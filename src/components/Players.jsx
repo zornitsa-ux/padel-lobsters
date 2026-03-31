@@ -1,0 +1,282 @@
+import React, { useState } from 'react'
+import { useApp } from '../context/AppContext'
+import { Plus, Pencil, Trash2, X, ChevronDown, ChevronUp, Search, User } from 'lucide-react'
+import AdminLogin from './AdminLogin'
+
+const LEVEL_COLORS = [
+  'bg-gray-200 text-gray-700',     // 0
+  'bg-blue-100 text-blue-700',     // 1
+  'bg-green-100 text-green-700',   // 2
+  'bg-teal-100 text-teal-700',     // 3
+  'bg-yellow-100 text-yellow-700', // 4
+  'bg-orange-100 text-orange-700', // 5
+  'bg-red-100 text-red-700',       // 6
+  'bg-purple-100 text-purple-700', // 7
+]
+
+const emptyForm = {
+  name: '', email: '', phone: '',
+  playtomicLevel: '', adjustment: '0',
+  playtomicUsername: '', notes: '',
+}
+
+export default function Players() {
+  const { players, addPlayer, updatePlayer, deletePlayer, isAdmin, setIsAdmin } = useApp()
+  const [showForm, setShowForm]       = useState(false)
+  const [editId, setEditId]           = useState(null)
+  const [form, setForm]               = useState(emptyForm)
+  const [search, setSearch]           = useState('')
+  const [showLogin, setShowLogin]     = useState(false)
+  const [expandedId, setExpandedId]   = useState(null)
+  const [saving, setSaving]           = useState(false)
+
+  const filtered = players.filter(p =>
+    p.name?.toLowerCase().includes(search.toLowerCase()) ||
+    p.playtomicUsername?.toLowerCase().includes(search.toLowerCase())
+  )
+
+  const sorted = [...filtered].sort((a, b) => (b.adjustedLevel || 0) - (a.adjustedLevel || 0))
+
+  const openAdd = () => {
+    if (!isAdmin) { setShowLogin(true); return }
+    setForm(emptyForm); setEditId(null); setShowForm(true)
+  }
+
+  const openEdit = (p) => {
+    if (!isAdmin) { setShowLogin(true); return }
+    setForm({
+      name: p.name || '', email: p.email || '', phone: p.phone || '',
+      playtomicLevel: p.playtomicLevel ?? '', adjustment: p.adjustment ?? '0',
+      playtomicUsername: p.playtomicUsername || '', notes: p.notes || '',
+    })
+    setEditId(p.id); setShowForm(true)
+  }
+
+  const handleDelete = async (id) => {
+    if (!isAdmin) { setShowLogin(true); return }
+    if (!confirm('Remove this player?')) return
+    await deletePlayer(id)
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setSaving(true)
+    try {
+      const data = {
+        ...form,
+        playtomicLevel: parseFloat(form.playtomicLevel) || 0,
+        adjustment: parseFloat(form.adjustment) || 0,
+      }
+      if (editId) await updatePlayer(editId, data)
+      else         await addPlayer(data)
+      setShowForm(false)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const levelBadge = (adjusted) => {
+    const idx = Math.min(7, Math.max(0, Math.floor(adjusted || 0)))
+    return LEVEL_COLORS[idx] || LEVEL_COLORS[0]
+  }
+
+  return (
+    <div className="space-y-4">
+      {showLogin && <AdminLogin onClose={() => setShowLogin(false)} />}
+
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-bold text-gray-800">Players ({players.length})</h2>
+        <button onClick={openAdd} className="btn-primary py-2 px-4 text-sm flex items-center gap-1.5">
+          <Plus size={16} /> Add
+        </button>
+      </div>
+
+      {/* Search */}
+      <div className="relative">
+        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+        <input
+          className="input pl-9"
+          placeholder="Search players..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+      </div>
+
+      {/* Level legend */}
+      <div className="card py-3">
+        <p className="text-xs font-semibold text-gray-500 mb-2">Adjusted Playtomic Level</p>
+        <p className="text-xs text-gray-500">
+          Players enter their Playtomic level (0–7) and can apply a personal adjustment.
+          The <strong>Adjusted Level</strong> is used for pairing.
+        </p>
+      </div>
+
+      {/* Player list */}
+      <div className="space-y-2">
+        {sorted.length === 0 && (
+          <div className="card py-10 text-center text-gray-400">
+            <User size={36} className="mx-auto mb-2 opacity-30" />
+            <p>No players yet. Add your first player!</p>
+          </div>
+        )}
+
+        {sorted.map((p, idx) => {
+          const expanded = expandedId === p.id
+          return (
+            <div key={p.id} className="card">
+              <button
+                className="w-full flex items-center gap-3"
+                onClick={() => setExpandedId(expanded ? null : p.id)}
+              >
+                {/* Rank */}
+                <span className="text-xs font-bold text-gray-400 w-5 text-center flex-shrink-0">
+                  #{idx + 1}
+                </span>
+
+                {/* Avatar */}
+                <div className="w-10 h-10 bg-lobster-teal rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
+                  {(p.name || '?')[0].toUpperCase()}
+                </div>
+
+                {/* Name & level */}
+                <div className="flex-1 text-left min-w-0">
+                  <p className="font-semibold text-gray-800 truncate">{p.name}</p>
+                  {p.playtomicUsername && (
+                    <p className="text-xs text-gray-400 truncate">@{p.playtomicUsername}</p>
+                  )}
+                </div>
+
+                {/* Adjusted level badge */}
+                <div className="flex-shrink-0 text-right">
+                  <span className={`text-sm font-bold px-2.5 py-1 rounded-lg ${levelBadge(p.adjustedLevel)}`}>
+                    {(p.adjustedLevel || 0).toFixed(1)}
+                  </span>
+                </div>
+
+                {expanded ? <ChevronUp size={16} className="text-gray-400 flex-shrink-0" /> : <ChevronDown size={16} className="text-gray-400 flex-shrink-0" />}
+              </button>
+
+              {/* Expanded detail */}
+              {expanded && (
+                <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    <div className="bg-gray-50 rounded-xl p-2">
+                      <p className="text-base font-bold text-gray-700">{(p.playtomicLevel || 0).toFixed(1)}</p>
+                      <p className="text-[10px] text-gray-500">Playtomic</p>
+                    </div>
+                    <div className="bg-gray-50 rounded-xl p-2">
+                      <p className={`text-base font-bold ${parseFloat(p.adjustment) >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+                        {parseFloat(p.adjustment) >= 0 ? '+' : ''}{(p.adjustment || 0)}
+                      </p>
+                      <p className="text-[10px] text-gray-500">Adjustment</p>
+                    </div>
+                    <div className={`rounded-xl p-2 ${levelBadge(p.adjustedLevel)}`}>
+                      <p className="text-base font-bold">{(p.adjustedLevel || 0).toFixed(1)}</p>
+                      <p className="text-[10px] opacity-70">Adjusted</p>
+                    </div>
+                  </div>
+
+                  {p.email && <p className="text-xs text-gray-500">✉ {p.email}</p>}
+                  {p.phone && <p className="text-xs text-gray-500">📞 {p.phone}</p>}
+                  {p.notes && <p className="text-xs text-gray-500 italic">{p.notes}</p>}
+
+                  {isAdmin && (
+                    <div className="flex gap-2 pt-1">
+                      <button onClick={() => openEdit(p)} className="btn-secondary flex-1 py-2 text-sm flex items-center justify-center gap-1">
+                        <Pencil size={14} /> Edit
+                      </button>
+                      <button onClick={() => handleDelete(p.id)} className="btn-danger flex-1 py-2 text-sm flex items-center justify-center gap-1">
+                        <Trash2 size={14} /> Remove
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Add/Edit modal */}
+      {showForm && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center">
+          <div className="bg-white rounded-t-3xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white px-5 pt-5 pb-3 border-b border-gray-100 flex items-center justify-between">
+              <h2 className="font-bold text-gray-800">{editId ? 'Edit Player' : 'Add Player'}</h2>
+              <button onClick={() => setShowForm(false)}>
+                <X size={22} className="text-gray-400" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="p-5 space-y-4">
+              <div>
+                <label className="label">Full Name *</label>
+                <input required className="input" placeholder="e.g. Maria García" value={form.name}
+                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
+              </div>
+
+              <div>
+                <label className="label">Playtomic Username</label>
+                <input className="input" placeholder="@username" value={form.playtomicUsername}
+                  onChange={e => setForm(f => ({ ...f, playtomicUsername: e.target.value }))} />
+              </div>
+
+              {/* Level section */}
+              <div className="bg-blue-50 rounded-xl p-4 space-y-3">
+                <p className="text-xs font-bold text-blue-700 uppercase tracking-wide">Playtomic Level</p>
+
+                <div>
+                  <label className="label">Playtomic Level (0–7)</label>
+                  <input
+                    type="number" step="0.1" min="0" max="7"
+                    className="input" placeholder="e.g. 3.5"
+                    value={form.playtomicLevel}
+                    onChange={e => setForm(f => ({ ...f, playtomicLevel: e.target.value }))}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Check your Playtomic app — it shows your current level</p>
+                </div>
+
+                <div>
+                  <label className="label">Personal Adjustment</label>
+                  <input
+                    type="number" step="0.1" min="-3" max="3"
+                    className="input" placeholder="0"
+                    value={form.adjustment}
+                    onChange={e => setForm(f => ({ ...f, adjustment: e.target.value }))}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Positive = stronger than Playtomic suggests · Negative = weaker<br />
+                    Adjusted Level = {((parseFloat(form.playtomicLevel) || 0) + (parseFloat(form.adjustment) || 0)).toFixed(1)}
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <label className="label">Email</label>
+                <input type="email" className="input" placeholder="player@email.com" value={form.email}
+                  onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
+              </div>
+
+              <div>
+                <label className="label">Phone / WhatsApp</label>
+                <input type="tel" className="input" placeholder="+31 6 12345678" value={form.phone}
+                  onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} />
+              </div>
+
+              <div>
+                <label className="label">Notes</label>
+                <textarea className="input resize-none" rows={2} placeholder="Any notes..." value={form.notes}
+                  onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
+              </div>
+
+              <button type="submit" disabled={saving} className="btn-primary w-full">
+                {saving ? 'Saving...' : editId ? 'Save Changes' : 'Add Player'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
