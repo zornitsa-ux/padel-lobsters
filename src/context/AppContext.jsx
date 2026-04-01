@@ -130,6 +130,7 @@ export function AppProvider({ children }) {
       time:               data.time,
       location:           data.location           || '',
       max_players:        parseInt(data.maxPlayers) || 16,
+      duration:           parseInt(data.duration)  || 90,
       format:             data.format,
       court_booking_mode: data.courtBookingMode   || 'admin_all',
       total_price:        parseFloat(data.totalPrice) || 0,
@@ -149,6 +150,7 @@ export function AppProvider({ children }) {
     if (data.time             !== undefined) payload.time               = data.time
     if (data.location         !== undefined) payload.location           = data.location
     if (data.maxPlayers       !== undefined) payload.max_players        = parseInt(data.maxPlayers) || 16
+    if (data.duration         !== undefined) payload.duration           = parseInt(data.duration) || 90
     if (data.format           !== undefined) payload.format             = data.format
     if (data.courtBookingMode !== undefined) payload.court_booking_mode = data.courtBookingMode
     if (data.totalPrice       !== undefined) payload.total_price        = parseFloat(data.totalPrice) || 0
@@ -245,6 +247,7 @@ export function AppProvider({ children }) {
   const normalisedTournaments = tournaments.map(t => ({
     ...t,
     maxPlayers:       t.max_players        ?? t.maxPlayers       ?? 16,
+    duration:         t.duration           ?? 90,
     courts:           t.courts             ?? [],
     location:         t.location           ?? '',
     courtBookingMode: t.court_booking_mode ?? t.courtBookingMode ?? 'admin_all',

@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext'
 import {
   Plus, X, Trash2, Pencil, Trophy,
   MapPin, Calendar, Users, Euro, CheckCircle, Circle,
-  Building2, ShieldCheck, UserCog
+  Building2, ShieldCheck, UserCog, Clock
 } from 'lucide-react'
 import AdminLogin from './AdminLogin'
 
@@ -13,6 +13,7 @@ const emptyForm = {
   time: '',
   location: '',
   maxPlayers: '16',
+  duration: 90,
   format: 'americano',
   courtBookingMode: 'admin_all',
   courts: [{ name: '', booked: false, costPerPerson: '', responsible: '', tikkieLink: '' }],
@@ -42,6 +43,7 @@ export default function Tournament({ onNavigate }) {
       time:             t.time             || '',
       location:         t.location         || '',
       maxPlayers:       t.maxPlayers       || '16',
+      duration:         t.duration         || 90,
       format:           t.format           || 'americano',
       courtBookingMode: t.courtBookingMode || 'admin_all',
       courts: t.courts?.length
@@ -72,6 +74,7 @@ export default function Tournament({ onNavigate }) {
         maxPlayers:       mp,
         format:           form.format,
         courtBookingMode: form.courtBookingMode,
+        duration:         parseInt(form.duration) || 90,
         totalPrice:       form.courtBookingMode === 'admin_all' ? (parseFloat(form.totalPrice) || 0) : 0,
         tikkieLink:       form.courtBookingMode === 'admin_all' ? (form.tikkieLink || '') : '',
         courts: form.courts.map(c => ({
@@ -180,10 +183,11 @@ export default function Tournament({ onNavigate }) {
               </div>
 
               {/* Stats row */}
-              <div className="grid grid-cols-3 gap-2 mb-3">
+              <div className="grid grid-cols-4 gap-2 mb-3">
                 <InfoChip icon={<Users size={12} />} label={`${t.maxPlayers || '?'} players`} />
                 <InfoChip icon={<MapPin size={12} />} label={`${bookedCount}/${totalCourts} courts`} warn={!allBooked && totalCourts > 0} />
-                <InfoChip icon={<Euro size={12} />} label={ppCost > 0 ? `€${ppCost.toFixed(2)}/pp` : 'No cost'} />
+                <InfoChip icon={<Clock size={12} />} label={t.duration ? `${t.duration}min` : '90min'} />
+                <InfoChip icon={<Euro size={12} />} label={ppCost > 0 ? `€${ppCost.toFixed(2)}/pp` : 'Free'} />
               </div>
 
               {/* Booking mode badge */}
@@ -321,6 +325,26 @@ export default function Tournament({ onNavigate }) {
                     <option value="roundrobin">Round Robin</option>
                     <option value="knockout">Knockout</option>
                   </select>
+                </div>
+              </div>
+
+              {/* Duration */}
+              <div>
+                <label className="label">Duration</label>
+                <div className="grid grid-cols-4 gap-2">
+                  {[60, 90, 120, 180].map(d => (
+                    <button
+                      key={d} type="button"
+                      onClick={() => setForm(f => ({ ...f, duration: d }))}
+                      className={`py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                        form.duration === d
+                          ? 'bg-lobster-teal text-white'
+                          : 'bg-gray-100 text-gray-600'
+                      }`}
+                    >
+                      {d < 60 ? `${d}m` : d === 60 ? '1h' : d === 90 ? '1.5h' : d === 120 ? '2h' : '3h'}
+                    </button>
+                  ))}
                 </div>
               </div>
 

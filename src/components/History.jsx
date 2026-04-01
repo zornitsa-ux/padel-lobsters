@@ -1,7 +1,106 @@
 import React, { useState } from 'react'
 import { Trophy, ChevronDown, ChevronUp, Medal } from 'lucide-react'
 
-// ── January 2026 data ─────────────────────────────────────────────────────────
+// ── December 2025 ─────────────────────────────────────────────────────────────
+const DEC_STANDINGS = [
+  { name: 'Ian',       total: 34 },
+  { name: 'Alex M',    total: 33 },
+  { name: 'Mariano',   total: 33 },
+  { name: 'Lucia',     total: 29 },
+  { name: 'Lisa',      total: 28 },
+  { name: 'Uziel',     total: 25 },
+  { name: 'Elena',     total: 25 },
+  { name: 'Hakan',     total: 24 },
+  { name: 'Daniel',    total: 24 },
+  { name: 'Chris',     total: 24 },
+  { name: 'Paola',     total: 24 },
+  { name: 'Damiao',    total: 23 },
+  { name: 'Valesca',   total: 22 },
+  { name: 'Ingrid',    total: 22 },
+  { name: 'GonzaloU',  total: 22 },
+  { name: 'Lara',      total: 21 },
+  { name: 'Davide',    total: 21 },
+  { name: 'Shahar',    total: 20 },
+  { name: 'Marielle',  total: 19 },
+  { name: 'Alex G',    total: 19 },
+  { name: 'Kemal',     total: 19 },
+  { name: 'Gino',      total: 18 },
+  { name: 'Zornitsa',  total: 17 },
+  { name: 'Karlijn',   total: 17 },
+  { name: 'Mel',       total: 17 },
+  { name: 'Gonzalo E', total: 17 },
+  { name: 'Rowan',     total: 17 },
+  { name: 'Markus',    total: 16 },
+  { name: 'Jon',       total: 15 },
+  { name: 'Arda',      total: 13 },
+  { name: 'Omar',      total: 11 },
+  { name: 'Maria',     total: 11 },
+].sort((a, b) => b.total - a.total)
+
+const DEC_ROUNDS = [
+  { round: 1, matches: [
+    { court:1, t1:['Zornitsa','Gonzalo E'],  t2:['Lara','Alex M'],      s1:3, s2:6 },
+    { court:2, t1:['Karlijn','Uziel'],        t2:['Valesca','Gino'],     s1:5, s2:2 },
+    { court:3, t1:['Marielle','Jon'],         t2:['Ingrid','Markus'],    s1:3, s2:4 },
+    { court:4, t1:['Lucia','Daniel'],         t2:['Elena','Davide'],     s1:4, s2:2 },
+    { court:5, t1:['Lisa','Arda'],            t2:['Paola','Nico B'],     s1:3, s2:6 },
+    { court:6, t1:['Mel','Chris'],            t2:['Rowan','GonzaloU'],   s1:2, s2:3 },
+    { court:7, t1:['Hakan','Damiao'],         t2:['Alex G','Shahar'],    s1:3, s2:2 },
+    { court:8, t1:['Omar','Maria'],           t2:['Erica','Kemal'],      s1:1, s2:5 },
+  ]},
+  { round: 2, matches: [
+    { court:1, t1:['Zornitsa','Uziel'],       t2:['Ingrid','Damiao'],    s1:4, s2:3 },
+    { court:2, t1:['Lara','Davide'],          t2:['Elena','Markus'],     s1:3, s2:5 },
+    { court:3, t1:['Lisa','Alex M'],          t2:['Karlijn','Omar'],     s1:5, s2:2 },
+    { court:4, t1:['Mel','Daniel'],           t2:['Hakan','Marielle'],   s1:3, s2:4 },
+    { court:5, t1:['Lucia','Chris'],          t2:['GonzaloU','Paola'],   s1:4, s2:3 },
+    { court:6, t1:['Shahar','Gonzalo E'],     t2:['Kemal','Alex G'],     s1:2, s2:4 },
+    { court:7, t1:['Valesca','Arda'],         t2:['Rowan','Nico B'],     s1:3, s2:4 },
+    { court:8, t1:['Gino','Erica'],           t2:['Jon','Maria'],        s1:5, s2:2 },
+  ]},
+  { round: 3, matches: [
+    { court:1, t1:['Karlijn','Gonzalo E'],    t2:['Lucia','Uziel'],      s1:2, s2:4 },
+    { court:2, t1:['Valesca','Daniel'],       t2:['Zornitsa','Jon'],     s1:5, s2:1 },
+    { court:3, t1:['Elena','Omar'],           t2:['Marielle','Nico B'],  s1:3, s2:6 },
+    { court:4, t1:['Mel','Alex M'],           t2:['Lara','Markus'],      s1:5, s2:2 },
+    { court:5, t1:['Rowan','Shahar'],         t2:['Hakan','Paola'],      s1:3, s2:4 },
+    { court:6, t1:['Ingrid','Davide'],        t2:['Lisa','Damiao'],      s1:2, s2:6 },
+    { court:7, t1:['GonzaloU','Maria'],       t2:['Erica','Chris'],      s1:2, s2:5 },
+    { court:8, t1:['Gino','Kemal'],           t2:['Arda','Alex G'],      s1:3, s2:3 },
+  ]},
+  { round: 4, matches: [
+    { court:1, t1:['Ingrid','GonzaloU'],      t2:['Lucia','Damiao'],     s1:2, s2:5 },
+    { court:2, t1:['Marielle','Uziel'],       t2:['Elena','Alex G'],     s1:2, s2:5 },
+    { court:3, t1:['Lisa','Hakan'],           t2:['Markus','Rowan'],     s1:6, s2:1 },
+    { court:4, t1:['Zornitsa','Omar'],        t2:['Chris','Paola'],      s1:3, s2:4 },
+    { court:5, t1:['Karlijn','Daniel'],       t2:['Shahar','Lara'],      s1:4, s2:4 },
+    { court:6, t1:['Erica','Gonzalo E'],      t2:['Kemal','Maria'],      s1:7, s2:0 },
+    { court:7, t1:['Valesca','Alex M'],       t2:['Arda','Mel'],         s1:6, s2:1 },
+    { court:8, t1:['Gino','Jon'],             t2:['Nico B','Davide'],    s1:2, s2:4 },
+  ]},
+  { round: 5, matches: [
+    { court:1, t1:['Marielle','Gonzalo E'],   t2:['Ingrid','Uziel'],     s1:1, s2:5 },
+    { court:2, t1:['Lucia','GonzaloU'],       t2:['Zornitsa','Alex G'],  s1:6, s2:1 },
+    { court:3, t1:['Lisa','Nico B'],          t2:['Karlijn','Markus'],   s1:7, s2:1 },
+    { court:4, t1:['Mel','Damiao'],           t2:['Elena','Alex M'],     s1:1, s2:6 },
+    { court:5, t1:['Lara','Daniel'],          t2:['Shahar','Erica'],     s1:2, s2:6 },
+    { court:6, t1:['Valesca','Jon'],          t2:['Hakan','Maria'],      s1:5, s2:3 },
+    { court:7, t1:['Gino','Omar'],            t2:['Chris','Kemal'],      s1:1, s2:6 },
+    { court:8, t1:['Davide','Paola'],         t2:['Arda','Rowan'],       s1:5, s2:1 },
+  ]},
+  { round: 6, matches: [
+    { court:1, t1:['Zornitsa','Uziel'],       t2:['Marielle','Markus'],  s1:5, s2:3 },
+    { court:2, t1:['Lisa','Kemal'],           t2:['Ingrid','Nico B'],    s1:1, s2:6 },
+    { court:3, t1:['Mel','Davide'],           t2:['Valesca','Omar'],     s1:5, s2:1 },
+    { court:4, t1:['Lara','Alex G'],          t2:['Elena','Hakan'],      s1:4, s2:4 },
+    { court:5, t1:['Lucia','Daniel'],         t2:['Paola','Gonzalo E'],  s1:6, s2:2 },
+    { court:6, t1:['Rowan','Damiao'],         t2:['Shahar','Karlijn'],   s1:5, s2:3 },
+    { court:7, t1:['Chris','Maria'],          t2:['Erica','GonzaloU'],   s1:3, s2:6 },
+    { court:8, t1:['Arda','Jon'],             t2:['Gino','Alex M'],      s1:2, s2:5 },
+  ]},
+]
+
+// ── January 2026 ──────────────────────────────────────────────────────────────
 const JAN_PLAYERS = [
   { name: 'Ingrid',          r: [5,4,5,5,4,6], total: 29 },
   { name: 'Marielle',        r: [4,3,5,4,6,6], total: 28 },
@@ -37,117 +136,106 @@ const JAN_PLAYERS = [
   { name: 'Valesca',         r: [3,3,2,3,1,3], total: 15 },
 ]
 
-// ── March 2026 data ───────────────────────────────────────────────────────────
+// ── March 2026 ────────────────────────────────────────────────────────────────
 const MAR_STANDINGS = [
-  { name: 'Alex B',       total: 29 },
-  { name: 'Erica',        total: 26 },
-  { name: 'Ini',          total: 26 },
-  { name: 'Alex M',       total: 27 },
-  { name: 'Karlijn',      total: 27 },
-  { name: 'Uziel',        total: 27 },
-  { name: 'Zornitsa',     total: 27 },
-  { name: 'Anthony',      total: 25 },
-  { name: 'Elena',        total: 24 },
-  { name: 'Stamatis',     total: 24 },
-  { name: 'Juan',         total: 24 },
-  { name: 'Milan',        total: 24 },
-  { name: 'Sebas',        total: 24 },
-  { name: 'Mauri',        total: 22 },
-  { name: 'Chris',        total: 22 },
-  { name: 'Jon',          total: 22 },
-  { name: 'Laura',        total: 22 },
-  { name: 'Arda',         total: 20 },
-  { name: 'Alex G',       total: 18 },
-  { name: 'Gonzalo U',    total: 19 },
-  { name: 'Nico',         total: 19 },
-  { name: 'Omar',         total: 19 },
-  { name: 'Rowan',        total: 19 },
-  { name: 'Maria',        total: 16 },
-  { name: 'Marielle',     total: 17 },
-  { name: 'Markus',       total: 17 },
-  { name: 'Gagan',        total: 15 },
-  { name: 'Juan Manuel',  total: 13 },
-  { name: 'Kathy',        total: 14 },
-  { name: 'Lara',         total: 14 },
-  { name: 'Lucia',        total: 14 },
-  { name: 'Paola',        total: 14 },
+  { name: 'Alex B',      total: 29 },
+  { name: 'Alex M',      total: 27 },
+  { name: 'Karlijn',     total: 27 },
+  { name: 'Uziel',       total: 27 },
+  { name: 'Zornitsa',    total: 27 },
+  { name: 'Erica',       total: 26 },
+  { name: 'Ini',         total: 26 },
+  { name: 'Anthony',     total: 25 },
+  { name: 'Elena',       total: 24 },
+  { name: 'Stamatis',    total: 24 },
+  { name: 'Juan',        total: 24 },
+  { name: 'Milan',       total: 24 },
+  { name: 'Sebas',       total: 24 },
+  { name: 'Chris',       total: 22 },
+  { name: 'Jon',         total: 22 },
+  { name: 'Laura',       total: 22 },
+  { name: 'Mauri',       total: 22 },
+  { name: 'Arda',        total: 20 },
+  { name: 'Gonzalo U',   total: 19 },
+  { name: 'Nico',        total: 19 },
+  { name: 'Omar',        total: 19 },
+  { name: 'Rowan',       total: 19 },
+  { name: 'Marielle',    total: 17 },
+  { name: 'Markus',      total: 17 },
+  { name: 'Alex G',      total: 18 },
+  { name: 'Maria',       total: 16 },
+  { name: 'Gagan',       total: 15 },
+  { name: 'Kathy',       total: 14 },
+  { name: 'Lara',        total: 14 },
+  { name: 'Lucia',       total: 14 },
+  { name: 'Paola',       total: 14 },
+  { name: 'Juan Manuel', total: 13 },
 ].sort((a, b) => b.total - a.total)
 
 const MAR_ROUNDS = [
-  {
-    round: 1, matches: [
-      { court: 1, t1: ['Anthony','Alex M'],    t2: ['Milan','Jon'],          s1: 6, s2: 2 },
-      { court: 2, t1: ['Chris','Karlijn'],      t2: ['Paola','Gagan'],        s1: 5, s2: 2 },
-      { court: 3, t1: ['Alex G','Elena'],       t2: ['Juan','Lucia'],         s1: 2, s2: 2 },
-      { court: 4, t1: ['Ini','Erica'],          t2: ['Laura','Maria'],        s1: 5, s2: 2 },
-      { court: 5, t1: ['Alex B','Omar'],        t2: ['Markus','Nico'],        s1: 5, s2: 4 },
-      { court: 6, t1: ['Gonzalo U','Uziel'],    t2: ['Sebas','Stamatis'],     s1: 2, s2: 4 },
-      { court: 7, t1: ['Marielle','Arda'],      t2: ['Lara','Mauri'],         s1: 2, s2: 3 },
-      { court: 8, t1: ['Zornitsa','Rowan'],     t2: ['Juan Manuel','Kathy'],  s1: 5, s2: 3 },
-    ]
-  },
-  {
-    round: 2, matches: [
-      { court: 1, t1: ['Omar','Nico'],          t2: ['Gagan','Alex G'],       s1: 1, s2: 2 },
-      { court: 2, t1: ['Alex B','Marielle'],    t2: ['Zornitsa','Markus'],    s1: 6, s2: 3 },
-      { court: 3, t1: ['Mauri','Juan'],         t2: ['Stamatis','Paola'],     s1: 5, s2: 2 },
-      { court: 4, t1: ['Rowan','Laura'],        t2: ['Lucia','Maria'],        s1: 3, s2: 1 },
-      { court: 5, t1: ['Karlijn','Arda'],       t2: ['Elena','Chris'],        s1: 4, s2: 4 },
-      { court: 6, t1: ['Alex M','Gonzalo U'],   t2: ['Uziel','Anthony'],      s1: 2, s2: 4 },
-      { court: 7, t1: ['Juan Manuel','Ini'],    t2: ['Sebas','Lara'],         s1: 2, s2: 3 },
-      { court: 8, t1: ['Milan','Kathy'],        t2: ['Erica','Jon'],          s1: 2, s2: 4 },
-    ]
-  },
-  {
-    round: 3, matches: [
-      { court: 1, t1: ['Arda','Zornitsa'],      t2: ['Sebas','Maria'],        s1: 4, s2: 4 },
-      { court: 2, t1: ['Juan Manuel','Markus'], t2: ['Chris','Alex M'],       s1: 2, s2: 6 },
-      { court: 3, t1: ['Nico','Marielle'],      t2: ['Alex B','Karlijn'],     s1: 1, s2: 6 },
-      { court: 4, t1: ['Ini','Paola'],          t2: ['Kathy','Rowan'],        s1: 5, s2: 2 },
-      { court: 5, t1: ['Omar','Lucia'],         t2: ['Alex G','Laura'],       s1: 3, s2: 3 },
-      { court: 6, t1: ['Gagan','Juan'],         t2: ['Milan','Lara'],         s1: 5, s2: 5 },
-      { court: 7, t1: ['Elena','Mauri'],        t2: ['Gonzalo U','Erica'],    s1: 5, s2: 2 },
-      { court: 8, t1: ['Anthony','Jon'],        t2: ['Uziel','Stamatis'],     s1: 3, s2: 5 },
-    ]
-  },
-  {
-    round: 4, matches: [
-      { court: 1, t1: ['Zornitsa','Chris'],     t2: ['Elena','Nico'],         s1: 5, s2: 3 },
-      { court: 2, t1: ['Mauri','Gagan'],        t2: ['Anthony','Arda'],       s1: 1, s2: 7 },
-      { court: 3, t1: ['Laura','Lucia'],        t2: ['Lara','Kathy'],         s1: 6, s2: 1 },
-      { court: 4, t1: ['Milan','Stamatis'],     t2: ['Juan Manuel','Sebas'],  s1: 6, s2: 2 },
-      { court: 5, t1: ['Juan','Omar'],          t2: ['Maria','Erica'],        s1: 4, s2: 1 },
-      { court: 6, t1: ['Alex B','Markus'],      t2: ['Uziel','Jon'],          s1: 3, s2: 5 },
-      { court: 7, t1: ['Marielle','Karlijn'],   t2: ['Alex G','Rowan'],       s1: 3, s2: 4 },
-      { court: 8, t1: ['Gonzalo U','Ini'],      t2: ['Paola','Alex M'],       s1: 4, s2: 2 },
-    ]
-  },
-  {
-    round: 5, matches: [
-      { court: 1, t1: ['Rowan','Zornitsa'],     t2: ['Lucia','Paola'],        s1: 4, s2: 2 },
-      { court: 2, t1: ['Gonzalo U','Sebas'],    t2: ['Gagan','Jon'],          s1: 5, s2: 4 },
-      { court: 3, t1: ['Juan','Ini'],           t2: ['Anthony','Laura'],      s1: 4, s2: 2 },
-      { court: 4, t1: ['Arda','Omar'],          t2: ['Alex B','Elena'],       s1: 2, s2: 6 },
-      { court: 5, t1: ['Mauri','Alex G'],       t2: ['Milan','Juan Manuel'],  s1: 3, s2: 3 },
-      { court: 6, t1: ['Lara','Nico'],          t2: ['Uziel','Maria'],        s1: 1, s2: 5 },
-      { court: 7, t1: ['Karlijn','Markus'],     t2: ['Kathy','Stamatis'],     s1: 4, s2: 3 },
-      { court: 8, t1: ['Chris','Marielle'],     t2: ['Erica','Alex M'],       s1: 1, s2: 7 },
-    ]
-  },
-  {
-    round: 6, matches: [
-      { court: 1, t1: ['Alex M','Marielle'],    t2: ['Elena','Stamatis'],     s1: 4, s2: 4 },
-      { court: 2, t1: ['Gagan','Juan Manuel'],  t2: ['Milan','Uziel'],        s1: 1, s2: 6 },
-      { court: 3, t1: ['Paola','Arda'],         t2: ['Erica','Nico'],         s1: 1, s2: 7 },
-      { court: 4, t1: ['Juan','Gonzalo U'],     t2: ['Omar','Jon'],           s1: 4, s2: 4 },
-      { court: 5, t1: ['Rowan','Lara'],         t2: ['Zornitsa','Laura'],     s1: 1, s2: 6 },
-      { court: 6, t1: ['Karlijn','Mauri'],      t2: ['Maria','Anthony'],      s1: 5, s2: 3 },
-      { court: 7, t1: ['Markus','Chris'],       t2: ['Ini','Sebas'],          s1: 1, s2: 6 },
-      { court: 8, t1: ['Kathy','Alex B'],       t2: ['Alex G','Lucia'],       s1: 3, s2: 4 },
-    ]
-  },
+  { round:1, matches:[
+    { court:1, t1:['Anthony','Alex M'],   t2:['Milan','Jon'],         s1:6, s2:2 },
+    { court:2, t1:['Chris','Karlijn'],    t2:['Paola','Gagan'],       s1:5, s2:2 },
+    { court:3, t1:['Alex G','Elena'],    t2:['Juan','Lucia'],         s1:2, s2:2 },
+    { court:4, t1:['Ini','Erica'],       t2:['Laura','Maria'],        s1:5, s2:2 },
+    { court:5, t1:['Alex B','Omar'],     t2:['Markus','Nico'],        s1:5, s2:4 },
+    { court:6, t1:['Gonzalo U','Uziel'], t2:['Sebas','Stamatis'],     s1:2, s2:4 },
+    { court:7, t1:['Marielle','Arda'],   t2:['Lara','Mauri'],         s1:2, s2:3 },
+    { court:8, t1:['Zornitsa','Rowan'],  t2:['Juan Manuel','Kathy'],  s1:5, s2:3 },
+  ]},
+  { round:2, matches:[
+    { court:1, t1:['Omar','Nico'],          t2:['Gagan','Alex G'],      s1:1, s2:2 },
+    { court:2, t1:['Alex B','Marielle'],    t2:['Zornitsa','Markus'],   s1:6, s2:3 },
+    { court:3, t1:['Mauri','Juan'],         t2:['Stamatis','Paola'],    s1:5, s2:2 },
+    { court:4, t1:['Rowan','Laura'],        t2:['Lucia','Maria'],       s1:3, s2:1 },
+    { court:5, t1:['Karlijn','Arda'],       t2:['Elena','Chris'],       s1:4, s2:4 },
+    { court:6, t1:['Alex M','Gonzalo U'],   t2:['Uziel','Anthony'],     s1:2, s2:4 },
+    { court:7, t1:['Juan Manuel','Ini'],    t2:['Sebas','Lara'],        s1:2, s2:3 },
+    { court:8, t1:['Milan','Kathy'],        t2:['Erica','Jon'],         s1:2, s2:4 },
+  ]},
+  { round:3, matches:[
+    { court:1, t1:['Arda','Zornitsa'],      t2:['Sebas','Maria'],       s1:4, s2:4 },
+    { court:2, t1:['Juan Manuel','Markus'], t2:['Chris','Alex M'],      s1:2, s2:6 },
+    { court:3, t1:['Nico','Marielle'],      t2:['Alex B','Karlijn'],    s1:1, s2:6 },
+    { court:4, t1:['Ini','Paola'],          t2:['Kathy','Rowan'],       s1:5, s2:2 },
+    { court:5, t1:['Omar','Lucia'],         t2:['Alex G','Laura'],      s1:3, s2:3 },
+    { court:6, t1:['Gagan','Juan'],         t2:['Milan','Lara'],        s1:5, s2:5 },
+    { court:7, t1:['Elena','Mauri'],        t2:['Gonzalo U','Erica'],   s1:5, s2:2 },
+    { court:8, t1:['Anthony','Jon'],        t2:['Uziel','Stamatis'],    s1:3, s2:5 },
+  ]},
+  { round:4, matches:[
+    { court:1, t1:['Zornitsa','Chris'],     t2:['Elena','Nico'],        s1:5, s2:3 },
+    { court:2, t1:['Mauri','Gagan'],        t2:['Anthony','Arda'],      s1:1, s2:7 },
+    { court:3, t1:['Laura','Lucia'],        t2:['Lara','Kathy'],        s1:6, s2:1 },
+    { court:4, t1:['Milan','Stamatis'],     t2:['Juan Manuel','Sebas'], s1:6, s2:2 },
+    { court:5, t1:['Juan','Omar'],          t2:['Maria','Erica'],       s1:4, s2:1 },
+    { court:6, t1:['Alex B','Markus'],      t2:['Uziel','Jon'],         s1:3, s2:5 },
+    { court:7, t1:['Marielle','Karlijn'],   t2:['Alex G','Rowan'],      s1:3, s2:4 },
+    { court:8, t1:['Gonzalo U','Ini'],      t2:['Paola','Alex M'],      s1:4, s2:2 },
+  ]},
+  { round:5, matches:[
+    { court:1, t1:['Rowan','Zornitsa'],     t2:['Lucia','Paola'],       s1:4, s2:2 },
+    { court:2, t1:['Gonzalo U','Sebas'],    t2:['Gagan','Jon'],         s1:5, s2:4 },
+    { court:3, t1:['Juan','Ini'],           t2:['Anthony','Laura'],     s1:4, s2:2 },
+    { court:4, t1:['Arda','Omar'],          t2:['Alex B','Elena'],      s1:2, s2:6 },
+    { court:5, t1:['Mauri','Alex G'],       t2:['Milan','Juan Manuel'], s1:3, s2:3 },
+    { court:6, t1:['Lara','Nico'],          t2:['Uziel','Maria'],       s1:1, s2:5 },
+    { court:7, t1:['Karlijn','Markus'],     t2:['Kathy','Stamatis'],    s1:4, s2:3 },
+    { court:8, t1:['Chris','Marielle'],     t2:['Erica','Alex M'],      s1:1, s2:7 },
+  ]},
+  { round:6, matches:[
+    { court:1, t1:['Alex M','Marielle'],    t2:['Elena','Stamatis'],    s1:4, s2:4 },
+    { court:2, t1:['Gagan','Juan Manuel'],  t2:['Milan','Uziel'],       s1:1, s2:6 },
+    { court:3, t1:['Paola','Arda'],         t2:['Erica','Nico'],        s1:1, s2:7 },
+    { court:4, t1:['Juan','Gonzalo U'],     t2:['Omar','Jon'],          s1:4, s2:4 },
+    { court:5, t1:['Rowan','Lara'],         t2:['Zornitsa','Laura'],    s1:1, s2:6 },
+    { court:6, t1:['Karlijn','Mauri'],      t2:['Maria','Anthony'],     s1:5, s2:3 },
+    { court:7, t1:['Markus','Chris'],       t2:['Ini','Sebas'],         s1:1, s2:6 },
+    { court:8, t1:['Kathy','Alex B'],       t2:['Alex G','Lucia'],      s1:3, s2:4 },
+  ]},
 ]
 
+// ── Tournament list (newest first) ────────────────────────────────────────────
 const TOURNAMENTS = [
   {
     id: 'mar2026',
@@ -166,18 +254,29 @@ const TOURNAMENTS = [
     rounds: null,
     numRounds: 6,
     numCourts: null,
+    note: 'Full match pairings not available for this tournament.',
+  },
+  {
+    id: 'dec2025',
+    name: 'Lobster Tournament · December 2025',
+    date: 'December 2025',
+    players: DEC_STANDINGS,
+    rounds: DEC_ROUNDS,
+    numRounds: 6,
+    numCourts: 8,
   },
 ]
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
 function medalColor(pos) {
   if (pos === 0) return 'text-yellow-500'
   if (pos === 1) return 'text-gray-400'
   if (pos === 2) return 'text-amber-600'
-  return 'text-gray-300'
+  return 'text-gray-400'
 }
 
 function Podium({ players }) {
-  const top3 = players.slice(0, 3)
+  const top3 = [...players].sort((a, b) => b.total - a.total).slice(0, 3)
   return (
     <div className="flex items-end justify-center gap-3 py-4">
       {/* 2nd */}
@@ -198,7 +297,7 @@ function Podium({ players }) {
         <div className="w-16 h-16 bg-yellow-50 border-2 border-yellow-400 rounded-full flex items-center justify-center font-bold text-xl text-yellow-700">
           {top3[0]?.name[0]}
         </div>
-        <p className="text-xs font-bold text-gray-800 text-center w-18 truncate">{top3[0]?.name}</p>
+        <p className="text-xs font-bold text-gray-800 text-center w-20 truncate">{top3[0]?.name}</p>
         <p className="text-base font-bold text-yellow-600">{top3[0]?.total} pts</p>
         <div className="bg-yellow-400 rounded-t-lg w-12 h-14 flex items-end justify-center pb-1">
           <span className="text-xs font-bold text-yellow-900">1st</span>
@@ -220,12 +319,13 @@ function Podium({ players }) {
   )
 }
 
+// ── Main component ────────────────────────────────────────────────────────────
 export default function History() {
-  const [expandedId, setExpandedId]     = useState('mar2026')
-  const [activeTab, setActiveTab]       = useState({}) // tournamentId → 'standings' | 'matches'
-  const [activeRound, setActiveRound]   = useState({}) // tournamentId → roundIndex
+  const [expandedId, setExpandedId] = useState('mar2026')
+  const [activeTab, setActiveTab]   = useState({})   // id → 'standings' | 'matches'
+  const [activeRound, setActiveRound] = useState({}) // id → roundIndex
 
-  const getTab = (id) => activeTab[id] || 'standings'
+  const getTab   = (id) => activeTab[id]   || 'standings'
   const getRound = (id) => activeRound[id] ?? 0
 
   return (
@@ -233,14 +333,14 @@ export default function History() {
       <h2 className="text-lg font-bold text-gray-800">Tournament History</h2>
 
       {TOURNAMENTS.map(t => {
-        const open = expandedId === t.id
-        const tab  = getTab(t.id)
-        const ri   = getRound(t.id)
-        const sortedPlayers = [...t.players].sort((a, b) => b.total - a.total)
+        const open   = expandedId === t.id
+        const tab    = getTab(t.id)
+        const ri     = getRound(t.id)
+        const sorted = t.players ? [...t.players].sort((a, b) => b.total - a.total) : []
 
         return (
           <div key={t.id} className="card overflow-hidden">
-            {/* Header */}
+            {/* Card header */}
             <button
               className="w-full flex items-center justify-between gap-3"
               onClick={() => setExpandedId(open ? null : t.id)}
@@ -252,7 +352,8 @@ export default function History() {
                 <div className="text-left">
                   <p className="font-bold text-gray-800 text-sm">{t.name}</p>
                   <p className="text-xs text-gray-500">
-                    {t.players.length} players · {t.numRounds} rounds
+                    {t.players ? `${t.players.length} players` : '—'}
+                    {t.numRounds ? ` · ${t.numRounds} rounds` : ''}
                     {t.numCourts ? ` · ${t.numCourts} courts` : ''}
                   </p>
                 </div>
@@ -266,7 +367,7 @@ export default function History() {
             {open && (
               <div className="mt-4">
                 {/* Podium */}
-                <Podium players={sortedPlayers} />
+                {sorted.length > 0 && <Podium players={sorted} />}
 
                 {/* Tabs */}
                 <div className="flex gap-1 bg-gray-100 p-1 rounded-xl mb-3">
@@ -290,12 +391,20 @@ export default function History() {
                   )}
                 </div>
 
-                {/* Standings */}
-                {tab === 'standings' && (
+                {/* Note (when no pairings available) */}
+                {tab === 'standings' && t.note && (
+                  <p className="text-xs text-gray-400 italic mb-3 px-1">{t.note}</p>
+                )}
+
+                {/* ── Standings tab ── */}
+                {tab === 'standings' && sorted.length > 0 && (
                   <div className="space-y-1">
-                    {/* Header row */}
-                    <div className="grid text-[10px] font-bold text-gray-400 uppercase px-2 mb-1"
-                      style={{ gridTemplateColumns: t.id === 'jan2026' ? '28px 1fr 32px 32px 32px 32px 32px 32px 40px' : '28px 1fr 44px' }}
+                    {/* Column headers */}
+                    <div
+                      className="grid text-[10px] font-bold text-gray-400 uppercase px-2 mb-1"
+                      style={{ gridTemplateColumns: t.id === 'jan2026'
+                        ? '28px 1fr 28px 28px 28px 28px 28px 28px 36px'
+                        : '28px 1fr 44px' }}
                     >
                       <span>#</span>
                       <span>Player</span>
@@ -307,14 +416,14 @@ export default function History() {
                           <span className="text-center">R4</span>
                           <span className="text-center">R5</span>
                           <span className="text-center">R6</span>
-                          <span className="text-right">Total</span>
+                          <span className="text-right">Tot</span>
                         </>
                       ) : (
                         <span className="text-right">Total</span>
                       )}
                     </div>
 
-                    {sortedPlayers.map((p, idx) => (
+                    {sorted.map((p, idx) => (
                       <div
                         key={p.name}
                         className={`grid items-center px-2 py-1.5 rounded-xl text-sm ${
@@ -322,28 +431,32 @@ export default function History() {
                           idx === 1 ? 'bg-gray-50' :
                           idx === 2 ? 'bg-amber-50' : ''
                         }`}
-                        style={{ gridTemplateColumns: t.id === 'jan2026' ? '28px 1fr 32px 32px 32px 32px 32px 32px 40px' : '28px 1fr 44px' }}
+                        style={{ gridTemplateColumns: t.id === 'jan2026'
+                          ? '28px 1fr 28px 28px 28px 28px 28px 28px 36px'
+                          : '28px 1fr 44px' }}
                       >
                         <span className={`text-xs font-bold ${medalColor(idx)}`}>
-                          {idx < 3 ? ['🥇','🥈','🥉'][idx] : `${idx+1}`}
+                          {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : idx + 1}
                         </span>
-                        <span className={`font-medium truncate ${idx < 3 ? 'font-bold' : ''}`}>{p.name}</span>
+                        <span className={`font-medium truncate text-xs ${idx < 3 ? 'font-bold' : ''}`}>
+                          {p.name}
+                        </span>
                         {p.r ? (
                           <>
                             {p.r.map((score, ri) => (
                               <span key={ri} className="text-center text-xs text-gray-600">{score}</span>
                             ))}
-                            <span className="text-right font-bold text-lobster-teal">{p.total}</span>
+                            <span className="text-right font-bold text-lobster-teal text-xs">{p.total}</span>
                           </>
                         ) : (
-                          <span className="text-right font-bold text-lobster-teal">{p.total}</span>
+                          <span className="text-right font-bold text-lobster-teal text-xs">{p.total}</span>
                         )}
                       </div>
                     ))}
                   </div>
                 )}
 
-                {/* Match results (March 2026 only) */}
+                {/* ── Matches tab ── */}
                 {tab === 'matches' && t.rounds && (
                   <div>
                     {/* Round selector */}
@@ -361,18 +474,20 @@ export default function History() {
                       ))}
                     </div>
 
-                    {/* Matches for active round */}
+                    {/* Match cards for selected round */}
                     <div className="space-y-2">
                       {t.rounds[ri]?.matches.map((m, i) => {
                         const t1won = m.s1 > m.s2
                         const t2won = m.s2 > m.s1
                         return (
                           <div key={i} className="bg-gray-50 rounded-xl p-3">
-                            <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center justify-between mb-1.5">
                               <span className="text-[10px] font-bold text-lobster-teal bg-lobster-cream px-2 py-0.5 rounded-full">
                                 Court {m.court}
                               </span>
-                              {m.s1 === m.s2 && <span className="text-[10px] text-gray-400">Draw</span>}
+                              {m.s1 === m.s2 && (
+                                <span className="text-[10px] text-gray-400 font-medium">Draw</span>
+                              )}
                             </div>
                             <div className="flex items-center gap-2">
                               {/* Team A */}
@@ -383,11 +498,11 @@ export default function History() {
                               </div>
                               {/* Score */}
                               <div className="flex items-center gap-1 flex-shrink-0">
-                                <span className={`text-lg font-bold w-7 text-center ${t1won ? 'text-green-700' : 'text-gray-500'}`}>
+                                <span className={`text-lg font-bold w-7 text-center ${t1won ? 'text-green-600' : 'text-gray-400'}`}>
                                   {m.s1}
                                 </span>
                                 <span className="text-gray-300 text-sm">–</span>
-                                <span className={`text-lg font-bold w-7 text-center ${t2won ? 'text-green-700' : 'text-gray-500'}`}>
+                                <span className={`text-lg font-bold w-7 text-center ${t2won ? 'text-green-600' : 'text-gray-400'}`}>
                                   {m.s2}
                                 </span>
                               </div>
