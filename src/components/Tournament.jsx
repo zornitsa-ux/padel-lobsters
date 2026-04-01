@@ -15,6 +15,7 @@ const emptyForm = {
   maxPlayers: '16',
   duration: 90,
   format: 'americano',
+  genderMode: 'mixed',
   courtBookingMode: 'admin_all',
   courts: [{ name: '', booked: false, costPerPerson: '', responsible: '', tikkieLink: '' }],
   totalPrice: '',
@@ -45,6 +46,7 @@ export default function Tournament({ onNavigate }) {
       maxPlayers:       t.maxPlayers       || '16',
       duration:         t.duration         || 90,
       format:           t.format           || 'americano',
+      genderMode:       t.genderMode       || 'mixed',
       courtBookingMode: t.courtBookingMode || 'admin_all',
       courts: t.courts?.length
         ? t.courts.map(c => ({ name: c.name || '', booked: !!c.booked, costPerPerson: c.costPerPerson || '', responsible: c.responsible || '', tikkieLink: c.tikkieLink || '' }))
@@ -73,6 +75,7 @@ export default function Tournament({ onNavigate }) {
         location:         form.location,
         maxPlayers:       mp,
         format:           form.format,
+        genderMode:       form.genderMode,
         courtBookingMode: form.courtBookingMode,
         duration:         parseInt(form.duration) || 90,
         totalPrice:       form.courtBookingMode === 'admin_all' ? (parseFloat(form.totalPrice) || 0) : 0,
@@ -346,6 +349,29 @@ export default function Tournament({ onNavigate }) {
                     </button>
                   ))}
                 </div>
+              </div>
+
+              {/* ── Gender Mode ── */}
+              <div>
+                <label className="label">Player Mix</label>
+                <div className="flex gap-2">
+                  {[['mixed', '🚺🚹 Mixed'], ['same_gender', '👥 Same Gender']].map(([val, lbl]) => (
+                    <button
+                      type="button" key={val}
+                      onClick={() => setForm(f => ({ ...f, genderMode: val }))}
+                      className={`flex-1 py-2.5 rounded-xl font-semibold text-sm transition-all ${
+                        form.genderMode === val
+                          ? 'bg-lobster-teal text-white'
+                          : 'bg-gray-100 text-gray-600'
+                      }`}
+                    >
+                      {lbl}
+                    </button>
+                  ))}
+                </div>
+                {form.genderMode === 'mixed' && (
+                  <p className="text-xs text-gray-400 mt-1">Schedule will balance gender per court and keep left-handed players on opposite teams</p>
+                )}
               </div>
 
               {/* ── Court Booking Mode ── */}

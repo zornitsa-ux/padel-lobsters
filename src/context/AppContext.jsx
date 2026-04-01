@@ -85,6 +85,7 @@ export function AppProvider({ children }) {
       playtomic_username: data.playtomicUsername  || '',
       gender:             data.gender             || '',
       status:             data.status             || 'active',
+      is_left_handed:     data.isLeftHanded       || false,
     }
     const { error } = await supabase.from('players').insert(payload)
     if (error) {
@@ -107,6 +108,7 @@ export function AppProvider({ children }) {
       playtomic_username: data.playtomicUsername  || '',
       gender:             data.gender             || '',
       status:             data.status             || 'active',
+      is_left_handed:     data.isLeftHanded       || false,
     }
     const { error } = await supabase.from('players').update(payload).eq('id', id)
     if (error) {
@@ -135,6 +137,7 @@ export function AppProvider({ children }) {
       court_booking_mode: data.courtBookingMode   || 'admin_all',
       total_price:        parseFloat(data.totalPrice) || 0,
       tikkie_link:        data.tikkieLink          || '',
+      gender_mode:        data.genderMode          || 'mixed',
       courts:             data.courts,
       notes:              data.notes,
       status:             'upcoming',
@@ -155,6 +158,7 @@ export function AppProvider({ children }) {
     if (data.courtBookingMode !== undefined) payload.court_booking_mode = data.courtBookingMode
     if (data.totalPrice       !== undefined) payload.total_price        = parseFloat(data.totalPrice) || 0
     if (data.tikkieLink       !== undefined) payload.tikkie_link        = data.tikkieLink || ''
+    if (data.genderMode       !== undefined) payload.gender_mode        = data.genderMode || 'mixed'
     if (data.courts           !== undefined) payload.courts             = data.courts
     if (data.notes            !== undefined) payload.notes              = data.notes
     if (data.status           !== undefined) payload.status             = data.status
@@ -242,6 +246,7 @@ export function AppProvider({ children }) {
     playtomicUsername: p.playtomic_username ?? p.playtomicUsername ?? '',
     gender:            p.gender             ?? '',
     status:            p.status             ?? 'active',
+    isLeftHanded:      p.is_left_handed     ?? p.isLeftHanded ?? false,
   }))
 
   const normalisedTournaments = tournaments.map(t => ({
@@ -253,6 +258,7 @@ export function AppProvider({ children }) {
     courtBookingMode: t.court_booking_mode ?? t.courtBookingMode ?? 'admin_all',
     totalPrice:       t.total_price        ?? t.totalPrice       ?? 0,
     tikkieLink:       t.tikkie_link        ?? t.tikkieLink       ?? '',
+    genderMode:       t.gender_mode        ?? t.genderMode       ?? 'mixed',
   }))
 
   const normalisedRegistrations = registrations.map(r => ({

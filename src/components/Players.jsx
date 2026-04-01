@@ -18,6 +18,7 @@ const emptyForm = {
   name: '', email: '', phone: '',
   playtomicLevel: '', adjustment: '0',
   playtomicUsername: '', notes: '', gender: '',
+  isLeftHanded: false,
 }
 
 export default function Players() {
@@ -51,7 +52,7 @@ export default function Players() {
       name: p.name || '', email: p.email || '', phone: p.phone || '',
       playtomicLevel: p.playtomicLevel ?? '', adjustment: p.adjustment ?? '0',
       playtomicUsername: p.playtomicUsername || '', notes: p.notes || '',
-      gender: p.gender || '',
+      gender: p.gender || '', isLeftHanded: p.isLeftHanded || false,
     })
     setEditId(p.id); setShowForm(true)
   }
@@ -79,6 +80,7 @@ export default function Players() {
         ...form,
         playtomicLevel: parseFloat(form.playtomicLevel) || 0,
         adjustment: parseFloat(form.adjustment) || 0,
+        isLeftHanded: form.isLeftHanded || false,
         // Admin adds directly as active; self-registration goes to pending
         status: editId ? undefined : (isAdmin ? 'active' : 'pending'),
       }
@@ -205,9 +207,10 @@ export default function Players() {
                   {(p.name || '?')[0].toUpperCase()}
                 </div>
                 <div className="flex-1 text-left min-w-0">
-                  <p className="font-semibold text-gray-800 truncate">
+                  <p className="font-semibold text-gray-800 truncate flex items-center gap-1">
                     {p.name}
-                    {p.gender && <span className="ml-1 text-gray-400 text-sm">{genderIcon(p.gender)}</span>}
+                    {p.gender && <span className="text-gray-400 text-sm">{genderIcon(p.gender)}</span>}
+                    {p.isLeftHanded && <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-semibold ml-0.5">L</span>}
                   </p>
                   {p.playtomicUsername && (
                     <p className="text-xs text-gray-400 truncate">@{p.playtomicUsername}</p>
@@ -242,9 +245,14 @@ export default function Players() {
                       <p className="text-[10px] opacity-70">Adjusted</p>
                     </div>
                   </div>
-                  {p.gender && (
-                    <p className="text-xs text-gray-500">{p.gender === 'male' ? '♂ Male' : '♀ Female'}</p>
-                  )}
+                  <div className="flex gap-2 flex-wrap">
+                    {p.gender && (
+                      <span className="text-xs text-gray-500">{p.gender === 'male' ? '♂ Male' : '♀ Female'}</span>
+                    )}
+                    {p.isLeftHanded && (
+                      <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">🤚 Left-handed</span>
+                    )}
+                  </div>
                   {p.email && <p className="text-xs text-gray-500">✉ {p.email}</p>}
                   {p.phone && <p className="text-xs text-gray-500">📞 {p.phone}</p>}
                   {p.notes && <p className="text-xs text-gray-500 italic">{p.notes}</p>}
@@ -308,6 +316,22 @@ export default function Players() {
                     </button>
                   ))}
                 </div>
+              </div>
+
+              {/* Left-handed */}
+              <div>
+                <label className="label">Playing hand</label>
+                <button
+                  type="button"
+                  onClick={() => setForm(f => ({ ...f, isLeftHanded: !f.isLeftHanded }))}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all w-full justify-center ${
+                    form.isLeftHanded
+                      ? 'bg-amber-100 text-amber-700 border-2 border-amber-300'
+                      : 'bg-gray-100 text-gray-500'
+                  }`}
+                >
+                  🤚 {form.isLeftHanded ? 'Left-handed (tap to undo)' : 'Tap if left-handed'}
+                </button>
               </div>
 
               <div>

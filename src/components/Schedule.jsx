@@ -3,125 +3,225 @@ import { useApp } from '../context/AppContext'
 import { ChevronLeft, Shuffle, AlertCircle, Trophy, Users } from 'lucide-react'
 import AdminLogin from './AdminLogin'
 
-// ── Pairing algorithms ──────────────────────────────────────────────────────
+// ── Smart pairing engine ─────────────────────────────────────────────────────
 
 /**
- * Americano: randomised pairings, balanced by level.
- * Each round: pair strongest with weakest, etc., then arrange matches so
- * team totals are as close as possible.
+ * Score how good it is to pair player A with player B.
+ * Lower = better. Hard constraints use large penalties.
  */
-function generateAmericano(players, courts, rounds = 4) {
-  const sorted = [...players].sort((a, b) => (b.adjustedLevel || 0) - (a.adjustedLevel || 0))
-  const numCourts = Math.min(courts, Math.floor(players.length / 4))
-  const playersPerRound = numCourts * 4
+function pairScore(a, b, partnerHistory, genderMode, avoidWWPairs) {
+  let score = 0
+  // Hard: two lefties on same team (they'd both play from the left side)
+  if (a.isLeftHanded && b.isLeftHanded) score += 10000
+  // Hard: repeat partner
+  if (partnerHistory[a.id]?.has(b.id)) score += 1000
+  // Mixed: gently spread women across courts (avoid WW pairs when women are scarce)
+  if (avoidWWPairs && a.gender === 'female' && b.gender === 'female') score += 50
+  // Mild: prefer partners of similar level (makes court matchups balanced)
+  score += Math.abs((a.adjustedLevel || 0) - (b.adjustedLevel || 0)) * 0.5
+  return score
+}
 
-  const allRounds = []
+/**
+ * Build N/2 pairs from a pool of N players respecting:
+ * - No two left-handed on same pair
+ * - Minimize repeat partnerships
+ * - Gender spreading (mixed mode)
+ */
+function buildSmartPairs(pool, partnerHistory, genderMode) {
+  const isMixed = genderMode === 'mixed'
+  const womenCount = isMixed ? pool.filter(p => p.gender === 'female').length : 0
+  // If women are ≤ half the pool, spreading WM pairs is better than WW
+  const avoidWWPairs = isMixed && womenCount <= Math.floor(pool.length / 2)
 
-  for (let r = 0; r < rounds; r++) {
-    // Shuffle slightly each round (keep balance but vary pairings)
-    const pool = [...sorted]
-    if (r > 0) {
-      // Introduce some shuffle to vary partners
-      for (let i = pool.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [pool[i], pool[j]] = [pool[j], pool[i]]
-      }
-      pool.sort((a, b) => (b.adjustedLevel || 0) - (a.adjustedLevel || 0))
+  // Process order: lefties first (hardest constraint), women next in mixed, then others
+  const indices = [...Array(pool.length).keys()].sort((i, j) => {
+    const a = pool[i], b = pool[j]
+    if (a.isLeftHanded && !b.isLeftHanded) return -1
+    if (!a.isLeftHanded && b.isLeftHanded) return 1
+    if (isMixed) {
+      if (a.gender === 'female' && b.gender !== 'female') return -1
+      if (a.gender !== 'female' && b.gender === 'female') return 1
     }
+    return 0
+  })
 
-    const active = pool.slice(0, playersPerRound)
-    const sitting = pool.slice(playersPerRound)
+  const available = new Array(pool.length).fill(true)
+  const pairs = []
 
-    const roundMatches = []
+  for (const i of indices) {
+    if (!available[i]) continue
+    available[i] = false
 
-    // Pair: 1st + last, 2nd + second-last, etc. within each group of 4
-    for (let i = 0; i < numCourts; i++) {
-      const group = active.slice(i * 4, i * 4 + 4)
-      if (group.length < 4) break
-
-      // Within 4 players sorted by level, best pairing is [0,3] vs [1,2]
-      const team1 = [group[0], group[3]]
-      const team2 = [group[1], group[2]]
-
-      roundMatches.push({
-        court: courts > 1 ? `Court ${i + 1}` : 'Court',
-        team1Ids: team1.map(p => p.id),
-        team2Ids: team2.map(p => p.id),
-        team1Level: team1.reduce((s, p) => s + (p.adjustedLevel || 0), 0),
-        team2Level: team2.reduce((s, p) => s + (p.adjustedLevel || 0), 0),
-        score1: null, score2: null,
-        completed: false,
-      })
+    let bestJ = -1, bestScore = Infinity
+    for (let j = 0; j < pool.length; j++) {
+      if (!available[j]) continue
+      const s = pairScore(pool[i], pool[j], partnerHistory, genderMode, avoidWWPairs)
+      if (s < bestScore) { bestScore = s; bestJ = j }
     }
+    if (bestJ !== -1) {
+      available[bestJ] = false
+      pairs.push([pool[i], pool[bestJ]])
+    }
+  }
+  return pairs
+}
 
-    allRounds.push({
-      round: r + 1,
-      label: `Round ${r + 1}`,
-      matches: roundMatches,
-      sitting: sitting.map(p => p.id),
-    })
+/**
+ * Assign pairs to courts ensuring gender balance:
+ * - Prefer WM+WM courts (2 women, 1 per team) — ideal
+ * - Accept WW+MM or WW+WM if needed
+ * - Avoid WM+MM (lone woman on a court) when possible
+ * - Within groupings, match by closest combined level
+ */
+function pairsToCourtMatches(pairs, numCourts, roundNum) {
+  const lvl = (pair) => pair.reduce((s, p) => s + (p.adjustedLevel || 0), 0)
+  const hasWoman = (pair) => pair.some(p => p.gender === 'female')
+
+  const wPairs = pairs.filter(hasWoman)
+  const mPairs = pairs.filter(p => !hasWoman(p))
+
+  const courts = []
+
+  const pickBestMatch = (target, pool) => {
+    let bestIdx = 0, minDiff = Infinity
+    for (let i = 0; i < pool.length; i++) {
+      const diff = Math.abs(lvl(target) - lvl(pool[i]))
+      if (diff < minDiff) { minDiff = diff; bestIdx = i }
+    }
+    return bestIdx
   }
 
+  const buildMatch = (t1, t2) => ({
+    court: `Court ${courts.length + 1}`,
+    round: roundNum,
+    team1Ids: t1.map(p => p.id),
+    team2Ids: t2.map(p => p.id),
+    team1Level: lvl(t1),
+    team2Level: lvl(t2),
+    score1: null, score2: null, completed: false,
+  })
+
+  const wp = [...wPairs], mp = [...mPairs]
+
+  // 1. Woman-pairs paired with other woman-pairs (WM+WM ideal)
+  while (wp.length >= 2 && courts.length < numCourts) {
+    const t1 = wp.shift()
+    const idx = pickBestMatch(t1, wp)
+    const t2 = wp.splice(idx, 1)[0]
+    courts.push(buildMatch(t1, t2))
+  }
+
+  // 2. Remaining woman-pair + man-pair (unavoidable if odd count)
+  while (wp.length > 0 && mp.length > 0 && courts.length < numCourts) {
+    const t1 = wp.shift()
+    const idx = pickBestMatch(t1, mp)
+    const t2 = mp.splice(idx, 1)[0]
+    courts.push(buildMatch(t1, t2))
+  }
+
+  // 3. All-male courts
+  while (mp.length >= 2 && courts.length < numCourts) {
+    const t1 = mp.shift()
+    const idx = pickBestMatch(t1, mp)
+    const t2 = mp.splice(idx, 1)[0]
+    courts.push(buildMatch(t1, t2))
+  }
+
+  return courts
+}
+
+// ── Format generators ─────────────────────────────────────────────────────────
+
+/**
+ * Lobster Matching: 6 rounds, partners rotate every round.
+ * Constraints: no repeat partners, no two lefties together,
+ * gender-balanced courts in mixed mode.
+ */
+function generateLobster(players, numCourts, genderMode = 'mixed') {
+  const ROUNDS = 6
+  const sorted = [...players].sort((a, b) => (b.adjustedLevel || 0) - (a.adjustedLevel || 0))
+  const active  = sorted.slice(0, numCourts * 4)
+  const sitting = sorted.slice(numCourts * 4)
+
+  const partnerHistory = {}
+  active.forEach(p => { partnerHistory[p.id] = new Set() })
+
+  const allRounds = []
+  for (let r = 0; r < ROUNDS; r++) {
+    const pairs = buildSmartPairs(active, partnerHistory, genderMode)
+    const matches = pairsToCourtMatches(pairs, numCourts, r + 1)
+    pairs.forEach(([a, b]) => {
+      partnerHistory[a.id].add(b.id)
+      partnerHistory[b.id].add(a.id)
+    })
+    allRounds.push({ round: r + 1, label: `Round ${r + 1}`, matches, sitting: sitting.map(p => p.id) })
+  }
   return allRounds
 }
 
 /**
- * Mexicano: after round 1, winners play winners, losers play losers.
- * For scheduling purposes we generate round 1 balanced, subsequent rounds
- * are placeholders (filled in after scores are entered).
+ * Americano: balanced pairings, strongest + weakest as partners.
+ * Respects gender balance and left-handed constraints.
  */
-function generateMexicano(players, courts, rounds = 4) {
-  // Round 1 is like Americano
-  const round1 = generateAmericano(players, courts, 1)
+function generateAmericano(players, numCourts, rounds = 4, genderMode = 'mixed') {
+  const sorted = [...players].sort((a, b) => (b.adjustedLevel || 0) - (a.adjustedLevel || 0))
+  const active  = sorted.slice(0, numCourts * 4)
+  const sitting = sorted.slice(numCourts * 4)
+
+  const partnerHistory = {}
+  active.forEach(p => { partnerHistory[p.id] = new Set() })
+
+  const allRounds = []
+  for (let r = 0; r < rounds; r++) {
+    const pairs = buildSmartPairs(active, partnerHistory, genderMode)
+    const matches = pairsToCourtMatches(pairs, numCourts, r + 1)
+    pairs.forEach(([a, b]) => {
+      partnerHistory[a.id].add(b.id)
+      partnerHistory[b.id].add(a.id)
+    })
+    allRounds.push({ round: r + 1, label: `Round ${r + 1}`, matches, sitting: sitting.map(p => p.id) })
+  }
+  return allRounds
+}
+
+/**
+ * Mexicano: round 1 Americano-style; subsequent rounds are placeholders
+ * (filled after scores are entered — winners vs winners).
+ */
+function generateMexicano(players, numCourts, rounds = 4, genderMode = 'mixed') {
+  const round1 = generateAmericano(players, numCourts, 1, genderMode)
   const placeholders = Array.from({ length: rounds - 1 }, (_, i) => ({
-    round: i + 2,
-    label: `Round ${i + 2}`,
-    matches: [],
-    sitting: [],
+    round: i + 2, label: `Round ${i + 2}`, matches: [], sitting: [],
     note: 'Generated after Round 1 scores are entered',
   }))
   return [...round1, ...placeholders]
 }
 
 /**
- * Round Robin: every pair of players meets once (or twice for doubles).
- * For padel doubles: generate all team combinations.
+ * Round Robin: rotate partners through all combinations.
+ * Respects gender and left-handed constraints.
  */
-function generateRoundRobin(players, courts) {
+function generateRoundRobin(players, numCourts, genderMode = 'mixed') {
   const sorted = [...players].sort((a, b) => (b.adjustedLevel || 0) - (a.adjustedLevel || 0))
-  const matches = []
+  const active  = sorted.slice(0, numCourts * 4)
+  const sitting = sorted.slice(numCourts * 4)
 
-  // Simple pairing: rotate positions
-  const n = sorted.length
+  const partnerHistory = {}
+  active.forEach(p => { partnerHistory[p.id] = new Set() })
+
   const rounds = []
-  const numCourts = Math.floor(n / 4)
-
-  // We'll generate ceil(n/4) rounds for a simplified round-robin
-  for (let r = 0; r < n - 1; r++) {
-    const roundMatches = []
-    for (let i = 0; i < numCourts; i++) {
-      const idx = (i * 2 + r) % sorted.length
-      const a = sorted[idx % n]
-      const b = sorted[(idx + 1) % n]
-      const c = sorted[(idx + 2) % n]
-      const d = sorted[(idx + 3) % n]
-      if (!a || !b || !c || !d) continue
-      roundMatches.push({
-        court: `Court ${i + 1}`,
-        team1Ids: [a.id, b.id],
-        team2Ids: [c.id, d.id],
-        team1Level: (a.adjustedLevel || 0) + (b.adjustedLevel || 0),
-        team2Level: (c.adjustedLevel || 0) + (d.adjustedLevel || 0),
-        score1: null, score2: null,
-        completed: false,
-      })
-    }
-    if (roundMatches.length > 0) {
-      rounds.push({ round: r + 1, label: `Round ${r + 1}`, matches: roundMatches, sitting: [] })
-    }
-    if (rounds.length >= 6) break // cap for sanity
+  const maxRounds = Math.min(active.length - 1, 6)
+  for (let r = 0; r < maxRounds; r++) {
+    const pairs = buildSmartPairs(active, partnerHistory, genderMode)
+    const matches = pairsToCourtMatches(pairs, numCourts, r + 1)
+    if (matches.length === 0) break
+    pairs.forEach(([a, b]) => {
+      partnerHistory[a.id].add(b.id)
+      partnerHistory[b.id].add(a.id)
+    })
+    rounds.push({ round: r + 1, label: `Round ${r + 1}`, matches, sitting: sitting.map(p => p.id) })
   }
-
   return rounds
 }
 
@@ -158,6 +258,8 @@ export default function Schedule({ tournament, onNavigate }) {
   const savedMatches = getTournamentMatches(tournament.id)
   const numCourts = (tournament.courts || []).length || 1
   const format = tournament.format || 'americano'
+  const genderMode = tournament.genderMode || 'mixed'
+  const isLobster = format === 'lobster_matching'
 
   // Group saved matches by round
   const savedRounds = useMemo(() => {
@@ -182,9 +284,10 @@ export default function Schedule({ tournament, onNavigate }) {
     await new Promise(r => setTimeout(r, 300)) // small delay for UX
 
     let newRounds
-    if (format === 'mexicano') newRounds = generateMexicano(registeredPlayers, numCourts, rounds)
-    else if (format === 'roundrobin') newRounds = generateRoundRobin(registeredPlayers, numCourts)
-    else newRounds = generateAmericano(registeredPlayers, numCourts, rounds)
+    if (format === 'lobster_matching') newRounds = generateLobster(registeredPlayers, numCourts, genderMode)
+    else if (format === 'mexicano')    newRounds = generateMexicano(registeredPlayers, numCourts, rounds, genderMode)
+    else if (format === 'roundrobin')  newRounds = generateRoundRobin(registeredPlayers, numCourts, genderMode)
+    else                               newRounds = generateAmericano(registeredPlayers, numCourts, rounds, genderMode)
 
     setGenerated(newRounds)
     setSaved(false)
@@ -245,7 +348,26 @@ export default function Schedule({ tournament, onNavigate }) {
       {isAdmin && (
         <div className="card space-y-3">
           <p className="font-semibold text-gray-700 text-sm">Generate Schedule</p>
-          {(format === 'americano' || format === 'mexicano') && (
+
+          {/* Gender & handedness notes */}
+          <div className="flex flex-wrap gap-1.5">
+            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${genderMode === 'mixed' ? 'bg-pink-50 text-pink-700' : 'bg-gray-100 text-gray-600'}`}>
+              {genderMode === 'mixed' ? '🚺🚹 Mixed · gender balanced' : '👥 Same gender'}
+            </span>
+            {registeredPlayers.some(p => p.isLeftHanded) && (
+              <span className="text-xs bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full font-medium">
+                🤚 {registeredPlayers.filter(p => p.isLeftHanded).length} lefty — kept on separate teams
+              </span>
+            )}
+            {isLobster && (
+              <span className="text-xs bg-lobster-cream text-lobster-teal px-2 py-0.5 rounded-full font-medium">
+                🦞 6 rounds · partners rotate
+              </span>
+            )}
+          </div>
+
+          {/* Rounds selector (hidden for Lobster which is always 6) */}
+          {!isLobster && (format === 'americano' || format === 'mexicano') && (
             <div>
               <label className="label">Number of rounds</label>
               <div className="flex gap-2">
@@ -263,6 +385,7 @@ export default function Schedule({ tournament, onNavigate }) {
               </div>
             </div>
           )}
+
           <button
             onClick={handleGenerate}
             disabled={generating || registeredPlayers.length < 4}
@@ -348,8 +471,11 @@ export default function Schedule({ tournament, onNavigate }) {
                       <div className="flex-1">
                         {t1.map(p => (
                           <div key={p.id} className="flex items-center gap-1.5 mb-1">
-                            <div className="w-7 h-7 rounded-full bg-lobster-teal flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                              {p.name[0]}
+                            <div className="relative w-7 h-7 flex-shrink-0">
+                              <div className="w-7 h-7 rounded-full bg-lobster-teal flex items-center justify-center text-white text-xs font-bold">
+                                {p.name[0]}
+                              </div>
+                              {p.isLeftHanded && <span className="absolute -top-1 -right-1 text-[9px] bg-amber-400 text-white rounded-full w-3.5 h-3.5 flex items-center justify-center font-bold">L</span>}
                             </div>
                             <span className="text-sm font-medium truncate">{p.name.split(' ')[0]}</span>
                           </div>
@@ -392,8 +518,11 @@ export default function Schedule({ tournament, onNavigate }) {
                         {t2.map(p => (
                           <div key={p.id} className="flex items-center justify-end gap-1.5 mb-1">
                             <span className="text-sm font-medium truncate">{p.name.split(' ')[0]}</span>
-                            <div className="w-7 h-7 rounded-full bg-lobster-orange flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                              {p.name[0]}
+                            <div className="relative w-7 h-7 flex-shrink-0">
+                              <div className="w-7 h-7 rounded-full bg-lobster-orange flex items-center justify-center text-white text-xs font-bold">
+                                {p.name[0]}
+                              </div>
+                              {p.isLeftHanded && <span className="absolute -top-1 -left-1 text-[9px] bg-amber-400 text-white rounded-full w-3.5 h-3.5 flex items-center justify-center font-bold">L</span>}
                             </div>
                           </div>
                         ))}
