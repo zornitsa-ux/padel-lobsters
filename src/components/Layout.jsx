@@ -1,15 +1,16 @@
 import React from 'react'
 import { useApp } from '../context/AppContext'
 import {
-  LayoutDashboard, Users, Trophy, ClipboardList,
-  CreditCard, Shuffle, Star, Settings, MessageCircle
+  LayoutDashboard, Users, Trophy,
+  History, Settings, MessageCircle
 } from 'lucide-react'
 
 const NAV = [
-  { id: 'dashboard',    label: 'Home',       icon: LayoutDashboard },
-  { id: 'tournament',   label: 'Events',     icon: Trophy },
-  { id: 'players',      label: 'Players',    icon: Users },
-  { id: 'settings',     label: 'Settings',   icon: Settings },
+  { id: 'dashboard',  label: 'Home',     icon: LayoutDashboard },
+  { id: 'tournament', label: 'Events',   icon: Trophy },
+  { id: 'players',    label: 'Players',  icon: Users },
+  { id: 'history',    label: 'History',  icon: History },
+  { id: 'settings',   label: 'Settings', icon: Settings },
 ]
 
 export default function Layout({ children, page, onNavigate }) {

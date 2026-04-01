@@ -1,44 +1,47 @@
 import React, { useState } from 'react'
 import { useApp } from '../context/AppContext'
-import { Plus, Pencil, Trash2, X, ChevronDown, ChevronUp, Search, User } from 'lucide-react'
+import { Plus, Pencil, Trash2, X, ChevronDown, ChevronUp, Search, User, CheckCircle, Clock } from 'lucide-react'
 import AdminLogin from './AdminLogin'
 
 const LEVEL_COLORS = [
-  'bg-gray-200 text-gray-700',     // 0
-  'bg-blue-100 text-blue-700',     // 1
-  'bg-green-100 text-green-700',   // 2
-  'bg-teal-100 text-teal-700',     // 3
-  'bg-yellow-100 text-yellow-700', // 4
-  'bg-orange-100 text-orange-700', // 5
-  'bg-red-100 text-red-700',       // 6
-  'bg-purple-100 text-purple-700', // 7
+  'bg-gray-200 text-gray-700',
+  'bg-blue-100 text-blue-700',
+  'bg-green-100 text-green-700',
+  'bg-teal-100 text-teal-700',
+  'bg-yellow-100 text-yellow-700',
+  'bg-orange-100 text-orange-700',
+  'bg-red-100 text-red-700',
+  'bg-purple-100 text-purple-700',
 ]
 
 const emptyForm = {
   name: '', email: '', phone: '',
   playtomicLevel: '', adjustment: '0',
-  playtomicUsername: '', notes: '',
+  playtomicUsername: '', notes: '', gender: '',
 }
 
 export default function Players() {
   const { players, addPlayer, updatePlayer, deletePlayer, isAdmin, setIsAdmin } = useApp()
-  const [showForm, setShowForm]       = useState(false)
-  const [editId, setEditId]           = useState(null)
-  const [form, setForm]               = useState(emptyForm)
-  const [search, setSearch]           = useState('')
-  const [showLogin, setShowLogin]     = useState(false)
-  const [expandedId, setExpandedId]   = useState(null)
-  const [saving, setSaving]           = useState(false)
+  const [showForm, setShowForm]     = useState(false)
+  const [editId, setEditId]         = useState(null)
+  const [form, setForm]             = useState(emptyForm)
+  const [search, setSearch]         = useState('')
+  const [showLogin, setShowLogin]   = useState(false)
+  const [expandedId, setExpandedId] = useState(null)
+  const [saving, setSaving]         = useState(false)
 
-  const filtered = players.filter(p =>
+  // Active players only in the main list
+  const activePlayers = players.filter(p => (p.status || 'active') === 'active')
+  const pendingPlayers = players.filter(p => p.status === 'pending')
+
+  const filtered = activePlayers.filter(p =>
     p.name?.toLowerCase().includes(search.toLowerCase()) ||
     p.playtomicUsername?.toLowerCase().includes(search.toLowerCase())
   )
-
   const sorted = [...filtered].sort((a, b) => (b.adjustedLevel || 0) - (a.adjustedLevel || 0))
 
+  // Anyone can open the Add form — no PIN needed
   const openAdd = () => {
-    if (!isAdmin) { setShowLogin(true); return }
     setForm(emptyForm); setEditId(null); setShowForm(true)
   }
 
@@ -48,6 +51,7 @@ export default function Players() {
       name: p.name || '', email: p.email || '', phone: p.phone || '',
       playtomicLevel: p.playtomicLevel ?? '', adjustment: p.adjustment ?? '0',
       playtomicUsername: p.playtomicUsername || '', notes: p.notes || '',
+      gender: p.gender || '',
     })
     setEditId(p.id); setShowForm(true)
   }
@@ -55,6 +59,15 @@ export default function Players() {
   const handleDelete = async (id) => {
     if (!isAdmin) { setShowLogin(true); return }
     if (!confirm('Remove this player?')) return
+    await deletePlayer(id)
+  }
+
+  const handleApprove = async (p) => {
+    await updatePlayer(p.id, { ...p, status: 'active' })
+  }
+
+  const handleReject = async (id) => {
+    if (!confirm('Reject and remove this registration request?')) return
     await deletePlayer(id)
   }
 
@@ -66,10 +79,15 @@ export default function Players() {
         ...form,
         playtomicLevel: parseFloat(form.playtomicLevel) || 0,
         adjustment: parseFloat(form.adjustment) || 0,
+        // Admin adds directly as active; self-registration goes to pending
+        status: editId ? undefined : (isAdmin ? 'active' : 'pending'),
       }
       if (editId) await updatePlayer(editId, data)
-      else         await addPlayer(data)
+      else        await addPlayer(data)
       setShowForm(false)
+      if (!isAdmin && !editId) {
+        alert('Your registration request has been sent! The admin will approve it shortly.')
+      }
     } finally {
       setSaving(false)
     }
@@ -80,17 +98,68 @@ export default function Players() {
     return LEVEL_COLORS[idx] || LEVEL_COLORS[0]
   }
 
+  const genderIcon = (g) => g === 'female' ? '♀' : g === 'male' ? '♂' : ''
+
   return (
     <div className="space-y-4">
       {showLogin && <AdminLogin onClose={() => setShowLogin(false)} />}
 
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold text-gray-800">Players ({players.length})</h2>
+        <h2 className="text-lg font-bold text-gray-800">
+          Players ({activePlayers.length})
+          {pendingPlayers.length > 0 && isAdmin && (
+            <span className="ml-2 text-xs bg-orange-100 text-orange-600 font-semibold px-2 py-0.5 rounded-full">
+              {pendingPlayers.length} pending
+            </span>
+          )}
+        </h2>
         <button onClick={openAdd} className="btn-primary py-2 px-4 text-sm flex items-center gap-1.5">
-          <Plus size={16} /> Add
+          <Plus size={16} /> Join
         </button>
       </div>
+
+      {/* Pending approvals — admin only */}
+      {isAdmin && pendingPlayers.length > 0 && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Clock size={14} className="text-orange-500" />
+            <p className="text-sm font-bold text-orange-600">Pending Approval</p>
+          </div>
+          {pendingPlayers.map(p => (
+            <div key={p.id} className="card border-l-4 border-orange-300">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center text-orange-600 font-bold flex-shrink-0">
+                  {(p.name || '?')[0].toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-gray-800 truncate">
+                    {p.name} {genderIcon(p.gender) && <span className="text-gray-400 text-sm">{genderIcon(p.gender)}</span>}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Lv {(p.adjustedLevel || 0).toFixed(1)}
+                    {p.email && ` · ${p.email}`}
+                  </p>
+                </div>
+                <div className="flex gap-1.5 flex-shrink-0">
+                  <button
+                    onClick={() => handleApprove(p)}
+                    className="text-xs bg-green-500 text-white px-3 py-1.5 rounded-xl font-semibold active:scale-95 transition-all"
+                  >
+                    Approve
+                  </button>
+                  <button
+                    onClick={() => handleReject(p.id)}
+                    className="w-8 h-8 flex items-center justify-center rounded-xl bg-red-50 active:scale-95"
+                  >
+                    <X size={13} className="text-red-500" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Search */}
       <div className="relative">
@@ -105,7 +174,7 @@ export default function Players() {
 
       {/* Level legend */}
       <div className="card py-3">
-        <p className="text-xs font-semibold text-gray-500 mb-2">Adjusted Playtomic Level</p>
+        <p className="text-xs font-semibold text-gray-500 mb-1">Adjusted Playtomic Level</p>
         <p className="text-xs text-gray-500">
           Players enter their Playtomic level (0–7) and can apply a personal adjustment.
           The <strong>Adjusted Level</strong> is used for pairing.
@@ -117,7 +186,7 @@ export default function Players() {
         {sorted.length === 0 && (
           <div className="card py-10 text-center text-gray-400">
             <User size={36} className="mx-auto mb-2 opacity-30" />
-            <p>No players yet. Add your first player!</p>
+            <p>No players yet. Be the first to join!</p>
           </div>
         )}
 
@@ -129,35 +198,32 @@ export default function Players() {
                 className="w-full flex items-center gap-3"
                 onClick={() => setExpandedId(expanded ? null : p.id)}
               >
-                {/* Rank */}
                 <span className="text-xs font-bold text-gray-400 w-5 text-center flex-shrink-0">
                   #{idx + 1}
                 </span>
-
-                {/* Avatar */}
                 <div className="w-10 h-10 bg-lobster-teal rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
                   {(p.name || '?')[0].toUpperCase()}
                 </div>
-
-                {/* Name & level */}
                 <div className="flex-1 text-left min-w-0">
-                  <p className="font-semibold text-gray-800 truncate">{p.name}</p>
+                  <p className="font-semibold text-gray-800 truncate">
+                    {p.name}
+                    {p.gender && <span className="ml-1 text-gray-400 text-sm">{genderIcon(p.gender)}</span>}
+                  </p>
                   {p.playtomicUsername && (
                     <p className="text-xs text-gray-400 truncate">@{p.playtomicUsername}</p>
                   )}
                 </div>
-
-                {/* Adjusted level badge */}
                 <div className="flex-shrink-0 text-right">
                   <span className={`text-sm font-bold px-2.5 py-1 rounded-lg ${levelBadge(p.adjustedLevel)}`}>
                     {(p.adjustedLevel || 0).toFixed(1)}
                   </span>
                 </div>
-
-                {expanded ? <ChevronUp size={16} className="text-gray-400 flex-shrink-0" /> : <ChevronDown size={16} className="text-gray-400 flex-shrink-0" />}
+                {expanded
+                  ? <ChevronUp size={16} className="text-gray-400 flex-shrink-0" />
+                  : <ChevronDown size={16} className="text-gray-400 flex-shrink-0" />
+                }
               </button>
 
-              {/* Expanded detail */}
               {expanded && (
                 <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
                   <div className="grid grid-cols-3 gap-2 text-center">
@@ -176,7 +242,9 @@ export default function Players() {
                       <p className="text-[10px] opacity-70">Adjusted</p>
                     </div>
                   </div>
-
+                  {p.gender && (
+                    <p className="text-xs text-gray-500">{p.gender === 'male' ? '♂ Male' : '♀ Female'}</p>
+                  )}
                   {p.email && <p className="text-xs text-gray-500">✉ {p.email}</p>}
                   {p.phone && <p className="text-xs text-gray-500">📞 {p.phone}</p>}
                   {p.notes && <p className="text-xs text-gray-500 italic">{p.notes}</p>}
@@ -201,9 +269,14 @@ export default function Players() {
       {/* Add/Edit modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center">
-          <div className="bg-white rounded-t-3xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-t-3xl w-full max-w-md max-h-[92vh] overflow-y-auto">
             <div className="sticky top-0 bg-white px-5 pt-5 pb-3 border-b border-gray-100 flex items-center justify-between">
-              <h2 className="font-bold text-gray-800">{editId ? 'Edit Player' : 'Add Player'}</h2>
+              <div>
+                <h2 className="font-bold text-gray-800">{editId ? 'Edit Player' : 'Join the Lobsters'}</h2>
+                {!editId && !isAdmin && (
+                  <p className="text-xs text-gray-500 mt-0.5">Your request will be approved by the admin</p>
+                )}
+              </div>
               <button onClick={() => setShowForm(false)}>
                 <X size={22} className="text-gray-400" />
               </button>
@@ -216,6 +289,27 @@ export default function Players() {
                   onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
               </div>
 
+              {/* Gender */}
+              <div>
+                <label className="label">Gender</label>
+                <p className="text-xs text-gray-400 mb-2">For optimal pair matching</p>
+                <div className="flex gap-3">
+                  {[['male', '♂ Male'], ['female', '♀ Female']].map(([val, lbl]) => (
+                    <button
+                      type="button" key={val}
+                      onClick={() => setForm(f => ({ ...f, gender: f.gender === val ? '' : val }))}
+                      className={`flex-1 py-2.5 rounded-xl font-semibold text-sm transition-all ${
+                        form.gender === val
+                          ? 'bg-lobster-teal text-white'
+                          : 'bg-gray-100 text-gray-600'
+                      }`}
+                    >
+                      {lbl}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div>
                 <label className="label">Playtomic Username</label>
                 <input className="input" placeholder="@username" value={form.playtomicUsername}
@@ -225,26 +319,18 @@ export default function Players() {
               {/* Level section */}
               <div className="bg-blue-50 rounded-xl p-4 space-y-3">
                 <p className="text-xs font-bold text-blue-700 uppercase tracking-wide">Playtomic Level</p>
-
                 <div>
                   <label className="label">Playtomic Level (0–7)</label>
-                  <input
-                    type="number" step="0.1" min="0" max="7"
-                    className="input" placeholder="e.g. 3.5"
+                  <input type="number" step="0.1" min="0" max="7" className="input" placeholder="e.g. 3.5"
                     value={form.playtomicLevel}
-                    onChange={e => setForm(f => ({ ...f, playtomicLevel: e.target.value }))}
-                  />
+                    onChange={e => setForm(f => ({ ...f, playtomicLevel: e.target.value }))} />
                   <p className="text-xs text-gray-500 mt-1">Check your Playtomic app — it shows your current level</p>
                 </div>
-
                 <div>
                   <label className="label">Personal Adjustment</label>
-                  <input
-                    type="number" step="0.1" min="-3" max="3"
-                    className="input" placeholder="0"
+                  <input type="number" step="0.1" min="-3" max="3" className="input" placeholder="0"
                     value={form.adjustment}
-                    onChange={e => setForm(f => ({ ...f, adjustment: e.target.value }))}
-                  />
+                    onChange={e => setForm(f => ({ ...f, adjustment: e.target.value }))} />
                   <p className="text-xs text-gray-500 mt-1">
                     Positive = stronger than Playtomic suggests · Negative = weaker<br />
                     Adjusted Level = {((parseFloat(form.playtomicLevel) || 0) + (parseFloat(form.adjustment) || 0)).toFixed(1)}
@@ -271,7 +357,7 @@ export default function Players() {
               </div>
 
               <button type="submit" disabled={saving} className="btn-primary w-full">
-                {saving ? 'Saving...' : editId ? 'Save Changes' : 'Add Player'}
+                {saving ? 'Saving...' : editId ? 'Save Changes' : isAdmin ? 'Add Player' : 'Send Registration Request'}
               </button>
             </form>
           </div>

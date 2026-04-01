@@ -10,6 +10,7 @@ import Schedule from './components/Schedule'
 import Scores from './components/Scores'
 import Settings from './components/Settings'
 import SetupGuard from './components/SetupGuard'
+import History from './components/History'
 
 export default function App() {
   return (
@@ -39,6 +40,7 @@ function Inner() {
     payments:     <Payments tournament={selectedTournament} onNavigate={navigate} />,
     schedule:     <Schedule tournament={selectedTournament} onNavigate={navigate} />,
     scores:       <Scores tournament={selectedTournament} onNavigate={navigate} />,
+    history:      <History />,
     settings:     <Settings />,
   }
 

@@ -83,6 +83,8 @@ export function AppProvider({ children }) {
       adjustment:         parseFloat(data.adjustment)     || 0,
       adjusted_level:     (parseFloat(data.playtomicLevel) || 0) + (parseFloat(data.adjustment) || 0),
       playtomic_username: data.playtomicUsername  || '',
+      gender:             data.gender             || '',
+      status:             data.status             || 'active',
     }
     const { error } = await supabase.from('players').insert(payload)
     if (error) {
@@ -103,6 +105,8 @@ export function AppProvider({ children }) {
       adjustment:         parseFloat(data.adjustment)     || 0,
       adjusted_level:     (parseFloat(data.playtomicLevel) || 0) + (parseFloat(data.adjustment) || 0),
       playtomic_username: data.playtomicUsername  || '',
+      gender:             data.gender             || '',
+      status:             data.status             || 'active',
     }
     const { error } = await supabase.from('players').update(payload).eq('id', id)
     if (error) {
@@ -230,10 +234,12 @@ export function AppProvider({ children }) {
   // Normalise Supabase snake_case → camelCase for components
   const normalisedPlayers = players.map(p => ({
     ...p,
-    playtomicLevel:    p.playtomic_level ?? p.playtomicLevel ?? 0,
-    adjustment:        p.adjustment ?? 0,
-    adjustedLevel:     p.adjusted_level ?? p.adjustedLevel ?? 0,
+    playtomicLevel:    p.playtomic_level    ?? p.playtomicLevel    ?? 0,
+    adjustment:        p.adjustment         ?? 0,
+    adjustedLevel:     p.adjusted_level     ?? p.adjustedLevel     ?? 0,
     playtomicUsername: p.playtomic_username ?? p.playtomicUsername ?? '',
+    gender:            p.gender             ?? '',
+    status:            p.status             ?? 'active',
   }))
 
   const normalisedTournaments = tournaments.map(t => ({
