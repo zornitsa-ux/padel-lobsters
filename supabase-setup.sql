@@ -20,16 +20,19 @@ create table if not exists players (
 
 -- Tournaments table
 create table if not exists tournaments (
-  id          uuid primary key default gen_random_uuid(),
-  name        text not null,
-  date        date,
-  time        text,
-  max_players integer default 16,
-  format      text default 'americano',
-  courts      jsonb default '[]',
-  notes       text,
-  status      text default 'upcoming',
-  created_at  timestamptz default now()
+  id                 uuid primary key default gen_random_uuid(),
+  name               text not null,
+  date               date,
+  time               text,
+  location           text    default '',
+  max_players        integer default 16,
+  format             text    default 'americano',
+  court_booking_mode text    default 'admin_all',
+  total_price        numeric default 0,
+  courts             jsonb   default '[]',
+  notes              text,
+  status             text    default 'upcoming',
+  created_at         timestamptz default now()
 );
 
 -- Registrations table

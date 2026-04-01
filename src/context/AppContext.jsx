@@ -121,14 +121,17 @@ export function AppProvider({ children }) {
   // ── Tournaments ───────────────────────────────────────────
   const addTournament = useCallback(async (data) => {
     const payload = {
-      name:        data.name,
-      date:        data.date,
-      time:        data.time,
-      max_players: parseInt(data.maxPlayers) || 16,
-      format:      data.format,
-      courts:      data.courts,
-      notes:       data.notes,
-      status:      'upcoming',
+      name:               data.name,
+      date:               data.date,
+      time:               data.time,
+      location:           data.location           || '',
+      max_players:        parseInt(data.maxPlayers) || 16,
+      format:             data.format,
+      court_booking_mode: data.courtBookingMode   || 'admin_all',
+      total_price:        parseFloat(data.totalPrice) || 0,
+      courts:             data.courts,
+      notes:              data.notes,
+      status:             'upcoming',
     }
     const { error } = await supabase.from('tournaments').insert(payload)
     if (!error) loadTournaments()
@@ -136,14 +139,17 @@ export function AppProvider({ children }) {
 
   const updateTournament = useCallback(async (id, data) => {
     const payload = {}
-    if (data.name        !== undefined) payload.name        = data.name
-    if (data.date        !== undefined) payload.date        = data.date
-    if (data.time        !== undefined) payload.time        = data.time
-    if (data.maxPlayers  !== undefined) payload.max_players = parseInt(data.maxPlayers) || 16
-    if (data.format      !== undefined) payload.format      = data.format
-    if (data.courts      !== undefined) payload.courts      = data.courts
-    if (data.notes       !== undefined) payload.notes       = data.notes
-    if (data.status      !== undefined) payload.status      = data.status
+    if (data.name             !== undefined) payload.name               = data.name
+    if (data.date             !== undefined) payload.date               = data.date
+    if (data.time             !== undefined) payload.time               = data.time
+    if (data.location         !== undefined) payload.location           = data.location
+    if (data.maxPlayers       !== undefined) payload.max_players        = parseInt(data.maxPlayers) || 16
+    if (data.format           !== undefined) payload.format             = data.format
+    if (data.courtBookingMode !== undefined) payload.court_booking_mode = data.courtBookingMode
+    if (data.totalPrice       !== undefined) payload.total_price        = parseFloat(data.totalPrice) || 0
+    if (data.courts           !== undefined) payload.courts             = data.courts
+    if (data.notes            !== undefined) payload.notes              = data.notes
+    if (data.status           !== undefined) payload.status             = data.status
     const { error } = await supabase.from('tournaments').update(payload).eq('id', id)
     if (!error) loadTournaments()
   }, [])
@@ -230,8 +236,11 @@ export function AppProvider({ children }) {
 
   const normalisedTournaments = tournaments.map(t => ({
     ...t,
-    maxPlayers: t.max_players ?? t.maxPlayers ?? 16,
-    courts:     t.courts ?? [],
+    maxPlayers:       t.max_players        ?? t.maxPlayers       ?? 16,
+    courts:           t.courts             ?? [],
+    location:         t.location           ?? '',
+    courtBookingMode: t.court_booking_mode ?? t.courtBookingMode ?? 'admin_all',
+    totalPrice:       t.total_price        ?? t.totalPrice       ?? 0,
   }))
 
   const normalisedRegistrations = registrations.map(r => ({
