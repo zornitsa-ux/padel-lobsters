@@ -1,22 +1,17 @@
 import React, { useState } from 'react'
 import { useApp } from '../context/AppContext'
-import { ChevronLeft, CreditCard, CheckCircle, AlertCircle, Euro } from 'lucide-react'
+import { ChevronLeft, CheckCircle, AlertCircle, ExternalLink, UserCog, ShieldCheck } from 'lucide-react'
 import AdminLogin from './AdminLogin'
 
 const METHODS = [
-  { value: 'ideal',     label: 'iDEAL' },
-  { value: 'wero',      label: 'Wero' },
+  { value: 'tikkie',    label: 'Tikkie' },
   { value: 'playtomic', label: 'Playtomic' },
-  { value: 'cash',      label: 'Cash' },
-  { value: 'other',     label: 'Other' },
 ]
 
 export default function Payments({ tournament, onNavigate }) {
-  const {
-    players, getTournamentRegistrations, updateRegistration, isAdmin
-  } = useApp()
+  const { players, getTournamentRegistrations, updateRegistration, isAdmin } = useApp()
   const [showLogin, setShowLogin] = useState(false)
-  const [filter, setFilter]       = useState('all') // all | paid | unpaid
+  const [filter, setFilter]       = useState('all')
 
   if (!tournament) {
     return (
@@ -30,18 +25,21 @@ export default function Payments({ tournament, onNavigate }) {
     )
   }
 
-  const regs = getTournamentRegistrations(tournament.id)
-    .filter(r => r.status === 'registered')
+  const isAdminAll = !tournament.courtBookingMode || tournament.courtBookingMode === 'admin_all'
 
+  const regs = getTournamentRegistrations(tournament.id).filter(r => r.status === 'registered')
   const paid   = regs.filter(r => r.paymentStatus === 'paid')
   const unpaid = regs.filter(r => r.paymentStatus !== 'paid')
 
-  const totalCostPP = (tournament.courts || []).reduce((s, c) => s + (parseFloat(c.costPerPerson) || 0), 0)
-  const totalCollected = paid.length * totalCostPP
-  const totalExpected  = regs.length * totalCostPP
+  // Cost per player depends on booking mode
+  const costPerPlayer = isAdminAll
+    ? (tournament.totalPrice > 0 ? tournament.totalPrice / (tournament.maxPlayers || regs.length || 1) : 0)
+    : (tournament.courts || []).reduce((s, c) => s + (parseFloat(c.costPerPerson) || 0), 0)
+
+  const totalCollected = paid.length   * costPerPlayer
+  const totalExpected  = regs.length   * costPerPlayer
 
   const filtered = filter === 'paid' ? paid : filter === 'unpaid' ? unpaid : regs
-
   const getPlayer = (id) => players.find(p => p.id === id)
 
   const handleMarkPaid = async (reg, method) => {
@@ -72,6 +70,67 @@ export default function Payments({ tournament, onNavigate }) {
         <p className="text-sm text-gray-500">Payment Tracker · {formatDate(tournament.date)}</p>
       </div>
 
+      {/* Payment info banner */}
+      {isAdminAll ? (
+        <div className="bg-lobster-cream rounded-2xl p-4 space-y-2">
+          <div className="flex items-center gap-2 mb-1">
+            <ShieldCheck size={15} className="text-lobster-teal" />
+            <span className="text-sm font-bold text-gray-700">Admin booked all courts</span>
+          </div>
+          {tournament.totalPrice > 0 && (
+            <p className="text-sm text-gray-600">
+              Total: <span className="font-bold text-gray-800">€{parseFloat(tournament.totalPrice).toFixed(2)}</span>
+              {' '}· Per player: <span className="font-bold text-lobster-teal">€{costPerPlayer.toFixed(2)}</span>
+              <span className="text-xs text-gray-400"> (÷ {tournament.maxPlayers} players)</span>
+            </p>
+          )}
+          {tournament.tikkieLink && (
+            <a
+              href={tournament.tikkieLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 bg-[#FF6B35] text-white text-sm font-bold px-4 py-2 rounded-xl active:scale-95 transition-all"
+            >
+              <ExternalLink size={14} /> Pay via Tikkie
+            </a>
+          )}
+          {!tournament.tikkieLink && (
+            <p className="text-xs text-gray-400">No Tikkie link set — payment via Playtomic or cash</p>
+          )}
+        </div>
+      ) : (
+        /* Player-responsible: show per-court Tikkie links */
+        (tournament.courts || []).some(c => c.tikkieLink || c.responsible) && (
+          <div className="bg-purple-50 rounded-2xl p-4 space-y-2">
+            <div className="flex items-center gap-2 mb-1">
+              <UserCog size={15} className="text-purple-600" />
+              <span className="text-sm font-bold text-gray-700">Court payments</span>
+            </div>
+            {(tournament.courts || []).map((c, i) => (
+              (c.responsible || c.tikkieLink) ? (
+                <div key={i} className="flex items-center justify-between gap-2">
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">{c.name || `Court ${i + 1}`}</p>
+                    {c.responsible && <p className="text-xs text-gray-500">Responsible: {c.responsible}</p>}
+                    {c.costPerPerson > 0 && <p className="text-xs text-gray-500">€{c.costPerPerson}/pp</p>}
+                  </div>
+                  {c.tikkieLink && (
+                    <a
+                      href={c.tikkieLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 bg-[#FF6B35] text-white text-xs font-bold px-3 py-1.5 rounded-lg active:scale-95 transition-all flex-shrink-0"
+                    >
+                      <ExternalLink size={12} /> Tikkie
+                    </a>
+                  )}
+                </div>
+              ) : null
+            ))}
+          </div>
+        )
+      )}
+
       {/* Summary */}
       <div className="bg-lobster-teal rounded-2xl p-4 text-white">
         <div className="grid grid-cols-3 gap-3 mb-4">
@@ -89,11 +148,11 @@ export default function Payments({ tournament, onNavigate }) {
           </div>
         </div>
 
-        {totalCostPP > 0 && (
+        {costPerPlayer > 0 && (
           <div className="bg-white/10 rounded-xl p-3">
             <div className="flex justify-between text-sm mb-1">
               <span className="opacity-80">Cost per player</span>
-              <span className="font-bold">€{totalCostPP.toFixed(2)}</span>
+              <span className="font-bold">€{costPerPlayer.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-sm mb-1">
               <span className="opacity-80">Collected</span>
@@ -103,8 +162,6 @@ export default function Payments({ tournament, onNavigate }) {
               <span className="opacity-80">Still owed</span>
               <span className="font-bold text-red-300">€{(totalExpected - totalCollected).toFixed(2)}</span>
             </div>
-
-            {/* Progress bar */}
             <div className="mt-2 bg-white/20 rounded-full h-2 overflow-hidden">
               <div
                 className="bg-green-400 h-2 rounded-full transition-all"
@@ -150,40 +207,36 @@ export default function Payments({ tournament, onNavigate }) {
           return (
             <div key={reg.id} className={`card transition-all ${isPaid ? 'border-l-4 border-green-400' : 'border-l-4 border-red-300'}`}>
               <div className="flex items-center gap-3">
-                {/* Avatar */}
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold flex-shrink-0 ${
                   isPaid ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
                 }`}>
                   {player.name[0]}
                 </div>
 
-                {/* Info */}
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-sm truncate">{player.name}</p>
                   <div className="flex items-center gap-2">
                     {isPaid
-                      ? <span className="badge-paid">✓ {reg.paymentMethod ? METHODS.find(m => m.value === reg.paymentMethod)?.label || reg.paymentMethod : 'Paid'}</span>
+                      ? <span className="badge-paid">✓ {METHODS.find(m => m.value === reg.paymentMethod)?.label || reg.paymentMethod || 'Paid'}</span>
                       : <span className="badge-unpaid">Unpaid</span>
                     }
-                    {totalCostPP > 0 && (
-                      <span className="text-xs text-gray-400">€{totalCostPP.toFixed(2)}</span>
+                    {costPerPlayer > 0 && (
+                      <span className="text-xs text-gray-400">€{costPerPlayer.toFixed(2)}</span>
                     )}
                   </div>
                 </div>
 
-                {/* Action */}
                 {isAdmin && (
-                  isPaid
-                    ? (
-                      <button
-                        onClick={() => handleMarkUnpaid(reg)}
-                        className="text-xs text-gray-500 border border-gray-200 px-3 py-1.5 rounded-xl font-semibold active:scale-95 transition-all"
-                      >
-                        Undo
-                      </button>
-                    ) : (
-                      <PaymentMethodPicker onSelect={(method) => handleMarkPaid(reg, method)} />
-                    )
+                  isPaid ? (
+                    <button
+                      onClick={() => handleMarkUnpaid(reg)}
+                      className="text-xs text-gray-500 border border-gray-200 px-3 py-1.5 rounded-xl font-semibold active:scale-95 transition-all"
+                    >
+                      Undo
+                    </button>
+                  ) : (
+                    <PaymentMethodPicker onSelect={(method) => handleMarkPaid(reg, method)} />
+                  )
                 )}
               </div>
             </div>
@@ -196,7 +249,6 @@ export default function Payments({ tournament, onNavigate }) {
 
 function PaymentMethodPicker({ onSelect }) {
   const [open, setOpen] = useState(false)
-
   return (
     <div className="relative">
       <button

@@ -29,6 +29,7 @@ create table if not exists tournaments (
   format             text    default 'americano',
   court_booking_mode text    default 'admin_all',
   total_price        numeric default 0,
+  tikkie_link        text    default '',
   courts             jsonb   default '[]',
   notes              text,
   status             text    default 'upcoming',

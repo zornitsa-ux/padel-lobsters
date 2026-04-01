@@ -129,6 +129,7 @@ export function AppProvider({ children }) {
       format:             data.format,
       court_booking_mode: data.courtBookingMode   || 'admin_all',
       total_price:        parseFloat(data.totalPrice) || 0,
+      tikkie_link:        data.tikkieLink          || '',
       courts:             data.courts,
       notes:              data.notes,
       status:             'upcoming',
@@ -147,6 +148,7 @@ export function AppProvider({ children }) {
     if (data.format           !== undefined) payload.format             = data.format
     if (data.courtBookingMode !== undefined) payload.court_booking_mode = data.courtBookingMode
     if (data.totalPrice       !== undefined) payload.total_price        = parseFloat(data.totalPrice) || 0
+    if (data.tikkieLink       !== undefined) payload.tikkie_link        = data.tikkieLink || ''
     if (data.courts           !== undefined) payload.courts             = data.courts
     if (data.notes            !== undefined) payload.notes              = data.notes
     if (data.status           !== undefined) payload.status             = data.status
@@ -241,6 +243,7 @@ export function AppProvider({ children }) {
     location:         t.location           ?? '',
     courtBookingMode: t.court_booking_mode ?? t.courtBookingMode ?? 'admin_all',
     totalPrice:       t.total_price        ?? t.totalPrice       ?? 0,
+    tikkieLink:       t.tikkie_link        ?? t.tikkieLink       ?? '',
   }))
 
   const normalisedRegistrations = registrations.map(r => ({

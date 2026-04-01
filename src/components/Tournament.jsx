@@ -15,8 +15,9 @@ const emptyForm = {
   maxPlayers: '16',
   format: 'americano',
   courtBookingMode: 'admin_all',
-  courts: [{ name: '', booked: false, costPerPerson: '', responsible: '' }],
+  courts: [{ name: '', booked: false, costPerPerson: '', responsible: '', tikkieLink: '' }],
   totalPrice: '',
+  tikkieLink: '',
   notes: '',
 }
 
@@ -44,10 +45,11 @@ export default function Tournament({ onNavigate }) {
       format:           t.format           || 'americano',
       courtBookingMode: t.courtBookingMode || 'admin_all',
       courts: t.courts?.length
-        ? t.courts.map(c => ({ name: c.name || '', booked: !!c.booked, costPerPerson: c.costPerPerson || '', responsible: c.responsible || '' }))
-        : [{ name: '', booked: false, costPerPerson: '', responsible: '' }],
+        ? t.courts.map(c => ({ name: c.name || '', booked: !!c.booked, costPerPerson: c.costPerPerson || '', responsible: c.responsible || '', tikkieLink: c.tikkieLink || '' }))
+        : [{ name: '', booked: false, costPerPerson: '', responsible: '', tikkieLink: '' }],
       totalPrice: t.totalPrice ?? '',
-      notes:      t.notes      || '',
+      tikkieLink: t.tikkieLink  || '',
+      notes:      t.notes       || '',
     })
     setEditId(t.id); setShowForm(true)
   }
@@ -71,11 +73,13 @@ export default function Tournament({ onNavigate }) {
         format:           form.format,
         courtBookingMode: form.courtBookingMode,
         totalPrice:       form.courtBookingMode === 'admin_all' ? (parseFloat(form.totalPrice) || 0) : 0,
+        tikkieLink:       form.courtBookingMode === 'admin_all' ? (form.tikkieLink || '') : '',
         courts: form.courts.map(c => ({
           name:          c.name,
           booked:        !!c.booked,
           costPerPerson: form.courtBookingMode === 'player_responsible' ? (parseFloat(c.costPerPerson) || 0) : 0,
           responsible:   form.courtBookingMode === 'player_responsible' ? (c.responsible || '') : '',
+          tikkieLink:    form.courtBookingMode === 'player_responsible' ? (c.tikkieLink || '') : '',
         })),
         notes: form.notes,
       }
@@ -86,7 +90,7 @@ export default function Tournament({ onNavigate }) {
   }
 
   const addCourt = () => setForm(f => ({
-    ...f, courts: [...f.courts, { name: '', booked: false, costPerPerson: '', responsible: '' }]
+    ...f, courts: [...f.courts, { name: '', booked: false, costPerPerson: '', responsible: '', tikkieLink: '' }]
   }))
 
   const removeCourt = (i) => setForm(f => ({
@@ -404,6 +408,12 @@ export default function Tournament({ onNavigate }) {
                             value={c.responsible}
                             onChange={e => setCourt(i, 'responsible', e.target.value)}
                           />
+                          <input
+                            className="input py-2 text-sm w-full"
+                            placeholder="Tikkie link for this court (optional)"
+                            value={c.tikkieLink}
+                            onChange={e => setCourt(i, 'tikkieLink', e.target.value)}
+                          />
                         </div>
                       )}
 
@@ -447,6 +457,22 @@ export default function Tournament({ onNavigate }) {
                     €{form.courts.reduce((s, c) => s + (parseFloat(c.costPerPerson) || 0), 0).toFixed(2)}
                   </span>
                 </p>
+              )}
+
+              {/* Tikkie link — admin_all only */}
+              {form.courtBookingMode === 'admin_all' && (
+                <div>
+                  <label className="label">Tikkie Link (optional)</label>
+                  <p className="text-xs text-gray-500 mb-2">
+                    Paste your Tikkie link here so players can pay directly from the registration page.
+                  </p>
+                  <input
+                    className="input"
+                    placeholder="https://tikkie.me/pay/..."
+                    value={form.tikkieLink}
+                    onChange={e => setForm(f => ({ ...f, tikkieLink: e.target.value }))}
+                  />
+                </div>
               )}
 
               {/* Notes */}
