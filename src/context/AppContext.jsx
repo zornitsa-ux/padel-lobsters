@@ -75,26 +75,42 @@ export function AppProvider({ children }) {
   // ── Players ──────────────────────────────────────────────
   const addPlayer = useCallback(async (data) => {
     const payload = {
-      ...data,
-      playtomic_level: parseFloat(data.playtomicLevel) || 0,
-      adjustment:      parseFloat(data.adjustment) || 0,
-      adjusted_level:  (parseFloat(data.playtomicLevel) || 0) + (parseFloat(data.adjustment) || 0),
-      playtomic_username: data.playtomicUsername || '',
+      name:               data.name,
+      email:              data.email              || '',
+      phone:              data.phone              || '',
+      notes:              data.notes              || '',
+      playtomic_level:    parseFloat(data.playtomicLevel) || 0,
+      adjustment:         parseFloat(data.adjustment)     || 0,
+      adjusted_level:     (parseFloat(data.playtomicLevel) || 0) + (parseFloat(data.adjustment) || 0),
+      playtomic_username: data.playtomicUsername  || '',
     }
     const { error } = await supabase.from('players').insert(payload)
-    if (!error) loadPlayers()
+    if (error) {
+      console.error('Add player error:', error)
+      alert('Could not save player: ' + error.message)
+    } else {
+      await loadPlayers()
+    }
   }, [])
 
   const updatePlayer = useCallback(async (id, data) => {
     const payload = {
-      ...data,
-      playtomic_level: parseFloat(data.playtomicLevel) || 0,
-      adjustment:      parseFloat(data.adjustment) || 0,
-      adjusted_level:  (parseFloat(data.playtomicLevel) || 0) + (parseFloat(data.adjustment) || 0),
-      playtomic_username: data.playtomicUsername || '',
+      name:               data.name,
+      email:              data.email              || '',
+      phone:              data.phone              || '',
+      notes:              data.notes              || '',
+      playtomic_level:    parseFloat(data.playtomicLevel) || 0,
+      adjustment:         parseFloat(data.adjustment)     || 0,
+      adjusted_level:     (parseFloat(data.playtomicLevel) || 0) + (parseFloat(data.adjustment) || 0),
+      playtomic_username: data.playtomicUsername  || '',
     }
     const { error } = await supabase.from('players').update(payload).eq('id', id)
-    if (!error) loadPlayers()
+    if (error) {
+      console.error('Update player error:', error)
+      alert('Could not update player: ' + error.message)
+    } else {
+      await loadPlayers()
+    }
   }, [])
 
   const deletePlayer = useCallback(async (id) => {
