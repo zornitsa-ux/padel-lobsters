@@ -32,13 +32,19 @@ insert into storage.buckets (id, name, public)
   values ('merch', 'merch', true)
   on conflict do nothing;
 
+-- Storage policies (drop first to avoid conflicts on re-run)
+do $$ begin
+  drop policy if exists "Public merch read" on storage.objects;
+  drop policy if exists "Merch upload"      on storage.objects;
+end $$;
+
 -- Allow anyone to read merch images
-create policy if not exists "Public merch read"
+create policy "Public merch read"
   on storage.objects for select
   using (bucket_id = 'merch');
 
--- Allow uploads (authenticated or anon — adjust to taste)
-create policy if not exists "Merch upload"
+-- Allow uploads (authenticated or anon)
+create policy "Merch upload"
   on storage.objects for insert
   with check (bucket_id = 'merch');
 
