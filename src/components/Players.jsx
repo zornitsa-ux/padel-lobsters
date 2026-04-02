@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { useApp } from '../context/AppContext'
-import { Plus, Pencil, Trash2, X, ChevronDown, ChevronUp, Search, User, CheckCircle, Clock } from 'lucide-react'
+import { supabase } from '../supabase'
+import { Plus, Pencil, Trash2, X, ChevronDown, ChevronUp, Search, User, Clock, Camera, Briefcase } from 'lucide-react'
 import AdminLogin from './AdminLogin'
 
 const LEVEL_COLORS = [
@@ -19,10 +20,63 @@ const emptyForm = {
   playtomicLevel: '', adjustment: '0',
   playtomicUsername: '', notes: '', gender: '',
   isLeftHanded: false,
+  avatarUrl: '',
+}
+
+// ── Corporate Performance Review generator ───────────────────────────────────
+function corpReview(player) {
+  const lvl = player.adjustedLevel || 0
+  const name = (player.name || 'Employee').split(' ')[0]
+
+  const low = [
+    `${name} continues to demonstrate an admirable commitment to court presence. While their strategic contributions remain in an early development phase, their enthusiasm for the sport has been duly noted in their file.`,
+    `Stakeholder feedback confirms that ${name} shows up reliably, which we consider a foundational competency. Q3 targets for backhand consistency remain aspirational. We recommend a performance improvement plan focused on "returning the ball."`,
+    `${name}'s on-court metrics are currently tracking below baseline KPIs. Leadership remains cautiously optimistic about their long-term padel ROI, pending further evidence.`,
+  ]
+  const mid = [
+    `${name} is delivering at-plan performance across core padel competencies. Their cross-functional net play has matured significantly. We recommend continued calibration of their serve velocity relative to peer benchmarks.`,
+    `${name} exhibits solid mid-tier output and has proven to be a reliable contributor to court-level outcomes. Their capacity to not lose every point has been flagged as a differentiating capability.`,
+    `${name} is successfully navigating the transition from novice to competent. Internal OKRs around "winning occasionally" are trending green. Synergies with higher-ranked partners have yielded measurable results.`,
+  ]
+  const high = [
+    `${name} continues to exceed expectations across all padel performance indicators. Their serve has been formally recognised as a strategic asset and will feature prominently in our next investor deck.`,
+    `${name} is a high-impact contributor whose court presence creates measurable value for the entire team. HR recommends an immediate retention bonus and priority access to court time.`,
+    `${name} operates at the top quartile of the padel talent pool. Their ability to anticipate opponent behaviour demonstrates exceptional market intelligence. We are exploring the possibility of a "Court Excellence Award."`,
+  ]
+  const elite = [
+    `${name} has disrupted the expected performance curve and is delivering exceptional padel outcomes at an enterprise level. Leadership has flagged them as mission-critical talent. Succession planning is underway should they be poached by a competitor club.`,
+    `${name}'s padel metrics place them firmly in the top 5% of the global talent pipeline. Their strategic vision, technical velocity, and ability to smash the ball very hard are considered core competitive differentiators.`,
+  ]
+
+  const pool = lvl < 2 ? low : lvl < 3.5 ? mid : lvl < 5 ? high : elite
+  // deterministic-ish pick based on player id
+  const idx = (player.id || 0) % pool.length
+  return pool[idx]
+}
+
+// ── Player avatar component ───────────────────────────────────────────────────
+function PlayerAvatar({ player, size = 'md', className = '' }) {
+  const sizes = { sm: 'w-8 h-8 text-xs', md: 'w-10 h-10 text-sm', lg: 'w-14 h-14 text-lg' }
+  const cls = sizes[size] || sizes.md
+  if (player.avatarUrl) {
+    return (
+      <img
+        src={player.avatarUrl}
+        alt={player.name}
+        className={`${cls} rounded-full object-cover flex-shrink-0 ${className}`}
+        onError={e => { e.target.style.display = 'none'; e.target.nextSibling?.style && (e.target.nextSibling.style.display = 'flex') }}
+      />
+    )
+  }
+  return (
+    <div className={`${cls} bg-lobster-teal rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 ${className}`}>
+      {(player.name || '?')[0].toUpperCase()}
+    </div>
+  )
 }
 
 export default function Players() {
-  const { players, addPlayer, updatePlayer, deletePlayer, isAdmin, setIsAdmin } = useApp()
+  const { players, addPlayer, updatePlayer, deletePlayer, isAdmin } = useApp()
   const [showForm, setShowForm]     = useState(false)
   const [editId, setEditId]         = useState(null)
   const [form, setForm]             = useState(emptyForm)
@@ -30,9 +84,11 @@ export default function Players() {
   const [showLogin, setShowLogin]   = useState(false)
   const [expandedId, setExpandedId] = useState(null)
   const [saving, setSaving]         = useState(false)
+  const [avatarFile, setAvatarFile] = useState(null)
+  const [avatarPreview, setAvatarPreview] = useState(null)
+  const fileInputRef = useRef(null)
 
-  // Active players only in the main list
-  const activePlayers = players.filter(p => (p.status || 'active') === 'active')
+  const activePlayers  = players.filter(p => (p.status || 'active') === 'active')
   const pendingPlayers = players.filter(p => p.status === 'pending')
 
   const filtered = activePlayers.filter(p =>
@@ -41,9 +97,8 @@ export default function Players() {
   )
   const sorted = [...filtered].sort((a, b) => (b.adjustedLevel || 0) - (a.adjustedLevel || 0))
 
-  // Anyone can open the Add form — no PIN needed
   const openAdd = () => {
-    setForm(emptyForm); setEditId(null); setShowForm(true)
+    setForm(emptyForm); setEditId(null); setAvatarFile(null); setAvatarPreview(null); setShowForm(true)
   }
 
   const openEdit = (p) => {
@@ -53,7 +108,10 @@ export default function Players() {
       playtomicLevel: p.playtomicLevel ?? '', adjustment: p.adjustment ?? '0',
       playtomicUsername: p.playtomicUsername || '', notes: p.notes || '',
       gender: p.gender || '', isLeftHanded: p.isLeftHanded || false,
+      avatarUrl: p.avatarUrl || '',
     })
+    setAvatarFile(null)
+    setAvatarPreview(p.avatarUrl || null)
     setEditId(p.id); setShowForm(true)
   }
 
@@ -72,21 +130,42 @@ export default function Players() {
     await deletePlayer(id)
   }
 
+  const handleAvatarChange = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setAvatarFile(file)
+    const reader = new FileReader()
+    reader.onload = (ev) => setAvatarPreview(ev.target.result)
+    reader.readAsDataURL(file)
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setSaving(true)
     try {
+      let avatarUrl = form.avatarUrl || ''
+      if (avatarFile) {
+        const ext = avatarFile.name.split('.').pop()
+        const filename = `player-${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+        const { error: uploadError } = await supabase.storage
+          .from('avatars').upload(filename, avatarFile, { upsert: true })
+        if (!uploadError) {
+          const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filename)
+          avatarUrl = publicUrl
+        }
+      }
       const data = {
         ...form,
+        avatarUrl,
         playtomicLevel: parseFloat(form.playtomicLevel) || 0,
         adjustment: parseFloat(form.adjustment) || 0,
         isLeftHanded: form.isLeftHanded || false,
-        // Admin adds directly as active; self-registration goes to pending
         status: editId ? undefined : (isAdmin ? 'active' : 'pending'),
       }
       if (editId) await updatePlayer(editId, data)
       else        await addPlayer(data)
       setShowForm(false)
+      setAvatarFile(null); setAvatarPreview(null)
       if (!isAdmin && !editId) {
         alert('Your registration request has been sent! The admin will approve it shortly.')
       }
@@ -121,7 +200,7 @@ export default function Players() {
         </button>
       </div>
 
-      {/* Pending approvals — admin only */}
+      {/* Pending approvals */}
       {isAdmin && pendingPlayers.length > 0 && (
         <div className="space-y-2">
           <div className="flex items-center gap-2">
@@ -131,9 +210,7 @@ export default function Players() {
           {pendingPlayers.map(p => (
             <div key={p.id} className="card border-l-4 border-orange-300">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center text-orange-600 font-bold flex-shrink-0">
-                  {(p.name || '?')[0].toUpperCase()}
-                </div>
+                <PlayerAvatar player={p} />
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-gray-800 truncate">
                     {p.name} {genderIcon(p.gender) && <span className="text-gray-400 text-sm">{genderIcon(p.gender)}</span>}
@@ -144,16 +221,12 @@ export default function Players() {
                   </p>
                 </div>
                 <div className="flex gap-1.5 flex-shrink-0">
-                  <button
-                    onClick={() => handleApprove(p)}
-                    className="text-xs bg-green-500 text-white px-3 py-1.5 rounded-xl font-semibold active:scale-95 transition-all"
-                  >
+                  <button onClick={() => handleApprove(p)}
+                    className="text-xs bg-green-500 text-white px-3 py-1.5 rounded-xl font-semibold active:scale-95 transition-all">
                     Approve
                   </button>
-                  <button
-                    onClick={() => handleReject(p.id)}
-                    className="w-8 h-8 flex items-center justify-center rounded-xl bg-red-50 active:scale-95"
-                  >
+                  <button onClick={() => handleReject(p.id)}
+                    className="w-8 h-8 flex items-center justify-center rounded-xl bg-red-50 active:scale-95">
                     <X size={13} className="text-red-500" />
                   </button>
                 </div>
@@ -166,21 +239,8 @@ export default function Players() {
       {/* Search */}
       <div className="relative">
         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-        <input
-          className="input pl-9"
-          placeholder="Search players..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
-      </div>
-
-      {/* Level legend */}
-      <div className="card py-3">
-        <p className="text-xs font-semibold text-gray-500 mb-1">Adjusted Playtomic Level</p>
-        <p className="text-xs text-gray-500">
-          Players enter their Playtomic level (0–7) and can apply a personal adjustment.
-          The <strong>Adjusted Level</strong> is used for pairing.
-        </p>
+        <input className="input pl-9" placeholder="Search players..." value={search}
+          onChange={e => setSearch(e.target.value)} />
       </div>
 
       {/* Player list */}
@@ -195,17 +255,13 @@ export default function Players() {
         {sorted.map((p, idx) => {
           const expanded = expandedId === p.id
           return (
-            <div key={p.id} className="card">
-              <button
-                className="w-full flex items-center gap-3"
-                onClick={() => setExpandedId(expanded ? null : p.id)}
-              >
+            <div key={p.id} className="card transition-all">
+              <button className="w-full flex items-center gap-3"
+                onClick={() => setExpandedId(expanded ? null : p.id)}>
                 <span className="text-xs font-bold text-gray-400 w-5 text-center flex-shrink-0">
                   #{idx + 1}
                 </span>
-                <div className="w-10 h-10 bg-lobster-teal rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
-                  {(p.name || '?')[0].toUpperCase()}
-                </div>
+                <PlayerAvatar player={p} />
                 <div className="flex-1 text-left min-w-0">
                   <p className="font-semibold text-gray-800 truncate flex items-center gap-1">
                     {p.name}
@@ -223,12 +279,12 @@ export default function Players() {
                 </div>
                 {expanded
                   ? <ChevronUp size={16} className="text-gray-400 flex-shrink-0" />
-                  : <ChevronDown size={16} className="text-gray-400 flex-shrink-0" />
-                }
+                  : <ChevronDown size={16} className="text-gray-400 flex-shrink-0" />}
               </button>
 
               {expanded && (
-                <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
+                <div className="mt-3 pt-3 border-t border-gray-100 space-y-3">
+                  {/* Stats grid */}
                   <div className="grid grid-cols-3 gap-2 text-center">
                     <div className="bg-gray-50 rounded-xl p-2">
                       <p className="text-base font-bold text-gray-700">{(p.playtomicLevel || 0).toFixed(1)}</p>
@@ -245,6 +301,8 @@ export default function Players() {
                       <p className="text-[10px] opacity-70">Adjusted</p>
                     </div>
                   </div>
+
+                  {/* Tags */}
                   <div className="flex gap-2 flex-wrap">
                     {p.gender && (
                       <span className="text-xs text-gray-500">{p.gender === 'male' ? '♂ Male' : '♀ Female'}</span>
@@ -253,9 +311,19 @@ export default function Players() {
                       <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">🤚 Left-handed</span>
                     )}
                   </div>
+
                   {p.email && <p className="text-xs text-gray-500">✉ {p.email}</p>}
                   {p.phone && <p className="text-xs text-gray-500">📞 {p.phone}</p>}
                   {p.notes && <p className="text-xs text-gray-500 italic">{p.notes}</p>}
+
+                  {/* Corporate Review */}
+                  <div className="bg-gray-50 rounded-xl p-3 border border-gray-200">
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      <Briefcase size={11} className="text-gray-400" />
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Annual Performance Review</p>
+                    </div>
+                    <p className="text-xs text-gray-600 leading-relaxed italic">{corpReview(p)}</p>
+                  </div>
 
                   {isAdmin && (
                     <div className="flex gap-2 pt-1">
@@ -285,12 +353,40 @@ export default function Players() {
                   <p className="text-xs text-gray-500 mt-0.5">Your request will be approved by the admin</p>
                 )}
               </div>
-              <button onClick={() => setShowForm(false)}>
+              <button onClick={() => { setShowForm(false); setAvatarFile(null); setAvatarPreview(null) }}>
                 <X size={22} className="text-gray-400" />
               </button>
             </div>
 
             <form onSubmit={handleSubmit} className="p-5 space-y-4">
+
+              {/* Avatar upload */}
+              <div className="flex flex-col items-center gap-2">
+                <div className="relative">
+                  {avatarPreview ? (
+                    <img src={avatarPreview} alt="Preview"
+                      className="w-20 h-20 rounded-full object-cover border-2 border-lobster-teal" />
+                  ) : (
+                    <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-300">
+                      <User size={28} />
+                    </div>
+                  )}
+                  <button type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute bottom-0 right-0 w-7 h-7 bg-lobster-teal rounded-full flex items-center justify-center text-white shadow-sm active:scale-95">
+                    <Camera size={13} />
+                  </button>
+                </div>
+                <p className="text-xs text-gray-400">Tap camera icon to add photo</p>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleAvatarChange}
+                />
+              </div>
+
               <div>
                 <label className="label">Full Name *</label>
                 <input required className="input" placeholder="e.g. Maria García" value={form.name}
@@ -303,15 +399,11 @@ export default function Players() {
                 <p className="text-xs text-gray-400 mb-2">For optimal pair matching</p>
                 <div className="flex gap-3">
                   {[['male', '♂ Male'], ['female', '♀ Female']].map(([val, lbl]) => (
-                    <button
-                      type="button" key={val}
+                    <button type="button" key={val}
                       onClick={() => setForm(f => ({ ...f, gender: f.gender === val ? '' : val }))}
                       className={`flex-1 py-2.5 rounded-xl font-semibold text-sm transition-all ${
-                        form.gender === val
-                          ? 'bg-lobster-teal text-white'
-                          : 'bg-gray-100 text-gray-600'
-                      }`}
-                    >
+                        form.gender === val ? 'bg-lobster-teal text-white' : 'bg-gray-100 text-gray-600'
+                      }`}>
                       {lbl}
                     </button>
                   ))}
@@ -321,15 +413,13 @@ export default function Players() {
               {/* Left-handed */}
               <div>
                 <label className="label">Playing hand</label>
-                <button
-                  type="button"
+                <button type="button"
                   onClick={() => setForm(f => ({ ...f, isLeftHanded: !f.isLeftHanded }))}
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all w-full justify-center ${
                     form.isLeftHanded
                       ? 'bg-amber-100 text-amber-700 border-2 border-amber-300'
                       : 'bg-gray-100 text-gray-500'
-                  }`}
-                >
+                  }`}>
                   🤚 {form.isLeftHanded ? 'Left-handed (tap to undo)' : 'Tap if left-handed'}
                 </button>
               </div>
@@ -340,7 +430,6 @@ export default function Players() {
                   onChange={e => setForm(f => ({ ...f, playtomicUsername: e.target.value }))} />
               </div>
 
-              {/* Level section */}
               <div className="bg-blue-50 rounded-xl p-4 space-y-3">
                 <p className="text-xs font-bold text-blue-700 uppercase tracking-wide">Playtomic Level</p>
                 <div>
@@ -356,7 +445,7 @@ export default function Players() {
                     value={form.adjustment}
                     onChange={e => setForm(f => ({ ...f, adjustment: e.target.value }))} />
                   <p className="text-xs text-gray-500 mt-1">
-                    Positive = stronger than Playtomic suggests · Negative = weaker<br />
+                    Positive = stronger · Negative = weaker<br />
                     Adjusted Level = {((parseFloat(form.playtomicLevel) || 0) + (parseFloat(form.adjustment) || 0)).toFixed(1)}
                   </p>
                 </div>

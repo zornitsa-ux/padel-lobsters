@@ -12,6 +12,7 @@ function pairScore(a, b, partnerHistory, avoidWWPairs) {
   if (partnerHistory[a.id]?.has(b.id))  score += 1000         // Hard: repeat partner
   if (avoidWWPairs && a.gender === 'female' && b.gender === 'female') score += 50
   score += Math.abs((a.adjustedLevel || 0) - (b.adjustedLevel || 0)) * 0.5
+  score += Math.random() * 0.3  // jitter: break ties randomly so each reshuffle differs
   return score
 }
 
@@ -21,9 +22,9 @@ function courtScore(t1, t2, opponentHistory) {
   const levelDiff = Math.abs(lvl(t1) - lvl(t2))
   let oppPenalty = 0
   t1.forEach(p => t2.forEach(q => {
-    if (opponentHistory[p.id]?.has(q.id)) oppPenalty += 8  // penalise repeat opponents
+    if (opponentHistory[p.id]?.has(q.id)) oppPenalty += 50  // penalise repeat opponents — was 8, increased so it overrides level-diff
   }))
-  return levelDiff + oppPenalty
+  return levelDiff + oppPenalty + Math.random() * 0.5  // jitter to break ties differently each reshuffle
 }
 
 /**
@@ -118,6 +119,21 @@ function updateHistories(pairs, matches, partnerHistory, opponentHistory) {
       opponentHistory[id2].add(id1)
     }))
   })
+}
+
+/**
+ * Smart short name: returns first name if unique, otherwise first + last-initial.
+ * Avoids "Gonzalo" being ambiguous when we have "Gonzalo U" and "Gonzalo E".
+ */
+function shortName(player, allPlayers) {
+  const parts = (player.name || '').split(' ')
+  const first = parts[0] || player.name
+  const hasDupe = allPlayers.some(
+    other => other.id !== player.id && (other.name || '').split(' ')[0] === first
+  )
+  if (!hasDupe) return first
+  // Use first + abbreviated remainder (e.g. "Gonzalo E.")
+  return parts.length > 1 ? `${first} ${parts[1][0]}.` : player.name
 }
 
 // ── Format generators ─────────────────────────────────────────────────────────
@@ -311,6 +327,7 @@ export default function Schedule({ tournament, onNavigate }) {
   }
 
   const getPlayer = (id) => players.find(p => p.id === id)
+  const sn = (p) => shortName(p, registeredPlayers) // smart short name
 
   const formatDate = (d) => {
     if (!d) return '—'
@@ -498,7 +515,7 @@ export default function Schedule({ tournament, onNavigate }) {
                               </div>
                               {p.isLeftHanded && <span className="absolute -top-1 -right-1 text-[9px] bg-amber-400 text-white rounded-full w-3.5 h-3.5 flex items-center justify-center font-bold">L</span>}
                             </div>
-                            <span className="text-sm font-medium truncate">{p.name.split(' ')[0]}</span>
+                            <span className="text-sm font-medium truncate">{sn(p)}</span>
                           </div>
                         )})}
 
@@ -544,7 +561,7 @@ export default function Schedule({ tournament, onNavigate }) {
                             onClick={() => handlePlayerTap(activeRound, i, 2, pi, p.id)}
                             className={`flex items-center justify-end gap-1.5 mb-1 rounded-lg px-1 transition-all ${isSwapping ? 'cursor-pointer active:scale-95' : ''} ${isSelected ? 'bg-orange-100 ring-2 ring-orange-400' : isSwapping ? 'hover:bg-gray-100' : ''}`}
                           >
-                            <span className="text-sm font-medium truncate">{p.name.split(' ')[0]}</span>
+                            <span className="text-sm font-medium truncate">{sn(p)}</span>
                             <div className="relative w-7 h-7 flex-shrink-0">
                               <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold ${isSelected ? 'bg-orange-500' : 'bg-lobster-orange'}`}>
                                 {p.name[0]}
