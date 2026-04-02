@@ -11,6 +11,7 @@ import Scores from './components/Scores'
 import Settings from './components/Settings'
 import SetupGuard from './components/SetupGuard'
 import History from './components/History'
+import Merch from './components/Merch'
 
 export default function App() {
   return (
@@ -41,6 +42,7 @@ function Inner() {
     schedule:     <Schedule tournament={selectedTournament} onNavigate={navigate} />,
     scores:       <Scores tournament={selectedTournament} onNavigate={navigate} />,
     history:      <History />,
+    merch:        <Merch tournament={selectedTournament} />,
     settings:     <Settings />,
   }
 

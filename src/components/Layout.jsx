@@ -2,15 +2,16 @@ import React from 'react'
 import { useApp } from '../context/AppContext'
 import {
   LayoutDashboard, Users, Trophy,
-  History, Settings, MessageCircle
+  History, Settings, MessageCircle, ShoppingBag
 } from 'lucide-react'
 
 const NAV = [
-  { id: 'dashboard',  label: 'Home',     icon: LayoutDashboard },
-  { id: 'tournament', label: 'Events',   icon: Trophy },
-  { id: 'players',    label: 'Players',  icon: Users },
-  { id: 'history',    label: 'History',  icon: History },
-  { id: 'settings',   label: 'Settings', icon: Settings },
+  { id: 'dashboard',  label: 'Home',    icon: LayoutDashboard },
+  { id: 'tournament', label: 'Events',  icon: Trophy },
+  { id: 'players',    label: 'Players', icon: Users },
+  { id: 'history',    label: 'History', icon: History },
+  { id: 'merch',      label: 'Merch',   icon: ShoppingBag },
+  { id: 'settings',   label: 'Settings',icon: Settings },
 ]
 
 export default function Layout({ children, page, onNavigate }) {
@@ -47,21 +48,19 @@ export default function Layout({ children, page, onNavigate }) {
 
       {/* Bottom navigation */}
       <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white border-t border-gray-200 pb-safe z-30">
-        <div className="flex items-center justify-around py-2">
+        <div className="flex items-center justify-around py-1.5">
           {NAV.map(({ id, label, icon: Icon }) => {
             const active = page === id
             return (
               <button
                 key={id}
                 onClick={() => onNavigate(id)}
-                className={`flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-xl transition-all ${
-                  active
-                    ? 'text-lobster-teal'
-                    : 'text-gray-400 hover:text-gray-600'
+                className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-xl transition-all ${
+                  active ? 'text-lobster-teal' : 'text-gray-400 hover:text-gray-600'
                 }`}
               >
-                <Icon size={22} strokeWidth={active ? 2.5 : 1.8} />
-                <span className={`text-[10px] font-medium ${active ? 'font-bold' : ''}`}>{label}</span>
+                <Icon size={20} strokeWidth={active ? 2.5 : 1.8} />
+                <span className={`text-[9px] font-medium ${active ? 'font-bold' : ''}`}>{label}</span>
               </button>
             )
           })}

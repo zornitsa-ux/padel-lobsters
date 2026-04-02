@@ -5,36 +5,36 @@ import AdminLogin from './AdminLogin'
 
 // ── Smart pairing engine ─────────────────────────────────────────────────────
 
-/**
- * Score how good it is to pair player A with player B.
- * Lower = better. Hard constraints use large penalties.
- */
-function pairScore(a, b, partnerHistory, genderMode, avoidWWPairs) {
+/** Score how good it is to pair A with B as partners. Lower = better. */
+function pairScore(a, b, partnerHistory, avoidWWPairs) {
   let score = 0
-  // Hard: two lefties on same team (they'd both play from the left side)
-  if (a.isLeftHanded && b.isLeftHanded) score += 10000
-  // Hard: repeat partner
-  if (partnerHistory[a.id]?.has(b.id)) score += 1000
-  // Mixed: gently spread women across courts (avoid WW pairs when women are scarce)
+  if (a.isLeftHanded && b.isLeftHanded) score += 10000        // Hard: no two lefties
+  if (partnerHistory[a.id]?.has(b.id))  score += 1000         // Hard: repeat partner
   if (avoidWWPairs && a.gender === 'female' && b.gender === 'female') score += 50
-  // Mild: prefer partners of similar level (makes court matchups balanced)
   score += Math.abs((a.adjustedLevel || 0) - (b.adjustedLevel || 0)) * 0.5
   return score
 }
 
+/** Score how good it is to put pair t1 against pair t2 on same court. */
+function courtScore(t1, t2, opponentHistory) {
+  const lvl = (pair) => pair.reduce((s, p) => s + (p.adjustedLevel || 0), 0)
+  const levelDiff = Math.abs(lvl(t1) - lvl(t2))
+  let oppPenalty = 0
+  t1.forEach(p => t2.forEach(q => {
+    if (opponentHistory[p.id]?.has(q.id)) oppPenalty += 8  // penalise repeat opponents
+  }))
+  return levelDiff + oppPenalty
+}
+
 /**
- * Build N/2 pairs from a pool of N players respecting:
- * - No two left-handed on same pair
- * - Minimize repeat partnerships
- * - Gender spreading (mixed mode)
+ * Build N/2 pairs respecting: no two lefties, minimize repeat partners,
+ * spread women across courts in mixed mode.
  */
 function buildSmartPairs(pool, partnerHistory, genderMode) {
   const isMixed = genderMode === 'mixed'
   const womenCount = isMixed ? pool.filter(p => p.gender === 'female').length : 0
-  // If women are ≤ half the pool, spreading WM pairs is better than WW
   const avoidWWPairs = isMixed && womenCount <= Math.floor(pool.length / 2)
 
-  // Process order: lefties first (hardest constraint), women next in mixed, then others
   const indices = [...Array(pool.length).keys()].sort((i, j) => {
     const a = pool[i], b = pool[j]
     if (a.isLeftHanded && !b.isLeftHanded) return -1
@@ -48,147 +48,110 @@ function buildSmartPairs(pool, partnerHistory, genderMode) {
 
   const available = new Array(pool.length).fill(true)
   const pairs = []
-
   for (const i of indices) {
     if (!available[i]) continue
     available[i] = false
-
     let bestJ = -1, bestScore = Infinity
     for (let j = 0; j < pool.length; j++) {
       if (!available[j]) continue
-      const s = pairScore(pool[i], pool[j], partnerHistory, genderMode, avoidWWPairs)
+      const s = pairScore(pool[i], pool[j], partnerHistory, avoidWWPairs)
       if (s < bestScore) { bestScore = s; bestJ = j }
     }
-    if (bestJ !== -1) {
-      available[bestJ] = false
-      pairs.push([pool[i], pool[bestJ]])
-    }
+    if (bestJ !== -1) { available[bestJ] = false; pairs.push([pool[i], pool[bestJ]]) }
   }
   return pairs
 }
 
 /**
- * Assign pairs to courts ensuring gender balance:
- * - Prefer WM+WM courts (2 women, 1 per team) — ideal
- * - Accept WW+MM or WW+WM if needed
- * - Avoid WM+MM (lone woman on a court) when possible
- * - Within groupings, match by closest combined level
+ * Assign pairs to courts: prefer WM+WM (gender balanced), minimise
+ * level difference AND repeat opponents.
  */
-function pairsToCourtMatches(pairs, numCourts, roundNum) {
-  const lvl = (pair) => pair.reduce((s, p) => s + (p.adjustedLevel || 0), 0)
-  const hasWoman = (pair) => pair.some(p => p.gender === 'female')
+function pairsToCourtMatches(pairs, numCourts, roundNum, opponentHistory = {}) {
+  const lvl   = (pair) => pair.reduce((s, p) => s + (p.adjustedLevel || 0), 0)
+  const hasW  = (pair) => pair.some(p => p.gender === 'female')
 
-  const wPairs = pairs.filter(hasWoman)
-  const mPairs = pairs.filter(p => !hasWoman(p))
-
-  const courts = []
-
-  const pickBestMatch = (target, pool) => {
-    let bestIdx = 0, minDiff = Infinity
-    for (let i = 0; i < pool.length; i++) {
-      const diff = Math.abs(lvl(target) - lvl(pool[i]))
-      if (diff < minDiff) { minDiff = diff; bestIdx = i }
-    }
+  const pickBest = (target, pool) => {
+    let bestIdx = 0, bestScore = Infinity
+    pool.forEach((p, i) => {
+      const s = courtScore(target, p, opponentHistory)
+      if (s < bestScore) { bestScore = s; bestIdx = i }
+    })
     return bestIdx
   }
 
+  const courts = []
   const buildMatch = (t1, t2) => ({
-    court: `Court ${courts.length + 1}`,
-    round: roundNum,
-    team1Ids: t1.map(p => p.id),
-    team2Ids: t2.map(p => p.id),
-    team1Level: lvl(t1),
-    team2Level: lvl(t2),
+    court: `Court ${courts.length + 1}`, round: roundNum,
+    team1Ids: t1.map(p => p.id), team2Ids: t2.map(p => p.id),
+    team1Level: lvl(t1), team2Level: lvl(t2),
     score1: null, score2: null, completed: false,
   })
 
-  const wp = [...wPairs], mp = [...mPairs]
+  const wp = [...pairs.filter(hasW)], mp = [...pairs.filter(p => !hasW(p))]
 
-  // 1. Woman-pairs paired with other woman-pairs (WM+WM ideal)
   while (wp.length >= 2 && courts.length < numCourts) {
-    const t1 = wp.shift()
-    const idx = pickBestMatch(t1, wp)
-    const t2 = wp.splice(idx, 1)[0]
+    const t1 = wp.shift(); const t2 = wp.splice(pickBest(t1, wp), 1)[0]
     courts.push(buildMatch(t1, t2))
   }
-
-  // 2. Remaining woman-pair + man-pair (unavoidable if odd count)
   while (wp.length > 0 && mp.length > 0 && courts.length < numCourts) {
-    const t1 = wp.shift()
-    const idx = pickBestMatch(t1, mp)
-    const t2 = mp.splice(idx, 1)[0]
+    const t1 = wp.shift(); const t2 = mp.splice(pickBest(t1, mp), 1)[0]
     courts.push(buildMatch(t1, t2))
   }
-
-  // 3. All-male courts
   while (mp.length >= 2 && courts.length < numCourts) {
-    const t1 = mp.shift()
-    const idx = pickBestMatch(t1, mp)
-    const t2 = mp.splice(idx, 1)[0]
+    const t1 = mp.shift(); const t2 = mp.splice(pickBest(t1, mp), 1)[0]
     courts.push(buildMatch(t1, t2))
   }
-
   return courts
+}
+
+/** Update both partner and opponent history after a set of matches. */
+function updateHistories(pairs, matches, partnerHistory, opponentHistory) {
+  pairs.forEach(([a, b]) => {
+    partnerHistory[a.id].add(b.id)
+    partnerHistory[b.id].add(a.id)
+  })
+  matches.forEach(m => {
+    m.team1Ids.forEach(id1 => m.team2Ids.forEach(id2 => {
+      if (!opponentHistory[id1]) opponentHistory[id1] = new Set()
+      if (!opponentHistory[id2]) opponentHistory[id2] = new Set()
+      opponentHistory[id1].add(id2)
+      opponentHistory[id2].add(id1)
+    }))
+  })
 }
 
 // ── Format generators ─────────────────────────────────────────────────────────
 
-/**
- * Lobster Matching: 6 rounds, partners rotate every round.
- * Constraints: no repeat partners, no two lefties together,
- * gender-balanced courts in mixed mode.
- */
 function generateLobster(players, numCourts, genderMode = 'mixed') {
-  const ROUNDS = 6
   const sorted = [...players].sort((a, b) => (b.adjustedLevel || 0) - (a.adjustedLevel || 0))
-  const active  = sorted.slice(0, numCourts * 4)
-  const sitting = sorted.slice(numCourts * 4)
-
-  const partnerHistory = {}
-  active.forEach(p => { partnerHistory[p.id] = new Set() })
-
+  const active = sorted.slice(0, numCourts * 4), sitting = sorted.slice(numCourts * 4)
+  const partnerHistory = {}, opponentHistory = {}
+  active.forEach(p => { partnerHistory[p.id] = new Set(); opponentHistory[p.id] = new Set() })
   const allRounds = []
-  for (let r = 0; r < ROUNDS; r++) {
-    const pairs = buildSmartPairs(active, partnerHistory, genderMode)
-    const matches = pairsToCourtMatches(pairs, numCourts, r + 1)
-    pairs.forEach(([a, b]) => {
-      partnerHistory[a.id].add(b.id)
-      partnerHistory[b.id].add(a.id)
-    })
+  for (let r = 0; r < 6; r++) {
+    const pairs   = buildSmartPairs(active, partnerHistory, genderMode)
+    const matches = pairsToCourtMatches(pairs, numCourts, r + 1, opponentHistory)
+    updateHistories(pairs, matches, partnerHistory, opponentHistory)
     allRounds.push({ round: r + 1, label: `Round ${r + 1}`, matches, sitting: sitting.map(p => p.id) })
   }
   return allRounds
 }
 
-/**
- * Americano: balanced pairings, strongest + weakest as partners.
- * Respects gender balance and left-handed constraints.
- */
 function generateAmericano(players, numCourts, rounds = 4, genderMode = 'mixed') {
   const sorted = [...players].sort((a, b) => (b.adjustedLevel || 0) - (a.adjustedLevel || 0))
-  const active  = sorted.slice(0, numCourts * 4)
-  const sitting = sorted.slice(numCourts * 4)
-
-  const partnerHistory = {}
-  active.forEach(p => { partnerHistory[p.id] = new Set() })
-
+  const active = sorted.slice(0, numCourts * 4), sitting = sorted.slice(numCourts * 4)
+  const partnerHistory = {}, opponentHistory = {}
+  active.forEach(p => { partnerHistory[p.id] = new Set(); opponentHistory[p.id] = new Set() })
   const allRounds = []
   for (let r = 0; r < rounds; r++) {
-    const pairs = buildSmartPairs(active, partnerHistory, genderMode)
-    const matches = pairsToCourtMatches(pairs, numCourts, r + 1)
-    pairs.forEach(([a, b]) => {
-      partnerHistory[a.id].add(b.id)
-      partnerHistory[b.id].add(a.id)
-    })
+    const pairs   = buildSmartPairs(active, partnerHistory, genderMode)
+    const matches = pairsToCourtMatches(pairs, numCourts, r + 1, opponentHistory)
+    updateHistories(pairs, matches, partnerHistory, opponentHistory)
     allRounds.push({ round: r + 1, label: `Round ${r + 1}`, matches, sitting: sitting.map(p => p.id) })
   }
   return allRounds
 }
 
-/**
- * Mexicano: round 1 Americano-style; subsequent rounds are placeholders
- * (filled after scores are entered — winners vs winners).
- */
 function generateMexicano(players, numCourts, rounds = 4, genderMode = 'mixed') {
   const round1 = generateAmericano(players, numCourts, 1, genderMode)
   const placeholders = Array.from({ length: rounds - 1 }, (_, i) => ({
@@ -198,28 +161,17 @@ function generateMexicano(players, numCourts, rounds = 4, genderMode = 'mixed') 
   return [...round1, ...placeholders]
 }
 
-/**
- * Round Robin: rotate partners through all combinations.
- * Respects gender and left-handed constraints.
- */
 function generateRoundRobin(players, numCourts, genderMode = 'mixed') {
   const sorted = [...players].sort((a, b) => (b.adjustedLevel || 0) - (a.adjustedLevel || 0))
-  const active  = sorted.slice(0, numCourts * 4)
-  const sitting = sorted.slice(numCourts * 4)
-
-  const partnerHistory = {}
-  active.forEach(p => { partnerHistory[p.id] = new Set() })
-
+  const active = sorted.slice(0, numCourts * 4), sitting = sorted.slice(numCourts * 4)
+  const partnerHistory = {}, opponentHistory = {}
+  active.forEach(p => { partnerHistory[p.id] = new Set(); opponentHistory[p.id] = new Set() })
   const rounds = []
-  const maxRounds = Math.min(active.length - 1, 6)
-  for (let r = 0; r < maxRounds; r++) {
-    const pairs = buildSmartPairs(active, partnerHistory, genderMode)
-    const matches = pairsToCourtMatches(pairs, numCourts, r + 1)
-    if (matches.length === 0) break
-    pairs.forEach(([a, b]) => {
-      partnerHistory[a.id].add(b.id)
-      partnerHistory[b.id].add(a.id)
-    })
+  for (let r = 0; r < Math.min(active.length - 1, 6); r++) {
+    const pairs   = buildSmartPairs(active, partnerHistory, genderMode)
+    const matches = pairsToCourtMatches(pairs, numCourts, r + 1, opponentHistory)
+    if (!matches.length) break
+    updateHistories(pairs, matches, partnerHistory, opponentHistory)
     rounds.push({ round: r + 1, label: `Round ${r + 1}`, matches, sitting: sitting.map(p => p.id) })
   }
   return rounds
@@ -233,12 +185,57 @@ export default function Schedule({ tournament, onNavigate }) {
     saveMatches, updateMatch, isAdmin
   } = useApp()
 
-  const [rounds, setRounds]       = useState(4)
-  const [showLogin, setShowLogin] = useState(false)
+  const [rounds, setRounds]         = useState(4)
+  const [showLogin, setShowLogin]   = useState(false)
   const [generating, setGenerating] = useState(false)
-  const [generated, setGenerated] = useState(null) // local preview before saving
-  const [saved, setSaved]         = useState(false)
+  const [generated, setGenerated]   = useState(null)
+  const [saved, setSaved]           = useState(false)
   const [activeRound, setActiveRound] = useState(0)
+  const [swapMode, setSwapMode]     = useState(false)
+  const [swapFirst, setSwapFirst]   = useState(null) // { roundIdx, matchIdx, team, playerIdx, playerId }
+
+  // Load saved schedule into edit preview
+  const handleEditSchedule = () => {
+    if (!isAdmin) { setShowLogin(true); return }
+    setGenerated(savedRounds.map(r => ({
+      ...r,
+      matches: r.matches.map(m => ({
+        ...m,
+        team1Ids: [...(m.team1Ids || [])],
+        team2Ids: [...(m.team2Ids || [])],
+      }))
+    })))
+    setSaved(false)
+    setSwapMode(true)
+  }
+
+  const handlePlayerTap = (roundIdx, matchIdx, team, playerIdx, playerId) => {
+    if (!swapMode || !generated) return
+    if (!swapFirst) {
+      setSwapFirst({ roundIdx, matchIdx, team, playerIdx, playerId })
+      return
+    }
+    if (swapFirst.playerId === playerId) { setSwapFirst(null); return }
+    // Perform swap
+    setGenerated(prev => {
+      const next = prev.map(r => ({ ...r, matches: r.matches.map(m => ({ ...m, team1Ids: [...m.team1Ids], team2Ids: [...m.team2Ids] })) }))
+      const srcMatch = next[swapFirst.roundIdx].matches[swapFirst.matchIdx]
+      const dstMatch = next[roundIdx].matches[matchIdx]
+      const srcArr = swapFirst.team === 1 ? srcMatch.team1Ids : srcMatch.team2Ids
+      const dstArr = team === 1 ? dstMatch.team1Ids : dstMatch.team2Ids
+      const tmp = srcArr[swapFirst.playerIdx]
+      srcArr[swapFirst.playerIdx] = dstArr[playerIdx]
+      dstArr[playerIdx] = tmp
+      // Recalculate levels
+      const lvl = (ids) => ids.reduce((s, id) => s + (players.find(p => p.id === id)?.adjustedLevel || 0), 0)
+      srcMatch.team1Level = lvl(srcMatch.team1Ids)
+      srcMatch.team2Level = lvl(srcMatch.team2Ids)
+      dstMatch.team1Level = lvl(dstMatch.team1Ids)
+      dstMatch.team2Level = lvl(dstMatch.team2Ids)
+      return next
+    })
+    setSwapFirst(null)
+  }
 
   if (!tournament) {
     return (
@@ -345,18 +342,18 @@ export default function Schedule({ tournament, onNavigate }) {
       </div>
 
       {/* Generator controls (admin only) */}
-      {isAdmin && (
+      {/* Generate controls — visible to all, gated on admin login */}
+      {!generated && (
         <div className="card space-y-3">
           <p className="font-semibold text-gray-700 text-sm">Generate Schedule</p>
 
-          {/* Gender & handedness notes */}
           <div className="flex flex-wrap gap-1.5">
             <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${genderMode === 'mixed' ? 'bg-pink-50 text-pink-700' : 'bg-gray-100 text-gray-600'}`}>
               {genderMode === 'mixed' ? '🚺🚹 Mixed · gender balanced' : '👥 Same gender'}
             </span>
             {registeredPlayers.some(p => p.isLeftHanded) && (
               <span className="text-xs bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full font-medium">
-                🤚 {registeredPlayers.filter(p => p.isLeftHanded).length} lefty — kept on separate teams
+                🤚 {registeredPlayers.filter(p => p.isLeftHanded).length} lefty — kept separate
               </span>
             )}
             {isLobster && (
@@ -366,19 +363,13 @@ export default function Schedule({ tournament, onNavigate }) {
             )}
           </div>
 
-          {/* Rounds selector (hidden for Lobster which is always 6) */}
           {!isLobster && (format === 'americano' || format === 'mexicano') && (
             <div>
               <label className="label">Number of rounds</label>
               <div className="flex gap-2">
                 {[2, 3, 4, 5, 6].map(n => (
-                  <button
-                    key={n}
-                    onClick={() => setRounds(n)}
-                    className={`flex-1 py-2 text-sm rounded-xl font-semibold transition-all ${
-                      rounds === n ? 'bg-lobster-teal text-white' : 'bg-gray-100 text-gray-600'
-                    }`}
-                  >
+                  <button key={n} onClick={() => setRounds(n)}
+                    className={`flex-1 py-2 text-sm rounded-xl font-semibold transition-all ${rounds === n ? 'bg-lobster-teal text-white' : 'bg-gray-100 text-gray-600'}`}>
                     {n}
                   </button>
                 ))}
@@ -397,20 +388,44 @@ export default function Schedule({ tournament, onNavigate }) {
           {registeredPlayers.length < 4 && (
             <p className="text-xs text-orange-600">Register at least 4 players first</p>
           )}
+          {savedRounds.length > 0 && (
+            <button onClick={handleEditSchedule}
+              className="w-full py-2 text-sm text-lobster-teal font-semibold border border-lobster-teal rounded-xl">
+              ✏️ Edit existing schedule
+            </button>
+          )}
         </div>
       )}
 
-      {/* Preview banner + save */}
+      {/* Preview banner + swap + save */}
       {generated && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 flex items-center gap-3">
-          <AlertCircle size={16} className="text-yellow-600 flex-shrink-0" />
-          <p className="text-sm text-yellow-700 flex-1">Preview only — pairings not saved yet</p>
-          <div className="flex gap-2 flex-shrink-0">
-            <button onClick={handleGenerate} className="text-xs text-yellow-700 font-semibold">Reshuffle</button>
-            <button onClick={handleSave} disabled={generating} className="text-xs bg-lobster-teal text-white px-3 py-1 rounded-lg font-semibold">
-              Save
-            </button>
+        <div className="space-y-2">
+          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 flex items-center gap-2">
+            <AlertCircle size={16} className="text-yellow-600 flex-shrink-0" />
+            <p className="text-xs text-yellow-700 flex-1">Preview — not saved yet</p>
+            <div className="flex gap-1.5 flex-shrink-0">
+              <button onClick={() => { setGenerated(null); setSwapMode(false); setSwapFirst(null) }}
+                className="text-xs text-gray-500 font-semibold px-2 py-1">Cancel</button>
+              <button onClick={handleGenerate} className="text-xs text-yellow-700 font-semibold px-2 py-1">Reshuffle</button>
+              <button onClick={handleSave} disabled={generating}
+                className="text-xs bg-lobster-teal text-white px-3 py-1 rounded-lg font-semibold">
+                Save
+              </button>
+            </div>
           </div>
+          {/* Swap mode toggle */}
+          {isAdmin && (
+            <button
+              onClick={() => { setSwapMode(s => !s); setSwapFirst(null) }}
+              className={`w-full py-2 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
+                swapMode ? 'bg-orange-100 text-orange-700 border-2 border-orange-300' : 'bg-gray-100 text-gray-600'
+              }`}
+            >
+              {swapMode
+                ? swapFirst ? '👆 Tap another player to swap…' : '↔️ Swap Mode ON — tap a player'
+                : '↔️ Manually swap players'}
+            </button>
+          )}
         </div>
       )}
 
@@ -454,9 +469,10 @@ export default function Schedule({ tournament, onNavigate }) {
               {display[activeRound].matches.map((match, i) => {
                 const t1 = match.team1Ids?.map(getPlayer).filter(Boolean) || []
                 const t2 = match.team2Ids?.map(getPlayer).filter(Boolean) || []
+                const isSwapping = swapMode && generated
 
                 return (
-                  <div key={match.id || i} className="card">
+                  <div key={match.id || i} className={`card transition-all ${isSwapping ? 'ring-2 ring-orange-200' : ''}`}>
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-xs font-bold text-lobster-teal bg-lobster-cream px-2 py-0.5 rounded-full">
                         {match.court}
@@ -469,17 +485,23 @@ export default function Schedule({ tournament, onNavigate }) {
                     <div className="flex items-center gap-2">
                       {/* Team 1 */}
                       <div className="flex-1">
-                        {t1.map(p => (
-                          <div key={p.id} className="flex items-center gap-1.5 mb-1">
+                        {t1.map((p, pi) => {
+                          const isSelected = swapFirst?.playerId === p.id
+                          return (
+                          <div key={p.id}
+                            onClick={() => handlePlayerTap(activeRound, i, 1, pi, p.id)}
+                            className={`flex items-center gap-1.5 mb-1 rounded-lg px-1 transition-all ${isSwapping ? 'cursor-pointer active:scale-95' : ''} ${isSelected ? 'bg-orange-100 ring-2 ring-orange-400' : isSwapping ? 'hover:bg-gray-100' : ''}`}
+                          >
                             <div className="relative w-7 h-7 flex-shrink-0">
-                              <div className="w-7 h-7 rounded-full bg-lobster-teal flex items-center justify-center text-white text-xs font-bold">
+                              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold ${isSelected ? 'bg-orange-500' : 'bg-lobster-teal'}`}>
                                 {p.name[0]}
                               </div>
                               {p.isLeftHanded && <span className="absolute -top-1 -right-1 text-[9px] bg-amber-400 text-white rounded-full w-3.5 h-3.5 flex items-center justify-center font-bold">L</span>}
                             </div>
                             <span className="text-sm font-medium truncate">{p.name.split(' ')[0]}</span>
                           </div>
-                        ))}
+                        )})}
+
                         {match.team1Level && (
                           <p className="text-xs text-gray-400 mt-1">Avg {(match.team1Level / 2).toFixed(1)}</p>
                         )}
@@ -515,17 +537,23 @@ export default function Schedule({ tournament, onNavigate }) {
 
                       {/* Team 2 */}
                       <div className="flex-1 text-right">
-                        {t2.map(p => (
-                          <div key={p.id} className="flex items-center justify-end gap-1.5 mb-1">
+                        {t2.map((p, pi) => {
+                          const isSelected = swapFirst?.playerId === p.id
+                          return (
+                          <div key={p.id}
+                            onClick={() => handlePlayerTap(activeRound, i, 2, pi, p.id)}
+                            className={`flex items-center justify-end gap-1.5 mb-1 rounded-lg px-1 transition-all ${isSwapping ? 'cursor-pointer active:scale-95' : ''} ${isSelected ? 'bg-orange-100 ring-2 ring-orange-400' : isSwapping ? 'hover:bg-gray-100' : ''}`}
+                          >
                             <span className="text-sm font-medium truncate">{p.name.split(' ')[0]}</span>
                             <div className="relative w-7 h-7 flex-shrink-0">
-                              <div className="w-7 h-7 rounded-full bg-lobster-orange flex items-center justify-center text-white text-xs font-bold">
+                              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold ${isSelected ? 'bg-orange-500' : 'bg-lobster-orange'}`}>
                                 {p.name[0]}
                               </div>
                               {p.isLeftHanded && <span className="absolute -top-1 -left-1 text-[9px] bg-amber-400 text-white rounded-full w-3.5 h-3.5 flex items-center justify-center font-bold">L</span>}
                             </div>
                           </div>
-                        ))}
+                        )})}
+
                         {match.team2Level && (
                           <p className="text-xs text-gray-400 mt-1">Avg {(match.team2Level / 2).toFixed(1)}</p>
                         )}
