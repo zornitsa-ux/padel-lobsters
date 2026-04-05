@@ -87,6 +87,7 @@ export function AppProvider({ children }) {
       status:             data.status             || 'active',
       is_left_handed:     data.isLeftHanded       || false,
       country:            data.country            || '',
+      avatar_url:         data.avatarUrl          || '',
     }
     const { error } = await supabase.from('players').insert(payload)
     if (error) {
@@ -111,6 +112,7 @@ export function AppProvider({ children }) {
       status:             data.status             || 'active',
       is_left_handed:     data.isLeftHanded       || false,
       country:            data.country            || '',
+      avatar_url:         data.avatarUrl          || '',
     }
     const { error } = await supabase.from('players').update(payload).eq('id', id)
     if (error) {

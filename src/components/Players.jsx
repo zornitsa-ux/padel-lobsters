@@ -70,13 +70,18 @@ function corpReview(player, matches = [], registrations = [], tournaments = []) 
   const name = (player.name || 'Employee').split(' ')[0]
   const pid  = player.id
 
+  const spid = String(pid)
+
   // ── Compute match stats ──────────────────────────────────────────────────
   const played = matches.filter(m =>
-    m.completed && (m.team1Ids?.includes(pid) || m.team2Ids?.includes(pid))
+    m.completed && (
+      m.team1Ids?.map(String).includes(spid) ||
+      m.team2Ids?.map(String).includes(spid)
+    )
   )
   let wins = 0, losses = 0
   played.forEach(m => {
-    const onTeam1 = m.team1Ids?.includes(pid)
+    const onTeam1 = m.team1Ids?.map(String).includes(spid)
     const s1 = m.score1 ?? 0, s2 = m.score2 ?? 0
     if ((onTeam1 && s1 > s2) || (!onTeam1 && s2 > s1)) wins++
     else losses++
@@ -91,7 +96,11 @@ function corpReview(player, matches = [], registrations = [], tournaments = []) 
 
   const tournamentsPlayed = new Set(
     registrations
-      .filter(r => r.playerId === pid && r.status === 'registered' && pastTournamentIds.has(String(r.tournamentId)))
+      .filter(r =>
+        String(r.playerId) === spid &&
+        r.status !== 'cancelled' &&
+        pastTournamentIds.has(String(r.tournamentId))
+      )
       .map(r => r.tournamentId)
   ).size
   const totalTournaments = pastTournaments.length
@@ -115,7 +124,7 @@ function corpReview(player, matches = [], registrations = [], tournaments = []) 
         ;(winners || []).forEach(id => { if (winsMap[id] !== undefined) winsMap[id]++ })
       })
       const ranked = Object.entries(winsMap).sort(([, a], [, b]) => b - a)
-      const pos = ranked.findIndex(([id]) => String(id) === String(pid))
+      const pos = ranked.findIndex(([id]) => String(id) === spid)
       if (pos >= 0) lastTournamentRank = pos + 1
     }
   }
@@ -245,6 +254,7 @@ export default function Players() {
   const [saving, setSaving]         = useState(false)
   const [avatarFile, setAvatarFile] = useState(null)
   const [avatarPreview, setAvatarPreview] = useState(null)
+  const [mergePlayer, setMergePlayer] = useState(null)   // existing player found by name
   const fileInputRef = useRef(null)
 
   const activePlayers  = players.filter(p => (p.status || 'active') === 'active')
@@ -272,7 +282,45 @@ export default function Players() {
   }
 
   const openAdd = () => {
-    setForm(emptyForm); setEditId(null); setAvatarFile(null); setAvatarPreview(null); setShowForm(true)
+    setForm(emptyForm); setEditId(null); setAvatarFile(null); setAvatarPreview(null); setMergePlayer(null); setShowForm(true)
+  }
+
+  // Check for existing player by name when the name field loses focus.
+  // Only suggest merge if the existing profile is incomplete (name-only placeholder).
+  const handleNameBlur = () => {
+    if (isAdmin || editId) return
+    const typed = form.name.trim().toLowerCase()
+    if (typed.split(/\s+/).length < 2) return   // need at least first + last
+    const found = players.find(p =>
+      (p.name || '').trim().toLowerCase() === typed
+    )
+    if (found) {
+      const isIncomplete = !found.email && !found.phone && !found.country
+      setMergePlayer(isIncomplete ? found : null)
+    } else {
+      setMergePlayer(null)
+    }
+  }
+
+  // Accept merge: pre-fill form with existing player data, switch to update mode
+  const acceptMerge = () => {
+    const p = mergePlayer
+    setForm({
+      name: p.name || '',
+      email: p.email || '',
+      phone: p.phone || '',
+      playtomicLevel: p.playtomicLevel ?? '',
+      adjustment: p.adjustment ?? '0',
+      playtomicUsername: p.playtomicUsername || '',
+      notes: p.notes || '',
+      gender: p.gender || '',
+      isLeftHanded: p.isLeftHanded || false,
+      country: p.country || '',
+      avatarUrl: p.avatarUrl || '',
+    })
+    setAvatarPreview(p.avatarUrl || null)
+    setEditId(p.id)
+    setMergePlayer(null)
   }
 
   const openEdit = (p) => {
@@ -329,20 +377,23 @@ export default function Players() {
           avatarUrl = publicUrl
         }
       }
+      const isMerge = !!editId && !isAdmin
       const data = {
         ...form,
         avatarUrl,
         playtomicLevel: parseFloat(form.playtomicLevel) || 0,
         adjustment: parseFloat(form.adjustment) || 0,
         isLeftHanded: form.isLeftHanded || false,
-        status: editId ? undefined : (isAdmin ? 'active' : 'pending'),
+        status: editId ? (isMerge ? 'pending' : undefined) : (isAdmin ? 'active' : 'pending'),
       }
       if (editId) await updatePlayer(editId, data)
       else        await addPlayer(data)
       setShowForm(false)
-      setAvatarFile(null); setAvatarPreview(null)
+      setAvatarFile(null); setAvatarPreview(null); setMergePlayer(null)
       if (!isAdmin && !editId) {
         alert('Your registration request has been sent! The admin will approve it shortly.')
+      } else if (isMerge) {
+        alert('Profile updated! The admin will verify and activate your account shortly.')
       }
     } finally {
       setSaving(false)
@@ -568,8 +619,37 @@ export default function Players() {
               <div>
                 <label className="label">Full Name *</label>
                 <input required className="input" placeholder="e.g. Maria García" value={form.name}
-                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
+                  onChange={e => { setForm(f => ({ ...f, name: e.target.value })); setMergePlayer(null) }}
+                  onBlur={handleNameBlur} />
               </div>
+
+              {/* Merge banner */}
+              {mergePlayer && !editId && (
+                <div className="rounded-2xl bg-amber-50 border border-amber-200 p-4 space-y-3">
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl">🦞</span>
+                    <div>
+                      <p className="font-semibold text-amber-800 text-sm">Welcome back!</p>
+                      <p className="text-xs text-amber-700 mt-1">
+                        Your profile already exists — you've played in a past Lobster tournament.
+                        Finish setting up your profile and we'll link everything together.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={acceptMerge}
+                    className="w-full py-2.5 bg-amber-500 text-white rounded-xl font-semibold text-sm active:scale-95 transition-all">
+                    Yes, complete my profile
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMergePlayer(null)}
+                    className="w-full py-2 text-amber-600 text-xs font-medium">
+                    No, I'm a different person
+                  </button>
+                </div>
+              )}
 
               <div>
                 <label className="label">Country</label>
