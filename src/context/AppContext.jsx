@@ -86,6 +86,7 @@ export function AppProvider({ children }) {
       gender:             data.gender             || '',
       status:             data.status             || 'active',
       is_left_handed:     data.isLeftHanded       || false,
+      country:            data.country            || '',
     }
     const { error } = await supabase.from('players').insert(payload)
     if (error) {
@@ -109,6 +110,7 @@ export function AppProvider({ children }) {
       gender:             data.gender             || '',
       status:             data.status             || 'active',
       is_left_handed:     data.isLeftHanded       || false,
+      country:            data.country            || '',
     }
     const { error } = await supabase.from('players').update(payload).eq('id', id)
     if (error) {
@@ -248,6 +250,7 @@ export function AppProvider({ children }) {
     status:            p.status             ?? 'active',
     isLeftHanded:      p.is_left_handed     ?? p.isLeftHanded ?? false,
     avatarUrl:         p.avatar_url         ?? p.avatarUrl    ?? '',
+    country:           p.country            ?? '',
   }))
 
   const normalisedTournaments = tournaments.map(t => ({

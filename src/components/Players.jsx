@@ -19,8 +19,33 @@ const emptyForm = {
   name: '', email: '', phone: '',
   playtomicLevel: '', adjustment: '0',
   playtomicUsername: '', notes: '', gender: '',
-  isLeftHanded: false,
+  isLeftHanded: false, country: '',
   avatarUrl: '',
+}
+
+const COUNTRIES = [
+  ['', 'Select country…'],
+  ['AR','Argentina'],['AU','Australia'],['AT','Austria'],['BE','Belgium'],
+  ['BR','Brazil'],['CA','Canada'],['CL','Chile'],['CN','China'],
+  ['CO','Colombia'],['HR','Croatia'],['CZ','Czech Republic'],['DK','Denmark'],
+  ['EG','Egypt'],['FI','Finland'],['FR','France'],['DE','Germany'],
+  ['GR','Greece'],['HU','Hungary'],['IN','India'],['ID','Indonesia'],
+  ['IE','Ireland'],['IL','Israel'],['IT','Italy'],['JP','Japan'],
+  ['LU','Luxembourg'],['MY','Malaysia'],['MX','Mexico'],['MA','Morocco'],
+  ['NL','Netherlands'],['NZ','New Zealand'],['NG','Nigeria'],['NO','Norway'],
+  ['PK','Pakistan'],['PE','Peru'],['PH','Philippines'],['PL','Poland'],
+  ['PT','Portugal'],['RO','Romania'],['RS','Serbia'],['SG','Singapore'],
+  ['ZA','South Africa'],['KR','South Korea'],['ES','Spain'],['SE','Sweden'],
+  ['CH','Switzerland'],['TR','Turkey'],['UA','Ukraine'],
+  ['AE','United Arab Emirates'],['GB','United Kingdom'],['US','United States'],
+  ['UY','Uruguay'],['VE','Venezuela'],
+]
+
+const countryFlag = (code) => {
+  if (!code || code.length !== 2) return ''
+  return code.toUpperCase().split('').map(c =>
+    String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65)
+  ).join('')
 }
 
 // ── Corporate Performance Review generator ───────────────────────────────────
@@ -82,7 +107,8 @@ function corpReview(player, matches = [], registrations = [], tournaments = []) 
       `No tournament history on file. ${name} remains, officially, an unknown quantity. The group is curious. The committee is hopeful. The courts are ready.`,
       `Pre-season assessment only. ${name} has yet to play a tournament, which means anything is still possible. We find this genuinely exciting and recommend they sign up before reality sets in.`,
     ]
-    return welcome[(player.id || 0) % welcome.length]
+    const idHash = String(player.id || '0').split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)
+    return welcome[idHash % welcome.length]
   }
 
   // ── Scenario matching (priority order) ───────────────────────────────────
@@ -230,6 +256,7 @@ export default function Players() {
       playtomicLevel: p.playtomicLevel ?? '', adjustment: p.adjustment ?? '0',
       playtomicUsername: p.playtomicUsername || '', notes: p.notes || '',
       gender: p.gender || '', isLeftHanded: p.isLeftHanded || false,
+      country: p.country || '',
       avatarUrl: p.avatarUrl || '',
     })
     setAvatarFile(null)
@@ -384,7 +411,8 @@ export default function Players() {
                   </span>
                   <PlayerAvatar player={p} />
                   <div className="flex-1 text-left min-w-0">
-                    <p className="font-semibold text-gray-800 truncate flex items-center gap-1">
+                    <p className="font-semibold text-gray-800 truncate flex items-center gap-1.5">
+                      {p.country && <span className="text-base leading-none">{countryFlag(p.country)}</span>}
                       {displayName(p)}
                       {p.isLeftHanded && <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-semibold ml-0.5">L</span>}
                     </p>
@@ -444,7 +472,7 @@ export default function Players() {
                   <div className="bg-gray-50 rounded-xl p-3 border border-gray-200">
                     <div className="flex items-center gap-1.5 mb-1.5">
                       <Briefcase size={11} className="text-gray-400" />
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Annual Performance Review</p>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Lobster Performance Review</p>
                     </div>
                     <p className="text-xs text-gray-600 leading-relaxed italic">{corpReview(p, matches, registrations, tournaments)}</p>
                   </div>
@@ -515,6 +543,18 @@ export default function Players() {
                 <label className="label">Full Name *</label>
                 <input required className="input" placeholder="e.g. Maria García" value={form.name}
                   onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
+              </div>
+
+              <div>
+                <label className="label">Country</label>
+                <select className="input" value={form.country}
+                  onChange={e => setForm(f => ({ ...f, country: e.target.value }))}>
+                  {COUNTRIES.map(([code, label]) => (
+                    <option key={code} value={code}>
+                      {code ? `${countryFlag(code)}  ${label}` : label}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {/* Gender — for optimal pair matching */}
