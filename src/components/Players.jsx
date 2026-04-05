@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
 import { supabase } from '../supabase'
 import { Plus, Pencil, Trash2, X, ChevronDown, ChevronUp, Search, User, Clock, Camera, Briefcase } from 'lucide-react'
@@ -61,6 +61,75 @@ const FlagImg = ({ code, className = '' }) => {
       alt={code}
       className={`inline-block flex-shrink-0 ${className}`}
     />
+  )
+}
+
+// ── Searchable country picker ─────────────────────────────────────────────────
+function CountryPicker({ value, onChange }) {
+  const [query, setQuery]     = useState('')
+  const [open, setOpen]       = useState(false)
+  const containerRef          = useRef(null)
+
+  // Close when clicking outside
+  useEffect(() => {
+    const handler = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setOpen(false); setQuery('')
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  const selectedLabel = COUNTRIES.find(([code]) => code === value)?.[1] || ''
+  const filtered = COUNTRIES.slice(1).filter(([code, label]) =>
+    label.toLowerCase().includes(query.toLowerCase()) ||
+    code.toLowerCase().includes(query.toLowerCase())
+  )
+
+  const select = (code) => {
+    onChange(code); setOpen(false); setQuery('')
+  }
+
+  return (
+    <div ref={containerRef} className="relative">
+      {/* Input */}
+      <div
+        className="input flex items-center gap-2 cursor-text"
+        onClick={() => { setOpen(true); setQuery('') }}
+      >
+        {value && !open && <FlagImg code={value} />}
+        <input
+          type="text"
+          className="flex-1 bg-transparent outline-none text-sm text-gray-800 placeholder-gray-400 min-w-0"
+          placeholder={open ? 'Type to search…' : (selectedLabel || 'Select country…')}
+          value={open ? query : (selectedLabel || '')}
+          onChange={e => { setQuery(e.target.value); setOpen(true) }}
+          onFocus={() => setOpen(true)}
+        />
+        <ChevronDown size={14} className="text-gray-400 flex-shrink-0" />
+      </div>
+
+      {/* Dropdown */}
+      {open && (
+        <div className="absolute z-50 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-52 overflow-y-auto">
+          {filtered.length === 0 && (
+            <p className="text-xs text-gray-400 px-3 py-3 text-center">No countries found</p>
+          )}
+          {filtered.map(([code, label]) => (
+            <button
+              key={code}
+              type="button"
+              onMouseDown={() => select(code)}
+              className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left transition-colors hover:bg-lobster-cream ${value === code ? 'bg-lobster-cream font-semibold text-lobster-teal' : 'text-gray-700'}`}
+            >
+              <FlagImg code={code} />
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -286,22 +355,22 @@ export default function Players() {
     setForm(emptyForm); setEditId(null); setAvatarFile(null); setAvatarPreview(null); setMergePlayer(null); setShowForm(true)
   }
 
-  // Check for existing player by name when the name field loses focus.
-  // Only suggest merge if the existing profile is incomplete (name-only placeholder).
-  const handleNameBlur = () => {
-    if (isAdmin || editId) return
-    const typed = form.name.trim().toLowerCase()
-    if (typed.split(/\s+/).length < 2) return   // need at least first + last
-    const found = players.find(p =>
-      (p.name || '').trim().toLowerCase() === typed
-    )
-    if (found) {
-      const isIncomplete = !found.email && !found.phone && !found.country
-      setMergePlayer(isIncomplete ? found : null)
-    } else {
-      setMergePlayer(null)
-    }
-  }
+  // Debounced duplicate check — fires 400ms after the user stops typing the name.
+  // Reliable on both desktop and mobile (doesn't depend on onBlur).
+  const mergeDebounceRef = useRef(null)
+  useEffect(() => {
+    if (editId) return  // never prompt when already editing
+    clearTimeout(mergeDebounceRef.current)
+    mergeDebounceRef.current = setTimeout(() => {
+      const typed = form.name.trim().toLowerCase()
+      if (typed.split(/\s+/).length < 2) { setMergePlayer(null); return }
+      const found = players.find(p =>
+        (p.name || '').trim().toLowerCase() === typed
+      )
+      setMergePlayer(found || null)
+    }, 400)
+    return () => clearTimeout(mergeDebounceRef.current)
+  }, [form.name, editId])
 
   // Accept merge: pre-fill form with existing player data, switch to update mode
   const acceptMerge = () => {
@@ -383,6 +452,18 @@ export default function Players() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+
+    // Safety net: if a matching player exists and hasn't been merged yet, block submit
+    if (!editId) {
+      const typed = form.name.trim().toLowerCase()
+      const duplicate = players.find(p => (p.name || '').trim().toLowerCase() === typed)
+      if (duplicate) {
+        // Force the merge banner to show — don't allow creating a duplicate
+        setMergePlayer(duplicate)
+        return
+      }
+    }
+
     // Validate all required fields before saving
     if (!isAdmin) {
       const missing = []
@@ -713,48 +794,55 @@ export default function Players() {
               <div>
                 <label className="label">Full Name</label>
                 <input required className="input" placeholder="e.g. Maria García" value={form.name}
-                  onChange={e => { setForm(f => ({ ...f, name: e.target.value })); setMergePlayer(null) }}
-                  onBlur={handleNameBlur} />
+                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
               </div>
 
-              {/* Merge banner */}
+              {/* Merge banner — shown for both admins and players when name already exists */}
               {mergePlayer && !editId && (
                 <div className="rounded-2xl bg-amber-50 border border-amber-200 p-4 space-y-3">
                   <div className="flex items-start gap-3">
                     <span className="text-2xl">🦞</span>
                     <div>
-                      <p className="font-semibold text-amber-800 text-sm">Welcome back!</p>
-                      <p className="text-xs text-amber-700 mt-1">
-                        Your profile already exists — you've played in a past Lobster tournament.
-                        Finish setting up your profile and we'll link everything together.
-                      </p>
+                      {isAdmin ? (
+                        <>
+                          <p className="font-semibold text-amber-800 text-sm">Player already exists!</p>
+                          <p className="text-xs text-amber-700 mt-1">
+                            <strong>{mergePlayer.name}</strong> is already in the system.
+                            Update their existing profile instead of creating a duplicate?
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="font-semibold text-amber-800 text-sm">Welcome back!</p>
+                          <p className="text-xs text-amber-700 mt-1">
+                            Your profile already exists — you've played in a past Lobster tournament.
+                            Finish setting up your profile and we'll link everything together.
+                          </p>
+                        </>
+                      )}
                     </div>
                   </div>
                   <button
                     type="button"
                     onClick={acceptMerge}
                     className="w-full py-2.5 bg-amber-500 text-white rounded-xl font-semibold text-sm active:scale-95 transition-all">
-                    Yes, complete my profile
+                    {isAdmin ? `Update ${mergePlayer.name.split(' ')[0]}'s profile` : 'Yes, complete my profile'}
                   </button>
                   <button
                     type="button"
                     onClick={() => setMergePlayer(null)}
                     className="w-full py-2 text-amber-600 text-xs font-medium">
-                    No, I'm a different person
+                    {isAdmin ? 'No, create as a new player' : "No, I'm a different person"}
                   </button>
                 </div>
               )}
 
               <div>
                 <label className="label">Country</label>
-                <select className="input" value={form.country}
-                  onChange={e => setForm(f => ({ ...f, country: e.target.value }))}>
-                  {COUNTRIES.map(([code, label]) => (
-                    <option key={code} value={code}>
-                      {code ? `${countryFlag(code)}  ${label}` : label}
-                    </option>
-                  ))}
-                </select>
+                <CountryPicker
+                  value={form.country}
+                  onChange={val => setForm(f => ({ ...f, country: val }))}
+                />
               </div>
 
               {/* Gender — for optimal pair matching */}
