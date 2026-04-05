@@ -203,12 +203,17 @@ export default function Players() {
   )
   const sorted = [...filtered].sort((a, b) => (b.adjustedLevel || 0) - (a.adjustedLevel || 0))
 
-  // ── Name display: first name + surname initial when surname exists;
-  //    if two players share the same first name, both always get the initial ──
+  // ── Name display: first name only; both players get a surname initial
+  //    the moment a duplicate first name exists in the group ────────────────
+  const firstNameCount = {}
+  activePlayers.forEach(p => {
+    const fn = (p.name || '').trim().split(/\s+/)[0]
+    firstNameCount[fn] = (firstNameCount[fn] || 0) + 1
+  })
   const displayName = (p) => {
     const parts = (p.name || '').trim().split(/\s+/)
     const fn = parts[0] || '?'
-    if (parts.length > 1) {
+    if (firstNameCount[fn] > 1 && parts.length > 1) {
       return `${fn} ${parts[1][0].toUpperCase()}`
     }
     return fn
