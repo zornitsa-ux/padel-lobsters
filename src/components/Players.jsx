@@ -364,6 +364,20 @@ export default function Players() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    // Validate all required fields before saving
+    if (!isAdmin) {
+      const missing = []
+      if (!form.name.trim())          missing.push('Full Name')
+      if (!form.country)              missing.push('Country')
+      if (!form.gender)               missing.push('Gender')
+      if (!form.email.trim())         missing.push('Email')
+      if (!form.phone.trim())         missing.push('Phone / WhatsApp')
+      if (!form.playtomicLevel)       missing.push('Playtomic Level')
+      if (missing.length > 0) {
+        alert(`Please complete the following fields before registering:\n\n• ${missing.join('\n• ')}`)
+        return
+      }
+    }
     setSaving(true)
     try {
       let avatarUrl = form.avatarUrl || ''
@@ -617,7 +631,7 @@ export default function Players() {
               </div>
 
               <div>
-                <label className="label">Full Name *</label>
+                <label className="label">Full Name</label>
                 <input required className="input" placeholder="e.g. Maria García" value={form.name}
                   onChange={e => { setForm(f => ({ ...f, name: e.target.value })); setMergePlayer(null) }}
                   onBlur={handleNameBlur} />
@@ -719,12 +733,14 @@ export default function Players() {
                 <label className="label">Email</label>
                 <input type="email" className="input" placeholder="player@email.com" value={form.email}
                   onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
+                <p className="text-xs text-gray-400 mt-1">Visible for organizers only</p>
               </div>
 
               <div>
                 <label className="label">Phone / WhatsApp</label>
                 <input type="tel" className="input" placeholder="+31 6 12345678" value={form.phone}
                   onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} />
+                <p className="text-xs text-gray-400 mt-1">Visible for organizers only</p>
               </div>
 
               <div>
