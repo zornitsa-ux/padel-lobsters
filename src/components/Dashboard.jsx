@@ -1,9 +1,27 @@
 import React from 'react'
 import { useApp } from '../context/AppContext'
-import { Trophy, Users, CreditCard, Calendar, ChevronRight, Clock, AlertCircle } from 'lucide-react'
+import { Trophy, Users, Calendar, ChevronRight, Clock, AlertCircle, Megaphone } from 'lucide-react'
+
+const ClawUp = ({ active }) => (
+  <span style={{ display:'inline-block', transform:'rotate(-90deg)', fontSize:13, lineHeight:1, filter: active ? 'none' : 'grayscale(1) opacity(0.4)' }}>🦞</span>
+)
+const ClawDown = ({ active }) => (
+  <span style={{ display:'inline-block', transform:'rotate(90deg)', fontSize:13, lineHeight:1, filter: active ? 'none' : 'grayscale(1) opacity(0.4)' }}>🦞</span>
+)
 
 export default function Dashboard({ onNavigate }) {
-  const { tournaments, players, registrations, getTournamentRegistrations, isAdmin } = useApp()
+  const { tournaments, players, updates, registrations, getTournamentRegistrations, isAdmin } = useApp()
+
+  const recentUpdates = (updates || []).slice(0, 2)
+
+  const formatUpdateTime = (ts) => {
+    if (!ts) return ''
+    const diff = (Date.now() - new Date(ts)) / 1000
+    if (diff < 60)    return 'just now'
+    if (diff < 3600)  return `${Math.floor(diff / 60)}m ago`
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
+    return new Date(ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+  }
 
   // Next upcoming tournament
   const upcoming = tournaments
@@ -100,6 +118,47 @@ export default function Dashboard({ onNavigate }) {
           onClick={() => onNavigate('tournament')}
         />
       </div>
+
+      {/* Latest updates preview */}
+      {recentUpdates.length > 0 && (
+        <section>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="font-bold text-gray-700 flex items-center gap-1.5">
+              <Megaphone size={15} className="text-lobster-orange" /> Latest Updates
+            </h3>
+            <button onClick={() => onNavigate('updates')} className="text-xs text-lobster-teal font-semibold">
+              See all →
+            </button>
+          </div>
+          <div className="space-y-2">
+            {recentUpdates.map(u => {
+              const poster = players.find(p => String(p.id) === String(u.player_id))
+              const ups    = (u.update_reactions || []).filter(r => r.type === 'up').length
+              const downs  = (u.update_reactions || []).filter(r => r.type === 'down').length
+              return (
+                <button
+                  key={u.id}
+                  onClick={() => onNavigate('updates')}
+                  className="card w-full text-left active:scale-[0.98] transition-all"
+                >
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <div className="w-6 h-6 bg-lobster-teal rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
+                      {(poster?.name || '?')[0].toUpperCase()}
+                    </div>
+                    <span className="text-xs font-semibold text-gray-700">{poster?.name || 'Unknown'}</span>
+                    <span className="text-[10px] text-gray-400 ml-auto">{formatUpdateTime(u.created_at)}</span>
+                  </div>
+                  <p className="text-xs text-gray-600 leading-relaxed line-clamp-2">{u.content}</p>
+                  <div className="flex items-center gap-3 mt-2">
+                    <span className="flex items-center gap-1"><ClawUp /> <span className="text-xs text-gray-400">{ups || ''}</span></span>
+                    <span className="flex items-center gap-1"><ClawDown /> <span className="text-xs text-gray-400">{downs || ''}</span></span>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        </section>
+      )}
 
       {/* Recent events */}
       {tournaments.length > 0 && (

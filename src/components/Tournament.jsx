@@ -3,9 +3,10 @@ import { useApp } from '../context/AppContext'
 import {
   Plus, X, Trash2, Pencil, Trophy,
   MapPin, Calendar, Users, Euro, CheckCircle, Circle,
-  Building2, ShieldCheck, UserCog, Clock
+  Building2, ShieldCheck, UserCog, Clock, ChevronDown, ChevronUp
 } from 'lucide-react'
 import AdminLogin from './AdminLogin'
+import HistoryContent from './History'
 
 const emptyForm = {
   name: '',
@@ -25,11 +26,15 @@ const emptyForm = {
 
 export default function Tournament({ onNavigate }) {
   const { tournaments, addTournament, updateTournament, deleteTournament, isAdmin } = useApp()
-  const [showForm, setShowForm]   = useState(false)
-  const [editId, setEditId]       = useState(null)
-  const [form, setForm]           = useState(emptyForm)
-  const [saving, setSaving]       = useState(false)
-  const [showLogin, setShowLogin] = useState(false)
+  const [showForm, setShowForm]       = useState(false)
+  const [editId, setEditId]           = useState(null)
+  const [form, setForm]               = useState(emptyForm)
+  const [saving, setSaving]           = useState(false)
+  const [showLogin, setShowLogin]     = useState(false)
+  const [showHistory, setShowHistory] = useState(false)
+
+  const upcoming = tournaments.filter(t => t.status !== 'completed')
+  const past     = tournaments.filter(t => t.status === 'completed')
 
   const openAdd = () => {
     if (!isAdmin) { setShowLogin(true); return }
@@ -142,16 +147,16 @@ export default function Tournament({ onNavigate }) {
         </button>
       </div>
 
-      {/* Tournament list */}
+      {/* Upcoming events */}
       <div className="space-y-3">
-        {tournaments.length === 0 && (
+        {upcoming.length === 0 && (
           <div className="card py-10 text-center text-gray-400">
             <Trophy size={36} className="mx-auto mb-2 opacity-30" />
-            <p>No events yet. Create your first one!</p>
+            <p>No upcoming events. Create your first one!</p>
           </div>
         )}
 
-        {tournaments.map(t => {
+        {upcoming.map(t => {
           const allBooked    = (t.courts || []).every(c => c.booked)
           const bookedCount  = (t.courts || []).filter(c => c.booked).length
           const totalCourts  = (t.courts || []).length
@@ -273,7 +278,86 @@ export default function Tournament({ onNavigate }) {
         })}
       </div>
 
-      {/* Add/Edit modal */}
+      {/* Past events + History — collapsible */}
+      {(past.length > 0) && (
+        <div>
+          <button
+            onClick={() => setShowHistory(h => !h)}
+            className="w-full flex items-center justify-between py-3 px-1 text-gray-500 font-semibold text-sm"
+          >
+            <span className="flex items-center gap-2">
+              <Clock size={15} className="text-gray-400" />
+              Past Events & History ({past.length})
+            </span>
+            {showHistory ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          </button>
+
+          {showHistory && (
+            <div className="space-y-3">
+              {past.map(t => {
+                const allBooked   = (t.courts || []).every(c => c.booked)
+                const bookedCount = (t.courts || []).filter(c => c.booked).length
+                const totalCourts = (t.courts || []).length
+                const ppCost      = pricePerPlayer(t)
+                const isAdminAll  = !t.courtBookingMode || t.courtBookingMode === 'admin_all'
+                return (
+                  <div key={t.id} className="card opacity-80">
+                    <div className="flex items-start gap-3 mb-3">
+                      <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <Trophy size={22} className="text-gray-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-gray-700 truncate">{t.name}</h3>
+                        <p className="text-xs text-gray-400 flex items-center gap-1">
+                          <Calendar size={11} /> {formatDate(t.date)} {t.time && `· ${t.time}`}
+                        </p>
+                        {t.location && (
+                          <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
+                            <Building2 size={11} /> {t.location}
+                          </p>
+                        )}
+                      </div>
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 flex-shrink-0">
+                        completed
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-4 gap-2 mb-3">
+                      <InfoChip icon={<Users size={12} />} label={`${t.maxPlayers || '?'} players`} />
+                      <InfoChip icon={<MapPin size={12} />} label={`${bookedCount}/${totalCourts} courts`} />
+                      <InfoChip icon={<Clock size={12} />} label={t.duration ? `${t.duration}min` : '90min'} />
+                      <InfoChip icon={<Euro size={12} />} label={ppCost > 0 ? `€${ppCost.toFixed(2)}/pp` : 'Free'} />
+                    </div>
+                    <div className="flex gap-2 pt-2 border-t border-gray-100">
+                      <button onClick={() => onNavigate('registration', t)} className="flex-1 text-xs font-semibold text-lobster-teal py-2 rounded-xl bg-lobster-cream active:scale-95 transition-all">
+                        Registrations
+                      </button>
+                      <button onClick={() => onNavigate('schedule', t)} className="flex-1 text-xs font-semibold text-gray-600 py-2 rounded-xl bg-gray-100 active:scale-95 transition-all">
+                        Schedule
+                      </button>
+                      {isAdmin && (
+                        <>
+                          <button onClick={() => openEdit(t)} className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-100 active:scale-95">
+                            <Pencil size={14} className="text-gray-600" />
+                          </button>
+                          <button onClick={() => handleDelete(t.id)} className="w-9 h-9 flex items-center justify-center rounded-xl bg-red-50 active:scale-95">
+                            <Trash2 size={14} className="text-red-500" />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+
+              {/* Legacy History Records */}
+              <div className="mt-4">
+                <HistoryContent />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {showForm && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center">
           <div className="bg-white rounded-t-3xl w-full max-w-md max-h-[92vh] overflow-y-auto">

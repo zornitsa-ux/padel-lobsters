@@ -8,7 +8,7 @@ const SIZES_APPAREL  = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
 const SIZES_SOCKS    = ['S (35-38)', 'M (39-42)', 'L (43-46)']
 
 const emptyItem = {
-  name: '', description: '', price: '', sizes: [], category: 'apparel', image_url: '', active: true,
+  name: '', description: '', price: '', sizes: [], category: 'apparel', image_url: '', image_urls: [], active: true,
 }
 
 // ── Raffle component ──────────────────────────────────────────────────────────
@@ -143,22 +143,42 @@ export default function Merch({ tournament, tournaments: allTournaments = [] }) 
     return () => { supabase.removeChannel(ch1); supabase.removeChannel(ch2) }
   }, [])
 
-  // ── Image upload ─────────────────────────────────────────────────────────────
+  // ── Image upload (up to 3) ───────────────────────────────────────────────────
   const handleImageUpload = async (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const files = Array.from(e.target.files || [])
+    if (!files.length) return
+    const current = form.image_urls || []
+    const slots   = 3 - current.length
+    if (slots <= 0) return
+    const toUpload = files.slice(0, slots)
     setUploading(true)
     try {
-      const filename = `${Date.now()}-${file.name.replace(/\s/g, '_')}`
-      const { error: uploadError } = await supabase.storage.from('merch').upload(filename, file)
-      if (uploadError) throw uploadError
-      const { data: { publicUrl } } = supabase.storage.from('merch').getPublicUrl(filename)
-      setForm(f => ({ ...f, image_url: publicUrl }))
+      const newUrls = []
+      for (const file of toUpload) {
+        const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}-${file.name.replace(/\s/g, '_')}`
+        const { error: uploadError } = await supabase.storage.from('merch').upload(filename, file)
+        if (uploadError) throw uploadError
+        const { data: { publicUrl } } = supabase.storage.from('merch').getPublicUrl(filename)
+        newUrls.push(publicUrl)
+      }
+      setForm(f => ({
+        ...f,
+        image_urls: [...(f.image_urls || []), ...newUrls],
+        image_url:  f.image_url || newUrls[0] || '',
+      }))
     } catch (err) {
       alert('Image upload failed: ' + err.message)
     } finally {
       setUploading(false)
+      e.target.value = ''
     }
+  }
+
+  const handleRemoveImage = (idx) => {
+    setForm(f => {
+      const next = (f.image_urls || []).filter((_, i) => i !== idx)
+      return { ...f, image_urls: next, image_url: next[0] || '' }
+    })
   }
 
   // ── Admin CRUD ───────────────────────────────────────────────────────────────
@@ -169,18 +189,21 @@ export default function Merch({ tournament, tournaments: allTournaments = [] }) 
 
   const openEdit = (item) => {
     if (!isAdmin) { setShowLogin(true); return }
-    setForm({ ...item, price: String(item.price), sizes: item.sizes || [] })
+    const urls = item.image_urls?.length ? item.image_urls : (item.image_url ? [item.image_url] : [])
+    setForm({ ...item, price: String(item.price), sizes: item.sizes || [], image_urls: urls })
     setEditItem(item); setShowForm(true)
   }
 
   const handleSaveItem = async (e) => {
     e.preventDefault(); setSaving(true)
+    const urls = form.image_urls || []
     const payload = {
       name: form.name,
       description: form.description || '',
       price: parseFloat(form.price) || 0,
       sizes: form.sizes || [],
-      image_url: form.image_url || '',
+      image_url: urls[0] || form.image_url || '',
+      image_urls: urls,
       category: form.category || 'apparel',
       active: true,
     }
@@ -531,20 +554,44 @@ export default function Merch({ tournament, tournaments: allTournaments = [] }) 
                 </div>
               </div>
 
-              {/* Image */}
+              {/* Images — up to 3 */}
               <div>
-                <label className="label">Product Image</label>
-                {form.image_url && (
-                  <img src={form.image_url} alt="" className="w-full h-32 object-cover rounded-xl mb-2" />
+                <label className="label">Product Photos <span className="text-gray-400 font-normal">(up to 3)</span></label>
+
+                {/* Thumbnails row */}
+                {(form.image_urls || []).length > 0 && (
+                  <div className="flex gap-2 mb-3">
+                    {(form.image_urls || []).map((url, idx) => (
+                      <div key={idx} className="relative w-24 h-24 flex-shrink-0">
+                        <img src={url} alt="" className="w-full h-full object-cover rounded-xl border border-gray-200" />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveImage(idx)}
+                          className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-bold leading-none"
+                        >×</button>
+                        {idx === 0 && (
+                          <span className="absolute bottom-1 left-1 text-[9px] bg-black/50 text-white px-1 rounded">main</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 )}
-                <label className={`flex items-center justify-center gap-2 w-full py-3 rounded-xl border-2 border-dashed border-gray-300 text-sm text-gray-500 font-medium cursor-pointer transition-all hover:border-lobster-teal hover:text-lobster-teal ${uploading ? 'opacity-50' : ''}`}>
-                  <Upload size={16} />
-                  {uploading ? 'Uploading…' : 'Upload photo'}
-                  <input type="file" accept="image/*" className="hidden" disabled={uploading} onChange={handleImageUpload} />
-                </label>
-                <p className="text-xs text-gray-400 mt-1">Or paste a URL:</p>
-                <input className="input mt-1" placeholder="https://…" value={form.image_url}
-                  onChange={e => setForm(f => ({ ...f, image_url: e.target.value }))} />
+
+                {/* Upload button — only show if under 3 */}
+                {(form.image_urls || []).length < 3 && (
+                  <label className={`flex items-center justify-center gap-2 w-full py-3 rounded-xl border-2 border-dashed border-gray-300 text-sm text-gray-500 font-medium cursor-pointer transition-all hover:border-lobster-teal hover:text-lobster-teal ${uploading ? 'opacity-50' : ''}`}>
+                    <Upload size={16} />
+                    {uploading ? 'Uploading…' : `Add photo${(form.image_urls || []).length > 0 ? ` (${(form.image_urls || []).length}/3)` : ''}`}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      disabled={uploading}
+                      onChange={handleImageUpload}
+                    />
+                  </label>
+                )}
               </div>
 
               <button type="submit" disabled={saving || uploading} className="btn-primary w-full">

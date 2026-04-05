@@ -8,6 +8,7 @@ export function AppProvider({ children }) {
   const [tournaments, setTournaments]   = useState([])
   const [registrations, setRegistrations] = useState([])
   const [matches, setMatches]           = useState([])
+  const [updates, setUpdates]           = useState([])
   const [settings, setSettings]         = useState({ whatsappLink: '', adminPin: '1234', groupName: 'Padel Lobsters' })
   const [loading, setLoading]           = useState(true)
   const [isAdmin, setIsAdmin]           = useState(false)
@@ -32,13 +33,27 @@ export function AppProvider({ children }) {
       supabase.channel('settings-changes')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'settings' }, loadSettings)
         .subscribe(),
+      supabase.channel('updates-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'updates' }, loadUpdates)
+        .subscribe(),
+      supabase.channel('reactions-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'update_reactions' }, loadUpdates)
+        .subscribe(),
     ]
     return () => channels.forEach(c => supabase.removeChannel(c))
   }, [])
 
   const loadAll = async () => {
-    await Promise.all([loadPlayers(), loadTournaments(), loadRegistrations(), loadMatches(), loadSettings()])
+    await Promise.all([loadPlayers(), loadTournaments(), loadRegistrations(), loadMatches(), loadSettings(), loadUpdates()])
     setLoading(false)
+  }
+
+  const loadUpdates = async () => {
+    const { data } = await supabase
+      .from('updates')
+      .select('*, update_reactions(*)')
+      .order('created_at', { ascending: false })
+    if (data) setUpdates(data)
   }
 
   const loadPlayers = async () => {
@@ -300,6 +315,41 @@ export function AppProvider({ children }) {
     [normalisedMatches]
   )
 
+  // ── Updates ──────────────────────────────────────────────
+  const addUpdate = useCallback(async (playerId, content) => {
+    const { error } = await supabase.from('updates').insert({ player_id: playerId, content })
+    if (error) console.error('Add update error:', error)
+    else await loadUpdates()
+  }, [])
+
+  const deleteUpdate = useCallback(async (id) => {
+    await supabase.from('updates').delete().eq('id', id)
+    await loadUpdates()
+  }, [])
+
+  const addReaction = useCallback(async (updateId, playerId, type) => {
+    // Check if a reaction already exists from this player on this update
+    const { data: existing } = await supabase
+      .from('update_reactions')
+      .select('*')
+      .eq('update_id', updateId)
+      .eq('player_id', playerId)
+      .maybeSingle()
+
+    if (existing) {
+      if (existing.type === type) {
+        // Same type → toggle off
+        await supabase.from('update_reactions').delete().eq('id', existing.id)
+      } else {
+        // Different type → switch
+        await supabase.from('update_reactions').update({ type }).eq('id', existing.id)
+      }
+    } else {
+      await supabase.from('update_reactions').insert({ update_id: updateId, player_id: playerId, type })
+    }
+    await loadUpdates()
+  }, [])
+
   return (
     <AppContext.Provider value={{
       players: normalisedPlayers,
@@ -314,6 +364,7 @@ export function AppProvider({ children }) {
       getTournamentRegistrations,
       saveMatches, updateMatch, getTournamentMatches,
       saveSettings,
+      updates, addUpdate, deleteUpdate, addReaction,
     }}>
       {children}
     </AppContext.Provider>
