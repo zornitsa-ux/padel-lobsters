@@ -26,17 +26,21 @@ const emptyForm = {
 const COUNTRIES = [
   ['', 'Select country…'],
   ['AR','Argentina'],['AU','Australia'],['AT','Austria'],['BE','Belgium'],
-  ['BR','Brazil'],['CA','Canada'],['CL','Chile'],['CN','China'],
-  ['CO','Colombia'],['HR','Croatia'],['CZ','Czech Republic'],['DK','Denmark'],
-  ['EG','Egypt'],['FI','Finland'],['FR','France'],['DE','Germany'],
-  ['GR','Greece'],['HU','Hungary'],['IN','India'],['ID','Indonesia'],
-  ['IE','Ireland'],['IL','Israel'],['IT','Italy'],['JP','Japan'],
-  ['LU','Luxembourg'],['MY','Malaysia'],['MX','Mexico'],['MA','Morocco'],
+  ['BA','Bosnia and Herzegovina'],['BR','Brazil'],['BG','Bulgaria'],
+  ['CA','Canada'],['CL','Chile'],['CN','China'],
+  ['CO','Colombia'],['HR','Croatia'],['CY','Cyprus'],['CZ','Czech Republic'],
+  ['DK','Denmark'],['EG','Egypt'],['EE','Estonia'],['FI','Finland'],
+  ['FR','France'],['DE','Germany'],['GR','Greece'],['HU','Hungary'],
+  ['IN','India'],['ID','Indonesia'],['IE','Ireland'],['IL','Israel'],
+  ['IT','Italy'],['JP','Japan'],['LV','Latvia'],['LT','Lithuania'],
+  ['LU','Luxembourg'],['MK','North Macedonia'],['MY','Malaysia'],
+  ['MT','Malta'],['MX','Mexico'],['MD','Moldova'],['MA','Morocco'],
   ['NL','Netherlands'],['NZ','New Zealand'],['NG','Nigeria'],['NO','Norway'],
   ['PK','Pakistan'],['PE','Peru'],['PH','Philippines'],['PL','Poland'],
-  ['PT','Portugal'],['RO','Romania'],['RS','Serbia'],['SG','Singapore'],
-  ['ZA','South Africa'],['KR','South Korea'],['ES','Spain'],['SE','Sweden'],
-  ['CH','Switzerland'],['TR','Turkey'],['UA','Ukraine'],
+  ['PT','Portugal'],['RO','Romania'],['RS','Serbia'],['SK','Slovakia'],
+  ['SI','Slovenia'],['SG','Singapore'],['ZA','South Africa'],
+  ['KR','South Korea'],['ES','Spain'],['SE','Sweden'],['CH','Switzerland'],
+  ['TR','Turkey'],['UA','Ukraine'],
   ['AE','United Arab Emirates'],['GB','United Kingdom'],['US','United States'],
   ['UY','Uruguay'],['VE','Venezuela'],
 ]
@@ -46,6 +50,18 @@ const countryFlag = (code) => {
   return code.toUpperCase().split('').map(c =>
     String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65)
   ).join('')
+}
+
+const FlagImg = ({ code, className = '' }) => {
+  if (!code || code.length !== 2) return null
+  return (
+    <img
+      src={`https://flagcdn.com/20x15/${code.toLowerCase()}.png`}
+      width="20" height="15"
+      alt={code}
+      className={`inline-block flex-shrink-0 ${className}`}
+    />
+  )
 }
 
 // ── Corporate Performance Review generator ───────────────────────────────────
@@ -66,15 +82,19 @@ function corpReview(player, matches = [], registrations = [], tournaments = []) 
     else losses++
   })
   const totalMatches = wins + losses
-  const winRate = totalMatches >= 2 ? wins / totalMatches : null
+  const winRate = totalMatches >= 1 ? wins / totalMatches : null
 
   // ── Compute tournament attendance ────────────────────────────────────────
+  const today = new Date()
+  const pastTournaments = tournaments.filter(t => new Date(t.date) <= today)
+  const pastTournamentIds = new Set(pastTournaments.map(t => String(t.id)))
+
   const tournamentsPlayed = new Set(
     registrations
-      .filter(r => r.playerId === pid && r.status === 'registered')
+      .filter(r => r.playerId === pid && r.status === 'registered' && pastTournamentIds.has(String(r.tournamentId)))
       .map(r => r.tournamentId)
   ).size
-  const totalTournaments = tournaments.length
+  const totalTournaments = pastTournaments.length
 
   // ── Compute last-tournament rank ─────────────────────────────────────────
   let lastTournamentRank = null
@@ -160,6 +180,11 @@ function corpReview(player, matches = [], registrations = [], tournaments = []) 
   // Perfectly mediocre
   if (winRate !== null && winRate >= 0.45 && winRate <= 0.55 && totalMatches >= 4) {
     return `Win rate hovering in the 45–55% range across six or more matches. A statistical masterpiece. Not good enough to be intimidating, not bad enough to be endearing. Just perfectly, beautifully average. The bell curve's favourite child.`
+  }
+
+  // Has tournament history but no completed match data recorded
+  if (tournamentsPlayed >= 1 && totalMatches === 0) {
+    return `${name} has shown up to tournaments. The official match record, however, has chosen to remain silent on what actually happened out there. Either the results were never logged, or ${name} plays matches that exist on a different plane of reality. The committee is intrigued and has requested more data.`
   }
 
   // ── Fallback: level-based ─────────────────────────────────────────────────
@@ -413,7 +438,7 @@ export default function Players() {
                   <PlayerAvatar player={p} />
                   <div className="flex-1 text-left min-w-0">
                     <p className="font-semibold text-gray-800 truncate flex items-center gap-1.5">
-                      {p.country && <span className="text-base leading-none">{countryFlag(p.country)}</span>}
+                      {p.country && <FlagImg code={p.country} />}
                       {displayName(p)}
                       {p.isLeftHanded && <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-semibold ml-0.5">L</span>}
                     </p>
