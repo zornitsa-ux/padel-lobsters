@@ -75,6 +75,16 @@ function corpReview(player, matches = [], registrations = [], tournaments = []) 
     }
   }
 
+  // ── No tournament history yet ────────────────────────────────────────────
+  if (tournamentsPlayed === 0) {
+    const welcome = [
+      `${name} has not yet competed in a tournament. Their record is, technically, perfect. We strongly encourage them to preserve this while they still can.`,
+      `No tournament history on file. ${name} remains, officially, an unknown quantity. The group is curious. The committee is hopeful. The courts are ready.`,
+      `Pre-season assessment only. ${name} has yet to play a tournament, which means anything is still possible. We find this genuinely exciting and recommend they sign up before reality sets in.`,
+    ]
+    return welcome[(player.id || 0) % welcome.length]
+  }
+
   // ── Scenario matching (priority order) ───────────────────────────────────
 
   // Dead last in most recent tournament — high skill
@@ -188,10 +198,24 @@ export default function Players() {
   const pendingPlayers = players.filter(p => p.status === 'pending')
 
   const filtered = activePlayers.filter(p =>
-    p.name?.toLowerCase().includes(search.toLowerCase()) ||
-    p.playtomicUsername?.toLowerCase().includes(search.toLowerCase())
+    p.name?.toLowerCase().includes(search.toLowerCase())
   )
   const sorted = [...filtered].sort((a, b) => (b.adjustedLevel || 0) - (a.adjustedLevel || 0))
+
+  // ── Smart name display: first name only, add surname initial on duplicates ─
+  const firstNameCount = {}
+  activePlayers.forEach(p => {
+    const fn = (p.name || '').trim().split(/\s+/)[0]
+    firstNameCount[fn] = (firstNameCount[fn] || 0) + 1
+  })
+  const displayName = (p) => {
+    const parts = (p.name || '').trim().split(/\s+/)
+    const fn = parts[0] || '?'
+    if (firstNameCount[fn] > 1 && parts.length > 1) {
+      return `${fn} ${parts[1][0].toUpperCase()}`
+    }
+    return fn
+  }
 
   const openAdd = () => {
     setForm(emptyForm); setEditId(null); setAvatarFile(null); setAvatarPreview(null); setShowForm(true)
@@ -275,8 +299,6 @@ export default function Players() {
     return LEVEL_COLORS[idx] || LEVEL_COLORS[0]
   }
 
-  const genderIcon = (g) => g === 'female' ? '♀' : g === 'male' ? '♂' : ''
-
   return (
     <div className="space-y-4">
       {showLogin && <AdminLogin onClose={() => setShowLogin(false)} />}
@@ -309,7 +331,7 @@ export default function Players() {
                 <PlayerAvatar player={p} />
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-gray-800 truncate">
-                    {p.name} {genderIcon(p.gender) && <span className="text-gray-400 text-sm">{genderIcon(p.gender)}</span>}
+                    {p.name}
                   </p>
                   <p className="text-xs text-gray-500">
                     Lv {(p.adjustedLevel || 0).toFixed(1)}
@@ -352,31 +374,33 @@ export default function Players() {
           const expanded = expandedId === p.id
           return (
             <div key={p.id} className="card transition-all">
-              <button className="w-full flex items-center gap-3"
-                onClick={() => setExpandedId(expanded ? null : p.id)}>
-                <span className="text-xs font-bold text-gray-400 w-5 text-center flex-shrink-0">
-                  #{idx + 1}
-                </span>
-                <PlayerAvatar player={p} />
-                <div className="flex-1 text-left min-w-0">
-                  <p className="font-semibold text-gray-800 truncate flex items-center gap-1">
-                    {p.name}
-                    {p.gender && <span className="text-gray-400 text-sm">{genderIcon(p.gender)}</span>}
-                    {p.isLeftHanded && <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-semibold ml-0.5">L</span>}
-                  </p>
-                  {p.playtomicUsername && (
-                    <p className="text-xs text-gray-400 truncate">@{p.playtomicUsername}</p>
-                  )}
-                </div>
-                <div className="flex-shrink-0 text-right">
-                  <span className={`text-sm font-bold px-2.5 py-1 rounded-lg ${levelBadge(p.adjustedLevel)}`}>
-                    {(p.adjustedLevel || 0).toFixed(1)}
+              <div className="w-full" onClick={() => setExpandedId(expanded ? null : p.id)}>
+                {/* Top row: rank · avatar · name · level · chevron */}
+                <div className="flex items-center gap-3">
+                  <span className="text-xs font-bold text-gray-400 w-5 text-center flex-shrink-0">
+                    #{idx + 1}
                   </span>
+                  <PlayerAvatar player={p} />
+                  <div className="flex-1 text-left min-w-0">
+                    <p className="font-semibold text-gray-800 truncate flex items-center gap-1">
+                      {displayName(p)}
+                      {p.isLeftHanded && <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-semibold ml-0.5">L</span>}
+                    </p>
+                  </div>
+                  <div className="flex-shrink-0 text-right">
+                    <span className={`text-sm font-bold px-2.5 py-1 rounded-lg ${levelBadge(p.adjustedLevel)}`}>
+                      {(p.adjustedLevel || 0).toFixed(1)}
+                    </span>
+                  </div>
+                  {expanded
+                    ? <ChevronUp size={16} className="text-gray-400 flex-shrink-0" />
+                    : <ChevronDown size={16} className="text-gray-400 flex-shrink-0" />}
                 </div>
-                {expanded
-                  ? <ChevronUp size={16} className="text-gray-400 flex-shrink-0" />
-                  : <ChevronDown size={16} className="text-gray-400 flex-shrink-0" />}
-              </button>
+                {/* Review preview — always visible */}
+                <p className="text-xs text-gray-400 italic mt-2 leading-relaxed line-clamp-2 pl-8">
+                  {corpReview(p, matches, registrations, tournaments)}
+                </p>
+              </div>
 
               {expanded && (
                 <div className="mt-3 pt-3 border-t border-gray-100 space-y-3">
@@ -399,20 +423,21 @@ export default function Players() {
                   </div>
 
                   {/* Tags */}
-                  <div className="flex gap-2 flex-wrap">
-                    {p.gender && (
-                      <span className="text-xs text-gray-500">{p.gender === 'male' ? '♂ Male' : '♀ Female'}</span>
-                    )}
-                    {p.isLeftHanded && (
+                  {p.isLeftHanded && (
+                    <div className="flex gap-2 flex-wrap">
                       <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">🤚 Left-handed</span>
-                    )}
-                  </div>
+                    </div>
+                  )}
 
-                  {isAdmin && p.email && <p className="text-xs text-gray-500">✉ {p.email}</p>}
-                  {isAdmin && p.phone && <p className="text-xs text-gray-500">📞 {p.phone}</p>}
+                  {isAdmin && (p.email || p.phone) && (
+                    <div className="space-y-1">
+                      {p.email && <p className="text-xs text-gray-500">✉ {p.email}</p>}
+                      {p.phone && <p className="text-xs text-gray-500">📞 {p.phone}</p>}
+                    </div>
+                  )}
                   {p.notes && <p className="text-xs text-gray-500 italic">{p.notes}</p>}
 
-                  {/* Corporate Review */}
+                  {/* Corporate Review — full text in expanded view */}
                   <div className="bg-gray-50 rounded-xl p-3 border border-gray-200">
                     <div className="flex items-center gap-1.5 mb-1.5">
                       <Briefcase size={11} className="text-gray-400" />
@@ -489,22 +514,24 @@ export default function Players() {
                   onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
               </div>
 
-              {/* Gender */}
-              <div>
-                <label className="label">Gender</label>
-                <p className="text-xs text-gray-400 mb-2">For optimal pair matching</p>
-                <div className="flex gap-3">
-                  {[['male', '♂ Male'], ['female', '♀ Female']].map(([val, lbl]) => (
-                    <button type="button" key={val}
-                      onClick={() => setForm(f => ({ ...f, gender: f.gender === val ? '' : val }))}
-                      className={`flex-1 py-2.5 rounded-xl font-semibold text-sm transition-all ${
-                        form.gender === val ? 'bg-lobster-teal text-white' : 'bg-gray-100 text-gray-600'
-                      }`}>
-                      {lbl}
-                    </button>
-                  ))}
+              {/* Gender — admin only, used for pair matching */}
+              {isAdmin && (
+                <div>
+                  <label className="label">Gender</label>
+                  <p className="text-xs text-gray-400 mb-2">For optimal pair matching</p>
+                  <div className="flex gap-3">
+                    {[['male', 'Male'], ['female', 'Female']].map(([val, lbl]) => (
+                      <button type="button" key={val}
+                        onClick={() => setForm(f => ({ ...f, gender: f.gender === val ? '' : val }))}
+                        className={`flex-1 py-2.5 rounded-xl font-semibold text-sm transition-all ${
+                          form.gender === val ? 'bg-lobster-teal text-white' : 'bg-gray-100 text-gray-600'
+                        }`}>
+                        {lbl}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Left-handed */}
               <div>
@@ -518,12 +545,6 @@ export default function Players() {
                   }`}>
                   🤚 {form.isLeftHanded ? 'Left-handed (tap to undo)' : 'Tap if left-handed'}
                 </button>
-              </div>
-
-              <div>
-                <label className="label">Playtomic Username</label>
-                <input className="input" placeholder="@username" value={form.playtomicUsername}
-                  onChange={e => setForm(f => ({ ...f, playtomicUsername: e.target.value }))} />
               </div>
 
               <div className="bg-blue-50 rounded-xl p-4 space-y-3">
