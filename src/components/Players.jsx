@@ -156,8 +156,9 @@ function corpReview(player, matches = [], registrations = [], tournaments = []) 
     `HR has reviewed ${name}'s match data and formally acknowledged that it creates a benchmarking problem for everyone else in the group. This is considered a net positive. The rest of the group is divided on that assessment.`,
   ]
   const pool = lvl < 2 ? low : lvl < 3.5 ? mid : lvl < 5 ? high : elite
-  const idx  = (player.id || 0) % pool.length
-  return pool[idx]
+  // hash works for both integer and UUID string IDs
+  const idHash = String(player.id || '0').split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)
+  return pool[idHash % pool.length]
 }
 
 // ── Player avatar component ───────────────────────────────────────────────────
@@ -514,24 +515,22 @@ export default function Players() {
                   onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
               </div>
 
-              {/* Gender — admin only, used for pair matching */}
-              {isAdmin && (
-                <div>
-                  <label className="label">Gender</label>
-                  <p className="text-xs text-gray-400 mb-2">For optimal pair matching</p>
-                  <div className="flex gap-3">
-                    {[['male', 'Male'], ['female', 'Female']].map(([val, lbl]) => (
-                      <button type="button" key={val}
-                        onClick={() => setForm(f => ({ ...f, gender: f.gender === val ? '' : val }))}
-                        className={`flex-1 py-2.5 rounded-xl font-semibold text-sm transition-all ${
-                          form.gender === val ? 'bg-lobster-teal text-white' : 'bg-gray-100 text-gray-600'
-                        }`}>
-                        {lbl}
-                      </button>
-                    ))}
-                  </div>
+              {/* Gender — for optimal pair matching */}
+              <div>
+                <label className="label">Gender</label>
+                <p className="text-xs text-gray-400 mb-2">For optimal pair matching</p>
+                <div className="flex gap-3">
+                  {[['male', 'Male'], ['female', 'Female']].map(([val, lbl]) => (
+                    <button type="button" key={val}
+                      onClick={() => setForm(f => ({ ...f, gender: f.gender === val ? '' : val }))}
+                      className={`flex-1 py-2.5 rounded-xl font-semibold text-sm transition-all ${
+                        form.gender === val ? 'bg-lobster-teal text-white' : 'bg-gray-100 text-gray-600'
+                      }`}>
+                      {lbl}
+                    </button>
+                  ))}
                 </div>
-              )}
+              </div>
 
               {/* Left-handed */}
               <div>
