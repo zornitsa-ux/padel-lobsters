@@ -103,9 +103,10 @@ function corpReview(player, matches = [], registrations = [], tournaments = []) 
   // ── No tournament history yet ────────────────────────────────────────────
   if (tournamentsPlayed === 0) {
     const welcome = [
-      `${name} has not yet competed in a tournament. Their record is, technically, perfect. We strongly encourage them to preserve this while they still can.`,
-      `No tournament history on file. ${name} remains, officially, an unknown quantity. The group is curious. The committee is hopeful. The courts are ready.`,
-      `Pre-season assessment only. ${name} has yet to play a tournament, which means anything is still possible. We find this genuinely exciting and recommend they sign up before reality sets in.`,
+      `${name} hasn't played a tournament yet — which means the group hasn't seen what they can do. That needs to change. Sign up. Show up. Make it a story worth telling.`,
+      `No tournament history yet. Every legend in this group started exactly here. The only difference between then and now is one registration. ${name}, the courts are waiting.`,
+      `${name} is yet to compete. The good news: nobody knows what to expect, which is the best possible position to be in. Sign up for the next one and make some noise.`,
+      `Tournament debut pending. ${name} has everything ahead of them — no losses on record, no limits set, no one to prove wrong yet. The best time to start is the next tournament.`,
     ]
     const idHash = String(player.id || '0').split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)
     return welcome[idHash % welcome.length]
