@@ -39,7 +39,6 @@ export default function Layout({ children, page, onNavigate }) {
           />
           <div>
             <h1 className="font-bold text-lg leading-tight tracking-tight">Padel Lobsters</h1>
-            <p className="text-white/60 text-xs">Tournament Manager</p>
           </div>
         </div>
         <div className="flex items-center gap-2">

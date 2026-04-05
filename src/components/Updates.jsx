@@ -33,10 +33,12 @@ const ClawDown = ({ active, size = 34 }) => (
       objectFit: 'contain',
       display: 'block',
       flexShrink: 0,
-      opacity: active ? 1 : 0.35,
-      transition: 'opacity 0.15s, transform 0.15s',
+      transition: 'filter 0.15s, transform 0.15s',
       transform: active ? 'scale(1.2) rotate(180deg)' : 'scale(1) rotate(180deg)',
-      filter: active ? 'drop-shadow(0 0 4px rgba(220,38,38,0.5))' : 'none',
+      // Gray: light gray inactive, dark gray when pressed
+      filter: active
+        ? 'grayscale(1) brightness(0.45)'
+        : 'grayscale(1) brightness(1.6)',
     }}
   />
 )
@@ -162,9 +164,17 @@ export default function Updates() {
                 {/* Author + time */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-lobster-teal rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                      {(poster?.name || '?')[0].toUpperCase()}
-                    </div>
+                    {poster?.avatarUrl ? (
+                      <img
+                        src={poster.avatarUrl}
+                        alt={poster.name}
+                        className="w-8 h-8 rounded-full object-cover flex-shrink-0 border border-gray-100"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 bg-lobster-teal rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                        {(poster?.name || '?')[0].toUpperCase()}
+                      </div>
+                    )}
                     <div>
                       <p className="font-semibold text-sm text-gray-800">{poster?.name || 'Unknown'}</p>
                       <p className="text-[10px] text-gray-400">{formatTime(u.created_at)}</p>
@@ -189,7 +199,7 @@ export default function Updates() {
                     onClick={() => handleReact(u.id, 'up')}
                     className="flex items-center gap-1.5 active:scale-95 transition-all"
                   >
-                    <ClawUp active={mine?.type === 'up'} size={18} />
+                    <ClawUp active={mine?.type === 'up'} size={28} />
                     <span className={`text-sm font-semibold ${mine?.type === 'up' ? 'text-lobster-teal' : 'text-gray-400'}`}>
                       {upList.length || ''}
                     </span>
@@ -198,7 +208,7 @@ export default function Updates() {
                     onClick={() => handleReact(u.id, 'down')}
                     className="flex items-center gap-1.5 active:scale-95 transition-all"
                   >
-                    <ClawDown active={mine?.type === 'down'} size={18} />
+                    <ClawDown active={mine?.type === 'down'} size={28} />
                     <span className={`text-sm font-semibold ${mine?.type === 'down' ? 'text-lob-coral' : 'text-gray-400'}`}>
                       {dnList.length || ''}
                     </span>
