@@ -33,9 +33,25 @@ export default function Tournament({ onNavigate }) {
   const [showLogin, setShowLogin]     = useState(false)
   const [showHistory, setShowHistory] = useState(false)
 
+  // Parse ISO date-only strings ("YYYY-MM-DD") as LOCAL midnight to avoid UTC-offset misclassification
+  const parseLocalDate = (s) => {
+    if (!s) return null
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s)
+    if (m) return new Date(+m[1], +m[2] - 1, +m[3])
+    const d = new Date(s)
+    return isNaN(d) ? null : d
+  }
   const today    = new Date(); today.setHours(0, 0, 0, 0)
-  const past     = tournaments.filter(t => t.status === 'completed' || new Date(t.date) < today)
-  const upcoming = tournaments.filter(t => t.status !== 'completed' && new Date(t.date) >= today)
+  const past     = tournaments.filter(t => {
+    if (t.status === 'completed') return true
+    const d = parseLocalDate(t.date)
+    return d !== null && d < today
+  })
+  const upcoming = tournaments.filter(t => {
+    if (t.status === 'completed') return false
+    const d = parseLocalDate(t.date)
+    return d === null || d >= today
+  })
 
   const openAdd = () => {
     if (!isAdmin) { setShowLogin(true); return }

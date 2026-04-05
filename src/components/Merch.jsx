@@ -163,6 +163,7 @@ export default function Merch({ tournament, tournaments: allTournaments = [] }) 
   const [uploading, setUploading] = useState(false)
   const [selectedSize, setSelectedSize]   = useState({}) // itemId -> size
   const [sizeError, setSizeError]         = useState({}) // itemId -> true (missing size)
+  const [customName, setCustomName]       = useState({}) // itemId -> name string
   const [ordered, setOrdered]             = useState({}) // itemId -> true (this session)
   const [selectedTournament, setSelectedTournament] = useState(tournament?.id != null ? String(tournament.id) : null)
   const [lightbox, setLightbox]           = useState(null) // { images, index }
@@ -279,6 +280,7 @@ export default function Merch({ tournament, tournaments: allTournaments = [] }) 
   const placeOrder = async (itemId) => {
     const item = items.find(i => i.id === itemId)
     const size = selectedSize[itemId] || ''
+    const name = (customName[itemId] || '').trim()
 
     // Require size if item has sizes
     if (item?.sizes?.length > 0 && !size) {
@@ -293,10 +295,15 @@ export default function Merch({ tournament, tournaments: allTournaments = [] }) 
           merch_item_id: itemId,
           size,
           player_id: claimedId,
+          custom_name: name || null,
         }, { onConflict: 'player_id,merch_item_id' })
       } else {
-        // No identity — still record interest without a name
-        await supabase.from('merch_interests').insert({ merch_item_id: itemId, size, player_id: null })
+        await supabase.from('merch_interests').insert({
+          merch_item_id: itemId,
+          size,
+          player_id: null,
+          custom_name: name || null,
+        })
       }
       setOrdered(o => ({ ...o, [itemId]: true }))
       await loadInterests()
@@ -423,6 +430,20 @@ export default function Merch({ tournament, tournaments: allTournaments = [] }) 
                   </div>
                 </div>
               )}
+
+              {/* Name on item */}
+              <div>
+                <label className="text-xs font-medium text-gray-500 block mb-1">Name for the shirt <span className="text-gray-400 font-normal">(optional)</span></label>
+                <input
+                  type="text"
+                  placeholder="e.g. Alex"
+                  maxLength={30}
+                  disabled={ordered[item.id]}
+                  value={customName[item.id] || ''}
+                  onChange={e => setCustomName(n => ({ ...n, [item.id]: e.target.value }))}
+                  className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-800 placeholder-gray-300 focus:outline-none focus:border-lobster-teal focus:ring-1 focus:ring-lobster-teal transition-all disabled:opacity-40 disabled:bg-gray-50"
+                />
+              </div>
 
               {/* Order button */}
               <div className="flex items-center gap-2">
@@ -551,13 +572,16 @@ export default function Merch({ tournament, tournaments: allTournaments = [] }) 
               {items.map(item => {
                 const itemOrders = interests.filter(i => i.merch_item_id === item.id)
                 if (itemOrders.length === 0) return null
-                // Group by size, collect names
+                // Group by size, collect { playerName, customName }
                 const bySize = {}
                 itemOrders.forEach(o => {
                   const k = o.size || '—'
                   if (!bySize[k]) bySize[k] = []
                   const player = players.find(p => String(p.id) === String(o.player_id))
-                  bySize[k].push(player ? player.name.split(' ')[0] : 'Unknown')
+                  bySize[k].push({
+                    playerName: player ? player.name.split(' ')[0] : 'Unknown',
+                    customName: o.custom_name || null,
+                  })
                 })
                 return (
                   <div key={item.id}>
@@ -566,12 +590,21 @@ export default function Merch({ tournament, tournaments: allTournaments = [] }) 
                       <span className="ml-1.5 text-lobster-teal font-semibold">×{itemOrders.length}</span>
                     </p>
                     <div className="mt-1.5 space-y-1.5">
-                      {Object.entries(bySize).sort().map(([size, names]) => (
+                      {Object.entries(bySize).sort().map(([size, entries]) => (
                         <div key={size} className="flex items-start gap-2">
                           <span className="text-xs font-bold bg-lobster-cream text-lobster-teal px-2 py-0.5 rounded-full flex-shrink-0 min-w-[2.5rem] text-center">
                             {size}
                           </span>
-                          <span className="text-xs text-gray-600">{names.join(', ')}</span>
+                          <div className="flex flex-col gap-0.5">
+                            {entries.map((e, i) => (
+                              <span key={i} className="text-xs text-gray-600">
+                                {e.playerName}
+                                {e.customName && (
+                                  <span className="ml-1 text-lobster-teal font-medium">"{e.customName}"</span>
+                                )}
+                              </span>
+                            ))}
+                          </div>
                         </div>
                       ))}
                     </div>

@@ -2,58 +2,43 @@ import React, { useState, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
 import { Plus, X, Trash2 } from 'lucide-react'
 
-// 🦞 Claw image buttons — mix-blend-mode:screen removes black background
-const CLAW_IMG = '/claws.jpg'
+// 🦞 Claw image buttons — transparent PNG, no background tricks needed
+const CLAW_IMG = '/claws.png'
 
-const ClawUp = ({ active, size = 32 }) => (
-  <span style={{ display: 'inline-block', width: size, height: size, flexShrink: 0, position: 'relative' }}>
-    {/* dark backing so screen blend has a surface */}
-    <span style={{
-      position: 'absolute', inset: 0,
-      borderRadius: '50%',
-      background: active ? 'rgba(220,38,38,0.12)' : 'transparent',
-      transition: 'background 0.15s',
-    }} />
-    <img
-      src={CLAW_IMG}
-      alt="like"
-      style={{
-        width: '100%',
-        height: '100%',
-        objectFit: 'cover',
-        mixBlendMode: 'screen',
-        display: 'block',
-        opacity: active ? 1 : 0.4,
-        transition: 'opacity 0.15s, transform 0.15s',
-        transform: active ? 'scale(1.18)' : 'scale(1)',
-      }}
-    />
-  </span>
+const ClawUp = ({ active, size = 34 }) => (
+  <img
+    src={CLAW_IMG}
+    alt="like"
+    style={{
+      width: size,
+      height: size,
+      objectFit: 'contain',
+      display: 'block',
+      flexShrink: 0,
+      opacity: active ? 1 : 0.35,
+      transition: 'opacity 0.15s, transform 0.15s',
+      transform: active ? 'scale(1.2)' : 'scale(1)',
+      filter: active ? 'drop-shadow(0 0 4px rgba(220,38,38,0.5))' : 'none',
+    }}
+  />
 )
 
-const ClawDown = ({ active, size = 32 }) => (
-  <span style={{ display: 'inline-block', width: size, height: size, flexShrink: 0, position: 'relative' }}>
-    <span style={{
-      position: 'absolute', inset: 0,
-      borderRadius: '50%',
-      background: active ? 'rgba(220,38,38,0.12)' : 'transparent',
-      transition: 'background 0.15s',
-    }} />
-    <img
-      src={CLAW_IMG}
-      alt="dislike"
-      style={{
-        width: '100%',
-        height: '100%',
-        objectFit: 'cover',
-        mixBlendMode: 'screen',
-        display: 'block',
-        opacity: active ? 1 : 0.4,
-        transition: 'opacity 0.15s, transform 0.15s',
-        transform: active ? 'scale(1.18) rotate(180deg)' : 'scale(1) rotate(180deg)',
-      }}
-    />
-  </span>
+const ClawDown = ({ active, size = 34 }) => (
+  <img
+    src={CLAW_IMG}
+    alt="dislike"
+    style={{
+      width: size,
+      height: size,
+      objectFit: 'contain',
+      display: 'block',
+      flexShrink: 0,
+      opacity: active ? 1 : 0.35,
+      transition: 'opacity 0.15s, transform 0.15s',
+      transform: active ? 'scale(1.2) rotate(180deg)' : 'scale(1) rotate(180deg)',
+      filter: active ? 'drop-shadow(0 0 4px rgba(220,38,38,0.5))' : 'none',
+    }}
+  />
 )
 
 export default function Updates() {
@@ -68,6 +53,7 @@ export default function Updates() {
   const [pinTarget, setPinTarget]       = useState(null)   // player to verify
   const [pinInput, setPinInput]         = useState('')
   const [pinError, setPinError]         = useState('')
+  const [playerSearch, setPlayerSearch] = useState('')
 
   const activePlayers = players.filter(p => (p.status || 'active') === 'active')
   const myPlayer = activePlayers.find(p => String(p.id) === String(claimedId))
@@ -280,7 +266,7 @@ export default function Updates() {
               <h3 className="font-bold text-gray-800">
                 {pinTarget ? `Enter PIN for ${pinTarget.name.split(' ')[0]}` : 'Who are you?'}
               </h3>
-              <button onClick={() => { setShowIdentity(false); setPickFor(null); setPinTarget(null); setPinError('') }}>
+              <button onClick={() => { setShowIdentity(false); setPickFor(null); setPinTarget(null); setPinError(''); setPlayerSearch('') }}>
                 <X size={22} className="text-gray-400" />
               </button>
             </div>
@@ -288,8 +274,17 @@ export default function Updates() {
             {!pinTarget ? (
               <>
                 <p className="text-xs text-gray-400">Select your name — you'll enter your PIN once to confirm.</p>
-                <div className="space-y-2 max-h-72 overflow-y-auto">
-                  {activePlayers.map(p => (
+                {/* Search box */}
+                <input
+                  type="text"
+                  placeholder="🔍 Search your name…"
+                  value={playerSearch}
+                  onChange={e => setPlayerSearch(e.target.value)}
+                  className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-lobster-teal focus:ring-1 focus:ring-lobster-teal"
+                  autoFocus
+                />
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {activePlayers.filter(p => p.name.toLowerCase().includes(playerSearch.toLowerCase())).map(p => (
                     <button
                       key={p.id}
                       onClick={() => startPinVerification(p)}
@@ -341,7 +336,7 @@ export default function Updates() {
                 >
                   Confirm — I'm {pinTarget.name.split(' ')[0]}
                 </button>
-                <button onClick={() => { setPinTarget(null); setPinError('') }}
+                <button onClick={() => { setPinTarget(null); setPinError(''); setPlayerSearch('') }}
                   className="w-full text-xs text-gray-400 py-1">
                   ← Back to player list
                 </button>
