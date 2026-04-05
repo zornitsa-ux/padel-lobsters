@@ -11,7 +11,14 @@ export function AppProvider({ children }) {
   const [updates, setUpdates]           = useState([])
   const [settings, setSettings]         = useState({ whatsappLink: '', adminPin: '1234', groupName: 'Padel Lobsters' })
   const [loading, setLoading]           = useState(true)
-  const [isAdmin, setIsAdmin]           = useState(false)
+  const [isAdmin, setIsAdmin]           = useState(() => localStorage.getItem('lobster_admin') === 'true')
+
+  // Wrap setIsAdmin so it persists across refreshes
+  const setAdminState = useCallback((val) => {
+    setIsAdmin(val)
+    if (val) localStorage.setItem('lobster_admin', 'true')
+    else      localStorage.removeItem('lobster_admin')
+  }, [])
 
   // ── Initial data load ──────────────────────────────────────
   useEffect(() => {
