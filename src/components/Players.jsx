@@ -433,6 +433,7 @@ export default function Players() {
 
                   {isAdmin && (p.email || p.phone) && (
                     <div className="space-y-1">
+                      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Only visible to admins</p>
                       {p.email && <p className="text-xs text-gray-500">✉ {p.email}</p>}
                       {p.phone && <p className="text-xs text-gray-500">📞 {p.phone}</p>}
                     </div>
