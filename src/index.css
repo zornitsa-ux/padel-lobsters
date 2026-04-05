@@ -4,7 +4,7 @@
 
 @layer base {
   body {
-    @apply bg-lobster-cream text-gray-800;
+    @apply bg-lob-cream text-lob-dark;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
@@ -15,56 +15,88 @@
 }
 
 @layer components {
+  /* ── Buttons ────────────────────────────────────────────────────── */
   .btn-primary {
-    @apply bg-lobster-teal text-white font-semibold py-3 px-5 rounded-2xl
-           active:scale-95 transition-all duration-150 shadow-md
-           hover:bg-lobster-teal-dark disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply bg-lob-coral text-white font-semibold py-3 px-5 rounded-full
+           active:scale-95 transition-all duration-150 shadow-lg
+           hover:shadow-xl hover:bg-opacity-90 disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-secondary {
-    @apply bg-white text-lobster-teal font-semibold py-3 px-5 rounded-2xl
-           border-2 border-lobster-teal active:scale-95 transition-all duration-150;
+    @apply bg-white text-lob-teal font-semibold py-3 px-5 rounded-full
+           border-2 border-lob-teal active:scale-95 transition-all duration-150
+           hover:bg-lob-teal-light;
   }
 
   .btn-danger {
-    @apply bg-red-500 text-white font-semibold py-2 px-4 rounded-2xl
-           active:scale-95 transition-all duration-150;
-  }
-
-  .btn-orange {
-    @apply bg-lobster-orange text-white font-semibold py-3 px-5 rounded-2xl
+    @apply bg-red-500 text-white font-semibold py-2 px-4 rounded-full
            active:scale-95 transition-all duration-150 shadow-md;
   }
 
+  .btn-orange {
+    @apply bg-lob-coral text-white font-semibold py-3 px-5 rounded-full
+           active:scale-95 transition-all duration-150 shadow-lg;
+  }
+
+  /* ── Cards ────────────────────────────────────────────────────── */
   .card {
     @apply bg-white rounded-2xl p-4;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
-    border: 1px solid rgba(0,0,0,0.05);
+    box-shadow: 0 1px 3px rgba(26, 43, 48, 0.08), 0 4px 16px rgba(26, 43, 48, 0.05);
+    border: 1px solid rgba(26, 43, 48, 0.06);
   }
 
   .card-elevated {
     @apply bg-white rounded-2xl p-4;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08), 0 8px 24px rgba(0,0,0,0.05);
-    border: 1px solid rgba(0,0,0,0.04);
+    box-shadow: 0 2px 8px rgba(26, 43, 48, 0.12), 0 8px 24px rgba(26, 43, 48, 0.08);
+    border: 1px solid rgba(26, 43, 48, 0.04);
   }
 
+  /* ── Inputs ────────────────────────────────────────────────────── */
   .input {
-    @apply w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm
-           focus:outline-none focus:ring-2 focus:ring-lobster-teal focus:border-transparent
+    @apply w-full border border-gray-200 rounded-xl px-4 py-3 text-sm
+           focus:outline-none focus:ring-2 focus:ring-lob-teal focus:border-transparent
            bg-white placeholder-gray-400;
     box-shadow: inset 0 1px 2px rgba(0,0,0,0.04);
   }
 
   .label {
-    @apply block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5;
+    @apply block text-xs font-semibold text-lob-muted uppercase tracking-wide mb-1.5;
   }
 
+  /* ── Pill tabs (modern, light) ────────────────────────────────────── */
+  .tab-pill {
+    @apply inline-flex items-center justify-center px-4 py-2 rounded-full text-sm font-semibold
+           transition-all duration-150 cursor-pointer;
+  }
+
+  .tab-pill-active {
+    @apply tab-pill bg-lob-coral text-white shadow-md;
+  }
+
+  .tab-pill-inactive {
+    @apply tab-pill bg-lob-teal-light text-lob-muted hover:bg-opacity-80;
+  }
+
+  /* ── Progress bar (for paid ratio) ────────────────────────────────── */
+  .progress-bar {
+    @apply w-full bg-gray-200 rounded-full overflow-hidden h-2;
+  }
+
+  .progress-fill {
+    @apply h-full bg-gradient-to-r from-lob-teal to-lob-amber transition-all duration-500;
+  }
+
+  .progress-paid {
+    @apply bg-lob-coral;
+  }
+
+  /* ── Badges & Chips ────────────────────────────────────────────────── */
   .badge-paid {
     @apply bg-green-100 text-green-700 text-xs font-semibold px-2 py-0.5 rounded-full;
   }
 
   .badge-unpaid {
-    @apply bg-red-100 text-red-600 text-xs font-semibold px-2 py-0.5 rounded-full;
+    @apply bg-lob-coral-light text-lob-coral text-xs font-semibold px-2 py-0.5 rounded-full;
   }
 
   .badge-pending {
@@ -72,26 +104,30 @@
   }
 
   .badge-waitlist {
-    @apply bg-orange-100 text-orange-700 text-xs font-semibold px-2 py-0.5 rounded-full;
+    @apply bg-lob-amber/15 text-lob-amber text-xs font-semibold px-2 py-0.5 rounded-full;
   }
 
-  /* Pill chip — used for tags, filters */
   .chip {
     @apply inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full;
   }
+
+  /* ── Header gradient ────────────────────────────────────────────────── */
+  .header-gradient {
+    background: linear-gradient(135deg, #3D7A8A 0%, #2A5A68 100%);
+  }
+
+  /* ── Utility: section header ────────────────────────────────── */
+  .section-header {
+    @apply text-sm font-bold text-lob-muted uppercase tracking-widest;
+  }
 }
 
-/* Smooth scroll */
+/* ── Smooth scroll ────────────────────────────────────────────────── */
 html { scroll-behavior: smooth; }
 
-/* Hide scrollbar on mobile nav */
+/* ── Hide scrollbar on mobile nav ────────────────────────────────── */
 .hide-scrollbar::-webkit-scrollbar { display: none; }
 .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* Bottom safe area for iOS */
+/* ── Bottom safe area for iOS ────────────────────────────────── */
 .pb-safe { padding-bottom: env(safe-area-inset-bottom, 16px); }
-
-/* Subtle gradient for section headers */
-.section-header {
-  background: linear-gradient(135deg, #2E7D8C 0%, #1E5F6E 100%);
-}

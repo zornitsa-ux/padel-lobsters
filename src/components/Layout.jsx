@@ -21,10 +21,9 @@ export default function Layout({ children, page, onNavigate }) {
     <div className="min-h-screen bg-lobster-cream flex flex-col max-w-md mx-auto relative">
       {/* Header */}
       <header
-        className="text-white px-4 pt-10 pb-4 flex items-center justify-between sticky top-0 z-30"
+        className="text-white px-4 pt-10 pb-4 flex items-center justify-between sticky top-0 z-30 header-gradient"
         style={{
-          background: 'linear-gradient(135deg, #2E7D8C 0%, #1E5F6E 100%)',
-          boxShadow: '0 2px 12px rgba(46,125,140,0.25)',
+          boxShadow: '0 2px 16px rgba(26,43,48,0.15), 0 4px 32px rgba(217,79,43,0.08)',
         }}
       >
         <div className="flex items-center gap-3">
@@ -61,20 +60,19 @@ export default function Layout({ children, page, onNavigate }) {
         className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white pb-safe z-30"
         style={{ boxShadow: '0 -1px 0 rgba(0,0,0,0.06), 0 -4px 16px rgba(0,0,0,0.06)' }}
       >
-        <div className="flex items-center justify-around py-1.5">
+        <div className="flex items-center justify-around py-2">
           {NAV.map(({ id, label, icon: Icon }) => {
             const active = page === id
             return (
               <button
                 key={id}
                 onClick={() => onNavigate(id)}
-                className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-xl transition-all ${
-                  active ? 'text-lobster-teal' : 'text-gray-400'
+                className={`flex flex-col items-center gap-1 px-2 py-1.5 rounded-xl transition-all ${
+                  active
+                    ? 'bg-lob-coral/15 text-lob-coral'
+                    : 'text-lob-muted hover:bg-white/10'
                 }`}
               >
-                {active && (
-                  <span className="absolute w-1 h-1 rounded-full bg-lobster-teal -mt-0.5" />
-                )}
                 <Icon size={20} strokeWidth={active ? 2.5 : 1.8} />
                 <span className={`text-[9px] ${active ? 'font-bold' : 'font-medium'}`}>{label}</span>
               </button>

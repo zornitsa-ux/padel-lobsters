@@ -63,7 +63,7 @@ export default function Payments({ tournament, onNavigate }) {
 
       {/* Back */}
       <div>
-        <button onClick={() => onNavigate('tournament')} className="flex items-center gap-1 text-lobster-teal text-sm font-semibold mb-2">
+        <button onClick={() => onNavigate('tournament')} className="flex items-center gap-1 text-lob-teal text-sm font-semibold mb-2">
           <ChevronLeft size={16} /> Events
         </button>
         <h2 className="text-lg font-bold text-gray-800">{tournament.name}</h2>
@@ -72,9 +72,9 @@ export default function Payments({ tournament, onNavigate }) {
 
       {/* Payment info banner */}
       {isAdminAll ? (
-        <div className="bg-lobster-cream rounded-2xl p-4 space-y-2">
+        <div className="bg-lob-teal-light rounded-2xl p-4 space-y-2 border border-lob-teal/10">
           <div className="flex items-center gap-2 mb-1">
-            <ShieldCheck size={15} className="text-lobster-teal" />
+            <ShieldCheck size={15} className="text-lob-teal" />
             <span className="text-sm font-bold text-gray-700">Admin booked all courts</span>
           </div>
           {tournament.totalPrice > 0 && (
@@ -132,7 +132,7 @@ export default function Payments({ tournament, onNavigate }) {
       )}
 
       {/* Summary */}
-      <div className="bg-lobster-teal rounded-2xl p-4 text-white">
+      <div className="bg-lob-teal rounded-2xl p-4 text-white shadow-lg">
         <div className="grid grid-cols-3 gap-3 mb-4">
           <div className="text-center">
             <p className="text-2xl font-bold text-green-300">{paid.length}</p>
@@ -162,9 +162,9 @@ export default function Payments({ tournament, onNavigate }) {
               <span className="opacity-80">Still owed</span>
               <span className="font-bold text-red-300">€{(totalExpected - totalCollected).toFixed(2)}</span>
             </div>
-            <div className="mt-2 bg-white/20 rounded-full h-2 overflow-hidden">
+            <div className="mt-3 bg-white/20 rounded-full h-3 overflow-hidden progress-bar">
               <div
-                className="bg-green-400 h-2 rounded-full transition-all"
+                className="h-full bg-gradient-to-r from-green-300 to-green-400 rounded-full transition-all"
                 style={{ width: totalExpected > 0 ? `${(totalCollected / totalExpected) * 100}%` : '0%' }}
               />
             </div>
@@ -172,18 +172,20 @@ export default function Payments({ tournament, onNavigate }) {
         )}
       </div>
 
-      {/* Filter tabs */}
-      <div className="flex gap-2 bg-gray-100 p-1 rounded-xl">
+      {/* Filter tabs — pill style */}
+      <div className="flex gap-2">
         {[['all', 'All'], ['unpaid', 'Unpaid'], ['paid', 'Paid']].map(([v, l]) => (
           <button
             key={v}
             onClick={() => setFilter(v)}
-            className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
-              filter === v ? 'bg-white text-lobster-teal shadow-sm' : 'text-gray-500'
+            className={`flex-1 py-2.5 px-3 text-sm font-semibold rounded-full transition-all ${
+              filter === v
+                ? 'bg-lob-coral text-white shadow-md'
+                : 'bg-lob-teal-light text-lob-muted hover:bg-opacity-80'
             }`}
           >
             {l}
-            <span className={`ml-1 text-xs ${filter === v ? 'text-lobster-teal' : 'text-gray-400'}`}>
+            <span className={`ml-1.5 text-xs font-bold ${filter === v ? 'text-white/80' : 'text-lob-muted'}`}>
               {v === 'all' ? regs.length : v === 'paid' ? paid.length : unpaid.length}
             </span>
           </button>
@@ -217,8 +219,8 @@ export default function Payments({ tournament, onNavigate }) {
                   <p className="font-semibold text-sm truncate">{player.name}</p>
                   <div className="flex items-center gap-2">
                     {isPaid
-                      ? <span className="badge-paid">✓ {METHODS.find(m => m.value === reg.paymentMethod)?.label || reg.paymentMethod || 'Paid'}</span>
-                      : <span className="badge-unpaid">Unpaid</span>
+                      ? <span className="text-xs font-semibold bg-green-100 text-green-700 px-2 py-0.5 rounded-full">✓ {METHODS.find(m => m.value === reg.paymentMethod)?.label || reg.paymentMethod || 'Paid'}</span>
+                      : <span className="text-xs font-semibold bg-lob-coral-light text-lob-coral px-2 py-0.5 rounded-full">⚠ Unpaid</span>
                     }
                     {costPerPlayer > 0 && (
                       <span className="text-xs text-gray-400">€{costPerPlayer.toFixed(2)}</span>

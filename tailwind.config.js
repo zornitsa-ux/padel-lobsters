@@ -7,14 +7,26 @@ export default {
   theme: {
     extend: {
       colors: {
+        lob: {
+          'teal':        '#3D7A8A',
+          'teal-dark':   '#2A5A68',
+          'teal-light':  '#EAF4F7',
+          'coral':       '#D94F2B',
+          'coral-light': '#FAEAE5',
+          'amber':       '#E8A030',
+          'cream':       '#FAF3E4',
+          'dark':        '#1C2B30',
+          'muted':       '#6B8A92',
+        },
+        // Keep old lobster names for backward compatibility
         lobster: {
-          teal: '#2E7D8C',
-          'teal-dark': '#1E5F6E',
-          'teal-light': '#4A9BAB',
-          orange: '#E05A2B',
-          'orange-light': '#F07040',
-          cream: '#FDF4E3',
-          gold: '#F4C430',
+          teal: '#3D7A8A',
+          'teal-dark': '#2A5A68',
+          'teal-light': '#EAF4F7',
+          orange: '#D94F2B',
+          'orange-light': '#FAEAE5',
+          cream: '#FAF3E4',
+          gold: '#E8A030',
         }
       },
       fontFamily: {
