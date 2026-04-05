@@ -66,7 +66,7 @@ function corpReview(player, matches = [], registrations = [], tournaments = []) 
     else losses++
   })
   const totalMatches = wins + losses
-  const winRate = totalMatches >= 4 ? wins / totalMatches : null
+  const winRate = totalMatches >= 2 ? wins / totalMatches : null
 
   // ── Compute tournament attendance ────────────────────────────────────────
   const tournamentsPlayed = new Set(
@@ -148,17 +148,17 @@ function corpReview(player, matches = [], registrations = [], tournaments = []) 
   }
 
   // The Ironman — attended every tournament
-  if (totalTournaments >= 3 && tournamentsPlayed >= totalTournaments) {
+  if (totalTournaments >= 2 && tournamentsPlayed >= totalTournaments) {
     return `Has attended every single tournament. Every. Single. One. Rain, wind, scheduling conflicts, life events — none of it mattered. We're not sure if this is dedication or if they simply have nowhere else to be. Both are valid.`
   }
 
   // The Ghost — barely shows up
-  if (totalTournaments >= 3 && tournamentsPlayed <= 1) {
+  if (totalTournaments >= 2 && tournamentsPlayed <= 1) {
     return `Has appeared at approximately one tournament. Like a rare weather event — talked about, rarely witnessed. The group respects the mystery. Statistically, anything could happen next. Nobody knows. Not even ${name}.`
   }
 
   // Perfectly mediocre
-  if (winRate !== null && winRate >= 0.45 && winRate <= 0.55 && totalMatches >= 6) {
+  if (winRate !== null && winRate >= 0.45 && winRate <= 0.55 && totalMatches >= 4) {
     return `Win rate hovering in the 45–55% range across six or more matches. A statistical masterpiece. Not good enough to be intimidating, not bad enough to be endearing. Just perfectly, beautifully average. The bell curve's favourite child.`
   }
 
