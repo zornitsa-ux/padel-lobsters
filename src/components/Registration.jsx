@@ -250,9 +250,11 @@ export default function Registration({ tournament, onNavigate }) {
                   <p className="font-semibold text-sm truncate">{p.name}</p>
                   <p className="text-xs text-gray-400">Level {(p.adjustedLevel || 0).toFixed(1)}</p>
                 </div>
-                <span className={reg.paymentStatus === 'paid' ? 'badge-paid' : 'badge-unpaid'}>
-                  {reg.paymentStatus === 'paid' ? 'Paid' : 'Unpaid'}
-                </span>
+                {isAdmin && (
+                  <span className={reg.paymentStatus === 'paid' ? 'badge-paid' : 'badge-unpaid'}>
+                    {reg.paymentStatus === 'paid' ? 'Paid' : 'Unpaid'}
+                  </span>
+                )}
                 {isAdmin && (
                   <button onClick={() => handleCancel(reg)}
                     className="w-8 h-8 flex items-center justify-center rounded-xl bg-red-50 active:scale-95">

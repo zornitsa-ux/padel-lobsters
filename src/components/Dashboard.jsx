@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext'
 import { Trophy, Users, CreditCard, Calendar, ChevronRight, Clock, AlertCircle } from 'lucide-react'
 
 export default function Dashboard({ onNavigate }) {
-  const { tournaments, players, registrations, getTournamentRegistrations } = useApp()
+  const { tournaments, players, registrations, getTournamentRegistrations, isAdmin } = useApp()
 
   // Next upcoming tournament
   const upcoming = tournaments
@@ -72,8 +72,8 @@ export default function Dashboard({ onNavigate }) {
         </div>
       )}
 
-      {/* Alerts */}
-      {unpaid.length > 0 && (
+      {/* Alerts — admin only */}
+      {isAdmin && unpaid.length > 0 && (
         <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-xl p-3">
           <AlertCircle size={18} className="text-red-500 flex-shrink-0" />
           <p className="text-sm text-red-700 font-medium">
@@ -130,7 +130,7 @@ export default function Dashboard({ onNavigate }) {
                     }`}>
                       {t.status}
                     </span>
-                    <p className="text-xs text-gray-400 mt-0.5">{tPaid}/{tRegs.filter(r=>r.status==='registered').length} paid</p>
+                    {isAdmin && <p className="text-xs text-gray-400 mt-0.5">{tPaid}/{tRegs.filter(r=>r.status==='registered').length} paid</p>}
                   </div>
                   <ChevronRight size={16} className="text-gray-300 flex-shrink-0" />
                 </button>

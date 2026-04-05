@@ -386,7 +386,10 @@ export default function Players() {
         const filename = `player-${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
         const { error: uploadError } = await supabase.storage
           .from('avatars').upload(filename, avatarFile, { upsert: true })
-        if (!uploadError) {
+        if (uploadError) {
+          console.error('Avatar upload error:', uploadError)
+          alert('Photo could not be saved: ' + uploadError.message + '\n\nMake sure the "avatars" storage bucket exists and is set to public in Supabase.')
+        } else {
           const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filename)
           avatarUrl = publicUrl
         }
