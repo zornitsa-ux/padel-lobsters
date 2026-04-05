@@ -121,7 +121,7 @@ export default function Merch({ tournament, tournaments: allTournaments = [] }) 
   const [uploading, setUploading] = useState(false)
   const [selectedInterest, setSelectedInterest] = useState({}) // itemId -> size
   const [expressed, setExpressed] = useState({}) // itemId -> true (this session)
-  const [selectedTournament, setSelectedTournament] = useState(tournament?.id || null) // prize tab: selected tournament
+  const [selectedTournament, setSelectedTournament] = useState(tournament?.id != null ? String(tournament.id) : null) // prize tab: selected tournament
 
   // ── Data loading ────────────────────────────────────────────────────────────
   const loadItems = async () => {
@@ -336,7 +336,7 @@ export default function Merch({ tournament, tournaments: allTournaments = [] }) 
               <label className="label">Select tournament for prizes & raffle</label>
               <select
                 value={selectedTournament || ''}
-                onChange={e => setSelectedTournament(e.target.value ? parseInt(e.target.value) : null)}
+                onChange={e => setSelectedTournament(e.target.value || null)}
                 className="input text-sm"
               >
                 <option value="">-- Choose tournament --</option>
@@ -359,12 +359,12 @@ export default function Merch({ tournament, tournaments: allTournaments = [] }) 
           {selectedTournament && items.length > 0 && isAdmin && (
             <div className="card space-y-3">
               <p className="font-semibold text-gray-700 text-sm">
-                Select prizes for {tournaments.find(t => t.id === selectedTournament)?.name}
+                Select prizes for {tournaments.find(t => String(t.id) === String(selectedTournament))?.name}
               </p>
               <p className="text-xs text-gray-400">Tap items to add/remove from the prize pool (admin feature)</p>
               <div className="space-y-2">
                 {items.map(item => {
-                  const selectedTour = tournaments.find(t => t.id === selectedTournament)
+                  const selectedTour = tournaments.find(t => String(t.id) === String(selectedTournament))
                   const prizeIds = selectedTour?.prizeItemIds || []
                   const selected = prizeIds.includes(item.id)
                   return (
@@ -392,7 +392,7 @@ export default function Merch({ tournament, tournaments: allTournaments = [] }) 
           {/* Raffle — use selected tournament */}
           {selectedTournament && (
             <Raffle
-              tournament={tournaments.find(t => t.id === selectedTournament)}
+              tournament={tournaments.find(t => String(t.id) === String(selectedTournament))}
               players={players}
               registrations={registrations}
             />
