@@ -2,31 +2,58 @@ import React, { useState, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
 import { Plus, X, Trash2 } from 'lucide-react'
 
-// 🦞 rotated = claw directions
-const ClawUp = ({ active, size = 20 }) => (
-  <span
-    style={{
-      display: 'inline-block',
-      transform: 'rotate(-90deg)',
-      fontSize: size,
-      lineHeight: 1,
-      filter: active ? 'none' : 'grayscale(1) opacity(0.45)',
-      transition: 'filter 0.15s',
-    }}
-  >🦞</span>
+// 🦞 Claw image buttons — mix-blend-mode:screen removes black background
+const CLAW_IMG = '/claws.jpg'
+
+const ClawUp = ({ active, size = 32 }) => (
+  <span style={{ display: 'inline-block', width: size, height: size, flexShrink: 0, position: 'relative' }}>
+    {/* dark backing so screen blend has a surface */}
+    <span style={{
+      position: 'absolute', inset: 0,
+      borderRadius: '50%',
+      background: active ? 'rgba(220,38,38,0.12)' : 'transparent',
+      transition: 'background 0.15s',
+    }} />
+    <img
+      src={CLAW_IMG}
+      alt="like"
+      style={{
+        width: '100%',
+        height: '100%',
+        objectFit: 'cover',
+        mixBlendMode: 'screen',
+        display: 'block',
+        opacity: active ? 1 : 0.4,
+        transition: 'opacity 0.15s, transform 0.15s',
+        transform: active ? 'scale(1.18)' : 'scale(1)',
+      }}
+    />
+  </span>
 )
 
-const ClawDown = ({ active, size = 20 }) => (
-  <span
-    style={{
-      display: 'inline-block',
-      transform: 'rotate(90deg)',
-      fontSize: size,
-      lineHeight: 1,
-      filter: active ? 'none' : 'grayscale(1) opacity(0.45)',
-      transition: 'filter 0.15s',
-    }}
-  >🦞</span>
+const ClawDown = ({ active, size = 32 }) => (
+  <span style={{ display: 'inline-block', width: size, height: size, flexShrink: 0, position: 'relative' }}>
+    <span style={{
+      position: 'absolute', inset: 0,
+      borderRadius: '50%',
+      background: active ? 'rgba(220,38,38,0.12)' : 'transparent',
+      transition: 'background 0.15s',
+    }} />
+    <img
+      src={CLAW_IMG}
+      alt="dislike"
+      style={{
+        width: '100%',
+        height: '100%',
+        objectFit: 'cover',
+        mixBlendMode: 'screen',
+        display: 'block',
+        opacity: active ? 1 : 0.4,
+        transition: 'opacity 0.15s, transform 0.15s',
+        transform: active ? 'scale(1.18) rotate(180deg)' : 'scale(1) rotate(180deg)',
+      }}
+    />
+  </span>
 )
 
 export default function Updates() {

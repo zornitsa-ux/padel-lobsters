@@ -105,6 +105,48 @@ function Raffle({ tournament, players, registrations }) {
   )
 }
 
+// ── Image Lightbox ────────────────────────────────────────────────────────────
+function Lightbox({ images, startIndex = 0, onClose }) {
+  const [current, setCurrent] = useState(startIndex)
+  return (
+    <div
+      className="fixed inset-0 bg-black/90 z-50 flex flex-col items-center justify-center"
+      onClick={onClose}
+    >
+      {/* Close button */}
+      <button
+        onClick={onClose}
+        className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-white"
+      >
+        <X size={20} />
+      </button>
+
+      {/* Main image */}
+      <img
+        src={images[current]}
+        alt=""
+        className="max-w-full max-h-[80vh] object-contain rounded-xl"
+        onClick={e => e.stopPropagation()}
+      />
+
+      {/* Thumbnails if multiple */}
+      {images.length > 1 && (
+        <div className="flex gap-2 mt-4" onClick={e => e.stopPropagation()}>
+          {images.map((url, i) => (
+            <button
+              key={i}
+              onClick={() => setCurrent(i)}
+              className={`w-12 h-12 rounded-lg overflow-hidden border-2 transition-all ${i === current ? 'border-white' : 'border-transparent opacity-50'}`}
+            >
+              <img src={url} alt="" className="w-full h-full object-cover" />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Main Merch component ──────────────────────────────────────────────────────
 export default function Merch({ tournament, tournaments: allTournaments = [] }) {
   const { players, registrations, isAdmin, tournaments: contextTournaments = [], claimedId } = useApp()
@@ -123,6 +165,7 @@ export default function Merch({ tournament, tournaments: allTournaments = [] }) 
   const [sizeError, setSizeError]         = useState({}) // itemId -> true (missing size)
   const [ordered, setOrdered]             = useState({}) // itemId -> true (this session)
   const [selectedTournament, setSelectedTournament] = useState(tournament?.id != null ? String(tournament.id) : null)
+  const [lightbox, setLightbox]           = useState(null) // { images, index }
 
   // ── Data loading ────────────────────────────────────────────────────────────
   const loadItems = async () => {
@@ -273,6 +316,15 @@ export default function Merch({ tournament, tournaments: allTournaments = [] }) 
     <div className="space-y-4">
       {showLogin && <AdminLogin onClose={() => setShowLogin(false)} />}
 
+      {/* Lightbox */}
+      {lightbox && (
+        <Lightbox
+          images={lightbox.images}
+          startIndex={lightbox.index}
+          onClose={() => setLightbox(null)}
+        />
+      )}
+
       <h2 className="text-lg font-bold text-gray-800">Padel Lobsters Merch</h2>
 
       {/* Tab bar */}
@@ -302,15 +354,32 @@ export default function Merch({ tournament, tournaments: allTournaments = [] }) 
 
           {loading && <p className="text-center text-gray-400 py-8 text-sm">Loading…</p>}
 
-          {items.map(item => (
+          {items.map(item => {
+            const allImgs = item.image_urls?.length > 0
+              ? item.image_urls
+              : item.image_url ? [item.image_url] : []
+            return (
             <div key={item.id} className="card space-y-3">
-              {/* Image(s) */}
-              {(item.image_urls?.length > 0 || item.image_url) ? (
-                <img
-                  src={(item.image_urls?.[0]) || item.image_url}
-                  alt={item.name}
-                  className="w-full h-44 object-cover rounded-xl"
-                />
+              {/* Image(s) — tap to zoom */}
+              {allImgs.length > 0 ? (
+                <div
+                  className="relative w-full bg-white rounded-xl overflow-hidden cursor-zoom-in"
+                  onClick={() => setLightbox({ images: allImgs, index: 0 })}
+                >
+                  <img
+                    src={allImgs[0]}
+                    alt={item.name}
+                    className="w-full h-52 object-contain rounded-xl"
+                  />
+                  {allImgs.length > 1 && (
+                    <span className="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-0.5 rounded-full">
+                      +{allImgs.length - 1} more
+                    </span>
+                  )}
+                  <span className="absolute bottom-2 left-2 bg-black/40 text-white text-xs px-2 py-0.5 rounded-full">
+                    🔍 tap to zoom
+                  </span>
+                </div>
               ) : (
                 <div className="w-full h-32 bg-lobster-cream rounded-xl flex items-center justify-center">
                   <ShoppingBag size={36} className="text-lobster-teal opacity-40" />
@@ -377,7 +446,7 @@ export default function Merch({ tournament, tournaments: allTournaments = [] }) 
                 )}
               </div>
             </div>
-          ))}
+          )})}
 
           {!loading && items.length === 0 && (
             <div className="card py-10 text-center text-gray-400">
