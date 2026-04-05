@@ -33,8 +33,9 @@ export default function Tournament({ onNavigate }) {
   const [showLogin, setShowLogin]     = useState(false)
   const [showHistory, setShowHistory] = useState(false)
 
-  const upcoming = tournaments.filter(t => t.status !== 'completed')
-  const past     = tournaments.filter(t => t.status === 'completed')
+  const today    = new Date(); today.setHours(0, 0, 0, 0)
+  const past     = tournaments.filter(t => t.status === 'completed' || new Date(t.date) < today)
+  const upcoming = tournaments.filter(t => t.status !== 'completed' && new Date(t.date) >= today)
 
   const openAdd = () => {
     if (!isAdmin) { setShowLogin(true); return }
@@ -279,22 +280,21 @@ export default function Tournament({ onNavigate }) {
       </div>
 
       {/* Past events + History — collapsible */}
-      {(past.length > 0) && (
-        <div>
-          <button
-            onClick={() => setShowHistory(h => !h)}
-            className="w-full flex items-center justify-between py-3 px-1 text-gray-500 font-semibold text-sm"
-          >
-            <span className="flex items-center gap-2">
-              <Clock size={15} className="text-gray-400" />
-              Past Events & History ({past.length})
-            </span>
-            {showHistory ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-          </button>
+      <div>
+        <button
+          onClick={() => setShowHistory(h => !h)}
+          className="w-full flex items-center justify-between py-3 px-1 text-gray-500 font-semibold text-sm"
+        >
+          <span className="flex items-center gap-2">
+            <Clock size={15} className="text-gray-400" />
+            Past Events & History ({past.length})
+          </span>
+          {showHistory ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+        </button>
 
-          {showHistory && (
-            <div className="space-y-3">
-              {past.map(t => {
+        {showHistory && (
+          <div className="space-y-3">
+            {past.map(t => {
                 const allBooked   = (t.courts || []).every(c => c.booked)
                 const bookedCount = (t.courts || []).filter(c => c.booked).length
                 const totalCourts = (t.courts || []).length
@@ -353,10 +353,9 @@ export default function Tournament({ onNavigate }) {
               <div className="mt-4">
                 <HistoryContent />
               </div>
-            </div>
-          )}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
 
       {showForm && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center">

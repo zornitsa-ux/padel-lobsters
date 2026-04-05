@@ -88,12 +88,23 @@ export function AppProvider({ children }) {
 
   const loadSettings = async () => {
     const { data } = await supabase.from('settings').select('*').eq('id', 1).single()
-    if (data) setSettings(data)
+    if (data) setSettings({
+      ...data,
+      whatsappLink: data.whatsapp_link ?? data.whatsappLink ?? '',
+      adminPin:     data.admin_pin     ?? data.adminPin     ?? '1234',
+      groupName:    data.group_name    ?? data.groupName    ?? 'Padel Lobsters',
+    })
   }
 
   // ── Settings ─────────────────────────────────────────────
   const saveSettings = useCallback(async (newSettings) => {
-    await supabase.from('settings').upsert({ id: 1, ...newSettings })
+    const payload = {
+      id:            1,
+      whatsapp_link: newSettings.whatsappLink ?? '',
+      admin_pin:     newSettings.adminPin     ?? '1234',
+      group_name:    newSettings.groupName    ?? 'Padel Lobsters',
+    }
+    await supabase.from('settings').upsert(payload)
     setSettings(s => ({ ...s, ...newSettings }))
   }, [])
 
