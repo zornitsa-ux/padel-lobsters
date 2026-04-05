@@ -244,7 +244,7 @@ function PlayerAvatar({ player, size = 'md', className = '' }) {
 }
 
 export default function Players() {
-  const { players, addPlayer, updatePlayer, deletePlayer, isAdmin, matches, registrations, tournaments } = useApp()
+  const { players, addPlayer, updatePlayer, deletePlayer, isAdmin, matches, registrations, tournaments, regeneratePin } = useApp()
   const [showForm, setShowForm]     = useState(false)
   const [editId, setEditId]         = useState(null)
   const [form, setForm]             = useState(emptyForm)
@@ -255,6 +255,7 @@ export default function Players() {
   const [avatarFile, setAvatarFile] = useState(null)
   const [avatarPreview, setAvatarPreview] = useState(null)
   const [mergePlayer, setMergePlayer] = useState(null)   // existing player found by name
+  const [pinReveal, setPinReveal]     = useState(null)   // { name, pin } — shown after registration
   const fileInputRef = useRef(null)
 
   const activePlayers  = players.filter(p => (p.status || 'active') === 'active')
@@ -346,11 +347,29 @@ export default function Players() {
 
   const handleApprove = async (p) => {
     await updatePlayer(p.id, { ...p, status: 'active' })
+    // Open WhatsApp with the PIN if we have a phone number
+    if (p.phone) {
+      const phone   = p.phone.replace(/\D/g, '')
+      const name    = (p.name || '').split(' ')[0]
+      const pin     = p.pin || '????'
+      const message = `Hi ${name}! 🦞 You've been approved for Padel Lobsters. Your access PIN is *${pin}* — enter it once in the app to confirm your identity. See you on the court!`
+      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank')
+    }
   }
 
   const handleReject = async (id) => {
     if (!confirm('Reject and remove this registration request?')) return
     await deletePlayer(id)
+  }
+
+  const handleRegeneratePin = async (p) => {
+    const newPin = await regeneratePin(p.id)
+    if (p.phone) {
+      const phone   = p.phone.replace(/\D/g, '')
+      const name    = (p.name || '').split(' ')[0]
+      const message = `Hi ${name}! 🦞 Your Padel Lobsters PIN has been reset. New PIN: *${newPin}*`
+      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank')
+    }
   }
 
   const handleAvatarChange = (e) => {
@@ -401,17 +420,24 @@ export default function Players() {
         playtomicLevel: parseFloat(form.playtomicLevel) || 0,
         adjustment: parseFloat(form.adjustment) || 0,
         isLeftHanded: form.isLeftHanded || false,
-        status: editId ? (isMerge ? 'pending' : undefined) : (isAdmin ? 'active' : 'pending'),
+        status: 'active',
       }
-      if (editId) await updatePlayer(editId, data)
-      else        await addPlayer(data)
+      const firstName = form.name.trim().split(/\s+/)[0]
+      if (editId) {
+        await updatePlayer(editId, data)
+        // Show the existing player's PIN after completing a merge
+        if (!isAdmin) {
+          const existing = players.find(p => String(p.id) === String(editId))
+          if (existing?.pin) setPinReveal({ name: firstName, pin: existing.pin })
+        }
+      } else {
+        const newPlayer = await addPlayer(data)
+        if (!isAdmin && newPlayer?.pin) {
+          setPinReveal({ name: firstName, pin: newPlayer.pin })
+        }
+      }
       setShowForm(false)
       setAvatarFile(null); setAvatarPreview(null); setMergePlayer(null)
-      if (!isAdmin && !editId) {
-        alert('Your registration request has been sent! The admin will approve it shortly.')
-      } else if (isMerge) {
-        alert('Profile updated! The admin will verify and activate your account shortly.')
-      }
     } finally {
       setSaving(false)
     }
@@ -441,12 +467,12 @@ export default function Players() {
         </button>
       </div>
 
-      {/* Pending approvals */}
+      {/* Pending approvals (legacy — new registrations are auto-approved) */}
       {isAdmin && pendingPlayers.length > 0 && (
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <Clock size={14} className="text-orange-500" />
-            <p className="text-sm font-bold text-orange-600">Pending Approval</p>
+            <p className="text-sm font-bold text-orange-600">Pending (legacy)</p>
           </div>
           {pendingPlayers.map(p => (
             <div key={p.id} className="card border-l-4 border-orange-300">
@@ -511,10 +537,15 @@ export default function Players() {
                       {p.isLeftHanded && <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-semibold ml-0.5">L</span>}
                     </p>
                   </div>
-                  <div className="flex-shrink-0 text-right">
+                  <div className="flex-shrink-0 text-right flex flex-col items-end gap-1">
                     <span className={`text-sm font-bold px-2.5 py-1 rounded-lg ${levelBadge(p.adjustedLevel)}`}>
                       {(p.adjustedLevel || 0).toFixed(1)}
                     </span>
+                    {isAdmin && p.pin && (
+                      <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-md tracking-wider">
+                        {p.pin}
+                      </span>
+                    )}
                   </div>
                   {expanded
                     ? <ChevronUp size={16} className="text-gray-400 flex-shrink-0" />
@@ -562,6 +593,22 @@ export default function Players() {
                   )}
                   {p.notes && <p className="text-xs text-gray-500 italic">{p.notes}</p>}
 
+                  {/* PIN — admin only */}
+                  {isAdmin && (
+                    <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider mb-0.5">Access PIN</p>
+                        <p className="text-xl font-bold text-amber-800 tracking-widest">{p.pin || '—'}</p>
+                      </div>
+                      <button
+                        onClick={() => handleRegeneratePin(p)}
+                        className="text-xs bg-amber-500 text-white px-3 py-1.5 rounded-xl font-semibold active:scale-95 transition-all"
+                      >
+                        Reset & send
+                      </button>
+                    </div>
+                  )}
+
                   {/* Corporate Review — full text in expanded view */}
                   <div className="bg-gray-50 rounded-xl p-3 border border-gray-200">
                     <div className="flex items-center gap-1.5 mb-1.5">
@@ -588,15 +635,45 @@ export default function Players() {
         })}
       </div>
 
+      {/* PIN reveal modal — shown after registration */}
+      {pinReveal && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-sm p-6 space-y-5 text-center shadow-xl">
+            <div className="text-5xl">🦞</div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-800">Welcome, {pinReveal.name}!</h2>
+              <p className="text-sm text-gray-500 mt-1">You're in! Here's your personal access PIN:</p>
+            </div>
+            <div className="bg-amber-50 border-2 border-amber-300 rounded-2xl py-5 px-4">
+              <p className="text-[10px] font-bold text-amber-600 uppercase tracking-widest mb-2">Your PIN</p>
+              <p className="text-5xl font-bold text-amber-800 tracking-[0.35em]">{pinReveal.pin}</p>
+            </div>
+            <div className="bg-gray-50 rounded-xl p-3 text-left space-y-1.5">
+              <p className="text-xs font-semibold text-gray-600">Save this PIN — you'll use it to:</p>
+              <p className="text-xs text-gray-500">🦞 Post updates and react to messages</p>
+              <p className="text-xs text-gray-500">📋 Confirm your identity in the app</p>
+              <p className="text-xs text-gray-500">🔒 Keep your account secure</p>
+            </div>
+            <p className="text-[10px] text-gray-400">Ask the admin if you ever lose your PIN</p>
+            <button
+              onClick={() => setPinReveal(null)}
+              className="btn-primary w-full"
+            >
+              Got it, let's play! 🎾
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Add/Edit modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center">
           <div className="bg-white rounded-t-3xl w-full max-w-md max-h-[92vh] overflow-y-auto">
             <div className="sticky top-0 bg-white px-5 pt-5 pb-3 border-b border-gray-100 flex items-center justify-between">
               <div>
-                <h2 className="font-bold text-gray-800">{editId ? 'Edit Player' : 'Join the Lobsters'}</h2>
+                <h2 className="font-bold text-gray-800">{editId ? 'Edit Player' : 'Join the Lobsters 🦞'}</h2>
                 {!editId && !isAdmin && (
-                  <p className="text-xs text-gray-500 mt-0.5">Your request will be approved by the admin</p>
+                  <p className="text-xs text-gray-500 mt-0.5">You'll get an access PIN to use in the app</p>
                 )}
               </div>
               <button onClick={() => { setShowForm(false); setAvatarFile(null); setAvatarPreview(null) }}>
@@ -753,7 +830,7 @@ export default function Players() {
               </div>
 
               <button type="submit" disabled={saving} className="btn-primary w-full">
-                {saving ? 'Saving...' : editId ? 'Save Changes' : isAdmin ? 'Add Player' : 'Send Registration Request'}
+                {saving ? 'Saving...' : editId ? 'Save Changes' : isAdmin ? 'Add Player' : 'Join the Lobsters 🦞'}
               </button>
             </form>
           </div>

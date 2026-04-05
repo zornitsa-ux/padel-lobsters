@@ -29,24 +29,21 @@ const ClawDown = ({ active, size = 20 }) => (
   >🦞</span>
 )
 
-const STORAGE_KEY = 'lobster_my_player_id'
-
 export default function Updates() {
-  const { updates, players, addUpdate, deleteUpdate, addReaction, isAdmin } = useApp()
-  const [showForm, setShowForm]       = useState(false)
-  const [myPlayerId, setMyPlayerId]   = useState(() => localStorage.getItem(STORAGE_KEY) || '')
-  const [postAs, setPostAs]           = useState('')
-  const [content, setContent]         = useState('')
-  const [posting, setPosting]         = useState(false)
+  const { updates, players, addUpdate, deleteUpdate, addReaction, isAdmin, claimedId, claimIdentity, clearIdentity } = useApp()
+  const [showForm, setShowForm]         = useState(false)
+  const [postAs, setPostAs]             = useState('')
+  const [content, setContent]           = useState('')
+  const [posting, setPosting]           = useState(false)
   const [showIdentity, setShowIdentity] = useState(false)
-  const [pickFor, setPickFor]         = useState(null) // { updateId, type } — pending reaction
+  const [pickFor, setPickFor]           = useState(null)   // { updateId, type } — pending reaction
+  // PIN verification state
+  const [pinTarget, setPinTarget]       = useState(null)   // player to verify
+  const [pinInput, setPinInput]         = useState('')
+  const [pinError, setPinError]         = useState('')
 
   const activePlayers = players.filter(p => (p.status || 'active') === 'active')
-  const myPlayer = activePlayers.find(p => String(p.id) === String(myPlayerId))
-
-  useEffect(() => {
-    if (myPlayerId) localStorage.setItem(STORAGE_KEY, myPlayerId)
-  }, [myPlayerId])
+  const myPlayer = activePlayers.find(p => String(p.id) === String(claimedId))
 
   const formatTime = (ts) => {
     if (!ts) return ''
@@ -60,39 +57,52 @@ export default function Updates() {
 
   const handlePost = async (e) => {
     e.preventDefault()
-    if (!postAs || !content.trim()) return
+    if (!claimedId || !content.trim()) return
     setPosting(true)
-    await addUpdate(postAs, content.trim())
-    setMyPlayerId(postAs)
+    await addUpdate(claimedId, content.trim())
     setContent('')
-    setPostAs('')
     setShowForm(false)
     setPosting(false)
   }
 
   const handleReact = (updateId, type) => {
-    if (!myPlayerId) {
+    if (!claimedId) {
       setPickFor({ updateId, type })
       setShowIdentity(true)
       return
     }
-    addReaction(updateId, myPlayerId, type)
+    addReaction(updateId, claimedId, type)
   }
 
-  const confirmIdentity = (pid) => {
-    setMyPlayerId(pid)
-    setShowIdentity(false)
-    if (pickFor) {
-      addReaction(pickFor.updateId, pid, pickFor.type)
-      setPickFor(null)
+  // Called when user taps a player in the identity picker
+  const startPinVerification = (player) => {
+    setPinTarget(player)
+    setPinInput('')
+    setPinError('')
+  }
+
+  const confirmPin = () => {
+    const result = claimIdentity(pinTarget.id, pinInput, players)
+    if (result.success) {
+      setPinTarget(null)
+      setPinInput('')
+      setPinError('')
+      setShowIdentity(false)
+      if (pickFor) {
+        addReaction(pickFor.updateId, pinTarget.id, pickFor.type)
+        setPickFor(null)
+      }
+    } else {
+      setPinError(result.error)
+      setPinInput('')
     }
   }
 
   const getReactions = (update, type) =>
     (update.update_reactions || []).filter(r => r.type === type)
 
-  const myReaction = (update) =>
-    (update.update_reactions || []).find(r => String(r.player_id) === String(myPlayerId))
+  const myReaction = (update, cid) =>
+    (update.update_reactions || []).find(r => String(r.player_id) === String(cid))
 
   return (
     <div className="space-y-4">
@@ -115,8 +125,8 @@ export default function Updates() {
         <span className="text-lg">🦞</span>
         <span className="text-sm text-gray-600 flex-1 text-left">
           {myPlayer
-            ? <><span className="font-semibold text-gray-800">{myPlayer.name}</span> <span className="text-gray-400 text-xs">— tap to change</span></>
-            : <span className="text-gray-400">Tap to set your profile for reactions & posts</span>
+            ? <><span className="font-semibold text-gray-800">{myPlayer.name}</span> <span className="text-gray-400 text-xs">✓ verified — tap to change</span></>
+            : <span className="text-gray-400">Tap to verify your identity</span>
           }
         </span>
       </button>
@@ -133,7 +143,7 @@ export default function Updates() {
             const poster  = activePlayers.find(p => String(p.id) === String(u.player_id))
             const upList  = getReactions(u, 'up')
             const dnList  = getReactions(u, 'down')
-            const mine    = myReaction(u)
+            const mine    = myReaction(u, claimedId)
             return (
               <div key={u.id} className="card space-y-3">
                 {/* Author + time */}
@@ -197,18 +207,22 @@ export default function Updates() {
             </div>
             <form onSubmit={handlePost} className="space-y-4">
               <div>
-                <label className="label">Post as</label>
-                <select
-                  className="input"
-                  value={postAs}
-                  onChange={e => setPostAs(e.target.value)}
-                  required
-                >
-                  <option value="">Select your name…</option>
-                  {activePlayers.map(p => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
-                </select>
+                <label className="label">Posting as</label>
+                {claimedId && myPlayer ? (
+                  <div className="flex items-center gap-2 bg-lobster-teal/10 rounded-xl px-3 py-2.5">
+                    <div className="w-7 h-7 bg-lobster-teal rounded-full flex items-center justify-center text-white font-bold text-xs">
+                      {myPlayer.name[0].toUpperCase()}
+                    </div>
+                    <span className="font-semibold text-sm text-gray-800">{myPlayer.name}</span>
+                    <span className="text-xs text-lobster-teal ml-1">✓ verified</span>
+                  </div>
+                ) : (
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-700">
+                    You need to verify your identity first. Close this and tap the identity pill above.
+                  </div>
+                )}
+                {/* hidden input carries the player id */}
+                <input type="hidden" value={claimedId || ''} />
               </div>
               <div>
                 <label className="label">Message</label>
@@ -236,33 +250,76 @@ export default function Updates() {
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center">
           <div className="bg-white rounded-t-3xl w-full max-w-md p-5 space-y-3">
             <div className="flex items-center justify-between mb-1">
-              <h3 className="font-bold text-gray-800">Who are you?</h3>
-              <button onClick={() => { setShowIdentity(false); setPickFor(null) }}>
+              <h3 className="font-bold text-gray-800">
+                {pinTarget ? `Enter PIN for ${pinTarget.name.split(' ')[0]}` : 'Who are you?'}
+              </h3>
+              <button onClick={() => { setShowIdentity(false); setPickFor(null); setPinTarget(null); setPinError('') }}>
                 <X size={22} className="text-gray-400" />
               </button>
             </div>
-            <p className="text-xs text-gray-400">Select your profile so your reactions and posts are attributed correctly.</p>
-            <div className="space-y-2 max-h-72 overflow-y-auto">
-              {activePlayers.map(p => (
+
+            {!pinTarget ? (
+              <>
+                <p className="text-xs text-gray-400">Select your name — you'll enter your PIN once to confirm.</p>
+                <div className="space-y-2 max-h-72 overflow-y-auto">
+                  {activePlayers.map(p => (
+                    <button
+                      key={p.id}
+                      onClick={() => startPinVerification(p)}
+                      className={`w-full flex items-center gap-3 p-3 rounded-2xl transition-all active:scale-[0.98] ${
+                        String(claimedId) === String(p.id)
+                          ? 'bg-lobster-teal/10 border-2 border-lobster-teal'
+                          : 'bg-gray-50 border-2 border-transparent'
+                      }`}
+                    >
+                      <div className="w-9 h-9 bg-lobster-teal rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                        {p.name[0].toUpperCase()}
+                      </div>
+                      <span className="font-semibold text-gray-800 text-sm">{p.name}</span>
+                      {String(claimedId) === String(p.id) && (
+                        <span className="ml-auto text-xs text-lobster-teal font-semibold">✓ verified</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+                {claimedId && (
+                  <button onClick={() => { clearIdentity(); setShowIdentity(false) }}
+                    className="w-full text-xs text-gray-400 py-2 font-medium">
+                    Sign out of my profile
+                  </button>
+                )}
+              </>
+            ) : (
+              <div className="space-y-4">
+                <p className="text-xs text-gray-500">
+                  Enter the 4-digit PIN you received via WhatsApp when you joined.
+                  Ask the admin if you don't have it.
+                </p>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={4}
+                  placeholder="• • • •"
+                  className="input text-center text-2xl tracking-[0.5em] font-bold"
+                  value={pinInput}
+                  onChange={e => { setPinInput(e.target.value.slice(0, 4)); setPinError('') }}
+                  autoFocus
+                />
+                {pinError && <p className="text-xs text-red-500 text-center font-medium">{pinError}</p>}
                 <button
-                  key={p.id}
-                  onClick={() => confirmIdentity(p.id)}
-                  className={`w-full flex items-center gap-3 p-3 rounded-2xl transition-all active:scale-[0.98] ${
-                    String(myPlayerId) === String(p.id)
-                      ? 'bg-lobster-teal/10 border-2 border-lobster-teal'
-                      : 'bg-gray-50 border-2 border-transparent'
-                  }`}
+                  onClick={confirmPin}
+                  disabled={pinInput.length !== 4}
+                  className="btn-primary w-full disabled:opacity-40"
                 >
-                  <div className="w-9 h-9 bg-lobster-teal rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                    {p.name[0].toUpperCase()}
-                  </div>
-                  <span className="font-semibold text-gray-800 text-sm">{p.name}</span>
-                  {String(myPlayerId) === String(p.id) && (
-                    <span className="ml-auto text-xs text-lobster-teal font-semibold">current</span>
-                  )}
+                  Confirm — I'm {pinTarget.name.split(' ')[0]}
                 </button>
-              ))}
-            </div>
+                <button onClick={() => { setPinTarget(null); setPinError('') }}
+                  className="w-full text-xs text-gray-400 py-1">
+                  ← Back to player list
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

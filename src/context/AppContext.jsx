@@ -3,6 +3,8 @@ import { supabase } from '../supabase'
 
 const AppContext = createContext(null)
 
+const generatePin = () => String(Math.floor(1000 + Math.random() * 9000))
+
 export function AppProvider({ children }) {
   const [players, setPlayers]           = useState([])
   const [tournaments, setTournaments]   = useState([])
@@ -12,6 +14,7 @@ export function AppProvider({ children }) {
   const [settings, setSettings]         = useState({ whatsappLink: '', adminPin: '1234', groupName: 'Padel Lobsters' })
   const [loading, setLoading]           = useState(true)
   const [isAdmin, setIsAdmin]           = useState(() => localStorage.getItem('lobster_admin') === 'true')
+  const [claimedId, setClaimedId]       = useState(() => localStorage.getItem('lobster_claimed_id') || null)
 
   // Wrap setIsAdmin so it persists across refreshes
   const setAdminState = useCallback((val) => {
@@ -96,6 +99,7 @@ export function AppProvider({ children }) {
 
   // ── Players ──────────────────────────────────────────────
   const addPlayer = useCallback(async (data) => {
+    const pin = generatePin()
     const payload = {
       name:               data.name,
       email:              data.email              || '',
@@ -110,13 +114,16 @@ export function AppProvider({ children }) {
       is_left_handed:     data.isLeftHanded       || false,
       country:            data.country            || '',
       avatar_url:         data.avatarUrl          || '',
+      pin,
     }
-    const { error } = await supabase.from('players').insert(payload)
+    const { data: inserted, error } = await supabase.from('players').insert(payload).select().single()
     if (error) {
       console.error('Add player error:', error)
       alert('Could not save player: ' + error.message)
+      return null
     } else {
       await loadPlayers()
+      return inserted
     }
   }, [])
 
@@ -275,6 +282,7 @@ export function AppProvider({ children }) {
     isLeftHanded:      p.is_left_handed     ?? p.isLeftHanded ?? false,
     avatarUrl:         p.avatar_url         ?? p.avatarUrl    ?? '',
     country:           p.country            ?? '',
+    pin:               p.pin                ?? '',
   }))
 
   const normalisedTournaments = tournaments.map(t => ({
@@ -321,6 +329,30 @@ export function AppProvider({ children }) {
     (tournamentId) => normalisedMatches.filter(m => m.tournamentId === tournamentId),
     [normalisedMatches]
   )
+
+  // ── PIN / Identity ───────────────────────────────────────
+  const regeneratePin = useCallback(async (playerId) => {
+    const newPin = generatePin()
+    await supabase.from('players').update({ pin: newPin }).eq('id', playerId)
+    await loadPlayers()
+    return newPin
+  }, [])
+
+  // Verify a player's PIN and claim that identity on this device
+  const claimIdentity = useCallback((playerId, enteredPin, playersList) => {
+    const player = playersList.find(p => String(p.id) === String(playerId))
+    if (!player) return { success: false, error: 'Player not found' }
+    if (String(player.pin) !== String(enteredPin).trim()) return { success: false, error: 'Wrong PIN — try again' }
+    const id = String(playerId)
+    localStorage.setItem('lobster_claimed_id', id)
+    setClaimedId(id)
+    return { success: true }
+  }, [])
+
+  const clearIdentity = useCallback(() => {
+    localStorage.removeItem('lobster_claimed_id')
+    setClaimedId(null)
+  }, [])
 
   // ── Updates ──────────────────────────────────────────────
   const addUpdate = useCallback(async (playerId, content) => {
@@ -372,6 +404,7 @@ export function AppProvider({ children }) {
       saveMatches, updateMatch, getTournamentMatches,
       saveSettings,
       updates, addUpdate, deleteUpdate, addReaction,
+      claimedId, claimIdentity, clearIdentity, regeneratePin,
     }}>
       {children}
     </AppContext.Provider>
