@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useApp } from '../context/AppContext'
 import { supabase } from '../supabase'
-import { Plus, X, Pencil, ShoppingBag, Gift, Shuffle, Upload, Check, Star } from 'lucide-react'
+import { Plus, X, Pencil, ShoppingBag, Gift, Shuffle, Upload, Check, ShoppingCart, User } from 'lucide-react'
 import AdminLogin from './AdminLogin'
 
 const SIZES_APPAREL  = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
@@ -107,7 +107,7 @@ function Raffle({ tournament, players, registrations }) {
 
 // ── Main Merch component ──────────────────────────────────────────────────────
 export default function Merch({ tournament, tournaments: allTournaments = [] }) {
-  const { players, registrations, isAdmin, players: allPlayers, tournaments: contextTournaments = [] } = useApp()
+  const { players, registrations, isAdmin, tournaments: contextTournaments = [], claimedId } = useApp()
   const tournaments = allTournaments.length > 0 ? allTournaments : contextTournaments
   const [tab, setTab]             = useState('shop')     // 'shop' | 'prizes' | 'manage'
   const [items, setItems]         = useState([])
@@ -119,9 +119,10 @@ export default function Merch({ tournament, tournaments: allTournaments = [] }) 
   const [form, setForm]           = useState(emptyItem)
   const [saving, setSaving]       = useState(false)
   const [uploading, setUploading] = useState(false)
-  const [selectedInterest, setSelectedInterest] = useState({}) // itemId -> size
-  const [expressed, setExpressed] = useState({}) // itemId -> true (this session)
-  const [selectedTournament, setSelectedTournament] = useState(tournament?.id != null ? String(tournament.id) : null) // prize tab: selected tournament
+  const [selectedSize, setSelectedSize]   = useState({}) // itemId -> size
+  const [sizeError, setSizeError]         = useState({}) // itemId -> true (missing size)
+  const [ordered, setOrdered]             = useState({}) // itemId -> true (this session)
+  const [selectedTournament, setSelectedTournament] = useState(tournament?.id != null ? String(tournament.id) : null)
 
   // ── Data loading ────────────────────────────────────────────────────────────
   const loadItems = async () => {
@@ -156,7 +157,7 @@ export default function Merch({ tournament, tournaments: allTournaments = [] }) 
       const newUrls = []
       for (const file of toUpload) {
         const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}-${file.name.replace(/\s/g, '_')}`
-        const { error: uploadError } = await supabase.storage.from('merch').upload(filename, file)
+        const { error: uploadError } = await supabase.storage.from('merch').upload(filename, file, { upsert: true })
         if (uploadError) throw uploadError
         const { data: { publicUrl } } = supabase.storage.from('merch').getPublicUrl(filename)
         newUrls.push(publicUrl)
@@ -167,7 +168,7 @@ export default function Merch({ tournament, tournaments: allTournaments = [] }) 
         image_url:  f.image_url || newUrls[0] || '',
       }))
     } catch (err) {
-      alert('Image upload failed: ' + err.message)
+      alert('Image upload failed: ' + err.message + '\n\nMake sure a public "merch" storage bucket exists in Supabase with upload policies enabled.')
     } finally {
       setUploading(false)
       e.target.value = ''
@@ -229,23 +230,36 @@ export default function Merch({ tournament, tournaments: allTournaments = [] }) 
     }))
   }
 
-  // ── Player interest ──────────────────────────────────────────────────────────
-  const interestCount = (itemId) => interests.filter(i => i.merch_item_id === itemId).length
+  // ── Orders ───────────────────────────────────────────────────────────────────
+  const orderCount = (itemId) => interests.filter(i => i.merch_item_id === itemId).length
 
-  const expressInterest = async (itemId) => {
-    const size = selectedInterest[itemId] || ''
-    // Use a temp player ID approach — for demo we just insert without player_id
-    // In production link to the logged-in player
+  const placeOrder = async (itemId) => {
+    const item = items.find(i => i.id === itemId)
+    const size = selectedSize[itemId] || ''
+
+    // Require size if item has sizes
+    if (item?.sizes?.length > 0 && !size) {
+      setSizeError(e => ({ ...e, [itemId]: true }))
+      return
+    }
+    setSizeError(e => ({ ...e, [itemId]: false }))
+
     try {
-      await supabase.from('merch_interests').upsert({
-        merch_item_id: itemId,
-        size,
-        player_id: null, // would be set from auth in production
-      }, { onConflict: 'player_id,merch_item_id', ignoreDuplicates: true })
-      setExpressed(e => ({ ...e, [itemId]: true }))
+      if (claimedId) {
+        await supabase.from('merch_interests').upsert({
+          merch_item_id: itemId,
+          size,
+          player_id: claimedId,
+        }, { onConflict: 'player_id,merch_item_id' })
+      } else {
+        // No identity — still record interest without a name
+        await supabase.from('merch_interests').insert({ merch_item_id: itemId, size, player_id: null })
+      }
+      setOrdered(o => ({ ...o, [itemId]: true }))
       await loadInterests()
-    } catch { /* silent */ }
-    setExpressed(e => ({ ...e, [itemId]: true }))
+    } catch (err) {
+      console.error('Order error:', err)
+    }
   }
 
   // ── Render ───────────────────────────────────────────────────────────────────
@@ -274,16 +288,29 @@ export default function Merch({ tournament, tournaments: allTournaments = [] }) 
       {/* ── SHOP TAB ── */}
       {tab === 'shop' && (
         <div className="space-y-3">
-          <p className="text-xs text-gray-500">Tap "I want this!" on anything you're interested in — we'll know what's popular for future orders.</p>
+          <p className="text-xs text-gray-500">Place an order — the organizers will see what you need and get in touch.</p>
+
+          {/* Identity notice */}
+          {!claimedId && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center gap-2">
+              <User size={14} className="text-amber-500 flex-shrink-0" />
+              <p className="text-xs text-amber-700">
+                Verify your identity in the <strong>Updates</strong> tab so your name appears on the order list.
+              </p>
+            </div>
+          )}
 
           {loading && <p className="text-center text-gray-400 py-8 text-sm">Loading…</p>}
 
           {items.map(item => (
             <div key={item.id} className="card space-y-3">
-              {/* Image */}
-              {item.image_url ? (
-                <img src={item.image_url} alt={item.name}
-                  className="w-full h-40 object-cover rounded-xl" />
+              {/* Image(s) */}
+              {(item.image_urls?.length > 0 || item.image_url) ? (
+                <img
+                  src={(item.image_urls?.[0]) || item.image_url}
+                  alt={item.name}
+                  className="w-full h-44 object-cover rounded-xl"
+                />
               ) : (
                 <div className="w-full h-32 bg-lobster-cream rounded-xl flex items-center justify-center">
                   <ShoppingBag size={36} className="text-lobster-teal opacity-40" />
@@ -304,14 +331,22 @@ export default function Merch({ tournament, tournaments: allTournaments = [] }) 
               {/* Size picker */}
               {item.sizes?.length > 0 && (
                 <div>
-                  <p className="text-xs text-gray-500 mb-1.5">Select size:</p>
+                  <p className={`text-xs mb-1.5 font-medium ${sizeError[item.id] ? 'text-red-500' : 'text-gray-500'}`}>
+                    {sizeError[item.id] ? '⚠ Please select a size:' : 'Select size:'}
+                  </p>
                   <div className="flex flex-wrap gap-1.5">
                     {item.sizes.map(s => (
-                      <button key={s} onClick={() => setSelectedInterest(si => ({ ...si, [item.id]: s }))}
+                      <button key={s}
+                        onClick={() => {
+                          setSelectedSize(si => ({ ...si, [item.id]: s }))
+                          setSizeError(e => ({ ...e, [item.id]: false }))
+                        }}
                         className={`text-xs px-2.5 py-1 rounded-lg font-medium border transition-all ${
-                          selectedInterest[item.id] === s
+                          selectedSize[item.id] === s
                             ? 'bg-lobster-teal text-white border-lobster-teal'
-                            : 'border-gray-200 text-gray-600'
+                            : sizeError[item.id]
+                              ? 'border-red-300 text-gray-600'
+                              : 'border-gray-200 text-gray-600'
                         }`}>
                         {s}
                       </button>
@@ -320,21 +355,24 @@ export default function Merch({ tournament, tournaments: allTournaments = [] }) 
                 </div>
               )}
 
-              {/* Interest button */}
+              {/* Order button */}
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => expressInterest(item.id)}
+                  onClick={() => placeOrder(item.id)}
+                  disabled={ordered[item.id]}
                   className={`flex-1 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all ${
-                    expressed[item.id]
+                    ordered[item.id]
                       ? 'bg-green-100 text-green-700'
-                      : 'bg-lobster-teal text-white'
+                      : 'bg-lobster-teal text-white active:scale-95'
                   }`}
                 >
-                  {expressed[item.id] ? <><Check size={15} /> Registered interest!</> : <><Star size={15} /> I want this!</>}
+                  {ordered[item.id]
+                    ? <><Check size={15} /> Ordered!</>
+                    : <><ShoppingCart size={15} /> Order</>}
                 </button>
-                {interestCount(item.id) > 0 && (
+                {orderCount(item.id) > 0 && (
                   <span className="text-xs text-gray-400 flex-shrink-0">
-                    {interestCount(item.id)} interested
+                    {orderCount(item.id)} {orderCount(item.id) === 1 ? 'order' : 'orders'}
                   </span>
                 )}
               </div>
@@ -437,32 +475,45 @@ export default function Merch({ tournament, tournaments: allTournaments = [] }) 
             <Plus size={16} /> Add Merch Item
           </button>
 
-          {/* Interest summary */}
+          {/* Orders summary — who ordered what */}
           {interests.length > 0 && (
-            <div className="card">
-              <p className="font-semibold text-gray-700 text-sm mb-2">Interest Summary</p>
+            <div className="card space-y-4">
+              <p className="font-semibold text-gray-700 text-sm">📋 Orders</p>
               {items.map(item => {
-                const itemInterests = interests.filter(i => i.merch_item_id === item.id)
-                if (itemInterests.length === 0) return null
-                const bySizeRaw = {}
-                itemInterests.forEach(i => {
-                  const k = i.size || 'No size'
-                  bySizeRaw[k] = (bySizeRaw[k] || 0) + 1
+                const itemOrders = interests.filter(i => i.merch_item_id === item.id)
+                if (itemOrders.length === 0) return null
+                // Group by size, collect names
+                const bySize = {}
+                itemOrders.forEach(o => {
+                  const k = o.size || '—'
+                  if (!bySize[k]) bySize[k] = []
+                  const player = players.find(p => String(p.id) === String(o.player_id))
+                  bySize[k].push(player ? player.name.split(' ')[0] : 'Unknown')
                 })
                 return (
-                  <div key={item.id} className="mb-3">
-                    <p className="text-sm font-medium text-gray-700">{item.name} <span className="text-lobster-teal">({itemInterests.length})</span></p>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {Object.entries(bySizeRaw).map(([size, count]) => (
-                        <span key={size} className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
-                          {size}: {count}
-                        </span>
+                  <div key={item.id}>
+                    <p className="text-sm font-bold text-gray-800">
+                      {item.name}
+                      <span className="ml-1.5 text-lobster-teal font-semibold">×{itemOrders.length}</span>
+                    </p>
+                    <div className="mt-1.5 space-y-1.5">
+                      {Object.entries(bySize).sort().map(([size, names]) => (
+                        <div key={size} className="flex items-start gap-2">
+                          <span className="text-xs font-bold bg-lobster-cream text-lobster-teal px-2 py-0.5 rounded-full flex-shrink-0 min-w-[2.5rem] text-center">
+                            {size}
+                          </span>
+                          <span className="text-xs text-gray-600">{names.join(', ')}</span>
+                        </div>
                       ))}
                     </div>
                   </div>
                 )
               })}
             </div>
+          )}
+
+          {interests.length === 0 && (
+            <div className="card py-6 text-center text-gray-400 text-sm">No orders yet</div>
           )}
 
           {/* Item list */}
@@ -477,7 +528,7 @@ export default function Merch({ tournament, tournaments: allTournaments = [] }) 
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-gray-800 truncate">{item.name}</p>
-                  <p className="text-xs text-gray-500">€{parseFloat(item.price).toFixed(0)} · {interestCount(item.id)} interested</p>
+                  <p className="text-xs text-gray-500">€{parseFloat(item.price).toFixed(0)} · {orderCount(item.id)} {orderCount(item.id) === 1 ? 'order' : 'orders'}</p>
                 </div>
                 <div className="flex gap-1.5 flex-shrink-0">
                   <button onClick={() => openEdit(item)} className="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center">
