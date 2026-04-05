@@ -106,8 +106,9 @@ function Raffle({ tournament, players, registrations }) {
 }
 
 // ── Main Merch component ──────────────────────────────────────────────────────
-export default function Merch({ tournament }) {
-  const { players, registrations, isAdmin, players: allPlayers } = useApp()
+export default function Merch({ tournament, tournaments: allTournaments = [] }) {
+  const { players, registrations, isAdmin, players: allPlayers, tournaments: contextTournaments = [] } = useApp()
+  const tournaments = allTournaments.length > 0 ? allTournaments : contextTournaments
   const [tab, setTab]             = useState('shop')     // 'shop' | 'prizes' | 'manage'
   const [items, setItems]         = useState([])
   const [interests, setInterests] = useState([])
@@ -120,6 +121,7 @@ export default function Merch({ tournament }) {
   const [uploading, setUploading] = useState(false)
   const [selectedInterest, setSelectedInterest] = useState({}) // itemId -> size
   const [expressed, setExpressed] = useState({}) // itemId -> true (this session)
+  const [selectedTournament, setSelectedTournament] = useState(tournament?.id || null) // prize tab: selected tournament
 
   // ── Data loading ────────────────────────────────────────────────────────────
   const loadItems = async () => {
@@ -328,14 +330,42 @@ export default function Merch({ tournament }) {
       {/* ── PRIZES TAB ── */}
       {tab === 'prizes' && (
         <div className="space-y-4">
-          {/* Prize items for this tournament */}
-          {items.length > 0 && isAdmin && tournament && (
+          {/* Tournament selector */}
+          {tournaments.length > 0 && (
+            <div className="card space-y-2">
+              <label className="label">Select tournament for prizes & raffle</label>
+              <select
+                value={selectedTournament || ''}
+                onChange={e => setSelectedTournament(e.target.value ? parseInt(e.target.value) : null)}
+                className="input text-sm"
+              >
+                <option value="">-- Choose tournament --</option>
+                {tournaments.map(t => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {tournaments.length === 0 && (
+            <div className="card text-center text-gray-400 py-4">
+              <p className="text-sm">No tournaments available</p>
+            </div>
+          )}
+
+          {/* Prize items for selected tournament */}
+          {selectedTournament && items.length > 0 && isAdmin && (
             <div className="card space-y-3">
-              <p className="font-semibold text-gray-700 text-sm">Select prizes for {tournament.name}</p>
-              <p className="text-xs text-gray-400">Tap items to add/remove from the prize pool</p>
+              <p className="font-semibold text-gray-700 text-sm">
+                Select prizes for {tournaments.find(t => t.id === selectedTournament)?.name}
+              </p>
+              <p className="text-xs text-gray-400">Tap items to add/remove from the prize pool (admin feature)</p>
               <div className="space-y-2">
                 {items.map(item => {
-                  const prizeIds = tournament.prizeItemIds || []
+                  const selectedTour = tournaments.find(t => t.id === selectedTournament)
+                  const prizeIds = selectedTour?.prizeItemIds || []
                   const selected = prizeIds.includes(item.id)
                   return (
                     <div key={item.id}
@@ -359,12 +389,21 @@ export default function Merch({ tournament }) {
             </div>
           )}
 
-          {/* Raffle */}
-          <Raffle
-            tournament={tournament}
-            players={players}
-            registrations={registrations}
-          />
+          {/* Raffle — use selected tournament */}
+          {selectedTournament && (
+            <Raffle
+              tournament={tournaments.find(t => t.id === selectedTournament)}
+              players={players}
+              registrations={registrations}
+            />
+          )}
+
+          {!selectedTournament && tournaments.length > 0 && (
+            <div className="card py-8 text-center text-gray-400">
+              <Gift size={32} className="mx-auto mb-2 opacity-30" />
+              <p className="text-sm">Select a tournament above to manage prizes and run raffle</p>
+            </div>
+          )}
         </div>
       )}
 
