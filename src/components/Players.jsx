@@ -24,33 +24,129 @@ const emptyForm = {
 }
 
 // ── Corporate Performance Review generator ───────────────────────────────────
-function corpReview(player) {
-  const lvl = player.adjustedLevel || 0
+function corpReview(player, matches = [], registrations = [], tournaments = []) {
+  const lvl  = player.adjustedLevel || 0
   const name = (player.name || 'Employee').split(' ')[0]
+  const pid  = player.id
 
+  // ── Compute match stats ──────────────────────────────────────────────────
+  const played = matches.filter(m =>
+    m.completed && (m.team1Ids?.includes(pid) || m.team2Ids?.includes(pid))
+  )
+  let wins = 0, losses = 0
+  played.forEach(m => {
+    const onTeam1 = m.team1Ids?.includes(pid)
+    const s1 = m.score1 ?? 0, s2 = m.score2 ?? 0
+    if ((onTeam1 && s1 > s2) || (!onTeam1 && s2 > s1)) wins++
+    else losses++
+  })
+  const totalMatches = wins + losses
+  const winRate = totalMatches >= 4 ? wins / totalMatches : null
+
+  // ── Compute tournament attendance ────────────────────────────────────────
+  const tournamentsPlayed = new Set(
+    registrations
+      .filter(r => r.playerId === pid && r.status === 'registered')
+      .map(r => r.tournamentId)
+  ).size
+  const totalTournaments = tournaments.length
+
+  // ── Compute last-tournament rank ─────────────────────────────────────────
+  let lastTournamentRank = null
+  let lastTournamentTotal = null
+  if (tournaments.length > 0) {
+    const lastT = [...tournaments].sort((a, b) => new Date(b.date) - new Date(a.date))[0]
+    const lastMs = matches.filter(m => String(m.tournamentId) === String(lastT.id) && m.completed)
+    if (lastMs.length > 0) {
+      const allIds = [...new Set([
+        ...lastMs.flatMap(m => m.team1Ids || []),
+        ...lastMs.flatMap(m => m.team2Ids || []),
+      ])]
+      lastTournamentTotal = allIds.length
+      const winsMap = Object.fromEntries(allIds.map(id => [id, 0]))
+      lastMs.forEach(m => {
+        const s1 = m.score1 ?? 0, s2 = m.score2 ?? 0
+        const winners = s1 > s2 ? m.team1Ids : s2 > s1 ? m.team2Ids : []
+        ;(winners || []).forEach(id => { if (winsMap[id] !== undefined) winsMap[id]++ })
+      })
+      const ranked = Object.entries(winsMap).sort(([, a], [, b]) => b - a)
+      const pos = ranked.findIndex(([id]) => String(id) === String(pid))
+      if (pos >= 0) lastTournamentRank = pos + 1
+    }
+  }
+
+  // ── Scenario matching (priority order) ───────────────────────────────────
+
+  // Dead last in most recent tournament — high skill
+  if (lastTournamentRank !== null && lastTournamentTotal >= 4 && lastTournamentRank === lastTournamentTotal) {
+    if (lvl >= 3.5) {
+      return `A Playtomic rating of ${lvl.toFixed(1)} and yet — last place. Scientists are studying this. The data doesn't lie but it does appear to be deeply confused. A walking contradiction, somehow making the rest of us feel both inferior and hopeful at the same time.`
+    }
+    return `Came last. Consistent, reliable, always there at the bottom holding the group together. Not everyone can win — someone has to make the winners feel good, and ${name} does this selflessly, every single time.`
+  }
+
+  // Won the most recent tournament
+  if (lastTournamentRank === 1 && lastTournamentTotal >= 4) {
+    return `Won the whole thing. Showed up, dominated, went home. The rest of the group is currently reviewing their life choices. ${name} is not available for comment — they're too busy being better than everyone else.`
+  }
+
+  // High skill, bad win rate — the unexplained gap
+  if (lvl >= 3.5 && winRate !== null && winRate < 0.35) {
+    return `Playtomic says elite. Match results say… something else entirely. Currently the most expensive mystery in the group. Investigations are ongoing. The committee remains baffled and slightly impressed.`
+  }
+
+  // Low skill, strong win rate — the secret weapon
+  if (lvl < 2.5 && winRate !== null && winRate > 0.6) {
+    return `Low rating, suspiciously high win rate. Either sandbagging at a professional level or has discovered something the rest of us haven't.`
+  }
+
+  // Dominant win rate
+  if (winRate !== null && winRate >= 0.7) {
+    return `Wins constantly. Shows up, wins, leaves. Has made winning look so routine that the group has started taking it personally. At this point, the committee is actively considering whether ${name} should remain eligible for the next invitation.`
+  }
+
+  // Committed loser
+  if (winRate !== null && winRate <= 0.25) {
+    return `Loses frequently, returns every time. This is either extraordinary mental resilience or a complete absence of self-preservation instinct. Either way, the courts wouldn't be the same without them. Truly the heart of the group.`
+  }
+
+  // The Ironman — attended every tournament
+  if (totalTournaments >= 3 && tournamentsPlayed >= totalTournaments) {
+    return `Has attended every single tournament. Every. Single. One. Rain, wind, scheduling conflicts, life events — none of it mattered. We're not sure if this is dedication or if they simply have nowhere else to be. Both are valid.`
+  }
+
+  // The Ghost — barely shows up
+  if (totalTournaments >= 3 && tournamentsPlayed <= 1) {
+    return `Has appeared at approximately one tournament. Like a rare weather event — talked about, rarely witnessed. The group respects the mystery. Statistically, anything could happen next. Nobody knows. Not even ${name}.`
+  }
+
+  // Perfectly mediocre
+  if (winRate !== null && winRate >= 0.45 && winRate <= 0.55 && totalMatches >= 6) {
+    return `Win rate hovering in the 45–55% range across six or more matches. A statistical masterpiece. Not good enough to be intimidating, not bad enough to be endearing. Just perfectly, beautifully average. The bell curve's favourite child.`
+  }
+
+  // ── Fallback: level-based ─────────────────────────────────────────────────
   const low = [
-    `${name} continues to demonstrate an admirable commitment to court presence. While their strategic contributions remain in an early development phase, their enthusiasm for the sport has been duly noted in their file.`,
-    `Stakeholder feedback confirms that ${name} shows up reliably, which we consider a foundational competency. Q3 targets for backhand consistency remain aspirational. We recommend a performance improvement plan focused on "returning the ball."`,
-    `${name}'s on-court metrics are currently tracking below baseline KPIs. Leadership remains cautiously optimistic about their long-term padel ROI, pending further evidence.`,
+    `Internal assessments confirm that ${name} is still, technically, learning padel. Leadership has described their progress as "visible." This is the most positive framing available to us at this time.`,
+    `${name} shows up. They swing. Things happen — not always the intended things, but things. HR has flagged "presence" as a genuine strength and is working hard to find a second one.`,
+    `${name}'s development metrics remain in an early phase. We want to be encouraging. We also want to be accurate. Balancing these two goals has made this the most difficult review in the organisation.`,
   ]
   const mid = [
-    `${name} is delivering at-plan performance across core padel competencies. Their cross-functional net play has matured significantly. We recommend continued calibration of their serve velocity relative to peer benchmarks.`,
-    `${name} exhibits solid mid-tier output and has proven to be a reliable contributor to court-level outcomes. Their capacity to not lose every point has been flagged as a differentiating capability.`,
-    `${name} is successfully navigating the transition from novice to competent. Internal OKRs around "winning occasionally" are trending green. Synergies with higher-ranked partners have yielded measurable results.`,
+    `${name} is, by all available data, fine. Not remarkable. Not a disaster. Fine. Writing this review took longer than expected.`,
+    `${name} wins some, loses some, and generates very few strong opinions in any direction. HR has described this as "low-maintenance." We mean that as a compliment. Mostly.`,
+    `${name} has successfully avoided both the top and the bottom of the leaderboard for the entire season. Whether this is strategy or coincidence, the result is the same: a perfectly adequate year. We have noted this.`,
   ]
   const high = [
-    `${name} continues to exceed expectations across all padel performance indicators. Their serve has been formally recognised as a strategic asset and will feature prominently in our next investor deck.`,
-    `${name} is a high-impact contributor whose court presence creates measurable value for the entire team. HR recommends an immediate retention bonus and priority access to court time.`,
-    `${name} operates at the top quartile of the padel talent pool. Their ability to anticipate opponent behaviour demonstrates exceptional market intelligence. We are exploring the possibility of a "Court Excellence Award."`,
+    `${name} is genuinely good at this. We are not used to saying this without caveats. There are no caveats. Please do not tell ${name}. They may already know and we are concerned about what happens next.`,
+    `The data on ${name} is, frankly, difficult to criticise. They win. They contribute. They do not create HR incidents. Leadership has described this as "ideal" and immediately moved on to people who are more complicated.`,
+    `${name} is one of the better players in this group, a fact they are presumably aware of and hopefully managing with appropriate humility. We have no evidence of inappropriate humility. We are monitoring the situation.`,
   ]
   const elite = [
-    `${name} has disrupted the expected performance curve and is delivering exceptional padel outcomes at an enterprise level. Leadership has flagged them as mission-critical talent. Succession planning is underway should they be poached by a competitor club.`,
-    `${name}'s padel metrics place them firmly in the top 5% of the global talent pipeline. Their strategic vision, technical velocity, and ability to smash the ball very hard are considered core competitive differentiators.`,
+    `${name} is, statistically, too good for this group. We have chosen to view this as their problem. Our official position is that it raises the average and we benefit from the association. ${name} has not been told this.`,
+    `HR has reviewed ${name}'s match data and formally acknowledged that it creates a benchmarking problem for everyone else in the group. This is considered a net positive. The rest of the group is divided on that assessment.`,
   ]
-
   const pool = lvl < 2 ? low : lvl < 3.5 ? mid : lvl < 5 ? high : elite
-  // deterministic-ish pick based on player id
-  const idx = (player.id || 0) % pool.length
+  const idx  = (player.id || 0) % pool.length
   return pool[idx]
 }
 
@@ -76,7 +172,7 @@ function PlayerAvatar({ player, size = 'md', className = '' }) {
 }
 
 export default function Players() {
-  const { players, addPlayer, updatePlayer, deletePlayer, isAdmin } = useApp()
+  const { players, addPlayer, updatePlayer, deletePlayer, isAdmin, matches, registrations, tournaments } = useApp()
   const [showForm, setShowForm]     = useState(false)
   const [editId, setEditId]         = useState(null)
   const [form, setForm]             = useState(emptyForm)
@@ -312,8 +408,8 @@ export default function Players() {
                     )}
                   </div>
 
-                  {p.email && <p className="text-xs text-gray-500">✉ {p.email}</p>}
-                  {p.phone && <p className="text-xs text-gray-500">📞 {p.phone}</p>}
+                  {isAdmin && p.email && <p className="text-xs text-gray-500">✉ {p.email}</p>}
+                  {isAdmin && p.phone && <p className="text-xs text-gray-500">📞 {p.phone}</p>}
                   {p.notes && <p className="text-xs text-gray-500 italic">{p.notes}</p>}
 
                   {/* Corporate Review */}
@@ -322,7 +418,7 @@ export default function Players() {
                       <Briefcase size={11} className="text-gray-400" />
                       <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Annual Performance Review</p>
                     </div>
-                    <p className="text-xs text-gray-600 leading-relaxed italic">{corpReview(p)}</p>
+                    <p className="text-xs text-gray-600 leading-relaxed italic">{corpReview(p, matches, registrations, tournaments)}</p>
                   </div>
 
                   {isAdmin && (
