@@ -133,37 +133,38 @@ export default function Settings() {
           )}
         </div>
 
-        {/* Security */}
-        <div className="card space-y-4">
-          <h3 className="font-bold text-gray-700 text-sm flex items-center gap-2">
-            <Lock size={15} className="text-lobster-teal" /> Admin Security
-          </h3>
-          <div>
-            <label className="label">Admin PIN</label>
-            <div className="relative">
-              <input
-                className="input pr-11"
-                type={showPin ? 'text' : 'password'}
-                inputMode="numeric"
-                maxLength={8}
-                placeholder="Enter new PIN"
-                value={form.adminPin}
-                onChange={e => setForm(f => ({ ...f, adminPin: e.target.value }))}
-                disabled={!isAdmin}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPin(v => !v)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
-              >
-                {showPin ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
+        {/* Security — admin only */}
+        {isAdmin && (
+          <div className="card space-y-4">
+            <h3 className="font-bold text-gray-700 text-sm flex items-center gap-2">
+              <Lock size={15} className="text-lobster-teal" /> Admin Security
+            </h3>
+            <div>
+              <label className="label">Admin PIN</label>
+              <div className="relative">
+                <input
+                  className="input pr-11"
+                  type={showPin ? 'text' : 'password'}
+                  inputMode="numeric"
+                  maxLength={8}
+                  placeholder="Enter new PIN"
+                  value={form.adminPin}
+                  onChange={e => setForm(f => ({ ...f, adminPin: e.target.value }))}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPin(v => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                >
+                  {showPin ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+              <p className="text-xs text-gray-400 mt-1.5">
+                Used to access admin features like adding players, editing data, and generating schedules.
+              </p>
             </div>
-            <p className="text-xs text-gray-400 mt-1.5">
-              Used to access admin features like adding players, editing data, and generating schedules.
-            </p>
           </div>
-        </div>
+        )}
 
         {/* Save button */}
         {isAdmin && (

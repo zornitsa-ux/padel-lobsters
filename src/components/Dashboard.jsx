@@ -2,11 +2,36 @@ import React from 'react'
 import { useApp } from '../context/AppContext'
 import { Trophy, Users, Calendar, ChevronRight, Clock, AlertCircle, Megaphone } from 'lucide-react'
 
+const CLAW_IMG = '/claws.png'
 const ClawUp = ({ active }) => (
-  <span style={{ display:'inline-block', transform:'rotate(-90deg)', fontSize:13, lineHeight:1, filter: active ? 'none' : 'grayscale(1) opacity(0.4)' }}>🦞</span>
+  <img
+    src={CLAW_IMG}
+    alt="like"
+    style={{
+      width: 22, height: 22,
+      objectFit: 'contain',
+      display: 'block',
+      flexShrink: 0,
+      opacity: active ? 1 : 0.35,
+      transition: 'opacity 0.15s',
+      filter: active ? 'drop-shadow(0 0 3px rgba(220,38,38,0.5))' : 'none',
+    }}
+  />
 )
 const ClawDown = ({ active }) => (
-  <span style={{ display:'inline-block', transform:'rotate(90deg)', fontSize:13, lineHeight:1, filter: active ? 'none' : 'grayscale(1) opacity(0.4)' }}>🦞</span>
+  <img
+    src={CLAW_IMG}
+    alt="dislike"
+    style={{
+      width: 22, height: 22,
+      objectFit: 'contain',
+      display: 'block',
+      flexShrink: 0,
+      transform: 'rotate(180deg)',
+      filter: active ? 'grayscale(1) brightness(0.45)' : 'grayscale(1) brightness(1.6)',
+      transition: 'filter 0.15s',
+    }}
+  />
 )
 
 export default function Dashboard({ onNavigate }) {

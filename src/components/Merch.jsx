@@ -315,7 +315,7 @@ export default function Merch({ tournament, tournaments: allTournaments = [] }) 
   // ── Render ───────────────────────────────────────────────────────────────────
   const TABS = [
     { id: 'shop', label: '🛍️ Shop' },
-    { id: 'prizes', label: '🎁 Prizes' },
+    ...(isAdmin ? [{ id: 'prizes', label: '🎁 Prizes' }] : []),
     ...(isAdmin ? [{ id: 'manage', label: '⚙️ Manage' }] : []),
   ]
 
@@ -431,19 +431,21 @@ export default function Merch({ tournament, tournaments: allTournaments = [] }) 
                 </div>
               )}
 
-              {/* Name on item */}
-              <div>
-                <label className="text-xs font-medium text-gray-500 block mb-1">Name for the shirt <span className="text-gray-400 font-normal">(optional)</span></label>
-                <input
-                  type="text"
-                  placeholder="e.g. Alex"
-                  maxLength={30}
-                  disabled={ordered[item.id]}
-                  value={customName[item.id] || ''}
-                  onChange={e => setCustomName(n => ({ ...n, [item.id]: e.target.value }))}
-                  className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-800 placeholder-gray-300 focus:outline-none focus:border-lobster-teal focus:ring-1 focus:ring-lobster-teal transition-all disabled:opacity-40 disabled:bg-gray-50"
-                />
-              </div>
+              {/* Name on item — only for shirts */}
+              {/shirt/i.test(item.name) && (
+                <div>
+                  <label className="text-xs font-medium text-gray-500 block mb-1">Name for the shirt <span className="text-gray-400 font-normal">(optional)</span></label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Alex"
+                    maxLength={30}
+                    disabled={ordered[item.id]}
+                    value={customName[item.id] || ''}
+                    onChange={e => setCustomName(n => ({ ...n, [item.id]: e.target.value }))}
+                    className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-800 placeholder-gray-300 focus:outline-none focus:border-lobster-teal focus:ring-1 focus:ring-lobster-teal transition-all disabled:opacity-40 disabled:bg-gray-50"
+                  />
+                </div>
+              )}
 
               {/* Order button */}
               <div className="flex items-center gap-2">
@@ -478,8 +480,8 @@ export default function Merch({ tournament, tournaments: allTournaments = [] }) 
         </div>
       )}
 
-      {/* ── PRIZES TAB ── */}
-      {tab === 'prizes' && (
+      {/* ── PRIZES TAB (admin only) ── */}
+      {tab === 'prizes' && isAdmin && (
         <div className="space-y-4">
           {/* Tournament selector */}
           {tournaments.length > 0 && (
