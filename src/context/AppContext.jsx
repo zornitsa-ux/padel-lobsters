@@ -125,6 +125,7 @@ export function AppProvider({ children }) {
       is_left_handed:     data.isLeftHanded       || false,
       country:            data.country            || '',
       avatar_url:         data.avatarUrl          || '',
+      birthday:           data.birthday           || null,
       pin,
     }
     const { data: inserted, error } = await supabase.from('players').insert(payload).select().single()
@@ -153,6 +154,7 @@ export function AppProvider({ children }) {
       is_left_handed:     data.isLeftHanded       || false,
       country:            data.country            || '',
       avatar_url:         data.avatarUrl          || '',
+      birthday:           data.birthday           || null,
     }
     const { error } = await supabase.from('players').update(payload).eq('id', id)
     if (error) {
@@ -221,15 +223,31 @@ export function AppProvider({ children }) {
       r => r.tournament_id === tournamentId && r.status === 'registered'
     ).length
     const status = current < maxPlayers ? 'registered' : 'waitlist'
-    const { error } = await supabase.from('registrations').insert({
+    const { data: inserted, error } = await supabase.from('registrations').insert({
       tournament_id:  tournamentId,
       player_id:      playerId,
       status,
       payment_status: 'unpaid',
       payment_method: '',
-    })
+    }).select().single()
     if (!error) loadRegistrations()
+    return { regId: inserted?.id ?? null, status }
   }, [registrations])
+
+  // Transfer a spot from one player to another — payment is handled between the two players
+  const transferRegistration = useCallback(async (regId, tournamentId, fromPlayerId, toPlayerId) => {
+    await supabase.from('registrations')
+      .update({ status: 'cancelled', payment_method: `transferred_to:${toPlayerId}` })
+      .eq('id', regId)
+    await supabase.from('registrations').insert({
+      tournament_id:  tournamentId,
+      player_id:      toPlayerId,
+      status:         'registered',
+      payment_status: 'transferred',
+      payment_method: `transferred_from:${fromPlayerId}`,
+    })
+    loadRegistrations()
+  }, [])
 
   const updateRegistration = useCallback(async (id, data) => {
     const payload = {}
@@ -410,7 +428,7 @@ export function AppProvider({ children }) {
       setIsAdmin,
       addPlayer, updatePlayer, deletePlayer, getPlayerById,
       addTournament, updateTournament, deleteTournament,
-      registerPlayer, updateRegistration, cancelRegistration,
+      registerPlayer, updateRegistration, cancelRegistration, transferRegistration,
       getTournamentRegistrations,
       saveMatches, updateMatch, getTournamentMatches,
       saveSettings,
