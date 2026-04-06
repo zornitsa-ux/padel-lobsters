@@ -22,7 +22,11 @@ export default function Registration({ tournament, onNavigate }) {
 
   // Post-registration payment sheet
   const [paymentSheet, setPaymentSheet] = useState(null)  // { regId, playerId, status }
-  const [declaring, setDeclaring]       = useState(false)
+  const [tikkieClicked, setTikkieClicked] = useState(false)
+  const [declaring, setDeclaring]         = useState(false)
+
+  const openPaymentSheet = (sheet) => { setPaymentSheet(sheet); setTikkieClicked(false) }
+  const closePaymentSheet = () => { setPaymentSheet(null); setTikkieClicked(false) }
 
   // Transfer sheet
   const [transferSheet, setTransferSheet] = useState(null) // { reg }
@@ -75,7 +79,7 @@ export default function Registration({ tournament, onNavigate }) {
       // Only show payment sheet for directly-registered players (not waitlist),
       // and only if there's a Tikkie link or a cost set
       if (status === 'registered' && (hasTikkie || costPerPlayer > 0)) {
-        setPaymentSheet({ regId, playerId: selectedPlayer, status })
+        openPaymentSheet({ regId, playerId: selectedPlayer, status })
       }
       setSelectedPlayer(''); setShowAdd(false); setSearch('')
     } finally { setSaving(false) }
@@ -90,7 +94,7 @@ export default function Registration({ tournament, onNavigate }) {
       paymentMethod: 'tikkie',
     })
     setDeclaring(false)
-    setPaymentSheet(null)
+    closePaymentSheet()
   }
 
   // ── Cancel ────────────────────────────────────────────────────────────────
@@ -120,9 +124,10 @@ export default function Registration({ tournament, onNavigate }) {
     setTransferSearch('')
   }
 
-  // Players available for transfer (not already in the event, active)
+  // Transfer candidates: active players not already registered/waitlisted in this tournament
   const transferCandidates = players
     .filter(p => (p.status || 'active') === 'active')
+    .filter(p => String(p.id) !== String(transferSheet?.reg?.playerId))
     .filter(p => !registeredIds.includes(p.id))
     .filter(p => !transferSearch || p.name.toLowerCase().includes(transferSearch.toLowerCase()))
 
@@ -435,7 +440,7 @@ export default function Registration({ tournament, onNavigate }) {
                 <p className="text-xl">🦞</p>
                 <h3 className="font-bold text-gray-800 mt-1">You're in! Now pay to lock your spot</h3>
               </div>
-              <button onClick={() => setPaymentSheet(null)}>
+              <button onClick={closePaymentSheet}>
                 <X size={22} className="text-gray-400" />
               </button>
             </div>
@@ -447,15 +452,21 @@ export default function Registration({ tournament, onNavigate }) {
               </div>
             )}
 
-            {/* Tikkie buttons */}
+            {/* Tikkie button(s) — grays out after click */}
             {isAdminAll && tournament.tikkieLink && (
               <a
                 href={tournament.tikkieLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full bg-[#FF6B35] text-white text-base font-bold py-3.5 rounded-2xl active:scale-95 transition-all"
+                onClick={() => setTikkieClicked(true)}
+                className={`flex items-center justify-center gap-2 w-full text-base font-bold py-3.5 rounded-2xl transition-all ${
+                  tikkieClicked
+                    ? 'bg-gray-200 text-gray-500 pointer-events-none'
+                    : 'bg-[#FF6B35] text-white active:scale-95'
+                }`}
               >
-                <ExternalLink size={18} /> Pay via Tikkie now
+                <ExternalLink size={18} />
+                {tikkieClicked ? 'Tikkie opened ✓' : 'Pay via Tikkie now'}
               </a>
             )}
             {!isAdminAll && (tournament.courts || []).filter(c => c.tikkieLink).map((c, i) => (
@@ -464,28 +475,33 @@ export default function Registration({ tournament, onNavigate }) {
                 href={c.tikkieLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full bg-[#FF6B35] text-white text-sm font-bold py-3 rounded-2xl active:scale-95 transition-all"
+                onClick={() => setTikkieClicked(true)}
+                className={`flex items-center justify-center gap-2 w-full text-sm font-bold py-3 rounded-2xl transition-all ${
+                  tikkieClicked
+                    ? 'bg-gray-200 text-gray-500 pointer-events-none'
+                    : 'bg-[#FF6B35] text-white active:scale-95'
+                }`}
               >
-                <ExternalLink size={16} /> Pay for {c.name || `Court ${i + 1}`} via Tikkie
+                <ExternalLink size={16} />
+                {tikkieClicked ? 'Tikkie opened ✓' : `Pay for ${c.name || `Court ${i + 1}`} via Tikkie`}
               </a>
             ))}
 
-            {/* Self-declare */}
-            <button
-              onClick={handleSelfDeclare}
-              disabled={declaring}
-              className="w-full flex items-center justify-center gap-2 border-2 border-lobster-teal text-lobster-teal font-semibold py-3 rounded-2xl active:scale-95 transition-all disabled:opacity-40"
-            >
-              <Send size={16} /> {declaring ? 'Saving…' : "I've sent the payment"}
-            </button>
-            <p className="text-xs text-gray-400 text-center -mt-2">
-              This notifies the admin to confirm your payment
-            </p>
-
-            <button onClick={() => setPaymentSheet(null)}
-              className="w-full text-xs text-gray-400 py-1 font-medium">
-              I'll pay later
-            </button>
+            {/* "I've sent the payment" — only appears after Tikkie was clicked */}
+            {tikkieClicked && (
+              <>
+                <button
+                  onClick={handleSelfDeclare}
+                  disabled={declaring}
+                  className="w-full flex items-center justify-center gap-2 border-2 border-lobster-teal text-lobster-teal font-semibold py-3 rounded-2xl active:scale-95 transition-all disabled:opacity-40"
+                >
+                  <Send size={16} /> {declaring ? 'Saving…' : "I've sent the payment"}
+                </button>
+                <p className="text-xs text-gray-400 text-center -mt-2">
+                  This notifies the admin to confirm your payment
+                </p>
+              </>
+            )}
           </div>
         </div>
       )}
