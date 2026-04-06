@@ -20,7 +20,7 @@ const emptyForm = {
   playtomicLevel: '', adjustment: '0',
   playtomicUsername: '', notes: '', gender: '',
   isLeftHanded: false, country: '',
-  avatarUrl: '',
+  avatarUrl: '', birthday: '',
 }
 
 const COUNTRIES = [
@@ -389,6 +389,7 @@ export default function Players() {
       isLeftHanded: p.isLeftHanded || false,
       country: p.country || '',
       avatarUrl: p.avatarUrl || '',
+      birthday: p.birthday || '',
     })
     setAvatarPreview(p.avatarUrl || null)
     setEditId(p.id)
@@ -404,6 +405,7 @@ export default function Players() {
       gender: p.gender || '', isLeftHanded: p.isLeftHanded || false,
       country: p.country || '',
       avatarUrl: p.avatarUrl || '',
+      birthday: p.birthday || '',
     })
     setAvatarFile(null)
     setAvatarPreview(p.avatarUrl || null)
@@ -538,6 +540,7 @@ export default function Players() {
         playtomicLevel: parseFloat(form.playtomicLevel) || 0,
         adjustment: parseFloat(form.adjustment) || 0,
         isLeftHanded: form.isLeftHanded || false,
+        birthday: form.birthday || null,
         // Non-admins go to pending so the admin can approve or link them to an existing profile
         status: isAdmin ? 'active' : 'pending',
       }
@@ -758,6 +761,18 @@ export default function Players() {
                       <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">🤚 Left-handed</span>
                     </div>
                   )}
+
+                  {/* Birthday — day/month visible to everyone; year only for admins */}
+                  {p.birthday && (() => {
+                    const d = new Date(p.birthday)
+                    const dayMonth = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })
+                    const full     = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+                    return (
+                      <p className="text-xs text-gray-500">
+                        🎂 {isAdmin ? full : dayMonth}
+                      </p>
+                    )
+                  })()}
 
                   {isAdmin && (p.email || p.phone) && (
                     <div className="space-y-1">
@@ -1019,6 +1034,13 @@ export default function Players() {
                 <input type="tel" className="input" placeholder="+31 6 12345678" value={form.phone}
                   onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} />
                 <p className="text-xs text-gray-400 mt-1">Visible for organizers only</p>
+              </div>
+
+              <div>
+                <label className="label">Birthday 🎂 <span className="text-gray-400 font-normal">(optional)</span></label>
+                <input type="date" className="input" value={form.birthday || ''}
+                  onChange={e => setForm(f => ({ ...f, birthday: e.target.value }))} />
+                <p className="text-xs text-gray-400 mt-1">We'll remind the admins on your special day 🦞</p>
               </div>
 
               <div>

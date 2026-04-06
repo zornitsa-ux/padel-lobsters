@@ -462,7 +462,7 @@ export default function Merch({ tournament, tournaments: allTournaments = [] }) 
                     ? <><Check size={15} /> Ordered!</>
                     : <><ShoppingCart size={15} /> Order</>}
                 </button>
-                {orderCount(item.id) > 0 && (
+                {isAdmin && orderCount(item.id) > 0 && (
                   <span className="text-xs text-gray-400 flex-shrink-0">
                     {orderCount(item.id)} {orderCount(item.id) === 1 ? 'order' : 'orders'}
                   </span>

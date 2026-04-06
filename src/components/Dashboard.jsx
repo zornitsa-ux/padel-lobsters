@@ -13,7 +13,8 @@ const ClawUp = ({ active }) => (
       display: 'block',
       flexShrink: 0,
       opacity: active ? 1 : 0.35,
-      transition: 'opacity 0.15s',
+      transition: 'opacity 0.15s, transform 0.15s',
+      transform: active ? 'scale(1.2)' : 'scale(1)',
       filter: active ? 'drop-shadow(0 0 3px rgba(220,38,38,0.5))' : 'none',
     }}
   />
@@ -27,9 +28,9 @@ const ClawDown = ({ active }) => (
       objectFit: 'contain',
       display: 'block',
       flexShrink: 0,
-      transform: 'rotate(180deg)',
+      transition: 'filter 0.15s, transform 0.15s',
+      transform: active ? 'scale(1.2) rotate(180deg)' : 'scale(1) rotate(180deg)',
       filter: active ? 'grayscale(1) brightness(0.45)' : 'grayscale(1) brightness(1.6)',
-      transition: 'filter 0.15s',
     }}
   />
 )
@@ -127,6 +128,38 @@ export default function Dashboard({ onNavigate }) {
           </button>
         </div>
       )}
+
+      {/* Birthday alerts — admin only */}
+      {isAdmin && (() => {
+        const today = new Date(); today.setHours(0, 0, 0, 0)
+        const upcoming7 = players
+          .filter(p => p.birthday)
+          .map(p => {
+            const d = new Date(p.birthday)
+            let bday = new Date(today.getFullYear(), d.getMonth(), d.getDate())
+            if (bday < today) bday = new Date(today.getFullYear() + 1, d.getMonth(), d.getDate())
+            const diff = Math.round((bday - today) / 86400000)
+            return { p, diff }
+          })
+          .filter(({ diff }) => diff <= 7)
+          .sort((a, b) => a.diff - b.diff)
+
+        if (upcoming7.length === 0) return null
+        return (
+          <div className="card border-l-4 border-pink-300 bg-pink-50/40 space-y-2">
+            <p className="font-bold text-sm text-pink-700">🎂 Upcoming Birthdays</p>
+            {upcoming7.map(({ p, diff }) => (
+              <div key={p.id} className="flex items-center gap-2">
+                <span className="text-base">{diff === 0 ? '🎉' : '🎂'}</span>
+                <span className="text-sm font-semibold text-gray-700">{p.name.split(' ')[0]}</span>
+                <span className="text-xs text-gray-500 ml-auto">
+                  {diff === 0 ? 'Today! 🎈' : diff === 1 ? 'Tomorrow' : `In ${diff} days`}
+                </span>
+              </div>
+            ))}
+          </div>
+        )
+      })()}
 
       {/* Quick stats */}
       <div className="grid grid-cols-2 gap-3">
