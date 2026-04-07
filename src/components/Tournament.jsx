@@ -367,7 +367,7 @@ export default function Tournament({ onNavigate }) {
 
               {/* Legacy History Records */}
               <div className="mt-4">
-                <HistoryContent />
+                <HistoryContent onNavigate={onNavigate} />
               </div>
           </div>
         )}

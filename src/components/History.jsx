@@ -1,5 +1,6 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { Trophy, ChevronDown, ChevronUp, Medal } from 'lucide-react'
+import { useApp } from '../context/AppContext'
 
 // ── December 2025 ─────────────────────────────────────────────────────────────
 const DEC_STANDINGS = [
@@ -383,7 +384,8 @@ function Podium({ players, rounds = [] }) {
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
-export default function History() {
+export default function History({ onNavigate }) {
+  const { tournaments, players, getTournamentMatches, getTournamentRegistrations } = useApp()
   const [expandedId, setExpandedId] = useState('mar2026')
   const [activeTab, setActiveTab]   = useState({})   // id → 'standings' | 'matches'
   const [activeRound, setActiveRound] = useState({}) // id → roundIndex
@@ -391,10 +393,164 @@ export default function History() {
   const getTab   = (id) => activeTab[id]   || 'standings'
   const getRound = (id) => activeRound[id] ?? 0
 
+  const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000
+
+  // Completed tournaments from DB older than 2 days (or no completedAt)
+  const dynamicTournaments = useMemo(() => {
+    return tournaments
+      .filter(t => {
+        if (t.status !== 'completed') return false
+        if (!t.completedAt) return true
+        return Date.now() - new Date(t.completedAt).getTime() >= TWO_DAYS_MS
+      })
+      .sort((a, b) => (b.completedAt || b.date || '') > (a.completedAt || a.date || '') ? 1 : -1)
+  }, [tournaments])
+
   return (
     <div className="space-y-4">
       <h2 className="text-lg font-bold text-gray-800">Tournament History</h2>
 
+      {/* Dynamic tournaments from DB */}
+      {dynamicTournaments.map(t => {
+        const open     = expandedId === `db-${t.id}`
+        const tMatches = getTournamentMatches(t.id)
+        const tRegs    = getTournamentRegistrations(t.id).filter(r => r.status === 'registered')
+
+        // Compute standings
+        const stats = {}
+        tRegs.forEach(r => {
+          const p = players.find(x => x.id === r.playerId)
+          if (p) stats[r.playerId] = { player: p, played: 0, won: 0, lost: 0, pf: 0, pa: 0, pts: 0 }
+        })
+        tMatches.filter(m => m.completed && m.score1 != null).forEach(m => {
+          const s1 = m.score1, s2 = m.score2
+          const t1w = s1 > s2, t2w = s2 > s1
+          ;(m.team1Ids || []).forEach(id => {
+            if (!stats[id]) return
+            stats[id].played++; stats[id].pf += s1; stats[id].pa += s2
+            if (t1w) { stats[id].won++; stats[id].pts += 3 }
+            else if (t2w) stats[id].lost++
+            else stats[id].pts += 1
+          })
+          ;(m.team2Ids || []).forEach(id => {
+            if (!stats[id]) return
+            stats[id].played++; stats[id].pf += s2; stats[id].pa += s1
+            if (t2w) { stats[id].won++; stats[id].pts += 3 }
+            else if (t1w) stats[id].lost++
+            else stats[id].pts += 1
+          })
+        })
+        const rankings = Object.values(stats).sort((a, b) =>
+          b.pts !== a.pts ? b.pts - a.pts : (b.pf - b.pa) - (a.pf - a.pa)
+        )
+        const top3 = rankings.slice(0, 3)
+
+        return (
+          <div key={`db-${t.id}`} className="card overflow-hidden border-l-4 border-yellow-400">
+            <button
+              className="w-full flex items-center justify-between gap-3"
+              onClick={() => setExpandedId(open ? null : `db-${t.id}`)}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-yellow-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Trophy size={20} className="text-yellow-500" />
+                </div>
+                <div className="text-left">
+                  <p className="font-bold text-gray-800 text-sm">{t.name}</p>
+                  <p className="text-xs text-gray-500">
+                    {t.date ? new Date(t.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'}
+                    {tRegs.length > 0 ? ` · ${tRegs.length} players` : ''}
+                  </p>
+                </div>
+              </div>
+              {open
+                ? <ChevronUp size={16} className="text-gray-400 flex-shrink-0" />
+                : <ChevronDown size={16} className="text-gray-400 flex-shrink-0" />
+              }
+            </button>
+
+            {open && (
+              <div className="mt-4 space-y-3">
+                {/* Podium */}
+                {top3.length >= 2 && (
+                  <div className="flex items-end justify-center gap-2 py-2">
+                    <div className="flex flex-col items-center gap-1 flex-1">
+                      <span className="text-xl">🥈</span>
+                      <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-bold text-gray-600">{top3[1].player.name[0]}</div>
+                      <p className="text-xs font-semibold truncate w-full text-center">{top3[1].player.name.split(' ')[0]}</p>
+                      <div className="bg-gray-200 w-full h-10 rounded-t-xl flex items-center justify-center">
+                        <span className="text-xs font-bold text-gray-600">{top3[1].pts}pts</span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-center gap-1 flex-1">
+                      <span className="text-2xl">🥇</span>
+                      <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center font-bold text-white text-lg">{top3[0].player.name[0]}</div>
+                      <p className="text-xs font-bold truncate w-full text-center">{top3[0].player.name.split(' ')[0]}</p>
+                      <div className="bg-yellow-400 w-full h-16 rounded-t-xl flex items-center justify-center">
+                        <span className="text-xs font-bold text-white">{top3[0].pts}pts</span>
+                      </div>
+                    </div>
+                    {top3[2] && (
+                      <div className="flex flex-col items-center gap-1 flex-1">
+                        <span className="text-xl">🥉</span>
+                        <div className="w-10 h-10 bg-amber-300 rounded-full flex items-center justify-center font-bold text-white">{top3[2].player.name[0]}</div>
+                        <p className="text-xs font-semibold truncate w-full text-center">{top3[2].player.name.split(' ')[0]}</p>
+                        <div className="bg-amber-300 w-full h-7 rounded-t-xl flex items-center justify-center">
+                          <span className="text-xs font-bold text-white">{top3[2].pts}pts</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Full standings */}
+                {rankings.length > 0 && (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="text-gray-400 uppercase border-b border-gray-100">
+                          <th className="text-left pb-1.5 pl-1">#</th>
+                          <th className="text-left pb-1.5">Player</th>
+                          <th className="text-center pb-1.5">W</th>
+                          <th className="text-center pb-1.5">L</th>
+                          <th className="text-center pb-1.5">+/-</th>
+                          <th className="text-center pb-1.5 text-gray-600 font-bold">Pts</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {rankings.map((s, i) => (
+                          <tr key={s.player.id} className="border-b border-gray-50">
+                            <td className="py-1.5 pl-1 text-gray-400 font-bold">{i + 1}</td>
+                            <td className="py-1.5 font-medium">{s.player.name}</td>
+                            <td className="text-center py-1.5 text-green-600 font-semibold">{s.won}</td>
+                            <td className="text-center py-1.5 text-red-400">{s.lost}</td>
+                            <td className="text-center py-1.5 text-gray-400">{s.pf}-{s.pa}</td>
+                            <td className="text-center py-1.5 font-bold text-lobster-teal">{s.pts}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+                {rankings.length === 0 && (
+                  <p className="text-sm text-gray-400 text-center py-2">No match data available</p>
+                )}
+
+                {onNavigate && (
+                  <button
+                    onClick={() => onNavigate('scores', t)}
+                    className="w-full text-sm text-lobster-teal font-semibold border border-lobster-teal rounded-xl py-2 active:scale-95 transition-all"
+                  >
+                    View full match scores →
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        )
+      })}
+
+      {/* Hardcoded past tournaments */}
       {TOURNAMENTS.map(t => {
         const open   = expandedId === t.id
         const tab    = getTab(t.id)

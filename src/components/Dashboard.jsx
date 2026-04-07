@@ -36,7 +36,7 @@ const ClawDown = ({ active }) => (
 )
 
 export default function Dashboard({ onNavigate }) {
-  const { tournaments, players, updates, registrations, getTournamentRegistrations, isAdmin } = useApp()
+  const { tournaments, players, updates, registrations, getTournamentRegistrations, getTournamentMatches, isAdmin } = useApp()
 
   const recentUpdates = (updates || []).slice(0, 2)
 
@@ -48,6 +48,14 @@ export default function Dashboard({ onNavigate }) {
     if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
     return new Date(ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
   }
+
+  // Recently completed tournaments (within 48 hours)
+  const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000
+  const recentlyCompleted = tournaments.filter(t => {
+    if (t.status !== 'completed') return false
+    if (!t.completedAt) return false
+    return Date.now() - new Date(t.completedAt).getTime() < TWO_DAYS_MS
+  }).sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt))
 
   // Next upcoming tournament
   const upcoming = tournaments
@@ -115,6 +123,45 @@ export default function Dashboard({ onNavigate }) {
           </button>
         </div>
       )}
+
+      {/* See Results — recently completed tournaments */}
+      {recentlyCompleted.map(t => {
+        const tMatches  = getTournamentMatches(t.id)
+        const tRegs     = getTournamentRegistrations(t.id).filter(r => r.status === 'registered')
+        // Quick winner calc
+        const stats = {}
+        tRegs.forEach(r => { stats[r.playerId] = { pts: 0 } })
+        tMatches.filter(m => m.completed && m.score1 != null).forEach(m => {
+          const t1w = m.score1 > m.score2, t2w = m.score2 > m.score1
+          ;(m.team1Ids || []).forEach(id => { if (stats[id]) stats[id].pts += t1w ? 3 : t2w ? 0 : 1 })
+          ;(m.team2Ids || []).forEach(id => { if (stats[id]) stats[id].pts += t2w ? 3 : t1w ? 0 : 1 })
+        })
+        const sorted = tRegs
+          .map(r => ({ ...r, pts: stats[r.playerId]?.pts ?? 0, player: players.find(p => p.id === r.playerId) }))
+          .sort((a, b) => b.pts - a.pts)
+        const winner = sorted[0]?.player
+
+        return (
+          <div key={t.id} className="bg-gradient-to-r from-yellow-400 to-lobster-orange rounded-2xl p-4 text-white">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-lg">🏆</span>
+              <p className="text-xs font-bold uppercase tracking-wide opacity-80">Tournament Complete!</p>
+            </div>
+            <h3 className="font-bold text-base mb-0.5">{t.name}</h3>
+            {winner && (
+              <p className="text-sm opacity-90 mb-3">
+                🥇 Winner: <span className="font-bold">{winner.name}</span>
+              </p>
+            )}
+            <button
+              onClick={() => onNavigate('scores', t)}
+              className="w-full bg-white/20 hover:bg-white/30 text-white font-semibold py-2 rounded-xl text-sm active:scale-95 transition-all"
+            >
+              See Full Results →
+            </button>
+          </div>
+        )
+      })}
 
       {/* Alerts — admin only */}
       {isAdmin && unpaid.length > 0 && (

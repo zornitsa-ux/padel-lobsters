@@ -208,6 +208,7 @@ export function AppProvider({ children }) {
     if (data.courts           !== undefined) payload.courts             = data.courts
     if (data.notes            !== undefined) payload.notes              = data.notes
     if (data.status           !== undefined) payload.status             = data.status
+    if (data.completedAt      !== undefined) payload.completed_at       = data.completedAt
     const { error } = await supabase.from('tournaments').update(payload).eq('id', id)
     if (!error) loadTournaments()
   }, [])
@@ -324,6 +325,7 @@ export function AppProvider({ children }) {
     totalPrice:       t.total_price        ?? t.totalPrice       ?? 0,
     tikkieLink:       t.tikkie_link        ?? t.tikkieLink       ?? '',
     genderMode:       t.gender_mode        ?? t.genderMode       ?? 'mixed',
+    completedAt:      t.completed_at       ?? t.completedAt      ?? null,
   }))
 
   const normalisedRegistrations = registrations.map(r => ({

@@ -39,6 +39,7 @@ export default function Layout({ children, page, onNavigate }) {
           />
           <div>
             <h1 className="font-bold text-lg leading-tight tracking-tight">Padel Lobsters</h1>
+            <p className="text-[10px] opacity-60 leading-tight tracking-wide">Amsterdam Padel Community</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
