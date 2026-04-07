@@ -1,18 +1,275 @@
 import React, { useState, useMemo, useCallback } from 'react'
-import { Trophy, ChevronDown, ChevronUp, Medal, Pencil, X, Check } from 'lucide-react'
+import { Trophy, ChevronDown, ChevronUp, Medal, Pencil, X, Check, Users, GitMerge } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 
-// ── Name alias helpers ────────────────────────────────────────────────────────
-const ALIAS_KEY = 'lobster_name_aliases'
+// ── Name alias storage ────────────────────────────────────────────────────────
+const ALIAS_KEY    = 'lobster_name_aliases'
+const SKIPPED_KEY  = 'lobster_name_skipped'   // pairs admin already said "different"
 
-function loadAliases() {
-  try { return JSON.parse(localStorage.getItem(ALIAS_KEY) || '{}') } catch { return {} }
+function loadAliases()  { try { return JSON.parse(localStorage.getItem(ALIAS_KEY)   || '{}') } catch { return {} } }
+function loadSkipped()  { try { return JSON.parse(localStorage.getItem(SKIPPED_KEY) || '[]') } catch { return [] } }
+function saveAliases(a) { localStorage.setItem(ALIAS_KEY,   JSON.stringify(a)) }
+function saveSkipped(s) { localStorage.setItem(SKIPPED_KEY, JSON.stringify(s)) }
+function resolveName(name, aliases) { return aliases[name] || name }
+
+// ── Fuzzy name matching ───────────────────────────────────────────────────────
+function normalize(n) { return n.toLowerCase().replace(/[\s.\-_]/g, '') }
+
+function editDistance(a, b) {
+  const m = a.length, n = b.length
+  const dp = Array.from({ length: m + 1 }, (_, i) => [i, ...Array(n).fill(0)])
+  for (let j = 0; j <= n; j++) dp[0][j] = j
+  for (let i = 1; i <= m; i++)
+    for (let j = 1; j <= n; j++)
+      dp[i][j] = a[i-1] === b[j-1] ? dp[i-1][j-1]
+        : 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1])
+  return dp[m][n]
 }
-function saveAliases(a) {
-  localStorage.setItem(ALIAS_KEY, JSON.stringify(a))
+
+function areSimilar(a, b) {
+  const na = normalize(a), nb = normalize(b)
+  if (na === nb) return true
+  if (na.startsWith(nb) || nb.startsWith(na)) return true
+  if (na.includes(nb)   || nb.includes(na))   return true
+  // same first token (e.g. "Alex M" and "Alex G" → skip; "Gonzalo U" and "GonzaloU" → match)
+  const ta = a.toLowerCase().split(/\s+/), tb = b.toLowerCase().split(/\s+/)
+  if (ta[0] === tb[0] && (ta.length === 1 || tb.length === 1)) return true
+  const shorter = Math.min(na.length, nb.length)
+  if (shorter >= 4 && editDistance(na, nb) <= Math.floor(shorter * 0.3)) return true
+  return false
 }
-function resolveName(name, aliases) {
-  return aliases[name] || name
+
+// Build clusters of similar names (Union-Find)
+function buildSimilarGroups(names, aliases, skipped) {
+  const canonical = names.map(n => aliases[n] || n)
+  const unique = [...new Set(canonical)]
+  const parent = Object.fromEntries(unique.map(n => [n, n]))
+
+  const find = n => parent[n] === n ? n : (parent[n] = find(parent[n]))
+  const union = (a, b) => { parent[find(a)] = find(b) }
+
+  const skippedSet = new Set(skipped.map(([a, b]) => `${a}|${b}`))
+  const isPairSkipped = (a, b) => skippedSet.has(`${a}|${b}`) || skippedSet.has(`${b}|${a}`)
+
+  for (let i = 0; i < unique.length; i++)
+    for (let j = i + 1; j < unique.length; j++)
+      if (!isPairSkipped(unique[i], unique[j]) && areSimilar(unique[i], unique[j]))
+        union(unique[i], unique[j])
+
+  const groups = {}
+  unique.forEach(n => {
+    const root = find(n)
+    if (!groups[root]) groups[root] = []
+    groups[root].push(n)
+  })
+
+  return Object.values(groups)
+    .filter(g => g.length > 1)
+    .sort((a, b) => b.length - a.length)
+}
+
+// ── Player journey builder ────────────────────────────────────────────────────
+function buildPlayerJourney(canonicalName, aliases) {
+  // reverse map: canonical → all raw names that resolve to it
+  const rawNames = Object.entries(aliases)
+    .filter(([, v]) => v === canonicalName).map(([k]) => k)
+  rawNames.push(canonicalName)
+  const matches = new Set(rawNames.map(normalize))
+
+  const appearances = []
+  TOURNAMENTS.forEach(t => {
+    const inStandings = t.players?.find(p => matches.has(normalize(p.name)))
+    if (inStandings) {
+      appearances.push({
+        tournament: t.name.replace('Lobster Tournament · ', ''),
+        pts: inStandings.total,
+        rank: null,
+      })
+    }
+  })
+  // Compute ranks
+  TOURNAMENTS.forEach((t, ti) => {
+    const sorted = t.players ? [...t.players].sort((a, b) => b.total - a.total) : []
+    sorted.forEach((p, idx) => {
+      if (matches.has(normalize(p.name))) {
+        const app = appearances.find(a => a.tournament === t.name.replace('Lobster Tournament · ', ''))
+        if (app) app.rank = idx + 1
+      }
+    })
+  })
+  return appearances
+}
+
+// ── Smart Match wizard ────────────────────────────────────────────────────────
+function SmartMatchPanel({ onClose }) {
+  const allNames  = useMemo(getAllHardcodedNames, [])
+  const [aliases, setAliasesState] = useState(loadAliases)
+  const [skipped, setSkippedState] = useState(loadSkipped)
+  const [step,    setStep]         = useState(0)   // current group index
+  const [input,   setInput]        = useState('')  // canonical name input
+
+  const groups = useMemo(
+    () => buildSimilarGroups(allNames, aliases, skipped),
+    [allNames, aliases, skipped]
+  )
+
+  const current = groups[step]
+
+  const mergeGroup = () => {
+    const canonical = input.trim() || current[0]
+    const next = { ...aliases }
+    current.forEach(n => { if (n !== canonical) next[n] = canonical })
+    saveAliases(next)
+    setAliasesState(next)
+    setInput('')
+    setStep(s => s + 1)
+  }
+
+  const skipGroup = () => {
+    // Mark every pair in this group as skipped
+    const newPairs = []
+    for (let i = 0; i < current.length; i++)
+      for (let j = i + 1; j < current.length; j++)
+        newPairs.push([current[i], current[j]])
+    const next = [...skipped, ...newPairs]
+    saveSkipped(next)
+    setSkippedState(next)
+    setInput('')
+    setStep(s => s + 1)
+  }
+
+  const resetAll = () => {
+    saveAliases({}); saveSkipped([])
+    setAliasesState({}); setSkippedState([])
+    setStep(0)
+  }
+
+  // Which tournaments does each name appear in?
+  const tournamentOf = (name) => {
+    const norm = normalize(name)
+    return TOURNAMENTS
+      .filter(t =>
+        t.players?.some(p => normalize(p.name) === norm) ||
+        t.rounds?.some(r => r.matches?.some(m =>
+          m.t1?.some(n => normalize(n) === norm) ||
+          m.t2?.some(n => normalize(n) === norm)
+        ))
+      )
+      .map(t => t.name.replace('Lobster Tournament · ', ''))
+  }
+
+  // Already merged aliases count
+  const mergedCount = Object.keys(loadAliases()).length
+
+  if (!current) {
+    return (
+      <div className="fixed inset-0 z-50 bg-black/50 flex items-end justify-center">
+        <div className="bg-white rounded-t-3xl w-full max-w-md p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="font-bold text-gray-800">Player Matching</h2>
+            <button onClick={onClose}><X size={20} className="text-gray-400" /></button>
+          </div>
+          <div className="text-center py-6 space-y-3">
+            <div className="text-5xl">✅</div>
+            <p className="font-bold text-gray-700">All done!</p>
+            <p className="text-sm text-gray-400">
+              {mergedCount > 0
+                ? `${mergedCount} name${mergedCount !== 1 ? 's' : ''} merged across history.`
+                : 'No similar names found to merge.'}
+            </p>
+          </div>
+          <button onClick={resetAll} className="w-full text-xs text-gray-400 underline text-center">
+            Reset all merges and start over
+          </button>
+          <button onClick={onClose} className="btn-primary w-full">Close</button>
+        </div>
+      </div>
+    )
+  }
+
+  const progress = step / (step + groups.length)
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-end justify-center">
+      <div className="bg-white rounded-t-3xl w-full max-w-md flex flex-col max-h-[85vh]">
+        {/* Header */}
+        <div className="px-5 pt-5 pb-4 border-b border-gray-100">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h2 className="font-bold text-gray-800 flex items-center gap-2">
+                <GitMerge size={18} className="text-lobster-teal" /> Match Players
+              </h2>
+              <p className="text-xs text-gray-400">Same person across tournaments?</p>
+            </div>
+            <button onClick={onClose}><X size={20} className="text-gray-400" /></button>
+          </div>
+          {/* Progress bar */}
+          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-lobster-teal rounded-full transition-all duration-500"
+              style={{ width: `${progress * 100}%` }}
+            />
+          </div>
+          <p className="text-[10px] text-gray-400 mt-1 text-right">
+            {step} reviewed · {groups.length} remaining
+          </p>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+          <p className="text-sm text-gray-500 text-center">Are these the same person?</p>
+
+          {/* Name cards */}
+          <div className="space-y-2">
+            {current.map(name => {
+              const tours = tournamentOf(name)
+              return (
+                <div key={name} className="bg-gray-50 rounded-2xl px-4 py-3 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="font-bold text-gray-800">{name}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {tours.length > 0 ? tours.join(' · ') : 'Not found in standings'}
+                    </p>
+                  </div>
+                  <div className="text-2xl shrink-0">
+                    {tours.length >= 3 ? '🔥' : tours.length === 2 ? '⚡' : '🆕'}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Canonical name input */}
+          <div className="space-y-1.5">
+            <p className="text-xs text-gray-500 font-semibold">Use this name everywhere:</p>
+            <input
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              placeholder={current[0]}
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-semibold focus:outline-none focus:border-lobster-teal"
+            />
+            <p className="text-[10px] text-gray-400">Leave blank to use "{current[0]}"</p>
+          </div>
+        </div>
+
+        {/* Action buttons */}
+        <div className="px-5 py-4 border-t border-gray-100 space-y-2">
+          <button
+            onClick={mergeGroup}
+            className="btn-primary w-full flex items-center justify-center gap-2"
+          >
+            <Check size={16} /> Yes, same person — merge
+          </button>
+          <button
+            onClick={skipGroup}
+            className="w-full py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-500 active:scale-95 transition-all"
+          >
+            No, different people — skip
+          </button>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 // ── December 2025 ─────────────────────────────────────────────────────────────
@@ -409,82 +666,6 @@ function getAllHardcodedNames() {
   return [...names].sort((a, b) => a.localeCompare(b))
 }
 
-// ── Rename panel (admin only) ─────────────────────────────────────────────────
-function RenamePanel({ onClose }) {
-  const [aliases, setAliases] = useState(loadAliases)
-  const [filter, setFilter]   = useState('')
-  const [dirty, setDirty]     = useState(false)
-  const allNames = useMemo(getAllHardcodedNames, [])
-
-  const update = (original, value) => {
-    setAliases(a => {
-      const next = { ...a }
-      if (!value || value === original) delete next[original]
-      else next[original] = value
-      return next
-    })
-    setDirty(true)
-  }
-
-  const save = () => { saveAliases(aliases); setDirty(false); onClose() }
-
-  const filtered = allNames.filter(n =>
-    !filter || n.toLowerCase().includes(filter.toLowerCase()) ||
-    (aliases[n] || '').toLowerCase().includes(filter.toLowerCase())
-  )
-
-  return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-end justify-center">
-      <div className="bg-white rounded-t-3xl w-full max-w-md max-h-[85vh] flex flex-col">
-        {/* Header */}
-        <div className="sticky top-0 bg-white px-5 pt-5 pb-3 border-b border-gray-100">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <h2 className="font-bold text-gray-800">Rename Players</h2>
-              <p className="text-xs text-gray-400">Changes apply across all history</p>
-            </div>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
-          </div>
-          <input
-            value={filter}
-            onChange={e => setFilter(e.target.value)}
-            placeholder="Search names…"
-            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-lobster-teal"
-          />
-        </div>
-
-        {/* Name list */}
-        <div className="flex-1 overflow-y-auto px-5 py-3 space-y-2">
-          {filtered.map(name => (
-            <div key={name} className="flex items-center gap-3">
-              <span className="text-xs text-gray-400 w-28 truncate shrink-0">{name}</span>
-              <span className="text-gray-300 text-xs">→</span>
-              <input
-                defaultValue={aliases[name] || name}
-                onBlur={e => update(name, e.target.value.trim())}
-                className={`flex-1 border rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-lobster-teal ${
-                  aliases[name] && aliases[name] !== name
-                    ? 'border-lobster-teal bg-teal-50 font-semibold text-lobster-teal'
-                    : 'border-gray-200'
-                }`}
-              />
-            </div>
-          ))}
-        </div>
-
-        {/* Footer */}
-        <div className="px-5 py-4 border-t border-gray-100">
-          <button
-            onClick={save}
-            className="btn-primary w-full flex items-center justify-center gap-2"
-          >
-            <Check size={16} /> Save Changes
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function History({ onNavigate }) {
@@ -492,13 +673,17 @@ export default function History({ onNavigate }) {
   const [expandedId, setExpandedId] = useState('mar2026')
   const [activeTab, setActiveTab]   = useState({})   // id → 'standings' | 'matches'
   const [activeRound, setActiveRound] = useState({}) // id → roundIndex
-  const [showRename, setShowRename]  = useState(false)
-  const [aliases, setAliases]        = useState(loadAliases)
+  const [showMatcher, setShowMatcher] = useState(false)
+  const [aliases, setAliases]         = useState(loadAliases)
 
-  // Reload aliases after rename panel closes
-  const handleRenameClose = () => { setAliases(loadAliases()); setShowRename(false) }
-
+  const handleMatcherClose = () => { setAliases(loadAliases()); setShowMatcher(false) }
   const rn = useCallback((name) => resolveName(name, aliases), [aliases])
+
+  // Count pending unreviewed groups for badge
+  const pendingGroups = useMemo(() => {
+    const allNames = getAllHardcodedNames()
+    return buildSimilarGroups(allNames, loadAliases(), loadSkipped()).length
+  }, [aliases])
 
   const getTab   = (id) => activeTab[id]   || 'standings'
   const getRound = (id) => activeRound[id] ?? 0
@@ -518,16 +703,21 @@ export default function History({ onNavigate }) {
 
   return (
     <div className="space-y-4">
-      {showRename && <RenamePanel onClose={handleRenameClose} />}
+      {showMatcher && <SmartMatchPanel onClose={handleMatcherClose} />}
 
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold text-gray-800">Tournament History</h2>
         {isAdmin && (
           <button
-            onClick={() => setShowRename(true)}
-            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-lobster-teal transition-colors"
+            onClick={() => setShowMatcher(true)}
+            className="flex items-center gap-1.5 text-xs font-semibold text-gray-400 hover:text-lobster-teal transition-colors relative"
           >
-            <Pencil size={13} /> Rename players
+            <GitMerge size={13} /> Match players
+            {pendingGroups > 0 && (
+              <span className="absolute -top-1.5 -right-2 bg-lobster-orange text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                {pendingGroups}
+              </span>
+            )}
           </button>
         )}
       </div>
