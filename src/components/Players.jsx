@@ -557,24 +557,19 @@ export default function Players() {
         adjustment: parseFloat(form.adjustment) || 0,
         isLeftHanded: form.isLeftHanded || false,
         birthday: form.birthday || null,
-        // Non-admins go to pending so the admin can approve or link them to an existing profile
-        status: isAdmin ? 'active' : 'pending',
+        status: 'active',
       }
       const firstName = form.name.trim().split(/\s+/)[0]
       if (editId) {
         await updatePlayer(editId, data)
-        // Show the existing player's PIN after completing a merge
         if (!isAdmin) {
           const existing = players.find(p => String(p.id) === String(editId))
           if (existing?.pin) setPinReveal({ name: firstName, pin: existing.pin })
         }
       } else {
         const newPlayer = await addPlayer(data)
-        if (isAdmin && newPlayer?.pin) {
+        if (newPlayer?.pin) {
           setPinReveal({ name: firstName, pin: newPlayer.pin })
-        } else if (!isAdmin) {
-          // Non-admin: show pending confirmation, not the PIN (admin will approve/link first)
-          setPinReveal({ name: firstName, pin: null })
         }
       }
       setShowForm(false)
@@ -845,43 +840,26 @@ export default function Players() {
       {pinReveal && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl w-full max-w-sm p-6 space-y-5 text-center shadow-xl">
-            <div className="text-5xl">{pinReveal.pin ? '🦞' : '⏳'}</div>
+            <div className="text-5xl">🦞</div>
             <div>
-              <h2 className="text-xl font-bold text-gray-800">
-                {pinReveal.pin ? `Welcome, ${pinReveal.name}!` : `You're registered, ${pinReveal.name}!`}
-              </h2>
-              <p className="text-sm text-gray-500 mt-1">
-                {pinReveal.pin
-                  ? "Here's your personal access PIN:"
-                  : 'Your registration is pending admin approval.'}
-              </p>
+              <h2 className="text-xl font-bold text-gray-800">Welcome, {pinReveal.name}!</h2>
+              <p className="text-sm text-gray-500 mt-1">Here's your personal access PIN:</p>
             </div>
 
-            {pinReveal.pin ? (
-              <>
-                <div className="bg-amber-50 border-2 border-amber-300 rounded-2xl py-5 px-4">
-                  <p className="text-[10px] font-bold text-amber-600 uppercase tracking-widest mb-2">Your PIN</p>
-                  <p className="text-5xl font-bold text-amber-800 tracking-[0.35em]">{pinReveal.pin}</p>
-                </div>
-                <div className="bg-gray-50 rounded-xl p-3 text-left space-y-1.5">
-                  <p className="text-xs font-semibold text-gray-600">Save this PIN — you'll use it to:</p>
-                  <p className="text-xs text-gray-500">🦞 Post updates and react to messages</p>
-                  <p className="text-xs text-gray-500">📋 Confirm your identity in the app</p>
-                  <p className="text-xs text-gray-500">🔒 Keep your account secure</p>
-                </div>
-                <p className="text-[10px] text-gray-400">Ask the admin if you ever lose your PIN</p>
-              </>
-            ) : (
-              <div className="bg-orange-50 border border-orange-200 rounded-2xl p-4 text-left space-y-2">
-                <p className="text-xs text-orange-700">The admin will review your profile and either:</p>
-                <p className="text-xs text-orange-600">✓ Approve you as a new player</p>
-                <p className="text-xs text-orange-600">🔗 Link you to your existing tournament profile</p>
-                <p className="text-xs text-orange-700 mt-1">You'll receive your PIN via WhatsApp once approved.</p>
-              </div>
-            )}
+            <div className="bg-amber-50 border-2 border-amber-300 rounded-2xl py-5 px-4">
+              <p className="text-[10px] font-bold text-amber-600 uppercase tracking-widest mb-2">Your PIN</p>
+              <p className="text-5xl font-bold text-amber-800 tracking-[0.35em]">{pinReveal.pin}</p>
+            </div>
+            <div className="bg-gray-50 rounded-xl p-3 text-left space-y-1.5">
+              <p className="text-xs font-semibold text-gray-600">Save this PIN — you'll use it to:</p>
+              <p className="text-xs text-gray-500">🦞 Post updates and react to messages</p>
+              <p className="text-xs text-gray-500">📋 Confirm your identity in the app</p>
+              <p className="text-xs text-gray-500">🔒 Keep your account secure</p>
+            </div>
+            <p className="text-[10px] text-gray-400">Ask the admin if you ever lose your PIN</p>
 
             <button onClick={() => setPinReveal(null)} className="btn-primary w-full">
-              {pinReveal.pin ? 'Got it, let\'s play! 🎾' : 'Got it!'}
+              Got it, let's play! 🎾
             </button>
           </div>
         </div>

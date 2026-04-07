@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useApp } from '../context/AppContext'
 import { Trophy, Users, Calendar, ChevronRight, Clock, AlertCircle, Megaphone } from 'lucide-react'
 
@@ -34,6 +34,36 @@ const ClawDown = ({ active }) => (
     }}
   />
 )
+
+const ORIGIN_STORY = "We didn't plan this. Nobody drafted a mission statement or hired a consultant. One court became two, two became a tournament, and now here we are — a full-blown padel community that somehow keeps showing up. We're competitive enough to care and relaxed enough to laugh about it. Come as you are. Stay for the padel."
+const ORIGIN_PREVIEW = "We didn't plan this. Nobody drafted a mission statement or hired a consultant."
+
+function OriginStory() {
+  const [open, setOpen] = useState(false)
+  return (
+    <div
+      onClick={() => setOpen(o => !o)}
+      className="cursor-pointer select-none"
+    >
+      <div className="relative">
+        <p className="text-[13px] text-gray-400 leading-relaxed italic">
+          <span className="text-lobster-teal opacity-60 font-serif text-lg leading-none mr-1">"</span>
+          {open ? ORIGIN_STORY : ORIGIN_PREVIEW}
+          {!open && (
+            <span className="not-italic text-lobster-teal font-semibold ml-1">
+              read more ↓
+            </span>
+          )}
+          {open && (
+            <span className="not-italic text-lobster-teal font-semibold ml-1">
+              ↑
+            </span>
+          )}
+        </p>
+      </div>
+    </div>
+  )
+}
 
 export default function Dashboard({ onNavigate }) {
   const { tournaments, players, updates, registrations, getTournamentRegistrations, getTournamentMatches, isAdmin } = useApp()
@@ -123,6 +153,8 @@ export default function Dashboard({ onNavigate }) {
           </button>
         </div>
       )}
+
+      <OriginStory />
 
       {/* See Results — recently completed tournaments */}
       {recentlyCompleted.map(t => {
