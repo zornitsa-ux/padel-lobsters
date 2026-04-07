@@ -102,11 +102,12 @@ function buildPlayerJourney(canonicalName, aliases) {
 
 // ── Smart Match wizard ────────────────────────────────────────────────────────
 function SmartMatchPanel({ onClose }) {
-  const allNames  = useMemo(getAllHardcodedNames, [])
-  const [aliases, setAliasesState] = useState(loadAliases)
-  const [skipped, setSkippedState] = useState(loadSkipped)
-  const [step,    setStep]         = useState(0)   // current group index
-  const [input,   setInput]        = useState('')  // canonical name input
+  const allNames = useMemo(getAllHardcodedNames, [])
+  const [aliases,  setAliasesState] = useState(loadAliases)
+  const [skipped,  setSkippedState] = useState(loadSkipped)
+  const [step,     setStep]         = useState(0)
+  const [checked,  setChecked]      = useState(null)  // Set of checked names for current group
+  const [input,    setInput]        = useState('')
 
   const groups = useMemo(
     () => buildSimilarGroups(allNames, aliases, skipped),
@@ -115,36 +116,16 @@ function SmartMatchPanel({ onClose }) {
 
   const current = groups[step]
 
-  const mergeGroup = () => {
-    const canonical = input.trim() || current[0]
-    const next = { ...aliases }
-    current.forEach(n => { if (n !== canonical) next[n] = canonical })
-    saveAliases(next)
-    setAliasesState(next)
-    setInput('')
-    setStep(s => s + 1)
+  // Initialise checkboxes when group changes — all checked by default
+  const checkedSet = checked ?? new Set(current || [])
+
+  const toggleCheck = (name) => {
+    const next = new Set(checkedSet)
+    next.has(name) ? next.delete(name) : next.add(name)
+    setChecked(next)
   }
 
-  const skipGroup = () => {
-    // Mark every pair in this group as skipped
-    const newPairs = []
-    for (let i = 0; i < current.length; i++)
-      for (let j = i + 1; j < current.length; j++)
-        newPairs.push([current[i], current[j]])
-    const next = [...skipped, ...newPairs]
-    saveSkipped(next)
-    setSkippedState(next)
-    setInput('')
-    setStep(s => s + 1)
-  }
-
-  const resetAll = () => {
-    saveAliases({}); saveSkipped([])
-    setAliasesState({}); setSkippedState([])
-    setStep(0)
-  }
-
-  // Which tournaments does each name appear in?
+  // Which tournaments does a name appear in?
   const tournamentOf = (name) => {
     const norm = normalize(name)
     return TOURNAMENTS
@@ -158,8 +139,50 @@ function SmartMatchPanel({ onClose }) {
       .map(t => t.name.replace('Lobster Tournament · ', ''))
   }
 
-  // Already merged aliases count
-  const mergedCount = Object.keys(loadAliases()).length
+  const advance = (newAliases, newSkipped) => {
+    saveAliases(newAliases); saveSkipped(newSkipped)
+    setAliasesState(newAliases); setSkippedState(newSkipped)
+    setChecked(null); setInput(''); setStep(s => s + 1)
+  }
+
+  const handleConfirm = () => {
+    const toMerge  = [...checkedSet]
+    const toSkip   = current.filter(n => !checkedSet.has(n))
+    const newAliases = { ...aliases }
+
+    if (toMerge.length >= 2) {
+      // Use input or first checked name as canonical
+      const canonical = input.trim() || toMerge[0]
+      toMerge.forEach(n => { if (n !== canonical) newAliases[n] = canonical })
+    }
+
+    // Skip pairs between the two groups (merged vs unmerged) so they never re-appear
+    const newPairs = []
+    toMerge.forEach(a => toSkip.forEach(b => newPairs.push([a, b])))
+    // Also skip pairs within unchecked names (they were shown and dismissed)
+    for (let i = 0; i < toSkip.length; i++)
+      for (let j = i + 1; j < toSkip.length; j++)
+        newPairs.push([toSkip[i], toSkip[j]])
+
+    advance(newAliases, [...skipped, ...newPairs])
+  }
+
+  const handleSkipAll = () => {
+    // Mark every pair in this whole group as skipped
+    const newPairs = []
+    for (let i = 0; i < current.length; i++)
+      for (let j = i + 1; j < current.length; j++)
+        newPairs.push([current[i], current[j]])
+    advance(aliases, [...skipped, ...newPairs])
+  }
+
+  const resetAll = () => {
+    saveAliases({}); saveSkipped([])
+    setAliasesState({}); setSkippedState([])
+    setChecked(null); setStep(0)
+  }
+
+  const mergedCount = Object.keys(aliases).length
 
   if (!current) {
     return (
@@ -188,6 +211,7 @@ function SmartMatchPanel({ onClose }) {
   }
 
   const progress = step / (step + groups.length)
+  const checkedCount = checkedSet.size
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-end justify-center">
@@ -199,72 +223,83 @@ function SmartMatchPanel({ onClose }) {
               <h2 className="font-bold text-gray-800 flex items-center gap-2">
                 <GitMerge size={18} className="text-lobster-teal" /> Match Players
               </h2>
-              <p className="text-xs text-gray-400">Same person across tournaments?</p>
+              <p className="text-xs text-gray-400">Tick the names that belong to the same person</p>
             </div>
             <button onClick={onClose}><X size={20} className="text-gray-400" /></button>
           </div>
-          {/* Progress bar */}
           <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-lobster-teal rounded-full transition-all duration-500"
-              style={{ width: `${progress * 100}%` }}
-            />
+            <div className="h-full bg-lobster-teal rounded-full transition-all duration-500"
+              style={{ width: `${progress * 100}%` }} />
           </div>
           <p className="text-[10px] text-gray-400 mt-1 text-right">
             {step} reviewed · {groups.length} remaining
           </p>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
-          <p className="text-sm text-gray-500 text-center">Are these the same person?</p>
-
-          {/* Name cards */}
-          <div className="space-y-2">
-            {current.map(name => {
-              const tours = tournamentOf(name)
-              return (
-                <div key={name} className="bg-gray-50 rounded-2xl px-4 py-3 flex items-center justify-between gap-3">
-                  <div>
-                    <p className="font-bold text-gray-800">{name}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">
-                      {tours.length > 0 ? tours.join(' · ') : 'Not found in standings'}
-                    </p>
-                  </div>
-                  <div className="text-2xl shrink-0">
-                    {tours.length >= 3 ? '🔥' : tours.length === 2 ? '⚡' : '🆕'}
-                  </div>
+        {/* Name checklist */}
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-2">
+          {current.map(name => {
+            const tours = tournamentOf(name)
+            const on    = checkedSet.has(name)
+            return (
+              <button
+                key={name}
+                onClick={() => toggleCheck(name)}
+                className={`w-full flex items-center gap-3 rounded-2xl px-4 py-3 transition-all text-left ${
+                  on ? 'bg-teal-50 border-2 border-lobster-teal' : 'bg-gray-50 border-2 border-transparent'
+                }`}
+              >
+                {/* Checkbox */}
+                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+                  on ? 'bg-lobster-teal border-lobster-teal' : 'border-gray-300'
+                }`}>
+                  {on && <Check size={11} className="text-white" strokeWidth={3} />}
                 </div>
-              )
-            })}
-          </div>
+                <div className="flex-1 min-w-0">
+                  <p className={`font-bold text-sm ${on ? 'text-lobster-teal' : 'text-gray-800'}`}>{name}</p>
+                  <p className="text-xs text-gray-400 mt-0.5 truncate">
+                    {tours.length > 0 ? tours.join(' · ') : 'not in standings'}
+                  </p>
+                </div>
+                <span className="text-lg shrink-0">
+                  {tours.length >= 3 ? '🔥' : tours.length === 2 ? '⚡' : '🆕'}
+                </span>
+              </button>
+            )
+          })}
 
-          {/* Canonical name input */}
-          <div className="space-y-1.5">
-            <p className="text-xs text-gray-500 font-semibold">Use this name everywhere:</p>
-            <input
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              placeholder={current[0]}
-              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-semibold focus:outline-none focus:border-lobster-teal"
-            />
-            <p className="text-[10px] text-gray-400">Leave blank to use "{current[0]}"</p>
-          </div>
+          {/* Canonical name input — only shown when ≥2 checked */}
+          {checkedCount >= 2 && (
+            <div className="pt-2 space-y-1.5">
+              <p className="text-xs text-gray-500 font-semibold">Canonical name to use everywhere:</p>
+              <input
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                placeholder={[...checkedSet][0]}
+                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-semibold focus:outline-none focus:border-lobster-teal"
+              />
+              <p className="text-[10px] text-gray-400">Leave blank to keep "{[...checkedSet][0]}"</p>
+            </div>
+          )}
         </div>
 
-        {/* Action buttons */}
+        {/* Actions */}
         <div className="px-5 py-4 border-t border-gray-100 space-y-2">
           <button
-            onClick={mergeGroup}
-            className="btn-primary w-full flex items-center justify-center gap-2"
+            onClick={handleConfirm}
+            disabled={checkedCount < 2}
+            className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-40"
           >
-            <Check size={16} /> Yes, same person — merge
+            <Check size={16} />
+            {checkedCount >= 2
+              ? `Merge ${checkedCount} selected names`
+              : 'Select at least 2 names to merge'}
           </button>
           <button
-            onClick={skipGroup}
+            onClick={handleSkipAll}
             className="w-full py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-500 active:scale-95 transition-all"
           >
-            No, different people — skip
+            None are the same — skip all
           </button>
         </div>
       </div>
