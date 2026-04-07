@@ -1,6 +1,19 @@
-import React, { useState, useMemo } from 'react'
-import { Trophy, ChevronDown, ChevronUp, Medal } from 'lucide-react'
+import React, { useState, useMemo, useCallback } from 'react'
+import { Trophy, ChevronDown, ChevronUp, Medal, Pencil, X, Check } from 'lucide-react'
 import { useApp } from '../context/AppContext'
+
+// ── Name alias helpers ────────────────────────────────────────────────────────
+const ALIAS_KEY = 'lobster_name_aliases'
+
+function loadAliases() {
+  try { return JSON.parse(localStorage.getItem(ALIAS_KEY) || '{}') } catch { return {} }
+}
+function saveAliases(a) {
+  localStorage.setItem(ALIAS_KEY, JSON.stringify(a))
+}
+function resolveName(name, aliases) {
+  return aliases[name] || name
+}
 
 // ── December 2025 ─────────────────────────────────────────────────────────────
 const DEC_STANDINGS = [
@@ -338,7 +351,7 @@ function medalColor(pos) {
   return 'text-gray-400'
 }
 
-function Podium({ players, rounds = [] }) {
+function Podium({ players, rounds = [], rn = n => n }) {
   const sorted = rounds.length > 0 ? smartSort(players, rounds) : [...players].sort((a, b) => b.total - a.total)
   const top3 = sorted.slice(0, 3)
   return (
@@ -347,9 +360,9 @@ function Podium({ players, rounds = [] }) {
       <div className="flex flex-col items-center gap-1">
         <Medal size={20} className="text-gray-400" />
         <div className="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center font-bold text-lg text-gray-600">
-          {top3[1]?.name[0]}
+          {rn(top3[1]?.name || '')[0]}
         </div>
-        <p className="text-xs font-semibold text-gray-600 text-center w-16 truncate">{top3[1]?.name}</p>
+        <p className="text-xs font-semibold text-gray-600 text-center w-16 truncate">{rn(top3[1]?.name || '')}</p>
         <p className="text-sm font-bold text-gray-500">{top3[1]?.total} pts</p>
         <div className="bg-gray-200 rounded-t-lg w-12 h-10 flex items-end justify-center pb-1">
           <span className="text-xs font-bold text-gray-600">2nd</span>
@@ -359,9 +372,9 @@ function Podium({ players, rounds = [] }) {
       <div className="flex flex-col items-center gap-1 -mb-1">
         <Trophy size={22} className="text-yellow-500" />
         <div className="w-16 h-16 bg-yellow-50 border-2 border-yellow-400 rounded-full flex items-center justify-center font-bold text-xl text-yellow-700">
-          {top3[0]?.name[0]}
+          {rn(top3[0]?.name || '')[0]}
         </div>
-        <p className="text-xs font-bold text-gray-800 text-center w-20 truncate">{top3[0]?.name}</p>
+        <p className="text-xs font-bold text-gray-800 text-center w-20 truncate">{rn(top3[0]?.name || '')}</p>
         <p className="text-base font-bold text-yellow-600">{top3[0]?.total} pts</p>
         <div className="bg-yellow-400 rounded-t-lg w-12 h-14 flex items-end justify-center pb-1">
           <span className="text-xs font-bold text-yellow-900">1st</span>
@@ -371,9 +384,9 @@ function Podium({ players, rounds = [] }) {
       <div className="flex flex-col items-center gap-1">
         <Medal size={20} className="text-amber-600" />
         <div className="w-14 h-14 bg-amber-50 rounded-full flex items-center justify-center font-bold text-lg text-amber-700">
-          {top3[2]?.name[0]}
+          {rn(top3[2]?.name || '')[0]}
         </div>
-        <p className="text-xs font-semibold text-amber-700 text-center w-16 truncate">{top3[2]?.name}</p>
+        <p className="text-xs font-semibold text-amber-700 text-center w-16 truncate">{rn(top3[2]?.name || '')}</p>
         <p className="text-sm font-bold text-amber-600">{top3[2]?.total} pts</p>
         <div className="bg-amber-300 rounded-t-lg w-12 h-7 flex items-end justify-center pb-1">
           <span className="text-xs font-bold text-amber-900">3rd</span>
@@ -383,12 +396,109 @@ function Podium({ players, rounds = [] }) {
   )
 }
 
+// ── Collect all unique hardcoded names ───────────────────────────────────────
+function getAllHardcodedNames() {
+  const names = new Set()
+  TOURNAMENTS.forEach(t => {
+    t.players?.forEach(p => names.add(p.name))
+    t.rounds?.forEach(r => r.matches?.forEach(m => {
+      m.t1?.forEach(n => names.add(n))
+      m.t2?.forEach(n => names.add(n))
+    }))
+  })
+  return [...names].sort((a, b) => a.localeCompare(b))
+}
+
+// ── Rename panel (admin only) ─────────────────────────────────────────────────
+function RenamePanel({ onClose }) {
+  const [aliases, setAliases] = useState(loadAliases)
+  const [filter, setFilter]   = useState('')
+  const [dirty, setDirty]     = useState(false)
+  const allNames = useMemo(getAllHardcodedNames, [])
+
+  const update = (original, value) => {
+    setAliases(a => {
+      const next = { ...a }
+      if (!value || value === original) delete next[original]
+      else next[original] = value
+      return next
+    })
+    setDirty(true)
+  }
+
+  const save = () => { saveAliases(aliases); setDirty(false); onClose() }
+
+  const filtered = allNames.filter(n =>
+    !filter || n.toLowerCase().includes(filter.toLowerCase()) ||
+    (aliases[n] || '').toLowerCase().includes(filter.toLowerCase())
+  )
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-end justify-center">
+      <div className="bg-white rounded-t-3xl w-full max-w-md max-h-[85vh] flex flex-col">
+        {/* Header */}
+        <div className="sticky top-0 bg-white px-5 pt-5 pb-3 border-b border-gray-100">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h2 className="font-bold text-gray-800">Rename Players</h2>
+              <p className="text-xs text-gray-400">Changes apply across all history</p>
+            </div>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+          </div>
+          <input
+            value={filter}
+            onChange={e => setFilter(e.target.value)}
+            placeholder="Search names…"
+            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-lobster-teal"
+          />
+        </div>
+
+        {/* Name list */}
+        <div className="flex-1 overflow-y-auto px-5 py-3 space-y-2">
+          {filtered.map(name => (
+            <div key={name} className="flex items-center gap-3">
+              <span className="text-xs text-gray-400 w-28 truncate shrink-0">{name}</span>
+              <span className="text-gray-300 text-xs">→</span>
+              <input
+                defaultValue={aliases[name] || name}
+                onBlur={e => update(name, e.target.value.trim())}
+                className={`flex-1 border rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-lobster-teal ${
+                  aliases[name] && aliases[name] !== name
+                    ? 'border-lobster-teal bg-teal-50 font-semibold text-lobster-teal'
+                    : 'border-gray-200'
+                }`}
+              />
+            </div>
+          ))}
+        </div>
+
+        {/* Footer */}
+        <div className="px-5 py-4 border-t border-gray-100">
+          <button
+            onClick={save}
+            className="btn-primary w-full flex items-center justify-center gap-2"
+          >
+            <Check size={16} /> Save Changes
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 export default function History({ onNavigate }) {
-  const { tournaments, players, getTournamentMatches, getTournamentRegistrations } = useApp()
+  const { tournaments, players, getTournamentMatches, getTournamentRegistrations, isAdmin } = useApp()
   const [expandedId, setExpandedId] = useState('mar2026')
   const [activeTab, setActiveTab]   = useState({})   // id → 'standings' | 'matches'
   const [activeRound, setActiveRound] = useState({}) // id → roundIndex
+  const [showRename, setShowRename]  = useState(false)
+  const [aliases, setAliases]        = useState(loadAliases)
+
+  // Reload aliases after rename panel closes
+  const handleRenameClose = () => { setAliases(loadAliases()); setShowRename(false) }
+
+  const rn = useCallback((name) => resolveName(name, aliases), [aliases])
 
   const getTab   = (id) => activeTab[id]   || 'standings'
   const getRound = (id) => activeRound[id] ?? 0
@@ -408,7 +518,19 @@ export default function History({ onNavigate }) {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-bold text-gray-800">Tournament History</h2>
+      {showRename && <RenamePanel onClose={handleRenameClose} />}
+
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-bold text-gray-800">Tournament History</h2>
+        {isAdmin && (
+          <button
+            onClick={() => setShowRename(true)}
+            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-lobster-teal transition-colors"
+          >
+            <Pencil size={13} /> Rename players
+          </button>
+        )}
+      </div>
 
       {/* Dynamic tournaments from DB */}
       {dynamicTournaments.map(t => {
@@ -586,7 +708,7 @@ export default function History({ onNavigate }) {
             {open && (
               <div className="mt-4">
                 {/* Podium */}
-                {sorted.length > 0 && <Podium players={sorted} rounds={t.rounds || []} />}
+                {sorted.length > 0 && <Podium players={sorted} rounds={t.rounds || []} rn={rn} />}
 
                 {/* Tabs */}
                 <div className="flex gap-1 bg-gray-100 p-1 rounded-xl mb-3">
@@ -658,7 +780,7 @@ export default function History({ onNavigate }) {
                           {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : idx + 1}
                         </span>
                         <span className={`font-medium truncate text-xs ${idx < 3 ? 'font-bold' : ''}`}>
-                          {p.name}
+                          {rn(p.name)}
                         </span>
                         {p.r ? (
                           <>
@@ -712,7 +834,7 @@ export default function History({ onNavigate }) {
                               {/* Team A */}
                               <div className={`flex-1 ${t1won ? 'text-green-700' : 'text-gray-600'}`}>
                                 {m.t1.map(name => (
-                                  <p key={name} className="text-xs font-semibold truncate">{name}</p>
+                                  <p key={name} className="text-xs font-semibold truncate">{rn(name)}</p>
                                 ))}
                               </div>
                               {/* Score */}
@@ -728,7 +850,7 @@ export default function History({ onNavigate }) {
                               {/* Team B */}
                               <div className={`flex-1 text-right ${t2won ? 'text-green-700' : 'text-gray-600'}`}>
                                 {m.t2.map(name => (
-                                  <p key={name} className="text-xs font-semibold truncate">{name}</p>
+                                  <p key={name} className="text-xs font-semibold truncate">{rn(name)}</p>
                                 ))}
                               </div>
                             </div>
