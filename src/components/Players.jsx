@@ -15,6 +15,19 @@ const LEVEL_COLORS = [
   'bg-purple-100 text-purple-700',
 ]
 
+// Rotating fun prompts for the "notes" field shown at registration
+const LOBBY_PROMPTS = [
+  { label: '🎤 Trash Talk',        placeholder: 'Say something to your future opponents…' },
+  { label: '🦞 Lobster Confession', placeholder: 'Confess your deepest padel sin…' },
+  { label: '💬 War Cry',           placeholder: 'What do you scream before a match?' },
+  { label: '🏅 Bold Claim',        placeholder: 'Make a promise you may not keep…' },
+  { label: '🎯 Battle Cry',        placeholder: 'Inspire (or scare) your opponents…' },
+  { label: '😤 Excuse Generator',  placeholder: 'Pre-write your excuse for losing today…' },
+  { label: '🤝 Personal Pledge',   placeholder: 'What do you bring to the court?' },
+  { label: '👀 Scouting Report',   placeholder: 'Describe your playing style in one line…' },
+]
+const randomPrompt = () => LOBBY_PROMPTS[Math.floor(Math.random() * LOBBY_PROMPTS.length)]
+
 const emptyForm = {
   name: '', email: '', phone: '',
   playtomicLevel: '', adjustment: '0',
@@ -317,6 +330,7 @@ export default function Players() {
   const [showForm, setShowForm]     = useState(false)
   const [editId, setEditId]         = useState(null)
   const [form, setForm]             = useState(emptyForm)
+  const [lobbyPrompt, setLobbyPrompt] = useState(randomPrompt)
   const [search, setSearch]         = useState('')
   const [showLogin, setShowLogin]   = useState(false)
   const [expandedId, setExpandedId] = useState(null)
@@ -354,7 +368,9 @@ export default function Players() {
   }
 
   const openAdd = () => {
-    setForm(emptyForm); setEditId(null); setAvatarFile(null); setAvatarPreview(null); setMergePlayer(null); setShowForm(true)
+    setForm(emptyForm); setEditId(null); setAvatarFile(null); setAvatarPreview(null); setMergePlayer(null)
+    setLobbyPrompt(randomPrompt())
+    setShowForm(true)
   }
 
   // Debounced duplicate check — fires 400ms after the user stops typing the name.
@@ -1037,15 +1053,16 @@ export default function Players() {
               </div>
 
               <div>
-                <label className="label">Birthday 🎂 <span className="text-gray-400 font-normal">(optional)</span></label>
+                <label className="label">Birthday 🎂</label>
                 <input type="date" className="input" value={form.birthday || ''}
                   onChange={e => setForm(f => ({ ...f, birthday: e.target.value }))} />
-                <p className="text-xs text-gray-400 mt-1">We'll remind the admins on your special day 🦞</p>
               </div>
 
               <div>
-                <label className="label">Notes</label>
-                <textarea className="input resize-none" rows={2} placeholder="Any notes..." value={form.notes}
+                <label className="label">{lobbyPrompt.label}</label>
+                <textarea className="input resize-none" rows={2}
+                  placeholder={lobbyPrompt.placeholder}
+                  value={form.notes}
                   onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
               </div>
 

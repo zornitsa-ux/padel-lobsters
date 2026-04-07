@@ -13,6 +13,7 @@ import SetupGuard from './components/SetupGuard'
 import Merch from './components/Merch'
 import Updates from './components/Updates'
 import History from './components/History'
+import Game from './components/Game'
 
 export default function App() {
   return (
@@ -46,6 +47,7 @@ function Inner() {
     merch:        <Merch tournament={selectedTournament} />,
     settings:     <Settings />,
     history:      <History onNavigate={navigate} />,
+    game:         <Game tournament={selectedTournament} onNavigate={navigate} />,
   }
 
   return (
