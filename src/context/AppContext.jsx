@@ -126,6 +126,7 @@ export function AppProvider({ children }) {
       country:            data.country            || '',
       avatar_url:         data.avatarUrl          || '',
       birthday:           data.birthday           || null,
+      preferred_position: data.preferredPosition  || '',
       pin,
     }
     const { data: inserted, error } = await supabase.from('players').insert(payload).select().single()
@@ -155,6 +156,7 @@ export function AppProvider({ children }) {
       country:            data.country            || '',
       avatar_url:         data.avatarUrl          || '',
       birthday:           data.birthday           || null,
+      preferred_position: data.preferredPosition  || '',
     }
     const { error } = await supabase.from('players').update(payload).eq('id', id)
     if (error) {
@@ -313,6 +315,7 @@ export function AppProvider({ children }) {
     avatarUrl:         p.avatar_url         ?? p.avatarUrl    ?? '',
     country:           p.country            ?? '',
     pin:               p.pin                ?? '',
+    preferredPosition: p.preferred_position ?? p.preferredPosition ?? '',
   }))
 
   const normalisedTournaments = tournaments.map(t => ({

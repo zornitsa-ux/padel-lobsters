@@ -1,7 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useMemo } from 'react'
 import { useApp } from '../context/AppContext'
 import { supabase } from '../supabase'
-import { Plus, Pencil, Trash2, X, ChevronDown, ChevronUp, Search, User, Clock, Camera, Briefcase } from 'lucide-react'
+import { Plus, Pencil, Trash2, X, ChevronDown, ChevronUp, Search, User, Clock, Camera, Briefcase, Trophy, TrendingUp } from 'lucide-react'
 import AdminLogin from './AdminLogin'
 
 const LEVEL_COLORS = [
@@ -14,6 +14,66 @@ const LEVEL_COLORS = [
   'bg-red-100 text-red-700',
   'bg-purple-100 text-purple-700',
 ]
+
+// ── Player stats from match history ──────────────────────────────────────────
+function buildPlayerStats(playerId, matches, tournaments, registrations) {
+  const completed = matches.filter(m => m.completed)
+  const playerMatches = completed.filter(m =>
+    (m.team1Ids || []).includes(playerId) || (m.team2Ids || []).includes(playerId)
+  )
+
+  let won = 0, lost = 0, draws = 0, pointsFor = 0, pointsAgainst = 0, points = 0
+  const recentForm = [] // last 5: 'W' | 'L' | 'D'
+  const h2h = {} // opponentId → { won, lost, draws }
+  const tournamentIds = new Set()
+
+  // Sort by tournament then round for chronological order
+  const sorted = [...playerMatches].sort((a, b) =>
+    a.tournamentId === b.tournamentId ? (a.round || 0) - (b.round || 0) : 0
+  )
+
+  sorted.forEach(m => {
+    const s1 = parseInt(m.score1) || 0
+    const s2 = parseInt(m.score2) || 0
+    const onTeam1 = (m.team1Ids || []).includes(playerId)
+    const myScore = onTeam1 ? s1 : s2
+    const theirScore = onTeam1 ? s2 : s1
+    const opponents = onTeam1 ? (m.team2Ids || []) : (m.team1Ids || [])
+
+    pointsFor += myScore
+    pointsAgainst += theirScore
+    tournamentIds.add(m.tournamentId)
+
+    let result
+    if (myScore > theirScore) { won++; points += 3; result = 'W' }
+    else if (myScore < theirScore) { lost++; result = 'L' }
+    else { draws++; points += 1; result = 'D' }
+
+    recentForm.push(result)
+
+    opponents.forEach(oppId => {
+      if (!h2h[oppId]) h2h[oppId] = { won: 0, lost: 0, draws: 0 }
+      if (result === 'W') h2h[oppId].won++
+      else if (result === 'L') h2h[oppId].lost++
+      else h2h[oppId].draws++
+    })
+  })
+
+  // Get tournaments this player participated in
+  const playerTournaments = tournaments
+    .filter(t => tournamentIds.has(t.id))
+    .sort((a, b) => (b.date || '') > (a.date || '') ? 1 : -1)
+
+  return {
+    played: won + lost + draws,
+    won, lost, draws, points,
+    pointsFor, pointsAgainst,
+    winRate: (won + lost + draws) > 0 ? Math.round((won / (won + lost + draws)) * 100) : 0,
+    recentForm: recentForm.slice(-5),
+    h2h,
+    playerTournaments,
+  }
+}
 
 // Rotating fun prompts for the "notes" field shown at registration
 const LOBBY_PROMPTS = [
@@ -34,6 +94,7 @@ const emptyForm = {
   playtomicUsername: '', notes: '', gender: '',
   isLeftHanded: false, country: '',
   avatarUrl: '', birthday: '',
+  preferredPosition: '',
 }
 
 const COUNTRIES = [
@@ -325,7 +386,7 @@ function PlayerAvatar({ player, size = 'md', className = '' }) {
   )
 }
 
-export default function Players() {
+export default function Players({ onNavigate }) {
   const { players, addPlayer, updatePlayer, deletePlayer, isAdmin, matches, registrations, tournaments, regeneratePin } = useApp()
   const [showForm, setShowForm]     = useState(false)
   const [editId, setEditId]         = useState(null)
@@ -422,6 +483,7 @@ export default function Players() {
       country: p.country || '',
       avatarUrl: p.avatarUrl || '',
       birthday: p.birthday || '',
+      preferredPosition: p.preferredPosition || '',
     })
     setAvatarFile(null)
     setAvatarPreview(p.avatarUrl || null)
@@ -746,48 +808,105 @@ export default function Players() {
                 </p>
               </div>
 
-              {expanded && (
+              {expanded && (() => {
+                const stats = buildPlayerStats(p.id, matches, tournaments, registrations)
+                const topH2H = Object.entries(stats.h2h)
+                  .map(([oppId, rec]) => ({ player: players.find(pl => pl.id === oppId), ...rec }))
+                  .filter(h => h.player)
+                  .sort((a, b) => (b.won + b.lost + b.draws) - (a.won + a.lost + a.draws))
+                  .slice(0, 5)
+
+                return (
                 <div className="mt-3 pt-3 border-t border-gray-100 space-y-3">
-                  {/* Stats grid */}
-                  <div className="grid grid-cols-3 gap-2 text-center">
-                    <div className="bg-gray-50 rounded-xl p-2">
-                      <p className="text-base font-bold text-gray-700">{(p.playtomicLevel || 0).toFixed(1)}</p>
-                      <p className="text-[10px] text-gray-500">Playtomic</p>
-                    </div>
-                    <div className="bg-gray-50 rounded-xl p-2">
-                      <p className={`text-base font-bold ${parseFloat(p.adjustment) >= 0 ? 'text-green-600' : 'text-red-500'}`}>
-                        {parseFloat(p.adjustment) >= 0 ? '+' : ''}{(p.adjustment || 0)}
-                      </p>
-                      <p className="text-[10px] text-gray-500">Adjustment</p>
-                    </div>
-                    <div className={`rounded-xl p-2 ${levelBadge(p.adjustedLevel)}`}>
-                      <p className="text-base font-bold">{(p.adjustedLevel || 0).toFixed(1)}</p>
-                      <p className="text-[10px] opacity-70">Adjusted</p>
-                    </div>
+
+                  {/* Match record + tags row */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {stats.played > 0 && (
+                      <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-lg font-semibold">
+                        {stats.won}W {stats.lost}L · {stats.winRate}%
+                      </span>
+                    )}
+                    {p.preferredPosition && (
+                      <span className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-lg font-semibold capitalize">
+                        {p.preferredPosition === 'drive' ? '🎯 Drive' : p.preferredPosition === 'reves' ? '🔄 Revés' : '↔️ Both'}
+                      </span>
+                    )}
+                    {p.isLeftHanded && (
+                      <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-lg font-semibold">🤚 Lefty</span>
+                    )}
+                    {p.birthday && (() => {
+                      const d = new Date(p.birthday)
+                      const dayMonth = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+                      return <span className="text-xs text-gray-400">🎂 {dayMonth}</span>
+                    })()}
                   </div>
 
-                  {/* Tags */}
-                  {p.isLeftHanded && (
-                    <div className="flex gap-2 flex-wrap">
-                      <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">🤚 Left-handed</span>
+                  {/* Level row — compact */}
+                  <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                    <span>Playtomic {(p.playtomicLevel || 0).toFixed(1)}</span>
+                    <span className={parseFloat(p.adjustment) >= 0 ? 'text-green-600' : 'text-red-500'}>
+                      {parseFloat(p.adjustment) >= 0 ? '+' : ''}{p.adjustment || 0}
+                    </span>
+                    <span>→</span>
+                    <span className={`font-bold px-1.5 py-0.5 rounded ${levelBadge(p.adjustedLevel)}`}>
+                      {(p.adjustedLevel || 0).toFixed(1)}
+                    </span>
+                  </div>
+
+                  {/* Recent form — last 5 matches */}
+                  {stats.recentForm.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Last {stats.recentForm.length}</p>
+                      <div className="flex gap-1">
+                        {stats.recentForm.map((r, i) => (
+                          <span key={i} className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold ${
+                            r === 'W' ? 'bg-green-100 text-green-700' : r === 'L' ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-500'
+                          }`}>{r}</span>
+                        ))}
+                      </div>
                     </div>
                   )}
 
-                  {/* Birthday — day/month visible to everyone; year only for admins */}
-                  {p.birthday && (() => {
-                    const d = new Date(p.birthday)
-                    const dayMonth = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })
-                    const full     = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
-                    return (
-                      <p className="text-xs text-gray-500">
-                        🎂 {isAdmin ? full : dayMonth}
-                      </p>
-                    )
-                  })()}
+                  {/* Head-to-head — top 5 opponents */}
+                  {topH2H.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Head to Head</p>
+                      <div className="space-y-1">
+                        {topH2H.map(h => (
+                          <div key={h.player.id} className="flex items-center justify-between text-xs">
+                            <span className="text-gray-700 truncate max-w-[120px]">vs {(h.player.name || '').split(' ')[0]}</span>
+                            <span className="font-semibold">
+                              <span className="text-green-600">{h.won}W</span>
+                              {' '}<span className="text-red-500">{h.lost}L</span>
+                              {h.draws > 0 && <> <span className="text-gray-400">{h.draws}D</span></>}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
+                  {/* Tournament history — clickable */}
+                  {stats.playerTournaments.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Tournaments</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {stats.playerTournaments.map(t => (
+                          <button key={t.id}
+                            onClick={(e) => { e.stopPropagation(); onNavigate && onNavigate('scores', t) }}
+                            className="text-xs bg-lobster-cream text-lobster-teal px-2.5 py-1 rounded-lg font-semibold hover:bg-lobster-teal hover:text-white transition-all active:scale-95"
+                          >
+                            {t.name || new Date(t.date).toLocaleDateString('en-GB', { month: 'short', year: '2-digit' })}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Admin info */}
                   {isAdmin && (p.email || p.phone) && (
                     <div className="space-y-1">
-                      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Only visible to admins</p>
+                      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Admin only</p>
                       {p.email && <p className="text-xs text-gray-500">✉ {p.email}</p>}
                       {p.phone && <p className="text-xs text-gray-500">📞 {p.phone}</p>}
                     </div>
@@ -810,15 +929,6 @@ export default function Players() {
                     </div>
                   )}
 
-                  {/* Corporate Review — full text in expanded view */}
-                  <div className="bg-gray-50 rounded-xl p-3 border border-gray-200">
-                    <div className="flex items-center gap-1.5 mb-1.5">
-                      <Briefcase size={11} className="text-gray-400" />
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Lobster Performance Review</p>
-                    </div>
-                    <p className="text-xs text-gray-600 leading-relaxed italic">{corpReview(p, matches, registrations, tournaments)}</p>
-                  </div>
-
                   {isAdmin && (
                     <div className="flex gap-2 pt-1">
                       <button onClick={() => openEdit(p)} className="btn-secondary flex-1 py-2 text-sm flex items-center justify-center gap-1">
@@ -830,7 +940,8 @@ export default function Players() {
                     </div>
                   )}
                 </div>
-              )}
+                )
+              })()}
             </div>
           )
         })}
@@ -993,6 +1104,22 @@ export default function Players() {
                   }`}>
                   🤚 {form.isLeftHanded ? 'Left-handed (tap to undo)' : 'Tap if left-handed'}
                 </button>
+              </div>
+
+              {/* Preferred position */}
+              <div>
+                <label className="label">Preferred Side</label>
+                <div className="flex gap-2">
+                  {[['drive', '🎯 Drive'], ['reves', '🔄 Revés'], ['both', '↔️ Both']].map(([val, lbl]) => (
+                    <button type="button" key={val}
+                      onClick={() => setForm(f => ({ ...f, preferredPosition: f.preferredPosition === val ? '' : val }))}
+                      className={`flex-1 py-2 rounded-xl font-semibold text-sm transition-all ${
+                        form.preferredPosition === val ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'
+                      }`}>
+                      {lbl}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className="bg-blue-50 rounded-xl p-4 space-y-3">
