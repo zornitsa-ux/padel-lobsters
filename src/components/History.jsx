@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react'
-import { Trophy, ChevronDown, ChevronUp, Medal, Pencil, X, Check, Users, GitMerge } from 'lucide-react'
+import { Trophy, ChevronDown, ChevronUp, Medal, Pencil, Users } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 
 // ── Name alias storage ────────────────────────────────────────────────────────
@@ -31,7 +31,7 @@ function areSimilar(a, b) {
   if (na === nb) return true
   if (na.startsWith(nb) || nb.startsWith(na)) return true
   if (na.includes(nb)   || nb.includes(na))   return true
-  // same first token (e.g. "Alex M" and "Alex G" → skip; "Gonzalo U" and "GonzaloU" → match)
+  // same first token (e.g. "Alex M" and "Alex G" → skip; "Gonzalo U" and "Gonzalo U" → match)
   const ta = a.toLowerCase().split(/\s+/), tb = b.toLowerCase().split(/\s+/)
   if (ta[0] === tb[0] && (ta.length === 1 || tb.length === 1)) return true
   const shorter = Math.min(na.length, nb.length)
@@ -323,7 +323,7 @@ const DEC_STANDINGS = [
   { name: 'Damiao',    total: 23 },
   { name: 'Valesca',   total: 22 },
   { name: 'Ingrid',    total: 22 },
-  { name: 'GonzaloU',  total: 22 },
+  { name: 'Gonzalo U',  total: 22 },
   { name: 'Lara',      total: 21 },
   { name: 'Davide',    total: 21 },
   { name: 'Shahar',    total: 20 },
@@ -350,7 +350,7 @@ const DEC_ROUNDS = [
     { court:3, t1:['Marielle','Jon'],         t2:['Ingrid','Markus'],    s1:3, s2:4 },
     { court:4, t1:['Lucia','Daniel'],         t2:['Elena','Davide'],     s1:4, s2:2 },
     { court:5, t1:['Lisa','Arda'],            t2:['Paola','Nico B'],     s1:3, s2:6 },
-    { court:6, t1:['Mel','Chris'],            t2:['Rowan','GonzaloU'],   s1:2, s2:3 },
+    { court:6, t1:['Mel','Chris'],            t2:['Rowan','Gonzalo U'],   s1:2, s2:3 },
     { court:7, t1:['Hakan','Damiao'],         t2:['Alex G','Shahar'],    s1:3, s2:2 },
     { court:8, t1:['Omar','Maria'],           t2:['Erica','Kemal'],      s1:1, s2:5 },
   ]},
@@ -359,7 +359,7 @@ const DEC_ROUNDS = [
     { court:2, t1:['Lara','Davide'],          t2:['Elena','Markus'],     s1:3, s2:5 },
     { court:3, t1:['Lisa','Alex M'],          t2:['Karlijn','Omar'],     s1:5, s2:2 },
     { court:4, t1:['Mel','Daniel'],           t2:['Hakan','Marielle'],   s1:3, s2:4 },
-    { court:5, t1:['Lucia','Chris'],          t2:['GonzaloU','Paola'],   s1:4, s2:3 },
+    { court:5, t1:['Lucia','Chris'],          t2:['Gonzalo U','Paola'],   s1:4, s2:3 },
     { court:6, t1:['Shahar','Gonzalo E'],     t2:['Kemal','Alex G'],     s1:2, s2:4 },
     { court:7, t1:['Valesca','Arda'],         t2:['Rowan','Nico B'],     s1:3, s2:4 },
     { court:8, t1:['Gino','Erica'],           t2:['Jon','Maria'],        s1:5, s2:2 },
@@ -371,11 +371,11 @@ const DEC_ROUNDS = [
     { court:4, t1:['Mel','Alex M'],           t2:['Lara','Markus'],      s1:5, s2:2 },
     { court:5, t1:['Rowan','Shahar'],         t2:['Hakan','Paola'],      s1:3, s2:4 },
     { court:6, t1:['Ingrid','Davide'],        t2:['Lisa','Damiao'],      s1:2, s2:6 },
-    { court:7, t1:['GonzaloU','Maria'],       t2:['Erica','Chris'],      s1:2, s2:5 },
+    { court:7, t1:['Gonzalo U','Maria'],       t2:['Erica','Chris'],      s1:2, s2:5 },
     { court:8, t1:['Gino','Kemal'],           t2:['Arda','Alex G'],      s1:3, s2:3 },
   ]},
   { round: 4, matches: [
-    { court:1, t1:['Ingrid','GonzaloU'],      t2:['Lucia','Damiao'],     s1:2, s2:5 },
+    { court:1, t1:['Ingrid','Gonzalo U'],      t2:['Lucia','Damiao'],     s1:2, s2:5 },
     { court:2, t1:['Marielle','Uziel'],       t2:['Elena','Alex G'],     s1:2, s2:5 },
     { court:3, t1:['Lisa','Hakan'],           t2:['Markus','Rowan'],     s1:6, s2:1 },
     { court:4, t1:['Zornitsa','Omar'],        t2:['Chris','Paola'],      s1:3, s2:4 },
@@ -386,7 +386,7 @@ const DEC_ROUNDS = [
   ]},
   { round: 5, matches: [
     { court:1, t1:['Marielle','Gonzalo E'],   t2:['Ingrid','Uziel'],     s1:1, s2:5 },
-    { court:2, t1:['Lucia','GonzaloU'],       t2:['Zornitsa','Alex G'],  s1:6, s2:1 },
+    { court:2, t1:['Lucia','Gonzalo U'],       t2:['Zornitsa','Alex G'],  s1:6, s2:1 },
     { court:3, t1:['Lisa','Nico B'],          t2:['Karlijn','Markus'],   s1:7, s2:1 },
     { court:4, t1:['Mel','Damiao'],           t2:['Elena','Alex M'],     s1:1, s2:6 },
     { court:5, t1:['Lara','Daniel'],          t2:['Shahar','Erica'],     s1:2, s2:6 },
@@ -401,7 +401,7 @@ const DEC_ROUNDS = [
     { court:4, t1:['Lara','Alex G'],          t2:['Elena','Hakan'],      s1:4, s2:4 },
     { court:5, t1:['Lucia','Daniel'],         t2:['Paola','Gonzalo E'],  s1:6, s2:2 },
     { court:6, t1:['Rowan','Damiao'],         t2:['Shahar','Karlijn'],   s1:5, s2:3 },
-    { court:7, t1:['Chris','Maria'],          t2:['Erica','GonzaloU'],   s1:3, s2:6 },
+    { court:7, t1:['Chris','Maria'],          t2:['Erica','Gonzalo U'],   s1:3, s2:6 },
     { court:8, t1:['Arda','Jon'],             t2:['Gino','Alex M'],      s1:2, s2:5 },
   ]},
 ]
@@ -413,17 +413,17 @@ const JAN_PLAYERS = [
   { name: 'Vasilya',         r: [7,4,3,7,5,2], total: 28 },
   { name: 'Ian',             r: [5,4,3,4,5,6], total: 27 },
   { name: 'Baturay',         r: [4,3,5,5,3,6], total: 26 },
-  { name: 'Gonzalo Ulla',    r: [2,4,5,7,6,2], total: 26 },
+  { name: 'Gonzalo U',    r: [2,4,5,7,6,2], total: 26 },
   { name: 'Chloe',           r: [3,4,3,4,5,6], total: 25 },
   { name: 'Damiao',          r: [2,4,4,3,5,5], total: 23 },
-  { name: 'Gonzalo Espeche', r: [2,3,5,3,6,4], total: 23 },
+  { name: 'Gonzalo E', r: [2,3,5,3,6,4], total: 23 },
   { name: 'Zornitsa',        r: [3,5,3,4,4,4], total: 23 },
   { name: 'Aimee',           r: [2,4,3,2,6,5], total: 22 },
   { name: 'Chris',           r: [2,2,5,5,5,3], total: 22 },
   { name: 'Gino',            r: [3,5,3,5,2,4], total: 22 },
   { name: 'Markus',          r: [1,5,3,4,5,4], total: 22 },
   { name: 'Mel',             r: [4,5,3,5,2,3], total: 22 },
-  { name: 'Nico Brizuela',   r: [3,4,3,3,4,5], total: 22 },
+  { name: 'Nico B',   r: [3,4,3,3,4,5], total: 22 },
   { name: 'Sebas',           r: [4,5,4,5,1,3], total: 22 },
   { name: 'Zico',            r: [2,4,3,4,6,3], total: 22 },
   { name: 'Alex M',          r: [3,3,5,4,1,5], total: 21 },
@@ -435,7 +435,7 @@ const JAN_PLAYERS = [
   { name: 'Alex G',          r: [2,4,2,2,4,4], total: 18 },
   { name: 'Amanda',          r: [1,3,3,4,4,3], total: 18 },
   { name: 'Jon',             r: [1,4,3,3,1,6], total: 18 },
-  { name: 'Nico Tzinieris',  r: [4,3,3,1,4,3], total: 18 },
+  { name: 'Nico T',  r: [4,3,3,1,4,3], total: 18 },
   { name: 'Juan',            r: [1,3,3,5,2,3], total: 17 },
   { name: 'Adri',            r: [2,3,5,3,3,0], total: 16 },
   { name: 'Paola',           r: [2,4,3,3,1,3], total: 16 },
@@ -708,17 +708,8 @@ export default function History({ onNavigate }) {
   const [expandedId, setExpandedId] = useState('mar2026')
   const [activeTab, setActiveTab]   = useState({})   // id → 'standings' | 'matches'
   const [activeRound, setActiveRound] = useState({}) // id → roundIndex
-  const [showMatcher, setShowMatcher] = useState(false)
-  const [aliases, setAliases]         = useState(loadAliases)
-
-  const handleMatcherClose = () => { setAliases(loadAliases()); setShowMatcher(false) }
+  const [aliases]         = useState(loadAliases)
   const rn = useCallback((name) => resolveName(name, aliases), [aliases])
-
-  // Count pending unreviewed groups for badge
-  const pendingGroups = useMemo(() => {
-    const allNames = getAllHardcodedNames()
-    return buildSimilarGroups(allNames, loadAliases(), loadSkipped()).length
-  }, [aliases])
 
   const getTab   = (id) => activeTab[id]   || 'standings'
   const getRound = (id) => activeRound[id] ?? 0
@@ -739,23 +730,8 @@ export default function History({ onNavigate }) {
 
   return (
     <div className="space-y-4">
-      {showMatcher && <SmartMatchPanel onClose={handleMatcherClose} />}
-
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold text-gray-800">Tournament History</h2>
-        {isAdmin && (
-          <button
-            onClick={() => setShowMatcher(true)}
-            className="flex items-center gap-1.5 text-xs font-semibold text-gray-400 hover:text-lobster-teal transition-colors relative"
-          >
-            <GitMerge size={13} /> Match players
-            {pendingGroups > 0 && (
-              <span className="absolute -top-1.5 -right-2 bg-lobster-orange text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
-                {pendingGroups}
-              </span>
-            )}
-          </button>
-        )}
       </div>
 
       {/* Dynamic tournaments from DB */}

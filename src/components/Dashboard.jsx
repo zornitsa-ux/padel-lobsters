@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
-import { Trophy, Users, Calendar, ChevronRight, AlertCircle, Megaphone, TrendingUp, Star, Clock, Flame, Award } from 'lucide-react'
+import { Trophy, Users, Calendar, ChevronRight, AlertCircle, Megaphone, TrendingUp, Star, Clock, Flame, Award, Lightbulb } from 'lucide-react'
+import DEFAULT_TIPS from '../data/padelTips'
 
 const CLAW_IMG = '/claws.png'
 const ClawUp = ({ active }) => (
@@ -53,12 +54,12 @@ function getGreeting(name) {
   return GREETINGS_HELLO[dayHash % GREETINGS_HELLO.length](first)
 }
 
-// ── Live countdown hook ──────────────────────────────────────────────────────
+// ── Live countdown hook (ticks every second) ────────────────────────────────
 function useCountdown(dateStr) {
   const [now, setNow] = useState(Date.now())
   useEffect(() => {
     if (!dateStr) return
-    const id = setInterval(() => setNow(Date.now()), 60000) // tick every minute
+    const id = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(id)
   }, [dateStr])
 
@@ -68,12 +69,13 @@ function useCountdown(dateStr) {
   const days = Math.floor(diff / 86400000)
   const hours = Math.floor((diff % 86400000) / 3600000)
   const mins = Math.floor((diff % 3600000) / 60000)
-  return { days, hours, mins }
+  const secs = Math.floor((diff % 60000) / 1000)
+  return { days, hours, mins, secs }
 }
 
 export default function Dashboard({ onNavigate }) {
   const {
-    tournaments, players, updates, registrations, matches,
+    tournaments, players, updates, registrations, matches, settings,
     getTournamentRegistrations, getTournamentMatches,
     isAdmin, claimedId, getPlayerById,
   } = useApp()
@@ -191,6 +193,14 @@ export default function Dashboard({ onNavigate }) {
 
   const [greetHello, greetSub] = getGreeting(claimedPlayer?.name || (isAdmin ? 'Admin' : null))
 
+  // Tip of the day — use custom tips from settings or defaults
+  const tips = (settings?.padelTips && settings.padelTips.length > 0) ? settings.padelTips : DEFAULT_TIPS
+  const todayTip = useMemo(() => {
+    const now = new Date()
+    const dayIndex = (now.getFullYear() * 366 + now.getMonth() * 31 + now.getDate()) % tips.length
+    return tips[dayIndex]
+  }, [tips])
+
   return (
     <div className="space-y-5">
 
@@ -213,11 +223,24 @@ export default function Dashboard({ onNavigate }) {
             <span className="text-[11px] bg-white border border-gray-200 text-gray-600 font-semibold px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1.5">
               <Clock size={13} className="text-blue-500" />
               {countdown.days > 0
-                ? `${countdown.days}d ${countdown.hours}h ${countdown.mins}m`
-                : `${countdown.hours}h ${countdown.mins}m`
-              } to go
+                ? <><span className="tabular-nums">{countdown.days}</span>d <span className="tabular-nums">{countdown.hours}</span>h <span className="tabular-nums">{countdown.mins}</span>m <span className="tabular-nums">{String(countdown.secs).padStart(2,'0')}</span>s</>
+                : <><span className="tabular-nums">{countdown.hours}</span>h <span className="tabular-nums">{countdown.mins}</span>m <span className="tabular-nums">{String(countdown.secs).padStart(2,'0')}</span>s</>
+              }
             </span>
           )}
+        </div>
+      )}
+
+      {/* ── Tip of the Day ──────────────────────────────────────── */}
+      {todayTip && (
+        <div className="bg-amber-50/70 border border-amber-200 rounded-2xl px-4 py-3 flex items-start gap-3">
+          <div className="w-8 h-8 bg-amber-400 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+            <Lightbulb size={16} className="text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wide mb-0.5">Tip of the Day</p>
+            <p className="text-xs text-gray-700 leading-relaxed">{todayTip}</p>
+          </div>
         </div>
       )}
 
@@ -431,25 +454,40 @@ export default function Dashboard({ onNavigate }) {
       )}
 
       {/* ── Community stats ───────────────────────────────────── */}
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        <button onClick={() => onNavigate('players')} className="bg-white rounded-xl px-4 py-3 text-center shadow-sm border border-gray-100 flex-shrink-0 active:scale-[0.98] transition-all">
-          <p className="text-lg font-bold text-lobster-teal">{activePlayers.length}</p>
-          <p className="text-[10px] text-gray-500">Players</p>
+      <div className="grid grid-cols-2 gap-2">
+        <button onClick={() => onNavigate('players')} className="bg-white rounded-2xl py-4 text-center shadow-sm border border-gray-200 active:scale-[0.97] active:bg-gray-50 transition-all">
+          <Users size={16} className="mx-auto mb-1 text-lobster-teal" />
+          <p className="text-xl font-bold text-lobster-teal">{activePlayers.length}</p>
+          <p className="text-[10px] text-gray-500 font-medium">Players</p>
+          <p className="text-[9px] text-lobster-teal mt-1 font-semibold">View all &rsaquo;</p>
         </button>
-        <button onClick={() => onNavigate('tournament')} className="bg-white rounded-xl px-4 py-3 text-center shadow-sm border border-gray-100 flex-shrink-0 active:scale-[0.98] transition-all">
-          <p className="text-lg font-bold text-lobster-orange">{upcomingCount}</p>
-          <p className="text-[10px] text-gray-500">Upcoming</p>
+        <button onClick={() => onNavigate('tournament')} className="bg-white rounded-2xl py-4 text-center shadow-sm border border-gray-200 active:scale-[0.97] active:bg-gray-50 transition-all">
+          <Calendar size={16} className="mx-auto mb-1 text-lobster-orange" />
+          <p className="text-xl font-bold text-lobster-orange">{upcomingCount}</p>
+          <p className="text-[10px] text-gray-500 font-medium">Upcoming</p>
+          <p className="text-[9px] text-lobster-orange mt-1 font-semibold">View all &rsaquo;</p>
         </button>
-        <button onClick={() => onNavigate('history')} className="bg-white rounded-xl px-4 py-3 text-center shadow-sm border border-gray-100 flex-shrink-0 active:scale-[0.98] transition-all">
-          <p className="text-lg font-bold text-gray-600">{pastCount}</p>
-          <p className="text-[10px] text-gray-500">Past Events</p>
+        <button onClick={() => onNavigate('history')} className="bg-white rounded-2xl py-4 text-center shadow-sm border border-gray-200 active:scale-[0.97] active:bg-gray-50 transition-all">
+          <Trophy size={16} className="mx-auto mb-1 text-gray-500" />
+          <p className="text-xl font-bold text-gray-700">{pastCount}</p>
+          <p className="text-[10px] text-gray-500 font-medium">Past Events</p>
+          <p className="text-[9px] text-gray-500 mt-1 font-semibold">View all &rsaquo;</p>
         </button>
-        {topPlayer && (
-          <div className="bg-white rounded-xl px-4 py-3 text-center shadow-sm border border-gray-100 flex-shrink-0">
-            <p className="text-lg font-bold text-yellow-500"><Star size={18} className="inline" /></p>
-            <p className="text-[10px] text-gray-500">{topPlayer.name} · {topPlayer.pts}pts</p>
-          </div>
-        )}
+        <button onClick={() => onNavigate('players')} className="bg-white rounded-2xl py-4 text-center shadow-sm border border-gray-200 active:scale-[0.97] active:bg-gray-50 transition-all">
+          <Star size={16} className="mx-auto mb-1 text-yellow-500" />
+          {topPlayer ? (
+            <>
+              <p className="text-sm font-bold text-gray-800 mt-1">{topPlayer.name}</p>
+              <p className="text-[10px] text-gray-500 font-medium">{topPlayer.pts} pts</p>
+              <p className="text-[9px] text-yellow-600 mt-1 font-semibold">Top Lobster &rsaquo;</p>
+            </>
+          ) : (
+            <>
+              <p className="text-sm font-bold text-gray-400 mt-1">—</p>
+              <p className="text-[10px] text-gray-500 font-medium">Top Lobster</p>
+            </>
+          )}
+        </button>
       </div>
 
       {/* ── Latest updates ────────────────────────────────────── */}

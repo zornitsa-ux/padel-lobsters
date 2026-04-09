@@ -93,6 +93,7 @@ export function AppProvider({ children }) {
       whatsappLink: data.whatsapp_link ?? data.whatsappLink ?? '',
       adminPin:     data.admin_pin     ?? data.adminPin     ?? '1234',
       groupName:    data.group_name    ?? data.groupName    ?? 'Padel Lobsters',
+      padelTips:    data.padel_tips    ?? data.padelTips    ?? null,
     })
   }
 
@@ -104,6 +105,7 @@ export function AppProvider({ children }) {
       admin_pin:     newSettings.adminPin     ?? '1234',
       group_name:    newSettings.groupName    ?? 'Padel Lobsters',
     }
+    if (newSettings.padelTips !== undefined) payload.padel_tips = newSettings.padelTips
     await supabase.from('settings').upsert(payload)
     setSettings(s => ({ ...s, ...newSettings }))
   }, [])
