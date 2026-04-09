@@ -1,6 +1,6 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useState, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
-import { Trophy, Users, Calendar, ChevronRight, AlertCircle, Megaphone, TrendingUp, Star } from 'lucide-react'
+import { Trophy, Users, Calendar, ChevronRight, AlertCircle, Megaphone, TrendingUp, Star, Clock, Flame, Award } from 'lucide-react'
 
 const CLAW_IMG = '/claws.png'
 const ClawUp = ({ active }) => (
@@ -36,22 +36,39 @@ const ClawDown = ({ active }) => (
 )
 
 // ── Fun greetings ────────────────────────────────────────────────────────────
-const GREETINGS = [
-  (n) => `Hey ${n}! Ready to pinch some wins today?`,
-  (n) => `${n}! The court is calling — try not to get clawed.`,
-  (n) => `Ahoy ${n}! Time to shell-ebrate some padel.`,
-  (n) => `${n}, today's forecast: 100% chance of lobster tears.`,
-  (n) => `Welcome back ${n}! May your lobs be high and your opponents low.`,
-  (n) => `${n}! Don't be shellfish — share the wins today.`,
-  (n) => `Snap snap ${n}! Let's crack some matches open.`,
-  (n) => `${n}, the lobsters are restless. Show them who's boss.`,
+const GREETINGS_HELLO = [
+  (n) => [`Hey ${n}!`, `Ready to pinch some wins today?`],
+  (n) => [`${n}!`, `The court is calling — try not to get clawed.`],
+  (n) => [`Ahoy ${n}!`, `Time to shell-ebrate some padel.`],
+  (n) => [`${n}!`, `Today's forecast: 100% chance of lobster tears.`],
+  (n) => [`Welcome back ${n}!`, `May your lobs be high and your opponents low.`],
+  (n) => [`${n}!`, `Don't be shellfish — share the wins today.`],
+  (n) => [`Snap snap ${n}!`, `Let's crack some matches open.`],
+  (n) => [`${n}!`, `The lobsters are restless. Show them who's boss.`],
 ]
 
 function getGreeting(name) {
   const first = (name || 'Lobster').split(' ')[0]
-  // Deterministic-ish per day so it doesn't flicker on re-renders
   const dayHash = new Date().getDate() + first.charCodeAt(0)
-  return GREETINGS[dayHash % GREETINGS.length](first)
+  return GREETINGS_HELLO[dayHash % GREETINGS_HELLO.length](first)
+}
+
+// ── Live countdown hook ──────────────────────────────────────────────────────
+function useCountdown(dateStr) {
+  const [now, setNow] = useState(Date.now())
+  useEffect(() => {
+    if (!dateStr) return
+    const id = setInterval(() => setNow(Date.now()), 60000) // tick every minute
+    return () => clearInterval(id)
+  }, [dateStr])
+
+  if (!dateStr) return null
+  const diff = new Date(dateStr).getTime() - now
+  if (diff <= 0) return null
+  const days = Math.floor(diff / 86400000)
+  const hours = Math.floor((diff % 86400000) / 3600000)
+  const mins = Math.floor((diff % 3600000) / 60000)
+  return { days, hours, mins }
 }
 
 export default function Dashboard({ onNavigate }) {
@@ -93,10 +110,12 @@ export default function Dashboard({ onNavigate }) {
   const waitlisted = regs.filter(r => r.status === 'waitlist')
   const unpaid     = regs.filter(r => r.status === 'registered' && r.paymentStatus !== 'paid')
 
-  // Check if claimed player is registered for the upcoming event
   const isRegistered = upcoming && claimedId
     ? regs.some(r => r.playerId === claimedId && r.status === 'registered')
     : false
+
+  // Live countdown
+  const countdown = useCountdown(upcoming?.date)
 
   // Past completed tournaments for history section
   const pastTournaments = tournaments
@@ -123,6 +142,43 @@ export default function Dashboard({ onNavigate }) {
     return p ? { name: p.name.split(' ')[0], pts: best[1] } : null
   }, [matches, players])
 
+  // ── Personal stats for claimed player ──────────────────────────────────────
+  const myStats = useMemo(() => {
+    if (!claimedId) return null
+    let played = 0, won = 0, lost = 0, draws = 0, pts = 0, pointsFor = 0, pointsAgainst = 0
+    matches.filter(m => m.completed).forEach(m => {
+      const onT1 = (m.team1Ids || []).includes(claimedId)
+      const onT2 = (m.team2Ids || []).includes(claimedId)
+      if (!onT1 && !onT2) return
+      played++
+      const s1 = parseInt(m.score1) || 0, s2 = parseInt(m.score2) || 0
+      if (onT1) { pointsFor += s1; pointsAgainst += s2 }
+      else      { pointsFor += s2; pointsAgainst += s1 }
+      const t1w = s1 > s2, t2w = s2 > s1
+      if ((onT1 && t1w) || (onT2 && t2w)) { won++; pts += 3 }
+      else if (s1 === s2) { draws++; pts += 1 }
+      else { lost++ }
+    })
+    if (played === 0) return null
+
+    // Streak: count consecutive completed tournaments the player participated in (most recent first)
+    const completedSorted = tournaments
+      .filter(t => t.status === 'completed')
+      .sort((a, b) => (b.date || '') > (a.date || '') ? 1 : -1)
+    let streak = 0
+    for (const t of completedSorted) {
+      const tRegs = getTournamentRegistrations(t.id)
+      if (tRegs.some(r => r.playerId === claimedId && r.status === 'registered')) {
+        streak++
+      } else {
+        break
+      }
+    }
+
+    const winRate = played > 0 ? Math.round((won / played) * 100) : 0
+    return { played, won, lost, draws, pts, pointsFor, pointsAgainst, winRate, streak }
+  }, [claimedId, matches, tournaments, getTournamentRegistrations])
+
   const formatDate = (d) => {
     if (!d) return '—'
     return new Date(d).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
@@ -133,64 +189,112 @@ export default function Dashboard({ onNavigate }) {
     return new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
   }
 
+  const [greetHello, greetSub] = getGreeting(claimedPlayer?.name || (isAdmin ? 'Admin' : null))
+
   return (
     <div className="space-y-5">
 
       {/* ── Greeting ──────────────────────────────────────────── */}
       <div>
-        <p className="text-lg font-bold text-gray-800 leading-snug">
-          {getGreeting(claimedPlayer?.name || (isAdmin ? 'Admin' : null))}
-        </p>
+        <p className="text-xl font-extrabold text-gray-800 leading-snug">{greetHello}</p>
+        <p className="text-sm text-gray-500 mt-0.5">{greetSub}</p>
       </div>
 
-      {/* ── Next event hero card ──────────────────────────────── */}
+      {/* ── Streak + Countdown pills ──────────────────────────── */}
+      {(myStats?.streak > 0 || countdown) && (
+        <div className="flex items-center gap-2 flex-wrap">
+          {myStats?.streak > 0 && (
+            <span className="text-[11px] bg-white border border-gray-200 text-gray-600 font-semibold px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1.5">
+              <Flame size={13} className="text-orange-500" />
+              {myStats.streak} event{myStats.streak > 1 ? 's' : ''} in a row
+            </span>
+          )}
+          {countdown && (
+            <span className="text-[11px] bg-white border border-gray-200 text-gray-600 font-semibold px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1.5">
+              <Clock size={13} className="text-blue-500" />
+              {countdown.days > 0
+                ? `${countdown.days}d ${countdown.hours}h ${countdown.mins}m`
+                : `${countdown.hours}h ${countdown.mins}m`
+              } to go
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* ── Next event — glass card ───────────────────────────── */}
       {upcoming ? (
-        <div className="bg-lobster-teal rounded-2xl p-5 text-white">
-          <p className="text-lobster-teal-light text-xs font-semibold uppercase tracking-wide mb-1">
-            Your Next Event
-          </p>
-          <h2 className="text-xl font-bold mb-1">{upcoming.name}</h2>
-          <div className="flex items-center gap-1.5 text-sm opacity-90 mb-4">
-            <Calendar size={14} />
+        <div
+          className="rounded-2xl p-4 shadow-sm bg-white/80 border border-white/90"
+          style={{ backdropFilter: 'blur(12px)' }}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[10px] font-bold text-lobster-orange uppercase tracking-wide">Next Event</p>
+            {countdown && (
+              <span className="text-[10px] bg-lobster-orange/10 text-lobster-orange font-bold px-2 py-0.5 rounded-full">
+                In {countdown.days > 0 ? `${countdown.days} day${countdown.days > 1 ? 's' : ''}` : `${countdown.hours}h`}
+              </span>
+            )}
+          </div>
+          <h2 className="text-base font-bold text-gray-800 mb-0.5">{upcoming.name}</h2>
+          <p className="text-xs text-gray-500 mb-3 flex items-center gap-1">
+            <Calendar size={12} />
             {formatDate(upcoming.date)}
+          </p>
+
+          <div className="flex items-center gap-4 mb-3">
+            <div className="text-center">
+              <p className="text-lg font-bold text-lobster-teal">
+                {registered.length}<span className="text-gray-400 font-normal text-xs">/{upcoming.maxPlayers || '?'}</span>
+              </p>
+              <p className="text-[9px] text-gray-400">Registered</p>
+            </div>
+            <div className="w-px h-8 bg-gray-200"></div>
+            <div className="text-center">
+              <p className={`text-lg font-bold ${waitlisted.length > 0 ? 'text-yellow-600' : 'text-gray-400'}`}>
+                {waitlisted.length}
+              </p>
+              <p className="text-[9px] text-gray-400">Waitlisted</p>
+            </div>
+            <div className="w-px h-8 bg-gray-200"></div>
+            <div className="text-center">
+              <p className="text-lg font-bold text-lobster-teal">
+                {(upcoming.courts || []).filter(c => c.booked).length}/{(upcoming.courts || []).length}
+              </p>
+              <p className="text-[9px] text-gray-400">Courts</p>
+            </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-2 mb-4">
-            <Stat label="Players" value={`${registered.length}/${upcoming.maxPlayers || '?'}`} />
-            <Stat label="Waitlist" value={waitlisted.length} warn={waitlisted.length > 0} />
-            <Stat label="Courts" value={(upcoming.courts || []).filter(c => c.booked).length + '/' + (upcoming.courts || []).length} />
-          </div>
-
-          <div className="flex gap-2">
-            <button
-              onClick={() => onNavigate('registration', upcoming)}
-              className="flex-1 bg-white text-lobster-teal font-semibold py-2 rounded-xl text-sm active:scale-95 transition-all"
-            >
-              Registrations
-            </button>
-            <button
-              onClick={() => onNavigate('payments', upcoming)}
-              className="flex-1 bg-lobster-orange text-white font-semibold py-2 rounded-xl text-sm active:scale-95 transition-all"
-            >
-              Payments
-            </button>
-            <button
-              onClick={() => onNavigate('schedule', upcoming)}
-              className="flex-1 bg-white/20 text-white font-semibold py-2 rounded-xl text-sm active:scale-95 transition-all"
-            >
-              Schedule
-            </button>
-          </div>
-
-          {/* Nudge to register if not signed up */}
+          {/* Nudge to register */}
           {claimedId && !isRegistered && !isAdmin && (
             <button
               onClick={() => onNavigate('registration', upcoming)}
-              className="w-full mt-3 bg-lobster-orange text-white font-semibold py-2.5 rounded-xl text-sm active:scale-95 transition-all"
+              className="w-full bg-lobster-orange text-white font-bold py-2.5 rounded-xl text-sm active:scale-95 transition-all mb-2"
             >
               You're not signed up yet — join now!
             </button>
           )}
+
+          {/* Action links */}
+          <div className="flex gap-2">
+            <button
+              onClick={() => onNavigate('registration', upcoming)}
+              className="flex-1 bg-lobster-orange text-white font-semibold py-2 rounded-xl text-xs active:scale-95 transition-all"
+            >
+              Registrations
+            </button>
+            <button
+              onClick={() => onNavigate('schedule', upcoming)}
+              className="flex-1 text-xs text-gray-500 font-semibold py-2 text-center active:scale-95"
+            >
+              Schedule
+            </button>
+            <button
+              onClick={() => onNavigate('payments', upcoming)}
+              className="flex-1 text-xs text-gray-500 font-semibold py-2 text-center active:scale-95"
+            >
+              Payments
+            </button>
+          </div>
         </div>
       ) : (
         <div className="card flex flex-col items-center py-8 text-center gap-2">
@@ -237,7 +341,7 @@ export default function Dashboard({ onNavigate }) {
               onClick={() => onNavigate('scores', t)}
               className="w-full bg-white/20 hover:bg-white/30 text-white font-semibold py-2 rounded-xl text-sm active:scale-95 transition-all"
             >
-              See Full Results →
+              See Full Results
             </button>
           </div>
         )
@@ -251,7 +355,7 @@ export default function Dashboard({ onNavigate }) {
             {unpaid.length} player{unpaid.length > 1 ? 's' : ''} haven't paid yet
           </p>
           <button onClick={() => onNavigate('payments', upcoming)} className="ml-auto text-xs text-red-600 font-semibold">
-            View →
+            View
           </button>
         </div>
       )}
@@ -288,34 +392,65 @@ export default function Dashboard({ onNavigate }) {
         )
       })()}
 
-      {/* ── Community stats ───────────────────────────────────── */}
-      <div className="grid grid-cols-3 gap-2">
-        <button onClick={() => onNavigate('players')} className="card text-center py-3 active:scale-[0.98] transition-all">
-          <p className="text-xl font-bold text-lobster-teal">{activePlayers.length}</p>
-          <p className="text-[10px] text-gray-500 font-medium">Players</p>
-        </button>
-        <button onClick={() => onNavigate('tournament')} className="card text-center py-3 active:scale-[0.98] transition-all">
-          <p className="text-xl font-bold text-lobster-orange">{upcomingCount}</p>
-          <p className="text-[10px] text-gray-500 font-medium">Upcoming</p>
-        </button>
-        <button onClick={() => onNavigate('history')} className="card text-center py-3 active:scale-[0.98] transition-all">
-          <p className="text-xl font-bold text-gray-700">{pastCount}</p>
-          <p className="text-[10px] text-gray-500 font-medium">Past Events</p>
-        </button>
-      </div>
-
-      {/* Top lobster callout */}
-      {topPlayer && (
-        <div className="card flex items-center gap-3 bg-yellow-50/60 border border-yellow-200">
-          <div className="w-9 h-9 bg-yellow-400 rounded-full flex items-center justify-center flex-shrink-0">
-            <Star size={16} className="text-white" />
+      {/* ── Your Stats (personal) ─────────────────────────────── */}
+      {myStats && (
+        <section>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="font-bold text-gray-700 flex items-center gap-1.5">
+              <Award size={15} className="text-lobster-orange" /> Your Stats
+            </h3>
+            <button onClick={() => onNavigate('players')} className="text-xs text-lobster-teal font-semibold">
+              Full profile
+            </button>
           </div>
-          <div className="flex-1">
-            <p className="text-xs text-gray-500 font-medium">All-time top lobster</p>
-            <p className="text-sm font-bold text-gray-800">{topPlayer.name} · {topPlayer.pts} pts</p>
+          <div className="bg-white/80 rounded-2xl p-4 shadow-sm border border-white/90" style={{ backdropFilter: 'blur(12px)' }}>
+            <div className="grid grid-cols-4 gap-2 text-center">
+              <div>
+                <p className="text-lg font-bold text-gray-800">{myStats.played}</p>
+                <p className="text-[9px] text-gray-400 font-medium">Played</p>
+              </div>
+              <div>
+                <p className="text-lg font-bold text-green-600">{myStats.won}</p>
+                <p className="text-[9px] text-gray-400 font-medium">Won</p>
+              </div>
+              <div>
+                <p className="text-lg font-bold text-red-500">{myStats.lost}</p>
+                <p className="text-[9px] text-gray-400 font-medium">Lost</p>
+              </div>
+              <div>
+                <p className="text-lg font-bold text-lobster-orange">{myStats.winRate}%</p>
+                <p className="text-[9px] text-gray-400 font-medium">Win Rate</p>
+              </div>
+            </div>
+            <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
+              <span>{myStats.pts} total points</span>
+              <span>Game diff: {myStats.pointsFor - myStats.pointsAgainst > 0 ? '+' : ''}{myStats.pointsFor - myStats.pointsAgainst}</span>
+            </div>
           </div>
-        </div>
+        </section>
       )}
+
+      {/* ── Community stats ───────────────────────────────────── */}
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        <button onClick={() => onNavigate('players')} className="bg-white rounded-xl px-4 py-3 text-center shadow-sm border border-gray-100 flex-shrink-0 active:scale-[0.98] transition-all">
+          <p className="text-lg font-bold text-lobster-teal">{activePlayers.length}</p>
+          <p className="text-[10px] text-gray-500">Players</p>
+        </button>
+        <button onClick={() => onNavigate('tournament')} className="bg-white rounded-xl px-4 py-3 text-center shadow-sm border border-gray-100 flex-shrink-0 active:scale-[0.98] transition-all">
+          <p className="text-lg font-bold text-lobster-orange">{upcomingCount}</p>
+          <p className="text-[10px] text-gray-500">Upcoming</p>
+        </button>
+        <button onClick={() => onNavigate('history')} className="bg-white rounded-xl px-4 py-3 text-center shadow-sm border border-gray-100 flex-shrink-0 active:scale-[0.98] transition-all">
+          <p className="text-lg font-bold text-gray-600">{pastCount}</p>
+          <p className="text-[10px] text-gray-500">Past Events</p>
+        </button>
+        {topPlayer && (
+          <div className="bg-white rounded-xl px-4 py-3 text-center shadow-sm border border-gray-100 flex-shrink-0">
+            <p className="text-lg font-bold text-yellow-500"><Star size={18} className="inline" /></p>
+            <p className="text-[10px] text-gray-500">{topPlayer.name} · {topPlayer.pts}pts</p>
+          </div>
+        )}
+      </div>
 
       {/* ── Latest updates ────────────────────────────────────── */}
       {recentUpdates.length > 0 && (
@@ -325,7 +460,7 @@ export default function Dashboard({ onNavigate }) {
               <Megaphone size={15} className="text-lobster-orange" /> Latest Updates
             </h3>
             <button onClick={() => onNavigate('updates')} className="text-xs text-lobster-teal font-semibold">
-              See all →
+              See all
             </button>
           </div>
           <div className="space-y-2">
@@ -366,14 +501,13 @@ export default function Dashboard({ onNavigate }) {
               <Trophy size={15} className="text-yellow-500" /> Past Events
             </h3>
             <button onClick={() => onNavigate('history')} className="text-xs text-lobster-teal font-semibold">
-              Full history →
+              Full history
             </button>
           </div>
           <div className="space-y-2">
             {pastTournaments.map(t => {
               const tMatches = getTournamentMatches(t.id)
               const tRegs = getTournamentRegistrations(t.id).filter(r => r.status === 'registered')
-              // Quick winner
               const stats = {}
               tRegs.forEach(r => { stats[r.playerId] = { pts: 0 } })
               tMatches.filter(m => m.completed && m.score1 != null).forEach(m => {
@@ -409,15 +543,6 @@ export default function Dashboard({ onNavigate }) {
           </div>
         </section>
       )}
-    </div>
-  )
-}
-
-function Stat({ label, value, warn }) {
-  return (
-    <div className="bg-white/15 rounded-xl p-2.5 text-center">
-      <p className={`text-xl font-bold ${warn ? 'text-lobster-gold' : 'text-white'}`}>{value}</p>
-      <p className="text-[10px] text-white/70 font-medium">{label}</p>
     </div>
   )
 }

@@ -200,7 +200,7 @@ function generateRoundRobin(players, numCourts, genderMode = 'mixed') {
 export default function Schedule({ tournament, onNavigate }) {
   const {
     players, getTournamentRegistrations, getTournamentMatches,
-    saveMatches, updateMatch, isAdmin
+    saveMatches, updateMatch, updateTournament, isAdmin
   } = useApp()
 
   const [rounds, setRounds]         = useState(4)
@@ -333,6 +333,29 @@ export default function Schedule({ tournament, onNavigate }) {
   }, [savedMatches])
 
   const display = generated || savedRounds
+
+  // Check if all matches have scores filled in
+  const allMatchesScored = useMemo(() => {
+    if (savedRounds.length === 0) return false
+    const allMatches = savedRounds.flatMap(r => r.matches)
+    if (allMatches.length === 0) return false
+    return allMatches.every(m => m.completed && m.score1 != null && m.score2 != null)
+  }, [savedRounds])
+
+  const isTournamentCompleted = tournament.status === 'completed'
+  const [finishing, setFinishing] = useState(false)
+
+  const handleFinishTournament = async () => {
+    if (!isAdmin) { setShowLogin(true); return }
+    setFinishing(true)
+    try {
+      await updateTournament(tournament.id, {
+        status: 'completed',
+        completedAt: new Date().toISOString(),
+      })
+      onNavigate('scores', tournament)
+    } finally { setFinishing(false) }
+  }
 
   const handleGenerate = async () => {
     if (!isAdmin) { setShowLogin(true); return }
@@ -663,6 +686,46 @@ export default function Schedule({ tournament, onNavigate }) {
         <div className="card py-10 text-center text-gray-400">
           <Shuffle size={36} className="mx-auto mb-2 opacity-30" />
           <p>No schedule generated yet</p>
+        </div>
+      )}
+
+      {/* ── Tournament completed → View Results ──────────────── */}
+      {isTournamentCompleted && (
+        <button
+          onClick={() => onNavigate('scores', tournament)}
+          className="w-full bg-gradient-to-r from-yellow-400 to-lobster-orange text-white font-bold py-3 rounded-2xl text-sm active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+        >
+          <Trophy size={18} /> View Results
+        </button>
+      )}
+
+      {/* ── All scores filled → Finish Tournament ────────────── */}
+      {allMatchesScored && !isTournamentCompleted && !generated && isAdmin && (
+        <div className="bg-green-50 border border-green-200 rounded-2xl p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+              <Trophy size={20} className="text-white" />
+            </div>
+            <div>
+              <p className="font-bold text-green-800 text-sm">All scores are in!</p>
+              <p className="text-xs text-green-600">Finish the tournament to generate the final standings.</p>
+            </div>
+          </div>
+          <button
+            onClick={handleFinishTournament}
+            disabled={finishing}
+            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl text-sm active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+          >
+            <Trophy size={16} />
+            {finishing ? 'Finishing...' : 'Finish Tournament & See Results'}
+          </button>
+        </div>
+      )}
+
+      {/* ── Non-admin: all scored but not finished → hint ──── */}
+      {allMatchesScored && !isTournamentCompleted && !isAdmin && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 text-center">
+          <p className="text-sm text-yellow-700 font-medium">All matches scored — waiting for admin to finish the tournament.</p>
         </div>
       )}
     </div>
