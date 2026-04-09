@@ -105,7 +105,8 @@ export default function Dashboard({ onNavigate }) {
     .slice(0, 6)
 
   // Community stats
-  const totalMatches = matches.filter(m => m.completed).length
+  const upcomingCount = tournaments.filter(t => t.status === 'upcoming' || t.status === 'active').length
+  const pastCount = tournaments.filter(t => t.status === 'completed').length
 
   // Top player by total points across all tournaments
   const topPlayer = useMemo(() => {
@@ -136,13 +137,10 @@ export default function Dashboard({ onNavigate }) {
     <div className="space-y-5">
 
       {/* ── Greeting ──────────────────────────────────────────── */}
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-600 leading-snug">
+      <div>
+        <p className="text-lg font-bold text-gray-800 leading-snug">
           {getGreeting(claimedPlayer?.name || (isAdmin ? 'Admin' : null))}
         </p>
-        <span className="text-xs bg-lobster-cream text-lobster-teal px-2.5 py-1 rounded-full font-semibold flex-shrink-0 ml-3">
-          {activePlayers.length} lobsters
-        </span>
       </div>
 
       {/* ── Next event hero card ──────────────────────────────── */}
@@ -297,13 +295,13 @@ export default function Dashboard({ onNavigate }) {
           <p className="text-[10px] text-gray-500 font-medium">Players</p>
         </button>
         <button onClick={() => onNavigate('tournament')} className="card text-center py-3 active:scale-[0.98] transition-all">
-          <p className="text-xl font-bold text-lobster-orange">{tournaments.length}</p>
-          <p className="text-[10px] text-gray-500 font-medium">Events</p>
+          <p className="text-xl font-bold text-lobster-orange">{upcomingCount}</p>
+          <p className="text-[10px] text-gray-500 font-medium">Upcoming</p>
         </button>
-        <div className="card text-center py-3">
-          <p className="text-xl font-bold text-gray-700">{totalMatches}</p>
-          <p className="text-[10px] text-gray-500 font-medium">Matches</p>
-        </div>
+        <button onClick={() => onNavigate('history')} className="card text-center py-3 active:scale-[0.98] transition-all">
+          <p className="text-xl font-bold text-gray-700">{pastCount}</p>
+          <p className="text-[10px] text-gray-500 font-medium">Past Events</p>
+        </button>
       </div>
 
       {/* Top lobster callout */}
