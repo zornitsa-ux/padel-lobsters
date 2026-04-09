@@ -39,7 +39,7 @@ export default function Layout({ children, page, onNavigate }) {
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-3">
             <img src="/logo-hd.png" alt="Padel Lobsters"
-              className="w-14 h-14 rounded-full object-cover"
+              className="w-16 h-16 rounded-full object-cover"
               style={{ boxShadow: '0 0 0 2.5px rgba(255,255,255,0.3)' }}
             />
             <div>
