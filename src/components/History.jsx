@@ -725,15 +725,16 @@ export default function History({ onNavigate }) {
 
   const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000
 
-  // Completed tournaments from DB older than 2 days (or no completedAt)
+  // Completed tournaments from DB older than 2 days after tournament date
   const dynamicTournaments = useMemo(() => {
     return tournaments
       .filter(t => {
         if (t.status !== 'completed') return false
-        if (!t.completedAt) return true
-        return Date.now() - new Date(t.completedAt).getTime() >= TWO_DAYS_MS
+        const refDate = t.date || t.completedAt
+        if (!refDate) return true
+        return Date.now() - new Date(refDate).getTime() >= TWO_DAYS_MS
       })
-      .sort((a, b) => (b.completedAt || b.date || '') > (a.completedAt || a.date || '') ? 1 : -1)
+      .sort((a, b) => (b.date || b.completedAt || '') > (a.date || a.completedAt || '') ? 1 : -1)
   }, [tournaments])
 
   return (

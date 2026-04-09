@@ -50,13 +50,14 @@ export default function Dashboard({ onNavigate }) {
     return new Date(ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
   }
 
-  // Recently completed tournaments (within 48 hours)
+  // Recently completed tournaments (within 48 hours of tournament date)
   const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000
   const recentlyCompleted = tournaments.filter(t => {
     if (t.status !== 'completed') return false
-    if (!t.completedAt) return false
-    return Date.now() - new Date(t.completedAt).getTime() < TWO_DAYS_MS
-  }).sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt))
+    const refDate = t.date || t.completedAt
+    if (!refDate) return false
+    return Date.now() - new Date(refDate).getTime() < TWO_DAYS_MS
+  }).sort((a, b) => new Date(b.date || b.completedAt) - new Date(a.date || a.completedAt))
 
   // Next upcoming tournament
   const upcoming = tournaments

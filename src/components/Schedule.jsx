@@ -138,13 +138,14 @@ function shortName(player, allPlayers) {
 
 // ── Format generators ─────────────────────────────────────────────────────────
 
-function generateLobster(players, numCourts, genderMode = 'mixed') {
+function generateLobster(players, numCourts, genderMode = 'mixed', duration = 90) {
+  const numRounds = duration >= 120 ? 6 : 5  // 2h → 6 rounds, 90min → 5 rounds (18min each)
   const sorted = [...players].sort((a, b) => (b.adjustedLevel || 0) - (a.adjustedLevel || 0))
   const active = sorted.slice(0, numCourts * 4), sitting = sorted.slice(numCourts * 4)
   const partnerHistory = {}, opponentHistory = {}
   active.forEach(p => { partnerHistory[p.id] = new Set(); opponentHistory[p.id] = new Set() })
   const allRounds = []
-  for (let r = 0; r < 6; r++) {
+  for (let r = 0; r < numRounds; r++) {
     const pairs   = buildSmartPairs(active, partnerHistory, genderMode)
     const matches = pairsToCourtMatches(pairs, numCourts, r + 1, opponentHistory)
     updateHistories(pairs, matches, partnerHistory, opponentHistory)
@@ -297,7 +298,7 @@ export default function Schedule({ tournament, onNavigate }) {
     await new Promise(r => setTimeout(r, 300)) // small delay for UX
 
     let newRounds
-    if (format === 'lobster_matching') newRounds = generateLobster(registeredPlayers, numCourts, genderMode)
+    if (format === 'lobster_matching') newRounds = generateLobster(registeredPlayers, numCourts, genderMode, tournament.duration || 90)
     else if (format === 'mexicano')    newRounds = generateMexicano(registeredPlayers, numCourts, rounds, genderMode)
     else if (format === 'roundrobin')  newRounds = generateRoundRobin(registeredPlayers, numCourts, genderMode)
     else                               newRounds = generateAmericano(registeredPlayers, numCourts, rounds, genderMode)
@@ -375,7 +376,7 @@ export default function Schedule({ tournament, onNavigate }) {
             )}
             {isLobster && (
               <span className="text-xs bg-lobster-cream text-lobster-teal px-2 py-0.5 rounded-full font-medium">
-                🦞 6 rounds · partners rotate
+                🦞 {(tournament.duration || 90) >= 120 ? 6 : 5} rounds · partners rotate
               </span>
             )}
           </div>
@@ -530,14 +531,14 @@ export default function Schedule({ tournament, onNavigate }) {
                         {match.id && isAdmin ? (
                           <div className="flex items-center gap-1">
                             <input
-                              type="number" min="0" max="99"
+                              type="number" min="0" max="15"
                               className="w-10 h-9 text-center text-lg font-bold border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-lobster-teal"
                               defaultValue={match.score1 ?? ''}
                               onBlur={e => handleScoreUpdate(match.id, 'score1', e.target.value)}
                             />
                             <span className="text-gray-400">-</span>
                             <input
-                              type="number" min="0" max="99"
+                              type="number" min="0" max="15"
                               className="w-10 h-9 text-center text-lg font-bold border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-lobster-teal"
                               defaultValue={match.score2 ?? ''}
                               onBlur={e => handleScoreUpdate(match.id, 'score2', e.target.value)}

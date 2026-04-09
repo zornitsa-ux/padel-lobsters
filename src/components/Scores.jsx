@@ -55,8 +55,9 @@ export default function Scores({ tournament, onNavigate }) {
     })
 
     return Object.values(stats).sort((a, b) =>
-      b.points !== a.points ? b.points - a.points
-      : (b.pointsFor - b.pointsAgainst) - (a.pointsFor - a.pointsAgainst)
+      b.points !== a.points ? b.points - a.points                              // 1. Total points (3 per win, 1 per draw)
+      : b.won !== a.won ? b.won - a.won                                        // 2. Matches won
+      : (b.pointsFor - b.pointsAgainst) - (a.pointsFor - a.pointsAgainst)     // 3. Game difference
     )
   }, [matches, registeredPlayers])
 
@@ -181,7 +182,7 @@ export default function Scores({ tournament, onNavigate }) {
                 </tbody>
               </table>
             </div>
-            <p className="text-xs text-gray-400 mt-2">3 pts for win · 1 pt for draw · 0 for loss</p>
+            <p className="text-xs text-gray-400 mt-2">3 pts/win · 1 pt/draw · Tiebreak: matches won → game difference</p>
           </div>
         </>
       )}
