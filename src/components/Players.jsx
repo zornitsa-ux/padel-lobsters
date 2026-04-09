@@ -802,8 +802,8 @@ export default function Players({ onNavigate }) {
                     ? <ChevronUp size={16} className="text-gray-400 flex-shrink-0" />
                     : <ChevronDown size={16} className="text-gray-400 flex-shrink-0" />}
                 </div>
-                {/* Review preview — always visible */}
-                <p className="text-xs text-gray-400 italic mt-2 leading-relaxed line-clamp-2 pl-8">
+                {/* Review — always visible */}
+                <p className="text-xs text-gray-500 mt-2 leading-relaxed pl-8">
                   {corpReview(p, matches, registrations, tournaments)}
                 </p>
               </div>
