@@ -11,7 +11,8 @@ function pairScore(a, b, partnerHistory, avoidWWPairs) {
   if (a.isLeftHanded && b.isLeftHanded) score += 10000        // Hard: no two lefties
   if (partnerHistory[a.id]?.has(b.id))  score += 1000         // Hard: repeat partner
   if (avoidWWPairs && a.gender === 'female' && b.gender === 'female') score += 50
-  score += Math.abs((a.adjustedLevel || 0) - (b.adjustedLevel || 0)) * 0.5
+  // PREFER complementary levels: pair strong with weak so teams are balanced
+  score -= Math.abs((a.adjustedLevel || 0) - (b.adjustedLevel || 0)) * 0.8
   score += Math.random() * 0.3  // jitter: break ties randomly so each reshuffle differs
   return score
 }
@@ -210,6 +211,7 @@ export default function Schedule({ tournament, onNavigate }) {
   const [activeRound, setActiveRound] = useState(0)
   const [swapMode, setSwapMode]     = useState(false)
   const [swapFirst, setSwapFirst]   = useState(null) // { roundIdx, matchIdx, team, playerIdx, playerId }
+  const [swapWarnings, setSwapWarnings] = useState([]) // warnings after a swap
 
   // Load saved schedule into edit preview
   const handleEditSchedule = () => {
@@ -224,6 +226,47 @@ export default function Schedule({ tournament, onNavigate }) {
     })))
     setSaved(false)
     setSwapMode(true)
+  }
+
+  // Check for duplicate partnerships across all rounds
+  const findPartnerConflicts = (allRounds) => {
+    const warnings = []
+    // Build a map: for each round, which player is partnered with whom
+    const partnersByRound = allRounds.map((r, ri) => {
+      const partners = {} // playerId → partnerId
+      r.matches.forEach(m => {
+        if (m.team1Ids?.length === 2) {
+          partners[m.team1Ids[0]] = m.team1Ids[1]
+          partners[m.team1Ids[1]] = m.team1Ids[0]
+        }
+        if (m.team2Ids?.length === 2) {
+          partners[m.team2Ids[0]] = m.team2Ids[1]
+          partners[m.team2Ids[1]] = m.team2Ids[0]
+        }
+      })
+      return { round: ri + 1, partners }
+    })
+
+    // Compare every pair of rounds for duplicate partnerships
+    for (let i = 0; i < partnersByRound.length; i++) {
+      for (let j = i + 1; j < partnersByRound.length; j++) {
+        const a = partnersByRound[i], b = partnersByRound[j]
+        const seen = new Set()
+        for (const [pid, partnerId] of Object.entries(a.partners)) {
+          const key = [pid, partnerId].sort().join('-')
+          if (seen.has(key)) continue
+          seen.add(key)
+          if (b.partners[pid] === partnerId) {
+            const p1 = players.find(p => p.id === pid)
+            const p2 = players.find(p => p.id === partnerId)
+            if (p1 && p2) {
+              warnings.push(`${(p1.name || '').split(' ')[0]} & ${(p2.name || '').split(' ')[0]} are partners in both Round ${a.round} and Round ${b.round}`)
+            }
+          }
+        }
+      }
+    }
+    return warnings
   }
 
   const handlePlayerTap = (roundIdx, matchIdx, team, playerIdx, playerId) => {
@@ -249,6 +292,9 @@ export default function Schedule({ tournament, onNavigate }) {
       srcMatch.team2Level = lvl(srcMatch.team2Ids)
       dstMatch.team1Level = lvl(dstMatch.team1Ids)
       dstMatch.team2Level = lvl(dstMatch.team2Ids)
+      // Check for conflicts after swap
+      const conflicts = findPartnerConflicts(next)
+      setSwapWarnings(conflicts)
       return next
     })
     setSwapFirst(null)
@@ -422,7 +468,7 @@ export default function Schedule({ tournament, onNavigate }) {
             <AlertCircle size={16} className="text-yellow-600 flex-shrink-0" />
             <p className="text-xs text-yellow-700 flex-1">Preview — not saved yet</p>
             <div className="flex gap-1.5 flex-shrink-0">
-              <button onClick={() => { setGenerated(null); setSwapMode(false); setSwapFirst(null) }}
+              <button onClick={() => { setGenerated(null); setSwapMode(false); setSwapFirst(null); setSwapWarnings([]) }}
                 className="text-xs text-gray-500 font-semibold px-2 py-1">Cancel</button>
               <button onClick={handleGenerate} className="text-xs text-yellow-700 font-semibold px-2 py-1">Reshuffle</button>
               <button onClick={handleSave} disabled={generating}
@@ -434,7 +480,7 @@ export default function Schedule({ tournament, onNavigate }) {
           {/* Swap mode toggle */}
           {isAdmin && (
             <button
-              onClick={() => { setSwapMode(s => !s); setSwapFirst(null) }}
+              onClick={() => { setSwapMode(s => !s); setSwapFirst(null); setSwapWarnings([]) }}
               className={`w-full py-2 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
                 swapMode ? 'bg-orange-100 text-orange-700 border-2 border-orange-300' : 'bg-gray-100 text-gray-600'
               }`}
@@ -443,6 +489,17 @@ export default function Schedule({ tournament, onNavigate }) {
                 ? swapFirst ? '👆 Tap another player to swap…' : '↔️ Swap Mode ON — tap a player'
                 : '↔️ Manually swap players'}
             </button>
+          )}
+          {/* Swap conflict warnings */}
+          {swapWarnings.length > 0 && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-3 space-y-1">
+              <p className="text-xs font-bold text-red-700 flex items-center gap-1.5">
+                <AlertCircle size={14} /> Partnership conflicts detected
+              </p>
+              {swapWarnings.map((w, i) => (
+                <p key={i} className="text-xs text-red-600">• {w}</p>
+              ))}
+            </div>
           )}
         </div>
       )}
