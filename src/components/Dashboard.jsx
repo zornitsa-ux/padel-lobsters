@@ -454,37 +454,29 @@ export default function Dashboard({ onNavigate }) {
       )}
 
       {/* ── Community stats ───────────────────────────────────── */}
-      <div className="grid grid-cols-2 gap-2">
-        <button onClick={() => onNavigate('players')} className="bg-white rounded-2xl py-4 text-center shadow-sm border border-gray-200 active:scale-[0.97] active:bg-gray-50 transition-all">
-          <Users size={16} className="mx-auto mb-1 text-lobster-teal" />
-          <p className="text-xl font-bold text-lobster-teal">{activePlayers.length}</p>
-          <p className="text-[10px] text-gray-500 font-medium">Players</p>
-          <p className="text-[9px] text-lobster-teal mt-1 font-semibold">View all &rsaquo;</p>
+      <div className="grid grid-cols-4 gap-1.5">
+        <button onClick={() => onNavigate('players')} className="bg-white rounded-xl py-2.5 text-center shadow-sm border border-gray-200 active:scale-[0.96] active:bg-gray-50 transition-all">
+          <p className="text-base font-bold text-lobster-teal">{activePlayers.length}</p>
+          <p className="text-[9px] text-gray-400 font-medium">Players</p>
         </button>
-        <button onClick={() => onNavigate('tournament')} className="bg-white rounded-2xl py-4 text-center shadow-sm border border-gray-200 active:scale-[0.97] active:bg-gray-50 transition-all">
-          <Calendar size={16} className="mx-auto mb-1 text-lobster-orange" />
-          <p className="text-xl font-bold text-lobster-orange">{upcomingCount}</p>
-          <p className="text-[10px] text-gray-500 font-medium">Upcoming</p>
-          <p className="text-[9px] text-lobster-orange mt-1 font-semibold">View all &rsaquo;</p>
+        <button onClick={() => onNavigate('tournament')} className="bg-white rounded-xl py-2.5 text-center shadow-sm border border-gray-200 active:scale-[0.96] active:bg-gray-50 transition-all">
+          <p className="text-base font-bold text-lobster-orange">{upcomingCount}</p>
+          <p className="text-[9px] text-gray-400 font-medium">Upcoming</p>
         </button>
-        <button onClick={() => onNavigate('history')} className="bg-white rounded-2xl py-4 text-center shadow-sm border border-gray-200 active:scale-[0.97] active:bg-gray-50 transition-all">
-          <Trophy size={16} className="mx-auto mb-1 text-gray-500" />
-          <p className="text-xl font-bold text-gray-700">{pastCount}</p>
-          <p className="text-[10px] text-gray-500 font-medium">Past Events</p>
-          <p className="text-[9px] text-gray-500 mt-1 font-semibold">View all &rsaquo;</p>
+        <button onClick={() => onNavigate('history')} className="bg-white rounded-xl py-2.5 text-center shadow-sm border border-gray-200 active:scale-[0.96] active:bg-gray-50 transition-all">
+          <p className="text-base font-bold text-gray-600">{pastCount}</p>
+          <p className="text-[9px] text-gray-400 font-medium">Past</p>
         </button>
-        <button onClick={() => onNavigate('players')} className="bg-white rounded-2xl py-4 text-center shadow-sm border border-gray-200 active:scale-[0.97] active:bg-gray-50 transition-all">
-          <Star size={16} className="mx-auto mb-1 text-yellow-500" />
+        <button onClick={() => onNavigate('players')} className="bg-white rounded-xl py-2.5 text-center shadow-sm border border-gray-200 active:scale-[0.96] active:bg-gray-50 transition-all">
           {topPlayer ? (
             <>
-              <p className="text-sm font-bold text-gray-800 mt-1">{topPlayer.name}</p>
-              <p className="text-[10px] text-gray-500 font-medium">{topPlayer.pts} pts</p>
-              <p className="text-[9px] text-yellow-600 mt-1 font-semibold">Top Lobster &rsaquo;</p>
+              <p className="text-base font-bold text-yellow-500"><Star size={14} className="inline" /></p>
+              <p className="text-[9px] text-gray-400 font-medium truncate px-0.5">{topPlayer.name}</p>
             </>
           ) : (
             <>
-              <p className="text-sm font-bold text-gray-400 mt-1">—</p>
-              <p className="text-[10px] text-gray-500 font-medium">Top Lobster</p>
+              <p className="text-base font-bold text-gray-300">—</p>
+              <p className="text-[9px] text-gray-400 font-medium">Top</p>
             </>
           )}
         </button>
