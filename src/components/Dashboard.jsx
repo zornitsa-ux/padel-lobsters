@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
+import React, { useMemo } from 'react'
 import { useApp } from '../context/AppContext'
-import { Trophy, Users, Calendar, ChevronRight, Clock, AlertCircle, Megaphone } from 'lucide-react'
+import { Trophy, Users, Calendar, ChevronRight, AlertCircle, Megaphone, TrendingUp, Star } from 'lucide-react'
 
 const CLAW_IMG = '/claws.png'
 const ClawUp = ({ active }) => (
@@ -35,10 +35,34 @@ const ClawDown = ({ active }) => (
   />
 )
 
+// ── Fun greetings ────────────────────────────────────────────────────────────
+const GREETINGS = [
+  (n) => `Hey ${n}! Ready to pinch some wins today?`,
+  (n) => `${n}! The court is calling — try not to get clawed.`,
+  (n) => `Ahoy ${n}! Time to shell-ebrate some padel.`,
+  (n) => `${n}, today's forecast: 100% chance of lobster tears.`,
+  (n) => `Welcome back ${n}! May your lobs be high and your opponents low.`,
+  (n) => `${n}! Don't be shellfish — share the wins today.`,
+  (n) => `Snap snap ${n}! Let's crack some matches open.`,
+  (n) => `${n}, the lobsters are restless. Show them who's boss.`,
+]
+
+function getGreeting(name) {
+  const first = (name || 'Lobster').split(' ')[0]
+  // Deterministic-ish per day so it doesn't flicker on re-renders
+  const dayHash = new Date().getDate() + first.charCodeAt(0)
+  return GREETINGS[dayHash % GREETINGS.length](first)
+}
 
 export default function Dashboard({ onNavigate }) {
-  const { tournaments, players, updates, registrations, getTournamentRegistrations, getTournamentMatches, isAdmin } = useApp()
+  const {
+    tournaments, players, updates, registrations, matches,
+    getTournamentRegistrations, getTournamentMatches,
+    isAdmin, claimedId, getPlayerById,
+  } = useApp()
 
+  const claimedPlayer = claimedId ? getPlayerById(claimedId) : null
+  const activePlayers = players.filter(p => (p.status || 'active') === 'active')
   const recentUpdates = (updates || []).slice(0, 2)
 
   const formatUpdateTime = (ts) => {
@@ -67,21 +91,65 @@ export default function Dashboard({ onNavigate }) {
   const regs = upcoming ? getTournamentRegistrations(upcoming.id) : []
   const registered = regs.filter(r => r.status === 'registered')
   const waitlisted = regs.filter(r => r.status === 'waitlist')
-  const paid       = regs.filter(r => r.paymentStatus === 'paid')
   const unpaid     = regs.filter(r => r.status === 'registered' && r.paymentStatus !== 'paid')
+
+  // Check if claimed player is registered for the upcoming event
+  const isRegistered = upcoming && claimedId
+    ? regs.some(r => r.playerId === claimedId && r.status === 'registered')
+    : false
+
+  // Past completed tournaments for history section
+  const pastTournaments = tournaments
+    .filter(t => t.status === 'completed')
+    .sort((a, b) => (b.date || '') > (a.date || '') ? 1 : -1)
+    .slice(0, 6)
+
+  // Community stats
+  const totalMatches = matches.filter(m => m.completed).length
+
+  // Top player by total points across all tournaments
+  const topPlayer = useMemo(() => {
+    const pts = {}
+    matches.filter(m => m.completed).forEach(m => {
+      const s1 = parseInt(m.score1) || 0, s2 = parseInt(m.score2) || 0
+      const t1w = s1 > s2, t2w = s2 > s1
+      ;(m.team1Ids || []).forEach(id => { pts[id] = (pts[id] || 0) + (t1w ? 3 : t2w ? 0 : 1) })
+      ;(m.team2Ids || []).forEach(id => { pts[id] = (pts[id] || 0) + (t2w ? 3 : t1w ? 0 : 1) })
+    })
+    const best = Object.entries(pts).sort((a, b) => b[1] - a[1])[0]
+    if (!best) return null
+    const p = players.find(x => x.id === best[0])
+    return p ? { name: p.name.split(' ')[0], pts: best[1] } : null
+  }, [matches, players])
 
   const formatDate = (d) => {
     if (!d) return '—'
     return new Date(d).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
   }
 
+  const formatShortDate = (d) => {
+    if (!d) return '—'
+    return new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+  }
+
   return (
     <div className="space-y-5">
-      {/* Next event hero card */}
+
+      {/* ── Greeting ──────────────────────────────────────────── */}
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-gray-600 leading-snug">
+          {getGreeting(claimedPlayer?.name || (isAdmin ? 'Admin' : null))}
+        </p>
+        <span className="text-xs bg-lobster-cream text-lobster-teal px-2.5 py-1 rounded-full font-semibold flex-shrink-0 ml-3">
+          {activePlayers.length} lobsters
+        </span>
+      </div>
+
+      {/* ── Next event hero card ──────────────────────────────── */}
       {upcoming ? (
         <div className="bg-lobster-teal rounded-2xl p-5 text-white">
           <p className="text-lobster-teal-light text-xs font-semibold uppercase tracking-wide mb-1">
-            Next Event
+            Your Next Event
           </p>
           <h2 className="text-xl font-bold mb-1">{upcoming.name}</h2>
           <div className="flex items-center gap-1.5 text-sm opacity-90 mb-4">
@@ -115,22 +183,34 @@ export default function Dashboard({ onNavigate }) {
               Schedule
             </button>
           </div>
+
+          {/* Nudge to register if not signed up */}
+          {claimedId && !isRegistered && !isAdmin && (
+            <button
+              onClick={() => onNavigate('registration', upcoming)}
+              className="w-full mt-3 bg-lobster-orange text-white font-semibold py-2.5 rounded-xl text-sm active:scale-95 transition-all"
+            >
+              You're not signed up yet — join now!
+            </button>
+          )}
         </div>
       ) : (
-        <div className="card flex flex-col items-center py-10 text-center gap-3">
-          <Trophy size={40} className="text-lobster-teal opacity-30" />
-          <p className="font-semibold text-gray-500">No upcoming events</p>
-          <button onClick={() => onNavigate('tournament')} className="btn-primary text-sm py-2 px-4">
-            Create an Event
-          </button>
+        <div className="card flex flex-col items-center py-8 text-center gap-2">
+          <Calendar size={36} className="text-gray-300" />
+          <p className="text-sm text-gray-500">No upcoming events right now</p>
+          <p className="text-xs text-gray-400">Check back soon — next tournament is around the corner.</p>
+          {isAdmin && (
+            <button onClick={() => onNavigate('tournament')} className="btn-primary text-sm py-2 px-4 mt-2">
+              Create an Event
+            </button>
+          )}
         </div>
       )}
 
-      {/* See Results — recently completed tournaments */}
+      {/* ── Recently completed — see results ──────────────────── */}
       {recentlyCompleted.map(t => {
         const tMatches  = getTournamentMatches(t.id)
         const tRegs     = getTournamentRegistrations(t.id).filter(r => r.status === 'registered')
-        // Quick winner calc
         const stats = {}
         tRegs.forEach(r => { stats[r.playerId] = { pts: 0 } })
         tMatches.filter(m => m.completed && m.score1 != null).forEach(m => {
@@ -165,7 +245,7 @@ export default function Dashboard({ onNavigate }) {
         )
       })}
 
-      {/* Alerts — admin only */}
+      {/* ── Admin alerts ──────────────────────────────────────── */}
       {isAdmin && unpaid.length > 0 && (
         <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-xl p-3">
           <AlertCircle size={18} className="text-red-500 flex-shrink-0" />
@@ -178,7 +258,7 @@ export default function Dashboard({ onNavigate }) {
         </div>
       )}
 
-      {/* Birthday alerts — admin only */}
+      {/* ── Birthday alerts (admin) ───────────────────────────── */}
       {isAdmin && (() => {
         const today = new Date(); today.setHours(0, 0, 0, 0)
         const upcoming7 = players
@@ -210,23 +290,36 @@ export default function Dashboard({ onNavigate }) {
         )
       })()}
 
-      {/* Quick stats */}
-      <div className="grid grid-cols-2 gap-3">
-        <QuickCard
-          icon={<Users size={20} className="text-lobster-teal" />}
-          label="Total Players"
-          value={players.length}
-          onClick={() => onNavigate('players')}
-        />
-        <QuickCard
-          icon={<Trophy size={20} className="text-lobster-orange" />}
-          label="Events"
-          value={tournaments.length}
-          onClick={() => onNavigate('tournament')}
-        />
+      {/* ── Community stats ───────────────────────────────────── */}
+      <div className="grid grid-cols-3 gap-2">
+        <button onClick={() => onNavigate('players')} className="card text-center py-3 active:scale-[0.98] transition-all">
+          <p className="text-xl font-bold text-lobster-teal">{activePlayers.length}</p>
+          <p className="text-[10px] text-gray-500 font-medium">Players</p>
+        </button>
+        <button onClick={() => onNavigate('tournament')} className="card text-center py-3 active:scale-[0.98] transition-all">
+          <p className="text-xl font-bold text-lobster-orange">{tournaments.length}</p>
+          <p className="text-[10px] text-gray-500 font-medium">Events</p>
+        </button>
+        <div className="card text-center py-3">
+          <p className="text-xl font-bold text-gray-700">{totalMatches}</p>
+          <p className="text-[10px] text-gray-500 font-medium">Matches</p>
+        </div>
       </div>
 
-      {/* Latest updates preview */}
+      {/* Top lobster callout */}
+      {topPlayer && (
+        <div className="card flex items-center gap-3 bg-yellow-50/60 border border-yellow-200">
+          <div className="w-9 h-9 bg-yellow-400 rounded-full flex items-center justify-center flex-shrink-0">
+            <Star size={16} className="text-white" />
+          </div>
+          <div className="flex-1">
+            <p className="text-xs text-gray-500 font-medium">All-time top lobster</p>
+            <p className="text-sm font-bold text-gray-800">{topPlayer.name} · {topPlayer.pts} pts</p>
+          </div>
+        </div>
+      )}
+
+      {/* ── Latest updates ────────────────────────────────────── */}
       {recentUpdates.length > 0 && (
         <section>
           <div className="flex items-center justify-between mb-2">
@@ -267,36 +360,49 @@ export default function Dashboard({ onNavigate }) {
         </section>
       )}
 
-      {/* Recent events */}
-      {tournaments.length > 0 && (
+      {/* ── Event history ─────────────────────────────────────── */}
+      {pastTournaments.length > 0 && (
         <section>
-          <h3 className="font-bold text-gray-700 mb-3">All Events</h3>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="font-bold text-gray-700 flex items-center gap-1.5">
+              <Trophy size={15} className="text-yellow-500" /> Past Events
+            </h3>
+            <button onClick={() => onNavigate('history')} className="text-xs text-lobster-teal font-semibold">
+              Full history →
+            </button>
+          </div>
           <div className="space-y-2">
-            {tournaments.slice(0, 5).map(t => {
-              const tRegs = getTournamentRegistrations(t.id)
-              const tPaid = tRegs.filter(r => r.paymentStatus === 'paid').length
+            {pastTournaments.map(t => {
+              const tMatches = getTournamentMatches(t.id)
+              const tRegs = getTournamentRegistrations(t.id).filter(r => r.status === 'registered')
+              // Quick winner
+              const stats = {}
+              tRegs.forEach(r => { stats[r.playerId] = { pts: 0 } })
+              tMatches.filter(m => m.completed && m.score1 != null).forEach(m => {
+                const t1w = m.score1 > m.score2, t2w = m.score2 > m.score1
+                ;(m.team1Ids || []).forEach(id => { if (stats[id]) stats[id].pts += t1w ? 3 : t2w ? 0 : 1 })
+                ;(m.team2Ids || []).forEach(id => { if (stats[id]) stats[id].pts += t2w ? 3 : t1w ? 0 : 1 })
+              })
+              const winner = tRegs
+                .map(r => ({ pts: stats[r.playerId]?.pts ?? 0, player: players.find(p => p.id === r.playerId) }))
+                .sort((a, b) => b.pts - a.pts)[0]?.player
+
               return (
                 <button
                   key={t.id}
-                  onClick={() => onNavigate('registration', t)}
+                  onClick={() => onNavigate('scores', t)}
                   className="card w-full flex items-center gap-3 active:scale-[0.98] transition-all"
                 >
-                  <div className="w-10 h-10 bg-lobster-cream rounded-xl flex items-center justify-center flex-shrink-0">
-                    <Trophy size={18} className="text-lobster-teal" />
+                  <div className="w-9 h-9 bg-yellow-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Trophy size={16} className="text-yellow-500" />
                   </div>
                   <div className="flex-1 text-left min-w-0">
                     <p className="font-semibold text-sm truncate">{t.name}</p>
-                    <p className="text-xs text-gray-500">{formatDate(t.date)}</p>
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                      t.status === 'completed' ? 'bg-gray-100 text-gray-500'
-                      : t.status === 'active'   ? 'bg-green-100 text-green-700'
-                      : 'bg-blue-100 text-blue-700'
-                    }`}>
-                      {t.status}
-                    </span>
-                    {isAdmin && <p className="text-xs text-gray-400 mt-0.5">{tPaid}/{tRegs.filter(r=>r.status==='registered').length} paid</p>}
+                    <p className="text-xs text-gray-500">
+                      {formatShortDate(t.date)}
+                      {tRegs.length > 0 ? ` · ${tRegs.length} players` : ''}
+                      {winner ? ` · 🥇 ${winner.name.split(' ')[0]}` : ''}
+                    </p>
                   </div>
                   <ChevronRight size={16} className="text-gray-300 flex-shrink-0" />
                 </button>
@@ -315,19 +421,5 @@ function Stat({ label, value, warn }) {
       <p className={`text-xl font-bold ${warn ? 'text-lobster-gold' : 'text-white'}`}>{value}</p>
       <p className="text-[10px] text-white/70 font-medium">{label}</p>
     </div>
-  )
-}
-
-function QuickCard({ icon, label, value, onClick }) {
-  return (
-    <button onClick={onClick} className="card flex items-center gap-3 active:scale-[0.98] transition-all w-full">
-      <div className="w-10 h-10 bg-lobster-cream rounded-xl flex items-center justify-center">
-        {icon}
-      </div>
-      <div className="text-left">
-        <p className="text-2xl font-bold text-gray-800">{value}</p>
-        <p className="text-xs text-gray-500">{label}</p>
-      </div>
-    </button>
   )
 }
