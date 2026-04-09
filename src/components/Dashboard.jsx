@@ -210,36 +210,54 @@ export default function Dashboard({ onNavigate }) {
         <p className="text-sm text-gray-500 mt-0.5">{greetSub}</p>
       </div>
 
-      {/* ── Streak + Countdown pills ──────────────────────────── */}
-      {(myStats?.streak > 0 || countdown) && (
-        <div className="flex items-center gap-2 flex-wrap">
+      {/* ── Countdown flip clock + streak ──────────────────────── */}
+      {countdown && (
+        <div className="text-center">
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Next Lobster Event in</p>
+          <div className="flex justify-center gap-2">
+            <div className="bg-lobster-teal-dark rounded-xl w-16 py-2.5">
+              <p className="text-2xl font-black text-white tabular-nums">{String(countdown.days).padStart(2,'0')}</p>
+              <p className="text-[9px] text-white/60 font-medium mt-0.5">DAYS</p>
+            </div>
+            <div className="bg-lobster-teal-dark rounded-xl w-16 py-2.5">
+              <p className="text-2xl font-black text-white tabular-nums">{String(countdown.hours).padStart(2,'0')}</p>
+              <p className="text-[9px] text-white/60 font-medium mt-0.5">HOURS</p>
+            </div>
+            <div className="bg-lobster-teal-dark rounded-xl w-16 py-2.5">
+              <p className="text-2xl font-black text-white tabular-nums">{String(countdown.mins).padStart(2,'0')}</p>
+              <p className="text-[9px] text-white/60 font-medium mt-0.5">MIN</p>
+            </div>
+            <div className="bg-lobster-teal-dark rounded-xl w-16 py-2.5">
+              <p className="text-2xl font-black text-white tabular-nums">{String(countdown.secs).padStart(2,'0')}</p>
+              <p className="text-[9px] text-white/60 font-medium mt-0.5">SEC</p>
+            </div>
+          </div>
           {myStats?.streak > 0 && (
-            <span className="text-[11px] bg-white border border-gray-200 text-gray-600 font-semibold px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1.5">
+            <p className="text-[11px] text-gray-500 font-semibold mt-2 flex items-center justify-center gap-1">
               <Flame size={13} className="text-orange-500" />
               {myStats.streak} event{myStats.streak > 1 ? 's' : ''} in a row
-            </span>
+            </p>
           )}
-          {countdown && (
-            <span className="text-[11px] bg-white border border-gray-200 text-gray-600 font-semibold px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1.5">
-              <Clock size={13} className="text-blue-500" />
-              {countdown.days > 0
-                ? <><span className="tabular-nums">{countdown.days}</span>d <span className="tabular-nums">{countdown.hours}</span>h <span className="tabular-nums">{countdown.mins}</span>m <span className="tabular-nums">{String(countdown.secs).padStart(2,'0')}</span>s</>
-                : <><span className="tabular-nums">{countdown.hours}</span>h <span className="tabular-nums">{countdown.mins}</span>m <span className="tabular-nums">{String(countdown.secs).padStart(2,'0')}</span>s</>
-              }
-            </span>
-          )}
+        </div>
+      )}
+      {!countdown && myStats?.streak > 0 && (
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] bg-white border border-gray-200 text-gray-600 font-semibold px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1.5">
+            <Flame size={13} className="text-orange-500" />
+            {myStats.streak} event{myStats.streak > 1 ? 's' : ''} in a row
+          </span>
         </div>
       )}
 
       {/* ── Tip of the Day ──────────────────────────────────────── */}
       {todayTip && (
         <div className="bg-amber-50/70 border border-amber-200 rounded-2xl px-4 py-3 flex items-start gap-3">
-          <div className="w-8 h-8 bg-amber-400 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-            <Lightbulb size={16} className="text-white" />
+          <div className="w-9 h-9 bg-amber-400 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+            <Lightbulb size={17} className="text-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wide mb-0.5">Tip of the Day</p>
-            <p className="text-xs text-gray-700 leading-relaxed">{todayTip}</p>
+            <p className="text-[11px] font-bold text-amber-700 uppercase tracking-wide mb-1">Tip of the Day</p>
+            <p className="text-sm text-gray-700 leading-relaxed">{todayTip}</p>
           </div>
         </div>
       )}
@@ -250,51 +268,29 @@ export default function Dashboard({ onNavigate }) {
           className="rounded-2xl p-4 shadow-sm bg-white/80 border border-white/90"
           style={{ backdropFilter: 'blur(12px)' }}
         >
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-[10px] font-bold text-lobster-orange uppercase tracking-wide">Next Event</p>
-            {countdown && (
-              <span className="text-[10px] bg-lobster-orange/10 text-lobster-orange font-bold px-2 py-0.5 rounded-full">
-                In {countdown.days > 0 ? `${countdown.days} day${countdown.days > 1 ? 's' : ''}` : `${countdown.hours}h`}
-              </span>
-            )}
-          </div>
-          <h2 className="text-base font-bold text-gray-800 mb-0.5">{upcoming.name}</h2>
-          <p className="text-xs text-gray-500 mb-3 flex items-center gap-1">
+          <p className="text-[10px] font-bold text-lobster-orange uppercase tracking-wide mb-1">Your Next Event</p>
+          <h2 className="text-base font-bold text-gray-800">{upcoming.name}</h2>
+          <p className="text-xs text-gray-500 mb-2 flex items-center gap-1">
             <Calendar size={12} />
             {formatDate(upcoming.date)}
           </p>
 
-          <div className="flex items-center gap-4 mb-3">
-            <div className="text-center">
-              <p className="text-lg font-bold text-lobster-teal">
-                {registered.length}<span className="text-gray-400 font-normal text-xs">/{upcoming.maxPlayers || '?'}</span>
-              </p>
-              <p className="text-[9px] text-gray-400">Registered</p>
-            </div>
-            <div className="w-px h-8 bg-gray-200"></div>
-            <div className="text-center">
-              <p className={`text-lg font-bold ${waitlisted.length > 0 ? 'text-yellow-600' : 'text-gray-400'}`}>
-                {waitlisted.length}
-              </p>
-              <p className="text-[9px] text-gray-400">Waitlisted</p>
-            </div>
-            <div className="w-px h-8 bg-gray-200"></div>
-            <div className="text-center">
-              <p className="text-lg font-bold text-lobster-teal">
-                {(upcoming.courts || []).filter(c => c.booked).length}/{(upcoming.courts || []).length}
-              </p>
-              <p className="text-[9px] text-gray-400">Courts</p>
-            </div>
-          </div>
-
-          {/* Nudge to register */}
-          {claimedId && !isRegistered && !isAdmin && (
-            <button
-              onClick={() => onNavigate('registration', upcoming)}
-              className="w-full bg-lobster-orange text-white font-bold py-2.5 rounded-xl text-sm active:scale-95 transition-all mb-2"
-            >
-              You're not signed up yet — join now!
-            </button>
+          {/* Registration status badge */}
+          {claimedId && (
+            isRegistered ? (
+              <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-1.5 inline-flex items-center gap-1.5 mb-3">
+                <span className="text-green-600 text-xs">✓</span>
+                <span className="text-xs font-semibold text-green-700">You're registered!</span>
+              </div>
+            ) : !isAdmin ? (
+              <button
+                onClick={() => onNavigate('registration', upcoming)}
+                className="bg-orange-50 border border-orange-200 rounded-lg px-3 py-1.5 inline-flex items-center gap-1.5 mb-3 active:scale-95 transition-all"
+              >
+                <span className="text-orange-500 text-xs">!</span>
+                <span className="text-xs font-semibold text-orange-700">Not signed up yet — tap to join</span>
+              </button>
+            ) : null
           )}
 
           {/* Action links */}

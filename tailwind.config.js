@@ -14,7 +14,7 @@ export default {
           'coral':       '#D94F2B',
           'coral-light': '#FAEAE5',
           'amber':       '#E8A030',
-          'cream':       '#FAF3E4',
+          'cream':       '#F5F0E8',
           'dark':        '#1C2B30',
           'muted':       '#6B8A92',
         },
@@ -25,7 +25,7 @@ export default {
           'teal-light': '#EAF4F7',
           orange: '#D94F2B',
           'orange-light': '#FAEAE5',
-          cream: '#FAF3E4',
+          cream: '#F5F0E8',
           gold: '#E8A030',
         }
       },
