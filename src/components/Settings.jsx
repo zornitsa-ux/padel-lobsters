@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
 import {
   Settings2, Lock, MessageCircle, Save, Eye, EyeOff,
-  LogOut, LogIn, Shield, Link, Info
+  LogOut, LogIn, Shield, Link, Info, Lightbulb, Plus, Trash2, RotateCcw
 } from 'lucide-react'
 import AdminLogin from './AdminLogin'
+import DEFAULT_TIPS from '../data/padelTips'
 
 export default function Settings() {
   const { settings, saveSettings, isAdmin, setIsAdmin } = useApp()
@@ -14,6 +15,10 @@ export default function Settings() {
   const [showPin, setShowPin]     = useState(false)
   const [saving, setSaving]       = useState(false)
   const [saved, setSaved]         = useState(false)
+  const [tips, setTips]           = useState(null) // null = use defaults
+  const [newTip, setNewTip]       = useState('')
+  const [editingTip, setEditingTip] = useState(null) // { index, text }
+  const [tipsExpanded, setTipsExpanded] = useState(false)
 
   useEffect(() => {
     if (settings) {
@@ -22,20 +27,52 @@ export default function Settings() {
         adminPin:     settings.adminPin     || '1234',
         groupName:    settings.groupName    || 'Padel Lobsters',
       })
+      setTips(settings.padelTips && settings.padelTips.length > 0 ? settings.padelTips : null)
     }
   }, [settings])
+
+  const activeTips = tips || DEFAULT_TIPS
+  const isCustom = tips !== null
 
   const handleSave = async (e) => {
     e.preventDefault()
     if (!isAdmin) { setShowLogin(true); return }
     setSaving(true)
     try {
-      await saveSettings(form)
+      await saveSettings({ ...form, padelTips: tips })
       setSaved(true)
       setTimeout(() => setSaved(false), 2500)
     } finally {
       setSaving(false)
     }
+  }
+
+  const handleAddTip = () => {
+    if (!newTip.trim()) return
+    const updated = [...activeTips, newTip.trim()]
+    setTips(updated)
+    setNewTip('')
+  }
+
+  const handleDeleteTip = (idx) => {
+    const updated = activeTips.filter((_, i) => i !== idx)
+    setTips(updated.length > 0 ? updated : null)
+  }
+
+  const handleEditTip = (idx) => {
+    setEditingTip({ index: idx, text: activeTips[idx] })
+  }
+
+  const handleSaveEdit = () => {
+    if (!editingTip || !editingTip.text.trim()) return
+    const updated = [...activeTips]
+    updated[editingTip.index] = editingTip.text.trim()
+    setTips(updated)
+    setEditingTip(null)
+  }
+
+  const handleResetTips = () => {
+    setTips(null)
   }
 
   return (
