@@ -74,9 +74,12 @@ export default function Game({ tournament, onNavigate }) {
   useEffect(() => {
     loadSession()
     const ch = supabase.channel(`game-${tournament?.id}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'game_sessions' }, loadSession)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'game_votes' },
-        () => { if (session?.id) loadVotes(session.id) })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'game_sessions' }, () => loadSession())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'game_votes' }, (payload) => {
+        // Use the session_id from the payload if available, otherwise reload session
+        const sid = payload?.new?.session_id
+        if (sid) loadVotes(sid)
+      })
       .subscribe()
     return () => supabase.removeChannel(ch)
   }, [tournament?.id])
@@ -114,6 +117,7 @@ export default function Game({ tournament, onNavigate }) {
   const patch = async (data) => {
     if (!session) return
     await supabase.from('game_sessions').update(data).eq('id', session.id)
+    await loadSession()  // immediately refresh so admin sees the change
   }
 
   const createSession = async () => {
@@ -127,6 +131,7 @@ export default function Game({ tournament, onNavigate }) {
       time_limit: gameType === 'trivia' ? 20 : 30,
       questions: qs,
     })
+    await loadSession()  // immediately refresh so admin sees the lobby
     setBusy(false)
   }
 
