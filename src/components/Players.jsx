@@ -838,13 +838,11 @@ export default function Players({ onNavigate, focusPlayerId }) {
                       {p.phone && <p className="text-xs text-gray-500">📞 {p.phone}</p>}
                     </div>
                   )}
-                  {p.notes && <p className="text-xs text-gray-500 italic">{p.notes}</p>}
-
-                  {/* War Cry — tagline display */}
-                  {p.tagline && (
+                  {/* War Cry — tagline or notes */}
+                  {(p.tagline || p.notes) && (
                     <div className="bg-lobster-cream rounded-xl px-3 py-2">
                       <p className="text-[10px] font-bold text-lobster-teal uppercase tracking-wider mb-0.5">War Cry</p>
-                      <p className="text-xs text-gray-700 italic">"{p.tagline}"</p>
+                      <p className="text-xs text-gray-700 italic">"{p.tagline || p.notes}"</p>
                     </div>
                   )}
 
