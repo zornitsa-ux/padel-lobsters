@@ -159,6 +159,7 @@ export function AppProvider({ children }) {
       avatar_url:         data.avatarUrl          || '',
       birthday:           data.birthday           || null,
       preferred_position: data.preferredPosition  || '',
+      tagline:            data.tagline            || '',
     }
     const { error } = await supabase.from('players').update(payload).eq('id', id)
     if (error) {

@@ -19,7 +19,7 @@ const emptyForm = {
   genderMode: 'mixed',
   courtBookingMode: 'admin_all',
   courts: [{ name: '', booked: false, costPerPerson: '', responsible: '', tikkieLink: '' }],
-  totalPrice: '',
+  pricePerPerson: '',
   tikkieLink: '',
   notes: '',
 }
@@ -73,7 +73,9 @@ export default function Tournament({ onNavigate }) {
       courts: t.courts?.length
         ? t.courts.map(c => ({ name: c.name || '', booked: !!c.booked, costPerPerson: c.costPerPerson || '', responsible: c.responsible || '', tikkieLink: c.tikkieLink || '' }))
         : [{ name: '', booked: false, costPerPerson: '', responsible: '', tikkieLink: '' }],
-      totalPrice: t.totalPrice ?? '',
+      pricePerPerson: (parseFloat(t.totalPrice) > 0 && parseInt(t.maxPlayers) > 0)
+        ? (parseFloat(t.totalPrice) / parseInt(t.maxPlayers)).toFixed(2).replace(/\.00$/, '')
+        : (t.totalPrice ?? ''),
       tikkieLink: t.tikkieLink  || '',
       notes:      t.notes       || '',
     })
@@ -100,7 +102,7 @@ export default function Tournament({ onNavigate }) {
         genderMode:       form.genderMode,
         courtBookingMode: form.courtBookingMode,
         duration:         parseInt(form.duration) || 90,
-        totalPrice:       form.courtBookingMode === 'admin_all' ? (parseFloat(form.totalPrice) || 0) : 0,
+        totalPrice:       form.courtBookingMode === 'admin_all' ? ((parseFloat(form.pricePerPerson) || 0) * (parseInt(form.maxPlayers) || 16)) : 0,
         tikkieLink:       form.courtBookingMode === 'admin_all' ? (form.tikkieLink || '') : '',
         courts: form.courts.map(c => ({
           name:          c.name,
@@ -589,20 +591,20 @@ export default function Tournament({ onNavigate }) {
               {/* ── Pricing ── */}
               {form.courtBookingMode === 'admin_all' && (
                 <div>
-                  <label className="label">Total Event Price (€)</label>
+                  <label className="label">Price per Person (€)</label>
                   <p className="text-xs text-gray-500 mb-2">
-                    All-in amount covering courts, food, drinks and prizes. Will be split equally among all registered players.
+                    All-in amount per player covering courts, food, drinks and prizes.
                   </p>
                   <input
                     type="number" min="0" step="0.5" className="input"
-                    placeholder="e.g. 320"
-                    value={form.totalPrice}
-                    onChange={e => setForm(f => ({ ...f, totalPrice: e.target.value }))}
+                    placeholder="e.g. 35"
+                    value={form.pricePerPerson}
+                    onChange={e => setForm(f => ({ ...f, pricePerPerson: e.target.value }))}
                   />
-                  {form.totalPrice && parseInt(form.maxPlayers) > 0 && (
+                  {form.pricePerPerson && parseInt(form.maxPlayers) > 0 && (
                     <p className="text-sm font-semibold text-lobster-teal mt-1.5">
-                      = €{(parseFloat(form.totalPrice) / parseInt(form.maxPlayers)).toFixed(2)} per player
-                      <span className="text-xs font-normal text-gray-400"> (based on {form.maxPlayers} players)</span>
+                      {form.maxPlayers} players × €{parseFloat(form.pricePerPerson).toFixed(2)} = €{(parseFloat(form.pricePerPerson) * parseInt(form.maxPlayers)).toFixed(2)}
+                      <span className="text-xs font-normal text-gray-400"> total</span>
                     </p>
                   )}
                 </div>

@@ -56,6 +56,8 @@ export default function Settings() {
         ...myPlayer,
         playtomicLevel: profileForm.playtomicLevel,
         adjustment: profileForm.adjustment,
+        tagline: profileForm.tagline,
+        preferredPosition: profileForm.preferredPosition,
       })
       localStorage.setItem(`lobster_playtomic_check_${claimedId}`, String(Date.now()))
       setShowPlaytomicPrompt(false)
@@ -270,7 +272,44 @@ export default function Settings() {
           {/* Expanded edit form */}
           {profileExpanded && (
             <div className="space-y-3 pt-2 border-t border-gray-100">
-              <p className="text-xs text-gray-400">Update your Playtomic level and adjustment. Changes are saved to your profile.</p>
+              <p className="text-xs text-gray-400">Edit your full profile. Changes are saved instantly.</p>
+
+              {/* Tagline */}
+              <div>
+                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block">Your Lobster Add-on</label>
+                <input
+                  className="input text-sm"
+                  type="text"
+                  maxLength={80}
+                  placeholder="e.g. The one who always calls the ball out"
+                  value={profileForm.tagline}
+                  onChange={e => setProfileForm(f => ({ ...f, tagline: e.target.value }))}
+                />
+                <p className="text-[10px] text-gray-400 mt-1">Appears on your player card. {80 - profileForm.tagline.length} chars left.</p>
+              </div>
+
+              {/* Preferred position */}
+              <div>
+                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block">Preferred Side</label>
+                <div className="flex gap-2">
+                  {[['left', '👈 Left'], ['right', '👉 Right'], ['both', '↔️ Both']].map(([val, lbl]) => (
+                    <button
+                      key={val}
+                      type="button"
+                      onClick={() => setProfileForm(f => ({ ...f, preferredPosition: val }))}
+                      className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all active:scale-95 ${
+                        profileForm.preferredPosition === val
+                          ? 'bg-lobster-teal text-white'
+                          : 'bg-gray-100 text-gray-600'
+                      }`}
+                    >
+                      {lbl}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Playtomic level + adjustment */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block">Playtomic Level</label>
