@@ -144,7 +144,7 @@ export default function Registration({ tournament, onNavigate }) {
     const ps = reg.paymentStatus
     if (ps === 'paid')                  return <span className="badge-paid">Paid</span>
     if (ps === 'transferred')           return <span className="text-xs font-semibold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">Transferred</span>
-    if (ps === 'pending_confirmation')  return <span className="text-xs font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">Sent ⏳</span>
+    if (ps === 'pending_confirmation')  return <span className="text-xs font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">Paid ⏳</span>
     return <span className="badge-unpaid">Unpaid</span>
   }
 
