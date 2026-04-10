@@ -863,7 +863,7 @@ export default function Players({ onNavigate, focusPlayerId }) {
                     )}
                     {p.preferredPosition && (
                       <span className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-lg font-semibold capitalize">
-                        {p.preferredPosition === 'drive' ? '🎯 Drive' : p.preferredPosition === 'reves' ? '🔄 Revés' : '↔️ Both'}
+                        {p.preferredPosition === 'left' || p.preferredPosition === 'drive' ? '👈 Left' : p.preferredPosition === 'right' || p.preferredPosition === 'reves' ? '👉 Right' : '↔️ Both'}
                       </span>
                     )}
                     {p.isLeftHanded && (
@@ -1150,7 +1150,7 @@ export default function Players({ onNavigate, focusPlayerId }) {
               <div>
                 <label className="label">Preferred Side</label>
                 <div className="flex gap-2">
-                  {[['drive', '🎯 Drive'], ['reves', '🔄 Revés'], ['both', '↔️ Both']].map(([val, lbl]) => (
+                  {[['left', '👈 Left'], ['right', '👉 Right'], ['both', '↔️ Both']].map(([val, lbl]) => (
                     <button type="button" key={val}
                       onClick={() => setForm(f => ({ ...f, preferredPosition: f.preferredPosition === val ? '' : val }))}
                       className={`flex-1 py-2 rounded-xl font-semibold text-sm transition-all ${

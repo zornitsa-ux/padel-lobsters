@@ -24,7 +24,7 @@ export default function Settings() {
   // ── My Lobster Profile ──────────────────────────────────────────────────
   const myPlayer = claimedId ? getPlayerById(claimedId) : null
   const [profileExpanded, setProfileExpanded] = useState(false)
-  const [profileForm, setProfileForm] = useState({ playtomicLevel: '', adjustment: '0' })
+  const [profileForm, setProfileForm] = useState({ playtomicLevel: '', adjustment: '0', tagline: '', preferredPosition: '' })
   const [profileSaving, setProfileSaving] = useState(false)
   const [profileSaved, setProfileSaved]   = useState(false)
 
@@ -36,6 +36,8 @@ export default function Settings() {
       setProfileForm({
         playtomicLevel: String(myPlayer.playtomicLevel || ''),
         adjustment: String(myPlayer.adjustment || '0'),
+        tagline: myPlayer.tagline || '',
+        preferredPosition: myPlayer.preferredPosition || myPlayer.preferred_position || '',
       })
       // Check if we should prompt for Playtomic update
       const lastCheck = localStorage.getItem(`lobster_playtomic_check_${claimedId}`)
