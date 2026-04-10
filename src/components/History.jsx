@@ -542,11 +542,77 @@ const MAR_ROUNDS = [
 ]
 
 // ── Tournament list (newest first) ────────────────────────────────────────────
+// ── April 2026 — Padel Queen Sunday Smash (Friday Edition) — Ladies ──────────
+const APR_STANDINGS = [
+  { name: 'Julie',     total: 23 },
+  { name: 'Aimee',     total: 23 },
+  { name: 'Ini',       total: 18 },
+  { name: 'Lucia',     total: 18 },
+  { name: 'Leentje',   total: 18 },
+  { name: 'Cristina',  total: 17 },
+  { name: 'Amanda',    total: 16 },
+  { name: 'Marleen',   total: 16 },
+  { name: 'Lisa',      total: 15 },
+  { name: 'Domi',      total: 15 },
+  { name: 'Marloes',   total: 14 },
+  { name: 'Kate',      total: 13 },
+  { name: 'Sofia',     total: 13 },
+  { name: 'Zornitsa',  total: 12 },
+  { name: 'Marielle',  total: 12 },
+  { name: 'Maria',     total: 11 },
+  { name: 'Mel',       total: 10 },
+  { name: 'Ara',       total: 10 },
+  { name: 'Bianca',    total: 10 },
+  { name: 'Chrissy',   total: 9 },
+].sort((a, b) => b.total - a.total)
+
+const APR_ROUNDS = [
+  { round:1, matches:[
+    { court:1, t1:['Lucia','Kate'],        t2:['Domi','Lisa'],         s1:5, s2:1 },
+    { court:2, t1:['Amanda','Julie'],      t2:['Maria','Chrissy'],     s1:5, s2:2 },
+    { court:3, t1:['Leentje','Aimee'],     t2:['Ini','Ara'],           s1:3, s2:2 },
+    { court:4, t1:['Cristina','Bianca'],   t2:['Marielle','Sofia'],    s1:2, s2:4 },
+    { court:5, t1:['Marleen','Zornitsa'],  t2:['Marloes','Mel'],       s1:7, s2:0 },
+  ]},
+  { round:2, matches:[
+    { court:1, t1:['Lucia','Julie'],       t2:['Amanda','Sofia'],      s1:3, s2:0 },
+    { court:2, t1:['Domi','Aimee'],        t2:['Lisa','Bianca'],       s1:2, s2:4 },
+    { court:3, t1:['Leentje','Ini'],       t2:['Marloes','Zornitsa'],  s1:3, s2:1 },
+    { court:4, t1:['Cristina','Chrissy'],  t2:['Maria','Ara'],         s1:3, s2:1 },
+    { court:5, t1:['Marielle','Kate'],     t2:['Marleen','Mel'],       s1:1, s2:2 },
+  ]},
+  { round:3, matches:[
+    { court:1, t1:['Lucia','Chrissy'],     t2:['Mel','Zornitsa'],      s1:3, s2:1 },
+    { court:2, t1:['Amanda','Ara'],        t2:['Marleen','Marloes'],   s1:1, s2:2 },
+    { court:3, t1:['Domi','Ini'],          t2:['Maria','Sofia'],       s1:4, s2:2 },
+    { court:4, t1:['Leentje','Lisa'],      t2:['Marielle','Bianca'],   s1:3, s2:3 },
+    { court:5, t1:['Aimee','Julie'],       t2:['Cristina','Kate'],     s1:6, s2:1 },
+  ]},
+  { round:4, matches:[
+    { court:1, t1:['Lucia','Ara'],         t2:['Ini','Julie'],         s1:5, s2:9 },
+    { court:2, t1:['Amanda','Kate'],       t2:['Marielle','Zornitsa'], s1:5, s2:4 },
+    { court:3, t1:['Domi','Mel'],          t2:['Leentje','Marloes'],   s1:5, s2:7 },
+    { court:4, t1:['Aimee','Sofia'],       t2:['Lisa','Chrissy'],      s1:12, s2:0 },
+    { court:5, t1:['Cristina','Maria'],    t2:['Marleen','Bianca'],    s1:8, s2:3 },
+  ]},
+]
+
 const TOURNAMENTS = [
+  {
+    id: 'apr2026',
+    name: 'Padel Queen Sunday Smash (Friday Edition)',
+    date: 'April 2026',
+    type: 'ladies',
+    players: APR_STANDINGS,
+    rounds: APR_ROUNDS,
+    numRounds: 4,
+    numCourts: 5,
+  },
   {
     id: 'mar2026',
     name: 'Lobster Tournament · March 2026',
     date: 'March 2026',
+    type: 'mixed',
     players: MAR_STANDINGS,
     rounds: MAR_ROUNDS,
     numRounds: 6,
@@ -556,6 +622,7 @@ const TOURNAMENTS = [
     id: 'jan2026',
     name: 'Lobster Tournament · January 2026',
     date: 'January 2026',
+    type: 'mixed',
     players: JAN_PLAYERS,
     rounds: null,
     numRounds: 6,
@@ -566,6 +633,7 @@ const TOURNAMENTS = [
     id: 'dec2025',
     name: 'Lobster Tournament · December 2025',
     date: 'December 2025',
+    type: 'mixed',
     players: DEC_STANDINGS,
     rounds: DEC_ROUNDS,
     numRounds: 6,
@@ -706,7 +774,7 @@ function getAllHardcodedNames() {
 // ── Main component ────────────────────────────────────────────────────────────
 export default function History({ onNavigate }) {
   const { tournaments, players, getTournamentMatches, getTournamentRegistrations, isAdmin } = useApp()
-  const [expandedId, setExpandedId] = useState('mar2026')
+  const [expandedId, setExpandedId] = useState('apr2026')
   const [activeTab, setActiveTab]   = useState({})   // id → 'standings' | 'matches'
   const [activeRound, setActiveRound] = useState({}) // id → roundIndex
   const [aliases]         = useState(loadAliases)
@@ -892,7 +960,15 @@ export default function History({ onNavigate }) {
                   <Trophy size={20} className="text-lobster-teal" />
                 </div>
                 <div className="text-left">
-                  <p className="font-bold text-gray-800 text-sm">{t.name}</p>
+                  <p className="font-bold text-gray-800 text-sm flex items-center gap-1.5">
+                    {t.name}
+                    {t.type === 'ladies' && (
+                      <span className="text-[10px] font-bold bg-pink-100 text-pink-600 px-1.5 py-0.5 rounded-full">Ladies</span>
+                    )}
+                    {t.type === 'mixed' && (
+                      <span className="text-[10px] font-bold bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full">Mixed</span>
+                    )}
+                  </p>
                   <p className="text-xs text-gray-500">
                     {t.players ? `${t.players.length} players` : '—'}
                     {t.numRounds ? ` · ${t.numRounds} rounds` : ''}
