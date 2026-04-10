@@ -26,6 +26,7 @@ function buildPlayerStats(playerId, matches, tournaments, registrations) {
   let won = 0, lost = 0, draws = 0, pointsFor = 0, pointsAgainst = 0, points = 0
   const recentForm = [] // last 5: 'W' | 'L' | 'D'
   const h2h = {} // opponentId → { won, lost, draws }
+  const h2hPairs = {} // "id1:id2" → { ids: [id1,id2], won, lost, draws }
   const tournamentIds = new Set()
 
   // Sort by tournament then round for chronological order
@@ -59,6 +60,15 @@ function buildPlayerStats(playerId, matches, tournaments, registrations) {
       else if (result === 'L') h2h[oppId].lost++
       else h2h[oppId].draws++
     })
+
+    // Track opponent pairs
+    const pairKey = [...opponents].sort().join(':')
+    if (pairKey) {
+      if (!h2hPairs[pairKey]) h2hPairs[pairKey] = { ids: [...opponents].sort(), won: 0, lost: 0, draws: 0 }
+      if (result === 'W') h2hPairs[pairKey].won++
+      else if (result === 'L') h2hPairs[pairKey].lost++
+      else h2hPairs[pairKey].draws++
+    }
   })
 
   // Get tournaments this player participated in
@@ -73,6 +83,7 @@ function buildPlayerStats(playerId, matches, tournaments, registrations) {
     winRate: (won + lost + draws) > 0 ? Math.round((won / (won + lost + draws)) * 100) : 0,
     recentForm: recentForm.slice(-5),
     h2h,
+    h2hPairs,
     playerTournaments,
   }
 }
@@ -831,9 +842,12 @@ export default function Players({ onNavigate, focusPlayerId }) {
 
               {expanded && (() => {
                 const stats = buildPlayerStats(p.id, matches, tournaments, registrations)
-                const topH2H = Object.entries(stats.h2h)
-                  .map(([oppId, rec]) => ({ player: players.find(pl => pl.id === oppId), ...rec }))
-                  .filter(h => h.player)
+                const topH2HPairs = Object.values(stats.h2hPairs)
+                  .map(rec => ({
+                    names: rec.ids.map(id => (players.find(pl => pl.id === id)?.name || '').split(' ')[0]).filter(Boolean),
+                    ...rec,
+                  }))
+                  .filter(h => h.names.length > 0)
                   .sort((a, b) => (b.won + b.lost + b.draws) - (a.won + a.lost + a.draws))
                   .slice(0, 5)
 
@@ -888,14 +902,14 @@ export default function Players({ onNavigate, focusPlayerId }) {
                     </div>
                   )}
 
-                  {/* Head-to-head — top 5 opponents */}
-                  {topH2H.length > 0 && (
+                  {/* Head-to-head — top 5 opponent pairs */}
+                  {topH2HPairs.length > 0 && (
                     <div>
                       <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Head to Head</p>
                       <div className="space-y-1">
-                        {topH2H.map(h => (
-                          <div key={h.player.id} className="flex items-center justify-between text-xs">
-                            <span className="text-gray-700 truncate max-w-[120px]">vs {(h.player.name || '').split(' ')[0]}</span>
+                        {topH2HPairs.map((h, i) => (
+                          <div key={i} className="flex items-center justify-between text-xs">
+                            <span className="text-gray-700 truncate max-w-[160px]">vs {h.names.join(' & ')}</span>
                             <span className="font-semibold">
                               <span className="text-green-600">{h.won}W</span>
                               {' '}<span className="text-red-500">{h.lost}L</span>
