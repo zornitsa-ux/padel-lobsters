@@ -1,7 +1,8 @@
 import React, { useMemo, useState, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
-import { Trophy, Users, Calendar, ChevronRight, AlertCircle, Megaphone, TrendingUp, Star, Clock, Flame, Award, Lightbulb } from 'lucide-react'
+import { Trophy, Users, Calendar, ChevronRight, AlertCircle, Megaphone, TrendingUp, Star, Clock, Flame, Award, Lightbulb, CreditCard, CalendarDays } from 'lucide-react'
 import DEFAULT_TIPS from '../data/padelTips'
+import PlayerProfile from './PlayerProfile'
 
 const CLAW_IMG = '/claws.png'
 const ClawUp = ({ active }) => (
@@ -38,13 +39,13 @@ const ClawDown = ({ active }) => (
 
 // ── Fun greetings ────────────────────────────────────────────────────────────
 const GREETINGS_HELLO = [
-  (n) => [`Hey ${n}!`, `Ready to pinch some wins today?`],
+  (n) => [`Hey, ${n}!`, `Ready to pinch some wins today?`],
   (n) => [`${n}!`, `The court is calling — try not to get clawed.`],
-  (n) => [`Ahoy ${n}!`, `Time to shell-ebrate some padel.`],
+  (n) => [`Ahoy, ${n}!`, `Time to shell-ebrate some padel.`],
   (n) => [`${n}!`, `Today's forecast: 100% chance of lobster tears.`],
-  (n) => [`Welcome back ${n}!`, `May your lobs be high and your opponents low.`],
+  (n) => [`Welcome back, ${n}!`, `May your lobs be high and your opponents low.`],
   (n) => [`${n}!`, `Don't be shellfish — share the wins today.`],
-  (n) => [`Snap snap ${n}!`, `Let's crack some matches open.`],
+  (n) => [`Snap snap, ${n}!`, `Let's crack some matches open.`],
   (n) => [`${n}!`, `The lobsters are restless. Show them who's boss.`],
 ]
 
@@ -79,6 +80,8 @@ export default function Dashboard({ onNavigate }) {
     getTournamentRegistrations, getTournamentMatches,
     isAdmin, claimedId, getPlayerById,
   } = useApp()
+
+  const [profileOpen, setProfileOpen] = useState(false)
 
   const claimedPlayer = claimedId ? getPlayerById(claimedId) : null
   const activePlayers = players.filter(p => (p.status || 'active') === 'active')
@@ -355,15 +358,15 @@ export default function Dashboard({ onNavigate }) {
             </button>
             <button
               onClick={() => onNavigate('schedule', upcoming)}
-              className="flex-1 text-xs text-gray-500 font-semibold py-2 text-center active:scale-95"
+              className="flex-none bg-gray-100 text-gray-600 font-semibold py-1.5 px-3 rounded-lg text-[11px] active:scale-95 transition-all flex items-center gap-1"
             >
-              Schedule
+              <CalendarDays size={12} /> Schedule
             </button>
             <button
               onClick={() => onNavigate('payments', upcoming)}
-              className="flex-1 text-xs text-gray-500 font-semibold py-2 text-center active:scale-95"
+              className="flex-none bg-gray-100 text-gray-600 font-semibold py-1.5 px-3 rounded-lg text-[11px] active:scale-95 transition-all flex items-center gap-1"
             >
-              Payments
+              <CreditCard size={12} /> Payments
             </button>
           </div>
         </div>
@@ -514,6 +517,48 @@ export default function Dashboard({ onNavigate }) {
               <span>Game diff: {myStats.pointsFor - myStats.pointsAgainst > 0 ? '+' : ''}{myStats.pointsFor - myStats.pointsAgainst}</span>
             </div>
           </div>
+        </section>
+      )}
+
+      {/* ── Your Profile (edit Playtomic level & tagline) ────── */}
+      {claimedPlayer && (
+        <section>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="font-bold text-gray-700 flex items-center gap-1.5">
+              <Users size={15} className="text-lobster-teal" /> Your Profile
+            </h3>
+            <button
+              onClick={() => setProfileOpen(o => !o)}
+              className="text-xs text-lobster-teal font-semibold"
+            >
+              {profileOpen ? 'Close' : 'Edit profile'}
+            </button>
+          </div>
+          {profileOpen && (
+            <PlayerProfile player={claimedPlayer} onSave={() => setProfileOpen(false)} />
+          )}
+          {!profileOpen && (
+            <div className="bg-white/80 rounded-2xl p-4 shadow-sm border border-white/90 flex items-center gap-4" style={{ backdropFilter: 'blur(12px)' }}>
+              <div className="w-11 h-11 bg-lobster-teal rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                {(claimedPlayer.name || '?')[0].toUpperCase()}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm text-gray-800 truncate">{claimedPlayer.name}</p>
+                <p className="text-xs text-gray-400">
+                  {claimedPlayer.playtomic_level
+                    ? `Playtomic level: ${claimedPlayer.playtomic_level}`
+                    : 'No level set yet'}
+                  {claimedPlayer.tagline ? ` · ${claimedPlayer.tagline}` : ''}
+                </p>
+              </div>
+              <button
+                onClick={() => setProfileOpen(true)}
+                className="text-xs text-lobster-teal font-semibold bg-lobster-teal/10 px-3 py-1.5 rounded-lg active:scale-95 transition-all"
+              >
+                Edit
+              </button>
+            </div>
+          )}
         </section>
       )}
 

@@ -272,8 +272,8 @@ export default function Registration({ tournament, onNavigate }) {
                     <p className="font-semibold text-sm truncate">{p.name}</p>
                     <p className="text-xs text-gray-400">Level {(p.adjustedLevel || 0).toFixed(1)}</p>
                   </div>
-                  {/* Payment badge: visible to admins and the player themselves */}
-                  {(isAdmin || isMyReg) && <PayBadge reg={reg} />}
+                  {/* Payment badge: visible to admins only */}
+                  {isAdmin && <PayBadge reg={reg} />}
                   {isAdmin && (
                     <button onClick={() => handleCancel(reg)}
                       className="w-8 h-8 flex items-center justify-center rounded-xl bg-red-50 active:scale-95">
