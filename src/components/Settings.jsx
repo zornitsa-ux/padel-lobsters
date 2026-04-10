@@ -69,6 +69,12 @@ export default function Settings() {
         avatarUrl: myPlayer.avatarUrl || myPlayer.avatar_url || '',
       })
       setAvatarPreview(myPlayer.avatarUrl || myPlayer.avatar_url || null)
+      // Restore selected prompt category
+      const savedLabel = myPlayer.taglineLabel || myPlayer.tagline_label || ''
+      if (savedLabel) {
+        const idx = LOBBY_PROMPTS.findIndex(p => p.label === savedLabel)
+        if (idx >= 0) setActivePrompt(idx)
+      }
       // Check if we should prompt for Playtomic update
       const lastCheck = localStorage.getItem(`lobster_playtomic_check_${claimedId}`)
       const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000)
@@ -115,6 +121,7 @@ export default function Settings() {
         playtomicLevel: profileForm.playtomicLevel,
         adjustment: profileForm.adjustment,
         tagline: profileForm.tagline,
+        taglineLabel: LOBBY_PROMPTS[activePrompt].label,
         email: profileForm.email,
         phone: profileForm.phone,
         birthday: profileForm.birthday || null,
