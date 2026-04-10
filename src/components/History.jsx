@@ -597,11 +597,11 @@ const APR_ROUNDS = [
   ]},
 ]
 
-const TOURNAMENTS = [
+export const TOURNAMENTS = [
   {
     id: 'apr2026',
     name: 'Padel Queen Sunday Smash (Friday Edition)',
-    date: 'April 2026',
+    date: '10 April 2026 · 17:00 · 90 min',
     type: 'ladies',
     players: APR_STANDINGS,
     rounds: APR_ROUNDS,

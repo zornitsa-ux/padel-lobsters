@@ -6,7 +6,7 @@ import {
   Building2, ShieldCheck, UserCog, Clock, ChevronDown, ChevronUp
 } from 'lucide-react'
 import AdminLogin from './AdminLogin'
-import HistoryContent from './History'
+import HistoryContent, { TOURNAMENTS as HISTORY_TOURNAMENTS } from './History'
 
 const emptyForm = {
   name: '',
@@ -240,21 +240,23 @@ export default function Tournament({ onNavigate }) {
                 </div>
               )}
 
-              {/* Courts */}
+              {/* Courts — horizontal chips */}
               {(t.courts || []).length > 0 && (
-                <div className="space-y-1 mb-3">
+                <div className="flex flex-wrap gap-1.5 mb-3">
                   {t.courts.map((c, i) => (
-                    <div key={i} className="flex items-center gap-2 text-sm">
+                    <div key={i} className={`inline-flex items-center gap-1 text-xs rounded-full px-2.5 py-1 font-medium ${
+                      c.booked ? 'bg-green-50 text-green-700' : 'bg-gray-50 text-gray-500'
+                    }`}>
                       {c.booked
-                        ? <CheckCircle size={14} className="text-green-500 flex-shrink-0" />
-                        : <Circle size={14} className="text-gray-300 flex-shrink-0" />
+                        ? <CheckCircle size={11} className="text-green-500 flex-shrink-0" />
+                        : <Circle size={11} className="text-gray-300 flex-shrink-0" />
                       }
-                      <span className="flex-1 text-gray-700">{c.name || `Court ${i + 1}`}</span>
+                      <span>{c.name || `Court ${i + 1}`}</span>
                       {!isAdminAll && c.responsible && (
-                        <span className="text-xs text-purple-600 font-medium">{c.responsible}</span>
+                        <span className="text-purple-600 ml-0.5">({c.responsible})</span>
                       )}
                       {isAdmin && !isAdminAll && c.costPerPerson > 0 && (
-                        <span className="text-xs text-gray-500">€{c.costPerPerson}/pp</span>
+                        <span className="text-gray-400 ml-0.5">€{c.costPerPerson}</span>
                       )}
                       {isAdmin && !c.booked && (
                         <button
@@ -263,9 +265,9 @@ export default function Tournament({ onNavigate }) {
                             courts[i] = { ...courts[i], booked: true }
                             updateTournament(t.id, { courts })
                           }}
-                          className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-semibold"
+                          className="ml-0.5 bg-green-100 text-green-700 px-1.5 py-0 rounded-full text-[10px] font-semibold"
                         >
-                          Mark booked
+                          Book
                         </button>
                       )}
                     </div>
@@ -313,7 +315,7 @@ export default function Tournament({ onNavigate }) {
         >
           <span className="flex items-center gap-2">
             <Clock size={15} className="text-gray-400" />
-            Past Events & History ({past.length})
+            Past Events & History ({past.length + HISTORY_TOURNAMENTS.length})
           </span>
           {showHistory ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
         </button>
