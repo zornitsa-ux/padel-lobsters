@@ -386,7 +386,7 @@ function PlayerAvatar({ player, size = 'md', className = '' }) {
   )
 }
 
-export default function Players({ onNavigate }) {
+export default function Players({ onNavigate, focusPlayerId }) {
   const { players, addPlayer, updatePlayer, deletePlayer, isAdmin, matches, registrations, tournaments, regeneratePin } = useApp()
   const [showForm, setShowForm]     = useState(false)
   const [editId, setEditId]         = useState(null)
@@ -394,7 +394,7 @@ export default function Players({ onNavigate }) {
   const [lobbyPrompt, setLobbyPrompt] = useState(randomPrompt)
   const [search, setSearch]         = useState('')
   const [showLogin, setShowLogin]   = useState(false)
-  const [expandedId, setExpandedId] = useState(null)
+  const [expandedId, setExpandedId] = useState(focusPlayerId || null)
   const [saving, setSaving]         = useState(false)
   const [avatarFile, setAvatarFile] = useState(null)
   const [avatarPreview, setAvatarPreview] = useState(null)

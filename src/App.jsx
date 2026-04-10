@@ -37,7 +37,7 @@ function Inner() {
 
   const pages = {
     dashboard:    <Dashboard onNavigate={navigate} />,
-    players:      <Players onNavigate={navigate} />,
+    players:      <Players onNavigate={navigate} focusPlayerId={selectedTournament?.focusPlayerId} />,
     tournament:   <Tournament onNavigate={navigate} />,
     registration: <Registration tournament={selectedTournament} onNavigate={navigate} />,
     payments:     <Payments tournament={selectedTournament} onNavigate={navigate} />,

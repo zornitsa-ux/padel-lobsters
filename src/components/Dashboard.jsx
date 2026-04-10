@@ -148,6 +148,9 @@ export default function Dashboard({ onNavigate }) {
   const myStats = useMemo(() => {
     if (!claimedId) return null
     let played = 0, won = 0, lost = 0, draws = 0, pts = 0, pointsFor = 0, pointsAgainst = 0
+    const h2h = {} // opponentId → { won, lost }
+    let bestWinStreak = 0, curWinStreak = 0
+
     matches.filter(m => m.completed).forEach(m => {
       const onT1 = (m.team1Ids || []).includes(claimedId)
       const onT2 = (m.team2Ids || []).includes(claimedId)
@@ -157,13 +160,34 @@ export default function Dashboard({ onNavigate }) {
       if (onT1) { pointsFor += s1; pointsAgainst += s2 }
       else      { pointsFor += s2; pointsAgainst += s1 }
       const t1w = s1 > s2, t2w = s2 > s1
-      if ((onT1 && t1w) || (onT2 && t2w)) { won++; pts += 3 }
-      else if (s1 === s2) { draws++; pts += 1 }
-      else { lost++ }
+      const iWon = (onT1 && t1w) || (onT2 && t2w)
+      const iLost = (onT1 && t2w) || (onT2 && t1w)
+      if (iWon) { won++; pts += 3; curWinStreak++; bestWinStreak = Math.max(bestWinStreak, curWinStreak) }
+      else if (s1 === s2) { draws++; pts += 1; curWinStreak = 0 }
+      else { lost++; curWinStreak = 0 }
+
+      // Track head-to-head
+      const opponents = onT1 ? (m.team2Ids || []) : (m.team1Ids || [])
+      opponents.forEach(oppId => {
+        if (!h2h[oppId]) h2h[oppId] = { won: 0, lost: 0 }
+        if (iWon) h2h[oppId].won++
+        else if (iLost) h2h[oppId].lost++
+      })
     })
     if (played === 0) return null
 
-    // Streak: count consecutive completed tournaments the player participated in (most recent first)
+    // Arch enemy: opponent you've lost to the most (min 2 games)
+    let archEnemy = null
+    let worstRecord = 0
+    Object.entries(h2h).forEach(([oppId, rec]) => {
+      const total = rec.won + rec.lost
+      if (total >= 2 && rec.lost > worstRecord) {
+        const p = players.find(x => x.id === oppId)
+        if (p) { archEnemy = { name: p.name.split(' ')[0], won: rec.won, lost: rec.lost }; worstRecord = rec.lost }
+      }
+    })
+
+    // Attendance streak: consecutive completed tournaments the player participated in
     const completedSorted = tournaments
       .filter(t => t.status === 'completed')
       .sort((a, b) => (b.date || '') > (a.date || '') ? 1 : -1)
@@ -178,8 +202,8 @@ export default function Dashboard({ onNavigate }) {
     }
 
     const winRate = played > 0 ? Math.round((won / played) * 100) : 0
-    return { played, won, lost, draws, pts, pointsFor, pointsAgainst, winRate, streak }
-  }, [claimedId, matches, tournaments, getTournamentRegistrations])
+    return { played, won, lost, draws, pts, pointsFor, pointsAgainst, winRate, streak, bestWinStreak, archEnemy }
+  }, [claimedId, matches, tournaments, players, getTournamentRegistrations])
 
   const formatDate = (d) => {
     if (!d) return '—'
@@ -207,7 +231,7 @@ export default function Dashboard({ onNavigate }) {
       {/* ── Greeting ──────────────────────────────────────────── */}
       <div>
         <p className="text-xl font-extrabold text-gray-800 leading-snug">{greetHello}</p>
-        <p className="text-sm text-gray-500 mt-0.5">{greetSub}</p>
+        <p className="text-base text-gray-500 mt-0.5">{greetSub}</p>
       </div>
 
       {/* ── Countdown flip clock + streak ──────────────────────── */}
@@ -261,6 +285,34 @@ export default function Dashboard({ onNavigate }) {
           </div>
         </div>
       )}
+
+      {/* ── Community quick links ─────────────────────────────── */}
+      <div className="grid grid-cols-4 gap-2">
+        <button onClick={() => onNavigate('players')} className="bg-white rounded-2xl py-3 text-center shadow-md border border-gray-100 active:scale-[0.95] active:shadow-sm transition-all">
+          <Users size={16} className="text-lobster-teal mx-auto mb-1" />
+          <p className="text-base font-bold text-gray-800">{activePlayers.length}</p>
+          <p className="text-[9px] text-gray-400 font-medium">Players</p>
+        </button>
+        <button onClick={() => onNavigate('tournament')} className="bg-white rounded-2xl py-3 text-center shadow-md border border-gray-100 active:scale-[0.95] active:shadow-sm transition-all">
+          <Calendar size={16} className="text-lobster-orange mx-auto mb-1" />
+          <p className="text-base font-bold text-gray-800">{upcomingCount}</p>
+          <p className="text-[9px] text-gray-400 font-medium">Upcoming</p>
+        </button>
+        <button onClick={() => onNavigate('history')} className="bg-white rounded-2xl py-3 text-center shadow-md border border-gray-100 active:scale-[0.95] active:shadow-sm transition-all">
+          <Trophy size={16} className="text-yellow-500 mx-auto mb-1" />
+          <p className="text-base font-bold text-gray-800">{pastCount}</p>
+          <p className="text-[9px] text-gray-400 font-medium">Past</p>
+        </button>
+        <button onClick={() => onNavigate('players')} className="bg-white rounded-2xl py-3 text-center shadow-md border border-gray-100 active:scale-[0.95] active:shadow-sm transition-all">
+          <Star size={16} className="text-yellow-500 mx-auto mb-1" />
+          {topPlayer ? (
+            <p className="text-[11px] font-bold text-gray-800 truncate px-1">{topPlayer.name}</p>
+          ) : (
+            <p className="text-base font-bold text-gray-300">—</p>
+          )}
+          <p className="text-[9px] text-gray-400 font-medium">Top Lobster</p>
+        </button>
+      </div>
 
       {/* ── Next event — glass card ───────────────────────────── */}
       {upcoming ? (
@@ -418,7 +470,7 @@ export default function Dashboard({ onNavigate }) {
             <h3 className="font-bold text-gray-700 flex items-center gap-1.5">
               <Award size={15} className="text-lobster-orange" /> Your Stats
             </h3>
-            <button onClick={() => onNavigate('players')} className="text-xs text-lobster-teal font-semibold">
+            <button onClick={() => onNavigate('players', { focusPlayerId: claimedId })} className="text-xs text-lobster-teal font-semibold">
               Full profile
             </button>
           </div>
@@ -441,42 +493,29 @@ export default function Dashboard({ onNavigate }) {
                 <p className="text-[9px] text-gray-400 font-medium">Win Rate</p>
               </div>
             </div>
-            <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
+
+            {/* Best win streak + Arch enemy row */}
+            <div className="mt-3 pt-3 border-t border-gray-100 flex items-center gap-3 flex-wrap">
+              {myStats.bestWinStreak > 1 && (
+                <span className="text-xs bg-green-50 text-green-700 px-2.5 py-1 rounded-lg font-semibold flex items-center gap-1">
+                  <Flame size={12} className="text-green-500" />
+                  {myStats.bestWinStreak} wins in a row
+                </span>
+              )}
+              {myStats.archEnemy && (
+                <span className="text-xs bg-red-50 text-red-700 px-2.5 py-1 rounded-lg font-semibold">
+                  😈 Nemesis: {myStats.archEnemy.name} ({myStats.archEnemy.won}W-{myStats.archEnemy.lost}L)
+                </span>
+              )}
+            </div>
+
+            <div className="mt-2 pt-2 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
               <span>{myStats.pts} total points</span>
               <span>Game diff: {myStats.pointsFor - myStats.pointsAgainst > 0 ? '+' : ''}{myStats.pointsFor - myStats.pointsAgainst}</span>
             </div>
           </div>
         </section>
       )}
-
-      {/* ── Community stats ───────────────────────────────────── */}
-      <div className="grid grid-cols-4 gap-1.5">
-        <button onClick={() => onNavigate('players')} className="bg-white rounded-xl py-2.5 text-center shadow-sm border border-gray-200 active:scale-[0.96] active:bg-gray-50 transition-all">
-          <p className="text-base font-bold text-lobster-teal">{activePlayers.length}</p>
-          <p className="text-[9px] text-gray-400 font-medium">Players</p>
-        </button>
-        <button onClick={() => onNavigate('tournament')} className="bg-white rounded-xl py-2.5 text-center shadow-sm border border-gray-200 active:scale-[0.96] active:bg-gray-50 transition-all">
-          <p className="text-base font-bold text-lobster-orange">{upcomingCount}</p>
-          <p className="text-[9px] text-gray-400 font-medium">Upcoming</p>
-        </button>
-        <button onClick={() => onNavigate('history')} className="bg-white rounded-xl py-2.5 text-center shadow-sm border border-gray-200 active:scale-[0.96] active:bg-gray-50 transition-all">
-          <p className="text-base font-bold text-gray-600">{pastCount}</p>
-          <p className="text-[9px] text-gray-400 font-medium">Past</p>
-        </button>
-        <button onClick={() => onNavigate('players')} className="bg-white rounded-xl py-2.5 text-center shadow-sm border border-gray-200 active:scale-[0.96] active:bg-gray-50 transition-all">
-          {topPlayer ? (
-            <>
-              <p className="text-base font-bold text-yellow-500"><Star size={14} className="inline" /></p>
-              <p className="text-[9px] text-gray-400 font-medium truncate px-0.5">{topPlayer.name}</p>
-            </>
-          ) : (
-            <>
-              <p className="text-base font-bold text-gray-300">—</p>
-              <p className="text-[9px] text-gray-400 font-medium">Top</p>
-            </>
-          )}
-        </button>
-      </div>
 
       {/* ── Latest updates ────────────────────────────────────── */}
       {recentUpdates.length > 0 && (
