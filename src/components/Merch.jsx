@@ -347,7 +347,7 @@ export default function Merch({ tournament, tournaments: allTournaments = [] }) 
       {/* ── SHOP TAB ── */}
       {tab === 'shop' && (
         <div className="space-y-3">
-          <p className="text-xs text-gray-500">Place an order — the organizers will see what you need and get in touch.</p>
+          <p className="text-xs text-gray-500">Place an order — the organizers will see what you need and get in touch. Prices include shipping.</p>
 
           {/* Identity notice */}
           {!claimedId && (
