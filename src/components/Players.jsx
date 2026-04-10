@@ -234,7 +234,7 @@ function corpReview(player, matches = [], registrations = [], tournaments = []) 
 
   // ── Compute tournament attendance ────────────────────────────────────────
   const today = new Date()
-  const pastTournaments = tournaments.filter(t => new Date(t.date) <= today)
+  const pastTournaments = tournaments.filter(t => t.status === 'completed' || new Date(t.date) <= today)
   const pastTournamentIds = new Set(pastTournaments.map(t => String(t.id)))
 
   const tournamentsPlayed = new Set(
@@ -336,7 +336,13 @@ function corpReview(player, matches = [], registrations = [], tournaments = []) 
 
   // Has tournament history but no completed match data recorded
   if (tournamentsPlayed >= 1 && totalMatches === 0) {
-    return `${name} has shown up to tournaments. The official match record, however, has chosen to remain silent on what actually happened out there. Either the results were never logged, or ${name} plays matches that exist on a different plane of reality. The committee is intrigued and has requested more data.`
+    const noData = [
+      `${name} has shown up to tournaments. The official match record, however, has chosen to remain silent on what actually happened out there. Either the results were never logged, or ${name} plays matches that exist on a different plane of reality. The committee is intrigued and has requested more data.`,
+      `${name} has been on the court. The scorecards, however, appear to have been left behind. We know they played. We just can't prove anything. The committee is treating this as an open investigation.`,
+      `Present at ${tournamentsPlayed} tournament${tournamentsPlayed > 1 ? 's' : ''}. Match data: classified. Whether by choice or by accident, ${name}'s results remain a mystery wrapped in a lobster shell. We respect the enigma.`,
+    ]
+    const idHash = String(player.id || '0').split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)
+    return noData[idHash % noData.length]
   }
 
   // ── Fallback: level-based ─────────────────────────────────────────────────
@@ -395,6 +401,16 @@ export default function Players({ onNavigate, focusPlayerId }) {
   const [search, setSearch]         = useState('')
   const [showLogin, setShowLogin]   = useState(false)
   const [expandedId, setExpandedId] = useState(focusPlayerId || null)
+  const focusRef = useRef(null)
+
+  // Auto-scroll to focused player card
+  useEffect(() => {
+    if (focusPlayerId && focusRef.current) {
+      setTimeout(() => {
+        focusRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 150)
+    }
+  }, [focusPlayerId])
   const [saving, setSaving]         = useState(false)
   const [avatarFile, setAvatarFile] = useState(null)
   const [avatarPreview, setAvatarPreview] = useState(null)
@@ -773,7 +789,7 @@ export default function Players({ onNavigate, focusPlayerId }) {
         {sorted.map((p, idx) => {
           const expanded = expandedId === p.id
           return (
-            <div key={p.id} className="card transition-all">
+            <div key={p.id} ref={p.id === focusPlayerId ? focusRef : undefined} className="card transition-all">
               <div className="w-full" onClick={() => setExpandedId(expanded ? null : p.id)}>
                 {/* Top row: rank · avatar · name · level · chevron */}
                 <div className="flex items-center gap-3">
@@ -803,9 +819,12 @@ export default function Players({ onNavigate, focusPlayerId }) {
                     : <ChevronDown size={16} className="text-gray-400 flex-shrink-0" />}
                 </div>
                 {/* Review — always visible */}
-                <p className="text-xs text-gray-500 mt-2 leading-relaxed pl-8">
-                  {corpReview(p, matches, registrations, tournaments)}
-                </p>
+                <div className="mt-2 pl-8">
+                  <p className="text-[10px] font-bold text-lobster-teal uppercase tracking-wider mb-0.5">Lobster Review</p>
+                  <p className="text-xs text-gray-500 leading-relaxed">
+                    {corpReview(p, matches, registrations, tournaments)}
+                  </p>
+                </div>
               </div>
 
               {expanded && (() => {
@@ -1023,7 +1042,7 @@ export default function Players({ onNavigate, focusPlayerId }) {
 
               <div>
                 <label className="label">Full Name</label>
-                <input required className="input" placeholder="e.g. Maria García" value={form.name}
+                <input required className="input" placeholder="e.g. Augustin Tapia" value={form.name}
                   onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
               </div>
 
