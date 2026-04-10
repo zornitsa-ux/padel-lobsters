@@ -214,29 +214,31 @@ export default function Tournament({ onNavigate }) {
               </div>
 
               {/* Stats row */}
-              <div className="grid grid-cols-4 gap-2 mb-3">
+              <div className={`grid ${isAdmin ? 'grid-cols-4' : 'grid-cols-3'} gap-2 mb-3`}>
                 <InfoChip icon={<Users size={12} />} label={`${t.maxPlayers || '?'} players`} />
                 <InfoChip icon={<MapPin size={12} />} label={`${bookedCount}/${totalCourts} courts`} warn={!allBooked && totalCourts > 0} />
                 <InfoChip icon={<Clock size={12} />} label={t.duration ? `${t.duration}min` : '90min'} />
-                <InfoChip icon={<Euro size={12} />} label={ppCost > 0 ? `€${ppCost.toFixed(2)}/pp` : 'Free'} />
+                {isAdmin && <InfoChip icon={<Euro size={12} />} label={ppCost > 0 ? `€${ppCost.toFixed(2)}/pp` : 'Free'} />}
               </div>
 
-              {/* Booking mode badge */}
-              <div className="mb-2">
-                {isAdminAll
-                  ? <span className="inline-flex items-center gap-1 text-xs bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full font-medium">
-                      <ShieldCheck size={11} /> Admin books all courts
+              {/* Booking mode badge — admin only */}
+              {isAdmin && (
+                <div className="mb-2">
+                  {isAdminAll
+                    ? <span className="inline-flex items-center gap-1 text-xs bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full font-medium">
+                        <ShieldCheck size={11} /> Admin books all courts
+                      </span>
+                    : <span className="inline-flex items-center gap-1 text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full font-medium">
+                        <UserCog size={11} /> Players responsible per court
+                      </span>
+                  }
+                  {isAdminAll && (t.totalPrice > 0) && (
+                    <span className="ml-2 text-xs text-gray-500">
+                      Total €{parseFloat(t.totalPrice).toFixed(2)} incl. courts + food + prizes
                     </span>
-                  : <span className="inline-flex items-center gap-1 text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full font-medium">
-                      <UserCog size={11} /> Players responsible per court
-                    </span>
-                }
-                {isAdminAll && (t.totalPrice > 0) && (
-                  <span className="ml-2 text-xs text-gray-500">
-                    Total €{parseFloat(t.totalPrice).toFixed(2)} incl. courts + food + prizes
-                  </span>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
 
               {/* Courts */}
               {(t.courts || []).length > 0 && (
@@ -251,7 +253,7 @@ export default function Tournament({ onNavigate }) {
                       {!isAdminAll && c.responsible && (
                         <span className="text-xs text-purple-600 font-medium">{c.responsible}</span>
                       )}
-                      {!isAdminAll && c.costPerPerson > 0 && (
+                      {isAdmin && !isAdminAll && c.costPerPerson > 0 && (
                         <span className="text-xs text-gray-500">€{c.costPerPerson}/pp</span>
                       )}
                       {isAdmin && !c.booked && (
@@ -279,9 +281,11 @@ export default function Tournament({ onNavigate }) {
                 <button onClick={() => onNavigate('registration', t)} className="flex-1 text-xs font-semibold text-lobster-teal py-2 rounded-xl bg-lobster-cream active:scale-95 transition-all">
                   Registrations
                 </button>
-                <button onClick={() => onNavigate('payments', t)} className="flex-1 text-xs font-semibold text-lobster-orange py-2 rounded-xl bg-orange-50 active:scale-95 transition-all">
-                  Payments
-                </button>
+                {isAdmin && (
+                  <button onClick={() => onNavigate('payments', t)} className="flex-1 text-xs font-semibold text-lobster-orange py-2 rounded-xl bg-orange-50 active:scale-95 transition-all">
+                    Payments
+                  </button>
+                )}
                 <button onClick={() => onNavigate('schedule', t)} className="flex-1 text-xs font-semibold text-gray-600 py-2 rounded-xl bg-gray-100 active:scale-95 transition-all">
                   Schedule
                 </button>
@@ -347,11 +351,11 @@ export default function Tournament({ onNavigate }) {
                         completed
                       </span>
                     </div>
-                    <div className="grid grid-cols-4 gap-2 mb-3">
+                    <div className={`grid ${isAdmin ? 'grid-cols-4' : 'grid-cols-3'} gap-2 mb-3`}>
                       <InfoChip icon={<Users size={12} />} label={`${t.maxPlayers || '?'} players`} />
                       <InfoChip icon={<MapPin size={12} />} label={`${bookedCount}/${totalCourts} courts`} />
                       <InfoChip icon={<Clock size={12} />} label={t.duration ? `${t.duration}min` : '90min'} />
-                      <InfoChip icon={<Euro size={12} />} label={ppCost > 0 ? `€${ppCost.toFixed(2)}/pp` : 'Free'} />
+                      {isAdmin && <InfoChip icon={<Euro size={12} />} label={ppCost > 0 ? `€${ppCost.toFixed(2)}/pp` : 'Free'} />}
                     </div>
                     <div className="flex gap-2 pt-2 border-t border-gray-100">
                       <button onClick={() => onNavigate('registration', t)} className="flex-1 text-xs font-semibold text-lobster-teal py-2 rounded-xl bg-lobster-cream active:scale-95 transition-all">

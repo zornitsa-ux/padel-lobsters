@@ -398,12 +398,14 @@ export default function Dashboard({ onNavigate }) {
             >
               <CalendarDays size={12} /> Schedule
             </button>
-            <button
-              onClick={() => onNavigate('payments', upcoming)}
-              className="flex-none bg-gray-100 text-gray-600 font-semibold py-1.5 px-3 rounded-lg text-[11px] active:scale-95 transition-all flex items-center gap-1"
-            >
-              <CreditCard size={12} /> Payments
-            </button>
+            {isAdmin && (
+              <button
+                onClick={() => onNavigate('payments', upcoming)}
+                className="flex-none bg-gray-100 text-gray-600 font-semibold py-1.5 px-3 rounded-lg text-[11px] active:scale-95 transition-all flex items-center gap-1"
+              >
+                <CreditCard size={12} /> Payments
+              </button>
+            )}
           </div>
         </div>
       ) : (
