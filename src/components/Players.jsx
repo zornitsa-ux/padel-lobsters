@@ -763,8 +763,9 @@ export default function Players({ onNavigate, focusPlayerId }) {
                       <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-lg font-semibold">🤚 Lefty</span>
                     )}
                     {p.birthday && (() => {
-                      const d = new Date(p.birthday)
-                      const dayMonth = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+                      const [y, m, d] = p.birthday.split('-').map(Number)
+                      const dt = new Date(y, m - 1, d)
+                      const dayMonth = dt.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
                       return <span className="text-xs text-gray-400">🎂 {dayMonth}</span>
                     })()}
                   </div>
