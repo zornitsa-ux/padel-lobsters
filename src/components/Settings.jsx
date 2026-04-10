@@ -10,6 +10,17 @@ import AdminLogin from './AdminLogin'
 import CountryPicker, { FlagImg } from './CountryPicker'
 import DEFAULT_TIPS from '../data/padelTips'
 
+const LOBBY_PROMPTS = [
+  { label: '🎤 Trash Talk',        placeholder: 'Say something to your future opponents…' },
+  { label: '🦞 Confession',        placeholder: 'Confess your deepest padel sin…' },
+  { label: '💬 War Cry',           placeholder: 'What do you scream before a match?' },
+  { label: '🏅 Bold Claim',        placeholder: 'Make a promise you may not keep…' },
+  { label: '🎯 Battle Cry',        placeholder: 'Inspire (or scare) your opponents…' },
+  { label: '😤 Excuse',            placeholder: 'Pre-write your excuse for losing today…' },
+  { label: '🤝 Pledge',            placeholder: 'What do you bring to the court?' },
+  { label: '👀 Scouting',          placeholder: 'Describe your playing style in one line…' },
+]
+
 export default function Settings() {
   const { settings, saveSettings, isAdmin, setIsAdmin, claimedId, getPlayerById, updatePlayer, players } = useApp()
 
@@ -35,6 +46,7 @@ export default function Settings() {
   const [profileSaved, setProfileSaved]   = useState(false)
   const [avatarFile, setAvatarFile]       = useState(null)
   const [avatarPreview, setAvatarPreview] = useState(null)
+  const [activePrompt, setActivePrompt]   = useState(2) // default to "War Cry"
   const fileInputRef = useRef(null)
 
   // Playtomic update popup — show if player hasn't visited settings in 30+ days
@@ -351,11 +363,27 @@ export default function Settings() {
                   onChange={e => setProfileForm(f => ({ ...f, name: e.target.value }))} />
               </div>
 
-              {/* War Cry */}
+              {/* War Cry — toggleable prompt categories */}
               <div>
                 <label className="label">War Cry</label>
+                <div className="flex gap-1.5 flex-wrap mb-2">
+                  {LOBBY_PROMPTS.map((p, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setActivePrompt(i)}
+                      className={`text-[11px] px-2.5 py-1 rounded-full font-semibold transition-all active:scale-95 ${
+                        activePrompt === i
+                          ? 'bg-lobster-teal text-white'
+                          : 'bg-gray-100 text-gray-500'
+                      }`}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
                 <input className="input" type="text" maxLength={80}
-                  placeholder="e.g. The one who always calls the ball out"
+                  placeholder={LOBBY_PROMPTS[activePrompt].placeholder}
                   value={profileForm.tagline}
                   onChange={e => setProfileForm(f => ({ ...f, tagline: e.target.value }))} />
                 <p className="text-xs text-gray-400 mt-1">Appears on your player card. {80 - profileForm.tagline.length} chars left.</p>
