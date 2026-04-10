@@ -43,9 +43,10 @@ const GREETINGS_HELLO = [
   (n) => [`Ahoy, ${n}!`, `Time to shell-ebrate some padel.`],
   (n) => [`${n}!`, `Today's forecast: 100% chance of lobster tears.`],
   (n) => [`Welcome back, ${n}!`, `May your lobs be high and your opponents low.`],
-  (n) => [`${n}!`, `Don't be shellfish — share the glory.`],
+  (n) => [`${n}!`, `Time to lob some lobsters.`],
   (n) => [`Snap snap, ${n}!`, `Let's get on the court.`],
   (n) => [`${n}!`, `The lobsters are restless. Show them who's boss.`],
+  (n) => [`¡Vamos, ${n}!`, `Menos bla bla, más padel.`],
 ]
 
 function getGreeting(name) {
