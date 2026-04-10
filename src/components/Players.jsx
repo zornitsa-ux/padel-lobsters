@@ -540,6 +540,7 @@ export default function Players({ onNavigate, focusPlayerId }) {
         adjustment: parseFloat(form.adjustment) || 0,
         isLeftHanded: form.isLeftHanded || false,
         birthday: form.birthday || null,
+        taglineLabel: lobbyPrompt.label,
         status: 'active',
       }
       const firstName = form.name.trim().split(/\s+/)[0]
