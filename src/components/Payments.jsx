@@ -141,7 +141,7 @@ export default function Payments({ tournament, onNavigate }) {
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold text-amber-300">{pending.length}</p>
-            <p className="text-xs opacity-75">Sent</p>
+            <p className="text-xs opacity-75">Paid</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold text-red-300">{unpaid.length - pending.length}</p>
@@ -182,7 +182,7 @@ export default function Payments({ tournament, onNavigate }) {
         {[
           ['all',     'All',    regs.length],
           ['unpaid',  'Unpaid', unpaid.length - pending.length],
-          ['pending', 'Sent ⏳', pending.length],
+          ['pending', 'Paid ⏳', pending.length],
           ['paid',    'Paid',   paid.length],
         ].map(([v, l, count]) => (
           <button
