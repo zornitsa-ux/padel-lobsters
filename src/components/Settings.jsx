@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
 import {
   Settings2, Lock, MessageCircle, Save, Eye, EyeOff,
-  LogOut, LogIn, Shield, Link, Info, Lightbulb, Plus, Trash2, RotateCcw
+  LogOut, LogIn, Shield, Link, Info, Lightbulb, Plus, Trash2, RotateCcw,
+  User, TrendingUp, ChevronDown, ChevronUp
 } from 'lucide-react'
 import AdminLogin from './AdminLogin'
 import DEFAULT_TIPS from '../data/padelTips'
 
 export default function Settings() {
-  const { settings, saveSettings, isAdmin, setIsAdmin } = useApp()
+  const { settings, saveSettings, isAdmin, setIsAdmin, claimedId, getPlayerById, updatePlayer, players } = useApp()
 
   const [form, setForm]           = useState({ whatsappLink: '', adminPin: '1234', groupName: 'Padel Lobsters' })
   const [showLogin, setShowLogin] = useState(false)
@@ -19,6 +20,54 @@ export default function Settings() {
   const [newTip, setNewTip]       = useState('')
   const [editingTip, setEditingTip] = useState(null) // { index, text }
   const [tipsExpanded, setTipsExpanded] = useState(false)
+
+  // ── My Lobster Profile ──────────────────────────────────────────────────
+  const myPlayer = claimedId ? getPlayerById(claimedId) : null
+  const [profileExpanded, setProfileExpanded] = useState(false)
+  const [profileForm, setProfileForm] = useState({ playtomicLevel: '', adjustment: '0' })
+  const [profileSaving, setProfileSaving] = useState(false)
+  const [profileSaved, setProfileSaved]   = useState(false)
+
+  // Playtomic update popup — show if player hasn't visited settings in 30+ days
+  const [showPlaytomicPrompt, setShowPlaytomicPrompt] = useState(false)
+
+  useEffect(() => {
+    if (myPlayer) {
+      setProfileForm({
+        playtomicLevel: String(myPlayer.playtomicLevel || ''),
+        adjustment: String(myPlayer.adjustment || '0'),
+      })
+      // Check if we should prompt for Playtomic update
+      const lastCheck = localStorage.getItem(`lobster_playtomic_check_${claimedId}`)
+      const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000)
+      if (!lastCheck || parseInt(lastCheck) < thirtyDaysAgo) {
+        setShowPlaytomicPrompt(true)
+      }
+    }
+  }, [myPlayer, claimedId])
+
+  const handleProfileSave = async () => {
+    if (!myPlayer) return
+    setProfileSaving(true)
+    try {
+      await updatePlayer(myPlayer.id, {
+        ...myPlayer,
+        playtomicLevel: profileForm.playtomicLevel,
+        adjustment: profileForm.adjustment,
+      })
+      localStorage.setItem(`lobster_playtomic_check_${claimedId}`, String(Date.now()))
+      setShowPlaytomicPrompt(false)
+      setProfileSaved(true)
+      setTimeout(() => setProfileSaved(false), 2500)
+    } finally {
+      setProfileSaving(false)
+    }
+  }
+
+  const dismissPlaytomicPrompt = () => {
+    localStorage.setItem(`lobster_playtomic_check_${claimedId}`, String(Date.now()))
+    setShowPlaytomicPrompt(false)
+  }
 
   useEffect(() => {
     if (settings) {
@@ -117,6 +166,148 @@ export default function Settings() {
           </button>
         )}
       </div>
+
+      {/* ── Playtomic update popup ─────────────────────────────── */}
+      {showPlaytomicPrompt && myPlayer && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-sm p-6 space-y-4 shadow-xl">
+            <div className="text-center">
+              <div className="text-4xl mb-2">🦞</div>
+              <h3 className="text-lg font-bold text-gray-800">Has your Playtomic score changed?</h3>
+              <p className="text-sm text-gray-500 mt-1">
+                It's been a while! Your current level on file:
+              </p>
+            </div>
+            <div className="bg-lobster-cream rounded-2xl p-4 text-center">
+              <p className="text-3xl font-bold text-lobster-teal">
+                {(parseFloat(myPlayer.playtomicLevel) || 0).toFixed(1)}
+              </p>
+              <p className="text-xs text-gray-400 mt-1">
+                Adjustment: {parseFloat(myPlayer.adjustment) >= 0 ? '+' : ''}{myPlayer.adjustment || 0}
+                {' → '}
+                <span className="font-bold text-gray-600">
+                  {((parseFloat(myPlayer.playtomicLevel) || 0) + (parseFloat(myPlayer.adjustment) || 0)).toFixed(1)}
+                </span>
+              </p>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-semibold text-gray-600 mb-1 block">New Playtomic Level</label>
+                <input
+                  className="input text-center text-lg font-bold"
+                  type="number" step="0.01" min="0" max="10"
+                  value={profileForm.playtomicLevel}
+                  onChange={e => setProfileForm(f => ({ ...f, playtomicLevel: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-600 mb-1 block">Adjustment (+/-)</label>
+                <input
+                  className="input text-center text-lg font-bold"
+                  type="number" step="0.1" min="-3" max="3"
+                  value={profileForm.adjustment}
+                  onChange={e => setProfileForm(f => ({ ...f, adjustment: e.target.value }))}
+                />
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={dismissPlaytomicPrompt}
+                className="flex-1 text-sm font-semibold text-gray-500 py-2.5 rounded-xl border border-gray-200 active:scale-95 transition-all"
+              >
+                No change
+              </button>
+              <button
+                type="button"
+                onClick={handleProfileSave}
+                disabled={profileSaving}
+                className="flex-1 bg-lobster-teal text-white text-sm font-bold py-2.5 rounded-xl active:scale-95 transition-all disabled:opacity-50"
+              >
+                {profileSaving ? 'Saving…' : 'Update'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── My Lobster Profile (for claimed players) ──────────── */}
+      {myPlayer && (
+        <div className="card space-y-3">
+          <button
+            type="button"
+            onClick={() => setProfileExpanded(e => !e)}
+            className="w-full flex items-center justify-between"
+          >
+            <h3 className="font-bold text-gray-700 text-sm flex items-center gap-2">
+              <User size={15} className="text-lobster-orange" /> My Lobster Profile
+            </h3>
+            {profileExpanded ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
+          </button>
+
+          {/* Always-visible summary */}
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-lobster-teal rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
+              {myPlayer.avatarUrl ? (
+                <img src={myPlayer.avatarUrl} alt={myPlayer.name} className="w-10 h-10 rounded-full object-cover" />
+              ) : (
+                (myPlayer.name || '?')[0].toUpperCase()
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-gray-800 truncate">{myPlayer.name}</p>
+              <p className="text-xs text-gray-500">
+                Level: <span className="font-bold text-lobster-teal">{((parseFloat(myPlayer.playtomicLevel) || 0) + (parseFloat(myPlayer.adjustment) || 0)).toFixed(1)}</span>
+                <span className="text-gray-400 ml-1">
+                  (Playtomic {(parseFloat(myPlayer.playtomicLevel) || 0).toFixed(1)} {parseFloat(myPlayer.adjustment) >= 0 ? '+' : ''}{myPlayer.adjustment || 0})
+                </span>
+              </p>
+            </div>
+          </div>
+
+          {/* Expanded edit form */}
+          {profileExpanded && (
+            <div className="space-y-3 pt-2 border-t border-gray-100">
+              <p className="text-xs text-gray-400">Update your Playtomic level and adjustment. Changes are saved to your profile.</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block">Playtomic Level</label>
+                  <input
+                    className="input text-center font-bold"
+                    type="number" step="0.01" min="0" max="10"
+                    value={profileForm.playtomicLevel}
+                    onChange={e => setProfileForm(f => ({ ...f, playtomicLevel: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block">Adjustment (+/-)</label>
+                  <input
+                    className="input text-center font-bold"
+                    type="number" step="0.1" min="-3" max="3"
+                    value={profileForm.adjustment}
+                    onChange={e => setProfileForm(f => ({ ...f, adjustment: e.target.value }))}
+                  />
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-gray-500">
+                  Effective level: <span className="font-bold text-lobster-teal">
+                    {((parseFloat(profileForm.playtomicLevel) || 0) + (parseFloat(profileForm.adjustment) || 0)).toFixed(1)}
+                  </span>
+                </p>
+                <button
+                  type="button"
+                  onClick={handleProfileSave}
+                  disabled={profileSaving}
+                  className="bg-lobster-teal text-white text-xs font-bold px-4 py-2 rounded-xl active:scale-95 transition-all disabled:opacity-50 flex items-center gap-1.5"
+                >
+                  {profileSaving ? 'Saving…' : profileSaved ? '✓ Saved!' : <><Save size={13} /> Save</>}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Settings form */}
       <form onSubmit={handleSave} className="space-y-4">
