@@ -3,7 +3,6 @@ import { useApp } from '../context/AppContext'
 import { supabase } from '../supabase'
 import { Plus, Pencil, Trash2, X, ChevronDown, ChevronUp, Search, User, Clock, Camera, Briefcase, Trophy, TrendingUp } from 'lucide-react'
 import AdminLogin from './AdminLogin'
-import PlayerProfile from './PlayerProfile'
 import CountryPicker, { COUNTRIES, countryFlag, FlagImg } from './CountryPicker'
 
 const LEVEL_COLORS = [
@@ -841,9 +840,12 @@ export default function Players({ onNavigate, focusPlayerId }) {
                   )}
                   {p.notes && <p className="text-xs text-gray-500 italic">{p.notes}</p>}
 
-                  {/* Edit profile — own card only */}
-                  {claimedId && String(claimedId) === String(p.id) && (
-                    <PlayerProfile player={p} />
+                  {/* War Cry — tagline display */}
+                  {p.tagline && (
+                    <div className="bg-lobster-cream rounded-xl px-3 py-2">
+                      <p className="text-[10px] font-bold text-lobster-teal uppercase tracking-wider mb-0.5">War Cry</p>
+                      <p className="text-xs text-gray-700 italic">"{p.tagline}"</p>
+                    </div>
                   )}
 
                   {/* PIN — admin only */}

@@ -351,9 +351,9 @@ export default function Settings() {
                   onChange={e => setProfileForm(f => ({ ...f, name: e.target.value }))} />
               </div>
 
-              {/* Tagline */}
+              {/* War Cry */}
               <div>
-                <label className="label">Your Lobster Add-on</label>
+                <label className="label">War Cry</label>
                 <input className="input" type="text" maxLength={80}
                   placeholder="e.g. The one who always calls the ball out"
                   value={profileForm.tagline}
