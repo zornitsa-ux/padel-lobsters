@@ -188,7 +188,11 @@ export default function Tournament({ onNavigate }) {
                   <Trophy size={22} className="text-lobster-teal" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-gray-800 truncate">{t.name}</h3>
+                  <h3 className="font-bold text-gray-800 truncate">
+                    <button onClick={() => onNavigate('registration', t)} className="hover:text-lobster-teal active:scale-95 transition-all text-left">
+                      {t.name}
+                    </button>
+                  </h3>
                   <p className="text-xs text-gray-500 flex items-center gap-1">
                     <Calendar size={11} /> {formatDate(t.date)} {t.time && `· ${t.time}`}
                   </p>
@@ -323,7 +327,11 @@ export default function Tournament({ onNavigate }) {
                         <Trophy size={22} className="text-gray-400" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-gray-700 truncate">{t.name}</h3>
+                        <h3 className="font-bold text-gray-700 truncate">
+                          <button onClick={() => onNavigate('registration', t)} className="hover:text-lobster-teal active:scale-95 transition-all text-left">
+                            {t.name}
+                          </button>
+                        </h3>
                         <p className="text-xs text-gray-400 flex items-center gap-1">
                           <Calendar size={11} /> {formatDate(t.date)} {t.time && `· ${t.time}`}
                         </p>

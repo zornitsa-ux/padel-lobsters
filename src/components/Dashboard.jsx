@@ -38,13 +38,13 @@ const ClawDown = ({ active }) => (
 
 // ── Fun greetings ────────────────────────────────────────────────────────────
 const GREETINGS_HELLO = [
-  (n) => [`Hey, ${n}!`, `Ready to pinch some wins today?`],
-  (n) => [`${n}!`, `The court is calling — try not to get clawed.`],
+  (n) => [`Hey, ${n}!`, `Ready to pinch some wins?`],
+  (n) => [`${n}!`, `The court is calling — time to play.`],
   (n) => [`Ahoy, ${n}!`, `Time to shell-ebrate some padel.`],
   (n) => [`${n}!`, `Today's forecast: 100% chance of lobster tears.`],
   (n) => [`Welcome back, ${n}!`, `May your lobs be high and your opponents low.`],
-  (n) => [`${n}!`, `Don't be shellfish — share the wins today.`],
-  (n) => [`Snap snap, ${n}!`, `Let's crack some matches open.`],
+  (n) => [`${n}!`, `Don't be shellfish — share the glory.`],
+  (n) => [`Snap snap, ${n}!`, `Let's get on the court.`],
   (n) => [`${n}!`, `The lobsters are restless. Show them who's boss.`],
 ]
 
@@ -158,6 +158,7 @@ export default function Dashboard({ onNavigate }) {
     if (!claimedId) return null
     let played = 0, won = 0, lost = 0, draws = 0, pts = 0, pointsFor = 0, pointsAgainst = 0
     const h2h = {} // opponentId → { won, lost }
+    const partners = {} // partnerId → { wins, games }
     let bestWinStreak = 0, curWinStreak = 0
 
     matches.filter(m => m.completed).forEach(m => {
@@ -183,19 +184,37 @@ export default function Dashboard({ onNavigate }) {
         if (iWon) h2h[oppId].won++
         else if (iLost) h2h[oppId].lost++
       })
+
+      // Track partners (teammates)
+      const teammates = onT1 ? (m.team1Ids || []) : (m.team2Ids || [])
+      teammates.forEach(tId => {
+        if (tId === claimedId) return
+        if (!partners[tId]) partners[tId] = { wins: 0, games: 0 }
+        partners[tId].games++
+        if (iWon) partners[tId].wins++
+      })
     })
     if (played === 0) return null
 
-    // Top nemeses: opponents you've lost to the most (min 2 games, top 2)
-    const nemeses = Object.entries(h2h)
+    // Top nemesis: opponent you've lost to the most (min 2 games)
+    const nemesis = Object.entries(h2h)
       .filter(([, rec]) => (rec.won + rec.lost) >= 2 && rec.lost > 0)
       .map(([oppId, rec]) => {
         const p = players.find(x => x.id === oppId)
         return p ? { name: p.name.split(' ')[0], won: rec.won, lost: rec.lost } : null
       })
       .filter(Boolean)
-      .sort((a, b) => b.lost - a.lost)
-      .slice(0, 2)
+      .sort((a, b) => b.lost - a.lost)[0] || null
+
+    // Best partner: teammate you've won the most with (min 2 games together)
+    const bestPartner = Object.entries(partners)
+      .filter(([, rec]) => rec.games >= 2 && rec.wins > 0)
+      .map(([pId, rec]) => {
+        const p = players.find(x => x.id === pId)
+        return p ? { name: p.name.split(' ')[0], wins: rec.wins, games: rec.games } : null
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.wins - a.wins)[0] || null
 
     // Attendance streak: consecutive completed tournaments the player participated in
     const completedSorted = tournaments
@@ -212,7 +231,7 @@ export default function Dashboard({ onNavigate }) {
     }
 
     const winRate = played > 0 ? Math.round((won / played) * 100) : 0
-    return { played, won, lost, draws, pts, pointsFor, pointsAgainst, winRate, streak, bestWinStreak, nemeses }
+    return { played, won, lost, draws, pts, pointsFor, pointsAgainst, winRate, streak, bestWinStreak, nemesis, bestPartner }
   }, [claimedId, matches, tournaments, players, getTournamentRegistrations])
 
   const formatDate = (d) => {
@@ -313,12 +332,12 @@ export default function Dashboard({ onNavigate }) {
           <p className="text-base font-bold text-gray-800">{pastCount}</p>
           <p className="text-[9px] text-gray-400 font-medium">Past</p>
         </button>
-        <button onClick={() => onNavigate('history')} className="bg-white rounded-2xl py-3 text-center shadow-md border border-gray-100 active:scale-[0.95] active:shadow-sm transition-all">
+        <button onClick={() => onNavigate('history')} className="bg-white rounded-2xl py-3 shadow-md border border-gray-100 active:scale-[0.95] active:shadow-sm transition-all">
           <Award size={16} className="text-yellow-500 mx-auto mb-1" />
           {lastPodium && lastPodium.length > 0 ? (
             <div className="px-1">
               {lastPodium.map((name, i) => (
-                <p key={i} className="text-[9px] font-bold text-gray-700 truncate leading-tight">
+                <p key={i} className="text-[9px] font-bold text-gray-700 truncate leading-tight text-left">
                   {['🥇','🥈','🥉'][i]} {name}
                 </p>
               ))}
@@ -326,7 +345,6 @@ export default function Dashboard({ onNavigate }) {
           ) : (
             <p className="text-base font-bold text-gray-300">—</p>
           )}
-          <p className="text-[9px] text-gray-400 font-medium mt-0.5">Podium</p>
         </button>
       </div>
 
@@ -337,7 +355,11 @@ export default function Dashboard({ onNavigate }) {
           style={{ backdropFilter: 'blur(12px)' }}
         >
           <p className="text-[10px] font-bold text-lobster-orange uppercase tracking-wide mb-1">Your Next Event</p>
-          <h2 className="text-base font-bold text-gray-800">{upcoming.name}</h2>
+          <h2 className="text-base font-bold text-gray-800">
+            <button onClick={() => onNavigate('registration', upcoming)} className="hover:text-lobster-teal active:scale-95 transition-all text-left">
+              {upcoming.name}
+            </button>
+          </h2>
           <p className="text-xs text-gray-500 mb-2 flex items-center gap-1">
             <Calendar size={12} />
             {formatDate(upcoming.date)}
@@ -510,7 +532,7 @@ export default function Dashboard({ onNavigate }) {
               </div>
             </div>
 
-            {/* Best win streak + Arch enemy row */}
+            {/* Best win streak + Nemesis + Best partner row */}
             <div className="mt-3 pt-3 border-t border-gray-100 flex items-center gap-3 flex-wrap">
               {myStats.bestWinStreak > 1 && (
                 <span className="text-xs bg-green-50 text-green-700 px-2.5 py-1 rounded-lg font-semibold flex items-center gap-1">
@@ -518,11 +540,16 @@ export default function Dashboard({ onNavigate }) {
                   {myStats.bestWinStreak} wins in a row
                 </span>
               )}
-              {myStats.nemeses.map((enemy, i) => (
-                <span key={i} className="text-xs bg-red-50 text-red-700 px-2.5 py-1 rounded-lg font-semibold">
-                  😈 {enemy.name} ({enemy.won}W-{enemy.lost}L)
+              {myStats.nemesis && (
+                <span className="text-xs bg-red-50 text-red-700 px-2.5 py-1 rounded-lg font-semibold">
+                  😈 Nemesis: {myStats.nemesis.name} ({myStats.nemesis.won}W-{myStats.nemesis.lost}L)
                 </span>
-              ))}
+              )}
+              {myStats.bestPartner && (
+                <span className="text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-lg font-semibold">
+                  🤝 Best partner: {myStats.bestPartner.name} ({myStats.bestPartner.wins}W/{myStats.bestPartner.games}G)
+                </span>
+              )}
             </div>
 
             <div className="mt-2 pt-2 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
