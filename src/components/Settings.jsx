@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useApp } from '../context/AppContext'
+import { supabase } from '../supabase'
 import {
   Settings2, Lock, MessageCircle, Save, Eye, EyeOff,
   LogOut, LogIn, Shield, Link, Info, Lightbulb, Plus, Trash2, RotateCcw,
-  User, TrendingUp, ChevronDown, ChevronUp
+  User, TrendingUp, ChevronDown, ChevronUp, Camera
 } from 'lucide-react'
 import AdminLogin from './AdminLogin'
+import CountryPicker, { FlagImg } from './CountryPicker'
 import DEFAULT_TIPS from '../data/padelTips'
 
 export default function Settings() {
@@ -24,9 +26,16 @@ export default function Settings() {
   // ── My Lobster Profile ──────────────────────────────────────────────────
   const myPlayer = claimedId ? getPlayerById(claimedId) : null
   const [profileExpanded, setProfileExpanded] = useState(false)
-  const [profileForm, setProfileForm] = useState({ playtomicLevel: '', adjustment: '0', tagline: '', preferredPosition: '' })
+  const [profileForm, setProfileForm] = useState({
+    name: '', country: '', gender: '', isLeftHanded: false,
+    preferredPosition: '', playtomicLevel: '', adjustment: '0',
+    tagline: '', email: '', phone: '', birthday: '', avatarUrl: '',
+  })
   const [profileSaving, setProfileSaving] = useState(false)
   const [profileSaved, setProfileSaved]   = useState(false)
+  const [avatarFile, setAvatarFile]       = useState(null)
+  const [avatarPreview, setAvatarPreview] = useState(null)
+  const fileInputRef = useRef(null)
 
   // Playtomic update popup — show if player hasn't visited settings in 30+ days
   const [showPlaytomicPrompt, setShowPlaytomicPrompt] = useState(false)
@@ -34,11 +43,20 @@ export default function Settings() {
   useEffect(() => {
     if (myPlayer) {
       setProfileForm({
+        name: myPlayer.name || '',
+        country: myPlayer.country || '',
+        gender: myPlayer.gender || '',
+        isLeftHanded: myPlayer.isLeftHanded || myPlayer.is_left_handed || false,
+        preferredPosition: myPlayer.preferredPosition || myPlayer.preferred_position || '',
         playtomicLevel: String(myPlayer.playtomicLevel || ''),
         adjustment: String(myPlayer.adjustment || '0'),
         tagline: myPlayer.tagline || '',
-        preferredPosition: myPlayer.preferredPosition || myPlayer.preferred_position || '',
+        email: myPlayer.email || '',
+        phone: myPlayer.phone || '',
+        birthday: myPlayer.birthday || '',
+        avatarUrl: myPlayer.avatarUrl || myPlayer.avatar_url || '',
       })
+      setAvatarPreview(myPlayer.avatarUrl || myPlayer.avatar_url || null)
       // Check if we should prompt for Playtomic update
       const lastCheck = localStorage.getItem(`lobster_playtomic_check_${claimedId}`)
       const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000)
@@ -48,17 +66,49 @@ export default function Settings() {
     }
   }, [myPlayer, claimedId])
 
+  const handleAvatarChange = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setAvatarFile(file)
+    const reader = new FileReader()
+    reader.onload = (ev) => setAvatarPreview(ev.target.result)
+    reader.readAsDataURL(file)
+  }
+
   const handleProfileSave = async () => {
     if (!myPlayer) return
     setProfileSaving(true)
     try {
+      let avatarUrl = profileForm.avatarUrl || ''
+      if (avatarFile) {
+        const ext = avatarFile.name.split('.').pop()
+        const filename = `player-${myPlayer.id}.${ext}`
+        const { error: uploadError } = await supabase.storage
+          .from('avatars').upload(filename, avatarFile, { upsert: true })
+        if (uploadError) {
+          console.error('Avatar upload error:', uploadError)
+          alert('Photo could not be saved: ' + uploadError.message)
+        } else {
+          const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filename)
+          avatarUrl = publicUrl
+        }
+      }
       await updatePlayer(myPlayer.id, {
         ...myPlayer,
+        name: profileForm.name,
+        country: profileForm.country,
+        gender: profileForm.gender,
+        isLeftHanded: profileForm.isLeftHanded,
+        preferredPosition: profileForm.preferredPosition,
         playtomicLevel: profileForm.playtomicLevel,
         adjustment: profileForm.adjustment,
         tagline: profileForm.tagline,
-        preferredPosition: profileForm.preferredPosition,
+        email: profileForm.email,
+        phone: profileForm.phone,
+        birthday: profileForm.birthday || null,
+        avatarUrl,
       })
+      setAvatarFile(null)
       localStorage.setItem(`lobster_playtomic_check_${claimedId}`, String(Date.now()))
       setShowPlaytomicPrompt(false)
       setProfileSaved(true)
@@ -269,40 +319,98 @@ export default function Settings() {
             </div>
           </div>
 
-          {/* Expanded edit form */}
+          {/* Expanded full edit form */}
           {profileExpanded && (
-            <div className="space-y-3 pt-2 border-t border-gray-100">
-              <p className="text-xs text-gray-400">Edit your full profile. Changes are saved instantly.</p>
+            <div className="space-y-4 pt-2 border-t border-gray-100">
+
+              {/* Avatar upload */}
+              <div className="flex flex-col items-center gap-2">
+                <div className="relative">
+                  {avatarPreview ? (
+                    <img src={avatarPreview} alt="Preview"
+                      className="w-20 h-20 rounded-full object-cover border-2 border-lobster-teal" />
+                  ) : (
+                    <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-300">
+                      <User size={28} />
+                    </div>
+                  )}
+                  <button type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute bottom-0 right-0 w-7 h-7 bg-lobster-teal rounded-full flex items-center justify-center text-white shadow-sm active:scale-95">
+                    <Camera size={13} />
+                  </button>
+                </div>
+                <p className="text-xs text-gray-400">Tap camera icon to change photo</p>
+                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
+              </div>
+
+              {/* Full Name */}
+              <div>
+                <label className="label">Full Name</label>
+                <input className="input" placeholder="e.g. Augustin Tapia" value={profileForm.name}
+                  onChange={e => setProfileForm(f => ({ ...f, name: e.target.value }))} />
+              </div>
 
               {/* Tagline */}
               <div>
-                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block">Your Lobster Add-on</label>
-                <input
-                  className="input text-sm"
-                  type="text"
-                  maxLength={80}
+                <label className="label">Your Lobster Add-on</label>
+                <input className="input" type="text" maxLength={80}
                   placeholder="e.g. The one who always calls the ball out"
                   value={profileForm.tagline}
-                  onChange={e => setProfileForm(f => ({ ...f, tagline: e.target.value }))}
-                />
-                <p className="text-[10px] text-gray-400 mt-1">Appears on your player card. {80 - profileForm.tagline.length} chars left.</p>
+                  onChange={e => setProfileForm(f => ({ ...f, tagline: e.target.value }))} />
+                <p className="text-xs text-gray-400 mt-1">Appears on your player card. {80 - profileForm.tagline.length} chars left.</p>
               </div>
 
-              {/* Preferred position */}
+              {/* Country */}
               <div>
-                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block">Preferred Side</label>
+                <label className="label">Country</label>
+                <CountryPicker
+                  value={profileForm.country}
+                  onChange={val => setProfileForm(f => ({ ...f, country: val }))}
+                />
+              </div>
+
+              {/* Gender */}
+              <div>
+                <label className="label">Gender</label>
+                <p className="text-xs text-gray-400 mb-2">For optimal pair matching</p>
+                <div className="flex gap-3">
+                  {[['male', 'Male'], ['female', 'Female']].map(([val, lbl]) => (
+                    <button type="button" key={val}
+                      onClick={() => setProfileForm(f => ({ ...f, gender: f.gender === val ? '' : val }))}
+                      className={`flex-1 py-2.5 rounded-xl font-semibold text-sm transition-all ${
+                        profileForm.gender === val ? 'bg-lobster-teal text-white' : 'bg-gray-100 text-gray-600'
+                      }`}>
+                      {lbl}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Left-handed */}
+              <div>
+                <label className="label">Playing Hand</label>
+                <button type="button"
+                  onClick={() => setProfileForm(f => ({ ...f, isLeftHanded: !f.isLeftHanded }))}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all w-full justify-center ${
+                    profileForm.isLeftHanded
+                      ? 'bg-amber-100 text-amber-700 border-2 border-amber-300'
+                      : 'bg-gray-100 text-gray-500'
+                  }`}>
+                  🤚 {profileForm.isLeftHanded ? 'Left-handed (tap to undo)' : 'Tap if left-handed'}
+                </button>
+              </div>
+
+              {/* Preferred side */}
+              <div>
+                <label className="label">Preferred Side</label>
                 <div className="flex gap-2">
                   {[['left', '👈 Left'], ['right', '👉 Right'], ['both', '↔️ Both']].map(([val, lbl]) => (
-                    <button
-                      key={val}
-                      type="button"
-                      onClick={() => setProfileForm(f => ({ ...f, preferredPosition: val }))}
-                      className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all active:scale-95 ${
-                        profileForm.preferredPosition === val
-                          ? 'bg-lobster-teal text-white'
-                          : 'bg-gray-100 text-gray-600'
-                      }`}
-                    >
+                    <button type="button" key={val}
+                      onClick={() => setProfileForm(f => ({ ...f, preferredPosition: f.preferredPosition === val ? '' : val }))}
+                      className={`flex-1 py-2 rounded-xl font-semibold text-sm transition-all ${
+                        profileForm.preferredPosition === val ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'
+                      }`}>
                       {lbl}
                     </button>
                   ))}
@@ -310,41 +418,60 @@ export default function Settings() {
               </div>
 
               {/* Playtomic level + adjustment */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="bg-blue-50 rounded-xl p-4 space-y-3">
+                <p className="text-xs font-bold text-blue-700 uppercase tracking-wide">Playtomic Level</p>
                 <div>
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block">Playtomic Level</label>
-                  <input
-                    className="input text-center font-bold"
-                    type="number" step="0.01" min="0" max="10"
+                  <label className="label">Playtomic Level (0–7)</label>
+                  <input type="number" step="0.1" min="0" max="7" className="input" placeholder="e.g. 3.5"
                     value={profileForm.playtomicLevel}
-                    onChange={e => setProfileForm(f => ({ ...f, playtomicLevel: e.target.value }))}
-                  />
+                    onChange={e => setProfileForm(f => ({ ...f, playtomicLevel: e.target.value }))} />
+                  <p className="text-xs text-gray-500 mt-1">Check your Playtomic app — it shows your current level</p>
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block">Adjustment (+/-)</label>
-                  <input
-                    className="input text-center font-bold"
-                    type="number" step="0.1" min="-3" max="3"
+                  <label className="label">Personal Adjustment</label>
+                  <input type="number" step="0.1" min="-3" max="3" className="input" placeholder="0"
                     value={profileForm.adjustment}
-                    onChange={e => setProfileForm(f => ({ ...f, adjustment: e.target.value }))}
-                  />
+                    onChange={e => setProfileForm(f => ({ ...f, adjustment: e.target.value }))} />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Positive = stronger · Negative = weaker<br />
+                    Adjusted Level = {((parseFloat(profileForm.playtomicLevel) || 0) + (parseFloat(profileForm.adjustment) || 0)).toFixed(1)}
+                  </p>
                 </div>
               </div>
-              <div className="flex items-center justify-between">
-                <p className="text-xs text-gray-500">
-                  Effective level: <span className="font-bold text-lobster-teal">
-                    {((parseFloat(profileForm.playtomicLevel) || 0) + (parseFloat(profileForm.adjustment) || 0)).toFixed(1)}
-                  </span>
-                </p>
-                <button
-                  type="button"
-                  onClick={handleProfileSave}
-                  disabled={profileSaving}
-                  className="bg-lobster-teal text-white text-xs font-bold px-4 py-2 rounded-xl active:scale-95 transition-all disabled:opacity-50 flex items-center gap-1.5"
-                >
-                  {profileSaving ? 'Saving…' : profileSaved ? '✓ Saved!' : <><Save size={13} /> Save</>}
-                </button>
+
+              {/* Email */}
+              <div>
+                <label className="label">Email</label>
+                <input type="email" className="input" placeholder="player@email.com" value={profileForm.email}
+                  onChange={e => setProfileForm(f => ({ ...f, email: e.target.value }))} />
+                <p className="text-xs text-gray-400 mt-1">Visible for organizers only</p>
               </div>
+
+              {/* Phone */}
+              <div>
+                <label className="label">Phone / WhatsApp</label>
+                <input type="tel" className="input" placeholder="+31 6 12345678" value={profileForm.phone}
+                  onChange={e => setProfileForm(f => ({ ...f, phone: e.target.value }))} />
+                <p className="text-xs text-gray-400 mt-1">Visible for organizers only</p>
+              </div>
+
+              {/* Birthday */}
+              <div>
+                <label className="label">Birthday 🎂</label>
+                <input type="date" className="input" value={profileForm.birthday || ''}
+                  onChange={e => setProfileForm(f => ({ ...f, birthday: e.target.value }))} />
+              </div>
+
+              {/* Save button */}
+              <button
+                type="button"
+                onClick={handleProfileSave}
+                disabled={profileSaving}
+                className="btn-primary w-full flex items-center justify-center gap-2"
+              >
+                <Save size={16} />
+                {profileSaving ? 'Saving…' : profileSaved ? '✓ Saved!' : 'Save Profile'}
+              </button>
             </div>
           )}
         </div>
