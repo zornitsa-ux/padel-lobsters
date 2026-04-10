@@ -85,9 +85,10 @@ export default function Scores({ tournament, onNavigate }) {
   const medalColor = (i) => {
     if (i === 0) return 'text-yellow-500'
     if (i === 1) return 'text-gray-400'
-    if (i === 2) return 'text-amber-600'
+    if (i === 2) return '' // bronze handled via inline style
     return 'text-gray-300'
   }
+  const medalStyle = (i) => i === 2 ? { color: '#CD7F32' } : {}
 
   return (
     <div className="space-y-4">
@@ -144,13 +145,13 @@ export default function Scores({ tournament, onNavigate }) {
                 {/* 3rd */}
                 <div className="flex flex-col items-center gap-1 flex-1">
                   <p className="text-2xl">🥉</p>
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-white text-lg" style={{ background: '#A0522D' }}>
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-white text-lg" style={{ background: '#CD7F32' }}>
                     {standings[2]?.player.name[0]}
                   </div>
                   <p className="text-xs font-semibold text-center text-gray-700 truncate w-full text-center">
                     {standings[2]?.player.name.split(' ')[0]}
                   </p>
-                  <div className="w-full h-8 rounded-t-xl flex items-center justify-center" style={{ background: '#A0522D' }}>
+                  <div className="w-full h-8 rounded-t-xl flex items-center justify-center" style={{ background: '#CD7F32' }}>
                     <span className="font-bold text-white">{standings[2]?.points}pts</span>
                   </div>
                 </div>
@@ -176,9 +177,9 @@ export default function Scores({ tournament, onNavigate }) {
                 </thead>
                 <tbody>
                   {standings.map((s, i) => (
-                    <tr key={s.player.id} className={`border-b border-gray-50 ${i < 3 && matches.length > 0 ? 'bg-yellow-50/40' : ''}`}>
+                    <tr key={s.player.id} className={`border-b border-gray-50 ${i < 2 && matches.length > 0 ? 'bg-yellow-50/40' : ''}`} style={i === 2 && matches.length > 0 ? { background: 'rgba(205,127,50,0.08)' } : {}}>
                       <td className="py-2.5 pl-1">
-                        <Trophy size={14} className={medalColor(i)} />
+                        <Trophy size={14} className={medalColor(i)} style={medalStyle(i)} />
                       </td>
                       <td className="py-2.5">
                         <div className="flex items-center gap-2">

@@ -639,9 +639,10 @@ function smartSort(players, rounds) {
 function medalColor(pos) {
   if (pos === 0) return 'text-yellow-500'
   if (pos === 1) return 'text-gray-400'
-  if (pos === 2) return 'text-amber-600'
+  if (pos === 2) return '' // bronze via inline style
   return 'text-gray-400'
 }
+function medalStyleH(pos) { return pos === 2 ? { color: '#CD7F32' } : {} }
 
 function Podium({ players, rounds = [], rn = n => n }) {
   const sorted = rounds.length > 0 ? smartSort(players, rounds) : [...players].sort((a, b) => b.total - a.total)
@@ -674,14 +675,14 @@ function Podium({ players, rounds = [], rn = n => n }) {
       </div>
       {/* 3rd */}
       <div className="flex flex-col items-center gap-1">
-        <Medal size={20} className="text-amber-600" />
-        <div className="w-14 h-14 bg-amber-50 rounded-full flex items-center justify-center font-bold text-lg text-amber-700">
+        <Medal size={20} style={{ color: '#CD7F32' }} />
+        <div className="w-14 h-14 rounded-full flex items-center justify-center font-bold text-lg text-white" style={{ background: '#CD7F32' }}>
           {rn(top3[2]?.name || '')[0]}
         </div>
-        <p className="text-xs font-semibold text-amber-700 text-center w-16 truncate">{rn(top3[2]?.name || '')}</p>
-        <p className="text-sm font-bold text-amber-600">{top3[2]?.total} pts</p>
-        <div className="bg-amber-300 rounded-t-lg w-12 h-7 flex items-end justify-center pb-1">
-          <span className="text-xs font-bold text-amber-900">3rd</span>
+        <p className="text-xs font-semibold text-center w-16 truncate" style={{ color: '#8B5E3C' }}>{rn(top3[2]?.name || '')}</p>
+        <p className="text-sm font-bold" style={{ color: '#CD7F32' }}>{top3[2]?.total} pts</p>
+        <div className="rounded-t-lg w-12 h-7 flex items-end justify-center pb-1" style={{ background: '#CD7F32' }}>
+          <span className="text-xs font-bold text-white">3rd</span>
         </div>
       </div>
     </div>
@@ -815,9 +816,9 @@ export default function History({ onNavigate }) {
                     {top3[2] && (
                       <div className="flex flex-col items-center gap-1 flex-1">
                         <span className="text-xl">🥉</span>
-                        <div className="w-10 h-10 bg-amber-300 rounded-full flex items-center justify-center font-bold text-white">{top3[2].player.name[0]}</div>
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white" style={{ background: '#CD7F32' }}>{top3[2].player.name[0]}</div>
                         <p className="text-xs font-semibold truncate w-full text-center">{top3[2].player.name.split(' ')[0]}</p>
-                        <div className="bg-amber-300 w-full h-7 rounded-t-xl flex items-center justify-center">
+                        <div className="w-full h-7 rounded-t-xl flex items-center justify-center" style={{ background: '#CD7F32' }}>
                           <span className="text-xs font-bold text-white">{top3[2].pts}pts</span>
                         </div>
                       </div>
@@ -970,13 +971,16 @@ export default function History({ onNavigate }) {
                         className={`grid items-center px-2 py-1.5 rounded-xl text-sm ${
                           idx === 0 ? 'bg-yellow-50 border border-yellow-200' :
                           idx === 1 ? 'bg-gray-50' :
-                          idx === 2 ? 'bg-amber-50' : ''
+                          idx === 2 ? '' : ''
                         }`}
-                        style={{ gridTemplateColumns: t.id === 'jan2026'
-                          ? '28px 1fr 28px 28px 28px 28px 28px 28px 36px'
-                          : '28px 1fr 44px' }}
+                        style={{
+                          gridTemplateColumns: t.id === 'jan2026'
+                            ? '28px 1fr 28px 28px 28px 28px 28px 28px 36px'
+                            : '28px 1fr 44px',
+                          ...(idx === 2 ? { background: 'rgba(205,127,50,0.1)' } : {}),
+                        }}
                       >
-                        <span className={`text-xs font-bold ${medalColor(idx)}`}>
+                        <span className={`text-xs font-bold ${medalColor(idx)}`} style={medalStyleH(idx)}>
                           {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : idx + 1}
                         </span>
                         <span className={`font-medium truncate text-xs ${idx < 3 ? 'font-bold' : ''}`}>
