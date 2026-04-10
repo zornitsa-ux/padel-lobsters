@@ -407,21 +407,19 @@ export default function Registration({ tournament, onNavigate }) {
           const t1won = s1 > s2, t2won = s2 > s1
           ;(m.team1Ids || []).forEach(id => {
             if (!stats[id]) return
-            stats[id].played++; stats[id].pf += s1; stats[id].pa += s2
-            if (t1won) { stats[id].won++; stats[id].pts += 3 }
+            stats[id].played++; stats[id].pf += s1; stats[id].pa += s2; stats[id].pts += s1
+            if (t1won) stats[id].won++
             else if (t2won) stats[id].lost++
-            else stats[id].pts += 1
           })
           ;(m.team2Ids || []).forEach(id => {
             if (!stats[id]) return
-            stats[id].played++; stats[id].pf += s2; stats[id].pa += s1
-            if (t2won) { stats[id].won++; stats[id].pts += 3 }
+            stats[id].played++; stats[id].pf += s2; stats[id].pa += s1; stats[id].pts += s2
+            if (t2won) stats[id].won++
             else if (t1won) stats[id].lost++
-            else stats[id].pts += 1
           })
         })
         const rankings = Object.values(stats).sort((a, b) =>
-          b.pts !== a.pts ? b.pts - a.pts : (b.pf - b.pa) - (a.pf - a.pa)
+          b.pts !== a.pts ? b.pts - a.pts : b.won !== a.won ? b.won - a.won : (b.pf - b.pa) - (a.pf - a.pa)
         )
 
         const allScored = savedMatches.length > 0 && savedMatches.every(m => m.completed)
@@ -526,7 +524,7 @@ export default function Registration({ tournament, onNavigate }) {
                     </tbody>
                   </table>
                 </div>
-                <p className="text-[10px] text-gray-400">3 pts win · 1 pt draw · 0 loss</p>
+                <p className="text-[10px] text-gray-400">Total game points · Tiebreak: matches won → head-to-head</p>
               </div>
             )}
 

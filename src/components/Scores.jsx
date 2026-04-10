@@ -21,7 +21,7 @@ export default function Scores({ tournament, onNavigate }) {
   const regs = getTournamentRegistrations(tournament.id).filter(r => r.status === 'registered')
   const registeredPlayers = players.filter(p => regs.some(r => r.playerId === p.id))
 
-  // Calculate standings
+  // Calculate standings — total game points, tiebreak: matches won → head-to-head
   const standings = useMemo(() => {
     const stats = {}
     registeredPlayers.forEach(p => {
@@ -39,26 +39,42 @@ export default function Scores({ tournament, onNavigate }) {
         stats[id].played++
         stats[id].pointsFor    += s1
         stats[id].pointsAgainst += s2
-        if (team1Won) { stats[id].won++; stats[id].points += 3 }
+        stats[id].points       += s1
+        if (team1Won) stats[id].won++
         else if (team2Won) stats[id].lost++
-        else stats[id].points += 1
       })
       ;[...(m.team2Ids || [])].forEach(id => {
         if (!stats[id]) return
         stats[id].played++
         stats[id].pointsFor    += s2
         stats[id].pointsAgainst += s1
-        if (team2Won) { stats[id].won++; stats[id].points += 3 }
+        stats[id].points       += s2
+        if (team2Won) stats[id].won++
         else if (team1Won) stats[id].lost++
-        else stats[id].points += 1
       })
     })
 
-    return Object.values(stats).sort((a, b) =>
-      b.points !== a.points ? b.points - a.points                              // 1. Total points (3 per win, 1 per draw)
-      : b.won !== a.won ? b.won - a.won                                        // 2. Matches won
-      : (b.pointsFor - b.pointsAgainst) - (a.pointsFor - a.pointsAgainst)     // 3. Game difference
-    )
+    // Build head-to-head lookup for tiebreaking
+    const h2h = {}
+    matches.forEach(m => {
+      const s1 = parseInt(m.score1) || 0, s2 = parseInt(m.score2) || 0
+      if (s1 === s2) return
+      const winners = s1 > s2 ? (m.team1Ids || []) : (m.team2Ids || [])
+      const losers  = s1 > s2 ? (m.team2Ids || []) : (m.team1Ids || [])
+      winners.forEach(w => losers.forEach(l => {
+        const key = `${w}:${l}`
+        h2h[key] = (h2h[key] || 0) + 1
+      }))
+    })
+
+    return Object.values(stats).sort((a, b) => {
+      if (b.points !== a.points) return b.points - a.points          // 1. Total game points
+      if (b.won !== a.won) return b.won - a.won                      // 2. Matches won
+      // 3. Head-to-head
+      const aBeatsB = h2h[`${a.player.id}:${b.player.id}`] || 0
+      const bBeatsA = h2h[`${b.player.id}:${a.player.id}`] || 0
+      return bBeatsA - aBeatsB
+    })
   }, [matches, registeredPlayers])
 
   const formatDate = (d) => {
@@ -128,13 +144,13 @@ export default function Scores({ tournament, onNavigate }) {
                 {/* 3rd */}
                 <div className="flex flex-col items-center gap-1 flex-1">
                   <p className="text-2xl">🥉</p>
-                  <div className="w-12 h-12 bg-amber-300 rounded-full flex items-center justify-center font-bold text-white text-lg">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-white text-lg" style={{ background: '#A0522D' }}>
                     {standings[2]?.player.name[0]}
                   </div>
                   <p className="text-xs font-semibold text-center text-gray-700 truncate w-full text-center">
                     {standings[2]?.player.name.split(' ')[0]}
                   </p>
-                  <div className="bg-amber-300 w-full h-8 rounded-t-xl flex items-center justify-center">
+                  <div className="w-full h-8 rounded-t-xl flex items-center justify-center" style={{ background: '#A0522D' }}>
                     <span className="font-bold text-white">{standings[2]?.points}pts</span>
                   </div>
                 </div>
@@ -182,7 +198,7 @@ export default function Scores({ tournament, onNavigate }) {
                 </tbody>
               </table>
             </div>
-            <p className="text-xs text-gray-400 mt-2">3 pts/win · 1 pt/draw · Tiebreak: matches won → game difference</p>
+            <p className="text-xs text-gray-400 mt-2">Total game points · Tiebreak: matches won → head-to-head</p>
           </div>
         </>
       )}

@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext'
 import { supabase } from '../supabase'
 import { Plus, Pencil, Trash2, X, ChevronDown, ChevronUp, Search, User, Clock, Camera, Briefcase, Trophy, TrendingUp } from 'lucide-react'
 import AdminLogin from './AdminLogin'
+import PlayerProfile from './PlayerProfile'
 
 const LEVEL_COLORS = [
   'bg-gray-200 text-gray-700',
@@ -44,10 +45,11 @@ function buildPlayerStats(playerId, matches, tournaments, registrations) {
     pointsAgainst += theirScore
     tournamentIds.add(m.tournamentId)
 
+    points = pointsFor  // total game points scored
     let result
-    if (myScore > theirScore) { won++; points += 3; result = 'W' }
+    if (myScore > theirScore) { won++; result = 'W' }
     else if (myScore < theirScore) { lost++; result = 'L' }
-    else { draws++; points += 1; result = 'D' }
+    else { draws++; result = 'D' }
 
     recentForm.push(result)
 
@@ -393,7 +395,7 @@ function PlayerAvatar({ player, size = 'md', className = '' }) {
 }
 
 export default function Players({ onNavigate, focusPlayerId }) {
-  const { players, addPlayer, updatePlayer, deletePlayer, isAdmin, matches, registrations, tournaments, regeneratePin } = useApp()
+  const { players, addPlayer, updatePlayer, deletePlayer, isAdmin, claimedId, matches, registrations, tournaments, regeneratePin } = useApp()
   const [showForm, setShowForm]     = useState(false)
   const [editId, setEditId]         = useState(null)
   const [form, setForm]             = useState(emptyForm)
@@ -931,6 +933,11 @@ export default function Players({ onNavigate, focusPlayerId }) {
                     </div>
                   )}
                   {p.notes && <p className="text-xs text-gray-500 italic">{p.notes}</p>}
+
+                  {/* Edit profile — own card only */}
+                  {claimedId && String(claimedId) === String(p.id) && (
+                    <PlayerProfile player={p} />
+                  )}
 
                   {/* PIN — admin only */}
                   {isAdmin && (

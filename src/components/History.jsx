@@ -751,21 +751,19 @@ export default function History({ onNavigate }) {
           const t1w = s1 > s2, t2w = s2 > s1
           ;(m.team1Ids || []).forEach(id => {
             if (!stats[id]) return
-            stats[id].played++; stats[id].pf += s1; stats[id].pa += s2
-            if (t1w) { stats[id].won++; stats[id].pts += 3 }
+            stats[id].played++; stats[id].pf += s1; stats[id].pa += s2; stats[id].pts += s1
+            if (t1w) stats[id].won++
             else if (t2w) stats[id].lost++
-            else stats[id].pts += 1
           })
           ;(m.team2Ids || []).forEach(id => {
             if (!stats[id]) return
-            stats[id].played++; stats[id].pf += s2; stats[id].pa += s1
-            if (t2w) { stats[id].won++; stats[id].pts += 3 }
+            stats[id].played++; stats[id].pf += s2; stats[id].pa += s1; stats[id].pts += s2
+            if (t2w) stats[id].won++
             else if (t1w) stats[id].lost++
-            else stats[id].pts += 1
           })
         })
         const rankings = Object.values(stats).sort((a, b) =>
-          b.pts !== a.pts ? b.pts - a.pts : (b.pf - b.pa) - (a.pf - a.pa)
+          b.pts !== a.pts ? b.pts - a.pts : b.won !== a.won ? b.won - a.won : (b.pf - b.pa) - (a.pf - a.pa)
         )
         const top3 = rankings.slice(0, 3)
 

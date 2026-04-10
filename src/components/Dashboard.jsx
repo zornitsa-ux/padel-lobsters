@@ -1,8 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
-import { Trophy, Users, Calendar, ChevronRight, AlertCircle, Megaphone, TrendingUp, Star, Clock, Flame, Award, Lightbulb, CreditCard, CalendarDays } from 'lucide-react'
+import { Trophy, Users, Calendar, ChevronRight, AlertCircle, Megaphone, TrendingUp, Clock, Flame, Award, Lightbulb, CreditCard, CalendarDays } from 'lucide-react'
 import DEFAULT_TIPS from '../data/padelTips'
-import PlayerProfile from './PlayerProfile'
 
 const CLAW_IMG = '/claws.png'
 const ClawUp = ({ active }) => (
@@ -81,8 +80,6 @@ export default function Dashboard({ onNavigate }) {
     isAdmin, claimedId, getPlayerById,
   } = useApp()
 
-  const [profileOpen, setProfileOpen] = useState(false)
-
   const claimedPlayer = claimedId ? getPlayerById(claimedId) : null
   const activePlayers = players.filter(p => (p.status || 'active') === 'active')
   const recentUpdates = (updates || []).slice(0, 2)
@@ -132,20 +129,29 @@ export default function Dashboard({ onNavigate }) {
   const upcomingCount = tournaments.filter(t => t.status === 'upcoming' || t.status === 'active').length
   const pastCount = tournaments.filter(t => t.status === 'completed').length
 
-  // Top player by total points across all tournaments
-  const topPlayer = useMemo(() => {
-    const pts = {}
-    matches.filter(m => m.completed).forEach(m => {
+  // Top 3 from the last completed tournament
+  const lastPodium = useMemo(() => {
+    const lastCompleted = tournaments
+      .filter(t => t.status === 'completed')
+      .sort((a, b) => (b.date || '') > (a.date || '') ? 1 : -1)[0]
+    if (!lastCompleted) return null
+    const tRegs = getTournamentRegistrations(lastCompleted.id).filter(r => r.status === 'registered')
+    const tMatches = getTournamentMatches(lastCompleted.id)
+    if (tMatches.length === 0) return null
+    const stats = {}
+    tRegs.forEach(r => { stats[r.playerId] = { pts: 0, won: 0 } })
+    tMatches.filter(m => m.completed && m.score1 != null).forEach(m => {
       const s1 = parseInt(m.score1) || 0, s2 = parseInt(m.score2) || 0
-      const t1w = s1 > s2, t2w = s2 > s1
-      ;(m.team1Ids || []).forEach(id => { pts[id] = (pts[id] || 0) + (t1w ? 3 : t2w ? 0 : 1) })
-      ;(m.team2Ids || []).forEach(id => { pts[id] = (pts[id] || 0) + (t2w ? 3 : t1w ? 0 : 1) })
+      ;(m.team1Ids || []).forEach(id => { if (stats[id]) { stats[id].pts += s1; if (s1 > s2) stats[id].won++ } })
+      ;(m.team2Ids || []).forEach(id => { if (stats[id]) { stats[id].pts += s2; if (s2 > s1) stats[id].won++ } })
     })
-    const best = Object.entries(pts).sort((a, b) => b[1] - a[1])[0]
-    if (!best) return null
-    const p = players.find(x => x.id === best[0])
-    return p ? { name: p.name.split(' ')[0], pts: best[1] } : null
-  }, [matches, players])
+    return Object.entries(stats)
+      .sort((a, b) => b[1].pts !== a[1].pts ? b[1].pts - a[1].pts : b[1].won - a[1].won)
+      .slice(0, 3)
+      .map(([id]) => players.find(p => p.id === id))
+      .filter(Boolean)
+      .map(p => p.name.split(' ')[0])
+  }, [tournaments, matches, players, getTournamentRegistrations, getTournamentMatches])
 
   // ── Personal stats for claimed player ──────────────────────────────────────
   const myStats = useMemo(() => {
@@ -165,8 +171,9 @@ export default function Dashboard({ onNavigate }) {
       const t1w = s1 > s2, t2w = s2 > s1
       const iWon = (onT1 && t1w) || (onT2 && t2w)
       const iLost = (onT1 && t2w) || (onT2 && t1w)
-      if (iWon) { won++; pts += 3; curWinStreak++; bestWinStreak = Math.max(bestWinStreak, curWinStreak) }
-      else if (s1 === s2) { draws++; pts += 1; curWinStreak = 0 }
+      pts = pointsFor  // total game points scored
+      if (iWon) { won++; curWinStreak++; bestWinStreak = Math.max(bestWinStreak, curWinStreak) }
+      else if (s1 === s2) { draws++; curWinStreak = 0 }
       else { lost++; curWinStreak = 0 }
 
       // Track head-to-head
@@ -179,16 +186,16 @@ export default function Dashboard({ onNavigate }) {
     })
     if (played === 0) return null
 
-    // Arch enemy: opponent you've lost to the most (min 2 games)
-    let archEnemy = null
-    let worstRecord = 0
-    Object.entries(h2h).forEach(([oppId, rec]) => {
-      const total = rec.won + rec.lost
-      if (total >= 2 && rec.lost > worstRecord) {
+    // Top nemeses: opponents you've lost to the most (min 2 games, top 2)
+    const nemeses = Object.entries(h2h)
+      .filter(([, rec]) => (rec.won + rec.lost) >= 2 && rec.lost > 0)
+      .map(([oppId, rec]) => {
         const p = players.find(x => x.id === oppId)
-        if (p) { archEnemy = { name: p.name.split(' ')[0], won: rec.won, lost: rec.lost }; worstRecord = rec.lost }
-      }
-    })
+        return p ? { name: p.name.split(' ')[0], won: rec.won, lost: rec.lost } : null
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.lost - a.lost)
+      .slice(0, 2)
 
     // Attendance streak: consecutive completed tournaments the player participated in
     const completedSorted = tournaments
@@ -205,7 +212,7 @@ export default function Dashboard({ onNavigate }) {
     }
 
     const winRate = played > 0 ? Math.round((won / played) * 100) : 0
-    return { played, won, lost, draws, pts, pointsFor, pointsAgainst, winRate, streak, bestWinStreak, archEnemy }
+    return { played, won, lost, draws, pts, pointsFor, pointsAgainst, winRate, streak, bestWinStreak, nemeses }
   }, [claimedId, matches, tournaments, players, getTournamentRegistrations])
 
   const formatDate = (d) => {
@@ -306,14 +313,20 @@ export default function Dashboard({ onNavigate }) {
           <p className="text-base font-bold text-gray-800">{pastCount}</p>
           <p className="text-[9px] text-gray-400 font-medium">Past</p>
         </button>
-        <button onClick={() => onNavigate('players')} className="bg-white rounded-2xl py-3 text-center shadow-md border border-gray-100 active:scale-[0.95] active:shadow-sm transition-all">
-          <Star size={16} className="text-yellow-500 mx-auto mb-1" />
-          {topPlayer ? (
-            <p className="text-[11px] font-bold text-gray-800 truncate px-1">{topPlayer.name}</p>
+        <button onClick={() => onNavigate('history')} className="bg-white rounded-2xl py-3 text-center shadow-md border border-gray-100 active:scale-[0.95] active:shadow-sm transition-all">
+          <Award size={16} className="text-yellow-500 mx-auto mb-1" />
+          {lastPodium && lastPodium.length > 0 ? (
+            <div className="px-1">
+              {lastPodium.map((name, i) => (
+                <p key={i} className="text-[9px] font-bold text-gray-700 truncate leading-tight">
+                  {['🥇','🥈','🥉'][i]} {name}
+                </p>
+              ))}
+            </div>
           ) : (
             <p className="text-base font-bold text-gray-300">—</p>
           )}
-          <p className="text-[9px] text-gray-400 font-medium">Top Lobster</p>
+          <p className="text-[9px] text-gray-400 font-medium mt-0.5">Podium</p>
         </button>
       </div>
 
@@ -388,15 +401,15 @@ export default function Dashboard({ onNavigate }) {
         const tMatches  = getTournamentMatches(t.id)
         const tRegs     = getTournamentRegistrations(t.id).filter(r => r.status === 'registered')
         const stats = {}
-        tRegs.forEach(r => { stats[r.playerId] = { pts: 0 } })
+        tRegs.forEach(r => { stats[r.playerId] = { pts: 0, won: 0 } })
         tMatches.filter(m => m.completed && m.score1 != null).forEach(m => {
-          const t1w = m.score1 > m.score2, t2w = m.score2 > m.score1
-          ;(m.team1Ids || []).forEach(id => { if (stats[id]) stats[id].pts += t1w ? 3 : t2w ? 0 : 1 })
-          ;(m.team2Ids || []).forEach(id => { if (stats[id]) stats[id].pts += t2w ? 3 : t1w ? 0 : 1 })
+          const s1 = parseInt(m.score1) || 0, s2 = parseInt(m.score2) || 0
+          ;(m.team1Ids || []).forEach(id => { if (stats[id]) { stats[id].pts += s1; if (s1 > s2) stats[id].won++ } })
+          ;(m.team2Ids || []).forEach(id => { if (stats[id]) { stats[id].pts += s2; if (s2 > s1) stats[id].won++ } })
         })
         const sorted = tRegs
-          .map(r => ({ ...r, pts: stats[r.playerId]?.pts ?? 0, player: players.find(p => p.id === r.playerId) }))
-          .sort((a, b) => b.pts - a.pts)
+          .map(r => ({ ...r, pts: stats[r.playerId]?.pts ?? 0, won: stats[r.playerId]?.won ?? 0, player: players.find(p => p.id === r.playerId) }))
+          .sort((a, b) => b.pts !== a.pts ? b.pts - a.pts : b.won - a.won)
         const winner = sorted[0]?.player
 
         return (
@@ -474,7 +487,7 @@ export default function Dashboard({ onNavigate }) {
               <Award size={15} className="text-lobster-orange" /> Your Stats
             </h3>
             <button onClick={() => onNavigate('players', { focusPlayerId: claimedId })} className="text-xs text-lobster-teal font-semibold">
-              Full profile
+              View profile
             </button>
           </div>
           <div className="bg-white/80 rounded-2xl p-4 shadow-sm border border-white/90" style={{ backdropFilter: 'blur(12px)' }}>
@@ -505,11 +518,11 @@ export default function Dashboard({ onNavigate }) {
                   {myStats.bestWinStreak} wins in a row
                 </span>
               )}
-              {myStats.archEnemy && (
-                <span className="text-xs bg-red-50 text-red-700 px-2.5 py-1 rounded-lg font-semibold">
-                  😈 Nemesis: {myStats.archEnemy.name} ({myStats.archEnemy.won}W-{myStats.archEnemy.lost}L)
+              {myStats.nemeses.map((enemy, i) => (
+                <span key={i} className="text-xs bg-red-50 text-red-700 px-2.5 py-1 rounded-lg font-semibold">
+                  😈 {enemy.name} ({enemy.won}W-{enemy.lost}L)
                 </span>
-              )}
+              ))}
             </div>
 
             <div className="mt-2 pt-2 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
@@ -517,48 +530,6 @@ export default function Dashboard({ onNavigate }) {
               <span>Game diff: {myStats.pointsFor - myStats.pointsAgainst > 0 ? '+' : ''}{myStats.pointsFor - myStats.pointsAgainst}</span>
             </div>
           </div>
-        </section>
-      )}
-
-      {/* ── Your Profile (edit Playtomic level & tagline) ────── */}
-      {claimedPlayer && (
-        <section>
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="font-bold text-gray-700 flex items-center gap-1.5">
-              <Users size={15} className="text-lobster-teal" /> Your Profile
-            </h3>
-            <button
-              onClick={() => setProfileOpen(o => !o)}
-              className="text-xs text-lobster-teal font-semibold"
-            >
-              {profileOpen ? 'Close' : 'Edit profile'}
-            </button>
-          </div>
-          {profileOpen && (
-            <PlayerProfile player={claimedPlayer} onSave={() => setProfileOpen(false)} />
-          )}
-          {!profileOpen && (
-            <div className="bg-white/80 rounded-2xl p-4 shadow-sm border border-white/90 flex items-center gap-4" style={{ backdropFilter: 'blur(12px)' }}>
-              <div className="w-11 h-11 bg-lobster-teal rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                {(claimedPlayer.name || '?')[0].toUpperCase()}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-sm text-gray-800 truncate">{claimedPlayer.name}</p>
-                <p className="text-xs text-gray-400">
-                  {claimedPlayer.playtomic_level
-                    ? `Playtomic level: ${claimedPlayer.playtomic_level}`
-                    : 'No level set yet'}
-                  {claimedPlayer.tagline ? ` · ${claimedPlayer.tagline}` : ''}
-                </p>
-              </div>
-              <button
-                onClick={() => setProfileOpen(true)}
-                className="text-xs text-lobster-teal font-semibold bg-lobster-teal/10 px-3 py-1.5 rounded-lg active:scale-95 transition-all"
-              >
-                Edit
-              </button>
-            </div>
-          )}
         </section>
       )}
 
@@ -619,15 +590,15 @@ export default function Dashboard({ onNavigate }) {
               const tMatches = getTournamentMatches(t.id)
               const tRegs = getTournamentRegistrations(t.id).filter(r => r.status === 'registered')
               const stats = {}
-              tRegs.forEach(r => { stats[r.playerId] = { pts: 0 } })
+              tRegs.forEach(r => { stats[r.playerId] = { pts: 0, won: 0 } })
               tMatches.filter(m => m.completed && m.score1 != null).forEach(m => {
-                const t1w = m.score1 > m.score2, t2w = m.score2 > m.score1
-                ;(m.team1Ids || []).forEach(id => { if (stats[id]) stats[id].pts += t1w ? 3 : t2w ? 0 : 1 })
-                ;(m.team2Ids || []).forEach(id => { if (stats[id]) stats[id].pts += t2w ? 3 : t1w ? 0 : 1 })
+                const s1 = parseInt(m.score1) || 0, s2 = parseInt(m.score2) || 0
+                ;(m.team1Ids || []).forEach(id => { if (stats[id]) { stats[id].pts += s1; if (s1 > s2) stats[id].won++ } })
+                ;(m.team2Ids || []).forEach(id => { if (stats[id]) { stats[id].pts += s2; if (s2 > s1) stats[id].won++ } })
               })
               const winner = tRegs
-                .map(r => ({ pts: stats[r.playerId]?.pts ?? 0, player: players.find(p => p.id === r.playerId) }))
-                .sort((a, b) => b.pts - a.pts)[0]?.player
+                .map(r => ({ pts: stats[r.playerId]?.pts ?? 0, won: stats[r.playerId]?.won ?? 0, player: players.find(p => p.id === r.playerId) }))
+                .sort((a, b) => b.pts !== a.pts ? b.pts - a.pts : b.won - a.won)[0]?.player
 
               return (
                 <button
