@@ -839,10 +839,12 @@ export default function Players({ onNavigate, focusPlayerId }) {
                       {p.phone && <p className="text-xs text-gray-500">📞 {p.phone}</p>}
                     </div>
                   )}
-                  {/* War Cry — tagline or notes */}
+                  {/* Player tagline / notes with saved prompt label */}
                   {(p.tagline || p.notes) && (
                     <div className="bg-lobster-cream rounded-xl px-3 py-2">
-                      <p className="text-[10px] font-bold text-lobster-teal uppercase tracking-wider mb-0.5">War Cry</p>
+                      <p className="text-[10px] font-bold text-lobster-teal uppercase tracking-wider mb-0.5">
+                        {p.taglineLabel || p.tagline_label || '💬 War Cry'}
+                      </p>
                       <p className="text-xs text-gray-700 italic">"{p.tagline || p.notes}"</p>
                     </div>
                   )}
