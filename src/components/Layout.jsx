@@ -38,10 +38,12 @@ export default function Layout({ children, page, onNavigate }) {
         {/* Top row */}
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-3">
-            <img src="/logo-hd.png" alt="Padel Lobsters"
-              className="w-20 h-20 rounded-full bg-lobster-teal p-1 object-contain"
-              style={{ boxShadow: '0 0 0 2.5px rgba(255,255,255,0.3)' }}
-            />
+            <div className="w-20 h-20 rounded-full flex-shrink-0 overflow-hidden bg-white"
+              style={{ boxShadow: '0 0 0 3px rgba(255,255,255,0.3)' }}>
+              <img src="/logo-hd.png" alt="Padel Lobsters"
+                className="w-full h-full object-contain"
+              />
+            </div>
             <div>
               <h1 className="font-bold text-lg leading-tight tracking-tight">Padel Lobsters</h1>
               <p className="text-[10px] opacity-60 leading-tight tracking-wide">Amsterdam Padel Community</p>
