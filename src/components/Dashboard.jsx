@@ -96,28 +96,33 @@ export default function Dashboard({ onNavigate }) {
   const activePlayers = players.filter(p => (p.status || 'active') === 'active')
   const recentUpdates = (updates || []).slice(0, 2)
 
-  // ── Recent merch orders (admin) ──────────────────────────────────────────────
-  const [recentOrders, setRecentOrders] = useState([])
+  // ── New merch orders since last admin check ─────────────────────────────────
+  const [newOrders, setNewOrders] = useState([])
+  const LAST_CHECK_KEY = 'pl_merch_last_checked'
 
   useEffect(() => {
     if (!isAdmin) return
-    const loadOrders = async () => {
-      const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
-      // Fetch orders + items separately to avoid FK join issues
+    const loadNewOrders = async () => {
+      const lastChecked = localStorage.getItem(LAST_CHECK_KEY) || new Date(0).toISOString()
       const [ordersRes, itemsRes] = await Promise.all([
-        supabase.from('merch_interests').select('*, players(name)').gte('created_at', since).order('created_at', { ascending: false }).limit(10),
+        supabase.from('merch_interests').select('*, players(name)').gte('created_at', lastChecked).order('created_at', { ascending: false }).limit(20),
         supabase.from('merch_items').select('id, name').eq('active', true),
       ])
       const orders = ordersRes.data || []
       const itemMap = Object.fromEntries((itemsRes.data || []).map(i => [i.id, i.name]))
-      setRecentOrders(orders.map(o => ({ ...o, itemName: itemMap[o.merch_item_id] || 'item' })))
+      setNewOrders(orders.map(o => ({ ...o, itemName: itemMap[o.merch_item_id] || 'item' })))
     }
-    loadOrders()
+    loadNewOrders()
     const ch = supabase.channel('dash-merch-orders')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'merch_interests' }, loadOrders)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'merch_interests' }, loadNewOrders)
       .subscribe()
     return () => supabase.removeChannel(ch)
   }, [isAdmin])
+
+  const dismissMerchOrders = () => {
+    localStorage.setItem(LAST_CHECK_KEY, new Date().toISOString())
+    setNewOrders([])
+  }
 
   const formatUpdateTime = (ts) => {
     if (!ts) return ''
@@ -546,19 +551,24 @@ export default function Dashboard({ onNavigate }) {
         )
       })()}
 
-      {/* ── Recent merch orders (admin) ─────────────────────────── */}
-      {isAdmin && recentOrders.length > 0 && (
+      {/* ── New merch orders (admin) ─────────────────────────── */}
+      {isAdmin && newOrders.length > 0 && (
         <div className="card border-l-4 border-lobster-teal space-y-2.5">
           <div className="flex items-center justify-between">
             <p className="font-bold text-sm text-gray-700 flex items-center gap-1.5">
               <ShoppingBag size={14} className="text-lobster-teal" /> New Merch Orders
-              <span className="bg-lobster-teal text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{recentOrders.length}</span>
+              <span className="bg-lobster-teal text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{newOrders.length}</span>
             </p>
-            <button onClick={() => onNavigate('merch')} className="text-xs text-lobster-teal font-semibold">
-              View all
-            </button>
+            <div className="flex gap-2">
+              <button onClick={() => { dismissMerchOrders(); onNavigate('merch') }} className="text-xs text-lobster-teal font-semibold">
+                View all
+              </button>
+              <button onClick={dismissMerchOrders} className="text-xs text-gray-400 font-medium">
+                Dismiss
+              </button>
+            </div>
           </div>
-          {recentOrders.slice(0, 5).map(o => {
+          {newOrders.slice(0, 5).map(o => {
             const playerName = o.players?.name?.split(' ')[0] || 'Someone'
             const itemName = o.itemName || 'item'
             const ago = formatUpdateTime(o.created_at)
@@ -577,8 +587,8 @@ export default function Dashboard({ onNavigate }) {
               </div>
             )
           })}
-          {recentOrders.length > 5 && (
-            <p className="text-xs text-gray-400 text-center">+{recentOrders.length - 5} more this week</p>
+          {newOrders.length > 5 && (
+            <p className="text-xs text-gray-400 text-center">+{newOrders.length - 5} more</p>
           )}
         </div>
       )}

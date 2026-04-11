@@ -6,6 +6,8 @@ import AdminLogin from './AdminLogin'
 
 const SIZES_APPAREL  = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
 const SIZES_SOCKS    = ['S (35-38)', 'M (39-42)', 'L (43-46)']
+const SIZE_ORDER     = ['XS', 'S', 'S (35-38)', 'M', 'M (39-42)', 'L', 'L (43-46)', 'XL', 'XXL']
+const sizeRank = (s) => { const i = SIZE_ORDER.indexOf(s); return i >= 0 ? i : 999 }
 
 const emptyItem = {
   name: '', description: '', price: '', sizes: [], category: 'apparel', image_url: '', image_urls: [], active: true,
@@ -449,7 +451,7 @@ export default function Merch({ tournament, tournaments: allTournaments = [] }) 
                     {sizeError[item.id] ? '⚠ Please select a size:' : 'Select size:'}
                   </p>
                   <div className="flex flex-wrap gap-1.5">
-                    {item.sizes.map(s => (
+                    {[...item.sizes].sort((a, b) => sizeRank(a) - sizeRank(b)).map(s => (
                       <button key={s}
                         onClick={() => {
                           setSelectedSize(si => ({ ...si, [item.id]: s }))
@@ -605,56 +607,85 @@ export default function Merch({ tournament, tournaments: allTournaments = [] }) 
             <Plus size={16} /> Add Merch Item
           </button>
 
-          {/* Orders summary — who ordered what */}
-          {interests.length > 0 && (
-            <div className="card space-y-4">
-              <p className="font-semibold text-gray-700 text-sm">📋 Orders</p>
-              {items.map(item => {
-                const itemOrders = interests.filter(i => i.merch_item_id === item.id)
-                if (itemOrders.length === 0) return null
-                // Group by size, collect { playerName, customName }
-                const bySize = {}
-                itemOrders.forEach(o => {
-                  const k = o.size || '—'
-                  if (!bySize[k]) bySize[k] = []
-                  const player = players.find(p => String(p.id) === String(o.player_id))
-                  bySize[k].push({
-                    playerName: player ? player.name.split(' ')[0] : 'Unknown',
-                    customName: o.custom_name || null,
-                  })
-                })
-                return (
-                  <div key={item.id}>
-                    <p className="text-sm font-bold text-gray-800">
-                      {item.name}
-                      <span className="ml-1.5 text-lobster-teal font-semibold">×{itemOrders.length}</span>
-                    </p>
-                    <div className="mt-1.5 space-y-1.5">
-                      {Object.entries(bySize).sort().map(([size, entries]) => (
-                        <div key={size} className="flex items-start gap-2">
-                          <span className="text-xs font-bold bg-lobster-cream text-lobster-teal px-2 py-0.5 rounded-full flex-shrink-0 min-w-[2.5rem] text-center">
-                            {size}
-                          </span>
-                          <div className="flex flex-col gap-0.5">
-                            {entries.map((e, i) => (
-                              <span key={i} className="text-xs text-gray-600">
-                                {e.playerName}
-                                {e.customName && (
-                                  <span className="ml-1 text-lobster-teal font-medium">"{e.customName}"</span>
-                                )}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )
-              })}
+          {/* Orders table — full list with paid/delivered toggles */}
+          {interests.length > 0 ? (
+            <div className="card space-y-3 overflow-x-auto">
+              <p className="font-semibold text-gray-700 text-sm flex items-center gap-1.5">
+                📋 Orders
+                <span className="bg-lobster-teal text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{interests.length}</span>
+              </p>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs text-gray-400 border-b border-gray-100">
+                    <th className="pb-2 font-medium">Player</th>
+                    <th className="pb-2 font-medium">Item</th>
+                    <th className="pb-2 font-medium">Size</th>
+                    <th className="pb-2 font-medium text-center">Paid</th>
+                    <th className="pb-2 font-medium text-center">Delivered</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[...interests]
+                    .sort((a, b) => {
+                      // Sort by item name, then by size order
+                      const itemA = items.find(i => i.id === a.merch_item_id)
+                      const itemB = items.find(i => i.id === b.merch_item_id)
+                      const nameCmp = (itemA?.name || '').localeCompare(itemB?.name || '')
+                      if (nameCmp !== 0) return nameCmp
+                      return sizeRank(a.size || '') - sizeRank(b.size || '')
+                    })
+                    .map(o => {
+                      const player = players.find(p => String(p.id) === String(o.player_id))
+                      const item = items.find(i => i.id === o.merch_item_id)
+                      return (
+                        <tr key={o.id} className="border-b border-gray-50 last:border-0">
+                          <td className="py-2 pr-2">
+                            <span className="font-medium text-gray-800">{player?.name?.split(' ')[0] || 'Unknown'}</span>
+                            {o.custom_name && (
+                              <span className="block text-[11px] text-lobster-teal">"{o.custom_name}"</span>
+                            )}
+                          </td>
+                          <td className="py-2 pr-2 text-gray-600">{item?.name || '—'}</td>
+                          <td className="py-2 pr-2">
+                            {o.size
+                              ? <span className="text-xs font-bold bg-lobster-cream text-lobster-teal px-2 py-0.5 rounded-full">{o.size}</span>
+                              : <span className="text-gray-300">—</span>
+                            }
+                          </td>
+                          <td className="py-2 text-center">
+                            <button
+                              onClick={async () => {
+                                await supabase.from('merch_interests').update({ paid: !o.paid }).eq('id', o.id)
+                                await loadInterests()
+                              }}
+                              className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${
+                                o.paid ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-300'
+                              }`}
+                            >
+                              <Check size={14} />
+                            </button>
+                          </td>
+                          <td className="py-2 text-center">
+                            <button
+                              onClick={async () => {
+                                await supabase.from('merch_interests').update({ delivered: !o.delivered }).eq('id', o.id)
+                                await loadInterests()
+                              }}
+                              className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${
+                                o.delivered ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-300'
+                              }`}
+                            >
+                              <Check size={14} />
+                            </button>
+                          </td>
+                        </tr>
+                      )
+                    })
+                  }
+                </tbody>
+              </table>
             </div>
-          )}
-
-          {interests.length === 0 && (
+          ) : (
             <div className="card py-6 text-center text-gray-400 text-sm">No orders yet</div>
           )}
 
