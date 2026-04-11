@@ -601,7 +601,7 @@ export const TOURNAMENTS = [
   {
     id: 'apr2026',
     name: 'Padel Queen Sunday Smash (Friday Edition)',
-    date: '10 April 2026 · 17:00 · 90 min',
+    date: '2026-04-10',
     type: 'ladies',
     players: APR_STANDINGS,
     rounds: APR_ROUNDS,
@@ -970,7 +970,8 @@ export default function History({ onNavigate }) {
                     )}
                   </p>
                   <p className="text-xs text-gray-500">
-                    {t.players ? `${t.players.length} players` : '—'}
+                    {t.date ? new Date(t.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : ''}
+                    {t.players ? `${t.date ? ' · ' : ''}${t.players.length} players` : '—'}
                     {t.numRounds ? ` · ${t.numRounds} rounds` : ''}
                     {t.numCourts ? ` · ${t.numCourts} courts` : ''}
                   </p>

@@ -240,8 +240,8 @@ export default function Tournament({ onNavigate }) {
                 </div>
               )}
 
-              {/* Courts — horizontal chips */}
-              {(t.courts || []).length > 0 && (
+              {/* Courts — horizontal chips (admin only) */}
+              {isAdmin && (t.courts || []).length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mb-3">
                   {t.courts.map((c, i) => (
                     <div key={i} className={`inline-flex items-center gap-1 text-xs rounded-full px-2.5 py-1 font-medium ${
