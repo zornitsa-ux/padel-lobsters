@@ -560,7 +560,7 @@ export default function Dashboard({ onNavigate }) {
               <span className="bg-lobster-teal text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{newOrders.length}</span>
             </p>
             <div className="flex gap-2">
-              <button onClick={() => { dismissMerchOrders(); onNavigate('merch') }} className="text-xs text-lobster-teal font-semibold">
+              <button onClick={() => { dismissMerchOrders(); onNavigate('merch-orders') }} className="text-xs text-lobster-teal font-semibold">
                 View all
               </button>
               <button onClick={dismissMerchOrders} className="text-xs text-gray-400 font-medium">

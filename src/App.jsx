@@ -29,8 +29,17 @@ function Inner() {
   const [page, setPage] = useState('dashboard')
   const [selectedTournament, setSelectedTournament] = useState(null)
 
+  const [merchTab, setMerchTab] = useState(null)
+
   const navigate = (p, tournament = null) => {
-    setPage(p)
+    // Support merch-orders shortcut to go directly to Orders tab
+    if (p === 'merch-orders') {
+      setMerchTab('orders')
+      setPage('merch')
+    } else {
+      if (p === 'merch') setMerchTab(null) // reset to default
+      setPage(p)
+    }
     if (tournament !== null) setSelectedTournament(tournament)
     window.scrollTo(0, 0)
   }
@@ -44,7 +53,7 @@ function Inner() {
     schedule:     <Schedule tournament={selectedTournament} onNavigate={navigate} />,
     scores:       <Scores tournament={selectedTournament} onNavigate={navigate} />,
     updates:      <Updates />,
-    merch:        <Merch tournament={selectedTournament} />,
+    merch:        <Merch tournament={selectedTournament} initialTab={merchTab} />,
     settings:     <Settings />,
     history:      <History onNavigate={navigate} />,
     game:         <Game tournament={selectedTournament} onNavigate={navigate} />,

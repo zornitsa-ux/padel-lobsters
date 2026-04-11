@@ -150,10 +150,11 @@ function Lightbox({ images, startIndex = 0, onClose }) {
 }
 
 // ── Main Merch component ──────────────────────────────────────────────────────
-export default function Merch({ tournament, tournaments: allTournaments = [] }) {
+export default function Merch({ tournament, tournaments: allTournaments = [], initialTab }) {
   const { players, registrations, isAdmin, tournaments: contextTournaments = [], claimedId } = useApp()
   const tournaments = allTournaments.length > 0 ? allTournaments : contextTournaments
-  const [tab, setTab]             = useState('shop')     // 'shop' | 'prizes' | 'manage'
+  const [tab, setTab]             = useState(initialTab || 'shop')
+  useEffect(() => { if (initialTab) setTab(initialTab) }, [initialTab])
   const [items, setItems]         = useState([])
   const [interests, setInterests] = useState([])
   const [loading, setLoading]     = useState(true)
@@ -355,6 +356,7 @@ export default function Merch({ tournament, tournaments: allTournaments = [] }) 
   // ── Render ───────────────────────────────────────────────────────────────────
   const TABS = [
     { id: 'shop', label: '🛍️ Shop' },
+    ...(isAdmin ? [{ id: 'orders', label: `📋 Orders${interests.length > 0 ? ` (${interests.length})` : ''}` }] : []),
     ...(isAdmin ? [{ id: 'prizes', label: '🎁 Prizes' }] : []),
     ...(isAdmin ? [{ id: 'manage', label: '⚙️ Manage' }] : []),
   ]
@@ -600,20 +602,21 @@ export default function Merch({ tournament, tournaments: allTournaments = [] }) 
         </div>
       )}
 
-      {/* ── MANAGE TAB (admin only) ── */}
-      {tab === 'manage' && isAdmin && (
+      {/* ── ORDERS TAB (admin only) ── */}
+      {tab === 'orders' && isAdmin && (
         <div className="space-y-4">
-          <button onClick={openAdd} className="btn-primary w-full flex items-center justify-center gap-2">
-            <Plus size={16} /> Add Merch Item
-          </button>
-
-          {/* Orders table — full list with paid/delivered toggles */}
           {interests.length > 0 ? (
             <div className="card space-y-3 overflow-x-auto">
-              <p className="font-semibold text-gray-700 text-sm flex items-center gap-1.5">
-                📋 Orders
-                <span className="bg-lobster-teal text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{interests.length}</span>
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="font-semibold text-gray-700 text-sm flex items-center gap-1.5">
+                  All Orders
+                  <span className="bg-lobster-teal text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{interests.length}</span>
+                </p>
+                <div className="flex gap-3 text-[11px] text-gray-400">
+                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-400 inline-block" /> Paid: {interests.filter(o => o.paid).length}</span>
+                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-400 inline-block" /> Delivered: {interests.filter(o => o.delivered).length}</span>
+                </div>
+              </div>
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-left text-xs text-gray-400 border-b border-gray-100">
@@ -627,7 +630,6 @@ export default function Merch({ tournament, tournaments: allTournaments = [] }) 
                 <tbody>
                   {[...interests]
                     .sort((a, b) => {
-                      // Sort by item name, then by size order
                       const itemA = items.find(i => i.id === a.merch_item_id)
                       const itemB = items.find(i => i.id === b.merch_item_id)
                       const nameCmp = (itemA?.name || '').localeCompare(itemB?.name || '')
@@ -686,8 +688,17 @@ export default function Merch({ tournament, tournaments: allTournaments = [] }) 
               </table>
             </div>
           ) : (
-            <div className="card py-6 text-center text-gray-400 text-sm">No orders yet</div>
+            <div className="card py-6 text-center text-gray-400 text-sm">No orders yet — orders will appear here when players place them from the Shop tab</div>
           )}
+        </div>
+      )}
+
+      {/* ── MANAGE TAB (admin only) ── */}
+      {tab === 'manage' && isAdmin && (
+        <div className="space-y-4">
+          <button onClick={openAdd} className="btn-primary w-full flex items-center justify-center gap-2">
+            <Plus size={16} /> Add Merch Item
+          </button>
 
           {/* Item list (draggable) */}
           <div className="space-y-2">
