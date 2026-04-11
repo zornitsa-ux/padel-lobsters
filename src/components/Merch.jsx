@@ -188,7 +188,12 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
   }
 
   const loadInterests = async () => {
-    const { data } = await supabase.from('merch_interests').select('*, players(name)')
+    let { data, error } = await supabase.from('merch_interests').select('*, players(name)')
+    if (error) {
+      console.warn('loadInterests with join failed:', error.message, '— retrying without join')
+      const res = await supabase.from('merch_interests').select('*')
+      data = res.data
+    }
     if (data) setInterests(data)
   }
 
@@ -343,18 +348,31 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
     }
     setSizeError(e => ({ ...e, [itemId]: false }))
 
-    try {
-      await supabase.from('merch_interests').upsert({
+    // Try inserting with custom_name first; if column doesn't exist, retry without it
+    let res = await supabase.from('merch_interests').upsert({
+      merch_item_id: itemId,
+      size,
+      player_id: parseInt(claimedId),
+      custom_name: name || null,
+    }, { onConflict: 'player_id,merch_item_id' })
+
+    if (res.error) {
+      console.warn('Merch order (with custom_name) failed:', res.error.message, '— retrying without custom_name')
+      res = await supabase.from('merch_interests').upsert({
         merch_item_id: itemId,
         size,
-        player_id: claimedId,
-        custom_name: name || null,
+        player_id: parseInt(claimedId),
       }, { onConflict: 'player_id,merch_item_id' })
-      setOrdered(o => ({ ...o, [itemId]: true }))
-      await loadInterests()
-    } catch (err) {
-      console.error('Order error:', err)
     }
+
+    if (res.error) {
+      console.error('Merch order failed:', res.error.message)
+      alert('Order failed: ' + res.error.message)
+      return
+    }
+
+    setOrdered(o => ({ ...o, [itemId]: true }))
+    await loadInterests()
   }
 
   // ── Render ───────────────────────────────────────────────────────────────────
