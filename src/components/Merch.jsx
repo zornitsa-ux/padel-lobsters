@@ -210,12 +210,13 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
   }
 
   const loadInterests = async () => {
-    let { data, error } = await supabase.from('merch_interests').select('*, players(name)')
+    // Always use simple select to avoid join issues
+    const { data, error } = await supabase.from('merch_interests').select('*')
     if (error) {
-      console.warn('loadInterests with join failed:', error.message, '— retrying without join')
-      const res = await supabase.from('merch_interests').select('*')
-      data = res.data
+      console.error('loadInterests failed:', error.message)
+      return
     }
+    console.log('loadInterests:', data?.length, 'orders loaded')
     if (data) setInterests(data)
   }
 
@@ -418,7 +419,7 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
 
   // ── Render ───────────────────────────────────────────────────────────────────
   const myOrders = claimedId ? interests.filter(o => String(o.player_id) === String(claimedId)) : []
-  const activeOrders = interests.filter(o => (o.status || 'ordered') !== 'cancelled' && getPlayerName(o, players))
+  const activeOrders = interests.filter(o => (o.status || 'ordered') !== 'cancelled')
 
   // Cancel order modal state
   const [cancelTarget, setCancelTarget] = useState(null)
