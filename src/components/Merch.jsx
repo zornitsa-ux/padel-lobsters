@@ -382,17 +382,27 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
 
     let res
     if (existing && existing.length > 0) {
-      // Update existing order
+      // Update existing order — try with all fields, fall back gracefully
       res = await supabase.from('merch_interests')
         .update({ size, custom_name: name || '' })
         .eq('id', existing[0].id)
-    } else {
-      // Insert new order (try with status first, fallback without if v12 not run)
-      res = await supabase.from('merch_interests')
-        .insert({ merch_item_id: itemId, size, player_id: pid, status: 'ordered', custom_name: name || '' })
       if (res.error) {
         res = await supabase.from('merch_interests')
-          .insert({ merch_item_id: itemId, size, player_id: pid, custom_name: name || '' })
+          .update({ size })
+          .eq('id', existing[0].id)
+      }
+    } else {
+      // Insert new order — try with all fields, then progressively strip optional columns
+      const base = { merch_item_id: itemId, size, player_id: pid }
+      res = await supabase.from('merch_interests').insert({ ...base, status: 'ordered', custom_name: name || '' })
+      if (res.error) {
+        res = await supabase.from('merch_interests').insert({ ...base, status: 'ordered' })
+      }
+      if (res.error) {
+        res = await supabase.from('merch_interests').insert({ ...base, custom_name: name || '' })
+      }
+      if (res.error) {
+        res = await supabase.from('merch_interests').insert(base)
       }
     }
 
@@ -416,7 +426,7 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
 
   const TABS = [
     { id: 'shop', label: '🛍️ Shop' },
-    ...(!isAdmin && myOrders.length > 0 ? [{ id: 'myorders', label: `📦 My Orders (${myOrders.length})` }] : []),
+    ...(!isAdmin && claimedId ? [{ id: 'myorders', label: `📦 My Orders${myOrders.length > 0 ? ` (${myOrders.length})` : ''}` }] : []),
     ...(isAdmin ? [{ id: 'orders', label: `📋 Orders${activeOrders.length > 0 ? ` (${activeOrders.length})` : ''}` }] : []),
     ...(isAdmin ? [{ id: 'prizes', label: '🎁 Prizes' }] : []),
     ...(isAdmin ? [{ id: 'manage', label: '⚙️ Manage' }] : []),
