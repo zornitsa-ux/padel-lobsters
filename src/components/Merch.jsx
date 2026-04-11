@@ -1,13 +1,35 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useApp } from '../context/AppContext'
 import { supabase } from '../supabase'
-import { Plus, X, Pencil, ShoppingBag, Gift, Shuffle, Upload, Check, ShoppingCart, User, GripVertical } from 'lucide-react'
-// Player identity picker is built-in (no AdminLogin needed for players)
+import { Plus, X, Pencil, ShoppingBag, Gift, Shuffle, Upload, Check, ShoppingCart, User, GripVertical, Ban, Clock, Package, CreditCard, MessageSquare } from 'lucide-react'
 
 const SIZES_APPAREL  = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
 const SIZES_SOCKS    = ['S (35-38)', 'M (39-42)', 'L (43-46)']
 const SIZE_ORDER     = ['XS', 'S', 'S (35-38)', 'M', 'M (39-42)', 'L', 'L (43-46)', 'XL', 'XXL']
 const sizeRank = (s) => { const i = SIZE_ORDER.indexOf(s); return i >= 0 ? i : 999 }
+
+const STATUS_CONFIG = {
+  ordered:   { label: 'Ordered',   icon: Clock,      bg: 'bg-amber-100',  text: 'text-amber-700' },
+  paid:      { label: 'Paid',      icon: CreditCard,  bg: 'bg-green-100',  text: 'text-green-700' },
+  delivered: { label: 'Delivered', icon: Package,     bg: 'bg-blue-100',   text: 'text-blue-700' },
+  cancelled: { label: 'Cancelled', icon: Ban,         bg: 'bg-red-100',    text: 'text-red-500' },
+}
+
+const formatOrderTime = (ts) => {
+  if (!ts) return ''
+  const d = new Date(ts)
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + ' ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+}
+
+const getPlayerName = (o, players) => {
+  // Try joined player name first, then match from players list
+  if (o.players?.name) return o.players.name
+  if (o.player_id) {
+    const p = players.find(pl => pl.id === o.player_id || String(pl.id) === String(o.player_id))
+    if (p) return p.name
+  }
+  return null
+}
 
 const emptyItem = {
   name: '', description: '', price: '', sizes: [], category: 'apparel', image_url: '', image_urls: [], active: true,
@@ -365,9 +387,13 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
         .update({ size })
         .eq('id', existing[0].id)
     } else {
-      // Insert new order
+      // Insert new order (try with status first, fallback without if v12 not run)
       res = await supabase.from('merch_interests')
-        .insert({ merch_item_id: itemId, size, player_id: pid })
+        .insert({ merch_item_id: itemId, size, player_id: pid, status: 'ordered' })
+      if (res.error) {
+        res = await supabase.from('merch_interests')
+          .insert({ merch_item_id: itemId, size, player_id: pid })
+      }
     }
 
     if (res.error) {
@@ -381,9 +407,17 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
   }
 
   // ── Render ───────────────────────────────────────────────────────────────────
+  const myOrders = claimedId ? interests.filter(o => String(o.player_id) === String(claimedId)) : []
+  const activeOrders = interests.filter(o => (o.status || 'ordered') !== 'cancelled')
+
+  // Cancel order modal state
+  const [cancelTarget, setCancelTarget] = useState(null)
+  const [cancelComment, setCancelComment] = useState('')
+
   const TABS = [
     { id: 'shop', label: '🛍️ Shop' },
-    ...(isAdmin ? [{ id: 'orders', label: `📋 Orders${interests.length > 0 ? ` (${interests.length})` : ''}` }] : []),
+    ...(!isAdmin && myOrders.length > 0 ? [{ id: 'myorders', label: `📦 My Orders (${myOrders.length})` }] : []),
+    ...(isAdmin ? [{ id: 'orders', label: `📋 Orders${activeOrders.length > 0 ? ` (${activeOrders.length})` : ''}` }] : []),
     ...(isAdmin ? [{ id: 'prizes', label: '🎁 Prizes' }] : []),
     ...(isAdmin ? [{ id: 'manage', label: '⚙️ Manage' }] : []),
   ]
@@ -551,6 +585,9 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
                 </div>
                 <span className="text-lg font-bold text-lobster-teal flex-shrink-0 ml-2">
                   €{parseFloat(item.price).toFixed(0)}
+                  {(/shirt|tank/i.test(item.name)) && (customName[item.id] || '').trim() && (
+                    <span className="text-xs font-semibold text-amber-600 block text-right">+€5 name</span>
+                  )}
                 </span>
               </div>
 
@@ -581,10 +618,10 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
                 </div>
               )}
 
-              {/* Name on item — only for shirts */}
-              {/shirt/i.test(item.name) && (
+              {/* Name on item — only for shirts/tops (+€5) */}
+              {(/shirt/i.test(item.name) || /tank/i.test(item.name)) && (
                 <div>
-                  <label className="text-xs font-medium text-gray-500 block mb-1">Name for the shirt <span className="text-gray-400 font-normal">(optional)</span></label>
+                  <label className="text-xs font-medium text-gray-500 block mb-1">Name customization <span className="text-amber-600 font-semibold">(+€5)</span></label>
                   <input
                     type="text"
                     placeholder="e.g. Alex"
@@ -625,6 +662,73 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
             <div className="card py-10 text-center text-gray-400">
               <ShoppingBag size={36} className="mx-auto mb-2 opacity-30" />
               <p>No merch items yet</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── MY ORDERS TAB (player) ── */}
+      {tab === 'myorders' && !isAdmin && claimedId && (
+        <div className="space-y-3">
+          {myOrders.length > 0 ? (
+            myOrders
+              .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+              .map(o => {
+                const item = items.find(i => i.id === o.merch_item_id)
+                const status = o.status || 'ordered'
+                const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.ordered
+                const StatusIcon = cfg.icon
+                return (
+                  <div key={o.id} className={`card space-y-2 ${status === 'cancelled' ? 'opacity-60' : ''}`}>
+                    <div className="flex items-start gap-3">
+                      <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100">
+                        {item?.image_url
+                          ? <img src={item.image_url} className="w-full h-full object-cover" alt="" />
+                          : <div className="w-full h-full flex items-center justify-center"><ShoppingBag size={18} className="text-gray-400" /></div>
+                        }
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-gray-800">{item?.name || 'Item'}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          {o.size && <span className="text-xs font-bold bg-lobster-cream text-lobster-teal px-2 py-0.5 rounded-full">{o.size}</span>}
+                          <span className="text-[11px] text-gray-400">{formatOrderTime(o.created_at)}</span>
+                        </div>
+                      </div>
+                    </div>
+                    {/* Status timeline */}
+                    <div className="flex items-center gap-1 pt-1">
+                      {['ordered', 'paid', 'delivered'].map((s, i) => {
+                        const sCfg = STATUS_CONFIG[s]
+                        const SIcon = sCfg.icon
+                        const steps = ['ordered', 'paid', 'delivered']
+                        const currentIdx = status === 'cancelled' ? -1 : steps.indexOf(status)
+                        const active = steps.indexOf(s) <= currentIdx
+                        return (
+                          <React.Fragment key={s}>
+                            {i > 0 && <div className={`flex-1 h-0.5 rounded ${active ? 'bg-lobster-teal' : 'bg-gray-200'}`} />}
+                            <div className={`flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-full ${
+                              active ? `${sCfg.bg} ${sCfg.text}` : 'bg-gray-100 text-gray-300'
+                            }`}>
+                              <SIcon size={10} /> {sCfg.label}
+                            </div>
+                          </React.Fragment>
+                        )
+                      })}
+                    </div>
+                    {/* Cancelled notice */}
+                    {status === 'cancelled' && (
+                      <div className="bg-red-50 rounded-xl p-2.5 space-y-1">
+                        <p className="text-xs font-semibold text-red-500 flex items-center gap-1"><Ban size={11} /> Order cancelled by admin</p>
+                        {o.admin_comment && <p className="text-xs text-red-400 italic">"{o.admin_comment}"</p>}
+                      </div>
+                    )}
+                  </div>
+                )
+              })
+          ) : (
+            <div className="card py-8 text-center text-gray-400">
+              <Package size={32} className="mx-auto mb-2 opacity-30" />
+              <p className="text-sm">No orders yet — browse the Shop to get started</p>
             </div>
           )}
         </div>
@@ -713,87 +817,146 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
       {/* ── ORDERS TAB (admin only) ── */}
       {tab === 'orders' && isAdmin && (
         <div className="space-y-4">
-          {interests.length > 0 ? (
-            <div className="card space-y-3 overflow-x-auto">
-              <div className="flex items-center justify-between">
-                <p className="font-semibold text-gray-700 text-sm flex items-center gap-1.5">
-                  All Orders
-                  <span className="bg-lobster-teal text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{interests.length}</span>
-                </p>
-                <div className="flex gap-3 text-[11px] text-gray-400">
-                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-400 inline-block" /> Paid: {interests.filter(o => o.paid).length}</span>
-                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-400 inline-block" /> Delivered: {interests.filter(o => o.delivered).length}</span>
+          {/* Cancel order modal */}
+          {cancelTarget && (
+            <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center">
+              <div className="bg-white rounded-t-3xl w-full max-w-md p-5 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold text-gray-800">Cancel Order</h3>
+                  <button onClick={() => { setCancelTarget(null); setCancelComment('') }}><X size={22} className="text-gray-400" /></button>
                 </div>
+                <p className="text-sm text-gray-500">
+                  Cancel order for <strong>{getPlayerName(cancelTarget, players)?.split(' ')[0] || 'player'}</strong> — {items.find(i => i.id === cancelTarget.merch_item_id)?.name}?
+                </p>
+                <textarea
+                  placeholder="Add a comment for the player (optional)…"
+                  value={cancelComment}
+                  onChange={e => setCancelComment(e.target.value)}
+                  className="input text-sm w-full h-20 resize-none"
+                />
+                <button
+                  onClick={async () => {
+                    await supabase.from('merch_interests').update({
+                      status: 'cancelled',
+                      admin_comment: cancelComment || null,
+                      cancelled_at: new Date().toISOString(),
+                      paid: false, delivered: false,
+                    }).eq('id', cancelTarget.id)
+                    setCancelTarget(null); setCancelComment('')
+                    await loadInterests()
+                  }}
+                  className="w-full py-2.5 rounded-xl bg-red-500 text-white font-semibold text-sm active:scale-95 transition-all"
+                >
+                  Cancel Order
+                </button>
               </div>
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-xs text-gray-400 border-b border-gray-100">
-                    <th className="pb-2 font-medium">Player</th>
-                    <th className="pb-2 font-medium">Item</th>
-                    <th className="pb-2 font-medium">Size</th>
-                    <th className="pb-2 font-medium text-center">Paid</th>
-                    <th className="pb-2 font-medium text-center">Delivered</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[...interests]
-                    .sort((a, b) => {
-                      const itemA = items.find(i => i.id === a.merch_item_id)
-                      const itemB = items.find(i => i.id === b.merch_item_id)
-                      const nameCmp = (itemA?.name || '').localeCompare(itemB?.name || '')
-                      if (nameCmp !== 0) return nameCmp
-                      return sizeRank(a.size || '') - sizeRank(b.size || '')
-                    })
-                    .map(o => {
-                      const player = players.find(p => String(p.id) === String(o.player_id))
+            </div>
+          )}
+
+          {activeOrders.length > 0 ? (
+            <div className="space-y-2">
+              {/* Summary stats */}
+              <div className="flex gap-2 text-[11px] text-gray-500 px-1">
+                <span>{activeOrders.length} orders</span>
+                <span>·</span>
+                <span className="text-amber-600">{activeOrders.filter(o => (o.status || 'ordered') === 'ordered').length} pending</span>
+                <span>·</span>
+                <span className="text-green-600">{activeOrders.filter(o => o.status === 'paid').length} paid</span>
+                <span>·</span>
+                <span className="text-blue-600">{activeOrders.filter(o => o.status === 'delivered').length} delivered</span>
+              </div>
+
+              {/* Order cards */}
+              {[...activeOrders]
+                .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+                .map(o => {
+                  const playerName = getPlayerName(o, players)
+                  const item = items.find(i => i.id === o.merch_item_id)
+                  const status = o.status || 'ordered'
+                  const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.ordered
+                  const StatusIcon = cfg.icon
+                  return (
+                    <div key={o.id} className="card space-y-2">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-gray-800">
+                            {playerName?.split(' ')[0] || 'Unknown'}
+                            <span className="font-normal text-gray-500 ml-1.5 text-xs">{item?.name || '—'}</span>
+                          </p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            {o.size && <span className="text-xs font-bold bg-lobster-cream text-lobster-teal px-2 py-0.5 rounded-full">{o.size}</span>}
+                            <span className="text-[11px] text-gray-400">{formatOrderTime(o.created_at)}</span>
+                          </div>
+                        </div>
+                        <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.text}`}>
+                          <StatusIcon size={10} /> {cfg.label}
+                        </span>
+                      </div>
+                      {/* Status action buttons */}
+                      <div className="flex gap-1.5">
+                        <button
+                          onClick={async () => {
+                            await supabase.from('merch_interests').update({ status: 'paid', paid: true }).eq('id', o.id)
+                            await loadInterests()
+                          }}
+                          disabled={status === 'paid' || status === 'delivered'}
+                          className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                            status === 'paid' || status === 'delivered'
+                              ? 'bg-green-100 text-green-600'
+                              : 'bg-gray-100 text-gray-500 active:scale-95'
+                          }`}
+                        >
+                          {status === 'paid' || status === 'delivered' ? '✓ Paid' : 'Mark Paid'}
+                        </button>
+                        <button
+                          onClick={async () => {
+                            await supabase.from('merch_interests').update({ status: 'delivered', delivered: true }).eq('id', o.id)
+                            await loadInterests()
+                          }}
+                          disabled={status === 'delivered'}
+                          className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                            status === 'delivered'
+                              ? 'bg-blue-100 text-blue-600'
+                              : 'bg-gray-100 text-gray-500 active:scale-95'
+                          }`}
+                        >
+                          {status === 'delivered' ? '✓ Delivered' : 'Mark Delivered'}
+                        </button>
+                        <button
+                          onClick={() => setCancelTarget(o)}
+                          className="px-2 py-1.5 rounded-lg text-xs font-semibold bg-red-50 text-red-400 active:scale-95 transition-all"
+                        >
+                          <Ban size={12} />
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })
+              }
+
+              {/* Cancelled orders (collapsed) */}
+              {interests.filter(o => o.status === 'cancelled').length > 0 && (
+                <details className="mt-3">
+                  <summary className="text-xs text-gray-400 cursor-pointer font-medium px-1">
+                    {interests.filter(o => o.status === 'cancelled').length} cancelled order{interests.filter(o => o.status === 'cancelled').length > 1 ? 's' : ''}
+                  </summary>
+                  <div className="space-y-2 mt-2">
+                    {interests.filter(o => o.status === 'cancelled').map(o => {
+                      const playerName = getPlayerName(o, players)
                       const item = items.find(i => i.id === o.merch_item_id)
                       return (
-                        <tr key={o.id} className="border-b border-gray-50 last:border-0">
-                          <td className="py-2 pr-2">
-                            <span className="font-medium text-gray-800">{player?.name?.split(' ')[0] || 'Unknown'}</span>
-                            {o.custom_name && (
-                              <span className="block text-[11px] text-lobster-teal">"{o.custom_name}"</span>
-                            )}
-                          </td>
-                          <td className="py-2 pr-2 text-gray-600">{item?.name || '—'}</td>
-                          <td className="py-2 pr-2">
-                            {o.size
-                              ? <span className="text-xs font-bold bg-lobster-cream text-lobster-teal px-2 py-0.5 rounded-full">{o.size}</span>
-                              : <span className="text-gray-300">—</span>
-                            }
-                          </td>
-                          <td className="py-2 text-center">
-                            <button
-                              onClick={async () => {
-                                await supabase.from('merch_interests').update({ paid: !o.paid }).eq('id', o.id)
-                                await loadInterests()
-                              }}
-                              className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${
-                                o.paid ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-300'
-                              }`}
-                            >
-                              <Check size={14} />
-                            </button>
-                          </td>
-                          <td className="py-2 text-center">
-                            <button
-                              onClick={async () => {
-                                await supabase.from('merch_interests').update({ delivered: !o.delivered }).eq('id', o.id)
-                                await loadInterests()
-                              }}
-                              className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${
-                                o.delivered ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-300'
-                              }`}
-                            >
-                              <Check size={14} />
-                            </button>
-                          </td>
-                        </tr>
+                        <div key={o.id} className="card opacity-60 space-y-1">
+                          <p className="text-sm text-gray-500 line-through">
+                            {playerName?.split(' ')[0] || 'Unknown'} — {item?.name} {o.size && `(${o.size})`}
+                          </p>
+                          {o.admin_comment && <p className="text-xs text-red-400 italic">"{o.admin_comment}"</p>}
+                          <p className="text-[10px] text-gray-400">{formatOrderTime(o.cancelled_at || o.created_at)}</p>
+                        </div>
                       )
-                    })
-                  }
-                </tbody>
-              </table>
+                    })}
+                  </div>
+                </details>
+              )}
             </div>
           ) : (
             <div className="card py-6 text-center text-gray-400 text-sm">No orders yet — orders will appear here when players place them from the Shop tab</div>
