@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useApp } from '../context/AppContext'
 import { supabase } from '../supabase'
-import { Plus, X, Pencil, ShoppingBag, Gift, Shuffle, Upload, Check, ShoppingCart, User } from 'lucide-react'
+import { Plus, X, Pencil, ShoppingBag, Gift, Shuffle, Upload, Check, ShoppingCart, User, GripVertical } from 'lucide-react'
 import AdminLogin from './AdminLogin'
 
 const SIZES_APPAREL  = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
@@ -170,7 +170,7 @@ export default function Merch({ tournament, tournaments: allTournaments = [] }) 
 
   // ── Data loading ────────────────────────────────────────────────────────────
   const loadItems = async () => {
-    const { data } = await supabase.from('merch_items').select('*').eq('active', true).order('id')
+    const { data } = await supabase.from('merch_items').select('*').eq('active', true).order('display_order').order('id')
     if (data) setItems(data)
     setLoading(false)
   }
@@ -255,7 +255,9 @@ export default function Merch({ tournament, tournaments: allTournaments = [] }) 
     if (editItem) {
       await supabase.from('merch_items').update(payload).eq('id', editItem.id)
     } else {
-      await supabase.from('merch_items').insert(payload)
+      // New items go to the end of the list
+      const maxOrder = items.length > 0 ? Math.max(...items.map(i => i.display_order || 0)) : 0
+      await supabase.from('merch_items').insert({ ...payload, display_order: maxOrder + 1 })
     }
     await loadItems()
     setShowForm(false); setSaving(false)
@@ -266,6 +268,39 @@ export default function Merch({ tournament, tournaments: allTournaments = [] }) 
     await supabase.from('merch_items').update({ active: false }).eq('id', id)
     await loadItems()
   }
+
+  // ── Drag-and-drop reorder (admin) ───────────────────────────────────────────
+  const [dragIdx, setDragIdx] = useState(null)
+  const [overIdx, setOverIdx] = useState(null)
+
+  const handleDragStart = (idx) => (e) => {
+    setDragIdx(idx)
+    e.dataTransfer.effectAllowed = 'move'
+  }
+
+  const handleDragOver = (idx) => (e) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    if (idx !== overIdx) setOverIdx(idx)
+  }
+
+  const handleDrop = (idx) => async (e) => {
+    e.preventDefault()
+    if (dragIdx === null || dragIdx === idx) { setDragIdx(null); setOverIdx(null); return }
+    const reordered = [...items]
+    const [moved] = reordered.splice(dragIdx, 1)
+    reordered.splice(idx, 0, moved)
+    setItems(reordered)
+    setDragIdx(null)
+    setOverIdx(null)
+    // Persist new order to DB
+    const updates = reordered.map((item, i) =>
+      supabase.from('merch_items').update({ display_order: i }).eq('id', item.id)
+    )
+    await Promise.all(updates)
+  }
+
+  const handleDragEnd = () => { setDragIdx(null); setOverIdx(null) }
 
   const toggleSize = (size) => {
     setForm(f => ({
@@ -620,13 +655,26 @@ export default function Merch({ tournament, tournaments: allTournaments = [] }) 
             <div className="card py-6 text-center text-gray-400 text-sm">No orders yet</div>
           )}
 
-          {/* Item list */}
+          {/* Item list (draggable) */}
           <div className="space-y-2">
-            {items.map(item => (
-              <div key={item.id} className="card flex items-center gap-3">
+            {items.map((item, idx) => (
+              <div
+                key={item.id}
+                draggable
+                onDragStart={handleDragStart(idx)}
+                onDragOver={handleDragOver(idx)}
+                onDrop={handleDrop(idx)}
+                onDragEnd={handleDragEnd}
+                className={`card flex items-center gap-3 transition-all ${
+                  dragIdx === idx ? 'opacity-40 scale-[0.97]' : ''
+                } ${overIdx === idx && dragIdx !== idx ? 'ring-2 ring-lobster-teal ring-offset-1' : ''}`}
+              >
+                <div className="cursor-grab active:cursor-grabbing touch-none flex-shrink-0 text-gray-300 hover:text-gray-500 -ml-1">
+                  <GripVertical size={18} />
+                </div>
                 <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100">
                   {item.image_url
-                    ? <img src={item.image_url} className="w-full h-full object-cover" alt="" />
+                    ? <img src={item.image_url} className="w-full h-full object-cover" alt="" draggable={false} />
                     : <div className="w-full h-full flex items-center justify-center"><ShoppingBag size={18} className="text-gray-400" /></div>
                   }
                 </div>
