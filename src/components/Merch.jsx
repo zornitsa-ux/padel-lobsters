@@ -319,6 +319,12 @@ export default function Merch({ tournament, tournaments: allTournaments = [] }) 
   const orderCount = (itemId) => interests.filter(i => i.merch_item_id === itemId).length
 
   const placeOrder = async (itemId) => {
+    // Must be logged in to place an order
+    if (!claimedId) {
+      setShowLogin(true)
+      return
+    }
+
     const item = items.find(i => i.id === itemId)
     const size = selectedSize[itemId] || ''
     const name = (customName[itemId] || '').trim()
@@ -331,21 +337,12 @@ export default function Merch({ tournament, tournaments: allTournaments = [] }) 
     setSizeError(e => ({ ...e, [itemId]: false }))
 
     try {
-      if (claimedId) {
-        await supabase.from('merch_interests').upsert({
-          merch_item_id: itemId,
-          size,
-          player_id: claimedId,
-          custom_name: name || null,
-        }, { onConflict: 'player_id,merch_item_id' })
-      } else {
-        await supabase.from('merch_interests').insert({
-          merch_item_id: itemId,
-          size,
-          player_id: null,
-          custom_name: name || null,
-        })
-      }
+      await supabase.from('merch_interests').upsert({
+        merch_item_id: itemId,
+        size,
+        player_id: claimedId,
+        custom_name: name || null,
+      }, { onConflict: 'player_id,merch_item_id' })
       setOrdered(o => ({ ...o, [itemId]: true }))
       await loadInterests()
     } catch (err) {
@@ -395,7 +392,7 @@ export default function Merch({ tournament, tournaments: allTournaments = [] }) 
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center gap-2">
               <User size={14} className="text-amber-500 flex-shrink-0" />
               <p className="text-xs text-amber-700">
-                Verify your identity in the <strong>Updates</strong> tab so your name appears on the order list.
+                You need to <button onClick={() => setShowLogin(true)} className="font-bold underline">verify your identity</button> before you can place orders.
               </p>
             </div>
           )}

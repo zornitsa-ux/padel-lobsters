@@ -103,13 +103,14 @@ export default function Dashboard({ onNavigate }) {
     if (!isAdmin) return
     const loadOrders = async () => {
       const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
-      const { data } = await supabase
-        .from('merch_interests')
-        .select('*, players(name), merch_items(name)')
-        .gte('created_at', since)
-        .order('created_at', { ascending: false })
-        .limit(10)
-      if (data) setRecentOrders(data)
+      // Fetch orders + items separately to avoid FK join issues
+      const [ordersRes, itemsRes] = await Promise.all([
+        supabase.from('merch_interests').select('*, players(name)').gte('created_at', since).order('created_at', { ascending: false }).limit(10),
+        supabase.from('merch_items').select('id, name').eq('active', true),
+      ])
+      const orders = ordersRes.data || []
+      const itemMap = Object.fromEntries((itemsRes.data || []).map(i => [i.id, i.name]))
+      setRecentOrders(orders.map(o => ({ ...o, itemName: itemMap[o.merch_item_id] || 'item' })))
     }
     loadOrders()
     const ch = supabase.channel('dash-merch-orders')
@@ -559,7 +560,7 @@ export default function Dashboard({ onNavigate }) {
           </div>
           {recentOrders.slice(0, 5).map(o => {
             const playerName = o.players?.name?.split(' ')[0] || 'Someone'
-            const itemName = o.merch_items?.name || 'item'
+            const itemName = o.itemName || 'item'
             const ago = formatUpdateTime(o.created_at)
             return (
               <div key={o.id} className="flex items-center gap-2 text-sm">
