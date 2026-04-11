@@ -170,28 +170,34 @@ export default function Dashboard({ onNavigate }) {
   const upcomingCount = tournaments.filter(t => t.status === 'upcoming' || t.status === 'active').length
   const pastCount = tournaments.filter(t => t.status === 'completed').length + LEGACY_TOURNAMENTS.length
 
-  // Top 3 from the last completed tournament
+  // Top 3 from the last completed tournament (DB first, then legacy fallback)
   const lastPodium = useMemo(() => {
     const lastCompleted = tournaments
       .filter(t => t.status === 'completed')
       .sort((a, b) => (b.date || '') > (a.date || '') ? 1 : -1)[0]
-    if (!lastCompleted) return null
-    const tRegs = getTournamentRegistrations(lastCompleted.id).filter(r => r.status === 'registered')
-    const tMatches = getTournamentMatches(lastCompleted.id)
-    if (tMatches.length === 0) return null
-    const stats = {}
-    tRegs.forEach(r => { stats[r.playerId] = { pts: 0, won: 0 } })
-    tMatches.filter(m => m.completed && m.score1 != null).forEach(m => {
-      const s1 = parseInt(m.score1) || 0, s2 = parseInt(m.score2) || 0
-      ;(m.team1Ids || []).forEach(id => { if (stats[id]) { stats[id].pts += s1; if (s1 > s2) stats[id].won++ } })
-      ;(m.team2Ids || []).forEach(id => { if (stats[id]) { stats[id].pts += s2; if (s2 > s1) stats[id].won++ } })
-    })
-    return Object.entries(stats)
-      .sort((a, b) => b[1].pts !== a[1].pts ? b[1].pts - a[1].pts : b[1].won - a[1].won)
-      .slice(0, 3)
-      .map(([id]) => players.find(p => p.id === id))
-      .filter(Boolean)
-      .map(p => p.name.split(' ')[0])
+    if (lastCompleted) {
+      const tRegs = getTournamentRegistrations(lastCompleted.id).filter(r => r.status === 'registered')
+      const tMatches = getTournamentMatches(lastCompleted.id)
+      if (tMatches.length > 0) {
+        const stats = {}
+        tRegs.forEach(r => { stats[r.playerId] = { pts: 0, won: 0 } })
+        tMatches.filter(m => m.completed && m.score1 != null).forEach(m => {
+          const s1 = parseInt(m.score1) || 0, s2 = parseInt(m.score2) || 0
+          ;(m.team1Ids || []).forEach(id => { if (stats[id]) { stats[id].pts += s1; if (s1 > s2) stats[id].won++ } })
+          ;(m.team2Ids || []).forEach(id => { if (stats[id]) { stats[id].pts += s2; if (s2 > s1) stats[id].won++ } })
+        })
+        const podium = Object.entries(stats)
+          .sort((a, b) => b[1].pts !== a[1].pts ? b[1].pts - a[1].pts : b[1].won - a[1].won)
+          .slice(0, 3)
+          .map(([id]) => players.find(p => p.id === id))
+          .filter(Boolean)
+          .map(p => p.name.split(' ')[0])
+        if (podium.length > 0) return podium
+      }
+    }
+    // Fallback: March 2026 Lobster Tournament top 3 (with tiebreaker via match wins)
+    // This will auto-replace once the next DB tournament is completed
+    return ['Alex B', 'Uziel', 'Karlijn']
   }, [tournaments, matches, players, getTournamentRegistrations, getTournamentMatches])
 
   // ── Personal stats for claimed player ──────────────────────────────────────
