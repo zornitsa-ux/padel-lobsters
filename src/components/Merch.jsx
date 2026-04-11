@@ -380,7 +380,7 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
     }
     setSizeError(e => ({ ...e, [itemId]: false }))
 
-    const pid = claimedPlayer.id  // Use the actual player.id from DB, not parsed string
+    const pid = String(claimedPlayer.id)  // Store as text to handle both UUID and integer IDs
 
     // Check if player already ordered this item — update if so, insert if not
     const { data: existing } = await supabase
