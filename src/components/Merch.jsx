@@ -348,21 +348,26 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
     }
     setSizeError(e => ({ ...e, [itemId]: false }))
 
-    // Try inserting with custom_name first; if column doesn't exist, retry without it
-    let res = await supabase.from('merch_interests').upsert({
-      merch_item_id: itemId,
-      size,
-      player_id: parseInt(claimedId),
-      custom_name: name || null,
-    }, { onConflict: 'player_id,merch_item_id' })
+    const pid = parseInt(claimedId)
 
-    if (res.error) {
-      console.warn('Merch order (with custom_name) failed:', res.error.message, '— retrying without custom_name')
-      res = await supabase.from('merch_interests').upsert({
-        merch_item_id: itemId,
-        size,
-        player_id: parseInt(claimedId),
-      }, { onConflict: 'player_id,merch_item_id' })
+    // Check if player already ordered this item — update if so, insert if not
+    const { data: existing } = await supabase
+      .from('merch_interests')
+      .select('id')
+      .eq('player_id', pid)
+      .eq('merch_item_id', itemId)
+      .limit(1)
+
+    let res
+    if (existing && existing.length > 0) {
+      // Update existing order
+      res = await supabase.from('merch_interests')
+        .update({ size })
+        .eq('id', existing[0].id)
+    } else {
+      // Insert new order
+      res = await supabase.from('merch_interests')
+        .insert({ merch_item_id: itemId, size, player_id: pid })
     }
 
     if (res.error) {
