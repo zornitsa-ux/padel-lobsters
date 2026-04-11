@@ -562,7 +562,7 @@ export default function Tournament({ onNavigate }) {
                         <div className="space-y-2">
                           <input
                             className="input py-2 text-sm w-full"
-                            type="number" min="0" step="0.5"
+                            type="number" min="0" step="0.01"
                             placeholder="€ cost per person for this court"
                             value={c.costPerPerson}
                             onChange={e => setCourt(i, 'costPerPerson', e.target.value)}
@@ -602,7 +602,7 @@ export default function Tournament({ onNavigate }) {
                     All-in amount per player covering courts, food, drinks and prizes.
                   </p>
                   <input
-                    type="number" min="0" step="0.5" className="input"
+                    type="number" min="0" step="0.01" className="input"
                     placeholder="e.g. 35"
                     value={form.pricePerPerson}
                     onChange={e => setForm(f => ({ ...f, pricePerPerson: e.target.value }))}
