@@ -22,13 +22,13 @@ const formatOrderTime = (ts) => {
 }
 
 const getPlayerName = (o, players) => {
-  // Try joined player name first, then match from players list
+  if (!o || !o.player_id) return null
+  // Try joined player name first
   if (o.players?.name) return o.players.name
-  if (o.player_id) {
-    const p = players.find(pl => pl.id === o.player_id || String(pl.id) === String(o.player_id))
-    if (p) return p.name
-  }
-  return null
+  // Match from players list — compare as strings to avoid type mismatch
+  const pid = String(o.player_id)
+  const p = players.find(pl => String(pl.id) === pid)
+  return p ? p.name : null
 }
 
 const emptyItem = {
@@ -360,6 +360,15 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
       return
     }
 
+    // Verify the claimed identity matches a real player
+    const claimedPlayer = players.find(p => String(p.id) === String(claimedId))
+    if (!claimedPlayer) {
+      alert('Could not verify your identity. Please log in again.')
+      clearIdentity()
+      setShowIdentity(true)
+      return
+    }
+
     const item = items.find(i => i.id === itemId)
     const size = selectedSize[itemId] || ''
     const name = (customName[itemId] || '').trim()
@@ -371,7 +380,7 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
     }
     setSizeError(e => ({ ...e, [itemId]: false }))
 
-    const pid = parseInt(claimedId)
+    const pid = claimedPlayer.id  // Use the actual player.id from DB, not parsed string
 
     // Check if player already ordered this item — update if so, insert if not
     const { data: existing } = await supabase
@@ -413,12 +422,16 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
       return
     }
 
+    console.log('Order placed! claimedId:', claimedId, 'pid:', pid, 'itemId:', itemId)
     setOrdered(o => ({ ...o, [itemId]: true }))
     await loadInterests()
+    console.log('After loadInterests, interests count:', interests.length)
   }
 
   // ── Render ───────────────────────────────────────────────────────────────────
-  const myOrders = claimedId ? interests.filter(o => String(o.player_id) === String(claimedId)) : []
+  // Match orders to current player — try both string and number comparison
+  const myPlayer = claimedId ? players.find(p => String(p.id) === String(claimedId)) : null
+  const myOrders = myPlayer ? interests.filter(o => o.player_id === myPlayer.id || String(o.player_id) === String(myPlayer.id)) : []
   const activeOrders = interests.filter(o => (o.status || 'ordered') !== 'cancelled')
 
   // Cancel order modal state
@@ -427,7 +440,7 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
 
   const TABS = [
     { id: 'shop', label: '🛍️ Shop' },
-    ...(!isAdmin && claimedId ? [{ id: 'myorders', label: `📦 My Orders${myOrders.length > 0 ? ` (${myOrders.length})` : ''}` }] : []),
+    ...(!isAdmin && myPlayer ? [{ id: 'myorders', label: `📦 My Orders${myOrders.length > 0 ? ` (${myOrders.length})` : ''}` }] : []),
     ...(isAdmin ? [{ id: 'orders', label: `📋 Orders${activeOrders.length > 0 ? ` (${activeOrders.length})` : ''}` }] : []),
     ...(isAdmin ? [{ id: 'prizes', label: '🎁 Prizes' }] : []),
     ...(isAdmin ? [{ id: 'manage', label: '⚙️ Manage' }] : []),
@@ -901,7 +914,7 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
                       <div className="flex items-start gap-3">
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold text-gray-800">
-                            {playerName?.split(' ')[0] || 'Unknown'}
+                            {playerName?.split(' ')[0] || `Player #${o.player_id}`}
                             <span className="font-normal text-gray-500 ml-1.5 text-xs">{item?.name || '—'}</span>
                           </p>
                           <div className="flex items-center gap-2 mt-0.5">
