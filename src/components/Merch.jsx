@@ -170,7 +170,12 @@ export default function Merch({ tournament, tournaments: allTournaments = [] }) 
 
   // ── Data loading ────────────────────────────────────────────────────────────
   const loadItems = async () => {
-    const { data } = await supabase.from('merch_items').select('*').eq('active', true).order('display_order').order('id')
+    // Try ordering by display_order first; fall back to id if column doesn't exist yet
+    let { data, error } = await supabase.from('merch_items').select('*').eq('active', true).order('display_order').order('id')
+    if (error) {
+      const res = await supabase.from('merch_items').select('*').eq('active', true).order('id')
+      data = res.data
+    }
     if (data) setItems(data)
     setLoading(false)
   }
@@ -257,7 +262,8 @@ export default function Merch({ tournament, tournaments: allTournaments = [] }) 
     } else {
       // New items go to the end of the list
       const maxOrder = items.length > 0 ? Math.max(...items.map(i => i.display_order || 0)) : 0
-      await supabase.from('merch_items').insert({ ...payload, display_order: maxOrder + 1 })
+      const { error } = await supabase.from('merch_items').insert({ ...payload, display_order: maxOrder + 1 })
+      if (error) await supabase.from('merch_items').insert(payload)
     }
     await loadItems()
     setShowForm(false); setSaving(false)
