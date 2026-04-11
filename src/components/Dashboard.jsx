@@ -49,8 +49,18 @@ const GREETINGS_HELLO = [
   (n) => [`¡Vamos, ${n}!`, `Menos bla bla, más padel.`],
 ]
 
+// Launch-day greeting overrides (date string → index into GREETINGS_HELLO)
+const GREETING_OVERRIDES = {
+  '2026-04-11': 6, // "Snap snap, {name}! Let's get on the court."
+  '2026-04-12': 8, // "¡Vamos, {name}! Menos bla bla, más padel."
+}
+
 function getGreeting(name) {
   const first = (name || 'Lobster').split(' ')[0]
+  const today = new Date().toISOString().slice(0, 10)
+  if (GREETING_OVERRIDES[today] !== undefined) {
+    return GREETINGS_HELLO[GREETING_OVERRIDES[today]](first)
+  }
   const dayHash = new Date().getDate() + first.charCodeAt(0)
   return GREETINGS_HELLO[dayHash % GREETINGS_HELLO.length](first)
 }
@@ -248,8 +258,15 @@ export default function Dashboard({ onNavigate }) {
   const [greetHello, greetSub] = getGreeting(claimedPlayer?.name || (isAdmin ? 'Admin' : null))
 
   // Tip of the day — use custom tips from settings or defaults
+  // Launch-day tip overrides (date string → exact tip text)
+  const TIP_OVERRIDES = {
+    '2026-04-11': "Patience wins padel matches. Wait for the right ball to attack — don't force winners.",
+    '2026-04-12': "Always return to the center of your side after every shot — positioning wins more points than power.",
+  }
   const tips = (settings?.padelTips && settings.padelTips.length > 0) ? settings.padelTips : DEFAULT_TIPS
   const todayTip = useMemo(() => {
+    const today = new Date().toISOString().slice(0, 10)
+    if (TIP_OVERRIDES[today]) return TIP_OVERRIDES[today]
     const now = new Date()
     const dayIndex = (now.getFullYear() * 366 + now.getMonth() * 31 + now.getDate()) % tips.length
     return tips[dayIndex]
