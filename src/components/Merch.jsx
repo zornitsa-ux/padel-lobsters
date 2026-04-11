@@ -384,15 +384,15 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
     if (existing && existing.length > 0) {
       // Update existing order
       res = await supabase.from('merch_interests')
-        .update({ size })
+        .update({ size, custom_name: name || '' })
         .eq('id', existing[0].id)
     } else {
       // Insert new order (try with status first, fallback without if v12 not run)
       res = await supabase.from('merch_interests')
-        .insert({ merch_item_id: itemId, size, player_id: pid, status: 'ordered' })
+        .insert({ merch_item_id: itemId, size, player_id: pid, status: 'ordered', custom_name: name || '' })
       if (res.error) {
         res = await supabase.from('merch_interests')
-          .insert({ merch_item_id: itemId, size, player_id: pid })
+          .insert({ merch_item_id: itemId, size, player_id: pid, custom_name: name || '' })
       }
     }
 
@@ -408,7 +408,7 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
 
   // ── Render ───────────────────────────────────────────────────────────────────
   const myOrders = claimedId ? interests.filter(o => String(o.player_id) === String(claimedId)) : []
-  const activeOrders = interests.filter(o => (o.status || 'ordered') !== 'cancelled')
+  const activeOrders = interests.filter(o => (o.status || 'ordered') !== 'cancelled' && getPlayerName(o, players))
 
   // Cancel order modal state
   const [cancelTarget, setCancelTarget] = useState(null)
@@ -585,7 +585,7 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
                 </div>
                 <span className="text-lg font-bold text-lobster-teal flex-shrink-0 ml-2">
                   €{parseFloat(item.price).toFixed(0)}
-                  {(/shirt|tank/i.test(item.name)) && (customName[item.id] || '').trim() && (
+                  {(/shirt/i.test(item.name) && !/tank/i.test(item.name)) && (customName[item.id] || '').trim() && (
                     <span className="text-xs font-semibold text-amber-600 block text-right">+€5 name</span>
                   )}
                 </span>
@@ -618,8 +618,8 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
                 </div>
               )}
 
-              {/* Name on item — only for shirts/tops (+€5) */}
-              {(/shirt/i.test(item.name) || /tank/i.test(item.name)) && (
+              {/* Name on item — only for shirts (+€5), not tank tops */}
+              {(/shirt/i.test(item.name) && !/tank/i.test(item.name)) && (
                 <div>
                   <label className="text-xs font-medium text-gray-500 block mb-1">Name customization <span className="text-amber-600 font-semibold">(+€5)</span></label>
                   <input
@@ -836,12 +836,18 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
                 />
                 <button
                   onClick={async () => {
-                    await supabase.from('merch_interests').update({
+                    const { error } = await supabase.from('merch_interests').update({
                       status: 'cancelled',
                       admin_comment: cancelComment || null,
                       cancelled_at: new Date().toISOString(),
                       paid: false, delivered: false,
                     }).eq('id', cancelTarget.id)
+                    if (error) {
+                      // Fallback: try without status fields (pre-v12)
+                      await supabase.from('merch_interests').update({
+                        paid: false, delivered: false,
+                      }).eq('id', cancelTarget.id)
+                    }
                     setCancelTarget(null); setCancelComment('')
                     await loadInterests()
                   }}
@@ -875,6 +881,10 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
                   const status = o.status || 'ordered'
                   const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.ordered
                   const StatusIcon = cfg.icon
+                  const basePrice = item ? parseFloat(item.price) : 0
+                  const hasCustomName = (o.custom_name || '').trim().length > 0
+                  const isShirt = item && /shirt/i.test(item.name)
+                  const orderPrice = basePrice + (isShirt && hasCustomName ? 5 : 0)
                   return (
                     <div key={o.id} className="card space-y-2">
                       <div className="flex items-start gap-3">
@@ -885,6 +895,8 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
                           </p>
                           <div className="flex items-center gap-2 mt-0.5">
                             {o.size && <span className="text-xs font-bold bg-lobster-cream text-lobster-teal px-2 py-0.5 rounded-full">{o.size}</span>}
+                            {hasCustomName && <span className="text-xs bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full font-medium">"{o.custom_name}"</span>}
+                            <span className="text-xs font-bold text-lobster-teal">€{orderPrice}</span>
                             <span className="text-[11px] text-gray-400">{formatOrderTime(o.created_at)}</span>
                           </div>
                         </div>
@@ -935,13 +947,13 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
               }
 
               {/* Cancelled orders (collapsed) */}
-              {interests.filter(o => o.status === 'cancelled').length > 0 && (
+              {interests.filter(o => o.status === 'cancelled' && getPlayerName(o, players)).length > 0 && (
                 <details className="mt-3">
                   <summary className="text-xs text-gray-400 cursor-pointer font-medium px-1">
-                    {interests.filter(o => o.status === 'cancelled').length} cancelled order{interests.filter(o => o.status === 'cancelled').length > 1 ? 's' : ''}
+                    {interests.filter(o => o.status === 'cancelled' && getPlayerName(o, players)).length} cancelled order{interests.filter(o => o.status === 'cancelled' && getPlayerName(o, players)).length > 1 ? 's' : ''}
                   </summary>
                   <div className="space-y-2 mt-2">
-                    {interests.filter(o => o.status === 'cancelled').map(o => {
+                    {interests.filter(o => o.status === 'cancelled' && getPlayerName(o, players)).map(o => {
                       const playerName = getPlayerName(o, players)
                       const item = items.find(i => i.id === o.merch_item_id)
                       return (
