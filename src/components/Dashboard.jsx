@@ -387,12 +387,12 @@ export default function Dashboard({ onNavigate }) {
           <p className="text-base font-bold text-gray-800">{pastCount}</p>
           <p className="text-[9px] text-gray-400 font-medium">Past</p>
         </button>
-        <button onClick={() => onNavigate('history')} className="bg-white rounded-2xl py-3 shadow-md border border-gray-100 active:scale-[0.95] active:shadow-sm transition-all">
-          <Award size={16} className="text-yellow-500 mx-auto mb-1" />
+        <button onClick={() => onNavigate('history')} className="bg-white rounded-2xl py-2 shadow-md border border-gray-100 active:scale-[0.95] active:shadow-sm transition-all overflow-hidden">
+          <Award size={16} className="text-yellow-500 mx-auto mb-0.5" />
           {lastPodium && lastPodium.length > 0 ? (
-            <div className="px-1">
+            <div className="px-1.5">
               {lastPodium.map((name, i) => (
-                <p key={i} className="text-[9px] font-bold text-gray-700 truncate leading-tight text-left">
+                <p key={i} className="text-[11px] font-bold text-gray-700 truncate leading-snug text-left">
                   {['🥇','🥈','🥉'][i]} {name}
                 </p>
               ))}
