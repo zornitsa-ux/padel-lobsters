@@ -713,8 +713,9 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-gray-800">{item?.name || 'Item'}</p>
-                        <div className="flex items-center gap-2 mt-0.5">
+                        <div className="flex items-center gap-2 flex-wrap mt-0.5">
                           {o.size && <span className="text-xs font-bold bg-lobster-cream text-lobster-teal px-2 py-0.5 rounded-full">{o.size}</span>}
+                          {(o.custom_name || '').trim() && <span className="text-xs bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full font-medium">Name: {o.custom_name}</span>}
                           <span className="text-[11px] text-gray-400">{formatOrderTime(o.created_at)}</span>
                         </div>
                       </div>
