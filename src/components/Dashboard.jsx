@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
-import { Trophy, Users, Calendar, ChevronRight, AlertCircle, Megaphone, TrendingUp, Clock, Flame, Award, Lightbulb, CreditCard, CalendarDays } from 'lucide-react'
+import { supabase } from '../supabase'
+import { Trophy, Users, Calendar, ChevronRight, AlertCircle, Megaphone, TrendingUp, Clock, Flame, Award, Lightbulb, CreditCard, CalendarDays, ShoppingBag } from 'lucide-react'
 import DEFAULT_TIPS from '../data/padelTips'
 
 const CLAW_IMG = '/claws.png'
@@ -94,6 +95,28 @@ export default function Dashboard({ onNavigate }) {
   const claimedPlayer = claimedId ? getPlayerById(claimedId) : null
   const activePlayers = players.filter(p => (p.status || 'active') === 'active')
   const recentUpdates = (updates || []).slice(0, 2)
+
+  // ── Recent merch orders (admin) ──────────────────────────────────────────────
+  const [recentOrders, setRecentOrders] = useState([])
+
+  useEffect(() => {
+    if (!isAdmin) return
+    const loadOrders = async () => {
+      const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+      const { data } = await supabase
+        .from('merch_interests')
+        .select('*, players(name), merch_items(name)')
+        .gte('created_at', since)
+        .order('created_at', { ascending: false })
+        .limit(10)
+      if (data) setRecentOrders(data)
+    }
+    loadOrders()
+    const ch = supabase.channel('dash-merch-orders')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'merch_interests' }, loadOrders)
+      .subscribe()
+    return () => supabase.removeChannel(ch)
+  }, [isAdmin])
 
   const formatUpdateTime = (ts) => {
     if (!ts) return ''
@@ -521,6 +544,43 @@ export default function Dashboard({ onNavigate }) {
           </div>
         )
       })()}
+
+      {/* ── Recent merch orders (admin) ─────────────────────────── */}
+      {isAdmin && recentOrders.length > 0 && (
+        <div className="card border-l-4 border-lobster-teal space-y-2.5">
+          <div className="flex items-center justify-between">
+            <p className="font-bold text-sm text-gray-700 flex items-center gap-1.5">
+              <ShoppingBag size={14} className="text-lobster-teal" /> New Merch Orders
+              <span className="bg-lobster-teal text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{recentOrders.length}</span>
+            </p>
+            <button onClick={() => onNavigate('merch')} className="text-xs text-lobster-teal font-semibold">
+              View all
+            </button>
+          </div>
+          {recentOrders.slice(0, 5).map(o => {
+            const playerName = o.players?.name?.split(' ')[0] || 'Someone'
+            const itemName = o.merch_items?.name || 'item'
+            const ago = formatUpdateTime(o.created_at)
+            return (
+              <div key={o.id} className="flex items-center gap-2 text-sm">
+                <div className="w-7 h-7 rounded-full bg-lobster-cream flex items-center justify-center flex-shrink-0">
+                  <ShoppingBag size={12} className="text-lobster-teal" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-gray-700 truncate">
+                    <span className="font-semibold">{playerName}</span> ordered <span className="font-medium">{itemName}</span>
+                    {o.size && <span className="text-gray-400"> · {o.size}</span>}
+                  </p>
+                </div>
+                <span className="text-xs text-gray-400 flex-shrink-0">{ago}</span>
+              </div>
+            )
+          })}
+          {recentOrders.length > 5 && (
+            <p className="text-xs text-gray-400 text-center">+{recentOrders.length - 5} more this week</p>
+          )}
+        </div>
+      )}
 
       {/* ── Your Stats (personal) ─────────────────────────────── */}
       {myStats && (
