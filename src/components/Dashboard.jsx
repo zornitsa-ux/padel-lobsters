@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext'
 import { supabase } from '../supabase'
 import { Trophy, Users, Calendar, ChevronRight, AlertCircle, Megaphone, TrendingUp, Clock, Flame, Award, Lightbulb, CreditCard, CalendarDays, ShoppingBag } from 'lucide-react'
 import DEFAULT_TIPS from '../data/padelTips'
+import { TOURNAMENTS as LEGACY_TOURNAMENTS } from './History'
 
 const CLAW_IMG = '/claws.png'
 const ClawUp = ({ active }) => (
@@ -167,7 +168,7 @@ export default function Dashboard({ onNavigate }) {
 
   // Community stats
   const upcomingCount = tournaments.filter(t => t.status === 'upcoming' || t.status === 'active').length
-  const pastCount = tournaments.filter(t => t.status === 'completed').length
+  const pastCount = tournaments.filter(t => t.status === 'completed').length + LEGACY_TOURNAMENTS.length
 
   // Top 3 from the last completed tournament
   const lastPodium = useMemo(() => {
