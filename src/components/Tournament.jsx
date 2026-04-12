@@ -25,7 +25,7 @@ const emptyForm = {
 }
 
 export default function Tournament({ onNavigate }) {
-  const { tournaments, addTournament, updateTournament, deleteTournament, isAdmin } = useApp()
+  const { tournaments, addTournament, updateTournament, deleteTournament, isAdmin, getTournamentRegistrations } = useApp()
   const [showForm, setShowForm]       = useState(false)
   const [editId, setEditId]           = useState(null)
   const [form, setForm]               = useState(emptyForm)
@@ -214,12 +214,14 @@ export default function Tournament({ onNavigate }) {
               </div>
 
               {/* Stats row */}
+              {(() => { const regCount = getTournamentRegistrations(t.id).filter(r => r.status === 'registered').length; return (
               <div className={`grid ${isAdmin ? 'grid-cols-4' : 'grid-cols-3'} gap-2 mb-3`}>
-                <InfoChip icon={<Users size={12} />} label={`${t.maxPlayers || '?'} players`} />
+                <InfoChip icon={<Users size={12} />} label={`${regCount}/${t.maxPlayers || '?'} players`} />
                 <InfoChip icon={<MapPin size={12} />} label={`${bookedCount}/${totalCourts} courts`} warn={!allBooked && totalCourts > 0} />
                 <InfoChip icon={<Clock size={12} />} label={t.duration ? `${t.duration}min` : '90min'} />
                 {isAdmin && <InfoChip icon={<Euro size={12} />} label={ppCost > 0 ? `€${ppCost.toFixed(2)}/pp` : 'Free'} />}
               </div>
+              ) })()}
 
               {/* Booking mode badge — admin only */}
               {isAdmin && (
@@ -353,12 +355,14 @@ export default function Tournament({ onNavigate }) {
                         completed
                       </span>
                     </div>
+                    {(() => { const regCount = getTournamentRegistrations(t.id).filter(r => r.status === 'registered').length; return (
                     <div className={`grid ${isAdmin ? 'grid-cols-4' : 'grid-cols-3'} gap-2 mb-3`}>
-                      <InfoChip icon={<Users size={12} />} label={`${t.maxPlayers || '?'} players`} />
+                      <InfoChip icon={<Users size={12} />} label={`${regCount}/${t.maxPlayers || '?'} players`} />
                       <InfoChip icon={<MapPin size={12} />} label={`${bookedCount}/${totalCourts} courts`} />
                       <InfoChip icon={<Clock size={12} />} label={t.duration ? `${t.duration}min` : '90min'} />
                       {isAdmin && <InfoChip icon={<Euro size={12} />} label={ppCost > 0 ? `€${ppCost.toFixed(2)}/pp` : 'Free'} />}
                     </div>
+                    ) })()}
                     <div className="flex gap-2 pt-2 border-t border-gray-100">
                       <button onClick={() => onNavigate('registration', t)} className="flex-1 text-xs font-semibold text-lobster-teal py-2 rounded-xl bg-lobster-cream active:scale-95 transition-all">
                         Registrations

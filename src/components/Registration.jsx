@@ -15,6 +15,9 @@ export default function Registration({ tournament, onNavigate }) {
     isAdmin, claimedId
   } = useApp()
 
+  // Show first name for players, full name for admins
+  const displayName = (p) => isAdmin ? p.name : (p.name || '').split(' ')[0]
+
   const [search, setSearch]         = useState('')
   const [showAdd, setShowAdd]       = useState(false)
   const [selectedPlayer, setSelectedPlayer] = useState('')
@@ -230,7 +233,7 @@ export default function Registration({ tournament, onNavigate }) {
                 }`}>
                   {(p.name || '?')[0]}
                 </div>
-                <span className="flex-1 text-left font-medium text-sm">{p.name}</span>
+                <span className="flex-1 text-left font-medium text-sm">{displayName(p)}</span>
                 <span className={`text-xs font-bold ${selectedPlayer === p.id ? 'text-white' : 'text-gray-500'}`}>
                   Lv {(p.adjustedLevel || 0).toFixed(1)}
                 </span>
@@ -269,7 +272,7 @@ export default function Registration({ tournament, onNavigate }) {
                     {p.name[0]}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm truncate">{p.name}</p>
+                    <p className="font-semibold text-sm truncate">{displayName(p)}</p>
                     <p className="text-xs text-gray-400">Level {(p.adjustedLevel || 0).toFixed(1)}</p>
                   </div>
                   {/* Payment badge: visible to admins only */}
@@ -332,7 +335,7 @@ export default function Registration({ tournament, onNavigate }) {
                     {p.name[0]}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm truncate">{p.name}</p>
+                    <p className="font-semibold text-sm truncate">{displayName(p)}</p>
                     <p className="text-xs text-gray-400">Waitlist position {idx + 1}</p>
                   </div>
                   {isAdmin && (
@@ -605,7 +608,7 @@ export default function Registration({ tournament, onNavigate }) {
                   <div className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 font-bold text-sm flex-shrink-0">
                     {p.name[0]}
                   </div>
-                  <p className="text-sm text-gray-500 line-through">{p.name}</p>
+                  <p className="text-sm text-gray-500 line-through">{displayName(p)}</p>
                 </div>
               )
             })}
@@ -733,7 +736,7 @@ export default function Registration({ tournament, onNavigate }) {
                     {(p.name || '?')[0]}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm text-gray-800">{p.name}</p>
+                    <p className="font-semibold text-sm text-gray-800">{displayName(p)}</p>
                     <p className="text-xs text-gray-500">Lv {(p.adjustedLevel || 0).toFixed(1)}</p>
                   </div>
                   <ArrowRightLeft size={14} className="text-lobster-teal flex-shrink-0" />
