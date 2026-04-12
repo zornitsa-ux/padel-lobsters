@@ -106,19 +106,23 @@ export default function Dashboard({ onNavigate }) {
     const loadNewOrders = async () => {
       const lastChecked = localStorage.getItem(LAST_CHECK_KEY) || new Date(0).toISOString()
       const [ordersRes, itemsRes] = await Promise.all([
-        supabase.from('merch_interests').select('*, players(name)').gte('created_at', lastChecked).order('created_at', { ascending: false }).limit(20),
+        supabase.from('merch_interests').select('*').gte('created_at', lastChecked).order('created_at', { ascending: false }).limit(20),
         supabase.from('merch_items').select('id, name').eq('active', true),
       ])
       const orders = ordersRes.data || []
       const itemMap = Object.fromEntries((itemsRes.data || []).map(i => [i.id, i.name]))
-      setNewOrders(orders.map(o => ({ ...o, itemName: itemMap[o.merch_item_id] || 'item' })))
+      // Match player names from context players array
+      setNewOrders(orders.map(o => {
+        const p = players.find(pl => String(pl.id) === String(o.player_id))
+        return { ...o, playerName: p?.name || null, itemName: itemMap[o.merch_item_id] || 'item' }
+      }))
     }
     loadNewOrders()
     const ch = supabase.channel('dash-merch-orders')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'merch_interests' }, loadNewOrders)
       .subscribe()
     return () => supabase.removeChannel(ch)
-  }, [isAdmin])
+  }, [isAdmin, players])
 
   const dismissMerchOrders = () => {
     localStorage.setItem(LAST_CHECK_KEY, new Date().toISOString())
@@ -576,7 +580,7 @@ export default function Dashboard({ onNavigate }) {
             </div>
           </div>
           {newOrders.slice(0, 5).map(o => {
-            const playerName = o.players?.name?.split(' ')[0] || 'Someone'
+            const playerName = o.playerName?.split(' ')[0] || 'Someone'
             const itemName = o.itemName || 'item'
             const ago = formatUpdateTime(o.created_at)
             return (
