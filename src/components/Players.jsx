@@ -115,12 +115,19 @@ const emptyForm = {
 // Country data and picker imported from ./CountryPicker
 
 // ── Corporate Performance Review generator ───────────────────────────────────
-function corpReview(player, matches = [], registrations = [], tournaments = []) {
+function corpReview(player, matches = [], registrations = [], tournaments = [], aliasMap = {}) {
   const lvl  = player.adjustedLevel || 0
   const name = (player.name || 'Employee').split(' ')[0]
   const pid  = player.id
 
   const spid = String(pid)
+
+  // ── Historical tournament signal (from player_aliases + History.jsx) ─────
+  // Includes Dec 2025, Jan 2026, Mar 2026, Apr 2026 — events that pre-date
+  // the in-app registration flow but are still part of each player's story.
+  const historical = buildHistoricalAppearances(pid, aliasMap || {})
+  const histSummary = summariseAppearances(historical)
+  const hasHistory = historical.length > 0
 
   // ── Compute match stats ──────────────────────────────────────────────────
   const played = matches.filter(m =>
