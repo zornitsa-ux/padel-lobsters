@@ -22,7 +22,7 @@ const LOBBY_PROMPTS = [
 
 export default function Settings() {
   const { settings, saveSettings, isAdmin, claimedId, getPlayerById, updatePlayer, players,
-          loginWithPin, logout } = useApp()
+          loginWithPin, logout, fetchMyProfile } = useApp()
 
   const [form, setForm]           = useState({ whatsappLink: '', adminPin: '1234', groupName: 'Padel Lobsters' })
   // ── Unified Account sign-in state ──────────────────────────
@@ -93,6 +93,25 @@ export default function Settings() {
       }
     }
   }, [myPlayer, claimedId])
+
+  // Securely fetch PII (email / phone / full birthday) via get_my_profile RPC.
+  // Runs after the cached-player effect above, so PII overlays the (eventually
+  // PII-stripped) players_public cache without a flash of empty fields.
+  useEffect(() => {
+    if (!claimedId) return
+    let cancelled = false
+    ;(async () => {
+      const row = await fetchMyProfile()
+      if (cancelled || !row) return
+      setProfileForm(prev => ({
+        ...prev,
+        email:    row.email    ?? prev.email    ?? '',
+        phone:    row.phone    ?? prev.phone    ?? '',
+        birthday: row.birthday ?? prev.birthday ?? '',
+      }))
+    })()
+    return () => { cancelled = true }
+  }, [claimedId, fetchMyProfile])
 
   const handleAvatarChange = (e) => {
     const file = e.target.files?.[0]

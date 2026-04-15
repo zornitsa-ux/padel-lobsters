@@ -391,6 +391,7 @@ export function AppProvider({ children }) {
 
   const clearIdentity = useCallback(() => {
     localStorage.removeItem('lobster_claimed_id')
+    localStorage.removeItem('lobster_session_pin')
     setClaimedId(null)
   }, [])
 
@@ -416,6 +417,9 @@ export function AppProvider({ children }) {
       if (adminErr) console.error('verify_admin_pin error:', adminErr)
       if (isAdminPin === true) {
         setAdminState(true)
+        // Stash the admin PIN so admin-only RPCs (e.g. get_all_players_with_pii)
+        // can be called without a re-prompt. Cleared on logout.
+        localStorage.setItem('lobster_session_admin_pin', pin)
         return { success: true, role: 'admin' }
       }
     } catch (e) {
@@ -429,6 +433,10 @@ export function AppProvider({ children }) {
       if (playerId) {
         const id = String(playerId)
         localStorage.setItem('lobster_claimed_id', id)
+        // Stash the player's PIN so get_my_profile can be called silently on
+        // profile loads. Same trust boundary as claimed_id (device-local,
+        // cleared on logout).
+        localStorage.setItem('lobster_session_pin', pin)
         setClaimedId(id)
         // Return the cached player record if we have it — callers use it for a greeting.
         const player = players.find(p => String(p.id) === id) || null
@@ -441,10 +449,44 @@ export function AppProvider({ children }) {
     return { success: false, error: "That PIN didn't match any Lobster — double-check and try again." }
   }, [players, setAdminState])
 
+  // Fetch the signed-in player's full record (including email / phone / full
+  // birthday) through the secure RPC. Returns null if no PIN is cached or the
+  // RPC call fails. Used by Settings' profile drawer.
+  const fetchMyProfile = useCallback(async () => {
+    const pin = localStorage.getItem('lobster_session_pin')
+    if (!pin) return null
+    try {
+      const { data, error } = await supabase.rpc('get_my_profile', { input_pin: pin })
+      if (error) { console.error('get_my_profile error:', error); return null }
+      // The RPC returns setof players; supabase-js returns an array.
+      const row = Array.isArray(data) ? data[0] : data
+      return row || null
+    } catch (e) {
+      console.error('get_my_profile threw:', e)
+      return null
+    }
+  }, [])
+
+  // Admin-only: fetch all players with full PII via the admin-gated RPC.
+  const fetchAllPlayersWithPii = useCallback(async () => {
+    const adminPin = localStorage.getItem('lobster_session_admin_pin')
+    if (!adminPin) return null
+    try {
+      const { data, error } = await supabase.rpc('get_all_players_with_pii', { admin_pin: adminPin })
+      if (error) { console.error('get_all_players_with_pii error:', error); return null }
+      return Array.isArray(data) ? data : []
+    } catch (e) {
+      console.error('get_all_players_with_pii threw:', e)
+      return null
+    }
+  }, [])
+
   // Full sign-out: drops both admin status and claimed player identity.
   const logout = useCallback(() => {
     setAdminState(false)
     localStorage.removeItem('lobster_claimed_id')
+    localStorage.removeItem('lobster_session_pin')
+    localStorage.removeItem('lobster_session_admin_pin')
     setClaimedId(null)
   }, [setAdminState])
 
@@ -494,7 +536,7 @@ export function AppProvider({ children }) {
       matches: normalisedMatches,
       settings, loading, isAdmin, role,
       setIsAdmin: setAdminState,
-      loginWithPin, logout,
+      loginWithPin, logout, fetchMyProfile, fetchAllPlayersWithPii,
       addPlayer, updatePlayer, deletePlayer, getPlayerById,
       addTournament, updateTournament, deleteTournament,
       registerPlayer, updateRegistration, cancelRegistration, transferRegistration,
