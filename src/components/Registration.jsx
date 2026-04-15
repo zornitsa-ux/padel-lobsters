@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import { SignInBanner } from './AuthGate'
 import { DateTile, AddToCalendarButton } from './CalendarPieces'
+import { fmtEur } from '../lib/format'
 
 export default function Registration({ tournament, onNavigate }) {
   const {
@@ -103,6 +104,25 @@ export default function Registration({ tournament, onNavigate }) {
     closePaymentSheet()
   }
 
+  // ── Auto-mark "Tikkied" when a player taps a Tikkie link ──────────────────
+  // Only upgrades from unpaid → tikkied. Never downgrades someone who already
+  // self-declared "paid" or whom the admin already confirmed — even if they
+  // re-open the Tikkie link (e.g. to check their payment history).
+  const markTikkied = async (regId, currentStatus) => {
+    if (!regId) return
+    if (currentStatus && currentStatus !== 'unpaid') return
+    try {
+      await updateRegistration(regId, {
+        paymentStatus: 'tikkied',
+        paymentMethod: 'tikkie',
+      })
+    } catch (err) {
+      // Non-blocking — the Tikkie link still opens even if the status update
+      // fails. Admin can always fix the status manually.
+      console.warn('markTikkied failed', err)
+    }
+  }
+
   // ── Cancel ────────────────────────────────────────────────────────────────
   const handleCancel = async (reg) => {
     if (!isAdmin) { onNavigate?.('settings'); return }
@@ -142,12 +162,20 @@ export default function Registration({ tournament, onNavigate }) {
     return new Date(d).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
   }
 
-  // Payment status badge helper
+  // Payment status badge helper.
+  // Status values and what they mean to the admin:
+  //   - 'unpaid'                → player hasn't tapped anything yet
+  //   - 'tikkied'               → player tapped the Tikkie link (amber)
+  //   - 'pending_confirmation'  → player self-declared "I've sent payment"
+  //                               (shown as "Paid" — still awaits admin check)
+  //   - 'paid'                  → admin confirmed the bank transfer
+  //   - 'transferred'           → player transferred their spot to someone else
   const PayBadge = ({ reg }) => {
     const ps = reg.paymentStatus
-    if (ps === 'paid')                  return <span className="badge-paid">Paid</span>
+    if (ps === 'paid')                  return <span className="text-xs font-semibold bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Confirmed ✓</span>
     if (ps === 'transferred')           return <span className="text-xs font-semibold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">Transferred</span>
-    if (ps === 'pending_confirmation')  return <span className="text-xs font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">Paid ⏳</span>
+    if (ps === 'pending_confirmation')  return <span className="text-xs font-semibold bg-sky-100 text-sky-700 px-2 py-0.5 rounded-full">Paid</span>
+    if (ps === 'tikkied')               return <span className="text-xs font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">Tikkied</span>
     return <span className="badge-unpaid">Unpaid</span>
   }
 
@@ -306,6 +334,7 @@ export default function Registration({ tournament, onNavigate }) {
                         href={tournament.tikkieLink}
                         target="_blank"
                         rel="noopener noreferrer"
+                        onClick={() => markTikkied(reg.id, reg.paymentStatus)}
                         className="inline-flex items-center gap-1 bg-[#FF6B35] text-white text-xs font-bold px-3 py-1.5 rounded-lg active:scale-95 transition-all flex-shrink-0"
                       >
                         <ExternalLink size={11} /> Tikkie
@@ -645,17 +674,22 @@ export default function Registration({ tournament, onNavigate }) {
             {costPerPlayer > 0 && (
               <div className="bg-lobster-cream rounded-2xl px-4 py-3 flex items-center justify-between">
                 <span className="text-sm text-gray-600">Your share</span>
-                <span className="text-2xl font-bold text-lobster-teal">€{costPerPlayer.toFixed(2)}</span>
+                <span className="text-2xl font-bold text-lobster-teal">{fmtEur(costPerPlayer)}</span>
               </div>
             )}
 
-            {/* Tikkie button(s) — grays out after click */}
+            {/* Tikkie button(s) — grays out after click, and auto-marks the
+                registration as "Tikkied" so admins can see the player started
+                the payment flow even if they never come back to confirm. */}
             {isAdminAll && tournament.tikkieLink && (
               <a
                 href={tournament.tikkieLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={() => setTikkieClicked(true)}
+                onClick={() => {
+                  setTikkieClicked(true)
+                  markTikkied(paymentSheet.regId, paymentSheet.paymentStatus)
+                }}
                 className={`flex items-center justify-center gap-2 w-full text-base font-bold py-3.5 rounded-2xl transition-all ${
                   tikkieClicked
                     ? 'bg-gray-200 text-gray-500 pointer-events-none'
@@ -672,7 +706,10 @@ export default function Registration({ tournament, onNavigate }) {
                 href={c.tikkieLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={() => setTikkieClicked(true)}
+                onClick={() => {
+                  setTikkieClicked(true)
+                  markTikkied(paymentSheet.regId, paymentSheet.paymentStatus)
+                }}
                 className={`flex items-center justify-center gap-2 w-full text-sm font-bold py-3 rounded-2xl transition-all ${
                   tikkieClicked
                     ? 'bg-gray-200 text-gray-500 pointer-events-none'

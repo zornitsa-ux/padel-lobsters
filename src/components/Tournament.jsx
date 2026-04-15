@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import HistoryContent, { TOURNAMENTS as HISTORY_TOURNAMENTS } from './History'
 import { DateTile, AddToCalendarButton } from './CalendarPieces'
+import { fmtEur } from '../lib/format'
 
 const emptyForm = {
   name: '',
@@ -222,7 +223,7 @@ export default function Tournament({ onNavigate }) {
                 <InfoChip icon={<Users size={12} />} label={`${regCount}/${t.maxPlayers || '?'} players`} />
                 <InfoChip icon={<MapPin size={12} />} label={`${bookedCount}/${totalCourts} courts`} warn={!allBooked && totalCourts > 0} />
                 <InfoChip icon={<Clock size={12} />} label={t.duration ? `${t.duration}min` : '90min'} />
-                {isAdmin && <InfoChip icon={<Euro size={12} />} label={ppCost > 0 ? `€${ppCost.toFixed(2)}/pp` : 'Free'} />}
+                {isAdmin && <InfoChip icon={<Euro size={12} />} label={ppCost > 0 ? `${fmtEur(ppCost)}/pp` : 'Free'} />}
               </div>
               ) })()}
 
@@ -239,7 +240,7 @@ export default function Tournament({ onNavigate }) {
                   }
                   {isAdminAll && (t.totalPrice > 0) && (
                     <span className="ml-2 text-xs text-gray-500">
-                      Total €{parseFloat(t.totalPrice).toFixed(2)} incl. courts + food + prizes
+                      Total {fmtEur(t.totalPrice)} incl. courts + food + prizes
                     </span>
                   )}
                 </div>
@@ -261,7 +262,7 @@ export default function Tournament({ onNavigate }) {
                         <span className="text-purple-600 ml-0.5">({c.responsible})</span>
                       )}
                       {isAdmin && !isAdminAll && c.costPerPerson > 0 && (
-                        <span className="text-gray-400 ml-0.5">€{c.costPerPerson}</span>
+                        <span className="text-gray-400 ml-0.5">{fmtEur(c.costPerPerson)}</span>
                       )}
                       {isAdmin && !c.booked && (
                         <button
@@ -361,7 +362,7 @@ export default function Tournament({ onNavigate }) {
                       <InfoChip icon={<Users size={12} />} label={`${regCount}/${t.maxPlayers || '?'} players`} />
                       <InfoChip icon={<MapPin size={12} />} label={`${bookedCount}/${totalCourts} courts`} />
                       <InfoChip icon={<Clock size={12} />} label={t.duration ? `${t.duration}min` : '90min'} />
-                      {isAdmin && <InfoChip icon={<Euro size={12} />} label={ppCost > 0 ? `€${ppCost.toFixed(2)}/pp` : 'Free'} />}
+                      {isAdmin && <InfoChip icon={<Euro size={12} />} label={ppCost > 0 ? `${fmtEur(ppCost)}/pp` : 'Free'} />}
                     </div>
                     ) })()}
                     <div className="flex gap-2 pt-2 border-t border-gray-100">
@@ -614,7 +615,7 @@ export default function Tournament({ onNavigate }) {
                   />
                   {form.pricePerPerson && parseInt(form.maxPlayers) > 0 && (
                     <p className="text-sm font-semibold text-lobster-teal mt-1.5">
-                      {form.maxPlayers} players × €{parseFloat(form.pricePerPerson).toFixed(2)} = €{(parseFloat(form.pricePerPerson) * parseInt(form.maxPlayers)).toFixed(2)}
+                      {form.maxPlayers} players × {fmtEur(form.pricePerPerson)} = {fmtEur((parseFloat(form.pricePerPerson) || 0) * (parseInt(form.maxPlayers) || 0))}
                       <span className="text-xs font-normal text-gray-400"> total</span>
                     </p>
                   )}
@@ -624,7 +625,7 @@ export default function Tournament({ onNavigate }) {
               {form.courtBookingMode === 'player_responsible' && form.courts.length > 0 && (
                 <p className="text-xs text-gray-500">
                   Total per player: <span className="font-semibold text-gray-700">
-                    €{form.courts.reduce((s, c) => s + (parseFloat(c.costPerPerson) || 0), 0).toFixed(2)}
+                    {fmtEur(form.courts.reduce((s, c) => s + (parseFloat(c.costPerPerson) || 0), 0))}
                   </span>
                 </p>
               )}
