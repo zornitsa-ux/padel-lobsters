@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react'
 import { useApp } from '../context/AppContext'
 import { supabase } from '../supabase'
-import { Plus, Pencil, Trash2, X, ChevronDown, ChevronUp, Search, User, Clock, Camera, Briefcase, Trophy, TrendingUp } from 'lucide-react'
+import { Plus, Pencil, Trash2, X, ChevronDown, ChevronUp, Search, User, Clock, Camera, Briefcase, Trophy, TrendingUp, GitMerge } from 'lucide-react'
 // AdminLogin modal replaced by unified sign-in in Settings → Account
 import CountryPicker, { COUNTRIES, countryFlag, FlagImg } from './CountryPicker'
+import PlayerAliasMatcher from './PlayerAliasMatcher'
+import { buildHistoricalAppearances, summariseAppearances } from '../lib/playerHistory'
 
 const LEVEL_COLORS = [
   'bg-gray-200 text-gray-700',
@@ -298,7 +300,7 @@ function PlayerAvatar({ player, size = 'md', className = '' }) {
 }
 
 export default function Players({ onNavigate, focusPlayerId }) {
-  const { players, addPlayer, updatePlayer, deletePlayer, isAdmin, claimedId, matches, registrations, tournaments, regeneratePin, fetchAllPlayersWithPii } = useApp()
+  const { players, addPlayer, updatePlayer, deletePlayer, isAdmin, claimedId, matches, registrations, tournaments, regeneratePin, fetchAllPlayersWithPii, playerAliases } = useApp()
 
   // ── Admin PII overlay ───────────────────────────────────────────────
   // After Phase 3 locks down players.email/phone/birthday from the anon
@@ -366,6 +368,7 @@ export default function Players({ onNavigate, focusPlayerId }) {
   const [pinReveal, setPinReveal]     = useState(null)   // { name, pin } — shown after registration
   const [linkModal, setLinkModal]     = useState(null)   // pending player being linked { pendingPlayer }
   const [linkSearch, setLinkSearch]   = useState('')     // search in link modal
+  const [showAliasMatcher, setShowAliasMatcher] = useState(false) // admin: tag historical names → players
   const fileInputRef = useRef(null)
 
   // Overlay admin PII onto every record up-front so downstream filtering,
@@ -635,10 +638,26 @@ export default function Players({ onNavigate, focusPlayerId }) {
             </span>
           )}
         </h2>
-        <button onClick={openAdd} className="btn-primary py-2 px-4 text-sm flex items-center gap-1.5">
-          <Plus size={16} /> Join
-        </button>
+        <div className="flex items-center gap-2">
+          {isAdmin && (
+            <button
+              onClick={() => setShowAliasMatcher(true)}
+              className="text-xs font-semibold text-lobster-teal border border-lobster-teal/30 bg-lobster-cream px-3 py-2 rounded-xl flex items-center gap-1.5 active:scale-95 transition-all"
+              title="Tag historical names from past tournaments to current players"
+            >
+              <GitMerge size={14} /> Match history
+            </button>
+          )}
+          <button onClick={openAdd} className="btn-primary py-2 px-4 text-sm flex items-center gap-1.5">
+            <Plus size={16} /> Join
+          </button>
+        </div>
       </div>
+
+      {/* Historical-name matcher (admin) */}
+      {showAliasMatcher && (
+        <PlayerAliasMatcher onClose={() => setShowAliasMatcher(false)} />
+      )}
 
       {/* Pending approvals */}
       {isAdmin && pendingPlayers.length > 0 && (
@@ -797,6 +816,15 @@ export default function Players({ onNavigate, focusPlayerId }) {
                   .sort((a, b) => (b.won + b.lost + b.draws) - (a.won + a.lost + a.draws))
                   .slice(0, 5)
 
+                // Historical tournaments (Dec 2025 → Apr 2026, hardcoded in History.jsx).
+                // Linked via the player_aliases table.
+                const historical = buildHistoricalAppearances(p.id, playerAliases || {})
+                const histSummary = summariseAppearances(historical)
+                // Combined headline counts (DB tournaments + historical, deduped on id).
+                const dbIds = new Set(stats.playerTournaments.map(t => t.id))
+                const totalEvents = stats.playerTournaments.length +
+                  historical.filter(h => !dbIds.has(h.id)).length
+
                 return (
                 <div className="mt-3 pt-3 border-t border-gray-100 space-y-3">
 
@@ -883,6 +911,81 @@ export default function Players({ onNavigate, focusPlayerId }) {
                         ))}
                       </div>
                     </div>
+                  )}
+
+                  {/* Historical tournaments — derived from player_aliases + History.jsx */}
+                  {historical.length > 0 && (
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                          Tournament History
+                        </p>
+                        <p className="text-[10px] font-semibold text-gray-500">
+                          {totalEvents} played
+                          {histSummary.played > 0 && ` · ${histSummary.won}W ${histSummary.lost}L · ${histSummary.winRate}%`}
+                        </p>
+                      </div>
+
+                      {/* Medal chips */}
+                      {(histSummary.golds + histSummary.silvers + histSummary.bronzes) > 0 && (
+                        <div className="flex gap-1.5 mb-2">
+                          {histSummary.golds > 0 && (
+                            <span className="text-[11px] bg-yellow-50 border border-yellow-200 text-yellow-700 px-2 py-0.5 rounded-lg font-bold">
+                              🥇 ×{histSummary.golds}
+                            </span>
+                          )}
+                          {histSummary.silvers > 0 && (
+                            <span className="text-[11px] bg-gray-100 border border-gray-200 text-gray-600 px-2 py-0.5 rounded-lg font-bold">
+                              🥈 ×{histSummary.silvers}
+                            </span>
+                          )}
+                          {histSummary.bronzes > 0 && (
+                            <span className="text-[11px] border px-2 py-0.5 rounded-lg font-bold"
+                                  style={{ background: 'rgba(205,127,50,0.10)', borderColor: 'rgba(205,127,50,0.3)', color: '#8B5E3C' }}>
+                              🥉 ×{histSummary.bronzes}
+                            </span>
+                          )}
+                          {histSummary.bestRank && histSummary.bestRank > 3 && (
+                            <span className="text-[11px] bg-gray-50 text-gray-500 px-2 py-0.5 rounded-lg font-semibold">
+                              Best #{histSummary.bestRank}
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Per-tournament rows */}
+                      <div className="space-y-1">
+                        {historical.map(h => {
+                          const medal = h.rank === 1 ? '🥇' : h.rank === 2 ? '🥈' : h.rank === 3 ? '🥉' : `#${h.rank}`
+                          return (
+                            <div key={h.id} className="flex items-center gap-2 text-xs bg-gray-50 rounded-lg px-2.5 py-1.5">
+                              <span className="font-bold text-gray-600 w-7 text-center flex-shrink-0">{medal}</span>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-semibold text-gray-700 truncate">
+                                  {h.name.replace('Lobster Tournament · ', '')}
+                                </p>
+                                <p className="text-[10px] text-gray-400">
+                                  {h.date} · {h.played > 0 ? `${h.won}-${h.lost}${h.draws ? `-${h.draws}` : ''}` : `${h.players} players`}
+                                </p>
+                              </div>
+                              <span className="text-xs font-bold text-lobster-teal flex-shrink-0">
+                                {h.total} pts
+                              </span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Hint when admin sees a player with no aliases linked yet */}
+                  {isAdmin && historical.length === 0 && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setShowAliasMatcher(true) }}
+                      className="text-[11px] text-gray-400 hover:text-lobster-teal flex items-center gap-1 italic"
+                    >
+                      <GitMerge size={11} /> Link this player to past tournaments…
+                    </button>
                   )}
 
                   {/* Admin info */}

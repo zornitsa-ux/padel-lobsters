@@ -11,6 +11,7 @@ export function AppProvider({ children }) {
   const [registrations, setRegistrations] = useState([])
   const [matches, setMatches]           = useState([])
   const [updates, setUpdates]           = useState([])
+  const [playerAliases, setPlayerAliases] = useState({}) // historical_name → player_id (or '__not_in_roster__')
   const [settings, setSettings]         = useState({ whatsappLink: '', adminPin: '1234', groupName: 'Padel Lobsters' })
   const [loading, setLoading]           = useState(true)
   const [isAdmin, setIsAdmin]           = useState(() => localStorage.getItem('lobster_admin') === 'true')
@@ -49,13 +50,31 @@ export function AppProvider({ children }) {
       supabase.channel('reactions-changes')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'update_reactions' }, loadUpdates)
         .subscribe(),
+      supabase.channel('player-aliases-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'player_aliases' }, loadPlayerAliases)
+        .subscribe(),
     ]
     return () => channels.forEach(c => supabase.removeChannel(c))
   }, [])
 
   const loadAll = async () => {
-    await Promise.all([loadPlayers(), loadTournaments(), loadRegistrations(), loadMatches(), loadSettings(), loadUpdates()])
+    await Promise.all([loadPlayers(), loadTournaments(), loadRegistrations(), loadMatches(), loadSettings(), loadUpdates(), loadPlayerAliases()])
     setLoading(false)
+  }
+
+  const loadPlayerAliases = async () => {
+    // Map of historical_name → player_id (or sentinel '__not_in_roster__').
+    // Fails silently if the v16 migration hasn't run yet so the rest of the
+    // app keeps working on a fresh DB.
+    try {
+      const { data, error } = await supabase.from('player_aliases').select('*')
+      if (error) throw error
+      const map = {}
+      ;(data || []).forEach(row => { map[row.historical_name] = row.player_id })
+      setPlayerAliases(map)
+    } catch (e) {
+      // Table not present — historical features just degrade to "no aliases".
+    }
   }
 
   const loadUpdates = async () => {
@@ -528,6 +547,31 @@ export function AppProvider({ children }) {
     await loadUpdates()
   }, [])
 
+  // ── Historical name → player_id alias map ─────────────────
+  const setPlayerAlias = useCallback(async (historicalName, playerId) => {
+    // Upsert. playerId can be a real UUID or the '__not_in_roster__' sentinel.
+    const payload = { historical_name: historicalName, player_id: playerId }
+    const { error } = await supabase.from('player_aliases').upsert(payload, { onConflict: 'historical_name' })
+    if (error) {
+      console.error('setPlayerAlias error:', error)
+      alert('Could not save alias: ' + error.message)
+      return false
+    }
+    setPlayerAliases(m => ({ ...m, [historicalName]: playerId }))
+    return true
+  }, [])
+
+  const removePlayerAlias = useCallback(async (historicalName) => {
+    const { error } = await supabase.from('player_aliases').delete().eq('historical_name', historicalName)
+    if (error) { console.error(error); return false }
+    setPlayerAliases(m => {
+      const next = { ...m }
+      delete next[historicalName]
+      return next
+    })
+    return true
+  }, [])
+
   return (
     <AppContext.Provider value={{
       players: normalisedPlayers,
@@ -545,6 +589,7 @@ export function AppProvider({ children }) {
       saveSettings,
       updates, addUpdate, deleteUpdate, addReaction,
       claimedId, claimIdentity, clearIdentity, regeneratePin,
+      playerAliases, setPlayerAlias, removePlayerAlias,
     }}>
       {children}
     </AppContext.Provider>
