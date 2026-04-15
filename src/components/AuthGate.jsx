@@ -136,11 +136,11 @@ export function PinPrompt({ open, onClose, onSuccess, role = 'player', title, su
 
   if (!open) return null
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e?.preventDefault?.()
     if (busy) return
     setBusy(true)
-    const result = loginWithPin(pin)
+    const result = await loginWithPin(pin)
     if (result.success) {
       // Role mismatch guards.
       if (role === 'admin' && result.role !== 'admin') {

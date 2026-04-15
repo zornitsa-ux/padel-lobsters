@@ -399,32 +399,47 @@ export function AppProvider({ children }) {
   //   1. If it matches the admin PIN → elevate to admin (keeps any existing player identity).
   //   2. Otherwise if it matches any active player's PIN → claim that player identity.
   // Returns { success, role, player?, error }.
-  // This is the "middleware" that the Settings → Account panel calls, and it's the
-  // single source of truth for sign-in across the whole site.
-  const loginWithPin = useCallback((enteredPin) => {
+  //
+  // Phase 2: PIN checking happens server-side via SECURITY DEFINER RPCs
+  // (verify_admin_pin / verify_player_pin). Plaintext PINs never leave the
+  // database. The previous implementation compared PINs against rows we
+  // already had in memory — that only worked because anon could read the
+  // pin column. Once Phase 3 revokes that grant, the old code would break,
+  // so we switch to the RPC path now.
+  const loginWithPin = useCallback(async (enteredPin) => {
     const pin = String(enteredPin || '').trim()
     if (!pin) return { success: false, error: 'Enter your PIN' }
 
-    // Admin PIN wins if it matches (admin is an explicit operator choice).
-    const adminPin = String(settings?.adminPin || '1234')
-    if (pin === adminPin) {
-      setAdminState(true)
-      return { success: true, role: 'admin' }
+    // 1) Try admin first — admin role is a deliberate operator choice.
+    try {
+      const { data: isAdminPin, error: adminErr } = await supabase.rpc('verify_admin_pin', { input_pin: pin })
+      if (adminErr) console.error('verify_admin_pin error:', adminErr)
+      if (isAdminPin === true) {
+        setAdminState(true)
+        return { success: true, role: 'admin' }
+      }
+    } catch (e) {
+      console.error('verify_admin_pin threw:', e)
     }
 
-    // Match against active player PINs.
-    const match = players.find(p =>
-      String(p.pin || '') === pin && (p.status || 'active') === 'active'
-    )
-    if (match) {
-      const id = String(match.id)
-      localStorage.setItem('lobster_claimed_id', id)
-      setClaimedId(id)
-      return { success: true, role: 'player', player: match }
+    // 2) Fall back to player PIN.
+    try {
+      const { data: playerId, error: playerErr } = await supabase.rpc('verify_player_pin', { input_pin: pin })
+      if (playerErr) console.error('verify_player_pin error:', playerErr)
+      if (playerId) {
+        const id = String(playerId)
+        localStorage.setItem('lobster_claimed_id', id)
+        setClaimedId(id)
+        // Return the cached player record if we have it — callers use it for a greeting.
+        const player = players.find(p => String(p.id) === id) || null
+        return { success: true, role: 'player', player }
+      }
+    } catch (e) {
+      console.error('verify_player_pin threw:', e)
     }
 
     return { success: false, error: "That PIN didn't match any Lobster — double-check and try again." }
-  }, [settings?.adminPin, players, setAdminState])
+  }, [players, setAdminState])
 
   // Full sign-out: drops both admin status and claimed player identity.
   const logout = useCallback(() => {

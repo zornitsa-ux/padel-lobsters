@@ -176,7 +176,7 @@ export default function Settings() {
     if (signingIn) return
     setSigningIn(true)
     setSignInError('')
-    const result = loginWithPin(signInPin)
+    const result = await loginWithPin(signInPin)
     if (!result.success) {
       setSignInError(result.error || 'Sign-in failed')
       setSignInPin('')
@@ -199,7 +199,7 @@ export default function Settings() {
     if (adminSigningIn) return
     setAdminSigningIn(true)
     setAdminPinError('')
-    const result = loginWithPin(adminPinInput)
+    const result = await loginWithPin(adminPinInput)
     if (!result.success || result.role !== 'admin') {
       // Don't reveal which kind of failure this was.
       setAdminPinError('Incorrect admin PIN.')
