@@ -6,6 +6,7 @@ import {
   Building2, ShieldCheck, UserCog, Clock, ChevronDown, ChevronUp
 } from 'lucide-react'
 import HistoryContent, { TOURNAMENTS as HISTORY_TOURNAMENTS } from './History'
+import { DateTile, AddToCalendarButton } from './CalendarPieces'
 
 const emptyForm = {
   name: '',
@@ -182,19 +183,18 @@ export default function Tournament({ onNavigate }) {
 
           return (
             <div key={t.id} className="card">
-              {/* Header row */}
+              {/* Header row — date tile is the visual anchor so players can tell
+                  at a glance which event is which. */}
               <div className="flex items-start gap-3 mb-3">
-                <div className="w-12 h-12 bg-lobster-cream rounded-xl flex items-center justify-center flex-shrink-0">
-                  <Trophy size={22} className="text-lobster-teal" />
-                </div>
+                <DateTile date={t.date} size="md" />
                 <div className="flex-1 min-w-0">
                   <h3 className="font-bold text-gray-800 truncate">
                     <button onClick={() => onNavigate('registration', t)} className="hover:text-lobster-teal active:scale-95 transition-all text-left">
                       {t.name}
                     </button>
                   </h3>
-                  <p className="text-xs text-gray-500 flex items-center gap-1">
-                    <Calendar size={11} /> {formatDate(t.date)} {t.time && `· ${t.time}`}
+                  <p className="text-sm font-semibold text-gray-700 flex items-center gap-1 mt-0.5">
+                    <Calendar size={13} /> {formatDate(t.date)}{t.time && <span className="text-gray-500">· {t.time}</span>}
                   </p>
                   {t.location && (
                     <p className="text-xs text-lobster-teal flex items-center gap-1 mt-0.5">
@@ -202,13 +202,18 @@ export default function Tournament({ onNavigate }) {
                     </p>
                   )}
                 </div>
-                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${
-                  t.status === 'completed' ? 'bg-gray-100 text-gray-500'
-                  : t.status === 'active'  ? 'bg-green-100 text-green-700'
-                  : 'bg-blue-100 text-blue-700'
-                }`}>
-                  {t.status}
-                </span>
+                <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                    t.status === 'completed' ? 'bg-gray-100 text-gray-500'
+                    : t.status === 'active'  ? 'bg-green-100 text-green-700'
+                    : 'bg-blue-100 text-blue-700'
+                  }`}>
+                    {t.status}
+                  </span>
+                  {t.status !== 'completed' && (
+                    <AddToCalendarButton tournament={t} variant="icon" />
+                  )}
+                </div>
               </div>
 
               {/* Stats row */}
@@ -331,17 +336,15 @@ export default function Tournament({ onNavigate }) {
                 return (
                   <div key={t.id} className="card opacity-80">
                     <div className="flex items-start gap-3 mb-3">
-                      <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                        <Trophy size={22} className="text-gray-400" />
-                      </div>
+                      <DateTile date={t.date} size="sm" className="grayscale" />
                       <div className="flex-1 min-w-0">
                         <h3 className="font-bold text-gray-700 truncate">
                           <button onClick={() => onNavigate('registration', t)} className="hover:text-lobster-teal active:scale-95 transition-all text-left">
                             {t.name}
                           </button>
                         </h3>
-                        <p className="text-xs text-gray-400 flex items-center gap-1">
-                          <Calendar size={11} /> {formatDate(t.date)} {t.time && `· ${t.time}`}
+                        <p className="text-sm font-semibold text-gray-600 flex items-center gap-1 mt-0.5">
+                          <Calendar size={12} /> {formatDate(t.date)}{t.time && <span className="text-gray-400">· {t.time}</span>}
                         </p>
                         {t.location && (
                           <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">

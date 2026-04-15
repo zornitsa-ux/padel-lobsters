@@ -6,6 +6,7 @@ import {
   UserCog, ArrowRightLeft, Send
 } from 'lucide-react'
 import { SignInBanner } from './AuthGate'
+import { DateTile, AddToCalendarButton } from './CalendarPieces'
 
 export default function Registration({ tournament, onNavigate }) {
   const {
@@ -158,7 +159,21 @@ export default function Registration({ tournament, onNavigate }) {
           <ChevronLeft size={16} /> Events
         </button>
         <h2 className="text-lg font-bold text-gray-800">{tournament.name}</h2>
-        <p className="text-sm text-gray-500">{formatDate(tournament.date)}</p>
+        <div className="mt-2 flex items-center gap-3">
+          <DateTile date={tournament.date} size="md" />
+          <div className="flex-1 min-w-0">
+            <p className="text-base font-semibold text-gray-800 leading-tight">
+              {formatDate(tournament.date)}
+            </p>
+            {tournament.time && (
+              <p className="text-sm text-gray-500 leading-tight mt-0.5">
+                {tournament.time}
+                {tournament.duration ? ` · ${tournament.duration}min` : ''}
+              </p>
+            )}
+          </div>
+          <AddToCalendarButton tournament={tournament} variant="icon" />
+        </div>
       </div>
 
       {/* Summary bar */}
@@ -684,6 +699,13 @@ export default function Registration({ tournament, onNavigate }) {
                 </p>
               </>
             )}
+
+            {/* Add-to-calendar CTA — always visible in the payment sheet so every
+                registrant sees it once, with 24h + 2h reminders baked in. */}
+            <AddToCalendarButton tournament={tournament} />
+            <p className="text-xs text-gray-400 text-center -mt-2">
+              We'll nudge you 24h and 2h before. No notifications from us — it runs from your own calendar.
+            </p>
           </div>
         </div>
       )}
