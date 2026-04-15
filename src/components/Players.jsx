@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react'
 import { useApp } from '../context/AppContext'
 import { supabase } from '../supabase'
 import { Plus, Pencil, Trash2, X, ChevronDown, ChevronUp, Search, User, Clock, Camera, Briefcase, Trophy, TrendingUp } from 'lucide-react'
-import AdminLogin from './AdminLogin'
+// AdminLogin modal replaced by unified sign-in in Settings → Account
 import CountryPicker, { COUNTRIES, countryFlag, FlagImg } from './CountryPicker'
 
 const LEVEL_COLORS = [
@@ -304,7 +304,6 @@ export default function Players({ onNavigate, focusPlayerId }) {
   const [form, setForm]             = useState(emptyForm)
   const [lobbyPrompt, setLobbyPrompt] = useState(randomPrompt)
   const [search, setSearch]         = useState('')
-  const [showLogin, setShowLogin]   = useState(false)
   const [expandedId, setExpandedId] = useState(focusPlayerId || null)
   const focusRef = useRef(null)
 
@@ -395,7 +394,7 @@ export default function Players({ onNavigate, focusPlayerId }) {
   }
 
   const openEdit = (p) => {
-    if (!isAdmin) { setShowLogin(true); return }
+    if (!isAdmin) { onNavigate?.('settings'); return }
     setForm({
       name: p.name || '', email: p.email || '', phone: p.phone || '',
       playtomicLevel: p.playtomicLevel ?? '', adjustment: p.adjustment ?? '0',
@@ -412,7 +411,7 @@ export default function Players({ onNavigate, focusPlayerId }) {
   }
 
   const handleDelete = async (id) => {
-    if (!isAdmin) { setShowLogin(true); return }
+    if (!isAdmin) { onNavigate?.('settings'); return }
     if (!confirm('Remove this player?')) return
     await deletePlayer(id)
   }
@@ -570,8 +569,6 @@ export default function Players({ onNavigate, focusPlayerId }) {
 
   return (
     <div className="space-y-4">
-      {showLogin && <AdminLogin onClose={() => setShowLogin(false)} />}
-
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold text-gray-800">

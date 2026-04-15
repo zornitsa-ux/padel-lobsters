@@ -394,6 +394,48 @@ export function AppProvider({ children }) {
     setClaimedId(null)
   }, [])
 
+  // ── Unified auth middleware ──────────────────────────────
+  // One entry point for authentication. Pass a PIN and we auto-detect:
+  //   1. If it matches the admin PIN → elevate to admin (keeps any existing player identity).
+  //   2. Otherwise if it matches any active player's PIN → claim that player identity.
+  // Returns { success, role, player?, error }.
+  // This is the "middleware" that the Settings → Account panel calls, and it's the
+  // single source of truth for sign-in across the whole site.
+  const loginWithPin = useCallback((enteredPin) => {
+    const pin = String(enteredPin || '').trim()
+    if (!pin) return { success: false, error: 'Enter your PIN' }
+
+    // Admin PIN wins if it matches (admin is an explicit operator choice).
+    const adminPin = String(settings?.adminPin || '1234')
+    if (pin === adminPin) {
+      setAdminState(true)
+      return { success: true, role: 'admin' }
+    }
+
+    // Match against active player PINs.
+    const match = players.find(p =>
+      String(p.pin || '') === pin && (p.status || 'active') === 'active'
+    )
+    if (match) {
+      const id = String(match.id)
+      localStorage.setItem('lobster_claimed_id', id)
+      setClaimedId(id)
+      return { success: true, role: 'player', player: match }
+    }
+
+    return { success: false, error: "That PIN didn't match any Lobster — double-check and try again." }
+  }, [settings?.adminPin, players, setAdminState])
+
+  // Full sign-out: drops both admin status and claimed player identity.
+  const logout = useCallback(() => {
+    setAdminState(false)
+    localStorage.removeItem('lobster_claimed_id')
+    setClaimedId(null)
+  }, [setAdminState])
+
+  // Current role for gates/banners: 'admin' > 'player' > 'guest'.
+  const role = isAdmin ? 'admin' : (claimedId ? 'player' : 'guest')
+
   // ── Updates ──────────────────────────────────────────────
   const addUpdate = useCallback(async (playerId, content) => {
     const { error } = await supabase.from('updates').insert({ player_id: playerId, content })
@@ -435,8 +477,9 @@ export function AppProvider({ children }) {
       tournaments: normalisedTournaments,
       registrations: normalisedRegistrations,
       matches: normalisedMatches,
-      settings, loading, isAdmin,
-      setIsAdmin,
+      settings, loading, isAdmin, role,
+      setIsAdmin: setAdminState,
+      loginWithPin, logout,
       addPlayer, updatePlayer, deletePlayer, getPlayerById,
       addTournament, updateTournament, deleteTournament,
       registerPlayer, updateRegistration, cancelRegistration, transferRegistration,

@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { useApp } from '../context/AppContext'
 import { ChevronLeft, Shuffle, AlertCircle, Trophy, Users } from 'lucide-react'
-import AdminLogin from './AdminLogin'
 
 // ── Smart pairing engine ─────────────────────────────────────────────────────
 
@@ -204,7 +203,6 @@ export default function Schedule({ tournament, onNavigate }) {
   } = useApp()
 
   const [rounds, setRounds]         = useState(4)
-  const [showLogin, setShowLogin]   = useState(false)
   const [generating, setGenerating] = useState(false)
   const [generated, setGenerated]   = useState(null)
   const [saved, setSaved]           = useState(false)
@@ -215,7 +213,7 @@ export default function Schedule({ tournament, onNavigate }) {
 
   // Load saved schedule into edit preview
   const handleEditSchedule = () => {
-    if (!isAdmin) { setShowLogin(true); return }
+    if (!isAdmin) { onNavigate?.('settings'); return }
     setGenerated(savedRounds.map(r => ({
       ...r,
       matches: r.matches.map(m => ({
@@ -346,7 +344,7 @@ export default function Schedule({ tournament, onNavigate }) {
   const [finishing, setFinishing] = useState(false)
 
   const handleFinishTournament = async () => {
-    if (!isAdmin) { setShowLogin(true); return }
+    if (!isAdmin) { onNavigate?.('settings'); return }
     setFinishing(true)
     try {
       await updateTournament(tournament.id, {
@@ -358,7 +356,7 @@ export default function Schedule({ tournament, onNavigate }) {
   }
 
   const handleGenerate = async () => {
-    if (!isAdmin) { setShowLogin(true); return }
+    if (!isAdmin) { onNavigate?.('settings'); return }
     if (registeredPlayers.length < 4) {
       alert('Need at least 4 registered players to generate a schedule.')
       return
@@ -389,7 +387,7 @@ export default function Schedule({ tournament, onNavigate }) {
   }
 
   const handleScoreUpdate = async (matchId, field, value) => {
-    if (!isAdmin) { setShowLogin(true); return }
+    if (!isAdmin) { onNavigate?.('settings'); return }
     await updateMatch(matchId, {
       [field]: parseInt(value) || 0,
       completed: true,
@@ -406,8 +404,6 @@ export default function Schedule({ tournament, onNavigate }) {
 
   return (
     <div className="space-y-4">
-      {showLogin && <AdminLogin onClose={() => setShowLogin(false)} />}
-
       {/* Header */}
       <div>
         <button onClick={() => onNavigate('tournament')} className="flex items-center gap-1 text-lobster-teal text-sm font-semibold mb-2">

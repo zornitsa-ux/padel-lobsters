@@ -5,7 +5,7 @@ import {
   Plus, X, AlertCircle, CheckCircle, Users, ExternalLink,
   UserCog, ArrowRightLeft, Send
 } from 'lucide-react'
-import AdminLogin from './AdminLogin'
+import { SignInBanner } from './AuthGate'
 
 export default function Registration({ tournament, onNavigate }) {
   const {
@@ -21,7 +21,6 @@ export default function Registration({ tournament, onNavigate }) {
   const [search, setSearch]         = useState('')
   const [showAdd, setShowAdd]       = useState(false)
   const [selectedPlayer, setSelectedPlayer] = useState('')
-  const [showLogin, setShowLogin]   = useState(false)
   const [saving, setSaving]         = useState(false)
 
   // Post-registration payment sheet
@@ -105,13 +104,13 @@ export default function Registration({ tournament, onNavigate }) {
 
   // ── Cancel ────────────────────────────────────────────────────────────────
   const handleCancel = async (reg) => {
-    if (!isAdmin) { setShowLogin(true); return }
+    if (!isAdmin) { onNavigate?.('settings'); return }
     if (!confirm(`Cancel ${getPlayer(reg.playerId)?.name}'s registration?`)) return
     await cancelRegistration(reg.id, tournament.id)
   }
 
   const handleMoveToRegistered = async (reg) => {
-    if (!isAdmin) { setShowLogin(true); return }
+    if (!isAdmin) { onNavigate?.('settings'); return }
     await updateRegistration(reg.id, { status: 'registered' })
   }
 
@@ -153,8 +152,6 @@ export default function Registration({ tournament, onNavigate }) {
 
   return (
     <div className="space-y-4">
-      {showLogin && <AdminLogin onClose={() => setShowLogin(false)} />}
-
       {/* Back + header */}
       <div>
         <button onClick={() => onNavigate('tournament')} className="flex items-center gap-1 text-lobster-teal text-sm font-semibold mb-2">

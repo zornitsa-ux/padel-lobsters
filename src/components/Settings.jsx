@@ -6,7 +6,6 @@ import {
   LogOut, LogIn, Shield, Link, Info, Lightbulb, Plus, Trash2, RotateCcw,
   User, TrendingUp, ChevronDown, ChevronUp, Camera
 } from 'lucide-react'
-import AdminLogin from './AdminLogin'
 import CountryPicker, { FlagImg } from './CountryPicker'
 import DEFAULT_TIPS from '../data/padelTips'
 
@@ -22,10 +21,21 @@ const LOBBY_PROMPTS = [
 ]
 
 export default function Settings() {
-  const { settings, saveSettings, isAdmin, setIsAdmin, claimedId, getPlayerById, updatePlayer, players } = useApp()
+  const { settings, saveSettings, isAdmin, claimedId, getPlayerById, updatePlayer, players,
+          loginWithPin, logout } = useApp()
 
   const [form, setForm]           = useState({ whatsappLink: '', adminPin: '1234', groupName: 'Padel Lobsters' })
-  const [showLogin, setShowLogin] = useState(false)
+  // ── Unified Account sign-in state ──────────────────────────
+  // A single PIN field handles BOTH admin + player sign-in via auto-detect.
+  // This replaces the old per-page <AdminLogin> modal scattered across the app.
+  const [signInPin, setSignInPin]     = useState('')
+  const [signInError, setSignInError] = useState('')
+  const [signingIn, setSigningIn]     = useState(false)
+  // Hidden admin-only sign-in (fold-out at the bottom of the page)
+  const [adminPanelOpen, setAdminPanelOpen]   = useState(false)
+  const [adminPinInput, setAdminPinInput]     = useState('')
+  const [adminPinError, setAdminPinError]     = useState('')
+  const [adminSigningIn, setAdminSigningIn]   = useState(false)
   const [showPin, setShowPin]     = useState(false)
   const [saving, setSaving]       = useState(false)
   const [saved, setSaved]         = useState(false)
@@ -156,9 +166,54 @@ export default function Settings() {
   const activeTips = tips || DEFAULT_TIPS
   const isCustom = tips !== null
 
+  // ── Player sign-in handler (player PINs only) ─────────────────────────
+  // Admin login is intentionally NOT exposed in this field — see the
+  // discrete fold-out at the bottom of the page (Group Owner Access).
+  // This keeps the UI focused for the 99% case (a player verifying their
+  // identity) and avoids giving away the admin entry point.
+  const handleSignIn = async (e) => {
+    e?.preventDefault?.()
+    if (signingIn) return
+    setSigningIn(true)
+    setSignInError('')
+    const result = loginWithPin(signInPin)
+    if (!result.success) {
+      setSignInError(result.error || 'Sign-in failed')
+      setSignInPin('')
+    } else if (result.role === 'admin') {
+      // If somebody happens to type the admin PIN in the player field,
+      // treat it as wrong — we don't want to encourage that behaviour and
+      // we don't want to surface the admin role here.
+      logout()
+      setSignInError("That PIN didn't match any Lobster — double-check and try again.")
+      setSignInPin('')
+    } else {
+      setSignInPin('')
+    }
+    setSigningIn(false)
+  }
+
+  // ── Admin sign-in handler (fold-out) ──────────────────────────────────
+  const handleAdminSignIn = async (e) => {
+    e?.preventDefault?.()
+    if (adminSigningIn) return
+    setAdminSigningIn(true)
+    setAdminPinError('')
+    const result = loginWithPin(adminPinInput)
+    if (!result.success || result.role !== 'admin') {
+      // Don't reveal which kind of failure this was.
+      setAdminPinError('Incorrect admin PIN.')
+      setAdminPinInput('')
+    } else {
+      setAdminPinInput('')
+      setAdminPanelOpen(false)
+    }
+    setAdminSigningIn(false)
+  }
+
   const handleSave = async (e) => {
     e.preventDefault()
-    if (!isAdmin) { setShowLogin(true); return }
+    if (!isAdmin) return // admin-only form is hidden when not admin
     setSaving(true)
     try {
       await saveSettings({ ...form, padelTips: tips })
@@ -197,10 +252,11 @@ export default function Settings() {
     setTips(null)
   }
 
+  // Active sign-in session — used by the Account card.
+  const signedInPlayer = claimedId ? getPlayerById(claimedId) : null
+
   return (
     <div className="space-y-5">
-      {showLogin && <AdminLogin onClose={() => setShowLogin(false)} />}
-
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 bg-lobster-teal rounded-xl flex items-center justify-center">
@@ -212,31 +268,102 @@ export default function Settings() {
         </div>
       </div>
 
-      {/* Admin status banner */}
-      <div className={`rounded-xl p-3 flex items-center gap-3 ${isAdmin ? 'bg-green-50 border border-green-200' : 'bg-gray-50 border border-gray-200'}`}>
-        <Shield size={18} className={isAdmin ? 'text-green-600' : 'text-gray-400'} />
-        <div className="flex-1">
-          <p className={`text-sm font-semibold ${isAdmin ? 'text-green-700' : 'text-gray-600'}`}>
-            {isAdmin ? 'Admin mode active' : 'Viewing as Player'}
-          </p>
-          <p className="text-xs text-gray-500">
-            {isAdmin ? 'You can edit all settings and data' : 'Log in as admin to edit settings'}
-          </p>
+      {/*
+        ── Account (unified sign-in) ───────────────────────────────────
+        Single card: one PIN field handles both player and admin sign-in.
+        After sign-in the session persists across every page — no more
+        per-action login prompts on Merch / Updates / Tournament / etc.
+      */}
+      <div className="card space-y-3">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-lobster-teal/10 rounded-lg flex items-center justify-center">
+            {isAdmin ? <Shield size={16} className="text-lobster-teal" /> :
+             signedInPlayer ? <User size={16} className="text-lobster-teal" /> :
+                              <LogIn size={16} className="text-lobster-teal" />}
+          </div>
+          <div>
+            <h3 className="font-bold text-gray-700 text-sm">Account</h3>
+            <p className="text-[11px] text-gray-400">One sign-in, works across the whole site</p>
+          </div>
         </div>
+
         {isAdmin ? (
-          <button
-            onClick={() => setIsAdmin(false)}
-            className="flex items-center gap-1 text-xs text-red-500 font-semibold bg-red-50 px-3 py-1.5 rounded-lg"
-          >
-            <LogOut size={12} /> Exit
-          </button>
+          // ── Signed in as admin ──────────────────────────────────
+          <div className="rounded-xl border border-green-200 bg-green-50 p-3 flex items-center gap-3">
+            <Shield size={18} className="text-green-600 flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-green-700">Admin mode active 🛡️</p>
+              <p className="text-xs text-gray-500">
+                {signedInPlayer ? `Also signed in as ${signedInPlayer.name.split(' ')[0]}` : 'You can edit all data'}
+              </p>
+            </div>
+            <button
+              onClick={logout}
+              className="flex items-center gap-1 text-xs text-red-500 font-semibold bg-red-50 px-3 py-1.5 rounded-lg active:scale-95 transition-all"
+            >
+              <LogOut size={12} /> Sign out
+            </button>
+          </div>
+        ) : signedInPlayer ? (
+          // ── Signed in as player ─────────────────────────────────
+          <div className="rounded-xl border border-lobster-teal/30 bg-lobster-cream p-3 flex items-center gap-3">
+            {signedInPlayer.avatarUrl ? (
+              <img src={signedInPlayer.avatarUrl} alt={signedInPlayer.name}
+                   className="w-9 h-9 rounded-full object-cover flex-shrink-0 border border-white" />
+            ) : (
+              <div className="w-9 h-9 bg-lobster-teal rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                {signedInPlayer.name[0].toUpperCase()}
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-gray-800 truncate">
+                Signed in as {signedInPlayer.name} <span className="text-lobster-teal text-xs">✓</span>
+              </p>
+              <p className="text-xs text-gray-500">You can post updates, place orders, and react anywhere on the site.</p>
+            </div>
+            <button
+              onClick={logout}
+              className="flex items-center gap-1 text-xs text-red-500 font-semibold bg-white px-3 py-1.5 rounded-lg active:scale-95 transition-all"
+            >
+              <LogOut size={12} /> Sign out
+            </button>
+          </div>
         ) : (
-          <button
-            onClick={() => setShowLogin(true)}
-            className="flex items-center gap-1 text-xs text-lobster-teal font-semibold bg-lobster-cream px-3 py-1.5 rounded-lg"
-          >
-            <LogIn size={12} /> Login
-          </button>
+          // ── Guest — player PIN sign-in ──────────────────────────
+          <form onSubmit={handleSignIn} className="space-y-3">
+            <div className="text-center py-2">
+              <div className="text-3xl mb-1">🦞</div>
+              <p className="text-sm font-semibold text-gray-800">Enter your 4-digit Lobster PIN</p>
+              <p className="text-[11px] text-gray-500 mt-0.5">
+                It's the code you got via WhatsApp when you joined the crew.
+              </p>
+            </div>
+            <input
+              type="password"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={8}
+              placeholder="• • • •"
+              className="input text-center text-2xl tracking-[0.5em] font-bold"
+              value={signInPin}
+              onChange={e => { setSignInPin(e.target.value.replace(/\D/g, '').slice(0, 8)); setSignInError('') }}
+              autoFocus
+            />
+            {signInError && (
+              <p className="text-xs text-red-500 text-center font-medium">{signInError}</p>
+            )}
+            <button
+              type="submit"
+              disabled={signingIn || signInPin.length < 4}
+              className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-40"
+            >
+              <LogIn size={14} />
+              {signingIn ? 'Signing in…' : 'Sign in'}
+            </button>
+            <p className="text-[11px] text-gray-400 text-center">
+              Lost your PIN? Ask an admin to resend it from the Players page.
+            </p>
+          </form>
         )}
       </div>
 
@@ -692,6 +819,51 @@ export default function Settings() {
         <p className="text-xs text-gray-400">Tournament Manager · v1.0</p>
         <p className="text-xs text-gray-300 mt-2">Made with 🦞 for the crew</p>
       </div>
+
+      {/* ── Group Owner Access (discrete admin fold-out) ─────────────────
+          Hidden by default — only group owners know to look for this.
+          Players never need to interact with this section. */}
+      {!isAdmin && (
+        <div className="pt-2">
+          <button
+            type="button"
+            onClick={() => setAdminPanelOpen(o => !o)}
+            className="w-full text-[11px] text-gray-300 hover:text-gray-500 transition-colors flex items-center justify-center gap-1.5 py-2"
+          >
+            <Lock size={10} className="opacity-60" />
+            Group owner access
+            {adminPanelOpen ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
+          </button>
+          {adminPanelOpen && (
+            <form onSubmit={handleAdminSignIn} className="card space-y-3 mt-1 border border-gray-100">
+              <p className="text-[11px] text-gray-400 text-center">
+                Enter the group owner PIN to manage events, players, and settings.
+              </p>
+              <input
+                type="password"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={8}
+                placeholder="• • • •"
+                className="input text-center text-lg tracking-[0.4em] font-bold"
+                value={adminPinInput}
+                onChange={e => { setAdminPinInput(e.target.value.replace(/\D/g, '').slice(0, 8)); setAdminPinError('') }}
+                autoFocus
+              />
+              {adminPinError && (
+                <p className="text-xs text-red-500 text-center font-medium">{adminPinError}</p>
+              )}
+              <button
+                type="submit"
+                disabled={adminSigningIn || adminPinInput.length < 4}
+                className="w-full text-xs font-semibold text-white bg-gray-700 py-2 rounded-xl active:scale-95 transition-all disabled:opacity-40"
+              >
+                {adminSigningIn ? 'Checking…' : 'Unlock owner mode'}
+              </button>
+            </form>
+          )}
+        </div>
+      )}
     </div>
   )
 }

@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import { useApp } from '../context/AppContext'
 import { ChevronLeft, CheckCircle, AlertCircle, ExternalLink, UserCog, ShieldCheck } from 'lucide-react'
-import AdminLogin from './AdminLogin'
 
 const METHODS = [
   { value: 'tikkie',    label: 'Tikkie' },
@@ -10,7 +9,6 @@ const METHODS = [
 
 export default function Payments({ tournament, onNavigate }) {
   const { players, getTournamentRegistrations, updateRegistration, isAdmin } = useApp()
-  const [showLogin, setShowLogin] = useState(false)
   const [filter, setFilter]       = useState('all')
 
   if (!tournament) {
@@ -44,12 +42,12 @@ export default function Payments({ tournament, onNavigate }) {
   const getPlayer = (id) => players.find(p => p.id === id)
 
   const handleMarkPaid = async (reg, method) => {
-    if (!isAdmin) { setShowLogin(true); return }
+    if (!isAdmin) { onNavigate?.('settings'); return }
     await updateRegistration(reg.id, { paymentStatus: 'paid', paymentMethod: method })
   }
 
   const handleMarkUnpaid = async (reg) => {
-    if (!isAdmin) { setShowLogin(true); return }
+    if (!isAdmin) { onNavigate?.('settings'); return }
     await updateRegistration(reg.id, { paymentStatus: 'unpaid', paymentMethod: '' })
   }
 
@@ -60,8 +58,6 @@ export default function Payments({ tournament, onNavigate }) {
 
   return (
     <div className="space-y-4">
-      {showLogin && <AdminLogin onClose={() => setShowLogin(false)} />}
-
       {/* Back */}
       <div>
         <button onClick={() => onNavigate('tournament')} className="flex items-center gap-1 text-lob-teal text-sm font-semibold mb-2">

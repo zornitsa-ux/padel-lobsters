@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useApp } from '../context/AppContext'
 import { supabase } from '../supabase'
-import { Plus, X, Pencil, ShoppingBag, Gift, Shuffle, Upload, Check, ShoppingCart, User, GripVertical, Ban, Clock, Package, CreditCard, MessageSquare } from 'lucide-react'
+import { Plus, X, Pencil, ShoppingBag, Gift, Shuffle, Upload, Check, ShoppingCart, User, GripVertical, Ban, Clock, Package, CreditCard, MessageSquare, LogIn } from 'lucide-react'
+import { SignInBanner, useAuthPrompt } from './AuthGate'
 
 const SIZES_APPAREL  = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
 const SIZES_SOCKS    = ['S (35-38)', 'M (39-42)', 'L (43-46)']
@@ -172,19 +173,18 @@ function Lightbox({ images, startIndex = 0, onClose }) {
 }
 
 // ── Main Merch component ──────────────────────────────────────────────────────
-export default function Merch({ tournament, tournaments: allTournaments = [], initialTab }) {
-  const { players, registrations, isAdmin, tournaments: contextTournaments = [], claimedId, claimIdentity, clearIdentity } = useApp()
+export default function Merch({ tournament, tournaments: allTournaments = [], initialTab, onNavigate }) {
+  const { players, registrations, isAdmin, tournaments: contextTournaments = [], claimedId } = useApp()
   const tournaments = allTournaments.length > 0 ? allTournaments : contextTournaments
   const [tab, setTab]             = useState(initialTab || 'shop')
   useEffect(() => { if (initialTab) setTab(initialTab) }, [initialTab])
   const [items, setItems]         = useState([])
   const [interests, setInterests] = useState([])
   const [loading, setLoading]     = useState(true)
-  const [showIdentity, setShowIdentity] = useState(false)
-  const [pinTarget, setPinTarget]       = useState(null)
-  const [pinInput, setPinInput]         = useState('')
-  const [pinError, setPinError]         = useState('')
-  const [playerSearch, setPlayerSearch] = useState('')
+  // Identity is managed in Settings → Account, but for friction-free ordering
+  // we also pop a PIN prompt right where the player tapped.
+  const { requireAuth, AuthPromptModal } = useAuthPrompt({ onNavigate })
+  const goToSignIn = () => onNavigate?.('settings')
   const [showForm, setShowForm]   = useState(false)
   const [editItem, setEditItem]   = useState(null)
   const [form, setForm]           = useState(emptyItem)
@@ -354,18 +354,20 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
   const orderCount = (itemId) => interests.filter(i => i.merch_item_id === itemId).length
 
   const placeOrder = async (itemId) => {
-    // Must be logged in to place an order
+    // If the player isn't signed in yet, pop the inline PIN prompt and
+    // re-run the order on success — no navigation away from the shop.
     if (!claimedId) {
-      setShowIdentity(true)
+      requireAuth('player', () => placeOrder(itemId), {
+        subtitle: 'Enter your PIN to place this order.',
+      })
       return
     }
 
-    // Verify the claimed identity matches a real player
+    // Verify the claimed identity still maps to a real player.
     const claimedPlayer = players.find(p => String(p.id) === String(claimedId))
     if (!claimedPlayer) {
-      alert('Could not verify your identity. Please log in again.')
-      clearIdentity()
-      setShowIdentity(true)
+      alert('Your session looks stale — please sign in again from Settings → Account.')
+      goToSignIn()
       return
     }
 
@@ -448,88 +450,8 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
 
   return (
     <div className="space-y-4">
-      {/* ── Player identity picker ── */}
-      {showIdentity && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center">
-          <div className="bg-white rounded-t-3xl w-full max-w-md p-5 space-y-3">
-            <div className="flex items-center justify-between mb-1">
-              <h3 className="font-bold text-gray-800">
-                {pinTarget ? `Enter PIN for ${pinTarget.name.split(' ')[0]}` : 'Who are you?'}
-              </h3>
-              <button onClick={() => { setShowIdentity(false); setPinTarget(null); setPinError(''); setPlayerSearch('') }}>
-                <X size={22} className="text-gray-400" />
-              </button>
-            </div>
-
-            {!pinTarget ? (
-              <>
-                <p className="text-xs text-gray-400">Select your name to place orders — you'll enter your PIN once to confirm.</p>
-                <input
-                  type="text"
-                  placeholder="🔍 Search your name…"
-                  value={playerSearch}
-                  onChange={e => setPlayerSearch(e.target.value)}
-                  className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-lobster-teal focus:ring-1 focus:ring-lobster-teal"
-                  autoFocus
-                />
-                <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {players.filter(p => (p.status || 'active') === 'active').filter(p => p.name.toLowerCase().includes(playerSearch.toLowerCase())).map(p => (
-                    <button
-                      key={p.id}
-                      onClick={() => { setPinTarget(p); setPinInput(''); setPinError('') }}
-                      className={`w-full flex items-center gap-3 p-3 rounded-2xl transition-all active:scale-[0.98] ${
-                        String(claimedId) === String(p.id)
-                          ? 'bg-lobster-teal/10 border-2 border-lobster-teal'
-                          : 'bg-gray-50 border-2 border-transparent'
-                      }`}
-                    >
-                      <div className="w-9 h-9 bg-lobster-teal rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                        {p.name[0].toUpperCase()}
-                      </div>
-                      <span className="font-semibold text-gray-800 text-sm">{p.name}</span>
-                    </button>
-                  ))}
-                </div>
-              </>
-            ) : (
-              <div className="space-y-4">
-                <p className="text-xs text-gray-500">Enter your 4-digit PIN to verify. Ask the admin if you don't have it.</p>
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  maxLength={4}
-                  placeholder="• • • •"
-                  className="input text-center text-2xl tracking-[0.5em] font-bold"
-                  value={pinInput}
-                  onChange={e => { setPinInput(e.target.value.slice(0, 4)); setPinError('') }}
-                  autoFocus
-                />
-                {pinError && <p className="text-xs text-red-500 text-center font-medium">{pinError}</p>}
-                <button
-                  onClick={() => {
-                    const result = claimIdentity(pinTarget.id, pinInput, players)
-                    if (result.success) {
-                      setPinTarget(null); setPinInput(''); setPinError('')
-                      setShowIdentity(false)
-                    } else {
-                      setPinError(result.error); setPinInput('')
-                    }
-                  }}
-                  disabled={pinInput.length !== 4}
-                  className="btn-primary w-full disabled:opacity-40"
-                >
-                  Confirm — I'm {pinTarget.name.split(' ')[0]}
-                </button>
-                <button onClick={() => { setPinTarget(null); setPinError(''); setPlayerSearch('') }}
-                  className="w-full text-xs text-gray-400 py-1">
-                  ← Back to player list
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      <AuthPromptModal />
+      {/* Identity is now handled entirely in Settings → Account. */}
 
       {/* Lightbox */}
       {lightbox && (
@@ -557,14 +479,14 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
         <div className="space-y-3">
           <p className="text-xs text-gray-500">Place an order — the organizers will see what you need and get in touch. Prices include shipping.</p>
 
-          {/* Identity notice */}
+          {/* Identity notice — deep-links to Settings → Account */}
           {!claimedId && (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center gap-2">
-              <User size={14} className="text-amber-500 flex-shrink-0" />
-              <p className="text-xs text-amber-700">
-                You need to <button onClick={() => setShowIdentity(true)} className="font-bold underline">verify your identity</button> before you can place orders.
-              </p>
-            </div>
+            <SignInBanner
+              role="player"
+              onNavigate={onNavigate}
+              compact
+              message="Sign in from Settings → Account before you can place orders."
+            />
           )}
 
           {loading && <p className="text-center text-gray-400 py-8 text-sm">Loading…</p>}

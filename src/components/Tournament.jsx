@@ -5,7 +5,6 @@ import {
   MapPin, Calendar, Users, Euro, CheckCircle, Circle,
   Building2, ShieldCheck, UserCog, Clock, ChevronDown, ChevronUp
 } from 'lucide-react'
-import AdminLogin from './AdminLogin'
 import HistoryContent, { TOURNAMENTS as HISTORY_TOURNAMENTS } from './History'
 
 const emptyForm = {
@@ -30,7 +29,6 @@ export default function Tournament({ onNavigate }) {
   const [editId, setEditId]           = useState(null)
   const [form, setForm]               = useState(emptyForm)
   const [saving, setSaving]           = useState(false)
-  const [showLogin, setShowLogin]     = useState(false)
   const [showHistory, setShowHistory] = useState(false)
 
   // Parse ISO date-only strings ("YYYY-MM-DD") as LOCAL midnight to avoid UTC-offset misclassification
@@ -54,12 +52,12 @@ export default function Tournament({ onNavigate }) {
   })
 
   const openAdd = () => {
-    if (!isAdmin) { setShowLogin(true); return }
+    if (!isAdmin) { onNavigate?.('settings'); return }
     setForm(emptyForm); setEditId(null); setShowForm(true)
   }
 
   const openEdit = (t) => {
-    if (!isAdmin) { setShowLogin(true); return }
+    if (!isAdmin) { onNavigate?.('settings'); return }
     setForm({
       name:             t.name             || '',
       date:             t.date             || '',
@@ -83,7 +81,7 @@ export default function Tournament({ onNavigate }) {
   }
 
   const handleDelete = async (id) => {
-    if (!isAdmin) { setShowLogin(true); return }
+    if (!isAdmin) { onNavigate?.('settings'); return }
     if (!confirm('Delete this event?')) return
     await deleteTournament(id)
   }
@@ -157,13 +155,13 @@ export default function Tournament({ onNavigate }) {
 
   return (
     <div className="space-y-4">
-      {showLogin && <AdminLogin onClose={() => setShowLogin(false)} />}
-
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold text-gray-800">Events ({tournaments.length})</h2>
-        <button onClick={openAdd} className="btn-primary py-2 px-4 text-sm flex items-center gap-1.5">
-          <Plus size={16} /> New
-        </button>
+        {isAdmin && (
+          <button onClick={openAdd} className="btn-primary py-2 px-4 text-sm flex items-center gap-1.5">
+            <Plus size={16} /> New
+          </button>
+        )}
       </div>
 
       {/* Upcoming events */}

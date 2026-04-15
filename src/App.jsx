@@ -52,9 +52,9 @@ function Inner() {
     payments:     <Payments tournament={selectedTournament} onNavigate={navigate} />,
     schedule:     <Schedule tournament={selectedTournament} onNavigate={navigate} />,
     scores:       <Scores tournament={selectedTournament} onNavigate={navigate} />,
-    updates:      <Updates />,
-    merch:        <Merch tournament={selectedTournament} initialTab={merchTab} />,
-    settings:     <Settings />,
+    updates:      <Updates onNavigate={navigate} />,
+    merch:        <Merch tournament={selectedTournament} initialTab={merchTab} onNavigate={navigate} />,
+    settings:     <Settings onNavigate={navigate} />,
     history:      <History onNavigate={navigate} />,
     game:         <Game tournament={selectedTournament} onNavigate={navigate} />,
   }

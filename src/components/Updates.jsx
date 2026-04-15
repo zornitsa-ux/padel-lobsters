@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
-import { Plus, X, Trash2 } from 'lucide-react'
+import { Plus, X, Trash2, LogIn } from 'lucide-react'
+import { SignInBanner, useAuthPrompt } from './AuthGate'
 
 // 🦞 Claw image buttons — transparent PNG, no background tricks needed
 const CLAW_IMG = '/claws.png'
@@ -43,19 +44,17 @@ const ClawDown = ({ active, size = 34 }) => (
   />
 )
 
-export default function Updates() {
-  const { updates, players, addUpdate, deleteUpdate, addReaction, isAdmin, claimedId, claimIdentity, clearIdentity } = useApp()
+export default function Updates({ onNavigate }) {
+  const { updates, players, addUpdate, deleteUpdate, addReaction, isAdmin, claimedId } = useApp()
   const [showForm, setShowForm]         = useState(false)
-  const [postAs, setPostAs]             = useState('')
   const [content, setContent]           = useState('')
   const [posting, setPosting]           = useState(false)
-  const [showIdentity, setShowIdentity] = useState(false)
-  const [pickFor, setPickFor]           = useState(null)   // { updateId, type } — pending reaction
-  // PIN verification state
-  const [pinTarget, setPinTarget]       = useState(null)   // player to verify
-  const [pinInput, setPinInput]         = useState('')
-  const [pinError, setPinError]         = useState('')
-  const [playerSearch, setPlayerSearch] = useState('')
+
+  // Identity is managed in Settings → Account, but for friction-free posting
+  // we also pop a PIN prompt right where the player tapped. Either path lands
+  // them in the same persistent session.
+  const { requireAuth, AuthPromptModal } = useAuthPrompt({ onNavigate })
+  const goToSignIn = () => onNavigate?.('settings')
 
   const activePlayers = players.filter(p => (p.status || 'active') === 'active')
   const myPlayer = activePlayers.find(p => String(p.id) === String(claimedId))
@@ -81,36 +80,17 @@ export default function Updates() {
   }
 
   const handleReact = (updateId, type) => {
-    if (!claimedId) {
-      setPickFor({ updateId, type })
-      setShowIdentity(true)
-      return
-    }
-    addReaction(updateId, claimedId, type)
+    requireAuth('player', () => {
+      // Re-read claimedId from localStorage in case sign-in just happened
+      const cid = claimedId || localStorage.getItem('lobster_claimed_id')
+      if (cid) addReaction(updateId, cid, type)
+    }, { subtitle: 'Enter your PIN to react to this update.' })
   }
 
-  // Called when user taps a player in the identity picker
-  const startPinVerification = (player) => {
-    setPinTarget(player)
-    setPinInput('')
-    setPinError('')
-  }
-
-  const confirmPin = () => {
-    const result = claimIdentity(pinTarget.id, pinInput, players)
-    if (result.success) {
-      setPinTarget(null)
-      setPinInput('')
-      setPinError('')
-      setShowIdentity(false)
-      if (pickFor) {
-        addReaction(pickFor.updateId, pinTarget.id, pickFor.type)
-        setPickFor(null)
-      }
-    } else {
-      setPinError(result.error)
-      setPinInput('')
-    }
+  const handleOpenPost = () => {
+    requireAuth('player', () => setShowForm(true), {
+      subtitle: 'Enter your PIN to post an update.',
+    })
   }
 
   const getReactions = (update, type) =>
@@ -121,30 +101,38 @@ export default function Updates() {
 
   return (
     <div className="space-y-4">
+      <AuthPromptModal />
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold text-gray-800">Updates</h2>
         <button
-          onClick={() => setShowForm(true)}
+          onClick={handleOpenPost}
           className="btn-primary py-2 px-4 text-sm flex items-center gap-1.5"
         >
           <Plus size={16} /> Post
         </button>
       </div>
 
-      {/* Identity pill */}
-      <button
-        onClick={() => { setShowIdentity(true); setPickFor(null) }}
-        className="w-full flex items-center gap-2 bg-white rounded-2xl px-4 py-2.5 border border-gray-100 shadow-sm active:scale-[0.98] transition-all"
-      >
-        <span className="text-lg">🦞</span>
-        <span className="text-sm text-gray-600 flex-1 text-left">
-          {myPlayer
-            ? <><span className="font-semibold text-gray-800">{myPlayer.name}</span> <span className="text-gray-400 text-xs">✓ verified — tap to change</span></>
-            : <span className="text-gray-400">Tap to verify your identity</span>
-          }
-        </span>
-      </button>
+      {/* Identity pill — now a status indicator + deep-link to Settings */}
+      {myPlayer ? (
+        <button
+          onClick={goToSignIn}
+          className="w-full flex items-center gap-2 bg-white rounded-2xl px-4 py-2.5 border border-gray-100 shadow-sm active:scale-[0.98] transition-all"
+        >
+          <span className="text-lg">🦞</span>
+          <span className="text-sm text-gray-600 flex-1 text-left">
+            <span className="font-semibold text-gray-800">{myPlayer.name}</span>
+            <span className="text-gray-400 text-xs"> ✓ signed in — manage in Settings</span>
+          </span>
+        </button>
+      ) : (
+        <SignInBanner
+          role="player"
+          onNavigate={onNavigate}
+          compact
+          message="Sign in from Settings → Account to post, react, or comment."
+        />
+      )}
 
       {/* Feed */}
       {(!updates || updates.length === 0) ? (
@@ -240,9 +228,11 @@ export default function Updates() {
                     <span className="text-xs text-lobster-teal ml-1">✓ verified</span>
                   </div>
                 ) : (
-                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-700">
-                    You need to verify your identity first. Close this and tap the identity pill above.
-                  </div>
+                  <button type="button" onClick={goToSignIn}
+                    className="w-full bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-700 text-left active:scale-[0.99] transition-all flex items-center gap-2">
+                    <LogIn size={13} />
+                    Sign in from Settings → Account to post.
+                  </button>
                 )}
                 {/* hidden input carries the player id */}
                 <input type="hidden" value={claimedId || ''} />
@@ -264,94 +254,6 @@ export default function Updates() {
                 {posting ? 'Posting…' : 'Post Update 🦞'}
               </button>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* Identity picker modal */}
-      {showIdentity && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center">
-          <div className="bg-white rounded-t-3xl w-full max-w-md p-5 space-y-3">
-            <div className="flex items-center justify-between mb-1">
-              <h3 className="font-bold text-gray-800">
-                {pinTarget ? `Enter PIN for ${pinTarget.name.split(' ')[0]}` : 'Who are you?'}
-              </h3>
-              <button onClick={() => { setShowIdentity(false); setPickFor(null); setPinTarget(null); setPinError(''); setPlayerSearch('') }}>
-                <X size={22} className="text-gray-400" />
-              </button>
-            </div>
-
-            {!pinTarget ? (
-              <>
-                <p className="text-xs text-gray-400">Select your name — you'll enter your PIN once to confirm.</p>
-                {/* Search box */}
-                <input
-                  type="text"
-                  placeholder="🔍 Search your name…"
-                  value={playerSearch}
-                  onChange={e => setPlayerSearch(e.target.value)}
-                  className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-lobster-teal focus:ring-1 focus:ring-lobster-teal"
-                  autoFocus
-                />
-                <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {activePlayers.filter(p => p.name.toLowerCase().includes(playerSearch.toLowerCase())).map(p => (
-                    <button
-                      key={p.id}
-                      onClick={() => startPinVerification(p)}
-                      className={`w-full flex items-center gap-3 p-3 rounded-2xl transition-all active:scale-[0.98] ${
-                        String(claimedId) === String(p.id)
-                          ? 'bg-lobster-teal/10 border-2 border-lobster-teal'
-                          : 'bg-gray-50 border-2 border-transparent'
-                      }`}
-                    >
-                      <div className="w-9 h-9 bg-lobster-teal rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                        {p.name[0].toUpperCase()}
-                      </div>
-                      <span className="font-semibold text-gray-800 text-sm">{p.name}</span>
-                      {String(claimedId) === String(p.id) && (
-                        <span className="ml-auto text-xs text-lobster-teal font-semibold">✓ verified</span>
-                      )}
-                    </button>
-                  ))}
-                </div>
-                {claimedId && (
-                  <button onClick={() => { clearIdentity(); setShowIdentity(false) }}
-                    className="w-full text-xs text-gray-400 py-2 font-medium">
-                    Sign out of my profile
-                  </button>
-                )}
-              </>
-            ) : (
-              <div className="space-y-4">
-                <p className="text-xs text-gray-500">
-                  Enter the 4-digit PIN you received via WhatsApp when you joined.
-                  Ask the admin if you don't have it.
-                </p>
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  maxLength={4}
-                  placeholder="• • • •"
-                  className="input text-center text-2xl tracking-[0.5em] font-bold"
-                  value={pinInput}
-                  onChange={e => { setPinInput(e.target.value.slice(0, 4)); setPinError('') }}
-                  autoFocus
-                />
-                {pinError && <p className="text-xs text-red-500 text-center font-medium">{pinError}</p>}
-                <button
-                  onClick={confirmPin}
-                  disabled={pinInput.length !== 4}
-                  className="btn-primary w-full disabled:opacity-40"
-                >
-                  Confirm — I'm {pinTarget.name.split(' ')[0]}
-                </button>
-                <button onClick={() => { setPinTarget(null); setPinError(''); setPlayerSearch('') }}
-                  className="w-full text-xs text-gray-400 py-1">
-                  ← Back to player list
-                </button>
-              </div>
-            )}
           </div>
         </div>
       )}
