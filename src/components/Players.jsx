@@ -298,7 +298,51 @@ function PlayerAvatar({ player, size = 'md', className = '' }) {
 }
 
 export default function Players({ onNavigate, focusPlayerId }) {
-  const { players, addPlayer, updatePlayer, deletePlayer, isAdmin, claimedId, matches, registrations, tournaments, regeneratePin } = useApp()
+  const { players, addPlayer, updatePlayer, deletePlayer, isAdmin, claimedId, matches, registrations, tournaments, regeneratePin, fetchAllPlayersWithPii } = useApp()
+
+  // ── Admin PII overlay ───────────────────────────────────────────────
+  // After Phase 3 locks down players.email/phone/birthday from the anon
+  // key, the `players` array we get from context (fed by players_public)
+  // won't carry those fields. While admin is signed in we fetch the
+  // full-PII rows via the admin-gated RPC and overlay them by id.
+  const [piiById, setPiiById] = useState({})
+  useEffect(() => {
+    if (!isAdmin) { setPiiById({}); return }
+    let cancelled = false
+    ;(async () => {
+      const rows = await fetchAllPlayersWithPii()
+      if (cancelled || !rows) return
+      const map = {}
+      for (const r of rows) {
+        map[r.id] = {
+          email:    r.email    ?? '',
+          phone:    r.phone    ?? '',
+          birthday: r.birthday ?? '',
+          notes:    r.notes    ?? '',
+          pin:      r.pin      ?? '',
+        }
+      }
+      setPiiById(map)
+    })()
+    return () => { cancelled = true }
+  }, [isAdmin, fetchAllPlayersWithPii])
+
+  // Merge a player record with the admin PII overlay. Non-admins get the
+  // record unchanged (which means empty PII fields after Phase 3 — fine,
+  // the admin-gated UI hides those fields anyway).
+  const withPii = (p) => {
+    if (!p) return p
+    const extra = piiById[p.id]
+    if (!extra) return p
+    return {
+      ...p,
+      email:    extra.email    || p.email    || '',
+      phone:    extra.phone    || p.phone    || '',
+      birthday: extra.birthday || p.birthday || '',
+      notes:    extra.notes    || p.notes    || '',
+      pin:      extra.pin      || p.pin      || '',
+    }
+  }
   const [showForm, setShowForm]     = useState(false)
   const [editId, setEditId]         = useState(null)
   const [form, setForm]             = useState(emptyForm)
@@ -324,8 +368,11 @@ export default function Players({ onNavigate, focusPlayerId }) {
   const [linkSearch, setLinkSearch]   = useState('')     // search in link modal
   const fileInputRef = useRef(null)
 
-  const activePlayers  = players.filter(p => (p.status || 'active') === 'active')
-  const pendingPlayers = players.filter(p => p.status === 'pending')
+  // Overlay admin PII onto every record up-front so downstream filtering,
+  // rendering, and form-fill calls just see the merged object.
+  const playersWithPii = useMemo(() => players.map(withPii), [players, piiById])
+  const activePlayers  = playersWithPii.filter(p => (p.status || 'active') === 'active')
+  const pendingPlayers = playersWithPii.filter(p => p.status === 'pending')
 
   const filtered = activePlayers.filter(p =>
     p.name?.toLowerCase().includes(search.toLowerCase())
@@ -373,7 +420,9 @@ export default function Players({ onNavigate, focusPlayerId }) {
 
   // Accept merge: pre-fill form with existing player data, switch to update mode
   const acceptMerge = () => {
-    const p = mergePlayer
+    // Re-resolve through the PII-overlay so email/phone/birthday are
+    // filled in if admin has fetched them.
+    const p = withPii(mergePlayer)
     setForm({
       name: p.name || '',
       email: p.email || '',
