@@ -377,7 +377,14 @@ export default function Players({ onNavigate, focusPlayerId }) {
   const filtered = activePlayers.filter(p =>
     p.name?.toLowerCase().includes(search.toLowerCase())
   )
-  const sorted = [...filtered].sort((a, b) => (b.adjustedLevel || 0) - (a.adjustedLevel || 0))
+  // Chronological order — first to join is #1, newest joiner is last.
+  // Falls back to id ordering if created_at is missing on a record.
+  const sorted = [...filtered].sort((a, b) => {
+    const ta = a.created_at ? new Date(a.created_at).getTime() : 0
+    const tb = b.created_at ? new Date(b.created_at).getTime() : 0
+    if (ta !== tb) return ta - tb
+    return String(a.id).localeCompare(String(b.id))
+  })
 
   // ── Name display: first name only; both players get a surname initial
   //    the moment a duplicate first name exists in the group ────────────────
