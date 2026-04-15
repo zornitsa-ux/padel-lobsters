@@ -114,13 +114,54 @@ const emptyForm = {
 
 // Country data and picker imported from ./CountryPicker
 
-// ── Corporate Performance Review generator ───────────────────────────────────
+// Stable list of all possible review scenarios — used by the admin
+// "Review breakdown" panel to surface what each branch produces.
+//
+// The 10 PERFORMANCE messages (the ones we actually designed) are tagged
+// with `performance: true` so the breakdown panel can highlight them
+// separately from welcome/historical/level-fallback scenarios.
+const REVIEW_SCENARIOS = [
+  // ── The 10 performance messages ────────────────────────────────────────
+  { id: 'last-place-elite',     label: '🎯 Last place (high skill)',  performance: true },
+  { id: 'last-place',           label: '💀 Last place (expected)',    performance: true },
+  { id: 'recent-winner',        label: '🏆 Tournament winner',         performance: true },
+  { id: 'elite-bad-winrate',    label: '🤔 The Gap',                   performance: true },
+  { id: 'low-rated-secret',     label: '🕵️ Secret Weapon',             performance: true },
+  { id: 'dominant',             label: '💪 Dominant',                  performance: true },
+  { id: 'committed-loser',      label: '🎁 Lovable Loser',             performance: true },
+  { id: 'ironman',              label: '🦁 The Ironman',               performance: true },
+  { id: 'ghost',                label: '👻 The Ghost',                 performance: true },
+  { id: 'mediocre',             label: '🤷 Perfectly Mediocre',        performance: true },
+
+  // ── Historical / legacy-tournament context (only fires with alias map) ─
+  { id: 'hist-multi-champion',  label: '👑 Historical multi-champion' },
+  { id: 'hist-champion',        label: '🏅 Historical champion' },
+  { id: 'hist-multi-podium',    label: '🥈 Multi-podium veteran' },
+  { id: 'hist-podium',          label: '🥉 Historical podium' },
+  { id: 'hist-veteran',         label: '🛡️ Tournament veteran' },
+  { id: 'hist-predates-app',    label: '📜 Predates the app' },
+
+  // ── Filler scenarios ───────────────────────────────────────────────────
+  { id: 'shows-up-no-data',     label: '📋 Registered, no match log' },
+  { id: 'welcome',              label: '👋 No history yet' },
+  { id: 'level-low',            label: '⚪️ Generic — low level' },
+  { id: 'level-mid',            label: '⚪️ Generic — mid level' },
+  { id: 'level-high',           label: '⚪️ Generic — high level' },
+  { id: 'level-elite',          label: '⚪️ Generic — elite level' },
+]
+
+// Returns a structured review so admins can see which branch fired.
+// Existing callers wanting plain text should read `.text`.
 function corpReview(player, matches = [], registrations = [], tournaments = [], aliasMap = {}) {
   const lvl  = player.adjustedLevel || 0
   const name = (player.name || 'Employee').split(' ')[0]
   const pid  = player.id
 
   const spid = String(pid)
+  const tag  = (scenario, text) => {
+    const label = REVIEW_SCENARIOS.find(s => s.id === scenario)?.label || scenario
+    return { text, scenario, scenarioLabel: label }
+  }
 
   // ── Historical tournament signal (from player_aliases + History.jsx) ─────
   // Includes Dec 2025, Jan 2026, Mar 2026, Apr 2026 — events that pre-date
@@ -162,6 +203,20 @@ function corpReview(player, matches = [], registrations = [], tournaments = [], 
   ).size
   const totalTournaments = pastTournaments.length
 
+  // Combined event count: DB tournaments this player attended + historical
+  // appearances from the legacy History.jsx tournaments (deduped on id).
+  const dbAttendedIds = new Set(
+    registrations
+      .filter(r =>
+        String(r.playerId) === spid &&
+        r.status !== 'cancelled' &&
+        pastTournamentIds.has(String(r.tournamentId))
+      )
+      .map(r => String(r.tournamentId))
+  )
+  const historicalNew = historical.filter(h => !dbAttendedIds.has(String(h.id)))
+  const eventsAttended = tournamentsPlayed + historicalNew.length
+
   // ── Compute last-tournament rank ─────────────────────────────────────────
   let lastTournamentRank = null
   let lastTournamentTotal = null
@@ -186,8 +241,8 @@ function corpReview(player, matches = [], registrations = [], tournaments = [], 
     }
   }
 
-  // ── No tournament history yet ────────────────────────────────────────────
-  if (tournamentsPlayed === 0) {
+  // ── No tournament history at all (DB or historical) ─────────────────────
+  if (tournamentsPlayed === 0 && !hasHistory) {
     const welcome = [
       `${name} hasn't played a tournament yet — which means the group hasn't seen what they can do. That needs to change. Sign up. Show up. Make it a story worth telling.`,
       `No tournament history yet. Every legend in this group started exactly here. The only difference between then and now is one registration. ${name}, the courts are waiting.`,
@@ -195,7 +250,49 @@ function corpReview(player, matches = [], registrations = [], tournaments = [], 
       `Tournament debut pending. ${name} has everything ahead of them — no losses on record, no limits set, no one to prove wrong yet. The best time to start is the next tournament.`,
     ]
     const idHash = String(player.id || '0').split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)
-    return welcome[idHash % welcome.length]
+    return tag('welcome', welcome[idHash % welcome.length])
+  }
+
+  // ── Historical-tournament scenarios (priority block) ────────────────────
+  // These fire whenever the alias map links this player to one of the four
+  // legacy tournaments (Dec 2025 → Apr 2026), giving the review some flesh
+  // even when the in-app match log is thin or empty.
+
+  // Multi-time champion across historical events
+  if (histSummary.golds >= 2) {
+    return tag('hist-multi-champion', `${histSummary.golds} historical titles. ${name} has been winning Lobster Tournaments since before there was an app to record it. The data is not new. The dominance is not new. The rest of the group is, by now, used to it.`)
+  }
+
+  // Recent historical champion
+  if (histSummary.golds === 1) {
+    const goldT = historical.find(h => h.rank === 1)?.name?.replace('Lobster Tournament · ', '')
+    return tag('hist-champion', `Won ${goldT || 'a previous Lobster Tournament'}. The trophy may be metaphorical but the bragging rights are not. ${name} has receipts. The committee respects the receipts.`)
+  }
+
+  // Multi-podium veteran
+  if (histSummary.podiums >= 2) {
+    return tag('hist-multi-podium', `${histSummary.podiums} podium finishes across the legacy tournaments. ${name} doesn't always win, but they've been close enough, often enough, that the medal photographer knows them by name.`)
+  }
+
+  // Single podium so far
+  if (histSummary.podiums === 1 && eventsAttended >= 1) {
+    const medal = histSummary.silvers ? '🥈 silver' : '🥉 bronze'
+    return tag('hist-podium', `Has a ${medal} on the historical record. ${name} has tasted the podium. The committee is monitoring whether this proves to be a launchpad or a peak.`)
+  }
+
+  // Tournament veteran (3+ events with no podium yet)
+  if (eventsAttended >= 3 && histSummary.podiums === 0) {
+    return tag('hist-veteran', `${eventsAttended} tournaments played. No podiums yet. The persistence is admirable, the stubbornness is documented, and the next one might just be the one. The group is rooting. Quietly.`)
+  }
+
+  // Has historical attendance but the modern in-app data is thin —
+  // surface their historical best so the review feels personal.
+  if (hasHistory && tournamentsPlayed === 0 && totalMatches === 0) {
+    const best = histSummary.bestRank
+    const bestT = histSummary.bestRankTournamentName?.replace('Lobster Tournament · ', '')
+    if (best && bestT) {
+      return tag('hist-predates-app', `${name} predates the app. Best historical finish: rank ${best} at ${bestT}. The new system has yet to capture them in action. Veterans are encouraged to register for the next one and let the modern record begin.`)
+    }
   }
 
   // ── Scenario matching (priority order) ───────────────────────────────────
@@ -203,49 +300,49 @@ function corpReview(player, matches = [], registrations = [], tournaments = [], 
   // Dead last in most recent tournament — high skill
   if (lastTournamentRank !== null && lastTournamentTotal >= 4 && lastTournamentRank === lastTournamentTotal) {
     if (lvl >= 3.5) {
-      return `A Playtomic rating of ${lvl.toFixed(1)} and yet — last place. Scientists are studying this. The data doesn't lie but it does appear to be deeply confused. A walking contradiction, somehow making the rest of us feel both inferior and hopeful at the same time.`
+      return tag('last-place-elite', `A Playtomic rating of ${lvl.toFixed(1)} and yet — last place. Scientists are studying this. The data doesn't lie but it does appear to be deeply confused. A walking contradiction, somehow making the rest of us feel both inferior and hopeful at the same time.`)
     }
-    return `Came last. Consistent, reliable, always there at the bottom holding the group together. Not everyone can win — someone has to make the winners feel good, and ${name} does this selflessly, every single time.`
+    return tag('last-place', `Came last. Consistent, reliable, always there at the bottom holding the group together. Not everyone can win — someone has to make the winners feel good, and ${name} does this selflessly, every single time.`)
   }
 
   // Won the most recent tournament
   if (lastTournamentRank === 1 && lastTournamentTotal >= 4) {
-    return `Won the whole thing. Showed up, dominated, went home. The rest of the group is currently reviewing their life choices. ${name} is not available for comment — they're too busy being better than everyone else.`
+    return tag('recent-winner', `Won the whole thing. Showed up, dominated, went home. The rest of the group is currently reviewing their life choices. ${name} is not available for comment — they're too busy being better than everyone else.`)
   }
 
   // High skill, bad win rate — the unexplained gap
   if (lvl >= 3.5 && winRate !== null && winRate < 0.35) {
-    return `Playtomic says elite. Match results say… something else entirely. Currently the most expensive mystery in the group. Investigations are ongoing. The committee remains baffled and slightly impressed.`
+    return tag('elite-bad-winrate', `Playtomic says elite. Match results say… something else entirely. Currently the most expensive mystery in the group. Investigations are ongoing. The committee remains baffled and slightly impressed.`)
   }
 
   // Low skill, strong win rate — the secret weapon
   if (lvl < 2.5 && winRate !== null && winRate > 0.6) {
-    return `Low rating, suspiciously high win rate. Either sandbagging at a professional level or has discovered something the rest of us haven't.`
+    return tag('low-rated-secret', `Low rating, suspiciously high win rate. Either sandbagging at a professional level or has discovered something the rest of us haven't.`)
   }
 
   // Dominant win rate
   if (winRate !== null && winRate >= 0.7) {
-    return `Wins constantly. Shows up, wins, leaves. Has made winning look so routine that the group has started taking it personally. At this point, the committee is actively considering whether ${name} should remain eligible for the next invitation.`
+    return tag('dominant', `Wins constantly. Shows up, wins, leaves. Has made winning look so routine that the group has started taking it personally. At this point, the committee is actively considering whether ${name} should remain eligible for the next invitation.`)
   }
 
   // Committed loser
   if (winRate !== null && winRate <= 0.25) {
-    return `Loses frequently, returns every time. This is either extraordinary mental resilience or a complete absence of self-preservation instinct. Either way, the courts wouldn't be the same without them. Truly the heart of the group.`
+    return tag('committed-loser', `Loses frequently, returns every time. This is either extraordinary mental resilience or a complete absence of self-preservation instinct. Either way, the courts wouldn't be the same without them. Truly the heart of the group.`)
   }
 
   // The Ironman — attended every tournament
   if (totalTournaments >= 2 && tournamentsPlayed >= totalTournaments) {
-    return `Has attended every single tournament. Every. Single. One. Rain, wind, scheduling conflicts, life events — none of it mattered. We're not sure if this is dedication or if they simply have nowhere else to be. Both are valid.`
+    return tag('ironman', `Has attended every single tournament. Every. Single. One. Rain, wind, scheduling conflicts, life events — none of it mattered. We're not sure if this is dedication or if they simply have nowhere else to be. Both are valid.`)
   }
 
   // The Ghost — barely shows up
   if (totalTournaments >= 2 && tournamentsPlayed <= 1) {
-    return `Has appeared at approximately one tournament. Like a rare weather event — talked about, rarely witnessed. The group respects the mystery. Statistically, anything could happen next. Nobody knows. Not even ${name}.`
+    return tag('ghost', `Has appeared at approximately one tournament. Like a rare weather event — talked about, rarely witnessed. The group respects the mystery. Statistically, anything could happen next. Nobody knows. Not even ${name}.`)
   }
 
   // Perfectly mediocre
   if (winRate !== null && winRate >= 0.45 && winRate <= 0.55 && totalMatches >= 4) {
-    return `Win rate hovering in the 45–55% range across six or more matches. A statistical masterpiece. Not good enough to be intimidating, not bad enough to be endearing. Just perfectly, beautifully average. The bell curve's favourite child.`
+    return tag('mediocre', `Win rate hovering in the 45–55% range across six or more matches. A statistical masterpiece. Not good enough to be intimidating, not bad enough to be endearing. Just perfectly, beautifully average. The bell curve's favourite child.`)
   }
 
   // Has tournament history but no completed match data recorded
@@ -256,7 +353,7 @@ function corpReview(player, matches = [], registrations = [], tournaments = [], 
       `Present at ${tournamentsPlayed} tournament${tournamentsPlayed > 1 ? 's' : ''}. Match data: classified. Whether by choice or by accident, ${name}'s results remain a mystery wrapped in a lobster shell. We respect the enigma.`,
     ]
     const idHash = String(player.id || '0').split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)
-    return noData[idHash % noData.length]
+    return tag('shows-up-no-data', noData[idHash % noData.length])
   }
 
   // ── Fallback: level-based ─────────────────────────────────────────────────
@@ -280,9 +377,10 @@ function corpReview(player, matches = [], registrations = [], tournaments = [], 
     `HR has reviewed ${name}'s match data and formally acknowledged that it creates a benchmarking problem for everyone else in the group. This is considered a net positive. The rest of the group is divided on that assessment.`,
   ]
   const pool = lvl < 2 ? low : lvl < 3.5 ? mid : lvl < 5 ? high : elite
+  const fallbackId = lvl < 2 ? 'level-low' : lvl < 3.5 ? 'level-mid' : lvl < 5 ? 'level-high' : 'level-elite'
   // hash works for both integer and UUID string IDs
   const idHash = String(player.id || '0').split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)
-  return pool[idHash % pool.length]
+  return tag(fallbackId, pool[idHash % pool.length])
 }
 
 // ── Player avatar component ───────────────────────────────────────────────────
@@ -395,6 +493,45 @@ export default function Players({ onNavigate, focusPlayerId }) {
     if (ta !== tb) return ta - tb
     return String(a.id).localeCompare(String(b.id))
   })
+
+  // ── Review breakdown ─────────────────────────────────────────────────────
+  // Run corpReview for every active player so we can group them by which
+  // scenario fired. Drives both the header counter and the admin-only
+  // breakdown panel that lists each scenario with its message + matched
+  // players. Recomputes whenever the underlying data changes.
+  const reviewBreakdown = useMemo(() => {
+    const byScenario = new Map()
+    REVIEW_SCENARIOS.forEach(s => {
+      byScenario.set(s.id, { id: s.id, label: s.label, players: [], samples: new Map() })
+    })
+    activePlayers.forEach(p => {
+      const r = corpReview(p, matches, registrations, tournaments, playerAliases)
+      let bucket = byScenario.get(r.scenario)
+      if (!bucket) {
+        bucket = { id: r.scenario, label: r.scenarioLabel, players: [], samples: new Map() }
+        byScenario.set(r.scenario, bucket)
+      }
+      bucket.players.push({ id: p.id, name: p.name })
+      // De-dupe identical message variants so we can show how many flavours
+      // of the same scenario are actually in play.
+      const v = bucket.samples.get(r.text)
+      if (v) v.count++
+      else bucket.samples.set(r.text, { text: r.text, count: 1 })
+    })
+    return [...byScenario.values()]
+      .filter(b => b.players.length > 0)
+      .sort((a, b) => b.players.length - a.players.length)
+  }, [activePlayers, matches, registrations, tournaments, playerAliases])
+
+  // A scenario is "generic" if it's the level-based fallback or the welcome
+  // line — everything else is personalised by tournament/match data.
+  const GENERIC_IDS = new Set(['level-low', 'level-mid', 'level-high', 'level-elite', 'welcome'])
+  const genericCount = reviewBreakdown
+    .filter(b => GENERIC_IDS.has(b.id))
+    .reduce((n, b) => n + b.players.length, 0)
+  const personalisedCount = activePlayers.length - genericCount
+
+  const [showReviewBreakdown, setShowReviewBreakdown] = useState(false)
 
   // ── Name display: first name only; both players get a surname initial
   //    the moment a duplicate first name exists in the group ────────────────
@@ -661,6 +798,155 @@ export default function Players({ onNavigate, focusPlayerId }) {
         </div>
       </div>
 
+      {/* Personalised-profile counter — only shown to admins so it doesn't
+          clutter the public view. Helps gauge how many reviews are running
+          on real data vs. the generic level-based fallback. */}
+      {isAdmin && activePlayers.length > 0 && (
+        <div className="flex items-center gap-1.5 text-[11px] -mt-2 flex-wrap">
+          <span className="bg-teal-50 text-teal-700 font-semibold px-2 py-0.5 rounded-full">
+            ✦ {personalisedCount} personalised
+          </span>
+          <span className="bg-gray-100 text-gray-500 font-semibold px-2 py-0.5 rounded-full">
+            {genericCount} generic
+          </span>
+          <span className="text-gray-400">
+            {activePlayers.length > 0 ? Math.round((personalisedCount / activePlayers.length) * 100) : 0}% Lobster Reviews use real tournament data
+          </span>
+          <button
+            onClick={() => setShowReviewBreakdown(true)}
+            className="ml-auto text-lobster-teal font-semibold underline-offset-2 hover:underline"
+          >
+            View breakdown →
+          </button>
+        </div>
+      )}
+
+      {/* Admin-only Review Breakdown modal */}
+      {showReviewBreakdown && (() => {
+        const PERF_IDS = new Set(REVIEW_SCENARIOS.filter(s => s.performance).map(s => s.id))
+        const perfBuckets  = reviewBreakdown.filter(b => PERF_IDS.has(b.id))
+        const otherBuckets = reviewBreakdown.filter(b => !PERF_IDS.has(b.id))
+        const perfPlayers  = perfBuckets.reduce((n, b) => n + b.players.length, 0)
+        const perfFiring   = perfBuckets.length
+
+        const renderBucket = (b, accent) => (
+          <div
+            key={b.id}
+            className={`rounded-2xl border-2 px-3 py-3 ${
+              accent === 'perf' ? 'bg-amber-50 border-amber-200' :
+              accent === 'hist' ? 'bg-teal-50 border-teal-200' :
+                                  'bg-gray-50 border-gray-200'
+            }`}
+          >
+            <div className="flex items-center justify-between gap-2 mb-1.5">
+              <p className={`text-xs font-bold ${
+                accent === 'perf' ? 'text-amber-800' :
+                accent === 'hist' ? 'text-teal-700' :
+                                    'text-gray-500'
+              }`}>
+                {b.label}
+              </p>
+              <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                accent === 'perf' ? 'bg-amber-500 text-white' :
+                accent === 'hist' ? 'bg-teal-500 text-white' :
+                                    'bg-gray-200 text-gray-600'
+              }`}>
+                {b.players.length}
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-1 mb-2">
+              {b.players.map(p => (
+                <span
+                  key={p.id}
+                  className="text-[11px] bg-white border border-gray-200 px-2 py-0.5 rounded-md text-gray-700"
+                >
+                  {(p.name || '').split(' ')[0]}
+                </span>
+              ))}
+            </div>
+            <div className="space-y-1.5">
+              {[...b.samples.values()].map((s, i) => (
+                <details key={i} className="text-[11px]">
+                  <summary className="cursor-pointer text-gray-500 font-semibold">
+                    {b.samples.size > 1 ? `Variant ${i + 1} (${s.count} player${s.count > 1 ? 's' : ''})` : 'Show message'}
+                  </summary>
+                  <p className="mt-1 italic text-gray-600 leading-relaxed">"{s.text}"</p>
+                </details>
+              ))}
+            </div>
+          </div>
+        )
+
+        return (
+          <div
+            className="fixed inset-0 z-50 bg-black/50 flex items-end justify-center"
+            onClick={() => setShowReviewBreakdown(false)}
+          >
+            <div
+              className="bg-white rounded-t-3xl w-full max-w-md flex flex-col"
+              style={{ maxHeight: '92vh' }}
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="px-5 pt-5 pb-3 border-b border-gray-100 flex items-center justify-between">
+                <div>
+                  <h2 className="font-bold text-gray-800">Review breakdown</h2>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    Who's getting which Lobster Review, grouped by scenario
+                  </p>
+                </div>
+                <button onClick={() => setShowReviewBreakdown(false)}>
+                  <X size={20} className="text-gray-400" />
+                </button>
+              </div>
+
+              {/* Performance summary banner */}
+              <div className="px-5 py-3 bg-amber-50 border-b border-amber-100">
+                <p className="text-xs font-bold text-amber-800 uppercase tracking-wide mb-1">
+                  ⭐ Performance messages
+                </p>
+                <p className="text-xs text-amber-700">
+                  <strong>{perfFiring} of 10</strong> performance scenarios firing,
+                  reaching <strong>{perfPlayers}</strong> player{perfPlayers === 1 ? '' : 's'}.
+                  Everyone else gets historical, welcome, or generic level-based reviews.
+                </p>
+              </div>
+
+              <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+                {/* Performance scenarios first */}
+                {perfBuckets.length > 0 && (
+                  <div className="space-y-2">
+                    {perfBuckets.map(b => renderBucket(b, 'perf'))}
+                  </div>
+                )}
+
+                {/* Other scenarios (historical + filler) */}
+                {otherBuckets.length > 0 && (
+                  <>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-2 px-1">
+                      Other scenarios
+                    </p>
+                    <div className="space-y-2">
+                      {otherBuckets.map(b => {
+                        const isHist = b.id.startsWith('hist-')
+                        return renderBucket(b, isHist ? 'hist' : 'generic')
+                      })}
+                    </div>
+                  </>
+                )}
+
+                {reviewBreakdown.length === 0 && (
+                  <p className="text-center text-gray-400 text-sm py-10">No reviews to break down yet.</p>
+                )}
+              </div>
+
+              <div className="px-5 py-3 border-t border-gray-100">
+                <button onClick={() => setShowReviewBreakdown(false)} className="btn-primary w-full">Close</button>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+
       {/* Historical-name matcher (admin) */}
       {showAliasMatcher && (
         <PlayerAliasMatcher onClose={() => setShowAliasMatcher(false)} />
@@ -807,7 +1093,7 @@ export default function Players({ onNavigate, focusPlayerId }) {
                 <div className="mt-2 pl-8">
                   <p className="text-[10px] font-bold text-lobster-teal uppercase tracking-wider mb-0.5">Lobster Review</p>
                   <p className="text-xs text-gray-500 leading-relaxed">
-                    {corpReview(p, matches, registrations, tournaments)}
+                    {corpReview(p, matches, registrations, tournaments, playerAliases).text}
                   </p>
                 </div>
               </div>
