@@ -49,6 +49,30 @@ function namesForPlayer(playerId, aliasMap) {
  *   [{ id, name, date, type, rank, total, played, won, lost, draws,
  *      pointsFor, pointsAgainst, isPodium }]
  */
+/**
+ * Build the effective ranking for a tournament. Players sort by total
+ * (desc), but any entry with an explicit `podium` field (1, 2, or 3) is
+ * pinned to that final position — overriding the tiebreaker. Non-podium
+ * players fill in the remaining slots in sort order.
+ *
+ * This lets us record real-world podium results when ties on total points
+ * would otherwise resolve incorrectly via input order.
+ */
+export function rankPlayers(players) {
+  const sorted = [...players].sort((a, b) => b.total - a.total)
+  const withPodium = sorted.filter(p => p.podium >= 1 && p.podium <= 3)
+  const others = sorted.filter(p => !(p.podium >= 1 && p.podium <= 3))
+
+  const ranked = new Array(sorted.length)
+  withPodium.forEach(p => { ranked[p.podium - 1] = p })
+
+  let oi = 0
+  for (let i = 0; i < ranked.length; i++) {
+    if (!ranked[i]) ranked[i] = others[oi++]
+  }
+  return ranked
+}
+
 export function buildHistoricalAppearances(playerId, aliasMap) {
   if (!playerId) return []
   const { norm } = namesForPlayer(playerId, aliasMap)
@@ -60,12 +84,13 @@ export function buildHistoricalAppearances(playerId, aliasMap) {
     const players = t.players || []
     if (players.length === 0) return
 
-    // Find this player's row in standings (if present)
-    const sorted = [...players].sort((a, b) => b.total - a.total)
-    const idx = sorted.findIndex(p => norm.has(normaliseName(p.name)))
+    // Find this player's row in standings (if present), respecting any
+    // explicit podium overrides that pin actual finish positions.
+    const ranked = rankPlayers(players)
+    const idx = ranked.findIndex(p => norm.has(normaliseName(p.name)))
     if (idx < 0) return
 
-    const me = sorted[idx]
+    const me = ranked[idx]
 
     // Walk rounds for W/L/D + point differential
     let played = 0, won = 0, lost = 0, draws = 0, pf = 0, pa = 0

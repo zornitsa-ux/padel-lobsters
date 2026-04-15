@@ -171,19 +171,24 @@ function corpReview(player, matches = [], registrations = [], tournaments = [], 
   const hasHistory = historical.length > 0
 
   // ── Compute match stats ──────────────────────────────────────────────────
-  const played = matches.filter(m =>
+  // We fold the legacy History.jsx matches in with the in-app DB matches so
+  // the 10 performance scenarios (dominant / mediocre / committed-loser etc.)
+  // can actually fire for veterans whose play is mostly pre-app.
+  const playedDb = matches.filter(m =>
     m.completed && (
       m.team1Ids?.map(String).includes(spid) ||
       m.team2Ids?.map(String).includes(spid)
     )
   )
-  let wins = 0, losses = 0
-  played.forEach(m => {
+  let dbWins = 0, dbLosses = 0
+  playedDb.forEach(m => {
     const onTeam1 = m.team1Ids?.map(String).includes(spid)
     const s1 = m.score1 ?? 0, s2 = m.score2 ?? 0
-    if ((onTeam1 && s1 > s2) || (!onTeam1 && s2 > s1)) wins++
-    else losses++
+    if ((onTeam1 && s1 > s2) || (!onTeam1 && s2 > s1)) dbWins++
+    else dbLosses++
   })
+  const wins   = dbWins   + histSummary.won
+  const losses = dbLosses + histSummary.lost
   const totalMatches = wins + losses
   const winRate = totalMatches >= 1 ? wins / totalMatches : null
 
@@ -192,19 +197,6 @@ function corpReview(player, matches = [], registrations = [], tournaments = [], 
   const pastTournaments = tournaments.filter(t => t.status === 'completed' || new Date(t.date) <= today)
   const pastTournamentIds = new Set(pastTournaments.map(t => String(t.id)))
 
-  const tournamentsPlayed = new Set(
-    registrations
-      .filter(r =>
-        String(r.playerId) === spid &&
-        r.status !== 'cancelled' &&
-        pastTournamentIds.has(String(r.tournamentId))
-      )
-      .map(r => r.tournamentId)
-  ).size
-  const totalTournaments = pastTournaments.length
-
-  // Combined event count: DB tournaments this player attended + historical
-  // appearances from the legacy History.jsx tournaments (deduped on id).
   const dbAttendedIds = new Set(
     registrations
       .filter(r =>
@@ -214,10 +206,26 @@ function corpReview(player, matches = [], registrations = [], tournaments = [], 
       )
       .map(r => String(r.tournamentId))
   )
+  // tournamentsPlayed = DB regs + historical appearances (deduped on id) so
+  // ironman/ghost compare against the *whole* tournament history, not just
+  // what's been logged inside the app.
   const historicalNew = historical.filter(h => !dbAttendedIds.has(String(h.id)))
-  const eventsAttended = tournamentsPlayed + historicalNew.length
+  const tournamentsPlayed = dbAttendedIds.size + historicalNew.length
+  // totalTournaments = DB past tournaments + every legacy event in History.jsx.
+  // We use the union of all historical IDs across the alias map so the
+  // denominator is the same for every player and "every single one" really
+  // means every single one we know about.
+  const TOTAL_HISTORICAL_EVENTS = (() => {
+    // Hardcoded — matches the count in History.jsx (Dec 2025, Jan 2026,
+    // Mar 2026, Apr 2026). Bumping when new legacy events are added.
+    return 4
+  })()
+  const totalTournaments = pastTournaments.length + TOTAL_HISTORICAL_EVENTS
+  const eventsAttended = tournamentsPlayed  // alias for clarity below
 
   // ── Compute last-tournament rank ─────────────────────────────────────────
+  // Prefer in-app data when it exists, otherwise fall back to the player's
+  // most recent historical appearance (newest first in `historical`).
   let lastTournamentRank = null
   let lastTournamentTotal = null
   if (tournaments.length > 0) {
@@ -240,6 +248,11 @@ function corpReview(player, matches = [], registrations = [], tournaments = [], 
       if (pos >= 0) lastTournamentRank = pos + 1
     }
   }
+  if (lastTournamentRank === null && historical.length > 0) {
+    // historical[] is sorted newest-first by buildHistoricalAppearances
+    lastTournamentRank  = historical[0].rank
+    lastTournamentTotal = historical[0].players
+  }
 
   // ── No tournament history at all (DB or historical) ─────────────────────
   if (tournamentsPlayed === 0 && !hasHistory) {
@@ -253,10 +266,66 @@ function corpReview(player, matches = [], registrations = [], tournaments = [], 
     return tag('welcome', welcome[idHash % welcome.length])
   }
 
-  // ── Historical-tournament scenarios (priority block) ────────────────────
-  // These fire whenever the alias map links this player to one of the four
-  // legacy tournaments (Dec 2025 → Apr 2026), giving the review some flesh
-  // even when the in-app match log is thin or empty.
+  // ── The 10 performance scenarios (priority block) ───────────────────────
+  // These are the messages we actually designed for the Lobster Review.
+  // They run on the COMBINED dataset (in-app DB + legacy History.jsx),
+  // so a player with only historical match data still hits the right
+  // bucket (dominant / mediocre / lovable-loser etc.).
+
+  // 🎯 Last place (high skill) — last in most recent tournament + Playtomic ≥ 3.5
+  if (lastTournamentRank !== null && lastTournamentTotal >= 4 && lastTournamentRank === lastTournamentTotal && lvl >= 3.5) {
+    return tag('last-place-elite', `A Playtomic rating of ${lvl.toFixed(1)} and yet — last place. Scientists are studying this. The data doesn't lie but it does appear to be deeply confused. A walking contradiction, somehow making the rest of us feel both inferior and hopeful at the same time.`)
+  }
+
+  // 💀 Last place (expected) — last in most recent tournament, lower skill
+  if (lastTournamentRank !== null && lastTournamentTotal >= 4 && lastTournamentRank === lastTournamentTotal) {
+    return tag('last-place', `Came last. Consistent, reliable, always there at the bottom holding the group together. Not everyone can win — someone has to make the winners feel good, and ${name} does this selflessly, every single time.`)
+  }
+
+  // 🏆 Tournament winner — won the most recent tournament
+  if (lastTournamentRank === 1 && lastTournamentTotal >= 4) {
+    return tag('recent-winner', `Won the whole thing. Showed up, dominated, went home. The rest of the group is currently reviewing their life choices. ${name} is not available for comment — they're too busy being better than everyone else.`)
+  }
+
+  // 🤔 The Gap — high Playtomic, low win rate
+  if (lvl >= 3.5 && winRate !== null && winRate < 0.35 && totalMatches >= 3) {
+    return tag('elite-bad-winrate', `Playtomic says elite. Match results say… something else entirely. Currently the most expensive mystery in the group. Investigations are ongoing. The committee remains baffled and slightly impressed.`)
+  }
+
+  // 🕵️ Secret Weapon — low Playtomic, suspiciously high win rate
+  if (lvl < 2.5 && winRate !== null && winRate > 0.6 && totalMatches >= 3) {
+    return tag('low-rated-secret', `Low rating, suspiciously high win rate. Either sandbagging at a professional level or has discovered something the rest of us haven't.`)
+  }
+
+  // 💪 Dominant — ≥70% win rate
+  if (winRate !== null && winRate >= 0.7 && totalMatches >= 3) {
+    return tag('dominant', `Wins constantly. Shows up, wins, leaves. Has made winning look so routine that the group has started taking it personally. At this point, the committee is actively considering whether ${name} should remain eligible for the next invitation.`)
+  }
+
+  // 🎁 Lovable Loser — ≤25% win rate
+  if (winRate !== null && winRate <= 0.25 && totalMatches >= 3) {
+    return tag('committed-loser', `Loses frequently, returns every time. This is either extraordinary mental resilience or a complete absence of self-preservation instinct. Either way, the courts wouldn't be the same without them. Truly the heart of the group.`)
+  }
+
+  // 🦁 The Ironman — attended every tournament we know about
+  if (totalTournaments >= 2 && tournamentsPlayed >= totalTournaments) {
+    return tag('ironman', `Has attended every single tournament. Every. Single. One. Rain, wind, scheduling conflicts, life events — none of it mattered. We're not sure if this is dedication or if they simply have nowhere else to be. Both are valid.`)
+  }
+
+  // 👻 The Ghost — barely shows up
+  if (totalTournaments >= 3 && tournamentsPlayed <= 1) {
+    return tag('ghost', `Has appeared at approximately one tournament. Like a rare weather event — talked about, rarely witnessed. The group respects the mystery. Statistically, anything could happen next. Nobody knows. Not even ${name}.`)
+  }
+
+  // 🤷 Perfectly Mediocre — win rate 45–55%, ≥4 matches
+  if (winRate !== null && winRate >= 0.45 && winRate <= 0.55 && totalMatches >= 4) {
+    return tag('mediocre', `Win rate hovering in the 45–55% range across six or more matches. A statistical masterpiece. Not good enough to be intimidating, not bad enough to be endearing. Just perfectly, beautifully average. The bell curve's favourite child.`)
+  }
+
+  // ── Historical-tournament scenarios (secondary block) ───────────────────
+  // For players whose record IS personal but doesn't fit any of the 10
+  // performance buckets — surface a podium / champion / veteran line so the
+  // review still feels tailored.
 
   // Multi-time champion across historical events
   if (histSummary.golds >= 2) {
@@ -293,56 +362,6 @@ function corpReview(player, matches = [], registrations = [], tournaments = [], 
     if (best && bestT) {
       return tag('hist-predates-app', `${name} predates the app. Best historical finish: rank ${best} at ${bestT}. The new system has yet to capture them in action. Veterans are encouraged to register for the next one and let the modern record begin.`)
     }
-  }
-
-  // ── Scenario matching (priority order) ───────────────────────────────────
-
-  // Dead last in most recent tournament — high skill
-  if (lastTournamentRank !== null && lastTournamentTotal >= 4 && lastTournamentRank === lastTournamentTotal) {
-    if (lvl >= 3.5) {
-      return tag('last-place-elite', `A Playtomic rating of ${lvl.toFixed(1)} and yet — last place. Scientists are studying this. The data doesn't lie but it does appear to be deeply confused. A walking contradiction, somehow making the rest of us feel both inferior and hopeful at the same time.`)
-    }
-    return tag('last-place', `Came last. Consistent, reliable, always there at the bottom holding the group together. Not everyone can win — someone has to make the winners feel good, and ${name} does this selflessly, every single time.`)
-  }
-
-  // Won the most recent tournament
-  if (lastTournamentRank === 1 && lastTournamentTotal >= 4) {
-    return tag('recent-winner', `Won the whole thing. Showed up, dominated, went home. The rest of the group is currently reviewing their life choices. ${name} is not available for comment — they're too busy being better than everyone else.`)
-  }
-
-  // High skill, bad win rate — the unexplained gap
-  if (lvl >= 3.5 && winRate !== null && winRate < 0.35) {
-    return tag('elite-bad-winrate', `Playtomic says elite. Match results say… something else entirely. Currently the most expensive mystery in the group. Investigations are ongoing. The committee remains baffled and slightly impressed.`)
-  }
-
-  // Low skill, strong win rate — the secret weapon
-  if (lvl < 2.5 && winRate !== null && winRate > 0.6) {
-    return tag('low-rated-secret', `Low rating, suspiciously high win rate. Either sandbagging at a professional level or has discovered something the rest of us haven't.`)
-  }
-
-  // Dominant win rate
-  if (winRate !== null && winRate >= 0.7) {
-    return tag('dominant', `Wins constantly. Shows up, wins, leaves. Has made winning look so routine that the group has started taking it personally. At this point, the committee is actively considering whether ${name} should remain eligible for the next invitation.`)
-  }
-
-  // Committed loser
-  if (winRate !== null && winRate <= 0.25) {
-    return tag('committed-loser', `Loses frequently, returns every time. This is either extraordinary mental resilience or a complete absence of self-preservation instinct. Either way, the courts wouldn't be the same without them. Truly the heart of the group.`)
-  }
-
-  // The Ironman — attended every tournament
-  if (totalTournaments >= 2 && tournamentsPlayed >= totalTournaments) {
-    return tag('ironman', `Has attended every single tournament. Every. Single. One. Rain, wind, scheduling conflicts, life events — none of it mattered. We're not sure if this is dedication or if they simply have nowhere else to be. Both are valid.`)
-  }
-
-  // The Ghost — barely shows up
-  if (totalTournaments >= 2 && tournamentsPlayed <= 1) {
-    return tag('ghost', `Has appeared at approximately one tournament. Like a rare weather event — talked about, rarely witnessed. The group respects the mystery. Statistically, anything could happen next. Nobody knows. Not even ${name}.`)
-  }
-
-  // Perfectly mediocre
-  if (winRate !== null && winRate >= 0.45 && winRate <= 0.55 && totalMatches >= 4) {
-    return tag('mediocre', `Win rate hovering in the 45–55% range across six or more matches. A statistical masterpiece. Not good enough to be intimidating, not bad enough to be endearing. Just perfectly, beautifully average. The bell curve's favourite child.`)
   }
 
   // Has tournament history but no completed match data recorded

@@ -447,7 +447,7 @@ const MAR_STANDINGS = [
   { name: 'Alex B',      total: 29 },
   { name: 'Alex M',      total: 27 },
   { name: 'Karlijn',     total: 27 },
-  { name: 'Uziel',       total: 27 },
+  { name: 'Uziel',       total: 27, podium: 3 },
   { name: 'Zornitsa',    total: 27 },
   { name: 'Erica',       total: 26 },
   { name: 'Ini',         total: 26 },
