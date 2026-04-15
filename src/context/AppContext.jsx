@@ -63,14 +63,16 @@ export function AppProvider({ children }) {
   }
 
   const loadPlayerAliases = async () => {
-    // Map of historical_name → player_id (or sentinel '__not_in_roster__').
-    // Fails silently if the v16 migration hasn't run yet so the rest of the
-    // app keeps working on a fresh DB.
+    // Map of historical_name → player_id (or sentinel '__not_in_roster__'
+    // when the row was explicitly skipped). Fails silently if the v16
+    // migration hasn't run yet so the rest of the app keeps working.
     try {
       const { data, error } = await supabase.from('player_aliases').select('*')
       if (error) throw error
       const map = {}
-      ;(data || []).forEach(row => { map[row.historical_name] = row.player_id })
+      ;(data || []).forEach(row => {
+        map[row.historical_name] = row.skipped ? '__not_in_roster__' : row.player_id
+      })
       setPlayerAliases(map)
     } catch (e) {
       // Table not present — historical features just degrade to "no aliases".
@@ -550,7 +552,14 @@ export function AppProvider({ children }) {
   // ── Historical name → player_id alias map ─────────────────
   const setPlayerAlias = useCallback(async (historicalName, playerId) => {
     // Upsert. playerId can be a real UUID or the '__not_in_roster__' sentinel.
-    const payload = { historical_name: historicalName, player_id: playerId }
+    // The DB stores skipped status as a separate boolean (player_id is NULL
+    // for skipped rows) — translate the sentinel here.
+    const isSkipped = playerId === '__not_in_roster__'
+    const payload = {
+      historical_name: historicalName,
+      player_id:       isSkipped ? null : playerId,
+      skipped:         isSkipped,
+    }
     const { error } = await supabase.from('player_aliases').upsert(payload, { onConflict: 'historical_name' })
     if (error) {
       console.error('setPlayerAlias error:', error)

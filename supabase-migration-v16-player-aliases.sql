@@ -14,10 +14,16 @@
 --  Idempotent — safe to re-run.
 -- ============================================================================
 
+-- A row either points to a current player (player_id set, skipped=false)
+-- OR records that the historical name is a guest who never joined the
+-- Lobsters (player_id NULL, skipped=true). Enforced by the CHECK below.
 CREATE TABLE IF NOT EXISTS player_aliases (
-  historical_name TEXT      PRIMARY KEY,
-  player_id       UUID      NOT NULL REFERENCES players(id) ON DELETE CASCADE,
-  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  historical_name TEXT        PRIMARY KEY,
+  player_id       UUID        REFERENCES players(id) ON DELETE CASCADE,
+  skipped         BOOLEAN     NOT NULL DEFAULT FALSE,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT player_aliases_xor_check
+    CHECK ((player_id IS NOT NULL) <> skipped)
 );
 
 CREATE INDEX IF NOT EXISTS player_aliases_player_id_idx

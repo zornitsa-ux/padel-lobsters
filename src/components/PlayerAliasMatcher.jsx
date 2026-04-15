@@ -195,22 +195,39 @@ export default function PlayerAliasMatcher({ onClose }) {
                 {/* Suggestions + actions for unmatched names */}
                 {!item.playerId && (
                   <div className="mt-2 space-y-1.5">
-                    {suggestions.map(p => (
+                    {suggestions.length > 0 && (
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">
+                        Tap a match to confirm:
+                      </p>
+                    )}
+                    {suggestions.map((p, i) => (
                       <button
                         key={p.id}
                         onClick={() => handleConfirm(item.name, p.id)}
-                        className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-teal-50 hover:bg-teal-100 active:scale-[0.98] transition-all"
+                        className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl border-2 active:scale-[0.98] transition-all ${
+                          i === 0
+                            ? 'bg-teal-500 border-teal-500 hover:bg-teal-600'
+                            : 'bg-teal-50 border-teal-200 hover:bg-teal-100'
+                        }`}
                       >
-                        <span className="text-sm font-semibold text-teal-700 truncate">{p.name}</span>
-                        <Check size={14} className="text-teal-600 flex-shrink-0" />
+                        <span className={`text-sm font-bold truncate ${i === 0 ? 'text-white' : 'text-teal-700'}`}>
+                          ✓ It's {p.name}
+                          {i === 0 && <span className="ml-1.5 text-[10px] font-semibold opacity-80">(best match)</span>}
+                        </span>
+                        <Check size={16} className={`flex-shrink-0 ${i === 0 ? 'text-white' : 'text-teal-600'}`} />
                       </button>
                     ))}
+                    {suggestions.length === 0 && (
+                      <p className="text-[11px] text-gray-400 italic">
+                        No close match found in your roster — pick from the full list or skip.
+                      </p>
+                    )}
                     <div className="flex gap-1.5">
                       <button
                         onClick={() => setPicker({ name: item.name })}
-                        className="flex-1 text-xs font-semibold text-gray-500 px-3 py-2 rounded-xl border border-gray-200 hover:bg-gray-50 active:scale-95 transition-all flex items-center justify-center gap-1"
+                        className="flex-1 text-xs font-semibold text-gray-600 px-3 py-2 rounded-xl border border-gray-200 hover:bg-gray-50 active:scale-95 transition-all flex items-center justify-center gap-1"
                       >
-                        Pick another <ChevronRight size={12} />
+                        {suggestions.length > 0 ? 'Different player…' : 'Pick from roster…'} <ChevronRight size={12} />
                       </button>
                       <button
                         onClick={() => handleSkip(item.name)}
