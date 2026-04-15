@@ -33,7 +33,7 @@ const getPlayerName = (o, players) => {
 }
 
 const emptyItem = {
-  name: '', description: '', price: '', sizes: [], category: 'apparel', image_url: '', image_urls: [], active: true,
+  name: '', description: '', price: '', sizes: [], category: 'apparel', image_url: '', image_urls: [], active: true, external_orders: 0,
 }
 
 // ── Raffle component ──────────────────────────────────────────────────────────
@@ -275,7 +275,7 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
   const openEdit = (item) => {
     if (!isAdmin) { setShowLogin(true); return }
     const urls = item.image_urls?.length ? item.image_urls : (item.image_url ? [item.image_url] : [])
-    setForm({ ...item, price: String(item.price), sizes: item.sizes || [], image_urls: urls })
+    setForm({ ...item, price: String(item.price), sizes: item.sizes || [], image_urls: urls, external_orders: parseInt(item.external_orders) || 0 })
     setEditItem(item); setShowForm(true)
   }
 
@@ -291,14 +291,26 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
       image_urls: urls,
       category: form.category || 'apparel',
       active: true,
+      external_orders: Math.max(0, parseInt(form.external_orders) || 0),
     }
     if (editItem) {
-      await supabase.from('merch_items').update(payload).eq('id', editItem.id)
+      // Graceful fallback: if the external_orders column doesn't exist yet
+      // (e.g. v15 migration not run), retry without it so admin can still
+      // edit the rest of the item.
+      let res = await supabase.from('merch_items').update(payload).eq('id', editItem.id)
+      if (res.error) {
+        const { external_orders: _drop, ...rest } = payload
+        await supabase.from('merch_items').update(rest).eq('id', editItem.id)
+      }
     } else {
       // New items go to the end of the list
       const maxOrder = items.length > 0 ? Math.max(...items.map(i => i.display_order || 0)) : 0
-      const { error } = await supabase.from('merch_items').insert({ ...payload, display_order: maxOrder + 1 })
-      if (error) await supabase.from('merch_items').insert(payload)
+      let res = await supabase.from('merch_items').insert({ ...payload, display_order: maxOrder + 1 })
+      if (res.error) {
+        const { external_orders: _drop, ...rest } = payload
+        res = await supabase.from('merch_items').insert({ ...rest, display_order: maxOrder + 1 })
+      }
+      if (res.error) await supabase.from('merch_items').insert(payload)
     }
     await loadItems()
     setShowForm(false); setSaving(false)
@@ -351,7 +363,17 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
   }
 
   // ── Orders ───────────────────────────────────────────────────────────────────
-  const orderCount = (itemId) => interests.filter(i => i.merch_item_id === itemId).length
+  // The counter combines live website orders (minus cancelled) with any
+  // `external_orders` the admin recorded manually on the item — so players
+  // see the real total (including offline/WhatsApp purchases). Cancelled
+  // orders are excluded from the FOMO count.
+  const websiteOrderCount = (itemId) =>
+    interests.filter(i => i.merch_item_id === itemId && (i.status || 'ordered') !== 'cancelled').length
+  const orderCount = (itemId) => {
+    const item = items.find(i => i.id === itemId)
+    const external = parseInt(item?.external_orders) || 0
+    return websiteOrderCount(itemId) + external
+  }
 
   const placeOrder = async (itemId) => {
     // If the player isn't signed in yet, pop the inline PIN prompt and
@@ -528,6 +550,17 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
                 <div>
                   <p className="font-bold text-gray-800">{item.name}</p>
                   {item.description && <p className="text-xs text-gray-500 mt-0.5">{item.description}</p>}
+                  {/* FOMO counter — combines website orders + offline sales.
+                      Singular copy below 1, so "1 lobster has this" sounds
+                      right when only one person has ordered so far. */}
+                  {orderCount(item.id) > 0 && (
+                    <p className="text-[11px] font-semibold text-amber-600 mt-1 flex items-center gap-1">
+                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                      {orderCount(item.id) === 1
+                        ? '1 lobster already ordered 🦞'
+                        : `${orderCount(item.id)} lobsters already ordered 🦞`}
+                    </p>
+                  )}
                 </div>
                 <span className="text-lg font-bold text-lobster-teal flex-shrink-0 ml-2">
                   €{parseFloat(item.price).toFixed(0)}
@@ -595,11 +628,15 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
                     ? <><Check size={15} /> Ordered!</>
                     : <><ShoppingCart size={15} /> Order</>}
                 </button>
-                {isAdmin && orderCount(item.id) > 0 && (
-                  <span className="text-xs text-gray-400 flex-shrink-0">
-                    {orderCount(item.id)} {orderCount(item.id) === 1 ? 'order' : 'orders'}
-                  </span>
-                )}
+                {isAdmin && orderCount(item.id) > 0 && (() => {
+                  const web = websiteOrderCount(item.id)
+                  const ext = parseInt(item.external_orders) || 0
+                  return (
+                    <span className="text-xs text-gray-400 flex-shrink-0" title="Website orders + offline orders">
+                      {web}{ext > 0 ? ` + ${ext}` : ''} total
+                    </span>
+                  )
+                })()}
               </div>
             </div>
           )})}
@@ -997,6 +1034,25 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
                 <label className="label">Price (€)</label>
                 <input type="number" step="0.01" min="0" className="input" placeholder="0.00"
                   value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))} />
+              </div>
+
+              {/* Offline orders — e.g. people who bought in person or via
+                  WhatsApp. Added to the live website count in the shop
+                  FOMO badge so players see the real demand. */}
+              <div>
+                <label className="label">Offline orders <span className="text-gray-400 font-normal">(bought outside the app)</span></label>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  className="input"
+                  placeholder="0"
+                  value={form.external_orders ?? 0}
+                  onChange={e => setForm(f => ({ ...f, external_orders: e.target.value }))}
+                />
+                <p className="text-[11px] text-gray-400 mt-1">
+                  Counts toward the "X lobsters already ordered" badge players see in the shop.
+                </p>
               </div>
 
               <div>

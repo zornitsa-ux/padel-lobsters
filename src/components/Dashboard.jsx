@@ -4,6 +4,7 @@ import { supabase } from '../supabase'
 import { Trophy, Users, Calendar, ChevronRight, AlertCircle, Megaphone, TrendingUp, Clock, Flame, Award, Lightbulb, CreditCard, CalendarDays, ShoppingBag } from 'lucide-react'
 import DEFAULT_TIPS from '../data/padelTips'
 import { TOURNAMENTS as LEGACY_TOURNAMENTS } from './History'
+import { DateTile, AddToCalendarButton } from './CalendarPieces'
 
 const CLAW_IMG = '/claws.png'
 const ClawUp = ({ active }) => (
@@ -414,15 +415,25 @@ export default function Dashboard({ onNavigate }) {
           style={{ backdropFilter: 'blur(12px)' }}
         >
           <p className="text-[10px] font-bold text-lobster-orange uppercase tracking-wide mb-1">Your Next Event</p>
-          <h2 className="text-base font-bold text-gray-800">
-            <button onClick={() => onNavigate('registration', upcoming)} className="hover:text-lobster-teal active:scale-95 transition-all text-left">
-              {upcoming.name}
-            </button>
-          </h2>
-          <p className="text-xs text-gray-500 mb-2 flex items-center gap-1">
-            <Calendar size={12} />
-            {formatDate(upcoming.date)}
-          </p>
+          <div className="flex items-start gap-3 mb-2">
+            <DateTile date={upcoming.date} size="md" />
+            <div className="flex-1 min-w-0">
+              <h2 className="text-base font-bold text-gray-800 leading-tight">
+                <button onClick={() => onNavigate('registration', upcoming)} className="hover:text-lobster-teal active:scale-95 transition-all text-left">
+                  {upcoming.name}
+                </button>
+              </h2>
+              <p className="text-sm font-semibold text-gray-700 leading-tight mt-0.5">
+                {formatDate(upcoming.date)}
+              </p>
+              {upcoming.time && (
+                <p className="text-xs text-gray-500 leading-tight mt-0.5">
+                  {upcoming.time}{upcoming.duration ? ` · ${upcoming.duration}min` : ''}
+                </p>
+              )}
+            </div>
+            <AddToCalendarButton tournament={upcoming} variant="icon" />
+          </div>
 
           {/* Registration status badge */}
           {claimedId && (
