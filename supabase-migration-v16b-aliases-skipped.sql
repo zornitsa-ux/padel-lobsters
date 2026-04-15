@@ -25,6 +25,12 @@ ALTER TABLE player_aliases
   ADD CONSTRAINT player_aliases_xor_check
   CHECK ((player_id IS NOT NULL) <> skipped);
 
+-- IMPORTANT: tell PostgREST (Supabase's auto-generated API) to refresh
+-- its schema cache so the new `skipped` column becomes visible to the
+-- client. Without this you get:
+--   "Could not find the 'skipped' column of 'player_aliases' in the schema cache"
+NOTIFY pgrst, 'reload schema';
+
 -- Verification
 SELECT historical_name, player_id, skipped
 FROM   player_aliases
