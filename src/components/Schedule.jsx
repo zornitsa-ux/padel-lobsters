@@ -7,10 +7,11 @@ import { ChevronLeft, Shuffle, AlertCircle, Trophy, Users } from 'lucide-react'
 /** Score how good it is to pair A with B as partners. Lower = better. */
 function pairScore(a, b, partnerHistory, avoidWWPairs) {
   let score = 0
-  if (a.isLeftHanded && b.isLeftHanded) score += 10000        // Hard: no two lefties
-  if (partnerHistory[a.id]?.has(b.id))  score += 1000         // Hard: repeat partner
+  if (a.isLeftHanded && b.isLeftHanded) score += 100000       // Absolute: no two lefties
+  if (partnerHistory[a.id]?.has(b.id))  score += 100000       // Absolute: never repeat a partner
   if (avoidWWPairs && a.gender === 'female' && b.gender === 'female') score += 50
-  // PREFER complementary levels: pair strong with weak so teams are balanced
+  // PREFER complementary levels: pair strong with weak so teams are balanced.
+  // This is a nice-to-have — it yields to the hard constraints above.
   score -= Math.abs((a.adjustedLevel || 0) - (b.adjustedLevel || 0)) * 0.8
   score += Math.random() * 0.3  // jitter: break ties randomly so each reshuffle differs
   return score
@@ -22,9 +23,9 @@ function courtScore(t1, t2, opponentHistory) {
   const levelDiff = Math.abs(lvl(t1) - lvl(t2))
   let oppPenalty = 0
   t1.forEach(p => t2.forEach(q => {
-    if (opponentHistory[p.id]?.has(q.id)) oppPenalty += 50  // penalise repeat opponents — was 8, increased so it overrides level-diff
+    if (opponentHistory[p.id]?.has(q.id)) oppPenalty += 200  // heavy penalty — want fresh faces on every court
   }))
-  return levelDiff + oppPenalty + Math.random() * 0.5  // jitter to break ties differently each reshuffle
+  return levelDiff + oppPenalty + Math.random() * 0.5
 }
 
 /** Shuffle an array in place (Fisher-Yates). */
@@ -44,20 +45,24 @@ function shuffle(arr) {
  * random traversal orders and keep the attempt with the lowest total cost.
  * This prevents the old bug where a fixed traversal order forced the last
  * few players into repeat partnerships every time.
+ *
+ * Men and women are shuffled TOGETHER (not women-first) so the greedy
+ * pass can start from any player — bottom-up, top-down, interleaved.
+ * The W-W avoidance penalty (+50) plus multi-attempt ensures we almost
+ * always find a solution without same-gender pairs in mixed mode, while
+ * giving much more variety in partner assignments.
  */
 function buildSmartPairs(pool, partnerHistory, genderMode) {
   const isMixed = genderMode === 'mixed'
   const womenCount = isMixed ? pool.filter(p => p.gender === 'female').length : 0
   const avoidWWPairs = isMixed && womenCount <= Math.floor(pool.length / 2)
 
-  // Sort into priority groups: left-handers → women (mixed only) → rest.
-  // Within each group the order is randomised per attempt so the greedy
-  // pass doesn't always sacrifice the same players at the tail end.
-  const buckets = { lefty: [], women: [], rest: [] }
+  // Only left-handers need priority (hard no-LL constraint). Everyone else
+  // — men AND women — goes into one pool and gets fully shuffled per attempt.
+  const leftyIdx = [], otherIdx = []
   pool.forEach((p, i) => {
-    if (p.isLeftHanded) buckets.lefty.push(i)
-    else if (isMixed && p.gender === 'female') buckets.women.push(i)
-    else buckets.rest.push(i)
+    if (p.isLeftHanded) leftyIdx.push(i)
+    else otherIdx.push(i)
   })
 
   // One greedy pass with a given traversal order.
@@ -78,25 +83,32 @@ function buildSmartPairs(pool, partnerHistory, genderMode) {
     return pairs
   }
 
-  // Cost of a full pairing set (lower = better). A pair that repeats a
-  // previous partnership contributes ≥1000, so any result under 1000
-  // contains zero repeats.
+  // Count how many pairs repeat a previous partnership (the thing we MUST avoid).
+  const countRepeats = (pairs) =>
+    pairs.filter(([a, b]) => partnerHistory[a.id]?.has(b.id)).length
+
+  // Total cost (lower = better). Used to break ties when repeat count is equal.
   const totalCost = (pairs) =>
     pairs.reduce((sum, [a, b]) => sum + pairScore(a, b, partnerHistory, avoidWWPairs), 0)
 
-  // Run up to 40 attempts; bail early when we find a repeat-free solution.
-  let bestPairs = null, bestCost = Infinity
-  const ATTEMPTS = 40
+  // Run up to 80 attempts. We ONLY bail early when we find a solution
+  // with zero repeat partners. Otherwise keep searching — more variety
+  // is always worth the (negligible) compute.
+  let bestPairs = null, bestRepeats = Infinity, bestCost = Infinity
+  const ATTEMPTS = 80
   for (let t = 0; t < ATTEMPTS; t++) {
     const indices = [
-      ...shuffle([...buckets.lefty]),
-      ...shuffle([...buckets.women]),
-      ...shuffle([...buckets.rest]),
+      ...shuffle([...leftyIdx]),
+      ...shuffle([...otherIdx]),
     ]
-    const pairs = greedyPass(indices)
-    const cost  = totalCost(pairs)
-    if (cost < bestCost) { bestCost = cost; bestPairs = pairs }
-    if (bestCost < 1000) break   // zero repeat partners → done
+    const pairs   = greedyPass(indices)
+    const repeats = countRepeats(pairs)
+    const cost    = totalCost(pairs)
+    // Prefer fewer repeats; break ties by lower total cost.
+    if (repeats < bestRepeats || (repeats === bestRepeats && cost < bestCost)) {
+      bestRepeats = repeats; bestCost = cost; bestPairs = pairs
+    }
+    if (bestRepeats === 0) break   // perfect — no need to keep looking
   }
   return bestPairs
 }
@@ -104,6 +116,9 @@ function buildSmartPairs(pool, partnerHistory, genderMode) {
 /**
  * Assign pairs to courts: prefer WM+WM (gender balanced), minimise
  * level difference AND repeat opponents.
+ *
+ * Uses multi-attempt with shuffled pair order so the same opponents
+ * don't keep meeting each other across rounds.
  */
 function pairsToCourtMatches(pairs, numCourts, roundNum, opponentHistory = {}) {
   const lvl   = (pair) => pair.reduce((s, p) => s + (p.adjustedLevel || 0), 0)
@@ -118,29 +133,54 @@ function pairsToCourtMatches(pairs, numCourts, roundNum, opponentHistory = {}) {
     return bestIdx
   }
 
-  const courts = []
-  const buildMatch = (t1, t2) => ({
-    court: `Court ${courts.length + 1}`, round: roundNum,
+  const buildMatch = (t1, t2, courtNum) => ({
+    court: `Court ${courtNum}`, round: roundNum,
     team1Ids: t1.map(p => p.id), team2Ids: t2.map(p => p.id),
     team1Level: lvl(t1), team2Level: lvl(t2),
     score1: null, score2: null, completed: false,
   })
 
-  const wp = [...pairs.filter(hasW)], mp = [...pairs.filter(p => !hasW(p))]
+  // Score a full court assignment: total of all courtScores.
+  const totalCourtCost = (courts) =>
+    courts.reduce((sum, m) => {
+      const t1 = m.team1Ids.map(id => pairs.flat().find(p => p.id === id)).filter(Boolean)
+      const t2 = m.team2Ids.map(id => pairs.flat().find(p => p.id === id)).filter(Boolean)
+      return sum + courtScore(t1, t2, opponentHistory)
+    }, 0)
 
-  while (wp.length >= 2 && courts.length < numCourts) {
-    const t1 = wp.shift(); const t2 = wp.splice(pickBest(t1, wp), 1)[0]
-    courts.push(buildMatch(t1, t2))
+  // One greedy pass: split pairs into WM/MM pools (shuffled), then greedily
+  // assign courts favouring WM+WM → WM+MM → MM+MM.
+  const greedyCourtPass = (shuffledPairs) => {
+    const wp = shuffle([...shuffledPairs.filter(hasW)])
+    const mp = shuffle([...shuffledPairs.filter(p => !hasW(p))])
+    const courts = []
+    let courtNum = 1
+
+    while (wp.length >= 2 && courts.length < numCourts) {
+      const t1 = wp.shift(); const t2 = wp.splice(pickBest(t1, wp), 1)[0]
+      courts.push(buildMatch(t1, t2, courtNum++))
+    }
+    while (wp.length > 0 && mp.length > 0 && courts.length < numCourts) {
+      const t1 = wp.shift(); const t2 = mp.splice(pickBest(t1, mp), 1)[0]
+      courts.push(buildMatch(t1, t2, courtNum++))
+    }
+    while (mp.length >= 2 && courts.length < numCourts) {
+      const t1 = mp.shift(); const t2 = mp.splice(pickBest(t1, mp), 1)[0]
+      courts.push(buildMatch(t1, t2, courtNum++))
+    }
+    return courts
   }
-  while (wp.length > 0 && mp.length > 0 && courts.length < numCourts) {
-    const t1 = wp.shift(); const t2 = mp.splice(pickBest(t1, mp), 1)[0]
-    courts.push(buildMatch(t1, t2))
+
+  // Run multiple attempts, keep the one with lowest opponent-repeat cost.
+  let bestCourts = null, bestCost = Infinity
+  const ATTEMPTS = 30
+  for (let t = 0; t < ATTEMPTS; t++) {
+    const courts = greedyCourtPass(pairs)
+    const cost = totalCourtCost(courts)
+    if (cost < bestCost) { bestCost = cost; bestCourts = courts }
+    if (bestCost < 200) break  // no repeat opponents → done early
   }
-  while (mp.length >= 2 && courts.length < numCourts) {
-    const t1 = mp.shift(); const t2 = mp.splice(pickBest(t1, mp), 1)[0]
-    courts.push(buildMatch(t1, t2))
-  }
-  return courts
+  return bestCourts
 }
 
 /** Update both partner and opponent history after a set of matches. */
