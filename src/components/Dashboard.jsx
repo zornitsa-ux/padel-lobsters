@@ -4,6 +4,7 @@ import { supabase } from '../supabase'
 import { Trophy, Users, Calendar, ChevronRight, AlertCircle, Megaphone, TrendingUp, Clock, Flame, Award, Lightbulb, CreditCard, CalendarDays, ShoppingBag } from 'lucide-react'
 import DEFAULT_TIPS from '../data/padelTips'
 import { TOURNAMENTS as LEGACY_TOURNAMENTS } from './History'
+import { buildPlayerStats } from '../lib/playerStats'
 import { DateTile, AddToCalendarButton } from './CalendarPieces'
 
 const CLAW_IMG = '/claws.png'
@@ -91,7 +92,7 @@ export default function Dashboard({ onNavigate }) {
   const {
     tournaments, players, updates, registrations, matches, settings,
     getTournamentRegistrations, getTournamentMatches,
-    isAdmin, claimedId, getPlayerById,
+    isAdmin, claimedId, getPlayerById, playerAliases,
   } = useApp()
 
   const claimedPlayer = claimedId ? getPlayerById(claimedId) : null
@@ -206,55 +207,21 @@ export default function Dashboard({ onNavigate }) {
   }, [tournaments, matches, players, getTournamentRegistrations, getTournamentMatches])
 
   // ── Personal stats for claimed player ──────────────────────────────────────
+  // Uses the SHARED buildPlayerStats helper (../lib/playerStats) so the home
+  // card and the Players-tab expanded profile always agree. It folds in
+  // historical matches from History.jsx via the player_aliases map (plus a
+  // first-name/full-name fallback), which is why veterans like Zornitsa see
+  // real played/won/lost numbers here even if they've never been logged in
+  // the Supabase `matches` table.
   const myStats = useMemo(() => {
     if (!claimedId) return null
-    let played = 0, won = 0, lost = 0, draws = 0, pts = 0, pointsFor = 0, pointsAgainst = 0
-    const h2h = {} // opponentId → { won, lost }
-    const partners = {} // partnerId → { wins, games }
-    let bestWinStreak = 0, curWinStreak = 0
+    const base = buildPlayerStats(
+      claimedId, matches, tournaments, registrations,
+      players, playerAliases || {}, LEGACY_TOURNAMENTS,
+    )
 
-    matches.filter(m => m.completed).forEach(m => {
-      const onT1 = (m.team1Ids || []).includes(claimedId)
-      const onT2 = (m.team2Ids || []).includes(claimedId)
-      if (!onT1 && !onT2) return
-      played++
-      const s1 = parseInt(m.score1) || 0, s2 = parseInt(m.score2) || 0
-      if (onT1) { pointsFor += s1; pointsAgainst += s2 }
-      else      { pointsFor += s2; pointsAgainst += s1 }
-      const t1w = s1 > s2, t2w = s2 > s1
-      const iWon = (onT1 && t1w) || (onT2 && t2w)
-      const iLost = (onT1 && t2w) || (onT2 && t1w)
-      pts = pointsFor  // total game points scored
-      if (iWon) { won++; curWinStreak++; bestWinStreak = Math.max(bestWinStreak, curWinStreak) }
-      else if (s1 === s2) { draws++; curWinStreak = 0 }
-      else { lost++; curWinStreak = 0 }
-
-      // Track head-to-head
-      const opponents = onT1 ? (m.team2Ids || []) : (m.team1Ids || [])
-      opponents.forEach(oppId => {
-        if (!h2h[oppId]) h2h[oppId] = { won: 0, lost: 0 }
-        if (iWon) h2h[oppId].won++
-        else if (iLost) h2h[oppId].lost++
-      })
-
-      // Track partners (teammates)
-      const teammates = onT1 ? (m.team1Ids || []) : (m.team2Ids || [])
-      teammates.forEach(tId => {
-        if (tId === claimedId) return
-        if (!partners[tId]) partners[tId] = { wins: 0, games: 0 }
-        partners[tId].games++
-        if (iWon) partners[tId].wins++
-      })
-    })
-    // NOTE: Previously returned null when played === 0, which caused the
-    // whole "Your Stats" card to disappear for claimed players with no DB
-    // matches yet. We now always return a stats object so the card always
-    // renders for the signed-in player, and the UI shows zeros / an empty
-    // state when there's no data to report.
-
-    // Top nemesis: opponent you've lost to the most (min 1 loss so it shows
-    // up as soon as there's data — doesn't need a second loss to qualify).
-    const nemesis = Object.entries(h2h)
+    // Shape for the home card: short nemesis/best-partner rows.
+    const nemesis = Object.entries(base.h2h)
       .filter(([, rec]) => rec.lost >= 1)
       .map(([oppId, rec]) => {
         const p = players.find(x => x.id === oppId)
@@ -263,8 +230,7 @@ export default function Dashboard({ onNavigate }) {
       .filter(Boolean)
       .sort((a, b) => (b.lost - b.won) - (a.lost - a.won))[0] || null
 
-    // Best partner: teammate you've won the most with (≥1 win together).
-    const bestPartner = Object.entries(partners)
+    const bestPartner = Object.entries(base.partners)
       .filter(([, rec]) => rec.wins >= 1)
       .map(([pId, rec]) => {
         const p = players.find(x => x.id === pId)
@@ -273,7 +239,9 @@ export default function Dashboard({ onNavigate }) {
       .filter(Boolean)
       .sort((a, b) => b.wins - a.wins)[0] || null
 
-    // Attendance streak: consecutive completed tournaments the player participated in
+    // Attendance streak: consecutive completed tournaments the player
+    // registered for. This is dashboard-specific (uses registrations, not
+    // match rows) so it stays here rather than moving into playerStats.
     const completedSorted = tournaments
       .filter(t => t.status === 'completed')
       .sort((a, b) => (b.date || '') > (a.date || '') ? 1 : -1)
@@ -287,9 +255,21 @@ export default function Dashboard({ onNavigate }) {
       }
     }
 
-    const winRate = played > 0 ? Math.round((won / played) * 100) : 0
-    return { played, won, lost, draws, pts, pointsFor, pointsAgainst, winRate, streak, bestWinStreak, nemesis, bestPartner }
-  }, [claimedId, matches, tournaments, players, getTournamentRegistrations])
+    return {
+      played: base.played,
+      won: base.won,
+      lost: base.lost,
+      draws: base.draws,
+      pts: base.points,
+      pointsFor: base.pointsFor,
+      pointsAgainst: base.pointsAgainst,
+      winRate: base.winRate,
+      streak,
+      bestWinStreak: base.bestWinStreak,
+      nemesis,
+      bestPartner,
+    }
+  }, [claimedId, matches, tournaments, players, registrations, playerAliases, getTournamentRegistrations])
 
   const formatDate = (d) => {
     if (!d) return '—'
