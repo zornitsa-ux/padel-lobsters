@@ -163,12 +163,18 @@ function corpReview(player, matches = [], registrations = [], tournaments = [], 
   const pid  = player.id
 
   const spid = String(pid)
-  // Scenarios whose review text should be prefixed with the scenario title
-  // (with emoji) so readers can instantly tell which "last place" variant it is.
-  const TITLED_SCENARIOS = new Set(['last-place-elite', 'last-place'])
+  // Every review is prefixed with its scenario title (with emoji) so the
+  // category is obvious at a glance. Generic level-fallback scenarios are
+  // intentionally excluded — those are "no real data" filler and shouldn't
+  // wear a badge.
+  const UNTITLED_SCENARIOS = new Set([
+    'welcome',
+    'level-low', 'level-mid', 'level-high', 'level-elite',
+    'shows-up-no-data',
+  ])
   const tag  = (scenario, text) => {
     const label = REVIEW_SCENARIOS.find(s => s.id === scenario)?.label || scenario
-    const finalText = TITLED_SCENARIOS.has(scenario) ? `${label} — ${text}` : text
+    const finalText = UNTITLED_SCENARIOS.has(scenario) ? text : `${label} — ${text}`
     return { text: finalText, scenario, scenarioLabel: label }
   }
 
