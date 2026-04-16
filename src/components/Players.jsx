@@ -6,6 +6,7 @@ import { Plus, Pencil, Trash2, X, ChevronDown, ChevronUp, Search, User, Clock, C
 import CountryPicker, { COUNTRIES, countryFlag, FlagImg } from './CountryPicker'
 import PlayerAliasMatcher from './PlayerAliasMatcher'
 import { buildHistoricalAppearances, summariseAppearances } from '../lib/playerHistory'
+import { computeTournamentStandings } from '../lib/standings'
 import { TOURNAMENTS } from './History'
 
 const LEVEL_COLORS = [
@@ -241,27 +242,18 @@ function corpReview(player, matches = [], registrations = [], tournaments = [], 
   const totalMixedTournaments  = pastTournaments.length + totalMixedHistorical
 
   // ── Compute per-tournament ranks across all played events ───────────────
+  // Uses the SAME ranking algorithm as Scores.jsx (total game points →
+  // matches won → head-to-head) via the shared standings helper, so the
+  // Lobster Review never contradicts the official standings screen.
   // We keep the full list so we can detect multi-event patterns (e.g. The
   // Anchor = 2+ last-place finishes), not just the most recent result.
   const dbTournamentRanks = []
   ;[...tournaments].sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(t => {
-    const tMs = matches.filter(m => String(m.tournamentId) === String(t.id) && m.completed)
-    if (tMs.length === 0) return
-    const allIds = [...new Set([
-      ...tMs.flatMap(m => m.team1Ids || []),
-      ...tMs.flatMap(m => m.team2Ids || []),
-    ])]
-    if (allIds.length < 4) return
-    const winsMap = Object.fromEntries(allIds.map(id => [id, 0]))
-    tMs.forEach(m => {
-      const s1 = m.score1 ?? 0, s2 = m.score2 ?? 0
-      const winners = s1 > s2 ? m.team1Ids : s2 > s1 ? m.team2Ids : []
-      ;(winners || []).forEach(id => { if (winsMap[id] !== undefined) winsMap[id]++ })
-    })
-    const ranked = Object.entries(winsMap).sort(([, a], [, b]) => b - a)
-    const pos = ranked.findIndex(([id]) => String(id) === spid)
+    const standings = computeTournamentStandings(t.id, matches)
+    if (standings.length < 4) return
+    const pos = standings.findIndex(s => String(s.id) === spid)
     if (pos >= 0) {
-      dbTournamentRanks.push({ id: t.id, date: t.date, rank: pos + 1, total: allIds.length })
+      dbTournamentRanks.push({ id: t.id, date: t.date, rank: pos + 1, total: standings.length })
     }
   })
 
@@ -316,10 +308,13 @@ function corpReview(player, matches = [], registrations = [], tournaments = [], 
     return tag('last-place', `${lastPlaceCount} last-place finishes and counting. Consistent, reliable, always there at the bottom holding the group together. Not everyone can win — someone has to make the winners feel good, and ${name} does this selflessly, every single time.`)
   }
 
-  // 🦁 The Ironman — attended ≥75% of mixed tournaments (ladies events excluded)
-  // Check BEFORE Bridesmaid so long-term attendance beats a one-off podium.
-  if (totalMixedTournaments >= 3 && mixedTournamentsPlayed / totalMixedTournaments >= 0.75) {
-    return tag('ironman', `Has attended almost every mixed tournament. Rain, wind, scheduling conflicts, life events — none of it mattered. We're not sure if this is dedication or if they simply have nowhere else to be. Both are valid.`)
+  // 🦁 The Ironman — attended EVERY mixed tournament we know about.
+  // Ladies-only events are excluded (they exclude half the roster by
+  // design), but EVERY mixed event — DB + historical — must be on the
+  // attendance record. Checked BEFORE Bridesmaid so long-term commitment
+  // beats a one-off podium finish.
+  if (totalMixedTournaments >= 3 && mixedTournamentsPlayed === totalMixedTournaments) {
+    return tag('ironman', `Has attended every Lobster tournament. Rain, wind, scheduling conflicts, life events — none of it mattered. We're not sure if this is dedication or if they simply have nowhere else to be. Both are valid.`)
   }
 
   // 👻 The Ghost — ≤33% mixed attendance across ≥3 known mixed events

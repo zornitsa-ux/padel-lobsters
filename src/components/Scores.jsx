@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react'
 import { useApp } from '../context/AppContext'
 import { ChevronLeft, Trophy, Star, AlertCircle } from 'lucide-react'
+import { computeTournamentStandings } from '../lib/standings'
 
 export default function Scores({ tournament, onNavigate }) {
   const { players, getTournamentMatches, getTournamentRegistrations } = useApp()
@@ -21,61 +22,18 @@ export default function Scores({ tournament, onNavigate }) {
   const regs = getTournamentRegistrations(tournament.id).filter(r => r.status === 'registered')
   const registeredPlayers = players.filter(p => regs.some(r => r.playerId === p.id))
 
-  // Calculate standings — total game points, tiebreak: matches won → head-to-head
+  // Calculate standings via the shared helper (lib/standings.js). This is
+  // the single source of truth the Lobster Review also reads from, so
+  // nothing ever disagrees with what's shown here.
+  //   Sort: total game points → matches won → head-to-head.
   const standings = useMemo(() => {
-    const stats = {}
-    registeredPlayers.forEach(p => {
-      stats[p.id] = { player: p, played: 0, won: 0, lost: 0, pointsFor: 0, pointsAgainst: 0, points: 0 }
-    })
-
-    matches.forEach(m => {
-      const s1 = parseInt(m.score1) || 0
-      const s2 = parseInt(m.score2) || 0
-      const team1Won = s1 > s2
-      const team2Won = s2 > s1
-
-      ;[...( m.team1Ids || [])].forEach(id => {
-        if (!stats[id]) return
-        stats[id].played++
-        stats[id].pointsFor    += s1
-        stats[id].pointsAgainst += s2
-        stats[id].points       += s1
-        if (team1Won) stats[id].won++
-        else if (team2Won) stats[id].lost++
-      })
-      ;[...(m.team2Ids || [])].forEach(id => {
-        if (!stats[id]) return
-        stats[id].played++
-        stats[id].pointsFor    += s2
-        stats[id].pointsAgainst += s1
-        stats[id].points       += s2
-        if (team2Won) stats[id].won++
-        else if (team1Won) stats[id].lost++
-      })
-    })
-
-    // Build head-to-head lookup for tiebreaking
-    const h2h = {}
-    matches.forEach(m => {
-      const s1 = parseInt(m.score1) || 0, s2 = parseInt(m.score2) || 0
-      if (s1 === s2) return
-      const winners = s1 > s2 ? (m.team1Ids || []) : (m.team2Ids || [])
-      const losers  = s1 > s2 ? (m.team2Ids || []) : (m.team1Ids || [])
-      winners.forEach(w => losers.forEach(l => {
-        const key = `${w}:${l}`
-        h2h[key] = (h2h[key] || 0) + 1
-      }))
-    })
-
-    return Object.values(stats).sort((a, b) => {
-      if (b.points !== a.points) return b.points - a.points          // 1. Total game points
-      if (b.won !== a.won) return b.won - a.won                      // 2. Matches won
-      // 3. Head-to-head
-      const aBeatsB = h2h[`${a.player.id}:${b.player.id}`] || 0
-      const bBeatsA = h2h[`${b.player.id}:${a.player.id}`] || 0
-      return bBeatsA - aBeatsB
-    })
-  }, [matches, registeredPlayers])
+    const seededIds = registeredPlayers.map(p => p.id)
+    const raw = computeTournamentStandings(tournament.id, matches, seededIds)
+    const byId = Object.fromEntries(players.map(p => [String(p.id), p]))
+    return raw
+      .map(s => ({ ...s, player: byId[String(s.id)] }))
+      .filter(s => s.player)
+  }, [matches, registeredPlayers, tournament.id, players])
 
   const formatDate = (d) => {
     if (!d) return '—'
