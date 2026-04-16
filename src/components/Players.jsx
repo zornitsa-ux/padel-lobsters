@@ -121,14 +121,18 @@ const emptyForm = {
 // with `performance: true` so the breakdown panel can highlight them
 // separately from welcome/historical/level-fallback scenarios.
 const REVIEW_SCENARIOS = [
-  // ── The 10 performance messages ────────────────────────────────────────
+  // ── The performance messages ───────────────────────────────────────────
   { id: 'last-place-elite',     label: '🎯 Playtomic: Fake News',     performance: true },
   { id: 'last-place',           label: '💀 The Anchor',               performance: true },
   { id: 'recent-winner',        label: '🏆 Tournament winner',         performance: true },
+  { id: 'bridesmaid',           label: '🥈 The Bridesmaid',            performance: true },
+  { id: 'rookie',               label: '🆕 The Rookie',                performance: true },
   { id: 'elite-bad-winrate',    label: '🤔 The Gap',                   performance: true },
   { id: 'low-rated-secret',     label: '🕵️ Secret Weapon',             performance: true },
   { id: 'dominant',             label: '💪 Dominant',                  performance: true },
+  { id: 'quietly-winning',      label: '💼 Quietly Winning',           performance: true },
   { id: 'committed-loser',      label: '🎁 Lovable Loser',             performance: true },
+  { id: 'quietly-losing',       label: '😬 Quietly Losing',            performance: true },
   { id: 'ironman',              label: '🦁 The Ironman',               performance: true },
   { id: 'ghost',                label: '👻 The Ghost',                 performance: true },
   { id: 'mediocre',             label: '🤷 Perfectly Mediocre',        performance: true },
@@ -291,39 +295,60 @@ function corpReview(player, matches = [], registrations = [], tournaments = [], 
     return tag('recent-winner', `Won the whole thing. Showed up, dominated, went home. The rest of the group is currently reviewing their life choices. ${name} is not available for comment — they're too busy being better than everyone else.`)
   }
 
+  // 🥈 The Bridesmaid — finished 2nd or 3rd in the most recent tournament
+  if (lastTournamentRank !== null && (lastTournamentRank === 2 || lastTournamentRank === 3) && lastTournamentTotal >= 4) {
+    const position = lastTournamentRank === 2 ? '2nd' : '3rd'
+    return tag('bridesmaid', `Finished ${position} at the most recent tournament. The podium, but not the top step. ${name} has mastered the art of being almost there — close enough to touch the trophy, far enough to go home without it. Tragic. Compelling. The committee remains quietly invested.`)
+  }
+
+  // 🆕 The Rookie — has played, but the sample size is still embarrassing
+  if (totalMatches >= 1 && totalMatches < 3) {
+    return tag('rookie', `${name} has played a match. Possibly two. That's it. That's the data. The committee is reserving judgement until the sample size stops being embarrassing. Potential is, technically, unlimited.`)
+  }
+
   // 🤔 The Gap — high Playtomic, low win rate
-  if (lvl >= 3.5 && winRate !== null && winRate < 0.35 && totalMatches >= 3) {
+  if (lvl >= 3.2 && winRate !== null && winRate < 0.40 && totalMatches >= 3) {
     return tag('elite-bad-winrate', `Playtomic says elite. Match results say… something else entirely. Currently the most expensive mystery in the group. Investigations are ongoing. The committee remains baffled and slightly impressed.`)
   }
 
   // 🕵️ Secret Weapon — low Playtomic, suspiciously high win rate
-  if (lvl < 2.5 && winRate !== null && winRate > 0.6 && totalMatches >= 3) {
+  if (lvl < 2.8 && winRate !== null && winRate > 0.55 && totalMatches >= 3) {
     return tag('low-rated-secret', `Low rating, suspiciously high win rate. Either sandbagging at a professional level or has discovered something the rest of us haven't.`)
   }
 
-  // 💪 Dominant — ≥70% win rate
-  if (winRate !== null && winRate >= 0.7 && totalMatches >= 3) {
+  // 💪 Dominant — ≥65% win rate
+  if (winRate !== null && winRate >= 0.65 && totalMatches >= 3) {
     return tag('dominant', `Wins constantly. Shows up, wins, leaves. Has made winning look so routine that the group has started taking it personally. At this point, the committee is actively considering whether ${name} should remain eligible for the next invitation.`)
   }
 
-  // 🎁 Lovable Loser — ≤25% win rate
-  if (winRate !== null && winRate <= 0.25 && totalMatches >= 3) {
+  // 💼 Quietly Winning — 55–64% win rate
+  if (winRate !== null && winRate >= 0.55 && totalMatches >= 3) {
+    return tag('quietly-winning', `${name} wins more than they lose without making it into a personality. No victory laps, no trash talk — just a steady accumulation of Ws that nobody notices until someone checks the numbers. Underrated in the group, probably overrated in their own head. A healthy balance.`)
+  }
+
+  // 🎁 Lovable Loser — <30% win rate
+  if (winRate !== null && winRate < 0.30 && totalMatches >= 3) {
     return tag('committed-loser', `Loses frequently, returns every time. This is either extraordinary mental resilience or a complete absence of self-preservation instinct. Either way, the courts wouldn't be the same without them. Truly the heart of the group.`)
   }
 
-  // 🦁 The Ironman — attended every tournament we know about
-  if (totalTournaments >= 2 && tournamentsPlayed >= totalTournaments) {
-    return tag('ironman', `Has attended every single tournament. Every. Single. One. Rain, wind, scheduling conflicts, life events — none of it mattered. We're not sure if this is dedication or if they simply have nowhere else to be. Both are valid.`)
+  // 😬 Quietly Losing — 30–39% win rate
+  if (winRate !== null && winRate < 0.40 && totalMatches >= 3) {
+    return tag('quietly-losing', `${name} loses slightly more than they win. Not catastrophically, not heroically — just enough to be frustrating. HR has described the pattern as "quietly below average," which ${name} has chosen to interpret as "quietly mysterious." We admire the framing.`)
   }
 
-  // 👻 The Ghost — barely shows up
-  if (totalTournaments >= 3 && tournamentsPlayed <= 1) {
+  // 🦁 The Ironman — attended ≥75% of tournaments (and ≥3 known events)
+  if (totalTournaments >= 3 && tournamentsPlayed / totalTournaments >= 0.75) {
+    return tag('ironman', `Has attended almost every tournament. Rain, wind, scheduling conflicts, life events — none of it mattered. We're not sure if this is dedication or if they simply have nowhere else to be. Both are valid.`)
+  }
+
+  // 👻 The Ghost — ≤33% attendance across ≥3 known events
+  if (totalTournaments >= 3 && tournamentsPlayed / totalTournaments <= 0.33) {
     return tag('ghost', `Has appeared at approximately one tournament. Like a rare weather event — talked about, rarely witnessed. The group respects the mystery. Statistically, anything could happen next. Nobody knows. Not even ${name}.`)
   }
 
-  // 🤷 Perfectly Mediocre — win rate 45–55%, ≥4 matches
-  if (winRate !== null && winRate >= 0.45 && winRate <= 0.55 && totalMatches >= 4) {
-    return tag('mediocre', `Win rate hovering in the 45–55% range across six or more matches. A statistical masterpiece. Not good enough to be intimidating, not bad enough to be endearing. Just perfectly, beautifully average. The bell curve's favourite child.`)
+  // 🤷 Perfectly Mediocre — win rate 40–54%, ≥3 matches
+  if (winRate !== null && winRate >= 0.40 && totalMatches >= 3) {
+    return tag('mediocre', `A statistical masterpiece. Not good enough to be intimidating, not bad enough to be endearing. Just perfectly, beautifully average. The bell curve's favourite child.`)
   }
 
   // ── Historical-tournament scenarios (secondary block) ───────────────────
