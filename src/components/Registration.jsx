@@ -59,10 +59,16 @@ export default function Registration({ tournament, onNavigate }) {
     .sort((a, b) => (a.registeredAt?.seconds || 0) - (b.registeredAt?.seconds || 0))
   const cancelled  = regs.filter(r => r.status === 'cancelled')
 
-  const registeredIds = regs.filter(r => r.status !== 'cancelled').map(r => r.playerId)
+  // Ids that currently hold a spot (can't be registered again, can't receive a transfer).
+  const registeredIds = regs.filter(r => r.status === 'registered').map(r => r.playerId)
+  // Ids on the waitlist — they SHOULD appear as transfer targets (receiving a
+  // transfer promotes them into the open spot) but still shouldn't appear in
+  // the generic "add player" picker since they're already in the tournament.
+  const waitlistedIds = regs.filter(r => r.status === 'waitlist').map(r => r.playerId)
+  const inTournamentIds = [...registeredIds, ...waitlistedIds]
   const availablePlayers = players
     .filter(p => (p.status || 'active') === 'active')
-    .filter(p => !registeredIds.includes(p.id) &&
+    .filter(p => !inTournamentIds.includes(p.id) &&
       (p.name?.toLowerCase().includes(search.toLowerCase()) || !search)
     )
 
@@ -150,12 +156,22 @@ export default function Registration({ tournament, onNavigate }) {
     setTransferSearch('')
   }
 
-  // Transfer candidates: active players not already registered/waitlisted in this tournament
+  // Transfer candidates: active players who don't already hold a registered
+  // spot in this tournament. Waitlisted players ARE eligible — in fact,
+  // transferring to a waitlister is the most natural thing to do, because
+  // it promotes them from the waitlist into the open spot in one step.
+  // We surface them at the top with a "Waitlisted" hint so it's clear.
   const transferCandidates = players
     .filter(p => (p.status || 'active') === 'active')
     .filter(p => String(p.id) !== String(transferSheet?.reg?.playerId))
     .filter(p => !registeredIds.includes(p.id))
     .filter(p => !transferSearch || p.name.toLowerCase().includes(transferSearch.toLowerCase()))
+    .sort((a, b) => {
+      const aw = waitlistedIds.includes(a.id) ? 0 : 1
+      const bw = waitlistedIds.includes(b.id) ? 0 : 1
+      if (aw !== bw) return aw - bw
+      return (a.name || '').localeCompare(b.name || '')
+    })
 
   const formatDate = (d) => {
     if (!d) return '—'
@@ -792,7 +808,14 @@ export default function Registration({ tournament, onNavigate }) {
                     {(p.name || '?')[0]}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm text-gray-800">{displayName(p)}</p>
+                    <p className="font-semibold text-sm text-gray-800 flex items-center gap-1.5">
+                      {displayName(p)}
+                      {waitlistedIds.includes(p.id) && (
+                        <span className="text-[10px] font-semibold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full">
+                          On waitlist
+                        </span>
+                      )}
+                    </p>
                     <p className="text-xs text-gray-500">Lv {(p.adjustedLevel || 0).toFixed(1)}</p>
                   </div>
                   <ArrowRightLeft size={14} className="text-lobster-teal flex-shrink-0" />

@@ -271,20 +271,49 @@ export function AppProvider({ children }) {
     return { regId: inserted?.id ?? null, status }
   }, [registrations])
 
-  // Transfer a spot from one player to another — payment is handled between the two players
+  // Transfer a spot from one player to another — payment is handled between the two players.
+  //
+  // Three cases for the recipient (toPlayerId):
+  //   1. They already have a 'waitlist' row for this tournament → promote
+  //      that existing row to 'registered' instead of inserting a duplicate.
+  //      This is the common case when someone on the waitlist picks up a
+  //      cancelling player's spot.
+  //   2. They have a 'cancelled' row for this tournament (e.g. they cancelled
+  //      earlier and changed their mind) → re-activate that row.
+  //   3. Otherwise → insert a fresh 'registered' row.
   const transferRegistration = useCallback(async (regId, tournamentId, fromPlayerId, toPlayerId) => {
+    // Step 1: mark the outgoing spot cancelled.
     await supabase.from('registrations')
       .update({ status: 'cancelled', payment_method: `transferred_to:${toPlayerId}` })
       .eq('id', regId)
-    await supabase.from('registrations').insert({
-      tournament_id:  tournamentId,
-      player_id:      toPlayerId,
-      status:         'registered',
-      payment_status: 'transferred',
-      payment_method: `transferred_from:${fromPlayerId}`,
-    })
+
+    // Step 2: decide what to do with the recipient. Look up any existing row
+    // for (tournament, recipient) so we don't create duplicates.
+    const existing = registrations.find(r =>
+      String(r.tournament_id) === String(tournamentId) &&
+      String(r.player_id) === String(toPlayerId)
+    )
+
+    if (existing && (existing.status === 'waitlist' || existing.status === 'cancelled')) {
+      // Promote the existing row — keeps a clean one-row-per-player invariant.
+      await supabase.from('registrations').update({
+        status:         'registered',
+        payment_status: 'transferred',
+        payment_method: `transferred_from:${fromPlayerId}`,
+      }).eq('id', existing.id)
+    } else {
+      // No existing row (or an odd state we don't recognise) — insert fresh.
+      await supabase.from('registrations').insert({
+        tournament_id:  tournamentId,
+        player_id:      toPlayerId,
+        status:         'registered',
+        payment_status: 'transferred',
+        payment_method: `transferred_from:${fromPlayerId}`,
+      })
+    }
+
     loadRegistrations()
-  }, [])
+  }, [registrations])
 
   const updateRegistration = useCallback(async (id, data) => {
     const payload = {}
