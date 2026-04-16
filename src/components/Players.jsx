@@ -28,9 +28,12 @@ function buildPlayerStats(playerId, matches, tournaments, registrations) {
   )
 
   let won = 0, lost = 0, draws = 0, pointsFor = 0, pointsAgainst = 0, points = 0
+  let curWinStreak = 0, bestWinStreak = 0
+  let curLossStreak = 0, worstLossStreak = 0
   const recentForm = [] // last 5: 'W' | 'L' | 'D'
   const h2h = {} // opponentId → { won, lost, draws }
   const h2hPairs = {} // "id1:id2" → { ids: [id1,id2], won, lost, draws }
+  const partners = {} // partnerId → { wins, losses, games }
   const tournamentIds = new Set()
 
   // Sort by tournament then round for chronological order
@@ -45,6 +48,7 @@ function buildPlayerStats(playerId, matches, tournaments, registrations) {
     const myScore = onTeam1 ? s1 : s2
     const theirScore = onTeam1 ? s2 : s1
     const opponents = onTeam1 ? (m.team2Ids || []) : (m.team1Ids || [])
+    const teammates = onTeam1 ? (m.team1Ids || []) : (m.team2Ids || [])
 
     pointsFor += myScore
     pointsAgainst += theirScore
@@ -52,9 +56,18 @@ function buildPlayerStats(playerId, matches, tournaments, registrations) {
 
     points = pointsFor  // total game points scored
     let result
-    if (myScore > theirScore) { won++; result = 'W' }
-    else if (myScore < theirScore) { lost++; result = 'L' }
-    else { draws++; result = 'D' }
+    if (myScore > theirScore) {
+      won++; result = 'W'
+      curWinStreak++; bestWinStreak = Math.max(bestWinStreak, curWinStreak)
+      curLossStreak = 0
+    } else if (myScore < theirScore) {
+      lost++; result = 'L'
+      curLossStreak++; worstLossStreak = Math.max(worstLossStreak, curLossStreak)
+      curWinStreak = 0
+    } else {
+      draws++; result = 'D'
+      curWinStreak = 0; curLossStreak = 0
+    }
 
     recentForm.push(result)
 
@@ -73,6 +86,15 @@ function buildPlayerStats(playerId, matches, tournaments, registrations) {
       else if (result === 'L') h2hPairs[pairKey].lost++
       else h2hPairs[pairKey].draws++
     }
+
+    // Track partners (teammates other than the player themselves)
+    teammates.forEach(tId => {
+      if (tId === playerId) return
+      if (!partners[tId]) partners[tId] = { wins: 0, losses: 0, games: 0 }
+      partners[tId].games++
+      if (result === 'W') partners[tId].wins++
+      else if (result === 'L') partners[tId].losses++
+    })
   })
 
   // Get tournaments this player participated in
@@ -80,14 +102,22 @@ function buildPlayerStats(playerId, matches, tournaments, registrations) {
     .filter(t => tournamentIds.has(t.id))
     .sort((a, b) => (b.date || '') > (a.date || '') ? 1 : -1)
 
+  const played = won + lost + draws
+
   return {
-    played: won + lost + draws,
+    played,
     won, lost, draws, points,
     pointsFor, pointsAgainst,
-    winRate: (won + lost + draws) > 0 ? Math.round((won / (won + lost + draws)) * 100) : 0,
+    pointDiff: pointsFor - pointsAgainst,
+    avgPointsFor: played > 0 ? pointsFor / played : 0,
+    avgPointsAgainst: played > 0 ? pointsAgainst / played : 0,
+    winRate: played > 0 ? Math.round((won / played) * 100) : 0,
     recentForm: recentForm.slice(-5),
+    bestWinStreak,
+    worstLossStreak,
     h2h,
     h2hPairs,
+    partners,
     playerTournaments,
   }
 }
@@ -1174,6 +1204,38 @@ export default function Players({ onNavigate, focusPlayerId }) {
                   .sort((a, b) => (b.won + b.lost + b.draws) - (a.won + a.lost + a.draws))
                   .slice(0, 5)
 
+                // 😈 Nemesis — opponent you've lost to the most (≥2 losses).
+                // Tiebreaker: bigger deficit (losses − wins).
+                const nemesis = Object.entries(stats.h2h)
+                  .filter(([, r]) => r.lost >= 2)
+                  .map(([oppId, r]) => {
+                    const opp = players.find(x => x.id === oppId)
+                    return opp ? { name: opp.name.split(' ')[0], ...r } : null
+                  })
+                  .filter(Boolean)
+                  .sort((a, b) => (b.lost - b.won) - (a.lost - a.won))[0] || null
+
+                // 🤝 Best partner — teammate you win the most with (≥2 games).
+                // Tiebreaker: higher win-count first, then win-rate.
+                const partnerRows = Object.entries(stats.partners)
+                  .filter(([, r]) => r.games >= 2)
+                  .map(([pid, r]) => {
+                    const partner = players.find(x => x.id === pid)
+                    return partner ? {
+                      name: partner.name.split(' ')[0],
+                      wins: r.wins, losses: r.losses, games: r.games,
+                      winRate: r.games > 0 ? r.wins / r.games : 0,
+                    } : null
+                  })
+                  .filter(Boolean)
+                const bestPartner = [...partnerRows]
+                  .sort((a, b) => b.wins - a.wins || b.winRate - a.winRate)[0] || null
+                // 🧊 Cooler — partner with the most losses together (≥2 games + at least
+                // one loss), so the stat is meaningful even for high-winrate players.
+                const worstPartner = [...partnerRows]
+                  .filter(r => r.losses >= 1)
+                  .sort((a, b) => b.losses - a.losses || a.winRate - b.winRate)[0] || null
+
                 // Historical tournaments (Dec 2025 → Apr 2026, hardcoded in History.jsx).
                 // Linked via the player_aliases table.
                 const historical = buildHistoricalAppearances(p.id, playerAliases || {})
@@ -1190,7 +1252,7 @@ export default function Players({ onNavigate, focusPlayerId }) {
                   <div className="flex items-center gap-2 flex-wrap">
                     {stats.played > 0 && (
                       <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-lg font-semibold">
-                        {stats.won}W {stats.lost}L · {stats.winRate}%
+                        {stats.played} played · {stats.won}W {stats.lost}L{stats.draws > 0 ? ` ${stats.draws}D` : ''} · {stats.winRate}%
                       </span>
                     )}
                     {p.preferredPosition && (
@@ -1231,6 +1293,76 @@ export default function Players({ onNavigate, focusPlayerId }) {
                             r === 'W' ? 'bg-green-100 text-green-700' : r === 'L' ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-500'
                           }`}>{r}</span>
                         ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Detailed match metrics — game points, streaks, averages */}
+                  {stats.played > 0 && (
+                    <div>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Match Metrics</p>
+                      <div className="grid grid-cols-2 gap-1.5 text-xs">
+                        <div className="bg-gray-50 rounded-lg px-2.5 py-1.5">
+                          <span className="text-gray-400 text-[10px] font-semibold uppercase tracking-wide block">Points for / against</span>
+                          <span className="text-gray-700 font-bold">
+                            {stats.pointsFor} – {stats.pointsAgainst}
+                            <span className={`ml-1 font-normal ${stats.pointDiff >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+                              ({stats.pointDiff >= 0 ? '+' : ''}{stats.pointDiff})
+                            </span>
+                          </span>
+                        </div>
+                        <div className="bg-gray-50 rounded-lg px-2.5 py-1.5">
+                          <span className="text-gray-400 text-[10px] font-semibold uppercase tracking-wide block">Avg per match</span>
+                          <span className="text-gray-700 font-bold">
+                            {stats.avgPointsFor.toFixed(1)} – {stats.avgPointsAgainst.toFixed(1)}
+                          </span>
+                        </div>
+                        {stats.bestWinStreak > 0 && (
+                          <div className="bg-gray-50 rounded-lg px-2.5 py-1.5">
+                            <span className="text-gray-400 text-[10px] font-semibold uppercase tracking-wide block">Best win streak</span>
+                            <span className="text-green-700 font-bold">🔥 {stats.bestWinStreak}</span>
+                          </div>
+                        )}
+                        {stats.worstLossStreak > 0 && (
+                          <div className="bg-gray-50 rounded-lg px-2.5 py-1.5">
+                            <span className="text-gray-400 text-[10px] font-semibold uppercase tracking-wide block">Longest skid</span>
+                            <span className="text-red-600 font-bold">🧊 {stats.worstLossStreak}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Nemesis + Best / Worst partner row */}
+                  {(nemesis || bestPartner || worstPartner) && (
+                    <div>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Rivalries & Chemistry</p>
+                      <div className="flex flex-col gap-1 text-xs">
+                        {nemesis && (
+                          <div className="flex items-center justify-between bg-red-50 rounded-lg px-2.5 py-1.5">
+                            <span className="text-gray-700">😈 <span className="font-semibold">Nemesis</span> · {nemesis.name}</span>
+                            <span className="font-semibold">
+                              <span className="text-green-600">{nemesis.won}W</span>{' '}
+                              <span className="text-red-500">{nemesis.lost}L</span>
+                            </span>
+                          </div>
+                        )}
+                        {bestPartner && (
+                          <div className="flex items-center justify-between bg-green-50 rounded-lg px-2.5 py-1.5">
+                            <span className="text-gray-700">🤝 <span className="font-semibold">Best partner</span> · {bestPartner.name}</span>
+                            <span className="font-semibold text-green-700">
+                              {bestPartner.wins}W / {bestPartner.games}
+                            </span>
+                          </div>
+                        )}
+                        {worstPartner && worstPartner.name !== bestPartner?.name && (
+                          <div className="flex items-center justify-between bg-amber-50 rounded-lg px-2.5 py-1.5">
+                            <span className="text-gray-700">💔 <span className="font-semibold">Jinx partner</span> · {worstPartner.name}</span>
+                            <span className="font-semibold text-amber-700">
+                              {worstPartner.wins}W / {worstPartner.games}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}

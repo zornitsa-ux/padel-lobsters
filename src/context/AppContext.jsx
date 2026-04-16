@@ -119,6 +119,10 @@ export function AppProvider({ children }) {
   }
 
   // ── Settings ─────────────────────────────────────────────
+  // Errors are NOT swallowed here — callers must handle them (and roll
+  // back optimistic UI if needed) so we never end up showing a save that
+  // didn't actually persist. The old "silent failure" behaviour was the
+  // root cause of the Tip of the Day "it came back" bug.
   const saveSettings = useCallback(async (newSettings) => {
     const payload = {
       id:            1,
@@ -127,7 +131,11 @@ export function AppProvider({ children }) {
       group_name:    newSettings.groupName    ?? 'Padel Lobsters',
     }
     if (newSettings.padelTips !== undefined) payload.padel_tips = newSettings.padelTips
-    await supabase.from('settings').upsert(payload)
+    const { error } = await supabase.from('settings').upsert(payload)
+    if (error) {
+      console.error('saveSettings error:', error)
+      throw error
+    }
     setSettings(s => ({ ...s, ...newSettings }))
   }, [])
 

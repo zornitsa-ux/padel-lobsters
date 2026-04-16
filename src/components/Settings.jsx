@@ -238,21 +238,43 @@ export default function Settings() {
       await saveSettings({ ...form, padelTips: tips })
       setSaved(true)
       setTimeout(() => setSaved(false), 2500)
+    } catch (err) {
+      alert('Could not save settings: ' + (err?.message || 'unknown error'))
     } finally {
       setSaving(false)
     }
   }
 
+  // ── Tip CRUD ─────────────────────────────────────────────────────────
+  // Each tip change auto-saves to the DB immediately. Previously, edits
+  // were only held in local state until the admin remembered to scroll
+  // down and click "Save Settings" — a forgotten click meant the delete
+  // was lost on the next page load and the old tip reappeared. Errors
+  // now roll back the optimistic UI so the admin sees the true state.
+  const persistTips = async (nextTips, prevTipsForRollback) => {
+    try {
+      await saveSettings({ ...form, padelTips: nextTips })
+    } catch (err) {
+      setTips(prevTipsForRollback) // revert UI if DB write failed
+      alert('Could not save tip change: ' + (err?.message || 'unknown error'))
+    }
+  }
+
   const handleAddTip = () => {
     if (!newTip.trim()) return
+    const prev = tips
     const updated = [...activeTips, newTip.trim()]
     setTips(updated)
     setNewTip('')
+    persistTips(updated, prev)
   }
 
   const handleDeleteTip = (idx) => {
+    const prev = tips
     const updated = activeTips.filter((_, i) => i !== idx)
-    setTips(updated.length > 0 ? updated : null)
+    const next = updated.length > 0 ? updated : null
+    setTips(next)
+    persistTips(next, prev)
   }
 
   const handleEditTip = (idx) => {
@@ -261,14 +283,18 @@ export default function Settings() {
 
   const handleSaveEdit = () => {
     if (!editingTip || !editingTip.text.trim()) return
+    const prev = tips
     const updated = [...activeTips]
     updated[editingTip.index] = editingTip.text.trim()
     setTips(updated)
     setEditingTip(null)
+    persistTips(updated, prev)
   }
 
   const handleResetTips = () => {
+    const prev = tips
     setTips(null)
+    persistTips(null, prev)
   }
 
   // Active sign-in session — used by the Account card.
@@ -766,7 +792,7 @@ export default function Settings() {
               </div>
             </div>
             <p className="text-xs text-gray-400">
-              One tip shows per day on the home page. {isCustom ? 'Using custom tips.' : 'Using 50 default tips.'} Hit Save to apply changes.
+              One tip shows per day on the home page. {isCustom ? 'Using custom tips.' : 'Using 50 default tips.'} Changes save automatically.
             </p>
 
             {/* Add new tip */}
