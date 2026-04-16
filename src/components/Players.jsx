@@ -6,6 +6,7 @@ import { Plus, Pencil, Trash2, X, ChevronDown, ChevronUp, Search, User, Clock, C
 import CountryPicker, { COUNTRIES, countryFlag, FlagImg } from './CountryPicker'
 import PlayerAliasMatcher from './PlayerAliasMatcher'
 import { buildHistoricalAppearances, summariseAppearances } from '../lib/playerHistory'
+import { TOURNAMENTS } from './History'
 
 const LEVEL_COLORS = [
   'bg-gray-200 text-gray-700',
@@ -219,45 +220,57 @@ function corpReview(player, matches = [], registrations = [], tournaments = [], 
   // what's been logged inside the app.
   const historicalNew = historical.filter(h => !dbAttendedIds.has(String(h.id)))
   const tournamentsPlayed = dbAttendedIds.size + historicalNew.length
-  // totalTournaments = DB past tournaments + every legacy event in History.jsx.
-  // We use the union of all historical IDs across the alias map so the
-  // denominator is the same for every player and "every single one" really
-  // means every single one we know about.
-  const TOTAL_HISTORICAL_EVENTS = (() => {
-    // Hardcoded — matches the count in History.jsx (Dec 2025, Jan 2026,
-    // Mar 2026, Apr 2026). Bumping when new legacy events are added.
-    return 4
-  })()
-  const totalTournaments = pastTournaments.length + TOTAL_HISTORICAL_EVENTS
+  // totalTournaments counts every past event we know about (DB + hardcoded history).
+  const totalTournaments = pastTournaments.length + TOURNAMENTS.length
   const eventsAttended = tournamentsPlayed  // alias for clarity below
 
-  // ── Compute last-tournament rank ─────────────────────────────────────────
-  // Prefer in-app data when it exists, otherwise fall back to the player's
-  // most recent historical appearance (newest first in `historical`).
-  let lastTournamentRank = null
-  let lastTournamentTotal = null
-  if (tournaments.length > 0) {
-    const lastT = [...tournaments].sort((a, b) => new Date(b.date) - new Date(a.date))[0]
-    const lastMs = matches.filter(m => String(m.tournamentId) === String(lastT.id) && m.completed)
-    if (lastMs.length > 0) {
-      const allIds = [...new Set([
-        ...lastMs.flatMap(m => m.team1Ids || []),
-        ...lastMs.flatMap(m => m.team2Ids || []),
-      ])]
-      lastTournamentTotal = allIds.length
-      const winsMap = Object.fromEntries(allIds.map(id => [id, 0]))
-      lastMs.forEach(m => {
-        const s1 = m.score1 ?? 0, s2 = m.score2 ?? 0
-        const winners = s1 > s2 ? m.team1Ids : s2 > s1 ? m.team2Ids : []
-        ;(winners || []).forEach(id => { if (winsMap[id] !== undefined) winsMap[id]++ })
-      })
-      const ranked = Object.entries(winsMap).sort(([, a], [, b]) => b - a)
-      const pos = ranked.findIndex(([id]) => String(id) === spid)
-      if (pos >= 0) lastTournamentRank = pos + 1
+  // ── Mixed-only attendance (for Ironman / Ghost) ─────────────────────────
+  // Ladies events exclude half the roster by design, so attendance ratios
+  // should be computed against mixed tournaments only. DB tournaments have
+  // no explicit type in the schema — treat them all as mixed.
+  const historicalMixed   = historical.filter(h => h.type !== 'ladies')
+  const historicalMixedNew = historicalMixed.filter(h => !dbAttendedIds.has(String(h.id)))
+  const mixedTournamentsPlayed = dbAttendedIds.size + historicalMixedNew.length
+  const totalMixedHistorical   = TOURNAMENTS.filter(t => t.type !== 'ladies').length
+  const totalMixedTournaments  = pastTournaments.length + totalMixedHistorical
+
+  // ── Compute per-tournament ranks across all played events ───────────────
+  // We keep the full list so we can detect multi-event patterns (e.g. The
+  // Anchor = 2+ last-place finishes), not just the most recent result.
+  const dbTournamentRanks = []
+  ;[...tournaments].sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(t => {
+    const tMs = matches.filter(m => String(m.tournamentId) === String(t.id) && m.completed)
+    if (tMs.length === 0) return
+    const allIds = [...new Set([
+      ...tMs.flatMap(m => m.team1Ids || []),
+      ...tMs.flatMap(m => m.team2Ids || []),
+    ])]
+    if (allIds.length < 4) return
+    const winsMap = Object.fromEntries(allIds.map(id => [id, 0]))
+    tMs.forEach(m => {
+      const s1 = m.score1 ?? 0, s2 = m.score2 ?? 0
+      const winners = s1 > s2 ? m.team1Ids : s2 > s1 ? m.team2Ids : []
+      ;(winners || []).forEach(id => { if (winsMap[id] !== undefined) winsMap[id]++ })
+    })
+    const ranked = Object.entries(winsMap).sort(([, a], [, b]) => b - a)
+    const pos = ranked.findIndex(([id]) => String(id) === spid)
+    if (pos >= 0) {
+      dbTournamentRanks.push({ id: t.id, date: t.date, rank: pos + 1, total: allIds.length })
     }
-  }
+  })
+
+  // Combine DB + historical into one flat list for multi-event pattern checks.
+  const historicalRanks = historical
+    .filter(h => h.players >= 4)
+    .map(h => ({ id: h.id, date: h.date, rank: h.rank, total: h.players }))
+  const allTournamentRanks = [...dbTournamentRanks, ...historicalRanks]
+  const lastPlaceCount = allTournamentRanks.filter(r => r.rank === r.total).length
+  const podiumCount    = allTournamentRanks.filter(r => r.rank <= 3).length
+
+  // "Most recent tournament rank" — prefer DB, fall back to historical.
+  let lastTournamentRank  = dbTournamentRanks[0]?.rank  ?? null
+  let lastTournamentTotal = dbTournamentRanks[0]?.total ?? null
   if (lastTournamentRank === null && historical.length > 0) {
-    // historical[] is sorted newest-first by buildHistoricalAppearances
     lastTournamentRank  = historical[0].rank
     lastTournamentTotal = historical[0].players
   }
@@ -280,19 +293,32 @@ function corpReview(player, matches = [], registrations = [], tournaments = [], 
   // so a player with only historical match data still hits the right
   // bucket (dominant / mediocre / lovable-loser etc.).
 
-  // 🎯 Playtomic: Fake News — last in most recent tournament + Playtomic ≥ 3.5 (high skill)
-  if (lastTournamentRank !== null && lastTournamentTotal >= 4 && lastTournamentRank === lastTournamentTotal && lvl >= 3.5) {
+  // 🏆 Tournament winner — won the most recent tournament
+  // A fresh win is the most notable thing you can say about a player.
+  if (lastTournamentRank === 1 && lastTournamentTotal >= 4) {
+    return tag('recent-winner', `Won the whole thing. Showed up, dominated, went home. The rest of the group is currently reviewing their life choices. ${name} is not available for comment — they're too busy being better than everyone else.`)
+  }
+
+  // 🎯 Playtomic: Fake News — last in most recent tournament + high Playtomic
+  if (lastTournamentRank !== null && lastTournamentTotal >= 4 && lastTournamentRank === lastTournamentTotal && lvl >= 3.2) {
     return tag('last-place-elite', `A Playtomic rating of ${lvl.toFixed(1)} and yet — last place. Scientists are studying this. The data doesn't lie but it does appear to be deeply confused. A walking contradiction, somehow making the rest of us feel both inferior and hopeful at the same time.`)
   }
 
-  // 💀 The Anchor — last in most recent tournament, lower skill (expected)
-  if (lastTournamentRank !== null && lastTournamentTotal >= 4 && lastTournamentRank === lastTournamentTotal) {
-    return tag('last-place', `Came last. Consistent, reliable, always there at the bottom holding the group together. Not everyone can win — someone has to make the winners feel good, and ${name} does this selflessly, every single time.`)
+  // 💀 The Anchor — has finished last in ≥2 tournaments across all history
+  // Pattern-based, not single-event: someone who truly owns the bottom.
+  if (lastPlaceCount >= 2) {
+    return tag('last-place', `${lastPlaceCount} last-place finishes and counting. Consistent, reliable, always there at the bottom holding the group together. Not everyone can win — someone has to make the winners feel good, and ${name} does this selflessly, every single time.`)
   }
 
-  // 🏆 Tournament winner — won the most recent tournament
-  if (lastTournamentRank === 1 && lastTournamentTotal >= 4) {
-    return tag('recent-winner', `Won the whole thing. Showed up, dominated, went home. The rest of the group is currently reviewing their life choices. ${name} is not available for comment — they're too busy being better than everyone else.`)
+  // 🦁 The Ironman — attended ≥75% of mixed tournaments (ladies events excluded)
+  // Check BEFORE Bridesmaid so long-term attendance beats a one-off podium.
+  if (totalMixedTournaments >= 3 && mixedTournamentsPlayed / totalMixedTournaments >= 0.75) {
+    return tag('ironman', `Has attended almost every mixed tournament. Rain, wind, scheduling conflicts, life events — none of it mattered. We're not sure if this is dedication or if they simply have nowhere else to be. Both are valid.`)
+  }
+
+  // 👻 The Ghost — ≤33% mixed attendance across ≥3 known mixed events
+  if (totalMixedTournaments >= 3 && mixedTournamentsPlayed / totalMixedTournaments <= 0.33) {
+    return tag('ghost', `Has appeared at approximately one tournament. Like a rare weather event — talked about, rarely witnessed. The group respects the mystery. Statistically, anything could happen next. Nobody knows. Not even ${name}.`)
   }
 
   // 🥈 The Bridesmaid — finished 2nd or 3rd in the most recent tournament
@@ -334,16 +360,6 @@ function corpReview(player, matches = [], registrations = [], tournaments = [], 
   // 😬 Quietly Losing — 30–39% win rate
   if (winRate !== null && winRate < 0.40 && totalMatches >= 3) {
     return tag('quietly-losing', `${name} loses slightly more than they win. Not catastrophically, not heroically — just enough to be frustrating. HR has described the pattern as "quietly below average," which ${name} has chosen to interpret as "quietly mysterious." We admire the framing.`)
-  }
-
-  // 🦁 The Ironman — attended ≥75% of tournaments (and ≥3 known events)
-  if (totalTournaments >= 3 && tournamentsPlayed / totalTournaments >= 0.75) {
-    return tag('ironman', `Has attended almost every tournament. Rain, wind, scheduling conflicts, life events — none of it mattered. We're not sure if this is dedication or if they simply have nowhere else to be. Both are valid.`)
-  }
-
-  // 👻 The Ghost — ≤33% attendance across ≥3 known events
-  if (totalTournaments >= 3 && tournamentsPlayed / totalTournaments <= 0.33) {
-    return tag('ghost', `Has appeared at approximately one tournament. Like a rare weather event — talked about, rarely witnessed. The group respects the mystery. Statistically, anything could happen next. Nobody knows. Not even ${name}.`)
   }
 
   // 🤷 Perfectly Mediocre — win rate 40–54%, ≥3 matches
