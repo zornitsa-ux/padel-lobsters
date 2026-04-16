@@ -122,8 +122,8 @@ const emptyForm = {
 // separately from welcome/historical/level-fallback scenarios.
 const REVIEW_SCENARIOS = [
   // ── The 10 performance messages ────────────────────────────────────────
-  { id: 'last-place-elite',     label: '🎯 Last place (high skill)',  performance: true },
-  { id: 'last-place',           label: '💀 Last place (expected)',    performance: true },
+  { id: 'last-place-elite',     label: '🎯 Playtomic: Fake News',     performance: true },
+  { id: 'last-place',           label: '💀 The Anchor',               performance: true },
   { id: 'recent-winner',        label: '🏆 Tournament winner',         performance: true },
   { id: 'elite-bad-winrate',    label: '🤔 The Gap',                   performance: true },
   { id: 'low-rated-secret',     label: '🕵️ Secret Weapon',             performance: true },
@@ -158,9 +158,13 @@ function corpReview(player, matches = [], registrations = [], tournaments = [], 
   const pid  = player.id
 
   const spid = String(pid)
+  // Scenarios whose review text should be prefixed with the scenario title
+  // (with emoji) so readers can instantly tell which "last place" variant it is.
+  const TITLED_SCENARIOS = new Set(['last-place-elite', 'last-place'])
   const tag  = (scenario, text) => {
     const label = REVIEW_SCENARIOS.find(s => s.id === scenario)?.label || scenario
-    return { text, scenario, scenarioLabel: label }
+    const finalText = TITLED_SCENARIOS.has(scenario) ? `${label} — ${text}` : text
+    return { text: finalText, scenario, scenarioLabel: label }
   }
 
   // ── Historical tournament signal (from player_aliases + History.jsx) ─────
@@ -272,12 +276,12 @@ function corpReview(player, matches = [], registrations = [], tournaments = [], 
   // so a player with only historical match data still hits the right
   // bucket (dominant / mediocre / lovable-loser etc.).
 
-  // 🎯 Last place (high skill) — last in most recent tournament + Playtomic ≥ 3.5
+  // 🎯 Playtomic: Fake News — last in most recent tournament + Playtomic ≥ 3.5 (high skill)
   if (lastTournamentRank !== null && lastTournamentTotal >= 4 && lastTournamentRank === lastTournamentTotal && lvl >= 3.5) {
     return tag('last-place-elite', `A Playtomic rating of ${lvl.toFixed(1)} and yet — last place. Scientists are studying this. The data doesn't lie but it does appear to be deeply confused. A walking contradiction, somehow making the rest of us feel both inferior and hopeful at the same time.`)
   }
 
-  // 💀 Last place (expected) — last in most recent tournament, lower skill
+  // 💀 The Anchor — last in most recent tournament, lower skill (expected)
   if (lastTournamentRank !== null && lastTournamentTotal >= 4 && lastTournamentRank === lastTournamentTotal) {
     return tag('last-place', `Came last. Consistent, reliable, always there at the bottom holding the group together. Not everyone can win — someone has to make the winners feel good, and ${name} does this selflessly, every single time.`)
   }
