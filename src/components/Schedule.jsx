@@ -27,40 +27,78 @@ function courtScore(t1, t2, opponentHistory) {
   return levelDiff + oppPenalty + Math.random() * 0.5  // jitter to break ties differently each reshuffle
 }
 
+/** Shuffle an array in place (Fisher-Yates). */
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[arr[i], arr[j]] = [arr[j], arr[i]]
+  }
+  return arr
+}
+
 /**
  * Build N/2 pairs respecting: no two lefties, minimize repeat partners,
  * spread women across courts in mixed mode.
+ *
+ * Uses a **multi-attempt** approach: run the greedy pairing with different
+ * random traversal orders and keep the attempt with the lowest total cost.
+ * This prevents the old bug where a fixed traversal order forced the last
+ * few players into repeat partnerships every time.
  */
 function buildSmartPairs(pool, partnerHistory, genderMode) {
   const isMixed = genderMode === 'mixed'
   const womenCount = isMixed ? pool.filter(p => p.gender === 'female').length : 0
   const avoidWWPairs = isMixed && womenCount <= Math.floor(pool.length / 2)
 
-  const indices = [...Array(pool.length).keys()].sort((i, j) => {
-    const a = pool[i], b = pool[j]
-    if (a.isLeftHanded && !b.isLeftHanded) return -1
-    if (!a.isLeftHanded && b.isLeftHanded) return 1
-    if (isMixed) {
-      if (a.gender === 'female' && b.gender !== 'female') return -1
-      if (a.gender !== 'female' && b.gender === 'female') return 1
-    }
-    return 0
+  // Sort into priority groups: left-handers → women (mixed only) → rest.
+  // Within each group the order is randomised per attempt so the greedy
+  // pass doesn't always sacrifice the same players at the tail end.
+  const buckets = { lefty: [], women: [], rest: [] }
+  pool.forEach((p, i) => {
+    if (p.isLeftHanded) buckets.lefty.push(i)
+    else if (isMixed && p.gender === 'female') buckets.women.push(i)
+    else buckets.rest.push(i)
   })
 
-  const available = new Array(pool.length).fill(true)
-  const pairs = []
-  for (const i of indices) {
-    if (!available[i]) continue
-    available[i] = false
-    let bestJ = -1, bestScore = Infinity
-    for (let j = 0; j < pool.length; j++) {
-      if (!available[j]) continue
-      const s = pairScore(pool[i], pool[j], partnerHistory, avoidWWPairs)
-      if (s < bestScore) { bestScore = s; bestJ = j }
+  // One greedy pass with a given traversal order.
+  const greedyPass = (indices) => {
+    const available = new Array(pool.length).fill(true)
+    const pairs = []
+    for (const i of indices) {
+      if (!available[i]) continue
+      available[i] = false
+      let bestJ = -1, bestScore = Infinity
+      for (let j = 0; j < pool.length; j++) {
+        if (!available[j]) continue
+        const s = pairScore(pool[i], pool[j], partnerHistory, avoidWWPairs)
+        if (s < bestScore) { bestScore = s; bestJ = j }
+      }
+      if (bestJ !== -1) { available[bestJ] = false; pairs.push([pool[i], pool[bestJ]]) }
     }
-    if (bestJ !== -1) { available[bestJ] = false; pairs.push([pool[i], pool[bestJ]]) }
+    return pairs
   }
-  return pairs
+
+  // Cost of a full pairing set (lower = better). A pair that repeats a
+  // previous partnership contributes ≥1000, so any result under 1000
+  // contains zero repeats.
+  const totalCost = (pairs) =>
+    pairs.reduce((sum, [a, b]) => sum + pairScore(a, b, partnerHistory, avoidWWPairs), 0)
+
+  // Run up to 40 attempts; bail early when we find a repeat-free solution.
+  let bestPairs = null, bestCost = Infinity
+  const ATTEMPTS = 40
+  for (let t = 0; t < ATTEMPTS; t++) {
+    const indices = [
+      ...shuffle([...buckets.lefty]),
+      ...shuffle([...buckets.women]),
+      ...shuffle([...buckets.rest]),
+    ]
+    const pairs = greedyPass(indices)
+    const cost  = totalCost(pairs)
+    if (cost < bestCost) { bestCost = cost; bestPairs = pairs }
+    if (bestCost < 1000) break   // zero repeat partners → done
+  }
+  return bestPairs
 }
 
 /**
