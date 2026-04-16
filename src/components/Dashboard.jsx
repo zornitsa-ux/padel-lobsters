@@ -246,21 +246,26 @@ export default function Dashboard({ onNavigate }) {
         if (iWon) partners[tId].wins++
       })
     })
-    if (played === 0) return null
+    // NOTE: Previously returned null when played === 0, which caused the
+    // whole "Your Stats" card to disappear for claimed players with no DB
+    // matches yet. We now always return a stats object so the card always
+    // renders for the signed-in player, and the UI shows zeros / an empty
+    // state when there's no data to report.
 
-    // Top nemesis: opponent you've lost to the most (min 2 games)
+    // Top nemesis: opponent you've lost to the most (min 1 loss so it shows
+    // up as soon as there's data — doesn't need a second loss to qualify).
     const nemesis = Object.entries(h2h)
-      .filter(([, rec]) => (rec.won + rec.lost) >= 2 && rec.lost > 0)
+      .filter(([, rec]) => rec.lost >= 1)
       .map(([oppId, rec]) => {
         const p = players.find(x => x.id === oppId)
         return p ? { name: p.name.split(' ')[0], won: rec.won, lost: rec.lost } : null
       })
       .filter(Boolean)
-      .sort((a, b) => b.lost - a.lost)[0] || null
+      .sort((a, b) => (b.lost - b.won) - (a.lost - a.won))[0] || null
 
-    // Best partner: teammate you've won the most with (min 2 games together)
+    // Best partner: teammate you've won the most with (≥1 win together).
     const bestPartner = Object.entries(partners)
-      .filter(([, rec]) => rec.games >= 2 && rec.wins > 0)
+      .filter(([, rec]) => rec.wins >= 1)
       .map(([pId, rec]) => {
         const p = players.find(x => x.id === pId)
         return p ? { name: p.name.split(' ')[0], wins: rec.wins, games: rec.games } : null
@@ -619,14 +624,18 @@ export default function Dashboard({ onNavigate }) {
       )}
 
       {/* ── Your Stats (personal) ─────────────────────────────── */}
-      {myStats && (
+      {/* Shows whenever a player identity is claimed. Empty state kicks in
+          when there are no DB matches yet, so the card doesn't silently
+          disappear for brand-new players or those with only historical
+          (pre-app) matches. */}
+      {claimedId && myStats && (
         <section>
           <div className="flex items-center justify-between mb-2">
             <h3 className="font-bold text-gray-700 flex items-center gap-1.5">
               <Award size={15} className="text-lobster-orange" /> Your Stats
             </h3>
             <button onClick={() => onNavigate('players', { focusPlayerId: claimedId })} className="text-xs text-lobster-teal font-semibold">
-              View profile
+              View full profile
             </button>
           </div>
           <div className="bg-white/80 rounded-2xl p-4 shadow-sm border border-white/90" style={{ backdropFilter: 'blur(12px)' }}>
@@ -649,30 +658,41 @@ export default function Dashboard({ onNavigate }) {
               </div>
             </div>
 
-            {/* Best win streak + Nemesis + Best partner row */}
-            <div className="mt-3 pt-3 border-t border-gray-100 flex items-center gap-3 flex-wrap">
-              {myStats.bestWinStreak > 1 && (
-                <span className="text-xs bg-green-50 text-green-700 px-2.5 py-1 rounded-lg font-semibold flex items-center gap-1">
-                  <Flame size={12} className="text-green-500" />
-                  {myStats.bestWinStreak} wins in a row
-                </span>
-              )}
-              {myStats.nemesis && (
-                <span className="text-xs bg-red-50 text-red-700 px-2.5 py-1 rounded-lg font-semibold">
-                  😈 Nemesis: {myStats.nemesis.name} ({myStats.nemesis.won}W-{myStats.nemesis.lost}L)
-                </span>
-              )}
-              {myStats.bestPartner && (
-                <span className="text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-lg font-semibold">
-                  🤝 Best partner: {myStats.bestPartner.name} ({myStats.bestPartner.wins}W/{myStats.bestPartner.games}G)
-                </span>
-              )}
-            </div>
+            {myStats.played === 0 ? (
+              <div className="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500 text-center">
+                No matches logged yet — your stats will populate as soon as a
+                tournament result is recorded. Tap <span className="font-semibold text-lobster-teal">View full profile</span> for your historical record.
+              </div>
+            ) : (
+              <>
+                {/* Best win streak + Nemesis + Best partner row */}
+                {(myStats.bestWinStreak > 1 || myStats.nemesis || myStats.bestPartner) && (
+                  <div className="mt-3 pt-3 border-t border-gray-100 flex items-center gap-3 flex-wrap">
+                    {myStats.bestWinStreak > 1 && (
+                      <span className="text-xs bg-green-50 text-green-700 px-2.5 py-1 rounded-lg font-semibold flex items-center gap-1">
+                        <Flame size={12} className="text-green-500" />
+                        {myStats.bestWinStreak} wins in a row
+                      </span>
+                    )}
+                    {myStats.nemesis && (
+                      <span className="text-xs bg-red-50 text-red-700 px-2.5 py-1 rounded-lg font-semibold">
+                        😈 Nemesis: {myStats.nemesis.name} ({myStats.nemesis.won}W-{myStats.nemesis.lost}L)
+                      </span>
+                    )}
+                    {myStats.bestPartner && (
+                      <span className="text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-lg font-semibold">
+                        🤝 Best partner: {myStats.bestPartner.name} ({myStats.bestPartner.wins}W/{myStats.bestPartner.games}G)
+                      </span>
+                    )}
+                  </div>
+                )}
 
-            <div className="mt-2 pt-2 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
-              <span>{myStats.pts} total points</span>
-              <span>Game diff: {myStats.pointsFor - myStats.pointsAgainst > 0 ? '+' : ''}{myStats.pointsFor - myStats.pointsAgainst}</span>
-            </div>
+                <div className="mt-2 pt-2 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
+                  <span>{myStats.pts} total points</span>
+                  <span>Game diff: {myStats.pointsFor - myStats.pointsAgainst > 0 ? '+' : ''}{myStats.pointsFor - myStats.pointsAgainst}</span>
+                </div>
+              </>
+            )}
           </div>
         </section>
       )}

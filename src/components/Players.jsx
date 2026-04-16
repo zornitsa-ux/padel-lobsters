@@ -1204,21 +1204,21 @@ export default function Players({ onNavigate, focusPlayerId }) {
                   .sort((a, b) => (b.won + b.lost + b.draws) - (a.won + a.lost + a.draws))
                   .slice(0, 5)
 
-                // 😈 Nemesis — opponent you've lost to the most (≥2 losses).
-                // Tiebreaker: bigger deficit (losses − wins).
+                // 😈 Nemesis — opponent you've lost to at least once.
+                // Tiebreaker: bigger deficit (losses − wins), then more losses.
                 const nemesis = Object.entries(stats.h2h)
-                  .filter(([, r]) => r.lost >= 2)
+                  .filter(([, r]) => r.lost >= 1)
                   .map(([oppId, r]) => {
                     const opp = players.find(x => x.id === oppId)
                     return opp ? { name: opp.name.split(' ')[0], ...r } : null
                   })
                   .filter(Boolean)
-                  .sort((a, b) => (b.lost - b.won) - (a.lost - a.won))[0] || null
+                  .sort((a, b) => (b.lost - b.won) - (a.lost - a.won) || b.lost - a.lost)[0] || null
 
-                // 🤝 Best partner — teammate you win the most with (≥2 games).
-                // Tiebreaker: higher win-count first, then win-rate.
+                // 🤝 Best partner — teammate you win the most with.
+                // Show as soon as they've played together at least once; rank by wins then win-rate.
                 const partnerRows = Object.entries(stats.partners)
-                  .filter(([, r]) => r.games >= 2)
+                  .filter(([, r]) => r.games >= 1)
                   .map(([pid, r]) => {
                     const partner = players.find(x => x.id === pid)
                     return partner ? {
@@ -1229,9 +1229,10 @@ export default function Players({ onNavigate, focusPlayerId }) {
                   })
                   .filter(Boolean)
                 const bestPartner = [...partnerRows]
+                  .filter(r => r.wins >= 1)
                   .sort((a, b) => b.wins - a.wins || b.winRate - a.winRate)[0] || null
-                // 🧊 Cooler — partner with the most losses together (≥2 games + at least
-                // one loss), so the stat is meaningful even for high-winrate players.
+                // 🧊 Cooler — partner you've dropped matches with. Surfaces as soon as
+                // there's been at least one shared loss.
                 const worstPartner = [...partnerRows]
                   .filter(r => r.losses >= 1)
                   .sort((a, b) => b.losses - a.losses || a.winRate - b.winRate)[0] || null
