@@ -229,7 +229,7 @@ export default function Tournament({ onNavigate }) {
                   <div className="flex flex-wrap gap-1.5 mb-2">
                     <InfoChip icon={<Users size={12} />} label={`${regCount}/${maxP}`} />
                     <InfoChip icon={<MapPin size={12} />} label={`${bookedCount}/${totalCourts}`} warn={!allBooked && totalCourts > 0} />
-                    <InfoChip icon={<Clock size={12} />} label={t.duration ? `${t.duration}'` : "90'"} />
+                    <InfoChip icon={<Clock size={12} />} label={t.duration ? `${t.duration}min` : '90min'} />
                     <InfoChip icon={null} label={ppCost > 0 ? `${fmtEur(ppCost)}/pp` : 'Free'} />
                   </div>
                   {isFull ? (
@@ -380,7 +380,7 @@ export default function Tournament({ onNavigate }) {
                     <div className="flex flex-wrap gap-1.5 mb-3">
                       <InfoChip icon={<Users size={12} />} label={`${regCount}/${t.maxPlayers || '?'}`} />
                       <InfoChip icon={<MapPin size={12} />} label={`${bookedCount}/${totalCourts}`} />
-                      <InfoChip icon={<Clock size={12} />} label={t.duration ? `${t.duration}'` : "90'"} />
+                      <InfoChip icon={<Clock size={12} />} label={t.duration ? `${t.duration}min` : '90min'} />
                       <InfoChip icon={null} label={ppCost > 0 ? `${fmtEur(ppCost)}/pp` : 'Free'} />
                     </div>
                     ) })()}
