@@ -220,14 +220,30 @@ export default function Tournament({ onNavigate }) {
                 </div>
               </div>
 
-              {/* Stats row */}
-              {(() => { const regCount = getTournamentRegistrations(t.id).filter(r => r.status === 'registered').length; return (
-              <div className="grid grid-cols-4 gap-2 mb-3">
-                <InfoChip icon={<Users size={12} />} label={`${regCount}/${t.maxPlayers || '?'} players`} />
-                <InfoChip icon={<MapPin size={12} />} label={`${bookedCount}/${totalCourts} courts`} warn={!allBooked && totalCourts > 0} />
-                <InfoChip icon={<Clock size={12} />} label={t.duration ? `${t.duration}min` : '90min'} />
-                <InfoChip icon={<Euro size={12} />} label={ppCost > 0 ? `${fmtEur(ppCost)}/pp` : 'Free'} />
-              </div>
+              {/* Stats row — compact for mobile */}
+              {(() => { const regCount = getTournamentRegistrations(t.id).filter(r => r.status === 'registered').length;
+                const maxP = t.maxPlayers || '?'
+                const isFull = typeof maxP === 'number' && regCount >= maxP
+                return (
+                <>
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    <InfoChip icon={<Users size={12} />} label={`${regCount}/${maxP}`} />
+                    <InfoChip icon={<MapPin size={12} />} label={`${bookedCount}/${totalCourts}`} warn={!allBooked && totalCourts > 0} />
+                    <InfoChip icon={<Clock size={12} />} label={t.duration ? `${t.duration}'` : "90'"} />
+                    <InfoChip icon={null} label={ppCost > 0 ? `${fmtEur(ppCost)}/pp` : 'Free'} />
+                  </div>
+                  {isFull ? (
+                    <div className="bg-orange-50 border border-orange-200 rounded-xl px-3 py-2 mb-3">
+                      <p className="text-xs font-bold text-orange-700">Sold out!</p>
+                      <p className="text-[11px] text-orange-600 mt-0.5">Someone always cancels last minute. Join the waitlist and keep your racket warm.</p>
+                    </div>
+                  ) : t.status !== 'completed' ? (
+                    <div className="bg-green-50 border border-green-200 rounded-xl px-3 py-1.5 mb-3 flex items-center gap-1.5">
+                      <span className="relative flex h-2 w-2 flex-shrink-0"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span></span>
+                      <p className="text-xs font-semibold text-green-700">Spots open — sign up now!</p>
+                    </div>
+                  ) : null}
+                </>
               ) })()}
 
               {/* Booking mode badge — admin only */}
@@ -361,11 +377,11 @@ export default function Tournament({ onNavigate }) {
                       </span>
                     </div>
                     {(() => { const regCount = getTournamentRegistrations(t.id).filter(r => r.status === 'registered').length; return (
-                    <div className="grid grid-cols-4 gap-2 mb-3">
-                      <InfoChip icon={<Users size={12} />} label={`${regCount}/${t.maxPlayers || '?'} players`} />
-                      <InfoChip icon={<MapPin size={12} />} label={`${bookedCount}/${totalCourts} courts`} />
-                      <InfoChip icon={<Clock size={12} />} label={t.duration ? `${t.duration}min` : '90min'} />
-                      <InfoChip icon={<Euro size={12} />} label={ppCost > 0 ? `${fmtEur(ppCost)}/pp` : 'Free'} />
+                    <div className="flex flex-wrap gap-1.5 mb-3">
+                      <InfoChip icon={<Users size={12} />} label={`${regCount}/${t.maxPlayers || '?'}`} />
+                      <InfoChip icon={<MapPin size={12} />} label={`${bookedCount}/${totalCourts}`} />
+                      <InfoChip icon={<Clock size={12} />} label={t.duration ? `${t.duration}'` : "90'"} />
+                      <InfoChip icon={null} label={ppCost > 0 ? `${fmtEur(ppCost)}/pp` : 'Free'} />
                     </div>
                     ) })()}
                     <div className="flex gap-2 pt-2 border-t border-gray-100">
@@ -671,7 +687,7 @@ function InfoChip({ icon, label, warn }) {
   return (
     <div className={`flex items-center gap-1 text-xs rounded-lg px-2 py-1.5 ${warn ? 'bg-orange-50 text-orange-600' : 'bg-gray-50 text-gray-600'}`}>
       {icon}
-      <span className="font-medium truncate">{label}</span>
+      <span className="font-medium">{label}</span>
     </div>
   )
 }
