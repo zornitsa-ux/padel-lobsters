@@ -18,13 +18,21 @@ function pairScore(a, b, partnerHistory, avoidWWPairs) {
 }
 
 /** Score how good it is to put pair t1 against pair t2 on same court. */
-function courtScore(t1, t2, opponentHistory) {
+function courtScore(t1, t2, opponentHistory, isMixed) {
   const lvl = (pair) => pair.reduce((s, p) => s + (p.adjustedLevel || 0), 0)
   const levelDiff = Math.abs(lvl(t1) - lvl(t2))
   let oppPenalty = 0
   t1.forEach(p => t2.forEach(q => {
     if (opponentHistory[p.id]?.has(q.id)) oppPenalty += 200  // heavy penalty — want fresh faces on every court
   }))
+  // In mixed mode: women must never face an all-male team. Every court is
+  // either WM vs WM or MM vs MM — never WM vs MM. This is absolute; level
+  // balance yields entirely.
+  if (isMixed) {
+    const t1HasW = t1.some(p => p.gender === 'female')
+    const t2HasW = t2.some(p => p.gender === 'female')
+    if (t1HasW !== t2HasW) oppPenalty += 100000
+  }
   return levelDiff + oppPenalty + Math.random() * 0.5
 }
 
@@ -120,14 +128,15 @@ function buildSmartPairs(pool, partnerHistory, genderMode) {
  * Uses multi-attempt with shuffled pair order so the same opponents
  * don't keep meeting each other across rounds.
  */
-function pairsToCourtMatches(pairs, numCourts, roundNum, opponentHistory = {}) {
+function pairsToCourtMatches(pairs, numCourts, roundNum, opponentHistory = {}, genderMode = 'mixed') {
+  const isMixed = genderMode === 'mixed'
   const lvl   = (pair) => pair.reduce((s, p) => s + (p.adjustedLevel || 0), 0)
   const hasW  = (pair) => pair.some(p => p.gender === 'female')
 
   const pickBest = (target, pool) => {
     let bestIdx = 0, bestScore = Infinity
     pool.forEach((p, i) => {
-      const s = courtScore(target, p, opponentHistory)
+      const s = courtScore(target, p, opponentHistory, isMixed)
       if (s < bestScore) { bestScore = s; bestIdx = i }
     })
     return bestIdx
@@ -141,28 +150,53 @@ function pairsToCourtMatches(pairs, numCourts, roundNum, opponentHistory = {}) {
   })
 
   // Score a full court assignment: total of all courtScores.
+  const flat = pairs.flat()
   const totalCourtCost = (courts) =>
     courts.reduce((sum, m) => {
-      const t1 = m.team1Ids.map(id => pairs.flat().find(p => p.id === id)).filter(Boolean)
-      const t2 = m.team2Ids.map(id => pairs.flat().find(p => p.id === id)).filter(Boolean)
-      return sum + courtScore(t1, t2, opponentHistory)
+      const t1 = m.team1Ids.map(id => flat.find(p => p.id === id)).filter(Boolean)
+      const t2 = m.team2Ids.map(id => flat.find(p => p.id === id)).filter(Boolean)
+      return sum + courtScore(t1, t2, opponentHistory, isMixed)
     }, 0)
 
+  // Count gender-mismatched courts (WM vs MM) — the thing we must avoid in
+  // mixed mode. Used to rank attempts: fewer mismatches always wins.
+  const countGenderClashes = (courts) => {
+    if (!isMixed) return 0
+    return courts.filter(m => {
+      const t1w = m.team1Ids.some(id => flat.find(p => p.id === id)?.gender === 'female')
+      const t2w = m.team2Ids.some(id => flat.find(p => p.id === id)?.gender === 'female')
+      return t1w !== t2w
+    }).length
+  }
+
   // One greedy pass: split pairs into WM/MM pools (shuffled), then greedily
-  // assign courts favouring WM+WM → WM+MM → MM+MM.
-  const greedyCourtPass = (shuffledPairs) => {
-    const wp = shuffle([...shuffledPairs.filter(hasW)])
-    const mp = shuffle([...shuffledPairs.filter(p => !hasW(p))])
+  // assign courts. In mixed mode the structure guarantees WM+WM and MM+MM —
+  // a leftover odd WM pair sits rather than being forced into a WM vs MM
+  // court, because we never cross the pools.
+  const greedyCourtPass = () => {
+    const wp = shuffle([...pairs.filter(hasW)])
+    const mp = shuffle([...pairs.filter(p => !hasW(p))])
     const courts = []
     let courtNum = 1
 
+    // WM + WM courts
     while (wp.length >= 2 && courts.length < numCourts) {
       const t1 = wp.shift(); const t2 = wp.splice(pickBest(t1, wp), 1)[0]
       courts.push(buildMatch(t1, t2, courtNum++))
     }
-    while (wp.length > 0 && mp.length > 0 && courts.length < numCourts) {
-      const t1 = wp.shift(); const t2 = mp.splice(pickBest(t1, mp), 1)[0]
-      courts.push(buildMatch(t1, t2, courtNum++))
+    // MM + MM courts (skip the WM+MM step entirely in mixed mode)
+    if (isMixed) {
+      // If there's an odd WM pair left, it can't play without a gender clash.
+      // Push remaining WM pairs back into the MM pool so they have a chance
+      // at a court if we're short — the +100000 courtScore penalty ensures
+      // multi-attempt ranking still prefers attempts that avoid this.
+      while (wp.length > 0) mp.push(wp.shift())
+    } else {
+      // Non-mixed: WM+MM is fine
+      while (wp.length > 0 && mp.length > 0 && courts.length < numCourts) {
+        const t1 = wp.shift(); const t2 = mp.splice(pickBest(t1, mp), 1)[0]
+        courts.push(buildMatch(t1, t2, courtNum++))
+      }
     }
     while (mp.length >= 2 && courts.length < numCourts) {
       const t1 = mp.shift(); const t2 = mp.splice(pickBest(t1, mp), 1)[0]
@@ -171,14 +205,17 @@ function pairsToCourtMatches(pairs, numCourts, roundNum, opponentHistory = {}) {
     return courts
   }
 
-  // Run multiple attempts, keep the one with lowest opponent-repeat cost.
-  let bestCourts = null, bestCost = Infinity
-  const ATTEMPTS = 30
+  // Run multiple attempts. Rank by: fewest gender clashes → lowest opponent cost.
+  let bestCourts = null, bestClashes = Infinity, bestCost = Infinity
+  const ATTEMPTS = 40
   for (let t = 0; t < ATTEMPTS; t++) {
-    const courts = greedyCourtPass(pairs)
-    const cost = totalCourtCost(courts)
-    if (cost < bestCost) { bestCost = cost; bestCourts = courts }
-    if (bestCost < 200) break  // no repeat opponents → done early
+    const courts  = greedyCourtPass()
+    const clashes = countGenderClashes(courts)
+    const cost    = totalCourtCost(courts)
+    if (clashes < bestClashes || (clashes === bestClashes && cost < bestCost)) {
+      bestClashes = clashes; bestCost = cost; bestCourts = courts
+    }
+    if (bestClashes === 0 && bestCost < 200) break
   }
   return bestCourts
 }
@@ -225,7 +262,7 @@ function generateLobster(players, numCourts, genderMode = 'mixed', duration = 90
   const allRounds = []
   for (let r = 0; r < numRounds; r++) {
     const pairs   = buildSmartPairs(active, partnerHistory, genderMode)
-    const matches = pairsToCourtMatches(pairs, numCourts, r + 1, opponentHistory)
+    const matches = pairsToCourtMatches(pairs, numCourts, r + 1, opponentHistory, genderMode)
     updateHistories(pairs, matches, partnerHistory, opponentHistory)
     allRounds.push({ round: r + 1, label: `Round ${r + 1}`, matches, sitting: sitting.map(p => p.id) })
   }
@@ -240,7 +277,7 @@ function generateAmericano(players, numCourts, rounds = 4, genderMode = 'mixed')
   const allRounds = []
   for (let r = 0; r < rounds; r++) {
     const pairs   = buildSmartPairs(active, partnerHistory, genderMode)
-    const matches = pairsToCourtMatches(pairs, numCourts, r + 1, opponentHistory)
+    const matches = pairsToCourtMatches(pairs, numCourts, r + 1, opponentHistory, genderMode)
     updateHistories(pairs, matches, partnerHistory, opponentHistory)
     allRounds.push({ round: r + 1, label: `Round ${r + 1}`, matches, sitting: sitting.map(p => p.id) })
   }
@@ -264,7 +301,7 @@ function generateRoundRobin(players, numCourts, genderMode = 'mixed') {
   const rounds = []
   for (let r = 0; r < Math.min(active.length - 1, 6); r++) {
     const pairs   = buildSmartPairs(active, partnerHistory, genderMode)
-    const matches = pairsToCourtMatches(pairs, numCourts, r + 1, opponentHistory)
+    const matches = pairsToCourtMatches(pairs, numCourts, r + 1, opponentHistory, genderMode)
     if (!matches.length) break
     updateHistories(pairs, matches, partnerHistory, opponentHistory)
     rounds.push({ round: r + 1, label: `Round ${r + 1}`, matches, sitting: sitting.map(p => p.id) })
