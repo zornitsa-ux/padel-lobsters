@@ -190,8 +190,25 @@ export default function Dashboard({ onNavigate }) {
     ? regs.some(r => r.playerId === claimedId && r.status === 'registered')
     : false
 
-  // Live countdown
-  const countdown = useCountdown(upcoming)
+  // Live countdown — targets the nearest event whose start time is still in the
+  // future. Once the current event starts, the clock automatically flips to the
+  // next one so there's always a countdown visible when future events exist.
+  const allUpcoming = tournaments
+    .filter(t => t.status === 'upcoming' || t.status === 'active')
+    .sort((a, b) => (a.date || '') < (b.date || '') ? -1 : 1)
+  const countdownTournament = allUpcoming.find(t => {
+    if (!t.date) return false
+    const [y, mo, d] = t.date.split('-').map(Number)
+    if (!y) return false
+    const timeStr = (t.time || '').trim()
+    let hh = 19, mm = 0
+    const ampm = timeStr.match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)$/i)
+    const hm   = timeStr.match(/^(\d{1,2})[:.](\d{2})$/)
+    if (ampm) { hh = parseInt(ampm[1], 10) % 12; if (/pm/i.test(ampm[3])) hh += 12; mm = parseInt(ampm[2] || '0', 10) }
+    else if (hm) { hh = parseInt(hm[1], 10); mm = parseInt(hm[2], 10) }
+    return new Date(y, mo - 1, d, hh, mm).getTime() > Date.now()
+  }) || null
+  const countdown = useCountdown(countdownTournament)
 
   // Past completed tournaments for history section
   const pastTournaments = tournaments
