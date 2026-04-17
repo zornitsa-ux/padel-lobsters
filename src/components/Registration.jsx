@@ -6,7 +6,7 @@ import {
   UserCog, ArrowRightLeft, Send
 } from 'lucide-react'
 import { SignInBanner } from './AuthGate'
-import { DateTile, AddToCalendarButton } from './CalendarPieces'
+import { DateTile, AddToCalendarButton, ShareWhatsAppButton } from './CalendarPieces'
 import { fmtEur } from '../lib/format'
 
 export default function Registration({ tournament, onNavigate }) {
@@ -216,7 +216,10 @@ export default function Registration({ tournament, onNavigate }) {
               </p>
             )}
           </div>
-          <AddToCalendarButton tournament={tournament} variant="icon" />
+          <div className="flex gap-1 flex-shrink-0">
+            <ShareWhatsAppButton tournament={tournament} variant="icon" />
+            <AddToCalendarButton tournament={tournament} variant="icon" />
+          </div>
         </div>
       </div>
 

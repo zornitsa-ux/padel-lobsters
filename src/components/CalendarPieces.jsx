@@ -1,5 +1,5 @@
 import React from 'react'
-import { CalendarPlus } from 'lucide-react'
+import { CalendarPlus, Share2 } from 'lucide-react'
 import { downloadTournamentIcs } from '../lib/calendar'
 
 // ============================================================================
@@ -85,6 +85,72 @@ export function AddToCalendarButton({ tournament, variant = 'full', className = 
     >
       <CalendarPlus size={18} />
       {label || "Don't forget — add to calendar"}
+    </button>
+  )
+}
+
+// ============================================================================
+//  ShareWhatsAppButton
+//
+//  Opens WhatsApp with a pre-filled message containing the event link, date,
+//  time and name. The link points to ?event=<id> which the app picks up on
+//  load and navigates to the registration page for that tournament.
+//
+//  Two variants: 'icon' (compact square) and 'full' (wide CTA pill).
+// ============================================================================
+
+export function ShareWhatsAppButton({ tournament, variant = 'icon', className = '' }) {
+  if (!tournament?.id) return null
+
+  const handleClick = (e) => {
+    e?.preventDefault?.()
+    e?.stopPropagation?.()
+
+    const baseUrl = window.location.origin + window.location.pathname
+    const eventUrl = `${baseUrl}?event=${tournament.id}`
+
+    const d = tournament.date ? new Date(tournament.date) : null
+    const dateLine = d && !isNaN(d.getTime())
+      ? d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+      : ''
+    const timePart = tournament.time ? ` at ${tournament.time}` : ''
+    const locationPart = tournament.location ? `\n${tournament.location}` : ''
+
+    const text = [
+      `🦞 ${tournament.name || 'Padel Lobsters Event'}`,
+      dateLine ? `📅 ${dateLine}${timePart}` : '',
+      locationPart ? `📍${locationPart}` : '',
+      '',
+      `Register & see details:`,
+      eventUrl,
+    ].filter(Boolean).join('\n')
+
+    const waUrl = `https://wa.me/?text=${encodeURIComponent(text)}`
+    window.open(waUrl, '_blank')
+  }
+
+  if (variant === 'icon') {
+    return (
+      <button
+        type="button"
+        onClick={handleClick}
+        aria-label="Share on WhatsApp"
+        title="Share on WhatsApp"
+        className={`w-9 h-9 flex items-center justify-center rounded-xl bg-green-50 text-green-600 active:scale-95 transition-all ${className}`}
+      >
+        <Share2 size={16} />
+      </button>
+    )
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      className={`w-full flex items-center justify-center gap-2 border-2 border-green-500 text-green-600 font-semibold py-3 rounded-2xl active:scale-95 transition-all ${className}`}
+    >
+      <Share2 size={18} />
+      Share on WhatsApp
     </button>
   )
 }

@@ -236,6 +236,104 @@ function updateHistories(pairs, matches, partnerHistory, opponentHistory) {
   })
 }
 
+// ── Post-generation validation ──────────────────────────────────────────────
+// Scans every round and returns a list of human-readable warnings so the
+// admin can see at a glance whether the engine had to break any rule.
+
+function validateSchedule(rounds, allPlayers, genderMode) {
+  const warnings = []
+  const getName = (id) => {
+    const p = allPlayers.find(x => x.id === id)
+    return p ? (p.name || '').split(' ')[0] : id
+  }
+  const isLefty = (id) => allPlayers.find(x => x.id === id)?.isLeftHanded
+  const isFemale = (id) => allPlayers.find(x => x.id === id)?.gender === 'female'
+  const isMixed = genderMode === 'mixed'
+
+  // Track partnerships and opponents across rounds
+  const partnersSeen = {} // "idA:idB" → [round numbers]
+  const opponentsSeen = {} // "idA:idB" → [round numbers]
+
+  rounds.forEach(r => {
+    (r.matches || []).forEach(m => {
+      const t1 = m.team1Ids || []
+      const t2 = m.team2Ids || []
+
+      // Rule 1: repeat partners
+      const checkPair = (ids) => {
+        if (ids.length !== 2) return
+        const key = [...ids].sort().join(':')
+        if (!partnersSeen[key]) partnersSeen[key] = []
+        partnersSeen[key].push(r.round)
+        if (partnersSeen[key].length === 2) {
+          warnings.push({
+            type: 'repeat-partner',
+            severity: 'error',
+            round: r.round,
+            message: `🔁 ${getName(ids[0])} & ${getName(ids[1])} are partners again (also round ${partnersSeen[key][0]})`,
+          })
+        }
+      }
+      checkPair(t1)
+      checkPair(t2)
+
+      // Rule 2: two lefties on same team
+      const checkLefties = (ids, teamLabel) => {
+        const lefties = ids.filter(isLefty)
+        if (lefties.length >= 2) {
+          warnings.push({
+            type: 'double-lefty',
+            severity: 'error',
+            round: r.round,
+            message: `🫲 Two left-handers on ${teamLabel}: ${lefties.map(getName).join(' & ')}`,
+          })
+        }
+      }
+      checkLefties(t1, `Court ${m.court}`)
+      checkLefties(t2, `Court ${m.court}`)
+
+      // Rule 3: gender clash on court (WM vs MM)
+      if (isMixed) {
+        const t1HasW = t1.some(isFemale)
+        const t2HasW = t2.some(isFemale)
+        if (t1HasW !== t2HasW) {
+          const wTeam = t1HasW ? t1 : t2
+          const mTeam = t1HasW ? t2 : t1
+          warnings.push({
+            type: 'gender-clash',
+            severity: 'error',
+            round: r.round,
+            message: `⚥ Mixed vs all-male on ${m.court}: ${wTeam.map(getName).join('+')} vs ${mTeam.map(getName).join('+')}`,
+          })
+        }
+      }
+
+      // Rule 4: repeat opponents
+      t1.forEach(a => t2.forEach(b => {
+        const key = [a, b].sort().join(':')
+        if (!opponentsSeen[key]) opponentsSeen[key] = []
+        opponentsSeen[key].push(r.round)
+      }))
+    })
+  })
+
+  // Collect repeat opponents (only warn when 3+ meetings — 2 is expected
+  // in small pools and doesn't feel like an issue to players).
+  Object.entries(opponentsSeen).forEach(([key, rnds]) => {
+    if (rnds.length >= 3) {
+      const [a, b] = key.split(':')
+      warnings.push({
+        type: 'repeat-opponent',
+        severity: 'warning',
+        round: rnds[rnds.length - 1],
+        message: `👥 ${getName(a)} & ${getName(b)} face each other ${rnds.length} times (rounds ${rnds.join(', ')})`,
+      })
+    }
+  })
+
+  return warnings
+}
+
 /**
  * Smart short name: returns first name if unique, otherwise first + last-initial.
  * Avoids "Gonzalo" being ambiguous when we have "Gonzalo U" and "Gonzalo E".
@@ -325,6 +423,7 @@ export default function Schedule({ tournament, onNavigate }) {
   const [swapMode, setSwapMode]     = useState(false)
   const [swapFirst, setSwapFirst]   = useState(null) // { roundIdx, matchIdx, team, playerIdx, playerId }
   const [swapWarnings, setSwapWarnings] = useState([]) // warnings after a swap
+  const [scheduleWarnings, setScheduleWarnings] = useState([]) // full validation after generate
 
   // Load saved schedule into edit preview
   const handleEditSchedule = () => {
@@ -405,9 +504,10 @@ export default function Schedule({ tournament, onNavigate }) {
       srcMatch.team2Level = lvl(srcMatch.team2Ids)
       dstMatch.team1Level = lvl(dstMatch.team1Ids)
       dstMatch.team2Level = lvl(dstMatch.team2Ids)
-      // Check for conflicts after swap
-      const conflicts = findPartnerConflicts(next)
-      setSwapWarnings(conflicts)
+      // Re-validate entire schedule after swap
+      const allWarnings = validateSchedule(next, registeredPlayers, genderMode)
+      setScheduleWarnings(allWarnings)
+      setSwapWarnings(allWarnings.filter(w => w.severity === 'error').map(w => w.message))
       return next
     })
     setSwapFirst(null)
@@ -486,6 +586,7 @@ export default function Schedule({ tournament, onNavigate }) {
     else                               newRounds = generateAmericano(registeredPlayers, numCourts, rounds, genderMode)
 
     setGenerated(newRounds)
+    setScheduleWarnings(validateSchedule(newRounds, registeredPlayers, genderMode))
     setSaved(false)
     setGenerating(false)
     setActiveRound(0)
@@ -602,7 +703,7 @@ export default function Schedule({ tournament, onNavigate }) {
             <AlertCircle size={16} className="text-yellow-600 flex-shrink-0" />
             <p className="text-xs text-yellow-700 flex-1">Preview — not saved yet</p>
             <div className="flex gap-1.5 flex-shrink-0">
-              <button onClick={() => { setGenerated(null); setSwapMode(false); setSwapFirst(null); setSwapWarnings([]) }}
+              <button onClick={() => { setGenerated(null); setSwapMode(false); setSwapFirst(null); setSwapWarnings([]); setScheduleWarnings([]) }}
                 className="text-xs text-gray-500 font-semibold px-2 py-1">Cancel</button>
               <button onClick={handleGenerate} className="text-xs text-yellow-700 font-semibold px-2 py-1">Reshuffle</button>
               <button onClick={handleSave} disabled={generating}
@@ -633,6 +734,40 @@ export default function Schedule({ tournament, onNavigate }) {
               {swapWarnings.map((w, i) => (
                 <p key={i} className="text-xs text-red-600">• {w}</p>
               ))}
+            </div>
+          )}
+          {/* Schedule validation summary */}
+          {scheduleWarnings.length > 0 && (
+            <div className="rounded-xl border overflow-hidden">
+              {/* Errors */}
+              {scheduleWarnings.some(w => w.severity === 'error') && (
+                <div className="bg-red-50 border-b border-red-200 p-3 space-y-1">
+                  <p className="text-xs font-bold text-red-700 flex items-center gap-1.5">
+                    <AlertCircle size={14} /> Rule violations
+                  </p>
+                  {scheduleWarnings.filter(w => w.severity === 'error').map((w, i) => (
+                    <p key={`e${i}`} className="text-xs text-red-600">• R{w.round}: {w.message}</p>
+                  ))}
+                </div>
+              )}
+              {/* Warnings */}
+              {scheduleWarnings.some(w => w.severity === 'warning') && (
+                <div className="bg-amber-50 p-3 space-y-1">
+                  <p className="text-xs font-bold text-amber-700 flex items-center gap-1.5">
+                    <AlertCircle size={14} /> Heads up
+                  </p>
+                  {scheduleWarnings.filter(w => w.severity === 'warning').map((w, i) => (
+                    <p key={`w${i}`} className="text-xs text-amber-600">• {w.message}</p>
+                  ))}
+                </div>
+              )}
+              {/* All clear */}
+            </div>
+          )}
+          {scheduleWarnings.length === 0 && generated && (
+            <div className="bg-green-50 border border-green-200 rounded-xl p-3 flex items-center gap-2">
+              <span className="text-sm">✅</span>
+              <p className="text-xs text-green-700 font-medium">All rules pass — no conflicts detected</p>
             </div>
           )}
         </div>

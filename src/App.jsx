@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { AppProvider } from './context/AppContext'
+import React, { useState, useEffect } from 'react'
+import { AppProvider, useApp } from './context/AppContext'
 import Layout from './components/Layout'
 import Dashboard from './components/Dashboard'
 import Players from './components/Players'
@@ -26,10 +26,26 @@ export default function App() {
 }
 
 function Inner() {
+  const { tournaments, loading } = useApp()
   const [page, setPage] = useState('dashboard')
   const [selectedTournament, setSelectedTournament] = useState(null)
 
   const [merchTab, setMerchTab] = useState(null)
+
+  // Deep-link: ?event=<id> opens the registration page for that tournament
+  useEffect(() => {
+    if (loading || tournaments.length === 0) return
+    const params = new URLSearchParams(window.location.search)
+    const eventId = params.get('event')
+    if (!eventId) return
+    const t = tournaments.find(x => String(x.id) === String(eventId))
+    if (t) {
+      setSelectedTournament(t)
+      setPage('registration')
+    }
+    // Clean the URL so refreshing doesn't re-trigger
+    window.history.replaceState({}, '', window.location.pathname)
+  }, [loading, tournaments])
 
   const navigate = (p, tournament = null) => {
     // Support merch-orders shortcut to go directly to Orders tab

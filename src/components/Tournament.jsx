@@ -6,7 +6,7 @@ import {
   Building2, ShieldCheck, UserCog, Clock, ChevronDown, ChevronUp
 } from 'lucide-react'
 import HistoryContent, { TOURNAMENTS as HISTORY_TOURNAMENTS } from './History'
-import { DateTile, AddToCalendarButton } from './CalendarPieces'
+import { DateTile, AddToCalendarButton, ShareWhatsAppButton } from './CalendarPieces'
 import { fmtEur } from '../lib/format'
 
 const emptyForm = {
@@ -212,7 +212,10 @@ export default function Tournament({ onNavigate }) {
                     {t.status}
                   </span>
                   {t.status !== 'completed' && (
-                    <AddToCalendarButton tournament={t} variant="icon" />
+                    <div className="flex gap-1">
+                      <ShareWhatsAppButton tournament={t} variant="icon" />
+                      <AddToCalendarButton tournament={t} variant="icon" />
+                    </div>
                   )}
                 </div>
               </div>

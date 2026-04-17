@@ -5,7 +5,7 @@ import { Trophy, Users, Calendar, ChevronRight, AlertCircle, Megaphone, Trending
 import DEFAULT_TIPS from '../data/padelTips'
 import { TOURNAMENTS as LEGACY_TOURNAMENTS } from './History'
 import { buildPlayerStats } from '../lib/playerStats'
-import { DateTile, AddToCalendarButton } from './CalendarPieces'
+import { DateTile, AddToCalendarButton, ShareWhatsAppButton } from './CalendarPieces'
 
 const CLAW_IMG = '/claws.png'
 const ClawUp = ({ active }) => (
@@ -420,7 +420,10 @@ export default function Dashboard({ onNavigate }) {
                 </p>
               )}
             </div>
-            <AddToCalendarButton tournament={upcoming} variant="icon" />
+            <div className="flex gap-1 flex-shrink-0">
+              <ShareWhatsAppButton tournament={upcoming} variant="icon" />
+              <AddToCalendarButton tournament={upcoming} variant="icon" />
+            </div>
           </div>
 
           {/* Registration status badge */}
