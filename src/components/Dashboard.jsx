@@ -427,8 +427,8 @@ export default function Dashboard({ onNavigate }) {
                   ? (tp > 0 ? tp / mp : 0)
                   : (upcoming.courts || []).reduce((s, c) => s + (parseFloat(c.costPerPerson) || 0), 0)
                 return ppCost > 0 ? (
-                  <p className="text-sm font-semibold text-lobster-teal leading-tight mt-0.5 flex items-center gap-1">
-                    <Euro size={12} /> {fmtEur(ppCost)}/pp
+                  <p className="text-sm font-semibold text-lobster-teal leading-tight mt-0.5">
+                    {fmtEur(ppCost)}/pp
                   </p>
                 ) : null
               })()}
