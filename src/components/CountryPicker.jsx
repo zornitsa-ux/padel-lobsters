@@ -6,7 +6,7 @@ export const COUNTRIES = [
   ['AR','Argentina'],['AU','Australia'],['AT','Austria'],['BE','Belgium'],
   ['BA','Bosnia and Herzegovina'],['BR','Brazil'],['BG','Bulgaria'],
   ['CA','Canada'],['CL','Chile'],['CN','China'],
-  ['CO','Colombia'],['HR','Croatia'],['CY','Cyprus'],['CZ','Czech Republic'],
+  ['CO','Colombia'],['CR','Costa Rica'],['HR','Croatia'],['CY','Cyprus'],['CZ','Czech Republic'],
   ['DK','Denmark'],['EG','Egypt'],['EE','Estonia'],['FI','Finland'],
   ['FR','France'],['DE','Germany'],['GR','Greece'],['HU','Hungary'],
   ['IN','India'],['ID','Indonesia'],['IE','Ireland'],['IL','Israel'],
