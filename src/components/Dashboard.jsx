@@ -1,10 +1,11 @@
 import React, { useMemo, useState, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
 import { supabase } from '../supabase'
-import { Trophy, Users, Calendar, ChevronRight, AlertCircle, Megaphone, TrendingUp, Clock, Flame, Award, Lightbulb, CreditCard, CalendarDays, ShoppingBag } from 'lucide-react'
+import { Trophy, Users, Calendar, ChevronRight, AlertCircle, Megaphone, TrendingUp, Clock, Flame, Award, Lightbulb, CreditCard, CalendarDays, ShoppingBag, Euro } from 'lucide-react'
 import DEFAULT_TIPS from '../data/padelTips'
 import { TOURNAMENTS as LEGACY_TOURNAMENTS } from './History'
 import { buildPlayerStats } from '../lib/playerStats'
+import { fmtEur } from '../lib/format'
 import { DateTile, AddToCalendarButton, ShareWhatsAppButton } from './CalendarPieces'
 
 const CLAW_IMG = '/claws.png'
@@ -419,6 +420,18 @@ export default function Dashboard({ onNavigate }) {
                   {upcoming.duration ? ` · ${upcoming.duration}min` : ''}
                 </p>
               )}
+              {(() => {
+                const tp = parseFloat(upcoming.totalPrice) || 0
+                const mp = parseInt(upcoming.maxPlayers) || 16
+                const ppCost = (!upcoming.courtBookingMode || upcoming.courtBookingMode === 'admin_all')
+                  ? (tp > 0 ? tp / mp : 0)
+                  : (upcoming.courts || []).reduce((s, c) => s + (parseFloat(c.costPerPerson) || 0), 0)
+                return ppCost > 0 ? (
+                  <p className="text-sm font-semibold text-lobster-teal leading-tight mt-0.5 flex items-center gap-1">
+                    <Euro size={12} /> {fmtEur(ppCost)}/pp
+                  </p>
+                ) : null
+              })()}
             </div>
             <div className="flex gap-1 flex-shrink-0">
               <ShareWhatsAppButton tournament={upcoming} variant="icon" />

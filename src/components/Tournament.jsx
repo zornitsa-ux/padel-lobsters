@@ -222,11 +222,11 @@ export default function Tournament({ onNavigate }) {
 
               {/* Stats row */}
               {(() => { const regCount = getTournamentRegistrations(t.id).filter(r => r.status === 'registered').length; return (
-              <div className={`grid ${isAdmin ? 'grid-cols-4' : 'grid-cols-3'} gap-2 mb-3`}>
+              <div className="grid grid-cols-4 gap-2 mb-3">
                 <InfoChip icon={<Users size={12} />} label={`${regCount}/${t.maxPlayers || '?'} players`} />
                 <InfoChip icon={<MapPin size={12} />} label={`${bookedCount}/${totalCourts} courts`} warn={!allBooked && totalCourts > 0} />
                 <InfoChip icon={<Clock size={12} />} label={t.duration ? `${t.duration}min` : '90min'} />
-                {isAdmin && <InfoChip icon={<Euro size={12} />} label={ppCost > 0 ? `${fmtEur(ppCost)}/pp` : 'Free'} />}
+                <InfoChip icon={<Euro size={12} />} label={ppCost > 0 ? `${fmtEur(ppCost)}/pp` : 'Free'} />
               </div>
               ) })()}
 
@@ -361,11 +361,11 @@ export default function Tournament({ onNavigate }) {
                       </span>
                     </div>
                     {(() => { const regCount = getTournamentRegistrations(t.id).filter(r => r.status === 'registered').length; return (
-                    <div className={`grid ${isAdmin ? 'grid-cols-4' : 'grid-cols-3'} gap-2 mb-3`}>
+                    <div className="grid grid-cols-4 gap-2 mb-3">
                       <InfoChip icon={<Users size={12} />} label={`${regCount}/${t.maxPlayers || '?'} players`} />
                       <InfoChip icon={<MapPin size={12} />} label={`${bookedCount}/${totalCourts} courts`} />
                       <InfoChip icon={<Clock size={12} />} label={t.duration ? `${t.duration}min` : '90min'} />
-                      {isAdmin && <InfoChip icon={<Euro size={12} />} label={ppCost > 0 ? `${fmtEur(ppCost)}/pp` : 'Free'} />}
+                      <InfoChip icon={<Euro size={12} />} label={ppCost > 0 ? `${fmtEur(ppCost)}/pp` : 'Free'} />
                     </div>
                     ) })()}
                     <div className="flex gap-2 pt-2 border-t border-gray-100">
