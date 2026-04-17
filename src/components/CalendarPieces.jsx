@@ -1,6 +1,6 @@
 import React from 'react'
 import { CalendarPlus, Share2 } from 'lucide-react'
-import { downloadTournamentIcs } from '../lib/calendar'
+import { downloadTournamentIcs, buildGoogleCalendarUrl } from '../lib/calendar'
 
 // ============================================================================
 //  DateTile
@@ -55,37 +55,38 @@ export function DateTile({ date, size = 'md', className = '' }) {
 
 export function AddToCalendarButton({ tournament, variant = 'full', className = '', label }) {
   if (!tournament?.date) return null
-  const handleClick = (e) => {
-    e?.preventDefault?.()
-    e?.stopPropagation?.()
-    downloadTournamentIcs(tournament)
-  }
+  const gcalUrl = buildGoogleCalendarUrl(tournament)
+  if (!gcalUrl) return null
 
+  // Use a real <a> tag so iOS Safari treats it as a trusted navigation
+  // instead of blocking it as a popup (which window.open would trigger).
   if (variant === 'icon') {
     return (
-      <button
-        type="button"
-        onClick={handleClick}
-        aria-label="Add to calendar"
-        title="Add to your calendar"
+      <a
+        href={gcalUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={(e) => e.stopPropagation()}
+        aria-label="Add to Google Calendar"
+        title="Add to Google Calendar"
         className={`w-9 h-9 flex items-center justify-center rounded-xl bg-lobster-cream text-lobster-teal active:scale-95 transition-all ${className}`}
       >
         <CalendarPlus size={16} />
-      </button>
+      </a>
     )
   }
 
-  // 'full' CTA — border style, softer than the primary payment actions so it
-  // doesn't compete with the Tikkie / "I've paid" buttons.
   return (
-    <button
-      type="button"
-      onClick={handleClick}
+    <a
+      href={gcalUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={(e) => e.stopPropagation()}
       className={`w-full flex items-center justify-center gap-2 border-2 border-lobster-teal text-lobster-teal font-semibold py-3 rounded-2xl active:scale-95 transition-all ${className}`}
     >
       <CalendarPlus size={18} />
-      {label || "Don't forget — add to calendar"}
-    </button>
+      {label || "Add to Google Calendar"}
+    </a>
   )
 }
 

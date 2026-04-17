@@ -102,6 +102,38 @@ export function buildTournamentIcs(tournament) {
   return lines
 }
 
+// Build a Google Calendar "add event" URL. Opens instantly in the browser
+// or Google Calendar app — no file download, no "Save in…" dialog.
+// Format: YYYYMMDDTHHmmssZ/YYYYMMDDTHHmmssZ (UTC pair)
+export function buildGoogleCalendarUrl(tournament) {
+  const start = parseTournamentStart(tournament)
+  if (!start) return null
+  const durationMin = parseInt(tournament.duration) || 90
+  const end = new Date(start.getTime() + durationMin * 60 * 1000)
+
+  const fmt = (d) => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
+  const dates = `${fmt(start)}/${fmt(end)}`
+
+  const descParts = [
+    'Padel Lobsters tournament 🦞',
+    tournament.format ? `Format: ${tournament.format}` : null,
+    tournament.maxPlayers ? `Max players: ${tournament.maxPlayers}` : null,
+    tournament.notes || null,
+    '',
+    'See you on court!',
+  ].filter(Boolean).join('\n')
+
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: '🦞 ' + (tournament.name || 'Padel Lobsters'),
+    dates,
+    details: descParts,
+  })
+  if (tournament.location) params.set('location', tournament.location)
+
+  return `https://calendar.google.com/calendar/render?${params.toString()}`
+}
+
 // Trigger a download of the .ics file for a tournament. This is the entry
 // point the button calls. Works on iPhone (opens the calendar add sheet),
 // Android (opens the calendar), and desktop (downloads the file, which the
