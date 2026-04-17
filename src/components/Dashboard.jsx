@@ -158,7 +158,7 @@ export default function Dashboard({ onNavigate }) {
   const regs = upcoming ? getTournamentRegistrations(upcoming.id) : []
   const registered = regs.filter(r => r.status === 'registered')
   const waitlisted = regs.filter(r => r.status === 'waitlist')
-  const unpaid     = regs.filter(r => r.status === 'registered' && r.paymentStatus !== 'paid')
+  const unpaid     = regs.filter(r => r.status === 'registered' && r.paymentStatus !== 'paid' && r.paymentStatus !== 'transferred')
 
   const isRegistered = upcoming && claimedId
     ? regs.some(r => r.playerId === claimedId && r.status === 'registered')
