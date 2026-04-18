@@ -27,7 +27,7 @@ const TRIVIA_BANK = [
 // (🎭 Most Unnecessary Shot Attempt and 💬 Most Unsolicited Mid-Match Coaching)
 // so the deck is always 8 cards long.
 const OSCARS_CORE = [
-  { category: '🦞 Lobster of the Day',        q: 'Who was the Most Valuable Lobster today?' },
+  { category: '🦞 Best Lobster',               q: 'Who was the Most Valuable Lobster today?' },
   { category: '💥 Best Smash',                 q: 'Who hit the most devastating smash?' },
   { category: '🛡️ Iron Wall Defence',          q: 'Who had the best defensive game?' },
   { category: '🤪 Wildest Shot',               q: 'Who pulled off the most insane shot?' },
@@ -196,15 +196,28 @@ export default function Game({ tournament, onNavigate }) {
   const startGame    = () => patch({ status: 'question', current_question: 0, question_started_at: new Date().toISOString() })
   const revealAnswer = () => patch({ status: 'reveal' })
 
-  // Archive a finished session so the admin can set up a new one. We also
-  // clear local state immediately so the UI flips back to the setup screen
-  // without waiting for the realtime round-trip.
+  // Archive a finished session so the admin can set up a new one. We clear
+  // local state optimistically so the UI flips to the setup screen even if
+  // the delete is slow (or silently blocked by RLS on an older DB). Also
+  // clears any leftover finished sessions for this tournament so the next
+  // loadSession() can't resurrect an old row.
   const startNewGame = async () => {
-    if (!session) return
-    await supabase.from('game_sessions').delete().eq('id', session.id)
+    // Wipe local state first — admin sees the setup screen immediately.
     setSession(null)
     setVotes([])
     setEditQs(null)
+    setMyVote(null)
+    // Best-effort DB cleanup — errors are non-fatal because a new insert
+    // will win by created_at anyway.
+    try {
+      await supabase
+        .from('game_sessions')
+        .delete()
+        .eq('tournament_id', tournament.id)
+        .eq('status', 'finished')
+    } catch (e) {
+      console.warn('startNewGame cleanup failed, continuing anyway:', e)
+    }
   }
   const endGame      = () => patch({ status: 'finished' })
 
@@ -590,6 +603,14 @@ export default function Game({ tournament, onNavigate }) {
                 )}
 
                 {/* Per-category breakdown */}
+                {/* Big Start New Game button — impossible to miss */}
+                {isAdmin && (
+                  <button onClick={startNewGame}
+                    className="w-full bg-lobster-teal text-white font-bold py-4 rounded-2xl text-base flex items-center justify-center gap-2 active:scale-95 transition-all shadow-md">
+                    🎮 Start a New Game
+                  </button>
+                )}
+
                 {perCategory.map(({ q, i, counts, winners }) => {
                   const maxV = Math.max(...Object.values(counts), 1)
                   return (
