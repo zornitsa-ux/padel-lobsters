@@ -19,14 +19,14 @@ const TRIVIA_BANK = [
 ]
 
 const OSCARS_BANK = [
-  { category: '🏆 MVP of the Day',     q: 'Who was the Most Valuable Lobster today?' },
-  { category: '💥 Best Smash',          q: 'Who hit the most devastating smash?' },
-  { category: '🛡️ Iron Wall',          q: 'Who had the best defensive game?' },
-  { category: '🤪 Wildest Shot',        q: 'Who pulled off the most insane shot?' },
-  { category: '😬 Own Goal Award',      q: 'Who managed to hit themselves today?' },
-  { category: '🎉 Best Celebration',    q: 'Whose celebration was the most over-the-top?' },
-  { category: '😂 Most Dramatic Fall',  q: 'Oscar for best dramatic fall goes to…' },
-  { category: '😴 Most Excuses',        q: 'Who had the best excuse for losing?' },
+  { category: '🦞 Lobster of the Day',     q: 'Who was the Most Valuable Lobster today?' },
+  { category: '💥 Best Smash',              q: 'Who hit the most devastating smash?' },
+  { category: '🛡️ Iron Wall Defence',       q: 'Who had the best defensive game?' },
+  { category: '🤪 Wildest Shot',            q: 'Who pulled off the most insane shot?' },
+  { category: '🤬 Potty Mouth Award',       q: 'Who dropped the most colourful language on the court?' },
+  { category: '🎉 Best Celebration',        q: 'Whose celebration was the most over-the-top?' },
+  { category: '😂 Most Dramatic Fall',      q: 'Oscar for best dramatic fall goes to…' },
+  { category: '😴 Most Excuses',            q: 'Who had the best excuse for losing?' },
 ]
 
 const SHAPES = ['▲', '◆', '●', '■']
@@ -317,12 +317,11 @@ export default function Game({ tournament, onNavigate }) {
             <p className="text-sm opacity-70 mb-3 flex items-center justify-center gap-1.5">
               <Users size={14} /> {regPlayers.length} players
             </p>
-            <div className="flex flex-wrap gap-2 justify-center max-w-sm">
+            <div className="flex flex-wrap gap-1.5 justify-center max-w-md">
               {regPlayers.map(p => (
-                <div key={p.id} className="flex items-center gap-1.5 bg-white/15 px-3 py-1.5 rounded-full">
-                  <div className="w-5 h-5 bg-white/30 rounded-full flex items-center justify-center text-white text-[10px] font-bold">{p.name[0]}</div>
-                  <span className="text-xs font-medium">{p.name.split(' ')[0]}</span>
-                </div>
+                <span key={p.id} className="bg-white/15 px-2.5 py-1 rounded-full text-xs font-medium">
+                  {p.name.split(' ')[0]}
+                </span>
               ))}
             </div>
           </div>
@@ -417,38 +416,88 @@ export default function Game({ tournament, onNavigate }) {
           )}
 
           {/* Oscars final results */}
-          {session.type === 'oscars' && (
-            <div className="space-y-3">
-              {(session.questions ?? []).map((q, i) => {
-                const qv = votes.filter(v => v.question_index === i)
-                const counts = {}
-                qv.forEach(v => { counts[v.answer] = (counts[v.answer] || 0) + 1 })
-                const maxV   = Math.max(...Object.values(counts), 1)
-                const winner = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]
-                const winP   = winner ? regPlayers.find(p => String(p.id) === winner[0]) : null
-                return (
-                  <div key={i} className="bg-white rounded-2xl p-4 space-y-2">
-                    <p className="font-bold text-sm text-gray-700">{q.category}</p>
-                    {winP
-                      ? <p className="text-sm text-gray-600">🏆 <span className="font-bold">{winP.name}</span> <span className="text-gray-400">({winner[1]} vote{winner[1] !== 1 ? 's' : ''})</span></p>
-                      : <p className="text-xs text-gray-400">No votes</p>}
-                    <div className="space-y-1">
-                      {regPlayers.filter(p => counts[String(p.id)]).sort((a, b) => (counts[String(b.id)] || 0) - (counts[String(a.id)] || 0)).map(p => (
-                        <div key={p.id} className="flex items-center gap-2">
-                          <span className="text-xs w-14 truncate text-gray-600">{p.name.split(' ')[0]}</span>
-                          <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden">
-                            <div className="h-full bg-lobster-teal rounded-full transition-all"
-                              style={{ width: `${(counts[String(p.id)] / maxV) * 100}%` }} />
-                          </div>
-                          <span className="text-xs text-gray-500 w-3 text-right">{counts[String(p.id)]}</span>
+          {session.type === 'oscars' && (() => {
+            // Pre-compute per-category counts + winners + overall award tally
+            const perCategory = (session.questions ?? []).map((q, i) => {
+              const qv = votes.filter(v => v.question_index === i)
+              const counts = {}
+              qv.forEach(v => { counts[v.answer] = (counts[v.answer] || 0) + 1 })
+              const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1])
+              const top    = sorted[0]?.[1] ?? 0
+              // Allow ties: every player who matches the top vote count wins this category
+              const winners = sorted.filter(([, c]) => c === top && top > 0).map(([pid]) => pid)
+              return { q, i, counts, sorted, winners }
+            })
+            const awardTally = {}
+            perCategory.forEach(({ winners }) => {
+              winners.forEach(pid => { awardTally[pid] = (awardTally[pid] || 0) + 1 })
+            })
+            const tallyRows = Object.entries(awardTally)
+              .map(([pid, n]) => ({ player: regPlayers.find(p => String(p.id) === pid), n }))
+              .filter(r => r.player)
+              .sort((a, b) => b.n - a.n)
+
+            return (
+              <div className="space-y-3">
+                {/* Overall award tally */}
+                {tallyRows.length > 0 && (
+                  <div className="bg-white rounded-2xl p-4">
+                    <p className="font-bold text-center text-gray-700 mb-3">🌟 Award Tally</p>
+                    <div className="space-y-1.5">
+                      {tallyRows.map((r, idx) => (
+                        <div key={r.player.id} className="flex items-center gap-3 px-2 py-1.5 rounded-xl">
+                          <span className="text-sm w-6 text-center">
+                            {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : idx + 1}
+                          </span>
+                          <span className="flex-1 text-sm font-medium">{r.player.name}</span>
+                          <span className="text-sm font-bold text-lobster-teal">
+                            {r.n} {r.n === 1 ? 'award' : 'awards'}
+                          </span>
                         </div>
                       ))}
                     </div>
                   </div>
-                )
-              })}
-            </div>
-          )}
+                )}
+
+                {/* Per-category breakdown */}
+                {perCategory.map(({ q, i, counts, winners }) => {
+                  const maxV = Math.max(...Object.values(counts), 1)
+                  return (
+                    <div key={i} className="bg-white rounded-2xl p-4 space-y-2">
+                      <p className="font-bold text-sm text-gray-700">{q.category}</p>
+                      {winners.length > 0
+                        ? (
+                          <p className="text-sm text-gray-600">
+                            🏆 <span className="font-bold">
+                              {winners
+                                .map(pid => regPlayers.find(p => String(p.id) === pid)?.name)
+                                .filter(Boolean)
+                                .join(', ')}
+                            </span>{' '}
+                            <span className="text-gray-400">
+                              ({counts[winners[0]]} vote{counts[winners[0]] !== 1 ? 's' : ''}{winners.length > 1 ? ' — tie' : ''})
+                            </span>
+                          </p>
+                        )
+                        : <p className="text-xs text-gray-400">No votes</p>}
+                      <div className="space-y-1">
+                        {regPlayers.filter(p => counts[String(p.id)]).sort((a, b) => (counts[String(b.id)] || 0) - (counts[String(a.id)] || 0)).map(p => (
+                          <div key={p.id} className="flex items-center gap-2">
+                            <span className="text-xs w-14 truncate text-gray-600">{p.name.split(' ')[0]}</span>
+                            <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden">
+                              <div className="h-full bg-lobster-teal rounded-full transition-all"
+                                style={{ width: `${(counts[String(p.id)] / maxV) * 100}%` }} />
+                            </div>
+                            <span className="text-xs text-gray-500 w-3 text-right">{counts[String(p.id)]}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )
+          })()}
         </div>
       </div>
     )
