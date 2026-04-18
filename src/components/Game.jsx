@@ -18,16 +18,43 @@ const TRIVIA_BANK = [
   { q: 'In padel, what happens if the ball hits the wire fence directly?',   opts: ['Point to receiver', 'Let — replay', 'Point to server', 'Fault'], correct: 0 },
 ]
 
-const OSCARS_BANK = [
-  { category: '🦞 Lobster of the Day',     q: 'Who was the Most Valuable Lobster today?' },
-  { category: '💥 Best Smash',              q: 'Who hit the most devastating smash?' },
-  { category: '🛡️ Iron Wall Defence',       q: 'Who had the best defensive game?' },
-  { category: '🤪 Wildest Shot',            q: 'Who pulled off the most insane shot?' },
-  { category: '🤬 Potty Mouth Award',       q: 'Who dropped the most colourful language on the court?' },
-  { category: '🎉 Best Celebration',        q: 'Whose celebration was the most over-the-top?' },
-  { category: '😂 Most Dramatic Fall',      q: 'Oscar for best dramatic fall goes to…' },
-  { category: '😴 Most Excuses',            q: 'Who had the best excuse for losing?' },
+// --- Oscars category bank ----------------------------------------------------
+// The Oscars always deliver exactly 8 categories. Six are core and always
+// play; the last two rotate based on the registered players' gender mix:
+//   • more men than women        → add 🍺 First to the Bar After the Match
+//   • 10 or more women           → add 👟 Best Dressed on Court
+// Any remaining slots are filled with the two evergreen fillers
+// (🎭 Most Unnecessary Shot Attempt and 💬 Most Unsolicited Mid-Match Coaching)
+// so the deck is always 8 cards long.
+const OSCARS_CORE = [
+  { category: '🦞 Lobster of the Day',        q: 'Who was the Most Valuable Lobster today?' },
+  { category: '💥 Best Smash',                 q: 'Who hit the most devastating smash?' },
+  { category: '🛡️ Iron Wall Defence',          q: 'Who had the best defensive game?' },
+  { category: '🤪 Wildest Shot',               q: 'Who pulled off the most insane shot?' },
+  { category: '🤬 Potty Mouth Award',          q: 'Who dropped the most colourful language on the court?' },
+  { category: '😴 Most Excuses',               q: 'Who had the best excuse for losing?' },
 ]
+const OSCARS_ROTATING = {
+  bar:         { category: '🍺 First to the Bar After the Match',   q: 'Who made it to the bar first after the match?' },
+  dressed:     { category: '👟 Best Dressed on Court',              q: 'Who looked the best on court today?' },
+  coaching:    { category: '💬 Most Unsolicited Mid-Match Coaching', q: 'Who handed out the most unsolicited tips mid-match?' },
+  unnecessary: { category: '🎭 Most Unnecessary Shot Attempt',       q: 'Who attempted the most unnecessary shot?' },
+}
+function buildOscarsBank(regPlayers = []) {
+  const men       = regPlayers.filter(p => p.gender === 'male').length
+  const women     = regPlayers.filter(p => p.gender === 'female').length
+  const moreMen   = men > women
+  const tenWomen  = women >= 10
+  const extras    = []
+  if (moreMen)  extras.push(OSCARS_ROTATING.bar)
+  if (tenWomen) extras.push(OSCARS_ROTATING.dressed)
+  // Fill any remaining slots with evergreens so the deck is always 8.
+  for (const c of [OSCARS_ROTATING.coaching, OSCARS_ROTATING.unnecessary]) {
+    if (extras.length >= 2) break
+    extras.push(c)
+  }
+  return [...OSCARS_CORE, ...extras]
+}
 
 const SHAPES = ['▲', '◆', '●', '■']
 const BG     = ['bg-red-500', 'bg-blue-500', 'bg-yellow-400', 'bg-green-500']
@@ -153,7 +180,7 @@ export default function Game({ tournament, onNavigate }) {
 
   const createSession = async () => {
     setBusy(true)
-    const qs = editQs ?? (gameType === 'trivia' ? TRIVIA_BANK : OSCARS_BANK)
+    const qs = editQs ?? (gameType === 'trivia' ? TRIVIA_BANK : buildOscarsBank(regPlayers))
     await supabase.from('game_sessions').insert({
       tournament_id: tournament.id,
       type: gameType,
@@ -258,7 +285,7 @@ export default function Game({ tournament, onNavigate }) {
     )
 
     // Admin setup screen
-    const bank      = gameType === 'trivia' ? TRIVIA_BANK : OSCARS_BANK
+    const bank      = gameType === 'trivia' ? TRIVIA_BANK : buildOscarsBank(regPlayers)
     const displayQs = editQs ?? bank
 
     return (
@@ -306,6 +333,11 @@ export default function Game({ tournament, onNavigate }) {
                   className="text-xs text-lobster-teal font-semibold">Reset all</button>
               )}
             </div>
+            {gameType === 'oscars' && !editQs && (
+              <p className="text-[11px] text-gray-400 leading-snug -mt-1 mb-1">
+                Two categories rotate with the group: 🍺 First to the Bar when more men play, 👟 Best Dressed when 10+ women are signed up.
+              </p>
+            )}
             {displayQs.map((q, i) => (
               <div key={i} className="flex items-start gap-2 bg-gray-50 rounded-xl px-3 py-2.5">
                 <span className="text-xs font-bold text-gray-400 w-4 pt-0.5">{i + 1}</span>
