@@ -56,11 +56,14 @@ export default function Game({ tournament, onNavigate }) {
 
   const loadSession = async () => {
     if (!tournament?.id) return
+    // Return the most recent session regardless of status so the
+    // final podium / award tally stays visible after the admin clicks
+    // "Finish". To start a new game, admin uses the "Start New Game"
+    // button on the finished screen, which deletes the stale row.
     const { data } = await supabase
       .from('game_sessions')
       .select('*')
       .eq('tournament_id', tournament.id)
-      .neq('status', 'finished')
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle()
@@ -165,6 +168,17 @@ export default function Game({ tournament, onNavigate }) {
 
   const startGame    = () => patch({ status: 'question', current_question: 0, question_started_at: new Date().toISOString() })
   const revealAnswer = () => patch({ status: 'reveal' })
+
+  // Archive a finished session so the admin can set up a new one. We also
+  // clear local state immediately so the UI flips back to the setup screen
+  // without waiting for the realtime round-trip.
+  const startNewGame = async () => {
+    if (!session) return
+    await supabase.from('game_sessions').delete().eq('id', session.id)
+    setSession(null)
+    setVotes([])
+    setEditQs(null)
+  }
   const endGame      = () => patch({ status: 'finished' })
 
   const nextQuestion = async () => {
@@ -397,11 +411,17 @@ export default function Game({ tournament, onNavigate }) {
   if (session.status === 'finished') {
     return (
       <div className="fixed inset-0 z-50 bg-lobster-cream flex flex-col overflow-y-auto">
-        <div className="px-4 pt-12 pb-4">
+        <div className="px-4 pt-12 pb-4 flex items-center justify-between">
           <button onClick={() => onNavigate('registration', tournament)}
             className="flex items-center gap-1 text-lobster-teal text-sm font-semibold">
             <ChevronLeft size={16} /> Back
           </button>
+          {isAdmin && (
+            <button onClick={startNewGame}
+              className="text-xs font-semibold text-lobster-teal bg-white px-3 py-1.5 rounded-full border border-lobster-teal/20 active:scale-95 transition-all">
+              🎮 Start New Game
+            </button>
+          )}
         </div>
 
         <div className="text-center px-4 pb-4">
@@ -489,7 +509,35 @@ export default function Game({ tournament, onNavigate }) {
 
             return (
               <div className="space-y-3">
-                {/* Overall award tally */}
+                {/* Top winner(s) — highlights whoever has the most awards.
+                    If multiple players tie at the top, all of them are shown as co-winners. */}
+                {tallyRows.length > 0 && (() => {
+                  const topCount  = tallyRows[0].n
+                  const topRows   = tallyRows.filter(r => r.n === topCount)
+                  const isTie     = topRows.length > 1
+                  return (
+                    <div className="bg-gradient-to-br from-yellow-300 to-yellow-500 rounded-2xl p-6 text-center shadow-md">
+                      <p className="text-6xl mb-2">👑</p>
+                      <p className="text-xs font-bold text-yellow-900 uppercase tracking-widest mb-3">
+                        {isTie ? `Co-Winners — tied with ${topCount} ${topCount === 1 ? 'award' : 'awards'}` : 'Winner of the Night'}
+                      </p>
+                      <div className="space-y-1">
+                        {topRows.map(r => (
+                          <p key={r.player.id} className="text-3xl font-extrabold text-gray-900 leading-tight">
+                            {r.player.name}
+                          </p>
+                        ))}
+                      </div>
+                      {!isTie && (
+                        <p className="text-sm font-semibold text-yellow-900 mt-3">
+                          🏆 {topCount} {topCount === 1 ? 'award' : 'awards'}
+                        </p>
+                      )}
+                    </div>
+                  )
+                })()}
+
+                {/* Overall award tally (full list) */}
                 {tallyRows.length > 0 && (
                   <div className="bg-white rounded-2xl p-4">
                     <p className="font-bold text-center text-gray-700 mb-3">🌟 Award Tally</p>
