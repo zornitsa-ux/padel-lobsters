@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useApp } from '../context/AppContext'
 import { supabase } from '../supabase'
 import { ChevronLeft, ChevronRight, Play, X, Check, Users } from 'lucide-react'
@@ -62,6 +62,51 @@ const TXT    = ['text-white', 'text-white', 'text-gray-900', 'text-white']
 const DIM    = ['bg-red-200', 'bg-blue-200', 'bg-yellow-100', 'bg-green-200']
 const RING   = ['ring-red-300', 'ring-blue-300', 'ring-yellow-200', 'ring-green-300']
 
+/* ─── Name disambiguation ──────────────────────────────────────────────────
+ * Build a map { playerId -> shortLabel } where the short label is the first
+ * name, plus a last-name initial when two+ players share the first name.
+ * Example: [Juan Rodriguez, Juan Martinez, Lena] -> { Juan R, Juan M, Lena }.
+ * If even the initial collides (Juan R + Juan R), we append more letters
+ * until the labels are unique within the group.                              */
+function shortLabelMap(players = []) {
+  const firstOf = (p) => (p.name || '').trim().split(/\s+/)[0] || p.name || ''
+  const lastOf  = (p) => {
+    const parts = (p.name || '').trim().split(/\s+/)
+    return parts.length > 1 ? parts.slice(1).join(' ') : ''
+  }
+  // Group players by first name
+  const byFirst = {}
+  players.forEach(p => {
+    const f = firstOf(p)
+    ;(byFirst[f] ??= []).push(p)
+  })
+  const out = {}
+  for (const first in byFirst) {
+    const group = byFirst[first]
+    if (group.length === 1) {
+      out[String(group[0].id)] = first
+      continue
+    }
+    // Multiple players share the first name. Try 1-letter last-initial;
+    // if any of those still collide, extend the initial by another letter.
+    let len = 1
+    while (true) {
+      const labels = group.map(p => {
+        const last = lastOf(p)
+        const suffix = last ? ` ${last.slice(0, len).toUpperCase()}` : ''
+        return suffix ? `${first}${suffix}` : first
+      })
+      const seen = new Set(labels)
+      if (seen.size === labels.length || len >= 5) {
+        group.forEach((p, i) => { out[String(p.id)] = labels[i] })
+        break
+      }
+      len += 1
+    }
+  }
+  return out
+}
+
 /* ─── Main component ──────────────────────────────────────────────────────── */
 
 export default function Game({ tournament, onNavigate }) {
@@ -78,6 +123,11 @@ export default function Game({ tournament, onNavigate }) {
 
   const regs       = getTournamentRegistrations(tournament?.id || '').filter(r => r.status === 'registered')
   const regPlayers = players.filter(p => regs.some(r => r.playerId === p.id))
+  // Per-tournament short-label map — Juan R / Juan M / Lena, etc. Used in
+  // lobby chips, voting grid, reveal bars, and the finished breakdown so
+  // same-name players are always distinguishable.
+  const shortLabels = useMemo(() => shortLabelMap(regPlayers), [regPlayers])
+  const shortName   = (p) => shortLabels[String(p?.id)] || (p?.name || '').split(' ')[0] || p?.name || ''
 
   /* ── Data loading ───────────────────────────────────────────────────────── */
 
@@ -427,7 +477,7 @@ export default function Game({ tournament, onNavigate }) {
                         here ? 'bg-white/25 text-white' : 'bg-white/5 text-white/40'
                       }`}>
                       {here && <span className="w-1.5 h-1.5 rounded-full bg-green-400" />}
-                      {p.name.split(' ')[0]}
+                      {shortName(p)}
                     </span>
                   )
                 })}
@@ -499,7 +549,7 @@ export default function Game({ tournament, onNavigate }) {
                             {s.player.name[0]}
                           </div>
                           <p className={`text-xs truncate w-full text-center ${isFirst ? 'font-bold' : 'font-semibold'}`}>
-                            {s.player.name.split(' ')[0]}
+                            {shortName(s.player)}
                           </p>
                           <div className={`${barBg} w-full ${barH} rounded-t-xl flex items-center justify-center`}>
                             <span className={`text-xs font-bold ${isFirst ? 'text-white' : ''}`}>{s.pts}</span>
@@ -532,77 +582,22 @@ export default function Game({ tournament, onNavigate }) {
 
           {/* Oscars final results */}
           {session.type === 'oscars' && (() => {
-            // Pre-compute per-category counts + winners + overall award tally
+            // Pre-compute per-category counts + winners. No overall "winner of
+            // the night" / award tally — the user wants each category to stand
+            // on its own, with every tied player shown as a co-winner.
             const perCategory = (session.questions ?? []).map((q, i) => {
               const qv = votes.filter(v => v.question_index === i)
               const counts = {}
               qv.forEach(v => { counts[v.answer] = (counts[v.answer] || 0) + 1 })
               const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1])
               const top    = sorted[0]?.[1] ?? 0
-              // Allow ties: every player who matches the top vote count wins this category
+              // Every player tied at the top vote count wins this category
               const winners = sorted.filter(([, c]) => c === top && top > 0).map(([pid]) => pid)
               return { q, i, counts, sorted, winners }
             })
-            const awardTally = {}
-            perCategory.forEach(({ winners }) => {
-              winners.forEach(pid => { awardTally[pid] = (awardTally[pid] || 0) + 1 })
-            })
-            const tallyRows = Object.entries(awardTally)
-              .map(([pid, n]) => ({ player: regPlayers.find(p => String(p.id) === pid), n }))
-              .filter(r => r.player)
-              .sort((a, b) => b.n - a.n)
 
             return (
               <div className="space-y-3">
-                {/* Top winner(s) — highlights whoever has the most awards.
-                    If multiple players tie at the top, all of them are shown as co-winners. */}
-                {tallyRows.length > 0 && (() => {
-                  const topCount  = tallyRows[0].n
-                  const topRows   = tallyRows.filter(r => r.n === topCount)
-                  const isTie     = topRows.length > 1
-                  return (
-                    <div className="bg-gradient-to-br from-yellow-300 to-yellow-500 rounded-2xl p-6 text-center shadow-md">
-                      <p className="text-6xl mb-2">👑</p>
-                      <p className="text-xs font-bold text-yellow-900 uppercase tracking-widest mb-3">
-                        {isTie ? `Co-Winners — tied with ${topCount} ${topCount === 1 ? 'award' : 'awards'}` : 'Winner of the Night'}
-                      </p>
-                      <div className="space-y-1">
-                        {topRows.map(r => (
-                          <p key={r.player.id} className="text-3xl font-extrabold text-gray-900 leading-tight">
-                            {r.player.name}
-                          </p>
-                        ))}
-                      </div>
-                      {!isTie && (
-                        <p className="text-sm font-semibold text-yellow-900 mt-3">
-                          🏆 {topCount} {topCount === 1 ? 'award' : 'awards'}
-                        </p>
-                      )}
-                    </div>
-                  )
-                })()}
-
-                {/* Overall award tally (full list) */}
-                {tallyRows.length > 0 && (
-                  <div className="bg-white rounded-2xl p-4">
-                    <p className="font-bold text-center text-gray-700 mb-3">🌟 Award Tally</p>
-                    <div className="space-y-1.5">
-                      {tallyRows.map((r, idx) => (
-                        <div key={r.player.id} className="flex items-center gap-3 px-2 py-1.5 rounded-xl">
-                          <span className="text-sm w-6 text-center">
-                            {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : idx + 1}
-                          </span>
-                          <span className="flex-1 text-sm font-medium">{r.player.name}</span>
-                          <span className="text-sm font-bold text-lobster-teal">
-                            {r.n} {r.n === 1 ? 'award' : 'awards'}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Per-category breakdown */}
                 {/* Big Start New Game button — impossible to miss */}
                 {isAdmin && (
                   <button onClick={startNewGame}
@@ -621,7 +616,10 @@ export default function Game({ tournament, onNavigate }) {
                           <p className="text-sm text-gray-600">
                             🏆 <span className="font-bold">
                               {winners
-                                .map(pid => regPlayers.find(p => String(p.id) === pid)?.name)
+                                .map(pid => {
+                                  const p = regPlayers.find(pp => String(pp.id) === pid)
+                                  return p ? shortName(p) : null
+                                })
                                 .filter(Boolean)
                                 .join(', ')}
                             </span>{' '}
@@ -634,7 +632,7 @@ export default function Game({ tournament, onNavigate }) {
                       <div className="space-y-1">
                         {regPlayers.filter(p => counts[String(p.id)]).sort((a, b) => (counts[String(b.id)] || 0) - (counts[String(a.id)] || 0)).map(p => (
                           <div key={p.id} className="flex items-center gap-2">
-                            <span className="text-xs w-14 truncate text-gray-600">{p.name.split(' ')[0]}</span>
+                            <span className="text-xs w-16 truncate text-gray-600">{shortName(p)}</span>
                             <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden">
                               <div className="h-full bg-lobster-teal rounded-full transition-all"
                                 style={{ width: `${(counts[String(p.id)] / maxV) * 100}%` }} />
@@ -777,8 +775,14 @@ export default function Game({ tournament, onNavigate }) {
     const counts  = {}
     curVotes.forEach(v => { counts[v.answer] = (counts[v.answer] || 0) + 1 })
     const maxV    = Math.max(...Object.values(counts), 1)
-    const winner  = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]
-    const winP    = winner ? regPlayers.find(p => String(p.id) === winner[0]) : null
+    // Find every player tied at the top vote count (not just the first one).
+    // With a single-element sort earlier we were randomly picking one of N
+    // tied winners; now we surface all of them in the reveal card.
+    const topCount   = Math.max(0, ...Object.values(counts))
+    const winnerIds  = topCount > 0
+      ? Object.entries(counts).filter(([, c]) => c === topCount).map(([pid]) => pid)
+      : []
+    const winnerPs   = winnerIds.map(pid => regPlayers.find(p => String(p.id) === pid)).filter(Boolean)
 
     return (
       <div className="fixed inset-0 z-50 flex flex-col bg-gradient-to-b from-lobster-teal to-teal-800 overflow-hidden">
@@ -791,13 +795,24 @@ export default function Game({ tournament, onNavigate }) {
           <p className="text-sm opacity-75 mt-1">{curQ.q}</p>
         </div>
 
-        {/* Reveal: winner + bars */}
+        {/* Reveal: winner(s) + bars */}
         {isReveal && (
           <div className="px-4 space-y-3 flex-shrink-0">
-            {winP && (
+            {winnerPs.length > 0 && (
               <div className="bg-yellow-400 rounded-2xl px-4 py-3 text-center text-gray-900">
-                <p className="text-xl font-bold">🏆 {winP.name}</p>
-                <p className="text-sm">{winner[1]} vote{winner[1] !== 1 ? 's' : ''}</p>
+                {winnerPs.length === 1 ? (
+                  <p className="text-xl font-bold">🏆 {shortName(winnerPs[0])}</p>
+                ) : (
+                  <>
+                    <p className="text-xs font-bold uppercase tracking-widest text-yellow-900 mb-1">
+                      Tied — {winnerPs.length} winners
+                    </p>
+                    <p className="text-lg font-bold leading-tight">
+                      🏆 {winnerPs.map(p => shortName(p)).join(', ')}
+                    </p>
+                  </>
+                )}
+                <p className="text-sm mt-1">{topCount} vote{topCount !== 1 ? 's' : ''} each</p>
               </div>
             )}
             <div className="space-y-1.5">
@@ -812,7 +827,7 @@ export default function Game({ tournament, onNavigate }) {
                         <span className="text-[10px] font-bold text-teal-800">{counts[String(p.id)]}</span>
                       </div>
                     </div>
-                    <span className="text-white text-xs w-14 truncate">{p.name.split(' ')[0]}</span>
+                    <span className="text-white text-xs w-16 truncate">{shortName(p)}</span>
                   </div>
                 ))}
             </div>
@@ -837,7 +852,7 @@ export default function Game({ tournament, onNavigate }) {
                     <button key={p.id}
                       onClick={() => submitAnswer(String(p.id))}
                       className="bg-white/15 hover:bg-white/25 active:scale-95 rounded-xl px-2 py-2 text-white transition-all text-center">
-                      <span className="text-xs font-semibold leading-tight break-words">{p.name.split(' ')[0]}</span>
+                      <span className="text-xs font-semibold leading-tight break-words">{shortName(p)}</span>
                     </button>
                   ))}
               </div>
