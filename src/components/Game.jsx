@@ -254,12 +254,56 @@ export default function Game({ tournament, onNavigate }) {
   const startGame    = () => patch({ status: 'question', current_question: 0, question_started_at: new Date().toISOString() })
   const revealAnswer = () => patch({ status: 'reveal' })
 
+  // Snapshot the final game state into game_results so the record survives
+  // "Start New Game" (which deletes the underlying session row). Called when
+  // a game transitions to 'finished' and again defensively from startNewGame
+  // for sessions that finished before this feature shipped.
+  // Idempotent — session_id is UNIQUE on game_results, duplicate inserts
+  // throw a 23505 we just swallow.
+  const snapshotResults = async (sessionOverride = null) => {
+    const s = sessionOverride || session
+    if (!s?.id || !tournament?.id) return
+    // Always fetch fresh votes — local `votes` state may be stale if the
+    // snapshot is triggered right after a patch.
+    const { data: finalVotes } = await supabase
+      .from('game_votes')
+      .select('*')
+      .eq('session_id', s.id)
+    // Freeze the player roster as it stood when the game ended. Future
+    // Results UIs won't have to worry about players being renamed/removed.
+    const playerSnapshot = regPlayers.map(p => ({
+      id: p.id, name: p.name, gender: p.gender ?? '', avatarUrl: p.avatarUrl ?? '',
+    }))
+    const data = {
+      type: s.type,
+      sessionId: s.id,
+      questions: s.questions ?? [],
+      votes: finalVotes ?? [],
+      players: playerSnapshot,
+      finishedAt: new Date().toISOString(),
+    }
+    const { error } = await supabase.from('game_results').insert({
+      tournament_id: tournament.id,
+      session_id:    s.id,
+      game_type:     s.type || 'oscars',
+      data,
+    })
+    // 23505 = unique_violation → we've already snapshotted this session.
+    if (error && error.code !== '23505') {
+      console.warn('snapshotResults failed:', error)
+    }
+  }
+
   // Archive a finished session so the admin can set up a new one. We clear
   // local state optimistically so the UI flips to the setup screen even if
   // the delete is slow (or silently blocked by RLS on an older DB). Also
   // clears any leftover finished sessions for this tournament so the next
   // loadSession() can't resurrect an old row.
   const startNewGame = async () => {
+    // Defensive snapshot first — for sessions that finished before v19
+    // shipped and never got persisted. UNIQUE constraint makes it a no-op
+    // if the snapshot already exists.
+    if (session?.status === 'finished') await snapshotResults()
     // Wipe local state first — admin sees the setup screen immediately.
     setSession(null)
     setVotes([])
@@ -277,13 +321,21 @@ export default function Game({ tournament, onNavigate }) {
       console.warn('startNewGame cleanup failed, continuing anyway:', e)
     }
   }
-  const endGame      = () => patch({ status: 'finished' })
+  const endGame = async () => {
+    // Capture the state BEFORE we patch, because the UI might remount /
+    // unmount. Then mark the session finished and persist results.
+    const s = session
+    await patch({ status: 'finished' })
+    if (s) await snapshotResults({ ...s, status: 'finished' })
+  }
 
   const nextQuestion = async () => {
     const qs   = session.questions ?? []
     const next = (session.current_question ?? 0) + 1
     if (next >= qs.length) {
+      const s = session
       await patch({ status: 'finished' })
+      if (s) await snapshotResults({ ...s, status: 'finished' })
     } else {
       await patch({ status: 'question', current_question: next, question_started_at: new Date().toISOString() })
     }

@@ -1,5 +1,6 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useApp } from '../context/AppContext'
+import { supabase } from '../supabase'
 import {
   UserCheck, UserX, Clock, ChevronLeft, Search,
   Plus, X, AlertCircle, CheckCircle, Users, ExternalLink,
@@ -8,6 +9,10 @@ import {
 import { SignInBanner } from './AuthGate'
 import { DateTile, AddToCalendarButton, ShareWhatsAppButton } from './CalendarPieces'
 import { fmtEur } from '../lib/format'
+
+// Tournaments stay on the home page for 48h after their date; during that
+// window we show "🏆 Lobster Games Over — See Results!" if a game was played.
+const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000
 
 export default function Registration({ tournament, onNavigate }) {
   const {
@@ -31,6 +36,32 @@ export default function Registration({ tournament, onNavigate }) {
   const [declaring, setDeclaring]         = useState(false)
 
   const [marking, setMarking] = useState(false)
+
+  // Whether a finished Lobster Game exists for this tournament. Used to show
+  // the "Lobster Games Over — See Results!" banner during the 48h window.
+  const [hasGameResults, setHasGameResults] = useState(false)
+  useEffect(() => {
+    if (!tournament?.id) return
+    let active = true
+    ;(async () => {
+      const { data } = await supabase
+        .from('game_results')
+        .select('id')
+        .eq('tournament_id', tournament.id)
+        .limit(1)
+      if (active) setHasGameResults((data ?? []).length > 0)
+    })()
+    return () => { active = false }
+  }, [tournament?.id])
+  const withinRecentWindow = (() => {
+    if (!tournament?.date) return false
+    const refMs = new Date(tournament.date).getTime()
+    if (Number.isNaN(refMs)) return false
+    const elapsed = Date.now() - refMs
+    // Show the banner from the day of the tournament up to 48h after
+    return elapsed >= -TWO_DAYS_MS && elapsed < TWO_DAYS_MS
+  })()
+  const showResultsBanner = hasGameResults && withinRecentWindow
 
   const openPaymentSheet = (sheet) => { setPaymentSheet(sheet); setTikkieClicked(false) }
   const closePaymentSheet = () => { setPaymentSheet(null); setTikkieClicked(false) }
@@ -245,6 +276,16 @@ export default function Registration({ tournament, onNavigate }) {
         </div>
       </div>
 
+
+      {/* Lobster Games Over — results banner (visible for the 48h window) */}
+      {showResultsBanner && (
+        <button
+          onClick={() => onNavigate('game', tournament)}
+          className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-yellow-400 via-amber-400 to-orange-400 text-gray-900 font-bold text-sm shadow-md active:scale-95 transition-all"
+        >
+          🏆 Lobster Games Over — See Results!
+        </button>
+      )}
 
       {/* Game button */}
       <button
