@@ -69,6 +69,14 @@ export function buildTournamentIcs(tournament) {
     'See you on court!',
   ].filter(Boolean).join('\n')
 
+  // iOS Calendar reliability notes:
+  //   • TRIGGER must include RELATED=START — Samsung / Google / Outlook treat
+  //     it as the default, but some iOS versions silently drop alarms without
+  //     it and fall back to the user's "Default Alert Times" (usually 30 min).
+  //   • Each VALARM gets a unique UID + X-WR-ALARMUID so Apple's import
+  //     dedupes correctly when the file is tapped twice.
+  //   • Field order ACTION → DESCRIPTION → TRIGGER matches what Apple's own
+  //     Calendar app exports; avoids edge cases in older iOS parsers.
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
@@ -85,15 +93,19 @@ export function buildTournamentIcs(tournament) {
     `DESCRIPTION:${icsEscape(descParts)}`,
     // 24h before — one-day heads-up
     'BEGIN:VALARM',
+    `UID:alarm-1d-${tournament.id || 'x'}@padellobsters.app`,
+    `X-WR-ALARMUID:alarm-1d-${tournament.id || 'x'}@padellobsters.app`,
     'ACTION:DISPLAY',
-    'TRIGGER:-PT24H',
     `DESCRIPTION:${icsEscape('Your Padel Lobsters tournament is tomorrow 🦞')}`,
+    'TRIGGER;RELATED=START:-PT24H',
     'END:VALARM',
     // 2h before — grab-your-gear ping
     'BEGIN:VALARM',
+    `UID:alarm-2h-${tournament.id || 'x'}@padellobsters.app`,
+    `X-WR-ALARMUID:alarm-2h-${tournament.id || 'x'}@padellobsters.app`,
     'ACTION:DISPLAY',
-    'TRIGGER:-PT2H',
     `DESCRIPTION:${icsEscape('Padel Lobsters in 2 hours — time to grab your gear!')}`,
+    'TRIGGER;RELATED=START:-PT2H',
     'END:VALARM',
     'END:VEVENT',
     'END:VCALENDAR',
