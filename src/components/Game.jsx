@@ -63,46 +63,54 @@ const DIM    = ['bg-red-200', 'bg-blue-200', 'bg-yellow-100', 'bg-green-200']
 const RING   = ['ring-red-300', 'ring-blue-300', 'ring-yellow-200', 'ring-green-300']
 
 /* ─── Name disambiguation ──────────────────────────────────────────────────
- * Build a map { playerId -> shortLabel } where the short label is the first
- * name, plus a last-name initial when two+ players share the first name.
- * Example: [Juan Rodriguez, Juan Martinez, Lena] -> { Juan R, Juan M, Lena }.
- * If even the initial collides (Juan R + Juan R), we append more letters
- * until the labels are unique within the group.                              */
+ * Build a map { playerId -> shortLabel } so players with the same first name
+ * get disambiguated. Priority of strategies:
+ *   1. If unique first name         → "Juan"
+ *   2. If 1-letter last-initial fixes it → "Juan R", "Juan M"
+ *   3. Extend last-initial to 2-3 letters if still colliding
+ *   4. If some/all players have no last name (or initials still collide),
+ *      append a numeric suffix: "Juan 1", "Juan 2"                            */
 function shortLabelMap(players = []) {
   const firstOf = (p) => (p.name || '').trim().split(/\s+/)[0] || p.name || ''
   const lastOf  = (p) => {
     const parts = (p.name || '').trim().split(/\s+/)
     return parts.length > 1 ? parts.slice(1).join(' ') : ''
   }
-  // Group players by first name
+  // Group players by first name (case-insensitive to catch "juan" vs "Juan")
   const byFirst = {}
   players.forEach(p => {
-    const f = firstOf(p)
+    const f = firstOf(p).toLowerCase()
     ;(byFirst[f] ??= []).push(p)
   })
   const out = {}
-  for (const first in byFirst) {
-    const group = byFirst[first]
+  for (const key in byFirst) {
+    const group = byFirst[key]
     if (group.length === 1) {
-      out[String(group[0].id)] = first
+      out[String(group[0].id)] = firstOf(group[0])
       continue
     }
-    // Multiple players share the first name. Try 1-letter last-initial;
-    // if any of those still collide, extend the initial by another letter.
-    let len = 1
-    while (true) {
-      const labels = group.map(p => {
+    // Stable order so numeric suffixes (fallback) are deterministic across
+    // renders — sort by id then fall back to the order given.
+    group.sort((a, b) => String(a.id).localeCompare(String(b.id)))
+
+    // Step 1: try last-initial suffixes of increasing length (1..3)
+    let labels = null
+    for (let len = 1; len <= 3; len++) {
+      const candidate = group.map(p => {
         const last = lastOf(p)
-        const suffix = last ? ` ${last.slice(0, len).toUpperCase()}` : ''
-        return suffix ? `${first}${suffix}` : first
+        return last ? `${firstOf(p)} ${last.slice(0, len).toUpperCase()}` : firstOf(p)
       })
-      const seen = new Set(labels)
-      if (seen.size === labels.length || len >= 5) {
-        group.forEach((p, i) => { out[String(p.id)] = labels[i] })
+      if (new Set(candidate).size === candidate.length) {
+        labels = candidate
         break
       }
-      len += 1
     }
+    // Step 2: fallback — numeric suffix when last names are missing or
+    // duplicate. "Juan 1", "Juan 2", ... so every player is unique.
+    if (!labels) {
+      labels = group.map((p, i) => `${firstOf(p)} ${i + 1}`)
+    }
+    group.forEach((p, i) => { out[String(p.id)] = labels[i] })
   }
   return out
 }
