@@ -40,13 +40,14 @@ const RING   = ['ring-red-300', 'ring-blue-300', 'ring-yellow-200', 'ring-green-
 export default function Game({ tournament, onNavigate }) {
   const { players, isAdmin, claimedId, getTournamentRegistrations } = useApp()
 
-  const [session,   setSession]   = useState(null)
-  const [votes,     setVotes]     = useState([])
-  const [myVote,    setMyVote]    = useState(null)
-  const [timeLeft,  setTimeLeft]  = useState(null)
-  const [gameType,  setGameType]  = useState('trivia')
-  const [editQs,    setEditQs]    = useState(null)   // trimmed question list
-  const [busy,      setBusy]      = useState(false)
+  const [session,    setSession]    = useState(null)
+  const [votes,      setVotes]      = useState([])
+  const [myVote,     setMyVote]     = useState(null)
+  const [timeLeft,   setTimeLeft]   = useState(null)
+  const [gameType,   setGameType]   = useState('trivia')
+  const [editQs,     setEditQs]     = useState(null)   // trimmed question list
+  const [busy,       setBusy]       = useState(false)
+  const [presentIds, setPresentIds] = useState(() => new Set())  // player_ids currently in the lobby/game
 
   const regs       = getTournamentRegistrations(tournament?.id || '').filter(r => r.status === 'registered')
   const regPlayers = players.filter(p => regs.some(r => r.playerId === p.id))
@@ -72,17 +73,44 @@ export default function Game({ tournament, onNavigate }) {
   }
 
   useEffect(() => {
+    if (!tournament?.id) return
     loadSession()
-    const ch = supabase.channel(`game-${tournament?.id}`)
+
+    // Presence: each connected client announces who they are so the admin
+    // can see exactly who's in the lobby on their device. Players also see
+    // a green dot next to people who are present. Key must be unique per
+    // client; we use the claimed player id, or "admin"/"guest-<rand>" otherwise.
+    const presenceKey = String(claimedId || (isAdmin ? `admin-${Math.random().toString(36).slice(2, 8)}` : `guest-${Math.random().toString(36).slice(2, 8)}`))
+
+    const ch = supabase.channel(`game-${tournament.id}`, {
+      config: { presence: { key: presenceKey } },
+    })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'game_sessions' }, () => loadSession())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'game_votes' }, (payload) => {
-        // Use the session_id from the payload if available, otherwise reload session
         const sid = payload?.new?.session_id
         if (sid) loadVotes(sid)
       })
-      .subscribe()
-    return () => supabase.removeChannel(ch)
-  }, [tournament?.id])
+      .on('presence', { event: 'sync' }, () => {
+        const state = ch.presenceState()
+        const ids = new Set()
+        Object.values(state).flat().forEach(meta => {
+          if (meta?.player_id) ids.add(String(meta.player_id))
+        })
+        setPresentIds(ids)
+      })
+      .subscribe(async (status) => {
+        if (status !== 'SUBSCRIBED') return
+        // Only registered players announce themselves with a player_id.
+        // Admin/guest also subscribe so they see the lobby update in real time
+        // but don't appear in the player count.
+        if (claimedId) {
+          await ch.track({ player_id: String(claimedId), online_at: new Date().toISOString() })
+        } else {
+          await ch.track({ role: isAdmin ? 'admin' : 'guest', online_at: new Date().toISOString() })
+        }
+      })
+    return () => { supabase.removeChannel(ch) }
+  }, [tournament?.id, claimedId, isAdmin])
 
   useEffect(() => {
     if (!session?.id) return
@@ -152,7 +180,11 @@ export default function Game({ tournament, onNavigate }) {
   /* ── Player action ──────────────────────────────────────────────────────── */
 
   const submitAnswer = async (answer) => {
-    if (myVote !== null || !claimedId || session?.status !== 'question' || timeLeft === 0) return
+    if (myVote !== null || !claimedId || session?.status !== 'question') return
+    // Timer only gates Trivia (where accuracy vs. speed matters). In Oscars
+    // the admin controls when results are revealed, so players must be able
+    // to vote for as long as the question is open.
+    if (session?.type === 'trivia' && timeLeft === 0) return
     setMyVote(String(answer))
     await supabase.from('game_votes').upsert({
       session_id: session.id,
@@ -314,15 +346,32 @@ export default function Game({ tournament, onNavigate }) {
           </h2>
           <p className="opacity-70 text-sm">{(session.questions ?? []).length} {session.type === 'trivia' ? 'questions' : 'categories'} · {tournament?.name}</p>
           <div className="mt-2">
-            <p className="text-sm opacity-70 mb-3 flex items-center justify-center gap-1.5">
-              <Users size={14} /> {regPlayers.length} players
+            <p className="text-sm opacity-70 mb-1 flex items-center justify-center gap-1.5">
+              <Users size={14} />
+              <span className="font-semibold text-green-300">{regPlayers.filter(p => presentIds.has(String(p.id))).length}</span>
+              <span className="opacity-60">/ {regPlayers.length} in lobby</span>
             </p>
+            <p className="text-[11px] opacity-50 mb-3">Green dot = on this screen now</p>
             <div className="flex flex-wrap gap-1.5 justify-center max-w-md">
-              {regPlayers.map(p => (
-                <span key={p.id} className="bg-white/15 px-2.5 py-1 rounded-full text-xs font-medium">
-                  {p.name.split(' ')[0]}
-                </span>
-              ))}
+              {regPlayers
+                .slice()
+                .sort((a, b) => {
+                  const aHere = presentIds.has(String(a.id)) ? 0 : 1
+                  const bHere = presentIds.has(String(b.id)) ? 0 : 1
+                  return aHere - bHere || a.name.localeCompare(b.name)
+                })
+                .map(p => {
+                  const here = presentIds.has(String(p.id))
+                  return (
+                    <span key={p.id}
+                      className={`px-2.5 py-1 rounded-full text-xs font-medium flex items-center gap-1 transition-all ${
+                        here ? 'bg-white/25 text-white' : 'bg-white/5 text-white/40'
+                      }`}>
+                      {here && <span className="w-1.5 h-1.5 rounded-full bg-green-400" />}
+                      {p.name.split(' ')[0]}
+                    </span>
+                  )
+                })}
             </div>
           </div>
         </div>
@@ -337,6 +386,7 @@ export default function Game({ tournament, onNavigate }) {
               className="w-full bg-white text-lobster-teal font-bold py-4 rounded-2xl text-base flex items-center justify-center gap-2 active:scale-95 transition-all">
               <Play size={20} /> Start Game!
             </button>
+            <p className="text-[11px] text-white/50 text-center">You can start any time — latecomers can still join.</p>
           </div>
         )}
       </div>
@@ -679,15 +729,14 @@ export default function Game({ tournament, onNavigate }) {
                 <p className="text-xs opacity-40 mt-2">{answered}/{regPlayers.length} voted</p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5">
                 {regPlayers
                   .filter(p => String(p.id) !== String(claimedId))
                   .map(p => (
                     <button key={p.id}
                       onClick={() => submitAnswer(String(p.id))}
-                      className="bg-white/15 hover:bg-white/25 active:scale-95 rounded-2xl p-3.5 flex items-center gap-2.5 text-white transition-all">
-                      <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center font-bold text-base flex-shrink-0">{p.name[0]}</div>
-                      <span className="text-sm font-semibold leading-tight">{p.name.split(' ')[0]}</span>
+                      className="bg-white/15 hover:bg-white/25 active:scale-95 rounded-xl px-2 py-2 text-white transition-all text-center">
+                      <span className="text-xs font-semibold leading-tight break-words">{p.name.split(' ')[0]}</span>
                     </button>
                   ))}
               </div>
