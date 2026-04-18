@@ -307,7 +307,7 @@ export default function Game({ tournament, onNavigate }) {
             : <div />}
         </div>
 
-        <div className="flex-1 flex flex-col items-center justify-center text-white text-center px-6 gap-4">
+        <div className="flex-1 min-h-0 overflow-y-auto flex flex-col items-center justify-center text-white text-center px-6 gap-4 py-4">
           <p className="text-6xl">{session.type === 'trivia' ? '🧠' : '🏆'}</p>
           <h2 className="text-2xl font-bold">
             {session.type === 'trivia' ? 'Lobster Trivia' : 'Lobster Oscars'}
