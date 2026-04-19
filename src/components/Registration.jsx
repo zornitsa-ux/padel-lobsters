@@ -291,16 +291,19 @@ export default function Registration({ tournament, onNavigate }) {
         </button>
       )}
 
-      {/* Game button */}
-      <button
-        onClick={() => onNavigate('game', tournament)}
-        className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-500 text-white font-semibold text-sm shadow"
-      >
-        🎮 Lobster Games
-      </button>
+      {/* Game button — hidden once the tournament is completed, since the
+          results live on the Scores page as a Lobster Games tab. */}
+      {!isCompleted && (
+        <button
+          onClick={() => onNavigate('game', tournament)}
+          className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-500 text-white font-semibold text-sm shadow"
+        >
+          🎮 Lobster Games
+        </button>
+      )}
 
-      {/* Add player */}
-      {!showAdd ? (
+      {/* Add player — hidden for completed tournaments */}
+      {isCompleted ? null : !showAdd ? (
         <button
           onClick={() => setShowAdd(true)}
           className="btn-primary w-full flex items-center justify-center gap-2"
