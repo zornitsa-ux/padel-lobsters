@@ -14,12 +14,19 @@ import Merch from './components/Merch'
 import Updates from './components/Updates'
 import History from './components/History'
 import Game from './components/Game'
+import VerificationGate from './components/VerificationGate'
 
 export default function App() {
   return (
     <AppProvider>
       <SetupGuard>
-        <Inner />
+        {/* Hard gate: guests can't browse, vote, register, or do anything
+            until they enter a valid player / admin PIN. Once signed in the
+            session is remembered in localStorage, so this only fires for
+            fresh devices or after an explicit sign-out. */}
+        <VerificationGate>
+          <Inner />
+        </VerificationGate>
       </SetupGuard>
     </AppProvider>
   )
