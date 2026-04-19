@@ -66,26 +66,39 @@ function Raffle({ tournament, players, registrations }) {
   )
 
   return (
-    <div className="space-y-4">
-      <div className="card">
-        <div className="flex items-center gap-2 mb-3">
-          <Gift size={18} className="text-lobster-teal" />
-          <p className="font-bold text-gray-800">Prize Raffle</p>
-          <span className="text-xs bg-lobster-cream text-lobster-teal px-2 py-0.5 rounded-full font-medium ml-auto">
-            {registered.length} participants
-          </span>
+    <div className="space-y-6">
+      {/* Big raffle hero card — sized up so it reads from across the room
+          when projected on a TV/screen during the tournament. */}
+      <div className="rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-lobster-teal via-teal-600 to-teal-800 text-white shadow-2xl">
+        <div className="flex items-center justify-center gap-3 mb-3">
+          <Gift size={32} className="text-yellow-300" />
+          <p className="text-2xl sm:text-3xl font-extrabold tracking-tight">Prize Raffle</p>
         </div>
-
-        <p className="text-xs text-gray-500 mb-3">
-          {tournament.name} · Randomly picks winners from registered players
+        <p className="text-center text-white/80 text-sm sm:text-base mb-5">
+          {tournament.name}
         </p>
 
-        <div>
-          <label className="label">Number of prizes to draw</label>
-          <div className="flex gap-2 mb-3">
+        <div className="text-center mb-6">
+          <p className="text-5xl sm:text-6xl font-black text-yellow-300 leading-none">
+            {registered.length}
+          </p>
+          <p className="text-[11px] sm:text-xs uppercase tracking-widest text-white/70 mt-1">
+            participants
+          </p>
+        </div>
+
+        <div className="mb-5">
+          <p className="text-sm text-white/80 mb-2 text-center font-semibold">
+            How many prizes?
+          </p>
+          <div className="flex gap-2 justify-center">
             {[1, 2, 3, 4, 5].map(n => (
               <button key={n} onClick={() => setNumPrizes(n)}
-                className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-all ${numPrizes === n ? 'bg-lobster-teal text-white' : 'bg-gray-100 text-gray-600'}`}>
+                className={`flex-1 max-w-[64px] py-3 rounded-xl text-lg font-extrabold transition-all ${
+                  numPrizes === n
+                    ? 'bg-yellow-400 text-gray-900 scale-110 shadow-md'
+                    : 'bg-white/15 text-white hover:bg-white/25'
+                }`}>
                 {n}
               </button>
             ))}
@@ -95,33 +108,41 @@ function Raffle({ tournament, players, registrations }) {
         <button
           onClick={runRaffle}
           disabled={spinning || registered.length === 0}
-          className="btn-primary w-full flex items-center justify-center gap-2"
+          className="w-full bg-yellow-400 hover:bg-yellow-500 disabled:opacity-40 disabled:cursor-not-allowed text-gray-900 font-black text-lg sm:text-xl py-4 sm:py-5 rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all shadow-lg"
         >
-          <Shuffle size={16} className={spinning ? 'animate-spin' : ''} />
+          <Shuffle size={22} className={spinning ? 'animate-spin' : ''} />
           {spinning ? 'Drawing winners…' : '🎲 Draw Winners!'}
         </button>
 
         {registered.length === 0 && (
-          <p className="text-xs text-orange-500 text-center mt-2">No registered players yet</p>
+          <p className="text-sm text-orange-200 text-center mt-3">No registered players yet</p>
         )}
       </div>
 
-      {/* Winners */}
+      {/* Winners — huge celebratory card for when the screen is showing
+          the result to the whole room. */}
       {winners.length > 0 && (
-        <div className="card bg-gradient-to-br from-yellow-50 to-amber-50 border border-yellow-200">
-          <p className="font-bold text-amber-800 mb-3 text-center">🎉 Winners!</p>
-          <div className="space-y-2">
+        <div className="rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-yellow-300 via-amber-400 to-orange-400 shadow-2xl">
+          <p className="font-black text-amber-900 text-3xl sm:text-4xl text-center mb-5 tracking-tight">
+            🎉 WINNERS! 🎉
+          </p>
+          <div className="space-y-3">
             {winners.map((w, i) => (
-              <div key={w.id} className="flex items-center gap-3 bg-white rounded-xl p-3">
-                <span className="text-lg">{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`}</span>
-                <div className="w-9 h-9 rounded-full bg-amber-400 flex items-center justify-center text-white font-bold flex-shrink-0">
+              <div key={w.id} className="flex items-center gap-4 bg-white rounded-2xl p-4 sm:p-5 shadow-md">
+                <span className="text-3xl sm:text-4xl flex-shrink-0">
+                  {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`}
+                </span>
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-amber-400 flex items-center justify-center text-white font-bold text-xl sm:text-2xl flex-shrink-0">
                   {w.name[0]}
                 </div>
-                <p className="font-semibold text-gray-800">{w.name}</p>
+                <p className="font-black text-gray-800 text-xl sm:text-2xl md:text-3xl leading-tight truncate">
+                  {w.name}
+                </p>
               </div>
             ))}
           </div>
-          <button onClick={() => setWinners([])} className="text-xs text-amber-600 font-medium mt-3 w-full text-center">
+          <button onClick={() => setWinners([])}
+            className="text-sm text-amber-900/70 font-semibold mt-5 w-full text-center hover:text-amber-900">
             Clear results
           </button>
         </div>
@@ -746,39 +767,49 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
             </div>
           )}
 
-          {/* Prize items for selected tournament */}
-          {selectedTournament && items.length > 0 && isAdmin && (
-            <div className="card space-y-3">
-              <p className="font-semibold text-gray-700 text-sm">
-                Select prizes for {tournaments.find(t => String(t.id) === String(selectedTournament))?.name}
-              </p>
-              <p className="text-xs text-gray-400">Tap items to add/remove from the prize pool (admin feature)</p>
-              <div className="space-y-2">
-                {items.map(item => {
-                  const selectedTour = tournaments.find(t => String(t.id) === String(selectedTournament))
-                  const prizeIds = selectedTour?.prizeItemIds || []
-                  const selected = prizeIds.includes(item.id)
-                  return (
-                    <div key={item.id}
-                      onClick={() => {/* prize selection handled in context */}}
-                      className={`flex items-center gap-3 p-2 rounded-xl border-2 transition-all ${selected ? 'border-lobster-teal bg-teal-50' : 'border-gray-100'}`}>
-                      <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
-                        {item.image_url
-                          ? <img src={item.image_url} className="w-full h-full object-cover" alt="" />
-                          : <div className="w-full h-full flex items-center justify-center"><ShoppingBag size={16} className="text-gray-400" /></div>
-                        }
+          {/* Prize items for selected tournament — collapsed by default so the
+              Raffle tile takes center stage on a projected screen. Admin can
+              expand it when actually editing the prize pool. */}
+          {selectedTournament && items.length > 0 && isAdmin && (() => {
+            const selectedTour = tournaments.find(t => String(t.id) === String(selectedTournament))
+            const prizeIds = selectedTour?.prizeItemIds || []
+            return (
+              <details className="bg-white border border-gray-100 rounded-xl text-sm">
+                <summary className="cursor-pointer px-3 py-2 flex items-center gap-2 text-gray-600 hover:bg-gray-50 rounded-xl">
+                  <ShoppingBag size={14} className="text-gray-400 flex-shrink-0" />
+                  <span className="flex-1 truncate">
+                    Prize pool: <span className="font-semibold text-gray-800">{prizeIds.length}</span> selected
+                  </span>
+                  <span className="text-[11px] text-gray-400">tap to edit</span>
+                </summary>
+                <div className="border-t border-gray-100 px-3 py-3 space-y-2">
+                  <p className="text-[11px] text-gray-400">
+                    Tap items to add / remove from the prize pool for {selectedTour?.name || 'this tournament'}
+                  </p>
+                  {items.map(item => {
+                    const selected = prizeIds.includes(item.id)
+                    return (
+                      <div key={item.id}
+                        onClick={() => {/* prize selection handled in context */}}
+                        className={`flex items-center gap-3 p-2 rounded-xl border-2 transition-all ${selected ? 'border-lobster-teal bg-teal-50' : 'border-gray-100'}`}>
+                        <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
+                          {item.image_url
+                            ? <img src={item.image_url} className="w-full h-full object-cover" alt="" />
+                            : <div className="w-full h-full flex items-center justify-center"><ShoppingBag size={16} className="text-gray-400" /></div>
+                          }
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-sm text-gray-800 truncate">{item.name}</p>
+                          <p className="text-xs text-gray-500">€{parseFloat(item.price).toFixed(0)}</p>
+                        </div>
+                        {selected && <Check size={16} className="text-lobster-teal flex-shrink-0" />}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-sm text-gray-800 truncate">{item.name}</p>
-                        <p className="text-xs text-gray-500">€{parseFloat(item.price).toFixed(0)}</p>
-                      </div>
-                      {selected && <Check size={16} className="text-lobster-teal flex-shrink-0" />}
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
+                    )
+                  })}
+                </div>
+              </details>
+            )
+          })()}
 
           {/* Raffle — use selected tournament */}
           {selectedTournament && (
