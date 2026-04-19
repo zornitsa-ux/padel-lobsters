@@ -627,7 +627,10 @@ export default function Players({ onNavigate, focusPlayerId }) {
       const phone   = p.phone.replace(/\D/g, '')
       const name    = (p.name || '').split(' ')[0]
       const pin     = p.pin || '????'
-      const message = `Hi ${name}! 🦞 You've been approved for Padel Lobsters. Your access PIN is *${pin}* — enter it once in the app to confirm your identity. See you on the court!`
+      // Emoji swapped from 🦞 to 🦀: older Androids / older WhatsApp versions
+      // render the lobster as a placeholder box. 🦀 (crab) ships everywhere
+      // and keeps the same coastal / crustacean vibe.
+      const message = `Hi ${name}! 🦀 You've been approved for Padel Lobsters. Your access PIN is *${pin}* — enter it once in the app to confirm your identity. See you on the court!`
       window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank')
     }
   }
@@ -667,7 +670,7 @@ export default function Players({ onNavigate, focusPlayerId }) {
     const phone = (pending.phone || existingPlayer.phone || '').replace(/\D/g, '')
     const firstName = existingPlayer.name.trim().split(/\s+/)[0]
     if (phone && existingPlayer.pin) {
-      const msg = `Hi ${firstName}! 🦞 Your profile has been linked. Your Padel Lobsters PIN is *${existingPlayer.pin}* — enter it once in the app to verify your identity. See you on court!`
+      const msg = `Hi ${firstName}! 🦀 Your profile has been linked. Your Padel Lobsters PIN is *${existingPlayer.pin}* — enter it once in the app to verify your identity. See you on court!`
       window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank')
     }
   }
@@ -677,7 +680,7 @@ export default function Players({ onNavigate, focusPlayerId }) {
     if (p.phone) {
       const phone   = p.phone.replace(/\D/g, '')
       const name    = (p.name || '').split(' ')[0]
-      const message = `Hi ${name}! 🦞 Your Padel Lobsters PIN has been reset. New PIN: *${newPin}*`
+      const message = `Hi ${name}! 🦀 Your Padel Lobsters PIN has been reset. New PIN: *${newPin}*`
       window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank')
     }
   }
