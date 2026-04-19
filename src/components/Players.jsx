@@ -38,6 +38,12 @@ const LOBBY_PROMPTS = [
 const randomPrompt = () => LOBBY_PROMPTS[Math.floor(Math.random() * LOBBY_PROMPTS.length)]
 
 const emptyForm = {
+  // New registrations split First / Last into separate inputs. The combined
+  // value gets written back into `name` at submit-time so the DB schema
+  // stays unchanged. Existing players get their `name` split on edit
+  // (first word → firstName, rest → lastName); admins can manually tidy
+  // legacy one-word names if they want.
+  firstName: '', lastName: '',
   name: '', email: '', phone: '',
   playtomicLevel: '', adjustment: '0',
   playtomicUsername: '', notes: '', gender: '',
@@ -599,7 +605,15 @@ export default function Players({ onNavigate, focusPlayerId }) {
 
   const openEdit = (p) => {
     if (!isAdmin) { onNavigate?.('settings'); return }
+    // Split existing single-string name into first + last so the new two-field
+    // form populates correctly. Single-word names go entirely into firstName
+    // (with an empty lastName) — admin can fill in the surname when they
+    // edit the player.
+    const nameParts = (p.name || '').trim().split(/\s+/)
+    const firstName = nameParts[0] || ''
+    const lastName  = nameParts.slice(1).join(' ')
     setForm({
+      firstName, lastName,
       name: p.name || '', email: p.email || '', phone: p.phone || '',
       playtomicLevel: p.playtomicLevel ?? '', adjustment: p.adjustment ?? '0',
       playtomicUsername: p.playtomicUsername || '', notes: p.notes || '',
@@ -697,9 +711,16 @@ export default function Players({ onNavigate, focusPlayerId }) {
   const handleSubmit = async (e) => {
     e.preventDefault()
 
+    // First + Last are required on every registration (new or self-edit).
+    // Combine them back into `name` so everything downstream (schedule,
+    // leaderboards, messaging) keeps working unchanged.
+    const firstName = (form.firstName || '').trim()
+    const lastName  = (form.lastName  || '').trim()
+    const combinedName = [firstName, lastName].filter(Boolean).join(' ')
+
     // Safety net: if a matching player exists and hasn't been merged yet, block submit
     if (!editId) {
-      const typed = form.name.trim().toLowerCase()
+      const typed = combinedName.toLowerCase()
       const duplicate = players.find(p => (p.name || '').trim().toLowerCase() === typed)
       if (duplicate) {
         // Force the merge banner to show — don't allow creating a duplicate
@@ -708,19 +729,22 @@ export default function Players({ onNavigate, focusPlayerId }) {
       }
     }
 
-    // Validate all required fields before saving
+    // Validate all required fields before saving. Admins see a lighter
+    // check (they can create placeholder entries); self-registering players
+    // must fill everything including first + last name.
+    const missing = []
+    if (!firstName)                   missing.push('First Name')
+    if (!lastName)                    missing.push('Last Name')
     if (!isAdmin) {
-      const missing = []
-      if (!form.name.trim())          missing.push('Full Name')
       if (!form.country)              missing.push('Country')
       if (!form.gender)               missing.push('Gender')
       if (!form.email.trim())         missing.push('Email')
       if (!form.phone.trim())         missing.push('Phone / WhatsApp')
       if (!form.playtomicLevel)       missing.push('Playtomic Level')
-      if (missing.length > 0) {
-        alert(`Please complete the following fields before registering:\n\n• ${missing.join('\n• ')}`)
-        return
-      }
+    }
+    if (missing.length > 0) {
+      alert(`Please complete the following fields before registering:\n\n• ${missing.join('\n• ')}`)
+      return
     }
     setSaving(true)
     try {
@@ -741,6 +765,7 @@ export default function Players({ onNavigate, focusPlayerId }) {
       const isMerge = !!editId && !isAdmin
       const data = {
         ...form,
+        name: combinedName,  // overwrite whatever was on form.name — single source of truth
         avatarUrl,
         playtomicLevel: parseFloat(form.playtomicLevel) || 0,
         adjustment: parseFloat(form.adjustment) || 0,
@@ -749,7 +774,11 @@ export default function Players({ onNavigate, focusPlayerId }) {
         taglineLabel: lobbyPrompt.label,
         status: 'active',
       }
-      const firstName = form.name.trim().split(/\s+/)[0]
+      // Drop the transient firstName / lastName fields — the DB only knows
+      // about `name`. Keeping them in the payload would let the API tolerate
+      // unknown columns (currently fine) but it's cleaner to be explicit.
+      delete data.firstName
+      delete data.lastName
       if (editId) {
         await updatePlayer(editId, data)
         if (!isAdmin) {
@@ -1525,10 +1554,17 @@ export default function Players({ onNavigate, focusPlayerId }) {
                 />
               </div>
 
-              <div>
-                <label className="label">Full Name</label>
-                <input required className="input" placeholder="e.g. Augustin Tapia" value={form.name}
-                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="label">First Name</label>
+                  <input required className="input" placeholder="e.g. Augustin" value={form.firstName}
+                    onChange={e => setForm(f => ({ ...f, firstName: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="label">Last Name</label>
+                  <input required className="input" placeholder="e.g. Tapia" value={form.lastName}
+                    onChange={e => setForm(f => ({ ...f, lastName: e.target.value }))} />
+                </div>
               </div>
 
               {/* Merge banner — shown for both admins and players when name already exists */}
