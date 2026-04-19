@@ -104,6 +104,10 @@ export default function Registration({ tournament, onNavigate }) {
     )
 
   const maxPlayers = tournament.maxPlayers || 16
+  const isCompleted = tournament.status === 'completed'
+  // Completed tournaments show a Ranking ↔ Matches tab switcher instead of
+  // the registered / waitlist / cancelled player lists. Default to Ranking.
+  const [completedTab, setCompletedTab] = useState('ranking')
   const isAdminAll = !tournament.courtBookingMode || tournament.courtBookingMode === 'admin_all'
   const hasTikkie  = isAdminAll
     ? !!tournament.tikkieLink
@@ -349,7 +353,9 @@ export default function Registration({ tournament, onNavigate }) {
         </div>
       )}
 
-      {/* Registered players */}
+      {/* Registered players — hidden for completed tournaments (replaced by
+          the Ranking / Matches tab switcher further down). */}
+      {!isCompleted && (
       <section>
         <h3 className="font-bold text-gray-700 mb-2 flex items-center gap-2">
           <CheckCircle size={16} className="text-green-500" />
@@ -417,9 +423,10 @@ export default function Registration({ tournament, onNavigate }) {
           })}
         </div>
       </section>
+      )}
 
-      {/* Waitlist */}
-      {waitlisted.length > 0 && (
+      {/* Waitlist — hidden for completed tournaments */}
+      {!isCompleted && waitlisted.length > 0 && (
         <section>
           <h3 className="font-bold text-gray-700 mb-2 flex items-center gap-2">
             <Clock size={16} className="text-orange-400" />
@@ -555,8 +562,29 @@ export default function Registration({ tournament, onNavigate }) {
               </div>
             )}
 
-            {/* Rankings — show when all scored or completed */}
-            {(allScored || isCompleted) && rankings.length > 0 && (
+            {/* Tab switcher — only for completed tournaments. Toggles between
+                the Final Ranking card and the per-round Match Scores. */}
+            {isCompleted && (
+              <div className="flex gap-1 bg-gray-100 p-1 rounded-xl">
+                <button onClick={() => setCompletedTab('ranking')}
+                  className={`flex-1 py-2 text-sm rounded-lg font-semibold transition-all ${
+                    completedTab === 'ranking' ? 'bg-white text-lobster-teal shadow-sm' : 'text-gray-500'
+                  }`}>
+                  🥇 Final Ranking
+                </button>
+                <button onClick={() => setCompletedTab('matches')}
+                  className={`flex-1 py-2 text-sm rounded-lg font-semibold transition-all ${
+                    completedTab === 'matches' ? 'bg-white text-lobster-teal shadow-sm' : 'text-gray-500'
+                  }`}>
+                  📋 Matches
+                </button>
+              </div>
+            )}
+
+            {/* Rankings — show when all scored or completed. In the completed
+                view, only render when the Ranking tab is active. */}
+            {(allScored || isCompleted) && rankings.length > 0
+              && (!isCompleted || completedTab === 'ranking') && (
               <div className="card space-y-3">
                 <p className="font-bold text-gray-700">🥇 Final Rankings</p>
 
@@ -643,7 +671,9 @@ export default function Registration({ tournament, onNavigate }) {
               </button>
             )}
 
-            {/* Scores per round */}
+            {/* Scores per round — hidden when completed and the Ranking tab
+                is the active one, so the Final Ranking takes the whole screen. */}
+            {(!isCompleted || completedTab === 'matches') && (
             <div>
               <h3 className="font-bold text-gray-700 mb-3">📋 Match Scores</h3>
               {roundNums.map(r => (
@@ -689,12 +719,13 @@ export default function Registration({ tournament, onNavigate }) {
                 <p className="text-sm text-gray-400 text-center py-4">No match data available</p>
               )}
             </div>
+            )}
           </section>
         )
       })()}
 
-      {/* Cancelled */}
-      {cancelled.length > 0 && (
+      {/* Cancelled — hidden for completed tournaments */}
+      {!isCompleted && cancelled.length > 0 && (
         <section>
           <h3 className="font-bold text-gray-700 mb-2 flex items-center gap-2 opacity-60">
             <UserX size={16} />
