@@ -170,36 +170,36 @@ function pairsToCourtMatches(pairs, numCourts, roundNum, opponentHistory = {}, g
   }
 
   // One greedy pass: split pairs into WM/MM pools (shuffled), then greedily
-  // assign courts. In mixed mode the structure guarantees WM+WM and MM+MM —
-  // a leftover odd WM pair sits rather than being forced into a WM vs MM
-  // court, because we never cross the pools.
+  // assign courts. In mixed mode we try WM+WM and MM+MM first (balanced),
+  // then Phase 3 is a SAFETY NET that seats any leftover pairs even if it
+  // means a gender clash on one court — it's always better to seat every
+  // pair than to silently drop one (which previously caused 2 players to
+  // "vanish" from later rounds once the gender distribution got lopsided).
   const greedyCourtPass = () => {
     const wp = shuffle([...pairs.filter(hasW)])
     const mp = shuffle([...pairs.filter(p => !hasW(p))])
     const courts = []
     let courtNum = 1
 
-    // WM + WM courts
+    // Phase 1: WM + WM (gender-balanced mixed courts)
     while (wp.length >= 2 && courts.length < numCourts) {
       const t1 = wp.shift(); const t2 = wp.splice(pickBest(t1, wp), 1)[0]
       courts.push(buildMatch(t1, t2, courtNum++))
     }
-    // MM + MM courts (skip the WM+MM step entirely in mixed mode)
-    if (isMixed) {
-      // If there's an odd WM pair left, it can't play without a gender clash.
-      // Push remaining WM pairs back into the MM pool so they have a chance
-      // at a court if we're short — the +100000 courtScore penalty ensures
-      // multi-attempt ranking still prefers attempts that avoid this.
-      while (wp.length > 0) mp.push(wp.shift())
-    } else {
-      // Non-mixed: WM+MM is fine
-      while (wp.length > 0 && mp.length > 0 && courts.length < numCourts) {
-        const t1 = wp.shift(); const t2 = mp.splice(pickBest(t1, mp), 1)[0]
-        courts.push(buildMatch(t1, t2, courtNum++))
-      }
-    }
+    // Phase 2: MM + MM (balanced all-male courts)
     while (mp.length >= 2 && courts.length < numCourts) {
       const t1 = mp.shift(); const t2 = mp.splice(pickBest(t1, mp), 1)[0]
+      courts.push(buildMatch(t1, t2, courtNum++))
+    }
+    // Phase 3: SAFETY NET — pair whatever's left (could be 1 WM + 1 MM
+    // after Phases 1/2 in mixed mode, which would create a gender-clash
+    // court that the +100000 courtScore penalty lets multi-attempt ranking
+    // still avoid picking as the final result, but at least every player
+    // gets on a court). Non-mixed mode uses the same logic.
+    const leftover = [...wp, ...mp]
+    while (leftover.length >= 2 && courts.length < numCourts) {
+      const t1 = leftover.shift()
+      const t2 = leftover.splice(pickBest(t1, leftover), 1)[0]
       courts.push(buildMatch(t1, t2, courtNum++))
     }
     return courts
@@ -218,6 +218,36 @@ function pairsToCourtMatches(pairs, numCourts, roundNum, opponentHistory = {}, g
     if (bestClashes === 0 && bestCost < 200) break
   }
   return bestCourts
+}
+
+/**
+ * After each round, assert that the match set covers exactly the active
+ * player roster — no duplicates, no foreign IDs, no one silently skipped.
+ * If the round is incomplete, log a console warning and return false so the
+ * generator can retry. Returning true means the round is valid.
+ */
+function assertRoundCoverage(matches, activePlayers, roundNum) {
+  const activeIds = new Set(activePlayers.map(p => String(p.id)))
+  const seen = new Set()
+  let hasDuplicate = false
+  let foreign = false
+  matches.forEach(m => {
+    ;[...(m.team1Ids || []), ...(m.team2Ids || [])].forEach(id => {
+      const sid = String(id)
+      if (!activeIds.has(sid)) foreign = true
+      if (seen.has(sid)) hasDuplicate = true
+      seen.add(sid)
+    })
+  })
+  const missingIds = [...activeIds].filter(id => !seen.has(id))
+  const ok = !hasDuplicate && !foreign && missingIds.length === 0
+  if (!ok) {
+    console.warn(
+      `[Schedule] Round ${roundNum} coverage check failed:`,
+      { duplicate: hasDuplicate, foreign, missingCount: missingIds.length, missing: missingIds }
+    )
+  }
+  return ok
 }
 
 /** Update both partner and opponent history after a set of matches. */
@@ -284,7 +314,54 @@ function validateSchedule(rounds, allPlayers, genderMode) {
   const partnersSeen = {} // "idA:idB" → [round numbers]
   const opponentsSeen = {} // "idA:idB" → [round numbers]
 
+  // Roster we expect every round to cover — respect "sitting" for formats that
+  // rotate a subset per round. If no sitting array was set, every player
+  // should play every round.
+  const allPlayerIds = new Set(allPlayers.map(p => String(p.id)))
+
   rounds.forEach(r => {
+    // Rule 0: per-round coverage — every active player appears exactly once,
+    // no player appears twice, no foreign player sneaks in. If the generator
+    // produced a valid round this is always true; if it didn't, the admin
+    // needs to know instead of finding out mid-tournament.
+    const sittingIds = new Set((r.sitting || []).map(String))
+    const expected = new Set([...allPlayerIds].filter(id => !sittingIds.has(id)))
+    const seen = new Map()  // id → count
+    const foreign = []
+    ;(r.matches || []).forEach(m => {
+      ;[...(m.team1Ids || []), ...(m.team2Ids || [])].forEach(id => {
+        const sid = String(id)
+        seen.set(sid, (seen.get(sid) || 0) + 1)
+        if (!allPlayerIds.has(sid)) foreign.push(sid)
+      })
+    })
+    const missing = [...expected].filter(id => !seen.has(id))
+    const duplicates = [...seen.entries()].filter(([, n]) => n > 1).map(([id]) => id)
+    if (missing.length > 0) {
+      warnings.push({
+        type: 'round-missing-players',
+        severity: 'error',
+        round: r.round,
+        message: `❌ ${missing.length} registered player${missing.length === 1 ? '' : 's'} not scheduled this round: ${missing.map(getName).join(', ')}`,
+      })
+    }
+    if (duplicates.length > 0) {
+      warnings.push({
+        type: 'round-duplicate-players',
+        severity: 'error',
+        round: r.round,
+        message: `⚠️ ${duplicates.map(getName).join(', ')} appear${duplicates.length === 1 ? 's' : ''} on more than one court this round`,
+      })
+    }
+    if (foreign.length > 0) {
+      warnings.push({
+        type: 'round-foreign-players',
+        severity: 'error',
+        round: r.round,
+        message: `❌ Non-registered player${foreign.length === 1 ? '' : 's'} in this round`,
+      })
+    }
+
     (r.matches || []).forEach(m => {
       const t1 = m.team1Ids || []
       const t2 = m.team2Ids || []
@@ -390,6 +467,28 @@ function shortName(player, allPlayers) {
 
 // ── Format generators ─────────────────────────────────────────────────────────
 
+/**
+ * Build a single round's matches. Retries the full pair-then-assign pipeline
+ * a few times if the coverage check fails (every active player must appear
+ * exactly once, no foreigners). On success returns the matches.
+ */
+function buildOneRound(active, numCourts, roundNum, partnerHistory, opponentHistory, genderMode) {
+  const MAX_RETRIES = 8
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    const pairs   = buildSmartPairs(active, partnerHistory, genderMode)
+    const matches = pairsToCourtMatches(pairs, numCourts, roundNum, opponentHistory, genderMode)
+    if (assertRoundCoverage(matches, active, roundNum)) {
+      return { pairs, matches }
+    }
+    // else retry with a fresh shuffle
+  }
+  // Best-effort: return whatever the last attempt produced. The warnings panel
+  // will still flag any issues via validateSchedule.
+  const pairs   = buildSmartPairs(active, partnerHistory, genderMode)
+  const matches = pairsToCourtMatches(pairs, numCourts, roundNum, opponentHistory, genderMode)
+  return { pairs, matches }
+}
+
 function generateLobster(players, numCourts, genderMode = 'mixed', duration = 90) {
   const numRounds = duration >= 120 ? 6 : 5  // 2h → 6 rounds, 90min → 5 rounds (18min each)
   const sorted = [...players].sort((a, b) => (b.adjustedLevel || 0) - (a.adjustedLevel || 0))
@@ -398,8 +497,7 @@ function generateLobster(players, numCourts, genderMode = 'mixed', duration = 90
   active.forEach(p => { partnerHistory[p.id] = new Set(); opponentHistory[p.id] = new Set() })
   const allRounds = []
   for (let r = 0; r < numRounds; r++) {
-    const pairs   = buildSmartPairs(active, partnerHistory, genderMode)
-    const matches = pairsToCourtMatches(pairs, numCourts, r + 1, opponentHistory, genderMode)
+    const { pairs, matches } = buildOneRound(active, numCourts, r + 1, partnerHistory, opponentHistory, genderMode)
     updateHistories(pairs, matches, partnerHistory, opponentHistory)
     allRounds.push({ round: r + 1, label: `Round ${r + 1}`, matches, sitting: sitting.map(p => p.id) })
   }
@@ -413,8 +511,7 @@ function generateAmericano(players, numCourts, rounds = 4, genderMode = 'mixed')
   active.forEach(p => { partnerHistory[p.id] = new Set(); opponentHistory[p.id] = new Set() })
   const allRounds = []
   for (let r = 0; r < rounds; r++) {
-    const pairs   = buildSmartPairs(active, partnerHistory, genderMode)
-    const matches = pairsToCourtMatches(pairs, numCourts, r + 1, opponentHistory, genderMode)
+    const { pairs, matches } = buildOneRound(active, numCourts, r + 1, partnerHistory, opponentHistory, genderMode)
     updateHistories(pairs, matches, partnerHistory, opponentHistory)
     allRounds.push({ round: r + 1, label: `Round ${r + 1}`, matches, sitting: sitting.map(p => p.id) })
   }
@@ -437,8 +534,7 @@ function generateRoundRobin(players, numCourts, genderMode = 'mixed') {
   active.forEach(p => { partnerHistory[p.id] = new Set(); opponentHistory[p.id] = new Set() })
   const rounds = []
   for (let r = 0; r < Math.min(active.length - 1, 6); r++) {
-    const pairs   = buildSmartPairs(active, partnerHistory, genderMode)
-    const matches = pairsToCourtMatches(pairs, numCourts, r + 1, opponentHistory, genderMode)
+    const { pairs, matches } = buildOneRound(active, numCourts, r + 1, partnerHistory, opponentHistory, genderMode)
     if (!matches.length) break
     updateHistories(pairs, matches, partnerHistory, opponentHistory)
     rounds.push({ round: r + 1, label: `Round ${r + 1}`, matches, sitting: sitting.map(p => p.id) })
