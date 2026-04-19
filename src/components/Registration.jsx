@@ -470,12 +470,26 @@ export default function Registration({ tournament, onNavigate }) {
         const savedMatches = getTournamentMatches(tournament.id)
         if (savedMatches.length === 0 && tournament.status !== 'completed') return null
 
+        // Extract the numeric court index from labels like "Court 1", "Court 12"
+        // so we can sort ascending. Falls back to the raw label for anything
+        // unusual (e.g. court names like "Centre Court").
+        const courtOrder = (label) => {
+          const m = String(label ?? '').match(/(\d+)/)
+          return m ? parseInt(m[1], 10) : Number.MAX_SAFE_INTEGER
+        }
+
         // Group by round
         const byRound = {}
         savedMatches.forEach(m => {
           const r = m.round || 1
           if (!byRound[r]) byRound[r] = []
           byRound[r].push(m)
+        })
+        // Sort each round's matches by court number ascending so the admin
+        // always fills scores in the same order as they happen on the
+        // courts (Court 1 first, then Court 2, ..., Court 8).
+        Object.keys(byRound).forEach(r => {
+          byRound[r].sort((a, b) => courtOrder(a.court) - courtOrder(b.court))
         })
         const roundNums = Object.keys(byRound).map(Number).sort((a, b) => a - b)
 

@@ -669,13 +669,22 @@ export default function Schedule({ tournament, onNavigate }) {
   const genderMode = tournament.genderMode || 'mixed'
   const isLobster = format === 'lobster_matching'
 
-  // Group saved matches by round
+  // Group saved matches by round, and keep matches within a round sorted
+  // by court number ascending (Court 1 first, etc.) so the admin always
+  // sees courts in the same natural order.
   const savedRounds = useMemo(() => {
+    const courtOrder = (label) => {
+      const m = String(label ?? '').match(/(\d+)/)
+      return m ? parseInt(m[1], 10) : Number.MAX_SAFE_INTEGER
+    }
     const byRound = {}
     savedMatches.forEach(m => {
       const r = m.round || 1
       if (!byRound[r]) byRound[r] = { round: r, label: `Round ${r}`, matches: [] }
       byRound[r].matches.push(m)
+    })
+    Object.values(byRound).forEach(r => {
+      r.matches.sort((a, b) => courtOrder(a.court) - courtOrder(b.court))
     })
     return Object.values(byRound).sort((a, b) => a.round - b.round)
   }, [savedMatches])
