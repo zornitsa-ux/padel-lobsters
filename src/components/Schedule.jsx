@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { useApp } from '../context/AppContext'
-import { ChevronLeft, Shuffle, AlertCircle, Trophy, Users } from 'lucide-react'
+import { ChevronLeft, Shuffle, AlertCircle, Trophy, Users, Download } from 'lucide-react'
 
 // ── Smart pairing engine ─────────────────────────────────────────────────────
 
@@ -737,6 +737,66 @@ export default function Schedule({ tournament, onNavigate }) {
     } finally { setGenerating(false) }
   }
 
+  /**
+   * Export the current preview (or saved) schedule as a CSV the admin can
+   * open in Excel / Google Sheets / Numbers to sanity-check pairings
+   * before committing. Each row is one court-match, plus a summary of
+   * players-sitting-out per round at the top of the file.
+   */
+  const handleDownloadCsv = () => {
+    const rounds = generated || savedRounds
+    if (!rounds?.length) return
+    const nameOf = (id) => {
+      const p = players.find(x => x.id === id)
+      return p ? (p.name || '').trim() : String(id)
+    }
+    // CSV needs proper quoting for commas and embedded quotes.
+    const csvCell = (v) => {
+      const s = v == null ? '' : String(v)
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
+    }
+    const lines = []
+    lines.push(['Round', 'Court', 'Team 1', 'Team 2', 'T1 Level', 'T2 Level'].join(','))
+    rounds.forEach(r => {
+      ;(r.matches || []).forEach(m => {
+        const t1 = (m.team1Ids || []).map(nameOf).join(' + ')
+        const t2 = (m.team2Ids || []).map(nameOf).join(' + ')
+        lines.push([
+          csvCell(r.round),
+          csvCell(m.court),
+          csvCell(t1),
+          csvCell(t2),
+          csvCell(m.team1Level?.toFixed?.(2) ?? m.team1Level ?? ''),
+          csvCell(m.team2Level?.toFixed?.(2) ?? m.team2Level ?? ''),
+        ].join(','))
+      })
+      const sittingIds = r.sitting || []
+      if (sittingIds.length) {
+        lines.push([csvCell(r.round), 'Sitting', csvCell(sittingIds.map(nameOf).join('; ')), '', '', ''].join(','))
+      }
+    })
+    // Header row with tournament context + roster summary
+    const header = [
+      `# ${tournament.name || 'Padel Lobsters'} — schedule ${generated ? 'preview' : 'saved'}`,
+      `# Format: ${tournament.format || 'americano'} · Courts: ${numCourts} · Registered: ${registeredPlayers.length}`,
+      `# Generated at ${new Date().toLocaleString()}`,
+      '',
+    ].join('\r\n')
+    const csv = header + '\r\n' + lines.join('\r\n') + '\r\n'
+
+    const slug = (tournament.name || 'tournament')
+      .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a')
+    a.href = url
+    a.download = `padel-lobsters-${slug || 'schedule'}-${generated ? 'preview' : 'saved'}.csv`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
+  }
+
   const handleScoreUpdate = async (matchId, field, value) => {
     if (!isAdmin) { onNavigate?.('settings'); return }
     await updateMatch(matchId, {
@@ -823,10 +883,17 @@ export default function Schedule({ tournament, onNavigate }) {
             <p className="text-xs text-orange-600">Register at least 4 players first</p>
           )}
           {savedRounds.length > 0 && (
-            <button onClick={handleEditSchedule}
-              className="w-full py-2 text-sm text-lobster-teal font-semibold border border-lobster-teal rounded-xl">
-              ✏️ Edit existing schedule
-            </button>
+            <>
+              <button onClick={handleEditSchedule}
+                className="w-full py-2 text-sm text-lobster-teal font-semibold border border-lobster-teal rounded-xl">
+                ✏️ Edit existing schedule
+              </button>
+              <button onClick={handleDownloadCsv}
+                className="w-full py-2 text-sm text-gray-600 font-semibold border border-gray-200 rounded-xl flex items-center justify-center gap-2"
+                title="Download the saved schedule as a CSV">
+                <Download size={14} /> Download schedule (CSV)
+              </button>
+            </>
           )}
         </div>
       )}
@@ -834,12 +901,17 @@ export default function Schedule({ tournament, onNavigate }) {
       {/* Preview banner + swap + save */}
       {generated && (
         <div className="space-y-2">
-          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 flex items-center gap-2">
+          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 flex items-center gap-2 flex-wrap">
             <AlertCircle size={16} className="text-yellow-600 flex-shrink-0" />
-            <p className="text-xs text-yellow-700 flex-1">Preview — not saved yet</p>
-            <div className="flex gap-1.5 flex-shrink-0">
+            <p className="text-xs text-yellow-700 flex-1 min-w-0">Preview — not saved yet</p>
+            <div className="flex gap-1.5 flex-shrink-0 flex-wrap">
               <button onClick={() => { setGenerated(null); setSwapMode(false); setSwapFirst(null); setSwapWarnings([]); setScheduleWarnings([]) }}
                 className="text-xs text-gray-500 font-semibold px-2 py-1">Cancel</button>
+              <button onClick={handleDownloadCsv}
+                className="text-xs text-yellow-700 font-semibold px-2 py-1 flex items-center gap-1 border border-yellow-300 rounded-lg bg-white active:scale-95"
+                title="Download the preview as a CSV you can review offline before saving">
+                <Download size={12} /> Download
+              </button>
               <button onClick={handleGenerate} className="text-xs text-yellow-700 font-semibold px-2 py-1">Reshuffle</button>
               <button onClick={handleSave} disabled={generating}
                 className="text-xs bg-lobster-teal text-white px-3 py-1 rounded-lg font-semibold">
