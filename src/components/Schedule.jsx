@@ -250,6 +250,36 @@ function validateSchedule(rounds, allPlayers, genderMode) {
   const isFemale = (id) => allPlayers.find(x => x.id === id)?.gender === 'female'
   const isMixed = genderMode === 'mixed'
 
+  // ── Unavoidable gender-clash analysis ─────────────────────────────────────
+  // With an odd number of women (e.g. 7W + 9M = 16), you physically cannot
+  // avoid at least one court per round being "mixed vs all-male" — a woman
+  // has to partner a man and play against a male-male team. Flagging this
+  // as a hard error is misleading because the admin can't "fix" it. We
+  // compute the minimum unavoidable clash count per round up-front, then
+  // mark the first N gender-clashes per round as informational instead of
+  // an error. Any EXTRA clashes above N are still real errors (the engine
+  // should have done better).
+  const womenCount = allPlayers.filter(p => p.gender === 'female').length
+  const menCount   = allPlayers.length - womenCount
+  const teams      = Math.floor(allPlayers.length / 2)
+  let unavoidablePerRound = 0
+  if (isMixed && womenCount > 0 && menCount > 0 && womenCount < teams) {
+    // When women < teams and we avoid WW pairs, one team per every two
+    // "leftover" W becomes a male-heavy court. With W odd, exactly 1
+    // unavoidable clash per round; with W even in this range, 0.
+    unavoidablePerRound = womenCount % 2 === 1 ? 1 : 0
+  }
+  if (unavoidablePerRound > 0) {
+    warnings.push({
+      type: 'gender-unavoidable-note',
+      severity: 'info',
+      round: 0,
+      message: `With ${womenCount} women and ${menCount} men, ${unavoidablePerRound} court per round will have 1 woman vs 3 men. This is unavoidable — nothing to fix.`,
+    })
+  }
+  // Per-round counter so we know when we've exhausted the unavoidable quota
+  const unavoidableUsedByRound = {}
+
   // Track partnerships and opponents across rounds
   const partnersSeen = {} // "idA:idB" → [round numbers]
   const opponentsSeen = {} // "idA:idB" → [round numbers]
@@ -293,17 +323,26 @@ function validateSchedule(rounds, allPlayers, genderMode) {
       checkLefties(t2, `Court ${m.court}`)
 
       // Rule 3: gender clash on court (WM vs MM)
+      // Each round has a quota of "unavoidable" clashes (dictated by the
+      // gender count — see the block at the top of validateSchedule). Within
+      // that quota the clash is informational. Past the quota, it's a real
+      // engine error the admin should know about.
       if (isMixed) {
         const t1HasW = t1.some(isFemale)
         const t2HasW = t2.some(isFemale)
         if (t1HasW !== t2HasW) {
           const wTeam = t1HasW ? t1 : t2
           const mTeam = t1HasW ? t2 : t1
+          const used    = unavoidableUsedByRound[r.round] || 0
+          const withinQuota = used < unavoidablePerRound
+          unavoidableUsedByRound[r.round] = used + 1
           warnings.push({
             type: 'gender-clash',
-            severity: 'error',
+            severity: withinQuota ? 'info' : 'error',
             round: r.round,
-            message: `⚥ Mixed vs all-male on ${m.court}: ${wTeam.map(getName).join('+')} vs ${mTeam.map(getName).join('+')}`,
+            message: withinQuota
+              ? `${m.court}: ${wTeam.map(getName).join('+')} vs ${mTeam.map(getName).join('+')} — unavoidable 1W vs 3M with ${womenCount} women`
+              : `⚥ Mixed vs all-male on ${m.court}: ${wTeam.map(getName).join('+')} vs ${mTeam.map(getName).join('+')}`,
           })
         }
       }
@@ -752,7 +791,7 @@ export default function Schedule({ tournament, onNavigate }) {
               )}
               {/* Warnings */}
               {scheduleWarnings.some(w => w.severity === 'warning') && (
-                <div className="bg-amber-50 p-3 space-y-1">
+                <div className="bg-amber-50 border-b border-amber-200 p-3 space-y-1">
                   <p className="text-xs font-bold text-amber-700 flex items-center gap-1.5">
                     <AlertCircle size={14} /> Heads up
                   </p>
@@ -761,13 +800,34 @@ export default function Schedule({ tournament, onNavigate }) {
                   ))}
                 </div>
               )}
-              {/* All clear */}
+              {/* Info — unavoidable, no action needed */}
+              {scheduleWarnings.some(w => w.severity === 'info') && (
+                <div className="bg-blue-50 p-3 space-y-1">
+                  <p className="text-xs font-bold text-blue-700 flex items-center gap-1.5">
+                    <AlertCircle size={14} /> Unavoidable — no action needed
+                  </p>
+                  {scheduleWarnings.filter(w => w.severity === 'info').map((w, i) => (
+                    <p key={`i${i}`} className="text-xs text-blue-600">
+                      • {w.round > 0 ? `R${w.round}: ` : ''}{w.message}
+                    </p>
+                  ))}
+                </div>
+              )}
             </div>
           )}
           {scheduleWarnings.length === 0 && generated && (
             <div className="bg-green-50 border border-green-200 rounded-xl p-3 flex items-center gap-2">
               <span className="text-sm">✅</span>
               <p className="text-xs text-green-700 font-medium">All rules pass — no conflicts detected</p>
+            </div>
+          )}
+          {scheduleWarnings.length > 0 &&
+           !scheduleWarnings.some(w => w.severity === 'error') &&
+           !scheduleWarnings.some(w => w.severity === 'warning') &&
+           generated && (
+            <div className="bg-green-50 border border-green-200 rounded-xl p-3 flex items-center gap-2">
+              <span className="text-sm">✅</span>
+              <p className="text-xs text-green-700 font-medium">No rule violations — only unavoidable notes above</p>
             </div>
           )}
         </div>
