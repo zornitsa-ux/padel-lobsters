@@ -587,7 +587,7 @@ export default function Dashboard({ onNavigate }) {
               <div className="flex items-center gap-3 mt-2 text-xs opacity-90">
                 <span className="flex items-center gap-1"><Users size={12} /> {leagueTeamCount} teams</span>
                 {activeLeague.signup_closes_at && new Date(activeLeague.signup_closes_at).getTime() > Date.now() && (
-                  <span className="bg-orange-500 text-white font-semibold px-2 py-0.5 rounded-full">
+                  <span className="bg-yellow-300 text-gray-900 font-semibold px-2 py-0.5 rounded-full">
                     Sign-up open
                   </span>
                 )}

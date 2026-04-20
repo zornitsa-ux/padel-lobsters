@@ -744,7 +744,7 @@ export default function League({ onNavigate }) {
             <Users size={14} /> <span>{confirmedTeams.length} teams confirmed</span>
           </div>
           {league.signup_closes_at && (
-            <p className="mt-2 text-xs bg-orange-500 text-white inline-block px-3 py-1 rounded-full font-semibold shadow-sm">
+            <p className="mt-2 text-xs bg-yellow-300 text-gray-900 inline-block px-3 py-1 rounded-full font-semibold shadow-sm">
               Sign-up closes on {new Date(league.signup_closes_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
               {' · '}
               <Countdown deadline={league.signup_closes_at} />
@@ -809,34 +809,42 @@ export default function League({ onNavigate }) {
         </div>
       )}
 
-      {/* If the viewer is a pure admin (no claimedId), they can't register
-          as a player here — "admin" is an operator role, not a player
-          identity. Show a note instead of the sign-up card so the button
-          doesn't look broken. They can still manage the league from the
-          Admin controls panel above. */}
-      {!myInterest && !signupClosed && !claimedId && (
-        <div className="card bg-lobster-cream border border-lobster-teal/30">
-          <p className="text-sm font-bold text-lobster-teal flex items-center gap-2">
-            <AlertCircle size={16} /> Signed in as admin, not as a player
-          </p>
-          <p className="text-xs text-gray-600 mt-2 leading-snug">
-            Admin PIN and player PIN are separate identities. If you want to
-            register <em>yourself</em> for the league, sign out from Settings →
-            Account and sign in again with your personal player PIN. Admin
-            access comes back automatically when you use the admin PIN.
-          </p>
-        </div>
-      )}
+      {/* A player is treated as "not in the league" both when they've
+          never registered (myInterest is undefined) and when they
+          previously withdrew (status === 'withdrawn') — in both cases
+          we want to show the register card so they can join / re-join. */}
+      {(() => {
+        const needsSignup = !myInterest || myInterest.status === 'withdrawn'
+        if (!needsSignup || signupClosed) return null
+        if (!claimedId) {
+          return (
+            <div className="card bg-lobster-cream border border-lobster-teal/30">
+              <p className="text-sm font-bold text-lobster-teal flex items-center gap-2">
+                <AlertCircle size={16} /> Signed in as admin, not as a player
+              </p>
+              <p className="text-xs text-gray-600 mt-2 leading-snug">
+                Admin PIN and player PIN are separate identities. If you want to
+                register <em>yourself</em> for the league, sign out from Settings →
+                Account and sign in again with your personal player PIN. Admin
+                access comes back automatically when you use the admin PIN.
+              </p>
+            </div>
+          )
+        }
+        return null
+      })()}
 
-      {/* Status: not yet interested — show sign-up card (players only) */}
-      {!myInterest && !signupClosed && claimedId && (
+      {/* Status: not yet interested OR previously withdrew — show sign-up card. */}
+      {(!myInterest || myInterest.status === 'withdrawn') && !signupClosed && claimedId && (
         <div className="card space-y-3">
           <p className="font-bold text-gray-700 flex items-center gap-2">
             <Heart size={16} className="text-lobster-teal" />
-            Register your interest
+            {myInterest?.status === 'withdrawn' ? 'Changed your mind? Register again' : 'Register your interest'}
           </p>
           <p className="text-xs text-gray-500">
-            Step 1: tell us you want to play. Step 2: once your partner has also registered, you'll be able to team up from the "Find a partner" section.
+            {myInterest?.status === 'withdrawn'
+              ? "You previously withdrew — no problem. Pick a level and register again; we'll plug you back into the partner pool."
+              : 'Step 1: tell us you want to play. Step 2: once your partner has also registered, you\'ll be able to team up from the "Find a partner" section.'}
           </p>
           <div>
             <label className="label">Experience level</label>
@@ -862,8 +870,9 @@ export default function League({ onNavigate }) {
           </label>
           {registerError && <p className="text-xs text-red-500">{registerError}</p>}
           <button onClick={handleRegister} disabled={!agreed}
-            className="btn-primary w-full py-3 flex items-center justify-center gap-2 disabled:opacity-50">
-            <UserPlus size={14} /> I'm interested — register me
+            className="w-full py-3 rounded-2xl font-bold text-base text-white bg-orange-500 hover:bg-orange-600 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 disabled:hover:bg-orange-500">
+            <UserPlus size={16} />
+            {myInterest?.status === 'withdrawn' ? "Count me back in" : "I'm interested — register me"}
           </button>
         </div>
       )}
