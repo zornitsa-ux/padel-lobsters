@@ -1,6 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useApp } from '../context/AppContext'
-import { KeyRound, LogIn } from 'lucide-react'
+import { KeyRound, LogIn, MessageCircle } from 'lucide-react'
+
+// WhatsApp contact for PIN-reset requests. wa.me wants digits only, no +.
+const ADMIN_RESET_PHONE = '56997442387'
+const ADMIN_RESET_MSG   = 'Hi Lobster Admin 🦀 I forgot my Padel Lobsters PIN — could you reset it and send me a new one? Thanks!'
 
 /**
  * Hard verification gate.
@@ -101,6 +105,20 @@ export default function VerificationGate({ children }) {
             <LogIn size={14} />
             {busy ? 'Checking…' : 'Sign in 🦞'}
           </button>
+
+          {/* Forgot PIN — opens WhatsApp with a pre-filled message to the
+              admin. User still has to tap send; the admin then uses the
+              Reset & Send PIN button on the Players page to issue a new
+              PIN, which lands back in WhatsApp. */}
+          <a
+            href={`https://wa.me/${ADMIN_RESET_PHONE}?text=${encodeURIComponent(ADMIN_RESET_MSG)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 border border-gray-200 py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all"
+          >
+            <MessageCircle size={14} />
+            Forgot your PIN? Message the admin
+          </a>
         </form>
 
         <p className="text-[11px] text-gray-400 text-center leading-snug">
