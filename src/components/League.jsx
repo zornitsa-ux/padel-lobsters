@@ -822,34 +822,35 @@ export default function League({ onNavigate }) {
                       {divLabel(d)} <span className="text-gray-400 font-normal">({rows.length})</span>
                     </p>
 
-                    {/* Matched pairs first — most "complete" state */}
-                    {matched.length > 0 && (
-                      <div className="space-y-1">
-                        {matched.map(r => {
-                          const p = players.find(pp => String(pp.id) === String(r.player_id))
-                          const team = teamForPlayer(r.player_id)
-                          const partnerId = team
-                            ? (String(team.proposer_id) === String(r.player_id) ? team.invitee_id : team.proposer_id)
-                            : null
-                          return (
-                            <div key={r.id} className="flex items-center gap-2 text-xs bg-green-50 border border-green-100 rounded-lg px-2.5 py-1.5">
+                    {/* Matched pairs — one row per team instead of one row
+                        per player, so "Jon & Uziel · Team The Claws"
+                        appears once rather than duplicated for each side. */}
+                    {matched.length > 0 && (() => {
+                      // Gather distinct teams in this division where both
+                      // players are in the `matched` bucket. Use a Set on
+                      // team id to de-duplicate.
+                      const seen = new Set()
+                      const teamsInDiv = []
+                      matched.forEach(r => {
+                        const t = teamForPlayer(r.player_id)
+                        if (t && !seen.has(t.id)) { seen.add(t.id); teamsInDiv.push(t) }
+                      })
+                      return (
+                        <div className="space-y-1">
+                          {teamsInDiv.map(t => (
+                            <div key={t.id} className="flex items-center gap-2 text-xs bg-green-50 border border-green-100 rounded-lg px-2.5 py-1.5">
                               <Check size={12} className="text-green-600 flex-shrink-0" />
                               <span className="flex-1 min-w-0 truncate">
-                                <span className="font-semibold text-gray-800">{p?.name || '?'}</span>
-                                {team && (
-                                  <>
-                                    {' — paired with '}
-                                    <span className="font-semibold text-gray-800">{nameOf(partnerId)}</span>
-                                    {' · '}
-                                    <span className="text-green-700 font-semibold">Team {team.team_name}</span>
-                                  </>
-                                )}
+                                <span className="font-semibold text-gray-800">
+                                  {nameOf(t.proposer_id)} & {nameOf(t.invitee_id)}
+                                </span>
+                                <span className="text-green-700 font-semibold"> · Team {t.team_name}</span>
                               </span>
                             </div>
-                          )
-                        })}
-                      </div>
-                    )}
+                          ))}
+                        </div>
+                      )
+                    })()}
 
                     {/* Still looking — admin may want to nudge them */}
                     {looking.length > 0 && (
