@@ -689,54 +689,88 @@ export default function Registration({ tournament, onNavigate }) {
             )}
 
             {/* Scores per round — hidden when completed and the Ranking tab
-                is the active one, so the Final Ranking takes the whole screen. */}
-            {(!isCompleted || completedTab === 'matches') && (
-            <div>
-              <h3 className="font-bold text-gray-700 mb-3">📋 Match Scores</h3>
-              {roundNums.map(r => (
-                <div key={r} className="mb-4">
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Round {r}</p>
-                  <div className="space-y-2">
-                    {byRound[r].map(match => {
-                      const t1 = (match.team1Ids || []).map(id => firstName(id)).join(' & ')
-                      const t2 = (match.team2Ids || []).map(id => firstName(id)).join(' & ')
-                      return (
-                        <div key={match.id} className={`card ${match.completed ? 'border-l-4 border-green-300' : ''}`}>
-                          {match.court && (
-                            <p className="text-[10px] font-bold text-lobster-teal bg-lobster-cream px-2 py-0.5 rounded-full inline-block mb-2">{match.court}</p>
+                is the active one, so the Final Ranking takes the whole screen.
+
+                Visibility rules:
+                 - Admins see every match on every round (they need the full
+                   picture to enter scores).
+                 - Players (non-admin) see ONLY the match they're playing in
+                   that round — their court, their partner, their opponents.
+                   Other courts are hidden to keep the screen focused.
+                 - Completed tournaments fall back to showing everything, so
+                   the history view keeps the full schedule on record. */}
+            {(!isCompleted || completedTab === 'matches') && (() => {
+              const isPlayerView = !isAdmin && !isCompleted
+              const claimedStr   = claimedId ? String(claimedId) : null
+              const playerInMatch = (m) =>
+                claimedStr &&
+                ((m.team1Ids || []).map(String).includes(claimedStr) ||
+                 (m.team2Ids || []).map(String).includes(claimedStr))
+
+              return (
+                <div>
+                  <h3 className="font-bold text-gray-700 mb-3">
+                    {isPlayerView ? '🎾 Your Matches' : '📋 Match Scores'}
+                  </h3>
+                  {isPlayerView && !claimedStr && (
+                    <p className="text-sm text-gray-400 mb-3">Sign in to see your own schedule.</p>
+                  )}
+                  {roundNums.map(r => {
+                    const roundMatches = byRound[r]
+                    const visibleMatches = isPlayerView
+                      ? roundMatches.filter(playerInMatch)
+                      : roundMatches
+                    return (
+                      <div key={r} className="mb-4">
+                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Round {r}</p>
+                        <div className="space-y-2">
+                          {visibleMatches.length === 0 && isPlayerView && (
+                            <p className="text-sm text-gray-400 bg-gray-50 rounded-xl px-3 py-3">
+                              You're sitting out this round — grab a drink, cheer the others on.
+                            </p>
                           )}
-                          <div className="flex items-center gap-2">
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-semibold text-gray-800 truncate">{t1}</p>
-                            </div>
-                            <div className="flex-shrink-0 flex items-center gap-1">
-                              {isAdmin && !isCompleted ? (
-                                <>
-                                  <ScoreSelect matchId={match.id} field="score1" otherField="score2" value={match.score1} otherValue={match.score2} />
-                                  <span className="text-gray-400 font-bold text-sm">-</span>
-                                  <ScoreSelect matchId={match.id} field="score2" otherField="score1" value={match.score2} otherValue={match.score1} />
-                                </>
-                              ) : (
-                                <span className="text-base font-bold text-gray-700 px-1">
-                                  {match.score1 != null ? `${match.score1} - ${match.score2}` : '— - —'}
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex-1 min-w-0 text-right">
-                              <p className="text-sm font-semibold text-gray-800 truncate">{t2}</p>
-                            </div>
-                          </div>
+                          {visibleMatches.map(match => {
+                            const t1 = (match.team1Ids || []).map(id => firstName(id)).join(' & ')
+                            const t2 = (match.team2Ids || []).map(id => firstName(id)).join(' & ')
+                            return (
+                              <div key={match.id} className={`card ${match.completed ? 'border-l-4 border-green-300' : ''}`}>
+                                {match.court && (
+                                  <p className="text-[10px] font-bold text-lobster-teal bg-lobster-cream px-2 py-0.5 rounded-full inline-block mb-2">{match.court}</p>
+                                )}
+                                <div className="flex items-center gap-2">
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-semibold text-gray-800 truncate">{t1}</p>
+                                  </div>
+                                  <div className="flex-shrink-0 flex items-center gap-1">
+                                    {isAdmin && !isCompleted ? (
+                                      <>
+                                        <ScoreSelect matchId={match.id} field="score1" otherField="score2" value={match.score1} otherValue={match.score2} />
+                                        <span className="text-gray-400 font-bold text-sm">-</span>
+                                        <ScoreSelect matchId={match.id} field="score2" otherField="score1" value={match.score2} otherValue={match.score1} />
+                                      </>
+                                    ) : (
+                                      <span className="text-base font-bold text-gray-700 px-1">
+                                        {match.score1 != null ? `${match.score1} - ${match.score2}` : '— - —'}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="flex-1 min-w-0 text-right">
+                                    <p className="text-sm font-semibold text-gray-800 truncate">{t2}</p>
+                                  </div>
+                                </div>
+                              </div>
+                            )
+                          })}
                         </div>
-                      )
-                    })}
-                  </div>
+                      </div>
+                    )
+                  })}
+                  {savedMatches.length === 0 && isCompleted && (
+                    <p className="text-sm text-gray-400 text-center py-4">No match data available</p>
+                  )}
                 </div>
-              ))}
-              {savedMatches.length === 0 && isCompleted && (
-                <p className="text-sm text-gray-400 text-center py-4">No match data available</p>
-              )}
-            </div>
-            )}
+              )
+            })()}
           </section>
         )
       })()}
