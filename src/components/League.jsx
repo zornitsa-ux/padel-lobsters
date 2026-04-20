@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext'
 import {
   ChevronLeft, ChevronRight, Trophy, Users, Calendar, BookOpen, BarChart3, Medal,
   ChevronDown, ChevronUp, Plus, Check, X, AlertCircle, Heart, Music,
-  UserPlus, Clock,
+  UserPlus, Clock, Pencil, Save,
 } from 'lucide-react'
 
 // ── Range calendar ────────────────────────────────────────────────────────
@@ -345,17 +345,73 @@ function Countdown({ deadline }) {
   )
 }
 
-function Section({ id, icon, title, children, defaultOpen }) {
-  const [open, setOpen] = useState(!!defaultOpen)
+// Section — collapsible info card, optionally editable inline by an admin
+// (admin or league admin). When editable is true and the user taps the
+// pencil icon in the header, the section body swaps for a textarea that
+// calls onSave(newBody) on commit.
+function Section({ id, icon, title, children, defaultOpen, editable, currentBody, onSave }) {
+  const [open, setOpen]       = useState(!!defaultOpen)
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft]     = useState(currentBody ?? '')
+  const [busy, setBusy]       = useState(false)
+
+  const startEdit = (e) => {
+    e.stopPropagation()
+    setDraft(currentBody ?? '')
+    setEditing(true)
+    setOpen(true)
+  }
+  const cancelEdit = () => { setEditing(false); setDraft(currentBody ?? '') }
+  const commit = async () => {
+    if (busy) return
+    setBusy(true)
+    try { await onSave?.(draft); setEditing(false) }
+    finally { setBusy(false) }
+  }
+
   return (
     <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
       <button onClick={() => setOpen(o => !o)}
         className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors">
         <span className="text-xl">{icon}</span>
         <span className="flex-1 font-bold text-gray-800 text-sm sm:text-base">{title}</span>
+        {editable && !editing && (
+          <span onClick={startEdit}
+            className="text-lobster-teal p-1 hover:bg-lobster-cream rounded"
+            title="Edit this section">
+            <Pencil size={14} />
+          </span>
+        )}
         {open ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
       </button>
-      {open && <div className="px-4 pb-4 pt-1 space-y-1.5 border-t border-gray-100">{children}</div>}
+      {open && (
+        <div className="px-4 pb-4 pt-1 space-y-1.5 border-t border-gray-100">
+          {editing ? (
+            <div className="space-y-2 pt-2">
+              <textarea
+                className="input font-mono text-xs"
+                rows={Math.max(6, Math.min(20, (draft || '').split('\n').length + 1))}
+                value={draft}
+                onChange={e => setDraft(e.target.value)}
+                placeholder="Write this section's body. Use **bold** for emphasis, blank lines for spacing, and bullet lines starting with • for lists."
+              />
+              <p className="text-[10px] text-gray-400">
+                Supports <code>**bold**</code> and line breaks. Leave blank to revert to the default.
+              </p>
+              <div className="flex gap-2">
+                <button onClick={cancelEdit}
+                  className="flex-1 py-2 text-sm font-semibold text-gray-500 bg-gray-50 rounded-xl">
+                  Cancel
+                </button>
+                <button onClick={commit} disabled={busy}
+                  className="flex-1 py-2 text-sm font-bold text-white bg-lobster-teal rounded-xl flex items-center justify-center gap-1 disabled:opacity-50">
+                  <Save size={12} /> {busy ? 'Saving…' : 'Save'}
+                </button>
+              </div>
+            </div>
+          ) : children}
+        </div>
+      )}
     </div>
   )
 }
@@ -533,6 +589,15 @@ export default function League({ onNavigate }) {
   // for this page. Everywhere else in the app they're treated as a guest.
   const canAdminLeague = isAdmin || isLeagueAdmin
 
+  // Temporary testing allowlist — players whose first name matches this
+  // list can preview the League page even when visibility is still 'admin'.
+  // Remove or replace with the `league.visibility === 'all'` check once
+  // signups open to the whole group.
+  const TEST_PLAYER_FIRST_NAMES = ['zornitsa']
+  const meForView = claimedId ? players.find(p => String(p.id) === String(claimedId)) : null
+  const myFirstName = (meForView?.name || '').trim().split(/\s+/)[0]?.toLowerCase() || ''
+  const isTestPlayer = myFirstName && TEST_PLAYER_FIRST_NAMES.includes(myFirstName)
+
   const [creatingLeague, setCreatingLeague] = useState(false)
   const [inviteTarget,   setInviteTarget]   = useState(null)
   const [myLevel,        setMyLevel]        = useState('intermediate')
@@ -588,7 +653,10 @@ export default function League({ onNavigate }) {
   }
 
   // ── Early returns ────────────────────────────────────────────────────────
-  if (!canAdminLeague) {
+  // Gate: full admin, scoped league admin, or a whitelisted test player.
+  // Once signup opens to everyone the test-player check is redundant —
+  // we'll switch this to checking league.visibility === 'all' instead.
+  if (!canAdminLeague && !isTestPlayer) {
     return (
       <div className="card py-10 text-center text-gray-400">
         <Trophy size={36} className="mx-auto mb-2 opacity-30" />
@@ -708,8 +776,27 @@ export default function League({ onNavigate }) {
         </div>
       )}
 
-      {/* Status: not yet interested — show sign-up card */}
-      {!myInterest && !signupClosed && (
+      {/* If the viewer is a pure admin (no claimedId), they can't register
+          as a player here — "admin" is an operator role, not a player
+          identity. Show a note instead of the sign-up card so the button
+          doesn't look broken. They can still manage the league from the
+          Admin controls panel above. */}
+      {!myInterest && !signupClosed && !claimedId && (
+        <div className="card bg-lobster-cream border border-lobster-teal/30">
+          <p className="text-sm font-bold text-lobster-teal flex items-center gap-2">
+            <AlertCircle size={16} /> Signed in as admin, not as a player
+          </p>
+          <p className="text-xs text-gray-600 mt-2 leading-snug">
+            Admin PIN and player PIN are separate identities. If you want to
+            register <em>yourself</em> for the league, sign out from Settings →
+            Account and sign in again with your personal player PIN. Admin
+            access comes back automatically when you use the admin PIN.
+          </p>
+        </div>
+      )}
+
+      {/* Status: not yet interested — show sign-up card (players only) */}
+      {!myInterest && !signupClosed && claimedId && (
         <div className="card space-y-3">
           <p className="font-bold text-gray-700 flex items-center gap-2">
             <Heart size={16} className="text-lobster-teal" />
@@ -837,18 +924,42 @@ export default function League({ onNavigate }) {
       )}
 
       {/* Collapsible info sections — findable but not shouting once read.
-          The Timeline section uses the admin-configured phase dates when
-          they exist, otherwise the placeholder text in DEFAULT_SECTIONS. */}
+          The Timeline section is special: it always renders from the
+          phase-date columns when they're filled in. All other sections
+          read their body from league.description_sections[id] if the
+          admin has customised it, else fall back to DEFAULT_SECTIONS.
+          Admins see a pencil icon on each editable section. */}
       <div className="space-y-2">
         <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 mt-4 mb-1">About the league</p>
         {DEFAULT_SECTIONS.map((s, i) => {
           const dynamicTimeline = s.id === 'timeline' ? renderTimeline(league) : null
+          const customBody = league.description_sections?.[s.id]
+          const effectiveBody = (customBody && customBody.trim()) || s.body
+          const saveSection = async (newBody) => {
+            const next = { ...(league.description_sections || {}) }
+            // Empty body resets to the default by removing the override.
+            if (!newBody || !newBody.trim()) delete next[s.id]
+            else next[s.id] = newBody
+            await updateLeague(league.id, { description_sections: next })
+          }
           return (
-            <Section key={s.id} {...s} defaultOpen={i === 0 && !myInterest}>
-              {dynamicTimeline || renderBody(s.body)}
+            <Section
+              key={s.id}
+              id={s.id} icon={s.icon} title={s.title}
+              defaultOpen={i === 0 && !myInterest}
+              editable={canAdminLeague && s.id !== 'timeline'}
+              currentBody={customBody || ''}
+              onSave={saveSection}
+            >
+              {dynamicTimeline || renderBody(effectiveBody)}
             </Section>
           )
         })}
+        {canAdminLeague && (
+          <p className="text-[10px] text-gray-400 mt-2">
+            Tap the pencil on any section to edit its copy inline. Leave blank to revert to the default. Timeline auto-builds from the phase dates you saved on the league.
+          </p>
+        )}
       </div>
 
       {/* Invite modal */}

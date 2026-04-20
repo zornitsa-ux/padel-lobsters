@@ -26,7 +26,13 @@ const emptyForm = {
 }
 
 export default function Tournament({ onNavigate }) {
-  const { tournaments, addTournament, updateTournament, deleteTournament, isAdmin, isLeagueAdmin, getTournamentRegistrations } = useApp()
+  const { tournaments, addTournament, updateTournament, deleteTournament, isAdmin, isLeagueAdmin, claimedId, players, getTournamentRegistrations } = useApp()
+  // Temporary testing allowlist — match League.jsx. Lets the named
+  // players preview the League entry while visibility is still 'admin'.
+  const TEST_PLAYER_FIRST_NAMES = ['zornitsa']
+  const meTourn       = claimedId ? players.find(p => String(p.id) === String(claimedId)) : null
+  const myFirstName   = (meTourn?.name || '').trim().split(/\s+/)[0]?.toLowerCase() || ''
+  const isLeagueTester = !!myFirstName && TEST_PLAYER_FIRST_NAMES.includes(myFirstName)
   const [showForm, setShowForm]       = useState(false)
   const [editId, setEditId]           = useState(null)
   const [form, setForm]               = useState(emptyForm)
@@ -166,11 +172,11 @@ export default function Tournament({ onNavigate }) {
         )}
       </div>
 
-      {/* Lobster League entry — visible to full admins AND to League Admins
-          (the scoped-down role whose PIN lives on settings.league_admin_pin).
-          Players still don't see it until the league's visibility flag is
-          flipped to 'all'. */}
-      {(isAdmin || isLeagueAdmin) && (
+      {/* Lobster League entry — visible to full admins, League Admins,
+          and the whitelisted test players (TEST_PLAYER_FIRST_NAMES).
+          Once the league's visibility flag is flipped to 'all' we'll
+          drop the gate entirely. */}
+      {(isAdmin || isLeagueAdmin || isLeagueTester) && (
         <button onClick={() => onNavigate('league')}
           className="w-full bg-gradient-to-r from-lobster-teal to-teal-600 text-white rounded-2xl p-4 flex items-center gap-3 shadow-md active:scale-95 transition-all">
           <div className="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center flex-shrink-0">
@@ -179,17 +185,21 @@ export default function Tournament({ onNavigate }) {
           <div className="flex-1 text-left min-w-0">
             <p className="font-bold text-sm">🏆 Lobster League</p>
             <p className="text-[11px] opacity-80">
-              {isLeagueAdmin && !isAdmin
-                ? 'League Admin access'
-                : 'Admin preview · multi-week competition (Phase 1 + 2)'}
+              {isAdmin
+                ? 'Admin preview · multi-week competition (Phase 1 + 2)'
+                : isLeagueAdmin
+                  ? 'League Admin access'
+                  : 'Test access — try joining a league'}
             </p>
           </div>
           <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-            isLeagueAdmin && !isAdmin
-              ? 'bg-lobster-cream text-lobster-teal'
-              : 'bg-yellow-400 text-gray-900'
+            isAdmin
+              ? 'bg-yellow-400 text-gray-900'
+              : isLeagueAdmin
+                ? 'bg-lobster-cream text-lobster-teal'
+                : 'bg-white/25 text-white'
           }`}>
-            {isLeagueAdmin && !isAdmin ? 'LEAGUE ADMIN' : 'ADMIN'}
+            {isAdmin ? 'ADMIN' : isLeagueAdmin ? 'LEAGUE ADMIN' : 'TEST'}
           </span>
         </button>
       )}
