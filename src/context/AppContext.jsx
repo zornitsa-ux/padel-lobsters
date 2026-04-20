@@ -671,14 +671,25 @@ export function AppProvider({ children }) {
 
   const createLeague = useCallback(async (data) => {
     const { data: row, error } = await supabase.from('leagues').insert({
-      name:             data.name,
-      description_md:   data.description_md || '',
-      signup_closes_at: data.signup_closes_at,
-      starts_at:        data.starts_at || null,
-      ends_at:          data.ends_at || null,
-      divisions:        data.divisions || ['mens', 'womens'],
-      status:           'signups_open',
-      created_by:       claimedId || null,
+      name:               data.name,
+      description_md:     data.description_md || '',
+      signup_closes_at:   data.signup_closes_at,
+      // Each competition phase gets an explicit date range (see v20c migration).
+      // Legacy starts_at / ends_at are kept in sync with the first/last phase
+      // so any older code paths still work.
+      group_stage_start:  data.group_stage_start  || null,
+      group_stage_end:    data.group_stage_end    || null,
+      quarters_start:     data.quarters_start     || null,
+      quarters_end:       data.quarters_end       || null,
+      semis_start:        data.semis_start        || null,
+      semis_end:          data.semis_end          || null,
+      finals_start:       data.finals_start       || null,
+      finals_end:         data.finals_end         || null,
+      starts_at:          data.group_stage_start  || data.starts_at || null,
+      ends_at:            data.finals_end         || data.ends_at   || null,
+      divisions:          data.divisions          || ['mens', 'womens'],
+      status:             'signups_open',
+      created_by:         claimedId || null,
     }).select().single()
     if (!error && row) await loadLeagues()
     return { data: row, error }

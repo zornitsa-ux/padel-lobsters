@@ -40,21 +40,18 @@ const DEFAULT_SECTIONS = [
       '• If there are insufficient signups to form separate divisions, they will be combined into a single open division.',
     ].join('\n'),
   },
+  // This placeholder is only used when the admin hasn't set phase dates.
+  // Once dates are saved on the league, the real dates render via
+  // renderTimelineBody() below, replacing this generic text.
   {
     id: 'timeline', icon: '🗓️', title: 'Season Timeline',
     body: [
-      '• Signups: Now → May 18',
-      '• Group Stage: May 25 → June 28 (5 weeks)',
-      '• Semifinals: June 29 → July 12',
-      '• Finals: July 13 → July 26 (both finals on the same day)',
-      '',
-      'If we get 3–4 groups (12+ teams per division), a quarterfinal round is added:',
-      '• Group Stage: May 25 → June 28',
-      '• Quarterfinals: June 29 → July 12',
-      '• Semifinals: July 13 → July 26',
-      '• Finals: July 27 → Aug 9',
-      '',
-      'Total time commitment: ~9–11 weeks of play. About 1 match every 1–2 weeks during the group stage, tighter during playoffs.',
+      'Once the admin locks in the season calendar, you\'ll see the exact date range for each phase here. Meanwhile, the shape is:',
+      '• Signups → deadline set by the admin',
+      '• Group Stage (5 weeks) — 3 matches per team at your own pace',
+      '• Quarterfinals (2 weeks) — only if the league hits 12+ teams per division',
+      '• Semifinals (2 weeks)',
+      '• Finals (1 day) — gold and silver played back-to-back',
     ].join('\n'),
   },
   {
@@ -121,6 +118,46 @@ function renderBody(body) {
   })
 }
 
+// Pretty-print a phase date range ("25 May → 28 Jun"). Both missing → null.
+function fmtRange(start, end) {
+  const fmt = (d) => d
+    ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+    : null
+  const s = fmt(start), e = fmt(end)
+  if (!s && !e) return null
+  if (s && !e)  return s
+  if (!s && e)  return `until ${e}`
+  return `${s} → ${e}`
+}
+
+// Render the Timeline section dynamically from the league's phase fields.
+// Falls back to the generic DEFAULT_SECTIONS timeline when nothing's set.
+function renderTimeline(league) {
+  const rows = [
+    ['📝 Signups',        league.signup_closes_at
+      ? `until ${new Date(league.signup_closes_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`
+      : null],
+    ['🏓 Group Stage',    fmtRange(league.group_stage_start, league.group_stage_end)],
+    ['🎯 Quarterfinals',  fmtRange(league.quarters_start,    league.quarters_end)],
+    ['⚡ Semifinals',      fmtRange(league.semis_start,       league.semis_end)],
+    ['🏆 Finals',         fmtRange(league.finals_start,      league.finals_end)],
+  ].filter(([, range]) => !!range)
+  if (rows.length === 0) return null
+  return (
+    <div className="space-y-1">
+      {rows.map(([label, range]) => (
+        <div key={label} className="flex items-center justify-between gap-3 text-sm">
+          <span className="font-semibold text-gray-700">{label}</span>
+          <span className="text-gray-500">{range}</span>
+        </div>
+      ))}
+      <p className="text-[11px] text-gray-400 pt-2">
+        About 1 match every 1–2 weeks in the group stage, tighter during playoffs. Quarterfinals only run if the league hits 12+ teams per division.
+      </p>
+    </div>
+  )
+}
+
 function Countdown({ deadline }) {
   if (!deadline) return null
   const ms = new Date(deadline).getTime() - Date.now()
@@ -157,15 +194,25 @@ function Section({ id, icon, title, children, defaultOpen }) {
 }
 
 // ── Admin: Create-league form ─────────────────────────────────────────────
+// Captures the full season calendar: signup deadline plus a date range per
+// competition phase. Quarterfinals is optional — only fill it if you know
+// you'll have 12+ teams per division.
 function CreateLeagueForm({ onCancel, onCreated }) {
   const { createLeague } = useApp()
-  const [name, setName]               = useState('Summer 2026 Lobster League')
-  const [descr, setDescr]             = useState('')
-  const [deadline, setDeadline]       = useState('')  // datetime-local
-  const [startDate, setStartDate]     = useState('')
-  const [endDate, setEndDate]         = useState('')
-  const [busy, setBusy]               = useState(false)
-  const [error, setError]             = useState('')
+  const [name, setName]         = useState('Summer 2026 Lobster League')
+  const [descr, setDescr]       = useState('')
+  const [deadline, setDeadline] = useState('')   // datetime-local
+  // Phase ranges — one [start, end] pair per phase.
+  const [gsStart, setGsStart]         = useState('')
+  const [gsEnd,   setGsEnd]           = useState('')
+  const [qfStart, setQfStart]         = useState('')
+  const [qfEnd,   setQfEnd]           = useState('')
+  const [sfStart, setSfStart]         = useState('')
+  const [sfEnd,   setSfEnd]           = useState('')
+  const [fStart,  setFStart]          = useState('')
+  const [fEnd,    setFEnd]            = useState('')
+  const [busy, setBusy]         = useState(false)
+  const [error, setError]       = useState('')
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -174,36 +221,57 @@ function CreateLeagueForm({ onCancel, onCreated }) {
     const { error: err } = await createLeague({
       name: name.trim(),
       description_md: descr.trim(),
-      signup_closes_at: new Date(deadline).toISOString(),
-      starts_at: startDate || null,
-      ends_at:   endDate   || null,
+      signup_closes_at:  new Date(deadline).toISOString(),
+      group_stage_start: gsStart || null,
+      group_stage_end:   gsEnd   || null,
+      quarters_start:    qfStart || null,
+      quarters_end:      qfEnd   || null,
+      semis_start:       sfStart || null,
+      semis_end:         sfEnd   || null,
+      finals_start:      fStart  || null,
+      finals_end:        fEnd    || null,
     })
     setBusy(false)
     if (err) { setError(err.message || 'Could not create league'); return }
     onCreated?.()
   }
 
+  const PhaseRange = ({ label, hint, start, setStart, end, setEnd, optional }) => (
+    <div>
+      <label className="label flex items-baseline justify-between">
+        <span>{label}{optional && <span className="font-normal text-gray-400 ml-1">(optional)</span>}</span>
+        {hint && <span className="text-[10px] font-normal text-gray-400">{hint}</span>}
+      </label>
+      <div className="grid grid-cols-2 gap-2">
+        <input type="date" className="input" value={start} onChange={e => setStart(e.target.value)} placeholder="Start" />
+        <input type="date" className="input" value={end}   onChange={e => setEnd(e.target.value)}   placeholder="End" />
+      </div>
+    </div>
+  )
+
   return (
-    <form onSubmit={handleSubmit} className="card space-y-3">
+    <form onSubmit={handleSubmit} className="card space-y-4">
       <p className="font-bold text-gray-700">🆕 Create a league</p>
+
       <div>
         <label className="label">League name</label>
         <input className="input" value={name} onChange={e => setName(e.target.value)} placeholder="Summer 2026 Lobster League" />
       </div>
+
       <div>
-        <label className="label">Signup deadline</label>
+        <label className="label">Signups deadline</label>
         <input type="datetime-local" className="input" value={deadline} onChange={e => setDeadline(e.target.value)} required />
+        <p className="text-[11px] text-gray-400 mt-1">After this moment, new interests are blocked and the page shows "Signups closed."</p>
       </div>
-      <div className="grid grid-cols-2 gap-2">
-        <div>
-          <label className="label">Group stage starts</label>
-          <input type="date" className="input" value={startDate} onChange={e => setStartDate(e.target.value)} />
-        </div>
-        <div>
-          <label className="label">Finals day</label>
-          <input type="date" className="input" value={endDate} onChange={e => setEndDate(e.target.value)} />
-        </div>
+
+      <div className="space-y-3 pt-2 border-t border-gray-100">
+        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Phase dates</p>
+        <PhaseRange label="Group Stage"   hint="5 weeks"  start={gsStart} setStart={setGsStart} end={gsEnd} setEnd={setGsEnd} />
+        <PhaseRange label="Quarterfinals" hint="2 weeks, only with 12+ teams"  start={qfStart} setStart={setQfStart} end={qfEnd} setEnd={setQfEnd} optional />
+        <PhaseRange label="Semifinals"    hint="2 weeks"  start={sfStart} setStart={setSfStart} end={sfEnd} setEnd={setSfEnd} />
+        <PhaseRange label="Finals"        hint="Finals day"  start={fStart}  setStart={setFStart}  end={fEnd}  setEnd={setFEnd} />
       </div>
+
       <div>
         <label className="label">Description (optional — overrides the default intro)</label>
         <textarea className="input text-xs font-mono" rows={4} value={descr} onChange={e => setDescr(e.target.value)}
@@ -588,14 +656,19 @@ export default function League({ onNavigate }) {
         </div>
       )}
 
-      {/* Collapsible info sections — findable but not shouting once read */}
+      {/* Collapsible info sections — findable but not shouting once read.
+          The Timeline section uses the admin-configured phase dates when
+          they exist, otherwise the placeholder text in DEFAULT_SECTIONS. */}
       <div className="space-y-2">
         <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 mt-4 mb-1">About the league</p>
-        {DEFAULT_SECTIONS.map((s, i) => (
-          <Section key={s.id} {...s} defaultOpen={i === 0 && !myInterest}>
-            {renderBody(s.body)}
-          </Section>
-        ))}
+        {DEFAULT_SECTIONS.map((s, i) => {
+          const dynamicTimeline = s.id === 'timeline' ? renderTimeline(league) : null
+          return (
+            <Section key={s.id} {...s} defaultOpen={i === 0 && !myInterest}>
+              {dynamicTimeline || renderBody(s.body)}
+            </Section>
+          )
+        })}
       </div>
 
       {/* Invite modal */}
