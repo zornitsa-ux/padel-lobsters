@@ -523,11 +523,15 @@ function InviteModal({ league, invitee, onClose, onSent }) {
 // ── Main component ────────────────────────────────────────────────────────
 export default function League({ onNavigate }) {
   const {
-    isAdmin, claimedId, players,
+    isAdmin, isLeagueAdmin, claimedId, players,
     leagues, leagueInterests, leagueTeams,
     registerLeagueInterest, withdrawLeagueInterest, respondLeagueTeam,
     deleteLeague, updateLeague, dissolveLeagueTeam,
   } = useApp()
+
+  // League Admin has the same scoped privileges as a full admin, but only
+  // for this page. Everywhere else in the app they're treated as a guest.
+  const canAdminLeague = isAdmin || isLeagueAdmin
 
   const [creatingLeague, setCreatingLeague] = useState(false)
   const [inviteTarget,   setInviteTarget]   = useState(null)
@@ -584,7 +588,7 @@ export default function League({ onNavigate }) {
   }
 
   // ── Early returns ────────────────────────────────────────────────────────
-  if (!isAdmin) {
+  if (!canAdminLeague) {
     return (
       <div className="card py-10 text-center text-gray-400">
         <Trophy size={36} className="mx-auto mb-2 opacity-30" />
@@ -648,8 +652,8 @@ export default function League({ onNavigate }) {
         </div>
       </div>
 
-      {/* Admin controls */}
-      {isAdmin && (
+      {/* Admin controls — either a full admin or the scoped league admin */}
+      {canAdminLeague && (
         <details className="bg-gray-50 border border-gray-200 rounded-2xl">
           <summary className="cursor-pointer px-3 py-2 text-sm font-semibold text-gray-700">
             ⚙️ Admin controls
@@ -822,7 +826,7 @@ export default function League({ onNavigate }) {
                     {t.team_song ? <> · 🎵 {t.team_song}</> : null}
                   </p>
                 </div>
-                {isAdmin && (
+                {canAdminLeague && (
                   <button onClick={() => { if (confirm(`Dissolve Team ${t.team_name}?`)) dissolveLeagueTeam(t.id) }}
                     className="text-[11px] font-semibold text-red-500 px-2">Dissolve</button>
                 )}

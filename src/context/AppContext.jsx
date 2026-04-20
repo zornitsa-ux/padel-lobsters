@@ -21,6 +21,9 @@ export function AppProvider({ children }) {
   const [settings, setSettings]         = useState({ whatsappLink: '', adminPin: '1234', groupName: 'Padel Lobsters' })
   const [loading, setLoading]           = useState(true)
   const [isAdmin, setIsAdmin]           = useState(() => localStorage.getItem('lobster_admin') === 'true')
+  // Secondary admin — can manage ONLY the Lobster League, nothing else.
+  // Granted when the user signs in with the league_admin_pin from settings.
+  const [isLeagueAdmin, setIsLeagueAdmin] = useState(() => localStorage.getItem('lobster_league_admin') === 'true')
   const [claimedId, setClaimedId]       = useState(() => localStorage.getItem('lobster_claimed_id') || null)
 
   // Wrap setIsAdmin so it persists across refreshes
@@ -28,6 +31,13 @@ export function AppProvider({ children }) {
     setIsAdmin(val)
     if (val) localStorage.setItem('lobster_admin', 'true')
     else      localStorage.removeItem('lobster_admin')
+  }, [])
+
+  // Same pattern for the secondary League Admin flag.
+  const setLeagueAdminState = useCallback((val) => {
+    setIsLeagueAdmin(val)
+    if (val) localStorage.setItem('lobster_league_admin', 'true')
+    else      localStorage.removeItem('lobster_league_admin')
   }, [])
 
   // ── Initial data load ──────────────────────────────────────
@@ -157,10 +167,11 @@ export function AppProvider({ children }) {
     const { data } = await supabase.from('settings').select('*').eq('id', 1).single()
     if (data) setSettings({
       ...data,
-      whatsappLink: data.whatsapp_link ?? data.whatsappLink ?? '',
-      adminPin:     data.admin_pin     ?? data.adminPin     ?? '1234',
-      groupName:    data.group_name    ?? data.groupName    ?? 'Padel Lobsters',
-      padelTips:    data.padel_tips    ?? data.padelTips    ?? null,
+      whatsappLink:   data.whatsapp_link    ?? data.whatsappLink    ?? '',
+      adminPin:       data.admin_pin        ?? data.adminPin        ?? '1234',
+      leagueAdminPin: data.league_admin_pin ?? data.leagueAdminPin  ?? '',
+      groupName:      data.group_name       ?? data.groupName       ?? 'Padel Lobsters',
+      padelTips:      data.padel_tips       ?? data.padelTips       ?? null,
     })
   }
 
@@ -171,10 +182,16 @@ export function AppProvider({ children }) {
   // root cause of the Tip of the Day "it came back" bug.
   const saveSettings = useCallback(async (newSettings) => {
     const payload = {
-      id:            1,
-      whatsapp_link: newSettings.whatsappLink ?? '',
-      admin_pin:     newSettings.adminPin     ?? '1234',
-      group_name:    newSettings.groupName    ?? 'Padel Lobsters',
+      id:               1,
+      whatsapp_link:    newSettings.whatsappLink    ?? '',
+      admin_pin:        newSettings.adminPin        ?? '1234',
+      group_name:       newSettings.groupName       ?? 'Padel Lobsters',
+    }
+    // league_admin_pin is optional — only include it when the caller
+    // actually set it, so a normal settings save doesn't wipe a stored
+    // league admin PIN just because the caller forgot to pass it through.
+    if (newSettings.leagueAdminPin !== undefined) {
+      payload.league_admin_pin = newSettings.leagueAdminPin || ''
     }
     if (newSettings.padelTips !== undefined) payload.padel_tips = newSettings.padelTips
     const { error } = await supabase.from('settings').upsert(payload)
@@ -530,6 +547,14 @@ export function AppProvider({ children }) {
       console.error('verify_admin_pin threw:', e)
     }
 
+    // 1b) Try the scoped League Admin PIN. Stored plaintext on settings —
+    //     see v21 migration. Only matches when the admin has actually
+    //     configured a non-empty PIN.
+    if (settings.leagueAdminPin && pin === String(settings.leagueAdminPin)) {
+      setLeagueAdminState(true)
+      return { success: true, role: 'league_admin' }
+    }
+
     // 2) Fall back to player PIN.
     try {
       const { data: playerId, error: playerErr } = await supabase.rpc('verify_player_pin', { input_pin: pin })
@@ -551,7 +576,7 @@ export function AppProvider({ children }) {
     }
 
     return { success: false, error: "That PIN didn't match any Lobster — double-check and try again." }
-  }, [players, setAdminState])
+  }, [players, setAdminState, setLeagueAdminState, settings.leagueAdminPin])
 
   // Fetch the signed-in player's full record (including email / phone / full
   // birthday) through the secure RPC. Returns null if no PIN is cached or the
@@ -585,17 +610,26 @@ export function AppProvider({ children }) {
     }
   }, [])
 
-  // Full sign-out: drops both admin status and claimed player identity.
+  // Full sign-out: drops both admin statuses and claimed player identity.
   const logout = useCallback(() => {
     setAdminState(false)
+    setLeagueAdminState(false)
     localStorage.removeItem('lobster_claimed_id')
     localStorage.removeItem('lobster_session_pin')
     localStorage.removeItem('lobster_session_admin_pin')
     setClaimedId(null)
-  }, [setAdminState])
+  }, [setAdminState, setLeagueAdminState])
 
-  // Current role for gates/banners: 'admin' > 'player' > 'guest'.
-  const role = isAdmin ? 'admin' : (claimedId ? 'player' : 'guest')
+  // Current role for gates/banners.
+  //   admin          — full operator access
+  //   league_admin   — scoped to the Lobster League
+  //   player         — signed in as a roster player
+  //   guest          — no identity yet (blocked by VerificationGate)
+  const role =
+    isAdmin         ? 'admin' :
+    isLeagueAdmin   ? 'league_admin' :
+    claimedId       ? 'player' :
+                      'guest'
 
   // ── Updates ──────────────────────────────────────────────
   const addUpdate = useCallback(async (playerId, content) => {
@@ -803,8 +837,9 @@ export function AppProvider({ children }) {
       tournaments: normalisedTournaments,
       registrations: normalisedRegistrations,
       matches: normalisedMatches,
-      settings, loading, isAdmin, role,
+      settings, loading, isAdmin, isLeagueAdmin, role,
       setIsAdmin: setAdminState,
+      setIsLeagueAdmin: setLeagueAdminState,
       loginWithPin, logout, fetchMyProfile, fetchAllPlayersWithPii,
       addPlayer, updatePlayer, deletePlayer, getPlayerById,
       addTournament, updateTournament, deleteTournament,

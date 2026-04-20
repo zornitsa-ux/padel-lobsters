@@ -24,7 +24,7 @@ export default function Settings() {
   const { settings, saveSettings, isAdmin, claimedId, getPlayerById, updatePlayer, players,
           loginWithPin, logout, fetchMyProfile } = useApp()
 
-  const [form, setForm]           = useState({ whatsappLink: '', adminPin: '1234', groupName: 'Padel Lobsters' })
+  const [form, setForm]           = useState({ whatsappLink: '', adminPin: '1234', leagueAdminPin: '', groupName: 'Padel Lobsters' })
   // ── Unified Account sign-in state ──────────────────────────
   // A single PIN field handles BOTH admin + player sign-in via auto-detect.
   // This replaces the old per-page <AdminLogin> modal scattered across the app.
@@ -174,9 +174,10 @@ export default function Settings() {
   useEffect(() => {
     if (settings) {
       setForm({
-        whatsappLink: settings.whatsappLink || '',
-        adminPin:     settings.adminPin     || '1234',
-        groupName:    settings.groupName    || 'Padel Lobsters',
+        whatsappLink:   settings.whatsappLink   || '',
+        adminPin:       settings.adminPin       || '1234',
+        leagueAdminPin: settings.leagueAdminPin || '',
+        groupName:      settings.groupName      || 'Padel Lobsters',
       })
       setTips(settings.padelTips && settings.padelTips.length > 0 ? settings.padelTips : null)
     }
@@ -764,6 +765,29 @@ export default function Settings() {
               </div>
               <p className="text-xs text-gray-400 mt-1.5">
                 Used to access admin features like adding players, editing data, and generating schedules.
+              </p>
+            </div>
+
+            {/* League Admin PIN — a scoped-down second admin. Anyone with
+                this PIN can run the Lobster League (create leagues,
+                dissolve teams) but can't access players / tournaments /
+                schedule / any other admin surface. Leave blank to disable. */}
+            <div>
+              <label className="label">League Admin PIN (optional)</label>
+              <input
+                className="input"
+                type={showPin ? 'text' : 'password'}
+                inputMode="numeric"
+                maxLength={8}
+                placeholder="Leave blank to disable"
+                value={form.leagueAdminPin}
+                onChange={e => setForm(f => ({ ...f, leagueAdminPin: e.target.value }))}
+              />
+              <p className="text-xs text-gray-400 mt-1.5">
+                Grants access to the Lobster League admin controls only. Anyone with
+                this PIN can create / edit the league and manage teams, but can't
+                see players, tournaments, schedule or scores. Set a different PIN
+                than your main Admin PIN.
               </p>
             </div>
           </div>
