@@ -166,6 +166,22 @@ export default function Tournament({ onNavigate }) {
         )}
       </div>
 
+      {/* Lobster League entry — admin-only for now (Phase 1+2 testing). Once
+          the league's visibility is flipped to 'all' we can drop the gate. */}
+      {isAdmin && (
+        <button onClick={() => onNavigate('league')}
+          className="w-full bg-gradient-to-r from-lobster-teal to-teal-600 text-white rounded-2xl p-4 flex items-center gap-3 shadow-md active:scale-95 transition-all">
+          <div className="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center flex-shrink-0">
+            <Trophy size={20} className="text-yellow-300" />
+          </div>
+          <div className="flex-1 text-left min-w-0">
+            <p className="font-bold text-sm">🏆 Lobster League</p>
+            <p className="text-[11px] opacity-80">Admin preview · multi-week competition (Phase 1 + 2)</p>
+          </div>
+          <span className="text-[10px] font-bold bg-yellow-400 text-gray-900 px-2 py-0.5 rounded-full">ADMIN</span>
+        </button>
+      )}
+
       {/* Upcoming events */}
       <div className="space-y-3">
         {upcoming.length === 0 && (

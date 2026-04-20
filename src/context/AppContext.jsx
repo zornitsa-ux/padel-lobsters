@@ -11,6 +11,12 @@ export function AppProvider({ children }) {
   const [registrations, setRegistrations] = useState([])
   const [matches, setMatches]           = useState([])
   const [updates, setUpdates]           = useState([])
+  // ── Lobster League (v20 migration) ─────────────────────────────────────
+  // Leagues and their three sub-tables are loaded lazily when the app boots
+  // so the Events tab and the League page can share the same live data.
+  const [leagues,          setLeagues]          = useState([])
+  const [leagueInterests,  setLeagueInterests]  = useState([])
+  const [leagueTeams,      setLeagueTeams]      = useState([])
   const [playerAliases, setPlayerAliases] = useState({}) // historical_name → player_id (or '__not_in_roster__')
   const [settings, setSettings]         = useState({ whatsappLink: '', adminPin: '1234', groupName: 'Padel Lobsters' })
   const [loading, setLoading]           = useState(true)
@@ -53,13 +59,53 @@ export function AppProvider({ children }) {
       supabase.channel('player-aliases-changes')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'player_aliases' }, loadPlayerAliases)
         .subscribe(),
+      // Lobster League subscriptions — one per table so invites, interests,
+      // and team creations all flow in live without waiting for a refresh.
+      supabase.channel('leagues-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'leagues' }, loadLeagues)
+        .subscribe(),
+      supabase.channel('league-interests-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'league_interests' }, loadLeagueInterests)
+        .subscribe(),
+      supabase.channel('league-teams-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'league_teams' }, loadLeagueTeams)
+        .subscribe(),
     ]
     return () => channels.forEach(c => supabase.removeChannel(c))
   }, [])
 
   const loadAll = async () => {
-    await Promise.all([loadPlayers(), loadTournaments(), loadRegistrations(), loadMatches(), loadSettings(), loadUpdates(), loadPlayerAliases()])
+    await Promise.all([
+      loadPlayers(), loadTournaments(), loadRegistrations(), loadMatches(),
+      loadSettings(), loadUpdates(), loadPlayerAliases(),
+      loadLeagues(), loadLeagueInterests(), loadLeagueTeams(),
+    ])
     setLoading(false)
+  }
+
+  // ── Lobster League loaders ────────────────────────────────────────────
+  // Each fails silently if the v20 migration hasn't run yet so the rest
+  // of the app keeps working during rollout.
+  const loadLeagues = async () => {
+    try {
+      const { data, error } = await supabase.from('leagues').select('*').order('created_at', { ascending: false })
+      if (error) throw error
+      setLeagues(data || [])
+    } catch { /* table not present yet */ }
+  }
+  const loadLeagueInterests = async () => {
+    try {
+      const { data, error } = await supabase.from('league_interests').select('*')
+      if (error) throw error
+      setLeagueInterests(data || [])
+    } catch { /* table not present yet */ }
+  }
+  const loadLeagueTeams = async () => {
+    try {
+      const { data, error } = await supabase.from('league_teams').select('*')
+      if (error) throw error
+      setLeagueTeams(data || [])
+    } catch { /* table not present yet */ }
   }
 
   const loadPlayerAliases = async () => {
@@ -618,6 +664,128 @@ export function AppProvider({ children }) {
     return true
   }, [])
 
+  // ── Lobster League CRUD ─────────────────────────────────────────────────
+  // Helpers for the new league flow. Each returns { data, error } so the UI
+  // can surface failures cleanly. All writes trigger realtime events that
+  // the subscriptions above pick up, so local state always matches the DB.
+
+  const createLeague = useCallback(async (data) => {
+    const { data: row, error } = await supabase.from('leagues').insert({
+      name:             data.name,
+      description_md:   data.description_md || '',
+      signup_closes_at: data.signup_closes_at,
+      starts_at:        data.starts_at || null,
+      ends_at:          data.ends_at || null,
+      divisions:        data.divisions || ['mens', 'womens'],
+      status:           'signups_open',
+      created_by:       claimedId || null,
+    }).select().single()
+    if (!error && row) await loadLeagues()
+    return { data: row, error }
+  }, [claimedId])
+
+  const updateLeague = useCallback(async (id, patch) => {
+    const { error } = await supabase.from('leagues').update(patch).eq('id', id)
+    if (!error) await loadLeagues()
+    return { error }
+  }, [])
+
+  const deleteLeague = useCallback(async (id) => {
+    const { error } = await supabase.from('leagues').delete().eq('id', id)
+    if (!error) await loadLeagues()
+    return { error }
+  }, [])
+
+  // Step 1 of signup — "I'm interested in playing." Division is derived
+  // from the player's profile gender (falls back to 'open').
+  const registerLeagueInterest = useCallback(async (leagueId, experienceLevel) => {
+    if (!claimedId) return { error: { message: 'Not signed in' } }
+    const me = players.find(p => String(p.id) === String(claimedId))
+    const division =
+      me?.gender === 'female' ? 'womens' :
+      me?.gender === 'male'   ? 'mens'   : 'open'
+    const { error } = await supabase.from('league_interests').upsert({
+      league_id: leagueId,
+      player_id: claimedId,
+      division,
+      experience_level: experienceLevel,
+      status: 'looking',
+    }, { onConflict: 'league_id,player_id' })
+    if (!error) await loadLeagueInterests()
+    return { error, division }
+  }, [claimedId, players])
+
+  const withdrawLeagueInterest = useCallback(async (leagueId) => {
+    if (!claimedId) return { error: { message: 'Not signed in' } }
+    const { error } = await supabase.from('league_interests')
+      .update({ status: 'withdrawn' })
+      .eq('league_id', leagueId)
+      .eq('player_id', claimedId)
+    if (!error) await loadLeagueInterests()
+    return { error }
+  }, [claimedId])
+
+  // Step 2 — send a pairing request. Creates a `league_teams` row with
+  // status='pending'. Both interest rows stay as 'looking' until the
+  // invitee accepts.
+  const proposeLeagueTeam = useCallback(async (leagueId, inviteeId, teamName, teamSong, division, experienceLevel) => {
+    if (!claimedId) return { error: { message: 'Not signed in' } }
+    if (String(claimedId) === String(inviteeId)) {
+      return { error: { message: "You can't invite yourself" } }
+    }
+    const { data: row, error } = await supabase.from('league_teams').insert({
+      league_id:        leagueId,
+      proposer_id:      claimedId,
+      invitee_id:       inviteeId,
+      team_name:        teamName,
+      team_song:        teamSong || '',
+      division,
+      experience_level: experienceLevel || null,
+      status:           'pending',
+    }).select().single()
+    if (!error && row) await loadLeagueTeams()
+    return { data: row, error }
+  }, [claimedId])
+
+  const respondLeagueTeam = useCallback(async (teamId, accept) => {
+    if (!claimedId) return { error: { message: 'Not signed in' } }
+    const newStatus = accept ? 'confirmed' : 'declined'
+    const { data: team, error } = await supabase.from('league_teams')
+      .update({ status: newStatus, responded_at: new Date().toISOString() })
+      .eq('id', teamId)
+      .select().single()
+    if (error) return { error }
+    // On acceptance, flip BOTH interest rows to 'matched' so the pair
+    // drops off the "looking for partner" list. On decline, leave them
+    // as 'looking' — either can invite again.
+    if (accept && team) {
+      await supabase.from('league_interests')
+        .update({ status: 'matched' })
+        .eq('league_id', team.league_id)
+        .in('player_id', [team.proposer_id, team.invitee_id])
+    }
+    await Promise.all([loadLeagueTeams(), loadLeagueInterests()])
+    return { error: null }
+  }, [claimedId])
+
+  // Admin-only: forcibly dissolve a confirmed team (e.g. someone dropped out).
+  // Flips the team to 'withdrawn' and returns both players to 'looking' so
+  // they can find new partners.
+  const dissolveLeagueTeam = useCallback(async (teamId) => {
+    const { data: team, error: fErr } = await supabase.from('league_teams').select('*').eq('id', teamId).single()
+    if (fErr) return { error: fErr }
+    const { error } = await supabase.from('league_teams')
+      .update({ status: 'withdrawn' })
+      .eq('id', teamId)
+    if (error) return { error }
+    await supabase.from('league_interests')
+      .update({ status: 'looking' })
+      .eq('league_id', team.league_id)
+      .in('player_id', [team.proposer_id, team.invitee_id])
+    await Promise.all([loadLeagueTeams(), loadLeagueInterests()])
+    return { error: null }
+  }, [])
+
   return (
     <AppContext.Provider value={{
       players: normalisedPlayers,
@@ -636,6 +804,11 @@ export function AppProvider({ children }) {
       updates, addUpdate, deleteUpdate, addReaction,
       claimedId, claimIdentity, clearIdentity, regeneratePin,
       playerAliases, setPlayerAlias, removePlayerAlias,
+      // Lobster League
+      leagues, leagueInterests, leagueTeams,
+      createLeague, updateLeague, deleteLeague,
+      registerLeagueInterest, withdrawLeagueInterest,
+      proposeLeagueTeam, respondLeagueTeam, dissolveLeagueTeam,
     }}>
       {children}
     </AppContext.Provider>

@@ -14,6 +14,7 @@ import Merch from './components/Merch'
 import Updates from './components/Updates'
 import History from './components/History'
 import Game from './components/Game'
+import League from './components/League'
 import VerificationGate from './components/VerificationGate'
 
 export default function App() {
@@ -80,6 +81,7 @@ function Inner() {
     settings:     <Settings onNavigate={navigate} />,
     history:      <History onNavigate={navigate} />,
     game:         <Game tournament={selectedTournament} onNavigate={navigate} />,
+    league:       <League onNavigate={navigate} />,
   }
 
   return (
