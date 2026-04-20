@@ -5,6 +5,7 @@ import {
   ChevronDown, ChevronUp, Plus, Check, X, AlertCircle, Heart, Music,
   UserPlus, Clock, Pencil, Save,
 } from 'lucide-react'
+import { DateTile } from './CalendarPieces'
 
 // ── Range calendar ────────────────────────────────────────────────────────
 // Compact custom calendar with range-select. Avoids native <input type="date">
@@ -203,8 +204,8 @@ const DEFAULT_SECTIONS = [
       '• One loss and you\'re out — every match matters',
       '',
       '**Divisions**',
-      "• The league will feature a Men's Division and a Women's Division, provided there are sufficient signups for each.",
-      '• If there are insufficient signups to form separate divisions, they will be combined into a single open division.',
+      "• The league will feature a Men's Division and a Women's Division, provided there are sufficient sign-ups for each.",
+      '• If there are insufficient sign-ups to form separate divisions, they will be combined into a single open division.',
     ].join('\n'),
   },
   // This placeholder is only used when the admin hasn't set phase dates.
@@ -214,7 +215,7 @@ const DEFAULT_SECTIONS = [
     id: 'timeline', icon: '🗓️', title: 'Season Timeline',
     body: [
       'Once the admin locks in the season calendar, you\'ll see the exact date range for each phase here. Meanwhile, the shape is:',
-      '• Signups → deadline set by the admin',
+      '• Sign-up → deadline set by the admin',
       '• Group Stage (5 weeks) — 3 matches per team at your own pace',
       '• Quarterfinals (2 weeks) — only if the league hits 12+ teams per division',
       '• Semifinals (2 weeks)',
@@ -301,7 +302,7 @@ function fmtRange(start, end) {
 // Falls back to the generic DEFAULT_SECTIONS timeline when nothing's set.
 function renderTimeline(league) {
   const rows = [
-    ['📝 Signups',        league.signup_closes_at
+    ['📝 Sign-up',        league.signup_closes_at
       ? `until ${new Date(league.signup_closes_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`
       : null],
     ['🏓 Group Stage',    fmtRange(league.group_stage_start, league.group_stage_end)],
@@ -325,6 +326,9 @@ function renderTimeline(league) {
   )
 }
 
+// Countdown shows "N days left" or "Signups closed …" based on the deadline.
+// Inherits text color from its parent so the same component looks right on
+// the orange hero pill (white) and on lighter admin surfaces (teal/red).
 function Countdown({ deadline }) {
   if (!deadline) return null
   const ms = new Date(deadline).getTime() - Date.now()
@@ -333,9 +337,9 @@ function Countdown({ deadline }) {
   const days = Math.floor(Math.abs(ms) / 86400000)
   const hours = Math.floor((Math.abs(ms) % 86400000) / 3600000)
   return (
-    <span className={`text-xs font-semibold ${past ? 'text-red-500' : 'text-lobster-teal'}`}>
+    <span className="text-xs font-semibold">
       {past
-        ? `Signups closed ${days}d ago`
+        ? `Sign-up closed ${days}d ago`
         : days > 1
           ? `${days} days left`
           : days === 1
@@ -475,9 +479,9 @@ function CreateLeagueForm({ onCancel, onCreated }) {
       </div>
 
       <div>
-        <label className="label">Signups deadline</label>
+        <label className="label">Sign-up deadline</label>
         <input type="datetime-local" className="input" value={deadline} onChange={e => setDeadline(e.target.value)} required />
-        <p className="text-[11px] text-gray-400 mt-1">After this moment, new interests are blocked and the page shows "Signups closed."</p>
+        <p className="text-[11px] text-gray-400 mt-1">After this moment, new interests are blocked and the page shows "Sign-up closed."</p>
       </div>
 
       <div className="space-y-3 pt-2 border-t border-gray-100">
@@ -677,7 +681,7 @@ export default function League({ onNavigate }) {
             <ChevronLeft size={16} /> Events
           </button>
           <h2 className="text-lg font-bold text-gray-800">Lobster League</h2>
-          <p className="text-sm text-gray-500">No league set up yet. Create one to open signups.</p>
+          <p className="text-sm text-gray-500">No league set up yet. Create one to open sign-ups.</p>
         </div>
         {creatingLeague
           ? <CreateLeagueForm onCancel={() => setCreatingLeague(false)} onCreated={() => setCreatingLeague(false)} />
@@ -702,17 +706,46 @@ export default function League({ onNavigate }) {
           <ChevronLeft size={16} /> Events
         </button>
         <div className="rounded-3xl bg-gradient-to-br from-lobster-teal to-teal-700 text-white p-5 shadow-md">
-          <div className="flex items-center gap-2 mb-1">
-            <Trophy size={20} className="text-yellow-300" />
-            <p className="text-xs font-bold uppercase tracking-widest opacity-80">Lobster League</p>
+          {/* Header row: DateTile (first playing day) + title + subtitle.
+              Matches the layout used on Tournament.jsx event cards so the
+              visual grammar is consistent across the two event types. */}
+          <div className="flex items-start gap-3 mb-3">
+            {(() => {
+              // Anchor the tile to the first meaningful day of the league:
+              // group stage start if set, otherwise the sign-up deadline.
+              const tileDate = league.group_stage_start
+                || (league.signup_closes_at ? new Date(league.signup_closes_at).toISOString().slice(0, 10) : null)
+                || league.starts_at
+              return tileDate ? <DateTile date={tileDate} size="md" /> : null
+            })()}
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] font-bold uppercase tracking-widest opacity-80">Lobster League</p>
+              <h1 className="text-xl sm:text-2xl font-extrabold leading-tight">{league.name}</h1>
+              {(() => {
+                // Full season range: group stage start → finals end. Show
+                // whichever endpoints are defined; omit gracefully if both
+                // are blank.
+                const rangeStart = league.group_stage_start || league.starts_at
+                const rangeEnd   = league.finals_end || league.ends_at
+                if (!rangeStart && !rangeEnd) return null
+                const fmt = (d) => d
+                  ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+                  : '…'
+                return (
+                  <p className="text-sm font-semibold mt-1 flex items-center gap-1 opacity-90">
+                    <Calendar size={13} /> {fmt(rangeStart)} – {fmt(rangeEnd)}
+                  </p>
+                )
+              })()}
+            </div>
           </div>
-          <h1 className="text-2xl font-extrabold leading-tight">{league.name}</h1>
-          <div className="flex items-center gap-3 mt-3 text-sm">
+
+          <div className="flex items-center gap-3 text-sm">
             <Users size={14} /> <span>{confirmedTeams.length} teams confirmed</span>
           </div>
           {league.signup_closes_at && (
-            <p className="mt-2 text-xs bg-white/15 inline-block px-2.5 py-1 rounded-full">
-              Signups close {new Date(league.signup_closes_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+            <p className="mt-2 text-xs bg-orange-500 text-white inline-block px-3 py-1 rounded-full font-semibold shadow-sm">
+              Sign-up closes on {new Date(league.signup_closes_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
               {' · '}
               <Countdown deadline={league.signup_closes_at} />
             </p>
@@ -733,7 +766,7 @@ export default function League({ onNavigate }) {
                 className="text-xs font-semibold px-3 py-1.5 bg-white border border-gray-200 rounded-lg">
                 Toggle visibility → {league.visibility === 'all' ? 'admin only' : 'all players'}
               </button>
-              <button onClick={() => { if (confirm('Delete this league and all its signups + teams?')) deleteLeague(league.id) }}
+              <button onClick={() => { if (confirm('Delete this league and all its sign-ups + teams?')) deleteLeague(league.id) }}
                 className="text-xs font-semibold px-3 py-1.5 text-red-600 border border-red-200 rounded-lg">
                 Delete league
               </button>
