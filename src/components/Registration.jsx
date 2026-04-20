@@ -630,15 +630,24 @@ export default function Registration({ tournament, onNavigate }) {
                         <span className="text-xs font-bold text-white">{rankings[0]?.pts}pts</span>
                       </div>
                     </div>
-                    {/* 3rd */}
+                    {/* 3rd — use the true bronze hex (#CD7F32) the History
+                        and Scores views use, so every place the podium is
+                        rendered matches. The Tailwind amber-300 that was
+                        here before reads as another gold shade next to 1st. */}
                     {rankings[2] && (
                       <div className="flex flex-col items-center gap-1 flex-1">
                         <span className="text-xl">🥉</span>
-                        <div className="w-10 h-10 bg-amber-300 rounded-full flex items-center justify-center font-bold text-white">
+                        <div
+                          className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white"
+                          style={{ background: '#CD7F32' }}
+                        >
                           {rankings[2]?.player.name[0]}
                         </div>
                         <p className="text-xs font-semibold text-center truncate w-full text-center">{rankings[2]?.player.name.split(' ')[0]}</p>
-                        <div className="bg-amber-300 w-full h-7 rounded-t-xl flex items-center justify-center">
+                        <div
+                          className="w-full h-7 rounded-t-xl flex items-center justify-center"
+                          style={{ background: '#CD7F32' }}
+                        >
                           <span className="text-xs font-bold text-white">{rankings[2]?.pts}pts</span>
                         </div>
                       </div>
