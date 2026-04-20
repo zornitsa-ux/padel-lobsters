@@ -975,12 +975,18 @@ export default function League({ onNavigate }) {
         <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 mt-4 mb-1">About the league</p>
         {DEFAULT_SECTIONS.map((s, i) => {
           const dynamicTimeline = s.id === 'timeline' ? renderTimeline(league) : null
-          const customBody = league.description_sections?.[s.id]
+          const customBody    = league.description_sections?.[s.id]
+          // What the user sees on-screen right now. When editing, the
+          // textarea is pre-filled with this so the admin is tweaking
+          // the actual copy rather than starting from a blank page.
           const effectiveBody = (customBody && customBody.trim()) || s.body
           const saveSection = async (newBody) => {
             const next = { ...(league.description_sections || {}) }
-            // Empty body resets to the default by removing the override.
-            if (!newBody || !newBody.trim()) delete next[s.id]
+            const trimmed = (newBody || '').trim()
+            // Blank OR identical to the default → drop the override so
+            // the section falls back to the hardcoded DEFAULT_SECTIONS
+            // copy and any future default updates show up automatically.
+            if (!trimmed || trimmed === s.body.trim()) delete next[s.id]
             else next[s.id] = newBody
             await updateLeague(league.id, { description_sections: next })
           }
@@ -990,7 +996,7 @@ export default function League({ onNavigate }) {
               id={s.id} icon={s.icon} title={s.title}
               defaultOpen={i === 0 && !myInterest}
               editable={canAdminLeague && s.id !== 'timeline'}
-              currentBody={customBody || ''}
+              currentBody={effectiveBody}
               onSave={saveSection}
             >
               {dynamicTimeline || renderBody(effectiveBody)}
