@@ -782,6 +782,119 @@ export default function League({ onNavigate }) {
         </details>
       )}
 
+      {/* Admin overview — all sign-ups across both divisions, grouped by
+          division, showing each player's status (looking vs matched) plus
+          their partner + team name when matched. Only visible to admins /
+          league admins, so it stays out of players' way.
+      */}
+      {canAdminLeague && (() => {
+        const all = leagueInterests.filter(i => String(i.league_id) === String(league.id))
+        if (all.length === 0) return null
+        const byDivision = all.reduce((acc, i) => {
+          (acc[i.division] ??= []).push(i)
+          return acc
+        }, {})
+        // Stable division ordering: Men's, Women's, Open (if present).
+        const divOrder = ['mens', 'womens', 'open']
+        const divLabel = (d) => d === 'mens' ? "Men's Division" : d === 'womens' ? "Women's Division" : 'Open Division'
+
+        // Quick lookup: for each matched player, find the confirmed team
+        // so we can show "paired with X — Team Y".
+        const teamForPlayer = (pid) => confirmedTeams.find(t =>
+          String(t.proposer_id) === String(pid) || String(t.invitee_id) === String(pid)
+        )
+
+        return (
+          <details className="bg-white border border-gray-200 rounded-2xl" open>
+            <summary className="cursor-pointer px-3 py-2 text-sm font-semibold text-gray-700 flex items-center justify-between">
+              <span>🔍 Admin overview — all sign-ups</span>
+              <span className="text-[11px] font-normal text-gray-400">{all.length} total</span>
+            </summary>
+            <div className="p-3 space-y-4 border-t border-gray-100">
+              {divOrder.filter(d => byDivision[d]?.length).map(d => {
+                const rows  = byDivision[d]
+                const looking = rows.filter(r => r.status === 'looking')
+                const matched = rows.filter(r => r.status === 'matched')
+                const withdrew = rows.filter(r => r.status === 'withdrawn')
+                return (
+                  <div key={d} className="space-y-2">
+                    <p className="text-xs font-bold uppercase tracking-wide text-lobster-teal">
+                      {divLabel(d)} <span className="text-gray-400 font-normal">({rows.length})</span>
+                    </p>
+
+                    {/* Matched pairs first — most "complete" state */}
+                    {matched.length > 0 && (
+                      <div className="space-y-1">
+                        {matched.map(r => {
+                          const p = players.find(pp => String(pp.id) === String(r.player_id))
+                          const team = teamForPlayer(r.player_id)
+                          const partnerId = team
+                            ? (String(team.proposer_id) === String(r.player_id) ? team.invitee_id : team.proposer_id)
+                            : null
+                          return (
+                            <div key={r.id} className="flex items-center gap-2 text-xs bg-green-50 border border-green-100 rounded-lg px-2.5 py-1.5">
+                              <Check size={12} className="text-green-600 flex-shrink-0" />
+                              <span className="flex-1 min-w-0 truncate">
+                                <span className="font-semibold text-gray-800">{p?.name || '?'}</span>
+                                {team && (
+                                  <>
+                                    {' — paired with '}
+                                    <span className="font-semibold text-gray-800">{nameOf(partnerId)}</span>
+                                    {' · '}
+                                    <span className="text-green-700 font-semibold">Team {team.team_name}</span>
+                                  </>
+                                )}
+                              </span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+
+                    {/* Still looking — admin may want to nudge them */}
+                    {looking.length > 0 && (
+                      <div className="space-y-1">
+                        {looking.map(r => {
+                          const p = players.find(pp => String(pp.id) === String(r.player_id))
+                          return (
+                            <div key={r.id} className="flex items-center gap-2 text-xs bg-amber-50 border border-amber-100 rounded-lg px-2.5 py-1.5">
+                              <Clock size={12} className="text-amber-600 flex-shrink-0" />
+                              <span className="flex-1 min-w-0 truncate">
+                                <span className="font-semibold text-gray-800">{p?.name || '?'}</span>
+                                {' — looking for a partner'}
+                                {r.experience_level && <span className="text-gray-500"> · {r.experience_level}</span>}
+                              </span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+
+                    {/* Withdrew — greyed so admin knows they're no longer in */}
+                    {withdrew.length > 0 && (
+                      <div className="space-y-1 opacity-60">
+                        {withdrew.map(r => {
+                          const p = players.find(pp => String(pp.id) === String(r.player_id))
+                          return (
+                            <div key={r.id} className="flex items-center gap-2 text-xs bg-gray-50 rounded-lg px-2.5 py-1.5">
+                              <X size={12} className="text-gray-400 flex-shrink-0" />
+                              <span className="flex-1 min-w-0 truncate">
+                                <span className="font-semibold text-gray-500 line-through">{p?.name || '?'}</span>
+                                {' — withdrew'}
+                              </span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </details>
+        )
+      })()}
+
       {/* Pending invites TO me — top priority, so I can act on them */}
       {myPendingRecv.length > 0 && (
         <div className="space-y-2">
