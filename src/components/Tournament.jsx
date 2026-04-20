@@ -29,7 +29,7 @@ export default function Tournament({ onNavigate }) {
   const { tournaments, addTournament, updateTournament, deleteTournament, isAdmin, isLeagueAdmin, claimedId, players, getTournamentRegistrations } = useApp()
   // Temporary testing allowlist — match League.jsx. Lets the named
   // players preview the League entry while visibility is still 'admin'.
-  const TEST_PLAYER_FIRST_NAMES = ['zornitsa']
+  const TEST_PLAYER_FIRST_NAMES = ['zornitsa', 'jon', 'uziel']
   const meTourn       = claimedId ? players.find(p => String(p.id) === String(claimedId)) : null
   const myFirstName   = (meTourn?.name || '').trim().split(/\s+/)[0]?.toLowerCase() || ''
   const isLeagueTester = !!myFirstName && TEST_PLAYER_FIRST_NAMES.includes(myFirstName)

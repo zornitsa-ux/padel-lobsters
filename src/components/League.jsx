@@ -597,7 +597,7 @@ export default function League({ onNavigate }) {
   // list can preview the League page even when visibility is still 'admin'.
   // Remove or replace with the `league.visibility === 'all'` check once
   // signups open to the whole group.
-  const TEST_PLAYER_FIRST_NAMES = ['zornitsa']
+  const TEST_PLAYER_FIRST_NAMES = ['zornitsa', 'jon', 'uziel']
   const meForView = claimedId ? players.find(p => String(p.id) === String(claimedId)) : null
   const myFirstName = (meForView?.name || '').trim().split(/\s+/)[0]?.toLowerCase() || ''
   const isTestPlayer = myFirstName && TEST_PLAYER_FIRST_NAMES.includes(myFirstName)

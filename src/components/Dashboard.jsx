@@ -125,7 +125,7 @@ export default function Dashboard({ onNavigate }) {
 
   // Temporary testing allowlist — match League.jsx / Tournament.jsx so the
   // Home page tile is visible to the same set of previewers.
-  const TEST_PLAYER_FIRST_NAMES = ['zornitsa']
+  const TEST_PLAYER_FIRST_NAMES = ['zornitsa', 'jon', 'uziel']
   const meDash      = claimedId ? players.find(p => String(p.id) === String(claimedId)) : null
   const myFirst     = (meDash?.name || '').trim().split(/\s+/)[0]?.toLowerCase() || ''
   const isLeagueTester = !!myFirst && TEST_PLAYER_FIRST_NAMES.includes(myFirst)
