@@ -844,9 +844,9 @@ export default function Schedule({ tournament, onNavigate }) {
         </span>
       </div>
 
-      {/* Generator controls (admin only) */}
-      {/* Generate controls — visible to all, gated on admin login */}
-      {!generated && (
+      {/* Generator controls — admin-only. Players never see this box;
+          they only see the saved schedule once an admin has generated it. */}
+      {!generated && isAdmin && (
         <div className="card space-y-3">
           <p className="font-semibold text-gray-700 text-sm">Generate Schedule</p>
 
