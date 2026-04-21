@@ -524,6 +524,13 @@ export default function Dashboard({ onNavigate }) {
             ) : null
           )}
 
+          {/* Event description — preserves line breaks from the admin form. */}
+          {upcoming.notes && upcoming.notes.trim() && (
+            <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-line mb-3">
+              {upcoming.notes}
+            </p>
+          )}
+
           {/* Action links */}
           <div className="flex gap-2">
             <button

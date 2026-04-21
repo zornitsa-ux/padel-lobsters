@@ -9,6 +9,15 @@ import HistoryContent, { TOURNAMENTS as HISTORY_TOURNAMENTS } from './History'
 import { DateTile, AddToCalendarButton, ShareWhatsAppButton } from './CalendarPieces'
 import { fmtEur } from '../lib/format'
 
+// Default description prefilled into every new event. Admins can edit
+// it freely per event — this is just the starting text so common
+// logistics (check-in time, what's included, pairing style) are always
+// visible to players without someone having to retype them each time.
+export const DEFAULT_EVENT_DESCRIPTION =
+  `Please arrive 15 minutes early for a quick check-in, meet & greet, and rules briefing.
+Includes courts, balls 🎾, food 🍗, a winner's prize, and raffle prizes 🏆
+Pairings are arranged for fun, balanced games.`
+
 const emptyForm = {
   name: '',
   date: '',
@@ -22,7 +31,7 @@ const emptyForm = {
   courts: [{ name: '', booked: false, costPerPerson: '', responsible: '', tikkieLink: '' }],
   pricePerPerson: '',
   tikkieLink: '',
-  notes: '',
+  notes: DEFAULT_EVENT_DESCRIPTION,
 }
 
 export default function Tournament({ onNavigate }) {
@@ -703,10 +712,14 @@ export default function Tournament({ onNavigate }) {
                 </div>
               )}
 
-              {/* Notes */}
+              {/* Description */}
               <div>
-                <label className="label">Notes</label>
-                <textarea className="input resize-none" rows={2} placeholder="Parking, dress code, anything else..."
+                <label className="label">Description</label>
+                <p className="text-xs text-gray-500 mb-2">
+                  Shown to players on the home screen and event page. Feel free to edit —
+                  the default covers check-in, what's included, and pairings.
+                </p>
+                <textarea className="input resize-none" rows={5} placeholder="What should players know about this event?"
                   value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
               </div>
 

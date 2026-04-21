@@ -256,6 +256,13 @@ export default function Registration({ tournament, onNavigate }) {
             <AddToCalendarButton tournament={tournament} variant="icon" />
           </div>
         </div>
+
+        {/* Event description — admin-editable, preserves line breaks. */}
+        {tournament.notes && tournament.notes.trim() && (
+          <p className="mt-3 text-sm text-gray-600 leading-relaxed whitespace-pre-line bg-gray-50 rounded-xl px-3 py-2.5 border border-gray-100">
+            {tournament.notes}
+          </p>
+        )}
       </div>
 
       {/* Summary bar */}
