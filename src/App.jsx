@@ -16,6 +16,7 @@ import History from './components/History'
 import Game from './components/Game'
 import League from './components/League'
 import VerificationGate from './components/VerificationGate'
+import GuestDashboard from './components/GuestDashboard'
 
 export default function App() {
   return (
@@ -31,7 +32,7 @@ export default function App() {
 }
 
 function Inner() {
-  const { tournaments, loading } = useApp()
+  const { tournaments, loading, role } = useApp()
   const [page, setPage] = useState('dashboard')
   const [selectedTournament, setSelectedTournament] = useState(null)
 
@@ -65,8 +66,15 @@ function Inner() {
     window.scrollTo(0, 0)
   }
 
+  // Guests see a dedicated landing (GuestDashboard) that mirrors the player
+  // Dashboard's event tile style but lists ALL upcoming events. Every
+  // interactive element (tile, sub-tile nav, etc.) routes to a protected
+  // page, which VerificationGate catches and converts into the sign-in/up
+  // popup. Once the guest signs in, the real Dashboard takes over.
   const pages = {
-    dashboard:    <Dashboard onNavigate={navigate} />,
+    dashboard:    role === 'guest'
+                    ? <GuestDashboard onNavigate={navigate} />
+                    : <Dashboard onNavigate={navigate} />,
     players:      <Players onNavigate={navigate} focusPlayerId={selectedTournament?.focusPlayerId} />,
     tournament:   <Tournament onNavigate={navigate} />,
     registration: <Registration tournament={selectedTournament} onNavigate={navigate} />,

@@ -26,8 +26,10 @@
  * 'guest', not from the raw tables.
  */
 export const PUBLIC_PAGES = Object.freeze([
-  'dashboard',   // landing — upcoming tournaments overview
-  'tournament',  // event detail — date, location, format, registered count (no player names)
+  'dashboard',   // landing — GuestDashboard lists all upcoming events for guests;
+                 // every sub-tile (Events, Players, Updates, Merch) and every
+                 // event tile routes to a protected page, which makes the
+                 // VerificationGate surface the sign-in/up popup.
 ])
 
 /**
@@ -36,6 +38,7 @@ export const PUBLIC_PAGES = Object.freeze([
  * runtime. If you add a page, put it here OR in PUBLIC_PAGES — pick one.
  */
 export const PROTECTED_PAGES = Object.freeze([
+  'tournament',    // events listing — protected so guests get the sign-in popup
   'players',       // roster (PII)
   'registration',  // signing up for a tournament (writes, identity-linked)
   'payments',      // payment status (identity-linked)
