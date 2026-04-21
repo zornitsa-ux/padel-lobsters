@@ -1,14 +1,15 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../supabase'
-
 const AppContext = createContext(null)
-
 const generatePin = () => String(Math.floor(1000 + Math.random() * 9000))
-
 export function AppProvider({ children }) {
   const [players, setPlayers]           = useState([])
   const [tournaments, setTournaments]   = useState([])
   const [registrations, setRegistrations] = useState([])
+  // Public (guest) read-surface: count-only registrations keyed by tournament_id.
+  // Populated only for role === 'guest' — authenticated roles get the real
+  // registrations[] array instead. Shape: { [t.id]: { registered_count, waitlist_count } }
+  const [publicCounts, setPublicCounts] = useState({})
   const [matches, setMatches]           = useState([])
   const [updates, setUpdates]           = useState([])
   // ── Lobster League (v20 migration) ─────────────────────────────────────
@@ -25,21 +26,22 @@ export function AppProvider({ children }) {
   // Granted when the user signs in with the league_admin_pin from settings.
   const [isLeagueAdmin, setIsLeagueAdmin] = useState(() => localStorage.getItem('lobster_league_admin') === 'true')
   const [claimedId, setClaimedId]       = useState(() => localStorage.getItem('lobster_claimed_id') || null)
-
+  // Role snapshot for loaders that need to pick a data source (public view vs
+  // raw table) outside React's render cycle — subscription callbacks close over
+  // their initial scope, so reading from state would give us stale values.
+  const roleRef = useRef('guest')
   // Wrap setIsAdmin so it persists across refreshes
   const setAdminState = useCallback((val) => {
     setIsAdmin(val)
     if (val) localStorage.setItem('lobster_admin', 'true')
     else      localStorage.removeItem('lobster_admin')
   }, [])
-
   // Same pattern for the secondary League Admin flag.
   const setLeagueAdminState = useCallback((val) => {
     setIsLeagueAdmin(val)
     if (val) localStorage.setItem('lobster_league_admin', 'true')
     else      localStorage.removeItem('lobster_league_admin')
   }, [])
-
   // ── Initial data load ──────────────────────────────────────
   useEffect(() => {
     loadAll()
@@ -83,7 +85,6 @@ export function AppProvider({ children }) {
     ]
     return () => channels.forEach(c => supabase.removeChannel(c))
   }, [])
-
   const loadAll = async () => {
     await Promise.all([
       loadPlayers(), loadTournaments(), loadRegistrations(), loadMatches(),
@@ -92,7 +93,6 @@ export function AppProvider({ children }) {
     ])
     setLoading(false)
   }
-
   // ── Lobster League loaders ────────────────────────────────────────────
   // Each fails silently if the v20 migration hasn't run yet so the rest
   // of the app keeps working during rollout.
@@ -117,7 +117,6 @@ export function AppProvider({ children }) {
       setLeagueTeams(data || [])
     } catch { /* table not present yet */ }
   }
-
   const loadPlayerAliases = async () => {
     // Map of historical_name → player_id (or sentinel '__not_in_roster__'
     // when the row was explicitly skipped). Fails silently if the v16
@@ -134,7 +133,6 @@ export function AppProvider({ children }) {
       // Table not present — historical features just degrade to "no aliases".
     }
   }
-
   const loadUpdates = async () => {
     const { data } = await supabase
       .from('updates')
@@ -142,27 +140,43 @@ export function AppProvider({ children }) {
       .order('created_at', { ascending: false })
     if (data) setUpdates(data)
   }
-
   const loadPlayers = async () => {
     const { data } = await supabase.from('players').select('*').order('name')
     if (data) setPlayers(data)
   }
-
   const loadTournaments = async () => {
-    const { data } = await supabase.from('tournaments').select('*').order('date', { ascending: false })
+    // Guests read from the PII-free `public_tournaments` view (see v24 migration).
+    // Authenticated roles still hit the raw table so admin-only columns stay
+    // available. roleRef avoids stale-closure reads from realtime subscriptions.
+    const source = roleRef.current === 'guest' ? 'public_tournaments' : 'tournaments'
+    const { data } = await supabase.from(source).select('*').order('date', { ascending: false })
     if (data) setTournaments(data)
   }
-
+  // Guest-only: count-of-registrations per tournament from the public view.
+  // Never returns player_ids — only the totals the UI needs to render
+  // "5 / 16 registered" on the guest dashboard / event page.
+  const loadPublicCounts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('public_tournament_registration_counts')
+        .select('*')
+      if (error) throw error
+      const map = {}
+      ;(data || []).forEach(row => { map[row.tournament_id] = row })
+      setPublicCounts(map)
+    } catch (e) {
+      // View not present yet (pre-v24) — degrade to empty counts.
+      console.warn('loadPublicCounts skipped:', e?.message)
+    }
+  }
   const loadRegistrations = async () => {
     const { data } = await supabase.from('registrations').select('*')
     if (data) setRegistrations(data)
   }
-
   const loadMatches = async () => {
     const { data } = await supabase.from('matches').select('*')
     if (data) setMatches(data)
   }
-
   const loadSettings = async () => {
     const { data } = await supabase.from('settings').select('*').eq('id', 1).single()
     if (data) setSettings({
@@ -174,7 +188,6 @@ export function AppProvider({ children }) {
       padelTips:      data.padel_tips       ?? data.padelTips       ?? null,
     })
   }
-
   // ── Settings ─────────────────────────────────────────────
   // Errors are NOT swallowed here — callers must handle them (and roll
   // back optimistic UI if needed) so we never end up showing a save that
@@ -201,7 +214,6 @@ export function AppProvider({ children }) {
     }
     setSettings(s => ({ ...s, ...newSettings }))
   }, [])
-
   // ── Players ──────────────────────────────────────────────
   const addPlayer = useCallback(async (data) => {
     const pin = generatePin()
@@ -234,7 +246,6 @@ export function AppProvider({ children }) {
       return inserted
     }
   }, [])
-
   const updatePlayer = useCallback(async (id, data) => {
     const payload = {
       name:               data.name,
@@ -263,12 +274,10 @@ export function AppProvider({ children }) {
       await loadPlayers()
     }
   }, [])
-
   const deletePlayer = useCallback(async (id) => {
     await supabase.from('players').delete().eq('id', id)
     loadPlayers()
   }, [])
-
   // ── Tournaments ───────────────────────────────────────────
   const addTournament = useCallback(async (data) => {
     const payload = {
@@ -290,7 +299,6 @@ export function AppProvider({ children }) {
     const { error } = await supabase.from('tournaments').insert(payload)
     if (!error) loadTournaments()
   }, [])
-
   const updateTournament = useCallback(async (id, data) => {
     const payload = {}
     if (data.name             !== undefined) payload.name               = data.name
@@ -311,12 +319,10 @@ export function AppProvider({ children }) {
     const { error } = await supabase.from('tournaments').update(payload).eq('id', id)
     if (!error) loadTournaments()
   }, [])
-
   const deleteTournament = useCallback(async (id) => {
     await supabase.from('tournaments').delete().eq('id', id)
     loadTournaments()
   }, [])
-
   // ── Registrations ─────────────────────────────────────────
   const registerPlayer = useCallback(async (tournamentId, playerId, maxPlayers) => {
     const current = registrations.filter(
@@ -333,7 +339,6 @@ export function AppProvider({ children }) {
     if (!error) loadRegistrations()
     return { regId: inserted?.id ?? null, status }
   }, [registrations])
-
   // Transfer a spot from one player to another — payment is handled between the two players.
   //
   // Three cases for the recipient (toPlayerId):
@@ -349,14 +354,12 @@ export function AppProvider({ children }) {
     await supabase.from('registrations')
       .update({ status: 'cancelled', payment_method: `transferred_to:${toPlayerId}` })
       .eq('id', regId)
-
     // Step 2: decide what to do with the recipient. Look up any existing row
     // for (tournament, recipient) so we don't create duplicates.
     const existing = registrations.find(r =>
       String(r.tournament_id) === String(tournamentId) &&
       String(r.player_id) === String(toPlayerId)
     )
-
     if (existing && (existing.status === 'waitlist' || existing.status === 'cancelled')) {
       // Promote the existing row — keeps a clean one-row-per-player invariant.
       await supabase.from('registrations').update({
@@ -374,10 +377,8 @@ export function AppProvider({ children }) {
         payment_method: `transferred_from:${fromPlayerId}`,
       })
     }
-
     loadRegistrations()
   }, [registrations])
-
   const updateRegistration = useCallback(async (id, data) => {
     const payload = {}
     if (data.status         !== undefined) payload.status         = data.status
@@ -386,7 +387,6 @@ export function AppProvider({ children }) {
     const { error } = await supabase.from('registrations').update(payload).eq('id', id)
     if (!error) loadRegistrations()
   }, [])
-
   const cancelRegistration = useCallback(async (id, tournamentId) => {
     await supabase.from('registrations').update({ status: 'cancelled' }).eq('id', id)
     // Promote first waitlisted player
@@ -398,7 +398,6 @@ export function AppProvider({ children }) {
     }
     loadRegistrations()
   }, [registrations])
-
   // ── Matches ───────────────────────────────────────────────
   const saveMatches = useCallback(async (tournamentId, rounds) => {
     await supabase.from('matches').delete().eq('tournament_id', tournamentId)
@@ -417,7 +416,6 @@ export function AppProvider({ children }) {
     if (rows.length > 0) await supabase.from('matches').insert(rows)
     loadMatches()
   }, [])
-
   const updateMatch = useCallback(async (id, data) => {
     const payload = {}
     if (data.score1    !== undefined) payload.score1    = data.score1
@@ -426,7 +424,6 @@ export function AppProvider({ children }) {
     await supabase.from('matches').update(payload).eq('id', id)
     loadMatches()
   }, [])
-
   // ── Helpers ───────────────────────────────────────────────
   // Normalise Supabase snake_case → camelCase for components
   const normalisedPlayers = players.map(p => ({
@@ -444,7 +441,6 @@ export function AppProvider({ children }) {
     preferredPosition: p.preferred_position ?? p.preferredPosition ?? '',
     taglineLabel:      p.tagline_label      ?? p.taglineLabel      ?? '',
   }))
-
   const normalisedTournaments = tournaments.map(t => ({
     ...t,
     maxPlayers:       t.max_players        ?? t.maxPlayers       ?? 16,
@@ -457,7 +453,6 @@ export function AppProvider({ children }) {
     genderMode:       t.gender_mode        ?? t.genderMode       ?? 'mixed',
     completedAt:      t.completed_at       ?? t.completedAt      ?? null,
   }))
-
   const normalisedRegistrations = registrations.map(r => ({
     ...r,
     tournamentId:  r.tournament_id ?? r.tournamentId,
@@ -466,7 +461,6 @@ export function AppProvider({ children }) {
     paymentMethod: r.payment_method ?? r.paymentMethod ?? '',
     registeredAt:  { seconds: r.created_at ? new Date(r.created_at).getTime() / 1000 : 0 },
   }))
-
   const normalisedMatches = matches.map(m => ({
     ...m,
     tournamentId: m.tournament_id ?? m.tournamentId,
@@ -475,22 +469,18 @@ export function AppProvider({ children }) {
     team1Level:   m.team1_level  ?? m.team1Level  ?? 0,
     team2Level:   m.team2_level  ?? m.team2Level  ?? 0,
   }))
-
   const getPlayerById = useCallback(
     (id) => normalisedPlayers.find(p => p.id === id),
     [normalisedPlayers]
   )
-
   const getTournamentRegistrations = useCallback(
     (tournamentId) => normalisedRegistrations.filter(r => r.tournamentId === tournamentId),
     [normalisedRegistrations]
   )
-
   const getTournamentMatches = useCallback(
     (tournamentId) => normalisedMatches.filter(m => m.tournamentId === tournamentId),
     [normalisedMatches]
   )
-
   // ── PIN / Identity ───────────────────────────────────────
   const regeneratePin = useCallback(async (playerId) => {
     const newPin = generatePin()
@@ -498,7 +488,6 @@ export function AppProvider({ children }) {
     await loadPlayers()
     return newPin
   }, [])
-
   // Verify a player's PIN and claim that identity on this device
   const claimIdentity = useCallback((playerId, enteredPin, playersList) => {
     const player = playersList.find(p => String(p.id) === String(playerId))
@@ -509,13 +498,11 @@ export function AppProvider({ children }) {
     setClaimedId(id)
     return { success: true }
   }, [])
-
   const clearIdentity = useCallback(() => {
     localStorage.removeItem('lobster_claimed_id')
     localStorage.removeItem('lobster_session_pin')
     setClaimedId(null)
   }, [])
-
   // ── Unified auth middleware ──────────────────────────────
   // One entry point for authentication. Pass a PIN and we auto-detect:
   //   1. If it matches the admin PIN → elevate to admin (keeps any existing player identity).
@@ -531,7 +518,6 @@ export function AppProvider({ children }) {
   const loginWithPin = useCallback(async (enteredPin) => {
     const pin = String(enteredPin || '').trim()
     if (!pin) return { success: false, error: 'Enter your PIN' }
-
     // 1) Try admin first — admin role is a deliberate operator choice.
     try {
       const { data: isAdminPin, error: adminErr } = await supabase.rpc('verify_admin_pin', { input_pin: pin })
@@ -546,7 +532,6 @@ export function AppProvider({ children }) {
     } catch (e) {
       console.error('verify_admin_pin threw:', e)
     }
-
     // 1b) Try the scoped League Admin PIN. Stored plaintext on settings —
     //     see v21 migration. Only matches when the admin has actually
     //     configured a non-empty PIN.
@@ -554,7 +539,6 @@ export function AppProvider({ children }) {
       setLeagueAdminState(true)
       return { success: true, role: 'league_admin' }
     }
-
     // 2) Fall back to player PIN.
     try {
       const { data: playerId, error: playerErr } = await supabase.rpc('verify_player_pin', { input_pin: pin })
@@ -574,10 +558,8 @@ export function AppProvider({ children }) {
     } catch (e) {
       console.error('verify_player_pin threw:', e)
     }
-
     return { success: false, error: "That PIN didn't match any Lobster — double-check and try again." }
   }, [players, setAdminState, setLeagueAdminState, settings.leagueAdminPin])
-
   // Fetch the signed-in player's full record (including email / phone / full
   // birthday) through the secure RPC. Returns null if no PIN is cached or the
   // RPC call fails. Used by Settings' profile drawer.
@@ -595,7 +577,6 @@ export function AppProvider({ children }) {
       return null
     }
   }, [])
-
   // Admin-only: fetch all players with full PII via the admin-gated RPC.
   const fetchAllPlayersWithPii = useCallback(async () => {
     const adminPin = localStorage.getItem('lobster_session_admin_pin')
@@ -609,7 +590,6 @@ export function AppProvider({ children }) {
       return null
     }
   }, [])
-
   // Full sign-out: drops both admin statuses and claimed player identity.
   const logout = useCallback(() => {
     setAdminState(false)
@@ -619,7 +599,6 @@ export function AppProvider({ children }) {
     localStorage.removeItem('lobster_session_admin_pin')
     setClaimedId(null)
   }, [setAdminState, setLeagueAdminState])
-
   // Current role for gates/banners.
   //   admin          — full operator access
   //   league_admin   — scoped to the Lobster League
@@ -630,19 +609,34 @@ export function AppProvider({ children }) {
     isLeagueAdmin   ? 'league_admin' :
     claimedId       ? 'player' :
                       'guest'
-
+  // Keep roleRef in sync with the derived role, and refresh the data sources
+  // that depend on which surface we're reading from. When a guest signs in,
+  // this re-runs loadTournaments so the raw table replaces the public view.
+  useEffect(() => {
+    const prev = roleRef.current
+    roleRef.current = role
+    // Always reload tournaments so source switches (guest ↔ authed) happen
+    // atomically with the role change. Safe: it's just a SELECT.
+    loadTournaments()
+    if (role === 'guest') {
+      loadPublicCounts()
+    } else if (prev === 'guest') {
+      // Dropping guest state — clear the map so a later sign-out rehydrates
+      // it fresh rather than showing a stale snapshot.
+      setPublicCounts({})
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [role])
   // ── Updates ──────────────────────────────────────────────
   const addUpdate = useCallback(async (playerId, content) => {
     const { error } = await supabase.from('updates').insert({ player_id: playerId, content })
     if (error) console.error('Add update error:', error)
     else await loadUpdates()
   }, [])
-
   const deleteUpdate = useCallback(async (id) => {
     await supabase.from('updates').delete().eq('id', id)
     await loadUpdates()
   }, [])
-
   const addReaction = useCallback(async (updateId, playerId, type) => {
     // Check if a reaction already exists from this player on this update
     const { data: existing } = await supabase
@@ -651,7 +645,6 @@ export function AppProvider({ children }) {
       .eq('update_id', updateId)
       .eq('player_id', playerId)
       .maybeSingle()
-
     if (existing) {
       if (existing.type === type) {
         // Same type → toggle off
@@ -665,7 +658,6 @@ export function AppProvider({ children }) {
     }
     await loadUpdates()
   }, [])
-
   // ── Historical name → player_id alias map ─────────────────
   const setPlayerAlias = useCallback(async (historicalName, playerId) => {
     // Upsert. playerId can be a real UUID or the '__not_in_roster__' sentinel.
@@ -686,7 +678,6 @@ export function AppProvider({ children }) {
     setPlayerAliases(m => ({ ...m, [historicalName]: playerId }))
     return true
   }, [])
-
   const removePlayerAlias = useCallback(async (historicalName) => {
     const { error } = await supabase.from('player_aliases').delete().eq('historical_name', historicalName)
     if (error) { console.error(error); return false }
@@ -697,12 +688,10 @@ export function AppProvider({ children }) {
     })
     return true
   }, [])
-
   // ── Lobster League CRUD ─────────────────────────────────────────────────
   // Helpers for the new league flow. Each returns { data, error } so the UI
   // can surface failures cleanly. All writes trigger realtime events that
   // the subscriptions above pick up, so local state always matches the DB.
-
   const createLeague = useCallback(async (data) => {
     const { data: row, error } = await supabase.from('leagues').insert({
       name:               data.name,
@@ -728,19 +717,16 @@ export function AppProvider({ children }) {
     if (!error && row) await loadLeagues()
     return { data: row, error }
   }, [claimedId])
-
   const updateLeague = useCallback(async (id, patch) => {
     const { error } = await supabase.from('leagues').update(patch).eq('id', id)
     if (!error) await loadLeagues()
     return { error }
   }, [])
-
   const deleteLeague = useCallback(async (id) => {
     const { error } = await supabase.from('leagues').delete().eq('id', id)
     if (!error) await loadLeagues()
     return { error }
   }, [])
-
   // Step 1 of signup — "I'm interested in playing." Division is derived
   // from the player's profile gender (falls back to 'open').
   const registerLeagueInterest = useCallback(async (leagueId, experienceLevel) => {
@@ -759,7 +745,6 @@ export function AppProvider({ children }) {
     if (!error) await loadLeagueInterests()
     return { error, division }
   }, [claimedId, players])
-
   const withdrawLeagueInterest = useCallback(async (leagueId) => {
     if (!claimedId) return { error: { message: 'Not signed in' } }
     const { error } = await supabase.from('league_interests')
@@ -769,7 +754,6 @@ export function AppProvider({ children }) {
     if (!error) await loadLeagueInterests()
     return { error }
   }, [claimedId])
-
   // Step 2 — send a pairing request. Creates a `league_teams` row with
   // status='pending'. Both interest rows stay as 'looking' until the
   // invitee accepts.
@@ -791,7 +775,6 @@ export function AppProvider({ children }) {
     if (!error && row) await loadLeagueTeams()
     return { data: row, error }
   }, [claimedId])
-
   const respondLeagueTeam = useCallback(async (teamId, accept) => {
     if (!claimedId) return { error: { message: 'Not signed in' } }
     const newStatus = accept ? 'confirmed' : 'declined'
@@ -812,7 +795,6 @@ export function AppProvider({ children }) {
     await Promise.all([loadLeagueTeams(), loadLeagueInterests()])
     return { error: null }
   }, [claimedId])
-
   // Admin-only: forcibly dissolve a confirmed team (e.g. someone dropped out).
   // Flips the team to 'withdrawn' and returns both players to 'looking' so
   // they can find new partners.
@@ -830,11 +812,11 @@ export function AppProvider({ children }) {
     await Promise.all([loadLeagueTeams(), loadLeagueInterests()])
     return { error: null }
   }, [])
-
   return (
     <AppContext.Provider value={{
       players: normalisedPlayers,
       tournaments: normalisedTournaments,
+      publicCounts,
       registrations: normalisedRegistrations,
       matches: normalisedMatches,
       settings, loading, isAdmin, isLeagueAdmin, role,
@@ -860,7 +842,6 @@ export function AppProvider({ children }) {
     </AppContext.Provider>
   )
 }
-
 export const useApp = () => {
   const ctx = useContext(AppContext)
   if (!ctx) throw new Error('useApp must be used inside AppProvider')
