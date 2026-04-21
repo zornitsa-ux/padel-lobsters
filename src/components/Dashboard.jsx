@@ -349,7 +349,14 @@ export default function Dashboard({ onNavigate }) {
     return new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
   }
 
-  const [greetHello, greetSub] = getGreeting(claimedPlayer?.name || (isAdmin ? 'Admin' : null))
+  // Greeting — members get the rotating "Snap snap, {name}!" set, guests
+  // (no claimed player, no admin, no league admin) get a generic welcome
+  // that invites them to sign in. Keeps the home page identical for
+  // logged-in and logged-out visitors except for the top line.
+  const isGuest = !claimedId && !isAdmin && !isLeagueAdmin
+  const [greetHello, greetSub] = isGuest
+    ? ['Welcome to Padel Lobsters!', 'Sign in with your PIN to join the fun.']
+    : getGreeting(claimedPlayer?.name || (isAdmin ? 'Admin' : null))
 
   // Tip of the day — use custom tips from settings or defaults
   // Launch-day tip overrides (date string → exact tip text)
