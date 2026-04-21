@@ -1,29 +1,32 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useApp } from '../context/AppContext'
 import { KeyRound, LogIn, MessageCircle } from 'lucide-react'
+import { isPublicPage } from '../lib/authPaths'
 
 // WhatsApp contact for PIN-reset requests. wa.me wants digits only, no +.
 const ADMIN_RESET_PHONE = '56997442387'
 const ADMIN_RESET_MSG   = 'Hi Lobster Admin 🦀 I forgot my Padel Lobsters PIN — could you reset it and send me a new one? Thanks!'
 
 /**
- * Hard verification gate.
+ * Verification gate.
  *
- * Wraps the entire app. When the user is not signed in as a player OR admin
- * (role === 'guest'), the children do NOT render — instead the gate shows
- * a full-screen PIN prompt. No browsing, no voting, no tournament registration,
- * no buttons of any kind until they've entered a valid PIN.
+ * Wraps the page render inside App. Three outcomes, in order:
  *
- * Why this exists: we previously let guests navigate freely and silently
- * disabled actions (e.g. the Lobster Games vote button would just no-op for
- * unauthenticated users). That produced confusing "why doesn't my tap work?"
- * reports. Now the app is explicitly gated from the first paint.
+ *   1. AppContext is still hydrating → render nothing (avoid UI flash).
+ *   2. Current page is in PUBLIC_PAGES (see src/lib/authPaths.js) → render
+ *      children regardless of role. Guests can browse upcoming tournaments,
+ *      event detail, and any other allowlisted surface without a PIN.
+ *   3. Current page is protected (default) → require a non-guest role;
+ *      otherwise show the full-screen PIN prompt.
  *
- * Once signed in, the PIN is remembered in localStorage by AppContext, so the
- * gate disappears for the session and doesn't come back unless the user logs
- * out from Settings.
+ * Why a `page` prop: the allowlist is keyed by page name. App.jsx is the
+ * component that knows which page is active, so it passes it in.
+ *
+ * Once signed in, the PIN is remembered in localStorage by AppContext, so
+ * the gate disappears for the session and doesn't come back unless the
+ * user logs out from Settings.
  */
-export default function VerificationGate({ children }) {
+export default function VerificationGate({ children, page }) {
   const { role, loading, loginWithPin } = useApp()
 
   const [pin, setPin]     = useState('')
@@ -42,6 +45,14 @@ export default function VerificationGate({ children }) {
   // While the context is hydrating (reading localStorage, fetching players),
   // don't flash the gate — render nothing so we don't paint the wrong state.
   if (loading) return null
+
+  // Public pages are rendered for everyone, including guests. The allowlist
+  // lives in src/lib/authPaths.js (default-deny: unknown pages are protected).
+  // Components under a public page MUST read only PII-free data — for tournament
+  // data that means the `public_tournaments` view, not the raw table. See
+  // supabase-migration-v24-public-browsing.sql.
+  if (isPublicPage(page)) return <>{children}</>
+
   if (role !== 'guest') return <>{children}</>
 
   const handleSubmit = async (e) => {

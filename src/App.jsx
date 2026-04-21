@@ -21,13 +21,10 @@ export default function App() {
   return (
     <AppProvider>
       <SetupGuard>
-        {/* Hard gate: guests can't browse, vote, register, or do anything
-            until they enter a valid player / admin PIN. Once signed in the
-            session is remembered in localStorage, so this only fires for
-            fresh devices or after an explicit sign-out. */}
-        <VerificationGate>
-          <Inner />
-        </VerificationGate>
+        {/* Page-aware auth gating: guests can browse pages in PUBLIC_PAGES
+            (src/lib/authPaths.js) without a PIN. Everything else is gated.
+            The gate lives inside <Inner /> so it can see the current page. */}
+        <Inner />
       </SetupGuard>
     </AppProvider>
   )
@@ -86,7 +83,13 @@ function Inner() {
 
   return (
     <Layout page={page} onNavigate={navigate}>
-      {pages[page] || pages.dashboard}
+      {/* VerificationGate is page-aware: for PUBLIC_PAGES it renders children
+          straight through; for everything else it shows the PIN prompt to
+          guests. Layout stays visible either way (nav chrome is fine to show
+          to guests — clicking a protected tab just triggers the PIN form). */}
+      <VerificationGate page={page}>
+        {pages[page] || pages.dashboard}
+      </VerificationGate>
     </Layout>
   )
 }
