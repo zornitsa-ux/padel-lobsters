@@ -1,2 +1,32 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+# =============================================================================
+#  Line ending policy for the repo.
+#
+#  `* text=auto eol=lf` says: detect text files automatically, and whenever
+#  git stores or checks one out, use LF (\n) line endings regardless of OS.
+#  This stops Windows editors from silently flipping files to CRLF and
+#  creating diffs that look like every line changed.
+#
+#  Binary files are matched explicitly so they're never touched.
+#
+#  After editing this file, run `git add --renormalize .` once to bring the
+#  existing working tree in line with the new rule. One-time cost.
+# =============================================================================
+
+* text=auto eol=lf
+
+# Explicit binaries — never normalize, never diff as text.
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.gif    binary
+*.ico    binary
+*.pdf    binary
+*.woff   binary
+*.woff2  binary
+*.ttf    binary
+*.otf    binary
+*.eot    binary
+*.mp3    binary
+*.mp4    binary
+*.webp   binary
+*.zip    binary
