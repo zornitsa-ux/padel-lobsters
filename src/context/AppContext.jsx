@@ -577,6 +577,46 @@ export function AppProvider({ children }) {
       return null
     }
   }, [])
+  // ── Self-serve signup (Phase 3: "create a Lobster from the PIN prompt") ──
+  // Wraps the v25 self_signup_player RPC. Returns { data, error } so the
+  // signup form can render inline feedback. data is { player_id, pin,
+  // was_existing } on success; error is a plain object with a .message.
+  //
+  // Intentionally no auto-login here — the caller handles that so the UI
+  // can show the PIN to the user first. Keeps this function focused on
+  // one job.
+  const selfSignup = useCallback(async ({ name, email, phone }) => {
+    const payload = {
+      p_name:  (name  || '').trim(),
+      p_email: (email || '').trim(),
+      p_phone: (phone || '').trim() || null,
+    }
+    if (!payload.p_name || !payload.p_email) {
+      return { data: null, error: { message: 'Name and email are required' } }
+    }
+    try {
+      const { data, error } = await supabase.rpc('self_signup_player', payload)
+      if (error) { console.error('self_signup_player error:', error); return { data: null, error } }
+      // RPC returns setof → supabase-js wraps it in an array.
+      const row = Array.isArray(data) ? data[0] : data
+      if (!row) return { data: null, error: { message: 'Signup RPC returned no row' } }
+      // After any signup (new OR returning via duplicate-email), refresh the
+      // local players list so the new row is visible to authenticated UI.
+      await loadPlayers()
+      return {
+        data: {
+          player_id:    row.player_id,
+          pin:          row.pin,
+          was_existing: Boolean(row.was_existing),
+        },
+        error: null,
+      }
+    } catch (e) {
+      console.error('self_signup_player threw:', e)
+      return { data: null, error: e }
+    }
+  }, [])
+
   // Admin-only: fetch all players with full PII via the admin-gated RPC.
   const fetchAllPlayersWithPii = useCallback(async () => {
     const adminPin = localStorage.getItem('lobster_session_admin_pin')
@@ -823,6 +863,7 @@ export function AppProvider({ children }) {
       setIsAdmin: setAdminState,
       setIsLeagueAdmin: setLeagueAdminState,
       loginWithPin, logout, fetchMyProfile, fetchAllPlayersWithPii,
+      selfSignup,
       addPlayer, updatePlayer, deletePlayer, getPlayerById,
       addTournament, updateTournament, deleteTournament,
       registerPlayer, updateRegistration, cancelRegistration, transferRegistration,

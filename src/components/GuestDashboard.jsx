@@ -125,9 +125,6 @@ export default function GuestDashboard({ onNavigate }) {
         </div>
       </section>
 
-      <p className="text-[11px] text-gray-400 text-center pt-2">
-        Not a Lobster yet? Ask an admin to add you — they'll issue your PIN.
-      </p>
     </div>
   )
 }
