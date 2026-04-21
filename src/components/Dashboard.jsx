@@ -811,8 +811,11 @@ export default function Dashboard({ onNavigate }) {
         </section>
       )}
 
-      {/* ── Latest updates ────────────────────────────────────── */}
-      {recentUpdates.length > 0 && (
+      {/* ── Latest updates ──────────────────────────────────────
+          Hidden for guests — updates can contain player-scoped chatter
+          and the landing page should stay focused on "events first".
+          Signed-in members see it as before. */}
+      {!isGuest && recentUpdates.length > 0 && (
         <section>
           <div className="flex items-center justify-between mb-2">
             <h3 className="font-bold text-gray-700 flex items-center gap-1.5">

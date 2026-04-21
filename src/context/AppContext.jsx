@@ -145,11 +145,17 @@ export function AppProvider({ children }) {
     if (data) setPlayers(data)
   }
   const loadTournaments = async () => {
-    // Guests read from the PII-free `public_tournaments` view (see v24 migration).
-    // Authenticated roles still hit the raw table so admin-only columns stay
-    // available. roleRef avoids stale-closure reads from realtime subscriptions.
-    const source = roleRef.current === 'guest' ? 'public_tournaments' : 'tournaments'
-    const { data } = await supabase.from(source).select('*').order('date', { ascending: false })
+    // Always read the raw `tournaments` table. The v24 `public_tournaments`
+    // view filters on status IN ('published', 'open', 'scheduled'), but the
+    // app actually writes 'upcoming' / 'active' / 'completed' — so the view
+    // returned zero rows to guests and the landing page showed "No upcoming
+    // events". Until the v26 migration (supabase-migration-v26-public-
+    // tournaments-fix.sql) is applied to correct the view's filter and
+    // expose time/duration/total_price/court_booking_mode/notes/courts, we
+    // hit the raw table for everyone. Anon SELECT on the raw table is still
+    // permitted (tracked in SECURITY-ROLLOUT.md), so this matches the
+    // current production state.
+    const { data } = await supabase.from('tournaments').select('*').order('date', { ascending: false })
     if (data) setTournaments(data)
   }
   // Guest-only: count-of-registrations per tournament from the public view.
