@@ -825,9 +825,10 @@ export default function Players({ onNavigate, focusPlayerId }) {
               <GitMerge size={14} /> Match history
             </button>
           )}
-          <button onClick={openAdd} className="btn-primary py-2 px-4 text-sm flex items-center gap-1.5">
-            <Plus size={16} /> Join
-          </button>
+          {/* "Join" button removed — new-player signup now lives exclusively
+              on the home page via the sign-in / sign-up popup
+              (VerificationGate → SignupRequest). The in-app Players roster
+              stays focused on viewing / editing existing members. */}
         </div>
       </div>
 

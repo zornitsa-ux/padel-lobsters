@@ -64,9 +64,14 @@ export default function VerificationGate({ children, page }) {
     setBusy(false)
   }
 
+  // Signup mode renders the full rich profile form (aligned with the old
+  // in-app Join form), which needs a wider card to fit two-column rows like
+  // First Name / Last Name. Sign-in and Forgot keep the tighter width.
+  const cardWidth = mode === 'signup' ? 'max-w-md' : 'max-w-sm'
+
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-lobster-teal via-teal-700 to-teal-900 flex flex-col items-center justify-center p-6 z-[100] overflow-y-auto">
-      <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-2xl w-full max-w-sm space-y-5 my-6">
+      <div className={`bg-white rounded-3xl p-6 sm:p-8 shadow-2xl w-full ${cardWidth} space-y-5 my-6`}>
         {/* Brand — shown across all three modes so the surface feels consistent */}
         <div className="text-center">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-lobster-cream mb-3">
