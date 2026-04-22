@@ -36,6 +36,14 @@ export default function VerificationGate({ children, page }) {
   const [busy, setBusy]   = useState(false)
   const inputRef          = useRef(null)
 
+  // Ref to the scrollable overlay. Needed because when the user switches
+  // into signup mode the form grows ~3x taller — on mobile the browser
+  // preserves the previous scroll position (or scrolls a focused field
+  // into view), so the card lands 1/3 down the page with "Country" at the
+  // top instead of the "Padel Lobsters" header. We reset scrollTop=0 on
+  // every mode change so the new surface always opens at the top.
+  const scrollRef = useRef(null)
+
   // Focus the PIN input whenever the gate returns to the signin mode so
   // mobile keyboards pop up ready to type.
   useEffect(() => {
@@ -43,6 +51,27 @@ export default function VerificationGate({ children, page }) {
       setTimeout(() => inputRef.current?.focus(), 100)
     }
   }, [mode, role, loading])
+
+  // Reset the overlay's scroll position every time the mode changes.
+  // Runs after the mode-change render commits, so the new form's height
+  // is already laid out. Two kicks are intentional:
+  //   1. Immediate scrollTop=0 — covers the common case.
+  //   2. A requestAnimationFrame follow-up — iOS Safari occasionally
+  //      adjusts scroll after focus changes (mode switch can unfocus the
+  //      previous PIN input), so we re-pin to the top after the browser
+  //      has finished its own fiddling.
+  // Both the overlay scroll and the window scroll are reset, because
+  // Android Chrome sometimes scrolls the outer document when the virtual
+  // keyboard dismisses.
+  useEffect(() => {
+    const toTop = () => {
+      if (scrollRef.current) scrollRef.current.scrollTop = 0
+      try { window.scrollTo({ top: 0, left: 0, behavior: 'auto' }) } catch { /* older browsers */ }
+    }
+    toTop()
+    const raf = requestAnimationFrame(toTop)
+    return () => cancelAnimationFrame(raf)
+  }, [mode])
 
   if (loading) return null
   if (isPublicPage(page)) return <>{children}</>
@@ -70,8 +99,11 @@ export default function VerificationGate({ children, page }) {
   const cardWidth = mode === 'signup' ? 'max-w-md' : 'max-w-sm'
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-lobster-teal via-teal-700 to-teal-900 flex flex-col items-center justify-center p-6 z-[100] overflow-y-auto">
-      <div className={`bg-white rounded-3xl p-6 sm:p-8 shadow-2xl w-full ${cardWidth} space-y-5 my-6`}>
+    <div
+      ref={scrollRef}
+      className="fixed inset-0 bg-gradient-to-br from-lobster-teal via-teal-700 to-teal-900 flex flex-col items-start sm:items-center justify-start sm:justify-center p-6 z-[100] overflow-y-auto"
+    >
+      <div className={`bg-white rounded-3xl p-6 sm:p-8 shadow-2xl w-full ${cardWidth} space-y-5 my-6 mx-auto`}>
         {/* Brand — shown across all three modes so the surface feels consistent */}
         <div className="text-center">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-lobster-cream mb-3">
