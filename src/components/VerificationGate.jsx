@@ -110,10 +110,20 @@ export default function VerificationGate({ children, page }) {
   // First Name / Last Name. Sign-in and Forgot keep the tighter width.
   const cardWidth = mode === 'signup' ? 'max-w-md' : 'max-w-sm'
 
+  // Anchor the card to the top whenever the form is taller than the viewport
+  // (signup), on every device. `justify-center` on a tall child overflows
+  // *above* the scroll origin, which is how desktop users reported seeing
+  // First Name at the top of the screen with the "Padel Lobsters" header
+  // cut off. Sign-in and Forgot are short forms, so we can still center
+  // those vertically on desktop.
+  const alignClasses = mode === 'signup'
+    ? 'items-start justify-start'
+    : 'items-start sm:items-center justify-start sm:justify-center'
+
   return (
     <div
       ref={scrollRef}
-      className="fixed inset-0 bg-gradient-to-br from-lobster-teal via-teal-700 to-teal-900 flex flex-col items-start sm:items-center justify-start sm:justify-center p-6 z-[100] overflow-y-auto"
+      className={`fixed inset-0 bg-gradient-to-br from-lobster-teal via-teal-700 to-teal-900 flex flex-col ${alignClasses} p-6 z-[100] overflow-y-auto`}
     >
       <div className={`bg-white rounded-3xl p-6 sm:p-8 shadow-2xl w-full ${cardWidth} space-y-5 my-6 mx-auto`}>
         {/* Brand — shown across all three modes so the surface feels consistent */}
