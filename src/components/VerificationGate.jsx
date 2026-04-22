@@ -36,6 +36,18 @@ export default function VerificationGate({ children, page }) {
   const [busy, setBusy]   = useState(false)
   const inputRef          = useRef(null)
 
+  // Incremented every time the user enters signup mode. Passed as the
+  // `key` on <SignupRequest/> so React treats each entry as a fresh
+  // mount — that's what re-rolls the rotating "Battle Cry / Trash Talk /
+  // War Cry" lobby prompt. Without the key bump, React can preserve the
+  // existing SignupRequest instance across rapid mode toggles and the
+  // prompt gets stuck on whatever was picked the first time.
+  const [signupKey, setSignupKey] = useState(0)
+  const enterSignup = () => {
+    setMode('signup'); setError(''); setPin('')
+    setSignupKey(k => k + 1)
+  }
+
   // Ref to the scrollable overlay. Needed because when the user switches
   // into signup mode the form grows ~3x taller — on mobile the browser
   // preserves the previous scroll position (or scrolls a focused field
@@ -157,7 +169,7 @@ export default function VerificationGate({ children, page }) {
             <div className="space-y-2">
               <button
                 type="button"
-                onClick={() => { setMode('signup'); setError(''); setPin('') }}
+                onClick={enterSignup}
                 className="w-full text-sm font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all"
               >
                 <UserPlus size={14} />
@@ -178,6 +190,7 @@ export default function VerificationGate({ children, page }) {
         {/* ── Mode: SIGN UP ──────────────────────────────────────────────── */}
         {mode === 'signup' && (
           <SignupRequest
+            key={signupKey}
             compact
             onBack={() => setMode('signin')}
             // After successful signup the RPC returns a PIN and we auto-login;

@@ -68,7 +68,17 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
   const { players, addPlayer, updatePlayer, loginWithPin } = useApp()
 
   const [form, setForm] = useState(emptyForm)
+  // useState's lazy initializer rolls a prompt on first mount, but in
+  // rare cases (hot reload, fast refresh, parent preserving an instance
+  // across guest signups) the same prompt can stick. The effect below
+  // guarantees a fresh roll on every mount — paired with a `key` bump
+  // in VerificationGate that forces a fresh mount each time the user
+  // enters signup, two different Lobsters should very rarely see the
+  // same tagline in a row.
   const [lobbyPrompt, setLobbyPrompt] = useState(randomPrompt)
+  useEffect(() => {
+    setLobbyPrompt(randomPrompt())
+  }, [])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
