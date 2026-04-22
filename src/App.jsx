@@ -11,7 +11,6 @@ import Scores from './components/Scores'
 import Settings from './components/Settings'
 import SetupGuard from './components/SetupGuard'
 import Merch from './components/Merch'
-import Updates from './components/Updates'
 import History from './components/History'
 import Game from './components/Game'
 import League from './components/League'
@@ -79,7 +78,6 @@ function Inner() {
     payments:     <Payments tournament={selectedTournament} onNavigate={navigate} />,
     schedule:     <Schedule tournament={selectedTournament} onNavigate={navigate} />,
     scores:       <Scores tournament={selectedTournament} onNavigate={navigate} />,
-    updates:      <Updates onNavigate={navigate} />,
     merch:        <Merch tournament={selectedTournament} initialTab={merchTab} onNavigate={navigate} />,
     settings:     <Settings onNavigate={navigate} />,
     history:      <History onNavigate={navigate} />,

@@ -1497,7 +1497,7 @@ export default function Players({ onNavigate, focusPlayerId }) {
             </div>
             <div className="bg-gray-50 rounded-xl p-3 text-left space-y-1.5">
               <p className="text-xs font-semibold text-gray-600">Save this PIN — you'll use it to:</p>
-              <p className="text-xs text-gray-500">🦞 Post updates and react to messages</p>
+              <p className="text-xs text-gray-500">🦞 Register for events and check your stats</p>
               <p className="text-xs text-gray-500">📋 Confirm your identity in the app</p>
               <p className="text-xs text-gray-500">🔒 Keep your account secure</p>
             </div>

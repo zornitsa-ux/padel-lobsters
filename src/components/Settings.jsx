@@ -318,7 +318,7 @@ export default function Settings() {
         ── Account (unified sign-in) ───────────────────────────────────
         Single card: one PIN field handles both player and admin sign-in.
         After sign-in the session persists across every page — no more
-        per-action login prompts on Merch / Updates / Tournament / etc.
+        per-action login prompts on Merch / Tournament / etc.
       */}
       <div className="card space-y-3">
         <div className="flex items-center gap-2">
@@ -365,7 +365,7 @@ export default function Settings() {
               <p className="text-sm font-semibold text-gray-800 truncate">
                 Signed in as {signedInPlayer.name} <span className="text-lobster-teal text-xs">✓</span>
               </p>
-              <p className="text-xs text-gray-500">You can post updates, place orders, and react anywhere on the site.</p>
+              <p className="text-xs text-gray-500">You can register for events, place orders, and manage your profile anywhere on the site.</p>
             </div>
             <button
               onClick={logout}

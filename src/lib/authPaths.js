@@ -26,10 +26,10 @@
  * 'guest', not from the raw tables.
  */
 export const PUBLIC_PAGES = Object.freeze([
-  'dashboard',   // landing — GuestDashboard lists all upcoming events for guests;
-                 // every sub-tile (Events, Players, Updates, Merch) and every
-                 // event tile routes to a protected page, which makes the
-                 // VerificationGate surface the sign-in/up popup.
+  'dashboard',   // landing — lists upcoming events for guests. Every sub-tile
+                 // in the bottom nav (Events, Players, Merch, Settings) and
+                 // every event tile routes to a protected page, which makes
+                 // the VerificationGate surface the sign-in/up popup.
 ])
 
 /**
@@ -45,7 +45,6 @@ export const PROTECTED_PAGES = Object.freeze([
   'schedule',      // match schedule (can include identity)
   'scores',        // live score updates (writes)
   'game',          // match play view (writes)
-  'updates',       // player updates feed
   'merch',         // merch orders (identity-linked)
   'settings',      // profile + admin settings
   'history',       // historical records

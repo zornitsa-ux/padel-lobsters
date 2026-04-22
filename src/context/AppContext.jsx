@@ -11,7 +11,6 @@ export function AppProvider({ children }) {
   // registrations[] array instead. Shape: { [t.id]: { registered_count, waitlist_count } }
   const [publicCounts, setPublicCounts] = useState({})
   const [matches, setMatches]           = useState([])
-  const [updates, setUpdates]           = useState([])
   // ── Lobster League (v20 migration) ─────────────────────────────────────
   // Leagues and their three sub-tables are loaded lazily when the app boots
   // so the Events tab and the League page can share the same live data.
@@ -62,12 +61,9 @@ export function AppProvider({ children }) {
       supabase.channel('settings-changes')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'settings' }, loadSettings)
         .subscribe(),
-      supabase.channel('updates-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'updates' }, loadUpdates)
-        .subscribe(),
-      supabase.channel('reactions-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'update_reactions' }, loadUpdates)
-        .subscribe(),
+      // Updates + update_reactions subscriptions removed — the Updates
+      // feature was retired. The DB tables (updates, update_reactions)
+      // still exist; they're simply unused by the client now.
       supabase.channel('player-aliases-changes')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'player_aliases' }, loadPlayerAliases)
         .subscribe(),
@@ -88,7 +84,7 @@ export function AppProvider({ children }) {
   const loadAll = async () => {
     await Promise.all([
       loadPlayers(), loadTournaments(), loadRegistrations(), loadMatches(),
-      loadSettings(), loadUpdates(), loadPlayerAliases(),
+      loadSettings(), loadPlayerAliases(),
       loadLeagues(), loadLeagueInterests(), loadLeagueTeams(),
     ])
     setLoading(false)
@@ -133,13 +129,7 @@ export function AppProvider({ children }) {
       // Table not present — historical features just degrade to "no aliases".
     }
   }
-  const loadUpdates = async () => {
-    const { data } = await supabase
-      .from('updates')
-      .select('*, update_reactions(*)')
-      .order('created_at', { ascending: false })
-    if (data) setUpdates(data)
-  }
+  // loadUpdates removed — Updates feature retired.
   const loadPlayers = async () => {
     const { data } = await supabase.from('players').select('*').order('name')
     if (data) setPlayers(data)
@@ -674,36 +664,12 @@ export function AppProvider({ children }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [role])
   // ── Updates ──────────────────────────────────────────────
-  const addUpdate = useCallback(async (playerId, content) => {
-    const { error } = await supabase.from('updates').insert({ player_id: playerId, content })
-    if (error) console.error('Add update error:', error)
-    else await loadUpdates()
-  }, [])
-  const deleteUpdate = useCallback(async (id) => {
-    await supabase.from('updates').delete().eq('id', id)
-    await loadUpdates()
-  }, [])
-  const addReaction = useCallback(async (updateId, playerId, type) => {
-    // Check if a reaction already exists from this player on this update
-    const { data: existing } = await supabase
-      .from('update_reactions')
-      .select('*')
-      .eq('update_id', updateId)
-      .eq('player_id', playerId)
-      .maybeSingle()
-    if (existing) {
-      if (existing.type === type) {
-        // Same type → toggle off
-        await supabase.from('update_reactions').delete().eq('id', existing.id)
-      } else {
-        // Different type → switch
-        await supabase.from('update_reactions').update({ type }).eq('id', existing.id)
-      }
-    } else {
-      await supabase.from('update_reactions').insert({ update_id: updateId, player_id: playerId, type })
-    }
-    await loadUpdates()
-  }, [])
+  // Removed. The Updates feature (addUpdate / deleteUpdate / addReaction)
+  // was retired app-wide; there's no UI that consumes these mutations
+  // anymore. Kept the `updates` and `update_reactions` DB tables in place
+  // so historical data isn't lost — they can be dropped in a future
+  // migration if the product decides to delete old content too.
+
   // ── Historical name → player_id alias map ─────────────────
   const setPlayerAlias = useCallback(async (historicalName, playerId) => {
     // Upsert. playerId can be a real UUID or the '__not_in_roster__' sentinel.
@@ -876,7 +842,6 @@ export function AppProvider({ children }) {
       getTournamentRegistrations,
       saveMatches, updateMatch, getTournamentMatches,
       saveSettings,
-      updates, addUpdate, deleteUpdate, addReaction,
       claimedId, claimIdentity, clearIdentity, regeneratePin,
       playerAliases, setPlayerAlias, removePlayerAlias,
       // Lobster League

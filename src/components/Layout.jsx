@@ -2,16 +2,17 @@ import React, { useState } from 'react'
 import { useApp } from '../context/AppContext'
 import {
   LayoutDashboard, Users, Trophy,
-  Settings, MessageCircle, ShoppingBag, Megaphone, ChevronDown, ChevronUp
+  Settings, MessageCircle, ShoppingBag, ChevronDown, ChevronUp
 } from 'lucide-react'
 
 const ORIGIN = "We didn't plan this. Nobody drafted a mission statement or hired a consultant. One court became two, two became a tournament, and now here we are — a full-blown padel community that somehow keeps showing up. We're competitive enough to care and relaxed enough to laugh about it. Come as you are. Stay for the padel."
 
+// Bottom nav. The Updates tab was removed — the Updates feature is gone
+// app-wide, so the bar now has 5 evenly spaced tabs instead of 6.
 const NAV = [
   { id: 'dashboard',  label: 'Home',    icon: LayoutDashboard },
   { id: 'tournament', label: 'Events',  icon: Trophy },
   { id: 'players',    label: 'Players', icon: Users },
-  { id: 'updates',    label: 'Updates', icon: Megaphone },
   { id: 'merch',      label: 'Merch',   icon: ShoppingBag },
   { id: 'settings',   label: 'Settings',icon: Settings },
 ]

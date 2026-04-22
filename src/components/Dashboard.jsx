@@ -1,45 +1,14 @@
 import React, { useMemo, useState, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
 import { supabase } from '../supabase'
-import { Trophy, Users, Calendar, ChevronRight, AlertCircle, Megaphone, TrendingUp, Clock, Flame, Award, Lightbulb, CreditCard, CalendarDays, ShoppingBag, Euro } from 'lucide-react'
+import { Trophy, Users, Calendar, ChevronRight, AlertCircle, TrendingUp, Clock, Flame, Award, Lightbulb, CreditCard, CalendarDays, ShoppingBag, Euro } from 'lucide-react'
 import DEFAULT_TIPS from '../data/padelTips'
 import { TOURNAMENTS as LEGACY_TOURNAMENTS } from './History'
 import { buildPlayerStats } from '../lib/playerStats'
 import { fmtEur } from '../lib/format'
 import { DateTile, AddToCalendarButton, ShareWhatsAppButton } from './CalendarPieces'
 
-const CLAW_IMG = '/claws.png'
-const ClawUp = ({ active }) => (
-  <img
-    src={CLAW_IMG}
-    alt="like"
-    style={{
-      width: 22, height: 22,
-      objectFit: 'contain',
-      display: 'block',
-      flexShrink: 0,
-      opacity: active ? 1 : 0.35,
-      transition: 'opacity 0.15s, transform 0.15s',
-      transform: active ? 'scale(1.2)' : 'scale(1)',
-      filter: active ? 'drop-shadow(0 0 3px rgba(220,38,38,0.5))' : 'none',
-    }}
-  />
-)
-const ClawDown = ({ active }) => (
-  <img
-    src={CLAW_IMG}
-    alt="dislike"
-    style={{
-      width: 22, height: 22,
-      objectFit: 'contain',
-      display: 'block',
-      flexShrink: 0,
-      transition: 'filter 0.15s, transform 0.15s',
-      transform: active ? 'scale(1.2) rotate(180deg)' : 'scale(1) rotate(180deg)',
-      filter: active ? 'grayscale(1) brightness(0.45)' : 'grayscale(1) brightness(1.6)',
-    }}
-  />
-)
+// (Claw up/down reaction icons removed along with the Updates feature.)
 
 // ── Fun greetings ────────────────────────────────────────────────────────────
 const GREETINGS_HELLO = [
@@ -117,7 +86,7 @@ function useCountdown(tournament) {
 
 export default function Dashboard({ onNavigate }) {
   const {
-    tournaments, players, updates, registrations, matches, settings,
+    tournaments, players, registrations, matches, settings,
     getTournamentRegistrations, getTournamentMatches,
     isAdmin, isLeagueAdmin, claimedId, getPlayerById, playerAliases,
     leagues, leagueTeams,
@@ -148,7 +117,6 @@ export default function Dashboard({ onNavigate }) {
 
   const claimedPlayer = claimedId ? getPlayerById(claimedId) : null
   const activePlayers = players.filter(p => (p.status || 'active') === 'active')
-  const recentUpdates = (updates || []).slice(0, 2)
 
   // ── New merch orders since last admin check ─────────────────────────────────
   const [newOrders, setNewOrders] = useState([])
@@ -811,49 +779,8 @@ export default function Dashboard({ onNavigate }) {
         </section>
       )}
 
-      {/* ── Latest updates ──────────────────────────────────────
-          Hidden for guests — updates can contain player-scoped chatter
-          and the landing page should stay focused on "events first".
-          Signed-in members see it as before. */}
-      {!isGuest && recentUpdates.length > 0 && (
-        <section>
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="font-bold text-gray-700 flex items-center gap-1.5">
-              <Megaphone size={15} className="text-lobster-orange" /> Latest Updates
-            </h3>
-            <button onClick={() => onNavigate('updates')} className="text-xs text-lobster-teal font-semibold">
-              See all
-            </button>
-          </div>
-          <div className="space-y-2">
-            {recentUpdates.map(u => {
-              const poster = players.find(p => String(p.id) === String(u.player_id))
-              const ups    = (u.update_reactions || []).filter(r => r.type === 'up').length
-              const downs  = (u.update_reactions || []).filter(r => r.type === 'down').length
-              return (
-                <button
-                  key={u.id}
-                  onClick={() => onNavigate('updates')}
-                  className="card w-full text-left active:scale-[0.98] transition-all"
-                >
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <div className="w-6 h-6 bg-lobster-teal rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
-                      {(poster?.name || '?')[0].toUpperCase()}
-                    </div>
-                    <span className="text-xs font-semibold text-gray-700">{poster?.name || 'Unknown'}</span>
-                    <span className="text-[10px] text-gray-400 ml-auto">{formatUpdateTime(u.created_at)}</span>
-                  </div>
-                  <p className="text-xs text-gray-600 leading-relaxed line-clamp-2">{u.content}</p>
-                  <div className="flex items-center gap-3 mt-2">
-                    <span className="flex items-center gap-1"><ClawUp /> <span className="text-xs text-gray-400">{ups || ''}</span></span>
-                    <span className="flex items-center gap-1"><ClawDown /> <span className="text-xs text-gray-400">{downs || ''}</span></span>
-                  </div>
-                </button>
-              )
-            })}
-          </div>
-        </section>
-      )}
+      {/* Latest Updates section removed — the Updates feature is gone
+          app-wide (see Layout / AppContext / Updates.jsx removal). */}
 
       {/* ── Event history ─────────────────────────────────────── */}
       {pastTournaments.length > 0 && (
