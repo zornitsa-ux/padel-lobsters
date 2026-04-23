@@ -41,6 +41,28 @@ export function AppProvider({ children }) {
     if (val) localStorage.setItem('lobster_league_admin', 'true')
     else      localStorage.removeItem('lobster_league_admin')
   }, [])
+  // Self-heal stale claimedId. If localStorage carries a claimedId that
+  // doesn't match any player in the loaded roster — test-row deleted,
+  // id rotated, RLS filtered them out — the app ends up in a weird
+  // half-signed-in state: role === 'player' so the VerificationGate lets
+  // the user through, but Dashboard greets them as "Lobster" and Settings
+  // re-shows the PIN prompt because nothing matches. Clearing the stale
+  // id pushes them back to 'guest' so the gate / sign-in flow can recover.
+  // We run this only AFTER initial load completes to avoid clobbering the
+  // session on boot (players [] is empty until loadPlayers resolves).
+  useEffect(() => {
+    if (loading) return
+    if (!claimedId) return
+    if (players.length === 0) return   // still hydrating / RLS blocked
+    const match = players.find(p => String(p.id) === String(claimedId))
+    if (!match) {
+      console.warn('[auth] claimedId', claimedId, 'not found in roster — clearing stale session.')
+      localStorage.removeItem('lobster_claimed_id')
+      localStorage.removeItem('lobster_session_pin')
+      setClaimedId(null)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, claimedId, players])
   // ── Initial data load ──────────────────────────────────────
   useEffect(() => {
     loadAll()

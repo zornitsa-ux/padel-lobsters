@@ -238,13 +238,33 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
         await updatePlayer(editId, data)
         const existing = (players || []).find(p => String(p.id) === String(editId))
         const pin = existing?.pin || ''
+        if (!pin) {
+          // Merge target has no PIN on record (unusual — would mean the
+          // roster row is missing it locally). Surface the problem
+          // instead of showing an empty reveal box.
+          setError(
+            "We found your existing profile but couldn't read your PIN. " +
+            "Ask an admin to resend it.",
+          )
+          return
+        }
         setPinReveal({ pin, wasExisting: true })
-        if (pin) loginWithPin(pin).catch(() => {})
+        // Auto-login is best-effort — the Continue button on the success
+        // screen retries explicitly if this fails (e.g. verify_player_pin
+        // timed out before the v27 migration ran).
+        loginWithPin(pin).catch(() => {})
       } else {
         const newPlayer = await addPlayer(data)
         if (!newPlayer?.pin) {
-          setError('Could not create your profile — please try again.')
-          setSaving(false)
+          // addPlayer returns null on any failure — RLS block, unique
+          // constraint violation, network error — and shows an alert() in
+          // the context layer. Don't proceed to pinReveal; leave the form
+          // up so the user can retry / correct.
+          setError(
+            newPlayer === null
+              ? 'Could not create your profile — see the error banner above and try again.'
+              : "Your profile was created but we couldn't read the PIN back. Please ask an admin to resend it.",
+          )
           return
         }
         setPinReveal({ pin: newPlayer.pin, wasExisting: false })
