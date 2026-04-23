@@ -100,6 +100,11 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
   // reveal instead of the form.
   const [pinReveal, setPinReveal] = useState(null)
   const [copied, setCopied] = useState(false)
+  // Tracks the "Continue to the app" retry state on the success screen.
+  // Separate from the form's `saving` so a retry can't re-trigger form
+  // submission logic.
+  const [continuing, setContinuing] = useState(false)
+  const [continueError, setContinueError] = useState('')
 
   // Debounced duplicate check — fires ~400ms after the user stops typing
   // the full name. Same predicate Players.jsx uses so the behaviour is
@@ -261,6 +266,45 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
     } catch { /* secure context etc. — PIN is visible in the callout */ }
   }
 
+  // "Continue to the app" on the success screen. Originally a no-op
+  // that trusted the background auto-login fired from handleSubmit to
+  // flip the role and unmount the gate. When verify_player_pin times
+  // out (see v27 migration) the auto-login quietly fails, the role
+  // stays 'guest', and Continue does nothing from the user's POV.
+  // This handler retries the login explicitly and surfaces the result —
+  // success dismisses the gate via onComplete + role change, failure
+  // shows an inline error so the user understands what's happening
+  // instead of being stuck.
+  const continueToApp = async () => {
+    if (continuing) return
+    const pin = pinReveal?.pin || ''
+    if (!pin) {
+      // No PIN to retry with — fall back to the parent callback and
+      // hope the role already flipped.
+      onComplete?.('player')
+      return
+    }
+    setContinuing(true); setContinueError('')
+    try {
+      const result = await loginWithPin(pin)
+      if (result?.success) {
+        onComplete?.(result.role || 'player')
+      } else {
+        setContinueError(
+          result?.error ||
+          "We couldn't sign you in automatically. Copy your PIN and try again from the sign-in screen.",
+        )
+      }
+    } catch (err) {
+      console.error('Continue retry failed:', err)
+      setContinueError(
+        "We couldn't reach the server. Copy your PIN and try again from the sign-in screen.",
+      )
+    } finally {
+      setContinuing(false)
+    }
+  }
+
   // ── Success state — one-shot PIN reveal + auto-login ──────────────────────
   if (pinReveal) {
     return (
@@ -299,11 +343,25 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
             manager — we don't email or text it automatically.
           </p>
 
+          {continueError && (
+            <p className="text-xs text-red-600 bg-red-50 rounded-lg p-2">
+              {continueError}
+            </p>
+          )}
+
           <button
-            onClick={() => onComplete?.('player')}
-            className="w-full bg-lobster-teal text-white font-bold text-sm py-2.5 rounded-xl hover:bg-teal-700 transition"
+            onClick={continueToApp}
+            disabled={continuing}
+            className="w-full bg-lobster-teal text-white font-bold text-sm py-2.5 rounded-xl hover:bg-teal-700 transition disabled:opacity-60 flex items-center justify-center gap-2"
           >
-            Continue to the app →
+            {continuing ? (
+              <>
+                <Loader2 size={14} className="animate-spin" />
+                Signing in…
+              </>
+            ) : (
+              <>Continue to the app →</>
+            )}
           </button>
         </div>
       </div>
