@@ -8,6 +8,8 @@ import {
 } from 'lucide-react'
 import CountryPicker, { FlagImg } from './CountryPicker'
 import DEFAULT_TIPS from '../data/padelTips'
+import ApproveDevicesWidget from './ApproveDevicesWidget'
+import AdminSecurityPanels from './AdminSecurityPanels'
 
 const LOBBY_PROMPTS = [
   { label: '🎤 Trash Talk',        placeholder: 'Say something to your future opponents…' },
@@ -374,7 +376,16 @@ export default function Settings() {
               <LogOut size={12} /> Sign out
             </button>
           </div>
-        ) : (
+        ) : null}
+
+        {/* Phase 2b: when the signed-in player has pending devices on
+            other browsers/phones (i.e. someone else logged in as them
+            and is waiting for trust), show the approve widget. The
+            widget renders nothing if there are no pending devices, so
+            it's silent in the common case. */}
+        {(signedInPlayer || isAdmin) && <ApproveDevicesWidget />}
+
+        {!isAdmin && !signedInPlayer && (
           // ── Guest — player PIN sign-in ──────────────────────────
           <form onSubmit={handleSignIn} className="space-y-3">
             <div className="text-center py-2">
@@ -736,6 +747,12 @@ export default function Settings() {
             </a>
           )}
         </div>
+
+        {/* Phase 2b: Pending device approvals + recent security events.
+            These are only visible when isAdmin is true and only mount
+            their internal RPCs once visible — no admin-only network
+            traffic for non-admin users. */}
+        {isAdmin && <AdminSecurityPanels />}
 
         {/* Security — admin only */}
         {isAdmin && (

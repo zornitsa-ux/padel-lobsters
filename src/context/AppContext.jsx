@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../supabase'
+import { getDeviceId, getUserAgentSummary } from '../lib/deviceId'
 const AppContext = createContext(null)
 const generatePin = () => String(Math.floor(1000 + Math.random() * 9000))
 export function AppProvider({ children }) {
@@ -25,6 +26,26 @@ export function AppProvider({ children }) {
   // Granted when the user signs in with the league_admin_pin from settings.
   const [isLeagueAdmin, setIsLeagueAdmin] = useState(() => localStorage.getItem('lobster_league_admin') === 'true')
   const [claimedId, setClaimedId]       = useState(() => localStorage.getItem('lobster_claimed_id') || null)
+  // Pending-trust state: a player has entered the correct PIN on a device
+  // that hasn't been approved yet (verify_player_pin_v2 returned trusted=false).
+  // VerificationGate shows the waiting-for-approval screen when this is set
+  // and claimedId is null. Once polling sees the device flip to trusted,
+  // acceptPendingClaim() promotes this to a real claimedId session.
+  const [pendingClaim, setPendingClaim] = useState(() => {
+    const id = localStorage.getItem('lobster_pending_id')
+    if (!id) return null
+    return { id, name: localStorage.getItem('lobster_pending_name') || null }
+  })
+  const setPendingClaimState = useCallback((claim) => {
+    setPendingClaim(claim)
+    if (claim) {
+      localStorage.setItem('lobster_pending_id', claim.id)
+      if (claim.name) localStorage.setItem('lobster_pending_name', claim.name)
+    } else {
+      localStorage.removeItem('lobster_pending_id')
+      localStorage.removeItem('lobster_pending_name')
+    }
+  }, [])
   // Role snapshot for loaders that need to pick a data source (public view vs
   // raw table) outside React's render cycle — subscription callbacks close over
   // their initial scope, so reading from state would give us stale values.
@@ -153,7 +174,16 @@ export function AppProvider({ children }) {
   }
   // loadUpdates removed — Updates feature retired.
   const loadPlayers = async () => {
-    const { data } = await supabase.from('players').select('*').order('name')
+    // Phase 2b: read from the redacted players_public view instead of the
+    // raw players table. The view exposes display fields (name, level,
+    // avatar, etc.) without PII (email, phone, full birthday, pin*).
+    // PII for the signed-in user is fetched on demand via get_my_profile_v2;
+    // admin-only roster dumps go through get_all_players_with_pii_v2.
+    const { data, error } = await supabase.from('players_public').select('*').order('name')
+    if (error) {
+      console.error('loadPlayers (players_public) error:', error)
+      return
+    }
     if (data) setPlayers(data)
   }
   const loadTournaments = async () => {
@@ -522,76 +552,129 @@ export function AppProvider({ children }) {
     setClaimedId(null)
   }, [])
   // ── Unified auth middleware ──────────────────────────────
-  // One entry point for authentication. Pass a PIN and we auto-detect:
-  //   1. If it matches the admin PIN → elevate to admin (keeps any existing player identity).
-  //   2. Otherwise if it matches any active player's PIN → claim that player identity.
-  // Returns { success, role, player?, error }.
+  // One entry point for authentication. Pass a PIN; we auto-detect role:
+  //   1. Admin PIN  → elevate to admin (keeps any existing player identity).
+  //   2. League admin PIN (settings) → scoped admin.
+  //   3. Player PIN → claim that player identity, gated by device trust.
+  // Returns { success, role, player?, error, isNewDevice? }.
   //
-  // Phase 2: PIN checking happens server-side via SECURITY DEFINER RPCs
-  // (verify_admin_pin / verify_player_pin). Plaintext PINs never leave the
-  // database. The previous implementation compared PINs against rows we
-  // already had in memory — that only worked because anon could read the
-  // pin column. Once Phase 3 revokes that grant, the old code would break,
-  // so we switch to the RPC path now.
+  // Phase 2b: switched from v1 RPCs to v2. v2 adds:
+  //   - per-device rate limiting (10 fails / 24h → status='rate_limited')
+  //   - per-player lockout (5 strikes from a known device → status='locked')
+  //   - tiered device trust: a freshly-authenticated device is "probationary"
+  //     (trusted=false). The grace window (default 21 days post-migration)
+  //     auto-trusts the very first device per player. After grace, new
+  //     devices need approval from a trusted device or from admin.
+  //
+  // When the player succeeds but trust=false, we set pendingClaim instead
+  // of claimedId. Role stays 'guest' so VerificationGate can show the
+  // waiting-for-approval screen, which polls is_my_device_trusted and
+  // promotes pendingClaim → claimedId once approved.
   const loginWithPin = useCallback(async (enteredPin) => {
     const pin = String(enteredPin || '').trim()
     if (!pin) return { success: false, error: 'Enter your PIN' }
-    // 1) Try admin first — admin role is a deliberate operator choice.
+    const deviceId  = getDeviceId()
+    const userAgent = getUserAgentSummary()
+
+    // 1) Try admin first via v2 (rate limited + audit logged).
     try {
-      const { data: isAdminPin, error: adminErr } = await supabase.rpc('verify_admin_pin', { input_pin: pin })
-      if (adminErr) console.error('verify_admin_pin error:', adminErr)
-      if (isAdminPin === true) {
+      const { data: adminRows, error: adminErr } = await supabase.rpc('verify_admin_pin_v2', {
+        input_pin:        pin,
+        input_device_id:  deviceId,
+        input_user_agent: userAgent,
+      })
+      if (adminErr) console.error('verify_admin_pin_v2 error:', adminErr)
+      const adminRow = Array.isArray(adminRows) ? adminRows[0] : adminRows
+      if (adminRow?.is_admin === true) {
         setAdminState(true)
-        // Stash the admin PIN so admin-only RPCs (e.g. get_all_players_with_pii)
-        // can be called without a re-prompt. Cleared on logout.
+        // Stash the admin PIN so admin-only RPCs can be called without
+        // a re-prompt. Cleared on logout. Sent on every admin RPC call.
         localStorage.setItem('lobster_session_admin_pin', pin)
         return { success: true, role: 'admin' }
       }
+      if (adminRow?.status === 'rate_limited') {
+        return { success: false, error: 'Too many failed PIN attempts on this device. Try again in 24 hours.' }
+      }
     } catch (e) {
-      console.error('verify_admin_pin threw:', e)
+      console.error('verify_admin_pin_v2 threw:', e)
     }
-    // 1b) Try the scoped League Admin PIN. Stored plaintext on settings —
-    //     see v21 migration. Only matches when the admin has actually
-    //     configured a non-empty PIN.
+
+    // 1b) League admin PIN (settings.league_admin_pin). Unchanged — this
+    //     PIN is stored plaintext on settings and compared client-side.
     if (settings.leagueAdminPin && pin === String(settings.leagueAdminPin)) {
       setLeagueAdminState(true)
       return { success: true, role: 'league_admin' }
     }
-    // 2) Fall back to player PIN.
+
+    // 2) Player PIN via v2.
     try {
-      const { data: playerId, error: playerErr } = await supabase.rpc('verify_player_pin', { input_pin: pin })
-      if (playerErr) console.error('verify_player_pin error:', playerErr)
-      if (playerId) {
-        const id = String(playerId)
-        localStorage.setItem('lobster_claimed_id', id)
-        // Stash the player's PIN so get_my_profile can be called silently on
-        // profile loads. Same trust boundary as claimed_id (device-local,
-        // cleared on logout).
-        localStorage.setItem('lobster_session_pin', pin)
-        setClaimedId(id)
-        // Return the cached player record if we have it — callers use it for a greeting.
-        const player = players.find(p => String(p.id) === id) || null
-        return { success: true, role: 'player', player }
+      const { data: playerRows, error: playerErr } = await supabase.rpc('verify_player_pin_v2', {
+        input_pin:        pin,
+        input_device_id:  deviceId,
+        input_user_agent: userAgent,
+      })
+      if (playerErr) console.error('verify_player_pin_v2 error:', playerErr)
+      const row = Array.isArray(playerRows) ? playerRows[0] : playerRows
+
+      if (row?.status === 'rate_limited') {
+        return { success: false, error: 'Too many failed PIN attempts on this device. Try again in 24 hours.' }
       }
+      if (row?.status === 'locked') {
+        return { success: false, error: 'This account is locked after too many wrong PIN attempts. Tap "Forgot your PIN?" to message the admin, or try again in 24 hours.' }
+      }
+      if (row?.status === 'wrong_pin' || !row?.player_id) {
+        return { success: false, error: "That PIN didn't match any Lobster — double-check and try again." }
+      }
+
+      // status === 'ok' and we have a player_id
+      const id = String(row.player_id)
+      // Stash the PIN regardless of trust state — we need it for
+      // get_my_profile_v2 polling and for approve_device. Same trust
+      // boundary as claimed_id (device-local, cleared on logout).
+      localStorage.setItem('lobster_session_pin', pin)
+
+      const player = players.find(p => String(p.id) === id) || null
+
+      if (row.trusted === true) {
+        // Fully trusted device — flip role to 'player' immediately.
+        localStorage.setItem('lobster_claimed_id', id)
+        setClaimedId(id)
+        setPendingClaimState(null)
+        return { success: true, role: 'player', player, isNewDevice: !!row.is_new_device }
+      }
+
+      // Probationary device — set pending state. Role stays 'guest'
+      // until approval comes through.
+      setPendingClaimState({ id, name: player?.name || null })
+      return { success: true, role: 'pending', playerId: id, playerName: player?.name || null }
     } catch (e) {
-      console.error('verify_player_pin threw:', e)
+      console.error('verify_player_pin_v2 threw:', e)
     }
+
     return { success: false, error: "That PIN didn't match any Lobster — double-check and try again." }
-  }, [players, setAdminState, setLeagueAdminState, settings.leagueAdminPin])
+  }, [players, setAdminState, setLeagueAdminState, setPendingClaimState, settings.leagueAdminPin])
   // Fetch the signed-in player's full record (including email / phone / full
   // birthday) through the secure RPC. Returns null if no PIN is cached or the
   // RPC call fails. Used by Settings' profile drawer.
+  //
+  // Phase 2b: uses get_my_profile_v2 which requires the calling device to
+  // be trusted. A probationary device gets an empty response — Settings
+  // should not call this until trust is confirmed.
   const fetchMyProfile = useCallback(async () => {
     const pin = localStorage.getItem('lobster_session_pin')
     if (!pin) return null
+    const deviceId = getDeviceId()
     try {
-      const { data, error } = await supabase.rpc('get_my_profile', { input_pin: pin })
-      if (error) { console.error('get_my_profile error:', error); return null }
+      const { data, error } = await supabase.rpc('get_my_profile_v2', {
+        input_pin:       pin,
+        input_device_id: deviceId,
+      })
+      if (error) { console.error('get_my_profile_v2 error:', error); return null }
       // The RPC returns setof players; supabase-js returns an array.
       const row = Array.isArray(data) ? data[0] : data
       return row || null
     } catch (e) {
-      console.error('get_my_profile threw:', e)
+      console.error('get_my_profile_v2 threw:', e)
       return null
     }
   }, [])
@@ -636,27 +719,188 @@ export function AppProvider({ children }) {
   }, [])
 
   // Admin-only: fetch all players with full PII via the admin-gated RPC.
+  //
+  // Phase 2b: uses get_all_players_with_pii_v2 which adds a 24h quota
+  // (default 3 successful dumps per day, audit-logged) and per-device
+  // rate limiting. Returns null on quota exhaustion or admin re-auth
+  // failure — caller should treat null as "try again later or contact
+  // another admin." Every successful call is visible in the admin
+  // security-events panel.
   const fetchAllPlayersWithPii = useCallback(async () => {
     const adminPin = localStorage.getItem('lobster_session_admin_pin')
     if (!adminPin) return null
+    const deviceId  = getDeviceId()
+    const userAgent = getUserAgentSummary()
     try {
-      const { data, error } = await supabase.rpc('get_all_players_with_pii', { admin_pin: adminPin })
-      if (error) { console.error('get_all_players_with_pii error:', error); return null }
+      const { data, error } = await supabase.rpc('get_all_players_with_pii_v2', {
+        input_admin_pin:  adminPin,
+        input_device_id:  deviceId,
+        input_user_agent: userAgent,
+      })
+      if (error) { console.error('get_all_players_with_pii_v2 error:', error); return null }
       return Array.isArray(data) ? data : []
     } catch (e) {
-      console.error('get_all_players_with_pii threw:', e)
+      console.error('get_all_players_with_pii_v2 threw:', e)
       return null
     }
   }, [])
-  // Full sign-out: drops both admin statuses and claimed player identity.
+  // Full sign-out: drops both admin statuses, claimed player identity,
+  // and any pending-trust state. Note: device_id is intentionally NOT
+  // cleared — keeping it means the user's next login from this device
+  // is recognized as the same device (no fresh approval needed).
   const logout = useCallback(() => {
     setAdminState(false)
     setLeagueAdminState(false)
     localStorage.removeItem('lobster_claimed_id')
     localStorage.removeItem('lobster_session_pin')
     localStorage.removeItem('lobster_session_admin_pin')
+    localStorage.removeItem('lobster_pending_id')
+    localStorage.removeItem('lobster_pending_name')
     setClaimedId(null)
+    setPendingClaim(null)
   }, [setAdminState, setLeagueAdminState])
+
+  // ── Phase 2b: device trust + admin dashboard helpers ─────────
+  // Polled by the WaitingForApproval screen. Returns true once the
+  // device is approved (by user from a trusted device or by admin).
+  const checkMyDeviceTrust = useCallback(async (playerId) => {
+    if (!playerId) return false
+    const deviceId = getDeviceId()
+    try {
+      const { data, error } = await supabase.rpc('is_my_device_trusted', {
+        input_player_id: playerId,
+        input_device_id: deviceId,
+      })
+      if (error) { console.error('is_my_device_trusted error:', error); return false }
+      return data === true
+    } catch (e) {
+      console.error('is_my_device_trusted threw:', e)
+      return false
+    }
+  }, [])
+
+  // Promote pendingClaim to a real session. Called by WaitingForApproval
+  // once polling sees the device flip to trusted.
+  const acceptPendingClaim = useCallback(() => {
+    if (!pendingClaim) return
+    localStorage.setItem('lobster_claimed_id', pendingClaim.id)
+    setClaimedId(pendingClaim.id)
+    setPendingClaimState(null)
+  }, [pendingClaim, setPendingClaimState])
+
+  // Cancel a pending claim — user closes the waiting screen, or
+  // changes their mind. Clears the stashed PIN too.
+  const cancelPendingClaim = useCallback(() => {
+    setPendingClaimState(null)
+    localStorage.removeItem('lobster_session_pin')
+  }, [setPendingClaimState])
+
+  // Player-side: list this player's own pending devices. Caller must
+  // already be on a trusted device (the RPC checks that internally).
+  const listMyPendingDevices = useCallback(async () => {
+    const pin = localStorage.getItem('lobster_session_pin')
+    if (!pin) return []
+    const deviceId = getDeviceId()
+    try {
+      const { data, error } = await supabase.rpc('list_pending_devices', {
+        input_pin:                  pin,
+        input_requesting_device_id: deviceId,
+      })
+      if (error) { console.error('list_pending_devices error:', error); return [] }
+      return Array.isArray(data) ? data : []
+    } catch (e) { return [] }
+  }, [])
+
+  // Player-side: approve one of my own pending devices.
+  // Returns { ok, reason } where reason ∈ 'ok' | 'denied' | 'no_such_device' | 'error'.
+  const approveMyDevice = useCallback(async (targetDeviceId) => {
+    const pin = localStorage.getItem('lobster_session_pin')
+    if (!pin) return { ok: false, reason: 'no_pin' }
+    const deviceId = getDeviceId()
+    try {
+      const { data, error } = await supabase.rpc('approve_device', {
+        input_pin:                  pin,
+        input_requesting_device_id: deviceId,
+        input_target_device_id:     targetDeviceId,
+      })
+      if (error) { console.error('approve_device error:', error); return { ok: false, reason: 'error' } }
+      return { ok: data === 'ok', reason: data }
+    } catch (e) { return { ok: false, reason: 'error' } }
+  }, [])
+
+  // Admin: list all pending devices across all players.
+  const adminListPendingDevices = useCallback(async () => {
+    const pin = localStorage.getItem('lobster_session_admin_pin')
+    if (!pin) return []
+    try {
+      const { data, error } = await supabase.rpc('admin_list_pending_devices', { input_admin_pin: pin })
+      if (error) { console.error('admin_list_pending_devices error:', error); return [] }
+      return Array.isArray(data) ? data : []
+    } catch (e) { return [] }
+  }, [])
+
+  // Admin: recent security events feed (pin_attempts, joined to player names).
+  const adminListSecurityEvents = useCallback(async (limit = 100) => {
+    const pin = localStorage.getItem('lobster_session_admin_pin')
+    if (!pin) return []
+    try {
+      const { data, error } = await supabase.rpc('admin_list_security_events', {
+        input_admin_pin: pin,
+        input_limit:     limit,
+      })
+      if (error) { console.error('admin_list_security_events error:', error); return [] }
+      return Array.isArray(data) ? data : []
+    } catch (e) { return [] }
+  }, [])
+
+  // Admin: approve a pending device by sidestepping the trusted-device requirement.
+  const adminApproveDevice = useCallback(async (targetPlayerId, targetDeviceId) => {
+    const pin = localStorage.getItem('lobster_session_admin_pin')
+    if (!pin) return { ok: false }
+    try {
+      const { data, error } = await supabase.rpc('admin_approve_device', {
+        input_admin_pin:     pin,
+        input_target_player: targetPlayerId,
+        input_target_device: targetDeviceId,
+      })
+      if (error) { console.error('admin_approve_device error:', error); return { ok: false } }
+      return { ok: data === 'ok', reason: data }
+    } catch (e) { return { ok: false } }
+  }, [])
+
+  // Admin: drop a pending device row entirely (user can re-trigger by
+  // logging in again with the right PIN).
+  const adminDenyDevice = useCallback(async (targetPlayerId, targetDeviceId) => {
+    const pin = localStorage.getItem('lobster_session_admin_pin')
+    if (!pin) return { ok: false }
+    try {
+      const { data, error } = await supabase.rpc('admin_deny_device', {
+        input_admin_pin:     pin,
+        input_target_player: targetPlayerId,
+        input_target_device: targetDeviceId,
+      })
+      if (error) { console.error('admin_deny_device error:', error); return { ok: false } }
+      return { ok: data === 'ok', reason: data }
+    } catch (e) { return { ok: false } }
+  }, [])
+
+  // Admin: clear a player's lockout state. Optionally also auto-trust
+  // a target device (useful for "they lost their old phone" recovery).
+  const adminUnlockPlayer = useCallback(async (targetPlayerId, targetDeviceId = null) => {
+    const pin = localStorage.getItem('lobster_session_admin_pin')
+    if (!pin) return { ok: false }
+    const adminDeviceId = getDeviceId()
+    try {
+      const { data, error } = await supabase.rpc('admin_unlock_player', {
+        input_admin_pin:        pin,
+        input_target_player:    targetPlayerId,
+        input_target_device:    targetDeviceId,
+        input_admin_device_id:  adminDeviceId,
+      })
+      if (error) { console.error('admin_unlock_player error:', error); return { ok: false } }
+      return { ok: data === 'ok', reason: data }
+    } catch (e) { return { ok: false } }
+  }, [])
   // Current role for gates/banners.
   //   admin          — full operator access
   //   league_admin   — scoped to the Lobster League
@@ -866,6 +1110,12 @@ export function AppProvider({ children }) {
       saveSettings,
       claimedId, claimIdentity, clearIdentity, regeneratePin,
       playerAliases, setPlayerAlias, removePlayerAlias,
+      // Phase 2b: device trust + admin dashboard
+      pendingClaim,
+      checkMyDeviceTrust, acceptPendingClaim, cancelPendingClaim,
+      listMyPendingDevices, approveMyDevice,
+      adminListPendingDevices, adminListSecurityEvents,
+      adminApproveDevice, adminDenyDevice, adminUnlockPlayer,
       // Lobster League
       leagues, leagueInterests, leagueTeams,
       createLeague, updateLeague, deleteLeague,
