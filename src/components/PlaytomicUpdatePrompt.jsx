@@ -1,8 +1,15 @@
 import { useState, useEffect } from 'react'
-import { supabase } from '../supabase'
+import { useApp } from '../context/AppContext'
 
+// NOTE: This component is currently unused (the live Playtomic-update UI
+// is implemented inline in Settings.jsx). Kept around — and refactored
+// to go through AppContext.updatePlayer in Phase 2c — so it compiles
+// and works if anyone re-enables it. Direct from('players').update calls
+// would fail after the Phase 2c REVOKE.
+//
 // ─── Popup: shown when player hasn't updated in 1+ month ─────────────────────
 export default function PlaytomicUpdatePrompt({ player, onDismiss, onUpdate }) {
+  const { updatePlayer } = useApp()
   const [newScore, setNewScore] = useState(player?.playtomic_level ?? '')
   const [saving, setSaving] = useState(false)
 
@@ -14,15 +21,11 @@ export default function PlaytomicUpdatePrompt({ player, onDismiss, onUpdate }) {
   const handleUpdate = async () => {
     if (!newScore) return
     setSaving(true)
-    const { error } = await supabase
-      .from('players')
-      .update({
-        playtomic_level: parseFloat(newScore),
-        playtomic_updated_at: new Date().toISOString(),
-      })
-      .eq('id', player.id)
+    await updatePlayer(player.id, { playtomicLevel: parseFloat(newScore) })
     setSaving(false)
-    if (!error) { stamp(); onUpdate(parseFloat(newScore)); onDismiss() }
+    stamp()
+    onUpdate(parseFloat(newScore))
+    onDismiss()
   }
 
   return (

@@ -429,11 +429,13 @@ export default function Players({ onNavigate, focusPlayerId }) {
       const map = {}
       for (const r of rows) {
         map[r.id] = {
-          email:    r.email    ?? '',
-          phone:    r.phone    ?? '',
-          birthday: r.birthday ?? '',
-          notes:    r.notes    ?? '',
-          pin:      r.pin      ?? '',
+          email:       r.email       ?? '',
+          phone:       r.phone       ?? '',
+          birthday:    r.birthday    ?? '',
+          notes:       r.notes       ?? '',
+          pin:         r.pin         ?? '',
+          pin_changes: r.pin_changes ?? 0,
+          pinChanges:  r.pin_changes ?? 0,
         }
       }
       setPiiById(map)
@@ -1116,6 +1118,9 @@ export default function Players({ onNavigate, focusPlayerId }) {
                     {isAdmin && p.pin && (
                       <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-md tracking-wider">
                         {p.pin}
+                        {p.pinChanges > 0 && (
+                          <span className="ml-1 text-amber-500/70 font-normal">({p.pinChanges})</span>
+                        )}
                       </span>
                     )}
                   </div>
@@ -1451,7 +1456,14 @@ export default function Players({ onNavigate, focusPlayerId }) {
                   {isAdmin && (
                     <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center justify-between gap-3">
                       <div>
-                        <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider mb-0.5">Access PIN</p>
+                        <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider mb-0.5">
+                          Access PIN
+                          {p.pinChanges > 0 && (
+                            <span className="ml-1.5 text-amber-500/80 font-semibold normal-case tracking-normal">
+                              · changed {p.pinChanges}×
+                            </span>
+                          )}
+                        </p>
                         <p className="text-xl font-bold text-amber-800 tracking-widest">{p.pin || '—'}</p>
                       </div>
                       <button
@@ -1705,7 +1717,7 @@ export default function Players({ onNavigate, focusPlayerId }) {
               </div>
 
               <div>
-                <label className="label">{lobbyPrompt.label}</label>
+                             <label className="label">{lobbyPrompt.label}</label>
                 <textarea className="input resize-none" rows={2}
                   placeholder={lobbyPrompt.placeholder}
                   value={form.notes}

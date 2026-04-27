@@ -1,7 +1,13 @@
 import { useState } from 'react'
-import { supabase } from '../supabase'
+import { useApp } from '../context/AppContext'
 
+// NOTE: This component is currently unused (the live Playtomic-update UI
+// lives inline in Settings.jsx). Kept around — and refactored to go
+// through AppContext.updatePlayer in Phase 2c — so it compiles and works
+// if anyone re-enables it. Direct from('players').update calls would
+// fail after the Phase 2c REVOKE.
 export default function PlayerProfile({ player, onSave }) {
+  const { updatePlayer } = useApp()
   const [playtomic, setPlaytomic] = useState(player?.playtomic_level ?? '')
   const [tagline, setTagline]     = useState(player?.tagline ?? '')
   const [saving, setSaving]       = useState(false)
@@ -13,20 +19,14 @@ export default function PlayerProfile({ player, onSave }) {
 
   const handleSave = async () => {
     setSaving(true)
-    const { error } = await supabase
-      .from('players')
-      .update({
-        playtomic_level: playtomic ? parseFloat(playtomic) : null,
-        tagline: tagline.trim() || null,
-        playtomic_updated_at: new Date().toISOString(),
-      })
-      .eq('id', player.id)
+    await updatePlayer(player.id, {
+      playtomicLevel: playtomic ? parseFloat(playtomic) : 0,
+      tagline:        tagline.trim() || '',
+    })
     setSaving(false)
-    if (!error) {
-      setSaved(true)
-      setTimeout(() => setSaved(false), 2500)
-      onSave?.({ ...player, playtomic_level: parseFloat(playtomic), tagline })
-    }
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2500)
+    onSave?.({ ...player, playtomic_level: parseFloat(playtomic), tagline })
   }
 
   const initials = (player?.name ?? '?')

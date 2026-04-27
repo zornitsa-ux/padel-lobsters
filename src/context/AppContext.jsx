@@ -124,6 +124,16 @@ export function AppProvider({ children }) {
     ]
     return () => channels.forEach(c => supabase.removeChannel(c))
   }, [])
+  // Phase 2c: background poll for the players list. After Phase 2c's
+  // REVOKE on public.players, the realtime subscription above stops
+  // delivering events to anon/authenticated (Realtime needs SELECT to
+  // broadcast row changes). The other tables keep their live sync —
+  // only the players roster goes silent. This 60-second poll closes
+  // the staleness window without a noticeable network cost.
+  useEffect(() => {
+    const t = setInterval(loadPlayers, 60000)
+    return () => clearInterval(t)
+  }, [])
   const loadAll = async () => {
     await Promise.all([
       loadPlayers(), loadTournaments(), loadRegistrations(), loadMatches(),
@@ -263,8 +273,18 @@ export function AppProvider({ children }) {
     setSettings(s => ({ ...s, ...newSettings }))
   }, [])
   // ── Players ──────────────────────────────────────────────
+  // Phase 2c: writes go through SECURITY DEFINER RPCs so we can REVOKE
+  // anon's direct grants on public.players. PINs are now generated
+  // server-side (atomic — no client/server collision race).
   const addPlayer = useCallback(async (data) => {
-    const pin = generatePin()
+    const adminPin = localStorage.getItem('lobster_session_admin_pin')
+    if (!adminPin) {
+      alert('Admin sign-in required to add a player.')
+      return null
+    }
+    const deviceId  = getDeviceId()
+    const userAgent = getUserAgentSummary()
+    // PIN omitted — admin_add_player generates one and returns it on the row.
     const payload = {
       name:               data.name,
       email:              data.email              || '',
@@ -272,7 +292,6 @@ export function AppProvider({ children }) {
       notes:              data.notes              || '',
       playtomic_level:    parseFloat(data.playtomicLevel) || 0,
       adjustment:         parseFloat(data.adjustment)     || 0,
-      adjusted_level:     (parseFloat(data.playtomicLevel) || 0) + (parseFloat(data.adjustment) || 0),
       playtomic_username: data.playtomicUsername  || '',
       gender:             data.gender             || '',
       status:             data.status             || 'active',
@@ -282,49 +301,121 @@ export function AppProvider({ children }) {
       birthday:           data.birthday           || null,
       preferred_position: data.preferredPosition  || '',
       tagline_label:      data.taglineLabel       || '',
-      pin,
     }
-    const { data: inserted, error } = await supabase.from('players').insert(payload).select().single()
-    if (error) {
-      console.error('Add player error:', error)
-      alert('Could not save player: ' + error.message)
-      return null
-    } else {
+    try {
+      const { data: rows, error } = await supabase.rpc('admin_add_player', {
+        input_admin_pin:  adminPin,
+        input_payload:    payload,
+        input_device_id:  deviceId,
+        input_user_agent: userAgent,
+      })
+      if (error) {
+        console.error('admin_add_player error:', error)
+        alert('Could not save player: ' + error.message)
+        return null
+      }
+      const inserted = Array.isArray(rows) ? rows[0] : rows
+      if (!inserted) {
+        alert('Could not save player. Check your admin sign-in.')
+        return null
+      }
       await loadPlayers()
       return inserted
+    } catch (e) {
+      console.error('admin_add_player threw:', e)
+      return null
     }
   }, [])
+  // Dispatch: admin → admin_update_player (full fields).
+  //           non-admin self-edit → update_my_profile (restricted fields,
+  //           requires trusted device).
   const updatePlayer = useCallback(async (id, data) => {
-    const payload = {
-      name:               data.name,
-      email:              data.email              || '',
-      phone:              data.phone              || '',
-      notes:              data.notes              || '',
-      playtomic_level:    parseFloat(data.playtomicLevel) || 0,
-      adjustment:         parseFloat(data.adjustment)     || 0,
-      adjusted_level:     (parseFloat(data.playtomicLevel) || 0) + (parseFloat(data.adjustment) || 0),
-      playtomic_username: data.playtomicUsername  || '',
-      gender:             data.gender             || '',
-      status:             data.status             || 'active',
-      is_left_handed:     data.isLeftHanded       || false,
-      country:            data.country            || '',
-      avatar_url:         data.avatarUrl          || '',
-      birthday:           data.birthday           || null,
-      preferred_position: data.preferredPosition  || '',
-      tagline:            data.tagline            || '',
-      tagline_label:      data.taglineLabel       || '',
+    const deviceId  = getDeviceId()
+    const userAgent = getUserAgentSummary()
+    // Build a payload with only the fields actually present in `data`.
+    // Send nothing for fields the caller didn't touch — the RPC's COALESCE
+    // preserves the existing values then.
+    const setIf = (cond, key, val) => { if (cond) payload[key] = val }
+    const payload = {}
+    setIf(data.name              !== undefined, 'name',               data.name              ?? '')
+    setIf(data.email             !== undefined, 'email',              data.email             ?? '')
+    setIf(data.phone             !== undefined, 'phone',              data.phone             ?? '')
+    setIf(data.playtomicLevel    !== undefined, 'playtomic_level',    String(parseFloat(data.playtomicLevel) || 0))
+    setIf(data.playtomicUsername !== undefined, 'playtomic_username', data.playtomicUsername ?? '')
+    setIf(data.gender            !== undefined, 'gender',             data.gender            ?? '')
+    setIf(data.isLeftHanded      !== undefined, 'is_left_handed',     String(!!data.isLeftHanded))
+    setIf(data.country           !== undefined, 'country',            data.country           ?? '')
+    setIf(data.avatarUrl         !== undefined, 'avatar_url',         data.avatarUrl         ?? '')
+    setIf(data.birthday          !== undefined, 'birthday',           data.birthday          ?? '')
+    setIf(data.preferredPosition !== undefined, 'preferred_position', data.preferredPosition ?? '')
+    setIf(data.tagline           !== undefined, 'tagline',            data.tagline           ?? '')
+    setIf(data.taglineLabel      !== undefined, 'tagline_label',      data.taglineLabel      ?? '')
+    // Admin-only fields
+    if (isAdmin) {
+      setIf(data.notes      !== undefined, 'notes',      data.notes ?? '')
+      setIf(data.adjustment !== undefined, 'adjustment', String(parseFloat(data.adjustment) || 0))
+      setIf(data.status     !== undefined, 'status',     data.status ?? 'active')
     }
-    const { error } = await supabase.from('players').update(payload).eq('id', id)
-    if (error) {
-      console.error('Update player error:', error)
-      alert('Could not update player: ' + error.message)
-    } else {
+
+    try {
+      if (isAdmin) {
+        const adminPin = localStorage.getItem('lobster_session_admin_pin')
+        if (!adminPin) { alert('Admin sign-in required.'); return }
+        const { error } = await supabase.rpc('admin_update_player', {
+          input_admin_pin:  adminPin,
+          input_target_id:  id,
+          input_payload:    payload,
+          input_device_id:  deviceId,
+          input_user_agent: userAgent,
+        })
+        if (error) {
+          console.error('admin_update_player error:', error)
+          alert('Could not update player: ' + error.message)
+          return
+        }
+      } else if (String(id) === String(claimedId)) {
+        const pin = localStorage.getItem('lobster_session_pin')
+        if (!pin) { alert('Sign in required.'); return }
+        const { error } = await supabase.rpc('update_my_profile', {
+          input_pin:       pin,
+          input_device_id: deviceId,
+          input_payload:   payload,
+        })
+        if (error) {
+          console.error('update_my_profile error:', error)
+          alert('Could not update profile: ' + error.message)
+          return
+        }
+      } else {
+        console.error('updatePlayer: not authorized to edit this player')
+        return
+      }
       await loadPlayers()
+    } catch (e) {
+      console.error('updatePlayer threw:', e)
     }
-  }, [])
+  }, [claimedId, isAdmin])
   const deletePlayer = useCallback(async (id) => {
-    await supabase.from('players').delete().eq('id', id)
-    loadPlayers()
+    const adminPin = localStorage.getItem('lobster_session_admin_pin')
+    if (!adminPin) { alert('Admin sign-in required.'); return }
+    const deviceId  = getDeviceId()
+    const userAgent = getUserAgentSummary()
+    try {
+      const { error } = await supabase.rpc('admin_delete_player', {
+        input_admin_pin:  adminPin,
+        input_target_id:  id,
+        input_device_id:  deviceId,
+        input_user_agent: userAgent,
+      })
+      if (error) {
+        console.error('admin_delete_player error:', error)
+        alert('Could not delete player: ' + error.message)
+        return
+      }
+      await loadPlayers()
+    } catch (e) {
+      console.error('admin_delete_player threw:', e)
+    }
   }, [])
   // ── Tournaments ───────────────────────────────────────────
   const addTournament = useCallback(async (data) => {
@@ -486,6 +577,7 @@ export function AppProvider({ children }) {
     avatarUrl:         p.avatar_url         ?? p.avatarUrl    ?? '',
     country:           p.country            ?? '',
     pin:               p.pin                ?? '',
+    pinChanges:        p.pin_changes        ?? p.pinChanges        ?? 0,
     preferredPosition: p.preferred_position ?? p.preferredPosition ?? '',
     taglineLabel:      p.tagline_label      ?? p.taglineLabel      ?? '',
   }))
@@ -530,11 +622,36 @@ export function AppProvider({ children }) {
     [normalisedMatches]
   )
   // ── PIN / Identity ───────────────────────────────────────
+  // Phase 2c: PIN generation moves server-side. admin_regenerate_pin
+  // also bumps pin_changes via the sync_player_pin_hash trigger.
+  // Returns the new PIN so admin can share it with the player.
   const regeneratePin = useCallback(async (playerId) => {
-    const newPin = generatePin()
-    await supabase.from('players').update({ pin: newPin }).eq('id', playerId)
-    await loadPlayers()
-    return newPin
+    const adminPin = localStorage.getItem('lobster_session_admin_pin')
+    if (!adminPin) { alert('Admin sign-in required to reset a PIN.'); return null }
+    const deviceId  = getDeviceId()
+    const userAgent = getUserAgentSummary()
+    try {
+      const { data, error } = await supabase.rpc('admin_regenerate_pin', {
+        input_admin_pin:  adminPin,
+        input_target_id:  playerId,
+        input_device_id:  deviceId,
+        input_user_agent: userAgent,
+      })
+      if (error) {
+        console.error('admin_regenerate_pin error:', error)
+        alert('Could not reset PIN: ' + error.message)
+        return null
+      }
+      if (!data) {
+        alert('Could not reset PIN. Check your admin sign-in.')
+        return null
+      }
+      await loadPlayers()
+      return data
+    } catch (e) {
+      console.error('admin_regenerate_pin threw:', e)
+      return null
+    }
   }, [])
   // Verify a player's PIN and claim that identity on this device
   const claimIdentity = useCallback((playerId, enteredPin, playersList) => {
@@ -1062,7 +1179,7 @@ export function AppProvider({ children }) {
       league_id:        leagueId,
       proposer_id:      claimedId,
       invitee_id:       inviteeId,
-      team_name:        teamName,
+         team_name:        teamName,
       team_song:        teamSong || '',
       division,
       experience_level: experienceLevel || null,
@@ -1121,15 +1238,14 @@ export function AppProvider({ children }) {
       loginWithPin, logout, fetchMyProfile, fetchAllPlayersWithPii,
       selfSignup,
       addPlayer, updatePlayer, deletePlayer, getPlayerById,
-      addTournament, updateTournament, deleteTournament,
       registerPlayer, updateRegistration, cancelRegistration, transferRegistration,
+      getTournamentRegistrations,
       saveMatches, updateMatch, getTournamentMatches, saveSettings,
       claimedId, claimIdentity, clearIdentity, regeneratePin,
       playerAliases, setPlayerAlias, removePlayerAlias,
       // Phase 2b: device trust + admin dashboard
       pendingClaim,
       checkMyDeviceTrust, acceptPendingClaim, cancelPendingClaim,
-      listMyPendingDevices, approveMyDevice, rejectMyDevice,
       adminListPendingDevices, adminListSecurityEvents,
       adminApproveDevice, adminDenyDevice, adminUnlockPlayer,
       // Lobster League

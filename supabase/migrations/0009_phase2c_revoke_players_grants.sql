@@ -1,0 +1,31 @@
+-- =====================================================================
+-- Padel Lobsters — Security Phase 2c FINAL: revoke direct grants on players
+-- =====================================================================
+-- Closes the bulk-PII vector. After this migration, anon and authenticated
+-- can no longer hit `from('players').select|insert|update|delete()`
+-- directly. Every read goes through:
+--   - public.players_public view (non-PII display data)
+--   - public.get_my_profile_v2 (signed-in player's own PII)
+--   - public.get_all_players_with_pii_v2 (admin-gated bulk PII, quota'd)
+-- Every write goes through the Phase 2c RPCs (admin_add_player,
+-- admin_update_player, update_my_profile, admin_delete_player,
+-- admin_regenerate_pin) which all run as SECURITY DEFINER and bypass
+-- the revoked grants because they execute as the table owner.
+--
+-- DO NOT APPLY this migration until:
+--   1. The Phase 2b + 2c app code is deployed to production.
+--   2. You've smoke-tested every flow through the new RPCs:
+--      - Admin: add player, update player, delete player, reset PIN.
+--      - Self: update own profile from Settings (name, level, tagline,
+--              email/phone if PII overlay loaded).
+--      - PIN reveal after admin_add_player and admin_regenerate_pin.
+--   3. Realtime subscriptions on `players` are accepted to either go
+--      silent for non-admin clients OR you've added a fallback poll.
+--      (After REVOKE, anon/authenticated can't subscribe to changes
+--      on a table they have no SELECT on.)
+--
+-- Rollback: 0009_revoke_rollback.sql restores the grants if anything
+-- breaks in production. The REVOKE itself is a one-line undo.
+-- =====================================================================
+
+revoke select, insert, update, delete on public.players from anon, authenticated;
