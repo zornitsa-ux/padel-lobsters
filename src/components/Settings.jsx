@@ -10,6 +10,7 @@ import CountryPicker, { FlagImg } from './CountryPicker'
 import DEFAULT_TIPS from '../data/padelTips'
 import ApproveDevicesWidget from './ApproveDevicesWidget'
 import AdminSecurityPanels from './AdminSecurityPanels'
+import ChangeAdminPinForm from './ChangeAdminPinForm'
 
 const LOBBY_PROMPTS = [
   { label: '🎤 Trash Talk',        placeholder: 'Say something to your future opponents…' },
@@ -760,30 +761,17 @@ export default function Settings() {
             <h3 className="font-bold text-gray-700 text-sm flex items-center gap-2">
               <Lock size={15} className="text-lobster-teal" /> Admin Security
             </h3>
-            <div>
-              <label className="label">Admin PIN</label>
-              <div className="relative">
-                <input
-                  className="input pr-11"
-                  type={showPin ? 'text' : 'password'}
-                  inputMode="numeric"
-                  maxLength={8}
-                  placeholder="Enter new PIN"
-                  value={form.adminPin}
-                  onChange={e => setForm(f => ({ ...f, adminPin: e.target.value }))}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPin(v => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
-                >
-                  {showPin ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-              <p className="text-xs text-gray-400 mt-1.5">
-                Used to access admin features like adding players, editing data, and generating schedules.
-              </p>
-            </div>
+            {/* Phase 2d: admin PIN is no longer readable from anon (it
+                lives only as a bcrypt hash on settings.admin_pin_hash,
+                which is column-grant locked). The "edit value in place"
+                input was replaced with a Change-PIN form that goes
+                through the admin_change_pin RPC. */}
+            <ChangeAdminPinForm />
+            <p className="text-xs text-gray-400">
+              Forgot the admin PIN? Run the break-glass SQL in
+              <code className="font-mono mx-1">supabase/migrations/0010_secure_admin_pin.sql</code>
+              from your Supabase SQL editor (project owner only) to set a fresh hash directly.
+            </p>
 
             {/* League Admin PIN — a scoped-down second admin. Anyone with
                 this PIN can run the Lobster League (create leagues,

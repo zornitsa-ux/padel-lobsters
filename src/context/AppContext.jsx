@@ -236,14 +236,19 @@ export function AppProvider({ children }) {
     if (data) setMatches(data)
   }
   const loadSettings = async () => {
-    const { data } = await supabase.from('settings').select('*').eq('id', 1).single()
+    // Phase 2d: explicit column list — `select *` would error after the
+    // 0010 migration revoked anon's grant on admin_pin_hash.
+    const { data } = await supabase.from('settings')
+      .select('id, whatsapp_link, group_name, padel_tips, auto_trust_until')
+      .eq('id', 1).single()
     if (data) setSettings({
       ...data,
-      whatsappLink:   data.whatsapp_link    ?? data.whatsappLink    ?? '',
-      adminPin:       data.admin_pin        ?? data.adminPin        ?? '1234',
-      leagueAdminPin: data.league_admin_pin ?? data.leagueAdminPin  ?? '',
-      groupName:      data.group_name       ?? data.groupName       ?? 'Padel Lobsters',
-      padelTips:      data.padel_tips       ?? data.padelTips       ?? null,
+      whatsappLink: data.whatsapp_link ?? '',
+      groupName:    data.group_name    ?? 'Padel Lobsters',
+      padelTips:    data.padel_tips    ?? null,
+      // adminPin / leagueAdminPin no longer exposed — admin PIN lives only
+      // as a bcrypt hash that anon cannot read. Use changeAdminPin() to
+      // rotate it from the UI.
     })
   }
   // ── Settings ─────────────────────────────────────────────
@@ -251,18 +256,16 @@ export function AppProvider({ children }) {
   // back optimistic UI if needed) so we never end up showing a save that
   // didn't actually persist. The old "silent failure" behaviour was the
   // root cause of the Tip of the Day "it came back" bug.
+  //
+  // Phase 2d: admin_pin and admin_pin_hash are NOT writable from the
+  // anon role anymore. The admin PIN is rotated through changeAdminPin
+  // (admin_change_pin RPC). Sending those columns in the upsert here
+  // would now error with "permission denied for column".
   const saveSettings = useCallback(async (newSettings) => {
     const payload = {
-      id:               1,
-      whatsapp_link:    newSettings.whatsappLink    ?? '',
-      admin_pin:        newSettings.adminPin        ?? '1234',
-      group_name:       newSettings.groupName       ?? 'Padel Lobsters',
-    }
-    // league_admin_pin is optional — only include it when the caller
-    // actually set it, so a normal settings save doesn't wipe a stored
-    // league admin PIN just because the caller forgot to pass it through.
-    if (newSettings.leagueAdminPin !== undefined) {
-      payload.league_admin_pin = newSettings.leagueAdminPin || ''
+      id:            1,
+      whatsapp_link: newSettings.whatsappLink ?? '',
+      group_name:    newSettings.groupName    ?? 'Padel Lobsters',
     }
     if (newSettings.padelTips !== undefined) payload.padel_tips = newSettings.padelTips
     const { error } = await supabase.from('settings').upsert(payload)
@@ -271,6 +274,26 @@ export function AppProvider({ children }) {
       throw error
     }
     setSettings(s => ({ ...s, ...newSettings }))
+  }, [])
+  // Rotate the admin PIN. Called from Settings → Change Admin PIN form.
+  // Returns { ok, reason } where reason ∈ 'ok' | 'wrong_current' |
+  // 'invalid_new' | 'error'.
+  const changeAdminPin = useCallback(async (currentPin, newPin) => {
+    const deviceId  = getDeviceId()
+    const userAgent = getUserAgentSummary()
+    try {
+      const { data, error } = await supabase.rpc('admin_change_pin', {
+        input_current_pin: currentPin,
+        input_new_pin:     newPin,
+        input_device_id:   deviceId,
+        input_user_agent:  userAgent,
+      })
+      if (error) { console.error('admin_change_pin error:', error); return { ok: false, reason: 'error' } }
+      return { ok: data === 'ok', reason: data }
+    } catch (e) {
+      console.error('admin_change_pin threw:', e)
+      return { ok: false, reason: 'error' }
+    }
   }, [])
   // ── Players ──────────────────────────────────────────────
   // Phase 2c: writes go through SECURITY DEFINER RPCs so we can REVOKE
@@ -1239,13 +1262,13 @@ export function AppProvider({ children }) {
       selfSignup,
       addPlayer, updatePlayer, deletePlayer, getPlayerById,
       registerPlayer, updateRegistration, cancelRegistration, transferRegistration,
-      getTournamentRegistrations,
-      saveMatches, updateMatch, getTournamentMatches, saveSettings,
+      saveMatches, updateMatch, getTournamentMatches, saveSettings, changeAdminPin,
       claimedId, claimIdentity, clearIdentity, regeneratePin,
       playerAliases, setPlayerAlias, removePlayerAlias,
       // Phase 2b: device trust + admin dashboard
       pendingClaim,
       checkMyDeviceTrust, acceptPendingClaim, cancelPendingClaim,
+      listMyPendingDevices, approveMyDevice, rejectMyDevice,
       adminListPendingDevices, adminListSecurityEvents,
       adminApproveDevice, adminDenyDevice, adminUnlockPlayer,
       // Lobster League
