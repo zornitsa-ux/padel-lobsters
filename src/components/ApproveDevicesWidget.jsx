@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { useApp } from '../context/AppContext'
-import { ShieldCheck, Smartphone, RefreshCw, Check, AlertCircle } from 'lucide-react'
+import { ShieldCheck, Smartphone, RefreshCw, Check, X, AlertCircle } from 'lucide-react'
 
 /**
  * Approve-pending-devices widget.
@@ -14,10 +14,10 @@ import { ShieldCheck, Smartphone, RefreshCw, Check, AlertCircle } from 'lucide-r
  * the top of Settings → Account.
  */
 export default function ApproveDevicesWidget() {
-  const { listMyPendingDevices, approveMyDevice } = useApp()
+  const { listMyPendingDevices, approveMyDevice, rejectMyDevice } = useApp()
   const [devices, setDevices] = useState([])
   const [loading, setLoading] = useState(true)
-  const [busy, setBusy]       = useState({})  // { [device_id]: true }
+  const [busy, setBusy]       = useState({})  // { [device_id]: 'approve' | 'reject' | null }
   const [error, setError]     = useState('')
 
   const load = useCallback(async () => {
@@ -30,10 +30,10 @@ export default function ApproveDevicesWidget() {
   useEffect(() => { load() }, [load])
 
   const onApprove = async (targetDeviceId) => {
-    setBusy(b => ({ ...b, [targetDeviceId]: true }))
+    setBusy(b => ({ ...b, [targetDeviceId]: 'approve' }))
     setError('')
     const result = await approveMyDevice(targetDeviceId)
-    setBusy(b => ({ ...b, [targetDeviceId]: false }))
+    setBusy(b => ({ ...b, [targetDeviceId]: null }))
     if (!result.ok) {
       setError(result.reason === 'denied'
         ? 'This device cannot approve devices yet (it must be trusted first).'
@@ -41,6 +41,20 @@ export default function ApproveDevicesWidget() {
       return
     }
     // Refresh the list to drop the approved row
+    load()
+  }
+
+  const onReject = async (targetDeviceId) => {
+    setBusy(b => ({ ...b, [targetDeviceId]: 'reject' }))
+    setError('')
+    const result = await rejectMyDevice(targetDeviceId)
+    setBusy(b => ({ ...b, [targetDeviceId]: null }))
+    if (!result.ok) {
+      setError(result.reason === 'denied'
+        ? 'This device cannot reject devices yet (it must be trusted first).'
+        : 'Could not reject. Try again in a moment.')
+      return
+    }
     load()
   }
 
@@ -92,14 +106,24 @@ export default function ApproveDevicesWidget() {
               </p>
             </div>
           </div>
-          <button
-            onClick={() => onApprove(d.device_id)}
-            disabled={busy[d.device_id]}
-            className="w-full text-xs font-semibold text-white bg-amber-600 hover:bg-amber-700 disabled:opacity-50 py-2 rounded-lg flex items-center justify-center gap-1.5"
-          >
-            <Check size={12} />
-            {busy[d.device_id] ? 'Approving…' : 'Approve this device'}
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => onApprove(d.device_id)}
+              disabled={!!busy[d.device_id]}
+              className="flex-1 text-xs font-semibold text-white bg-amber-600 hover:bg-amber-700 disabled:opacity-50 py-2 rounded-lg flex items-center justify-center gap-1.5"
+            >
+              <Check size={12} />
+              {busy[d.device_id] === 'approve' ? 'Approving…' : 'Approve'}
+            </button>
+            <button
+              onClick={() => onReject(d.device_id)}
+              disabled={!!busy[d.device_id]}
+              className="flex-1 text-xs font-semibold text-gray-600 bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-50 py-2 rounded-lg flex items-center justify-center gap-1.5"
+            >
+              <X size={12} />
+              {busy[d.device_id] === 'reject' ? 'Denying…' : 'Deny'}
+            </button>
+          </div>
         </div>
       ))}
     </div>

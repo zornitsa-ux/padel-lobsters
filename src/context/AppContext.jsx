@@ -828,6 +828,24 @@ export function AppProvider({ children }) {
     } catch (e) { return { ok: false, reason: 'error' } }
   }, [])
 
+  // Player-side: reject one of my own pending devices. Mirrors approve
+  // but deletes the pending row instead of marking it trusted. Same
+  // auth gates as approve (caller must be trusted for this player).
+  const rejectMyDevice = useCallback(async (targetDeviceId) => {
+    const pin = localStorage.getItem('lobster_session_pin')
+    if (!pin) return { ok: false, reason: 'no_pin' }
+    const deviceId = getDeviceId()
+    try {
+      const { data, error } = await supabase.rpc('reject_device', {
+        input_pin:                  pin,
+        input_requesting_device_id: deviceId,
+        input_target_device_id:     targetDeviceId,
+      })
+      if (error) { console.error('reject_device error:', error); return { ok: false, reason: 'error' } }
+      return { ok: data === 'ok', reason: data }
+    } catch (e) { return { ok: false, reason: 'error' } }
+  }, [])
+
   // Admin: list all pending devices across all players.
   const adminListPendingDevices = useCallback(async () => {
     const pin = localStorage.getItem('lobster_session_admin_pin')
@@ -1105,15 +1123,13 @@ export function AppProvider({ children }) {
       addPlayer, updatePlayer, deletePlayer, getPlayerById,
       addTournament, updateTournament, deleteTournament,
       registerPlayer, updateRegistration, cancelRegistration, transferRegistration,
-      getTournamentRegistrations,
-      saveMatches, updateMatch, getTournamentMatches,
-      saveSettings,
+      saveMatches, updateMatch, getTournamentMatches, saveSettings,
       claimedId, claimIdentity, clearIdentity, regeneratePin,
       playerAliases, setPlayerAlias, removePlayerAlias,
       // Phase 2b: device trust + admin dashboard
       pendingClaim,
       checkMyDeviceTrust, acceptPendingClaim, cancelPendingClaim,
-      listMyPendingDevices, approveMyDevice,
+      listMyPendingDevices, approveMyDevice, rejectMyDevice,
       adminListPendingDevices, adminListSecurityEvents,
       adminApproveDevice, adminDenyDevice, adminUnlockPlayer,
       // Lobster League
