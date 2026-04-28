@@ -818,6 +818,34 @@ export function AppProvider({ children }) {
       return null
     }
   }, [])
+  // ── Forgot PIN: email-based self-service reset ──────────────────────
+  // Wraps the forgot_my_pin RPC. Player provides their email, we look up
+  // their row, generate a fresh PIN, hash it, and email the new PIN via
+  // the send-pin-email Edge Function. The plaintext never crosses the
+  // browser — it's generated and emailed entirely server-side.
+  //
+  // Returns one of:
+  //   'sent'          — new PIN emailed, tell the user to check their inbox
+  //   'contact_admin' — no active player matches that email; route to WhatsApp
+  //   'rate_limited'  — too many resets in the last 24h
+  //   'invalid'       — input failed validation (bad email format etc.)
+  //   'error'         — RPC threw / network error
+  const forgotMyPin = useCallback(async (email) => {
+    const deviceId  = getDeviceId()
+    const userAgent = getUserAgentSummary()
+    try {
+      const { data, error } = await supabase.rpc('forgot_my_pin', {
+        input_email:      String(email || '').trim(),
+        input_device_id:  deviceId,
+        input_user_agent: userAgent,
+      })
+      if (error) { console.error('forgot_my_pin error:', error); return 'error' }
+      return data || 'error'
+    } catch (e) {
+      console.error('forgot_my_pin threw:', e)
+      return 'error'
+    }
+  }, [])
   // ── Self-serve signup (Phase 3: "create a Lobster from the PIN prompt") ──
   // Wraps the v25 self_signup_player RPC. Returns { data, error } so the
   // signup form can render inline feedback. data is { player_id, pin,
@@ -1259,7 +1287,7 @@ export function AppProvider({ children }) {
       setIsAdmin: setAdminState,
       setIsLeagueAdmin: setLeagueAdminState,
       loginWithPin, logout, fetchMyProfile, fetchAllPlayersWithPii,
-      selfSignup,
+      selfSignup, forgotMyPin,
       addPlayer, updatePlayer, deletePlayer, getPlayerById,
       registerPlayer, updateRegistration, cancelRegistration, transferRegistration,
       getTournamentRegistrations,
