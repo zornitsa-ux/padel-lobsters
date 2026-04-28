@@ -1262,6 +1262,7 @@ export function AppProvider({ children }) {
       selfSignup,
       addPlayer, updatePlayer, deletePlayer, getPlayerById,
       registerPlayer, updateRegistration, cancelRegistration, transferRegistration,
+      getTournamentRegistrations,
       saveMatches, updateMatch, getTournamentMatches, saveSettings, changeAdminPin,
       claimedId, claimIdentity, clearIdentity, regeneratePin,
       playerAliases, setPlayerAlias, removePlayerAlias,
