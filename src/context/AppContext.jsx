@@ -854,23 +854,48 @@ export function AppProvider({ children }) {
   // Intentionally no auto-login here — the caller handles that so the UI
   // can show the PIN to the user first. Keeps this function focused on
   // one job.
-  const selfSignup = useCallback(async ({ name, email, phone }) => {
-    const payload = {
-      p_name:  (name  || '').trim(),
-      p_email: (email || '').trim(),
-      p_phone: (phone || '').trim() || null,
-    }
-    if (!payload.p_name || !payload.p_email) {
+  const selfSignup = useCallback(async (data) => {
+    const name  = (data?.name  || '').trim()
+    const email = (data?.email || '').trim()
+    if (!name || !email) {
       return { data: null, error: { message: 'Name and email are required' } }
     }
+    // RPC takes a jsonb payload with the same shape as admin_add_player
+    // so SignupRequest.jsx can capture the rich profile (country, level,
+    // avatar, etc) on first signup.
+    const payload = {
+      name,
+      email,
+      phone:              (data.phone || '').trim(),
+      notes:              data.notes || '',
+      playtomic_level:    String(parseFloat(data.playtomicLevel) || 0),
+      adjustment:         String(parseFloat(data.adjustment) || 0),
+      playtomic_username: data.playtomicUsername || '',
+      gender:             data.gender || '',
+      is_left_handed:     String(!!data.isLeftHanded),
+      country:            data.country || '',
+      avatar_url:         data.avatarUrl || '',
+      birthday:           data.birthday || '',
+      preferred_position: data.preferredPosition || '',
+      tagline_label:      data.taglineLabel || '',
+    }
+    const deviceId  = getDeviceId()
+    const userAgent = getUserAgentSummary()
     try {
-      const { data, error } = await supabase.rpc('self_signup_player', payload)
+      const { data: rows, error } = await supabase.rpc('self_signup_player', {
+        input_payload:    payload,
+        input_device_id:  deviceId,
+        input_user_agent: userAgent,
+      })
       if (error) { console.error('self_signup_player error:', error); return { data: null, error } }
       // RPC returns setof → supabase-js wraps it in an array.
-      const row = Array.isArray(data) ? data[0] : data
+      const row = Array.isArray(rows) ? rows[0] : rows
       if (!row) return { data: null, error: { message: 'Signup RPC returned no row' } }
-      // After any signup (new OR returning via duplicate-email), refresh the
-      // local players list so the new row is visible to authenticated UI.
+      // was_existing=true means the email is already on an active row;
+      // the RPC deliberately returns NO pin in that case so the UI can
+      // route the user to Forgot-my-PIN instead of disclosing a PIN to
+      // a stranger holding only the email.
+      // Refresh the local players list so the new row is visible.
       await loadPlayers()
       return {
         data: {

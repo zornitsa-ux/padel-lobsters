@@ -26,7 +26,7 @@ import CountryPicker from './CountryPicker'
 //       (keeps their PIN, their history, their aliases).
 //    3. Optional avatar upload goes to the `avatars` Supabase Storage
 //       bucket, same as the old in-app form.
-//    4. Submit calls addPlayer (new) or updatePlayer (merge). On success
+//    4. Submit calls selfSignup (new) or updatePlayer (merge). On success
 //       we surface the assigned PIN on a one-shot screen with a copy
 //       button and auto-login with the PIN so the user lands already
 //       signed in.
@@ -65,7 +65,7 @@ const emptyForm = {
 }
 
 export default function SignupRequest({ onComplete, onBack, compact = false }) {
-  const { players, addPlayer, updatePlayer, loginWithPin } = useApp()
+  const { players, selfSignup, updatePlayer, loginWithPin } = useApp()
 
   const [form, setForm] = useState(emptyForm)
   // useState's lazy initializer rolls a prompt on first mount, but in
@@ -85,7 +85,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
   // Merge state — when a new joiner's typed name matches an existing player,
   // we show a banner offering to complete that existing profile instead of
   // creating a duplicate row. `mergePlayer` holds the candidate; `editId`
-  // flips the submit path from addPlayer → updatePlayer.
+  // flips the submit path from selfSignup → updatePlayer.
   const [mergePlayer, setMergePlayer] = useState(null)
   const [editId, setEditId] = useState(null)
 
@@ -254,21 +254,38 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
         // timed out before the v27 migration ran).
         loginWithPin(pin).catch(() => {})
       } else {
-        const newPlayer = await addPlayer(data)
-        if (!newPlayer?.pin) {
-          // addPlayer returns null on any failure — RLS block, unique
-          // constraint violation, network error — and shows an alert() in
-          // the context layer. Don't proceed to pinReveal; leave the form
-          // up so the user can retry / correct.
+        // Self-serve: route through selfSignup (anon-callable RPC), NOT
+        // addPlayer — addPlayer requires the admin PIN and would refuse
+        // for a brand-new user with "Admin sign-in required to add a
+        // player." (the original production bug fixed in migration 0014).
+        const { data: signup, error: signupError } = await selfSignup(data)
+        if (signupError) {
+          // Rate-limit, invalid input, network — show the message
+          // straight from the RPC so the user has something actionable.
           setError(
-            newPlayer === null
-              ? 'Could not create your profile — see the error banner above and try again.'
-              : "Your profile was created but we couldn't read the PIN back. Please ask an admin to resend it.",
+            signupError.message?.includes('rate limited')
+              ? "We've seen too many signups from this device today. Please try again tomorrow or ask an admin to add you."
+              : signupError.message || 'Could not create your profile — please try again.',
           )
           return
         }
-        setPinReveal({ pin: newPlayer.pin, wasExisting: false })
-        loginWithPin(newPlayer.pin).catch(() => {})
+        if (signup?.was_existing) {
+          // Email is already on an active roster row. The RPC deliberately
+          // does NOT return the PIN to a stranger holding the email —
+          // route the user to the Forgot-my-PIN flow instead.
+          setError(
+            "An account with this email already exists. Use “Forgot my PIN” on the sign-in screen to recover it.",
+          )
+          return
+        }
+        if (!signup?.pin) {
+          setError(
+            "Your profile was created but we couldn't read the PIN back. Please ask an admin to resend it.",
+          )
+          return
+        }
+        setPinReveal({ pin: signup.pin, wasExisting: false })
+        loginWithPin(signup.pin).catch(() => {})
       }
     } catch (err) {
       console.error('Signup error:', err)
