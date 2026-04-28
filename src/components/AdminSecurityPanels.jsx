@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext'
 import {
   ShieldCheck, AlertTriangle, Smartphone, RefreshCw,
   Check, X, Activity, Lock, KeyRound, UserCheck,
+  ChevronDown, ChevronUp,
 } from 'lucide-react'
 
 /**
@@ -166,18 +167,32 @@ function PendingDevicesPanel() {
 function SecurityEventsPanel() {
   const { adminListSecurityEvents } = useApp()
   const [events, setEvents]   = useState([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
+  const [loaded, setLoaded]   = useState(false)
   const [limit, setLimit]     = useState(50)
   const [filter, setFilter]   = useState('all') // all | failures | pii | locks
+  const [expanded, setExpanded] = useState(false) // collapsed by default — admin can expand on demand
 
   const load = useCallback(async () => {
     setLoading(true)
     const data = await adminListSecurityEvents(limit)
     setEvents(data)
     setLoading(false)
+    setLoaded(true)
   }, [adminListSecurityEvents, limit])
 
-  useEffect(() => { load() }, [load])
+  // Lazy-load: only fetch the events list once the admin actually opens
+  // the panel. Saves an RPC round-trip on every Settings page render
+  // when the admin doesn't care about the security log right now.
+  useEffect(() => {
+    if (expanded && !loaded) load()
+  }, [expanded, loaded, load])
+
+  // Re-fetch if limit changes while expanded.
+  useEffect(() => {
+    if (expanded && loaded) load()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [limit])
 
   const filtered = events.filter(e => {
     if (filter === 'all') return true
@@ -187,64 +202,86 @@ function SecurityEventsPanel() {
     return true
   })
 
+  const failureCount = loaded ? events.filter(e => e.succeeded === false).length : null
+
   return (
     <div className="card space-y-3">
-      <div className="flex items-center justify-between">
+      <button
+        type="button"
+        onClick={() => setExpanded(v => !v)}
+        className="flex items-center justify-between w-full"
+        aria-expanded={expanded}
+      >
         <h3 className="font-bold text-gray-700 text-sm flex items-center gap-2">
           <Activity size={15} className="text-lobster-teal" />
           Recent security events
+          {failureCount !== null && failureCount > 0 && (
+            <span className="text-[10px] text-white bg-red-500 px-1.5 py-0.5 rounded-full font-bold">
+              {failureCount} fail
+            </span>
+          )}
         </h3>
-        <button onClick={load} aria-label="Refresh" className="text-gray-400 hover:text-lobster-teal">
-          <RefreshCw size={14} />
-        </button>
-      </div>
-      <p className="text-xs text-gray-500 leading-snug">
-        Every PIN attempt, device approval, and PII dump is logged. Watch
-        for bursts of failures, locked accounts, or unexpected pii_dump
-        calls.
-      </p>
+        {expanded
+          ? <ChevronUp size={16} className="text-gray-400" />
+          : <ChevronDown size={16} className="text-gray-400" />}
+      </button>
 
-      <div className="flex flex-wrap gap-1.5">
-        {[
-          { id: 'all',      label: 'All' },
-          { id: 'failures', label: 'Failures only' },
-          { id: 'pii',      label: 'PII dumps' },
-          { id: 'locks',    label: 'Unlocks' },
-        ].map(f => (
-          <button
-            key={f.id}
-            onClick={() => setFilter(f.id)}
-            className={`text-[11px] px-2 py-1 rounded-lg border transition-all ${
-              filter === f.id
-                ? 'bg-lobster-teal text-white border-lobster-teal'
-                : 'bg-white text-gray-600 border-gray-200 hover:border-lobster-teal/50'
-            }`}
-          >
-            {f.label}
-          </button>
-        ))}
-        <select
-          value={limit}
-          onChange={e => setLimit(parseInt(e.target.value, 10))}
-          className="text-[11px] px-2 py-1 rounded-lg border border-gray-200 bg-white ml-auto"
-        >
-          <option value={25}>Last 25</option>
-          <option value={50}>Last 50</option>
-          <option value={100}>Last 100</option>
-          <option value={200}>Last 200</option>
-        </select>
-      </div>
-
-      {loading ? (
-        <p className="text-xs text-gray-400 italic">Loading…</p>
-      ) : filtered.length === 0 ? (
-        <p className="text-xs text-gray-400 italic">No events match this filter.</p>
-      ) : (
-        <div className="max-h-96 overflow-y-auto -mx-1 px-1">
-          <div className="space-y-1.5">
-            {filtered.map(ev => <EventRow key={ev.id} ev={ev} />)}
+      {expanded && (
+        <>
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-gray-500 leading-snug flex-1 pr-2">
+              Every PIN attempt, device approval, and PII dump is logged. Watch
+              for bursts of failures, locked accounts, or unexpected pii_dump
+              calls.
+            </p>
+            <button onClick={load} aria-label="Refresh" className="text-gray-400 hover:text-lobster-teal flex-shrink-0">
+              <RefreshCw size={14} />
+            </button>
           </div>
-        </div>
+
+          <div className="flex flex-wrap gap-1.5">
+            {[
+              { id: 'all',      label: 'All' },
+              { id: 'failures', label: 'Failures only' },
+              { id: 'pii',      label: 'PII dumps' },
+              { id: 'locks',    label: 'Unlocks' },
+            ].map(f => (
+              <button
+                key={f.id}
+                onClick={() => setFilter(f.id)}
+                className={`text-[11px] px-2 py-1 rounded-lg border transition-all ${
+                  filter === f.id
+                    ? 'bg-lobster-teal text-white border-lobster-teal'
+                    : 'bg-white text-gray-600 border-gray-200 hover:border-lobster-teal/50'
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+            <select
+              value={limit}
+              onChange={e => setLimit(parseInt(e.target.value, 10))}
+              className="text-[11px] px-2 py-1 rounded-lg border border-gray-200 bg-white ml-auto"
+            >
+              <option value={25}>Last 25</option>
+              <option value={50}>Last 50</option>
+              <option value={100}>Last 100</option>
+              <option value={200}>Last 200</option>
+            </select>
+          </div>
+
+          {loading ? (
+            <p className="text-xs text-gray-400 italic">Loading…</p>
+          ) : filtered.length === 0 ? (
+            <p className="text-xs text-gray-400 italic">No events match this filter.</p>
+          ) : (
+            <div className="max-h-96 overflow-y-auto -mx-1 px-1">
+              <div className="space-y-1.5">
+                {filtered.map(ev => <EventRow key={ev.id} ev={ev} />)}
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   )

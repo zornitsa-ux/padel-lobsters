@@ -1,13 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useApp } from '../context/AppContext'
-import { KeyRound, LogIn, MessageCircle, UserPlus, HelpCircle, ArrowLeft, Mail, Check, AlertCircle } from 'lucide-react'
+import { KeyRound, LogIn, UserPlus, HelpCircle, ArrowLeft, Mail, Check, AlertCircle } from 'lucide-react'
 import { isPublicPage } from '../lib/authPaths'
 import SignupRequest from './SignupRequest'
 import WaitingForApproval from './WaitingForApproval'
 
-// WhatsApp contact for PIN-reset requests. wa.me wants digits only, no +.
-const ADMIN_RESET_PHONE = '56997442387'
-const ADMIN_RESET_MSG   = 'Hi Lobster Admin 🦀 I forgot my Padel Lobsters PIN — could you reset it and send me a new one? Thanks!'
+// Phase 2d: removed the WhatsApp-the-admin fallback for forgot-PIN.
+// Recovery is now self-service via email; users without an email on
+// file are directed to mail pin@padelobsters.nl.
 
 /**
  * Verification gate.
@@ -37,14 +37,16 @@ export default function VerificationGate({ children, page }) {
   const [busy, setBusy]   = useState(false)
   const inputRef          = useRef(null)
 
-  // Forgot-PIN flow state. Three sub-states:
-  //   form         - email input, default
-  //   sent         - "check your inbox" success
-  //   contact      - "we couldn't find that email — message admin instead"
-  // The user can always go back to "form" or hit the WhatsApp link from
-  // the form view if they know they didn't sign up with an email.
+  // Forgot-PIN flow state. Two sub-states:
+  //   form  - email input, default; also where contact_admin errors land
+  //           inline (no separate "go contact admin" page)
+  //   sent  - "check your inbox" success
+  // Phase 2d: removed the WhatsApp-fallback stage — email-mismatch is
+  // now an inline error pointing to pin@padelobsters.nl, which keeps
+  // recovery on the same self-service rail rather than dead-ending at
+  // an admin handoff.
   const [forgotEmail, setForgotEmail]     = useState('')
-  const [forgotStage, setForgotStage]     = useState('form') // form | sent | contact
+  const [forgotStage, setForgotStage]     = useState('form') // form | sent
   const [forgotBusy, setForgotBusy]       = useState(false)
   const [forgotError, setForgotError]     = useState('')
   const [forgotSentTo, setForgotSentTo]   = useState('')
@@ -158,7 +160,14 @@ export default function VerificationGate({ children, page }) {
       return
     }
     if (result === 'contact_admin') {
-      setForgotStage('contact')
+      // Email didn't match any active player. Stay on the form, let the
+      // user retry with a different email, and direct them to
+      // pin@padelobsters.nl if they think their account has no email.
+      setForgotError(
+        "We couldn't find that email in our records. Double-check the address. " +
+        "If you never signed up with an email, write to pin@padelobsters.nl from " +
+        "your usual address and we'll add it to your account.",
+      )
       return
     }
     if (result === 'rate_limited') {
@@ -296,15 +305,14 @@ export default function VerificationGate({ children, page }) {
               <>
                 <p className="text-sm text-gray-700 leading-snug">
                   Enter the email you signed up with and we'll send you a
-                  fresh PIN. Didn't sign up with an email?{' '}
-                  <button
-                    type="button"
-                    onClick={() => setForgotStage('contact')}
+                  fresh PIN. Didn't sign up with an email? Write to{' '}
+                  <a
+                    href="mailto:pin@padelobsters.nl"
                     className="text-lobster-teal font-semibold underline-offset-2 hover:underline"
                   >
-                    Contact the Lobster admin
-                  </button>
-                  .
+                    pin@padelobsters.nl
+                  </a>{' '}
+                  from your usual address and we'll add it to your account.
                 </p>
 
                 <form onSubmit={handleForgotSubmit} className="space-y-3">
@@ -371,35 +379,10 @@ export default function VerificationGate({ children, page }) {
               </div>
             )}
 
-            {/* Stage 3: email not on file — route to admin via WhatsApp. */}
-            {forgotStage === 'contact' && (
-              <div className="space-y-3">
-                <p className="text-sm text-gray-700 leading-snug">
-                  We couldn't find a player with that email. If you didn't
-                  sign up with an email, message the Lobster admin on
-                  WhatsApp and they'll reset your PIN and send you a new
-                  one.
-                </p>
-
-                <a
-                  href={`https://wa.me/${ADMIN_RESET_PHONE}?text=${encodeURIComponent(ADMIN_RESET_MSG)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full text-sm font-semibold text-white bg-[#25D366] hover:bg-[#1fba59] py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all"
-                >
-                  <MessageCircle size={14} />
-                  Message the admin on WhatsApp
-                </a>
-
-                <button
-                  type="button"
-                  onClick={() => { resetForgotFlow() }}
-                  className="w-full text-xs font-semibold text-gray-500 hover:text-lobster-teal py-2 transition-all"
-                >
-                  ← Try a different email
-                </button>
-              </div>
-            )}
+            {/* Phase 2d: removed the WhatsApp "contact admin" stage. When
+                forgot_my_pin returns 'contact_admin' we now surface an
+                inline error on the form pointing the user at
+                pin@padelobsters.nl — keeps recovery self-service. */}
           </div>
         )}
       </div>

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react'
 import { useApp } from '../context/AppContext'
 import { supabase } from '../supabase'
-import { Plus, Pencil, Trash2, X, ChevronDown, ChevronUp, Search, User, Clock, Camera, Briefcase, Trophy, TrendingUp, GitMerge } from 'lucide-react'
+import { Plus, Pencil, Trash2, X, ChevronDown, ChevronUp, Search, User, Clock, Camera, Briefcase, Trophy, TrendingUp, GitMerge, RotateCcw } from 'lucide-react'
 // AdminLogin modal replaced by unified sign-in in Settings → Account
 import CountryPicker, { COUNTRIES, countryFlag, FlagImg } from './CountryPicker'
 import PlayerAliasMatcher from './PlayerAliasMatcher'
@@ -638,17 +638,9 @@ export default function Players({ onNavigate, focusPlayerId }) {
 
   const handleApprove = async (p) => {
     await updatePlayer(p.id, { ...p, status: 'active' })
-    // Open WhatsApp with the PIN if we have a phone number
-    if (p.phone) {
-      const phone   = p.phone.replace(/\D/g, '')
-      const name    = (p.name || '').split(' ')[0]
-      const pin     = p.pin || '????'
-      // Emoji swapped from 🦞 to 🦀: older Androids / older WhatsApp versions
-      // render the lobster as a placeholder box. 🦀 (crab) ships everywhere
-      // and keeps the same coastal / crustacean vibe.
-      const message = `Hi ${name}! 🦀 You've been approved for Padel Lobsters. Your access PIN is *${pin}* — enter it once in the app to confirm your identity. See you on the court!`
-      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank')
-    }
+    // Phase 2d: PIN was already emailed at signup; no need to share via
+    // WhatsApp on approval. If the player lost their PIN, they use
+    // "Forgot PIN?" on the sign-in screen for self-service recovery.
   }
 
   const handleReject = async (id) => {
@@ -681,23 +673,23 @@ export default function Players({ onNavigate, focusPlayerId }) {
     await deletePlayer(pending.id)
     setLinkModal(null)
     setLinkSearch('')
-
-    // Send existing player's PIN to the new joiner's phone
-    const phone = (pending.phone || existingPlayer.phone || '').replace(/\D/g, '')
-    const firstName = existingPlayer.name.trim().split(/\s+/)[0]
-    if (phone && existingPlayer.pin) {
-      const msg = `Hi ${firstName}! 🦀 Your profile has been linked. Your Padel Lobsters PIN is *${existingPlayer.pin}* — enter it once in the app to verify your identity. See you on court!`
-      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank')
-    }
+    // Phase 2d: linked profiles already had a PIN. If the player can't
+    // recall it, "Forgot PIN?" on the sign-in screen sends a fresh one
+    // to their email. Admin no longer needs to share via WhatsApp.
   }
 
   const handleRegeneratePin = async (p) => {
+    // Phase 2d: admin_regenerate_pin RPC also calls send_pin_email, so
+    // the new PIN is emailed automatically. Admin doesn't need to share
+    // via WhatsApp anymore. The toast confirms the email went out.
     const newPin = await regeneratePin(p.id)
-    if (p.phone) {
-      const phone   = p.phone.replace(/\D/g, '')
-      const name    = (p.name || '').split(' ')[0]
-      const message = `Hi ${name}! 🦀 Your Padel Lobsters PIN has been reset. New PIN: *${newPin}*`
-      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank')
+    if (newPin) {
+      // The RPC succeeded. Email status is fire-and-forget on the DB
+      // side (pg_net is async); we trust the queue and surface a generic
+      // confirmation here. Detailed delivery status lives in the Resend
+      // dashboard.
+      const recipient = p.email || `${(p.name || '').split(' ')[0]}'s email on file`
+      alert(`New PIN generated. Email sent to ${recipient}.`)
     }
   }
 
@@ -1115,12 +1107,13 @@ export default function Players({ onNavigate, focusPlayerId }) {
                     <span className={`text-sm font-bold px-2.5 py-1 rounded-lg ${levelBadge(p.adjustedLevel)}`}>
                       {(p.adjustedLevel || 0).toFixed(1)}
                     </span>
-                    {isAdmin && p.pin && (
-                      <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-md tracking-wider">
-                        {p.pin}
-                        {p.pinChanges > 0 && (
-                          <span className="ml-1 text-amber-500/70 font-normal">({p.pinChanges})</span>
-                        )}
+                    {isAdmin && (p.pinChanges ?? 0) > 0 && (
+                      <span
+                        className="text-[10px] font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded-md flex items-center gap-1"
+                        title={`PIN reset ${p.pinChanges} time${p.pinChanges === 1 ? '' : 's'}`}
+                      >
+                        <RotateCcw size={10} />
+                        {p.pinChanges}
                       </span>
                     )}
                   </div>
@@ -1452,7 +1445,9 @@ export default function Players({ onNavigate, focusPlayerId }) {
                     </div>
                   )}
 
-                  {/* PIN — admin only */}
+                  {/* PIN reset — admin only. PIN itself is no longer
+                      shown in admin UI; it's delivered to the player by
+                      email on creation and on every reset. */}
                   {isAdmin && (
                     <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center justify-between gap-3">
                       <div>
@@ -1460,17 +1455,20 @@ export default function Players({ onNavigate, focusPlayerId }) {
                           Access PIN
                           {p.pinChanges > 0 && (
                             <span className="ml-1.5 text-amber-500/80 font-semibold normal-case tracking-normal">
-                              · changed {p.pinChanges}×
+                              · reset {p.pinChanges}×
                             </span>
                           )}
                         </p>
-                        <p className="text-xl font-bold text-amber-800 tracking-widest">{p.pin || '—'}</p>
+                        <p className="text-xs text-amber-700/80 leading-snug">
+                          Emailed to the player. Click to generate a fresh one.
+                        </p>
                       </div>
                       <button
                         onClick={() => handleRegeneratePin(p)}
-                        className="text-xs bg-amber-500 text-white px-3 py-1.5 rounded-xl font-semibold active:scale-95 transition-all"
+                        className="text-xs bg-amber-500 text-white px-3 py-1.5 rounded-xl font-semibold active:scale-95 transition-all flex items-center gap-1.5 flex-shrink-0"
                       >
-                        Reset & send
+                        <RotateCcw size={12} />
+                        Reset &amp; email
                       </button>
                     </div>
                   )}
