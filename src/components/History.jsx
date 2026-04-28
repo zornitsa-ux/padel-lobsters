@@ -755,7 +755,7 @@ function Podium({ players, rounds = [], rn = n => n, dn = n => n }) {
         <div className="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center font-bold text-lg text-gray-600">
           {rn(top3[1]?.name || '')[0]}
         </div>
-        <p className="text-xs font-semibold text-gray-600 text-center w-16 truncate">{dn(rn(top3[1]?.name || ''))}</p>
+        <p className="text-sm font-semibold text-gray-700 text-center w-20 leading-tight">{dn(rn(top3[1]?.name || ''))}</p>
         <p className="text-sm font-bold text-gray-500">{top3[1]?.total} pts</p>
         <div className="bg-gray-200 rounded-t-lg w-12 h-10 flex items-end justify-center pb-1">
           <span className="text-xs font-bold text-gray-600">2nd</span>
@@ -767,7 +767,7 @@ function Podium({ players, rounds = [], rn = n => n, dn = n => n }) {
         <div className="w-16 h-16 bg-yellow-50 border-2 border-yellow-400 rounded-full flex items-center justify-center font-bold text-xl text-yellow-700">
           {rn(top3[0]?.name || '')[0]}
         </div>
-        <p className="text-xs font-bold text-gray-800 text-center w-20 truncate">{dn(rn(top3[0]?.name || ''))}</p>
+        <p className="text-base font-bold text-gray-800 text-center w-24 leading-tight">{dn(rn(top3[0]?.name || ''))}</p>
         <p className="text-base font-bold text-yellow-600">{top3[0]?.total} pts</p>
         <div className="bg-yellow-400 rounded-t-lg w-12 h-14 flex items-end justify-center pb-1">
           <span className="text-xs font-bold text-yellow-900">1st</span>
@@ -779,7 +779,7 @@ function Podium({ players, rounds = [], rn = n => n, dn = n => n }) {
         <div className="w-14 h-14 rounded-full flex items-center justify-center font-bold text-lg text-white" style={{ background: '#CD7F32' }}>
           {rn(top3[2]?.name || '')[0]}
         </div>
-        <p className="text-xs font-semibold text-center w-16 truncate" style={{ color: '#8B5E3C' }}>{dn(rn(top3[2]?.name || ''))}</p>
+        <p className="text-sm font-semibold text-center w-20 leading-tight" style={{ color: '#8B5E3C' }}>{dn(rn(top3[2]?.name || ''))}</p>
         <p className="text-sm font-bold" style={{ color: '#CD7F32' }}>{top3[2]?.total} pts</p>
         <div className="rounded-t-lg w-12 h-7 flex items-end justify-center pb-1" style={{ background: '#CD7F32' }}>
           <span className="text-xs font-bold text-white">3rd</span>
@@ -963,7 +963,7 @@ export default function History({ onNavigate }) {
                       <div className="flex flex-col items-center gap-1 flex-1">
                         <span className="text-xl">🥈</span>
                         <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-bold text-gray-600">{top3[1].player.name[0]}</div>
-                        <p className="text-xs font-semibold truncate w-full text-center">{dbDn(top3[1].player.name)}</p>
+                        <p className="text-sm font-semibold w-full text-center leading-tight px-1">{dbDn(top3[1].player.name)}</p>
                         <div className="bg-gray-200 w-full h-10 rounded-t-xl flex items-center justify-center">
                           <span className="text-xs font-bold text-gray-600">{top3[1].pts}pts</span>
                         </div>
@@ -971,7 +971,7 @@ export default function History({ onNavigate }) {
                       <div className="flex flex-col items-center gap-1 flex-1">
                         <span className="text-2xl">🥇</span>
                         <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center font-bold text-white text-lg">{top3[0].player.name[0]}</div>
-                        <p className="text-xs font-bold truncate w-full text-center">{dbDn(top3[0].player.name)}</p>
+                        <p className="text-base font-bold w-full text-center leading-tight px-1">{dbDn(top3[0].player.name)}</p>
                         <div className="bg-yellow-400 w-full h-16 rounded-t-xl flex items-center justify-center">
                           <span className="text-xs font-bold text-white">{top3[0].pts}pts</span>
                         </div>
@@ -980,7 +980,7 @@ export default function History({ onNavigate }) {
                         <div className="flex flex-col items-center gap-1 flex-1">
                           <span className="text-xl">🥉</span>
                           <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white" style={{ background: '#CD7F32' }}>{top3[2].player.name[0]}</div>
-                          <p className="text-xs font-semibold truncate w-full text-center">{dbDn(top3[2].player.name)}</p>
+                          <p className="text-sm font-semibold w-full text-center leading-tight px-1">{dbDn(top3[2].player.name)}</p>
                           <div className="w-full h-7 rounded-t-xl flex items-center justify-center" style={{ background: '#CD7F32' }}>
                             <span className="text-xs font-bold text-white">{top3[2].pts}pts</span>
                           </div>
