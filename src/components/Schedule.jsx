@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react'
 import { useApp } from '../context/AppContext'
 import { ChevronLeft, Shuffle, AlertCircle, Trophy, Users, Download } from 'lucide-react'
+import { generateLobster as generateLobsterAnnealed } from '../lib/lobsterMatcher'
 
 // ── Smart pairing engine ─────────────────────────────────────────────────────
 
@@ -489,7 +490,10 @@ function buildOneRound(active, numCourts, roundNum, partnerHistory, opponentHist
   return { pairs, matches }
 }
 
-function generateLobster(players, numCourts, genderMode = 'mixed', duration = 90) {
+// Legacy greedy generator. Kept for reference / quick revert; the live path
+// now uses generateLobsterAnnealed from src/lib/lobsterMatcher.js.
+// eslint-disable-next-line no-unused-vars
+function generateLobsterLegacy(players, numCourts, genderMode = 'mixed', duration = 90) {
   const numRounds = duration >= 120 ? 6 : 5  // 2h → 6 rounds, 90min → 5 rounds (18min each)
   const sorted = [...players].sort((a, b) => (b.adjustedLevel || 0) - (a.adjustedLevel || 0))
   const active = sorted.slice(0, numCourts * 4), sitting = sorted.slice(numCourts * 4)
@@ -546,7 +550,7 @@ function generateRoundRobin(players, numCourts, genderMode = 'mixed') {
 
 export default function Schedule({ tournament, onNavigate }) {
   const {
-    players, getTournamentRegistrations, getTournamentMatches,
+    players, matches: allMatches, getTournamentRegistrations, getTournamentMatches,
     saveMatches, updateMatch, updateTournament, isAdmin
   } = useApp()
 
@@ -724,7 +728,18 @@ export default function Schedule({ tournament, onNavigate }) {
     await new Promise(r => setTimeout(r, 300)) // small delay for UX
 
     let newRounds
-    if (format === 'lobster_matching') newRounds = generateLobster(registeredPlayers, numCourts, genderMode, tournament.duration || 90)
+    if (format === 'lobster_matching') {
+      // Decayed cohort memory pulls from EVERY past completed match outside
+      // this tournament. Excluding this tournament's own matches prevents
+      // re-generation from biasing against itself if the admin reshuffles.
+      const pastMatches = (allMatches || []).filter(
+        m => m.tournamentId !== tournament.id && m.completed
+      )
+      newRounds = generateLobsterAnnealed(
+        registeredPlayers, numCourts, genderMode, tournament.duration || 90,
+        { pastMatches }
+      )
+    }
     else if (format === 'mexicano')    newRounds = generateMexicano(registeredPlayers, numCourts, rounds, genderMode)
     else if (format === 'roundrobin')  newRounds = generateRoundRobin(registeredPlayers, numCourts, genderMode)
     else                               newRounds = generateAmericano(registeredPlayers, numCourts, rounds, genderMode)
