@@ -1,8 +1,14 @@
--- =====================================================================
 -- Rollback for 0009_phase2c_revoke_players_grants.sql
--- =====================================================================
--- Restores the grants that 0009 revoked. Use if Phase 2c shows a
--- production regression that can't be fixed in the app layer.
--- =====================================================================
+-- Restores anon/authenticated's direct grants on public.players and
+-- reverts the players_public view to security_invoker.
 
-grant select, insert, update, delete on public.players to anon, authenticated;
+begin;
+
+revoke select on public.players from anon, authenticated;
+
+grant select, insert, update, delete, references, trigger, truncate
+  on public.players to anon, authenticated;
+
+alter view public.players_public set (security_invoker = true);
+
+commit;

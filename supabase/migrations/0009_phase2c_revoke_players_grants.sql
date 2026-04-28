@@ -1,31 +1,36 @@
 -- =====================================================================
--- Padel Lobsters — Security Phase 2c FINAL: revoke direct grants on players
+-- Phase 2c — final lockdown: revoke direct grants on public.players
 -- =====================================================================
--- Closes the bulk-PII vector. After this migration, anon and authenticated
--- can no longer hit `from('players').select|insert|update|delete()`
--- directly. Every read goes through:
---   - public.players_public view (non-PII display data)
---   - public.get_my_profile_v2 (signed-in player's own PII)
---   - public.get_all_players_with_pii_v2 (admin-gated bulk PII, quota'd)
--- Every write goes through the Phase 2c RPCs (admin_add_player,
--- admin_update_player, update_my_profile, admin_delete_player,
--- admin_regenerate_pin) which all run as SECURITY DEFINER and bypass
--- the revoked grants because they execute as the table owner.
+-- Closes the bulk-PII vector for good. After this runs, an attacker
+-- holding the anon key cannot do `select email, phone, birthday from
+-- players` from DevTools. PII can only be reached via the SECURITY
+-- DEFINER RPCs (get_my_profile_v2, get_all_players_with_pii_v2) which
+-- gate on PIN + device trust + rate limits + audit logging.
 --
--- DO NOT APPLY this migration until:
---   1. The Phase 2b + 2c app code is deployed to production.
---   2. You've smoke-tested every flow through the new RPCs:
---      - Admin: add player, update player, delete player, reset PIN.
---      - Self: update own profile from Settings (name, level, tagline,
---              email/phone if PII overlay loaded).
---      - PIN reveal after admin_add_player and admin_regenerate_pin.
---   3. Realtime subscriptions on `players` are accepted to either go
---      silent for non-admin clients OR you've added a fallback poll.
---      (After REVOKE, anon/authenticated can't subscribe to changes
---      on a table they have no SELECT on.)
---
--- Rollback: 0009_revoke_rollback.sql restores the grants if anything
--- breaks in production. The REVOKE itself is a one-line undo.
+-- Three changes:
+--   1. Switch players_public back to security_definer. The view's role
+--      has shifted from "documentation-only redaction" (Phase 1) to
+--      "canonical controlled-access boundary" — so it must run as its
+--      creator to bypass the underlying-table grants we restrict next.
+--      Supabase advisor will re-flag this as security_definer_view —
+--      that's the deliberate design choice for Phase 2c.
+--   2. Revoke all grants on public.players from anon, authenticated.
+--   3. Grant SELECT on non-PII columns only — required for Supabase
+--      realtime postgres_changes events to deliver. Notably absent:
+--      email, phone, birthday, notes, pin, pin_hash, locked_until.
 -- =====================================================================
 
-revoke select, insert, update, delete on public.players from anon, authenticated;
+begin;
+
+alter view public.players_public set (security_invoker = false);
+
+revoke all on public.players from anon, authenticated;
+
+grant select (
+  id, name, status, gender, is_left_handed, preferred_position, country,
+  tagline, tagline_label, playtomic_level, playtomic_username,
+  playtomic_updated_at, adjustment, adjusted_level, avatar_url,
+  created_at, pin_changes
+) on public.players to anon, authenticated;
+
+commit;
