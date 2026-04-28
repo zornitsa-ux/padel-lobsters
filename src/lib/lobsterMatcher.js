@@ -186,16 +186,28 @@ function buildContext(players, numCourts, numRounds, genderMode, pastMatches) {
   const totalPairs = (playerCount * (playerCount - 1)) / 2
   const cohortTarget = totalPairs > 0 ? pairEvents / totalPairs : 0
 
-  // Gender quota — same logic as the existing validator. With odd women in
-  // mixed mode we accept exactly one unavoidable WM-vs-MM clash per round.
+  // Gender model. In mixed mode the target is 1 woman per team where possible:
+  //   - When womenCount ≤ teamsPerRound, every team is either 1W1M or 0W2M
+  //     (NEVER 2W0M / WW). Courts pair up WM-vs-WM and MM-vs-MM.
+  //   - When womenCount > teamsPerRound, some teams must be WW; we still want
+  //     team women-counts as equal as possible.
+  // The cost function penalises (a) 2W teams in regime A, and (b) |w1 - w2|
+  // mismatch on each court. With odd women in regime A, ONE court per round
+  // must be 1W1M vs 0W2M (mismatch = 1) — that's unavoidable.
   const isMixed = genderMode === 'mixed'
   const womenCount = playerByIdx.filter(p => p.gender === 'female').length
   const menCount   = playerByIdx.length - womenCount
-  let unavoidableClashesPerRound = 0
+  const teamsPerRound = Math.floor(activePerRound / 2)
+  const womenAtMostOnePerTeam = isMixed && womenCount <= teamsPerRound
+  let unavoidableMismatchPerRound = 0
   if (isMixed && womenCount > 0 && menCount > 0) {
-    const teamsPerRound = Math.floor(activePerRound / 2)
-    if (womenCount < teamsPerRound) {
-      unavoidableClashesPerRound = womenCount % 2 === 1 ? 1 : 0
+    if (womenAtMostOnePerTeam) {
+      unavoidableMismatchPerRound = womenCount % 2 === 1 ? 1 : 0
+    } else {
+      // Excess-women regime: any extra-woman teams pair up; if the excess is
+      // odd, one court has mismatch 1.
+      const excessWomen = womenCount - teamsPerRound
+      unavoidableMismatchPerRound = excessWomen % 2 === 1 ? 1 : 0
     }
   }
 
@@ -219,7 +231,8 @@ function buildContext(players, numCourts, numRounds, genderMode, pastMatches) {
     isFemale: playerByIdx.map(p => p.gender === 'female'),
     isLefty:  playerByIdx.map(p => p.isLeftHanded === true),
     level:    playerByIdx.map(p => p.adjustedLevel || 0),
-    unavoidableClashesPerRound,
+    womenAtMostOnePerTeam,
+    unavoidableMismatchPerRound,
   }
 }
 
@@ -273,14 +286,15 @@ function seedSchedule(ctx, rng) {
 // incrementally; for N=32 × 6 rounds this is ~5µs in V8 and lets us iterate
 // on the cost design without rewriting the SA loop.
 function scoreSchedule(schedule, ctx) {
-  const { playerCount, isFemale, isLefty, level, isMixed,
-          cohortHistory, cohortTarget, unavoidableClashesPerRound } = ctx
+  const { playerCount, isFemale, isLefty, level, isMixed, womenAtMostOnePerTeam,
+          cohortHistory, cohortTarget, unavoidableMismatchPerRound } = ctx
 
   let hard = 0
   let levelCost = 0
   let cohortHistCost = 0
   let cohortExcessCost = 0
-  let extraGenderClashes = 0
+  let wwTeams = 0          // WW (2-women) teams in the regime where they're avoidable
+  let extraMismatchSum = 0 // sum of |w1-w2| above the per-round unavoidable quota
 
   // Per-player partner / opponent / co-court counters within this schedule.
   const partner   = makeMatrix(playerCount)
@@ -289,7 +303,7 @@ function scoreSchedule(schedule, ctx) {
   const sitouts   = new Array(playerCount).fill(0)
 
   for (let r = 0; r < schedule.length; r++) {
-    let clashesThisRound = 0
+    let mismatchThisRound = 0
     for (let c = 0; c < schedule[r].length; c++) {
       const [a, b, c1, c2] = schedule[r][c]
       // Hard: two lefties on the same team
@@ -320,16 +334,21 @@ function scoreSchedule(schedule, ctx) {
           cohortHistCost += cohortHistory[four[i]][four[j]]
         }
       }
-      // Gender mode: WM team must not face MM team in mixed mode.
+      // Gender (mixed mode): each team should have the same number of women,
+      // and (when there are enough teams) no team should have 2 women.
       if (isMixed) {
-        const t1HasW = isFemale[a] || isFemale[b]
-        const t2HasW = isFemale[c1] || isFemale[c2]
-        if (t1HasW !== t2HasW) clashesThisRound++
+        const w1 = (isFemale[a] ? 1 : 0) + (isFemale[b] ? 1 : 0)
+        const w2 = (isFemale[c1] ? 1 : 0) + (isFemale[c2] ? 1 : 0)
+        if (womenAtMostOnePerTeam) {
+          if (w1 === 2) wwTeams++
+          if (w2 === 2) wwTeams++
+        }
+        mismatchThisRound += Math.abs(w1 - w2)
       }
     }
-    // Anything beyond the unavoidable quota is real engine error.
-    if (clashesThisRound > unavoidableClashesPerRound) {
-      extraGenderClashes += (clashesThisRound - unavoidableClashesPerRound)
+    // Beyond the unavoidable per-round mismatch quota is real engine error.
+    if (mismatchThisRound > unavoidableMismatchPerRound) {
+      extraMismatchSum += (mismatchThisRound - unavoidableMismatchPerRound)
     }
   }
 
@@ -375,7 +394,7 @@ function scoreSchedule(schedule, ctx) {
     W.OPPONENT_REPEAT * opponentCost +
     W.COHORT_EXCESS * cohortExcessCost +
     W.COHORT_HISTORY * cohortHistCost +
-    W.GENDER_EXTRA * extraGenderClashes +
+    W.GENDER_EXTRA * (extraMismatchSum + wwTeams) +
     W.SITOUT_VAR * sitoutCost
   )
 }
@@ -572,5 +591,52 @@ function mulberry32(seed) {
   }
 }
 ) / 4294967296
+  }
+}
+    for (let i = 0; i < ctx.playerCount; i++) {
+      if (!playing.has(i)) sitting.push(ctx.idByIdx[i])
+    }
+    out.push({
+      round: r + 1,
+      label: `Round ${r + 1}`,
+      matches,
+      sitting,
+    })
+  }
+  return out
+}
+
+// ── Tiny helpers ─────────────────────────────────────────────────────────────
+
+function makeMatrix(n) {
+  const m = new Array(n)
+  for (let i = 0; i < n; i++) m[i] = new Array(n).fill(0)
+  return m
+}
+
+function cloneSchedule(schedule) {
+  return schedule.map(round => round.map(court => [...court]))
+}
+
+function shuffleInPlace(arr, rng) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1))
+    ;[arr[i], arr[j]] = [arr[j], arr[i]]
+  }
+  return arr
+}
+
+function mulberry32(seed) {
+  let a = seed | 0
+  return function() {
+    a = (a + 0x6D2B79F5) | 0
+    let t = a
+    t = Math.imul(t ^ (t >>> 15), t | 1)
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+ >>> 7), t | 61)
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
   }
 }
