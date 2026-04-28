@@ -713,7 +713,38 @@ function medalColor(pos) {
 }
 function medalStyleH(pos) { return pos === 2 ? { color: '#CD7F32' } : {} }
 
-function Podium({ players, rounds = [], rn = n => n }) {
+// Build a {fullName: displayName} map.
+// • If a first name is unique in the input, display = first name only.
+// • If multiple players share a first name, append the rest of the name —
+//   the original last token if it's already short (≤2 chars, e.g. "Alex M"),
+//   otherwise just the last name's initial (e.g. "Daniel Net Hitter" → "Daniel N").
+function buildDisplayNames(names) {
+  const groups = {}
+  ;(names || []).forEach(n => {
+    if (!n) return
+    const f = n.trim().split(/\s+/)[0] || n
+    if (!groups[f]) groups[f] = []
+    groups[f].push(n)
+  })
+  const out = {}
+  Object.entries(groups).forEach(([first, group]) => {
+    const unique = [...new Set(group)]
+    if (unique.length === 1) {
+      unique.forEach(n => { out[n] = first })
+    } else {
+      unique.forEach(n => {
+        const tokens = n.trim().split(/\s+/)
+        const rest   = tokens.slice(1).join(' ')
+        if (!rest) { out[n] = n; return }
+        const tail = rest.length <= 2 ? rest : rest[0]
+        out[n] = `${first} ${tail}`
+      })
+    }
+  })
+  return out
+}
+
+function Podium({ players, rounds = [], rn = n => n, dn = n => n }) {
   const sorted = rounds.length > 0 ? smartSort(players, rounds) : [...players].sort((a, b) => b.total - a.total)
   const top3 = sorted.slice(0, 3)
   return (
@@ -724,7 +755,7 @@ function Podium({ players, rounds = [], rn = n => n }) {
         <div className="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center font-bold text-lg text-gray-600">
           {rn(top3[1]?.name || '')[0]}
         </div>
-        <p className="text-xs font-semibold text-gray-600 text-center w-16 truncate">{rn(top3[1]?.name || '')}</p>
+        <p className="text-xs font-semibold text-gray-600 text-center w-16 truncate">{dn(rn(top3[1]?.name || ''))}</p>
         <p className="text-sm font-bold text-gray-500">{top3[1]?.total} pts</p>
         <div className="bg-gray-200 rounded-t-lg w-12 h-10 flex items-end justify-center pb-1">
           <span className="text-xs font-bold text-gray-600">2nd</span>
@@ -736,7 +767,7 @@ function Podium({ players, rounds = [], rn = n => n }) {
         <div className="w-16 h-16 bg-yellow-50 border-2 border-yellow-400 rounded-full flex items-center justify-center font-bold text-xl text-yellow-700">
           {rn(top3[0]?.name || '')[0]}
         </div>
-        <p className="text-xs font-bold text-gray-800 text-center w-20 truncate">{rn(top3[0]?.name || '')}</p>
+        <p className="text-xs font-bold text-gray-800 text-center w-20 truncate">{dn(rn(top3[0]?.name || ''))}</p>
         <p className="text-base font-bold text-yellow-600">{top3[0]?.total} pts</p>
         <div className="bg-yellow-400 rounded-t-lg w-12 h-14 flex items-end justify-center pb-1">
           <span className="text-xs font-bold text-yellow-900">1st</span>
@@ -748,7 +779,7 @@ function Podium({ players, rounds = [], rn = n => n }) {
         <div className="w-14 h-14 rounded-full flex items-center justify-center font-bold text-lg text-white" style={{ background: '#CD7F32' }}>
           {rn(top3[2]?.name || '')[0]}
         </div>
-        <p className="text-xs font-semibold text-center w-16 truncate" style={{ color: '#8B5E3C' }}>{rn(top3[2]?.name || '')}</p>
+        <p className="text-xs font-semibold text-center w-16 truncate" style={{ color: '#8B5E3C' }}>{dn(rn(top3[2]?.name || ''))}</p>
         <p className="text-sm font-bold" style={{ color: '#CD7F32' }}>{top3[2]?.total} pts</p>
         <div className="rounded-t-lg w-12 h-7 flex items-end justify-center pb-1" style={{ background: '#CD7F32' }}>
           <span className="text-xs font-bold text-white">3rd</span>
@@ -890,6 +921,19 @@ export default function History({ onNavigate }) {
               const dbTab    = getDbTab(t.id)
               const dbRi     = getDbRound(t.id)
               const playerNameById = id => players.find(p => p.id === id)?.name || '?'
+              // Names that appear in this tournament (registered roster + everyone in matches).
+              const dbNameSet = new Set()
+              tRegs.forEach(r => {
+                const pp = players.find(x => x.id === r.playerId)
+                if (pp?.name) dbNameSet.add(pp.name)
+              })
+              tMatches.forEach(mt => {
+                ;(mt.team1Ids || []).forEach(id => { const nm = playerNameById(id); if (nm && nm !== '?') dbNameSet.add(nm) })
+                ;(mt.team2Ids || []).forEach(id => { const nm = playerNameById(id); if (nm && nm !== '?') dbNameSet.add(nm) })
+              })
+              const dbDnMap = buildDisplayNames([...dbNameSet])
+              const dbDn    = (n) => dbDnMap[n] || (n || '').split(' ')[0] || ''
+              const dbDnId  = (id) => dbDn(playerNameById(id))
 
               // Group completed matches by round, sort within round by court number.
               const courtNum = (label) => {
@@ -919,7 +963,7 @@ export default function History({ onNavigate }) {
                       <div className="flex flex-col items-center gap-1 flex-1">
                         <span className="text-xl">🥈</span>
                         <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-bold text-gray-600">{top3[1].player.name[0]}</div>
-                        <p className="text-xs font-semibold truncate w-full text-center">{top3[1].player.name.split(' ')[0]}</p>
+                        <p className="text-xs font-semibold truncate w-full text-center">{dbDn(top3[1].player.name)}</p>
                         <div className="bg-gray-200 w-full h-10 rounded-t-xl flex items-center justify-center">
                           <span className="text-xs font-bold text-gray-600">{top3[1].pts}pts</span>
                         </div>
@@ -927,7 +971,7 @@ export default function History({ onNavigate }) {
                       <div className="flex flex-col items-center gap-1 flex-1">
                         <span className="text-2xl">🥇</span>
                         <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center font-bold text-white text-lg">{top3[0].player.name[0]}</div>
-                        <p className="text-xs font-bold truncate w-full text-center">{top3[0].player.name.split(' ')[0]}</p>
+                        <p className="text-xs font-bold truncate w-full text-center">{dbDn(top3[0].player.name)}</p>
                         <div className="bg-yellow-400 w-full h-16 rounded-t-xl flex items-center justify-center">
                           <span className="text-xs font-bold text-white">{top3[0].pts}pts</span>
                         </div>
@@ -936,7 +980,7 @@ export default function History({ onNavigate }) {
                         <div className="flex flex-col items-center gap-1 flex-1">
                           <span className="text-xl">🥉</span>
                           <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white" style={{ background: '#CD7F32' }}>{top3[2].player.name[0]}</div>
-                          <p className="text-xs font-semibold truncate w-full text-center">{top3[2].player.name.split(' ')[0]}</p>
+                          <p className="text-xs font-semibold truncate w-full text-center">{dbDn(top3[2].player.name)}</p>
                           <div className="w-full h-7 rounded-t-xl flex items-center justify-center" style={{ background: '#CD7F32' }}>
                             <span className="text-xs font-bold text-white">{top3[2].pts}pts</span>
                           </div>
@@ -995,7 +1039,7 @@ export default function History({ onNavigate }) {
                           {rankings.map((s, i) => (
                             <tr key={s.player.id} className="border-b border-gray-50">
                               <td className="py-1.5 pl-1 text-gray-400 font-bold">{i + 1}</td>
-                              <td className="py-1.5 font-medium">{s.player.name}</td>
+                              <td className="py-1.5 font-medium text-sm">{dbDn(s.player.name)}</td>
                               <td className="text-center py-1.5 text-green-600 font-semibold">{s.won}</td>
                               <td className="text-center py-1.5 text-red-400">{s.lost}</td>
                               <td className="text-center py-1.5 text-gray-400">{s.pf}-{s.pa}</td>
@@ -1033,8 +1077,8 @@ export default function History({ onNavigate }) {
                           const scored = mt.completed && s1 != null && s2 != null
                           const t1won = scored && s1 > s2
                           const t2won = scored && s2 > s1
-                          const t1Names = (mt.team1Ids || []).map(playerNameById)
-                          const t2Names = (mt.team2Ids || []).map(playerNameById)
+                          const t1Names = (mt.team1Ids || []).map(dbDnId)
+                          const t2Names = (mt.team2Ids || []).map(dbDnId)
                           return (
                             <div key={mt.id} className="bg-gray-50 rounded-xl p-3">
                               <div className="flex items-center justify-between mb-1.5">
@@ -1081,7 +1125,9 @@ export default function History({ onNavigate }) {
                     const gvotes     = data.votes || []
                     const qs         = data.questions || []
                     const playerById = Object.fromEntries(roster.map(pp => [String(pp.id), pp]))
-                    const rosterName = (id) => playerById[String(id)]?.name || '?'
+                    const rosterDnMap = buildDisplayNames(roster.map(pp => pp.name).filter(Boolean))
+                    const rosterDn    = (n) => rosterDnMap[n] || (n || '').split(' ')[0] || ''
+                    const rosterName  = (id) => rosterDn(playerById[String(id)]?.name || '')
 
                     if (type === 'oscars') {
                       const perCategory = qs.map((q, i) => {
@@ -1128,7 +1174,7 @@ export default function History({ onNavigate }) {
                                     .map(pp => (
                                       <div key={pp.id} className="flex items-center gap-2">
                                         <span className="text-[10px] w-16 truncate text-gray-600">
-                                          {(pp.name || '').split(' ')[0]}
+                                          {rosterDn(pp.name)}
                                         </span>
                                         <div className="flex-1 h-2.5 bg-gray-100 rounded-full overflow-hidden">
                                           <div className="h-full bg-lobster-teal rounded-full transition-all"
@@ -1176,7 +1222,7 @@ export default function History({ onNavigate }) {
                                 <span className="text-xs w-5 text-center">
                                   {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}
                                 </span>
-                                <span className="flex-1 text-xs font-medium truncate">{s.player.name}</span>
+                                <span className="flex-1 text-xs font-medium truncate">{rosterDn(s.player.name)}</span>
                                 <span className="text-xs font-bold text-lobster-teal">{s.pts} pts</span>
                                 <span className="text-[10px] text-gray-400">{s.correct}/{qs.length} ✓</span>
                               </div>
@@ -1210,6 +1256,16 @@ export default function History({ onNavigate }) {
         const tab    = getTab(t.id)
         const ri     = getRound(t.id)
         const sorted = t.players ? smartSort(t.players, t.rounds || []) : []
+        // Build display-name map (first name, with disambiguator when needed) for
+        // every name that appears in this tournament's standings or rounds.
+        const allNames = []
+        t.players?.forEach(p => allNames.push(rn(p.name)))
+        t.rounds?.forEach(r => r.matches?.forEach(mm => {
+          mm.t1?.forEach(n => allNames.push(rn(n)))
+          mm.t2?.forEach(n => allNames.push(rn(n)))
+        }))
+        const dnMap = buildDisplayNames(allNames)
+        const dn = (n) => dnMap[rn(n)] || (rn(n) || '').split(' ')[0] || ''
 
         return (
           <div key={t.id} className="card overflow-hidden">
@@ -1249,7 +1305,7 @@ export default function History({ onNavigate }) {
             {open && (
               <div className="mt-4">
                 {/* Podium */}
-                {sorted.length > 0 && <Podium players={sorted} rounds={t.rounds || []} rn={rn} />}
+                {sorted.length > 0 && <Podium players={sorted} rounds={t.rounds || []} rn={rn} dn={dn} />}
 
                 {/* Tabs */}
                 <div className="flex gap-1 bg-gray-100 p-1 rounded-xl mb-3">
@@ -1323,8 +1379,8 @@ export default function History({ onNavigate }) {
                         <span className={`text-xs font-bold ${medalColor(idx)}`} style={medalStyleH(idx)}>
                           {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : idx + 1}
                         </span>
-                        <span className={`font-medium truncate text-xs ${idx < 3 ? 'font-bold' : ''}`}>
-                          {rn(p.name)}
+                        <span className={`font-medium text-sm leading-tight ${idx < 3 ? 'font-bold' : ''}`}>
+                          {dn(p.name)}
                         </span>
                         {p.r ? (
                           <>
@@ -1378,7 +1434,7 @@ export default function History({ onNavigate }) {
                               {/* Team A */}
                               <div className={`flex-1 min-w-0 ${t1won ? 'text-green-700' : 'text-gray-600'}`}>
                                 {m.t1.map(name => (
-                                  <p key={name} className="text-sm font-semibold leading-tight">{rn(name)}</p>
+                                  <p key={name} className="text-sm font-semibold leading-tight">{dn(name)}</p>
                                 ))}
                               </div>
                               {/* Score */}
@@ -1394,7 +1450,7 @@ export default function History({ onNavigate }) {
                               {/* Team B */}
                               <div className={`flex-1 min-w-0 text-right ${t2won ? 'text-green-700' : 'text-gray-600'}`}>
                                 {m.t2.map(name => (
-                                  <p key={name} className="text-sm font-semibold leading-tight">{rn(name)}</p>
+                                  <p key={name} className="text-sm font-semibold leading-tight">{dn(name)}</p>
                                 ))}
                               </div>
                             </div>
