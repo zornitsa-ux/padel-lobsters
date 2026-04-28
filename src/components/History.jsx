@@ -1,6 +1,7 @@
-import React, { useState, useMemo, useCallback } from 'react'
-import { Trophy, ChevronDown, ChevronUp, Medal, Pencil, Users } from 'lucide-react'
+import React, { useState, useMemo, useCallback, useEffect } from 'react'
+import { Trophy, ChevronDown, ChevronUp, Medal, Pencil, Users, Gamepad2 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
+import { supabase } from '../supabase'
 
 // ── Name alias storage ────────────────────────────────────────────────────────
 const ALIAS_KEY    = 'lobster_name_aliases'
@@ -774,14 +775,19 @@ function getAllHardcodedNames() {
 // ── Main component ────────────────────────────────────────────────────────────
 export default function History({ onNavigate }) {
   const { tournaments, players, getTournamentMatches, getTournamentRegistrations, isAdmin } = useApp()
-  const [expandedId, setExpandedId] = useState('apr2026')
-  const [activeTab, setActiveTab]   = useState({})   // id → 'standings' | 'matches'
+  const [expandedId, setExpandedId] = useState(null)
+  const [activeTab, setActiveTab]   = useState({})   // id → 'standings' | 'matches' | 'games'
   const [activeRound, setActiveRound] = useState({}) // id → roundIndex
+  const [dbActiveTab, setDbActiveTab]     = useState({})   // dbId → 'standings' | 'matches' | 'games'
+  const [dbActiveRound, setDbActiveRound] = useState({})   // dbId → roundIndex
+  const [dbGameResults, setDbGameResults] = useState({})   // tId → array
   const [aliases]         = useState(loadAliases)
   const rn = useCallback((name) => resolveName(name, aliases), [aliases])
 
   const getTab   = (id) => activeTab[id]   || 'standings'
   const getRound = (id) => activeRound[id] ?? 0
+  const getDbTab   = (id) => dbActiveTab[id]   || 'standings'
+  const getDbRound = (id) => dbActiveRound[id] ?? 0
 
   const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000
 
@@ -796,6 +802,26 @@ export default function History({ onNavigate }) {
       })
       .sort((a, b) => (b.date || b.completedAt || '') > (a.date || a.completedAt || '') ? 1 : -1)
   }, [tournaments])
+
+  // Fetch lobster game results for any completed dynamic tournament that doesn't
+  // have them cached yet — used by the "Lobster games" tab on those event cards.
+  useEffect(() => {
+    let active = true
+    dynamicTournaments.forEach(t => {
+      if (dbGameResults[t.id] !== undefined) return
+      ;(async () => {
+        const { data } = await supabase
+          .from('game_results')
+          .select('*')
+          .eq('tournament_id', t.id)
+          .order('finished_at', { ascending: false })
+        if (active) {
+          setDbGameResults(prev => ({ ...prev, [t.id]: data || [] }))
+        }
+      })()
+    })
+    return () => { active = false }
+  }, [dynamicTournaments, dbGameResults])
 
   return (
     <div className="space-y-4">
@@ -860,83 +886,320 @@ export default function History({ onNavigate }) {
               }
             </button>
 
-            {open && (
-              <div className="mt-4 space-y-3">
-                {/* Podium */}
-                {top3.length >= 2 && (
-                  <div className="flex items-end justify-center gap-2 py-2">
-                    <div className="flex flex-col items-center gap-1 flex-1">
-                      <span className="text-xl">🥈</span>
-                      <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-bold text-gray-600">{top3[1].player.name[0]}</div>
-                      <p className="text-xs font-semibold truncate w-full text-center">{top3[1].player.name.split(' ')[0]}</p>
-                      <div className="bg-gray-200 w-full h-10 rounded-t-xl flex items-center justify-center">
-                        <span className="text-xs font-bold text-gray-600">{top3[1].pts}pts</span>
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-center gap-1 flex-1">
-                      <span className="text-2xl">🥇</span>
-                      <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center font-bold text-white text-lg">{top3[0].player.name[0]}</div>
-                      <p className="text-xs font-bold truncate w-full text-center">{top3[0].player.name.split(' ')[0]}</p>
-                      <div className="bg-yellow-400 w-full h-16 rounded-t-xl flex items-center justify-center">
-                        <span className="text-xs font-bold text-white">{top3[0].pts}pts</span>
-                      </div>
-                    </div>
-                    {top3[2] && (
+            {open && (() => {
+              const dbTab    = getDbTab(t.id)
+              const dbRi     = getDbRound(t.id)
+              const playerNameById = id => players.find(p => p.id === id)?.name || '?'
+
+              // Group completed matches by round, sort within round by court number.
+              const courtNum = (label) => {
+                const mm = String(label ?? '').match(/(\d+)/)
+                return mm ? parseInt(mm[1], 10) : Number.MAX_SAFE_INTEGER
+              }
+              const byRound = {}
+              tMatches.forEach(mt => {
+                const r = mt.round || 1
+                if (!byRound[r]) byRound[r] = []
+                byRound[r].push(mt)
+              })
+              Object.values(byRound).forEach(arr => arr.sort((a, b) => courtNum(a.court) - courtNum(b.court)))
+              const dbRounds = Object.keys(byRound)
+                .map(Number).sort((a, b) => a - b)
+                .map(n => ({ round: n, matches: byRound[n] }))
+
+              const gameResults = dbGameResults[t.id] || []
+              const hasGameResults = gameResults.length > 0
+              const hasMatches = tMatches.length > 0
+
+              return (
+                <div className="mt-4 space-y-3">
+                  {/* Podium */}
+                  {top3.length >= 2 && (
+                    <div className="flex items-end justify-center gap-2 py-2">
                       <div className="flex flex-col items-center gap-1 flex-1">
-                        <span className="text-xl">🥉</span>
-                        <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white" style={{ background: '#CD7F32' }}>{top3[2].player.name[0]}</div>
-                        <p className="text-xs font-semibold truncate w-full text-center">{top3[2].player.name.split(' ')[0]}</p>
-                        <div className="w-full h-7 rounded-t-xl flex items-center justify-center" style={{ background: '#CD7F32' }}>
-                          <span className="text-xs font-bold text-white">{top3[2].pts}pts</span>
+                        <span className="text-xl">🥈</span>
+                        <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-bold text-gray-600">{top3[1].player.name[0]}</div>
+                        <p className="text-xs font-semibold truncate w-full text-center">{top3[1].player.name.split(' ')[0]}</p>
+                        <div className="bg-gray-200 w-full h-10 rounded-t-xl flex items-center justify-center">
+                          <span className="text-xs font-bold text-gray-600">{top3[1].pts}pts</span>
                         </div>
                       </div>
+                      <div className="flex flex-col items-center gap-1 flex-1">
+                        <span className="text-2xl">🥇</span>
+                        <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center font-bold text-white text-lg">{top3[0].player.name[0]}</div>
+                        <p className="text-xs font-bold truncate w-full text-center">{top3[0].player.name.split(' ')[0]}</p>
+                        <div className="bg-yellow-400 w-full h-16 rounded-t-xl flex items-center justify-center">
+                          <span className="text-xs font-bold text-white">{top3[0].pts}pts</span>
+                        </div>
+                      </div>
+                      {top3[2] && (
+                        <div className="flex flex-col items-center gap-1 flex-1">
+                          <span className="text-xl">🥉</span>
+                          <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white" style={{ background: '#CD7F32' }}>{top3[2].player.name[0]}</div>
+                          <p className="text-xs font-semibold truncate w-full text-center">{top3[2].player.name.split(' ')[0]}</p>
+                          <div className="w-full h-7 rounded-t-xl flex items-center justify-center" style={{ background: '#CD7F32' }}>
+                            <span className="text-xs font-bold text-white">{top3[2].pts}pts</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Tabs — Full Standings | Match Results | Lobster Games (conditional) */}
+                  <div className="flex gap-1 bg-gray-100 p-1 rounded-xl overflow-x-auto">
+                    <button
+                      onClick={() => setDbActiveTab(s => ({ ...s, [t.id]: 'standings' }))}
+                      className={`flex-1 min-w-max py-1.5 px-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${
+                        dbTab === 'standings' ? 'bg-white text-lobster-teal shadow-sm' : 'text-gray-500'
+                      }`}
+                    >
+                      Full Standings
+                    </button>
+                    {hasMatches && (
+                      <button
+                        onClick={() => setDbActiveTab(s => ({ ...s, [t.id]: 'matches' }))}
+                        className={`flex-1 min-w-max py-1.5 px-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${
+                          dbTab === 'matches' ? 'bg-white text-lobster-teal shadow-sm' : 'text-gray-500'
+                        }`}
+                      >
+                        Match Results
+                      </button>
+                    )}
+                    {hasGameResults && (
+                      <button
+                        onClick={() => setDbActiveTab(s => ({ ...s, [t.id]: 'games' }))}
+                        className={`flex-1 min-w-max py-1.5 px-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${
+                          dbTab === 'games' ? 'bg-white text-lobster-teal shadow-sm' : 'text-gray-500'
+                        }`}
+                      >
+                        🦞 Lobster Games
+                      </button>
                     )}
                   </div>
-                )}
 
-                {/* Full standings */}
-                {rankings.length > 0 && (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-xs">
-                      <thead>
-                        <tr className="text-gray-400 uppercase border-b border-gray-100">
-                          <th className="text-left pb-1.5 pl-1">#</th>
-                          <th className="text-left pb-1.5">Player</th>
-                          <th className="text-center pb-1.5">W</th>
-                          <th className="text-center pb-1.5">L</th>
-                          <th className="text-center pb-1.5">+/-</th>
-                          <th className="text-center pb-1.5 text-gray-600 font-bold">Pts</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {rankings.map((s, i) => (
-                          <tr key={s.player.id} className="border-b border-gray-50">
-                            <td className="py-1.5 pl-1 text-gray-400 font-bold">{i + 1}</td>
-                            <td className="py-1.5 font-medium">{s.player.name}</td>
-                            <td className="text-center py-1.5 text-green-600 font-semibold">{s.won}</td>
-                            <td className="text-center py-1.5 text-red-400">{s.lost}</td>
-                            <td className="text-center py-1.5 text-gray-400">{s.pf}-{s.pa}</td>
-                            <td className="text-center py-1.5 font-bold text-lobster-teal">{s.pts}</td>
+                  {/* ── Full Standings ── */}
+                  {dbTab === 'standings' && rankings.length > 0 && (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr className="text-gray-400 uppercase border-b border-gray-100">
+                            <th className="text-left pb-1.5 pl-1">#</th>
+                            <th className="text-left pb-1.5">Player</th>
+                            <th className="text-center pb-1.5">W</th>
+                            <th className="text-center pb-1.5">L</th>
+                            <th className="text-center pb-1.5">+/-</th>
+                            <th className="text-center pb-1.5 text-gray-600 font-bold">Pts</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-                {rankings.length === 0 && (
-                  <p className="text-sm text-gray-400 text-center py-2">No match data available</p>
-                )}
+                        </thead>
+                        <tbody>
+                          {rankings.map((s, i) => (
+                            <tr key={s.player.id} className="border-b border-gray-50">
+                              <td className="py-1.5 pl-1 text-gray-400 font-bold">{i + 1}</td>
+                              <td className="py-1.5 font-medium">{s.player.name}</td>
+                              <td className="text-center py-1.5 text-green-600 font-semibold">{s.won}</td>
+                              <td className="text-center py-1.5 text-red-400">{s.lost}</td>
+                              <td className="text-center py-1.5 text-gray-400">{s.pf}-{s.pa}</td>
+                              <td className="text-center py-1.5 font-bold text-lobster-teal">{s.pts}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                  {dbTab === 'standings' && rankings.length === 0 && (
+                    <p className="text-sm text-gray-400 text-center py-2">No match data available</p>
+                  )}
 
-                {onNavigate && (
-                  <button
-                    onClick={() => onNavigate('scores', t)}
-                    className="w-full text-sm text-lobster-teal font-semibold border border-lobster-teal rounded-xl py-2 active:scale-95 transition-all"
-                  >
-                    View full match scores →
-                  </button>
-                )}
-              </div>
-            )}
+                  {/* ── Match Results ── */}
+                  {dbTab === 'matches' && hasMatches && (
+                    <div>
+                      <div className="flex gap-1.5 overflow-x-auto pb-2 mb-3">
+                        {dbRounds.map((r, i) => (
+                          <button
+                            key={r.round}
+                            onClick={() => setDbActiveRound(s => ({ ...s, [t.id]: i }))}
+                            className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                              dbRi === i ? 'bg-lobster-teal text-white' : 'bg-gray-100 text-gray-600'
+                            }`}
+                          >
+                            R{r.round}
+                          </button>
+                        ))}
+                      </div>
+
+                      <div className="space-y-2">
+                        {dbRounds[dbRi]?.matches.map(mt => {
+                          const s1 = mt.score1, s2 = mt.score2
+                          const scored = mt.completed && s1 != null && s2 != null
+                          const t1won = scored && s1 > s2
+                          const t2won = scored && s2 > s1
+                          const t1Names = (mt.team1Ids || []).map(playerNameById)
+                          const t2Names = (mt.team2Ids || []).map(playerNameById)
+                          return (
+                            <div key={mt.id} className="bg-gray-50 rounded-xl p-3">
+                              <div className="flex items-center justify-between mb-1.5">
+                                <span className="text-[10px] font-bold text-lobster-teal bg-lobster-cream px-2 py-0.5 rounded-full">
+                                  {mt.court || `Round ${mt.round}`}
+                                </span>
+                                {scored && s1 === s2 && (
+                                  <span className="text-[10px] text-gray-400 font-medium">Draw</span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <div className={`flex-1 min-w-0 ${t1won ? 'text-green-700' : 'text-gray-600'}`}>
+                                  {t1Names.map((name, i) => (
+                                    <p key={i} className="text-sm font-semibold leading-tight">{name}</p>
+                                  ))}
+                                </div>
+                                <div className="flex items-center gap-1 flex-shrink-0">
+                                  <span className={`text-lg font-bold w-7 text-center ${t1won ? 'text-green-600' : 'text-gray-400'}`}>
+                                    {scored ? s1 : '—'}
+                                  </span>
+                                  <span className="text-gray-300 text-sm">–</span>
+                                  <span className={`text-lg font-bold w-7 text-center ${t2won ? 'text-green-600' : 'text-gray-400'}`}>
+                                    {scored ? s2 : '—'}
+                                  </span>
+                                </div>
+                                <div className={`flex-1 min-w-0 text-right ${t2won ? 'text-green-700' : 'text-gray-600'}`}>
+                                  {t2Names.map((name, i) => (
+                                    <p key={i} className="text-sm font-semibold leading-tight">{name}</p>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ── Lobster Games ── */}
+                  {dbTab === 'games' && hasGameResults && gameResults.map(gr => {
+                    const data       = gr.data || {}
+                    const type       = gr.game_type || data.type || 'oscars'
+                    const roster     = data.players || []
+                    const gvotes     = data.votes || []
+                    const qs         = data.questions || []
+                    const playerById = Object.fromEntries(roster.map(pp => [String(pp.id), pp]))
+                    const rosterName = (id) => playerById[String(id)]?.name || '?'
+
+                    if (type === 'oscars') {
+                      const perCategory = qs.map((q, i) => {
+                        const qv = gvotes.filter(v => String(v.question_index) === String(i))
+                        const counts = {}
+                        qv.forEach(v => { counts[v.answer] = (counts[v.answer] || 0) + 1 })
+                        const top     = Math.max(0, ...Object.values(counts))
+                        const winners = top > 0
+                          ? Object.entries(counts).filter(([, c]) => c === top).map(([pid]) => pid)
+                          : []
+                        return { q, i, counts, winners, top }
+                      })
+
+                      return (
+                        <div key={gr.id} className="space-y-2">
+                          <div className="flex items-center gap-2 px-1">
+                            <Gamepad2 size={14} className="text-lobster-teal" />
+                            <p className="text-xs font-bold text-gray-700">🏆 Lobster Oscars</p>
+                            <span className="text-[10px] text-gray-400 ml-auto">
+                              {qs.length} categor{qs.length === 1 ? 'y' : 'ies'}
+                            </span>
+                          </div>
+                          {perCategory.map(({ q, i, counts, winners, top }) => {
+                            const maxV = Math.max(1, ...Object.values(counts))
+                            return (
+                              <div key={i} className="bg-white rounded-xl p-3 space-y-1.5 border border-gray-100">
+                                <p className="font-bold text-xs text-gray-700">{q.category}</p>
+                                {winners.length > 0 ? (
+                                  <p className="text-xs text-gray-600">
+                                    🏆 <span className="font-bold">
+                                      {winners.map(pid => rosterName(pid)).join(', ')}
+                                    </span>{' '}
+                                    <span className="text-gray-400">
+                                      ({top} vote{top !== 1 ? 's' : ''}{winners.length > 1 ? ' — tie' : ''})
+                                    </span>
+                                  </p>
+                                ) : (
+                                  <p className="text-[10px] text-gray-400">No votes</p>
+                                )}
+                                <div className="space-y-0.5">
+                                  {roster
+                                    .filter(pp => counts[String(pp.id)])
+                                    .sort((a, b) => (counts[String(b.id)] || 0) - (counts[String(a.id)] || 0))
+                                    .map(pp => (
+                                      <div key={pp.id} className="flex items-center gap-2">
+                                        <span className="text-[10px] w-16 truncate text-gray-600">
+                                          {(pp.name || '').split(' ')[0]}
+                                        </span>
+                                        <div className="flex-1 h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                                          <div className="h-full bg-lobster-teal rounded-full transition-all"
+                                            style={{ width: `${(counts[String(pp.id)] / maxV) * 100}%` }} />
+                                        </div>
+                                        <span className="text-[10px] text-gray-500 w-3 text-right">
+                                          {counts[String(pp.id)]}
+                                        </span>
+                                      </div>
+                                    ))}
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )
+                    }
+
+                    if (type === 'trivia') {
+                      const scores = {}
+                      roster.forEach(pp => { scores[String(pp.id)] = { player: pp, pts: 0, correct: 0 } })
+                      qs.forEach((q, i) => {
+                        const qv = gvotes.filter(v => String(v.question_index) === String(i))
+                        qv.forEach(v => {
+                          if (String(v.answer) !== String(q.correct)) return
+                          if (!scores[String(v.player_id)]) return
+                          scores[String(v.player_id)].pts     += 500
+                          scores[String(v.player_id)].correct += 1
+                        })
+                      })
+                      const board = Object.values(scores).sort((a, b) => b.pts - a.pts)
+                      return (
+                        <div key={gr.id} className="space-y-2">
+                          <div className="flex items-center gap-2 px-1">
+                            <Gamepad2 size={14} className="text-lobster-teal" />
+                            <p className="text-xs font-bold text-gray-700">🧠 Lobster Trivia</p>
+                            <span className="text-[10px] text-gray-400 ml-auto">
+                              {qs.length} question{qs.length === 1 ? '' : 's'}
+                            </span>
+                          </div>
+                          <div className="bg-white rounded-xl p-3 space-y-1 border border-gray-100">
+                            {board.map((s, i) => (
+                              <div key={s.player.id}
+                                className={`flex items-center gap-2 px-1 py-1 rounded-lg ${i < 3 ? 'bg-yellow-50/40' : ''}`}>
+                                <span className="text-xs w-5 text-center">
+                                  {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}
+                                </span>
+                                <span className="flex-1 text-xs font-medium truncate">{s.player.name}</span>
+                                <span className="text-xs font-bold text-lobster-teal">{s.pts} pts</span>
+                                <span className="text-[10px] text-gray-400">{s.correct}/{qs.length} ✓</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    }
+
+                    return null
+                  })}
+
+                  {onNavigate && (
+                    <button
+                      onClick={() => onNavigate('scores', t)}
+                      className="w-full text-xs text-lobster-teal font-semibold border border-lobster-teal rounded-xl py-2 active:scale-95 transition-all"
+                    >
+                      View full match scores →
+                    </button>
+                  )}
+                </div>
+              )
+            })()}
           </div>
         )
       })}
@@ -1113,9 +1376,9 @@ export default function History({ onNavigate }) {
                             </div>
                             <div className="flex items-center gap-2">
                               {/* Team A */}
-                              <div className={`flex-1 ${t1won ? 'text-green-700' : 'text-gray-600'}`}>
+                              <div className={`flex-1 min-w-0 ${t1won ? 'text-green-700' : 'text-gray-600'}`}>
                                 {m.t1.map(name => (
-                                  <p key={name} className="text-xs font-semibold truncate">{rn(name)}</p>
+                                  <p key={name} className="text-sm font-semibold leading-tight">{rn(name)}</p>
                                 ))}
                               </div>
                               {/* Score */}
@@ -1129,9 +1392,9 @@ export default function History({ onNavigate }) {
                                 </span>
                               </div>
                               {/* Team B */}
-                              <div className={`flex-1 text-right ${t2won ? 'text-green-700' : 'text-gray-600'}`}>
+                              <div className={`flex-1 min-w-0 text-right ${t2won ? 'text-green-700' : 'text-gray-600'}`}>
                                 {m.t2.map(name => (
-                                  <p key={name} className="text-xs font-semibold truncate">{rn(name)}</p>
+                                  <p key={name} className="text-sm font-semibold leading-tight">{rn(name)}</p>
                                 ))}
                               </div>
                             </div>
