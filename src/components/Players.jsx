@@ -1232,6 +1232,21 @@ export default function Players({ onNavigate, focusPlayerId }) {
                     </span>
                   </div>
 
+                  {/* Lobster Ladder — admin-only Glicko-2 shadow rating */}
+                  {isAdmin && p.learnedLevel != null && (
+                    <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                      <span className="text-[10px] font-bold text-lobster-teal uppercase tracking-wider">Ladder</span>
+                      <span className="font-bold text-gray-700">{p.learnedLevel.toFixed(2)}</span>
+                      <span className={(p.learnedLevel - (p.adjustedLevel || 0)) >= 0 ? 'text-green-600' : 'text-red-500'}>
+                        ({(p.learnedLevel - (p.adjustedLevel || 0)) >= 0 ? '+' : ''}{(p.learnedLevel - (p.adjustedLevel || 0)).toFixed(2)} vs adjusted)
+                      </span>
+                      <span className="text-gray-400">·</span>
+                      <span title={`Rating Deviation — lower means more confident. ~80 is "stable", 350 means brand new.`} className={(p.learnedRd ?? 350) < 100 ? 'text-green-600' : (p.learnedRd ?? 350) < 200 ? 'text-amber-600' : 'text-gray-400'}>
+                        ±{Math.round((p.learnedRd ?? 0) / 100)} · {p.learnedMatchesCount || 0}m
+                      </span>
+                    </div>
+                  )}
+
                   {/* Recent form — last 5 matches */}
                   {stats.recentForm.length > 0 && (
                     <div>

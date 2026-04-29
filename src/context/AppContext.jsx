@@ -594,6 +594,12 @@ export function AppProvider({ children }) {
     playtomicLevel:    p.playtomic_level    ?? p.playtomicLevel    ?? 0,
     adjustment:        p.adjustment         ?? 0,
     adjustedLevel:     p.adjusted_level     ?? p.adjustedLevel     ?? 0,
+    // Glicko-2 shadow rating in Padel-scale units (learned_rating - 1200) / 100.
+    // Null when player has never been rated. learnedRd is the rating deviation
+    // (lower = more trustworthy; ~80 is "stable enough to use", default 350).
+    learnedLevel:      p.learned_rating != null ? (Number(p.learned_rating) - 1200) / 100 : null,
+    learnedRd:         p.learned_rd != null ? Number(p.learned_rd) : null,
+    learnedMatchesCount: p.learned_matches_count ?? 0,
     playtomicUsername: p.playtomic_username ?? p.playtomicUsername ?? '',
     gender:            p.gender             ?? '',
     status:            p.status             ?? 'active',
