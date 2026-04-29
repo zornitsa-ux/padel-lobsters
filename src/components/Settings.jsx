@@ -774,7 +774,7 @@ export default function Settings() {
         {isAdmin && (
           <div className="card space-y-3">
             <h3 className="font-bold text-gray-700 text-sm flex items-center gap-2">
-              <TrendingUp size={15} className="text-lobster-teal" /> Lobster Ladder (Glicko-2)
+              <TrendingUp size={15} className="text-lobster-teal" /> Lobster Score (Glicko-2)
             </h3>
             <p className="text-xs text-gray-500">
               Rebuilds shadow ratings from every known tournament (history file + DB)

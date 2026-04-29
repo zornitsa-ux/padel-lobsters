@@ -1135,8 +1135,8 @@ export default function Schedule({ tournament, onNavigate }) {
                           if (rated.length === 0) return null
                           const avg = rated.reduce((s, p) => s + p.learnedLevel, 0) / rated.length
                           return (
-                            <p className="text-[10px] text-lobster-teal/70 font-semibold mt-0.5" title="Lobster Ladder average (Glicko-2 shadow rating)">
-                              Ladder {avg.toFixed(2)}{rated.length < t1.length ? '*' : ''}
+                            <p className="text-[10px] text-lobster-teal/70 font-semibold mt-0.5" title="Lobster Score team average (Glicko-2 shadow rating)">
+                              Lobster {avg.toFixed(2)}{rated.length < t1.length ? '*' : ''}
                             </p>
                           )
                         })()}
@@ -1197,8 +1197,8 @@ export default function Schedule({ tournament, onNavigate }) {
                           if (rated.length === 0) return null
                           const avg = rated.reduce((s, p) => s + p.learnedLevel, 0) / rated.length
                           return (
-                            <p className="text-[10px] text-lobster-teal/70 font-semibold mt-0.5" title="Lobster Ladder average (Glicko-2 shadow rating)">
-                              Ladder {avg.toFixed(2)}{rated.length < t2.length ? '*' : ''}
+                            <p className="text-[10px] text-lobster-teal/70 font-semibold mt-0.5" title="Lobster Score team average (Glicko-2 shadow rating)">
+                              Lobster {avg.toFixed(2)}{rated.length < t2.length ? '*' : ''}
                             </p>
                           )
                         })()}
