@@ -321,6 +321,10 @@ function validateSchedule(rounds, allPlayers, genderMode) {
   // Track partnerships and opponents across rounds
   const partnersSeen = {} // "idA:idB" → [round numbers]
   const opponentsSeen = {} // "idA:idB" → [round numbers]
+  // Per-round counts of all-male / all-female courts (one summary row per round)
+  const allMaleByRound = {}
+  const allFemaleByRound = {}
+  const totalMatchesByRound = {}
 
   // Roster we expect every round to cover — respect "sitting" for formats that
   // rotate a subset per round. If no sitting array was set, every player
@@ -370,7 +374,9 @@ function validateSchedule(rounds, allPlayers, genderMode) {
       })
     }
 
-    (r.matches || []).forEach(m => {
+    totalMatchesByRound[r.round] = (r.matches || []).length
+
+    ;(r.matches || []).forEach(m => {
       const t1 = m.team1Ids || []
       const t2 = m.team2Ids || []
 
@@ -430,23 +436,12 @@ function validateSchedule(rounds, allPlayers, genderMode) {
               : `⚥ Gender imbalance on ${m.court}: ${t1.map(getName).join('+')} (${t1Lbl}) vs ${t2.map(getName).join('+')} (${t2Lbl})`,
           })
         }
-        // Info: all-male court (in mixed mode) — admin can decide if OK.
+        // Track all-male / all-female courts per round; summary at the end.
         if (w1 === 0 && w2 === 0) {
-          warnings.push({
-            type: 'gender-all-male-court',
-            severity: 'info',
-            round: r.round,
-            message: `♂ All-male on ${m.court}: ${t1.map(getName).join('+')} vs ${t2.map(getName).join('+')}`,
-          })
+          allMaleByRound[r.round] = (allMaleByRound[r.round] || 0) + 1
         }
-        // Info: all-female court (in mixed mode).
         if (w1 === 2 && w2 === 2) {
-          warnings.push({
-            type: 'gender-all-female-court',
-            severity: 'info',
-            round: r.round,
-            message: `♀ All-female on ${m.court}: ${t1.map(getName).join('+')} vs ${t2.map(getName).join('+')}`,
-          })
+          allFemaleByRound[r.round] = (allFemaleByRound[r.round] || 0) + 1
         }
       }
 
@@ -456,6 +451,23 @@ function validateSchedule(rounds, allPlayers, genderMode) {
         if (!opponentsSeen[key]) opponentsSeen[key] = []
         opponentsSeen[key].push(r.round)
       }))
+    })
+  })
+
+  // Per-round all-male / all-female summary (one row per round)
+  Object.keys(totalMatchesByRound).forEach(round => {
+    const total = totalMatchesByRound[round]
+    const am = allMaleByRound[round] || 0
+    const af = allFemaleByRound[round] || 0
+    if (am === 0 && af === 0) return
+    const parts = []
+    if (am > 0) parts.push(`${am}/${total} Men`)
+    if (af > 0) parts.push(`${af}/${total} Ladies`)
+    warnings.push({
+      type: 'gender-court-composition',
+      severity: 'info',
+      round: Number(round),
+      message: `R${round}: ${parts.join(' · ')}`,
     })
   })
 
@@ -1138,9 +1150,21 @@ export default function Schedule({ tournament, onNavigate }) {
                 return (
                   <div key={match.id || i} className={`card transition-all ${isSwapping ? 'ring-2 ring-orange-200' : ''}`}>
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-xs font-bold text-lobster-teal bg-lobster-cream px-2 py-0.5 rounded-full">
-                        {match.court}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-bold text-lobster-teal bg-lobster-cream px-2 py-0.5 rounded-full">
+                          {match.court}
+                        </span>
+                        {genderMode === 'mixed' && (() => {
+                          const w = [...t1, ...t2].filter(p => p?.gender === 'female').length
+                          if (w === 0) {
+                            return <span title="All-male court" className="text-xs font-bold bg-blue-100 text-blue-700 px-3 py-0.5 rounded-full">Men</span>
+                          }
+                          if (w === 4) {
+                            return <span title="All-female court" className="text-xs font-bold bg-pink-100 text-pink-700 px-3 py-0.5 rounded-full">Ladies</span>
+                          }
+                          return <span title="Mixed court" className="text-xs font-semibold bg-teal-50 text-teal-700 px-3 py-0.5 rounded-full">Mixed</span>
+                        })()}
+                      </div>
                       {match.completed && (
                         <span className="text-xs text-green-600 font-semibold">✓ Done</span>
                       )}
