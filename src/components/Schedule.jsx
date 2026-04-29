@@ -295,23 +295,28 @@ function validateSchedule(rounds, allPlayers, genderMode) {
   const womenCount = allPlayers.filter(p => p.gender === 'female').length
   const menCount   = allPlayers.length - womenCount
   const teams      = Math.floor(allPlayers.length / 2)
-  let unavoidablePerRound = 0
-  if (isMixed && womenCount > 0 && menCount > 0 && womenCount < teams) {
-    // When women < teams and we avoid WW pairs, one team per every two
-    // "leftover" W becomes a male-heavy court. With W odd, exactly 1
-    // unavoidable clash per round; with W even in this range, 0.
-    unavoidablePerRound = womenCount % 2 === 1 ? 1 : 0
+  // unavoidableMismatchPerRound = sum of |w1 - w2| per round physically
+  // forced by the W/M split. Odd women + women <= teams ⇒ one court must
+  // be 1W1M vs 0W2M (mismatch = 1).
+  let unavoidableMismatchPerRound = 0
+  if (isMixed && womenCount > 0 && menCount > 0) {
+    if (womenCount <= teams) {
+      unavoidableMismatchPerRound = womenCount % 2 === 1 ? 1 : 0
+    } else {
+      const excess = womenCount - teams
+      unavoidableMismatchPerRound = excess % 2 === 1 ? 1 : 0
+    }
   }
-  if (unavoidablePerRound > 0) {
+  if (isMixed && womenCount > 0 && womenCount % 2 === 1) {
     warnings.push({
-      type: 'gender-unavoidable-note',
+      type: 'gender-odd-women',
       severity: 'info',
       round: 0,
-      message: `With ${womenCount} women and ${menCount} men, ${unavoidablePerRound} court per round will have 1 woman vs 3 men. This is unavoidable — nothing to fix.`,
+      message: `Odd number of women (${womenCount}). With ${womenCount}W + ${menCount}M, one court per round will have 1 woman vs an all-male team — that's unavoidable. Other courts should still be balanced.`,
     })
   }
-  // Per-round counter so we know when we've exhausted the unavoidable quota
-  const unavoidableUsedByRound = {}
+  // Per-round running sum of mismatch already counted toward the unavoidable quota.
+  const mismatchUsedByRound = {}
 
   // Track partnerships and opponents across rounds
   const partnersSeen = {} // "idA:idB" → [round numbers]
@@ -402,27 +407,45 @@ function validateSchedule(rounds, allPlayers, genderMode) {
       checkLefties(t1, `Court ${m.court}`)
       checkLefties(t2, `Court ${m.court}`)
 
-      // Rule 3: gender clash on court (WM vs MM)
-      // Each round has a quota of "unavoidable" clashes (dictated by the
-      // gender count — see the block at the top of validateSchedule). Within
-      // that quota the clash is informational. Past the quota, it's a real
-      // engine error the admin should know about.
+      // Rule 3: gender mismatch on court. Each team should have the same
+      // number of women. Mismatch = |w1 - w2|: 0 = balanced, 1 = one extra
+      // woman on one side (e.g. 1W1M vs 0W2M, or 2W0M vs 1W1M = 3W on court),
+      // 2 = totally lopsided (2W0M vs 0W2M = 3W on court).
       if (isMixed) {
-        const t1HasW = t1.some(isFemale)
-        const t2HasW = t2.some(isFemale)
-        if (t1HasW !== t2HasW) {
-          const wTeam = t1HasW ? t1 : t2
-          const mTeam = t1HasW ? t2 : t1
-          const used    = unavoidableUsedByRound[r.round] || 0
-          const withinQuota = used < unavoidablePerRound
-          unavoidableUsedByRound[r.round] = used + 1
+        const w1 = t1.filter(isFemale).length
+        const w2 = t2.filter(isFemale).length
+        const diff = Math.abs(w1 - w2)
+        if (diff > 0) {
+          const used        = mismatchUsedByRound[r.round] || 0
+          const withinQuota = used + diff <= unavoidableMismatchPerRound
+          mismatchUsedByRound[r.round] = used + diff
+          const t1Lbl = `${w1}W${2 - w1}M`
+          const t2Lbl = `${w2}W${2 - w2}M`
           warnings.push({
-            type: 'gender-clash',
+            type: 'gender-mismatch',
             severity: withinQuota ? 'info' : 'error',
             round: r.round,
             message: withinQuota
-              ? `${m.court}: ${wTeam.map(getName).join('+')} vs ${mTeam.map(getName).join('+')} — unavoidable 1W vs 3M with ${womenCount} women`
-              : `⚥ Mixed vs all-male on ${m.court}: ${wTeam.map(getName).join('+')} vs ${mTeam.map(getName).join('+')}`,
+              ? `${m.court}: ${t1.map(getName).join('+')} (${t1Lbl}) vs ${t2.map(getName).join('+')} (${t2Lbl}) — unavoidable with ${womenCount} women`
+              : `⚥ Gender imbalance on ${m.court}: ${t1.map(getName).join('+')} (${t1Lbl}) vs ${t2.map(getName).join('+')} (${t2Lbl})`,
+          })
+        }
+        // Info: all-male court (in mixed mode) — admin can decide if OK.
+        if (w1 === 0 && w2 === 0) {
+          warnings.push({
+            type: 'gender-all-male-court',
+            severity: 'info',
+            round: r.round,
+            message: `♂ All-male on ${m.court}: ${t1.map(getName).join('+')} vs ${t2.map(getName).join('+')}`,
+          })
+        }
+        // Info: all-female court (in mixed mode).
+        if (w1 === 2 && w2 === 2) {
+          warnings.push({
+            type: 'gender-all-female-court',
+            severity: 'info',
+            round: r.round,
+            message: `♀ All-female on ${m.court}: ${t1.map(getName).join('+')} vs ${t2.map(getName).join('+')}`,
           })
         }
       }
