@@ -1130,6 +1130,16 @@ export default function Schedule({ tournament, onNavigate }) {
                         {match.team1Level && (
                           <p className="text-xs text-gray-400 mt-1">Avg {(match.team1Level / 2).toFixed(1)}</p>
                         )}
+                        {isAdmin && (() => {
+                          const rated = t1.filter(p => p.learnedLevel != null)
+                          if (rated.length === 0) return null
+                          const avg = rated.reduce((s, p) => s + p.learnedLevel, 0) / rated.length
+                          return (
+                            <p className="text-[10px] text-lobster-teal/70 font-semibold mt-0.5" title="Lobster Ladder average (Glicko-2 shadow rating)">
+                              Ladder {avg.toFixed(2)}{rated.length < t1.length ? '*' : ''}
+                            </p>
+                          )
+                        })()}
                       </div>
 
                       {/* Score */}
@@ -1182,6 +1192,16 @@ export default function Schedule({ tournament, onNavigate }) {
                         {match.team2Level && (
                           <p className="text-xs text-gray-400 mt-1">Avg {(match.team2Level / 2).toFixed(1)}</p>
                         )}
+                        {isAdmin && (() => {
+                          const rated = t2.filter(p => p.learnedLevel != null)
+                          if (rated.length === 0) return null
+                          const avg = rated.reduce((s, p) => s + p.learnedLevel, 0) / rated.length
+                          return (
+                            <p className="text-[10px] text-lobster-teal/70 font-semibold mt-0.5" title="Lobster Ladder average (Glicko-2 shadow rating)">
+                              Ladder {avg.toFixed(2)}{rated.length < t2.length ? '*' : ''}
+                            </p>
+                          )
+                        })()}
                       </div>
                     </div>
                   </div>
