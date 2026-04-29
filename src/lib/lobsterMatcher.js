@@ -320,11 +320,12 @@ function scoreSchedule(schedule, ctx) {
           cohortHistCost += cohortHistory[four[i]][four[j]]
         }
       }
-      // Gender mode: WM team must not face MM team in mixed mode.
+      // Mixed mode: each team should have the same number of women.
+      // Mismatch 1 = WM vs MM or WW vs WM; mismatch 2 = WW vs MM (3W on court).
       if (isMixed) {
-        const t1HasW = isFemale[a] || isFemale[b]
-        const t2HasW = isFemale[c1] || isFemale[c2]
-        if (t1HasW !== t2HasW) clashesThisRound++
+        const w1 = (isFemale[a] ? 1 : 0) + (isFemale[b] ? 1 : 0)
+        const w2 = (isFemale[c1] ? 1 : 0) + (isFemale[c2] ? 1 : 0)
+        clashesThisRound += Math.abs(w1 - w2)
       }
     }
     // Anything beyond the unavoidable quota is real engine error.
