@@ -589,6 +589,16 @@ export default function Schedule({ tournament, onNavigate }) {
   const [swapWarnings, setSwapWarnings] = useState([]) // warnings after a swap
   const [scheduleWarnings, setScheduleWarnings] = useState([]) // full validation after generate
 
+  // Admin toggle: feed Lobster Scores (Glicko-2 shadow ratings) into the
+  // matcher instead of adjusted Playtomic levels. Persisted across sessions
+  // via localStorage so a reshuffle keeps the same setting.
+  const [useLobsterScore, setUseLobsterScore] = useState(() => {
+    try { return localStorage.getItem('lobster_use_score_for_matcher') === '1' } catch { return false }
+  })
+  React.useEffect(() => {
+    try { localStorage.setItem('lobster_use_score_for_matcher', useLobsterScore ? '1' : '0') } catch {}
+  }, [useLobsterScore])
+
   // Load saved schedule into edit preview
   const handleEditSchedule = () => {
     if (!isAdmin) { onNavigate?.('settings'); return }
@@ -756,6 +766,17 @@ export default function Schedule({ tournament, onNavigate }) {
     setGenerating(true)
     await new Promise(r => setTimeout(r, 300)) // small delay for UX
 
+    // When the Lobster Score toggle is on, swap each player's adjustedLevel
+    // with their learnedLevel (Padel-scale Glicko rating). Players without a
+    // learned rating fall back to their adjustedLevel so brand-new joiners
+    // don't get matched as 0-rated.
+    const playersForMatcher = useLobsterScore
+      ? registeredPlayers.map(p => ({
+          ...p,
+          adjustedLevel: p.learnedLevel != null ? p.learnedLevel : (p.adjustedLevel || 0),
+        }))
+      : registeredPlayers
+
     let newRounds
     if (format === 'lobster_matching') {
       // Decayed cohort memory pulls from EVERY past completed match outside
@@ -765,13 +786,13 @@ export default function Schedule({ tournament, onNavigate }) {
         m => m.tournamentId !== tournament.id && m.completed
       )
       newRounds = generateLobsterAnnealed(
-        registeredPlayers, numCourts, genderMode, tournament.duration || 90,
+        playersForMatcher, numCourts, genderMode, tournament.duration || 90,
         { pastMatches }
       )
     }
-    else if (format === 'mexicano')    newRounds = generateMexicano(registeredPlayers, numCourts, rounds, genderMode)
-    else if (format === 'roundrobin')  newRounds = generateRoundRobin(registeredPlayers, numCourts, genderMode)
-    else                               newRounds = generateAmericano(registeredPlayers, numCourts, rounds, genderMode)
+    else if (format === 'mexicano')    newRounds = generateMexicano(playersForMatcher, numCourts, rounds, genderMode)
+    else if (format === 'roundrobin')  newRounds = generateRoundRobin(playersForMatcher, numCourts, genderMode)
+    else                               newRounds = generateAmericano(playersForMatcher, numCourts, rounds, genderMode)
 
     setGenerated(newRounds)
     setScheduleWarnings(validateSchedule(newRounds, registeredPlayers, genderMode))
@@ -922,6 +943,24 @@ export default function Schedule({ tournament, onNavigate }) {
                 ))}
               </div>
             </div>
+          )}
+
+          {isAdmin && (
+            <label className="flex items-start gap-2 p-3 rounded-xl bg-lobster-cream/40 border border-lobster-teal/20 cursor-pointer active:scale-[0.99] transition-transform">
+              <input
+                type="checkbox"
+                checked={useLobsterScore}
+                onChange={(e) => setUseLobsterScore(e.target.checked)}
+                className="mt-0.5 w-4 h-4 accent-lobster-teal"
+              />
+              <span className="text-xs text-gray-700 leading-snug">
+                <span className="font-semibold text-lobster-teal">Use Lobster Score for matching</span>
+                <span className="block text-[11px] text-gray-500 mt-0.5">
+                  When on, the matcher uses Glicko-2 shadow ratings instead of Playtomic-adjusted levels.
+                  Players without a Lobster Score yet fall back to their adjusted level.
+                </span>
+              </span>
+            </label>
           )}
 
           <button
