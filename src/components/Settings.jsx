@@ -11,6 +11,7 @@ import DEFAULT_TIPS from '../data/padelTips'
 import ApproveDevicesWidget from './ApproveDevicesWidget'
 import AdminSecurityPanels from './AdminSecurityPanels'
 import ChangeAdminPinForm from './ChangeAdminPinForm'
+import { recomputeAllRatings } from '../lib/ratingsRecompute'
 
 const LOBBY_PROMPTS = [
   { label: '🎤 Trash Talk',        placeholder: 'Say something to your future opponents…' },
@@ -39,6 +40,23 @@ export default function Settings() {
   const [adminPinInput, setAdminPinInput]     = useState('')
   const [adminPinError, setAdminPinError]     = useState('')
   const [adminSigningIn, setAdminSigningIn]   = useState(false)
+
+  // ── Glicko-2 ratings recompute (admin) ────────────────────────────
+  const [recomputing, setRecomputing] = useState(false)
+  const [recomputeResult, setRecomputeResult] = useState(null)
+  const handleRecomputeRatings = async () => {
+    if (recomputing) return
+    setRecomputing(true)
+    setRecomputeResult(null)
+    try {
+      const result = await recomputeAllRatings(supabase)
+      setRecomputeResult({ ok: true, ...result })
+    } catch (e) {
+      setRecomputeResult({ ok: false, message: e.message || String(e) })
+    } finally {
+      setRecomputing(false)
+    }
+  }
   const [showPin, setShowPin]     = useState(false)
   const [saving, setSaving]       = useState(false)
   const [saved, setSaved]         = useState(false)
@@ -753,6 +771,35 @@ export default function Settings() {
             These are only visible when isAdmin is true and only mount
             their internal RPCs once visible — no admin-only network
             traffic for non-admin users. */}
+        {isAdmin && (
+          <div className="card space-y-3">
+            <h3 className="font-bold text-gray-700 text-sm flex items-center gap-2">
+              <TrendingUp size={15} className="text-lobster-teal" /> Lobster Ladder (Glicko-2)
+            </h3>
+            <p className="text-xs text-gray-500">
+              Rebuilds shadow ratings from every known tournament (history file + DB)
+              in chronological order. Re-run after registering a new historical player
+              or completing a tournament.
+            </p>
+            <button
+              onClick={handleRecomputeRatings}
+              disabled={recomputing}
+              className="bg-lobster-teal text-white text-sm font-semibold px-4 py-2 rounded-xl active:scale-95 transition-all disabled:opacity-60"
+            >
+              {recomputing ? 'Recomputing…' : 'Recompute ratings'}
+            </button>
+            {recomputeResult && recomputeResult.ok && (
+              <p className="text-xs text-green-600">
+                ✓ Updated {recomputeResult.playersUpdated} players from {recomputeResult.eventsProcessed} events.
+                {recomputeResult.droppedMatches > 0 && ` (${recomputeResult.droppedMatches} historical matches skipped — unmatched names)`}
+              </p>
+            )}
+            {recomputeResult && !recomputeResult.ok && (
+              <p className="text-xs text-red-600">✗ {recomputeResult.message}</p>
+            )}
+          </div>
+        )}
+
         {isAdmin && <AdminSecurityPanels />}
 
         {/* Security — admin only */}

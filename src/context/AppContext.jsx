@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../supabase'
+import { recomputeAllRatings } from '../lib/ratingsRecompute'
 import { getDeviceId, getUserAgentSummary } from '../lib/deviceId'
 const AppContext = createContext(null)
 const generatePin = () => String(Math.floor(1000 + Math.random() * 9000))
@@ -1165,6 +1166,9 @@ export function AppProvider({ children }) {
       return false
     }
     setPlayerAliases(m => ({ ...m, [historicalName]: playerId }))
+    // Fire-and-forget Glicko recompute. A new alias may unlock historical
+    // matches for this player; ratings should reflect that on next page load.
+    recomputeAllRatings(supabase).catch(e => console.warn('recompute after alias save failed:', e))
     return true
   }, [])
   const removePlayerAlias = useCallback(async (historicalName) => {
@@ -1175,6 +1179,7 @@ export function AppProvider({ children }) {
       delete next[historicalName]
       return next
     })
+    recomputeAllRatings(supabase).catch(e => console.warn('recompute after alias remove failed:', e))
     return true
   }, [])
   // ── Lobster League CRUD ─────────────────────────────────────────────────
