@@ -47,6 +47,12 @@ const W = {
   COHORT_HISTORY: 15,    // decayed past co-court (cross-tournament), 60-day half-life
   GENDER_EXTRA:   1000,  // gender clashes above the unavoidable quota
   SITOUT_VAR:     20,    // squared sit-out count above the fair share, per player
+  SAMEGENDER_REPEAT: 500, // squared excess same-gender matches per player above
+                          // the fair share — keeps a single player from being
+                          // pulled into multiple all-female / all-male games
+                          // when other same-gender players have zero. See the
+                          // "fair distribution of same-gender matches" block
+                          // in scoreSchedule for the cap calculation.
 }
 
 const COHORT_HALF_LIFE_DAYS = 60
@@ -287,6 +293,12 @@ function scoreSchedule(schedule, ctx) {
   const opponent  = makeMatrix(playerCount)
   const cohort    = makeMatrix(playerCount)
   const sitouts   = new Array(playerCount).fill(0)
+  // Per-player count of same-gender matches (all-female / all-male).
+  // Fairness rule: when same-gender matches are unavoidable (M/F imbalance),
+  // they should be spread across as many distinct same-gender players as
+  // possible — no woman in two FF matches while other women have zero, etc.
+  const ffMatches = new Array(playerCount).fill(0)
+  const mmMatches = new Array(playerCount).fill(0)
 
   for (let r = 0; r < schedule.length; r++) {
     let clashesThisRound = 0
@@ -326,6 +338,17 @@ function scoreSchedule(schedule, ctx) {
         const w1 = (isFemale[a] ? 1 : 0) + (isFemale[b] ? 1 : 0)
         const w2 = (isFemale[c1] ? 1 : 0) + (isFemale[c2] ? 1 : 0)
         clashesThisRound += Math.abs(w1 - w2)
+      }
+      // Same-gender match tracking (used by the fairness penalty after this
+      // loop). Independent of genderMode — applies equally in 'open' rosters
+      // that happen to land all-male or all-female.
+      const womenInMatch =
+        (isFemale[a] ? 1 : 0) + (isFemale[b] ? 1 : 0) +
+        (isFemale[c1] ? 1 : 0) + (isFemale[c2] ? 1 : 0)
+      if (womenInMatch === 4) {
+        ffMatches[a]++; ffMatches[b]++; ffMatches[c1]++; ffMatches[c2]++
+      } else if (womenInMatch === 0) {
+        mmMatches[a]++; mmMatches[b]++; mmMatches[c1]++; mmMatches[c2]++
       }
     }
     // Anything beyond the unavoidable quota is real engine error.
@@ -369,6 +392,34 @@ function scoreSchedule(schedule, ctx) {
     sitoutCost += excess * excess
   }
 
+  // Fair distribution of same-gender matches. Penalises any player whose
+  // same-gender match count exceeds ceil(slots / players-of-that-gender).
+  // Examples:
+  //   12 women, 2 FF matches → 8 FF-slots → ceil(8/12) = 1 → no woman in
+  //     more than one all-female match.
+  //   20 men, 14 MM matches → 56 MM-slots → ceil(56/20) = 3 → no man in
+  //     more than three all-male matches.
+  // The cap is computed dynamically from the schedule, so if the optimiser
+  // chooses zero same-gender matches (e.g. an even gender split), the term
+  // collapses to zero with no constraint.
+  let samegenderRepeatCost = 0
+  let womenN = 0, menN = 0
+  let totalFFSlots = 0, totalMMSlots = 0
+  for (let i = 0; i < playerCount; i++) {
+    if (isFemale[i]) { womenN++; totalFFSlots += ffMatches[i] }
+    else { menN++; totalMMSlots += mmMatches[i] }
+  }
+  const ffCap = womenN > 0 ? Math.ceil(totalFFSlots / womenN) : 0
+  const mmCap = menN > 0 ? Math.ceil(totalMMSlots / menN) : 0
+  for (let i = 0; i < playerCount; i++) {
+    const cap = isFemale[i] ? ffCap : mmCap
+    const cnt = isFemale[i] ? ffMatches[i] : mmMatches[i]
+    if (cnt > cap) {
+      const excess = cnt - cap
+      samegenderRepeatCost += excess * excess
+    }
+  }
+
   return (
     W.HARD * hard +
     W.LEVEL_DELTA * levelCost +
@@ -377,7 +428,8 @@ function scoreSchedule(schedule, ctx) {
     W.COHORT_EXCESS * cohortExcessCost +
     W.COHORT_HISTORY * cohortHistCost +
     W.GENDER_EXTRA * extraGenderClashes +
-    W.SITOUT_VAR * sitoutCost
+    W.SITOUT_VAR * sitoutCost +
+    W.SAMEGENDER_REPEAT * samegenderRepeatCost
   )
 }
 
