@@ -77,11 +77,10 @@ const AVATAR_COLORS = [
   '#E63946','#1D3557','#2A9D8F','#E76F51','#9C27B0','#0277BD',
   '#558B2F','#5E35B1','#EF6C00','#00838F','#6A1B9A','#37474F',
 ]
-function avatarColor(id) {
-  const s = String(id || '')
-  let h = 0
-  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0
-  return AVATAR_COLORS[h % AVATAR_COLORS.length]
+function letterColor(name) {
+  const ch = ((name || '').trim()[0] || '?').toUpperCase()
+  const code = ch.charCodeAt(0) || 0
+  return AVATAR_COLORS[code % AVATAR_COLORS.length]
 }
 function initials(name) {
   return (name || '').split(/\s+/).map(p => p[0]).filter(Boolean).slice(0, 2).join('').toUpperCase()
@@ -878,7 +877,7 @@ function PlayerCategoryScreen({
                 <div className="flex items-center gap-2 min-w-0">
                   <span
                     className="flex-shrink-0 text-[10px] font-bold text-white px-1.5 py-0.5 rounded leading-none"
-                    style={{ backgroundColor: avatarColor(p.id) }}
+                    style={{ backgroundColor: letterColor(p.name) }}
                   >
                     {(p.name || '?').trim()[0]?.toUpperCase() || '?'}
                   </span>
