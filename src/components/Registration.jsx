@@ -304,7 +304,7 @@ export default function Registration({ tournament, onNavigate }) {
       {!isCompleted && (
         <button
           onClick={() => onNavigate('game', tournament)}
-          className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-gradient-to-r from-lobster-orange to-lobster-gold text-white font-semibold text-sm shadow"
+          className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-violet-400 text-white font-semibold text-sm shadow"
         >
           🎮 Lobster Games
         </button>
