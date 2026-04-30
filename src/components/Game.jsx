@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { useApp } from '../context/AppContext'
 import { supabase } from '../supabase'
 import { getDeviceId } from '../lib/deviceId'
+import { letterColor } from '../lib/letterColors'
 import {
   ChevronLeft, ChevronDown, Play, X, Plus, Trophy, Share2, Download, Loader2, Check, RotateCw,
 } from 'lucide-react'
@@ -72,19 +73,7 @@ function computeHistory(voterId, targetId, matches) {
   return lines.sort((a, b) => a.round - b.round)
 }
 
-/* ─── Stable initials avatar color from id ─────────────────────────────────── */
-const AVATAR_COLORS = [
-  '#E63946','#1D3557','#2A9D8F','#E76F51','#9C27B0','#0277BD',
-  '#558B2F','#5E35B1','#EF6C00','#00838F','#6A1B9A','#37474F',
-]
-function letterColor(name) {
-  const ch = ((name || '').trim()[0] || '?').toUpperCase()
-  const code = ch.charCodeAt(0) || 0
-  return AVATAR_COLORS[code % AVATAR_COLORS.length]
-}
-function initials(name) {
-  return (name || '').split(/\s+/).map(p => p[0]).filter(Boolean).slice(0, 2).join('').toUpperCase()
-}
+/* Letter avatar color now lives in src/lib/letterColors.js — single source of truth. */
 
 /* ─── First-name with disambiguation (unchanged from v1) ──────────────────── */
 function shortLabelMap(players = []) {
