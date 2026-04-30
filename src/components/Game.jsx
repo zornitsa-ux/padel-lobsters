@@ -867,7 +867,7 @@ function PlayerCategoryScreen({
                 key={p.id}
                 disabled={isYou || busy}
                 onClick={() => onVote(p.id)}
-                className={`rounded-xl p-2.5 text-left transition-all border flex flex-col gap-1.5 ${
+                className={`rounded-xl p-2 text-left transition-all border flex flex-col gap-1 ${
                   isMyVote
                     ? 'bg-lobster-teal/10 border-lobster-teal'
                     : isYou
@@ -876,12 +876,6 @@ function PlayerCategoryScreen({
                 }`}
               >
                 <div className="flex items-center gap-2 min-w-0">
-                  <div
-                    className="flex-shrink-0 w-7 h-7 rounded-full grid place-items-center text-white text-[11px] font-bold"
-                    style={{ backgroundColor: avatarColor(p.id) }}
-                  >
-                    {initials(p.name)}
-                  </div>
                   <span className="font-semibold text-[13px] flex-1 min-w-0 truncate text-gray-800">
                     {shortName(p)}
                   </span>
@@ -898,7 +892,7 @@ function PlayerCategoryScreen({
                   ) : history.length === 0 ? (
                     <span className="italic opacity-70">no shared rounds yet</span>
                   ) : (
-                    history.slice(0, 3).map((h, i) => {
+                    history.slice(0, 2).map((h, i) => {
                       if (h.type === 'with') {
                         return (
                           <div key={i} className="truncate">
