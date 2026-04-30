@@ -834,18 +834,18 @@ export default function History({ onNavigate }) {
       .sort((a, b) => (b.date || b.completedAt || '') > (a.date || a.completedAt || '') ? 1 : -1)
   }, [tournaments])
 
-  // Fetch lobster game results for any completed dynamic tournament that doesn't
-  // have them cached yet — used by the "Lobster games" tab on those event cards.
+  // Fetch shared Lobster Oscars results for any completed dynamic tournament
+  // that doesn't have them cached yet — used by the "Lobster games" tab on
+  // those event cards. Returns empty until the admin pressed Share for that
+  // tournament's session (share gate enforced server-side).
   useEffect(() => {
     let active = true
     dynamicTournaments.forEach(t => {
       if (dbGameResults[t.id] !== undefined) return
       ;(async () => {
-        const { data } = await supabase
-          .from('game_results')
-          .select('*')
-          .eq('tournament_id', t.id)
-          .order('finished_at', { ascending: false })
+        const { data } = await supabase.rpc('lobster_oscars_get_results', {
+          input_tournament_id: t.id,
+        })
         if (active) {
           setDbGameResults(prev => ({ ...prev, [t.id]: data || [] }))
         }
@@ -1118,122 +1118,68 @@ export default function History({ onNavigate }) {
                   )}
 
                   {/* ── Lobster Games ── */}
-                  {dbTab === 'games' && hasGameResults && gameResults.map(gr => {
-                    const data       = gr.data || {}
-                    const type       = gr.game_type || data.type || 'oscars'
-                    const roster     = data.players || []
-                    const gvotes     = data.votes || []
-                    const qs         = data.questions || []
-                    const playerById = Object.fromEntries(roster.map(pp => [String(pp.id), pp]))
-                    const rosterDnMap = buildDisplayNames(roster.map(pp => pp.name).filter(Boolean))
-                    const rosterDn    = (n) => rosterDnMap[n] || (n || '').split(' ')[0] || ''
-                    const rosterName  = (id) => rosterDn(playerById[String(id)]?.name || '')
-
-                    if (type === 'oscars') {
-                      const perCategory = qs.map((q, i) => {
-                        const qv = gvotes.filter(v => String(v.question_index) === String(i))
-                        const counts = {}
-                        qv.forEach(v => { counts[v.answer] = (counts[v.answer] || 0) + 1 })
-                        const top     = Math.max(0, ...Object.values(counts))
-                        const winners = top > 0
-                          ? Object.entries(counts).filter(([, c]) => c === top).map(([pid]) => pid)
-                          : []
-                        return { q, i, counts, winners, top }
+                  {dbTab === 'games' && hasGameResults && (() => {
+                    const byCat = new Map()
+                    for (const r of gameResults) {
+                      if (!byCat.has(r.category_id)) byCat.set(r.category_id, {
+                        id: r.category_id, name: r.category_name, icon: r.category_icon,
+                        display_order: r.display_order, rows: [],
                       })
-
-                      return (
-                        <div key={gr.id} className="space-y-2">
-                          <div className="flex items-center gap-2 px-1">
-                            <Gamepad2 size={14} className="text-lobster-teal" />
-                            <p className="text-xs font-bold text-gray-700">🏆 Lobster Oscars</p>
-                            <span className="text-[10px] text-gray-400 ml-auto">
-                              {qs.length} categor{qs.length === 1 ? 'y' : 'ies'}
-                            </span>
-                          </div>
-                          {perCategory.map(({ q, i, counts, winners, top }) => {
-                            const maxV = Math.max(1, ...Object.values(counts))
-                            return (
-                              <div key={i} className="bg-white rounded-xl p-3 space-y-1.5 border border-gray-100">
-                                <p className="font-bold text-xs text-gray-700">{q.category}</p>
-                                {winners.length > 0 ? (
-                                  <p className="text-xs text-gray-600">
-                                    🏆 <span className="font-bold">
-                                      {winners.map(pid => rosterName(pid)).join(', ')}
-                                    </span>{' '}
-                                    <span className="text-gray-400">
-                                      ({top} vote{top !== 1 ? 's' : ''}{winners.length > 1 ? ' — tie' : ''})
+                      byCat.get(r.category_id).rows.push(r)
+                    }
+                    const cats = Array.from(byCat.values()).sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
+                    return (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 px-1">
+                          <Gamepad2 size={14} className="text-lobster-teal" />
+                          <p className="text-xs font-bold text-gray-700">🏆 Lobster Oscars</p>
+                          <span className="text-[10px] text-gray-400 ml-auto">
+                            {cats.length} categor{cats.length === 1 ? 'y' : 'ies'}
+                          </span>
+                        </div>
+                        {cats.map(cat => {
+                          const winners  = cat.rows.filter(r => Number(r.rank_in_category) === 1)
+                          const maxV     = Math.max(1, ...cat.rows.map(r => Number(r.votes_count)))
+                          const topVotes = winners.length ? Number(winners[0].votes_count) : 0
+                          return (
+                            <div key={cat.id} className="bg-white rounded-xl p-3 space-y-1.5 border border-gray-100">
+                              <p className="font-bold text-xs text-gray-700">
+                                <span className="mr-1">{cat.icon}</span>{cat.name}
+                              </p>
+                              {winners.length > 0 ? (
+                                <p className="text-xs text-gray-600">
+                                  🏆 <span className="font-bold">
+                                    {winners.map(w => w.target_name).join(', ')}
+                                  </span>{' '}
+                                  <span className="text-gray-400">
+                                    ({topVotes} vote{topVotes !== 1 ? 's' : ''}{winners.length > 1 ? ' — tie' : ''})
+                                  </span>
+                                </p>
+                              ) : (
+                                <p className="text-[10px] text-gray-400">No votes</p>
+                              )}
+                              <div className="space-y-0.5">
+                                {cat.rows.map(r => (
+                                  <div key={r.target_id} className="flex items-center gap-2">
+                                    <span className="text-[10px] w-16 truncate text-gray-600">
+                                      {(r.target_name || '').split(' ')[0]}
                                     </span>
-                                  </p>
-                                ) : (
-                                  <p className="text-[10px] text-gray-400">No votes</p>
-                                )}
-                                <div className="space-y-0.5">
-                                  {roster
-                                    .filter(pp => counts[String(pp.id)])
-                                    .sort((a, b) => (counts[String(b.id)] || 0) - (counts[String(a.id)] || 0))
-                                    .map(pp => (
-                                      <div key={pp.id} className="flex items-center gap-2">
-                                        <span className="text-[10px] w-16 truncate text-gray-600">
-                                          {rosterDn(pp.name)}
-                                        </span>
-                                        <div className="flex-1 h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                                          <div className="h-full bg-lobster-teal rounded-full transition-all"
-                                            style={{ width: `${(counts[String(pp.id)] / maxV) * 100}%` }} />
-                                        </div>
-                                        <span className="text-[10px] text-gray-500 w-3 text-right">
-                                          {counts[String(pp.id)]}
-                                        </span>
-                                      </div>
-                                    ))}
-                                </div>
+                                    <div className="flex-1 h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                                      <div className="h-full bg-lobster-teal rounded-full transition-all"
+                                        style={{ width: `${(Number(r.votes_count) / maxV) * 100}%` }} />
+                                    </div>
+                                    <span className="text-[10px] text-gray-500 w-3 text-right">
+                                      {Number(r.votes_count)}
+                                    </span>
+                                  </div>
+                                ))}
                               </div>
-                            )
-                          })}
-                        </div>
-                      )
-                    }
-
-                    if (type === 'trivia') {
-                      const scores = {}
-                      roster.forEach(pp => { scores[String(pp.id)] = { player: pp, pts: 0, correct: 0 } })
-                      qs.forEach((q, i) => {
-                        const qv = gvotes.filter(v => String(v.question_index) === String(i))
-                        qv.forEach(v => {
-                          if (String(v.answer) !== String(q.correct)) return
-                          if (!scores[String(v.player_id)]) return
-                          scores[String(v.player_id)].pts     += 500
-                          scores[String(v.player_id)].correct += 1
-                        })
-                      })
-                      const board = Object.values(scores).sort((a, b) => b.pts - a.pts)
-                      return (
-                        <div key={gr.id} className="space-y-2">
-                          <div className="flex items-center gap-2 px-1">
-                            <Gamepad2 size={14} className="text-lobster-teal" />
-                            <p className="text-xs font-bold text-gray-700">🧠 Lobster Trivia</p>
-                            <span className="text-[10px] text-gray-400 ml-auto">
-                              {qs.length} question{qs.length === 1 ? '' : 's'}
-                            </span>
-                          </div>
-                          <div className="bg-white rounded-xl p-3 space-y-1 border border-gray-100">
-                            {board.map((s, i) => (
-                              <div key={s.player.id}
-                                className={`flex items-center gap-2 px-1 py-1 rounded-lg ${i < 3 ? 'bg-yellow-50/40' : ''}`}>
-                                <span className="text-xs w-5 text-center">
-                                  {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}
-                                </span>
-                                <span className="flex-1 text-xs font-medium truncate">{rosterDn(s.player.name)}</span>
-                                <span className="text-xs font-bold text-lobster-teal">{s.pts} pts</span>
-                                <span className="text-[10px] text-gray-400">{s.correct}/{qs.length} ✓</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )
-                    }
-
-                    return null
-                  })}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )
+                  })()}
 
                   {onNavigate && (
                     <button

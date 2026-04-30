@@ -1,82 +1,99 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { useApp } from '../context/AppContext'
 import { supabase } from '../supabase'
-import { ChevronLeft, ChevronRight, Play, X, Check, Users } from 'lucide-react'
+import { getDeviceId } from '../lib/deviceId'
+import {
+  ChevronLeft, Play, X, Plus, Trophy, Share2, Download, Loader2, Check, RotateCw,
+} from 'lucide-react'
 
-/* ─── Static defaults ─────────────────────────────────────────────────────── */
+/* ════════════════════════════════════════════════════════════════════════════
+   Lobster Oscars — async, tile-based voting.
+   Replaces the old Kahoot-style synchronous flow. Backed by lobster_oscars_*
+   tables and RPCs (migrations 0020 + 0021). All state lives server-side, so
+   refresh on either player or admin device reconstructs the same view.
 
-const TRIVIA_BANK = [
-  { q: 'How many players are on each side in padel?',                        opts: ['1', '2', '3', '4'],                                         correct: 1 },
-  { q: 'In padel, balls can legally bounce off the glass walls — true?',     opts: ['True ✅', 'False ❌', 'Back wall only', 'Side walls only'],  correct: 0 },
-  { q: 'Padel serves must be hit at or below which height?',                 opts: ['Shoulder', 'Head', 'Waist', 'Knee'],                        correct: 2 },
-  { q: 'You may serve overarm in padel — true?',                             opts: ['True', 'False — underarm only', 'Second serve only', 'In tie-break'], correct: 1 },
-  { q: "What's the Lobsters' signature tournament format called?",           opts: ['Americano', 'Mexicano', 'Lobster Matching', 'Round Robin'],  correct: 2 },
-  { q: 'How many rounds are played in Lobster Matching format?',             opts: ['4', '5', '6', '8'],                                         correct: 2 },
-  { q: 'In Americano, partners rotate every…',                               opts: ['Game', 'Set', 'Round', 'Match'],                            correct: 2 },
-  { q: 'A "bajada" in padel means…',                                        opts: ['A winning smash', 'Taking the ball off the glass', 'An underarm serve', 'A lob'], correct: 1 },
-  { q: 'Padel Lobsters plays in…',                                           opts: ['Rotterdam', 'Utrecht', 'Amsterdam', 'The Hague'],            correct: 2 },
-  { q: 'In padel, what happens if the ball hits the wire fence directly?',   opts: ['Point to receiver', 'Let — replay', 'Point to server', 'Fault'], correct: 0 },
-]
+   Session lifecycle (on lobster_oscars_sessions):
+     not_created  → no row
+     pre_start    → row exists, started_at IS NULL  (admin still configuring)
+     active       → started_at IS NOT NULL, closed_at IS NULL  (voting open)
+     ended        → closed_at IS NOT NULL, shared_at IS NULL  (admin sees rankings,
+                                                             players see "waiting")
+     shared       → shared_at IS NOT NULL  (results visible to players)
+   ════════════════════════════════════════════════════════════════════════════ */
 
-// --- Oscars category bank ----------------------------------------------------
-// The Oscars always deliver exactly 8 categories. Six are core and always
-// play; the last two rotate based on the registered players' gender mix:
-//   • more men than women        → add 🍺 First to the Bar After the Match
-//   • 10 or more women           → add 👟 Best Dressed on Court
-// Any remaining slots are filled with the two evergreen fillers
-// (🎭 Most Unnecessary Shot Attempt and 💬 Most Unsolicited Mid-Match Coaching)
-// so the deck is always 8 cards long.
+/* ─── Default categories (preserves the gender-based rotation from v1) ───── */
 const OSCARS_CORE = [
-  { category: '🦞 Best Lobster',               q: 'Who was the Most Valuable Lobster today?' },
-  { category: '💥 Best Smash',                 q: 'Who hit the most devastating smash?' },
-  { category: '🛡️ Iron Wall Defence',          q: 'Who had the best defensive game?' },
-  { category: '🤪 Wildest Shot',               q: 'Who pulled off the most insane shot?' },
-  { category: '🤬 Potty Mouth Award',          q: 'Who dropped the most colourful language on the court?' },
-  { category: '😴 Most Excuses',               q: 'Who had the best excuse for losing?' },
+  { name: 'Best Lobster',           icon: '🦞' },
+  { name: 'Best Smash',             icon: '💥' },
+  { name: 'Iron Wall Defence',      icon: '🛡️' },
+  { name: 'Wildest Shot',           icon: '🤪' },
+  { name: 'Potty Mouth Award',      icon: '🤬' },
+  { name: 'Most Excuses',           icon: '😴' },
 ]
 const OSCARS_ROTATING = {
-  bar:         { category: '🍺 First to the Bar After the Match',   q: 'Who made it to the bar first after the match?' },
-  dressed:     { category: '👟 Best Dressed on Court',              q: 'Who looked the best on court today?' },
-  coaching:    { category: '💬 Most Unsolicited Mid-Match Coaching', q: 'Who handed out the most unsolicited tips mid-match?' },
-  unnecessary: { category: '🎭 Most Unnecessary Shot Attempt',       q: 'Who attempted the most unnecessary shot?' },
+  bar:         { name: 'First to the Bar After the Match',     icon: '🍺' },
+  dressed:     { name: 'Best Dressed on Court',                icon: '👟' },
+  coaching:    { name: 'Most Unsolicited Mid-Match Coaching',  icon: '💬' },
+  unnecessary: { name: 'Most Unnecessary Shot Attempt',        icon: '🎭' },
 }
-function buildOscarsBank(regPlayers = []) {
-  const men       = regPlayers.filter(p => p.gender === 'male').length
-  const women     = regPlayers.filter(p => p.gender === 'female').length
-  const moreMen   = men > women
-  const tenWomen  = women >= 10
-  const extras    = []
-  if (moreMen)  extras.push(OSCARS_ROTATING.bar)
-  if (tenWomen) extras.push(OSCARS_ROTATING.dressed)
-  // Fill any remaining slots with evergreens so the deck is always 8.
+function buildDefaultCategories(regPlayers = []) {
+  const men   = regPlayers.filter(p => p.gender === 'male').length
+  const women = regPlayers.filter(p => p.gender === 'female').length
+  const extras = []
+  if (men > women) extras.push(OSCARS_ROTATING.bar)
+  if (women >= 10) extras.push(OSCARS_ROTATING.dressed)
   for (const c of [OSCARS_ROTATING.coaching, OSCARS_ROTATING.unnecessary]) {
     if (extras.length >= 2) break
     extras.push(c)
   }
-  return [...OSCARS_CORE, ...extras]
+  return [...OSCARS_CORE, ...extras].map((c, i) => ({ ...c, display_order: i }))
 }
 
-const SHAPES = ['▲', '◆', '●', '■']
-const BG     = ['bg-red-500', 'bg-blue-500', 'bg-yellow-400', 'bg-green-500']
-const TXT    = ['text-white', 'text-white', 'text-gray-900', 'text-white']
-const DIM    = ['bg-red-200', 'bg-blue-200', 'bg-yellow-100', 'bg-green-200']
-const RING   = ['ring-red-300', 'ring-blue-300', 'ring-yellow-200', 'ring-green-300']
+/* ─── Match-history helper: rounds where voter played WITH or AGAINST target  */
+function computeHistory(voterId, targetId, matches) {
+  if (!voterId || !targetId || !matches?.length) return []
+  const lines = []
+  for (const m of matches) {
+    const t1 = (m.team1_ids || []).map(String)
+    const t2 = (m.team2_ids || []).map(String)
+    const voterOnT1  = t1.includes(String(voterId))
+    const voterOnT2  = t2.includes(String(voterId))
+    const targetOnT1 = t1.includes(String(targetId))
+    const targetOnT2 = t2.includes(String(targetId))
+    if (!(voterOnT1 || voterOnT2) || !(targetOnT1 || targetOnT2)) continue
+    if ((voterOnT1 && targetOnT1) || (voterOnT2 && targetOnT2)) {
+      lines.push({ round: m.round, type: 'with' })
+    } else {
+      const targetTeam = targetOnT1 ? t1 : t2
+      const partnerId  = targetTeam.find(id => id !== String(targetId))
+      lines.push({ round: m.round, type: 'vs', partnerId })
+    }
+  }
+  return lines.sort((a, b) => a.round - b.round)
+}
 
-/* ─── Name disambiguation ──────────────────────────────────────────────────
- * Build a map { playerId -> shortLabel } so players with the same first name
- * get disambiguated. Priority of strategies:
- *   1. If unique first name         → "Juan"
- *   2. If 1-letter last-initial fixes it → "Juan R", "Juan M"
- *   3. Extend last-initial to 2-3 letters if still colliding
- *   4. If some/all players have no last name (or initials still collide),
- *      append a numeric suffix: "Juan 1", "Juan 2"                            */
+/* ─── Stable initials avatar color from id ─────────────────────────────────── */
+const AVATAR_COLORS = [
+  '#E63946','#1D3557','#2A9D8F','#E76F51','#9C27B0','#0277BD',
+  '#558B2F','#5E35B1','#EF6C00','#00838F','#6A1B9A','#37474F',
+]
+function avatarColor(id) {
+  const s = String(id || '')
+  let h = 0
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0
+  return AVATAR_COLORS[h % AVATAR_COLORS.length]
+}
+function initials(name) {
+  return (name || '').split(/\s+/).map(p => p[0]).filter(Boolean).slice(0, 2).join('').toUpperCase()
+}
+
+/* ─── First-name with disambiguation (unchanged from v1) ──────────────────── */
 function shortLabelMap(players = []) {
   const firstOf = (p) => (p.name || '').trim().split(/\s+/)[0] || p.name || ''
   const lastOf  = (p) => {
     const parts = (p.name || '').trim().split(/\s+/)
     return parts.length > 1 ? parts.slice(1).join(' ') : ''
   }
-  // Group players by first name (case-insensitive to catch "juan" vs "Juan")
   const byFirst = {}
   players.forEach(p => {
     const f = firstOf(p).toLowerCase()
@@ -85,873 +102,890 @@ function shortLabelMap(players = []) {
   const out = {}
   for (const key in byFirst) {
     const group = byFirst[key]
-    if (group.length === 1) {
-      out[String(group[0].id)] = firstOf(group[0])
-      continue
-    }
-    // Stable order so numeric suffixes (fallback) are deterministic across
-    // renders — sort by id then fall back to the order given.
+    if (group.length === 1) { out[String(group[0].id)] = firstOf(group[0]); continue }
     group.sort((a, b) => String(a.id).localeCompare(String(b.id)))
-
-    // Step 1: try last-initial suffixes of increasing length (1..3)
     let labels = null
     for (let len = 1; len <= 3; len++) {
       const candidate = group.map(p => {
         const last = lastOf(p)
         return last ? `${firstOf(p)} ${last.slice(0, len).toUpperCase()}` : firstOf(p)
       })
-      if (new Set(candidate).size === candidate.length) {
-        labels = candidate
-        break
-      }
+      if (new Set(candidate).size === candidate.length) { labels = candidate; break }
     }
-    // Step 2: fallback — numeric suffix when last names are missing or
-    // duplicate. "Juan 1", "Juan 2", ... so every player is unique.
-    if (!labels) {
-      labels = group.map((p, i) => `${firstOf(p)} ${i + 1}`)
-    }
+    if (!labels) labels = group.map((p, i) => `${firstOf(p)} ${i + 1}`)
     group.forEach((p, i) => { out[String(p.id)] = labels[i] })
   }
   return out
 }
 
-/* ─── Main component ──────────────────────────────────────────────────────── */
+/* ════════════════════════════════════════════════════════════════════════════ */
+/* MAIN COMPONENT                                                              */
+/* ════════════════════════════════════════════════════════════════════════════ */
 
 export default function Game({ tournament, onNavigate }) {
   const { players, isAdmin, claimedId, getTournamentRegistrations } = useApp()
 
-  const [session,    setSession]    = useState(null)
-  const [votes,      setVotes]      = useState([])
-  const [myVote,     setMyVote]     = useState(null)
-  const [timeLeft,   setTimeLeft]   = useState(null)
-  const [gameType,   setGameType]   = useState('trivia')
-  const [editQs,     setEditQs]     = useState(null)   // trimmed question list
-  const [busy,       setBusy]       = useState(false)
-  const [presentIds, setPresentIds] = useState(() => new Set())  // player_ids currently in the lobby/game
+  const [session,        setSession]        = useState(undefined) // undefined = unloaded; null = no row
+  const [categories,     setCategories]     = useState([])
+  const [myVotes,        setMyVotes]        = useState([])
+  const [adminStats,     setAdminStats]     = useState([])
+  const [adminResults,   setAdminResults]   = useState([])
+  const [playerResults,  setPlayerResults]  = useState([])
+  const [matches,        setMatches]        = useState([])
+  const [selectedCatId,  setSelectedCatId]  = useState(null)
+  const [editCats,       setEditCats]       = useState(null) // null = derive from saved/defaults
+  const [busy,           setBusy]           = useState(false)
+  const [error,          setError]          = useState(null)
 
   const regs       = getTournamentRegistrations(tournament?.id || '').filter(r => r.status === 'registered')
-  const regPlayers = players.filter(p => regs.some(r => r.playerId === p.id))
-  // Per-tournament short-label map — Juan R / Juan M / Lena, etc. Used in
-  // lobby chips, voting grid, reveal bars, and the finished breakdown so
-  // same-name players are always distinguishable.
+  const regPlayers = useMemo(
+    () => players.filter(p => regs.some(r => r.playerId === p.id)),
+    [players, regs]
+  )
   const shortLabels = useMemo(() => shortLabelMap(regPlayers), [regPlayers])
-  const shortName   = (p) => shortLabels[String(p?.id)] || (p?.name || '').split(' ')[0] || p?.name || ''
+  const shortName   = useCallback(
+    (p) => shortLabels[String(p?.id)] || (p?.name || '').split(' ')[0] || p?.name || '',
+    [shortLabels]
+  )
 
-  /* ── Data loading ───────────────────────────────────────────────────────── */
+  const phase = useMemo(() => {
+    if (!tournament?.id) return 'loading'
+    if (session === undefined) return 'loading'
+    if (session === null) return 'not_created'
+    if (!session.started_at) return 'pre_start'
+    if (!session.closed_at)  return 'active'
+    if (!session.shared_at)  return 'ended'
+    return 'shared'
+  }, [tournament?.id, session])
 
-  const loadSession = async () => {
+  /* ── Fetchers ─────────────────────────────────────────────────────────── */
+
+  const getPin      = () => localStorage.getItem('lobster_session_pin') || ''
+  const getAdminPin = () => localStorage.getItem('lobster_session_admin_pin') || ''
+
+  const loadSession = useCallback(async () => {
     if (!tournament?.id) return
-    // Return the most recent session regardless of status so the
-    // final podium / award tally stays visible after the admin clicks
-    // "Finish". To start a new game, admin uses the "Start New Game"
-    // button on the finished screen, which deletes the stale row.
-    const { data } = await supabase
-      .from('game_sessions')
-      .select('*')
+    const { data, error: err } = await supabase
+      .from('lobster_oscars_sessions')
+      .select('id, started_at, closed_at, shared_at')
       .eq('tournament_id', tournament.id)
-      .order('created_at', { ascending: false })
-      .limit(1)
       .maybeSingle()
-    setSession(data ?? null)
-  }
+    if (err && err.code !== 'PGRST116') { console.error('loadSession:', err); return }
+    setSession(data || null)
+  }, [tournament?.id])
 
-  const loadVotes = async (sid) => {
-    const { data } = await supabase.from('game_votes').select('*').eq('session_id', sid)
-    setVotes(data ?? [])
-  }
+  const loadCategories = useCallback(async (sessionId) => {
+    if (!sessionId) { setCategories([]); return }
+    const { data, error: err } = await supabase
+      .from('lobster_oscars_categories')
+      .select('id, name, icon, display_order')
+      .eq('session_id', sessionId)
+      .order('display_order', { ascending: true })
+    if (err) { console.error('loadCategories:', err); return }
+    setCategories(data || [])
+  }, [])
+
+  const loadMyVotes = useCallback(async () => {
+    if (!tournament?.id || !claimedId) return
+    const pin = getPin(); if (!pin) return
+    const { data, error: err } = await supabase.rpc('lobster_oscars_get_my_votes', {
+      input_pin:           pin,
+      input_device_id:     getDeviceId(),
+      input_tournament_id: tournament.id,
+    })
+    if (err) { console.error('get_my_votes:', err); return }
+    setMyVotes(data || [])
+  }, [tournament?.id, claimedId])
+
+  const loadAdminStats = useCallback(async () => {
+    if (!tournament?.id || !isAdmin) return
+    const adminPin = getAdminPin(); if (!adminPin) return
+    const { data, error: err } = await supabase.rpc('lobster_oscars_admin_get_stats', {
+      input_admin_pin:     adminPin,
+      input_tournament_id: tournament.id,
+      input_device_id:     getDeviceId(),
+    })
+    if (err) { console.error('admin_get_stats:', err); return }
+    setAdminStats(data || [])
+  }, [tournament?.id, isAdmin])
+
+  const loadAdminResults = useCallback(async () => {
+    if (!tournament?.id || !isAdmin) return
+    const adminPin = getAdminPin(); if (!adminPin) return
+    const { data, error: err } = await supabase.rpc('lobster_oscars_admin_get_results', {
+      input_admin_pin:     adminPin,
+      input_tournament_id: tournament.id,
+      input_device_id:     getDeviceId(),
+    })
+    if (err) { console.error('admin_get_results:', err); return }
+    setAdminResults(data || [])
+  }, [tournament?.id, isAdmin])
+
+  const loadPlayerResults = useCallback(async () => {
+    if (!tournament?.id) return
+    const { data, error: err } = await supabase.rpc('lobster_oscars_get_results', {
+      input_tournament_id: tournament.id,
+    })
+    if (err) { console.error('get_results:', err); return }
+    setPlayerResults(data || [])
+  }, [tournament?.id])
+
+  const loadMatches = useCallback(async () => {
+    if (!tournament?.id) return
+    const { data } = await supabase
+      .from('matches')
+      .select('round, team1_ids, team2_ids')
+      .eq('tournament_id', tournament.id)
+      .order('round', { ascending: true })
+    setMatches(data || [])
+  }, [tournament?.id])
+
+  /* ── Initial load ─────────────────────────────────────────────────────── */
 
   useEffect(() => {
     if (!tournament?.id) return
+    setSession(undefined)
     loadSession()
+    loadMatches()
+  }, [tournament?.id, loadSession, loadMatches])
 
-    // Presence: each connected client announces who they are so the admin
-    // can see exactly who's in the lobby on their device. Players also see
-    // a green dot next to people who are present. Key must be unique per
-    // client; we use the claimed player id, or "admin"/"guest-<rand>" otherwise.
-    const presenceKey = String(claimedId || (isAdmin ? `admin-${Math.random().toString(36).slice(2, 8)}` : `guest-${Math.random().toString(36).slice(2, 8)}`))
-
-    const ch = supabase.channel(`game-${tournament.id}`, {
-      config: { presence: { key: presenceKey } },
-    })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'game_sessions' }, () => loadSession())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'game_votes' }, (payload) => {
-        const sid = payload?.new?.session_id
-        if (sid) loadVotes(sid)
-      })
-      .on('presence', { event: 'sync' }, () => {
-        const state = ch.presenceState()
-        const ids = new Set()
-        Object.values(state).flat().forEach(meta => {
-          if (meta?.player_id) ids.add(String(meta.player_id))
-        })
-        setPresentIds(ids)
-      })
-      .subscribe(async (status) => {
-        if (status !== 'SUBSCRIBED') return
-        // Only registered players announce themselves with a player_id.
-        // Admin/guest also subscribe so they see the lobby update in real time
-        // but don't appear in the player count.
-        if (claimedId) {
-          await ch.track({ player_id: String(claimedId), online_at: new Date().toISOString() })
-        } else {
-          await ch.track({ role: isAdmin ? 'admin' : 'guest', online_at: new Date().toISOString() })
-        }
-      })
-    return () => { supabase.removeChannel(ch) }
-  }, [tournament?.id, claimedId, isAdmin])
-
+  // After session loads, fetch categories + my votes
   useEffect(() => {
-    if (!session?.id) return
-    loadVotes(session.id)
-    setMyVote(null)
-    if (claimedId) {
-      supabase.from('game_votes').select('answer')
-        .eq('session_id', session.id)
-        .eq('player_id', String(claimedId))
-        .eq('question_index', session.current_question ?? 0)
-        .maybeSingle()
-        .then(({ data }) => { if (data) setMyVote(data.answer) })
-    }
-  }, [session?.id, session?.current_question])
+    if (!session?.id) { setCategories([]); setMyVotes([]); return }
+    loadCategories(session.id)
+    if (claimedId) loadMyVotes()
+  }, [session?.id, claimedId, loadCategories, loadMyVotes])
 
-  // Countdown timer synced to server timestamp
+  // Phase-specific data + polling
   useEffect(() => {
-    if (!session?.question_started_at || session.status !== 'question') {
-      setTimeLeft(null); return
+    if (phase === 'active' && isAdmin) {
+      loadAdminStats()
+      const t = setInterval(loadAdminStats, 10000)
+      return () => clearInterval(t)
     }
-    const tick = () => {
-      const elapsed = (Date.now() - new Date(session.question_started_at).getTime()) / 1000
-      setTimeLeft(Math.max(0, Math.ceil((session.time_limit ?? 20) - elapsed)))
+    if (phase === 'active' && !isAdmin) {
+      // Poll session every 20s so the player notices when admin ends/shares
+      const t = setInterval(loadSession, 20000)
+      return () => clearInterval(t)
     }
-    tick()
-    const t = setInterval(tick, 300)
-    return () => clearInterval(t)
-  }, [session?.question_started_at, session?.status, session?.time_limit])
+    if ((phase === 'ended' || phase === 'shared') && isAdmin) {
+      loadAdminResults()
+    }
+    if (phase === 'ended' && !isAdmin) {
+      // Player waits for share — poll session
+      const t = setInterval(loadSession, 10000)
+      return () => clearInterval(t)
+    }
+    if (phase === 'shared' && !isAdmin) {
+      loadPlayerResults()
+    }
+  }, [phase, isAdmin, loadAdminStats, loadAdminResults, loadPlayerResults, loadSession])
 
-  /* ── Admin actions ──────────────────────────────────────────────────────── */
+  /* ── Actions ──────────────────────────────────────────────────────────── */
 
-  const patch = async (data) => {
-    if (!session) return
-    await supabase.from('game_sessions').update(data).eq('id', session.id)
-    await loadSession()  // immediately refresh so admin sees the change
-  }
-
-  const createSession = async () => {
-    setBusy(true)
-    const qs = editQs ?? (gameType === 'trivia' ? TRIVIA_BANK : buildOscarsBank(regPlayers))
-    await supabase.from('game_sessions').insert({
-      tournament_id: tournament.id,
-      type: gameType,
-      status: 'lobby',
-      current_question: 0,
-      time_limit: gameType === 'trivia' ? 20 : 30,
-      questions: qs,
+  const handleVote = async (categoryId, targetId) => {
+    if (busy) return
+    setBusy(true); setError(null)
+    const { data, error: err } = await supabase.rpc('lobster_oscars_cast_vote', {
+      input_pin:         getPin(),
+      input_device_id:   getDeviceId(),
+      input_category_id: categoryId,
+      input_target_id:   targetId,
     })
-    await loadSession()  // immediately refresh so admin sees the lobby
     setBusy(false)
-  }
-
-  const startGame    = () => patch({ status: 'question', current_question: 0, question_started_at: new Date().toISOString() })
-  const revealAnswer = () => patch({ status: 'reveal' })
-
-  // Snapshot the final game state into game_results so the record survives
-  // "Start New Game" (which deletes the underlying session row). Called when
-  // a game transitions to 'finished' and again defensively from startNewGame
-  // for sessions that finished before this feature shipped.
-  // Idempotent — session_id is UNIQUE on game_results, duplicate inserts
-  // throw a 23505 we just swallow.
-  const snapshotResults = async (sessionOverride = null) => {
-    const s = sessionOverride || session
-    if (!s?.id || !tournament?.id) return
-    // Always fetch fresh votes — local `votes` state may be stale if the
-    // snapshot is triggered right after a patch.
-    const { data: finalVotes } = await supabase
-      .from('game_votes')
-      .select('*')
-      .eq('session_id', s.id)
-    // Freeze the player roster as it stood when the game ended. Future
-    // Results UIs won't have to worry about players being renamed/removed.
-    const playerSnapshot = regPlayers.map(p => ({
-      id: p.id, name: p.name, gender: p.gender ?? '', avatarUrl: p.avatarUrl ?? '',
-    }))
-    const data = {
-      type: s.type,
-      sessionId: s.id,
-      questions: s.questions ?? [],
-      votes: finalVotes ?? [],
-      players: playerSnapshot,
-      finishedAt: new Date().toISOString(),
-    }
-    const { error } = await supabase.from('game_results').insert({
-      tournament_id: tournament.id,
-      session_id:    s.id,
-      game_type:     s.type || 'oscars',
-      data,
-    })
-    // 23505 = unique_violation → we've already snapshotted this session.
-    if (error && error.code !== '23505') {
-      console.warn('snapshotResults failed:', error)
-    }
-  }
-
-  // Archive a finished session so the admin can set up a new one. We clear
-  // local state optimistically so the UI flips to the setup screen even if
-  // the delete is slow (or silently blocked by RLS on an older DB). Also
-  // clears any leftover finished sessions for this tournament so the next
-  // loadSession() can't resurrect an old row.
-  const startNewGame = async () => {
-    // Defensive snapshot first — for sessions that finished before v19
-    // shipped and never got persisted. UNIQUE constraint makes it a no-op
-    // if the snapshot already exists.
-    if (session?.status === 'finished') await snapshotResults()
-    // Wipe local state first — admin sees the setup screen immediately.
-    setSession(null)
-    setVotes([])
-    setEditQs(null)
-    setMyVote(null)
-    // Best-effort DB cleanup — errors are non-fatal because a new insert
-    // will win by created_at anyway.
-    try {
-      await supabase
-        .from('game_sessions')
-        .delete()
-        .eq('tournament_id', tournament.id)
-        .eq('status', 'finished')
-    } catch (e) {
-      console.warn('startNewGame cleanup failed, continuing anyway:', e)
-    }
-  }
-  const endGame = async () => {
-    // Capture the state BEFORE we patch, because the UI might remount /
-    // unmount. Then mark the session finished and persist results.
-    const s = session
-    await patch({ status: 'finished' })
-    if (s) await snapshotResults({ ...s, status: 'finished' })
-  }
-
-  const nextQuestion = async () => {
-    const qs   = session.questions ?? []
-    const next = (session.current_question ?? 0) + 1
-    if (next >= qs.length) {
-      const s = session
-      await patch({ status: 'finished' })
-      if (s) await snapshotResults({ ...s, status: 'finished' })
+    if (err) { setError(err.message); return }
+    if (data === 'voted' || data === 'updated') {
+      await loadMyVotes()
+      setSelectedCatId(null)
     } else {
-      await patch({ status: 'question', current_question: next, question_started_at: new Date().toISOString() })
+      const friendly = {
+        invalid_pin:           'Sign-in expired — please re-enter your PIN.',
+        self_vote:             "You can't vote for yourself.",
+        not_started:           'Voting hasn\'t started yet.',
+        closed:                'Voting has closed.',
+        invalid_category:      'That category no longer exists.',
+        invalid_target:        'That player isn\'t registered for this tournament.',
+        voter_not_registered:  'You\'re not registered for this tournament.',
+      }[data] || `Vote failed: ${data}`
+      setError(friendly)
     }
   }
 
-  /* ── Player action ──────────────────────────────────────────────────────── */
-
-  const submitAnswer = async (answer) => {
-    if (myVote !== null || !claimedId || session?.status !== 'question') return
-    // Timer only gates Trivia (where accuracy vs. speed matters). In Oscars
-    // the admin controls when results are revealed, so players must be able
-    // to vote for as long as the question is open.
-    if (session?.type === 'trivia' && timeLeft === 0) return
-    setMyVote(String(answer))
-    await supabase.from('game_votes').upsert({
-      session_id: session.id,
-      player_id: String(claimedId),
-      question_index: session.current_question ?? 0,
-      answer: String(answer),
-      answered_at: new Date().toISOString(),
-    }, { onConflict: 'session_id,player_id,question_index' })
-  }
-
-  /* ── Derived data ───────────────────────────────────────────────────────── */
-
-  const qs        = session?.questions ?? []
-  const qi        = session?.current_question ?? 0
-  const curQ      = qs[qi]
-  const curVotes  = votes.filter(v => v.question_index === qi)
-  const answered  = curVotes.length
-
-  // Trivia leaderboard across all answered questions
-  const leaderboard = (() => {
-    if (session?.type !== 'trivia') return []
-    const scores = {}
-    regPlayers.forEach(p => { scores[String(p.id)] = { player: p, pts: 0, correct: 0 } })
-    ;(session?.questions ?? []).forEach((q, i) => {
-      const tl = session.time_limit ?? 20
-      votes.filter(v => v.question_index === i && String(v.answer) === String(q.correct)).forEach(v => {
-        if (!scores[v.player_id]) return
-        const elapsed = Math.max(0, (new Date(v.answered_at) - new Date(session.question_started_at || v.answered_at)) / 1000)
-        const speed   = Math.round(500 * Math.max(0, 1 - elapsed / tl))
-        scores[v.player_id].pts     += 500 + speed
-        scores[v.player_id].correct += 1
-      })
+  const handleAdminStart = async () => {
+    setBusy(true); setError(null)
+    const adminPin = getAdminPin()
+    const cats = (
+      editCats
+      || (categories.length
+            ? categories.map(c => ({ name: c.name, icon: c.icon, display_order: c.display_order }))
+            : buildDefaultCategories(regPlayers))
+    ).map((c, i) => ({
+      name: c.name?.trim() || 'Untitled',
+      icon: c.icon?.trim() || '🦞',
+      display_order: typeof c.display_order === 'number' ? c.display_order : i,
+    }))
+    if (cats.length === 0) {
+      setBusy(false); setError('Add at least one category before starting.'); return
+    }
+    const { data: upRes, error: upErr } = await supabase.rpc('lobster_oscars_admin_upsert_categories', {
+      input_admin_pin:     adminPin,
+      input_tournament_id: tournament.id,
+      input_categories:    cats,
+      input_device_id:     getDeviceId(),
     })
-    return Object.values(scores).sort((a, b) => b.pts - a.pts)
-  })()
+    if (upErr || (upRes !== 'ok' && upRes !== 'already_started')) {
+      setBusy(false)
+      setError(`Could not save categories: ${upErr?.message || upRes}`)
+      return
+    }
+    const { data: startRes, error: startErr } = await supabase.rpc('lobster_oscars_admin_start', {
+      input_admin_pin:     adminPin,
+      input_tournament_id: tournament.id,
+      input_device_id:     getDeviceId(),
+    })
+    setBusy(false)
+    if (startErr) { setError(startErr.message); return }
+    if (startRes === 'started' || startRes === 'already_started') {
+      setEditCats(null)
+      await loadSession()
+    } else {
+      setError(`Could not start: ${startRes}`)
+    }
+  }
+
+  const handleAdminEnd = async () => {
+    if (!window.confirm('End voting now? Players will see a "waiting for results" screen until you press Share.')) return
+    setBusy(true); setError(null)
+    const { data, error: err } = await supabase.rpc('lobster_oscars_admin_end', {
+      input_admin_pin:     getAdminPin(),
+      input_tournament_id: tournament.id,
+      input_device_id:     getDeviceId(),
+    })
+    setBusy(false)
+    if (err) { setError(err.message); return }
+    if (data === 'ended' || data === 'already_ended') {
+      await loadSession()
+    } else {
+      setError(`Could not end: ${data}`)
+    }
+  }
+
+  const handleAdminShare = async () => {
+    setBusy(true); setError(null)
+    const { data, error: err } = await supabase.rpc('lobster_oscars_admin_share', {
+      input_admin_pin:     getAdminPin(),
+      input_tournament_id: tournament.id,
+      input_device_id:     getDeviceId(),
+    })
+    setBusy(false)
+    if (err) { setError(err.message); return }
+    if (data === 'shared' || data === 'already_shared') {
+      await loadSession()
+    } else {
+      setError(`Could not share: ${data}`)
+    }
+  }
+
+  const handleExportCsv = () => {
+    if (!adminResults?.length) return
+    const rows = [['Category', 'Player', 'Votes', 'Rank']]
+    for (const r of adminResults) {
+      rows.push([r.category_name, r.target_name, r.votes_count, r.rank_in_category])
+    }
+    const csv  = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a')
+    a.href = url
+    a.download = `lobster-oscars-${(tournament?.name || 'results').replace(/\s+/g, '-')}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  /* ── Derived ──────────────────────────────────────────────────────────── */
+
+  const myVoteByCat = useMemo(() => {
+    const m = {}
+    for (const v of myVotes) m[v.category_id] = { id: v.target_id, name: v.target_name }
+    return m
+  }, [myVotes])
+
+  const selectedCategory = categories.find(c => c.id === selectedCatId)
 
   /* ════════════════════════════════════════════════════════════════════════ */
-  /* VIEWS                                                                   */
+  /* RENDER                                                                  */
   /* ════════════════════════════════════════════════════════════════════════ */
 
-  /* ── No active session ──────────────────────────────────────────────────── */
-  if (!session) {
-    if (!isAdmin) return (
-      <div className="fixed inset-0 z-50 bg-lobster-cream flex flex-col">
-        <div className="px-4 pt-12 pb-4">
-          <button onClick={() => onNavigate('registration', tournament)}
-            className="flex items-center gap-1 text-lobster-teal text-sm font-semibold mb-6">
-            <ChevronLeft size={16} /> Back
-          </button>
-        </div>
-        <div className="flex-1 flex flex-col items-center justify-center text-center px-6 gap-4">
-          <p className="text-6xl">🎮</p>
-          <p className="text-xl font-bold text-gray-700">No game running yet</p>
-          <p className="text-sm text-gray-400">Ask the admin to start one!</p>
-        </div>
+  if (phase === 'loading') {
+    return (
+      <div className="fixed inset-0 z-50 bg-lobster-cream flex items-center justify-center">
+        <Loader2 className="animate-spin text-lobster-teal" size={32} />
       </div>
     )
+  }
 
-    // Admin setup screen
-    const bank      = gameType === 'trivia' ? TRIVIA_BANK : buildOscarsBank(regPlayers)
-    const displayQs = editQs ?? bank
-
-    return (
-      <div className="fixed inset-0 z-50 bg-lobster-cream flex flex-col overflow-y-auto">
-        <div className="px-4 pt-12 pb-4 sticky top-0 bg-lobster-cream z-10 border-b border-gray-100">
-          <button onClick={() => onNavigate('registration', tournament)}
-            className="flex items-center gap-1 text-lobster-teal text-sm font-semibold mb-2">
-            <ChevronLeft size={16} /> Back
-          </button>
-          <h2 className="text-lg font-bold text-gray-800">🎮 Start a Game</h2>
-          <p className="text-sm text-gray-500">{tournament?.name}</p>
-        </div>
-
-        <div className="px-4 py-4 space-y-4">
-          {/* Mode picker */}
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              { id: 'trivia', emoji: '🧠', label: 'Lobster Trivia', desc: 'Quiz with timer & scores' },
-              { id: 'oscars', emoji: '🏆', label: 'Lobster Oscars', desc: 'Vote for today\'s best' },
-            ].map(t => (
-              <button key={t.id}
-                onClick={() => { setGameType(t.id); setEditQs(null) }}
-                className={`rounded-2xl p-4 text-left space-y-1 border-2 transition-all ${
-                  gameType === t.id
-                    ? 'border-lobster-teal bg-lobster-cream shadow-sm'
-                    : 'border-transparent bg-white'
-                }`}
-              >
-                <p className="text-2xl">{t.emoji}</p>
-                <p className="font-bold text-sm text-gray-800">{t.label}</p>
-                <p className="text-xs text-gray-500">{t.desc}</p>
-              </button>
-            ))}
-          </div>
-
-          {/* Question list with remove toggles */}
-          <div className="bg-white rounded-2xl p-4 space-y-2">
-            <div className="flex items-center justify-between mb-1">
-              <p className="font-semibold text-sm text-gray-700">
-                {gameType === 'trivia' ? 'Questions' : 'Categories'}
-                <span className="text-gray-400 font-normal ml-1">({displayQs.length})</span>
+  /* ─── ADMIN VIEWS ─────────────────────────────────────────────────────── */
+  if (isAdmin) {
+    // Admin: pre-start (also covers not_created — same UI, the start button creates the session)
+    if (phase === 'not_created' || phase === 'pre_start') {
+      const baseCats = (
+        editCats
+        || (categories.length
+              ? categories.map(c => ({ name: c.name, icon: c.icon, display_order: c.display_order }))
+              : buildDefaultCategories(regPlayers))
+      )
+      return (
+        <Shell onBack={() => onNavigate('registration', tournament)} title="🦞 Lobster Games" subtitle={tournament?.name}>
+          <div className="space-y-3">
+            <div className="bg-white rounded-2xl p-4">
+              <p className="text-sm text-gray-600 leading-snug">
+                <span className="font-semibold text-gray-800">Async Lobster Oscars.</span>{' '}
+                Once you start, players vote any time during the tournament. End voting when the
+                tournament wraps up. Results stay private to you until you press <em>Share</em>.
               </p>
-              {editQs && (
-                <button onClick={() => setEditQs(null)}
-                  className="text-xs text-lobster-teal font-semibold">Reset all</button>
-              )}
             </div>
-            {gameType === 'oscars' && !editQs && (
-              <p className="text-[11px] text-gray-400 leading-snug -mt-1 mb-1">
-                Two categories rotate with the group: 🍺 First to the Bar when more men play, 👟 Best Dressed when 10+ women are signed up.
-              </p>
-            )}
-            {displayQs.map((q, i) => (
-              <div key={i} className="flex items-start gap-2 bg-gray-50 rounded-xl px-3 py-2.5">
-                <span className="text-xs font-bold text-gray-400 w-4 pt-0.5">{i + 1}</span>
-                <div className="flex-1 min-w-0">
-                  {gameType === 'trivia' ? (
-                    <>
-                      <p className="text-xs font-medium text-gray-700 leading-snug">{q.q}</p>
-                      <p className="text-[10px] text-green-600 font-semibold mt-0.5">✓ {q.opts?.[q.correct]}</p>
-                    </>
-                  ) : (
-                    <p className="text-xs font-medium text-gray-700">{q.category}</p>
-                  )}
-                </div>
-                <button
-                  onClick={() => {
-                    const next = [...displayQs]; next.splice(i, 1); setEditQs(next)
-                  }}
-                  className="text-gray-300 hover:text-red-400 transition-colors flex-shrink-0 pt-0.5"
-                >
-                  <X size={14} />
-                </button>
-              </div>
-            ))}
-            {displayQs.length === 0 && (
-              <p className="text-xs text-gray-400 text-center py-2">No items — reset to restore defaults</p>
-            )}
-          </div>
 
-          <button onClick={createSession} disabled={busy || displayQs.length === 0}
-            className="btn-primary w-full flex items-center justify-center gap-2 py-3.5 text-base disabled:opacity-50">
-            <Play size={18} /> {busy ? 'Creating…' : 'Open Game Lobby'}
-          </button>
-        </div>
-      </div>
-    )
-  }
-
-  /* ── LOBBY ──────────────────────────────────────────────────────────────── */
-  if (session.status === 'lobby') {
-    return (
-      <div className="fixed inset-0 z-50 bg-lobster-teal flex flex-col">
-        <div className="px-4 pt-12 flex items-center justify-between text-white">
-          {isAdmin
-            ? <button onClick={endGame} className="text-white/60 text-sm">Cancel</button>
-            : <div />}
-        </div>
-
-        <div className="flex-1 min-h-0 overflow-y-auto flex flex-col items-center justify-center text-white text-center px-6 gap-4 py-4">
-          <p className="text-6xl">{session.type === 'trivia' ? '🧠' : '🏆'}</p>
-          <h2 className="text-2xl font-bold">
-            {session.type === 'trivia' ? 'Lobster Trivia' : 'Lobster Oscars'}
-          </h2>
-          <p className="opacity-70 text-sm">{(session.questions ?? []).length} {session.type === 'trivia' ? 'questions' : 'categories'} · {tournament?.name}</p>
-          <div className="mt-2">
-            <p className="text-sm opacity-70 mb-1 flex items-center justify-center gap-1.5">
-              <Users size={14} />
-              <span className="font-semibold text-green-300">{regPlayers.filter(p => presentIds.has(String(p.id))).length}</span>
-              <span className="opacity-60">/ {regPlayers.length} in lobby</span>
-            </p>
-            <p className="text-[11px] opacity-50 mb-3">Green dot = on this screen now</p>
-            <div className="flex flex-wrap gap-1.5 justify-center max-w-md">
-              {regPlayers
-                .slice()
-                .sort((a, b) => {
-                  const aHere = presentIds.has(String(a.id)) ? 0 : 1
-                  const bHere = presentIds.has(String(b.id)) ? 0 : 1
-                  return aHere - bHere || a.name.localeCompare(b.name)
-                })
-                .map(p => {
-                  const here = presentIds.has(String(p.id))
-                  return (
-                    <span key={p.id}
-                      className={`px-2.5 py-1 rounded-full text-xs font-medium flex items-center gap-1 transition-all ${
-                        here ? 'bg-white/25 text-white' : 'bg-white/5 text-white/40'
-                      }`}>
-                      {here && <span className="w-1.5 h-1.5 rounded-full bg-green-400" />}
-                      {shortName(p)}
-                    </span>
-                  )
-                })}
-            </div>
-          </div>
-        </div>
-
-        {!isAdmin && (
-          <div className="px-4 pb-16 text-center text-white/60 text-sm">⏳ Waiting for admin to start…</div>
-        )}
-
-        {isAdmin && (
-          <div className="px-4 pb-12 space-y-2">
-            <button onClick={startGame}
-              className="w-full bg-white text-lobster-teal font-bold py-4 rounded-2xl text-base flex items-center justify-center gap-2 active:scale-95 transition-all">
-              <Play size={20} /> Start Game!
-            </button>
-            <p className="text-[11px] text-white/50 text-center">You can start any time — latecomers can still join.</p>
-          </div>
-        )}
-      </div>
-    )
-  }
-
-  /* ── FINISHED ───────────────────────────────────────────────────────────── */
-  if (session.status === 'finished') {
-    return (
-      <div className="fixed inset-0 z-50 bg-lobster-cream flex flex-col overflow-y-auto">
-        <div className="px-4 pt-12 pb-4 flex items-center justify-between">
-          <button onClick={() => onNavigate('registration', tournament)}
-            className="flex items-center gap-1 text-lobster-teal text-sm font-semibold">
-            <ChevronLeft size={16} /> Back
-          </button>
-          {isAdmin && (
-            <button onClick={startNewGame}
-              className="text-xs font-semibold text-lobster-teal bg-white px-3 py-1.5 rounded-full border border-lobster-teal/20 active:scale-95 transition-all">
-              🎮 Start New Game
-            </button>
-          )}
-        </div>
-
-        <div className="text-center px-4 pb-4">
-          <p className="text-5xl mb-2">🎊</p>
-          <h2 className="text-2xl font-bold text-gray-800">Game Over!</h2>
-          <p className="text-sm text-gray-500">{tournament?.name}</p>
-        </div>
-
-        <div className="px-4 space-y-4 pb-12">
-          {/* Trivia final leaderboard */}
-          {session.type === 'trivia' && (
-            <>
-              {leaderboard.length >= 2 && (
-                <div className="bg-white rounded-2xl p-4">
-                  <p className="font-bold text-center text-gray-700 mb-4">🏆 Final Rankings</p>
-                  <div className="flex items-end justify-center gap-2">
-                    {[1, 0, 2].map(idx => {
-                      const s = leaderboard[idx]
-                      if (!s) return null
-                      const isFirst  = idx === 0
-                      const emoji    = idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉'
-                      const barH     = isFirst ? 'h-20' : idx === 1 ? 'h-12' : 'h-8'
-                      const barBg    = isFirst ? 'bg-yellow-400' : idx === 1 ? 'bg-gray-200' : 'bg-amber-300'
-                      const avatarBg = isFirst ? 'bg-yellow-400 text-white' : idx === 1 ? 'bg-gray-200 text-gray-600' : 'bg-amber-300 text-white'
-                      const avatarSz = isFirst ? 'w-14 h-14 text-xl' : 'w-11 h-11 text-base'
-                      return (
-                        <div key={s.player.id} className="flex flex-col items-center gap-1 flex-1">
-                          <span className={isFirst ? 'text-3xl' : 'text-2xl'}>{emoji}</span>
-                          <div className={`${avatarBg} ${avatarSz} rounded-full flex items-center justify-center font-bold`}>
-                            {s.player.name[0]}
-                          </div>
-                          <p className={`text-xs truncate w-full text-center ${isFirst ? 'font-bold' : 'font-semibold'}`}>
-                            {shortName(s.player)}
-                          </p>
-                          <div className={`${barBg} w-full ${barH} rounded-t-xl flex items-center justify-center`}>
-                            <span className={`text-xs font-bold ${isFirst ? 'text-white' : ''}`}>{s.pts}</span>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
-
-              <div className="bg-white rounded-2xl p-4 space-y-1.5">
-                <p className="font-semibold text-sm text-gray-700 mb-2">All Players</p>
-                {leaderboard.map((s, i) => {
-                  const isMe = String(s.player.id) === String(claimedId)
-                  return (
-                    <div key={s.player.id}
-                      className={`flex items-center gap-3 px-2 py-2 rounded-xl ${isMe ? 'bg-lobster-cream ring-1 ring-lobster-teal' : i < 3 ? 'bg-yellow-50/40' : ''}`}>
-                      <span className="text-sm w-6 text-center">{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}</span>
-                      <div className="w-7 h-7 bg-lobster-teal rounded-full flex items-center justify-center text-white text-xs font-bold">{s.player.name[0]}</div>
-                      <span className="flex-1 text-sm font-medium">{s.player.name}</span>
-                      <span className="text-sm font-bold text-lobster-teal">{s.pts} pts</span>
-                      <span className="text-xs text-gray-400">{s.correct}/{qs.length} ✓</span>
-                    </div>
-                  )
-                })}
-              </div>
-            </>
-          )}
-
-          {/* Oscars final results */}
-          {session.type === 'oscars' && (() => {
-            // Pre-compute per-category counts + winners. No overall "winner of
-            // the night" / award tally — the user wants each category to stand
-            // on its own, with every tied player shown as a co-winner.
-            const perCategory = (session.questions ?? []).map((q, i) => {
-              const qv = votes.filter(v => v.question_index === i)
-              const counts = {}
-              qv.forEach(v => { counts[v.answer] = (counts[v.answer] || 0) + 1 })
-              const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1])
-              const top    = sorted[0]?.[1] ?? 0
-              // Every player tied at the top vote count wins this category
-              const winners = sorted.filter(([, c]) => c === top && top > 0).map(([pid]) => pid)
-              return { q, i, counts, sorted, winners }
-            })
-
-            return (
-              <div className="space-y-3">
-                {/* Big Start New Game button — impossible to miss */}
-                {isAdmin && (
-                  <button onClick={startNewGame}
-                    className="w-full bg-lobster-teal text-white font-bold py-4 rounded-2xl text-base flex items-center justify-center gap-2 active:scale-95 transition-all shadow-md">
-                    🎮 Start a New Game
-                  </button>
-                )}
-
-                {perCategory.map(({ q, i, counts, winners }) => {
-                  const maxV = Math.max(...Object.values(counts), 1)
-                  return (
-                    <div key={i} className="bg-white rounded-2xl p-4 space-y-2">
-                      <p className="font-bold text-sm text-gray-700">{q.category}</p>
-                      {winners.length > 0
-                        ? (
-                          <p className="text-sm text-gray-600">
-                            🏆 <span className="font-bold">
-                              {winners
-                                .map(pid => {
-                                  const p = regPlayers.find(pp => String(pp.id) === pid)
-                                  return p ? shortName(p) : null
-                                })
-                                .filter(Boolean)
-                                .join(', ')}
-                            </span>{' '}
-                            <span className="text-gray-400">
-                              ({counts[winners[0]]} vote{counts[winners[0]] !== 1 ? 's' : ''}{winners.length > 1 ? ' — tie' : ''})
-                            </span>
-                          </p>
-                        )
-                        : <p className="text-xs text-gray-400">No votes</p>}
-                      <div className="space-y-1">
-                        {regPlayers.filter(p => counts[String(p.id)]).sort((a, b) => (counts[String(b.id)] || 0) - (counts[String(a.id)] || 0)).map(p => (
-                          <div key={p.id} className="flex items-center gap-2">
-                            <span className="text-xs w-16 truncate text-gray-600">{shortName(p)}</span>
-                            <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden">
-                              <div className="h-full bg-lobster-teal rounded-full transition-all"
-                                style={{ width: `${(counts[String(p.id)] / maxV) * 100}%` }} />
-                            </div>
-                            <span className="text-xs text-gray-500 w-3 text-right">{counts[String(p.id)]}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            )
-          })()}
-        </div>
-      </div>
-    )
-  }
-
-  /* ── ACTIVE QUESTION ────────────────────────────────────────────────────── */
-
-  if (!curQ) return null
-
-  const timeLimit    = session.time_limit ?? 20
-  const timerPct     = timeLeft != null ? timeLeft / timeLimit : 1
-  const timeCritical = timeLeft != null && timeLeft <= 5
-  const isReveal     = session.status === 'reveal'
-
-  /* ── TRIVIA question view ────────────────────────────────────────────────── */
-  if (session.type === 'trivia') {
-    const correct      = curQ.correct
-    const opts         = curQ.opts ?? []
-    const myAnswerIdx  = myVote != null ? parseInt(myVote) : null
-    const gotCorrect   = myAnswerIdx === correct
-    const voteBars     = opts.map((_, i) => curVotes.filter(v => String(v.answer) === String(i)).length)
-    const maxBar       = Math.max(...voteBars, 1)
-
-    return (
-      <div className="fixed inset-0 z-50 flex flex-col bg-lobster-teal overflow-hidden">
-        {/* Top bar */}
-        <div className="px-4 pt-10 pb-2 flex items-center gap-3 text-white flex-shrink-0">
-          <span className="text-xs font-bold opacity-70 w-12">Q{qi + 1}/{qs.length}</span>
-          <div className="flex-1 h-2.5 bg-white/20 rounded-full overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-all duration-300 ${timeCritical ? 'bg-red-400' : 'bg-white'}`}
-              style={{ width: `${timerPct * 100}%` }}
+            <SectionLabel>Categories</SectionLabel>
+            <CategoryEditor
+              cats={baseCats}
+              onChange={setEditCats}
+              onReset={() => setEditCats(buildDefaultCategories(regPlayers))}
             />
+
+            {error && <ErrorBanner message={error} onDismiss={() => setError(null)} />}
+
+            <button
+              onClick={handleAdminStart}
+              disabled={busy || baseCats.length === 0}
+              className="w-full bg-lobster-teal text-white font-bold py-4 rounded-2xl text-base flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50 mt-4"
+            >
+              {busy ? <Loader2 className="animate-spin" size={18} /> : <Play size={18} />}
+              {busy ? 'Starting…' : 'Start Lobster Games'}
+            </button>
+            <p className="text-[11px] text-gray-400 text-center -mt-1">
+              Once started, categories can&apos;t be edited. You can end voting at any time.
+            </p>
           </div>
-          <span className={`text-xl font-bold w-10 text-right tabular-nums ${timeCritical ? 'text-red-300' : ''}`}>
-            {timeLeft ?? '—'}
-          </span>
-        </div>
+        </Shell>
+      )
+    }
 
-        {/* Question */}
-        <div className="flex-1 flex items-center justify-center px-5 py-4">
-          <p className="text-white text-xl font-bold text-center leading-snug">{curQ.q}</p>
-        </div>
-
-        {/* Answer grid */}
-        <div className="grid grid-cols-2 gap-2 px-3 pb-2 flex-shrink-0">
-          {opts.map((opt, i) => {
-            const isSelected    = myAnswerIdx === i
-            const isCorrectOpt  = isReveal && i === correct
-            const isWrong       = isReveal && isSelected && i !== correct
-
-            let cls
-            if (isReveal) {
-              cls = isCorrectOpt
-                ? 'bg-green-400 text-white ring-4 ring-white/50'
-                : `${DIM[i]} text-gray-400`
-            } else if (myVote !== null) {
-              cls = isSelected
-                ? `${BG[i]} ${TXT[i]} ring-4 ${RING[i]}`
-                : `${DIM[i]} text-gray-400`
-            } else {
-              cls = `${BG[i]} ${TXT[i]}`
-            }
-
-            return (
-              <button key={i}
-                onClick={() => submitAnswer(i)}
-                disabled={myVote !== null || isReveal || timeLeft === 0}
-                className={`rounded-2xl p-4 font-bold text-sm flex items-start gap-2.5 transition-all active:scale-95 disabled:cursor-default ${cls}`}
-              >
-                <span className="text-lg leading-none flex-shrink-0 mt-0.5">{SHAPES[i]}</span>
-                <span className="text-left leading-snug flex-1">{opt}</span>
-                {isReveal && (
-                  <div className="flex-shrink-0 text-right">
-                    <div className="text-xs font-bold">{voteBars[i]}</div>
-                    <div className="w-8 h-1.5 bg-white/30 rounded-full mt-0.5 overflow-hidden">
-                      <div className="h-full bg-white/80 rounded-full" style={{ width: `${(voteBars[i] / maxBar) * 100}%` }} />
-                    </div>
-                  </div>
-                )}
-              </button>
-            )
-          })}
-        </div>
-
-        {/* Status strip */}
-        <div className="bg-black/25 px-4 py-2 flex items-center justify-between text-white/80 text-xs flex-shrink-0">
-          <span>{answered}/{regPlayers.length} answered</span>
-          {myVote !== null && !isReveal && <span className="font-semibold text-green-300">✓ Locked in!</span>}
-          {isReveal && myVote !== null && (
-            <span className={`font-bold text-sm ${gotCorrect ? 'text-green-300' : 'text-red-300'}`}>
-              {gotCorrect ? `✅ +${500 + Math.round(500 * timerPct)} pts` : '❌ Missed it'}
-            </span>
-          )}
-          {isReveal && myVote === null && <span className="text-yellow-300">⏰ Time's up</span>}
-        </div>
-
-        {/* Admin controls */}
-        {isAdmin && (
-          <div className="bg-gray-900/90 px-4 py-3 flex gap-2 flex-shrink-0">
-            {session.status === 'question' && (
-              <button onClick={revealAnswer}
-                className="flex-1 bg-white text-gray-900 font-bold py-3 rounded-xl text-sm active:scale-95 transition-all">
-                Reveal Answer
-              </button>
+    // Admin: active — live counts + End game
+    if (phase === 'active') {
+      return (
+        <Shell onBack={() => onNavigate('registration', tournament)} title="🦞 Lobster Games" subtitle={tournament?.name}>
+          <div className="space-y-3">
+            <PhaseBanner status="active" startedAt={session.started_at} />
+            <SectionLabel>Live participation</SectionLabel>
+            {adminStats.length === 0 && (
+              <div className="bg-white rounded-2xl p-4 text-center text-sm text-gray-400">No data yet — refreshing…</div>
             )}
-            {isReveal && (
-              <button onClick={nextQuestion}
-                className="flex-1 bg-lobster-orange text-white font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 active:scale-95 transition-all">
-                <ChevronRight size={16} />
-                {qi + 1 >= qs.length ? 'Finish Game' : 'Next Question'}
-              </button>
-            )}
-            <button onClick={endGame}
-              className="bg-white/10 text-white font-semibold py-3 px-4 rounded-xl text-sm active:scale-95">
-              End
+            {adminStats.map(s => (
+              <StatRow key={s.category_id} stat={s} />
+            ))}
+            <p className="text-[11px] text-gray-400 text-center pt-1">Refreshes every 10 seconds.</p>
+
+            {error && <ErrorBanner message={error} onDismiss={() => setError(null)} />}
+
+            <button
+              onClick={handleAdminEnd}
+              disabled={busy}
+              className="w-full bg-lobster-orange text-white font-bold py-4 rounded-2xl text-base flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50 mt-4"
+            >
+              {busy ? <Loader2 className="animate-spin" size={18} /> : <X size={18} />}
+              End game
             </button>
           </div>
-        )}
-      </div>
+        </Shell>
+      )
+    }
+
+    // Admin: ended or shared — rankings + share / export
+    if (phase === 'ended' || phase === 'shared') {
+      return (
+        <Shell onBack={() => onNavigate('registration', tournament)} title="🦞 Final Results" subtitle={tournament?.name}>
+          <div className="space-y-3">
+            <PhaseBanner
+              status={phase}
+              startedAt={session.started_at}
+              closedAt={session.closed_at}
+              sharedAt={session.shared_at}
+            />
+
+            <ResultsView results={adminResults} />
+
+            {error && <ErrorBanner message={error} onDismiss={() => setError(null)} />}
+
+            <div className="flex gap-2 pt-2">
+              <button
+                onClick={handleExportCsv}
+                className="flex-1 bg-white border border-gray-200 text-gray-700 font-semibold py-3 rounded-xl text-sm flex items-center justify-center gap-2 active:scale-95 transition-all"
+              >
+                <Download size={16} /> Export CSV
+              </button>
+              {phase === 'ended' ? (
+                <button
+                  onClick={handleAdminShare}
+                  disabled={busy}
+                  className="flex-1 bg-lobster-teal text-white font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50"
+                >
+                  {busy ? <Loader2 className="animate-spin" size={16} /> : <Share2 size={16} />}
+                  Share with players
+                </button>
+              ) : (
+                <div className="flex-1 bg-green-50 text-green-700 font-semibold py-3 rounded-xl text-sm flex items-center justify-center gap-2">
+                  <Check size={16} /> Shared with players
+                </div>
+              )}
+            </div>
+          </div>
+        </Shell>
+      )
+    }
+  }
+
+  /* ─── PLAYER VIEWS ────────────────────────────────────────────────────── */
+
+  // Player: not started yet
+  if (phase === 'not_created' || phase === 'pre_start') {
+    return (
+      <Shell onBack={() => onNavigate('registration', tournament)} title="🦞 Lobster Games" subtitle={tournament?.name}>
+        <div className="bg-white rounded-2xl p-6 text-center space-y-3">
+          <p className="text-5xl">🎮</p>
+          <p className="text-lg font-bold text-gray-700">Voting hasn&apos;t started yet</p>
+          <p className="text-sm text-gray-500">Your admin will open Lobster Oscars at some point during the tournament.</p>
+        </div>
+      </Shell>
     )
   }
 
-  /* ── OSCARS question view ────────────────────────────────────────────────── */
-  if (session.type === 'oscars') {
-    const counts  = {}
-    curVotes.forEach(v => { counts[v.answer] = (counts[v.answer] || 0) + 1 })
-    const maxV    = Math.max(...Object.values(counts), 1)
-    // Find every player tied at the top vote count (not just the first one).
-    // With a single-element sort earlier we were randomly picking one of N
-    // tied winners; now we surface all of them in the reveal card.
-    const topCount   = Math.max(0, ...Object.values(counts))
-    const winnerIds  = topCount > 0
-      ? Object.entries(counts).filter(([, c]) => c === topCount).map(([pid]) => pid)
-      : []
-    const winnerPs   = winnerIds.map(pid => regPlayers.find(p => String(p.id) === pid)).filter(Boolean)
-
+  // Player: active — home or category screen
+  if (phase === 'active') {
+    if (selectedCatId && !selectedCategory) {
+      // Category vanished (deleted? shouldn't happen) — bounce back
+      setSelectedCatId(null)
+    }
+    if (selectedCategory) {
+      return (
+        <PlayerCategoryScreen
+          category={selectedCategory}
+          tournamentParticipants={regPlayers}
+          claimedId={claimedId}
+          matches={matches}
+          shortName={shortName}
+          myVote={myVoteByCat[selectedCategory.id] || null}
+          onBack={() => setSelectedCatId(null)}
+          onVote={(targetId) => handleVote(selectedCategory.id, targetId)}
+          busy={busy}
+          error={error}
+          onDismissError={() => setError(null)}
+        />
+      )
+    }
     return (
-      <div className="fixed inset-0 z-50 flex flex-col bg-gradient-to-b from-lobster-teal to-teal-800 overflow-hidden">
-        {/* Header */}
-        <div className="px-4 pt-10 pb-3 text-white text-center flex-shrink-0">
-          <p className="text-xs font-bold uppercase tracking-widest opacity-60 mb-1">
-            Category {qi + 1} of {qs.length}
+      <Shell onBack={() => onNavigate('registration', tournament)} title="🦞 Lobster Games" subtitle={tournament?.name}>
+        <div className="bg-white rounded-2xl p-4 mb-3">
+          <p className="text-sm text-gray-600 leading-snug">
+            Vote for your favorites in each category. You can change your vote anytime until the admin closes the games.
           </p>
-          <p className="text-2xl font-bold leading-tight">{curQ.category}</p>
-          <p className="text-sm opacity-75 mt-1">{curQ.q}</p>
         </div>
+        {error && <ErrorBanner message={error} onDismiss={() => setError(null)} />}
+        <CategoryGrid
+          categories={categories}
+          myVoteByCat={myVoteByCat}
+          onSelect={setSelectedCatId}
+        />
+        <p className="text-center text-xs text-gray-400 pt-3">
+          <span className="font-semibold text-gray-700">{Object.keys(myVoteByCat).length}</span> of {categories.length} voted
+        </p>
+      </Shell>
+    )
+  }
 
-        {/* Reveal: winner(s) + bars */}
-        {isReveal && (
-          <div className="px-4 space-y-3 flex-shrink-0">
-            {winnerPs.length > 0 && (
-              <div className="bg-yellow-400 rounded-2xl px-4 py-3 text-center text-gray-900">
-                {winnerPs.length === 1 ? (
-                  <p className="text-xl font-bold">🏆 {shortName(winnerPs[0])}</p>
-                ) : (
-                  <>
-                    <p className="text-xs font-bold uppercase tracking-widest text-yellow-900 mb-1">
-                      Tied — {winnerPs.length} winners
-                    </p>
-                    <p className="text-lg font-bold leading-tight">
-                      🏆 {winnerPs.map(p => shortName(p)).join(', ')}
-                    </p>
-                  </>
-                )}
-                <p className="text-sm mt-1">{topCount} vote{topCount !== 1 ? 's' : ''} each</p>
-              </div>
-            )}
-            <div className="space-y-1.5">
-              {regPlayers.filter(p => counts[String(p.id)])
-                .sort((a, b) => (counts[String(b.id)] || 0) - (counts[String(a.id)] || 0))
-                .map(p => (
-                  <div key={p.id} className="flex items-center gap-2">
-                    <div className="w-7 h-7 bg-white/20 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">{p.name[0]}</div>
-                    <div className="flex-1 h-5 bg-white/10 rounded-full overflow-hidden">
-                      <div className="h-full bg-white/70 rounded-full transition-all flex items-center justify-end pr-1.5"
-                        style={{ width: `${(counts[String(p.id)] / maxV) * 100}%` }}>
-                        <span className="text-[10px] font-bold text-teal-800">{counts[String(p.id)]}</span>
-                      </div>
-                    </div>
-                    <span className="text-white text-xs w-16 truncate">{shortName(p)}</span>
-                  </div>
-                ))}
-            </div>
-          </div>
-        )}
+  // Player: ended (waiting for share)
+  if (phase === 'ended') {
+    return (
+      <Shell onBack={() => onNavigate('registration', tournament)} title="🦞 Voting closed" subtitle={tournament?.name}>
+        <div className="bg-white rounded-2xl p-4 mb-3">
+          <p className="text-sm text-gray-600 leading-snug">
+            Voting is closed. Your admin will share the final results shortly. Below is a recap of who you voted for.
+          </p>
+        </div>
+        <CategoryGrid
+          categories={categories}
+          myVoteByCat={myVoteByCat}
+          onSelect={null}
+          showWaitingState
+        />
+        <p className="text-center text-xs text-gray-400 pt-3 flex items-center justify-center gap-1">
+          <RotateCw size={11} className="animate-spin" /> waiting for the admin to share
+        </p>
+      </Shell>
+    )
+  }
 
-        {/* Player voting grid */}
-        {!isReveal && (
-          <div className="flex-1 overflow-y-auto px-3 pt-2 pb-2">
-            {myVote ? (
-              <div className="flex flex-col items-center justify-center h-full text-white text-center gap-3">
-                <p className="text-4xl">🗳️</p>
-                <p className="text-lg font-bold">Vote cast!</p>
-                <p className="text-sm opacity-70">You voted for <span className="font-bold">{regPlayers.find(p => String(p.id) === myVote)?.name ?? '—'}</span></p>
-                <p className="text-xs opacity-40 mt-2">{answered}/{regPlayers.length} voted</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5">
-                {regPlayers
-                  .filter(p => String(p.id) !== String(claimedId))
-                  .map(p => (
-                    <button key={p.id}
-                      onClick={() => submitAnswer(String(p.id))}
-                      className="bg-white/15 hover:bg-white/25 active:scale-95 rounded-xl px-2 py-2 text-white transition-all text-center">
-                      <span className="text-xs font-semibold leading-tight break-words">{shortName(p)}</span>
-                    </button>
-                  ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Admin vote count */}
-        {isAdmin && !isReveal && (
-          <div className="bg-black/20 px-4 py-1.5 text-white/60 text-xs text-center flex-shrink-0">
-            {answered} / {regPlayers.length} voted
-          </div>
-        )}
-
-        {/* Admin controls */}
-        {isAdmin && (
-          <div className="bg-gray-900/90 px-4 py-3 flex gap-2 flex-shrink-0">
-            {session.status === 'question' && (
-              <button onClick={revealAnswer}
-                className="flex-1 bg-white text-gray-900 font-bold py-3 rounded-xl text-sm active:scale-95 transition-all">
-                Reveal Results
-              </button>
-            )}
-            {isReveal && (
-              <button onClick={nextQuestion}
-                className="flex-1 bg-lobster-orange text-white font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 active:scale-95 transition-all">
-                <ChevronRight size={16} />
-                {qi + 1 >= qs.length ? 'Finish Oscars' : 'Next Category'}
-              </button>
-            )}
-            <button onClick={endGame}
-              className="bg-white/10 text-white font-semibold py-3 px-4 rounded-xl text-sm active:scale-95">
-              End
-            </button>
-          </div>
-        )}
-      </div>
+  // Player: shared — winners
+  if (phase === 'shared') {
+    return (
+      <Shell onBack={() => onNavigate('registration', tournament)} title="🦞 The Results" subtitle={tournament?.name}>
+        <ResultsView results={playerResults} highlightWinners />
+      </Shell>
     )
   }
 
   return null
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   SUBCOMPONENTS
+   ════════════════════════════════════════════════════════════════════════════ */
+
+function Shell({ onBack, title, subtitle, children }) {
+  return (
+    <div className="fixed inset-0 z-50 bg-lobster-cream flex flex-col overflow-y-auto">
+      <div className="px-4 pt-12 pb-3 sticky top-0 bg-lobster-cream z-10 border-b border-gray-100">
+        <button onClick={onBack} className="flex items-center gap-1 text-lobster-teal text-sm font-semibold mb-2">
+          <ChevronLeft size={16} /> Back
+        </button>
+        <h2 className="text-lg font-bold text-gray-800">{title}</h2>
+        {subtitle && <p className="text-sm text-gray-500">{subtitle}</p>}
+      </div>
+      <div className="px-4 py-4 pb-12">{children}</div>
+    </div>
+  )
+}
+
+function SectionLabel({ children }) {
+  return <p className="text-[11px] uppercase tracking-wider font-bold text-gray-400 mt-2 mb-2 px-1">{children}</p>
+}
+
+function ErrorBanner({ message, onDismiss }) {
+  return (
+    <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-3 py-2 text-sm flex items-start gap-2">
+      <span className="flex-1">{message}</span>
+      <button onClick={onDismiss} className="text-red-400 hover:text-red-600"><X size={14} /></button>
+    </div>
+  )
+}
+
+function PhaseBanner({ status, startedAt, closedAt, sharedAt }) {
+  const stamp = (iso) => iso ? new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''
+  if (status === 'active') {
+    return (
+      <div className="bg-white border border-gray-200 rounded-2xl px-4 py-3 flex items-center gap-3">
+        <span className="w-2 h-2 rounded-full bg-lobster-orange animate-pulse" />
+        <span className="text-sm font-semibold text-gray-700">Active</span>
+        <span className="text-xs text-gray-400 ml-auto">started {stamp(startedAt)}</span>
+      </div>
+    )
+  }
+  if (status === 'ended') {
+    return (
+      <div className="bg-yellow-50 border border-yellow-200 rounded-2xl px-4 py-3">
+        <p className="text-sm font-semibold text-yellow-800">Voting closed at {stamp(closedAt)}</p>
+        <p className="text-xs text-yellow-700/80 mt-0.5">Players see a "waiting for results" screen. Press <em>Share with players</em> below to reveal.</p>
+      </div>
+    )
+  }
+  if (status === 'shared') {
+    return (
+      <div className="bg-green-50 border border-green-200 rounded-2xl px-4 py-3">
+        <p className="text-sm font-semibold text-green-800">Shared with players at {stamp(sharedAt)}</p>
+        <p className="text-xs text-green-700/80 mt-0.5">Everyone can now see the results.</p>
+      </div>
+    )
+  }
+  return null
+}
+
+/* ─── Admin: editable categories list ─────────────────────────────────── */
+function CategoryEditor({ cats, onChange, onReset }) {
+  const update = (i, patch) => {
+    const next = cats.map((c, idx) => idx === i ? { ...c, ...patch } : c)
+    onChange(next)
+  }
+  const remove = (i) => {
+    const next = cats.filter((_, idx) => idx !== i).map((c, idx) => ({ ...c, display_order: idx }))
+    onChange(next)
+  }
+  const add = () => {
+    const next = [...cats, { name: '', icon: '🏆', display_order: cats.length }]
+    onChange(next)
+  }
+  return (
+    <div className="bg-white rounded-2xl p-3 space-y-2">
+      {cats.map((c, i) => (
+        <div key={i} className="flex items-center gap-2 bg-gray-50 rounded-xl px-2.5 py-2">
+          <input
+            type="text"
+            value={c.icon || ''}
+            onChange={e => update(i, { icon: e.target.value.slice(0, 4) })}
+            className="w-10 text-center bg-white border border-gray-200 rounded-lg py-1.5 text-base"
+            placeholder="🦞"
+            aria-label="Category icon"
+          />
+          <input
+            type="text"
+            value={c.name || ''}
+            onChange={e => update(i, { name: e.target.value })}
+            className="flex-1 bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm"
+            placeholder="Category name"
+            aria-label="Category name"
+          />
+          <button
+            onClick={() => remove(i)}
+            className="text-gray-300 hover:text-red-400 transition-colors p-1"
+            aria-label="Remove category"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      ))}
+      <div className="flex gap-2 pt-1">
+        <button
+          onClick={add}
+          className="flex-1 flex items-center justify-center gap-1 text-lobster-teal text-sm font-semibold bg-lobster-teal/5 hover:bg-lobster-teal/10 rounded-xl py-2 transition-colors"
+        >
+          <Plus size={14} /> Add category
+        </button>
+        <button
+          onClick={onReset}
+          className="text-gray-500 text-xs font-semibold px-3 hover:text-gray-700"
+        >
+          Reset to defaults
+        </button>
+      </div>
+    </div>
+  )
+}
+
+/* ─── Admin: per-category live participation row ──────────────────────── */
+function StatRow({ stat }) {
+  const pct = stat.total_participants > 0
+    ? Math.round((stat.votes_count / stat.total_participants) * 100)
+    : 0
+  return (
+    <div className="bg-white rounded-2xl p-3">
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-lg">{stat.category_icon}</span>
+        <span className="flex-1 font-semibold text-sm text-gray-700">{stat.category_name}</span>
+        <span className="text-xs text-gray-500 font-semibold">
+          <span className="text-lobster-teal text-base font-bold">{stat.votes_count}</span> of {stat.total_participants} voted
+        </span>
+      </div>
+      <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+        <div
+          className="h-full bg-gradient-to-r from-lobster-teal to-lobster-orange transition-all"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </div>
+  )
+}
+
+/* ─── Player: home tile grid ──────────────────────────────────────────── */
+function CategoryGrid({ categories, myVoteByCat, onSelect, showWaitingState = false }) {
+  return (
+    <div className="grid grid-cols-2 gap-2.5">
+      {categories.map(c => {
+        const voted = myVoteByCat[c.id]
+        const clickable = !!onSelect
+        return (
+          <button
+            key={c.id}
+            disabled={!clickable}
+            onClick={() => onSelect && onSelect(c.id)}
+            className={`rounded-2xl p-3 text-left transition-all min-h-[112px] flex flex-col justify-between border ${
+              voted
+                ? 'bg-gray-100 border-gray-200'
+                : clickable
+                  ? 'bg-white border-gray-100 active:scale-95'
+                  : 'bg-white border-gray-100 opacity-90'
+            }`}
+          >
+            <span className="text-2xl">{c.icon}</span>
+            <div>
+              <p className={`font-bold text-sm leading-tight ${voted ? 'text-gray-600' : 'text-gray-800'}`}>
+                {c.name}
+              </p>
+              {voted ? (
+                <p className="text-[11px] text-green-600 font-semibold mt-1 flex items-center gap-1">
+                  <Check size={11} /> Voted: {voted.name}
+                  {clickable && <span className="text-gray-400 font-normal ml-0.5">· tap to change</span>}
+                </p>
+              ) : showWaitingState ? (
+                <p className="text-[11px] text-gray-400 font-medium mt-1">You didn&apos;t vote</p>
+              ) : (
+                <p className="text-[11px] text-gray-400 mt-1">Tap to vote</p>
+              )}
+            </div>
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+/* ─── Player: category screen with player tiles + match-history ───────── */
+function PlayerCategoryScreen({
+  category, tournamentParticipants, claimedId, matches, shortName,
+  myVote, onBack, onVote, busy, error, onDismissError,
+}) {
+  return (
+    <div className="fixed inset-0 z-50 bg-lobster-cream flex flex-col overflow-y-auto">
+      <div className="px-4 pt-12 pb-3 sticky top-0 bg-lobster-cream z-10 border-b border-gray-100">
+        <button
+          onClick={onBack}
+          className="inline-flex items-center gap-1.5 bg-white border border-gray-200 rounded-xl px-3 py-1.5 text-sm font-semibold text-gray-800 active:scale-95 transition-all"
+        >
+          <ChevronLeft size={15} /> Games home
+        </button>
+        <div className="mt-3 flex items-center gap-2">
+          <span className="text-2xl">{category.icon}</span>
+          <h2 className="text-xl font-bold text-gray-800">{category.name}</h2>
+        </div>
+      </div>
+
+      <div className="px-3 py-3 pb-12">
+        {error && <div className="mb-2"><ErrorBanner message={error} onDismiss={onDismissError} /></div>}
+        <div className="grid grid-cols-2 gap-2">
+          {tournamentParticipants.map(p => {
+            const isYou       = String(p.id) === String(claimedId)
+            const isMyVote    = myVote && String(myVote.id) === String(p.id)
+            const history     = isYou ? [] : computeHistory(claimedId, p.id, matches)
+            return (
+              <button
+                key={p.id}
+                disabled={isYou || busy}
+                onClick={() => onVote(p.id)}
+                className={`rounded-xl p-2.5 text-left transition-all border flex flex-col gap-1.5 ${
+                  isMyVote
+                    ? 'bg-lobster-teal/10 border-lobster-teal'
+                    : isYou
+                      ? 'bg-gray-50 border-gray-100 opacity-50 cursor-not-allowed'
+                      : 'bg-white border-gray-100 active:scale-95'
+                }`}
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <div
+                    className="flex-shrink-0 w-7 h-7 rounded-full grid place-items-center text-white text-[11px] font-bold"
+                    style={{ backgroundColor: avatarColor(p.id) }}
+                  >
+                    {initials(p.name)}
+                  </div>
+                  <span className="font-semibold text-[13px] flex-1 min-w-0 truncate text-gray-800">
+                    {shortName(p)}
+                  </span>
+                  {isYou && (
+                    <span className="text-[9px] uppercase tracking-wide font-semibold text-gray-500 bg-gray-200 rounded px-1.5 py-0.5">you</span>
+                  )}
+                  {isMyVote && (
+                    <Check size={14} className="text-lobster-teal flex-shrink-0" />
+                  )}
+                </div>
+                <div className="text-[10.5px] text-gray-500 leading-snug space-y-0.5">
+                  {isYou ? (
+                    <span className="italic opacity-70">that&apos;s you</span>
+                  ) : history.length === 0 ? (
+                    <span className="italic opacity-70">no shared rounds yet</span>
+                  ) : (
+                    history.slice(0, 3).map((h, i) => {
+                      if (h.type === 'with') {
+                        return (
+                          <div key={i} className="truncate">
+                            R{h.round}: you &amp; <strong className="text-gray-800">{shortName(p)}</strong>
+                          </div>
+                        )
+                      }
+                      const partner = tournamentParticipants.find(pp => String(pp.id) === String(h.partnerId))
+                      return (
+                        <div key={i} className="truncate">
+                          <strong className="text-gray-800">R{h.round}: vs {shortName(p)}</strong>
+                          {partner ? <> &amp; {shortName(partner)}</> : null}
+                        </div>
+                      )
+                    })
+                  )}
+                </div>
+              </button>
+            )
+          })}
+        </div>
+        <p className="text-center text-[11px] text-gray-400 pt-3">
+          Tap a player to vote. You can change your mind until the admin ends the games.
+        </p>
+      </div>
+    </div>
+  )
+}
+
+/* ─── Results view (used by both admin post-end and player post-share) ── */
+function ResultsView({ results, highlightWinners = false }) {
+  // Group by category
+  const byCat = useMemo(() => {
+    const m = new Map()
+    for (const r of results) {
+      if (!m.has(r.category_id)) {
+        m.set(r.category_id, {
+          id: r.category_id,
+          name: r.category_name,
+          icon: r.category_icon,
+          display_order: r.display_order,
+          rows: [],
+        })
+      }
+      m.get(r.category_id).rows.push(r)
+    }
+    return Array.from(m.values()).sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
+  }, [results])
+
+  if (byCat.length === 0) {
+    return (
+      <div className="bg-white rounded-2xl p-6 text-center">
+        <p className="text-3xl mb-2">🤷</p>
+        <p className="text-sm text-gray-500">No votes were cast.</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-3">
+      {byCat.map(cat => {
+        const winners = cat.rows.filter(r => Number(r.rank_in_category) === 1)
+        const others  = cat.rows.filter(r => Number(r.rank_in_category) !== 1)
+        return (
+          <div key={cat.id} className="bg-white rounded-2xl p-3.5 space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">{cat.icon}</span>
+              <span className="flex-1 font-bold text-sm text-gray-800">{cat.name}</span>
+            </div>
+            {winners.length > 0 && (
+              <div className={`rounded-xl px-3 py-2 ${highlightWinners ? 'bg-yellow-50 border border-yellow-200' : 'bg-yellow-50/60'}`}>
+                <p className="text-sm font-bold text-yellow-900 flex items-center gap-1.5">
+                  <Trophy size={15} className="text-yellow-600" />
+                  {winners.map(w => w.target_name).join(', ')}
+                  {winners.length > 1 && <span className="text-xs font-semibold text-yellow-700/80 ml-1">(tied)</span>}
+                </p>
+                <p className="text-xs text-yellow-700/80 mt-0.5">
+                  {Number(winners[0].votes_count)} vote{Number(winners[0].votes_count) === 1 ? '' : 's'}
+                  {winners.length > 1 ? ' each' : ''}
+                </p>
+              </div>
+            )}
+            {others.length > 0 && (
+              <div className="space-y-1 pt-0.5">
+                {others.map((r, i) => (
+                  <div key={`${r.target_id}-${i}`} className="flex items-center gap-2 text-xs text-gray-600">
+                    <span className="w-5 text-center font-semibold text-gray-400">{r.rank_in_category}</span>
+                    <span className="flex-1 truncate">{r.target_name}</span>
+                    <span className="text-gray-500">{r.votes_count} vote{Number(r.votes_count) === 1 ? '' : 's'}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
 }

@@ -37,19 +37,19 @@ export default function Registration({ tournament, onNavigate }) {
 
   const [marking, setMarking] = useState(false)
 
-  // Whether a finished Lobster Game exists for this tournament. Used to show
-  // the "Lobster Games Over — See Results!" banner during the 48h window.
+  // Whether a Lobster Oscars session has been shared for this tournament.
+  // Drives the "Lobster Games Over — See Results!" banner during the 48h window.
   const [hasGameResults, setHasGameResults] = useState(false)
   useEffect(() => {
     if (!tournament?.id) return
     let active = true
     ;(async () => {
       const { data } = await supabase
-        .from('game_results')
-        .select('id')
+        .from('lobster_oscars_sessions')
+        .select('shared_at')
         .eq('tournament_id', tournament.id)
-        .limit(1)
-      if (active) setHasGameResults((data ?? []).length > 0)
+        .maybeSingle()
+      if (active) setHasGameResults(!!data?.shared_at)
     })()
     return () => { active = false }
   }, [tournament?.id])
