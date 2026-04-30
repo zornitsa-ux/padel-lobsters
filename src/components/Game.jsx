@@ -412,6 +412,12 @@ export default function Game({ tournament, onNavigate }) {
 
   const selectedCategory = categories.find(c => c.id === selectedCatId)
 
+  // Clear a stale selectedCatId if its category no longer exists (e.g. categories
+  // refetched and the id is gone). Side-effect — must NOT live in render.
+  useEffect(() => {
+    if (selectedCatId && !selectedCategory) setSelectedCatId(null)
+  }, [selectedCatId, selectedCategory])
+
   /* ════════════════════════════════════════════════════════════════════════ */
   /* RENDER                                                                  */
   /* ════════════════════════════════════════════════════════════════════════ */
@@ -561,10 +567,6 @@ export default function Game({ tournament, onNavigate }) {
 
   // Player: active — home or category screen
   if (phase === 'active') {
-    if (selectedCatId && !selectedCategory) {
-      // Category vanished (deleted? shouldn't happen) — bounce back
-      setSelectedCatId(null)
-    }
     if (selectedCategory) {
       return (
         <PlayerCategoryScreen
@@ -848,6 +850,13 @@ function PlayerCategoryScreen({
 
       <div className="px-3 py-3 pb-12">
         {error && <div className="mb-2"><ErrorBanner message={error} onDismiss={onDismissError} /></div>}
+        {tournamentParticipants.length === 0 ? (
+          <div className="text-center py-10 text-gray-500">
+            <p className="text-4xl mb-2">🤷</p>
+            <p className="text-sm font-semibold text-gray-700">No registered players</p>
+            <p className="text-xs text-gray-500 mt-1">This tournament doesn&apos;t have any registered players yet, so there&apos;s no one to vote for.</p>
+          </div>
+        ) : (
         <div className="grid grid-cols-2 gap-2">
           {tournamentParticipants.map(p => {
             const isYou       = String(p.id) === String(claimedId)
@@ -911,6 +920,7 @@ function PlayerCategoryScreen({
             )
           })}
         </div>
+        )}
         <p className="text-center text-[11px] text-gray-400 pt-3">
           Tap a player to vote. You can change your mind until the admin ends the games.
         </p>
