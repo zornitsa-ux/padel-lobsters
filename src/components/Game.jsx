@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext'
 import { supabase } from '../supabase'
 import { getDeviceId } from '../lib/deviceId'
 import {
-  ChevronLeft, Play, X, Plus, Trophy, Share2, Download, Loader2, Check, RotateCw,
+  ChevronLeft, ChevronDown, Play, X, Plus, Trophy, Share2, Download, Loader2, Check, RotateCw,
 } from 'lucide-react'
 
 /* ════════════════════════════════════════════════════════════════════════════
@@ -135,6 +135,8 @@ export default function Game({ tournament, onNavigate }) {
   const [editCats,       setEditCats]       = useState(null) // null = derive from saved/defaults
   const [busy,           setBusy]           = useState(false)
   const [error,          setError]          = useState(null)
+  const [expandedStatCatId, setExpandedStatCatId] = useState(null)
+  const [categoryVoters, setCategoryVoters] = useState({}) // { [categoryId]: [{player_id, player_name, voted}] }
 
   const regs       = getTournamentRegistrations(tournament?.id || '').filter(r => r.status === 'registered')
   const regPlayers = useMemo(
@@ -220,6 +222,18 @@ export default function Game({ tournament, onNavigate }) {
     setAdminResults(data || [])
   }, [tournament?.id, isAdmin])
 
+  const loadCategoryVoters = useCallback(async (categoryId) => {
+    if (!categoryId || !isAdmin) return
+    const adminPin = getAdminPin(); if (!adminPin) return
+    const { data, error: err } = await supabase.rpc('lobster_oscars_admin_get_category_voters', {
+      input_admin_pin:   adminPin,
+      input_category_id: categoryId,
+      input_device_id:   getDeviceId(),
+    })
+    if (err) { console.error('admin_get_category_voters:', err); return }
+    setCategoryVoters(prev => ({ ...prev, [categoryId]: data || [] }))
+  }, [isAdmin])
+
   const loadPlayerResults = useCallback(async () => {
     if (!tournament?.id) return
     const { data, error: err } = await supabase.rpc('lobster_oscars_get_results', {
@@ -254,6 +268,14 @@ export default function Game({ tournament, onNavigate }) {
     loadCategories(session.id)
     if (claimedId) loadMyVotes()
   }, [session?.id, claimedId, loadCategories, loadMyVotes])
+
+  // Refresh the expanded category's voter list (initial + every 10s while active)
+  useEffect(() => {
+    if (!isAdmin || !expandedStatCatId || phase !== 'active') return
+    loadCategoryVoters(expandedStatCatId)
+    const t = setInterval(() => loadCategoryVoters(expandedStatCatId), 10000)
+    return () => clearInterval(t)
+  }, [isAdmin, expandedStatCatId, phase, loadCategoryVoters])
 
   // Phase-specific data + polling
   useEffect(() => {
@@ -307,6 +329,24 @@ export default function Game({ tournament, onNavigate }) {
         voter_not_registered:  'You\'re not registered for this tournament.',
       }[data] || `Vote failed: ${data}`
       setError(friendly)
+    }
+  }
+
+  const handleClearVote = async (categoryId) => {
+    if (!window.confirm('Clear your vote for this category?')) return
+    setBusy(true); setError(null)
+    const { data, error: err } = await supabase.rpc('lobster_oscars_clear_vote', {
+      input_pin:         getPin(),
+      input_device_id:   getDeviceId(),
+      input_category_id: categoryId,
+    })
+    setBusy(false)
+    if (err) { setError(err.message); return }
+    if (data === 'cleared' || data === 'no_vote') {
+      await loadMyVotes()
+      setSelectedCatId(null)
+    } else {
+      setError(`Could not clear vote: ${data}`)
     }
   }
 
@@ -486,7 +526,13 @@ export default function Game({ tournament, onNavigate }) {
               <div className="bg-white rounded-2xl p-4 text-center text-sm text-gray-400">No data yet — refreshing…</div>
             )}
             {adminStats.map(s => (
-              <StatRow key={s.category_id} stat={s} />
+              <StatRow
+                key={s.category_id}
+                stat={s}
+                expanded={expandedStatCatId === s.category_id}
+                voters={categoryVoters[s.category_id]}
+                onToggle={() => setExpandedStatCatId(prev => prev === s.category_id ? null : s.category_id)}
+              />
             ))}
             <p className="text-[11px] text-gray-400 text-center pt-1">Refreshes every 10 seconds.</p>
 
@@ -577,6 +623,7 @@ export default function Game({ tournament, onNavigate }) {
           myVote={myVoteByCat[selectedCategory.id] || null}
           onBack={() => setSelectedCatId(null)}
           onVote={(targetId) => handleVote(selectedCategory.id, targetId)}
+          onClear={() => handleClearVote(selectedCategory.id)}
           busy={busy}
           error={error}
           onDismissError={() => setError(null)}
@@ -761,25 +808,58 @@ function CategoryEditor({ cats, onChange, onReset }) {
 }
 
 /* ─── Admin: per-category live participation row ──────────────────────── */
-function StatRow({ stat }) {
+function StatRow({ stat, expanded, voters, onToggle }) {
   const pct = stat.total_participants > 0
     ? Math.round((stat.votes_count / stat.total_participants) * 100)
     : 0
+  const voted    = (voters || []).filter(v => v.voted)
+  const notVoted = (voters || []).filter(v => !v.voted)
   return (
-    <div className="bg-white rounded-2xl p-3">
-      <div className="flex items-center gap-2 mb-2">
-        <span className="text-lg">{stat.category_icon}</span>
-        <span className="flex-1 font-semibold text-sm text-gray-700">{stat.category_name}</span>
-        <span className="text-xs text-gray-500 font-semibold">
-          <span className="text-lobster-teal text-base font-bold">{stat.votes_count}</span> of {stat.total_participants} voted
-        </span>
-      </div>
-      <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-        <div
-          className="h-full bg-gradient-to-r from-lobster-teal to-lobster-orange transition-all"
-          style={{ width: `${pct}%` }}
-        />
-      </div>
+    <div className="bg-white rounded-2xl overflow-hidden">
+      <button
+        onClick={onToggle}
+        className="w-full p-3 text-left active:scale-[0.99] transition-all"
+      >
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-lg">{stat.category_icon}</span>
+          <span className="flex-1 font-semibold text-sm text-gray-700">{stat.category_name}</span>
+          <span className="text-xs text-gray-500 font-semibold">
+            <span className="text-lobster-teal text-base font-bold">{stat.votes_count}</span> of {stat.total_participants} voted
+          </span>
+          <ChevronDown
+            size={14}
+            className={`text-gray-400 transition-transform flex-shrink-0 ${expanded ? 'rotate-180' : ''}`}
+          />
+        </div>
+        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-gradient-to-r from-lobster-teal to-lobster-orange transition-all"
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+      </button>
+      {expanded && (
+        <div className="px-3 pb-3 pt-2 border-t border-gray-100 grid grid-cols-2 gap-3">
+          <div>
+            <p className="text-[10px] uppercase font-bold text-green-700 tracking-wide mb-1">✓ Voted ({voted.length})</p>
+            <div className="space-y-0.5">
+              {voted.length === 0 && <p className="text-xs text-gray-400 italic">none yet</p>}
+              {voted.map(v => (
+                <p key={v.player_id} className="text-xs text-gray-700 truncate">{v.player_name}</p>
+              ))}
+            </div>
+          </div>
+          <div>
+            <p className="text-[10px] uppercase font-bold text-gray-500 tracking-wide mb-1">○ Not yet ({notVoted.length})</p>
+            <div className="space-y-0.5">
+              {notVoted.length === 0 && <p className="text-xs text-gray-400 italic">all voted!</p>}
+              {notVoted.map(v => (
+                <p key={v.player_id} className="text-xs text-gray-500 truncate">{v.player_name}</p>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -830,7 +910,7 @@ function CategoryGrid({ categories, myVoteByCat, onSelect, showWaitingState = fa
 /* ─── Player: category screen with player tiles + match-history ───────── */
 function PlayerCategoryScreen({
   category, tournamentParticipants, claimedId, matches, shortName,
-  myVote, onBack, onVote, busy, error, onDismissError,
+  myVote, onBack, onVote, onClear, busy, error, onDismissError,
 }) {
   return (
     <div className="fixed inset-0 z-50 bg-lobster-cream flex flex-col overflow-y-auto">
@@ -843,7 +923,16 @@ function PlayerCategoryScreen({
         </button>
         <div className="mt-3 flex items-center gap-2">
           <span className="text-2xl">{category.icon}</span>
-          <h2 className="text-xl font-bold text-gray-800">{category.name}</h2>
+          <h2 className="text-xl font-bold text-gray-800 flex-1">{category.name}</h2>
+          {myVote && (
+            <button
+              onClick={onClear}
+              disabled={busy}
+              className="text-xs font-semibold text-red-500 hover:text-red-600 disabled:opacity-50 px-2 py-1 rounded-lg bg-red-50 border border-red-100 active:scale-95 transition-all flex items-center gap-1"
+            >
+              <X size={12} /> Clear vote
+            </button>
+          )}
         </div>
       </div>
 
