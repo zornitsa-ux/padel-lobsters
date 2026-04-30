@@ -876,6 +876,12 @@ function PlayerCategoryScreen({
                 }`}
               >
                 <div className="flex items-center gap-2 min-w-0">
+                  <span
+                    className="flex-shrink-0 text-[10px] font-bold text-white px-1.5 py-0.5 rounded leading-none"
+                    style={{ backgroundColor: avatarColor(p.id) }}
+                  >
+                    {(p.name || '?').trim()[0]?.toUpperCase() || '?'}
+                  </span>
                   <span className="font-semibold text-[13px] flex-1 min-w-0 truncate text-gray-800">
                     {shortName(p)}
                   </span>
