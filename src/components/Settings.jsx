@@ -12,6 +12,7 @@ import ApproveDevicesWidget from './ApproveDevicesWidget'
 import AdminSecurityPanels from './AdminSecurityPanels'
 import ChangeAdminPinForm from './ChangeAdminPinForm'
 import { recomputeAllRatings } from '../lib/ratingsRecompute'
+import { letterColor } from '../lib/letterColors'
 
 const LOBBY_PROMPTS = [
   { label: '🎤 Trash Talk',        placeholder: 'Say something to your future opponents…' },
@@ -378,7 +379,10 @@ export default function Settings() {
               <img src={signedInPlayer.avatarUrl} alt={signedInPlayer.name}
                    className="w-9 h-9 rounded-full object-cover flex-shrink-0 border border-white" />
             ) : (
-              <div className="w-9 h-9 bg-lobster-teal rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+              <div
+                className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
+                style={{ backgroundColor: letterColor(signedInPlayer.name) }}
+              >
                 {signedInPlayer.name[0].toUpperCase()}
               </div>
             )}
@@ -523,7 +527,10 @@ export default function Settings() {
 
           {/* Always-visible summary */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-lobster-teal rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
+            <div
+              className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0"
+              style={{ backgroundColor: letterColor(myPlayer.name) }}
+            >
               {myPlayer.avatarUrl ? (
                 <img src={myPlayer.avatarUrl} alt={myPlayer.name} className="w-10 h-10 rounded-full object-cover" />
               ) : (

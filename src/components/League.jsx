@@ -6,6 +6,7 @@ import {
   UserPlus, Clock, Pencil, Save,
 } from 'lucide-react'
 import { DateTile } from './CalendarPieces'
+import { letterColor } from '../lib/letterColors'
 
 // ── Range calendar ────────────────────────────────────────────────────────
 // Compact custom calendar with range-select. Avoids native <input type="date">
@@ -1010,7 +1011,10 @@ export default function League({ onNavigate }) {
               ? <p className="text-sm text-gray-400">No other Lobsters in your division yet — check back as more people register.</p>
               : partnerPool.map(p => (
                   <div key={p.id} className="flex items-center gap-3 bg-gray-50 rounded-xl p-3">
-                    <div className="w-10 h-10 bg-lobster-teal rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
+                    <div
+                      className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0"
+                      style={{ backgroundColor: letterColor(p.name) }}
+                    >
                       {(p.name || '')[0]}
                     </div>
                     <div className="flex-1 min-w-0">

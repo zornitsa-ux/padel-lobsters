@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext'
 import { supabase } from '../supabase'
 import { ChevronLeft, Trophy, AlertCircle } from 'lucide-react'
 import { computeTournamentStandings } from '../lib/standings'
+import { letterColor } from '../lib/letterColors'
 
 export default function Scores({ tournament, onNavigate }) {
   const { players, getTournamentMatches, getTournamentRegistrations } = useApp()
@@ -217,7 +218,10 @@ export default function Scores({ tournament, onNavigate }) {
                           </td>
                           <td className="py-2.5">
                             <div className="flex items-center gap-2">
-                              <div className="w-7 h-7 rounded-full bg-lobster-teal flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                              <div
+                                className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                                style={{ backgroundColor: letterColor(s.player.name) }}
+                              >
                                 {s.player.name[0]}
                               </div>
                               <span className="font-medium truncate max-w-[100px]">{s.player.name}</span>

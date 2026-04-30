@@ -9,6 +9,7 @@ import {
 import { SignInBanner } from './AuthGate'
 import { DateTile, AddToCalendarButton, ShareWhatsAppButton } from './CalendarPieces'
 import { fmtEur } from '../lib/format'
+import { letterColor } from '../lib/letterColors'
 
 // Tournaments stay on the home page for 48h after their date; during that
 // window we show "🏆 Lobster Games Over — See Results!" if a game was played.
@@ -385,7 +386,10 @@ export default function Registration({ tournament, onNavigate }) {
               <div key={reg.id} className="card space-y-2">
                 <div className="flex items-center gap-3">
                   <span className="text-xs text-gray-400 w-5 text-center font-bold">#{idx + 1}</span>
-                  <div className="w-9 h-9 bg-lobster-teal rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                  <div
+                    className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
+                    style={{ backgroundColor: letterColor(p.name) }}
+                  >
                     {p.name[0]}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -947,7 +951,10 @@ export default function Registration({ tournament, onNavigate }) {
                   disabled={transferring}
                   className="w-full flex items-center gap-3 p-3 rounded-2xl bg-gray-50 hover:bg-lobster-cream active:scale-[0.98] transition-all text-left disabled:opacity-40"
                 >
-                  <div className="w-9 h-9 bg-lobster-teal rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                  <div
+                    className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
+                    style={{ backgroundColor: letterColor(p.name) }}
+                  >
                     {(p.name || '?')[0]}
                   </div>
                   <div className="flex-1 min-w-0">

@@ -4,6 +4,7 @@ import { ChevronLeft, Shuffle, AlertCircle, Trophy, Users, Download } from 'luci
 import { generateLobster as generateLobsterAnnealed } from '../lib/lobsterMatcher'
 import { recomputeAllRatings } from '../lib/ratingsRecompute'
 import { supabase } from '../supabase'
+import { letterColor } from '../lib/letterColors'
 
 // ── Smart pairing engine ─────────────────────────────────────────────────────
 
@@ -1181,7 +1182,10 @@ export default function Schedule({ tournament, onNavigate }) {
                             className={`flex items-center gap-1.5 mb-1 rounded-lg px-1 transition-all ${isSwapping ? 'cursor-pointer active:scale-95' : ''} ${isSelected ? 'bg-orange-100 ring-2 ring-orange-400' : isSwapping ? 'hover:bg-gray-100' : ''}`}
                           >
                             <div className="relative w-7 h-7 flex-shrink-0">
-                              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold ${isSelected ? 'bg-orange-500' : 'bg-lobster-teal'}`}>
+                              <div
+                                className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold ${isSelected ? 'bg-orange-500' : ''}`}
+                                style={isSelected ? undefined : { backgroundColor: letterColor(p.name) }}
+                              >
                                 {p.name[0]}
                               </div>
                               {p.isLeftHanded && <span className="absolute -top-1 -right-1 text-[9px] bg-amber-400 text-white rounded-full w-3.5 h-3.5 flex items-center justify-center font-bold">L</span>}
