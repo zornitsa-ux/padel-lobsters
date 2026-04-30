@@ -8,6 +8,7 @@ import PlayerAliasMatcher from './PlayerAliasMatcher'
 import { buildHistoricalAppearances, summariseAppearances } from '../lib/playerHistory'
 import { computeTournamentStandings } from '../lib/standings'
 import { buildPlayerStats } from '../lib/playerStats'
+import { letterColor } from '../lib/letterColors'
 import { TOURNAMENTS } from './History'
 
 const LEVEL_COLORS = [
@@ -405,7 +406,10 @@ function PlayerAvatar({ player, size = 'md', className = '' }) {
     )
   }
   return (
-    <div className={`${cls} bg-lobster-teal rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 ${className}`}>
+    <div
+      className={`${cls} rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 ${className}`}
+      style={{ backgroundColor: letterColor(player.name) }}
+    >
       {(player.name || '?')[0].toUpperCase()}
     </div>
   )
@@ -502,6 +506,24 @@ export default function Players({ onNavigate, focusPlayerId }) {
     if (ta !== tb) return ta - tb
     return String(a.id).localeCompare(String(b.id))
   })
+
+  // Pin the logged-in player's card to the top when no search is active.
+  // During search the self card just shows up via the regular filtered
+  // list (or disappears entirely if their name doesn't match the query).
+  // The original chronological index (`idx`) is preserved on the pair so
+  // the rank badge `#${idx + 1}` keeps reflecting join order, not the
+  // display position.
+  const orderedForRender = (() => {
+    const withIdx = sorted.map((p, idx) => ({ p, idx, isSelf: false }))
+    if (search.trim()) return withIdx
+    const cid = claimedId ? String(claimedId) : null
+    if (!cid) return withIdx
+    const selfPos = withIdx.findIndex(x => String(x.p.id) === cid)
+    if (selfPos === -1) return withIdx
+    const selfPair = { ...withIdx[selfPos], isSelf: true }
+    const rest = withIdx.filter((_, i) => i !== selfPos)
+    return [selfPair, ...rest]
+  })()
 
   // ── Review breakdown ─────────────────────────────────────────────────────
   // Run corpReview for every active player so we can group them by which
@@ -1085,10 +1107,10 @@ export default function Players({ onNavigate, focusPlayerId }) {
           </div>
         )}
 
-        {sorted.map((p, idx) => {
+        {orderedForRender.map(({ p, idx, isSelf }) => {
           const expanded = expandedId === p.id
           return (
-            <div key={p.id} ref={p.id === focusPlayerId ? focusRef : undefined} className="card transition-all">
+            <div key={p.id} ref={p.id === focusPlayerId ? focusRef : undefined} className={`card transition-all${isSelf ? ' ring-2 ring-lobster-teal/40' : ''}`}>
               <div className="w-full" onClick={() => setExpandedId(expanded ? null : p.id)}>
                 {/* Top row: rank · avatar · name · level · chevron */}
                 <div className="flex items-center gap-3">
@@ -1101,6 +1123,7 @@ export default function Players({ onNavigate, focusPlayerId }) {
                       {p.country && <FlagImg code={p.country} />}
                       {displayName(p)}
                       {p.isLeftHanded && <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-semibold ml-0.5">L</span>}
+                      {isSelf && <span className="text-[10px] bg-lobster-teal text-white px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider ml-0.5">You</span>}
                     </p>
                   </div>
                   <div className="flex-shrink-0 text-right flex flex-col items-end gap-1">
