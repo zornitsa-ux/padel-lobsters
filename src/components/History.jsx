@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react'
-import { Trophy, ChevronDown, ChevronUp, Medal, Pencil, Users, Gamepad2 } from 'lucide-react'
+import { Trophy, ChevronDown, ChevronUp, Pencil, Users, Gamepad2 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { supabase } from '../supabase'
 
@@ -747,44 +747,44 @@ function buildDisplayNames(names) {
 function Podium({ players, rounds = [], rn = n => n, dn = n => n }) {
   const sorted = rounds.length > 0 ? smartSort(players, rounds) : [...players].sort((a, b) => b.total - a.total)
   const top3 = sorted.slice(0, 3)
+  if (top3.length < 2) return null
   return (
-    <div className="flex items-end justify-center gap-3 py-4">
+    <div className="flex items-end justify-center gap-2 py-2">
       {/* 2nd */}
-      <div className="flex flex-col items-center gap-1">
-        <Medal size={20} className="text-gray-400" />
-        <div className="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center font-bold text-lg text-gray-600">
+      <div className="flex flex-col items-center gap-1 flex-1">
+        <span className="text-xl">🥈</span>
+        <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-bold text-gray-600">
           {rn(top3[1]?.name || '')[0]}
         </div>
-        <p className="text-sm font-semibold text-gray-700 text-center w-20 leading-tight">{dn(rn(top3[1]?.name || ''))}</p>
-        <p className="text-sm font-bold text-gray-500">{top3[1]?.total} pts</p>
-        <div className="bg-gray-200 rounded-t-lg w-12 h-10 flex items-end justify-center pb-1">
-          <span className="text-xs font-bold text-gray-600">2nd</span>
+        <p className="text-sm font-semibold w-full text-center leading-tight px-1">{dn(rn(top3[1]?.name || ''))}</p>
+        <div className="bg-gray-200 w-full h-10 rounded-t-xl flex items-center justify-center">
+          <span className="text-xs font-bold text-gray-600">{top3[1]?.total}pts</span>
         </div>
       </div>
       {/* 1st */}
-      <div className="flex flex-col items-center gap-1 -mb-1">
-        <Trophy size={22} className="text-yellow-500" />
-        <div className="w-16 h-16 bg-yellow-50 border-2 border-yellow-400 rounded-full flex items-center justify-center font-bold text-xl text-yellow-700">
+      <div className="flex flex-col items-center gap-1 flex-1">
+        <span className="text-2xl">🥇</span>
+        <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center font-bold text-white text-lg">
           {rn(top3[0]?.name || '')[0]}
         </div>
-        <p className="text-base font-bold text-gray-800 text-center w-24 leading-tight">{dn(rn(top3[0]?.name || ''))}</p>
-        <p className="text-base font-bold text-yellow-600">{top3[0]?.total} pts</p>
-        <div className="bg-yellow-400 rounded-t-lg w-12 h-14 flex items-end justify-center pb-1">
-          <span className="text-xs font-bold text-yellow-900">1st</span>
+        <p className="text-base font-bold w-full text-center leading-tight px-1">{dn(rn(top3[0]?.name || ''))}</p>
+        <div className="bg-yellow-400 w-full h-16 rounded-t-xl flex items-center justify-center">
+          <span className="text-xs font-bold text-white">{top3[0]?.total}pts</span>
         </div>
       </div>
       {/* 3rd */}
-      <div className="flex flex-col items-center gap-1">
-        <Medal size={20} style={{ color: '#CD7F32' }} />
-        <div className="w-14 h-14 rounded-full flex items-center justify-center font-bold text-lg text-white" style={{ background: '#CD7F32' }}>
-          {rn(top3[2]?.name || '')[0]}
+      {top3[2] && (
+        <div className="flex flex-col items-center gap-1 flex-1">
+          <span className="text-xl">🥉</span>
+          <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white" style={{ background: '#CD7F32' }}>
+            {rn(top3[2]?.name || '')[0]}
+          </div>
+          <p className="text-sm font-semibold w-full text-center leading-tight px-1">{dn(rn(top3[2]?.name || ''))}</p>
+          <div className="w-full h-7 rounded-t-xl flex items-center justify-center" style={{ background: '#CD7F32' }}>
+            <span className="text-xs font-bold text-white">{top3[2]?.total}pts</span>
+          </div>
         </div>
-        <p className="text-sm font-semibold text-center w-20 leading-tight" style={{ color: '#8B5E3C' }}>{dn(rn(top3[2]?.name || ''))}</p>
-        <p className="text-sm font-bold" style={{ color: '#CD7F32' }}>{top3[2]?.total} pts</p>
-        <div className="rounded-t-lg w-12 h-7 flex items-end justify-center pb-1" style={{ background: '#CD7F32' }}>
-          <span className="text-xs font-bold text-white">3rd</span>
-        </div>
-      </div>
+      )}
     </div>
   )
 }
@@ -893,6 +893,20 @@ export default function History({ onNavigate }) {
         )
         const top3 = rankings.slice(0, 3)
 
+        // Derive category pill from gender mode + registered roster
+        const tCategory = (() => {
+          if (t.genderMode === 'mixed') return 'mixed'
+          if (t.genderMode === 'same_gender') {
+            const genders = new Set(
+              tRegs.map(r => players.find(x => x.id === r.playerId)?.gender).filter(Boolean)
+            )
+            if (genders.size === 1 && genders.has('female')) return 'ladies'
+            if (genders.size === 1 && genders.has('male'))   return 'mens'
+            return 'same'
+          }
+          return null
+        })()
+
         return (
           <div key={`db-${t.id}`} className="card overflow-hidden border-l-4 border-yellow-400">
             <button
@@ -904,7 +918,21 @@ export default function History({ onNavigate }) {
                   <Trophy size={20} className="text-yellow-500" />
                 </div>
                 <div className="text-left">
-                  <p className="font-bold text-gray-800 text-sm">{t.name}</p>
+                  <p className="font-bold text-gray-800 text-sm flex items-center gap-1.5 flex-wrap">
+                    <span>{t.name}</span>
+                    {tCategory === 'ladies' && (
+                      <span className="text-[10px] font-bold bg-pink-100 text-pink-600 px-1.5 py-0.5 rounded-full">Ladies</span>
+                    )}
+                    {tCategory === 'mens' && (
+                      <span className="text-[10px] font-bold bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded-full">Mens</span>
+                    )}
+                    {tCategory === 'mixed' && (
+                      <span className="text-[10px] font-bold bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full">Mixed</span>
+                    )}
+                    {tCategory === 'same' && (
+                      <span className="text-[10px] font-bold bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full">Same Gender</span>
+                    )}
+                  </p>
                   <p className="text-xs text-gray-500">
                     {t.date ? new Date(t.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'}
                     {tRegs.length > 0 ? ` · ${tRegs.length} players` : ''}
@@ -1214,15 +1242,15 @@ export default function History({ onNavigate }) {
         const dn = (n) => dnMap[rn(n)] || (rn(n) || '').split(' ')[0] || ''
 
         return (
-          <div key={t.id} className="card overflow-hidden">
+          <div key={t.id} className="card overflow-hidden border-l-4 border-yellow-400">
             {/* Card header */}
             <button
               className="w-full flex items-center justify-between gap-3"
               onClick={() => setExpandedId(open ? null : t.id)}
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-lobster-cream rounded-xl flex items-center justify-center flex-shrink-0">
-                  <Trophy size={20} className="text-lobster-teal" />
+                <div className="w-10 h-10 bg-yellow-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Trophy size={20} className="text-yellow-500" />
                 </div>
                 <div className="text-left">
                   <p className="font-bold text-gray-800 text-sm flex items-center gap-1.5">
