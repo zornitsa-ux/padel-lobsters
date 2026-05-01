@@ -57,7 +57,18 @@ export default function Tournament({ onNavigate }) {
     return isNaN(d) ? null : d
   }
   const today    = new Date(); today.setHours(0, 0, 0, 0)
+  // Once a completed event is >= 2 days past its date, the embedded
+  // <HistoryContent /> renders it as a podium card, so don't also list it
+  // here as a past-event card — that's what produced the duplicate render.
+  const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000
+  const isInHistory = (t) => {
+    if (t.status !== 'completed') return false
+    const ref = t.date || t.completedAt
+    if (!ref) return true
+    return Date.now() - new Date(ref).getTime() >= TWO_DAYS_MS
+  }
   const past     = tournaments.filter(t => {
+    if (isInHistory(t)) return false
     if (t.status === 'completed') return true
     const d = parseLocalDate(t.date)
     return d !== null && d < today
