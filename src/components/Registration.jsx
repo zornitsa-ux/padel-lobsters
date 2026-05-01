@@ -381,6 +381,9 @@ export default function Registration({ tournament, onNavigate }) {
             const p = getPlayer(reg.playerId)
             if (!p) return null
             const isMyReg   = claimedId && String(claimedId) === String(reg.playerId)
+            // Player view: render only your own card as a full card here.
+            // Everyone else goes into the compact tile grid below this map.
+            if (!isAdmin && !isMyReg) return null
             const canTransfer = isAdmin || isMyReg
             return (
               <div key={reg.id} className="card space-y-2">
@@ -436,6 +439,33 @@ export default function Registration({ tournament, onNavigate }) {
               </div>
             )
           })}
+
+          {/* Player view: compact tile grid for everyone except yourself */}
+          {!isAdmin && (
+            <div className="grid grid-cols-2 gap-2">
+              {registered.map((reg) => {
+                const p = getPlayer(reg.playerId)
+                if (!p) return null
+                const isMyReg = claimedId && String(claimedId) === String(reg.playerId)
+                if (isMyReg) return null
+                return (
+                  <div key={reg.id} className="bg-white border border-gray-200 rounded-xl px-2 py-1.5 flex items-center gap-2 min-w-0">
+                    {p.avatarUrl ? (
+                      <img src={p.avatarUrl} alt={p.name} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+                    ) : (
+                      <div
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0"
+                        style={{ backgroundColor: letterColor(p.name) }}
+                      >
+                        {p.name[0]}
+                      </div>
+                    )}
+                    <span className="text-xs font-semibold text-gray-800 truncate flex-1">{displayName(p)}</span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
       </section>
       )}
