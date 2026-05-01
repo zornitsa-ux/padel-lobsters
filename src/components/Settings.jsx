@@ -12,6 +12,7 @@ import ApproveDevicesWidget from './ApproveDevicesWidget'
 import AdminSecurityPanels from './AdminSecurityPanels'
 import ChangeAdminPinForm from './ChangeAdminPinForm'
 import { recomputeAllRatings } from '../lib/ratingsRecompute'
+import { processAvatar } from '../lib/processAvatar'
 import { letterColor } from '../lib/letterColors'
 
 const LOBBY_PROMPTS = [
@@ -150,16 +151,25 @@ export default function Settings() {
     try {
       let avatarUrl = profileForm.avatarUrl || ''
       if (avatarFile) {
-        const ext = avatarFile.name.split('.').pop()
-        const filename = `player-${myPlayer.id}.${ext}`
+        let processed
+        try {
+          processed = await processAvatar(avatarFile)
+        } catch (err) {
+          console.error('Avatar processing error:', err)
+          alert('Photo could not be processed: ' + err.message)
+          setProfileSaving(false)
+          return
+        }
+        const filename = `player-${myPlayer.id}.webp`
         const { error: uploadError } = await supabase.storage
-          .from('avatars').upload(filename, avatarFile, { upsert: true })
+          .from('avatars').upload(filename, processed, { upsert: true, contentType: 'image/webp' })
         if (uploadError) {
           console.error('Avatar upload error:', uploadError)
           alert('Photo could not be saved: ' + uploadError.message)
         } else {
           const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filename)
-          avatarUrl = publicUrl
+          // Cache buster so the CDN serves the new image immediately on re-upload.
+          avatarUrl = `${publicUrl}?v=${Date.now()}`
         }
       }
       await updatePlayer(myPlayer.id, {

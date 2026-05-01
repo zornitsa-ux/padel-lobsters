@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useApp } from '../context/AppContext'
 import { supabase } from '../supabase'
+import { processAvatar } from '../lib/processAvatar'
 import {
   ArrowLeft, UserPlus, Check, Loader2, Copy, User, Camera,
 } from 'lucide-react'
@@ -203,16 +204,22 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
       // Avatar upload — same bucket and naming pattern the in-app form used.
       let avatarUrl = form.avatarUrl || ''
       if (avatarFile) {
-        const ext = avatarFile.name.split('.').pop()
-        const filename = `player-${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-        const { error: uploadError } = await supabase.storage
-          .from('avatars').upload(filename, avatarFile, { upsert: true })
-        if (uploadError) {
-          console.error('Avatar upload error:', uploadError)
-          // Non-fatal — signup still proceeds without the photo.
-        } else {
-          const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filename)
-          avatarUrl = publicUrl
+        try {
+          const processed = await processAvatar(avatarFile)
+          const filename = `player-${Date.now()}-${Math.random().toString(36).slice(2)}.webp`
+          const { error: uploadError } = await supabase.storage
+            .from('avatars').upload(filename, processed, { upsert: true, contentType: 'image/webp' })
+          if (uploadError) {
+            console.error('Avatar upload error:', uploadError)
+            // Non-fatal — signup still proceeds without the photo.
+          } else {
+            const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filename)
+            avatarUrl = publicUrl
+          }
+        } catch (err) {
+          // Non-fatal — signup still proceeds without the photo if the
+          // image can't be decoded (e.g. unusual HEIC variant on Chrome).
+          console.error('Avatar processing error:', err)
         }
       }
 

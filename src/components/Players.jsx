@@ -9,6 +9,7 @@ import { buildHistoricalAppearances, summariseAppearances } from '../lib/playerH
 import { computeTournamentStandings } from '../lib/standings'
 import { buildPlayerStats } from '../lib/playerStats'
 import { letterColor } from '../lib/letterColors'
+import { processAvatar } from '../lib/processAvatar'
 import { TOURNAMENTS } from './History'
 
 const LEVEL_COLORS = [
@@ -766,10 +767,18 @@ export default function Players({ onNavigate, focusPlayerId }) {
     try {
       let avatarUrl = form.avatarUrl || ''
       if (avatarFile) {
-        const ext = avatarFile.name.split('.').pop()
-        const filename = `player-${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+        let processed
+        try {
+          processed = await processAvatar(avatarFile)
+        } catch (err) {
+          console.error('Avatar processing error:', err)
+          alert('Photo could not be processed: ' + err.message)
+          setSaving(false)
+          return
+        }
+        const filename = `player-${Date.now()}-${Math.random().toString(36).slice(2)}.webp`
         const { error: uploadError } = await supabase.storage
-          .from('avatars').upload(filename, avatarFile, { upsert: true })
+          .from('avatars').upload(filename, processed, { upsert: true, contentType: 'image/webp' })
         if (uploadError) {
           console.error('Avatar upload error:', uploadError)
           alert('Photo could not be saved: ' + uploadError.message + '\n\nMake sure the "avatars" storage bucket exists and is set to public in Supabase.')
