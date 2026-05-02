@@ -4,7 +4,7 @@ import { supabase } from '../supabase'
 import { getDeviceId } from '../lib/deviceId'
 import { letterColor } from '../lib/letterColors'
 import {
-  ChevronLeft, ChevronDown, Play, X, Plus, Trophy, Share2, Download, Loader2, Check, RotateCw,
+  ChevronLeft, ChevronDown, Play, X, Plus, Trophy, Share2, Loader2, Check, RotateCw,
 } from 'lucide-react'
 
 /* ════════════════════════════════════════════════════════════════════════════
@@ -414,22 +414,6 @@ export default function Game({ tournament, onNavigate }) {
     }
   }
 
-  const handleExportCsv = () => {
-    if (!adminResults?.length) return
-    const rows = [['Category', 'Player', 'Votes', 'Rank']]
-    for (const r of adminResults) {
-      rows.push([r.category_name, r.target_name, r.votes_count, r.rank_in_category])
-    }
-    const csv  = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n')
-    const blob = new Blob([csv], { type: 'text/csv' })
-    const url  = URL.createObjectURL(blob)
-    const a    = document.createElement('a')
-    a.href = url
-    a.download = `lobster-oscars-${(tournament?.name || 'results').replace(/\s+/g, '-')}.csv`
-    a.click()
-    URL.revokeObjectURL(url)
-  }
-
   /* ── Derived ──────────────────────────────────────────────────────────── */
 
   const myVoteByCat = useMemo(() => {
@@ -552,28 +536,22 @@ export default function Game({ tournament, onNavigate }) {
               sharedAt={session.shared_at}
             />
 
-            <ResultsView results={adminResults} />
+            <ResultsView results={adminResults} collapsible />
 
             {error && <ErrorBanner message={error} onDismiss={() => setError(null)} />}
 
-            <div className="flex gap-2 pt-2">
-              <button
-                onClick={handleExportCsv}
-                className="flex-1 bg-white border border-gray-200 text-gray-700 font-semibold py-3 rounded-xl text-sm flex items-center justify-center gap-2 active:scale-95 transition-all"
-              >
-                <Download size={16} /> Export CSV
-              </button>
+            <div className="pt-2">
               {phase === 'ended' ? (
                 <button
                   onClick={handleAdminShare}
                   disabled={busy}
-                  className="flex-1 bg-lobster-teal text-white font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50"
+                  className="w-full bg-lobster-teal text-white font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50"
                 >
                   {busy ? <Loader2 className="animate-spin" size={16} /> : <Share2 size={16} />}
                   Share with players
                 </button>
               ) : (
-                <div className="flex-1 bg-green-50 text-green-700 font-semibold py-3 rounded-xl text-sm flex items-center justify-center gap-2">
+                <div className="w-full bg-green-50 text-green-700 font-semibold py-3 rounded-xl text-sm flex items-center justify-center gap-2">
                   <Check size={16} /> Shared with players
                 </div>
               )}
@@ -1007,7 +985,17 @@ function PlayerCategoryScreen({
 }
 
 /* ─── Results view (used by both admin post-end and player post-share) ── */
-function ResultsView({ results, highlightWinners = false }) {
+function ResultsView({ results, highlightWinners = false, collapsible = false }) {
+  // Track which categories are revealed (only used when collapsible)
+  const [openIds, setOpenIds] = useState(() => new Set())
+  const toggle = (id) => {
+    setOpenIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id); else next.add(id)
+      return next
+    })
+  }
+
   // Group by category
   const byCat = useMemo(() => {
     const m = new Map()
@@ -1040,12 +1028,26 @@ function ResultsView({ results, highlightWinners = false }) {
       {byCat.map(cat => {
         const winners = cat.rows.filter(r => Number(r.rank_in_category) === 1)
         const others  = cat.rows.filter(r => Number(r.rank_in_category) !== 1)
-        return (
-          <div key={cat.id} className="bg-white rounded-2xl p-3.5 space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="text-lg">{cat.icon}</span>
-              <span className="flex-1 font-bold text-sm text-gray-800">{cat.name}</span>
-            </div>
+        const isOpen  = collapsible ? openIds.has(cat.id) : true
+
+        const Header = (
+          <div className="flex items-center gap-2">
+            <span className="text-lg">{cat.icon}</span>
+            <span className="flex-1 font-bold text-sm text-gray-800">{cat.name}</span>
+            {collapsible && !isOpen && (
+              <span className="text-[11px] text-gray-400 italic">tap to reveal</span>
+            )}
+            {collapsible && (
+              <ChevronDown
+                size={14}
+                className={`text-gray-400 transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}
+              />
+            )}
+          </div>
+        )
+
+        const Body = isOpen && (
+          <>
             {winners.length > 0 && (
               <div className={`rounded-xl px-3 py-2 ${highlightWinners ? 'bg-yellow-50 border border-yellow-200' : 'bg-yellow-50/60'}`}>
                 <p className="text-sm font-bold text-yellow-900 flex items-center gap-1.5">
@@ -1070,6 +1072,27 @@ function ResultsView({ results, highlightWinners = false }) {
                 ))}
               </div>
             )}
+          </>
+        )
+
+        if (collapsible) {
+          return (
+            <div key={cat.id} className="bg-white rounded-2xl overflow-hidden">
+              <button
+                onClick={() => toggle(cat.id)}
+                className="w-full p-3.5 text-left active:scale-[0.99] transition-all"
+              >
+                {Header}
+              </button>
+              {isOpen && <div className="px-3.5 pb-3.5 space-y-2">{Body}</div>}
+            </div>
+          )
+        }
+
+        return (
+          <div key={cat.id} className="bg-white rounded-2xl p-3.5 space-y-2">
+            {Header}
+            {Body}
           </div>
         )
       })}
