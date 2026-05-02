@@ -1248,7 +1248,10 @@ export default function Schedule({ tournament, onNavigate }) {
                           >
                             <span className="text-sm font-medium truncate">{sn(p)}</span>
                             <div className="relative w-7 h-7 flex-shrink-0">
-                              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold ${isSelected ? 'bg-orange-500' : 'bg-lobster-orange'}`}>
+                              <div
+                                className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold ${isSelected ? 'bg-orange-500' : ''}`}
+                                style={isSelected ? undefined : { backgroundColor: letterColor(p.name) }}
+                              >
                                 {p.name[0]}
                               </div>
                               {p.isLeftHanded && <span className="absolute -top-1 -left-1 text-[9px] bg-amber-400 text-white rounded-full w-3.5 h-3.5 flex items-center justify-center font-bold">L</span>}
