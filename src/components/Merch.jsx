@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { useApp } from '../context/AppContext'
 import { supabase } from '../supabase'
 import { Plus, X, Pencil, ShoppingBag, Gift, Shuffle, Upload, Check, ShoppingCart, User, GripVertical, Ban, Clock, Package, CreditCard, MessageSquare, LogIn } from 'lucide-react'
@@ -38,15 +38,17 @@ const emptyItem = {
 
 // ── Raffle component ──────────────────────────────────────────────────────────
 function Raffle({ tournament, players, registrations }) {
+  const { tournaments, raffleWinners, recordRaffleWinners } = useApp()
+
   const registered = registrations
     .filter(r => r.tournamentId === tournament?.id && r.status === 'registered')
     .map(r => players.find(p => p.id === r.playerId))
     .filter(Boolean)
 
-  // First-name-only labels, with last-name initial(s) appended only when the
-  // first name collides within the registered pool. Mirrors the convention used
-  // elsewhere in the app (Game.jsx shortLabelMap, Schedule.jsx shortName).
-  const shortLabels = (() => {
+  // First-name labels with last-initial only for collisions; mirrors the
+  // convention used in Game.jsx / Schedule.jsx so the projection screen
+  // matches the rest of the app.
+  const shortLabels = useMemo(() => {
     const firstOf = (p) => (p.name || '').trim().split(/\s+/)[0] || p.name || ''
     const lastOf  = (p) => {
       const parts = (p.name || '').trim().split(/\s+/)
@@ -74,21 +76,85 @@ function Raffle({ tournament, players, registrations }) {
       group.forEach((p, i) => { out[String(p.id)] = labels[i] })
     }
     return out
-  })()
+  }, [registered])
 
-  const [winners, setWinners]       = useState([])
-  const [spinning, setSpinning]     = useState(false)
-  const [numPrizes, setNumPrizes]   = useState(1)
+  // Eligibility: a registered player is INELIGIBLE if either
+  //  a) they have no prior tournament registered as 'registered' with
+  //     date < this tournament's date (new-player rule), OR
+  //  b) any of their raffle wins is still in cooldown — i.e. fewer than
+  //     2 OTHER tournaments (in DB) lie strictly between the win date and
+  //     this tournament's date, after adjusting for `cooldown_offset`
+  //     (set on historical seed rows where the win-tournament isn't in DB).
+  // Combined with the win itself, that's a 3-tournament cooldown.
+  const eligibility = useMemo(() => {
+    const result = { eligible: [], ineligible: [] }
+    if (!tournament?.date) {
+      registered.forEach(p => result.eligible.push(p))
+      return result
+    }
+    const tDate = tournament.date
+    const tId = String(tournament.id)
+    registered.forEach(p => {
+      // Rule A — new player.
+      const priorRegs = registrations.filter(r =>
+        String(r.playerId) === String(p.id) &&
+        r.status === 'registered' &&
+        String(r.tournamentId) !== tId
+      )
+      const hasPrior = priorRegs.some(r => {
+        const t = tournaments.find(tt => String(tt.id) === String(r.tournamentId))
+        return t && t.date && t.date < tDate
+      })
+      if (!hasPrior) {
+        result.ineligible.push({ player: p, reason: 'new_player' })
+        return
+      }
+      // Rule B — cooldown.
+      const myWins = (raffleWinners || []).filter(w => String(w.player_id) === String(p.id))
+      const blockingWin = myWins.find(w => {
+        if (!w.won_at_date) return false
+        const between = tournaments.filter(t =>
+          t && t.date && t.date > w.won_at_date && t.date < tDate
+        ).length
+        return (between + (w.cooldown_offset || 0)) < 2
+      })
+      if (blockingWin) {
+        result.ineligible.push({ player: p, reason: 'cooldown', win: blockingWin })
+        return
+      }
+      result.eligible.push(p)
+    })
+    return result
+  }, [registered, registrations, tournaments, tournament, raffleWinners])
+
+  const [winners, setWinners]   = useState([])
+  const [spinning, setSpinning] = useState(false)
+  const [numPrizes, setNumPrizes] = useState(1)
+  const [saved, setSaved]       = useState(false)
+  const [saving, setSaving]     = useState(false)
+
+  // If the eligible pool changes (new registrations, etc.) drop a stale
+  // unsaved draw so admin doesn't accidentally save people who just got
+  // disqualified between draw and save.
+  useEffect(() => { if (!saved) setWinners([]) /* reset on pool change */ }, [eligibility.eligible.length])  // eslint-disable-line
 
   const runRaffle = async () => {
-    if (registered.length === 0) return
+    if (eligibility.eligible.length === 0) return
     setSpinning(true)
     setWinners([])
-    // Brief animation delay
+    setSaved(false)
     await new Promise(r => setTimeout(r, 800))
-    const shuffled = [...registered].sort(() => Math.random() - 0.5)
-    setWinners(shuffled.slice(0, Math.min(numPrizes, registered.length)))
+    const shuffled = [...eligibility.eligible].sort(() => Math.random() - 0.5)
+    setWinners(shuffled.slice(0, Math.min(numPrizes, eligibility.eligible.length)))
     setSpinning(false)
+  }
+
+  const saveWinners = async () => {
+    if (winners.length === 0 || !tournament?.id) return
+    setSaving(true)
+    const res = await recordRaffleWinners(tournament.id, winners.map(w => w.id))
+    setSaving(false)
+    if (res !== null) setSaved(true)
   }
 
   if (!tournament) return (
@@ -98,10 +164,15 @@ function Raffle({ tournament, players, registrations }) {
     </div>
   )
 
+  const eligibleCount = eligibility.eligible.length
+  const ineligibleCount = eligibility.ineligible.length
+
   return (
     <div className="space-y-6">
       {/* Big raffle hero card — sized up so it reads from across the room
-          when projected on a TV/screen during the tournament. */}
+          when projected on a TV/screen during the tournament. The count
+          and the draw both use the eligible pool only; ineligibility is
+          deliberately not exposed to the projection. */}
       <div className="rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-lobster-teal via-teal-600 to-teal-800 text-white shadow-2xl">
         <div className="flex items-center justify-center gap-3 mb-3">
           <Gift size={32} className="text-yellow-300" />
@@ -113,7 +184,7 @@ function Raffle({ tournament, players, registrations }) {
 
         <div className="text-center mb-6">
           <p className="text-5xl sm:text-6xl font-black text-yellow-300 leading-none">
-            {registered.length}
+            {eligibleCount}
           </p>
           <p className="text-[11px] sm:text-xs uppercase tracking-widest text-white/70 mt-1">
             participants
@@ -140,17 +211,50 @@ function Raffle({ tournament, players, registrations }) {
 
         <button
           onClick={runRaffle}
-          disabled={spinning || registered.length === 0}
+          disabled={spinning || eligibleCount === 0}
           className="w-full bg-yellow-400 hover:bg-yellow-500 disabled:opacity-40 disabled:cursor-not-allowed text-gray-900 font-black text-lg sm:text-xl py-4 sm:py-5 rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all shadow-lg"
         >
           <Shuffle size={22} className={spinning ? 'animate-spin' : ''} />
           {spinning ? 'Drawing winners…' : '🎲 Draw Winners!'}
         </button>
 
-        {registered.length === 0 && (
-          <p className="text-sm text-orange-200 text-center mt-3">No registered players yet</p>
+        {eligibleCount === 0 && (
+          <p className="text-sm text-orange-200 text-center mt-3">
+            {registered.length === 0 ? 'No registered players yet' : 'No eligible players for this raffle'}
+          </p>
         )}
       </div>
+
+      {/* Admin-only eligibility audit. Collapsed by default so it isn't on
+          screen during projection; admin can open it privately to confirm
+          who's in / out before drawing. Ineligible players are greyed out
+          with no reason text, per the rule that this stays opaque to
+          players in the room. */}
+      {ineligibleCount > 0 && (
+        <details className="bg-white border border-gray-100 rounded-xl text-sm">
+          <summary className="cursor-pointer px-3 py-2 flex items-center gap-2 text-gray-600 hover:bg-gray-50 rounded-xl">
+            <User size={14} className="text-gray-400 flex-shrink-0" />
+            <span className="flex-1 truncate">
+              Eligible pool: <span className="font-semibold text-gray-800">{eligibleCount}</span>
+              <span className="text-gray-400"> / {registered.length}</span>
+            </span>
+            <span className="text-[11px] text-gray-400">tap to peek</span>
+          </summary>
+          <div className="border-t border-gray-100 px-3 py-3">
+            <div className="flex flex-wrap gap-1.5">
+              {[...eligibility.eligible.map(p => ({ p, dim: false })),
+                ...eligibility.ineligible.map(({ player }) => ({ p: player, dim: true }))]
+                .sort((a, b) => (a.p.name || '').localeCompare(b.p.name || ''))
+                .map(({ p, dim }) => (
+                  <span key={p.id}
+                    className={`px-2 py-1 rounded-md text-xs ${dim ? 'bg-gray-100 text-gray-400' : 'bg-teal-50 text-teal-700'}`}>
+                    {shortLabels[String(p.id)] || (p.name || '').split(' ')[0] || p.name}
+                  </span>
+                ))}
+            </div>
+          </div>
+        </details>
+      )}
 
       {/* Winners — huge celebratory card for when the screen is showing
           the result to the whole room. */}
@@ -174,10 +278,27 @@ function Raffle({ tournament, players, registrations }) {
               </div>
             ))}
           </div>
-          <button onClick={() => setWinners([])}
-            className="text-sm text-amber-900/70 font-semibold mt-5 w-full text-center hover:text-amber-900">
-            Clear results
-          </button>
+
+          {/* Save / Saved state — recording the winners is what arms the
+              cooldown for next time. */}
+          <div className="mt-5 flex flex-col sm:flex-row gap-2">
+            {saved ? (
+              <div className="flex-1 text-center bg-white/60 text-amber-900 font-bold py-3 rounded-xl flex items-center justify-center gap-2">
+                <Check size={18} />
+                Saved — cooldown armed
+              </div>
+            ) : (
+              <button onClick={saveWinners} disabled={saving}
+                className="flex-1 bg-amber-900 hover:bg-amber-950 disabled:opacity-50 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-all">
+                <Check size={18} />
+                {saving ? 'Saving…' : 'Save winners'}
+              </button>
+            )}
+            <button onClick={() => { setWinners([]); setSaved(false) }}
+              className="text-sm text-amber-900/70 font-semibold py-3 px-4 hover:text-amber-900">
+              Clear results
+            </button>
+          </div>
         </div>
       )}
     </div>

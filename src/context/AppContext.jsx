@@ -25,6 +25,9 @@ export function AppProvider({ children }) {
   const [leagueInterests,  setLeagueInterests]  = useState([])
   const [leagueTeams,      setLeagueTeams]      = useState([])
   const [playerAliases, setPlayerAliases] = useState({}) // historical_name → player_id (or '__not_in_roster__')
+  // Raffle winners — used by the Merch admin Raffle component to enforce the
+  // 3-tournament cooldown (and the new-player rule) when drawing prizes.
+  const [raffleWinners, setRaffleWinners] = useState([])
   const [settings, setSettings]         = useState({ whatsappLink: '', adminPin: '1234', groupName: 'Padel Lobsters' })
   const [loading, setLoading]           = useState(true)
   const [isAdmin, setIsAdmin]           = useState(() => localStorage.getItem('lobster_admin') === 'true')
@@ -130,6 +133,9 @@ export function AppProvider({ children }) {
       supabase.channel('league-teams-changes')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'league_teams' }, loadLeagueTeams)
         .subscribe(),
+      supabase.channel('raffle-winners-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'raffle_winners' }, loadRaffleWinners)
+        .subscribe(),
     ]
     return () => channels.forEach(c => supabase.removeChannel(c))
   }, [])
@@ -149,6 +155,7 @@ export function AppProvider({ children }) {
       loadTransfers(),
       loadSettings(), loadPlayerAliases(),
       loadLeagues(), loadLeagueInterests(), loadLeagueTeams(),
+      loadRaffleWinners(),
     ])
     setLoading(false)
   }
@@ -175,6 +182,16 @@ export function AppProvider({ children }) {
       if (error) throw error
       setLeagueTeams(data || [])
     } catch { /* table not present yet */ }
+  }
+  const loadRaffleWinners = async () => {
+    // Fails silently if the raffle_winners migration hasn't run yet so the
+    // rest of the app keeps working during rollout.
+    try {
+      const { data, error } = await supabase.from('raffle_winners')
+        .select('*').order('won_at_date', { ascending: false })
+      if (error) throw error
+      setRaffleWinners(data || [])
+    } catch (e) { /* table not present yet */ }
   }
   const loadPlayerAliases = async () => {
     // Map of historical_name → player_id (or sentinel '__not_in_roster__'
@@ -1573,6 +1590,44 @@ export function AppProvider({ children }) {
     await Promise.all([loadLeagueTeams(), loadLeagueInterests()])
     return { error: null }
   }, [])
+  // ── Raffle winners ─────────────────────────────────────────────────────
+  // Insert one row per winner via the SECURITY DEFINER RPC. Returns the
+  // inserted rows (or null on auth failure).
+  const recordRaffleWinners = useCallback(async (tournamentId, playerIds) => {
+    const adminPin = localStorage.getItem('lobster_session_admin_pin')
+    if (!adminPin) { alert('Admin sign-in required to save raffle winners.'); return null }
+    if (!tournamentId || !Array.isArray(playerIds) || playerIds.length === 0) return []
+    try {
+      const { data, error } = await supabase.rpc('admin_record_raffle_winners', {
+        input_admin_pin:     adminPin,
+        input_tournament_id: tournamentId,
+        input_player_ids:    playerIds,
+      })
+      if (error) { console.error('admin_record_raffle_winners error:', error); return null }
+      await loadRaffleWinners()
+      return Array.isArray(data) ? data : []
+    } catch (e) {
+      console.error('admin_record_raffle_winners threw:', e)
+      return null
+    }
+  }, [])
+  const deleteRaffleWinner = useCallback(async (winnerId) => {
+    const adminPin = localStorage.getItem('lobster_session_admin_pin')
+    if (!adminPin) { alert('Admin sign-in required.'); return false }
+    if (!winnerId) return false
+    try {
+      const { data, error } = await supabase.rpc('admin_delete_raffle_winner', {
+        input_admin_pin: adminPin,
+        input_winner_id: winnerId,
+      })
+      if (error) { console.error('admin_delete_raffle_winner error:', error); return false }
+      await loadRaffleWinners()
+      return data === true
+    } catch (e) {
+      console.error('admin_delete_raffle_winner threw:', e)
+      return false
+    }
+  }, [])
   return (
     <AppContext.Provider value={{
       players: normalisedPlayers,
@@ -1608,6 +1663,8 @@ export function AppProvider({ children }) {
       createLeague, updateLeague, deleteLeague,
       registerLeagueInterest, withdrawLeagueInterest,
       proposeLeagueTeam, respondLeagueTeam, dissolveLeagueTeam,
+      // Raffle winners
+      raffleWinners, recordRaffleWinners, deleteRaffleWinner,
     }}>
       {children}
     </AppContext.Provider>
