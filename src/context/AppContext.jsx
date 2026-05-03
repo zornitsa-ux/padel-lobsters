@@ -1562,6 +1562,7 @@ export function AppProvider({ children }) {
     <AppContext.Provider value={{
       players: normalisedPlayers,
       tournaments: normalisedTournaments,
+      addTournament, updateTournament, deleteTournament,
       publicCounts,
       registrations: normalisedRegistrations,
       matches: normalisedMatches,
