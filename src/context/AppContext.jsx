@@ -487,7 +487,12 @@ export function AppProvider({ children }) {
       status:             'upcoming',
     }
     const { error } = await supabase.from('tournaments').insert(payload)
-    if (!error) loadTournaments()
+    if (error) {
+      console.error('addTournament error:', error)
+      alert('Could not create event: ' + (error.message || 'unknown error'))
+      return
+    }
+    loadTournaments()
   }, [])
   const updateTournament = useCallback(async (id, data) => {
     const payload = {}
@@ -507,10 +512,20 @@ export function AppProvider({ children }) {
     if (data.status           !== undefined) payload.status             = data.status
     if (data.completedAt      !== undefined) payload.completed_at       = data.completedAt
     const { error } = await supabase.from('tournaments').update(payload).eq('id', id)
-    if (!error) loadTournaments()
+    if (error) {
+      console.error('updateTournament error:', error)
+      alert('Could not save changes: ' + (error.message || 'unknown error'))
+      return
+    }
+    loadTournaments()
   }, [])
   const deleteTournament = useCallback(async (id) => {
-    await supabase.from('tournaments').delete().eq('id', id)
+    const { error } = await supabase.from('tournaments').delete().eq('id', id)
+    if (error) {
+      console.error('deleteTournament error:', error)
+      alert('Could not delete event: ' + (error.message || 'unknown error'))
+      return
+    }
     loadTournaments()
   }, [])
   // ── Registrations ─────────────────────────────────────────
