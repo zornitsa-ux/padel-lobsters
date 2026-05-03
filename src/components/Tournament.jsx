@@ -8,6 +8,7 @@ import {
 import HistoryContent, { TOURNAMENTS as HISTORY_TOURNAMENTS } from './History'
 import { DateTile, AddToCalendarButton, ShareWhatsAppButton } from './CalendarPieces'
 import { fmtEur } from '../lib/format'
+import AdminTransferPanel from './AdminTransferPanel'
 
 // Default description prefilled into every new event. Admins can edit
 // it freely per event — this is just the starting text so common
@@ -35,7 +36,7 @@ const emptyForm = {
 }
 
 export default function Tournament({ onNavigate }) {
-  const { tournaments, addTournament, updateTournament, deleteTournament, isAdmin, isLeagueAdmin, claimedId, players, getTournamentRegistrations } = useApp()
+  const { tournaments, addTournament, updateTournament, deleteTournament, isAdmin, isLeagueAdmin, claimedId, players, getTournamentRegistrations, transfers } = useApp()
   // Temporary testing allowlist — match League.jsx. Lets the named
   // players preview the League entry while visibility is still 'admin'.
   const TEST_PLAYER_FIRST_NAMES = ['zornitsa', 'jon', 'uziel']
@@ -47,6 +48,8 @@ export default function Tournament({ onNavigate }) {
   const [form, setForm]               = useState(emptyForm)
   const [saving, setSaving]           = useState(false)
   const [showHistory, setShowHistory] = useState(false)
+  // Admin pending-transfer panel — open for one tournament at a time.
+  const [adminTransferTournament, setAdminTransferTournament] = useState(null)
 
   // Parse ISO date-only strings ("YYYY-MM-DD") as LOCAL midnight to avoid UTC-offset misclassification
   const parseLocalDate = (s) => {
@@ -183,6 +186,12 @@ export default function Tournament({ onNavigate }) {
 
   return (
     <div className="space-y-4">
+      {adminTransferTournament && (
+        <AdminTransferPanel
+          tournament={adminTransferTournament}
+          onClose={() => setAdminTransferTournament(null)}
+        />
+      )}
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold text-gray-800">Events ({tournaments.length})</h2>
         {isAdmin && (
@@ -303,6 +312,27 @@ export default function Tournament({ onNavigate }) {
                   ) : null}
                 </>
               ) })()}
+
+              {/* Pending-transfer callout — admin only. Tap to open the
+                  AdminTransferPanel with force-accept / cancel actions. */}
+              {isAdmin && (() => {
+                const pendingForT = transfers.filter(x =>
+                  x.status === 'pending' && String(x.tournamentId) === String(t.id)
+                )
+                if (pendingForT.length === 0) return null
+                return (
+                  <button
+                    onClick={() => setAdminTransferTournament(t)}
+                    className="w-full mb-3 flex items-center gap-2 bg-amber-50 border border-amber-300 rounded-xl px-3 py-2 text-left active:scale-[0.99] transition-all"
+                  >
+                    <Clock size={14} className="text-amber-600 flex-shrink-0" />
+                    <span className="flex-1 text-xs font-semibold text-amber-800">
+                      {pendingForT.length === 1 ? '1 pending transfer' : `${pendingForT.length} pending transfers`}
+                    </span>
+                    <span className="text-[10px] text-amber-600 font-semibold">Review ›</span>
+                  </button>
+                )
+              })()}
 
               {/* Booking mode badge — admin only */}
               {isAdmin && (

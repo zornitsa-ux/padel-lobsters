@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useApp } from '../context/AppContext'
 import { supabase } from '../supabase'
+import { isE164 } from '../lib/whatsapp'
 import {
   Settings2, Lock, MessageCircle, Save, Eye, EyeOff,
   LogOut, LogIn, Shield, Link, Info, Lightbulb, Plus, Trash2, RotateCcw,
@@ -147,6 +148,14 @@ export default function Settings() {
 
   const handleProfileSave = async () => {
     if (!myPlayer) return
+    // Phone validation: required to be E.164 so wa.me links work for
+    // transfer offers. Allow blank (the user might have an empty phone
+    // on file from before this validation existed) but reject malformed
+    // values when present.
+    if (profileForm.phone && !isE164(profileForm.phone)) {
+      alert('Phone must start with + and the country code (e.g. +31612345678).')
+      return
+    }
     setProfileSaving(true)
     try {
       let avatarUrl = profileForm.avatarUrl || ''
@@ -705,9 +714,9 @@ export default function Settings() {
               {/* Phone */}
               <div>
                 <label className="label">Phone / WhatsApp</label>
-                <input type="tel" className="input" placeholder="+31 6 12345678" value={profileForm.phone}
+                <input type="tel" className="input" placeholder="+31612345678" value={profileForm.phone}
                   onChange={e => setProfileForm(f => ({ ...f, phone: e.target.value }))} />
-                <p className="text-xs text-gray-400 mt-1">Visible for organizers only</p>
+                <p className="text-xs text-gray-400 mt-1">Start with + and country code, e.g. +31 for the Netherlands. Visible to organizers only.</p>
               </div>
 
               {/* Birthday */}

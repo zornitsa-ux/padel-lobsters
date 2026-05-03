@@ -7,6 +7,8 @@ import {
   UserCog, ArrowRightLeft, Send, Pencil, Check
 } from 'lucide-react'
 import { SignInBanner } from './AuthGate'
+import TransferSpotModal from './TransferSpotModal'
+import TransferPendingModal from './TransferPendingModal'
 import { DateTile, AddToCalendarButton, ShareWhatsAppButton } from './CalendarPieces'
 import { fmtEur } from '../lib/format'
 import { letterColor } from '../lib/letterColors'
@@ -18,9 +20,10 @@ const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000
 export default function Registration({ tournament, onNavigate }) {
   const {
     players, registrations, registerPlayer, cancelRegistration,
-    updateRegistration, transferRegistration,
+    updateRegistration,
     getTournamentRegistrations, getTournamentMatches, updateMatch, updateTournament,
-    isAdmin, claimedId
+    isAdmin, claimedId,
+    transfers, cancelTransfer, respondToTransfer,
   } = useApp()
 
   // Show first name for players, full name for admins
@@ -67,10 +70,14 @@ export default function Registration({ tournament, onNavigate }) {
   const openPaymentSheet = (sheet) => { setPaymentSheet(sheet); setTikkieClicked(false) }
   const closePaymentSheet = () => { setPaymentSheet(null); setTikkieClicked(false) }
 
-  // Transfer sheet
-  const [transferSheet, setTransferSheet] = useState(null) // { reg }
-  const [transferSearch, setTransferSearch] = useState('')
-  const [transferring, setTransferring]     = useState(false)
+  // Transfer flow modal state.
+  //   pickerForReg : { reg } when the recipient picker is open
+  //   shareModal   : { transferId, toPlayer } when the share-actions /
+  //                  pending modal is open (after creating an offer or
+  //                  via 'Resend WhatsApp' on a persistent pending banner)
+  const [pickerForReg, setPickerForReg] = useState(null)
+  const [shareModal,   setShareModal]   = useState(null)
+  const [respondingTo, setRespondingTo] = useState(null) // transferId being acted on
 
   if (!tournament) {
     return (
@@ -177,37 +184,58 @@ export default function Registration({ tournament, onNavigate }) {
     await updateRegistration(reg.id, { status: 'registered' })
   }
 
-  // ── Transfer ──────────────────────────────────────────────────────────────
-  const handleTransferConfirm = async (toPlayer) => {
-    if (!transferSheet) return
-    setTransferring(true)
-    await transferRegistration(
-      transferSheet.reg.id,
-      tournament.id,
-      transferSheet.reg.playerId,
-      toPlayer.id
-    )
-    setTransferring(false)
-    setTransferSheet(null)
-    setTransferSearch('')
+  // ── Transfer (acceptance flow) ──────────────────────────────────────────────────
+  // The picker calls createTransfer, which writes a pending row in
+  // registration_transfers. The actual swap of the registration rows
+  // happens server-side once the recipient accepts (respond_to_transfer)
+  // or the admin force-accepts.
+  const startTransfer = (reg) => {
+    if (!claimedId && !isAdmin) { onNavigate?.('settings'); return }
+    setPickerForReg({ reg })
+  }
+  const handleTransferCreated = ({ transferId, toPlayer }) => {
+    setPickerForReg(null)
+    setShareModal({ transferId, toPlayer })
   }
 
-  // Transfer candidates: active players who don't already hold a registered
-  // spot in this tournament. Waitlisted players ARE eligible — in fact,
-  // transferring to a waitlister is the most natural thing to do, because
-  // it promotes them from the waitlist into the open spot in one step.
-  // We surface them at the top with a "Waitlisted" hint so it's clear.
-  const transferCandidates = players
-    .filter(p => (p.status || 'active') === 'active')
-    .filter(p => String(p.id) !== String(transferSheet?.reg?.playerId))
-    .filter(p => !registeredIds.includes(p.id))
-    .filter(p => !transferSearch || p.name.toLowerCase().includes(transferSearch.toLowerCase()))
-    .sort((a, b) => {
-      const aw = waitlistedIds.includes(a.id) ? 0 : 1
-      const bw = waitlistedIds.includes(b.id) ? 0 : 1
-      if (aw !== bw) return aw - bw
-      return (a.name || '').localeCompare(b.name || '')
-    })
+  // Pending transfers tied to this tournament. Used to render persistent
+  // banners on registration cards and the incoming-offer banner at the
+  // top of the page. Both surfaces survive page reloads — transfers are
+  // loaded from the DB on app boot, so this state is reproducible.
+  const pendingForTournament = transfers.filter(t =>
+    t.status === 'pending' && String(t.tournamentId) === String(tournament.id)
+  )
+  const pendingFromMe = pendingForTournament.find(t =>
+    claimedId && String(t.fromPlayerId) === String(claimedId)
+  )
+  const incomingForMe = pendingForTournament.filter(t =>
+    claimedId && String(t.toPlayerId) === String(claimedId)
+  )
+  const pendingByFromPlayerId = new Map(
+    pendingForTournament.map(t => [String(t.fromPlayerId), t])
+  )
+
+  const handleCancelMyOffer = async () => {
+    if (!pendingFromMe) return
+    if (!confirm('Cancel the transfer offer? Your spot stays registered to you.')) return
+    setRespondingTo(pendingFromMe.id)
+    await cancelTransfer(pendingFromMe.id)
+    setRespondingTo(null)
+  }
+  const handleIncomingResponse = async (xfer, accept) => {
+    setRespondingTo(xfer.id)
+    const r = await respondToTransfer(xfer.id, accept)
+    setRespondingTo(null)
+    if (!r.ok) {
+      const map = {
+        wrong_pin: 'Sign in again to respond.',
+        forbidden: 'This transfer is for a different player.',
+        not_pending: 'This transfer was already responded to or closed.',
+        tournament_started: 'Too late — the event has already started.',
+      }
+      alert(map[r.status] || 'Could not record your response.')
+    }
+  }
 
   const formatDate = (d) => {
     if (!d) return '—'
@@ -367,6 +395,38 @@ export default function Registration({ tournament, onNavigate }) {
 
       {/* Registered players — hidden for completed tournaments (replaced by
           the Ranking / Matches tab switcher further down). */}
+      {/* Incoming transfer offer(s) addressed to the current player.
+          Survives page reloads — sourced from registration_transfers. */}
+      {!isCompleted && incomingForMe.length > 0 && incomingForMe.map(xfer => {
+        const fromP = getPlayer(xfer.fromPlayerId)
+        const fromFirst = (fromP?.name || '').split(/\s+/)[0] || 'someone'
+        const busy = respondingTo === xfer.id
+        return (
+          <div key={xfer.id} className="card border border-amber-300 bg-amber-50 space-y-2">
+            <div className="flex items-center gap-2">
+              <ArrowRightLeft size={14} className="text-amber-700" />
+              <p className="text-sm text-amber-800"><strong>{fromFirst}</strong> wants to transfer their spot to you.</p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleIncomingResponse(xfer, false)}
+                disabled={busy}
+                className="flex-1 border border-gray-300 text-gray-700 font-semibold py-2 rounded-xl text-sm active:scale-[0.98] disabled:opacity-50"
+              >
+                {busy ? 'Declining…' : 'Decline'}
+              </button>
+              <button
+                onClick={() => handleIncomingResponse(xfer, true)}
+                disabled={busy}
+                className="flex-1 bg-green-600 text-white font-semibold py-2 rounded-xl text-sm active:scale-[0.98] disabled:opacity-50"
+              >
+                {busy ? 'Accepting…' : 'Accept'}
+              </button>
+            </div>
+          </div>
+        )
+      })}
+
       {!isCompleted && (
       <section>
         <h3 className="font-bold text-gray-700 mb-2 flex items-center gap-2">
@@ -427,15 +487,54 @@ export default function Registration({ tournament, onNavigate }) {
                   </div>
                 )}
 
-                {/* Transfer spot button */}
-                {canTransfer && reg.paymentStatus !== 'transferred' && (
-                  <button
-                    onClick={() => { setTransferSheet({ reg }); setTransferSearch('') }}
-                    className="w-full flex items-center justify-center gap-1.5 text-xs text-gray-500 border border-gray-200 rounded-xl py-1.5 font-medium active:scale-95 transition-all"
-                  >
-                    <ArrowRightLeft size={12} /> Transfer spot to another player
-                  </button>
-                )}
+                {/* Transfer flow: persistent pending banner when this
+                    player has an open offer; otherwise the transfer
+                    button. Banner survives reloads — it reads from
+                    registration_transfers via context. */}
+                {(() => {
+                  const myPending = pendingByFromPlayerId.get(String(reg.playerId))
+                  if (myPending) {
+                    const recipient = getPlayer(myPending.toPlayerId)
+                    const recipientFirst = (recipient?.name || '').split(/\s+/)[0] || 'them'
+                    const isOwner = isMyReg || isAdmin
+                    return (
+                      <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 space-y-2">
+                        <div className="flex items-center gap-2 text-xs text-amber-800">
+                          <Clock size={12} className="flex-shrink-0" />
+                          <span><strong>Pending transfer</strong> to {recipientFirst} — awaiting acceptance.</span>
+                        </div>
+                        {isOwner && recipient && (
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => setShareModal({ transferId: myPending.id, toPlayer: recipient })}
+                              className="flex-1 text-xs font-semibold text-green-700 bg-white border border-green-600 rounded-lg py-1.5 active:scale-95 transition-all"
+                            >
+                              Resend WhatsApp
+                            </button>
+                            <button
+                              onClick={handleCancelMyOffer}
+                              disabled={respondingTo === myPending.id}
+                              className="flex-1 text-xs font-semibold text-red-600 border border-red-200 rounded-lg py-1.5 active:scale-95 transition-all disabled:opacity-50"
+                            >
+                              {respondingTo === myPending.id ? 'Cancelling…' : 'Cancel offer'}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  }
+                  if (canTransfer && reg.paymentStatus !== 'transferred') {
+                    return (
+                      <button
+                        onClick={() => startTransfer(reg)}
+                        className="w-full flex items-center justify-center gap-1.5 text-xs text-gray-500 border border-gray-200 rounded-xl py-1.5 font-medium active:scale-95 transition-all"
+                      >
+                        <ArrowRightLeft size={12} /> Transfer spot to another player
+                      </button>
+                    )
+                  }
+                  return null
+                })()}
               </div>
             )
           })}
@@ -940,70 +1039,21 @@ export default function Registration({ tournament, onNavigate }) {
         </div>
       )}
 
-      {/* ── TRANSFER SHEET ── */}
-      {transferSheet && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center">
-          <div className="bg-white rounded-t-3xl w-full max-w-md p-5 space-y-4 max-h-[85vh] flex flex-col">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-bold text-gray-800">Transfer your spot</h3>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  Pick who takes over — they join as registered.
-                  Sort the payment between yourselves.
-                </p>
-              </div>
-              <button onClick={() => { setTransferSheet(null); setTransferSearch('') }}>
-                <X size={22} className="text-gray-400" />
-              </button>
-            </div>
-
-            <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 text-xs text-amber-700">
-              ⚠ Your spot will be <strong>cancelled</strong> and the new player will be registered. Payment between you is handled outside the app.
-            </div>
-
-            <input
-              type="text"
-              placeholder="🔍 Search player…"
-              value={transferSearch}
-              onChange={e => setTransferSearch(e.target.value)}
-              className="input"
-              autoFocus
-            />
-
-            <div className="overflow-y-auto flex-1 space-y-2">
-              {transferCandidates.length === 0 && (
-                <p className="text-sm text-gray-400 text-center py-4">No available players found</p>
-              )}
-              {transferCandidates.map(p => (
-                <button
-                  key={p.id}
-                  onClick={() => !transferring && handleTransferConfirm(p)}
-                  disabled={transferring}
-                  className="w-full flex items-center gap-3 p-3 rounded-2xl bg-gray-50 hover:bg-lobster-cream active:scale-[0.98] transition-all text-left disabled:opacity-40"
-                >
-                  <div
-                    className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
-                    style={{ backgroundColor: letterColor(p.name) }}
-                  >
-                    {(p.name || '?')[0]}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm text-gray-800 flex items-center gap-1.5">
-                      {displayName(p)}
-                      {waitlistedIds.includes(p.id) && (
-                        <span className="text-[10px] font-semibold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full">
-                          On waitlist
-                        </span>
-                      )}
-                    </p>
-                    <p className="text-xs text-gray-500">Lv {(p.adjustedLevel || 0).toFixed(1)}</p>
-                  </div>
-                  <ArrowRightLeft size={14} className="text-lobster-teal flex-shrink-0" />
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
+      {/* ── TRANSFER PICKER + PENDING MODALS ── */}
+      {pickerForReg && (
+        <TransferSpotModal
+          tournament={tournament}
+          onClose={() => setPickerForReg(null)}
+          onTransferCreated={handleTransferCreated}
+        />
+      )}
+      {shareModal && (
+        <TransferPendingModal
+          transferId={shareModal.transferId}
+          toPlayer={shareModal.toPlayer}
+          onClose={() => setShareModal(null)}
+          onCancel={() => setShareModal(null)}
+        />
       )}
     </div>
   )

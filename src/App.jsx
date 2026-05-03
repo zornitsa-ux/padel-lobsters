@@ -15,6 +15,7 @@ import History from './components/History'
 import Game from './components/Game'
 import League from './components/League'
 import VerificationGate from './components/VerificationGate'
+import TransferAccept from './components/TransferAccept'
 
 export default function App() {
   return (
@@ -33,13 +34,29 @@ function Inner() {
   const { tournaments, loading } = useApp()
   const [page, setPage] = useState('dashboard')
   const [selectedTournament, setSelectedTournament] = useState(null)
+  // Active transfer id for the /?transfer=<id> deep link. Persisted in
+  // component state so a sign-in round-trip (where the URL gets cleaned)
+  // doesn't lose the context — the transfer-accept page can still render.
+  const [activeTransferId, setActiveTransferId] = useState(null)
 
   const [merchTab, setMerchTab] = useState(null)
 
-  // Deep-link: ?event=<id> opens the registration page for that tournament
+  // Deep links read once at boot:
+  //   ?event=<id>    → open the registration page for that tournament
+  //   ?transfer=<id> → open the transfer-accept page (Melanie's tap from the
+  //                    WhatsApp link sent by Josephine). Has priority over
+  //                    ?event= because the same URL can carry both for a
+  //                    tournament-scoped offer.
   useEffect(() => {
-    if (loading || tournaments.length === 0) return
     const params = new URLSearchParams(window.location.search)
+    const transferId = params.get('transfer')
+    if (transferId) {
+      setActiveTransferId(transferId)
+      setPage('transfer-accept')
+      window.history.replaceState({}, '', window.location.pathname)
+      return
+    }
+    if (loading || tournaments.length === 0) return
     const eventId = params.get('event')
     if (!eventId) return
     const t = tournaments.find(x => String(x.id) === String(eventId))
@@ -83,6 +100,7 @@ function Inner() {
     history:      <History onNavigate={navigate} />,
     game:         <Game tournament={selectedTournament} onNavigate={navigate} />,
     league:       <League onNavigate={navigate} />,
+    'transfer-accept': <TransferAccept transferId={activeTransferId} onNavigate={navigate} />,
   }
 
   return (

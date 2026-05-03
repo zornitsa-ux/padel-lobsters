@@ -49,6 +49,7 @@ export const PROTECTED_PAGES = Object.freeze([
   'settings',      // profile + admin settings
   'history',       // historical records
   'league',        // league management
+  'transfer-accept', // recipient of a registration transfer responding to the offer
 ])
 
 /**

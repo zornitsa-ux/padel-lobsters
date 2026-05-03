@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useApp } from '../context/AppContext'
 import { supabase } from '../supabase'
+import { isE164 } from '../lib/whatsapp'
 import { processAvatar } from '../lib/processAvatar'
 import {
   ArrowLeft, UserPlus, Check, Loader2, Copy, User, Camera,
@@ -196,6 +197,12 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
     if (!form.playtomicLevel)         missing.push('Playtomic Level')
     if (missing.length > 0) {
       setError(`Please complete: ${missing.join(', ')}`)
+      return
+    }
+    // Phone must be in international format (E.164) so we can build
+    // wa.me links for transfer offers — e.g. "+31612345678".
+    if (!isE164(form.phone)) {
+      setError('Phone must start with + and the country code (e.g. +31612345678).')
       return
     }
 
@@ -597,10 +604,10 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
 
           <div>
             <label className="label">Phone / WhatsApp</label>
-            <input type="tel" className="input" placeholder="+31 6 12345678"
+            <input type="tel" className="input" placeholder="+31612345678"
               value={form.phone}
               onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} />
-            <p className="text-xs text-gray-400 mt-1">Visible for organizers only</p>
+            <p className="text-xs text-gray-400 mt-1">Start with + and your country code, e.g. +31 for the Netherlands. Visible to organizers only.</p>
           </div>
 
           <div>

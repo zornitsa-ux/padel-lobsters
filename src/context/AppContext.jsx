@@ -8,6 +8,11 @@ export function AppProvider({ children }) {
   const [players, setPlayers]           = useState([])
   const [tournaments, setTournaments]   = useState([])
   const [registrations, setRegistrations] = useState([])
+  // registration_transfers — pending and recent-history transfer offers.
+  // Loaded eagerly so a player who closes the site and reopens still sees
+  // their pending banner / awaiting-acceptance state on home + tournament
+  // screens. Admin sees all pending offers too.
+  const [transfers, setTransfers] = useState([])
   // Public (guest) read-surface: count-only registrations keyed by tournament_id.
   // Populated only for role === 'guest' — authenticated roles get the real
   // registrations[] array instead. Shape: { [t.id]: { registered_count, waitlist_count } }
@@ -102,6 +107,9 @@ export function AppProvider({ children }) {
       supabase.channel('matches-changes')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'matches' }, loadMatches)
         .subscribe(),
+      supabase.channel('registration-transfers-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'registration_transfers' }, loadTransfers)
+        .subscribe(),
       supabase.channel('settings-changes')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'settings' }, loadSettings)
         .subscribe(),
@@ -138,6 +146,7 @@ export function AppProvider({ children }) {
   const loadAll = async () => {
     await Promise.all([
       loadPlayers(), loadTournaments(), loadRegistrations(), loadMatches(),
+      loadTransfers(),
       loadSettings(), loadPlayerAliases(),
       loadLeagues(), loadLeagueInterests(), loadLeagueTeams(),
     ])
@@ -231,6 +240,24 @@ export function AppProvider({ children }) {
   const loadRegistrations = async () => {
     const { data } = await supabase.from('registrations').select('*')
     if (data) setRegistrations(data)
+  }
+  // Loads every transfer row. The table is tiny (a handful per week) and
+  // anon SELECT is permitted, so no filter — admins need to see all
+  // pending transfers, players need to see their own pending+history. The
+  // UI does the per-user / per-tournament filtering downstream.
+  const loadTransfers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('registration_transfers')
+        .select('*')
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      setTransfers(data || [])
+    } catch (e) {
+      // Migration may not be applied yet on this environment — degrade
+      // gracefully so the rest of the app still works.
+      console.warn('loadTransfers skipped:', e?.message)
+    }
   }
   const loadMatches = async () => {
     const { data } = await supabase.from('matches').select('*')
@@ -542,6 +569,195 @@ export function AppProvider({ children }) {
     }
     loadRegistrations()
   }, [registrations])
+
+  // ── Registration transfers (acceptance flow) ────────────────────────
+  // Four wrappers around the SECURITY DEFINER RPCs added in migration
+  // add_registration_transfers. Each one returns { ok, status, transferId? }
+  // so callers can branch on the RPC's status text without parsing errors.
+  const createTransfer = useCallback(async (toPlayerId, tournamentId) => {
+    const pin       = localStorage.getItem('lobster_session_pin')
+    const deviceId  = getDeviceId()
+    const userAgent = getUserAgentSummary()
+    if (!pin) return { ok: false, status: 'wrong_pin' }
+    try {
+      const { data, error } = await supabase.rpc('create_transfer', {
+        input_pin:           pin,
+        input_device_id:     deviceId,
+        input_to_player_id:  toPlayerId,
+        input_tournament_id: tournamentId,
+        input_user_agent:    userAgent,
+      })
+      if (error) {
+        console.error('create_transfer error:', error)
+        return { ok: false, status: 'error' }
+      }
+      const row = Array.isArray(data) ? data[0] : data
+      const status = row?.status
+      const transferId = row?.transfer_id
+      if (status === 'ok' || status === 'already_pending') {
+        await loadTransfers()
+        return { ok: true, status, transferId }
+      }
+      return { ok: false, status: status || 'error', transferId }
+    } catch (e) {
+      console.error('create_transfer threw:', e)
+      return { ok: false, status: 'error' }
+    }
+  }, [])
+
+  const respondToTransfer = useCallback(async (transferId, accept) => {
+    const pin       = localStorage.getItem('lobster_session_pin')
+    const deviceId  = getDeviceId()
+    const userAgent = getUserAgentSummary()
+    if (!pin) return { ok: false, status: 'wrong_pin' }
+    try {
+      const { data, error } = await supabase.rpc('respond_to_transfer', {
+        input_pin:          pin,
+        input_device_id:    deviceId,
+        input_transfer_id:  transferId,
+        input_accept:       !!accept,
+        input_user_agent:   userAgent,
+      })
+      if (error) {
+        console.error('respond_to_transfer error:', error)
+        return { ok: false, status: 'error' }
+      }
+      const row = Array.isArray(data) ? data[0] : data
+      const status = row?.status
+      if (status === 'accepted' || status === 'declined') {
+        await Promise.all([loadTransfers(), loadRegistrations()])
+        return { ok: true, status }
+      }
+      return { ok: false, status: status || 'error' }
+    } catch (e) {
+      console.error('respond_to_transfer threw:', e)
+      return { ok: false, status: 'error' }
+    }
+  }, [])
+
+  const cancelTransfer = useCallback(async (transferId) => {
+    const pin       = localStorage.getItem('lobster_session_pin')
+    const deviceId  = getDeviceId()
+    const userAgent = getUserAgentSummary()
+    if (!pin) return { ok: false, status: 'wrong_pin' }
+    try {
+      const { data, error } = await supabase.rpc('cancel_transfer', {
+        input_pin:         pin,
+        input_device_id:   deviceId,
+        input_transfer_id: transferId,
+        input_user_agent:  userAgent,
+      })
+      if (error) {
+        console.error('cancel_transfer error:', error)
+        return { ok: false, status: 'error' }
+      }
+      const row = Array.isArray(data) ? data[0] : data
+      const status = row?.status
+      if (status === 'cancelled') {
+        await loadTransfers()
+        return { ok: true, status }
+      }
+      return { ok: false, status: status || 'error' }
+    } catch (e) {
+      console.error('cancel_transfer threw:', e)
+      return { ok: false, status: 'error' }
+    }
+  }, [])
+
+  // Privacy-respecting fetch of the to-player's phone for a pending
+  // transfer the current user initiated. Returns { ok, name, phone }.
+  // Returns ok:false when the caller isn't the from-player or the
+  // transfer isn't pending — the API never leaks phone numbers to
+  // anyone other than the offer's initiator.
+  const getTransferRecipientContact = useCallback(async (transferId) => {
+    const pin       = localStorage.getItem('lobster_session_pin')
+    const deviceId  = getDeviceId()
+    const userAgent = getUserAgentSummary()
+    if (!pin) return { ok: false, status: 'wrong_pin' }
+    try {
+      const { data, error } = await supabase.rpc('get_transfer_recipient_phone', {
+        input_pin:         pin,
+        input_device_id:   deviceId,
+        input_transfer_id: transferId,
+        input_user_agent:  userAgent,
+      })
+      if (error) {
+        console.error('get_transfer_recipient_phone error:', error)
+        return { ok: false, status: 'error' }
+      }
+      const row = Array.isArray(data) ? data[0] : data
+      if (row?.status === 'ok') {
+        return { ok: true, status: 'ok', name: row.name || '', phone: row.phone || '' }
+      }
+      return { ok: false, status: row?.status || 'error' }
+    } catch (e) {
+      console.error('get_transfer_recipient_phone threw:', e)
+      return { ok: false, status: 'error' }
+    }
+  }, [])
+
+  // Admin-only cancel: cancels any pending offer regardless of which
+  // player initiated it. Different from cancelTransfer (which checks
+  // the from-player's PIN). Status text on the row gets a distinct
+  // closed_reason='admin_cancel' for auditability.
+  const adminCancelTransfer = useCallback(async (transferId) => {
+    const adminPin  = localStorage.getItem('lobster_session_admin_pin')
+    const deviceId  = getDeviceId()
+    const userAgent = getUserAgentSummary()
+    if (!adminPin) return { ok: false, status: 'wrong_admin_pin' }
+    try {
+      const { data, error } = await supabase.rpc('admin_cancel_transfer', {
+        input_admin_pin:   adminPin,
+        input_device_id:   deviceId,
+        input_transfer_id: transferId,
+        input_user_agent:  userAgent,
+      })
+      if (error) {
+        console.error('admin_cancel_transfer error:', error)
+        return { ok: false, status: 'error' }
+      }
+      const row = Array.isArray(data) ? data[0] : data
+      const status = row?.status
+      if (status === 'cancelled') {
+        await loadTransfers()
+        return { ok: true, status }
+      }
+      return { ok: false, status: status || 'error' }
+    } catch (e) {
+      console.error('admin_cancel_transfer threw:', e)
+      return { ok: false, status: 'error' }
+    }
+  }, [])
+
+  const forceAcceptTransfer = useCallback(async (transferId) => {
+    const adminPin  = localStorage.getItem('lobster_session_admin_pin')
+    const deviceId  = getDeviceId()
+    const userAgent = getUserAgentSummary()
+    if (!adminPin) return { ok: false, status: 'wrong_admin_pin' }
+    try {
+      const { data, error } = await supabase.rpc('admin_force_accept_transfer', {
+        input_admin_pin:   adminPin,
+        input_device_id:   deviceId,
+        input_transfer_id: transferId,
+        input_user_agent:  userAgent,
+      })
+      if (error) {
+        console.error('admin_force_accept_transfer error:', error)
+        return { ok: false, status: 'error' }
+      }
+      const row = Array.isArray(data) ? data[0] : data
+      const status = row?.status
+      if (status === 'accepted') {
+        await Promise.all([loadTransfers(), loadRegistrations()])
+        return { ok: true, status }
+      }
+      return { ok: false, status: status || 'error' }
+    } catch (e) {
+      console.error('admin_force_accept_transfer threw:', e)
+      return { ok: false, status: 'error' }
+    }
+  }, [])
+
   const updateRegistration = useCallback(async (id, data) => {
     const payload = {}
     if (data.status         !== undefined) payload.status         = data.status
@@ -639,6 +855,16 @@ export function AppProvider({ children }) {
     team1Level:   m.team1_level  ?? m.team1Level  ?? 0,
     team2Level:   m.team2_level  ?? m.team2Level  ?? 0,
   }))
+  const normalisedTransfers = transfers.map(t => ({
+    ...t,
+    tournamentId:  t.tournament_id   ?? t.tournamentId,
+    fromPlayerId:  t.from_player_id  ?? t.fromPlayerId,
+    toPlayerId:    t.to_player_id    ?? t.toPlayerId,
+    closedReason:  t.closed_reason   ?? t.closedReason   ?? null,
+    respondedAt:   t.responded_at    ?? t.respondedAt    ?? null,
+    closedAt:      t.closed_at       ?? t.closedAt       ?? null,
+    createdAt:     t.created_at      ?? t.createdAt      ?? null,
+  }))
   const getPlayerById = useCallback(
     (id) => normalisedPlayers.find(p => p.id === id),
     [normalisedPlayers]
@@ -650,6 +876,26 @@ export function AppProvider({ children }) {
   const getTournamentMatches = useCallback(
     (tournamentId) => normalisedMatches.filter(m => m.tournamentId === tournamentId),
     [normalisedMatches]
+  )
+  // Active (pending) transfers visible to the current user. For admin
+  // returns ALL pending; for a regular player returns only those where
+  // they are the from-player or to-player. Used by the home screen, the
+  // tournament screen, and the admin panel — keeps the same data shape.
+  const getPendingTransfersForMe = useCallback(() => {
+    const all = normalisedTransfers.filter(t => t.status === 'pending')
+    if (isAdmin) return all
+    if (!claimedId) return []
+    return all.filter(t =>
+      String(t.fromPlayerId) === String(claimedId) ||
+      String(t.toPlayerId)   === String(claimedId)
+    )
+  }, [normalisedTransfers, isAdmin, claimedId])
+  // Pending transfers for one specific tournament (any party).
+  const getTournamentPendingTransfers = useCallback(
+    (tournamentId) => normalisedTransfers.filter(t =>
+      t.status === 'pending' && String(t.tournamentId) === String(tournamentId)
+    ),
+    [normalisedTransfers]
   )
   // ── PIN / Identity ───────────────────────────────────────
   // Phase 2c: PIN generation moves server-side. admin_regenerate_pin
@@ -1326,6 +1572,11 @@ export function AppProvider({ children }) {
       selfSignup, forgotMyPin,
       addPlayer, updatePlayer, deletePlayer, getPlayerById,
       registerPlayer, updateRegistration, cancelRegistration, transferRegistration,
+      transfers: normalisedTransfers,
+      createTransfer, respondToTransfer, cancelTransfer, forceAcceptTransfer,
+      adminCancelTransfer,
+      getTransferRecipientContact,
+      getPendingTransfersForMe, getTournamentPendingTransfers,
       getTournamentRegistrations,
       saveMatches, updateMatch, getTournamentMatches, saveSettings, changeAdminPin,
       claimedId, claimIdentity, clearIdentity, regeneratePin,

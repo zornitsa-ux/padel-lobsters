@@ -7,6 +7,8 @@ import { TOURNAMENTS as LEGACY_TOURNAMENTS } from './History'
 import { buildPlayerStats } from '../lib/playerStats'
 import { fmtEur } from '../lib/format'
 import { DateTile, AddToCalendarButton, ShareWhatsAppButton } from './CalendarPieces'
+import TransferPendingModal from './TransferPendingModal'
+import { ArrowRightLeft, X as IconX } from 'lucide-react'
 
 // (Claw up/down reaction icons removed along with the Updates feature.)
 
@@ -90,7 +92,41 @@ export default function Dashboard({ onNavigate }) {
     getTournamentRegistrations, getTournamentMatches,
     isAdmin, isLeagueAdmin, claimedId, getPlayerById, playerAliases,
     leagues, leagueTeams,
+    transfers, respondToTransfer, cancelTransfer,
   } = useApp()
+
+  // Pending-transfer state surfaced on the home screen so the player
+  // sees their open offers right after reload — even before drilling
+  // into a tournament. Sourced from the eagerly-loaded transfers
+  // slice in AppContext, so it survives page reloads.
+  const myIncomingTransfers = transfers.filter(t =>
+    t.status === 'pending' && claimedId && String(t.toPlayerId) === String(claimedId)
+  )
+  const myOutgoingTransfers = transfers.filter(t =>
+    t.status === 'pending' && claimedId && String(t.fromPlayerId) === String(claimedId)
+  )
+  const [transferShare, setTransferShare] = useState(null) // { transferId, toPlayer }
+  const [transferBusy, setTransferBusy]   = useState(null) // transferId being acted on
+  const handleIncomingResponse = async (xfer, accept) => {
+    setTransferBusy(xfer.id)
+    const r = await respondToTransfer(xfer.id, accept)
+    setTransferBusy(null)
+    if (!r.ok) {
+      const map = {
+        wrong_pin: 'Sign in again to respond.',
+        forbidden: 'This transfer is for a different player.',
+        not_pending: 'This transfer was already responded to or closed.',
+        tournament_started: 'Too late — the event has already started.',
+      }
+      alert(map[r.status] || 'Could not record your response.')
+    }
+  }
+  const handleOutgoingCancel = async (xfer) => {
+    if (!confirm('Cancel the transfer offer? Your spot stays registered to you.')) return
+    setTransferBusy(xfer.id)
+    await cancelTransfer(xfer.id)
+    setTransferBusy(null)
+  }
 
   // Temporary testing allowlist — match League.jsx / Tournament.jsx so the
   // Home page tile is visible to the same set of previewers.
@@ -349,6 +385,98 @@ export default function Dashboard({ onNavigate }) {
         <p className="text-xl font-extrabold text-gray-800 leading-snug">{greetHello}</p>
         <p className="text-base text-gray-500 mt-0.5">{greetSub}</p>
       </div>
+
+      {/* ── Pending transfers ──────────────────────────────────
+          Both incoming offers (someone wants to transfer to me) and
+          outgoing pending offers (I'm waiting on someone to accept).
+          Sourced from registration_transfers via AppContext — survives
+          page reloads. */}
+      {(myIncomingTransfers.length > 0 || myOutgoingTransfers.length > 0) && (
+        <div className="space-y-2">
+          {myIncomingTransfers.map(xfer => {
+            const fromP = players.find(p => String(p.id) === String(xfer.fromPlayerId))
+            const t     = tournaments.find(t => String(t.id) === String(xfer.tournamentId))
+            const fromFirst = (fromP?.name || '').split(/\s+/)[0] || 'Someone'
+            const busy = transferBusy === xfer.id
+            return (
+              <div key={xfer.id} className="card border border-amber-300 bg-amber-50 space-y-2">
+                <div className="flex items-start gap-2">
+                  <ArrowRightLeft size={14} className="text-amber-700 mt-1 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-amber-900">
+                      <strong>{fromFirst}</strong> wants to transfer their spot to you
+                    </p>
+                    {t && (
+                      <p className="text-xs text-amber-700 mt-0.5">{t.name}{t.date && ` · ${new Date(t.date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}`}</p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleIncomingResponse(xfer, false)}
+                    disabled={busy}
+                    className="flex-1 border border-gray-300 text-gray-700 font-semibold py-2 rounded-xl text-sm active:scale-[0.98] disabled:opacity-50"
+                  >
+                    {busy ? 'Declining…' : 'Decline'}
+                  </button>
+                  <button
+                    onClick={() => handleIncomingResponse(xfer, true)}
+                    disabled={busy}
+                    className="flex-1 bg-green-600 text-white font-semibold py-2 rounded-xl text-sm active:scale-[0.98] disabled:opacity-50"
+                  >
+                    {busy ? 'Accepting…' : 'Accept'}
+                  </button>
+                </div>
+              </div>
+            )
+          })}
+          {myOutgoingTransfers.map(xfer => {
+            const toP = players.find(p => String(p.id) === String(xfer.toPlayerId))
+            const t   = tournaments.find(t => String(t.id) === String(xfer.tournamentId))
+            const toFirst = (toP?.name || '').split(/\s+/)[0] || 'them'
+            const busy = transferBusy === xfer.id
+            return (
+              <div key={xfer.id} className="card border border-amber-200 bg-amber-50/60 space-y-2">
+                <div className="flex items-start gap-2">
+                  <Clock size={14} className="text-amber-700 mt-1 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-amber-900">
+                      <strong>Pending transfer</strong> to {toFirst} — awaiting acceptance.
+                    </p>
+                    {t && (
+                      <p className="text-xs text-amber-700 mt-0.5">{t.name}{t.date && ` · ${new Date(t.date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}`}</p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setTransferShare({ transferId: xfer.id, toPlayer: toP })}
+                    disabled={busy || !toP}
+                    className="flex-1 text-xs font-semibold text-green-700 bg-white border border-green-600 rounded-xl py-2 active:scale-95 transition-all disabled:opacity-50"
+                  >
+                    Resend WhatsApp
+                  </button>
+                  <button
+                    onClick={() => handleOutgoingCancel(xfer)}
+                    disabled={busy}
+                    className="flex-1 text-xs font-semibold text-red-600 border border-red-200 rounded-xl py-2 active:scale-95 transition-all disabled:opacity-50"
+                  >
+                    {busy ? 'Cancelling…' : 'Cancel offer'}
+                  </button>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+      {transferShare && (
+        <TransferPendingModal
+          transferId={transferShare.transferId}
+          toPlayer={transferShare.toPlayer}
+          onClose={() => setTransferShare(null)}
+          onCancel={() => setTransferShare(null)}
+        />
+      )}
 
       {/* ── Countdown flip clock + streak ──────────────────────── */}
       {countdown && (
