@@ -184,7 +184,7 @@ function Raffle({ tournament, players, registrations }) {
 
         <div className="text-center mb-6">
           <p className="text-5xl sm:text-6xl font-black text-yellow-300 leading-none">
-            {eligibleCount}
+            {registered.length}
           </p>
           <p className="text-[11px] sm:text-xs uppercase tracking-widest text-white/70 mt-1">
             participants
@@ -218,43 +218,10 @@ function Raffle({ tournament, players, registrations }) {
           {spinning ? 'Drawing winners…' : '🎲 Draw Winners!'}
         </button>
 
-        {eligibleCount === 0 && (
-          <p className="text-sm text-orange-200 text-center mt-3">
-            {registered.length === 0 ? 'No registered players yet' : 'No eligible players for this raffle'}
-          </p>
+        {registered.length === 0 && (
+          <p className="text-sm text-orange-200 text-center mt-3">No registered players yet</p>
         )}
       </div>
-
-      {/* Admin-only eligibility audit. Collapsed by default so it isn't on
-          screen during projection; admin can open it privately to confirm
-          who's in / out before drawing. Ineligible players are greyed out
-          with no reason text, per the rule that this stays opaque to
-          players in the room. */}
-      {ineligibleCount > 0 && (
-        <details className="bg-white border border-gray-100 rounded-xl text-sm">
-          <summary className="cursor-pointer px-3 py-2 flex items-center gap-2 text-gray-600 hover:bg-gray-50 rounded-xl">
-            <User size={14} className="text-gray-400 flex-shrink-0" />
-            <span className="flex-1 truncate">
-              Eligible pool: <span className="font-semibold text-gray-800">{eligibleCount}</span>
-              <span className="text-gray-400"> / {registered.length}</span>
-            </span>
-            <span className="text-[11px] text-gray-400">tap to peek</span>
-          </summary>
-          <div className="border-t border-gray-100 px-3 py-3">
-            <div className="flex flex-wrap gap-1.5">
-              {[...eligibility.eligible.map(p => ({ p, dim: false })),
-                ...eligibility.ineligible.map(({ player }) => ({ p: player, dim: true }))]
-                .sort((a, b) => (a.p.name || '').localeCompare(b.p.name || ''))
-                .map(({ p, dim }) => (
-                  <span key={p.id}
-                    className={`px-2 py-1 rounded-md text-xs ${dim ? 'bg-gray-100 text-gray-400' : 'bg-teal-50 text-teal-700'}`}>
-                    {shortLabels[String(p.id)] || (p.name || '').split(' ')[0] || p.name}
-                  </span>
-                ))}
-            </div>
-          </div>
-        </details>
-      )}
 
       {/* Winners — huge celebratory card for when the screen is showing
           the result to the whole room. */}
@@ -371,6 +338,24 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
   const [ordered, setOrdered]             = useState({}) // itemId -> true (this session)
   const [selectedTournament, setSelectedTournament] = useState(tournament?.id != null ? String(tournament.id) : null)
   const [lightbox, setLightbox]           = useState(null) // { images, index }
+  // Filter the prize/raffle picker to today's and future tournaments only.
+  // Past events are hidden so the dropdown stays focused on what admin can
+  // still act on. `today` is the user's local YYYY-MM-DD; tournament.date
+  // strings are also YYYY-MM-DD so a string compare is sufficient.
+  const upcomingTournaments = useMemo(() => {
+    const d = new Date()
+    const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    return tournaments.filter(t => !t.date || String(t.date) >= todayStr)
+  }, [tournaments])
+  // If the currently selected tournament drops out of the upcoming window
+  // (e.g. midnight rollover, or admin loaded the page with a stale prop),
+  // clear it so the select widget doesn't render an orphan value.
+  useEffect(() => {
+    if (!selectedTournament) return
+    if (!upcomingTournaments.find(t => String(t.id) === String(selectedTournament))) {
+      setSelectedTournament(null)
+    }
+  }, [upcomingTournaments, selectedTournament])
 
   // ── Data loading ────────────────────────────────────────────────────────────
   const loadItems = async () => {
@@ -896,8 +881,13 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
       {/* ── PRIZES TAB (admin only) ── */}
       {tab === 'prizes' && isAdmin && (
         <div className="space-y-4">
-          {/* Tournament selector */}
-          {tournaments.length > 0 && (
+          {/* Tournament selector — past tournaments are hidden so the
+              prize/raffle picker only ever lists today's and future events. */}
+          {upcomingTournaments.length === 0 ? (
+            <div className="card text-center text-gray-400 py-4">
+              <p className="text-sm">No upcoming tournaments</p>
+            </div>
+          ) : (
             <div className="card space-y-2">
               <label className="label">Select tournament for prizes & raffle</label>
               <select
@@ -906,18 +896,12 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
                 className="input text-sm"
               >
                 <option value="">-- Choose tournament --</option>
-                {tournaments.map(t => (
+                {upcomingTournaments.map(t => (
                   <option key={t.id} value={t.id}>
                     {t.name}
                   </option>
                 ))}
               </select>
-            </div>
-          )}
-
-          {tournaments.length === 0 && (
-            <div className="card text-center text-gray-400 py-4">
-              <p className="text-sm">No tournaments available</p>
             </div>
           )}
 
