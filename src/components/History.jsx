@@ -611,7 +611,7 @@ export const TOURNAMENTS = [
   },
   {
     id: 'mar2026',
-    name: 'Lobster Tournament · March 2026',
+    name: 'LOBStournament #4',
     date: 'March 2026',
     type: 'mixed',
     players: MAR_STANDINGS,
@@ -621,7 +621,7 @@ export const TOURNAMENTS = [
   },
   {
     id: 'jan2026',
-    name: 'Lobster Tournament · January 2026',
+    name: 'LOBStournament #3',
     date: 'January 2026',
     type: 'mixed',
     players: JAN_PLAYERS,
@@ -632,7 +632,7 @@ export const TOURNAMENTS = [
   },
   {
     id: 'dec2025',
-    name: 'Lobster Tournament · December 2025',
+    name: 'LOBStournament #2',
     date: 'December 2025',
     type: 'mixed',
     players: DEC_STANDINGS,
