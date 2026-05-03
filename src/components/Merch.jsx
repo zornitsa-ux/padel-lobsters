@@ -43,6 +43,39 @@ function Raffle({ tournament, players, registrations }) {
     .map(r => players.find(p => p.id === r.playerId))
     .filter(Boolean)
 
+  // First-name-only labels, with last-name initial(s) appended only when the
+  // first name collides within the registered pool. Mirrors the convention used
+  // elsewhere in the app (Game.jsx shortLabelMap, Schedule.jsx shortName).
+  const shortLabels = (() => {
+    const firstOf = (p) => (p.name || '').trim().split(/\s+/)[0] || p.name || ''
+    const lastOf  = (p) => {
+      const parts = (p.name || '').trim().split(/\s+/)
+      return parts.length > 1 ? parts.slice(1).join(' ') : ''
+    }
+    const byFirst = {}
+    registered.forEach(p => {
+      const f = firstOf(p).toLowerCase()
+      ;(byFirst[f] ??= []).push(p)
+    })
+    const out = {}
+    for (const key in byFirst) {
+      const group = byFirst[key]
+      if (group.length === 1) { out[String(group[0].id)] = firstOf(group[0]); continue }
+      group.sort((a, b) => String(a.id).localeCompare(String(b.id)))
+      let labels = null
+      for (let len = 1; len <= 3; len++) {
+        const candidate = group.map(p => {
+          const last = lastOf(p)
+          return last ? `${firstOf(p)} ${last.slice(0, len).toUpperCase()}` : firstOf(p)
+        })
+        if (new Set(candidate).size === candidate.length) { labels = candidate; break }
+      }
+      if (!labels) labels = group.map((p, i) => `${firstOf(p)} ${i + 1}`)
+      group.forEach((p, i) => { out[String(p.id)] = labels[i] })
+    }
+    return out
+  })()
+
   const [winners, setWinners]       = useState([])
   const [spinning, setSpinning]     = useState(false)
   const [numPrizes, setNumPrizes]   = useState(1)
@@ -136,7 +169,7 @@ function Raffle({ tournament, players, registrations }) {
                   {w.name[0]}
                 </div>
                 <p className="font-black text-gray-800 text-xl sm:text-2xl md:text-3xl leading-tight truncate">
-                  {w.name}
+                  {shortLabels[String(w.id)] || (w.name || '').split(' ')[0] || w.name}
                 </p>
               </div>
             ))}
