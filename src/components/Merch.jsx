@@ -40,10 +40,21 @@ const emptyItem = {
 function Raffle({ tournament, players, registrations }) {
   const { tournaments, raffleWinners, recordRaffleWinners } = useApp()
 
-  const registered = registrations
-    .filter(r => r.tournamentId === tournament?.id && r.status === 'registered')
-    .map(r => players.find(p => p.id === r.playerId))
-    .filter(Boolean)
+  const registered = (() => {
+    const seen = new Set()
+    const out = []
+    registrations
+      .filter(r => r.tournamentId === tournament?.id && r.status === 'registered')
+      .forEach(r => {
+        const p = players.find(pl => pl.id === r.playerId)
+        if (!p) return
+        const key = String(p.id)
+        if (seen.has(key)) return // defensive: never list the same player twice in one draw
+        seen.add(key)
+        out.push(p)
+      })
+    return out
+  })()
 
   // First-name labels with last-initial only for collisions; mirrors the
   // convention used in Game.jsx / Schedule.jsx so the projection screen
