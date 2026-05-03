@@ -34,15 +34,9 @@ export default function Settings() {
   const [form, setForm]           = useState({ whatsappLink: '', adminPin: '1234', leagueAdminPin: '', groupName: 'Padel Lobsters' })
   // ── Unified Account sign-in state ──────────────────────────
   // A single PIN field handles BOTH admin + player sign-in via auto-detect.
-  // This replaces the old per-page <AdminLogin> modal scattered across the app.
   const [signInPin, setSignInPin]     = useState('')
   const [signInError, setSignInError] = useState('')
   const [signingIn, setSigningIn]     = useState(false)
-  // Hidden admin-only sign-in (fold-out at the bottom of the page)
-  const [adminPanelOpen, setAdminPanelOpen]   = useState(false)
-  const [adminPinInput, setAdminPinInput]     = useState('')
-  const [adminPinError, setAdminPinError]     = useState('')
-  const [adminSigningIn, setAdminSigningIn]   = useState(false)
 
   // ── Glicko-2 ratings recompute (admin) ────────────────────────────
   const [recomputing, setRecomputing] = useState(false)
@@ -252,24 +246,6 @@ export default function Settings() {
       setSignInPin('')
     }
     setSigningIn(false)
-  }
-
-  // ── Admin sign-in handler (fold-out) ──────────────────────────────────
-  const handleAdminSignIn = async (e) => {
-    e?.preventDefault?.()
-    if (adminSigningIn) return
-    setAdminSigningIn(true)
-    setAdminPinError('')
-    const result = await loginWithPin(adminPinInput)
-    if (!result.success || result.role !== 'admin') {
-      // Don't reveal which kind of failure this was.
-      setAdminPinError('Incorrect admin PIN.')
-      setAdminPinInput('')
-    } else {
-      setAdminPinInput('')
-      setAdminPanelOpen(false)
-    }
-    setAdminSigningIn(false)
   }
 
   const handleSave = async (e) => {
@@ -967,50 +943,6 @@ export default function Settings() {
         <p className="text-xs text-gray-300 mt-2">Made with 🦞 for the crew</p>
       </div>
 
-      {/* ── Group Owner Access (discrete admin fold-out) ─────────────────
-          Hidden by default — only group owners know to look for this.
-          Players never need to interact with this section. */}
-      {!isAdmin && (
-        <div className="pt-2">
-          <button
-            type="button"
-            onClick={() => setAdminPanelOpen(o => !o)}
-            className="w-full text-[11px] text-gray-300 hover:text-gray-500 transition-colors flex items-center justify-center gap-1.5 py-2"
-          >
-            <Lock size={10} className="opacity-60" />
-            Group owner access
-            {adminPanelOpen ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
-          </button>
-          {adminPanelOpen && (
-            <form onSubmit={handleAdminSignIn} className="card space-y-3 mt-1 border border-gray-100">
-              <p className="text-[11px] text-gray-400 text-center">
-                Enter the group owner PIN to manage events, players, and settings.
-              </p>
-              <input
-                type="password"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                maxLength={8}
-                placeholder="• • • •"
-                className="input text-center text-lg tracking-[0.4em] font-bold"
-                value={adminPinInput}
-                onChange={e => { setAdminPinInput(e.target.value.replace(/\D/g, '').slice(0, 8)); setAdminPinError('') }}
-                autoFocus
-              />
-              {adminPinError && (
-                <p className="text-xs text-red-500 text-center font-medium">{adminPinError}</p>
-              )}
-              <button
-                type="submit"
-                disabled={adminSigningIn || adminPinInput.length < 4}
-                className="w-full text-xs font-semibold text-white bg-gray-700 py-2 rounded-xl active:scale-95 transition-all disabled:opacity-40"
-              >
-                {adminSigningIn ? 'Checking…' : 'Unlock owner mode'}
-              </button>
-            </form>
-          )}
-        </div>
-      )}
     </div>
   )
 }

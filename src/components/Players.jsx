@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect, useMemo } from 'react'
 import { useApp } from '../context/AppContext'
 import { supabase } from '../supabase'
 import { Plus, Pencil, Trash2, X, ChevronDown, ChevronUp, Search, User, Clock, Camera, Briefcase, Trophy, TrendingUp, GitMerge, RotateCcw } from 'lucide-react'
-// AdminLogin modal replaced by unified sign-in in Settings → Account
 import CountryPicker, { COUNTRIES, countryFlag, FlagImg } from './CountryPicker'
 import PlayerAliasMatcher from './PlayerAliasMatcher'
 import { buildHistoricalAppearances, summariseAppearances } from '../lib/playerHistory'
