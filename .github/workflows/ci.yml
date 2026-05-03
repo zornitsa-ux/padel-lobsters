@@ -19,11 +19,14 @@ jobs:
         with:
           node-version-file: '.nvmrc'
 
+      - name: Use stable npm
+        run: npm install -g npm@10
+
       - name: Check versions
         run: node --version && npm --version
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Check formatting
         run: npm run format:check
