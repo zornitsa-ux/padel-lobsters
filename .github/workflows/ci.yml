@@ -35,7 +35,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --include=dev
 
       - name: Check formatting (Prettier)
         run: npm run format:check
@@ -45,7 +45,7 @@ jobs:
         # Once those are fixed, remove continue-on-error to make lint blocking.
         # Reduce --max-warnings over time as you fix existing warnings (~144).
         continue-on-error: true
-        run: npx eslint . --max-warnings 150
+        run: npm run lint -- --max-warnings 150
 
       - name: Build
         run: npm run build
