@@ -59,7 +59,7 @@ function Inner() {
     if (loading || tournaments.length === 0) return
     const eventId = params.get('event')
     if (!eventId) return
-    const t = tournaments.find(x => String(x.id) === String(eventId))
+    const t = tournaments.find((x) => String(x.id) === String(eventId))
     if (t) {
       setSelectedTournament(t)
       setPage('registration')
@@ -88,18 +88,18 @@ function Inner() {
   // quick-link tiles, sub-tile nav, and event card buttons all trigger
   // the popup for a logged-out visitor without needing a separate surface.
   const pages = {
-    dashboard:    <Dashboard onNavigate={navigate} />,
-    players:      <Players onNavigate={navigate} focusPlayerId={selectedTournament?.focusPlayerId} />,
-    tournament:   <Tournament onNavigate={navigate} />,
+    dashboard: <Dashboard onNavigate={navigate} />,
+    players: <Players onNavigate={navigate} focusPlayerId={selectedTournament?.focusPlayerId} />,
+    tournament: <Tournament onNavigate={navigate} />,
     registration: <Registration tournament={selectedTournament} onNavigate={navigate} />,
-    payments:     <Payments tournament={selectedTournament} onNavigate={navigate} />,
-    schedule:     <Schedule tournament={selectedTournament} onNavigate={navigate} />,
-    scores:       <Scores tournament={selectedTournament} onNavigate={navigate} />,
-    merch:        <Merch tournament={selectedTournament} initialTab={merchTab} onNavigate={navigate} />,
-    settings:     <Settings onNavigate={navigate} />,
-    history:      <History onNavigate={navigate} />,
-    game:         <Game tournament={selectedTournament} onNavigate={navigate} />,
-    league:       <League onNavigate={navigate} />,
+    payments: <Payments tournament={selectedTournament} onNavigate={navigate} />,
+    schedule: <Schedule tournament={selectedTournament} onNavigate={navigate} />,
+    scores: <Scores tournament={selectedTournament} onNavigate={navigate} />,
+    merch: <Merch tournament={selectedTournament} initialTab={merchTab} onNavigate={navigate} />,
+    settings: <Settings onNavigate={navigate} />,
+    history: <History onNavigate={navigate} />,
+    game: <Game tournament={selectedTournament} onNavigate={navigate} />,
+    league: <League onNavigate={navigate} />,
     'transfer-accept': <TransferAccept transferId={activeTransferId} onNavigate={navigate} />,
   }
 
@@ -109,9 +109,7 @@ function Inner() {
           straight through; for everything else it shows the PIN prompt to
           guests. Layout stays visible either way (nav chrome is fine to show
           to guests — clicking a protected tab just triggers the PIN form). */}
-      <VerificationGate page={page}>
-        {pages[page] || pages.dashboard}
-      </VerificationGate>
+      <VerificationGate page={page}>{pages[page] || pages.dashboard}</VerificationGate>
     </Layout>
   )
 }

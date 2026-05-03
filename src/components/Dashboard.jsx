@@ -1,7 +1,22 @@
 import React, { useMemo, useState, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
 import { supabase } from '../supabase'
-import { Trophy, Users, Calendar, ChevronRight, AlertCircle, TrendingUp, Clock, Flame, Award, Lightbulb, CreditCard, CalendarDays, ShoppingBag, Euro } from 'lucide-react'
+import {
+  Trophy,
+  Users,
+  Calendar,
+  ChevronRight,
+  AlertCircle,
+  TrendingUp,
+  Clock,
+  Flame,
+  Award,
+  Lightbulb,
+  CreditCard,
+  CalendarDays,
+  ShoppingBag,
+  Euro,
+} from 'lucide-react'
 import DEFAULT_TIPS from '../data/padelTips'
 import { TOURNAMENTS as LEGACY_TOURNAMENTS } from './History'
 import { buildPlayerStats } from '../lib/playerStats'
@@ -59,11 +74,12 @@ function useCountdown(tournament) {
   // Parse date + time as local
   const [y, mo, d] = dateStr.split('-').map(Number)
   if (!y || !mo || !d) return null
-  let hh = 19, mm = 0 // default 19:00 if no time set
+  let hh = 19,
+    mm = 0 // default 19:00 if no time set
   const timeStr = (tournament.time || '').trim()
   if (timeStr) {
     const ampm = timeStr.match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)$/i)
-    const hm   = timeStr.match(/^(\d{1,2})[:.](\d{2})$/)
+    const hm = timeStr.match(/^(\d{1,2})[:.](\d{2})$/)
     const hOnly = timeStr.match(/^(\d{1,2})$/)
     if (ampm) {
       hh = parseInt(ampm[1], 10) % 12
@@ -88,25 +104,37 @@ function useCountdown(tournament) {
 
 export default function Dashboard({ onNavigate }) {
   const {
-    tournaments, players, registrations, matches, settings,
-    getTournamentRegistrations, getTournamentMatches,
-    isAdmin, isLeagueAdmin, claimedId, getPlayerById, playerAliases,
-    leagues, leagueTeams,
-    transfers, respondToTransfer, cancelTransfer,
+    tournaments,
+    players,
+    registrations,
+    matches,
+    settings,
+    getTournamentRegistrations,
+    getTournamentMatches,
+    isAdmin,
+    isLeagueAdmin,
+    claimedId,
+    getPlayerById,
+    playerAliases,
+    leagues,
+    leagueTeams,
+    transfers,
+    respondToTransfer,
+    cancelTransfer,
   } = useApp()
 
   // Pending-transfer state surfaced on the home screen so the player
   // sees their open offers right after reload — even before drilling
   // into a tournament. Sourced from the eagerly-loaded transfers
   // slice in AppContext, so it survives page reloads.
-  const myIncomingTransfers = transfers.filter(t =>
-    t.status === 'pending' && claimedId && String(t.toPlayerId) === String(claimedId)
+  const myIncomingTransfers = transfers.filter(
+    (t) => t.status === 'pending' && claimedId && String(t.toPlayerId) === String(claimedId),
   )
-  const myOutgoingTransfers = transfers.filter(t =>
-    t.status === 'pending' && claimedId && String(t.fromPlayerId) === String(claimedId)
+  const myOutgoingTransfers = transfers.filter(
+    (t) => t.status === 'pending' && claimedId && String(t.fromPlayerId) === String(claimedId),
   )
   const [transferShare, setTransferShare] = useState(null) // { transferId, toPlayer }
-  const [transferBusy, setTransferBusy]   = useState(null) // transferId being acted on
+  const [transferBusy, setTransferBusy] = useState(null) // transferId being acted on
   const handleIncomingResponse = async (xfer, accept) => {
     setTransferBusy(xfer.id)
     const r = await respondToTransfer(xfer.id, accept)
@@ -131,28 +159,32 @@ export default function Dashboard({ onNavigate }) {
   // Temporary testing allowlist — match League.jsx / Tournament.jsx so the
   // Home page tile is visible to the same set of previewers.
   const TEST_PLAYER_FIRST_NAMES = ['zornitsa', 'jon', 'uziel']
-  const meDash      = claimedId ? players.find(p => String(p.id) === String(claimedId)) : null
-  const myFirst     = (meDash?.name || '').trim().split(/\s+/)[0]?.toLowerCase() || ''
+  const meDash = claimedId ? players.find((p) => String(p.id) === String(claimedId)) : null
+  const myFirst = (meDash?.name || '').trim().split(/\s+/)[0]?.toLowerCase() || ''
   const isLeagueTester = !!myFirst && TEST_PLAYER_FIRST_NAMES.includes(myFirst)
-  const canSeeLeague   = isAdmin || isLeagueAdmin || isLeagueTester
+  const canSeeLeague = isAdmin || isLeagueAdmin || isLeagueTester
 
   // Pick the active league to surface. Same rule as League.jsx: prefer one
   // still in signups / group stage, otherwise the newest.
   const activeLeague = useMemo(() => {
     if (!leagues || leagues.length === 0) return null
-    return leagues.find(l => l.status === 'signups_open' || l.status === 'group_stage') || leagues[0]
+    return (
+      leagues.find((l) => l.status === 'signups_open' || l.status === 'group_stage') || leagues[0]
+    )
   }, [leagues])
   const leagueTeamCount = activeLeague
-    ? (leagueTeams || []).filter(t => String(t.league_id) === String(activeLeague.id) && t.status === 'confirmed').length
+    ? (leagueTeams || []).filter(
+        (t) => String(t.league_id) === String(activeLeague.id) && t.status === 'confirmed',
+      ).length
     : 0
-  const leagueRangeStart = activeLeague && (activeLeague.group_stage_start || activeLeague.starts_at)
-  const leagueRangeEnd   = activeLeague && (activeLeague.finals_end       || activeLeague.ends_at)
-  const fmtLeagueDate = (d) => d
-    ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
-    : '…'
+  const leagueRangeStart =
+    activeLeague && (activeLeague.group_stage_start || activeLeague.starts_at)
+  const leagueRangeEnd = activeLeague && (activeLeague.finals_end || activeLeague.ends_at)
+  const fmtLeagueDate = (d) =>
+    d ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '…'
 
   const claimedPlayer = claimedId ? getPlayerById(claimedId) : null
-  const activePlayers = players.filter(p => (p.status || 'active') === 'active')
+  const activePlayers = players.filter((p) => (p.status || 'active') === 'active')
 
   // ── New merch orders since last admin check ─────────────────────────────────
   const [newOrders, setNewOrders] = useState([])
@@ -163,20 +195,32 @@ export default function Dashboard({ onNavigate }) {
     const loadNewOrders = async () => {
       const lastChecked = localStorage.getItem(LAST_CHECK_KEY) || new Date(0).toISOString()
       const [ordersRes, itemsRes] = await Promise.all([
-        supabase.from('merch_interests').select('*').gte('created_at', lastChecked).order('created_at', { ascending: false }).limit(20),
+        supabase
+          .from('merch_interests')
+          .select('*')
+          .gte('created_at', lastChecked)
+          .order('created_at', { ascending: false })
+          .limit(20),
         supabase.from('merch_items').select('id, name').eq('active', true),
       ])
       const orders = ordersRes.data || []
-      const itemMap = Object.fromEntries((itemsRes.data || []).map(i => [i.id, i.name]))
+      const itemMap = Object.fromEntries((itemsRes.data || []).map((i) => [i.id, i.name]))
       // Match player names from context players array
-      setNewOrders(orders.map(o => {
-        const p = players.find(pl => String(pl.id) === String(o.player_id))
-        return { ...o, playerName: p?.name || null, itemName: itemMap[o.merch_item_id] || 'item' }
-      }))
+      setNewOrders(
+        orders.map((o) => {
+          const p = players.find((pl) => String(pl.id) === String(o.player_id))
+          return { ...o, playerName: p?.name || null, itemName: itemMap[o.merch_item_id] || 'item' }
+        }),
+      )
     }
     loadNewOrders()
-    const ch = supabase.channel('dash-merch-orders')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'merch_interests' }, loadNewOrders)
+    const ch = supabase
+      .channel('dash-merch-orders')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'merch_interests' },
+        loadNewOrders,
+      )
       .subscribe()
     return () => supabase.removeChannel(ch)
   }, [isAdmin, players])
@@ -189,87 +233,121 @@ export default function Dashboard({ onNavigate }) {
   const formatUpdateTime = (ts) => {
     if (!ts) return ''
     const diff = (Date.now() - new Date(ts)) / 1000
-    if (diff < 60)    return 'just now'
-    if (diff < 3600)  return `${Math.floor(diff / 60)}m ago`
+    if (diff < 60) return 'just now'
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
     if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
     return new Date(ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
   }
 
   // Recently completed tournaments (within 48 hours of tournament date)
   const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000
-  const recentlyCompleted = tournaments.filter(t => {
-    if (t.status !== 'completed') return false
-    const refDate = t.date || t.completedAt
-    if (!refDate) return false
-    return Date.now() - new Date(refDate).getTime() < TWO_DAYS_MS
-  }).sort((a, b) => new Date(b.date || b.completedAt) - new Date(a.date || a.completedAt))
+  const recentlyCompleted = tournaments
+    .filter((t) => {
+      if (t.status !== 'completed') return false
+      const refDate = t.date || t.completedAt
+      if (!refDate) return false
+      return Date.now() - new Date(refDate).getTime() < TWO_DAYS_MS
+    })
+    .sort((a, b) => new Date(b.date || b.completedAt) - new Date(a.date || a.completedAt))
 
   // Next upcoming tournament
   const upcoming = tournaments
-    .filter(t => t.status === 'upcoming' || t.status === 'active')
-    .sort((a, b) => (a.date || '') < (b.date || '') ? -1 : 1)[0]
+    .filter((t) => t.status === 'upcoming' || t.status === 'active')
+    .sort((a, b) => ((a.date || '') < (b.date || '') ? -1 : 1))[0]
 
   const regs = upcoming ? getTournamentRegistrations(upcoming.id) : []
-  const registered = regs.filter(r => r.status === 'registered')
-  const waitlisted = regs.filter(r => r.status === 'waitlist')
-  const unpaid     = regs.filter(r => r.status === 'registered' && r.paymentStatus !== 'paid' && r.paymentStatus !== 'transferred')
+  const registered = regs.filter((r) => r.status === 'registered')
+  const waitlisted = regs.filter((r) => r.status === 'waitlist')
+  const unpaid = regs.filter(
+    (r) =>
+      r.status === 'registered' && r.paymentStatus !== 'paid' && r.paymentStatus !== 'transferred',
+  )
 
-  const isRegistered = upcoming && claimedId
-    ? regs.some(r => r.playerId === claimedId && r.status === 'registered')
-    : false
+  const isRegistered =
+    upcoming && claimedId
+      ? regs.some((r) => r.playerId === claimedId && r.status === 'registered')
+      : false
 
   // Live countdown — targets the nearest event whose start time is still in the
   // future. Once the current event starts, the clock automatically flips to the
   // next one so there's always a countdown visible when future events exist.
   const allUpcoming = tournaments
-    .filter(t => t.status === 'upcoming' || t.status === 'active')
-    .sort((a, b) => (a.date || '') < (b.date || '') ? -1 : 1)
-  const countdownTournament = allUpcoming.find(t => {
-    if (!t.date) return false
-    const [y, mo, d] = t.date.split('-').map(Number)
-    if (!y) return false
-    const timeStr = (t.time || '').trim()
-    let hh = 19, mm = 0
-    const ampm = timeStr.match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)$/i)
-    const hm   = timeStr.match(/^(\d{1,2})[:.](\d{2})$/)
-    if (ampm) { hh = parseInt(ampm[1], 10) % 12; if (/pm/i.test(ampm[3])) hh += 12; mm = parseInt(ampm[2] || '0', 10) }
-    else if (hm) { hh = parseInt(hm[1], 10); mm = parseInt(hm[2], 10) }
-    return new Date(y, mo - 1, d, hh, mm).getTime() > Date.now()
-  }) || null
+    .filter((t) => t.status === 'upcoming' || t.status === 'active')
+    .sort((a, b) => ((a.date || '') < (b.date || '') ? -1 : 1))
+  const countdownTournament =
+    allUpcoming.find((t) => {
+      if (!t.date) return false
+      const [y, mo, d] = t.date.split('-').map(Number)
+      if (!y) return false
+      const timeStr = (t.time || '').trim()
+      let hh = 19,
+        mm = 0
+      const ampm = timeStr.match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)$/i)
+      const hm = timeStr.match(/^(\d{1,2})[:.](\d{2})$/)
+      if (ampm) {
+        hh = parseInt(ampm[1], 10) % 12
+        if (/pm/i.test(ampm[3])) hh += 12
+        mm = parseInt(ampm[2] || '0', 10)
+      } else if (hm) {
+        hh = parseInt(hm[1], 10)
+        mm = parseInt(hm[2], 10)
+      }
+      return new Date(y, mo - 1, d, hh, mm).getTime() > Date.now()
+    }) || null
   const countdown = useCountdown(countdownTournament)
 
   // Past completed tournaments for history section
   const pastTournaments = tournaments
-    .filter(t => t.status === 'completed')
-    .sort((a, b) => (b.date || '') > (a.date || '') ? 1 : -1)
+    .filter((t) => t.status === 'completed')
+    .sort((a, b) => ((b.date || '') > (a.date || '') ? 1 : -1))
     .slice(0, 6)
 
   // Community stats
-  const upcomingCount = tournaments.filter(t => t.status === 'upcoming' || t.status === 'active').length
-  const pastCount = tournaments.filter(t => t.status === 'completed').length + LEGACY_TOURNAMENTS.length
+  const upcomingCount = tournaments.filter(
+    (t) => t.status === 'upcoming' || t.status === 'active',
+  ).length
+  const pastCount =
+    tournaments.filter((t) => t.status === 'completed').length + LEGACY_TOURNAMENTS.length
 
   // Top 3 from the last completed tournament (DB first, then legacy fallback)
   const lastPodium = useMemo(() => {
     const lastCompleted = tournaments
-      .filter(t => t.status === 'completed')
-      .sort((a, b) => (b.date || '') > (a.date || '') ? 1 : -1)[0]
+      .filter((t) => t.status === 'completed')
+      .sort((a, b) => ((b.date || '') > (a.date || '') ? 1 : -1))[0]
     if (lastCompleted) {
-      const tRegs = getTournamentRegistrations(lastCompleted.id).filter(r => r.status === 'registered')
+      const tRegs = getTournamentRegistrations(lastCompleted.id).filter(
+        (r) => r.status === 'registered',
+      )
       const tMatches = getTournamentMatches(lastCompleted.id)
       if (tMatches.length > 0) {
         const stats = {}
-        tRegs.forEach(r => { stats[r.playerId] = { pts: 0, won: 0 } })
-        tMatches.filter(m => m.completed && m.score1 != null).forEach(m => {
-          const s1 = parseInt(m.score1) || 0, s2 = parseInt(m.score2) || 0
-          ;(m.team1Ids || []).forEach(id => { if (stats[id]) { stats[id].pts += s1; if (s1 > s2) stats[id].won++ } })
-          ;(m.team2Ids || []).forEach(id => { if (stats[id]) { stats[id].pts += s2; if (s2 > s1) stats[id].won++ } })
+        tRegs.forEach((r) => {
+          stats[r.playerId] = { pts: 0, won: 0 }
         })
+        tMatches
+          .filter((m) => m.completed && m.score1 != null)
+          .forEach((m) => {
+            const s1 = parseInt(m.score1) || 0,
+              s2 = parseInt(m.score2) || 0
+            ;(m.team1Ids || []).forEach((id) => {
+              if (stats[id]) {
+                stats[id].pts += s1
+                if (s1 > s2) stats[id].won++
+              }
+            })
+            ;(m.team2Ids || []).forEach((id) => {
+              if (stats[id]) {
+                stats[id].pts += s2
+                if (s2 > s1) stats[id].won++
+              }
+            })
+          })
         const podium = Object.entries(stats)
-          .sort((a, b) => b[1].pts !== a[1].pts ? b[1].pts - a[1].pts : b[1].won - a[1].won)
+          .sort((a, b) => (b[1].pts !== a[1].pts ? b[1].pts - a[1].pts : b[1].won - a[1].won))
           .slice(0, 3)
-          .map(([id]) => players.find(p => p.id === id))
+          .map(([id]) => players.find((p) => p.id === id))
           .filter(Boolean)
-          .map(p => p.name.split(' ')[0])
+          .map((p) => p.name.split(' ')[0])
         if (podium.length > 0) return podium
       }
     }
@@ -288,39 +366,46 @@ export default function Dashboard({ onNavigate }) {
   const myStats = useMemo(() => {
     if (!claimedId) return null
     const base = buildPlayerStats(
-      claimedId, matches, tournaments, registrations,
-      players, playerAliases || {}, LEGACY_TOURNAMENTS,
+      claimedId,
+      matches,
+      tournaments,
+      registrations,
+      players,
+      playerAliases || {},
+      LEGACY_TOURNAMENTS,
     )
 
     // Shape for the home card: short nemesis/best-partner rows.
-    const nemesis = Object.entries(base.h2h)
-      .filter(([, rec]) => rec.lost >= 1)
-      .map(([oppId, rec]) => {
-        const p = players.find(x => x.id === oppId)
-        return p ? { name: p.name.split(' ')[0], won: rec.won, lost: rec.lost } : null
-      })
-      .filter(Boolean)
-      .sort((a, b) => (b.lost - b.won) - (a.lost - a.won))[0] || null
+    const nemesis =
+      Object.entries(base.h2h)
+        .filter(([, rec]) => rec.lost >= 1)
+        .map(([oppId, rec]) => {
+          const p = players.find((x) => x.id === oppId)
+          return p ? { name: p.name.split(' ')[0], won: rec.won, lost: rec.lost } : null
+        })
+        .filter(Boolean)
+        .sort((a, b) => b.lost - b.won - (a.lost - a.won))[0] || null
 
-    const bestPartner = Object.entries(base.partners)
-      .filter(([, rec]) => rec.wins >= 1)
-      .map(([pId, rec]) => {
-        const p = players.find(x => x.id === pId)
-        return p ? { name: p.name.split(' ')[0], wins: rec.wins, games: rec.games } : null
-      })
-      .filter(Boolean)
-      .sort((a, b) => b.wins - a.wins)[0] || null
+    const bestPartner =
+      Object.entries(base.partners)
+        .filter(([, rec]) => rec.wins >= 1)
+        .map(([pId, rec]) => {
+          const p = players.find((x) => x.id === pId)
+          return p ? { name: p.name.split(' ')[0], wins: rec.wins, games: rec.games } : null
+        })
+        .filter(Boolean)
+        .sort((a, b) => b.wins - a.wins)[0] || null
 
     // Attendance streak: consecutive completed tournaments the player
     // registered for. This is dashboard-specific (uses registrations, not
     // match rows) so it stays here rather than moving into playerStats.
     const completedSorted = tournaments
-      .filter(t => t.status === 'completed')
-      .sort((a, b) => (b.date || '') > (a.date || '') ? 1 : -1)
+      .filter((t) => t.status === 'completed')
+      .sort((a, b) => ((b.date || '') > (a.date || '') ? 1 : -1))
     let streak = 0
     for (const t of completedSorted) {
       const tRegs = getTournamentRegistrations(t.id)
-      if (tRegs.some(r => r.playerId === claimedId && r.status === 'registered')) {
+      if (tRegs.some((r) => r.playerId === claimedId && r.status === 'registered')) {
         streak++
       } else {
         break
@@ -341,11 +426,23 @@ export default function Dashboard({ onNavigate }) {
       nemesis,
       bestPartner,
     }
-  }, [claimedId, matches, tournaments, players, registrations, playerAliases, getTournamentRegistrations])
+  }, [
+    claimedId,
+    matches,
+    tournaments,
+    players,
+    registrations,
+    playerAliases,
+    getTournamentRegistrations,
+  ])
 
   const formatDate = (d) => {
     if (!d) return '—'
-    return new Date(d).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
+    return new Date(d).toLocaleDateString('en-GB', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+    })
   }
 
   const formatShortDate = (d) => {
@@ -365,10 +462,13 @@ export default function Dashboard({ onNavigate }) {
   // Tip of the day — use custom tips from settings or defaults
   // Launch-day tip overrides (date string → exact tip text)
   const TIP_OVERRIDES = {
-    '2026-04-11': "Patience wins padel matches. Wait for the right ball to attack — don't force winners.",
-    '2026-04-12': "Always return to the center of your side after every shot — positioning wins more points than power.",
+    '2026-04-11':
+      "Patience wins padel matches. Wait for the right ball to attack — don't force winners.",
+    '2026-04-12':
+      'Always return to the center of your side after every shot — positioning wins more points than power.',
   }
-  const tips = (settings?.padelTips && settings.padelTips.length > 0) ? settings.padelTips : DEFAULT_TIPS
+  const tips =
+    settings?.padelTips && settings.padelTips.length > 0 ? settings.padelTips : DEFAULT_TIPS
   const todayTip = useMemo(() => {
     const today = new Date().toISOString().slice(0, 10)
     if (TIP_OVERRIDES[today]) return TIP_OVERRIDES[today]
@@ -379,7 +479,6 @@ export default function Dashboard({ onNavigate }) {
 
   return (
     <div className="space-y-5">
-
       {/* ── Greeting ──────────────────────────────────────────── */}
       <div>
         <p className="text-xl font-extrabold text-gray-800 leading-snug">{greetHello}</p>
@@ -393,9 +492,9 @@ export default function Dashboard({ onNavigate }) {
           page reloads. */}
       {(myIncomingTransfers.length > 0 || myOutgoingTransfers.length > 0) && (
         <div className="space-y-2">
-          {myIncomingTransfers.map(xfer => {
-            const fromP = players.find(p => String(p.id) === String(xfer.fromPlayerId))
-            const t     = tournaments.find(t => String(t.id) === String(xfer.tournamentId))
+          {myIncomingTransfers.map((xfer) => {
+            const fromP = players.find((p) => String(p.id) === String(xfer.fromPlayerId))
+            const t = tournaments.find((t) => String(t.id) === String(xfer.tournamentId))
             const fromFirst = (fromP?.name || '').split(/\s+/)[0] || 'Someone'
             const busy = transferBusy === xfer.id
             return (
@@ -407,7 +506,11 @@ export default function Dashboard({ onNavigate }) {
                       <strong>{fromFirst}</strong> wants to transfer their spot to you
                     </p>
                     {t && (
-                      <p className="text-xs text-amber-700 mt-0.5">{t.name}{t.date && ` · ${new Date(t.date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}`}</p>
+                      <p className="text-xs text-amber-700 mt-0.5">
+                        {t.name}
+                        {t.date &&
+                          ` · ${new Date(t.date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}`}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -430,9 +533,9 @@ export default function Dashboard({ onNavigate }) {
               </div>
             )
           })}
-          {myOutgoingTransfers.map(xfer => {
-            const toP = players.find(p => String(p.id) === String(xfer.toPlayerId))
-            const t   = tournaments.find(t => String(t.id) === String(xfer.tournamentId))
+          {myOutgoingTransfers.map((xfer) => {
+            const toP = players.find((p) => String(p.id) === String(xfer.toPlayerId))
+            const t = tournaments.find((t) => String(t.id) === String(xfer.tournamentId))
             const toFirst = (toP?.name || '').split(/\s+/)[0] || 'them'
             const busy = transferBusy === xfer.id
             return (
@@ -444,7 +547,11 @@ export default function Dashboard({ onNavigate }) {
                       <strong>Pending transfer</strong> to {toFirst} — awaiting acceptance.
                     </p>
                     {t && (
-                      <p className="text-xs text-amber-700 mt-0.5">{t.name}{t.date && ` · ${new Date(t.date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}`}</p>
+                      <p className="text-xs text-amber-700 mt-0.5">
+                        {t.name}
+                        {t.date &&
+                          ` · ${new Date(t.date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}`}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -481,22 +588,32 @@ export default function Dashboard({ onNavigate }) {
       {/* ── Countdown flip clock + streak ──────────────────────── */}
       {countdown && (
         <div className="text-center">
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Next Lobster Event in</p>
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">
+            Next Lobster Event in
+          </p>
           <div className="flex justify-center gap-2">
             <div className="bg-lobster-teal-dark rounded-xl w-16 py-2.5">
-              <p className="text-2xl font-black text-white tabular-nums">{String(countdown.days).padStart(2,'0')}</p>
+              <p className="text-2xl font-black text-white tabular-nums">
+                {String(countdown.days).padStart(2, '0')}
+              </p>
               <p className="text-[9px] text-white/60 font-medium mt-0.5">DAYS</p>
             </div>
             <div className="bg-lobster-teal-dark rounded-xl w-16 py-2.5">
-              <p className="text-2xl font-black text-white tabular-nums">{String(countdown.hours).padStart(2,'0')}</p>
+              <p className="text-2xl font-black text-white tabular-nums">
+                {String(countdown.hours).padStart(2, '0')}
+              </p>
               <p className="text-[9px] text-white/60 font-medium mt-0.5">HOURS</p>
             </div>
             <div className="bg-lobster-teal-dark rounded-xl w-16 py-2.5">
-              <p className="text-2xl font-black text-white tabular-nums">{String(countdown.mins).padStart(2,'0')}</p>
+              <p className="text-2xl font-black text-white tabular-nums">
+                {String(countdown.mins).padStart(2, '0')}
+              </p>
               <p className="text-[9px] text-white/60 font-medium mt-0.5">MIN</p>
             </div>
             <div className="bg-lobster-teal-dark rounded-xl w-16 py-2.5">
-              <p className="text-2xl font-black text-white tabular-nums">{String(countdown.secs).padStart(2,'0')}</p>
+              <p className="text-2xl font-black text-white tabular-nums">
+                {String(countdown.secs).padStart(2, '0')}
+              </p>
               <p className="text-[9px] text-white/60 font-medium mt-0.5">SEC</p>
             </div>
           </div>
@@ -524,7 +641,9 @@ export default function Dashboard({ onNavigate }) {
             <Lightbulb size={17} className="text-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[11px] font-bold text-amber-700 uppercase tracking-wide mb-1">Tip of the Day</p>
+            <p className="text-[11px] font-bold text-amber-700 uppercase tracking-wide mb-1">
+              Tip of the Day
+            </p>
             <p className="text-sm text-gray-700 leading-relaxed">{todayTip}</p>
             <p className="text-xs text-gray-400 italic mt-1.5">– ask Jon for more tips</p>
           </div>
@@ -533,28 +652,43 @@ export default function Dashboard({ onNavigate }) {
 
       {/* ── Community quick links ─────────────────────────────── */}
       <div className="grid grid-cols-4 gap-2">
-        <button onClick={() => onNavigate('players')} className="bg-white rounded-2xl py-3 text-center shadow-md border border-gray-100 active:scale-[0.95] active:shadow-sm transition-all">
+        <button
+          onClick={() => onNavigate('players')}
+          className="bg-white rounded-2xl py-3 text-center shadow-md border border-gray-100 active:scale-[0.95] active:shadow-sm transition-all"
+        >
           <Users size={16} className="text-lobster-teal mx-auto mb-1" />
           <p className="text-base font-bold text-gray-800">{activePlayers.length}</p>
           <p className="text-[9px] text-gray-400 font-medium">Players</p>
         </button>
-        <button onClick={() => onNavigate('tournament')} className="bg-white rounded-2xl py-3 text-center shadow-md border border-gray-100 active:scale-[0.95] active:shadow-sm transition-all">
+        <button
+          onClick={() => onNavigate('tournament')}
+          className="bg-white rounded-2xl py-3 text-center shadow-md border border-gray-100 active:scale-[0.95] active:shadow-sm transition-all"
+        >
           <Calendar size={16} className="text-lobster-orange mx-auto mb-1" />
           <p className="text-base font-bold text-gray-800">{upcomingCount}</p>
           <p className="text-[9px] text-gray-400 font-medium">Upcoming</p>
         </button>
-        <button onClick={() => onNavigate('history')} className="bg-white rounded-2xl py-3 text-center shadow-md border border-gray-100 active:scale-[0.95] active:shadow-sm transition-all">
+        <button
+          onClick={() => onNavigate('history')}
+          className="bg-white rounded-2xl py-3 text-center shadow-md border border-gray-100 active:scale-[0.95] active:shadow-sm transition-all"
+        >
           <Trophy size={16} className="text-yellow-500 mx-auto mb-1" />
           <p className="text-base font-bold text-gray-800">{pastCount}</p>
           <p className="text-[9px] text-gray-400 font-medium">Past</p>
         </button>
-        <button onClick={() => onNavigate('history')} className="bg-white rounded-2xl py-2 shadow-md border border-gray-100 active:scale-[0.95] active:shadow-sm transition-all overflow-hidden">
+        <button
+          onClick={() => onNavigate('history')}
+          className="bg-white rounded-2xl py-2 shadow-md border border-gray-100 active:scale-[0.95] active:shadow-sm transition-all overflow-hidden"
+        >
           <Award size={16} className="text-yellow-500 mx-auto mb-0.5" />
           {lastPodium && lastPodium.length > 0 ? (
             <div className="px-1.5">
               {lastPodium.map((name, i) => (
-                <p key={i} className="text-[11px] font-bold text-gray-700 truncate leading-snug text-left">
-                  {['🥇','🥈','🥉'][i]} {name}
+                <p
+                  key={i}
+                  className="text-[11px] font-bold text-gray-700 truncate leading-snug text-left"
+                >
+                  {['🥇', '🥈', '🥉'][i]} {name}
                 </p>
               ))}
             </div>
@@ -570,9 +704,14 @@ export default function Dashboard({ onNavigate }) {
           className="rounded-2xl p-4 shadow-sm bg-white/80 border border-white/90"
           style={{ backdropFilter: 'blur(12px)' }}
         >
-          <p className="text-[10px] font-bold text-lobster-orange uppercase tracking-wide mb-1">Your Next Event</p>
+          <p className="text-[10px] font-bold text-lobster-orange uppercase tracking-wide mb-1">
+            Your Next Event
+          </p>
           <h2 className="text-lg font-bold text-gray-800">
-            <button onClick={() => onNavigate('registration', upcoming)} className="hover:text-lobster-teal active:scale-95 transition-all text-left">
+            <button
+              onClick={() => onNavigate('registration', upcoming)}
+              className="hover:text-lobster-teal active:scale-95 transition-all text-left"
+            >
               {upcoming.name}
             </button>
           </h2>
@@ -593,9 +732,15 @@ export default function Dashboard({ onNavigate }) {
               {(() => {
                 const tp = parseFloat(upcoming.totalPrice) || 0
                 const mp = parseInt(upcoming.maxPlayers) || 16
-                const ppCost = (!upcoming.courtBookingMode || upcoming.courtBookingMode === 'admin_all')
-                  ? (tp > 0 ? tp / mp : 0)
-                  : (upcoming.courts || []).reduce((s, c) => s + (parseFloat(c.costPerPerson) || 0), 0)
+                const ppCost =
+                  !upcoming.courtBookingMode || upcoming.courtBookingMode === 'admin_all'
+                    ? tp > 0
+                      ? tp / mp
+                      : 0
+                    : (upcoming.courts || []).reduce(
+                        (s, c) => s + (parseFloat(c.costPerPerson) || 0),
+                        0,
+                      )
                 return ppCost > 0 ? (
                   <p className="text-sm font-semibold text-lobster-teal leading-tight mt-0.5">
                     {fmtEur(ppCost)}/pp
@@ -610,8 +755,8 @@ export default function Dashboard({ onNavigate }) {
           </div>
 
           {/* Registration status badge */}
-          {claimedId && (
-            isRegistered ? (
+          {claimedId &&
+            (isRegistered ? (
               <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-1.5 inline-flex items-center gap-1.5 mb-3">
                 <span className="text-green-600 text-xs">✓</span>
                 <span className="text-xs font-semibold text-green-700">You're registered!</span>
@@ -622,10 +767,11 @@ export default function Dashboard({ onNavigate }) {
                 className="bg-orange-50 border border-orange-200 rounded-lg px-3 py-1.5 inline-flex items-center gap-1.5 mb-3 active:scale-95 transition-all"
               >
                 <span className="text-orange-500 text-xs">!</span>
-                <span className="text-xs font-semibold text-orange-700">Not signed up yet — tap to join</span>
+                <span className="text-xs font-semibold text-orange-700">
+                  Not signed up yet — tap to join
+                </span>
               </button>
-            ) : null
-          )}
+            ) : null)}
 
           {/* Event description — preserves line breaks from the admin form. */}
           {upcoming.notes && upcoming.notes.trim() && (
@@ -662,9 +808,14 @@ export default function Dashboard({ onNavigate }) {
         <div className="card flex flex-col items-center py-8 text-center gap-2">
           <Calendar size={36} className="text-gray-300" />
           <p className="text-sm text-gray-500">No upcoming events right now</p>
-          <p className="text-xs text-gray-400">Check back soon — next tournament is around the corner.</p>
+          <p className="text-xs text-gray-400">
+            Check back soon — next tournament is around the corner.
+          </p>
           {isAdmin && (
-            <button onClick={() => onNavigate('tournament')} className="btn-primary text-sm py-2 px-4 mt-2">
+            <button
+              onClick={() => onNavigate('tournament')}
+              className="btn-primary text-sm py-2 px-4 mt-2"
+            >
               Create an Event
             </button>
           )}
@@ -685,22 +836,28 @@ export default function Dashboard({ onNavigate }) {
           <div className="flex items-start gap-3">
             {leagueRangeStart && <DateTile date={leagueRangeStart} size="md" />}
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">Lobster League</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">
+                Lobster League
+              </p>
               <h2 className="text-base sm:text-lg font-extrabold leading-tight break-words">
                 {activeLeague.name}
               </h2>
               {(leagueRangeStart || leagueRangeEnd) && (
                 <p className="text-sm font-semibold mt-1 flex items-center gap-1 opacity-90">
-                  <Calendar size={13} /> {fmtLeagueDate(leagueRangeStart)} – {fmtLeagueDate(leagueRangeEnd)}
+                  <Calendar size={13} /> {fmtLeagueDate(leagueRangeStart)} –{' '}
+                  {fmtLeagueDate(leagueRangeEnd)}
                 </p>
               )}
               <div className="flex items-center gap-3 mt-2 text-xs opacity-90">
-                <span className="flex items-center gap-1"><Users size={12} /> {leagueTeamCount} teams</span>
-                {activeLeague.signup_closes_at && new Date(activeLeague.signup_closes_at).getTime() > Date.now() && (
-                  <span className="bg-yellow-300 text-gray-900 font-semibold px-2 py-0.5 rounded-full">
-                    Sign-up open
-                  </span>
-                )}
+                <span className="flex items-center gap-1">
+                  <Users size={12} /> {leagueTeamCount} teams
+                </span>
+                {activeLeague.signup_closes_at &&
+                  new Date(activeLeague.signup_closes_at).getTime() > Date.now() && (
+                    <span className="bg-yellow-300 text-gray-900 font-semibold px-2 py-0.5 rounded-full">
+                      Sign-up open
+                    </span>
+                  )}
               </div>
             </div>
             <ChevronRight size={18} className="text-white/70 flex-shrink-0" />
@@ -709,26 +866,51 @@ export default function Dashboard({ onNavigate }) {
       )}
 
       {/* ── Recently completed — see results ──────────────────── */}
-      {recentlyCompleted.map(t => {
-        const tMatches  = getTournamentMatches(t.id)
-        const tRegs     = getTournamentRegistrations(t.id).filter(r => r.status === 'registered')
+      {recentlyCompleted.map((t) => {
+        const tMatches = getTournamentMatches(t.id)
+        const tRegs = getTournamentRegistrations(t.id).filter((r) => r.status === 'registered')
         const stats = {}
-        tRegs.forEach(r => { stats[r.playerId] = { pts: 0, won: 0 } })
-        tMatches.filter(m => m.completed && m.score1 != null).forEach(m => {
-          const s1 = parseInt(m.score1) || 0, s2 = parseInt(m.score2) || 0
-          ;(m.team1Ids || []).forEach(id => { if (stats[id]) { stats[id].pts += s1; if (s1 > s2) stats[id].won++ } })
-          ;(m.team2Ids || []).forEach(id => { if (stats[id]) { stats[id].pts += s2; if (s2 > s1) stats[id].won++ } })
+        tRegs.forEach((r) => {
+          stats[r.playerId] = { pts: 0, won: 0 }
         })
+        tMatches
+          .filter((m) => m.completed && m.score1 != null)
+          .forEach((m) => {
+            const s1 = parseInt(m.score1) || 0,
+              s2 = parseInt(m.score2) || 0
+            ;(m.team1Ids || []).forEach((id) => {
+              if (stats[id]) {
+                stats[id].pts += s1
+                if (s1 > s2) stats[id].won++
+              }
+            })
+            ;(m.team2Ids || []).forEach((id) => {
+              if (stats[id]) {
+                stats[id].pts += s2
+                if (s2 > s1) stats[id].won++
+              }
+            })
+          })
         const sorted = tRegs
-          .map(r => ({ ...r, pts: stats[r.playerId]?.pts ?? 0, won: stats[r.playerId]?.won ?? 0, player: players.find(p => p.id === r.playerId) }))
-          .sort((a, b) => b.pts !== a.pts ? b.pts - a.pts : b.won - a.won)
+          .map((r) => ({
+            ...r,
+            pts: stats[r.playerId]?.pts ?? 0,
+            won: stats[r.playerId]?.won ?? 0,
+            player: players.find((p) => p.id === r.playerId),
+          }))
+          .sort((a, b) => (b.pts !== a.pts ? b.pts - a.pts : b.won - a.won))
         const winner = sorted[0]?.player
 
         return (
-          <div key={t.id} className="bg-gradient-to-r from-yellow-400 to-lobster-orange rounded-2xl p-4 text-white">
+          <div
+            key={t.id}
+            className="bg-gradient-to-r from-yellow-400 to-lobster-orange rounded-2xl p-4 text-white"
+          >
             <div className="flex items-center gap-2 mb-1">
               <span className="text-lg">🏆</span>
-              <p className="text-xs font-bold uppercase tracking-wide opacity-80">Tournament Complete!</p>
+              <p className="text-xs font-bold uppercase tracking-wide opacity-80">
+                Tournament Complete!
+              </p>
             </div>
             <h3 className="font-bold text-base mb-0.5">{t.name}</h3>
             {winner && (
@@ -753,43 +935,50 @@ export default function Dashboard({ onNavigate }) {
           <p className="text-sm text-red-700 font-medium">
             {unpaid.length} player{unpaid.length > 1 ? 's' : ''} haven't paid yet
           </p>
-          <button onClick={() => onNavigate('payments', upcoming)} className="ml-auto text-xs text-red-600 font-semibold">
+          <button
+            onClick={() => onNavigate('payments', upcoming)}
+            className="ml-auto text-xs text-red-600 font-semibold"
+          >
             View
           </button>
         </div>
       )}
 
       {/* ── Birthday alerts (admin) ───────────────────────────── */}
-      {isAdmin && (() => {
-        const today = new Date(); today.setHours(0, 0, 0, 0)
-        const upcoming7 = players
-          .filter(p => p.birthday)
-          .map(p => {
-            const d = new Date(p.birthday)
-            let bday = new Date(today.getFullYear(), d.getMonth(), d.getDate())
-            if (bday < today) bday = new Date(today.getFullYear() + 1, d.getMonth(), d.getDate())
-            const diff = Math.round((bday - today) / 86400000)
-            return { p, diff }
-          })
-          .filter(({ diff }) => diff <= 7)
-          .sort((a, b) => a.diff - b.diff)
+      {isAdmin &&
+        (() => {
+          const today = new Date()
+          today.setHours(0, 0, 0, 0)
+          const upcoming7 = players
+            .filter((p) => p.birthday)
+            .map((p) => {
+              const d = new Date(p.birthday)
+              let bday = new Date(today.getFullYear(), d.getMonth(), d.getDate())
+              if (bday < today) bday = new Date(today.getFullYear() + 1, d.getMonth(), d.getDate())
+              const diff = Math.round((bday - today) / 86400000)
+              return { p, diff }
+            })
+            .filter(({ diff }) => diff <= 7)
+            .sort((a, b) => a.diff - b.diff)
 
-        if (upcoming7.length === 0) return null
-        return (
-          <div className="card border-l-4 border-pink-300 bg-pink-50/40 space-y-2">
-            <p className="font-bold text-sm text-pink-700">🎂 Upcoming Birthdays</p>
-            {upcoming7.map(({ p, diff }) => (
-              <div key={p.id} className="flex items-center gap-2">
-                <span className="text-base">{diff === 0 ? '🎉' : '🎂'}</span>
-                <span className="text-sm font-semibold text-gray-700">{p.name.split(' ')[0]}</span>
-                <span className="text-xs text-gray-500 ml-auto">
-                  {diff === 0 ? 'Today! 🎈' : diff === 1 ? 'Tomorrow' : `In ${diff} days`}
-                </span>
-              </div>
-            ))}
-          </div>
-        )
-      })()}
+          if (upcoming7.length === 0) return null
+          return (
+            <div className="card border-l-4 border-pink-300 bg-pink-50/40 space-y-2">
+              <p className="font-bold text-sm text-pink-700">🎂 Upcoming Birthdays</p>
+              {upcoming7.map(({ p, diff }) => (
+                <div key={p.id} className="flex items-center gap-2">
+                  <span className="text-base">{diff === 0 ? '🎉' : '🎂'}</span>
+                  <span className="text-sm font-semibold text-gray-700">
+                    {p.name.split(' ')[0]}
+                  </span>
+                  <span className="text-xs text-gray-500 ml-auto">
+                    {diff === 0 ? 'Today! 🎈' : diff === 1 ? 'Tomorrow' : `In ${diff} days`}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )
+        })()}
 
       {/* ── New merch orders (admin) ─────────────────────────── */}
       {isAdmin && newOrders.length > 0 && (
@@ -797,10 +986,18 @@ export default function Dashboard({ onNavigate }) {
           <div className="flex items-center justify-between">
             <p className="font-bold text-sm text-gray-700 flex items-center gap-1.5">
               <ShoppingBag size={14} className="text-lobster-teal" /> New Merch Orders
-              <span className="bg-lobster-teal text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{newOrders.length}</span>
+              <span className="bg-lobster-teal text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                {newOrders.length}
+              </span>
             </p>
             <div className="flex gap-2">
-              <button onClick={() => { dismissMerchOrders(); onNavigate('merch-orders') }} className="text-xs text-lobster-teal font-semibold">
+              <button
+                onClick={() => {
+                  dismissMerchOrders()
+                  onNavigate('merch-orders')
+                }}
+                className="text-xs text-lobster-teal font-semibold"
+              >
                 View all
               </button>
               <button onClick={dismissMerchOrders} className="text-xs text-gray-400 font-medium">
@@ -808,7 +1005,7 @@ export default function Dashboard({ onNavigate }) {
               </button>
             </div>
           </div>
-          {newOrders.slice(0, 5).map(o => {
+          {newOrders.slice(0, 5).map((o) => {
             const playerName = o.playerName?.split(' ')[0] || 'Someone'
             const itemName = o.itemName || 'item'
             const ago = formatUpdateTime(o.created_at)
@@ -819,7 +1016,8 @@ export default function Dashboard({ onNavigate }) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-gray-700 truncate">
-                    <span className="font-semibold">{playerName}</span> ordered <span className="font-medium">{itemName}</span>
+                    <span className="font-semibold">{playerName}</span> ordered{' '}
+                    <span className="font-medium">{itemName}</span>
                     {o.size && <span className="text-gray-400"> · {o.size}</span>}
                   </p>
                 </div>
@@ -844,11 +1042,17 @@ export default function Dashboard({ onNavigate }) {
             <h3 className="font-bold text-gray-700 flex items-center gap-1.5">
               <Award size={15} className="text-lobster-orange" /> Your Stats
             </h3>
-            <button onClick={() => onNavigate('players', { focusPlayerId: claimedId })} className="text-xs text-lobster-teal font-semibold">
+            <button
+              onClick={() => onNavigate('players', { focusPlayerId: claimedId })}
+              className="text-xs text-lobster-teal font-semibold"
+            >
               View full profile
             </button>
           </div>
-          <div className="bg-white/80 rounded-2xl p-4 shadow-sm border border-white/90" style={{ backdropFilter: 'blur(12px)' }}>
+          <div
+            className="bg-white/80 rounded-2xl p-4 shadow-sm border border-white/90"
+            style={{ backdropFilter: 'blur(12px)' }}
+          >
             <div className="grid grid-cols-4 gap-2 text-center">
               <div>
                 <p className="text-lg font-bold text-gray-800">{myStats.played}</p>
@@ -870,8 +1074,10 @@ export default function Dashboard({ onNavigate }) {
 
             {myStats.played === 0 ? (
               <div className="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500 text-center">
-                No matches logged yet — your stats will populate as soon as a
-                tournament result is recorded. Tap <span className="font-semibold text-lobster-teal">View full profile</span> for your historical record.
+                No matches logged yet — your stats will populate as soon as a tournament result is
+                recorded. Tap{' '}
+                <span className="font-semibold text-lobster-teal">View full profile</span> for your
+                historical record.
               </div>
             ) : (
               <>
@@ -886,12 +1092,14 @@ export default function Dashboard({ onNavigate }) {
                     )}
                     {myStats.nemesis && (
                       <span className="text-xs bg-red-50 text-red-700 px-2.5 py-1 rounded-lg font-semibold">
-                        😈 Nemesis: {myStats.nemesis.name} ({myStats.nemesis.won}W-{myStats.nemesis.lost}L)
+                        😈 Nemesis: {myStats.nemesis.name} ({myStats.nemesis.won}W-
+                        {myStats.nemesis.lost}L)
                       </span>
                     )}
                     {myStats.bestPartner && (
                       <span className="text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-lg font-semibold">
-                        🤝 Best partner: {myStats.bestPartner.name} ({myStats.bestPartner.wins}W/{myStats.bestPartner.games}G)
+                        🤝 Best partner: {myStats.bestPartner.name} ({myStats.bestPartner.wins}W/
+                        {myStats.bestPartner.games}G)
                       </span>
                     )}
                   </div>
@@ -899,7 +1107,10 @@ export default function Dashboard({ onNavigate }) {
 
                 <div className="mt-2 pt-2 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
                   <span>{myStats.pts} total points</span>
-                  <span>Game diff: {myStats.pointsFor - myStats.pointsAgainst > 0 ? '+' : ''}{myStats.pointsFor - myStats.pointsAgainst}</span>
+                  <span>
+                    Game diff: {myStats.pointsFor - myStats.pointsAgainst > 0 ? '+' : ''}
+                    {myStats.pointsFor - myStats.pointsAgainst}
+                  </span>
                 </div>
               </>
             )}
@@ -917,24 +1128,48 @@ export default function Dashboard({ onNavigate }) {
             <h3 className="font-bold text-gray-700 flex items-center gap-1.5">
               <Trophy size={15} className="text-yellow-500" /> Past Events
             </h3>
-            <button onClick={() => onNavigate('history')} className="text-xs text-lobster-teal font-semibold">
+            <button
+              onClick={() => onNavigate('history')}
+              className="text-xs text-lobster-teal font-semibold"
+            >
               Full history
             </button>
           </div>
           <div className="space-y-2">
-            {pastTournaments.map(t => {
+            {pastTournaments.map((t) => {
               const tMatches = getTournamentMatches(t.id)
-              const tRegs = getTournamentRegistrations(t.id).filter(r => r.status === 'registered')
+              const tRegs = getTournamentRegistrations(t.id).filter(
+                (r) => r.status === 'registered',
+              )
               const stats = {}
-              tRegs.forEach(r => { stats[r.playerId] = { pts: 0, won: 0 } })
-              tMatches.filter(m => m.completed && m.score1 != null).forEach(m => {
-                const s1 = parseInt(m.score1) || 0, s2 = parseInt(m.score2) || 0
-                ;(m.team1Ids || []).forEach(id => { if (stats[id]) { stats[id].pts += s1; if (s1 > s2) stats[id].won++ } })
-                ;(m.team2Ids || []).forEach(id => { if (stats[id]) { stats[id].pts += s2; if (s2 > s1) stats[id].won++ } })
+              tRegs.forEach((r) => {
+                stats[r.playerId] = { pts: 0, won: 0 }
               })
+              tMatches
+                .filter((m) => m.completed && m.score1 != null)
+                .forEach((m) => {
+                  const s1 = parseInt(m.score1) || 0,
+                    s2 = parseInt(m.score2) || 0
+                  ;(m.team1Ids || []).forEach((id) => {
+                    if (stats[id]) {
+                      stats[id].pts += s1
+                      if (s1 > s2) stats[id].won++
+                    }
+                  })
+                  ;(m.team2Ids || []).forEach((id) => {
+                    if (stats[id]) {
+                      stats[id].pts += s2
+                      if (s2 > s1) stats[id].won++
+                    }
+                  })
+                })
               const winner = tRegs
-                .map(r => ({ pts: stats[r.playerId]?.pts ?? 0, won: stats[r.playerId]?.won ?? 0, player: players.find(p => p.id === r.playerId) }))
-                .sort((a, b) => b.pts !== a.pts ? b.pts - a.pts : b.won - a.won)[0]?.player
+                .map((r) => ({
+                  pts: stats[r.playerId]?.pts ?? 0,
+                  won: stats[r.playerId]?.won ?? 0,
+                  player: players.find((p) => p.id === r.playerId),
+                }))
+                .sort((a, b) => (b.pts !== a.pts ? b.pts - a.pts : b.won - a.won))[0]?.player
 
               return (
                 <button

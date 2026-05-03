@@ -26,10 +26,10 @@
  * 'guest', not from the raw tables.
  */
 export const PUBLIC_PAGES = Object.freeze([
-  'dashboard',   // landing — lists upcoming events for guests. Every sub-tile
-                 // in the bottom nav (Events, Players, Merch, Settings) and
-                 // every event tile routes to a protected page, which makes
-                 // the VerificationGate surface the sign-in/up popup.
+  'dashboard', // landing — lists upcoming events for guests. Every sub-tile
+  // in the bottom nav (Events, Players, Merch, Settings) and
+  // every event tile routes to a protected page, which makes
+  // the VerificationGate surface the sign-in/up popup.
 ])
 
 /**
@@ -38,17 +38,17 @@ export const PUBLIC_PAGES = Object.freeze([
  * runtime. If you add a page, put it here OR in PUBLIC_PAGES — pick one.
  */
 export const PROTECTED_PAGES = Object.freeze([
-  'tournament',    // events listing — protected so guests get the sign-in popup
-  'players',       // roster (PII)
-  'registration',  // signing up for a tournament (writes, identity-linked)
-  'payments',      // payment status (identity-linked)
-  'schedule',      // match schedule (can include identity)
-  'scores',        // live score updates (writes)
-  'game',          // match play view (writes)
-  'merch',         // merch orders (identity-linked)
-  'settings',      // profile + admin settings
-  'history',       // historical records
-  'league',        // league management
+  'tournament', // events listing — protected so guests get the sign-in popup
+  'players', // roster (PII)
+  'registration', // signing up for a tournament (writes, identity-linked)
+  'payments', // payment status (identity-linked)
+  'schedule', // match schedule (can include identity)
+  'scores', // live score updates (writes)
+  'game', // match play view (writes)
+  'merch', // merch orders (identity-linked)
+  'settings', // profile + admin settings
+  'history', // historical records
+  'league', // league management
   'transfer-accept', // recipient of a registration transfer responding to the offer
 ])
 

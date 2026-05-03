@@ -9,9 +9,9 @@ import { useApp } from '../context/AppContext'
 export default function PlayerProfile({ player, onSave }) {
   const { updatePlayer } = useApp()
   const [playtomic, setPlaytomic] = useState(player?.playtomic_level ?? '')
-  const [tagline, setTagline]     = useState(player?.tagline ?? '')
-  const [saving, setSaving]       = useState(false)
-  const [saved, setSaved]         = useState(false)
+  const [tagline, setTagline] = useState(player?.tagline ?? '')
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
 
   const hasChanges =
     String(playtomic) !== String(player?.playtomic_level ?? '') ||
@@ -21,7 +21,7 @@ export default function PlayerProfile({ player, onSave }) {
     setSaving(true)
     await updatePlayer(player.id, {
       playtomicLevel: playtomic ? parseFloat(playtomic) : 0,
-      tagline:        tagline.trim() || '',
+      tagline: tagline.trim() || '',
     })
     setSaving(false)
     setSaved(true)
@@ -30,17 +30,28 @@ export default function PlayerProfile({ player, onSave }) {
   }
 
   const initials = (player?.name ?? '?')
-    .split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase()
 
   return (
-    <div className="rounded-2xl overflow-hidden"
-         style={{ border: '1px solid rgba(61,122,138,0.15)' }}>
-
+    <div
+      className="rounded-2xl overflow-hidden"
+      style={{ border: '1px solid rgba(61,122,138,0.15)' }}
+    >
       {/* Header */}
-      <div className="flex items-center gap-4 px-5 py-5"
-           style={{ background: '#2A5A68' }}>
-        <div className="flex-shrink-0 flex items-center justify-center rounded-full text-white font-semibold text-lg"
-             style={{ width: 52, height: 52, background: '#E8A030', border: '2px solid rgba(255,255,255,0.3)' }}>
+      <div className="flex items-center gap-4 px-5 py-5" style={{ background: '#2A5A68' }}>
+        <div
+          className="flex-shrink-0 flex items-center justify-center rounded-full text-white font-semibold text-lg"
+          style={{
+            width: 52,
+            height: 52,
+            background: '#E8A030',
+            border: '2px solid rgba(255,255,255,0.3)',
+          }}
+        >
           {initials}
         </div>
         <div>
@@ -53,22 +64,26 @@ export default function PlayerProfile({ player, onSave }) {
 
       {/* Form */}
       <div className="p-5 flex flex-col gap-5" style={{ background: 'white' }}>
-
         {/* Playtomic level */}
         <div>
           <label style={labelStyle}>Playtomic level</label>
           <div className="relative">
             <input
-              type="number" min="1.0" max="7.0" step="0.1"
+              type="number"
+              min="1.0"
+              max="7.0"
+              step="0.1"
               value={playtomic}
-              onChange={e => setPlaytomic(e.target.value)}
+              onChange={(e) => setPlaytomic(e.target.value)}
               placeholder="e.g. 3.5"
               style={inputStyle}
               className="w-full"
             />
             {player?.playtomic_level && (
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs"
-                    style={{ color: '#9BADB2' }}>
+              <span
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs"
+                style={{ color: '#9BADB2' }}
+              >
                 currently {player.playtomic_level}
               </span>
             )}
@@ -82,7 +97,7 @@ export default function PlayerProfile({ player, onSave }) {
           <input
             type="text"
             value={tagline}
-            onChange={e => setTagline(e.target.value)}
+            onChange={(e) => setTagline(e.target.value)}
             placeholder="e.g. The one who always calls the ball out"
             maxLength={80}
             style={inputStyle}
@@ -95,11 +110,15 @@ export default function PlayerProfile({ player, onSave }) {
 
         {/* Last updated */}
         {player?.playtomic_updated_at && (
-          <div className="rounded-xl px-3 py-2.5 text-xs"
-               style={{ background: '#EAF4F7', color: '#3D7A8A' }}>
+          <div
+            className="rounded-xl px-3 py-2.5 text-xs"
+            style={{ background: '#EAF4F7', color: '#3D7A8A' }}
+          >
             Last updated:{' '}
             {new Date(player.playtomic_updated_at).toLocaleDateString('en-GB', {
-              day: 'numeric', month: 'short', year: 'numeric',
+              day: 'numeric',
+              month: 'short',
+              year: 'numeric',
             })}
           </div>
         )}
@@ -109,7 +128,11 @@ export default function PlayerProfile({ player, onSave }) {
           onClick={handleSave}
           disabled={saving || !hasChanges}
           className="w-full py-3.5 rounded-xl text-sm font-medium text-white transition-colors"
-          style={{ background: hasChanges ? '#D94F2B' : '#E0D5C8', cursor: hasChanges ? 'pointer' : 'not-allowed' }}>
+          style={{
+            background: hasChanges ? '#D94F2B' : '#E0D5C8',
+            cursor: hasChanges ? 'pointer' : 'not-allowed',
+          }}
+        >
           {saving ? 'Saving…' : saved ? '✓ Saved!' : 'Save changes'}
         </button>
       </div>

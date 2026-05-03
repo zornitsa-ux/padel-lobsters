@@ -1,5 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { CheckCircle, XCircle, ArrowRightLeft, AlertCircle, ChevronLeft, LogOut } from 'lucide-react'
+import {
+  CheckCircle,
+  XCircle,
+  ArrowRightLeft,
+  AlertCircle,
+  ChevronLeft,
+  LogOut,
+} from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { letterColor } from '../lib/letterColors'
 
@@ -18,25 +25,32 @@ import { letterColor } from '../lib/letterColors'
 //   onNavigate(page, tournament?): standard nav helper used across the app
 export default function TransferAccept({ transferId, onNavigate }) {
   const {
-    transfers, players, tournaments, claimedId, isAdmin,
-    respondToTransfer, logout, loading,
+    transfers,
+    players,
+    tournaments,
+    claimedId,
+    isAdmin,
+    respondToTransfer,
+    logout,
+    loading,
   } = useApp()
 
-  const [busy, setBusy]     = useState(null) // 'accept' | 'decline' | null
-  const [done, setDone]     = useState(null) // { kind: 'accepted' | 'declined' }
-  const [error, setError]   = useState(null)
+  const [busy, setBusy] = useState(null) // 'accept' | 'decline' | null
+  const [done, setDone] = useState(null) // { kind: 'accepted' | 'declined' }
+  const [error, setError] = useState(null)
 
   const transfer = useMemo(
-    () => transfers.find(t => String(t.id) === String(transferId)),
-    [transfers, transferId]
+    () => transfers.find((t) => String(t.id) === String(transferId)),
+    [transfers, transferId],
   )
-  const fromPlayer  = transfer && players.find(p => String(p.id) === String(transfer.fromPlayerId))
-  const toPlayer    = transfer && players.find(p => String(p.id) === String(transfer.toPlayerId))
-  const tournament  = transfer && tournaments.find(t => String(t.id) === String(transfer.tournamentId))
+  const fromPlayer = transfer && players.find((p) => String(p.id) === String(transfer.fromPlayerId))
+  const toPlayer = transfer && players.find((p) => String(p.id) === String(transfer.toPlayerId))
+  const tournament =
+    transfer && tournaments.find((t) => String(t.id) === String(transfer.tournamentId))
 
   // First name only for non-admins (matches the rest of the app's privacy
   // posture — players_public hides full names).
-  const dn = (p) => p ? (isAdmin ? p.name : (p.name || '').split(/\s+/)[0]) : '—'
+  const dn = (p) => (p ? (isAdmin ? p.name : (p.name || '').split(/\s+/)[0]) : '—')
 
   const isMyOffer = transfer && claimedId && String(claimedId) === String(transfer.toPlayerId)
   const wrongIdentity = transfer && claimedId && !isMyOffer
@@ -52,12 +66,12 @@ export default function TransferAccept({ transferId, onNavigate }) {
       return
     }
     const map = {
-      wrong_pin:           'Sign in again to respond.',
-      forbidden:           'This transfer is for a different player.',
-      not_found:           'This transfer no longer exists.',
-      not_pending:         'This transfer was already responded to or closed.',
-      tournament_started:  'Too late — the event has already started.',
-      error:               'Something went wrong. Try again.',
+      wrong_pin: 'Sign in again to respond.',
+      forbidden: 'This transfer is for a different player.',
+      not_found: 'This transfer no longer exists.',
+      not_pending: 'This transfer was already responded to or closed.',
+      tournament_started: 'Too late — the event has already started.',
+      error: 'Something went wrong. Try again.',
     }
     setError(map[r.status] || 'Could not record your response.')
   }
@@ -85,7 +99,10 @@ export default function TransferAccept({ transferId, onNavigate }) {
       <div className="card py-10 text-center">
         <AlertCircle size={36} className="mx-auto mb-2 text-gray-300" />
         <p className="text-sm text-gray-500">No transfer link found.</p>
-        <button onClick={() => onNavigate?.('dashboard')} className="btn-primary mt-4 py-2 px-5 text-sm">
+        <button
+          onClick={() => onNavigate?.('dashboard')}
+          className="btn-primary mt-4 py-2 px-5 text-sm"
+        >
           Back to home
         </button>
       </div>
@@ -97,8 +114,13 @@ export default function TransferAccept({ transferId, onNavigate }) {
       <div className="card py-10 text-center">
         <AlertCircle size={36} className="mx-auto mb-2 text-gray-300" />
         <p className="text-sm text-gray-500">We couldn't find this transfer.</p>
-        <p className="text-xs text-gray-400 mt-1">It may have been cancelled or already accepted.</p>
-        <button onClick={() => onNavigate?.('dashboard')} className="btn-primary mt-4 py-2 px-5 text-sm">
+        <p className="text-xs text-gray-400 mt-1">
+          It may have been cancelled or already accepted.
+        </p>
+        <button
+          onClick={() => onNavigate?.('dashboard')}
+          className="btn-primary mt-4 py-2 px-5 text-sm"
+        >
           Back to home
         </button>
       </div>
@@ -107,18 +129,22 @@ export default function TransferAccept({ transferId, onNavigate }) {
 
   // ── Already-resolved state ───────────────────────────────────────────────
   if (transfer.status !== 'pending' && !done) {
-    const stateLabel = {
-      accepted:    'already accepted',
-      declined:    'already declined',
-      cancelled:   'been cancelled',
-      auto_closed: 'closed because the event has started',
-    }[transfer.status] || 'already closed'
+    const stateLabel =
+      {
+        accepted: 'already accepted',
+        declined: 'already declined',
+        cancelled: 'been cancelled',
+        auto_closed: 'closed because the event has started',
+      }[transfer.status] || 'already closed'
     return (
       <div className="card py-10 text-center">
         <AlertCircle size={36} className="mx-auto mb-2 text-gray-300" />
         <p className="text-sm text-gray-600">This transfer has {stateLabel}.</p>
         {tournament && (
-          <button onClick={() => onNavigate?.('registration', tournament)} className="btn-primary mt-4 py-2 px-5 text-sm">
+          <button
+            onClick={() => onNavigate?.('registration', tournament)}
+            className="btn-primary mt-4 py-2 px-5 text-sm"
+          >
             See the event
           </button>
         )}
@@ -136,17 +162,17 @@ export default function TransferAccept({ transferId, onNavigate }) {
         ) : (
           <XCircle size={42} className="mx-auto text-gray-400" />
         )}
-        <h2 className="font-bold text-lg">
-          {isAccept ? `You're in!` : `Offer declined`}
-        </h2>
+        <h2 className="font-bold text-lg">{isAccept ? `You're in!` : `Offer declined`}</h2>
         <p className="text-sm text-gray-600">
           {isAccept
             ? `You've taken over ${dn(fromPlayer)}'s spot for ${tournament?.name || 'the event'}. They'll send you the payment link separately.`
-            : `We've let ${dn(fromPlayer)} know you can't take the spot.`
-          }
+            : `We've let ${dn(fromPlayer)} know you can't take the spot.`}
         </p>
         {tournament && (
-          <button onClick={() => onNavigate?.('registration', tournament)} className="btn-primary mt-2 py-2 px-5 text-sm">
+          <button
+            onClick={() => onNavigate?.('registration', tournament)}
+            className="btn-primary mt-2 py-2 px-5 text-sm"
+          >
             {isAccept ? 'See the event' : 'Back to events'}
           </button>
         )}
@@ -161,9 +187,13 @@ export default function TransferAccept({ transferId, onNavigate }) {
         <AlertCircle size={36} className="mx-auto text-amber-500" />
         <h2 className="font-bold text-base">This transfer is for {dn(toPlayer)}</h2>
         <p className="text-sm text-gray-600">
-          You're currently signed in as someone else. Sign out and back in with {dn(toPlayer)}'s PIN to accept or decline.
+          You're currently signed in as someone else. Sign out and back in with {dn(toPlayer)}'s PIN
+          to accept or decline.
         </p>
-        <button onClick={handleSignOut} className="btn-primary mt-2 py-2 px-5 text-sm inline-flex items-center gap-1">
+        <button
+          onClick={handleSignOut}
+          className="btn-primary mt-2 py-2 px-5 text-sm inline-flex items-center gap-1"
+        >
           <LogOut size={14} /> Sign out
         </button>
       </div>
@@ -173,21 +203,30 @@ export default function TransferAccept({ transferId, onNavigate }) {
   // ── Main offer view ──────────────────────────────────────────────────────
   return (
     <div className="space-y-4">
-      <button onClick={() => onNavigate?.('dashboard')} className="text-xs text-gray-400 inline-flex items-center gap-1">
+      <button
+        onClick={() => onNavigate?.('dashboard')}
+        className="text-xs text-gray-400 inline-flex items-center gap-1"
+      >
         <ChevronLeft size={14} /> Home
       </button>
 
       <div className="card space-y-4">
         <div className="flex items-center gap-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
           <ArrowRightLeft size={14} />
-          <span><strong>{dn(fromPlayer)}</strong> wants to transfer their spot to you</span>
+          <span>
+            <strong>{dn(fromPlayer)}</strong> wants to transfer their spot to you
+          </span>
         </div>
 
         <div>
           <h2 className="font-bold text-lg">{tournament?.name || 'Event'}</h2>
           <p className="text-xs text-gray-500 mt-0.5">
             {tournament?.date
-              ? new Date(tournament.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
+              ? new Date(tournament.date).toLocaleDateString('en-GB', {
+                  weekday: 'long',
+                  day: 'numeric',
+                  month: 'long',
+                })
               : '—'}
             {tournament?.time && ` · ${tournament.time}`}
             {tournament?.location && ` · ${tournament.location}`}

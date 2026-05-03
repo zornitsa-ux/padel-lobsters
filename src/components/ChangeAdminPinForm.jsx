@@ -19,25 +19,40 @@ import { Eye, EyeOff, KeyRound, Check } from 'lucide-react'
 export default function ChangeAdminPinForm() {
   const { changeAdminPin } = useApp()
   const [currentPin, setCurrentPin] = useState('')
-  const [newPin, setNewPin]         = useState('')
+  const [newPin, setNewPin] = useState('')
   const [confirmPin, setConfirmPin] = useState('')
-  const [show, setShow]             = useState(false)
-  const [busy, setBusy]             = useState(false)
-  const [error, setError]           = useState('')
-  const [done, setDone]             = useState(false)
+  const [show, setShow] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const [done, setDone] = useState(false)
 
   const reset = () => {
-    setCurrentPin(''); setNewPin(''); setConfirmPin(''); setError('')
+    setCurrentPin('')
+    setNewPin('')
+    setConfirmPin('')
+    setError('')
   }
 
   const onSubmit = async (e) => {
     e.preventDefault()
     setError('')
     if (busy) return
-    if (newPin.length < 4) { setError('New PIN must be at least 4 digits.'); return }
-    if (!/^\d+$/.test(newPin)) { setError('New PIN must be digits only.'); return }
-    if (newPin !== confirmPin) { setError("New PIN doesn't match the confirmation."); return }
-    if (newPin === currentPin) { setError('New PIN must differ from the current one.'); return }
+    if (newPin.length < 4) {
+      setError('New PIN must be at least 4 digits.')
+      return
+    }
+    if (!/^\d+$/.test(newPin)) {
+      setError('New PIN must be digits only.')
+      return
+    }
+    if (newPin !== confirmPin) {
+      setError("New PIN doesn't match the confirmation.")
+      return
+    }
+    if (newPin === currentPin) {
+      setError('New PIN must differ from the current one.')
+      return
+    }
     setBusy(true)
     const result = await changeAdminPin(currentPin, newPin)
     setBusy(false)
@@ -72,11 +87,14 @@ export default function ChangeAdminPinForm() {
               maxLength={8}
               placeholder="Current admin PIN"
               value={currentPin}
-              onChange={e => { setCurrentPin(e.target.value.replace(/\D/g, '')); setError('') }}
+              onChange={(e) => {
+                setCurrentPin(e.target.value.replace(/\D/g, ''))
+                setError('')
+              }}
             />
             <button
               type="button"
-              onClick={() => setShow(v => !v)}
+              onClick={() => setShow((v) => !v)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
               aria-label={show ? 'Hide PIN' : 'Show PIN'}
             >
@@ -90,7 +108,10 @@ export default function ChangeAdminPinForm() {
             maxLength={8}
             placeholder="New PIN (4+ digits)"
             value={newPin}
-            onChange={e => { setNewPin(e.target.value.replace(/\D/g, '')); setError('') }}
+            onChange={(e) => {
+              setNewPin(e.target.value.replace(/\D/g, ''))
+              setError('')
+            }}
           />
           <input
             className="input"
@@ -99,13 +120,14 @@ export default function ChangeAdminPinForm() {
             maxLength={8}
             placeholder="Confirm new PIN"
             value={confirmPin}
-            onChange={e => { setConfirmPin(e.target.value.replace(/\D/g, '')); setError('') }}
+            onChange={(e) => {
+              setConfirmPin(e.target.value.replace(/\D/g, ''))
+              setError('')
+            }}
           />
         </div>
       </div>
-      {error && (
-        <p className="text-xs text-red-500 font-medium">{error}</p>
-      )}
+      {error && <p className="text-xs text-red-500 font-medium">{error}</p>}
       {done && (
         <p className="text-xs text-green-700 font-semibold flex items-center gap-1">
           <Check size={12} /> Admin PIN updated. Use the new PIN next time you sign in.

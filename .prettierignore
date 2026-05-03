@@ -1,0 +1,6 @@
+dist
+dist-*
+node_modules
+package-lock.json
+supabase/.temp
+*.sql

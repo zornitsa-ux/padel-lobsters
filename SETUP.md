@@ -5,6 +5,7 @@ Follow these steps **once** to get your app live. It takes about 20–30 minutes
 ---
 
 ## What you'll need
+
 - A Google account (for Firebase)
 - A GitHub account (free at github.com) — for hosting
 - A Vercel account (free at vercel.com) — for your web address
@@ -23,12 +24,14 @@ Firebase is Google's free database service. It stores all your player, tournamen
 6. You'll see a block of code with your config values — **keep this page open**, you'll need these values in Step 3
 
 ### Enable the database
+
 1. In the left sidebar, click **Build → Firestore Database**
 2. Click **Create database**
 3. Choose **"Start in production mode"** → click Next
 4. Pick a location closest to you (e.g. `eur3` for Europe) → click **Enable**
 
 ### Set database rules (allow your app to read/write)
+
 1. In Firestore, click the **Rules** tab
 2. Replace everything with this:
 
@@ -57,7 +60,7 @@ GitHub stores your app's code online so Vercel can deploy it.
 2. Name the repository `padel-lobsters` → set it to **Private** → click **Create repository**
 3. On your computer, open the `padel-lobsters` folder you downloaded
 4. Follow GitHub's instructions to upload ("push") the folder
-   *(You can also use [GitHub Desktop](https://desktop.github.com/) — a simple drag-and-drop app)*
+   _(You can also use [GitHub Desktop](https://desktop.github.com/) — a simple drag-and-drop app)_
 
 ---
 
@@ -67,14 +70,14 @@ GitHub stores your app's code online so Vercel can deploy it.
 2. Click **"Add New Project"** → import your `padel-lobsters` GitHub repo
 3. Before clicking Deploy, click **"Environment Variables"** and add these one by one:
 
-| Name | Value (from Firebase Step 1) |
-|------|-------------------------------|
-| `VITE_FIREBASE_API_KEY` | your `apiKey` value |
-| `VITE_FIREBASE_AUTH_DOMAIN` | your `authDomain` value |
-| `VITE_FIREBASE_PROJECT_ID` | your `projectId` value |
-| `VITE_FIREBASE_STORAGE_BUCKET` | your `storageBucket` value |
+| Name                                | Value (from Firebase Step 1)   |
+| ----------------------------------- | ------------------------------ |
+| `VITE_FIREBASE_API_KEY`             | your `apiKey` value            |
+| `VITE_FIREBASE_AUTH_DOMAIN`         | your `authDomain` value        |
+| `VITE_FIREBASE_PROJECT_ID`          | your `projectId` value         |
+| `VITE_FIREBASE_STORAGE_BUCKET`      | your `storageBucket` value     |
 | `VITE_FIREBASE_MESSAGING_SENDER_ID` | your `messagingSenderId` value |
-| `VITE_FIREBASE_APP_ID` | your `appId` value |
+| `VITE_FIREBASE_APP_ID`              | your `appId` value             |
 
 4. Click **Deploy** 🎉
 
@@ -103,6 +106,7 @@ Vercel gives you a URL like `padel-lobsters.vercel.app` — that's your app!
 ## Your WhatsApp invite link
 
 To get your WhatsApp community/group invite link:
+
 1. Open WhatsApp → open your group
 2. Tap the group name → **Invite via link**
 3. Copy the link (looks like `https://chat.whatsapp.com/xxxxxxxxx`)

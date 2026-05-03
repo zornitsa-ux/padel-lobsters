@@ -16,26 +16,30 @@ export function DateTile({ date, size = 'md', className = '' }) {
   const d = new Date(date)
   if (isNaN(d.getTime())) return null
   const month = d.toLocaleDateString('en-GB', { month: 'short' }).toUpperCase()
-  const day   = d.getDate()
-  const dow   = d.toLocaleDateString('en-GB', { weekday: 'short' }).toUpperCase()
+  const day = d.getDate()
+  const dow = d.toLocaleDateString('en-GB', { weekday: 'short' }).toUpperCase()
 
   const dims =
     size === 'lg'
-      ? { box: 'w-16 h-20',       day: 'text-3xl', month: 'text-[10px] py-0.5', dow: 'text-[10px]' }
+      ? { box: 'w-16 h-20', day: 'text-3xl', month: 'text-[10px] py-0.5', dow: 'text-[10px]' }
       : size === 'sm'
-      ? { box: 'w-11 h-12',       day: 'text-lg',  month: 'text-[8px]  py-[1px]', dow: 'text-[8px]' }
-      : { box: 'w-14 h-16',       day: 'text-2xl', month: 'text-[9px]  py-0.5', dow: 'text-[9px]' } // md
+        ? { box: 'w-11 h-12', day: 'text-lg', month: 'text-[8px]  py-[1px]', dow: 'text-[8px]' }
+        : { box: 'w-14 h-16', day: 'text-2xl', month: 'text-[9px]  py-0.5', dow: 'text-[9px]' } // md
 
   return (
     <div
       className={`${dims.box} bg-white rounded-xl border border-lobster-teal/40 flex flex-col items-stretch flex-shrink-0 overflow-hidden shadow-sm ${className}`}
     >
-      <div className={`${dims.month} font-bold bg-lobster-teal text-white text-center uppercase tracking-wider leading-none`}>
+      <div
+        className={`${dims.month} font-bold bg-lobster-teal text-white text-center uppercase tracking-wider leading-none`}
+      >
         {month}
       </div>
       <div className="flex-1 flex flex-col items-center justify-center gap-0.5 leading-none">
         <span className={`${dims.day} font-black text-gray-800`}>{day}</span>
-        <span className={`${dims.dow} font-semibold text-gray-500 uppercase tracking-wider`}>{dow}</span>
+        <span className={`${dims.dow} font-semibold text-gray-500 uppercase tracking-wider`}>
+          {dow}
+        </span>
       </div>
     </div>
   )
@@ -85,7 +89,7 @@ export function AddToCalendarButton({ tournament, variant = 'full', className = 
       className={`w-full flex items-center justify-center gap-2 border-2 border-lobster-teal text-lobster-teal font-semibold py-3 rounded-2xl active:scale-95 transition-all ${className}`}
     >
       <CalendarPlus size={18} />
-      {label || "Add to Google Calendar"}
+      {label || 'Add to Google Calendar'}
     </a>
   )
 }
@@ -111,9 +115,15 @@ export function ShareWhatsAppButton({ tournament, variant = 'icon', className = 
     const eventUrl = `${baseUrl}?event=${tournament.id}`
 
     const d = tournament.date ? new Date(tournament.date) : null
-    const dateLine = d && !isNaN(d.getTime())
-      ? d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
-      : ''
+    const dateLine =
+      d && !isNaN(d.getTime())
+        ? d.toLocaleDateString('en-GB', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+          })
+        : ''
     const timePart = tournament.time ? ` at ${tournament.time}` : ''
     const locationPart = tournament.location ? `\n${tournament.location}` : ''
 
@@ -124,7 +134,9 @@ export function ShareWhatsAppButton({ tournament, variant = 'icon', className = 
       '',
       `Register & see details:`,
       eventUrl,
-    ].filter(Boolean).join('\n')
+    ]
+      .filter(Boolean)
+      .join('\n')
 
     const waUrl = `https://wa.me/?text=${encodeURIComponent(text)}`
     window.open(waUrl, '_blank')

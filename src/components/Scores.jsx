@@ -11,7 +11,7 @@ export default function Scores({ tournament, onNavigate }) {
   // Tab switcher: ranking (podium + standings), matches (round-by-round
   // cards, same layout as History), or lobster-games (per-category winners
   // from a shared Lobster Oscars session).
-  const [tab, setTab]               = useState('ranking')
+  const [tab, setTab] = useState('ranking')
   const [activeRoundIdx, setActiveRoundIdx] = useState(0)
   const [oscarRows, setOscarRows] = useState([])
   useEffect(() => {
@@ -23,7 +23,9 @@ export default function Scores({ tournament, onNavigate }) {
       })
       if (active) setOscarRows(data ?? [])
     })()
-    return () => { active = false }
+    return () => {
+      active = false
+    }
   }, [tournament?.id])
   const hasGameResults = oscarRows.length > 0
 
@@ -32,7 +34,10 @@ export default function Scores({ tournament, onNavigate }) {
       <div className="card py-10 text-center text-gray-400">
         <AlertCircle size={36} className="mx-auto mb-2 opacity-30" />
         <p>No event selected</p>
-        <button onClick={() => onNavigate('tournament')} className="btn-primary mt-4 py-2 px-5 text-sm">
+        <button
+          onClick={() => onNavigate('tournament')}
+          className="btn-primary mt-4 py-2 px-5 text-sm"
+        >
           Go to Events
         </button>
       </div>
@@ -40,18 +45,16 @@ export default function Scores({ tournament, onNavigate }) {
   }
 
   const allMatches = getTournamentMatches(tournament.id)
-  const matches    = allMatches.filter(m => m.completed)
-  const regs       = getTournamentRegistrations(tournament.id).filter(r => r.status === 'registered')
-  const registeredPlayers = players.filter(p => regs.some(r => r.playerId === p.id))
+  const matches = allMatches.filter((m) => m.completed)
+  const regs = getTournamentRegistrations(tournament.id).filter((r) => r.status === 'registered')
+  const registeredPlayers = players.filter((p) => regs.some((r) => r.playerId === p.id))
 
   // Standings via the shared helper — same source the Lobster Review reads.
   const standings = useMemo(() => {
-    const seededIds = registeredPlayers.map(p => p.id)
+    const seededIds = registeredPlayers.map((p) => p.id)
     const raw = computeTournamentStandings(tournament.id, matches, seededIds)
-    const byId = Object.fromEntries(players.map(p => [String(p.id), p]))
-    return raw
-      .map(s => ({ ...s, player: byId[String(s.id)] }))
-      .filter(s => s.player)
+    const byId = Object.fromEntries(players.map((p) => [String(p.id), p]))
+    return raw.map((s) => ({ ...s, player: byId[String(s.id)] })).filter((s) => s.player)
   }, [matches, registeredPlayers, tournament.id, players])
 
   // Group matches by round, then sort within each round by court number
@@ -62,22 +65,22 @@ export default function Scores({ tournament, onNavigate }) {
       return m ? parseInt(m[1], 10) : Number.MAX_SAFE_INTEGER
     }
     const byRound = {}
-    allMatches.forEach(m => {
+    allMatches.forEach((m) => {
       const r = m.round || 1
       if (!byRound[r]) byRound[r] = []
       byRound[r].push(m)
     })
-    Object.values(byRound).forEach(arr =>
-      arr.sort((a, b) => courtOrder(a.court) - courtOrder(b.court))
+    Object.values(byRound).forEach((arr) =>
+      arr.sort((a, b) => courtOrder(a.court) - courtOrder(b.court)),
     )
     return Object.keys(byRound)
       .map(Number)
       .sort((a, b) => a - b)
-      .map(n => ({ round: n, matches: byRound[n] }))
+      .map((n) => ({ round: n, matches: byRound[n] }))
   }, [allMatches])
 
   const nameFor = (id) => {
-    const p = players.find(x => x.id === id)
+    const p = players.find((x) => x.id === id)
     return p ? (p.name || '').split(' ')[0] : '?'
   }
 
@@ -92,13 +95,16 @@ export default function Scores({ tournament, onNavigate }) {
     if (i === 2) return ''
     return 'text-gray-300'
   }
-  const medalStyle = (i) => i === 2 ? { color: '#CD7F32' } : {}
+  const medalStyle = (i) => (i === 2 ? { color: '#CD7F32' } : {})
 
   return (
     <div className="space-y-4">
       {/* Header */}
       <div>
-        <button onClick={() => onNavigate('tournament')} className="flex items-center gap-1 text-lobster-teal text-sm font-semibold mb-2">
+        <button
+          onClick={() => onNavigate('tournament')}
+          className="flex items-center gap-1 text-lobster-teal text-sm font-semibold mb-2"
+        >
           <ChevronLeft size={16} /> Events
         </button>
         <h2 className="text-lg font-bold text-gray-800">{tournament.name}</h2>
@@ -109,23 +115,29 @@ export default function Scores({ tournament, onNavigate }) {
           The Lobster Games tab only shows up if at least one game was
           played + finished for this tournament. */}
       <div className="flex gap-1 bg-gray-100 p-1 rounded-xl overflow-x-auto">
-        <button onClick={() => setTab('ranking')}
+        <button
+          onClick={() => setTab('ranking')}
           className={`flex-1 min-w-max py-2 px-2 text-xs sm:text-sm rounded-lg font-semibold transition-all whitespace-nowrap ${
             tab === 'ranking' ? 'bg-white text-lobster-teal shadow-sm' : 'text-gray-500'
-          }`}>
+          }`}
+        >
           🥇 Final Ranking
         </button>
-        <button onClick={() => setTab('matches')}
+        <button
+          onClick={() => setTab('matches')}
           className={`flex-1 min-w-max py-2 px-2 text-xs sm:text-sm rounded-lg font-semibold transition-all whitespace-nowrap ${
             tab === 'matches' ? 'bg-white text-lobster-teal shadow-sm' : 'text-gray-500'
-          }`}>
+          }`}
+        >
           📋 Matches
         </button>
         {hasGameResults && (
-          <button onClick={() => setTab('games')}
+          <button
+            onClick={() => setTab('games')}
             className={`flex-1 min-w-max py-2 px-2 text-xs sm:text-sm rounded-lg font-semibold transition-all whitespace-nowrap ${
               tab === 'games' ? 'bg-white text-lobster-teal shadow-sm' : 'text-gray-500'
-            }`}>
+            }`}
+          >
             🦞 Lobster Games
           </button>
         )}
@@ -178,13 +190,19 @@ export default function Scores({ tournament, onNavigate }) {
                     {/* 3rd */}
                     <div className="flex flex-col items-center gap-1 flex-1">
                       <p className="text-2xl">🥉</p>
-                      <div className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-white text-lg" style={{ background: '#CD7F32' }}>
+                      <div
+                        className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-white text-lg"
+                        style={{ background: '#CD7F32' }}
+                      >
                         {standings[2]?.player.name[0]}
                       </div>
                       <p className="text-xs font-semibold text-center text-gray-700 truncate w-full">
                         {standings[2]?.player.name.split(' ')[0]}
                       </p>
-                      <div className="w-full h-8 rounded-t-xl flex items-center justify-center" style={{ background: '#CD7F32' }}>
+                      <div
+                        className="w-full h-8 rounded-t-xl flex items-center justify-center"
+                        style={{ background: '#CD7F32' }}
+                      >
                         <span className="font-bold text-white">{standings[2]?.points}pts</span>
                       </div>
                     </div>
@@ -210,9 +228,15 @@ export default function Scores({ tournament, onNavigate }) {
                     </thead>
                     <tbody>
                       {standings.map((s, i) => (
-                        <tr key={s.player.id}
+                        <tr
+                          key={s.player.id}
                           className={`border-b border-gray-50 ${i < 2 && matches.length > 0 ? 'bg-yellow-50/40' : ''}`}
-                          style={i === 2 && matches.length > 0 ? { background: 'rgba(205,127,50,0.08)' } : {}}>
+                          style={
+                            i === 2 && matches.length > 0
+                              ? { background: 'rgba(205,127,50,0.08)' }
+                              : {}
+                          }
+                        >
                           <td className="py-2.5 pl-1">
                             <Trophy size={14} className={medalColor(i)} style={medalStyle(i)} />
                           </td>
@@ -224,20 +248,30 @@ export default function Scores({ tournament, onNavigate }) {
                               >
                                 {s.player.name[0]}
                               </div>
-                              <span className="font-medium truncate max-w-[100px]">{s.player.name}</span>
+                              <span className="font-medium truncate max-w-[100px]">
+                                {s.player.name}
+                              </span>
                             </div>
                           </td>
                           <td className="text-center py-2.5 text-gray-600">{s.played}</td>
-                          <td className="text-center py-2.5 text-green-600 font-semibold">{s.won}</td>
+                          <td className="text-center py-2.5 text-green-600 font-semibold">
+                            {s.won}
+                          </td>
                           <td className="text-center py-2.5 text-red-500">{s.lost}</td>
-                          <td className="text-center py-2.5 text-gray-500 text-xs">{s.pointsFor}-{s.pointsAgainst}</td>
-                          <td className="text-center py-2.5 font-bold text-lobster-teal">{s.points}</td>
+                          <td className="text-center py-2.5 text-gray-500 text-xs">
+                            {s.pointsFor}-{s.pointsAgainst}
+                          </td>
+                          <td className="text-center py-2.5 font-bold text-lobster-teal">
+                            {s.points}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
-                <p className="text-xs text-gray-400 mt-2">Total game points · Tiebreak: matches won → head-to-head</p>
+                <p className="text-xs text-gray-400 mt-2">
+                  Total game points · Tiebreak: matches won → head-to-head
+                </p>
               </div>
             </>
           )}
@@ -257,11 +291,15 @@ export default function Scores({ tournament, onNavigate }) {
               {/* Round selector — same as History */}
               <div className="flex gap-1.5 overflow-x-auto pb-2">
                 {rounds.map((r, i) => (
-                  <button key={r.round}
+                  <button
+                    key={r.round}
                     onClick={() => setActiveRoundIdx(i)}
                     className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                      activeRoundIdx === i ? 'bg-lobster-teal text-white' : 'bg-gray-100 text-gray-600'
-                    }`}>
+                      activeRoundIdx === i
+                        ? 'bg-lobster-teal text-white'
+                        : 'bg-gray-100 text-gray-600'
+                    }`}
+                  >
                     R{r.round}
                   </button>
                 ))}
@@ -269,8 +307,9 @@ export default function Scores({ tournament, onNavigate }) {
 
               {/* Match cards for the selected round */}
               <div className="space-y-2">
-                {rounds[activeRoundIdx]?.matches.map(m => {
-                  const s1 = m.score1, s2 = m.score2
+                {rounds[activeRoundIdx]?.matches.map((m) => {
+                  const s1 = m.score1,
+                    s2 = m.score2
                   const scored = m.completed && s1 != null && s2 != null
                   const t1won = scored && s1 > s2
                   const t2won = scored && s2 > s1
@@ -288,25 +327,37 @@ export default function Scores({ tournament, onNavigate }) {
                       </div>
                       <div className="flex items-center gap-2">
                         {/* Team A */}
-                        <div className={`flex-1 min-w-0 ${t1won ? 'text-green-700' : 'text-gray-600'}`}>
+                        <div
+                          className={`flex-1 min-w-0 ${t1won ? 'text-green-700' : 'text-gray-600'}`}
+                        >
                           {t1Names.map((name, i) => (
-                            <p key={i} className="text-xs font-semibold truncate">{name}</p>
+                            <p key={i} className="text-xs font-semibold truncate">
+                              {name}
+                            </p>
                           ))}
                         </div>
                         {/* Score */}
                         <div className="flex items-center gap-1 flex-shrink-0">
-                          <span className={`text-lg font-bold w-7 text-center ${t1won ? 'text-green-600' : 'text-gray-400'}`}>
+                          <span
+                            className={`text-lg font-bold w-7 text-center ${t1won ? 'text-green-600' : 'text-gray-400'}`}
+                          >
                             {scored ? s1 : '—'}
                           </span>
                           <span className="text-gray-300 text-sm">–</span>
-                          <span className={`text-lg font-bold w-7 text-center ${t2won ? 'text-green-600' : 'text-gray-400'}`}>
+                          <span
+                            className={`text-lg font-bold w-7 text-center ${t2won ? 'text-green-600' : 'text-gray-400'}`}
+                          >
                             {scored ? s2 : '—'}
                           </span>
                         </div>
                         {/* Team B */}
-                        <div className={`flex-1 min-w-0 text-right ${t2won ? 'text-green-700' : 'text-gray-600'}`}>
+                        <div
+                          className={`flex-1 min-w-0 text-right ${t2won ? 'text-green-700' : 'text-gray-600'}`}
+                        >
                           {t2Names.map((name, i) => (
-                            <p key={i} className="text-xs font-semibold truncate">{name}</p>
+                            <p key={i} className="text-xs font-semibold truncate">
+                              {name}
+                            </p>
                           ))}
                         </div>
                       </div>
@@ -320,71 +371,92 @@ export default function Scores({ tournament, onNavigate }) {
       )}
 
       {/* ── LOBSTER GAMES tab ───────────────────────────────────────────── */}
-      {tab === 'games' && (() => {
-        if (!oscarRows.length) return null
-        const byCat = new Map()
-        for (const r of oscarRows) {
-          if (!byCat.has(r.category_id)) byCat.set(r.category_id, {
-            id: r.category_id, name: r.category_name, icon: r.category_icon,
-            display_order: r.display_order, totalVoters: Number(r.total_voters || 0), rows: [],
-          })
-          byCat.get(r.category_id).rows.push(r)
-        }
-        const cats = Array.from(byCat.values()).sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
-        const totalVoters = cats[0]?.totalVoters ?? 0
+      {tab === 'games' &&
+        (() => {
+          if (!oscarRows.length) return null
+          const byCat = new Map()
+          for (const r of oscarRows) {
+            if (!byCat.has(r.category_id))
+              byCat.set(r.category_id, {
+                id: r.category_id,
+                name: r.category_name,
+                icon: r.category_icon,
+                display_order: r.display_order,
+                totalVoters: Number(r.total_voters || 0),
+                rows: [],
+              })
+            byCat.get(r.category_id).rows.push(r)
+          }
+          const cats = Array.from(byCat.values()).sort(
+            (a, b) => (a.display_order || 0) - (b.display_order || 0),
+          )
+          const totalVoters = cats[0]?.totalVoters ?? 0
 
-        return (
-          <div className="space-y-4">
-            <div className="card">
-              <p className="font-bold text-gray-700">🏆 Lobster Oscars</p>
-              <p className="text-xs text-gray-400">
-                {cats.length} categor{cats.length === 1 ? 'y' : 'ies'}
-                {totalVoters > 0 && <> · {totalVoters} voter{totalVoters === 1 ? '' : 's'}</>}
-              </p>
-            </div>
-            {cats.map(cat => {
-              const winners = cat.rows.filter(r => Number(r.rank_in_category) === 1)
-              const maxV    = Math.max(1, ...cat.rows.map(r => Number(r.votes_count)))
-              const topVotes = winners.length ? Number(winners[0].votes_count) : 0
-              return (
-                <div key={cat.id} className="bg-white rounded-2xl p-4 space-y-2 border border-gray-100">
-                  <p className="font-bold text-sm text-gray-700">
-                    <span className="mr-1">{cat.icon}</span>{cat.name}
-                  </p>
-                  {winners.length > 0 ? (
-                    <p className="text-sm text-gray-600">
-                      🏆 <span className="font-bold">
-                        {winners.map(w => w.target_name).join(', ')}
-                      </span>{' '}
-                      <span className="text-gray-400">
-                        ({topVotes} vote{topVotes !== 1 ? 's' : ''}{winners.length > 1 ? ' — tie' : ''})
-                      </span>
-                    </p>
-                  ) : (
-                    <p className="text-xs text-gray-400">No votes</p>
+          return (
+            <div className="space-y-4">
+              <div className="card">
+                <p className="font-bold text-gray-700">🏆 Lobster Oscars</p>
+                <p className="text-xs text-gray-400">
+                  {cats.length} categor{cats.length === 1 ? 'y' : 'ies'}
+                  {totalVoters > 0 && (
+                    <>
+                      {' '}
+                      · {totalVoters} voter{totalVoters === 1 ? '' : 's'}
+                    </>
                   )}
-                  <div className="space-y-1">
-                    {cat.rows.map(r => (
-                      <div key={r.target_id} className="flex items-center gap-2">
-                        <span className="text-xs w-16 truncate text-gray-600">
-                          {(r.target_name || '').split(' ')[0]}
+                </p>
+              </div>
+              {cats.map((cat) => {
+                const winners = cat.rows.filter((r) => Number(r.rank_in_category) === 1)
+                const maxV = Math.max(1, ...cat.rows.map((r) => Number(r.votes_count)))
+                const topVotes = winners.length ? Number(winners[0].votes_count) : 0
+                return (
+                  <div
+                    key={cat.id}
+                    className="bg-white rounded-2xl p-4 space-y-2 border border-gray-100"
+                  >
+                    <p className="font-bold text-sm text-gray-700">
+                      <span className="mr-1">{cat.icon}</span>
+                      {cat.name}
+                    </p>
+                    {winners.length > 0 ? (
+                      <p className="text-sm text-gray-600">
+                        🏆{' '}
+                        <span className="font-bold">
+                          {winners.map((w) => w.target_name).join(', ')}
+                        </span>{' '}
+                        <span className="text-gray-400">
+                          ({topVotes} vote{topVotes !== 1 ? 's' : ''}
+                          {winners.length > 1 ? ' — tie' : ''})
                         </span>
-                        <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden">
-                          <div className="h-full bg-lobster-teal rounded-full transition-all"
-                            style={{ width: `${(Number(r.votes_count) / maxV) * 100}%` }} />
+                      </p>
+                    ) : (
+                      <p className="text-xs text-gray-400">No votes</p>
+                    )}
+                    <div className="space-y-1">
+                      {cat.rows.map((r) => (
+                        <div key={r.target_id} className="flex items-center gap-2">
+                          <span className="text-xs w-16 truncate text-gray-600">
+                            {(r.target_name || '').split(' ')[0]}
+                          </span>
+                          <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-lobster-teal rounded-full transition-all"
+                              style={{ width: `${(Number(r.votes_count) / maxV) * 100}%` }}
+                            />
+                          </div>
+                          <span className="text-xs text-gray-500 w-3 text-right">
+                            {Number(r.votes_count)}
+                          </span>
                         </div>
-                        <span className="text-xs text-gray-500 w-3 text-right">
-                          {Number(r.votes_count)}
-                        </span>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )
-            })}
-          </div>
-        )
-      })()}
+                )
+              })}
+            </div>
+          )
+        })()}
     </div>
   )
 }
