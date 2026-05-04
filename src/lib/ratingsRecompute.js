@@ -96,6 +96,11 @@ export async function recomputeAllRatings(supabase) {
   }
 
   // ── 5. Persist ──────────────────────────────────────────────────────────
+  // Anon has no UPDATE on public.players, so the writeback goes through the
+  // admin_persist_learned_ratings RPC (SECURITY DEFINER, gated by
+  // verify_admin_pin). All callers of recomputeAllRatings already happen in
+  // admin-only contexts (Settings.jsx button, Schedule.jsx finish-tournament,
+  // AppContext.jsx alias save/remove), so the PIN should be in localStorage.
   const updates = Object.entries(prior).map(([id, r]) => ({
     id,
     learned_rating: r.rating,
@@ -105,21 +110,18 @@ export async function recomputeAllRatings(supabase) {
     learned_updated_at: new Date().toISOString(),
   }))
 
-  // Batch upsert. Supabase's upsert wraps a single round-trip per chunk.
-  const CHUNK = 50
-  for (let i = 0; i < updates.length; i += CHUNK) {
-    const slice = updates.slice(i, i + CHUNK)
-    const { error } = await supabase.from('players').upsert(slice, { onConflict: 'id' })
-    if (error) throw error
-  }
+  const adminPin = (typeof localStorage !== 'undefined')
+    ? localStorage.getItem('lobster_session_admin_pin')
+    : null
+  if (!adminPin) throw new Error('Admin sign-in required to persist ratings')
 
-  // Mark DB tournaments as having had ratings applied.
   const dbTournamentIds = dbEvents.map(e => e.id)
-  if (dbTournamentIds.length > 0) {
-    await supabase.from('tournaments')
-      .update({ ratings_applied_at: new Date().toISOString() })
-      .in('id', dbTournamentIds)
-  }
+  const { error: persistError } = await supabase.rpc('admin_persist_learned_ratings', {
+    input_admin_pin:              adminPin,
+    input_updates:                updates,
+    input_applied_tournament_ids: dbTournamentIds,
+  })
+  if (persistError) throw persistError
 
   return {
     playersUpdated: updates.length,
