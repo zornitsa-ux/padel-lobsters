@@ -32,7 +32,7 @@ import { TOURNAMENTS as HISTORICAL_TOURNAMENTS } from '../components/History'
 export async function recomputeAllRatings(supabase) {
   // ── 1. Load mapping data ────────────────────────────────────────────────
   const [{ data: players }, { data: aliases }, { data: tournaments }, { data: dbMatches }] = await Promise.all([
-    supabase.from('players').select('id, playtomic_level'),
+    supabase.from('players_public').select('id, playtomic_level'),
     supabase.from('player_aliases').select('historical_name, player_id, skipped'),
     supabase.from('tournaments').select('id, date, status').order('date', { ascending: true }),
     supabase.from('matches').select('tournament_id, team1_ids, team2_ids, score1, score2, created_at'),

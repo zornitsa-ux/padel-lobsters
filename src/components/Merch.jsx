@@ -36,9 +36,48 @@ const emptyItem = {
   name: '', description: '', price: '', sizes: [], category: 'apparel', image_url: '', image_urls: [], active: true, external_orders: 0,
 }
 
+// ── Inline prize editor for a single winner row ───────────────────────────────
+// Click the prize text to edit. Empty value shows a neutral placeholder so
+// admin always knows the field exists. Save on blur or Enter; Esc reverts.
+function PrizeEditor({ winner, onSave }) {
+  const initial = winner.prize || ''
+  const [editing, setEditing] = useState(false)
+  const [value, setValue]     = useState(initial)
+  useEffect(() => { setValue(initial) /* sync when winner changes */ }, [initial])
+  const commit = async () => {
+    setEditing(false)
+    const trimmed = (value || '').trim()
+    if (trimmed === (initial || '').trim()) return
+    if (!winner.winnerId) return // not yet saved (RPC still in flight)
+    await onSave(winner.winnerId, trimmed)
+  }
+  if (editing) {
+    return (
+      <input
+        autoFocus
+        value={value}
+        onChange={e => setValue(e.target.value)}
+        onBlur={commit}
+        onKeyDown={e => {
+          if (e.key === 'Enter') { e.preventDefault(); e.target.blur() }
+          if (e.key === 'Escape') { setValue(initial); setEditing(false) }
+        }}
+        className="mt-1 px-2 py-1 rounded-md border border-amber-300 bg-white/80 text-amber-900 text-sm sm:text-base font-semibold w-full max-w-xs"
+        placeholder="e.g. tshirt, hat, sticker"
+      />
+    )
+  }
+  return (
+    <button onClick={() => setEditing(true)}
+      className={`mt-1 text-sm sm:text-base font-semibold text-left ${winner.prize ? 'text-amber-900/80' : 'text-amber-900/40 italic'}`}>
+      {winner.prize || '+ add prize'}
+    </button>
+  )
+}
+
 // ── Raffle component ──────────────────────────────────────────────────────────
 function Raffle({ tournament, players, registrations }) {
-  const { tournaments, raffleWinners, recordRaffleWinners } = useApp()
+  const { tournaments, raffleWinners, recordRaffleWinners, updateRaffleWinnerPrize } = useApp()
 
   const registered = (() => {
     const seen = new Set()
@@ -89,14 +128,35 @@ function Raffle({ tournament, players, registrations }) {
     return out
   }, [registered])
 
-  // Eligibility: a registered player is INELIGIBLE if either
-  //  a) they have no prior tournament registered as 'registered' with
-  //     date < this tournament's date (new-player rule), OR
-  //  b) any of their raffle wins is still in cooldown — i.e. fewer than
-  //     2 OTHER tournaments (in DB) lie strictly between the win date and
-  //     this tournament's date, after adjusting for `cooldown_offset`
-  //     (set on historical seed rows where the win-tournament isn't in DB).
-  // Combined with the win itself, that's a 3-tournament cooldown.
+  // localWins covers two failure modes:
+  //   (1) a draw whose auto-save to DB hasn't round-tripped yet, and
+  //   (2) network failure on auto-save — we still don't want the same
+  //       person to come up twice in this tournament's raffle.
+  const [localWins, setLocalWins] = useState([])
+  // Reset when tournament changes.
+  useEffect(() => { setLocalWins([]) }, [tournament?.id])
+
+  // Set of player_ids who must be excluded for THIS tournament:
+  //   - anyone with a saved raffle_winners row for this tournament_id
+  //   - anyone the local session has already drawn for this tournament
+  const alreadyWonHere = useMemo(() => {
+    const s = new Set()
+    if (tournament?.id) {
+      const tId = String(tournament.id)
+      ;(raffleWinners || []).forEach(w => {
+        if (String(w.tournament_id) === tId) s.add(String(w.player_id))
+      })
+    }
+    localWins.forEach(id => s.add(String(id)))
+    return s
+  }, [raffleWinners, tournament, localWins])
+
+  // Eligibility: a registered player is INELIGIBLE if any of:
+  //   a) they have NO prior registration in a tournament dated before
+  //      this one (new-player rule),
+  //   b) they're in cooldown — won in one of the last 2 raffles before
+  //      this tournament,
+  //   c) they have already been drawn for this tournament's raffle.
   const eligibility = useMemo(() => {
     const result = { eligible: [], ineligible: [] }
     if (!tournament?.date) {
@@ -106,24 +166,30 @@ function Raffle({ tournament, players, registrations }) {
     const tDate = tournament.date
     const tId = String(tournament.id)
     registered.forEach(p => {
-      // Rule A — new player.
-      const priorRegs = registrations.filter(r =>
+      // Rule C — already won here this raffle.
+      if (alreadyWonHere.has(String(p.id))) {
+        result.ineligible.push({ player: p, reason: 'already_won_here' })
+        return
+      }
+      // Rule A — new player. Three signals count as "veteran".
+      const hasPriorReg = registrations.some(r =>
         String(r.playerId) === String(p.id) &&
         r.status === 'registered' &&
-        String(r.tournamentId) !== tId
+        String(r.tournamentId) !== tId &&
+        (() => {
+          const t = tournaments.find(tt => String(tt.id) === String(r.tournamentId))
+          return t && t.date && t.date < tDate
+        })()
       )
-      const hasPrior = priorRegs.some(r => {
-        const t = tournaments.find(tt => String(tt.id) === String(r.tournamentId))
-        return t && t.date && t.date < tDate
-      })
-      if (!hasPrior) {
+      if (!hasPriorReg) {
         result.ineligible.push({ player: p, reason: 'new_player' })
         return
       }
-      // Rule B — cooldown.
+      // Rule B — cooldown (won in the last 2 raffles before this one).
       const myWins = (raffleWinners || []).filter(w => String(w.player_id) === String(p.id))
       const blockingWin = myWins.find(w => {
         if (!w.won_at_date) return false
+        if (w.won_at_date >= tDate) return false  // future / current win doesn't bar current
         const between = tournaments.filter(t =>
           t && t.date && t.date > w.won_at_date && t.date < tDate
         ).length
@@ -136,18 +202,36 @@ function Raffle({ tournament, players, registrations }) {
       result.eligible.push(p)
     })
     return result
-  }, [registered, registrations, tournaments, tournament, raffleWinners])
+  }, [registered, registrations, tournaments, tournament, raffleWinners, alreadyWonHere])
 
   const [winners, setWinners]   = useState([])
   const [spinning, setSpinning] = useState(false)
   const [numPrizes, setNumPrizes] = useState(1)
   const [saved, setSaved]       = useState(false)
-  const [saving, setSaving]     = useState(false)
 
-  // If the eligible pool changes (new registrations, etc.) drop a stale
-  // unsaved draw so admin doesn't accidentally save people who just got
-  // disqualified between draw and save.
-  useEffect(() => { if (!saved) setWinners([]) /* reset on pool change */ }, [eligibility.eligible.length])  // eslint-disable-line
+  // Is the selected tournament already in the past? Used to switch into
+  // a read-only "review" mode (no Draw button, recorded winners are
+  // pre-loaded).
+  const isPastTournament = useMemo(() => {
+    if (!tournament?.date) return false
+    const d = new Date()
+    const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    return String(tournament.date) < todayStr
+  }, [tournament?.date])
+
+  // For past tournaments, populate the WINNERS card from the recorded
+  // raffle_winners rows so admin can review (and edit prize labels).
+  useEffect(() => {
+    if (!tournament?.id) { setWinners([]); setSaved(false); return }
+    if (!isPastTournament) return
+    const rows = (raffleWinners || []).filter(w => String(w.tournament_id) === String(tournament.id))
+    const enriched = rows.map(r => {
+      const p = players.find(pl => String(pl.id) === String(r.player_id))
+      return p ? { ...p, winnerId: r.id, prize: r.prize ?? null } : null
+    }).filter(Boolean)
+    setWinners(enriched)
+    setSaved(true)
+  }, [tournament?.id, isPastTournament, raffleWinners, players])
 
   const runRaffle = async () => {
     if (eligibility.eligible.length === 0) return
@@ -156,16 +240,31 @@ function Raffle({ tournament, players, registrations }) {
     setSaved(false)
     await new Promise(r => setTimeout(r, 800))
     const shuffled = [...eligibility.eligible].sort(() => Math.random() - 0.5)
-    setWinners(shuffled.slice(0, Math.min(numPrizes, eligibility.eligible.length)))
+    const picked = shuffled.slice(0, Math.min(numPrizes, eligibility.eligible.length))
+    // Optimistic display — winnerId+prize get filled in once the auto-
+    // record RPC returns.
+    setWinners(picked.map(p => ({ ...p, winnerId: null, prize: null })))
     setSpinning(false)
-  }
-
-  const saveWinners = async () => {
-    if (winners.length === 0 || !tournament?.id) return
-    setSaving(true)
-    const res = await recordRaffleWinners(tournament.id, winners.map(w => w.id))
-    setSaving(false)
-    if (res !== null) setSaved(true)
+    // Auto-record the win immediately so the cooldown is armed without
+    // any extra click — and so a follow-up draw for the next prize never
+    // re-picks someone who just won.
+    setLocalWins(prev => [...prev, ...picked.map(p => p.id)])
+    if (tournament?.id) {
+      const rows = await recordRaffleWinners(tournament.id, picked.map(p => p.id))
+      if (rows && rows.length > 0) {
+        const byPid = Object.fromEntries(rows.map(r => [String(r.player_id), r]))
+        setWinners(prev => prev.map(w => {
+          const r = byPid[String(w.id)]
+          return r ? { ...w, winnerId: r.id, prize: r.prize ?? null } : w
+        }))
+        setSaved(true)
+      } else if (rows !== null) {
+        // RPC returned [] — most likely all picks were dupes for this
+        // tournament. Eligibility should have prevented that, but mark as
+        // saved anyway so the badge state is honest.
+        setSaved(true)
+      }
+    }
   }
 
   if (!tournament) return (
@@ -183,7 +282,10 @@ function Raffle({ tournament, players, registrations }) {
       {/* Big raffle hero card — sized up so it reads from across the room
           when projected on a TV/screen during the tournament. The count
           and the draw both use the eligible pool only; ineligibility is
-          deliberately not exposed to the projection. */}
+          deliberately not exposed to the projection. Hidden when the
+          selected tournament is in the past — that switches into a
+          read-only review of the recorded winners. */}
+      {!isPastTournament && (
       <div className="rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-lobster-teal via-teal-600 to-teal-800 text-white shadow-2xl">
         <div className="flex items-center justify-center gap-3 mb-3">
           <Gift size={32} className="text-yellow-300" />
@@ -233,6 +335,7 @@ function Raffle({ tournament, players, registrations }) {
           <p className="text-sm text-orange-200 text-center mt-3">No registered players yet</p>
         )}
       </div>
+      )}
 
       {/* Winners — huge celebratory card for when the screen is showing
           the result to the whole room. */}
@@ -250,33 +353,34 @@ function Raffle({ tournament, players, registrations }) {
                 <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-amber-400 flex items-center justify-center text-white font-bold text-xl sm:text-2xl flex-shrink-0">
                   {w.name[0]}
                 </div>
-                <p className="font-black text-gray-800 text-xl sm:text-2xl md:text-3xl leading-tight truncate">
-                  {shortLabels[String(w.id)] || (w.name || '').split(' ')[0] || w.name}
-                </p>
+                <div className="flex-1 min-w-0">
+                  <p className="font-black text-gray-800 text-xl sm:text-2xl md:text-3xl leading-tight truncate">
+                    {shortLabels[String(w.id)] || (w.name || '').split(' ')[0] || w.name}
+                  </p>
+                  <PrizeEditor winner={w} onSave={updateRaffleWinnerPrize} />
+                </div>
               </div>
             ))}
           </div>
 
-          {/* Save / Saved state — recording the winners is what arms the
-              cooldown for next time. */}
-          <div className="mt-5 flex flex-col sm:flex-row gap-2">
-            {saved ? (
-              <div className="flex-1 text-center bg-white/60 text-amber-900 font-bold py-3 rounded-xl flex items-center justify-center gap-2">
+          {/* Saved badge — auto-recorded on draw, so this is purely a
+              confirmation. "Hide" only clears the local display; the
+              winners stay saved in the DB. For past tournaments the
+              saved state is implied so we just show a neutral header. */}
+          {!isPastTournament && (
+            <div className="mt-5 flex flex-col sm:flex-row gap-2">
+              <div className={`flex-1 text-center font-bold py-3 rounded-xl flex items-center justify-center gap-2 ${
+                  saved ? 'bg-white/60 text-amber-900' : 'bg-white/30 text-amber-900/60'
+                }`}>
                 <Check size={18} />
-                Saved — cooldown armed
+                {saved ? 'Saved' : 'Saving…'}
               </div>
-            ) : (
-              <button onClick={saveWinners} disabled={saving}
-                className="flex-1 bg-amber-900 hover:bg-amber-950 disabled:opacity-50 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-all">
-                <Check size={18} />
-                {saving ? 'Saving…' : 'Save winners'}
+              <button onClick={() => setWinners([])}
+                className="text-sm text-amber-900/70 font-semibold py-3 px-4 hover:text-amber-900">
+                Hide
               </button>
-            )}
-            <button onClick={() => { setWinners([]); setSaved(false) }}
-              className="text-sm text-amber-900/70 font-semibold py-3 px-4 hover:text-amber-900">
-              Clear results
-            </button>
-          </div>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -327,7 +431,7 @@ function Lightbox({ images, startIndex = 0, onClose }) {
 
 // ── Main Merch component ──────────────────────────────────────────────────────
 export default function Merch({ tournament, tournaments: allTournaments = [], initialTab, onNavigate }) {
-  const { players, registrations, isAdmin, tournaments: contextTournaments = [], claimedId } = useApp()
+  const { players, registrations, isAdmin, tournaments: contextTournaments = [], claimedId, raffleWinners = [] } = useApp()
   const tournaments = allTournaments.length > 0 ? allTournaments : contextTournaments
   const [tab, setTab]             = useState(initialTab || 'shop')
   useEffect(() => { if (initialTab) setTab(initialTab) }, [initialTab])
@@ -356,8 +460,16 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
   const upcomingTournaments = useMemo(() => {
     const d = new Date()
     const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-    return tournaments.filter(t => !t.date || String(t.date) >= todayStr)
-  }, [tournaments])
+    const winsByTournament = new Set((raffleWinners || []).map(w => String(w.tournament_id)).filter(Boolean))
+    // Include today + future as before, plus any past tournament that
+    // already has recorded winners — admin can re-open it to review the
+    // result. Pure-past-no-winners stays hidden.
+    return tournaments.filter(t => {
+      if (!t.date) return true
+      if (String(t.date) >= todayStr) return true
+      return winsByTournament.has(String(t.id))
+    })
+  }, [tournaments, raffleWinners])
   // If the currently selected tournament drops out of the upcoming window
   // (e.g. midnight rollover, or admin loaded the page with a stale prop),
   // clear it so the select widget doesn't render an orphan value.

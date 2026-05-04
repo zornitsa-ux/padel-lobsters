@@ -1594,8 +1594,11 @@ export function AppProvider({ children }) {
   // Insert one row per winner via the SECURITY DEFINER RPC. Returns the
   // inserted rows (or null on auth failure).
   const recordRaffleWinners = useCallback(async (tournamentId, playerIds) => {
+    // Auto-called on every Draw, so we MUST stay silent on failure — no
+    // alerts mid-raffle in front of the room. Returns null for caller to
+    // detect.
     const adminPin = localStorage.getItem('lobster_session_admin_pin')
-    if (!adminPin) { alert('Admin sign-in required to save raffle winners.'); return null }
+    if (!adminPin) { console.warn('recordRaffleWinners: no admin pin'); return null }
     if (!tournamentId || !Array.isArray(playerIds) || playerIds.length === 0) return []
     try {
       const { data, error } = await supabase.rpc('admin_record_raffle_winners', {
@@ -1609,6 +1612,24 @@ export function AppProvider({ children }) {
     } catch (e) {
       console.error('admin_record_raffle_winners threw:', e)
       return null
+    }
+  }, [])
+  const updateRaffleWinnerPrize = useCallback(async (winnerId, prize) => {
+    const adminPin = localStorage.getItem('lobster_session_admin_pin')
+    if (!adminPin) { console.warn('updateRaffleWinnerPrize: no admin pin'); return false }
+    if (!winnerId) return false
+    try {
+      const { data, error } = await supabase.rpc('admin_update_raffle_winner_prize', {
+        input_admin_pin: adminPin,
+        input_winner_id: winnerId,
+        input_prize:     prize ?? '',
+      })
+      if (error) { console.error('admin_update_raffle_winner_prize error:', error); return false }
+      await loadRaffleWinners()
+      return data === true
+    } catch (e) {
+      console.error('admin_update_raffle_winner_prize threw:', e)
+      return false
     }
   }, [])
   const deleteRaffleWinner = useCallback(async (winnerId) => {
@@ -1664,7 +1685,7 @@ export function AppProvider({ children }) {
       registerLeagueInterest, withdrawLeagueInterest,
       proposeLeagueTeam, respondLeagueTeam, dissolveLeagueTeam,
       // Raffle winners
-      raffleWinners, recordRaffleWinners, deleteRaffleWinner,
+      raffleWinners, recordRaffleWinners, deleteRaffleWinner, updateRaffleWinnerPrize,
     }}>
       {children}
     </AppContext.Provider>
