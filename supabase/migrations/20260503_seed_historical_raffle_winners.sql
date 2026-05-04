@@ -21,6 +21,7 @@ SELECT v.player_id::uuid, v.tournament_id::uuid, v.won_at_date::date,
        v.tournament_label, v.cooldown_offset
 FROM (VALUES
   ('7f9de5e6-552f-4726-89e9-c6bf6767fa13', NULL,                                   '2026-03-22', 'LOBStournament #3', 1),
+  ('38dc6f48-b225-4d49-9d36-d938b0432ac7', NULL,                                   '2026-03-22', 'LOBStournament #3', 1),
   ('d5de9ee6-f2a4-4961-8df0-a89ca8e59b0b', NULL,                                   '2026-03-22', 'LOBStournament #3', 1),
   ('9c6dc64d-031f-4e5b-b405-56c2b49148d0', NULL,                                   '2026-03-22', 'LOBStournament #3', 1),
   ('3a526d40-f7ef-479e-888e-355edf8fdb4a', '10683d63-6e7b-48c2-8e74-7087fe2a0dac', '2026-04-19', 'LOBStournament #5', 0),

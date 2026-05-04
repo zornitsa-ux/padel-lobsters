@@ -15,10 +15,25 @@
 ALTER TABLE public.raffle_winners
   ADD COLUMN IF NOT EXISTS prize TEXT;
 
--- ── Backfill LOBS #3 prize label ───────────────────────────────────────
+-- ── Backfill LOBS #3 prize labels ──────────────────────────────────────
 UPDATE public.raffle_winners SET prize = 'tshirt'
  WHERE tournament_label = 'LOBStournament #3'
    AND player_id        = '7f9de5e6-552f-4726-89e9-c6bf6767fa13'  -- ALEJANDRO González
+   AND prize IS NULL;
+
+UPDATE public.raffle_winners SET prize = 'grips'
+ WHERE tournament_label = 'LOBStournament #3'
+   AND player_id        = '38dc6f48-b225-4d49-9d36-d938b0432ac7'  -- Alejandro Muñoz (Alex M)
+   AND prize IS NULL;
+
+UPDATE public.raffle_winners SET prize = 'sticker'
+ WHERE tournament_label = 'LOBStournament #3'
+   AND player_id        = 'd5de9ee6-f2a4-4961-8df0-a89ca8e59b0b'  -- Gagan Shetty
+   AND prize IS NULL;
+
+UPDATE public.raffle_winners SET prize = 'canvas bag'
+ WHERE tournament_label = 'LOBStournament #3'
+   AND player_id        = '9c6dc64d-031f-4e5b-b405-56c2b49148d0'  -- Baturay Ucer
    AND prize IS NULL;
 
 -- ── Backfill LOBS #6 prize labels ──────────────────────────────────────
