@@ -834,6 +834,29 @@ export default function History({ onNavigate }) {
       .sort((a, b) => (b.date || b.completedAt || '') > (a.date || a.completedAt || '') ? 1 : -1)
   }, [tournaments])
 
+  // Global first-name disambiguation map across the entire player base.
+  // "Gonzalo" stays "Gonzalo" if unique; "Gonzalo U" / "Gonzalo E" if not.
+  // Built once and reused by every tournament card so names don't flip
+  // between cards depending on local roster.
+  const globalDnMap = useMemo(() => {
+    const names = new Set()
+    players.forEach(p => { if (p?.name) names.add(p.name) })
+    // Include any hardcoded-tournament names that may not exist in players,
+    // resolved through aliases first.
+    TOURNAMENTS.forEach(t => {
+      t.players?.forEach(p => { const r = rn(p.name); if (r) names.add(r) })
+      t.rounds?.forEach(r => r.matches?.forEach(mm => {
+        mm.t1?.forEach(n => { const x = rn(n); if (x) names.add(x) })
+        mm.t2?.forEach(n => { const x = rn(n); if (x) names.add(x) })
+      }))
+    })
+    return buildDisplayNames([...names])
+  }, [players, rn])
+  const globalDn = useCallback(
+    (n) => globalDnMap[n] || (n || '').split(' ')[0] || '',
+    [globalDnMap]
+  )
+
   // Fetch shared Lobster Oscars results for any completed dynamic tournament
   // that doesn't have them cached yet — used by the "Lobster games" tab on
   // those event cards. Returns empty until the admin pressed Share for that
@@ -949,19 +972,10 @@ export default function History({ onNavigate }) {
               const dbTab    = getDbTab(t.id)
               const dbRi     = getDbRound(t.id)
               const playerNameById = id => players.find(p => p.id === id)?.name || '?'
-              // Names that appear in this tournament (registered roster + everyone in matches).
-              const dbNameSet = new Set()
-              tRegs.forEach(r => {
-                const pp = players.find(x => x.id === r.playerId)
-                if (pp?.name) dbNameSet.add(pp.name)
-              })
-              tMatches.forEach(mt => {
-                ;(mt.team1Ids || []).forEach(id => { const nm = playerNameById(id); if (nm && nm !== '?') dbNameSet.add(nm) })
-                ;(mt.team2Ids || []).forEach(id => { const nm = playerNameById(id); if (nm && nm !== '?') dbNameSet.add(nm) })
-              })
-              const dbDnMap = buildDisplayNames([...dbNameSet])
-              const dbDn    = (n) => dbDnMap[n] || (n || '').split(' ')[0] || ''
-              const dbDnId  = (id) => dbDn(playerNameById(id))
+              // Use the global display-name map so names render consistently
+              // across all event cards, regardless of who's in this roster.
+              const dbDn   = globalDn
+              const dbDnId = (id) => globalDn(playerNameById(id))
 
               // Group completed matches by round, sort within round by court number.
               const courtNum = (label) => {
@@ -1230,16 +1244,9 @@ export default function History({ onNavigate }) {
         const tab    = getTab(t.id)
         const ri     = getRound(t.id)
         const sorted = t.players ? smartSort(t.players, t.rounds || []) : []
-        // Build display-name map (first name, with disambiguator when needed) for
-        // every name that appears in this tournament's standings or rounds.
-        const allNames = []
-        t.players?.forEach(p => allNames.push(rn(p.name)))
-        t.rounds?.forEach(r => r.matches?.forEach(mm => {
-          mm.t1?.forEach(n => allNames.push(rn(n)))
-          mm.t2?.forEach(n => allNames.push(rn(n)))
-        }))
-        const dnMap = buildDisplayNames(allNames)
-        const dn = (n) => dnMap[rn(n)] || (rn(n) || '').split(' ')[0] || ''
+        // Use the global display-name map so first-name collisions are
+        // disambiguated consistently across every event card.
+        const dn = (n) => globalDn(rn(n))
 
         return (
           <div key={t.id} className="card overflow-hidden border-l-4 border-yellow-400">
