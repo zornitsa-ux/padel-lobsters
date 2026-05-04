@@ -128,17 +128,10 @@ function Raffle({ tournament, players, registrations }) {
     return out
   }, [registered])
 
-  // localWins covers two failure modes:
-  //   (1) a draw whose auto-save to DB hasn't round-tripped yet, and
-  //   (2) network failure on auto-save — we still don't want the same
-  //       person to come up twice in this tournament's raffle.
-  const [localWins, setLocalWins] = useState([])
-  // Reset when tournament changes.
-  useEffect(() => { setLocalWins([]) }, [tournament?.id])
-
-  // Set of player_ids who must be excluded for THIS tournament:
-  //   - anyone with a saved raffle_winners row for this tournament_id
-  //   - anyone the local session has already drawn for this tournament
+  // Set of player_ids who must be excluded for THIS tournament — those
+  // who already have a saved raffle_winners row for this tournament_id.
+  // Unsaved draft draws do NOT count, so admin can re-draw freely while
+  // testing.
   const alreadyWonHere = useMemo(() => {
     const s = new Set()
     if (tournament?.id) {
@@ -147,9 +140,8 @@ function Raffle({ tournament, players, registrations }) {
         if (String(w.tournament_id) === tId) s.add(String(w.player_id))
       })
     }
-    localWins.forEach(id => s.add(String(id)))
     return s
-  }, [raffleWinners, tournament, localWins])
+  }, [raffleWinners, tournament])
 
   // Eligibility: a registered player is INELIGIBLE if any of:
   //   a) they have NO prior registration in a tournament dated before
@@ -241,29 +233,28 @@ function Raffle({ tournament, players, registrations }) {
     await new Promise(r => setTimeout(r, 800))
     const shuffled = [...eligibility.eligible].sort(() => Math.random() - 0.5)
     const picked = shuffled.slice(0, Math.min(numPrizes, eligibility.eligible.length))
-    // Optimistic display — winnerId+prize get filled in once the auto-
-    // record RPC returns.
     setWinners(picked.map(p => ({ ...p, winnerId: null, prize: null })))
     setSpinning(false)
-    // Auto-record the win immediately so the cooldown is armed without
-    // any extra click — and so a follow-up draw for the next prize never
-    // re-picks someone who just won.
-    setLocalWins(prev => [...prev, ...picked.map(p => p.id)])
-    if (tournament?.id) {
-      const rows = await recordRaffleWinners(tournament.id, picked.map(p => p.id))
-      if (rows && rows.length > 0) {
-        const byPid = Object.fromEntries(rows.map(r => [String(r.player_id), r]))
-        setWinners(prev => prev.map(w => {
-          const r = byPid[String(w.id)]
-          return r ? { ...w, winnerId: r.id, prize: r.prize ?? null } : w
-        }))
-        setSaved(true)
-      } else if (rows !== null) {
-        // RPC returned [] — most likely all picks were dupes for this
-        // tournament. Eligibility should have prevented that, but mark as
-        // saved anyway so the badge state is honest.
-        setSaved(true)
-      }
+  }
+
+  // Explicit Save: writes the current draw to raffle_winners. Until the
+  // admin clicks this, draws are ephemeral — handy for testing without
+  // arming the cooldown.
+  const [saving, setSaving] = useState(false)
+  const saveWinners = async () => {
+    if (winners.length === 0 || !tournament?.id || saved || saving) return
+    setSaving(true)
+    const rows = await recordRaffleWinners(tournament.id, winners.map(w => w.id))
+    setSaving(false)
+    if (rows && rows.length > 0) {
+      const byPid = Object.fromEntries(rows.map(r => [String(r.player_id), r]))
+      setWinners(prev => prev.map(w => {
+        const r = byPid[String(w.id)]
+        return r ? { ...w, winnerId: r.id, prize: r.prize ?? null } : w
+      }))
+      setSaved(true)
+    } else if (rows !== null) {
+      setSaved(true)
     }
   }
 
@@ -363,19 +354,25 @@ function Raffle({ tournament, players, registrations }) {
             ))}
           </div>
 
-          {/* Saved badge — auto-recorded on draw, so this is purely a
-              confirmation. "Hide" only clears the local display; the
-              winners stay saved in the DB. For past tournaments the
-              saved state is implied so we just show a neutral header. */}
+          {/* Save / Hide — explicit Save records to the DB and arms the
+              cooldown for next time. Until then the draw is purely
+              local, so admin can test repeatedly without polluting the
+              winners table. "Hide" only clears the local display. */}
           {!isPastTournament && (
             <div className="mt-5 flex flex-col sm:flex-row gap-2">
-              <div className={`flex-1 text-center font-bold py-3 rounded-xl flex items-center justify-center gap-2 ${
-                  saved ? 'bg-white/60 text-amber-900' : 'bg-white/30 text-amber-900/60'
-                }`}>
-                <Check size={18} />
-                {saved ? 'Saved' : 'Saving…'}
-              </div>
-              <button onClick={() => setWinners([])}
+              {saved ? (
+                <div className="flex-1 text-center bg-white/60 text-amber-900 font-bold py-3 rounded-xl flex items-center justify-center gap-2">
+                  <Check size={18} />
+                  Saved
+                </div>
+              ) : (
+                <button onClick={saveWinners} disabled={saving}
+                  className="flex-1 bg-amber-900 hover:bg-amber-950 disabled:opacity-50 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-all">
+                  <Check size={18} />
+                  {saving ? 'Saving…' : 'Save winners'}
+                </button>
+              )}
+              <button onClick={() => { setWinners([]); setSaved(false) }}
                 className="text-sm text-amber-900/70 font-semibold py-3 px-4 hover:text-amber-900">
                 Hide
               </button>

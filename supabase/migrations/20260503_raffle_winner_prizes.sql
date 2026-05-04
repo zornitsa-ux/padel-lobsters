@@ -15,6 +15,12 @@
 ALTER TABLE public.raffle_winners
   ADD COLUMN IF NOT EXISTS prize TEXT;
 
+-- ── Backfill LOBS #3 prize label ───────────────────────────────────────
+UPDATE public.raffle_winners SET prize = 'tshirt'
+ WHERE tournament_label = 'LOBStournament #3'
+   AND player_id        = '7f9de5e6-552f-4726-89e9-c6bf6767fa13'  -- ALEJANDRO González
+   AND prize IS NULL;
+
 -- ── Backfill LOBS #6 prize labels ──────────────────────────────────────
 UPDATE public.raffle_winners SET prize = 'tshirt'
  WHERE tournament_id = '45382520-87ad-489b-8e8e-8bd12aa865b7'::uuid
