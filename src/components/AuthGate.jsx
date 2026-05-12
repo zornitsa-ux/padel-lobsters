@@ -23,15 +23,15 @@ export default function AuthGate({ role, onNavigate, message, compact, fallback,
   const { isAdmin, claimedId } = useApp()
 
   const allowed =
-    role === 'admin'  ? isAdmin :
-    role === 'player' ? !!claimedId || isAdmin : // admin counts as a superset
-    true
+    role === 'admin'
+      ? isAdmin
+      : role === 'player'
+        ? !!claimedId || isAdmin // admin counts as a superset
+        : true
 
   if (allowed) return <>{children}</>
   if (fallback !== undefined) return fallback
-  return (
-    <SignInBanner role={role} onNavigate={onNavigate} message={message} compact={compact} />
-  )
+  return <SignInBanner role={role} onNavigate={onNavigate} message={message} compact={compact} />
 }
 
 /**
@@ -40,13 +40,14 @@ export default function AuthGate({ role, onNavigate, message, compact, fallback,
  */
 export function SignInBanner({ role, onNavigate, message, compact }) {
   const isAdmin = role === 'admin'
-  const Icon    = isAdmin ? Shield : User
-  const accent  = isAdmin ? 'amber' : 'teal'
+  const Icon = isAdmin ? Shield : User
+  const accent = isAdmin ? 'amber' : 'teal'
 
-  const bg      = accent === 'amber' ? 'bg-amber-50 border-amber-200' : 'bg-lobster-cream border-lobster-teal/30'
-  const iconTxt = accent === 'amber' ? 'text-amber-600'              : 'text-lobster-teal'
-  const title   = accent === 'amber' ? 'text-amber-800'              : 'text-lobster-teal'
-  const body    = accent === 'amber' ? 'text-amber-700'              : 'text-gray-600'
+  const bg =
+    accent === 'amber' ? 'bg-amber-50 border-amber-200' : 'bg-lobster-cream border-lobster-teal/30'
+  const iconTxt = accent === 'amber' ? 'text-amber-600' : 'text-lobster-teal'
+  const title = accent === 'amber' ? 'text-amber-800' : 'text-lobster-teal'
+  const body = accent === 'amber' ? 'text-amber-700' : 'text-gray-600'
 
   const defaultCopy = isAdmin
     ? 'Sign in as admin from Settings → Account to manage this.'
@@ -71,7 +72,9 @@ export function SignInBanner({ role, onNavigate, message, compact }) {
 
   return (
     <div className={`rounded-2xl border ${bg} p-4 flex items-start gap-3`}>
-      <div className={`w-9 h-9 rounded-full bg-white flex items-center justify-center flex-shrink-0 ${iconTxt}`}>
+      <div
+        className={`w-9 h-9 rounded-full bg-white flex items-center justify-center flex-shrink-0 ${iconTxt}`}
+      >
         <Icon size={16} />
       </div>
       <div className="flex-1 min-w-0">
@@ -99,10 +102,7 @@ export function SignInBanner({ role, onNavigate, message, compact }) {
 export function useRequireRole(onNavigate) {
   const { isAdmin, claimedId } = useApp()
   return (role) => {
-    const ok =
-      role === 'admin'  ? isAdmin :
-      role === 'player' ? !!claimedId || isAdmin :
-      true
+    const ok = role === 'admin' ? isAdmin : role === 'player' ? !!claimedId || isAdmin : true
     if (!ok) onNavigate?.('settings')
     return ok
   }
@@ -116,12 +116,20 @@ export function useRequireRole(onNavigate) {
  *
  * Uses the same PIN auto-detect as Settings (admin PIN OR a player PIN).
  */
-export function PinPrompt({ open, onClose, onSuccess, role = 'player', title, subtitle, onNavigate }) {
+export function PinPrompt({
+  open,
+  onClose,
+  onSuccess,
+  role = 'player',
+  title,
+  subtitle,
+  onNavigate,
+}) {
   const { loginWithPin, logout } = useApp()
-  const [pin, setPin]         = useState('')
-  const [error, setError]     = useState('')
-  const [busy, setBusy]       = useState(false)
-  const inputRef              = useRef(null)
+  const [pin, setPin] = useState('')
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
+  const inputRef = useRef(null)
 
   // Reset state every time the modal opens
   useEffect(() => {
@@ -170,12 +178,15 @@ export function PinPrompt({ open, onClose, onSuccess, role = 'player', title, su
   }
 
   const isAdminAsk = role === 'admin'
-  const accent     = isAdminAsk ? 'amber' : 'teal'
-  const accentBg   = accent === 'amber' ? 'bg-amber-50'           : 'bg-lobster-cream'
-  const accentTxt  = accent === 'amber' ? 'text-amber-700'        : 'text-lobster-teal'
+  const accent = isAdminAsk ? 'amber' : 'teal'
+  const accentBg = accent === 'amber' ? 'bg-amber-50' : 'bg-lobster-cream'
+  const accentTxt = accent === 'amber' ? 'text-amber-700' : 'text-lobster-teal'
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-[60] flex items-end sm:items-center justify-center" onClick={onClose}>
+    <div
+      className="fixed inset-0 bg-black/50 z-[60] flex items-end sm:items-center justify-center"
+      onClick={onClose}
+    >
       <div
         className="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-sm p-5 space-y-4"
         onClick={(e) => e.stopPropagation()}
@@ -185,7 +196,9 @@ export function PinPrompt({ open, onClose, onSuccess, role = 'player', title, su
             <div className={`w-8 h-8 rounded-full ${accentBg} flex items-center justify-center`}>
               <KeyRound size={15} className={accentTxt} />
             </div>
-            <h3 className="font-bold text-gray-800">{title || (isAdminAsk ? 'Admin PIN' : 'Enter your PIN')}</h3>
+            <h3 className="font-bold text-gray-800">
+              {title || (isAdminAsk ? 'Admin PIN' : 'Enter your PIN')}
+            </h3>
           </div>
           <button onClick={onClose} aria-label="Close">
             <X size={22} className="text-gray-400" />
@@ -193,9 +206,10 @@ export function PinPrompt({ open, onClose, onSuccess, role = 'player', title, su
         </div>
 
         <p className="text-sm text-gray-500">
-          {subtitle || (isAdminAsk
-            ? 'Enter the admin PIN to continue.'
-            : 'Enter your 4-digit PIN — you only need to do this once on this device.')}
+          {subtitle ||
+            (isAdminAsk
+              ? 'Enter the admin PIN to continue.'
+              : 'Enter your 4-digit PIN — you only need to do this once on this device.')}
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-3">
@@ -206,13 +220,14 @@ export function PinPrompt({ open, onClose, onSuccess, role = 'player', title, su
             autoComplete="one-time-code"
             maxLength={6}
             value={pin}
-            onChange={(e) => { setPin(e.target.value.replace(/\D/g, '')); setError('') }}
+            onChange={(e) => {
+              setPin(e.target.value.replace(/\D/g, ''))
+              setError('')
+            }}
             placeholder="••••"
             className="input text-center text-2xl tracking-[0.5em] font-bold"
           />
-          {error && (
-            <p className="text-xs text-lob-coral font-medium text-center">{error}</p>
-          )}
+          {error && <p className="text-xs text-lob-coral font-medium text-center">{error}</p>}
           <button
             type="submit"
             disabled={busy || !pin}
@@ -249,27 +264,27 @@ export function PinPrompt({ open, onClose, onSuccess, role = 'player', title, su
  */
 export function useAuthPrompt({ onNavigate } = {}) {
   const { isAdmin, claimedId } = useApp()
-  const [open, setOpen]         = useState(false)
-  const [askRole, setAskRole]   = useState('player')
+  const [open, setOpen] = useState(false)
+  const [askRole, setAskRole] = useState('player')
   const [askTitle, setAskTitle] = useState(null)
-  const [askSub, setAskSub]     = useState(null)
-  const pendingRef              = useRef(null)
+  const [askSub, setAskSub] = useState(null)
+  const pendingRef = useRef(null)
 
-  const requireAuth = useCallback((role, cb, options = {}) => {
-    const ok =
-      role === 'admin'  ? isAdmin :
-      role === 'player' ? !!claimedId || isAdmin :
-      true
-    if (ok) {
-      cb?.()
-      return
-    }
-    pendingRef.current = cb
-    setAskRole(role || 'player')
-    setAskTitle(options.title || null)
-    setAskSub(options.subtitle || null)
-    setOpen(true)
-  }, [isAdmin, claimedId])
+  const requireAuth = useCallback(
+    (role, cb, options = {}) => {
+      const ok = role === 'admin' ? isAdmin : role === 'player' ? !!claimedId || isAdmin : true
+      if (ok) {
+        cb?.()
+        return
+      }
+      pendingRef.current = cb
+      setAskRole(role || 'player')
+      setAskTitle(options.title || null)
+      setAskSub(options.subtitle || null)
+      setOpen(true)
+    },
+    [isAdmin, claimedId],
+  )
 
   const handleSuccess = useCallback(() => {
     const cb = pendingRef.current
@@ -278,17 +293,20 @@ export function useAuthPrompt({ onNavigate } = {}) {
     setTimeout(() => cb?.(), 0)
   }, [])
 
-  const AuthPromptModal = useCallback(() => (
-    <PinPrompt
-      open={open}
-      onClose={() => setOpen(false)}
-      onSuccess={handleSuccess}
-      role={askRole}
-      title={askTitle}
-      subtitle={askSub}
-      onNavigate={onNavigate}
-    />
-  ), [open, askRole, askTitle, askSub, onNavigate, handleSuccess])
+  const AuthPromptModal = useCallback(
+    () => (
+      <PinPrompt
+        open={open}
+        onClose={() => setOpen(false)}
+        onSuccess={handleSuccess}
+        role={askRole}
+        title={askTitle}
+        subtitle={askSub}
+        onNavigate={onNavigate}
+      />
+    ),
+    [open, askRole, askTitle, askSub, onNavigate, handleSuccess],
+  )
 
   return { requireAuth, AuthPromptModal }
 }

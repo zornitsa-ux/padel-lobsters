@@ -1,23 +1,34 @@
 import React, { useState } from 'react'
 import { useApp } from '../context/AppContext'
-import { ChevronLeft, CheckCircle, AlertCircle, ExternalLink, UserCog, ShieldCheck, MoreVertical } from 'lucide-react'
+import {
+  ChevronLeft,
+  CheckCircle,
+  AlertCircle,
+  ExternalLink,
+  UserCog,
+  ShieldCheck,
+  MoreVertical,
+} from 'lucide-react'
 import { fmtEur } from '../lib/format'
 
 const METHODS = [
-  { value: 'tikkie',    label: 'Tikkie' },
+  { value: 'tikkie', label: 'Tikkie' },
   { value: 'playtomic', label: 'Playtomic' },
 ]
 
 export default function Payments({ tournament, onNavigate }) {
   const { players, getTournamentRegistrations, updateRegistration, isAdmin } = useApp()
-  const [filter, setFilter]       = useState('all')
+  const [filter, setFilter] = useState('all')
 
   if (!tournament) {
     return (
       <div className="card py-10 text-center text-gray-400">
         <AlertCircle size={36} className="mx-auto mb-2 opacity-30" />
         <p>No event selected</p>
-        <button onClick={() => onNavigate('tournament')} className="btn-primary mt-4 py-2 px-5 text-sm">
+        <button
+          onClick={() => onNavigate('tournament')}
+          className="btn-primary mt-4 py-2 px-5 text-sm"
+        >
           Go to Events
         </button>
       </div>
@@ -26,49 +37,69 @@ export default function Payments({ tournament, onNavigate }) {
 
   const isAdminAll = !tournament.courtBookingMode || tournament.courtBookingMode === 'admin_all'
 
-  const regs = getTournamentRegistrations(tournament.id).filter(r => r.status === 'registered')
+  const regs = getTournamentRegistrations(tournament.id).filter((r) => r.status === 'registered')
   // Status buckets — see Registration.jsx PayBadge for semantics.
-  const confirmed = regs.filter(r => r.paymentStatus === 'paid' || r.paymentStatus === 'transferred')
-  const selfPaid  = regs.filter(r => r.paymentStatus === 'pending_confirmation')
-  const tikkied   = regs.filter(r => r.paymentStatus === 'tikkied')
+  const confirmed = regs.filter(
+    (r) => r.paymentStatus === 'paid' || r.paymentStatus === 'transferred',
+  )
+  const selfPaid = regs.filter((r) => r.paymentStatus === 'pending_confirmation')
+  const tikkied = regs.filter((r) => r.paymentStatus === 'tikkied')
   // Anyone who hasn't been confirmed yet — this is what admin still has to chase
-  const openCount = regs.filter(r => r.paymentStatus !== 'paid' && r.paymentStatus !== 'transferred')
+  const openCount = regs.filter(
+    (r) => r.paymentStatus !== 'paid' && r.paymentStatus !== 'transferred',
+  )
   // True "ghost" unpaid — didn't even click the Tikkie link
-  const trulyUnpaid = regs.filter(r => !r.paymentStatus || r.paymentStatus === 'unpaid')
+  const trulyUnpaid = regs.filter((r) => !r.paymentStatus || r.paymentStatus === 'unpaid')
 
   // Cost per player depends on booking mode
   const costPerPlayer = isAdminAll
-    ? (tournament.totalPrice > 0 ? tournament.totalPrice / (tournament.maxPlayers || regs.length || 1) : 0)
+    ? tournament.totalPrice > 0
+      ? tournament.totalPrice / (tournament.maxPlayers || regs.length || 1)
+      : 0
     : (tournament.courts || []).reduce((s, c) => s + (parseFloat(c.costPerPerson) || 0), 0)
 
   const totalCollected = confirmed.length * costPerPlayer
-  const totalExpected  = regs.length      * costPerPlayer
+  const totalExpected = regs.length * costPerPlayer
 
   const filtered =
-    filter === 'paid'     ? confirmed :
-    filter === 'pending'  ? selfPaid  :
-    filter === 'tikkied'  ? tikkied   :
-    filter === 'unpaid'   ? trulyUnpaid :
-    regs
-  const getPlayer = (id) => players.find(p => p.id === id)
+    filter === 'paid'
+      ? confirmed
+      : filter === 'pending'
+        ? selfPaid
+        : filter === 'tikkied'
+          ? tikkied
+          : filter === 'unpaid'
+            ? trulyUnpaid
+            : regs
+  const getPlayer = (id) => players.find((p) => p.id === id)
 
   const handleMarkPaid = async (reg, method) => {
-    if (!isAdmin) { onNavigate?.('settings'); return }
+    if (!isAdmin) {
+      onNavigate?.('settings')
+      return
+    }
     await updateRegistration(reg.id, { paymentStatus: 'paid', paymentMethod: method })
   }
 
   const handleMarkUnpaid = async (reg) => {
-    if (!isAdmin) { onNavigate?.('settings'); return }
+    if (!isAdmin) {
+      onNavigate?.('settings')
+      return
+    }
     await updateRegistration(reg.id, { paymentStatus: 'unpaid', paymentMethod: '' })
   }
 
   // Manual status override — admin can jump to any state regardless of the
   // natural flow (for bookkeeping fixes, correcting miscicks, etc.)
   const handleSetStatus = async (reg, status) => {
-    if (!isAdmin) { onNavigate?.('settings'); return }
+    if (!isAdmin) {
+      onNavigate?.('settings')
+      return
+    }
     await updateRegistration(reg.id, {
       paymentStatus: status,
-      paymentMethod: status === 'unpaid' ? '' : (reg.paymentMethod || (status === 'tikkied' ? 'tikkie' : '')),
+      paymentMethod:
+        status === 'unpaid' ? '' : reg.paymentMethod || (status === 'tikkied' ? 'tikkie' : ''),
     })
   }
 
@@ -81,7 +112,10 @@ export default function Payments({ tournament, onNavigate }) {
     <div className="space-y-4">
       {/* Back */}
       <div>
-        <button onClick={() => onNavigate('tournament')} className="flex items-center gap-1 text-lob-teal text-sm font-semibold mb-2">
+        <button
+          onClick={() => onNavigate('tournament')}
+          className="flex items-center gap-1 text-lob-teal text-sm font-semibold mb-2"
+        >
           <ChevronLeft size={16} /> Events
         </button>
         <h2 className="text-lg font-bold text-gray-800">{tournament.name}</h2>
@@ -97,8 +131,9 @@ export default function Payments({ tournament, onNavigate }) {
           </div>
           {tournament.totalPrice > 0 && (
             <p className="text-sm text-gray-600">
-              Total: <span className="font-bold text-gray-800">{fmtEur(tournament.totalPrice)}</span>
-              {' '}· Per player: <span className="font-bold text-lobster-teal">{fmtEur(costPerPlayer)}</span>
+              Total:{' '}
+              <span className="font-bold text-gray-800">{fmtEur(tournament.totalPrice)}</span> · Per
+              player: <span className="font-bold text-lobster-teal">{fmtEur(costPerPlayer)}</span>
               <span className="text-xs text-gray-400"> (÷ {tournament.maxPlayers} players)</span>
             </p>
           )}
@@ -113,24 +148,32 @@ export default function Payments({ tournament, onNavigate }) {
             </a>
           )}
           {!tournament.tikkieLink && (
-            <p className="text-xs text-gray-400">No Tikkie link set — payment via Playtomic or cash</p>
+            <p className="text-xs text-gray-400">
+              No Tikkie link set — payment via Playtomic or cash
+            </p>
           )}
         </div>
       ) : (
         /* Player-responsible: show per-court Tikkie links */
-        (tournament.courts || []).some(c => c.tikkieLink || c.responsible) && (
+        (tournament.courts || []).some((c) => c.tikkieLink || c.responsible) && (
           <div className="bg-purple-50 rounded-2xl p-4 space-y-2">
             <div className="flex items-center gap-2 mb-1">
               <UserCog size={15} className="text-purple-600" />
               <span className="text-sm font-bold text-gray-700">Court payments</span>
             </div>
-            {(tournament.courts || []).map((c, i) => (
-              (c.responsible || c.tikkieLink) ? (
+            {(tournament.courts || []).map((c, i) =>
+              c.responsible || c.tikkieLink ? (
                 <div key={i} className="flex items-center justify-between gap-2">
                   <div>
-                    <p className="text-sm font-medium text-gray-700">{c.name || `Court ${i + 1}`}</p>
-                    {c.responsible && <p className="text-xs text-gray-500">Responsible: {c.responsible}</p>}
-                    {c.costPerPerson > 0 && <p className="text-xs text-gray-500">{fmtEur(c.costPerPerson)}/pp</p>}
+                    <p className="text-sm font-medium text-gray-700">
+                      {c.name || `Court ${i + 1}`}
+                    </p>
+                    {c.responsible && (
+                      <p className="text-xs text-gray-500">Responsible: {c.responsible}</p>
+                    )}
+                    {c.costPerPerson > 0 && (
+                      <p className="text-xs text-gray-500">{fmtEur(c.costPerPerson)}/pp</p>
+                    )}
                   </div>
                   {c.tikkieLink && (
                     <a
@@ -143,8 +186,8 @@ export default function Payments({ tournament, onNavigate }) {
                     </a>
                   )}
                 </div>
-              ) : null
-            ))}
+              ) : null,
+            )}
           </div>
         )
       )}
@@ -182,12 +225,16 @@ export default function Payments({ tournament, onNavigate }) {
             </div>
             <div className="flex justify-between text-sm">
               <span className="opacity-80">Still owed</span>
-              <span className="font-bold text-red-300">{fmtEur(totalExpected - totalCollected)}</span>
+              <span className="font-bold text-red-300">
+                {fmtEur(totalExpected - totalCollected)}
+              </span>
             </div>
             <div className="mt-3 bg-white/20 rounded-full h-3 overflow-hidden progress-bar">
               <div
                 className="h-full bg-gradient-to-r from-green-300 to-green-400 rounded-full transition-all"
-                style={{ width: totalExpected > 0 ? `${(totalCollected / totalExpected) * 100}%` : '0%' }}
+                style={{
+                  width: totalExpected > 0 ? `${(totalCollected / totalExpected) * 100}%` : '0%',
+                }}
               />
             </div>
           </div>
@@ -199,11 +246,11 @@ export default function Payments({ tournament, onNavigate }) {
           → confirmed (admin verified). */}
       <div className="flex gap-1.5 overflow-x-auto -mx-1 px-1">
         {[
-          ['all',     'All',       regs.length,          'bg-lob-coral text-white'],
-          ['unpaid',  'Unpaid',    trulyUnpaid.length,   'bg-red-500 text-white'],
-          ['tikkied', 'Tikkied',   tikkied.length,       'bg-amber-500 text-white'],
-          ['pending', 'Paid',      selfPaid.length,      'bg-sky-500 text-white'],
-          ['paid',    'Confirmed', confirmed.length,     'bg-green-600 text-white'],
+          ['all', 'All', regs.length, 'bg-lob-coral text-white'],
+          ['unpaid', 'Unpaid', trulyUnpaid.length, 'bg-red-500 text-white'],
+          ['tikkied', 'Tikkied', tikkied.length, 'bg-amber-500 text-white'],
+          ['pending', 'Paid', selfPaid.length, 'bg-sky-500 text-white'],
+          ['paid', 'Confirmed', confirmed.length, 'bg-green-600 text-white'],
         ].map(([v, l, count, activeClass]) => (
           <button
             key={v}
@@ -215,7 +262,9 @@ export default function Payments({ tournament, onNavigate }) {
             }`}
           >
             {l}
-            <span className={`ml-1 text-xs font-bold ${filter === v ? 'text-white/80' : 'text-lob-muted'}`}>
+            <span
+              className={`ml-1 text-xs font-bold ${filter === v ? 'text-white/80' : 'text-lob-muted'}`}
+            >
               {count}
             </span>
           </button>
@@ -231,46 +280,66 @@ export default function Payments({ tournament, onNavigate }) {
           </div>
         )}
 
-        {filtered.map(reg => {
+        {filtered.map((reg) => {
           const player = getPlayer(reg.playerId)
           if (!player) return null
           const ps = reg.paymentStatus
-          const isConfirmed   = ps === 'paid' || ps === 'transferred'
-          const isSelfPaid    = ps === 'pending_confirmation'
-          const isTikkied     = ps === 'tikkied'
+          const isConfirmed = ps === 'paid' || ps === 'transferred'
+          const isSelfPaid = ps === 'pending_confirmation'
+          const isTikkied = ps === 'tikkied'
           const isTransferred = ps === 'transferred'
 
-          const borderColor =
-            isConfirmed ? 'border-green-400' :
-            isSelfPaid  ? 'border-sky-400'   :
-            isTikkied   ? 'border-amber-400' :
-            'border-red-300'
-          const avatarColor =
-            isConfirmed ? 'bg-green-100 text-green-700' :
-            isSelfPaid  ? 'bg-sky-100 text-sky-700'     :
-            isTikkied   ? 'bg-amber-100 text-amber-700' :
-            'bg-red-100 text-red-600'
+          const borderColor = isConfirmed
+            ? 'border-green-400'
+            : isSelfPaid
+              ? 'border-sky-400'
+              : isTikkied
+                ? 'border-amber-400'
+                : 'border-red-300'
+          const avatarColor = isConfirmed
+            ? 'bg-green-100 text-green-700'
+            : isSelfPaid
+              ? 'bg-sky-100 text-sky-700'
+              : isTikkied
+                ? 'bg-amber-100 text-amber-700'
+                : 'bg-red-100 text-red-600'
 
           return (
             <div key={reg.id} className={`card transition-all border-l-4 ${borderColor}`}>
               <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold flex-shrink-0 ${avatarColor}`}>
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center font-bold flex-shrink-0 ${avatarColor}`}
+                >
                   {player.name[0]}
                 </div>
 
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-sm truncate">{player.name}</p>
                   <div className="flex items-center gap-2 flex-wrap">
-                    {isTransferred
-                      ? <span className="text-xs font-semibold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">↔ Transferred</span>
-                      : isConfirmed
-                        ? <span className="text-xs font-semibold bg-green-100 text-green-700 px-2 py-0.5 rounded-full">✓ Confirmed {reg.paymentMethod ? `· ${METHODS.find(m => m.value === reg.paymentMethod)?.label || reg.paymentMethod}` : ''}</span>
-                        : isSelfPaid
-                          ? <span className="text-xs font-semibold bg-sky-100 text-sky-700 px-2 py-0.5 rounded-full">💬 Paid (self-declared)</span>
-                          : isTikkied
-                            ? <span className="text-xs font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">🔗 Tikkied</span>
-                            : <span className="text-xs font-semibold bg-lob-coral-light text-lob-coral px-2 py-0.5 rounded-full">⚠ Unpaid</span>
-                    }
+                    {isTransferred ? (
+                      <span className="text-xs font-semibold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                        ↔ Transferred
+                      </span>
+                    ) : isConfirmed ? (
+                      <span className="text-xs font-semibold bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                        ✓ Confirmed{' '}
+                        {reg.paymentMethod
+                          ? `· ${METHODS.find((m) => m.value === reg.paymentMethod)?.label || reg.paymentMethod}`
+                          : ''}
+                      </span>
+                    ) : isSelfPaid ? (
+                      <span className="text-xs font-semibold bg-sky-100 text-sky-700 px-2 py-0.5 rounded-full">
+                        💬 Paid (self-declared)
+                      </span>
+                    ) : isTikkied ? (
+                      <span className="text-xs font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+                        🔗 Tikkied
+                      </span>
+                    ) : (
+                      <span className="text-xs font-semibold bg-lob-coral-light text-lob-coral px-2 py-0.5 rounded-full">
+                        ⚠ Unpaid
+                      </span>
+                    )}
                     {costPerPlayer > 0 && !isTransferred && (
                       <span className="text-xs text-gray-400">{fmtEur(costPerPlayer)}</span>
                     )}
@@ -300,7 +369,10 @@ export default function Payments({ tournament, onNavigate }) {
                     )}
                     {/* Manual override — lets the admin set any status directly,
                         e.g. correcting a miscick or manually marking Tikkied. */}
-                    <StatusOverrideMenu currentStatus={ps} onSelect={(s) => handleSetStatus(reg, s)} />
+                    <StatusOverrideMenu
+                      currentStatus={ps}
+                      onSelect={(s) => handleSetStatus(reg, s)}
+                    />
                   </div>
                 )}
               </div>
@@ -326,10 +398,13 @@ function PaymentMethodPicker({ onSelect }) {
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div className="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-xl border border-gray-100 z-50 min-w-[130px] overflow-hidden">
-            {METHODS.map(m => (
+            {METHODS.map((m) => (
               <button
                 key={m.value}
-                onClick={() => { onSelect(m.value); setOpen(false) }}
+                onClick={() => {
+                  onSelect(m.value)
+                  setOpen(false)
+                }}
                 className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 active:bg-gray-100"
               >
                 {m.label}
@@ -346,11 +421,11 @@ function PaymentMethodPicker({ onSelect }) {
 // fixing accidental clicks or recording out-of-app payments without going
 // through the natural funnel.
 const OVERRIDE_STATUSES = [
-  { value: 'unpaid',                label: 'Unpaid',      hint: 'Never paid' },
-  { value: 'tikkied',               label: 'Tikkied',     hint: 'Clicked Tikkie link' },
-  { value: 'pending_confirmation',  label: 'Paid',        hint: 'Player says they paid' },
-  { value: 'paid',                  label: 'Confirmed',   hint: 'Admin verified' },
-  { value: 'transferred',           label: 'Transferred', hint: 'Gave up their spot' },
+  { value: 'unpaid', label: 'Unpaid', hint: 'Never paid' },
+  { value: 'tikkied', label: 'Tikkied', hint: 'Clicked Tikkie link' },
+  { value: 'pending_confirmation', label: 'Paid', hint: 'Player says they paid' },
+  { value: 'paid', label: 'Confirmed', hint: 'Admin verified' },
+  { value: 'transferred', label: 'Transferred', hint: 'Gave up their spot' },
 ]
 
 function StatusOverrideMenu({ currentStatus, onSelect }) {
@@ -368,13 +443,18 @@ function StatusOverrideMenu({ currentStatus, onSelect }) {
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div className="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-xl border border-gray-100 z-50 min-w-[190px] overflow-hidden">
-            <div className="px-3 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider bg-gray-50">Set status</div>
-            {OVERRIDE_STATUSES.map(s => {
+            <div className="px-3 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider bg-gray-50">
+              Set status
+            </div>
+            {OVERRIDE_STATUSES.map((s) => {
               const isCurrent = s.value === currentStatus
               return (
                 <button
                   key={s.value}
-                  onClick={() => { if (!isCurrent) onSelect(s.value); setOpen(false) }}
+                  onClick={() => {
+                    if (!isCurrent) onSelect(s.value)
+                    setOpen(false)
+                  }}
                   disabled={isCurrent}
                   className={`w-full text-left px-3 py-2 text-sm font-medium transition-all ${
                     isCurrent

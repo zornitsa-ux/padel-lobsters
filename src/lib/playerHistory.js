@@ -12,18 +12,22 @@ import { TOURNAMENTS } from '../components/History'
 
 /** Lower-case + strip whitespace/punctuation for forgiving comparisons. */
 export function normaliseName(n) {
-  return String(n || '').toLowerCase().replace(/[\s.\-_]/g, '')
+  return String(n || '')
+    .toLowerCase()
+    .replace(/[\s.\-_]/g, '')
 }
 
 /** Collect every unique historical name across all tournaments + rounds. */
 export function getAllHistoricalNames() {
   const names = new Set()
-  TOURNAMENTS.forEach(t => {
-    t.players?.forEach(p => names.add(p.name))
-    t.rounds?.forEach(r => r.matches?.forEach(m => {
-      m.t1?.forEach(n => names.add(n))
-      m.t2?.forEach(n => names.add(n))
-    }))
+  TOURNAMENTS.forEach((t) => {
+    t.players?.forEach((p) => names.add(p.name))
+    t.rounds?.forEach((r) =>
+      r.matches?.forEach((m) => {
+        m.t1?.forEach((n) => names.add(n))
+        m.t2?.forEach((n) => names.add(n))
+      }),
+    )
   })
   return [...names].sort((a, b) => a.localeCompare(b))
 }
@@ -60,11 +64,13 @@ function namesForPlayer(playerId, aliasMap) {
  */
 export function rankPlayers(players) {
   const sorted = [...players].sort((a, b) => b.total - a.total)
-  const withPodium = sorted.filter(p => p.podium >= 1 && p.podium <= 3)
-  const others = sorted.filter(p => !(p.podium >= 1 && p.podium <= 3))
+  const withPodium = sorted.filter((p) => p.podium >= 1 && p.podium <= 3)
+  const others = sorted.filter((p) => !(p.podium >= 1 && p.podium <= 3))
 
   const ranked = new Array(sorted.length)
-  withPodium.forEach(p => { ranked[p.podium - 1] = p })
+  withPodium.forEach((p) => {
+    ranked[p.podium - 1] = p
+  })
 
   let oi = 0
   for (let i = 0; i < ranked.length; i++) {
@@ -80,26 +86,31 @@ export function buildHistoricalAppearances(playerId, aliasMap) {
 
   const out = []
 
-  TOURNAMENTS.forEach(t => {
+  TOURNAMENTS.forEach((t) => {
     const players = t.players || []
     if (players.length === 0) return
 
     // Find this player's row in standings (if present), respecting any
     // explicit podium overrides that pin actual finish positions.
     const ranked = rankPlayers(players)
-    const idx = ranked.findIndex(p => norm.has(normaliseName(p.name)))
+    const idx = ranked.findIndex((p) => norm.has(normaliseName(p.name)))
     if (idx < 0) return
 
     const me = ranked[idx]
 
     // Walk rounds for W/L/D + point differential
-    let played = 0, won = 0, lost = 0, draws = 0, pf = 0, pa = 0
-    ;(t.rounds || []).forEach(r => {
-      r.matches?.forEach(m => {
-        const onT1 = (m.t1 || []).some(n => norm.has(normaliseName(n)))
-        const onT2 = (m.t2 || []).some(n => norm.has(normaliseName(n)))
+    let played = 0,
+      won = 0,
+      lost = 0,
+      draws = 0,
+      pf = 0,
+      pa = 0
+    ;(t.rounds || []).forEach((r) => {
+      r.matches?.forEach((m) => {
+        const onT1 = (m.t1 || []).some((n) => norm.has(normaliseName(n)))
+        const onT2 = (m.t2 || []).some((n) => norm.has(normaliseName(n)))
         if (!onT1 && !onT2) return
-        const myScore    = onT1 ? m.s1 : m.s2
+        const myScore = onT1 ? m.s1 : m.s2
         const theirScore = onT1 ? m.s2 : m.s1
         played++
         pf += myScore
@@ -111,24 +122,28 @@ export function buildHistoricalAppearances(playerId, aliasMap) {
     })
 
     out.push({
-      id:         t.id,
-      name:       t.name,
-      date:       t.date,
-      type:       t.type,
-      rank:       idx + 1,
-      total:      me.total,
-      players:    players.length,
-      played, won, lost, draws,
-      pointsFor:  pf,
+      id: t.id,
+      name: t.name,
+      date: t.date,
+      type: t.type,
+      rank: idx + 1,
+      total: me.total,
+      players: players.length,
+      played,
+      won,
+      lost,
+      draws,
+      pointsFor: pf,
       pointsAgainst: pa,
-      isPodium:   idx < 3,
+      isPodium: idx < 3,
     })
   })
 
   // Newest first — try Date parse, fall back to string compare so things
   // like "December 2025" still order sensibly relative to "2026-04-10".
   return out.sort((a, b) => {
-    const ta = Date.parse(a.date), tb = Date.parse(b.date)
+    const ta = Date.parse(a.date),
+      tb = Date.parse(b.date)
     if (!isNaN(ta) && !isNaN(tb)) return tb - ta
     return String(b.date).localeCompare(String(a.date))
   })
@@ -147,21 +162,24 @@ export function summariseAppearances(appearances) {
     silvers: 0,
     bronzes: 0,
     totalPoints: 0,
-    played: 0, won: 0, lost: 0, draws: 0,
+    played: 0,
+    won: 0,
+    lost: 0,
+    draws: 0,
     winRate: 0,
     bestRank: null,
     bestRankTournamentName: null,
   }
-  appearances.forEach(a => {
+  appearances.forEach((a) => {
     if (a.rank === 1) out.golds++
     if (a.rank === 2) out.silvers++
     if (a.rank === 3) out.bronzes++
-    if (a.isPodium)   out.podiums++
+    if (a.isPodium) out.podiums++
     out.totalPoints += a.total || 0
-    out.played      += a.played
-    out.won         += a.won
-    out.lost        += a.lost
-    out.draws       += a.draws
+    out.played += a.played
+    out.won += a.won
+    out.lost += a.lost
+    out.draws += a.draws
     if (out.bestRank === null || a.rank < out.bestRank) {
       out.bestRank = a.rank
       out.bestRankTournamentName = a.name
@@ -181,16 +199,17 @@ export function buildAliasInventory(aliasMap) {
   const inventory = []
   const all = getAllHistoricalNames()
 
-  all.forEach(name => {
+  all.forEach((name) => {
     const norm = normaliseName(name)
     const tournaments = []
-    TOURNAMENTS.forEach(t => {
-      const inStandings = (t.players || []).some(p => normaliseName(p.name) === norm)
-      const inRounds = (t.rounds || []).some(r =>
-        r.matches?.some(m =>
-          (m.t1 || []).some(n => normaliseName(n) === norm) ||
-          (m.t2 || []).some(n => normaliseName(n) === norm)
-        )
+    TOURNAMENTS.forEach((t) => {
+      const inStandings = (t.players || []).some((p) => normaliseName(p.name) === norm)
+      const inRounds = (t.rounds || []).some((r) =>
+        r.matches?.some(
+          (m) =>
+            (m.t1 || []).some((n) => normaliseName(n) === norm) ||
+            (m.t2 || []).some((n) => normaliseName(n) === norm),
+        ),
       )
       if (inStandings || inRounds) {
         tournaments.push(t.name.replace('Lobster Tournament · ', ''))
@@ -198,9 +217,9 @@ export function buildAliasInventory(aliasMap) {
     })
     inventory.push({
       name,
-      playerId:         aliasMap?.[name] || null,
-      skipped:          aliasMap?.[name] === '__not_in_roster__',
-      tournamentCount:  tournaments.length,
+      playerId: aliasMap?.[name] || null,
+      skipped: aliasMap?.[name] === '__not_in_roster__',
+      tournamentCount: tournaments.length,
       tournamentLabels: tournaments,
     })
   })
@@ -220,9 +239,11 @@ export function suggestPlayers(historicalName, players, max = 4) {
   const tokens = String(historicalName).toLowerCase().split(/\s+/)
   const firstTok = tokens[0]
 
-  const scored = (players || []).map(p => {
-    const full   = normaliseName(p.name)
-    const first  = String(p.name || '').toLowerCase().split(/\s+/)[0]
+  const scored = (players || []).map((p) => {
+    const full = normaliseName(p.name)
+    const first = String(p.name || '')
+      .toLowerCase()
+      .split(/\s+/)[0]
     let score = 0
     if (full === target) score = 1000
     else if (full.startsWith(target) || target.startsWith(full)) score = 500
@@ -231,15 +252,18 @@ export function suggestPlayers(historicalName, players, max = 4) {
     else if (first.startsWith(firstTok) || firstTok.startsWith(first)) score = 100
     // surname-initial suffix: "Alex M" matches "Alex Martinez"
     if (tokens.length > 1 && tokens[1].length === 1) {
-      const last = String(p.name || '').toLowerCase().split(/\s+/).slice(-1)[0]
+      const last = String(p.name || '')
+        .toLowerCase()
+        .split(/\s+/)
+        .slice(-1)[0]
       if (first === firstTok && last && last[0] === tokens[1]) score += 400
     }
     return { player: p, score }
   })
 
   return scored
-    .filter(s => s.score > 0)
+    .filter((s) => s.score > 0)
     .sort((a, b) => b.score - a.score)
     .slice(0, max)
-    .map(s => s.player)
+    .map((s) => s.player)
 }

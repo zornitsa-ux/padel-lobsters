@@ -22,7 +22,9 @@ function newDeviceId() {
     if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
       return crypto.randomUUID()
     }
-  } catch { /* fall through */ }
+  } catch {
+    /* fall through */
+  }
   // Manual v4-shaped hex (good enough as a unique ID, not cryptographic)
   const hex = (n) => Math.floor(Math.random() * 16).toString(16)
   let s = ''
@@ -73,5 +75,9 @@ export function getUserAgentSummary() {
  * they can sign back in without going through approval again).
  */
 export function clearDeviceId() {
-  try { localStorage.removeItem(DEVICE_ID_KEY) } catch { /* ignore */ }
+  try {
+    localStorage.removeItem(DEVICE_ID_KEY)
+  } catch {
+    /* ignore */
+  }
 }

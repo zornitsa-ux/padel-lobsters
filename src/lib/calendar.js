@@ -21,7 +21,10 @@ const icsEscape = (s) =>
 
 // Format a Date as an ICS UTC timestamp: 20260415T190000Z
 const toIcsUtc = (d) =>
-  d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
+  d
+    .toISOString()
+    .replace(/[-:]/g, '')
+    .replace(/\.\d{3}/, '')
 
 // Parse a tournament's (date, time) into a local Date. Defaults to 19:00 if
 // no time is set. `tournament.date` is stored as YYYY-MM-DD; `tournament.time`
@@ -30,9 +33,10 @@ const parseTournamentStart = (t) => {
   if (!t?.date) return null
   const time = (t.time || '19:00').trim()
   // Normalise "7pm", "19:00", "19.00" → "HH:mm"
-  let hh = 19, mm = 0
+  let hh = 19,
+    mm = 0
   const ampm = time.match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)$/i)
-  const hm   = time.match(/^(\d{1,2})[:.](\d{2})$/)
+  const hm = time.match(/^(\d{1,2})[:.](\d{2})$/)
   const hOnly = time.match(/^(\d{1,2})$/)
   if (ampm) {
     hh = parseInt(ampm[1], 10) % 12
@@ -67,7 +71,9 @@ export function buildTournamentIcs(tournament) {
     tournament.notes || null,
     '',
     'See you on court!',
-  ].filter(Boolean).join('\n')
+  ]
+    .filter(Boolean)
+    .join('\n')
 
   // iOS Calendar reliability notes:
   //   • TRIGGER must include RELATED=START — Samsung / Google / Outlook treat
@@ -109,7 +115,9 @@ export function buildTournamentIcs(tournament) {
     'END:VALARM',
     'END:VEVENT',
     'END:VCALENDAR',
-  ].filter(Boolean).join('\r\n')
+  ]
+    .filter(Boolean)
+    .join('\r\n')
 
   return lines
 }
@@ -123,7 +131,11 @@ export function buildGoogleCalendarUrl(tournament) {
   const durationMin = parseInt(tournament.duration) || 90
   const end = new Date(start.getTime() + durationMin * 60 * 1000)
 
-  const fmt = (d) => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
+  const fmt = (d) =>
+    d
+      .toISOString()
+      .replace(/[-:]/g, '')
+      .replace(/\.\d{3}/, '')
   const dates = `${fmt(start)}/${fmt(end)}`
 
   const descParts = [
@@ -133,7 +145,9 @@ export function buildGoogleCalendarUrl(tournament) {
     tournament.notes || null,
     '',
     'See you on court!',
-  ].filter(Boolean).join('\n')
+  ]
+    .filter(Boolean)
+    .join('\n')
 
   const params = new URLSearchParams({
     action: 'TEMPLATE',

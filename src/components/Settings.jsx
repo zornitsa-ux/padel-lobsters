@@ -3,9 +3,26 @@ import { useApp } from '../context/AppContext'
 import { supabase } from '../supabase'
 import { isE164 } from '../lib/whatsapp'
 import {
-  Settings2, Lock, MessageCircle, Save, Eye, EyeOff,
-  LogOut, LogIn, Shield, Link, Info, Lightbulb, Plus, Trash2, RotateCcw,
-  User, TrendingUp, ChevronDown, ChevronUp, Camera
+  Settings2,
+  Lock,
+  MessageCircle,
+  Save,
+  Eye,
+  EyeOff,
+  LogOut,
+  LogIn,
+  Shield,
+  Link,
+  Info,
+  Lightbulb,
+  Plus,
+  Trash2,
+  RotateCcw,
+  User,
+  TrendingUp,
+  ChevronDown,
+  ChevronUp,
+  Camera,
 } from 'lucide-react'
 import CountryPicker, { FlagImg } from './CountryPicker'
 import DEFAULT_TIPS from '../data/padelTips'
@@ -17,26 +34,41 @@ import { processAvatar } from '../lib/processAvatar'
 import { letterColor } from '../lib/letterColors'
 
 const LOBBY_PROMPTS = [
-  { label: '🎤 Trash Talk',        placeholder: 'Say something to your future opponents…' },
-  { label: '🦞 Confession',        placeholder: 'Confess your deepest padel sin…' },
-  { label: '💬 War Cry',           placeholder: 'What do you scream before a match?' },
-  { label: '🏅 Bold Claim',        placeholder: 'Make a promise you may not keep…' },
-  { label: '🎯 Battle Cry',        placeholder: 'Inspire (or scare) your opponents…' },
-  { label: '😤 Excuse',            placeholder: 'Pre-write your excuse for losing today…' },
-  { label: '🤝 Pledge',            placeholder: 'What do you bring to the court?' },
-  { label: '👀 Scouting',          placeholder: 'Describe your playing style in one line…' },
+  { label: '🎤 Trash Talk', placeholder: 'Say something to your future opponents…' },
+  { label: '🦞 Confession', placeholder: 'Confess your deepest padel sin…' },
+  { label: '💬 War Cry', placeholder: 'What do you scream before a match?' },
+  { label: '🏅 Bold Claim', placeholder: 'Make a promise you may not keep…' },
+  { label: '🎯 Battle Cry', placeholder: 'Inspire (or scare) your opponents…' },
+  { label: '😤 Excuse', placeholder: 'Pre-write your excuse for losing today…' },
+  { label: '🤝 Pledge', placeholder: 'What do you bring to the court?' },
+  { label: '👀 Scouting', placeholder: 'Describe your playing style in one line…' },
 ]
 
 export default function Settings() {
-  const { settings, saveSettings, isAdmin, claimedId, getPlayerById, updatePlayer, players,
-          loginWithPin, logout, fetchMyProfile } = useApp()
+  const {
+    settings,
+    saveSettings,
+    isAdmin,
+    claimedId,
+    getPlayerById,
+    updatePlayer,
+    players,
+    loginWithPin,
+    logout,
+    fetchMyProfile,
+  } = useApp()
 
-  const [form, setForm]           = useState({ whatsappLink: '', adminPin: '1234', leagueAdminPin: '', groupName: 'Padel Lobsters' })
+  const [form, setForm] = useState({
+    whatsappLink: '',
+    adminPin: '1234',
+    leagueAdminPin: '',
+    groupName: 'Padel Lobsters',
+  })
   // ── Unified Account sign-in state ──────────────────────────
   // A single PIN field handles BOTH admin + player sign-in via auto-detect.
-  const [signInPin, setSignInPin]     = useState('')
+  const [signInPin, setSignInPin] = useState('')
   const [signInError, setSignInError] = useState('')
-  const [signingIn, setSigningIn]     = useState(false)
+  const [signingIn, setSigningIn] = useState(false)
 
   // ── Glicko-2 ratings recompute (admin) ────────────────────────────
   const [recomputing, setRecomputing] = useState(false)
@@ -54,11 +86,11 @@ export default function Settings() {
       setRecomputing(false)
     }
   }
-  const [showPin, setShowPin]     = useState(false)
-  const [saving, setSaving]       = useState(false)
-  const [saved, setSaved]         = useState(false)
-  const [tips, setTips]           = useState(null) // null = use defaults
-  const [newTip, setNewTip]       = useState('')
+  const [showPin, setShowPin] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [tips, setTips] = useState(null) // null = use defaults
+  const [newTip, setNewTip] = useState('')
   const [editingTip, setEditingTip] = useState(null) // { index, text }
   const [tipsExpanded, setTipsExpanded] = useState(false)
 
@@ -66,15 +98,24 @@ export default function Settings() {
   const myPlayer = claimedId ? getPlayerById(claimedId) : null
   const [profileExpanded, setProfileExpanded] = useState(false)
   const [profileForm, setProfileForm] = useState({
-    name: '', country: '', gender: '', isLeftHanded: false,
-    preferredPosition: '', playtomicLevel: '', adjustment: '0',
-    tagline: '', email: '', phone: '', birthday: '', avatarUrl: '',
+    name: '',
+    country: '',
+    gender: '',
+    isLeftHanded: false,
+    preferredPosition: '',
+    playtomicLevel: '',
+    adjustment: '0',
+    tagline: '',
+    email: '',
+    phone: '',
+    birthday: '',
+    avatarUrl: '',
   })
   const [profileSaving, setProfileSaving] = useState(false)
-  const [profileSaved, setProfileSaved]   = useState(false)
-  const [avatarFile, setAvatarFile]       = useState(null)
+  const [profileSaved, setProfileSaved] = useState(false)
+  const [avatarFile, setAvatarFile] = useState(null)
   const [avatarPreview, setAvatarPreview] = useState(null)
-  const [activePrompt, setActivePrompt]   = useState(2) // default to "War Cry"
+  const [activePrompt, setActivePrompt] = useState(2) // default to "War Cry"
   const fileInputRef = useRef(null)
 
   // Playtomic update popup — show if player hasn't visited settings in 30+ days
@@ -100,12 +141,12 @@ export default function Settings() {
       // Restore selected prompt category
       const savedLabel = myPlayer.taglineLabel || myPlayer.tagline_label || ''
       if (savedLabel) {
-        const idx = LOBBY_PROMPTS.findIndex(p => p.label === savedLabel)
+        const idx = LOBBY_PROMPTS.findIndex((p) => p.label === savedLabel)
         if (idx >= 0) setActivePrompt(idx)
       }
       // Check if we should prompt for Playtomic update
       const lastCheck = localStorage.getItem(`lobster_playtomic_check_${claimedId}`)
-      const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000)
+      const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000
       if (!lastCheck || parseInt(lastCheck) < thirtyDaysAgo) {
         setShowPlaytomicPrompt(true)
       }
@@ -121,14 +162,16 @@ export default function Settings() {
     ;(async () => {
       const row = await fetchMyProfile()
       if (cancelled || !row) return
-      setProfileForm(prev => ({
+      setProfileForm((prev) => ({
         ...prev,
-        email:    row.email    ?? prev.email    ?? '',
-        phone:    row.phone    ?? prev.phone    ?? '',
+        email: row.email ?? prev.email ?? '',
+        phone: row.phone ?? prev.phone ?? '',
         birthday: row.birthday ?? prev.birthday ?? '',
       }))
     })()
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+    }
   }, [claimedId, fetchMyProfile])
 
   const handleAvatarChange = (e) => {
@@ -165,12 +208,15 @@ export default function Settings() {
         }
         const filename = `player-${myPlayer.id}.webp`
         const { error: uploadError } = await supabase.storage
-          .from('avatars').upload(filename, processed, { upsert: true, contentType: 'image/webp' })
+          .from('avatars')
+          .upload(filename, processed, { upsert: true, contentType: 'image/webp' })
         if (uploadError) {
           console.error('Avatar upload error:', uploadError)
           alert('Photo could not be saved: ' + uploadError.message)
         } else {
-          const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filename)
+          const {
+            data: { publicUrl },
+          } = supabase.storage.from('avatars').getPublicUrl(filename)
           // Cache buster so the CDN serves the new image immediately on re-upload.
           avatarUrl = `${publicUrl}?v=${Date.now()}`
         }
@@ -209,10 +255,10 @@ export default function Settings() {
   useEffect(() => {
     if (settings) {
       setForm({
-        whatsappLink:   settings.whatsappLink   || '',
-        adminPin:       settings.adminPin       || '1234',
+        whatsappLink: settings.whatsappLink || '',
+        adminPin: settings.adminPin || '1234',
         leagueAdminPin: settings.leagueAdminPin || '',
-        groupName:      settings.groupName      || 'Padel Lobsters',
+        groupName: settings.groupName || 'Padel Lobsters',
       })
       setTips(settings.padelTips && settings.padelTips.length > 0 ? settings.padelTips : null)
     }
@@ -340,9 +386,13 @@ export default function Settings() {
       <div className="card space-y-3">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-lobster-teal/10 rounded-lg flex items-center justify-center">
-            {isAdmin ? <Shield size={16} className="text-lobster-teal" /> :
-             signedInPlayer ? <User size={16} className="text-lobster-teal" /> :
-                              <LogIn size={16} className="text-lobster-teal" />}
+            {isAdmin ? (
+              <Shield size={16} className="text-lobster-teal" />
+            ) : signedInPlayer ? (
+              <User size={16} className="text-lobster-teal" />
+            ) : (
+              <LogIn size={16} className="text-lobster-teal" />
+            )}
           </div>
           <div>
             <h3 className="font-bold text-gray-700 text-sm">Account</h3>
@@ -357,7 +407,9 @@ export default function Settings() {
             <div className="flex-1">
               <p className="text-sm font-semibold text-green-700">Admin mode active 🛡️</p>
               <p className="text-xs text-gray-500">
-                {signedInPlayer ? `Also signed in as ${signedInPlayer.name.split(' ')[0]}` : 'You can edit all data'}
+                {signedInPlayer
+                  ? `Also signed in as ${signedInPlayer.name.split(' ')[0]}`
+                  : 'You can edit all data'}
               </p>
             </div>
             <button
@@ -371,8 +423,11 @@ export default function Settings() {
           // ── Signed in as player ─────────────────────────────────
           <div className="rounded-xl border border-lobster-teal/30 bg-lobster-cream p-3 flex items-center gap-3">
             {signedInPlayer.avatarUrl ? (
-              <img src={signedInPlayer.avatarUrl} alt={signedInPlayer.name}
-                   className="w-9 h-9 rounded-full object-cover flex-shrink-0 border border-white" />
+              <img
+                src={signedInPlayer.avatarUrl}
+                alt={signedInPlayer.name}
+                className="w-9 h-9 rounded-full object-cover flex-shrink-0 border border-white"
+              />
             ) : (
               <div
                 className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
@@ -383,9 +438,13 @@ export default function Settings() {
             )}
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-gray-800 truncate">
-                Signed in as {signedInPlayer.name} <span className="text-lobster-teal text-xs">✓</span>
+                Signed in as {signedInPlayer.name}{' '}
+                <span className="text-lobster-teal text-xs">✓</span>
               </p>
-              <p className="text-xs text-gray-500">You can register for events, place orders, and manage your profile anywhere on the site.</p>
+              <p className="text-xs text-gray-500">
+                You can register for events, place orders, and manage your profile anywhere on the
+                site.
+              </p>
             </div>
             <button
               onClick={logout}
@@ -421,7 +480,10 @@ export default function Settings() {
               placeholder="• • • •"
               className="input text-center text-2xl tracking-[0.5em] font-bold"
               value={signInPin}
-              onChange={e => { setSignInPin(e.target.value.replace(/\D/g, '').slice(0, 8)); setSignInError('') }}
+              onChange={(e) => {
+                setSignInPin(e.target.value.replace(/\D/g, '').slice(0, 8))
+                setSignInError('')
+              }}
               autoFocus
             />
             {signInError && (
@@ -458,30 +520,46 @@ export default function Settings() {
                 {(parseFloat(myPlayer.playtomicLevel) || 0).toFixed(1)}
               </p>
               <p className="text-xs text-gray-400 mt-1">
-                Adjustment: {parseFloat(myPlayer.adjustment) >= 0 ? '+' : ''}{myPlayer.adjustment || 0}
+                Adjustment: {parseFloat(myPlayer.adjustment) >= 0 ? '+' : ''}
+                {myPlayer.adjustment || 0}
                 {' → '}
                 <span className="font-bold text-gray-600">
-                  {((parseFloat(myPlayer.playtomicLevel) || 0) + (parseFloat(myPlayer.adjustment) || 0)).toFixed(1)}
+                  {(
+                    (parseFloat(myPlayer.playtomicLevel) || 0) +
+                    (parseFloat(myPlayer.adjustment) || 0)
+                  ).toFixed(1)}
                 </span>
               </p>
             </div>
             <div className="space-y-3">
               <div>
-                <label className="text-xs font-semibold text-gray-600 mb-1 block">New Playtomic Level</label>
+                <label className="text-xs font-semibold text-gray-600 mb-1 block">
+                  New Playtomic Level
+                </label>
                 <input
                   className="input text-center text-lg font-bold"
-                  type="number" step="0.01" min="0" max="10"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="10"
                   value={profileForm.playtomicLevel}
-                  onChange={e => setProfileForm(f => ({ ...f, playtomicLevel: e.target.value }))}
+                  onChange={(e) =>
+                    setProfileForm((f) => ({ ...f, playtomicLevel: e.target.value }))
+                  }
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-gray-600 mb-1 block">Adjustment (+/-)</label>
+                <label className="text-xs font-semibold text-gray-600 mb-1 block">
+                  Adjustment (+/-)
+                </label>
                 <input
                   className="input text-center text-lg font-bold"
-                  type="number" step="0.1" min="-3" max="3"
+                  type="number"
+                  step="0.1"
+                  min="-3"
+                  max="3"
                   value={profileForm.adjustment}
-                  onChange={e => setProfileForm(f => ({ ...f, adjustment: e.target.value }))}
+                  onChange={(e) => setProfileForm((f) => ({ ...f, adjustment: e.target.value }))}
                 />
               </div>
             </div>
@@ -511,13 +589,17 @@ export default function Settings() {
         <div className="card space-y-3">
           <button
             type="button"
-            onClick={() => setProfileExpanded(e => !e)}
+            onClick={() => setProfileExpanded((e) => !e)}
             className="w-full flex items-center justify-between"
           >
             <h3 className="font-bold text-gray-700 text-sm flex items-center gap-2">
               <User size={15} className="text-lobster-orange" /> My Lobster Profile
             </h3>
-            {profileExpanded ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
+            {profileExpanded ? (
+              <ChevronUp size={16} className="text-gray-400" />
+            ) : (
+              <ChevronDown size={16} className="text-gray-400" />
+            )}
           </button>
 
           {/* Always-visible summary */}
@@ -527,7 +609,11 @@ export default function Settings() {
               style={{ backgroundColor: letterColor(myPlayer.name) }}
             >
               {myPlayer.avatarUrl ? (
-                <img src={myPlayer.avatarUrl} alt={myPlayer.name} className="w-10 h-10 rounded-full object-cover" />
+                <img
+                  src={myPlayer.avatarUrl}
+                  alt={myPlayer.name}
+                  className="w-10 h-10 rounded-full object-cover"
+                />
               ) : (
                 (myPlayer.name || '?')[0].toUpperCase()
               )}
@@ -535,9 +621,17 @@ export default function Settings() {
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-gray-800 truncate">{myPlayer.name}</p>
               <p className="text-xs text-gray-500">
-                Level: <span className="font-bold text-lobster-teal">{((parseFloat(myPlayer.playtomicLevel) || 0) + (parseFloat(myPlayer.adjustment) || 0)).toFixed(1)}</span>
+                Level:{' '}
+                <span className="font-bold text-lobster-teal">
+                  {(
+                    (parseFloat(myPlayer.playtomicLevel) || 0) +
+                    (parseFloat(myPlayer.adjustment) || 0)
+                  ).toFixed(1)}
+                </span>
                 <span className="text-gray-400 ml-1">
-                  (Playtomic {(parseFloat(myPlayer.playtomicLevel) || 0).toFixed(1)} {parseFloat(myPlayer.adjustment) >= 0 ? '+' : ''}{myPlayer.adjustment || 0})
+                  (Playtomic {(parseFloat(myPlayer.playtomicLevel) || 0).toFixed(1)}{' '}
+                  {parseFloat(myPlayer.adjustment) >= 0 ? '+' : ''}
+                  {myPlayer.adjustment || 0})
                 </span>
               </p>
             </div>
@@ -546,33 +640,47 @@ export default function Settings() {
           {/* Expanded full edit form */}
           {profileExpanded && (
             <div className="space-y-4 pt-2 border-t border-gray-100">
-
               {/* Avatar upload */}
               <div className="flex flex-col items-center gap-2">
                 <div className="relative">
                   {avatarPreview ? (
-                    <img src={avatarPreview} alt="Preview"
-                      className="w-20 h-20 rounded-full object-cover border-2 border-lobster-teal" />
+                    <img
+                      src={avatarPreview}
+                      alt="Preview"
+                      className="w-20 h-20 rounded-full object-cover border-2 border-lobster-teal"
+                    />
                   ) : (
                     <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-300">
                       <User size={28} />
                     </div>
                   )}
-                  <button type="button"
+                  <button
+                    type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="absolute bottom-0 right-0 w-7 h-7 bg-lobster-teal rounded-full flex items-center justify-center text-white shadow-sm active:scale-95">
+                    className="absolute bottom-0 right-0 w-7 h-7 bg-lobster-teal rounded-full flex items-center justify-center text-white shadow-sm active:scale-95"
+                  >
                     <Camera size={13} />
                   </button>
                 </div>
                 <p className="text-xs text-gray-400">Tap camera icon to change photo</p>
-                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleAvatarChange}
+                />
               </div>
 
               {/* Full Name */}
               <div>
                 <label className="label">Full Name</label>
-                <input className="input" placeholder="e.g. Augustin Tapia" value={profileForm.name}
-                  onChange={e => setProfileForm(f => ({ ...f, name: e.target.value }))} />
+                <input
+                  className="input"
+                  placeholder="e.g. Augustin Tapia"
+                  value={profileForm.name}
+                  onChange={(e) => setProfileForm((f) => ({ ...f, name: e.target.value }))}
+                />
               </div>
 
               {/* War Cry — toggleable prompt categories */}
@@ -594,11 +702,17 @@ export default function Settings() {
                     </button>
                   ))}
                 </div>
-                <input className="input" type="text" maxLength={80}
+                <input
+                  className="input"
+                  type="text"
+                  maxLength={80}
                   placeholder={LOBBY_PROMPTS[activePrompt].placeholder}
                   value={profileForm.tagline}
-                  onChange={e => setProfileForm(f => ({ ...f, tagline: e.target.value }))} />
-                <p className="text-xs text-gray-400 mt-1">Appears on your player card. {80 - profileForm.tagline.length} chars left.</p>
+                  onChange={(e) => setProfileForm((f) => ({ ...f, tagline: e.target.value }))}
+                />
+                <p className="text-xs text-gray-400 mt-1">
+                  Appears on your player card. {80 - profileForm.tagline.length} chars left.
+                </p>
               </div>
 
               {/* Country */}
@@ -606,7 +720,7 @@ export default function Settings() {
                 <label className="label">Country</label>
                 <CountryPicker
                   value={profileForm.country}
-                  onChange={val => setProfileForm(f => ({ ...f, country: val }))}
+                  onChange={(val) => setProfileForm((f) => ({ ...f, country: val }))}
                 />
               </div>
 
@@ -615,12 +729,22 @@ export default function Settings() {
                 <label className="label">Gender</label>
                 <p className="text-xs text-gray-400 mb-2">For optimal pair matching</p>
                 <div className="flex gap-3">
-                  {[['male', 'Male'], ['female', 'Female']].map(([val, lbl]) => (
-                    <button type="button" key={val}
-                      onClick={() => setProfileForm(f => ({ ...f, gender: f.gender === val ? '' : val }))}
+                  {[
+                    ['male', 'Male'],
+                    ['female', 'Female'],
+                  ].map(([val, lbl]) => (
+                    <button
+                      type="button"
+                      key={val}
+                      onClick={() =>
+                        setProfileForm((f) => ({ ...f, gender: f.gender === val ? '' : val }))
+                      }
                       className={`flex-1 py-2.5 rounded-xl font-semibold text-sm transition-all ${
-                        profileForm.gender === val ? 'bg-lobster-teal text-white' : 'bg-gray-100 text-gray-600'
-                      }`}>
+                        profileForm.gender === val
+                          ? 'bg-lobster-teal text-white'
+                          : 'bg-gray-100 text-gray-600'
+                      }`}
+                    >
                       {lbl}
                     </button>
                   ))}
@@ -630,13 +754,15 @@ export default function Settings() {
               {/* Left-handed */}
               <div>
                 <label className="label">Playing Hand</label>
-                <button type="button"
-                  onClick={() => setProfileForm(f => ({ ...f, isLeftHanded: !f.isLeftHanded }))}
+                <button
+                  type="button"
+                  onClick={() => setProfileForm((f) => ({ ...f, isLeftHanded: !f.isLeftHanded }))}
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all w-full justify-center ${
                     profileForm.isLeftHanded
                       ? 'bg-amber-100 text-amber-700 border-2 border-amber-300'
                       : 'bg-gray-100 text-gray-500'
-                  }`}>
+                  }`}
+                >
                   🤚 {profileForm.isLeftHanded ? 'Left-handed (tap to undo)' : 'Tap if left-handed'}
                 </button>
               </div>
@@ -645,12 +771,26 @@ export default function Settings() {
               <div>
                 <label className="label">Preferred Side</label>
                 <div className="flex gap-2">
-                  {[['left', '👈 Left'], ['right', '👉 Right'], ['both', '↔️ Both']].map(([val, lbl]) => (
-                    <button type="button" key={val}
-                      onClick={() => setProfileForm(f => ({ ...f, preferredPosition: f.preferredPosition === val ? '' : val }))}
+                  {[
+                    ['left', '👈 Left'],
+                    ['right', '👉 Right'],
+                    ['both', '↔️ Both'],
+                  ].map(([val, lbl]) => (
+                    <button
+                      type="button"
+                      key={val}
+                      onClick={() =>
+                        setProfileForm((f) => ({
+                          ...f,
+                          preferredPosition: f.preferredPosition === val ? '' : val,
+                        }))
+                      }
                       className={`flex-1 py-2 rounded-xl font-semibold text-sm transition-all ${
-                        profileForm.preferredPosition === val ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'
-                      }`}>
+                        profileForm.preferredPosition === val
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-gray-100 text-gray-600'
+                      }`}
+                    >
                       {lbl}
                     </button>
                   ))}
@@ -659,22 +799,47 @@ export default function Settings() {
 
               {/* Playtomic level + adjustment */}
               <div className="bg-blue-50 rounded-xl p-4 space-y-3">
-                <p className="text-xs font-bold text-blue-700 uppercase tracking-wide">Playtomic Level</p>
+                <p className="text-xs font-bold text-blue-700 uppercase tracking-wide">
+                  Playtomic Level
+                </p>
                 <div>
                   <label className="label">Playtomic Level (0–7)</label>
-                  <input type="number" step="0.1" min="0" max="7" className="input" placeholder="e.g. 3.5"
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    max="7"
+                    className="input"
+                    placeholder="e.g. 3.5"
                     value={profileForm.playtomicLevel}
-                    onChange={e => setProfileForm(f => ({ ...f, playtomicLevel: e.target.value }))} />
-                  <p className="text-xs text-gray-500 mt-1">Check your Playtomic app — it shows your current level</p>
+                    onChange={(e) =>
+                      setProfileForm((f) => ({ ...f, playtomicLevel: e.target.value }))
+                    }
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Check your Playtomic app — it shows your current level
+                  </p>
                 </div>
                 <div>
                   <label className="label">Personal Adjustment</label>
-                  <input type="number" step="0.1" min="-3" max="3" className="input" placeholder="0"
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="-3"
+                    max="3"
+                    className="input"
+                    placeholder="0"
                     value={profileForm.adjustment}
-                    onChange={e => setProfileForm(f => ({ ...f, adjustment: e.target.value }))} />
+                    onChange={(e) => setProfileForm((f) => ({ ...f, adjustment: e.target.value }))}
+                  />
                   <p className="text-xs text-gray-500 mt-1">
-                    Positive = stronger · Negative = weaker<br />
-                    Adjusted Level = {((parseFloat(profileForm.playtomicLevel) || 0) + (parseFloat(profileForm.adjustment) || 0)).toFixed(1)}
+                    Positive = stronger · Negative = weaker
+                    <br />
+                    Adjusted Level ={' '}
+                    {(
+                      (parseFloat(profileForm.playtomicLevel) || 0) +
+                      (parseFloat(profileForm.adjustment) || 0)
+                    ).toFixed(1)}
                   </p>
                 </div>
               </div>
@@ -682,24 +847,41 @@ export default function Settings() {
               {/* Email */}
               <div>
                 <label className="label">Email</label>
-                <input type="email" className="input" placeholder="player@email.com" value={profileForm.email}
-                  onChange={e => setProfileForm(f => ({ ...f, email: e.target.value }))} />
+                <input
+                  type="email"
+                  className="input"
+                  placeholder="player@email.com"
+                  value={profileForm.email}
+                  onChange={(e) => setProfileForm((f) => ({ ...f, email: e.target.value }))}
+                />
                 <p className="text-xs text-gray-400 mt-1">Visible for organizers only</p>
               </div>
 
               {/* Phone */}
               <div>
                 <label className="label">Phone / WhatsApp</label>
-                <input type="tel" className="input" placeholder="+31612345678" value={profileForm.phone}
-                  onChange={e => setProfileForm(f => ({ ...f, phone: e.target.value }))} />
-                <p className="text-xs text-gray-400 mt-1">Start with + and country code, e.g. +31 for the Netherlands. Visible to organizers only.</p>
+                <input
+                  type="tel"
+                  className="input"
+                  placeholder="+31612345678"
+                  value={profileForm.phone}
+                  onChange={(e) => setProfileForm((f) => ({ ...f, phone: e.target.value }))}
+                />
+                <p className="text-xs text-gray-400 mt-1">
+                  Start with + and country code, e.g. +31 for the Netherlands. Visible to organizers
+                  only.
+                </p>
               </div>
 
               {/* Birthday */}
               <div>
                 <label className="label">Birthday 🎂</label>
-                <input type="date" className="input" value={profileForm.birthday || ''}
-                  onChange={e => setProfileForm(f => ({ ...f, birthday: e.target.value }))} />
+                <input
+                  type="date"
+                  className="input"
+                  value={profileForm.birthday || ''}
+                  onChange={(e) => setProfileForm((f) => ({ ...f, birthday: e.target.value }))}
+                />
               </div>
 
               {/* Save button */}
@@ -719,7 +901,6 @@ export default function Settings() {
 
       {/* Settings form */}
       <form onSubmit={handleSave} className="space-y-4">
-
         {/* Group info */}
         <div className="card space-y-4">
           <h3 className="font-bold text-gray-700 text-sm flex items-center gap-2">
@@ -731,7 +912,7 @@ export default function Settings() {
               className="input"
               placeholder="Padel Lobsters"
               value={form.groupName}
-              onChange={e => setForm(f => ({ ...f, groupName: e.target.value }))}
+              onChange={(e) => setForm((f) => ({ ...f, groupName: e.target.value }))}
               disabled={!isAdmin}
             />
           </div>
@@ -749,11 +930,12 @@ export default function Settings() {
               type="url"
               placeholder="https://chat.whatsapp.com/xxxxxxxxxx"
               value={form.whatsappLink}
-              onChange={e => setForm(f => ({ ...f, whatsappLink: e.target.value }))}
+              onChange={(e) => setForm((f) => ({ ...f, whatsappLink: e.target.value }))}
               disabled={!isAdmin}
             />
             <p className="text-xs text-gray-400 mt-1.5">
-              Opens in WhatsApp when tapped in the header. Find it in your WhatsApp group → Invite via link.
+              Opens in WhatsApp when tapped in the header. Find it in your WhatsApp group → Invite
+              via link.
             </p>
           </div>
           {form.whatsappLink && (
@@ -779,9 +961,9 @@ export default function Settings() {
               <TrendingUp size={15} className="text-lobster-teal" /> Lobster Score (Glicko-2)
             </h3>
             <p className="text-xs text-gray-500">
-              Rebuilds shadow ratings from every known tournament (history file + DB)
-              in chronological order. Re-run after registering a new historical player
-              or completing a tournament.
+              Rebuilds shadow ratings from every known tournament (history file + DB) in
+              chronological order. Re-run after registering a new historical player or completing a
+              tournament.
             </p>
             <button
               onClick={handleRecomputeRatings}
@@ -792,8 +974,10 @@ export default function Settings() {
             </button>
             {recomputeResult && recomputeResult.ok && (
               <p className="text-xs text-green-600">
-                ✓ Updated {recomputeResult.playersUpdated} players from {recomputeResult.eventsProcessed} events.
-                {recomputeResult.droppedMatches > 0 && ` (${recomputeResult.droppedMatches} historical matches skipped — unmatched names)`}
+                ✓ Updated {recomputeResult.playersUpdated} players from{' '}
+                {recomputeResult.eventsProcessed} events.
+                {recomputeResult.droppedMatches > 0 &&
+                  ` (${recomputeResult.droppedMatches} historical matches skipped — unmatched names)`}
               </p>
             )}
             {recomputeResult && !recomputeResult.ok && (
@@ -835,13 +1019,12 @@ export default function Settings() {
                 maxLength={8}
                 placeholder="Leave blank to disable"
                 value={form.leagueAdminPin}
-                onChange={e => setForm(f => ({ ...f, leagueAdminPin: e.target.value }))}
+                onChange={(e) => setForm((f) => ({ ...f, leagueAdminPin: e.target.value }))}
               />
               <p className="text-xs text-gray-400 mt-1.5">
-                Grants access to the Lobster League admin controls only. Anyone with
-                this PIN can create / edit the league and manage teams, but can't
-                see players, tournaments, schedule or scores. Set a different PIN
-                than your main Admin PIN.
+                Grants access to the Lobster League admin controls only. Anyone with this PIN can
+                create / edit the league and manage teams, but can't see players, tournaments,
+                schedule or scores. Set a different PIN than your main Admin PIN.
               </p>
             </div>
           </div>
@@ -856,13 +1039,17 @@ export default function Settings() {
               </h3>
               <div className="flex items-center gap-2">
                 {isCustom && (
-                  <button type="button" onClick={handleResetTips} className="flex items-center gap-1 text-[10px] text-gray-400 font-semibold">
+                  <button
+                    type="button"
+                    onClick={handleResetTips}
+                    className="flex items-center gap-1 text-[10px] text-gray-400 font-semibold"
+                  >
                     <RotateCcw size={10} /> Reset to defaults
                   </button>
                 )}
                 <button
                   type="button"
-                  onClick={() => setTipsExpanded(e => !e)}
+                  onClick={() => setTipsExpanded((e) => !e)}
                   className="text-xs text-lobster-teal font-semibold"
                 >
                   {tipsExpanded ? 'Collapse' : `View all (${activeTips.length})`}
@@ -870,7 +1057,9 @@ export default function Settings() {
               </div>
             </div>
             <p className="text-xs text-gray-400">
-              One tip shows per day on the home page. {isCustom ? 'Using custom tips.' : 'Using 50 default tips.'} Changes save automatically.
+              One tip shows per day on the home page.{' '}
+              {isCustom ? 'Using custom tips.' : 'Using 50 default tips.'} Changes save
+              automatically.
             </p>
 
             {/* Add new tip */}
@@ -879,10 +1068,14 @@ export default function Settings() {
                 className="input flex-1 text-xs"
                 placeholder="Add a new tip..."
                 value={newTip}
-                onChange={e => setNewTip(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleAddTip())}
+                onChange={(e) => setNewTip(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTip())}
               />
-              <button type="button" onClick={handleAddTip} className="bg-lobster-teal text-white px-3 rounded-xl text-xs font-semibold flex items-center gap-1 active:scale-95 transition-all">
+              <button
+                type="button"
+                onClick={handleAddTip}
+                className="bg-lobster-teal text-white px-3 rounded-xl text-xs font-semibold flex items-center gap-1 active:scale-95 transition-all"
+              >
                 <Plus size={14} /> Add
               </button>
             </div>
@@ -891,26 +1084,52 @@ export default function Settings() {
             {tipsExpanded && (
               <div className="space-y-1.5 max-h-64 overflow-y-auto">
                 {activeTips.map((tip, i) => (
-                  <div key={i} className="flex items-start gap-2 bg-gray-50 rounded-xl px-3 py-2 group">
-                    <span className="text-[10px] text-gray-400 font-mono mt-0.5 flex-shrink-0 w-5">{i + 1}</span>
+                  <div
+                    key={i}
+                    className="flex items-start gap-2 bg-gray-50 rounded-xl px-3 py-2 group"
+                  >
+                    <span className="text-[10px] text-gray-400 font-mono mt-0.5 flex-shrink-0 w-5">
+                      {i + 1}
+                    </span>
                     {editingTip?.index === i ? (
                       <div className="flex-1 flex gap-1">
                         <input
                           className="input flex-1 text-xs py-1"
                           value={editingTip.text}
-                          onChange={e => setEditingTip(prev => ({ ...prev, text: e.target.value }))}
-                          onKeyDown={e => e.key === 'Enter' && handleSaveEdit()}
+                          onChange={(e) =>
+                            setEditingTip((prev) => ({ ...prev, text: e.target.value }))
+                          }
+                          onKeyDown={(e) => e.key === 'Enter' && handleSaveEdit()}
                           autoFocus
                         />
-                        <button type="button" onClick={handleSaveEdit} className="text-xs text-green-600 font-semibold px-2">Save</button>
-                        <button type="button" onClick={() => setEditingTip(null)} className="text-xs text-gray-400 font-semibold px-1">Cancel</button>
+                        <button
+                          type="button"
+                          onClick={handleSaveEdit}
+                          className="text-xs text-green-600 font-semibold px-2"
+                        >
+                          Save
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setEditingTip(null)}
+                          className="text-xs text-gray-400 font-semibold px-1"
+                        >
+                          Cancel
+                        </button>
                       </div>
                     ) : (
                       <>
-                        <p className="flex-1 text-xs text-gray-600 leading-relaxed cursor-pointer" onClick={() => handleEditTip(i)}>
+                        <p
+                          className="flex-1 text-xs text-gray-600 leading-relaxed cursor-pointer"
+                          onClick={() => handleEditTip(i)}
+                        >
                           {tip}
                         </p>
-                        <button type="button" onClick={() => handleDeleteTip(i)} className="text-gray-300 hover:text-red-500 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteTip(i)}
+                          className="text-gray-300 hover:text-red-500 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
                           <Trash2 size={13} />
                         </button>
                       </>
@@ -937,12 +1156,15 @@ export default function Settings() {
 
       {/* App info */}
       <div className="card text-center space-y-1 py-5">
-        <img src="/logo-hd.png" alt="Padel Lobsters" className="w-14 h-14 rounded-full bg-white p-1 object-contain mx-auto mb-2" />
+        <img
+          src="/logo-hd.png"
+          alt="Padel Lobsters"
+          className="w-14 h-14 rounded-full bg-white p-1 object-contain mx-auto mb-2"
+        />
         <p className="font-bold text-gray-700">Padel Lobsters</p>
         <p className="text-xs text-gray-400">Tournament Manager · v1.0</p>
         <p className="text-xs text-gray-300 mt-2">Made with 🦞 for the crew</p>
       </div>
-
     </div>
   )
 }

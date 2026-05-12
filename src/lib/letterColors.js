@@ -48,7 +48,7 @@ export function letterColor(name) {
 export function initials(name) {
   return (name || '')
     .split(/\s+/)
-    .map(p => p[0])
+    .map((p) => p[0])
     .filter(Boolean)
     .slice(0, 2)
     .join('')

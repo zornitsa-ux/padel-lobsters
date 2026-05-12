@@ -36,20 +36,20 @@
 
 import { serve } from 'https://deno.land/std@0.224.0/http/server.ts'
 
-const RESEND_API_KEY     = Deno.env.get('RESEND_API_KEY') ?? ''
-const EMAIL_FROM         = Deno.env.get('EMAIL_FROM') ?? 'Padel Lobsters <pin@padelobsters.nl>'
-const EMAIL_REPLY_TO     = Deno.env.get('EMAIL_REPLY_TO') ?? ''
-const APP_URL            = Deno.env.get('APP_URL') ?? 'https://padelobsters.nl'
+const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? ''
+const EMAIL_FROM = Deno.env.get('EMAIL_FROM') ?? 'Padel Lobsters <pin@padelobsters.nl>'
+const EMAIL_REPLY_TO = Deno.env.get('EMAIL_REPLY_TO') ?? ''
+const APP_URL = Deno.env.get('APP_URL') ?? 'https://padelobsters.nl'
 const EDGE_SHARED_SECRET = Deno.env.get('EDGE_SHARED_SECRET') ?? ''
 
 type Kind = 'new_signup' | 'regenerated' | 'forgot_reset'
 
 interface Payload {
   player_id?: string
-  email?:     string
-  name?:      string
-  pin?:       string
-  kind?:      Kind
+  email?: string
+  name?: string
+  pin?: string
+  kind?: Kind
 }
 
 const json = (status: number, body: unknown) =>
@@ -68,9 +68,12 @@ const escapeHtml = (s: string) =>
 
 const subjectFor = (kind: Kind): string => {
   switch (kind) {
-    case 'new_signup':   return 'Welcome to Padel Lobsters - your PIN'
-    case 'regenerated':  return 'Your Padel Lobsters PIN was reset'
-    case 'forgot_reset': return 'Your new Padel Lobsters PIN'
+    case 'new_signup':
+      return 'Welcome to Padel Lobsters - your PIN'
+    case 'regenerated':
+      return 'Your Padel Lobsters PIN was reset'
+    case 'forgot_reset':
+      return 'Your new Padel Lobsters PIN'
   }
 }
 
@@ -117,10 +120,10 @@ serve(async (req) => {
     return json(400, { ok: false, error: 'invalid_email_format' })
   }
 
-  const safeName  = (name ?? '').trim() || 'Lobster'
+  const safeName = (name ?? '').trim() || 'Lobster'
   const firstName = safeName.split(/\s+/)[0]
-  const subject   = subjectFor(kind)
-  const intro     = introFor(kind, firstName)
+  const subject = subjectFor(kind)
+  const intro = introFor(kind, firstName)
 
   const text =
     `${intro}\n\n` +
@@ -148,18 +151,18 @@ serve(async (req) => {
     resendResp = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
-        'authorization': `Bearer ${RESEND_API_KEY}`,
+        authorization: `Bearer ${RESEND_API_KEY}`,
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        from:     EMAIL_FROM,
-        to:       [email],
+        from: EMAIL_FROM,
+        to: [email],
         subject,
         text,
         html,
         reply_to: EMAIL_REPLY_TO || undefined,
         tags: [
-          { name: 'kind',      value: kind },
+          { name: 'kind', value: kind },
           { name: 'player_id', value: player_id },
         ],
       }),
@@ -169,20 +172,20 @@ serve(async (req) => {
     return json(502, { ok: false, error: 'resend_unreachable' })
   }
 
-  const resendBody = await resendResp.json().catch(() => ({} as Record<string, unknown>))
+  const resendBody = await resendResp.json().catch(() => ({}) as Record<string, unknown>)
 
   if (!resendResp.ok) {
     console.error('resend send failed', {
-      status:    resendResp.status,
-      body:      resendBody,
+      status: resendResp.status,
+      body: resendBody,
       kind,
       player_id,
     })
     return json(502, {
-      ok:           false,
-      error:        'resend_failed',
+      ok: false,
+      error: 'resend_failed',
       resend_status: resendResp.status,
-      resend_error:  resendBody,
+      resend_error: resendBody,
     })
   }
 

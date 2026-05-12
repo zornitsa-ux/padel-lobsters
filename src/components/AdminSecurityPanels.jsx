@@ -1,9 +1,18 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { useApp } from '../context/AppContext'
 import {
-  ShieldCheck, AlertTriangle, Smartphone, RefreshCw,
-  Check, X, Activity, Lock, KeyRound, UserCheck,
-  ChevronDown, ChevronUp,
+  ShieldCheck,
+  AlertTriangle,
+  Smartphone,
+  RefreshCw,
+  Check,
+  X,
+  Activity,
+  Lock,
+  KeyRound,
+  UserCheck,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react'
 
 /**
@@ -37,10 +46,10 @@ export default function AdminSecurityPanels() {
 
 function PendingDevicesPanel() {
   const { adminListPendingDevices, adminApproveDevice, adminDenyDevice } = useApp()
-  const [rows, setRows]       = useState([])
+  const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
-  const [busy, setBusy]       = useState({}) // keyed by `${player_id}|${device_id}`
-  const [error, setError]     = useState('')
+  const [busy, setBusy] = useState({}) // keyed by `${player_id}|${device_id}`
+  const [error, setError] = useState('')
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -49,32 +58,40 @@ function PendingDevicesPanel() {
     setLoading(false)
   }, [adminListPendingDevices])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    load()
+  }, [load])
 
   const onApprove = async (row) => {
     const key = `${row.player_id}|${row.device_id}`
-    setBusy(b => ({ ...b, [key]: 'approve' }))
+    setBusy((b) => ({ ...b, [key]: 'approve' }))
     setError('')
     const result = await adminApproveDevice(row.player_id, row.device_id)
-    setBusy(b => ({ ...b, [key]: null }))
+    setBusy((b) => ({ ...b, [key]: null }))
     if (!result.ok) {
-      setError(`Could not approve ${row.player_name}'s device — ${result.reason || 'unknown error'}`)
+      setError(
+        `Could not approve ${row.player_name}'s device — ${result.reason || 'unknown error'}`,
+      )
       return
     }
-    setRows(rs => rs.filter(r => !(r.player_id === row.player_id && r.device_id === row.device_id)))
+    setRows((rs) =>
+      rs.filter((r) => !(r.player_id === row.player_id && r.device_id === row.device_id)),
+    )
   }
 
   const onDeny = async (row) => {
     const key = `${row.player_id}|${row.device_id}`
-    setBusy(b => ({ ...b, [key]: 'deny' }))
+    setBusy((b) => ({ ...b, [key]: 'deny' }))
     setError('')
     const result = await adminDenyDevice(row.player_id, row.device_id)
-    setBusy(b => ({ ...b, [key]: null }))
+    setBusy((b) => ({ ...b, [key]: null }))
     if (!result.ok) {
       setError(`Could not deny ${row.player_name}'s device — ${result.reason || 'unknown error'}`)
       return
     }
-    setRows(rs => rs.filter(r => !(r.player_id === row.player_id && r.device_id === row.device_id)))
+    setRows((rs) =>
+      rs.filter((r) => !(r.player_id === row.player_id && r.device_id === row.device_id)),
+    )
   }
 
   return (
@@ -98,8 +115,8 @@ function PendingDevicesPanel() {
         </button>
       </div>
       <p className="text-xs text-gray-500 leading-snug">
-        Devices that successfully entered a player PIN but haven't been
-        approved. Approve only if you trust the user / device pair.
+        Devices that successfully entered a player PIN but haven't been approved. Approve only if
+        you trust the user / device pair.
       </p>
 
       {error && (
@@ -118,10 +135,13 @@ function PendingDevicesPanel() {
         </div>
       ) : (
         <div className="space-y-2">
-          {rows.map(row => {
+          {rows.map((row) => {
             const key = `${row.player_id}|${row.device_id}`
             return (
-              <div key={key} className="bg-amber-50 border border-amber-100 rounded-xl p-3 space-y-2">
+              <div
+                key={key}
+                className="bg-amber-50 border border-amber-100 rounded-xl p-3 space-y-2"
+              >
                 <div className="flex items-start gap-2">
                   <Smartphone size={14} className="text-amber-700 flex-shrink-0 mt-0.5" />
                   <div className="flex-1 min-w-0 text-xs">
@@ -166,11 +186,11 @@ function PendingDevicesPanel() {
 
 function SecurityEventsPanel() {
   const { adminListSecurityEvents } = useApp()
-  const [events, setEvents]   = useState([])
+  const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(false)
-  const [loaded, setLoaded]   = useState(false)
-  const [limit, setLimit]     = useState(50)
-  const [filter, setFilter]   = useState('all') // all | failures | pii | locks
+  const [loaded, setLoaded] = useState(false)
+  const [limit, setLimit] = useState(50)
+  const [filter, setFilter] = useState('all') // all | failures | pii | locks
   const [expanded, setExpanded] = useState(false) // collapsed by default — admin can expand on demand
 
   const load = useCallback(async () => {
@@ -194,7 +214,7 @@ function SecurityEventsPanel() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [limit])
 
-  const filtered = events.filter(e => {
+  const filtered = events.filter((e) => {
     if (filter === 'all') return true
     if (filter === 'failures') return e.succeeded === false
     if (filter === 'pii') return e.attempt_kind === 'pii_dump'
@@ -202,13 +222,13 @@ function SecurityEventsPanel() {
     return true
   })
 
-  const failureCount = loaded ? events.filter(e => e.succeeded === false).length : null
+  const failureCount = loaded ? events.filter((e) => e.succeeded === false).length : null
 
   return (
     <div className="card space-y-3">
       <button
         type="button"
-        onClick={() => setExpanded(v => !v)}
+        onClick={() => setExpanded((v) => !v)}
         className="flex items-center justify-between w-full"
         aria-expanded={expanded}
       >
@@ -221,31 +241,36 @@ function SecurityEventsPanel() {
             </span>
           )}
         </h3>
-        {expanded
-          ? <ChevronUp size={16} className="text-gray-400" />
-          : <ChevronDown size={16} className="text-gray-400" />}
+        {expanded ? (
+          <ChevronUp size={16} className="text-gray-400" />
+        ) : (
+          <ChevronDown size={16} className="text-gray-400" />
+        )}
       </button>
 
       {expanded && (
         <>
           <div className="flex items-center justify-between">
             <p className="text-xs text-gray-500 leading-snug flex-1 pr-2">
-              Every PIN attempt, device approval, and PII dump is logged. Watch
-              for bursts of failures, locked accounts, or unexpected pii_dump
-              calls.
+              Every PIN attempt, device approval, and PII dump is logged. Watch for bursts of
+              failures, locked accounts, or unexpected pii_dump calls.
             </p>
-            <button onClick={load} aria-label="Refresh" className="text-gray-400 hover:text-lobster-teal flex-shrink-0">
+            <button
+              onClick={load}
+              aria-label="Refresh"
+              className="text-gray-400 hover:text-lobster-teal flex-shrink-0"
+            >
               <RefreshCw size={14} />
             </button>
           </div>
 
           <div className="flex flex-wrap gap-1.5">
             {[
-              { id: 'all',      label: 'All' },
+              { id: 'all', label: 'All' },
               { id: 'failures', label: 'Failures only' },
-              { id: 'pii',      label: 'PII dumps' },
-              { id: 'locks',    label: 'Unlocks' },
-            ].map(f => (
+              { id: 'pii', label: 'PII dumps' },
+              { id: 'locks', label: 'Unlocks' },
+            ].map((f) => (
               <button
                 key={f.id}
                 onClick={() => setFilter(f.id)}
@@ -260,7 +285,7 @@ function SecurityEventsPanel() {
             ))}
             <select
               value={limit}
-              onChange={e => setLimit(parseInt(e.target.value, 10))}
+              onChange={(e) => setLimit(parseInt(e.target.value, 10))}
               className="text-[11px] px-2 py-1 rounded-lg border border-gray-200 bg-white ml-auto"
             >
               <option value={25}>Last 25</option>
@@ -277,7 +302,9 @@ function SecurityEventsPanel() {
           ) : (
             <div className="max-h-96 overflow-y-auto -mx-1 px-1">
               <div className="space-y-1.5">
-                {filtered.map(ev => <EventRow key={ev.id} ev={ev} />)}
+                {filtered.map((ev) => (
+                  <EventRow key={ev.id} ev={ev} />
+                ))}
               </div>
             </div>
           )}
@@ -295,9 +322,7 @@ function EventRow({ ev }) {
       <Icon size={12} className={`flex-shrink-0 mt-0.5 ${colors.icon}`} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5 flex-wrap">
-          <span className={`font-semibold ${colors.text}`}>
-            {labelForKind(ev.attempt_kind)}
-          </span>
+          <span className={`font-semibold ${colors.text}`}>{labelForKind(ev.attempt_kind)}</span>
           {ev.succeeded === false && (
             <span className="text-[10px] font-bold text-red-700 bg-red-100 px-1.5 py-0.5 rounded uppercase">
               fail
@@ -315,7 +340,10 @@ function EventRow({ ev }) {
         <p className="text-gray-600 truncate mt-0.5">
           {ev.player_name || <span className="italic">unknown player</span>}
           {ev.device_id && (
-            <> · device <span className="font-mono">{String(ev.device_id).slice(0, 8)}</span></>
+            <>
+              {' '}
+              · device <span className="font-mono">{String(ev.device_id).slice(0, 8)}</span>
+            </>
           )}
         </p>
       </div>
@@ -325,25 +353,39 @@ function EventRow({ ev }) {
 
 function labelForKind(kind) {
   switch (kind) {
-    case 'player':         return 'Player sign-in'
-    case 'admin':          return 'Admin sign-in'
-    case 'pii_dump':       return 'Full roster PII read'
-    case 'approve_device': return 'Device approved'
-    case 'admin_unlock':   return 'Admin unlocked player'
-    case 'admin_action':   return 'Admin action'
-    default:               return kind
+    case 'player':
+      return 'Player sign-in'
+    case 'admin':
+      return 'Admin sign-in'
+    case 'pii_dump':
+      return 'Full roster PII read'
+    case 'approve_device':
+      return 'Device approved'
+    case 'admin_unlock':
+      return 'Admin unlocked player'
+    case 'admin_action':
+      return 'Admin action'
+    default:
+      return kind
   }
 }
 
 function iconForKind(kind) {
   switch (kind) {
-    case 'player':         return KeyRound
-    case 'admin':          return ShieldCheck
-    case 'pii_dump':       return AlertTriangle
-    case 'approve_device': return UserCheck
-    case 'admin_unlock':   return Lock
-    case 'admin_action':   return ShieldCheck
-    default:               return Activity
+    case 'player':
+      return KeyRound
+    case 'admin':
+      return ShieldCheck
+    case 'pii_dump':
+      return AlertTriangle
+    case 'approve_device':
+      return UserCheck
+    case 'admin_unlock':
+      return Lock
+    case 'admin_action':
+      return ShieldCheck
+    default:
+      return Activity
   }
 }
 
@@ -366,10 +408,12 @@ function formatTime(iso) {
     const d = new Date(iso)
     const now = new Date()
     const diffMin = Math.round((now - d) / 60000)
-    if (diffMin < 1)    return 'just now'
-    if (diffMin < 60)   return `${diffMin} min ago`
+    if (diffMin < 1) return 'just now'
+    if (diffMin < 60) return `${diffMin} min ago`
     if (diffMin < 1440) return `${Math.round(diffMin / 60)}h ago`
     if (diffMin < 10080) return `${Math.round(diffMin / 1440)}d ago`
     return d.toLocaleString()
-  } catch { return '—' }
+  } catch {
+    return '—'
+  }
 }

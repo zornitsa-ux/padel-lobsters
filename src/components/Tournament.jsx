@@ -1,9 +1,23 @@
 import React, { useState } from 'react'
 import { useApp } from '../context/AppContext'
 import {
-  Plus, X, Trash2, Pencil, Trophy,
-  MapPin, Calendar, Users, Euro, CheckCircle, Circle,
-  Building2, ShieldCheck, UserCog, Clock, ChevronDown, ChevronUp
+  Plus,
+  X,
+  Trash2,
+  Pencil,
+  Trophy,
+  MapPin,
+  Calendar,
+  Users,
+  Euro,
+  CheckCircle,
+  Circle,
+  Building2,
+  ShieldCheck,
+  UserCog,
+  Clock,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react'
 import HistoryContent, { TOURNAMENTS as HISTORY_TOURNAMENTS } from './History'
 import { DateTile, AddToCalendarButton, ShareWhatsAppButton } from './CalendarPieces'
@@ -14,8 +28,7 @@ import AdminTransferPanel from './AdminTransferPanel'
 // it freely per event — this is just the starting text so common
 // logistics (check-in time, what's included, pairing style) are always
 // visible to players without someone having to retype them each time.
-export const DEFAULT_EVENT_DESCRIPTION =
-  `Please arrive 15 minutes early for a quick check-in, meet & greet, and rules briefing.
+export const DEFAULT_EVENT_DESCRIPTION = `Please arrive 15 minutes early for a quick check-in, meet & greet, and rules briefing.
 Includes courts, balls 🎾, food 🍗, a winner's prize, and raffle prizes 🏆
 Pairings are arranged for fun, balanced games.`
 
@@ -36,17 +49,28 @@ const emptyForm = {
 }
 
 export default function Tournament({ onNavigate }) {
-  const { tournaments, addTournament, updateTournament, deleteTournament, isAdmin, isLeagueAdmin, claimedId, players, getTournamentRegistrations, transfers } = useApp()
+  const {
+    tournaments,
+    addTournament,
+    updateTournament,
+    deleteTournament,
+    isAdmin,
+    isLeagueAdmin,
+    claimedId,
+    players,
+    getTournamentRegistrations,
+    transfers,
+  } = useApp()
   // Temporary testing allowlist — match League.jsx. Lets the named
   // players preview the League entry while visibility is still 'admin'.
   const TEST_PLAYER_FIRST_NAMES = ['zornitsa', 'jon', 'uziel']
-  const meTourn       = claimedId ? players.find(p => String(p.id) === String(claimedId)) : null
-  const myFirstName   = (meTourn?.name || '').trim().split(/\s+/)[0]?.toLowerCase() || ''
+  const meTourn = claimedId ? players.find((p) => String(p.id) === String(claimedId)) : null
+  const myFirstName = (meTourn?.name || '').trim().split(/\s+/)[0]?.toLowerCase() || ''
   const isLeagueTester = !!myFirstName && TEST_PLAYER_FIRST_NAMES.includes(myFirstName)
-  const [showForm, setShowForm]       = useState(false)
-  const [editId, setEditId]           = useState(null)
-  const [form, setForm]               = useState(emptyForm)
-  const [saving, setSaving]           = useState(false)
+  const [showForm, setShowForm] = useState(false)
+  const [editId, setEditId] = useState(null)
+  const [form, setForm] = useState(emptyForm)
+  const [saving, setSaving] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
   // Admin pending-transfer panel — open for one tournament at a time.
   const [adminTransferTournament, setAdminTransferTournament] = useState(null)
@@ -59,7 +83,8 @@ export default function Tournament({ onNavigate }) {
     const d = new Date(s)
     return isNaN(d) ? null : d
   }
-  const today    = new Date(); today.setHours(0, 0, 0, 0)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
   // Once a completed event is >= 2 days past its date, the embedded
   // <HistoryContent /> renders it as a podium card, so don't also list it
   // here as a past-event card — that's what produced the duplicate render.
@@ -70,115 +95,154 @@ export default function Tournament({ onNavigate }) {
     if (!ref) return true
     return Date.now() - new Date(ref).getTime() >= TWO_DAYS_MS
   }
-  const past     = tournaments.filter(t => {
+  const past = tournaments.filter((t) => {
     if (isInHistory(t)) return false
     if (t.status === 'completed') return true
     const d = parseLocalDate(t.date)
     return d !== null && d < today
   })
-  const upcoming = tournaments.filter(t => {
+  const upcoming = tournaments.filter((t) => {
     if (t.status === 'completed') return false
     const d = parseLocalDate(t.date)
     return d === null || d >= today
   })
 
   const openAdd = () => {
-    if (!isAdmin) { onNavigate?.('settings'); return }
-    setForm(emptyForm); setEditId(null); setShowForm(true)
+    if (!isAdmin) {
+      onNavigate?.('settings')
+      return
+    }
+    setForm(emptyForm)
+    setEditId(null)
+    setShowForm(true)
   }
 
   const openEdit = (t) => {
-    if (!isAdmin) { onNavigate?.('settings'); return }
+    if (!isAdmin) {
+      onNavigate?.('settings')
+      return
+    }
     setForm({
-      name:             t.name             || '',
-      date:             t.date             || '',
-      time:             t.time             || '',
-      location:         t.location         || '',
-      maxPlayers:       t.maxPlayers       || '16',
-      duration:         t.duration         || 90,
-      format:           t.format           || 'americano',
-      genderMode:       t.genderMode       || 'mixed',
+      name: t.name || '',
+      date: t.date || '',
+      time: t.time || '',
+      location: t.location || '',
+      maxPlayers: t.maxPlayers || '16',
+      duration: t.duration || 90,
+      format: t.format || 'americano',
+      genderMode: t.genderMode || 'mixed',
       courtBookingMode: t.courtBookingMode || 'admin_all',
       courts: t.courts?.length
-        ? t.courts.map(c => ({ name: c.name || '', booked: !!c.booked, costPerPerson: c.costPerPerson || '', responsible: c.responsible || '', tikkieLink: c.tikkieLink || '' }))
+        ? t.courts.map((c) => ({
+            name: c.name || '',
+            booked: !!c.booked,
+            costPerPerson: c.costPerPerson || '',
+            responsible: c.responsible || '',
+            tikkieLink: c.tikkieLink || '',
+          }))
         : [{ name: '', booked: false, costPerPerson: '', responsible: '', tikkieLink: '' }],
-      pricePerPerson: (parseFloat(t.totalPrice) > 0 && parseInt(t.maxPlayers) > 0)
-        ? (parseFloat(t.totalPrice) / parseInt(t.maxPlayers)).toFixed(2).replace(/\.00$/, '')
-        : (t.totalPrice ?? ''),
-      tikkieLink: t.tikkieLink  || '',
-      notes:      t.notes       || '',
+      pricePerPerson:
+        parseFloat(t.totalPrice) > 0 && parseInt(t.maxPlayers) > 0
+          ? (parseFloat(t.totalPrice) / parseInt(t.maxPlayers)).toFixed(2).replace(/\.00$/, '')
+          : (t.totalPrice ?? ''),
+      tikkieLink: t.tikkieLink || '',
+      notes: t.notes || '',
     })
-    setEditId(t.id); setShowForm(true)
+    setEditId(t.id)
+    setShowForm(true)
   }
 
   const handleDelete = async (id) => {
-    if (!isAdmin) { onNavigate?.('settings'); return }
+    if (!isAdmin) {
+      onNavigate?.('settings')
+      return
+    }
     if (!confirm('Delete this event?')) return
     await deleteTournament(id)
   }
 
   const handleSubmit = async (e) => {
-    e.preventDefault(); setSaving(true)
+    e.preventDefault()
+    setSaving(true)
     try {
       const mp = parseInt(form.maxPlayers) || 16
       const data = {
-        name:             form.name,
-        date:             form.date,
-        time:             form.time,
-        location:         form.location,
-        maxPlayers:       mp,
-        format:           form.format,
-        genderMode:       form.genderMode,
+        name: form.name,
+        date: form.date,
+        time: form.time,
+        location: form.location,
+        maxPlayers: mp,
+        format: form.format,
+        genderMode: form.genderMode,
         courtBookingMode: form.courtBookingMode,
-        duration:         parseInt(form.duration) || 90,
-        totalPrice:       form.courtBookingMode === 'admin_all' ? ((parseFloat(form.pricePerPerson) || 0) * (parseInt(form.maxPlayers) || 16)) : 0,
-        tikkieLink:       form.courtBookingMode === 'admin_all' ? (form.tikkieLink || '') : '',
-        courts: form.courts.map(c => ({
-          name:          c.name,
-          booked:        !!c.booked,
-          costPerPerson: form.courtBookingMode === 'player_responsible' ? (parseFloat(c.costPerPerson) || 0) : 0,
-          responsible:   form.courtBookingMode === 'player_responsible' ? (c.responsible || '') : '',
-          tikkieLink:    form.courtBookingMode === 'player_responsible' ? (c.tikkieLink || '') : '',
+        duration: parseInt(form.duration) || 90,
+        totalPrice:
+          form.courtBookingMode === 'admin_all'
+            ? (parseFloat(form.pricePerPerson) || 0) * (parseInt(form.maxPlayers) || 16)
+            : 0,
+        tikkieLink: form.courtBookingMode === 'admin_all' ? form.tikkieLink || '' : '',
+        courts: form.courts.map((c) => ({
+          name: c.name,
+          booked: !!c.booked,
+          costPerPerson:
+            form.courtBookingMode === 'player_responsible' ? parseFloat(c.costPerPerson) || 0 : 0,
+          responsible: form.courtBookingMode === 'player_responsible' ? c.responsible || '' : '',
+          tikkieLink: form.courtBookingMode === 'player_responsible' ? c.tikkieLink || '' : '',
         })),
         notes: form.notes,
       }
       if (editId) await updateTournament(editId, data)
-      else        await addTournament(data)
+      else await addTournament(data)
       setShowForm(false)
-    } finally { setSaving(false) }
+    } finally {
+      setSaving(false)
+    }
   }
 
-  const addCourt = () => setForm(f => ({
-    ...f, courts: [...f.courts, { name: '', booked: false, costPerPerson: '', responsible: '', tikkieLink: '' }]
-  }))
+  const addCourt = () =>
+    setForm((f) => ({
+      ...f,
+      courts: [
+        ...f.courts,
+        { name: '', booked: false, costPerPerson: '', responsible: '', tikkieLink: '' },
+      ],
+    }))
 
-  const removeCourt = (i) => setForm(f => ({
-    ...f, courts: f.courts.filter((_, idx) => idx !== i)
-  }))
+  const removeCourt = (i) =>
+    setForm((f) => ({
+      ...f,
+      courts: f.courts.filter((_, idx) => idx !== i),
+    }))
 
-  const setCourt = (i, field, value) => setForm(f => ({
-    ...f,
-    courts: f.courts.map((c, idx) => idx === i ? { ...c, [field]: value } : c)
-  }))
+  const setCourt = (i, field, value) =>
+    setForm((f) => ({
+      ...f,
+      courts: f.courts.map((c, idx) => (idx === i ? { ...c, [field]: value } : c)),
+    }))
 
   const formatDate = (d) => {
     if (!d) return '—'
-    return new Date(d).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
+    return new Date(d).toLocaleDateString('en-GB', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+    })
   }
 
-  const formatLabel = (f) => ({
-    americano:       'Americano',
-    mexicano:        'Mexicano',
-    roundrobin:      'Round Robin',
-    knockout:        'Knockout',
-    lobster_matching:'Lobster Matching',
-  }[f] || f)
+  const formatLabel = (f) =>
+    ({
+      americano: 'Americano',
+      mexicano: 'Mexicano',
+      roundrobin: 'Round Robin',
+      knockout: 'Knockout',
+      lobster_matching: 'Lobster Matching',
+    })[f] || f
 
   // Price display helpers
   const pricePerPlayer = (t) => {
     if (t.courtBookingMode === 'admin_all' || !t.courtBookingMode) {
       const tp = parseFloat(t.totalPrice) || 0
-      const mp = parseInt(t.maxPlayers)   || 16
+      const mp = parseInt(t.maxPlayers) || 16
       return tp > 0 ? tp / mp : 0
     }
     return (t.courts || []).reduce((sum, c) => sum + (parseFloat(c.costPerPerson) || 0), 0)
@@ -195,7 +259,10 @@ export default function Tournament({ onNavigate }) {
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold text-gray-800">Events ({tournaments.length})</h2>
         {isAdmin && (
-          <button onClick={openAdd} className="btn-primary py-2 px-4 text-sm flex items-center gap-1.5">
+          <button
+            onClick={openAdd}
+            className="btn-primary py-2 px-4 text-sm flex items-center gap-1.5"
+          >
             <Plus size={16} /> New
           </button>
         )}
@@ -206,8 +273,10 @@ export default function Tournament({ onNavigate }) {
           Once the league's visibility flag is flipped to 'all' we'll
           drop the gate entirely. */}
       {(isAdmin || isLeagueAdmin || isLeagueTester) && (
-        <button onClick={() => onNavigate('league')}
-          className="w-full bg-gradient-to-r from-lobster-teal to-teal-600 text-white rounded-2xl p-4 flex items-center gap-3 shadow-md active:scale-95 transition-all">
+        <button
+          onClick={() => onNavigate('league')}
+          className="w-full bg-gradient-to-r from-lobster-teal to-teal-600 text-white rounded-2xl p-4 flex items-center gap-3 shadow-md active:scale-95 transition-all"
+        >
           <div className="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center flex-shrink-0">
             <Trophy size={20} className="text-yellow-300" />
           </div>
@@ -221,13 +290,15 @@ export default function Tournament({ onNavigate }) {
                   : 'Test access — try joining a league'}
             </p>
           </div>
-          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-            isAdmin
-              ? 'bg-yellow-400 text-gray-900'
-              : isLeagueAdmin
-                ? 'bg-lobster-cream text-lobster-teal'
-                : 'bg-white/25 text-white'
-          }`}>
+          <span
+            className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+              isAdmin
+                ? 'bg-yellow-400 text-gray-900'
+                : isLeagueAdmin
+                  ? 'bg-lobster-cream text-lobster-teal'
+                  : 'bg-white/25 text-white'
+            }`}
+          >
             {isAdmin ? 'ADMIN' : isLeagueAdmin ? 'LEAGUE ADMIN' : 'TEST'}
           </span>
         </button>
@@ -242,12 +313,12 @@ export default function Tournament({ onNavigate }) {
           </div>
         )}
 
-        {upcoming.map(t => {
-          const allBooked    = (t.courts || []).every(c => c.booked)
-          const bookedCount  = (t.courts || []).filter(c => c.booked).length
-          const totalCourts  = (t.courts || []).length
-          const ppCost       = pricePerPlayer(t)
-          const isAdminAll   = !t.courtBookingMode || t.courtBookingMode === 'admin_all'
+        {upcoming.map((t) => {
+          const allBooked = (t.courts || []).every((c) => c.booked)
+          const bookedCount = (t.courts || []).filter((c) => c.booked).length
+          const totalCourts = (t.courts || []).length
+          const ppCost = pricePerPlayer(t)
+          const isAdminAll = !t.courtBookingMode || t.courtBookingMode === 'admin_all'
 
           return (
             <div key={t.id} className="card">
@@ -257,12 +328,16 @@ export default function Tournament({ onNavigate }) {
                 <DateTile date={t.date} size="md" />
                 <div className="flex-1 min-w-0">
                   <h3 className="font-bold text-gray-800 truncate">
-                    <button onClick={() => onNavigate('registration', t)} className="hover:text-lobster-teal active:scale-95 transition-all text-left">
+                    <button
+                      onClick={() => onNavigate('registration', t)}
+                      className="hover:text-lobster-teal active:scale-95 transition-all text-left"
+                    >
                       {t.name}
                     </button>
                   </h3>
                   <p className="text-sm font-semibold text-gray-700 flex items-center gap-1 mt-0.5">
-                    <Calendar size={13} /> {formatDate(t.date)}{t.time && <span className="text-gray-500">· {t.time}</span>}
+                    <Calendar size={13} /> {formatDate(t.date)}
+                    {t.time && <span className="text-gray-500">· {t.time}</span>}
                   </p>
                   {t.location && (
                     <p className="text-xs text-lobster-teal flex items-center gap-1 mt-0.5">
@@ -271,11 +346,15 @@ export default function Tournament({ onNavigate }) {
                   )}
                 </div>
                 <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                    t.status === 'completed' ? 'bg-gray-100 text-gray-500'
-                    : t.status === 'active'  ? 'bg-green-100 text-green-700'
-                    : 'bg-blue-100 text-blue-700'
-                  }`}>
+                  <span
+                    className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                      t.status === 'completed'
+                        ? 'bg-gray-100 text-gray-500'
+                        : t.status === 'active'
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-blue-100 text-blue-700'
+                    }`}
+                  >
                     {t.status}
                   </span>
                   {t.status !== 'completed' && (
@@ -288,64 +367,87 @@ export default function Tournament({ onNavigate }) {
               </div>
 
               {/* Stats row — compact for mobile */}
-              {(() => { const regCount = getTournamentRegistrations(t.id).filter(r => r.status === 'registered').length;
+              {(() => {
+                const regCount = getTournamentRegistrations(t.id).filter(
+                  (r) => r.status === 'registered',
+                ).length
                 const maxP = t.maxPlayers || '?'
                 const isFull = typeof maxP === 'number' && regCount >= maxP
                 return (
-                <>
-                  <div className="flex flex-wrap gap-1.5 mb-2">
-                    <InfoChip icon={<Users size={12} />} label={`${regCount}/${maxP}`} />
-                    <InfoChip icon={<MapPin size={12} />} label={`${bookedCount}/${totalCourts}`} warn={!allBooked && totalCourts > 0} />
-                    <InfoChip icon={<Clock size={12} />} label={t.duration ? `${t.duration}min` : '90min'} />
-                    <InfoChip icon={null} label={ppCost > 0 ? `${fmtEur(ppCost)}/pp` : 'Free'} />
-                  </div>
-                  {isFull ? (
-                    <div className="bg-orange-50 border border-orange-200 rounded-xl px-3 py-2 mb-3">
-                      <p className="text-xs font-bold text-orange-700">Sold out!</p>
-                      <p className="text-[11px] text-orange-600 mt-0.5">Someone always cancels last minute. Join the waitlist and keep your racket warm.</p>
+                  <>
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      <InfoChip icon={<Users size={12} />} label={`${regCount}/${maxP}`} />
+                      <InfoChip
+                        icon={<MapPin size={12} />}
+                        label={`${bookedCount}/${totalCourts}`}
+                        warn={!allBooked && totalCourts > 0}
+                      />
+                      <InfoChip
+                        icon={<Clock size={12} />}
+                        label={t.duration ? `${t.duration}min` : '90min'}
+                      />
+                      <InfoChip icon={null} label={ppCost > 0 ? `${fmtEur(ppCost)}/pp` : 'Free'} />
                     </div>
-                  ) : t.status !== 'completed' ? (
-                    <div className="bg-green-50 border border-green-200 rounded-xl px-3 py-1.5 mb-3 flex items-center gap-1.5">
-                      <span className="relative flex h-2 w-2 flex-shrink-0"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span></span>
-                      <p className="text-xs font-semibold text-green-700">Spots open — sign up now!</p>
-                    </div>
-                  ) : null}
-                </>
-              ) })()}
+                    {isFull ? (
+                      <div className="bg-orange-50 border border-orange-200 rounded-xl px-3 py-2 mb-3">
+                        <p className="text-xs font-bold text-orange-700">Sold out!</p>
+                        <p className="text-[11px] text-orange-600 mt-0.5">
+                          Someone always cancels last minute. Join the waitlist and keep your racket
+                          warm.
+                        </p>
+                      </div>
+                    ) : t.status !== 'completed' ? (
+                      <div className="bg-green-50 border border-green-200 rounded-xl px-3 py-1.5 mb-3 flex items-center gap-1.5">
+                        <span className="relative flex h-2 w-2 flex-shrink-0">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                        </span>
+                        <p className="text-xs font-semibold text-green-700">
+                          Spots open — sign up now!
+                        </p>
+                      </div>
+                    ) : null}
+                  </>
+                )
+              })()}
 
               {/* Pending-transfer callout — admin only. Tap to open the
                   AdminTransferPanel with force-accept / cancel actions. */}
-              {isAdmin && (() => {
-                const pendingForT = transfers.filter(x =>
-                  x.status === 'pending' && String(x.tournamentId) === String(t.id)
-                )
-                if (pendingForT.length === 0) return null
-                return (
-                  <button
-                    onClick={() => setAdminTransferTournament(t)}
-                    className="w-full mb-3 flex items-center gap-2 bg-amber-50 border border-amber-300 rounded-xl px-3 py-2 text-left active:scale-[0.99] transition-all"
-                  >
-                    <Clock size={14} className="text-amber-600 flex-shrink-0" />
-                    <span className="flex-1 text-xs font-semibold text-amber-800">
-                      {pendingForT.length === 1 ? '1 pending transfer' : `${pendingForT.length} pending transfers`}
-                    </span>
-                    <span className="text-[10px] text-amber-600 font-semibold">Review ›</span>
-                  </button>
-                )
-              })()}
+              {isAdmin &&
+                (() => {
+                  const pendingForT = transfers.filter(
+                    (x) => x.status === 'pending' && String(x.tournamentId) === String(t.id),
+                  )
+                  if (pendingForT.length === 0) return null
+                  return (
+                    <button
+                      onClick={() => setAdminTransferTournament(t)}
+                      className="w-full mb-3 flex items-center gap-2 bg-amber-50 border border-amber-300 rounded-xl px-3 py-2 text-left active:scale-[0.99] transition-all"
+                    >
+                      <Clock size={14} className="text-amber-600 flex-shrink-0" />
+                      <span className="flex-1 text-xs font-semibold text-amber-800">
+                        {pendingForT.length === 1
+                          ? '1 pending transfer'
+                          : `${pendingForT.length} pending transfers`}
+                      </span>
+                      <span className="text-[10px] text-amber-600 font-semibold">Review ›</span>
+                    </button>
+                  )
+                })()}
 
               {/* Booking mode badge — admin only */}
               {isAdmin && (
                 <div className="mb-2">
-                  {isAdminAll
-                    ? <span className="inline-flex items-center gap-1 text-xs bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full font-medium">
-                        <ShieldCheck size={11} /> Admin books all courts
-                      </span>
-                    : <span className="inline-flex items-center gap-1 text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full font-medium">
-                        <UserCog size={11} /> Players responsible per court
-                      </span>
-                  }
-                  {isAdminAll && (t.totalPrice > 0) && (
+                  {isAdminAll ? (
+                    <span className="inline-flex items-center gap-1 text-xs bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full font-medium">
+                      <ShieldCheck size={11} /> Admin books all courts
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full font-medium">
+                      <UserCog size={11} /> Players responsible per court
+                    </span>
+                  )}
+                  {isAdminAll && t.totalPrice > 0 && (
                     <span className="ml-2 text-xs text-gray-500">
                       Total {fmtEur(t.totalPrice)} incl. courts + food + prizes
                     </span>
@@ -357,13 +459,17 @@ export default function Tournament({ onNavigate }) {
               {isAdmin && (t.courts || []).length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mb-3">
                   {t.courts.map((c, i) => (
-                    <div key={i} className={`inline-flex items-center gap-1 text-xs rounded-full px-2.5 py-1 font-medium ${
-                      c.booked ? 'bg-green-50 text-green-700' : 'bg-gray-50 text-gray-500'
-                    }`}>
-                      {c.booked
-                        ? <CheckCircle size={11} className="text-green-500 flex-shrink-0" />
-                        : <Circle size={11} className="text-gray-300 flex-shrink-0" />
-                      }
+                    <div
+                      key={i}
+                      className={`inline-flex items-center gap-1 text-xs rounded-full px-2.5 py-1 font-medium ${
+                        c.booked ? 'bg-green-50 text-green-700' : 'bg-gray-50 text-gray-500'
+                      }`}
+                    >
+                      {c.booked ? (
+                        <CheckCircle size={11} className="text-green-500 flex-shrink-0" />
+                      ) : (
+                        <Circle size={11} className="text-gray-300 flex-shrink-0" />
+                      )}
                       <span>{c.name || `Court ${i + 1}`}</span>
                       {!isAdminAll && c.responsible && (
                         <span className="text-purple-600 ml-0.5">({c.responsible})</span>
@@ -389,27 +495,44 @@ export default function Tournament({ onNavigate }) {
               )}
 
               {/* Format chip */}
-              <p className="text-xs text-gray-400 mb-3">Format: <span className="font-medium text-gray-600">{formatLabel(t.format)}</span></p>
+              <p className="text-xs text-gray-400 mb-3">
+                Format: <span className="font-medium text-gray-600">{formatLabel(t.format)}</span>
+              </p>
 
               {/* Actions */}
               <div className="flex gap-2 pt-2 border-t border-gray-100">
-                <button onClick={() => onNavigate('registration', t)} className="flex-1 text-xs font-semibold text-lobster-teal py-2 rounded-xl bg-lobster-cream active:scale-95 transition-all">
+                <button
+                  onClick={() => onNavigate('registration', t)}
+                  className="flex-1 text-xs font-semibold text-lobster-teal py-2 rounded-xl bg-lobster-cream active:scale-95 transition-all"
+                >
                   Registrations
                 </button>
                 {isAdmin && (
-                  <button onClick={() => onNavigate('payments', t)} className="flex-1 text-xs font-semibold text-lobster-orange py-2 rounded-xl bg-orange-50 active:scale-95 transition-all">
+                  <button
+                    onClick={() => onNavigate('payments', t)}
+                    className="flex-1 text-xs font-semibold text-lobster-orange py-2 rounded-xl bg-orange-50 active:scale-95 transition-all"
+                  >
                     Payments
                   </button>
                 )}
-                <button onClick={() => onNavigate('schedule', t)} className="flex-1 text-xs font-semibold text-gray-600 py-2 rounded-xl bg-gray-100 active:scale-95 transition-all">
+                <button
+                  onClick={() => onNavigate('schedule', t)}
+                  className="flex-1 text-xs font-semibold text-gray-600 py-2 rounded-xl bg-gray-100 active:scale-95 transition-all"
+                >
                   Schedule
                 </button>
                 {isAdmin && (
                   <>
-                    <button onClick={() => openEdit(t)} className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-100 active:scale-95">
+                    <button
+                      onClick={() => openEdit(t)}
+                      className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-100 active:scale-95"
+                    >
                       <Pencil size={14} className="text-gray-600" />
                     </button>
-                    <button onClick={() => handleDelete(t.id)} className="w-9 h-9 flex items-center justify-center rounded-xl bg-red-50 active:scale-95">
+                    <button
+                      onClick={() => handleDelete(t.id)}
+                      className="w-9 h-9 flex items-center justify-center rounded-xl bg-red-50 active:scale-95"
+                    >
                       <Trash2 size={14} className="text-red-500" />
                     </button>
                   </>
@@ -423,7 +546,7 @@ export default function Tournament({ onNavigate }) {
       {/* Past events + History — collapsible */}
       <div>
         <button
-          onClick={() => setShowHistory(h => !h)}
+          onClick={() => setShowHistory((h) => !h)}
           className="w-full flex items-center justify-between py-3 px-1 text-gray-500 font-semibold text-sm"
         >
           <span className="flex items-center gap-2">
@@ -435,69 +558,102 @@ export default function Tournament({ onNavigate }) {
 
         {showHistory && (
           <div className="space-y-3">
-            {past.map(t => {
-                const allBooked   = (t.courts || []).every(c => c.booked)
-                const bookedCount = (t.courts || []).filter(c => c.booked).length
-                const totalCourts = (t.courts || []).length
-                const ppCost      = pricePerPlayer(t)
-                const isAdminAll  = !t.courtBookingMode || t.courtBookingMode === 'admin_all'
-                return (
-                  <div key={t.id} className="card opacity-80">
-                    <div className="flex items-start gap-3 mb-3">
-                      <DateTile date={t.date} size="sm" className="grayscale" />
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-gray-700 truncate">
-                          <button onClick={() => onNavigate('registration', t)} className="hover:text-lobster-teal active:scale-95 transition-all text-left">
-                            {t.name}
-                          </button>
-                        </h3>
-                        <p className="text-sm font-semibold text-gray-600 flex items-center gap-1 mt-0.5">
-                          <Calendar size={12} /> {formatDate(t.date)}{t.time && <span className="text-gray-400">· {t.time}</span>}
+            {past.map((t) => {
+              const allBooked = (t.courts || []).every((c) => c.booked)
+              const bookedCount = (t.courts || []).filter((c) => c.booked).length
+              const totalCourts = (t.courts || []).length
+              const ppCost = pricePerPlayer(t)
+              const isAdminAll = !t.courtBookingMode || t.courtBookingMode === 'admin_all'
+              return (
+                <div key={t.id} className="card opacity-80">
+                  <div className="flex items-start gap-3 mb-3">
+                    <DateTile date={t.date} size="sm" className="grayscale" />
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-gray-700 truncate">
+                        <button
+                          onClick={() => onNavigate('registration', t)}
+                          className="hover:text-lobster-teal active:scale-95 transition-all text-left"
+                        >
+                          {t.name}
+                        </button>
+                      </h3>
+                      <p className="text-sm font-semibold text-gray-600 flex items-center gap-1 mt-0.5">
+                        <Calendar size={12} /> {formatDate(t.date)}
+                        {t.time && <span className="text-gray-400">· {t.time}</span>}
+                      </p>
+                      {t.location && (
+                        <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
+                          <Building2 size={11} /> {t.location}
                         </p>
-                        {t.location && (
-                          <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
-                            <Building2 size={11} /> {t.location}
-                          </p>
-                        )}
-                      </div>
-                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 flex-shrink-0">
-                        completed
-                      </span>
-                    </div>
-                    {(() => { const regCount = getTournamentRegistrations(t.id).filter(r => r.status === 'registered').length; return (
-                    <div className="flex flex-wrap gap-1.5 mb-3">
-                      <InfoChip icon={<Users size={12} />} label={`${regCount}/${t.maxPlayers || '?'}`} />
-                      <InfoChip icon={<MapPin size={12} />} label={`${bookedCount}/${totalCourts}`} />
-                      <InfoChip icon={<Clock size={12} />} label={t.duration ? `${t.duration}min` : '90min'} />
-                      <InfoChip icon={null} label={ppCost > 0 ? `${fmtEur(ppCost)}/pp` : 'Free'} />
-                    </div>
-                    ) })()}
-                    <div className="flex gap-2 pt-2 border-t border-gray-100">
-                      <button onClick={() => onNavigate('registration', t)} className="flex-1 text-xs font-semibold text-lobster-teal py-2 rounded-xl bg-lobster-cream active:scale-95 transition-all">
-                        Registrations
-                      </button>
-                      <button onClick={() => onNavigate('schedule', t)} className="flex-1 text-xs font-semibold text-gray-600 py-2 rounded-xl bg-gray-100 active:scale-95 transition-all">
-                        Schedule
-                      </button>
-                      {isAdmin && (
-                        <>
-                          <button onClick={() => openEdit(t)} className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-100 active:scale-95">
-                            <Pencil size={14} className="text-gray-600" />
-                          </button>
-                          <button onClick={() => handleDelete(t.id)} className="w-9 h-9 flex items-center justify-center rounded-xl bg-red-50 active:scale-95">
-                            <Trash2 size={14} className="text-red-500" />
-                          </button>
-                        </>
                       )}
                     </div>
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 flex-shrink-0">
+                      completed
+                    </span>
                   </div>
-                )
-              })}
+                  {(() => {
+                    const regCount = getTournamentRegistrations(t.id).filter(
+                      (r) => r.status === 'registered',
+                    ).length
+                    return (
+                      <div className="flex flex-wrap gap-1.5 mb-3">
+                        <InfoChip
+                          icon={<Users size={12} />}
+                          label={`${regCount}/${t.maxPlayers || '?'}`}
+                        />
+                        <InfoChip
+                          icon={<MapPin size={12} />}
+                          label={`${bookedCount}/${totalCourts}`}
+                        />
+                        <InfoChip
+                          icon={<Clock size={12} />}
+                          label={t.duration ? `${t.duration}min` : '90min'}
+                        />
+                        <InfoChip
+                          icon={null}
+                          label={ppCost > 0 ? `${fmtEur(ppCost)}/pp` : 'Free'}
+                        />
+                      </div>
+                    )
+                  })()}
+                  <div className="flex gap-2 pt-2 border-t border-gray-100">
+                    <button
+                      onClick={() => onNavigate('registration', t)}
+                      className="flex-1 text-xs font-semibold text-lobster-teal py-2 rounded-xl bg-lobster-cream active:scale-95 transition-all"
+                    >
+                      Registrations
+                    </button>
+                    <button
+                      onClick={() => onNavigate('schedule', t)}
+                      className="flex-1 text-xs font-semibold text-gray-600 py-2 rounded-xl bg-gray-100 active:scale-95 transition-all"
+                    >
+                      Schedule
+                    </button>
+                    {isAdmin && (
+                      <>
+                        <button
+                          onClick={() => openEdit(t)}
+                          className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-100 active:scale-95"
+                        >
+                          <Pencil size={14} className="text-gray-600" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(t.id)}
+                          className="w-9 h-9 flex items-center justify-center rounded-xl bg-red-50 active:scale-95"
+                        >
+                          <Trash2 size={14} className="text-red-500" />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
 
-              {/* Legacy History Records */}
-              <div className="mt-4">
-                <HistoryContent onNavigate={onNavigate} />
-              </div>
+            {/* Legacy History Records */}
+            <div className="mt-4">
+              <HistoryContent onNavigate={onNavigate} />
+            </div>
           </div>
         )}
       </div>
@@ -507,36 +663,55 @@ export default function Tournament({ onNavigate }) {
           <div className="bg-white rounded-t-3xl w-full max-w-md max-h-[92vh] overflow-y-auto">
             <div className="sticky top-0 bg-white px-5 pt-5 pb-3 border-b border-gray-100 flex items-center justify-between">
               <h2 className="font-bold text-gray-800">{editId ? 'Edit Event' : 'New Event'}</h2>
-              <button onClick={() => setShowForm(false)}><X size={22} className="text-gray-400" /></button>
+              <button onClick={() => setShowForm(false)}>
+                <X size={22} className="text-gray-400" />
+              </button>
             </div>
 
             <form onSubmit={handleSubmit} className="p-5 space-y-5">
-
               {/* Event name */}
               <div>
                 <label className="label">Event Name *</label>
-                <input required className="input" placeholder="e.g. Lobsters Americano #12"
-                  value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
+                <input
+                  required
+                  className="input"
+                  placeholder="e.g. Lobsters Americano #12"
+                  value={form.name}
+                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                />
               </div>
 
               {/* Location */}
               <div>
                 <label className="label">Location (Club / Venue)</label>
-                <input className="input" placeholder="e.g. Padel City Amsterdam"
-                  value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} />
+                <input
+                  className="input"
+                  placeholder="e.g. Padel City Amsterdam"
+                  value={form.location}
+                  onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))}
+                />
               </div>
 
               {/* Date & Time */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="label">Date *</label>
-                  <input required type="date" className="input"
-                    value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} />
+                  <input
+                    required
+                    type="date"
+                    className="input"
+                    value={form.date}
+                    onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
+                  />
                 </div>
                 <div>
                   <label className="label">Time</label>
-                  <input type="time" className="input"
-                    value={form.time} onChange={e => setForm(f => ({ ...f, time: e.target.value }))} />
+                  <input
+                    type="time"
+                    className="input"
+                    value={form.time}
+                    onChange={(e) => setForm((f) => ({ ...f, time: e.target.value }))}
+                  />
                 </div>
               </div>
 
@@ -544,12 +719,23 @@ export default function Tournament({ onNavigate }) {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="label">Max Players</label>
-                  <input type="number" min="4" max="64" step="4" className="input"
-                    value={form.maxPlayers} onChange={e => setForm(f => ({ ...f, maxPlayers: e.target.value }))} />
+                  <input
+                    type="number"
+                    min="4"
+                    max="64"
+                    step="4"
+                    className="input"
+                    value={form.maxPlayers}
+                    onChange={(e) => setForm((f) => ({ ...f, maxPlayers: e.target.value }))}
+                  />
                 </div>
                 <div>
                   <label className="label">Format</label>
-                  <select className="input" value={form.format} onChange={e => setForm(f => ({ ...f, format: e.target.value }))}>
+                  <select
+                    className="input"
+                    value={form.format}
+                    onChange={(e) => setForm((f) => ({ ...f, format: e.target.value }))}
+                  >
                     <option value="americano">Americano</option>
                     <option value="mexicano">Mexicano</option>
                     <option value="lobster_matching">Lobster Matching</option>
@@ -563,17 +749,26 @@ export default function Tournament({ onNavigate }) {
               <div>
                 <label className="label">Duration</label>
                 <div className="grid grid-cols-4 gap-2">
-                  {[60, 90, 120, 180].map(d => (
+                  {[60, 90, 120, 180].map((d) => (
                     <button
-                      key={d} type="button"
-                      onClick={() => setForm(f => ({ ...f, duration: d }))}
+                      key={d}
+                      type="button"
+                      onClick={() => setForm((f) => ({ ...f, duration: d }))}
                       className={`py-2.5 rounded-xl text-sm font-semibold transition-all ${
                         form.duration === d
                           ? 'bg-lobster-teal text-white'
                           : 'bg-gray-100 text-gray-600'
                       }`}
                     >
-                      {d < 60 ? `${d}m` : d === 60 ? '1h' : d === 90 ? '1.5h' : d === 120 ? '2h' : '3h'}
+                      {d < 60
+                        ? `${d}m`
+                        : d === 60
+                          ? '1h'
+                          : d === 90
+                            ? '1.5h'
+                            : d === 120
+                              ? '2h'
+                              : '3h'}
                     </button>
                   ))}
                 </div>
@@ -583,10 +778,14 @@ export default function Tournament({ onNavigate }) {
               <div>
                 <label className="label">Player Mix</label>
                 <div className="flex gap-2">
-                  {[['mixed', '🚺🚹 Mixed'], ['same_gender', '👥 Same Gender']].map(([val, lbl]) => (
+                  {[
+                    ['mixed', '🚺🚹 Mixed'],
+                    ['same_gender', '👥 Same Gender'],
+                  ].map(([val, lbl]) => (
                     <button
-                      type="button" key={val}
-                      onClick={() => setForm(f => ({ ...f, genderMode: val }))}
+                      type="button"
+                      key={val}
+                      onClick={() => setForm((f) => ({ ...f, genderMode: val }))}
                       className={`flex-1 py-2.5 rounded-xl font-semibold text-sm transition-all ${
                         form.genderMode === val
                           ? 'bg-lobster-teal text-white'
@@ -598,7 +797,10 @@ export default function Tournament({ onNavigate }) {
                   ))}
                 </div>
                 {form.genderMode === 'mixed' && (
-                  <p className="text-xs text-gray-400 mt-1">Schedule will balance gender per court and keep left-handed players on opposite teams</p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Schedule will balance gender per court and keep left-handed players on opposite
+                    teams
+                  </p>
                 )}
               </div>
 
@@ -606,11 +808,10 @@ export default function Tournament({ onNavigate }) {
               <div>
                 <label className="label">Court Booking</label>
                 <div className="space-y-2">
-
                   {/* Option 1: Admin books all */}
                   <button
                     type="button"
-                    onClick={() => setForm(f => ({ ...f, courtBookingMode: 'admin_all' }))}
+                    onClick={() => setForm((f) => ({ ...f, courtBookingMode: 'admin_all' }))}
                     className={`w-full text-left p-3 rounded-xl border-2 transition-all ${
                       form.courtBookingMode === 'admin_all'
                         ? 'border-lobster-teal bg-teal-50'
@@ -618,18 +819,30 @@ export default function Tournament({ onNavigate }) {
                     }`}
                   >
                     <div className="flex items-center gap-2 mb-0.5">
-                      <ShieldCheck size={15} className={form.courtBookingMode === 'admin_all' ? 'text-lobster-teal' : 'text-gray-400'} />
-                      <span className="font-semibold text-sm text-gray-800">Admin books all courts</span>
+                      <ShieldCheck
+                        size={15}
+                        className={
+                          form.courtBookingMode === 'admin_all'
+                            ? 'text-lobster-teal'
+                            : 'text-gray-400'
+                        }
+                      />
+                      <span className="font-semibold text-sm text-gray-800">
+                        Admin books all courts
+                      </span>
                     </div>
                     <p className="text-xs text-gray-500 ml-5">
-                      You book all courts centrally. One total price covers courts + food, drinks &amp; prizes — split equally among players.
+                      You book all courts centrally. One total price covers courts + food, drinks
+                      &amp; prizes — split equally among players.
                     </p>
                   </button>
 
                   {/* Option 2: Players responsible */}
                   <button
                     type="button"
-                    onClick={() => setForm(f => ({ ...f, courtBookingMode: 'player_responsible' }))}
+                    onClick={() =>
+                      setForm((f) => ({ ...f, courtBookingMode: 'player_responsible' }))
+                    }
                     className={`w-full text-left p-3 rounded-xl border-2 transition-all ${
                       form.courtBookingMode === 'player_responsible'
                         ? 'border-purple-400 bg-purple-50'
@@ -637,11 +850,21 @@ export default function Tournament({ onNavigate }) {
                     }`}
                   >
                     <div className="flex items-center gap-2 mb-0.5">
-                      <UserCog size={15} className={form.courtBookingMode === 'player_responsible' ? 'text-purple-600' : 'text-gray-400'} />
-                      <span className="font-semibold text-sm text-gray-800">Players help book courts</span>
+                      <UserCog
+                        size={15}
+                        className={
+                          form.courtBookingMode === 'player_responsible'
+                            ? 'text-purple-600'
+                            : 'text-gray-400'
+                        }
+                      />
+                      <span className="font-semibold text-sm text-gray-800">
+                        Players help book courts
+                      </span>
                     </div>
                     <p className="text-xs text-gray-500 ml-5">
-                      Each court has a responsible player who books it on Playtomic. Set a cost per person per court.
+                      Each court has a responsible player who books it on Playtomic. Set a cost per
+                      person per court.
                     </p>
                   </button>
                 </div>
@@ -651,8 +874,11 @@ export default function Tournament({ onNavigate }) {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="label mb-0">Courts</label>
-                  <button type="button" onClick={addCourt}
-                    className="text-xs text-lobster-teal font-semibold flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={addCourt}
+                    className="text-xs text-lobster-teal font-semibold flex items-center gap-1"
+                  >
                     <Plus size={13} /> Add court
                   </button>
                 </div>
@@ -661,8 +887,12 @@ export default function Tournament({ onNavigate }) {
                     <div key={i} className="bg-gray-50 rounded-xl p-3 space-y-2">
                       {/* Court name + remove button */}
                       <div className="flex items-center gap-2">
-                        <input className="input flex-1 py-2 text-sm" placeholder={`Court ${i + 1} name`}
-                          value={c.name} onChange={e => setCourt(i, 'name', e.target.value)} />
+                        <input
+                          className="input flex-1 py-2 text-sm"
+                          placeholder={`Court ${i + 1} name`}
+                          value={c.name}
+                          onChange={(e) => setCourt(i, 'name', e.target.value)}
+                        />
                         {form.courts.length > 1 && (
                           <button type="button" onClick={() => removeCourt(i)}>
                             <X size={16} className="text-gray-400" />
@@ -675,31 +905,36 @@ export default function Tournament({ onNavigate }) {
                         <div className="space-y-2">
                           <input
                             className="input py-2 text-sm w-full"
-                            type="number" min="0" step="0.01"
+                            type="number"
+                            min="0"
+                            step="0.01"
                             placeholder="€ cost per person for this court"
                             value={c.costPerPerson}
-                            onChange={e => setCourt(i, 'costPerPerson', e.target.value)}
+                            onChange={(e) => setCourt(i, 'costPerPerson', e.target.value)}
                           />
                           <input
                             className="input py-2 text-sm w-full"
                             placeholder="Responsible player name (books on Playtomic)"
                             value={c.responsible}
-                            onChange={e => setCourt(i, 'responsible', e.target.value)}
+                            onChange={(e) => setCourt(i, 'responsible', e.target.value)}
                           />
                           <input
                             className="input py-2 text-sm w-full"
                             placeholder="Tikkie link for this court (optional)"
                             value={c.tikkieLink}
-                            onChange={e => setCourt(i, 'tikkieLink', e.target.value)}
+                            onChange={(e) => setCourt(i, 'tikkieLink', e.target.value)}
                           />
                         </div>
                       )}
 
                       {/* Booked checkbox */}
                       <label className="flex items-center gap-2 text-sm font-medium text-gray-600 cursor-pointer">
-                        <input type="checkbox" checked={c.booked}
-                          onChange={e => setCourt(i, 'booked', e.target.checked)}
-                          className="w-4 h-4 accent-lobster-teal" />
+                        <input
+                          type="checkbox"
+                          checked={c.booked}
+                          onChange={(e) => setCourt(i, 'booked', e.target.checked)}
+                          className="w-4 h-4 accent-lobster-teal"
+                        />
                         Court confirmed / booked
                       </label>
                     </div>
@@ -715,14 +950,20 @@ export default function Tournament({ onNavigate }) {
                     All-in amount per player covering courts, food, drinks and prizes.
                   </p>
                   <input
-                    type="number" min="0" step="0.01" className="input"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    className="input"
                     placeholder="e.g. 35"
                     value={form.pricePerPerson}
-                    onChange={e => setForm(f => ({ ...f, pricePerPerson: e.target.value }))}
+                    onChange={(e) => setForm((f) => ({ ...f, pricePerPerson: e.target.value }))}
                   />
                   {form.pricePerPerson && parseInt(form.maxPlayers) > 0 && (
                     <p className="text-sm font-semibold text-lobster-teal mt-1.5">
-                      {form.maxPlayers} players × {fmtEur(form.pricePerPerson)} = {fmtEur((parseFloat(form.pricePerPerson) || 0) * (parseInt(form.maxPlayers) || 0))}
+                      {form.maxPlayers} players × {fmtEur(form.pricePerPerson)} ={' '}
+                      {fmtEur(
+                        (parseFloat(form.pricePerPerson) || 0) * (parseInt(form.maxPlayers) || 0),
+                      )}
                       <span className="text-xs font-normal text-gray-400"> total</span>
                     </p>
                   )}
@@ -731,8 +972,11 @@ export default function Tournament({ onNavigate }) {
 
               {form.courtBookingMode === 'player_responsible' && form.courts.length > 0 && (
                 <p className="text-xs text-gray-500">
-                  Total per player: <span className="font-semibold text-gray-700">
-                    {fmtEur(form.courts.reduce((s, c) => s + (parseFloat(c.costPerPerson) || 0), 0))}
+                  Total per player:{' '}
+                  <span className="font-semibold text-gray-700">
+                    {fmtEur(
+                      form.courts.reduce((s, c) => s + (parseFloat(c.costPerPerson) || 0), 0),
+                    )}
                   </span>
                 </p>
               )}
@@ -742,13 +986,14 @@ export default function Tournament({ onNavigate }) {
                 <div>
                   <label className="label">Tikkie Link (optional)</label>
                   <p className="text-xs text-gray-500 mb-2">
-                    Paste your Tikkie link here so players can pay directly from the registration page.
+                    Paste your Tikkie link here so players can pay directly from the registration
+                    page.
                   </p>
                   <input
                     className="input"
                     placeholder="https://tikkie.me/pay/..."
                     value={form.tikkieLink}
-                    onChange={e => setForm(f => ({ ...f, tikkieLink: e.target.value }))}
+                    onChange={(e) => setForm((f) => ({ ...f, tikkieLink: e.target.value }))}
                   />
                 </div>
               )}
@@ -757,11 +1002,16 @@ export default function Tournament({ onNavigate }) {
               <div>
                 <label className="label">Description</label>
                 <p className="text-xs text-gray-500 mb-2">
-                  Shown to players on the home screen and event page. Feel free to edit —
-                  the default covers check-in, what's included, and pairings.
+                  Shown to players on the home screen and event page. Feel free to edit — the
+                  default covers check-in, what's included, and pairings.
                 </p>
-                <textarea className="input resize-none" rows={5} placeholder="What should players know about this event?"
-                  value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
+                <textarea
+                  className="input resize-none"
+                  rows={5}
+                  placeholder="What should players know about this event?"
+                  value={form.notes}
+                  onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
+                />
               </div>
 
               <button type="submit" disabled={saving} className="btn-primary w-full">
@@ -777,7 +1027,9 @@ export default function Tournament({ onNavigate }) {
 
 function InfoChip({ icon, label, warn }) {
   return (
-    <div className={`flex items-center gap-1 text-xs rounded-lg px-2 py-1.5 ${warn ? 'bg-orange-50 text-orange-600' : 'bg-gray-50 text-gray-600'}`}>
+    <div
+      className={`flex items-center gap-1 text-xs rounded-lg px-2 py-1.5 ${warn ? 'bg-orange-50 text-orange-600' : 'bg-gray-50 text-gray-600'}`}
+    >
       {icon}
       <span className="font-medium">{label}</span>
     </div>

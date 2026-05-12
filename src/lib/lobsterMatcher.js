@@ -39,20 +39,20 @@
 // cohort-break is preferred up to ~5.5 of level-delta; beyond that, the
 // optimiser keeps the cohort. See backtest notes when adjusting.
 const W = {
-  HARD:           1e9,   // double lefty team, gender clash above unavoidable quota
-  LEVEL_DELTA:    1.0,   // squared team level difference, per match
-  PARTNER_REPEAT: 200,   // squared count of repeat partnerships in this tournament
-  OPPONENT_REPEAT: 8,    // squared count above 1 of repeat opponents in this tournament
-  COHORT_EXCESS:  30,    // squared count above target share of co-court within this tournament
-  COHORT_HISTORY: 15,    // decayed past co-court (cross-tournament), 60-day half-life
-  GENDER_EXTRA:   1000,  // gender clashes above the unavoidable quota
-  SITOUT_VAR:     20,    // squared sit-out count above the fair share, per player
+  HARD: 1e9, // double lefty team, gender clash above unavoidable quota
+  LEVEL_DELTA: 1.0, // squared team level difference, per match
+  PARTNER_REPEAT: 200, // squared count of repeat partnerships in this tournament
+  OPPONENT_REPEAT: 8, // squared count above 1 of repeat opponents in this tournament
+  COHORT_EXCESS: 30, // squared count above target share of co-court within this tournament
+  COHORT_HISTORY: 15, // decayed past co-court (cross-tournament), 60-day half-life
+  GENDER_EXTRA: 1000, // gender clashes above the unavoidable quota
+  SITOUT_VAR: 20, // squared sit-out count above the fair share, per player
   SAMEGENDER_REPEAT: 500, // squared excess same-gender matches per player above
-                          // the fair share — keeps a single player from being
-                          // pulled into multiple all-female / all-male games
-                          // when other same-gender players have zero. See the
-                          // "fair distribution of same-gender matches" block
-                          // in scoreSchedule for the cap calculation.
+  // the fair share — keeps a single player from being
+  // pulled into multiple all-female / all-male games
+  // when other same-gender players have zero. See the
+  // "fair distribution of same-gender matches" block
+  // in scoreSchedule for the cap calculation.
 }
 
 const COHORT_HALF_LIFE_DAYS = 60
@@ -74,7 +74,13 @@ const COHORT_HALF_LIFE_DAYS = 60
  *
  * @returns {Array<{round:number,label:string,matches:Array,sitting:Array<string>}>}
  */
-export function generateLobster(players, numCourts, genderMode = 'mixed', duration = 90, opts = {}) {
+export function generateLobster(
+  players,
+  numCourts,
+  genderMode = 'mixed',
+  duration = 90,
+  opts = {},
+) {
   const numRounds = duration >= 120 ? 6 : 5
   return generateSchedule(players, numCourts, numRounds, genderMode, opts)
 }
@@ -90,7 +96,9 @@ export function generateSchedule(players, numCourts, numRounds, genderMode, opts
   const ctx = buildContext(players, numCourts, numRounds, genderMode, opts.pastMatches || [])
   if (ctx.playerCount < 4 || ctx.courtsPerRound < 1) {
     return Array.from({ length: numRounds }, (_, r) => ({
-      round: r + 1, label: `Round ${r + 1}`, matches: [],
+      round: r + 1,
+      label: `Round ${r + 1}`,
+      matches: [],
       sitting: ctx.sittingPerRound[r] || [],
     }))
   }
@@ -120,7 +128,7 @@ function buildContext(players, numCourts, numRounds, genderMode, pastMatches) {
   const sitPerRound = Math.max(0, playerCount - activePerRound)
 
   // We index players 0..playerCount-1 internally and map to/from real ids.
-  const idByIdx = sorted.map(p => p.id)
+  const idByIdx = sorted.map((p) => p.id)
   const idxById = new Map(idByIdx.map((id, i) => [id, i]))
   const playerByIdx = sorted
 
@@ -131,9 +139,11 @@ function buildContext(players, numCourts, numRounds, genderMode, pastMatches) {
   const sitOutByRound = []
   const totalSitSlots = sitPerRound * numRounds
   const baseSitouts = Math.floor(totalSitSlots / playerCount)
-  const extra = totalSitSlots - baseSitouts * playerCount  // first `extra` players sit one more
+  const extra = totalSitSlots - baseSitouts * playerCount // first `extra` players sit one more
   // assign each player a target sit-out count
-  const targetSitouts = new Array(playerCount).fill(0).map((_, i) => baseSitouts + (i < extra ? 1 : 0))
+  const targetSitouts = new Array(playerCount)
+    .fill(0)
+    .map((_, i) => baseSitouts + (i < extra ? 1 : 0))
   // round-robin allocation, choosing players with remaining sit-out budget
   const remaining = [...targetSitouts]
   for (let r = 0; r < numRounds; r++) {
@@ -142,7 +152,7 @@ function buildContext(players, numCourts, numRounds, genderMode, pastMatches) {
     // by lowest player index so the seed is deterministic for a given roster.
     const candidates = remaining
       .map((c, i) => ({ i, c }))
-      .filter(x => x.c > 0)
+      .filter((x) => x.c > 0)
       .sort((a, b) => b.c - a.c || a.i - b.i)
     for (let k = 0; k < sitPerRound && k < candidates.length; k++) {
       sit.push(candidates[k].i)
@@ -152,7 +162,7 @@ function buildContext(players, numCourts, numRounds, genderMode, pastMatches) {
   }
 
   // Active player indices per round (everyone not sitting).
-  const activeByRound = sitOutByRound.map(sit => {
+  const activeByRound = sitOutByRound.map((sit) => {
     const sitSet = new Set(sit)
     const out = []
     for (let i = 0; i < playerCount; i++) if (!sitSet.has(i)) out.push(i)
@@ -164,11 +174,11 @@ function buildContext(players, numCourts, numRounds, genderMode, pastMatches) {
   // for each historical match where they shared a court.
   const cohortHistory = makeMatrix(playerCount)
   const now = Date.now()
-  pastMatches.forEach(m => {
+  pastMatches.forEach((m) => {
     if (!m.team1Ids || !m.team2Ids) return
     const four = [...m.team1Ids, ...m.team2Ids]
-      .map(id => idxById.get(id))
-      .filter(idx => idx != null)
+      .map((id) => idxById.get(id))
+      .filter((idx) => idx != null)
     if (four.length < 2) return
     const t = m.created_at ? new Date(m.created_at).getTime() : now
     const deltaDays = Math.max(0, (now - t) / 86400000)
@@ -195,8 +205,8 @@ function buildContext(players, numCourts, numRounds, genderMode, pastMatches) {
   // Gender quota — same logic as the existing validator. With odd women in
   // mixed mode we accept exactly one unavoidable WM-vs-MM clash per round.
   const isMixed = genderMode === 'mixed'
-  const womenCount = playerByIdx.filter(p => p.gender === 'female').length
-  const menCount   = playerByIdx.length - womenCount
+  const womenCount = playerByIdx.filter((p) => p.gender === 'female').length
+  const menCount = playerByIdx.length - womenCount
   let unavoidableClashesPerRound = 0
   if (isMixed && womenCount > 0 && menCount > 0) {
     const teamsPerRound = Math.floor(activePerRound / 2)
@@ -216,15 +226,15 @@ function buildContext(players, numCourts, numRounds, genderMode, pastMatches) {
     activePerRound,
     courtsPerRound: Math.floor(activePerRound / 4),
     activeByRound,
-    sittingPerRound: sitOutByRound.map(arr => arr.map(i => idByIdx[i])),
+    sittingPerRound: sitOutByRound.map((arr) => arr.map((i) => idByIdx[i])),
     targetSitouts,
     cohortHistory,
     cohortTarget,
     isMixed,
     genderMode,
-    isFemale: playerByIdx.map(p => p.gender === 'female'),
-    isLefty:  playerByIdx.map(p => p.isLeftHanded === true),
-    level:    playerByIdx.map(p => p.adjustedLevel || 0),
+    isFemale: playerByIdx.map((p) => p.gender === 'female'),
+    isLefty: playerByIdx.map((p) => p.isLeftHanded === true),
+    level: playerByIdx.map((p) => p.adjustedLevel || 0),
     unavoidableClashesPerRound,
   }
 }
@@ -262,7 +272,7 @@ function seedSchedule(ctx, rng) {
         active[2 * C - 1 - c],
         active[2 * C + c],
         active[4 * C - 1 - c],
-      ].filter(x => x != null)
+      ].filter((x) => x != null)
       if (ids.length === 4) {
         // Pair high+low vs mid+mid on this court → minimal level delta.
         courts.push([ids[0], ids[3], ids[1], ids[2]])
@@ -279,8 +289,16 @@ function seedSchedule(ctx, rng) {
 // incrementally; for N=32 × 6 rounds this is ~5µs in V8 and lets us iterate
 // on the cost design without rewriting the SA loop.
 function scoreSchedule(schedule, ctx) {
-  const { playerCount, isFemale, isLefty, level, isMixed,
-          cohortHistory, cohortTarget, unavoidableClashesPerRound } = ctx
+  const {
+    playerCount,
+    isFemale,
+    isLefty,
+    level,
+    isMixed,
+    cohortHistory,
+    cohortTarget,
+    unavoidableClashesPerRound,
+  } = ctx
 
   let hard = 0
   let levelCost = 0
@@ -289,10 +307,10 @@ function scoreSchedule(schedule, ctx) {
   let extraGenderClashes = 0
 
   // Per-player partner / opponent / co-court counters within this schedule.
-  const partner   = makeMatrix(playerCount)
-  const opponent  = makeMatrix(playerCount)
-  const cohort    = makeMatrix(playerCount)
-  const sitouts   = new Array(playerCount).fill(0)
+  const partner = makeMatrix(playerCount)
+  const opponent = makeMatrix(playerCount)
+  const cohort = makeMatrix(playerCount)
+  const sitouts = new Array(playerCount).fill(0)
   // Per-player count of same-gender matches (all-female / all-male).
   // Fairness rule: when same-gender matches are unavoidable (M/F imbalance),
   // they should be spread across as many distinct same-gender players as
@@ -313,14 +331,19 @@ function scoreSchedule(schedule, ctx) {
       const delta = t1 - t2
       levelCost += delta * delta
       // Partner counts (one pair per team)
-      partner[a][b]++; partner[b][a]++
-      partner[c1][c2]++; partner[c2][c1]++
+      partner[a][b]++
+      partner[b][a]++
+      partner[c1][c2]++
+      partner[c2][c1]++
       // Opponent counts (4 cross-pairs)
-      const t1arr = [a, b], t2arr = [c1, c2]
+      const t1arr = [a, b],
+        t2arr = [c1, c2]
       for (let i = 0; i < 2; i++) {
         for (let j = 0; j < 2; j++) {
-          const x = t1arr[i], y = t2arr[j]
-          opponent[x][y]++; opponent[y][x]++
+          const x = t1arr[i],
+            y = t2arr[j]
+          opponent[x][y]++
+          opponent[y][x]++
         }
       }
       // Co-court counts (all 6 pairs of 4)
@@ -343,17 +366,25 @@ function scoreSchedule(schedule, ctx) {
       // loop). Independent of genderMode — applies equally in 'open' rosters
       // that happen to land all-male or all-female.
       const womenInMatch =
-        (isFemale[a] ? 1 : 0) + (isFemale[b] ? 1 : 0) +
-        (isFemale[c1] ? 1 : 0) + (isFemale[c2] ? 1 : 0)
+        (isFemale[a] ? 1 : 0) +
+        (isFemale[b] ? 1 : 0) +
+        (isFemale[c1] ? 1 : 0) +
+        (isFemale[c2] ? 1 : 0)
       if (womenInMatch === 4) {
-        ffMatches[a]++; ffMatches[b]++; ffMatches[c1]++; ffMatches[c2]++
+        ffMatches[a]++
+        ffMatches[b]++
+        ffMatches[c1]++
+        ffMatches[c2]++
       } else if (womenInMatch === 0) {
-        mmMatches[a]++; mmMatches[b]++; mmMatches[c1]++; mmMatches[c2]++
+        mmMatches[a]++
+        mmMatches[b]++
+        mmMatches[c1]++
+        mmMatches[c2]++
       }
     }
     // Anything beyond the unavoidable quota is real engine error.
     if (clashesThisRound > unavoidableClashesPerRound) {
-      extraGenderClashes += (clashesThisRound - unavoidableClashesPerRound)
+      extraGenderClashes += clashesThisRound - unavoidableClashesPerRound
     }
   }
 
@@ -363,14 +394,15 @@ function scoreSchedule(schedule, ctx) {
   for (let i = 0; i < playerCount; i++) {
     for (let j = i + 1; j < playerCount; j++) {
       const p = partner[i][j]
-      if (p > 0) partnerCost += p * p   // any repeat partnership is heavily penalised
+      if (p > 0) partnerCost += p * p // any repeat partnership is heavily penalised
       const o = opponent[i][j]
       if (o > 1) {
         const excess = o - 1
         opponentCost += excess * excess
       }
       const co = cohort[i][j]
-      if (co > cohortTarget + 1) {        // small slack so common cases stay quiet
+      if (co > cohortTarget + 1) {
+        // small slack so common cases stay quiet
         const excess = co - cohortTarget - 1
         cohortExcessCost += excess * excess
       }
@@ -381,7 +413,7 @@ function scoreSchedule(schedule, ctx) {
   // of their target. (For 32×8 with 0 sit-outs this term is identically 0.)
   for (let r = 0; r < schedule.length; r++) {
     const playing = new Set()
-    schedule[r].forEach(court => court.forEach(p => playing.add(p)))
+    schedule[r].forEach((court) => court.forEach((p) => playing.add(p)))
     for (let i = 0; i < playerCount; i++) {
       if (!playing.has(i)) sitouts[i]++
     }
@@ -403,11 +435,18 @@ function scoreSchedule(schedule, ctx) {
   // chooses zero same-gender matches (e.g. an even gender split), the term
   // collapses to zero with no constraint.
   let samegenderRepeatCost = 0
-  let womenN = 0, menN = 0
-  let totalFFSlots = 0, totalMMSlots = 0
+  let womenN = 0,
+    menN = 0
+  let totalFFSlots = 0,
+    totalMMSlots = 0
   for (let i = 0; i < playerCount; i++) {
-    if (isFemale[i]) { womenN++; totalFFSlots += ffMatches[i] }
-    else { menN++; totalMMSlots += mmMatches[i] }
+    if (isFemale[i]) {
+      womenN++
+      totalFFSlots += ffMatches[i]
+    } else {
+      menN++
+      totalMMSlots += mmMatches[i]
+    }
   }
   const ffCap = womenN > 0 ? Math.ceil(totalFFSlots / womenN) : 0
   const mmCap = menN > 0 ? Math.ceil(totalMMSlots / menN) : 0
@@ -452,10 +491,10 @@ function anneal(schedule, ctx, iterations, rng) {
   let bestCost = curCost
 
   let T = Math.max(50, curCost * 0.001)
-  const cooling = Math.pow(0.001, 1 / iterations)  // T → ~T*0.001 over the run
+  const cooling = Math.pow(0.001, 1 / iterations) // T → ~T*0.001 over the run
 
   for (let it = 0; it < iterations; it++) {
-    const moveType = rng() < 0.7 ? 'A' : (rng() < 0.5 ? 'B' : 'C')
+    const moveType = rng() < 0.7 ? 'A' : rng() < 0.5 ? 'B' : 'C'
     const undo = applyMove(schedule, ctx, moveType, rng)
     if (!undo) continue
 
@@ -470,7 +509,7 @@ function anneal(schedule, ctx, iterations, rng) {
         best = cloneSchedule(schedule)
       }
     } else {
-      undo()  // revert
+      undo() // revert
     }
     T *= cooling
   }
@@ -497,8 +536,10 @@ function moveSwapPlayersInRound(schedule, ctx, rng) {
   let aSlot = Math.floor(rng() * totalSlots)
   let bSlot = Math.floor(rng() * totalSlots)
   if (aSlot === bSlot) bSlot = (bSlot + 1) % totalSlots
-  const aC = Math.floor(aSlot / 4), aIdx = aSlot % 4
-  const bC = Math.floor(bSlot / 4), bIdx = bSlot % 4
+  const aC = Math.floor(aSlot / 4),
+    aIdx = aSlot % 4
+  const bC = Math.floor(bSlot / 4),
+    bIdx = bSlot % 4
   const tmp = courts[aC][aIdx]
   courts[aC][aIdx] = courts[bC][bIdx]
   courts[bC][bIdx] = tmp
@@ -518,8 +559,8 @@ function moveSwapPartnerOpponent(schedule, rng) {
   // Swap one team-1 slot with the matching team-2 slot. This exchanges a
   // partner with an opponent within the same 4 — cheap perturbation that
   // keeps the cohort unchanged but reshuffles the pair structure.
-  const i = Math.floor(rng() * 2)        // team1 slot 0 or 1
-  const j = 2 + Math.floor(rng() * 2)    // team2 slot 2 or 3
+  const i = Math.floor(rng() * 2) // team1 slot 0 or 1
+  const j = 2 + Math.floor(rng() * 2) // team2 slot 2 or 3
   const tmp = court[i]
   court[i] = court[j]
   court[j] = tmp
@@ -535,7 +576,7 @@ function moveSwapWithSittingPlayer(schedule, ctx, rng) {
   // Determine current sit-outs from the schedule itself (not ctx, which may
   // be stale after earlier C moves).
   const playing = new Set()
-  schedule[r].forEach(court => court.forEach(p => playing.add(p)))
+  schedule[r].forEach((court) => court.forEach((p) => playing.add(p)))
   const sitting = []
   for (let i = 0; i < ctx.playerCount; i++) if (!playing.has(i)) sitting.push(i)
   if (sitting.length === 0) return null
@@ -578,7 +619,7 @@ function materialise(schedule, ctx) {
     }
     // Sit-outs: anyone not on a court this round.
     const playing = new Set()
-    schedule[r].forEach(court => court.forEach(p => playing.add(p)))
+    schedule[r].forEach((court) => court.forEach((p) => playing.add(p)))
     const sitting = []
     for (let i = 0; i < ctx.playerCount; i++) {
       if (!playing.has(i)) sitting.push(ctx.idByIdx[i])
@@ -602,7 +643,7 @@ function makeMatrix(n) {
 }
 
 function cloneSchedule(schedule) {
-  return schedule.map(round => round.map(court => [...court]))
+  return schedule.map((round) => round.map((court) => [...court]))
 }
 
 function shuffleInPlace(arr, rng) {
@@ -616,12 +657,11 @@ function shuffleInPlace(arr, rng) {
 // Mulberry32 — small, fast, deterministic PRNG. Used for backtests.
 function mulberry32(seed) {
   let a = seed | 0
-  return function() {
-    a = (a + 0x6D2B79F5) | 0
+  return function () {
+    a = (a + 0x6d2b79f5) | 0
     let t = a
     t = Math.imul(t ^ (t >>> 15), t | 1)
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296
   }
 }
-

@@ -1,25 +1,50 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { useApp } from '../context/AppContext'
 import { supabase } from '../supabase'
-import { Plus, X, Pencil, ShoppingBag, Gift, Shuffle, Upload, Check, ShoppingCart, User, GripVertical, Ban, Clock, Package, CreditCard, MessageSquare, LogIn } from 'lucide-react'
+import {
+  Plus,
+  X,
+  Pencil,
+  ShoppingBag,
+  Gift,
+  Shuffle,
+  Upload,
+  Check,
+  ShoppingCart,
+  User,
+  GripVertical,
+  Ban,
+  Clock,
+  Package,
+  CreditCard,
+  MessageSquare,
+  LogIn,
+} from 'lucide-react'
 import { SignInBanner, useAuthPrompt } from './AuthGate'
 
-const SIZES_APPAREL  = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
-const SIZES_SOCKS    = ['S (35-38)', 'M (39-42)', 'L (43-46)']
-const SIZE_ORDER     = ['XS', 'S', 'S (35-38)', 'M', 'M (39-42)', 'L', 'L (43-46)', 'XL', 'XXL']
-const sizeRank = (s) => { const i = SIZE_ORDER.indexOf(s); return i >= 0 ? i : 999 }
+const SIZES_APPAREL = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
+const SIZES_SOCKS = ['S (35-38)', 'M (39-42)', 'L (43-46)']
+const SIZE_ORDER = ['XS', 'S', 'S (35-38)', 'M', 'M (39-42)', 'L', 'L (43-46)', 'XL', 'XXL']
+const sizeRank = (s) => {
+  const i = SIZE_ORDER.indexOf(s)
+  return i >= 0 ? i : 999
+}
 
 const STATUS_CONFIG = {
-  ordered:   { label: 'Ordered',   icon: Clock,      bg: 'bg-amber-100',  text: 'text-amber-700' },
-  paid:      { label: 'Paid',      icon: CreditCard,  bg: 'bg-green-100',  text: 'text-green-700' },
-  delivered: { label: 'Delivered', icon: Package,     bg: 'bg-blue-100',   text: 'text-blue-700' },
-  cancelled: { label: 'Cancelled', icon: Ban,         bg: 'bg-red-100',    text: 'text-red-500' },
+  ordered: { label: 'Ordered', icon: Clock, bg: 'bg-amber-100', text: 'text-amber-700' },
+  paid: { label: 'Paid', icon: CreditCard, bg: 'bg-green-100', text: 'text-green-700' },
+  delivered: { label: 'Delivered', icon: Package, bg: 'bg-blue-100', text: 'text-blue-700' },
+  cancelled: { label: 'Cancelled', icon: Ban, bg: 'bg-red-100', text: 'text-red-500' },
 }
 
 const formatOrderTime = (ts) => {
   if (!ts) return ''
   const d = new Date(ts)
-  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + ' ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+  return (
+    d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) +
+    ' ' +
+    d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+  )
 }
 
 const getPlayerName = (o, players) => {
@@ -28,12 +53,20 @@ const getPlayerName = (o, players) => {
   if (o.players?.name) return o.players.name
   // Match from players list — compare as strings to avoid type mismatch
   const pid = String(o.player_id)
-  const p = players.find(pl => String(pl.id) === pid)
+  const p = players.find((pl) => String(pl.id) === pid)
   return p ? p.name : null
 }
 
 const emptyItem = {
-  name: '', description: '', price: '', sizes: [], category: 'apparel', image_url: '', image_urls: [], active: true, external_orders: 0,
+  name: '',
+  description: '',
+  price: '',
+  sizes: [],
+  category: 'apparel',
+  image_url: '',
+  image_urls: [],
+  active: true,
+  external_orders: 0,
 }
 
 // ── Inline prize editor for a single winner row ───────────────────────────────
@@ -42,8 +75,10 @@ const emptyItem = {
 function PrizeEditor({ winner, onSave }) {
   const initial = winner.prize || ''
   const [editing, setEditing] = useState(false)
-  const [value, setValue]     = useState(initial)
-  useEffect(() => { setValue(initial) /* sync when winner changes */ }, [initial])
+  const [value, setValue] = useState(initial)
+  useEffect(() => {
+    setValue(initial) /* sync when winner changes */
+  }, [initial])
   const commit = async () => {
     setEditing(false)
     const trimmed = (value || '').trim()
@@ -56,11 +91,17 @@ function PrizeEditor({ winner, onSave }) {
       <input
         autoFocus
         value={value}
-        onChange={e => setValue(e.target.value)}
+        onChange={(e) => setValue(e.target.value)}
         onBlur={commit}
-        onKeyDown={e => {
-          if (e.key === 'Enter') { e.preventDefault(); e.target.blur() }
-          if (e.key === 'Escape') { setValue(initial); setEditing(false) }
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault()
+            e.target.blur()
+          }
+          if (e.key === 'Escape') {
+            setValue(initial)
+            setEditing(false)
+          }
         }}
         className="mt-1 px-2 py-1 rounded-md border border-amber-300 bg-white/80 text-amber-900 text-sm sm:text-base font-semibold w-full max-w-xs"
         placeholder="e.g. tshirt, hat, sticker"
@@ -68,8 +109,10 @@ function PrizeEditor({ winner, onSave }) {
     )
   }
   return (
-    <button onClick={() => setEditing(true)}
-      className={`mt-1 text-sm sm:text-base font-semibold text-left ${winner.prize ? 'text-amber-900/80' : 'text-amber-900/40 italic'}`}>
+    <button
+      onClick={() => setEditing(true)}
+      className={`mt-1 text-sm sm:text-base font-semibold text-left ${winner.prize ? 'text-amber-900/80' : 'text-amber-900/40 italic'}`}
+    >
       {winner.prize || '+ add prize'}
     </button>
   )
@@ -83,9 +126,9 @@ function Raffle({ tournament, players, registrations }) {
     const seen = new Set()
     const out = []
     registrations
-      .filter(r => r.tournamentId === tournament?.id && r.status === 'registered')
-      .forEach(r => {
-        const p = players.find(pl => pl.id === r.playerId)
+      .filter((r) => r.tournamentId === tournament?.id && r.status === 'registered')
+      .forEach((r) => {
+        const p = players.find((pl) => pl.id === r.playerId)
         if (!p) return
         const key = String(p.id)
         if (seen.has(key)) return // defensive: never list the same player twice in one draw
@@ -100,30 +143,38 @@ function Raffle({ tournament, players, registrations }) {
   // matches the rest of the app.
   const shortLabels = useMemo(() => {
     const firstOf = (p) => (p.name || '').trim().split(/\s+/)[0] || p.name || ''
-    const lastOf  = (p) => {
+    const lastOf = (p) => {
       const parts = (p.name || '').trim().split(/\s+/)
       return parts.length > 1 ? parts.slice(1).join(' ') : ''
     }
     const byFirst = {}
-    registered.forEach(p => {
+    registered.forEach((p) => {
       const f = firstOf(p).toLowerCase()
       ;(byFirst[f] ??= []).push(p)
     })
     const out = {}
     for (const key in byFirst) {
       const group = byFirst[key]
-      if (group.length === 1) { out[String(group[0].id)] = firstOf(group[0]); continue }
+      if (group.length === 1) {
+        out[String(group[0].id)] = firstOf(group[0])
+        continue
+      }
       group.sort((a, b) => String(a.id).localeCompare(String(b.id)))
       let labels = null
       for (let len = 1; len <= 3; len++) {
-        const candidate = group.map(p => {
+        const candidate = group.map((p) => {
           const last = lastOf(p)
           return last ? `${firstOf(p)} ${last.slice(0, len).toUpperCase()}` : firstOf(p)
         })
-        if (new Set(candidate).size === candidate.length) { labels = candidate; break }
+        if (new Set(candidate).size === candidate.length) {
+          labels = candidate
+          break
+        }
       }
       if (!labels) labels = group.map((p, i) => `${firstOf(p)} ${i + 1}`)
-      group.forEach((p, i) => { out[String(p.id)] = labels[i] })
+      group.forEach((p, i) => {
+        out[String(p.id)] = labels[i]
+      })
     }
     return out
   }, [registered])
@@ -136,7 +187,7 @@ function Raffle({ tournament, players, registrations }) {
     const s = new Set()
     if (tournament?.id) {
       const tId = String(tournament.id)
-      ;(raffleWinners || []).forEach(w => {
+      ;(raffleWinners || []).forEach((w) => {
         if (String(w.tournament_id) === tId) s.add(String(w.player_id))
       })
     }
@@ -152,40 +203,41 @@ function Raffle({ tournament, players, registrations }) {
   const eligibility = useMemo(() => {
     const result = { eligible: [], ineligible: [] }
     if (!tournament?.date) {
-      registered.forEach(p => result.eligible.push(p))
+      registered.forEach((p) => result.eligible.push(p))
       return result
     }
     const tDate = tournament.date
     const tId = String(tournament.id)
-    registered.forEach(p => {
+    registered.forEach((p) => {
       // Rule C — already won here this raffle.
       if (alreadyWonHere.has(String(p.id))) {
         result.ineligible.push({ player: p, reason: 'already_won_here' })
         return
       }
       // Rule A — new player. Three signals count as "veteran".
-      const hasPriorReg = registrations.some(r =>
-        String(r.playerId) === String(p.id) &&
-        r.status === 'registered' &&
-        String(r.tournamentId) !== tId &&
-        (() => {
-          const t = tournaments.find(tt => String(tt.id) === String(r.tournamentId))
-          return t && t.date && t.date < tDate
-        })()
+      const hasPriorReg = registrations.some(
+        (r) =>
+          String(r.playerId) === String(p.id) &&
+          r.status === 'registered' &&
+          String(r.tournamentId) !== tId &&
+          (() => {
+            const t = tournaments.find((tt) => String(tt.id) === String(r.tournamentId))
+            return t && t.date && t.date < tDate
+          })(),
       )
       if (!hasPriorReg) {
         result.ineligible.push({ player: p, reason: 'new_player' })
         return
       }
       // Rule B — cooldown (won in the last 2 raffles before this one).
-      const myWins = (raffleWinners || []).filter(w => String(w.player_id) === String(p.id))
-      const blockingWin = myWins.find(w => {
+      const myWins = (raffleWinners || []).filter((w) => String(w.player_id) === String(p.id))
+      const blockingWin = myWins.find((w) => {
         if (!w.won_at_date) return false
-        if (w.won_at_date >= tDate) return false  // future / current win doesn't bar current
-        const between = tournaments.filter(t =>
-          t && t.date && t.date > w.won_at_date && t.date < tDate
+        if (w.won_at_date >= tDate) return false // future / current win doesn't bar current
+        const between = tournaments.filter(
+          (t) => t && t.date && t.date > w.won_at_date && t.date < tDate,
         ).length
-        return (between + (w.cooldown_offset || 0)) < 2
+        return between + (w.cooldown_offset || 0) < 2
       })
       if (blockingWin) {
         result.ineligible.push({ player: p, reason: 'cooldown', win: blockingWin })
@@ -196,10 +248,10 @@ function Raffle({ tournament, players, registrations }) {
     return result
   }, [registered, registrations, tournaments, tournament, raffleWinners, alreadyWonHere])
 
-  const [winners, setWinners]   = useState([])
+  const [winners, setWinners] = useState([])
   const [spinning, setSpinning] = useState(false)
   const [numPrizes, setNumPrizes] = useState(1)
-  const [saved, setSaved]       = useState(false)
+  const [saved, setSaved] = useState(false)
 
   // Is the selected tournament already in the past? Used to switch into
   // a read-only "review" mode (no Draw button, recorded winners are
@@ -214,13 +266,21 @@ function Raffle({ tournament, players, registrations }) {
   // For past tournaments, populate the WINNERS card from the recorded
   // raffle_winners rows so admin can review (and edit prize labels).
   useEffect(() => {
-    if (!tournament?.id) { setWinners([]); setSaved(false); return }
+    if (!tournament?.id) {
+      setWinners([])
+      setSaved(false)
+      return
+    }
     if (!isPastTournament) return
-    const rows = (raffleWinners || []).filter(w => String(w.tournament_id) === String(tournament.id))
-    const enriched = rows.map(r => {
-      const p = players.find(pl => String(pl.id) === String(r.player_id))
-      return p ? { ...p, winnerId: r.id, prize: r.prize ?? null } : null
-    }).filter(Boolean)
+    const rows = (raffleWinners || []).filter(
+      (w) => String(w.tournament_id) === String(tournament.id),
+    )
+    const enriched = rows
+      .map((r) => {
+        const p = players.find((pl) => String(pl.id) === String(r.player_id))
+        return p ? { ...p, winnerId: r.id, prize: r.prize ?? null } : null
+      })
+      .filter(Boolean)
     setWinners(enriched)
     setSaved(true)
   }, [tournament?.id, isPastTournament, raffleWinners, players])
@@ -230,10 +290,10 @@ function Raffle({ tournament, players, registrations }) {
     setSpinning(true)
     setWinners([])
     setSaved(false)
-    await new Promise(r => setTimeout(r, 800))
+    await new Promise((r) => setTimeout(r, 800))
     const shuffled = [...eligibility.eligible].sort(() => Math.random() - 0.5)
     const picked = shuffled.slice(0, Math.min(numPrizes, eligibility.eligible.length))
-    setWinners(picked.map(p => ({ ...p, winnerId: null, prize: null })))
+    setWinners(picked.map((p) => ({ ...p, winnerId: null, prize: null })))
     setSpinning(false)
   }
 
@@ -244,26 +304,32 @@ function Raffle({ tournament, players, registrations }) {
   const saveWinners = async () => {
     if (winners.length === 0 || !tournament?.id || saved || saving) return
     setSaving(true)
-    const rows = await recordRaffleWinners(tournament.id, winners.map(w => w.id))
+    const rows = await recordRaffleWinners(
+      tournament.id,
+      winners.map((w) => w.id),
+    )
     setSaving(false)
     if (rows && rows.length > 0) {
-      const byPid = Object.fromEntries(rows.map(r => [String(r.player_id), r]))
-      setWinners(prev => prev.map(w => {
-        const r = byPid[String(w.id)]
-        return r ? { ...w, winnerId: r.id, prize: r.prize ?? null } : w
-      }))
+      const byPid = Object.fromEntries(rows.map((r) => [String(r.player_id), r]))
+      setWinners((prev) =>
+        prev.map((w) => {
+          const r = byPid[String(w.id)]
+          return r ? { ...w, winnerId: r.id, prize: r.prize ?? null } : w
+        }),
+      )
       setSaved(true)
     } else if (rows !== null) {
       setSaved(true)
     }
   }
 
-  if (!tournament) return (
-    <div className="card py-8 text-center text-gray-400">
-      <Gift size={32} className="mx-auto mb-2 opacity-30" />
-      <p className="text-sm">Open a tournament first to run a raffle</p>
-    </div>
-  )
+  if (!tournament)
+    return (
+      <div className="card py-8 text-center text-gray-400">
+        <Gift size={32} className="mx-auto mb-2 opacity-30" />
+        <p className="text-sm">Open a tournament first to run a raffle</p>
+      </div>
+    )
 
   const eligibleCount = eligibility.eligible.length
   const ineligibleCount = eligibility.ineligible.length
@@ -277,55 +343,54 @@ function Raffle({ tournament, players, registrations }) {
           selected tournament is in the past — that switches into a
           read-only review of the recorded winners. */}
       {!isPastTournament && (
-      <div className="rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-lobster-teal via-teal-600 to-teal-800 text-white shadow-2xl">
-        <div className="flex items-center justify-center gap-3 mb-3">
-          <Gift size={32} className="text-yellow-300" />
-          <p className="text-2xl sm:text-3xl font-extrabold tracking-tight">Prize Raffle</p>
-        </div>
-        <p className="text-center text-white/80 text-sm sm:text-base mb-5">
-          {tournament.name}
-        </p>
-
-        <div className="text-center mb-6">
-          <p className="text-5xl sm:text-6xl font-black text-yellow-300 leading-none">
-            {registered.length}
-          </p>
-          <p className="text-[11px] sm:text-xs uppercase tracking-widest text-white/70 mt-1">
-            participants
-          </p>
-        </div>
-
-        <div className="mb-5">
-          <p className="text-sm text-white/80 mb-2 text-center font-semibold">
-            How many prizes?
-          </p>
-          <div className="flex gap-2 justify-center">
-            {[1, 2, 3, 4, 5].map(n => (
-              <button key={n} onClick={() => setNumPrizes(n)}
-                className={`flex-1 max-w-[64px] py-3 rounded-xl text-lg font-extrabold transition-all ${
-                  numPrizes === n
-                    ? 'bg-yellow-400 text-gray-900 scale-110 shadow-md'
-                    : 'bg-white/15 text-white hover:bg-white/25'
-                }`}>
-                {n}
-              </button>
-            ))}
+        <div className="rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-lobster-teal via-teal-600 to-teal-800 text-white shadow-2xl">
+          <div className="flex items-center justify-center gap-3 mb-3">
+            <Gift size={32} className="text-yellow-300" />
+            <p className="text-2xl sm:text-3xl font-extrabold tracking-tight">Prize Raffle</p>
           </div>
+          <p className="text-center text-white/80 text-sm sm:text-base mb-5">{tournament.name}</p>
+
+          <div className="text-center mb-6">
+            <p className="text-5xl sm:text-6xl font-black text-yellow-300 leading-none">
+              {registered.length}
+            </p>
+            <p className="text-[11px] sm:text-xs uppercase tracking-widest text-white/70 mt-1">
+              participants
+            </p>
+          </div>
+
+          <div className="mb-5">
+            <p className="text-sm text-white/80 mb-2 text-center font-semibold">How many prizes?</p>
+            <div className="flex gap-2 justify-center">
+              {[1, 2, 3, 4, 5].map((n) => (
+                <button
+                  key={n}
+                  onClick={() => setNumPrizes(n)}
+                  className={`flex-1 max-w-[64px] py-3 rounded-xl text-lg font-extrabold transition-all ${
+                    numPrizes === n
+                      ? 'bg-yellow-400 text-gray-900 scale-110 shadow-md'
+                      : 'bg-white/15 text-white hover:bg-white/25'
+                  }`}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <button
+            onClick={runRaffle}
+            disabled={spinning || eligibleCount === 0}
+            className="w-full bg-yellow-400 hover:bg-yellow-500 disabled:opacity-40 disabled:cursor-not-allowed text-gray-900 font-black text-lg sm:text-xl py-4 sm:py-5 rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all shadow-lg"
+          >
+            <Shuffle size={22} className={spinning ? 'animate-spin' : ''} />
+            {spinning ? 'Drawing winners…' : '🎲 Draw Winners!'}
+          </button>
+
+          {registered.length === 0 && (
+            <p className="text-sm text-orange-200 text-center mt-3">No registered players yet</p>
+          )}
         </div>
-
-        <button
-          onClick={runRaffle}
-          disabled={spinning || eligibleCount === 0}
-          className="w-full bg-yellow-400 hover:bg-yellow-500 disabled:opacity-40 disabled:cursor-not-allowed text-gray-900 font-black text-lg sm:text-xl py-4 sm:py-5 rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all shadow-lg"
-        >
-          <Shuffle size={22} className={spinning ? 'animate-spin' : ''} />
-          {spinning ? 'Drawing winners…' : '🎲 Draw Winners!'}
-        </button>
-
-        {registered.length === 0 && (
-          <p className="text-sm text-orange-200 text-center mt-3">No registered players yet</p>
-        )}
-      </div>
       )}
 
       {/* Winners — huge celebratory card for when the screen is showing
@@ -337,7 +402,10 @@ function Raffle({ tournament, players, registrations }) {
           </p>
           <div className="space-y-3">
             {winners.map((w, i) => (
-              <div key={w.id} className="flex items-center gap-4 bg-white rounded-2xl p-4 sm:p-5 shadow-md">
+              <div
+                key={w.id}
+                className="flex items-center gap-4 bg-white rounded-2xl p-4 sm:p-5 shadow-md"
+              >
                 <span className="text-3xl sm:text-4xl flex-shrink-0">
                   {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`}
                 </span>
@@ -366,14 +434,22 @@ function Raffle({ tournament, players, registrations }) {
                   Saved
                 </div>
               ) : (
-                <button onClick={saveWinners} disabled={saving}
-                  className="flex-1 bg-amber-900 hover:bg-amber-950 disabled:opacity-50 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-all">
+                <button
+                  onClick={saveWinners}
+                  disabled={saving}
+                  className="flex-1 bg-amber-900 hover:bg-amber-950 disabled:opacity-50 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-all"
+                >
                   <Check size={18} />
                   {saving ? 'Saving…' : 'Save winners'}
                 </button>
               )}
-              <button onClick={() => { setWinners([]); setSaved(false) }}
-                className="text-sm text-amber-900/70 font-semibold py-3 px-4 hover:text-amber-900">
+              <button
+                onClick={() => {
+                  setWinners([])
+                  setSaved(false)
+                }}
+                className="text-sm text-amber-900/70 font-semibold py-3 px-4 hover:text-amber-900"
+              >
                 Hide
               </button>
             </div>
@@ -405,12 +481,12 @@ function Lightbox({ images, startIndex = 0, onClose }) {
         src={images[current]}
         alt=""
         className="max-w-full max-h-[80vh] object-contain rounded-xl"
-        onClick={e => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
       />
 
       {/* Thumbnails if multiple */}
       {images.length > 1 && (
-        <div className="flex gap-2 mt-4" onClick={e => e.stopPropagation()}>
+        <div className="flex gap-2 mt-4" onClick={(e) => e.stopPropagation()}>
           {images.map((url, i) => (
             <button
               key={i}
@@ -427,29 +503,45 @@ function Lightbox({ images, startIndex = 0, onClose }) {
 }
 
 // ── Main Merch component ──────────────────────────────────────────────────────
-export default function Merch({ tournament, tournaments: allTournaments = [], initialTab, onNavigate }) {
-  const { players, registrations, isAdmin, tournaments: contextTournaments = [], claimedId, raffleWinners = [] } = useApp()
+export default function Merch({
+  tournament,
+  tournaments: allTournaments = [],
+  initialTab,
+  onNavigate,
+}) {
+  const {
+    players,
+    registrations,
+    isAdmin,
+    tournaments: contextTournaments = [],
+    claimedId,
+    raffleWinners = [],
+  } = useApp()
   const tournaments = allTournaments.length > 0 ? allTournaments : contextTournaments
-  const [tab, setTab]             = useState(initialTab || 'shop')
-  useEffect(() => { if (initialTab) setTab(initialTab) }, [initialTab])
-  const [items, setItems]         = useState([])
+  const [tab, setTab] = useState(initialTab || 'shop')
+  useEffect(() => {
+    if (initialTab) setTab(initialTab)
+  }, [initialTab])
+  const [items, setItems] = useState([])
   const [interests, setInterests] = useState([])
-  const [loading, setLoading]     = useState(true)
+  const [loading, setLoading] = useState(true)
   // Identity is managed in Settings → Account, but for friction-free ordering
   // we also pop a PIN prompt right where the player tapped.
   const { requireAuth, AuthPromptModal } = useAuthPrompt({ onNavigate })
   const goToSignIn = () => onNavigate?.('settings')
-  const [showForm, setShowForm]   = useState(false)
-  const [editItem, setEditItem]   = useState(null)
-  const [form, setForm]           = useState(emptyItem)
-  const [saving, setSaving]       = useState(false)
+  const [showForm, setShowForm] = useState(false)
+  const [editItem, setEditItem] = useState(null)
+  const [form, setForm] = useState(emptyItem)
+  const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
-  const [selectedSize, setSelectedSize]   = useState({}) // itemId -> size
-  const [sizeError, setSizeError]         = useState({}) // itemId -> true (missing size)
-  const [customName, setCustomName]       = useState({}) // itemId -> name string
-  const [ordered, setOrdered]             = useState({}) // itemId -> true (this session)
-  const [selectedTournament, setSelectedTournament] = useState(tournament?.id != null ? String(tournament.id) : null)
-  const [lightbox, setLightbox]           = useState(null) // { images, index }
+  const [selectedSize, setSelectedSize] = useState({}) // itemId -> size
+  const [sizeError, setSizeError] = useState({}) // itemId -> true (missing size)
+  const [customName, setCustomName] = useState({}) // itemId -> name string
+  const [ordered, setOrdered] = useState({}) // itemId -> true (this session)
+  const [selectedTournament, setSelectedTournament] = useState(
+    tournament?.id != null ? String(tournament.id) : null,
+  )
+  const [lightbox, setLightbox] = useState(null) // { images, index }
   // Filter the prize/raffle picker to today's and future tournaments only.
   // Past events are hidden so the dropdown stays focused on what admin can
   // still act on. `today` is the user's local YYYY-MM-DD; tournament.date
@@ -457,11 +549,13 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
   const upcomingTournaments = useMemo(() => {
     const d = new Date()
     const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-    const winsByTournament = new Set((raffleWinners || []).map(w => String(w.tournament_id)).filter(Boolean))
+    const winsByTournament = new Set(
+      (raffleWinners || []).map((w) => String(w.tournament_id)).filter(Boolean),
+    )
     // Include today + future as before, plus any past tournament that
     // already has recorded winners — admin can re-open it to review the
     // result. Pure-past-no-winners stays hidden.
-    return tournaments.filter(t => {
+    return tournaments.filter((t) => {
       if (!t.date) return true
       if (String(t.date) >= todayStr) return true
       return winsByTournament.has(String(t.id))
@@ -472,7 +566,7 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
   // clear it so the select widget doesn't render an orphan value.
   useEffect(() => {
     if (!selectedTournament) return
-    if (!upcomingTournaments.find(t => String(t.id) === String(selectedTournament))) {
+    if (!upcomingTournaments.find((t) => String(t.id) === String(selectedTournament))) {
       setSelectedTournament(null)
     }
   }, [upcomingTournaments, selectedTournament])
@@ -480,7 +574,12 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
   // ── Data loading ────────────────────────────────────────────────────────────
   const loadItems = async () => {
     // Try ordering by display_order first; fall back to id if column doesn't exist yet
-    let { data, error } = await supabase.from('merch_items').select('*').eq('active', true).order('display_order').order('id')
+    let { data, error } = await supabase
+      .from('merch_items')
+      .select('*')
+      .eq('active', true)
+      .order('display_order')
+      .order('id')
     if (error) {
       const res = await supabase.from('merch_items').select('*').eq('active', true).order('id')
       data = res.data
@@ -503,9 +602,22 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
   useEffect(() => {
     loadItems()
     loadInterests()
-    const ch1 = supabase.channel('merch-items').on('postgres_changes', { event: '*', schema: 'public', table: 'merch_items' }, loadItems).subscribe()
-    const ch2 = supabase.channel('merch-interests').on('postgres_changes', { event: '*', schema: 'public', table: 'merch_interests' }, loadInterests).subscribe()
-    return () => { supabase.removeChannel(ch1); supabase.removeChannel(ch2) }
+    const ch1 = supabase
+      .channel('merch-items')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'merch_items' }, loadItems)
+      .subscribe()
+    const ch2 = supabase
+      .channel('merch-interests')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'merch_interests' },
+        loadInterests,
+      )
+      .subscribe()
+    return () => {
+      supabase.removeChannel(ch1)
+      supabase.removeChannel(ch2)
+    }
   }, [])
 
   // ── Image upload (up to 3) ───────────────────────────────────────────────────
@@ -513,7 +625,7 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
     const files = Array.from(e.target.files || [])
     if (!files.length) return
     const current = form.image_urls || []
-    const slots   = 3 - current.length
+    const slots = 3 - current.length
     if (slots <= 0) return
     const toUpload = files.slice(0, slots)
     setUploading(true)
@@ -521,18 +633,26 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
       const newUrls = []
       for (const file of toUpload) {
         const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}-${file.name.replace(/\s/g, '_')}`
-        const { error: uploadError } = await supabase.storage.from('merch').upload(filename, file, { upsert: true })
+        const { error: uploadError } = await supabase.storage
+          .from('merch')
+          .upload(filename, file, { upsert: true })
         if (uploadError) throw uploadError
-        const { data: { publicUrl } } = supabase.storage.from('merch').getPublicUrl(filename)
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from('merch').getPublicUrl(filename)
         newUrls.push(publicUrl)
       }
-      setForm(f => ({
+      setForm((f) => ({
         ...f,
         image_urls: [...(f.image_urls || []), ...newUrls],
-        image_url:  f.image_url || newUrls[0] || '',
+        image_url: f.image_url || newUrls[0] || '',
       }))
     } catch (err) {
-      alert('Image upload failed: ' + err.message + '\n\nMake sure a public "merch" storage bucket exists in Supabase with upload policies enabled.')
+      alert(
+        'Image upload failed: ' +
+          err.message +
+          '\n\nMake sure a public "merch" storage bucket exists in Supabase with upload policies enabled.',
+      )
     } finally {
       setUploading(false)
       e.target.value = ''
@@ -540,7 +660,7 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
   }
 
   const handleRemoveImage = (idx) => {
-    setForm(f => {
+    setForm((f) => {
       const next = (f.image_urls || []).filter((_, i) => i !== idx)
       return { ...f, image_urls: next, image_url: next[0] || '' }
     })
@@ -548,19 +668,35 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
 
   // ── Admin CRUD ───────────────────────────────────────────────────────────────
   const openAdd = () => {
-    if (!isAdmin) { setShowLogin(true); return }
-    setForm(emptyItem); setEditItem(null); setShowForm(true)
+    if (!isAdmin) {
+      setShowLogin(true)
+      return
+    }
+    setForm(emptyItem)
+    setEditItem(null)
+    setShowForm(true)
   }
 
   const openEdit = (item) => {
-    if (!isAdmin) { setShowLogin(true); return }
-    const urls = item.image_urls?.length ? item.image_urls : (item.image_url ? [item.image_url] : [])
-    setForm({ ...item, price: String(item.price), sizes: item.sizes || [], image_urls: urls, external_orders: parseInt(item.external_orders) || 0 })
-    setEditItem(item); setShowForm(true)
+    if (!isAdmin) {
+      setShowLogin(true)
+      return
+    }
+    const urls = item.image_urls?.length ? item.image_urls : item.image_url ? [item.image_url] : []
+    setForm({
+      ...item,
+      price: String(item.price),
+      sizes: item.sizes || [],
+      image_urls: urls,
+      external_orders: parseInt(item.external_orders) || 0,
+    })
+    setEditItem(item)
+    setShowForm(true)
   }
 
   const handleSaveItem = async (e) => {
-    e.preventDefault(); setSaving(true)
+    e.preventDefault()
+    setSaving(true)
     const urls = form.image_urls || []
     const payload = {
       name: form.name,
@@ -584,8 +720,10 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
       }
     } else {
       // New items go to the end of the list
-      const maxOrder = items.length > 0 ? Math.max(...items.map(i => i.display_order || 0)) : 0
-      let res = await supabase.from('merch_items').insert({ ...payload, display_order: maxOrder + 1 })
+      const maxOrder = items.length > 0 ? Math.max(...items.map((i) => i.display_order || 0)) : 0
+      let res = await supabase
+        .from('merch_items')
+        .insert({ ...payload, display_order: maxOrder + 1 })
       if (res.error) {
         const { external_orders: _drop, ...rest } = payload
         res = await supabase.from('merch_items').insert({ ...rest, display_order: maxOrder + 1 })
@@ -593,7 +731,8 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
       if (res.error) await supabase.from('merch_items').insert(payload)
     }
     await loadItems()
-    setShowForm(false); setSaving(false)
+    setShowForm(false)
+    setSaving(false)
   }
 
   const handleDeleteItem = async (id) => {
@@ -619,7 +758,11 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
 
   const handleDrop = (idx) => async (e) => {
     e.preventDefault()
-    if (dragIdx === null || dragIdx === idx) { setDragIdx(null); setOverIdx(null); return }
+    if (dragIdx === null || dragIdx === idx) {
+      setDragIdx(null)
+      setOverIdx(null)
+      return
+    }
     const reordered = [...items]
     const [moved] = reordered.splice(dragIdx, 1)
     reordered.splice(idx, 0, moved)
@@ -628,17 +771,20 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
     setOverIdx(null)
     // Persist new order to DB
     const updates = reordered.map((item, i) =>
-      supabase.from('merch_items').update({ display_order: i }).eq('id', item.id)
+      supabase.from('merch_items').update({ display_order: i }).eq('id', item.id),
     )
     await Promise.all(updates)
   }
 
-  const handleDragEnd = () => { setDragIdx(null); setOverIdx(null) }
+  const handleDragEnd = () => {
+    setDragIdx(null)
+    setOverIdx(null)
+  }
 
   const toggleSize = (size) => {
-    setForm(f => ({
+    setForm((f) => ({
       ...f,
-      sizes: f.sizes.includes(size) ? f.sizes.filter(s => s !== size) : [...f.sizes, size]
+      sizes: f.sizes.includes(size) ? f.sizes.filter((s) => s !== size) : [...f.sizes, size],
     }))
   }
 
@@ -648,9 +794,10 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
   // see the real total (including offline/WhatsApp purchases). Cancelled
   // orders are excluded from the FOMO count.
   const websiteOrderCount = (itemId) =>
-    interests.filter(i => i.merch_item_id === itemId && (i.status || 'ordered') !== 'cancelled').length
+    interests.filter((i) => i.merch_item_id === itemId && (i.status || 'ordered') !== 'cancelled')
+      .length
   const orderCount = (itemId) => {
-    const item = items.find(i => i.id === itemId)
+    const item = items.find((i) => i.id === itemId)
     const external = parseInt(item?.external_orders) || 0
     return websiteOrderCount(itemId) + external
   }
@@ -666,25 +813,25 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
     }
 
     // Verify the claimed identity still maps to a real player.
-    const claimedPlayer = players.find(p => String(p.id) === String(claimedId))
+    const claimedPlayer = players.find((p) => String(p.id) === String(claimedId))
     if (!claimedPlayer) {
       alert('Your session looks stale — please sign in again from Settings → Account.')
       goToSignIn()
       return
     }
 
-    const item = items.find(i => i.id === itemId)
+    const item = items.find((i) => i.id === itemId)
     const size = selectedSize[itemId] || ''
     const name = (customName[itemId] || '').trim()
 
     // Require size if item has sizes
     if (item?.sizes?.length > 0 && !size) {
-      setSizeError(e => ({ ...e, [itemId]: true }))
+      setSizeError((e) => ({ ...e, [itemId]: true }))
       return
     }
-    setSizeError(e => ({ ...e, [itemId]: false }))
+    setSizeError((e) => ({ ...e, [itemId]: false }))
 
-    const pid = String(claimedPlayer.id)  // Store as text to handle both UUID and integer IDs
+    const pid = String(claimedPlayer.id) // Store as text to handle both UUID and integer IDs
 
     // Check if player already ordered this item — update if so, insert if not
     const { data: existing } = await supabase
@@ -697,18 +844,19 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
     let res
     if (existing && existing.length > 0) {
       // Update existing order — try with all fields, fall back gracefully
-      res = await supabase.from('merch_interests')
+      res = await supabase
+        .from('merch_interests')
         .update({ size, custom_name: name || '' })
         .eq('id', existing[0].id)
       if (res.error) {
-        res = await supabase.from('merch_interests')
-          .update({ size })
-          .eq('id', existing[0].id)
+        res = await supabase.from('merch_interests').update({ size }).eq('id', existing[0].id)
       }
     } else {
       // Insert new order — try with all fields, then progressively strip optional columns
       const base = { merch_item_id: itemId, size, player_id: pid }
-      res = await supabase.from('merch_interests').insert({ ...base, status: 'ordered', custom_name: name || '' })
+      res = await supabase
+        .from('merch_interests')
+        .insert({ ...base, status: 'ordered', custom_name: name || '' })
       if (res.error) {
         res = await supabase.from('merch_interests').insert({ ...base, status: 'ordered' })
       }
@@ -727,16 +875,20 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
     }
 
     console.log('Order placed! claimedId:', claimedId, 'pid:', pid, 'itemId:', itemId)
-    setOrdered(o => ({ ...o, [itemId]: true }))
+    setOrdered((o) => ({ ...o, [itemId]: true }))
     await loadInterests()
     console.log('After loadInterests, interests count:', interests.length)
   }
 
   // ── Render ───────────────────────────────────────────────────────────────────
   // Match orders to current player — try both string and number comparison
-  const myPlayer = claimedId ? players.find(p => String(p.id) === String(claimedId)) : null
-  const myOrders = myPlayer ? interests.filter(o => o.player_id === myPlayer.id || String(o.player_id) === String(myPlayer.id)) : []
-  const activeOrders = interests.filter(o => (o.status || 'ordered') !== 'cancelled')
+  const myPlayer = claimedId ? players.find((p) => String(p.id) === String(claimedId)) : null
+  const myOrders = myPlayer
+    ? interests.filter(
+        (o) => o.player_id === myPlayer.id || String(o.player_id) === String(myPlayer.id),
+      )
+    : []
+  const activeOrders = interests.filter((o) => (o.status || 'ordered') !== 'cancelled')
 
   // Cancel order modal state
   const [cancelTarget, setCancelTarget] = useState(null)
@@ -744,8 +896,22 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
 
   const TABS = [
     { id: 'shop', label: '🛍️ Shop' },
-    ...(!isAdmin && myPlayer ? [{ id: 'myorders', label: `📦 My Orders${myOrders.length > 0 ? ` (${myOrders.length})` : ''}` }] : []),
-    ...(isAdmin ? [{ id: 'orders', label: `📋 Orders${activeOrders.length > 0 ? ` (${activeOrders.length})` : ''}` }] : []),
+    ...(!isAdmin && myPlayer
+      ? [
+          {
+            id: 'myorders',
+            label: `📦 My Orders${myOrders.length > 0 ? ` (${myOrders.length})` : ''}`,
+          },
+        ]
+      : []),
+    ...(isAdmin
+      ? [
+          {
+            id: 'orders',
+            label: `📋 Orders${activeOrders.length > 0 ? ` (${activeOrders.length})` : ''}`,
+          },
+        ]
+      : []),
     ...(isAdmin ? [{ id: 'prizes', label: '🎁 Prizes' }] : []),
     ...(isAdmin ? [{ id: 'manage', label: '⚙️ Manage' }] : []),
   ]
@@ -768,9 +934,12 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
 
       {/* Tab bar */}
       <div className="flex gap-1 bg-gray-100 p-1 rounded-xl">
-        {TABS.map(t => (
-          <button key={t.id} onClick={() => setTab(t.id)}
-            className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${tab === t.id ? 'bg-white text-lobster-teal shadow-sm' : 'text-gray-500'}`}>
+        {TABS.map((t) => (
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
+            className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${tab === t.id ? 'bg-white text-lobster-teal shadow-sm' : 'text-gray-500'}`}
+          >
             {t.label}
           </button>
         ))}
@@ -779,7 +948,10 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
       {/* ── SHOP TAB ── */}
       {tab === 'shop' && (
         <div className="space-y-3">
-          <p className="text-xs text-gray-500">Place an order — the organizers will see what you need and get in touch. Prices include shipping.</p>
+          <p className="text-xs text-gray-500">
+            Place an order — the organizers will see what you need and get in touch. Prices include
+            shipping.
+          </p>
 
           {/* Identity notice — deep-links to Settings → Account */}
           {!claimedId && (
@@ -793,133 +965,159 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
 
           {loading && <p className="text-center text-gray-400 py-8 text-sm">Loading…</p>}
 
-          {items.map(item => {
-            const allImgs = item.image_urls?.length > 0
-              ? item.image_urls
-              : item.image_url ? [item.image_url] : []
+          {items.map((item) => {
+            const allImgs =
+              item.image_urls?.length > 0 ? item.image_urls : item.image_url ? [item.image_url] : []
             return (
-            <div key={item.id} className="card space-y-3">
-              {/* Image(s) — tap to zoom */}
-              {allImgs.length > 0 ? (
-                <div
-                  className="relative w-full bg-white rounded-xl overflow-hidden cursor-zoom-in"
-                  onClick={() => setLightbox({ images: allImgs, index: 0 })}
-                >
-                  <img
-                    src={allImgs[0]}
-                    alt={item.name}
-                    className="w-full h-52 object-contain rounded-xl"
-                  />
-                  {allImgs.length > 1 && (
-                    <span className="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-0.5 rounded-full">
-                      +{allImgs.length - 1} more
+              <div key={item.id} className="card space-y-3">
+                {/* Image(s) — tap to zoom */}
+                {allImgs.length > 0 ? (
+                  <div
+                    className="relative w-full bg-white rounded-xl overflow-hidden cursor-zoom-in"
+                    onClick={() => setLightbox({ images: allImgs, index: 0 })}
+                  >
+                    <img
+                      src={allImgs[0]}
+                      alt={item.name}
+                      className="w-full h-52 object-contain rounded-xl"
+                    />
+                    {allImgs.length > 1 && (
+                      <span className="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-0.5 rounded-full">
+                        +{allImgs.length - 1} more
+                      </span>
+                    )}
+                    <span className="absolute bottom-2 left-2 bg-black/40 text-white text-xs px-2 py-0.5 rounded-full">
+                      🔍 tap to zoom
                     </span>
-                  )}
-                  <span className="absolute bottom-2 left-2 bg-black/40 text-white text-xs px-2 py-0.5 rounded-full">
-                    🔍 tap to zoom
-                  </span>
-                </div>
-              ) : (
-                <div className="w-full h-32 bg-lobster-cream rounded-xl flex items-center justify-center">
-                  <ShoppingBag size={36} className="text-lobster-teal opacity-40" />
-                </div>
-              )}
+                  </div>
+                ) : (
+                  <div className="w-full h-32 bg-lobster-cream rounded-xl flex items-center justify-center">
+                    <ShoppingBag size={36} className="text-lobster-teal opacity-40" />
+                  </div>
+                )}
 
-              {/* Info */}
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="font-bold text-gray-800">{item.name}</p>
-                  {item.description && <p className="text-xs text-gray-500 mt-0.5">{item.description}</p>}
-                  {/* FOMO counter — combines website orders + offline sales.
+                {/* Info */}
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="font-bold text-gray-800">{item.name}</p>
+                    {item.description && (
+                      <p className="text-xs text-gray-500 mt-0.5">{item.description}</p>
+                    )}
+                    {/* FOMO counter — combines website orders + offline sales.
                       Singular copy below 1, so "1 lobster has this" sounds
                       right when only one person has ordered so far. */}
-                  {orderCount(item.id) > 0 && (
-                    <p className="text-[11px] font-semibold text-amber-600 mt-1 flex items-center gap-1">
-                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-                      {orderCount(item.id) === 1
-                        ? '1 lobster already ordered 🦞'
-                        : `${orderCount(item.id)} lobsters already ordered 🦞`}
-                    </p>
-                  )}
-                </div>
-                <span className="text-lg font-bold text-lobster-teal flex-shrink-0 ml-2">
-                  €{parseFloat(item.price).toFixed(0)}
-                  {(/shirt/i.test(item.name) && !/tank/i.test(item.name)) && (customName[item.id] || '').trim() && (
-                    <span className="text-xs font-semibold text-amber-600 block text-right">+€5 name</span>
-                  )}
-                </span>
-              </div>
-
-              {/* Size picker */}
-              {item.sizes?.length > 0 && (
-                <div>
-                  <p className={`text-xs mb-1.5 font-medium ${sizeError[item.id] ? 'text-red-500' : 'text-gray-500'}`}>
-                    {sizeError[item.id] ? '⚠ Please select a size:' : 'Select size:'}
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {[...item.sizes].sort((a, b) => sizeRank(a) - sizeRank(b)).map(s => (
-                      <button key={s}
-                        onClick={() => {
-                          setSelectedSize(si => ({ ...si, [item.id]: s }))
-                          setSizeError(e => ({ ...e, [item.id]: false }))
-                        }}
-                        className={`text-xs px-2.5 py-1 rounded-lg font-medium border transition-all ${
-                          selectedSize[item.id] === s
-                            ? 'bg-lobster-teal text-white border-lobster-teal'
-                            : sizeError[item.id]
-                              ? 'border-red-300 text-gray-600'
-                              : 'border-gray-200 text-gray-600'
-                        }`}>
-                        {s}
-                      </button>
-                    ))}
+                    {orderCount(item.id) > 0 && (
+                      <p className="text-[11px] font-semibold text-amber-600 mt-1 flex items-center gap-1">
+                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                        {orderCount(item.id) === 1
+                          ? '1 lobster already ordered 🦞'
+                          : `${orderCount(item.id)} lobsters already ordered 🦞`}
+                      </p>
+                    )}
                   </div>
+                  <span className="text-lg font-bold text-lobster-teal flex-shrink-0 ml-2">
+                    €{parseFloat(item.price).toFixed(0)}
+                    {/shirt/i.test(item.name) &&
+                      !/tank/i.test(item.name) &&
+                      (customName[item.id] || '').trim() && (
+                        <span className="text-xs font-semibold text-amber-600 block text-right">
+                          +€5 name
+                        </span>
+                      )}
+                  </span>
                 </div>
-              )}
 
-              {/* Name on item — only for shirts (+€5), not tank tops */}
-              {(/shirt/i.test(item.name) && !/tank/i.test(item.name)) && (
-                <div>
-                  <label className="text-xs font-medium text-gray-500 block mb-1">Name customization <span className="text-amber-600 font-semibold">(+€5)</span></label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Alex"
-                    maxLength={30}
+                {/* Size picker */}
+                {item.sizes?.length > 0 && (
+                  <div>
+                    <p
+                      className={`text-xs mb-1.5 font-medium ${sizeError[item.id] ? 'text-red-500' : 'text-gray-500'}`}
+                    >
+                      {sizeError[item.id] ? '⚠ Please select a size:' : 'Select size:'}
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {[...item.sizes]
+                        .sort((a, b) => sizeRank(a) - sizeRank(b))
+                        .map((s) => (
+                          <button
+                            key={s}
+                            onClick={() => {
+                              setSelectedSize((si) => ({ ...si, [item.id]: s }))
+                              setSizeError((e) => ({ ...e, [item.id]: false }))
+                            }}
+                            className={`text-xs px-2.5 py-1 rounded-lg font-medium border transition-all ${
+                              selectedSize[item.id] === s
+                                ? 'bg-lobster-teal text-white border-lobster-teal'
+                                : sizeError[item.id]
+                                  ? 'border-red-300 text-gray-600'
+                                  : 'border-gray-200 text-gray-600'
+                            }`}
+                          >
+                            {s}
+                          </button>
+                        ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Name on item — only for shirts (+€5), not tank tops */}
+                {/shirt/i.test(item.name) && !/tank/i.test(item.name) && (
+                  <div>
+                    <label className="text-xs font-medium text-gray-500 block mb-1">
+                      Name customization <span className="text-amber-600 font-semibold">(+€5)</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Alex"
+                      maxLength={30}
+                      disabled={ordered[item.id]}
+                      value={customName[item.id] || ''}
+                      onChange={(e) => setCustomName((n) => ({ ...n, [item.id]: e.target.value }))}
+                      className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-800 placeholder-gray-300 focus:outline-none focus:border-lobster-teal focus:ring-1 focus:ring-lobster-teal transition-all disabled:opacity-40 disabled:bg-gray-50"
+                    />
+                  </div>
+                )}
+
+                {/* Order button */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => placeOrder(item.id)}
                     disabled={ordered[item.id]}
-                    value={customName[item.id] || ''}
-                    onChange={e => setCustomName(n => ({ ...n, [item.id]: e.target.value }))}
-                    className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-800 placeholder-gray-300 focus:outline-none focus:border-lobster-teal focus:ring-1 focus:ring-lobster-teal transition-all disabled:opacity-40 disabled:bg-gray-50"
-                  />
+                    className={`flex-1 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all ${
+                      ordered[item.id]
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-lobster-teal text-white active:scale-95'
+                    }`}
+                  >
+                    {ordered[item.id] ? (
+                      <>
+                        <Check size={15} /> Ordered!
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingCart size={15} /> Order
+                      </>
+                    )}
+                  </button>
+                  {isAdmin &&
+                    orderCount(item.id) > 0 &&
+                    (() => {
+                      const web = websiteOrderCount(item.id)
+                      const ext = parseInt(item.external_orders) || 0
+                      return (
+                        <span
+                          className="text-xs text-gray-400 flex-shrink-0"
+                          title="Website orders + offline orders"
+                        >
+                          {web}
+                          {ext > 0 ? ` + ${ext}` : ''} total
+                        </span>
+                      )
+                    })()}
                 </div>
-              )}
-
-              {/* Order button */}
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => placeOrder(item.id)}
-                  disabled={ordered[item.id]}
-                  className={`flex-1 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all ${
-                    ordered[item.id]
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-lobster-teal text-white active:scale-95'
-                  }`}
-                >
-                  {ordered[item.id]
-                    ? <><Check size={15} /> Ordered!</>
-                    : <><ShoppingCart size={15} /> Order</>}
-                </button>
-                {isAdmin && orderCount(item.id) > 0 && (() => {
-                  const web = websiteOrderCount(item.id)
-                  const ext = parseInt(item.external_orders) || 0
-                  return (
-                    <span className="text-xs text-gray-400 flex-shrink-0" title="Website orders + offline orders">
-                      {web}{ext > 0 ? ` + ${ext}` : ''} total
-                    </span>
-                  )
-                })()}
               </div>
-            </div>
-          )})}
+            )
+          })}
 
           {!loading && items.length === 0 && (
             <div className="card py-10 text-center text-gray-400">
@@ -936,26 +1134,42 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
           {myOrders.length > 0 ? (
             myOrders
               .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-              .map(o => {
-                const item = items.find(i => i.id === o.merch_item_id)
+              .map((o) => {
+                const item = items.find((i) => i.id === o.merch_item_id)
                 const status = o.status || 'ordered'
                 const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.ordered
                 const StatusIcon = cfg.icon
                 return (
-                  <div key={o.id} className={`card space-y-2 ${status === 'cancelled' ? 'opacity-60' : ''}`}>
+                  <div
+                    key={o.id}
+                    className={`card space-y-2 ${status === 'cancelled' ? 'opacity-60' : ''}`}
+                  >
                     <div className="flex items-start gap-3">
                       <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100">
-                        {item?.image_url
-                          ? <img src={item.image_url} className="w-full h-full object-cover" alt="" />
-                          : <div className="w-full h-full flex items-center justify-center"><ShoppingBag size={18} className="text-gray-400" /></div>
-                        }
+                        {item?.image_url ? (
+                          <img src={item.image_url} className="w-full h-full object-cover" alt="" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <ShoppingBag size={18} className="text-gray-400" />
+                          </div>
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-gray-800">{item?.name || 'Item'}</p>
                         <div className="flex items-center gap-2 flex-wrap mt-0.5">
-                          {o.size && <span className="text-xs font-bold bg-lobster-cream text-lobster-teal px-2 py-0.5 rounded-full">{o.size}</span>}
-                          {(o.custom_name || '').trim() && <span className="text-xs bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full font-medium">Name: {o.custom_name}</span>}
-                          <span className="text-[11px] text-gray-400">{formatOrderTime(o.created_at)}</span>
+                          {o.size && (
+                            <span className="text-xs font-bold bg-lobster-cream text-lobster-teal px-2 py-0.5 rounded-full">
+                              {o.size}
+                            </span>
+                          )}
+                          {(o.custom_name || '').trim() && (
+                            <span className="text-xs bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full font-medium">
+                              Name: {o.custom_name}
+                            </span>
+                          )}
+                          <span className="text-[11px] text-gray-400">
+                            {formatOrderTime(o.created_at)}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -969,10 +1183,16 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
                         const active = steps.indexOf(s) <= currentIdx
                         return (
                           <React.Fragment key={s}>
-                            {i > 0 && <div className={`flex-1 h-0.5 rounded ${active ? 'bg-lobster-teal' : 'bg-gray-200'}`} />}
-                            <div className={`flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-full ${
-                              active ? `${sCfg.bg} ${sCfg.text}` : 'bg-gray-100 text-gray-300'
-                            }`}>
+                            {i > 0 && (
+                              <div
+                                className={`flex-1 h-0.5 rounded ${active ? 'bg-lobster-teal' : 'bg-gray-200'}`}
+                              />
+                            )}
+                            <div
+                              className={`flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-full ${
+                                active ? `${sCfg.bg} ${sCfg.text}` : 'bg-gray-100 text-gray-300'
+                              }`}
+                            >
                               <SIcon size={10} /> {sCfg.label}
                             </div>
                           </React.Fragment>
@@ -982,8 +1202,12 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
                     {/* Cancelled notice */}
                     {status === 'cancelled' && (
                       <div className="bg-red-50 rounded-xl p-2.5 space-y-1">
-                        <p className="text-xs font-semibold text-red-500 flex items-center gap-1"><Ban size={11} /> Order cancelled by admin</p>
-                        {o.admin_comment && <p className="text-xs text-red-400 italic">"{o.admin_comment}"</p>}
+                        <p className="text-xs font-semibold text-red-500 flex items-center gap-1">
+                          <Ban size={11} /> Order cancelled by admin
+                        </p>
+                        {o.admin_comment && (
+                          <p className="text-xs text-red-400 italic">"{o.admin_comment}"</p>
+                        )}
                       </div>
                     )}
                   </div>
@@ -1012,11 +1236,11 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
               <label className="label">Select tournament for prizes & raffle</label>
               <select
                 value={selectedTournament || ''}
-                onChange={e => setSelectedTournament(e.target.value || null)}
+                onChange={(e) => setSelectedTournament(e.target.value || null)}
                 className="input text-sm"
               >
                 <option value="">-- Choose tournament --</option>
-                {upcomingTournaments.map(t => (
+                {upcomingTournaments.map((t) => (
                   <option key={t.id} value={t.id}>
                     {t.name}
                   </option>
@@ -1028,51 +1252,76 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
           {/* Prize items for selected tournament — collapsed by default so the
               Raffle tile takes center stage on a projected screen. Admin can
               expand it when actually editing the prize pool. */}
-          {selectedTournament && items.length > 0 && isAdmin && (() => {
-            const selectedTour = tournaments.find(t => String(t.id) === String(selectedTournament))
-            const prizeIds = selectedTour?.prizeItemIds || []
-            return (
-              <details className="bg-white border border-gray-100 rounded-xl text-sm">
-                <summary className="cursor-pointer px-3 py-2 flex items-center gap-2 text-gray-600 hover:bg-gray-50 rounded-xl">
-                  <ShoppingBag size={14} className="text-gray-400 flex-shrink-0" />
-                  <span className="flex-1 truncate">
-                    Prize pool: <span className="font-semibold text-gray-800">{prizeIds.length}</span> selected
-                  </span>
-                  <span className="text-[11px] text-gray-400">tap to edit</span>
-                </summary>
-                <div className="border-t border-gray-100 px-3 py-3 space-y-2">
-                  <p className="text-[11px] text-gray-400">
-                    Tap items to add / remove from the prize pool for {selectedTour?.name || 'this tournament'}
-                  </p>
-                  {items.map(item => {
-                    const selected = prizeIds.includes(item.id)
-                    return (
-                      <div key={item.id}
-                        onClick={() => {/* prize selection handled in context */}}
-                        className={`flex items-center gap-3 p-2 rounded-xl border-2 transition-all ${selected ? 'border-lobster-teal bg-teal-50' : 'border-gray-100'}`}>
-                        <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
-                          {item.image_url
-                            ? <img src={item.image_url} className="w-full h-full object-cover" alt="" />
-                            : <div className="w-full h-full flex items-center justify-center"><ShoppingBag size={16} className="text-gray-400" /></div>
-                          }
+          {selectedTournament &&
+            items.length > 0 &&
+            isAdmin &&
+            (() => {
+              const selectedTour = tournaments.find(
+                (t) => String(t.id) === String(selectedTournament),
+              )
+              const prizeIds = selectedTour?.prizeItemIds || []
+              return (
+                <details className="bg-white border border-gray-100 rounded-xl text-sm">
+                  <summary className="cursor-pointer px-3 py-2 flex items-center gap-2 text-gray-600 hover:bg-gray-50 rounded-xl">
+                    <ShoppingBag size={14} className="text-gray-400 flex-shrink-0" />
+                    <span className="flex-1 truncate">
+                      Prize pool:{' '}
+                      <span className="font-semibold text-gray-800">{prizeIds.length}</span>{' '}
+                      selected
+                    </span>
+                    <span className="text-[11px] text-gray-400">tap to edit</span>
+                  </summary>
+                  <div className="border-t border-gray-100 px-3 py-3 space-y-2">
+                    <p className="text-[11px] text-gray-400">
+                      Tap items to add / remove from the prize pool for{' '}
+                      {selectedTour?.name || 'this tournament'}
+                    </p>
+                    {items.map((item) => {
+                      const selected = prizeIds.includes(item.id)
+                      return (
+                        <div
+                          key={item.id}
+                          onClick={() => {
+                            /* prize selection handled in context */
+                          }}
+                          className={`flex items-center gap-3 p-2 rounded-xl border-2 transition-all ${selected ? 'border-lobster-teal bg-teal-50' : 'border-gray-100'}`}
+                        >
+                          <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
+                            {item.image_url ? (
+                              <img
+                                src={item.image_url}
+                                className="w-full h-full object-cover"
+                                alt=""
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <ShoppingBag size={16} className="text-gray-400" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-sm text-gray-800 truncate">
+                              {item.name}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              €{parseFloat(item.price).toFixed(0)}
+                            </p>
+                          </div>
+                          {selected && (
+                            <Check size={16} className="text-lobster-teal flex-shrink-0" />
+                          )}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-sm text-gray-800 truncate">{item.name}</p>
-                          <p className="text-xs text-gray-500">€{parseFloat(item.price).toFixed(0)}</p>
-                        </div>
-                        {selected && <Check size={16} className="text-lobster-teal flex-shrink-0" />}
-                      </div>
-                    )
-                  })}
-                </div>
-              </details>
-            )
-          })()}
+                      )
+                    })}
+                  </div>
+                </details>
+              )
+            })()}
 
           {/* Raffle — use selected tournament */}
           {selectedTournament && (
             <Raffle
-              tournament={tournaments.find(t => String(t.id) === String(selectedTournament))}
+              tournament={tournaments.find((t) => String(t.id) === String(selectedTournament))}
               players={players}
               registrations={registrations}
             />
@@ -1096,32 +1345,50 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
               <div className="bg-white rounded-t-3xl w-full max-w-md p-5 space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="font-bold text-gray-800">Cancel Order</h3>
-                  <button onClick={() => { setCancelTarget(null); setCancelComment('') }}><X size={22} className="text-gray-400" /></button>
+                  <button
+                    onClick={() => {
+                      setCancelTarget(null)
+                      setCancelComment('')
+                    }}
+                  >
+                    <X size={22} className="text-gray-400" />
+                  </button>
                 </div>
                 <p className="text-sm text-gray-500">
-                  Cancel order for <strong>{getPlayerName(cancelTarget, players)?.split(' ')[0] || 'player'}</strong> — {items.find(i => i.id === cancelTarget.merch_item_id)?.name}?
+                  Cancel order for{' '}
+                  <strong>{getPlayerName(cancelTarget, players)?.split(' ')[0] || 'player'}</strong>{' '}
+                  — {items.find((i) => i.id === cancelTarget.merch_item_id)?.name}?
                 </p>
                 <textarea
                   placeholder="Add a comment for the player (optional)…"
                   value={cancelComment}
-                  onChange={e => setCancelComment(e.target.value)}
+                  onChange={(e) => setCancelComment(e.target.value)}
                   className="input text-sm w-full h-20 resize-none"
                 />
                 <button
                   onClick={async () => {
-                    const { error } = await supabase.from('merch_interests').update({
-                      status: 'cancelled',
-                      admin_comment: cancelComment || null,
-                      cancelled_at: new Date().toISOString(),
-                      paid: false, delivered: false,
-                    }).eq('id', cancelTarget.id)
+                    const { error } = await supabase
+                      .from('merch_interests')
+                      .update({
+                        status: 'cancelled',
+                        admin_comment: cancelComment || null,
+                        cancelled_at: new Date().toISOString(),
+                        paid: false,
+                        delivered: false,
+                      })
+                      .eq('id', cancelTarget.id)
                     if (error) {
                       // Fallback: try without status fields (pre-v12)
-                      await supabase.from('merch_interests').update({
-                        paid: false, delivered: false,
-                      }).eq('id', cancelTarget.id)
+                      await supabase
+                        .from('merch_interests')
+                        .update({
+                          paid: false,
+                          delivered: false,
+                        })
+                        .eq('id', cancelTarget.id)
                     }
-                    setCancelTarget(null); setCancelComment('')
+                    setCancelTarget(null)
+                    setCancelComment('')
                     await loadInterests()
                   }}
                   className="w-full py-2.5 rounded-xl bg-red-500 text-white font-semibold text-sm active:scale-95 transition-all"
@@ -1138,19 +1405,25 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
               <div className="flex gap-2 text-[11px] text-gray-500 px-1">
                 <span>{activeOrders.length} orders</span>
                 <span>·</span>
-                <span className="text-amber-600">{activeOrders.filter(o => (o.status || 'ordered') === 'ordered').length} pending</span>
+                <span className="text-amber-600">
+                  {activeOrders.filter((o) => (o.status || 'ordered') === 'ordered').length} pending
+                </span>
                 <span>·</span>
-                <span className="text-green-600">{activeOrders.filter(o => o.status === 'paid').length} paid</span>
+                <span className="text-green-600">
+                  {activeOrders.filter((o) => o.status === 'paid').length} paid
+                </span>
                 <span>·</span>
-                <span className="text-blue-600">{activeOrders.filter(o => o.status === 'delivered').length} delivered</span>
+                <span className="text-blue-600">
+                  {activeOrders.filter((o) => o.status === 'delivered').length} delivered
+                </span>
               </div>
 
               {/* Order cards */}
               {[...activeOrders]
                 .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-                .map(o => {
+                .map((o) => {
                   const playerName = getPlayerName(o, players)
-                  const item = items.find(i => i.id === o.merch_item_id)
+                  const item = items.find((i) => i.id === o.merch_item_id)
                   const status = o.status || 'ordered'
                   const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.ordered
                   const StatusIcon = cfg.icon
@@ -1164,16 +1437,32 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold text-gray-800">
                             {playerName?.split(' ')[0] || `Player #${o.player_id}`}
-                            <span className="font-normal text-gray-500 ml-1.5 text-xs">{item?.name || '—'}</span>
+                            <span className="font-normal text-gray-500 ml-1.5 text-xs">
+                              {item?.name || '—'}
+                            </span>
                           </p>
                           <div className="flex items-center gap-2 mt-0.5">
-                            {o.size && <span className="text-xs font-bold bg-lobster-cream text-lobster-teal px-2 py-0.5 rounded-full">{o.size}</span>}
-                            {hasCustomName && <span className="text-xs bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full font-medium">"{o.custom_name}"</span>}
-                            <span className="text-xs font-bold text-lobster-teal">€{orderPrice}</span>
-                            <span className="text-[11px] text-gray-400">{formatOrderTime(o.created_at)}</span>
+                            {o.size && (
+                              <span className="text-xs font-bold bg-lobster-cream text-lobster-teal px-2 py-0.5 rounded-full">
+                                {o.size}
+                              </span>
+                            )}
+                            {hasCustomName && (
+                              <span className="text-xs bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full font-medium">
+                                "{o.custom_name}"
+                              </span>
+                            )}
+                            <span className="text-xs font-bold text-lobster-teal">
+                              €{orderPrice}
+                            </span>
+                            <span className="text-[11px] text-gray-400">
+                              {formatOrderTime(o.created_at)}
+                            </span>
                           </div>
                         </div>
-                        <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.text}`}>
+                        <span
+                          className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.text}`}
+                        >
                           <StatusIcon size={10} /> {cfg.label}
                         </span>
                       </div>
@@ -1181,7 +1470,10 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
                       <div className="flex gap-1.5">
                         <button
                           onClick={async () => {
-                            await supabase.from('merch_interests').update({ status: 'paid', paid: true }).eq('id', o.id)
+                            await supabase
+                              .from('merch_interests')
+                              .update({ status: 'paid', paid: true })
+                              .eq('id', o.id)
                             await loadInterests()
                           }}
                           disabled={status === 'paid' || status === 'delivered'}
@@ -1195,7 +1487,10 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
                         </button>
                         <button
                           onClick={async () => {
-                            await supabase.from('merch_interests').update({ status: 'delivered', delivered: true }).eq('id', o.id)
+                            await supabase
+                              .from('merch_interests')
+                              .update({ status: 'delivered', delivered: true })
+                              .eq('id', o.id)
                             await loadInterests()
                           }}
                           disabled={status === 'delivered'}
@@ -1216,35 +1511,52 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
                       </div>
                     </div>
                   )
-                })
-              }
+                })}
 
               {/* Cancelled orders (collapsed) */}
-              {interests.filter(o => o.status === 'cancelled' && getPlayerName(o, players)).length > 0 && (
+              {interests.filter((o) => o.status === 'cancelled' && getPlayerName(o, players))
+                .length > 0 && (
                 <details className="mt-3">
                   <summary className="text-xs text-gray-400 cursor-pointer font-medium px-1">
-                    {interests.filter(o => o.status === 'cancelled' && getPlayerName(o, players)).length} cancelled order{interests.filter(o => o.status === 'cancelled' && getPlayerName(o, players)).length > 1 ? 's' : ''}
+                    {
+                      interests.filter((o) => o.status === 'cancelled' && getPlayerName(o, players))
+                        .length
+                    }{' '}
+                    cancelled order
+                    {interests.filter((o) => o.status === 'cancelled' && getPlayerName(o, players))
+                      .length > 1
+                      ? 's'
+                      : ''}
                   </summary>
                   <div className="space-y-2 mt-2">
-                    {interests.filter(o => o.status === 'cancelled' && getPlayerName(o, players)).map(o => {
-                      const playerName = getPlayerName(o, players)
-                      const item = items.find(i => i.id === o.merch_item_id)
-                      return (
-                        <div key={o.id} className="card opacity-60 space-y-1">
-                          <p className="text-sm text-gray-500 line-through">
-                            {playerName?.split(' ')[0] || 'Unknown'} — {item?.name} {o.size && `(${o.size})`}
-                          </p>
-                          {o.admin_comment && <p className="text-xs text-red-400 italic">"{o.admin_comment}"</p>}
-                          <p className="text-[10px] text-gray-400">{formatOrderTime(o.cancelled_at || o.created_at)}</p>
-                        </div>
-                      )
-                    })}
+                    {interests
+                      .filter((o) => o.status === 'cancelled' && getPlayerName(o, players))
+                      .map((o) => {
+                        const playerName = getPlayerName(o, players)
+                        const item = items.find((i) => i.id === o.merch_item_id)
+                        return (
+                          <div key={o.id} className="card opacity-60 space-y-1">
+                            <p className="text-sm text-gray-500 line-through">
+                              {playerName?.split(' ')[0] || 'Unknown'} — {item?.name}{' '}
+                              {o.size && `(${o.size})`}
+                            </p>
+                            {o.admin_comment && (
+                              <p className="text-xs text-red-400 italic">"{o.admin_comment}"</p>
+                            )}
+                            <p className="text-[10px] text-gray-400">
+                              {formatOrderTime(o.cancelled_at || o.created_at)}
+                            </p>
+                          </div>
+                        )
+                      })}
                   </div>
                 </details>
               )}
             </div>
           ) : (
-            <div className="card py-6 text-center text-gray-400 text-sm">No orders yet — orders will appear here when players place them from the Shop tab</div>
+            <div className="card py-6 text-center text-gray-400 text-sm">
+              No orders yet — orders will appear here when players place them from the Shop tab
+            </div>
           )}
         </div>
       )}
@@ -1252,7 +1564,10 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
       {/* ── MANAGE TAB (admin only) ── */}
       {tab === 'manage' && isAdmin && (
         <div className="space-y-4">
-          <button onClick={openAdd} className="btn-primary w-full flex items-center justify-center gap-2">
+          <button
+            onClick={openAdd}
+            className="btn-primary w-full flex items-center justify-center gap-2"
+          >
             <Plus size={16} /> Add Merch Item
           </button>
 
@@ -1274,20 +1589,37 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
                   <GripVertical size={18} />
                 </div>
                 <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100">
-                  {item.image_url
-                    ? <img src={item.image_url} className="w-full h-full object-cover" alt="" draggable={false} />
-                    : <div className="w-full h-full flex items-center justify-center"><ShoppingBag size={18} className="text-gray-400" /></div>
-                  }
+                  {item.image_url ? (
+                    <img
+                      src={item.image_url}
+                      className="w-full h-full object-cover"
+                      alt=""
+                      draggable={false}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <ShoppingBag size={18} className="text-gray-400" />
+                    </div>
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-gray-800 truncate">{item.name}</p>
-                  <p className="text-xs text-gray-500">€{parseFloat(item.price).toFixed(0)} · {orderCount(item.id)} {orderCount(item.id) === 1 ? 'order' : 'orders'}</p>
+                  <p className="text-xs text-gray-500">
+                    €{parseFloat(item.price).toFixed(0)} · {orderCount(item.id)}{' '}
+                    {orderCount(item.id) === 1 ? 'order' : 'orders'}
+                  </p>
                 </div>
                 <div className="flex gap-1.5 flex-shrink-0">
-                  <button onClick={() => openEdit(item)} className="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center">
+                  <button
+                    onClick={() => openEdit(item)}
+                    className="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center"
+                  >
                     <Pencil size={13} className="text-gray-500" />
                   </button>
-                  <button onClick={() => handleDeleteItem(item.id)} className="w-8 h-8 rounded-xl bg-red-50 flex items-center justify-center">
+                  <button
+                    onClick={() => handleDeleteItem(item.id)}
+                    className="w-8 h-8 rounded-xl bg-red-50 flex items-center justify-center"
+                  >
                     <X size={13} className="text-red-500" />
                   </button>
                 </div>
@@ -1302,34 +1634,57 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center">
           <div className="bg-white rounded-t-3xl w-full max-w-md max-h-[92vh] overflow-y-auto">
             <div className="sticky top-0 bg-white px-5 pt-5 pb-3 border-b border-gray-100 flex items-center justify-between">
-              <h2 className="font-bold text-gray-800">{editItem ? 'Edit Item' : 'Add Merch Item'}</h2>
-              <button onClick={() => setShowForm(false)}><X size={22} className="text-gray-400" /></button>
+              <h2 className="font-bold text-gray-800">
+                {editItem ? 'Edit Item' : 'Add Merch Item'}
+              </h2>
+              <button onClick={() => setShowForm(false)}>
+                <X size={22} className="text-gray-400" />
+              </button>
             </div>
 
             <form onSubmit={handleSaveItem} className="p-5 space-y-4">
               <div>
                 <label className="label">Name *</label>
-                <input required className="input" placeholder="e.g. Technical T-Shirt"
-                  value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
+                <input
+                  required
+                  className="input"
+                  placeholder="e.g. Technical T-Shirt"
+                  value={form.name}
+                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                />
               </div>
 
               <div>
                 <label className="label">Description</label>
-                <input className="input" placeholder="Short description"
-                  value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
+                <input
+                  className="input"
+                  placeholder="Short description"
+                  value={form.description}
+                  onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                />
               </div>
 
               <div>
                 <label className="label">Price (€)</label>
-                <input type="number" step="0.01" min="0" className="input" placeholder="0.00"
-                  value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))} />
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  className="input"
+                  placeholder="0.00"
+                  value={form.price}
+                  onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
+                />
               </div>
 
               {/* Offline orders — e.g. people who bought in person or via
                   WhatsApp. Added to the live website count in the shop
                   FOMO badge so players see the real demand. */}
               <div>
-                <label className="label">Offline orders <span className="text-gray-400 font-normal">(bought outside the app)</span></label>
+                <label className="label">
+                  Offline orders{' '}
+                  <span className="text-gray-400 font-normal">(bought outside the app)</span>
+                </label>
                 <input
                   type="number"
                   min="0"
@@ -1337,7 +1692,7 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
                   className="input"
                   placeholder="0"
                   value={form.external_orders ?? 0}
-                  onChange={e => setForm(f => ({ ...f, external_orders: e.target.value }))}
+                  onChange={(e) => setForm((f) => ({ ...f, external_orders: e.target.value }))}
                 />
                 <p className="text-[11px] text-gray-400 mt-1">
                   Counts toward the "X lobsters already ordered" badge players see in the shop.
@@ -1346,7 +1701,11 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
 
               <div>
                 <label className="label">Category</label>
-                <select className="input" value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))}>
+                <select
+                  className="input"
+                  value={form.category}
+                  onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
+                >
                   <option value="apparel">Apparel</option>
                   <option value="accessories">Accessories</option>
                   <option value="other">Other</option>
@@ -1358,42 +1717,62 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
                 <label className="label">Sizes (select applicable)</label>
                 <div className="space-y-2">
                   <div className="flex flex-wrap gap-1.5">
-                    {SIZES_APPAREL.map(s => (
-                      <button type="button" key={s} onClick={() => toggleSize(s)}
-                        className={`text-xs px-2.5 py-1 rounded-lg font-medium border transition-all ${form.sizes.includes(s) ? 'bg-lobster-teal text-white border-lobster-teal' : 'border-gray-200 text-gray-600'}`}>
+                    {SIZES_APPAREL.map((s) => (
+                      <button
+                        type="button"
+                        key={s}
+                        onClick={() => toggleSize(s)}
+                        className={`text-xs px-2.5 py-1 rounded-lg font-medium border transition-all ${form.sizes.includes(s) ? 'bg-lobster-teal text-white border-lobster-teal' : 'border-gray-200 text-gray-600'}`}
+                      >
                         {s}
                       </button>
                     ))}
                   </div>
                   <div className="flex flex-wrap gap-1.5">
-                    {SIZES_SOCKS.map(s => (
-                      <button type="button" key={s} onClick={() => toggleSize(s)}
-                        className={`text-xs px-2.5 py-1 rounded-lg font-medium border transition-all ${form.sizes.includes(s) ? 'bg-lobster-teal text-white border-lobster-teal' : 'border-gray-200 text-gray-600'}`}>
+                    {SIZES_SOCKS.map((s) => (
+                      <button
+                        type="button"
+                        key={s}
+                        onClick={() => toggleSize(s)}
+                        className={`text-xs px-2.5 py-1 rounded-lg font-medium border transition-all ${form.sizes.includes(s) ? 'bg-lobster-teal text-white border-lobster-teal' : 'border-gray-200 text-gray-600'}`}
+                      >
                         {s}
                       </button>
                     ))}
                   </div>
-                  {form.sizes.length === 0 && <p className="text-xs text-gray-400">No sizes = one-size item</p>}
+                  {form.sizes.length === 0 && (
+                    <p className="text-xs text-gray-400">No sizes = one-size item</p>
+                  )}
                 </div>
               </div>
 
               {/* Images — up to 3 */}
               <div>
-                <label className="label">Product Photos <span className="text-gray-400 font-normal">(up to 3)</span></label>
+                <label className="label">
+                  Product Photos <span className="text-gray-400 font-normal">(up to 3)</span>
+                </label>
 
                 {/* Thumbnails row */}
                 {(form.image_urls || []).length > 0 && (
                   <div className="flex gap-2 mb-3">
                     {(form.image_urls || []).map((url, idx) => (
                       <div key={idx} className="relative w-24 h-24 flex-shrink-0">
-                        <img src={url} alt="" className="w-full h-full object-cover rounded-xl border border-gray-200" />
+                        <img
+                          src={url}
+                          alt=""
+                          className="w-full h-full object-cover rounded-xl border border-gray-200"
+                        />
                         <button
                           type="button"
                           onClick={() => handleRemoveImage(idx)}
                           className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-bold leading-none"
-                        >×</button>
+                        >
+                          ×
+                        </button>
                         {idx === 0 && (
-                          <span className="absolute bottom-1 left-1 text-[9px] bg-black/50 text-white px-1 rounded">main</span>
+                          <span className="absolute bottom-1 left-1 text-[9px] bg-black/50 text-white px-1 rounded">
+                            main
+                          </span>
                         )}
                       </div>
                     ))}
@@ -1402,9 +1781,13 @@ export default function Merch({ tournament, tournaments: allTournaments = [], in
 
                 {/* Upload button — only show if under 3 */}
                 {(form.image_urls || []).length < 3 && (
-                  <label className={`flex items-center justify-center gap-2 w-full py-3 rounded-xl border-2 border-dashed border-gray-300 text-sm text-gray-500 font-medium cursor-pointer transition-all hover:border-lobster-teal hover:text-lobster-teal ${uploading ? 'opacity-50' : ''}`}>
+                  <label
+                    className={`flex items-center justify-center gap-2 w-full py-3 rounded-xl border-2 border-dashed border-gray-300 text-sm text-gray-500 font-medium cursor-pointer transition-all hover:border-lobster-teal hover:text-lobster-teal ${uploading ? 'opacity-50' : ''}`}
+                  >
                     <Upload size={16} />
-                    {uploading ? 'Uploading…' : `Add photo${(form.image_urls || []).length > 0 ? ` (${(form.image_urls || []).length}/3)` : ''}`}
+                    {uploading
+                      ? 'Uploading…'
+                      : `Add photo${(form.image_urls || []).length > 0 ? ` (${(form.image_urls || []).length}/3)` : ''}`}
                     <input
                       type="file"
                       accept="image/*"

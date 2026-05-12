@@ -31,32 +31,35 @@ import { TOURNAMENTS as HISTORICAL_TOURNAMENTS } from '../components/History'
  */
 export async function recomputeAllRatings(supabase) {
   // ── 1. Load mapping data ────────────────────────────────────────────────
-  const [{ data: players }, { data: aliases }, { data: tournaments }, { data: dbMatches }] = await Promise.all([
-    supabase.from('players_public').select('id, playtomic_level'),
-    supabase.from('player_aliases').select('historical_name, player_id, skipped'),
-    supabase.from('tournaments').select('id, date, status').order('date', { ascending: true }),
-    supabase.from('matches').select('tournament_id, team1_ids, team2_ids, score1, score2, created_at'),
-  ])
+  const [{ data: players }, { data: aliases }, { data: tournaments }, { data: dbMatches }] =
+    await Promise.all([
+      supabase.from('players_public').select('id, playtomic_level'),
+      supabase.from('player_aliases').select('historical_name, player_id, skipped'),
+      supabase.from('tournaments').select('id, date, status').order('date', { ascending: true }),
+      supabase
+        .from('matches')
+        .select('tournament_id, team1_ids, team2_ids, score1, score2, created_at'),
+    ])
 
   if (!players) throw new Error('Could not load players')
 
   const playtomicByPid = Object.fromEntries(
-    players.map(p => [p.id, Number(p.playtomic_level) || 0])
+    players.map((p) => [p.id, Number(p.playtomic_level) || 0]),
   )
   const aliasMap = new Map(
-    (aliases || []).filter(a => !a.skipped).map(a => [a.historical_name, a.player_id])
+    (aliases || []).filter((a) => !a.skipped).map((a) => [a.historical_name, a.player_id]),
   )
 
   // ── 2. Resolve historical (History.jsx) tournaments ─────────────────────
   let droppedMatches = 0
   const historicalEvents = (HISTORICAL_TOURNAMENTS || [])
-    .filter(t => t.rounds && t.rounds.length > 0)
-    .map(t => {
+    .filter((t) => t.rounds && t.rounds.length > 0)
+    .map((t) => {
       const matches = []
       for (const round of t.rounds) {
-        for (const m of (round.matches || [])) {
-          const t1 = (m.t1 || []).map(n => aliasMap.get(n))
-          const t2 = (m.t2 || []).map(n => aliasMap.get(n))
+        for (const m of round.matches || []) {
+          const t1 = (m.t1 || []).map((n) => aliasMap.get(n))
+          const t2 = (m.t2 || []).map((n) => aliasMap.get(n))
           if (t1.length === 2 && t2.length === 2 && t1.every(Boolean) && t2.every(Boolean)) {
             matches.push({ team1Ids: t1, team2Ids: t2, score1: m.s1, score2: m.s2 })
           } else {
@@ -66,27 +69,29 @@ export async function recomputeAllRatings(supabase) {
       }
       return { id: t.id, date: t.date, sortKey: parseEventDate(t.date), matches }
     })
-    .filter(e => e.matches.length > 0)
+    .filter((e) => e.matches.length > 0)
 
   // ── 3. DB tournaments (only completed ones with scored matches) ─────────
   const dbEvents = (tournaments || [])
-    .filter(t => t.status === 'completed')
-    .map(t => {
+    .filter((t) => t.status === 'completed')
+    .map((t) => {
       const matches = (dbMatches || [])
-        .filter(m => m.tournament_id === t.id && m.score1 != null && m.score2 != null)
-        .map(m => ({
-          team1Ids: m.team1_ids, team2Ids: m.team2_ids,
-          score1: m.score1, score2: m.score2,
+        .filter((m) => m.tournament_id === t.id && m.score1 != null && m.score2 != null)
+        .map((m) => ({
+          team1Ids: m.team1_ids,
+          team2Ids: m.team2_ids,
+          score1: m.score1,
+          score2: m.score2,
         }))
       return { id: t.id, date: t.date, sortKey: parseEventDate(t.date), matches }
     })
-    .filter(e => e.matches.length > 0)
+    .filter((e) => e.matches.length > 0)
 
   // ── 4. Sort chronologically and apply Glicko in order ───────────────────
   const allEvents = [...historicalEvents, ...dbEvents].sort((a, b) => a.sortKey - b.sortKey)
 
   let prior = {}
-  const matchCount = {}    // playerId → cumulative match count across all events
+  const matchCount = {} // playerId → cumulative match count across all events
   for (const event of allEvents) {
     const out = applyTournamentRatings(prior, event.matches, playtomicByPid)
     Object.entries(out).forEach(([id, r]) => {
@@ -110,15 +115,14 @@ export async function recomputeAllRatings(supabase) {
     learned_updated_at: new Date().toISOString(),
   }))
 
-  const adminPin = (typeof localStorage !== 'undefined')
-    ? localStorage.getItem('lobster_session_admin_pin')
-    : null
+  const adminPin =
+    typeof localStorage !== 'undefined' ? localStorage.getItem('lobster_session_admin_pin') : null
   if (!adminPin) throw new Error('Admin sign-in required to persist ratings')
 
-  const dbTournamentIds = dbEvents.map(e => e.id)
+  const dbTournamentIds = dbEvents.map((e) => e.id)
   const { error: persistError } = await supabase.rpc('admin_persist_learned_ratings', {
-    input_admin_pin:              adminPin,
-    input_updates:                updates,
+    input_admin_pin: adminPin,
+    input_updates: updates,
     input_applied_tournament_ids: dbTournamentIds,
   })
   if (persistError) throw persistError
@@ -147,8 +151,18 @@ function parseEventDate(d) {
   if (iso) return Date.UTC(+iso[1], +iso[2] - 1, +iso[3])
   // Month name + year
   const monthMap = {
-    january: 0, february: 1, march: 2, april: 3, may: 4, june: 5,
-    july: 6, august: 7, september: 8, october: 9, november: 10, december: 11,
+    january: 0,
+    february: 1,
+    march: 2,
+    april: 3,
+    may: 4,
+    june: 5,
+    july: 6,
+    august: 7,
+    september: 8,
+    october: 9,
+    november: 10,
+    december: 11,
   }
   const monthYear = s.match(/(\w+)\s+(\d{4})/)
   if (monthYear) {

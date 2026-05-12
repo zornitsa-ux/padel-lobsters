@@ -25,13 +25,13 @@ const ADMIN_RESET_PHONE = '56997442387'
  */
 export default function WaitingForApproval() {
   const { pendingClaim, checkMyDeviceTrust, acceptPendingClaim, cancelPendingClaim } = useApp()
-  const [polling, setPolling]   = useState(true)
+  const [polling, setPolling] = useState(true)
   const [tickCount, setTickCount] = useState(0)
   const intervalRef = useRef(null)
 
-  const playerId   = pendingClaim?.id || null
+  const playerId = pendingClaim?.id || null
   const playerName = pendingClaim?.name || null
-  const deviceId   = getDeviceId()
+  const deviceId = getDeviceId()
   const shortDevice = deviceId.slice(0, 8)
 
   // Poll for trust on a 4s loop. Stops as soon as the device is trusted
@@ -42,7 +42,7 @@ export default function WaitingForApproval() {
     const tick = async () => {
       const trusted = await checkMyDeviceTrust(playerId)
       if (cancelled) return
-      setTickCount(n => n + 1)
+      setTickCount((n) => n + 1)
       if (trusted) {
         setPolling(false)
         acceptPendingClaim()
@@ -61,7 +61,7 @@ export default function WaitingForApproval() {
 
   const waMessage = encodeURIComponent(
     `Hi Lobster Admin 🦀 I just signed in on a new device for ${playerName || 'my account'} ` +
-    `but it's pending approval. Could you approve it? Device code: ${shortDevice}. Thanks!`
+      `but it's pending approval. Could you approve it? Device code: ${shortDevice}. Thanks!`,
   )
 
   return (
@@ -71,15 +71,18 @@ export default function WaitingForApproval() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-50 mb-3 relative">
             <Smartphone size={28} className="text-amber-600" />
             {polling && (
-              <Loader size={14} className="text-amber-700 absolute -bottom-1 -right-1 animate-spin bg-white rounded-full" />
+              <Loader
+                size={14}
+                className="text-amber-700 absolute -bottom-1 -right-1 animate-spin bg-white rounded-full"
+              />
             )}
           </div>
           <h1 className="text-xl font-extrabold text-gray-800">
             New device — waiting for approval
           </h1>
           <p className="text-xs text-gray-500 mt-2 leading-relaxed">
-            {playerName ? `Welcome back, ${playerName}.` : ''} You signed in
-            with the right PIN, but this device hasn't been approved yet.
+            {playerName ? `Welcome back, ${playerName}.` : ''} You signed in with the right PIN, but
+            this device hasn't been approved yet.
           </p>
         </div>
 
@@ -89,12 +92,12 @@ export default function WaitingForApproval() {
             <div className="text-xs text-amber-800 leading-relaxed">
               <p className="font-semibold mb-1">Two ways to unlock:</p>
               <p>
-                <span className="font-semibold">From a trusted device:</span> open
-                Padel Lobsters on a phone or laptop you've used before, go to
-                Settings, tap "Approve new device".
+                <span className="font-semibold">From a trusted device:</span> open Padel Lobsters on
+                a phone or laptop you've used before, go to Settings, tap "Approve new device".
               </p>
               <p className="mt-1.5">
-                <span className="font-semibold">No other device?</span> Message the admin on WhatsApp.
+                <span className="font-semibold">No other device?</span> Message the admin on
+                WhatsApp.
               </p>
             </div>
           </div>
@@ -112,7 +115,10 @@ export default function WaitingForApproval() {
 
         <div className="text-center text-[11px] text-gray-400">
           {polling ? (
-            <>Checking every few seconds… (this device: <span className="font-mono">{shortDevice}</span>)</>
+            <>
+              Checking every few seconds… (this device:{' '}
+              <span className="font-mono">{shortDevice}</span>)
+            </>
           ) : (
             <>Approved! Letting you in…</>
           )}

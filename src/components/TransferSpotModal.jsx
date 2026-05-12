@@ -15,20 +15,17 @@ import { letterColor } from '../lib/letterColors'
 //                      called after the RPC returns 'ok' so the caller can
 //                      open the share modal next.
 export default function TransferSpotModal({ tournament, onClose, onTransferCreated }) {
-  const {
-    players, isAdmin, claimedId,
-    getTournamentRegistrations, createTransfer,
-  } = useApp()
+  const { players, isAdmin, claimedId, getTournamentRegistrations, createTransfer } = useApp()
 
   const [search, setSearch] = useState('')
-  const [busy, setBusy]     = useState(false)
-  const [error, setError]   = useState(null)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState(null)
 
-  const displayName = (p) => isAdmin ? p.name : (p.name || '').split(' ')[0]
+  const displayName = (p) => (isAdmin ? p.name : (p.name || '').split(' ')[0])
 
   const regs = getTournamentRegistrations(tournament?.id)
-  const registeredIds = regs.filter(r => r.status === 'registered').map(r => String(r.playerId))
-  const waitlistedIds = regs.filter(r => r.status === 'waitlist').map(r => String(r.playerId))
+  const registeredIds = regs.filter((r) => r.status === 'registered').map((r) => String(r.playerId))
+  const waitlistedIds = regs.filter((r) => r.status === 'waitlist').map((r) => String(r.playerId))
 
   // Build the candidate list. Waitlisted players surface first (one-tap
   // promotion off the waitlist), then everyone else alphabetically. We
@@ -36,12 +33,10 @@ export default function TransferSpotModal({ tournament, onClose, onTransferCreat
   // receive a transfer, and we exclude the current user themselves.
   const candidates = useMemo(() => {
     const list = players
-      .filter(p => (p.status || 'active') === 'active')
-      .filter(p => String(p.id) !== String(claimedId))
-      .filter(p => !registeredIds.includes(String(p.id)))
-      .filter(p => !search ||
-        (p.name || '').toLowerCase().includes(search.toLowerCase())
-      )
+      .filter((p) => (p.status || 'active') === 'active')
+      .filter((p) => String(p.id) !== String(claimedId))
+      .filter((p) => !registeredIds.includes(String(p.id)))
+      .filter((p) => !search || (p.name || '').toLowerCase().includes(search.toLowerCase()))
     list.sort((a, b) => {
       const aw = waitlistedIds.includes(String(a.id)) ? 0 : 1
       const bw = waitlistedIds.includes(String(b.id)) ? 0 : 1
@@ -63,13 +58,13 @@ export default function TransferSpotModal({ tournament, onClose, onTransferCreat
     }
     // Map the RPC's status code to a human-readable error.
     const map = {
-      wrong_pin:                 'Sign in again to send a transfer.',
-      invalid_target:            'That player can\'t receive a transfer.',
-      not_registered:            'You are no longer registered for this event.',
+      wrong_pin: 'Sign in again to send a transfer.',
+      invalid_target: "That player can't receive a transfer.",
+      not_registered: 'You are no longer registered for this event.',
       target_already_registered: 'That player is already registered.',
-      tournament_started:        'Too late — the event has already started.',
-      already_pending:           'You already have a pending transfer for this event.',
-      error:                     'Something went wrong. Try again.',
+      tournament_started: 'Too late — the event has already started.',
+      already_pending: 'You already have a pending transfer for this event.',
+      error: 'Something went wrong. Try again.',
     }
     setError(map[result.status] || 'Could not send the transfer offer.')
   }
@@ -81,8 +76,7 @@ export default function TransferSpotModal({ tournament, onClose, onTransferCreat
           <div>
             <h3 className="font-bold text-gray-800">Transfer your spot</h3>
             <p className="text-xs text-gray-400 mt-0.5">
-              Pick who takes over. They'll be asked to accept — your spot stays
-              held until they do.
+              Pick who takes over. They'll be asked to accept — your spot stays held until they do.
             </p>
           </div>
           <button onClick={onClose} disabled={busy}>
@@ -102,7 +96,7 @@ export default function TransferSpotModal({ tournament, onClose, onTransferCreat
             type="text"
             placeholder="Search player…"
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={(e) => setSearch(e.target.value)}
             className="input pl-9"
             autoFocus
           />
@@ -112,7 +106,7 @@ export default function TransferSpotModal({ tournament, onClose, onTransferCreat
           {candidates.length === 0 && (
             <p className="text-sm text-gray-400 text-center py-4">No matching players found</p>
           )}
-          {candidates.map(p => {
+          {candidates.map((p) => {
             const isWait = waitlistedIds.includes(String(p.id))
             return (
               <button

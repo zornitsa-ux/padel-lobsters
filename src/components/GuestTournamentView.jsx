@@ -27,7 +27,8 @@ export default function GuestTournamentView({ onNavigate }) {
   // registration page; a future improvement is to land here instead and keep
   // the selection in context so a guest can browse a specific event. For now
   // this view lists all upcoming events, expanded.
-  const today = new Date(); today.setHours(0, 0, 0, 0)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
   const parseLocalDate = (s) => {
     if (!s) return null
     const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s)
@@ -36,7 +37,7 @@ export default function GuestTournamentView({ onNavigate }) {
     return isNaN(d) ? null : d
   }
   const upcoming = (tournaments || [])
-    .filter(t => {
+    .filter((t) => {
       if (t.status === 'completed') return false
       const d = parseLocalDate(t.date)
       return d === null || d >= today
@@ -63,12 +64,12 @@ export default function GuestTournamentView({ onNavigate }) {
         </div>
       )}
 
-      {upcoming.map(t => {
+      {upcoming.map((t) => {
         const counts = publicCounts[t.id] || {}
         const registered = counts.registered_count ?? 0
-        const waitlist   = counts.waitlist_count ?? 0
-        const max        = t.max_players ?? t.maxPlayers
-        const isFull     = max && registered >= max
+        const waitlist = counts.waitlist_count ?? 0
+        const max = t.max_players ?? t.maxPlayers
+        const isFull = max && registered >= max
         return (
           <article
             key={t.id}
@@ -98,11 +99,12 @@ export default function GuestTournamentView({ onNavigate }) {
             <div className="flex items-center justify-between pt-1">
               <div className="text-xs text-gray-600 flex items-center gap-1">
                 <Users size={12} />
-                <span className="font-semibold">{registered}{max ? ` / ${max}` : ''}</span>
+                <span className="font-semibold">
+                  {registered}
+                  {max ? ` / ${max}` : ''}
+                </span>
                 <span className="text-gray-400">registered</span>
-                {waitlist > 0 && (
-                  <span className="text-amber-600 ml-1">+{waitlist} waitlist</span>
-                )}
+                {waitlist > 0 && <span className="text-amber-600 ml-1">+{waitlist} waitlist</span>}
               </div>
               <div className="flex items-center gap-2">
                 <AddToCalendarButton tournament={t} compact />

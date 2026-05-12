@@ -1,6 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useApp } from '../context/AppContext'
-import { KeyRound, LogIn, UserPlus, HelpCircle, ArrowLeft, Mail, Check, AlertCircle } from 'lucide-react'
+import {
+  KeyRound,
+  LogIn,
+  UserPlus,
+  HelpCircle,
+  ArrowLeft,
+  Mail,
+  Check,
+  AlertCircle,
+} from 'lucide-react'
 import { isPublicPage } from '../lib/authPaths'
 import SignupRequest from './SignupRequest'
 import WaitingForApproval from './WaitingForApproval'
@@ -31,11 +40,11 @@ import WaitingForApproval from './WaitingForApproval'
 export default function VerificationGate({ children, page }) {
   const { role, loading, loginWithPin, pendingClaim, forgotMyPin } = useApp()
 
-  const [mode, setMode]   = useState('signin')   // signin | signup | forgot
-  const [pin, setPin]     = useState('')
+  const [mode, setMode] = useState('signin') // signin | signup | forgot
+  const [pin, setPin] = useState('')
   const [error, setError] = useState('')
-  const [busy, setBusy]   = useState(false)
-  const inputRef          = useRef(null)
+  const [busy, setBusy] = useState(false)
+  const inputRef = useRef(null)
 
   // Forgot-PIN flow state. Two sub-states:
   //   form  - email input, default; also where contact_admin errors land
@@ -45,11 +54,11 @@ export default function VerificationGate({ children, page }) {
   // now an inline error pointing to pin@padelobsters.nl, which keeps
   // recovery on the same self-service rail rather than dead-ending at
   // an admin handoff.
-  const [forgotEmail, setForgotEmail]     = useState('')
-  const [forgotStage, setForgotStage]     = useState('form') // form | sent
-  const [forgotBusy, setForgotBusy]       = useState(false)
-  const [forgotError, setForgotError]     = useState('')
-  const [forgotSentTo, setForgotSentTo]   = useState('')
+  const [forgotEmail, setForgotEmail] = useState('')
+  const [forgotStage, setForgotStage] = useState('form') // form | sent
+  const [forgotBusy, setForgotBusy] = useState(false)
+  const [forgotError, setForgotError] = useState('')
+  const [forgotSentTo, setForgotSentTo] = useState('')
 
   // Incremented every time the user enters signup mode. Passed as the
   // `key` on <SignupRequest/> so React treats each entry as a fresh
@@ -59,8 +68,10 @@ export default function VerificationGate({ children, page }) {
   // prompt gets stuck on whatever was picked the first time.
   const [signupKey, setSignupKey] = useState(0)
   const enterSignup = () => {
-    setMode('signup'); setError(''); setPin('')
-    setSignupKey(k => k + 1)
+    setMode('signup')
+    setError('')
+    setPin('')
+    setSignupKey((k) => k + 1)
   }
 
   // Ref to the scrollable overlay. Needed because when the user switches
@@ -93,7 +104,11 @@ export default function VerificationGate({ children, page }) {
   useEffect(() => {
     const toTop = () => {
       if (scrollRef.current) scrollRef.current.scrollTop = 0
-      try { window.scrollTo({ top: 0, left: 0, behavior: 'auto' }) } catch { /* older browsers */ }
+      try {
+        window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+      } catch {
+        /* older browsers */
+      }
     }
     toTop()
     const raf = requestAnimationFrame(toTop)
@@ -102,7 +117,7 @@ export default function VerificationGate({ children, page }) {
 
   if (loading) return null
   if (isPublicPage(page)) return <>{children}</>
-  if (role !== 'guest')   return <>{children}</>
+  if (role !== 'guest') return <>{children}</>
 
   // Phase 2b: pending-trust takes priority over the sign-in form. If a
   // user entered the right PIN but the device hasn't been approved yet,
@@ -113,7 +128,8 @@ export default function VerificationGate({ children, page }) {
   const handleSignin = async (e) => {
     e?.preventDefault?.()
     if (busy || !pin) return
-    setBusy(true); setError('')
+    setBusy(true)
+    setError('')
     const result = await loginWithPin(pin)
     if (!result?.success) {
       setError(result?.error || "That PIN didn't match any Lobster. Try again.")
@@ -151,7 +167,8 @@ export default function VerificationGate({ children, page }) {
       setForgotError('Please enter a valid email address.')
       return
     }
-    setForgotBusy(true); setForgotError('')
+    setForgotBusy(true)
+    setForgotError('')
     const result = await forgotMyPin(email)
     setForgotBusy(false)
     if (result === 'sent') {
@@ -165,15 +182,15 @@ export default function VerificationGate({ children, page }) {
       // pin@padelobsters.nl if they think their account has no email.
       setForgotError(
         "We couldn't find that email in our records. Double-check the address. " +
-        "If you never signed up with an email, write to pin@padelobsters.nl from " +
-        "your usual address and we'll add it to your account.",
+          'If you never signed up with an email, write to pin@padelobsters.nl from ' +
+          "your usual address and we'll add it to your account.",
       )
       return
     }
     if (result === 'rate_limited') {
       setForgotError(
         "We've sent quite a few PINs to this account already today. " +
-        "Try again tomorrow, or message the admin on WhatsApp.",
+          'Try again tomorrow, or message the admin on WhatsApp.',
       )
       return
     }
@@ -181,7 +198,7 @@ export default function VerificationGate({ children, page }) {
       setForgotError('That email looks off — double-check the format.')
       return
     }
-    setForgotError("Something went wrong. Try again, or message the admin on WhatsApp.")
+    setForgotError('Something went wrong. Try again, or message the admin on WhatsApp.')
   }
 
   // Signup mode renders the full rich profile form (aligned with the old
@@ -195,16 +212,19 @@ export default function VerificationGate({ children, page }) {
   // First Name at the top of the screen with the "Padel Lobsters" header
   // cut off. Sign-in and Forgot are short forms, so we can still center
   // those vertically on desktop.
-  const alignClasses = mode === 'signup'
-    ? 'items-start justify-start'
-    : 'items-start sm:items-center justify-start sm:justify-center'
+  const alignClasses =
+    mode === 'signup'
+      ? 'items-start justify-start'
+      : 'items-start sm:items-center justify-start sm:justify-center'
 
   return (
     <div
       ref={scrollRef}
       className={`fixed inset-0 bg-gradient-to-br from-lobster-teal via-teal-700 to-teal-900 flex flex-col ${alignClasses} p-6 z-[100] overflow-y-auto`}
     >
-      <div className={`bg-white rounded-3xl p-6 sm:p-8 shadow-2xl w-full ${cardWidth} space-y-5 my-6 mx-auto`}>
+      <div
+        className={`bg-white rounded-3xl p-6 sm:p-8 shadow-2xl w-full ${cardWidth} space-y-5 my-6 mx-auto`}
+      >
         {/* Brand — shown across all three modes so the surface feels consistent */}
         <div className="text-center">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-lobster-cream mb-3">
@@ -233,7 +253,10 @@ export default function VerificationGate({ children, page }) {
                   autoComplete="one-time-code"
                   maxLength={6}
                   value={pin}
-                  onChange={(e) => { setPin(e.target.value.replace(/\D/g, '')); setError('') }}
+                  onChange={(e) => {
+                    setPin(e.target.value.replace(/\D/g, ''))
+                    setError('')
+                  }}
                   placeholder="••••"
                   className="input text-center text-2xl tracking-[0.5em] font-bold"
                   aria-label="PIN"
@@ -266,7 +289,11 @@ export default function VerificationGate({ children, page }) {
               </button>
               <button
                 type="button"
-                onClick={() => { setMode('forgot'); setError(''); resetForgotFlow() }}
+                onClick={() => {
+                  setMode('forgot')
+                  setError('')
+                  resetForgotFlow()
+                }}
                 className="w-full text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 border border-gray-200 py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all"
               >
                 <HelpCircle size={14} />
@@ -285,7 +312,9 @@ export default function VerificationGate({ children, page }) {
             // After successful signup the RPC returns a PIN and we auto-login;
             // AppContext flips the role, this component unmounts. No explicit
             // navigation needed here.
-            onComplete={() => { /* no-op — role change unmounts the gate */ }}
+            onComplete={() => {
+              /* no-op — role change unmounts the gate */
+            }}
           />
         )}
 
@@ -294,7 +323,10 @@ export default function VerificationGate({ children, page }) {
           <div className="space-y-3">
             <button
               type="button"
-              onClick={() => { setMode('signin'); resetForgotFlow() }}
+              onClick={() => {
+                setMode('signin')
+                resetForgotFlow()
+              }}
               className="text-sm text-gray-600 hover:text-lobster-teal flex items-center gap-1"
             >
               <ArrowLeft size={14} /> Back to sign in
@@ -304,8 +336,8 @@ export default function VerificationGate({ children, page }) {
             {forgotStage === 'form' && (
               <>
                 <p className="text-sm text-gray-700 leading-snug">
-                  Enter the email you signed up with and we'll send you a
-                  fresh PIN. Didn't sign up with an email? Write to{' '}
+                  Enter the email you signed up with and we'll send you a fresh PIN. Didn't sign up
+                  with an email? Write to{' '}
                   <a
                     href="mailto:pin@padelobsters.nl"
                     className="text-lobster-teal font-semibold underline-offset-2 hover:underline"
@@ -325,7 +357,10 @@ export default function VerificationGate({ children, page }) {
                       autoComplete="email"
                       inputMode="email"
                       value={forgotEmail}
-                      onChange={(e) => { setForgotEmail(e.target.value); setForgotError('') }}
+                      onChange={(e) => {
+                        setForgotEmail(e.target.value)
+                        setForgotError('')
+                      }}
                       placeholder="you@example.com"
                       className="input"
                       aria-label="Email"
@@ -358,19 +393,21 @@ export default function VerificationGate({ children, page }) {
                     <Check size={16} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-lobster-teal">
-                      Check your inbox
-                    </p>
+                    <p className="text-sm font-semibold text-lobster-teal">Check your inbox</p>
                     <p className="text-xs text-gray-600 mt-1 leading-snug">
-                      We sent a new PIN to <span className="font-semibold break-all">{forgotSentTo}</span>.
-                      It usually arrives within a minute. Check spam if it doesn't show up.
+                      We sent a new PIN to{' '}
+                      <span className="font-semibold break-all">{forgotSentTo}</span>. It usually
+                      arrives within a minute. Check spam if it doesn't show up.
                     </p>
                   </div>
                 </div>
 
                 <button
                   type="button"
-                  onClick={() => { setMode('signin'); resetForgotFlow() }}
+                  onClick={() => {
+                    setMode('signin')
+                    resetForgotFlow()
+                  }}
                   className="w-full text-sm font-semibold text-lobster-teal bg-white border border-lobster-teal/30 hover:bg-lobster-cream py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all"
                 >
                   <LogIn size={14} />

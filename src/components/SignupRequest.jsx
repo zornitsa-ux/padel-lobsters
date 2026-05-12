@@ -3,9 +3,7 @@ import { useApp } from '../context/AppContext'
 import { supabase } from '../supabase'
 import { isE164 } from '../lib/whatsapp'
 import { processAvatar } from '../lib/processAvatar'
-import {
-  ArrowLeft, UserPlus, Check, Loader2, Copy, User, Camera,
-} from 'lucide-react'
+import { ArrowLeft, UserPlus, Check, Loader2, Copy, User, Camera } from 'lucide-react'
 import CountryPicker from './CountryPicker'
 
 // =============================================================================
@@ -45,24 +43,30 @@ import CountryPicker from './CountryPicker'
 // sync with the copy originally used by Players.jsx so new signups see
 // the same vibe.
 const LOBBY_PROMPTS = [
-  { label: '🎤 Trash Talk',         placeholder: 'Say something to your future opponents…' },
+  { label: '🎤 Trash Talk', placeholder: 'Say something to your future opponents…' },
   { label: '🦞 Lobster Confession', placeholder: 'Confess your deepest padel sin…' },
-  { label: '💬 War Cry',            placeholder: 'What do you scream before a match?' },
-  { label: '🏅 Bold Claim',         placeholder: 'Make a promise you may not keep…' },
-  { label: '🎯 Battle Cry',         placeholder: 'Inspire (or scare) your opponents…' },
-  { label: '😤 Excuse Generator',   placeholder: 'Pre-write your excuse for losing today…' },
-  { label: '🤝 Personal Pledge',    placeholder: 'What do you bring to the court?' },
-  { label: '👀 Scouting Report',    placeholder: 'Describe your playing style in one line…' },
+  { label: '💬 War Cry', placeholder: 'What do you scream before a match?' },
+  { label: '🏅 Bold Claim', placeholder: 'Make a promise you may not keep…' },
+  { label: '🎯 Battle Cry', placeholder: 'Inspire (or scare) your opponents…' },
+  { label: '😤 Excuse Generator', placeholder: 'Pre-write your excuse for losing today…' },
+  { label: '🤝 Personal Pledge', placeholder: 'What do you bring to the court?' },
+  { label: '👀 Scouting Report', placeholder: 'Describe your playing style in one line…' },
 ]
 const randomPrompt = () => LOBBY_PROMPTS[Math.floor(Math.random() * LOBBY_PROMPTS.length)]
 
 const emptyForm = {
-  firstName: '', lastName: '',
-  email: '', phone: '',
-  playtomicLevel: '', adjustment: '0',
-  notes: '', gender: '',
-  isLeftHanded: false, country: '',
-  avatarUrl: '', birthday: '',
+  firstName: '',
+  lastName: '',
+  email: '',
+  phone: '',
+  playtomicLevel: '',
+  adjustment: '0',
+  notes: '',
+  gender: '',
+  isLeftHanded: false,
+  country: '',
+  avatarUrl: '',
+  birthday: '',
   preferredPosition: '',
 }
 
@@ -117,11 +121,13 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
     clearTimeout(mergeDebounceRef.current)
     mergeDebounceRef.current = setTimeout(() => {
       const combined = `${(form.firstName || '').trim()} ${(form.lastName || '').trim()}`
-        .trim().toLowerCase()
-      if (combined.split(/\s+/).length < 2) { setMergePlayer(null); return }
-      const found = (players || []).find(p =>
-        (p.name || '').trim().toLowerCase() === combined
-      )
+        .trim()
+        .toLowerCase()
+      if (combined.split(/\s+/).length < 2) {
+        setMergePlayer(null)
+        return
+      }
+      const found = (players || []).find((p) => (p.name || '').trim().toLowerCase() === combined)
       setMergePlayer(found || null)
     }, 400)
     return () => clearTimeout(mergeDebounceRef.current)
@@ -136,17 +142,17 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
     const nameParts = (p.name || '').trim().split(/\s+/)
     setForm({
       firstName: nameParts[0] || '',
-      lastName:  nameParts.slice(1).join(' '),
-      email:             p.email             || '',
-      phone:             p.phone             || '',
-      playtomicLevel:    p.playtomicLevel    ?? '',
-      adjustment:        p.adjustment        ?? '0',
-      notes:             p.notes             || '',
-      gender:            p.gender            || '',
-      isLeftHanded:      p.isLeftHanded      || false,
-      country:           p.country           || '',
-      avatarUrl:         p.avatarUrl         || '',
-      birthday:          p.birthday          || '',
+      lastName: nameParts.slice(1).join(' '),
+      email: p.email || '',
+      phone: p.phone || '',
+      playtomicLevel: p.playtomicLevel ?? '',
+      adjustment: p.adjustment ?? '0',
+      notes: p.notes || '',
+      gender: p.gender || '',
+      isLeftHanded: p.isLeftHanded || false,
+      country: p.country || '',
+      avatarUrl: p.avatarUrl || '',
+      birthday: p.birthday || '',
       preferredPosition: p.preferredPosition || '',
     })
     setAvatarPreview(p.avatarUrl || null)
@@ -169,16 +175,14 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
     setError('')
 
     const firstName = (form.firstName || '').trim()
-    const lastName  = (form.lastName  || '').trim()
+    const lastName = (form.lastName || '').trim()
     const combinedName = [firstName, lastName].filter(Boolean).join(' ')
 
     // Safety net — if an exact duplicate exists but the user hasn't merged,
     // force the merge banner rather than allowing a dupe row.
     if (!editId) {
       const typed = combinedName.toLowerCase()
-      const duplicate = (players || []).find(p =>
-        (p.name || '').trim().toLowerCase() === typed
-      )
+      const duplicate = (players || []).find((p) => (p.name || '').trim().toLowerCase() === typed)
       if (duplicate) {
         setMergePlayer(duplicate)
         return
@@ -188,13 +192,13 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
     // Required-field validation — matches Players.jsx's non-admin branch so
     // guest signups and in-app signups land the same shape in the DB.
     const missing = []
-    if (!firstName)                   missing.push('First Name')
-    if (!lastName)                    missing.push('Last Name')
-    if (!form.country)                missing.push('Country')
-    if (!form.gender)                 missing.push('Gender')
-    if (!form.email.trim())           missing.push('Email')
-    if (!form.phone.trim())           missing.push('Phone / WhatsApp')
-    if (!form.playtomicLevel)         missing.push('Playtomic Level')
+    if (!firstName) missing.push('First Name')
+    if (!lastName) missing.push('Last Name')
+    if (!form.country) missing.push('Country')
+    if (!form.gender) missing.push('Gender')
+    if (!form.email.trim()) missing.push('Email')
+    if (!form.phone.trim()) missing.push('Phone / WhatsApp')
+    if (!form.playtomicLevel) missing.push('Playtomic Level')
     if (missing.length > 0) {
       setError(`Please complete: ${missing.join(', ')}`)
       return
@@ -215,12 +219,15 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
           const processed = await processAvatar(avatarFile)
           const filename = `player-${Date.now()}-${Math.random().toString(36).slice(2)}.webp`
           const { error: uploadError } = await supabase.storage
-            .from('avatars').upload(filename, processed, { upsert: true, contentType: 'image/webp' })
+            .from('avatars')
+            .upload(filename, processed, { upsert: true, contentType: 'image/webp' })
           if (uploadError) {
             console.error('Avatar upload error:', uploadError)
             // Non-fatal — signup still proceeds without the photo.
           } else {
-            const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filename)
+            const {
+              data: { publicUrl },
+            } = supabase.storage.from('avatars').getPublicUrl(filename)
             avatarUrl = publicUrl
           }
         } catch (err) {
@@ -232,25 +239,25 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
 
       const data = {
         name: combinedName,
-        email:             form.email.trim(),
-        phone:             form.phone.trim(),
-        playtomicLevel:    parseFloat(form.playtomicLevel) || 0,
-        adjustment:        parseFloat(form.adjustment) || 0,
-        notes:             form.notes || '',
-        gender:            form.gender || '',
-        isLeftHanded:      form.isLeftHanded || false,
-        country:           form.country || '',
+        email: form.email.trim(),
+        phone: form.phone.trim(),
+        playtomicLevel: parseFloat(form.playtomicLevel) || 0,
+        adjustment: parseFloat(form.adjustment) || 0,
+        notes: form.notes || '',
+        gender: form.gender || '',
+        isLeftHanded: form.isLeftHanded || false,
+        country: form.country || '',
         avatarUrl,
-        birthday:          form.birthday || null,
+        birthday: form.birthday || null,
         preferredPosition: form.preferredPosition || '',
-        taglineLabel:      lobbyPrompt.label,
-        status:            'active',
+        taglineLabel: lobbyPrompt.label,
+        status: 'active',
       }
 
       if (editId) {
         // Merge path — write onto the existing row. PIN stays untouched.
         await updatePlayer(editId, data)
-        const existing = (players || []).find(p => String(p.id) === String(editId))
+        const existing = (players || []).find((p) => String(p.id) === String(editId))
         const pin = existing?.pin || ''
         if (!pin) {
           // Merge target has no PIN on record (unusual — would mean the
@@ -258,7 +265,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
           // instead of showing an empty reveal box.
           setError(
             "We found your existing profile but couldn't read your PIN. " +
-            "Ask an admin to resend it.",
+              'Ask an admin to resend it.',
           )
           return
         }
@@ -288,7 +295,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
           // does NOT return the PIN to a stranger holding the email —
           // route the user to the Forgot-my-PIN flow instead.
           setError(
-            "An account with this email already exists. Use “Forgot my PIN” on the sign-in screen to recover it.",
+            'An account with this email already exists. Use “Forgot my PIN” on the sign-in screen to recover it.',
           )
           return
         }
@@ -314,7 +321,9 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
       await navigator.clipboard.writeText(pinReveal?.pin || '')
       setCopied(true)
       setTimeout(() => setCopied(false), 1500)
-    } catch { /* secure context etc. — PIN is visible in the callout */ }
+    } catch {
+      /* secure context etc. — PIN is visible in the callout */
+    }
   }
 
   // "Continue to the app" on the success screen. Originally a no-op
@@ -335,7 +344,8 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
       onComplete?.('player')
       return
     }
-    setContinuing(true); setContinueError('')
+    setContinuing(true)
+    setContinueError('')
     try {
       const result = await loginWithPin(pin)
       if (result?.success) {
@@ -343,7 +353,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
       } else {
         setContinueError(
           result?.error ||
-          "We couldn't sign you in automatically. Copy your PIN and try again from the sign-in screen.",
+            "We couldn't sign you in automatically. Copy your PIN and try again from the sign-in screen.",
         )
       }
     } catch (err) {
@@ -371,14 +381,18 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
             <p className="text-sm text-gray-600 leading-snug">
               {pinReveal.wasExisting
                 ? 'We found your existing Lobster profile and pulled up your PIN.'
-                : 'Your Lobster profile is ready. Save your PIN — you\'ll need it next time.'}
+                : "Your Lobster profile is ready. Save your PIN — you'll need it next time."}
             </p>
           </div>
 
           <div className="bg-teal-50 border border-teal-200 rounded-xl p-3 flex items-center justify-between">
             <div>
-              <div className="text-[10px] text-lobster-teal font-bold uppercase tracking-wide">Your PIN</div>
-              <div className="text-2xl font-extrabold tracking-[0.4em] text-lobster-teal">{pinReveal.pin || '????'}</div>
+              <div className="text-[10px] text-lobster-teal font-bold uppercase tracking-wide">
+                Your PIN
+              </div>
+              <div className="text-2xl font-extrabold tracking-[0.4em] text-lobster-teal">
+                {pinReveal.pin || '????'}
+              </div>
             </div>
             <button
               onClick={copyPin}
@@ -390,14 +404,12 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
           </div>
 
           <p className="text-[11px] text-gray-500 leading-snug">
-            This PIN unlocks the app on any device. Save it in your password
-            manager — we don't email or text it automatically.
+            This PIN unlocks the app on any device. Save it in your password manager — we don't
+            email or text it automatically.
           </p>
 
           {continueError && (
-            <p className="text-xs text-red-600 bg-red-50 rounded-lg p-2">
-              {continueError}
-            </p>
+            <p className="text-xs text-red-600 bg-red-50 rounded-lg p-2">{continueError}</p>
           )}
 
           <button
@@ -439,28 +451,31 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
             Join the Lobsters 🦞
           </h1>
           <p className="text-xs text-gray-500 leading-snug">
-            You'll get an access PIN to use in the app. Fill in the full
-            profile — it powers matchmaking, your Lobster Review, and the
-            leaderboards.
+            You'll get an access PIN to use in the app. Fill in the full profile — it powers
+            matchmaking, your Lobster Review, and the leaderboards.
           </p>
         </header>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-
           {/* Avatar — optional, but the same slot the in-app form offered. */}
           <div className="flex flex-col items-center gap-2">
             <div className="relative">
               {avatarPreview ? (
-                <img src={avatarPreview} alt="Preview"
-                  className="w-20 h-20 rounded-full object-cover border-2 border-lobster-teal" />
+                <img
+                  src={avatarPreview}
+                  alt="Preview"
+                  className="w-20 h-20 rounded-full object-cover border-2 border-lobster-teal"
+                />
               ) : (
                 <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-300">
                   <User size={28} />
                 </div>
               )}
-              <button type="button"
+              <button
+                type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="absolute bottom-0 right-0 w-7 h-7 bg-lobster-teal rounded-full flex items-center justify-center text-white shadow-sm active:scale-95">
+                className="absolute bottom-0 right-0 w-7 h-7 bg-lobster-teal rounded-full flex items-center justify-center text-white shadow-sm active:scale-95"
+              >
                 <Camera size={13} />
               </button>
             </div>
@@ -477,15 +492,23 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
           <div className="grid grid-cols-2 gap-2">
             <div>
               <label className="label">First Name</label>
-              <input required className="input" placeholder="e.g. Augustin"
+              <input
+                required
+                className="input"
+                placeholder="e.g. Augustin"
                 value={form.firstName}
-                onChange={e => setForm(f => ({ ...f, firstName: e.target.value }))} />
+                onChange={(e) => setForm((f) => ({ ...f, firstName: e.target.value }))}
+              />
             </div>
             <div>
               <label className="label">Last Name</label>
-              <input required className="input" placeholder="e.g. Tapia"
+              <input
+                required
+                className="input"
+                placeholder="e.g. Tapia"
                 value={form.lastName}
-                onChange={e => setForm(f => ({ ...f, lastName: e.target.value }))} />
+                onChange={(e) => setForm((f) => ({ ...f, lastName: e.target.value }))}
+              />
             </div>
           </div>
 
@@ -498,22 +521,23 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
                 <div>
                   <p className="font-semibold text-amber-800 text-sm">Welcome back!</p>
                   <p className="text-xs text-amber-700 mt-1">
-                    Your profile already exists — you've played in a past
-                    Lobster tournament. Finish setting up your profile and
-                    we'll link everything together.
+                    Your profile already exists — you've played in a past Lobster tournament. Finish
+                    setting up your profile and we'll link everything together.
                   </p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={acceptMerge}
-                className="w-full py-2.5 bg-amber-500 text-white rounded-xl font-semibold text-sm active:scale-95 transition-all">
+                className="w-full py-2.5 bg-amber-500 text-white rounded-xl font-semibold text-sm active:scale-95 transition-all"
+              >
                 Yes, complete my profile
               </button>
               <button
                 type="button"
                 onClick={() => setMergePlayer(null)}
-                className="w-full py-2 text-amber-600 text-xs font-medium">
+                className="w-full py-2 text-amber-600 text-xs font-medium"
+              >
                 No, I'm a different person
               </button>
             </div>
@@ -523,7 +547,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
             <label className="label">Country</label>
             <CountryPicker
               value={form.country}
-              onChange={val => setForm(f => ({ ...f, country: val }))}
+              onChange={(val) => setForm((f) => ({ ...f, country: val }))}
             />
           </div>
 
@@ -531,12 +555,18 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
             <label className="label">Gender</label>
             <p className="text-xs text-gray-400 mb-2">For optimal pair matching</p>
             <div className="flex gap-3">
-              {[['male', 'Male'], ['female', 'Female']].map(([val, lbl]) => (
-                <button type="button" key={val}
-                  onClick={() => setForm(f => ({ ...f, gender: f.gender === val ? '' : val }))}
+              {[
+                ['male', 'Male'],
+                ['female', 'Female'],
+              ].map(([val, lbl]) => (
+                <button
+                  type="button"
+                  key={val}
+                  onClick={() => setForm((f) => ({ ...f, gender: f.gender === val ? '' : val }))}
                   className={`flex-1 py-2.5 rounded-xl font-semibold text-sm transition-all ${
                     form.gender === val ? 'bg-lobster-teal text-white' : 'bg-gray-100 text-gray-600'
-                  }`}>
+                  }`}
+                >
                   {lbl}
                 </button>
               ))}
@@ -545,13 +575,15 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
 
           <div>
             <label className="label">Playing hand</label>
-            <button type="button"
-              onClick={() => setForm(f => ({ ...f, isLeftHanded: !f.isLeftHanded }))}
+            <button
+              type="button"
+              onClick={() => setForm((f) => ({ ...f, isLeftHanded: !f.isLeftHanded }))}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all w-full justify-center ${
                 form.isLeftHanded
                   ? 'bg-amber-100 text-amber-700 border-2 border-amber-300'
                   : 'bg-gray-100 text-gray-500'
-              }`}>
+              }`}
+            >
               🤚 {form.isLeftHanded ? 'Left-handed (tap to undo)' : 'Tap if left-handed'}
             </button>
           </div>
@@ -559,12 +591,26 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
           <div>
             <label className="label">Preferred Side</label>
             <div className="flex gap-2">
-              {[['left', '👈 Left'], ['right', '👉 Right'], ['both', '↔️ Both']].map(([val, lbl]) => (
-                <button type="button" key={val}
-                  onClick={() => setForm(f => ({ ...f, preferredPosition: f.preferredPosition === val ? '' : val }))}
+              {[
+                ['left', '👈 Left'],
+                ['right', '👉 Right'],
+                ['both', '↔️ Both'],
+              ].map(([val, lbl]) => (
+                <button
+                  type="button"
+                  key={val}
+                  onClick={() =>
+                    setForm((f) => ({
+                      ...f,
+                      preferredPosition: f.preferredPosition === val ? '' : val,
+                    }))
+                  }
                   className={`flex-1 py-2 rounded-xl font-semibold text-sm transition-all ${
-                    form.preferredPosition === val ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'
-                  }`}>
+                    form.preferredPosition === val
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-gray-100 text-gray-600'
+                  }`}
+                >
                   {lbl}
                 </button>
               ))}
@@ -572,61 +618,97 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
           </div>
 
           <div className="bg-blue-50 rounded-xl p-4 space-y-3">
-            <p className="text-xs font-bold text-blue-700 uppercase tracking-wide">Playtomic Level</p>
+            <p className="text-xs font-bold text-blue-700 uppercase tracking-wide">
+              Playtomic Level
+            </p>
             <div>
               <label className="label">Playtomic Level (0–7)</label>
-              <input type="number" step="0.1" min="0" max="7" className="input" placeholder="e.g. 3.5"
+              <input
+                type="number"
+                step="0.1"
+                min="0"
+                max="7"
+                className="input"
+                placeholder="e.g. 3.5"
                 value={form.playtomicLevel}
-                onChange={e => setForm(f => ({ ...f, playtomicLevel: e.target.value }))} />
+                onChange={(e) => setForm((f) => ({ ...f, playtomicLevel: e.target.value }))}
+              />
               <p className="text-xs text-gray-500 mt-1">
                 Check your Playtomic app — it shows your current level
               </p>
             </div>
             <div>
               <label className="label">Personal Adjustment</label>
-              <input type="number" step="0.1" min="-3" max="3" className="input" placeholder="0"
+              <input
+                type="number"
+                step="0.1"
+                min="-3"
+                max="3"
+                className="input"
+                placeholder="0"
                 value={form.adjustment}
-                onChange={e => setForm(f => ({ ...f, adjustment: e.target.value }))} />
+                onChange={(e) => setForm((f) => ({ ...f, adjustment: e.target.value }))}
+              />
               <p className="text-xs text-gray-500 mt-1">
-                Positive = stronger · Negative = weaker<br />
-                Adjusted Level = {((parseFloat(form.playtomicLevel) || 0) + (parseFloat(form.adjustment) || 0)).toFixed(1)}
+                Positive = stronger · Negative = weaker
+                <br />
+                Adjusted Level ={' '}
+                {(
+                  (parseFloat(form.playtomicLevel) || 0) + (parseFloat(form.adjustment) || 0)
+                ).toFixed(1)}
               </p>
             </div>
           </div>
 
           <div>
             <label className="label">Email</label>
-            <input type="email" className="input" placeholder="player@email.com"
+            <input
+              type="email"
+              className="input"
+              placeholder="player@email.com"
               value={form.email}
-              onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
+              onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+            />
             <p className="text-xs text-gray-400 mt-1">Visible for organizers only</p>
           </div>
 
           <div>
             <label className="label">Phone / WhatsApp</label>
-            <input type="tel" className="input" placeholder="+31612345678"
+            <input
+              type="tel"
+              className="input"
+              placeholder="+31612345678"
               value={form.phone}
-              onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} />
-            <p className="text-xs text-gray-400 mt-1">Start with + and your country code, e.g. +31 for the Netherlands. Visible to organizers only.</p>
+              onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+            />
+            <p className="text-xs text-gray-400 mt-1">
+              Start with + and your country code, e.g. +31 for the Netherlands. Visible to
+              organizers only.
+            </p>
           </div>
 
           <div>
             <label className="label">Birthday 🎂</label>
-            <input type="date" className="input" value={form.birthday || ''}
-              onChange={e => setForm(f => ({ ...f, birthday: e.target.value }))} />
+            <input
+              type="date"
+              className="input"
+              value={form.birthday || ''}
+              onChange={(e) => setForm((f) => ({ ...f, birthday: e.target.value }))}
+            />
           </div>
 
           <div>
             <label className="label">{lobbyPrompt.label}</label>
-            <textarea className="input resize-none" rows={2}
+            <textarea
+              className="input resize-none"
+              rows={2}
               placeholder={lobbyPrompt.placeholder}
               value={form.notes}
-              onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
+              onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
+            />
           </div>
 
-          {error && (
-            <p className="text-xs text-red-600 bg-red-50 rounded-lg p-2">{error}</p>
-          )}
+          {error && <p className="text-xs text-red-600 bg-red-50 rounded-lg p-2">{error}</p>}
 
           <button
             type="submit"

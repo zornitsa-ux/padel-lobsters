@@ -15,7 +15,9 @@
 // Normalise a name for alias/first-name matching: lowercase + strip
 // whitespace and common punctuation so "Gonzalo U" ≈ "gonzalou".
 function normHistName(s) {
-  return String(s || '').toLowerCase().replace(/[\s.\-_]/g, '')
+  return String(s || '')
+    .toLowerCase()
+    .replace(/[\s.\-_]/g, '')
 }
 
 /**
@@ -55,12 +57,12 @@ export function buildPlayerStats(
   Object.entries(aliasMap || {}).forEach(([name, pid]) => {
     if (name && pid) nameToId.set(normHistName(name), pid)
   })
-  players.forEach(pl => {
+  players.forEach((pl) => {
     if (!pl?.id || !pl?.name) return
     const first = normHistName(String(pl.name).split(' ')[0])
-    const full  = normHistName(pl.name)
+    const full = normHistName(pl.name)
     if (first && !nameToId.has(first)) nameToId.set(first, pl.id)
-    if (full  && !nameToId.has(full))  nameToId.set(full,  pl.id)
+    if (full && !nameToId.has(full)) nameToId.set(full, pl.id)
   })
   const resolveName = (n) => nameToId.get(normHistName(n)) || null
 
@@ -71,12 +73,12 @@ export function buildPlayerStats(
   const events = []
 
   // DB matches (from Supabase)
-  const completed = (matches || []).filter(m => m?.completed)
-  completed.forEach(m => {
+  const completed = (matches || []).filter((m) => m?.completed)
+  completed.forEach((m) => {
     const onT1 = (m.team1Ids || []).includes(playerId)
     const onT2 = (m.team2Ids || []).includes(playerId)
     if (!onT1 && !onT2) return
-    const tournDate = tournaments.find(t => t.id === m.tournamentId)?.date || ''
+    const tournDate = tournaments.find((t) => t.id === m.tournamentId)?.date || ''
     events.push({
       source: 'db',
       tournamentId: m.tournamentId,
@@ -84,17 +86,16 @@ export function buildPlayerStats(
       round: m.round || 0,
       myScore: parseInt(onT1 ? m.score1 : m.score2) || 0,
       theirScore: parseInt(onT1 ? m.score2 : m.score1) || 0,
-      opponents: (onT1 ? (m.team2Ids || []) : (m.team1Ids || [])).filter(Boolean),
-      teammates: (onT1 ? (m.team1Ids || []) : (m.team2Ids || []))
-        .filter(id => id && id !== playerId),
+      opponents: (onT1 ? m.team2Ids || [] : m.team1Ids || []).filter(Boolean),
+      teammates: (onT1 ? m.team1Ids || [] : m.team2Ids || []).filter((id) => id && id !== playerId),
     })
   })
 
   // Historical matches (from the hardcoded TOURNAMENTS list in History.jsx)
-  ;(historicalTournaments || []).forEach(t => {
+  ;(historicalTournaments || []).forEach((t) => {
     if (!t?.rounds) return
-    t.rounds.forEach(r => {
-      (r.matches || []).forEach(m => {
+    t.rounds.forEach((r) => {
+      ;(r.matches || []).forEach((m) => {
         const t1Ids = (m.t1 || []).map(resolveName)
         const t2Ids = (m.t2 || []).map(resolveName)
         const onT1 = t1Ids.includes(playerId)
@@ -108,7 +109,7 @@ export function buildPlayerStats(
           myScore: parseInt(onT1 ? m.s1 : m.s2) || 0,
           theirScore: parseInt(onT1 ? m.s2 : m.s1) || 0,
           opponents: (onT1 ? t2Ids : t1Ids).filter(Boolean),
-          teammates: (onT1 ? t1Ids : t2Ids).filter(id => id && id !== playerId),
+          teammates: (onT1 ? t1Ids : t2Ids).filter((id) => id && id !== playerId),
         })
       })
     })
@@ -126,16 +127,23 @@ export function buildPlayerStats(
     return (a.round || 0) - (b.round || 0)
   })
 
-  let won = 0, lost = 0, draws = 0, pointsFor = 0, pointsAgainst = 0, points = 0
-  let curWinStreak = 0, bestWinStreak = 0
-  let curLossStreak = 0, worstLossStreak = 0
-  const recentForm = []         // last 5: 'W' | 'L' | 'D'
-  const h2h = {}                // opponentId → { won, lost, draws }
-  const h2hPairs = {}           // "id1:id2" → { ids: [id1,id2], won, lost, draws }
-  const partners = {}           // partnerId → { wins, losses, games }
+  let won = 0,
+    lost = 0,
+    draws = 0,
+    pointsFor = 0,
+    pointsAgainst = 0,
+    points = 0
+  let curWinStreak = 0,
+    bestWinStreak = 0
+  let curLossStreak = 0,
+    worstLossStreak = 0
+  const recentForm = [] // last 5: 'W' | 'L' | 'D'
+  const h2h = {} // opponentId → { won, lost, draws }
+  const h2hPairs = {} // "id1:id2" → { ids: [id1,id2], won, lost, draws }
+  const partners = {} // partnerId → { wins, losses, games }
   const tournamentIds = new Set()
 
-  events.forEach(e => {
+  events.forEach((e) => {
     pointsFor += e.myScore
     pointsAgainst += e.theirScore
     points = pointsFor
@@ -143,20 +151,26 @@ export function buildPlayerStats(
 
     let result
     if (e.myScore > e.theirScore) {
-      won++; result = 'W'
-      curWinStreak++; bestWinStreak = Math.max(bestWinStreak, curWinStreak)
+      won++
+      result = 'W'
+      curWinStreak++
+      bestWinStreak = Math.max(bestWinStreak, curWinStreak)
       curLossStreak = 0
     } else if (e.myScore < e.theirScore) {
-      lost++; result = 'L'
-      curLossStreak++; worstLossStreak = Math.max(worstLossStreak, curLossStreak)
+      lost++
+      result = 'L'
+      curLossStreak++
+      worstLossStreak = Math.max(worstLossStreak, curLossStreak)
       curWinStreak = 0
     } else {
-      draws++; result = 'D'
-      curWinStreak = 0; curLossStreak = 0
+      draws++
+      result = 'D'
+      curWinStreak = 0
+      curLossStreak = 0
     }
     recentForm.push(result)
 
-    e.opponents.forEach(oppId => {
+    e.opponents.forEach((oppId) => {
       if (!oppId) return
       if (!h2h[oppId]) h2h[oppId] = { won: 0, lost: 0, draws: 0 }
       if (result === 'W') h2h[oppId].won++
@@ -175,7 +189,7 @@ export function buildPlayerStats(
       else h2hPairs[pairKey].draws++
     }
 
-    e.teammates.forEach(tId => {
+    e.teammates.forEach((tId) => {
       if (!tId) return
       if (!partners[tId]) partners[tId] = { wins: 0, losses: 0, games: 0 }
       partners[tId].games++
@@ -188,18 +202,22 @@ export function buildPlayerStats(
   // profile already has a dedicated Historical section powered by
   // buildHistoricalAppearances, so we don't want to duplicate those here.
   const dbTournIds = new Set(
-    Array.from(tournamentIds).filter(id => !String(id).startsWith('hist:'))
+    Array.from(tournamentIds).filter((id) => !String(id).startsWith('hist:')),
   )
   const playerTournaments = tournaments
-    .filter(t => dbTournIds.has(t.id))
-    .sort((a, b) => (b.date || '') > (a.date || '') ? 1 : -1)
+    .filter((t) => dbTournIds.has(t.id))
+    .sort((a, b) => ((b.date || '') > (a.date || '') ? 1 : -1))
 
   const played = won + lost + draws
 
   return {
     played,
-    won, lost, draws, points,
-    pointsFor, pointsAgainst,
+    won,
+    lost,
+    draws,
+    points,
+    pointsFor,
+    pointsAgainst,
     pointDiff: pointsFor - pointsAgainst,
     avgPointsFor: played > 0 ? pointsFor / played : 0,
     avgPointsAgainst: played > 0 ? pointsAgainst / played : 0,

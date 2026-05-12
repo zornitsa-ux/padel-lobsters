@@ -167,9 +167,13 @@ More details on venue and date as we get closer — keep an eye on the WhatsApp 
 ]
 
 export const EXPERIENCE_LEVELS = [
-  { id: 'beginner',     label: 'Beginner',     hint: 'KNLTB 9–8 · Building the fundamentals' },
+  { id: 'beginner', label: 'Beginner', hint: 'KNLTB 9–8 · Building the fundamentals' },
   { id: 'intermediate', label: 'Intermediate', hint: 'KNLTB 7–6 · Sustaining rallies' },
-  { id: 'advanced',     label: 'Advanced',     hint: 'KNLTB 5 or lower · Competing frequently' },
+  { id: 'advanced', label: 'Advanced', hint: 'KNLTB 5 or lower · Competing frequently' },
 ]
 
-export const DIVISION_LABEL = { mens: "Men's Division", womens: "Women's Division", open: 'Open Division' }
+export const DIVISION_LABEL = {
+  mens: "Men's Division",
+  womens: "Women's Division",
+  open: 'Open Division',
+}

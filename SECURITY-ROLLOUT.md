@@ -44,6 +44,7 @@ the receptionist and receive only the folder they're entitled to.
 File: `supabase-migration-v14-security.sql`
 
 This migration is purely additive. It:
+
 - Adds hashed PIN columns alongside the plaintext ones.
 - Backfills the hashes from the existing plaintext PINs using bcrypt.
 - Keeps the two columns synced via triggers so the old app path still
@@ -109,7 +110,7 @@ Not started yet. Once Phase 1 is verified, I'll update these files:
 
 After Phase 2 is deployed, the app no longer reads `email`, `phone`,
 `birthday`, `pin`, or `admin_pin` from the browser. But the database
-still *allows* those reads to anybody with the anon key who calls them
+still _allows_ those reads to anybody with the anon key who calls them
 directly. We close that hole in Phase 3.
 
 ---

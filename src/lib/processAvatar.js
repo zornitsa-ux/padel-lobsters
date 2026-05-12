@@ -22,12 +22,12 @@ export async function processAvatar(file) {
 
   // Center-crop the source to a square before scaling, so portrait/landscape
   // photos don't get stretched.
-  const minDim   = Math.min(bitmap.width, bitmap.height)
-  const offsetX  = (bitmap.width  - minDim) / 2
-  const offsetY  = (bitmap.height - minDim) / 2
+  const minDim = Math.min(bitmap.width, bitmap.height)
+  const offsetX = (bitmap.width - minDim) / 2
+  const offsetY = (bitmap.height - minDim) / 2
 
   const canvas = document.createElement('canvas')
-  canvas.width  = SIZE
+  canvas.width = SIZE
   canvas.height = SIZE
   const ctx = canvas.getContext('2d')
   ctx.imageSmoothingEnabled = true
@@ -49,7 +49,7 @@ export async function processAvatar(file) {
 function canvasToBlob(canvas, type, quality) {
   return new Promise((resolve, reject) => {
     canvas.toBlob(
-      b => (b ? resolve(b) : reject(new Error('Could not encode image'))),
+      (b) => (b ? resolve(b) : reject(new Error('Could not encode image'))),
       type,
       quality,
     )

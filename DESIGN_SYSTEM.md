@@ -6,27 +6,27 @@ The new design system uses a carefully curated palette that feels premium, moder
 
 ### Primary Colors
 
-| Name | Hex | Usage |
-|------|-----|-------|
-| **lob-teal** | `#3D7A8A` | Primary brand color, backgrounds, text |
-| **lob-teal-dark** | `#2A5A68` | Header gradient (dark end), darkening hover states |
+| Name               | Hex       | Usage                                                |
+| ------------------ | --------- | ---------------------------------------------------- |
+| **lob-teal**       | `#3D7A8A` | Primary brand color, backgrounds, text               |
+| **lob-teal-dark**  | `#2A5A68` | Header gradient (dark end), darkening hover states   |
 | **lob-teal-light** | `#EAF4F7` | Soft backgrounds, inactive tabs, supporting surfaces |
 
 ### Action Colors
 
-| Name | Hex | Usage |
-|------|-----|-------|
-| **lob-coral** | `#D94F2B` | Primary CTAs, active states, alerts |
+| Name                | Hex       | Usage                                 |
+| ------------------- | --------- | ------------------------------------- |
+| **lob-coral**       | `#D94F2B` | Primary CTAs, active states, alerts   |
 | **lob-coral-light** | `#FAEAE5` | Soft coral backgrounds, alert banners |
 
 ### Supporting Colors
 
-| Name | Hex | Usage |
-|------|-----|-------|
+| Name          | Hex       | Usage                                           |
+| ------------- | --------- | ----------------------------------------------- |
 | **lob-amber** | `#E8A030` | Secondary actions, accents, progress indicators |
-| **lob-cream** | `#FAF3E4` | Page background, tied to logo |
-| **lob-dark** | `#1C2B30` | Primary text color |
-| **lob-muted** | `#6B8A92` | Secondary text, disabled states |
+| **lob-cream** | `#FAF3E4` | Page background, tied to logo                   |
+| **lob-dark**  | `#1C2B30` | Primary text color                              |
+| **lob-muted** | `#6B8A92` | Secondary text, disabled states                 |
 
 ---
 

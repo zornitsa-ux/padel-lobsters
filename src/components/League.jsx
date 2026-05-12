@@ -1,9 +1,26 @@
 import React, { useMemo, useState } from 'react'
 import { useApp } from '../context/AppContext'
 import {
-  ChevronLeft, ChevronRight, Trophy, Users, Calendar, BookOpen, BarChart3, Medal,
-  ChevronDown, ChevronUp, Plus, Check, X, AlertCircle, Heart, Music,
-  UserPlus, Clock, Pencil, Save,
+  ChevronLeft,
+  ChevronRight,
+  Trophy,
+  Users,
+  Calendar,
+  BookOpen,
+  BarChart3,
+  Medal,
+  ChevronDown,
+  ChevronUp,
+  Plus,
+  Check,
+  X,
+  AlertCircle,
+  Heart,
+  Music,
+  UserPlus,
+  Clock,
+  Pencil,
+  Save,
 } from 'lucide-react'
 import { DateTile } from './CalendarPieces'
 import { letterColor } from '../lib/letterColors'
@@ -28,31 +45,42 @@ const fromIso = (s) => {
 }
 const fmtShort = (iso) => {
   const d = fromIso(iso)
-  return d ? d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' }) : '—'
+  return d
+    ? d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })
+    : '—'
 }
 
 function RangeCalendar({ start, end, onChange, minDate }) {
   // Cursor is the month currently rendered. Start on the earlier of the two
   // bounds, or today if nothing's set yet.
   const initialCursor = fromIso(start) || fromIso(end) || new Date()
-  const [cursor, setCursor] = useState(new Date(initialCursor.getFullYear(), initialCursor.getMonth(), 1))
+  const [cursor, setCursor] = useState(
+    new Date(initialCursor.getFullYear(), initialCursor.getMonth(), 1),
+  )
   // Track which endpoint we're picking next: 'start' or 'end'.
   const [pickSide, setPickSide] = useState(start ? 'end' : 'start')
 
   const startD = fromIso(start)
-  const endD   = fromIso(end)
-  const minD   = fromIso(minDate)
+  const endD = fromIso(end)
+  const minD = fromIso(minDate)
 
   // Build the month grid: always 6 weeks of 7 days starting on Monday.
   const firstOfMonth = new Date(cursor.getFullYear(), cursor.getMonth(), 1)
-  const dayOfWeek = (firstOfMonth.getDay() + 6) % 7  // Mon=0 ... Sun=6
-  const gridStart = new Date(firstOfMonth); gridStart.setDate(1 - dayOfWeek)
+  const dayOfWeek = (firstOfMonth.getDay() + 6) % 7 // Mon=0 ... Sun=6
+  const gridStart = new Date(firstOfMonth)
+  gridStart.setDate(1 - dayOfWeek)
   const days = Array.from({ length: 42 }, (_, i) => {
-    const d = new Date(gridStart); d.setDate(gridStart.getDate() + i)
+    const d = new Date(gridStart)
+    d.setDate(gridStart.getDate() + i)
     return d
   })
 
-  const isSame = (a, b) => a && b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
+  const isSame = (a, b) =>
+    a &&
+    b &&
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
   const inRange = (d) => startD && endD && d >= startD && d <= endD
   const isDisabled = (d) => minD && d < minD
 
@@ -61,7 +89,7 @@ function RangeCalendar({ start, end, onChange, minDate }) {
     const iso = toIso(d)
     if (pickSide === 'start' || !startD || d < startD) {
       // Start a new range anchored on this day. Clear end if it's now invalid.
-      onChange({ start: iso, end: (endD && d > endD) ? null : end })
+      onChange({ start: iso, end: endD && d > endD ? null : end })
       setPickSide('end')
     } else {
       // Complete the range. If click equals existing start, treat as single-day.
@@ -72,7 +100,8 @@ function RangeCalendar({ start, end, onChange, minDate }) {
 
   const monthLabel = cursor.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
   const bump = (delta) => {
-    const next = new Date(cursor); next.setMonth(cursor.getMonth() + delta)
+    const next = new Date(cursor)
+    next.setMonth(cursor.getMonth() + delta)
     setCursor(next)
   }
 
@@ -80,18 +109,30 @@ function RangeCalendar({ start, end, onChange, minDate }) {
     <div className="bg-white border border-gray-200 rounded-xl p-3 space-y-2 select-none">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <button type="button" onClick={() => bump(-1)} className="p-1.5 rounded-lg hover:bg-gray-100">
+        <button
+          type="button"
+          onClick={() => bump(-1)}
+          className="p-1.5 rounded-lg hover:bg-gray-100"
+        >
           <ChevronLeft size={16} className="text-gray-500" />
         </button>
         <p className="text-sm font-bold text-gray-800">{monthLabel}</p>
-        <button type="button" onClick={() => bump(1)} className="p-1.5 rounded-lg hover:bg-gray-100">
+        <button
+          type="button"
+          onClick={() => bump(1)}
+          className="p-1.5 rounded-lg hover:bg-gray-100"
+        >
           <ChevronRight size={16} className="text-gray-500" />
         </button>
       </div>
 
       {/* Weekday labels */}
       <div className="grid grid-cols-7 gap-0.5 text-[10px] font-bold text-gray-400 uppercase text-center">
-        {['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d => <div key={d} className="py-0.5">{d}</div>)}
+        {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => (
+          <div key={d} className="py-0.5">
+            {d}
+          </div>
+        ))}
       </div>
 
       {/* Day grid */}
@@ -99,8 +140,8 @@ function RangeCalendar({ start, end, onChange, minDate }) {
         {days.map((d, i) => {
           const inThisMonth = d.getMonth() === cursor.getMonth()
           const isStart = isSame(d, startD)
-          const isEnd   = isSame(d, endD)
-          const ranged  = inRange(d) && !isStart && !isEnd
+          const isEnd = isSame(d, endD)
+          const ranged = inRange(d) && !isStart && !isEnd
           const disabled = isDisabled(d)
           let cls = 'py-1.5 text-center rounded'
           if (disabled) cls += ' text-gray-300 cursor-not-allowed'
@@ -125,15 +166,35 @@ function RangeCalendar({ start, end, onChange, minDate }) {
       {/* Summary + quick actions */}
       <div className="flex items-center justify-between pt-1 border-t border-gray-100 text-[11px]">
         <span className="text-gray-500">
-          {start || end
-            ? <><span className="font-semibold text-gray-700">{fmtShort(start)}</span> → <span className="font-semibold text-gray-700">{fmtShort(end)}</span></>
-            : <span className="italic">Click a day to set the start</span>}
+          {start || end ? (
+            <>
+              <span className="font-semibold text-gray-700">{fmtShort(start)}</span> →{' '}
+              <span className="font-semibold text-gray-700">{fmtShort(end)}</span>
+            </>
+          ) : (
+            <span className="italic">Click a day to set the start</span>
+          )}
         </span>
         <div className="flex gap-2">
-          <button type="button" onClick={() => { setCursor(new Date(new Date().getFullYear(), new Date().getMonth(), 1)) }}
-            className="font-semibold text-lobster-teal">Today</button>
-          <button type="button" onClick={() => { onChange({ start: null, end: null }); setPickSide('start') }}
-            className="font-semibold text-gray-400 hover:text-gray-600">Clear</button>
+          <button
+            type="button"
+            onClick={() => {
+              setCursor(new Date(new Date().getFullYear(), new Date().getMonth(), 1))
+            }}
+            className="font-semibold text-lobster-teal"
+          >
+            Today
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              onChange({ start: null, end: null })
+              setPickSide('start')
+            }}
+            className="font-semibold text-gray-400 hover:text-gray-600"
+          >
+            Clear
+          </button>
         </div>
       </div>
     </div>
@@ -145,26 +206,40 @@ function RangeCalendar({ start, end, onChange, minDate }) {
 function PhaseRangeField({ label, hint, start, end, onChange, optional, minDate }) {
   const [open, setOpen] = useState(false)
   const summary =
-    start && end ? `${fmtShort(start)} → ${fmtShort(end)}` :
-    start        ? `${fmtShort(start)} → …` :
-                   'Select dates'
+    start && end
+      ? `${fmtShort(start)} → ${fmtShort(end)}`
+      : start
+        ? `${fmtShort(start)} → …`
+        : 'Select dates'
   return (
     <div>
       <div className="flex items-baseline justify-between mb-1">
         <span className="label">
-          {label}{optional && <span className="font-normal text-gray-400 ml-1">(optional)</span>}
+          {label}
+          {optional && <span className="font-normal text-gray-400 ml-1">(optional)</span>}
         </span>
         {hint && <span className="text-[10px] font-normal text-gray-400">{hint}</span>}
       </div>
-      <button type="button" onClick={() => setOpen(o => !o)}
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
         className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 transition-all ${
-          open ? 'border-lobster-teal bg-lobster-cream' : 'border-gray-200 bg-white hover:border-gray-300'
-        }`}>
+          open
+            ? 'border-lobster-teal bg-lobster-cream'
+            : 'border-gray-200 bg-white hover:border-gray-300'
+        }`}
+      >
         <Calendar size={14} className="text-lobster-teal flex-shrink-0" />
-        <span className={`flex-1 text-left text-sm ${start ? 'font-semibold text-gray-800' : 'text-gray-400'}`}>
+        <span
+          className={`flex-1 text-left text-sm ${start ? 'font-semibold text-gray-800' : 'text-gray-400'}`}
+        >
           {summary}
         </span>
-        {open ? <ChevronUp size={14} className="text-gray-400" /> : <ChevronDown size={14} className="text-gray-400" />}
+        {open ? (
+          <ChevronUp size={14} className="text-gray-400" />
+        ) : (
+          <ChevronDown size={14} className="text-gray-400" />
+        )}
       </button>
       {open && (
         <div className="mt-2">
@@ -179,19 +254,23 @@ function PhaseRangeField({ label, hint, start, end, onChange, optional, minDate 
 // Rendered inside collapsible sections so the page is scannable after a first read.
 const DEFAULT_SECTIONS = [
   {
-    id: 'welcome', icon: '🏆', title: 'Welcome to the League!',
+    id: 'welcome',
+    icon: '🏆',
+    title: 'Welcome to the League!',
     body: [
       "Join us this summer for the first edition of the Lobster League! Form your team and get ready for an exciting season of padel competition. You'll compete in a group stage where you'll play three matches against each team in your group, then advance to the playoff bracket where you could compete for the championship or silver title.",
       '',
       '**Why you should join:**',
-      '• 🏆 Competitive but friendly — Everyone plays to win, but we\'re all here for the love of the game',
+      "• 🏆 Competitive but friendly — Everyone plays to win, but we're all here for the love of the game",
       '• 📅 Flexible scheduling — You organize your matches around your life, not the other way around',
       '• 🥇 Everyone gets their moment — With gold and silver brackets, every team has something to play for',
-      '• 🎉 Community atmosphere — We\'ll bring everyone together for an exciting Finals Day where we can all cheer on the finalists',
+      "• 🎉 Community atmosphere — We'll bring everyone together for an exciting Finals Day where we can all cheer on the finalists",
     ].join('\n'),
   },
   {
-    id: 'how', icon: '📋', title: 'How It Works',
+    id: 'how',
+    icon: '📋',
+    title: 'How It Works',
     body: [
       '**Group Stage (5 weeks)**',
       '• Play in a small group of 4 teams',
@@ -202,7 +281,7 @@ const DEFAULT_SECTIONS = [
       '**Playoff Bracket (single elimination)**',
       '• Top 2 teams from each group → Gold Bracket (competing for the championship)',
       '• Bottom 2 teams from each group → Silver Bracket (competing for the silver title)',
-      '• One loss and you\'re out — every match matters',
+      "• One loss and you're out — every match matters",
       '',
       '**Divisions**',
       "• The league will feature a Men's Division and a Women's Division, provided there are sufficient sign-ups for each.",
@@ -213,9 +292,11 @@ const DEFAULT_SECTIONS = [
   // Once dates are saved on the league, the real dates render via
   // renderTimelineBody() below, replacing this generic text.
   {
-    id: 'timeline', icon: '🗓️', title: 'Season Timeline',
+    id: 'timeline',
+    icon: '🗓️',
+    title: 'Season Timeline',
     body: [
-      'Once the admin locks in the season calendar, you\'ll see the exact date range for each phase here. Meanwhile, the shape is:',
+      "Once the admin locks in the season calendar, you'll see the exact date range for each phase here. Meanwhile, the shape is:",
       '• Sign-up → deadline set by the admin',
       '• Group Stage (5 weeks) — 3 matches per team at your own pace',
       '• Quarterfinals (2 weeks) — only if the league hits 12+ teams per division',
@@ -224,7 +305,9 @@ const DEFAULT_SECTIONS = [
     ].join('\n'),
   },
   {
-    id: 'rules', icon: '⚔️', title: 'Match Rules',
+    id: 'rules',
+    icon: '⚔️',
+    title: 'Match Rules',
     body: [
       '**Match Format**',
       'All matches are best of 2 sets. If each team wins one set, a match tiebreak to 10 points (win by 2) decides the match.',
@@ -237,7 +320,9 @@ const DEFAULT_SECTIONS = [
     ].join('\n'),
   },
   {
-    id: 'scoring', icon: '📈', title: 'Scoring & Standings',
+    id: 'scoring',
+    icon: '📈',
+    title: 'Scoring & Standings',
     body: [
       '**Group Stage points:** Win = 1, Loss = 0.',
       '',
@@ -255,9 +340,11 @@ const DEFAULT_SECTIONS = [
     ].join('\n'),
   },
   {
-    id: 'finals', icon: '🏅', title: 'Finals Day',
+    id: 'finals',
+    icon: '🏅',
+    title: 'Finals Day',
     body: [
-      'We\'d like to host both the gold and silver finals on the same day at the same club so everyone can come out to support the finalists. Venue and date will be shared as we get closer.',
+      "We'd like to host both the gold and silver finals on the same day at the same club so everyone can come out to support the finalists. Venue and date will be shared as we get closer.",
       '',
       "**The organizer has the final say** on group formations, disputes, and rule interpretations. If a situation isn't covered here, we\'ll settle it in the spirit of fair play.",
     ].join('\n'),
@@ -265,9 +352,13 @@ const DEFAULT_SECTIONS = [
 ]
 
 const EXPERIENCE_LEVELS = [
-  { id: 'beginner',     label: 'Beginner',      hint: 'Building the fundamentals · KNLTB 9–8' },
-  { id: 'intermediate', label: 'Intermediate',  hint: 'Playing regularly, sustaining rallies · KNLTB 7–6' },
-  { id: 'advanced',     label: 'Advanced',      hint: 'Competing frequently · KNLTB 5 or lower' },
+  { id: 'beginner', label: 'Beginner', hint: 'Building the fundamentals · KNLTB 9–8' },
+  {
+    id: 'intermediate',
+    label: 'Intermediate',
+    hint: 'Playing regularly, sustaining rallies · KNLTB 7–6',
+  },
+  { id: 'advanced', label: 'Advanced', hint: 'Competing frequently · KNLTB 5 or lower' },
 ]
 
 // Very small markdown-ish line renderer so the admin can use **bold** and
@@ -275,27 +366,33 @@ const EXPERIENCE_LEVELS = [
 function inlineBold(text) {
   const parts = String(text).split(/(\*\*[^*]+\*\*)/g)
   return parts.map((p, i) =>
-    p.startsWith('**') && p.endsWith('**')
-      ? <strong key={i}>{p.slice(2, -2)}</strong>
-      : <React.Fragment key={i}>{p}</React.Fragment>
+    p.startsWith('**') && p.endsWith('**') ? (
+      <strong key={i}>{p.slice(2, -2)}</strong>
+    ) : (
+      <React.Fragment key={i}>{p}</React.Fragment>
+    ),
   )
 }
 function renderBody(body) {
   return body.split('\n').map((line, i) => {
     if (!line.trim()) return <div key={i} className="h-2" />
-    return <p key={i} className="text-sm text-gray-700 leading-relaxed">{inlineBold(line)}</p>
+    return (
+      <p key={i} className="text-sm text-gray-700 leading-relaxed">
+        {inlineBold(line)}
+      </p>
+    )
   })
 }
 
 // Pretty-print a phase date range ("25 May → 28 Jun"). Both missing → null.
 function fmtRange(start, end) {
-  const fmt = (d) => d
-    ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
-    : null
-  const s = fmt(start), e = fmt(end)
+  const fmt = (d) =>
+    d ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : null
+  const s = fmt(start),
+    e = fmt(end)
   if (!s && !e) return null
-  if (s && !e)  return s
-  if (!s && e)  return `until ${e}`
+  if (s && !e) return s
+  if (!s && e) return `until ${e}`
   return `${s} → ${e}`
 }
 
@@ -303,13 +400,16 @@ function fmtRange(start, end) {
 // Falls back to the generic DEFAULT_SECTIONS timeline when nothing's set.
 function renderTimeline(league) {
   const rows = [
-    ['📝 Sign-up',        league.signup_closes_at
-      ? `until ${new Date(league.signup_closes_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`
-      : null],
-    ['🏓 Group Stage',    fmtRange(league.group_stage_start, league.group_stage_end)],
-    ['🎯 Quarterfinals',  fmtRange(league.quarters_start,    league.quarters_end)],
-    ['⚡ Semifinals',      fmtRange(league.semis_start,       league.semis_end)],
-    ['🏆 Finals',         fmtRange(league.finals_start,      league.finals_end)],
+    [
+      '📝 Sign-up',
+      league.signup_closes_at
+        ? `until ${new Date(league.signup_closes_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`
+        : null,
+    ],
+    ['🏓 Group Stage', fmtRange(league.group_stage_start, league.group_stage_end)],
+    ['🎯 Quarterfinals', fmtRange(league.quarters_start, league.quarters_end)],
+    ['⚡ Semifinals', fmtRange(league.semis_start, league.semis_end)],
+    ['🏆 Finals', fmtRange(league.finals_start, league.finals_end)],
   ].filter(([, range]) => !!range)
   if (rows.length === 0) return null
   return (
@@ -321,7 +421,8 @@ function renderTimeline(league) {
         </div>
       ))}
       <p className="text-[11px] text-gray-400 pt-2">
-        About 1 match every 1–2 weeks in the group stage, tighter during playoffs. Quarterfinals only run if the league hits 12+ teams per division.
+        About 1 match every 1–2 weeks in the group stage, tighter during playoffs. Quarterfinals
+        only run if the league hits 12+ teams per division.
       </p>
     </div>
   )
@@ -355,10 +456,10 @@ function Countdown({ deadline }) {
 // pencil icon in the header, the section body swaps for a textarea that
 // calls onSave(newBody) on commit.
 function Section({ id, icon, title, children, defaultOpen, editable, currentBody, onSave }) {
-  const [open, setOpen]       = useState(!!defaultOpen)
+  const [open, setOpen] = useState(!!defaultOpen)
   const [editing, setEditing] = useState(false)
-  const [draft, setDraft]     = useState(currentBody ?? '')
-  const [busy, setBusy]       = useState(false)
+  const [draft, setDraft] = useState(currentBody ?? '')
+  const [busy, setBusy] = useState(false)
 
   const startEdit = (e) => {
     e.stopPropagation()
@@ -366,28 +467,43 @@ function Section({ id, icon, title, children, defaultOpen, editable, currentBody
     setEditing(true)
     setOpen(true)
   }
-  const cancelEdit = () => { setEditing(false); setDraft(currentBody ?? '') }
+  const cancelEdit = () => {
+    setEditing(false)
+    setDraft(currentBody ?? '')
+  }
   const commit = async () => {
     if (busy) return
     setBusy(true)
-    try { await onSave?.(draft); setEditing(false) }
-    finally { setBusy(false) }
+    try {
+      await onSave?.(draft)
+      setEditing(false)
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
     <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
-      <button onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+      >
         <span className="text-xl">{icon}</span>
         <span className="flex-1 font-bold text-gray-800 text-sm sm:text-base">{title}</span>
         {editable && !editing && (
-          <span onClick={startEdit}
+          <span
+            onClick={startEdit}
             className="text-lobster-teal p-1 hover:bg-lobster-cream rounded"
-            title="Edit this section">
+            title="Edit this section"
+          >
             <Pencil size={14} />
           </span>
         )}
-        {open ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
+        {open ? (
+          <ChevronUp size={16} className="text-gray-400" />
+        ) : (
+          <ChevronDown size={16} className="text-gray-400" />
+        )}
       </button>
       {open && (
         <div className="px-4 pb-4 pt-1 space-y-1.5 border-t border-gray-100">
@@ -397,24 +513,32 @@ function Section({ id, icon, title, children, defaultOpen, editable, currentBody
                 className="input font-mono text-xs"
                 rows={Math.max(6, Math.min(20, (draft || '').split('\n').length + 1))}
                 value={draft}
-                onChange={e => setDraft(e.target.value)}
+                onChange={(e) => setDraft(e.target.value)}
                 placeholder="Write this section's body. Use **bold** for emphasis, blank lines for spacing, and bullet lines starting with • for lists."
               />
               <p className="text-[10px] text-gray-400">
-                Supports <code>**bold**</code> and line breaks. Leave blank to revert to the default.
+                Supports <code>**bold**</code> and line breaks. Leave blank to revert to the
+                default.
               </p>
               <div className="flex gap-2">
-                <button onClick={cancelEdit}
-                  className="flex-1 py-2 text-sm font-semibold text-gray-500 bg-gray-50 rounded-xl">
+                <button
+                  onClick={cancelEdit}
+                  className="flex-1 py-2 text-sm font-semibold text-gray-500 bg-gray-50 rounded-xl"
+                >
                   Cancel
                 </button>
-                <button onClick={commit} disabled={busy}
-                  className="flex-1 py-2 text-sm font-bold text-white bg-lobster-teal rounded-xl flex items-center justify-center gap-1 disabled:opacity-50">
+                <button
+                  onClick={commit}
+                  disabled={busy}
+                  className="flex-1 py-2 text-sm font-bold text-white bg-lobster-teal rounded-xl flex items-center justify-center gap-1 disabled:opacity-50"
+                >
                   <Save size={12} /> {busy ? 'Saving…' : 'Save'}
                 </button>
               </div>
             </div>
-          ) : children}
+          ) : (
+            children
+          )}
         </div>
       )}
     </div>
@@ -427,40 +551,47 @@ function Section({ id, icon, title, children, defaultOpen, editable, currentBody
 // you'll have 12+ teams per division.
 function CreateLeagueForm({ onCancel, onCreated }) {
   const { createLeague } = useApp()
-  const [name, setName]         = useState('Summer 2026 Lobster League')
-  const [descr, setDescr]       = useState('')
-  const [deadline, setDeadline] = useState('')   // datetime-local
+  const [name, setName] = useState('Summer 2026 Lobster League')
+  const [descr, setDescr] = useState('')
+  const [deadline, setDeadline] = useState('') // datetime-local
   // Phase ranges — one [start, end] pair per phase.
-  const [gsStart, setGsStart]         = useState('')
-  const [gsEnd,   setGsEnd]           = useState('')
-  const [qfStart, setQfStart]         = useState('')
-  const [qfEnd,   setQfEnd]           = useState('')
-  const [sfStart, setSfStart]         = useState('')
-  const [sfEnd,   setSfEnd]           = useState('')
-  const [fStart,  setFStart]          = useState('')
-  const [fEnd,    setFEnd]            = useState('')
-  const [busy, setBusy]         = useState(false)
-  const [error, setError]       = useState('')
+  const [gsStart, setGsStart] = useState('')
+  const [gsEnd, setGsEnd] = useState('')
+  const [qfStart, setQfStart] = useState('')
+  const [qfEnd, setQfEnd] = useState('')
+  const [sfStart, setSfStart] = useState('')
+  const [sfEnd, setSfEnd] = useState('')
+  const [fStart, setFStart] = useState('')
+  const [fEnd, setFEnd] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!name.trim() || !deadline) { setError('Name and signup deadline are required'); return }
-    setBusy(true); setError('')
+    if (!name.trim() || !deadline) {
+      setError('Name and signup deadline are required')
+      return
+    }
+    setBusy(true)
+    setError('')
     const { error: err } = await createLeague({
       name: name.trim(),
       description_md: descr.trim(),
-      signup_closes_at:  new Date(deadline).toISOString(),
+      signup_closes_at: new Date(deadline).toISOString(),
       group_stage_start: gsStart || null,
-      group_stage_end:   gsEnd   || null,
-      quarters_start:    qfStart || null,
-      quarters_end:      qfEnd   || null,
-      semis_start:       sfStart || null,
-      semis_end:         sfEnd   || null,
-      finals_start:      fStart  || null,
-      finals_end:        fEnd    || null,
+      group_stage_end: gsEnd || null,
+      quarters_start: qfStart || null,
+      quarters_end: qfEnd || null,
+      semis_start: sfStart || null,
+      semis_end: sfEnd || null,
+      finals_start: fStart || null,
+      finals_end: fEnd || null,
     })
     setBusy(false)
-    if (err) { setError(err.message || 'Could not create league'); return }
+    if (err) {
+      setError(err.message || 'Could not create league')
+      return
+    }
     onCreated?.()
   }
 
@@ -476,50 +607,100 @@ function CreateLeagueForm({ onCancel, onCreated }) {
 
       <div>
         <label className="label">League name</label>
-        <input className="input" value={name} onChange={e => setName(e.target.value)} placeholder="Summer 2026 Lobster League" />
+        <input
+          className="input"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Summer 2026 Lobster League"
+        />
       </div>
 
       <div>
         <label className="label">Sign-up deadline</label>
-        <input type="datetime-local" className="input" value={deadline} onChange={e => setDeadline(e.target.value)} required />
-        <p className="text-[11px] text-gray-400 mt-1">After this moment, new interests are blocked and the page shows "Sign-up closed."</p>
+        <input
+          type="datetime-local"
+          className="input"
+          value={deadline}
+          onChange={(e) => setDeadline(e.target.value)}
+          required
+        />
+        <p className="text-[11px] text-gray-400 mt-1">
+          After this moment, new interests are blocked and the page shows "Sign-up closed."
+        </p>
       </div>
 
       <div className="space-y-3 pt-2 border-t border-gray-100">
         <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Phase dates</p>
         <PhaseRangeField
-          label="Group Stage"   hint="5 weeks"
-          start={gsStart} end={gsEnd}
-          onChange={({ start, end }) => { setGsStart(start || ''); setGsEnd(end || '') }}
+          label="Group Stage"
+          hint="5 weeks"
+          start={gsStart}
+          end={gsEnd}
+          onChange={({ start, end }) => {
+            setGsStart(start || '')
+            setGsEnd(end || '')
+          }}
         />
         <PhaseRangeField
-          label="Quarterfinals" hint="2 weeks, only with 12+ teams" optional
-          start={qfStart} end={qfEnd} minDate={gsEnd}
-          onChange={({ start, end }) => { setQfStart(start || ''); setQfEnd(end || '') }}
+          label="Quarterfinals"
+          hint="2 weeks, only with 12+ teams"
+          optional
+          start={qfStart}
+          end={qfEnd}
+          minDate={gsEnd}
+          onChange={({ start, end }) => {
+            setQfStart(start || '')
+            setQfEnd(end || '')
+          }}
         />
         <PhaseRangeField
-          label="Semifinals"    hint="2 weeks"
-          start={sfStart} end={sfEnd} minDate={qfEnd || gsEnd}
-          onChange={({ start, end }) => { setSfStart(start || ''); setSfEnd(end || '') }}
+          label="Semifinals"
+          hint="2 weeks"
+          start={sfStart}
+          end={sfEnd}
+          minDate={qfEnd || gsEnd}
+          onChange={({ start, end }) => {
+            setSfStart(start || '')
+            setSfEnd(end || '')
+          }}
         />
         <PhaseRangeField
-          label="Finals"        hint="Finals day"
-          start={fStart} end={fEnd} minDate={sfEnd || qfEnd || gsEnd}
-          onChange={({ start, end }) => { setFStart(start || ''); setFEnd(end || '') }}
+          label="Finals"
+          hint="Finals day"
+          start={fStart}
+          end={fEnd}
+          minDate={sfEnd || qfEnd || gsEnd}
+          onChange={({ start, end }) => {
+            setFStart(start || '')
+            setFEnd(end || '')
+          }}
         />
       </div>
 
       <div>
         <label className="label">Description (optional — overrides the default intro)</label>
-        <textarea className="input text-xs font-mono" rows={4} value={descr} onChange={e => setDescr(e.target.value)}
-          placeholder="Leave empty to use the default league intro." />
+        <textarea
+          className="input text-xs font-mono"
+          rows={4}
+          value={descr}
+          onChange={(e) => setDescr(e.target.value)}
+          placeholder="Leave empty to use the default league intro."
+        />
       </div>
       {error && <p className="text-xs text-red-500">{error}</p>}
       <div className="flex gap-2">
-        <button type="button" onClick={onCancel}
-          className="flex-1 py-2.5 rounded-xl text-sm text-gray-500 font-semibold">Cancel</button>
-        <button type="submit" disabled={busy}
-          className="btn-primary flex-1 py-2.5 text-sm disabled:opacity-50">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="flex-1 py-2.5 rounded-xl text-sm text-gray-500 font-semibold"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          disabled={busy}
+          className="btn-primary flex-1 py-2.5 text-sm disabled:opacity-50"
+        >
           {busy ? 'Creating…' : 'Create league'}
         </button>
       </div>
@@ -532,47 +713,85 @@ function InviteModal({ league, invitee, onClose, onSent }) {
   const { proposeLeagueTeam, leagueInterests } = useApp()
   const [teamName, setTeamName] = useState('')
   const [teamSong, setTeamSong] = useState('')
-  const [busy, setBusy]         = useState(false)
-  const [error, setError]       = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
 
   if (!invitee) return null
-  const myInterest = leagueInterests.find(i => String(i.league_id) === String(league.id))
+  const myInterest = leagueInterests.find((i) => String(i.league_id) === String(league.id))
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!teamName.trim()) { setError('Team name is required'); return }
-    setBusy(true); setError('')
+    if (!teamName.trim()) {
+      setError('Team name is required')
+      return
+    }
+    setBusy(true)
+    setError('')
     const { error: err } = await proposeLeagueTeam(
-      league.id, invitee.id, teamName.trim(), teamSong.trim(),
+      league.id,
+      invitee.id,
+      teamName.trim(),
+      teamSong.trim(),
       invitee.division || myInterest?.division || 'open',
       myInterest?.experience_level || null,
     )
     setBusy(false)
-    if (err) { setError(err.message || 'Could not send invite'); return }
+    if (err) {
+      setError(err.message || 'Could not send invite')
+      return
+    }
     onSent?.()
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center" onClick={onClose}>
-      <div className="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-sm p-5 space-y-3" onClick={e => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-sm p-5 space-y-3"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between">
           <h3 className="font-bold text-gray-800">Invite {invitee.name?.split(' ')[0]}</h3>
-          <button onClick={onClose}><X size={20} className="text-gray-400" /></button>
+          <button onClick={onClose}>
+            <X size={20} className="text-gray-400" />
+          </button>
         </div>
         <p className="text-xs text-gray-500">
-          Propose a team name + song. Once {invitee.name?.split(' ')[0]} accepts, you'll be locked in as partners.
+          Propose a team name + song. Once {invitee.name?.split(' ')[0]} accepts, you'll be locked
+          in as partners.
         </p>
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
-            <label className="label flex items-center gap-1"><Users size={12} /> Team name</label>
-            <input className="input" value={teamName} onChange={e => setTeamName(e.target.value)} placeholder="e.g. Smash & Grab" required />
+            <label className="label flex items-center gap-1">
+              <Users size={12} /> Team name
+            </label>
+            <input
+              className="input"
+              value={teamName}
+              onChange={(e) => setTeamName(e.target.value)}
+              placeholder="e.g. Smash & Grab"
+              required
+            />
           </div>
           <div>
-            <label className="label flex items-center gap-1"><Music size={12} /> Team song (optional)</label>
-            <input className="input" value={teamSong} onChange={e => setTeamSong(e.target.value)} placeholder="e.g. Eye of the Tiger" />
+            <label className="label flex items-center gap-1">
+              <Music size={12} /> Team song (optional)
+            </label>
+            <input
+              className="input"
+              value={teamSong}
+              onChange={(e) => setTeamSong(e.target.value)}
+              placeholder="e.g. Eye of the Tiger"
+            />
           </div>
           {error && <p className="text-xs text-red-500">{error}</p>}
-          <button type="submit" disabled={busy} className="btn-primary w-full py-2.5 text-sm disabled:opacity-50">
+          <button
+            type="submit"
+            disabled={busy}
+            className="btn-primary w-full py-2.5 text-sm disabled:opacity-50"
+          >
             {busy ? 'Sending…' : 'Send invite'}
           </button>
         </form>
@@ -584,10 +803,19 @@ function InviteModal({ league, invitee, onClose, onSent }) {
 // ── Main component ────────────────────────────────────────────────────────
 export default function League({ onNavigate }) {
   const {
-    isAdmin, isLeagueAdmin, claimedId, players,
-    leagues, leagueInterests, leagueTeams,
-    registerLeagueInterest, withdrawLeagueInterest, respondLeagueTeam,
-    deleteLeague, updateLeague, dissolveLeagueTeam,
+    isAdmin,
+    isLeagueAdmin,
+    claimedId,
+    players,
+    leagues,
+    leagueInterests,
+    leagueTeams,
+    registerLeagueInterest,
+    withdrawLeagueInterest,
+    respondLeagueTeam,
+    deleteLeague,
+    updateLeague,
+    dissolveLeagueTeam,
   } = useApp()
 
   // League Admin has the same scoped privileges as a full admin, but only
@@ -599,60 +827,80 @@ export default function League({ onNavigate }) {
   // Remove or replace with the `league.visibility === 'all'` check once
   // signups open to the whole group.
   const TEST_PLAYER_FIRST_NAMES = ['zornitsa', 'jon', 'uziel']
-  const meForView = claimedId ? players.find(p => String(p.id) === String(claimedId)) : null
+  const meForView = claimedId ? players.find((p) => String(p.id) === String(claimedId)) : null
   const myFirstName = (meForView?.name || '').trim().split(/\s+/)[0]?.toLowerCase() || ''
   const isTestPlayer = myFirstName && TEST_PLAYER_FIRST_NAMES.includes(myFirstName)
 
   const [creatingLeague, setCreatingLeague] = useState(false)
-  const [inviteTarget,   setInviteTarget]   = useState(null)
-  const [myLevel,        setMyLevel]        = useState('intermediate')
-  const [agreed,         setAgreed]         = useState(false)
-  const [registerError,  setRegisterError]  = useState('')
+  const [inviteTarget, setInviteTarget] = useState(null)
+  const [myLevel, setMyLevel] = useState('intermediate')
+  const [agreed, setAgreed] = useState(false)
+  const [registerError, setRegisterError] = useState('')
 
   // For now we work with the newest league. If the admin has multiple
   // leagues in the DB we just surface the most recent signups-open one.
   const league = useMemo(() => {
     if (leagues.length === 0) return null
     // Prefer an active league (signups_open or group_stage), otherwise newest.
-    const active = leagues.find(l => l.status === 'signups_open' || l.status === 'group_stage')
+    const active = leagues.find((l) => l.status === 'signups_open' || l.status === 'group_stage')
     return active || leagues[0]
   }, [leagues])
 
-  const me = claimedId ? players.find(p => String(p.id) === String(claimedId)) : null
-  const myInterest = league && claimedId
-    ? leagueInterests.find(i => String(i.league_id) === String(league.id) && String(i.player_id) === String(claimedId))
-    : null
+  const me = claimedId ? players.find((p) => String(p.id) === String(claimedId)) : null
+  const myInterest =
+    league && claimedId
+      ? leagueInterests.find(
+          (i) =>
+            String(i.league_id) === String(league.id) && String(i.player_id) === String(claimedId),
+        )
+      : null
 
   // Teams for the current league, grouped by status.
   const teamsForLeague = league
-    ? leagueTeams.filter(t => String(t.league_id) === String(league.id))
+    ? leagueTeams.filter((t) => String(t.league_id) === String(league.id))
     : []
-  const confirmedTeams = teamsForLeague.filter(t => t.status === 'confirmed')
-  const myPendingSent = teamsForLeague.filter(t => t.status === 'pending' && String(t.proposer_id) === String(claimedId))
-  const myPendingRecv = teamsForLeague.filter(t => t.status === 'pending' && String(t.invitee_id) === String(claimedId))
+  const confirmedTeams = teamsForLeague.filter((t) => t.status === 'confirmed')
+  const myPendingSent = teamsForLeague.filter(
+    (t) => t.status === 'pending' && String(t.proposer_id) === String(claimedId),
+  )
+  const myPendingRecv = teamsForLeague.filter(
+    (t) => t.status === 'pending' && String(t.invitee_id) === String(claimedId),
+  )
 
   // Interests in my division who haven't been matched yet — the "find a
   // partner" pool. Only show players of the same division as me.
-  const partnerPool = (league && myInterest)
-    ? leagueInterests
-        .filter(i =>
-          String(i.league_id) === String(league.id) &&
-          i.status === 'looking' &&
-          i.division === myInterest.division &&
-          String(i.player_id) !== String(claimedId)
-        )
-        .map(i => {
-          const p = players.find(pp => String(pp.id) === String(i.player_id))
-          return p ? { ...p, division: i.division, experience_level: i.experience_level, interestId: i.id } : null
-        })
-        .filter(Boolean)
-    : []
+  const partnerPool =
+    league && myInterest
+      ? leagueInterests
+          .filter(
+            (i) =>
+              String(i.league_id) === String(league.id) &&
+              i.status === 'looking' &&
+              i.division === myInterest.division &&
+              String(i.player_id) !== String(claimedId),
+          )
+          .map((i) => {
+            const p = players.find((pp) => String(pp.id) === String(i.player_id))
+            return p
+              ? {
+                  ...p,
+                  division: i.division,
+                  experience_level: i.experience_level,
+                  interestId: i.id,
+                }
+              : null
+          })
+          .filter(Boolean)
+      : []
 
-  const nameOf = (id) => players.find(p => String(p.id) === String(id))?.name || '?'
+  const nameOf = (id) => players.find((p) => String(p.id) === String(id))?.name || '?'
 
   const handleRegister = async () => {
     setRegisterError('')
-    if (!agreed) { setRegisterError('Please confirm you agree to the league rules'); return }
+    if (!agreed) {
+      setRegisterError('Please confirm you agree to the league rules')
+      return
+    }
     const { error, division } = await registerLeagueInterest(league.id, myLevel)
     if (error) setRegisterError(error.message || 'Could not register interest')
   }
@@ -666,7 +914,10 @@ export default function League({ onNavigate }) {
       <div className="card py-10 text-center text-gray-400">
         <Trophy size={36} className="mx-auto mb-2 opacity-30" />
         <p className="text-sm">Leagues coming soon!</p>
-        <button onClick={() => onNavigate?.('tournament')} className="btn-primary mt-4 py-2 px-5 text-sm">
+        <button
+          onClick={() => onNavigate?.('tournament')}
+          className="btn-primary mt-4 py-2 px-5 text-sm"
+        >
           Back to Events
         </button>
       </div>
@@ -677,33 +928,45 @@ export default function League({ onNavigate }) {
     return (
       <div className="space-y-4">
         <div>
-          <button onClick={() => onNavigate?.('tournament')}
-            className="flex items-center gap-1 text-lobster-teal text-sm font-semibold mb-2">
+          <button
+            onClick={() => onNavigate?.('tournament')}
+            className="flex items-center gap-1 text-lobster-teal text-sm font-semibold mb-2"
+          >
             <ChevronLeft size={16} /> Events
           </button>
           <h2 className="text-lg font-bold text-gray-800">Lobster League</h2>
-          <p className="text-sm text-gray-500">No league set up yet. Create one to open sign-ups.</p>
+          <p className="text-sm text-gray-500">
+            No league set up yet. Create one to open sign-ups.
+          </p>
         </div>
-        {creatingLeague
-          ? <CreateLeagueForm onCancel={() => setCreatingLeague(false)} onCreated={() => setCreatingLeague(false)} />
-          : (
-            <button onClick={() => setCreatingLeague(true)}
-              className="btn-primary w-full flex items-center justify-center gap-2 py-3">
-              <Plus size={16} /> Create a league
-            </button>
-          )}
+        {creatingLeague ? (
+          <CreateLeagueForm
+            onCancel={() => setCreatingLeague(false)}
+            onCreated={() => setCreatingLeague(false)}
+          />
+        ) : (
+          <button
+            onClick={() => setCreatingLeague(true)}
+            className="btn-primary w-full flex items-center justify-center gap-2 py-3"
+          >
+            <Plus size={16} /> Create a league
+          </button>
+        )}
       </div>
     )
   }
 
-  const signupClosed = league.signup_closes_at && new Date(league.signup_closes_at).getTime() < Date.now()
+  const signupClosed =
+    league.signup_closes_at && new Date(league.signup_closes_at).getTime() < Date.now()
 
   return (
     <div className="space-y-4 pb-12">
       {/* Header */}
       <div>
-        <button onClick={() => onNavigate?.('tournament')}
-          className="flex items-center gap-1 text-lobster-teal text-sm font-semibold mb-2">
+        <button
+          onClick={() => onNavigate?.('tournament')}
+          className="flex items-center gap-1 text-lobster-teal text-sm font-semibold mb-2"
+        >
           <ChevronLeft size={16} /> Events
         </button>
         <div className="rounded-3xl bg-gradient-to-br from-lobster-teal to-teal-700 text-white p-5 shadow-md">
@@ -714,24 +977,30 @@ export default function League({ onNavigate }) {
             {(() => {
               // Anchor the tile to the first meaningful day of the league:
               // group stage start if set, otherwise the sign-up deadline.
-              const tileDate = league.group_stage_start
-                || (league.signup_closes_at ? new Date(league.signup_closes_at).toISOString().slice(0, 10) : null)
-                || league.starts_at
+              const tileDate =
+                league.group_stage_start ||
+                (league.signup_closes_at
+                  ? new Date(league.signup_closes_at).toISOString().slice(0, 10)
+                  : null) ||
+                league.starts_at
               return tileDate ? <DateTile date={tileDate} size="md" /> : null
             })()}
             <div className="flex-1 min-w-0">
-              <p className="text-[11px] font-bold uppercase tracking-widest opacity-80">Lobster League</p>
+              <p className="text-[11px] font-bold uppercase tracking-widest opacity-80">
+                Lobster League
+              </p>
               <h1 className="text-xl sm:text-2xl font-extrabold leading-tight">{league.name}</h1>
               {(() => {
                 // Full season range: group stage start → finals end. Show
                 // whichever endpoints are defined; omit gracefully if both
                 // are blank.
                 const rangeStart = league.group_stage_start || league.starts_at
-                const rangeEnd   = league.finals_end || league.ends_at
+                const rangeEnd = league.finals_end || league.ends_at
                 if (!rangeStart && !rangeEnd) return null
-                const fmt = (d) => d
-                  ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
-                  : '…'
+                const fmt = (d) =>
+                  d
+                    ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+                    : '…'
                 return (
                   <p className="text-sm font-semibold mt-1 flex items-center gap-1 opacity-90">
                     <Calendar size={13} /> {fmt(rangeStart)} – {fmt(rangeEnd)}
@@ -746,7 +1015,11 @@ export default function League({ onNavigate }) {
           </div>
           {league.signup_closes_at && (
             <p className="mt-2 text-xs bg-yellow-300 text-gray-900 inline-block px-3 py-1 rounded-full font-semibold shadow-sm">
-              Sign-up closes on {new Date(league.signup_closes_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+              Sign-up closes on{' '}
+              {new Date(league.signup_closes_at).toLocaleDateString('en-GB', {
+                day: 'numeric',
+                month: 'short',
+              })}
               {' · '}
               <Countdown deadline={league.signup_closes_at} />
             </p>
@@ -761,21 +1034,36 @@ export default function League({ onNavigate }) {
             ⚙️ Admin controls
           </summary>
           <div className="p-3 space-y-2">
-            <p className="text-[11px] text-gray-500">Visibility: <span className="font-semibold">{league.visibility || 'admin'}</span> (players won't see this until you flip to "all").</p>
+            <p className="text-[11px] text-gray-500">
+              Visibility: <span className="font-semibold">{league.visibility || 'admin'}</span>{' '}
+              (players won't see this until you flip to "all").
+            </p>
             <div className="flex gap-2 flex-wrap">
-              <button onClick={() => updateLeague(league.id, { visibility: league.visibility === 'all' ? 'admin' : 'all' })}
-                className="text-xs font-semibold px-3 py-1.5 bg-white border border-gray-200 rounded-lg">
+              <button
+                onClick={() =>
+                  updateLeague(league.id, {
+                    visibility: league.visibility === 'all' ? 'admin' : 'all',
+                  })
+                }
+                className="text-xs font-semibold px-3 py-1.5 bg-white border border-gray-200 rounded-lg"
+              >
                 Toggle visibility → {league.visibility === 'all' ? 'admin only' : 'all players'}
               </button>
-              <button onClick={() => { if (confirm('Delete this league and all its sign-ups + teams?')) deleteLeague(league.id) }}
-                className="text-xs font-semibold px-3 py-1.5 text-red-600 border border-red-200 rounded-lg">
+              <button
+                onClick={() => {
+                  if (confirm('Delete this league and all its sign-ups + teams?'))
+                    deleteLeague(league.id)
+                }}
+                className="text-xs font-semibold px-3 py-1.5 text-red-600 border border-red-200 rounded-lg"
+              >
                 Delete league
               </button>
             </div>
             <p className="text-[11px] text-gray-500 pt-2 border-t border-gray-100">
-              {leagueInterests.filter(i => String(i.league_id) === String(league.id)).length} interests registered
+              {leagueInterests.filter((i) => String(i.league_id) === String(league.id)).length}{' '}
+              interests registered
               {' · '}
-              {teamsForLeague.filter(t => t.status === 'pending').length} pending invites
+              {teamsForLeague.filter((t) => t.status === 'pending').length} pending invites
               {' · '}
               {confirmedTeams.length} teams confirmed
             </p>
@@ -788,134 +1076,171 @@ export default function League({ onNavigate }) {
           their partner + team name when matched. Only visible to admins /
           league admins, so it stays out of players' way.
       */}
-      {canAdminLeague && (() => {
-        const all = leagueInterests.filter(i => String(i.league_id) === String(league.id))
-        if (all.length === 0) return null
-        const byDivision = all.reduce((acc, i) => {
-          (acc[i.division] ??= []).push(i)
-          return acc
-        }, {})
-        // Stable division ordering: Men's, Women's, Open (if present).
-        const divOrder = ['mens', 'womens', 'open']
-        const divLabel = (d) => d === 'mens' ? "Men's Division" : d === 'womens' ? "Women's Division" : 'Open Division'
+      {canAdminLeague &&
+        (() => {
+          const all = leagueInterests.filter((i) => String(i.league_id) === String(league.id))
+          if (all.length === 0) return null
+          const byDivision = all.reduce((acc, i) => {
+            ;(acc[i.division] ??= []).push(i)
+            return acc
+          }, {})
+          // Stable division ordering: Men's, Women's, Open (if present).
+          const divOrder = ['mens', 'womens', 'open']
+          const divLabel = (d) =>
+            d === 'mens' ? "Men's Division" : d === 'womens' ? "Women's Division" : 'Open Division'
 
-        // Quick lookup: for each matched player, find the confirmed team
-        // so we can show "paired with X — Team Y".
-        const teamForPlayer = (pid) => confirmedTeams.find(t =>
-          String(t.proposer_id) === String(pid) || String(t.invitee_id) === String(pid)
-        )
+          // Quick lookup: for each matched player, find the confirmed team
+          // so we can show "paired with X — Team Y".
+          const teamForPlayer = (pid) =>
+            confirmedTeams.find(
+              (t) => String(t.proposer_id) === String(pid) || String(t.invitee_id) === String(pid),
+            )
 
-        return (
-          <details className="bg-white border border-gray-200 rounded-2xl" open>
-            <summary className="cursor-pointer px-3 py-2 text-sm font-semibold text-gray-700 flex items-center justify-between">
-              <span>🔍 Admin overview — all sign-ups</span>
-              <span className="text-[11px] font-normal text-gray-400">{all.length} total</span>
-            </summary>
-            <div className="p-3 space-y-4 border-t border-gray-100">
-              {divOrder.filter(d => byDivision[d]?.length).map(d => {
-                const rows  = byDivision[d]
-                const looking = rows.filter(r => r.status === 'looking')
-                const matched = rows.filter(r => r.status === 'matched')
-                const withdrew = rows.filter(r => r.status === 'withdrawn')
-                return (
-                  <div key={d} className="space-y-2">
-                    <p className="text-xs font-bold uppercase tracking-wide text-lobster-teal">
-                      {divLabel(d)} <span className="text-gray-400 font-normal">({rows.length})</span>
-                    </p>
+          return (
+            <details className="bg-white border border-gray-200 rounded-2xl" open>
+              <summary className="cursor-pointer px-3 py-2 text-sm font-semibold text-gray-700 flex items-center justify-between">
+                <span>🔍 Admin overview — all sign-ups</span>
+                <span className="text-[11px] font-normal text-gray-400">{all.length} total</span>
+              </summary>
+              <div className="p-3 space-y-4 border-t border-gray-100">
+                {divOrder
+                  .filter((d) => byDivision[d]?.length)
+                  .map((d) => {
+                    const rows = byDivision[d]
+                    const looking = rows.filter((r) => r.status === 'looking')
+                    const matched = rows.filter((r) => r.status === 'matched')
+                    const withdrew = rows.filter((r) => r.status === 'withdrawn')
+                    return (
+                      <div key={d} className="space-y-2">
+                        <p className="text-xs font-bold uppercase tracking-wide text-lobster-teal">
+                          {divLabel(d)}{' '}
+                          <span className="text-gray-400 font-normal">({rows.length})</span>
+                        </p>
 
-                    {/* Matched pairs — one row per team instead of one row
+                        {/* Matched pairs — one row per team instead of one row
                         per player, so "Jon & Uziel · Team The Claws"
                         appears once rather than duplicated for each side. */}
-                    {matched.length > 0 && (() => {
-                      // Gather distinct teams in this division where both
-                      // players are in the `matched` bucket. Use a Set on
-                      // team id to de-duplicate.
-                      const seen = new Set()
-                      const teamsInDiv = []
-                      matched.forEach(r => {
-                        const t = teamForPlayer(r.player_id)
-                        if (t && !seen.has(t.id)) { seen.add(t.id); teamsInDiv.push(t) }
-                      })
-                      return (
-                        <div className="space-y-1">
-                          {teamsInDiv.map(t => (
-                            <div key={t.id} className="flex items-center gap-2 text-xs bg-green-50 border border-green-100 rounded-lg px-2.5 py-1.5">
-                              <Check size={12} className="text-green-600 flex-shrink-0" />
-                              <span className="flex-1 min-w-0 truncate">
-                                <span className="font-semibold text-gray-800">
-                                  {nameOf(t.proposer_id)} & {nameOf(t.invitee_id)}
-                                </span>
-                                <span className="text-green-700 font-semibold"> · Team {t.team_name}</span>
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      )
-                    })()}
+                        {matched.length > 0 &&
+                          (() => {
+                            // Gather distinct teams in this division where both
+                            // players are in the `matched` bucket. Use a Set on
+                            // team id to de-duplicate.
+                            const seen = new Set()
+                            const teamsInDiv = []
+                            matched.forEach((r) => {
+                              const t = teamForPlayer(r.player_id)
+                              if (t && !seen.has(t.id)) {
+                                seen.add(t.id)
+                                teamsInDiv.push(t)
+                              }
+                            })
+                            return (
+                              <div className="space-y-1">
+                                {teamsInDiv.map((t) => (
+                                  <div
+                                    key={t.id}
+                                    className="flex items-center gap-2 text-xs bg-green-50 border border-green-100 rounded-lg px-2.5 py-1.5"
+                                  >
+                                    <Check size={12} className="text-green-600 flex-shrink-0" />
+                                    <span className="flex-1 min-w-0 truncate">
+                                      <span className="font-semibold text-gray-800">
+                                        {nameOf(t.proposer_id)} & {nameOf(t.invitee_id)}
+                                      </span>
+                                      <span className="text-green-700 font-semibold">
+                                        {' '}
+                                        · Team {t.team_name}
+                                      </span>
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            )
+                          })()}
 
-                    {/* Still looking — admin may want to nudge them */}
-                    {looking.length > 0 && (
-                      <div className="space-y-1">
-                        {looking.map(r => {
-                          const p = players.find(pp => String(pp.id) === String(r.player_id))
-                          return (
-                            <div key={r.id} className="flex items-center gap-2 text-xs bg-amber-50 border border-amber-100 rounded-lg px-2.5 py-1.5">
-                              <Clock size={12} className="text-amber-600 flex-shrink-0" />
-                              <span className="flex-1 min-w-0 truncate">
-                                <span className="font-semibold text-gray-800">{p?.name || '?'}</span>
-                                {' — looking for a partner'}
-                                {r.experience_level && <span className="text-gray-500"> · {r.experience_level}</span>}
-                              </span>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    )}
+                        {/* Still looking — admin may want to nudge them */}
+                        {looking.length > 0 && (
+                          <div className="space-y-1">
+                            {looking.map((r) => {
+                              const p = players.find((pp) => String(pp.id) === String(r.player_id))
+                              return (
+                                <div
+                                  key={r.id}
+                                  className="flex items-center gap-2 text-xs bg-amber-50 border border-amber-100 rounded-lg px-2.5 py-1.5"
+                                >
+                                  <Clock size={12} className="text-amber-600 flex-shrink-0" />
+                                  <span className="flex-1 min-w-0 truncate">
+                                    <span className="font-semibold text-gray-800">
+                                      {p?.name || '?'}
+                                    </span>
+                                    {' — looking for a partner'}
+                                    {r.experience_level && (
+                                      <span className="text-gray-500"> · {r.experience_level}</span>
+                                    )}
+                                  </span>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        )}
 
-                    {/* Withdrew — greyed so admin knows they're no longer in */}
-                    {withdrew.length > 0 && (
-                      <div className="space-y-1 opacity-60">
-                        {withdrew.map(r => {
-                          const p = players.find(pp => String(pp.id) === String(r.player_id))
-                          return (
-                            <div key={r.id} className="flex items-center gap-2 text-xs bg-gray-50 rounded-lg px-2.5 py-1.5">
-                              <X size={12} className="text-gray-400 flex-shrink-0" />
-                              <span className="flex-1 min-w-0 truncate">
-                                <span className="font-semibold text-gray-500 line-through">{p?.name || '?'}</span>
-                                {' — withdrew'}
-                              </span>
-                            </div>
-                          )
-                        })}
+                        {/* Withdrew — greyed so admin knows they're no longer in */}
+                        {withdrew.length > 0 && (
+                          <div className="space-y-1 opacity-60">
+                            {withdrew.map((r) => {
+                              const p = players.find((pp) => String(pp.id) === String(r.player_id))
+                              return (
+                                <div
+                                  key={r.id}
+                                  className="flex items-center gap-2 text-xs bg-gray-50 rounded-lg px-2.5 py-1.5"
+                                >
+                                  <X size={12} className="text-gray-400 flex-shrink-0" />
+                                  <span className="flex-1 min-w-0 truncate">
+                                    <span className="font-semibold text-gray-500 line-through">
+                                      {p?.name || '?'}
+                                    </span>
+                                    {' — withdrew'}
+                                  </span>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          </details>
-        )
-      })()}
+                    )
+                  })}
+              </div>
+            </details>
+          )
+        })()}
 
       {/* Pending invites TO me — top priority, so I can act on them */}
       {myPendingRecv.length > 0 && (
         <div className="space-y-2">
-          {myPendingRecv.map(t => (
+          {myPendingRecv.map((t) => (
             <div key={t.id} className="bg-yellow-50 border border-yellow-200 rounded-2xl p-4">
               <p className="text-sm font-bold text-yellow-900">
                 💌 {nameOf(t.proposer_id)?.split(' ')[0]} wants to team up
               </p>
               <p className="text-xs text-yellow-800 mt-1">
                 Proposed team: <span className="font-semibold">{t.team_name}</span>
-                {t.team_song ? <> · song: <em>{t.team_song}</em></> : null}
+                {t.team_song ? (
+                  <>
+                    {' '}
+                    · song: <em>{t.team_song}</em>
+                  </>
+                ) : null}
               </p>
               <div className="flex gap-2 mt-3">
-                <button onClick={() => respondLeagueTeam(t.id, true)}
-                  className="flex-1 bg-green-600 text-white text-sm font-bold py-2 rounded-xl active:scale-95 transition-all flex items-center justify-center gap-1">
+                <button
+                  onClick={() => respondLeagueTeam(t.id, true)}
+                  className="flex-1 bg-green-600 text-white text-sm font-bold py-2 rounded-xl active:scale-95 transition-all flex items-center justify-center gap-1"
+                >
                   <Check size={14} /> Accept
                 </button>
-                <button onClick={() => respondLeagueTeam(t.id, false)}
-                  className="flex-1 bg-white border border-red-200 text-red-600 text-sm font-semibold py-2 rounded-xl active:scale-95 transition-all">
+                <button
+                  onClick={() => respondLeagueTeam(t.id, false)}
+                  className="flex-1 bg-white border border-red-200 text-red-600 text-sm font-semibold py-2 rounded-xl active:scale-95 transition-all"
+                >
                   Decline
                 </button>
               </div>
@@ -938,10 +1263,10 @@ export default function League({ onNavigate }) {
                 <AlertCircle size={16} /> Signed in as admin, not as a player
               </p>
               <p className="text-xs text-gray-600 mt-2 leading-snug">
-                Admin PIN and player PIN are separate identities. If you want to
-                register <em>yourself</em> for the league, sign out from Settings →
-                Account and sign in again with your personal player PIN. Admin
-                access comes back automatically when you use the admin PIN.
+                Admin PIN and player PIN are separate identities. If you want to register{' '}
+                <em>yourself</em> for the league, sign out from Settings → Account and sign in again
+                with your personal player PIN. Admin access comes back automatically when you use
+                the admin PIN.
               </p>
             </div>
           )
@@ -954,7 +1279,9 @@ export default function League({ onNavigate }) {
         <div className="card space-y-3">
           <p className="font-bold text-gray-700 flex items-center gap-2">
             <Heart size={16} className="text-lobster-teal" />
-            {myInterest?.status === 'withdrawn' ? 'Changed your mind? Register again' : 'Register your interest'}
+            {myInterest?.status === 'withdrawn'
+              ? 'Changed your mind? Register again'
+              : 'Register your interest'}
           </p>
           <p className="text-xs text-gray-500">
             {myInterest?.status === 'withdrawn'
@@ -964,13 +1291,22 @@ export default function League({ onNavigate }) {
           <div>
             <label className="label">Experience level</label>
             <div className="space-y-2">
-              {EXPERIENCE_LEVELS.map(lvl => (
-                <label key={lvl.id}
+              {EXPERIENCE_LEVELS.map((lvl) => (
+                <label
+                  key={lvl.id}
                   className={`flex items-start gap-3 p-3 border-2 rounded-xl cursor-pointer transition-all ${
-                    myLevel === lvl.id ? 'border-lobster-teal bg-lobster-cream' : 'border-gray-100 bg-gray-50'
-                  }`}>
-                  <input type="radio" name="level" checked={myLevel === lvl.id}
-                    onChange={() => setMyLevel(lvl.id)} className="mt-0.5" />
+                    myLevel === lvl.id
+                      ? 'border-lobster-teal bg-lobster-cream'
+                      : 'border-gray-100 bg-gray-50'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="level"
+                    checked={myLevel === lvl.id}
+                    onChange={() => setMyLevel(lvl.id)}
+                    className="mt-0.5"
+                  />
                   <div>
                     <p className="text-sm font-semibold text-gray-800">{lvl.label}</p>
                     <p className="text-xs text-gray-500">{lvl.hint}</p>
@@ -980,14 +1316,24 @@ export default function League({ onNavigate }) {
             </div>
           </div>
           <label className="flex items-start gap-2 text-xs text-gray-600">
-            <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)} className="mt-0.5" />
+            <input
+              type="checkbox"
+              checked={agreed}
+              onChange={(e) => setAgreed(e.target.checked)}
+              className="mt-0.5"
+            />
             <span>I've read the league rules and agree to the code of conduct.</span>
           </label>
           {registerError && <p className="text-xs text-red-500">{registerError}</p>}
-          <button onClick={handleRegister} disabled={!agreed}
-            className="w-full py-3 rounded-2xl font-bold text-base text-white bg-orange-500 hover:bg-orange-600 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 disabled:hover:bg-orange-500">
+          <button
+            onClick={handleRegister}
+            disabled={!agreed}
+            className="w-full py-3 rounded-2xl font-bold text-base text-white bg-orange-500 hover:bg-orange-600 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 disabled:hover:bg-orange-500"
+          >
             <UserPlus size={16} />
-            {myInterest?.status === 'withdrawn' ? "Count me back in" : "I'm interested — register me"}
+            {myInterest?.status === 'withdrawn'
+              ? 'Count me back in'
+              : "I'm interested — register me"}
           </button>
         </div>
       )}
@@ -998,75 +1344,110 @@ export default function League({ onNavigate }) {
           <div className="bg-green-50 border border-green-200 rounded-2xl p-3 flex items-center gap-2">
             <Check size={16} className="text-green-600 flex-shrink-0" />
             <p className="text-sm text-green-700 flex-1">
-              You're on the list ({myInterest.division === 'mens' ? "Men's" : myInterest.division === 'womens' ? "Women's" : 'Open'} Division
-              {' · '}{myInterest.experience_level}). Now find a partner below.
+              You're on the list (
+              {myInterest.division === 'mens'
+                ? "Men's"
+                : myInterest.division === 'womens'
+                  ? "Women's"
+                  : 'Open'}{' '}
+              Division
+              {' · '}
+              {myInterest.experience_level}). Now find a partner below.
             </p>
-            <button onClick={() => withdrawLeagueInterest(league.id)}
-              className="text-[11px] font-semibold text-green-700 underline">Withdraw</button>
+            <button
+              onClick={() => withdrawLeagueInterest(league.id)}
+              className="text-[11px] font-semibold text-green-700 underline"
+            >
+              Withdraw
+            </button>
           </div>
 
           <div className="card space-y-3">
             <p className="font-bold text-gray-700">🤝 Find a partner</p>
-            {partnerPool.length === 0
-              ? <p className="text-sm text-gray-400">No other Lobsters in your division yet — check back as more people register.</p>
-              : partnerPool.map(p => (
-                  <div key={p.id} className="flex items-center gap-3 bg-gray-50 rounded-xl p-3">
-                    <div
-                      className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0"
-                      style={{ backgroundColor: letterColor(p.name) }}
-                    >
-                      {(p.name || '')[0]}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-800 truncate">{p.name}</p>
-                      <p className="text-[11px] text-gray-500">{p.experience_level}</p>
-                    </div>
-                    {myPendingSent.find(t => String(t.invitee_id) === String(p.id))
-                      ? <span className="text-[11px] font-semibold text-amber-600 bg-amber-50 px-2 py-1 rounded-full flex items-center gap-1">
-                          <Clock size={10} /> Invite sent
-                        </span>
-                      : <button onClick={() => setInviteTarget(p)}
-                          className="text-xs font-semibold text-white bg-lobster-teal px-3 py-1.5 rounded-lg active:scale-95">
-                          Invite
-                        </button>}
+            {partnerPool.length === 0 ? (
+              <p className="text-sm text-gray-400">
+                No other Lobsters in your division yet — check back as more people register.
+              </p>
+            ) : (
+              partnerPool.map((p) => (
+                <div key={p.id} className="flex items-center gap-3 bg-gray-50 rounded-xl p-3">
+                  <div
+                    className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0"
+                    style={{ backgroundColor: letterColor(p.name) }}
+                  >
+                    {(p.name || '')[0]}
                   </div>
-                ))}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-800 truncate">{p.name}</p>
+                    <p className="text-[11px] text-gray-500">{p.experience_level}</p>
+                  </div>
+                  {myPendingSent.find((t) => String(t.invitee_id) === String(p.id)) ? (
+                    <span className="text-[11px] font-semibold text-amber-600 bg-amber-50 px-2 py-1 rounded-full flex items-center gap-1">
+                      <Clock size={10} /> Invite sent
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => setInviteTarget(p)}
+                      className="text-xs font-semibold text-white bg-lobster-teal px-3 py-1.5 rounded-lg active:scale-95"
+                    >
+                      Invite
+                    </button>
+                  )}
+                </div>
+              ))
+            )}
           </div>
         </div>
       )}
 
       {/* Status: matched — show our team card */}
-      {myInterest && myInterest.status === 'matched' && (() => {
-        const myTeam = confirmedTeams.find(t =>
-          String(t.proposer_id) === String(claimedId) || String(t.invitee_id) === String(claimedId)
-        )
-        if (!myTeam) return null
-        const partnerId = String(myTeam.proposer_id) === String(claimedId) ? myTeam.invitee_id : myTeam.proposer_id
-        return (
-          <div className="rounded-3xl p-5 bg-gradient-to-br from-yellow-300 to-amber-400 text-gray-900 shadow-md">
-            <p className="text-xs font-bold uppercase tracking-widest text-amber-900 mb-1">You're in!</p>
-            <h3 className="text-2xl font-extrabold leading-tight">Team {myTeam.team_name}</h3>
-            <p className="text-sm font-semibold mt-1">
-              {me?.name?.split(' ')[0]} & {nameOf(partnerId)?.split(' ')[0]}
-            </p>
-            {myTeam.team_song && (
-              <p className="text-xs mt-2 italic">🎵 {myTeam.team_song}</p>
-            )}
-          </div>
-        )
-      })()}
+      {myInterest &&
+        myInterest.status === 'matched' &&
+        (() => {
+          const myTeam = confirmedTeams.find(
+            (t) =>
+              String(t.proposer_id) === String(claimedId) ||
+              String(t.invitee_id) === String(claimedId),
+          )
+          if (!myTeam) return null
+          const partnerId =
+            String(myTeam.proposer_id) === String(claimedId)
+              ? myTeam.invitee_id
+              : myTeam.proposer_id
+          return (
+            <div className="rounded-3xl p-5 bg-gradient-to-br from-yellow-300 to-amber-400 text-gray-900 shadow-md">
+              <p className="text-xs font-bold uppercase tracking-widest text-amber-900 mb-1">
+                You're in!
+              </p>
+              <h3 className="text-2xl font-extrabold leading-tight">Team {myTeam.team_name}</h3>
+              <p className="text-sm font-semibold mt-1">
+                {me?.name?.split(' ')[0]} & {nameOf(partnerId)?.split(' ')[0]}
+              </p>
+              {myTeam.team_song && <p className="text-xs mt-2 italic">🎵 {myTeam.team_song}</p>}
+            </div>
+          )
+        })()}
 
       {/* Confirmed teams — everyone's teams, for social proof + scanning */}
       {confirmedTeams.length > 0 && (
         <div className="card space-y-2">
           <p className="font-bold text-gray-700">🏆 Teams confirmed ({confirmedTeams.length})</p>
           <div className="space-y-1.5">
-            {confirmedTeams.map(t => (
+            {confirmedTeams.map((t) => (
               <div key={t.id} className="flex items-center gap-3 bg-gray-50 rounded-xl p-2.5">
                 <Medal size={14} className="text-lobster-teal flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-gray-800 truncate">
-                    Team {t.team_name} <span className="text-xs text-gray-400 font-normal">({t.division === 'mens' ? "Men's" : t.division === 'womens' ? "Women's" : 'Open'})</span>
+                    Team {t.team_name}{' '}
+                    <span className="text-xs text-gray-400 font-normal">
+                      (
+                      {t.division === 'mens'
+                        ? "Men's"
+                        : t.division === 'womens'
+                          ? "Women's"
+                          : 'Open'}
+                      )
+                    </span>
                   </p>
                   <p className="text-[11px] text-gray-500 truncate">
                     {nameOf(t.proposer_id)?.split(' ')[0]} & {nameOf(t.invitee_id)?.split(' ')[0]}
@@ -1074,8 +1455,14 @@ export default function League({ onNavigate }) {
                   </p>
                 </div>
                 {canAdminLeague && (
-                  <button onClick={() => { if (confirm(`Dissolve Team ${t.team_name}?`)) dissolveLeagueTeam(t.id) }}
-                    className="text-[11px] font-semibold text-red-500 px-2">Dissolve</button>
+                  <button
+                    onClick={() => {
+                      if (confirm(`Dissolve Team ${t.team_name}?`)) dissolveLeagueTeam(t.id)
+                    }}
+                    className="text-[11px] font-semibold text-red-500 px-2"
+                  >
+                    Dissolve
+                  </button>
                 )}
               </div>
             ))}
@@ -1090,10 +1477,12 @@ export default function League({ onNavigate }) {
           admin has customised it, else fall back to DEFAULT_SECTIONS.
           Admins see a pencil icon on each editable section. */}
       <div className="space-y-2">
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 mt-4 mb-1">About the league</p>
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 mt-4 mb-1">
+          About the league
+        </p>
         {DEFAULT_SECTIONS.map((s, i) => {
           const dynamicTimeline = s.id === 'timeline' ? renderTimeline(league) : null
-          const customBody    = league.description_sections?.[s.id]
+          const customBody = league.description_sections?.[s.id]
           // What the user sees on-screen right now. When editing, the
           // textarea is pre-filled with this so the admin is tweaking
           // the actual copy rather than starting from a blank page.
@@ -1111,7 +1500,9 @@ export default function League({ onNavigate }) {
           return (
             <Section
               key={s.id}
-              id={s.id} icon={s.icon} title={s.title}
+              id={s.id}
+              icon={s.icon}
+              title={s.title}
               defaultOpen={i === 0 && !myInterest}
               editable={canAdminLeague && s.id !== 'timeline'}
               currentBody={effectiveBody}
@@ -1123,7 +1514,8 @@ export default function League({ onNavigate }) {
         })}
         {canAdminLeague && (
           <p className="text-[10px] text-gray-400 mt-2">
-            Tap the pencil on any section to edit its copy inline. Leave blank to revert to the default. Timeline auto-builds from the phase dates you saved on the league.
+            Tap the pencil on any section to edit its copy inline. Leave blank to revert to the
+            default. Timeline auto-builds from the phase dates you saved on the league.
           </p>
         )}
       </div>
