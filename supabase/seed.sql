@@ -109,3 +109,29 @@ VALUES
   ('Upcoming Test Tournament',  CURRENT_DATE + INTERVAL '7 days',  '18:00', 'Test Courts Amsterdam', 16, 'americano', 'upcoming', 90, 'mixed', 'Auto-generated for local development'),
   ('Past Test Tournament',      CURRENT_DATE - INTERVAL '14 days', '17:30', 'Test Courts Amsterdam', 16, 'americano', 'completed', 90, 'mixed', 'Auto-generated for local development')
 ON CONFLICT DO NOTHING;
+
+-- ── Raffle winners (historical) ──────────────────────────────────────────────
+-- All historical entries use tournament_id = NULL because the seed tournaments
+-- above are local test stubs, not the real LOBS #3/5/6 events.
+-- Idempotent: skips any row where (player_id, won_at_date) already exists.
+INSERT INTO public.raffle_winners (player_id, tournament_id, won_at_date, tournament_label, cooldown_offset, prize)
+SELECT p.id, NULL, v.won_at_date, v.tournament_label, v.cooldown_offset, v.prize
+FROM (VALUES
+  ('ALEJANDRO González', '2026-03-22'::date, 'LOBStournament #3', 1, 'tshirt'),
+  ('Alejandro Muñoz',    '2026-03-22'::date, 'LOBStournament #3', 1, 'grips'),
+  ('Gagan Shetty',       '2026-03-22'::date, 'LOBStournament #3', 1, 'sticker'),
+  ('Baturay Ucer',       '2026-03-22'::date, 'LOBStournament #3', 1, 'canvas bag'),
+  ('Paola Hasbún Lopez', '2026-04-19'::date, 'LOBStournament #5', 0, NULL),
+  ('Ini',                '2026-04-19'::date, 'LOBStournament #5', 0, NULL),
+  ('Nico Tzinieris',     '2026-04-19'::date, 'LOBStournament #5', 0, NULL),
+  ('Sebas solis',        '2026-05-03'::date, 'LOBStournament #6', 0, 'tshirt'),
+  ('Nico Tzinieris',     '2026-05-03'::date, 'LOBStournament #6', 0, 'hat'),
+  ('Trunal',             '2026-05-03'::date, 'LOBStournament #6', 0, 'canvas bag'),
+  ('Juan Blas Diaz',     '2026-05-03'::date, 'LOBStournament #6', 0, 'sticker'),
+  ('Mauricio Wiersma',   '2026-05-03'::date, 'LOBStournament #6', 0, 'sticker')
+) AS v(player_name, won_at_date, tournament_label, cooldown_offset, prize)
+JOIN public.players p ON p.name = v.player_name
+WHERE NOT EXISTS (
+  SELECT 1 FROM public.raffle_winners w
+   WHERE w.player_id = p.id AND w.won_at_date = v.won_at_date
+);

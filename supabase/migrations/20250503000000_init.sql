@@ -1949,3 +1949,179 @@ create policy "Public delete merch" on storage.objects for delete to anon, authe
 insert into private.admin_secrets (id, admin_pin_hash)
 values (1, extensions.crypt('0000', extensions.gen_salt('bf', 10)))
 on conflict do nothing;
+
+-- ============================================================
+-- 14. Raffle winners
+-- ============================================================
+-- Track who has won the prize raffle and enforce a 3-tournament cooldown.
+-- Eligibility is computed client-side; cooldown_offset compensates for
+-- historical wins whose tournament isn't in the tournaments table.
+create table if not exists public.raffle_winners (
+  id                uuid        primary key default gen_random_uuid(),
+  player_id         uuid        not null references public.players(id) on delete cascade,
+  tournament_id     uuid        references public.tournaments(id) on delete set null,
+  won_at_date       date        not null,
+  tournament_label  text,
+  cooldown_offset   int         not null default 0,
+  prize             text,
+  created_at        timestamptz not null default now()
+);
+
+create index if not exists idx_raffle_winners_player_id
+  on public.raffle_winners(player_id);
+create index if not exists idx_raffle_winners_won_at_date
+  on public.raffle_winners(won_at_date desc);
+
+alter table public.raffle_winners enable row level security;
+
+-- Reads are open; writes go through SECURITY DEFINER RPCs only.
+drop policy if exists raffle_winners_select_all on public.raffle_winners;
+create policy raffle_winners_select_all on public.raffle_winners
+  for select to anon, authenticated using (true);
+
+-- ── RPC: record raffle winners after a confirmed draw ───────────────────────
+create or replace function public.admin_record_raffle_winners(
+  input_admin_pin     text,
+  input_tournament_id uuid,
+  input_player_ids    uuid[],
+  input_prizes        text[] default null
+) returns setof public.raffle_winners
+language plpgsql
+security definer
+set search_path to 'pg_catalog', 'public', 'extensions'
+as $function$
+declare
+  v_t_date  date;
+  v_t_name  text;
+  v_pid     uuid;
+  v_prize   text;
+  v_idx     int;
+  v_row     public.raffle_winners%rowtype;
+begin
+  set local statement_timeout = '15s';
+  if not public.verify_admin_pin(input_admin_pin) then return; end if;
+  if input_tournament_id is null or input_player_ids is null then return; end if;
+
+  select date, name into v_t_date, v_t_name
+    from public.tournaments where id = input_tournament_id;
+  if v_t_date is null then return; end if;
+
+  v_idx := 1;
+  foreach v_pid in array input_player_ids loop
+    v_prize := null;
+    if input_prizes is not null and v_idx <= array_length(input_prizes, 1) then
+      v_prize := input_prizes[v_idx];
+    end if;
+    v_idx := v_idx + 1;
+
+    -- Skip duplicates (same player, same tournament) silently.
+    if exists (
+      select 1 from public.raffle_winners
+       where player_id = v_pid and tournament_id = input_tournament_id
+    ) then continue; end if;
+
+    insert into public.raffle_winners
+      (player_id, tournament_id, won_at_date, tournament_label, cooldown_offset, prize)
+    values
+      (v_pid, input_tournament_id, v_t_date, v_t_name, 0, v_prize)
+    returning * into v_row;
+    return next v_row;
+  end loop;
+end $function$;
+
+-- ── RPC: delete a raffle winner row (mistakes, re-draws) ────────────────────
+create or replace function public.admin_delete_raffle_winner(
+  input_admin_pin text,
+  input_winner_id uuid
+) returns boolean
+language plpgsql
+security definer
+set search_path to 'pg_catalog', 'public', 'extensions'
+as $function$
+begin
+  if not public.verify_admin_pin(input_admin_pin) then return false; end if;
+  delete from public.raffle_winners where id = input_winner_id;
+  return true;
+end $function$;
+
+-- ── RPC: edit a winner's prize after the fact ───────────────────────────────
+create or replace function public.admin_update_raffle_winner_prize(
+  input_admin_pin text,
+  input_winner_id uuid,
+  input_prize     text
+) returns boolean
+language plpgsql
+security definer
+set search_path to 'pg_catalog', 'public', 'extensions'
+as $function$
+begin
+  if not public.verify_admin_pin(input_admin_pin) then return false; end if;
+  update public.raffle_winners
+     set prize = nullif(trim(coalesce(input_prize, '')), '')
+   where id = input_winner_id;
+  return found;
+end $function$;
+
+grant execute on function public.admin_record_raffle_winners(text, uuid, uuid[], text[])
+  to anon, authenticated;
+grant execute on function public.admin_delete_raffle_winner(text, uuid)
+  to anon, authenticated;
+grant execute on function public.admin_update_raffle_winner_prize(text, uuid, text)
+  to anon, authenticated;
+
+-- ============================================================
+-- 15. Ratings persistence
+-- ============================================================
+-- Bulk-write Glicko-2 recompute results from client-side ratingsRecompute.js.
+-- anon has no direct UPDATE on players; this SECURITY DEFINER RPC is the gate.
+create or replace function public.admin_persist_learned_ratings(
+  input_admin_pin              text,
+  input_updates                jsonb,    -- [{id, learned_rating, learned_rd, learned_volatility, learned_matches_count, learned_updated_at}]
+  input_applied_tournament_ids uuid[]    default '{}'
+) returns int                            -- number of player rows updated
+language plpgsql
+security definer
+set search_path = pg_catalog, public, extensions
+as $$
+declare
+  v_updated_count int         := 0;
+  v_now           timestamptz := now();
+begin
+  set local statement_timeout = '30s';
+  if not public.verify_admin_pin(input_admin_pin) then return 0; end if;
+  if input_updates is null or jsonb_typeof(input_updates) <> 'array' then return 0; end if;
+
+  with src as (
+    select
+      (e->>'id')::uuid                                                   as id,
+      coalesce((e->>'learned_rating')::numeric, 1500)                    as learned_rating,
+      coalesce((e->>'learned_rd')::numeric, 350)                         as learned_rd,
+      coalesce((e->>'learned_volatility')::numeric, 0.06)                as learned_volatility,
+      coalesce((e->>'learned_matches_count')::int, 0)                    as learned_matches_count,
+      coalesce(nullif(e->>'learned_updated_at','')::timestamptz, v_now)  as learned_updated_at
+    from jsonb_array_elements(input_updates) as e
+  )
+  update public.players p
+     set learned_rating        = src.learned_rating,
+         learned_rd            = src.learned_rd,
+         learned_volatility    = src.learned_volatility,
+         learned_matches_count = src.learned_matches_count,
+         learned_updated_at    = src.learned_updated_at
+    from src
+   where p.id = src.id;
+
+  get diagnostics v_updated_count = row_count;
+
+  if input_applied_tournament_ids is not null
+     and array_length(input_applied_tournament_ids, 1) > 0 then
+    update public.tournaments
+       set ratings_applied_at = v_now
+     where id = any(input_applied_tournament_ids);
+  end if;
+
+  return v_updated_count;
+end;
+$$;
+
+revoke execute on function public.admin_persist_learned_ratings(text, jsonb, uuid[]) from public;
+grant  execute on function public.admin_persist_learned_ratings(text, jsonb, uuid[]) to anon, authenticated;
