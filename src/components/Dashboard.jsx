@@ -18,7 +18,7 @@ import {
   Euro,
 } from 'lucide-react'
 import DEFAULT_TIPS from '../data/padelTips'
-import { TOURNAMENTS as LEGACY_TOURNAMENTS } from './History'
+import { TOURNAMENTS as LEGACY_TOURNAMENTS } from '../data/historicalTournaments'
 import { buildPlayerStats } from '../lib/playerStats'
 import { fmtEur } from '../lib/format'
 import { DateTile, AddToCalendarButton, ShareWhatsAppButton } from './CalendarPieces'

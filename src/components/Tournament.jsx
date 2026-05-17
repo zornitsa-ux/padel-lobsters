@@ -19,7 +19,8 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react'
-import HistoryContent, { TOURNAMENTS as HISTORY_TOURNAMENTS } from './History'
+import HistoryContent from './History'
+import { TOURNAMENTS as HISTORY_TOURNAMENTS } from '../data/historicalTournaments'
 import { DateTile, AddToCalendarButton, ShareWhatsAppButton } from './CalendarPieces'
 import { fmtEur } from '../lib/format'
 import AdminTransferPanel from './AdminTransferPanel'

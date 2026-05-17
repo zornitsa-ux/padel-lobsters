@@ -25,7 +25,7 @@ import { computeTournamentStandings } from '../lib/standings'
 import { buildPlayerStats } from '../lib/playerStats'
 import { letterColor } from '../lib/letterColors'
 import { processAvatar } from '../lib/processAvatar'
-import { TOURNAMENTS } from './History'
+import { TOURNAMENTS } from '../data/historicalTournaments'
 
 const LEVEL_COLORS = [
   'bg-gray-200 text-gray-700',

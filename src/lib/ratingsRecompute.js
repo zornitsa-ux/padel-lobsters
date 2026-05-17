@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Ratings recompute — rebuilds every player's Glicko-2 rating from scratch
 // using the chronological union of:
-//   1. Historical tournaments hardcoded in History.jsx (DEC, JAN, MAR, APR…)
+//   1. Historical tournaments hardcoded in src/data/historicalTournaments.js
 //   2. Match data stored in the database (T#5 onward)
 //
 // Idempotent: always recomputes from zero, so re-running never causes drift.
@@ -19,7 +19,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { applyTournamentRatings } from './glicko2'
-import { TOURNAMENTS as HISTORICAL_TOURNAMENTS } from '../components/History'
+import { TOURNAMENTS as HISTORICAL_TOURNAMENTS } from '../data/historicalTournaments'
 
 /**
  * Run a full recompute. Returns {playersUpdated, eventsProcessed, dropped}.
