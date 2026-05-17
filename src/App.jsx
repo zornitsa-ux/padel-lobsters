@@ -23,6 +23,7 @@ import SetupGuard from './components/SetupGuard'
 import Merch from './components/Merch'
 import History from './components/History'
 import Game from './components/Game'
+import Admin from './components/Admin.tsx'
 import VerificationGate from './components/VerificationGate'
 import TransferAccept from './components/TransferAccept'
 
@@ -56,6 +57,7 @@ export default function App() {
                 <Route path="/community/:id" element={<CommunityRoute />} />
 
                 <Route path="/merch" element={<MerchRoute />} />
+                <Route path="/admin" element={<AdminRoute />} />
                 <Route path="/settings" element={<SettingsRoute />} />
                 <Route path="/history" element={<HistoryRoute />} />
                 <Route path="/transfer/:id" element={<TransferRoute />} />
@@ -97,6 +99,8 @@ function useLegacyNavigate() {
         return navigate('/community')
       case 'merch':
         return navigate('/merch')
+      case 'admin':
+        return navigate('/admin')
       case 'merch-orders':
         return navigate('/merch?tab=orders')
       case 'history':
@@ -178,6 +182,11 @@ function MerchRoute() {
 function SettingsRoute() {
   const onNavigate = useLegacyNavigate()
   return <Settings onNavigate={onNavigate} />
+}
+
+function AdminRoute() {
+  const onNavigate = useLegacyNavigate()
+  return <Admin onNavigate={onNavigate} />
 }
 
 function HistoryRoute() {

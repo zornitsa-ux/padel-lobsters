@@ -395,6 +395,66 @@ The `player_aliases` table maps historical name strings → current player UUIDs
 
 ---
 
+## New Feature Architecture Pattern (Default)
+
+All new feature work should follow a layered structure with explicit ownership of responsibilities.
+
+### Folder Shape
+
+```text
+src/features/<domain>/<feature>/
+  domain/
+    *.types.ts
+    *.ts            # pure business logic, transforms, rule checks
+  application/
+    *.service.ts    # use-cases / orchestration of async flows
+  state/
+    *Reducer.ts     # local UI state transitions (predictable actions)
+    *Actions.ts
+    *Selectors.ts
+  ui/
+    *.tsx           # presentational components only
+  <Feature>Container.tsx  # wiring: context/hooks/query + callbacks
+```
+
+### Layer Boundaries
+
+- **domain**: deterministic, side-effect free logic only (no React, no Supabase, no Context).
+- **application**: coordinates async workflows (fetch/save/update) and delegates business rules to `domain`.
+- **state**: feature-local reducer/state machine for explicit transitions and impossible-state prevention.
+- **ui**: dumb components that render props and emit events only.
+- **container**: the only place that connects framework/runtime concerns (AppContext, routing, query hooks).
+
+Import direction must be one-way: `ui -> state/selectors -> application -> domain`.
+
+### Runtime Validation & Parsing (Zod)
+
+Use **Zod** as the default runtime schema layer for all new implementations:
+
+- Parse external/unsafe data (Supabase rows, edge function responses, localStorage payloads, URL params).
+- Keep schemas close to the feature (typically `domain/*.schema.ts` or `domain/*.types.ts`).
+- Use `z.infer` for TS types where possible to keep runtime schemas and compile-time types aligned.
+- Prefer safe parsing (`safeParse`) in user-facing flows; map failures to actionable UI/application errors.
+
+### Server State (TanStack Query)
+
+Use **TanStack Query** as the default server-state abstraction:
+
+- Fetching: `useQuery` with stable query keys (`['feature', entityId, ...]`).
+- Mutations: `useMutation` + targeted cache invalidation / cache updates.
+- Avoid duplicating server-state in local component state; reserve reducer state for local UI flow only.
+- Keep query key factories and query functions in feature-local modules for consistency and reuse.
+- Prefer optimistic updates only when rollback logic is explicit and safe.
+
+### Practical Rules
+
+- New extracted files should be TypeScript (`.ts` / `.tsx`).
+- Keep components small and focused; move logic-heavy blocks into `domain`/`application`.
+- Model UI flow with explicit actions/events instead of many unrelated `useState` calls.
+- Add unit tests first for `domain` and reducer logic; treat UI tests as secondary.
+
+---
+
 ## Known Technical Debt
 
 ### High Priority

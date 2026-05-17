@@ -1,20 +1,32 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react'
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { useApp } from '../../context/AppContext'
 import usePlayerAliases from '../../hooks/usePlayerAliases'
 import { supabase } from '../../supabase'
-import { ChevronDown, ChevronUp, Search, User, GitMerge, RotateCcw } from 'lucide-react'
-import { FlagImg } from '../../components/ui/CountryPicker'
-import PlayerAliasMatcher from '../../components/PlayerAliasMatcher'
+import { Search } from 'lucide-react'
 import { processAvatar } from '../../lib/processAvatar'
-import Avatar from '../../components/ui/Avatar'
 import { LEVEL_COLORS, randomPrompt, emptyForm } from './playerConstants'
-import { REVIEW_SCENARIOS, corpReview } from './reviewScenarios'
-import PlayerProfileDrawer from './PlayerProfileDrawer'
+import { corpReview } from './reviewScenarios'
 import PlayerForm from './PlayerForm'
-import ReviewBreakdownModal from './ReviewBreakdownModal'
 import LinkPlayerModal from './LinkPlayerModal'
 import PinRevealModal from './PinRevealModal'
 import PendingApprovalsList from './PendingApprovalsList'
+import PlayersList from './PlayersList'
+import { getMissingPlayerFormFields } from './playerFormSchema'
+import {
+  buildFirstNameCount,
+  computeReviewCounts,
+  getDisplayName,
+  orderPlayersForRender,
+  sortPlayersChronological,
+} from './playersSelectors'
+
+const GENERIC_REVIEW_IDS = new Set([
+  'level-low',
+  'level-mid',
+  'level-high',
+  'level-elite',
+  'welcome',
+])
 
 export default function Players({ onNavigate, focusPlayerId }) {
   const {
@@ -29,7 +41,7 @@ export default function Players({ onNavigate, focusPlayerId }) {
     regeneratePin,
     fetchAllPlayersWithPii,
   } = useApp()
-  const { playerAliases, setPlayerAlias, removePlayerAlias } = usePlayerAliases()
+  const { playerAliases } = usePlayerAliases()
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
   const claimedId = session?.user?.id ?? null
 
@@ -70,23 +82,26 @@ export default function Players({ onNavigate, focusPlayerId }) {
   // Merge a player record with the admin PII overlay. Non-admins get the
   // record unchanged (which means empty PII fields after Phase 3 — fine,
   // the admin-gated UI hides those fields anyway).
-  const withPii = (p) => {
-    if (!p) return p
-    const extra = piiById[p.id]
-    if (!extra) return p
-    return {
-      ...p,
-      email: extra.email || p.email || '',
-      phone: extra.phone || p.phone || '',
-      birthday: extra.birthday || p.birthday || '',
-      notes: extra.notes || p.notes || '',
-      pin: extra.pin || p.pin || '',
-    }
-  }
+  const withPii = useCallback(
+    (p) => {
+      if (!p) return p
+      const extra = piiById[p.id]
+      if (!extra) return p
+      return {
+        ...p,
+        email: extra.email || p.email || '',
+        phone: extra.phone || p.phone || '',
+        birthday: extra.birthday || p.birthday || '',
+        notes: extra.notes || p.notes || '',
+        pin: extra.pin || p.pin || '',
+      }
+    },
+    [piiById],
+  )
   const [showForm, setShowForm] = useState(false)
   const [editId, setEditId] = useState(null)
   const [form, setForm] = useState(emptyForm)
-  const [lobbyPrompt, setLobbyPrompt] = useState(randomPrompt)
+  const lobbyPrompt = useMemo(() => randomPrompt(), [])
   const [search, setSearch] = useState('')
   const [expandedId, setExpandedId] = useState(focusPlayerId || null)
   const focusRef = useRef(null)
@@ -106,25 +121,17 @@ export default function Players({ onNavigate, focusPlayerId }) {
   const [pinReveal, setPinReveal] = useState(null) // { name, pin } — shown after registration
   const [linkModal, setLinkModal] = useState(null) // pending player being linked { pendingPlayer }
   const [linkSearch, setLinkSearch] = useState('') // search in link modal
-  const [showAliasMatcher, setShowAliasMatcher] = useState(false) // admin: tag historical names → players
   const [error, setError] = useState('')
   const fileInputRef = useRef(null)
 
   // Overlay admin PII onto every record up-front so downstream filtering,
   // rendering, and form-fill calls just see the merged object.
-  const playersWithPii = useMemo(() => players.map(withPii), [players, piiById])
+  const playersWithPii = useMemo(() => players.map(withPii), [players, withPii])
   const activePlayers = playersWithPii.filter((p) => (p.status || 'active') === 'active')
   const pendingPlayers = playersWithPii.filter((p) => p.status === 'pending')
 
   const filtered = activePlayers.filter((p) => p.name?.toLowerCase().includes(search.toLowerCase()))
-  // Chronological order — first to join is #1, newest joiner is last.
-  // Falls back to id ordering if created_at is missing on a record.
-  const sorted = [...filtered].sort((a, b) => {
-    const ta = a.created_at ? new Date(a.created_at).getTime() : 0
-    const tb = b.created_at ? new Date(b.created_at).getTime() : 0
-    if (ta !== tb) return ta - tb
-    return String(a.id).localeCompare(String(b.id))
-  })
+  const sorted = useMemo(() => sortPlayersChronological(filtered), [filtered])
 
   // Pin the logged-in player's card to the top when no search is active.
   // During search the self card just shows up via the regular filtered
@@ -132,82 +139,28 @@ export default function Players({ onNavigate, focusPlayerId }) {
   // The original chronological index (`idx`) is preserved on the pair so
   // the rank badge `#${idx + 1}` keeps reflecting join order, not the
   // display position.
-  const orderedForRender = (() => {
-    const withIdx = sorted.map((p, idx) => ({ p, idx, isSelf: false }))
-    if (search.trim()) return withIdx
-    const cid = claimedId ? String(claimedId) : null
-    if (!cid) return withIdx
-    const selfPos = withIdx.findIndex((x) => String(x.p.id) === cid)
-    if (selfPos === -1) return withIdx
-    const selfPair = { ...withIdx[selfPos], isSelf: true }
-    const rest = withIdx.filter((_, i) => i !== selfPos)
-    return [selfPair, ...rest]
-  })()
-
-  // ── Review breakdown ─────────────────────────────────────────────────────
-  // Run corpReview for every active player so we can group them by which
-  // scenario fired. Drives both the header counter and the admin-only
-  // breakdown panel that lists each scenario with its message + matched
-  // players. Recomputes whenever the underlying data changes.
-  const reviewBreakdown = useMemo(() => {
-    const byScenario = new Map()
-    REVIEW_SCENARIOS.forEach((s) => {
-      byScenario.set(s.id, { id: s.id, label: s.label, players: [], samples: new Map() })
-    })
-    activePlayers.forEach((p) => {
-      const r = corpReview(p, matches, registrations, tournaments, playerAliases)
-      let bucket = byScenario.get(r.scenario)
-      if (!bucket) {
-        bucket = { id: r.scenario, label: r.scenarioLabel, players: [], samples: new Map() }
-        byScenario.set(r.scenario, bucket)
-      }
-      bucket.players.push({ id: p.id, name: p.name })
-      // De-dupe identical message variants so we can show how many flavours
-      // of the same scenario are actually in play.
-      const v = bucket.samples.get(r.text)
-      if (v) v.count++
-      else bucket.samples.set(r.text, { text: r.text, count: 1 })
-    })
-    return [...byScenario.values()]
-      .filter((b) => b.players.length > 0)
-      .sort((a, b) => b.players.length - a.players.length)
-  }, [activePlayers, matches, registrations, tournaments, playerAliases])
+  const orderedForRender = useMemo(
+    () => orderPlayersForRender(sorted, search, claimedId),
+    [sorted, search, claimedId],
+  )
 
   // A scenario is "generic" if it's the level-based fallback or the welcome
   // line — everything else is personalised by tournament/match data.
-  const GENERIC_IDS = new Set(['level-low', 'level-mid', 'level-high', 'level-elite', 'welcome'])
-  const genericCount = reviewBreakdown
-    .filter((b) => GENERIC_IDS.has(b.id))
-    .reduce((n, b) => n + b.players.length, 0)
-  const personalisedCount = activePlayers.length - genericCount
-
-  const [showReviewBreakdown, setShowReviewBreakdown] = useState(false)
+  const { genericCount, personalisedCount } = useMemo(
+    () =>
+      computeReviewCounts({
+        activePlayers,
+        classifyScenario: (p) =>
+          corpReview(p, matches, registrations, tournaments, playerAliases).scenario,
+        genericIds: GENERIC_REVIEW_IDS,
+      }),
+    [activePlayers, matches, registrations, tournaments, playerAliases],
+  )
 
   // ── Name display: first name only; both players get a surname initial
   //    the moment a duplicate first name exists in the group ────────────────
-  const firstNameCount = {}
-  activePlayers.forEach((p) => {
-    const fn = (p.name || '').trim().split(/\s+/)[0]
-    firstNameCount[fn] = (firstNameCount[fn] || 0) + 1
-  })
-  const displayName = (p) => {
-    const parts = (p.name || '').trim().split(/\s+/)
-    const fn = parts[0] || '?'
-    if (firstNameCount[fn] > 1 && parts.length > 1) {
-      return `${fn} ${parts[1][0].toUpperCase()}`
-    }
-    return fn
-  }
-
-  const openAdd = () => {
-    setForm(emptyForm)
-    setEditId(null)
-    setAvatarFile(null)
-    setAvatarPreview(null)
-    setMergePlayer(null)
-    setLobbyPrompt(randomPrompt())
-    setShowForm(true)
-  }
+  const firstNameCount = useMemo(() => buildFirstNameCount(activePlayers), [activePlayers])
+  const displayName = (p) => getDisplayName(p.name, firstNameCount)
 
   // Debounced duplicate check — fires 400ms after the user stops typing the name.
   // Reliable on both desktop and mobile (doesn't depend on onBlur).
@@ -225,7 +178,7 @@ export default function Players({ onNavigate, focusPlayerId }) {
       setMergePlayer(found || null)
     }, 400)
     return () => clearTimeout(mergeDebounceRef.current)
-  }, [form.name, editId])
+  }, [form.name, editId, players])
 
   // Accept merge: pre-fill form with existing player data, switch to update mode
   const acceptMerge = () => {
@@ -407,16 +360,7 @@ export default function Players({ onNavigate, focusPlayerId }) {
     // Validate all required fields before saving. Admins see a lighter
     // check (they can create placeholder entries); self-registering players
     // must fill everything including first + last name.
-    const missing = []
-    if (!firstName) missing.push('First Name')
-    if (!lastName) missing.push('Last Name')
-    if (!isAdmin) {
-      if (!form.country) missing.push('Country')
-      if (!form.gender) missing.push('Gender')
-      if (!form.email.trim()) missing.push('Email')
-      if (!form.phone.trim()) missing.push('Phone / WhatsApp')
-      if (!form.playtomicLevel) missing.push('Playtomic Level')
-    }
+    const missing = getMissingPlayerFormFields(form, isAdmin)
     if (missing.length > 0) {
       alert(`Please complete the following fields before registering:\n\n• ${missing.join('\n• ')}`)
       return
@@ -453,7 +397,6 @@ export default function Players({ onNavigate, focusPlayerId }) {
           avatarUrl = publicUrl
         }
       }
-      const isMerge = !!editId && !isAdmin
       const data = {
         ...form,
         name: combinedName, // overwrite whatever was on form.name — single source of truth
@@ -526,21 +469,10 @@ export default function Players({ onNavigate, focusPlayerId }) {
             </span>
           )}
         </h2>
-        <div className="flex items-center gap-2">
-          {isAdmin && (
-            <button
-              onClick={() => setShowAliasMatcher(true)}
-              className="text-xs font-semibold text-lobster-teal border border-lobster-teal/30 bg-lobster-cream px-3 py-2 rounded-xl flex items-center gap-1.5 active:scale-95 transition-all"
-              title="Tag historical names from past tournaments to current players"
-            >
-              <GitMerge size={14} /> Match history
-            </button>
-          )}
-          {/* "Join" button removed — new-player signup now lives exclusively
-              on the home page via the sign-in / sign-up popup
-              (VerificationGate → SignupRequest). The in-app Players roster
-              stays focused on viewing / editing existing members. */}
-        </div>
+        {/* "Join" button removed — new-player signup now lives exclusively
+            on the home page via the sign-in / sign-up popup
+            (VerificationGate → SignupRequest). The in-app Players roster
+            stays focused on viewing / editing existing members. */}
       </div>
 
       {/* Personalised-profile counter — only shown to admins so it doesn't
@@ -560,32 +492,7 @@ export default function Players({ onNavigate, focusPlayerId }) {
               : 0}
             % Lobster Reviews use real tournament data
           </span>
-          <button
-            onClick={() => setShowReviewBreakdown(true)}
-            className="ml-auto text-lobster-teal font-semibold underline-offset-2 hover:underline"
-          >
-            View breakdown →
-          </button>
         </div>
-      )}
-
-      {/* Admin-only Review Breakdown modal */}
-      {showReviewBreakdown && (
-        <ReviewBreakdownModal
-          reviewBreakdown={reviewBreakdown}
-          onClose={() => setShowReviewBreakdown(false)}
-        />
-      )}
-
-      {/* Historical-name matcher (admin) */}
-      {showAliasMatcher && (
-        <PlayerAliasMatcher
-          players={players}
-          playerAliases={playerAliases}
-          setPlayerAlias={setPlayerAlias}
-          removePlayerAlias={removePlayerAlias}
-          onClose={() => setShowAliasMatcher(false)}
-        />
       )}
 
       {/* Pending approvals */}
@@ -627,105 +534,26 @@ export default function Players({ onNavigate, focusPlayerId }) {
 
       {/* Player list */}
       <div className="space-y-2">
-        {sorted.length === 0 && (
-          <div className="card py-10 text-center text-gray-400">
-            <User size={36} className="mx-auto mb-2 opacity-30" />
-            <p>No players yet. Be the first to join!</p>
-          </div>
-        )}
-
-        {orderedForRender.map(({ p, idx, isSelf }) => {
-          const expanded = expandedId === p.id
-          return (
-            <div
-              key={p.id}
-              ref={p.id === focusPlayerId ? focusRef : undefined}
-              className={`card transition-all${isSelf ? ' ring-2 ring-lobster-teal/40' : ''}`}
-            >
-              <div className="w-full" onClick={() => setExpandedId(expanded ? null : p.id)}>
-                {/* Top row: rank · avatar · name · level · chevron */}
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-bold text-gray-400 w-5 text-center flex-shrink-0">
-                    #{idx + 1}
-                  </span>
-                  <Avatar player={p} />
-                  <div className="flex-1 text-left min-w-0">
-                    <p className="font-semibold text-gray-800 truncate flex items-center gap-1.5">
-                      {p.country && <FlagImg code={p.country} />}
-                      {displayName(p)}
-                      {p.isLeftHanded && (
-                        <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-semibold ml-0.5">
-                          L
-                        </span>
-                      )}
-                      {isSelf && (
-                        <span className="text-[10px] bg-lobster-teal text-white px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider ml-0.5">
-                          You
-                        </span>
-                      )}
-                    </p>
-                  </div>
-                  <div className="flex-shrink-0 text-right flex flex-col items-end gap-1">
-                    <span
-                      className={`text-sm font-bold px-2.5 py-1 rounded-lg ${levelBadge(p.adjustedLevel)}`}
-                    >
-                      {(p.adjustedLevel || 0).toFixed(1)}
-                    </span>
-                    {isAdmin && (p.pinChanges ?? 0) > 0 && (
-                      <span
-                        className="text-[10px] font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded-md flex items-center gap-1"
-                        title={`PIN reset ${p.pinChanges} time${p.pinChanges === 1 ? '' : 's'}`}
-                      >
-                        <RotateCcw size={10} />
-                        {p.pinChanges}
-                      </span>
-                    )}
-                  </div>
-                  {expanded ? (
-                    <ChevronUp size={16} className="text-gray-400 flex-shrink-0" />
-                  ) : (
-                    <ChevronDown size={16} className="text-gray-400 flex-shrink-0" />
-                  )}
-                </div>
-                {/* Review — always visible */}
-                <div className="mt-2 pl-8">
-                  <p className="text-[10px] font-bold text-lobster-teal uppercase tracking-wider mb-0.5">
-                    Lobster Review
-                  </p>
-                  {(() => {
-                    const r = corpReview(p, matches, registrations, tournaments, playerAliases)
-                    return (
-                      <p className="text-xs text-gray-500 leading-relaxed">
-                        {r.hasLabel && (
-                          <span className="font-bold text-lobster-teal">{r.scenarioLabel}</span>
-                        )}
-                        {r.hasLabel ? ' — ' : ''}
-                        {r.body}
-                      </p>
-                    )
-                  })()}
-                </div>
-              </div>
-
-              {expanded && (
-                <PlayerProfileDrawer
-                  player={p}
-                  players={players}
-                  matches={matches}
-                  tournaments={tournaments}
-                  registrations={registrations}
-                  playerAliases={playerAliases}
-                  isAdmin={isAdmin}
-                  onNavigate={onNavigate}
-                  onEdit={openEdit}
-                  onDelete={handleDelete}
-                  onRegeneratePin={handleRegeneratePin}
-                  onOpenAliasMatcher={() => setShowAliasMatcher(true)}
-                />
-              )}
-            </div>
-          )
-        })}
+        <PlayersList
+          orderedForRender={orderedForRender}
+          hasPlayers={sorted.length > 0}
+          focusPlayerId={focusPlayerId}
+          focusRef={focusRef}
+          expandedId={expandedId}
+          setExpandedId={setExpandedId}
+          isAdmin={isAdmin}
+          levelBadge={levelBadge}
+          displayName={displayName}
+          matches={matches}
+          registrations={registrations}
+          tournaments={tournaments}
+          playerAliases={playerAliases}
+          players={players}
+          onNavigate={onNavigate}
+          onEdit={openEdit}
+          onDelete={handleDelete}
+          onRegeneratePin={handleRegeneratePin}
+        />
       </div>
 
       {/* PIN reveal / pending confirmation modal */}

@@ -6,6 +6,7 @@ import {
   Users,
   Trophy,
   Settings,
+  Shield,
   MessageCircle,
   ShoppingBag,
   ChevronDown,
@@ -33,8 +34,12 @@ const InstagramIcon = () => (
 )
 
 export default function Layout({ children }) {
-  const { settings } = useApp()
+  const { settings, session } = useApp()
   const [originOpen, setOriginOpen] = useState(false)
+  const isAdmin = session?.user?.app_metadata?.role === 'admin'
+  const navItems = isAdmin
+    ? [...NAV, { to: '/admin', label: 'Admin', icon: Shield, end: false }]
+    : NAV
 
   return (
     <div className="min-h-screen bg-lobster-cream flex flex-col max-w-md mx-auto relative">
@@ -123,7 +128,7 @@ export default function Layout({ children }) {
         style={{ boxShadow: '0 -1px 0 rgba(0,0,0,0.06), 0 -4px 16px rgba(0,0,0,0.06)' }}
       >
         <div className="flex items-center justify-around py-2">
-          {NAV.map(({ to, label, icon: Icon, end }) => (
+          {navItems.map(({ to, label, icon: Icon, end }) => (
             <NavLink
               key={to}
               to={to}

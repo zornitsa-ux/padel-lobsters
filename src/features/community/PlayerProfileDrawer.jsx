@@ -1,5 +1,5 @@
 import React from 'react'
-import { Pencil, Trash2, GitMerge, RotateCcw } from 'lucide-react'
+import { Pencil, Trash2, RotateCcw } from 'lucide-react'
 import { buildHistoricalAppearances, summariseAppearances } from '../../lib/playerHistory'
 import { buildPlayerStats } from '../../lib/playerStats'
 import { TOURNAMENTS } from '../../data/historicalTournaments'
@@ -17,7 +17,6 @@ export default function PlayerProfileDrawer({
   onEdit,
   onDelete,
   onRegeneratePin,
-  onOpenAliasMatcher,
 }) {
   const stats = buildPlayerStats(
     p.id,
@@ -423,19 +422,6 @@ export default function PlayerProfileDrawer({
             })}
           </div>
         </div>
-      )}
-
-      {/* Hint when admin sees a player with no aliases linked yet */}
-      {isAdmin && historical.length === 0 && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation()
-            onOpenAliasMatcher()
-          }}
-          className="text-[11px] text-gray-400 hover:text-lobster-teal flex items-center gap-1 italic"
-        >
-          <GitMerge size={11} /> Link this player to past tournaments…
-        </button>
       )}
 
       {/* Admin info */}

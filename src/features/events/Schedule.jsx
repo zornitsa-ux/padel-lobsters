@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { useApp } from '../../context/AppContext'
-import { ChevronLeft, Shuffle, AlertCircle, Trophy, Users, Download } from 'lucide-react'
+import { Shuffle, AlertCircle, Trophy, Users, Download } from 'lucide-react'
 import { generateLobster as generateLobsterAnnealed } from '../../lib/lobsterMatcher'
 import { recomputeAllRatings } from '../../lib/ratingsRecompute'
 import { supabase } from '../../supabase'
@@ -12,6 +12,19 @@ import {
   generateMexicano,
   generateRoundRobin,
 } from './scheduleHelpers'
+import ScheduleHeader from './schedule/ScheduleHeader'
+import ScheduleGeneratorControls from './schedule/ScheduleGeneratorControls'
+import ScheduleValidationSummary from './schedule/ScheduleValidationSummary'
+import usePersistentBoolean from './schedule/usePersistentBoolean'
+import {
+  buildPlayerById,
+  buildSavedRounds,
+  buildScheduleCsv,
+  cloneRounds,
+  downloadCsvFile,
+  formatScheduleDate,
+  hasAllMatchesScored,
+} from './schedule/utils'
 
 // ── Component ────────────────────────────────────────────────────────────────
 
@@ -39,22 +52,11 @@ export default function Schedule({ tournament, onNavigate }) {
   const [scheduleWarnings, setScheduleWarnings] = useState([]) // full validation after generate
 
   // Admin toggle: feed Lobster Scores (Glicko-2 shadow ratings) into the
-  // matcher instead of adjusted Playtomic levels. Persisted across sessions
-  // via localStorage so a reshuffle keeps the same setting.
-  const [useLobsterScore, setUseLobsterScore] = useState(() => {
-    try {
-      return localStorage.getItem('lobster_use_score_for_matcher') === '1'
-    } catch {
-      return false
-    }
-  })
-  React.useEffect(() => {
-    try {
-      localStorage.setItem('lobster_use_score_for_matcher', useLobsterScore ? '1' : '0')
-    } catch {
-      /* localStorage unavailable — silently degrade */
-    }
-  }, [useLobsterScore])
+  // matcher instead of adjusted Playtomic levels. Persisted across sessions.
+  const [useLobsterScore, setUseLobsterScore] = usePersistentBoolean(
+    'lobster_use_score_for_matcher',
+    false,
+  )
 
   // Load saved schedule into edit preview
   const handleEditSchedule = () => {
@@ -62,62 +64,9 @@ export default function Schedule({ tournament, onNavigate }) {
       onNavigate?.('settings')
       return
     }
-    setGenerated(
-      savedRounds.map((r) => ({
-        ...r,
-        matches: r.matches.map((m) => ({
-          ...m,
-          team1Ids: [...(m.team1Ids || [])],
-          team2Ids: [...(m.team2Ids || [])],
-        })),
-      })),
-    )
+    setGenerated(cloneRounds(savedRounds))
     setSaved(false)
     setSwapMode(true)
-  }
-
-  // Check for duplicate partnerships across all rounds
-  const findPartnerConflicts = (allRounds) => {
-    const warnings = []
-    // Build a map: for each round, which player is partnered with whom
-    const partnersByRound = allRounds.map((r, ri) => {
-      const partners = {} // playerId → partnerId
-      r.matches.forEach((m) => {
-        if (m.team1Ids?.length === 2) {
-          partners[m.team1Ids[0]] = m.team1Ids[1]
-          partners[m.team1Ids[1]] = m.team1Ids[0]
-        }
-        if (m.team2Ids?.length === 2) {
-          partners[m.team2Ids[0]] = m.team2Ids[1]
-          partners[m.team2Ids[1]] = m.team2Ids[0]
-        }
-      })
-      return { round: ri + 1, partners }
-    })
-
-    // Compare every pair of rounds for duplicate partnerships
-    for (let i = 0; i < partnersByRound.length; i++) {
-      for (let j = i + 1; j < partnersByRound.length; j++) {
-        const a = partnersByRound[i],
-          b = partnersByRound[j]
-        const seen = new Set()
-        for (const [pid, partnerId] of Object.entries(a.partners)) {
-          const key = [pid, partnerId].sort().join('-')
-          if (seen.has(key)) continue
-          seen.add(key)
-          if (b.partners[pid] === partnerId) {
-            const p1 = players.find((p) => p.id === pid)
-            const p2 = players.find((p) => p.id === partnerId)
-            if (p1 && p2) {
-              warnings.push(
-                `${(p1.name || '').split(' ')[0]} & ${(p2.name || '').split(' ')[0]} are partners in both Round ${a.round} and Round ${b.round}`,
-              )
-            }
-          }
-        }
-      }
-    }
-    return warnings
   }
 
   const handlePlayerTap = (roundIdx, matchIdx, team, playerIdx, playerId) => {
@@ -149,7 +98,7 @@ export default function Schedule({ tournament, onNavigate }) {
       dstArr[playerIdx] = tmp
       // Recalculate levels
       const lvl = (ids) =>
-        ids.reduce((s, id) => s + (players.find((p) => p.id === id)?.adjustedLevel || 0), 0)
+        ids.reduce((s, id) => s + (playerById.get(String(id))?.adjustedLevel || 0), 0)
       srcMatch.team1Level = lvl(srcMatch.team1Ids)
       srcMatch.team2Level = lvl(srcMatch.team2Ids)
       dstMatch.team1Level = lvl(dstMatch.team1Ids)
@@ -166,13 +115,19 @@ export default function Schedule({ tournament, onNavigate }) {
   // Hooks must run on every render — these were moved above the early
   // `if (!tournament) return …` below. The data-deriving expressions are
   // guarded so they degrade to empty arrays when tournament is null.
-  const regs = tournament
-    ? getTournamentRegistrations(tournament.id).filter((r) => r.status === 'registered')
-    : []
-  const registeredPlayers = tournament
-    ? players.filter((p) => regs.some((r) => r.playerId === p.id))
-    : []
-  const savedMatches = tournament ? getTournamentMatches(tournament.id) : []
+  const regs = useMemo(() => {
+    if (!tournament) return []
+    return getTournamentRegistrations(tournament.id).filter((r) => r.status === 'registered')
+  }, [getTournamentRegistrations, tournament])
+  const registeredPlayers = useMemo(() => {
+    if (!tournament) return []
+    const registeredIds = new Set(regs.map((reg) => String(reg.playerId)))
+    return players.filter((player) => registeredIds.has(String(player.id)))
+  }, [players, regs, tournament])
+  const savedMatches = useMemo(() => {
+    if (!tournament) return []
+    return getTournamentMatches(tournament.id)
+  }, [getTournamentMatches, tournament])
   const numCourts = tournament ? (tournament.courts || []).length || 1 : 1
   const format = tournament ? tournament.format || 'americano' : 'americano'
   const genderMode = tournament ? tournament.genderMode || 'mixed' : 'mixed'
@@ -181,30 +136,15 @@ export default function Schedule({ tournament, onNavigate }) {
   // Group saved matches by round, and keep matches within a round sorted
   // by court number ascending (Court 1 first, etc.) so the admin always
   // sees courts in the same natural order.
-  const savedRounds = useMemo(() => {
-    const courtOrder = (label) => {
-      const m = String(label ?? '').match(/(\d+)/)
-      return m ? parseInt(m[1], 10) : Number.MAX_SAFE_INTEGER
-    }
-    const byRound = {}
-    savedMatches.forEach((m) => {
-      const r = m.round || 1
-      if (!byRound[r]) byRound[r] = { round: r, label: `Round ${r}`, matches: [] }
-      byRound[r].matches.push(m)
-    })
-    Object.values(byRound).forEach((r) => {
-      r.matches.sort((a, b) => courtOrder(a.court) - courtOrder(b.court))
-    })
-    return Object.values(byRound).sort((a, b) => a.round - b.round)
-  }, [savedMatches])
+  const savedRounds = useMemo(() => buildSavedRounds(savedMatches), [savedMatches])
 
   // Check if all matches have scores filled in
-  const allMatchesScored = useMemo(() => {
-    if (savedRounds.length === 0) return false
-    const allMatches = savedRounds.flatMap((r) => r.matches)
-    if (allMatches.length === 0) return false
-    return allMatches.every((m) => m.completed && m.score1 != null && m.score2 != null)
-  }, [savedRounds])
+  const allMatchesScored = useMemo(() => hasAllMatchesScored(savedRounds), [savedRounds])
+
+  const playerById = useMemo(() => buildPlayerById(players), [players])
+  const getPlayer = useCallback((id) => playerById.get(String(id)), [playerById])
+  const sn = (p) => shortName(p, registeredPlayers) // smart short name
+  const formattedDate = useMemo(() => formatScheduleDate(tournament?.date), [tournament?.date])
 
   const [finishing, setFinishing] = useState(false)
   const [finishError, setFinishError] = useState('')
@@ -326,68 +266,15 @@ export default function Schedule({ tournament, onNavigate }) {
   const handleDownloadCsv = () => {
     const rounds = generated || savedRounds
     if (!rounds?.length) return
-    const nameOf = (id) => {
-      const p = players.find((x) => x.id === id)
-      return p ? (p.name || '').trim() : String(id)
-    }
-    // CSV needs proper quoting for commas and embedded quotes.
-    const csvCell = (v) => {
-      const s = v == null ? '' : String(v)
-      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
-    }
-    const lines = []
-    lines.push(['Round', 'Court', 'Team 1', 'Team 2', 'T1 Level', 'T2 Level'].join(','))
-    rounds.forEach((r) => {
-      ;(r.matches || []).forEach((m) => {
-        const t1 = (m.team1Ids || []).map(nameOf).join(' + ')
-        const t2 = (m.team2Ids || []).map(nameOf).join(' + ')
-        lines.push(
-          [
-            csvCell(r.round),
-            csvCell(m.court),
-            csvCell(t1),
-            csvCell(t2),
-            csvCell(m.team1Level?.toFixed?.(2) ?? m.team1Level ?? ''),
-            csvCell(m.team2Level?.toFixed?.(2) ?? m.team2Level ?? ''),
-          ].join(','),
-        )
-      })
-      const sittingIds = r.sitting || []
-      if (sittingIds.length) {
-        lines.push(
-          [
-            csvCell(r.round),
-            'Sitting',
-            csvCell(sittingIds.map(nameOf).join('; ')),
-            '',
-            '',
-            '',
-          ].join(','),
-        )
-      }
+    const { filename, content } = buildScheduleCsv({
+      rounds,
+      players,
+      tournament,
+      numCourts,
+      registeredCount: registeredPlayers.length,
+      isPreview: Boolean(generated),
     })
-    // Header row with tournament context + roster summary
-    const header = [
-      `# ${tournament.name || 'Padel Lobsters'} — schedule ${generated ? 'preview' : 'saved'}`,
-      `# Format: ${tournament.format || 'americano'} · Courts: ${numCourts} · Registered: ${registeredPlayers.length}`,
-      `# Generated at ${new Date().toLocaleString()}`,
-      '',
-    ].join('\r\n')
-    const csv = header + '\r\n' + lines.join('\r\n') + '\r\n'
-
-    const slug = (tournament.name || 'tournament')
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '')
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `padel-lobsters-${slug || 'schedule'}-${generated ? 'preview' : 'saved'}.csv`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    setTimeout(() => URL.revokeObjectURL(url), 1000)
+    downloadCsvFile(filename, content)
   }
 
   const handleScoreUpdate = async (matchId, field, value) => {
@@ -401,27 +288,15 @@ export default function Schedule({ tournament, onNavigate }) {
     })
   }
 
-  const getPlayer = (id) => players.find((p) => p.id === id)
-  const sn = (p) => shortName(p, registeredPlayers) // smart short name
-
-  const formatDate = (d) => {
-    if (!d) return '—'
-    return new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
-  }
-
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div>
-        <button
-          onClick={() => onNavigate('tournament')}
-          className="flex items-center gap-1 text-lobster-teal text-sm font-semibold mb-2"
-        >
-          <ChevronLeft size={16} /> Events
-        </button>
-        <h2 className="text-lg font-bold text-gray-800">{tournament.name}</h2>
-        <p className="text-sm text-gray-500">Schedule · {formatDate(tournament.date)}</p>
-      </div>
+      <ScheduleHeader
+        tournamentName={tournament.name}
+        tournamentDate={tournament.date}
+        formattedDate={formattedDate}
+        onBack={() => onNavigate('tournament')}
+      />
 
       {/* Info */}
       <div className="card flex items-center justify-between">
@@ -436,95 +311,25 @@ export default function Schedule({ tournament, onNavigate }) {
 
       {/* Generator controls — admin-only. Players never see this box;
           they only see the saved schedule once an admin has generated it. */}
-      {!generated && isAdmin && (
-        <div className="card space-y-3">
-          <p className="font-semibold text-gray-700 text-sm">Generate Schedule</p>
-
-          <div className="flex flex-wrap gap-1.5">
-            <span
-              className={`text-xs px-2 py-0.5 rounded-full font-medium ${genderMode === 'mixed' ? 'bg-pink-50 text-pink-700' : 'bg-gray-100 text-gray-600'}`}
-            >
-              {genderMode === 'mixed' ? '🚺🚹 Mixed · gender balanced' : '👥 Same gender'}
-            </span>
-            {registeredPlayers.some((p) => p.isLeftHanded) && (
-              <span className="text-xs bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full font-medium">
-                🤚 {registeredPlayers.filter((p) => p.isLeftHanded).length} lefty — kept separate
-              </span>
-            )}
-            {isLobster && (
-              <span className="text-xs bg-lobster-cream text-lobster-teal px-2 py-0.5 rounded-full font-medium">
-                🦞 {(tournament.duration || 90) >= 120 ? 6 : 5} rounds · partners rotate
-              </span>
-            )}
-          </div>
-
-          {!isLobster && (format === 'americano' || format === 'mexicano') && (
-            <div>
-              <label className="label">Number of rounds</label>
-              <div className="flex gap-2">
-                {[2, 3, 4, 5, 6].map((n) => (
-                  <button
-                    key={n}
-                    onClick={() => setRounds(n)}
-                    className={`flex-1 py-2 text-sm rounded-xl font-semibold transition-all ${rounds === n ? 'bg-lobster-teal text-white' : 'bg-gray-100 text-gray-600'}`}
-                  >
-                    {n}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {isAdmin && (
-            <label className="flex items-start gap-2 p-3 rounded-xl bg-lobster-cream/40 border border-lobster-teal/20 cursor-pointer active:scale-[0.99] transition-transform">
-              <input
-                type="checkbox"
-                checked={useLobsterScore}
-                onChange={(e) => setUseLobsterScore(e.target.checked)}
-                className="mt-0.5 w-4 h-4 accent-lobster-teal"
-              />
-              <span className="text-xs text-gray-700 leading-snug">
-                <span className="font-semibold text-lobster-teal">
-                  Use Lobster Score for matching
-                </span>
-                <span className="block text-[11px] text-gray-500 mt-0.5">
-                  When on, the matcher uses Glicko-2 shadow ratings instead of Playtomic-adjusted
-                  levels. Players without a Lobster Score yet fall back to their adjusted level.
-                </span>
-              </span>
-            </label>
-          )}
-
-          <button
-            onClick={handleGenerate}
-            disabled={generating || registeredPlayers.length < 4}
-            className="btn-primary w-full flex items-center justify-center gap-2"
-          >
-            <Shuffle size={16} />
-            {generating ? 'Generating...' : 'Generate Pairings'}
-          </button>
-          {registeredPlayers.length < 4 && (
-            <p className="text-xs text-orange-600">Register at least 4 players first</p>
-          )}
-          {savedRounds.length > 0 && (
-            <>
-              <button
-                onClick={handleEditSchedule}
-                className="w-full py-2 text-sm text-lobster-teal font-semibold border border-lobster-teal rounded-xl"
-              >
-                ✏️ Edit existing schedule
-              </button>
-              <button
-                onClick={handleDownloadCsv}
-                className="w-full py-2 text-sm text-gray-600 font-semibold border border-gray-200 rounded-xl flex items-center justify-center gap-2"
-                title="Download the saved schedule as a CSV"
-              >
-                <Download size={14} /> Download schedule (CSV)
-              </button>
-            </>
-          )}
-        </div>
-      )}
+      <ScheduleGeneratorControls
+        generated={generated}
+        isAdmin={isAdmin}
+        format={format}
+        genderMode={genderMode}
+        isLobster={isLobster}
+        registeredPlayers={registeredPlayers}
+        numCourts={numCourts}
+        rounds={rounds}
+        setRounds={setRounds}
+        useLobsterScore={useLobsterScore}
+        setUseLobsterScore={setUseLobsterScore}
+        onGenerate={handleGenerate}
+        generating={generating}
+        savedRounds={savedRounds}
+        onEditSchedule={handleEditSchedule}
+        onDownloadCsv={handleDownloadCsv}
+        tournamentDuration={tournament.duration}
+      />
 
       {/* Preview banner + swap + save */}
       {generated && (
@@ -601,76 +406,7 @@ export default function Schedule({ tournament, onNavigate }) {
               ))}
             </div>
           )}
-          {/* Schedule validation summary */}
-          {scheduleWarnings.length > 0 && (
-            <div className="rounded-xl border overflow-hidden">
-              {/* Errors */}
-              {scheduleWarnings.some((w) => w.severity === 'error') && (
-                <div className="bg-red-50 border-b border-red-200 p-3 space-y-1">
-                  <p className="text-xs font-bold text-red-700 flex items-center gap-1.5">
-                    <AlertCircle size={14} /> Rule violations
-                  </p>
-                  {scheduleWarnings
-                    .filter((w) => w.severity === 'error')
-                    .map((w, i) => (
-                      <p key={`e${i}`} className="text-xs text-red-600">
-                        • R{w.round}: {w.message}
-                      </p>
-                    ))}
-                </div>
-              )}
-              {/* Warnings */}
-              {scheduleWarnings.some((w) => w.severity === 'warning') && (
-                <div className="bg-amber-50 border-b border-amber-200 p-3 space-y-1">
-                  <p className="text-xs font-bold text-amber-700 flex items-center gap-1.5">
-                    <AlertCircle size={14} /> Heads up
-                  </p>
-                  {scheduleWarnings
-                    .filter((w) => w.severity === 'warning')
-                    .map((w, i) => (
-                      <p key={`w${i}`} className="text-xs text-amber-600">
-                        • {w.message}
-                      </p>
-                    ))}
-                </div>
-              )}
-              {/* Info — unavoidable, no action needed */}
-              {scheduleWarnings.some((w) => w.severity === 'info') && (
-                <div className="bg-blue-50 p-3 space-y-1">
-                  <p className="text-xs font-bold text-blue-700 flex items-center gap-1.5">
-                    <AlertCircle size={14} /> Unavoidable — no action needed
-                  </p>
-                  {scheduleWarnings
-                    .filter((w) => w.severity === 'info')
-                    .map((w, i) => (
-                      <p key={`i${i}`} className="text-xs text-blue-600">
-                        • {w.round > 0 ? `R${w.round}: ` : ''}
-                        {w.message}
-                      </p>
-                    ))}
-                </div>
-              )}
-            </div>
-          )}
-          {scheduleWarnings.length === 0 && generated && (
-            <div className="bg-green-50 border border-green-200 rounded-xl p-3 flex items-center gap-2">
-              <span className="text-sm">✅</span>
-              <p className="text-xs text-green-700 font-medium">
-                All rules pass — no conflicts detected
-              </p>
-            </div>
-          )}
-          {scheduleWarnings.length > 0 &&
-            !scheduleWarnings.some((w) => w.severity === 'error') &&
-            !scheduleWarnings.some((w) => w.severity === 'warning') &&
-            generated && (
-              <div className="bg-green-50 border border-green-200 rounded-xl p-3 flex items-center gap-2">
-                <span className="text-sm">✅</span>
-                <p className="text-xs text-green-700 font-medium">
-                  No rule violations — only unavoidable notes above
-                </p>
-              </div>
-            )}
+          <ScheduleValidationSummary warnings={scheduleWarnings} showSuccess={Boolean(generated)} />
         </div>
       )}
 
