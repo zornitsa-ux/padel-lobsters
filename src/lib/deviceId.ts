@@ -26,7 +26,7 @@ function newDeviceId() {
     /* fall through */
   }
   // Manual v4-shaped hex (good enough as a unique ID, not cryptographic)
-  const hex = (n) => Math.floor(Math.random() * 16).toString(16)
+  const hex = () => Math.floor(Math.random() * 16).toString(16)
   let s = ''
   for (let i = 0; i < 32; i++) {
     if (i === 8 || i === 12 || i === 16 || i === 20) s += '-'
