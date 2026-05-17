@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import {
   KeyRound,
@@ -10,7 +11,7 @@ import {
   Check,
   AlertCircle,
 } from 'lucide-react'
-import { isPublicPage } from '../lib/authPaths'
+import { isPublicPath } from '../lib/authPaths'
 import SignupRequest from './SignupRequest'
 
 // Phase 2d: removed the WhatsApp-the-admin fallback for forgot-PIN.
@@ -36,8 +37,9 @@ import SignupRequest from './SignupRequest'
  *   - forgot:  WhatsApp-the-admin deep link. No auto-reset flow yet —
  *              matches the "leave pin-only auth simple" product brief.
  */
-export default function VerificationGate({ children, page }) {
+export default function VerificationGate({ children }) {
   const { role, loading, loginWithPin, forgotMyPin } = useApp()
+  const location = useLocation()
 
   const [mode, setMode] = useState('signin') // signin | signup | forgot
   const [pin, setPin] = useState('')
@@ -115,7 +117,7 @@ export default function VerificationGate({ children, page }) {
   }, [mode])
 
   if (loading) return null
-  if (isPublicPage(page)) return <>{children}</>
+  if (isPublicPath(location.pathname)) return <>{children}</>
   if (role !== 'guest') return <>{children}</>
 
   const handleSignin = async (e) => {

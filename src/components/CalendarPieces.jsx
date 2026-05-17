@@ -98,8 +98,9 @@ export function AddToCalendarButton({ tournament, variant = 'full', className = 
 //  ShareWhatsAppButton
 //
 //  Opens WhatsApp with a pre-filled message containing the event link, date,
-//  time and name. The link points to ?event=<id> which the app picks up on
-//  load and navigates to the registration page for that tournament.
+//  time and name. The link points to /events/:id which the app routes to the
+//  registration page for that tournament. Legacy ?event=<id> links from
+//  older messages still resolve via App.jsx's DeepLinkMigrator.
 //
 //  Two variants: 'icon' (compact square) and 'full' (wide CTA pill).
 // ============================================================================
@@ -111,8 +112,7 @@ export function ShareWhatsAppButton({ tournament, variant = 'icon', className = 
     e?.preventDefault?.()
     e?.stopPropagation?.()
 
-    const baseUrl = window.location.origin + window.location.pathname
-    const eventUrl = `${baseUrl}?event=${tournament.id}`
+    const eventUrl = `${window.location.origin}/events/${tournament.id}`
 
     const d = tournament.date ? new Date(tournament.date) : null
     const dateLine =

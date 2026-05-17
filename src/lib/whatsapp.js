@@ -9,9 +9,10 @@
 //      sender pastes manually.
 //
 // Production base URL for the deep link in the WhatsApp message. The app
-// is reachable at the apex domain (padelobsters.nl). The deep link uses
-// the existing ?<param>=<id> pattern (mirrors ?event=<id> in App.jsx) since
-// the app is a single-route SPA without React Router.
+// is reachable at the apex domain (padelobsters.nl). Deep links use
+// react-router paths (/transfer/:id, /events/:id). Legacy ?transfer=<id>
+// links sent in old WhatsApp messages still work — App.jsx redirects them
+// to the new path on first paint.
 
 export const APP_BASE_URL = 'https://padelobsters.nl'
 export const LOBSTERS_GROUP_URL = 'https://chat.whatsapp.com/KigGKm4ERxR3UY9uq0GH3f'
@@ -29,11 +30,11 @@ export function isE164(phone) {
   return /^\+\d{8,15}$/.test(s)
 }
 
-// Build the deep link Melanie will tap from WhatsApp. Lands on the home
-// page with ?transfer=<id> set, which App.jsx reads on boot to navigate
-// to the transfer-accept page.
+// Build the deep link Melanie will tap from WhatsApp. Lands directly on
+// the transfer-accept route. Legacy ?transfer=<id> links from older
+// messages still resolve via App.jsx's DeepLinkMigrator.
 export function buildTransferUrl(transferId) {
-  return `${APP_BASE_URL}/?transfer=${encodeURIComponent(transferId)}`
+  return `${APP_BASE_URL}/transfer/${encodeURIComponent(transferId)}`
 }
 
 // Pre-filled message — wording locked with user 2026-05-03.
