@@ -1,7 +1,9 @@
 import React from 'react'
 import { useApp } from '../context/AppContext'
 import { Calendar, MapPin, Users, Trophy, LogIn, ArrowLeft } from 'lucide-react'
-import { DateTile, AddToCalendarButton, ShareWhatsAppButton } from './CalendarPieces'
+import DateTile from './ui/DateTile'
+import AddToCalendarButton from './ui/AddToCalendarButton'
+import ShareWhatsAppButton from './ui/ShareWhatsAppButton'
 
 // =============================================================================
 //  GuestTournamentView — read-only event page for logged-out visitors.

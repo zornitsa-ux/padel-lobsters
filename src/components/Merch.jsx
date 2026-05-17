@@ -20,7 +20,7 @@ import {
   MessageSquare,
   LogIn,
 } from 'lucide-react'
-import { SignInBanner, useAuthPrompt } from './AuthGate'
+import { SignInBanner, useAuthPrompt } from './ui/AuthGate'
 
 const SIZES_APPAREL = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
 const SIZES_SOCKS = ['S (35-38)', 'M (39-42)', 'L (43-46)']

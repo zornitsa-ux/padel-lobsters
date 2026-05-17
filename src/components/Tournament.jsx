@@ -21,7 +21,9 @@ import {
 } from 'lucide-react'
 import HistoryContent from './History'
 import { TOURNAMENTS as HISTORY_TOURNAMENTS } from '../data/historicalTournaments'
-import { DateTile, AddToCalendarButton, ShareWhatsAppButton } from './CalendarPieces'
+import DateTile from './ui/DateTile'
+import AddToCalendarButton from './ui/AddToCalendarButton'
+import ShareWhatsAppButton from './ui/ShareWhatsAppButton'
 import { fmtEur } from '../lib/format'
 import AdminTransferPanel from './AdminTransferPanel'
 

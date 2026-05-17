@@ -22,7 +22,7 @@ import {
   Pencil,
   Save,
 } from 'lucide-react'
-import { DateTile } from './CalendarPieces'
+import DateTile from './ui/DateTile'
 import { letterColor } from '../lib/letterColors'
 
 // ── Range calendar ────────────────────────────────────────────────────────

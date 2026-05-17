@@ -18,7 +18,7 @@ import {
   GitMerge,
   RotateCcw,
 } from 'lucide-react'
-import CountryPicker, { COUNTRIES, countryFlag, FlagImg } from './CountryPicker'
+import CountryPicker, { COUNTRIES, countryFlag, FlagImg } from './ui/CountryPicker'
 import PlayerAliasMatcher from './PlayerAliasMatcher'
 import { buildHistoricalAppearances, summariseAppearances } from '../lib/playerHistory'
 import { computeTournamentStandings } from '../lib/standings'

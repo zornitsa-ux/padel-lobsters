@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react'
-import { useApp } from '../context/AppContext'
+import { useApp } from '../../context/AppContext'
 import { Shield, User, LogIn, X, KeyRound } from 'lucide-react'
 
 /**

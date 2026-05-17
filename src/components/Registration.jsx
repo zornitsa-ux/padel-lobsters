@@ -19,10 +19,12 @@ import {
   Pencil,
   Check,
 } from 'lucide-react'
-import { SignInBanner } from './AuthGate'
+import { SignInBanner } from './ui/AuthGate'
 import TransferSpotModal from './TransferSpotModal'
 import TransferPendingModal from './TransferPendingModal'
-import { DateTile, AddToCalendarButton, ShareWhatsAppButton } from './CalendarPieces'
+import DateTile from './ui/DateTile'
+import AddToCalendarButton from './ui/AddToCalendarButton'
+import ShareWhatsAppButton from './ui/ShareWhatsAppButton'
 import { fmtEur } from '../lib/format'
 import { letterColor } from '../lib/letterColors'
 

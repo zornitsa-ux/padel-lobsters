@@ -23,7 +23,7 @@ import {
   ChevronUp,
   Camera,
 } from 'lucide-react'
-import CountryPicker, { FlagImg } from './CountryPicker'
+import CountryPicker, { FlagImg } from './ui/CountryPicker'
 import DEFAULT_TIPS from '../data/padelTips'
 import ApproveDevicesWidget from './ApproveDevicesWidget'
 import AdminSecurityPanels from './AdminSecurityPanels'
