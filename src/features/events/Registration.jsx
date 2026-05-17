@@ -66,6 +66,7 @@ export default function Registration({ tournament, onNavigate }) {
   const [declaring, setDeclaring] = useState(false)
 
   const [marking, setMarking] = useState(false)
+  const [tournamentError, setTournamentError] = useState('')
 
   // Whether a Lobster Oscars session has been shared for this tournament.
   // Drives the "Lobster Games Over — See Results!" banner during the 48h window.
@@ -376,7 +377,14 @@ export default function Registration({ tournament, onNavigate }) {
         <EventDescription
           tournament={tournament}
           isAdmin={isAdmin}
-          onSave={(next) => updateTournament(tournament.id, { notes: next })}
+          onSave={async (next) => {
+            setTournamentError('')
+            try {
+              await updateTournament(tournament.id, { notes: next })
+            } catch (err) {
+              setTournamentError(err?.message || 'Could not save description.')
+            }
+          }}
         />
       </div>
 
@@ -865,11 +873,17 @@ export default function Registration({ tournament, onNavigate }) {
 
         const handleMarkComplete = async () => {
           setMarking(true)
-          await updateTournament(tournament.id, {
-            status: 'completed',
-            completedAt: new Date().toISOString(),
-          })
-          setMarking(false)
+          setTournamentError('')
+          try {
+            await updateTournament(tournament.id, {
+              status: 'completed',
+              completedAt: new Date().toISOString(),
+            })
+          } catch (err) {
+            setTournamentError(err?.message || 'Could not mark tournament as complete.')
+          } finally {
+            setMarking(false)
+          }
         }
 
         return (
@@ -1040,6 +1054,11 @@ export default function Registration({ tournament, onNavigate }) {
               >
                 {marking ? 'Saving…' : '✓ Mark Tournament as Complete'}
               </button>
+            )}
+            {isAdmin && tournamentError && (
+              <p className="text-xs text-red-600 text-center" role="alert">
+                {tournamentError}
+              </p>
             )}
 
             {/* Scores per round — hidden when completed and the Ranking tab

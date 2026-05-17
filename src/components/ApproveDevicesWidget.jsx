@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react'
-import { useApp } from '../context/AppContext'
+import useDevices from '../hooks/useDevices'
 import { ShieldCheck, Smartphone, RefreshCw, Check, X, AlertCircle } from 'lucide-react'
 
 /**
@@ -14,7 +14,7 @@ import { ShieldCheck, Smartphone, RefreshCw, Check, X, AlertCircle } from 'lucid
  * the top of Settings → Account.
  */
 export default function ApproveDevicesWidget() {
-  const { listMyPendingDevices, approveMyDevice, rejectMyDevice } = useApp()
+  const { listMyPendingDevices, approveMyDevice, rejectMyDevice } = useDevices()
   const [devices, setDevices] = useState([])
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState({}) // { [device_id]: 'approve' | 'reject' | null }

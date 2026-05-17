@@ -23,7 +23,6 @@ import SetupGuard from './components/SetupGuard'
 import Merch from './components/Merch'
 import History from './components/History'
 import Game from './components/Game'
-import League from './components/League'
 import VerificationGate from './components/VerificationGate'
 import TransferAccept from './components/TransferAccept'
 
@@ -59,7 +58,6 @@ export default function App() {
                 <Route path="/merch" element={<MerchRoute />} />
                 <Route path="/settings" element={<SettingsRoute />} />
                 <Route path="/history" element={<HistoryRoute />} />
-                <Route path="/league" element={<LeagueRoute />} />
                 <Route path="/transfer/:id" element={<TransferRoute />} />
 
                 <Route path="*" element={<Navigate to="/home" replace />} />
@@ -103,8 +101,6 @@ function useLegacyNavigate() {
         return navigate('/merch?tab=orders')
       case 'history':
         return navigate('/history')
-      case 'league':
-        return navigate('/league')
       case 'settings':
         return navigate('/settings')
       default:
@@ -187,11 +183,6 @@ function SettingsRoute() {
 function HistoryRoute() {
   const onNavigate = useLegacyNavigate()
   return <History onNavigate={onNavigate} />
-}
-
-function LeagueRoute() {
-  const onNavigate = useLegacyNavigate()
-  return <League onNavigate={onNavigate} />
 }
 
 function TransferRoute() {

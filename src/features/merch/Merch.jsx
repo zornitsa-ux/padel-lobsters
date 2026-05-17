@@ -10,6 +10,7 @@ import OrdersTable from './OrdersTable'
 import PrizesTab from './PrizesTab'
 import AdminItemManager from './AdminItemManager'
 import ItemEditorForm from './ItemEditorForm'
+import useRaffle from './useRaffle'
 
 // ── Main Merch component ──────────────────────────────────────────────────────
 export default function Merch({
@@ -18,13 +19,8 @@ export default function Merch({
   initialTab,
   onNavigate,
 }) {
-  const {
-    players,
-    registrations,
-    session,
-    tournaments: contextTournaments = [],
-    raffleWinners = [],
-  } = useApp()
+  const { players, registrations, session, tournaments: contextTournaments = [] } = useApp()
+  const { raffleWinners = [] } = useRaffle()
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
   const claimedId = session?.user?.id ?? null
   const tournaments = allTournaments.length > 0 ? allTournaments : contextTournaments

@@ -12,6 +12,7 @@ export default function ProfileSection({
   setProfileForm,
   profileSaving,
   profileSaved,
+  profileError,
   avatarPreview,
   handleAvatarChange,
   handleProfileSave,
@@ -415,6 +416,9 @@ export default function ProfileSection({
                 <Save size={16} />
                 {profileSaving ? 'Saving…' : profileSaved ? '✓ Saved!' : 'Save Profile'}
               </button>
+              {profileError && (
+                <p className="text-xs text-red-600 bg-red-50 rounded-lg p-2">{profileError}</p>
+              )}
             </div>
           )}
         </div>

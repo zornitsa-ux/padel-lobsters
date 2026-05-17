@@ -13,7 +13,7 @@ import CountdownClock from './CountdownClock'
 import TipOfTheDay from './TipOfTheDay'
 import CommunityQuickLinks from './CommunityQuickLinks'
 import NextEventCard from './NextEventCard'
-import LobsterLeagueTile from './LobsterLeagueTile'
+import usePlayerAliases from '../../hooks/usePlayerAliases'
 import RecentlyCompletedBanners from './RecentlyCompletedBanners'
 import AdminAlerts from './AdminAlerts'
 import YourStatsCard from './YourStatsCard'
@@ -32,17 +32,13 @@ export default function Dashboard({ onNavigate }) {
     getTournamentMatches,
     session,
     getPlayerById,
-    playerAliases,
-    leagues,
-    leagueTeams,
     transfers,
     respondToTransfer,
     cancelTransfer,
   } = useApp()
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
   const claimedId = session?.user?.id ?? null
-  // league_admin role no longer exists — admins manage the league.
-  const isLeagueAdmin = false
+  const { playerAliases } = usePlayerAliases()
 
   // Pending-transfer state surfaced on the home screen so the player
   // sees their open offers right after reload — even before drilling
@@ -79,33 +75,6 @@ export default function Dashboard({ onNavigate }) {
   const handleOutgoingShare = (xfer, toPlayer) => {
     setTransferShare({ transferId: xfer.id, toPlayer })
   }
-
-  // Temporary testing allowlist — match League.jsx / Tournament.jsx so the
-  // Home page tile is visible to the same set of previewers.
-  const TEST_PLAYER_FIRST_NAMES = ['zornitsa', 'jon', 'uziel']
-  const meDash = claimedId ? players.find((p) => String(p.id) === String(claimedId)) : null
-  const myFirst = (meDash?.name || '').trim().split(/\s+/)[0]?.toLowerCase() || ''
-  const isLeagueTester = !!myFirst && TEST_PLAYER_FIRST_NAMES.includes(myFirst)
-  const canSeeLeague = isAdmin || isLeagueAdmin || isLeagueTester
-
-  // Pick the active league to surface. Same rule as League.jsx: prefer one
-  // still in signups / group stage, otherwise the newest.
-  const activeLeague = useMemo(() => {
-    if (!leagues || leagues.length === 0) return null
-    return (
-      leagues.find((l) => l.status === 'signups_open' || l.status === 'group_stage') || leagues[0]
-    )
-  }, [leagues])
-  const leagueTeamCount = activeLeague
-    ? (leagueTeams || []).filter(
-        (t) => String(t.league_id) === String(activeLeague.id) && t.status === 'confirmed',
-      ).length
-    : 0
-  const leagueRangeStart =
-    activeLeague && (activeLeague.group_stage_start || activeLeague.starts_at)
-  const leagueRangeEnd = activeLeague && (activeLeague.finals_end || activeLeague.ends_at)
-  const fmtLeagueDate = (d) =>
-    d ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '…'
 
   const claimedPlayer = claimedId ? getPlayerById(claimedId) : null
   const activePlayers = players.filter((p) => (p.status || 'active') === 'active')
@@ -378,7 +347,7 @@ export default function Dashboard({ onNavigate }) {
   // (no claimed player, no admin, no league admin) get a generic welcome
   // that invites them to sign in. Keeps the home page identical for
   // logged-in and logged-out visitors except for the top line.
-  const isGuest = !claimedId && !isAdmin && !isLeagueAdmin
+  const isGuest = !claimedId && !isAdmin
   const [greetHello, greetSub] = isGuest
     ? ['Welcome to Padel Lobsters!', 'Sign in with your PIN to join the fun.']
     : getGreeting(claimedPlayer?.name || (isAdmin ? 'Admin' : null))
@@ -443,16 +412,6 @@ export default function Dashboard({ onNavigate }) {
         isRegistered={isRegistered}
         onNavigate={onNavigate}
         formatDate={formatDate}
-      />
-
-      <LobsterLeagueTile
-        canSeeLeague={canSeeLeague}
-        activeLeague={activeLeague}
-        leagueRangeStart={leagueRangeStart}
-        leagueRangeEnd={leagueRangeEnd}
-        leagueTeamCount={leagueTeamCount}
-        fmtLeagueDate={fmtLeagueDate}
-        onNavigate={onNavigate}
       />
 
       <RecentlyCompletedBanners

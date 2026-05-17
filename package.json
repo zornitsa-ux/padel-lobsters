@@ -12,6 +12,7 @@
     "db:stop": "supabase stop",
     "db:reset": "supabase db reset",
     "db:migration": "supabase migration new",
+    "claude": "claude --strict-mcp-config --mcp-config .mcp.json",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",

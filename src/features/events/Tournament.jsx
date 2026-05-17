@@ -37,6 +37,7 @@ export default function Tournament({ onNavigate }) {
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
+  const [error, setError] = useState('')
   // Admin pending-transfer panel — open for one tournament at a time.
   const [adminTransferTournament, setAdminTransferTournament] = useState(null)
 
@@ -115,12 +116,18 @@ export default function Tournament({ onNavigate }) {
       return
     }
     if (!confirm('Delete this event?')) return
-    await deleteTournament(id)
+    setError('')
+    try {
+      await deleteTournament(id)
+    } catch (err) {
+      setError(err?.message || 'Could not delete event.')
+    }
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setSaving(true)
+    setError('')
     try {
       const mp = parseInt(form.maxPlayers) || 16
       const data = {
@@ -148,9 +155,13 @@ export default function Tournament({ onNavigate }) {
         })),
         notes: form.notes,
       }
-      if (editId) await updateTournament(editId, data)
-      else await addTournament(data)
-      setShowForm(false)
+      try {
+        if (editId) await updateTournament(editId, data)
+        else await addTournament(data)
+        setShowForm(false)
+      } catch (err) {
+        setError(err?.message || 'Could not save event.')
+      }
     } finally {
       setSaving(false)
     }
@@ -196,6 +207,19 @@ export default function Tournament({ onNavigate }) {
           </button>
         )}
       </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg p-2 flex items-start justify-between gap-2">
+          <span>{error}</span>
+          <button
+            onClick={() => setError('')}
+            className="text-red-500 font-bold leading-none px-1"
+            aria-label="Dismiss error"
+          >
+            ×
+          </button>
+        </div>
+      )}
 
       {/* Lobster League entry — visible to full admins, League Admins,
           and the whitelisted test players (TEST_PLAYER_FIRST_NAMES).

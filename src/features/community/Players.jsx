@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react'
 import { useApp } from '../../context/AppContext'
+import usePlayerAliases from '../../hooks/usePlayerAliases'
 import { supabase } from '../../supabase'
 import { ChevronDown, ChevronUp, Search, User, GitMerge, RotateCcw } from 'lucide-react'
 import { FlagImg } from '../../components/ui/CountryPicker'
@@ -27,8 +28,8 @@ export default function Players({ onNavigate, focusPlayerId }) {
     tournaments,
     regeneratePin,
     fetchAllPlayersWithPii,
-    playerAliases,
   } = useApp()
+  const { playerAliases, setPlayerAlias, removePlayerAlias } = usePlayerAliases()
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
   const claimedId = session?.user?.id ?? null
 
@@ -106,6 +107,7 @@ export default function Players({ onNavigate, focusPlayerId }) {
   const [linkModal, setLinkModal] = useState(null) // pending player being linked { pendingPlayer }
   const [linkSearch, setLinkSearch] = useState('') // search in link modal
   const [showAliasMatcher, setShowAliasMatcher] = useState(false) // admin: tag historical names → players
+  const [error, setError] = useState('')
   const fileInputRef = useRef(null)
 
   // Overlay admin PII onto every record up-front so downstream filtering,
@@ -290,19 +292,34 @@ export default function Players({ onNavigate, focusPlayerId }) {
       return
     }
     if (!confirm('Remove this player?')) return
-    await deletePlayer(id)
+    setError('')
+    try {
+      await deletePlayer(id)
+    } catch (err) {
+      setError(err?.message || 'Could not remove player.')
+    }
   }
 
   const handleApprove = async (p) => {
-    await updatePlayer(p.id, { ...p, status: 'active' })
-    // Phase 2d: PIN was already emailed at signup; no need to share via
-    // WhatsApp on approval. If the player lost their PIN, they use
-    // "Forgot PIN?" on the sign-in screen for self-service recovery.
+    setError('')
+    try {
+      await updatePlayer(p.id, { ...p, status: 'active' })
+      // Phase 2d: PIN was already emailed at signup; no need to share via
+      // WhatsApp on approval. If the player lost their PIN, they use
+      // "Forgot PIN?" on the sign-in screen for self-service recovery.
+    } catch (err) {
+      setError(err?.message || 'Could not approve player.')
+    }
   }
 
   const handleReject = async (id) => {
     if (!confirm('Reject and remove this registration request?')) return
-    await deletePlayer(id)
+    setError('')
+    try {
+      await deletePlayer(id)
+    } catch (err) {
+      setError(err?.message || 'Could not reject player.')
+    }
   }
 
   // Admin links a pending new joiner to an existing player profile:
@@ -326,10 +343,15 @@ export default function Players({ onNavigate, focusPlayerId }) {
       notes: existingPlayer.notes || pending.notes || '',
       status: 'active',
     }
-    await updatePlayer(existingPlayer.id, merged)
-    await deletePlayer(pending.id)
-    setLinkModal(null)
-    setLinkSearch('')
+    setError('')
+    try {
+      await updatePlayer(existingPlayer.id, merged)
+      await deletePlayer(pending.id)
+      setLinkModal(null)
+      setLinkSearch('')
+    } catch (err) {
+      setError(err?.message || 'Could not link player.')
+    }
     // Phase 2d: linked profiles already had a PIN. If the player can't
     // recall it, "Forgot PIN?" on the sign-in screen sends a fresh one
     // to their email. Admin no longer needs to share via WhatsApp.
@@ -337,16 +359,18 @@ export default function Players({ onNavigate, focusPlayerId }) {
 
   const handleRegeneratePin = async (p) => {
     // Phase 2d: admin_regenerate_pin RPC also calls send_pin_email, so
-    // the new PIN is emailed automatically. Admin doesn't need to share
-    // via WhatsApp anymore. The toast confirms the email went out.
-    const newPin = await regeneratePin(p.id)
-    if (newPin) {
-      // The RPC succeeded. Email status is fire-and-forget on the DB
-      // side (pg_net is async); we trust the queue and surface a generic
-      // confirmation here. Detailed delivery status lives in the Resend
-      // dashboard.
-      const recipient = p.email || `${(p.name || '').split(' ')[0]}'s email on file`
-      alert(`New PIN generated. Email sent to ${recipient}.`)
+    // the new PIN is emailed automatically. We surface the new PIN in a
+    // modal (no alert) — useful when the email is bouncing or admin needs
+    // to read it back to the player on the spot.
+    setError('')
+    try {
+      const result = await regeneratePin(p.id)
+      if (result?.ok && result.pin) {
+        const firstName = (p.name || '').split(' ')[0] || 'Player'
+        setPinReveal({ name: firstName, pin: result.pin })
+      }
+    } catch (err) {
+      setError(err?.message || 'Could not regenerate PIN.')
     }
   }
 
@@ -398,6 +422,7 @@ export default function Players({ onNavigate, focusPlayerId }) {
       return
     }
     setSaving(true)
+    setError('')
     try {
       let avatarUrl = form.avatarUrl || ''
       if (avatarFile) {
@@ -445,22 +470,28 @@ export default function Players({ onNavigate, focusPlayerId }) {
       // unknown columns (currently fine) but it's cleaner to be explicit.
       delete data.firstName
       delete data.lastName
-      if (editId) {
-        await updatePlayer(editId, data)
-        if (!isAdmin) {
-          const existing = players.find((p) => String(p.id) === String(editId))
-          if (existing?.pin) setPinReveal({ name: firstName, pin: existing.pin })
+      try {
+        if (editId) {
+          await updatePlayer(editId, data)
+          if (!isAdmin) {
+            const existing = players.find((p) => String(p.id) === String(editId))
+            if (existing?.pin) setPinReveal({ name: firstName, pin: existing.pin })
+          }
+        } else {
+          const result = await addPlayer(data)
+          // addPlayer now returns { ok, data: insertedRow } — pin lives on result.data.
+          const insertedPin = result?.data?.pin
+          if (insertedPin) {
+            setPinReveal({ name: firstName, pin: insertedPin })
+          }
         }
-      } else {
-        const newPlayer = await addPlayer(data)
-        if (newPlayer?.pin) {
-          setPinReveal({ name: firstName, pin: newPlayer.pin })
-        }
+        setShowForm(false)
+        setAvatarFile(null)
+        setAvatarPreview(null)
+        setMergePlayer(null)
+      } catch (err) {
+        setError(err?.message || 'Could not save player.')
       }
-      setShowForm(false)
-      setAvatarFile(null)
-      setAvatarPreview(null)
-      setMergePlayer(null)
     } finally {
       setSaving(false)
     }
@@ -473,6 +504,18 @@ export default function Players({ onNavigate, focusPlayerId }) {
 
   return (
     <div className="space-y-4">
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg p-2 flex items-start justify-between gap-2">
+          <span>{error}</span>
+          <button
+            onClick={() => setError('')}
+            className="text-red-500 font-bold leading-none px-1"
+            aria-label="Dismiss error"
+          >
+            ×
+          </button>
+        </div>
+      )}
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold text-gray-800">
@@ -535,7 +578,15 @@ export default function Players({ onNavigate, focusPlayerId }) {
       )}
 
       {/* Historical-name matcher (admin) */}
-      {showAliasMatcher && <PlayerAliasMatcher onClose={() => setShowAliasMatcher(false)} />}
+      {showAliasMatcher && (
+        <PlayerAliasMatcher
+          players={players}
+          playerAliases={playerAliases}
+          setPlayerAlias={setPlayerAlias}
+          removePlayerAlias={removePlayerAlias}
+          onClose={() => setShowAliasMatcher(false)}
+        />
+      )}
 
       {/* Pending approvals */}
       {isAdmin && (

@@ -2,10 +2,12 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { Gift, Shuffle, Check } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import PrizeEditor from './PrizeEditor'
+import useRaffle from './useRaffle'
 
 // ── Raffle component ──────────────────────────────────────────────────────────
 export default function Raffle({ tournament, players, registrations }) {
-  const { tournaments, raffleWinners, recordRaffleWinners, updateRaffleWinnerPrize } = useApp()
+  const { tournaments } = useApp()
+  const { raffleWinners, recordRaffleWinners, updateRaffleWinnerPrize } = useRaffle()
 
   const registered = (() => {
     const seen = new Set()

@@ -64,7 +64,11 @@ serve(async (req) => {
   const rpcResp = await fetch(`${SUPABASE_URL}/rest/v1/rpc/verify_player_pin_v2`, {
     method: 'POST',
     headers: anonHeaders,
-    body: JSON.stringify({ input_pin: pin, input_device_id: device_id, input_user_agent: user_agent }),
+    body: JSON.stringify({
+      input_pin: pin,
+      input_device_id: device_id,
+      input_user_agent: user_agent,
+    }),
   })
 
   if (!rpcResp.ok) {
@@ -72,7 +76,7 @@ serve(async (req) => {
     return json(500, { error: 'internal_error' })
   }
 
-  const rpcData = await rpcResp.json() as Array<{
+  const rpcData = (await rpcResp.json()) as Array<{
     player_id: string
     is_new_device: boolean
     trusted: boolean
@@ -96,7 +100,7 @@ serve(async (req) => {
     return json(500, { error: 'internal_error' })
   }
 
-  const players = await playerResp.json() as Array<{ role: string; email: string | null }>
+  const players = (await playerResp.json()) as Array<{ role: string; email: string | null }>
   const player = players[0]
   if (!player) {
     console.error('player not found:', player_id)
@@ -151,7 +155,7 @@ serve(async (req) => {
     return json(500, { error: 'internal_error' })
   }
 
-  const linkData = await linkResp.json() as { hashed_token?: string; action_link?: string }
+  const linkData = (await linkResp.json()) as { hashed_token?: string; action_link?: string }
   const hashed_token = linkData.hashed_token
 
   if (!hashed_token) {

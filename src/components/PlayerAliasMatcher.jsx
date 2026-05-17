@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react'
 import { X, Check, GitMerge, Search, ChevronRight, RotateCcw, UserX } from 'lucide-react'
-import { useApp } from '../context/AppContext'
 import { buildAliasInventory, suggestPlayers, NOT_IN_ROSTER } from '../lib/playerHistory'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -10,9 +9,13 @@ import { buildAliasInventory, suggestPlayers, NOT_IN_ROSTER } from '../lib/playe
 //  tournament history (count, list, podium finishes, total points).
 // ─────────────────────────────────────────────────────────────────────────────
 
-export default function PlayerAliasMatcher({ onClose }) {
-  const { players, playerAliases, setPlayerAlias, removePlayerAlias } = useApp()
-
+export default function PlayerAliasMatcher({
+  players,
+  playerAliases,
+  setPlayerAlias,
+  removePlayerAlias,
+  onClose,
+}) {
   const inventory = useMemo(() => buildAliasInventory(playerAliases), [playerAliases])
 
   const [filter, setFilter] = useState('unmatched') // 'unmatched' | 'matched' | 'all'

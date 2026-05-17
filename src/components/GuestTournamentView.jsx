@@ -1,6 +1,7 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
 import { Calendar, MapPin, Users, Trophy, LogIn, ArrowLeft } from 'lucide-react'
+import { loadPublicCounts } from '../api/tournaments'
 import DateTile from './ui/DateTile'
 import AddToCalendarButton from './ui/AddToCalendarButton'
 import ShareWhatsAppButton from './ui/ShareWhatsAppButton'
@@ -21,7 +22,12 @@ import ShareWhatsAppButton from './ui/ShareWhatsAppButton'
 // =============================================================================
 
 export default function GuestTournamentView({ onNavigate }) {
-  const { tournaments, publicCounts = {} } = useApp()
+  const { tournaments } = useApp()
+  const [publicCounts, setPublicCounts] = useState({})
+
+  useEffect(() => {
+    loadPublicCounts().then((counts) => setPublicCounts(counts || {}))
+  }, [])
 
   // Which event is the visitor looking at? Page-state routing doesn't carry
   // an ID the way URL routing would, so we fall back to "the next upcoming".

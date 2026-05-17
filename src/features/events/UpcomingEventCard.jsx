@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import {
   Pencil,
   Trash2,
@@ -45,6 +45,22 @@ export default function UpcomingEventCard({
   const totalCourts = (t.courts || []).length
   const ppCost = pricePerPlayer(t)
   const isAdminAll = !t.courtBookingMode || t.courtBookingMode === 'admin_all'
+  const [bookError, setBookError] = useState('')
+  const [bookingIndex, setBookingIndex] = useState(null)
+
+  const handleBookCourt = async (i) => {
+    setBookError('')
+    setBookingIndex(i)
+    try {
+      const courts = [...(t.courts || [])]
+      courts[i] = { ...courts[i], booked: true }
+      await updateTournament(t.id, { courts })
+    } catch (err) {
+      setBookError(err?.message || 'Could not book court.')
+    } finally {
+      setBookingIndex(null)
+    }
+  }
 
   return (
     <div className="card">
@@ -202,19 +218,21 @@ export default function UpcomingEventCard({
               )}
               {isAdmin && !c.booked && (
                 <button
-                  onClick={() => {
-                    const courts = [...(t.courts || [])]
-                    courts[i] = { ...courts[i], booked: true }
-                    updateTournament(t.id, { courts })
-                  }}
-                  className="ml-0.5 bg-green-100 text-green-700 px-1.5 py-0 rounded-full text-[10px] font-semibold"
+                  onClick={() => handleBookCourt(i)}
+                  disabled={bookingIndex === i}
+                  className="ml-0.5 bg-green-100 text-green-700 px-1.5 py-0 rounded-full text-[10px] font-semibold disabled:opacity-50"
                 >
-                  Book
+                  {bookingIndex === i ? '…' : 'Book'}
                 </button>
               )}
             </div>
           ))}
         </div>
+      )}
+      {isAdmin && bookError && (
+        <p className="text-xs text-red-600 mb-3" role="alert">
+          {bookError}
+        </p>
       )}
 
       {/* Format chip */}

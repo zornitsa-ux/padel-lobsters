@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react'
-import { useApp } from '../context/AppContext'
+import useDevices from '../hooks/useDevices'
 import {
   ShieldCheck,
   AlertTriangle,
@@ -45,7 +45,7 @@ export default function AdminSecurityPanels() {
 }
 
 function PendingDevicesPanel() {
-  const { adminListPendingDevices, adminApproveDevice, adminDenyDevice } = useApp()
+  const { adminListPendingDevices, adminApproveDevice, adminDenyDevice } = useDevices()
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState({}) // keyed by `${player_id}|${device_id}`
@@ -185,7 +185,7 @@ function PendingDevicesPanel() {
 }
 
 function SecurityEventsPanel() {
-  const { adminListSecurityEvents } = useApp()
+  const { adminListSecurityEvents } = useDevices()
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(false)
   const [loaded, setLoaded] = useState(false)

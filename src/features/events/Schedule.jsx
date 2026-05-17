@@ -207,6 +207,7 @@ export default function Schedule({ tournament, onNavigate }) {
   }, [savedRounds])
 
   const [finishing, setFinishing] = useState(false)
+  const [finishError, setFinishError] = useState('')
 
   if (!tournament) {
     return (
@@ -232,6 +233,7 @@ export default function Schedule({ tournament, onNavigate }) {
       return
     }
     setFinishing(true)
+    setFinishError('')
     try {
       await updateTournament(tournament.id, {
         status: 'completed',
@@ -242,6 +244,8 @@ export default function Schedule({ tournament, onNavigate }) {
       // manually from Settings.
       recomputeAllRatings(supabase).catch((e) => console.warn('recompute on finish failed:', e))
       onNavigate('scores', tournament)
+    } catch (err) {
+      setFinishError(err?.message || 'Could not finish tournament.')
     } finally {
       setFinishing(false)
     }
@@ -970,6 +974,11 @@ export default function Schedule({ tournament, onNavigate }) {
             <Trophy size={16} />
             {finishing ? 'Finishing...' : 'Finish Tournament & See Results'}
           </button>
+          {finishError && (
+            <p className="mt-2 text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg p-2">
+              {finishError}
+            </p>
+          )}
         </div>
       )}
 

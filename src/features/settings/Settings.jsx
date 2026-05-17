@@ -78,6 +78,7 @@ export default function Settings() {
   })
   const [profileSaving, setProfileSaving] = useState(false)
   const [profileSaved, setProfileSaved] = useState(false)
+  const [profileError, setProfileError] = useState('')
   const [avatarFile, setAvatarFile] = useState(null)
   const [avatarPreview, setAvatarPreview] = useState(null)
   const [activePrompt, setActivePrompt] = useState(2) // default to "War Cry"
@@ -154,10 +155,11 @@ export default function Settings() {
     // on file from before this validation existed) but reject malformed
     // values when present.
     if (profileForm.phone && !isE164(profileForm.phone)) {
-      alert('Phone must start with + and the country code (e.g. +31612345678).')
+      setProfileError('Phone must start with + and the country code (e.g. +31612345678).')
       return
     }
     setProfileSaving(true)
+    setProfileError('')
     try {
       let avatarUrl = profileForm.avatarUrl || ''
       if (avatarFile) {
@@ -206,6 +208,8 @@ export default function Settings() {
       setShowPlaytomicPrompt(false)
       setProfileSaved(true)
       setTimeout(() => setProfileSaved(false), 2500)
+    } catch (err) {
+      setProfileError(err?.message || 'Could not save profile.')
     } finally {
       setProfileSaving(false)
     }
@@ -365,6 +369,7 @@ export default function Settings() {
         setProfileForm={setProfileForm}
         profileSaving={profileSaving}
         profileSaved={profileSaved}
+        profileError={profileError}
         avatarPreview={avatarPreview}
         handleAvatarChange={handleAvatarChange}
         handleProfileSave={handleProfileSave}

@@ -53,7 +53,7 @@ export function buildOneRound(
 
 // Legacy greedy generator. Kept for reference / quick revert; the live path
 // now uses generateLobsterAnnealed from src/lib/lobsterMatcher.js.
- 
+
 export function generateLobsterLegacy(players, numCourts, genderMode = 'mixed', duration = 90) {
   const numRounds = duration >= 120 ? 6 : 5 // 2h → 6 rounds, 90min → 5 rounds (18min each)
   const sorted = [...players].sort((a, b) => (b.adjustedLevel || 0) - (a.adjustedLevel || 0))
