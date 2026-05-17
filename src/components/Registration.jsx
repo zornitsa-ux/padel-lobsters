@@ -41,12 +41,13 @@ export default function Registration({ tournament, onNavigate }) {
     getTournamentMatches,
     updateMatch,
     updateTournament,
-    isAdmin,
-    claimedId,
+    session,
     transfers,
     cancelTransfer,
     respondToTransfer,
   } = useApp()
+  const isAdmin = session?.user?.app_metadata?.role === 'admin'
+  const claimedId = session?.user?.id ?? null
 
   // Show first name for players, full name for admins
   const displayName = (p) => (isAdmin ? p.name : (p.name || '').split(' ')[0])
@@ -109,6 +110,11 @@ export default function Registration({ tournament, onNavigate }) {
   const [shareModal, setShareModal] = useState(null)
   const [respondingTo, setRespondingTo] = useState(null) // transferId being acted on
 
+  // Hook order: this useState used to live below an `if (!tournament) return`
+  // branch, which made it conditional. Hooks must run on every render, so it
+  // moved up here; the initializer guards on tournament being defined.
+  const [completedTab, setCompletedTab] = useState('ranking')
+
   if (!tournament) {
     return (
       <div className="card py-10 text-center text-gray-400">
@@ -150,9 +156,6 @@ export default function Registration({ tournament, onNavigate }) {
 
   const maxPlayers = tournament.maxPlayers || 16
   const isCompleted = tournament.status === 'completed'
-  // Completed tournaments show a Ranking ↔ Matches tab switcher instead of
-  // the registered / waitlist / cancelled player lists. Default to Ranking.
-  const [completedTab, setCompletedTab] = useState('ranking')
   const isAdminAll = !tournament.courtBookingMode || tournament.courtBookingMode === 'admin_all'
   const hasTikkie = isAdminAll
     ? !!tournament.tikkieLink

@@ -533,8 +533,7 @@ export default function Players({ onNavigate, focusPlayerId }) {
     addPlayer,
     updatePlayer,
     deletePlayer,
-    isAdmin,
-    claimedId,
+    session,
     matches,
     registrations,
     tournaments,
@@ -542,6 +541,8 @@ export default function Players({ onNavigate, focusPlayerId }) {
     fetchAllPlayersWithPii,
     playerAliases,
   } = useApp()
+  const isAdmin = session?.user?.app_metadata?.role === 'admin'
+  const claimedId = session?.user?.id ?? null
 
   // ── Admin PII overlay ───────────────────────────────────────────────
   // After Phase 3 locks down players.email/phone/birthday from the anon

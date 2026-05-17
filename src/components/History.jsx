@@ -1,5 +1,15 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react'
-import { Trophy, ChevronDown, ChevronUp, Pencil, Users, Gamepad2 } from 'lucide-react'
+import {
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Gamepad2,
+  GitMerge,
+  Pencil,
+  Trophy,
+  Users,
+  X,
+} from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { supabase } from '../supabase'
 
@@ -930,8 +940,9 @@ function getAllHardcodedNames() {
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function History({ onNavigate }) {
-  const { tournaments, players, getTournamentMatches, getTournamentRegistrations, isAdmin } =
+  const { tournaments, players, getTournamentMatches, getTournamentRegistrations, session } =
     useApp()
+  const isAdmin = session?.user?.app_metadata?.role === 'admin'
   const [expandedId, setExpandedId] = useState(null)
   const [activeTab, setActiveTab] = useState({}) // id → 'standings' | 'matches' | 'games'
   const [activeRound, setActiveRound] = useState({}) // id → roundIndex

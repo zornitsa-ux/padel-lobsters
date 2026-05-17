@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { useApp } from '../context/AppContext'
 import { supabase } from '../supabase'
-import { getDeviceId } from '../lib/deviceId'
 import { letterColor } from '../lib/letterColors'
 import {
   ChevronLeft,
@@ -128,7 +127,8 @@ function shortLabelMap(players = []) {
 /* ════════════════════════════════════════════════════════════════════════════ */
 
 export default function Game({ tournament, onNavigate }) {
-  const { players, isAdmin, claimedId, getTournamentRegistrations } = useApp()
+  const { players, session: authSession, getTournamentRegistrations } = useApp()
+  const isAdmin = authSession?.user?.app_metadata?.role === 'admin'
 
   const [session, setSession] = useState(undefined) // undefined = unloaded; null = no row
   const [categories, setCategories] = useState([])
@@ -169,9 +169,6 @@ export default function Game({ tournament, onNavigate }) {
 
   /* ── Fetchers ─────────────────────────────────────────────────────────── */
 
-  const getPin = () => localStorage.getItem('lobster_session_pin') || ''
-  const getAdminPin = () => localStorage.getItem('lobster_session_admin_pin') || ''
-
   const loadSession = useCallback(async () => {
     if (!tournament?.id) return
     const { data, error: err } = await supabase
@@ -204,12 +201,8 @@ export default function Game({ tournament, onNavigate }) {
   }, [])
 
   const loadMyVotes = useCallback(async () => {
-    if (!tournament?.id || !claimedId) return
-    const pin = getPin()
-    if (!pin) return
+    if (!tournament?.id || !authSession?.user) return
     const { data, error: err } = await supabase.rpc('lobster_oscars_get_my_votes', {
-      input_pin: pin,
-      input_device_id: getDeviceId(),
       input_tournament_id: tournament.id,
     })
     if (err) {
@@ -217,16 +210,12 @@ export default function Game({ tournament, onNavigate }) {
       return
     }
     setMyVotes(data || [])
-  }, [tournament?.id, claimedId])
+  }, [tournament?.id, authSession])
 
   const loadAdminStats = useCallback(async () => {
     if (!tournament?.id || !isAdmin) return
-    const adminPin = getAdminPin()
-    if (!adminPin) return
     const { data, error: err } = await supabase.rpc('lobster_oscars_admin_get_stats', {
-      input_admin_pin: adminPin,
       input_tournament_id: tournament.id,
-      input_device_id: getDeviceId(),
     })
     if (err) {
       console.error('admin_get_stats:', err)
@@ -237,12 +226,8 @@ export default function Game({ tournament, onNavigate }) {
 
   const loadAdminResults = useCallback(async () => {
     if (!tournament?.id || !isAdmin) return
-    const adminPin = getAdminPin()
-    if (!adminPin) return
     const { data, error: err } = await supabase.rpc('lobster_oscars_admin_get_results', {
-      input_admin_pin: adminPin,
       input_tournament_id: tournament.id,
-      input_device_id: getDeviceId(),
     })
     if (err) {
       console.error('admin_get_results:', err)
@@ -254,12 +239,8 @@ export default function Game({ tournament, onNavigate }) {
   const loadCategoryVoters = useCallback(
     async (categoryId) => {
       if (!categoryId || !isAdmin) return
-      const adminPin = getAdminPin()
-      if (!adminPin) return
       const { data, error: err } = await supabase.rpc('lobster_oscars_admin_get_category_voters', {
-        input_admin_pin: adminPin,
         input_category_id: categoryId,
-        input_device_id: getDeviceId(),
       })
       if (err) {
         console.error('admin_get_category_voters:', err)
@@ -309,8 +290,8 @@ export default function Game({ tournament, onNavigate }) {
       return
     }
     loadCategories(session.id)
-    if (claimedId) loadMyVotes()
-  }, [session?.id, claimedId, loadCategories, loadMyVotes])
+    if (authSession?.user) loadMyVotes()
+  }, [session?.id, authSession, loadCategories, loadMyVotes])
 
   // Refresh the expanded category's voter list (initial + every 10s while active)
   useEffect(() => {
@@ -352,8 +333,6 @@ export default function Game({ tournament, onNavigate }) {
     setBusy(true)
     setError(null)
     const { data, error: err } = await supabase.rpc('lobster_oscars_cast_vote', {
-      input_pin: getPin(),
-      input_device_id: getDeviceId(),
       input_category_id: categoryId,
       input_target_id: targetId,
     })
@@ -385,8 +364,6 @@ export default function Game({ tournament, onNavigate }) {
     setBusy(true)
     setError(null)
     const { data, error: err } = await supabase.rpc('lobster_oscars_clear_vote', {
-      input_pin: getPin(),
-      input_device_id: getDeviceId(),
       input_category_id: categoryId,
     })
     setBusy(false)
@@ -405,7 +382,6 @@ export default function Game({ tournament, onNavigate }) {
   const handleAdminStart = async () => {
     setBusy(true)
     setError(null)
-    const adminPin = getAdminPin()
     const cats = (
       editCats ||
       (categories.length
@@ -424,10 +400,8 @@ export default function Game({ tournament, onNavigate }) {
     const { data: upRes, error: upErr } = await supabase.rpc(
       'lobster_oscars_admin_upsert_categories',
       {
-        input_admin_pin: adminPin,
         input_tournament_id: tournament.id,
         input_categories: cats,
-        input_device_id: getDeviceId(),
       },
     )
     if (upErr || (upRes !== 'ok' && upRes !== 'already_started')) {
@@ -436,9 +410,7 @@ export default function Game({ tournament, onNavigate }) {
       return
     }
     const { data: startRes, error: startErr } = await supabase.rpc('lobster_oscars_admin_start', {
-      input_admin_pin: adminPin,
       input_tournament_id: tournament.id,
-      input_device_id: getDeviceId(),
     })
     setBusy(false)
     if (startErr) {
@@ -463,9 +435,7 @@ export default function Game({ tournament, onNavigate }) {
     setBusy(true)
     setError(null)
     const { data, error: err } = await supabase.rpc('lobster_oscars_admin_end', {
-      input_admin_pin: getAdminPin(),
       input_tournament_id: tournament.id,
-      input_device_id: getDeviceId(),
     })
     setBusy(false)
     if (err) {
@@ -483,9 +453,7 @@ export default function Game({ tournament, onNavigate }) {
     setBusy(true)
     setError(null)
     const { data, error: err } = await supabase.rpc('lobster_oscars_admin_share', {
-      input_admin_pin: getAdminPin(),
       input_tournament_id: tournament.id,
-      input_device_id: getDeviceId(),
     })
     setBusy(false)
     if (err) {
@@ -692,7 +660,7 @@ export default function Game({ tournament, onNavigate }) {
         <PlayerCategoryScreen
           category={selectedCategory}
           tournamentParticipants={regPlayers}
-          claimedId={claimedId}
+          claimedId={authSession?.user?.id}
           matches={matches}
           shortName={shortName}
           myVote={myVoteByCat[selectedCategory.id] || null}

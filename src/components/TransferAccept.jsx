@@ -24,16 +24,9 @@ import { letterColor } from '../lib/letterColors'
 //   transferId: from the ?transfer=<id> deep link
 //   onNavigate(page, tournament?): standard nav helper used across the app
 export default function TransferAccept({ transferId, onNavigate }) {
-  const {
-    transfers,
-    players,
-    tournaments,
-    claimedId,
-    isAdmin,
-    respondToTransfer,
-    logout,
-    loading,
-  } = useApp()
+  const { transfers, players, tournaments, session, respondToTransfer, logout, loading } = useApp()
+  const claimedId = session?.user?.id ?? null
+  const isAdmin = session?.user?.app_metadata?.role === 'admin'
 
   const [busy, setBusy] = useState(null) // 'accept' | 'decline' | null
   const [done, setDone] = useState(null) // { kind: 'accepted' | 'declined' }

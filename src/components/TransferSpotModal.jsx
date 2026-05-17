@@ -15,7 +15,9 @@ import { letterColor } from '../lib/letterColors'
 //                      called after the RPC returns 'ok' so the caller can
 //                      open the share modal next.
 export default function TransferSpotModal({ tournament, onClose, onTransferCreated }) {
-  const { players, isAdmin, claimedId, getTournamentRegistrations, createTransfer } = useApp()
+  const { players, session, getTournamentRegistrations, createTransfer } = useApp()
+  const claimedId = session?.user?.id ?? null
+  const isAdmin = session?.user?.app_metadata?.role === 'admin'
 
   const [search, setSearch] = useState('')
   const [busy, setBusy] = useState(false)

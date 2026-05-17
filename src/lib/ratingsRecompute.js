@@ -115,13 +115,8 @@ export async function recomputeAllRatings(supabase) {
     learned_updated_at: new Date().toISOString(),
   }))
 
-  const adminPin =
-    typeof localStorage !== 'undefined' ? localStorage.getItem('lobster_session_admin_pin') : null
-  if (!adminPin) throw new Error('Admin sign-in required to persist ratings')
-
   const dbTournamentIds = dbEvents.map((e) => e.id)
   const { error: persistError } = await supabase.rpc('admin_persist_learned_ratings', {
-    input_admin_pin: adminPin,
     input_updates: updates,
     input_applied_tournament_ids: dbTournamentIds,
   })

@@ -12,7 +12,6 @@ import {
 } from 'lucide-react'
 import { isPublicPage } from '../lib/authPaths'
 import SignupRequest from './SignupRequest'
-import WaitingForApproval from './WaitingForApproval'
 
 // Phase 2d: removed the WhatsApp-the-admin fallback for forgot-PIN.
 // Recovery is now self-service via email; users without an email on
@@ -38,7 +37,7 @@ import WaitingForApproval from './WaitingForApproval'
  *              matches the "leave pin-only auth simple" product brief.
  */
 export default function VerificationGate({ children, page }) {
-  const { role, loading, loginWithPin, pendingClaim, forgotMyPin } = useApp()
+  const { role, loading, loginWithPin, forgotMyPin } = useApp()
 
   const [mode, setMode] = useState('signin') // signin | signup | forgot
   const [pin, setPin] = useState('')
@@ -119,12 +118,6 @@ export default function VerificationGate({ children, page }) {
   if (isPublicPage(page)) return <>{children}</>
   if (role !== 'guest') return <>{children}</>
 
-  // Phase 2b: pending-trust takes priority over the sign-in form. If a
-  // user entered the right PIN but the device hasn't been approved yet,
-  // their role stays 'guest' but pendingClaim is populated. Show the
-  // waiting screen instead of asking them to sign in again.
-  if (pendingClaim) return <WaitingForApproval />
-
   const handleSignin = async (e) => {
     e?.preventDefault?.()
     if (busy || !pin) return
@@ -138,11 +131,6 @@ export default function VerificationGate({ children, page }) {
       setTimeout(() => inputRef.current?.focus(), 10)
       return
     }
-    // Phase 2b: a successful login on a probationary device sets
-    // pendingClaim (role stays 'guest'). The next render reaches the
-    // pendingClaim branch above and swaps in <WaitingForApproval/>,
-    // which polls trust and unlocks once approved. We don't need
-    // anything special here for that case.
     setBusy(false)
   }
 

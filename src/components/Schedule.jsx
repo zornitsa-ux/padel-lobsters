@@ -685,8 +685,9 @@ export default function Schedule({ tournament, onNavigate }) {
     saveMatches,
     updateMatch,
     updateTournament,
-    isAdmin,
+    session,
   } = useApp()
+  const isAdmin = session?.user?.app_metadata?.role === 'admin'
 
   const [rounds, setRounds] = useState(4)
   const [generating, setGenerating] = useState(false)
@@ -711,7 +712,9 @@ export default function Schedule({ tournament, onNavigate }) {
   React.useEffect(() => {
     try {
       localStorage.setItem('lobster_use_score_for_matcher', useLobsterScore ? '1' : '0')
-    } catch {}
+    } catch {
+      /* localStorage unavailable — silently degrade */
+    }
   }, [useLobsterScore])
 
   // Load saved schedule into edit preview
@@ -821,27 +824,19 @@ export default function Schedule({ tournament, onNavigate }) {
     setSwapFirst(null)
   }
 
-  if (!tournament) {
-    return (
-      <div className="card py-10 text-center text-gray-400">
-        <AlertCircle size={36} className="mx-auto mb-2 opacity-30" />
-        <p>No event selected</p>
-        <button
-          onClick={() => onNavigate('tournament')}
-          className="btn-primary mt-4 py-2 px-5 text-sm"
-        >
-          Go to Events
-        </button>
-      </div>
-    )
-  }
-
-  const regs = getTournamentRegistrations(tournament.id).filter((r) => r.status === 'registered')
-  const registeredPlayers = players.filter((p) => regs.some((r) => r.playerId === p.id))
-  const savedMatches = getTournamentMatches(tournament.id)
-  const numCourts = (tournament.courts || []).length || 1
-  const format = tournament.format || 'americano'
-  const genderMode = tournament.genderMode || 'mixed'
+  // Hooks must run on every render — these were moved above the early
+  // `if (!tournament) return …` below. The data-deriving expressions are
+  // guarded so they degrade to empty arrays when tournament is null.
+  const regs = tournament
+    ? getTournamentRegistrations(tournament.id).filter((r) => r.status === 'registered')
+    : []
+  const registeredPlayers = tournament
+    ? players.filter((p) => regs.some((r) => r.playerId === p.id))
+    : []
+  const savedMatches = tournament ? getTournamentMatches(tournament.id) : []
+  const numCourts = tournament ? (tournament.courts || []).length || 1 : 1
+  const format = tournament ? tournament.format || 'americano' : 'americano'
+  const genderMode = tournament ? tournament.genderMode || 'mixed' : 'mixed'
   const isLobster = format === 'lobster_matching'
 
   // Group saved matches by round, and keep matches within a round sorted
@@ -864,8 +859,6 @@ export default function Schedule({ tournament, onNavigate }) {
     return Object.values(byRound).sort((a, b) => a.round - b.round)
   }, [savedMatches])
 
-  const display = generated || savedRounds
-
   // Check if all matches have scores filled in
   const allMatchesScored = useMemo(() => {
     if (savedRounds.length === 0) return false
@@ -874,8 +867,25 @@ export default function Schedule({ tournament, onNavigate }) {
     return allMatches.every((m) => m.completed && m.score1 != null && m.score2 != null)
   }, [savedRounds])
 
-  const isTournamentCompleted = tournament.status === 'completed'
   const [finishing, setFinishing] = useState(false)
+
+  if (!tournament) {
+    return (
+      <div className="card py-10 text-center text-gray-400">
+        <AlertCircle size={36} className="mx-auto mb-2 opacity-30" />
+        <p>No event selected</p>
+        <button
+          onClick={() => onNavigate('tournament')}
+          className="btn-primary mt-4 py-2 px-5 text-sm"
+        >
+          Go to Events
+        </button>
+      </div>
+    )
+  }
+
+  const display = generated || savedRounds
+  const isTournamentCompleted = tournament.status === 'completed'
 
   const handleFinishTournament = async () => {
     if (!isAdmin) {

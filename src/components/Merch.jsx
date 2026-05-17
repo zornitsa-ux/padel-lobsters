@@ -512,11 +512,12 @@ export default function Merch({
   const {
     players,
     registrations,
-    isAdmin,
+    session,
     tournaments: contextTournaments = [],
-    claimedId,
     raffleWinners = [],
   } = useApp()
+  const isAdmin = session?.user?.app_metadata?.role === 'admin'
+  const claimedId = session?.user?.id ?? null
   const tournaments = allTournaments.length > 0 ? allTournaments : contextTournaments
   const [tab, setTab] = useState(initialTab || 'shop')
   useEffect(() => {
@@ -669,7 +670,7 @@ export default function Merch({
   // ── Admin CRUD ───────────────────────────────────────────────────────────────
   const openAdd = () => {
     if (!isAdmin) {
-      setShowLogin(true)
+      onNavigate?.('settings')
       return
     }
     setForm(emptyItem)
@@ -679,7 +680,7 @@ export default function Merch({
 
   const openEdit = (item) => {
     if (!isAdmin) {
-      setShowLogin(true)
+      onNavigate?.('settings')
       return
     }
     const urls = item.image_urls?.length ? item.image_urls : item.image_url ? [item.image_url] : []

@@ -30,77 +30,23 @@ export function AppProvider({ children }) {
   const [raffleWinners, setRaffleWinners] = useState([])
   const [settings, setSettings] = useState({
     whatsappLink: '',
-    adminPin: '1234',
     groupName: 'Padel Lobsters',
   })
   const [loading, setLoading] = useState(true)
-  const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem('lobster_admin') === 'true')
-  // Secondary admin — can manage ONLY the Lobster League, nothing else.
-  // Granted when the user signs in with the league_admin_pin from settings.
-  const [isLeagueAdmin, setIsLeagueAdmin] = useState(
-    () => localStorage.getItem('lobster_league_admin') === 'true',
-  )
-  const [claimedId, setClaimedId] = useState(
-    () => localStorage.getItem('lobster_claimed_id') || null,
-  )
-  // Pending-trust state: a player has entered the correct PIN on a device
-  // that hasn't been approved yet (verify_player_pin_v2 returned trusted=false).
-  // VerificationGate shows the waiting-for-approval screen when this is set
-  // and claimedId is null. Once polling sees the device flip to trusted,
-  // acceptPendingClaim() promotes this to a real claimedId session.
-  const [pendingClaim, setPendingClaim] = useState(() => {
-    const id = localStorage.getItem('lobster_pending_id')
-    if (!id) return null
-    return { id, name: localStorage.getItem('lobster_pending_name') || null }
-  })
-  const setPendingClaimState = useCallback((claim) => {
-    setPendingClaim(claim)
-    if (claim) {
-      localStorage.setItem('lobster_pending_id', claim.id)
-      if (claim.name) localStorage.setItem('lobster_pending_name', claim.name)
-    } else {
-      localStorage.removeItem('lobster_pending_id')
-      localStorage.removeItem('lobster_pending_name')
-    }
-  }, [])
+  const [session, setSession] = useState(null)
   // Role snapshot for loaders that need to pick a data source (public view vs
   // raw table) outside React's render cycle — subscription callbacks close over
   // their initial scope, so reading from state would give us stale values.
   const roleRef = useRef('guest')
-  // Wrap setIsAdmin so it persists across refreshes
-  const setAdminState = useCallback((val) => {
-    setIsAdmin(val)
-    if (val) localStorage.setItem('lobster_admin', 'true')
-    else localStorage.removeItem('lobster_admin')
-  }, [])
-  // Same pattern for the secondary League Admin flag.
-  const setLeagueAdminState = useCallback((val) => {
-    setIsLeagueAdmin(val)
-    if (val) localStorage.setItem('lobster_league_admin', 'true')
-    else localStorage.removeItem('lobster_league_admin')
-  }, [])
-  // Self-heal stale claimedId. If localStorage carries a claimedId that
-  // doesn't match any player in the loaded roster — test-row deleted,
-  // id rotated, RLS filtered them out — the app ends up in a weird
-  // half-signed-in state: role === 'player' so the VerificationGate lets
-  // the user through, but Dashboard greets them as "Lobster" and Settings
-  // re-shows the PIN prompt because nothing matches. Clearing the stale
-  // id pushes them back to 'guest' so the gate / sign-in flow can recover.
-  // We run this only AFTER initial load completes to avoid clobbering the
-  // session on boot (players [] is empty until loadPlayers resolves).
   useEffect(() => {
-    if (loading) return
-    if (!claimedId) return
-    if (players.length === 0) return // still hydrating / RLS blocked
-    const match = players.find((p) => String(p.id) === String(claimedId))
-    if (!match) {
-      console.warn('[auth] claimedId', claimedId, 'not found in roster — clearing stale session.')
-      localStorage.removeItem('lobster_claimed_id')
-      localStorage.removeItem('lobster_session_pin')
-      setClaimedId(null)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, claimedId, players])
+    supabase.auth.getSession().then(({ data: { session: s } }) => setSession(s))
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, s) => {
+      setSession(s)
+    })
+    return () => subscription.unsubscribe()
+  }, [])
   // ── Initial data load ──────────────────────────────────────
   useEffect(() => {
     loadAll()
@@ -365,9 +311,6 @@ export function AppProvider({ children }) {
         whatsappLink: data.whatsapp_link ?? '',
         groupName: data.group_name ?? 'Padel Lobsters',
         padelTips: data.padel_tips ?? null,
-        // adminPin / leagueAdminPin no longer exposed — admin PIN lives only
-        // as a bcrypt hash that anon cannot read. Use changeAdminPin() to
-        // rotate it from the UI.
       })
   }
   // ── Settings ─────────────────────────────────────────────
@@ -375,11 +318,6 @@ export function AppProvider({ children }) {
   // back optimistic UI if needed) so we never end up showing a save that
   // didn't actually persist. The old "silent failure" behaviour was the
   // root cause of the Tip of the Day "it came back" bug.
-  //
-  // Phase 2d: admin_pin and admin_pin_hash are NOT writable from the
-  // anon role anymore. The admin PIN is rotated through changeAdminPin
-  // (admin_change_pin RPC). Sending those columns in the upsert here
-  // would now error with "permission denied for column".
   const saveSettings = useCallback(async (newSettings) => {
     const payload = {
       id: 1,
@@ -394,41 +332,15 @@ export function AppProvider({ children }) {
     }
     setSettings((s) => ({ ...s, ...newSettings }))
   }, [])
-  // Rotate the admin PIN. Called from Settings → Change Admin PIN form.
-  // Returns { ok, reason } where reason ∈ 'ok' | 'wrong_current' |
-  // 'invalid_new' | 'error'.
-  const changeAdminPin = useCallback(async (currentPin, newPin) => {
-    const deviceId = getDeviceId()
-    const userAgent = getUserAgentSummary()
-    try {
-      const { data, error } = await supabase.rpc('admin_change_pin', {
-        input_current_pin: currentPin,
-        input_new_pin: newPin,
-        input_device_id: deviceId,
-        input_user_agent: userAgent,
-      })
-      if (error) {
-        console.error('admin_change_pin error:', error)
-        return { ok: false, reason: 'error' }
-      }
-      return { ok: data === 'ok', reason: data }
-    } catch (e) {
-      console.error('admin_change_pin threw:', e)
-      return { ok: false, reason: 'error' }
-    }
-  }, [])
   // ── Players ──────────────────────────────────────────────
   // Phase 2c: writes go through SECURITY DEFINER RPCs so we can REVOKE
   // anon's direct grants on public.players. PINs are now generated
   // server-side (atomic — no client/server collision race).
   const addPlayer = useCallback(async (data) => {
-    const adminPin = localStorage.getItem('lobster_session_admin_pin')
-    if (!adminPin) {
+    if (!session?.user) {
       alert('Admin sign-in required to add a player.')
       return null
     }
-    const deviceId = getDeviceId()
-    const userAgent = getUserAgentSummary()
     // PIN omitted — admin_add_player generates one and returns it on the row.
     const payload = {
       name: data.name,
@@ -449,10 +361,7 @@ export function AppProvider({ children }) {
     }
     try {
       const { data: rows, error } = await supabase.rpc('admin_add_player', {
-        input_admin_pin: adminPin,
         input_payload: payload,
-        input_device_id: deviceId,
-        input_user_agent: userAgent,
       })
       if (error) {
         console.error('admin_add_player error:', error)
@@ -471,16 +380,8 @@ export function AppProvider({ children }) {
       return null
     }
   }, [])
-  // Dispatch: admin → admin_update_player (full fields).
-  //           non-admin self-edit → update_my_profile (restricted fields,
-  //           requires trusted device).
   const updatePlayer = useCallback(
     async (id, data) => {
-      const deviceId = getDeviceId()
-      const userAgent = getUserAgentSummary()
-      // Build a payload with only the fields actually present in `data`.
-      // Send nothing for fields the caller didn't touch — the RPC's COALESCE
-      // preserves the existing values then.
       const setIf = (cond, key, val) => {
         if (cond) payload[key] = val
       }
@@ -511,40 +412,26 @@ export function AppProvider({ children }) {
       setIf(data.tagline !== undefined, 'tagline', data.tagline ?? '')
       setIf(data.taglineLabel !== undefined, 'tagline_label', data.taglineLabel ?? '')
       // Admin-only fields
-      if (isAdmin) {
+      const role = session?.user?.app_metadata?.role ?? 'guest'
+      if (role === 'admin') {
         setIf(data.notes !== undefined, 'notes', data.notes ?? '')
         setIf(data.adjustment !== undefined, 'adjustment', String(parseFloat(data.adjustment) || 0))
         setIf(data.status !== undefined, 'status', data.status ?? 'active')
       }
 
       try {
-        if (isAdmin) {
-          const adminPin = localStorage.getItem('lobster_session_admin_pin')
-          if (!adminPin) {
-            alert('Admin sign-in required.')
-            return
-          }
+        if (role === 'admin') {
           const { error } = await supabase.rpc('admin_update_player', {
-            input_admin_pin: adminPin,
             input_target_id: id,
             input_payload: payload,
-            input_device_id: deviceId,
-            input_user_agent: userAgent,
           })
           if (error) {
             console.error('admin_update_player error:', error)
             alert('Could not update player: ' + error.message)
             return
           }
-        } else if (String(id) === String(claimedId)) {
-          const pin = localStorage.getItem('lobster_session_pin')
-          if (!pin) {
-            alert('Sign in required.')
-            return
-          }
+        } else if (String(id) === String(session?.user?.id)) {
           const { error } = await supabase.rpc('update_my_profile', {
-            input_pin: pin,
-            input_device_id: deviceId,
             input_payload: payload,
           })
           if (error) {
@@ -561,22 +448,12 @@ export function AppProvider({ children }) {
         console.error('updatePlayer threw:', e)
       }
     },
-    [claimedId, isAdmin],
+    [session],
   )
   const deletePlayer = useCallback(async (id) => {
-    const adminPin = localStorage.getItem('lobster_session_admin_pin')
-    if (!adminPin) {
-      alert('Admin sign-in required.')
-      return
-    }
-    const deviceId = getDeviceId()
-    const userAgent = getUserAgentSummary()
     try {
       const { error } = await supabase.rpc('admin_delete_player', {
-        input_admin_pin: adminPin,
         input_target_id: id,
-        input_device_id: deviceId,
-        input_user_agent: userAgent,
       })
       if (error) {
         console.error('admin_delete_player error:', error)
@@ -725,17 +602,11 @@ export function AppProvider({ children }) {
   // add_registration_transfers. Each one returns { ok, status, transferId? }
   // so callers can branch on the RPC's status text without parsing errors.
   const createTransfer = useCallback(async (toPlayerId, tournamentId) => {
-    const pin = localStorage.getItem('lobster_session_pin')
-    const deviceId = getDeviceId()
-    const userAgent = getUserAgentSummary()
-    if (!pin) return { ok: false, status: 'wrong_pin' }
+    if (!session?.user) return { ok: false, status: 'not_authenticated' }
     try {
       const { data, error } = await supabase.rpc('create_transfer', {
-        input_pin: pin,
-        input_device_id: deviceId,
         input_to_player_id: toPlayerId,
         input_tournament_id: tournamentId,
-        input_user_agent: userAgent,
       })
       if (error) {
         console.error('create_transfer error:', error)
@@ -756,17 +627,11 @@ export function AppProvider({ children }) {
   }, [])
 
   const respondToTransfer = useCallback(async (transferId, accept) => {
-    const pin = localStorage.getItem('lobster_session_pin')
-    const deviceId = getDeviceId()
-    const userAgent = getUserAgentSummary()
-    if (!pin) return { ok: false, status: 'wrong_pin' }
+    if (!session?.user) return { ok: false, status: 'not_authenticated' }
     try {
       const { data, error } = await supabase.rpc('respond_to_transfer', {
-        input_pin: pin,
-        input_device_id: deviceId,
         input_transfer_id: transferId,
         input_accept: !!accept,
-        input_user_agent: userAgent,
       })
       if (error) {
         console.error('respond_to_transfer error:', error)
@@ -786,16 +651,10 @@ export function AppProvider({ children }) {
   }, [])
 
   const cancelTransfer = useCallback(async (transferId) => {
-    const pin = localStorage.getItem('lobster_session_pin')
-    const deviceId = getDeviceId()
-    const userAgent = getUserAgentSummary()
-    if (!pin) return { ok: false, status: 'wrong_pin' }
+    if (!session?.user) return { ok: false, status: 'not_authenticated' }
     try {
       const { data, error } = await supabase.rpc('cancel_transfer', {
-        input_pin: pin,
-        input_device_id: deviceId,
         input_transfer_id: transferId,
-        input_user_agent: userAgent,
       })
       if (error) {
         console.error('cancel_transfer error:', error)
@@ -820,16 +679,10 @@ export function AppProvider({ children }) {
   // transfer isn't pending — the API never leaks phone numbers to
   // anyone other than the offer's initiator.
   const getTransferRecipientContact = useCallback(async (transferId) => {
-    const pin = localStorage.getItem('lobster_session_pin')
-    const deviceId = getDeviceId()
-    const userAgent = getUserAgentSummary()
-    if (!pin) return { ok: false, status: 'wrong_pin' }
+    if (!session?.user) return { ok: false, status: 'not_authenticated' }
     try {
       const { data, error } = await supabase.rpc('get_transfer_recipient_phone', {
-        input_pin: pin,
-        input_device_id: deviceId,
         input_transfer_id: transferId,
-        input_user_agent: userAgent,
       })
       if (error) {
         console.error('get_transfer_recipient_phone error:', error)
@@ -851,16 +704,9 @@ export function AppProvider({ children }) {
   // the from-player's PIN). Status text on the row gets a distinct
   // closed_reason='admin_cancel' for auditability.
   const adminCancelTransfer = useCallback(async (transferId) => {
-    const adminPin = localStorage.getItem('lobster_session_admin_pin')
-    const deviceId = getDeviceId()
-    const userAgent = getUserAgentSummary()
-    if (!adminPin) return { ok: false, status: 'wrong_admin_pin' }
     try {
       const { data, error } = await supabase.rpc('admin_cancel_transfer', {
-        input_admin_pin: adminPin,
-        input_device_id: deviceId,
         input_transfer_id: transferId,
-        input_user_agent: userAgent,
       })
       if (error) {
         console.error('admin_cancel_transfer error:', error)
@@ -880,16 +726,9 @@ export function AppProvider({ children }) {
   }, [])
 
   const forceAcceptTransfer = useCallback(async (transferId) => {
-    const adminPin = localStorage.getItem('lobster_session_admin_pin')
-    const deviceId = getDeviceId()
-    const userAgent = getUserAgentSummary()
-    if (!adminPin) return { ok: false, status: 'wrong_admin_pin' }
     try {
       const { data, error } = await supabase.rpc('admin_force_accept_transfer', {
-        input_admin_pin: adminPin,
-        input_device_id: deviceId,
         input_transfer_id: transferId,
-        input_user_agent: userAgent,
       })
       if (error) {
         console.error('admin_force_accept_transfer error:', error)
@@ -978,8 +817,6 @@ export function AppProvider({ children }) {
     isLeftHanded: p.is_left_handed ?? p.isLeftHanded ?? false,
     avatarUrl: p.avatar_url ?? p.avatarUrl ?? '',
     country: p.country ?? '',
-    pin: p.pin ?? '',
-    pinChanges: p.pin_changes ?? p.pinChanges ?? 0,
     preferredPosition: p.preferred_position ?? p.preferredPosition ?? '',
     taglineLabel: p.tagline_label ?? p.taglineLabel ?? '',
   }))
@@ -1039,13 +876,14 @@ export function AppProvider({ children }) {
   // tournament screen, and the admin panel — keeps the same data shape.
   const getPendingTransfersForMe = useCallback(() => {
     const all = normalisedTransfers.filter((t) => t.status === 'pending')
-    if (isAdmin) return all
-    if (!claimedId) return []
+    const uid = session?.user?.id
+    const role = session?.user?.app_metadata?.role ?? 'guest'
+    if (role === 'admin') return all
+    if (!uid) return []
     return all.filter(
-      (t) =>
-        String(t.fromPlayerId) === String(claimedId) || String(t.toPlayerId) === String(claimedId),
+      (t) => String(t.fromPlayerId) === String(uid) || String(t.toPlayerId) === String(uid),
     )
-  }, [normalisedTransfers, isAdmin, claimedId])
+  }, [normalisedTransfers, session])
   // Pending transfers for one specific tournament (any party).
   const getTournamentPendingTransfers = useCallback(
     (tournamentId) =>
@@ -1059,19 +897,9 @@ export function AppProvider({ children }) {
   // also bumps pin_changes via the sync_player_pin_hash trigger.
   // Returns the new PIN so admin can share it with the player.
   const regeneratePin = useCallback(async (playerId) => {
-    const adminPin = localStorage.getItem('lobster_session_admin_pin')
-    if (!adminPin) {
-      alert('Admin sign-in required to reset a PIN.')
-      return null
-    }
-    const deviceId = getDeviceId()
-    const userAgent = getUserAgentSummary()
     try {
       const { data, error } = await supabase.rpc('admin_regenerate_pin', {
-        input_admin_pin: adminPin,
         input_target_id: playerId,
-        input_device_id: deviceId,
-        input_user_agent: userAgent,
       })
       if (error) {
         console.error('admin_regenerate_pin error:', error)
@@ -1079,7 +907,7 @@ export function AppProvider({ children }) {
         return null
       }
       if (!data) {
-        alert('Could not reset PIN. Check your admin sign-in.')
+        alert('Could not reset PIN.')
         return null
       }
       await loadPlayers()
@@ -1089,143 +917,35 @@ export function AppProvider({ children }) {
       return null
     }
   }, [])
-  // Verify a player's PIN and claim that identity on this device
-  const claimIdentity = useCallback((playerId, enteredPin, playersList) => {
-    const player = playersList.find((p) => String(p.id) === String(playerId))
-    if (!player) return { success: false, error: 'Player not found' }
-    if (String(player.pin) !== String(enteredPin).trim())
-      return { success: false, error: 'Wrong PIN — try again' }
-    const id = String(playerId)
-    localStorage.setItem('lobster_claimed_id', id)
-    setClaimedId(id)
-    return { success: true }
+  // ── Auth ─────────────────────────────────────────────────
+  const loginWithPin = useCallback(async (enteredPin) => {
+    const pin = String(enteredPin || '').trim()
+    if (!pin) return { success: false, error: 'Enter your PIN' }
+    const deviceId = getDeviceId()
+    const userAgent = getUserAgentSummary()
+    try {
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-pin`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ pin, device_id: deviceId, user_agent: userAgent }),
+      })
+      const json = await res.json()
+      if (!res.ok) return { success: false, error: json?.error || 'Login failed' }
+      const { access_token, refresh_token, role } = json
+      const {
+        data: { session: newSession },
+        error: sessErr,
+      } = await supabase.auth.setSession({ access_token, refresh_token })
+      if (sessErr) return { success: false, error: sessErr.message }
+      setSession(newSession)
+      return { success: true, role }
+    } catch (e) {
+      return { success: false, error: 'Login failed' }
+    }
   }, [])
-  const clearIdentity = useCallback(() => {
-    localStorage.removeItem('lobster_claimed_id')
-    localStorage.removeItem('lobster_session_pin')
-    setClaimedId(null)
-  }, [])
-  // ── Unified auth middleware ──────────────────────────────
-  // One entry point for authentication. Pass a PIN; we auto-detect role:
-  //   1. Admin PIN  → elevate to admin (keeps any existing player identity).
-  //   2. League admin PIN (settings) → scoped admin.
-  //   3. Player PIN → claim that player identity, gated by device trust.
-  // Returns { success, role, player?, error, isNewDevice? }.
-  //
-  // Phase 2b: switched from v1 RPCs to v2. v2 adds:
-  //   - per-device rate limiting (10 fails / 24h → status='rate_limited')
-  //   - per-player lockout (5 strikes from a known device → status='locked')
-  //   - tiered device trust: a freshly-authenticated device is "probationary"
-  //     (trusted=false). The grace window (default 21 days post-migration)
-  //     auto-trusts the very first device per player. After grace, new
-  //     devices need approval from a trusted device or from admin.
-  //
-  // When the player succeeds but trust=false, we set pendingClaim instead
-  // of claimedId. Role stays 'guest' so VerificationGate can show the
-  // waiting-for-approval screen, which polls is_my_device_trusted and
-  // promotes pendingClaim → claimedId once approved.
-  const loginWithPin = useCallback(
-    async (enteredPin) => {
-      const pin = String(enteredPin || '').trim()
-      if (!pin) return { success: false, error: 'Enter your PIN' }
-      const deviceId = getDeviceId()
-      const userAgent = getUserAgentSummary()
-
-      // 1) Try admin first via v2 (rate limited + audit logged).
-      try {
-        const { data: adminRows, error: adminErr } = await supabase.rpc('verify_admin_pin_v2', {
-          input_pin: pin,
-          input_device_id: deviceId,
-          input_user_agent: userAgent,
-        })
-        if (adminErr) console.error('verify_admin_pin_v2 error:', adminErr)
-        const adminRow = Array.isArray(adminRows) ? adminRows[0] : adminRows
-        if (adminRow?.is_admin === true) {
-          setAdminState(true)
-          // Stash the admin PIN so admin-only RPCs can be called without
-          // a re-prompt. Cleared on logout. Sent on every admin RPC call.
-          localStorage.setItem('lobster_session_admin_pin', pin)
-          return { success: true, role: 'admin' }
-        }
-        if (adminRow?.status === 'rate_limited') {
-          return {
-            success: false,
-            error: 'Too many failed PIN attempts on this device. Try again in 24 hours.',
-          }
-        }
-      } catch (e) {
-        console.error('verify_admin_pin_v2 threw:', e)
-      }
-
-      // 1b) League admin PIN (settings.league_admin_pin). Unchanged — this
-      //     PIN is stored plaintext on settings and compared client-side.
-      if (settings.leagueAdminPin && pin === String(settings.leagueAdminPin)) {
-        setLeagueAdminState(true)
-        return { success: true, role: 'league_admin' }
-      }
-
-      // 2) Player PIN via v2.
-      try {
-        const { data: playerRows, error: playerErr } = await supabase.rpc('verify_player_pin_v2', {
-          input_pin: pin,
-          input_device_id: deviceId,
-          input_user_agent: userAgent,
-        })
-        if (playerErr) console.error('verify_player_pin_v2 error:', playerErr)
-        const row = Array.isArray(playerRows) ? playerRows[0] : playerRows
-
-        if (row?.status === 'rate_limited') {
-          return {
-            success: false,
-            error: 'Too many failed PIN attempts on this device. Try again in 24 hours.',
-          }
-        }
-        if (row?.status === 'locked') {
-          return {
-            success: false,
-            error:
-              'This account is locked after too many wrong PIN attempts. Tap "Forgot your PIN?" to message the admin, or try again in 24 hours.',
-          }
-        }
-        if (row?.status === 'wrong_pin' || !row?.player_id) {
-          return {
-            success: false,
-            error: "That PIN didn't match any Lobster — double-check and try again.",
-          }
-        }
-
-        // status === 'ok' and we have a player_id
-        const id = String(row.player_id)
-        // Stash the PIN regardless of trust state — we need it for
-        // get_my_profile_v2 polling and for approve_device. Same trust
-        // boundary as claimed_id (device-local, cleared on logout).
-        localStorage.setItem('lobster_session_pin', pin)
-
-        const player = players.find((p) => String(p.id) === id) || null
-
-        if (row.trusted === true) {
-          // Fully trusted device — flip role to 'player' immediately.
-          localStorage.setItem('lobster_claimed_id', id)
-          setClaimedId(id)
-          setPendingClaimState(null)
-          return { success: true, role: 'player', player, isNewDevice: !!row.is_new_device }
-        }
-
-        // Probationary device — set pending state. Role stays 'guest'
-        // until approval comes through.
-        setPendingClaimState({ id, name: player?.name || null })
-        return { success: true, role: 'pending', playerId: id, playerName: player?.name || null }
-      } catch (e) {
-        console.error('verify_player_pin_v2 threw:', e)
-      }
-
-      return {
-        success: false,
-        error: "That PIN didn't match any Lobster — double-check and try again.",
-      }
-    },
-    [players, setAdminState, setLeagueAdminState, setPendingClaimState, settings.leagueAdminPin],
-  )
   // Fetch the signed-in player's full record (including email / phone / full
   // birthday) through the secure RPC. Returns null if no PIN is cached or the
   // RPC call fails. Used by Settings' profile drawer.
@@ -1234,26 +954,20 @@ export function AppProvider({ children }) {
   // be trusted. A probationary device gets an empty response — Settings
   // should not call this until trust is confirmed.
   const fetchMyProfile = useCallback(async () => {
-    const pin = localStorage.getItem('lobster_session_pin')
-    if (!pin) return null
-    const deviceId = getDeviceId()
+    if (!session?.user) return null
     try {
-      const { data, error } = await supabase.rpc('get_my_profile_v2', {
-        input_pin: pin,
-        input_device_id: deviceId,
-      })
+      const { data, error } = await supabase.rpc('get_my_profile_v2')
       if (error) {
         console.error('get_my_profile_v2 error:', error)
         return null
       }
-      // The RPC returns setof players; supabase-js returns an array.
       const row = Array.isArray(data) ? data[0] : data
       return row || null
     } catch (e) {
       console.error('get_my_profile_v2 threw:', e)
       return null
     }
-  }, [])
+  }, [session])
   // ── Forgot PIN: email-based self-service reset ──────────────────────
   // Wraps the forgot_my_pin RPC. Player provides their email, we look up
   // their row, generate a fresh PIN, hash it, and email the new PIN via
@@ -1362,16 +1076,8 @@ export function AppProvider({ children }) {
   // another admin." Every successful call is visible in the admin
   // security-events panel.
   const fetchAllPlayersWithPii = useCallback(async () => {
-    const adminPin = localStorage.getItem('lobster_session_admin_pin')
-    if (!adminPin) return null
-    const deviceId = getDeviceId()
-    const userAgent = getUserAgentSummary()
     try {
-      const { data, error } = await supabase.rpc('get_all_players_with_pii_v2', {
-        input_admin_pin: adminPin,
-        input_device_id: deviceId,
-        input_user_agent: userAgent,
-      })
+      const { data, error } = await supabase.rpc('get_all_players_with_pii_v2')
       if (error) {
         console.error('get_all_players_with_pii_v2 error:', error)
         return null
@@ -1386,65 +1092,26 @@ export function AppProvider({ children }) {
   // and any pending-trust state. Note: device_id is intentionally NOT
   // cleared — keeping it means the user's next login from this device
   // is recognized as the same device (no fresh approval needed).
-  const logout = useCallback(() => {
-    setAdminState(false)
-    setLeagueAdminState(false)
-    localStorage.removeItem('lobster_claimed_id')
-    localStorage.removeItem('lobster_session_pin')
-    localStorage.removeItem('lobster_session_admin_pin')
-    localStorage.removeItem('lobster_pending_id')
-    localStorage.removeItem('lobster_pending_name')
-    setClaimedId(null)
-    setPendingClaim(null)
-  }, [setAdminState, setLeagueAdminState])
-
-  // ── Phase 2b: device trust + admin dashboard helpers ─────────
-  // Polled by the WaitingForApproval screen. Returns true once the
-  // device is approved (by user from a trusted device or by admin).
-  const checkMyDeviceTrust = useCallback(async (playerId) => {
-    if (!playerId) return false
-    const deviceId = getDeviceId()
-    try {
-      const { data, error } = await supabase.rpc('is_my_device_trusted', {
-        input_player_id: playerId,
-        input_device_id: deviceId,
-      })
-      if (error) {
-        console.error('is_my_device_trusted error:', error)
-        return false
-      }
-      return data === true
-    } catch (e) {
-      console.error('is_my_device_trusted threw:', e)
-      return false
-    }
+  const logout = useCallback(async () => {
+    await supabase.auth.signOut()
+    setSession(null)
+    ;[
+      'lobster_admin',
+      'lobster_league_admin',
+      'lobster_claimed_id',
+      'lobster_session_pin',
+      'lobster_session_admin_pin',
+      'lobster_pending_id',
+      'lobster_pending_name',
+    ].forEach((k) => localStorage.removeItem(k))
   }, [])
 
-  // Promote pendingClaim to a real session. Called by WaitingForApproval
-  // once polling sees the device flip to trusted.
-  const acceptPendingClaim = useCallback(() => {
-    if (!pendingClaim) return
-    localStorage.setItem('lobster_claimed_id', pendingClaim.id)
-    setClaimedId(pendingClaim.id)
-    setPendingClaimState(null)
-  }, [pendingClaim, setPendingClaimState])
-
-  // Cancel a pending claim — user closes the waiting screen, or
-  // changes their mind. Clears the stashed PIN too.
-  const cancelPendingClaim = useCallback(() => {
-    setPendingClaimState(null)
-    localStorage.removeItem('lobster_session_pin')
-  }, [setPendingClaimState])
-
-  // Player-side: list this player's own pending devices. Caller must
-  // already be on a trusted device (the RPC checks that internally).
+  // Player-side: list this player's own pending devices.
   const listMyPendingDevices = useCallback(async () => {
-    const pin = localStorage.getItem('lobster_session_pin')
-    if (!pin) return []
+    if (!session?.user) return []
     const deviceId = getDeviceId()
     try {
       const { data, error } = await supabase.rpc('list_pending_devices', {
-        input_pin: pin,
         input_requesting_device_id: deviceId,
       })
       if (error) {
@@ -1455,61 +1122,59 @@ export function AppProvider({ children }) {
     } catch (e) {
       return []
     }
-  }, [])
+  }, [session])
 
   // Player-side: approve one of my own pending devices.
   // Returns { ok, reason } where reason ∈ 'ok' | 'denied' | 'no_such_device' | 'error'.
-  const approveMyDevice = useCallback(async (targetDeviceId) => {
-    const pin = localStorage.getItem('lobster_session_pin')
-    if (!pin) return { ok: false, reason: 'no_pin' }
-    const deviceId = getDeviceId()
-    try {
-      const { data, error } = await supabase.rpc('approve_device', {
-        input_pin: pin,
-        input_requesting_device_id: deviceId,
-        input_target_device_id: targetDeviceId,
-      })
-      if (error) {
-        console.error('approve_device error:', error)
+  const approveMyDevice = useCallback(
+    async (targetDeviceId) => {
+      if (!session?.user) return { ok: false, reason: 'not_authenticated' }
+      const deviceId = getDeviceId()
+      try {
+        const { data, error } = await supabase.rpc('approve_device', {
+          input_requesting_device_id: deviceId,
+          input_target_device_id: targetDeviceId,
+        })
+        if (error) {
+          console.error('approve_device error:', error)
+          return { ok: false, reason: 'error' }
+        }
+        return { ok: data === 'ok', reason: data }
+      } catch (e) {
         return { ok: false, reason: 'error' }
       }
-      return { ok: data === 'ok', reason: data }
-    } catch (e) {
-      return { ok: false, reason: 'error' }
-    }
-  }, [])
+    },
+    [session],
+  )
 
   // Player-side: reject one of my own pending devices. Mirrors approve
   // but deletes the pending row instead of marking it trusted. Same
   // auth gates as approve (caller must be trusted for this player).
-  const rejectMyDevice = useCallback(async (targetDeviceId) => {
-    const pin = localStorage.getItem('lobster_session_pin')
-    if (!pin) return { ok: false, reason: 'no_pin' }
-    const deviceId = getDeviceId()
-    try {
-      const { data, error } = await supabase.rpc('reject_device', {
-        input_pin: pin,
-        input_requesting_device_id: deviceId,
-        input_target_device_id: targetDeviceId,
-      })
-      if (error) {
-        console.error('reject_device error:', error)
+  const rejectMyDevice = useCallback(
+    async (targetDeviceId) => {
+      if (!session?.user) return { ok: false, reason: 'not_authenticated' }
+      const deviceId = getDeviceId()
+      try {
+        const { data, error } = await supabase.rpc('reject_device', {
+          input_requesting_device_id: deviceId,
+          input_target_device_id: targetDeviceId,
+        })
+        if (error) {
+          console.error('reject_device error:', error)
+          return { ok: false, reason: 'error' }
+        }
+        return { ok: data === 'ok', reason: data }
+      } catch (e) {
         return { ok: false, reason: 'error' }
       }
-      return { ok: data === 'ok', reason: data }
-    } catch (e) {
-      return { ok: false, reason: 'error' }
-    }
-  }, [])
+    },
+    [session],
+  )
 
   // Admin: list all pending devices across all players.
   const adminListPendingDevices = useCallback(async () => {
-    const pin = localStorage.getItem('lobster_session_admin_pin')
-    if (!pin) return []
     try {
-      const { data, error } = await supabase.rpc('admin_list_pending_devices', {
-        input_admin_pin: pin,
-      })
+      const { data, error } = await supabase.rpc('admin_list_pending_devices')
       if (error) {
         console.error('admin_list_pending_devices error:', error)
         return []
@@ -1522,11 +1187,8 @@ export function AppProvider({ children }) {
 
   // Admin: recent security events feed (pin_attempts, joined to player names).
   const adminListSecurityEvents = useCallback(async (limit = 100) => {
-    const pin = localStorage.getItem('lobster_session_admin_pin')
-    if (!pin) return []
     try {
       const { data, error } = await supabase.rpc('admin_list_security_events', {
-        input_admin_pin: pin,
         input_limit: limit,
       })
       if (error) {
@@ -1541,11 +1203,8 @@ export function AppProvider({ children }) {
 
   // Admin: approve a pending device by sidestepping the trusted-device requirement.
   const adminApproveDevice = useCallback(async (targetPlayerId, targetDeviceId) => {
-    const pin = localStorage.getItem('lobster_session_admin_pin')
-    if (!pin) return { ok: false }
     try {
       const { data, error } = await supabase.rpc('admin_approve_device', {
-        input_admin_pin: pin,
         input_target_player: targetPlayerId,
         input_target_device: targetDeviceId,
       })
@@ -1562,11 +1221,8 @@ export function AppProvider({ children }) {
   // Admin: drop a pending device row entirely (user can re-trigger by
   // logging in again with the right PIN).
   const adminDenyDevice = useCallback(async (targetPlayerId, targetDeviceId) => {
-    const pin = localStorage.getItem('lobster_session_admin_pin')
-    if (!pin) return { ok: false }
     try {
       const { data, error } = await supabase.rpc('admin_deny_device', {
-        input_admin_pin: pin,
         input_target_player: targetPlayerId,
         input_target_device: targetDeviceId,
       })
@@ -1583,12 +1239,9 @@ export function AppProvider({ children }) {
   // Admin: clear a player's lockout state. Optionally also auto-trust
   // a target device (useful for "they lost their old phone" recovery).
   const adminUnlockPlayer = useCallback(async (targetPlayerId, targetDeviceId = null) => {
-    const pin = localStorage.getItem('lobster_session_admin_pin')
-    if (!pin) return { ok: false }
     const adminDeviceId = getDeviceId()
     try {
       const { data, error } = await supabase.rpc('admin_unlock_player', {
-        input_admin_pin: pin,
         input_target_player: targetPlayerId,
         input_target_device: targetDeviceId,
         input_admin_device_id: adminDeviceId,
@@ -1607,24 +1260,16 @@ export function AppProvider({ children }) {
   //   league_admin   — scoped to the Lobster League
   //   player         — signed in as a roster player
   //   guest          — no identity yet (blocked by VerificationGate)
-  const role = isAdmin ? 'admin' : isLeagueAdmin ? 'league_admin' : claimedId ? 'player' : 'guest'
-  // Keep roleRef in sync with the derived role, and refresh the data sources
-  // that depend on which surface we're reading from. When a guest signs in,
-  // this re-runs loadTournaments so the raw table replaces the public view.
+  const role = session?.user?.app_metadata?.role ?? 'guest'
   useEffect(() => {
     const prev = roleRef.current
     roleRef.current = role
-    // Always reload tournaments so source switches (guest ↔ authed) happen
-    // atomically with the role change. Safe: it's just a SELECT.
     loadTournaments()
     if (role === 'guest') {
       loadPublicCounts()
     } else if (prev === 'guest') {
-      // Dropping guest state — clear the map so a later sign-out rehydrates
-      // it fresh rather than showing a stale snapshot.
       setPublicCounts({})
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [role])
   // ── Updates ──────────────────────────────────────────────
   // Removed. The Updates feature (addUpdate / deleteUpdate / addReaction)
@@ -1706,14 +1351,14 @@ export function AppProvider({ children }) {
           ends_at: data.finals_end || data.ends_at || null,
           divisions: data.divisions || ['mens', 'womens'],
           status: 'signups_open',
-          created_by: claimedId || null,
+          created_by: session?.user?.id || null,
         })
         .select()
         .single()
       if (!error && row) await loadLeagues()
       return { data: row, error }
     },
-    [claimedId],
+    [session],
   )
   const updateLeague = useCallback(async (id, patch) => {
     const { error } = await supabase.from('leagues').update(patch).eq('id', id)
@@ -1729,13 +1374,13 @@ export function AppProvider({ children }) {
   // from the player's profile gender (falls back to 'open').
   const registerLeagueInterest = useCallback(
     async (leagueId, experienceLevel) => {
-      if (!claimedId) return { error: { message: 'Not signed in' } }
-      const me = players.find((p) => String(p.id) === String(claimedId))
+      if (!session?.user?.id) return { error: { message: 'Not signed in' } }
+      const me = players.find((p) => String(p.id) === String(session.user.id))
       const division = me?.gender === 'female' ? 'womens' : me?.gender === 'male' ? 'mens' : 'open'
       const { error } = await supabase.from('league_interests').upsert(
         {
           league_id: leagueId,
-          player_id: claimedId,
+          player_id: session.user.id,
           division,
           experience_level: experienceLevel,
           status: 'looking',
@@ -1745,35 +1390,35 @@ export function AppProvider({ children }) {
       if (!error) await loadLeagueInterests()
       return { error, division }
     },
-    [claimedId, players],
+    [session, players],
   )
   const withdrawLeagueInterest = useCallback(
     async (leagueId) => {
-      if (!claimedId) return { error: { message: 'Not signed in' } }
+      if (!session?.user?.id) return { error: { message: 'Not signed in' } }
       const { error } = await supabase
         .from('league_interests')
         .update({ status: 'withdrawn' })
         .eq('league_id', leagueId)
-        .eq('player_id', claimedId)
+        .eq('player_id', session.user.id)
       if (!error) await loadLeagueInterests()
       return { error }
     },
-    [claimedId],
+    [session],
   )
   // Step 2 — send a pairing request. Creates a `league_teams` row with
   // status='pending'. Both interest rows stay as 'looking' until the
   // invitee accepts.
   const proposeLeagueTeam = useCallback(
     async (leagueId, inviteeId, teamName, teamSong, division, experienceLevel) => {
-      if (!claimedId) return { error: { message: 'Not signed in' } }
-      if (String(claimedId) === String(inviteeId)) {
+      if (!session?.user?.id) return { error: { message: 'Not signed in' } }
+      if (String(session.user.id) === String(inviteeId)) {
         return { error: { message: "You can't invite yourself" } }
       }
       const { data: row, error } = await supabase
         .from('league_teams')
         .insert({
           league_id: leagueId,
-          proposer_id: claimedId,
+          proposer_id: session.user.id,
           invitee_id: inviteeId,
           team_name: teamName,
           team_song: teamSong || '',
@@ -1786,11 +1431,11 @@ export function AppProvider({ children }) {
       if (!error && row) await loadLeagueTeams()
       return { data: row, error }
     },
-    [claimedId],
+    [session],
   )
   const respondLeagueTeam = useCallback(
     async (teamId, accept) => {
-      if (!claimedId) return { error: { message: 'Not signed in' } }
+      if (!session?.user?.id) return { error: { message: 'Not signed in' } }
       const newStatus = accept ? 'confirmed' : 'declined'
       const { data: team, error } = await supabase
         .from('league_teams')
@@ -1812,7 +1457,7 @@ export function AppProvider({ children }) {
       await Promise.all([loadLeagueTeams(), loadLeagueInterests()])
       return { error: null }
     },
-    [claimedId],
+    [session],
   )
   // Admin-only: forcibly dissolve a confirmed team (e.g. someone dropped out).
   // Flips the team to 'withdrawn' and returns both players to 'looking' so
@@ -1841,18 +1486,9 @@ export function AppProvider({ children }) {
   // Insert one row per winner via the SECURITY DEFINER RPC. Returns the
   // inserted rows (or null on auth failure).
   const recordRaffleWinners = useCallback(async (tournamentId, playerIds) => {
-    // Auto-called on every Draw, so we MUST stay silent on failure — no
-    // alerts mid-raffle in front of the room. Returns null for caller to
-    // detect.
-    const adminPin = localStorage.getItem('lobster_session_admin_pin')
-    if (!adminPin) {
-      console.warn('recordRaffleWinners: no admin pin')
-      return null
-    }
     if (!tournamentId || !Array.isArray(playerIds) || playerIds.length === 0) return []
     try {
       const { data, error } = await supabase.rpc('admin_record_raffle_winners', {
-        input_admin_pin: adminPin,
         input_tournament_id: tournamentId,
         input_player_ids: playerIds,
       })
@@ -1868,15 +1504,9 @@ export function AppProvider({ children }) {
     }
   }, [])
   const updateRaffleWinnerPrize = useCallback(async (winnerId, prize) => {
-    const adminPin = localStorage.getItem('lobster_session_admin_pin')
-    if (!adminPin) {
-      console.warn('updateRaffleWinnerPrize: no admin pin')
-      return false
-    }
     if (!winnerId) return false
     try {
       const { data, error } = await supabase.rpc('admin_update_raffle_winner_prize', {
-        input_admin_pin: adminPin,
         input_winner_id: winnerId,
         input_prize: prize ?? '',
       })
@@ -1892,15 +1522,9 @@ export function AppProvider({ children }) {
     }
   }, [])
   const deleteRaffleWinner = useCallback(async (winnerId) => {
-    const adminPin = localStorage.getItem('lobster_session_admin_pin')
-    if (!adminPin) {
-      alert('Admin sign-in required.')
-      return false
-    }
     if (!winnerId) return false
     try {
       const { data, error } = await supabase.rpc('admin_delete_raffle_winner', {
-        input_admin_pin: adminPin,
         input_winner_id: winnerId,
       })
       if (error) {
@@ -1927,11 +1551,8 @@ export function AppProvider({ children }) {
         matches: normalisedMatches,
         settings,
         loading,
-        isAdmin,
-        isLeagueAdmin,
+        session,
         role,
-        setIsAdmin: setAdminState,
-        setIsLeagueAdmin: setLeagueAdminState,
         loginWithPin,
         logout,
         fetchMyProfile,
@@ -1960,19 +1581,11 @@ export function AppProvider({ children }) {
         updateMatch,
         getTournamentMatches,
         saveSettings,
-        changeAdminPin,
-        claimedId,
-        claimIdentity,
-        clearIdentity,
         regeneratePin,
         playerAliases,
         setPlayerAlias,
         removePlayerAlias,
         // Phase 2b: device trust + admin dashboard
-        pendingClaim,
-        checkMyDeviceTrust,
-        acceptPendingClaim,
-        cancelPendingClaim,
         listMyPendingDevices,
         approveMyDevice,
         rejectMyDevice,

@@ -346,7 +346,7 @@ const DEFAULT_SECTIONS = [
     body: [
       "We'd like to host both the gold and silver finals on the same day at the same club so everyone can come out to support the finalists. Venue and date will be shared as we get closer.",
       '',
-      "**The organizer has the final say** on group formations, disputes, and rule interpretations. If a situation isn't covered here, we\'ll settle it in the spirit of fair play.",
+      "**The organizer has the final say** on group formations, disputes, and rule interpretations. If a situation isn't covered here, we'll settle it in the spirit of fair play.",
     ].join('\n'),
   },
 ]
@@ -803,9 +803,7 @@ function InviteModal({ league, invitee, onClose, onSent }) {
 // ── Main component ────────────────────────────────────────────────────────
 export default function League({ onNavigate }) {
   const {
-    isAdmin,
-    isLeagueAdmin,
-    claimedId,
+    session,
     players,
     leagues,
     leagueInterests,
@@ -817,10 +815,11 @@ export default function League({ onNavigate }) {
     updateLeague,
     dissolveLeagueTeam,
   } = useApp()
+  const isAdmin = session?.user?.app_metadata?.role === 'admin'
+  const claimedId = session?.user?.id ?? null
 
-  // League Admin has the same scoped privileges as a full admin, but only
-  // for this page. Everywhere else in the app they're treated as a guest.
-  const canAdminLeague = isAdmin || isLeagueAdmin
+  // league_admin role no longer exists — admins manage the league.
+  const canAdminLeague = isAdmin
 
   // Temporary testing allowlist — players whose first name matches this
   // list can preview the League page even when visibility is still 'admin'.

@@ -4,7 +4,6 @@ import { supabase } from '../supabase'
 import { isE164 } from '../lib/whatsapp'
 import {
   Settings2,
-  Lock,
   MessageCircle,
   Save,
   Eye,
@@ -28,7 +27,6 @@ import CountryPicker, { FlagImg } from './CountryPicker'
 import DEFAULT_TIPS from '../data/padelTips'
 import ApproveDevicesWidget from './ApproveDevicesWidget'
 import AdminSecurityPanels from './AdminSecurityPanels'
-import ChangeAdminPinForm from './ChangeAdminPinForm'
 import { recomputeAllRatings } from '../lib/ratingsRecompute'
 import { processAvatar } from '../lib/processAvatar'
 import { letterColor } from '../lib/letterColors'
@@ -48,8 +46,7 @@ export default function Settings() {
   const {
     settings,
     saveSettings,
-    isAdmin,
-    claimedId,
+    session,
     getPlayerById,
     updatePlayer,
     players,
@@ -57,11 +54,11 @@ export default function Settings() {
     logout,
     fetchMyProfile,
   } = useApp()
+  const isAdmin = session?.user?.app_metadata?.role === 'admin'
+  const claimedId = session?.user?.id ?? null
 
   const [form, setForm] = useState({
     whatsappLink: '',
-    adminPin: '1234',
-    leagueAdminPin: '',
     groupName: 'Padel Lobsters',
   })
   // ── Unified Account sign-in state ──────────────────────────
@@ -86,7 +83,6 @@ export default function Settings() {
       setRecomputing(false)
     }
   }
-  const [showPin, setShowPin] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [tips, setTips] = useState(null) // null = use defaults
@@ -256,8 +252,6 @@ export default function Settings() {
     if (settings) {
       setForm({
         whatsappLink: settings.whatsappLink || '',
-        adminPin: settings.adminPin || '1234',
-        leagueAdminPin: settings.leagueAdminPin || '',
         groupName: settings.groupName || 'Padel Lobsters',
       })
       setTips(settings.padelTips && settings.padelTips.length > 0 ? settings.padelTips : null)
@@ -987,48 +981,6 @@ export default function Settings() {
         )}
 
         {isAdmin && <AdminSecurityPanels />}
-
-        {/* Security — admin only */}
-        {isAdmin && (
-          <div className="card space-y-4">
-            <h3 className="font-bold text-gray-700 text-sm flex items-center gap-2">
-              <Lock size={15} className="text-lobster-teal" /> Admin Security
-            </h3>
-            {/* Phase 2d: admin PIN is no longer readable from anon (it
-                lives only as a bcrypt hash on settings.admin_pin_hash,
-                which is column-grant locked). The "edit value in place"
-                input was replaced with a Change-PIN form that goes
-                through the admin_change_pin RPC. */}
-            <ChangeAdminPinForm />
-            <p className="text-xs text-gray-400">
-              Forgot the admin PIN? Run the break-glass SQL in
-              <code className="font-mono mx-1">supabase/migrations/0010_secure_admin_pin.sql</code>
-              from your Supabase SQL editor (project owner only) to set a fresh hash directly.
-            </p>
-
-            {/* League Admin PIN — a scoped-down second admin. Anyone with
-                this PIN can run the Lobster League (create leagues,
-                dissolve teams) but can't access players / tournaments /
-                schedule / any other admin surface. Leave blank to disable. */}
-            <div>
-              <label className="label">League Admin PIN (optional)</label>
-              <input
-                className="input"
-                type={showPin ? 'text' : 'password'}
-                inputMode="numeric"
-                maxLength={8}
-                placeholder="Leave blank to disable"
-                value={form.leagueAdminPin}
-                onChange={(e) => setForm((f) => ({ ...f, leagueAdminPin: e.target.value }))}
-              />
-              <p className="text-xs text-gray-400 mt-1.5">
-                Grants access to the Lobster League admin controls only. Anyone with this PIN can
-                create / edit the league and manage teams, but can't see players, tournaments,
-                schedule or scores. Set a different PIN than your main Admin PIN.
-              </p>
-            </div>
-          </div>
-        )}
 
         {/* Padel Tips */}
         {isAdmin && (

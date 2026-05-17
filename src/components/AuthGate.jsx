@@ -20,13 +20,16 @@ import { Shield, User, LogIn, X, KeyRound } from 'lucide-react'
  *               (e.g. `null` to hide entirely)
  */
 export default function AuthGate({ role, onNavigate, message, compact, fallback, children }) {
-  const { isAdmin, claimedId } = useApp()
+  const { session } = useApp()
+  const userRole = session?.user?.app_metadata?.role ?? 'guest'
+  const isAdmin = userRole === 'admin'
+  const isPlayer = userRole === 'player'
 
   const allowed =
     role === 'admin'
       ? isAdmin
       : role === 'player'
-        ? !!claimedId || isAdmin // admin counts as a superset
+        ? isPlayer || isAdmin // admin counts as a superset
         : true
 
   if (allowed) return <>{children}</>
@@ -100,9 +103,12 @@ export function SignInBanner({ role, onNavigate, message, compact }) {
  * patterns become `if (!requireRole('admin')) return`.
  */
 export function useRequireRole(onNavigate) {
-  const { isAdmin, claimedId } = useApp()
+  const { session } = useApp()
+  const userRole = session?.user?.app_metadata?.role ?? 'guest'
+  const isAdmin = userRole === 'admin'
+  const isPlayer = userRole === 'player'
   return (role) => {
-    const ok = role === 'admin' ? isAdmin : role === 'player' ? !!claimedId || isAdmin : true
+    const ok = role === 'admin' ? isAdmin : role === 'player' ? isPlayer || isAdmin : true
     if (!ok) onNavigate?.('settings')
     return ok
   }
@@ -263,7 +269,10 @@ export function PinPrompt({
  * successful sign-in.
  */
 export function useAuthPrompt({ onNavigate } = {}) {
-  const { isAdmin, claimedId } = useApp()
+  const { session } = useApp()
+  const userRole = session?.user?.app_metadata?.role ?? 'guest'
+  const isAdmin = userRole === 'admin'
+  const isPlayer = userRole === 'player'
   const [open, setOpen] = useState(false)
   const [askRole, setAskRole] = useState('player')
   const [askTitle, setAskTitle] = useState(null)
@@ -272,7 +281,7 @@ export function useAuthPrompt({ onNavigate } = {}) {
 
   const requireAuth = useCallback(
     (role, cb, options = {}) => {
-      const ok = role === 'admin' ? isAdmin : role === 'player' ? !!claimedId || isAdmin : true
+      const ok = role === 'admin' ? isAdmin : role === 'player' ? isPlayer || isAdmin : true
       if (ok) {
         cb?.()
         return
@@ -283,7 +292,7 @@ export function useAuthPrompt({ onNavigate } = {}) {
       setAskSub(options.subtitle || null)
       setOpen(true)
     },
-    [isAdmin, claimedId],
+    [isAdmin, isPlayer],
   )
 
   const handleSuccess = useCallback(() => {

@@ -17,7 +17,8 @@ const METHODS = [
 ]
 
 export default function Payments({ tournament, onNavigate }) {
-  const { players, getTournamentRegistrations, updateRegistration, isAdmin } = useApp()
+  const { players, getTournamentRegistrations, updateRegistration, session } = useApp()
+  const isAdmin = session?.user?.app_metadata?.role === 'admin'
   const [filter, setFilter] = useState('all')
 
   if (!tournament) {

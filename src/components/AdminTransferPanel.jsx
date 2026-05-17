@@ -17,8 +17,8 @@ import { letterColor } from '../lib/letterColors'
 //   tournament: tournament object whose pending transfers are listed
 //   onClose():  dismiss the panel
 export default function AdminTransferPanel({ tournament, onClose }) {
-  const { transfers, players, isAdmin, claimedId, forceAcceptTransfer, adminCancelTransfer } =
-    useApp()
+  const { transfers, players, session, forceAcceptTransfer, adminCancelTransfer } = useApp()
+  const isAdmin = session?.user?.app_metadata?.role === 'admin'
 
   const [busyId, setBusyId] = useState(null)
   const [errorById, setErrorById] = useState({})

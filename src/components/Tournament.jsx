@@ -54,13 +54,14 @@ export default function Tournament({ onNavigate }) {
     addTournament,
     updateTournament,
     deleteTournament,
-    isAdmin,
-    isLeagueAdmin,
-    claimedId,
+    session,
     players,
     getTournamentRegistrations,
     transfers,
   } = useApp()
+  const isAdmin = session?.user?.app_metadata?.role === 'admin'
+  const claimedId = session?.user?.id ?? null
+  const isLeagueAdmin = false
   // Temporary testing allowlist — match League.jsx. Lets the named
   // players preview the League entry while visibility is still 'admin'.
   const TEST_PLAYER_FIRST_NAMES = ['zornitsa', 'jon', 'uziel']

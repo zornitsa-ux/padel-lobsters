@@ -111,9 +111,7 @@ export default function Dashboard({ onNavigate }) {
     settings,
     getTournamentRegistrations,
     getTournamentMatches,
-    isAdmin,
-    isLeagueAdmin,
-    claimedId,
+    session,
     getPlayerById,
     playerAliases,
     leagues,
@@ -122,6 +120,10 @@ export default function Dashboard({ onNavigate }) {
     respondToTransfer,
     cancelTransfer,
   } = useApp()
+  const isAdmin = session?.user?.app_metadata?.role === 'admin'
+  const claimedId = session?.user?.id ?? null
+  // league_admin role no longer exists — admins manage the league.
+  const isLeagueAdmin = false
 
   // Pending-transfer state surfaced on the home screen so the player
   // sees their open offers right after reload — even before drilling
