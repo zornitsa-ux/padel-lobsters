@@ -26,25 +26,13 @@ export async function loginWithPin(enteredPin) {
     if (sessErr) return { success: false, error: sessErr.message }
     return { success: true, role, session: newSession }
   } catch (e) {
+    console.error('loginWithPin threw', e)
     return { success: false, error: 'Login failed' }
   }
 }
 
-// Full sign-out: drops both admin statuses, claimed player identity,
-// and any pending-trust state. Note: device_id is intentionally NOT
-// cleared — keeping it means the user's next login from this device
-// is recognized as the same device (no fresh approval needed).
-export async function logout() {
-  await supabase.auth.signOut()
-  ;[
-    'lobster_admin',
-    'lobster_league_admin',
-    'lobster_claimed_id',
-    'lobster_session_pin',
-    'lobster_session_admin_pin',
-    'lobster_pending_id',
-    'lobster_pending_name',
-  ].forEach((k) => localStorage.removeItem(k))
+export function logout() {
+  return supabase.auth.signOut()
 }
 
 // Fetch the signed-in player's full record (including email / phone / full

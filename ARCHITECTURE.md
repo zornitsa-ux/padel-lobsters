@@ -12,11 +12,11 @@ Padel Lobsters is a private-league management SPA for a recurring Americano-form
 | Styling    | Tailwind CSS v3, custom `lob-*` color namespace                 |
 | Backend    | Supabase (Postgres, Realtime, RLS, Edge Functions)              |
 | Deployment | Vercel (auto-deploy `main`); migrations are **manually pushed** |
-| CI         | GitHub Actions — lint + build only (no tests)                   |
+| CI         | GitHub Actions — lint + build only                              |
 | Email      | Resend API via Supabase Edge Function                           |
 | Ratings    | Client-side Glicko-2                                            |
 
-No test suite exists. No react-router-dom routing (despite it being installed).
+Vitest unit test suite exists (`npm test`) covering `src/lib/` and `src/data/` modules. No react-router-dom routing (despite it being installed).
 
 ---
 
@@ -45,29 +45,21 @@ Access control is in `src/lib/authPaths.js`:
 
 - players, tournaments, registrations, matches, settings, player_aliases, merch_items, merch_interests, leagues, league_interests, league_teams, raffle_winners
 
-**Realtime subscriptions** — every table has a Supabase Realtime channel. Players table additionally has a 60s polling fallback because Phase 2c revoked direct SELECT — the subscription works but a missed event would go unnoticed without the poll.
+**Realtime subscriptions** — every table has a Supabase Realtime channel. The `players` table additionally has a 60s polling fallback — direct `SELECT` on `players` is restricted by RLS (anon reads go through `players_public`), so a missed Realtime event would go unnoticed without the poll.
 
-**Role derivation** (current — pre-Phase-5):
-
-```
-role = isAdmin          → 'admin'
-     | isLeagueAdmin    → 'league_admin'
-     | claimedId        → 'player'
-     | else             → 'guest'
-```
-
-After Phase 5 this collapses to a single session read:
+**Role derivation** — derived from the JWT session on every render:
 
 ```javascript
 const role = session?.user?.app_metadata?.role ?? 'guest'
+// role ∈ { 'admin', 'player', 'guest' }
 ```
+
+The `role` claim is baked into `app_metadata` by the `verify-pin` Edge Function on every login. Components derive `isAdmin = role === 'admin'` locally; there are no global boolean state variables for auth roles.
 
 **Key state**:
 
-- `claimedId` — the player_id this device has PIN-authenticated as (pre-Phase-5; replaced by `auth.uid()` after Phase 5)
-- `deviceId` — UUID v4 from `localStorage['lobster_device_id']`
-- `pendingClaim` — set when device is on probation (awaiting admin approval)
-- `isAdmin` / `isLeagueAdmin` — derived from player row flags (pre-Phase-5; removed in Phase 5)
+- `session` — Supabase Auth session (`supabase.auth.getSession()` / `onAuthStateChange`); `session.user.id` is the authenticated player's UUID
+- `deviceId` — UUID v4 from `localStorage['lobster_device_id']`; stable across logins, used for device trust
 
 Context exposes ~80 values/functions to consumers. All player writes go through RPCs, never direct table writes.
 
@@ -120,7 +112,7 @@ Display font: Georgia serif (CSS class `font-display`). UI font: system sans-ser
 
 ### Supabase
 
-All DB access goes through the Supabase JS client (`src/supabase.js`) using the anon key + RLS. Admin operations use `SECURITY DEFINER` RPCs that run as the `postgres` role, bypassing RLS checks.
+All DB access goes through the Supabase JS client (`src/supabase.js`) using the anon key + RLS. Admin operations use `SECURITY DEFINER` RPCs that run as the `postgres` role, bypassing RLS. All public-facing mutations are gated by `require_admin()` or `require_trusted_device()` within the RPC body.
 
 ### Data Model
 
@@ -128,9 +120,9 @@ All DB access goes through the Supabase JS client (`src/supabase.js`) using the 
 
 **`players`**
 
-- `id`, `name`, `email`, `pin_hash` (bcrypt), `pin` (plaintext — Phase 3 will drop this), `nationality`, `avatar_url`, `playtomic_level`, `learned_rating` (Glicko-2 in DB units), `learned_rd`, `created_at`
-- **No `is_admin` or `is_league_admin` column exists** — admin identity is a shared bcrypt PIN stored in `private.admin_secrets`, not a per-player flag. The RBAC transition (Phase 1) will add a `role` column (`player_role` enum: `'player'` | `'admin'`).
-- RLS: players can read their own row via `update_my_profile` RPC; admin reads all via `admin_update_player`. Direct SELECT was revoked in Phase 2c — all reads go through the `players_public` view or RPCs.
+- `id`, `name`, `email`, `pin_hash` (bcrypt), `pin` (plaintext — **pending drop**, see Open Work), `nationality`, `avatar_url`, `playtomic_level`, `learned_rating` (Glicko-2 in DB units), `learned_rd`, `role` (`player_role` enum: `'player'` | `'admin'`), `created_at`
+- **`role`** is the single source of truth for authorization. Baked into JWT `app_metadata.role` by the `verify-pin` Edge Function on every login.
+- RLS: admins have full access via JWT claim policy; players can read/update their own row; anon reads go through the `players_public` view. Direct table access for non-owners is denied.
 
 **`tournaments`**
 
@@ -208,24 +200,30 @@ Cooldown rule: a player who won within the last N tournaments (default 2, config
 
 All write operations go through RPCs, never direct INSERT/UPDATE:
 
-| RPC                              | Purpose                                          |
-| -------------------------------- | ------------------------------------------------ |
-| `admin_add_player`               | Create player (admin only)                       |
-| `admin_update_player`            | Update any player field (admin only)             |
-| `update_my_profile`              | Player updates own name/email/avatar/nationality |
-| `admin_change_pin`               | Rotate admin PIN (validates old PIN)             |
-| `register_player_for_tournament` | Register or waitlist                             |
-| `admin_transfer_spot`            | Admin executes a spot transfer                   |
-| `propose_transfer`               | Player proposes to transfer their spot           |
-| `accept_transfer`                | Recipient accepts the transfer                   |
-| `admin_complete_payment`         | Mark registration as paid                        |
-| `lobster_oscars_cast_vote`       | Cast/update a vote                               |
-| `lobster_oscars_clear_vote`      | Remove own vote                                  |
-| `lobster_oscars_admin_*`         | Various admin Oscars management RPCs             |
-| `dissolveLeagueTeam`             | Admin breaks up a league team                    |
-| `recompute_player_ratings`       | Rebuild Glicko-2 for one or all players          |
-| `admin_draw_raffle`              | Draw a raffle winner (enforces cooldown)         |
-| `admin_update_raffle_winner`     | Edit prize label                                 |
+Authorization pattern: player RPCs use `auth.uid()` + `require_trusted_device()`; admin RPCs use `require_admin()` (reads JWT `app_metadata.role`).
+
+| RPC                             | Auth                   | Purpose                                          |
+| ------------------------------- | ---------------------- | ------------------------------------------------ |
+| `admin_add_player`              | `require_admin()`      | Create player                                    |
+| `admin_update_player`           | `require_admin()`      | Update any player field                          |
+| `admin_delete_player`           | `require_admin()`      | Delete player                                    |
+| `admin_regenerate_pin`          | `require_admin()`      | Regenerate a player's PIN                        |
+| `admin_approve_device`          | `require_admin()`      | Approve a pending device                         |
+| `update_my_profile`             | `auth.uid()` + trusted | Player updates own name/email/avatar/nationality |
+| `create_transfer`               | `auth.uid()` + trusted | Player initiates a spot transfer                 |
+| `cancel_transfer`               | `auth.uid()` + trusted | Player cancels their pending transfer            |
+| `respond_to_transfer`           | `auth.uid()` + trusted | Recipient accepts or declines transfer           |
+| `approve_device`                | `auth.uid()`           | Player approves a pending device (no trust gate) |
+| `reject_device`                 | `auth.uid()`           | Player rejects a pending device (no trust gate)  |
+| `get_my_profile_v2`             | `auth.uid()`           | Fetch own full record (email/phone)              |
+| `lobster_oscars_cast_vote`      | `auth.uid()` + trusted | Cast/update a vote                               |
+| `lobster_oscars_clear_vote`     | `auth.uid()` + trusted | Remove own vote                                  |
+| `lobster_oscars_admin_*`        | `require_admin()`      | Oscars session management                        |
+| `admin_persist_learned_ratings` | `require_admin()`      | Persist Glicko-2 ratings to DB                   |
+| `admin_record_raffle_winners`   | `require_admin()`      | Draw raffle winners (enforces cooldown)          |
+| `verify_player_pin_v2`          | anon                   | PIN check + rate limiting (called by Edge Fn)    |
+| `self_signup_player`            | anon                   | Self-service player registration                 |
+| `forgot_my_pin`                 | anon                   | Email-based PIN reset                            |
 
 ### Edge Functions
 
@@ -253,66 +251,85 @@ All write operations go through RPCs, never direct INSERT/UPDATE:
 
 ## Authentication & Security
 
-### PIN Authentication
+### Authorization Model
 
-Authentication uses a 4-digit PIN system backed by Supabase Auth (GoTrue) sessions:
+Two roles: `'player'` and `'admin'`. Role lives in `players.role` (Postgres enum) and is baked into the JWT `app_metadata.role` claim on every login by the `verify-pin` Edge Function.
 
-1. Player selects their name from a list
-2. Enters their 4-digit PIN
-3. Client calls the `verify-pin` Edge Function → Edge Function verifies PIN via `verify_player_pin_v2` RPC, then creates/syncs a GoTrue auth user and issues a JWT session
-4. Client calls `supabase.auth.setSession({ access_token, refresh_token })` to establish the session
-5. Session persisted by Supabase JS client (no manual localStorage writes for the session)
+**Server-side enforcement** — two DB helper functions (not SECURITY DEFINER, `search_path = ''`):
 
-PINs are stored bcrypt-hashed in `pin_hash`. **A plaintext `pin` column still exists** (Security Phase 3 incomplete — drop it).
+- `require_admin()` — raises if `(auth.jwt() -> 'app_metadata' ->> 'role') IS DISTINCT FROM 'admin'`
+- `require_trusted_device()` — raises `pending_device_approval` if `(auth.jwt() -> 'app_metadata' ->> 'device_trusted')::boolean IS NOT TRUE`
 
-The JWT `app_metadata.role` claim carries `'player'` or `'admin'` — baked in by the Edge Function on every login. Client reads role from `session.user.app_metadata.role`. RPCs use `require_admin()` which reads `auth.uid()` + `players.role`.
+**Client-side role reading** — `useAuth.js`:
 
-**Admin identity is a per-player property**: `players.role = 'admin'`. There is no longer a separate shared admin PIN credential. The `verify_admin_pin_v2` RPC is still present but will be removed in Phase 6 once Phase 4+5 are deployed.
+```javascript
+const role = session?.user?.app_metadata?.role ?? 'guest'
+// role ∈ { 'admin', 'player', 'guest' }
+```
 
-### Session Flow (verify-pin Edge Function)
+No shared admin PIN. No `is_admin`/`is_league_admin` state. `auth.uid()` is the identity for all operations.
+
+### PIN Authentication Flow
+
+1. Player selects their name and enters their 4-digit PIN
+2. Client calls `verify-pin` Edge Function (POST `{ pin, device_id }`)
+3. Edge Function runs `verify_player_pin_v2` (bcrypt check + rate limiting), fetches `players.role`, creates/syncs a GoTrue auth user with `app_metadata: { role, device_trusted }`, and issues a JWT via magic-link token exchange
+4. Client calls `supabase.auth.setSession({ access_token, refresh_token })`
+5. Session persisted by Supabase JS client
 
 ```
 Client POST /functions/v1/verify-pin { pin, device_id }
-  → RPC verify_player_pin_v2 (bcrypt check + rate limit)
-  → GET /rest/v1/players (fetch role + email, service role)
-  → GET /auth/v1/admin/users/:id (check if auth user exists)
-  → POST or PUT /auth/v1/admin/users (create/sync, bake app_metadata.role)
-  → POST /auth/v1/admin/generate_link (get hashed_token)
-  → GET /auth/v1/verify?token=...&redirect:manual (parse Location fragment)
+  → RPC verify_player_pin_v2        (bcrypt check + rate limit + device trust lookup)
+  → GET /rest/v1/players            (fetch role + email, service role)
+  → GET /auth/v1/admin/users/:id    (check if auth user exists)
+  → POST|PUT /auth/v1/admin/users   (create/sync; bake app_metadata: { role, device_trusted })
+  → POST /auth/v1/admin/generate_link
+  → GET /auth/v1/verify?token=...&redirect:manual  (parse Location fragment for tokens)
   → 200 { access_token, refresh_token, role, is_new_device, is_trusted }
 ```
 
+PINs are bcrypt-hashed in `pin_hash`. **The plaintext `pin` column still exists and must be dropped** (see Open Work).
+
 ### Device Trust
 
-Every browser gets a UUID v4 `deviceId` stored in `localStorage['lobster_device_id']`.
+Every browser has a stable UUID v4 `deviceId` in `localStorage['lobster_device_id']`.
 
-On first claim, the device enters a **probationary** state:
+- `verify_player_pin_v2` returns `trusted: boolean` based on `player_devices.trusted_at`
+- `is_trusted` is baked into `app_metadata.device_trusted` in the JWT by the Edge Function
+- All 6 player write RPCs (`update_my_profile`, `create_transfer`, `cancel_transfer`, `respond_to_transfer`, `lobster_oscars_cast_vote`, `lobster_oscars_clear_vote`) call `require_trusted_device()` — an untrusted device gets `pending_device_approval` from the server
+- `approve_device` / `reject_device` are **not** trust-gated (gating them would deadlock the approval flow)
+- `settings.auto_trust_until` grace window: devices that log in during this period are auto-trusted; used when onboarding players in bulk
+- **Client UX for untrusted devices is not yet implemented** — the server correctly rejects writes, but there is no ribbon or prompt explaining why to the user (see Open Work)
 
-- `pendingClaim` is set in context
-- Device cannot access protected pages
-- Admin must approve the device via `device_approvals` table
+### RLS Policies
 
-`settings.auto_trust_until` provides a grace-period bypass: devices that claim during this window are auto-approved, used when onboarding new players in bulk.
+All tables have RLS enabled with real policies (not `USING (true)`):
+
+- **Read**: public tables (`tournaments`, `matches`, `registrations`, etc.) are `SELECT USING (true)` — readable by anon
+- **Admin write**: `(auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'` — no SECURITY DEFINER, no DB lookup, JWT-only
+- **Own-row access**: `players` has `self_read` and `self_update` policies using `id = auth.uid()`
+- **Player-scoped writes**: `league_interests`, `merch_interests`, etc. have `player_id = auth.uid()` policies
+- `pin_attempts` and `player_devices` have RLS enabled with no public policies — only accessible through SECURITY DEFINER RPCs
+
+### Function EXECUTE Grants
+
+`anon` can only call: `verify_player_pin_v2`, `self_signup_player`, `forgot_my_pin`, `is_my_device_trusted`
+
+`authenticated` can call all player + admin RPCs. Admin RPCs are still reachable by any authenticated user, but `require_admin()` is the real gate — a non-admin session raises an exception.
+
+### Storage
+
+- `avatars` bucket: `authenticated` can upload/update their own `player-{uid}.webp`; admins can upload any file
+- `merch` bucket: admin only (INSERT/UPDATE/DELETE); reads served by CDN (bucket is public)
+- All storage policies use JWT claim (`auth.jwt() -> 'app_metadata' ->> 'role'`) — no SECURITY DEFINER
 
 ### Rate Limiting
 
-Enforced inside RPCs (not middleware):
+Enforced inside `verify_player_pin_v2` (not middleware):
 
-- Player PIN failures: 10 per device per 24h → lockout
-- Admin PIN failures: 5 per device per 24h → lockout
-- Per-player lockout after 5 consecutive failures (regardless of device)
-
-### Security Rollout Phases
-
-| Phase | Status      | Description                                                                      |
-| ----- | ----------- | -------------------------------------------------------------------------------- |
-| 1     | ✅ Complete | All writes moved to SECURITY DEFINER RPCs                                        |
-| 2     | ✅ Complete | REVOKE SELECT on sensitive columns; players read via view/RPCs                   |
-| 2c    | ✅ Complete | REVOKE SELECT on `players` table for anon; polling fallback added                |
-| 3     | ⏳ Pending  | REVOKE SELECT on `players`/`settings` for all roles; drop plaintext `pin` column |
-| 4     | ⏳ Pending  | Full audit trail, login attempt logging                                          |
-
-**Phase 3 is the most important remaining work.** The plaintext PIN column is a data exposure risk.
+- 10 failed PIN attempts per device per 24h → per-device lockout
+- 5 consecutive failures per player (any device) → per-player lockout
+- `pin_attempts` table is fully locked (no public RLS policies)
 
 ---
 
@@ -455,26 +472,48 @@ Use **TanStack Query** as the default server-state abstraction:
 
 ---
 
+## Open Work
+
+Concrete tasks that are scoped but not yet done, ordered by risk.
+
+### High — Security / Data Integrity
+
+- **Drop `players.pin` plaintext column** — the bcrypt `pin_hash` column is the live credential; the plaintext `pin` is a data exposure risk. Migration: `ALTER TABLE players DROP COLUMN pin;`. Gate on confirming no client code reads `players.pin` directly (grep clean).
+- **Device trust ribbon (client UX)** — `require_trusted_device()` is live and correctly rejects writes from untrusted sessions with `pending_device_approval`. The UX is missing: add a slim ribbon at the top of the app when `session.user.app_metadata.device_trusted === false`, explaining the device is read-only until approved, with a CTA to open Settings. Write-action buttons should surface this instead of silently failing.
+- **Apply all migrations to staging + production** — all migrations through `20260518000014_rbac_jwt_admin.sql` are applied locally. They have not been pushed to other environments.
+
+### Medium — Code Hygiene
+
+- **`src/api/auth.js` `logout()` cleanup** — removes several legacy localStorage keys (`lobster_admin`, `lobster_league_admin`, `lobster_claimed_id`, `lobster_session_admin_pin`, etc.) that no longer exist in the live app. The comment "drops both admin statuses" is stale. Clean up the key list and comment once confident all active user sessions have migrated.
+- **`search_path = ''` on SECURITY DEFINER function bodies** — `require_admin()` and `require_trusted_device()` already have `search_path = ''`. The larger SECURITY DEFINER RPCs (`admin_add_player`, `update_my_profile`, etc.) use `search_path = 'pg_catalog, public, extensions'` (safe but not maximally strict). Setting `search_path = ''` on all of them requires qualifying every unqualified table/function reference — deferred until there is a broader function audit.
+- **No migration CI gate** — migrations are manually pushed. A bad migration to production is difficult to reverse. Consider adding `supabase db diff` check to CI or at minimum a pre-push hook.
+- **`src/firebase.js`** — legacy Firebase config, entirely unused; safe to delete.
+- **`PlayerProfile.jsx` and `PlaytomicUpdatePrompt.jsx`** — currently unused components.
+
+### Low — Optional Improvements
+
+- **RLS for admin ops (RBAC Phase 8)** — some SECURITY DEFINER admin RPCs could be replaced with direct table operations guarded by RLS admin policies, reducing the SECURITY DEFINER surface area. Low urgency; replace one at a time.
+- **`react-router-dom` installed but unused** — the custom string-state router works but standard routing would enable deep links, browser back/forward, and bookmarking.
+- **Hardcoded test player names** — `TEST_PLAYER_FIRST_NAMES = ['zornitsa', 'jon', 'uziel']` in multiple components. Should be a single constant or DB flag.
+- **`AddToCalendarButton` opens Google Calendar URL** — `.ics` download was intentionally avoided to prevent iOS popup blocking; Android/desktop users lose native calendar integration.
+- **Role staleness** — if a player's `role` is changed in the DB mid-session, `app_metadata.role` in the JWT updates only at the next token refresh (~1 hour). Acceptable for this threat model; if immediate revocation is ever needed, force sign-out via Auth Admin API in `admin_update_player` when role is changed.
+
+---
+
 ## Known Technical Debt
 
 ### High Priority
 
-- **Plaintext PIN column** — `players.pin` still exists. Phase 3 must drop it.
-- **No tests** — zero unit/integration/e2e coverage. The matcher, standings algorithm, and Glicko-2 are untested.
-- **Monolithic AppContext** — 2012 lines, ~80 exports. Works but will become a maintenance burden as features grow.
+- **No tests on core algorithms** — the matcher, standings algorithm, and Glicko-2 are untested.
+- **Monolithic AppContext** — ~380 lines with `useAuth` + `useDataSync` extracted, but still a large surface area. Will become a maintenance burden as features grow.
 
 ### Medium Priority
 
-- **`react-router-dom` installed but unused** — the custom string-state router works, but standard routing would enable deep links, browser back/forward, and bookmarking.
-- **No migration CI gate** — migrations are pushed manually to production. A bad migration pushed directly could be destructive.
-- **`src/firebase.js`** — legacy Firebase config still in the repo. Entirely unused; safe to delete.
-- **`PlayerProfile.jsx` and `PlaytomicUpdatePrompt.jsx`** — currently unused components.
+- **Hardcoded historical data** — pre-Supabase tournaments are hardcoded in `History.jsx`. No migration path exists for adding new historical data without a code change.
 
 ### Low Priority
 
-- **Hardcoded test player names** — `TEST_PLAYER_FIRST_NAMES = ['zornitsa', 'jon', 'uziel']` appears in multiple components. Should be a single constant or a DB flag.
-- **Hardcoded podium fallback** — `['Alex B', 'Uziel', 'Karlijn']` in Dashboard.jsx.
-- **`AddToCalendarButton` opens Google Calendar URL** — `.ics` download was intentionally avoided to prevent iOS popup blocking, but this means Android/desktop users lose native calendar integration.
+- **Hardcoded podium fallback** — `['Alex B', 'Uziel', 'Karlijn']` in `Dashboard.jsx`.
 
 ---
 

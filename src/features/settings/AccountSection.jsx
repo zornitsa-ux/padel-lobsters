@@ -102,7 +102,7 @@ export default function AccountSection({
             <div className="text-3xl mb-1">🦞</div>
             <p className="text-sm font-semibold text-gray-800">Enter your 4-digit Lobster PIN</p>
             <p className="text-[11px] text-gray-500 mt-0.5">
-              It's the code you got via WhatsApp when you joined the crew.
+              It&rsquo;s the code you got via WhatsApp when you joined the crew.
             </p>
           </div>
           <input

@@ -125,7 +125,12 @@ serve(async (req) => {
     const createResp = await fetch(`${SUPABASE_URL}/auth/v1/admin/users`, {
       method: 'POST',
       headers: serviceHeaders,
-      body: JSON.stringify({ id: player_id, email, email_confirm: true, app_metadata: { role } }),
+      body: JSON.stringify({
+        id: player_id,
+        email,
+        email_confirm: true,
+        app_metadata: { role, device_trusted: is_trusted },
+      }),
     })
     if (!createResp.ok) {
       console.error('createUser http error:', createResp.status, await createResp.text())
@@ -135,7 +140,7 @@ serve(async (req) => {
     const updateResp = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${player_id}`, {
       method: 'PUT',
       headers: serviceHeaders,
-      body: JSON.stringify({ app_metadata: { role } }),
+      body: JSON.stringify({ app_metadata: { role, device_trusted: is_trusted } }),
     })
     if (!updateResp.ok) {
       console.error('updateUser http error:', updateResp.status, await updateResp.text())

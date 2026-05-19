@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import {
@@ -33,9 +33,38 @@ const InstagramIcon = () => (
   </svg>
 )
 
+import DeviceTrustBanner from './device-trust/DeviceTrustBanner'
+import DeviceTrustIndicator from './device-trust/DeviceTrustIndicator'
+const DEVICE_TRUST_BANNER_KEY = 'pl_device_trust_banner_dismissed'
+
 export default function Layout({ children }) {
   const { settings, session } = useApp()
   const [originOpen, setOriginOpen] = useState(false)
+  const [bannerDismissed, setBannerDismissed] = useState(false)
+  const deviceTrusted = session?.user?.app_metadata?.device_trusted
+  const isDeviceProbationary = deviceTrusted === false
+  const showBanner = isDeviceProbationary && !bannerDismissed
+  const showIndicator = isDeviceProbationary && bannerDismissed
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const stored = window.localStorage.getItem(DEVICE_TRUST_BANNER_KEY)
+    setBannerDismissed(stored === 'true')
+  }, [])
+
+  useEffect(() => {
+    if (!isDeviceProbationary && typeof window !== 'undefined') {
+      window.localStorage.removeItem(DEVICE_TRUST_BANNER_KEY)
+      setBannerDismissed(false)
+    }
+  }, [isDeviceProbationary])
+
+  const handleDismissBanner = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(DEVICE_TRUST_BANNER_KEY, 'true')
+    }
+    setBannerDismissed(true)
+  }, [])
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
   const navItems = isAdmin
     ? [...NAV, { to: '/admin', label: 'Admin', icon: Shield, end: false }]
@@ -92,6 +121,7 @@ export default function Layout({ children }) {
                 WhatsApp
               </a>
             )}
+            <DeviceTrustIndicator visible={showIndicator} />
           </div>
         </div>
 
@@ -118,6 +148,9 @@ export default function Layout({ children }) {
           <p className="text-[11px] text-white/60 italic leading-relaxed mt-1 pb-1">{ORIGIN}</p>
         )}
       </header>
+
+      {/* Device trust banner */}
+      {showBanner && <DeviceTrustBanner onDismiss={handleDismissBanner} />}
 
       {/* Page content */}
       <main className="flex-1 overflow-y-auto pb-24 px-4 pt-5">{children}</main>
