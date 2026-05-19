@@ -66,10 +66,7 @@ export function buildPlayerById(players: SchedulePlayer[]): Map<string, Schedule
   return new Map(players.map((player) => [toIdString(player.id), player]))
 }
 
-export function getPlayerName(
-  playerById: Map<string, SchedulePlayer>,
-  id: EntityId,
-): string {
+export function getPlayerName(playerById: Map<string, SchedulePlayer>, id: EntityId): string {
   const player = playerById.get(toIdString(id))
   return player ? (player.name || '').trim() : String(id)
 }

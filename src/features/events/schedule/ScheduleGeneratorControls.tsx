@@ -97,8 +97,8 @@ export default function ScheduleGeneratorControls({
         <span className="text-xs text-gray-700 leading-snug">
           <span className="font-semibold text-lobster-teal">Use Lobster Score for matching</span>
           <span className="block text-[11px] text-gray-500 mt-0.5">
-            When on, the matcher uses Glicko-2 shadow ratings instead of Playtomic-adjusted
-            levels. Players without a Lobster Score yet fall back to their adjusted level.
+            When on, the matcher uses Glicko-2 shadow ratings instead of Playtomic-adjusted levels.
+            Players without a Lobster Score yet fall back to their adjusted level.
           </span>
         </span>
       </label>
