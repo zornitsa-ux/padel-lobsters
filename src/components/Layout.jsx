@@ -1,10 +1,12 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
+import { NavLink } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import {
   LayoutDashboard,
   Users,
   Trophy,
   Settings,
+  Shield,
   MessageCircle,
   ShoppingBag,
   ChevronDown,
@@ -14,14 +16,15 @@ import {
 const ORIGIN =
   "We didn't plan this. Nobody drafted a mission statement or hired a consultant. One court became two, two became a tournament, and now here we are — a full-blown padel community that somehow keeps showing up. We're competitive enough to care and relaxed enough to laugh about it. Come as you are. Stay for the padel."
 
-// Bottom nav. The Updates tab was removed — the Updates feature is gone
-// app-wide, so the bar now has 5 evenly spaced tabs instead of 6.
+// Bottom nav — five tabs, each a NavLink so the active state tracks the URL.
+// `end={false}` for /events and /community so the tab stays highlighted on
+// nested routes (e.g. /events/123/schedule keeps Events highlighted).
 const NAV = [
-  { id: 'dashboard', label: 'Home', icon: LayoutDashboard },
-  { id: 'tournament', label: 'Events', icon: Trophy },
-  { id: 'players', label: 'Players', icon: Users },
-  { id: 'merch', label: 'Merch', icon: ShoppingBag },
-  { id: 'settings', label: 'Settings', icon: Settings },
+  { to: '/home', label: 'Home', icon: LayoutDashboard, end: true },
+  { to: '/events', label: 'Events', icon: Trophy, end: false },
+  { to: '/community', label: 'Players', icon: Users, end: false },
+  { to: '/merch', label: 'Merch', icon: ShoppingBag, end: false },
+  { to: '/settings', label: 'Settings', icon: Settings, end: false },
 ]
 
 const InstagramIcon = () => (
@@ -30,9 +33,42 @@ const InstagramIcon = () => (
   </svg>
 )
 
-export default function Layout({ children, page, onNavigate }) {
-  const { settings } = useApp()
+import DeviceTrustBanner from './device-trust/DeviceTrustBanner'
+import DeviceTrustIndicator from './device-trust/DeviceTrustIndicator'
+const DEVICE_TRUST_BANNER_KEY = 'pl_device_trust_banner_dismissed'
+
+export default function Layout({ children }) {
+  const { settings, session } = useApp()
   const [originOpen, setOriginOpen] = useState(false)
+  const [bannerDismissed, setBannerDismissed] = useState(false)
+  const deviceTrusted = session?.user?.app_metadata?.device_trusted
+  const isDeviceProbationary = deviceTrusted === false
+  const showBanner = isDeviceProbationary && !bannerDismissed
+  const showIndicator = isDeviceProbationary && bannerDismissed
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const stored = window.localStorage.getItem(DEVICE_TRUST_BANNER_KEY)
+    setBannerDismissed(stored === 'true')
+  }, [])
+
+  useEffect(() => {
+    if (!isDeviceProbationary && typeof window !== 'undefined') {
+      window.localStorage.removeItem(DEVICE_TRUST_BANNER_KEY)
+      setBannerDismissed(false)
+    }
+  }, [isDeviceProbationary])
+
+  const handleDismissBanner = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(DEVICE_TRUST_BANNER_KEY, 'true')
+    }
+    setBannerDismissed(true)
+  }, [])
+  const isAdmin = session?.user?.app_metadata?.role === 'admin'
+  const navItems = isAdmin
+    ? [...NAV, { to: '/admin', label: 'Admin', icon: Shield, end: false }]
+    : NAV
 
   return (
     <div className="min-h-screen bg-lobster-cream flex flex-col max-w-md mx-auto relative">
@@ -85,6 +121,7 @@ export default function Layout({ children, page, onNavigate }) {
                 WhatsApp
               </a>
             )}
+            <DeviceTrustIndicator visible={showIndicator} />
           </div>
         </div>
 
@@ -112,6 +149,9 @@ export default function Layout({ children, page, onNavigate }) {
         )}
       </header>
 
+      {/* Device trust banner */}
+      {showBanner && <DeviceTrustBanner onDismiss={handleDismissBanner} />}
+
       {/* Page content */}
       <main className="flex-1 overflow-y-auto pb-24 px-4 pt-5">{children}</main>
 
@@ -121,23 +161,27 @@ export default function Layout({ children, page, onNavigate }) {
         style={{ boxShadow: '0 -1px 0 rgba(0,0,0,0.06), 0 -4px 16px rgba(0,0,0,0.06)' }}
       >
         <div className="flex items-center justify-around py-2">
-          {NAV.map(({ id, label, icon: Icon }) => {
-            const active = page === id
-            return (
-              <button
-                key={id}
-                onClick={() => onNavigate(id)}
-                className={`flex flex-col items-center gap-1 px-2 py-1.5 rounded-xl transition-all ${
-                  active ? 'bg-lob-coral/15 text-lob-coral' : 'text-lob-muted hover:bg-white/10'
-                }`}
-              >
-                <Icon size={20} strokeWidth={active ? 2.5 : 1.8} />
-                <span className={`text-[9px] ${active ? 'font-bold' : 'font-medium'}`}>
-                  {label}
-                </span>
-              </button>
-            )
-          })}
+          {navItems.map(({ to, label, icon: Icon, end }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={end}
+              className={({ isActive }) =>
+                `flex flex-col items-center gap-1 px-2 py-1.5 rounded-xl transition-all ${
+                  isActive ? 'bg-lob-coral/15 text-lob-coral' : 'text-lob-muted hover:bg-white/10'
+                }`
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  <Icon size={20} strokeWidth={isActive ? 2.5 : 1.8} />
+                  <span className={`text-[9px] ${isActive ? 'font-bold' : 'font-medium'}`}>
+                    {label}
+                  </span>
+                </>
+              )}
+            </NavLink>
+          ))}
         </div>
       </nav>
     </div>

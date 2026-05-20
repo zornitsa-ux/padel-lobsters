@@ -1,6 +1,6 @@
 // ─────────────────────────────────────────────────────────────────────────────
 //  Historical-tournament stats derived from the alias map + hardcoded
-//  TOURNAMENTS list in src/components/History.jsx.
+//  TOURNAMENTS list in src/data/historicalTournaments.js.
 //
 //  The alias map is { historical_name: player_id }. For any given player,
 //  collect every name that resolves to them, then walk the tournaments to
@@ -8,7 +8,7 @@
 //  the rounds data, and best finish.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { TOURNAMENTS } from '../components/History'
+import { TOURNAMENTS } from '../data/historicalTournaments'
 
 /** Lower-case + strip whitespace/punctuation for forgiving comparisons. */
 export function normaliseName(n) {

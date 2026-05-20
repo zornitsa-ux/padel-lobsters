@@ -4,7 +4,7 @@ import { supabase } from '../supabase'
 import { isE164 } from '../lib/whatsapp'
 import { processAvatar } from '../lib/processAvatar'
 import { ArrowLeft, UserPlus, Check, Loader2, Copy, User, Camera } from 'lucide-react'
-import CountryPicker from './CountryPicker'
+import CountryPicker from './ui/CountryPicker'
 
 // =============================================================================
 //  SignupRequest — the self-serve "Join the Lobsters" form shown inside the

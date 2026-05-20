@@ -70,8 +70,10 @@ VALUES
   ('Ini',                   'female', 1.9, 0.4,  2.3, 'active', false, 'ES', 'left',  'ini@lobsters.test',        ''),
   ('Jens N',                'male',   2.0, 0,    2.0, 'active', false, 'NL', 'right', 'jens@lobsters.test',       ''),
   ('Jessica Spotowski',     'female', 2.4, -1.0, 1.4, 'active', false, 'NL', 'both',  'jessica@lobsters.test',    ''),
-  -- Jon gets a test PIN for admin/login testing
-  ('Jon Grim',              'male',   2.6, 0.4,  3.0, 'active', false, 'US', 'both',  'jon@lobsters.test',        '1234'),
+  -- Jon (admin) gets a unique test PIN. Keep this distinct from any other
+  -- seeded PIN so admin login is unambiguous when verify_player_pin_v2
+  -- matches by bcrypt and there are multiple seeded test PINs.
+  ('Jon Grim',              'male',   2.6, 0.4,  3.0, 'active', false, 'US', 'both',  'jon@lobsters.test',        '9999'),
   ('Josephine Tolley',      'female', 1.0, 1.0,  2.0, 'active', false, 'NL', 'right', 'josephine@lobsters.test',  ''),
   ('Juan Blas Diaz',        'male',   2.6, 0,    2.6, 'active', false, 'AR', 'both',  'juan.blas@lobsters.test',  ''),
   ('Juan Dominguez',        'male',   2.0, 0.5,  2.5, 'active', false, 'AR', 'both',  'juan.d@lobsters.test',     ''),
@@ -101,6 +103,9 @@ VALUES
   -- Zornitsa gets a test PIN for admin/login testing
   ('Zornitsa Mihaylova',    'female', 1.6, 0.4,  2.0, 'active', false, 'BG', 'both',  'zornitsa@lobsters.test',   '1234')
 ON CONFLICT DO NOTHING;
+
+-- Grant admin role to Jon so PIN 9999 works as admin without a manual DB edit.
+UPDATE players SET role = 'admin' WHERE name = 'Jon Grim';
 
 -- ── Tournaments ──────────────────────────────────────────────────────────────
 

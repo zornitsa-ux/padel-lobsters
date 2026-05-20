@@ -60,5 +60,11 @@ enabled = true
 policy = "per_worker"
 inspector_port = 8083
 
+[functions.verify-pin]
+verify_jwt = false
+
+[functions.send-pin-email]
+verify_jwt = false
+
 [analytics]
 enabled = false

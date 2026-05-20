@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import {
   KeyRound,
@@ -10,9 +11,8 @@ import {
   Check,
   AlertCircle,
 } from 'lucide-react'
-import { isPublicPage } from '../lib/authPaths'
+import { isPublicPath } from '../lib/authPaths'
 import SignupRequest from './SignupRequest'
-import WaitingForApproval from './WaitingForApproval'
 
 // Phase 2d: removed the WhatsApp-the-admin fallback for forgot-PIN.
 // Recovery is now self-service via email; users without an email on
@@ -37,8 +37,9 @@ import WaitingForApproval from './WaitingForApproval'
  *   - forgot:  WhatsApp-the-admin deep link. No auto-reset flow yet —
  *              matches the "leave pin-only auth simple" product brief.
  */
-export default function VerificationGate({ children, page }) {
-  const { role, loading, loginWithPin, pendingClaim, forgotMyPin } = useApp()
+export default function VerificationGate({ children }) {
+  const { role, loading, loginWithPin, forgotMyPin } = useApp()
+  const location = useLocation()
 
   const [mode, setMode] = useState('signin') // signin | signup | forgot
   const [pin, setPin] = useState('')
@@ -116,14 +117,8 @@ export default function VerificationGate({ children, page }) {
   }, [mode])
 
   if (loading) return null
-  if (isPublicPage(page)) return <>{children}</>
+  if (isPublicPath(location.pathname)) return <>{children}</>
   if (role !== 'guest') return <>{children}</>
-
-  // Phase 2b: pending-trust takes priority over the sign-in form. If a
-  // user entered the right PIN but the device hasn't been approved yet,
-  // their role stays 'guest' but pendingClaim is populated. Show the
-  // waiting screen instead of asking them to sign in again.
-  if (pendingClaim) return <WaitingForApproval />
 
   const handleSignin = async (e) => {
     e?.preventDefault?.()
@@ -138,11 +133,6 @@ export default function VerificationGate({ children, page }) {
       setTimeout(() => inputRef.current?.focus(), 10)
       return
     }
-    // Phase 2b: a successful login on a probationary device sets
-    // pendingClaim (role stays 'guest'). The next render reaches the
-    // pendingClaim branch above and swaps in <WaitingForApproval/>,
-    // which polls trust and unlocks once approved. We don't need
-    // anything special here for that case.
     setBusy(false)
   }
 

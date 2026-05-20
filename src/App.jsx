@@ -1,4 +1,14 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect } from 'react'
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useNavigate,
+  useLocation,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom'
 import { AppProvider, useApp } from './context/AppContext'
 import Layout from './components/Layout'
 import Dashboard from './components/Dashboard'
@@ -13,103 +23,202 @@ import SetupGuard from './components/SetupGuard'
 import Merch from './components/Merch'
 import History from './components/History'
 import Game from './components/Game'
-import League from './components/League'
+import Admin from './components/Admin.tsx'
 import VerificationGate from './components/VerificationGate'
 import TransferAccept from './components/TransferAccept'
 
+// URL routing — replaces the previous string-state page machine.
+//
+// Existing components were written against an `onNavigate(page, tournament?)`
+// helper. Rather than rewrite every consumer in this commit, route shims
+// translate that legacy signature into URL navigation via `useLegacyNavigate`.
+// Phase 2 feature refactors will switch each component to call useNavigate
+// directly and the adapter can be deleted then.
 export default function App() {
   return (
     <AppProvider>
       <SetupGuard>
-        {/* Page-aware auth gating: guests can browse pages in PUBLIC_PAGES
-            (src/lib/authPaths.js) without a PIN. Everything else is gated.
-            The gate lives inside <Inner /> so it can see the current page. */}
-        <Inner />
+        <BrowserRouter>
+          <DeepLinkMigrator />
+          <Layout>
+            <VerificationGate>
+              <Routes>
+                <Route path="/" element={<Navigate to="/home" replace />} />
+                <Route path="/home" element={<HomeRoute />} />
+
+                <Route path="/events" element={<EventsRoute />} />
+                <Route path="/events/:id" element={<EventDetailRoute />} />
+                <Route path="/events/:id/schedule" element={<EventScheduleRoute />} />
+                <Route path="/events/:id/scores" element={<EventScoresRoute />} />
+                <Route path="/events/:id/payments" element={<EventPaymentsRoute />} />
+                <Route path="/events/:id/oscars" element={<EventOscarsRoute />} />
+
+                <Route path="/community" element={<CommunityRoute />} />
+                <Route path="/community/:id" element={<CommunityRoute />} />
+
+                <Route path="/merch" element={<MerchRoute />} />
+                <Route path="/admin" element={<AdminRoute />} />
+                <Route path="/settings" element={<SettingsRoute />} />
+                <Route path="/history" element={<HistoryRoute />} />
+                <Route path="/transfer/:id" element={<TransferRoute />} />
+
+                <Route path="*" element={<Navigate to="/home" replace />} />
+              </Routes>
+            </VerificationGate>
+          </Layout>
+        </BrowserRouter>
       </SetupGuard>
     </AppProvider>
   )
 }
 
-function Inner() {
-  const { tournaments, loading } = useApp()
-  const [page, setPage] = useState('dashboard')
-  const [selectedTournament, setSelectedTournament] = useState(null)
-  // Active transfer id for the /?transfer=<id> deep link. Persisted in
-  // component state so a sign-in round-trip (where the URL gets cleaned)
-  // doesn't lose the context — the transfer-accept page can still render.
-  const [activeTransferId, setActiveTransferId] = useState(null)
+// Translate the legacy onNavigate(page, tournament?) signature to URL
+// navigation. Existing components keep working without internal changes.
+function useLegacyNavigate() {
+  const navigate = useNavigate()
+  return (page, payload) => {
+    const t = payload && typeof payload === 'object' ? payload : null
+    switch (page) {
+      case 'home':
+      case 'dashboard':
+        return navigate('/home')
+      case 'tournament':
+        return navigate('/events')
+      case 'registration':
+        return t?.id ? navigate(`/events/${t.id}`) : navigate('/events')
+      case 'schedule':
+        return t?.id ? navigate(`/events/${t.id}/schedule`) : navigate('/events')
+      case 'scores':
+        return t?.id ? navigate(`/events/${t.id}/scores`) : navigate('/events')
+      case 'payments':
+        return t?.id ? navigate(`/events/${t.id}/payments`) : navigate('/events')
+      case 'game':
+        return t?.id ? navigate(`/events/${t.id}/oscars`) : navigate('/events')
+      case 'players':
+        if (t?.focusPlayerId) return navigate(`/community/${t.focusPlayerId}`)
+        return navigate('/community')
+      case 'merch':
+        return navigate('/merch')
+      case 'admin':
+        return navigate('/admin')
+      case 'merch-orders':
+        return navigate('/merch?tab=orders')
+      case 'history':
+        return navigate('/history')
+      case 'settings':
+        return navigate('/settings')
+      default:
+        return navigate('/home')
+    }
+  }
+}
 
-  const [merchTab, setMerchTab] = useState(null)
+// Look up a tournament by URL :id. Returns null while data is still loading
+// (route renders nothing) and redirects to /events if the id doesn't exist.
+function useTournamentFromUrl() {
+  const { id } = useParams()
+  const { tournaments } = useApp()
+  return tournaments.find((t) => String(t.id) === String(id)) ?? null
+}
 
-  // Deep links read once at boot:
-  //   ?event=<id>    → open the registration page for that tournament
-  //   ?transfer=<id> → open the transfer-accept page (Melanie's tap from the
-  //                    WhatsApp link sent by Josephine). Has priority over
-  //                    ?event= because the same URL can carry both for a
-  //                    tournament-scoped offer.
+function HomeRoute() {
+  const onNavigate = useLegacyNavigate()
+  return <Dashboard onNavigate={onNavigate} />
+}
+
+function EventsRoute() {
+  const onNavigate = useLegacyNavigate()
+  return <Tournament onNavigate={onNavigate} />
+}
+
+function EventDetailRoute() {
+  const tournament = useTournamentFromUrl()
+  const onNavigate = useLegacyNavigate()
+  if (!tournament) return <Navigate to="/events" replace />
+  return <Registration tournament={tournament} onNavigate={onNavigate} />
+}
+
+function EventScheduleRoute() {
+  const tournament = useTournamentFromUrl()
+  const onNavigate = useLegacyNavigate()
+  if (!tournament) return <Navigate to="/events" replace />
+  return <Schedule tournament={tournament} onNavigate={onNavigate} />
+}
+
+function EventScoresRoute() {
+  const tournament = useTournamentFromUrl()
+  const onNavigate = useLegacyNavigate()
+  if (!tournament) return <Navigate to="/events" replace />
+  return <Scores tournament={tournament} onNavigate={onNavigate} />
+}
+
+function EventPaymentsRoute() {
+  const tournament = useTournamentFromUrl()
+  const onNavigate = useLegacyNavigate()
+  if (!tournament) return <Navigate to="/events" replace />
+  return <Payments tournament={tournament} onNavigate={onNavigate} />
+}
+
+function EventOscarsRoute() {
+  const tournament = useTournamentFromUrl()
+  const onNavigate = useLegacyNavigate()
+  if (!tournament) return <Navigate to="/events" replace />
+  return <Game tournament={tournament} onNavigate={onNavigate} />
+}
+
+function CommunityRoute() {
+  const { id } = useParams()
+  const onNavigate = useLegacyNavigate()
+  return <Players onNavigate={onNavigate} focusPlayerId={id} />
+}
+
+function MerchRoute() {
+  const [searchParams] = useSearchParams()
+  const tab = searchParams.get('tab')
+  const onNavigate = useLegacyNavigate()
+  return <Merch initialTab={tab} onNavigate={onNavigate} />
+}
+
+function SettingsRoute() {
+  const onNavigate = useLegacyNavigate()
+  return <Settings onNavigate={onNavigate} />
+}
+
+function AdminRoute() {
+  const onNavigate = useLegacyNavigate()
+  return <Admin onNavigate={onNavigate} />
+}
+
+function HistoryRoute() {
+  const onNavigate = useLegacyNavigate()
+  return <History onNavigate={onNavigate} />
+}
+
+function TransferRoute() {
+  const { id } = useParams()
+  const onNavigate = useLegacyNavigate()
+  return <TransferAccept transferId={id} onNavigate={onNavigate} />
+}
+
+// Backward compatibility for the original ?event=<id> and ?transfer=<id>
+// deep links sent by WhatsApp / calendar share. New share links use the
+// /events/:id and /transfer/:id routes directly, but old shared messages
+// still land on /?event=… so we redirect them on first paint.
+function DeepLinkMigrator() {
+  const navigate = useNavigate()
+  const location = useLocation()
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
+    const params = new URLSearchParams(location.search)
     const transferId = params.get('transfer')
     if (transferId) {
-      setActiveTransferId(transferId)
-      setPage('transfer-accept')
-      window.history.replaceState({}, '', window.location.pathname)
+      navigate(`/transfer/${transferId}`, { replace: true })
       return
     }
-    if (loading || tournaments.length === 0) return
     const eventId = params.get('event')
-    if (!eventId) return
-    const t = tournaments.find((x) => String(x.id) === String(eventId))
-    if (t) {
-      setSelectedTournament(t)
-      setPage('registration')
+    if (eventId) {
+      navigate(`/events/${eventId}`, { replace: true })
     }
-    // Clean the URL so refreshing doesn't re-trigger
-    window.history.replaceState({}, '', window.location.pathname)
-  }, [loading, tournaments])
-
-  const navigate = (p, tournament = null) => {
-    // Support merch-orders shortcut to go directly to Orders tab
-    if (p === 'merch-orders') {
-      setMerchTab('orders')
-      setPage('merch')
-    } else {
-      if (p === 'merch') setMerchTab(null) // reset to default
-      setPage(p)
-    }
-    if (tournament !== null) setSelectedTournament(tournament)
-    window.scrollTo(0, 0)
-  }
-
-  // Guests see the same Dashboard as members — the greeting renders
-  // generically when there's no claimed identity, and every onNavigate
-  // target that isn't in PUBLIC_PAGES (see authPaths.js) routes through
-  // <VerificationGate>, which surfaces the sign-in/up popup. That's how
-  // quick-link tiles, sub-tile nav, and event card buttons all trigger
-  // the popup for a logged-out visitor without needing a separate surface.
-  const pages = {
-    dashboard: <Dashboard onNavigate={navigate} />,
-    players: <Players onNavigate={navigate} focusPlayerId={selectedTournament?.focusPlayerId} />,
-    tournament: <Tournament onNavigate={navigate} />,
-    registration: <Registration tournament={selectedTournament} onNavigate={navigate} />,
-    payments: <Payments tournament={selectedTournament} onNavigate={navigate} />,
-    schedule: <Schedule tournament={selectedTournament} onNavigate={navigate} />,
-    scores: <Scores tournament={selectedTournament} onNavigate={navigate} />,
-    merch: <Merch tournament={selectedTournament} initialTab={merchTab} onNavigate={navigate} />,
-    settings: <Settings onNavigate={navigate} />,
-    history: <History onNavigate={navigate} />,
-    game: <Game tournament={selectedTournament} onNavigate={navigate} />,
-    league: <League onNavigate={navigate} />,
-    'transfer-accept': <TransferAccept transferId={activeTransferId} onNavigate={navigate} />,
-  }
-
-  return (
-    <Layout page={page} onNavigate={navigate}>
-      {/* VerificationGate is page-aware: for PUBLIC_PAGES it renders children
-          straight through; for everything else it shows the PIN prompt to
-          guests. Layout stays visible either way (nav chrome is fine to show
-          to guests — clicking a protected tab just triggers the PIN form). */}
-      <VerificationGate page={page}>{pages[page] || pages.dashboard}</VerificationGate>
-    </Layout>
-  )
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  return null
 }
