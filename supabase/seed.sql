@@ -104,6 +104,9 @@ VALUES
   ('Zornitsa Mihaylova',    'female', 1.6, 0.4,  2.0, 'active', false, 'BG', 'both',  'zornitsa@lobsters.test',   '1234')
 ON CONFLICT DO NOTHING;
 
+-- Grant admin role to Jon so PIN 9999 works as admin without a manual DB edit.
+UPDATE players SET role = 'admin' WHERE name = 'Jon Grim';
+
 -- ── Tournaments ──────────────────────────────────────────────────────────────
 
 INSERT INTO tournaments (name, date, time, location, max_players, format, status, duration, gender_mode, notes)
