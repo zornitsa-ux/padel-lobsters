@@ -7,10 +7,7 @@ interface TeamRecord {
   gameDiff: number
 }
 
-function accumulateRecord(
-  teamId: string,
-  match: LeagueMatch,
-): TeamRecord {
+function accumulateRecord(teamId: string, match: LeagueMatch): TeamRecord {
   const isTeam1 = match.team1_id === teamId
   const won = match.winner_id === teamId
 
@@ -37,9 +34,7 @@ function accumulateRecord(
 }
 
 function playedGroupMatches(matches: LeagueMatch[]): LeagueMatch[] {
-  return matches.filter(
-    (m) => m.stage === 'group' && m.winner_id !== null,
-  )
+  return matches.filter((m) => m.stage === 'group' && m.winner_id !== null)
 }
 
 export function getTeamRecord(

@@ -135,10 +135,7 @@ describe('suggestGroups', () => {
   })
 
   it('preserves team objects (same references)', () => {
-    const teams = [
-      makeTeam('t1', 'advanced'),
-      makeTeam('t2', 'beginner'),
-    ]
+    const teams = [makeTeam('t1', 'advanced'), makeTeam('t2', 'beginner')]
     const { A, B } = suggestGroups(teams)
     const all = [...A, ...B]
     for (const team of teams) {

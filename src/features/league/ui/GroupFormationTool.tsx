@@ -42,12 +42,17 @@ function RecommendationPanel({ teams, groupA, groupB }: RecommendationPanelProps
       <div className="flex items-baseline gap-1.5 flex-wrap">
         <span className="text-sm text-lob-dark">
           With <span className="font-bold">{teams.length}</span> teams: suggested{' '}
-          <span className="font-bold">{rec.sizeA}+{rec.sizeB}</span> groups
+          <span className="font-bold">
+            {rec.sizeA}+{rec.sizeB}
+          </span>{' '}
+          groups
         </span>
-        {!matchesRec && (currentA + currentB) > 0 && (
-          <span className="text-xs text-lob-muted">(current {currentA}+{currentB})</span>
+        {!matchesRec && currentA + currentB > 0 && (
+          <span className="text-xs text-lob-muted">
+            (current {currentA}+{currentB})
+          </span>
         )}
-        {matchesRec && (currentA + currentB) > 0 && (
+        {matchesRec && currentA + currentB > 0 && (
           <span className="text-xs text-lob-teal font-semibold">✓ matches recommendation</span>
         )}
       </div>
@@ -61,9 +66,7 @@ function RecommendationPanel({ teams, groupA, groupB }: RecommendationPanelProps
           <p className="font-semibold text-lob-dark">{SILVER_LABEL[rec.silverBracket]}</p>
         </div>
       </div>
-      {rec.warning && (
-        <p className="text-xs text-lob-amber">{rec.warning}</p>
-      )}
+      {rec.warning && <p className="text-xs text-lob-amber">{rec.warning}</p>}
     </div>
   )
 }
@@ -90,14 +93,24 @@ function TeamCard({ team, actions }: TeamCardProps) {
   return (
     <div className="flex items-center gap-2 rounded-xl bg-gray-50 px-3 py-2">
       <span className="text-base">{team.spirit_animal ?? '🎾'}</span>
-      <span className="text-sm font-semibold text-lob-dark flex-1 min-w-0 truncate">{teamLabel(team)}</span>
-      <Badge variant={experienceBadgeVariant(team.experience_level)} label={team.experience_level} />
+      <span className="text-sm font-semibold text-lob-dark flex-1 min-w-0 truncate">
+        {teamLabel(team)}
+      </span>
+      <Badge
+        variant={experienceBadgeVariant(team.experience_level)}
+        label={team.experience_level}
+      />
       {actions}
     </div>
   )
 }
 
-export function GroupFormationTool({ leagueId, division, teams, onSuccess }: GroupFormationToolProps) {
+export function GroupFormationTool({
+  leagueId,
+  division,
+  teams,
+  onSuccess,
+}: GroupFormationToolProps) {
   const [groupA, setGroupA] = useState<string[]>([])
   const [groupB, setGroupB] = useState<string[]>([])
   const [suggested, setSuggested] = useState(false)
@@ -150,24 +163,19 @@ export function GroupFormationTool({ leagueId, division, teams, onSuccess }: Gro
       <RecommendationPanel teams={teams} groupA={groupA} groupB={groupB} />
 
       <div className="flex gap-2">
-        <button
-          type="button"
-          className="btn-secondary text-sm"
-          onClick={handleSuggest}
-        >
+        <button type="button" className="btn-secondary text-sm" onClick={handleSuggest}>
           Suggest balanced groups
         </button>
       </div>
 
       {suggested && (
-        <AlertBox variant="info">
-          Groups suggested — review and adjust before confirming.
-        </AlertBox>
+        <AlertBox variant="info">Groups suggested — review and adjust before confirming.</AlertBox>
       )}
 
       {unassigned.length > 0 && groupA.length >= 2 && groupB.length >= 2 && (
         <AlertBox variant="warning">
-          {unassigned.length} team{unassigned.length !== 1 ? 's' : ''} unassigned — assign all teams before confirming.
+          {unassigned.length} team{unassigned.length !== 1 ? 's' : ''} unassigned — assign all teams
+          before confirming.
         </AlertBox>
       )}
 
@@ -175,50 +183,52 @@ export function GroupFormationTool({ leagueId, division, teams, onSuccess }: Gro
         <div>
           <SectionHeader icon={<Users size={15} />} title={`Group A (${groupA.length})`} />
           <div className="space-y-2">
-            {groupA.map((id) => teamById[id] && (
-              <TeamCard
-                key={id}
-                team={teamById[id]}
-                actions={
-                  <button
-                    type="button"
-                    onClick={() => removeFromGroup(id)}
-                    className="text-gray-400 hover:text-lob-coral text-xs ml-1"
-                    aria-label="Remove from group"
-                  >
-                    ✕
-                  </button>
-                }
-              />
-            ))}
-            {groupA.length === 0 && (
-              <p className="text-xs text-gray-400 px-2">No teams assigned</p>
+            {groupA.map(
+              (id) =>
+                teamById[id] && (
+                  <TeamCard
+                    key={id}
+                    team={teamById[id]}
+                    actions={
+                      <button
+                        type="button"
+                        onClick={() => removeFromGroup(id)}
+                        className="text-gray-400 hover:text-lob-coral text-xs ml-1"
+                        aria-label="Remove from group"
+                      >
+                        ✕
+                      </button>
+                    }
+                  />
+                ),
             )}
+            {groupA.length === 0 && <p className="text-xs text-gray-400 px-2">No teams assigned</p>}
           </div>
         </div>
 
         <div>
           <SectionHeader icon={<Users size={15} />} title={`Group B (${groupB.length})`} />
           <div className="space-y-2">
-            {groupB.map((id) => teamById[id] && (
-              <TeamCard
-                key={id}
-                team={teamById[id]}
-                actions={
-                  <button
-                    type="button"
-                    onClick={() => removeFromGroup(id)}
-                    className="text-gray-400 hover:text-lob-coral text-xs ml-1"
-                    aria-label="Remove from group"
-                  >
-                    ✕
-                  </button>
-                }
-              />
-            ))}
-            {groupB.length === 0 && (
-              <p className="text-xs text-gray-400 px-2">No teams assigned</p>
+            {groupB.map(
+              (id) =>
+                teamById[id] && (
+                  <TeamCard
+                    key={id}
+                    team={teamById[id]}
+                    actions={
+                      <button
+                        type="button"
+                        onClick={() => removeFromGroup(id)}
+                        className="text-gray-400 hover:text-lob-coral text-xs ml-1"
+                        aria-label="Remove from group"
+                      >
+                        ✕
+                      </button>
+                    }
+                  />
+                ),
             )}
+            {groupB.length === 0 && <p className="text-xs text-gray-400 px-2">No teams assigned</p>}
           </div>
         </div>
       </div>

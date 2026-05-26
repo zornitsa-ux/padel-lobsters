@@ -1,5 +1,16 @@
 export interface BadgeProps {
-  variant: 'paid' | 'unpaid' | 'pending' | 'waitlist' | 'info' | 'gold' | 'silver' | 'league-draft' | 'league-group-stage' | 'league-knockout' | 'league-completed'
+  variant:
+    | 'paid'
+    | 'unpaid'
+    | 'pending'
+    | 'waitlist'
+    | 'info'
+    | 'gold'
+    | 'silver'
+    | 'league-draft'
+    | 'league-group-stage'
+    | 'league-knockout'
+    | 'league-completed'
   label: string
   icon?: React.ReactNode
 }

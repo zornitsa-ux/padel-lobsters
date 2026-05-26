@@ -25,7 +25,9 @@ export function useUpdateLeagueStatus() {
       input_league_id: string
       input_status: string
     }) => {
-      await supabase.rpc('admin_update_league_status', { input_league_id, input_status }).throwOnError()
+      await supabase
+        .rpc('admin_update_league_status', { input_league_id, input_status })
+        .throwOnError()
     },
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: leagueKeys.active() })
@@ -56,7 +58,9 @@ export function useUpdateTeam(leagueId: string) {
       input_team_id: string
       input_payload: Record<string, unknown>
     }) => {
-      await supabase.rpc('admin_update_league_team', { input_team_id, input_payload }).throwOnError()
+      await supabase
+        .rpc('admin_update_league_team', { input_team_id, input_payload })
+        .throwOnError()
     },
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: leagueKeys.teams(leagueId) })
@@ -125,7 +129,9 @@ export function useInviteLeaguePlayer(leagueId: string) {
       input_player_id: string
       input_email: string
     }) => {
-      await supabase.rpc('admin_invite_league_player', { input_player_id, input_email }).throwOnError()
+      await supabase
+        .rpc('admin_invite_league_player', { input_player_id, input_email })
+        .throwOnError()
     },
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: leagueKeys.teams(leagueId) })

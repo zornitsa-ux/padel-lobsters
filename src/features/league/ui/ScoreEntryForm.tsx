@@ -61,9 +61,18 @@ function SetInput({ label, t1, t2, onT1, onT2, team1Label, team2Label, error }: 
   )
 }
 
-function setStr(n: number | undefined) { return n != null ? String(n) : '' }
+function setStr(n: number | undefined) {
+  return n != null ? String(n) : ''
+}
 
-export function ScoreEntryForm({ match, team1, team2, leagueId, onSuccess, onCancel }: ScoreEntryFormProps) {
+export function ScoreEntryForm({
+  match,
+  team1,
+  team2,
+  leagueId,
+  onSuccess,
+  onCancel,
+}: ScoreEntryFormProps) {
   const existing = match.set_scores
   const [s1t1, setS1t1] = useState(setStr(existing?.[0]?.t1))
   const [s1t2, setS1t2] = useState(setStr(existing?.[0]?.t2))
@@ -81,12 +90,15 @@ export function ScoreEntryForm({ match, team1, team2, leagueId, onSuccess, onCan
   const t2Label = teamLabel(team2)
 
   function countWins() {
-    let w1 = 0, w2 = 0
+    let w1 = 0,
+      w2 = 0
     const sets = [[s1t1, s1t2], [s2t1, s2t2], ...(superTb ? [[s3t1, s3t2]] : [])]
     for (const [a, b] of sets) {
-      const an = Number(a), bn = Number(b)
+      const an = Number(a),
+        bn = Number(b)
       if (a !== '' && b !== '' && an !== bn) {
-        if (an > bn) w1++; else w2++
+        if (an > bn) w1++
+        else w2++
       }
     }
     return [w1, w2]
@@ -102,14 +114,17 @@ export function ScoreEntryForm({ match, team1, team2, leagueId, onSuccess, onCan
 
   function validate() {
     const errs: Record<string, string> = {}
-    const s1a = Number(s1t1), s1b = Number(s1t2)
-    const s2a = Number(s2t1), s2b = Number(s2t2)
+    const s1a = Number(s1t1),
+      s1b = Number(s1t2)
+    const s2a = Number(s2t1),
+      s2b = Number(s2t2)
     if (s1t1 === '' || s1t2 === '') errs.set1 = 'Enter Set 1 scores'
     else if (s1a === s1b) errs.set1 = 'Set 1 cannot be tied'
     if (s2t1 === '' || s2t2 === '') errs.set2 = 'Enter Set 2 scores'
     else if (s2a === s2b) errs.set2 = 'Set 2 cannot be tied'
     if (superTb) {
-      const s3a = Number(s3t1), s3b = Number(s3t2)
+      const s3a = Number(s3t1),
+        s3b = Number(s3t2)
       if (s3t1 === '' || s3t2 === '') errs.set3 = 'Enter super tiebreak scores'
       else if (Math.max(s3a, s3b) < 10) errs.set3 = 'Super tiebreak must reach 10 points'
       else if (Math.abs(s3a - s3b) < 2) errs.set3 = 'Super tiebreak must be decided by 2 points'
@@ -145,36 +160,80 @@ export function ScoreEntryForm({ match, team1, team2, leagueId, onSuccess, onCan
 
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-1">
-      <SetInput label="Set 1" t1={s1t1} t2={s1t2} onT1={setS1t1} onT2={setS1t2} team1Label={t1Label} team2Label={t2Label} error={errors.set1} />
-      <SetInput label="Set 2" t1={s2t1} t2={s2t2} onT1={setS2t1} onT2={setS2t2} team1Label={t1Label} team2Label={t2Label} error={errors.set2} />
+      <SetInput
+        label="Set 1"
+        t1={s1t1}
+        t2={s1t2}
+        onT1={setS1t1}
+        onT2={setS1t2}
+        team1Label={t1Label}
+        team2Label={t2Label}
+        error={errors.set1}
+      />
+      <SetInput
+        label="Set 2"
+        t1={s2t1}
+        t2={s2t2}
+        onT1={setS2t1}
+        onT2={setS2t2}
+        team1Label={t1Label}
+        team2Label={t2Label}
+        error={errors.set2}
+      />
 
       <div className="flex items-center gap-2 py-2">
         <input
           id="super-tb"
           type="checkbox"
           checked={superTb}
-          onChange={(e) => { setSuperTb(e.target.checked); if (!e.target.checked) { setS3t1(''); setS3t2('') } }}
+          onChange={(e) => {
+            setSuperTb(e.target.checked)
+            if (!e.target.checked) {
+              setS3t1('')
+              setS3t2('')
+            }
+          }}
           className="rounded"
         />
-        <label htmlFor="super-tb" className="text-sm text-lob-dark">Super tiebreak</label>
+        <label htmlFor="super-tb" className="text-sm text-lob-dark">
+          Super tiebreak
+        </label>
       </div>
 
       {superTb && (
-        <SetInput label="Set 3 (Super tiebreak)" t1={s3t1} t2={s3t2} onT1={setS3t1} onT2={setS3t2} team1Label={t1Label} team2Label={t2Label} error={errors.set3} />
+        <SetInput
+          label="Set 3 (Super tiebreak)"
+          t1={s3t1}
+          t2={s3t2}
+          onT1={setS3t1}
+          onT2={setS3t2}
+          team1Label={t1Label}
+          team2Label={t2Label}
+          error={errors.set3}
+        />
       )}
 
-      {preview && (
-        <p className="text-sm font-semibold text-lob-teal py-1">{preview}</p>
-      )}
+      {preview && <p className="text-sm font-semibold text-lob-teal py-1">{preview}</p>}
 
       <div className="pt-2">
         <label className="label">Date played</label>
-        <input type="date" className="input w-full" value={playedOn} onChange={(e) => setPlayedOn(e.target.value)} />
+        <input
+          type="date"
+          className="input w-full"
+          value={playedOn}
+          onChange={(e) => setPlayedOn(e.target.value)}
+        />
       </div>
 
       <div>
         <label className="label">Location</label>
-        <input type="text" className="input w-full" placeholder="Optional" value={location} onChange={(e) => setLocation(e.target.value)} />
+        <input
+          type="text"
+          className="input w-full"
+          placeholder="Optional"
+          value={location}
+          onChange={(e) => setLocation(e.target.value)}
+        />
       </div>
 
       {recordResult.error && (
@@ -184,7 +243,9 @@ export function ScoreEntryForm({ match, team1, team2, leagueId, onSuccess, onCan
       )}
 
       <div className="flex gap-3 pt-4">
-        <button type="button" className="btn-secondary flex-1" onClick={onCancel}>Cancel</button>
+        <button type="button" className="btn-secondary flex-1" onClick={onCancel}>
+          Cancel
+        </button>
         <button type="submit" className="btn-primary flex-1" disabled={recordResult.isPending}>
           {recordResult.isPending ? 'Saving…' : 'Save Result'}
         </button>

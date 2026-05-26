@@ -36,7 +36,9 @@ export default function GroupStageHistoryPage() {
   if (isLoading) return <LoadingSpinner />
   if (!league) return null
 
-  const safeDivision = league.divisions.includes(division) ? division : (league.divisions[0] ?? 'mens')
+  const safeDivision = league.divisions.includes(division)
+    ? division
+    : (league.divisions[0] ?? 'mens')
   const divTeams = teams.filter((t) => t.division === safeDivision)
   const divMatches = matches.filter((m) => m.division === safeDivision)
   const teamById = Object.fromEntries(teams.map((t) => [t.id, t]))
@@ -86,15 +88,25 @@ export default function GroupStageHistoryPage() {
             {standingsA.length > 0 && (
               <>
                 <p className="text-xs uppercase tracking-wide text-lob-muted mb-2">Group A</p>
-                <GroupStandingsTable standings={standingsA} myTeamId={null} onTeamClick={setSelectedTeam} />
+                <GroupStandingsTable
+                  standings={standingsA}
+                  myTeamId={null}
+                  onTeamClick={setSelectedTeam}
+                />
               </>
             )}
             {standingsB.length > 0 && (
               <>
-                <p className={`text-xs uppercase tracking-wide text-lob-muted mb-2 ${standingsA.length > 0 ? 'mt-4' : ''}`}>
+                <p
+                  className={`text-xs uppercase tracking-wide text-lob-muted mb-2 ${standingsA.length > 0 ? 'mt-4' : ''}`}
+                >
                   Group B
                 </p>
-                <GroupStandingsTable standings={standingsB} myTeamId={null} onTeamClick={setSelectedTeam} />
+                <GroupStandingsTable
+                  standings={standingsB}
+                  myTeamId={null}
+                  onTeamClick={setSelectedTeam}
+                />
               </>
             )}
           </div>

@@ -86,7 +86,10 @@ function PlayerPicker({
           className="input w-full"
           placeholder="Search by name…"
           value={query}
-          onChange={(e) => { setQuery(e.target.value); setOpen(true) }}
+          onChange={(e) => {
+            setQuery(e.target.value)
+            setOpen(true)
+          }}
           onFocus={() => setOpen(true)}
         />
         {open && (filtered.length > 0 || showCreate) && (
@@ -96,7 +99,12 @@ function PlayerPicker({
                 key={p.id}
                 type="button"
                 className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 text-left"
-                onMouseDown={(e) => { e.preventDefault(); onSelectPlayer(p.id); setQuery(''); setOpen(false) }}
+                onMouseDown={(e) => {
+                  e.preventDefault()
+                  onSelectPlayer(p.id)
+                  setQuery('')
+                  setOpen(false)
+                }}
               >
                 <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold bg-lob-teal/10 text-lob-teal flex-shrink-0">
                   {p.name.charAt(0).toUpperCase()}
@@ -108,7 +116,12 @@ function PlayerPicker({
               <button
                 type="button"
                 className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 text-left border-t border-gray-100"
-                onMouseDown={(e) => { e.preventDefault(); onSelectPlaceholder(query.trim()); setQuery(''); setOpen(false) }}
+                onMouseDown={(e) => {
+                  e.preventDefault()
+                  onSelectPlaceholder(query.trim())
+                  setQuery('')
+                  setOpen(false)
+                }}
               >
                 <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold bg-lob-amber/10 text-lob-amber flex-shrink-0">
                   +
@@ -127,7 +140,15 @@ function PlayerPicker({
   )
 }
 
-export function TeamForm({ leagueId, division, players, editTeam, divisionTeams, onSuccess, onCancel }: TeamFormProps) {
+export function TeamForm({
+  leagueId,
+  division,
+  players,
+  editTeam,
+  divisionTeams,
+  onSuccess,
+  onCancel,
+}: TeamFormProps) {
   const isEdit = editTeam != null
   const createTeam = useCreateTeam(leagueId)
   const updateTeam = useUpdateTeam(leagueId)
@@ -139,7 +160,9 @@ export function TeamForm({ leagueId, division, players, editTeam, divisionTeams,
   const [teamName, setTeamName] = useState(editTeam?.team_name ?? '')
   const [teamSong, setTeamSong] = useState(editTeam?.team_song ?? '')
   const [spiritAnimal, setSpiritAnimal] = useState(editTeam?.spirit_animal ?? '')
-  const [experienceLevel, setExperienceLevel] = useState(editTeam?.experience_level ?? 'intermediate')
+  const [experienceLevel, setExperienceLevel] = useState(
+    editTeam?.experience_level ?? 'intermediate',
+  )
   const [preferredTimes, setPreferredTimes] = useState(editTeam?.preferred_play_times ?? '')
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
 
@@ -198,7 +221,9 @@ export function TeamForm({ leagueId, division, players, editTeam, divisionTeams,
     const result = teamFormSchema.safeParse(raw)
     if (!result.success) {
       const errs: Record<string, string> = {}
-      result.error.issues.forEach((e) => { if (e.path[0]) errs[e.path[0] as string] = e.message })
+      result.error.issues.forEach((e) => {
+        if (e.path[0]) errs[e.path[0] as string] = e.message
+      })
       setValidationErrors(errs)
       return
     }
@@ -225,8 +250,14 @@ export function TeamForm({ leagueId, division, players, editTeam, divisionTeams,
         excludeId={player2Id}
         selectedId={player1Id}
         selectedName={player1Name}
-        onSelectPlayer={(id) => { setPlayer1Id(id); setPlayer1Name(undefined) }}
-        onSelectPlaceholder={(name) => { setPlayer1Id(undefined); setPlayer1Name(name) }}
+        onSelectPlayer={(id) => {
+          setPlayer1Id(id)
+          setPlayer1Name(undefined)
+        }}
+        onSelectPlaceholder={(name) => {
+          setPlayer1Id(undefined)
+          setPlayer1Name(name)
+        }}
         error={validationErrors.player1_id}
       />
       {player1Conflict && (
@@ -240,8 +271,14 @@ export function TeamForm({ leagueId, division, players, editTeam, divisionTeams,
         excludeId={player1Id}
         selectedId={player2Id}
         selectedName={player2Name}
-        onSelectPlayer={(id) => { setPlayer2Id(id); setPlayer2Name(undefined) }}
-        onSelectPlaceholder={(name) => { setPlayer2Id(undefined); setPlayer2Name(name) }}
+        onSelectPlayer={(id) => {
+          setPlayer2Id(id)
+          setPlayer2Name(undefined)
+        }}
+        onSelectPlaceholder={(name) => {
+          setPlayer2Id(undefined)
+          setPlayer2Name(name)
+        }}
         error={validationErrors.player2_id}
       />
       {player2Conflict && (
@@ -251,24 +288,52 @@ export function TeamForm({ leagueId, division, players, editTeam, divisionTeams,
       )}
       <div className="mb-4">
         <label className="label">Team Name</label>
-        <input type="text" className="input w-full" placeholder="Optional" value={teamName} onChange={(e) => setTeamName(e.target.value)} />
+        <input
+          type="text"
+          className="input w-full"
+          placeholder="Optional"
+          value={teamName}
+          onChange={(e) => setTeamName(e.target.value)}
+        />
       </div>
       <div className="mb-4">
         <label className="label">Team Song</label>
-        <input type="text" className="input w-full" placeholder="Optional" value={teamSong} onChange={(e) => setTeamSong(e.target.value)} />
+        <input
+          type="text"
+          className="input w-full"
+          placeholder="Optional"
+          value={teamSong}
+          onChange={(e) => setTeamSong(e.target.value)}
+        />
       </div>
       <div className="mb-4">
         <label className="label">Spirit Animal</label>
-        <input type="text" className="input w-full" placeholder="Optional" value={spiritAnimal} onChange={(e) => setSpiritAnimal(e.target.value)} />
+        <input
+          type="text"
+          className="input w-full"
+          placeholder="Optional"
+          value={spiritAnimal}
+          onChange={(e) => setSpiritAnimal(e.target.value)}
+        />
         <p className="text-xs text-lob-muted mt-1">Emoji or animal name</p>
       </div>
       <div className="mb-4">
         <label className="label">Experience Level</label>
-        <TabSwitcher tabs={EXPERIENCE_TABS} value={experienceLevel} onChange={(v) => setExperienceLevel(v as typeof experienceLevel)} />
+        <TabSwitcher
+          tabs={EXPERIENCE_TABS}
+          value={experienceLevel}
+          onChange={(v) => setExperienceLevel(v as typeof experienceLevel)}
+        />
       </div>
       <div className="mb-4">
         <label className="label">Preferred Play Times</label>
-        <textarea className="input w-full resize-none" rows={3} placeholder="Optional" value={preferredTimes} onChange={(e) => setPreferredTimes(e.target.value)} />
+        <textarea
+          className="input w-full resize-none"
+          rows={3}
+          placeholder="Optional"
+          value={preferredTimes}
+          onChange={(e) => setPreferredTimes(e.target.value)}
+        />
         <p className="text-xs text-lob-muted mt-1">Visible to other teams for scheduling</p>
       </div>
       {groupsFormed && (
@@ -292,8 +357,11 @@ export function TeamForm({ leagueId, division, players, editTeam, divisionTeams,
                   onClick={() => setSelectedGroup(g)}
                 >
                   <span className="block text-sm font-semibold">Group {g}</span>
-                  <span className={`block text-xs font-normal mt-0.5 ${isSelected ? 'text-white/70' : 'text-lob-muted'}`}>
-                    {count} team{count !== 1 ? 's' : ''}{isSuggested ? ' · suggested' : ''}
+                  <span
+                    className={`block text-xs font-normal mt-0.5 ${isSelected ? 'text-white/70' : 'text-lob-muted'}`}
+                  >
+                    {count} team{count !== 1 ? 's' : ''}
+                    {isSuggested ? ' · suggested' : ''}
                   </span>
                 </button>
               )
@@ -308,7 +376,9 @@ export function TeamForm({ leagueId, division, players, editTeam, divisionTeams,
         </AlertBox>
       )}
       <div className="flex gap-3 pt-2">
-        <button type="button" className="btn-secondary flex-1" onClick={onCancel}>Cancel</button>
+        <button type="button" className="btn-secondary flex-1" onClick={onCancel}>
+          Cancel
+        </button>
         <button type="submit" className="btn-primary flex-1" disabled={mutation.isPending}>
           {mutation.isPending ? 'Saving…' : 'Save Team'}
         </button>

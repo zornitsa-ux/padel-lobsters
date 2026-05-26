@@ -11,11 +11,11 @@ interface KnockoutBracketProps {
 }
 
 interface ConnectorGeo {
-  s1y: number       // semi1 card center Y, relative to container top
-  s2y: number       // semi2 card center Y, relative to container top
-  semisRightX: number  // right edge of semis column
-  finalLeftX: number   // left edge of final card
-  h: number         // container height
+  s1y: number // semi1 card center Y, relative to container top
+  s2y: number // semi2 card center Y, relative to container top
+  semisRightX: number // right edge of semis column
+  finalLeftX: number // left edge of final card
+  h: number // container height
 }
 
 const CORNER_RADIUS = 8
@@ -50,7 +50,13 @@ function connectorPaths(geo: ConnectorGeo): { d1: string; d2: string } {
   return { d1, d2 }
 }
 
-export function KnockoutBracket({ semi1, semi2, final, teamById, onTeamClick }: KnockoutBracketProps) {
+export function KnockoutBracket({
+  semi1,
+  semi2,
+  final,
+  teamById,
+  onTeamClick,
+}: KnockoutBracketProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const semi1Ref = useRef<HTMLDivElement>(null)
   const semi2Ref = useRef<HTMLDivElement>(null)

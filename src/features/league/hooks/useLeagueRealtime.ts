@@ -9,15 +9,29 @@ export function useLeagueRealtime(leagueId: string | undefined) {
     if (!leagueId) return
     const channel = supabase
       .channel(`league:${leagueId}`)
-      .on('postgres_changes', {
-        event: '*', schema: 'public', table: 'league_matches',
-        filter: `league_id=eq.${leagueId}`,
-      }, () => qc.invalidateQueries({ queryKey: leagueKeys.matches(leagueId) }))
-      .on('postgres_changes', {
-        event: '*', schema: 'public', table: 'league_teams',
-        filter: `league_id=eq.${leagueId}`,
-      }, () => qc.invalidateQueries({ queryKey: leagueKeys.teams(leagueId) }))
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'league_matches',
+          filter: `league_id=eq.${leagueId}`,
+        },
+        () => qc.invalidateQueries({ queryKey: leagueKeys.matches(leagueId) }),
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'league_teams',
+          filter: `league_id=eq.${leagueId}`,
+        },
+        () => qc.invalidateQueries({ queryKey: leagueKeys.teams(leagueId) }),
+      )
       .subscribe()
-    return () => { supabase.removeChannel(channel) }
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [leagueId, qc])
 }

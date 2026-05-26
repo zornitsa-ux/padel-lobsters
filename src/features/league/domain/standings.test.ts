@@ -90,7 +90,7 @@ describe('computeGroupStandings', () => {
     const alphaRow = standings.find((s) => s.team.id === 'alpha')!
     const betaRow = standings.find((s) => s.team.id === 'beta')!
 
-    expect(alphaRow.setDiff).toBe(1)   // 2 sets won - 1 set lost
+    expect(alphaRow.setDiff).toBe(1) // 2 sets won - 1 set lost
     expect(betaRow.setDiff).toBe(-1)
   })
 
@@ -112,7 +112,7 @@ describe('computeGroupStandings', () => {
     const alphaRow = standings.find((s) => s.team.id === 'alpha')!
     const betaRow = standings.find((s) => s.team.id === 'beta')!
 
-    expect(alphaRow.gameDiff).toBe(2)   // (6+4) - (2+6) = 10 - 8 = 2
+    expect(alphaRow.gameDiff).toBe(2) // (6+4) - (2+6) = 10 - 8 = 2
     expect(betaRow.gameDiff).toBe(-2)
   })
 
@@ -201,7 +201,10 @@ describe('computeGroupStandings', () => {
       team2_id: 'gamma',
       winner_id: 'beta',
       // beta wins with a huge set diff to ensure set diff alone would favour beta
-      set_scores: [{ t1: 6, t2: 0 }, { t1: 6, t2: 0 }],
+      set_scores: [
+        { t1: 6, t2: 0 },
+        { t1: 6, t2: 0 },
+      ],
     })
     // alpha beats gamma
     const m3 = makeMatch({
@@ -236,7 +239,10 @@ describe('computeGroupStandings', () => {
       team1_id: 'beta',
       team2_id: 'gamma',
       winner_id: 'beta',
-      set_scores: [{ t1: 6, t2: 0 }, { t1: 6, t2: 0 }], // beta: huge set diff
+      set_scores: [
+        { t1: 6, t2: 0 },
+        { t1: 6, t2: 0 },
+      ], // beta: huge set diff
     })
     const m3 = makeMatch({
       team1_id: 'gamma',
@@ -268,7 +274,10 @@ describe('computeGroupStandings', () => {
       team1_id: 'alpha',
       team2_id: 'charlie',
       winner_id: 'alpha',
-      set_scores: [{ t1: 6, t2: 1 }, { t1: 6, t2: 1 }], // alpha +4 sets
+      set_scores: [
+        { t1: 6, t2: 1 },
+        { t1: 6, t2: 1 },
+      ], // alpha +4 sets
     })
     const m2 = makeMatch({
       team1_id: 'beta',
@@ -360,14 +369,20 @@ describe('getTeamRecord', () => {
       team1_id: 'alpha',
       team2_id: 'beta',
       winner_id: 'alpha',
-      set_scores: [{ t1: 6, t2: 2 }, { t1: 6, t2: 3 }],
+      set_scores: [
+        { t1: 6, t2: 2 },
+        { t1: 6, t2: 3 },
+      ],
     })
     const m2 = makeMatch({
       team1_id: 'gamma',
       team2_id: 'alpha',
       winner_id: 'alpha',
       // alpha is team2 here — flip perspective
-      set_scores: [{ t1: 3, t2: 6 }, { t1: 4, t2: 6 }],
+      set_scores: [
+        { t1: 3, t2: 6 },
+        { t1: 4, t2: 6 },
+      ],
     })
 
     const record = getTeamRecord('alpha', [m1, m2])

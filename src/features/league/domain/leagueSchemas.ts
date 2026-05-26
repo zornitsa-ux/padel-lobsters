@@ -13,18 +13,18 @@ export const teamFormSchema = z
     spirit_animal: z.string().trim().optional(),
     preferred_play_times: z.string().trim().optional(),
   })
-  .refine(
-    (d) => d.player1_id != null || (d.player1_name != null && d.player1_name.length > 0),
-    { message: 'Player 1 is required', path: ['player1_id'] },
-  )
-  .refine(
-    (d) => d.player2_id != null || (d.player2_name != null && d.player2_name.length > 0),
-    { message: 'Player 2 is required', path: ['player2_id'] },
-  )
-  .refine(
-    (d) => !d.player1_id || !d.player2_id || d.player1_id !== d.player2_id,
-    { message: 'Players must be different', path: ['player2_id'] },
-  )
+  .refine((d) => d.player1_id != null || (d.player1_name != null && d.player1_name.length > 0), {
+    message: 'Player 1 is required',
+    path: ['player1_id'],
+  })
+  .refine((d) => d.player2_id != null || (d.player2_name != null && d.player2_name.length > 0), {
+    message: 'Player 2 is required',
+    path: ['player2_id'],
+  })
+  .refine((d) => !d.player1_id || !d.player2_id || d.player1_id !== d.player2_id, {
+    message: 'Players must be different',
+    path: ['player2_id'],
+  })
 
 export const scoreEntrySchema = z.object({
   match_id: z.string().uuid(),

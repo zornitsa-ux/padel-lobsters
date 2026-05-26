@@ -54,7 +54,9 @@ export function GroupStandingsTable({
                     className={`flex items-center gap-2 ${onTeamClick ? 'cursor-pointer active:opacity-70' : ''}`}
                     onClick={() => onTeamClick?.(standing.team)}
                   >
-                    <span className="font-semibold text-lob-dark">{resolveTeamName(standing.team)}</span>
+                    <span className="font-semibold text-lob-dark">
+                      {resolveTeamName(standing.team)}
+                    </span>
                   </div>
                 </td>
                 <td className="py-2 text-center w-8">{standing.wins}</td>

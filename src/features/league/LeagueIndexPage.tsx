@@ -5,10 +5,14 @@ import { useActiveLeague, useAllLeagues } from './hooks/useLeagueQueries'
 
 function leagueBadge(status: string): { variant: BadgeProps['variant']; label: string } {
   switch (status) {
-    case 'draft':       return { variant: 'league-draft',        label: 'Draft' }
-    case 'group_stage': return { variant: 'league-group-stage',  label: 'Group Stage' }
-    case 'knockout':    return { variant: 'league-knockout',     label: 'Knockout' }
-    default:            return { variant: 'league-completed',    label: 'Completed' }
+    case 'draft':
+      return { variant: 'league-draft', label: 'Draft' }
+    case 'group_stage':
+      return { variant: 'league-group-stage', label: 'Group Stage' }
+    case 'knockout':
+      return { variant: 'league-knockout', label: 'Knockout' }
+    default:
+      return { variant: 'league-completed', label: 'Completed' }
   }
 }
 

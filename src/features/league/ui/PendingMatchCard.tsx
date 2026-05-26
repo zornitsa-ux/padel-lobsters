@@ -13,11 +13,17 @@ interface PendingMatchCardProps {
   onOpponentClick: (team: LeagueTeam) => void
 }
 
-export function PendingMatchCard({ pendingMatches, myTeamGroupLabel, onOpponentClick }: PendingMatchCardProps) {
+export function PendingMatchCard({
+  pendingMatches,
+  myTeamGroupLabel,
+  onOpponentClick,
+}: PendingMatchCardProps) {
   if (pendingMatches.length === 0) return null
 
   const isKnockout = pendingMatches.length === 1 && pendingMatches[0].match.stage !== 'group'
-  const title = isKnockout ? 'Your Next Match' : `Pending Matches · ${pendingMatches.length} remaining`
+  const title = isKnockout
+    ? 'Your Next Match'
+    : `Pending Matches · ${pendingMatches.length} remaining`
 
   return (
     <div className="rounded-2xl bg-lob-coral/[0.08] border border-lob-coral/20 overflow-hidden">
@@ -37,8 +43,12 @@ export function PendingMatchCard({ pendingMatches, myTeamGroupLabel, onOpponentC
               </span>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-lob-dark text-sm truncate">{resolveTeamName(opponent)}</p>
-              <p className="text-xs text-lob-muted">{stageToLabel(match.stage, myTeamGroupLabel)}</p>
+              <p className="font-semibold text-lob-dark text-sm truncate">
+                {resolveTeamName(opponent)}
+              </p>
+              <p className="text-xs text-lob-muted">
+                {stageToLabel(match.stage, myTeamGroupLabel)}
+              </p>
             </div>
             <span className="text-xs font-semibold text-lob-coral flex-shrink-0">View →</span>
           </button>

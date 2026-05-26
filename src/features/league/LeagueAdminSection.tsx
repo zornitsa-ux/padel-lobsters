@@ -355,9 +355,7 @@ function MatchManagementSection({ league, teams, matches, division }: MatchManag
 
   const completedMatches = useMemo(
     () =>
-      matches
-        .filter((m) => m.division === division && m.winner_id !== null)
-        .sort(sortMatchesDesc),
+      matches.filter((m) => m.division === division && m.winner_id !== null).sort(sortMatchesDesc),
     [matches, division],
   )
 

@@ -32,7 +32,9 @@ export async function fetchActiveLeague(): Promise<League | null> {
 export async function fetchLeagueTeams(leagueId: string): Promise<LeagueTeam[]> {
   const { data, error } = await supabase
     .from('league_teams')
-    .select('*, player1:players!player1_id(id,name,avatar_url,status), player2:players!player2_id(id,name,avatar_url,status)')
+    .select(
+      '*, player1:players!player1_id(id,name,avatar_url,status), player2:players!player2_id(id,name,avatar_url,status)',
+    )
     .eq('league_id', leagueId)
     .order('created_at')
   if (error) throw error
@@ -50,11 +52,7 @@ export async function fetchLeagueMatches(leagueId: string): Promise<LeagueMatch[
 }
 
 export async function fetchLeagueById(id: string): Promise<League | null> {
-  const { data, error } = await supabase
-    .from('leagues')
-    .select('*')
-    .eq('id', id)
-    .maybeSingle()
+  const { data, error } = await supabase.from('leagues').select('*').eq('id', id).maybeSingle()
   if (error) throw error
   return data
 }

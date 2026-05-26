@@ -20,7 +20,11 @@ const EXPERIENCE_BADGE: Record<string, 'info' | 'gold' | 'silver'> = {
   beginner: 'silver',
 }
 
-function PlayerRow({ player }: { player: { id: string; name: string; avatar_url: string | null } | undefined }) {
+function PlayerRow({
+  player,
+}: {
+  player: { id: string; name: string; avatar_url: string | null } | undefined
+}) {
   if (!player) return null
   const initials = player.name
     .split(' ')
@@ -56,16 +60,13 @@ function StatCell({ label, value }: { label: string; value: string | number }) {
   )
 }
 
-
 export function TeamPage({ team, matches, teamById, onClose, onTeamClick }: TeamPageProps) {
   if (!team) return null
 
   const record = getTeamRecord(team.id, matches)
 
   const teamMatches = matches
-    .filter(
-      (m) => (m.team1_id === team.id || m.team2_id === team.id) && m.winner_id !== null,
-    )
+    .filter((m) => (m.team1_id === team.id || m.team2_id === team.id) && m.winner_id !== null)
     .sort(sortMatchesDesc)
 
   const teamName = resolveTeamName(team)
@@ -78,17 +79,15 @@ export function TeamPage({ team, matches, teamById, onClose, onTeamClick }: Team
             variant={EXPERIENCE_BADGE[team.experience_level] ?? 'silver'}
             label={team.experience_level.charAt(0).toUpperCase() + team.experience_level.slice(1)}
           />
-          <Badge
-            variant="info"
-            label={team.division === 'mens' ? "Men's" : "Women's"}
-          />
+          <Badge variant="info" label={team.division === 'mens' ? "Men's" : "Women's"} />
         </div>
 
         {(team.spirit_animal || team.team_song) && (
           <div className="flex flex-wrap gap-x-4 gap-y-1">
             {team.spirit_animal && (
               <p className="text-sm text-lob-muted">
-                Spirit animal: <span className="text-lob-dark font-medium">{team.spirit_animal}</span>
+                Spirit animal:{' '}
+                <span className="text-lob-dark font-medium">{team.spirit_animal}</span>
               </p>
             )}
             {team.team_song && (

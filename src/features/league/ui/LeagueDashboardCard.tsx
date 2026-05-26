@@ -12,10 +12,10 @@ interface LeagueDashboardCardProps {
 }
 
 const STATUS_BADGE: Record<LeagueStatus, { label: string; variant: BadgeProps['variant'] }> = {
-  draft:        { label: 'Coming Soon',    variant: 'league-draft' },
-  group_stage:  { label: 'Group Stage',    variant: 'league-group-stage' },
-  knockout:     { label: 'Knockout Stage', variant: 'league-knockout' },
-  completed:    { label: 'Completed',      variant: 'league-completed' },
+  draft: { label: 'Coming Soon', variant: 'league-draft' },
+  group_stage: { label: 'Group Stage', variant: 'league-group-stage' },
+  knockout: { label: 'Knockout Stage', variant: 'league-knockout' },
+  completed: { label: 'Completed', variant: 'league-completed' },
 }
 
 export function LeagueDashboardCard({ myPlayerId }: LeagueDashboardCardProps) {
@@ -51,14 +51,21 @@ export function LeagueDashboardCard({ myPlayerId }: LeagueDashboardCardProps) {
   const { label, variant } = STATUS_BADGE[league.status]
 
   const myPendingMatches = myTeam
-    ? matches.filter((m) => m.winner_id === null && (m.team1_id === myTeam.id || m.team2_id === myTeam.id))
+    ? matches.filter(
+        (m) => m.winner_id === null && (m.team1_id === myTeam.id || m.team2_id === myTeam.id),
+      )
     : []
 
   const teamById = Object.fromEntries(teams.map((t) => [t.id, t]))
 
-  const myNextOpponent = myTeam && myPendingMatches.length === 1
-    ? teamById[myPendingMatches[0].team1_id === myTeam.id ? (myPendingMatches[0].team2_id ?? '') : (myPendingMatches[0].team1_id ?? '')]
-    : null
+  const myNextOpponent =
+    myTeam && myPendingMatches.length === 1
+      ? teamById[
+          myPendingMatches[0].team1_id === myTeam.id
+            ? (myPendingMatches[0].team2_id ?? '')
+            : (myPendingMatches[0].team1_id ?? '')
+        ]
+      : null
 
   const myRank = myGroupStandings.find((s) => s.team.id === myTeam?.id)?.rank ?? null
 
@@ -75,16 +82,26 @@ export function LeagueDashboardCard({ myPlayerId }: LeagueDashboardCardProps) {
       return <p className="text-sm text-lob-muted">{teams.length} teams competing</p>
     }
 
-    const rankLine = myRank && myGroupLabel
-      ? <span className="font-bold text-lob-teal">#{myRank} Group {myGroupLabel}</span>
-      : null
+    const rankLine =
+      myRank && myGroupLabel ? (
+        <span className="font-bold text-lob-teal">
+          #{myRank} Group {myGroupLabel}
+        </span>
+      ) : null
 
     if (league!.status === 'knockout') {
       return (
         <p className="text-sm text-lob-muted">
-          {myNextOpponent
-            ? <>Next: <span className="font-semibold text-lob-dark">vs {resolveTeamShortName(myNextOpponent)}</span></>
-            : 'Awaiting your bracket match'}
+          {myNextOpponent ? (
+            <>
+              Next:{' '}
+              <span className="font-semibold text-lob-dark">
+                vs {resolveTeamShortName(myNextOpponent)}
+              </span>
+            </>
+          ) : (
+            'Awaiting your bracket match'
+          )}
         </p>
       )
     }
@@ -95,9 +112,16 @@ export function LeagueDashboardCard({ myPlayerId }: LeagueDashboardCardProps) {
       return (
         <p className="text-sm text-lob-muted">
           {rankLine && <>{rankLine} · </>}
-          {pending > 0
-            ? <><span className="font-semibold text-lob-dark">{pending} match{pending !== 1 ? 'es' : ''}</span> remaining</>
-            : 'Group stage complete'}
+          {pending > 0 ? (
+            <>
+              <span className="font-semibold text-lob-dark">
+                {pending} match{pending !== 1 ? 'es' : ''}
+              </span>{' '}
+              remaining
+            </>
+          ) : (
+            'Group stage complete'
+          )}
         </p>
       )
     }

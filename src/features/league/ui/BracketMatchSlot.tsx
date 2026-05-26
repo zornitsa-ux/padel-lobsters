@@ -73,12 +73,7 @@ export function BracketMatchSlot({ match, team1, team2, onTeamClick }: BracketMa
         !played ? 'border-2 border-dashed border-gray-200' : 'border border-gray-200'
       }`}
     >
-      <TeamRow
-        team={team1}
-        isWinner={t1Won}
-        played={played}
-        onTeamClick={onTeamClick}
-      />
+      <TeamRow team={team1} isWinner={t1Won} played={played} onTeamClick={onTeamClick} />
       <div className="border-t border-gray-100 my-0.5" />
       <TeamRow
         team={team2}

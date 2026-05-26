@@ -31,11 +31,7 @@ function makeStanding(id: string, rank: number): GroupStanding {
   }
 }
 
-function makeMatch(
-  id: string,
-  stage: LeagueMatch['stage'],
-  winner_id: string | null,
-): LeagueMatch {
+function makeMatch(id: string, stage: LeagueMatch['stage'], winner_id: string | null): LeagueMatch {
   return {
     id,
     league_id: 'league-1',
@@ -59,8 +55,18 @@ describe('buildBracketPairings', () => {
   // ── 4+4 (standard) ──────────────────────────────────────────────────────────
   describe('4+4 groups (standard)', () => {
     const standings = {
-      A: [makeStanding('A1', 1), makeStanding('A2', 2), makeStanding('A3', 3), makeStanding('A4', 4)],
-      B: [makeStanding('B1', 1), makeStanding('B2', 2), makeStanding('B3', 3), makeStanding('B4', 4)],
+      A: [
+        makeStanding('A1', 1),
+        makeStanding('A2', 2),
+        makeStanding('A3', 3),
+        makeStanding('A4', 4),
+      ],
+      B: [
+        makeStanding('B1', 1),
+        makeStanding('B2', 2),
+        makeStanding('B3', 3),
+        makeStanding('B4', 4),
+      ],
     }
 
     it('returns 4 pairings', () => {
@@ -68,15 +74,21 @@ describe('buildBracketPairings', () => {
     })
 
     it('sets division on all pairings', () => {
-      expect(buildBracketPairings(standings, 'womens').every((p) => p.division === 'womens')).toBe(true)
+      expect(buildBracketPairings(standings, 'womens').every((p) => p.division === 'womens')).toBe(
+        true,
+      )
     })
 
     it('produces 2 gold_semi pairings', () => {
-      expect(buildBracketPairings(standings, 'mens').filter((p) => p.stage === 'gold_semi')).toHaveLength(2)
+      expect(
+        buildBracketPairings(standings, 'mens').filter((p) => p.stage === 'gold_semi'),
+      ).toHaveLength(2)
     })
 
     it('produces 2 silver_semi pairings', () => {
-      expect(buildBracketPairings(standings, 'mens').filter((p) => p.stage === 'silver_semi')).toHaveLength(2)
+      expect(
+        buildBracketPairings(standings, 'mens').filter((p) => p.stage === 'silver_semi'),
+      ).toHaveLength(2)
     })
 
     it('gold semi: A1 vs B2 and B1 vs A2 (cross-seeded)', () => {
@@ -86,7 +98,9 @@ describe('buildBracketPairings', () => {
     })
 
     it('silver semi: A3 vs B4 and B3 vs A4 (cross-seeded)', () => {
-      const silver = buildBracketPairings(standings, 'mens').filter((p) => p.stage === 'silver_semi')
+      const silver = buildBracketPairings(standings, 'mens').filter(
+        (p) => p.stage === 'silver_semi',
+      )
       expect(silver.find((p) => p.team1_id === 'A3' && p.team2_id === 'B4')).toBeDefined()
       expect(silver.find((p) => p.team1_id === 'B3' && p.team2_id === 'A4')).toBeDefined()
     })
@@ -113,14 +127,18 @@ describe('buildBracketPairings', () => {
     })
 
     it('silver semis have byes for missing rank-4 slots', () => {
-      const silver = buildBracketPairings(standings, 'mens').filter((p) => p.stage === 'silver_semi')
+      const silver = buildBracketPairings(standings, 'mens').filter(
+        (p) => p.stage === 'silver_semi',
+      )
       expect(silver).toHaveLength(2)
       // Both A4 and B4 are absent → both silver semis are byes
       expect(silver.every((p) => p.team2_id === null)).toBe(true)
     })
 
     it('silver semi team1_id values are A3 and B3', () => {
-      const silver = buildBracketPairings(standings, 'mens').filter((p) => p.stage === 'silver_semi')
+      const silver = buildBracketPairings(standings, 'mens').filter(
+        (p) => p.stage === 'silver_semi',
+      )
       const team1Ids = silver.map((p) => p.team1_id).sort()
       expect(team1Ids).toEqual(['A3', 'B3'])
     })
@@ -129,19 +147,28 @@ describe('buildBracketPairings', () => {
   // ── 4+3 ─────────────────────────────────────────────────────────────────────
   describe('4+3 groups', () => {
     const standings = {
-      A: [makeStanding('A1', 1), makeStanding('A2', 2), makeStanding('A3', 3), makeStanding('A4', 4)],
+      A: [
+        makeStanding('A1', 1),
+        makeStanding('A2', 2),
+        makeStanding('A3', 3),
+        makeStanding('A4', 4),
+      ],
       B: [makeStanding('B1', 1), makeStanding('B2', 2), makeStanding('B3', 3)],
     }
 
     it('silver semi A3 vs B4: B4 is a bye (null)', () => {
-      const silver = buildBracketPairings(standings, 'mens').filter((p) => p.stage === 'silver_semi')
+      const silver = buildBracketPairings(standings, 'mens').filter(
+        (p) => p.stage === 'silver_semi',
+      )
       const a3Match = silver.find((p) => p.team1_id === 'A3')
       expect(a3Match).toBeDefined()
       expect(a3Match?.team2_id).toBeNull()
     })
 
     it('silver semi B3 vs A4: A4 is real', () => {
-      const silver = buildBracketPairings(standings, 'mens').filter((p) => p.stage === 'silver_semi')
+      const silver = buildBracketPairings(standings, 'mens').filter(
+        (p) => p.stage === 'silver_semi',
+      )
       const b3Match = silver.find((p) => p.team1_id === 'B3')
       expect(b3Match).toBeDefined()
       expect(b3Match?.team2_id).toBe('A4')
@@ -221,8 +248,8 @@ describe('isBracketComplete', () => {
       const matches = [
         makeMatch('m1', 'gold_semi', 'team-x'),
         makeMatch('m2', 'silver_semi', 'team-y'),
-        makeMatch('m3', 'group', null),          // null but not a semi
-        makeMatch('m4', 'gold_final', null),     // null but not a semi
+        makeMatch('m3', 'group', null), // null but not a semi
+        makeMatch('m4', 'gold_final', null), // null but not a semi
       ]
       expect(isBracketComplete(matches, 'semi')).toBe(true)
     })
@@ -261,7 +288,7 @@ describe('isBracketComplete', () => {
       const matches = [
         makeMatch('m1', 'gold_final', 'team-x'),
         makeMatch('m2', 'silver_final', 'team-y'),
-        makeMatch('m3', 'gold_semi', null),    // null but not a final
+        makeMatch('m3', 'gold_semi', null), // null but not a final
       ]
       expect(isBracketComplete(matches, 'final')).toBe(true)
     })

@@ -64,5 +64,5 @@ export interface BracketPairing {
   division: Division
   stage: MatchStage
   team1_id: string
-  team2_id: string | null  // null = bye; team1 advances automatically
+  team2_id: string | null // null = bye; team1 advances automatically
 }

@@ -1,6 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
 import { leagueKeys } from '../api/queryKeys'
-import { fetchActiveLeague, fetchLeagueById, fetchLeagueTeams, fetchLeagueMatches, fetchAllLeagues, fetchAllPlayers } from '../api/leagueQueries'
+import {
+  fetchActiveLeague,
+  fetchLeagueById,
+  fetchLeagueTeams,
+  fetchLeagueMatches,
+  fetchAllLeagues,
+  fetchAllPlayers,
+} from '../api/leagueQueries'
 
 export function useActiveLeague() {
   return useQuery({ queryKey: leagueKeys.active(), queryFn: fetchActiveLeague })

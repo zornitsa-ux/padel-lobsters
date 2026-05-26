@@ -28,8 +28,14 @@ export function buildBracketPairings(
     return group[idx]?.team.id ?? null
   }
 
-  const A1 = id(a, 0), A2 = id(a, 1), A3 = id(a, 2), A4 = id(a, 3)
-  const B1 = id(b, 0), B2 = id(b, 1), B3 = id(b, 2), B4 = id(b, 3)
+  const A1 = id(a, 0),
+    A2 = id(a, 1),
+    A3 = id(a, 2),
+    A4 = id(a, 3)
+  const B1 = id(b, 0),
+    B2 = id(b, 1),
+    B3 = id(b, 2),
+    B4 = id(b, 3)
 
   const pairings: BracketPairing[] = []
 
@@ -56,10 +62,7 @@ export function buildBracketPairings(
  * @param matches - All league matches to inspect.
  * @param stage   - 'semi' checks gold_semi + silver_semi; 'final' checks gold_final + silver_final.
  */
-export function isBracketComplete(
-  matches: LeagueMatch[],
-  stage: 'semi' | 'final',
-): boolean {
+export function isBracketComplete(matches: LeagueMatch[], stage: 'semi' | 'final'): boolean {
   const relevant =
     stage === 'semi'
       ? matches.filter((m) => m.stage === 'gold_semi' || m.stage === 'silver_semi')
