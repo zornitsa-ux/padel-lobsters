@@ -88,6 +88,17 @@ Authorization inside RPCs:
 
 Player write RPCs that call `require_trusted_device()`: `update_my_profile`, `create_transfer`, `cancel_transfer`, `respond_to_transfer`, `lobster_oscars_cast_vote`, `lobster_oscars_clear_vote`.
 
+#### Writing a new RPC
+
+Every new `SECURITY DEFINER` function MUST include all four of these **in the same migration that creates it** — there is no CI gate, so an omission ships silently:
+
+1. **Explicit EXECUTE grant.** New functions inherit Postgres's default `PUBLIC` grant unless you grant explicitly. `GRANT EXECUTE ... TO authenticated` for admin/player RPCs; `TO anon` only for pre-auth RPCs (PIN verify, signup, forgot-PIN). Also `REVOKE EXECUTE ... FROM public, anon` on admin RPCs as defense-in-depth. (Phase A's blanket `REVOKE ON ALL FUNCTIONS` only covered functions existing in 2026-05-18 — it does **not** retroactively protect new ones.)
+2. **Authorization guard as the first statement.** `PERFORM public.require_admin();` for admin RPCs; `PERFORM public.require_trusted_device();` for player write RPCs. The grant is not the access boundary — this guard is.
+3. **Hardened search_path.** `SET search_path TO 'pg_catalog', 'public', 'extensions'` (add `extensions` only if the function uses it).
+4. **No direct table writes from the client** — the RPC is the only mutation path; keep the table's `INSERT/UPDATE/DELETE` revoked from `anon, authenticated`.
+
+When adding a function, double-check the grant: `grep "GRANT EXECUTE.*<fn_name>" supabase/migrations/` should return a row.
+
 ### Authentication Flow
 
 PIN-based (no passwords/OAuth). Client posts `{ pin, device_id }` to the `verify-pin` Edge Function, which bcrypt-checks against `players.pin_hash`, bakes `{ role, device_trusted }` into `app_metadata`, and returns `{ access_token, refresh_token }`. Client calls `supabase.auth.setSession(...)`.
