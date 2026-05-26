@@ -6,8 +6,7 @@ import { mergeMyProfile } from './playerSelectors'
 // fetchPlayers does: validate rows with Zod, then run them through
 // normalisePlayers. We exercise that exact pipeline here without touching the
 // network, since it's the contract the rest of the app reads against.
-const runPipeline = (rows: unknown[]) =>
-  normalisePlayers(playerPublicRowSchema.array().parse(rows))
+const runPipeline = (rows: unknown[]) => normalisePlayers(playerPublicRowSchema.array().parse(rows))
 
 describe('players_public validate → normalise pipeline', () => {
   it('produces the camelCase fields downstream code reads', () => {
