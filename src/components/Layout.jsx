@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
+import { supabase } from '../supabase'
+import { getDeviceId } from '../lib/deviceId'
 import {
   LayoutDashboard,
   Users,
@@ -41,8 +43,23 @@ export default function Layout({ children }) {
   const { settings, session } = useApp()
   const [originOpen, setOriginOpen] = useState(false)
   const [bannerDismissed, setBannerDismissed] = useState(false)
-  const deviceTrusted = session?.user?.app_metadata?.device_trusted
-  const isDeviceProbationary = deviceTrusted === false
+  const [deviceTrustedDb, setDeviceTrustedDb] = useState(undefined)
+
+  useEffect(() => {
+    const uid = session?.user?.id
+    if (!uid) {
+      setDeviceTrustedDb(undefined)
+      return
+    }
+    const deviceId = getDeviceId()
+    supabase
+      .rpc('is_my_device_trusted', { input_player_id: uid, input_device_id: deviceId })
+      .then(({ data }) => setDeviceTrustedDb(data === true))
+  }, [session?.user?.id])
+
+  // Use live DB result; while it's loading (undefined) don't show the banner to
+  // avoid false positives from stale JWT claims.
+  const isDeviceProbationary = deviceTrustedDb === false
   const showBanner = isDeviceProbationary && !bannerDismissed
   const showIndicator = isDeviceProbationary && bannerDismissed
 
