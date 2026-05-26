@@ -4,5 +4,4 @@ export const leagueKeys = {
   byId: (id: string) => ['league', id] as const,
   teams: (leagueId: string) => ['league', leagueId, 'teams'] as const,
   matches: (leagueId: string) => ['league', leagueId, 'matches'] as const,
-  players: () => ['league', 'players'] as const,
 }

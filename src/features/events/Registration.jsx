@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import { useApp } from '../../context/AppContext'
+import { usePlayers } from '../players/usePlayers'
 import { ChevronLeft, AlertCircle } from 'lucide-react'
 import TransferSpotModal from '../../components/TransferSpotModal'
 import TransferPendingModal from '../../components/TransferPendingModal'
@@ -27,7 +28,6 @@ import ScoresAndRankingSection from './registration/ScoresAndRankingSection'
 
 export default function Registration({ tournament, onNavigate }) {
   const {
-    players,
     registerPlayer,
     cancelRegistration,
     updateRegistration,
@@ -40,6 +40,7 @@ export default function Registration({ tournament, onNavigate }) {
     cancelTransfer,
     respondToTransfer,
   } = useApp()
+  const { data: players = [] } = usePlayers()
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
   const claimedId = session?.user?.id ?? null
 

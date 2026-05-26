@@ -8,6 +8,7 @@ import {
   LogOut,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
+import { usePlayers } from '../features/players/usePlayers'
 import { letterColor } from '../lib/letterColors'
 
 // Landing page Melanie hits after tapping the WhatsApp link
@@ -24,7 +25,8 @@ import { letterColor } from '../lib/letterColors'
 //   transferId: from the ?transfer=<id> deep link
 //   onNavigate(page, tournament?): standard nav helper used across the app
 export default function TransferAccept({ transferId, onNavigate }) {
-  const { transfers, players, tournaments, session, respondToTransfer, logout, loading } = useApp()
+  const { transfers, tournaments, session, respondToTransfer, logout, loading } = useApp()
+  const { data: players = [] } = usePlayers()
   const claimedId = session?.user?.id ?? null
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
 

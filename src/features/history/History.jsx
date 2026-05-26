@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react'
 import { ChevronDown, ChevronUp, Gamepad2, Trophy } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
+import { usePlayers } from '../players/usePlayers'
 import * as oscarsApi from '../../api/oscars'
 import { TOURNAMENTS } from '../../data/historicalTournaments'
 import { loadAliases, resolveName } from './aliasStorage'
@@ -10,8 +11,8 @@ import Podium from './Podium'
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function History({ onNavigate }) {
-  const { tournaments, players, getTournamentMatches, getTournamentRegistrations, session } =
-    useApp()
+  const { tournaments, getTournamentMatches, getTournamentRegistrations, session } = useApp()
+  const { data: players = [] } = usePlayers()
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
   const [expandedId, setExpandedId] = useState(null)
   const [activeTab, setActiveTab] = useState({}) // id → 'standings' | 'matches' | 'games'

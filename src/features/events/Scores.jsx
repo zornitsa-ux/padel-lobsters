@@ -1,12 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useApp } from '../../context/AppContext'
+import { usePlayers } from '../players/usePlayers'
 import * as oscarsApi from '../../api/oscars'
 import { ChevronLeft, Trophy, AlertCircle } from 'lucide-react'
 import { computeTournamentStandings } from '../../lib/standings'
 import { letterColor } from '../../lib/letterColors'
 
 export default function Scores({ tournament, onNavigate }) {
-  const { players, getTournamentMatches, getTournamentRegistrations } = useApp()
+  const { getTournamentMatches, getTournamentRegistrations } = useApp()
+  const { data: players = [] } = usePlayers()
 
   // Tab switcher: ranking (podium + standings), matches (round-by-round
   // cards, same layout as History), or lobster-games (per-category winners

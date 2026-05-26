@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react'
 import { useApp } from '../../context/AppContext'
+import { usePlayers } from '../players/usePlayers'
 import usePlayerAliases from '../../hooks/usePlayerAliases'
 import { SignInBanner } from '../../components/ui/AuthGate'
 import PlayerAliasMatcher from '../../components/PlayerAliasMatcher'
@@ -30,7 +31,8 @@ type ToolCard = {
 }
 
 export default function AdminTools({ onNavigate }: AdminToolsProps) {
-  const { session, players, matches, registrations, tournaments } = useApp() as any
+  const { session, matches, registrations, tournaments } = useApp() as any
+  const { data: players = [] } = usePlayers()
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
   const { playerAliases, setPlayerAlias, removePlayerAlias } = usePlayerAliases()
   const [showAliasMatcher, setShowAliasMatcher] = useState(false)

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useMemo } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import * as playersApi from '../api/players'
 import * as tournamentsApi from '../api/tournaments'
 import * as registrationsApi from '../api/registrations'
@@ -7,8 +8,8 @@ import * as matchesApi from '../api/matches'
 import * as settingsApi from '../api/settings'
 import useAuth from '../hooks/useAuth'
 import useDataSync from '../hooks/useDataSync'
+import { playerKeys } from '../features/players/playerKeys'
 import {
-  normalisePlayers,
   normaliseTournaments,
   normaliseRegistrations,
   normaliseMatches,
@@ -18,7 +19,6 @@ import {
 const AppContext = createContext(null)
 
 export function AppProvider({ children }) {
-  const [players, setPlayers] = useState([])
   const [tournaments, setTournaments] = useState([])
   const [registrations, setRegistrations] = useState([])
   // registration_transfers — pending and recent-history transfer offers.
@@ -35,9 +35,9 @@ export function AppProvider({ children }) {
 
   const auth = useAuth()
   const { session, role, roleRef } = auth
+  const queryClient = useQueryClient()
 
   useDataSync({
-    setPlayers,
     setTournaments,
     setRegistrations,
     setMatches,
@@ -48,13 +48,13 @@ export function AppProvider({ children }) {
     roleRef,
   })
 
-  // Post-write reload helpers. Defined here rather than re-exported from
-  // useDataSync so that hook stays a pure side-effect coordinator with no
-  // return value.
-  const reloadPlayers = useCallback(async () => {
-    const data = await playersApi.loadPlayers()
-    if (data) setPlayers(data)
-  }, [])
+  // Player writes still funnel through these context functions (they hold the
+  // authorization checks and are called from many admin sites). After a write
+  // they invalidate the players query cache so usePlayers/useMyProfile refetch.
+  const invalidatePlayers = useCallback(
+    () => queryClient.invalidateQueries({ queryKey: playerKeys.all() }),
+    [queryClient],
+  )
 
   const reloadTournaments = useCallback(async () => {
     const data = await tournamentsApi.loadTournaments()
@@ -82,11 +82,11 @@ export function AppProvider({ children }) {
     async (data) => {
       const result = await auth.selfSignup(data)
       if (!result.error && result.data) {
-        await reloadPlayers()
+        await invalidatePlayers()
       }
       return result
     },
-    [auth.selfSignup, reloadPlayers],
+    [auth.selfSignup, invalidatePlayers],
   )
 
   // ── Settings ──────────────────────────────────────────────
@@ -108,10 +108,10 @@ export function AppProvider({ children }) {
       if (!session?.user) throw new Error('Admin sign-in required to add a player.')
       const inserted = await playersApi.addPlayer(data)
       if (!inserted) throw new Error('Could not save player. Check your admin sign-in.')
-      await reloadPlayers()
+      await invalidatePlayers()
       return { ok: true, data: inserted }
     },
-    [session, reloadPlayers],
+    [session, invalidatePlayers],
   )
 
   const updatePlayer = useCallback(
@@ -120,19 +120,19 @@ export function AppProvider({ children }) {
         throw new Error('Not authorized to edit this player')
       }
       await playersApi.updatePlayer(id, data, role)
-      await reloadPlayers()
+      await invalidatePlayers()
       return { ok: true }
     },
-    [session, role, reloadPlayers],
+    [session, role, invalidatePlayers],
   )
 
   const deletePlayer = useCallback(
     async (id) => {
       await playersApi.deletePlayer(id)
-      await reloadPlayers()
+      await invalidatePlayers()
       return { ok: true }
     },
-    [reloadPlayers],
+    [invalidatePlayers],
   )
 
   // ── Tournaments ────────────────────────────────────────────
@@ -297,14 +297,13 @@ export function AppProvider({ children }) {
     async (playerId) => {
       const data = await playersApi.regeneratePin(playerId)
       if (!data) throw new Error('Could not reset PIN.')
-      await reloadPlayers()
+      await invalidatePlayers()
       return { ok: true, pin: data }
     },
-    [reloadPlayers],
+    [invalidatePlayers],
   )
 
   // ── Normalisation ──────────────────────────────────────────
-  const normalisedPlayers = useMemo(() => normalisePlayers(players), [players])
   const normalisedTournaments = useMemo(() => normaliseTournaments(tournaments), [tournaments])
   const normalisedRegistrations = useMemo(
     () => normaliseRegistrations(registrations),
@@ -314,10 +313,6 @@ export function AppProvider({ children }) {
   const normalisedTransfers = useMemo(() => normaliseTransfers(transfers), [transfers])
 
   // ── Helpers ────────────────────────────────────────────────
-  const getPlayerById = useCallback(
-    (id) => normalisedPlayers.find((p) => p.id === id),
-    [normalisedPlayers],
-  )
   const getTournamentRegistrations = useCallback(
     (tournamentId) => normalisedRegistrations.filter((r) => r.tournamentId === tournamentId),
     [normalisedRegistrations],
@@ -330,7 +325,6 @@ export function AppProvider({ children }) {
   return (
     <AppContext.Provider
       value={{
-        players: normalisedPlayers,
         tournaments: normalisedTournaments,
         addTournament,
         updateTournament,
@@ -350,7 +344,6 @@ export function AppProvider({ children }) {
         addPlayer,
         updatePlayer,
         deletePlayer,
-        getPlayerById,
         registerPlayer,
         updateRegistration,
         cancelRegistration,

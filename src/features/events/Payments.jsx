@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useApp } from '../../context/AppContext'
+import { usePlayers } from '../players/usePlayers'
 import {
   ChevronLeft,
   CheckCircle,
@@ -17,7 +18,8 @@ const METHODS = [
 ]
 
 export default function Payments({ tournament, onNavigate }) {
-  const { players, getTournamentRegistrations, updateRegistration, session } = useApp()
+  const { getTournamentRegistrations, updateRegistration, session } = useApp()
+  const { data: players = [] } = usePlayers()
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
   const [filter, setFilter] = useState('all')
 

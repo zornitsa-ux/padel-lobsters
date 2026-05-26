@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useApp } from '../../context/AppContext'
+import { useMyProfile } from '../players/usePlayers'
 import { supabase } from '../../supabase'
 import { isE164 } from '../../lib/whatsapp'
 import { Settings2 } from 'lucide-react'
@@ -12,19 +13,13 @@ import ProfileSection from './ProfileSection'
 import AdminSection from './AdminSection'
 
 export default function Settings() {
-  const {
-    settings,
-    saveSettings,
-    session,
-    getPlayerById,
-    updatePlayer,
-    players,
-    loginWithPin,
-    logout,
-    fetchMyProfile,
-  } = useApp()
+  const { settings, saveSettings, session, updatePlayer, loginWithPin, logout } = useApp()
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
   const claimedId = session?.user?.id ?? null
+  // Own profile: identity from the public roster (works on untrusted devices)
+  // merged with PII from the trust-gated RPC. Single source — no separate
+  // poll/overlay, so a background refetch can't flash or stomp the form.
+  const { data: myPlayer } = useMyProfile(claimedId)
 
   const [form, setForm] = useState({
     whatsappLink: '',
@@ -60,7 +55,6 @@ export default function Settings() {
   const [tipsExpanded, setTipsExpanded] = useState(false)
 
   // ── My Lobster Profile ──────────────────────────────────────────────────
-  const myPlayer = claimedId ? getPlayerById(claimedId) : null
   const [profileExpanded, setProfileExpanded] = useState(false)
   const [profileForm, setProfileForm] = useState({
     name: '',
@@ -79,6 +73,15 @@ export default function Settings() {
   const [profileSaving, setProfileSaving] = useState(false)
   const [profileSaved, setProfileSaved] = useState(false)
   const [profileError, setProfileError] = useState('')
+  // Once the user touches the form it's "dirty"; the seed effect below then
+  // stops re-initialising from myPlayer so a background refetch / cache
+  // invalidation cannot wipe out unsaved edits. Reset to false after a
+  // successful save so the form re-seeds from the server's saved values.
+  const profileDirty = useRef(false)
+  const editProfileForm = useCallback((updater) => {
+    profileDirty.current = true
+    setProfileForm(updater)
+  }, [])
   const [avatarFile, setAvatarFile] = useState(null)
   const [avatarPreview, setAvatarPreview] = useState(null)
   const [activePrompt, setActivePrompt] = useState(2) // default to "War Cry"
@@ -86,7 +89,11 @@ export default function Settings() {
   // Playtomic update popup — show if player hasn't visited settings in 30+ days
   const [showPlaytomicPrompt, setShowPlaytomicPrompt] = useState(false)
 
+  // Seed the form from myPlayer (roster identity + PII, already merged by
+  // useMyProfile). Skipped once the form is dirty so an in-flight edit is never
+  // overwritten by a refetch.
   useEffect(() => {
+    if (profileDirty.current) return
     if (myPlayer) {
       setProfileForm({
         name: myPlayer.name || '',
@@ -118,30 +125,10 @@ export default function Settings() {
     }
   }, [myPlayer, claimedId])
 
-  // Securely fetch PII (email / phone / full birthday) via get_my_profile RPC.
-  // Runs after the cached-player effect above, so PII overlays the (eventually
-  // PII-stripped) players_public cache without a flash of empty fields.
-  useEffect(() => {
-    if (!claimedId) return
-    let cancelled = false
-    ;(async () => {
-      const row = await fetchMyProfile()
-      if (cancelled || !row) return
-      setProfileForm((prev) => ({
-        ...prev,
-        email: row.email ?? prev.email ?? '',
-        phone: row.phone ?? prev.phone ?? '',
-        birthday: row.birthday ?? prev.birthday ?? '',
-      }))
-    })()
-    return () => {
-      cancelled = true
-    }
-  }, [claimedId, fetchMyProfile])
-
   const handleAvatarChange = (e) => {
     const file = e.target.files?.[0]
     if (!file) return
+    profileDirty.current = true
     setAvatarFile(file)
     const reader = new FileReader()
     reader.onload = (ev) => setAvatarPreview(ev.target.result)
@@ -204,6 +191,9 @@ export default function Settings() {
         avatarUrl,
       })
       setAvatarFile(null)
+      // Edits are persisted — clear dirty so the seed effect can re-initialise
+      // from the freshly-invalidated server values.
+      profileDirty.current = false
       localStorage.setItem(`lobster_playtomic_check_${claimedId}`, String(Date.now()))
       setShowPlaytomicPrompt(false)
       setProfileSaved(true)
@@ -328,7 +318,7 @@ export default function Settings() {
   }
 
   // Active sign-in session — used by the Account card.
-  const signedInPlayer = claimedId ? getPlayerById(claimedId) : null
+  const signedInPlayer = myPlayer
 
   return (
     <div className="space-y-5">
@@ -366,7 +356,7 @@ export default function Settings() {
         profileExpanded={profileExpanded}
         setProfileExpanded={setProfileExpanded}
         profileForm={profileForm}
-        setProfileForm={setProfileForm}
+        setProfileForm={editProfileForm}
         profileSaving={profileSaving}
         profileSaved={profileSaved}
         profileError={profileError}

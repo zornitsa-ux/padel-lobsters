@@ -4,17 +4,8 @@ import type { League, LeagueTeam, LeagueMatch } from '../domain/types'
 export interface PlayerOption {
   id: string
   name: string
-  avatar_url: string | null
-  status: string
-}
-
-export async function fetchAllPlayers(): Promise<PlayerOption[]> {
-  const { data, error } = await supabase
-    .from('players_public')
-    .select('id, name, avatar_url, status')
-    .order('name')
-  if (error) throw error
-  return data ?? []
+  avatar_url?: string | null
+  status?: string
 }
 
 export async function fetchActiveLeague(): Promise<League | null> {

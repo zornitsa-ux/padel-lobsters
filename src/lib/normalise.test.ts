@@ -30,6 +30,7 @@ describe('normalisePlayers', () => {
     expect(result).toEqual([
       {
         id: 'p1',
+        name: '',
         playtomic_level: 4.7,
         adjusted_level: 4.5,
         learned_rating: '1300',
@@ -56,6 +57,7 @@ describe('normalisePlayers', () => {
       },
       {
         id: 'p2',
+        name: '',
         playtomicLevel: 0,
         adjustment: 0,
         adjustedLevel: 0,

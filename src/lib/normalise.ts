@@ -1,6 +1,42 @@
-export function normalisePlayers(players) {
+// Raw player row as it arrives from the players_public view or the
+// get_my_profile_v2 RPC (snake_case). Loosely typed because callers validate
+// with Zod at the fetch boundary before normalising.
+export interface RawPlayerRow {
+  id: string
+  [key: string]: any
+}
+
+// The normalised player shape consumed across the app: the raw row is spread
+// through (so snake_case columns and any future columns remain accessible),
+// with these camelCase aliases layered on top. PII fields are present only when
+// the row came from get_my_profile_v2 (see useMyProfile).
+export interface Player {
+  id: string
+  name: string
+  playtomicLevel: number
+  adjustment: number
+  adjustedLevel: number
+  learnedLevel: number | null
+  learnedRd: number | null
+  learnedMatchesCount: number
+  playtomicUsername: string
+  gender: string
+  status: string
+  isLeftHanded: boolean
+  avatarUrl: string
+  country: string
+  preferredPosition: string
+  taglineLabel: string
+  email?: string | null
+  phone?: string | null
+  birthday?: string | null
+  [key: string]: any
+}
+
+export function normalisePlayers(players: RawPlayerRow[]): Player[] {
   return players.map((p) => ({
     ...p,
+    name: p.name ?? '',
     playtomicLevel: p.playtomic_level ?? p.playtomicLevel ?? 0,
     adjustment: p.adjustment ?? 0,
     adjustedLevel: p.adjusted_level ?? p.adjustedLevel ?? 0,

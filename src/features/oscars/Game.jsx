@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { useApp } from '../../context/AppContext'
+import { usePlayers } from '../players/usePlayers'
 import * as oscarsApi from '../../api/oscars'
 import { supabase } from '../../supabase'
 import { letterColor } from '../../lib/letterColors'
@@ -44,7 +45,8 @@ import ErrorBanner from './ErrorBanner'
 /* ════════════════════════════════════════════════════════════════════════════ */
 
 export default function Game({ tournament, onNavigate }) {
-  const { players, session: authSession, getTournamentRegistrations } = useApp()
+  const { session: authSession, getTournamentRegistrations } = useApp()
+  const { data: players = [] } = usePlayers()
   const isAdmin = authSession?.user?.app_metadata?.role === 'admin'
 
   const [session, setSession] = useState(undefined) // undefined = unloaded; null = no row

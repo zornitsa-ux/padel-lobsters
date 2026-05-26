@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useApp } from '../../context/AppContext'
+import { usePlayers } from '../players/usePlayers'
 import { Plus, Trophy, Clock, ChevronDown, ChevronUp } from 'lucide-react'
 import HistoryContent from '../../components/History'
 import { TOURNAMENTS as HISTORY_TOURNAMENTS } from '../../data/historicalTournaments'
@@ -20,10 +21,10 @@ export default function Tournament({ onNavigate }) {
     updateTournament,
     deleteTournament,
     session,
-    players,
     getTournamentRegistrations,
     transfers,
   } = useApp()
+  const { data: players = [] } = usePlayers()
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
   const claimedId = session?.user?.id ?? null
 
