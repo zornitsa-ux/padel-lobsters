@@ -32,6 +32,15 @@ const json = (status: number, body: unknown) =>
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   })
 
+// Logs the failing stage + upstream detail server-side, and returns a 500 that
+// names the stage to the client. The stage is a coarse, non-sensitive label
+// (no PINs, tokens, or PII) so a user can report "it failed at generate_link"
+// and we can find the cause without guessing across 7 identical error returns.
+const fail = (stage: string, detail?: unknown) => {
+  console.error(`[verify-pin] stage=${stage}`, detail ?? '')
+  return json(500, { error: 'internal_error', stage })
+}
+
 const anonHeaders = {
   apikey: SUPABASE_ANON_KEY,
   Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
@@ -72,8 +81,7 @@ serve(async (req) => {
   })
 
   if (!rpcResp.ok) {
-    console.error('verify_player_pin_v2 http error:', rpcResp.status)
-    return json(500, { error: 'internal_error' })
+    return fail('verify_pin_rpc', `http ${rpcResp.status}`)
   }
 
   const rpcData = (await rpcResp.json()) as Array<{
@@ -89,26 +97,31 @@ serve(async (req) => {
 
   const { player_id, is_new_device, trusted: is_trusted } = result
 
-  // Step 2: Fetch role and email from players table
+  // Step 2: Fetch role from players table
   const playerResp = await fetch(
-    `${SUPABASE_URL}/rest/v1/players?id=eq.${player_id}&select=role,email&limit=1`,
+    `${SUPABASE_URL}/rest/v1/players?id=eq.${player_id}&select=role&limit=1`,
     { headers: serviceHeaders },
   )
 
   if (!playerResp.ok) {
-    console.error('players lookup http error:', playerResp.status)
-    return json(500, { error: 'internal_error' })
+    return fail('players_lookup', `http ${playerResp.status}`)
   }
 
-  const players = (await playerResp.json()) as Array<{ role: string; email: string | null }>
+  const players = (await playerResp.json()) as Array<{ role: string }>
   const player = players[0]
   if (!player) {
-    console.error('player not found:', player_id)
-    return json(500, { error: 'internal_error' })
+    return fail('player_not_found', player_id)
   }
 
   const role = player.role
-  const email = player.email ?? `player-${player_id}@padelobsters.internal`
+
+  // The auth identity is keyed on a deterministic synthetic address derived
+  // from player_id — NOT the player's real email. Real email is optional and
+  // mutable (players.email can be blank or change), so binding the session
+  // bridge to it caused "An email address is required" 500s and id/email
+  // mismatches. players.email stays the source of truth for notifications only.
+  const authEmail = `player-${player_id}@padelobsters.internal`
+  const appMetadata = { role, device_trusted: is_trusted, device_id }
 
   // Step 3: Check if auth.users entry exists
   const getUserResp = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${player_id}`, {
@@ -116,35 +129,35 @@ serve(async (req) => {
   })
 
   if (!getUserResp.ok && getUserResp.status !== 404) {
-    console.error('get auth user http error:', getUserResp.status)
-    return json(500, { error: 'internal_error' })
+    return fail('get_auth_user', `http ${getUserResp.status}`)
   }
 
-  // Step 4: Create or update auth.users entry with current role in app_metadata
+  // Step 4: Create or update the auth.users entry. We always (re)assert the
+  // synthetic email so that pre-existing rows created with a real/blank email
+  // are migrated in place — keeping auth.users.id == player_id and ensuring
+  // generate_link (step 5) resolves to this exact row.
   if (getUserResp.status === 404) {
     const createResp = await fetch(`${SUPABASE_URL}/auth/v1/admin/users`, {
       method: 'POST',
       headers: serviceHeaders,
       body: JSON.stringify({
         id: player_id,
-        email,
+        email: authEmail,
         email_confirm: true,
-        app_metadata: { role, device_trusted: is_trusted, device_id },
+        app_metadata: appMetadata,
       }),
     })
     if (!createResp.ok) {
-      console.error('createUser http error:', createResp.status, await createResp.text())
-      return json(500, { error: 'internal_error' })
+      return fail('create_auth_user', `http ${createResp.status} ${await createResp.text()}`)
     }
   } else {
     const updateResp = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${player_id}`, {
       method: 'PUT',
       headers: serviceHeaders,
-      body: JSON.stringify({ app_metadata: { role, device_trusted: is_trusted, device_id } }),
+      body: JSON.stringify({ email: authEmail, email_confirm: true, app_metadata: appMetadata }),
     })
     if (!updateResp.ok) {
-      console.error('updateUser http error:', updateResp.status, await updateResp.text())
-      return json(500, { error: 'internal_error' })
+      return fail('update_auth_user', `http ${updateResp.status} ${await updateResp.text()}`)
     }
   }
 
@@ -152,20 +165,18 @@ serve(async (req) => {
   const linkResp = await fetch(`${SUPABASE_URL}/auth/v1/admin/generate_link`, {
     method: 'POST',
     headers: serviceHeaders,
-    body: JSON.stringify({ type: 'magiclink', email }),
+    body: JSON.stringify({ type: 'magiclink', email: authEmail }),
   })
 
   if (!linkResp.ok) {
-    console.error('generate_link http error:', linkResp.status, await linkResp.text())
-    return json(500, { error: 'internal_error' })
+    return fail('generate_link', `http ${linkResp.status} ${await linkResp.text()}`)
   }
 
   const linkData = (await linkResp.json()) as { hashed_token?: string; action_link?: string }
   const hashed_token = linkData.hashed_token
 
   if (!hashed_token) {
-    console.error('generate_link missing hashed_token:', linkData)
-    return json(500, { error: 'internal_error' })
+    return fail('generate_link_no_token', linkData)
   }
 
   // Step 6: Exchange the magic-link token for a session.
@@ -182,8 +193,7 @@ serve(async (req) => {
   const refresh_token = params.get('refresh_token')
 
   if (!access_token || !refresh_token) {
-    console.error('verify did not return tokens; location:', location)
-    return json(500, { error: 'internal_error' })
+    return fail('verify_no_tokens', `location=${location}`)
   }
 
   return json(200, { access_token, refresh_token, role, is_new_device, is_trusted })
