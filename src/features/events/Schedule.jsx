@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import { useApp } from '../../context/AppContext'
+import { usePlayers } from '../players/usePlayers'
 import { Shuffle, AlertCircle, Trophy, Users, Download } from 'lucide-react'
 import { generateLobster as generateLobsterAnnealed } from '../../lib/lobsterMatcher'
 import { recomputeAllRatings } from '../../lib/ratingsRecompute'
@@ -30,7 +31,6 @@ import {
 
 export default function Schedule({ tournament, onNavigate }) {
   const {
-    players,
     matches: allMatches,
     getTournamentRegistrations,
     getTournamentMatches,
@@ -39,6 +39,7 @@ export default function Schedule({ tournament, onNavigate }) {
     updateTournament,
     session,
   } = useApp()
+  const { data: players = [] } = usePlayers()
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
 
   const [rounds, setRounds] = useState(4)

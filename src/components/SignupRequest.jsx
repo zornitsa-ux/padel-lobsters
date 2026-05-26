@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useApp } from '../context/AppContext'
+import { usePlayers } from '../features/players/usePlayers'
 import { supabase } from '../supabase'
 import { isE164 } from '../lib/whatsapp'
 import { processAvatar } from '../lib/processAvatar'
@@ -71,7 +72,8 @@ const emptyForm = {
 }
 
 export default function SignupRequest({ onComplete, onBack, compact = false }) {
-  const { players, selfSignup, updatePlayer, loginWithPin } = useApp()
+  const { selfSignup, updatePlayer, loginWithPin } = useApp()
+  const { data: players = [] } = usePlayers()
 
   const [form, setForm] = useState(emptyForm)
   // useState's lazy initializer rolls a prompt on first mount, but in

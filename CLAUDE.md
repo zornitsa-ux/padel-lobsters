@@ -48,7 +48,7 @@ Components were originally written against an `onNavigate(page, tournament?)` he
 
 Access control list: `src/lib/authPaths.ts` — `PUBLIC_PAGES = ['dashboard']`; everything else requires authentication. Default-deny.
 
-**Global state** lives entirely in `src/context/AppContext.jsx` (~2000 lines). All components consume it via `useApp()`. `loadAll()` fires on mount and fetches all tables in parallel. Every table has a Supabase Realtime subscription; `players` also has a 60s polling fallback because anon direct reads are blocked by RLS.
+**Global state** lives in `src/context/AppContext.jsx` (~2000 lines). Most tables (tournaments, registrations, matches, transfers, settings) are loaded once by `loadAll()` on mount, kept live via Supabase Realtime subscriptions, and consumed via `useApp()`. **Players are the exception** — they have migrated out of context to a TanStack Query module (see below); the rest of the slices are slated to follow the same pattern over time.
 
 Role is derived from the JWT on every render:
 
@@ -58,6 +58,29 @@ const role = session?.user?.app_metadata?.role ?? 'guest'
 ```
 
 No `isAdmin` state variable. Components derive it locally: `const isAdmin = role === 'admin'`.
+
+### Player data access
+
+Players are at the heart of nearly every feature. **Do not read players from `useApp()` — that slice no longer exists there.** All player reads go through the TanStack Query module at `src/features/players/`:
+
+| Need                                                                      | Hook                      | Notes                                                                                                                                                              |
+| ------------------------------------------------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| The full roster (lists, pickers, name/avatar lookups)                     | `usePlayers()`            | Returns `{ data, isLoading, ... }`. One shared cache — call it from as many components as you like; requests are deduped.                                          |
+| One player by id (when you don't otherwise need the list)                 | `usePlayer(id)`           | Derived from the roster cache via `select` — **no extra network request**, and re-renders only when that player changes.                                           |
+| The signed-in user's own profile **with PII** (email/phone/full birthday) | `useMyProfile(claimedId)` | Roster identity (works on untrusted devices) merged with PII from the trust-gated `get_my_profile_v2` RPC. Use this for Settings/account screens, not `usePlayer`. |
+
+Typical usage: `const { data: players = [] } = usePlayers()`.
+
+Module layout:
+
+- `playerQueries.ts` — fetchers (`fetchPlayers` reads `players_public`; `fetchMyProfile` calls the PII RPC). Each validates rows with Zod at the boundary, then runs them through `normalisePlayers` (snake_case → camelCase). Exports the `Player` type.
+- `playerSchemas.ts` — Zod schemas for the public row and the PII row.
+- `playerKeys.ts` — query-key factory. `playerKeys.all()` (`['players']`) is the invalidation prefix covering both the roster and the "me" row.
+- `usePlayers.ts` — the three hooks above.
+
+**Writes** still go through `useApp()` (`addPlayer`, `updatePlayer`, `deletePlayer`, `regeneratePin`, `selfSignup`) — these hold the authorization checks and, on success, call `queryClient.invalidateQueries({ queryKey: playerKeys.all() })` so every reader refetches. After any new player-write path, invalidate `playerKeys.all()` the same way.
+
+There is **no polling and no Realtime subscription** for players (anon reads of the underlying `players` table are revoked, so Realtime is silent). Freshness comes from TanStack Query: refetch-on-mount/focus plus explicit invalidation after writes. If a screen needs tighter liveness, add a `refetchInterval` on that screen's `usePlayers()` call — don't reintroduce a global poll.
 
 ### New Feature Pattern
 

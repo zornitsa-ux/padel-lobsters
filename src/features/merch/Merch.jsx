@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { useApp } from '../../context/AppContext'
+import { usePlayers } from '../players/usePlayers'
 import { supabase } from '../../supabase'
 import { useAuthPrompt } from '../../components/ui/AuthGate'
 import { emptyItem } from './itemForm'
@@ -19,7 +20,8 @@ export default function Merch({
   initialTab,
   onNavigate,
 }) {
-  const { players, registrations, session, tournaments: contextTournaments = [] } = useApp()
+  const { registrations, session, tournaments: contextTournaments = [] } = useApp()
+  const { data: players = [] } = usePlayers()
   const { raffleWinners = [] } = useRaffle()
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
   const claimedId = session?.user?.id ?? null

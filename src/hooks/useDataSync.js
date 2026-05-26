@@ -1,6 +1,5 @@
 import { useEffect } from 'react'
 import { supabase } from '../supabase'
-import * as playersApi from '../api/players'
 import * as tournamentsApi from '../api/tournaments'
 import * as registrationsApi from '../api/registrations'
 import * as matchesApi from '../api/matches'
@@ -8,11 +7,10 @@ import * as transfersApi from '../api/transfers'
 import * as settingsApi from '../api/settings'
 
 // Side-effect coordinator: loads all data on mount, keeps it live via
-// realtime subscriptions, polls the players list every 60s (realtime goes
-// silent on public.players after the Phase 2c REVOKE), and reloads
-// tournaments whenever the caller's role changes (admin vs player scope).
+// realtime subscriptions, and reloads tournaments whenever the caller's role
+// changes (admin vs player scope). The players slice is owned by the players
+// feature (usePlayers/useMyProfile via TanStack Query), not this hook.
 export default function useDataSync({
-  setPlayers,
   setTournaments,
   setRegistrations,
   setMatches,
@@ -22,11 +20,6 @@ export default function useDataSync({
   role,
   roleRef,
 }) {
-  const loadPlayers = async () => {
-    const data = await playersApi.loadPlayers()
-    if (data) setPlayers(data)
-  }
-
   const loadTournaments = async () => {
     const data = await tournamentsApi.loadTournaments()
     if (data) setTournaments(data)
@@ -54,7 +47,6 @@ export default function useDataSync({
 
   const loadAll = async () => {
     await Promise.all([
-      loadPlayers(),
       loadTournaments(),
       loadRegistrations(),
       loadMatches(),
@@ -69,10 +61,6 @@ export default function useDataSync({
   useEffect(() => {
     loadAll()
     const channels = [
-      supabase
-        .channel('players-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'players' }, loadPlayers)
-        .subscribe(),
       supabase
         .channel('tournaments-changes')
         .on(
@@ -107,13 +95,6 @@ export default function useDataSync({
         .subscribe(),
     ]
     return () => channels.forEach((c) => supabase.removeChannel(c))
-  }, [])
-
-  // Background poll: realtime stops delivering player changes after the
-  // Phase 2c REVOKE on public.players. 60s poll closes the staleness window.
-  useEffect(() => {
-    const t = setInterval(loadPlayers, 60_000)
-    return () => clearInterval(t)
   }, [])
 
   // Role-change reload: admin sees all tournament statuses; player sees only

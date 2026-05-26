@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { X, ArrowRightLeft, AlertTriangle, Clock } from 'lucide-react'
 import { useApp } from '../context/AppContext'
+import { usePlayers } from '../features/players/usePlayers'
 import { letterColor } from '../lib/letterColors'
 
 // Admin-only modal that lists every pending transfer for a tournament and
@@ -17,7 +18,8 @@ import { letterColor } from '../lib/letterColors'
 //   tournament: tournament object whose pending transfers are listed
 //   onClose():  dismiss the panel
 export default function AdminTransferPanel({ tournament, onClose }) {
-  const { transfers, players, session, forceAcceptTransfer, adminCancelTransfer } = useApp()
+  const { transfers, session, forceAcceptTransfer, adminCancelTransfer } = useApp()
+  const { data: players = [] } = usePlayers()
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
 
   const [busyId, setBusyId] = useState(null)

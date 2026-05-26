@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react'
 import { useApp } from '../../context/AppContext'
+import { usePlayers } from '../players/usePlayers'
 import { supabase } from '../../supabase'
 import DEFAULT_TIPS from '../../data/padelTips'
 import { TOURNAMENTS as LEGACY_TOURNAMENTS } from '../../data/historicalTournaments'
@@ -25,18 +26,17 @@ import { LeagueDashboardCard } from '../league/ui/LeagueDashboardCard'
 export default function Dashboard({ onNavigate }) {
   const {
     tournaments,
-    players,
     registrations,
     matches,
     settings,
     getTournamentRegistrations,
     getTournamentMatches,
     session,
-    getPlayerById,
     transfers,
     respondToTransfer,
     cancelTransfer,
   } = useApp()
+  const { data: players = [] } = usePlayers()
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
   const claimedId = session?.user?.id ?? null
   const { playerAliases } = usePlayerAliases()
@@ -77,7 +77,7 @@ export default function Dashboard({ onNavigate }) {
     setTransferShare({ transferId: xfer.id, toPlayer })
   }
 
-  const claimedPlayer = claimedId ? getPlayerById(claimedId) : null
+  const claimedPlayer = claimedId ? players.find((p) => p.id === claimedId) : null
   const activePlayers = players.filter((p) => (p.status || 'active') === 'active')
 
   // ── New merch orders since last admin check ─────────────────────────────────

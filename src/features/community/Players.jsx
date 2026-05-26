@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { useApp } from '../../context/AppContext'
+import { usePlayers } from '../players/usePlayers'
 import usePlayerAliases from '../../hooks/usePlayerAliases'
 import { supabase } from '../../supabase'
 import { Search } from 'lucide-react'
@@ -30,7 +31,6 @@ const GENERIC_REVIEW_IDS = new Set([
 
 export default function Players({ onNavigate, focusPlayerId }) {
   const {
-    players,
     addPlayer,
     updatePlayer,
     deletePlayer,
@@ -41,6 +41,7 @@ export default function Players({ onNavigate, focusPlayerId }) {
     regeneratePin,
     fetchAllPlayersWithPii,
   } = useApp()
+  const { data: players = [] } = usePlayers()
   const { playerAliases } = usePlayerAliases()
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
   const claimedId = session?.user?.id ?? null

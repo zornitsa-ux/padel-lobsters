@@ -1,20 +1,10 @@
 import { supabase } from '../supabase'
 
 // ── Players ──────────────────────────────────────────────
-// Phase 2b: read from the redacted players_public view instead of the
-// raw players table. The view exposes display fields (name, level,
-// avatar, etc.) without PII (email, phone, full birthday, pin*).
-// PII for the signed-in user is fetched on demand via get_my_profile_v2;
-// admin-only roster dumps go through get_all_players_with_pii_v2.
-export async function loadPlayers() {
-  const { data, error } = await supabase.from('players_public').select('*').order('name')
-  if (error) {
-    console.error('loadPlayers (players_public) error:', error)
-    return []
-  }
-  return data || []
-}
-
+// Reads of the redacted roster live in the players feature
+// (src/features/players/playerQueries.ts, via TanStack Query). This module
+// keeps only the write paths.
+//
 // Phase 2c: writes go through SECURITY DEFINER RPCs so we can REVOKE
 // anon's direct grants on public.players. PINs are now generated
 // server-side (atomic — no client/server collision race).
