@@ -18,6 +18,7 @@ import RecentlyCompletedBanners from './RecentlyCompletedBanners'
 import AdminAlerts from './AdminAlerts'
 import YourStatsCard from './YourStatsCard'
 import RecentResultsList from './RecentResultsList'
+import { LeagueDashboardCard } from '../league/ui/LeagueDashboardCard'
 
 // (Claw up/down reaction icons removed along with the Updates feature.)
 
@@ -404,6 +405,8 @@ export default function Dashboard({ onNavigate }) {
         pastCount={pastCount}
         lastPodium={lastPodium}
       />
+
+      <LeagueDashboardCard myPlayerId={claimedId} />
 
       <NextEventCard
         upcoming={upcoming}

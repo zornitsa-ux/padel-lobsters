@@ -26,6 +26,9 @@ import Game from './components/Game'
 import Admin from './components/Admin.tsx'
 import VerificationGate from './components/VerificationGate'
 import TransferAccept from './components/TransferAccept'
+import LeaguePage from './features/league/LeaguePage'
+import LeagueIndexPage from './features/league/LeagueIndexPage'
+import GroupStageHistoryPage from './features/league/GroupStageHistoryPage'
 
 // URL routing — replaces the previous string-state page machine.
 //
@@ -61,6 +64,9 @@ export default function App() {
                 <Route path="/settings" element={<SettingsRoute />} />
                 <Route path="/history" element={<HistoryRoute />} />
                 <Route path="/transfer/:id" element={<TransferRoute />} />
+                <Route path="/league" element={<LeagueIndexPage />} />
+                <Route path="/league/:id" element={<LeaguePage />} />
+                <Route path="/league/:id/group-stage" element={<GroupStageHistoryPage />} />
 
                 <Route path="*" element={<Navigate to="/home" replace />} />
               </Routes>
@@ -107,6 +113,8 @@ function useLegacyNavigate() {
         return navigate('/history')
       case 'settings':
         return navigate('/settings')
+      case 'league':
+        return navigate('/league')
       default:
         return navigate('/home')
     }

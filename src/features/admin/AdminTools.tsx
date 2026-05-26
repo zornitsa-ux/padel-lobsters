@@ -5,7 +5,16 @@ import { SignInBanner } from '../../components/ui/AuthGate'
 import PlayerAliasMatcher from '../../components/PlayerAliasMatcher'
 import ReviewBreakdownModal from '../community/ReviewBreakdownModal'
 import { REVIEW_SCENARIOS, corpReview } from '../community/reviewScenarios'
-import { GitMerge, Users, Calculator, ShoppingBag, BarChart3, ChevronRight } from 'lucide-react'
+import {
+  GitMerge,
+  Users,
+  Calculator,
+  ShoppingBag,
+  BarChart3,
+  ChevronRight,
+  Trophy,
+} from 'lucide-react'
+import LeagueAdminSection from '../league/LeagueAdminSection'
 
 type AdminToolsProps = {
   onNavigate?: (page: string, payload?: unknown) => void
@@ -172,6 +181,10 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
           onClose={() => setShowReviewBreakdown(false)}
         />
       )}
+
+      <div className="pt-2 border-t border-gray-100">
+        <LeagueAdminSection />
+      </div>
     </div>
   )
 }

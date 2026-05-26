@@ -129,7 +129,7 @@ serve(async (req) => {
         id: player_id,
         email,
         email_confirm: true,
-        app_metadata: { role, device_trusted: is_trusted },
+        app_metadata: { role, device_trusted: is_trusted, device_id },
       }),
     })
     if (!createResp.ok) {
@@ -140,7 +140,7 @@ serve(async (req) => {
     const updateResp = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${player_id}`, {
       method: 'PUT',
       headers: serviceHeaders,
-      body: JSON.stringify({ app_metadata: { role, device_trusted: is_trusted } }),
+      body: JSON.stringify({ app_metadata: { role, device_trusted: is_trusted, device_id } }),
     })
     if (!updateResp.ok) {
       console.error('updateUser http error:', updateResp.status, await updateResp.text())
