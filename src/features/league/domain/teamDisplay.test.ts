@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { resolveTeamName, resolveTeamShortName } from './teamDisplay'
+import { resolveTeamName, resolveTeamShortName, resolveTeamPlayers } from './teamDisplay'
 import type { LeagueTeam } from './types'
 
 function makeTeam(overrides: Partial<LeagueTeam> = {}): LeagueTeam {
@@ -78,5 +78,24 @@ describe('resolveTeamShortName', () => {
 
   it('uses ? for missing players', () => {
     expect(resolveTeamShortName(makeTeam())).toBe('? & ?')
+  })
+})
+
+describe('resolveTeamPlayers', () => {
+  it('returns full player names when team_name is set', () => {
+    const team = makeTeam({
+      team_name: 'Lobster Kings',
+      player1: { id: 'p1', name: 'Alice Smith', avatar_url: null },
+      player2: { id: 'p2', name: 'Bob Jones', avatar_url: null },
+    })
+    expect(resolveTeamPlayers(team)).toBe('Alice Smith & Bob Jones')
+  })
+
+  it('returns null when team has no distinct name', () => {
+    const team = makeTeam({
+      player1: { id: 'p1', name: 'Alice Smith', avatar_url: null },
+      player2: { id: 'p2', name: 'Bob Jones', avatar_url: null },
+    })
+    expect(resolveTeamPlayers(team)).toBeNull()
   })
 })

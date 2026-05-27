@@ -111,7 +111,11 @@ export function TeamPage({ team, matches, teamById, onClose, onTeamClick }: Team
             <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
               Preferred Play Times
             </p>
-            <p className="text-sm text-lob-dark whitespace-pre-line">{team.preferred_play_times}</p>
+            <div className="text-sm text-lob-dark space-y-0.5">
+              {team.preferred_play_times.split(' | ').map((line) => (
+                <p key={line}>{line}</p>
+              ))}
+            </div>
           </div>
         )}
 
