@@ -8,6 +8,7 @@ import DateTile from '../../components/ui/DateTile'
 import AddToCalendarButton from '../../components/ui/AddToCalendarButton'
 import ShareWhatsAppButton from '../../components/ui/ShareWhatsAppButton'
 import EventDescription from './EventDescription'
+import EventAdminMenu from './EventAdminMenu'
 import {
   splitRegistrationsByStatus,
   getAvailablePlayers,
@@ -282,6 +283,13 @@ export default function Registration({ tournament, onNavigate }) {
           <div className="flex gap-1 flex-shrink-0">
             <ShareWhatsAppButton tournament={tournament} variant="icon" />
             <AddToCalendarButton tournament={tournament} variant="icon" />
+            <EventAdminMenu
+              isAdmin={isAdmin}
+              onRaffle={() => onNavigate('raffle', tournament)}
+              onEligibility={() => onNavigate('eligibility', tournament)}
+              onPayments={() => onNavigate('payments', tournament)}
+              onScores={() => onNavigate('scores', tournament)}
+            />
           </div>
         </div>
 

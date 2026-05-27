@@ -29,6 +29,20 @@ export default {
       fontFamily: {
         display: ['Georgia', 'serif'],
       },
+      keyframes: {
+        'fade-in-up': {
+          '0%': { opacity: '0', transform: 'translateY(12px) scale(0.97)' },
+          '100%': { opacity: '1', transform: 'translateY(0) scale(1)' },
+        },
+        'confetti-fall': {
+          '0%': { opacity: '1', transform: 'translateY(-10vh) rotate(0deg)' },
+          '100%': { opacity: '0', transform: 'translateY(110vh) rotate(720deg)' },
+        },
+      },
+      animation: {
+        'fade-in-up': 'fade-in-up 0.5s ease-out both',
+        'confetti-fall': 'confetti-fall linear forwards',
+      },
     },
   },
   plugins: [],

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useApp } from '../../context/AppContext'
 import { usePlayers } from '../players/usePlayers'
 import { supabase } from '../../supabase'
@@ -8,24 +8,15 @@ import Lightbox from './Lightbox'
 import Shop from './Shop'
 import MyOrders from './MyOrders'
 import OrdersTable from './OrdersTable'
-import PrizesTab from './PrizesTab'
 import AdminItemManager from './AdminItemManager'
 import ItemEditorForm from './ItemEditorForm'
-import useRaffle from './useRaffle'
 
 // ── Main Merch component ──────────────────────────────────────────────────────
-export default function Merch({
-  tournament,
-  tournaments: allTournaments = [],
-  initialTab,
-  onNavigate,
-}) {
-  const { registrations, session, tournaments: contextTournaments = [] } = useApp()
+export default function Merch({ initialTab, onNavigate }) {
+  const { session } = useApp()
   const { data: players = [] } = usePlayers()
-  const { raffleWinners = [] } = useRaffle()
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
   const claimedId = session?.user?.id ?? null
-  const tournaments = allTournaments.length > 0 ? allTournaments : contextTournaments
   const [tab, setTab] = useState(initialTab || 'shop')
   useEffect(() => {
     if (initialTab) setTab(initialTab)
@@ -46,38 +37,7 @@ export default function Merch({
   const [sizeError, setSizeError] = useState({}) // itemId -> true (missing size)
   const [customName, setCustomName] = useState({}) // itemId -> name string
   const [ordered, setOrdered] = useState({}) // itemId -> true (this session)
-  const [selectedTournament, setSelectedTournament] = useState(
-    tournament?.id != null ? String(tournament.id) : null,
-  )
   const [lightbox, setLightbox] = useState(null) // { images, index }
-  // Filter the prize/raffle picker to today's and future tournaments only.
-  // Past events are hidden so the dropdown stays focused on what admin can
-  // still act on. `today` is the user's local YYYY-MM-DD; tournament.date
-  // strings are also YYYY-MM-DD so a string compare is sufficient.
-  const upcomingTournaments = useMemo(() => {
-    const d = new Date()
-    const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-    const winsByTournament = new Set(
-      (raffleWinners || []).map((w) => String(w.tournament_id)).filter(Boolean),
-    )
-    // Include today + future as before, plus any past tournament that
-    // already has recorded winners — admin can re-open it to review the
-    // result. Pure-past-no-winners stays hidden.
-    return tournaments.filter((t) => {
-      if (!t.date) return true
-      if (String(t.date) >= todayStr) return true
-      return winsByTournament.has(String(t.id))
-    })
-  }, [tournaments, raffleWinners])
-  // If the currently selected tournament drops out of the upcoming window
-  // (e.g. midnight rollover, or admin loaded the page with a stale prop),
-  // clear it so the select widget doesn't render an orphan value.
-  useEffect(() => {
-    if (!selectedTournament) return
-    if (!upcomingTournaments.find((t) => String(t.id) === String(selectedTournament))) {
-      setSelectedTournament(null)
-    }
-  }, [upcomingTournaments, selectedTournament])
 
   // ── Data loading ────────────────────────────────────────────────────────────
   const loadItems = async () => {
@@ -416,7 +376,6 @@ export default function Merch({
           },
         ]
       : []),
-    ...(isAdmin ? [{ id: 'prizes', label: '🎁 Prizes' }] : []),
     ...(isAdmin ? [{ id: 'manage', label: '⚙️ Manage' }] : []),
   ]
 
@@ -474,20 +433,6 @@ export default function Merch({
       {/* ── MY ORDERS TAB (player) ── */}
       {tab === 'myorders' && !isAdmin && claimedId && (
         <MyOrders myOrders={myOrders} items={items} />
-      )}
-
-      {/* ── PRIZES TAB (admin only) ── */}
-      {tab === 'prizes' && isAdmin && (
-        <PrizesTab
-          upcomingTournaments={upcomingTournaments}
-          tournaments={tournaments}
-          selectedTournament={selectedTournament}
-          setSelectedTournament={setSelectedTournament}
-          items={items}
-          isAdmin={isAdmin}
-          players={players}
-          registrations={registrations}
-        />
       )}
 
       {/* ── ORDERS TAB (admin only) ── */}
