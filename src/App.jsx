@@ -23,6 +23,8 @@ import SetupGuard from './components/SetupGuard'
 import Merch from './components/Merch'
 import History from './components/History'
 import Game from './components/Game'
+import RaffleContainer from './features/raffle/RaffleContainer'
+import RaffleEligibilityContainer from './features/raffle/RaffleEligibilityContainer'
 import Admin from './components/Admin.tsx'
 import VerificationGate from './components/VerificationGate'
 import TransferAccept from './components/TransferAccept'
@@ -55,6 +57,8 @@ export default function App() {
                 <Route path="/events/:id/scores" element={<EventScoresRoute />} />
                 <Route path="/events/:id/payments" element={<EventPaymentsRoute />} />
                 <Route path="/events/:id/oscars" element={<EventOscarsRoute />} />
+                <Route path="/events/:id/raffle" element={<EventRaffleRoute />} />
+                <Route path="/events/:id/eligibility" element={<EventEligibilityRoute />} />
 
                 <Route path="/community" element={<CommunityRoute />} />
                 <Route path="/community/:id" element={<CommunityRoute />} />
@@ -100,6 +104,10 @@ function useLegacyNavigate() {
         return t?.id ? navigate(`/events/${t.id}/payments`) : navigate('/events')
       case 'game':
         return t?.id ? navigate(`/events/${t.id}/oscars`) : navigate('/events')
+      case 'raffle':
+        return t?.id ? navigate(`/events/${t.id}/raffle`) : navigate('/events')
+      case 'eligibility':
+        return t?.id ? navigate(`/events/${t.id}/eligibility`) : navigate('/events')
       case 'players':
         if (t?.focusPlayerId) return navigate(`/community/${t.focusPlayerId}`)
         return navigate('/community')
@@ -172,6 +180,26 @@ function EventOscarsRoute() {
   const onNavigate = useLegacyNavigate()
   if (!tournament) return <Navigate to="/events" replace />
   return <Game tournament={tournament} onNavigate={onNavigate} />
+}
+
+function EventRaffleRoute() {
+  const tournament = useTournamentFromUrl()
+  const { session } = useApp()
+  const onNavigate = useLegacyNavigate()
+  const isAdmin = session?.user?.app_metadata?.role === 'admin'
+  if (!tournament) return <Navigate to="/events" replace />
+  if (!isAdmin) return <Navigate to={`/events/${tournament.id}`} replace />
+  return <RaffleContainer tournament={tournament} onNavigate={onNavigate} />
+}
+
+function EventEligibilityRoute() {
+  const tournament = useTournamentFromUrl()
+  const { session } = useApp()
+  const onNavigate = useLegacyNavigate()
+  const isAdmin = session?.user?.app_metadata?.role === 'admin'
+  if (!tournament) return <Navigate to="/events" replace />
+  if (!isAdmin) return <Navigate to={`/events/${tournament.id}`} replace />
+  return <RaffleEligibilityContainer tournament={tournament} onNavigate={onNavigate} />
 }
 
 function CommunityRoute() {

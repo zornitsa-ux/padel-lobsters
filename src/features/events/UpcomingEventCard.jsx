@@ -1,7 +1,5 @@
 import React, { useState } from 'react'
 import {
-  Pencil,
-  Trash2,
   Calendar,
   Users,
   MapPin,
@@ -12,6 +10,7 @@ import {
   ShieldCheck,
   UserCog,
 } from 'lucide-react'
+import EventAdminMenu from './EventAdminMenu'
 import DateTile from '../../components/ui/DateTile'
 import AddToCalendarButton from '../../components/ui/AddToCalendarButton'
 import ShareWhatsAppButton from '../../components/ui/ShareWhatsAppButton'
@@ -248,36 +247,20 @@ export default function UpcomingEventCard({
         >
           Registrations
         </button>
-        {isAdmin && (
-          <button
-            onClick={() => onNavigate('payments', t)}
-            className="flex-1 text-xs font-semibold text-lobster-orange py-2 rounded-xl bg-orange-50 active:scale-95 transition-all"
-          >
-            Payments
-          </button>
-        )}
         <button
           onClick={() => onNavigate('schedule', t)}
           className="flex-1 text-xs font-semibold text-gray-600 py-2 rounded-xl bg-gray-100 active:scale-95 transition-all"
         >
           Schedule
         </button>
-        {isAdmin && (
-          <>
-            <button
-              onClick={() => onEdit(t)}
-              className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-100 active:scale-95"
-            >
-              <Pencil size={14} className="text-gray-600" />
-            </button>
-            <button
-              onClick={() => onDelete(t.id)}
-              className="w-9 h-9 flex items-center justify-center rounded-xl bg-red-50 active:scale-95"
-            >
-              <Trash2 size={14} className="text-red-500" />
-            </button>
-          </>
-        )}
+        <EventAdminMenu
+          isAdmin={isAdmin}
+          onRaffle={() => onNavigate('raffle', t)}
+          onEligibility={() => onNavigate('eligibility', t)}
+          onPayments={() => onNavigate('payments', t)}
+          onEdit={() => onEdit(t)}
+          onDelete={() => onDelete(t.id)}
+        />
       </div>
     </div>
   )
