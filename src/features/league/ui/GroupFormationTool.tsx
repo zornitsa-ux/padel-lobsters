@@ -92,7 +92,6 @@ interface TeamCardProps {
 function TeamCard({ team, actions }: TeamCardProps) {
   return (
     <div className="flex items-center gap-2 rounded-xl bg-gray-50 px-3 py-2">
-      <span className="text-base">{team.spirit_animal ?? '🎾'}</span>
       <span className="text-sm font-semibold text-lob-dark flex-1 min-w-0 truncate">
         {teamLabel(team)}
       </span>

@@ -51,9 +51,6 @@ function TeamRow({
       className={`flex items-center gap-1 py-1 ${textClass} ${team && onTeamClick && !isBye ? 'cursor-pointer active:opacity-70' : ''}`}
       onClick={() => team && !isBye && onTeamClick?.(team)}
     >
-      {team?.spirit_animal && !isBye && (
-        <span className="text-sm leading-none">{team.spirit_animal}</span>
-      )}
       <span className="text-xs flex-1 truncate">{teamLabel(team, isBye)}</span>
     </div>
   )

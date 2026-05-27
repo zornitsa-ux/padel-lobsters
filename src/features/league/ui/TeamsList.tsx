@@ -1,4 +1,4 @@
-import { resolveTeamShortName } from '../domain/teamDisplay'
+import { resolveTeamShortName, resolveTeamPlayers } from '../domain/teamDisplay'
 import type { LeagueTeam } from '../domain/types'
 
 interface TeamsListProps {
@@ -24,11 +24,19 @@ export function TeamsList({ teams, myTeamId, onTeamClick }: TeamsListProps) {
               .join(' ')}
             onClick={() => onTeamClick?.(team)}
           >
-            {team.spirit_animal && <span className="text-lg">{team.spirit_animal}</span>}
-            <span className="flex-1 font-semibold text-sm text-lob-dark">
-              {resolveTeamShortName(team)}
+            <span className="flex-1 min-w-0">
+              <span className="block font-semibold text-sm text-lob-dark truncate">
+                {resolveTeamShortName(team)}
+              </span>
+              {resolveTeamPlayers(team) && (
+                <span className="block text-xs text-lob-muted truncate">
+                  {resolveTeamPlayers(team)}
+                </span>
+              )}
             </span>
-            <span className="text-xs text-lob-muted capitalize">{team.experience_level}</span>
+            <span className="text-xs text-lob-muted capitalize shrink-0">
+              {team.experience_level}
+            </span>
           </div>
         )
       })}
