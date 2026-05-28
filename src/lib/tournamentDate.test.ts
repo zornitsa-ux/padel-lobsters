@@ -17,26 +17,28 @@ describe('localDateString', () => {
 })
 
 describe('isTournamentPast', () => {
+  // Inject "today" so the test doesn't rot when the real clock moves past
+  // these calendar dates.
   const today = new Date(2026, 4, 27) // 2026-05-27
 
   it('returns false for null / undefined', () => {
-    expect(isTournamentPast(null)).toBe(false)
-    expect(isTournamentPast(undefined)).toBe(false)
-    expect(isTournamentPast('')).toBe(false)
+    expect(isTournamentPast(null, today)).toBe(false)
+    expect(isTournamentPast(undefined, today)).toBe(false)
+    expect(isTournamentPast('', today)).toBe(false)
   })
 
   it('returns false for today — draw runs on the day', () => {
-    expect(isTournamentPast('2026-05-27')).toBe(false)
+    expect(isTournamentPast('2026-05-27', today)).toBe(false)
   })
 
   it('returns false for a future date', () => {
-    expect(isTournamentPast('2026-05-28')).toBe(false)
-    expect(isTournamentPast('2026-12-31')).toBe(false)
+    expect(isTournamentPast('2026-05-28', today)).toBe(false)
+    expect(isTournamentPast('2026-12-31', today)).toBe(false)
   })
 
   it('returns true for a past date', () => {
-    expect(isTournamentPast('2026-05-26')).toBe(true)
-    expect(isTournamentPast('2025-01-01')).toBe(true)
+    expect(isTournamentPast('2026-05-26', today)).toBe(true)
+    expect(isTournamentPast('2025-01-01', today)).toBe(true)
   })
 
   // Verify the function uses local time, not UTC. Injecting a fixed `now` into
@@ -46,6 +48,6 @@ describe('isTournamentPast', () => {
     const lateNight = new Date(2026, 4, 27, 23, 59)
     expect(localDateString(lateNight)).toBe('2026-05-27')
     // So 2026-05-27 is still not past at 23:59
-    expect('2026-05-27' < localDateString(lateNight)).toBe(false)
+    expect(isTournamentPast('2026-05-27', lateNight)).toBe(false)
   })
 })

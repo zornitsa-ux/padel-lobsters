@@ -10,8 +10,19 @@ export default function useAuth() {
     supabase.auth.getSession().then(({ data: { session: s } }) => setSession(s))
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, s) => {
+    } = supabase.auth.onAuthStateChange(async (event, s) => {
       setSession(s)
+      // Magic-link / OAuth sessions arrive without a device_id baked
+      // into app_metadata (verify-pin sets that for the PIN flow). When
+      // we see a fresh sign-in that's missing it, register this device
+      // and refresh so the JWT picks up the new claim.
+      if (event === 'SIGNED_IN' && s && !s.user?.app_metadata?.device_id) {
+        try {
+          await authApi.bootstrapDeviceSession()
+        } catch (e) {
+          console.warn('bootstrapDeviceSession failed', e)
+        }
+      }
     })
     return () => subscription.unsubscribe()
   }, [])
@@ -35,8 +46,12 @@ export default function useAuth() {
     return authApi.fetchMyProfile()
   }, [session])
 
-  const forgotMyPin = useCallback(async (email) => {
-    return authApi.forgotMyPin(email)
+  const sendMagicLink = useCallback(async (email) => {
+    return authApi.sendMagicLink(email)
+  }, [])
+
+  const requestMyEmailChange = useCallback(async (email) => {
+    return authApi.requestMyEmailChange(email)
   }, [])
 
   const selfSignup = useCallback(async (data) => {
@@ -59,7 +74,8 @@ export default function useAuth() {
     loginWithPin,
     logout,
     fetchMyProfile,
-    forgotMyPin,
+    sendMagicLink,
+    requestMyEmailChange,
     selfSignup,
     fetchAllPlayersWithPii,
   }

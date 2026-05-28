@@ -1,0 +1,38 @@
+<!--
+  Magic-link email template.
+
+  Why we override the default:
+  - GoTrue's built-in {{ .ConfirmationURL }} macro builds an URL against the
+    auth server's external URL (e.g. http://127.0.0.1:54321/verify?...).
+    Locally, Kong only forwards /auth/v1/* to GoTrue, so the bare /verify
+    path 404s. Rather than fight Kong path-prefix configuration, we route
+    the redemption through the SPA: the email link lands on
+    /auth/confirm, the SPA reads token_hash + type from the URL and calls
+    supabase.auth.verifyOtp() itself. Works identically locally and in
+    production.
+
+  We build the URL from {{ .SiteURL }} (always the configured site URL —
+  the SPA origin) rather than {{ .RedirectTo }} (the client's
+  emailRedirectTo, which GoTrue rejects to site_url when it's not on the
+  redirect allow-list, producing a malformed URL when we tried to append
+  to it).
+-->
+<h2>Sign in to Padel Lobsters</h2>
+
+<p>
+  Welcome back. Click the link below to sign in. It's valid for one hour and can only be used once.
+</p>
+
+<p>
+  <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=magiclink&next=/home"
+    >Sign in to Padel Lobsters</a
+  >
+</p>
+
+<p>If you didn't request this email you can safely ignore it.</p>
+
+<!-- We intentionally do NOT render {{ .Token }} here. It's a Supabase OTP
+     code redeemable via verifyOtp(), not the player's PIN, and we don't
+     have a UI to enter it. Showing it sent users straight to the PIN
+     field, where it can't possibly work. The link above is the only
+     intended redemption path. -->

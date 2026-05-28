@@ -1,0 +1,40 @@
+<!--
+  Email-change confirmation template.
+
+  GoTrue sends this email to BOTH the current and new addresses (because
+  auth.email.double_confirm_changes = true in config.toml). The new
+  address gets it as the primary confirmation; the current address gets
+  it as a security notification.
+
+  In GoTrue v2.189, a single token-hash redemption applies the change —
+  the first link clicked completes the switch and the other link
+  becomes a no-op ("link expired"). We word the template accordingly:
+  click any link to confirm, ignore if you didn't request the change.
+
+  Like magic_link.html, we route through /auth/confirm rather than
+  {{ .ConfirmationURL }} (which 404s through Kong locally).
+-->
+<h2>Confirm your email change</h2>
+
+<p>
+  A request to change your Padel Lobsters email {{ if .Email }}from <strong>{{ .Email }}</strong>{{
+  end }} {{ if .NewEmail }}to <strong>{{ .NewEmail }}</strong>{{ end }} was just submitted.
+</p>
+
+<p>
+  <a
+    href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email_change&next=/settings"
+  >
+    Confirm email change
+  </a>
+</p>
+
+<p>
+  You're receiving this at both the old and new addresses as a security heads-up. Confirming once
+  from either inbox completes the change.
+</p>
+
+<p>
+  If you didn't request this change, ignore this email — no action is needed, and your account stays
+  as-is.
+</p>

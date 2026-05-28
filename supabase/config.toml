@@ -43,7 +43,16 @@ pop3_port = 54326
 [auth]
 enabled = true
 site_url = "http://127.0.0.1:5173"
-additional_redirect_urls = ["https://127.0.0.1:5173"]
+# Wildcards so any path under the dev origin (notably /auth/confirm with
+# its query string) passes the redirect-URL allow-list. Without this,
+# GoTrue silently rejects custom emailRedirectTo values and falls back
+# to site_url — which can produce malformed links if a template tries
+# to append to .RedirectTo.
+additional_redirect_urls = [
+  "http://127.0.0.1:5173/**",
+  "http://localhost:5173/**",
+  "https://127.0.0.1:5173",
+]
 jwt_expiry = 3600
 enable_refresh_token_rotation = true
 refresh_token_reuse_interval = 10
@@ -54,6 +63,32 @@ enable_anonymous_sign_ins = true
 enable_signup = true
 double_confirm_changes = true
 enable_confirmations = false
+
+# Magic-link template override. The default `{{ .ConfirmationURL }}` macro
+# builds against GoTrue's external URL (http://127.0.0.1:54321), but Kong
+# only forwards /auth/v1/* — the bare /verify path 404s locally. This
+# template redirects through the SPA's /auth/confirm route, which calls
+# supabase.auth.verifyOtp() itself. Same template works in production.
+[auth.email.template.magic_link]
+subject = "Sign in to Padel Lobsters"
+content_path = "./supabase/templates/magic_link.html"
+
+# Email-change confirmation. Same Kong-prefix workaround as magic_link.
+# With double_confirm_changes=true (see above) this template is sent to
+# BOTH the current and new addresses; each link redeems the appropriate
+# side via supabase.auth.verifyOtp({ type: 'email_change' }).
+[auth.email.template.email_change]
+subject = "Confirm your Padel Lobsters email change"
+content_path = "./supabase/templates/email_change.html"
+
+# Custom access token hook. Lives in the public schema (see migration
+# 20260528000000_magic_link_auth.sql). Injects {role, device_trusted}
+# claims into every token issuance regardless of sign-in method
+# (PIN, magic link, future OAuth) so authz reads the same JWT shape
+# for all paths.
+[auth.hook.custom_access_token]
+enabled = true
+uri = "pg-functions://postgres/public/custom_access_token_hook"
 
 [edge_runtime]
 enabled = true

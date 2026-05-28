@@ -115,15 +115,25 @@ serve(async (req) => {
 
   const role = player.role
 
-  // The auth identity is keyed on a deterministic synthetic address derived
-  // from player_id — NOT the player's real email. Real email is optional and
-  // mutable (players.email can be blank or change), so binding the session
-  // bridge to it caused "An email address is required" 500s and id/email
-  // mismatches. players.email stays the source of truth for notifications only.
-  const authEmail = `player-${player_id}@padelobsters.internal`
+  // Email handling: with magic-link sign-in now in the mix, auth.users.email
+  // must be the player's real address when they have one — otherwise magic
+  // link can't find them. We:
+  //   * Fetch the player's real email from players.email.
+  //   * On CREATE (first-ever PIN login): use the real email if set,
+  //     otherwise a deterministic synthetic that keeps the row valid.
+  //   * On UPDATE: leave the email column alone. The bidirectional sync
+  //     trigger (migration 20260528000001) keeps it in step with
+  //     players.email; verify-pin only touches app_metadata.
+  const playerEmailResp = await fetch(
+    `${SUPABASE_URL}/rest/v1/players?id=eq.${player_id}&select=email&limit=1`,
+    { headers: serviceHeaders },
+  )
+  const playerEmailRow = (await playerEmailResp.json()) as Array<{ email: string | null }>
+  const realEmail = playerEmailRow[0]?.email?.trim() || ''
+  const syntheticEmail = `player-${player_id}@padelobsters.internal`
   const appMetadata = { role, device_trusted: is_trusted, device_id }
 
-  // Step 3: Check if auth.users entry exists
+  // Step 3: Check if auth.users entry exists and capture its current email.
   const getUserResp = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${player_id}`, {
     headers: serviceHeaders,
   })
@@ -132,11 +142,9 @@ serve(async (req) => {
     return fail('get_auth_user', `http ${getUserResp.status}`)
   }
 
-  // Step 4: Create or update the auth.users entry. We always (re)assert the
-  // synthetic email so that pre-existing rows created with a real/blank email
-  // are migrated in place — keeping auth.users.id == player_id and ensuring
-  // generate_link (step 5) resolves to this exact row.
+  let authEmail: string
   if (getUserResp.status === 404) {
+    authEmail = realEmail || syntheticEmail
     const createResp = await fetch(`${SUPABASE_URL}/auth/v1/admin/users`, {
       method: 'POST',
       headers: serviceHeaders,
@@ -151,10 +159,14 @@ serve(async (req) => {
       return fail('create_auth_user', `http ${createResp.status} ${await createResp.text()}`)
     }
   } else {
+    const existing = (await getUserResp.json()) as { email?: string }
+    authEmail = existing.email || syntheticEmail
     const updateResp = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${player_id}`, {
       method: 'PUT',
       headers: serviceHeaders,
-      body: JSON.stringify({ email: authEmail, email_confirm: true, app_metadata: appMetadata }),
+      // Only app_metadata — leaving email alone preserves any real address
+      // the player set via admin edit or the self-service confirmation flow.
+      body: JSON.stringify({ app_metadata: appMetadata }),
     })
     if (!updateResp.ok) {
       return fail('update_auth_user', `http ${updateResp.status} ${await updateResp.text()}`)

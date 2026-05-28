@@ -185,7 +185,8 @@ export default function Settings() {
         adjustment: profileForm.adjustment,
         tagline: profileForm.tagline,
         taglineLabel: LOBBY_PROMPTS[activePrompt].label,
-        email: profileForm.email,
+        // email intentionally not included — self-service email change
+        // routes through requestMyEmailChange (Supabase confirmation flow).
         phone: profileForm.phone,
         birthday: profileForm.birthday || null,
         avatarUrl,
