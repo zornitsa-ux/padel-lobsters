@@ -22,6 +22,7 @@
 export const PUBLIC_PATHS = Object.freeze([
   '/', // root redirect
   '/home', // landing — every protected sub-tile triggers the sign-in popup
+  '/auth/confirm', // magic-link landing — must be reachable without a session
 ])
 
 /**

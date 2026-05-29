@@ -1,22 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
-import {
-  KeyRound,
-  LogIn,
-  UserPlus,
-  HelpCircle,
-  ArrowLeft,
-  Mail,
-  Check,
-  AlertCircle,
-} from 'lucide-react'
+import { KeyRound, LogIn, UserPlus, ArrowLeft, Mail, Check, AlertCircle } from 'lucide-react'
 import { isPublicPath } from '../lib/authPaths'
 import SignupRequest from './SignupRequest'
 
-// Phase 2d: removed the WhatsApp-the-admin fallback for forgot-PIN.
-// Recovery is now self-service via email; users without an email on
-// file are directed to mail pin@padelobsters.nl.
+// Recovery + alternative sign-in is now via emailed magic link.
+// Users without an email on file are directed to mail
+// pin@padelobsters.nl so an admin can set one for them.
 
 /**
  * Verification gate.
@@ -38,10 +29,10 @@ import SignupRequest from './SignupRequest'
  *              matches the "leave pin-only auth simple" product brief.
  */
 export default function VerificationGate({ children }) {
-  const { role, loading, loginWithPin, forgotMyPin } = useApp()
+  const { role, loading, loginWithPin, sendMagicLink } = useApp()
   const location = useLocation()
 
-  const [mode, setMode] = useState('signin') // signin | signup | forgot
+  const [mode, setMode] = useState('signin') // signin | signup | magic
   const [pin, setPin] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -55,11 +46,11 @@ export default function VerificationGate({ children }) {
   // now an inline error pointing to pin@padelobsters.nl, which keeps
   // recovery on the same self-service rail rather than dead-ending at
   // an admin handoff.
-  const [forgotEmail, setForgotEmail] = useState('')
-  const [forgotStage, setForgotStage] = useState('form') // form | sent
-  const [forgotBusy, setForgotBusy] = useState(false)
-  const [forgotError, setForgotError] = useState('')
-  const [forgotSentTo, setForgotSentTo] = useState('')
+  const [magicEmail, setMagicEmail] = useState('')
+  const [magicStage, setMagicStage] = useState('form') // form | sent
+  const [magicBusy, setMagicBusy] = useState(false)
+  const [magicError, setMagicError] = useState('')
+  const [magicSentTo, setMagicSentTo] = useState('')
 
   // Incremented every time the user enters signup mode. Passed as the
   // `key` on <SignupRequest/> so React treats each entry as a fresh
@@ -136,59 +127,44 @@ export default function VerificationGate({ children }) {
     setBusy(false)
   }
 
-  // Reset the forgot-PIN flow state — called when entering forgot mode and
-  // when leaving it, so the user always lands on a clean email-input form.
-  const resetForgotFlow = () => {
-    setForgotEmail('')
-    setForgotStage('form')
-    setForgotBusy(false)
-    setForgotError('')
-    setForgotSentTo('')
+  const resetMagicFlow = () => {
+    setMagicEmail('')
+    setMagicStage('form')
+    setMagicBusy(false)
+    setMagicError('')
+    setMagicSentTo('')
   }
 
-  // Submit the forgot-PIN form. Routes to one of three outcomes based on
-  // the RPC's response. Always preserves the typed email in `forgotSentTo`
-  // for the success message.
-  const handleForgotSubmit = async (e) => {
+  const handleMagicSubmit = async (e) => {
     e?.preventDefault?.()
-    if (forgotBusy) return
-    const email = forgotEmail.trim()
+    if (magicBusy) return
+    const email = magicEmail.trim()
     if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
-      setForgotError('Please enter a valid email address.')
+      setMagicError('Please enter a valid email address.')
       return
     }
-    setForgotBusy(true)
-    setForgotError('')
-    const result = await forgotMyPin(email)
-    setForgotBusy(false)
+    setMagicBusy(true)
+    setMagicError('')
+    const result = await sendMagicLink(email)
+    setMagicBusy(false)
     if (result === 'sent') {
-      setForgotSentTo(email)
-      setForgotStage('sent')
+      setMagicSentTo(email)
+      setMagicStage('sent')
       return
     }
-    if (result === 'contact_admin') {
-      // Email didn't match any active player. Stay on the form, let the
-      // user retry with a different email, and direct them to
-      // pin@padelobsters.nl if they think their account has no email.
-      setForgotError(
+    if (result === 'unknown') {
+      setMagicError(
         "We couldn't find that email in our records. Double-check the address. " +
           'If you never signed up with an email, write to pin@padelobsters.nl from ' +
           "your usual address and we'll add it to your account.",
       )
       return
     }
-    if (result === 'rate_limited') {
-      setForgotError(
-        "We've sent quite a few PINs to this account already today. " +
-          'Try again tomorrow, or message the admin on WhatsApp.',
-      )
-      return
-    }
     if (result === 'invalid') {
-      setForgotError('That email looks off — double-check the format.')
+      setMagicError('That email looks off — double-check the format.')
       return
     }
-    setForgotError('Something went wrong. Try again, or message the admin on WhatsApp.')
+    setMagicError('Something went wrong. Try again in a moment.')
   }
 
   // Signup mode renders the full rich profile form (aligned with the old
@@ -224,7 +200,7 @@ export default function VerificationGate({ children }) {
           <p className="text-xs text-gray-500 mt-1">
             {mode === 'signin' && 'Sign in with your 4-digit PIN to continue.'}
             {mode === 'signup' && 'New here? Set up your Lobster profile.'}
-            {mode === 'forgot' && "Lost your PIN? We'll get you back in."}
+            {mode === 'magic' && "We'll email you a one-tap sign-in link."}
           </p>
         </div>
 
@@ -280,14 +256,14 @@ export default function VerificationGate({ children }) {
               <button
                 type="button"
                 onClick={() => {
-                  setMode('forgot')
+                  setMode('magic')
                   setError('')
-                  resetForgotFlow()
+                  resetMagicFlow()
                 }}
                 className="w-full text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 border border-gray-200 py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all"
               >
-                <HelpCircle size={14} />
-                Forgot your PIN?
+                <Mail size={14} />
+                Email me a sign-in link
               </button>
             </div>
           </>
@@ -308,26 +284,26 @@ export default function VerificationGate({ children }) {
           />
         )}
 
-        {/* ── Mode: FORGOT PIN ───────────────────────────────────────────── */}
-        {mode === 'forgot' && (
+        {/* ── Mode: MAGIC LINK ───────────────────────────────────────────── */}
+        {mode === 'magic' && (
           <div className="space-y-3">
             <button
               type="button"
               onClick={() => {
                 setMode('signin')
-                resetForgotFlow()
+                resetMagicFlow()
               }}
               className="text-sm text-gray-600 hover:text-lobster-teal flex items-center gap-1"
             >
               <ArrowLeft size={14} /> Back to sign in
             </button>
 
-            {/* Stage 1: ask for email. Most players land here. */}
-            {forgotStage === 'form' && (
+            {magicStage === 'form' && (
               <>
                 <p className="text-sm text-gray-700 leading-snug">
-                  Enter the email you signed up with and we'll send you a fresh PIN. Didn't sign up
-                  with an email? Write to{' '}
+                  Enter the email on your Lobster account and we'll send you a one-tap sign-in link.
+                  Use this if you've forgotten your PIN or just prefer email. Didn't sign up with an
+                  email? Write to{' '}
                   <a
                     href="mailto:pin@padelobsters.nl"
                     className="text-lobster-teal font-semibold underline-offset-2 hover:underline"
@@ -337,7 +313,7 @@ export default function VerificationGate({ children }) {
                   from your usual address and we'll add it to your account.
                 </p>
 
-                <form onSubmit={handleForgotSubmit} className="space-y-3">
+                <form onSubmit={handleMagicSubmit} className="space-y-3">
                   <div>
                     <label className="label flex items-center gap-1.5">
                       <Mail size={12} className="text-lobster-teal" /> Your email
@@ -346,37 +322,36 @@ export default function VerificationGate({ children }) {
                       type="email"
                       autoComplete="email"
                       inputMode="email"
-                      value={forgotEmail}
+                      value={magicEmail}
                       onChange={(e) => {
-                        setForgotEmail(e.target.value)
-                        setForgotError('')
+                        setMagicEmail(e.target.value)
+                        setMagicError('')
                       }}
                       placeholder="you@example.com"
                       className="input"
                       aria-label="Email"
                     />
-                    {forgotError && (
+                    {magicError && (
                       <p className="text-xs text-red-500 font-medium mt-2 flex items-start gap-1">
                         <AlertCircle size={12} className="mt-0.5 flex-shrink-0" />
-                        <span>{forgotError}</span>
+                        <span>{magicError}</span>
                       </p>
                     )}
                   </div>
 
                   <button
                     type="submit"
-                    disabled={forgotBusy || !forgotEmail.trim()}
+                    disabled={magicBusy || !magicEmail.trim()}
                     className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-50"
                   >
                     <Mail size={14} />
-                    {forgotBusy ? 'Sending…' : 'Send me a new PIN'}
+                    {magicBusy ? 'Sending…' : 'Email me a sign-in link'}
                   </button>
                 </form>
               </>
             )}
 
-            {/* Stage 2: success — PIN was generated and emailed. */}
-            {forgotStage === 'sent' && (
+            {magicStage === 'sent' && (
               <div className="space-y-3">
                 <div className="rounded-2xl bg-lobster-cream border border-lobster-teal/30 p-4 flex items-start gap-3">
                   <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center flex-shrink-0 text-lobster-teal">
@@ -385,9 +360,9 @@ export default function VerificationGate({ children }) {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-lobster-teal">Check your inbox</p>
                     <p className="text-xs text-gray-600 mt-1 leading-snug">
-                      We sent a new PIN to{' '}
-                      <span className="font-semibold break-all">{forgotSentTo}</span>. It usually
-                      arrives within a minute. Check spam if it doesn't show up.
+                      We sent a sign-in link to{' '}
+                      <span className="font-semibold break-all">{magicSentTo}</span>. Tap it from
+                      this device and you'll be signed in. Check spam if it doesn't show up.
                     </p>
                   </div>
                 </div>
@@ -396,7 +371,7 @@ export default function VerificationGate({ children }) {
                   type="button"
                   onClick={() => {
                     setMode('signin')
-                    resetForgotFlow()
+                    resetMagicFlow()
                   }}
                   className="w-full text-sm font-semibold text-lobster-teal bg-white border border-lobster-teal/30 hover:bg-lobster-cream py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all"
                 >
@@ -405,11 +380,6 @@ export default function VerificationGate({ children }) {
                 </button>
               </div>
             )}
-
-            {/* Phase 2d: removed the WhatsApp "contact admin" stage. When
-                forgot_my_pin returns 'contact_admin' we now surface an
-                inline error on the form pointing the user at
-                pin@padelobsters.nl — keeps recovery self-service. */}
           </div>
         )}
       </div>

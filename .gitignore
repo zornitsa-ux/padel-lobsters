@@ -11,3 +11,5 @@ vite.config.js.timestamp-*
 
 # Supabase local data (Docker volumes, generated types, etc.)
 supabase/.temp/
+# Studio SQL-editor scratchpad
+supabase/snippets/

@@ -9,7 +9,13 @@ export function localDateString(now = new Date()): string {
 
 // Returns true only when the tournament date is strictly before today (local time).
 // A tournament whose date equals today is NOT considered past — the draw runs on the day.
-export function isTournamentPast(tournamentDate: string | null | undefined): boolean {
+//
+// `now` is injectable for testing — production callers should leave it default
+// so the function reads from the real clock.
+export function isTournamentPast(
+  tournamentDate: string | null | undefined,
+  now: Date = new Date(),
+): boolean {
   if (!tournamentDate) return false
-  return tournamentDate < localDateString()
+  return tournamentDate < localDateString(now)
 }

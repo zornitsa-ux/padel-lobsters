@@ -44,7 +44,14 @@ export async function updatePlayer(id, data, role) {
   }
   const payload = {}
   setIf(data.name !== undefined, 'name', data.name ?? '')
-  setIf(data.email !== undefined, 'email', data.email ?? '')
+  // Email is only included for the admin path. Self-service email change
+  // must go through supabase.auth.updateUser (confirmation flow); see
+  // requestMyEmailChange in src/api/auth.js. update_my_profile silently
+  // drops the email field regardless, but skipping it here avoids
+  // bloating the payload.
+  if (role === 'admin') {
+    setIf(data.email !== undefined, 'email', data.email ?? '')
+  }
   setIf(data.phone !== undefined, 'phone', data.phone ?? '')
   setIf(
     data.playtomicLevel !== undefined,

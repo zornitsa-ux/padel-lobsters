@@ -27,6 +27,7 @@ import RaffleContainer from './features/raffle/RaffleContainer'
 import RaffleEligibilityContainer from './features/raffle/RaffleEligibilityContainer'
 import Admin from './components/Admin.tsx'
 import VerificationGate from './components/VerificationGate'
+import AuthConfirm from './components/AuthConfirm'
 import TransferAccept from './components/TransferAccept'
 import LeaguePage from './features/league/LeaguePage'
 import LeagueIndexPage from './features/league/LeagueIndexPage'
@@ -50,6 +51,7 @@ export default function App() {
               <Routes>
                 <Route path="/" element={<Navigate to="/home" replace />} />
                 <Route path="/home" element={<HomeRoute />} />
+                <Route path="/auth/confirm" element={<AuthConfirm />} />
 
                 <Route path="/events" element={<EventsRoute />} />
                 <Route path="/events/:id" element={<EventDetailRoute />} />

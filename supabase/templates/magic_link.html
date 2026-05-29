@@ -1,0 +1,161 @@
+<!--
+  Magic-link email template.
+
+  Why we override the default:
+  - GoTrue's built-in {{ .ConfirmationURL }} macro builds an URL against the
+    auth server's external URL (e.g. http://127.0.0.1:54321/verify?...).
+    Locally, Kong only forwards /auth/v1/* to GoTrue, so the bare /verify
+    path 404s. Rather than fight Kong path-prefix configuration, we route
+    the redemption through the SPA: the email link lands on
+    /auth/confirm, the SPA reads token_hash + type from the URL and calls
+    supabase.auth.verifyOtp() itself. Works identically locally and in
+    production.
+
+  We build the URL from {{ .SiteURL }} (always the configured site URL —
+  the SPA origin) rather than {{ .RedirectTo }} (the client's
+  emailRedirectTo, which GoTrue rejects to site_url when it's not on the
+  redirect allow-list, producing a malformed URL when we tried to append
+  to it).
+-->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign in to Padel Lobsters</title>
+  </head>
+  <body>
+    <div
+      style="
+        margin: 0;
+        padding: 0;
+        background-color: #f5f0e8;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      "
+    >
+      <table
+        width="100%"
+        cellpadding="0"
+        cellspacing="0"
+        border="0"
+        style="background-color: #f5f0e8"
+      >
+        <tr>
+          <td align="center" style="padding: 32px 16px">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 520px">
+              <!-- Header -->
+              <tr>
+                <td
+                  style="
+                    background: #3d7a8a;
+                    border-radius: 12px 12px 0 0;
+                    padding: 32px 32px 24px;
+                    text-align: center;
+                  "
+                >
+                  <img
+                    src="https://enjhugmqjtfakwivpmvf.supabase.co/storage/v1/object/public/merch/logo-hd.png"
+                    alt="Padel Lobsters"
+                    width="80"
+                    height="80"
+                    style="
+                      border-radius: 50%;
+                      background: #fff;
+                      padding: 4px;
+                      border: 3px solid #8ab4be;
+                      display: block;
+                      margin: 0 auto 12px;
+                    "
+                  />
+                  <p
+                    style="
+                      margin: 0;
+                      color: #c2d8dd;
+                      font-size: 13px;
+                      letter-spacing: 0.08em;
+                      text-transform: uppercase;
+                    "
+                  >
+                    Padel Lobsters
+                  </p>
+                </td>
+              </tr>
+
+              <!-- Body -->
+              <tr>
+                <td
+                  style="
+                    background: #ffffff;
+                    padding: 36px 32px 28px;
+                    border-left: 1px solid #e8e0d4;
+                    border-right: 1px solid #e8e0d4;
+                  "
+                >
+                  <h1 style="margin: 0 0 12px; font-size: 22px; font-weight: 700; color: #1c2b30">
+                    Sign in to Padel Lobsters
+                  </h1>
+                  <p style="margin: 0 0 24px; font-size: 15px; line-height: 1.6; color: #4a5568">
+                    Welcome back. Click the button below to sign in. This link expires in 1 hour and
+                    can only be used once.
+                  </p>
+                  <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 28px">
+                    <tr>
+                      <td style="background: #d94f2b; border-radius: 8px">
+                        <a
+                          href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=magiclink&next=/home"
+                          style="
+                            display: inline-block;
+                            padding: 14px 32px;
+                            color: #ffffff;
+                            font-size: 15px;
+                            font-weight: 600;
+                            text-decoration: none;
+                            border-radius: 8px;
+                          "
+                        >
+                          Sign in &rarr;
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+                  <p style="margin: 0; font-size: 13px; color: #6b8a92; line-height: 1.5">
+                    If you didn't request this, you can safely ignore this email.<br /><br />
+                    Or copy and paste this link into your browser:<br />
+                    <a
+                      href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=magiclink&next=/home"
+                      style="color: #d94f2b; text-decoration: underline"
+                      >{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash
+                      }}&type=magiclink&next=/home</a
+                    >
+                  </p>
+                </td>
+              </tr>
+
+              <!-- Footer -->
+              <tr>
+                <td
+                  style="
+                    background: #e8e4dc;
+                    border-radius: 0 0 12px 12px;
+                    padding: 16px 32px;
+                    text-align: center;
+                    border: 1px solid #e0d8cc;
+                    border-top: none;
+                  "
+                >
+                  <p style="margin: 0; font-size: 14px; color: #6b8a92">🦞 ❤️</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+
+<!-- We intentionally do NOT render {{ .Token }} here. It's a Supabase OTP
+     code redeemable via verifyOtp(), not the player's PIN, and we don't
+     have a UI to enter it. Showing it sent users straight to the PIN
+     field, where it can't possibly work. The link above is the only
+     intended redemption path. -->

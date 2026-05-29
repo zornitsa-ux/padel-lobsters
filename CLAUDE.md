@@ -156,5 +156,4 @@ CI (GitHub Actions) runs lint + build only — no migration gate.
 
 ## Known Open Work
 
-- **Drop `players.pin` plaintext column** — `pin_hash` is live; `pin` is a data exposure risk
-- **`src/firebase.js`** — legacy unused file, safe to delete
+- **Drop `players.pin` plaintext column** — `pin_hash` is live; `pin` is a data exposure risk. The column is still read by collision checks inside `verify_player_pin`, `regenerate_pin`, `admin_regenerate_pin`, `self_signup_player`, and the league signup RPC, plus rendered to admins in `Players.jsx`. Dropping it is its own PR-sized piece of work (rewrite collision checks against `pin_hash`, drop the `sync_player_pin_hash` trigger, strip plaintext from admin views).

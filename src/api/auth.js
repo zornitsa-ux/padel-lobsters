@@ -35,6 +35,76 @@ export function logout() {
   return supabase.auth.signOut()
 }
 
+// ── Magic link sign-in ──────────────────────────────────────────
+// shouldCreateUser:false enforces the 1:1 players↔auth.users invariant:
+// Supabase will refuse to sign in an email that has no matching
+// auth.users row. To become a player you still go through the
+// admin-invite or self_signup_player path; magic link is purely a way
+// for an existing player to authenticate.
+//
+// Returns one of:
+//   'sent'     — link emailed, tell the user to check their inbox
+//   'unknown'  — email is not on file (Supabase returns an error)
+//   'invalid'  — input failed basic validation
+//   'error'    — network / unexpected
+export async function sendMagicLink(email) {
+  const trimmed = String(email || '')
+    .trim()
+    .toLowerCase()
+  if (!trimmed || !trimmed.includes('@')) return 'invalid'
+  try {
+    const { error } = await supabase.auth.signInWithOtp({
+      email: trimmed,
+      options: {
+        shouldCreateUser: false,
+        // Land on the SPA's /auth/confirm route — the template appends
+        // &token_hash=...&type=magiclink, and the route calls verifyOtp.
+        // See supabase/templates/magic_link.html for the matching URL shape.
+        emailRedirectTo: `${window.location.origin}/auth/confirm?next=/home`,
+      },
+    })
+    if (error) {
+      // Supabase returns "Signups not allowed for otp" when shouldCreateUser=false
+      // hits an unknown email. Anything else is a genuine failure.
+      const msg = (error.message || '').toLowerCase()
+      if (msg.includes('signup') || msg.includes('not allowed') || msg.includes('not found')) {
+        return 'unknown'
+      }
+      console.error('sendMagicLink error:', error)
+      return 'error'
+    }
+    return 'sent'
+  } catch (e) {
+    console.error('sendMagicLink threw:', e)
+    return 'error'
+  }
+}
+
+// ── Post-sign-in device bootstrap ──────────────────────────────
+// Called after a magic-link (or future OAuth) sign-in to register the
+// current browser as a device for the player. Mirrors what verify-pin
+// does for the PIN flow. After this resolves we force a token refresh
+// so the custom_access_token_hook can bake the new device_id into the
+// JWT — without that refresh, require_trusted_device() would still see
+// the empty claim from the initial OTP-issued token.
+export async function bootstrapDeviceSession() {
+  const deviceId = getDeviceId()
+  try {
+    const { data, error } = await supabase.rpc('bootstrap_device_session', {
+      p_device_id: deviceId,
+    })
+    if (error) {
+      console.error('bootstrap_device_session error:', error)
+      return null
+    }
+    await supabase.auth.refreshSession()
+    return data
+  } catch (e) {
+    console.error('bootstrap_device_session threw:', e)
+    return null
+  }
+}
+
 // Fetch the signed-in player's full record (including email / phone / full
 // birthday) through the secure RPC. Returns null if no PIN is cached or the
 // RPC call fails. Used by Settings' profile drawer.
@@ -79,34 +149,37 @@ export async function fetchAllPlayersWithPii() {
   }
 }
 
-// ── Forgot PIN: email-based self-service reset ──────────────────────
-// Wraps the forgot_my_pin RPC. Player provides their email, we look up
-// their row, generate a fresh PIN, hash it, and email the new PIN via
-// the send-pin-email Edge Function. The plaintext never crosses the
-// browser — it's generated and emailed entirely server-side.
+// ── Self-service email change ───────────────────────────────────────
+// Wraps supabase.auth.updateUser. Supabase sends a confirmation link to
+// the new address (and, with double_confirm_changes enabled in
+// config.toml, also to the old one). When the user clicks through,
+// auth.users.email changes — the sync_auth_email_to_player trigger
+// mirrors the new value back to players.email. We do not write
+// players.email here; the confirmation flow is the source of truth.
 //
-// Returns one of:
-//   'sent'          — new PIN emailed, tell the user to check their inbox
-//   'contact_admin' — no active player matches that email; route to WhatsApp
-//   'rate_limited'  — too many resets in the last 24h
-//   'invalid'       — input failed validation (bad email format etc.)
-//   'error'         — RPC threw / network error
-export async function forgotMyPin(email) {
-  const deviceId = getDeviceId()
-  const userAgent = getUserAgentSummary()
+// Returns:
+//   'sent'    — confirmation email(s) dispatched
+//   'invalid' — input failed basic validation
+//   'taken'   — email already on another auth.users row
+//   'error'   — anything else
+export async function requestMyEmailChange(email) {
+  const trimmed = String(email || '')
+    .trim()
+    .toLowerCase()
+  if (!trimmed || !trimmed.includes('@')) return 'invalid'
   try {
-    const { data, error } = await supabase.rpc('forgot_my_pin', {
-      input_email: String(email || '').trim(),
-      input_device_id: deviceId,
-      input_user_agent: userAgent,
-    })
+    const { error } = await supabase.auth.updateUser({ email: trimmed })
     if (error) {
-      console.error('forgot_my_pin error:', error)
+      const msg = (error.message || '').toLowerCase()
+      if (msg.includes('already') || msg.includes('exists') || msg.includes('taken')) {
+        return 'taken'
+      }
+      console.error('requestMyEmailChange error:', error)
       return 'error'
     }
-    return data || 'error'
+    return 'sent'
   } catch (e) {
-    console.error('forgot_my_pin threw:', e)
+    console.error('requestMyEmailChange threw:', e)
     return 'error'
   }
 }
