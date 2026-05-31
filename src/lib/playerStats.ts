@@ -12,48 +12,130 @@
 //  DB + history.
 // ─────────────────────────────────────────────────────────────────────────────
 
+export interface DbMatchForStats {
+  completed: boolean | null | undefined
+  tournamentId: string | number
+  team1Ids: (string | number)[]
+  team2Ids: (string | number)[]
+  score1: string | number | null | undefined
+  score2: string | number | null | undefined
+  round?: number | null
+}
+
+export interface TournamentForStats {
+  id: string | number
+  date?: string | null
+}
+
+export interface PlayerForStats {
+  id: string
+  name: string
+}
+
+export interface HistoricalMatch {
+  t1: string[]
+  t2: string[]
+  s1: string | number
+  s2: string | number
+}
+
+export interface HistoricalRound {
+  round?: number
+  matches?: HistoricalMatch[]
+}
+
+export interface HistoricalTournament {
+  id: string | number
+  date?: string
+  rounds?: HistoricalRound[]
+}
+
+type FormChar = 'W' | 'L' | 'D'
+
+export interface H2HRecord {
+  won: number
+  lost: number
+  draws: number
+}
+
+export interface PairRecord extends H2HRecord {
+  ids: string[]
+}
+
+export interface PartnerRecord {
+  wins: number
+  losses: number
+  games: number
+}
+
+export interface PlayerStats {
+  played: number
+  won: number
+  lost: number
+  draws: number
+  points: number
+  pointsFor: number
+  pointsAgainst: number
+  pointDiff: number
+  avgPointsFor: number
+  avgPointsAgainst: number
+  winRate: number
+  recentForm: FormChar[]
+  bestWinStreak: number
+  worstLossStreak: number
+  h2h: Record<string, H2HRecord>
+  h2hPairs: Record<string, PairRecord>
+  partners: Record<string, PartnerRecord>
+  playerTournaments: TournamentForStats[]
+}
+
 // Normalise a name for alias/first-name matching: lowercase + strip
 // whitespace and common punctuation so "Gonzalo U" ≈ "gonzalou".
-function normHistName(s) {
+function normHistName(s: string | null | undefined): string {
   return String(s || '')
     .toLowerCase()
     .replace(/[\s.\-_]/g, '')
 }
 
+interface NormalisedEvent {
+  source: 'db' | 'hist'
+  tournamentId: string | number
+  tournamentDate: string
+  round: number
+  myScore: number
+  theirScore: number
+  opponents: string[]
+  teammates: string[]
+}
+
 /**
  * Compute a full per-player stats bundle.
  *
- * @param {string} playerId
- * @param {Array}  matches                DB matches (from Supabase `matches`)
- * @param {Array}  tournaments            DB tournaments (for date lookup + chips)
- * @param {Array}  registrations          (reserved — not currently used but
- *                                        kept for future per-registration stats)
- * @param {Array}  players                Live players list — used for the
- *                                        name→id fallback when no alias is set.
- * @param {Object} aliasMap               { historicalName: playerId }
- * @param {Array}  historicalTournaments  TOURNAMENTS export from History.jsx
- *
- * @returns stats bundle with played, won, lost, draws, winRate,
- *          pointsFor/Against, pointDiff, streaks, h2h, h2hPairs,
- *          partners, playerTournaments (DB only).
+ * @param playerId
+ * @param matches                DB matches (from Supabase `matches`)
+ * @param tournaments            DB tournaments (for date lookup + chips)
+ * @param _registrations         reserved — not currently used
+ * @param players                Live players list — used for the
+ *                               name→id fallback when no alias is set.
+ * @param aliasMap               { historicalName: playerId }
+ * @param historicalTournaments  TOURNAMENTS export from History.jsx
  */
 export function buildPlayerStats(
-  playerId,
-  matches = [],
-  tournaments = [],
-  // eslint-disable-next-line no-unused-vars
-  registrations = [],
-  players = [],
-  aliasMap = {},
-  historicalTournaments = [],
-) {
+  playerId: string,
+  matches: DbMatchForStats[] = [],
+  tournaments: TournamentForStats[] = [],
+  _registrations: unknown[] = [],
+  players: PlayerForStats[] = [],
+  aliasMap: Record<string, string> = {},
+  historicalTournaments: HistoricalTournament[] = [],
+): PlayerStats {
   // ── Name → player_id resolver for historical matches ─────────────────
   // Priority: explicit alias map entries, then fall back to matching a
   // live player's first-name or full-name. Unresolved opponent/partner
   // names are skipped from h2h / partner rows (so you don't get
   // "You vs <unknown>" junk), but the focal player's own pointsFor /
   // pointsAgainst / streaks still count so long as *they* resolve.
-  const nameToId = new Map()
+  const nameToId = new Map<string, string>()
   Object.entries(aliasMap || {}).forEach(([name, pid]) => {
     if (name && pid) nameToId.set(normHistName(name), pid)
   })
@@ -64,13 +146,13 @@ export function buildPlayerStats(
     if (first && !nameToId.has(first)) nameToId.set(first, pl.id)
     if (full && !nameToId.has(full)) nameToId.set(full, pl.id)
   })
-  const resolveName = (n) => nameToId.get(normHistName(n)) || null
+  const resolveName = (n: string): string | null => nameToId.get(normHistName(n)) ?? null
 
   // ── Unified match list: DB matches + historical matches ──────────────
   // Each event is normalised into the same shape so a single loop below
   // can handle both sources identically. Streaks end up correct because
   // we sort chronologically before iterating.
-  const events = []
+  const events: NormalisedEvent[] = []
 
   // DB matches (from Supabase)
   const completed = (matches || []).filter((m) => m?.completed)
@@ -84,10 +166,12 @@ export function buildPlayerStats(
       tournamentId: m.tournamentId,
       tournamentDate: tournDate,
       round: m.round || 0,
-      myScore: parseInt(onT1 ? m.score1 : m.score2) || 0,
-      theirScore: parseInt(onT1 ? m.score2 : m.score1) || 0,
-      opponents: (onT1 ? m.team2Ids || [] : m.team1Ids || []).filter(Boolean),
-      teammates: (onT1 ? m.team1Ids || [] : m.team2Ids || []).filter((id) => id && id !== playerId),
+      myScore: parseInt(String(onT1 ? m.score1 : m.score2)) || 0,
+      theirScore: parseInt(String(onT1 ? m.score2 : m.score1)) || 0,
+      opponents: ((onT1 ? m.team2Ids : m.team1Ids) || []).filter(Boolean).map(String),
+      teammates: ((onT1 ? m.team1Ids : m.team2Ids) || [])
+        .filter((id) => id && String(id) !== playerId)
+        .map(String),
     })
   })
 
@@ -106,10 +190,12 @@ export function buildPlayerStats(
           tournamentId: `hist:${t.id}`,
           tournamentDate: t.date || '',
           round: r.round || 0,
-          myScore: parseInt(onT1 ? m.s1 : m.s2) || 0,
-          theirScore: parseInt(onT1 ? m.s2 : m.s1) || 0,
-          opponents: (onT1 ? t2Ids : t1Ids).filter(Boolean),
-          teammates: (onT1 ? t1Ids : t2Ids).filter((id) => id && id !== playerId),
+          myScore: parseInt(String(onT1 ? m.s1 : m.s2)) || 0,
+          theirScore: parseInt(String(onT1 ? m.s2 : m.s1)) || 0,
+          opponents: (onT1 ? t2Ids : t1Ids).filter((id): id is string => id !== null),
+          teammates: (onT1 ? t1Ids : t2Ids).filter(
+            (id): id is string => id !== null && id !== playerId,
+          ),
         })
       })
     })
@@ -137,11 +223,11 @@ export function buildPlayerStats(
     bestWinStreak = 0
   let curLossStreak = 0,
     worstLossStreak = 0
-  const recentForm = [] // last 5: 'W' | 'L' | 'D'
-  const h2h = {} // opponentId → { won, lost, draws }
-  const h2hPairs = {} // "id1:id2" → { ids: [id1,id2], won, lost, draws }
-  const partners = {} // partnerId → { wins, losses, games }
-  const tournamentIds = new Set()
+  const recentForm: FormChar[] = []
+  const h2h: Record<string, H2HRecord> = {}
+  const h2hPairs: Record<string, PairRecord> = {}
+  const partners: Record<string, PartnerRecord> = {}
+  const tournamentIds = new Set<string | number>()
 
   events.forEach((e) => {
     pointsFor += e.myScore
@@ -149,7 +235,7 @@ export function buildPlayerStats(
     points = pointsFor
     tournamentIds.add(e.tournamentId)
 
-    let result
+    let result: FormChar
     if (e.myScore > e.theirScore) {
       won++
       result = 'W'

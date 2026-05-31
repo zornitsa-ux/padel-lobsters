@@ -5,14 +5,46 @@ const TAU = 0.5
 const SCALE = 173.7178
 const EPS = 1e-6
 
-export const padelToRating = (level) => 1200 + (Number(level) || 3) * 100
-export const ratingToPadel = (rating) => (rating - 1200) / 100
+export interface GlickoState {
+  rating: number
+  rd: number
+  volatility: number
+}
 
-export function defaultRating(playtomicLevel) {
+export interface GlickoMatchResult {
+  oppRating: number
+  oppRd: number
+  score: number // fractional: 1 = win, 0.5 = draw, 0 = loss
+}
+
+export interface GlickoMatch {
+  team1Ids: string[]
+  team2Ids: string[]
+  score1: number | null | undefined
+  score2: number | null | undefined
+}
+
+export interface UpdatedGlickoState extends GlickoState {
+  matches: number
+}
+
+export function padelToRating(level: number | null | undefined): number {
+  const n = Number(level)
+  // Use ?? semantics: fall back to 3 only for null/undefined/NaN, not for 0.
+  const effective = Number.isNaN(n) || level == null ? 3 : n
+  return 1200 + effective * 100
+}
+
+export const ratingToPadel = (rating: number): number => (rating - 1200) / 100
+
+export function defaultRating(playtomicLevel: number | null | undefined): GlickoState {
   return { rating: padelToRating(playtomicLevel), rd: 350, volatility: 0.06 }
 }
 
-export function updateRating(state, matches) {
+export function updateRating(
+  state: GlickoState,
+  matches: GlickoMatchResult[] | null | undefined,
+): GlickoState {
   if (!matches || matches.length === 0) return { ...state }
   const mu = (state.rating - 1500) / SCALE
   const phi = state.rd / SCALE
@@ -35,23 +67,23 @@ export function updateRating(state, matches) {
   })
   const delta = v * sumGSE
   const a = Math.log(sigma * sigma)
-  const f = (x) => {
+  const f = (x: number): number => {
     const ex = Math.exp(x)
     const num = ex * (delta * delta - phi * phi - v - ex)
     const den = 2 * (phi * phi + v + ex) * (phi * phi + v + ex)
     return num / den - (x - a) / (TAU * TAU)
   }
-  let A = a,
-    B
+  let A = a
+  let B: number
   if (delta * delta > phi * phi + v) B = Math.log(delta * delta - phi * phi - v)
   else {
     let k = 1
     while (f(a - k * TAU) < 0) k++
     B = a - k * TAU
   }
-  let fA = f(A),
-    fB = f(B),
-    it = 0
+  let fA = f(A)
+  let fB = f(B)
+  let it = 0
   while (Math.abs(B - A) > EPS && it < 100) {
     const C = A + ((A - B) * fA) / (fB - fA)
     const fC = f(C)
@@ -76,19 +108,23 @@ export function updateRating(state, matches) {
   }
 }
 
-export function applyTournamentRatings(priorByPlayerId, matches, playtomicByPlayerId = {}) {
-  const seen = new Set()
+export function applyTournamentRatings(
+  priorByPlayerId: Record<string, GlickoState>,
+  matches: GlickoMatch[],
+  playtomicByPlayerId: Record<string, number> = {},
+): Record<string, UpdatedGlickoState> {
+  const seen = new Set<string>()
   matches.forEach((m) => {
     if (m.score1 == null || m.score2 == null) return
     ;[...m.team1Ids, ...m.team2Ids].forEach((id) => seen.add(id))
   })
-  const prior = {}
+  const prior: Record<string, GlickoState> = {}
   seen.forEach((id) => {
     if (priorByPlayerId[id]) prior[id] = priorByPlayerId[id]
     else if (playtomicByPlayerId[id] != null) prior[id] = defaultRating(playtomicByPlayerId[id])
     else prior[id] = { rating: 1500, rd: 350, volatility: 0.06 }
   })
-  const perPlayer = {}
+  const perPlayer: Record<string, GlickoMatchResult[]> = {}
   seen.forEach((id) => {
     perPlayer[id] = []
   })
@@ -96,13 +132,13 @@ export function applyTournamentRatings(priorByPlayerId, matches, playtomicByPlay
     if (m.score1 == null || m.score2 == null) continue
     const total = m.score1 + m.score2
     if (total <= 0) continue
-    const s1 = m.score1 / total,
-      s2 = m.score2 / total
-    const team1 = m.team1Ids.map((id) => prior[id]).filter(Boolean)
-    const team2 = m.team2Ids.map((id) => prior[id]).filter(Boolean)
+    const s1 = m.score1 / total
+    const s2 = m.score2 / total
+    const team1 = m.team1Ids.map((id) => prior[id]).filter(Boolean) as GlickoState[]
+    const team2 = m.team2Ids.map((id) => prior[id]).filter(Boolean) as GlickoState[]
     if (!team1.length || !team2.length) continue
-    const t1 = avgRating(team1),
-      t2 = avgRating(team2)
+    const t1 = avgRating(team1)
+    const t2 = avgRating(team2)
     m.team1Ids.forEach(
       (id) => prior[id] && perPlayer[id].push({ oppRating: t2.rating, oppRd: t2.rd, score: s1 }),
     )
@@ -110,7 +146,7 @@ export function applyTournamentRatings(priorByPlayerId, matches, playtomicByPlay
       (id) => prior[id] && perPlayer[id].push({ oppRating: t1.rating, oppRd: t1.rd, score: s2 }),
     )
   }
-  const next = {}
+  const next: Record<string, UpdatedGlickoState> = {}
   Object.keys(perPlayer).forEach((id) => {
     if (perPlayer[id].length === 0) return
     next[id] = { ...updateRating(prior[id], perPlayer[id]), matches: perPlayer[id].length }
@@ -118,9 +154,9 @@ export function applyTournamentRatings(priorByPlayerId, matches, playtomicByPlay
   return next
 }
 
-function avgRating(team) {
-  let sumR = 0,
-    sumRdSq = 0
+function avgRating(team: GlickoState[]): { rating: number; rd: number } {
+  let sumR = 0
+  let sumRdSq = 0
   team.forEach((p) => {
     sumR += p.rating
     sumRdSq += p.rd * p.rd
