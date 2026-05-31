@@ -18,9 +18,8 @@ interface Tournament {
   date?: string
 }
 
-const firstNameOf = (name?: string | null) =>
-  (name || '').trim().split(/\s+/)[0] || (name || '').trim() || 'Player'
-const initialOf = (name?: string | null) => firstNameOf(name).charAt(0).toUpperCase() || '?'
+const fullNameOf = (name?: string | null) => (name || '').trim() || 'Player'
+const initialOf = (name?: string | null) => fullNameOf(name).charAt(0).toUpperCase() || '?'
 const medal = (i: number) => (i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`)
 
 export default function RaffleContainer({
@@ -100,7 +99,7 @@ export default function RaffleContainer({
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-gray-800 truncate">
-                    {firstNameOf(nameOf(w.playerId))}
+                    {fullNameOf(nameOf(w.playerId))}
                   </p>
                   <PrizeEditor
                     prize={w.prize}
