@@ -14,26 +14,51 @@
 //  that disagrees with the Scores tab.
 // ─────────────────────────────────────────────────────────────────────────────
 
+export interface MatchForStandings {
+  tournamentId: string | number
+  team1Ids: (string | number)[]
+  team2Ids: (string | number)[]
+  score1: string | number | null | undefined
+  score2: string | number | null | undefined
+  completed: boolean | null | undefined
+}
+
+export interface PlayerStanding {
+  id: string
+  played: number
+  won: number
+  lost: number
+  pointsFor: number
+  pointsAgainst: number
+  points: number
+}
+
+export interface PlayerRank {
+  rank: number
+  total: number
+}
+
 /**
  * Compute ranked standings for a tournament.
  *
- * @param {string|number} tournamentId
- * @param {Array} matches            all matches across all tournaments
- * @param {Array<string>=} playerIds optional list of player IDs to seed the
- *                                    standings (so players who registered but
- *                                    didn't play still appear). If omitted,
- *                                    the standings are derived from the match
- *                                    roster alone.
- * @returns {Array<{ id, played, won, lost, points, pointsFor, pointsAgainst }>}
- *          sorted best → worst.
+ * @param tournamentId
+ * @param matches      all matches across all tournaments
+ * @param playerIds    optional list of player IDs to seed the standings (so
+ *                     players who registered but didn't play still appear). If
+ *                     omitted, standings are derived from the match roster alone.
+ * @returns sorted best → worst.
  */
-export function computeTournamentStandings(tournamentId, matches, playerIds = null) {
+export function computeTournamentStandings(
+  tournamentId: string | number,
+  matches: MatchForStandings[],
+  playerIds: (string | number)[] | null = null,
+): PlayerStanding[] {
   const tMs = (matches || []).filter(
     (m) => String(m.tournamentId) === String(tournamentId) && m.completed,
   )
   if (tMs.length === 0) return []
 
-  const idsFromMatches = new Set()
+  const idsFromMatches = new Set<string>()
   tMs.forEach((m) => {
     ;(m.team1Ids || []).forEach((id) => idsFromMatches.add(String(id)))
     ;(m.team2Ids || []).forEach((id) => idsFromMatches.add(String(id)))
@@ -42,22 +67,14 @@ export function computeTournamentStandings(tournamentId, matches, playerIds = nu
     ? [...new Set([...playerIds.map(String), ...idsFromMatches])]
     : [...idsFromMatches]
 
-  const stats = {}
+  const stats: Record<string, PlayerStanding> = {}
   allIds.forEach((id) => {
-    stats[id] = {
-      id,
-      played: 0,
-      won: 0,
-      lost: 0,
-      pointsFor: 0,
-      pointsAgainst: 0,
-      points: 0,
-    }
+    stats[id] = { id, played: 0, won: 0, lost: 0, pointsFor: 0, pointsAgainst: 0, points: 0 }
   })
 
   tMs.forEach((m) => {
-    const s1 = parseInt(m.score1) || 0
-    const s2 = parseInt(m.score2) || 0
+    const s1 = parseInt(String(m.score1)) || 0
+    const s2 = parseInt(String(m.score2)) || 0
     const t1Won = s1 > s2
     const t2Won = s2 > s1
 
@@ -84,10 +101,10 @@ export function computeTournamentStandings(tournamentId, matches, playerIds = nu
   })
 
   // Head-to-head lookup for tiebreaks.
-  const h2h = {}
+  const h2h: Record<string, number> = {}
   tMs.forEach((m) => {
-    const s1 = parseInt(m.score1) || 0
-    const s2 = parseInt(m.score2) || 0
+    const s1 = parseInt(String(m.score1)) || 0
+    const s2 = parseInt(String(m.score2)) || 0
     if (s1 === s2) return
     const winners = s1 > s2 ? m.team1Ids || [] : m.team2Ids || []
     const losers = s1 > s2 ? m.team2Ids || [] : m.team1Ids || []
@@ -112,7 +129,12 @@ export function computeTournamentStandings(tournamentId, matches, playerIds = nu
  * Convenience wrapper: return 1-based rank for a specific player in a
  * given tournament, or null if they didn't play / don't appear.
  */
-export function rankOfPlayer(playerId, tournamentId, matches, playerIds = null) {
+export function rankOfPlayer(
+  playerId: string | number,
+  tournamentId: string | number,
+  matches: MatchForStandings[],
+  playerIds: (string | number)[] | null = null,
+): PlayerRank | null {
   const standings = computeTournamentStandings(tournamentId, matches, playerIds)
   if (standings.length === 0) return null
   const pos = standings.findIndex((s) => String(s.id) === String(playerId))

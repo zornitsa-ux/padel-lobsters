@@ -1,5 +1,10 @@
 /* ─── Default categories (preserves the gender-based rotation from v1) ───── */
-export const OSCARS_CORE = [
+
+export type CategoryTemplate = { name: string; icon: string }
+export type DefaultCategory = CategoryTemplate & { display_order: number }
+type GenderedPlayer = { gender?: string | null }
+
+export const OSCARS_CORE: CategoryTemplate[] = [
   { name: 'Best Lobster', icon: '🦞' },
   { name: 'Best Smash', icon: '💥' },
   { name: 'Iron Wall Defence', icon: '🛡️' },
@@ -7,16 +12,16 @@ export const OSCARS_CORE = [
   { name: 'Potty Mouth Award', icon: '🤬' },
   { name: 'Most Excuses', icon: '😴' },
 ]
-export const OSCARS_ROTATING = {
+export const OSCARS_ROTATING: Record<string, CategoryTemplate> = {
   bar: { name: 'First to the Bar After the Match', icon: '🍺' },
   dressed: { name: 'Best Dressed on Court', icon: '👟' },
   coaching: { name: 'Most Unsolicited Mid-Match Coaching', icon: '💬' },
   unnecessary: { name: 'Most Unnecessary Shot Attempt', icon: '🎭' },
 }
-export function buildDefaultCategories(regPlayers = []) {
+export function buildDefaultCategories(regPlayers: GenderedPlayer[] = []): DefaultCategory[] {
   const men = regPlayers.filter((p) => p.gender === 'male').length
   const women = regPlayers.filter((p) => p.gender === 'female').length
-  const extras = []
+  const extras: CategoryTemplate[] = []
   if (men > women) extras.push(OSCARS_ROTATING.bar)
   if (women >= 10) extras.push(OSCARS_ROTATING.dressed)
   for (const c of [OSCARS_ROTATING.coaching, OSCARS_ROTATING.unnecessary]) {
