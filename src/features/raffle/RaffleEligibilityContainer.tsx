@@ -10,9 +10,8 @@ interface Tournament {
   name?: string
 }
 
-const firstNameOf = (name?: string | null) =>
-  (name || '').trim().split(/\s+/)[0] || (name || '').trim() || 'Player'
-const initialOf = (name?: string | null) => firstNameOf(name).charAt(0).toUpperCase() || '?'
+const fullNameOf = (name?: string | null) => (name || '').trim() || 'Player'
+const initialOf = (name?: string | null) => fullNameOf(name).charAt(0).toUpperCase() || '?'
 
 export default function RaffleEligibilityContainer({
   tournament,
@@ -57,7 +56,7 @@ export default function RaffleEligibilityContainer({
       .filter((r: { status?: string }) => r.status === 'registered')
       .map((r: { playerId: string }) => r.playerId)
       .filter((id: string) => (seen.has(id) ? false : (seen.add(id), true)))
-      .sort((a: string, b: string) => firstNameOf(nameOf(a)).localeCompare(firstNameOf(nameOf(b))))
+      .sort((a: string, b: string) => fullNameOf(nameOf(a)).localeCompare(fullNameOf(nameOf(b))))
   }, [getTournamentRegistrations, tournament.id, nameOf])
 
   const toggle = (id: string) => {
@@ -146,7 +145,7 @@ export default function RaffleEligibilityContainer({
                     isEligible ? 'text-gray-800' : 'text-gray-400 line-through'
                   }`}
                 >
-                  {firstNameOf(nameOf(id))}
+                  {fullNameOf(nameOf(id))}
                 </p>
 
                 {skip ? (
