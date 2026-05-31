@@ -1,7 +1,22 @@
 /* ─── Match-history helper: rounds where voter played WITH or AGAINST target  */
-export function computeHistory(voterId, targetId, matches) {
+
+export type OscarMatch = {
+  round: number
+  team1_ids: string[] | null
+  team2_ids: string[] | null
+}
+
+export type HistoryLine =
+  | { round: number; type: 'with' }
+  | { round: number; type: 'vs'; partnerId: string | undefined }
+
+export function computeHistory(
+  voterId: string | null | undefined,
+  targetId: string | null | undefined,
+  matches: OscarMatch[] | null | undefined,
+): HistoryLine[] {
   if (!voterId || !targetId || !matches?.length) return []
-  const lines = []
+  const lines: HistoryLine[] = []
   for (const m of matches) {
     const t1 = (m.team1_ids || []).map(String)
     const t2 = (m.team2_ids || []).map(String)
@@ -21,21 +36,24 @@ export function computeHistory(voterId, targetId, matches) {
   return lines.sort((a, b) => a.round - b.round)
 }
 
-/* Letter avatar color now lives in src/lib/letterColors.js — single source of truth. */
+/* Letter avatar color now lives in src/lib/letterColors.ts — single source of truth. */
 
 /* ─── First-name with disambiguation (unchanged from v1) ──────────────────── */
-export function shortLabelMap(players = []) {
-  const firstOf = (p) => (p.name || '').trim().split(/\s+/)[0] || p.name || ''
-  const lastOf = (p) => {
+
+type LabelablePlayer = { id: string | number; name?: string | null }
+
+export function shortLabelMap(players: LabelablePlayer[] = []): Record<string, string> {
+  const firstOf = (p: LabelablePlayer) => (p.name || '').trim().split(/\s+/)[0] || p.name || ''
+  const lastOf = (p: LabelablePlayer) => {
     const parts = (p.name || '').trim().split(/\s+/)
     return parts.length > 1 ? parts.slice(1).join(' ') : ''
   }
-  const byFirst = {}
+  const byFirst: Record<string, LabelablePlayer[]> = {}
   players.forEach((p) => {
     const f = firstOf(p).toLowerCase()
     ;(byFirst[f] ??= []).push(p)
   })
-  const out = {}
+  const out: Record<string, string> = {}
   for (const key in byFirst) {
     const group = byFirst[key]
     if (group.length === 1) {
@@ -43,7 +61,7 @@ export function shortLabelMap(players = []) {
       continue
     }
     group.sort((a, b) => String(a.id).localeCompare(String(b.id)))
-    let labels = null
+    let labels: string[] | null = null
     for (let len = 1; len <= 3; len++) {
       const candidate = group.map((p) => {
         const last = lastOf(p)
@@ -56,7 +74,7 @@ export function shortLabelMap(players = []) {
     }
     if (!labels) labels = group.map((p, i) => `${firstOf(p)} ${i + 1}`)
     group.forEach((p, i) => {
-      out[String(p.id)] = labels[i]
+      out[String(p.id)] = labels![i]
     })
   }
   return out
