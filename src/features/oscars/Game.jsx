@@ -54,7 +54,7 @@ export default function Game({ tournament, onNavigate }) {
   const [myVotes, setMyVotes] = useState([])
   const [adminStats, setAdminStats] = useState([])
   const [adminResults, setAdminResults] = useState([])
-  const [playerResults, setPlayerResults] = useState([])
+  const [playerResults, setPlayerResults] = useState(null) // null = unloaded; [] = loaded (possibly empty)
   const [matches, setMatches] = useState([])
   const [selectedCatId, setSelectedCatId] = useState(null)
   const [editCats, setEditCats] = useState(null) // null = derive from saved/defaults
@@ -92,6 +92,9 @@ export default function Game({ tournament, onNavigate }) {
     if (!tournament?.id) return
     const { data, error: err } = await oscarsApi.loadSession(tournament.id)
     if (err) {
+      // Exit the loading spinner on initial load; keep current state during polling
+      setSession((prev) => (prev === undefined ? null : prev))
+      setError('Could not load session — please refresh.')
       return
     }
     setSession(data || null)
@@ -104,6 +107,7 @@ export default function Game({ tournament, onNavigate }) {
     }
     const { data, error: err } = await oscarsApi.loadCategories(sessionId)
     if (err) {
+      setError('Could not load categories — please refresh.')
       return
     }
     setCategories(data || [])
@@ -113,6 +117,7 @@ export default function Game({ tournament, onNavigate }) {
     if (!tournament?.id || !authSession?.user) return
     const { data, error: err } = await oscarsApi.getMyVotes(tournament.id)
     if (err) {
+      setError('Could not load your votes — please refresh.')
       return
     }
     setMyVotes(data || [])
@@ -122,6 +127,7 @@ export default function Game({ tournament, onNavigate }) {
     if (!tournament?.id || !isAdmin) return
     const { data, error: err } = await oscarsApi.adminGetStats(tournament.id)
     if (err) {
+      setError('Could not refresh stats.')
       return
     }
     setAdminStats(data || [])
@@ -131,6 +137,7 @@ export default function Game({ tournament, onNavigate }) {
     if (!tournament?.id || !isAdmin) return
     const { data, error: err } = await oscarsApi.adminGetResults(tournament.id)
     if (err) {
+      setError('Could not load results — please refresh.')
       return
     }
     setAdminResults(data || [])
@@ -141,6 +148,7 @@ export default function Game({ tournament, onNavigate }) {
       if (!categoryId || !isAdmin) return
       const { data, error: err } = await oscarsApi.adminGetCategoryVoters(categoryId)
       if (err) {
+        setError('Could not load voter list.')
         return
       }
       setCategoryVoters((prev) => ({ ...prev, [categoryId]: data || [] }))
@@ -152,6 +160,7 @@ export default function Game({ tournament, onNavigate }) {
     if (!tournament?.id) return
     const { data, error: err } = await oscarsApi.getResults(tournament.id)
     if (err) {
+      setError('Could not load results — please refresh.')
       return
     }
     setPlayerResults(data || [])
@@ -337,6 +346,7 @@ export default function Game({ tournament, onNavigate }) {
   }
 
   const handleAdminShare = async () => {
+    if (!window.confirm('Share results with all players now? This cannot be undone.')) return
     setBusy(true)
     setError(null)
     const { data, error: err } = await supabase.rpc('lobster_oscars_admin_share', {
@@ -621,7 +631,13 @@ export default function Game({ tournament, onNavigate }) {
         title="🦞 The Results"
         subtitle={tournament?.name}
       >
-        <ResultsView results={playerResults} highlightWinners />
+        {playerResults === null ? (
+          <div className="flex justify-center py-10">
+            <Loader2 className="animate-spin text-lobster-teal" size={28} />
+          </div>
+        ) : (
+          <ResultsView results={playerResults} highlightWinners />
+        )}
       </Shell>
     )
   }
