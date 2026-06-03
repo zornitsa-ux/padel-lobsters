@@ -1,5 +1,6 @@
-import React, { useMemo, useState, useEffect } from 'react'
+import React, { useMemo, useState, useEffect, useCallback } from 'react'
 import { useApp } from '../../context/AppContext'
+import useRefreshOnFocus from '../../hooks/useRefreshOnFocus'
 import { usePlayers } from '../players/usePlayers'
 import { supabase } from '../../supabase'
 import DEFAULT_TIPS from '../../data/padelTips'
@@ -84,40 +85,36 @@ export default function Dashboard({ onNavigate }) {
   const [newOrders, setNewOrders] = useState([])
   const LAST_CHECK_KEY = 'pl_merch_last_checked'
 
-  useEffect(() => {
+  const loadNewOrders = useCallback(async () => {
     if (!isAdmin) return
-    const loadNewOrders = async () => {
-      const lastChecked = localStorage.getItem(LAST_CHECK_KEY) || new Date(0).toISOString()
-      const [ordersRes, itemsRes] = await Promise.all([
-        supabase
-          .from('merch_interests')
-          .select('*')
-          .gte('created_at', lastChecked)
-          .order('created_at', { ascending: false })
-          .limit(20),
-        supabase.from('merch_items').select('id, name').eq('active', true),
-      ])
-      const orders = ordersRes.data || []
-      const itemMap = Object.fromEntries((itemsRes.data || []).map((i) => [i.id, i.name]))
-      // Match player names from context players array
-      setNewOrders(
-        orders.map((o) => {
-          const p = players.find((pl) => String(pl.id) === String(o.player_id))
-          return { ...o, playerName: p?.name || null, itemName: itemMap[o.merch_item_id] || 'item' }
-        }),
-      )
-    }
-    loadNewOrders()
-    const ch = supabase
-      .channel('dash-merch-orders')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'merch_interests' },
-        loadNewOrders,
-      )
-      .subscribe()
-    return () => supabase.removeChannel(ch)
+    const lastChecked = localStorage.getItem(LAST_CHECK_KEY) || new Date(0).toISOString()
+    const [ordersRes, itemsRes] = await Promise.all([
+      supabase
+        .from('merch_interests')
+        .select('*')
+        .gte('created_at', lastChecked)
+        .order('created_at', { ascending: false })
+        .limit(20),
+      supabase.from('merch_items').select('id, name').eq('active', true),
+    ])
+    const orders = ordersRes.data || []
+    const itemMap = Object.fromEntries((itemsRes.data || []).map((i) => [i.id, i.name]))
+    // Match player names from context players array
+    setNewOrders(
+      orders.map((o) => {
+        const p = players.find((pl) => String(pl.id) === String(o.player_id))
+        return { ...o, playerName: p?.name || null, itemName: itemMap[o.merch_item_id] || 'item' }
+      }),
+    )
   }, [isAdmin, players])
+
+  useEffect(() => {
+    loadNewOrders()
+  }, [loadNewOrders])
+
+  // Flat read (tournament IO refactor): refresh new-order count on tab focus
+  // instead of holding a realtime channel open.
+  useRefreshOnFocus(loadNewOrders)
 
   const dismissMerchOrders = () => {
     localStorage.setItem(LAST_CHECK_KEY, new Date().toISOString())

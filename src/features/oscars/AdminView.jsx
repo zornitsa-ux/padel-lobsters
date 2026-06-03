@@ -46,12 +46,11 @@ export default function AdminView({
     return buildDefaultCategories(regPlayers)
   }, [editCats, categories, regPlayers])
 
-  // Refresh the expanded category's voter list (initial + every 10s while active)
+  // Load the expanded category's voter list once on expand. Re-expanding (or the
+  // header refresh / tab refocus driving loadAdminStats) re-pulls it — no poll.
   useEffect(() => {
     if (!expandedStatCatId || phase !== 'active') return
     loadCategoryVoters(expandedStatCatId)
-    const t = setInterval(() => loadCategoryVoters(expandedStatCatId), 10000)
-    return () => clearInterval(t)
   }, [expandedStatCatId, phase, loadCategoryVoters])
 
   const handleStart = () => {

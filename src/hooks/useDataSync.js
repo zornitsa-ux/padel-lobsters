@@ -1,15 +1,28 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { supabase } from '../supabase'
+import useRefreshOnFocus from './useRefreshOnFocus'
 import * as tournamentsApi from '../api/tournaments'
 import * as registrationsApi from '../api/registrations'
 import * as matchesApi from '../api/matches'
 import * as transfersApi from '../api/transfers'
 import * as settingsApi from '../api/settings'
 
-// Side-effect coordinator: loads all data on mount, keeps it live via
-// realtime subscriptions, and reloads tournaments whenever the caller's role
-// changes (admin vs player scope). The players slice is owned by the players
-// feature (usePlayers/useMyProfile via TanStack Query), not this hook.
+// Side-effect coordinator: loads all data on mount, keeps it fresh, and reloads
+// tournaments whenever the caller's role changes (admin vs player scope). The
+// players slice is owned by the players feature (usePlayers/useMyProfile via
+// TanStack Query), not this hook.
+//
+// Data-access model (see the tournament IO refactor):
+//   - The ONLY realtime subscription is `matches`, bound to INSERT/DELETE only,
+//     so schedule (re)generation pushes live to every client. Score entry is an
+//     UPDATE and deliberately does NOT push — scores ride the flat-read path.
+//   - The realtime handler is debounced so a burst of schedule inserts collapses
+//     into a single refetch instead of one per row × per client.
+//   - Everything else (registrations, settings, tournaments, transfers) is a flat
+//     read: loaded on mount, refreshed on tab focus, and reloaded by the mutation
+//     wrappers in AppContext after the user's own write.
+const MATCHES_DEBOUNCE_MS = 1500
+
 export default function useDataSync({
   setTournaments,
   setRegistrations,
@@ -56,45 +69,47 @@ export default function useDataSync({
     setLoading(false)
   }
 
-  // Initial load + realtime subscriptions. Raffle winners are excluded —
-  // useRaffle (Task 5) owns that slice and its subscription.
+  // Refresh the flat slices when the tab/app regains focus (throttled). This is
+  // the freshness path that replaces the per-table realtime subscriptions.
+  useRefreshOnFocus(() => {
+    loadTournaments()
+    loadRegistrations()
+    loadMatches()
+    loadTransfers()
+    loadSettings()
+  })
+
+  // Initial load + the single (schedule) realtime subscription. Raffle winners
+  // are excluded — useRaffle owns that slice and its subscription.
+  const debounceRef = useRef(null)
   useEffect(() => {
     loadAll()
-    const channels = [
-      supabase
-        .channel('tournaments-changes')
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'tournaments' },
-          loadTournaments,
-        )
-        .subscribe(),
-      supabase
-        .channel('registrations-changes')
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'registrations' },
-          loadRegistrations,
-        )
-        .subscribe(),
-      supabase
-        .channel('matches-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'matches' }, loadMatches)
-        .subscribe(),
-      supabase
-        .channel('registration-transfers-changes')
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'registration_transfers' },
-          loadTransfers,
-        )
-        .subscribe(),
-      supabase
-        .channel('settings-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'settings' }, loadSettings)
-        .subscribe(),
-    ]
-    return () => channels.forEach((c) => supabase.removeChannel(c))
+
+    // Debounced so a schedule regen (bulk insert/delete of a whole round)
+    // triggers one refetch, not one per row.
+    const debouncedReload = () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+      debounceRef.current = setTimeout(loadMatches, MATCHES_DEBOUNCE_MS)
+    }
+
+    const channel = supabase
+      .channel('matches-schedule')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'matches' },
+        debouncedReload,
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'matches' },
+        debouncedReload,
+      )
+      .subscribe()
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+      supabase.removeChannel(channel)
+    }
   }, [])
 
   // Role-change reload: admin sees all tournament statuses; player sees only

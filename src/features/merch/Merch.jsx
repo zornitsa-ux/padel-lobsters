@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useApp } from '../../context/AppContext'
 import { usePlayers } from '../players/usePlayers'
 import { supabase } from '../../supabase'
+import useRefreshOnFocus from '../../hooks/useRefreshOnFocus'
 import { useAuthPrompt } from '../../components/ui/AuthGate'
 import { emptyItem } from './itemForm'
 import Lightbox from './Lightbox'
@@ -63,30 +64,20 @@ export default function Merch({ initialTab, onNavigate }) {
       console.error('loadInterests failed:', error.message)
       return
     }
-    console.log('loadInterests:', data?.length, 'orders loaded')
     if (data) setInterests(data)
   }
 
+  // Flat reads (tournament IO refactor): load on mount, refresh on tab focus.
+  // Own writes (order/save) reload locally where they happen.
   useEffect(() => {
     loadItems()
     loadInterests()
-    const ch1 = supabase
-      .channel('merch-items')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'merch_items' }, loadItems)
-      .subscribe()
-    const ch2 = supabase
-      .channel('merch-interests')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'merch_interests' },
-        loadInterests,
-      )
-      .subscribe()
-    return () => {
-      supabase.removeChannel(ch1)
-      supabase.removeChannel(ch2)
-    }
   }, [])
+
+  useRefreshOnFocus(() => {
+    loadItems()
+    loadInterests()
+  })
 
   // ── Image upload (up to 3) ───────────────────────────────────────────────────
   const handleImageUpload = async (e) => {
@@ -342,10 +333,8 @@ export default function Merch({ initialTab, onNavigate }) {
       return
     }
 
-    console.log('Order placed! claimedId:', claimedId, 'pid:', pid, 'itemId:', itemId)
     setOrdered((o) => ({ ...o, [itemId]: true }))
     await loadInterests()
-    console.log('After loadInterests, interests count:', interests.length)
   }
 
   // ── Render ───────────────────────────────────────────────────────────────────
