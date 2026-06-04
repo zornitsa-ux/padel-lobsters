@@ -361,6 +361,8 @@ export function AppProvider({ children }) {
         adminCancelTransfer,
         getTransferRecipientContact,
         getTournamentRegistrations,
+        reloadMatches,
+        reloadRegistrations,
         saveMatches,
         updateMatch,
         getTournamentMatches,

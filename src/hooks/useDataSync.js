@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react'
 import { supabase } from '../supabase'
 import useRefreshOnFocus from './useRefreshOnFocus'
 import * as tournamentsApi from '../api/tournaments'
-import * as registrationsApi from '../api/registrations'
 import * as matchesApi from '../api/matches'
 import * as transfersApi from '../api/transfers'
 import * as settingsApi from '../api/settings'
@@ -38,11 +37,6 @@ export default function useDataSync({
     if (data) setTournaments(data)
   }
 
-  const loadRegistrations = async () => {
-    const data = await registrationsApi.loadRegistrations()
-    if (data) setRegistrations(data)
-  }
-
   const loadMatches = async () => {
     const data = await matchesApi.loadMatches()
     if (data) setMatches(data)
@@ -59,22 +53,14 @@ export default function useDataSync({
   }
 
   const loadAll = async () => {
-    await Promise.all([
-      loadTournaments(),
-      loadRegistrations(),
-      loadMatches(),
-      loadTransfers(),
-      loadSettings(),
-    ])
+    await Promise.all([loadTournaments(), loadTransfers(), loadSettings()])
     setLoading(false)
   }
 
-  // Refresh the flat slices when the tab/app regains focus (throttled). This is
-  // the freshness path that replaces the per-table realtime subscriptions.
+  // Refresh the light global slices on focus. Matches and registrations are
+  // event-route-scoped and refreshed by useEventDataLoader when on those routes.
   useRefreshOnFocus(() => {
     loadTournaments()
-    loadRegistrations()
-    loadMatches()
     loadTransfers()
     loadSettings()
   })

@@ -32,6 +32,7 @@ import TransferAccept from './components/TransferAccept'
 import LeaguePage from './features/league/LeaguePage'
 import LeagueIndexPage from './features/league/LeagueIndexPage'
 import GroupStageHistoryPage from './features/league/GroupStageHistoryPage'
+import { useEventDataLoader } from './features/events/useEventDataLoader'
 
 // URL routing — replaces the previous string-state page machine.
 //
@@ -133,9 +134,12 @@ function useLegacyNavigate() {
 
 // Look up a tournament by URL :id. Returns null while data is still loading
 // (route renders nothing) and redirects to /events if the id doesn't exist.
+// Also mounts useEventDataLoader so matches + registrations load lazily when
+// any event route is active (every event route calls this hook).
 function useTournamentFromUrl() {
   const { id } = useParams()
   const { tournaments } = useApp()
+  useEventDataLoader()
   return tournaments.find((t) => String(t.id) === String(id)) ?? null
 }
 

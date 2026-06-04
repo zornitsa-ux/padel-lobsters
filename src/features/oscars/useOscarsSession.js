@@ -149,11 +149,11 @@ export function useOscarsSession(tournament) {
   useEffect(() => {
     if (!tournamentId) return
     setSession(undefined)
+    setMatches([])
     loadSession()
-    loadMatches()
-  }, [tournamentId, loadSession, loadMatches])
+  }, [tournamentId, loadSession])
 
-  // After session loads, fetch categories + my votes
+  // After session loads: categories + my votes + matches (only when active session confirmed)
   useEffect(() => {
     if (!session?.id) {
       setCategories([])
@@ -162,7 +162,8 @@ export function useOscarsSession(tournament) {
     }
     loadCategories(session.id)
     if (authSession?.user) loadMyVotes()
-  }, [session?.id, authSession, loadCategories, loadMyVotes])
+    loadMatches()
+  }, [session?.id, authSession, loadCategories, loadMyVotes, loadMatches])
 
   /* ── Mutations ────────────────────────────────────────────────────────── */
 
