@@ -13,6 +13,7 @@ import {
   generateMexicano,
   generateRoundRobin,
 } from './scheduleHelpers'
+import ScoreEntry from './ScoreEntry'
 import ScheduleHeader from './schedule/ScheduleHeader'
 import ScheduleGeneratorControls from './schedule/ScheduleGeneratorControls'
 import ScheduleValidationSummary from './schedule/ScheduleValidationSummary'
@@ -276,17 +277,6 @@ export default function Schedule({ tournament, onNavigate }) {
       isPreview: Boolean(generated),
     })
     downloadCsvFile(filename, content)
-  }
-
-  const handleScoreUpdate = async (matchId, field, value) => {
-    if (!isAdmin) {
-      onNavigate?.('settings')
-      return
-    }
-    await updateMatch(matchId, {
-      [field]: parseInt(value) || 0,
-      completed: true,
-    })
   }
 
   return (
@@ -562,25 +552,7 @@ export default function Schedule({ tournament, onNavigate }) {
                       <div className="flex-shrink-0 flex flex-col items-center gap-1">
                         <span className="text-xs text-gray-400 font-medium">vs</span>
                         {match.id && isAdmin ? (
-                          <div className="flex items-center gap-1">
-                            <input
-                              type="number"
-                              min="0"
-                              max="15"
-                              className="w-10 h-9 text-center text-lg font-bold border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-lobster-teal"
-                              defaultValue={match.score1 ?? ''}
-                              onBlur={(e) => handleScoreUpdate(match.id, 'score1', e.target.value)}
-                            />
-                            <span className="text-gray-400">-</span>
-                            <input
-                              type="number"
-                              min="0"
-                              max="15"
-                              className="w-10 h-9 text-center text-lg font-bold border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-lobster-teal"
-                              defaultValue={match.score2 ?? ''}
-                              onBlur={(e) => handleScoreUpdate(match.id, 'score2', e.target.value)}
-                            />
-                          </div>
+                          <ScoreEntry match={match} onUpdate={updateMatch} variant="input" />
                         ) : (
                           <div className="flex items-center gap-1 text-lg font-bold text-gray-600">
                             <span>{match.score1 ?? '—'}</span>

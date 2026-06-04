@@ -283,10 +283,15 @@ export function AppProvider({ children }) {
 
   const updateMatch = useCallback(
     async (id, data) => {
-      await matchesApi.updateMatch(id, data)
-      reloadMatches()
+      // Optimistic local patch — we know the row id and its new values, so skip
+      // the full-table reloadMatches() that used to run on every score entry.
+      // (Score writes deliberately don't push over realtime; other clients pick
+      // the change up on their next focus refetch.) Resync only if the write fails.
+      setMatches((prev) => prev.map((m) => (m.id === id ? { ...m, ...data } : m)))
+      const { error } = await matchesApi.updateMatch(id, data)
+      if (error) reloadMatches()
     },
-    [reloadMatches],
+    [setMatches, reloadMatches],
   )
 
   // ── PIN / Identity ─────────────────────────────────────────

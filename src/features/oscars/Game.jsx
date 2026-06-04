@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { Loader2 } from 'lucide-react'
+import useRefreshOnFocus from '../../hooks/useRefreshOnFocus'
 import { useOscarsSession } from './useOscarsSession'
 import { defaultViewMode, canToggleViewMode } from './oscarsPhase'
 import AdminView from './AdminView'
@@ -63,14 +64,15 @@ export default function Game({ tournament, onNavigate }) {
 
   const onBack = useCallback(() => onNavigate('registration', tournament), [onNavigate, tournament])
 
-  /* ── Phase- & view-mode-dependent loading/polling ─────────────────────── */
+  /* ── Phase- & view-mode-dependent loading ─────────────────────────────────
+     Flat reads, not polling (tournament IO refactor): each phase loads its data
+     once on entry, and a single focus refresh re-pulls whatever's relevant when
+     the player/admin returns to the tab — so a participant notices the admin
+     ending/sharing without a steady background poll. */
 
-  // Admin controls, active: live participation stats every 10s
+  // Admin controls, active: load live participation stats on entry.
   useEffect(() => {
-    if (phase !== 'active' || !showAdmin) return
-    loadAdminStats()
-    const t = setInterval(loadAdminStats, 10000)
-    return () => clearInterval(t)
+    if (phase === 'active' && showAdmin) loadAdminStats()
   }, [phase, showAdmin, loadAdminStats])
 
   // Admin controls, results phases: load rankings
@@ -78,24 +80,20 @@ export default function Game({ tournament, onNavigate }) {
     if ((phase === 'ended' || phase === 'shared') && showAdmin) loadAdminResults()
   }, [phase, showAdmin, loadAdminResults])
 
-  // Play mode: poll the session so a participant notices when the admin
-  // ends/shares (admins driving the controls don't need this).
-  useEffect(() => {
-    if (showAdmin) return
-    if (phase === 'active') {
-      const t = setInterval(loadSession, 20000)
-      return () => clearInterval(t)
-    }
-    if (phase === 'ended') {
-      const t = setInterval(loadSession, 10000)
-      return () => clearInterval(t)
-    }
-  }, [phase, showAdmin, loadSession])
-
   // Play mode, shared: load the published results
   useEffect(() => {
     if (!showAdmin && phase === 'shared') loadPlayerResults()
   }, [phase, showAdmin, loadPlayerResults])
+
+  // Re-pull the session (so phase transitions land) plus the data relevant to
+  // the current phase/view whenever the tab regains focus.
+  const refreshCurrent = useCallback(() => {
+    loadSession()
+    if (showAdmin && phase === 'active') loadAdminStats()
+    else if (showAdmin && (phase === 'ended' || phase === 'shared')) loadAdminResults()
+    else if (!showAdmin && phase === 'shared') loadPlayerResults()
+  }, [showAdmin, phase, loadSession, loadAdminStats, loadAdminResults, loadPlayerResults])
+  useRefreshOnFocus(refreshCurrent)
 
   /* ── Selection bookkeeping ────────────────────────────────────────────── */
 

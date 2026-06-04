@@ -6,30 +6,7 @@ import {
   computeRankings,
   isMatchVisibleForPlayer,
 } from './utils'
-
-function ScoreSelect({ value, matchId, field, otherField, otherValue, onUpdate }) {
-  return (
-    <select
-      value={value ?? ''}
-      onChange={(e) => {
-        const v = e.target.value === '' ? null : parseInt(e.target.value)
-        onUpdate(matchId, {
-          [field]: v,
-          [otherField]: otherValue ?? 0,
-          completed: v != null,
-        })
-      }}
-      className="w-11 h-9 text-center text-base font-bold border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-lobster-teal bg-white"
-    >
-      <option value="">—</option>
-      {Array.from({ length: 16 }, (_, i) => (
-        <option key={i} value={i}>
-          {i}
-        </option>
-      ))}
-    </select>
-  )
-}
+import ScoreEntry from '../ScoreEntry'
 
 export default function ScoresAndRankingSection({
   tournament,
@@ -291,25 +268,7 @@ export default function ScoresAndRankingSection({
                           </div>
                           <div className="flex-shrink-0 flex items-center gap-1">
                             {isAdmin && !isCompleted ? (
-                              <>
-                                <ScoreSelect
-                                  matchId={match.id}
-                                  field="score1"
-                                  otherField="score2"
-                                  value={match.score1}
-                                  otherValue={match.score2}
-                                  onUpdate={updateMatch}
-                                />
-                                <span className="text-gray-400 font-bold text-sm">-</span>
-                                <ScoreSelect
-                                  matchId={match.id}
-                                  field="score2"
-                                  otherField="score1"
-                                  value={match.score2}
-                                  otherValue={match.score1}
-                                  onUpdate={updateMatch}
-                                />
-                              </>
+                              <ScoreEntry match={match} onUpdate={updateMatch} variant="select" />
                             ) : (
                               <span className="text-base font-bold text-gray-700 px-1">
                                 {match.score1 != null

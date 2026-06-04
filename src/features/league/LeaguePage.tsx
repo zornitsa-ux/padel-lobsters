@@ -5,7 +5,6 @@ import { LoadingSpinner } from './ui/LoadingSpinner'
 import { LeagueNotFound } from './ui/LeagueNotFound'
 import { LeagueHome } from './ui/LeagueHome'
 import { useLeagueById, useLeagueTeams, useLeagueMatches } from './hooks/useLeagueQueries'
-import { useLeagueRealtime } from './hooks/useLeagueRealtime'
 
 export default function LeaguePage() {
   const { id } = useParams<{ id: string }>()
@@ -13,7 +12,6 @@ export default function LeaguePage() {
   const { data: league, isLoading } = useLeagueById(id)
   const { data: teams = [] } = useLeagueTeams(league?.id)
   const { data: matches = [] } = useLeagueMatches(league?.id)
-  useLeagueRealtime(league?.id)
 
   const myTeam = useMemo(
     () =>

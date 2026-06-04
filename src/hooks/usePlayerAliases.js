@@ -1,25 +1,19 @@
 import { useState, useEffect, useCallback } from 'react'
-import { supabase } from '../supabase'
 import {
   loadPlayerAliases,
   setPlayerAlias as apiSetAlias,
   removePlayerAlias as apiRemoveAlias,
 } from '../api/aliases'
 
+// Aliases change rarely (admin maps an unrecognised name to a player) and the
+// local setter below keeps the editing admin's view current, so this is a flat
+// read: load once on mount. The realtime channel it used to hold was silent
+// anyway — player_aliases isn't in the supabase_realtime publication.
 export default function usePlayerAliases() {
   const [playerAliases, setPlayerAliases] = useState({})
 
   useEffect(() => {
     loadPlayerAliases().then(setPlayerAliases)
-
-    const ch = supabase
-      .channel('player-aliases-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'player_aliases' }, () =>
-        loadPlayerAliases().then(setPlayerAliases),
-      )
-      .subscribe()
-
-    return () => supabase.removeChannel(ch)
   }, [])
 
   const setPlayerAlias = useCallback(async (name, playerId) => {
