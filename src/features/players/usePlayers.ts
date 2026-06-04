@@ -7,8 +7,17 @@ import { mergeMyProfile } from './playerSelectors'
 // Full redacted roster. One shared cache across every list view — TanStack
 // Query dedupes concurrent callers, so it doesn't matter how many components
 // mount this. Replaces the global AppContext `players` array + 60s poll.
+//
+// staleTime 5min: the roster barely changes mid-tournament, so we don't need
+// the global 30s default. Writes already invalidate playerKeys.all(), so
+// post-write freshness is preserved without focus-triggered refetches.
+const ROSTER_OPTIONS = {
+  staleTime: 5 * 60 * 1000,
+  refetchOnWindowFocus: false,
+} as const
+
 export function usePlayers() {
-  return useQuery({ queryKey: playerKeys.list(), queryFn: fetchPlayers })
+  return useQuery({ queryKey: playerKeys.list(), queryFn: fetchPlayers, ...ROSTER_OPTIONS })
 }
 
 // One player derived from the shared roster cache via `select` — no extra
@@ -20,6 +29,7 @@ export function usePlayer(id: string | null | undefined) {
     queryFn: fetchPlayers,
     enabled: !!id,
     select: (list: Player[]) => list.find((p) => p.id === id) ?? null,
+    ...ROSTER_OPTIONS,
   })
 }
 

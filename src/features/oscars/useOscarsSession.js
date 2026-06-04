@@ -178,35 +178,36 @@ export function useOscarsSession(tournament) {
         return false
       }
       if (data === 'voted' || data === 'updated') {
-        await loadMyVotes()
+        const targetName = players.find((p) => String(p.id) === String(targetId))?.name ?? ''
+        setMyVotes((prev) => [
+          ...prev.filter((v) => v.category_id !== categoryId),
+          { category_id: categoryId, target_id: targetId, target_name: targetName },
+        ])
         return true
       }
       setError(castVoteErrorMessage(data))
       return false
     },
-    [busy, loadMyVotes],
+    [busy, players],
   )
 
-  const clearVote = useCallback(
-    async (categoryId) => {
-      if (!window.confirm('Clear your vote for this category?')) return false
-      setBusy(true)
-      setError(null)
-      const { data, error: err } = await oscarsApi.clearVote(categoryId)
-      setBusy(false)
-      if (err) {
-        setError(err.message)
-        return false
-      }
-      if (data === 'cleared' || data === 'no_vote') {
-        await loadMyVotes()
-        return true
-      }
-      setError(`Could not clear vote: ${data}`)
+  const clearVote = useCallback(async (categoryId) => {
+    if (!window.confirm('Clear your vote for this category?')) return false
+    setBusy(true)
+    setError(null)
+    const { data, error: err } = await oscarsApi.clearVote(categoryId)
+    setBusy(false)
+    if (err) {
+      setError(err.message)
       return false
-    },
-    [loadMyVotes],
-  )
+    }
+    if (data === 'cleared' || data === 'no_vote') {
+      setMyVotes((prev) => prev.filter((v) => v.category_id !== categoryId))
+      return true
+    }
+    setError(`Could not clear vote: ${data}`)
+    return false
+  }, [])
 
   const startGame = useCallback(
     async (cats) => {
