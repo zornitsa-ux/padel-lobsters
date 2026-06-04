@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useRegistrations } from './useRegistrations'
 import {
   Calendar,
   Users,
@@ -31,7 +32,6 @@ function InfoChip({ icon, label, warn }) {
 export default function UpcomingEventCard({
   t,
   isAdmin,
-  getTournamentRegistrations,
   transfers,
   onNavigate,
   onEdit,
@@ -39,6 +39,7 @@ export default function UpcomingEventCard({
   onOpenTransfers,
   updateTournament,
 }) {
+  const { data: regsData = [] } = useRegistrations(t?.id)
   const allBooked = (t.courts || []).every((c) => c.booked)
   const bookedCount = (t.courts || []).filter((c) => c.booked).length
   const totalCourts = (t.courts || []).length
@@ -109,9 +110,7 @@ export default function UpcomingEventCard({
 
       {/* Stats row — compact for mobile */}
       {(() => {
-        const regCount = getTournamentRegistrations(t.id).filter(
-          (r) => r.status === 'registered',
-        ).length
+        const regCount = regsData.filter((r) => r.status === 'registered').length
         const maxP = t.maxPlayers || '?'
         const isFull = typeof maxP === 'number' && regCount >= maxP
         return (

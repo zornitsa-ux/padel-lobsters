@@ -13,24 +13,14 @@ export default function ScoresAndRankingSection({
   players,
   isAdmin,
   claimedId,
-  getTournamentMatches,
-  getTournamentRegistrations,
+  matches: savedMatches,
+  registrations: regs,
   updateMatch,
   updateTournament,
 }) {
   const [completedTab, setCompletedTab] = useState('ranking')
   const [marking, setMarking] = useState(false)
   const [tournamentError, setTournamentError] = useState('')
-
-  const savedMatches = useMemo(
-    () => getTournamentMatches(tournament.id),
-    [getTournamentMatches, tournament.id],
-  )
-
-  const regs = useMemo(
-    () => getTournamentRegistrations(tournament.id),
-    [getTournamentRegistrations, tournament.id],
-  )
   const byRound = useMemo(() => groupMatchesByRound(savedMatches), [savedMatches])
   const roundNums = useMemo(() => getSortedRoundNumbers(byRound), [byRound])
   const rankings = useMemo(

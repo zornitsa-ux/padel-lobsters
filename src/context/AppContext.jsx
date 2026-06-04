@@ -9,24 +9,19 @@ import * as settingsApi from '../api/settings'
 import useAuth from '../hooks/useAuth'
 import useDataSync from '../hooks/useDataSync'
 import { playerKeys } from '../features/players/playerKeys'
-import {
-  normaliseTournaments,
-  normaliseRegistrations,
-  normaliseMatches,
-  normaliseTransfers,
-} from '../lib/normalise'
+import { matchKeys } from '../features/events/matchKeys'
+import { registrationKeys } from '../features/events/registrationKeys'
+import { normaliseTournaments, normaliseTransfers } from '../lib/normalise'
 
 const AppContext = createContext(null)
 
 export function AppProvider({ children }) {
   const [tournaments, setTournaments] = useState([])
-  const [registrations, setRegistrations] = useState([])
   // registration_transfers — pending and recent-history transfer offers.
   // Loaded eagerly so a player who closes the site and reopens still sees
   // their pending banner / awaiting-acceptance state on home + tournament
   // screens. Admin sees all pending offers too.
   const [transfers, setTransfers] = useState([])
-  const [matches, setMatches] = useState([])
   const [settings, setSettings] = useState({
     whatsappLink: '',
     groupName: 'Padel Lobsters',
@@ -39,8 +34,6 @@ export function AppProvider({ children }) {
 
   useDataSync({
     setTournaments,
-    setRegistrations,
-    setMatches,
     setTransfers,
     setSettings,
     setLoading,
@@ -48,11 +41,23 @@ export function AppProvider({ children }) {
     roleRef,
   })
 
-  // Player writes still funnel through these context functions (they hold the
-  // authorization checks and are called from many admin sites). After a write
-  // they invalidate the players query cache so usePlayers/useMyProfile refetch.
+  // ── Invalidation helpers ────────────────────────────────────
   const invalidatePlayers = useCallback(
     () => queryClient.invalidateQueries({ queryKey: playerKeys.all() }),
+    [queryClient],
+  )
+  const invalidateMatches = useCallback(
+    (tournamentId) =>
+      queryClient.invalidateQueries({
+        queryKey: tournamentId ? matchKeys.list(tournamentId) : matchKeys.all(),
+      }),
+    [queryClient],
+  )
+  const invalidateRegistrations = useCallback(
+    (tournamentId) =>
+      queryClient.invalidateQueries({
+        queryKey: tournamentId ? registrationKeys.list(tournamentId) : registrationKeys.all(),
+      }),
     [queryClient],
   )
 
@@ -61,19 +66,9 @@ export function AppProvider({ children }) {
     if (data) setTournaments(data)
   }, [])
 
-  const reloadRegistrations = useCallback(async () => {
-    const data = await registrationsApi.loadRegistrations()
-    if (data) setRegistrations(data)
-  }, [])
-
   const reloadTransfers = useCallback(async () => {
     const data = await transfersApi.loadTransfers()
     setTransfers(data)
-  }, [])
-
-  const reloadMatches = useCallback(async () => {
-    const data = await matchesApi.loadMatches()
-    if (data) setMatches(data)
   }, [])
 
   // selfSignup: extends useAuth's version to also refresh the players list
@@ -166,25 +161,23 @@ export function AppProvider({ children }) {
   // ── Registrations ──────────────────────────────────────────
   const registerPlayer = useCallback(
     async (tournamentId, playerId, maxPlayers) => {
-      const current = registrations.filter(
-        (r) => r.tournament_id === tournamentId && r.status === 'registered',
-      ).length
+      // Read current count from TanStack Query cache. Falls back to 0 if the
+      // cache is cold (the server's own insert-guard is the authoritative check).
+      const cached = queryClient.getQueryData(registrationKeys.list(tournamentId)) ?? []
+      const current = cached.filter((r) => r.status === 'registered').length
       const result = await registrationsApi.registerPlayer(
         tournamentId,
         playerId,
         current,
         maxPlayers,
       )
-      if (result.regId) reloadRegistrations()
+      if (result.regId) invalidateRegistrations(tournamentId)
       return result
     },
-    [registrations, reloadRegistrations],
+    [queryClient, invalidateRegistrations],
   )
 
   // ── Registration transfers (acceptance flow) ───────────────
-  // Four wrappers around the SECURITY DEFINER RPCs added in migration
-  // add_registration_transfers. Each one returns { ok, status, transferId? }
-  // so callers can branch on the RPC's status text without parsing errors.
   const createTransfer = useCallback(
     async (toPlayerId, tournamentId) => {
       if (!session?.user) return { ok: false, status: 'not_authenticated' }
@@ -199,10 +192,13 @@ export function AppProvider({ children }) {
     async (transferId, accept) => {
       if (!session?.user) return { ok: false, status: 'not_authenticated' }
       const result = await transfersApi.respondToTransfer(transferId, accept)
-      if (result.ok) await Promise.all([reloadTransfers(), reloadRegistrations()])
+      if (result.ok) {
+        await reloadTransfers()
+        invalidateRegistrations()
+      }
       return result
     },
-    [session, reloadTransfers, reloadRegistrations],
+    [session, reloadTransfers, invalidateRegistrations],
   )
 
   const cancelTransfer = useCallback(
@@ -215,11 +211,6 @@ export function AppProvider({ children }) {
     [session, reloadTransfers],
   )
 
-  // Privacy-respecting fetch of the to-player's phone for a pending
-  // transfer the current user initiated. Returns { ok, name, phone }.
-  // Returns ok:false when the caller isn't the from-player or the
-  // transfer isn't pending — the API never leaks phone numbers to
-  // anyone other than the offer's initiator.
   const getTransferRecipientContact = useCallback(
     async (transferId) => {
       if (!session?.user) return { ok: false, status: 'not_authenticated' }
@@ -228,10 +219,6 @@ export function AppProvider({ children }) {
     [session],
   )
 
-  // Admin-only cancel: cancels any pending offer regardless of which
-  // player initiated it. Different from cancelTransfer (which checks
-  // the from-player's PIN). Status text on the row gets a distinct
-  // closed_reason='admin_cancel' for auditability.
   const adminCancelTransfer = useCallback(
     async (transferId) => {
       const result = await transfersApi.adminCancelTransfer(transferId)
@@ -244,60 +231,64 @@ export function AppProvider({ children }) {
   const forceAcceptTransfer = useCallback(
     async (transferId) => {
       const result = await transfersApi.forceAcceptTransfer(transferId)
-      if (result.ok) await Promise.all([reloadTransfers(), reloadRegistrations()])
+      if (result.ok) {
+        await reloadTransfers()
+        invalidateRegistrations()
+      }
       return result
     },
-    [reloadTransfers, reloadRegistrations],
+    [reloadTransfers, invalidateRegistrations],
   )
 
   const updateRegistration = useCallback(
-    async (id, data) => {
+    async (id, data, tournamentId) => {
       try {
         await registrationsApi.updateRegistration(id, data)
-        reloadRegistrations()
+        invalidateRegistrations(tournamentId)
       } catch {
         /* error already logged in api */
       }
     },
-    [reloadRegistrations],
+    [invalidateRegistrations],
   )
 
   const cancelRegistration = useCallback(
     async (id, tournamentId) => {
       await registrationsApi.cancelRegistration(id)
-      // Promote first waitlisted player
-      await registrationsApi.promoteWaitlist(tournamentId, registrations)
-      reloadRegistrations()
+      // Promote first waitlisted player. Read the cached normalised registrations
+      // (they still carry the snake_case tournament_id from the spread in normalise).
+      const cached = queryClient.getQueryData(registrationKeys.list(tournamentId)) ?? []
+      await registrationsApi.promoteWaitlist(tournamentId, cached)
+      invalidateRegistrations(tournamentId)
     },
-    [registrations, reloadRegistrations],
+    [queryClient, invalidateRegistrations],
   )
 
   // ── Matches ────────────────────────────────────────────────
   const saveMatches = useCallback(
     async (tournamentId, rounds) => {
       await matchesApi.saveMatches(tournamentId, rounds)
-      reloadMatches()
+      invalidateMatches(tournamentId)
     },
-    [reloadMatches],
+    [invalidateMatches],
   )
 
   const updateMatch = useCallback(
     async (id, data) => {
-      // Optimistic local patch — we know the row id and its new values, so skip
-      // the full-table reloadMatches() that used to run on every score entry.
-      // (Score writes deliberately don't push over realtime; other clients pick
-      // the change up on their next focus refetch.) Resync only if the write fails.
-      setMatches((prev) => prev.map((m) => (m.id === id ? { ...m, ...data } : m)))
+      // Optimistic patch: update whichever tournament's match cache contains this
+      // match id, without knowing the tournamentId upfront.
+      queryClient.setQueriesData({ queryKey: matchKeys.all() }, (cache) => {
+        if (!Array.isArray(cache)) return cache
+        const idx = cache.findIndex((m) => m.id === id)
+        return idx === -1 ? cache : cache.map((m) => (m.id === id ? { ...m, ...data } : m))
+      })
       const { error } = await matchesApi.updateMatch(id, data)
-      if (error) reloadMatches()
+      if (error) invalidateMatches()
     },
-    [setMatches, reloadMatches],
+    [queryClient, invalidateMatches],
   )
 
   // ── PIN / Identity ─────────────────────────────────────────
-  // Phase 2c: PIN generation moves server-side. admin_regenerate_pin
-  // also bumps pin_changes via the sync_player_pin_hash trigger.
-  // Returns { ok: true, pin } so the caller can display the new PIN.
   const regeneratePin = useCallback(
     async (playerId) => {
       const data = await playersApi.regeneratePin(playerId)
@@ -308,24 +299,8 @@ export function AppProvider({ children }) {
     [invalidatePlayers],
   )
 
-  // ── Normalisation ──────────────────────────────────────────
   const normalisedTournaments = useMemo(() => normaliseTournaments(tournaments), [tournaments])
-  const normalisedRegistrations = useMemo(
-    () => normaliseRegistrations(registrations),
-    [registrations],
-  )
-  const normalisedMatches = useMemo(() => normaliseMatches(matches), [matches])
   const normalisedTransfers = useMemo(() => normaliseTransfers(transfers), [transfers])
-
-  // ── Helpers ────────────────────────────────────────────────
-  const getTournamentRegistrations = useCallback(
-    (tournamentId) => normalisedRegistrations.filter((r) => r.tournamentId === tournamentId),
-    [normalisedRegistrations],
-  )
-  const getTournamentMatches = useCallback(
-    (tournamentId) => normalisedMatches.filter((m) => m.tournamentId === tournamentId),
-    [normalisedMatches],
-  )
 
   return (
     <AppContext.Provider
@@ -334,8 +309,6 @@ export function AppProvider({ children }) {
         addTournament,
         updateTournament,
         deleteTournament,
-        registrations: normalisedRegistrations,
-        matches: normalisedMatches,
         settings,
         loading,
         session,
@@ -360,12 +333,8 @@ export function AppProvider({ children }) {
         forceAcceptTransfer,
         adminCancelTransfer,
         getTransferRecipientContact,
-        getTournamentRegistrations,
-        reloadMatches,
-        reloadRegistrations,
         saveMatches,
         updateMatch,
-        getTournamentMatches,
         saveSettings,
         regeneratePin,
       }}
