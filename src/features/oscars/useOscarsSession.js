@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useApp } from '../../context/AppContext'
 import { usePlayers } from '../players/usePlayers'
+import { useRegistrations } from '../events/useRegistrations'
 import * as oscarsApi from '../../api/oscars'
 import { derivePhase, castVoteErrorMessage } from './oscarsPhase'
 import { shortLabelMap } from './gameHelpers'
@@ -15,8 +16,9 @@ import { shortLabelMap } from './gameHelpers'
    which view is on screen.
    ════════════════════════════════════════════════════════════════════════════ */
 export function useOscarsSession(tournament) {
-  const { session: authSession, getTournamentRegistrations } = useApp()
+  const { session: authSession } = useApp()
   const { data: players = [] } = usePlayers()
+  const { data: regsData = [] } = useRegistrations(tournamentId || null)
   const isAdmin = authSession?.user?.app_metadata?.role === 'admin'
   const claimedId = authSession?.user?.id ?? null
   const tournamentId = tournament?.id || ''
@@ -32,10 +34,7 @@ export function useOscarsSession(tournament) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
 
-  const regs = useMemo(
-    () => getTournamentRegistrations(tournamentId).filter((r) => r.status === 'registered'),
-    [getTournamentRegistrations, tournamentId],
-  )
+  const regs = useMemo(() => regsData.filter((r) => r.status === 'registered'), [regsData])
   const regPlayers = useMemo(
     () => players.filter((p) => regs.some((r) => r.playerId === p.id)),
     [players, regs],
@@ -149,11 +148,11 @@ export function useOscarsSession(tournament) {
   useEffect(() => {
     if (!tournamentId) return
     setSession(undefined)
+    setMatches([])
     loadSession()
-    loadMatches()
-  }, [tournamentId, loadSession, loadMatches])
+  }, [tournamentId, loadSession])
 
-  // After session loads, fetch categories + my votes
+  // After session loads: categories + my votes + matches (only when active session confirmed)
   useEffect(() => {
     if (!session?.id) {
       setCategories([])
@@ -162,7 +161,8 @@ export function useOscarsSession(tournament) {
     }
     loadCategories(session.id)
     if (authSession?.user) loadMyVotes()
-  }, [session?.id, authSession, loadCategories, loadMyVotes])
+    loadMatches()
+  }, [session?.id, authSession, loadCategories, loadMyVotes, loadMatches])
 
   /* ── Mutations ────────────────────────────────────────────────────────── */
 

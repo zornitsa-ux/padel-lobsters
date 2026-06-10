@@ -1,14 +1,16 @@
-import React, { useEffect, useMemo, useState } from 'react'
-import { useApp } from '../../context/AppContext'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { usePlayers } from '../players/usePlayers'
+import { useMatches } from './useMatches'
+import { useRegistrations } from './useRegistrations'
 import * as oscarsApi from '../../api/oscars'
 import { ChevronLeft, Trophy, AlertCircle } from 'lucide-react'
 import { computeTournamentStandings } from '../../lib/standings'
 import { letterColor } from '../../lib/letterColors'
 
 export default function Scores({ tournament, onNavigate }) {
-  const { getTournamentMatches, getTournamentRegistrations } = useApp()
   const { data: players = [] } = usePlayers()
+  const { data: allMatches = [] } = useMatches(tournament?.id)
+  const { data: regsData = [] } = useRegistrations(tournament?.id)
 
   // Tab switcher: ranking (podium + standings), matches (round-by-round
   // cards, same layout as History), or lobster-games (per-category winners
@@ -16,8 +18,10 @@ export default function Scores({ tournament, onNavigate }) {
   const [tab, setTab] = useState('ranking')
   const [activeRoundIdx, setActiveRoundIdx] = useState(0)
   const [oscarRows, setOscarRows] = useState([])
+  const oscarsFetchedRef = useRef(false)
   useEffect(() => {
-    if (!tournament?.id) return
+    if (tab !== 'lobster-games' || !tournament?.id || oscarsFetchedRef.current) return
+    oscarsFetchedRef.current = true
     let active = true
     ;(async () => {
       const { data } = await oscarsApi.getResults(tournament.id)
@@ -26,14 +30,11 @@ export default function Scores({ tournament, onNavigate }) {
     return () => {
       active = false
     }
-  }, [tournament?.id])
+  }, [tab, tournament?.id])
   const hasGameResults = oscarRows.length > 0
 
-  const allMatches = tournament ? getTournamentMatches(tournament.id) : []
   const matches = allMatches.filter((m) => m.completed)
-  const regs = tournament
-    ? getTournamentRegistrations(tournament.id).filter((r) => r.status === 'registered')
-    : []
+  const regs = regsData.filter((r) => r.status === 'registered')
   const registeredPlayers = players.filter((p) => regs.some((r) => r.playerId === p.id))
 
   // Standings via the shared helper — same source the Lobster Review reads.

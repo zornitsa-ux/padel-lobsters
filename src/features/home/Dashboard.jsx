@@ -2,6 +2,8 @@ import React, { useMemo, useState, useEffect, useCallback } from 'react'
 import { useApp } from '../../context/AppContext'
 import useRefreshOnFocus from '../../hooks/useRefreshOnFocus'
 import { usePlayers } from '../players/usePlayers'
+import { useAllMatches } from '../events/useMatches'
+import { useAllRegistrations } from '../events/useRegistrations'
 import { supabase } from '../../supabase'
 import DEFAULT_TIPS from '../../data/padelTips'
 import { TOURNAMENTS as LEGACY_TOURNAMENTS } from '../../data/historicalTournaments'
@@ -25,19 +27,19 @@ import { LeagueDashboardCard } from '../league/ui/LeagueDashboardCard'
 // (Claw up/down reaction icons removed along with the Updates feature.)
 
 export default function Dashboard({ onNavigate }) {
-  const {
-    tournaments,
-    registrations,
-    matches,
-    settings,
-    getTournamentRegistrations,
-    getTournamentMatches,
-    session,
-    transfers,
-    respondToTransfer,
-    cancelTransfer,
-  } = useApp()
+  const { tournaments, settings, session, transfers, respondToTransfer, cancelTransfer } = useApp()
   const { data: players = [] } = usePlayers()
+  const { data: matches = [] } = useAllMatches()
+  const { data: registrations = [] } = useAllRegistrations()
+
+  const getTournamentMatches = useCallback(
+    (id) => matches.filter((m) => m.tournamentId === id),
+    [matches],
+  )
+  const getTournamentRegistrations = useCallback(
+    (id) => registrations.filter((r) => r.tournamentId === id),
+    [registrations],
+  )
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
   const claimedId = session?.user?.id ?? null
   const { playerAliases } = usePlayerAliases()

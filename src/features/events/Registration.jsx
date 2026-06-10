@@ -1,6 +1,8 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import { useApp } from '../../context/AppContext'
 import { usePlayers } from '../players/usePlayers'
+import { useMatches } from './useMatches'
+import { useRegistrations } from './useRegistrations'
 import { ChevronLeft, AlertCircle } from 'lucide-react'
 import TransferSpotModal from '../../components/TransferSpotModal'
 import TransferPendingModal from '../../components/TransferPendingModal'
@@ -32,8 +34,6 @@ export default function Registration({ tournament, onNavigate }) {
     registerPlayer,
     cancelRegistration,
     updateRegistration,
-    getTournamentRegistrations,
-    getTournamentMatches,
     updateMatch,
     updateTournament,
     session,
@@ -42,6 +42,8 @@ export default function Registration({ tournament, onNavigate }) {
     respondToTransfer,
   } = useApp()
   const { data: players = [] } = usePlayers()
+  const { data: regsData = [] } = useRegistrations(tournament?.id)
+  const { data: matchesData = [] } = useMatches(tournament?.id)
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
   const claimedId = session?.user?.id ?? null
 
@@ -86,10 +88,7 @@ export default function Registration({ tournament, onNavigate }) {
 
   const tournamentId = tournament?.id
 
-  const regs = useMemo(() => {
-    if (!tournamentId) return []
-    return getTournamentRegistrations(tournamentId)
-  }, [getTournamentRegistrations, tournamentId])
+  const regs = regsData
   const { registered, waitlisted, cancelled } = useMemo(
     () => splitRegistrationsByStatus(regs),
     [regs],
@@ -168,10 +167,11 @@ export default function Registration({ tournament, onNavigate }) {
   const handleSelfDeclare = async () => {
     if (!paymentSheet?.regId) return
     setDeclaring(true)
-    await updateRegistration(paymentSheet.regId, {
-      paymentStatus: 'pending_confirmation',
-      paymentMethod: 'tikkie',
-    })
+    await updateRegistration(
+      paymentSheet.regId,
+      { paymentStatus: 'pending_confirmation', paymentMethod: 'tikkie' },
+      tournamentId,
+    )
     setDeclaring(false)
     closePaymentSheet()
   }
@@ -184,10 +184,11 @@ export default function Registration({ tournament, onNavigate }) {
     if (!regId) return
     if (currentStatus && currentStatus !== 'unpaid') return
     try {
-      await updateRegistration(regId, {
-        paymentStatus: 'tikkied',
-        paymentMethod: 'tikkie',
-      })
+      await updateRegistration(
+        regId,
+        { paymentStatus: 'tikkied', paymentMethod: 'tikkie' },
+        tournamentId,
+      )
     } catch (err) {
       // Non-blocking — the Tikkie link still opens even if the status update
       // fails. Admin can always fix the status manually.
@@ -210,7 +211,7 @@ export default function Registration({ tournament, onNavigate }) {
       onNavigate?.('settings')
       return
     }
-    await updateRegistration(reg.id, { status: 'registered' })
+    await updateRegistration(reg.id, { status: 'registered' }, tournamentId)
   }
 
   // ── Transfer (acceptance flow) ──────────────────────────────────────────────────
@@ -412,8 +413,8 @@ export default function Registration({ tournament, onNavigate }) {
         players={players}
         isAdmin={isAdmin}
         claimedId={claimedId}
-        getTournamentMatches={getTournamentMatches}
-        getTournamentRegistrations={getTournamentRegistrations}
+        matches={matchesData}
+        registrations={regsData}
         updateMatch={updateMatch}
         updateTournament={updateTournament}
       />
