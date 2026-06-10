@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, lazy, Suspense } from 'react'
 import {
   BrowserRouter,
   Routes,
@@ -12,27 +12,35 @@ import {
 import { AppProvider, useApp } from './context/AppContext'
 import Layout from './components/Layout'
 import Dashboard from './components/Dashboard'
-import Players from './components/Players'
-import Tournament from './components/Tournament'
-import Registration from './components/Registration'
-import Payments from './components/Payments'
-import Schedule from './components/Schedule'
-import Scores from './components/Scores'
-import Settings from './components/Settings'
 import SetupGuard from './components/SetupGuard'
-import Merch from './components/Merch'
-import History from './components/History'
-import Game from './components/Game'
-import RaffleContainer from './features/raffle/RaffleContainer'
-import RaffleEligibilityContainer from './features/raffle/RaffleEligibilityContainer'
-import Admin from './components/Admin.tsx'
 import VerificationGate from './components/VerificationGate'
 import AuthConfirm from './components/AuthConfirm'
-import TransferAccept from './components/TransferAccept'
-import LeaguePage from './features/league/LeaguePage'
-import LeagueIndexPage from './features/league/LeagueIndexPage'
-import GroupStageHistoryPage from './features/league/GroupStageHistoryPage'
 import { useEventDataLoader } from './features/events/useEventDataLoader'
+
+// Code-split every route off the first paint. The app shell (Layout,
+// VerificationGate, SetupGuard) and the logged-out landing (Dashboard) stay
+// in the entry chunk; everything below loads on demand the first time its
+// route is hit. Each lazy() becomes its own Rollup chunk — see the bundle
+// treemap (`npm run build:analyze`) for the split.
+const Players = lazy(() => import('./components/Players'))
+const Tournament = lazy(() => import('./components/Tournament'))
+const Registration = lazy(() => import('./components/Registration'))
+const Payments = lazy(() => import('./components/Payments'))
+const Schedule = lazy(() => import('./components/Schedule'))
+const Scores = lazy(() => import('./components/Scores'))
+const Settings = lazy(() => import('./components/Settings'))
+const Merch = lazy(() => import('./components/Merch'))
+const History = lazy(() => import('./components/History'))
+const Game = lazy(() => import('./components/Game'))
+const RaffleContainer = lazy(() => import('./features/raffle/RaffleContainer'))
+const RaffleEligibilityContainer = lazy(
+  () => import('./features/raffle/RaffleEligibilityContainer'),
+)
+const Admin = lazy(() => import('./components/Admin.tsx'))
+const TransferAccept = lazy(() => import('./components/TransferAccept'))
+const LeaguePage = lazy(() => import('./features/league/LeaguePage'))
+const LeagueIndexPage = lazy(() => import('./features/league/LeagueIndexPage'))
+const GroupStageHistoryPage = lazy(() => import('./features/league/GroupStageHistoryPage'))
 
 // URL routing — replaces the previous string-state page machine.
 //
@@ -49,39 +57,53 @@ export default function App() {
           <DeepLinkMigrator />
           <Layout>
             <VerificationGate>
-              <Routes>
-                <Route path="/" element={<Navigate to="/home" replace />} />
-                <Route path="/home" element={<HomeRoute />} />
-                <Route path="/auth/confirm" element={<AuthConfirm />} />
+              <Suspense fallback={<RouteFallback />}>
+                <Routes>
+                  <Route path="/" element={<Navigate to="/home" replace />} />
+                  <Route path="/home" element={<HomeRoute />} />
+                  <Route path="/auth/confirm" element={<AuthConfirm />} />
 
-                <Route path="/events" element={<EventsRoute />} />
-                <Route path="/events/:id" element={<EventDetailRoute />} />
-                <Route path="/events/:id/schedule" element={<EventScheduleRoute />} />
-                <Route path="/events/:id/scores" element={<EventScoresRoute />} />
-                <Route path="/events/:id/payments" element={<EventPaymentsRoute />} />
-                <Route path="/events/:id/oscars" element={<EventOscarsRoute />} />
-                <Route path="/events/:id/raffle" element={<EventRaffleRoute />} />
-                <Route path="/events/:id/eligibility" element={<EventEligibilityRoute />} />
+                  <Route path="/events" element={<EventsRoute />} />
+                  <Route path="/events/:id" element={<EventDetailRoute />} />
+                  <Route path="/events/:id/schedule" element={<EventScheduleRoute />} />
+                  <Route path="/events/:id/scores" element={<EventScoresRoute />} />
+                  <Route path="/events/:id/payments" element={<EventPaymentsRoute />} />
+                  <Route path="/events/:id/oscars" element={<EventOscarsRoute />} />
+                  <Route path="/events/:id/raffle" element={<EventRaffleRoute />} />
+                  <Route path="/events/:id/eligibility" element={<EventEligibilityRoute />} />
 
-                <Route path="/community" element={<CommunityRoute />} />
-                <Route path="/community/:id" element={<CommunityRoute />} />
+                  <Route path="/community" element={<CommunityRoute />} />
+                  <Route path="/community/:id" element={<CommunityRoute />} />
 
-                <Route path="/merch" element={<MerchRoute />} />
-                <Route path="/admin" element={<AdminRoute />} />
-                <Route path="/settings" element={<SettingsRoute />} />
-                <Route path="/history" element={<HistoryRoute />} />
-                <Route path="/transfer/:id" element={<TransferRoute />} />
-                <Route path="/league" element={<LeagueIndexPage />} />
-                <Route path="/league/:id" element={<LeaguePage />} />
-                <Route path="/league/:id/group-stage" element={<GroupStageHistoryPage />} />
+                  <Route path="/merch" element={<MerchRoute />} />
+                  <Route path="/admin" element={<AdminRoute />} />
+                  <Route path="/settings" element={<SettingsRoute />} />
+                  <Route path="/history" element={<HistoryRoute />} />
+                  <Route path="/transfer/:id" element={<TransferRoute />} />
+                  <Route path="/league" element={<LeagueIndexPage />} />
+                  <Route path="/league/:id" element={<LeaguePage />} />
+                  <Route path="/league/:id/group-stage" element={<GroupStageHistoryPage />} />
 
-                <Route path="*" element={<Navigate to="/home" replace />} />
-              </Routes>
+                  <Route path="*" element={<Navigate to="/home" replace />} />
+                </Routes>
+              </Suspense>
             </VerificationGate>
           </Layout>
         </BrowserRouter>
       </SetupGuard>
     </AppProvider>
+  )
+}
+
+// Shown while a lazily-loaded route chunk is in flight. Kept deliberately
+// minimal — the app shell (header/nav) is already painted around it, so this
+// only fills the content area for the brief fetch on first visit to a route.
+function RouteFallback() {
+  return (
+    <div className="flex items-center justify-center py-24" role="status" aria-live="polite">
+      <div className="h-8 w-8 animate-spin rounded-full border-2 border-lob-muted border-t-lob-teal" />
+      <span className="sr-only">Loading…</span>
+    </div>
   )
 }
 
