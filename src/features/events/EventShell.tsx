@@ -26,7 +26,7 @@ export default function EventShell({ tournament }: Props) {
   const base = `/events/${tournament.id}`
 
   return (
-    <div className="-mx-4 -mt-5">
+    <div className="-mx-4">
       {/* Sticky app bar: back nav + title + tab strip */}
       <div className="sticky top-0 z-20 border-b border-gray-200">
         {/* Title area — white background lifts it off the cream page */}
