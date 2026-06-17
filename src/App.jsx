@@ -31,7 +31,6 @@ const Schedule = lazy(() => import('./components/Schedule'))
 const Scores = lazy(() => import('./components/Scores'))
 const Settings = lazy(() => import('./components/Settings'))
 const Merch = lazy(() => import('./components/Merch'))
-const History = lazy(() => import('./components/History'))
 const Account = lazy(() => import('./components/Settings'))
 const Game = lazy(() => import('./components/Game'))
 const RaffleContainer = lazy(() => import('./features/raffle/RaffleContainer'))
@@ -86,7 +85,7 @@ export default function App() {
                   <Route path="/admin" element={<AdminRoute />} />
                   <Route path="/account" element={<AccountRoute />} />
                   <Route path="/settings" element={<Navigate to="/account" replace />} />
-                  <Route path="/history" element={<HistoryRoute />} />
+                  <Route path="/history" element={<Navigate to="/events" replace />} />
                   <Route path="/transfer/:id" element={<TransferRoute />} />
                   <Route path="/league" element={<LeagueIndexPage />} />
                   <Route path="/league/:id" element={<LeaguePage />} />
@@ -151,7 +150,7 @@ function useLegacyNavigate() {
       case 'merch-orders':
         return navigate('/merch?tab=orders')
       case 'history':
-        return navigate('/history')
+        return navigate('/events')
       case 'settings':
         return navigate('/account')
       case 'league':
@@ -270,11 +269,6 @@ function AccountRoute() {
 function AdminRoute() {
   const onNavigate = useLegacyNavigate()
   return <Admin onNavigate={onNavigate} />
-}
-
-function HistoryRoute() {
-  const onNavigate = useLegacyNavigate()
-  return <History onNavigate={onNavigate} />
 }
 
 function TransferRoute() {

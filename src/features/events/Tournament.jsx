@@ -26,7 +26,7 @@ export default function Tournament({ onNavigate }) {
   const [editId, setEditId] = useState(null)
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
-  const [showHistory, setShowHistory] = useState(false)
+  const [showHistory, setShowHistory] = useState(true)
   const [error, setError] = useState('')
   // Admin pending-transfer panel — open for one tournament at a time.
   const [adminTransferTournament, setAdminTransferTournament] = useState(null)
@@ -245,7 +245,7 @@ export default function Tournament({ onNavigate }) {
         >
           <span className="flex items-center gap-2">
             <Clock size={15} className="text-gray-400" />
-            Past Events & History ({past.length + HISTORY_TOURNAMENTS.length})
+            Past
           </span>
           {showHistory ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
         </button>

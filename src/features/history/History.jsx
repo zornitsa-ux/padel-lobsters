@@ -113,10 +113,6 @@ export default function History({ onNavigate }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold text-gray-800">Tournament History</h2>
-      </div>
-
       {/* Dynamic tournaments from DB */}
       {dynamicTournaments.map((t) => {
         const open = expandedId === `db-${t.id}`
