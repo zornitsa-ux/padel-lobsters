@@ -1,6 +1,8 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import { useApp } from '../../context/AppContext'
 import { usePlayers } from '../players/usePlayers'
+import { useMatches, useAllMatches } from './useMatches'
+import { useRegistrations } from './useRegistrations'
 import { Shuffle, AlertCircle, Trophy, Users, Download } from 'lucide-react'
 import { generateLobster as generateLobsterAnnealed } from '../../lib/lobsterMatcher'
 import { recomputeAllRatings } from '../../lib/ratingsRecompute'
@@ -31,16 +33,13 @@ import {
 // ── Component ────────────────────────────────────────────────────────────────
 
 export default function Schedule({ tournament, onNavigate }) {
-  const {
-    matches: allMatches,
-    getTournamentRegistrations,
-    getTournamentMatches,
-    saveMatches,
-    updateMatch,
-    updateTournament,
-    session,
-  } = useApp()
+  const { saveMatches, updateMatch, updateTournament, session } = useApp()
   const { data: players = [] } = usePlayers()
+  const { data: savedMatches = [] } = useMatches(tournament?.id)
+  const { data: regsData = [] } = useRegistrations(tournament?.id)
+  // All-tournament match history: used by the Lobster annealing matcher to
+  // avoid repeating partner/opponent pairs across events.
+  const { data: allMatches = [] } = useAllMatches()
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
 
   const [rounds, setRounds] = useState(4)
@@ -117,19 +116,11 @@ export default function Schedule({ tournament, onNavigate }) {
   // Hooks must run on every render — these were moved above the early
   // `if (!tournament) return …` below. The data-deriving expressions are
   // guarded so they degrade to empty arrays when tournament is null.
-  const regs = useMemo(() => {
-    if (!tournament) return []
-    return getTournamentRegistrations(tournament.id).filter((r) => r.status === 'registered')
-  }, [getTournamentRegistrations, tournament])
+  const regs = useMemo(() => regsData.filter((r) => r.status === 'registered'), [regsData])
   const registeredPlayers = useMemo(() => {
-    if (!tournament) return []
     const registeredIds = new Set(regs.map((reg) => String(reg.playerId)))
     return players.filter((player) => registeredIds.has(String(player.id)))
-  }, [players, regs, tournament])
-  const savedMatches = useMemo(() => {
-    if (!tournament) return []
-    return getTournamentMatches(tournament.id)
-  }, [getTournamentMatches, tournament])
+  }, [players, regs])
   const numCourts = tournament ? (tournament.courts || []).length || 1 : 1
   const format = tournament ? tournament.format || 'americano' : 'americano'
   const genderMode = tournament ? tournament.genderMode || 'mixed' : 'mixed'

@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useApp } from '../../context/AppContext'
 import { usePlayers } from '../players/usePlayers'
+import { useRegistrations } from './useRegistrations'
 import {
   ChevronLeft,
   CheckCircle,
@@ -18,8 +19,9 @@ const METHODS = [
 ]
 
 export default function Payments({ tournament, onNavigate }) {
-  const { getTournamentRegistrations, updateRegistration, session } = useApp()
+  const { updateRegistration, session } = useApp()
   const { data: players = [] } = usePlayers()
+  const { data: regsData = [] } = useRegistrations(tournament?.id)
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
   const [filter, setFilter] = useState('all')
 
@@ -40,7 +42,7 @@ export default function Payments({ tournament, onNavigate }) {
 
   const isAdminAll = !tournament.courtBookingMode || tournament.courtBookingMode === 'admin_all'
 
-  const regs = getTournamentRegistrations(tournament.id).filter((r) => r.status === 'registered')
+  const regs = regsData.filter((r) => r.status === 'registered')
   // Status buckets — see Registration.jsx PayBadge for semantics.
   const confirmed = regs.filter(
     (r) => r.paymentStatus === 'paid' || r.paymentStatus === 'transferred',
@@ -81,7 +83,11 @@ export default function Payments({ tournament, onNavigate }) {
       onNavigate?.('settings')
       return
     }
-    await updateRegistration(reg.id, { paymentStatus: 'paid', paymentMethod: method })
+    await updateRegistration(
+      reg.id,
+      { paymentStatus: 'paid', paymentMethod: method },
+      tournament.id,
+    )
   }
 
   const handleMarkUnpaid = async (reg) => {
@@ -89,7 +95,7 @@ export default function Payments({ tournament, onNavigate }) {
       onNavigate?.('settings')
       return
     }
-    await updateRegistration(reg.id, { paymentStatus: 'unpaid', paymentMethod: '' })
+    await updateRegistration(reg.id, { paymentStatus: 'unpaid', paymentMethod: '' }, tournament.id)
   }
 
   // Manual status override — admin can jump to any state regardless of the
@@ -99,11 +105,15 @@ export default function Payments({ tournament, onNavigate }) {
       onNavigate?.('settings')
       return
     }
-    await updateRegistration(reg.id, {
-      paymentStatus: status,
-      paymentMethod:
-        status === 'unpaid' ? '' : reg.paymentMethod || (status === 'tikkied' ? 'tikkie' : ''),
-    })
+    await updateRegistration(
+      reg.id,
+      {
+        paymentStatus: status,
+        paymentMethod:
+          status === 'unpaid' ? '' : reg.paymentMethod || (status === 'tikkied' ? 'tikkie' : ''),
+      },
+      tournament.id,
+    )
   }
 
   const formatDate = (d) => {

@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react'
 import { X, ArrowRightLeft, Search } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { usePlayers } from '../features/players/usePlayers'
+import { useRegistrations } from '../features/events/useRegistrations'
 import { letterColor } from '../lib/letterColors'
 
 // Picker modal Josephine sees when she taps "Transfer spot to another player".
@@ -16,8 +17,9 @@ import { letterColor } from '../lib/letterColors'
 //                      called after the RPC returns 'ok' so the caller can
 //                      open the share modal next.
 export default function TransferSpotModal({ tournament, onClose, onTransferCreated }) {
-  const { session, getTournamentRegistrations, createTransfer } = useApp()
+  const { session, createTransfer } = useApp()
   const { data: players = [] } = usePlayers()
+  const { data: regs = [] } = useRegistrations(tournament?.id)
   const claimedId = session?.user?.id ?? null
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
 
@@ -26,8 +28,6 @@ export default function TransferSpotModal({ tournament, onClose, onTransferCreat
   const [error, setError] = useState(null)
 
   const displayName = (p) => (isAdmin ? p.name : (p.name || '').split(' ')[0])
-
-  const regs = getTournamentRegistrations(tournament?.id)
   const registeredIds = regs.filter((r) => r.status === 'registered').map((r) => String(r.playerId))
   const waitlistedIds = regs.filter((r) => r.status === 'waitlist').map((r) => String(r.playerId))
 

@@ -1,4 +1,5 @@
 import React from 'react'
+import { useRegistrations } from './useRegistrations'
 import { Pencil, Trash2, Calendar, Users, MapPin, Clock, Building2 } from 'lucide-react'
 import DateTile from '../../components/ui/DateTile'
 import { fmtEur } from '../../lib/format'
@@ -15,14 +16,8 @@ function InfoChip({ icon, label, warn }) {
   )
 }
 
-export default function PastEventCard({
-  t,
-  isAdmin,
-  getTournamentRegistrations,
-  onNavigate,
-  onEdit,
-  onDelete,
-}) {
+export default function PastEventCard({ t, isAdmin, onNavigate, onEdit, onDelete }) {
+  const { data: regsData = [] } = useRegistrations(t?.id)
   const bookedCount = (t.courts || []).filter((c) => c.booked).length
   const totalCourts = (t.courts || []).length
   const ppCost = pricePerPlayer(t)
@@ -55,9 +50,7 @@ export default function PastEventCard({
         </span>
       </div>
       {(() => {
-        const regCount = getTournamentRegistrations(t.id).filter(
-          (r) => r.status === 'registered',
-        ).length
+        const regCount = regsData.filter((r) => r.status === 'registered').length
         return (
           <div className="flex flex-wrap gap-1.5 mb-3">
             <InfoChip icon={<Users size={12} />} label={`${regCount}/${t.maxPlayers || '?'}`} />

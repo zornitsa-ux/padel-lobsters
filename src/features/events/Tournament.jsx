@@ -15,15 +15,8 @@ import { LeagueDashboardCard } from '../league/ui/LeagueDashboardCard'
 export { DEFAULT_EVENT_DESCRIPTION }
 
 export default function Tournament({ onNavigate }) {
-  const {
-    tournaments,
-    addTournament,
-    updateTournament,
-    deleteTournament,
-    session,
-    getTournamentRegistrations,
-    transfers,
-  } = useApp()
+  const { tournaments, addTournament, updateTournament, deleteTournament, session, transfers } =
+    useApp()
   const { data: players = [] } = usePlayers()
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
   const claimedId = session?.user?.id ?? null
@@ -234,7 +227,6 @@ export default function Tournament({ onNavigate }) {
             key={t.id}
             t={t}
             isAdmin={isAdmin}
-            getTournamentRegistrations={getTournamentRegistrations}
             transfers={transfers}
             onNavigate={onNavigate}
             onEdit={openEdit}
@@ -265,7 +257,6 @@ export default function Tournament({ onNavigate }) {
                 key={t.id}
                 t={t}
                 isAdmin={isAdmin}
-                getTournamentRegistrations={getTournamentRegistrations}
                 onNavigate={onNavigate}
                 onEdit={openEdit}
                 onDelete={handleDelete}

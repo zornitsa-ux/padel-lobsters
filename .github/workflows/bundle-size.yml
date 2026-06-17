@@ -1,0 +1,42 @@
+name: Bundle size
+
+# Comment-only bundle-size report on PRs. This does NOT gate merges — it
+# builds the PR and the base branch, diffs the gzipped asset sizes, and posts
+# (then keeps updating) a single sticky comment so reviewers can see the cost
+# of a change. See dist treemap via `npm run build:analyze` for the breakdown.
+
+on:
+  pull_request:
+    branches: [main]
+
+# Only need to write the PR comment; no code changes are pushed.
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  size:
+    name: Compressed size diff
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # preactjs/compressed-size-action@v2 — pinned to the v2 tag commit for
+      # supply-chain safety. Builds base + head, diffs gzipped sizes, comments.
+      - uses: preactjs/compressed-size-action@66325aad6443cb7cf89c4bfcd414aea2367cda94
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          # Match against scripts in CLAUDE.md; --ignore-scripts skips husky.
+          install-step: 'npm ci --ignore-scripts --no-audit --no-fund'
+          build-script: 'build'
+          # Report the hashed JS/CSS chunks Vite emits under dist/assets.
+          pattern: './dist/assets/**/*.{js,css}'
+          # Hide rows whose change is below this (bytes) to cut comment noise.
+          minimum-change-threshold: 100
+        env:
+          # The build imports these; placeholders are fine — we never hit
+          # Supabase during a production build, we just need the vars defined.
+          VITE_SUPABASE_URL: https://placeholder.supabase.co
+          VITE_SUPABASE_ANON_KEY: placeholder-anon-key

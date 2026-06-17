@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ArrowLeft, Check, Users, Save, Clock, Trophy } from 'lucide-react'
-import { useApp } from '../../context/AppContext'
 import { usePlayers } from '../players/usePlayers'
+import { useRegistrations } from '../events/useRegistrations'
 import { useExclusions, useIneligible, useSetExclusions } from './useRaffle'
 import type { IneligibleReason } from './raffleQueries'
 
@@ -20,8 +20,8 @@ export default function RaffleEligibilityContainer({
   tournament: Tournament
   onNavigate?: (page: string, payload?: unknown) => void
 }) {
-  const { getTournamentRegistrations } = useApp()
   const { data: players = [] } = usePlayers()
+  const { data: regsData = [] } = useRegistrations(tournament?.id)
   const { data: excludedIds = [], isLoading } = useExclusions(tournament?.id)
   const { data: ineligible = [] } = useIneligible(tournament?.id)
   const setExclusions = useSetExclusions()
@@ -52,12 +52,12 @@ export default function RaffleEligibilityContainer({
   // Registered players for this tournament, name-sorted.
   const registered = useMemo(() => {
     const seen = new Set<string>()
-    return getTournamentRegistrations(tournament.id)
+    return regsData
       .filter((r: { status?: string }) => r.status === 'registered')
       .map((r: { playerId: string }) => r.playerId)
       .filter((id: string) => (seen.has(id) ? false : (seen.add(id), true)))
       .sort((a: string, b: string) => fullNameOf(nameOf(a)).localeCompare(fullNameOf(nameOf(b))))
-  }, [getTournamentRegistrations, tournament.id, nameOf])
+  }, [regsData, nameOf])
 
   const toggle = (id: string) => {
     if (autoSkip.has(id)) return // locked — the draw skips them regardless
