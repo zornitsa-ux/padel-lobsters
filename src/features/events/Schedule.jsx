@@ -16,7 +16,6 @@ import {
   generateRoundRobin,
 } from './scheduleHelpers'
 import ScoreEntry from './ScoreEntry'
-import ScheduleHeader from './schedule/ScheduleHeader'
 import ScheduleGeneratorControls from './schedule/ScheduleGeneratorControls'
 import ScheduleValidationSummary from './schedule/ScheduleValidationSummary'
 import usePersistentBoolean from './schedule/usePersistentBoolean'
@@ -26,7 +25,6 @@ import {
   buildScheduleCsv,
   cloneRounds,
   downloadCsvFile,
-  formatScheduleDate,
   hasAllMatchesScored,
 } from './schedule/utils'
 
@@ -137,8 +135,6 @@ export default function Schedule({ tournament, onNavigate }) {
   const playerById = useMemo(() => buildPlayerById(players), [players])
   const getPlayer = useCallback((id) => playerById.get(String(id)), [playerById])
   const sn = (p) => shortName(p, registeredPlayers) // smart short name
-  const formattedDate = useMemo(() => formatScheduleDate(tournament?.date), [tournament?.date])
-
   const [finishing, setFinishing] = useState(false)
   const [finishError, setFinishError] = useState('')
 
@@ -272,14 +268,6 @@ export default function Schedule({ tournament, onNavigate }) {
 
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <ScheduleHeader
-        tournamentName={tournament.name}
-        tournamentDate={tournament.date}
-        formattedDate={formattedDate}
-        onBack={() => onNavigate('tournament')}
-      />
-
       {/* Info */}
       <div className="card flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm text-gray-600">

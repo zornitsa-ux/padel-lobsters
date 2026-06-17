@@ -3,7 +3,6 @@ import { useApp } from '../../context/AppContext'
 import { usePlayers } from '../players/usePlayers'
 import { useRegistrations } from './useRegistrations'
 import {
-  ChevronLeft,
   CheckCircle,
   AlertCircle,
   ExternalLink,
@@ -123,18 +122,6 @@ export default function Payments({ tournament, onNavigate }) {
 
   return (
     <div className="space-y-4">
-      {/* Back */}
-      <div>
-        <button
-          onClick={() => onNavigate('tournament')}
-          className="flex items-center gap-1 text-lob-teal text-sm font-semibold mb-2"
-        >
-          <ChevronLeft size={16} /> Events
-        </button>
-        <h2 className="text-lg font-bold text-gray-800">{tournament.name}</h2>
-        <p className="text-sm text-gray-500">Payment Tracker · {formatDate(tournament.date)}</p>
-      </div>
-
       {/* Payment info banner */}
       {isAdminAll ? (
         <div className="bg-lob-teal-light rounded-2xl p-4 space-y-2 border border-lob-teal/10">

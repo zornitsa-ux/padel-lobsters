@@ -3,7 +3,7 @@ import { useApp } from '../../context/AppContext'
 import { usePlayers } from '../players/usePlayers'
 import { useMatches } from './useMatches'
 import { useRegistrations } from './useRegistrations'
-import { ChevronLeft, AlertCircle } from 'lucide-react'
+import { AlertCircle } from 'lucide-react'
 import TransferSpotModal from '../../components/TransferSpotModal'
 import TransferPendingModal from '../../components/TransferPendingModal'
 import DateTile from '../../components/ui/DateTile'
@@ -259,16 +259,9 @@ export default function Registration({ tournament, onNavigate }) {
 
   return (
     <div className="space-y-4">
-      {/* Back + header */}
+      {/* Event meta + actions */}
       <div>
-        <button
-          onClick={() => onNavigate('tournament')}
-          className="flex items-center gap-1 text-lobster-teal text-sm font-semibold mb-2"
-        >
-          <ChevronLeft size={16} /> Events
-        </button>
-        <h2 className="text-lg font-bold text-gray-800">{tournament.name}</h2>
-        <div className="mt-2 flex items-center gap-3">
+        <div className="flex items-center gap-3">
           <DateTile date={tournament.date} size="md" />
           <div className="flex-1 min-w-0">
             <p className="text-base font-semibold text-gray-800 leading-tight">

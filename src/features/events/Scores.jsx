@@ -3,7 +3,7 @@ import { usePlayers } from '../players/usePlayers'
 import { useMatches } from './useMatches'
 import { useRegistrations } from './useRegistrations'
 import * as oscarsApi from '../../api/oscars'
-import { ChevronLeft, Trophy, AlertCircle } from 'lucide-react'
+import { Trophy, AlertCircle } from 'lucide-react'
 import { computeTournamentStandings } from '../../lib/standings'
 import { letterColor } from '../../lib/letterColors'
 
@@ -103,18 +103,6 @@ export default function Scores({ tournament, onNavigate }) {
 
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <div>
-        <button
-          onClick={() => onNavigate('tournament')}
-          className="flex items-center gap-1 text-lobster-teal text-sm font-semibold mb-2"
-        >
-          <ChevronLeft size={16} /> Events
-        </button>
-        <h2 className="text-lg font-bold text-gray-800">{tournament.name}</h2>
-        <p className="text-sm text-gray-500">{formatDate(tournament.date)}</p>
-      </div>
-
       {/* Tab switcher — Ranking | Matches | Lobster Games.
           The Lobster Games tab only shows up if at least one game was
           played + finished for this tournament. */}

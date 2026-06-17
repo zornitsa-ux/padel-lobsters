@@ -16,6 +16,7 @@ import SetupGuard from './components/SetupGuard'
 import VerificationGate from './components/VerificationGate'
 import AuthConfirm from './components/AuthConfirm'
 import { useEventDataLoader } from './features/events/useEventDataLoader'
+import EventShell from './features/events/EventShell'
 
 // Code-split every route off the first paint. The app shell (Layout,
 // VerificationGate, SetupGuard) and the logged-out landing (Dashboard) stay
@@ -65,13 +66,17 @@ export default function App() {
                   <Route path="/auth/confirm" element={<AuthConfirm />} />
 
                   <Route path="/events" element={<EventsRoute />} />
-                  <Route path="/events/:id" element={<EventDetailRoute />} />
-                  <Route path="/events/:id/schedule" element={<EventScheduleRoute />} />
-                  <Route path="/events/:id/scores" element={<EventScoresRoute />} />
-                  <Route path="/events/:id/payments" element={<EventPaymentsRoute />} />
-                  <Route path="/events/:id/oscars" element={<EventOscarsRoute />} />
-                  <Route path="/events/:id/raffle" element={<EventRaffleRoute />} />
-                  <Route path="/events/:id/eligibility" element={<EventEligibilityRoute />} />
+                  <Route path="/events/:id" element={<EventShellRoute />}>
+                    <Route index element={<Navigate to="info" replace />} />
+                    <Route path="info" element={<EventDetailRoute />} />
+                    <Route path="schedule" element={<EventScheduleRoute />} />
+                    <Route path="results" element={<EventScoresRoute />} />
+                    <Route path="scores" element={<Navigate to="../results" replace />} />
+                    <Route path="payments" element={<EventPaymentsRoute />} />
+                    <Route path="oscars" element={<EventOscarsRoute />} />
+                    <Route path="raffle" element={<EventRaffleRoute />} />
+                    <Route path="eligibility" element={<EventEligibilityRoute />} />
+                  </Route>
 
                   <Route path="/community" element={<CommunityRoute />} />
                   <Route path="/community/shop" element={<MerchRoute />} />
@@ -123,11 +128,11 @@ function useLegacyNavigate() {
       case 'tournament':
         return navigate('/events')
       case 'registration':
-        return t?.id ? navigate(`/events/${t.id}`) : navigate('/events')
+        return t?.id ? navigate(`/events/${t.id}/info`) : navigate('/events')
       case 'schedule':
         return t?.id ? navigate(`/events/${t.id}/schedule`) : navigate('/events')
       case 'scores':
-        return t?.id ? navigate(`/events/${t.id}/scores`) : navigate('/events')
+        return t?.id ? navigate(`/events/${t.id}/results`) : navigate('/events')
       case 'payments':
         return t?.id ? navigate(`/events/${t.id}/payments`) : navigate('/events')
       case 'game':
@@ -176,6 +181,12 @@ function HomeRoute() {
 function EventsRoute() {
   const onNavigate = useLegacyNavigate()
   return <Tournament onNavigate={onNavigate} />
+}
+
+function EventShellRoute() {
+  const tournament = useTournamentFromUrl()
+  if (!tournament) return <Navigate to="/events" replace />
+  return <EventShell tournament={tournament} />
 }
 
 function EventDetailRoute() {
