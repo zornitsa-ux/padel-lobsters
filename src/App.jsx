@@ -17,6 +17,7 @@ import VerificationGate from './components/VerificationGate'
 import AuthConfirm from './components/AuthConfirm'
 import { useEventDataLoader } from './features/events/useEventDataLoader'
 import EventShell from './features/events/EventShell'
+import CommunityShell from './features/community/CommunityShell'
 
 // Code-split every route off the first paint. The app shell (Layout,
 // VerificationGate, SetupGuard) and the logged-out landing (Dashboard) stay
@@ -77,11 +78,13 @@ export default function App() {
                     <Route path="eligibility" element={<EventEligibilityRoute />} />
                   </Route>
 
-                  <Route path="/community" element={<CommunityRoute />} />
-                  <Route path="/community/shop" element={<MerchRoute />} />
-                  <Route path="/community/:id" element={<CommunityRoute />} />
+                  <Route path="/community" element={<CommunityShell />}>
+                    <Route index element={<CommunityMembersRoute />} />
+                    <Route path="shop" element={<MerchRoute />} />
+                    <Route path=":id" element={<CommunityMembersRoute />} />
+                  </Route>
 
-                  <Route path="/merch" element={<MerchRoute />} />
+                  <Route path="/merch" element={<Navigate to="/community/shop" replace />} />
                   <Route path="/admin" element={<AdminRoute />} />
                   <Route path="/account" element={<AccountRoute />} />
                   <Route path="/settings" element={<Navigate to="/account" replace />} />
@@ -144,11 +147,11 @@ function useLegacyNavigate() {
         if (t?.focusPlayerId) return navigate(`/community/${t.focusPlayerId}`)
         return navigate('/community')
       case 'merch':
-        return navigate('/merch')
+        return navigate('/community/shop')
       case 'admin':
         return navigate('/admin')
       case 'merch-orders':
-        return navigate('/merch?tab=orders')
+        return navigate('/community/shop?tab=orders')
       case 'history':
         return navigate('/events')
       case 'settings':
@@ -243,7 +246,7 @@ function EventEligibilityRoute() {
   return <RaffleEligibilityContainer tournament={tournament} onNavigate={onNavigate} />
 }
 
-function CommunityRoute() {
+function CommunityMembersRoute() {
   const { id } = useParams()
   const onNavigate = useLegacyNavigate()
   return <Players onNavigate={onNavigate} focusPlayerId={id} />
