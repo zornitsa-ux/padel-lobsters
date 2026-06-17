@@ -3,13 +3,14 @@ import { useApp } from '../../context/AppContext'
 import { useMyProfile } from '../players/usePlayers'
 import { supabase } from '../../supabase'
 import { isE164 } from '../../lib/whatsapp'
-import { Settings2 } from 'lucide-react'
 import DEFAULT_TIPS from '../../data/padelTips'
 import { recomputeAllRatings } from '../../lib/ratingsRecompute'
 import { processAvatar } from '../../lib/processAvatar'
 import { LOBBY_PROMPTS } from './settingsHelpers'
 import AccountSection from './AccountSection'
 import ProfileSection from './ProfileSection'
+import AccountStatsSection from './AccountStatsSection'
+import AccountOrdersSection from './AccountOrdersSection'
 import AdminSection from './AdminSection'
 
 export default function Settings() {
@@ -323,23 +324,8 @@ export default function Settings() {
 
   return (
     <div className="space-y-5">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 bg-lobster-teal rounded-xl flex items-center justify-center">
-          <Settings2 size={20} className="text-white" />
-        </div>
-        <div>
-          <h2 className="text-lg font-bold text-gray-800">Settings</h2>
-          <p className="text-xs text-gray-500">App configuration</p>
-        </div>
-      </div>
+      <h2 className="text-lg font-bold text-gray-800">Account</h2>
 
-      {/*
-        ── Account (unified sign-in) ───────────────────────────────────
-        Single card: one PIN field handles both player and admin sign-in.
-        After sign-in the session persists across every page — no more
-        per-action login prompts on Merch / Tournament / etc.
-      */}
       <AccountSection
         isAdmin={isAdmin}
         signedInPlayer={signedInPlayer}
@@ -370,7 +356,11 @@ export default function Settings() {
         dismissPlaytomicPrompt={dismissPlaytomicPrompt}
       />
 
-      {/* Settings form — admin only */}
+      <AccountStatsSection claimedId={claimedId} />
+
+      <AccountOrdersSection myPlayer={myPlayer} />
+
+      {/* App config — admin only */}
       {isAdmin && (
         <AdminSection
           form={form}
