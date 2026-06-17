@@ -26,9 +26,6 @@ export default {
           gold: '#E8A030',
         },
       },
-      fontFamily: {
-        display: ['Georgia', 'serif'],
-      },
       keyframes: {
         'fade-in-up': {
           '0%': { opacity: '0', transform: 'translateY(12px) scale(0.97)' },

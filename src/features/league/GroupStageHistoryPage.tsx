@@ -62,7 +62,7 @@ export default function GroupStageHistoryPage() {
         >
           <ChevronLeft size={22} />
         </button>
-        <h1 className="font-display text-xl font-bold text-lob-dark">Group Stage</h1>
+        <h1 className="text-xl font-bold text-lob-dark">Group Stage</h1>
       </div>
 
       {league.divisions.length > 1 && (

@@ -146,7 +146,7 @@ Tailwind CSS v3 with custom `lob-*` color tokens (defined in `tailwind.config.js
 - `lob-dark` `#1C2B30` — body text
 - `lob-muted` `#6B8A92` — secondary text
 
-Display font: Georgia serif (`font-display`). Mobile-first layout with `pb-safe` for iOS home-indicator.
+Mobile-first layout with `pb-safe` for iOS home-indicator.
 
 ### Migrations
 

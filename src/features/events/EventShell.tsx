@@ -28,20 +28,20 @@ export default function EventShell({ tournament }: Props) {
   return (
     <div className="-mx-4 -mt-5">
       {/* Sticky app bar: back nav + title + tab strip */}
-      <div className="sticky top-0 z-20 shadow-md">
+      <div className="sticky top-0 z-20 border-b border-gray-200">
         {/* Title area — white background lifts it off the cream page */}
-        <div className="bg-white px-4 pt-3 pb-4">
+        <div className="bg-white px-4 pt-3 pb-2">
           {/* Back button — small and quiet above the title */}
           <button
             onClick={() => navigate('/events')}
-            className="flex items-center gap-0.5 text-lob-teal text-xs font-semibold mb-2 -ml-0.5 hover:text-lob-teal-dark transition-colors"
+            className="flex items-center gap-0.5 text-lob-teal text-xs font-semibold mb-1.5 -ml-0.5 hover:text-lob-teal-dark transition-colors"
           >
             <ChevronLeft size={14} strokeWidth={2.5} />
             Events
           </button>
 
           {/* Tournament name as a proper page title */}
-          <h1 className="font-display text-xl font-semibold text-lob-dark leading-snug truncate">
+          <h1 className="text-xl font-semibold text-lob-dark leading-snug truncate">
             {tournament.name}
           </h1>
         </div>
