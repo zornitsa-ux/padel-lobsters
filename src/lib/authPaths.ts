@@ -33,7 +33,8 @@ export const PROTECTED_PATHS = Object.freeze([
   '/events', // tournament list + detail + sub-tabs (schedule/scores/payments/oscars)
   '/community', // roster + per-player profile
   '/merch', // merch orders + raffle
-  '/settings', // profile + admin
+  '/account', // profile + admin (was /settings)
+  '/settings', // redirects to /account — kept here so the redirect itself is accessible
   '/history', // historical tournaments
   '/league', // Lobster League
   '/transfer', // accept-spot-transfer deep link

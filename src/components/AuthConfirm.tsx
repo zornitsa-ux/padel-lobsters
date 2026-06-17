@@ -112,10 +112,10 @@ export default function AuthConfirm() {
         </p>
         <button
           type="button"
-          onClick={() => navigate('/settings', { replace: true })}
+          onClick={() => navigate('/account', { replace: true })}
           className="mt-5 inline-flex items-center rounded-lg bg-lob-teal px-4 py-2 text-sm font-medium text-white hover:bg-lob-teal/90"
         >
-          Back to settings
+          Back to account
         </button>
       </div>
     )

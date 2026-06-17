@@ -31,6 +31,7 @@ const Scores = lazy(() => import('./components/Scores'))
 const Settings = lazy(() => import('./components/Settings'))
 const Merch = lazy(() => import('./components/Merch'))
 const History = lazy(() => import('./components/History'))
+const Account = lazy(() => import('./components/Settings'))
 const Game = lazy(() => import('./components/Game'))
 const RaffleContainer = lazy(() => import('./features/raffle/RaffleContainer'))
 const RaffleEligibilityContainer = lazy(
@@ -73,11 +74,13 @@ export default function App() {
                   <Route path="/events/:id/eligibility" element={<EventEligibilityRoute />} />
 
                   <Route path="/community" element={<CommunityRoute />} />
+                  <Route path="/community/shop" element={<MerchRoute />} />
                   <Route path="/community/:id" element={<CommunityRoute />} />
 
                   <Route path="/merch" element={<MerchRoute />} />
                   <Route path="/admin" element={<AdminRoute />} />
-                  <Route path="/settings" element={<SettingsRoute />} />
+                  <Route path="/account" element={<AccountRoute />} />
+                  <Route path="/settings" element={<Navigate to="/account" replace />} />
                   <Route path="/history" element={<HistoryRoute />} />
                   <Route path="/transfer/:id" element={<TransferRoute />} />
                   <Route path="/league" element={<LeagueIndexPage />} />
@@ -145,7 +148,7 @@ function useLegacyNavigate() {
       case 'history':
         return navigate('/history')
       case 'settings':
-        return navigate('/settings')
+        return navigate('/account')
       case 'league':
         return navigate('/league')
       default:
@@ -246,6 +249,11 @@ function MerchRoute() {
 function SettingsRoute() {
   const onNavigate = useLegacyNavigate()
   return <Settings onNavigate={onNavigate} />
+}
+
+function AccountRoute() {
+  const onNavigate = useLegacyNavigate()
+  return <Account onNavigate={onNavigate} />
 }
 
 function AdminRoute() {

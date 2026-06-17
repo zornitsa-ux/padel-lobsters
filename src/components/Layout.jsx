@@ -7,10 +7,10 @@ import {
   LayoutDashboard,
   Users,
   Trophy,
-  Settings,
+  Medal,
+  CircleUser,
   Shield,
   MessageCircle,
-  ShoppingBag,
   ChevronDown,
   ChevronUp,
 } from 'lucide-react'
@@ -24,9 +24,9 @@ const ORIGIN =
 const NAV = [
   { to: '/home', label: 'Home', icon: LayoutDashboard, end: true },
   { to: '/events', label: 'Events', icon: Trophy, end: false },
-  { to: '/community', label: 'Players', icon: Users, end: false },
-  { to: '/merch', label: 'Merch', icon: ShoppingBag, end: false },
-  { to: '/settings', label: 'Settings', icon: Settings, end: false },
+  { to: '/league', label: 'League', icon: Medal, end: false },
+  { to: '/community', label: 'Community', icon: Users, end: false },
+  { to: '/account', label: 'Account', icon: CircleUser, end: false },
 ]
 
 const InstagramIcon = () => (
