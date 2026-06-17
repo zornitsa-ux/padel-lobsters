@@ -27,32 +27,38 @@ export default function EventShell({ tournament }: Props) {
 
   return (
     <div className="-mx-4 -mt-5">
-      {/* Sticky back-button row + tab strip */}
-      <div className="sticky top-0 z-20 bg-lob-cream border-b border-gray-200">
-        <div className="flex items-center gap-2 px-4 pt-3 pb-1">
+      {/* Sticky app bar: back nav + title + tab strip */}
+      <div className="sticky top-0 z-20 shadow-md">
+        {/* Title area — white background lifts it off the cream page */}
+        <div className="bg-white px-4 pt-3 pb-4">
+          {/* Back button — small and quiet above the title */}
           <button
             onClick={() => navigate('/events')}
-            className="flex items-center gap-1 text-lob-teal text-sm font-semibold shrink-0"
+            className="flex items-center gap-0.5 text-lob-teal text-xs font-semibold mb-2 -ml-0.5 hover:text-lob-teal-dark transition-colors"
           >
-            <ChevronLeft size={16} />
+            <ChevronLeft size={14} strokeWidth={2.5} />
             Events
           </button>
-          <span className="text-lob-muted text-sm shrink-0">·</span>
-          <span className="text-sm font-semibold text-lob-dark truncate">{tournament.name}</span>
+
+          {/* Tournament name as a proper page title */}
+          <h1 className="font-display text-xl font-semibold text-lob-dark leading-snug truncate">
+            {tournament.name}
+          </h1>
         </div>
 
-        <div className="overflow-x-auto">
-          <div className="flex px-4 min-w-max">
+        {/* Tab strip — teal-light band creates a clear visual break from the title */}
+        <div className="bg-lob-teal-light overflow-x-auto">
+          <div className="flex gap-1 px-3 py-2 min-w-max">
             {tabs.map(({ label, path }) => (
               <NavLink
                 key={path}
                 to={`${base}/${path}`}
                 end
                 className={({ isActive }) =>
-                  `px-3 py-2.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
+                  `px-3.5 py-1.5 text-sm font-semibold rounded-full transition-colors whitespace-nowrap ${
                     isActive
-                      ? 'border-lob-coral text-lob-coral'
-                      : 'border-transparent text-lob-muted'
+                      ? 'bg-lob-coral text-white shadow-sm'
+                      : 'text-lob-teal hover:bg-white/60'
                   }`
                 }
               >
