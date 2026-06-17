@@ -18,7 +18,7 @@ export default function ScheduleHeader({
     <div>
       <button
         onClick={onBack}
-        className="flex items-center gap-1 text-lobster-teal text-sm font-semibold mb-2"
+        className="flex items-center gap-1 text-lob-teal text-sm font-semibold mb-2"
       >
         <ChevronLeft size={16} /> Events
       </button>

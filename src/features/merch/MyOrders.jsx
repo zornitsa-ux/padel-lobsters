@@ -34,7 +34,7 @@ export default function MyOrders({ myOrders, items }) {
                     <p className="font-semibold text-gray-800">{item?.name || 'Item'}</p>
                     <div className="flex items-center gap-2 flex-wrap mt-0.5">
                       {o.size && (
-                        <span className="text-xs font-bold bg-lobster-cream text-lobster-teal px-2 py-0.5 rounded-full">
+                        <span className="text-xs font-bold bg-lob-cream text-lob-teal px-2 py-0.5 rounded-full">
                           {o.size}
                         </span>
                       )}
@@ -61,7 +61,7 @@ export default function MyOrders({ myOrders, items }) {
                       <React.Fragment key={s}>
                         {i > 0 && (
                           <div
-                            className={`flex-1 h-0.5 rounded ${active ? 'bg-lobster-teal' : 'bg-gray-200'}`}
+                            className={`flex-1 h-0.5 rounded ${active ? 'bg-lob-teal' : 'bg-gray-200'}`}
                           />
                         )}
                         <div

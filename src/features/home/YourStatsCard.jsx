@@ -12,11 +12,11 @@ export default function YourStatsCard({ claimedId, myStats, onNavigate }) {
     <section>
       <div className="flex items-center justify-between mb-2">
         <h3 className="font-bold text-gray-700 flex items-center gap-1.5">
-          <Award size={15} className="text-lobster-orange" /> Your Stats
+          <Award size={15} className="text-lob-coral" /> Your Stats
         </h3>
         <button
           onClick={() => onNavigate('players', { focusPlayerId: claimedId })}
-          className="text-xs text-lobster-teal font-semibold"
+          className="text-xs text-lob-teal font-semibold"
         >
           View full profile
         </button>
@@ -39,7 +39,7 @@ export default function YourStatsCard({ claimedId, myStats, onNavigate }) {
             <p className="text-[9px] text-gray-400 font-medium">Lost</p>
           </div>
           <div>
-            <p className="text-lg font-bold text-lobster-orange">{myStats.winRate}%</p>
+            <p className="text-lg font-bold text-lob-coral">{myStats.winRate}%</p>
             <p className="text-[9px] text-gray-400 font-medium">Win Rate</p>
           </div>
         </div>
@@ -47,7 +47,7 @@ export default function YourStatsCard({ claimedId, myStats, onNavigate }) {
         {myStats.played === 0 ? (
           <div className="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500 text-center">
             No matches logged yet — your stats will populate as soon as a tournament result is
-            recorded. Tap <span className="font-semibold text-lobster-teal">View full profile</span>{' '}
+            recorded. Tap <span className="font-semibold text-lob-teal">View full profile</span>{' '}
             for your historical record.
           </div>
         ) : (

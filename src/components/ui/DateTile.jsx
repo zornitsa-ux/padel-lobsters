@@ -26,10 +26,10 @@ export default function DateTile({ date, size = 'md', className = '' }) {
 
   return (
     <div
-      className={`${dims.box} bg-white rounded-xl border border-lobster-teal/40 flex flex-col items-stretch flex-shrink-0 overflow-hidden shadow-sm ${className}`}
+      className={`${dims.box} bg-white rounded-xl border border-lob-teal/40 flex flex-col items-stretch flex-shrink-0 overflow-hidden shadow-sm ${className}`}
     >
       <div
-        className={`${dims.month} font-bold bg-lobster-teal text-white text-center uppercase tracking-wider leading-none`}
+        className={`${dims.month} font-bold bg-lob-teal text-white text-center uppercase tracking-wider leading-none`}
       >
         {month}
       </div>

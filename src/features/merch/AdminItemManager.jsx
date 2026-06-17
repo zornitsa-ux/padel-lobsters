@@ -36,7 +36,7 @@ export default function AdminItemManager({
             onDragEnd={handleDragEnd}
             className={`card flex items-center gap-3 transition-all ${
               dragIdx === idx ? 'opacity-40 scale-[0.97]' : ''
-            } ${overIdx === idx && dragIdx !== idx ? 'ring-2 ring-lobster-teal ring-offset-1' : ''}`}
+            } ${overIdx === idx && dragIdx !== idx ? 'ring-2 ring-lob-teal ring-offset-1' : ''}`}
           >
             <div className="cursor-grab active:cursor-grabbing touch-none flex-shrink-0 text-gray-300 hover:text-gray-500 -ml-1">
               <GripVertical size={18} />

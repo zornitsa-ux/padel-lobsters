@@ -144,7 +144,7 @@ export default function PlayerProfileDrawer({
       {/* Lobster Ladder — admin-only Glicko-2 shadow rating */}
       {isAdmin && p.learnedLevel != null && (
         <div className="flex items-center gap-1.5 text-xs text-gray-500">
-          <span className="text-[10px] font-bold text-lobster-teal uppercase tracking-wider">
+          <span className="text-[10px] font-bold text-lob-teal uppercase tracking-wider">
             Lobster Score
           </span>
           <span className="font-bold text-gray-700">{p.learnedLevel.toFixed(2)}</span>
@@ -330,7 +330,7 @@ export default function PlayerProfileDrawer({
                   e.stopPropagation()
                   onNavigate && onNavigate('scores', t)
                 }}
-                className="text-xs bg-lobster-cream text-lobster-teal px-2.5 py-1 rounded-lg font-semibold hover:bg-lobster-teal hover:text-white transition-all active:scale-95"
+                className="text-xs bg-lob-cream text-lob-teal px-2.5 py-1 rounded-lg font-semibold hover:bg-lob-teal hover:text-white transition-all active:scale-95"
               >
                 {t.name ||
                   new Date(t.date).toLocaleDateString('en-GB', {
@@ -414,7 +414,7 @@ export default function PlayerProfileDrawer({
                         : `${h.players} players`}
                     </p>
                   </div>
-                  <span className="text-xs font-bold text-lobster-teal flex-shrink-0">
+                  <span className="text-xs font-bold text-lob-teal flex-shrink-0">
                     {h.total} pts
                   </span>
                 </div>
@@ -436,8 +436,8 @@ export default function PlayerProfileDrawer({
       )}
       {/* Player tagline / notes with saved prompt label */}
       {(p.tagline || p.notes) && (
-        <div className="bg-lobster-cream rounded-xl px-3 py-2">
-          <p className="text-[10px] font-bold text-lobster-teal uppercase tracking-wider mb-0.5">
+        <div className="bg-lob-cream rounded-xl px-3 py-2">
+          <p className="text-[10px] font-bold text-lob-teal uppercase tracking-wider mb-0.5">
             {p.taglineLabel || p.tagline_label || '💬 War Cry'}
           </p>
           <p className="text-xs text-gray-700 italic">"{p.tagline || p.notes}"</p>

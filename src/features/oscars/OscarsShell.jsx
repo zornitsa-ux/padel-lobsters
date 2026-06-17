@@ -4,12 +4,12 @@ import { ChevronLeft } from 'lucide-react'
 /* ─── Full-screen shell with back button and an optional header-right slot ── */
 export function Shell({ onBack, title, subtitle, headerRight, children }) {
   return (
-    <div className="fixed inset-0 z-50 bg-lobster-cream flex flex-col overflow-y-auto">
-      <div className="px-4 pt-12 pb-3 sticky top-0 bg-lobster-cream z-10 border-b border-gray-100">
+    <div className="fixed inset-0 z-50 bg-lob-cream flex flex-col overflow-y-auto">
+      <div className="px-4 pt-12 pb-3 sticky top-0 bg-lob-cream z-10 border-b border-gray-100">
         <div className="flex items-center justify-between gap-2 mb-2">
           <button
             onClick={onBack}
-            className="flex items-center gap-1 text-lobster-teal text-sm font-semibold"
+            className="flex items-center gap-1 text-lob-teal text-sm font-semibold"
           >
             <ChevronLeft size={16} /> Back
           </button>
@@ -37,7 +37,7 @@ export function PhaseBanner({ status, startedAt, closedAt, sharedAt }) {
   if (status === 'active') {
     return (
       <div className="bg-white border border-gray-200 rounded-2xl px-4 py-3 flex items-center gap-3">
-        <span className="w-2 h-2 rounded-full bg-lobster-orange animate-pulse" />
+        <span className="w-2 h-2 rounded-full bg-lob-coral animate-pulse" />
         <span className="text-sm font-semibold text-gray-700">Active</span>
         <span className="text-xs text-gray-400 ml-auto">started {stamp(startedAt)}</span>
       </div>

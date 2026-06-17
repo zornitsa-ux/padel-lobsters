@@ -47,9 +47,9 @@ export function SignInBanner({ role, onNavigate, message, compact }) {
   const accent = isAdmin ? 'amber' : 'teal'
 
   const bg =
-    accent === 'amber' ? 'bg-amber-50 border-amber-200' : 'bg-lobster-cream border-lobster-teal/30'
-  const iconTxt = accent === 'amber' ? 'text-amber-600' : 'text-lobster-teal'
-  const title = accent === 'amber' ? 'text-amber-800' : 'text-lobster-teal'
+    accent === 'amber' ? 'bg-amber-50 border-amber-200' : 'bg-lob-cream border-lob-teal/30'
+  const iconTxt = accent === 'amber' ? 'text-amber-600' : 'text-lob-teal'
+  const title = accent === 'amber' ? 'text-amber-800' : 'text-lob-teal'
   const body = accent === 'amber' ? 'text-amber-700' : 'text-gray-600'
 
   const defaultCopy = isAdmin
@@ -65,7 +65,7 @@ export function SignInBanner({ role, onNavigate, message, compact }) {
         <p className={`text-xs ${body} flex-1`}>{message || defaultCopy}</p>
         <button
           onClick={goToSettings}
-          className="text-xs font-semibold text-lobster-teal bg-white px-2.5 py-1 rounded-lg active:scale-95 transition-all flex items-center gap-1"
+          className="text-xs font-semibold text-lob-teal bg-white px-2.5 py-1 rounded-lg active:scale-95 transition-all flex items-center gap-1"
         >
           <LogIn size={11} /> Sign in
         </button>
@@ -87,7 +87,7 @@ export function SignInBanner({ role, onNavigate, message, compact }) {
         <p className={`text-xs ${body} mt-0.5`}>{message || defaultCopy}</p>
         <button
           onClick={goToSettings}
-          className="mt-2 text-xs font-bold text-white bg-lobster-teal px-3 py-1.5 rounded-lg active:scale-95 transition-all inline-flex items-center gap-1"
+          className="mt-2 text-xs font-bold text-white bg-lob-teal px-3 py-1.5 rounded-lg active:scale-95 transition-all inline-flex items-center gap-1"
         >
           <LogIn size={12} /> Go to Settings
         </button>
@@ -185,8 +185,8 @@ export function PinPrompt({
 
   const isAdminAsk = role === 'admin'
   const accent = isAdminAsk ? 'amber' : 'teal'
-  const accentBg = accent === 'amber' ? 'bg-amber-50' : 'bg-lobster-cream'
-  const accentTxt = accent === 'amber' ? 'text-amber-700' : 'text-lobster-teal'
+  const accentBg = accent === 'amber' ? 'bg-amber-50' : 'bg-lob-cream'
+  const accentTxt = accent === 'amber' ? 'text-amber-700' : 'text-lob-teal'
 
   return (
     <div

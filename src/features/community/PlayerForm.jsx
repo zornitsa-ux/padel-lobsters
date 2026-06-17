@@ -47,7 +47,7 @@ export default function PlayerForm({
                 <img
                   src={avatarPreview}
                   alt="Preview"
-                  className="w-20 h-20 rounded-full object-cover border-2 border-lobster-teal"
+                  className="w-20 h-20 rounded-full object-cover border-2 border-lob-teal"
                 />
               ) : (
                 <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-300">
@@ -57,7 +57,7 @@ export default function PlayerForm({
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="absolute bottom-0 right-0 w-7 h-7 bg-lobster-teal rounded-full flex items-center justify-center text-white shadow-sm active:scale-95"
+                className="absolute bottom-0 right-0 w-7 h-7 bg-lob-teal rounded-full flex items-center justify-center text-white shadow-sm active:scale-95"
               >
                 <Camera size={13} />
               </button>
@@ -161,7 +161,7 @@ export default function PlayerForm({
                   key={val}
                   onClick={() => setForm((f) => ({ ...f, gender: f.gender === val ? '' : val }))}
                   className={`flex-1 py-2.5 rounded-xl font-semibold text-sm transition-all ${
-                    form.gender === val ? 'bg-lobster-teal text-white' : 'bg-gray-100 text-gray-600'
+                    form.gender === val ? 'bg-lob-teal text-white' : 'bg-gray-100 text-gray-600'
                   }`}
                 >
                   {lbl}

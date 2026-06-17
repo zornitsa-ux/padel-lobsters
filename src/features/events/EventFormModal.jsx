@@ -110,7 +110,7 @@ export default function EventFormModal({
                   type="button"
                   onClick={() => setForm((f) => ({ ...f, duration: d }))}
                   className={`py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                    form.duration === d ? 'bg-lobster-teal text-white' : 'bg-gray-100 text-gray-600'
+                    form.duration === d ? 'bg-lob-teal text-white' : 'bg-gray-100 text-gray-600'
                   }`}
                 >
                   {d < 60 ? `${d}m` : d === 60 ? '1h' : d === 90 ? '1.5h' : d === 120 ? '2h' : '3h'}
@@ -133,7 +133,7 @@ export default function EventFormModal({
                   onClick={() => setForm((f) => ({ ...f, genderMode: val }))}
                   className={`flex-1 py-2.5 rounded-xl font-semibold text-sm transition-all ${
                     form.genderMode === val
-                      ? 'bg-lobster-teal text-white'
+                      ? 'bg-lob-teal text-white'
                       : 'bg-gray-100 text-gray-600'
                   }`}
                 >
@@ -159,7 +159,7 @@ export default function EventFormModal({
                 onClick={() => setForm((f) => ({ ...f, courtBookingMode: 'admin_all' }))}
                 className={`w-full text-left p-3 rounded-xl border-2 transition-all ${
                   form.courtBookingMode === 'admin_all'
-                    ? 'border-lobster-teal bg-teal-50'
+                    ? 'border-lob-teal bg-teal-50'
                     : 'border-gray-200 bg-gray-50'
                 }`}
               >
@@ -167,7 +167,7 @@ export default function EventFormModal({
                   <ShieldCheck
                     size={15}
                     className={
-                      form.courtBookingMode === 'admin_all' ? 'text-lobster-teal' : 'text-gray-400'
+                      form.courtBookingMode === 'admin_all' ? 'text-lob-teal' : 'text-gray-400'
                     }
                   />
                   <span className="font-semibold text-sm text-gray-800">
@@ -218,7 +218,7 @@ export default function EventFormModal({
               <button
                 type="button"
                 onClick={addCourt}
-                className="text-xs text-lobster-teal font-semibold flex items-center gap-1"
+                className="text-xs text-lob-teal font-semibold flex items-center gap-1"
               >
                 <Plus size={13} /> Add court
               </button>
@@ -274,7 +274,7 @@ export default function EventFormModal({
                       type="checkbox"
                       checked={c.booked}
                       onChange={(e) => setCourt(i, 'booked', e.target.checked)}
-                      className="w-4 h-4 accent-lobster-teal"
+                      className="w-4 h-4 accent-lob-teal"
                     />
                     Court confirmed / booked
                   </label>
@@ -300,7 +300,7 @@ export default function EventFormModal({
                 onChange={(e) => setForm((f) => ({ ...f, pricePerPerson: e.target.value }))}
               />
               {form.pricePerPerson && parseInt(form.maxPlayers) > 0 && (
-                <p className="text-sm font-semibold text-lobster-teal mt-1.5">
+                <p className="text-sm font-semibold text-lob-teal mt-1.5">
                   {form.maxPlayers} players × {fmtEur(form.pricePerPerson)} ={' '}
                   {fmtEur(
                     (parseFloat(form.pricePerPerson) || 0) * (parseInt(form.maxPlayers) || 0),

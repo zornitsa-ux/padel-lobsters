@@ -47,7 +47,7 @@ export default function CategoryEditor({ cats, onChange, onReset }) {
       <div className="flex gap-2 pt-1">
         <button
           onClick={add}
-          className="flex-1 flex items-center justify-center gap-1 text-lobster-teal text-sm font-semibold bg-lobster-teal/5 hover:bg-lobster-teal/10 rounded-xl py-2 transition-colors"
+          className="flex-1 flex items-center justify-center gap-1 text-lob-teal text-sm font-semibold bg-lob-teal/5 hover:bg-lob-teal/10 rounded-xl py-2 transition-colors"
         >
           <Plus size={14} /> Add category
         </button>

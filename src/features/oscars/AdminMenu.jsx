@@ -77,14 +77,14 @@ function MenuOption({ active, icon, title, subtitle, onClick }) {
       aria-pressed={active}
       className={`w-full text-left rounded-xl border p-3 flex items-start gap-3 transition-all active:scale-[0.99] ${
         active
-          ? 'bg-lobster-teal/10 border-lobster-teal'
+          ? 'bg-lob-teal/10 border-lob-teal'
           : 'bg-white border-gray-200 hover:border-gray-300'
       }`}
     >
-      <span className={active ? 'text-lobster-teal' : 'text-gray-500'}>{icon}</span>
+      <span className={active ? 'text-lob-teal' : 'text-gray-500'}>{icon}</span>
       <span className="min-w-0">
         <span
-          className={`block text-sm font-bold ${active ? 'text-lobster-teal' : 'text-gray-800'}`}
+          className={`block text-sm font-bold ${active ? 'text-lob-teal' : 'text-gray-800'}`}
         >
           {title}
           {active && <span className="ml-1.5 text-[10px] font-semibold uppercase">· current</span>}

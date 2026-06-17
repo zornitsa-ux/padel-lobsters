@@ -375,7 +375,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
         <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 space-y-4">
           <div className="text-center space-y-1">
             <div className="w-12 h-12 bg-teal-50 rounded-full flex items-center justify-center mx-auto">
-              <Check className="text-lobster-teal" size={24} />
+              <Check className="text-lob-teal" size={24} />
             </div>
             <h1 className="text-lg font-extrabold text-gray-800">
               {pinReveal.wasExisting ? 'Welcome back 🦞' : "You're in 🦞"}
@@ -389,16 +389,16 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
 
           <div className="bg-teal-50 border border-teal-200 rounded-xl p-3 flex items-center justify-between">
             <div>
-              <div className="text-[10px] text-lobster-teal font-bold uppercase tracking-wide">
+              <div className="text-[10px] text-lob-teal font-bold uppercase tracking-wide">
                 Your PIN
               </div>
-              <div className="text-2xl font-extrabold tracking-[0.4em] text-lobster-teal">
+              <div className="text-2xl font-extrabold tracking-[0.4em] text-lob-teal">
                 {pinReveal.pin || '????'}
               </div>
             </div>
             <button
               onClick={copyPin}
-              className="text-xs font-semibold text-lobster-teal hover:text-teal-700 flex items-center gap-1"
+              className="text-xs font-semibold text-lob-teal hover:text-teal-700 flex items-center gap-1"
             >
               <Copy size={12} />
               {copied ? 'Copied' : 'Copy'}
@@ -417,7 +417,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
           <button
             onClick={continueToApp}
             disabled={continuing}
-            className="w-full bg-lobster-teal text-white font-bold text-sm py-2.5 rounded-xl hover:bg-teal-700 transition disabled:opacity-60 flex items-center justify-center gap-2"
+            className="w-full bg-lob-teal text-white font-bold text-sm py-2.5 rounded-xl hover:bg-teal-700 transition disabled:opacity-60 flex items-center justify-center gap-2"
           >
             {continuing ? (
               <>
@@ -439,7 +439,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
       {onBack && (
         <button
           onClick={onBack}
-          className="text-sm text-gray-600 hover:text-lobster-teal flex items-center gap-1"
+          className="text-sm text-gray-600 hover:text-lob-teal flex items-center gap-1"
           type="button"
         >
           <ArrowLeft size={14} /> Back to sign in
@@ -449,7 +449,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
       <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 space-y-4">
         <header className="space-y-1">
           <h1 className="text-lg font-extrabold text-gray-800 flex items-center gap-2">
-            <UserPlus size={18} className="text-lobster-teal" />
+            <UserPlus size={18} className="text-lob-teal" />
             Join the Lobsters 🦞
           </h1>
           <p className="text-xs text-gray-500 leading-snug">
@@ -466,7 +466,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
                 <img
                   src={avatarPreview}
                   alt="Preview"
-                  className="w-20 h-20 rounded-full object-cover border-2 border-lobster-teal"
+                  className="w-20 h-20 rounded-full object-cover border-2 border-lob-teal"
                 />
               ) : (
                 <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-300">
@@ -476,7 +476,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="absolute bottom-0 right-0 w-7 h-7 bg-lobster-teal rounded-full flex items-center justify-center text-white shadow-sm active:scale-95"
+                className="absolute bottom-0 right-0 w-7 h-7 bg-lob-teal rounded-full flex items-center justify-center text-white shadow-sm active:scale-95"
               >
                 <Camera size={13} />
               </button>
@@ -566,7 +566,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
                   key={val}
                   onClick={() => setForm((f) => ({ ...f, gender: f.gender === val ? '' : val }))}
                   className={`flex-1 py-2.5 rounded-xl font-semibold text-sm transition-all ${
-                    form.gender === val ? 'bg-lobster-teal text-white' : 'bg-gray-100 text-gray-600'
+                    form.gender === val ? 'bg-lob-teal text-white' : 'bg-gray-100 text-gray-600'
                   }`}
                 >
                   {lbl}

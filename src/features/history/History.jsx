@@ -320,7 +320,7 @@ export default function History({ onNavigate }) {
                         onClick={() => setDbActiveTab((s) => ({ ...s, [t.id]: 'standings' }))}
                         className={`flex-1 min-w-max py-1.5 px-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${
                           dbTab === 'standings'
-                            ? 'bg-white text-lobster-teal shadow-sm'
+                            ? 'bg-white text-lob-teal shadow-sm'
                             : 'text-gray-500'
                         }`}
                       >
@@ -331,7 +331,7 @@ export default function History({ onNavigate }) {
                           onClick={() => setDbActiveTab((s) => ({ ...s, [t.id]: 'matches' }))}
                           className={`flex-1 min-w-max py-1.5 px-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${
                             dbTab === 'matches'
-                              ? 'bg-white text-lobster-teal shadow-sm'
+                              ? 'bg-white text-lob-teal shadow-sm'
                               : 'text-gray-500'
                           }`}
                         >
@@ -343,7 +343,7 @@ export default function History({ onNavigate }) {
                           onClick={() => setDbActiveTab((s) => ({ ...s, [t.id]: 'games' }))}
                           className={`flex-1 min-w-max py-1.5 px-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${
                             dbTab === 'games'
-                              ? 'bg-white text-lobster-teal shadow-sm'
+                              ? 'bg-white text-lob-teal shadow-sm'
                               : 'text-gray-500'
                           }`}
                         >
@@ -380,7 +380,7 @@ export default function History({ onNavigate }) {
                                 <td className="text-center py-1.5 text-gray-400">
                                   {s.pf}-{s.pa}
                                 </td>
-                                <td className="text-center py-1.5 font-bold text-lobster-teal">
+                                <td className="text-center py-1.5 font-bold text-lob-teal">
                                   {s.pts}
                                 </td>
                               </tr>
@@ -405,7 +405,7 @@ export default function History({ onNavigate }) {
                               onClick={() => setDbActiveRound((s) => ({ ...s, [t.id]: i }))}
                               className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
                                 dbRi === i
-                                  ? 'bg-lobster-teal text-white'
+                                  ? 'bg-lob-teal text-white'
                                   : 'bg-gray-100 text-gray-600'
                               }`}
                             >
@@ -426,7 +426,7 @@ export default function History({ onNavigate }) {
                             return (
                               <div key={mt.id} className="bg-gray-50 rounded-xl p-3">
                                 <div className="flex items-center justify-between mb-1.5">
-                                  <span className="text-[10px] font-bold text-lobster-teal bg-lobster-cream px-2 py-0.5 rounded-full">
+                                  <span className="text-[10px] font-bold text-lob-teal bg-lob-cream px-2 py-0.5 rounded-full">
                                     {mt.court || `Round ${mt.round}`}
                                   </span>
                                   {scored && s1 === s2 && (
@@ -497,7 +497,7 @@ export default function History({ onNavigate }) {
                         return (
                           <div className="space-y-2">
                             <div className="flex items-center gap-2 px-1">
-                              <Gamepad2 size={14} className="text-lobster-teal" />
+                              <Gamepad2 size={14} className="text-lob-teal" />
                               <p className="text-xs font-bold text-gray-700">🏆 Lobster Oscars</p>
                               <span className="text-[10px] text-gray-400 ml-auto">
                                 {cats.length} categor{cats.length === 1 ? 'y' : 'ies'}
@@ -543,7 +543,7 @@ export default function History({ onNavigate }) {
                                         </span>
                                         <div className="flex-1 h-2.5 bg-gray-100 rounded-full overflow-hidden">
                                           <div
-                                            className="h-full bg-lobster-teal rounded-full transition-all"
+                                            className="h-full bg-lob-teal rounded-full transition-all"
                                             style={{
                                               width: `${(Number(r.votes_count) / maxV) * 100}%`,
                                             }}
@@ -565,7 +565,7 @@ export default function History({ onNavigate }) {
                     {onNavigate && (
                       <button
                         onClick={() => onNavigate('scores', t)}
-                        className="w-full text-xs text-lobster-teal font-semibold border border-lobster-teal rounded-xl py-2 active:scale-95 transition-all"
+                        className="w-full text-xs text-lob-teal font-semibold border border-lob-teal rounded-xl py-2 active:scale-95 transition-all"
                       >
                         View full match scores →
                       </button>
@@ -645,7 +645,7 @@ export default function History({ onNavigate }) {
                   <button
                     onClick={() => setActiveTab((s) => ({ ...s, [t.id]: 'standings' }))}
                     className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-                      tab === 'standings' ? 'bg-white text-lobster-teal shadow-sm' : 'text-gray-500'
+                      tab === 'standings' ? 'bg-white text-lob-teal shadow-sm' : 'text-gray-500'
                     }`}
                   >
                     Full Standings
@@ -654,7 +654,7 @@ export default function History({ onNavigate }) {
                     <button
                       onClick={() => setActiveTab((s) => ({ ...s, [t.id]: 'matches' }))}
                       className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-                        tab === 'matches' ? 'bg-white text-lobster-teal shadow-sm' : 'text-gray-500'
+                        tab === 'matches' ? 'bg-white text-lob-teal shadow-sm' : 'text-gray-500'
                       }`}
                     >
                       Match Results
@@ -735,12 +735,12 @@ export default function History({ onNavigate }) {
                                 {score}
                               </span>
                             ))}
-                            <span className="text-right font-bold text-lobster-teal text-xs">
+                            <span className="text-right font-bold text-lob-teal text-xs">
                               {p.total}
                             </span>
                           </>
                         ) : (
-                          <span className="text-right font-bold text-lobster-teal text-xs">
+                          <span className="text-right font-bold text-lob-teal text-xs">
                             {p.total}
                           </span>
                         )}
@@ -759,7 +759,7 @@ export default function History({ onNavigate }) {
                           key={i}
                           onClick={() => setActiveRound((s) => ({ ...s, [t.id]: i }))}
                           className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                            ri === i ? 'bg-lobster-teal text-white' : 'bg-gray-100 text-gray-600'
+                            ri === i ? 'bg-lob-teal text-white' : 'bg-gray-100 text-gray-600'
                           }`}
                         >
                           R{r.round}
@@ -775,7 +775,7 @@ export default function History({ onNavigate }) {
                         return (
                           <div key={i} className="bg-gray-50 rounded-xl p-3">
                             <div className="flex items-center justify-between mb-1.5">
-                              <span className="text-[10px] font-bold text-lobster-teal bg-lobster-cream px-2 py-0.5 rounded-full">
+                              <span className="text-[10px] font-bold text-lob-teal bg-lob-cream px-2 py-0.5 rounded-full">
                                 Court {m.court}
                               </span>
                               {m.s1 === m.s2 && (

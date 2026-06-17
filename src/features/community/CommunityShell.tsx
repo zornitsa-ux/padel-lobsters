@@ -20,13 +20,14 @@ export default function CommunityShell() {
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl">
+      <h1 className="text-xl font-bold text-lob-dark">Community</h1>
+      <div className="flex gap-1 bg-lob-teal-light p-1 rounded-xl">
         {TABS.map(({ label, to, isActive }) => (
           <Link
             key={to}
             to={to}
             className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all text-center ${
-              isActive(pathname) ? 'bg-white text-lob-teal shadow-sm' : 'text-gray-500'
+              isActive(pathname) ? 'bg-white text-lob-teal shadow-sm' : 'text-lob-muted'
             }`}
           >
             {label}

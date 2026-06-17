@@ -92,7 +92,7 @@ export default function AdminView({
           <button
             onClick={handleStart}
             disabled={busy || baseCats.length === 0}
-            className="w-full bg-lobster-teal text-white font-bold py-4 rounded-2xl text-base flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50 mt-4"
+            className="w-full bg-lob-teal text-white font-bold py-4 rounded-2xl text-base flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50 mt-4"
           >
             {busy ? <Loader2 className="animate-spin" size={18} /> : <Play size={18} />}
             {busy ? 'Starting…' : 'Start Lobster Games'}
@@ -140,7 +140,7 @@ export default function AdminView({
           <button
             onClick={onEnd}
             disabled={busy}
-            className="w-full bg-lobster-orange text-white font-bold py-4 rounded-2xl text-base flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50 mt-4"
+            className="w-full bg-lob-coral text-white font-bold py-4 rounded-2xl text-base flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50 mt-4"
           >
             {busy ? <Loader2 className="animate-spin" size={18} /> : <X size={18} />}
             End game
@@ -175,7 +175,7 @@ export default function AdminView({
             <button
               onClick={onShare}
               disabled={busy}
-              className="w-full bg-lobster-teal text-white font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50"
+              className="w-full bg-lob-teal text-white font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50"
             >
               {busy ? <Loader2 className="animate-spin" size={16} /> : <Share2 size={16} />}
               Share with players

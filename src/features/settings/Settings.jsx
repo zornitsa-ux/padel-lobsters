@@ -324,7 +324,7 @@ export default function Settings() {
 
   return (
     <div className="space-y-5">
-      <h2 className="text-lg font-bold text-gray-800">Account</h2>
+      <h1 className="text-xl font-bold text-lob-dark">Account</h1>
 
       <AccountSection
         isAdmin={isAdmin}

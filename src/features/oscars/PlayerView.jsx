@@ -109,7 +109,7 @@ export default function PlayerView({
     >
       {playerResults === null ? (
         <div className="flex justify-center py-10">
-          <Loader2 className="animate-spin text-lobster-teal" size={28} />
+          <Loader2 className="animate-spin text-lob-teal" size={28} />
         </div>
       ) : (
         <ResultsView results={playerResults} highlightWinners />

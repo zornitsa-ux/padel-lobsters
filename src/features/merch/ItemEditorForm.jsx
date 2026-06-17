@@ -107,7 +107,7 @@ export default function ItemEditorForm({
                     type="button"
                     key={s}
                     onClick={() => toggleSize(s)}
-                    className={`text-xs px-2.5 py-1 rounded-lg font-medium border transition-all ${form.sizes.includes(s) ? 'bg-lobster-teal text-white border-lobster-teal' : 'border-gray-200 text-gray-600'}`}
+                    className={`text-xs px-2.5 py-1 rounded-lg font-medium border transition-all ${form.sizes.includes(s) ? 'bg-lob-teal text-white border-lob-teal' : 'border-gray-200 text-gray-600'}`}
                   >
                     {s}
                   </button>
@@ -119,7 +119,7 @@ export default function ItemEditorForm({
                     type="button"
                     key={s}
                     onClick={() => toggleSize(s)}
-                    className={`text-xs px-2.5 py-1 rounded-lg font-medium border transition-all ${form.sizes.includes(s) ? 'bg-lobster-teal text-white border-lobster-teal' : 'border-gray-200 text-gray-600'}`}
+                    className={`text-xs px-2.5 py-1 rounded-lg font-medium border transition-all ${form.sizes.includes(s) ? 'bg-lob-teal text-white border-lob-teal' : 'border-gray-200 text-gray-600'}`}
                   >
                     {s}
                   </button>
@@ -167,7 +167,7 @@ export default function ItemEditorForm({
             {/* Upload button — only show if under 3 */}
             {(form.image_urls || []).length < 3 && (
               <label
-                className={`flex items-center justify-center gap-2 w-full py-3 rounded-xl border-2 border-dashed border-gray-300 text-sm text-gray-500 font-medium cursor-pointer transition-all hover:border-lobster-teal hover:text-lobster-teal ${uploading ? 'opacity-50' : ''}`}
+                className={`flex items-center justify-center gap-2 w-full py-3 rounded-xl border-2 border-dashed border-gray-300 text-sm text-gray-500 font-medium cursor-pointer transition-all hover:border-lob-teal hover:text-lob-teal ${uploading ? 'opacity-50' : ''}`}
               >
                 <Upload size={16} />
                 {uploading

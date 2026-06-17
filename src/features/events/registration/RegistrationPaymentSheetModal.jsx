@@ -33,9 +33,9 @@ export default function RegistrationPaymentSheetModal({
         </div>
 
         {costPerPlayer > 0 && (
-          <div className="bg-lobster-cream rounded-2xl px-4 py-3 flex items-center justify-between">
+          <div className="bg-lob-cream rounded-2xl px-4 py-3 flex items-center justify-between">
             <span className="text-sm text-gray-600">Your share</span>
-            <span className="text-2xl font-bold text-lobster-teal">{fmtEur(costPerPlayer)}</span>
+            <span className="text-2xl font-bold text-lob-teal">{fmtEur(costPerPlayer)}</span>
           </div>
         )}
 
@@ -84,7 +84,7 @@ export default function RegistrationPaymentSheetModal({
             <button
               onClick={onSelfDeclare}
               disabled={declaring}
-              className="w-full flex items-center justify-center gap-2 border-2 border-lobster-teal text-lobster-teal font-semibold py-3 rounded-2xl active:scale-95 transition-all disabled:opacity-40"
+              className="w-full flex items-center justify-center gap-2 border-2 border-lob-teal text-lob-teal font-semibold py-3 rounded-2xl active:scale-95 transition-all disabled:opacity-40"
             >
               <Send size={16} /> {declaring ? 'Saving…' : "I've sent the payment"}
             </button>

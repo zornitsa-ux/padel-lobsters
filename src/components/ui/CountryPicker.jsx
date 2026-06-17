@@ -154,7 +154,7 @@ export default function CountryPicker({ value, onChange }) {
               key={code}
               type="button"
               onMouseDown={() => select(code)}
-              className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left transition-colors hover:bg-lobster-cream ${value === code ? 'bg-lobster-cream font-semibold text-lobster-teal' : 'text-gray-700'}`}
+              className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left transition-colors hover:bg-lob-cream ${value === code ? 'bg-lob-cream font-semibold text-lob-teal' : 'text-gray-700'}`}
             >
               <FlagImg code={code} />
               {label}

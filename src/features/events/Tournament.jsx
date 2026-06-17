@@ -187,7 +187,7 @@ export default function Tournament({ onNavigate }) {
         />
       )}
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold text-gray-800">Events ({tournaments.length})</h2>
+        <h1 className="text-xl font-bold text-lob-dark">Events ({tournaments.length})</h1>
         {isAdmin && (
           <button
             onClick={openAdd}
@@ -241,13 +241,13 @@ export default function Tournament({ onNavigate }) {
       <div>
         <button
           onClick={() => setShowHistory((h) => !h)}
-          className="w-full flex items-center justify-between py-3 px-1 text-gray-500 font-semibold text-sm"
+          className="w-full flex items-center justify-between py-3 px-1"
         >
-          <span className="flex items-center gap-2">
-            <Clock size={15} className="text-gray-400" />
+          <span className="text-[10px] font-bold text-lob-muted uppercase tracking-widest flex items-center gap-2">
+            <Clock size={13} className="text-lob-muted opacity-60" />
             Past
           </span>
-          {showHistory ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          {showHistory ? <ChevronUp size={14} className="text-lob-muted opacity-60" /> : <ChevronDown size={14} className="text-lob-muted opacity-60" />}
         </button>
 
         {showHistory && (

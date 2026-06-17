@@ -20,8 +20,8 @@ export default function PlayerCategoryScreen({
   onDismissError,
 }) {
   return (
-    <div className="fixed inset-0 z-50 bg-lobster-cream flex flex-col overflow-y-auto">
-      <div className="px-4 pt-12 pb-3 sticky top-0 bg-lobster-cream z-10 border-b border-gray-100">
+    <div className="fixed inset-0 z-50 bg-lob-cream flex flex-col overflow-y-auto">
+      <div className="px-4 pt-12 pb-3 sticky top-0 bg-lob-cream z-10 border-b border-gray-100">
         <button
           onClick={onBack}
           className="inline-flex items-center gap-1.5 bg-white border border-gray-200 rounded-xl px-3 py-1.5 text-sm font-semibold text-gray-800 active:scale-95 transition-all"
@@ -71,7 +71,7 @@ export default function PlayerCategoryScreen({
                   onClick={() => onVote(p.id)}
                   className={`rounded-xl p-2 text-left transition-all border flex flex-col gap-1 ${
                     isMyVote
-                      ? 'bg-lobster-teal/10 border-lobster-teal'
+                      ? 'bg-lob-teal/10 border-lob-teal'
                       : isYou
                         ? 'bg-gray-50 border-gray-100 opacity-50 cursor-not-allowed'
                         : 'bg-white border-gray-100 active:scale-95'
@@ -92,7 +92,7 @@ export default function PlayerCategoryScreen({
                         you
                       </span>
                     )}
-                    {isMyVote && <Check size={14} className="text-lobster-teal flex-shrink-0" />}
+                    {isMyVote && <Check size={14} className="text-lob-teal flex-shrink-0" />}
                   </div>
                   <div className="text-[10.5px] text-gray-500 leading-snug space-y-0.5">
                     {isYou ? (

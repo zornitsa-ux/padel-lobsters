@@ -303,13 +303,13 @@ export default function Registration({ tournament, onNavigate }) {
       </div>
 
       {/* Summary bar */}
-      <div className="bg-lobster-teal rounded-xl p-4 text-white flex items-center justify-between">
+      <div className="bg-lob-teal rounded-xl p-4 text-white flex items-center justify-between">
         <div className="text-center">
           <p className="text-2xl font-bold">{registered.length}</p>
           <p className="text-xs opacity-75">Registered</p>
         </div>
         <div className="text-center">
-          <p className={`text-2xl font-bold ${waitlisted.length > 0 ? 'text-lobster-gold' : ''}`}>
+          <p className={`text-2xl font-bold ${waitlisted.length > 0 ? 'text-lob-amber' : ''}`}>
             {waitlisted.length}
           </p>
           <p className="text-xs opacity-75">Waitlist</p>
@@ -320,7 +320,7 @@ export default function Registration({ tournament, onNavigate }) {
         </div>
         <div className="text-center">
           <p
-            className={`text-2xl font-bold ${registered.length >= maxPlayers ? 'text-lobster-gold' : 'text-green-300'}`}
+            className={`text-2xl font-bold ${registered.length >= maxPlayers ? 'text-lob-amber' : 'text-green-300'}`}
           >
             {Math.max(0, maxPlayers - registered.length)}
           </p>

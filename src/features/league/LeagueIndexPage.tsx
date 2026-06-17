@@ -33,7 +33,7 @@ export default function LeagueIndexPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold text-lob-dark">Leagues</h1>
+      <h1 className="text-xl font-bold text-lob-dark">Leagues</h1>
       {loadingAll ? (
         <LoadingSpinner />
       ) : allLeagues.length === 0 ? (

@@ -133,7 +133,7 @@ export default function Payments({ tournament, onNavigate }) {
             <p className="text-sm text-gray-600">
               Total:{' '}
               <span className="font-bold text-gray-800">{fmtEur(tournament.totalPrice)}</span> · Per
-              player: <span className="font-bold text-lobster-teal">{fmtEur(costPerPlayer)}</span>
+              player: <span className="font-bold text-lob-teal">{fmtEur(costPerPlayer)}</span>
               <span className="text-xs text-gray-400"> (÷ {tournament.maxPlayers} players)</span>
             </p>
           )}

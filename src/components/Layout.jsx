@@ -11,12 +11,7 @@ import {
   CircleUser,
   Shield,
   MessageCircle,
-  ChevronDown,
-  ChevronUp,
 } from 'lucide-react'
-
-const ORIGIN =
-  "We didn't plan this. Nobody drafted a mission statement or hired a consultant. One court became two, two became a tournament, and now here we are — a full-blown padel community that somehow keeps showing up. We're competitive enough to care and relaxed enough to laugh about it. Come as you are. Stay for the padel."
 
 // Bottom nav — five tabs, each a NavLink so the active state tracks the URL.
 // `end={false}` for /events and /community so the tab stays highlighted on
@@ -41,7 +36,6 @@ const DEVICE_TRUST_BANNER_KEY = 'pl_device_trust_banner_dismissed'
 
 export default function Layout({ children }) {
   const { settings, session } = useApp()
-  const [originOpen, setOriginOpen] = useState(false)
   const [bannerDismissed, setBannerDismissed] = useState(false)
   const [deviceTrustedDb, setDeviceTrustedDb] = useState(undefined)
 
@@ -88,21 +82,18 @@ export default function Layout({ children }) {
     : NAV
 
   return (
-    <div className="min-h-screen bg-lobster-cream flex flex-col max-w-md mx-auto relative">
+    <div className="min-h-screen bg-lob-cream flex flex-col max-w-md mx-auto relative">
       {/* Header */}
       <header
-        className="text-white px-4 pt-10 pb-3 sticky top-0 z-30 header-gradient"
+        className="text-white px-4 pt-4 pb-3 sticky top-0 z-30 header-gradient"
         style={{
           boxShadow: '0 2px 16px rgba(26,43,48,0.15), 0 4px 32px rgba(217,79,43,0.08)',
         }}
       >
         {/* Top row */}
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center justify-between mb-0">
           <div className="flex items-center gap-3">
-            <div
-              className="w-20 h-20 rounded-full flex-shrink-0 overflow-hidden bg-white"
-              style={{ boxShadow: '0 0 0 3px rgba(255,255,255,0.3)' }}
-            >
+            <div className="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden bg-white">
               <img
                 src="/logo-hd.png"
                 alt="Padel Lobsters"
@@ -110,8 +101,8 @@ export default function Layout({ children }) {
               />
             </div>
             <div>
-              <h1 className="font-bold text-lg leading-tight tracking-tight">Padel Lobsters</h1>
-              <p className="text-[10px] opacity-60 leading-tight tracking-wide">
+              <h1 className="font-bold text-base leading-tight tracking-tight">Padel Lobsters</h1>
+              <p className="text-[9px] opacity-60 leading-tight tracking-wide">
                 Amsterdam Padel Community
               </p>
             </div>
@@ -142,28 +133,6 @@ export default function Layout({ children }) {
           </div>
         </div>
 
-        {/* Origin story strip */}
-        <button
-          onClick={() => setOriginOpen((o) => !o)}
-          className="w-full text-left flex items-start gap-1.5 group"
-        >
-          <span className="text-[10px] font-bold text-white/50 uppercase tracking-widest shrink-0 mt-0.5">
-            Origin story
-          </span>
-          {originOpen ? (
-            <ChevronUp size={11} className="text-white/40 shrink-0 mt-0.5" />
-          ) : (
-            <ChevronDown size={11} className="text-white/40 shrink-0 mt-0.5" />
-          )}
-          {!originOpen && (
-            <span className="text-[11px] text-white/40 italic truncate leading-snug">
-              {ORIGIN.slice(0, 55)}…
-            </span>
-          )}
-        </button>
-        {originOpen && (
-          <p className="text-[11px] text-white/60 italic leading-relaxed mt-1 pb-1">{ORIGIN}</p>
-        )}
       </header>
 
       {/* Device trust banner */}

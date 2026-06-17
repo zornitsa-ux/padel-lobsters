@@ -110,7 +110,7 @@ export default function Scores({ tournament, onNavigate }) {
         <button
           onClick={() => setTab('ranking')}
           className={`flex-1 min-w-max py-2 px-2 text-xs sm:text-sm rounded-lg font-semibold transition-all whitespace-nowrap ${
-            tab === 'ranking' ? 'bg-white text-lobster-teal shadow-sm' : 'text-gray-500'
+            tab === 'ranking' ? 'bg-white text-lob-teal shadow-sm' : 'text-gray-500'
           }`}
         >
           🥇 Final Ranking
@@ -118,7 +118,7 @@ export default function Scores({ tournament, onNavigate }) {
         <button
           onClick={() => setTab('matches')}
           className={`flex-1 min-w-max py-2 px-2 text-xs sm:text-sm rounded-lg font-semibold transition-all whitespace-nowrap ${
-            tab === 'matches' ? 'bg-white text-lobster-teal shadow-sm' : 'text-gray-500'
+            tab === 'matches' ? 'bg-white text-lob-teal shadow-sm' : 'text-gray-500'
           }`}
         >
           📋 Matches
@@ -127,7 +127,7 @@ export default function Scores({ tournament, onNavigate }) {
           <button
             onClick={() => setTab('games')}
             className={`flex-1 min-w-max py-2 px-2 text-xs sm:text-sm rounded-lg font-semibold transition-all whitespace-nowrap ${
-              tab === 'games' ? 'bg-white text-lobster-teal shadow-sm' : 'text-gray-500'
+              tab === 'games' ? 'bg-white text-lob-teal shadow-sm' : 'text-gray-500'
             }`}
           >
             🦞 Lobster Games
@@ -253,7 +253,7 @@ export default function Scores({ tournament, onNavigate }) {
                           <td className="text-center py-2.5 text-gray-500 text-xs">
                             {s.pointsFor}-{s.pointsAgainst}
                           </td>
-                          <td className="text-center py-2.5 font-bold text-lobster-teal">
+                          <td className="text-center py-2.5 font-bold text-lob-teal">
                             {s.points}
                           </td>
                         </tr>
@@ -288,7 +288,7 @@ export default function Scores({ tournament, onNavigate }) {
                     onClick={() => setActiveRoundIdx(i)}
                     className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
                       activeRoundIdx === i
-                        ? 'bg-lobster-teal text-white'
+                        ? 'bg-lob-teal text-white'
                         : 'bg-gray-100 text-gray-600'
                     }`}
                   >
@@ -310,7 +310,7 @@ export default function Scores({ tournament, onNavigate }) {
                   return (
                     <div key={m.id} className="bg-gray-50 rounded-xl p-3">
                       <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-[10px] font-bold text-lobster-teal bg-lobster-cream px-2 py-0.5 rounded-full">
+                        <span className="text-[10px] font-bold text-lob-teal bg-lob-cream px-2 py-0.5 rounded-full">
                           {m.court || `Round ${m.round}`}
                         </span>
                         {scored && s1 === s2 && (
@@ -433,7 +433,7 @@ export default function Scores({ tournament, onNavigate }) {
                           </span>
                           <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden">
                             <div
-                              className="h-full bg-lobster-teal rounded-full transition-all"
+                              className="h-full bg-lob-teal rounded-full transition-all"
                               style={{ width: `${(Number(r.votes_count) / maxV) * 100}%` }}
                             />
                           </div>

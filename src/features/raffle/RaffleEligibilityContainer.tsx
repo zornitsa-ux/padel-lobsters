@@ -91,7 +91,7 @@ export default function RaffleEligibilityContainer({
     <div className="space-y-4">
       <button
         onClick={() => onNavigate?.('raffle', tournament)}
-        className="flex items-center gap-1 text-sm font-semibold text-lobster-teal"
+        className="flex items-center gap-1 text-sm font-semibold text-lob-teal"
       >
         <ArrowLeft size={16} />
         Back to raffle
@@ -99,7 +99,7 @@ export default function RaffleEligibilityContainer({
 
       <div className="card space-y-1">
         <div className="flex items-center gap-2">
-          <Users size={18} className="text-lobster-teal" />
+          <Users size={18} className="text-lob-teal" />
           <p className="font-bold text-gray-800">Raffle eligibility</p>
         </div>
         <p className="text-sm text-gray-500">{tournament.name}</p>
@@ -162,7 +162,7 @@ export default function RaffleEligibilityContainer({
                 ) : (
                   <span
                     className={`w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 ${
-                      isEligible ? 'bg-lobster-teal text-white' : 'border-2 border-gray-300'
+                      isEligible ? 'bg-lob-teal text-white' : 'border-2 border-gray-300'
                     }`}
                   >
                     {isEligible && <Check size={16} />}
@@ -177,7 +177,7 @@ export default function RaffleEligibilityContainer({
       <button
         onClick={save}
         disabled={!dirty || setExclusions.isPending}
-        className="w-full bg-lobster-teal hover:bg-lobster-teal-dark disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-all"
+        className="w-full bg-lob-teal hover:bg-lob-teal-dark disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-all"
       >
         <Save size={18} />
         {setExclusions.isPending ? 'Saving…' : dirty ? 'Save eligibility' : 'Saved'}

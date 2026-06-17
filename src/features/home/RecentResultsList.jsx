@@ -19,7 +19,7 @@ export default function RecentResultsList({
         </h3>
         <button
           onClick={() => onNavigate('history')}
-          className="text-xs text-lobster-teal font-semibold"
+          className="text-xs text-lob-teal font-semibold"
         >
           Full history
         </button>

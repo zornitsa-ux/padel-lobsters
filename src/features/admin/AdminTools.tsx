@@ -166,7 +166,7 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
   if (!isAdmin) {
     return (
       <div className="space-y-3">
-        <h2 className="text-lg font-bold text-gray-800">Admin</h2>
+        <h1 className="text-xl font-bold text-lob-dark">Admin</h1>
         <SignInBanner
           role="admin"
           onNavigate={onNavigate}
@@ -179,7 +179,7 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-bold text-gray-800">Admin</h2>
+      <h1 className="text-xl font-bold text-lob-dark">Admin</h1>
 
       {/* Needs Attention */}
       {totalPending > 0 && (
@@ -223,7 +223,7 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
           return (
             <div key={tool.id} className="card">
               <div className="flex items-start gap-3">
-                <div className="w-9 h-9 rounded-xl bg-lobster-cream text-lobster-teal flex items-center justify-center flex-shrink-0">
+                <div className="w-9 h-9 rounded-xl bg-lob-cream text-lob-teal flex items-center justify-center flex-shrink-0">
                   <Icon size={16} />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -231,7 +231,7 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
                   <p className="text-xs text-gray-500 mt-0.5">{tool.description}</p>
                   <button
                     onClick={tool.onClick}
-                    className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-lobster-teal hover:underline"
+                    className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-lob-teal hover:underline"
                   >
                     {tool.actionLabel} <ChevronRight size={12} />
                   </button>
