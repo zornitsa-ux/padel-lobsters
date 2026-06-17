@@ -10,6 +10,7 @@ import { loadAliases, resolveName } from './aliasStorage'
 import { smartSort, buildDisplayNames, getAllHardcodedNames } from './historicalStats'
 import { medalColor, medalStyleH } from './medals'
 import Podium from './Podium'
+import { TabSwitcher } from '../../components/ui/TabSwitcher'
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function History({ onNavigate }) {
@@ -315,42 +316,15 @@ export default function History({ onNavigate }) {
                     )}
 
                     {/* Tabs — Full Standings | Match Results | Lobster Games (conditional) */}
-                    <div className="flex gap-1 bg-gray-100 p-1 rounded-xl overflow-x-auto">
-                      <button
-                        onClick={() => setDbActiveTab((s) => ({ ...s, [t.id]: 'standings' }))}
-                        className={`flex-1 min-w-max py-1.5 px-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${
-                          dbTab === 'standings'
-                            ? 'bg-white text-lob-teal shadow-sm'
-                            : 'text-gray-500'
-                        }`}
-                      >
-                        Full Standings
-                      </button>
-                      {hasMatches && (
-                        <button
-                          onClick={() => setDbActiveTab((s) => ({ ...s, [t.id]: 'matches' }))}
-                          className={`flex-1 min-w-max py-1.5 px-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${
-                            dbTab === 'matches'
-                              ? 'bg-white text-lob-teal shadow-sm'
-                              : 'text-gray-500'
-                          }`}
-                        >
-                          Match Results
-                        </button>
-                      )}
-                      {hasGameResults && (
-                        <button
-                          onClick={() => setDbActiveTab((s) => ({ ...s, [t.id]: 'games' }))}
-                          className={`flex-1 min-w-max py-1.5 px-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${
-                            dbTab === 'games'
-                              ? 'bg-white text-lob-teal shadow-sm'
-                              : 'text-gray-500'
-                          }`}
-                        >
-                          🦞 Lobster Games
-                        </button>
-                      )}
-                    </div>
+                    <TabSwitcher
+                      tabs={[
+                        { id: 'standings', label: 'Full Standings' },
+                        ...(hasMatches ? [{ id: 'matches', label: 'Match Results' }] : []),
+                        ...(hasGameResults ? [{ id: 'games', label: '🦞 Lobster Games' }] : []),
+                      ]}
+                      value={dbTab}
+                      onChange={(id) => setDbActiveTab((s) => ({ ...s, [t.id]: id }))}
+                    />
 
                     {/* ── Full Standings ── */}
                     {dbTab === 'standings' && rankings.length > 0 && (
@@ -641,26 +615,15 @@ export default function History({ onNavigate }) {
                 )}
 
                 {/* Tabs */}
-                <div className="flex gap-1 bg-gray-100 p-1 rounded-xl mb-3">
-                  <button
-                    onClick={() => setActiveTab((s) => ({ ...s, [t.id]: 'standings' }))}
-                    className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-                      tab === 'standings' ? 'bg-white text-lob-teal shadow-sm' : 'text-gray-500'
-                    }`}
-                  >
-                    Full Standings
-                  </button>
-                  {t.rounds && (
-                    <button
-                      onClick={() => setActiveTab((s) => ({ ...s, [t.id]: 'matches' }))}
-                      className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-                        tab === 'matches' ? 'bg-white text-lob-teal shadow-sm' : 'text-gray-500'
-                      }`}
-                    >
-                      Match Results
-                    </button>
-                  )}
-                </div>
+                <TabSwitcher
+                  tabs={[
+                    { id: 'standings', label: 'Full Standings' },
+                    ...(t.rounds ? [{ id: 'matches', label: 'Match Results' }] : []),
+                  ]}
+                  value={tab}
+                  onChange={(id) => setActiveTab((s) => ({ ...s, [t.id]: id }))}
+                  className="mb-3"
+                />
 
                 {/* Note (when no pairings available) */}
                 {tab === 'standings' && t.note && (

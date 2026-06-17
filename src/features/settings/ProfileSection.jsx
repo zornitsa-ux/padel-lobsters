@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react'
 import { Save, User, ChevronDown, ChevronUp, Camera, Mail, Check } from 'lucide-react'
 import CountryPicker from '../../components/ui/CountryPicker'
-import { letterColor } from '../../lib/letterColors'
+import Avatar from '../../components/ui/Avatar'
 import { useApp } from '../../context/AppContext'
 import { LOBBY_PROMPTS } from './settingsHelpers'
 
@@ -156,20 +156,7 @@ export default function ProfileSection({
 
           {/* Always-visible summary */}
           <div className="flex items-center gap-3">
-            <div
-              className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0"
-              style={{ backgroundColor: letterColor(myPlayer.name) }}
-            >
-              {myPlayer.avatarUrl ? (
-                <img
-                  src={myPlayer.avatarUrl}
-                  alt={myPlayer.name}
-                  className="w-10 h-10 rounded-full object-cover"
-                />
-              ) : (
-                (myPlayer.name || '?')[0].toUpperCase()
-              )}
-            </div>
+            <Avatar player={myPlayer} size="md" className="flex-shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-gray-800 truncate">{myPlayer.name}</p>
               <p className="text-xs text-gray-500">

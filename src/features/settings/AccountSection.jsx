@@ -1,7 +1,7 @@
 import React from 'react'
 import { Shield, User, LogIn, LogOut } from 'lucide-react'
 import ApproveDevicesWidget from '../../components/ApproveDevicesWidget'
-import { letterColor } from '../../lib/letterColors'
+import Avatar from '../../components/ui/Avatar'
 
 export default function AccountSection({
   isAdmin,
@@ -55,20 +55,7 @@ export default function AccountSection({
       ) : signedInPlayer ? (
         // ── Signed in as player ─────────────────────────────────
         <div className="rounded-xl border border-lob-teal/30 bg-lob-cream p-3 flex items-center gap-3">
-          {signedInPlayer.avatarUrl ? (
-            <img
-              src={signedInPlayer.avatarUrl}
-              alt={signedInPlayer.name}
-              className="w-9 h-9 rounded-full object-cover flex-shrink-0 border border-white"
-            />
-          ) : (
-            <div
-              className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
-              style={{ backgroundColor: letterColor(signedInPlayer.name) }}
-            >
-              {signedInPlayer.name[0].toUpperCase()}
-            </div>
-          )}
+          <Avatar player={signedInPlayer} size="sm" className="!w-9 !h-9 flex-shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-gray-800 truncate">
               Signed in as {signedInPlayer.name}{' '}

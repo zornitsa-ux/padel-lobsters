@@ -8,7 +8,7 @@ export function SectionHeader({ icon, title, action }: SectionHeaderProps) {
   return (
     <div className="flex items-center gap-2 mb-3">
       <span className="text-lob-muted">{icon}</span>
-      <span className="font-bold text-gray-700 text-sm flex-1">{title}</span>
+      <span className="font-bold text-lob-dark text-sm flex-1">{title}</span>
       {action}
     </div>
   )
