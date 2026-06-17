@@ -6,8 +6,6 @@ import { useAllMatches } from '../events/useMatches'
 import { useAllRegistrations } from '../events/useRegistrations'
 import { supabase } from '../../supabase'
 import DEFAULT_TIPS from '../../data/padelTips'
-import { TOURNAMENTS as LEGACY_TOURNAMENTS } from '../../data/historicalTournaments'
-import { buildPlayerStats } from '../../lib/playerStats'
 import TransferPendingModal from '../../components/TransferPendingModal'
 import { getGreeting } from './greetings'
 import useCountdown from './useCountdown'
@@ -15,13 +13,9 @@ import Greeting from './Greeting'
 import TransferOfferBanners from './TransferOfferBanners'
 import CountdownClock from './CountdownClock'
 import TipOfTheDay from './TipOfTheDay'
-import CommunityQuickLinks from './CommunityQuickLinks'
 import NextEventCard from './NextEventCard'
-import usePlayerAliases from '../../hooks/usePlayerAliases'
 import RecentlyCompletedBanners from './RecentlyCompletedBanners'
 import AdminAlerts from './AdminAlerts'
-import YourStatsCard from './YourStatsCard'
-import RecentResultsList from './RecentResultsList'
 import { LeagueDashboardCard } from '../league/ui/LeagueDashboardCard'
 
 // (Claw up/down reaction icons removed along with the Updates feature.)
@@ -42,7 +36,6 @@ export default function Dashboard({ onNavigate }) {
   )
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
   const claimedId = session?.user?.id ?? null
-  const { playerAliases } = usePlayerAliases()
 
   // Pending-transfer state surfaced on the home screen so the player
   // sees their open offers right after reload — even before drilling
@@ -81,7 +74,6 @@ export default function Dashboard({ onNavigate }) {
   }
 
   const claimedPlayer = claimedId ? players.find((p) => p.id === claimedId) : null
-  const activePlayers = players.filter((p) => (p.status || 'active') === 'active')
 
   // ── New merch orders since last admin check ─────────────────────────────────
   const [newOrders, setNewOrders] = useState([])
@@ -189,145 +181,20 @@ export default function Dashboard({ onNavigate }) {
     }) || null
   const countdown = useCountdown(countdownTournament)
 
-  // Past completed tournaments for history section
-  const pastTournaments = tournaments
-    .filter((t) => t.status === 'completed')
-    .sort((a, b) => ((b.date || '') > (a.date || '') ? 1 : -1))
-    .slice(0, 6)
-
-  // Community stats
-  const upcomingCount = tournaments.filter(
-    (t) => t.status === 'upcoming' || t.status === 'active',
-  ).length
-  const pastCount =
-    tournaments.filter((t) => t.status === 'completed').length + LEGACY_TOURNAMENTS.length
-
-  // Top 3 from the last completed tournament (DB first, then legacy fallback)
-  const lastPodium = useMemo(() => {
-    const lastCompleted = tournaments
-      .filter((t) => t.status === 'completed')
-      .sort((a, b) => ((b.date || '') > (a.date || '') ? 1 : -1))[0]
-    if (lastCompleted) {
-      const tRegs = getTournamentRegistrations(lastCompleted.id).filter(
-        (r) => r.status === 'registered',
-      )
-      const tMatches = getTournamentMatches(lastCompleted.id)
-      if (tMatches.length > 0) {
-        const stats = {}
-        tRegs.forEach((r) => {
-          stats[r.playerId] = { pts: 0, won: 0 }
-        })
-        tMatches
-          .filter((m) => m.completed && m.score1 != null)
-          .forEach((m) => {
-            const s1 = parseInt(m.score1) || 0,
-              s2 = parseInt(m.score2) || 0
-            ;(m.team1Ids || []).forEach((id) => {
-              if (stats[id]) {
-                stats[id].pts += s1
-                if (s1 > s2) stats[id].won++
-              }
-            })
-            ;(m.team2Ids || []).forEach((id) => {
-              if (stats[id]) {
-                stats[id].pts += s2
-                if (s2 > s1) stats[id].won++
-              }
-            })
-          })
-        const podium = Object.entries(stats)
-          .sort((a, b) => (b[1].pts !== a[1].pts ? b[1].pts - a[1].pts : b[1].won - a[1].won))
-          .slice(0, 3)
-          .map(([id]) => players.find((p) => p.id === id))
-          .filter(Boolean)
-          .map((p) => p.name.split(' ')[0])
-        if (podium.length > 0) return podium
-      }
-    }
-    // Fallback: March 2026 Lobster Tournament top 3 (with tiebreaker via match wins)
-    // This will auto-replace once the next DB tournament is completed
-    return ['Alex B', 'Uziel', 'Karlijn']
-  }, [tournaments, matches, players, getTournamentRegistrations, getTournamentMatches])
-
-  // ── Personal stats for claimed player ──────────────────────────────────────
-  // Uses the SHARED buildPlayerStats helper (../lib/playerStats) so the home
-  // card and the Players-tab expanded profile always agree. It folds in
-  // historical matches from History.jsx via the player_aliases map (plus a
-  // first-name/full-name fallback), which is why veterans like Zornitsa see
-  // real played/won/lost numbers here even if they've never been logged in
-  // the Supabase `matches` table.
-  const myStats = useMemo(() => {
-    if (!claimedId) return null
-    const base = buildPlayerStats(
-      claimedId,
-      matches,
-      tournaments,
-      registrations,
-      players,
-      playerAliases || {},
-      LEGACY_TOURNAMENTS,
-    )
-
-    // Shape for the home card: short nemesis/best-partner rows.
-    const nemesis =
-      Object.entries(base.h2h)
-        .filter(([, rec]) => rec.lost >= 1)
-        .map(([oppId, rec]) => {
-          const p = players.find((x) => x.id === oppId)
-          return p ? { name: p.name.split(' ')[0], won: rec.won, lost: rec.lost } : null
-        })
-        .filter(Boolean)
-        .sort((a, b) => b.lost - b.won - (a.lost - a.won))[0] || null
-
-    const bestPartner =
-      Object.entries(base.partners)
-        .filter(([, rec]) => rec.wins >= 1)
-        .map(([pId, rec]) => {
-          const p = players.find((x) => x.id === pId)
-          return p ? { name: p.name.split(' ')[0], wins: rec.wins, games: rec.games } : null
-        })
-        .filter(Boolean)
-        .sort((a, b) => b.wins - a.wins)[0] || null
-
-    // Attendance streak: consecutive completed tournaments the player
-    // registered for. This is dashboard-specific (uses registrations, not
-    // match rows) so it stays here rather than moving into playerStats.
-    const completedSorted = tournaments
+  // Attendance streak — consecutive completed tournaments the player registered
+  // for. Shown in CountdownClock as a motivational nudge.
+  const myStreak = useMemo(() => {
+    if (!claimedId) return 0
+    const completed = tournaments
       .filter((t) => t.status === 'completed')
       .sort((a, b) => ((b.date || '') > (a.date || '') ? 1 : -1))
-    let streak = 0
-    for (const t of completedSorted) {
-      const tRegs = getTournamentRegistrations(t.id)
-      if (tRegs.some((r) => r.playerId === claimedId && r.status === 'registered')) {
-        streak++
-      } else {
-        break
-      }
+    let s = 0
+    for (const t of completed) {
+      if (getTournamentRegistrations(t.id).some((r) => r.playerId === claimedId && r.status === 'registered')) s++
+      else break
     }
-
-    return {
-      played: base.played,
-      won: base.won,
-      lost: base.lost,
-      draws: base.draws,
-      pts: base.points,
-      pointsFor: base.pointsFor,
-      pointsAgainst: base.pointsAgainst,
-      winRate: base.winRate,
-      streak,
-      bestWinStreak: base.bestWinStreak,
-      nemesis,
-      bestPartner,
-    }
-  }, [
-    claimedId,
-    matches,
-    tournaments,
-    players,
-    registrations,
-    playerAliases,
-    getTournamentRegistrations,
-  ])
+    return s
+  }, [claimedId, tournaments, registrations, getTournamentRegistrations])
 
   const formatDate = (d) => {
     if (!d) return '—'
@@ -336,11 +203,6 @@ export default function Dashboard({ onNavigate }) {
       day: 'numeric',
       month: 'long',
     })
-  }
-
-  const formatShortDate = (d) => {
-    if (!d) return '—'
-    return new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
   }
 
   // Greeting — members get the rotating "Snap snap, {name}!" set, guests
@@ -393,17 +255,9 @@ export default function Dashboard({ onNavigate }) {
         />
       )}
 
-      <CountdownClock countdown={countdown} streak={myStats?.streak ?? 0} />
+      <CountdownClock countdown={countdown} streak={myStreak} />
 
       <TipOfTheDay tip={todayTip} />
-
-      <CommunityQuickLinks
-        onNavigate={onNavigate}
-        activePlayersCount={activePlayers.length}
-        upcomingCount={upcomingCount}
-        pastCount={pastCount}
-        lastPodium={lastPodium}
-      />
 
       <LeagueDashboardCard myPlayerId={claimedId} />
 
@@ -435,19 +289,6 @@ export default function Dashboard({ onNavigate }) {
         onNavigate={onNavigate}
       />
 
-      <YourStatsCard claimedId={claimedId} myStats={myStats} onNavigate={onNavigate} />
-
-      {/* Latest Updates section removed — the Updates feature is gone
-          app-wide (see Layout / AppContext / Updates.jsx removal). */}
-
-      <RecentResultsList
-        pastTournaments={pastTournaments}
-        getTournamentMatches={getTournamentMatches}
-        getTournamentRegistrations={getTournamentRegistrations}
-        players={players}
-        onNavigate={onNavigate}
-        formatShortDate={formatShortDate}
-      />
     </div>
   )
 }
