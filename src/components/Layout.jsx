@@ -83,63 +83,57 @@ export default function Layout({ children }) {
 
   return (
     <div className="min-h-screen bg-lob-cream flex flex-col max-w-md mx-auto relative">
-      {/* Header */}
-      <header
-        className="text-white px-4 pt-4 pb-3 sticky top-0 z-30 header-gradient"
-        style={{
-          boxShadow: '0 2px 16px rgba(26,43,48,0.15), 0 4px 32px rgba(217,79,43,0.08)',
-        }}
-      >
-        {/* Top row */}
-        <div className="flex items-center justify-between mb-0">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden bg-white">
-              <img
-                src="/logo-hd.png"
-                alt="Padel Lobsters"
-                className="w-full h-full object-contain"
-              />
+      {/* Page content */}
+      <main className="flex-1 pb-24">
+        {/* App header */}
+        <header className="text-white px-4 pt-4 pb-3 header-gradient">
+          <div className="flex items-center justify-between mb-0">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden bg-white">
+                <img
+                  src="/logo-hd.png"
+                  alt="Padel Lobsters"
+                  className="w-full h-full object-contain"
+                />
+              </div>
+              <div>
+                <h1 className="font-bold text-base leading-tight tracking-tight">Padel Lobsters</h1>
+                <p className="text-[9px] opacity-60 leading-tight tracking-wide">
+                  Amsterdam Padel Community
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="font-bold text-base leading-tight tracking-tight">Padel Lobsters</h1>
-              <p className="text-[9px] opacity-60 leading-tight tracking-wide">
-                Amsterdam Padel Community
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <a
-              href="https://www.instagram.com/padelobsters?utm_source=qr&igsh=MTVwcHdod3pkanQxaQ=="
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center w-8 h-8 rounded-2xl text-white transition-all active:scale-95"
-              style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)' }}
-            >
-              <InstagramIcon />
-            </a>
-            {settings?.whatsappLink && (
+            <div className="flex items-center gap-2">
               <a
-                href={settings.whatsappLink}
+                href="https://www.instagram.com/padelobsters?utm_source=qr&igsh=MTVwcHdod3pkanQxaQ=="
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1.5 text-white text-xs font-semibold px-3 py-2 rounded-2xl transition-all active:scale-95"
+                className="flex items-center justify-center w-8 h-8 rounded-2xl text-white transition-all active:scale-95"
                 style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)' }}
               >
-                <MessageCircle size={14} />
-                WhatsApp
+                <InstagramIcon />
               </a>
-            )}
-            <DeviceTrustIndicator visible={showIndicator} />
+              {settings?.whatsappLink && (
+                <a
+                  href={settings.whatsappLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 text-white text-xs font-semibold px-3 py-2 rounded-2xl transition-all active:scale-95"
+                  style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)' }}
+                >
+                  <MessageCircle size={14} />
+                  WhatsApp
+                </a>
+              )}
+              <DeviceTrustIndicator visible={showIndicator} />
+            </div>
           </div>
-        </div>
+        </header>
 
-      </header>
+        {showBanner && <DeviceTrustBanner onDismiss={handleDismissBanner} />}
 
-      {/* Device trust banner */}
-      {showBanner && <DeviceTrustBanner onDismiss={handleDismissBanner} />}
-
-      {/* Page content */}
-      <main className="flex-1 overflow-y-auto pb-24 px-4 pt-5">{children}</main>
+        <div className="px-4">{children}</div>
+      </main>
 
       {/* Bottom navigation */}
       <nav

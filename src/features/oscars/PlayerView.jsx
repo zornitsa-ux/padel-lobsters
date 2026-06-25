@@ -25,12 +25,7 @@ export default function PlayerView({
   // Not started yet
   if (phase === 'not_created' || phase === 'pre_start') {
     return (
-      <Shell
-        onBack={onBack}
-        title="🦞 Lobster Games"
-        subtitle={tournament?.name}
-        headerRight={headerRight}
-      >
+      <Shell title="🦞 Lobster Games" headerRight={headerRight}>
         <div className="bg-white rounded-2xl p-6 text-center space-y-3">
           <p className="text-5xl">🎮</p>
           <p className="text-lg font-bold text-gray-700">Voting hasn&apos;t started yet</p>
@@ -45,12 +40,7 @@ export default function PlayerView({
   // Active — category tile grid
   if (phase === 'active') {
     return (
-      <Shell
-        onBack={onBack}
-        title="🦞 Lobster Games"
-        subtitle={tournament?.name}
-        headerRight={headerRight}
-      >
+      <Shell title="🦞 Lobster Games" headerRight={headerRight}>
         <div className="bg-white rounded-2xl p-4 mb-3">
           <p className="text-sm text-gray-600 leading-snug">
             Vote for your favorites in each category. You can change your vote anytime until the
@@ -74,12 +64,7 @@ export default function PlayerView({
   // Ended — waiting for share
   if (phase === 'ended') {
     return (
-      <Shell
-        onBack={onBack}
-        title="🦞 Voting closed"
-        subtitle={tournament?.name}
-        headerRight={headerRight}
-      >
+      <Shell title="🦞 Voting closed" headerRight={headerRight}>
         <div className="bg-white rounded-2xl p-4 mb-3">
           <p className="text-sm text-gray-600 leading-snug">
             Voting is closed. Your admin will share the final results shortly. Below is a recap of
@@ -101,12 +86,7 @@ export default function PlayerView({
 
   // Shared — winners
   return (
-    <Shell
-      onBack={onBack}
-      title="🦞 The Results"
-      subtitle={tournament?.name}
-      headerRight={headerRight}
-    >
+    <Shell title="🦞 The Results" headerRight={headerRight}>
       {playerResults === null ? (
         <div className="flex justify-center py-10">
           <Loader2 className="animate-spin text-lob-teal" size={28} />

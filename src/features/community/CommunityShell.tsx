@@ -1,40 +1,29 @@
-import { Link, Outlet, useLocation } from 'react-router-dom'
+import { Outlet } from 'react-router-dom'
+import { PageHeader } from '../../components/ui/PageHeader'
+import type { PageHeaderTab } from '../../components/ui/PageHeader'
 
-const TABS = [
+const TABS: PageHeaderTab[] = [
   {
     label: 'Members',
     to: '/community',
-    isActive: (p: string) =>
+    isActive: (p) =>
       p === '/community' ||
       (p.startsWith('/community/') && !p.startsWith('/community/shop')),
   },
   {
     label: 'Shop',
     to: '/community/shop',
-    isActive: (p: string) => p.startsWith('/community/shop'),
+    isActive: (p) => p.startsWith('/community/shop'),
   },
 ]
 
 export default function CommunityShell() {
-  const { pathname } = useLocation()
-
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-bold text-lob-dark">Community</h1>
-      <div className="flex gap-1 bg-lob-teal-light p-1 rounded-xl">
-        {TABS.map(({ label, to, isActive }) => (
-          <Link
-            key={to}
-            to={to}
-            className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all text-center ${
-              isActive(pathname) ? 'bg-white text-lob-teal shadow-sm' : 'text-lob-muted'
-            }`}
-          >
-            {label}
-          </Link>
-        ))}
+    <div className="-mx-4">
+      <PageHeader title="Community" tabs={TABS} />
+      <div className="px-4 pt-4">
+        <Outlet />
       </div>
-      <Outlet />
     </div>
   )
 }

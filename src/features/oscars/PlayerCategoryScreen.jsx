@@ -20,8 +20,8 @@ export default function PlayerCategoryScreen({
   onDismissError,
 }) {
   return (
-    <div className="fixed inset-0 z-50 bg-lob-cream flex flex-col overflow-y-auto">
-      <div className="px-4 pt-12 pb-3 sticky top-0 bg-lob-cream z-10 border-b border-gray-100">
+    <div>
+      <div className="pb-3 border-b border-gray-100 mb-3">
         <button
           onClick={onBack}
           className="inline-flex items-center gap-1.5 bg-white border border-gray-200 rounded-xl px-3 py-1.5 text-sm font-semibold text-gray-800 active:scale-95 transition-all"
@@ -43,7 +43,7 @@ export default function PlayerCategoryScreen({
         </div>
       </div>
 
-      <div className="px-3 py-3 pb-12">
+      <div className="py-3">
         {error && (
           <div className="mb-2">
             <ErrorBanner message={error} onDismiss={onDismissError} />

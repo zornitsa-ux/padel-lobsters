@@ -65,12 +65,7 @@ export default function AdminView({
   /* ── pre-start / not-created: configure + start ───────────────────────── */
   if (phase === 'not_created' || phase === 'pre_start') {
     return (
-      <Shell
-        onBack={onBack}
-        title="🦞 Lobster Games"
-        subtitle={tournament?.name}
-        headerRight={headerRight}
-      >
+      <Shell title="🦞 Lobster Games" headerRight={headerRight}>
         <div className="space-y-3">
           <div className="bg-white rounded-2xl p-4">
             <p className="text-sm text-gray-600 leading-snug">
@@ -108,12 +103,7 @@ export default function AdminView({
   /* ── active: live counts + end ────────────────────────────────────────── */
   if (phase === 'active') {
     return (
-      <Shell
-        onBack={onBack}
-        title="🦞 Lobster Games"
-        subtitle={tournament?.name}
-        headerRight={headerRight}
-      >
+      <Shell title="🦞 Lobster Games" headerRight={headerRight}>
         <div className="space-y-3">
           <PhaseBanner status="active" startedAt={session.started_at} />
           <SectionLabel>Live participation</SectionLabel>
@@ -152,12 +142,7 @@ export default function AdminView({
 
   /* ── ended / shared: rankings + share ─────────────────────────────────── */
   return (
-    <Shell
-      onBack={onBack}
-      title="🦞 Final Results"
-      subtitle={tournament?.name}
-      headerRight={headerRight}
-    >
+    <Shell title="🦞 Final Results" headerRight={headerRight}>
       <div className="space-y-3">
         <PhaseBanner
           status={phase}

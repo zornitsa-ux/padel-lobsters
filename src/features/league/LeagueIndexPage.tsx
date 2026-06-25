@@ -1,5 +1,6 @@
 import { Navigate, Link } from 'react-router-dom'
 import { Badge } from '../../components/ui/Badge'
+import { PageHeader } from '../../components/ui/PageHeader'
 import type { BadgeProps } from '../../components/ui/Badge'
 import { useActiveLeague, useAllLeagues } from './hooks/useLeagueQueries'
 
@@ -32,26 +33,28 @@ export default function LeagueIndexPage() {
   if (active) return <Navigate to={`/league/${active.id}`} replace />
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-bold text-lob-dark">Leagues</h1>
-      {loadingAll ? (
-        <LoadingSpinner />
-      ) : allLeagues.length === 0 ? (
-        <p className="text-sm text-lob-muted text-center py-8">No leagues yet.</p>
-      ) : (
-        <div className="divide-y divide-gray-100">
-          {allLeagues.map((league) => (
-            <Link
-              key={league.id}
-              to={`/league/${league.id}`}
-              className="flex items-center justify-between py-3"
-            >
-              <span className="font-medium text-lob-dark">🦞 {league.name}</span>
-              <Badge {...leagueBadge(league.status)} />
-            </Link>
-          ))}
-        </div>
-      )}
+    <div className="-mx-4">
+      <PageHeader title="Leagues" />
+      <div className="px-4 pt-4 space-y-4">
+        {loadingAll ? (
+          <LoadingSpinner />
+        ) : allLeagues.length === 0 ? (
+          <p className="text-sm text-lob-muted text-center py-8">No leagues yet.</p>
+        ) : (
+          <div className="divide-y divide-gray-100">
+            {allLeagues.map((league) => (
+              <Link
+                key={league.id}
+                to={`/league/${league.id}`}
+                className="flex items-center justify-between py-3"
+              >
+                <span className="font-medium text-lob-dark">🦞 {league.name}</span>
+                <Badge {...leagueBadge(league.status)} />
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

@@ -19,6 +19,7 @@ import {
   AlertCircle,
 } from 'lucide-react'
 import LeagueAdminSection from '../league/LeagueAdminSection'
+import { PageHeader } from '../../components/ui/PageHeader'
 
 type AdminToolsProps = {
   onNavigate?: (page: string, payload?: unknown) => void
@@ -165,21 +166,24 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
 
   if (!isAdmin) {
     return (
-      <div className="space-y-3">
-        <h1 className="text-xl font-bold text-lob-dark">Admin</h1>
-        <SignInBanner
-          role="admin"
-          onNavigate={onNavigate}
-          message={undefined}
-          compact={undefined}
-        />
+      <div className="-mx-4">
+        <PageHeader title="Admin" />
+        <div className="px-4 pt-4 space-y-3">
+          <SignInBanner
+            role="admin"
+            onNavigate={onNavigate}
+            message={undefined}
+            compact={undefined}
+          />
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-bold text-lob-dark">Admin</h1>
+    <div className="-mx-4">
+      <PageHeader title="Admin" />
+      <div className="px-4 pt-4 space-y-4">
 
       {/* Needs Attention */}
       {totalPending > 0 && (
@@ -261,6 +265,7 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
 
       <div className="pt-2 border-t border-gray-100">
         <LeagueAdminSection />
+      </div>
       </div>
     </div>
   )

@@ -7,6 +7,7 @@ import { useAllRegistrations } from '../events/useRegistrations'
 import { supabase } from '../../supabase'
 import DEFAULT_TIPS from '../../data/padelTips'
 import TransferPendingModal from '../../components/TransferPendingModal'
+import { PageHeader } from '../../components/ui/PageHeader'
 import { getGreeting } from './greetings'
 import useCountdown from './useCountdown'
 import Greeting from './Greeting'
@@ -17,8 +18,6 @@ import NextEventCard from './NextEventCard'
 import RecentlyCompletedBanners from './RecentlyCompletedBanners'
 import AdminAlerts from './AdminAlerts'
 import { LeagueDashboardCard } from '../league/ui/LeagueDashboardCard'
-
-// (Claw up/down reaction icons removed along with the Updates feature.)
 
 export default function Dashboard({ onNavigate }) {
   const { tournaments, settings, session, transfers, respondToTransfer, cancelTransfer } = useApp()
@@ -141,8 +140,6 @@ export default function Dashboard({ onNavigate }) {
     .sort((a, b) => ((a.date || '') < (b.date || '') ? -1 : 1))[0]
 
   const regs = upcoming ? getTournamentRegistrations(upcoming.id) : []
-  const registered = regs.filter((r) => r.status === 'registered')
-  const waitlisted = regs.filter((r) => r.status === 'waitlist')
   const unpaid = regs.filter(
     (r) =>
       r.status === 'registered' && r.paymentStatus !== 'paid' && r.paymentStatus !== 'transferred',
@@ -190,7 +187,12 @@ export default function Dashboard({ onNavigate }) {
       .sort((a, b) => ((b.date || '') > (a.date || '') ? 1 : -1))
     let s = 0
     for (const t of completed) {
-      if (getTournamentRegistrations(t.id).some((r) => r.playerId === claimedId && r.status === 'registered')) s++
+      if (
+        getTournamentRegistrations(t.id).some(
+          (r) => r.playerId === claimedId && r.status === 'registered',
+        )
+      )
+        s++
       else break
     }
     return s
@@ -233,62 +235,63 @@ export default function Dashboard({ onNavigate }) {
   }, [tips])
 
   return (
-    <div className="space-y-5">
-      <Greeting hello={greetHello} sub={greetSub} />
+    <div className="-mx-4">
+      <div className="px-4 pt-4 space-y-5">
+        <Greeting hello={greetHello} sub={greetSub} />
 
-      <TransferOfferBanners
-        incomingTransfers={myIncomingTransfers}
-        outgoingTransfers={myOutgoingTransfers}
-        players={players}
-        tournaments={tournaments}
-        transferBusy={transferBusy}
-        onIncomingResponse={handleIncomingResponse}
-        onOutgoingCancel={handleOutgoingCancel}
-        onOutgoingShare={handleOutgoingShare}
-      />
-      {transferShare && (
-        <TransferPendingModal
-          transferId={transferShare.transferId}
-          toPlayer={transferShare.toPlayer}
-          onClose={() => setTransferShare(null)}
-          onCancel={() => setTransferShare(null)}
+        <TransferOfferBanners
+          incomingTransfers={myIncomingTransfers}
+          outgoingTransfers={myOutgoingTransfers}
+          players={players}
+          tournaments={tournaments}
+          transferBusy={transferBusy}
+          onIncomingResponse={handleIncomingResponse}
+          onOutgoingCancel={handleOutgoingCancel}
+          onOutgoingShare={handleOutgoingShare}
         />
-      )}
+        {transferShare && (
+          <TransferPendingModal
+            transferId={transferShare.transferId}
+            toPlayer={transferShare.toPlayer}
+            onClose={() => setTransferShare(null)}
+            onCancel={() => setTransferShare(null)}
+          />
+        )}
 
-      <CountdownClock countdown={countdown} streak={myStreak} />
+        <CountdownClock countdown={countdown} streak={myStreak} />
 
-      <TipOfTheDay tip={todayTip} />
+        <TipOfTheDay tip={todayTip} />
 
-      <LeagueDashboardCard myPlayerId={claimedId} />
+        <LeagueDashboardCard myPlayerId={claimedId} />
 
-      <NextEventCard
-        upcoming={upcoming}
-        isAdmin={isAdmin}
-        claimedId={claimedId}
-        isRegistered={isRegistered}
-        onNavigate={onNavigate}
-        formatDate={formatDate}
-      />
+        <NextEventCard
+          upcoming={upcoming}
+          isAdmin={isAdmin}
+          claimedId={claimedId}
+          isRegistered={isRegistered}
+          onNavigate={onNavigate}
+          formatDate={formatDate}
+        />
 
-      <RecentlyCompletedBanners
-        recentlyCompleted={recentlyCompleted}
-        getTournamentMatches={getTournamentMatches}
-        getTournamentRegistrations={getTournamentRegistrations}
-        players={players}
-        onNavigate={onNavigate}
-      />
+        <RecentlyCompletedBanners
+          recentlyCompleted={recentlyCompleted}
+          getTournamentMatches={getTournamentMatches}
+          getTournamentRegistrations={getTournamentRegistrations}
+          players={players}
+          onNavigate={onNavigate}
+        />
 
-      <AdminAlerts
-        isAdmin={isAdmin}
-        unpaid={unpaid}
-        upcomingEvent={upcoming}
-        players={players}
-        newOrders={newOrders}
-        onDismissMerch={dismissMerchOrders}
-        formatUpdateTime={formatUpdateTime}
-        onNavigate={onNavigate}
-      />
-
+        <AdminAlerts
+          isAdmin={isAdmin}
+          unpaid={unpaid}
+          upcomingEvent={upcoming}
+          players={players}
+          newOrders={newOrders}
+          onDismissMerch={dismissMerchOrders}
+          formatUpdateTime={formatUpdateTime}
+          onNavigate={onNavigate}
+        />
+      </div>
     </div>
   )
 }

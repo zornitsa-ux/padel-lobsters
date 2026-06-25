@@ -214,8 +214,11 @@ function EventScoresRoute() {
 
 function EventPaymentsRoute() {
   const tournament = useTournamentFromUrl()
+  const { session } = useApp()
   const onNavigate = useLegacyNavigate()
+  const isAdmin = session?.user?.app_metadata?.role === 'admin'
   if (!tournament) return <Navigate to="/events" replace />
+  if (!isAdmin) return <Navigate to={`/events/${tournament.id}/info`} replace />
   return <Payments tournament={tournament} onNavigate={onNavigate} />
 }
 

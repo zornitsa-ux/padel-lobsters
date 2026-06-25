@@ -12,6 +12,7 @@ import ProfileSection from './ProfileSection'
 import AccountStatsSection from './AccountStatsSection'
 import AccountOrdersSection from './AccountOrdersSection'
 import AdminSection from './AdminSection'
+import { PageHeader } from '../../components/ui/PageHeader'
 
 export default function Settings() {
   const { settings, saveSettings, session, updatePlayer, loginWithPin, logout } = useApp()
@@ -323,9 +324,10 @@ export default function Settings() {
   const signedInPlayer = myPlayer
 
   return (
-    <div className="space-y-5">
-      <h1 className="text-xl font-bold text-lob-dark">Account</h1>
+    <div className="-mx-4">
+      <PageHeader title="Account" />
 
+      <div className="px-4 pt-4 space-y-5">
       <AccountSection
         isAdmin={isAdmin}
         signedInPlayer={signedInPlayer}
@@ -397,6 +399,7 @@ export default function Settings() {
         <p className="font-bold text-gray-700">Padel Lobsters</p>
         <p className="text-xs text-gray-400">Tournament Manager · v1.0</p>
         <p className="text-xs text-gray-300 mt-2">Made with 🦞 for the crew</p>
+      </div>
       </div>
     </div>
   )

@@ -18,10 +18,10 @@ import { shortLabelMap } from './gameHelpers'
 export function useOscarsSession(tournament) {
   const { session: authSession } = useApp()
   const { data: players = [] } = usePlayers()
-  const { data: regsData = [] } = useRegistrations(tournamentId || null)
   const isAdmin = authSession?.user?.app_metadata?.role === 'admin'
   const claimedId = authSession?.user?.id ?? null
   const tournamentId = tournament?.id || ''
+  const { data: regsData = [] } = useRegistrations(tournamentId || null)
 
   const [session, setSession] = useState(undefined) // undefined = unloaded; null = no row
   const [categories, setCategories] = useState([])
