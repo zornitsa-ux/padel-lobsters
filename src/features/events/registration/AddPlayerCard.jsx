@@ -66,9 +66,7 @@ export default function AddPlayerCard({
           >
             <div
               className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${
-                selectedPlayer === p.id
-                  ? 'bg-white text-lob-teal'
-                  : 'bg-lob-teal text-white'
+                selectedPlayer === p.id ? 'bg-white text-lob-teal' : 'bg-lob-teal text-white'
               }`}
             >
               {(p.name || '?')[0]}

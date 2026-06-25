@@ -232,9 +232,7 @@ export default function ProfileSection({
                       type="button"
                       onClick={() => setActivePrompt(i)}
                       className={`text-[11px] px-2.5 py-1 rounded-full font-semibold transition-all active:scale-95 ${
-                        activePrompt === i
-                          ? 'bg-lob-teal text-white'
-                          : 'bg-gray-100 text-gray-500'
+                        activePrompt === i ? 'bg-lob-teal text-white' : 'bg-gray-100 text-gray-500'
                       }`}
                     >
                       {p.label}

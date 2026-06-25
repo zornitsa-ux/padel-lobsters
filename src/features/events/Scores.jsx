@@ -89,11 +89,6 @@ export default function Scores({ tournament, onNavigate }) {
     return p ? (p.name || '').split(' ')[0] : '?'
   }
 
-  const formatDate = (d) => {
-    if (!d) return '—'
-    return new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
-  }
-
   const medalColor = (i) => {
     if (i === 0) return 'text-yellow-500'
     if (i === 1) return 'text-gray-400'
@@ -217,7 +212,11 @@ export default function Scores({ tournament, onNavigate }) {
                           </td>
                           <td className="py-2.5">
                             <div className="flex items-center gap-2">
-                              <Avatar player={s.player} size="sm" className="!w-7 !h-7 flex-shrink-0" />
+                              <Avatar
+                                player={s.player}
+                                size="sm"
+                                className="!w-7 !h-7 flex-shrink-0"
+                              />
                               <span className="font-medium truncate max-w-[100px]">
                                 {s.player.name}
                               </span>
@@ -231,9 +230,7 @@ export default function Scores({ tournament, onNavigate }) {
                           <td className="text-center py-2.5 text-gray-500 text-xs">
                             {s.pointsFor}-{s.pointsAgainst}
                           </td>
-                          <td className="text-center py-2.5 font-bold text-lob-teal">
-                            {s.points}
-                          </td>
+                          <td className="text-center py-2.5 font-bold text-lob-teal">{s.points}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -265,9 +262,7 @@ export default function Scores({ tournament, onNavigate }) {
                     key={r.round}
                     onClick={() => setActiveRoundIdx(i)}
                     className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                      activeRoundIdx === i
-                        ? 'bg-lob-teal text-white'
-                        : 'bg-gray-100 text-gray-600'
+                      activeRoundIdx === i ? 'bg-lob-teal text-white' : 'bg-gray-100 text-gray-600'
                     }`}
                   >
                     R{r.round}

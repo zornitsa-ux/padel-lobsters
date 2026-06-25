@@ -184,88 +184,94 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
     <div className="-mx-4">
       <PageHeader title="Admin" />
       <div className="px-4 pt-4 space-y-4">
+        {/* Needs Attention */}
+        {totalPending > 0 && (
+          <div className="card space-y-2 border-l-4 border-lob-amber">
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-wide flex items-center gap-1.5">
+              <AlertCircle size={13} className="text-lob-amber" /> Needs attention
+            </p>
+            {unpaidForNextEvent > 0 && (
+              <button
+                onClick={() => onNavigate?.('merch-orders')}
+                className="w-full flex items-center justify-between text-sm text-gray-700 hover:text-lob-teal"
+              >
+                <span>
+                  {unpaidForNextEvent} unpaid registration{unpaidForNextEvent !== 1 ? 's' : ''} for
+                  next event
+                </span>
+                <ChevronRight size={14} className="text-gray-400" />
+              </button>
+            )}
+            {pendingSignups > 0 && (
+              <button
+                onClick={() => onNavigate?.('players')}
+                className="w-full flex items-center justify-between text-sm text-gray-700 hover:text-lob-teal"
+              >
+                <span>
+                  {pendingSignups} player signup{pendingSignups !== 1 ? 's' : ''} awaiting approval
+                </span>
+                <ChevronRight size={14} className="text-gray-400" />
+              </button>
+            )}
+            {newOrdersCount > 0 && (
+              <button
+                onClick={() => onNavigate?.('merch-orders')}
+                className="w-full flex items-center justify-between text-sm text-gray-700 hover:text-lob-teal"
+              >
+                <span>
+                  {newOrdersCount} new merch order{newOrdersCount !== 1 ? 's' : ''}
+                </span>
+                <ChevronRight size={14} className="text-gray-400" />
+              </button>
+            )}
+          </div>
+        )}
 
-      {/* Needs Attention */}
-      {totalPending > 0 && (
-        <div className="card space-y-2 border-l-4 border-lob-amber">
-          <p className="text-xs font-bold text-gray-500 uppercase tracking-wide flex items-center gap-1.5">
-            <AlertCircle size={13} className="text-lob-amber" /> Needs attention
-          </p>
-          {unpaidForNextEvent > 0 && (
-            <button
-              onClick={() => onNavigate?.('merch-orders')}
-              className="w-full flex items-center justify-between text-sm text-gray-700 hover:text-lob-teal"
-            >
-              <span>{unpaidForNextEvent} unpaid registration{unpaidForNextEvent !== 1 ? 's' : ''} for next event</span>
-              <ChevronRight size={14} className="text-gray-400" />
-            </button>
-          )}
-          {pendingSignups > 0 && (
-            <button
-              onClick={() => onNavigate?.('players')}
-              className="w-full flex items-center justify-between text-sm text-gray-700 hover:text-lob-teal"
-            >
-              <span>{pendingSignups} player signup{pendingSignups !== 1 ? 's' : ''} awaiting approval</span>
-              <ChevronRight size={14} className="text-gray-400" />
-            </button>
-          )}
-          {newOrdersCount > 0 && (
-            <button
-              onClick={() => onNavigate?.('merch-orders')}
-              className="w-full flex items-center justify-between text-sm text-gray-700 hover:text-lob-teal"
-            >
-              <span>{newOrdersCount} new merch order{newOrdersCount !== 1 ? 's' : ''}</span>
-              <ChevronRight size={14} className="text-gray-400" />
-            </button>
-          )}
-        </div>
-      )}
-
-      <div className="space-y-2">
-        {tools.map((tool) => {
-          const Icon = tool.icon
-          return (
-            <div key={tool.id} className="card">
-              <div className="flex items-start gap-3">
-                <div className="w-9 h-9 rounded-xl bg-lob-cream text-lob-teal flex items-center justify-center flex-shrink-0">
-                  <Icon size={16} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-800">{tool.title}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">{tool.description}</p>
-                  <button
-                    onClick={tool.onClick}
-                    className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-lob-teal hover:underline"
-                  >
-                    {tool.actionLabel} <ChevronRight size={12} />
-                  </button>
+        <div className="space-y-2">
+          {tools.map((tool) => {
+            const Icon = tool.icon
+            return (
+              <div key={tool.id} className="card">
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-lob-cream text-lob-teal flex items-center justify-center flex-shrink-0">
+                    <Icon size={16} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-800">{tool.title}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{tool.description}</p>
+                    <button
+                      onClick={tool.onClick}
+                      className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-lob-teal hover:underline"
+                    >
+                      {tool.actionLabel} <ChevronRight size={12} />
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          )
-        })}
-      </div>
+            )
+          })}
+        </div>
 
-      {showAliasMatcher && (
-        <PlayerAliasMatcher
-          players={players}
-          playerAliases={playerAliases}
-          setPlayerAlias={setPlayerAlias}
-          removePlayerAlias={removePlayerAlias}
-          onClose={() => setShowAliasMatcher(false)}
-        />
-      )}
+        {showAliasMatcher && (
+          <PlayerAliasMatcher
+            players={players}
+            playerAliases={playerAliases}
+            setPlayerAlias={setPlayerAlias}
+            removePlayerAlias={removePlayerAlias}
+            onClose={() => setShowAliasMatcher(false)}
+          />
+        )}
 
-      {showReviewBreakdown && (
-        <ReviewBreakdownModal
-          reviewBreakdown={reviewBreakdown}
-          onClose={() => setShowReviewBreakdown(false)}
-        />
-      )}
+        {showReviewBreakdown && (
+          <ReviewBreakdownModal
+            reviewBreakdown={reviewBreakdown}
+            onClose={() => setShowReviewBreakdown(false)}
+          />
+        )}
 
-      <div className="pt-2 border-t border-gray-100">
-        <LeagueAdminSection />
-      </div>
+        <div className="pt-2 border-t border-gray-100">
+          <LeagueAdminSection />
+        </div>
       </div>
     </div>
   )

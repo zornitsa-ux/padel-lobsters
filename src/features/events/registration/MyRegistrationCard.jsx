@@ -112,9 +112,7 @@ export default function MyRegistrationCard({
               You&apos;re on the waitlist{waitlistPosition ? ` · #${waitlistPosition}` : ''}
             </p>
           </div>
-          <p className="text-xs text-amber-700 pl-5">
-            You&apos;ll be notified if a spot opens up.
-          </p>
+          <p className="text-xs text-amber-700 pl-5">You&apos;ll be notified if a spot opens up.</p>
         </div>
       </>
     )

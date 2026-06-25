@@ -7,14 +7,14 @@ import { useAllRegistrations } from '../events/useRegistrations'
 import * as oscarsApi from '../../api/oscars'
 import { TOURNAMENTS } from '../../data/historicalTournaments'
 import { loadAliases, resolveName } from './aliasStorage'
-import { smartSort, buildDisplayNames, getAllHardcodedNames } from './historicalStats'
+import { smartSort, buildDisplayNames } from './historicalStats'
 import { medalColor, medalStyleH } from './medals'
 import Podium from './Podium'
 import { TabSwitcher } from '../../components/ui/TabSwitcher'
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function History({ onNavigate }) {
-  const { tournaments, session } = useApp()
+  const { tournaments } = useApp()
   const { data: players = [] } = usePlayers()
   const { data: allMatchesData = [] } = useAllMatches()
   const { data: allRegsData = [] } = useAllRegistrations()
@@ -27,7 +27,7 @@ export default function History({ onNavigate }) {
     (id) => allRegsData.filter((r) => r.tournamentId === id),
     [allRegsData],
   )
-  const isAdmin = session?.user?.app_metadata?.role === 'admin'
+
   const [expandedId, setExpandedId] = useState(null)
   const [activeTab, setActiveTab] = useState({}) // id → 'standings' | 'matches' | 'games'
   const [activeRound, setActiveRound] = useState({}) // id → roundIndex
@@ -378,9 +378,7 @@ export default function History({ onNavigate }) {
                               key={r.round}
                               onClick={() => setDbActiveRound((s) => ({ ...s, [t.id]: i }))}
                               className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                                dbRi === i
-                                  ? 'bg-lob-teal text-white'
-                                  : 'bg-gray-100 text-gray-600'
+                                dbRi === i ? 'bg-lob-teal text-white' : 'bg-gray-100 text-gray-600'
                               }`}
                             >
                               R{r.round}

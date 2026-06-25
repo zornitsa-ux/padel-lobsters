@@ -328,78 +328,78 @@ export default function Settings() {
       <PageHeader title="Account" />
 
       <div className="px-4 pt-4 space-y-5">
-      <AccountSection
-        isAdmin={isAdmin}
-        signedInPlayer={signedInPlayer}
-        logout={logout}
-        signInPin={signInPin}
-        setSignInPin={setSignInPin}
-        signInError={signInError}
-        setSignInError={setSignInError}
-        signingIn={signingIn}
-        handleSignIn={handleSignIn}
-      />
-
-      <ProfileSection
-        myPlayer={myPlayer}
-        profileExpanded={profileExpanded}
-        setProfileExpanded={setProfileExpanded}
-        profileForm={profileForm}
-        setProfileForm={editProfileForm}
-        profileSaving={profileSaving}
-        profileSaved={profileSaved}
-        profileError={profileError}
-        avatarPreview={avatarPreview}
-        handleAvatarChange={handleAvatarChange}
-        handleProfileSave={handleProfileSave}
-        activePrompt={activePrompt}
-        setActivePrompt={setActivePrompt}
-        showPlaytomicPrompt={showPlaytomicPrompt}
-        dismissPlaytomicPrompt={dismissPlaytomicPrompt}
-      />
-
-      <AccountStatsSection claimedId={claimedId} />
-
-      <AccountOrdersSection myPlayer={myPlayer} />
-
-      {/* App config — admin only */}
-      {isAdmin && (
-        <AdminSection
-          form={form}
-          setForm={setForm}
-          saving={saving}
-          saved={saved}
-          handleSave={handleSave}
-          recomputing={recomputing}
-          recomputeResult={recomputeResult}
-          handleRecomputeRatings={handleRecomputeRatings}
-          activeTips={activeTips}
-          isCustom={isCustom}
-          tipsExpanded={tipsExpanded}
-          setTipsExpanded={setTipsExpanded}
-          newTip={newTip}
-          setNewTip={setNewTip}
-          editingTip={editingTip}
-          setEditingTip={setEditingTip}
-          handleAddTip={handleAddTip}
-          handleDeleteTip={handleDeleteTip}
-          handleEditTip={handleEditTip}
-          handleSaveEdit={handleSaveEdit}
-          handleResetTips={handleResetTips}
+        <AccountSection
+          isAdmin={isAdmin}
+          signedInPlayer={signedInPlayer}
+          logout={logout}
+          signInPin={signInPin}
+          setSignInPin={setSignInPin}
+          signInError={signInError}
+          setSignInError={setSignInError}
+          signingIn={signingIn}
+          handleSignIn={handleSignIn}
         />
-      )}
 
-      {/* App info */}
-      <div className="card text-center space-y-1 py-5">
-        <img
-          src="/logo-hd.png"
-          alt="Padel Lobsters"
-          className="w-14 h-14 rounded-full bg-white p-1 object-contain mx-auto mb-2"
+        <ProfileSection
+          myPlayer={myPlayer}
+          profileExpanded={profileExpanded}
+          setProfileExpanded={setProfileExpanded}
+          profileForm={profileForm}
+          setProfileForm={editProfileForm}
+          profileSaving={profileSaving}
+          profileSaved={profileSaved}
+          profileError={profileError}
+          avatarPreview={avatarPreview}
+          handleAvatarChange={handleAvatarChange}
+          handleProfileSave={handleProfileSave}
+          activePrompt={activePrompt}
+          setActivePrompt={setActivePrompt}
+          showPlaytomicPrompt={showPlaytomicPrompt}
+          dismissPlaytomicPrompt={dismissPlaytomicPrompt}
         />
-        <p className="font-bold text-gray-700">Padel Lobsters</p>
-        <p className="text-xs text-gray-400">Tournament Manager · v1.0</p>
-        <p className="text-xs text-gray-300 mt-2">Made with 🦞 for the crew</p>
-      </div>
+
+        <AccountStatsSection claimedId={claimedId} />
+
+        <AccountOrdersSection myPlayer={myPlayer} />
+
+        {/* App config — admin only */}
+        {isAdmin && (
+          <AdminSection
+            form={form}
+            setForm={setForm}
+            saving={saving}
+            saved={saved}
+            handleSave={handleSave}
+            recomputing={recomputing}
+            recomputeResult={recomputeResult}
+            handleRecomputeRatings={handleRecomputeRatings}
+            activeTips={activeTips}
+            isCustom={isCustom}
+            tipsExpanded={tipsExpanded}
+            setTipsExpanded={setTipsExpanded}
+            newTip={newTip}
+            setNewTip={setNewTip}
+            editingTip={editingTip}
+            setEditingTip={setEditingTip}
+            handleAddTip={handleAddTip}
+            handleDeleteTip={handleDeleteTip}
+            handleEditTip={handleEditTip}
+            handleSaveEdit={handleSaveEdit}
+            handleResetTips={handleResetTips}
+          />
+        )}
+
+        {/* App info */}
+        <div className="card text-center space-y-1 py-5">
+          <img
+            src="/logo-hd.png"
+            alt="Padel Lobsters"
+            className="w-14 h-14 rounded-full bg-white p-1 object-contain mx-auto mb-2"
+          />
+          <p className="font-bold text-gray-700">Padel Lobsters</p>
+          <p className="text-xs text-gray-400">Tournament Manager · v1.0</p>
+          <p className="text-xs text-gray-300 mt-2">Made with 🦞 for the crew</p>
+        </div>
       </div>
     </div>
   )

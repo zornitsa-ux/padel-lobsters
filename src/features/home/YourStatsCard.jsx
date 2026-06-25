@@ -47,8 +47,8 @@ export default function YourStatsCard({ claimedId, myStats, onNavigate }) {
         {myStats.played === 0 ? (
           <div className="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500 text-center">
             No matches logged yet — your stats will populate as soon as a tournament result is
-            recorded. Tap <span className="font-semibold text-lob-teal">View full profile</span>{' '}
-            for your historical record.
+            recorded. Tap <span className="font-semibold text-lob-teal">View full profile</span> for
+            your historical record.
           </div>
         ) : (
           <>

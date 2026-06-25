@@ -106,11 +106,7 @@ function PendingDevicesPanel() {
             </span>
           )}
         </h3>
-        <button
-          onClick={load}
-          aria-label="Refresh"
-          className="text-gray-400 hover:text-lob-teal"
-        >
+        <button onClick={load} aria-label="Refresh" className="text-gray-400 hover:text-lob-teal">
           <RefreshCw size={14} />
         </button>
       </div>

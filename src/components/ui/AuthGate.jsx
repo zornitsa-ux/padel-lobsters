@@ -46,8 +46,7 @@ export function SignInBanner({ role, onNavigate, message, compact }) {
   const Icon = isAdmin ? Shield : User
   const accent = isAdmin ? 'amber' : 'teal'
 
-  const bg =
-    accent === 'amber' ? 'bg-amber-50 border-amber-200' : 'bg-lob-cream border-lob-teal/30'
+  const bg = accent === 'amber' ? 'bg-amber-50 border-amber-200' : 'bg-lob-cream border-lob-teal/30'
   const iconTxt = accent === 'amber' ? 'text-amber-600' : 'text-lob-teal'
   const title = accent === 'amber' ? 'text-amber-800' : 'text-lob-teal'
   const body = accent === 'amber' ? 'text-amber-700' : 'text-gray-600'

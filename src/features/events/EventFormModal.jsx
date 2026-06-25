@@ -132,9 +132,7 @@ export default function EventFormModal({
                   key={val}
                   onClick={() => setForm((f) => ({ ...f, genderMode: val }))}
                   className={`flex-1 py-2.5 rounded-xl font-semibold text-sm transition-all ${
-                    form.genderMode === val
-                      ? 'bg-lob-teal text-white'
-                      : 'bg-gray-100 text-gray-600'
+                    form.genderMode === val ? 'bg-lob-teal text-white' : 'bg-gray-100 text-gray-600'
                   }`}
                 >
                   {lbl}

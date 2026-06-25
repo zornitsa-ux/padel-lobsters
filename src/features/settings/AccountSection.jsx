@@ -58,8 +58,7 @@ export default function AccountSection({
           <Avatar player={signedInPlayer} size="sm" className="!w-9 !h-9 flex-shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-gray-800 truncate">
-              Signed in as {signedInPlayer.name}{' '}
-              <span className="text-lob-teal text-xs">✓</span>
+              Signed in as {signedInPlayer.name} <span className="text-lob-teal text-xs">✓</span>
             </p>
             <p className="text-xs text-gray-500">
               You can register for events, place orders, and manage your profile anywhere on the

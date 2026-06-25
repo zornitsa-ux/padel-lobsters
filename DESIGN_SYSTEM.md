@@ -6,41 +6,41 @@ The palette is defined in `tailwind.config.js` under the `lob` namespace. Use **
 
 ### Token map
 
-| Token | Hex | Use |
-|-------|-----|-----|
-| `lob-teal` | `#3D7A8A` | Primary brand, icons, links, active states |
-| `lob-teal-dark` | `#2A5A68` | Header gradient end, hover darken |
-| `lob-teal-light` | `#EAF4F7` | Tab tracks, chip backgrounds, subtle rows |
-| `lob-coral` | `#D94F2B` | Primary CTAs, active nav tab, destructive alerts |
-| `lob-coral-light` | `#FAEAE5` | Alert/warning card backgrounds |
-| `lob-amber` | `#E8A030` | Warnings, in-progress, streak indicators |
-| `lob-cream` | `#FAF3E4` | Page background (set on `body`) |
-| `lob-dark` | `#1C2B30` | All headings and body text |
-| `lob-muted` | `#6B8A92` | Secondary text, placeholders, inactive icons |
+| Token             | Hex       | Use                                              |
+| ----------------- | --------- | ------------------------------------------------ |
+| `lob-teal`        | `#3D7A8A` | Primary brand, icons, links, active states       |
+| `lob-teal-dark`   | `#2A5A68` | Header gradient end, hover darken                |
+| `lob-teal-light`  | `#EAF4F7` | Tab tracks, chip backgrounds, subtle rows        |
+| `lob-coral`       | `#D94F2B` | Primary CTAs, active nav tab, destructive alerts |
+| `lob-coral-light` | `#FAEAE5` | Alert/warning card backgrounds                   |
+| `lob-amber`       | `#E8A030` | Warnings, in-progress, streak indicators         |
+| `lob-cream`       | `#FAF3E4` | Page background (set on `body`)                  |
+| `lob-dark`        | `#1C2B30` | All headings and body text                       |
+| `lob-muted`       | `#6B8A92` | Secondary text, placeholders, inactive icons     |
 
 ### Legacy migration map
 
 When touching a file, replace old tokens:
 
-| Old (`lobster-*`) | New (`lob-*`) |
-|-------------------|---------------|
-| `lobster-teal` | `lob-teal` |
-| `lobster-teal-dark` | `lob-teal-dark` |
-| `lobster-teal-light` | `lob-teal-light` |
-| `lobster-orange` | `lob-coral` |
+| Old (`lobster-*`)      | New (`lob-*`)     |
+| ---------------------- | ----------------- |
+| `lobster-teal`         | `lob-teal`        |
+| `lobster-teal-dark`    | `lob-teal-dark`   |
+| `lobster-teal-light`   | `lob-teal-light`  |
+| `lobster-orange`       | `lob-coral`       |
 | `lobster-orange-light` | `lob-coral-light` |
-| `lobster-cream` | `lob-cream` |
-| `lobster-gold` | `lob-amber` |
+| `lobster-cream`        | `lob-cream`       |
+| `lobster-gold`         | `lob-amber`       |
 
 ### Raw gray ban
 
 Do not use Tailwind's `gray-*` scale for content text. Map to lob tokens:
 
-| Raw gray | Lob token |
-|----------|-----------|
-| `text-gray-800` / `text-gray-700` | `text-lob-dark` |
-| `text-gray-600` / `text-gray-500` | `text-lob-muted` |
-| `text-gray-400` | `text-lob-muted` (or add `opacity-70`) |
+| Raw gray                          | Lob token                              |
+| --------------------------------- | -------------------------------------- |
+| `text-gray-800` / `text-gray-700` | `text-lob-dark`                        |
+| `text-gray-600` / `text-gray-500` | `text-lob-muted`                       |
+| `text-gray-400`                   | `text-lob-muted` (or add `opacity-70`) |
 
 `bg-gray-100` tracks → `bg-lob-teal-light`. `bg-gray-50` states → `bg-lob-teal-light` or `bg-white`.
 
@@ -73,15 +73,15 @@ All six top-level pages use this exact pattern. Dashboard is the exception — t
 
 ## Typography Scale
 
-| Role | Classes |
-|------|---------|
-| Page title | `text-xl font-bold text-lob-dark` |
-| Card / section title | `text-base font-semibold text-lob-dark` |
-| Eyebrow label | `text-[10px] font-bold text-lob-muted uppercase tracking-widest` |
-| Body | `text-sm text-lob-dark` |
-| Secondary / supporting | `text-sm text-lob-muted` |
-| Caption / meta | `text-xs text-lob-muted` |
-| Micro (nav labels, badge text) | `text-[10px] text-lob-muted` |
+| Role                           | Classes                                                          |
+| ------------------------------ | ---------------------------------------------------------------- |
+| Page title                     | `text-xl font-bold text-lob-dark`                                |
+| Card / section title           | `text-base font-semibold text-lob-dark`                          |
+| Eyebrow label                  | `text-[10px] font-bold text-lob-muted uppercase tracking-widest` |
+| Body                           | `text-sm text-lob-dark`                                          |
+| Secondary / supporting         | `text-sm text-lob-muted`                                         |
+| Caption / meta                 | `text-xs text-lob-muted`                                         |
+| Micro (nav labels, badge text) | `text-[10px] text-lob-muted`                                     |
 
 ---
 
@@ -90,12 +90,15 @@ All six top-level pages use this exact pattern. Dashboard is the exception — t
 Three variants — choose the right one, do not write inline card styles.
 
 ### `.card` (default)
+
 `bg-white rounded-2xl p-4` with subtle shadow + thin border. Use for all standard content cards.
 
 ### `.card-elevated`
+
 Same shape, stronger shadow. Use for hero/featured cards only (NextEventCard, LeagueDashboardCard).
 
 ### Accent card (inline modifier)
+
 ```jsx
 <div className="card border-l-4 border-lob-amber">…</div>   // warning
 <div className="card border-l-4 border-lob-coral">…</div>   // error/action
@@ -108,12 +111,12 @@ Same shape, stronger shadow. Use for hero/featured cards only (NextEventCard, Le
 
 Four variants only. Do not create custom one-off button styles.
 
-| Class | Shape | Use |
-|-------|-------|-----|
-| `.btn-primary` | Coral, `rounded-full`, `py-3 px-5` | One per screen max — the single key action |
-| `.btn-secondary` | White/teal border, `rounded-full`, `py-3 px-5` | Alongside a primary |
-| `.btn-danger` | Red, `rounded-full`, `py-2 px-4` | Destructive confirm |
-| Ghost chip | `bg-gray-100 text-lob-muted rounded-lg px-3 py-1.5 text-xs` | Tertiary (Share, Schedule…) |
+| Class            | Shape                                                       | Use                                        |
+| ---------------- | ----------------------------------------------------------- | ------------------------------------------ |
+| `.btn-primary`   | Coral, `rounded-full`, `py-3 px-5`                          | One per screen max — the single key action |
+| `.btn-secondary` | White/teal border, `rounded-full`, `py-3 px-5`              | Alongside a primary                        |
+| `.btn-danger`    | Red, `rounded-full`, `py-2 px-4`                            | Destructive confirm                        |
+| Ghost chip       | `bg-gray-100 text-lob-muted rounded-lg px-3 py-1.5 text-xs` | Tertiary (Share, Schedule…)                |
 
 Do not override `.btn-primary` padding. If you need a smaller action button, use the ghost chip pattern.
 

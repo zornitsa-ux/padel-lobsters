@@ -78,7 +78,15 @@ export default function AccountStatsSection({ claimedId }) {
       nemesis,
       bestPartner,
     }
-  }, [claimedId, allMatchesData, tournaments, allRegsData, players, playerAliases, getTournamentRegistrations])
+  }, [
+    claimedId,
+    allMatchesData,
+    tournaments,
+    allRegsData,
+    players,
+    playerAliases,
+    getTournamentRegistrations,
+  ])
 
   if (!claimedId || !myStats) return null
 
