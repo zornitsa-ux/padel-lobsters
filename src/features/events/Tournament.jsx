@@ -1,9 +1,7 @@
 import React, { useState } from 'react'
 import { useApp } from '../../context/AppContext'
-import { usePlayers } from '../players/usePlayers'
 import { Plus, Trophy, Clock, ChevronDown, ChevronUp } from 'lucide-react'
 import HistoryContent from '../../components/History'
-import { TOURNAMENTS as HISTORY_TOURNAMENTS } from '../../data/historicalTournaments'
 import AdminTransferPanel from '../../components/AdminTransferPanel'
 import { DEFAULT_EVENT_DESCRIPTION, emptyForm } from './eventConstants'
 import { parseLocalDate } from './eventHelpers'
@@ -18,11 +16,9 @@ export { DEFAULT_EVENT_DESCRIPTION }
 export default function Tournament({ onNavigate }) {
   const { tournaments, addTournament, updateTournament, deleteTournament, session, transfers } =
     useApp()
-  const { data: players = [] } = usePlayers()
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
   const claimedId = session?.user?.id ?? null
 
-  const meTourn = claimedId ? players.find((p) => String(p.id) === String(claimedId)) : null
   const [showForm, setShowForm] = useState(false)
   const [editId, setEditId] = useState(null)
   const [form, setForm] = useState(emptyForm)
@@ -280,19 +276,18 @@ export default function Tournament({ onNavigate }) {
           )}
         </div>
 
-        {showForm && (
-          <EventFormModal
-            editId={editId}
-            form={form}
-            setForm={setForm}
-            saving={saving}
-            onSubmit={handleSubmit}
-            onClose={() => setShowForm(false)}
-            addCourt={addCourt}
-            removeCourt={removeCourt}
-            setCourt={setCourt}
-          />
-        )}
+        <EventFormModal
+          open={showForm}
+          editId={editId}
+          form={form}
+          setForm={setForm}
+          saving={saving}
+          onSubmit={handleSubmit}
+          onClose={() => setShowForm(false)}
+          addCourt={addCourt}
+          removeCourt={removeCourt}
+          setCourt={setCourt}
+        />
       </div>
     </div>
   )
