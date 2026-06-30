@@ -71,7 +71,9 @@ export function Modal({ open, onClose, title, children, footer }: ModalProps) {
             {title}
           </div>
         )}
-        <div ref={scrollRef} className="px-5 py-4 flex-1 overflow-y-auto">{children}</div>
+        <div ref={scrollRef} className="px-5 py-4 flex-1 overflow-y-auto">
+          {children}
+        </div>
         {footer && (
           <div className="px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-gray-100 flex-shrink-0">
             {footer}
