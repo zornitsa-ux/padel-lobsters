@@ -1,178 +1,194 @@
 # Padel Lobsters Design System
 
-## 🎨 Color Palette
+## Color Palette
 
-The new design system uses a carefully curated palette that feels premium, modern, and on-brand.
+The palette is defined in `tailwind.config.js` under the `lob` namespace. Use **only** `lob-*` tokens. The legacy `lobster-*` aliases are being phased out — do not use them in new code.
 
-### Primary Colors
+### Token map
 
-| Name               | Hex       | Usage                                                |
-| ------------------ | --------- | ---------------------------------------------------- |
-| **lob-teal**       | `#3D7A8A` | Primary brand color, backgrounds, text               |
-| **lob-teal-dark**  | `#2A5A68` | Header gradient (dark end), darkening hover states   |
-| **lob-teal-light** | `#EAF4F7` | Soft backgrounds, inactive tabs, supporting surfaces |
+| Token             | Hex       | Use                                              |
+| ----------------- | --------- | ------------------------------------------------ |
+| `lob-teal`        | `#3D7A8A` | Primary brand, icons, links, active states       |
+| `lob-teal-dark`   | `#2A5A68` | Header gradient end, hover darken                |
+| `lob-teal-light`  | `#EAF4F7` | Tab tracks, chip backgrounds, subtle rows        |
+| `lob-coral`       | `#D94F2B` | Primary CTAs, active nav tab, destructive alerts |
+| `lob-coral-light` | `#FAEAE5` | Alert/warning card backgrounds                   |
+| `lob-amber`       | `#E8A030` | Warnings, in-progress, streak indicators         |
+| `lob-cream`       | `#FAF3E4` | Page background (set on `body`)                  |
+| `lob-dark`        | `#1C2B30` | All headings and body text                       |
+| `lob-muted`       | `#6B8A92` | Secondary text, placeholders, inactive icons     |
 
-### Action Colors
+### Legacy migration map
 
-| Name                | Hex       | Usage                                 |
-| ------------------- | --------- | ------------------------------------- |
-| **lob-coral**       | `#D94F2B` | Primary CTAs, active states, alerts   |
-| **lob-coral-light** | `#FAEAE5` | Soft coral backgrounds, alert banners |
+When touching a file, replace old tokens:
 
-### Supporting Colors
+| Old (`lobster-*`)      | New (`lob-*`)     |
+| ---------------------- | ----------------- |
+| `lobster-teal`         | `lob-teal`        |
+| `lobster-teal-dark`    | `lob-teal-dark`   |
+| `lobster-teal-light`   | `lob-teal-light`  |
+| `lobster-orange`       | `lob-coral`       |
+| `lobster-orange-light` | `lob-coral-light` |
+| `lobster-cream`        | `lob-cream`       |
+| `lobster-gold`         | `lob-amber`       |
 
-| Name          | Hex       | Usage                                           |
-| ------------- | --------- | ----------------------------------------------- |
-| **lob-amber** | `#E8A030` | Secondary actions, accents, progress indicators |
-| **lob-cream** | `#FAF3E4` | Page background, tied to logo                   |
-| **lob-dark**  | `#1C2B30` | Primary text color                              |
-| **lob-muted** | `#6B8A92` | Secondary text, disabled states                 |
+### Raw gray ban
+
+Do not use Tailwind's `gray-*` scale for content text. Map to lob tokens:
+
+| Raw gray                          | Lob token                              |
+| --------------------------------- | -------------------------------------- |
+| `text-gray-800` / `text-gray-700` | `text-lob-dark`                        |
+| `text-gray-600` / `text-gray-500` | `text-lob-muted`                       |
+| `text-gray-400`                   | `text-lob-muted` (or add `opacity-70`) |
+
+`bg-gray-100` tracks → `bg-lob-teal-light`. `bg-gray-50` states → `bg-lob-teal-light` or `bg-white`.
+
+Exception: semantic status colors (`bg-green-50`, `text-green-700` for success) are fine — those are not brand tokens.
 
 ---
 
-## 🎯 Design Decisions
+## Page Structure
 
-### Color Strategy
+Every top-level page uses this three-layer layout:
 
-**Teal Header** — Replaces flat teal with a deeper, richer gradient (teal → teal-dark) that feels premium and sophisticated. The depth makes white content below appear to breathe.
-
-**Cream Background** — Warm cream (`#FAF3E4`) pulled straight from the Padel Lobsters logo. It's warmer than pure white, ties the brand together, and reduces eye strain.
-
-**Coral = Action** — The active tab, payment alerts, CTAs, and key interactions use lobster orange-red (`#D94F2B`). Consistent, on-brand, and immediately draws attention to actionable elements.
-
-**Progress Bars** — Visual progress indicators (e.g., payment collection ratio) use a subtle gradient fill to show status at a glance without needing to read numbers.
-
-**Pill Tabs** — Modern, rounded-full buttons instead of rectangular tabs. Lighter visual weight, more contemporary feel. Active state uses coral, inactive uses soft teal-light.
-
----
-
-## 🧩 Component Styles
-
-### Buttons
-
-All buttons use `rounded-full` for a modern, pill-shaped appearance:
-
-- **Primary** (`.btn-primary`): Coral background, white text, shadow
-- **Secondary** (`.btn-secondary`): White background, teal border, teal text
-- **Danger** (`.btn-danger`): Red background, white text
-
-### Cards
-
-- Subtle multi-layer shadow for depth
-- Thin border with transparency for definition
-- Rounded corners (`rounded-2xl`)
-
-### Inputs
-
-- Inset shadow for tactile feel
-- Teal ring on focus
-- Placeholder text in muted gray
-
-### Pill Tabs
-
-Used for filtering, mode toggles, and selection:
-
-```css
-.tab-pill-active    /* coral bg, white text, shadow */
-.tab-pill-inactive  /* teal-light bg, muted text */
+```
+Page Header   ← h1 + optional primary CTA
+Sub-tabs      ← pill tab bar (only if page has distinct sections)
+Content area  ← space-y-4 cards
 ```
 
-### Badges
-
-- **Paid**: Green background, green text
-- **Unpaid**: Coral-light background, coral text
-- **Pending**: Yellow background, yellow text
-- **Waitlist**: Amber background, amber text
-
-### Progress Bars
-
-Gradient fill (teal → amber) for visual interest:
-
-```html
-<div className="progress-bar">
-  <div className="progress-fill" style={{width: '75%'}} />
-</div>
-```
-
----
-
-## 🛠️ Tailwind Configuration
-
-New colors are defined in `tailwind.config.js` under the `lob` namespace:
-
-```javascript
-colors: {
-  lob: {
-    'teal':        '#3D7A8A',
-    'teal-dark':   '#2A5A68',
-    'teal-light':  '#EAF4F7',
-    'coral':       '#D94F2B',
-    'coral-light': '#FAEAE5',
-    'amber':       '#E8A030',
-    'cream':       '#FAF3E4',
-    'dark':        '#1C2B30',
-    'muted':       '#6B8A92',
-  }
-}
-```
-
-Old `lobster-*` names are maintained for backward compatibility but should be gradually migrated to `lob-*`.
-
----
-
-## 📐 Spacing & Sizing
-
-- **Padding**: Base unit of 4px (Tailwind default)
-- **Border Radius**:
-  - `rounded-full` for pill buttons and badges
-  - `rounded-2xl` for cards and containers
-  - `rounded-xl` for inputs
-- **Shadows**: Multi-layer shadows for depth (inset + drop)
-
----
-
-## 🎬 Motion & Transitions
-
-- Active scales: `active:scale-95` on interactive elements
-- Transitions: `transition-all duration-150` for button feedback
-- Progress animations: `duration-500` for smoother bar fills
-
----
-
-## ✅ Best Practices
-
-1. **Use coral for action**: Buttons, alerts, active tabs, and interactive feedback
-2. **Teal for structure**: Headers, primary sections, brand color
-3. **Cream for breathing room**: Page background, spacious layouts
-4. **Pill buttons over rectangles**: Modern, friendly, consistent
-5. **Progress bars for data**: Show ratios/completion visually before reading numbers
-
----
-
-## 🚀 Implementation
-
-To use the new colors in a component:
+### Page header
 
 ```jsx
-// Primary button (coral)
-<button className="btn-primary">Pay Now</button>
+<div className="flex items-center justify-between mb-1">
+  <h1 className="text-xl font-bold text-lob-dark">Page Title</h1>
+  {/* one optional primary action */}
+</div>
+```
 
-// Inactive tab (teal-light)
-<button className="bg-lob-teal-light text-lob-muted">Tab</button>
+All six top-level pages use this exact pattern. Dashboard is the exception — the `<Greeting>` component acts as the page header.
 
-// Active tab (coral)
-<button className="bg-lob-coral text-white">Tab</button>
+---
 
-// Progress bar
-<div className="progress-bar">
-  <div className="progress-fill" style={{width: '60%'}} />
+## Typography Scale
+
+| Role                           | Classes                                                          |
+| ------------------------------ | ---------------------------------------------------------------- |
+| Page title                     | `text-xl font-bold text-lob-dark`                                |
+| Card / section title           | `text-base font-semibold text-lob-dark`                          |
+| Eyebrow label                  | `text-[10px] font-bold text-lob-muted uppercase tracking-widest` |
+| Body                           | `text-sm text-lob-dark`                                          |
+| Secondary / supporting         | `text-sm text-lob-muted`                                         |
+| Caption / meta                 | `text-xs text-lob-muted`                                         |
+| Micro (nav labels, badge text) | `text-[10px] text-lob-muted`                                     |
+
+---
+
+## Card System
+
+Three variants — choose the right one, do not write inline card styles.
+
+### `.card` (default)
+
+`bg-white rounded-2xl p-4` with subtle shadow + thin border. Use for all standard content cards.
+
+### `.card-elevated`
+
+Same shape, stronger shadow. Use for hero/featured cards only (NextEventCard, LeagueDashboardCard).
+
+### Accent card (inline modifier)
+
+```jsx
+<div className="card border-l-4 border-lob-amber">…</div>   // warning
+<div className="card border-l-4 border-lob-coral">…</div>   // error/action
+<div className="card border-l-4 border-lob-teal">…</div>    // info
+```
+
+---
+
+## Buttons
+
+Four variants only. Do not create custom one-off button styles.
+
+| Class            | Shape                                                       | Use                                        |
+| ---------------- | ----------------------------------------------------------- | ------------------------------------------ |
+| `.btn-primary`   | Coral, `rounded-full`, `py-3 px-5`                          | One per screen max — the single key action |
+| `.btn-secondary` | White/teal border, `rounded-full`, `py-3 px-5`              | Alongside a primary                        |
+| `.btn-danger`    | Red, `rounded-full`, `py-2 px-4`                            | Destructive confirm                        |
+| Ghost chip       | `bg-gray-100 text-lob-muted rounded-lg px-3 py-1.5 text-xs` | Tertiary (Share, Schedule…)                |
+
+Do not override `.btn-primary` padding. If you need a smaller action button, use the ghost chip pattern.
+
+---
+
+## Sub-tab Pattern
+
+For pages with 2–3 distinct views:
+
+```jsx
+<div className="flex gap-1 bg-lob-teal-light p-1 rounded-xl mb-4">
+  {/* active */}
+  <button className="flex-1 py-1.5 text-xs font-semibold rounded-lg text-center bg-white text-lob-teal shadow-sm">
+    Members
+  </button>
+  {/* inactive */}
+  <button className="flex-1 py-1.5 text-xs font-semibold rounded-lg text-center text-lob-muted">
+    Shop
+  </button>
+</div>
+```
+
+Tab track is always `bg-lob-teal-light` (not `bg-gray-100`).
+
+---
+
+## Empty States
+
+```jsx
+<div className="card flex flex-col items-center py-10 text-center gap-2">
+  <Icon size={36} className="text-lob-muted opacity-40" />
+  <p className="text-sm font-semibold text-lob-dark">Nothing here yet</p>
+  <p className="text-xs text-lob-muted">Supporting copy</p>
 </div>
 ```
 
 ---
 
-## 📚 References
+## Section Dividers
 
-- **Color Hex Reference**: See table above
-- **Tailwind Classes**: `bg-lob-*, text-lob-*, border-lob-*`
-- **Component Files**: See `.card`, `.btn-primary` in `src/index.css`
+Use an eyebrow label + optional chevron toggle instead of `<hr>`:
+
+```jsx
+<button className="w-full flex items-center justify-between py-3 px-1">
+  <span className="text-[10px] font-bold text-lob-muted uppercase tracking-widest flex items-center gap-2">
+    <Clock size={13} className="text-lob-muted opacity-60" />
+    Past
+  </span>
+  <ChevronDown size={14} className="text-lob-muted opacity-60" />
+</button>
+```
+
+---
+
+## Loading States
+
+Spinner: `border-lob-teal border-t-transparent animate-spin`. Reference: `RouteFallback` in `App.jsx`.
+
+---
+
+## Motion
+
+- Press feedback: `active:scale-95 transition-all duration-150` on all interactive elements
+- Progress bars: `transition-all duration-500`
+- Route entry: `animate-fade-in-up` (defined in tailwind config)
+
+---
+
+## What Not to Touch
+
+- `src/lib/letterColors.ts` — **LOCKED 2026-04-30**, do not change avatar color values
+- `.header-gradient` CSS class — keep the exact teal gradient values
+- `.card` and `.card-elevated` shadow values — deliberately tuned, do not adjust
+- `pb-safe` iOS safe-area utility
+- Bottom nav layout, active state, and icon sizes

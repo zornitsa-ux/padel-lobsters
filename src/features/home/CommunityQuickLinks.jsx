@@ -15,7 +15,7 @@ export default function CommunityQuickLinks({
         onClick={() => onNavigate('players')}
         className="bg-white rounded-2xl py-3 text-center shadow-md border border-gray-100 active:scale-[0.95] active:shadow-sm transition-all"
       >
-        <Users size={16} className="text-lobster-teal mx-auto mb-1" />
+        <Users size={16} className="text-lob-teal mx-auto mb-1" />
         <p className="text-base font-bold text-gray-800">{activePlayersCount}</p>
         <p className="text-[9px] text-gray-400 font-medium">Players</p>
       </button>
@@ -23,7 +23,7 @@ export default function CommunityQuickLinks({
         onClick={() => onNavigate('tournament')}
         className="bg-white rounded-2xl py-3 text-center shadow-md border border-gray-100 active:scale-[0.95] active:shadow-sm transition-all"
       >
-        <Calendar size={16} className="text-lobster-orange mx-auto mb-1" />
+        <Calendar size={16} className="text-lob-coral mx-auto mb-1" />
         <p className="text-base font-bold text-gray-800">{upcomingCount}</p>
         <p className="text-[9px] text-gray-400 font-medium">Upcoming</p>
       </button>

@@ -69,11 +69,11 @@ export default function AdminAlerts({
 
       {/* ── New merch orders (admin) ─────────────────────────── */}
       {newOrders.length > 0 && (
-        <div className="card border-l-4 border-lobster-teal space-y-2.5">
+        <div className="card border-l-4 border-lob-teal space-y-2.5">
           <div className="flex items-center justify-between">
             <p className="font-bold text-sm text-gray-700 flex items-center gap-1.5">
-              <ShoppingBag size={14} className="text-lobster-teal" /> New Merch Orders
-              <span className="bg-lobster-teal text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+              <ShoppingBag size={14} className="text-lob-teal" /> New Merch Orders
+              <span className="bg-lob-teal text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
                 {newOrders.length}
               </span>
             </p>
@@ -83,7 +83,7 @@ export default function AdminAlerts({
                   onDismissMerch()
                   onNavigate('merch-orders')
                 }}
-                className="text-xs text-lobster-teal font-semibold"
+                className="text-xs text-lob-teal font-semibold"
               >
                 View all
               </button>
@@ -98,8 +98,8 @@ export default function AdminAlerts({
             const ago = formatUpdateTime(o.created_at)
             return (
               <div key={o.id} className="flex items-center gap-2 text-sm">
-                <div className="w-7 h-7 rounded-full bg-lobster-cream flex items-center justify-center flex-shrink-0">
-                  <ShoppingBag size={12} className="text-lobster-teal" />
+                <div className="w-7 h-7 rounded-full bg-lob-cream flex items-center justify-center flex-shrink-0">
+                  <ShoppingBag size={12} className="text-lob-teal" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-gray-700 truncate">

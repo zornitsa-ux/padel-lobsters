@@ -60,15 +60,13 @@ export default function AddPlayerCard({
             onClick={() => onSelectPlayer(selectedPlayer === p.id ? '' : p.id)}
             className={`w-full flex items-center gap-3 p-2.5 rounded-xl transition-all ${
               selectedPlayer === p.id
-                ? 'bg-lobster-teal text-white'
+                ? 'bg-lob-teal text-white'
                 : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
             }`}
           >
             <div
               className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${
-                selectedPlayer === p.id
-                  ? 'bg-white text-lobster-teal'
-                  : 'bg-lobster-teal text-white'
+                selectedPlayer === p.id ? 'bg-white text-lob-teal' : 'bg-lob-teal text-white'
               }`}
             >
               {(p.name || '?')[0]}

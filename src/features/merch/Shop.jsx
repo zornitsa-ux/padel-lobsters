@@ -67,8 +67,8 @@ export default function Shop({
                 </span>
               </div>
             ) : (
-              <div className="w-full h-32 bg-lobster-cream rounded-xl flex items-center justify-center">
-                <ShoppingBag size={36} className="text-lobster-teal opacity-40" />
+              <div className="w-full h-32 bg-lob-cream rounded-xl flex items-center justify-center">
+                <ShoppingBag size={36} className="text-lob-teal opacity-40" />
               </div>
             )}
 
@@ -91,7 +91,7 @@ export default function Shop({
                   </p>
                 )}
               </div>
-              <span className="text-lg font-bold text-lobster-teal flex-shrink-0 ml-2">
+              <span className="text-lg font-bold text-lob-teal flex-shrink-0 ml-2">
                 €{parseFloat(item.price).toFixed(0)}
                 {/shirt/i.test(item.name) &&
                   !/tank/i.test(item.name) &&
@@ -123,7 +123,7 @@ export default function Shop({
                         }}
                         className={`text-xs px-2.5 py-1 rounded-lg font-medium border transition-all ${
                           selectedSize[item.id] === s
-                            ? 'bg-lobster-teal text-white border-lobster-teal'
+                            ? 'bg-lob-teal text-white border-lob-teal'
                             : sizeError[item.id]
                               ? 'border-red-300 text-gray-600'
                               : 'border-gray-200 text-gray-600'
@@ -149,7 +149,7 @@ export default function Shop({
                   disabled={ordered[item.id]}
                   value={customName[item.id] || ''}
                   onChange={(e) => setCustomName((n) => ({ ...n, [item.id]: e.target.value }))}
-                  className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-800 placeholder-gray-300 focus:outline-none focus:border-lobster-teal focus:ring-1 focus:ring-lobster-teal transition-all disabled:opacity-40 disabled:bg-gray-50"
+                  className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-800 placeholder-gray-300 focus:outline-none focus:border-lob-teal focus:ring-1 focus:ring-lob-teal transition-all disabled:opacity-40 disabled:bg-gray-50"
                 />
               </div>
             )}
@@ -162,7 +162,7 @@ export default function Shop({
                 className={`flex-1 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all ${
                   ordered[item.id]
                     ? 'bg-green-100 text-green-700'
-                    : 'bg-lobster-teal text-white active:scale-95'
+                    : 'bg-lob-teal text-white active:scale-95'
                 }`}
               >
                 {ordered[item.id] ? (

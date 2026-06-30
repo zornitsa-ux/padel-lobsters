@@ -74,7 +74,7 @@ export default function ScoreEntry({ match, onUpdate, variant = 'input' }: Score
       }
     }
     const selectClass =
-      'w-11 h-9 text-center text-base font-bold border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-lobster-teal bg-white'
+      'w-11 h-9 text-center text-base font-bold border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-lob-teal bg-white'
     return (
       <div className="flex items-center gap-1">
         <select
@@ -109,7 +109,7 @@ export default function ScoreEntry({ match, onUpdate, variant = 'input' }: Score
   }
 
   const inputClass =
-    'w-10 h-9 text-center text-lg font-bold border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-lobster-teal'
+    'w-10 h-9 text-center text-lg font-bold border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-lob-teal'
   return (
     <div className="flex items-center gap-1">
       <input

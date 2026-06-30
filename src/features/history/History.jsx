@@ -7,13 +7,14 @@ import { useAllRegistrations } from '../events/useRegistrations'
 import * as oscarsApi from '../../api/oscars'
 import { TOURNAMENTS } from '../../data/historicalTournaments'
 import { loadAliases, resolveName } from './aliasStorage'
-import { smartSort, buildDisplayNames, getAllHardcodedNames } from './historicalStats'
+import { smartSort, buildDisplayNames } from './historicalStats'
 import { medalColor, medalStyleH } from './medals'
 import Podium from './Podium'
+import { TabSwitcher } from '../../components/ui/TabSwitcher'
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function History({ onNavigate }) {
-  const { tournaments, session } = useApp()
+  const { tournaments } = useApp()
   const { data: players = [] } = usePlayers()
   const { data: allMatchesData = [] } = useAllMatches()
   const { data: allRegsData = [] } = useAllRegistrations()
@@ -26,7 +27,7 @@ export default function History({ onNavigate }) {
     (id) => allRegsData.filter((r) => r.tournamentId === id),
     [allRegsData],
   )
-  const isAdmin = session?.user?.app_metadata?.role === 'admin'
+
   const [expandedId, setExpandedId] = useState(null)
   const [activeTab, setActiveTab] = useState({}) // id → 'standings' | 'matches' | 'games'
   const [activeRound, setActiveRound] = useState({}) // id → roundIndex
@@ -113,10 +114,6 @@ export default function History({ onNavigate }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold text-gray-800">Tournament History</h2>
-      </div>
-
       {/* Dynamic tournaments from DB */}
       {dynamicTournaments.map((t) => {
         const open = expandedId === `db-${t.id}`
@@ -319,42 +316,15 @@ export default function History({ onNavigate }) {
                     )}
 
                     {/* Tabs — Full Standings | Match Results | Lobster Games (conditional) */}
-                    <div className="flex gap-1 bg-gray-100 p-1 rounded-xl overflow-x-auto">
-                      <button
-                        onClick={() => setDbActiveTab((s) => ({ ...s, [t.id]: 'standings' }))}
-                        className={`flex-1 min-w-max py-1.5 px-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${
-                          dbTab === 'standings'
-                            ? 'bg-white text-lobster-teal shadow-sm'
-                            : 'text-gray-500'
-                        }`}
-                      >
-                        Full Standings
-                      </button>
-                      {hasMatches && (
-                        <button
-                          onClick={() => setDbActiveTab((s) => ({ ...s, [t.id]: 'matches' }))}
-                          className={`flex-1 min-w-max py-1.5 px-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${
-                            dbTab === 'matches'
-                              ? 'bg-white text-lobster-teal shadow-sm'
-                              : 'text-gray-500'
-                          }`}
-                        >
-                          Match Results
-                        </button>
-                      )}
-                      {hasGameResults && (
-                        <button
-                          onClick={() => setDbActiveTab((s) => ({ ...s, [t.id]: 'games' }))}
-                          className={`flex-1 min-w-max py-1.5 px-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${
-                            dbTab === 'games'
-                              ? 'bg-white text-lobster-teal shadow-sm'
-                              : 'text-gray-500'
-                          }`}
-                        >
-                          🦞 Lobster Games
-                        </button>
-                      )}
-                    </div>
+                    <TabSwitcher
+                      tabs={[
+                        { id: 'standings', label: 'Full Standings' },
+                        ...(hasMatches ? [{ id: 'matches', label: 'Match Results' }] : []),
+                        ...(hasGameResults ? [{ id: 'games', label: '🦞 Lobster Games' }] : []),
+                      ]}
+                      value={dbTab}
+                      onChange={(id) => setDbActiveTab((s) => ({ ...s, [t.id]: id }))}
+                    />
 
                     {/* ── Full Standings ── */}
                     {dbTab === 'standings' && rankings.length > 0 && (
@@ -384,7 +354,7 @@ export default function History({ onNavigate }) {
                                 <td className="text-center py-1.5 text-gray-400">
                                   {s.pf}-{s.pa}
                                 </td>
-                                <td className="text-center py-1.5 font-bold text-lobster-teal">
+                                <td className="text-center py-1.5 font-bold text-lob-teal">
                                   {s.pts}
                                 </td>
                               </tr>
@@ -408,9 +378,7 @@ export default function History({ onNavigate }) {
                               key={r.round}
                               onClick={() => setDbActiveRound((s) => ({ ...s, [t.id]: i }))}
                               className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                                dbRi === i
-                                  ? 'bg-lobster-teal text-white'
-                                  : 'bg-gray-100 text-gray-600'
+                                dbRi === i ? 'bg-lob-teal text-white' : 'bg-gray-100 text-gray-600'
                               }`}
                             >
                               R{r.round}
@@ -430,7 +398,7 @@ export default function History({ onNavigate }) {
                             return (
                               <div key={mt.id} className="bg-gray-50 rounded-xl p-3">
                                 <div className="flex items-center justify-between mb-1.5">
-                                  <span className="text-[10px] font-bold text-lobster-teal bg-lobster-cream px-2 py-0.5 rounded-full">
+                                  <span className="text-[10px] font-bold text-lob-teal bg-lob-cream px-2 py-0.5 rounded-full">
                                     {mt.court || `Round ${mt.round}`}
                                   </span>
                                   {scored && s1 === s2 && (
@@ -501,7 +469,7 @@ export default function History({ onNavigate }) {
                         return (
                           <div className="space-y-2">
                             <div className="flex items-center gap-2 px-1">
-                              <Gamepad2 size={14} className="text-lobster-teal" />
+                              <Gamepad2 size={14} className="text-lob-teal" />
                               <p className="text-xs font-bold text-gray-700">🏆 Lobster Oscars</p>
                               <span className="text-[10px] text-gray-400 ml-auto">
                                 {cats.length} categor{cats.length === 1 ? 'y' : 'ies'}
@@ -547,7 +515,7 @@ export default function History({ onNavigate }) {
                                         </span>
                                         <div className="flex-1 h-2.5 bg-gray-100 rounded-full overflow-hidden">
                                           <div
-                                            className="h-full bg-lobster-teal rounded-full transition-all"
+                                            className="h-full bg-lob-teal rounded-full transition-all"
                                             style={{
                                               width: `${(Number(r.votes_count) / maxV) * 100}%`,
                                             }}
@@ -569,7 +537,7 @@ export default function History({ onNavigate }) {
                     {onNavigate && (
                       <button
                         onClick={() => onNavigate('scores', t)}
-                        className="w-full text-xs text-lobster-teal font-semibold border border-lobster-teal rounded-xl py-2 active:scale-95 transition-all"
+                        className="w-full text-xs text-lob-teal font-semibold border border-lob-teal rounded-xl py-2 active:scale-95 transition-all"
                       >
                         View full match scores →
                       </button>
@@ -645,26 +613,15 @@ export default function History({ onNavigate }) {
                 )}
 
                 {/* Tabs */}
-                <div className="flex gap-1 bg-gray-100 p-1 rounded-xl mb-3">
-                  <button
-                    onClick={() => setActiveTab((s) => ({ ...s, [t.id]: 'standings' }))}
-                    className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-                      tab === 'standings' ? 'bg-white text-lobster-teal shadow-sm' : 'text-gray-500'
-                    }`}
-                  >
-                    Full Standings
-                  </button>
-                  {t.rounds && (
-                    <button
-                      onClick={() => setActiveTab((s) => ({ ...s, [t.id]: 'matches' }))}
-                      className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-                        tab === 'matches' ? 'bg-white text-lobster-teal shadow-sm' : 'text-gray-500'
-                      }`}
-                    >
-                      Match Results
-                    </button>
-                  )}
-                </div>
+                <TabSwitcher
+                  tabs={[
+                    { id: 'standings', label: 'Full Standings' },
+                    ...(t.rounds ? [{ id: 'matches', label: 'Match Results' }] : []),
+                  ]}
+                  value={tab}
+                  onChange={(id) => setActiveTab((s) => ({ ...s, [t.id]: id }))}
+                  className="mb-3"
+                />
 
                 {/* Note (when no pairings available) */}
                 {tab === 'standings' && t.note && (
@@ -739,12 +696,12 @@ export default function History({ onNavigate }) {
                                 {score}
                               </span>
                             ))}
-                            <span className="text-right font-bold text-lobster-teal text-xs">
+                            <span className="text-right font-bold text-lob-teal text-xs">
                               {p.total}
                             </span>
                           </>
                         ) : (
-                          <span className="text-right font-bold text-lobster-teal text-xs">
+                          <span className="text-right font-bold text-lob-teal text-xs">
                             {p.total}
                           </span>
                         )}
@@ -763,7 +720,7 @@ export default function History({ onNavigate }) {
                           key={i}
                           onClick={() => setActiveRound((s) => ({ ...s, [t.id]: i }))}
                           className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                            ri === i ? 'bg-lobster-teal text-white' : 'bg-gray-100 text-gray-600'
+                            ri === i ? 'bg-lob-teal text-white' : 'bg-gray-100 text-gray-600'
                           }`}
                         >
                           R{r.round}
@@ -779,7 +736,7 @@ export default function History({ onNavigate }) {
                         return (
                           <div key={i} className="bg-gray-50 rounded-xl p-3">
                             <div className="flex items-center justify-between mb-1.5">
-                              <span className="text-[10px] font-bold text-lobster-teal bg-lobster-cream px-2 py-0.5 rounded-full">
+                              <span className="text-[10px] font-bold text-lob-teal bg-lob-cream px-2 py-0.5 rounded-full">
                                 Court {m.court}
                               </span>
                               {m.s1 === m.s2 && (

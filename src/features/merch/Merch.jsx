@@ -390,7 +390,7 @@ export default function Merch({ initialTab, onNavigate }) {
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${tab === t.id ? 'bg-white text-lobster-teal shadow-sm' : 'text-gray-500'}`}
+            className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${tab === t.id ? 'bg-white text-lob-teal shadow-sm' : 'text-gray-500'}`}
           >
             {t.label}
           </button>

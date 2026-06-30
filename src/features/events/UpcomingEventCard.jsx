@@ -72,7 +72,7 @@ export default function UpcomingEventCard({
           <h3 className="font-bold text-gray-800 truncate">
             <button
               onClick={() => onNavigate('registration', t)}
-              className="hover:text-lobster-teal active:scale-95 transition-all text-left"
+              className="hover:text-lob-teal active:scale-95 transition-all text-left"
             >
               {t.name}
             </button>
@@ -82,7 +82,7 @@ export default function UpcomingEventCard({
             {t.time && <span className="text-gray-500">· {t.time}</span>}
           </p>
           {t.location && (
-            <p className="text-xs text-lobster-teal flex items-center gap-1 mt-0.5">
+            <p className="text-xs text-lob-teal flex items-center gap-1 mt-0.5">
               <Building2 size={11} /> {t.location}
             </p>
           )}
@@ -242,7 +242,7 @@ export default function UpcomingEventCard({
       <div className="flex gap-2 pt-2 border-t border-gray-100">
         <button
           onClick={() => onNavigate('registration', t)}
-          className="flex-1 text-xs font-semibold text-lobster-teal py-2 rounded-xl bg-lobster-cream active:scale-95 transition-all"
+          className="flex-1 text-xs font-semibold text-lob-teal py-2 rounded-xl bg-lob-cream active:scale-95 transition-all"
         >
           Registrations
         </button>

@@ -116,7 +116,7 @@ export default function OrdersTable({ activeOrders, interests, items, players, l
                       </p>
                       <div className="flex items-center gap-2 mt-0.5">
                         {o.size && (
-                          <span className="text-xs font-bold bg-lobster-cream text-lobster-teal px-2 py-0.5 rounded-full">
+                          <span className="text-xs font-bold bg-lob-cream text-lob-teal px-2 py-0.5 rounded-full">
                             {o.size}
                           </span>
                         )}
@@ -125,7 +125,7 @@ export default function OrdersTable({ activeOrders, interests, items, players, l
                             "{o.custom_name}"
                           </span>
                         )}
-                        <span className="text-xs font-bold text-lobster-teal">€{orderPrice}</span>
+                        <span className="text-xs font-bold text-lob-teal">€{orderPrice}</span>
                         <span className="text-[11px] text-gray-400">
                           {formatOrderTime(o.created_at)}
                         </span>

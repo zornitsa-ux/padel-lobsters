@@ -1,7 +1,7 @@
 import React from 'react'
 import { Shield, User, LogIn, LogOut } from 'lucide-react'
 import ApproveDevicesWidget from '../../components/ApproveDevicesWidget'
-import { letterColor } from '../../lib/letterColors'
+import Avatar from '../../components/ui/Avatar'
 
 export default function AccountSection({
   isAdmin,
@@ -18,13 +18,13 @@ export default function AccountSection({
   return (
     <div className="card space-y-3">
       <div className="flex items-center gap-2">
-        <div className="w-8 h-8 bg-lobster-teal/10 rounded-lg flex items-center justify-center">
+        <div className="w-8 h-8 bg-lob-teal/10 rounded-lg flex items-center justify-center">
           {isAdmin ? (
-            <Shield size={16} className="text-lobster-teal" />
+            <Shield size={16} className="text-lob-teal" />
           ) : signedInPlayer ? (
-            <User size={16} className="text-lobster-teal" />
+            <User size={16} className="text-lob-teal" />
           ) : (
-            <LogIn size={16} className="text-lobster-teal" />
+            <LogIn size={16} className="text-lob-teal" />
           )}
         </div>
         <div>
@@ -54,25 +54,11 @@ export default function AccountSection({
         </div>
       ) : signedInPlayer ? (
         // ── Signed in as player ─────────────────────────────────
-        <div className="rounded-xl border border-lobster-teal/30 bg-lobster-cream p-3 flex items-center gap-3">
-          {signedInPlayer.avatarUrl ? (
-            <img
-              src={signedInPlayer.avatarUrl}
-              alt={signedInPlayer.name}
-              className="w-9 h-9 rounded-full object-cover flex-shrink-0 border border-white"
-            />
-          ) : (
-            <div
-              className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
-              style={{ backgroundColor: letterColor(signedInPlayer.name) }}
-            >
-              {signedInPlayer.name[0].toUpperCase()}
-            </div>
-          )}
+        <div className="rounded-xl border border-lob-teal/30 bg-lob-cream p-3 flex items-center gap-3">
+          <Avatar player={signedInPlayer} size="sm" className="!w-9 !h-9 flex-shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-gray-800 truncate">
-              Signed in as {signedInPlayer.name}{' '}
-              <span className="text-lobster-teal text-xs">✓</span>
+              Signed in as {signedInPlayer.name} <span className="text-lob-teal text-xs">✓</span>
             </p>
             <p className="text-xs text-gray-500">
               You can register for events, place orders, and manage your profile anywhere on the

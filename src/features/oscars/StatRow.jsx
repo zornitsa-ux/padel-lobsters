@@ -17,7 +17,7 @@ export default function StatRow({ stat, expanded, voters, onToggle }) {
           <span className="text-lg">{stat.category_icon}</span>
           <span className="flex-1 font-semibold text-sm text-gray-700">{stat.category_name}</span>
           <span className="text-xs text-gray-500 font-semibold">
-            <span className="text-lobster-teal text-base font-bold">{stat.votes_count}</span> of{' '}
+            <span className="text-lob-teal text-base font-bold">{stat.votes_count}</span> of{' '}
             {stat.total_participants} voted
           </span>
           <ChevronDown
@@ -27,7 +27,7 @@ export default function StatRow({ stat, expanded, voters, onToggle }) {
         </div>
         <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-lobster-teal to-lobster-orange transition-all"
+            className="h-full bg-gradient-to-r from-lob-teal to-lob-coral transition-all"
             style={{ width: `${pct}%` }}
           />
         </div>

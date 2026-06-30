@@ -1,9 +1,7 @@
 import React, { useState } from 'react'
 import { useApp } from '../../context/AppContext'
-import { usePlayers } from '../players/usePlayers'
 import { Plus, Trophy, Clock, ChevronDown, ChevronUp } from 'lucide-react'
 import HistoryContent from '../../components/History'
-import { TOURNAMENTS as HISTORY_TOURNAMENTS } from '../../data/historicalTournaments'
 import AdminTransferPanel from '../../components/AdminTransferPanel'
 import { DEFAULT_EVENT_DESCRIPTION, emptyForm } from './eventConstants'
 import { parseLocalDate } from './eventHelpers'
@@ -11,22 +9,21 @@ import EventFormModal from './EventFormModal'
 import UpcomingEventCard from './UpcomingEventCard'
 import PastEventCard from './PastEventCard'
 import { LeagueDashboardCard } from '../league/ui/LeagueDashboardCard'
+import { PageHeader } from '../../components/ui/PageHeader'
 
 export { DEFAULT_EVENT_DESCRIPTION }
 
 export default function Tournament({ onNavigate }) {
   const { tournaments, addTournament, updateTournament, deleteTournament, session, transfers } =
     useApp()
-  const { data: players = [] } = usePlayers()
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
   const claimedId = session?.user?.id ?? null
 
-  const meTourn = claimedId ? players.find((p) => String(p.id) === String(claimedId)) : null
   const [showForm, setShowForm] = useState(false)
   const [editId, setEditId] = useState(null)
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
-  const [showHistory, setShowHistory] = useState(false)
+  const [showHistory, setShowHistory] = useState(true)
   const [error, setError] = useState('')
   // Admin pending-transfer panel — open for one tournament at a time.
   const [adminTransferTournament, setAdminTransferTournament] = useState(null)
@@ -179,100 +176,108 @@ export default function Tournament({ onNavigate }) {
     }))
 
   return (
-    <div className="space-y-4">
-      {adminTransferTournament && (
-        <AdminTransferPanel
-          tournament={adminTransferTournament}
-          onClose={() => setAdminTransferTournament(null)}
-        />
-      )}
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold text-gray-800">Events ({tournaments.length})</h2>
-        {isAdmin && (
-          <button
-            onClick={openAdd}
-            className="btn-primary py-2 px-4 text-sm flex items-center gap-1.5"
-          >
-            <Plus size={16} /> New
-          </button>
-        )}
-      </div>
+    <div className="-mx-4">
+      <PageHeader
+        title="Events"
+        rightAction={
+          isAdmin ? (
+            <button
+              onClick={openAdd}
+              className="btn-secondary py-2 px-4 text-sm flex items-center gap-1.5"
+            >
+              <Plus size={16} /> New
+            </button>
+          ) : undefined
+        }
+      />
 
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg p-2 flex items-start justify-between gap-2">
-          <span>{error}</span>
-          <button
-            onClick={() => setError('')}
-            className="text-red-500 font-bold leading-none px-1"
-            aria-label="Dismiss error"
-          >
-            ×
-          </button>
-        </div>
-      )}
-
-      <LeagueDashboardCard myPlayerId={claimedId} />
-
-      {/* Upcoming events */}
-      <div className="space-y-3">
-        {upcoming.length === 0 && (
-          <div className="card py-10 text-center text-gray-400">
-            <Trophy size={36} className="mx-auto mb-2 opacity-30" />
-            <p>No upcoming events. Create your first one!</p>
-          </div>
-        )}
-
-        {upcoming.map((t) => (
-          <UpcomingEventCard
-            key={t.id}
-            t={t}
-            isAdmin={isAdmin}
-            transfers={transfers}
-            onNavigate={onNavigate}
-            onEdit={openEdit}
-            onDelete={handleDelete}
-            onOpenTransfers={setAdminTransferTournament}
-            updateTournament={updateTournament}
+      <div className="px-4 pt-4 space-y-4">
+        {adminTransferTournament && (
+          <AdminTransferPanel
+            tournament={adminTransferTournament}
+            onClose={() => setAdminTransferTournament(null)}
           />
-        ))}
-      </div>
+        )}
 
-      {/* Past events + History — collapsible */}
-      <div>
-        <button
-          onClick={() => setShowHistory((h) => !h)}
-          className="w-full flex items-center justify-between py-3 px-1 text-gray-500 font-semibold text-sm"
-        >
-          <span className="flex items-center gap-2">
-            <Clock size={15} className="text-gray-400" />
-            Past Events & History ({past.length + HISTORY_TOURNAMENTS.length})
-          </span>
-          {showHistory ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-        </button>
-
-        {showHistory && (
-          <div className="space-y-3">
-            {past.map((t) => (
-              <PastEventCard
-                key={t.id}
-                t={t}
-                isAdmin={isAdmin}
-                onNavigate={onNavigate}
-                onEdit={openEdit}
-                onDelete={handleDelete}
-              />
-            ))}
-
-            {/* Legacy History Records */}
-            <div className="mt-4">
-              <HistoryContent onNavigate={onNavigate} />
-            </div>
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg p-2 flex items-start justify-between gap-2">
+            <span>{error}</span>
+            <button
+              onClick={() => setError('')}
+              className="text-red-500 font-bold leading-none px-1"
+              aria-label="Dismiss error"
+            >
+              ×
+            </button>
           </div>
         )}
-      </div>
 
-      {showForm && (
+        <LeagueDashboardCard myPlayerId={claimedId} />
+
+        {/* Upcoming events */}
+        <div className="space-y-3">
+          {upcoming.length === 0 && (
+            <div className="card py-10 text-center text-gray-400">
+              <Trophy size={36} className="mx-auto mb-2 opacity-30" />
+              <p>No upcoming events. Create your first one!</p>
+            </div>
+          )}
+
+          {upcoming.map((t) => (
+            <UpcomingEventCard
+              key={t.id}
+              t={t}
+              isAdmin={isAdmin}
+              transfers={transfers}
+              onNavigate={onNavigate}
+              onEdit={openEdit}
+              onDelete={handleDelete}
+              onOpenTransfers={setAdminTransferTournament}
+              updateTournament={updateTournament}
+            />
+          ))}
+        </div>
+
+        {/* Past events + History — collapsible */}
+        <div>
+          <button
+            onClick={() => setShowHistory((h) => !h)}
+            className="w-full flex items-center justify-between py-3 px-1"
+          >
+            <span className="text-[10px] font-bold text-lob-muted uppercase tracking-widest flex items-center gap-2">
+              <Clock size={13} className="text-lob-muted opacity-60" />
+              Past
+            </span>
+            {showHistory ? (
+              <ChevronUp size={14} className="text-lob-muted opacity-60" />
+            ) : (
+              <ChevronDown size={14} className="text-lob-muted opacity-60" />
+            )}
+          </button>
+
+          {showHistory && (
+            <div className="space-y-3">
+              {past.map((t) => (
+                <PastEventCard
+                  key={t.id}
+                  t={t}
+                  isAdmin={isAdmin}
+                  onNavigate={onNavigate}
+                  onEdit={openEdit}
+                  onDelete={handleDelete}
+                />
+              ))}
+
+              {/* Legacy History Records */}
+              <div className="mt-4">
+                <HistoryContent onNavigate={onNavigate} />
+              </div>
+            </div>
+          )}
+        </div>
+
         <EventFormModal
+          open={showForm}
           editId={editId}
           form={form}
           setForm={setForm}
@@ -283,7 +288,7 @@ export default function Tournament({ onNavigate }) {
           removeCourt={removeCourt}
           setCourt={setCourt}
         />
-      )}
+      </div>
     </div>
   )
 }

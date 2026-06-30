@@ -37,7 +37,7 @@ export default function AddToCalendarButton({
         onClick={(e) => e.stopPropagation()}
         aria-label="Add to Google Calendar"
         title="Add to Google Calendar"
-        className={`w-9 h-9 flex items-center justify-center rounded-xl bg-lobster-cream text-lobster-teal active:scale-95 transition-all ${className}`}
+        className={`w-9 h-9 flex items-center justify-center rounded-xl bg-lob-cream text-lob-teal active:scale-95 transition-all ${className}`}
       >
         <CalendarPlus size={16} />
       </a>
@@ -50,7 +50,7 @@ export default function AddToCalendarButton({
       target="_blank"
       rel="noopener noreferrer"
       onClick={(e) => e.stopPropagation()}
-      className={`w-full flex items-center justify-center gap-2 border-2 border-lobster-teal text-lobster-teal font-semibold py-3 rounded-2xl active:scale-95 transition-all ${className}`}
+      className={`w-full flex items-center justify-center gap-2 border-2 border-lob-teal text-lob-teal font-semibold py-3 rounded-2xl active:scale-95 transition-all ${className}`}
     >
       <CalendarPlus size={18} />
       {label || 'Add to Google Calendar'}

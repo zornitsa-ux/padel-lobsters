@@ -16,7 +16,6 @@ import {
   generateRoundRobin,
 } from './scheduleHelpers'
 import ScoreEntry from './ScoreEntry'
-import ScheduleHeader from './schedule/ScheduleHeader'
 import ScheduleGeneratorControls from './schedule/ScheduleGeneratorControls'
 import ScheduleValidationSummary from './schedule/ScheduleValidationSummary'
 import usePersistentBoolean from './schedule/usePersistentBoolean'
@@ -26,7 +25,6 @@ import {
   buildScheduleCsv,
   cloneRounds,
   downloadCsvFile,
-  formatScheduleDate,
   hasAllMatchesScored,
 } from './schedule/utils'
 
@@ -137,8 +135,6 @@ export default function Schedule({ tournament, onNavigate }) {
   const playerById = useMemo(() => buildPlayerById(players), [players])
   const getPlayer = useCallback((id) => playerById.get(String(id)), [playerById])
   const sn = (p) => shortName(p, registeredPlayers) // smart short name
-  const formattedDate = useMemo(() => formatScheduleDate(tournament?.date), [tournament?.date])
-
   const [finishing, setFinishing] = useState(false)
   const [finishError, setFinishError] = useState('')
 
@@ -272,21 +268,13 @@ export default function Schedule({ tournament, onNavigate }) {
 
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <ScheduleHeader
-        tournamentName={tournament.name}
-        tournamentDate={tournament.date}
-        formattedDate={formattedDate}
-        onBack={() => onNavigate('tournament')}
-      />
-
       {/* Info */}
       <div className="card flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm text-gray-600">
-          <Users size={15} className="text-lobster-teal" />
+          <Users size={15} className="text-lob-teal" />
           {registeredPlayers.length} players · {numCourts} court{numCourts > 1 ? 's' : ''}
         </div>
-        <span className="text-xs font-semibold bg-lobster-cream text-lobster-teal px-2.5 py-1 rounded-full capitalize">
+        <span className="text-xs font-semibold bg-lob-cream text-lob-teal px-2.5 py-1 rounded-full capitalize">
           {format}
         </span>
       </div>
@@ -348,7 +336,7 @@ export default function Schedule({ tournament, onNavigate }) {
               <button
                 onClick={handleSave}
                 disabled={generating}
-                className="text-xs bg-lobster-teal text-white px-3 py-1 rounded-lg font-semibold"
+                className="text-xs bg-lob-teal text-white px-3 py-1 rounded-lg font-semibold"
               >
                 Save
               </button>
@@ -409,7 +397,7 @@ export default function Schedule({ tournament, onNavigate }) {
                 onClick={() => setActiveRound(i)}
                 className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
                   activeRound === i
-                    ? 'bg-lobster-teal text-white'
+                    ? 'bg-lob-teal text-white'
                     : 'bg-white text-gray-600 border border-gray-200'
                 }`}
               >
@@ -443,7 +431,7 @@ export default function Schedule({ tournament, onNavigate }) {
                   >
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-bold text-lobster-teal bg-lobster-cream px-2 py-0.5 rounded-full">
+                        <span className="text-xs font-bold text-lob-teal bg-lob-cream px-2 py-0.5 rounded-full">
                           {match.court}
                         </span>
                         {genderMode === 'mixed' &&
@@ -529,7 +517,7 @@ export default function Schedule({ tournament, onNavigate }) {
                             const avg = rated.reduce((s, p) => s + p.learnedLevel, 0) / rated.length
                             return (
                               <p
-                                className="text-[10px] text-lobster-teal/70 font-semibold mt-0.5"
+                                className="text-[10px] text-lob-teal/70 font-semibold mt-0.5"
                                 title="Lobster Score team average (Glicko-2 shadow rating)"
                               >
                                 Lobster {avg.toFixed(2)}
@@ -597,7 +585,7 @@ export default function Schedule({ tournament, onNavigate }) {
                             const avg = rated.reduce((s, p) => s + p.learnedLevel, 0) / rated.length
                             return (
                               <p
-                                className="text-[10px] text-lobster-teal/70 font-semibold mt-0.5"
+                                className="text-[10px] text-lob-teal/70 font-semibold mt-0.5"
                                 title="Lobster Score team average (Glicko-2 shadow rating)"
                               >
                                 Lobster {avg.toFixed(2)}
@@ -646,7 +634,7 @@ export default function Schedule({ tournament, onNavigate }) {
       {isTournamentCompleted && (
         <button
           onClick={() => onNavigate('scores', tournament)}
-          className="w-full bg-gradient-to-r from-yellow-400 to-lobster-orange text-white font-bold py-3 rounded-2xl text-sm active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+          className="w-full bg-gradient-to-r from-yellow-400 to-lob-coral text-white font-bold py-3 rounded-2xl text-sm active:scale-[0.98] transition-all flex items-center justify-center gap-2"
         >
           <Trophy size={18} /> View Results
         </button>

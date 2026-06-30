@@ -35,17 +35,14 @@ export default function NextEventCard({
   }
 
   return (
-    <div
-      className="rounded-2xl p-4 shadow-sm bg-white/80 border border-white/90"
-      style={{ backdropFilter: 'blur(12px)' }}
-    >
-      <p className="text-[10px] font-bold text-lobster-orange uppercase tracking-wide mb-1">
+    <div className="card-elevated">
+      <p className="text-[10px] font-bold text-lob-coral uppercase tracking-wide mb-1">
         Your Next Event
       </p>
       <h2 className="text-lg font-bold text-gray-800">
         <button
           onClick={() => onNavigate('registration', upcoming)}
-          className="hover:text-lobster-teal active:scale-95 transition-all text-left"
+          className="hover:text-lob-teal active:scale-95 transition-all text-left"
         >
           {upcoming.name}
         </button>
@@ -77,7 +74,7 @@ export default function NextEventCard({
                     0,
                   )
             return ppCost > 0 ? (
-              <p className="text-sm font-semibold text-lobster-teal leading-tight mt-0.5">
+              <p className="text-sm font-semibold text-lob-teal leading-tight mt-0.5">
                 {fmtEur(ppCost)}/pp
               </p>
             ) : null
@@ -119,7 +116,7 @@ export default function NextEventCard({
       <div className="flex gap-2">
         <button
           onClick={() => onNavigate('registration', upcoming)}
-          className="flex-1 bg-lobster-orange text-white font-semibold py-2 rounded-xl text-xs active:scale-95 transition-all"
+          className="flex-1 bg-lob-coral text-white font-semibold py-2 rounded-xl text-xs active:scale-95 transition-all"
         >
           Registrations
         </button>

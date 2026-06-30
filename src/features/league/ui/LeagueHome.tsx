@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import { Badge } from '../../../components/ui/Badge'
+import { PageHeader } from '../../../components/ui/PageHeader'
 import { DivisionPills } from './DivisionPills'
 import { DraftSection } from './DraftSection'
 import { GroupStageContent } from './GroupStageContent'
@@ -56,25 +56,20 @@ export function LeagueHome({ league, teams, matches, myTeam }: LeagueHomeProps) 
   const pill = PHASE_PILL[league.status]
 
   return (
-    <div>
-      <div className="-mx-4 -mt-5 mb-4 px-4 pt-5 pb-4">
-        <div className="flex items-start justify-between gap-2 mb-2">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-black/60 mb-0.5">
-              <span className="text-black">🦞</span> Lobster League
-            </p>
-            <h1 className="font-bold text-black text-2xl leading-tight">{league.name}</h1>
-          </div>
-          <Badge variant={pill.variant} label={pill.label} />
-        </div>
-        <Link to="/league" className="text-xs text-black/60 hover:text-lob-muted transition-colors">
-          ← Past seasons
-        </Link>
-      </div>
+    <div className="-mx-4">
+      <PageHeader
+        title={league.name}
+        eyebrow="🦞 Lobster League"
+        backLink={{ to: '/league', label: 'Seasons' }}
+        badge={<Badge variant={pill.variant} label={pill.label} />}
+        tabStrip={
+          league.divisions.length > 1 ? (
+            <DivisionPills divisions={league.divisions} value={division} onChange={setDivision} />
+          ) : undefined
+        }
+      />
 
-      <DivisionPills divisions={league.divisions} value={division} onChange={setDivision} />
-
-      <div className="space-y-5 pt-4">
+      <div className="px-4 pt-4 space-y-5">
         {myPendingMatches.length > 0 && (
           <PendingMatchCard
             pendingMatches={myPendingMatches}

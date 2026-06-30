@@ -51,7 +51,7 @@ export default function RecentlyCompletedBanners({
         return (
           <div
             key={t.id}
-            className="bg-gradient-to-r from-yellow-400 to-lobster-orange rounded-2xl p-4 text-white"
+            className="bg-gradient-to-r from-yellow-400 to-lob-coral rounded-2xl p-4 text-white"
           >
             <div className="flex items-center gap-2 mb-1">
               <span className="text-lg">🏆</span>

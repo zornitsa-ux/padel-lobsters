@@ -106,11 +106,7 @@ function PendingDevicesPanel() {
             </span>
           )}
         </h3>
-        <button
-          onClick={load}
-          aria-label="Refresh"
-          className="text-gray-400 hover:text-lobster-teal"
-        >
+        <button onClick={load} aria-label="Refresh" className="text-gray-400 hover:text-lob-teal">
           <RefreshCw size={14} />
         </button>
       </div>
@@ -233,7 +229,7 @@ function SecurityEventsPanel() {
         aria-expanded={expanded}
       >
         <h3 className="font-bold text-gray-700 text-sm flex items-center gap-2">
-          <Activity size={15} className="text-lobster-teal" />
+          <Activity size={15} className="text-lob-teal" />
           Recent security events
           {failureCount !== null && failureCount > 0 && (
             <span className="text-[10px] text-white bg-red-500 px-1.5 py-0.5 rounded-full font-bold">
@@ -258,7 +254,7 @@ function SecurityEventsPanel() {
             <button
               onClick={load}
               aria-label="Refresh"
-              className="text-gray-400 hover:text-lobster-teal flex-shrink-0"
+              className="text-gray-400 hover:text-lob-teal flex-shrink-0"
             >
               <RefreshCw size={14} />
             </button>
@@ -276,8 +272,8 @@ function SecurityEventsPanel() {
                 onClick={() => setFilter(f.id)}
                 className={`text-[11px] px-2 py-1 rounded-lg border transition-all ${
                   filter === f.id
-                    ? 'bg-lobster-teal text-white border-lobster-teal'
-                    : 'bg-white text-gray-600 border-gray-200 hover:border-lobster-teal/50'
+                    ? 'bg-lob-teal text-white border-lob-teal'
+                    : 'bg-white text-gray-600 border-gray-200 hover:border-lob-teal/50'
                 }`}
               >
                 {f.label}

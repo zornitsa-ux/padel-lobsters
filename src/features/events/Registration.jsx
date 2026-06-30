@@ -3,7 +3,7 @@ import { useApp } from '../../context/AppContext'
 import { usePlayers } from '../players/usePlayers'
 import { useMatches } from './useMatches'
 import { useRegistrations } from './useRegistrations'
-import { ChevronLeft, AlertCircle } from 'lucide-react'
+import { AlertCircle } from 'lucide-react'
 import TransferSpotModal from '../../components/TransferSpotModal'
 import TransferPendingModal from '../../components/TransferPendingModal'
 import DateTile from '../../components/ui/DateTile'
@@ -24,6 +24,7 @@ import {
 import { useTournamentResultsBanner } from './registration/useTournamentResultsBanner'
 import RegistrationPaymentSheetModal from './registration/RegistrationPaymentSheetModal'
 import AddPlayerCard from './registration/AddPlayerCard'
+import MyRegistrationCard from './registration/MyRegistrationCard'
 import RegisteredSection from './registration/RegisteredSection'
 import WaitlistSection from './registration/WaitlistSection'
 import CancelledSection from './registration/CancelledSection'
@@ -129,6 +130,14 @@ export default function Registration({ tournament, onNavigate }) {
     [pendingForTournament],
   )
 
+  const myReg = claimedId
+    ? (registered.find((r) => String(r.playerId) === String(claimedId)) ?? null)
+    : null
+  const myWaitlistReg = claimedId
+    ? (waitlisted.find((r) => String(r.playerId) === String(claimedId)) ?? null)
+    : null
+  const myWaitlistPosition = myWaitlistReg ? waitlisted.indexOf(myWaitlistReg) + 1 : null
+
   if (!tournament) {
     return (
       <div className="card py-10 text-center text-gray-400">
@@ -161,6 +170,26 @@ export default function Registration({ tournament, onNavigate }) {
     } finally {
       setSaving(false)
     }
+  }
+
+  // ── Direct self-registration (used by MyRegistrationCard) ────────────────
+  const handleSelfRegister = async () => {
+    if (!claimedId) return
+    setSaving(true)
+    try {
+      await registerPlayer(tournament.id, claimedId, maxPlayers)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // ── Self-declare payment by reg ID (used by MyRegistrationCard) ───────────
+  const handleSelfDeclareById = async (regId) => {
+    await updateRegistration(
+      regId,
+      { paymentStatus: 'pending_confirmation', paymentMethod: 'tikkie' },
+      tournamentId,
+    )
   }
 
   // ── Self-declare payment ──────────────────────────────────────────────────
@@ -259,16 +288,9 @@ export default function Registration({ tournament, onNavigate }) {
 
   return (
     <div className="space-y-4">
-      {/* Back + header */}
+      {/* Event meta + actions */}
       <div>
-        <button
-          onClick={() => onNavigate('tournament')}
-          className="flex items-center gap-1 text-lobster-teal text-sm font-semibold mb-2"
-        >
-          <ChevronLeft size={16} /> Events
-        </button>
-        <h2 className="text-lg font-bold text-gray-800">{tournament.name}</h2>
-        <div className="mt-2 flex items-center gap-3">
+        <div className="flex items-center gap-3">
           <DateTile date={tournament.date} size="md" />
           <div className="flex-1 min-w-0">
             <p className="text-base font-semibold text-gray-800 leading-tight">
@@ -309,14 +331,39 @@ export default function Registration({ tournament, onNavigate }) {
         />
       </div>
 
+      {!isAdmin && claimedId && !isCompleted && (
+        <MyRegistrationCard
+          myReg={myReg}
+          myWaitlistReg={myWaitlistReg}
+          waitlistPosition={myWaitlistPosition}
+          isEventFull={registered.length >= maxPlayers}
+          tournament={tournament}
+          isAdminAll={isAdminAll}
+          hasTikkie={hasTikkie}
+          costPerPlayer={costPerPlayer}
+          pendingFromMe={pendingFromMe}
+          incomingForMe={incomingForMe}
+          respondingTo={respondingTo}
+          onRegister={handleSelfRegister}
+          onMarkTikkied={markTikkied}
+          onSelfDeclare={handleSelfDeclareById}
+          onStartTransfer={startTransfer}
+          onCancelMyOffer={handleCancelMyOffer}
+          onOpenShareModal={setShareModal}
+          onIncomingResponse={handleIncomingResponse}
+          getPlayer={getPlayer}
+          saving={saving}
+        />
+      )}
+
       {/* Summary bar */}
-      <div className="bg-lobster-teal rounded-xl p-4 text-white flex items-center justify-between">
+      <div className="bg-lob-teal rounded-xl p-4 text-white flex items-center justify-between">
         <div className="text-center">
           <p className="text-2xl font-bold">{registered.length}</p>
           <p className="text-xs opacity-75">Registered</p>
         </div>
         <div className="text-center">
-          <p className={`text-2xl font-bold ${waitlisted.length > 0 ? 'text-lobster-gold' : ''}`}>
+          <p className={`text-2xl font-bold ${waitlisted.length > 0 ? 'text-lob-amber' : ''}`}>
             {waitlisted.length}
           </p>
           <p className="text-xs opacity-75">Waitlist</p>
@@ -327,7 +374,7 @@ export default function Registration({ tournament, onNavigate }) {
         </div>
         <div className="text-center">
           <p
-            className={`text-2xl font-bold ${registered.length >= maxPlayers ? 'text-lobster-gold' : 'text-green-300'}`}
+            className={`text-2xl font-bold ${registered.length >= maxPlayers ? 'text-lob-amber' : 'text-green-300'}`}
           >
             {Math.max(0, maxPlayers - registered.length)}
           </p>
@@ -356,43 +403,38 @@ export default function Registration({ tournament, onNavigate }) {
         </button>
       )}
 
-      <AddPlayerCard
-        isCompleted={isCompleted}
-        showAdd={showAdd}
-        onOpen={() => setShowAdd(true)}
-        onClose={() => {
-          setShowAdd(false)
-          setSearch('')
-        }}
-        search={search}
-        onSearchChange={setSearch}
-        availablePlayers={availablePlayers}
-        selectedPlayer={selectedPlayer}
-        onSelectPlayer={setSelectedPlayer}
-        onAdd={handleAdd}
-        saving={saving}
-        registeredCount={registered.length}
-        maxPlayers={maxPlayers}
-        displayName={displayName}
-      />
+      {isAdmin && (
+        <AddPlayerCard
+          isCompleted={isCompleted}
+          showAdd={showAdd}
+          onOpen={() => setShowAdd(true)}
+          onClose={() => {
+            setShowAdd(false)
+            setSearch('')
+          }}
+          search={search}
+          onSearchChange={setSearch}
+          availablePlayers={availablePlayers}
+          selectedPlayer={selectedPlayer}
+          onSelectPlayer={setSelectedPlayer}
+          onAdd={handleAdd}
+          saving={saving}
+          registeredCount={registered.length}
+          maxPlayers={maxPlayers}
+          displayName={displayName}
+        />
+      )}
 
       <RegisteredSection
         isCompleted={isCompleted}
-        incomingForMe={incomingForMe}
         getPlayer={getPlayer}
-        respondingTo={respondingTo}
-        onIncomingResponse={handleIncomingResponse}
         registered={registered}
         maxPlayers={maxPlayers}
-        claimedId={claimedId}
         isAdmin={isAdmin}
         displayName={displayName}
         onCancelRegistration={handleCancel}
-        hasTikkie={hasTikkie}
-        isAdminAll={isAdminAll}
-        tournamentTikkieLink={tournament.tikkieLink}
-        onMarkTikkied={markTikkied}
         pendingByFromPlayerId={pendingByFromPlayerId}
+        respondingTo={respondingTo}
         onOpenShareModal={setShareModal}
         onCancelMyOffer={handleCancelMyOffer}
         onStartTransfer={startTransfer}

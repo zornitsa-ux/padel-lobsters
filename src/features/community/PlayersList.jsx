@@ -40,7 +40,7 @@ export default function PlayersList({
           <div
             key={p.id}
             ref={p.id === focusPlayerId ? focusRef : undefined}
-            className={`card transition-all${isSelf ? ' ring-2 ring-lobster-teal/40' : ''}`}
+            className={`card transition-all${isSelf ? ' ring-2 ring-lob-teal/40' : ''}`}
           >
             <div className="w-full" onClick={() => setExpandedId(expanded ? null : p.id)}>
               <div className="flex items-center gap-3">
@@ -58,7 +58,7 @@ export default function PlayersList({
                       </span>
                     )}
                     {isSelf && (
-                      <span className="text-[10px] bg-lobster-teal text-white px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider ml-0.5">
+                      <span className="text-[10px] bg-lob-teal text-white px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider ml-0.5">
                         You
                       </span>
                     )}
@@ -88,7 +88,7 @@ export default function PlayersList({
               </div>
 
               <div className="mt-2 pl-8">
-                <p className="text-[10px] font-bold text-lobster-teal uppercase tracking-wider mb-0.5">
+                <p className="text-[10px] font-bold text-lob-teal uppercase tracking-wider mb-0.5">
                   Lobster Review
                 </p>
                 {(() => {
@@ -96,7 +96,7 @@ export default function PlayersList({
                   return (
                     <p className="text-xs text-gray-500 leading-relaxed">
                       {r.hasLabel && (
-                        <span className="font-bold text-lobster-teal">{r.scenarioLabel}</span>
+                        <span className="font-bold text-lob-teal">{r.scenarioLabel}</span>
                       )}
                       {r.hasLabel ? ' — ' : ''}
                       {r.body}

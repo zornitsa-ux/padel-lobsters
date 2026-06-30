@@ -131,8 +131,8 @@ export default function Game({ tournament, onNavigate }) {
 
   if (phase === 'loading') {
     return (
-      <div className="fixed inset-0 z-50 bg-lobster-cream flex items-center justify-center">
-        <Loader2 className="animate-spin text-lobster-teal" size={32} />
+      <div className="flex items-center justify-center py-16">
+        <Loader2 className="animate-spin text-lob-teal" size={32} />
       </div>
     )
   }

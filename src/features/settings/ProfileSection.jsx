@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react'
 import { Save, User, ChevronDown, ChevronUp, Camera, Mail, Check } from 'lucide-react'
 import CountryPicker from '../../components/ui/CountryPicker'
-import { letterColor } from '../../lib/letterColors'
+import Avatar from '../../components/ui/Avatar'
 import { useApp } from '../../context/AppContext'
 import { LOBBY_PROMPTS } from './settingsHelpers'
 
@@ -67,8 +67,8 @@ export default function ProfileSection({
                 It's been a while! Your current level on file:
               </p>
             </div>
-            <div className="bg-lobster-cream rounded-2xl p-4 text-center">
-              <p className="text-3xl font-bold text-lobster-teal">
+            <div className="bg-lob-cream rounded-2xl p-4 text-center">
+              <p className="text-3xl font-bold text-lob-teal">
                 {(parseFloat(myPlayer.playtomicLevel) || 0).toFixed(1)}
               </p>
               <p className="text-xs text-gray-400 mt-1">
@@ -127,7 +127,7 @@ export default function ProfileSection({
                 type="button"
                 onClick={handleProfileSave}
                 disabled={profileSaving}
-                className="flex-1 bg-lobster-teal text-white text-sm font-bold py-2.5 rounded-xl active:scale-95 transition-all disabled:opacity-50"
+                className="flex-1 bg-lob-teal text-white text-sm font-bold py-2.5 rounded-xl active:scale-95 transition-all disabled:opacity-50"
               >
                 {profileSaving ? 'Saving…' : 'Update'}
               </button>
@@ -145,7 +145,7 @@ export default function ProfileSection({
             className="w-full flex items-center justify-between"
           >
             <h3 className="font-bold text-gray-700 text-sm flex items-center gap-2">
-              <User size={15} className="text-lobster-orange" /> My Lobster Profile
+              <User size={15} className="text-lob-coral" /> My Lobster Profile
             </h3>
             {profileExpanded ? (
               <ChevronUp size={16} className="text-gray-400" />
@@ -156,25 +156,12 @@ export default function ProfileSection({
 
           {/* Always-visible summary */}
           <div className="flex items-center gap-3">
-            <div
-              className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0"
-              style={{ backgroundColor: letterColor(myPlayer.name) }}
-            >
-              {myPlayer.avatarUrl ? (
-                <img
-                  src={myPlayer.avatarUrl}
-                  alt={myPlayer.name}
-                  className="w-10 h-10 rounded-full object-cover"
-                />
-              ) : (
-                (myPlayer.name || '?')[0].toUpperCase()
-              )}
-            </div>
+            <Avatar player={myPlayer} size="md" className="flex-shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-gray-800 truncate">{myPlayer.name}</p>
               <p className="text-xs text-gray-500">
                 Level:{' '}
-                <span className="font-bold text-lobster-teal">
+                <span className="font-bold text-lob-teal">
                   {(
                     (parseFloat(myPlayer.playtomicLevel) || 0) +
                     (parseFloat(myPlayer.adjustment) || 0)
@@ -199,7 +186,7 @@ export default function ProfileSection({
                     <img
                       src={avatarPreview}
                       alt="Preview"
-                      className="w-20 h-20 rounded-full object-cover border-2 border-lobster-teal"
+                      className="w-20 h-20 rounded-full object-cover border-2 border-lob-teal"
                     />
                   ) : (
                     <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-300">
@@ -209,7 +196,7 @@ export default function ProfileSection({
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="absolute bottom-0 right-0 w-7 h-7 bg-lobster-teal rounded-full flex items-center justify-center text-white shadow-sm active:scale-95"
+                    className="absolute bottom-0 right-0 w-7 h-7 bg-lob-teal rounded-full flex items-center justify-center text-white shadow-sm active:scale-95"
                   >
                     <Camera size={13} />
                   </button>
@@ -245,9 +232,7 @@ export default function ProfileSection({
                       type="button"
                       onClick={() => setActivePrompt(i)}
                       className={`text-[11px] px-2.5 py-1 rounded-full font-semibold transition-all active:scale-95 ${
-                        activePrompt === i
-                          ? 'bg-lobster-teal text-white'
-                          : 'bg-gray-100 text-gray-500'
+                        activePrompt === i ? 'bg-lob-teal text-white' : 'bg-gray-100 text-gray-500'
                       }`}
                     >
                       {p.label}
@@ -293,7 +278,7 @@ export default function ProfileSection({
                       }
                       className={`flex-1 py-2.5 rounded-xl font-semibold text-sm transition-all ${
                         profileForm.gender === val
-                          ? 'bg-lobster-teal text-white'
+                          ? 'bg-lob-teal text-white'
                           : 'bg-gray-100 text-gray-600'
                       }`}
                     >
@@ -414,7 +399,7 @@ export default function ProfileSection({
                         setNewEmail('')
                         setEmailStatus('')
                       }}
-                      className="text-xs font-semibold text-lobster-teal bg-lobster-cream border border-lobster-teal/30 px-3 py-2 rounded-xl active:scale-95"
+                      className="text-xs font-semibold text-lob-teal bg-lob-cream border border-lob-teal/30 px-3 py-2 rounded-xl active:scale-95"
                     >
                       Change
                     </button>
@@ -466,8 +451,8 @@ export default function ProfileSection({
                 )}
                 {emailEditing && emailStatus === 'sent' && (
                   <div className="space-y-2">
-                    <div className="rounded-xl bg-lobster-cream border border-lobster-teal/30 p-3 flex items-start gap-2">
-                      <Check size={14} className="text-lobster-teal mt-0.5 flex-shrink-0" />
+                    <div className="rounded-xl bg-lob-cream border border-lob-teal/30 p-3 flex items-start gap-2">
+                      <Check size={14} className="text-lob-teal mt-0.5 flex-shrink-0" />
                       <p className="text-xs text-gray-700 leading-snug">
                         Confirmation sent to{' '}
                         <span className="font-semibold break-all">{newEmail.trim()}</span>. Click
@@ -480,7 +465,7 @@ export default function ProfileSection({
                         setEmailEditing(false)
                         setEmailStatus('')
                       }}
-                      className="w-full text-sm font-semibold text-lobster-teal py-2 rounded-xl bg-white border border-lobster-teal/30"
+                      className="w-full text-sm font-semibold text-lob-teal py-2 rounded-xl bg-white border border-lob-teal/30"
                     >
                       Done
                     </button>

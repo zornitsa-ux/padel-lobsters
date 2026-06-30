@@ -10,25 +10,25 @@ export default function CountdownClock({ countdown, streak }) {
           Next Lobster Event in
         </p>
         <div className="flex justify-center gap-2">
-          <div className="bg-lobster-teal-dark rounded-xl w-16 py-2.5">
+          <div className="bg-lob-teal-dark rounded-xl w-16 py-2.5">
             <p className="text-2xl font-black text-white tabular-nums">
               {String(countdown.days).padStart(2, '0')}
             </p>
             <p className="text-[9px] text-white/60 font-medium mt-0.5">DAYS</p>
           </div>
-          <div className="bg-lobster-teal-dark rounded-xl w-16 py-2.5">
+          <div className="bg-lob-teal-dark rounded-xl w-16 py-2.5">
             <p className="text-2xl font-black text-white tabular-nums">
               {String(countdown.hours).padStart(2, '0')}
             </p>
             <p className="text-[9px] text-white/60 font-medium mt-0.5">HOURS</p>
           </div>
-          <div className="bg-lobster-teal-dark rounded-xl w-16 py-2.5">
+          <div className="bg-lob-teal-dark rounded-xl w-16 py-2.5">
             <p className="text-2xl font-black text-white tabular-nums">
               {String(countdown.mins).padStart(2, '0')}
             </p>
             <p className="text-[9px] text-white/60 font-medium mt-0.5">MIN</p>
           </div>
-          <div className="bg-lobster-teal-dark rounded-xl w-16 py-2.5">
+          <div className="bg-lob-teal-dark rounded-xl w-16 py-2.5">
             <p className="text-2xl font-black text-white tabular-nums">
               {String(countdown.secs).padStart(2, '0')}
             </p>

@@ -30,7 +30,7 @@ export default function PastEventCard({ t, isAdmin, onNavigate, onEdit, onDelete
           <h3 className="font-bold text-gray-700 truncate">
             <button
               onClick={() => onNavigate('registration', t)}
-              className="hover:text-lobster-teal active:scale-95 transition-all text-left"
+              className="hover:text-lob-teal active:scale-95 transition-all text-left"
             >
               {t.name}
             </button>
@@ -66,7 +66,7 @@ export default function PastEventCard({ t, isAdmin, onNavigate, onEdit, onDelete
       <div className="flex gap-2 pt-2 border-t border-gray-100">
         <button
           onClick={() => onNavigate('registration', t)}
-          className="flex-1 text-xs font-semibold text-lobster-teal py-2 rounded-xl bg-lobster-cream active:scale-95 transition-all"
+          className="flex-1 text-xs font-semibold text-lob-teal py-2 rounded-xl bg-lob-cream active:scale-95 transition-all"
         >
           Registrations
         </button>

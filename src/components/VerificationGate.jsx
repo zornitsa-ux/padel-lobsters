@@ -186,14 +186,14 @@ export default function VerificationGate({ children }) {
   return (
     <div
       ref={scrollRef}
-      className={`fixed inset-0 bg-gradient-to-br from-lobster-teal via-teal-700 to-teal-900 flex flex-col ${alignClasses} p-6 z-[100] overflow-y-auto`}
+      className={`fixed inset-0 bg-gradient-to-br from-lob-teal via-teal-700 to-teal-900 flex flex-col ${alignClasses} p-6 z-[100] overflow-y-auto`}
     >
       <div
         className={`bg-white rounded-3xl p-6 sm:p-8 shadow-2xl w-full ${cardWidth} space-y-5 my-6 mx-auto`}
       >
         {/* Brand — shown across all three modes so the surface feels consistent */}
         <div className="text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-lobster-cream mb-3">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-lob-cream mb-3">
             <span className="text-4xl">🦞</span>
           </div>
           <h1 className="text-xl font-extrabold text-gray-800">Padel Lobsters</h1>
@@ -210,7 +210,7 @@ export default function VerificationGate({ children }) {
             <form onSubmit={handleSignin} className="space-y-3">
               <div>
                 <label className="label flex items-center gap-1.5">
-                  <KeyRound size={12} className="text-lobster-teal" /> Your PIN
+                  <KeyRound size={12} className="text-lob-teal" /> Your PIN
                 </label>
                 <input
                   ref={inputRef}
@@ -293,7 +293,7 @@ export default function VerificationGate({ children }) {
                 setMode('signin')
                 resetMagicFlow()
               }}
-              className="text-sm text-gray-600 hover:text-lobster-teal flex items-center gap-1"
+              className="text-sm text-gray-600 hover:text-lob-teal flex items-center gap-1"
             >
               <ArrowLeft size={14} /> Back to sign in
             </button>
@@ -306,7 +306,7 @@ export default function VerificationGate({ children }) {
                   email? Write to{' '}
                   <a
                     href="mailto:pin@padelobsters.nl"
-                    className="text-lobster-teal font-semibold underline-offset-2 hover:underline"
+                    className="text-lob-teal font-semibold underline-offset-2 hover:underline"
                   >
                     pin@padelobsters.nl
                   </a>{' '}
@@ -316,7 +316,7 @@ export default function VerificationGate({ children }) {
                 <form onSubmit={handleMagicSubmit} className="space-y-3">
                   <div>
                     <label className="label flex items-center gap-1.5">
-                      <Mail size={12} className="text-lobster-teal" /> Your email
+                      <Mail size={12} className="text-lob-teal" /> Your email
                     </label>
                     <input
                       type="email"
@@ -353,12 +353,12 @@ export default function VerificationGate({ children }) {
 
             {magicStage === 'sent' && (
               <div className="space-y-3">
-                <div className="rounded-2xl bg-lobster-cream border border-lobster-teal/30 p-4 flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center flex-shrink-0 text-lobster-teal">
+                <div className="rounded-2xl bg-lob-cream border border-lob-teal/30 p-4 flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center flex-shrink-0 text-lob-teal">
                     <Check size={16} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-lobster-teal">Check your inbox</p>
+                    <p className="text-sm font-semibold text-lob-teal">Check your inbox</p>
                     <p className="text-xs text-gray-600 mt-1 leading-snug">
                       We sent a sign-in link to{' '}
                       <span className="font-semibold break-all">{magicSentTo}</span>. Tap it from
@@ -373,7 +373,7 @@ export default function VerificationGate({ children }) {
                     setMode('signin')
                     resetMagicFlow()
                   }}
-                  className="w-full text-sm font-semibold text-lobster-teal bg-white border border-lobster-teal/30 hover:bg-lobster-cream py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all"
+                  className="w-full text-sm font-semibold text-lob-teal bg-white border border-lob-teal/30 hover:bg-lob-cream py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all"
                 >
                   <LogIn size={14} />
                   Back to sign in

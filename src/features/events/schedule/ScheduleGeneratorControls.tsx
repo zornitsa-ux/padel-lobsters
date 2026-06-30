@@ -62,7 +62,7 @@ export default function ScheduleGeneratorControls({
           </span>
         )}
         {isLobster && (
-          <span className="text-xs bg-lobster-cream text-lobster-teal px-2 py-0.5 rounded-full font-medium">
+          <span className="text-xs bg-lob-cream text-lob-teal px-2 py-0.5 rounded-full font-medium">
             🦞 {(tournamentDuration || 90) >= 120 ? 6 : 5} rounds · partners rotate
           </span>
         )}
@@ -77,7 +77,7 @@ export default function ScheduleGeneratorControls({
                 key={value}
                 onClick={() => setRounds(value)}
                 className={`flex-1 py-2 text-sm rounded-xl font-semibold transition-all ${
-                  rounds === value ? 'bg-lobster-teal text-white' : 'bg-gray-100 text-gray-600'
+                  rounds === value ? 'bg-lob-teal text-white' : 'bg-gray-100 text-gray-600'
                 }`}
               >
                 {value}
@@ -87,15 +87,15 @@ export default function ScheduleGeneratorControls({
         </div>
       )}
 
-      <label className="flex items-start gap-2 p-3 rounded-xl bg-lobster-cream/40 border border-lobster-teal/20 cursor-pointer active:scale-[0.99] transition-transform">
+      <label className="flex items-start gap-2 p-3 rounded-xl bg-lob-cream/40 border border-lob-teal/20 cursor-pointer active:scale-[0.99] transition-transform">
         <input
           type="checkbox"
           checked={useLobsterScore}
           onChange={(event) => setUseLobsterScore(event.target.checked)}
-          className="mt-0.5 w-4 h-4 accent-lobster-teal"
+          className="mt-0.5 w-4 h-4 accent-lob-teal"
         />
         <span className="text-xs text-gray-700 leading-snug">
-          <span className="font-semibold text-lobster-teal">Use Lobster Score for matching</span>
+          <span className="font-semibold text-lob-teal">Use Lobster Score for matching</span>
           <span className="block text-[11px] text-gray-500 mt-0.5">
             When on, the matcher uses Glicko-2 shadow ratings instead of Playtomic-adjusted levels.
             Players without a Lobster Score yet fall back to their adjusted level.
@@ -120,7 +120,7 @@ export default function ScheduleGeneratorControls({
         <>
           <button
             onClick={onEditSchedule}
-            className="w-full py-2 text-sm text-lobster-teal font-semibold border border-lobster-teal rounded-xl"
+            className="w-full py-2 text-sm text-lob-teal font-semibold border border-lob-teal rounded-xl"
           >
             ✏️ Edit existing schedule
           </button>

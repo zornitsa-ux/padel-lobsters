@@ -117,7 +117,7 @@ export default function TransferSpotModal({ tournament, onClose, onTransferCreat
                 key={p.id}
                 onClick={() => handlePick(p)}
                 disabled={busy}
-                className="w-full flex items-center gap-3 p-3 rounded-2xl bg-gray-50 hover:bg-lobster-cream active:scale-[0.98] transition-all text-left disabled:opacity-40"
+                className="w-full flex items-center gap-3 p-3 rounded-2xl bg-gray-50 hover:bg-lob-cream active:scale-[0.98] transition-all text-left disabled:opacity-40"
               >
                 <div
                   className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
@@ -136,7 +136,7 @@ export default function TransferSpotModal({ tournament, onClose, onTransferCreat
                   </p>
                   <p className="text-xs text-gray-500">Lv {(p.adjustedLevel || 0).toFixed(1)}</p>
                 </div>
-                <ArrowRightLeft size={14} className="text-lobster-teal flex-shrink-0" />
+                <ArrowRightLeft size={14} className="text-lob-teal flex-shrink-0" />
               </button>
             )
           })}

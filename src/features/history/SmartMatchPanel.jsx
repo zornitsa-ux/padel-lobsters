@@ -139,7 +139,7 @@ export default function SmartMatchPanel({ onClose }) {
           <div className="flex items-center justify-between mb-3">
             <div>
               <h2 className="font-bold text-gray-800 flex items-center gap-2">
-                <GitMerge size={18} className="text-lobster-teal" /> Match Players
+                <GitMerge size={18} className="text-lob-teal" /> Match Players
               </h2>
               <p className="text-xs text-gray-400">Tick the names that belong to the same person</p>
             </div>
@@ -149,7 +149,7 @@ export default function SmartMatchPanel({ onClose }) {
           </div>
           <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
             <div
-              className="h-full bg-lobster-teal rounded-full transition-all duration-500"
+              className="h-full bg-lob-teal rounded-full transition-all duration-500"
               style={{ width: `${progress * 100}%` }}
             />
           </div>
@@ -169,20 +169,20 @@ export default function SmartMatchPanel({ onClose }) {
                 onClick={() => toggleCheck(name)}
                 className={`w-full flex items-center gap-3 rounded-2xl px-4 py-3 transition-all text-left ${
                   on
-                    ? 'bg-teal-50 border-2 border-lobster-teal'
+                    ? 'bg-teal-50 border-2 border-lob-teal'
                     : 'bg-gray-50 border-2 border-transparent'
                 }`}
               >
                 {/* Checkbox */}
                 <div
                   className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
-                    on ? 'bg-lobster-teal border-lobster-teal' : 'border-gray-300'
+                    on ? 'bg-lob-teal border-lob-teal' : 'border-gray-300'
                   }`}
                 >
                   {on && <Check size={11} className="text-white" strokeWidth={3} />}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className={`font-bold text-sm ${on ? 'text-lobster-teal' : 'text-gray-800'}`}>
+                  <p className={`font-bold text-sm ${on ? 'text-lob-teal' : 'text-gray-800'}`}>
                     {name}
                   </p>
                   <p className="text-xs text-gray-400 mt-0.5 truncate">
@@ -206,7 +206,7 @@ export default function SmartMatchPanel({ onClose }) {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder={[...checkedSet][0]}
-                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-semibold focus:outline-none focus:border-lobster-teal"
+                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-semibold focus:outline-none focus:border-lob-teal"
               />
               <p className="text-[10px] text-gray-400">
                 Leave blank to keep "{[...checkedSet][0]}"

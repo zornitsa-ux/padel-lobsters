@@ -41,7 +41,7 @@ export default function AdminSection({
       {/* Group info */}
       <div className="card space-y-4">
         <h3 className="font-bold text-gray-700 text-sm flex items-center gap-2">
-          <Info size={15} className="text-lobster-teal" /> Group Info
+          <Info size={15} className="text-lob-teal" /> Group Info
         </h3>
         <div>
           <label className="label">Group Name</label>
@@ -92,7 +92,7 @@ export default function AdminSection({
           traffic for non-admin users. */}
       <div className="card space-y-3">
         <h3 className="font-bold text-gray-700 text-sm flex items-center gap-2">
-          <TrendingUp size={15} className="text-lobster-teal" /> Lobster Score (Glicko-2)
+          <TrendingUp size={15} className="text-lob-teal" /> Lobster Score (Glicko-2)
         </h3>
         <p className="text-xs text-gray-500">
           Rebuilds shadow ratings from every known tournament (history file + DB) in chronological
@@ -101,7 +101,7 @@ export default function AdminSection({
         <button
           onClick={handleRecomputeRatings}
           disabled={recomputing}
-          className="bg-lobster-teal text-white text-sm font-semibold px-4 py-2 rounded-xl active:scale-95 transition-all disabled:opacity-60"
+          className="bg-lob-teal text-white text-sm font-semibold px-4 py-2 rounded-xl active:scale-95 transition-all disabled:opacity-60"
         >
           {recomputing ? 'Recomputing…' : 'Recompute ratings'}
         </button>
@@ -139,7 +139,7 @@ export default function AdminSection({
             <button
               type="button"
               onClick={() => setTipsExpanded((e) => !e)}
-              className="text-xs text-lobster-teal font-semibold"
+              className="text-xs text-lob-teal font-semibold"
             >
               {tipsExpanded ? 'Collapse' : `View all (${activeTips.length})`}
             </button>
@@ -162,7 +162,7 @@ export default function AdminSection({
           <button
             type="button"
             onClick={handleAddTip}
-            className="bg-lobster-teal text-white px-3 rounded-xl text-xs font-semibold flex items-center gap-1 active:scale-95 transition-all"
+            className="bg-lob-teal text-white px-3 rounded-xl text-xs font-semibold flex items-center gap-1 active:scale-95 transition-all"
           >
             <Plus size={14} /> Add
           </button>

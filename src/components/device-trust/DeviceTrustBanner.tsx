@@ -26,10 +26,10 @@ export default function DeviceTrustBanner({ onDismiss }: DeviceTrustBannerProps)
       </div>
       <div className="text-xs">
         <Link
-          to="/settings"
+          to="/account"
           className="inline-flex items-center gap-1 rounded-full border border-lob-coral px-3 py-1 text-lob-coral font-semibold text-[11px] tracking-wide"
         >
-          Request approval in Settings
+          Request approval in Account
         </Link>
       </div>
     </div>

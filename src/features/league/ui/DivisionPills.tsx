@@ -16,18 +16,18 @@ export function DivisionPills({
 }) {
   if (divisions.length <= 1) return null
   return (
-    <div className="-mx-4 px-4 py-2 bg-lob-cream border-b border-gray-100 sticky top-0 z-10 flex gap-2">
+    <>
       {divisions.map((div) => (
         <button
           key={div}
           onClick={() => onChange(div)}
-          className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-            value === div ? 'bg-lob-teal text-white' : 'bg-gray-100 text-gray-500'
+          className={`px-3.5 py-1.5 text-sm font-semibold rounded-full transition-colors whitespace-nowrap ${
+            value === div ? 'bg-lob-coral text-white shadow-sm' : 'text-lob-teal hover:bg-white/60'
           }`}
         >
           {DIVISION_LABELS[div]}
         </button>
       ))}
-    </div>
+    </>
   )
 }

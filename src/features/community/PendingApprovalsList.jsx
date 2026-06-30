@@ -39,7 +39,7 @@ export default function PendingApprovalsList({ pendingPlayers, onApprove, onReje
             </button>
             <button
               onClick={() => onLink(p)}
-              className="flex-1 text-xs bg-lobster-teal text-white px-3 py-2 rounded-xl font-semibold active:scale-95 transition-all"
+              className="flex-1 text-xs bg-lob-teal text-white px-3 py-2 rounded-xl font-semibold active:scale-95 transition-all"
             >
               🔗 Played before?
             </button>

@@ -16,6 +16,8 @@ import SetupGuard from './components/SetupGuard'
 import VerificationGate from './components/VerificationGate'
 import AuthConfirm from './components/AuthConfirm'
 import { useEventDataLoader } from './features/events/useEventDataLoader'
+import EventShell from './features/events/EventShell'
+import CommunityShell from './features/community/CommunityShell'
 
 // Code-split every route off the first paint. The app shell (Layout,
 // VerificationGate, SetupGuard) and the logged-out landing (Dashboard) stay
@@ -30,7 +32,7 @@ const Schedule = lazy(() => import('./components/Schedule'))
 const Scores = lazy(() => import('./components/Scores'))
 const Settings = lazy(() => import('./components/Settings'))
 const Merch = lazy(() => import('./components/Merch'))
-const History = lazy(() => import('./components/History'))
+const Account = lazy(() => import('./components/Settings'))
 const Game = lazy(() => import('./components/Game'))
 const RaffleContainer = lazy(() => import('./features/raffle/RaffleContainer'))
 const RaffleEligibilityContainer = lazy(
@@ -64,21 +66,29 @@ export default function App() {
                   <Route path="/auth/confirm" element={<AuthConfirm />} />
 
                   <Route path="/events" element={<EventsRoute />} />
-                  <Route path="/events/:id" element={<EventDetailRoute />} />
-                  <Route path="/events/:id/schedule" element={<EventScheduleRoute />} />
-                  <Route path="/events/:id/scores" element={<EventScoresRoute />} />
-                  <Route path="/events/:id/payments" element={<EventPaymentsRoute />} />
-                  <Route path="/events/:id/oscars" element={<EventOscarsRoute />} />
-                  <Route path="/events/:id/raffle" element={<EventRaffleRoute />} />
-                  <Route path="/events/:id/eligibility" element={<EventEligibilityRoute />} />
+                  <Route path="/events/:id" element={<EventShellRoute />}>
+                    <Route index element={<Navigate to="info" replace />} />
+                    <Route path="info" element={<EventDetailRoute />} />
+                    <Route path="schedule" element={<EventScheduleRoute />} />
+                    <Route path="results" element={<EventScoresRoute />} />
+                    <Route path="scores" element={<Navigate to="../results" replace />} />
+                    <Route path="payments" element={<EventPaymentsRoute />} />
+                    <Route path="oscars" element={<EventOscarsRoute />} />
+                    <Route path="raffle" element={<EventRaffleRoute />} />
+                    <Route path="eligibility" element={<EventEligibilityRoute />} />
+                  </Route>
 
-                  <Route path="/community" element={<CommunityRoute />} />
-                  <Route path="/community/:id" element={<CommunityRoute />} />
+                  <Route path="/community" element={<CommunityShell />}>
+                    <Route index element={<CommunityMembersRoute />} />
+                    <Route path="shop" element={<MerchRoute />} />
+                    <Route path=":id" element={<CommunityMembersRoute />} />
+                  </Route>
 
-                  <Route path="/merch" element={<MerchRoute />} />
+                  <Route path="/merch" element={<Navigate to="/community/shop" replace />} />
                   <Route path="/admin" element={<AdminRoute />} />
-                  <Route path="/settings" element={<SettingsRoute />} />
-                  <Route path="/history" element={<HistoryRoute />} />
+                  <Route path="/account" element={<AccountRoute />} />
+                  <Route path="/settings" element={<Navigate to="/account" replace />} />
+                  <Route path="/history" element={<Navigate to="/events" replace />} />
                   <Route path="/transfer/:id" element={<TransferRoute />} />
                   <Route path="/league" element={<LeagueIndexPage />} />
                   <Route path="/league/:id" element={<LeaguePage />} />
@@ -120,11 +130,11 @@ function useLegacyNavigate() {
       case 'tournament':
         return navigate('/events')
       case 'registration':
-        return t?.id ? navigate(`/events/${t.id}`) : navigate('/events')
+        return t?.id ? navigate(`/events/${t.id}/info`) : navigate('/events')
       case 'schedule':
         return t?.id ? navigate(`/events/${t.id}/schedule`) : navigate('/events')
       case 'scores':
-        return t?.id ? navigate(`/events/${t.id}/scores`) : navigate('/events')
+        return t?.id ? navigate(`/events/${t.id}/results`) : navigate('/events')
       case 'payments':
         return t?.id ? navigate(`/events/${t.id}/payments`) : navigate('/events')
       case 'game':
@@ -137,15 +147,15 @@ function useLegacyNavigate() {
         if (t?.focusPlayerId) return navigate(`/community/${t.focusPlayerId}`)
         return navigate('/community')
       case 'merch':
-        return navigate('/merch')
+        return navigate('/community/shop')
       case 'admin':
         return navigate('/admin')
       case 'merch-orders':
-        return navigate('/merch?tab=orders')
+        return navigate('/community/shop?tab=orders')
       case 'history':
-        return navigate('/history')
+        return navigate('/events')
       case 'settings':
-        return navigate('/settings')
+        return navigate('/account')
       case 'league':
         return navigate('/league')
       default:
@@ -175,6 +185,12 @@ function EventsRoute() {
   return <Tournament onNavigate={onNavigate} />
 }
 
+function EventShellRoute() {
+  const tournament = useTournamentFromUrl()
+  if (!tournament) return <Navigate to="/events" replace />
+  return <EventShell tournament={tournament} />
+}
+
 function EventDetailRoute() {
   const tournament = useTournamentFromUrl()
   const onNavigate = useLegacyNavigate()
@@ -198,8 +214,11 @@ function EventScoresRoute() {
 
 function EventPaymentsRoute() {
   const tournament = useTournamentFromUrl()
+  const { session } = useApp()
   const onNavigate = useLegacyNavigate()
+  const isAdmin = session?.user?.app_metadata?.role === 'admin'
   if (!tournament) return <Navigate to="/events" replace />
+  if (!isAdmin) return <Navigate to={`/events/${tournament.id}/info`} replace />
   return <Payments tournament={tournament} onNavigate={onNavigate} />
 }
 
@@ -230,7 +249,7 @@ function EventEligibilityRoute() {
   return <RaffleEligibilityContainer tournament={tournament} onNavigate={onNavigate} />
 }
 
-function CommunityRoute() {
+function CommunityMembersRoute() {
   const { id } = useParams()
   const onNavigate = useLegacyNavigate()
   return <Players onNavigate={onNavigate} focusPlayerId={id} />
@@ -248,14 +267,14 @@ function SettingsRoute() {
   return <Settings onNavigate={onNavigate} />
 }
 
+function AccountRoute() {
+  const onNavigate = useLegacyNavigate()
+  return <Account onNavigate={onNavigate} />
+}
+
 function AdminRoute() {
   const onNavigate = useLegacyNavigate()
   return <Admin onNavigate={onNavigate} />
-}
-
-function HistoryRoute() {
-  const onNavigate = useLegacyNavigate()
-  return <History onNavigate={onNavigate} />
 }
 
 function TransferRoute() {

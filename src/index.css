@@ -111,6 +111,18 @@
     @apply bg-lob-amber/15 text-lob-amber text-xs font-semibold px-2 py-0.5 rounded-full;
   }
 
+  .badge-ladies {
+    @apply bg-pink-100 text-pink-700 text-xs font-semibold px-2 py-0.5 rounded-full;
+  }
+
+  .badge-mens {
+    @apply bg-indigo-100 text-indigo-700 text-xs font-semibold px-2 py-0.5 rounded-full;
+  }
+
+  .badge-mixed {
+    @apply bg-lob-teal-light text-lob-teal text-xs font-semibold px-2 py-0.5 rounded-full;
+  }
+
   .chip {
     @apply inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full;
   }

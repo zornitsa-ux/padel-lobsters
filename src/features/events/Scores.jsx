@@ -3,9 +3,10 @@ import { usePlayers } from '../players/usePlayers'
 import { useMatches } from './useMatches'
 import { useRegistrations } from './useRegistrations'
 import * as oscarsApi from '../../api/oscars'
-import { ChevronLeft, Trophy, AlertCircle } from 'lucide-react'
+import { Trophy, AlertCircle } from 'lucide-react'
 import { computeTournamentStandings } from '../../lib/standings'
-import { letterColor } from '../../lib/letterColors'
+import Avatar from '../../components/ui/Avatar'
+import { TabSwitcher } from '../../components/ui/TabSwitcher'
 
 export default function Scores({ tournament, onNavigate }) {
   const { data: players = [] } = usePlayers()
@@ -88,11 +89,6 @@ export default function Scores({ tournament, onNavigate }) {
     return p ? (p.name || '').split(' ')[0] : '?'
   }
 
-  const formatDate = (d) => {
-    if (!d) return '—'
-    return new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
-  }
-
   const medalColor = (i) => {
     if (i === 0) return 'text-yellow-500'
     if (i === 1) return 'text-gray-400'
@@ -103,49 +99,19 @@ export default function Scores({ tournament, onNavigate }) {
 
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <div>
-        <button
-          onClick={() => onNavigate('tournament')}
-          className="flex items-center gap-1 text-lobster-teal text-sm font-semibold mb-2"
-        >
-          <ChevronLeft size={16} /> Events
-        </button>
-        <h2 className="text-lg font-bold text-gray-800">{tournament.name}</h2>
-        <p className="text-sm text-gray-500">{formatDate(tournament.date)}</p>
-      </div>
-
       {/* Tab switcher — Ranking | Matches | Lobster Games.
           The Lobster Games tab only shows up if at least one game was
           played + finished for this tournament. */}
-      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl overflow-x-auto">
-        <button
-          onClick={() => setTab('ranking')}
-          className={`flex-1 min-w-max py-2 px-2 text-xs sm:text-sm rounded-lg font-semibold transition-all whitespace-nowrap ${
-            tab === 'ranking' ? 'bg-white text-lobster-teal shadow-sm' : 'text-gray-500'
-          }`}
-        >
-          🥇 Final Ranking
-        </button>
-        <button
-          onClick={() => setTab('matches')}
-          className={`flex-1 min-w-max py-2 px-2 text-xs sm:text-sm rounded-lg font-semibold transition-all whitespace-nowrap ${
-            tab === 'matches' ? 'bg-white text-lobster-teal shadow-sm' : 'text-gray-500'
-          }`}
-        >
-          📋 Matches
-        </button>
-        {hasGameResults && (
-          <button
-            onClick={() => setTab('games')}
-            className={`flex-1 min-w-max py-2 px-2 text-xs sm:text-sm rounded-lg font-semibold transition-all whitespace-nowrap ${
-              tab === 'games' ? 'bg-white text-lobster-teal shadow-sm' : 'text-gray-500'
-            }`}
-          >
-            🦞 Lobster Games
-          </button>
-        )}
-      </div>
+      <TabSwitcher
+        tabs={[
+          { id: 'ranking', label: '🥇 Final Ranking' },
+          { id: 'matches', label: '📋 Matches' },
+          ...(hasGameResults ? [{ id: 'games', label: '🦞 Lobster Games' }] : []),
+        ]}
+        value={tab}
+        onChange={setTab}
+        className="overflow-x-auto"
+      />
 
       {/* ── RANKING tab ─────────────────────────────────────────────────── */}
       {tab === 'ranking' && (
@@ -246,12 +212,11 @@ export default function Scores({ tournament, onNavigate }) {
                           </td>
                           <td className="py-2.5">
                             <div className="flex items-center gap-2">
-                              <div
-                                className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                                style={{ backgroundColor: letterColor(s.player.name) }}
-                              >
-                                {s.player.name[0]}
-                              </div>
+                              <Avatar
+                                player={s.player}
+                                size="sm"
+                                className="!w-7 !h-7 flex-shrink-0"
+                              />
                               <span className="font-medium truncate max-w-[100px]">
                                 {s.player.name}
                               </span>
@@ -265,9 +230,7 @@ export default function Scores({ tournament, onNavigate }) {
                           <td className="text-center py-2.5 text-gray-500 text-xs">
                             {s.pointsFor}-{s.pointsAgainst}
                           </td>
-                          <td className="text-center py-2.5 font-bold text-lobster-teal">
-                            {s.points}
-                          </td>
+                          <td className="text-center py-2.5 font-bold text-lob-teal">{s.points}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -299,9 +262,7 @@ export default function Scores({ tournament, onNavigate }) {
                     key={r.round}
                     onClick={() => setActiveRoundIdx(i)}
                     className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                      activeRoundIdx === i
-                        ? 'bg-lobster-teal text-white'
-                        : 'bg-gray-100 text-gray-600'
+                      activeRoundIdx === i ? 'bg-lob-teal text-white' : 'bg-gray-100 text-gray-600'
                     }`}
                   >
                     R{r.round}
@@ -322,7 +283,7 @@ export default function Scores({ tournament, onNavigate }) {
                   return (
                     <div key={m.id} className="bg-gray-50 rounded-xl p-3">
                       <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-[10px] font-bold text-lobster-teal bg-lobster-cream px-2 py-0.5 rounded-full">
+                        <span className="text-[10px] font-bold text-lob-teal bg-lob-cream px-2 py-0.5 rounded-full">
                           {m.court || `Round ${m.round}`}
                         </span>
                         {scored && s1 === s2 && (
@@ -445,7 +406,7 @@ export default function Scores({ tournament, onNavigate }) {
                           </span>
                           <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden">
                             <div
-                              className="h-full bg-lobster-teal rounded-full transition-all"
+                              className="h-full bg-lob-teal rounded-full transition-all"
                               style={{ width: `${(Number(r.votes_count) / maxV) * 100}%` }}
                             />
                           </div>

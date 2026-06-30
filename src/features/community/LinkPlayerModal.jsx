@@ -42,7 +42,7 @@ export default function LinkPlayerModal({
               <button
                 key={p.id}
                 onClick={() => onConfirm(p)}
-                className="w-full flex items-center gap-3 p-3 rounded-2xl bg-gray-50 hover:bg-lobster-cream active:scale-[0.98] transition-all text-left"
+                className="w-full flex items-center gap-3 p-3 rounded-2xl bg-gray-50 hover:bg-lob-cream active:scale-[0.98] transition-all text-left"
               >
                 <Avatar player={p} size="sm" />
                 <div className="flex-1 min-w-0">

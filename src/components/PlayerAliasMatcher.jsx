@@ -78,7 +78,7 @@ export default function PlayerAliasMatcher({
           <div className="flex items-center justify-between mb-3">
             <div>
               <h2 className="font-bold text-gray-800 flex items-center gap-2">
-                <GitMerge size={18} className="text-lobster-teal" />
+                <GitMerge size={18} className="text-lob-teal" />
                 Match Historical Names
               </h2>
               <p className="text-xs text-gray-400 mt-0.5">
@@ -93,7 +93,7 @@ export default function PlayerAliasMatcher({
           {/* Progress bar */}
           <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
             <div
-              className="h-full bg-lobster-teal rounded-full transition-all duration-500"
+              className="h-full bg-lob-teal rounded-full transition-all duration-500"
               style={{
                 width: `${counts.all > 0 ? ((counts.matched + counts.skipped) / counts.all) * 100 : 0}%`,
               }}
@@ -115,7 +115,7 @@ export default function PlayerAliasMatcher({
                 key={p.k}
                 onClick={() => setFilter(p.k)}
                 className={`text-[11px] font-semibold px-2.5 py-1 rounded-full transition-all ${
-                  filter === p.k ? 'bg-lobster-teal text-white' : 'bg-gray-100 text-gray-500'
+                  filter === p.k ? 'bg-lob-teal text-white' : 'bg-gray-100 text-gray-500'
                 }`}
               >
                 {p.label}
@@ -130,7 +130,7 @@ export default function PlayerAliasMatcher({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search historical name…"
-              className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-lobster-teal"
+              className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-lob-teal"
             />
           </div>
         </div>
@@ -321,7 +321,7 @@ function PlayerPicker({ historicalName, players, onPick, onClose }) {
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search roster…"
             autoFocus
-            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-lobster-teal"
+            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-lob-teal"
           />
         </div>
         <div className="flex-1 overflow-y-auto p-3 space-y-1">

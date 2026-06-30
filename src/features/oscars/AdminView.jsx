@@ -65,12 +65,7 @@ export default function AdminView({
   /* ── pre-start / not-created: configure + start ───────────────────────── */
   if (phase === 'not_created' || phase === 'pre_start') {
     return (
-      <Shell
-        onBack={onBack}
-        title="🦞 Lobster Games"
-        subtitle={tournament?.name}
-        headerRight={headerRight}
-      >
+      <Shell title="🦞 Lobster Games" headerRight={headerRight}>
         <div className="space-y-3">
           <div className="bg-white rounded-2xl p-4">
             <p className="text-sm text-gray-600 leading-snug">
@@ -92,7 +87,7 @@ export default function AdminView({
           <button
             onClick={handleStart}
             disabled={busy || baseCats.length === 0}
-            className="w-full bg-lobster-teal text-white font-bold py-4 rounded-2xl text-base flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50 mt-4"
+            className="w-full bg-lob-teal text-white font-bold py-4 rounded-2xl text-base flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50 mt-4"
           >
             {busy ? <Loader2 className="animate-spin" size={18} /> : <Play size={18} />}
             {busy ? 'Starting…' : 'Start Lobster Games'}
@@ -108,12 +103,7 @@ export default function AdminView({
   /* ── active: live counts + end ────────────────────────────────────────── */
   if (phase === 'active') {
     return (
-      <Shell
-        onBack={onBack}
-        title="🦞 Lobster Games"
-        subtitle={tournament?.name}
-        headerRight={headerRight}
-      >
+      <Shell title="🦞 Lobster Games" headerRight={headerRight}>
         <div className="space-y-3">
           <PhaseBanner status="active" startedAt={session.started_at} />
           <SectionLabel>Live participation</SectionLabel>
@@ -140,7 +130,7 @@ export default function AdminView({
           <button
             onClick={onEnd}
             disabled={busy}
-            className="w-full bg-lobster-orange text-white font-bold py-4 rounded-2xl text-base flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50 mt-4"
+            className="w-full bg-lob-coral text-white font-bold py-4 rounded-2xl text-base flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50 mt-4"
           >
             {busy ? <Loader2 className="animate-spin" size={18} /> : <X size={18} />}
             End game
@@ -152,12 +142,7 @@ export default function AdminView({
 
   /* ── ended / shared: rankings + share ─────────────────────────────────── */
   return (
-    <Shell
-      onBack={onBack}
-      title="🦞 Final Results"
-      subtitle={tournament?.name}
-      headerRight={headerRight}
-    >
+    <Shell title="🦞 Final Results" headerRight={headerRight}>
       <div className="space-y-3">
         <PhaseBanner
           status={phase}
@@ -175,7 +160,7 @@ export default function AdminView({
             <button
               onClick={onShare}
               disabled={busy}
-              className="w-full bg-lobster-teal text-white font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50"
+              className="w-full bg-lob-teal text-white font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50"
             >
               {busy ? <Loader2 className="animate-spin" size={16} /> : <Share2 size={16} />}
               Share with players

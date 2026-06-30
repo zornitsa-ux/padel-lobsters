@@ -92,7 +92,7 @@ export default function ScoresAndRankingSection({
           <button
             onClick={() => setCompletedTab('ranking')}
             className={`flex-1 py-2 text-sm rounded-lg font-semibold transition-all ${
-              completedTab === 'ranking' ? 'bg-white text-lobster-teal shadow-sm' : 'text-gray-500'
+              completedTab === 'ranking' ? 'bg-white text-lob-teal shadow-sm' : 'text-gray-500'
             }`}
           >
             🥇 Final Ranking
@@ -100,7 +100,7 @@ export default function ScoresAndRankingSection({
           <button
             onClick={() => setCompletedTab('matches')}
             className={`flex-1 py-2 text-sm rounded-lg font-semibold transition-all ${
-              completedTab === 'matches' ? 'bg-white text-lobster-teal shadow-sm' : 'text-gray-500'
+              completedTab === 'matches' ? 'bg-white text-lob-teal shadow-sm' : 'text-gray-500'
             }`}
           >
             📋 Matches
@@ -187,7 +187,7 @@ export default function ScoresAndRankingSection({
                       <td className="text-center py-1.5 text-gray-400">
                         {s.pf}-{s.pa}
                       </td>
-                      <td className="text-center py-1.5 font-bold text-lobster-teal">{s.pts}</td>
+                      <td className="text-center py-1.5 font-bold text-lob-teal">{s.pts}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -248,7 +248,7 @@ export default function ScoresAndRankingSection({
                         className={`card ${match.completed ? 'border-l-4 border-green-300' : ''}`}
                       >
                         {match.court && (
-                          <p className="text-[10px] font-bold text-lobster-teal bg-lobster-cream px-2 py-0.5 rounded-full inline-block mb-2">
+                          <p className="text-[10px] font-bold text-lob-teal bg-lob-cream px-2 py-0.5 rounded-full inline-block mb-2">
                             {match.court}
                           </p>
                         )}

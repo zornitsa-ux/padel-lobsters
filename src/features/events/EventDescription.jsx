@@ -67,7 +67,7 @@ export default function EventDescription({ tournament, isAdmin, onSave }) {
             type="button"
             onClick={save}
             disabled={saving}
-            className="text-xs font-semibold text-white px-3 py-1.5 rounded-lg bg-lobster-teal active:scale-95 transition-all flex items-center gap-1"
+            className="text-xs font-semibold text-white px-3 py-1.5 rounded-lg bg-lob-teal active:scale-95 transition-all flex items-center gap-1"
           >
             <Check size={12} /> {saving ? 'Saving...' : 'Save'}
           </button>
@@ -93,7 +93,7 @@ export default function EventDescription({ tournament, isAdmin, onSave }) {
           type="button"
           onClick={startEdit}
           aria-label="Edit description"
-          className="absolute top-1.5 right-1.5 w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-lobster-teal hover:bg-white active:scale-95 transition-all"
+          className="absolute top-1.5 right-1.5 w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-lob-teal hover:bg-white active:scale-95 transition-all"
         >
           <Pencil size={13} />
         </button>
