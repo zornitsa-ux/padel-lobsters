@@ -7,6 +7,7 @@ import { Trophy, AlertCircle } from 'lucide-react'
 import { computeTournamentStandings } from '../../lib/standings'
 import Avatar from '../../components/ui/Avatar'
 import { TabSwitcher } from '../../components/ui/TabSwitcher'
+import { useScoreSync } from './useScoreSync'
 
 export default function Scores({ tournament, onNavigate }) {
   const { data: players = [] } = usePlayers()
@@ -18,6 +19,13 @@ export default function Scores({ tournament, onNavigate }) {
   // from a shared Lobster Oscars session).
   const [tab, setTab] = useState('ranking')
   const [activeRoundIdx, setActiveRoundIdx] = useState(0)
+
+  // Keep displayed scores current while the event is still running.
+  // Disabled for completed events — scores are frozen.
+  useScoreSync({
+    tournamentId: tournament?.id,
+    enabled: tournament != null && tournament.status !== 'completed',
+  })
   const [oscarRows, setOscarRows] = useState([])
   const oscarsFetchedRef = useRef(false)
   useEffect(() => {

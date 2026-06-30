@@ -16,6 +16,7 @@ import {
   generateRoundRobin,
 } from './scheduleHelpers'
 import ScoreEntry from './ScoreEntry'
+import { useScoreSync } from './useScoreSync'
 import ScheduleGeneratorControls from './schedule/ScheduleGeneratorControls'
 import ScheduleValidationSummary from './schedule/ScheduleValidationSummary'
 import usePersistentBoolean from './schedule/usePersistentBoolean'
@@ -137,6 +138,13 @@ export default function Schedule({ tournament, onNavigate }) {
   const sn = (p) => shortName(p, registeredPlayers) // smart short name
   const [finishing, setFinishing] = useState(false)
   const [finishError, setFinishError] = useState('')
+
+  // Sync peer score updates in real-time while the tournament is active.
+  // Disabled for completed events — scores are frozen.
+  useScoreSync({
+    tournamentId: tournament?.id,
+    enabled: tournament != null && tournament.status !== 'completed',
+  })
 
   if (!tournament) {
     return (

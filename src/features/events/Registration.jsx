@@ -29,6 +29,7 @@ import RegisteredSection from './registration/RegisteredSection'
 import WaitlistSection from './registration/WaitlistSection'
 import CancelledSection from './registration/CancelledSection'
 import ScoresAndRankingSection from './registration/ScoresAndRankingSection'
+import { useScoreSync } from './useScoreSync'
 
 export default function Registration({ tournament, onNavigate }) {
   const {
@@ -47,6 +48,13 @@ export default function Registration({ tournament, onNavigate }) {
   const { data: matchesData = [] } = useMatches(tournament?.id)
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
   const claimedId = session?.user?.id ?? null
+
+  // Sync peer score updates while the tournament is active.
+  // Disabled for completed events — scores are frozen.
+  useScoreSync({
+    tournamentId: tournament?.id,
+    enabled: tournament != null && tournament.status !== 'completed',
+  })
 
   // Show first name for players, full name for admins
   const displayName = useCallback(

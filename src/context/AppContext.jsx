@@ -12,6 +12,7 @@ import { playerKeys } from '../features/players/playerKeys'
 import { matchKeys } from '../features/events/matchKeys'
 import { registrationKeys } from '../features/events/registrationKeys'
 import { normaliseTournaments, normaliseTransfers } from '../lib/normalise'
+import { broadcastScore } from '../features/events/scoreChannel'
 
 const AppContext = createContext(null)
 
@@ -276,14 +277,23 @@ export function AppProvider({ children }) {
   const updateMatch = useCallback(
     async (id, data) => {
       // Optimistic patch: update whichever tournament's match cache contains this
-      // match id, without knowing the tournamentId upfront.
+      // match id, without knowing the tournamentId upfront. Capture tournamentId
+      // while iterating so we can broadcast without a second cache scan.
+      let tournamentId
       queryClient.setQueriesData({ queryKey: matchKeys.all() }, (cache) => {
         if (!Array.isArray(cache)) return cache
         const idx = cache.findIndex((m) => m.id === id)
+        if (idx !== -1 && !tournamentId) tournamentId = cache[idx].tournamentId
         return idx === -1 ? cache : cache.map((m) => (m.id === id ? { ...m, ...data } : m))
       })
       const { error } = await matchesApi.updateMatch(id, data)
-      if (error) invalidateMatches()
+      if (error) {
+        invalidateMatches()
+      } else if (tournamentId) {
+        // Broadcast only the fields actually written so a partial update never
+        // clobbers peers' other fields via the receiver's merge.
+        broadcastScore({ tournamentId, payload: { id, ...data } })
+      }
     },
     [queryClient, invalidateMatches],
   )
