@@ -181,50 +181,60 @@ describe('computeGroupStandings', () => {
     expect(standings[2].team.id).toBe('gamma')
   })
 
-  it('breaks ties using head-to-head result (H2H beats set diff)', () => {
-    // alpha and beta both have 1 win but alpha beat beta directly
-    // gamma has 0 wins; set diff irrelevant for the H2H tiebreak
+  it('uses H2H to break a two-way tie when one team beat the other directly', () => {
+    // alpha and beta are both 1-1; they played each other and alpha won.
+    // beta has better overall set diff — H2H must override it.
+    // Four teams so the tied group is exactly {alpha, beta}.
     const alpha = makeTeam('alpha')
     const beta = makeTeam('beta')
     const gamma = makeTeam('gamma')
+    const delta = makeTeam('delta')
 
-    // alpha beats beta (H2H)
+    // alpha beats beta directly
     const m1 = makeMatch({
       team1_id: 'alpha',
       team2_id: 'beta',
       winner_id: 'alpha',
+      set_scores: [{ t1: 6, t2: 5 }], // alpha narrow win → poor set diff
+    })
+    // gamma beats alpha (alpha 1-1)
+    const m2 = makeMatch({
+      team1_id: 'gamma',
+      team2_id: 'alpha',
+      winner_id: 'gamma',
       set_scores: [{ t1: 6, t2: 0 }],
     })
-    // beta beats gamma (so beta has 1 win too)
-    const m2 = makeMatch({
+    // beta beats delta with a huge margin (beta 1-1, better set diff than alpha)
+    const m3 = makeMatch({
       team1_id: 'beta',
-      team2_id: 'gamma',
+      team2_id: 'delta',
       winner_id: 'beta',
-      // beta wins with a huge set diff to ensure set diff alone would favour beta
       set_scores: [
         { t1: 6, t2: 0 },
         { t1: 6, t2: 0 },
       ],
     })
-    // alpha beats gamma
-    const m3 = makeMatch({
-      team1_id: 'alpha',
-      team2_id: 'gamma',
-      winner_id: 'alpha',
-      set_scores: [{ t1: 6, t2: 0 }],
-    })
 
-    const standings = computeGroupStandings([alpha, beta, gamma], [m1, m2, m3])
+    // alpha set diff: +1 (beat beta 6-5) − 1 (lost to gamma 0-6) = 0
+    // beta set diff:  −1 (lost to alpha 5-6) + 2 (beat delta 6-0, 6-0) = +1
+    // beta has better set diff, but alpha beat beta directly → alpha must rank higher
+    const standings = computeGroupStandings([alpha, beta, gamma, delta], [m1, m2, m3])
 
-    // alpha: 2 wins, beta: 1 win, gamma: 0 — alpha is first by points alone
-    // beta's extra set diff doesn't matter; alpha won more matches
-    expect(standings[0].team.id).toBe('alpha')
-    expect(standings[1].team.id).toBe('beta')
-    expect(standings[2].team.id).toBe('gamma')
+    const alphaRow = standings.find((s) => s.team.id === 'alpha')!
+    const betaRow = standings.find((s) => s.team.id === 'beta')!
+    expect(alphaRow.rank).toBeLessThan(betaRow.rank)
   })
 
-  it('breaks ties using H2H when points are equal', () => {
-    // alpha and beta each have 1 win; alpha beat beta in their direct match
+  it('falls through to set diff when H2H is circular among tied teams', () => {
+    // Three-way tie on points with rock-paper-scissors H2H:
+    // alpha beat beta, beta beat gamma, gamma beat alpha — no team dominates.
+    // Each team has 1 H2H win within the group → tiebreaker is inconclusive → set diff decides.
+    //
+    // set diff per team (from the scores below):
+    //   alpha: +1 (beat beta) − 1 (lost to gamma) = 0
+    //   beta:  −1 (lost to alpha) + 2 (beat gamma 6-0, 6-0) = +1
+    //   gamma: −2 (lost to beta) + 1 (beat alpha) = −1
+    // expected order: beta (+1) → alpha (0) → gamma (−1)
     const alpha = makeTeam('alpha')
     const beta = makeTeam('beta')
     const gamma = makeTeam('gamma')
@@ -242,7 +252,7 @@ describe('computeGroupStandings', () => {
       set_scores: [
         { t1: 6, t2: 0 },
         { t1: 6, t2: 0 },
-      ], // beta: huge set diff
+      ],
     })
     const m3 = makeMatch({
       team1_id: 'gamma',
@@ -251,15 +261,11 @@ describe('computeGroupStandings', () => {
       set_scores: [{ t1: 6, t2: 0 }],
     })
 
-    // points: alpha 1, beta 1, gamma 1 — full three-way tie on points
-    // H2H: alpha beat beta, beta beat gamma, gamma beat alpha
-    // No single team dominates H2H (circular), so fall through to set diff
-    // beta has set diff +3 (6-0, 6-0 vs gamma; 3-6 vs alpha) = +2-1-sets = net depends
-    // Let's just verify the output is deterministic and ranked 1-3
     const standings = computeGroupStandings([alpha, beta, gamma], [m1, m2, m3])
-    const ranks = standings.map((s) => s.rank)
-    expect(ranks).toEqual([1, 2, 3])
-    expect(new Set(standings.map((s) => s.team.id)).size).toBe(3)
+
+    expect(standings[0].team.id).toBe('beta')
+    expect(standings[1].team.id).toBe('alpha')
+    expect(standings[2].team.id).toBe('gamma')
   })
 
   it('breaks ties using set diff after H2H is equal', () => {

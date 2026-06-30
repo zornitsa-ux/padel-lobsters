@@ -61,14 +61,47 @@ export function getTeamRecord(
   return { wins, losses, setDiff, gameDiff }
 }
 
-/** Head-to-head wins for teamA directly against teamB in the played group matches. */
-function h2hWins(teamA: string, teamB: string, played: LeagueMatch[]): number {
+type Standing = Omit<GroupStanding, 'rank'>
+
+/**
+ * H2H wins for a team against other members of a specific tied sub-group.
+ * When the tied group has a circular dependency (A beat B, B beat C, C beat A),
+ * every team gets the same count and this tiebreaker is inconclusive — callers
+ * fall through to set diff and game diff.
+ */
+function h2hWinsInGroup(teamId: string, groupIds: Set<string>, played: LeagueMatch[]): number {
   return played.filter(
     (m) =>
-      ((m.team1_id === teamA && m.team2_id === teamB) ||
-        (m.team1_id === teamB && m.team2_id === teamA)) &&
-      m.winner_id === teamA,
+      m.winner_id === teamId &&
+      ((m.team1_id === teamId && m.team2_id !== null && groupIds.has(m.team2_id)) ||
+        (m.team2_id === teamId && m.team1_id !== null && groupIds.has(m.team1_id))),
   ).length
+}
+
+/**
+ * Sort a group of teams all tied on wins.
+ *
+ * Tiebreakers (in order):
+ * 1. H2H wins within this tied sub-group — resolves clean 2-way or non-circular
+ *    multi-team ties; produces equal counts for circular ties (e.g. rock-paper-scissors),
+ *    which then falls through.
+ * 2. Overall set difference
+ * 3. Overall game difference
+ */
+function sortTiedGroup(group: Standing[], played: LeagueMatch[]): Standing[] {
+  if (group.length <= 1) return group
+
+  const groupIds = new Set(group.map((s) => s.team.id))
+
+  return [...group].sort((a, b) => {
+    const aH2H = h2hWinsInGroup(a.team.id, groupIds, played)
+    const bH2H = h2hWinsInGroup(b.team.id, groupIds, played)
+    if (bH2H !== aH2H) return bH2H - aH2H
+
+    if (b.setDiff !== a.setDiff) return b.setDiff - a.setDiff
+
+    return b.gameDiff - a.gameDiff
+  })
 }
 
 export function computeGroupStandings(
@@ -98,8 +131,8 @@ export function computeGroupStandings(
     }
   }
 
-  // Build standings list (preserve original order for stable sort)
-  const standings: Omit<GroupStanding, 'rank'>[] = teams.map((team) => {
+  // Build standings list
+  const standings: Standing[] = teams.map((team) => {
     const rec = records.get(team.id) ?? { wins: 0, losses: 0, setDiff: 0, gameDiff: 0 }
     return {
       team,
@@ -111,26 +144,18 @@ export function computeGroupStandings(
     }
   })
 
-  // Sort with tiebreakers
-  standings.sort((a, b) => {
-    // 1. Points (wins)
-    if (b.points !== a.points) return b.points - a.points
+  // Group by wins, sort each win-group with proper tiebreakers, then flatten
+  const byWins = new Map<number, Standing[]>()
+  for (const s of standings) {
+    const arr = byWins.get(s.wins) ?? []
+    arr.push(s)
+    byWins.set(s.wins, arr)
+  }
 
-    // 2. Head-to-head
-    const aWinsH2H = h2hWins(a.team.id, b.team.id, played)
-    const bWinsH2H = h2hWins(b.team.id, a.team.id, played)
-    if (aWinsH2H !== bWinsH2H) return bWinsH2H - aWinsH2H
+  const sorted: Standing[] = []
+  for (const w of [...byWins.keys()].sort((a, b) => b - a)) {
+    sorted.push(...sortTiedGroup(byWins.get(w)!, played))
+  }
 
-    // 3. Set difference
-    if (b.setDiff !== a.setDiff) return b.setDiff - a.setDiff
-
-    // 4. Game difference
-    if (b.gameDiff !== a.gameDiff) return b.gameDiff - a.gameDiff
-
-    // 5. Stable (preserve input order — Array.sort is stable in V8/Node 11+)
-    return 0
-  })
-
-  // Assign rank
-  return standings.map((s, i) => ({ ...s, rank: i + 1 }))
+  return sorted.map((s, i) => ({ ...s, rank: i + 1 }))
 }
