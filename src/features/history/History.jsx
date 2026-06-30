@@ -9,6 +9,7 @@ import { TOURNAMENTS } from '../../data/historicalTournaments'
 import { loadAliases, resolveName } from './aliasStorage'
 import { smartSort, buildDisplayNames } from './historicalStats'
 import { medalColor, medalStyleH } from './medals'
+import { groupOscarResultsByCategory } from '../oscars/oscarResults'
 import Podium from './Podium'
 import { TabSwitcher } from '../../components/ui/TabSwitcher'
 
@@ -451,21 +452,7 @@ export default function History({ onNavigate }) {
                     {dbTab === 'games' &&
                       hasGameResults &&
                       (() => {
-                        const byCat = new Map()
-                        for (const r of gameResults) {
-                          if (!byCat.has(r.category_id))
-                            byCat.set(r.category_id, {
-                              id: r.category_id,
-                              name: r.category_name,
-                              icon: r.category_icon,
-                              display_order: r.display_order,
-                              rows: [],
-                            })
-                          byCat.get(r.category_id).rows.push(r)
-                        }
-                        const cats = Array.from(byCat.values()).sort(
-                          (a, b) => (a.display_order || 0) - (b.display_order || 0),
-                        )
+                        const cats = groupOscarResultsByCategory(gameResults)
                         return (
                           <div className="space-y-2">
                             <div className="flex items-center gap-2 px-1">
@@ -475,61 +462,51 @@ export default function History({ onNavigate }) {
                                 {cats.length} categor{cats.length === 1 ? 'y' : 'ies'}
                               </span>
                             </div>
-                            {cats.map((cat) => {
-                              const winners = cat.rows.filter(
-                                (r) => Number(r.rank_in_category) === 1,
-                              )
-                              const maxV = Math.max(
-                                1,
-                                ...cat.rows.map((r) => Number(r.votes_count)),
-                              )
-                              const topVotes = winners.length ? Number(winners[0].votes_count) : 0
-                              return (
-                                <div
-                                  key={cat.id}
-                                  className="bg-white rounded-xl p-3 space-y-1.5 border border-gray-100"
-                                >
-                                  <p className="font-bold text-xs text-gray-700">
-                                    <span className="mr-1">{cat.icon}</span>
-                                    {cat.name}
+                            {cats.map((cat) => (
+                              <div
+                                key={cat.id}
+                                className="bg-white rounded-xl p-3 space-y-1.5 border border-gray-100"
+                              >
+                                <p className="font-bold text-xs text-gray-700">
+                                  <span className="mr-1">{cat.icon}</span>
+                                  {cat.name}
+                                </p>
+                                {cat.winners.length > 0 ? (
+                                  <p className="text-xs text-gray-600">
+                                    🏆{' '}
+                                    <span className="font-bold">
+                                      {cat.winners.map((w) => w.target_name).join(', ')}
+                                    </span>{' '}
+                                    <span className="text-gray-400">
+                                      ({cat.topVotes} vote{cat.topVotes !== 1 ? 's' : ''}
+                                      {cat.winners.length > 1 ? ' — tie' : ''})
+                                    </span>
                                   </p>
-                                  {winners.length > 0 ? (
-                                    <p className="text-xs text-gray-600">
-                                      🏆{' '}
-                                      <span className="font-bold">
-                                        {winners.map((w) => w.target_name).join(', ')}
-                                      </span>{' '}
-                                      <span className="text-gray-400">
-                                        ({topVotes} vote{topVotes !== 1 ? 's' : ''}
-                                        {winners.length > 1 ? ' — tie' : ''})
+                                ) : (
+                                  <p className="text-[10px] text-gray-400">No votes</p>
+                                )}
+                                <div className="space-y-0.5">
+                                  {cat.rows.map((r) => (
+                                    <div key={r.target_id} className="flex items-center gap-2">
+                                      <span className="text-[10px] w-16 truncate text-gray-600">
+                                        {(r.target_name || '').split(' ')[0]}
                                       </span>
-                                    </p>
-                                  ) : (
-                                    <p className="text-[10px] text-gray-400">No votes</p>
-                                  )}
-                                  <div className="space-y-0.5">
-                                    {cat.rows.map((r) => (
-                                      <div key={r.target_id} className="flex items-center gap-2">
-                                        <span className="text-[10px] w-16 truncate text-gray-600">
-                                          {(r.target_name || '').split(' ')[0]}
-                                        </span>
-                                        <div className="flex-1 h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                                          <div
-                                            className="h-full bg-lob-teal rounded-full transition-all"
-                                            style={{
-                                              width: `${(Number(r.votes_count) / maxV) * 100}%`,
-                                            }}
-                                          />
-                                        </div>
-                                        <span className="text-[10px] text-gray-500 w-3 text-right">
-                                          {Number(r.votes_count)}
-                                        </span>
+                                      <div className="flex-1 h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                                        <div
+                                          className="h-full bg-lob-teal rounded-full transition-all"
+                                          style={{
+                                            width: `${(Number(r.votes_count) / cat.maxVotes) * 100}%`,
+                                          }}
+                                        />
                                       </div>
-                                    ))}
-                                  </div>
+                                      <span className="text-[10px] text-gray-500 w-3 text-right">
+                                        {Number(r.votes_count)}
+                                      </span>
+                                    </div>
+                                  ))}
                                 </div>
-                              )
-                            })}
+                              </div>
+                            ))}
                           </div>
                         )
                       })()}
