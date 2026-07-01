@@ -97,10 +97,10 @@ export async function updatePlayer(id: any, data: any, role: string) {
   setIf(data.preferredPosition !== undefined, 'preferred_position', data.preferredPosition ?? '')
   setIf(data.tagline !== undefined, 'tagline', data.tagline ?? '')
   setIf(data.taglineLabel !== undefined, 'tagline_label', data.taglineLabel ?? '')
+  setIf(data.adjustment !== undefined, 'adjustment', String(parseFloat(data.adjustment) || 0))
   // Admin-only fields
   if (role === 'admin') {
     setIf(data.notes !== undefined, 'notes', data.notes ?? '')
-    setIf(data.adjustment !== undefined, 'adjustment', String(parseFloat(data.adjustment) || 0))
     setIf(data.status !== undefined, 'status', data.status ?? 'active')
   }
 

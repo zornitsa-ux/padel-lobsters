@@ -19,7 +19,6 @@ export default function ProfileSection({
   handleProfileSave,
   activePrompt,
   setActivePrompt,
-  // Playtomic popup props
   showPlaytomicPrompt,
   dismissPlaytomicPrompt,
 }) {
@@ -115,6 +114,9 @@ export default function ProfileSection({
                 />
               </div>
             </div>
+            {profileError && (
+              <p className="text-xs text-red-600 bg-red-50 rounded-lg p-2">{profileError}</p>
+            )}
             <div className="flex gap-2">
               <button
                 type="button"
