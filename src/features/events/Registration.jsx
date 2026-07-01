@@ -1,8 +1,10 @@
 import React, { useCallback, useMemo, useState } from 'react'
-import { useApp } from '../../context/AppContext'
+import { useApp } from '../../context/useApp'
+import { useUpdateTournament } from './useTournaments'
+import { useTransfers, useTransferActions } from './useTransfers'
 import { usePlayers } from '../players/usePlayers'
-import { useMatches } from './useMatches'
-import { useRegistrations } from './useRegistrations'
+import { useMatches, useMatchActions } from './useMatches'
+import { useRegistrations, useRegistrationActions } from './useRegistrations'
 import { AlertCircle } from 'lucide-react'
 import TransferSpotModal from '../../components/TransferSpotModal'
 import TransferPendingModal from '../../components/TransferPendingModal'
@@ -11,6 +13,8 @@ import AddToCalendarButton from '../../components/ui/AddToCalendarButton'
 import ShareWhatsAppButton from '../../components/ui/ShareWhatsAppButton'
 import EventDescription from './EventDescription'
 import EventAdminMenu from './EventAdminMenu'
+import EventFormModal from './EventFormModal'
+import { emptyForm } from './eventConstants'
 import {
   splitRegistrationsByStatus,
   getAvailablePlayers,
@@ -29,24 +33,31 @@ import RegisteredSection from './registration/RegisteredSection'
 import WaitlistSection from './registration/WaitlistSection'
 import CancelledSection from './registration/CancelledSection'
 import ScoresAndRankingSection from './registration/ScoresAndRankingSection'
+import { useScoreSync } from './useScoreSync'
 
 export default function Registration({ tournament, onNavigate }) {
-  const {
-    registerPlayer,
-    cancelRegistration,
-    updateRegistration,
-    updateMatch,
-    updateTournament,
-    session,
-    transfers,
-    cancelTransfer,
-    respondToTransfer,
-  } = useApp()
+  const { session } = useApp()
+  const { registerPlayer, updateRegistration, cancelRegistration } = useRegistrationActions()
+  const { updateMatch } = useMatchActions()
+  const { data: transfers = [] } = useTransfers()
+  const { respondToTransfer, cancelTransfer } = useTransferActions({ session })
+  const updateMut = useUpdateTournament()
+  const updateTournament = useCallback(
+    (id, data) => updateMut.mutateAsync({ id, data }),
+    [updateMut],
+  )
   const { data: players = [] } = usePlayers()
   const { data: regsData = [] } = useRegistrations(tournament?.id)
   const { data: matchesData = [] } = useMatches(tournament?.id)
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
   const claimedId = session?.user?.id ?? null
+
+  // Sync peer score updates while the tournament is active.
+  // Disabled for completed events — scores are frozen.
+  useScoreSync({
+    tournamentId: tournament?.id,
+    enabled: tournament != null && tournament.status !== 'completed',
+  })
 
   // Show first name for players, full name for admins
   const displayName = useCallback(
@@ -86,6 +97,99 @@ export default function Registration({ tournament, onNavigate }) {
   const [pickerForReg, setPickerForReg] = useState(null)
   const [shareModal, setShareModal] = useState(null)
   const [respondingTo, setRespondingTo] = useState(null) // transferId being acted on
+
+  const [showEditForm, setShowEditForm] = useState(false)
+  const [editForm, setEditForm] = useState(emptyForm)
+  const [editSaving, setEditSaving] = useState(false)
+
+  const openEdit = useCallback(() => {
+    const t = tournament
+    setEditForm({
+      name: t.name || '',
+      date: t.date || '',
+      time: t.time || '',
+      location: t.location || '',
+      maxPlayers: String(t.maxPlayers || 16),
+      duration: t.duration || 90,
+      format: t.format || 'americano',
+      genderMode: t.genderMode || 'mixed',
+      courtBookingMode: t.courtBookingMode || 'admin_all',
+      courts: t.courts?.length
+        ? t.courts.map((c) => ({
+            name: c.name || '',
+            booked: !!c.booked,
+            costPerPerson: String(c.costPerPerson || ''),
+            responsible: c.responsible || '',
+            tikkieLink: c.tikkieLink || '',
+          }))
+        : [{ name: '', booked: false, costPerPerson: '', responsible: '', tikkieLink: '' }],
+      pricePerPerson:
+        t.totalPrice > 0 && t.maxPlayers > 0
+          ? (t.totalPrice / t.maxPlayers).toFixed(2).replace(/\.00$/, '')
+          : String(t.totalPrice ?? ''),
+      tikkieLink: t.tikkieLink || '',
+      notes: t.notes || '',
+    })
+    setShowEditForm(true)
+  }, [tournament])
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault()
+    setEditSaving(true)
+    try {
+      const mp = parseInt(editForm.maxPlayers) || 16
+      const data = {
+        name: editForm.name,
+        date: editForm.date,
+        time: editForm.time,
+        location: editForm.location,
+        maxPlayers: mp,
+        format: editForm.format,
+        genderMode: editForm.genderMode,
+        courtBookingMode: editForm.courtBookingMode,
+        duration: editForm.duration || 90,
+        totalPrice:
+          editForm.courtBookingMode === 'admin_all'
+            ? (parseFloat(editForm.pricePerPerson) || 0) * mp
+            : 0,
+        tikkieLink: editForm.courtBookingMode === 'admin_all' ? editForm.tikkieLink || '' : '',
+        courts: editForm.courts.map((c) => ({
+          name: c.name,
+          booked: !!c.booked,
+          costPerPerson:
+            editForm.courtBookingMode === 'player_responsible'
+              ? parseFloat(c.costPerPerson) || 0
+              : 0,
+          responsible:
+            editForm.courtBookingMode === 'player_responsible' ? c.responsible || '' : '',
+          tikkieLink: editForm.courtBookingMode === 'player_responsible' ? c.tikkieLink || '' : '',
+        })),
+        notes: editForm.notes,
+      }
+      await updateTournament(tournament.id, data)
+      setShowEditForm(false)
+    } finally {
+      setEditSaving(false)
+    }
+  }
+
+  const addEditCourt = () =>
+    setEditForm((f) => ({
+      ...f,
+      courts: [
+        ...f.courts,
+        { name: '', booked: false, costPerPerson: '', responsible: '', tikkieLink: '' },
+      ],
+    }))
+
+  const removeEditCourt = (i) =>
+    setEditForm((f) => ({ ...f, courts: f.courts.filter((_, idx) => idx !== i) }))
+
+  const setEditCourt = (i, field, value) =>
+    setEditForm((f) => ({
+      ...f,
+      courts: f.courts.map((c, idx) => (idx === i ? { ...c, [field]: value } : c)),
+    }))
 
   const tournamentId = tournament?.id
 
@@ -312,6 +416,7 @@ export default function Registration({ tournament, onNavigate }) {
               onEligibility={() => onNavigate('eligibility', tournament)}
               onPayments={() => onNavigate('payments', tournament)}
               onScores={() => onNavigate('scores', tournament)}
+              onEdit={openEdit}
             />
           </div>
         </div>
@@ -501,6 +606,18 @@ export default function Registration({ tournament, onNavigate }) {
           onCancel={() => setShareModal(null)}
         />
       )}
+      <EventFormModal
+        open={showEditForm}
+        editId={tournament.id}
+        form={editForm}
+        setForm={setEditForm}
+        saving={editSaving}
+        onSubmit={handleEditSubmit}
+        onClose={() => setShowEditForm(false)}
+        addCourt={addEditCourt}
+        removeCourt={removeEditCourt}
+        setCourt={setEditCourt}
+      />
     </div>
   )
 }

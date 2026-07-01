@@ -34,3 +34,55 @@ export async function fetchAllRegistrations(): Promise<NormalisedRegistration[]>
   const rows = z.array(registrationRowSchema).parse(data ?? [])
   return normaliseRegistrations(rows)
 }
+
+// ── Registrations write path ──────────────────────────────────────
+export async function registerPlayer(
+  tournamentId: string,
+  playerId: string,
+  currentRegisteredCount: number,
+  maxPlayers: number,
+) {
+  const status = currentRegisteredCount < maxPlayers ? 'registered' : 'waitlist'
+  const { data: inserted, error } = await supabase
+    .from('registrations')
+    .insert({
+      tournament_id: tournamentId,
+      player_id: playerId,
+      status,
+      payment_status: 'unpaid',
+      payment_method: '',
+    })
+    .select()
+    .single()
+  if (error) {
+    return { regId: null, status }
+  }
+  return { regId: inserted?.id ?? null, status }
+}
+
+export async function updateRegistration(id: string, data: Record<string, any>) {
+  const payload: Record<string, any> = {}
+  if (data.status !== undefined) payload.status = data.status
+  if (data.paymentStatus !== undefined) payload.payment_status = data.paymentStatus
+  if (data.paymentMethod !== undefined) payload.payment_method = data.paymentMethod
+  const { error } = await supabase.from('registrations').update(payload).eq('id', id)
+  if (error) throw error
+}
+
+export async function cancelRegistration(id: string) {
+  await supabase.from('registrations').update({ status: 'cancelled' }).eq('id', id)
+}
+
+// Promote first waitlisted player (oldest by created_at). Caller passes
+// the current registrations array so the api stays state-free. Returns
+// the promoted reg id, or null if there were no waitlisted players.
+export async function promoteWaitlist(tournamentId: string, currentRegistrations: any[]) {
+  const waitlisted = currentRegistrations
+    .filter((r) => r.tournament_id === tournamentId && r.status === 'waitlist')
+    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+  if (waitlisted.length > 0) {
+    await supabase.from('registrations').update({ status: 'registered' }).eq('id', waitlisted[0].id)
+    return waitlisted[0].id
+  }
+  return null
+}

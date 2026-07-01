@@ -1,6 +1,9 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react'
-import { useApp } from '../../context/AppContext'
-import { usePlayers } from '../players/usePlayers'
+import { useApp } from '../../context/useApp'
+import { useTournaments } from '../events/useTournaments'
+import { usePlayers, usePlayerActions } from '../players/usePlayers'
+import { useAllMatches } from '../events/useMatches'
+import { useAllRegistrations } from '../events/useRegistrations'
 import usePlayerAliases from '../../hooks/usePlayerAliases'
 import { supabase } from '../../supabase'
 import { Search } from 'lucide-react'
@@ -30,18 +33,15 @@ const GENERIC_REVIEW_IDS = new Set([
 ])
 
 export default function Players({ onNavigate, focusPlayerId }) {
-  const {
-    addPlayer,
-    updatePlayer,
-    deletePlayer,
+  const { session, role, fetchAllPlayersWithPii } = useApp()
+  const { addPlayer, updatePlayer, deletePlayer, regeneratePin } = usePlayerActions({
     session,
-    matches,
-    registrations,
-    tournaments,
-    regeneratePin,
-    fetchAllPlayersWithPii,
-  } = useApp()
+    role,
+  })
+  const { data: tournaments = [] } = useTournaments()
   const { data: players = [] } = usePlayers()
+  const { data: matches = [] } = useAllMatches()
+  const { data: registrations = [] } = useAllRegistrations()
   const { playerAliases } = usePlayerAliases()
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
   const claimedId = session?.user?.id ?? null

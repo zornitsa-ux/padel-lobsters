@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react'
 import { Save, User, ChevronDown, ChevronUp, Camera, Mail, Check } from 'lucide-react'
 import CountryPicker from '../../components/ui/CountryPicker'
 import Avatar from '../../components/ui/Avatar'
-import { useApp } from '../../context/AppContext'
+import { useApp } from '../../context/useApp'
 import { LOBBY_PROMPTS } from './settingsHelpers'
 
 export default function ProfileSection({

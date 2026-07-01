@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import type { MatchScoreUpdate } from '../../api/matches'
+import type { MatchScoreUpdate } from './matchQueries'
 
 /* ════════════════════════════════════════════════════════════════════════════
    ScoreEntry — batched score input for a single match.

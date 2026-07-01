@@ -1,7 +1,8 @@
-import { useQuery } from '@tanstack/react-query'
-import { useMemo } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useCallback, useMemo } from 'react'
 import { playerKeys } from './playerKeys'
 import { fetchPlayers, fetchMyProfile, type Player } from './playerQueries'
+import * as mut from './playerQueries'
 import { mergeMyProfile } from './playerSelectors'
 
 // Full redacted roster. One shared cache across every list view — TanStack
@@ -57,4 +58,56 @@ export function useMyProfile(id: string | null | undefined) {
     isLoading: base.isLoading || pii.isLoading,
     isError: base.isError || pii.isError,
   }
+}
+
+export function usePlayerActions({ session, role }: { session: any; role: string }) {
+  const qc = useQueryClient()
+  const invalidatePlayers = useCallback(
+    () => qc.invalidateQueries({ queryKey: playerKeys.all() }),
+    [qc],
+  )
+
+  const addPlayer = useCallback(
+    async (data: any) => {
+      if (!session?.user) throw new Error('Admin sign-in required to add a player.')
+      const inserted = await mut.addPlayer(data)
+      if (!inserted) throw new Error('Could not save player. Check your admin sign-in.')
+      await invalidatePlayers()
+      return { ok: true, data: inserted }
+    },
+    [session, invalidatePlayers],
+  )
+
+  const updatePlayer = useCallback(
+    async (id: any, data: any) => {
+      if (role !== 'admin' && String(id) !== String(session?.user?.id)) {
+        throw new Error('Not authorized to edit this player')
+      }
+      await mut.updatePlayer(id, data, role)
+      await invalidatePlayers()
+      return { ok: true }
+    },
+    [session, role, invalidatePlayers],
+  )
+
+  const deletePlayer = useCallback(
+    async (id: any) => {
+      await mut.deletePlayer(id)
+      await invalidatePlayers()
+      return { ok: true }
+    },
+    [invalidatePlayers],
+  )
+
+  const regeneratePin = useCallback(
+    async (playerId: any) => {
+      const data = await mut.regeneratePin(playerId)
+      if (!data) throw new Error('Could not reset PIN.')
+      await invalidatePlayers()
+      return { ok: true, pin: data }
+    },
+    [invalidatePlayers],
+  )
+
+  return { addPlayer, updatePlayer, deletePlayer, regeneratePin }
 }

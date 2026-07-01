@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { NavLink } from 'react-router-dom'
-import { useApp } from '../context/AppContext'
+import { useApp } from '../context/useApp'
+import { useSettings } from '../features/settings/useSettings'
 import { supabase } from '../supabase'
 import { getDeviceId } from '../lib/deviceId'
 import {
@@ -35,7 +36,8 @@ import DeviceTrustIndicator from './device-trust/DeviceTrustIndicator'
 const DEVICE_TRUST_BANNER_KEY = 'pl_device_trust_banner_dismissed'
 
 export default function Layout({ children }) {
-  const { settings, session } = useApp()
+  const { session } = useApp()
+  const { data: settings } = useSettings()
   const [bannerDismissed, setBannerDismissed] = useState(false)
   const [deviceTrustedDb, setDeviceTrustedDb] = useState(undefined)
 

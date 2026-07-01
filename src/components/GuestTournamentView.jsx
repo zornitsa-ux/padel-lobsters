@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import { useApp } from '../context/AppContext'
-import { Calendar, MapPin, Users, Trophy, LogIn, ArrowLeft } from 'lucide-react'
-import { loadPublicCounts } from '../api/tournaments'
+import { MapPin, Users, Trophy, LogIn, ArrowLeft } from 'lucide-react'
+import { useTournaments } from '../features/events/useTournaments'
+import { loadPublicCounts } from '../features/events/tournamentQueries'
 import DateTile from './ui/DateTile'
 import AddToCalendarButton from './ui/AddToCalendarButton'
 import ShareWhatsAppButton from './ui/ShareWhatsAppButton'
@@ -22,7 +22,7 @@ import ShareWhatsAppButton from './ui/ShareWhatsAppButton'
 // =============================================================================
 
 export default function GuestTournamentView({ onNavigate }) {
-  const { tournaments } = useApp()
+  const { data: tournaments = [] } = useTournaments()
   const [publicCounts, setPublicCounts] = useState({})
 
   useEffect(() => {

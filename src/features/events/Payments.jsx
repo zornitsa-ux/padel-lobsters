@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
-import { useApp } from '../../context/AppContext'
+import { useApp } from '../../context/useApp'
 import { usePlayers } from '../players/usePlayers'
-import { useRegistrations } from './useRegistrations'
+import { useRegistrations, useRegistrationActions } from './useRegistrations'
 import {
   CheckCircle,
   AlertCircle,
@@ -18,7 +18,8 @@ const METHODS = [
 ]
 
 export default function Payments({ tournament, onNavigate }) {
-  const { updateRegistration, session } = useApp()
+  const { session } = useApp()
+  const { updateRegistration } = useRegistrationActions()
   const { data: players = [] } = usePlayers()
   const { data: regsData = [] } = useRegistrations(tournament?.id)
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
@@ -48,10 +49,6 @@ export default function Payments({ tournament, onNavigate }) {
   )
   const selfPaid = regs.filter((r) => r.paymentStatus === 'pending_confirmation')
   const tikkied = regs.filter((r) => r.paymentStatus === 'tikkied')
-  // Anyone who hasn't been confirmed yet — this is what admin still has to chase
-  const openCount = regs.filter(
-    (r) => r.paymentStatus !== 'paid' && r.paymentStatus !== 'transferred',
-  )
   // True "ghost" unpaid — didn't even click the Tikkie link
   const trulyUnpaid = regs.filter((r) => !r.paymentStatus || r.paymentStatus === 'unpaid')
 
@@ -113,11 +110,6 @@ export default function Payments({ tournament, onNavigate }) {
       },
       tournament.id,
     )
-  }
-
-  const formatDate = (d) => {
-    if (!d) return '—'
-    return new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
   }
 
   return (

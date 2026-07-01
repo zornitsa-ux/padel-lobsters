@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
-import { useApp } from '../context/AppContext'
+import { useApp } from '../context/useApp'
 import { KeyRound, LogIn, UserPlus, ArrowLeft, Mail, Check, AlertCircle } from 'lucide-react'
 import { isPublicPath } from '../lib/authPaths'
 import SignupRequest from './SignupRequest'

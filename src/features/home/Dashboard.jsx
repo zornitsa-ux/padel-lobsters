@@ -1,5 +1,8 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react'
-import { useApp } from '../../context/AppContext'
+import { useApp } from '../../context/useApp'
+import { useSettings } from '../settings/useSettings'
+import { useTournaments } from '../events/useTournaments'
+import { useTransfers, useTransferActions } from '../events/useTransfers'
 import useRefreshOnFocus from '../../hooks/useRefreshOnFocus'
 import { usePlayers } from '../players/usePlayers'
 import { useAllMatches } from '../events/useMatches'
@@ -7,7 +10,6 @@ import { useAllRegistrations } from '../events/useRegistrations'
 import { supabase } from '../../supabase'
 import DEFAULT_TIPS from '../../data/padelTips'
 import TransferPendingModal from '../../components/TransferPendingModal'
-import { PageHeader } from '../../components/ui/PageHeader'
 import { getGreeting } from './greetings'
 import useCountdown from './useCountdown'
 import Greeting from './Greeting'
@@ -20,7 +22,11 @@ import AdminAlerts from './AdminAlerts'
 import { LeagueDashboardCard } from '../league/ui/LeagueDashboardCard'
 
 export default function Dashboard({ onNavigate }) {
-  const { tournaments, settings, session, transfers, respondToTransfer, cancelTransfer } = useApp()
+  const { session } = useApp()
+  const { data: tournaments = [] } = useTournaments()
+  const { data: transfers = [] } = useTransfers()
+  const { respondToTransfer, cancelTransfer } = useTransferActions({ session })
+  const { data: settings } = useSettings()
   const { data: players = [] } = usePlayers()
   const { data: matches = [] } = useAllMatches()
   const { data: registrations = [] } = useAllRegistrations()
@@ -196,7 +202,7 @@ export default function Dashboard({ onNavigate }) {
       else break
     }
     return s
-  }, [claimedId, tournaments, registrations, getTournamentRegistrations])
+  }, [claimedId, tournaments, getTournamentRegistrations])
 
   const formatDate = (d) => {
     if (!d) return '—'
@@ -216,19 +222,9 @@ export default function Dashboard({ onNavigate }) {
     ? ['Welcome to Padel Lobsters!', 'Sign in with your PIN to join the fun.']
     : getGreeting(claimedPlayer?.name || (isAdmin ? 'Admin' : null))
 
-  // Tip of the day — use custom tips from settings or defaults
-  // Launch-day tip overrides (date string → exact tip text)
-  const TIP_OVERRIDES = {
-    '2026-04-11':
-      "Patience wins padel matches. Wait for the right ball to attack — don't force winners.",
-    '2026-04-12':
-      'Always return to the center of your side after every shot — positioning wins more points than power.',
-  }
   const tips =
     settings?.padelTips && settings.padelTips.length > 0 ? settings.padelTips : DEFAULT_TIPS
   const todayTip = useMemo(() => {
-    const today = new Date().toISOString().slice(0, 10)
-    if (TIP_OVERRIDES[today]) return TIP_OVERRIDES[today]
     const now = new Date()
     const dayIndex = (now.getFullYear() * 366 + now.getMonth() * 31 + now.getDate()) % tips.length
     return tips[dayIndex]

@@ -69,8 +69,7 @@ export const adminStatRowSchema = z
   })
   .passthrough()
 
-// lobster_oscars_admin_get_results / get_results RETURNS TABLE. get_results adds
-// a `total_voters` column which the UI ignores; `.passthrough()` lets it ride.
+// lobster_oscars_admin_get_results / get_results RETURNS TABLE.
 export const resultRowSchema = z
   .object({
     category_id: z.string(),
@@ -81,6 +80,7 @@ export const resultRowSchema = z
     target_name: nullableString,
     votes_count: count,
     rank_in_category: count,
+    total_voters: count.optional(),
   })
   .passthrough()
 

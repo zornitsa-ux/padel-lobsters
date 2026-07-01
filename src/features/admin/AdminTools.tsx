@@ -1,7 +1,9 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react'
-import { useApp } from '../../context/AppContext'
+import { useApp } from '../../context/useApp'
+import { useTournaments } from '../events/useTournaments'
 import { usePlayers } from '../players/usePlayers'
 import { useAllRegistrations } from '../events/useRegistrations'
+import { useAllMatches } from '../events/useMatches'
 import usePlayerAliases from '../../hooks/usePlayerAliases'
 import useRefreshOnFocus from '../../hooks/useRefreshOnFocus'
 import { supabase } from '../../supabase'
@@ -37,9 +39,11 @@ type ToolCard = {
 const LAST_CHECK_KEY = 'pl_merch_last_checked'
 
 export default function AdminTools({ onNavigate }: AdminToolsProps) {
-  const { session, matches, registrations: ctxRegs, tournaments } = useApp() as any
+  const { session } = useApp() as any
+  const { data: tournaments = [] } = useTournaments()
   const { data: players = [] } = usePlayers()
   const { data: allRegs = [] } = useAllRegistrations()
+  const { data: allMatches = [] } = useAllMatches()
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
   const { playerAliases, setPlayerAlias, removePlayerAlias } = usePlayerAliases()
   const [showAliasMatcher, setShowAliasMatcher] = useState(false)
@@ -94,7 +98,7 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
       byScenario.set(s.id, { id: s.id, label: s.label, players: [], samples: new Map() })
     })
     activePlayers.forEach((p: any) => {
-      const r = corpReview(p, matches, ctxRegs, tournaments, playerAliases)
+      const r = corpReview(p, allMatches, allRegs, tournaments, playerAliases)
       let bucket = byScenario.get(r.scenario)
       if (!bucket) {
         bucket = { id: r.scenario, label: r.scenarioLabel, players: [], samples: new Map() }
@@ -108,7 +112,7 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
     return [...byScenario.values()]
       .filter((b) => b.players.length > 0)
       .sort((a, b) => b.players.length - a.players.length)
-  }, [activePlayers, matches, ctxRegs, tournaments, playerAliases])
+  }, [activePlayers, allMatches, allRegs, tournaments, playerAliases])
 
   const GENERIC_IDS = new Set(['level-low', 'level-mid', 'level-high', 'level-elite', 'welcome'])
   const genericCount = reviewBreakdown
