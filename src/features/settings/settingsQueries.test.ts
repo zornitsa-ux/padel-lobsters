@@ -55,7 +55,13 @@ describe('fetchSettings', () => {
 
   it('applies defaults when columns are null', async () => {
     mockSingle.mockResolvedValue({
-      data: { id: 1, whatsapp_link: null, group_name: null, padel_tips: null, auto_trust_until: null },
+      data: {
+        id: 1,
+        whatsapp_link: null,
+        group_name: null,
+        padel_tips: null,
+        auto_trust_until: null,
+      },
       error: null,
     })
 

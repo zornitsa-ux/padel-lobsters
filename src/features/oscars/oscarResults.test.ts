@@ -31,9 +31,27 @@ describe('groupOscarResultsByCategory', () => {
 
   it('groups multiple rows into their categories', () => {
     const rows = [
-      makeRow({ category_id: 'c1', target_id: 'p1', target_name: 'Alice', rank_in_category: 1, votes_count: 5 }),
-      makeRow({ category_id: 'c1', target_id: 'p2', target_name: 'Bob', rank_in_category: 2, votes_count: 3 }),
-      makeRow({ category_id: 'c2', target_id: 'p3', target_name: 'Carol', rank_in_category: 1, votes_count: 4 }),
+      makeRow({
+        category_id: 'c1',
+        target_id: 'p1',
+        target_name: 'Alice',
+        rank_in_category: 1,
+        votes_count: 5,
+      }),
+      makeRow({
+        category_id: 'c1',
+        target_id: 'p2',
+        target_name: 'Bob',
+        rank_in_category: 2,
+        votes_count: 3,
+      }),
+      makeRow({
+        category_id: 'c2',
+        target_id: 'p3',
+        target_name: 'Carol',
+        rank_in_category: 1,
+        votes_count: 4,
+      }),
     ]
     const cats = groupOscarResultsByCategory(rows)
     expect(cats).toHaveLength(2)
@@ -102,7 +120,13 @@ describe('groupOscarResultsByCategory', () => {
 
   it('reads totalVoters from the row', () => {
     const rows = [
-      makeRow({ category_id: 'c1', target_id: 'p1', rank_in_category: 1, votes_count: 3, total_voters: 10 }),
+      makeRow({
+        category_id: 'c1',
+        target_id: 'p1',
+        rank_in_category: 1,
+        votes_count: 3,
+        total_voters: 10,
+      }),
     ]
     const [cat] = groupOscarResultsByCategory(rows)
     expect(cat.totalVoters).toBe(10)

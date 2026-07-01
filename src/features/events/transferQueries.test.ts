@@ -16,11 +16,7 @@ vi.mock('../../supabase', () => ({
   },
 }))
 
-import {
-  fetchTransfers,
-  createTransfer,
-  forceAcceptTransfer,
-} from './transferQueries'
+import { fetchTransfers, createTransfer, forceAcceptTransfer } from './transferQueries'
 
 beforeEach(() => {
   vi.clearAllMocks()

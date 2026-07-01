@@ -32,9 +32,9 @@ describe('usePlayerActions — addPlayer', () => {
       usePlayerActions({ session: null, role: adminRole }),
     )
 
-    await expect(
-      act(async () => result.current.addPlayer({ name: 'Test' })),
-    ).rejects.toThrow('Admin sign-in required to add a player.')
+    await expect(act(async () => result.current.addPlayer({ name: 'Test' }))).rejects.toThrow(
+      'Admin sign-in required to add a player.',
+    )
 
     expect(q.addPlayer).not.toHaveBeenCalled()
   })
@@ -44,9 +44,9 @@ describe('usePlayerActions — addPlayer', () => {
       usePlayerActions({ session: {}, role: adminRole }),
     )
 
-    await expect(
-      act(async () => result.current.addPlayer({ name: 'Test' })),
-    ).rejects.toThrow('Admin sign-in required to add a player.')
+    await expect(act(async () => result.current.addPlayer({ name: 'Test' }))).rejects.toThrow(
+      'Admin sign-in required to add a player.',
+    )
 
     expect(q.addPlayer).not.toHaveBeenCalled()
   })
@@ -58,9 +58,9 @@ describe('usePlayerActions — addPlayer', () => {
       usePlayerActions({ session: authedSession, role: adminRole }),
     )
 
-    await expect(
-      act(async () => result.current.addPlayer({ name: 'Test' })),
-    ).rejects.toThrow('Could not save player. Check your admin sign-in.')
+    await expect(act(async () => result.current.addPlayer({ name: 'Test' }))).rejects.toThrow(
+      'Could not save player. Check your admin sign-in.',
+    )
   })
 
   it('returns { ok: true, data: inserted } and invalidates playerKeys.all() on success', async () => {
@@ -90,9 +90,7 @@ describe('usePlayerActions — addPlayer', () => {
 describe('usePlayerActions — updatePlayer', () => {
   it('throws "Not authorized" when role is not admin and id does not match session user', async () => {
     const session = { user: { id: 'player-uid' } }
-    const { result } = renderHookWithClient(() =>
-      usePlayerActions({ session, role: playerRole }),
-    )
+    const { result } = renderHookWithClient(() => usePlayerActions({ session, role: playerRole }))
 
     await expect(
       act(async () => result.current.updatePlayer('other-player-id', { name: 'New' })),
@@ -180,9 +178,9 @@ describe('usePlayerActions — regeneratePin', () => {
       usePlayerActions({ session: authedSession, role: adminRole }),
     )
 
-    await expect(
-      act(async () => result.current.regeneratePin('player-id')),
-    ).rejects.toThrow('Could not reset PIN.')
+    await expect(act(async () => result.current.regeneratePin('player-id'))).rejects.toThrow(
+      'Could not reset PIN.',
+    )
   })
 
   it('returns { ok: true, pin } and invalidates playerKeys.all() on success', async () => {
