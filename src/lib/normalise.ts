@@ -54,9 +54,56 @@ export function normalisePlayers(players: RawPlayerRow[]): Player[] {
   }))
 }
 
-export function normaliseTournaments(tournaments) {
+// Raw `tournaments` row as it arrives from the fetch boundary (snake_case,
+// Zod-validated). Loosely typed with an index signature because callers spread
+// unlisted passthrough columns straight through normalisation.
+export interface RawTournamentRow {
+  id: string
+  [key: string]: any
+}
+
+// A single court entry, stored (and edited) in camelCase inside the row's
+// `courts` JSON column.
+export interface TournamentCourt {
+  name: string
+  booked: boolean
+  costPerPerson: number | string
+  responsible: string
+  tikkieLink: string
+}
+
+// The normalised tournament consumed across the app: the raw row spread through
+// (snake_case + future columns stay accessible via the index signature) with
+// these camelCase aliases and defaults layered on top.
+export interface NormalisedTournament {
+  id: string
+  name: string
+  date: string
+  time: string
+  location: string
+  status: string
+  format: string
+  notes: string
+  maxPlayers: number
+  duration: number
+  courts: TournamentCourt[]
+  courtBookingMode: string
+  totalPrice: number
+  tikkieLink: string
+  genderMode: string
+  completedAt: string | null
+  [key: string]: any
+}
+
+export function normaliseTournaments(tournaments: RawTournamentRow[]): NormalisedTournament[] {
   return tournaments.map((t) => ({
     ...t,
+    name: t.name ?? '',
+    date: t.date ?? '',
+    time: t.time ?? '',
+    status: t.status ?? '',
+    format: t.format ?? '',
+    notes: t.notes ?? '',
     maxPlayers: t.max_players ?? t.maxPlayers ?? 16,
     duration: t.duration ?? 90,
     courts: t.courts ?? [],

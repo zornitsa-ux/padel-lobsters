@@ -2,7 +2,7 @@ import { Outlet } from 'react-router-dom'
 import { useApp } from '../../context/useApp'
 import { PageHeader } from '../../components/ui/PageHeader'
 import type { PageHeaderTab } from '../../components/ui/PageHeader'
-import type { TournamentRow } from './tournamentSchemas'
+import type { NormalisedTournament } from '../../lib/normalise'
 
 const PLAYER_TAB_PATHS = [
   { label: 'Info', path: 'info' },
@@ -16,7 +16,7 @@ const ADMIN_TAB_PATHS = [
 ]
 
 type Props = {
-  tournament: TournamentRow
+  tournament: NormalisedTournament
 }
 
 export default function EventShell({ tournament }: Props) {

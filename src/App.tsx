@@ -12,7 +12,7 @@ import {
 import { AppProvider } from './context/AppContext'
 import { useApp } from './context/useApp'
 import { useTournaments } from './features/events/useTournaments'
-import type { TournamentRow } from './features/events/tournamentSchemas'
+import type { NormalisedTournament } from './lib/normalise'
 import Layout from './components/Layout'
 import Dashboard from './features/home/Dashboard'
 import SetupGuard from './components/SetupGuard'
@@ -172,7 +172,7 @@ function useLegacyNavigate() {
 // (route renders nothing) and redirects to /events if the id doesn't exist.
 // Also mounts useEventDataLoader so matches + registrations load lazily when
 // any event route is active (every event route calls this hook).
-function useTournamentFromUrl(): TournamentRow | null {
+function useTournamentFromUrl(): NormalisedTournament | null {
   const { id } = useParams()
   const { data: tournaments = [] } = useTournaments()
   useEventDataLoader()

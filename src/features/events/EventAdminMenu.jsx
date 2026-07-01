@@ -15,12 +15,12 @@ import {
 // transparent backdrop catches outside clicks.
 export default function EventAdminMenu({
   isAdmin,
-  onRaffle,
-  onEligibility,
-  onPayments,
-  onScores,
-  onEdit,
-  onDelete,
+  onRaffle = undefined,
+  onEligibility = undefined,
+  onPayments = undefined,
+  onScores = undefined,
+  onEdit = undefined,
+  onDelete = undefined,
   align = 'right',
 }) {
   const [open, setOpen] = useState(false)
