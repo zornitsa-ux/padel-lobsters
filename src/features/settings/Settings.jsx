@@ -107,7 +107,7 @@ export default function Settings() {
         gender: myPlayer.gender || '',
         isLeftHanded: myPlayer.isLeftHanded || myPlayer.is_left_handed || false,
         preferredPosition: myPlayer.preferredPosition || myPlayer.preferred_position || '',
-        playtomicLevel: String(myPlayer.playtomicLevel || ''),
+        playtomicLevel: myPlayer.playtomicLevel > 0 ? String(myPlayer.playtomicLevel) : '',
         adjustment: String(myPlayer.adjustment || '0'),
         tagline: myPlayer.tagline || '',
         email: myPlayer.email || '',
@@ -149,6 +149,11 @@ export default function Settings() {
     // values when present.
     if (profileForm.phone && !isE164(profileForm.phone)) {
       setProfileError('Phone must start with + and the country code (e.g. +31612345678).')
+      return
+    }
+    const pt = parseFloat(profileForm.playtomicLevel)
+    if (profileForm.playtomicLevel !== '' && (isNaN(pt) || pt < 0.5)) {
+      setProfileError('Playtomic level must be at least 0.5')
       return
     }
     setProfileSaving(true)
