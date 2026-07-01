@@ -37,15 +37,15 @@ Access control is in `src/lib/authPaths.js`:
 - All other pages are protected (require at least a claimed player identity)
 - Default-deny: anything not in the list is treated as protected
 
-### AppContext — Monolithic State Layer
+### AppContext — Auth/Session Provider (was the monolith)
 
-`src/context/AppContext.jsx` (~2012 lines) is the single global context. Every component that needs data or actions consumes it via `useApp()`.
+`src/context/AppContext.jsx` used to be a ~2012-line global store. It has been **dismantled into per-feature TanStack Query + Zod slices** under `src/features/**` (see "Feature Data Slices" below). What remains (~65 lines) is a thin auth/session provider consumed via `useApp()`: it holds `session`/`role` (from `useAuth`), the app-level `loading` flag, the auth passthrough actions (`loginWithPin`, `logout`, `fetchMyProfile`, `fetchAllPlayersWithPii`, `sendMagicLink`, `requestMyEmailChange`), and `selfSignup` (wraps `useAuth`'s version to also invalidate the roster cache). It is intentionally the single place the Supabase auth session is subscribed.
 
-**Data loading** — `loadAll()` fires on mount and loads all tables in parallel:
+`src/hooks/useScheduleRealtime.js` (mounted once by the provider) flips the initial `loading` flag and runs the one remaining Realtime subscription — matches INSERT/DELETE (schedule generation) — invalidating the `matches` query cache. Score UPDATEs are optimistically applied by `useMatchActions().updateMatch` and broadcast peer-to-peer, not over Realtime.
 
-- players, tournaments, registrations, matches, settings, player_aliases, merch_items, merch_interests, leagues, league_interests, league_teams, raffle_winners
+#### Feature Data Slices (default pattern)
 
-**Realtime subscriptions** — every table has a Supabase Realtime channel. The `players` table additionally has a 60s polling fallback — direct `SELECT` on `players` is restricted by RLS (anon reads go through `players_public`), so a missed Realtime event would go unnoticed without the poll.
+Each domain owns its data next to where it's used. Per slice (all TypeScript): `<feat>Keys.ts` (query-key factory) · `<feat>Schemas.ts` (Zod boundary validation, `.passthrough()`) · `<feat>Queries.ts` (fetch + mutation fns, Zod-parse then `normaliseX`) · `use<Feat>.ts` (`useQuery` + `useMutation`/action hooks with `onSuccess` invalidation). Live slices: `features/players` (usePlayers, usePlayerActions), `features/settings` (useSettings), `features/events` (useTournaments, useTransfers, useMatches/useMatchActions, useRegistrations/useRegistrationActions), `features/raffle`, `features/oscars`. Session-dependent guards (admin authorization, `not_authenticated`) are passed `session`/`role` as hook args so slices stay free of context imports. Reads follow the flat-reads model: mount load + `refetchOnWindowFocus`; writes invalidate their key.
 
 **Role derivation** — derived from the JWT session on every render:
 
@@ -61,7 +61,7 @@ The `role` claim is baked into `app_metadata` by the `verify-pin` Edge Function 
 - `session` — Supabase Auth session (`supabase.auth.getSession()` / `onAuthStateChange`); `session.user.id` is the authenticated player's UUID
 - `deviceId` — UUID v4 from `localStorage['lobster_device_id']`; stable across logins, used for device trust
 
-Context exposes ~80 values/functions to consumers. All player writes go through RPCs, never direct table writes.
+The context now exposes ~10 auth/session values to consumers. All player writes go through RPCs (in the feature slices), never direct table writes.
 
 ### Component Sizes (largest first)
 
@@ -72,7 +72,7 @@ Context exposes ~80 values/functions to consumers. All player writes go through 
 | `Game.jsx`         | 1286   | Lobster Oscars voting                  |
 | `Tournament.jsx`   | 1037   | Event management                       |
 | `Dashboard.jsx`    | 1200   | Home page                              |
-| `AppContext.jsx`   | 2012   | Global state                           |
+| `AppContext.jsx`   | ~65    | Auth/session provider (was 2012)       |
 | `History.jsx`      | ~900   | Hardcoded historical tournament data   |
 | `Players.jsx`      | ~800   | Player profiles + stats                |
 | `Settings.jsx`     | ~700   | Profile + admin settings               |
@@ -505,7 +505,7 @@ Concrete tasks that are scoped but not yet done, ordered by risk.
 ### High Priority
 
 - **No tests on core algorithms** — the matcher, standings algorithm, and Glicko-2 are untested.
-- **Monolithic AppContext** — ~380 lines with `useAuth` + `useDataSync` extracted, but still a large surface area. Will become a maintenance burden as features grow.
+- ~~**Monolithic AppContext**~~ — **Done.** Fully dismantled into per-feature TanStack Query + Zod slices; `AppContext.jsx` is now a ~65-line auth/session provider. See "AppContext — Auth/Session Provider".
 
 ### Medium Priority
 

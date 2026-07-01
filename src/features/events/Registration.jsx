@@ -1,8 +1,10 @@
 import React, { useCallback, useMemo, useState } from 'react'
-import { useApp } from '../../context/AppContext'
+import { useApp } from '../../context/useApp'
+import { useUpdateTournament } from './useTournaments'
+import { useTransfers, useTransferActions } from './useTransfers'
 import { usePlayers } from '../players/usePlayers'
-import { useMatches } from './useMatches'
-import { useRegistrations } from './useRegistrations'
+import { useMatches, useMatchActions } from './useMatches'
+import { useRegistrations, useRegistrationActions } from './useRegistrations'
 import { AlertCircle } from 'lucide-react'
 import TransferSpotModal from '../../components/TransferSpotModal'
 import TransferPendingModal from '../../components/TransferPendingModal'
@@ -32,17 +34,16 @@ import ScoresAndRankingSection from './registration/ScoresAndRankingSection'
 import { useScoreSync } from './useScoreSync'
 
 export default function Registration({ tournament, onNavigate }) {
-  const {
-    registerPlayer,
-    cancelRegistration,
-    updateRegistration,
-    updateMatch,
-    updateTournament,
-    session,
-    transfers,
-    cancelTransfer,
-    respondToTransfer,
-  } = useApp()
+  const { session } = useApp()
+  const { registerPlayer, updateRegistration, cancelRegistration } = useRegistrationActions()
+  const { updateMatch } = useMatchActions()
+  const { data: transfers = [] } = useTransfers()
+  const { respondToTransfer, cancelTransfer } = useTransferActions({ session })
+  const updateMut = useUpdateTournament()
+  const updateTournament = useCallback(
+    (id, data) => updateMut.mutateAsync({ id, data }),
+    [updateMut],
+  )
   const { data: players = [] } = usePlayers()
   const { data: regsData = [] } = useRegistrations(tournament?.id)
   const { data: matchesData = [] } = useMatches(tournament?.id)

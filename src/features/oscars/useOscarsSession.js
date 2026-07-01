@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { useApp } from '../../context/AppContext'
+import { useApp } from '../../context/useApp'
 import { usePlayers } from '../players/usePlayers'
 import { useRegistrations } from '../events/useRegistrations'
 import * as oscarsApi from '../../api/oscars'

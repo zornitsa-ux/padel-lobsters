@@ -1,7 +1,14 @@
-import React, { useState } from 'react'
-import { useApp } from '../../context/AppContext'
+import React, { useState, useCallback } from 'react'
+import { useApp } from '../../context/useApp'
+import {
+  useTournaments,
+  useAddTournament,
+  useUpdateTournament,
+  useDeleteTournament,
+} from './useTournaments'
+import { useTransfers } from './useTransfers'
 import { Plus, Trophy, Clock, ChevronDown, ChevronUp } from 'lucide-react'
-import HistoryContent from '../../components/History'
+import HistoryContent from '../history/History'
 import AdminTransferPanel from '../../components/AdminTransferPanel'
 import { DEFAULT_EVENT_DESCRIPTION, emptyForm } from './eventConstants'
 import { parseLocalDate } from './eventHelpers'
@@ -14,8 +21,18 @@ import { PageHeader } from '../../components/ui/PageHeader'
 export { DEFAULT_EVENT_DESCRIPTION }
 
 export default function Tournament({ onNavigate }) {
-  const { tournaments, addTournament, updateTournament, deleteTournament, session, transfers } =
-    useApp()
+  const { session } = useApp()
+  const { data: tournaments = [] } = useTournaments()
+  const { data: transfers = [] } = useTransfers()
+  const addMut = useAddTournament()
+  const updateMut = useUpdateTournament()
+  const deleteMut = useDeleteTournament()
+  const addTournament = useCallback((data) => addMut.mutateAsync(data), [addMut])
+  const updateTournament = useCallback(
+    (id, data) => updateMut.mutateAsync({ id, data }),
+    [updateMut],
+  )
+  const deleteTournament = useCallback((id) => deleteMut.mutateAsync(id), [deleteMut])
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
   const claimedId = session?.user?.id ?? null
 

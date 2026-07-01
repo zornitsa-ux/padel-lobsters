@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { X, MessageCircle, Users, Clock } from 'lucide-react'
-import { useApp } from '../context/AppContext'
+import { useApp } from '../context/useApp'
+import { useTransferActions } from '../features/events/useTransfers'
 import {
   buildTransferMessage,
   isE164,
@@ -24,7 +25,8 @@ import {
 //   onClose():  dismiss
 //   onCancel(): user explicitly cancels the offer (calls cancelTransfer)
 export default function TransferPendingModal({ transferId, toPlayer, onClose, onCancel }) {
-  const { getTransferRecipientContact, cancelTransfer } = useApp()
+  const { session } = useApp()
+  const { getTransferRecipientContact, cancelTransfer } = useTransferActions({ session })
 
   const [phone, setPhone] = useState(null) // null = loading, '' = no phone
   const [busyAction, setBusyAction] = useState(null) // 'whatsapp' | 'group' | 'cancel' | null

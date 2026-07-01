@@ -1,18 +1,23 @@
-import { supabase } from '../supabase'
+import { z } from 'zod'
+import { supabase } from '../../supabase'
+import { normaliseTransfers } from '../../lib/normalise'
+import { transferRowSchema } from './transferSchemas'
+
+export type NormalisedTransfer = ReturnType<typeof normaliseTransfers>[number]
 
 // Loads every transfer row. The table is tiny (a handful per week) and
 // anon SELECT is permitted, so no filter — admins need to see all
 // pending transfers, players need to see their own pending+history. The
 // UI does the per-user / per-tournament filtering downstream.
-export async function loadTransfers() {
+export async function fetchTransfers(): Promise<NormalisedTransfer[]> {
   try {
     const { data, error } = await supabase
       .from('registration_transfers')
       .select('*')
       .order('created_at', { ascending: false })
     if (error) throw error
-    return data || []
-  } catch (e) {
+    return normaliseTransfers(z.array(transferRowSchema).parse(data ?? []))
+  } catch (e: any) {
     // Migration may not be applied yet on this environment — degrade
     // gracefully so the rest of the app still works.
     console.warn('loadTransfers skipped:', e?.message)
@@ -24,7 +29,7 @@ export async function loadTransfers() {
 // Four wrappers around the SECURITY DEFINER RPCs added in migration
 // add_registration_transfers. Each one returns { ok, status, transferId? }
 // so callers can branch on the RPC's status text without parsing errors.
-export async function createTransfer(toPlayerId, tournamentId) {
+export async function createTransfer(toPlayerId: string, tournamentId: string) {
   try {
     const { data, error } = await supabase.rpc('create_transfer', {
       input_to_player_id: toPlayerId,
@@ -47,7 +52,7 @@ export async function createTransfer(toPlayerId, tournamentId) {
   }
 }
 
-export async function respondToTransfer(transferId, accept) {
+export async function respondToTransfer(transferId: string, accept: boolean) {
   try {
     const { data, error } = await supabase.rpc('respond_to_transfer', {
       input_transfer_id: transferId,
@@ -69,7 +74,7 @@ export async function respondToTransfer(transferId, accept) {
   }
 }
 
-export async function cancelTransfer(transferId) {
+export async function cancelTransfer(transferId: string) {
   try {
     const { data, error } = await supabase.rpc('cancel_transfer', {
       input_transfer_id: transferId,
@@ -94,7 +99,7 @@ export async function cancelTransfer(transferId) {
 // player initiated it. Different from cancelTransfer (which checks
 // the from-player's PIN). Status text on the row gets a distinct
 // closed_reason='admin_cancel' for auditability.
-export async function adminCancelTransfer(transferId) {
+export async function adminCancelTransfer(transferId: string) {
   try {
     const { data, error } = await supabase.rpc('admin_cancel_transfer', {
       input_transfer_id: transferId,
@@ -115,7 +120,7 @@ export async function adminCancelTransfer(transferId) {
   }
 }
 
-export async function forceAcceptTransfer(transferId) {
+export async function forceAcceptTransfer(transferId: string) {
   try {
     const { data, error } = await supabase.rpc('admin_force_accept_transfer', {
       input_transfer_id: transferId,
@@ -141,7 +146,7 @@ export async function forceAcceptTransfer(transferId) {
 // Returns ok:false when the caller isn't the from-player or the
 // transfer isn't pending — the API never leaks phone numbers to
 // anyone other than the offer's initiator.
-export async function getTransferRecipientContact(transferId) {
+export async function getTransferRecipientContact(transferId: string) {
   try {
     const { data, error } = await supabase.rpc('get_transfer_recipient_phone', {
       input_transfer_id: transferId,

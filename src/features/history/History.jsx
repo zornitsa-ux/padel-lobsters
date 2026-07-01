@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react'
 import { ChevronDown, ChevronUp, Gamepad2, Trophy } from 'lucide-react'
-import { useApp } from '../../context/AppContext'
+import { useTournaments } from '../events/useTournaments'
 import { usePlayers } from '../players/usePlayers'
 import { useAllMatches } from '../events/useMatches'
 import { useAllRegistrations } from '../events/useRegistrations'
@@ -15,7 +15,7 @@ import { TabSwitcher } from '../../components/ui/TabSwitcher'
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function History({ onNavigate }) {
-  const { tournaments } = useApp()
+  const { data: tournaments = [] } = useTournaments()
   const { data: players = [] } = usePlayers()
   const { data: allMatchesData = [] } = useAllMatches()
   const { data: allRegsData = [] } = useAllRegistrations()

@@ -1,9 +1,9 @@
 import { useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useApp } from '../../context/AppContext'
 import { usePlayers } from '../players/usePlayers'
 import { useAllMatches } from '../events/useMatches'
 import { useAllRegistrations } from '../events/useRegistrations'
+import { useTournaments } from '../events/useTournaments'
 import usePlayerAliases from '../../hooks/usePlayerAliases'
 import { buildPlayerStats } from '../../lib/playerStats'
 import { TOURNAMENTS as LEGACY_TOURNAMENTS } from '../../data/historicalTournaments'
@@ -11,7 +11,7 @@ import YourStatsCard from '../home/YourStatsCard'
 
 export default function AccountStatsSection({ claimedId }) {
   const navigate = useNavigate()
-  const { tournaments } = useApp()
+  const { data: tournaments = [] } = useTournaments()
   const { data: players = [] } = usePlayers()
   const { data: allMatchesData = [] } = useAllMatches()
   const { data: allRegsData = [] } = useAllRegistrations()

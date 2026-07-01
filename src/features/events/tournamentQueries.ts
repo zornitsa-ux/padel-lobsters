@@ -1,6 +1,11 @@
-import { supabase } from '../supabase'
+import { z } from 'zod'
+import { supabase } from '../../supabase'
+import { normaliseTournaments } from '../../lib/normalise'
+import { tournamentRowSchema } from './tournamentSchemas'
 
-export async function loadTournaments() {
+export type NormalisedTournament = ReturnType<typeof normaliseTournaments>[number]
+
+export async function fetchTournaments(): Promise<NormalisedTournament[]> {
   // Always read the raw `tournaments` table. The v24 `public_tournaments`
   // view filters on status IN ('published', 'open', 'scheduled'), but the
   // app actually writes 'upcoming' / 'active' / 'completed' — so the view
@@ -11,11 +16,13 @@ export async function loadTournaments() {
   // hit the raw table for everyone. Anon SELECT on the raw table is still
   // permitted (tracked in SECURITY-ROLLOUT.md), so this matches the
   // current production state.
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('tournaments')
     .select('*')
     .order('date', { ascending: false })
-  return data || []
+  if (error) throw error
+  const rows = z.array(tournamentRowSchema).parse(data ?? [])
+  return normaliseTournaments(rows)
 }
 
 // Guest-only: count-of-registrations per tournament from the public view.
@@ -25,19 +32,19 @@ export async function loadPublicCounts() {
   try {
     const { data, error } = await supabase.from('public_tournament_registration_counts').select('*')
     if (error) throw error
-    const map = {}
-    ;(data || []).forEach((row) => {
+    const map: Record<string, any> = {}
+    ;(data || []).forEach((row: any) => {
       map[row.tournament_id] = row
     })
     return map
-  } catch (e) {
+  } catch (e: any) {
     // View not present yet (pre-v24) — degrade to empty counts.
     console.warn('loadPublicCounts skipped:', e?.message)
     return {}
   }
 }
 
-export async function addTournament(data) {
+export async function addTournament(data: any): Promise<void> {
   const payload = {
     name: data.name,
     date: data.date,
@@ -61,8 +68,8 @@ export async function addTournament(data) {
   }
 }
 
-export async function updateTournament(id, data) {
-  const payload = {}
+export async function updateTournament(id: string, data: any): Promise<void> {
+  const payload: Record<string, any> = {}
   if (data.name !== undefined) payload.name = data.name
   if (data.date !== undefined) payload.date = data.date
   if (data.time !== undefined) payload.time = data.time
@@ -85,7 +92,7 @@ export async function updateTournament(id, data) {
   }
 }
 
-export async function deleteTournament(id) {
+export async function deleteTournament(id: string): Promise<void> {
   const { error } = await supabase.from('tournaments').delete().eq('id', id)
   if (error) {
     console.error('deleteTournament error:', error)

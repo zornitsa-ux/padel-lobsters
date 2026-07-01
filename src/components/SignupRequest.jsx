@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { useApp } from '../context/AppContext'
-import { usePlayers } from '../features/players/usePlayers'
+import { useApp } from '../context/useApp'
+import { usePlayers, usePlayerActions } from '../features/players/usePlayers'
 import { supabase } from '../supabase'
 import { isE164 } from '../lib/whatsapp'
 import { processAvatar } from '../lib/processAvatar'
@@ -72,7 +72,8 @@ const emptyForm = {
 }
 
 export default function SignupRequest({ onComplete, onBack, compact = false }) {
-  const { selfSignup, updatePlayer, loginWithPin } = useApp()
+  const { selfSignup, loginWithPin, session, role } = useApp()
+  const { updatePlayer } = usePlayerActions({ session, role })
   const { data: players = [] } = usePlayers()
 
   const [form, setForm] = useState(emptyForm)

@@ -1,7 +1,8 @@
 import React, { useCallback, useMemo, useState } from 'react'
-import { useApp } from '../../context/AppContext'
+import { useApp } from '../../context/useApp'
+import { useUpdateTournament } from './useTournaments'
 import { usePlayers } from '../players/usePlayers'
-import { useMatches, useAllMatches } from './useMatches'
+import { useMatches, useAllMatches, useMatchActions } from './useMatches'
 import { useRegistrations } from './useRegistrations'
 import { Shuffle, AlertCircle, Trophy, Users, Download } from 'lucide-react'
 import { generateLobster as generateLobsterAnnealed } from '../../lib/lobsterMatcher'
@@ -32,7 +33,13 @@ import {
 // ── Component ────────────────────────────────────────────────────────────────
 
 export default function Schedule({ tournament, onNavigate }) {
-  const { saveMatches, updateMatch, updateTournament, session } = useApp()
+  const { session } = useApp()
+  const { saveMatches, updateMatch } = useMatchActions()
+  const updateMut = useUpdateTournament()
+  const updateTournament = useCallback(
+    (id, data) => updateMut.mutateAsync({ id, data }),
+    [updateMut],
+  )
   const { data: players = [] } = usePlayers()
   const { data: savedMatches = [] } = useMatches(tournament?.id)
   const { data: regsData = [] } = useRegistrations(tournament?.id)

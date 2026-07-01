@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useApp } from '../../context/AppContext'
+import { useApp } from '../../context/useApp'
 import { usePlayers } from '../players/usePlayers'
 import { supabase } from '../../supabase'
 import useRefreshOnFocus from '../../hooks/useRefreshOnFocus'

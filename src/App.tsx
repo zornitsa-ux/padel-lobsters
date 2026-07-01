@@ -9,9 +9,12 @@ import {
   useParams,
   useSearchParams,
 } from 'react-router-dom'
-import { AppProvider, useApp } from './context/AppContext'
+import { AppProvider } from './context/AppContext'
+import { useApp } from './context/useApp'
+import { useTournaments } from './features/events/useTournaments'
+import type { TournamentRow } from './features/events/tournamentSchemas'
 import Layout from './components/Layout'
-import Dashboard from './components/Dashboard'
+import Dashboard from './features/home/Dashboard'
 import SetupGuard from './components/SetupGuard'
 import VerificationGate from './components/VerificationGate'
 import AuthConfirm from './components/AuthConfirm'
@@ -24,21 +27,20 @@ import CommunityShell from './features/community/CommunityShell'
 // in the entry chunk; everything below loads on demand the first time its
 // route is hit. Each lazy() becomes its own Rollup chunk — see the bundle
 // treemap (`npm run build:analyze`) for the split.
-const Players = lazy(() => import('./components/Players'))
-const Tournament = lazy(() => import('./components/Tournament'))
-const Registration = lazy(() => import('./components/Registration'))
-const Payments = lazy(() => import('./components/Payments'))
-const Schedule = lazy(() => import('./components/Schedule'))
-const Scores = lazy(() => import('./components/Scores'))
-const Settings = lazy(() => import('./components/Settings'))
-const Merch = lazy(() => import('./components/Merch'))
-const Account = lazy(() => import('./components/Settings'))
-const Game = lazy(() => import('./components/Game'))
+const Players = lazy(() => import('./features/community/Players'))
+const Tournament = lazy(() => import('./features/events/Tournament'))
+const Registration = lazy(() => import('./features/events/Registration'))
+const Payments = lazy(() => import('./features/events/Payments'))
+const Schedule = lazy(() => import('./features/events/Schedule'))
+const Scores = lazy(() => import('./features/events/Scores'))
+const Merch = lazy(() => import('./features/merch/Merch'))
+const Account = lazy(() => import('./features/settings/Settings'))
+const Game = lazy(() => import('./features/oscars/Game'))
 const RaffleContainer = lazy(() => import('./features/raffle/RaffleContainer'))
 const RaffleEligibilityContainer = lazy(
   () => import('./features/raffle/RaffleEligibilityContainer'),
 )
-const Admin = lazy(() => import('./components/Admin.tsx'))
+const Admin = lazy(() => import('./features/admin/AdminTools'))
 const TransferAccept = lazy(() => import('./components/TransferAccept'))
 const LeaguePage = lazy(() => import('./features/league/LeaguePage'))
 const LeagueIndexPage = lazy(() => import('./features/league/LeagueIndexPage'))
@@ -117,11 +119,13 @@ function RouteFallback() {
   )
 }
 
+type NavigatePayload = { id?: string | number; focusPlayerId?: string } & Record<string, unknown>
+
 // Translate the legacy onNavigate(page, tournament?) signature to URL
 // navigation. Existing components keep working without internal changes.
 function useLegacyNavigate() {
   const navigate = useNavigate()
-  return (page, payload) => {
+  return (page: string, payload?: NavigatePayload | null) => {
     const t = payload && typeof payload === 'object' ? payload : null
     switch (page) {
       case 'home':
@@ -168,9 +172,9 @@ function useLegacyNavigate() {
 // (route renders nothing) and redirects to /events if the id doesn't exist.
 // Also mounts useEventDataLoader so matches + registrations load lazily when
 // any event route is active (every event route calls this hook).
-function useTournamentFromUrl() {
+function useTournamentFromUrl(): TournamentRow | null {
   const { id } = useParams()
-  const { tournaments } = useApp()
+  const { data: tournaments = [] } = useTournaments()
   useEventDataLoader()
   return tournaments.find((t) => String(t.id) === String(id)) ?? null
 }
@@ -262,14 +266,8 @@ function MerchRoute() {
   return <Merch initialTab={tab} onNavigate={onNavigate} />
 }
 
-function SettingsRoute() {
-  const onNavigate = useLegacyNavigate()
-  return <Settings onNavigate={onNavigate} />
-}
-
 function AccountRoute() {
-  const onNavigate = useLegacyNavigate()
-  return <Account onNavigate={onNavigate} />
+  return <Account />
 }
 
 function AdminRoute() {

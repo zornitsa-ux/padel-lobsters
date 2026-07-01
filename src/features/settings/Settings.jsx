@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { useApp } from '../../context/AppContext'
-import { useMyProfile } from '../players/usePlayers'
+import { useApp } from '../../context/useApp'
+import { useSettings, useSaveSettings } from './useSettings'
+import { useMyProfile, usePlayerActions } from '../players/usePlayers'
 import { supabase } from '../../supabase'
 import { isE164 } from '../../lib/whatsapp'
 import DEFAULT_TIPS from '../../data/padelTips'
@@ -15,7 +16,10 @@ import AdminSection from './AdminSection'
 import { PageHeader } from '../../components/ui/PageHeader'
 
 export default function Settings() {
-  const { settings, saveSettings, session, updatePlayer, loginWithPin, logout } = useApp()
+  const { session, role, loginWithPin, logout } = useApp()
+  const { updatePlayer } = usePlayerActions({ session, role })
+  const { data: settings } = useSettings()
+  const saveSettingsMutation = useSaveSettings()
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
   const claimedId = session?.user?.id ?? null
   // Own profile: identity from the public roster (works on untrusted devices)
@@ -258,7 +262,7 @@ export default function Settings() {
     if (!isAdmin) return // admin-only form is hidden when not admin
     setSaving(true)
     try {
-      await saveSettings({ ...form, padelTips: tips })
+      await saveSettingsMutation.mutateAsync({ ...form, padelTips: tips })
       setSaved(true)
       setTimeout(() => setSaved(false), 2500)
     } catch (err) {
@@ -276,7 +280,7 @@ export default function Settings() {
   // now roll back the optimistic UI so the admin sees the true state.
   const persistTips = async (nextTips, prevTipsForRollback) => {
     try {
-      await saveSettings({ ...form, padelTips: nextTips })
+      await saveSettingsMutation.mutateAsync({ ...form, padelTips: nextTips })
     } catch (err) {
       setTips(prevTipsForRollback) // revert UI if DB write failed
       alert('Could not save tip change: ' + (err?.message || 'unknown error'))

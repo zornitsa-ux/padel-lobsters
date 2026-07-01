@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import {
   CheckCircle,
   XCircle,
@@ -7,8 +7,10 @@ import {
   ChevronLeft,
   LogOut,
 } from 'lucide-react'
-import { useApp } from '../context/AppContext'
+import { useApp } from '../context/useApp'
 import { usePlayers } from '../features/players/usePlayers'
+import { useTournaments } from '../features/events/useTournaments'
+import { useTransfers, useTransferActions } from '../features/events/useTransfers'
 import { letterColor } from '../lib/letterColors'
 
 // Landing page Melanie hits after tapping the WhatsApp link
@@ -25,7 +27,10 @@ import { letterColor } from '../lib/letterColors'
 //   transferId: from the ?transfer=<id> deep link
 //   onNavigate(page, tournament?): standard nav helper used across the app
 export default function TransferAccept({ transferId, onNavigate }) {
-  const { transfers, tournaments, session, respondToTransfer, logout, loading } = useApp()
+  const { session, logout, loading } = useApp()
+  const { data: tournaments = [] } = useTournaments()
+  const { data: transfers = [] } = useTransfers()
+  const { respondToTransfer } = useTransferActions({ session })
   const { data: players = [] } = usePlayers()
   const claimedId = session?.user?.id ?? null
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
