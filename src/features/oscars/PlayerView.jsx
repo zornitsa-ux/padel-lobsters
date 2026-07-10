@@ -12,12 +12,10 @@ import ErrorBanner from './ErrorBanner'
    ════════════════════════════════════════════════════════════════════════════ */
 export default function PlayerView({
   phase,
-  tournament,
   categories,
   myVoteByCat,
   playerResults,
   onSelectCategory,
-  onBack,
   error,
   onDismissError,
   headerRight,

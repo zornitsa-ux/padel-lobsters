@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Users } from 'lucide-react'
 import { suggestGroups, recommendGroupConfig } from '../domain/groupBalancer'
-import type { Division, LeagueTeam, GroupLabel } from '../domain/types'
+import type { Division, LeagueTeam } from '../domain/types'
 import { Badge } from '../../../components/ui/Badge'
 import { AlertBox } from '../../../components/ui/AlertBox'
 import { SectionHeader } from '../../../components/ui/SectionHeader'

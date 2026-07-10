@@ -13,7 +13,7 @@ export async function loadPlayerAliases() {
       map[row.historical_name] = row.skipped ? '__not_in_roster__' : row.player_id
     })
     return map
-  } catch (e) {
+  } catch {
     // Table not present — historical features just degrade to "no aliases".
     return {}
   }
