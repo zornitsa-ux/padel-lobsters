@@ -35,6 +35,10 @@ Local dev requires `.env.localdev` (copy from `.env.localdev.example`) and Docke
 
 See `ARCHITECTURE.md` for the full reference: stack, frontend structure, data model, algorithms, and open work.
 
+## Active Initiative — Matchmaking V2
+
+Multi-session rebuild of matchmaking + level learning. Before touching matchmaking, ratings, or schedule generation, read `docs/matchmaking-v2/PLAN.md` (status + session protocol), then `DESIGN.md` and `DECISIONS.md` in the same directory. Update PLAN.md status at the end of every working session.
+
 ## Code Style
 
 - Reserve comments for complex or critical code only. When writing one, be succinct and factual — no narration of what the code does.
