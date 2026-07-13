@@ -198,3 +198,106 @@ independent of the default. New files: `rating/calibrate.ts` (+ `.test.ts`),
 as a shared export. PLAN §6 "alias coverage gap" risk resolved (owner chose not
 to link; fit proceeded on prod data). Learning-param retune tracked for Phase 4
 live events (M4.2).
+
+## D-011 — Unknown gender is exempt, never blocking (2026-07-13)
+
+**Decision:** `PlayerInput.gender` is `male | female | unknown`; `''`/null
+normalize to `unknown` at the service boundary. In mixed mode, a team
+containing an unknown-gender player never counts as same-gender, and unknowns
+offset the unavoidable same-gender quota: per round,
+`quota = max(0, 2·courtsUsed − min(male, female) − unknown)`; rosters with
+unknowns get an informational audit entry. In `men`/`women` modes gender never
+blocks — mismatched or unknown genders produce an informational `gender-mode`
+entry only.
+
+**Why:** Production has 9/103 players with `''` or null gender (P0.2 finding).
+Blocking would strand real rosters on data we know is dirty; penalizing
+unknown-containing teams would fabricate evidence the data doesn't hold.
+Rosters are admin-curated, so the audit's job is to surface, never veto.
+
+**Impact:** `types.ts` (`playerGenderSchema`); feasibility contract + M2.2
+tests (`sameGenderQuotaForRound`); mixedPreference scoring in M2.5/M2.6 tests;
+PLAN §6 "gender data is not binary" watch item resolved.
+
+## D-012 — Property testing via seeded sweeps; goldens via vitest snapshots (2026-07-13)
+
+**Decision:** No fast-check dependency. Invariant suites use deterministic
+case grids and seed sweeps driven by the domain's own injected mulberry32 RNG
+(seeds pinned in the tests); small subproblems are verified against in-test
+brute force (e.g. the M2.3 co-sit optimum). Golden tests (M2.10) are vitest
+`toMatchSnapshot` runs of the full `ScheduleRun` for 3 rosters × 3 presets,
+with committed snapshots.
+
+**Why:** Reproduce-by-seed comes free from the engine's determinism contract —
+a failing case is already a pinned seed, which removes fast-check's main win
+(shrinking) while its generators would add a dependency and a second source of
+randomness. The parameter space (8–32 players × 4–6 rounds × 0–4 lefties) is
+small enough to sweep deterministically. Snapshots give reviewable committed
+fixtures with zero harness code and a built-in update workflow.
+
+**Impact:** All M2.2–M2.10 test files as frozen by M2.1; `golden.test.ts`
+harness shape; PLAN M2.10 "commit golden fixtures" = commit the snapshot file.
+
+## D-013 — Matcher contract clarifications made while freezing (M2.1, 2026-07-13)
+
+**Decision:** Gaps DESIGN left implicit, pinned so the acceptance tests could
+be frozen:
+
+1. **`generate.ts` orchestrator** joins the §7 module map (implemented in
+   M2.8): the pipeline is a domain concern and golden/shadow harnesses need a
+   single entry point (`generateSchedule(input): ScheduleRun`).
+2. **Quotas are enforced per round** from actual round composition
+   (`leftyQuotaForRound`, `sameGenderQuotaForRound`); the event-level audit
+   numbers are the reported relaxation plan, not the enforcement mechanism.
+3. **Court-spread sigma slack:** `cap′ = maxCourtSpread + max(sigma on
+court) / 2`, owned by `cost.ts`. The "sigma slack applied" acceptance moves
+   M2.4 → M2.6 (banding uses mu + jitter only).
+4. **§3.2 exchange-rate example corrected:** a 2nd opponent meeting
+   (raw 0.5 × weight 0.6 = 0.3) equals a 0.15-level team-sum gap; a 3rd+
+   meeting equals 0.3 levels. The original sentence double-counted.
+5. **Report conventions:** rounds/courts 1-based; `violations.court` nullable
+   (sit-out rules have no court); `quality` = `{ overall, perRound }`;
+   player refs are full `PlayerInput` snapshots; quality rollup formulas
+   frozen in the `report.ts` docblock.
+6. **Canonicalization:** teams sorted by playerId with team1 lexicographically
+   first; split candidates enumerated over the court sorted mu-desc/id-asc as
+   [01|23], [02|13], [03|12]; cost ties pick the earliest candidate.
+7. **Sequencing:** M2.6 lands before M2.5 (`teams` uses `cost.scoreSplit`);
+   M2.9 lands before M2.8 (`generate` uses `resolveConfig`).
+
+**Why:** Each is a point where two reasonable implementations would diverge —
+exactly what the contract-freeze rule exists to prevent.
+
+**Impact:** DESIGN §2, §3.1, §3.2, §3.4, §7 text updated; PLAN M2.4/M2.5/M2.6/
+M2.8/M2.9 task notes; all matcher stub docblocks carry the pinned semantics.
+
+## D-014 — Refine repairs quota-exceeding construction output (2026-07-13)
+
+**Decision:** `refineSchedule` does not assume a hard-legal input. Stages 2–3
+can exceed hard quotas (strict banding concentrates same-mu lefties onto one
+court, forcing a double-lefty fallback; stable bands repeat partnerships), so
+refine's acceptance rule is lexicographic: a move is accepted when it strictly
+reduces total hard-quota violations (per-round double-lefty excess + event
+partner-repeat excess), or keeps them equal and strictly reduces cost.
+Sit-out rules (never consecutive, counts within 1) remain absolute move
+filters — stage-1 plans are always sit-legal, so they never need repair.
+While violations exist, refine proposes a targeted deterministic repair move
+(enumerate lefty ↔ non-lefty swaps within the violating round, pick the
+lexicographic best) before falling back to rng moves; random proposals alone
+are too unlikely to find repairs within the budget. `refine.ts`'s contract
+docblock is updated accordingly (this entry authorizes it); `generate.ts`
+tracks `doublesUsed` against `leftyQuotaForRound` during construction and
+relies on refine to repair any banding-forced excess.
+
+**Why:** The frozen M2.7 acceptance suite (M2.1) feeds refine raw stage 0–3
+construction output and asserts the _output_ is hard-legal — repair is the
+contract, not an option. The alternative (making construction itself
+hard-legal by re-banding around lefty concentration) would duplicate the
+search inside stage 2 for no test-visible benefit. Empirically the golden
+suite confirms all 9 roster × preset runs emit zero violations.
+
+**Impact:** `refine.ts` (contract docblock + implementation), `generate.ts`
+docblock note. No frozen test changed. Cost-non-increase still holds: repair
+moves may transiently raise cost, but descent recovers within budget on every
+frozen case (violating partnerships also carry the 5.0 partnerRepeat weight,
+so repairs usually cut cost outright).

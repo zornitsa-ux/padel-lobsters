@@ -94,25 +94,33 @@ not the update-rule code).
 
 ## 4. Current status
 
-> **Next up:** M2.1 (coordinator, M) — Phase 2 opener: matcher contracts + test
-> specs. **Phase 1 is complete and its gate is met.**
-> Handoff note (2026-07-10, third session): M1.6 done — `calibrate.ts` (pure) +
-> tests, dev harness `calibrate.harness.test.ts` (skipped without
-> `MM_CALIB_FIXTURE`), `calibration.md`. Fit on 228 real matches (174 prod +
-> 54 alias-resolved History; owner chose not to link the 16 unaliased names, so
-> the fit leans on prod). Adopted **levelScale 6→7**, held β/G/N_ref/I at
-> defaults (D-010). **Gate MET:** V2 Brier 0.0541 ≤ Glicko-2 0.0577.
-> Typecheck clean, full suite 466 pass / 1 skip (the harness), lint 0 errors,
-> prettier applied. Prior sessions: Phase 0 complete; M1.1–M1.5 green;
-> D-008/D-009 decided. All work uncommitted on branch `matchmaking-v2`.
+> **Next up:** **owner reviews `shadow-report.md`** (the Phase 2 → Phase 3
+> gate). Then Phase 3 M3.1 (migrations + RPCs). Pending owner decision in the
+> report: **proposed D-015** — raise the `balanced` preset socialDial 0.35 →
+> 0.5 (near-Pareto balance+variety gain on both real rosters). Not applied yet
+> (would regenerate goldens); apply + log D-015 if approved.
+> Handoff note (2026-07-13, sixth session): **M2.11 shadow comparison done.**
+> Dev harness `shadow.harness.test.ts` (fixture-gated on `MM_SHADOW_FIXTURE`,
+> mirrors the M1.6 calibrate harness) runs V2 (3 presets, deterministic) vs the
+> legacy annealed matcher (5-seed sweep at the prod 5000-iter budget) on two
+> anonymized real rosters (32p/8c and 24p/6c, both mixed, 6 rounds), scores both
+> under one common `balanced` cost model, and writes `shadow-report.md`.
+> **Result: V2 is a decisive win on lopsidedness** (avg team-sum gap 0.7→0.1,
+> Balance quality 16–34% → 87–92%), parity on hard rules / partner-repeats /
+> gender (all zero violations), and a _tunable_ regression on opponent variety
+> in competitive/balanced (social recovers it). Fixture kept out of git
+> (anonymized levels/gender/handedness only, in scratchpad) per the calibrate-
+> harness privacy pattern; report is the committed deliverable. Everything
+> Phase 1+2 (incl. this) committed this session. Prior: Phase 0+1 complete
+> (D-010), Phase 2 engine M2.2–M2.10 green (D-011..D-014).
 
-| Phase           | Goal                         | Gate to next                               | State                  |
-| --------------- | ---------------------------- | ------------------------------------------ | ---------------------- |
-| 0 Discovery     | Audit data + wiring          | findings recorded below                    | done                   |
-| 1 Rating engine | Pure domain + calibration    | backtest ≥ Glicko-2 parity                 | done (gate met, D-010) |
-| 2 Matcher       | Pure domain + shadow mode    | shadow report reviewed on 1–2 real rosters | not started            |
-| 3 Integration   | Schema, services, admin UI   | feature-flagged V2 generates a real event  | not started            |
-| 4 Cutover       | Ratings live, legacy deleted | two clean events on V2                     | not started            |
+| Phase           | Goal                         | Gate to next                               | State                                        |
+| --------------- | ---------------------------- | ------------------------------------------ | -------------------------------------------- |
+| 0 Discovery     | Audit data + wiring          | findings recorded below                    | done                                         |
+| 1 Rating engine | Pure domain + calibration    | backtest ≥ Glicko-2 parity                 | done (gate met, D-010)                       |
+| 2 Matcher       | Pure domain + shadow mode    | shadow report reviewed on 1–2 real rosters | M2.1–M2.11 ✓; **gate: owner review pending** |
+| 3 Integration   | Schema, services, admin UI   | feature-flagged V2 generates a real event  | not started                                  |
+| 4 Cutover       | Ratings live, legacy deleted | two clean events on V2                     | not started                                  |
 
 ---
 
@@ -185,46 +193,68 @@ Size: S ≈ half-day, M ≈ 1–2 days, L ≈ needs splitting when reached.
 
 ### Phase 2 — Matcher engine (pure domain)
 
-- `[ ]` **M2.1 — Matcher contracts + test specs** (C, M)
-  Extend `types.ts` (MatchConfig, ScheduleRun, PlayerInput), `presets.ts`
-  skeleton, signatures for `feasibility/sitouts/courts/teams/cost/refine/report`,
-  failing test files for M2.2–M2.9, golden-test harness shape. Decide
-  property-testing approach (fast-check vs seeded sweeps) — DECISIONS entry.
-  **Freezes:** matcher contracts.
-- `[ ]` **M2.2 — `feasibility.ts`** (C, M)
+- `[x]` **M2.1 — Matcher contracts + test specs** (C, M — done 2026-07-13,
+  uncommitted) `types.ts` extended, `presets.ts` skeleton (knob table real),
+  contract-docblock stubs for all pipeline modules **plus `generate.ts`
+  (D-013)**, `testkit.ts`, `describe.skip` acceptance suites for M2.2–M2.10
+  incl. golden snapshot harness. Decisions: D-011 (unknown gender), D-012
+  (seeded sweeps + vitest-snapshot goldens; no fast-check), D-013 (contract
+  clarifications + task sequencing). **Frozen:** matcher contracts.
+- `[x]` **M2.2 — `feasibility.ts`** (C, M — done 2026-07-13, uncommitted)
   Stage-0 audits + relaxation quotas per DESIGN §3.1. **Acceptance:** lefty
   quota math across roster shapes; sit-out arithmetic; gender-mode audits;
-  human-readable entries for every relaxation.
-- `[ ]` **M2.3 — `sitouts.ts`** (W, M)
+  human-readable entries for every relaxation. Partner-repeat quota for
+  P < 8 generalized to `2·max(0, rounds − floor(P(P−1)/4))` (each no-repeat
+  round consumes 2 of the C(P,2) pairs; matches the frozen P=4 cases).
+- `[x]` **M2.3 — `sitouts.ts`** (W→C, M — done 2026-07-13, uncommitted;
+  Sonnet worker was killed by a session limit before writing anything, so the
+  coordinator implemented inline) Greedy debt-first assignment with rng
+  tie-breaks + first-improvement same-round swap passes.
   **Acceptance (invariants):** never consecutive; counts within 1; co-sit
   overlap minimized vs brute force on small fields; deterministic.
-- `[ ]` **M2.4 — `courts.ts`** (W, S)
-  Banding + social dial. **Acceptance:** J=0 ⇒ strictly level-sorted courts;
-  jitter deterministic per seed; sigma slack applied.
-- `[ ]` **M2.5 — `teams.ts`** (W, S)
+- `[x]` **M2.4 — `courts.ts`** (W, S — done 2026-07-13, uncommitted; Sonnet
+  worker, coordinator-reviewed) Banding + social dial. **Acceptance:** J=0 ⇒
+  strictly level-sorted courts; jitter deterministic per seed. (Sigma slack
+  moved to M2.6 — D-013.)
+- `[x]` **M2.5 — `teams.ts`** (W→C, S — done 2026-07-13, uncommitted, landed
+  after M2.6 as sequenced; coordinator-implemented for session-limit reasons)
   Court split + lefty/gender legality. **Acceptance:** never exceeds lefty
   quota; picks min-cost legal split (exhaustive check — only 3 splits).
-- `[ ]` **M2.6 — `cost.ts`** (C, M)
+- `[x]` **M2.6 — `cost.ts`** (C, M — done 2026-07-13, uncommitted)
   Normalized dimensions per DESIGN §3.2, single scoring entry point used by
   both refine and report. **Acceptance:** each dimension 0 at ideal; unit tests
-  pinning the exchange-rate examples from the design.
-- `[ ]` **M2.7 — `refine.ts`** (C, M)
-  Bounded local search; hard rules as move filters. **Acceptance:** never emits
-  quota-exceeding schedule (property sweep 8–32 players × 4–6 rounds ×
-  0–4 lefties); cost non-increasing; iteration budget respected; deterministic.
-- `[ ]` **M2.8 — `report.ts`** (W, S)
-  ScheduleRun assembly + quality rollup. **Acceptance:** quality percentages
-  match hand-computed fixtures; violations list mirrors relaxations used.
-- `[ ]` **M2.9 — `presets.ts`** (W, S)
+  pinning the exchange-rate examples from the design; court-spread sigma slack
+  (cap′ = cap + max sigma / 2 — D-013).
+- `[x]` **M2.7 — `refine.ts`** (C, M — done 2026-07-13, uncommitted)
+  Bounded local search; hard rules as move filters, with lexicographic
+  violation-repair acceptance + targeted lefty repair (D-014). **Acceptance:**
+  never emits quota-exceeding schedule (property sweep 8–32 players × 4–6
+  rounds × 0–4 lefties); cost non-increasing; iteration budget respected;
+  deterministic.
+- `[x]` **M2.8 — `report.ts` + `generate.ts`** (W→C, S — done 2026-07-13,
+  uncommitted, landed after M2.9 as sequenced; coordinator-implemented)
+  ScheduleRun assembly + quality rollup (per-round attribution via prefix
+  diffs of `scoreSchedule`), plus the pipeline orchestrator (D-013).
+  **Acceptance:** quality percentages match hand-computed fixtures; violations
+  list mirrors relaxations used; generate determinism + hard-legality suite.
+- `[x]` **M2.9 — `presets.ts`** (W→C, S — done 2026-07-13, uncommitted;
+  Sonnet worker killed by the same session limit, coordinator-implemented)
   Preset→knob resolution + exchange-rate sentence generation. **Acceptance:**
   override precedence (knob beats preset); sentences match live weights.
-- `[ ]` **M2.10 — Property + golden suite completion** (W, M)
-  Fill any specs M2.1 left thin; commit golden fixtures (3 rosters × 3 presets).
-  **Acceptance:** full invariant list from DESIGN §7 covered; `npm test` < 30s.
-- `[ ]` **M2.11 — Shadow-mode comparison** (C+W, M)
-  Dev harness generating V2 vs current matcher on 1–2 real past rosters
-  (needs P0.2); compare quality reports; tune preset defaults; record results
-  in `shadow-report.md`. **Gate:** owner reviews the comparison before Phase 3.
+- `[x]` **M2.10 — Property + golden suite completion** (C, M — done
+  2026-07-13, uncommitted) Golden snapshots written for 3 rosters × 3 presets
+  (`__snapshots__/golden.test.ts.snap`); all 9 runs emit zero violations.
+  **Acceptance:** full invariant list from DESIGN §7 covered; `npm test` < 30s
+  (8.4s observed, 580 passing).
+- `[x]` **M2.11 — Shadow-mode comparison** (C, M — done 2026-07-13)
+  `shadow.harness.test.ts` (fixture-gated, dev-only) runs V2 (3 presets) vs the
+  legacy annealed matcher (5-seed sweep) on two real anonymized rosters, scores
+  both under one common `balanced` model, writes `shadow-report.md`. Verdict: V2
+  decisively wins balance/lopsidedness, parity on hard rules, tunable variety
+  regression on competitive/balanced. Preset-tuning frontier included; proposed
+  **D-015** (balanced socialDial 0.35→0.5) recorded in the report, **not applied**
+  (regenerates goldens) — apply on owner approval. **Gate:** owner reviews the
+  comparison before Phase 3 — pending.
 
 ### Phase 3 — Schema, services, admin UI
 
@@ -281,9 +311,10 @@ Size: S ≈ half-day, M ≈ 1–2 days, L ≈ needs splitting when reached.
   production push stays manual and owner-triggered.
 - **The two-generator trap**: `pairingEngine.js` paths still exist until M4.3;
   never "fix" or extend them in the meantime.
-- **Gender data is not binary in prod** (P0.2): 7 `''` + 2 `null` of 103
-  players. M2.1 must define an explicit unknown-gender policy for the
-  feasibility audit and mixed-mode preference (DECISIONS entry when decided).
+- ~~**Gender data is not binary in prod** (P0.2): 7 `''` + 2 `null` of 103
+  players.~~ Resolved 2026-07-13 (D-011): explicit `unknown` bucket — never
+  penalized, never blocking, offsets the mixed-mode quota; informational audit
+  entries only.
 - **RPC vs direct-write mismatch** (P0.2): existing `matches`/`settings`
   writes are RLS-gated direct table writes, not the `require_admin()` RPCs
   DESIGN §5 specifies for the new tables. M3.1 needs an explicit DECISIONS

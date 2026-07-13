@@ -79,9 +79,9 @@ One player-strength representation feeds both systems.
   quantity the matcher balances, so the matcher and the learner agree on what
   "even" means.
 - Matchmaking uses `mu` directly. High-`sigma` players are additionally marked
-  in schedule reports, and the court-spread cap is relaxed by `sigma/2` for
-  them — placing an unknown player "wrong" is cheap, and the resulting match
-  is exactly what teaches us their level fastest.
+  in schedule reports, and the court-spread cap is relaxed by half the largest
+  `sigma` on the court (D-013) — placing an unknown player "wrong" is cheap,
+  and the resulting match is exactly what teaches us their level fastest.
 
 ---
 
@@ -108,7 +108,15 @@ against the roster: player count vs courts, lefty count vs team slots
 gender-mode composition, sit-out arithmetic. Output: a relaxation plan — the
 exact quota of unavoidable violations per rule — and human-readable entries
 ("9 lefties on 4 courts: at least 1 double-lefty team per round"). The search
-may use exactly the quota, never more.
+may use exactly the quota, never more. Quotas are enforced per round from the
+actual round composition; the stage-0 numbers are the reported plan (D-013).
+
+Gender policy (D-011): `''`/null genders normalize to `unknown` at the service
+boundary. In mixed mode a team containing an unknown-gender player never
+counts as same-gender, and unknowns offset the unavoidable same-gender quota
+(`max(0, 2·courts − min(M, F) − U)` per round); in `men`/`women` modes gender
+never blocks — mismatches and unknowns are reported informationally, since
+rosters are admin-curated.
 
 **Stage 1 — Sit-out plan.** With `P` players and `C` courts, `courtsUsed =
 min(C, floor(P/4))` and `sittersPerRound = P − 4·courtsUsed`. Assign sitters
@@ -156,9 +164,10 @@ tolerable), so weights are true exchange rates between dimensions.
 | Mixed-team preference | 1.0 per same-gender team beyond the unavoidable quota (mixed mode)                                                   | 0.3            |
 | Sit-group overlap     | pairwise co-sit count above minimum achievable                                                                       | 0.4            |
 
-Because units are shared, the defaults _say something checkable_: "a second
-meeting with the same opponent (0.6) costs about the same as a 0.3-level
-team-sum gap (0.6 × tolerance)". The config UI renders these sentences
+Because units are shared, the defaults _say something checkable_: "a third
+meeting with the same opponent (1.0 × 0.6) costs about the same as a 0.3-level
+team-sum gap; a second meeting costs half that" (corrected by D-013 — the
+original sentence double-counted). The config UI renders these sentences
 automatically from the live weights, so tuning is legible instead of numerology.
 
 Three constraint classes:
@@ -200,28 +209,27 @@ Persisted per generation run (§5), rendered in the admin UI.
 ```ts
 interface ScheduleRun {
   tournamentId: string
-  config: MatchConfig // full resolved config incl. preset expansion
+  config: ResolvedConfig // full resolved config incl. preset expansion
   seed: number
   feasibility: Array<{ rule: string; status: 'ok' | 'relaxed'; detail: string }>
   rounds: Array<{
+    // rounds and courts are numbered 1-based in violations (D-013)
     courts: Array<{
-      players: PlayerRef[] // id, mu, sigma, handed, gender
-      teams: [TeamRef, TeamRef]
+      players: PlayerInput[] // full snapshot: id, name, mu, sigma, handed, gender
+      teams: [Team, Team]
       teamSums: [number, number]
       courtSpread: number
       flags: string[] // e.g. 'high-sigma-player', 'opponent-rematch'
     }>
-    sitters: PlayerRef[]
+    sitters: PlayerInput[]
   }>
   quality: {
-    // 0–100% per dimension, per round + overall
-    balance: number
-    partnerFairness: number
-    variety: number
-    sitoutFairness: number
-    genderPreference: number
+    // 0–100% per dimension; rollup formulas frozen in report.ts (D-013)
+    overall: QualityDimensions
+    perRound: QualityDimensions[]
   }
-  violations: Array<{ round: number; court: number; rule: string; reason: string }>
+  // court is null for violations without one (sit-out rules)
+  violations: Array<{ round: number; court: number | null; rule: string; reason: string }>
 }
 ```
 
@@ -388,6 +396,8 @@ src/features/matchmaking/
     cost.ts             // normalized dimensions, single scoring entry point
     refine.ts           // Stage 4: move generation + bounded search
     report.ts           // Stage 5: ScheduleRun assembly + quality rollup
+    generate.ts         // pipeline orchestration: audit → … → report (D-013)
+    testkit.ts          // test-only fixture builders + invariant assertions
     rating/
       model.ts          // mu/sigma types, priors, inactivity inflation
       update.ts         // §4.2 batch update

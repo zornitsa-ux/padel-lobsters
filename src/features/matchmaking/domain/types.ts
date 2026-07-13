@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 // All quantities are in Playtomic level units (DESIGN.md §2).
-// Rating-side contracts, frozen by M1.1. Matcher-side types are added by M2.1.
+// Rating-side contracts frozen by M1.1; matcher-side contracts frozen by M2.1.
 // Changing anything here requires a coordinator DECISIONS.md entry.
 
 export const ratingSchema = z.object({
@@ -105,3 +105,206 @@ export const breakdownRowSchema = z.object({
   delta: z.number(),
 })
 export type BreakdownRow = z.infer<typeof breakdownRowSchema>
+
+// ── Matcher-side contracts (frozen by M2.1, DESIGN.md §3) ─────────────────
+
+export const genderModeSchema = z.enum(['men', 'women', 'mixed'])
+export type GenderMode = z.infer<typeof genderModeSchema>
+
+// '' / null genders normalize to 'unknown' at the service boundary (D-011).
+export const playerGenderSchema = z.enum(['male', 'female', 'unknown'])
+export type PlayerGender = z.infer<typeof playerGenderSchema>
+
+export const playerInputSchema = z.object({
+  playerId: z.string().min(1),
+  name: z.string().min(1),
+  mu: z.number(),
+  sigma: z.number().positive(),
+  isLeftHanded: z.boolean(),
+  gender: playerGenderSchema,
+})
+export type PlayerInput = z.infer<typeof playerInputSchema>
+
+export const matchPresetSchema = z.enum(['competitive', 'balanced', 'social'])
+export type MatchPreset = z.infer<typeof matchPresetSchema>
+
+export const leftyRuleSchema = z.enum(['hard', 'off'])
+export type LeftyRule = z.infer<typeof leftyRuleSchema>
+
+// Soft-cost dimensions (DESIGN.md §3.2). Raw scores share a 0..1-per-match
+// unit, so weights are true exchange rates between dimensions.
+export const DIMENSION_KEYS = [
+  'teamBalance',
+  'partnerGap',
+  'courtSpread',
+  'opponentRepeat',
+  'partnerRepeat',
+  'mixedPreference',
+  'sitGroupOverlap',
+] as const
+export type DimensionKey = (typeof DIMENSION_KEYS)[number]
+export type DimensionScores = Record<DimensionKey, number>
+
+export const weightsSchema = z.object({
+  teamBalance: z.number().nonnegative(),
+  partnerGap: z.number().nonnegative(),
+  courtSpread: z.number().nonnegative(),
+  opponentRepeat: z.number().nonnegative(),
+  partnerRepeat: z.number().nonnegative(),
+  mixedPreference: z.number().nonnegative(),
+  sitGroupOverlap: z.number().nonnegative(),
+})
+export type Weights = z.infer<typeof weightsSchema>
+
+export const DEFAULT_WEIGHTS: Weights = {
+  teamBalance: 1.0,
+  partnerGap: 0.8,
+  courtSpread: 1.5,
+  opponentRepeat: 0.6,
+  partnerRepeat: 5.0,
+  mixedPreference: 0.3,
+  sitGroupOverlap: 0.4,
+}
+
+export const matchConfigSchema = z.object({
+  preset: matchPresetSchema,
+  socialDial: z.number().min(0).max(1).optional(),
+  maxCourtSpread: z.number().positive().optional(),
+  maxPartnerGap: z.number().positive().optional(),
+  balanceTolerance: z.number().positive().optional(),
+  weights: weightsSchema.partial().optional(),
+  leftyRule: leftyRuleSchema.optional(),
+  seed: z.number().int().nonnegative().optional(),
+})
+export type MatchConfig = z.infer<typeof matchConfigSchema>
+
+// MatchConfig after preset expansion (presets.ts). seed defaults to
+// hashSeed(tournamentId).
+export const resolvedConfigSchema = z.object({
+  preset: matchPresetSchema,
+  socialDial: z.number().min(0).max(1),
+  maxCourtSpread: z.number().positive(),
+  maxPartnerGap: z.number().positive(),
+  balanceTolerance: z.number().positive(),
+  weights: weightsSchema,
+  leftyRule: leftyRuleSchema,
+  seed: z.number().int().nonnegative(),
+})
+export type ResolvedConfig = z.infer<typeof resolvedConfigSchema>
+
+// Working representation between stages 1–4. Round and court indices are
+// array positions; teams are canonical (each sorted by playerId, team1
+// lexicographically before team2); sitters sorted by playerId.
+export const matchAssignmentSchema = z.object({
+  team1: teamSchema,
+  team2: teamSchema,
+})
+export type MatchAssignment = z.infer<typeof matchAssignmentSchema>
+
+export const roundAssignmentSchema = z.object({
+  matches: z.array(matchAssignmentSchema),
+  sitters: z.array(z.string().min(1)),
+})
+export type RoundAssignment = z.infer<typeof roundAssignmentSchema>
+
+export const scheduleSchema = z.array(roundAssignmentSchema)
+export type Schedule = z.infer<typeof scheduleSchema>
+
+// 'infeasible' only appears in audit output (structurally impossible input);
+// entries persisted into a ScheduleRun are 'ok' | 'relaxed'.
+export const feasibilityStatusSchema = z.enum(['ok', 'relaxed', 'infeasible'])
+export type FeasibilityStatus = z.infer<typeof feasibilityStatusSchema>
+
+export const feasibilityEntrySchema = z.object({
+  rule: z.string().min(1),
+  status: feasibilityStatusSchema,
+  detail: z.string().min(1),
+})
+export type FeasibilityEntry = z.infer<typeof feasibilityEntrySchema>
+
+// Event-level relaxation plan (reporting); enforcement is per round from the
+// actual round composition via the feasibility.ts quota helpers (D-013).
+export const relaxationQuotasSchema = z.object({
+  doubleLeftyTeamsPerRound: z.number().int().nonnegative(),
+  partnerRepeatsTotal: z.number().int().nonnegative(),
+  sameGenderTeamsPerRound: z.number().int().nonnegative(),
+})
+export type RelaxationQuotas = z.infer<typeof relaxationQuotasSchema>
+
+export const feasibilityResultSchema = z.object({
+  feasible: z.boolean(),
+  courtsUsed: z.number().int().nonnegative(),
+  sittersPerRound: z.number().int().nonnegative(),
+  quotas: relaxationQuotasSchema,
+  entries: z.array(feasibilityEntrySchema),
+})
+export type FeasibilityResult = z.infer<typeof feasibilityResultSchema>
+
+export interface ScheduleCost {
+  // Σ weighted[dimension]
+  total: number
+  raw: DimensionScores
+  weighted: DimensionScores
+}
+
+// ── ScheduleRun report (DESIGN.md §3.4; persisted as schedule_runs.report) ──
+// Round and court numbers are 1-based (human-facing). Violations without a
+// court (sit-out rules) carry court: null.
+
+const qualityPercentSchema = z.number().min(0).max(100)
+
+export const qualityDimensionsSchema = z.object({
+  balance: qualityPercentSchema,
+  partnerFairness: qualityPercentSchema,
+  variety: qualityPercentSchema,
+  sitoutFairness: qualityPercentSchema,
+  genderPreference: qualityPercentSchema,
+})
+export type QualityDimensions = z.infer<typeof qualityDimensionsSchema>
+
+export const courtReportSchema = z.object({
+  players: z.array(playerInputSchema).length(4),
+  teams: z.tuple([teamSchema, teamSchema]),
+  teamSums: z.tuple([z.number(), z.number()]),
+  courtSpread: z.number().nonnegative(),
+  flags: z.array(z.string()),
+})
+export type CourtReport = z.infer<typeof courtReportSchema>
+
+export const roundReportSchema = z.object({
+  courts: z.array(courtReportSchema),
+  sitters: z.array(playerInputSchema),
+})
+export type RoundReport = z.infer<typeof roundReportSchema>
+
+export const violationSchema = z.object({
+  round: z.number().int().positive(),
+  court: z.number().int().positive().nullable(),
+  rule: z.string().min(1),
+  reason: z.string().min(1),
+})
+export type Violation = z.infer<typeof violationSchema>
+
+export const scheduleRunSchema = z.object({
+  tournamentId: z.string().min(1),
+  config: resolvedConfigSchema,
+  seed: z.number().int().nonnegative(),
+  feasibility: z.array(feasibilityEntrySchema),
+  rounds: z.array(roundReportSchema),
+  quality: z.object({
+    overall: qualityDimensionsSchema,
+    perRound: z.array(qualityDimensionsSchema),
+  }),
+  violations: z.array(violationSchema),
+})
+export type ScheduleRun = z.infer<typeof scheduleRunSchema>
+
+export const generateInputSchema = z.object({
+  tournamentId: z.string().min(1),
+  players: z.array(playerInputSchema).min(4),
+  courts: z.number().int().positive(),
+  rounds: z.number().int().positive(),
+  genderMode: genderModeSchema,
+  config: matchConfigSchema,
+})
+export type GenerateInput = z.infer<typeof generateInputSchema>
