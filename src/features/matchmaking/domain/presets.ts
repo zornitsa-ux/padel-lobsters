@@ -4,13 +4,14 @@ import { DEFAULT_WEIGHTS } from './types'
 
 // Preset knob table (DESIGN.md §3.3) — contract data, frozen by M2.1.
 // Starting values in the D-003 spirit; M2.11 shadow runs may retune them
-// (DECISIONS entry required).
+// (DECISIONS entry required). balanced.socialDial 0.35→0.5 per D-015 (M2.11
+// shadow: a near-Pareto balance+variety gain on real rosters).
 export const PRESET_KNOBS: Record<
   MatchPreset,
   { socialDial: number; maxCourtSpread: number; opponentRepeatWeight: number }
 > = {
   competitive: { socialDial: 0, maxCourtSpread: 0.75, opponentRepeatWeight: 0.3 },
-  balanced: { socialDial: 0.35, maxCourtSpread: 1.25, opponentRepeatWeight: 0.6 },
+  balanced: { socialDial: 0.5, maxCourtSpread: 1.25, opponentRepeatWeight: 0.6 },
   social: { socialDial: 0.8, maxCourtSpread: 2.5, opponentRepeatWeight: 1.0 },
 }
 

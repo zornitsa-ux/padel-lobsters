@@ -8,7 +8,7 @@ describe('preset knob table (M2.1 contract data)', () => {
   it('pins the DESIGN §3.3 preset values', () => {
     expect(PRESET_KNOBS).toEqual({
       competitive: { socialDial: 0, maxCourtSpread: 0.75, opponentRepeatWeight: 0.3 },
-      balanced: { socialDial: 0.35, maxCourtSpread: 1.25, opponentRepeatWeight: 0.6 },
+      balanced: { socialDial: 0.5, maxCourtSpread: 1.25, opponentRepeatWeight: 0.6 },
       social: { socialDial: 0.8, maxCourtSpread: 2.5, opponentRepeatWeight: 1.0 },
     })
     expect(KNOB_DEFAULTS).toEqual({
@@ -28,7 +28,7 @@ describe('presets (M2.9)', () => {
   it('expands the balanced preset to a fully resolved config', () => {
     expect(resolve({ preset: 'balanced' })).toEqual({
       preset: 'balanced',
-      socialDial: 0.35,
+      socialDial: 0.5,
       maxCourtSpread: 1.25,
       maxPartnerGap: 1,
       balanceTolerance: 0.5,

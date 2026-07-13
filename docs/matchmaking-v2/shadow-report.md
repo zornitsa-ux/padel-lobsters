@@ -23,9 +23,9 @@ for the quality percentages.
 - **Opponent variety — V2 competitive/balanced regress; social matches legacy.** Legacy keeps repeat-opponent pairs low (1–5). V2 competitive/balanced trade variety for tight bands (14–25 repeat-opponent pairs); V2 social recovers it (1–8) while still beating legacy on balance. This is the balance↔variety tension the presets are meant to expose.
 - **Gender preference — parity** (~94–100% for both engines).
 
-**Recommendation (proposed D-015, pending owner approval): raise the `balanced` preset socialDial J from 0.35 → 0.5.** The re-tuning frontier below shows this is a near-Pareto improvement on both rosters — Event A: repeat-opponent pairs 14→10, Balance 91.6→93.8%, Variety 91.7→92.7%; Event B: 17→12, Balance 89.4→90.9%, Variety 85.4→87.5%. At these field sizes the extra banding jitter breaks up repeat-opponent clustering _before_ the court-spread cap binds, so balance and variety both improve. Raising the opponent-repeat weight instead costs balance for less variety gain. Not applied in this commit — it would regenerate the golden snapshots, so it is held for the owner’s go/no-go on this report.
+**D-015 (approved & applied 2026-07-13): the `balanced` preset socialDial J was raised 0.35 → 0.5.** The re-tuning frontier below motivated it — a near-Pareto improvement on both rosters (Event A: repeat-opponent pairs 14→10, Balance 91.6→93.8%, Variety 91.7→92.7%; Event B: 17→12, Balance 89.4→90.9%, Variety 85.4→87.5%). At these field sizes the extra banding jitter breaks up repeat-opponent clustering _before_ the court-spread cap binds, so balance and variety both improve; raising the opponent-repeat weight instead costs balance for less variety gain. The `V2 balanced` rows below already reflect J=0.5; the frontier still shows the J=0.35 baseline it was chosen against.
 
-**Gate (PLAN §4): owner reviews this report before Phase 3.**
+**Gate (PLAN §4): owner reviewed this report; Phase 3 may proceed.**
 
 ## Event A — 32 players, 8 courts, mixed (largest recent field)
 
@@ -38,7 +38,7 @@ Roster: **32** players (22M / 10F, 4 left-handed), **8** courts, **6** rounds, m
 | Legacy (mean of seeds) | 90.00  | 0.69 / 2.30        | 1.40 / 2.42            | 0.0               | 0.4                | 38.4 (2.4)                   | 0.0            | 0.0          |
 | Legacy (best seed)     | 83.06  | 0.61 / 2.10        | 1.41 / 2.30            | 0.0               | 1.0                | 40.0 (4.0)                   | 0.0            | 0.0          |
 | V2 competitive         | 20.26  | 0.10 / 0.40        | 0.83 / 1.30            | 0.0               | 17.0               | 42.0 (6.0)                   | 0.0            | 0.0          |
-| V2 balanced            | 18.72  | 0.08 / 0.40        | 0.86 / 1.70            | 0.0               | 14.0               | 42.0 (6.0)                   | 0.0            | 0.0          |
+| V2 balanced            | 19.20  | 0.06 / 0.30        | 0.95 / 1.90            | 0.0               | 10.0               | 46.0 (10.0)                  | 0.0            | 0.0          |
 | V2 social              | 29.74  | 0.10 / 0.50        | 1.19 / 2.70            | 0.0               | 1.0                | 42.0 (6.0)                   | 0.0            | 0.0          |
 
 ### Quality percentages (scored under the common `balanced` model)
@@ -48,7 +48,7 @@ Roster: **32** players (22M / 10F, 4 left-handed), **8** courts, **6** rounds, m
 | Legacy (mean of seeds) | 25.9%   | 79.4%            | 99.8%   | 97.5%             |
 | Legacy (best seed)     | 34.2%   | 79.0%            | 99.5%   | 95.8%             |
 | V2 competitive         | 90.0%   | 98.2%            | 87.0%   | 93.8%             |
-| V2 balanced            | 91.6%   | 94.8%            | 91.7%   | 93.8%             |
+| V2 balanced            | 93.8%   | 92.3%            | 92.7%   | 89.6%             |
 | V2 social              | 87.2%   | 82.1%            | 99.5%   | 93.8%             |
 
 ### V2 preset-native quality (each under its own caps/weights)
@@ -56,15 +56,15 @@ Roster: **32** players (22M / 10F, 4 left-handed), **8** courts, **6** rounds, m
 | Preset      | Balance | Partner fairness | Variety | Gender preference |
 | ----------- | ------- | ---------------- | ------- | ----------------- |
 | competitive | 89.2%   | 98.2%            | 87.0%   | 93.8%             |
-| balanced    | 91.6%   | 94.8%            | 91.7%   | 93.8%             |
+| balanced    | 93.8%   | 92.3%            | 92.7%   | 89.6%             |
 | social      | 90.4%   | 82.1%            | 99.5%   | 93.8%             |
 
 ### `balanced` re-tuning frontier (variety levers)
 
 | Config                               | Team-gap avg ↓ | Court-spread avg ↓ | Opp-repeat pairs ↓ | Balance ↑ | Variety ↑ |
 | ------------------------------------ | -------------- | ------------------ | ------------------ | --------- | --------- |
-| balanced (current: J=0.35, oppW=0.6) | 0.08           | 0.86               | 14.0               | 91.6%     | 91.7%     |
-| J=0.5, oppW=0.6                      | 0.06           | 0.95               | 10.0               | 93.8%     | 92.7%     |
+| J=0.35, oppW=0.6 (pre-D-015 default) | 0.08           | 0.86               | 14.0               | 91.6%     | 91.7%     |
+| J=0.5, oppW=0.6 (D-015 default)      | 0.06           | 0.95               | 10.0               | 93.8%     | 92.7%     |
 | J=0.65, oppW=0.6                     | 0.06           | 1.05               | 7.0                | 92.2%     | 96.4%     |
 | J=0.5, oppW=1.0                      | 0.11           | 1.03               | 6.0                | 87.8%     | 95.8%     |
 | J=0.65, oppW=1.0                     | 0.15           | 1.09               | 5.0                | 84.4%     | 97.4%     |
@@ -80,7 +80,7 @@ Roster: **24** players (18M / 6F, 1 left-handed), **6** courts, **6** rounds, mi
 | Legacy (mean of seeds) | 75.62  | 0.79 / 2.48        | 1.41 / 2.56            | 0.0               | 5.2                | 39.2 (3.2)                   | 0.0            | 0.0          |
 | Legacy (best seed)     | 68.14  | 0.72 / 2.50        | 1.37 / 2.40            | 0.0               | 3.0                | 36.0 (0.0)                   | 0.0            | 0.0          |
 | V2 competitive         | 18.94  | 0.09 / 0.40        | 0.88 / 2.00            | 0.0               | 25.0               | 36.0 (0.0)                   | 0.0            | 0.0          |
-| V2 balanced            | 18.70  | 0.10 / 0.50        | 0.97 / 2.00            | 0.0               | 17.0               | 38.0 (2.0)                   | 0.0            | 0.0          |
+| V2 balanced            | 17.48  | 0.09 / 0.70        | 1.06 / 1.70            | 0.0               | 12.0               | 36.0 (0.0)                   | 0.0            | 0.0          |
 | V2 social              | 25.36  | 0.16 / 0.90        | 1.12 / 2.30            | 0.0               | 8.0                | 36.0 (0.0)                   | 0.0            | 0.0          |
 
 ### Quality percentages (scored under the common `balanced` model)
@@ -90,7 +90,7 @@ Roster: **24** players (18M / 6F, 1 left-handed), **6** courts, **6** rounds, mi
 | Legacy (mean of seeds) | 15.6%   | 81.9%            | 96.4%   | 95.6%             |
 | Legacy (best seed)     | 23.3%   | 82.2%            | 97.9%   | 100.0%            |
 | V2 competitive         | 90.7%   | 96.3%            | 77.1%   | 100.0%            |
-| V2 balanced            | 89.4%   | 93.1%            | 85.4%   | 97.2%             |
+| V2 balanced            | 90.9%   | 90.6%            | 87.5%   | 100.0%            |
 | V2 social              | 81.3%   | 85.4%            | 94.4%   | 100.0%            |
 
 ### V2 preset-native quality (each under its own caps/weights)
@@ -98,15 +98,15 @@ Roster: **24** players (18M / 6F, 1 left-handed), **6** courts, **6** rounds, mi
 | Preset      | Balance | Partner fairness | Variety | Gender preference |
 | ----------- | ------- | ---------------- | ------- | ----------------- |
 | competitive | 88.1%   | 96.3%            | 77.1%   | 100.0%            |
-| balanced    | 89.4%   | 93.1%            | 85.4%   | 97.2%             |
+| balanced    | 90.9%   | 90.6%            | 87.5%   | 100.0%            |
 | social      | 84.4%   | 85.4%            | 94.4%   | 100.0%            |
 
 ### `balanced` re-tuning frontier (variety levers)
 
 | Config                               | Team-gap avg ↓ | Court-spread avg ↓ | Opp-repeat pairs ↓ | Balance ↑ | Variety ↑ |
 | ------------------------------------ | -------------- | ------------------ | ------------------ | --------- | --------- |
-| balanced (current: J=0.35, oppW=0.6) | 0.10           | 0.97               | 17.0               | 89.4%     | 85.4%     |
-| J=0.5, oppW=0.6                      | 0.09           | 1.06               | 12.0               | 90.9%     | 87.5%     |
+| J=0.35, oppW=0.6 (pre-D-015 default) | 0.10           | 0.97               | 17.0               | 89.4%     | 85.4%     |
+| J=0.5, oppW=0.6 (D-015 default)      | 0.09           | 1.06               | 12.0               | 90.9%     | 87.5%     |
 | J=0.65, oppW=0.6                     | 0.12           | 1.03               | 9.0                | 87.4%     | 89.6%     |
 | J=0.5, oppW=1.0                      | 0.13           | 1.17               | 11.0               | 86.3%     | 89.6%     |
 | J=0.65, oppW=1.0                     | 0.13           | 1.06               | 12.0               | 85.0%     | 91.7%     |

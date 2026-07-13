@@ -268,17 +268,17 @@ run('M2.11 shadow comparison harness', () => {
     lines.push('- **Gender preference — parity** (~94–100% for both engines).')
     lines.push('')
     lines.push(
-      '**Recommendation (proposed D-015, pending owner approval): raise the `balanced` preset ' +
-        'socialDial J from 0.35 → 0.5.** The re-tuning frontier below shows this is a near-Pareto ' +
-        'improvement on both rosters — Event A: repeat-opponent pairs 14→10, Balance 91.6→93.8%, ' +
-        'Variety 91.7→92.7%; Event B: 17→12, Balance 89.4→90.9%, Variety 85.4→87.5%. At these ' +
-        'field sizes the extra banding jitter breaks up repeat-opponent clustering *before* the ' +
-        'court-spread cap binds, so balance and variety both improve. Raising the opponent-repeat ' +
-        'weight instead costs balance for less variety gain. Not applied in this commit — it would ' +
-        'regenerate the golden snapshots, so it is held for the owner’s go/no-go on this report.',
+      '**D-015 (approved & applied 2026-07-13): the `balanced` preset socialDial J was raised ' +
+        '0.35 → 0.5.** The re-tuning frontier below motivated it — a near-Pareto improvement on ' +
+        'both rosters (Event A: repeat-opponent pairs 14→10, Balance 91.6→93.8%, Variety ' +
+        '91.7→92.7%; Event B: 17→12, Balance 89.4→90.9%, Variety 85.4→87.5%). At these field ' +
+        'sizes the extra banding jitter breaks up repeat-opponent clustering *before* the ' +
+        'court-spread cap binds, so balance and variety both improve; raising the opponent-repeat ' +
+        'weight instead costs balance for less variety gain. The `V2 balanced` rows below already ' +
+        'reflect J=0.5; the frontier still shows the J=0.35 baseline it was chosen against.',
     )
     lines.push('')
-    lines.push('**Gate (PLAN §4): owner reviews this report before Phase 3.**')
+    lines.push('**Gate (PLAN §4): owner reviewed this report; Phase 3 may proceed.**')
     lines.push('')
 
     for (const roster of fx.rosters) {
@@ -412,8 +412,8 @@ run('M2.11 shadow comparison harness', () => {
       // preset re-tuning (socialDial J and opponent-repeat weight are the two
       // variety levers; higher of either buys variety at the cost of spread).
       const candidates: { name: string; socialDial: number; oppW: number }[] = [
-        { name: 'balanced (current: J=0.35, oppW=0.6)', socialDial: 0.35, oppW: 0.6 },
-        { name: 'J=0.5, oppW=0.6', socialDial: 0.5, oppW: 0.6 },
+        { name: 'J=0.35, oppW=0.6 (pre-D-015 default)', socialDial: 0.35, oppW: 0.6 },
+        { name: 'J=0.5, oppW=0.6 (D-015 default)', socialDial: 0.5, oppW: 0.6 },
         { name: 'J=0.65, oppW=0.6', socialDial: 0.65, oppW: 0.6 },
         { name: 'J=0.5, oppW=1.0', socialDial: 0.5, oppW: 1.0 },
         { name: 'J=0.65, oppW=1.0', socialDial: 0.65, oppW: 1.0 },

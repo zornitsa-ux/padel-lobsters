@@ -301,3 +301,29 @@ docblock note. No frozen test changed. Cost-non-increase still holds: repair
 moves may transiently raise cost, but descent recovers within budget on every
 frozen case (violating partnerships also carry the 5.0 partnerRepeat weight,
 so repairs usually cut cost outright).
+
+## D-015 — `balanced` preset socialDial 0.35 → 0.5 (2026-07-13)
+
+**Decision:** The `balanced` preset's `socialDial` (J) moves `0.35 → 0.5` in the
+frozen `PRESET_KNOBS` table (`presets.ts`). No other knob or weight changes;
+`competitive` (J=0) and `social` (J=0.8) are untouched.
+
+**Why:** The M2.11 shadow comparison (`shadow-report.md`) ran V2 against the
+legacy annealed matcher on two real anonymized rosters and included a
+balance↔variety re-tuning frontier. Raising J to 0.5 is a near-Pareto
+improvement at these field sizes: extra banding jitter breaks up
+repeat-opponent clustering _before_ the court-spread cap binds, so both balance
+and opponent variety improve (Event A: repeat-opponent pairs 14→10, Balance
+91.6→93.8%, Variety 91.7→92.7%; Event B: 17→12, Balance 89.4→90.9%, Variety
+85.4→87.5%). Raising the opponent-repeat _weight_ instead was rejected — it
+costs balance for less variety gain. Minor side effect: mixed-mode gender
+preference dips slightly on the fuller field (Event A genderPreference
+93.8→89.6%), well within tolerance and never a hard rule. Owner approved
+2026-07-13. This entry authorizes the change to the M2.1-frozen knob table.
+
+**Impact:** `presets.ts` `PRESET_KNOBS.balanced.socialDial`; the three pinned
+assertions that hard-coded 0.35 (`presets.test.ts` ×2, `generate.test.ts` ×1)
+updated to 0.5 (this entry authorizes them); the three `× balanced` golden
+snapshots regenerated (`__snapshots__/golden.test.ts.snap`); `shadow-report.md`
+regenerated with balanced = J=0.5. Phase 2 → Phase 3 gate met: owner reviewed
+the shadow report and approved proceeding.

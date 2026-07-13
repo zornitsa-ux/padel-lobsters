@@ -9,7 +9,7 @@ exports[`matcher golden runs (M2.10) > men-32 × balanced 1`] = `
     "maxPartnerGap": 1,
     "preset": "balanced",
     "seed": 1161971013,
-    "socialDial": 0.35,
+    "socialDial": 0.5,
     "weights": {
       "courtSpread": 1.5,
       "mixedPreference": 0.3,
@@ -44,40 +44,40 @@ exports[`matcher golden runs (M2.10) > men-32 × balanced 1`] = `
   ],
   "quality": {
     "overall": {
-      "balance": 91.74999999999997,
+      "balance": 93.12499999999999,
       "genderPreference": 100,
-      "partnerFairness": 90.625,
+      "partnerFairness": 91.09375,
       "sitoutFairness": 100,
-      "variety": 96.09375,
+      "variety": 92.96875,
     },
     "perRound": [
       {
-        "balance": 94.99999999999999,
+        "balance": 92,
         "genderPreference": 100,
-        "partnerFairness": 99.37499999999999,
+        "partnerFairness": 93.74999999999999,
         "sitoutFairness": 100,
         "variety": 100,
       },
       {
-        "balance": 97.49999999999997,
+        "balance": 91.00000000000001,
         "genderPreference": 100,
-        "partnerFairness": 100,
-        "sitoutFairness": 100,
-        "variety": 93.75,
-      },
-      {
-        "balance": 88.99999999999999,
-        "genderPreference": 100,
-        "partnerFairness": 86.25,
+        "partnerFairness": 89.375,
         "sitoutFairness": 100,
         "variety": 96.875,
       },
       {
-        "balance": 85.49999999999996,
+        "balance": 97.49999999999997,
         "genderPreference": 100,
-        "partnerFairness": 76.875,
+        "partnerFairness": 92.5,
         "sitoutFairness": 100,
-        "variety": 93.75,
+        "variety": 84.375,
+      },
+      {
+        "balance": 91.99999999999996,
+        "genderPreference": 100,
+        "partnerFairness": 88.75,
+        "sitoutFairness": 100,
+        "variety": 90.625,
       },
     ],
   },
@@ -85,434 +85,11 @@ exports[`matcher golden runs (M2.10) > men-32 × balanced 1`] = `
     {
       "courts": [
         {
-          "courtSpread": 0.7000000000000002,
-          "flags": [],
-          "players": [
-            {
-              "gender": "male",
-              "isLeftHanded": true,
-              "mu": 4.5,
-              "name": "p01",
-              "playerId": "p01",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 3.8,
-              "name": "p08",
-              "playerId": "p08",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": true,
-              "mu": 4.3,
-              "name": "p03",
-              "playerId": "p03",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 4,
-              "name": "p06",
-              "playerId": "p06",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            8.3,
-            8.3,
-          ],
-          "teams": [
-            [
-              "p01",
-              "p08",
-            ],
-            [
-              "p03",
-              "p06",
-            ],
-          ],
-        },
-        {
-          "courtSpread": 1.0000000000000004,
-          "flags": [],
-          "players": [
-            {
-              "gender": "male",
-              "isLeftHanded": true,
-              "mu": 4.4,
-              "name": "p02",
-              "playerId": "p02",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 3.4,
-              "name": "p12",
-              "playerId": "p12",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 4.1,
-              "name": "p05",
-              "playerId": "p05",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 3.7,
-              "name": "p09",
-              "playerId": "p09",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            7.800000000000001,
-            7.8,
-          ],
-          "teams": [
-            [
-              "p02",
-              "p12",
-            ],
-            [
-              "p05",
-              "p09",
-            ],
-          ],
-        },
-        {
-          "courtSpread": 1.1000000000000005,
-          "flags": [],
-          "players": [
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 4.2,
-              "name": "p04",
-              "playerId": "p04",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 3.0999999999999996,
-              "name": "p15",
-              "playerId": "p15",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 3.9,
-              "name": "p07",
-              "playerId": "p07",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 3.5,
-              "name": "p11",
-              "playerId": "p11",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            7.3,
-            7.4,
-          ],
-          "teams": [
-            [
-              "p04",
-              "p15",
-            ],
-            [
-              "p07",
-              "p11",
-            ],
-          ],
-        },
-        {
-          "courtSpread": 0.7000000000000002,
-          "flags": [],
-          "players": [
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 3.6,
-              "name": "p10",
-              "playerId": "p10",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 2.9,
-              "name": "p17",
-              "playerId": "p17",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 3.3,
-              "name": "p13",
-              "playerId": "p13",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 3.2,
-              "name": "p14",
-              "playerId": "p14",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            6.5,
-            6.5,
-          ],
-          "teams": [
-            [
-              "p10",
-              "p17",
-            ],
-            [
-              "p13",
-              "p14",
-            ],
-          ],
-        },
-        {
           "courtSpread": 1,
           "flags": [],
           "players": [
             {
               "gender": "male",
-              "isLeftHanded": false,
-              "mu": 3,
-              "name": "p16",
-              "playerId": "p16",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 2,
-              "name": "p26",
-              "playerId": "p26",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 2.7,
-              "name": "p19",
-              "playerId": "p19",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 2.3,
-              "name": "p23",
-              "playerId": "p23",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            5,
-            5,
-          ],
-          "teams": [
-            [
-              "p16",
-              "p26",
-            ],
-            [
-              "p19",
-              "p23",
-            ],
-          ],
-        },
-        {
-          "courtSpread": 0.3999999999999999,
-          "flags": [],
-          "players": [
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 2.8,
-              "name": "p18",
-              "playerId": "p18",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 2.4,
-              "name": "p22",
-              "playerId": "p22",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 2.5999999999999996,
-              "name": "p20",
-              "playerId": "p20",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 2.5,
-              "name": "p21",
-              "playerId": "p21",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            5.199999999999999,
-            5.1,
-          ],
-          "teams": [
-            [
-              "p18",
-              "p22",
-            ],
-            [
-              "p20",
-              "p21",
-            ],
-          ],
-        },
-        {
-          "courtSpread": 0.5999999999999996,
-          "flags": [],
-          "players": [
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 2.0999999999999996,
-              "name": "p25",
-              "playerId": "p25",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 1.5,
-              "name": "p31",
-              "playerId": "p31",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 1.9,
-              "name": "p27",
-              "playerId": "p27",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 1.5999999999999996,
-              "name": "p30",
-              "playerId": "p30",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            3.5999999999999996,
-            3.4999999999999996,
-          ],
-          "teams": [
-            [
-              "p25",
-              "p31",
-            ],
-            [
-              "p27",
-              "p30",
-            ],
-          ],
-        },
-        {
-          "courtSpread": 0.7999999999999998,
-          "flags": [],
-          "players": [
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 2.1999999999999997,
-              "name": "p24",
-              "playerId": "p24",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 1.4,
-              "name": "p32",
-              "playerId": "p32",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 1.7999999999999998,
-              "name": "p28",
-              "playerId": "p28",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 1.6999999999999997,
-              "name": "p29",
-              "playerId": "p29",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            3.5999999999999996,
-            3.4999999999999996,
-          ],
-          "teams": [
-            [
-              "p24",
-              "p32",
-            ],
-            [
-              "p28",
-              "p29",
-            ],
-          ],
-        },
-      ],
-      "sitters": [],
-    },
-    {
-      "courts": [
-        {
-          "courtSpread": 0.6000000000000001,
-          "flags": [
-            "opponent-rematch",
-          ],
-          "players": [
-            {
-              "gender": "male",
               "isLeftHanded": true,
               "mu": 4.5,
               "name": "p01",
@@ -522,63 +99,9 @@ exports[`matcher golden runs (M2.10) > men-32 × balanced 1`] = `
             {
               "gender": "male",
               "isLeftHanded": false,
-              "mu": 3.9,
-              "name": "p07",
-              "playerId": "p07",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": true,
-              "mu": 4.3,
-              "name": "p03",
-              "playerId": "p03",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 4.1,
-              "name": "p05",
-              "playerId": "p05",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            8.4,
-            8.399999999999999,
-          ],
-          "teams": [
-            [
-              "p01",
-              "p07",
-            ],
-            [
-              "p03",
-              "p05",
-            ],
-          ],
-        },
-        {
-          "courtSpread": 0.6000000000000005,
-          "flags": [
-            "opponent-rematch",
-          ],
-          "players": [
-            {
-              "gender": "male",
-              "isLeftHanded": true,
-              "mu": 4.4,
-              "name": "p02",
-              "playerId": "p02",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 3.8,
-              "name": "p08",
-              "playerId": "p08",
+              "mu": 3.5,
+              "name": "p11",
+              "playerId": "p11",
               "sigma": 0.3,
             },
             {
@@ -599,13 +122,13 @@ exports[`matcher golden runs (M2.10) > men-32 × balanced 1`] = `
             },
           ],
           "teamSums": [
-            8.2,
+            8,
             8.2,
           ],
           "teams": [
             [
-              "p02",
-              "p08",
+              "p01",
+              "p11",
             ],
             [
               "p04",
@@ -613,323 +136,6 @@ exports[`matcher golden runs (M2.10) > men-32 × balanced 1`] = `
             ],
           ],
         },
-        {
-          "courtSpread": 0.8000000000000003,
-          "flags": [],
-          "players": [
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 3.7,
-              "name": "p09",
-              "playerId": "p09",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 2.9,
-              "name": "p17",
-              "playerId": "p17",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 3.6,
-              "name": "p10",
-              "playerId": "p10",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 3,
-              "name": "p16",
-              "playerId": "p16",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            6.6,
-            6.6,
-          ],
-          "teams": [
-            [
-              "p09",
-              "p17",
-            ],
-            [
-              "p10",
-              "p16",
-            ],
-          ],
-        },
-        {
-          "courtSpread": 0.2999999999999998,
-          "flags": [],
-          "players": [
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 3.5,
-              "name": "p11",
-              "playerId": "p11",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 3.2,
-              "name": "p14",
-              "playerId": "p14",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 3.4,
-              "name": "p12",
-              "playerId": "p12",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 3.3,
-              "name": "p13",
-              "playerId": "p13",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            6.7,
-            6.699999999999999,
-          ],
-          "teams": [
-            [
-              "p11",
-              "p14",
-            ],
-            [
-              "p12",
-              "p13",
-            ],
-          ],
-        },
-        {
-          "courtSpread": 0.6999999999999997,
-          "flags": [],
-          "players": [
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 3.0999999999999996,
-              "name": "p15",
-              "playerId": "p15",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 2.4,
-              "name": "p22",
-              "playerId": "p22",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 2.8,
-              "name": "p18",
-              "playerId": "p18",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 2.7,
-              "name": "p19",
-              "playerId": "p19",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            5.5,
-            5.5,
-          ],
-          "teams": [
-            [
-              "p15",
-              "p22",
-            ],
-            [
-              "p18",
-              "p19",
-            ],
-          ],
-        },
-        {
-          "courtSpread": 0.7999999999999998,
-          "flags": [],
-          "players": [
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 2.5999999999999996,
-              "name": "p20",
-              "playerId": "p20",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 1.7999999999999998,
-              "name": "p28",
-              "playerId": "p28",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 2.5,
-              "name": "p21",
-              "playerId": "p21",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 2.0999999999999996,
-              "name": "p25",
-              "playerId": "p25",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            4.3999999999999995,
-            4.6,
-          ],
-          "teams": [
-            [
-              "p20",
-              "p28",
-            ],
-            [
-              "p21",
-              "p25",
-            ],
-          ],
-        },
-        {
-          "courtSpread": 0.8999999999999999,
-          "flags": [],
-          "players": [
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 2.3,
-              "name": "p23",
-              "playerId": "p23",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 1.4,
-              "name": "p32",
-              "playerId": "p32",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 2.1999999999999997,
-              "name": "p24",
-              "playerId": "p24",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 1.5,
-              "name": "p31",
-              "playerId": "p31",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            3.6999999999999997,
-            3.6999999999999997,
-          ],
-          "teams": [
-            [
-              "p23",
-              "p32",
-            ],
-            [
-              "p24",
-              "p31",
-            ],
-          ],
-        },
-        {
-          "courtSpread": 0.40000000000000036,
-          "flags": [],
-          "players": [
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 2,
-              "name": "p26",
-              "playerId": "p26",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 1.5999999999999996,
-              "name": "p30",
-              "playerId": "p30",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 1.9,
-              "name": "p27",
-              "playerId": "p27",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 1.6999999999999997,
-              "name": "p29",
-              "playerId": "p29",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            3.5999999999999996,
-            3.5999999999999996,
-          ],
-          "teams": [
-            [
-              "p26",
-              "p30",
-            ],
-            [
-              "p27",
-              "p29",
-            ],
-          ],
-        },
-      ],
-      "sitters": [],
-    },
-    {
-      "courts": [
         {
           "courtSpread": 1.1000000000000005,
           "flags": [],
@@ -983,163 +189,7 @@ exports[`matcher golden runs (M2.10) > men-32 × balanced 1`] = `
           ],
         },
         {
-          "courtSpread": 1.1,
-          "flags": [],
-          "players": [
-            {
-              "gender": "male",
-              "isLeftHanded": true,
-              "mu": 4.5,
-              "name": "p01",
-              "playerId": "p01",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 3.4,
-              "name": "p12",
-              "playerId": "p12",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 4.2,
-              "name": "p04",
-              "playerId": "p04",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 3.6,
-              "name": "p10",
-              "playerId": "p10",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            7.9,
-            7.800000000000001,
-          ],
-          "teams": [
-            [
-              "p01",
-              "p12",
-            ],
-            [
-              "p04",
-              "p10",
-            ],
-          ],
-        },
-        {
-          "courtSpread": 1.1,
-          "flags": [],
-          "players": [
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 4,
-              "name": "p06",
-              "playerId": "p06",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 2.9,
-              "name": "p17",
-              "playerId": "p17",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 3.7,
-              "name": "p09",
-              "playerId": "p09",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 3.0999999999999996,
-              "name": "p15",
-              "playerId": "p15",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            6.9,
-            6.8,
-          ],
-          "teams": [
-            [
-              "p06",
-              "p17",
-            ],
-            [
-              "p09",
-              "p15",
-            ],
-          ],
-        },
-        {
-          "courtSpread": 0.7000000000000002,
-          "flags": [],
-          "players": [
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 3.5,
-              "name": "p11",
-              "playerId": "p11",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 2.8,
-              "name": "p18",
-              "playerId": "p18",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 3.2,
-              "name": "p14",
-              "playerId": "p14",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 3,
-              "name": "p16",
-              "playerId": "p16",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            6.3,
-            6.2,
-          ],
-          "teams": [
-            [
-              "p11",
-              "p18",
-            ],
-            [
-              "p14",
-              "p16",
-            ],
-          ],
-        },
-        {
-          "courtSpread": 2.1,
+          "courtSpread": 0.8999999999999999,
           "flags": [],
           "players": [
             {
@@ -1153,9 +203,9 @@ exports[`matcher golden runs (M2.10) > men-32 × balanced 1`] = `
             {
               "gender": "male",
               "isLeftHanded": false,
-              "mu": 2.1999999999999997,
-              "name": "p24",
-              "playerId": "p24",
+              "mu": 3.4,
+              "name": "p12",
+              "playerId": "p12",
               "sigma": 0.3,
             },
             {
@@ -1169,29 +219,185 @@ exports[`matcher golden runs (M2.10) > men-32 × balanced 1`] = `
             {
               "gender": "male",
               "isLeftHanded": false,
+              "mu": 3.6,
+              "name": "p10",
+              "playerId": "p10",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            7.699999999999999,
+            7.699999999999999,
+          ],
+          "teams": [
+            [
+              "p03",
+              "p12",
+            ],
+            [
+              "p05",
+              "p10",
+            ],
+          ],
+        },
+        {
+          "courtSpread": 1.3000000000000003,
+          "flags": [],
+          "players": [
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 3.7,
+              "name": "p09",
+              "playerId": "p09",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
               "mu": 2.4,
               "name": "p22",
               "playerId": "p22",
               "sigma": 0.3,
             },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 3.2,
+              "name": "p14",
+              "playerId": "p14",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 2.5999999999999996,
+              "name": "p20",
+              "playerId": "p20",
+              "sigma": 0.3,
+            },
           ],
           "teamSums": [
-            6.5,
-            6.5,
+            6.1,
+            5.8,
           ],
           "teams": [
             [
-              "p03",
-              "p24",
+              "p09",
+              "p22",
             ],
             [
-              "p05",
-              "p22",
+              "p14",
+              "p20",
             ],
           ],
         },
         {
           "courtSpread": 0.9000000000000004,
+          "flags": [],
+          "players": [
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 3,
+              "name": "p16",
+              "playerId": "p16",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 2.0999999999999996,
+              "name": "p25",
+              "playerId": "p25",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 2.8,
+              "name": "p18",
+              "playerId": "p18",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 2.3,
+              "name": "p23",
+              "playerId": "p23",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            5.1,
+            5.1,
+          ],
+          "teams": [
+            [
+              "p16",
+              "p25",
+            ],
+            [
+              "p18",
+              "p23",
+            ],
+          ],
+        },
+        {
+          "courtSpread": 1.5,
+          "flags": [],
+          "players": [
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 3.0999999999999996,
+              "name": "p15",
+              "playerId": "p15",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 1.5999999999999996,
+              "name": "p30",
+              "playerId": "p30",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 2.9,
+              "name": "p17",
+              "playerId": "p17",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 1.7999999999999998,
+              "name": "p28",
+              "playerId": "p28",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            4.699999999999999,
+            4.699999999999999,
+          ],
+          "teams": [
+            [
+              "p15",
+              "p30",
+            ],
+            [
+              "p17",
+              "p28",
+            ],
+          ],
+        },
+        {
+          "courtSpread": 1.0000000000000004,
           "flags": [],
           "players": [
             {
@@ -1205,17 +411,17 @@ exports[`matcher golden runs (M2.10) > men-32 × balanced 1`] = `
             {
               "gender": "male",
               "isLeftHanded": false,
-              "mu": 1.7999999999999998,
-              "name": "p28",
-              "playerId": "p28",
+              "mu": 1.6999999999999997,
+              "name": "p29",
+              "playerId": "p29",
               "sigma": 0.3,
             },
             {
               "gender": "male",
               "isLeftHanded": false,
-              "mu": 2.5999999999999996,
-              "name": "p20",
-              "playerId": "p20",
+              "mu": 2.5,
+              "name": "p21",
+              "playerId": "p21",
               "sigma": 0.3,
             },
             {
@@ -1228,30 +434,30 @@ exports[`matcher golden runs (M2.10) > men-32 × balanced 1`] = `
             },
           ],
           "teamSums": [
-            4.5,
-            4.5,
+            4.4,
+            4.4,
           ],
           "teams": [
             [
               "p19",
-              "p28",
+              "p29",
             ],
             [
-              "p20",
+              "p21",
               "p27",
             ],
           ],
         },
         {
-          "courtSpread": 1.1,
+          "courtSpread": 0.7999999999999998,
           "flags": [],
           "players": [
             {
               "gender": "male",
               "isLeftHanded": false,
-              "mu": 2.5,
-              "name": "p21",
-              "playerId": "p21",
+              "mu": 2.1999999999999997,
+              "name": "p24",
+              "playerId": "p24",
               "sigma": 0.3,
             },
             {
@@ -1260,60 +466,6 @@ exports[`matcher golden runs (M2.10) > men-32 × balanced 1`] = `
               "mu": 1.4,
               "name": "p32",
               "playerId": "p32",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 2.3,
-              "name": "p23",
-              "playerId": "p23",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 1.5999999999999996,
-              "name": "p30",
-              "playerId": "p30",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            3.9,
-            3.8999999999999995,
-          ],
-          "teams": [
-            [
-              "p21",
-              "p32",
-            ],
-            [
-              "p23",
-              "p30",
-            ],
-          ],
-        },
-        {
-          "courtSpread": 0.5999999999999996,
-          "flags": [
-            "opponent-rematch",
-          ],
-          "players": [
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 2.0999999999999996,
-              "name": "p25",
-              "playerId": "p25",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 1.6999999999999997,
-              "name": "p29",
-              "playerId": "p29",
               "sigma": 0.3,
             },
             {
@@ -1334,13 +486,13 @@ exports[`matcher golden runs (M2.10) > men-32 × balanced 1`] = `
             },
           ],
           "teamSums": [
-            3.7999999999999994,
+            3.5999999999999996,
             3.5,
           ],
           "teams": [
             [
-              "p25",
-              "p29",
+              "p24",
+              "p32",
             ],
             [
               "p26",
@@ -1354,23 +506,23 @@ exports[`matcher golden runs (M2.10) > men-32 × balanced 1`] = `
     {
       "courts": [
         {
-          "courtSpread": 1.6000000000000005,
+          "courtSpread": 0.7000000000000002,
           "flags": [],
           "players": [
             {
               "gender": "male",
               "isLeftHanded": true,
-              "mu": 4.4,
-              "name": "p02",
-              "playerId": "p02",
+              "mu": 4.5,
+              "name": "p01",
+              "playerId": "p01",
               "sigma": 0.3,
             },
             {
               "gender": "male",
               "isLeftHanded": false,
-              "mu": 2.8,
-              "name": "p18",
-              "playerId": "p18",
+              "mu": 3.8,
+              "name": "p08",
+              "playerId": "p08",
               "sigma": 0.3,
             },
             {
@@ -1384,29 +536,29 @@ exports[`matcher golden runs (M2.10) > men-32 × balanced 1`] = `
             {
               "gender": "male",
               "isLeftHanded": false,
-              "mu": 2.9,
-              "name": "p17",
-              "playerId": "p17",
+              "mu": 4.1,
+              "name": "p05",
+              "playerId": "p05",
               "sigma": 0.3,
             },
           ],
           "teamSums": [
-            7.2,
-            7.199999999999999,
+            8.3,
+            8.399999999999999,
           ],
           "teams": [
             [
-              "p02",
-              "p18",
+              "p01",
+              "p08",
             ],
             [
               "p03",
-              "p17",
+              "p05",
             ],
           ],
         },
         {
-          "courtSpread": 0.7000000000000002,
+          "courtSpread": 1.1000000000000005,
           "flags": [],
           "players": [
             {
@@ -1420,9 +572,61 @@ exports[`matcher golden runs (M2.10) > men-32 × balanced 1`] = `
             {
               "gender": "male",
               "isLeftHanded": false,
-              "mu": 3.5,
-              "name": "p11",
-              "playerId": "p11",
+              "mu": 3.0999999999999996,
+              "name": "p15",
+              "playerId": "p15",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 3.9,
+              "name": "p07",
+              "playerId": "p07",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 3.4,
+              "name": "p12",
+              "playerId": "p12",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            7.3,
+            7.3,
+          ],
+          "teams": [
+            [
+              "p04",
+              "p15",
+            ],
+            [
+              "p07",
+              "p12",
+            ],
+          ],
+        },
+        {
+          "courtSpread": 1.4000000000000004,
+          "flags": [],
+          "players": [
+            {
+              "gender": "male",
+              "isLeftHanded": true,
+              "mu": 4.4,
+              "name": "p02",
+              "playerId": "p02",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 3,
+              "name": "p16",
+              "playerId": "p16",
               "sigma": 0.3,
             },
             {
@@ -1436,30 +640,405 @@ exports[`matcher golden runs (M2.10) > men-32 × balanced 1`] = `
             {
               "gender": "male",
               "isLeftHanded": false,
+              "mu": 3.5,
+              "name": "p11",
+              "playerId": "p11",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            7.4,
+            7.5,
+          ],
+          "teams": [
+            [
+              "p02",
+              "p16",
+            ],
+            [
+              "p06",
+              "p11",
+            ],
+          ],
+        },
+        {
+          "courtSpread": 0.7000000000000002,
+          "flags": [],
+          "players": [
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 3.6,
+              "name": "p10",
+              "playerId": "p10",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 2.9,
+              "name": "p17",
+              "playerId": "p17",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 3.3,
+              "name": "p13",
+              "playerId": "p13",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 3.2,
+              "name": "p14",
+              "playerId": "p14",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            6.5,
+            6.5,
+          ],
+          "teams": [
+            [
+              "p10",
+              "p17",
+            ],
+            [
+              "p13",
+              "p14",
+            ],
+          ],
+        },
+        {
+          "courtSpread": 2.2,
+          "flags": [],
+          "players": [
+            {
+              "gender": "male",
+              "isLeftHanded": false,
               "mu": 3.7,
               "name": "p09",
               "playerId": "p09",
               "sigma": 0.3,
             },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 1.5,
+              "name": "p31",
+              "playerId": "p31",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 2.8,
+              "name": "p18",
+              "playerId": "p18",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 2.4,
+              "name": "p22",
+              "playerId": "p22",
+              "sigma": 0.3,
+            },
           ],
           "teamSums": [
-            7.7,
-            7.7,
+            5.2,
+            5.199999999999999,
           ],
           "teams": [
             [
-              "p04",
-              "p11",
+              "p09",
+              "p31",
             ],
             [
-              "p06",
-              "p09",
+              "p18",
+              "p22",
             ],
           ],
         },
         {
-          "courtSpread": 1.3999999999999995,
+          "courtSpread": 0.8999999999999999,
           "flags": [],
+          "players": [
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 2.3,
+              "name": "p23",
+              "playerId": "p23",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 1.4,
+              "name": "p32",
+              "playerId": "p32",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 1.9,
+              "name": "p27",
+              "playerId": "p27",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 1.5999999999999996,
+              "name": "p30",
+              "playerId": "p30",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            3.6999999999999997,
+            3.4999999999999996,
+          ],
+          "teams": [
+            [
+              "p23",
+              "p32",
+            ],
+            [
+              "p27",
+              "p30",
+            ],
+          ],
+        },
+        {
+          "courtSpread": 0.8999999999999999,
+          "flags": [],
+          "players": [
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 2.5999999999999996,
+              "name": "p20",
+              "playerId": "p20",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 1.6999999999999997,
+              "name": "p29",
+              "playerId": "p29",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 2.1999999999999997,
+              "name": "p24",
+              "playerId": "p24",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 2.0999999999999996,
+              "name": "p25",
+              "playerId": "p25",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            4.299999999999999,
+            4.299999999999999,
+          ],
+          "teams": [
+            [
+              "p20",
+              "p29",
+            ],
+            [
+              "p24",
+              "p25",
+            ],
+          ],
+        },
+        {
+          "courtSpread": 0.9000000000000004,
+          "flags": [
+            "opponent-rematch",
+          ],
+          "players": [
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 2.7,
+              "name": "p19",
+              "playerId": "p19",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 1.7999999999999998,
+              "name": "p28",
+              "playerId": "p28",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 2.5,
+              "name": "p21",
+              "playerId": "p21",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 2,
+              "name": "p26",
+              "playerId": "p26",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            4.5,
+            4.5,
+          ],
+          "teams": [
+            [
+              "p19",
+              "p28",
+            ],
+            [
+              "p21",
+              "p26",
+            ],
+          ],
+        },
+      ],
+      "sitters": [],
+    },
+    {
+      "courts": [
+        {
+          "courtSpread": 0.7999999999999998,
+          "flags": [
+            "opponent-rematch",
+          ],
+          "players": [
+            {
+              "gender": "male",
+              "isLeftHanded": true,
+              "mu": 4.5,
+              "name": "p01",
+              "playerId": "p01",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 3.7,
+              "name": "p09",
+              "playerId": "p09",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": true,
+              "mu": 4.3,
+              "name": "p03",
+              "playerId": "p03",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 3.9,
+              "name": "p07",
+              "playerId": "p07",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            8.2,
+            8.2,
+          ],
+          "teams": [
+            [
+              "p01",
+              "p09",
+            ],
+            [
+              "p03",
+              "p07",
+            ],
+          ],
+        },
+        {
+          "courtSpread": 1.2000000000000002,
+          "flags": [],
+          "players": [
+            {
+              "gender": "male",
+              "isLeftHanded": true,
+              "mu": 4.4,
+              "name": "p02",
+              "playerId": "p02",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 3.2,
+              "name": "p14",
+              "playerId": "p14",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 4.2,
+              "name": "p04",
+              "playerId": "p04",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 3.4,
+              "name": "p12",
+              "playerId": "p12",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            7.6000000000000005,
+            7.6,
+          ],
+          "teams": [
+            [
+              "p02",
+              "p14",
+            ],
+            [
+              "p04",
+              "p12",
+            ],
+          ],
+        },
+        {
+          "courtSpread": 1.0999999999999996,
+          "flags": [
+            "opponent-rematch",
+          ],
           "players": [
             {
               "gender": "male",
@@ -1472,9 +1051,63 @@ exports[`matcher golden runs (M2.10) > men-32 × balanced 1`] = `
             {
               "gender": "male",
               "isLeftHanded": false,
-              "mu": 2.7,
-              "name": "p19",
-              "playerId": "p19",
+              "mu": 3,
+              "name": "p16",
+              "playerId": "p16",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 3.8,
+              "name": "p08",
+              "playerId": "p08",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 3.3,
+              "name": "p13",
+              "playerId": "p13",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            7.1,
+            7.1,
+          ],
+          "teams": [
+            [
+              "p05",
+              "p16",
+            ],
+            [
+              "p08",
+              "p13",
+            ],
+          ],
+        },
+        {
+          "courtSpread": 0.9000000000000004,
+          "flags": [
+            "opponent-rematch",
+          ],
+          "players": [
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 4,
+              "name": "p06",
+              "playerId": "p06",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 3.0999999999999996,
+              "name": "p15",
+              "playerId": "p15",
               "sigma": 0.3,
             },
             {
@@ -1488,37 +1121,45 @@ exports[`matcher golden runs (M2.10) > men-32 × balanced 1`] = `
             {
               "gender": "male",
               "isLeftHanded": false,
-              "mu": 3.3,
-              "name": "p13",
-              "playerId": "p13",
+              "mu": 3.5,
+              "name": "p11",
+              "playerId": "p11",
               "sigma": 0.3,
             },
           ],
           "teamSums": [
-            6.8,
-            6.9,
+            7.1,
+            7.1,
           ],
           "teams": [
             [
-              "p05",
-              "p19",
+              "p06",
+              "p15",
             ],
             [
               "p10",
-              "p13",
+              "p11",
             ],
           ],
         },
         {
-          "courtSpread": 1.2000000000000002,
+          "courtSpread": 1.4,
           "flags": [],
           "players": [
             {
               "gender": "male",
               "isLeftHanded": false,
-              "mu": 3.8,
-              "name": "p08",
-              "playerId": "p08",
+              "mu": 2.8,
+              "name": "p18",
+              "playerId": "p18",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 1.4,
+              "name": "p32",
+              "playerId": "p32",
               "sigma": 0.3,
             },
             {
@@ -1532,6 +1173,261 @@ exports[`matcher golden runs (M2.10) > men-32 × balanced 1`] = `
             {
               "gender": "male",
               "isLeftHanded": false,
+              "mu": 1.7999999999999998,
+              "name": "p28",
+              "playerId": "p28",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            4.199999999999999,
+            4.3999999999999995,
+          ],
+          "teams": [
+            [
+              "p18",
+              "p32",
+            ],
+            [
+              "p20",
+              "p28",
+            ],
+          ],
+        },
+        {
+          "courtSpread": 1.1000000000000005,
+          "flags": [
+            "opponent-rematch",
+          ],
+          "players": [
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 2.7,
+              "name": "p19",
+              "playerId": "p19",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 1.5999999999999996,
+              "name": "p30",
+              "playerId": "p30",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 2.4,
+              "name": "p22",
+              "playerId": "p22",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 1.9,
+              "name": "p27",
+              "playerId": "p27",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            4.3,
+            4.3,
+          ],
+          "teams": [
+            [
+              "p19",
+              "p30",
+            ],
+            [
+              "p22",
+              "p27",
+            ],
+          ],
+        },
+        {
+          "courtSpread": 1.4,
+          "flags": [],
+          "players": [
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 2.9,
+              "name": "p17",
+              "playerId": "p17",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 1.5,
+              "name": "p31",
+              "playerId": "p31",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 2.3,
+              "name": "p23",
+              "playerId": "p23",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 2.0999999999999996,
+              "name": "p25",
+              "playerId": "p25",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            4.4,
+            4.3999999999999995,
+          ],
+          "teams": [
+            [
+              "p17",
+              "p31",
+            ],
+            [
+              "p23",
+              "p25",
+            ],
+          ],
+        },
+        {
+          "courtSpread": 0.8000000000000003,
+          "flags": [
+            "opponent-rematch",
+          ],
+          "players": [
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 2.5,
+              "name": "p21",
+              "playerId": "p21",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 1.6999999999999997,
+              "name": "p29",
+              "playerId": "p29",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 2.1999999999999997,
+              "name": "p24",
+              "playerId": "p24",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 2,
+              "name": "p26",
+              "playerId": "p26",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            4.199999999999999,
+            4.199999999999999,
+          ],
+          "teams": [
+            [
+              "p21",
+              "p29",
+            ],
+            [
+              "p24",
+              "p26",
+            ],
+          ],
+        },
+      ],
+      "sitters": [],
+    },
+    {
+      "courts": [
+        {
+          "courtSpread": 0.40000000000000036,
+          "flags": [
+            "opponent-rematch",
+          ],
+          "players": [
+            {
+              "gender": "male",
+              "isLeftHanded": true,
+              "mu": 4.5,
+              "name": "p01",
+              "playerId": "p01",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 4.1,
+              "name": "p05",
+              "playerId": "p05",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": true,
+              "mu": 4.4,
+              "name": "p02",
+              "playerId": "p02",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 4.2,
+              "name": "p04",
+              "playerId": "p04",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            8.6,
+            8.600000000000001,
+          ],
+          "teams": [
+            [
+              "p01",
+              "p05",
+            ],
+            [
+              "p02",
+              "p04",
+            ],
+          ],
+        },
+        {
+          "courtSpread": 0.3999999999999999,
+          "flags": [],
+          "players": [
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 3.8,
+              "name": "p08",
+              "playerId": "p08",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
               "mu": 3.4,
               "name": "p12",
               "playerId": "p12",
@@ -1540,24 +1436,84 @@ exports[`matcher golden runs (M2.10) > men-32 × balanced 1`] = `
             {
               "gender": "male",
               "isLeftHanded": false,
-              "mu": 3,
-              "name": "p16",
-              "playerId": "p16",
+              "mu": 3.7,
+              "name": "p09",
+              "playerId": "p09",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 3.5,
+              "name": "p11",
+              "playerId": "p11",
               "sigma": 0.3,
             },
           ],
           "teamSums": [
-            6.3999999999999995,
-            6.4,
+            7.199999999999999,
+            7.2,
           ],
           "teams": [
             [
               "p08",
-              "p20",
+              "p12",
             ],
             [
-              "p12",
-              "p16",
+              "p09",
+              "p11",
+            ],
+          ],
+        },
+        {
+          "courtSpread": 1.5,
+          "flags": [],
+          "players": [
+            {
+              "gender": "male",
+              "isLeftHanded": true,
+              "mu": 4.3,
+              "name": "p03",
+              "playerId": "p03",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 2.8,
+              "name": "p18",
+              "playerId": "p18",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 4,
+              "name": "p06",
+              "playerId": "p06",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 3.3,
+              "name": "p13",
+              "playerId": "p13",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            7.1,
+            7.3,
+          ],
+          "teams": [
+            [
+              "p03",
+              "p18",
+            ],
+            [
+              "p06",
+              "p13",
             ],
           ],
         },
@@ -1614,77 +1570,15 @@ exports[`matcher golden runs (M2.10) > men-32 × balanced 1`] = `
           ],
         },
         {
-          "courtSpread": 2.6,
+          "courtSpread": 1.9,
           "flags": [],
           "players": [
-            {
-              "gender": "male",
-              "isLeftHanded": true,
-              "mu": 4.5,
-              "name": "p01",
-              "playerId": "p01",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 1.9,
-              "name": "p27",
-              "playerId": "p27",
-              "sigma": 0.3,
-            },
             {
               "gender": "male",
               "isLeftHanded": false,
               "mu": 3.9,
               "name": "p07",
               "playerId": "p07",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 2.5,
-              "name": "p21",
-              "playerId": "p21",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            6.4,
-            6.4,
-          ],
-          "teams": [
-            [
-              "p01",
-              "p27",
-            ],
-            [
-              "p07",
-              "p21",
-            ],
-          ],
-        },
-        {
-          "courtSpread": 1,
-          "flags": [
-            "opponent-rematch",
-          ],
-          "players": [
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 2.4,
-              "name": "p22",
-              "playerId": "p22",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 1.4,
-              "name": "p32",
-              "playerId": "p32",
               "sigma": 0.3,
             },
             {
@@ -1698,29 +1592,89 @@ exports[`matcher golden runs (M2.10) > men-32 × balanced 1`] = `
             {
               "gender": "male",
               "isLeftHanded": false,
-              "mu": 1.6999999999999997,
-              "name": "p29",
-              "playerId": "p29",
+              "mu": 3.6,
+              "name": "p10",
+              "playerId": "p10",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 2.4,
+              "name": "p22",
+              "playerId": "p22",
               "sigma": 0.3,
             },
           ],
           "teamSums": [
-            3.8,
-            3.6999999999999997,
+            5.9,
+            6,
           ],
           "teams": [
             [
-              "p22",
-              "p32",
+              "p07",
+              "p26",
             ],
             [
-              "p26",
-              "p29",
+              "p10",
+              "p22",
             ],
           ],
         },
         {
-          "courtSpread": 0.7999999999999998,
+          "courtSpread": 0.40000000000000036,
+          "flags": [],
+          "players": [
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 3,
+              "name": "p16",
+              "playerId": "p16",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 2.5999999999999996,
+              "name": "p20",
+              "playerId": "p20",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 2.9,
+              "name": "p17",
+              "playerId": "p17",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 2.7,
+              "name": "p19",
+              "playerId": "p19",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            5.6,
+            5.6,
+          ],
+          "teams": [
+            [
+              "p16",
+              "p20",
+            ],
+            [
+              "p17",
+              "p19",
+            ],
+          ],
+        },
+        {
+          "courtSpread": 1.1,
           "flags": [
             "opponent-rematch",
           ],
@@ -1728,9 +1682,63 @@ exports[`matcher golden runs (M2.10) > men-32 × balanced 1`] = `
             {
               "gender": "male",
               "isLeftHanded": false,
+              "mu": 2.5,
+              "name": "p21",
+              "playerId": "p21",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 1.4,
+              "name": "p32",
+              "playerId": "p32",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
               "mu": 2.3,
               "name": "p23",
               "playerId": "p23",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 1.6999999999999997,
+              "name": "p29",
+              "playerId": "p29",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            3.9,
+            3.9999999999999996,
+          ],
+          "teams": [
+            [
+              "p21",
+              "p32",
+            ],
+            [
+              "p23",
+              "p29",
+            ],
+          ],
+        },
+        {
+          "courtSpread": 0.3999999999999999,
+          "flags": [
+            "opponent-rematch",
+          ],
+          "players": [
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 1.9,
+              "name": "p27",
+              "playerId": "p27",
               "sigma": 0.3,
             },
             {
@@ -1759,12 +1767,12 @@ exports[`matcher golden runs (M2.10) > men-32 × balanced 1`] = `
             },
           ],
           "teamSums": [
-            3.8,
+            3.4,
             3.3999999999999995,
           ],
           "teams": [
             [
-              "p23",
+              "p27",
               "p31",
             ],
             [
@@ -5368,7 +5376,7 @@ exports[`matcher golden runs (M2.10) > mixed-16 × balanced 1`] = `
     "maxPartnerGap": 1,
     "preset": "balanced",
     "seed": 3635110702,
-    "socialDial": 0.35,
+    "socialDial": 0.5,
     "weights": {
       "courtSpread": 1.5,
       "mixedPreference": 0.3,
@@ -5408,22 +5416,15 @@ exports[`matcher golden runs (M2.10) > mixed-16 × balanced 1`] = `
   ],
   "quality": {
     "overall": {
-      "balance": 93.99999999999997,
-      "genderPreference": 70,
-      "partnerFairness": 97,
+      "balance": 94.99999999999996,
+      "genderPreference": 75,
+      "partnerFairness": 96.5,
       "sitoutFairness": 100,
-      "variety": 87.5,
+      "variety": 90,
     },
     "perRound": [
       {
-        "balance": 90.00000000000001,
-        "genderPreference": 50,
-        "partnerFairness": 100,
-        "sitoutFairness": 100,
-        "variety": 100,
-      },
-      {
-        "balance": 89.99999999999997,
+        "balance": 94.99999999999996,
         "genderPreference": 50,
         "partnerFairness": 100,
         "sitoutFairness": 100,
@@ -5432,21 +5433,28 @@ exports[`matcher golden runs (M2.10) > mixed-16 × balanced 1`] = `
       {
         "balance": 99.99999999999993,
         "genderPreference": 100,
-        "partnerFairness": 98.75,
+        "partnerFairness": 95,
         "sitoutFairness": 100,
-        "variety": 75,
+        "variety": 87.5,
       },
       {
         "balance": 95,
-        "genderPreference": 75,
-        "partnerFairness": 96.24999999999999,
+        "genderPreference": 25,
+        "partnerFairness": 97.5,
         "sitoutFairness": 100,
-        "variety": 81.25,
+        "variety": 93.75,
       },
       {
-        "balance": 94.99999999999994,
-        "genderPreference": 75,
-        "partnerFairness": 89.99999999999999,
+        "balance": 89.99999999999999,
+        "genderPreference": 100,
+        "partnerFairness": 93.75,
+        "sitoutFairness": 100,
+        "variety": 87.5,
+      },
+      {
+        "balance": 94.99999999999996,
+        "genderPreference": 100,
+        "partnerFairness": 96.24999999999999,
         "sitoutFairness": 100,
         "variety": 81.25,
       },
@@ -5456,7 +5464,7 @@ exports[`matcher golden runs (M2.10) > mixed-16 × balanced 1`] = `
     {
       "courts": [
         {
-          "courtSpread": 0.7999999999999998,
+          "courtSpread": 0.8999999999999999,
           "flags": [],
           "players": [
             {
@@ -5465,110 +5473,6 @@ exports[`matcher golden runs (M2.10) > mixed-16 × balanced 1`] = `
               "mu": 4.5,
               "name": "p01",
               "playerId": "p01",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 3.7,
-              "name": "p09",
-              "playerId": "p09",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": true,
-              "mu": 4.2,
-              "name": "p04",
-              "playerId": "p04",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 4,
-              "name": "p06",
-              "playerId": "p06",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            8.2,
-            8.2,
-          ],
-          "teams": [
-            [
-              "p01",
-              "p09",
-            ],
-            [
-              "p04",
-              "p06",
-            ],
-          ],
-        },
-        {
-          "courtSpread": 0.6999999999999997,
-          "flags": [],
-          "players": [
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 4.1,
-              "name": "p05",
-              "playerId": "p05",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 3.5,
-              "name": "p11",
-              "playerId": "p11",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 3.9,
-              "name": "p07",
-              "playerId": "p07",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 3.4,
-              "name": "p12",
-              "playerId": "p12",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            7.6,
-            7.3,
-          ],
-          "teams": [
-            [
-              "p05",
-              "p11",
-            ],
-            [
-              "p07",
-              "p12",
-            ],
-          ],
-        },
-        {
-          "courtSpread": 0.8000000000000003,
-          "flags": [],
-          "players": [
-            {
-              "gender": "male",
-              "isLeftHanded": true,
-              "mu": 4.4,
-              "name": "p02",
-              "playerId": "p02",
               "sigma": 0.3,
             },
             {
@@ -5597,12 +5501,12 @@ exports[`matcher golden runs (M2.10) > mixed-16 × balanced 1`] = `
             },
           ],
           "teamSums": [
-            8,
+            8.1,
             8.1,
           ],
           "teams": [
             [
-              "p02",
+              "p01",
               "p10",
             ],
             [
@@ -5612,134 +5516,9 @@ exports[`matcher golden runs (M2.10) > mixed-16 × balanced 1`] = `
           ],
         },
         {
-          "courtSpread": 0.2999999999999998,
+          "courtSpread": 1.1000000000000005,
           "flags": [],
           "players": [
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 3.3,
-              "name": "p13",
-              "playerId": "p13",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 3,
-              "name": "p16",
-              "playerId": "p16",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 3.2,
-              "name": "p14",
-              "playerId": "p14",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 3.0999999999999996,
-              "name": "p15",
-              "playerId": "p15",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            6.3,
-            6.3,
-          ],
-          "teams": [
-            [
-              "p13",
-              "p16",
-            ],
-            [
-              "p14",
-              "p15",
-            ],
-          ],
-        },
-      ],
-      "sitters": [],
-    },
-    {
-      "courts": [
-        {
-          "courtSpread": 0.5,
-          "flags": [],
-          "players": [
-            {
-              "gender": "male",
-              "isLeftHanded": true,
-              "mu": 4.5,
-              "name": "p01",
-              "playerId": "p01",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 4,
-              "name": "p06",
-              "playerId": "p06",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": true,
-              "mu": 4.4,
-              "name": "p02",
-              "playerId": "p02",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 4.1,
-              "name": "p05",
-              "playerId": "p05",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            8.5,
-            8.5,
-          ],
-          "teams": [
-            [
-              "p01",
-              "p06",
-            ],
-            [
-              "p02",
-              "p05",
-            ],
-          ],
-        },
-        {
-          "courtSpread": 0.8999999999999999,
-          "flags": [],
-          "players": [
-            {
-              "gender": "male",
-              "isLeftHanded": true,
-              "mu": 4.3,
-              "name": "p03",
-              "playerId": "p03",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 3.4,
-              "name": "p12",
-              "playerId": "p12",
-              "sigma": 0.3,
-            },
             {
               "gender": "male",
               "isLeftHanded": true,
@@ -5751,37 +5530,17 @@ exports[`matcher golden runs (M2.10) > mixed-16 × balanced 1`] = `
             {
               "gender": "female",
               "isLeftHanded": false,
-              "mu": 3.7,
-              "name": "p09",
-              "playerId": "p09",
+              "mu": 3.2,
+              "name": "p14",
+              "playerId": "p14",
               "sigma": 0.3,
             },
-          ],
-          "teamSums": [
-            7.699999999999999,
-            7.9,
-          ],
-          "teams": [
-            [
-              "p03",
-              "p12",
-            ],
-            [
-              "p04",
-              "p09",
-            ],
-          ],
-        },
-        {
-          "courtSpread": 0.8000000000000003,
-          "flags": [],
-          "players": [
             {
               "gender": "male",
               "isLeftHanded": false,
-              "mu": 3.9,
-              "name": "p07",
-              "playerId": "p07",
+              "mu": 4.1,
+              "name": "p05",
+              "playerId": "p05",
               "sigma": 0.3,
             },
             {
@@ -5792,203 +5551,133 @@ exports[`matcher golden runs (M2.10) > mixed-16 × balanced 1`] = `
               "playerId": "p15",
               "sigma": 0.3,
             },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 3.8,
-              "name": "p08",
-              "playerId": "p08",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 3.2,
-              "name": "p14",
-              "playerId": "p14",
-              "sigma": 0.3,
-            },
           ],
           "teamSums": [
-            7,
-            7,
+            7.4,
+            7.199999999999999,
           ],
           "teams": [
             [
-              "p07",
+              "p04",
+              "p14",
+            ],
+            [
+              "p05",
               "p15",
-            ],
-            [
-              "p08",
-              "p14",
-            ],
-          ],
-        },
-        {
-          "courtSpread": 0.6000000000000001,
-          "flags": [],
-          "players": [
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 3.6,
-              "name": "p10",
-              "playerId": "p10",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 3,
-              "name": "p16",
-              "playerId": "p16",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 3.5,
-              "name": "p11",
-              "playerId": "p11",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 3.3,
-              "name": "p13",
-              "playerId": "p13",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            6.6,
-            6.8,
-          ],
-          "teams": [
-            [
-              "p10",
-              "p16",
-            ],
-            [
-              "p11",
-              "p13",
-            ],
-          ],
-        },
-      ],
-      "sitters": [],
-    },
-    {
-      "courts": [
-        {
-          "courtSpread": 0.8999999999999999,
-          "flags": [
-            "opponent-rematch",
-          ],
-          "players": [
-            {
-              "gender": "male",
-              "isLeftHanded": true,
-              "mu": 4.5,
-              "name": "p01",
-              "playerId": "p01",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 3.6,
-              "name": "p10",
-              "playerId": "p10",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": true,
-              "mu": 4.4,
-              "name": "p02",
-              "playerId": "p02",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 3.7,
-              "name": "p09",
-              "playerId": "p09",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            8.1,
-            8.100000000000001,
-          ],
-          "teams": [
-            [
-              "p01",
-              "p10",
-            ],
-            [
-              "p02",
-              "p09",
-            ],
-          ],
-        },
-        {
-          "courtSpread": 1.0999999999999996,
-          "flags": [],
-          "players": [
-            {
-              "gender": "male",
-              "isLeftHanded": true,
-              "mu": 4.3,
-              "name": "p03",
-              "playerId": "p03",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 3.2,
-              "name": "p14",
-              "playerId": "p14",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 4,
-              "name": "p06",
-              "playerId": "p06",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 3.5,
-              "name": "p11",
-              "playerId": "p11",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            7.5,
-            7.5,
-          ],
-          "teams": [
-            [
-              "p03",
-              "p14",
-            ],
-            [
-              "p06",
-              "p11",
             ],
           ],
         },
         {
           "courtSpread": 0.9000000000000004,
+          "flags": [],
+          "players": [
+            {
+              "gender": "male",
+              "isLeftHanded": true,
+              "mu": 4.4,
+              "name": "p02",
+              "playerId": "p02",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 3.5,
+              "name": "p11",
+              "playerId": "p11",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 4,
+              "name": "p06",
+              "playerId": "p06",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 3.9,
+              "name": "p07",
+              "playerId": "p07",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            7.9,
+            7.9,
+          ],
+          "teams": [
+            [
+              "p02",
+              "p11",
+            ],
+            [
+              "p06",
+              "p07",
+            ],
+          ],
+        },
+        {
+          "courtSpread": 0.7000000000000002,
+          "flags": [],
+          "players": [
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 3.7,
+              "name": "p09",
+              "playerId": "p09",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 3,
+              "name": "p16",
+              "playerId": "p16",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 3.4,
+              "name": "p12",
+              "playerId": "p12",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 3.3,
+              "name": "p13",
+              "playerId": "p13",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            6.7,
+            6.699999999999999,
+          ],
+          "teams": [
+            [
+              "p09",
+              "p16",
+            ],
+            [
+              "p12",
+              "p13",
+            ],
+          ],
+        },
+      ],
+      "sitters": [],
+    },
+    {
+      "courts": [
+        {
+          "courtSpread": 1.2000000000000002,
           "flags": [
             "opponent-rematch",
           ],
@@ -5996,9 +5685,9 @@ exports[`matcher golden runs (M2.10) > mixed-16 × balanced 1`] = `
             {
               "gender": "male",
               "isLeftHanded": true,
-              "mu": 4.2,
-              "name": "p04",
-              "playerId": "p04",
+              "mu": 4.5,
+              "name": "p01",
+              "playerId": "p01",
               "sigma": 0.3,
             },
             {
@@ -6020,32 +5709,136 @@ exports[`matcher golden runs (M2.10) > mixed-16 × balanced 1`] = `
             {
               "gender": "female",
               "isLeftHanded": false,
-              "mu": 3.4,
-              "name": "p12",
-              "playerId": "p12",
+              "mu": 3.7,
+              "name": "p09",
+              "playerId": "p09",
               "sigma": 0.3,
             },
           ],
           "teamSums": [
-            7.5,
-            7.5,
+            7.8,
+            7.8,
           ],
           "teams": [
             [
-              "p04",
+              "p01",
               "p13",
             ],
             [
               "p05",
-              "p12",
+              "p09",
             ],
           ],
         },
         {
           "courtSpread": 0.8999999999999999,
+          "flags": [],
+          "players": [
+            {
+              "gender": "male",
+              "isLeftHanded": true,
+              "mu": 4.3,
+              "name": "p03",
+              "playerId": "p03",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 3.4,
+              "name": "p12",
+              "playerId": "p12",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": true,
+              "mu": 4.2,
+              "name": "p04",
+              "playerId": "p04",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 3.5,
+              "name": "p11",
+              "playerId": "p11",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            7.699999999999999,
+            7.7,
+          ],
+          "teams": [
+            [
+              "p03",
+              "p12",
+            ],
+            [
+              "p04",
+              "p11",
+            ],
+          ],
+        },
+        {
+          "courtSpread": 1.2000000000000002,
           "flags": [
             "opponent-rematch",
           ],
+          "players": [
+            {
+              "gender": "male",
+              "isLeftHanded": true,
+              "mu": 4.4,
+              "name": "p02",
+              "playerId": "p02",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 3.2,
+              "name": "p14",
+              "playerId": "p14",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 4,
+              "name": "p06",
+              "playerId": "p06",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 3.6,
+              "name": "p10",
+              "playerId": "p10",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            7.6000000000000005,
+            7.6,
+          ],
+          "teams": [
+            [
+              "p02",
+              "p14",
+            ],
+            [
+              "p06",
+              "p10",
+            ],
+          ],
+        },
+        {
+          "courtSpread": 0.8999999999999999,
+          "flags": [],
           "players": [
             {
               "gender": "male",
@@ -6101,10 +5894,114 @@ exports[`matcher golden runs (M2.10) > mixed-16 × balanced 1`] = `
     {
       "courts": [
         {
-          "courtSpread": 1,
+          "courtSpread": 0.7000000000000002,
+          "flags": [],
+          "players": [
+            {
+              "gender": "male",
+              "isLeftHanded": true,
+              "mu": 4.5,
+              "name": "p01",
+              "playerId": "p01",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 3.8,
+              "name": "p08",
+              "playerId": "p08",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": true,
+              "mu": 4.4,
+              "name": "p02",
+              "playerId": "p02",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 4,
+              "name": "p06",
+              "playerId": "p06",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            8.3,
+            8.4,
+          ],
+          "teams": [
+            [
+              "p01",
+              "p08",
+            ],
+            [
+              "p02",
+              "p06",
+            ],
+          ],
+        },
+        {
+          "courtSpread": 0.30000000000000027,
           "flags": [
             "opponent-rematch",
           ],
+          "players": [
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 3.4,
+              "name": "p12",
+              "playerId": "p12",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 3.0999999999999996,
+              "name": "p15",
+              "playerId": "p15",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 3.3,
+              "name": "p13",
+              "playerId": "p13",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 3.2,
+              "name": "p14",
+              "playerId": "p14",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            6.5,
+            6.5,
+          ],
+          "teams": [
+            [
+              "p12",
+              "p15",
+            ],
+            [
+              "p13",
+              "p14",
+            ],
+          ],
+        },
+        {
+          "courtSpread": 0.5999999999999996,
+          "flags": [],
           "players": [
             {
               "gender": "male",
@@ -6117,63 +6014,9 @@ exports[`matcher golden runs (M2.10) > mixed-16 × balanced 1`] = `
             {
               "gender": "female",
               "isLeftHanded": false,
-              "mu": 3.3,
-              "name": "p13",
-              "playerId": "p13",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 3.9,
-              "name": "p07",
-              "playerId": "p07",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
               "mu": 3.7,
               "name": "p09",
               "playerId": "p09",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            7.6,
-            7.6,
-          ],
-          "teams": [
-            [
-              "p03",
-              "p13",
-            ],
-            [
-              "p07",
-              "p09",
-            ],
-          ],
-        },
-        {
-          "courtSpread": 1,
-          "flags": [
-            "opponent-rematch",
-          ],
-          "players": [
-            {
-              "gender": "male",
-              "isLeftHanded": true,
-              "mu": 4.5,
-              "name": "p01",
-              "playerId": "p01",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 3.5,
-              "name": "p11",
-              "playerId": "p11",
               "sigma": 0.3,
             },
             {
@@ -6187,37 +6030,37 @@ exports[`matcher golden runs (M2.10) > mixed-16 × balanced 1`] = `
             {
               "gender": "male",
               "isLeftHanded": false,
-              "mu": 3.8,
-              "name": "p08",
-              "playerId": "p08",
+              "mu": 3.9,
+              "name": "p07",
+              "playerId": "p07",
               "sigma": 0.3,
             },
           ],
           "teamSums": [
             8,
-            7.8999999999999995,
+            8,
           ],
           "teams": [
             [
-              "p01",
-              "p11",
+              "p03",
+              "p09",
             ],
             [
               "p05",
-              "p08",
+              "p07",
             ],
           ],
         },
         {
-          "courtSpread": 1,
+          "courtSpread": 1.2000000000000002,
           "flags": [],
           "players": [
             {
               "gender": "male",
-              "isLeftHanded": false,
-              "mu": 4,
-              "name": "p06",
-              "playerId": "p06",
+              "isLeftHanded": true,
+              "mu": 4.2,
+              "name": "p04",
+              "playerId": "p04",
               "sigma": 0.3,
             },
             {
@@ -6239,78 +6082,24 @@ exports[`matcher golden runs (M2.10) > mixed-16 × balanced 1`] = `
             {
               "gender": "female",
               "isLeftHanded": false,
-              "mu": 3.4,
-              "name": "p12",
-              "playerId": "p12",
+              "mu": 3.5,
+              "name": "p11",
+              "playerId": "p11",
               "sigma": 0.3,
             },
           ],
           "teamSums": [
-            7,
-            7,
+            7.2,
+            7.1,
           ],
           "teams": [
             [
-              "p06",
+              "p04",
               "p16",
             ],
             [
               "p10",
-              "p12",
-            ],
-          ],
-        },
-        {
-          "courtSpread": 1.3000000000000007,
-          "flags": [
-            "opponent-rematch",
-          ],
-          "players": [
-            {
-              "gender": "male",
-              "isLeftHanded": true,
-              "mu": 4.4,
-              "name": "p02",
-              "playerId": "p02",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 3.0999999999999996,
-              "name": "p15",
-              "playerId": "p15",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": true,
-              "mu": 4.2,
-              "name": "p04",
-              "playerId": "p04",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 3.2,
-              "name": "p14",
-              "playerId": "p14",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            7.5,
-            7.4,
-          ],
-          "teams": [
-            [
-              "p02",
-              "p15",
-            ],
-            [
-              "p04",
-              "p14",
+              "p11",
             ],
           ],
         },
@@ -6320,62 +6109,10 @@ exports[`matcher golden runs (M2.10) > mixed-16 × balanced 1`] = `
     {
       "courts": [
         {
-          "courtSpread": 0.6000000000000001,
+          "courtSpread": 1.1,
           "flags": [
             "opponent-rematch",
           ],
-          "players": [
-            {
-              "gender": "male",
-              "isLeftHanded": true,
-              "mu": 4.2,
-              "name": "p04",
-              "playerId": "p04",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 3.6,
-              "name": "p10",
-              "playerId": "p10",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 4,
-              "name": "p06",
-              "playerId": "p06",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 3.8,
-              "name": "p08",
-              "playerId": "p08",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            7.800000000000001,
-            7.8,
-          ],
-          "teams": [
-            [
-              "p04",
-              "p10",
-            ],
-            [
-              "p06",
-              "p08",
-            ],
-          ],
-        },
-        {
-          "courtSpread": 1.4000000000000004,
-          "flags": [],
           "players": [
             {
               "gender": "male",
@@ -6388,9 +6125,226 @@ exports[`matcher golden runs (M2.10) > mixed-16 × balanced 1`] = `
             {
               "gender": "female",
               "isLeftHanded": false,
+              "mu": 3.4,
+              "name": "p12",
+              "playerId": "p12",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": true,
+              "mu": 4.4,
+              "name": "p02",
+              "playerId": "p02",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 3.6,
+              "name": "p10",
+              "playerId": "p10",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            7.9,
+            8,
+          ],
+          "teams": [
+            [
+              "p01",
+              "p12",
+            ],
+            [
+              "p02",
+              "p10",
+            ],
+          ],
+        },
+        {
+          "courtSpread": 0.8999999999999995,
+          "flags": [],
+          "players": [
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 4.1,
+              "name": "p05",
+              "playerId": "p05",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 3.2,
+              "name": "p14",
+              "playerId": "p14",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 3.9,
+              "name": "p07",
+              "playerId": "p07",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 3.5,
+              "name": "p11",
+              "playerId": "p11",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            7.3,
+            7.4,
+          ],
+          "teams": [
+            [
+              "p05",
+              "p14",
+            ],
+            [
+              "p07",
+              "p11",
+            ],
+          ],
+        },
+        {
+          "courtSpread": 1.2999999999999998,
+          "flags": [
+            "opponent-rematch",
+          ],
+          "players": [
+            {
+              "gender": "male",
+              "isLeftHanded": true,
+              "mu": 4.3,
+              "name": "p03",
+              "playerId": "p03",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 3,
+              "name": "p16",
+              "playerId": "p16",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 4,
+              "name": "p06",
+              "playerId": "p06",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 3.3,
+              "name": "p13",
+              "playerId": "p13",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            7.3,
+            7.3,
+          ],
+          "teams": [
+            [
+              "p03",
+              "p16",
+            ],
+            [
+              "p06",
+              "p13",
+            ],
+          ],
+        },
+        {
+          "courtSpread": 1.1000000000000005,
+          "flags": [],
+          "players": [
+            {
+              "gender": "male",
+              "isLeftHanded": true,
+              "mu": 4.2,
+              "name": "p04",
+              "playerId": "p04",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
               "mu": 3.0999999999999996,
               "name": "p15",
               "playerId": "p15",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 3.8,
+              "name": "p08",
+              "playerId": "p08",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 3.7,
+              "name": "p09",
+              "playerId": "p09",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            7.3,
+            7.5,
+          ],
+          "teams": [
+            [
+              "p04",
+              "p15",
+            ],
+            [
+              "p08",
+              "p09",
+            ],
+          ],
+        },
+      ],
+      "sitters": [],
+    },
+    {
+      "courts": [
+        {
+          "courtSpread": 1.0000000000000004,
+          "flags": [
+            "opponent-rematch",
+          ],
+          "players": [
+            {
+              "gender": "male",
+              "isLeftHanded": true,
+              "mu": 4.4,
+              "name": "p02",
+              "playerId": "p02",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 3.4,
+              "name": "p12",
+              "playerId": "p12",
               "sigma": 0.3,
             },
             {
@@ -6411,13 +6365,13 @@ exports[`matcher golden runs (M2.10) > mixed-16 × balanced 1`] = `
             },
           ],
           "teamSums": [
-            7.6,
+            7.800000000000001,
             7.8,
           ],
           "teams": [
             [
-              "p01",
-              "p15",
+              "p02",
+              "p12",
             ],
             [
               "p03",
@@ -6426,9 +6380,27 @@ exports[`matcher golden runs (M2.10) > mixed-16 × balanced 1`] = `
           ],
         },
         {
-          "courtSpread": 0.6999999999999997,
-          "flags": [],
+          "courtSpread": 1,
+          "flags": [
+            "opponent-rematch",
+          ],
           "players": [
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 4,
+              "name": "p06",
+              "playerId": "p06",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 3,
+              "name": "p16",
+              "playerId": "p16",
+              "sigma": 0.3,
+            },
             {
               "gender": "male",
               "isLeftHanded": false,
@@ -6440,9 +6412,55 @@ exports[`matcher golden runs (M2.10) > mixed-16 × balanced 1`] = `
             {
               "gender": "female",
               "isLeftHanded": false,
+              "mu": 3.0999999999999996,
+              "name": "p15",
+              "playerId": "p15",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            7,
+            7,
+          ],
+          "teams": [
+            [
+              "p06",
+              "p16",
+            ],
+            [
+              "p07",
+              "p15",
+            ],
+          ],
+        },
+        {
+          "courtSpread": 1.2999999999999998,
+          "flags": [
+            "opponent-rematch",
+          ],
+          "players": [
+            {
+              "gender": "male",
+              "isLeftHanded": true,
+              "mu": 4.5,
+              "name": "p01",
+              "playerId": "p01",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
               "mu": 3.2,
               "name": "p14",
               "playerId": "p14",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": true,
+              "mu": 4.2,
+              "name": "p04",
+              "playerId": "p04",
               "sigma": 0.3,
             },
             {
@@ -6453,52 +6471,26 @@ exports[`matcher golden runs (M2.10) > mixed-16 × balanced 1`] = `
               "playerId": "p09",
               "sigma": 0.3,
             },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 3.4,
-              "name": "p12",
-              "playerId": "p12",
-              "sigma": 0.3,
-            },
           ],
           "teamSums": [
-            7.1,
-            7.1,
+            7.7,
+            7.9,
           ],
           "teams": [
             [
-              "p07",
+              "p01",
               "p14",
             ],
             [
+              "p04",
               "p09",
-              "p12",
             ],
           ],
         },
         {
-          "courtSpread": 1.4000000000000004,
-          "flags": [
-            "opponent-rematch",
-          ],
+          "courtSpread": 0.7999999999999998,
+          "flags": [],
           "players": [
-            {
-              "gender": "male",
-              "isLeftHanded": true,
-              "mu": 4.4,
-              "name": "p02",
-              "playerId": "p02",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 3,
-              "name": "p16",
-              "playerId": "p16",
-              "sigma": 0.3,
-            },
             {
               "gender": "male",
               "isLeftHanded": false,
@@ -6515,19 +6507,35 @@ exports[`matcher golden runs (M2.10) > mixed-16 × balanced 1`] = `
               "playerId": "p13",
               "sigma": 0.3,
             },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 3.8,
+              "name": "p08",
+              "playerId": "p08",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 3.6,
+              "name": "p10",
+              "playerId": "p10",
+              "sigma": 0.3,
+            },
           ],
           "teamSums": [
-            7.4,
             7.3999999999999995,
+            7.4,
           ],
           "teams": [
             [
-              "p02",
-              "p16",
-            ],
-            [
               "p05",
               "p13",
+            ],
+            [
+              "p08",
+              "p10",
             ],
           ],
         },
@@ -8914,7 +8922,7 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × balanced 1`] = `
     "maxPartnerGap": 1,
     "preset": "balanced",
     "seed": 1270010876,
-    "socialDial": 0.35,
+    "socialDial": 0.5,
     "weights": {
       "courtSpread": 1.5,
       "mixedPreference": 0.3,
@@ -8959,268 +8967,60 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × balanced 1`] = `
   ],
   "quality": {
     "overall": {
-      "balance": 93.86666666666666,
-      "genderPreference": 66.66666666666667,
-      "partnerFairness": 94.66666666666667,
+      "balance": 93.33333333333333,
+      "genderPreference": 71.66666666666667,
+      "partnerFairness": 92.66666666666666,
       "sitoutFairness": 100,
-      "variety": 86.66666666666667,
+      "variety": 90,
     },
     "perRound": [
       {
-        "balance": 84.00000000000001,
-        "genderPreference": 80,
-        "partnerFairness": 96.99999999999999,
+        "balance": 96.00000000000003,
+        "genderPreference": 60,
+        "partnerFairness": 97.99999999999999,
         "sitoutFairness": 100,
         "variety": 100,
       },
       {
-        "balance": 97.99999999999997,
-        "genderPreference": 60,
-        "partnerFairness": 97,
+        "balance": 94,
+        "genderPreference": 80,
+        "partnerFairness": 84,
         "sitoutFairness": 100,
-        "variety": 95,
+        "variety": 100,
       },
       {
-        "balance": 96.00000000000001,
-        "genderPreference": 40,
-        "partnerFairness": 98,
-        "sitoutFairness": 100,
-        "variety": 80,
-      },
-      {
-        "balance": 93.99999999999994,
-        "genderPreference": 90,
-        "partnerFairness": 91,
+        "balance": 96,
+        "genderPreference": 70,
+        "partnerFairness": 95,
         "sitoutFairness": 100,
         "variety": 85,
       },
       {
-        "balance": 95.19999999999997,
-        "genderPreference": 90,
-        "partnerFairness": 85,
+        "balance": 90,
+        "genderPreference": 70,
+        "partnerFairness": 99,
         "sitoutFairness": 100,
-        "variety": 80,
+        "variety": 75,
       },
       {
-        "balance": 96,
-        "genderPreference": 40,
-        "partnerFairness": 100,
+        "balance": 92.00000000000001,
+        "genderPreference": 50,
+        "partnerFairness": 97,
         "sitoutFairness": 100,
-        "variety": 80,
+        "variety": 90,
+      },
+      {
+        "balance": 92,
+        "genderPreference": 100,
+        "partnerFairness": 83,
+        "sitoutFairness": 100,
+        "variety": 90,
       },
     ],
   },
   "rounds": [
     {
       "courts": [
-        {
-          "courtSpread": 1.1,
-          "flags": [],
-          "players": [
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 3.6,
-              "name": "p10",
-              "playerId": "p10",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "unknown",
-              "isLeftHanded": false,
-              "mu": 2.5,
-              "name": "p21",
-              "playerId": "p21",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 3.5,
-              "name": "p11",
-              "playerId": "p11",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "unknown",
-              "isLeftHanded": false,
-              "mu": 2.5999999999999996,
-              "name": "p20",
-              "playerId": "p20",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            6.1,
-            6.1,
-          ],
-          "teams": [
-            [
-              "p10",
-              "p21",
-            ],
-            [
-              "p11",
-              "p20",
-            ],
-          ],
-        },
-        {
-          "courtSpread": 1.0000000000000004,
-          "flags": [],
-          "players": [
-            {
-              "gender": "male",
-              "isLeftHanded": true,
-              "mu": 4.4,
-              "name": "p02",
-              "playerId": "p02",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 3.4,
-              "name": "p12",
-              "playerId": "p12",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 4.3,
-              "name": "p03",
-              "playerId": "p03",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 3.9,
-              "name": "p07",
-              "playerId": "p07",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            7.800000000000001,
-            8.2,
-          ],
-          "teams": [
-            [
-              "p02",
-              "p12",
-            ],
-            [
-              "p03",
-              "p07",
-            ],
-          ],
-        },
-        {
-          "courtSpread": 1.2000000000000002,
-          "flags": [],
-          "players": [
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 4,
-              "name": "p06",
-              "playerId": "p06",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 2.9,
-              "name": "p17",
-              "playerId": "p17",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 3.8,
-              "name": "p08",
-              "playerId": "p08",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 2.8,
-              "name": "p18",
-              "playerId": "p18",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            6.9,
-            6.6,
-          ],
-          "teams": [
-            [
-              "p06",
-              "p17",
-            ],
-            [
-              "p08",
-              "p18",
-            ],
-          ],
-        },
-        {
-          "courtSpread": 1,
-          "flags": [],
-          "players": [
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 3.7,
-              "name": "p09",
-              "playerId": "p09",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 2.7,
-              "name": "p19",
-              "playerId": "p19",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 3.3,
-              "name": "p13",
-              "playerId": "p13",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 3,
-              "name": "p16",
-              "playerId": "p16",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            6.4,
-            6.3,
-          ],
-          "teams": [
-            [
-              "p09",
-              "p19",
-            ],
-            [
-              "p13",
-              "p16",
-            ],
-          ],
-        },
         {
           "courtSpread": 1.1000000000000005,
           "flags": [],
@@ -9244,17 +9044,17 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × balanced 1`] = `
             {
               "gender": "male",
               "isLeftHanded": false,
-              "mu": 4.1,
-              "name": "p05",
-              "playerId": "p05",
+              "mu": 4,
+              "name": "p06",
+              "playerId": "p06",
               "sigma": 0.3,
             },
             {
               "gender": "female",
               "isLeftHanded": false,
-              "mu": 3.2,
-              "name": "p14",
-              "playerId": "p14",
+              "mu": 3.3,
+              "name": "p13",
+              "playerId": "p13",
               "sigma": 0.3,
             },
           ],
@@ -9268,35 +9068,73 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × balanced 1`] = `
               "p15",
             ],
             [
-              "p05",
+              "p06",
+              "p13",
+            ],
+          ],
+        },
+        {
+          "courtSpread": 1,
+          "flags": [],
+          "players": [
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 3.8,
+              "name": "p08",
+              "playerId": "p08",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 2.8,
+              "name": "p18",
+              "playerId": "p18",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 3.4,
+              "name": "p12",
+              "playerId": "p12",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 3.2,
+              "name": "p14",
+              "playerId": "p14",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            6.6,
+            6.6,
+          ],
+          "teams": [
+            [
+              "p08",
+              "p18",
+            ],
+            [
+              "p12",
               "p14",
             ],
           ],
         },
-      ],
-      "sitters": [
         {
-          "gender": "male",
-          "isLeftHanded": true,
-          "mu": 4.5,
-          "name": "p01",
-          "playerId": "p01",
-          "sigma": 0.3,
-        },
-      ],
-    },
-    {
-      "courts": [
-        {
-          "courtSpread": 0.6000000000000001,
+          "courtSpread": 0.5000000000000004,
           "flags": [],
           "players": [
             {
               "gender": "male",
               "isLeftHanded": true,
-              "mu": 4.5,
-              "name": "p01",
-              "playerId": "p01",
+              "mu": 4.4,
+              "name": "p02",
+              "playerId": "p02",
               "sigma": 0.3,
             },
             {
@@ -9325,17 +9163,513 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × balanced 1`] = `
             },
           ],
           "teamSums": [
-            8.4,
+            8.3,
             8.399999999999999,
           ],
           "teams": [
             [
-              "p01",
+              "p02",
               "p07",
             ],
             [
               "p03",
               "p05",
+            ],
+          ],
+        },
+        {
+          "courtSpread": 1.1000000000000005,
+          "flags": [],
+          "players": [
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 3.7,
+              "name": "p09",
+              "playerId": "p09",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "unknown",
+              "isLeftHanded": false,
+              "mu": 2.5999999999999996,
+              "name": "p20",
+              "playerId": "p20",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 3.6,
+              "name": "p10",
+              "playerId": "p10",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 2.7,
+              "name": "p19",
+              "playerId": "p19",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            6.3,
+            6.300000000000001,
+          ],
+          "teams": [
+            [
+              "p09",
+              "p20",
+            ],
+            [
+              "p10",
+              "p19",
+            ],
+          ],
+        },
+        {
+          "courtSpread": 1,
+          "flags": [],
+          "players": [
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 3.5,
+              "name": "p11",
+              "playerId": "p11",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "unknown",
+              "isLeftHanded": false,
+              "mu": 2.5,
+              "name": "p21",
+              "playerId": "p21",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 3,
+              "name": "p16",
+              "playerId": "p16",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 2.9,
+              "name": "p17",
+              "playerId": "p17",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            6,
+            5.9,
+          ],
+          "teams": [
+            [
+              "p11",
+              "p21",
+            ],
+            [
+              "p16",
+              "p17",
+            ],
+          ],
+        },
+      ],
+      "sitters": [
+        {
+          "gender": "male",
+          "isLeftHanded": true,
+          "mu": 4.5,
+          "name": "p01",
+          "playerId": "p01",
+          "sigma": 0.3,
+        },
+      ],
+    },
+    {
+      "courts": [
+        {
+          "courtSpread": 1.4000000000000004,
+          "flags": [],
+          "players": [
+            {
+              "gender": "male",
+              "isLeftHanded": true,
+              "mu": 4.5,
+              "name": "p01",
+              "playerId": "p01",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 3.0999999999999996,
+              "name": "p15",
+              "playerId": "p15",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 4.3,
+              "name": "p03",
+              "playerId": "p03",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 3.2,
+              "name": "p14",
+              "playerId": "p14",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            7.6,
+            7.5,
+          ],
+          "teams": [
+            [
+              "p01",
+              "p15",
+            ],
+            [
+              "p03",
+              "p14",
+            ],
+          ],
+        },
+        {
+          "courtSpread": 0.9000000000000004,
+          "flags": [],
+          "players": [
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 4.2,
+              "name": "p04",
+              "playerId": "p04",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 3.3,
+              "name": "p13",
+              "playerId": "p13",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 4.1,
+              "name": "p05",
+              "playerId": "p05",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 3.4,
+              "name": "p12",
+              "playerId": "p12",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            7.5,
+            7.5,
+          ],
+          "teams": [
+            [
+              "p04",
+              "p13",
+            ],
+            [
+              "p05",
+              "p12",
+            ],
+          ],
+        },
+        {
+          "courtSpread": 1.4000000000000004,
+          "flags": [],
+          "players": [
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 4,
+              "name": "p06",
+              "playerId": "p06",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "unknown",
+              "isLeftHanded": false,
+              "mu": 2.5999999999999996,
+              "name": "p20",
+              "playerId": "p20",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 3.7,
+              "name": "p09",
+              "playerId": "p09",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 2.9,
+              "name": "p17",
+              "playerId": "p17",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            6.6,
+            6.6,
+          ],
+          "teams": [
+            [
+              "p06",
+              "p20",
+            ],
+            [
+              "p09",
+              "p17",
+            ],
+          ],
+        },
+        {
+          "courtSpread": 1.4000000000000004,
+          "flags": [],
+          "players": [
+            {
+              "gender": "male",
+              "isLeftHanded": true,
+              "mu": 4.4,
+              "name": "p02",
+              "playerId": "p02",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 3,
+              "name": "p16",
+              "playerId": "p16",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 3.9,
+              "name": "p07",
+              "playerId": "p07",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 3.6,
+              "name": "p10",
+              "playerId": "p10",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            7.4,
+            7.5,
+          ],
+          "teams": [
+            [
+              "p02",
+              "p16",
+            ],
+            [
+              "p07",
+              "p10",
+            ],
+          ],
+        },
+        {
+          "courtSpread": 1.2999999999999998,
+          "flags": [],
+          "players": [
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 3.8,
+              "name": "p08",
+              "playerId": "p08",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "unknown",
+              "isLeftHanded": false,
+              "mu": 2.5,
+              "name": "p21",
+              "playerId": "p21",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 3.5,
+              "name": "p11",
+              "playerId": "p11",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 2.7,
+              "name": "p19",
+              "playerId": "p19",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            6.3,
+            6.2,
+          ],
+          "teams": [
+            [
+              "p08",
+              "p21",
+            ],
+            [
+              "p11",
+              "p19",
+            ],
+          ],
+        },
+      ],
+      "sitters": [
+        {
+          "gender": "female",
+          "isLeftHanded": false,
+          "mu": 2.8,
+          "name": "p18",
+          "playerId": "p18",
+          "sigma": 0.3,
+        },
+      ],
+    },
+    {
+      "courts": [
+        {
+          "courtSpread": 1,
+          "flags": [],
+          "players": [
+            {
+              "gender": "male",
+              "isLeftHanded": true,
+              "mu": 4.5,
+              "name": "p01",
+              "playerId": "p01",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 3.5,
+              "name": "p11",
+              "playerId": "p11",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 4.1,
+              "name": "p05",
+              "playerId": "p05",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 3.9,
+              "name": "p07",
+              "playerId": "p07",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            8,
+            8,
+          ],
+          "teams": [
+            [
+              "p01",
+              "p11",
+            ],
+            [
+              "p05",
+              "p07",
+            ],
+          ],
+        },
+        {
+          "courtSpread": 1.1000000000000005,
+          "flags": [],
+          "players": [
+            {
+              "gender": "male",
+              "isLeftHanded": true,
+              "mu": 4.4,
+              "name": "p02",
+              "playerId": "p02",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 3.3,
+              "name": "p13",
+              "playerId": "p13",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 4,
+              "name": "p06",
+              "playerId": "p06",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 3.8,
+              "name": "p08",
+              "playerId": "p08",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            7.7,
+            7.8,
+          ],
+          "teams": [
+            [
+              "p02",
+              "p13",
+            ],
+            [
+              "p06",
+              "p08",
             ],
           ],
         },
@@ -9346,9 +9680,239 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × balanced 1`] = `
             {
               "gender": "male",
               "isLeftHanded": false,
+              "mu": 3.7,
+              "name": "p09",
+              "playerId": "p09",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 2.7,
+              "name": "p19",
+              "playerId": "p19",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 3.2,
+              "name": "p14",
+              "playerId": "p14",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 3.0999999999999996,
+              "name": "p15",
+              "playerId": "p15",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            6.4,
+            6.3,
+          ],
+          "teams": [
+            [
+              "p09",
+              "p19",
+            ],
+            [
+              "p14",
+              "p15",
+            ],
+          ],
+        },
+        {
+          "courtSpread": 1.4000000000000004,
+          "flags": [
+            "opponent-rematch",
+          ],
+          "players": [
+            {
+              "gender": "male",
+              "isLeftHanded": false,
               "mu": 4.2,
               "name": "p04",
               "playerId": "p04",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 2.8,
+              "name": "p18",
+              "playerId": "p18",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 3.6,
+              "name": "p10",
+              "playerId": "p10",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 3.4,
+              "name": "p12",
+              "playerId": "p12",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            7,
+            7,
+          ],
+          "teams": [
+            [
+              "p04",
+              "p18",
+            ],
+            [
+              "p10",
+              "p12",
+            ],
+          ],
+        },
+        {
+          "courtSpread": 0.5,
+          "flags": [
+            "opponent-rematch",
+          ],
+          "players": [
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 3,
+              "name": "p16",
+              "playerId": "p16",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "unknown",
+              "isLeftHanded": false,
+              "mu": 2.5,
+              "name": "p21",
+              "playerId": "p21",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 2.9,
+              "name": "p17",
+              "playerId": "p17",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "unknown",
+              "isLeftHanded": false,
+              "mu": 2.5999999999999996,
+              "name": "p20",
+              "playerId": "p20",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            5.5,
+            5.5,
+          ],
+          "teams": [
+            [
+              "p16",
+              "p21",
+            ],
+            [
+              "p17",
+              "p20",
+            ],
+          ],
+        },
+      ],
+      "sitters": [
+        {
+          "gender": "male",
+          "isLeftHanded": false,
+          "mu": 4.3,
+          "name": "p03",
+          "playerId": "p03",
+          "sigma": 0.3,
+        },
+      ],
+    },
+    {
+      "courts": [
+        {
+          "courtSpread": 0.40000000000000036,
+          "flags": [
+            "opponent-rematch",
+          ],
+          "players": [
+            {
+              "gender": "male",
+              "isLeftHanded": true,
+              "mu": 4.5,
+              "name": "p01",
+              "playerId": "p01",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 4.1,
+              "name": "p05",
+              "playerId": "p05",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 4.3,
+              "name": "p03",
+              "playerId": "p03",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 4.2,
+              "name": "p04",
+              "playerId": "p04",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            8.6,
+            8.5,
+          ],
+          "teams": [
+            [
+              "p01",
+              "p05",
+            ],
+            [
+              "p03",
+              "p04",
+            ],
+          ],
+        },
+        {
+          "courtSpread": 0.7999999999999998,
+          "flags": [
+            "opponent-rematch",
+          ],
+          "players": [
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 4,
+              "name": "p06",
+              "playerId": "p06",
               "sigma": 0.3,
             },
             {
@@ -9368,58 +9932,6 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × balanced 1`] = `
               "sigma": 0.3,
             },
             {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 3.6,
-              "name": "p10",
-              "playerId": "p10",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            7.4,
-            7.300000000000001,
-          ],
-          "teams": [
-            [
-              "p04",
-              "p14",
-            ],
-            [
-              "p09",
-              "p10",
-            ],
-          ],
-        },
-        {
-          "courtSpread": 1.3000000000000007,
-          "flags": [],
-          "players": [
-            {
-              "gender": "male",
-              "isLeftHanded": true,
-              "mu": 4.4,
-              "name": "p02",
-              "playerId": "p02",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 3.0999999999999996,
-              "name": "p15",
-              "playerId": "p15",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 4,
-              "name": "p06",
-              "playerId": "p06",
-              "sigma": 0.3,
-            },
-            {
               "gender": "female",
               "isLeftHanded": false,
               "mu": 3.5,
@@ -9429,30 +9941,30 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × balanced 1`] = `
             },
           ],
           "teamSums": [
-            7.5,
-            7.5,
+            7.2,
+            7.2,
           ],
           "teams": [
             [
-              "p02",
-              "p15",
+              "p06",
+              "p14",
             ],
             [
-              "p06",
+              "p09",
               "p11",
             ],
           ],
         },
         {
-          "courtSpread": 0.8999999999999999,
+          "courtSpread": 1,
           "flags": [],
           "players": [
             {
               "gender": "male",
               "isLeftHanded": false,
-              "mu": 3.8,
-              "name": "p08",
-              "playerId": "p08",
+              "mu": 3.9,
+              "name": "p07",
+              "playerId": "p07",
               "sigma": 0.3,
             },
             {
@@ -9481,12 +9993,12 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × balanced 1`] = `
             },
           ],
           "teamSums": [
-            6.699999999999999,
+            6.8,
             6.699999999999999,
           ],
           "teams": [
             [
-              "p08",
+              "p07",
               "p17",
             ],
             [
@@ -9496,183 +10008,7 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × balanced 1`] = `
           ],
         },
         {
-          "courtSpread": 0.2999999999999998,
-          "flags": [
-            "opponent-rematch",
-          ],
-          "players": [
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 2.8,
-              "name": "p18",
-              "playerId": "p18",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "unknown",
-              "isLeftHanded": false,
-              "mu": 2.5,
-              "name": "p21",
-              "playerId": "p21",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 2.7,
-              "name": "p19",
-              "playerId": "p19",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "unknown",
-              "isLeftHanded": false,
-              "mu": 2.5999999999999996,
-              "name": "p20",
-              "playerId": "p20",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            5.3,
-            5.3,
-          ],
-          "teams": [
-            [
-              "p18",
-              "p21",
-            ],
-            [
-              "p19",
-              "p20",
-            ],
-          ],
-        },
-      ],
-      "sitters": [
-        {
-          "gender": "female",
-          "isLeftHanded": false,
-          "mu": 3,
-          "name": "p16",
-          "playerId": "p16",
-          "sigma": 0.3,
-        },
-      ],
-    },
-    {
-      "courts": [
-        {
-          "courtSpread": 0.5000000000000004,
-          "flags": [
-            "opponent-rematch",
-          ],
-          "players": [
-            {
-              "gender": "male",
-              "isLeftHanded": true,
-              "mu": 4.4,
-              "name": "p02",
-              "playerId": "p02",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 3.9,
-              "name": "p07",
-              "playerId": "p07",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 4.2,
-              "name": "p04",
-              "playerId": "p04",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 4.1,
-              "name": "p05",
-              "playerId": "p05",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            8.3,
-            8.3,
-          ],
-          "teams": [
-            [
-              "p02",
-              "p07",
-            ],
-            [
-              "p04",
-              "p05",
-            ],
-          ],
-        },
-        {
-          "courtSpread": 1.2000000000000002,
-          "flags": [
-            "opponent-rematch",
-          ],
-          "players": [
-            {
-              "gender": "male",
-              "isLeftHanded": true,
-              "mu": 4.5,
-              "name": "p01",
-              "playerId": "p01",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 3.3,
-              "name": "p13",
-              "playerId": "p13",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 4,
-              "name": "p06",
-              "playerId": "p06",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 3.7,
-              "name": "p09",
-              "playerId": "p09",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            7.8,
-            7.7,
-          ],
-          "teams": [
-            [
-              "p01",
-              "p13",
-            ],
-            [
-              "p06",
-              "p09",
-            ],
-          ],
-        },
-        {
-          "courtSpread": 0.7999999999999998,
+          "courtSpread": 1.0999999999999996,
           "flags": [],
           "players": [
             {
@@ -9686,49 +10022,11 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × balanced 1`] = `
             {
               "gender": "female",
               "isLeftHanded": false,
-              "mu": 3,
-              "name": "p16",
-              "playerId": "p16",
+              "mu": 2.7,
+              "name": "p19",
+              "playerId": "p19",
               "sigma": 0.3,
             },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 3.5,
-              "name": "p11",
-              "playerId": "p11",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 3.2,
-              "name": "p14",
-              "playerId": "p14",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            6.8,
-            6.7,
-          ],
-          "teams": [
-            [
-              "p08",
-              "p16",
-            ],
-            [
-              "p11",
-              "p14",
-            ],
-          ],
-        },
-        {
-          "courtSpread": 1.0000000000000004,
-          "flags": [
-            "opponent-rematch",
-          ],
-          "players": [
             {
               "gender": "male",
               "isLeftHanded": false,
@@ -9738,42 +10036,26 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × balanced 1`] = `
               "sigma": 0.3,
             },
             {
-              "gender": "unknown",
-              "isLeftHanded": false,
-              "mu": 2.5999999999999996,
-              "name": "p20",
-              "playerId": "p20",
-              "sigma": 0.3,
-            },
-            {
               "gender": "female",
               "isLeftHanded": false,
-              "mu": 3.4,
-              "name": "p12",
-              "playerId": "p12",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 2.8,
-              "name": "p18",
-              "playerId": "p18",
+              "mu": 3,
+              "name": "p16",
+              "playerId": "p16",
               "sigma": 0.3,
             },
           ],
           "teamSums": [
-            6.199999999999999,
-            6.199999999999999,
+            6.5,
+            6.6,
           ],
           "teams": [
             [
-              "p10",
-              "p20",
+              "p08",
+              "p19",
             ],
             [
-              "p12",
-              "p18",
+              "p10",
+              "p16",
             ],
           ],
         },
@@ -9802,287 +10084,9 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × balanced 1`] = `
             {
               "gender": "female",
               "isLeftHanded": false,
-              "mu": 2.9,
-              "name": "p17",
-              "playerId": "p17",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 2.7,
-              "name": "p19",
-              "playerId": "p19",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            5.6,
-            5.6,
-          ],
-          "teams": [
-            [
-              "p15",
-              "p21",
-            ],
-            [
-              "p17",
-              "p19",
-            ],
-          ],
-        },
-      ],
-      "sitters": [
-        {
-          "gender": "male",
-          "isLeftHanded": false,
-          "mu": 4.3,
-          "name": "p03",
-          "playerId": "p03",
-          "sigma": 0.3,
-        },
-      ],
-    },
-    {
-      "courts": [
-        {
-          "courtSpread": 1.1,
-          "flags": [],
-          "players": [
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 3.9,
-              "name": "p07",
-              "playerId": "p07",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
               "mu": 2.8,
               "name": "p18",
               "playerId": "p18",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 3.7,
-              "name": "p09",
-              "playerId": "p09",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 3,
-              "name": "p16",
-              "playerId": "p16",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            6.699999999999999,
-            6.7,
-          ],
-          "teams": [
-            [
-              "p07",
-              "p18",
-            ],
-            [
-              "p09",
-              "p16",
-            ],
-          ],
-        },
-        {
-          "courtSpread": 1,
-          "flags": [
-            "opponent-rematch",
-          ],
-          "players": [
-            {
-              "gender": "male",
-              "isLeftHanded": true,
-              "mu": 4.5,
-              "name": "p01",
-              "playerId": "p01",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 3.5,
-              "name": "p11",
-              "playerId": "p11",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 4.2,
-              "name": "p04",
-              "playerId": "p04",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 3.8,
-              "name": "p08",
-              "playerId": "p08",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            8,
-            8,
-          ],
-          "teams": [
-            [
-              "p01",
-              "p11",
-            ],
-            [
-              "p04",
-              "p08",
-            ],
-          ],
-        },
-        {
-          "courtSpread": 1.3999999999999995,
-          "flags": [],
-          "players": [
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 4.1,
-              "name": "p05",
-              "playerId": "p05",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 2.7,
-              "name": "p19",
-              "playerId": "p19",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 3.6,
-              "name": "p10",
-              "playerId": "p10",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 3.4,
-              "name": "p12",
-              "playerId": "p12",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            6.8,
-            7,
-          ],
-          "teams": [
-            [
-              "p05",
-              "p19",
-            ],
-            [
-              "p10",
-              "p12",
-            ],
-          ],
-        },
-        {
-          "courtSpread": 1.4,
-          "flags": [],
-          "players": [
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 4.3,
-              "name": "p03",
-              "playerId": "p03",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 2.9,
-              "name": "p17",
-              "playerId": "p17",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 4,
-              "name": "p06",
-              "playerId": "p06",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 3.2,
-              "name": "p14",
-              "playerId": "p14",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            7.199999999999999,
-            7.2,
-          ],
-          "teams": [
-            [
-              "p03",
-              "p17",
-            ],
-            [
-              "p06",
-              "p14",
-            ],
-          ],
-        },
-        {
-          "courtSpread": 0.7999999999999998,
-          "flags": [
-            "opponent-rematch",
-          ],
-          "players": [
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 3.3,
-              "name": "p13",
-              "playerId": "p13",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "unknown",
-              "isLeftHanded": false,
-              "mu": 2.5,
-              "name": "p21",
-              "playerId": "p21",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 3.0999999999999996,
-              "name": "p15",
-              "playerId": "p15",
               "sigma": 0.3,
             },
             {
@@ -10095,16 +10099,16 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × balanced 1`] = `
             },
           ],
           "teamSums": [
-            5.8,
-            5.699999999999999,
+            5.6,
+            5.3999999999999995,
           ],
           "teams": [
             [
-              "p13",
+              "p15",
               "p21",
             ],
             [
-              "p15",
+              "p18",
               "p20",
             ],
           ],
@@ -10124,69 +10128,25 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × balanced 1`] = `
     {
       "courts": [
         {
-          "courtSpread": 1.5,
+          "courtSpread": 0.7000000000000002,
           "flags": [
             "opponent-rematch",
           ],
           "players": [
             {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 4.2,
-              "name": "p04",
-              "playerId": "p04",
-              "sigma": 0.3,
-            },
-            {
               "gender": "female",
               "isLeftHanded": false,
-              "mu": 2.7,
-              "name": "p19",
-              "playerId": "p19",
+              "mu": 3.3,
+              "name": "p13",
+              "playerId": "p13",
               "sigma": 0.3,
             },
             {
-              "gender": "male",
+              "gender": "unknown",
               "isLeftHanded": false,
-              "mu": 4.1,
-              "name": "p05",
-              "playerId": "p05",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 2.9,
-              "name": "p17",
-              "playerId": "p17",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            6.9,
-            7,
-          ],
-          "teams": [
-            [
-              "p04",
-              "p19",
-            ],
-            [
-              "p05",
-              "p17",
-            ],
-          ],
-        },
-        {
-          "courtSpread": 1.2999999999999998,
-          "flags": [],
-          "players": [
-            {
-              "gender": "male",
-              "isLeftHanded": true,
-              "mu": 4.5,
-              "name": "p01",
-              "playerId": "p01",
+              "mu": 2.5999999999999996,
+              "name": "p20",
+              "playerId": "p20",
               "sigma": 0.3,
             },
             {
@@ -10198,39 +10158,31 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × balanced 1`] = `
               "sigma": 0.3,
             },
             {
-              "gender": "male",
-              "isLeftHanded": true,
-              "mu": 4.4,
-              "name": "p02",
-              "playerId": "p02",
-              "sigma": 0.3,
-            },
-            {
               "gender": "female",
               "isLeftHanded": false,
-              "mu": 3.3,
-              "name": "p13",
-              "playerId": "p13",
+              "mu": 2.7,
+              "name": "p19",
+              "playerId": "p19",
               "sigma": 0.3,
             },
           ],
           "teamSums": [
-            7.7,
-            7.7,
+            5.8999999999999995,
+            5.9,
           ],
           "teams": [
             [
-              "p01",
-              "p14",
+              "p13",
+              "p20",
             ],
             [
-              "p02",
-              "p13",
+              "p14",
+              "p19",
             ],
           ],
         },
         {
-          "courtSpread": 1.2000000000000002,
+          "courtSpread": 0.3999999999999999,
           "flags": [],
           "players": [
             {
@@ -10242,179 +10194,11 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × balanced 1`] = `
               "sigma": 0.3,
             },
             {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 3.0999999999999996,
-              "name": "p15",
-              "playerId": "p15",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 3.8,
-              "name": "p08",
-              "playerId": "p08",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 3.6,
-              "name": "p10",
-              "playerId": "p10",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            7.3999999999999995,
-            7.4,
-          ],
-          "teams": [
-            [
-              "p03",
-              "p15",
-            ],
-            [
-              "p08",
-              "p10",
-            ],
-          ],
-        },
-        {
-          "courtSpread": 1,
-          "flags": [
-            "opponent-rematch",
-          ],
-          "players": [
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 3.5,
-              "name": "p11",
-              "playerId": "p11",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "unknown",
-              "isLeftHanded": false,
-              "mu": 2.5,
-              "name": "p21",
-              "playerId": "p21",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 3.4,
-              "name": "p12",
-              "playerId": "p12",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "unknown",
-              "isLeftHanded": false,
-              "mu": 2.5999999999999996,
-              "name": "p20",
-              "playerId": "p20",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            6,
-            6,
-          ],
-          "teams": [
-            [
-              "p11",
-              "p21",
-            ],
-            [
-              "p12",
-              "p20",
-            ],
-          ],
-        },
-        {
-          "courtSpread": 1.2000000000000002,
-          "flags": [
-            "opponent-rematch",
-          ],
-          "players": [
-            {
-              "gender": "male",
-              "isLeftHanded": false,
-              "mu": 4,
-              "name": "p06",
-              "playerId": "p06",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 2.8,
-              "name": "p18",
-              "playerId": "p18",
-              "sigma": 0.3,
-            },
-            {
               "gender": "male",
               "isLeftHanded": false,
               "mu": 3.9,
               "name": "p07",
               "playerId": "p07",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 3,
-              "name": "p16",
-              "playerId": "p16",
-              "sigma": 0.3,
-            },
-          ],
-          "teamSums": [
-            6.8,
-            6.9,
-          ],
-          "teams": [
-            [
-              "p06",
-              "p18",
-            ],
-            [
-              "p07",
-              "p16",
-            ],
-          ],
-        },
-      ],
-      "sitters": [
-        {
-          "gender": "male",
-          "isLeftHanded": false,
-          "mu": 3.7,
-          "name": "p09",
-          "playerId": "p09",
-          "sigma": 0.3,
-        },
-      ],
-    },
-    {
-      "courts": [
-        {
-          "courtSpread": 0.2999999999999998,
-          "flags": [
-            "opponent-rematch",
-          ],
-          "players": [
-            {
-              "gender": "male",
-              "isLeftHanded": true,
-              "mu": 4.5,
-              "name": "p01",
-              "playerId": "p01",
               "sigma": 0.3,
             },
             {
@@ -10427,46 +10211,38 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × balanced 1`] = `
             },
             {
               "gender": "male",
-              "isLeftHanded": true,
-              "mu": 4.4,
-              "name": "p02",
-              "playerId": "p02",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "male",
               "isLeftHanded": false,
-              "mu": 4.3,
-              "name": "p03",
-              "playerId": "p03",
+              "mu": 4,
+              "name": "p06",
+              "playerId": "p06",
               "sigma": 0.3,
             },
           ],
           "teamSums": [
-            8.7,
-            8.7,
+            8.2,
+            8.2,
           ],
           "teams": [
             [
-              "p01",
-              "p04",
+              "p03",
+              "p07",
             ],
             [
-              "p02",
-              "p03",
+              "p04",
+              "p06",
             ],
           ],
         },
         {
-          "courtSpread": 0.39999999999999947,
+          "courtSpread": 1,
           "flags": [],
           "players": [
             {
               "gender": "male",
-              "isLeftHanded": false,
-              "mu": 4.1,
-              "name": "p05",
-              "playerId": "p05",
+              "isLeftHanded": true,
+              "mu": 4.5,
+              "name": "p01",
+              "playerId": "p01",
               "sigma": 0.3,
             },
             {
@@ -10479,10 +10255,54 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × balanced 1`] = `
             },
             {
               "gender": "male",
+              "isLeftHanded": true,
+              "mu": 4.4,
+              "name": "p02",
+              "playerId": "p02",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
               "isLeftHanded": false,
-              "mu": 4,
-              "name": "p06",
-              "playerId": "p06",
+              "mu": 3.5,
+              "name": "p11",
+              "playerId": "p11",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            8.2,
+            7.9,
+          ],
+          "teams": [
+            [
+              "p01",
+              "p09",
+            ],
+            [
+              "p02",
+              "p11",
+            ],
+          ],
+        },
+        {
+          "courtSpread": 1.2999999999999998,
+          "flags": [],
+          "players": [
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 4.1,
+              "name": "p05",
+              "playerId": "p05",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 2.8,
+              "name": "p18",
+              "playerId": "p18",
               "sigma": 0.3,
             },
             {
@@ -10493,25 +10313,209 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × balanced 1`] = `
               "playerId": "p08",
               "sigma": 0.3,
             },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 3,
+              "name": "p16",
+              "playerId": "p16",
+              "sigma": 0.3,
+            },
           ],
           "teamSums": [
-            7.8,
-            7.8,
+            6.8999999999999995,
+            6.8,
           ],
           "teams": [
             [
               "p05",
-              "p09",
+              "p18",
             ],
             [
-              "p06",
               "p08",
+              "p16",
             ],
           ],
         },
         {
-          "courtSpread": 0.6000000000000001,
+          "courtSpread": 0.7000000000000002,
+          "flags": [
+            "opponent-rematch",
+          ],
+          "players": [
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 3.6,
+              "name": "p10",
+              "playerId": "p10",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 2.9,
+              "name": "p17",
+              "playerId": "p17",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 3.4,
+              "name": "p12",
+              "playerId": "p12",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 3.0999999999999996,
+              "name": "p15",
+              "playerId": "p15",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            6.5,
+            6.5,
+          ],
+          "teams": [
+            [
+              "p10",
+              "p17",
+            ],
+            [
+              "p12",
+              "p15",
+            ],
+          ],
+        },
+      ],
+      "sitters": [
+        {
+          "gender": "unknown",
+          "isLeftHanded": false,
+          "mu": 2.5,
+          "name": "p21",
+          "playerId": "p21",
+          "sigma": 0.3,
+        },
+      ],
+    },
+    {
+      "courts": [
+        {
+          "courtSpread": 1.0999999999999996,
           "flags": [],
+          "players": [
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 4.1,
+              "name": "p05",
+              "playerId": "p05",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 3,
+              "name": "p16",
+              "playerId": "p16",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 4,
+              "name": "p06",
+              "playerId": "p06",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 3.0999999999999996,
+              "name": "p15",
+              "playerId": "p15",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            7.1,
+            7.1,
+          ],
+          "teams": [
+            [
+              "p05",
+              "p16",
+            ],
+            [
+              "p06",
+              "p15",
+            ],
+          ],
+        },
+        {
+          "courtSpread": 1.0000000000000004,
+          "flags": [
+            "opponent-rematch",
+          ],
+          "players": [
+            {
+              "gender": "male",
+              "isLeftHanded": true,
+              "mu": 4.4,
+              "name": "p02",
+              "playerId": "p02",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 3.4,
+              "name": "p12",
+              "playerId": "p12",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 4.3,
+              "name": "p03",
+              "playerId": "p03",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "female",
+              "isLeftHanded": false,
+              "mu": 3.5,
+              "name": "p11",
+              "playerId": "p11",
+              "sigma": 0.3,
+            },
+          ],
+          "teamSums": [
+            7.800000000000001,
+            7.8,
+          ],
+          "teams": [
+            [
+              "p02",
+              "p12",
+            ],
+            [
+              "p03",
+              "p11",
+            ],
+          ],
+        },
+        {
+          "courtSpread": 1.4,
+          "flags": [
+            "opponent-rematch",
+          ],
           "players": [
             {
               "gender": "male",
@@ -10522,11 +10526,11 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × balanced 1`] = `
               "sigma": 0.3,
             },
             {
-              "gender": "female",
+              "gender": "unknown",
               "isLeftHanded": false,
-              "mu": 3.3,
-              "name": "p13",
-              "playerId": "p13",
+              "mu": 2.5,
+              "name": "p21",
+              "playerId": "p21",
               "sigma": 0.3,
             },
             {
@@ -10540,39 +10544,37 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × balanced 1`] = `
             {
               "gender": "female",
               "isLeftHanded": false,
-              "mu": 3.5,
-              "name": "p11",
-              "playerId": "p11",
+              "mu": 2.8,
+              "name": "p18",
+              "playerId": "p18",
               "sigma": 0.3,
             },
           ],
           "teamSums": [
-            7.199999999999999,
-            7.1,
+            6.4,
+            6.4,
           ],
           "teams": [
             [
               "p07",
-              "p13",
+              "p21",
             ],
             [
               "p10",
-              "p11",
+              "p18",
             ],
           ],
         },
         {
-          "courtSpread": 0.6000000000000005,
-          "flags": [
-            "opponent-rematch",
-          ],
+          "courtSpread": 1.9000000000000004,
+          "flags": [],
           "players": [
             {
-              "gender": "female",
-              "isLeftHanded": false,
-              "mu": 3.2,
-              "name": "p14",
-              "playerId": "p14",
+              "gender": "male",
+              "isLeftHanded": true,
+              "mu": 4.5,
+              "name": "p01",
+              "playerId": "p01",
               "sigma": 0.3,
             },
             {
@@ -10584,86 +10586,86 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × balanced 1`] = `
               "sigma": 0.3,
             },
             {
-              "gender": "female",
+              "gender": "male",
               "isLeftHanded": false,
-              "mu": 3.0999999999999996,
-              "name": "p15",
-              "playerId": "p15",
+              "mu": 3.8,
+              "name": "p08",
+              "playerId": "p08",
               "sigma": 0.3,
             },
             {
               "gender": "female",
               "isLeftHanded": false,
-              "mu": 2.7,
-              "name": "p19",
-              "playerId": "p19",
+              "mu": 3.3,
+              "name": "p13",
+              "playerId": "p13",
               "sigma": 0.3,
             },
           ],
           "teamSums": [
-            5.8,
-            5.8,
+            7.1,
+            7.1,
           ],
           "teams": [
             [
-              "p14",
+              "p01",
               "p20",
             ],
             [
-              "p15",
-              "p19",
+              "p08",
+              "p13",
             ],
           ],
         },
         {
-          "courtSpread": 0.8999999999999999,
+          "courtSpread": 1.3000000000000003,
           "flags": [],
           "players": [
             {
-              "gender": "female",
+              "gender": "male",
               "isLeftHanded": false,
-              "mu": 3.4,
-              "name": "p12",
-              "playerId": "p12",
-              "sigma": 0.3,
-            },
-            {
-              "gender": "unknown",
-              "isLeftHanded": false,
-              "mu": 2.5,
-              "name": "p21",
-              "playerId": "p21",
+              "mu": 4.2,
+              "name": "p04",
+              "playerId": "p04",
               "sigma": 0.3,
             },
             {
               "gender": "female",
               "isLeftHanded": false,
-              "mu": 3,
-              "name": "p16",
-              "playerId": "p16",
+              "mu": 2.9,
+              "name": "p17",
+              "playerId": "p17",
+              "sigma": 0.3,
+            },
+            {
+              "gender": "male",
+              "isLeftHanded": false,
+              "mu": 3.7,
+              "name": "p09",
+              "playerId": "p09",
               "sigma": 0.3,
             },
             {
               "gender": "female",
               "isLeftHanded": false,
-              "mu": 2.8,
-              "name": "p18",
-              "playerId": "p18",
+              "mu": 3.2,
+              "name": "p14",
+              "playerId": "p14",
               "sigma": 0.3,
             },
           ],
           "teamSums": [
-            5.9,
-            5.8,
+            7.1,
+            6.9,
           ],
           "teams": [
             [
-              "p12",
-              "p21",
+              "p04",
+              "p17",
             ],
             [
-              "p16",
-              "p18",
+              "p09",
+              "p14",
             ],
           ],
         },
@@ -10672,9 +10674,9 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × balanced 1`] = `
         {
           "gender": "female",
           "isLeftHanded": false,
-          "mu": 2.9,
-          "name": "p17",
-          "playerId": "p17",
+          "mu": 2.7,
+          "name": "p19",
+          "playerId": "p19",
           "sigma": 0.3,
         },
       ],

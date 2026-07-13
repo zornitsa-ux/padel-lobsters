@@ -47,7 +47,7 @@ describe('generate (M2.8)', () => {
   it('persists the fully resolved config', () => {
     const run = generateSchedule(input())
     expect(run.config.preset).toBe('balanced')
-    expect(run.config.socialDial).toBe(0.35)
+    expect(run.config.socialDial).toBe(0.5) // D-015
     expect(run.config.maxCourtSpread).toBe(1.25)
     expect(run.config.weights.opponentRepeat).toBe(0.6)
   })

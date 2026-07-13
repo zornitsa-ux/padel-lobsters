@@ -94,12 +94,14 @@ not the update-rule code).
 
 ## 4. Current status
 
-> **Next up:** **owner reviews `shadow-report.md`** (the Phase 2 → Phase 3
-> gate). Then Phase 3 M3.1 (migrations + RPCs). Pending owner decision in the
-> report: **proposed D-015** — raise the `balanced` preset socialDial 0.35 →
-> 0.5 (near-Pareto balance+variety gain on both real rosters). Not applied yet
-> (would regenerate goldens); apply + log D-015 if approved.
-> Handoff note (2026-07-13, sixth session): **M2.11 shadow comparison done.**
+> **Next up:** **Phase 3 M3.1** (migrations + RPCs: `mm_*` columns,
+> `rating_events`, `schedule_runs`). Phase 2 → Phase 3 gate MET — owner
+> reviewed `shadow-report.md` and approved; **D-015 applied** (`balanced`
+> socialDial 0.35 → 0.5, goldens + report regenerated). Note for M3.1: reconcile
+> the RPC-vs-direct-write mismatch (§6 watch item) with an explicit DECISIONS
+> entry.
+> Handoff note (2026-07-13, sixth session): **M2.11 shadow comparison done +
+> D-015 applied.**
 > Dev harness `shadow.harness.test.ts` (fixture-gated on `MM_SHADOW_FIXTURE`,
 > mirrors the M1.6 calibrate harness) runs V2 (3 presets, deterministic) vs the
 > legacy annealed matcher (5-seed sweep at the prod 5000-iter budget) on two
@@ -110,17 +112,19 @@ not the update-rule code).
 > gender (all zero violations), and a _tunable_ regression on opponent variety
 > in competitive/balanced (social recovers it). Fixture kept out of git
 > (anonymized levels/gender/handedness only, in scratchpad) per the calibrate-
-> harness privacy pattern; report is the committed deliverable. Everything
-> Phase 1+2 (incl. this) committed this session. Prior: Phase 0+1 complete
-> (D-010), Phase 2 engine M2.2–M2.10 green (D-011..D-014).
+> harness privacy pattern; report is the committed deliverable. Owner reviewed
+> and approved → **D-015** applied (`balanced` socialDial 0.35→0.5; the three
+> pinned assertions, three `× balanced` goldens, and the report regenerated).
+> Prior: Phase 0+1 complete (D-010), Phase 2 engine M2.2–M2.10 green
+> (D-011..D-014).
 
-| Phase           | Goal                         | Gate to next                               | State                                        |
-| --------------- | ---------------------------- | ------------------------------------------ | -------------------------------------------- |
-| 0 Discovery     | Audit data + wiring          | findings recorded below                    | done                                         |
-| 1 Rating engine | Pure domain + calibration    | backtest ≥ Glicko-2 parity                 | done (gate met, D-010)                       |
-| 2 Matcher       | Pure domain + shadow mode    | shadow report reviewed on 1–2 real rosters | M2.1–M2.11 ✓; **gate: owner review pending** |
-| 3 Integration   | Schema, services, admin UI   | feature-flagged V2 generates a real event  | not started                                  |
-| 4 Cutover       | Ratings live, legacy deleted | two clean events on V2                     | not started                                  |
+| Phase           | Goal                         | Gate to next                               | State                    |
+| --------------- | ---------------------------- | ------------------------------------------ | ------------------------ |
+| 0 Discovery     | Audit data + wiring          | findings recorded below                    | done                     |
+| 1 Rating engine | Pure domain + calibration    | backtest ≥ Glicko-2 parity                 | done (gate met, D-010)   |
+| 2 Matcher       | Pure domain + shadow mode    | shadow report reviewed on 1–2 real rosters | done (gate met; D-015)   |
+| 3 Integration   | Schema, services, admin UI   | feature-flagged V2 generates a real event  | not started (next: M3.1) |
+| 4 Cutover       | Ratings live, legacy deleted | two clean events on V2                     | not started              |
 
 ---
 
@@ -251,10 +255,9 @@ Size: S ≈ half-day, M ≈ 1–2 days, L ≈ needs splitting when reached.
   legacy annealed matcher (5-seed sweep) on two real anonymized rosters, scores
   both under one common `balanced` model, writes `shadow-report.md`. Verdict: V2
   decisively wins balance/lopsidedness, parity on hard rules, tunable variety
-  regression on competitive/balanced. Preset-tuning frontier included; proposed
-  **D-015** (balanced socialDial 0.35→0.5) recorded in the report, **not applied**
-  (regenerates goldens) — apply on owner approval. **Gate:** owner reviews the
-  comparison before Phase 3 — pending.
+  regression on competitive/balanced. Preset-tuning frontier drove **D-015**
+  (balanced socialDial 0.35→0.5), **owner-approved and applied** (goldens +
+  report regenerated). **Gate MET:** owner reviewed the comparison → Phase 3.
 
 ### Phase 3 — Schema, services, admin UI
 
