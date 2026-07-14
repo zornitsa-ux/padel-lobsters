@@ -395,3 +395,31 @@ one design coupling actively favors it:
 note); PLAN §6 watch item resolved (ref D-016); M3.1 (build the three RPCs +
 SQL auth tests), M3.2 (services call RPCs for ratings/runs, keep `saveMatches`
 for `matches`).
+
+## D-017 — `mm_*` is admin-only: redact it from `get_my_profile_v2` (2026-07-14)
+
+**Decision:** `mm_rating` / `mm_sigma` / `mm_rating_updated_at` are never exposed
+to a player, including their own row. `get_my_profile_v2()` (the self-profile
+RPC, `SECURITY DEFINER`, `SELECT *`) is rewritten to null those three columns in
+its returned row; it keeps its `RETURNS SETOF players` signature (the row shape
+is unchanged — the columns come back `NULL`), so no client schema/type change is
+needed. Admin visibility is preserved: `get_all_players_with_pii_v2()`
+(`require_admin()`-gated) still returns the real values, and `players_public`
+already omits `mm_*` via its explicit column list. Realized now (pulled forward
+from the M3.4/M4.1 deferral) at the owner's request.
+
+**Why:** DESIGN §5 specifies "admin-only visibility" for the learned rating.
+After M3.1 added the columns, `get_my_profile_v2`'s `SELECT *` transmitted a
+signed-in player their own `mm_*` over the wire (never others' — RLS + the
+admin-only `rating_events`/`schedule_runs` policies hold). The learned number is
+internal engine state, not a player-facing score; leaking even one's own invites
+confusion and gaming. Nulling the columns in-place (vs. narrowing the return type
+to a custom composite) is the minimal, non-breaking fix: it keeps `SETOF players`
+so `myProfileRowSchema` and every caller are untouched, and a rowtype-variable
+redaction is robust to future `players` columns. The §6 watch item explicitly
+flagged the return-type change as the reason to defer — nulling sidesteps it.
+
+**Impact:** new migration `20260714000001_mm_admin_only_profile.sql` (redefines
+`get_my_profile_v2`); PLAN §6 "`mm_*` self-visibility" watch item resolved
+(ref D-017); no client code change (M3.2 services + `myProfileRowSchema`
+unaffected). M4.1 seeding can populate `mm_*` without exposing it.

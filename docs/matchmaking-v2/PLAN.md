@@ -107,11 +107,11 @@ not the update-rule code).
 > `admin_record_schedule_run` (D-016 ordering). `buildRatingUpdatePayload` is the
 > pure update→guardrails→breakdown composition feeding
 > `admin_apply_tournament_ratings`. 21 new tests (mocked client; invalidation
-> keys asserted); typecheck/lint green; 601 pass. **Open follow-up carried from
-> M3.1** (owner, decide in M3.4/M4.1): `mm_*` stays out of `players_public`, but
-> `get_my_profile_v2()` is `SELECT *`, so a signed-in player can see _their own_
-> `mm_rating`/`mm_sigma` (never others'). DESIGN §5 wants "admin-only
-> visibility" — narrow that RPC? (§6 watch item.)
+> keys asserted); typecheck/lint green; 601 pass. Also **D-017 applied** (owner
+> pulled it forward): `get_my_profile_v2()` now redacts `mm_*` (nulls the three
+> columns, keeps `SETOF players` — no client change) so the learned rating is
+> admin-only per DESIGN §5; migration `20260714000001_mm_admin_only_profile.sql`,
+> verified on local. §6 `mm_*` self-visibility watch item resolved.
 > Prior handoff (2026-07-13, sixth session): **M2.11 shadow comparison done +
 > D-015 applied.**
 > Dev harness `shadow.harness.test.ts` (fixture-gated on `MM_SHADOW_FIXTURE`,
@@ -362,14 +362,13 @@ seed, report }`; single insert, returns the run id.
   FKs a match id, and delete+insert drives realtime schedule liveness).
   `schedule_runs` is a commit-time, unlinked audit blob — intentionally not
   atomic with the `matches` write (M3.2).
-- **`mm_*` self-visibility via `get_my_profile_v2`** (M3.1): `mm_*` is excluded
-  from `players_public`, but `get_my_profile_v2()` returns `SETOF players`
-  (`SELECT *`), so a signed-in player receives their own `mm_rating`/`mm_sigma`
-  (not others'). DESIGN §5 says "admin-only visibility." Decide in M3.4/M4.1
-  whether to narrow that RPC to an explicit column list (its return type would
-  change from `SETOF players` to a custom type — a real change, hence deferred).
-  Data-safe today: RLS + the admin-only `rating_events`/`schedule_runs` policies
-  hold; this is own-row profile discoverability only.
+- ~~**`mm_*` self-visibility via `get_my_profile_v2`** (M3.1)~~ Resolved
+  2026-07-14 (D-017): `get_my_profile_v2()` now nulls `mm_rating`/`mm_sigma`/
+  `mm_rating_updated_at` in its returned row, keeping the `SETOF players`
+  signature (no client type change). Admin visibility preserved via
+  `get_all_players_with_pii_v2()`; `players_public` already omits `mm_*`.
+  Migration `20260714000001_mm_admin_only_profile.sql`; verified on local (self
+  path returns NULL `mm_*`, owner-direct read still holds the value).
 - ~~**Alias coverage gap** (P0.1): 16/68 historical names unlinked~~ Resolved
   2026-07-10 (D-010): owner chose not to link them; M1.6 dropped the 62
   affected History matches (incl. all of apr2026 + standings-only jan2026) and
