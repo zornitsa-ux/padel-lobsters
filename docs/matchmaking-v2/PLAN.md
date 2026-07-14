@@ -94,17 +94,24 @@ not the update-rule code).
 
 ## 4. Current status
 
-> **Next up:** **Phase 3 M3.2** (application services `generateSchedule.service.ts`,
-> `applyTournamentRatings.service.ts` wiring the domain to the M3.1 RPCs — see the
-> frozen RPC contracts under M3.1 below). Handoff note (2026-07-13, seventh
-> session): **M3.1 schema + RPCs done** (D-016 realized). Migration
-> `20260713000001_matchmaking_v2_schema.sql` applied clean on local; all
-> acceptance checks pass (non-admin rejection + admin apply/review flow verified
-> by scripted SQL). **Uncommitted.** One follow-up surfaced for the owner: `mm_*`
-> stays out of `players_public`, but `get_my_profile_v2()` is `SELECT *`, so a
-> signed-in player can see _their own_ `mm_rating`/`mm_sigma` (never others').
-> DESIGN §5 wants "admin-only visibility" — decide in M3.4 whether to narrow that
-> RPC (new §6 watch item).
+> **Next up:** **Phase 3 M3.3** (self-edit reset hook — `update_my_profile`
+> migration: a `playtomic_level` edit resets `mm_rating`/`mm_sigma` + inserts a
+> `self_reset` rating event; strip `adjustment` from `update_my_profile` and
+> `admin_update_player` per D-008; use the P0.3 inventory in Appendix B).
+> Handoff note (2026-07-14, eighth session): **M3.1 committed** (6e53d42) and
+> **M3.2 done** (this commit). M3.2 added the `src/features/matchmaking/`
+> service slice: `generateSchedule.service.ts`, `applyTournamentRatings.service.ts`,
+> `matchmakingKeys.ts`, `matchmakingSchemas.ts` (Zod boundary), `useMatchmaking.ts`
+> (query + 3 mutation hooks). Preview generation stays pure; `commitSchedule`
+> writes `matches` (existing RLS `saveMatches`) then records the run via
+> `admin_record_schedule_run` (D-016 ordering). `buildRatingUpdatePayload` is the
+> pure update→guardrails→breakdown composition feeding
+> `admin_apply_tournament_ratings`. 21 new tests (mocked client; invalidation
+> keys asserted); typecheck/lint green; 601 pass. **Open follow-up carried from
+> M3.1** (owner, decide in M3.4/M4.1): `mm_*` stays out of `players_public`, but
+> `get_my_profile_v2()` is `SELECT *`, so a signed-in player can see _their own_
+> `mm_rating`/`mm_sigma` (never others'). DESIGN §5 wants "admin-only
+> visibility" — narrow that RPC? (§6 watch item.)
 > Prior handoff (2026-07-13, sixth session): **M2.11 shadow comparison done +
 > D-015 applied.**
 > Dev harness `shadow.harness.test.ts` (fixture-gated on `MM_SHADOW_FIXTURE`,
@@ -123,13 +130,13 @@ not the update-rule code).
 > Prior: Phase 0+1 complete (D-010), Phase 2 engine M2.2–M2.10 green
 > (D-011..D-014).
 
-| Phase           | Goal                         | Gate to next                               | State                   |
-| --------------- | ---------------------------- | ------------------------------------------ | ----------------------- |
-| 0 Discovery     | Audit data + wiring          | findings recorded below                    | done                    |
-| 1 Rating engine | Pure domain + calibration    | backtest ≥ Glicko-2 parity                 | done (gate met, D-010)  |
-| 2 Matcher       | Pure domain + shadow mode    | shadow report reviewed on 1–2 real rosters | done (gate met; D-015)  |
-| 3 Integration   | Schema, services, admin UI   | feature-flagged V2 generates a real event  | in progress (M3.1 done) |
-| 4 Cutover       | Ratings live, legacy deleted | two clean events on V2                     | not started             |
+| Phase           | Goal                         | Gate to next                               | State                     |
+| --------------- | ---------------------------- | ------------------------------------------ | ------------------------- |
+| 0 Discovery     | Audit data + wiring          | findings recorded below                    | done                      |
+| 1 Rating engine | Pure domain + calibration    | backtest ≥ Glicko-2 parity                 | done (gate met, D-010)    |
+| 2 Matcher       | Pure domain + shadow mode    | shadow report reviewed on 1–2 real rosters | done (gate met; D-015)    |
+| 3 Integration   | Schema, services, admin UI   | feature-flagged V2 generates a real event  | in progress (M3.1–2 done) |
+| 4 Cutover       | Ratings live, legacy deleted | two clean events on V2                     | not started               |
 
 ---
 
@@ -285,16 +292,23 @@ proposed_delta, applied_delta, flagged, breakdown }] }`. Inserts one
     (rejects already-reviewed / non-flagged), stamps `review_status`/`reviewed_by`/
     `reviewed_at`, and sets `applied_delta` to the true total that hit `mm_rating`.
   - `admin_record_schedule_run(jsonb) → uuid` — payload `{ tournament_id, config,
-  seed, report }`; single insert, returns the run id.
+seed, report }`; single insert, returns the run id.
     **Acceptance MET:** `npm run db:reset` clean; advisor adds no ERROR and no
     new anon exposure (remaining `authenticated_*` WARNs match the house baseline
     for every admin RPC + `matches`/`players`/`settings`); scripted SQL proved all
     three RPCs reject non-admins and the admin apply→cap→review-approve flow +
     double-apply guard behave correctly. typecheck/lint/test green (580 pass).
-- `[ ]` **M3.2 — Application services** (W, M)
-  `generateSchedule.service.ts`, `applyTournamentRatings.service.ts` wiring
-  domain ⇄ RPCs per feature-slice pattern (query keys, Zod at boundary).
-  **Acceptance:** unit tests with mocked client; invalidation keys correct.
+- `[x]` **M3.2 — Application services** (W→C, M — done 2026-07-14,
+  coordinator-implemented) `generateSchedule.service.ts` (`toPlayerInput`
+  rating/gender boundary mapping, pure `previewSchedule`, `scheduleRunToMatchRows`,
+  `recordScheduleRun` + `commitSchedule` = saveMatches-then-record per D-016),
+  `applyTournamentRatings.service.ts` (pure `buildRatingUpdatePayload` =
+  update→guardrails→breakdown composition, `applyTournamentRatings`,
+  `reviewRatingEvent`, `fetchRatingReviewQueue`), plus `matchmakingKeys.ts`,
+  `matchmakingSchemas.ts` (Zod boundary), `useMatchmaking.ts` (query +
+  mutation hooks). **Acceptance MET:** 21 new tests (mocked supabase client;
+  invalidation keys asserted for all three mutations). typecheck/lint green;
+  601 pass.
 - `[ ]` **M3.3 — Self-edit reset hook** (C design, W implement, S)
   `update_my_profile` change: `playtomic_level` edit ⇒ reset `mm_rating`/
   `mm_sigma` + insert `self_reset` rating event; remove `adjustment` from the
