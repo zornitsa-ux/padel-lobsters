@@ -94,13 +94,18 @@ not the update-rule code).
 
 ## 4. Current status
 
-> **Next up:** **Phase 3 M3.1** (migrations + RPCs: `mm_*` columns,
-> `rating_events`, `schedule_runs`). Phase 2 → Phase 3 gate MET — owner
-> reviewed `shadow-report.md` and approved; **D-015 applied** (`balanced`
-> socialDial 0.35 → 0.5, goldens + report regenerated). Note for M3.1: reconcile
-> the RPC-vs-direct-write mismatch (§6 watch item) with an explicit DECISIONS
-> entry.
-> Handoff note (2026-07-13, sixth session): **M2.11 shadow comparison done +
+> **Next up:** **Phase 3 M3.2** (application services `generateSchedule.service.ts`,
+> `applyTournamentRatings.service.ts` wiring the domain to the M3.1 RPCs — see the
+> frozen RPC contracts under M3.1 below). Handoff note (2026-07-13, seventh
+> session): **M3.1 schema + RPCs done** (D-016 realized). Migration
+> `20260713000001_matchmaking_v2_schema.sql` applied clean on local; all
+> acceptance checks pass (non-admin rejection + admin apply/review flow verified
+> by scripted SQL). **Uncommitted.** One follow-up surfaced for the owner: `mm_*`
+> stays out of `players_public`, but `get_my_profile_v2()` is `SELECT *`, so a
+> signed-in player can see _their own_ `mm_rating`/`mm_sigma` (never others').
+> DESIGN §5 wants "admin-only visibility" — decide in M3.4 whether to narrow that
+> RPC (new §6 watch item).
+> Prior handoff (2026-07-13, sixth session): **M2.11 shadow comparison done +
 > D-015 applied.**
 > Dev harness `shadow.harness.test.ts` (fixture-gated on `MM_SHADOW_FIXTURE`,
 > mirrors the M1.6 calibrate harness) runs V2 (3 presets, deterministic) vs the
@@ -118,13 +123,13 @@ not the update-rule code).
 > Prior: Phase 0+1 complete (D-010), Phase 2 engine M2.2–M2.10 green
 > (D-011..D-014).
 
-| Phase           | Goal                         | Gate to next                               | State                    |
-| --------------- | ---------------------------- | ------------------------------------------ | ------------------------ |
-| 0 Discovery     | Audit data + wiring          | findings recorded below                    | done                     |
-| 1 Rating engine | Pure domain + calibration    | backtest ≥ Glicko-2 parity                 | done (gate met, D-010)   |
-| 2 Matcher       | Pure domain + shadow mode    | shadow report reviewed on 1–2 real rosters | done (gate met; D-015)   |
-| 3 Integration   | Schema, services, admin UI   | feature-flagged V2 generates a real event  | not started (next: M3.1) |
-| 4 Cutover       | Ratings live, legacy deleted | two clean events on V2                     | not started              |
+| Phase           | Goal                         | Gate to next                               | State                   |
+| --------------- | ---------------------------- | ------------------------------------------ | ----------------------- |
+| 0 Discovery     | Audit data + wiring          | findings recorded below                    | done                    |
+| 1 Rating engine | Pure domain + calibration    | backtest ≥ Glicko-2 parity                 | done (gate met, D-010)  |
+| 2 Matcher       | Pure domain + shadow mode    | shadow report reviewed on 1–2 real rosters | done (gate met; D-015)  |
+| 3 Integration   | Schema, services, admin UI   | feature-flagged V2 generates a real event  | in progress (M3.1 done) |
+| 4 Cutover       | Ratings live, legacy deleted | two clean events on V2                     | not started             |
 
 ---
 
@@ -261,12 +266,31 @@ Size: S ≈ half-day, M ≈ 1–2 days, L ≈ needs splitting when reached.
 
 ### Phase 3 — Schema, services, admin UI
 
-- `[ ]` **M3.1 — Migrations + RPCs** (W, M)
-  `mm_*` columns, `rating_events`, `schedule_runs` per DESIGN §5;
-  `admin_apply_tournament_ratings`, `admin_review_rating_event`,
-  `admin_record_schedule_run` RPCs (house auth patterns); exclude `mm_*` from
-  `players_public`. **Acceptance:** `npm run db:reset` clean; RLS advisor clean;
-  non-admin calls rejected (SQL tests or scripted checks).
+- `[x]` **M3.1 — Migrations + RPCs** (W→C, M — done 2026-07-13, uncommitted;
+  coordinator-implemented) `supabase/migrations/20260713000001_matchmaking_v2_schema.sql`:
+  `players.mm_rating/mm_sigma/mm_rating_updated_at`, `rating_events`,
+  `schedule_runs` per DESIGN §5, RLS admin-only SELECT + house grant posture
+  (anon revoked; authenticated SELECT-only; functions EXECUTE revoked from
+  anon/public), three `require_admin()` SECURITY DEFINER RPCs. **Frozen RPC
+  contracts for M3.2:**
+  - `admin_apply_tournament_ratings(jsonb) → int` — payload `{ tournament_id,
+updates: [{ player_id, prior_mu, prior_sigma, new_mu, new_sigma,
+proposed_delta, applied_delta, flagged, breakdown }] }`. Inserts one
+    `rating_events` row (kind `tournament`) + updates `players.mm_*` per player,
+    one transaction. Refuses to double-apply a tournament (guard on existing
+    `tournament`-kind events). Domain supplies the already-capped `applied_delta`.
+  - `admin_review_rating_event(uuid, text, numeric) → rating_events` — actions
+    `approve` (apply withheld remainder `proposed−applied`), `edit` (apply the
+    passed delta on top), `discard` (no change); each resolves exactly once
+    (rejects already-reviewed / non-flagged), stamps `review_status`/`reviewed_by`/
+    `reviewed_at`, and sets `applied_delta` to the true total that hit `mm_rating`.
+  - `admin_record_schedule_run(jsonb) → uuid` — payload `{ tournament_id, config,
+  seed, report }`; single insert, returns the run id.
+    **Acceptance MET:** `npm run db:reset` clean; advisor adds no ERROR and no
+    new anon exposure (remaining `authenticated_*` WARNs match the house baseline
+    for every admin RPC + `matches`/`players`/`settings`); scripted SQL proved all
+    three RPCs reject non-admins and the admin apply→cap→review-approve flow +
+    double-apply guard behave correctly. typecheck/lint/test green (580 pass).
 - `[ ]` **M3.2 — Application services** (W, M)
   `generateSchedule.service.ts`, `applyTournamentRatings.service.ts` wiring
   domain ⇄ RPCs per feature-slice pattern (query keys, Zod at boundary).
@@ -318,11 +342,20 @@ Size: S ≈ half-day, M ≈ 1–2 days, L ≈ needs splitting when reached.
   players.~~ Resolved 2026-07-13 (D-011): explicit `unknown` bucket — never
   penalized, never blocking, offsets the mixed-mode quota; informational audit
   entries only.
-- **RPC vs direct-write mismatch** (P0.2): existing `matches`/`settings`
-  writes are RLS-gated direct table writes, not the `require_admin()` RPCs
-  DESIGN §5 specifies for the new tables. M3.1 needs an explicit DECISIONS
-  entry either way. Related: `saveMatches` is delete+insert, so match ids are
-  not stable across regenerates — relevant to `schedule_runs` linkage (M3.2).
+- ~~**RPC vs direct-write mismatch** (P0.2)~~ Resolved 2026-07-13 (D-016): new
+  V2 tables (`mm_*`, `rating_events`, `schedule_runs`) write through
+  `require_admin()` RPCs; `matches` keeps its RLS-gated delete+insert (nothing
+  FKs a match id, and delete+insert drives realtime schedule liveness).
+  `schedule_runs` is a commit-time, unlinked audit blob — intentionally not
+  atomic with the `matches` write (M3.2).
+- **`mm_*` self-visibility via `get_my_profile_v2`** (M3.1): `mm_*` is excluded
+  from `players_public`, but `get_my_profile_v2()` returns `SETOF players`
+  (`SELECT *`), so a signed-in player receives their own `mm_rating`/`mm_sigma`
+  (not others'). DESIGN §5 says "admin-only visibility." Decide in M3.4/M4.1
+  whether to narrow that RPC to an explicit column list (its return type would
+  change from `SETOF players` to a custom type — a real change, hence deferred).
+  Data-safe today: RLS + the admin-only `rating_events`/`schedule_runs` policies
+  hold; this is own-row profile discoverability only.
 - ~~**Alias coverage gap** (P0.1): 16/68 historical names unlinked~~ Resolved
   2026-07-10 (D-010): owner chose not to link them; M1.6 dropped the 62
   affected History matches (incl. all of apr2026 + standings-only jan2026) and

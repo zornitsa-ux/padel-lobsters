@@ -327,3 +327,71 @@ updated to 0.5 (this entry authorizes them); the three `× balanced` golden
 snapshots regenerated (`__snapshots__/golden.test.ts.snap`); `shadow-report.md`
 regenerated with balanced = J=0.5. Phase 2 → Phase 3 gate met: owner reviewed
 the shadow report and approved proceeding.
+
+## D-016 — V2 tables write through `require_admin()` RPCs; `matches` keeps delete+insert (2026-07-13)
+
+**Decision:** The new Phase 3 write surfaces — `players.mm_*` updates,
+`rating_events`, and `schedule_runs` — go through `require_admin()` RPCs
+(`admin_apply_tournament_ratings`, `admin_review_rating_event`,
+`admin_record_schedule_run`) per DESIGN §5, **not** the RLS-gated direct table
+writes that `matches`/`settings` use today (P0.2). `matches` is the deliberate
+exception: schedule (re)generation keeps its existing full `DELETE` +
+`INSERT` via `saveMatches` (direct, RLS-gated), and score entry keeps its
+in-place `UPDATE` by stable `id`. This resolves the §6 "RPC vs direct-write
+mismatch" watch item.
+
+**Why:** The rating surfaces have integrity and atomicity requirements
+`matches`/`settings` never had, so the direct-write precedent is the wrong
+model to copy:
+
+- **Multi-row atomicity.** Applying one tournament's ratings updates N
+  `players.mm_*` rows _and_ inserts N `rating_events` rows all-or-nothing; a
+  direct-write client does this as 2N un-transacted round-trips with
+  partial-failure risk. An RPC is one transaction.
+- **Server-enforced invariants RLS cannot express.** RLS gates _who_ writes,
+  never _what_: `applied_delta` must equal the guardrail-capped
+  `proposed_delta`; `review_status` may only move `null → approved/edited/
+discarded`. Direct writes let any admin-JWT client tamper with either. The
+  RPC enforces them.
+- **Computed, not form, payloads.** These rows are the domain engine's output
+  (caps, flags, breakdown jsonb), validated at the RPC boundary rather than
+  trusted from the client.
+- The `require_admin()` helper and `admin_*` RPC pattern already exist (RBAC
+  migrations), so this is reuse, not net-new plumbing.
+
+`matches` stays direct delete+insert because none of those pressures apply and
+one design coupling actively favors it:
+
+- **Nothing references a match `id` durably** — no FK targets `matches`, scores
+  live on the row itself, and no V2 table links to a match row (`rating_events`
+  keys off `tournament_id` + `player_id`; the per-match breakdown is a jsonb
+  blob; `schedule_runs` is an unlinked audit record). There is nothing to
+  preserve an id _for_, so a diff/upsert buys nothing.
+- **Delete+insert is load-bearing for realtime.** `matches` is the sole table
+  left in the `supabase_realtime` publication
+  (`20260602000001_trim_realtime_publication.sql`), kept published for schedule
+  INSERT/DELETE liveness; peers rebuild the schedule view from those events
+  (score sync rides a separate Broadcast path). Switching to diff/upsert would
+  break peer schedule-sync and re-add per-subscription WAL/RLS cost on the one
+  table that migration deliberately trimmed to.
+
+**Consequences / notes:**
+
+- `schedule_runs` is written at **commit time** (bundled with the `matches`
+  persist in M3.2's `generateSchedule.service.ts`), not on throwaway preview
+  generations. It is an audit blob, intentionally **not** transactionally tied
+  to the `matches` rows it describes — acceptable non-atomicity for a
+  provenance record; the two use different write mechanisms anyway.
+- **Revisit trigger for the `matches` exception:** if a future table gains a
+  foreign key to an _individual_ match row (e.g. per-match rating events instead
+  of a tournament-level blob, or match-level media), reconsider id stability
+  then — not before.
+- **Out of scope, flagged separately:** regenerating after scores are entered
+  currently wipes them (`saveMatches` re-inserts with null scores). This is a
+  product/UX behavior question orthogonal to id stability, owned by M3.5, not
+  addressed here.
+
+**Impact:** DESIGN §5 (confirms the RPC pattern; adds the `matches` exception
+note); PLAN §6 watch item resolved (ref D-016); M3.1 (build the three RPCs +
+SQL auth tests), M3.2 (services call RPCs for ratings/runs, keep `saveMatches`
+for `matches`).
