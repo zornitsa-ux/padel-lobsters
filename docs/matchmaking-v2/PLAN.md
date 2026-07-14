@@ -94,12 +94,16 @@ not the update-rule code).
 
 ## 4. Current status
 
-> **Next up:** **Phase 3 M3.3** (self-edit reset hook — `update_my_profile`
-> migration: a `playtomic_level` edit resets `mm_rating`/`mm_sigma` + inserts a
-> `self_reset` rating event; strip `adjustment` from `update_my_profile` and
-> `admin_update_player` per D-008; use the P0.3 inventory in Appendix B).
-> Handoff note (2026-07-14, eighth session): **M3.1 committed** (6e53d42) and
-> **M3.2 done** (this commit). M3.2 added the `src/features/matchmaking/`
+> **Next up:** **Phase 3 M3.4** (Admin UI — `ConfigPanel`, `SchedulePreview`,
+> `QualityReport`, `RatingReview`, one presentational component per task, wired
+> via a container to the M3.2 hooks/services; manual verify + typecheck). The
+> M3.2 service slice (`useMatchmaking.ts` hooks, `matchmakingKeys.ts`) is the
+> data layer; `previewSchedule`/`commitSchedule` and the rating review queue are
+> ready to wire.
+> Handoff note (2026-07-14, eighth session): **M3.1 committed** (6e53d42),
+> **M3.2 done** (4bac68d), **D-017** (78a94ee — redact `mm_*` from
+> `get_my_profile_v2`), **M3.3 done** (this commit — self/admin level-edit reset
+> hook + D-018). M3.2 added the `src/features/matchmaking/`
 > service slice: `generateSchedule.service.ts`, `applyTournamentRatings.service.ts`,
 > `matchmakingKeys.ts`, `matchmakingSchemas.ts` (Zod boundary), `useMatchmaking.ts`
 > (query + 3 mutation hooks). Preview generation stays pure; `commitSchedule`
@@ -135,7 +139,7 @@ not the update-rule code).
 | 0 Discovery     | Audit data + wiring          | findings recorded below                    | done                      |
 | 1 Rating engine | Pure domain + calibration    | backtest ≥ Glicko-2 parity                 | done (gate met, D-010)    |
 | 2 Matcher       | Pure domain + shadow mode    | shadow report reviewed on 1–2 real rosters | done (gate met; D-015)    |
-| 3 Integration   | Schema, services, admin UI   | feature-flagged V2 generates a real event  | in progress (M3.1–2 done) |
+| 3 Integration   | Schema, services, admin UI   | feature-flagged V2 generates a real event  | in progress (M3.1–3 done) |
 | 4 Cutover       | Ratings live, legacy deleted | two clean events on V2                     | not started               |
 
 ---
@@ -309,13 +313,17 @@ seed, report }`; single insert, returns the run id.
   mutation hooks). **Acceptance MET:** 21 new tests (mocked supabase client;
   invalidation keys asserted for all three mutations). typecheck/lint green;
   601 pass.
-- `[ ]` **M3.3 — Self-edit reset hook** (C design, W implement, S)
-  `update_my_profile` change: `playtomic_level` edit ⇒ reset `mm_rating`/
-  `mm_sigma` + insert `self_reset` rating event; remove `adjustment` from the
-  RPC payload; also strip the `adjustment`/`adjusted_level` writes from
-  `admin_update_player` (D-008 — the RPC itself survives). Uses the P0.3
-  inventory. **Acceptance:** migration test: edit resets exactly and audit row
-  exists; no-op edits don't reset.
+- `[x]` **M3.3 — Self-edit reset hook** (C, S — done 2026-07-14) Migration
+  `20260714000002_mm_self_reset_hook.sql`: shared `record_mm_reset()` helper
+  (mm reset + audit insert, execute revoked from client roles), `update_my_profile`
+  logs `self_reset`, `admin_update_player` logs `admin_edit` (D-008); both stop
+  writing `adjustment` and keep `adjusted_level = playtomic_level` for display
+  through M4.3 (D-018). **Acceptance MET** (scripted SQL on local): level edit
+  resets `mm_rating`→new / `mm_sigma`→0.7 with a `self_reset` row
+  (`applied_delta = new−prior`, `flagged=f`, `tournament_id=null`); no-op /
+  non-level edits don't reset; admin level edit resets + logs `admin_edit`;
+  `adjustment` never written. db:reset + db lint clean; typecheck/lint green;
+  601 pass.
 - `[ ]` **M3.4 — Admin UI** (W ×4, M each)
   `ConfigPanel`, `SchedulePreview`, `QualityReport`, `RatingReview` — one task
   per component, presentational per house pattern, wired via container.

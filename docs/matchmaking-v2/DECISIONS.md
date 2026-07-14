@@ -423,3 +423,35 @@ flagged the return-type change as the reason to defer — nulling sidesteps it.
 `get_my_profile_v2`); PLAN §6 "`mm_*` self-visibility" watch item resolved
 (ref D-017); no client code change (M3.2 services + `myProfileRowSchema`
 unaffected). M4.1 seeding can populate `mm_*` without exposing it.
+
+## D-018 — M3.3 keeps `adjusted_level` mirroring `playtomic_level` (2026-07-14)
+
+**Decision:** In M3.3, `update_my_profile` and `admin_update_player` stop writing
+`adjustment` and drop the `+ adjustment` term, but **keep writing
+`adjusted_level = <new playtomic_level>`** (i.e. treat adjustment as 0 on the
+edit path) rather than dropping the `adjusted_level` write outright as D-008's
+letter suggested. Both RPCs additionally reset `mm_rating`/`mm_sigma` and log a
+rating event when `playtomic_level` actually changes: `update_my_profile` →
+`kind = 'self_reset'`, `admin_update_player` → `kind = 'admin_edit'` (D-008: an
+admin level edit triggers the same D-002 reset semantics). The reset + audit
+insert is a single shared `record_mm_reset()` SECURITY DEFINER helper
+(execute revoked from anon/authenticated/public — internal to the two RPCs).
+
+**Why:** `adjusted_level` is still read by ~13 display sites (P0.3 Appendix B
+"client reads") until M4.3 migrates them to `mm_*`/`playtomic_level`. Dropping
+its write in M3.3 would show an edited player their _old_ level badge for the
+whole M3.3→M4.3 window — a real regression for one free line. Mirroring
+`playtomic_level` is the correct "no adjustment" value and keeps display
+faithful; the column and this write both still disappear at M4.3, so the drop
+proceeds unchanged (D-008 Impact holds). The self-_adjustment_ mechanism itself
+is gone: `adjustment` is no longer read or written by either RPC (D-002).
+`record_mm_reset` is extracted rather than inlined twice (CLAUDE.md de-dup rule)
+and single-sources the `applied_delta = new_level − prior_mu` audit arithmetic.
+
+**Impact:** new migration `20260714000002_mm_self_reset_hook.sql`
+(`record_mm_reset` helper + both RPC redefinitions); realizes M3.3. Client
+`updatePlayer` still sends an `adjustment` key (now ignored by the RPCs) — its
+removal is M4.3 UI work per Appendix B. `admin_add_player`/`self_signup_player`
+still write `adjustment`/`adjusted_level` (out of M3.3 scope; dropped at M4.3).
+`rating_events` gains real `self_reset`/`admin_edit` rows. M4.3 checklist:
+`record_mm_reset` stops writing `adjusted_level` when the column drops.
