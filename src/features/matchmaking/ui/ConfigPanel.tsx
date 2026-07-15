@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronRight, RotateCcw, Shuffle } from 'lucide-react'
+import { COURT_JITTER_SCALE } from '../domain/courts'
 import type { MatcherPriority } from '../domain/presets'
 import type {
   FeasibilityResult,
@@ -50,17 +51,66 @@ const CHIP_STATUS_CLASSES: Record<string, string> = {
 
 type NumericKnob = 'socialDial' | 'maxCourtSpread' | 'maxPartnerGap' | 'balanceTolerance'
 
+const round2 = (n: number): number => Math.round(n * 100) / 100
+
 const NUMERIC_KNOBS: {
   key: NumericKnob
   label: string
   min: number
   max: number
   step: number
+  // What the current value means, in levels. Effect names the quality bars it
+  // moves, in the QualityReport's own vocabulary (D-019: one set of terms).
+  describe: (value: number) => string
+  effect: string
+  // balanceTolerance is lower = stricter, so the slider is reversed to make
+  // right = stricter. Display transform only; the domain knob is unchanged.
+  // The transform is an involution over [min,max] (v ↦ min+max−v).
+  invert?: boolean
 }[] = [
-  { key: 'socialDial', label: 'Social dial', min: 0, max: 1, step: 0.05 },
-  { key: 'maxCourtSpread', label: 'Max court spread', min: 0.25, max: 3.0, step: 0.25 },
-  { key: 'maxPartnerGap', label: 'Max partner gap', min: 0.25, max: 2.0, step: 0.25 },
-  { key: 'balanceTolerance', label: 'Balance tolerance', min: 0.1, max: 1.5, step: 0.1 },
+  {
+    key: 'socialDial',
+    label: 'Social dial',
+    min: 0,
+    max: 1,
+    step: 0.05,
+    describe: (value) =>
+      value === 0
+        ? 'No shuffle — courts are a strict level sort, identical every reshuffle.'
+        : `Shuffles each player up to ±${round2(value * COURT_JITTER_SCALE)} levels before seeding courts, so they can land a court above or below their own.`,
+    effect: 'More mixing → Variety up, Balance down.',
+  },
+  {
+    key: 'maxCourtSpread',
+    label: 'Max court spread',
+    min: 0.25,
+    max: 3.0,
+    step: 0.25,
+    describe: (value) =>
+      `A court spanning up to ${value} levels is free; only the excess beyond that counts.`,
+    effect: 'Wider → Variety up, Balance down.',
+  },
+  {
+    key: 'maxPartnerGap',
+    label: 'Max partner gap',
+    min: 0.25,
+    max: 2.0,
+    step: 0.25,
+    describe: (value) =>
+      `Partners up to ${value} levels apart are free; only the excess beyond that counts.`,
+    effect: 'Wider → more pairing options, Partner fairness down.',
+  },
+  {
+    key: 'balanceTolerance',
+    label: 'Balance strictness',
+    min: 0.1,
+    max: 1.5,
+    step: 0.1,
+    invert: true,
+    describe: (value) =>
+      `Nothing is free here — every lopsided court counts. A ${value}-level team gap counts as one full unit of imbalance.`,
+    effect: 'Stricter → Balance up, Variety down.',
+  },
 ]
 
 function clearOverride({
@@ -126,15 +176,16 @@ export default function ConfigPanel({
 
       {advancedOpen && (
         <div className="space-y-3 pl-1">
-          {NUMERIC_KNOBS.map(({ key, label, min, max, step }) => {
+          {NUMERIC_KNOBS.map(({ key, label, min, max, step, describe, effect, invert }) => {
             const overridden = config[key] !== undefined
             const value = resolvedConfig[key]
+            const toDisplay = (v: number) => (invert ? round2(min + max - v) : v)
             return (
               <div key={key}>
                 <div className="flex items-center justify-between">
                   <label className="label mb-0">{label}</label>
                   <span className="flex items-center gap-1 text-xs text-gray-500">
-                    {value}
+                    {toDisplay(value)}
                     {overridden && (
                       <>
                         <span
@@ -160,12 +211,14 @@ export default function ConfigPanel({
                   min={min}
                   max={max}
                   step={step}
-                  value={value}
+                  value={toDisplay(value)}
                   onChange={(event) =>
-                    onConfigChange({ ...config, [key]: Number(event.target.value) })
+                    onConfigChange({ ...config, [key]: toDisplay(Number(event.target.value)) })
                   }
                   className="w-full accent-lob-teal"
                 />
+                <p className="text-xs text-gray-500">{describe(value)}</p>
+                <p className="text-xs text-gray-400">{effect}</p>
               </div>
             )
           })}
