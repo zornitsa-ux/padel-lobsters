@@ -519,3 +519,41 @@ disclosure); `RatingReview` mounts inside the Finish flow. M3.4 tasks build to
 this shape (manual verify + typecheck, no domain logic in UI). M3.5 flag = silent
 V2 swap on the Lobster path. Compare-two is in M3.4 scope; N-candidate gallery is
 explicitly out. UX sketch is a throwaway exploration artifact — not committed.
+
+---
+
+## D-020 — Lobster is the only format; the select goes away (2026-07-15)
+
+**Decision:** The app supports **exactly one event format: `lobster_matching`**.
+M4.3 removes the format select from `EventFormModal.jsx` rather than trimming it
+to a shorter list, and removes the multi-format branching behind it. If a second
+format is ever wanted, it gets built deliberately — as a real generator with a
+real UI — rather than kept alive as a standing option that mostly doesn't work.
+Owner call, 2026-07-15: "We have no plans for other formats. I'd rather get
+things cleaned up and we can expand again later if we need."
+
+**Why:** The list is already fiction (M3.6 Finding 2). Production has used
+`lobster_matching` for **6 of 6 events** and nothing else, ever. `knockout` is
+offered with no generator at all — it silently falls through to Americano.
+D-001 deletes the americano/mexicano/roundrobin generators at M4.3, which would
+turn their three options into the same silent trap. So the select cannot survive
+M4.3 in its current form regardless; the only open question was whether to trim
+or to cut, and there is no evidence for anything to trim _to_. Keeping dead
+options costs real money: every one is a branch in `handleGenerate`, a
+`|| 'americano'` default in three files, a label map, and a rounds picker that
+V2 has to keep reasoning about.
+
+**Impact:** M4.3 scope grows to include: the select
+(`EventFormModal.jsx:97-101`), `formatLabel` (`eventHelpers.js:20-26`), the
+`format` branch (`Schedule.jsx:332-350`), the `|| 'americano'` defaults
+(`eventConstants.js:16`, `Tournament.jsx:94`, `Registration.jsx:114`), and the
+`!isLobster && (americano|mexicano)` rounds picker
+(`ScheduleGeneratorControls.tsx:71`). With one format, `isLobster` stops being a
+condition and collapses out of `Schedule.jsx` — including the `useV2Matcher`
+guard, which reduces to `v2Enabled && isAdmin`. Data: all 6 existing rows are
+already `lobster_matching`, so no backfill is needed; add a CHECK constraint (or
+default-and-drop the column) so the DB stops accepting formats the app can't
+generate — `tournaments.format` is bare `text default 'americano'` today
+(`init.sql:69`), a default that will itself be wrong once Americano is gone.
+Supersedes nothing; extends D-001 from "delete the unused generators" to "delete
+the concept of format choice."
