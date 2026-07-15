@@ -532,6 +532,8 @@ boolean not null default false`; applied+verified on local, owner pushes).
   Fix is container-scoped: defer the compute off the click (yield/idle or worker)
   so `generating` is real, then make arrival perceptible (scroll-into-view or
   focus move to the preview heading + a live-region announcement for a11y).
+  **Also covers Reshuffle** (M3.6 Finding 7): `reshuffling`/`comparing` are the
+  same hard-coded `false`, so `'Reshuffling…'` is dead code that can never render.
   **Finding 5 (design gap — exchange rates are unreadable).** Owner: "I and other
   admins don't really understand how to think about things like 'repeat partner
   for a second time is worth X'." The six `exchangeRateSentences`
@@ -552,7 +554,52 @@ boolean not null default false`; applied+verified on local, owner pushes).
   (`socialDial`/`maxCourtSpread`), not weights — so a per-preset "gives up X
   first" list would look dynamic and never change; the ranking is therefore
   framed as an engine explainer and the intent one-liner carries the preset
-  difference. Presentation only; no engine behavior change. 604 pass.
+  difference. Presentation only; no engine behavior change. 604 pass. Second
+  round of copy work → **D-022** (per-knob copy in padel terms; owner rejected
+  "free"/"excess"/"unit of imbalance" as the same leak one level down).
+  **Finding 6 (D-022 violation — raw flag strings, owner asked to note).** Court
+  flag chips render the **domain identifier verbatim** (`SchedulePreview.tsx:77`
+  prints `{flag}`), so admins see `high-sigma-player` and `opponent-rematch` as
+  UI text. Owner: "Organizers will not know what that means." `high-sigma-player`
+  means someone on the court has an uncertain rating (`sigma ≥ 0.5`,
+  `report.ts:18,122`) — a new or recently-reset player whose level we don't trust
+  yet, so that court's balance is a guess. `opponent-rematch` means a repeat
+  meeting. **Fix belongs in the UI, not the domain:** these strings are persisted
+  inside the `schedule_runs` report blob (D-016), so renaming them in `report.ts`
+  would break historical rows. Add a flag→label map next to `ui/dimensions.ts`
+  (the same one-vocabulary pattern) and leave the domain identifiers alone.
+  Reconsider the wording per D-022 — probably "new player, level uncertain" and
+  "playing each other again".
+  **Finding 7 (real defect — Reshuffle/Compare read as disabled).** Owner: "the
+  reshuffle and compare buttons both look disabled, but they do work." Confirmed:
+  both use `bg-gray-100 text-gray-600` (`SchedulePreview.tsx:203,214`) — the
+  **exact classes ConfigPanel uses for an _unselected_ preset**
+  (`ConfigPanel.tsx`), so grey-on-grey already means "off" in this app's visual
+  language. Sitting beside `btn-primary` Save, they read as inert. Worse, the
+  actual disabled state is only `disabled:opacity-50` — a fainter grey — so
+  enabled and disabled are nearly indistinguishable. Needs a real secondary
+  button style (outline/bordered), distinct from both unselected-chip and
+  disabled. Cheap, independent of Finding 8.
+  **Finding 8 (design rejected by owner — the compare flow).** Owner: "The
+  compare is very confusing. I didn't think it worked at all for a while but then
+  I happened to scroll up and saw there is a comparison… I do not like this
+  compare flow at all." Three separate causes, all confirmed:
+  (a) **Placement** — `ComparePanel` renders at the **top** of `SchedulePreview`
+  (`:179`), above the quality card and every round, while the Compare button sits
+  at the **bottom** (`:212`) under the full round list. On mobile the result
+  appears entirely off-screen; nothing scrolls, focuses, or announces.
+  (b) **Opaque provenance** — `handleCompare` (`MatchmakingContainer.tsx:80`) is
+  `{ ...config, seed: freshSeed() }`: same preset, new shuffle. The admin never
+  chose that and is never told. `RunLabel` (`:104`) shows `preset · seed 1837…`,
+  so **both columns read "balanced"** and differ only by a meaningless integer.
+  Hence "I don't understand how the two schedules were chosen."
+  (c) **Wrong shape** — a passive side-by-side of two grades, not a task. Owner
+  wants compare to be a **focused, front-and-center activity where the admin
+  chooses what is being compared** (modal or equivalent). Supersedes the D-019
+  compare-two decision; options put to the owner 2026-07-15 → needs a DECISIONS
+  entry once a direction is picked. Note the D-019 rejection of an N-candidate
+  gallery is worth revisiting as part of this, since "pick what to compare" and
+  "show me the options" converge.
 
 ### Phase 4 — Cutover & cleanup
 
