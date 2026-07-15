@@ -429,7 +429,7 @@ playerNamesById; onReview({eventId, action, delta?}); reviewing }`. NOT yet
     `compareRun` state; makes the pure domain calls (`toPlayerInput` roster map →
     `resolveConfig` → `exchangeRateSentences` → `auditFeasibility`;
     `previewSchedule`) and the M3.2 `useCommitSchedule` write. Props: `{
-  tournamentId; roster: RosterRow[]; courts; rounds; genderMode }`. **Conservative
+tournamentId; roster: RosterRow[]; courts; rounds; genderMode }`. **Conservative
     calls (D-019 "iterate live" latitude):** Compare = re-seed same preset
     (preset-vs-preset compare deferred); default preset `balanced`; roster passed
     in (mm\_\* sourcing via `get_all_players_with_pii_v2` is M3.5's Schedule.jsx
@@ -493,6 +493,22 @@ boolean not null default false`; applied+verified on local, owner pushes).
   admin-only via the existing RLS policy). Applied to local. **Owner push
   needed for `...0003` and `...0004` — `0004` is worth pushing on its own
   merits regardless of the V2 timeline.**
+  **Finding 2 (format list is fiction — fix at M4.3).** The Edit Event format
+  select (`EventFormModal.jsx:97-101`) offers five formats; production has only
+  ever used one. `select format, count(*) from tournaments group by format` on
+  prod returns a single row: **`lobster_matching` × 6, most recent 2026-08-23**.
+  Nothing else has ever been created. Worse, `knockout` is offered but has **no
+  branch** in `handleGenerate` (`Schedule.jsx:332-350` handles
+  `lobster_matching` / `mexicano` / `roundrobin`, else Americano) — picking
+  Knockout silently generates an Americano schedule under a Knockout label.
+  `tournaments.format` is bare `text default 'americano'`
+  (`init.sql:69`) with no CHECK, so nothing constrains it at the DB either.
+  D-001 already slates the americano/mexicano/roundrobin generators for
+  deletion at M4.3, which turns those three options into the same silent-
+  fallthrough trap `knockout` is today — so the select must be cut back in the
+  same change that deletes the generators. Owner call needed on the target:
+  Lobster-only (drop the select entirely / make it a static label) vs
+  Lobster + a genuinely-supported second format. Recorded in M4.3 scope.
 
 ### Phase 4 — Cutover & cleanup
 
@@ -503,7 +519,19 @@ boolean not null default false`; applied+verified on local, owner pushes).
 - `[ ]` **M4.3 — Delete legacy** (W, M) — `lobsterMatcher.js`, `glicko2.js`,
   `ratingsRecompute.js`, unused generators (D-001), `learned_rating`/
   `learned_rd`/`adjustment`/`adjusted_level` columns + UI (D-002, P0.3 list).
-  **Acceptance:** grep-clean; app fully functional; ARCHITECTURE.md updated.
+  **Also in scope — the format select** (M3.6 Finding 2): deleting the
+  americano/mexicano/roundrobin generators strands the options that invoke them,
+  so `EventFormModal.jsx:97-101` must be cut back in the same change, along with
+  `formatLabel` (`eventHelpers.js:20-26`), the `format` branch in
+  `Schedule.jsx:332-350`, `eventConstants.js:16` + `Tournament.jsx:94` +
+  `Registration.jsx:114` (`|| 'americano'` defaults), and the
+  `!isLobster && (americano|mexicano)` rounds picker
+  (`ScheduleGeneratorControls.tsx:71`). `knockout` can go immediately — it is
+  offered but unimplemented today. Consider a CHECK constraint or enum on
+  `tournaments.format` (bare `text` today) so the DB stops accepting formats the
+  app can't generate. Needs the owner's Lobster-only vs Lobster+one call first.
+  **Acceptance:** grep-clean; app fully functional; ARCHITECTURE.md updated;
+  every format the select still offers has a real generator behind it.
 
 ---
 
