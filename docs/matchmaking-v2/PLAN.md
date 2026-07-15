@@ -506,9 +506,18 @@ boolean not null default false`; applied+verified on local, owner pushes).
   D-001 already slates the americano/mexicano/roundrobin generators for
   deletion at M4.3, which turns those three options into the same silent-
   fallthrough trap `knockout` is today — so the select must be cut back in the
-  same change that deletes the generators. Owner call needed on the target:
-  Lobster-only (drop the select entirely / make it a static label) vs
-  Lobster + a genuinely-supported second format. Recorded in M4.3 scope.
+  same change that deletes the generators. **Owner resolved same day → D-020:
+  Lobster-only, select removed outright.** Recorded in M4.3 scope.
+  **Finding 3 (no action — expected).** The "use Lobster score for matching"
+  checkbox does not apply under V2 and is not rendered there: it lives inside
+  `ScheduleGeneratorControls`, which the seam (`Schedule.jsx:411`) swaps out
+  wholesale. `useLobsterScore` feeds only `playersForMatcher` in the legacy
+  `handleGenerate` (`Schedule.jsx:324`), swapping `adjustedLevel`→`learnedLevel`
+  — both legacy fields dropped at M4.3. The V2 roster (`Schedule.jsx:157`) reads
+  `playtomicLevel` + `mmRating`/`mmSigma` instead, so the toggle cannot reach it.
+  Seeing the checkbox under a Lobster event as admin means the flag is **not**
+  active — useful as a diagnostic. The toggle + its `usePersistentBoolean` key
+  (`lobster_use_score_for_matcher`) die with `ScheduleGeneratorControls` at M4.3.
 
 ### Phase 4 — Cutover & cleanup
 
@@ -526,12 +535,15 @@ boolean not null default false`; applied+verified on local, owner pushes).
   `Schedule.jsx:332-350`, `eventConstants.js:16` + `Tournament.jsx:94` +
   `Registration.jsx:114` (`|| 'americano'` defaults), and the
   `!isLobster && (americano|mexicano)` rounds picker
-  (`ScheduleGeneratorControls.tsx:71`). `knockout` can go immediately — it is
-  offered but unimplemented today. Consider a CHECK constraint or enum on
-  `tournaments.format` (bare `text` today) so the DB stops accepting formats the
-  app can't generate. Needs the owner's Lobster-only vs Lobster+one call first.
-  **Acceptance:** grep-clean; app fully functional; ARCHITECTURE.md updated;
-  every format the select still offers has a real generator behind it.
+  (`ScheduleGeneratorControls.tsx:71`). **Resolved by D-020 (2026-07-15):
+  Lobster-only — the select is removed outright, not trimmed.** With one format,
+  `isLobster` collapses out of `Schedule.jsx` (incl. `useV2Matcher` →
+  `v2Enabled && isAdmin`). Add a CHECK constraint (or default-and-drop the
+  column) on `tournaments.format` — bare `text default 'americano'` today
+  (`init.sql:69`), a default that goes stale once Americano is deleted. All 6
+  prod rows are already `lobster_matching`; no backfill.
+  **Acceptance:** grep-clean; app fully functional; ARCHITECTURE.md updated; no
+  reachable code path can select or generate a non-Lobster format.
 
 ---
 
