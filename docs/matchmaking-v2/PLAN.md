@@ -94,13 +94,67 @@ not the update-rule code).
 
 ## 4. Current status
 
-> **Next up:** **Phase 3 M3.4** (Admin UI — `ConfigPanel`, `SchedulePreview`,
-> `QualityReport`, `RatingReview`, one presentational component per task, wired
-> via a container to the M3.2 hooks/services; manual verify + typecheck). The
-> M3.2 service slice (`useMatchmaking.ts` hooks, `matchmakingKeys.ts`) is the
-> data layer; `previewSchedule`/`commitSchedule` and the rating review queue are
-> ready to wire.
-> Handoff note (2026-07-14, eighth session): **M3.1 committed** (6e53d42),
+> **Next up:** **M3.6 — End-to-end verify** (C, S). Everything through M3.5 is
+> built + statically green + the migration is applied/verified on local; what
+> remains is a live `/verify`-style walkthrough on the local stack (needs
+> `npm run dev:local` + admin auth + a Lobster tournament with ≥4 registered):
+> flip the **Matchmaking V2** toggle in Settings → open a Lobster event →
+> configure (preset/Advanced/preflight chips) → generate → reshuffle/compare →
+> save → enter scores → **Finish** → confirm auto-applied summary + flagged
+> `RatingReview` queue (Approve/Edit/Discard) → verify `mm_*` moved + a
+> `schedule_runs` row + `rating_events` rows exist. Also spot-check: flag **off**
+> ⇒ legacy Lobster path unchanged; the **typed-`REGENERATE` score guard** fires
+> when re-saving over entered scores. Migrations `...0003` **and `...0004`** still
+> need the owner `npx supabase db push` (applied to local only). Watch the M3.5b
+> compound-failure edge (apply-ok + complete-fail blocks retry via the
+> double-apply guard).
+> Handoff note (2026-07-15, thirteenth session): **M3.6 walkthrough started by the
+> owner; M3.4+M3.5 committed as a checkpoint** (tree had carried both milestones
+> uncommitted). Owner's first finding is recorded in the M3.6 bullet: the
+> `settings` write grant was dropped by RBAC Phase C in May — a **pre-existing
+> production bug affecting all settings writes**, surfaced by (not caused by) the
+> V2 flag toggle; fix is migration `...0004`, coordinator-verified against
+> `20260518000008` (grant list omits settings; no later re-grant). Also committed:
+> Supabase CLI 2.98.0→2.109.1 with the matching `[inbucket]`→`[local_smtp]`
+> config rename. Static state unchanged and green (typecheck clean, lint 0 errors,
+> 601 pass / 2 skip). Awaiting further owner findings.
+> Handoff note (2026-07-14, twelfth session): **M3.5 done — V2 is live behind the
+> flag.** Migration `20260714000003_settings_matchmaking_v2_flag.sql` (applied +
+> verified on local; owner pushes). Settings flag plumbing (Sonnet worker) +
+> `Settings.jsx` seed gap closed by coordinator. `Schedule.jsx` seam swaps the
+> Lobster controls region for `MatchmakingContainer` when `v2Enabled && isLobster
+&& isAdmin`; saved-schedule display/score-entry reused. Container gained a
+> typed-confirmation **score guard** (owner ask). Owner chose **apply V2 ratings
+> on finish** → `handleFinishTournament` applies ratings + renders `RatingReview`
+> inline (M3.5b). All five files + Schedule.jsx typecheck + lint clean; 601 pass.
+> Deferred parity gaps under V2 (swap-edit, CSV export, deferred-generation
+> spinner) noted in the M3.5a bullet. No new DECISIONS entry (all calls sit inside
+> D-019/D-016 latitude; the rating-apply choice is an owner selection recorded in
+> the M3.5b bullet). Next: M3.6 live e2e.
+> Prior handoff (2026-07-14, eleventh session): **M3.4 code-complete.** Built the
+> three remaining presentational components via Sonnet workers against frozen
+> props (`QualityReport` + `RatingReview` in parallel, then `SchedulePreview`
+> which composes `QualityReport`), all in-tree on `matchmaking-v2` (no worktree),
+> each coordinator-reviewed for contract adherence + scope + types-only domain
+> imports. Wrote `MatchmakingContainer.tsx` myself (wiring/orchestration =
+> coordinator territory): config/preview/compare state machine + pure domain
+> calls + `useCommitSchedule`. All five files typecheck + lint clean; `npm test`
+> 601 pass / 2 skip (pure additions, nothing existing touched). Frozen props for
+> all four components recorded in the M3.4 task bullet. Live manual-verify is the
+> one open piece and is gated on M3.5 giving the container a mount point. No new
+> DECISIONS entry needed — the container's conservative calls (compare=re-seed,
+> default balanced, RatingReview→M3.5) sit inside D-019's deferral latitude.
+> Prior handoff (2026-07-14, tenth session): **M3.4 `ConfigPanel` landed.**
+> Coordinator froze the `ConfigPanelProps` contract, delegated the presentational
+> build to a Sonnet worker, reviewed the diff. Prior action pinned the compare-two
+> container state model before delegating `SchedulePreview`.
+> Prior handoff (2026-07-14, ninth session): **UX design settled → D-019.**
+> Owner-reviewed a mobile UX sketch (throwaway artifact, not committed), approved
+> the "deepen the existing flow" shape, and locked all five product forks to the
+> recommended picks (see D-019). PLAN M3.4 task expanded to per-component briefs
+> carrying the shape. No code changed this session — decisions + plan only. Next
+> action: start M3.4 (first component, likely `ConfigPanel`).
+> Prior handoff (2026-07-14, eighth session): **M3.1 committed** (6e53d42),
 > **M3.2 done** (4bac68d), **D-017** (78a94ee — redact `mm_*` from
 > `get_my_profile_v2`), **M3.3 done** (this commit — self/admin level-edit reset
 > hook + D-018). M3.2 added the `src/features/matchmaking/`
@@ -134,13 +188,13 @@ not the update-rule code).
 > Prior: Phase 0+1 complete (D-010), Phase 2 engine M2.2–M2.10 green
 > (D-011..D-014).
 
-| Phase           | Goal                         | Gate to next                               | State                     |
-| --------------- | ---------------------------- | ------------------------------------------ | ------------------------- |
-| 0 Discovery     | Audit data + wiring          | findings recorded below                    | done                      |
-| 1 Rating engine | Pure domain + calibration    | backtest ≥ Glicko-2 parity                 | done (gate met, D-010)    |
-| 2 Matcher       | Pure domain + shadow mode    | shadow report reviewed on 1–2 real rosters | done (gate met; D-015)    |
-| 3 Integration   | Schema, services, admin UI   | feature-flagged V2 generates a real event  | in progress (M3.1–3 done) |
-| 4 Cutover       | Ratings live, legacy deleted | two clean events on V2                     | not started               |
+| Phase           | Goal                         | Gate to next                               | State                                    |
+| --------------- | ---------------------------- | ------------------------------------------ | ---------------------------------------- |
+| 0 Discovery     | Audit data + wiring          | findings recorded below                    | done                                     |
+| 1 Rating engine | Pure domain + calibration    | backtest ≥ Glicko-2 parity                 | done (gate met, D-010)                   |
+| 2 Matcher       | Pure domain + shadow mode    | shadow report reviewed on 1–2 real rosters | done (gate met; D-015)                   |
+| 3 Integration   | Schema, services, admin UI   | feature-flagged V2 generates a real event  | in progress (M3.1–5 done; M3.6 e2e left) |
+| 4 Cutover       | Ratings live, legacy deleted | two clean events on V2                     | not started                              |
 
 ---
 
@@ -324,16 +378,121 @@ seed, report }`; single insert, returns the run id.
   non-level edits don't reset; admin level edit resets + logs `admin_edit`;
   `adjustment` never written. db:reset + db lint clean; typecheck/lint green;
   601 pass.
-- `[ ]` **M3.4 — Admin UI** (W ×4, M each)
-  `ConfigPanel`, `SchedulePreview`, `QualityReport`, `RatingReview` — one task
-  per component, presentational per house pattern, wired via container.
-  **Acceptance:** manual verify on local stack + typecheck; no domain logic in UI.
-- `[ ]` **M3.5 — Feature flag + Schedule.jsx integration** (W, S)
+- `[~]` **M3.4 — Admin UI** (W ×4, M each — 2026-07-14: **all four components +
+  `MatchmakingContainer` built & statically verified**; only the live
+  manual-verify on local stack remains, which is gated on M3.5 mounting the
+  container) — build to the **D-019** shape (deepen the existing Schedule-tab
+  flow; four beats configure → generate → review → save). One task per
+  component, presentational per house pattern, wired via container:
+  - `[x]` `ConfigPanel` (Sonnet worker, coordinator-reviewed) — preset
+    segmented control (Competitive/Balanced/Social, always visible) + collapsed
+    "Advanced" disclosure for the five knobs (socialDial, maxCourtSpread,
+    maxPartnerGap, balanceTolerance, leftyRule) with `exchangeRateSentences`
+    helper text + **preflight feasibility chips** (Stage-0 audit before
+    generate). `src/features/matchmaking/ui/ConfigPanel.tsx`, purely
+    presentational (types-only domain import). **Frozen props contract** the
+    container + siblings build against: `{ config: MatchConfig; onConfigChange;
+resolvedConfig: ResolvedConfig; exchangeSentences: string[]; feasibility:
+FeasibilityResult; playerCount; onGenerate; generating }`. Preset select
+    emits `onConfigChange({ preset })` (clears all knob overrides); a knob is
+    "overridden" iff its `config` field is defined; effective values read from
+    `resolvedConfig`. Container owes the pure calls: `resolveConfig` →
+    `exchangeRateSentences` → `auditFeasibility({players, courts, rounds,
+genderMode, config: resolved})`. typecheck + lint green; standalone
+    render (no container yet) so full manual-verify defers to container wiring.
+  - `[x]` `QualityReport` (Sonnet worker, coordinator-reviewed) — inline
+    `src/features/matchmaking/ui/QualityReport.tsx`. Overall grade + five
+    `QualityDimensions` bars always visible; per-round table + violations behind
+    a "Details" disclosure. **Frozen props:** `{ quality: { overall; perRound };
+violations; compact? }` (compact = grade+bars only, for the compare panel).
+    Overall grade = **mean of the five dims** (UI-only rollup; domain exposes no
+    scalar) with bands ≥90 Excellent / ≥80 Good / ≥70 Fair / <70 Needs work.
+  - `[x]` `SchedulePreview` (Sonnet worker, coordinator-reviewed) —
+    `src/features/matchmaking/ui/SchedulePreview.tsx`. Court cards (names via the
+    court's `players` snapshot, 🤚 lefty marker, teamSums, spread, flag chips) +
+    sitters line; inline full `QualityReport`; action row Reshuffle/Compare/Save.
+    **Compare-two** panel (shown when `compareRun` set): two-column compact
+    `QualityReport`s + preset/seed labels + "Use this schedule" pick + cancel.
+    N-candidate gallery out of scope. **Frozen props:** `{ run; compareRun?;
+onReshuffle; onCompare; onPickRun('current'|'compare'); onCancelCompare;
+onSave; reshuffling; comparing; saving }`.
+  - `[x]` `RatingReview` (Sonnet worker, coordinator-reviewed) —
+    `src/features/matchmaking/ui/RatingReview.tsx`. Auto-applied summary +
+    flagged queue; each card: player, prior→proposed, held remainder
+    (`proposed−applied`), per-match breakdown disclosure, Approve/Edit/Discard
+    (Edit = minimal inline delta input; the full Edit-remainder modal stays
+    deferred). **Frozen props:** `{ appliedCount; queue: RatingEventRow[];
+playerNamesById; onReview({eventId, action, delta?}); reviewing }`. NOT yet
+    mounted — its Finish-flow wiring + queue/name data are **M3.5**.
+  - `[x]` `MatchmakingContainer.tsx` (C — coordinator-owned wiring, not
+    delegated) — composes ConfigPanel + SchedulePreview; owns `config`/`preview`/
+    `compareRun` state; makes the pure domain calls (`toPlayerInput` roster map →
+    `resolveConfig` → `exchangeRateSentences` → `auditFeasibility`;
+    `previewSchedule`) and the M3.2 `useCommitSchedule` write. Props: `{
+  tournamentId; roster: RosterRow[]; courts; rounds; genderMode }`. **Conservative
+    calls (D-019 "iterate live" latitude):** Compare = re-seed same preset
+    (preset-vs-preset compare deferred); default preset `balanced`; roster passed
+    in (mm\_\* sourcing via `get_all_players_with_pii_v2` is M3.5's Schedule.jsx
+    job); RatingReview not composed here (Finish flow, M3.5).
+    Deferred (iterate on the live first-cut): per-round breakdown layout, the
+    Edit-remainder modal, empty/first-run states, and **deferred generation** so
+    the `generating`/`reshuffling`/`comparing` booleans can go live (today
+    `previewSchedule` is synchronous — ~0.6–1.1s main-thread for 32p; container
+    passes `false`; components already accept the flags, so it's a container-only
+    change in M3.5).
+    **Static verification MET** (2026-07-14): typecheck + lint (all five files
+    exit 0) + `npm test` 601 pass / 2 skip; every component types-only domain
+    import, no Supabase/React-Query/domain-logic in the leaves. **Remaining:** live
+    manual-verify on local stack once M3.5 mounts the container behind the flag.
+- `[x]` **M3.5 — Feature flag + Schedule.jsx integration** (W→C, S — done
+  2026-07-14; M3.5a + M3.5b both landed, coordinator-implemented)
   V2 behind a settings flag; old path untouched when off. **Acceptance:** flag
   off ⇒ zero behavior change; flag on ⇒ V2 generates + persists `schedule_runs`.
-- `[ ]` **M3.6 — End-to-end verify** (C, S)
-  Full local-stack run: roster → generate → play scores → apply ratings →
-  review queue. Use `/verify`-style walkthrough; record in this file.
+  - `[x]` **M3.5a — flag + generate-path swap + score guard.** Migration
+    `20260714000003_settings_matchmaking_v2_flag.sql` (`settings.matchmaking_v2_enabled
+boolean not null default false`; applied+verified on local, owner pushes).
+    Settings client plumbing (`settingsSchemas`/`settingsQueries`/`AdminSection`
+    toggle via Sonnet worker; `Settings.jsx` form init+seed closed by coordinator).
+    `Schedule.jsx` seam: `useV2Matcher = v2Enabled && isLobster && isAdmin` swaps
+    the controls region for `<MatchmakingContainer>` (roster from
+    `registeredPlayers`, `mm_*` null for now → playtomic prior, correct while
+    unseeded pre-M4.1; rounds derived `duration>=120?6:5` for Lobster parity;
+    genderMode coerced to enum). Saved-schedule display/score-entry/finish all
+    reused unchanged (V2 commits via same `saveMatches`). **Score guard (owner
+    ask):** container gates commit behind a typed `REGENERATE` confirmation when
+    `scoresEntered`. typecheck+lint clean; 601 pass. **Deferred parity gaps**
+    (in the now-hidden `ScheduleGeneratorControls`): saved-schedule swap-edit,
+    CSV export; plus deferred generation for the in-flight spinner flags.
+  - `[x]` **M3.5b — RatingReview in the Finish flow.** Owner chose **apply V2
+    ratings on finish** during the flagged trial (full loop; real `mm_*` move via
+    the new engine pre-cutover, priors = playtomic since unseeded). `Schedule.jsx`
+    `handleFinishTournament` branches on `useV2Matcher`: builds the payload from
+    saved scores + priors (`initialRating` when `mm_*` absent), applies via
+    `applyTournamentRatings` **before** marking completed (a failure stays
+    finishable), then renders `<RatingReview>` inline (auto-applied count +
+    flagged queue filtered to this tournament); `handleV2Review` wires
+    Approve/Edit/Discard via `reviewRatingEvent` + refetch. Legacy Glicko
+    recompute left intact (drops at M4.3). typecheck+lint clean; 601 pass.
+    **Known edge (first-cut):** if apply succeeds but the completed-status write
+    fails, the RPC double-apply guard blocks a retry — rare compound failure,
+    flagged for M3.6/owner. **Static + DB layers verified; live e2e is M3.6.**
+- `[~]` **M3.6 — End-to-end verify** (C, S — owner walkthrough in progress
+  2026-07-15) Full local-stack run: roster → generate → play scores → apply
+  ratings → review queue. Use `/verify`-style walkthrough; record in this file.
+  **Finding 1 (pre-existing prod bug, not V2).** Toggling the V2 flag surfaced
+  that every client write to `settings` has 403'd since
+  `20260518000008_rbac_phase_c.sql`: its `REVOKE ALL ON ALL TABLES` reset lists
+  `public.settings` under `GRANT SELECT` but omits it from the
+  `GRANT INSERT, UPDATE, DELETE` block, and no later migration re-grants it.
+  Table privileges are checked before RLS, so `settings_admin_write` was never
+  reached — admins included. Blast radius is every settings field (whatsapp
+  link, group name, padel tips, raffle cooldown), not just the V2 flag; it has
+  been silently broken in production since 2026-05-18. Fix:
+  `20260714000004_grant_settings_write.sql` (`grant insert, update` only —
+  upsert needs INSERT; the single row is never client-deleted; writes stay
+  admin-only via the existing RLS policy). Applied to local. **Owner push
+  needed for `...0003` and `...0004` — `0004` is worth pushing on its own
+  merits regardless of the V2 timeline.**
 
 ### Phase 4 — Cutover & cleanup
 

@@ -455,3 +455,67 @@ removal is M4.3 UI work per Appendix B. `admin_add_player`/`self_signup_player`
 still write `adjustment`/`adjusted_level` (out of M3.3 scope; dropped at M4.3).
 `rating_events` gains real `self_reset`/`admin_edit` rows. M4.3 checklist:
 `record_mm_reset` stops writing `adjusted_level` when the column drops.
+
+## D-019 — Phase 3 admin UX: deepen the existing flow (2026-07-14)
+
+**Decision:** The M3.4 admin UI **extends the current Schedule-tab flow rather
+than replacing it**, keeping the four beats admins already know — configure →
+generate → review the preview → save — and making each beat smarter. Settled
+from an owner-reviewed UX sketch (mobile mockups; shape approved, only spacing
+noted). Five product forks resolved:
+
+1. **Rollout visibility → silent swap.** With the M3.5 flag on, the Lobster
+   generation path _is_ V2; no user-facing "old/new matcher" toggle or beta
+   label. The reworked config card is the only visible change. (Rejected: labeled
+   beta tag; explicit per-event engine toggle — both invite per-generate
+   second-guessing for no benefit once the flag is the gate.)
+2. **Config depth → preset + collapsed "Advanced".** The three presets
+   (Competitive / Balanced / Social) are always visible; the advanced knobs
+   (`socialDial`, `maxCourtSpread`, `maxPartnerGap`, `balanceTolerance`,
+   `leftyRule`) live behind one disclosure, with the auto-generated exchange-rate
+   sentences (`presets.exchangeRateSentences`) shown as helper text inside.
+   (Rejected: presets-only, which loses per-event nudging; everything-open, too
+   heavy for a normal event.)
+3. **Quality report → inline on the preview.** The overall grade + the five
+   `QualityDimensions` bars (balance, partnerFairness, variety, sitoutFairness,
+   genderPreference) render atop the preview; per-round breakdown and the
+   violations list sit behind a disclosure. Seen on every generate, no detour.
+   (Rejected: separate Report tab, out of the save-path sightline; collapsed-by-
+   default, which hides the "explainable" payoff.)
+4. **Iteration → Reshuffle + Compare-two.** Reshuffle re-seeds and replaces the
+   preview (today's model). Additionally, **Compare** generates one alternate
+   (different preset or seed) and shows the two ScheduleRuns side-by-side as
+   comparable grades to pick a winner — leaning into the design's "directly
+   comparable" promise. (Rejected for now: an N-candidate gallery — heaviest
+   build, deferred to post-cutover if wanted.)
+5. **Rating review home → in the Finish flow.** "Finish tournament" → apply
+   ratings → review screen, in one motion while context is freshest. Small moves
+   auto-apply (±cap); only clamped/flagged events queue, each with its per-match
+   breakdown and Approve / Edit / Discard. (Rejected as the _primary_ home: a
+   standing "Ratings" admin area — another place to remember to visit; the
+   badge+deep-link hybrid can be added later if reviews start piling across
+   events.)
+
+Also feasibility (Stage-0 audit) is surfaced **before** generation as preflight
+chips on the config card, not only inside the post-generation report.
+
+**Why:** The current flow works and admins have muscle memory for it; the only
+genuinely new literacy V2 demands is reading a quality bar, so the design spends
+its novelty budget there and nowhere else. Progressive disclosure keeps the
+power (dials, per-round detail, comparison) one tap away without cluttering a
+normal Saturday generate. The rating queue is deliberately quiet — it speaks up
+only for the 1–2 players per event the model is unsure about, matching the
+"auto-apply small, review large" governance in DESIGN §4.3. Component-level
+polish (per-round breakdown layout, the Edit-remainder modal, empty/first-run
+states) is intentionally deferred — cheap to iterate on the live first-cut once
+the shape is in.
+
+**Impact:** DESIGN §7 UI module intent confirmed (`ConfigPanel`,
+`SchedulePreview`, `QualityReport`, `RatingReview`) and clarified — `ConfigPanel`
+owns the preset segmented control + Advanced disclosure + preflight feasibility
+chips; `SchedulePreview` owns per-court sums/spread/flags + Reshuffle/Compare;
+`QualityReport` renders inline (grade + 5 bars + violations, per-round behind a
+disclosure); `RatingReview` mounts inside the Finish flow. M3.4 tasks build to
+this shape (manual verify + typecheck, no domain logic in UI). M3.5 flag = silent
+V2 swap on the Lobster path. Compare-two is in M3.4 scope; N-candidate gallery is
+explicitly out. UX sketch is a throwaway exploration artifact — not committed.
