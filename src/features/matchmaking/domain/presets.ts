@@ -1,5 +1,10 @@
 import { hashSeed } from './rng'
-import type { MatchConfig, MatchPreset, ResolvedConfig } from './types'
+import type {
+  MatchConfig,
+  MatchPreset,
+  QualityDimensions,
+  ResolvedConfig,
+} from './types'
 import { DEFAULT_WEIGHTS } from './types'
 
 // Preset knob table (DESIGN.md §3.3) — contract data, frozen by M2.1.
@@ -48,23 +53,45 @@ export function resolveConfig({
 }
 
 /**
- * Human-readable exchange-rate sentences derived from the live weights
- * (DESIGN.md §3.2), e.g. for defaults: "a repeat opponent (3rd+ meeting)
- * costs as much as a 0.3-level team-sum gap". The level-gap equivalent of a
- * dimension's worst-tolerable unit is
- * weight_d / weights.teamBalance × balanceTolerance, rendered to 2 decimals.
+ * What each preset is *for*, in an organizer's terms. Co-located with
+ * PRESET_KNOBS so retuning a preset forces a look at whether the promise still
+ * holds: the three knobs above are exactly what these sentences describe
+ * (socialDial + maxCourtSpread = how tightly courts band by level;
+ * opponentRepeatWeight = how hard repeat opponents are avoided).
  */
-export function exchangeRateSentences({ config }: { config: ResolvedConfig }): string[] {
-  const { weights, balanceTolerance } = config
-  if (weights.teamBalance <= 0) return []
-  const levelGap = (weight: number): string =>
-    Number(((weight / weights.teamBalance) * balanceTolerance).toFixed(2)).toString()
-  return [
-    `A 3rd+ meeting with the same opponent costs as much as a ${levelGap(weights.opponentRepeat)}-level team-sum gap; a 2nd meeting costs half that.`,
-    `A repeated partnership (inside quota) costs as much as a ${levelGap(weights.partnerRepeat)}-level team-sum gap.`,
-    `A partner gap one full cap over the limit costs as much as a ${levelGap(weights.partnerGap)}-level team-sum gap.`,
-    `A court spread one full cap over the limit costs as much as a ${levelGap(weights.courtSpread)}-level team-sum gap.`,
-    `An avoidable same-gender team (mixed mode) costs as much as a ${levelGap(weights.mixedPreference)}-level team-sum gap.`,
-    `Each repeated co-sit pairing costs as much as a ${levelGap(weights.sitGroupOverlap)}-level team-sum gap.`,
+export const PRESET_INTENT: Record<MatchPreset, string> = {
+  competitive:
+    'Play with and against your own level. Courts stay tight, even if that means facing the same opponents again.',
+  balanced:
+    'Close courts with some mixing. Levels stay near each other, and you meet new opponents where it costs little.',
+  social:
+    'Meet as many people as possible. Courts mix levels freely to keep partners and opponents fresh.',
+}
+
+export type MatcherPriority = { key: keyof QualityDimensions; weight: number }
+
+/**
+ * The five quality dimensions ranked by how hard the matcher protects them —
+ * i.e. what it sacrifices first when it cannot satisfy everything.
+ *
+ * Weights are grouped exactly as report.ts derives the quality bars, so this
+ * list and QualityReport can never name different things. Comparing weights
+ * directly is meaningful because every dimension's cost is weight × a
+ * normalized unit (DESIGN §3.2) — one "unit" of each concession is the same
+ * size, so the weight *is* the exchange rate.
+ *
+ * Note: this ordering is near-invariant across presets (M3.6 Finding 5) —
+ * presets differ in banding tightness, not in weights. It explains the engine,
+ * not the preset; PRESET_INTENT carries the preset difference.
+ */
+export function matcherPriorities({ config }: { config: ResolvedConfig }): MatcherPriority[] {
+  const { weights } = config
+  const priorities: MatcherPriority[] = [
+    { key: 'variety', weight: weights.opponentRepeat + weights.partnerRepeat },
+    { key: 'balance', weight: weights.teamBalance + weights.courtSpread },
+    { key: 'partnerFairness', weight: weights.partnerGap },
+    { key: 'sitoutFairness', weight: weights.sitGroupOverlap },
+    { key: 'genderPreference', weight: weights.mixedPreference },
   ]
+  return priorities.sort((a, b) => b.weight - a.weight)
 }

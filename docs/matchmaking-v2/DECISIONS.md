@@ -557,3 +557,59 @@ generate — `tournaments.format` is bare `text default 'americano'` today
 (`init.sql:69`), a default that will itself be wrong once Americano is gone.
 Supersedes nothing; extends D-001 from "delete the unused generators" to "delete
 the concept of format choice."
+
+---
+
+## D-021 — Exchange rates out; preset intent + tie-break order in (2026-07-15)
+
+**Decision:** Delete `exchangeRateSentences` and replace it with two things:
+
+1. **`PRESET_INTENT`** — a one-line, plain-language statement of what each
+   preset is for, rendered **always-visible under the preset control**, not
+   behind Advanced. Static copy co-located with `PRESET_KNOBS` so retuning a
+   preset forces a look at whether the promise still holds.
+2. **`matcherPriorities({ config })`** — the five quality dimensions ranked by
+   how hard the matcher protects them, rendered inside Advanced as "when it
+   can't satisfy everything, the matcher protects these in order — the last ones
+   give first."
+
+Owner call, 2026-07-15 (M3.6 Finding 5): reframe rather than cut, plus surface
+per-preset intent outside the Advanced disclosure.
+
+**Why:** The sentences exposed the cost model's own units to admins — every one
+read "…costs as much as a 0.42-level team-sum gap", a conversion between two
+abstractions, one of which (_team-sum gap_) the UI never defines. That breaks a
+**D-019 premise**: V2 budgets for admins learning _one_ new thing (reading a
+quality bar) and spends novelty "there and nowhere else". Exchange rates were a
+second, harder, unbudgeted literacy. They were also **non-actionable**: four of
+the six described weights (`opponentRepeat`, `partnerRepeat`, `mixedPreference`,
+`sitGroupOverlap`) that no Advanced knob can change.
+
+**The ranking is preset-invariant, and that is why the two pieces are separate.**
+Ranking by weight yields the identical order for all three presets
+(`variety > balance > partnerFairness > sitoutFairness > genderPreference`;
+verified numerically and pinned by a test) because presets differ in
+`socialDial`/`maxCourtSpread` — banding tightness — not in weights. A
+"this preset gives up X first" list would therefore look dynamic and never
+change, which is worse than the sentences it replaced. So the ranked list is
+framed as an **engine** explainer (fixed, inside Advanced) and `PRESET_INTENT`
+carries the **preset** difference (always visible). Comparing weights directly is
+legitimate: every dimension's cost is weight × a normalized unit (DESIGN §3.2),
+so one unit of each concession is the same size and the weight _is_ the exchange
+rate — the same identity the deleted sentences were built on, minus the
+arithmetic.
+
+**Impact:** Two frozen contracts change (coordinator-made, per the §1 freeze
+rule). Matcher domain: `exchangeRateSentences` removed; `PRESET_INTENT`,
+`matcherPriorities`, and the `MatcherPriority` type added to `presets.ts`.
+ConfigPanel props (frozen at M3.4): `exchangeSentences: string[]` → `presetIntent:
+string` + `priorities: MatcherPriority[]`. The M2.9 exchange-rate acceptance
+specs are replaced by matcher-priority specs incl. a grouping test asserting
+`matcherPriorities` sums weights exactly as `report.ts:40-44` derives the bars —
+the list and the bars can never name different things. New `ui/dimensions.ts`
+holds the one dimension vocabulary, consumed by both `QualityReport` and
+`ConfigPanel` (D-019's one-literacy rule, enforced structurally). No engine
+behavior changes: weights, costs, and goldens are untouched — this is presentation
+only. The deeper "show consequences, not descriptions" option (re-run on dial
+change, show bar deltas) stays deferred; it depends on Finding 4's deferred
+generation landing first.

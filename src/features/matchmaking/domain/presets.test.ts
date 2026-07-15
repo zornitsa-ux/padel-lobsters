@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest'
-import { KNOB_DEFAULTS, PRESET_KNOBS, exchangeRateSentences, resolveConfig } from './presets'
+import {
+  KNOB_DEFAULTS,
+  PRESET_INTENT,
+  PRESET_KNOBS,
+  matcherPriorities,
+  resolveConfig,
+} from './presets'
 import { hashSeed } from './rng'
 import type { MatchConfig } from './types'
 import { DEFAULT_WEIGHTS, resolvedConfigSchema } from './types'
@@ -66,19 +72,56 @@ describe('presets (M2.9)', () => {
     }
   })
 
-  describe('exchange-rate sentences', () => {
-    it('derives level-gap equivalents from the live weights', () => {
-      // opponentRepeat equivalent = weight / teamBalance × tolerance
-      const balanced = exchangeRateSentences({ config: resolve({ preset: 'balanced' }) }).join(' ')
-      expect(balanced).toContain('0.3') // 0.6 / 1.0 × 0.5
-      const social = exchangeRateSentences({ config: resolve({ preset: 'social' }) }).join(' ')
-      expect(social).toContain('0.5') // 1.0 / 1.0 × 0.5
+  // Replaces the M2.9 exchange-rate-sentence specs (D-021).
+  describe('matcher priorities', () => {
+    it('ranks all five quality dimensions, most-protected first', () => {
+      const priorities = matcherPriorities({ config: resolve({ preset: 'balanced' }) })
+      expect(priorities.map((p) => p.key)).toEqual([
+        'variety',
+        'balance',
+        'partnerFairness',
+        'sitoutFairness',
+        'genderPreference',
+      ])
+      const weights = priorities.map((p) => p.weight)
+      expect([...weights].sort((a, b) => b - a)).toEqual(weights)
     })
 
-    it('returns a nonempty sentence per traded dimension', () => {
-      const sentences = exchangeRateSentences({ config: resolve({ preset: 'balanced' }) })
-      expect(sentences.length).toBeGreaterThanOrEqual(3)
-      for (const s of sentences) expect(s.length).toBeGreaterThan(0)
+    it('groups weights exactly as report.ts derives the bars', () => {
+      const config = resolve({ preset: 'balanced' })
+      const by = Object.fromEntries(
+        matcherPriorities({ config }).map((p) => [p.key, p.weight]),
+      )
+      const { weights } = config
+      expect(by.balance).toBe(weights.teamBalance + weights.courtSpread)
+      expect(by.variety).toBe(weights.opponentRepeat + weights.partnerRepeat)
+      expect(by.partnerFairness).toBe(weights.partnerGap)
+      expect(by.sitoutFairness).toBe(weights.sitGroupOverlap)
+      expect(by.genderPreference).toBe(weights.mixedPreference)
+    })
+
+    it('reorders when an override outweighs the preset', () => {
+      const config = resolve({ preset: 'balanced', weights: { mixedPreference: 99 } })
+      expect(matcherPriorities({ config })[0].key).toBe('genderPreference')
+    })
+
+    // M3.6 Finding 5: presets differ in banding, not weights. The list explains
+    // the engine; PRESET_INTENT carries the preset difference. If this ever
+    // fails, presets have gained real weight spread and the ConfigPanel copy
+    // ("the matcher protects these in order") should move under the preset.
+    it('is preset-invariant in order', () => {
+      const keys = (preset: MatchConfig['preset']) =>
+        matcherPriorities({ config: resolve({ preset }) }).map((p) => p.key)
+      expect(keys('competitive')).toEqual(keys('balanced'))
+      expect(keys('social')).toEqual(keys('balanced'))
+    })
+  })
+
+  describe('preset intent copy', () => {
+    it('covers every preset with a nonempty one-liner', () => {
+      for (const preset of Object.keys(PRESET_KNOBS) as MatchConfig['preset'][]) {
+        expect(PRESET_INTENT[preset]?.length ?? 0).toBeGreaterThan(0)
+      }
     })
   })
 })

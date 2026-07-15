@@ -3,7 +3,7 @@ import ConfigPanel from './ui/ConfigPanel'
 import SchedulePreview from './ui/SchedulePreview'
 import { previewSchedule, toPlayerInput } from './generateSchedule.service'
 import { useCommitSchedule } from './useMatchmaking'
-import { exchangeRateSentences, resolveConfig } from './domain/presets'
+import { PRESET_INTENT, matcherPriorities, resolveConfig } from './domain/presets'
 import { auditFeasibility } from './domain/feasibility'
 import type { GenderMode, MatchConfig, ScheduleRun } from './domain/types'
 
@@ -54,7 +54,7 @@ export default function MatchmakingContainer({
     () => resolveConfig({ config, tournamentId }),
     [config, tournamentId],
   )
-  const sentences = useMemo(() => exchangeRateSentences({ config: resolved }), [resolved])
+  const priorities = useMemo(() => matcherPriorities({ config: resolved }), [resolved])
   const feasibility = useMemo(
     () => auditFeasibility({ players, courts, rounds, genderMode, config: resolved }),
     [players, courts, rounds, genderMode, resolved],
@@ -111,7 +111,8 @@ export default function MatchmakingContainer({
         config={config}
         onConfigChange={setConfig}
         resolvedConfig={resolved}
-        exchangeSentences={sentences}
+        presetIntent={PRESET_INTENT[config.preset]}
+        priorities={priorities}
         feasibility={feasibility}
         playerCount={players.length}
         onGenerate={handleGenerate}

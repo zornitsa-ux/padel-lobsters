@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import type { QualityDimensions, Violation } from '../domain/types'
+import { DIMENSIONS } from './dimensions'
 
 export type QualityReportProps = {
   quality: { overall: QualityDimensions; perRound: QualityDimensions[] }
@@ -8,14 +9,6 @@ export type QualityReportProps = {
   // compact = grade + 5 bars only (no disclosure); used in the compare view.
   compact?: boolean
 }
-
-const DIMENSIONS: { key: keyof QualityDimensions; label: string; short: string }[] = [
-  { key: 'balance', label: 'Balance', short: 'Bal' },
-  { key: 'partnerFairness', label: 'Partner fairness', short: 'Partner' },
-  { key: 'variety', label: 'Variety', short: 'Var' },
-  { key: 'sitoutFairness', label: 'Sit-out fairness', short: 'Sit-out' },
-  { key: 'genderPreference', label: 'Gender preference', short: 'Gender' },
-]
 
 function gradeBand(pct: number): { label: string; textClass: string; bgClass: string } {
   if (pct >= 90) return { label: 'Excellent', textClass: 'text-green-700', bgClass: 'bg-green-50' }

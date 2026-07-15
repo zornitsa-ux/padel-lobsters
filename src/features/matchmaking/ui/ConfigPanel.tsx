@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronRight, RotateCcw, Shuffle } from 'lucide-react'
+import type { MatcherPriority } from '../domain/presets'
 import type {
   FeasibilityResult,
   MatchConfig,
   MatchPreset,
   ResolvedConfig,
 } from '../domain/types'
+import { DIMENSION_LABELS } from './dimensions'
 
 export type ConfigPanelProps = {
   // Controlled config: preset + optional knob overrides. Container owns state.
@@ -14,9 +16,12 @@ export type ConfigPanelProps = {
   // Preset-expanded effective knob values (container called resolveConfig).
   // Drives the Advanced panel's displayed effective values.
   resolvedConfig: ResolvedConfig
-  // Human-readable exchange-rate helper text (container called
-  // exchangeRateSentences). Render as a small helper list inside Advanced.
-  exchangeSentences: string[]
+  // One-line plain-language intent for the selected preset (PRESET_INTENT).
+  // Always visible under the preset control — not gated behind Advanced.
+  presetIntent: string
+  // Quality dimensions ranked by how hard the matcher protects them (container
+  // called matcherPriorities). Render as the tie-break order inside Advanced.
+  priorities: MatcherPriority[]
   // Stage-0 preflight audit (container called auditFeasibility on the current
   // roster + resolvedConfig). Render its entries as chips above Generate.
   feasibility: FeasibilityResult
@@ -74,7 +79,8 @@ export default function ConfigPanel({
   config,
   onConfigChange,
   resolvedConfig,
-  exchangeSentences,
+  presetIntent,
+  priorities,
   feasibility,
   playerCount,
   onGenerate,
@@ -106,6 +112,7 @@ export default function ConfigPanel({
             </button>
           ))}
         </div>
+        <p className="mt-2 text-xs text-gray-500">{presetIntent}</p>
       </div>
 
       <button
@@ -208,12 +215,18 @@ export default function ConfigPanel({
             </div>
           </div>
 
-          {exchangeSentences.length > 0 && (
-            <ul className="space-y-1 text-xs text-gray-500 list-disc pl-4">
-              {exchangeSentences.map((sentence) => (
-                <li key={sentence}>{sentence}</li>
-              ))}
-            </ul>
+          {priorities.length > 0 && (
+            <div className="pt-1">
+              <p className="text-xs text-gray-500">
+                When it can&apos;t satisfy everything, the matcher protects these in order —
+                the last ones give first:
+              </p>
+              <ol className="mt-1 space-y-0.5 text-xs text-gray-500 list-decimal pl-4">
+                {priorities.map(({ key }) => (
+                  <li key={key}>{DIMENSION_LABELS[key]}</li>
+                ))}
+              </ol>
+            </div>
           )}
         </div>
       )}
