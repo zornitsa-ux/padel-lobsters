@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import ConfigPanel from './ui/ConfigPanel'
 import SchedulePreview from './ui/SchedulePreview'
 import { previewSchedule, toPlayerInput } from './generateSchedule.service'
@@ -30,6 +30,18 @@ const CONFIRM_PHRASE = 'REGENERATE'
 // the seed it receives.
 const freshSeed = (): number => Math.floor(Math.random() * 0x7fffffff)
 
+/**
+ * Resolve after the browser has painted. previewSchedule is synchronous and
+ * CPU-bound (~0.6–1.1s at 32 players), so without this the busy state never
+ * reaches the screen: React batches it, the thread blocks, and the click looks
+ * dead (M3.6 Finding 4). Two frames because the first rAF fires *before* the
+ * paint that shows the spinner.
+ */
+const afterPaint = (): Promise<void> =>
+  new Promise((resolve) => {
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+  })
+
 // Wires the pure matcher domain + M3.2 commit hook into the configure →
 // generate → review → save flow (D-019). All domain calls are pure; only
 // commit writes.
@@ -46,6 +58,12 @@ export default function MatchmakingContainer({
   const [compareRun, setCompareRun] = useState<ScheduleRun | null>(null)
   const [confirming, setConfirming] = useState(false)
   const [confirmText, setConfirmText] = useState('')
+  const [busy, setBusy] = useState<null | 'generate' | 'reshuffle' | 'compare'>(null)
+  const [status, setStatus] = useState('')
+  // Bumped whenever a run lands, to drive the scroll/announce effect. A plain
+  // `preview` dep would not fire on reshuffle-to-an-identical-object.
+  const [arrival, setArrival] = useState(0)
+  const previewRef = useRef<HTMLDivElement>(null)
 
   const commit = useCommitSchedule()
 
@@ -63,19 +81,70 @@ export default function MatchmakingContainer({
   const generateWith = (overrides: MatchConfig): ScheduleRun =>
     previewSchedule({ tournamentId, players, courts, rounds, genderMode, config: overrides })
 
-  const handleGenerate = () => {
-    setCompareRun(null)
-    setPreview(generateWith(config))
+  // Run a synchronous domain call without freezing the click: flip the busy
+  // flag, let it paint, then compute. The thread still blocks during the
+  // compute itself — a worker is the escalation if the M3.6 Finding 8
+  // alternatives view multiplies this cost.
+  const runDeferred = async ({
+    kind,
+    work,
+    announce,
+  }: {
+    kind: 'generate' | 'reshuffle' | 'compare'
+    work: () => void
+    announce: string
+  }) => {
+    if (busy) return
+    setBusy(kind)
+    setStatus('')
+    try {
+      await afterPaint()
+      work()
+      setStatus(announce)
+      setArrival((n) => n + 1)
+    } finally {
+      setBusy(null)
+    }
   }
 
-  const handleReshuffle = () => {
-    setCompareRun(null)
-    setPreview(generateWith({ ...config, seed: freshSeed() }))
-  }
+  const handleGenerate = () =>
+    runDeferred({
+      kind: 'generate',
+      work: () => {
+        setCompareRun(null)
+        setPreview(generateWith(config))
+      },
+      announce: 'Schedule generated. Review it below.',
+    })
 
-  const handleCompare = () => {
-    setCompareRun(generateWith({ ...config, seed: freshSeed() }))
-  }
+  const handleReshuffle = () =>
+    runDeferred({
+      kind: 'reshuffle',
+      work: () => {
+        setCompareRun(null)
+        setPreview(generateWith({ ...config, seed: freshSeed() }))
+      },
+      announce: 'New schedule generated.',
+    })
+
+  const handleCompare = () =>
+    runDeferred({
+      kind: 'compare',
+      work: () => setCompareRun(generateWith({ ...config, seed: freshSeed() })),
+      announce: 'Comparison ready.',
+    })
+
+  // Bring the run into view. Without this the preview mounts below the fold and
+  // the click reads as a no-op (M3.6 Finding 4).
+  useEffect(() => {
+    if (arrival === 0) return
+    const reduceMotion =
+      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
+    previewRef.current?.scrollIntoView({
+      behavior: reduceMotion ? 'auto' : 'smooth',
+      block: 'start',
+    })
+  }, [arrival])
 
   const handlePickRun = (which: 'current' | 'compare') => {
     if (which === 'compare' && compareRun) setPreview(compareRun)
@@ -116,22 +185,28 @@ export default function MatchmakingContainer({
         feasibility={feasibility}
         playerCount={players.length}
         onGenerate={handleGenerate}
-        generating={false}
+        generating={busy === 'generate'}
       />
 
+      <p className="sr-only" role="status" aria-live="polite">
+        {status}
+      </p>
+
       {preview && (
-        <SchedulePreview
-          run={preview}
-          compareRun={compareRun}
-          onReshuffle={handleReshuffle}
-          onCompare={handleCompare}
-          onPickRun={handlePickRun}
-          onCancelCompare={() => setCompareRun(null)}
-          onSave={handleSave}
-          reshuffling={false}
-          comparing={false}
-          saving={commit.isPending}
-        />
+        <div ref={previewRef} className="scroll-mt-4">
+          <SchedulePreview
+            run={preview}
+            compareRun={compareRun}
+            onReshuffle={handleReshuffle}
+            onCompare={handleCompare}
+            onPickRun={handlePickRun}
+            onCancelCompare={() => setCompareRun(null)}
+            onSave={handleSave}
+            reshuffling={busy === 'reshuffle'}
+            comparing={busy === 'compare'}
+            saving={commit.isPending}
+          />
+        </div>
       )}
 
       {confirming && (

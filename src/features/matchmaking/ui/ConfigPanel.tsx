@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronDown, ChevronRight, RotateCcw, Shuffle } from 'lucide-react'
+import { ChevronDown, ChevronRight, Loader2, RotateCcw, Shuffle } from 'lucide-react'
 import { COURT_JITTER_SCALE } from '../domain/courts'
 import type { MatcherPriority } from '../domain/presets'
 import type {
@@ -338,7 +338,7 @@ export default function ConfigPanel({
         disabled={disabled}
         className="btn-primary w-full flex items-center justify-center gap-2"
       >
-        <Shuffle size={16} />
+        {generating ? <Loader2 size={16} className="animate-spin" /> : <Shuffle size={16} />}
         {generating ? 'Generating…' : 'Generate schedule'}
       </button>
 

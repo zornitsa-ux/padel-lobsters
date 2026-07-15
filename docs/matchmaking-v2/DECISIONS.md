@@ -656,3 +656,44 @@ and means the opposite of the truth. The D-021 priority list is reworded on the
 same rule. Presentation only; no engine change. The deferred "show consequences"
 work (dial moves → bars move) is the real fix and makes most of this copy
 redundant when it lands.
+
+---
+
+## D-023 — Compare becomes a focused Alternatives view (2026-07-15)
+
+**Decision:** Replace the inline compare-two panel with an **Alternatives view**:
+a focused, full-screen task (not a small modal) that generates candidate
+schedules, shows each as a card with its grade, the five bars, and a
+plain-English diff against the current schedule, and ends in Keep / Use. It
+absorbs Reshuffle as a special case. Owner call, 2026-07-15, rejecting the
+current flow outright (M3.6 Finding 8).
+
+**Open decision point — deliberately not settled now.** _Which_ candidates the
+view offers is undecided: all three presets + a reshuffle of the current one, a
+subset, or an admin-chosen set. Owner: "I'm not sure we'll automatically do all
+the options you've suggested. We can decide that when we get there." Decide at
+build time and amend this entry — do not infer it from the shape.
+
+**Why:** Three separate failures, not one (all confirmed in code). _Placement:_
+`ComparePanel` rendered at the top of `SchedulePreview` while its button sat at
+the bottom under the full round list, so on mobile the comparison appeared
+entirely off-screen — the owner found it only by accidentally scrolling up.
+_Provenance:_ `handleCompare` silently re-seeded the same preset, so both columns
+labelled themselves "balanced" and differed only by a raw seed integer; the admin
+never chose the comparison and was never told what it was. _Shape:_ a passive A/B
+of two grades is not a task. The deeper miss is that compare only ever answered
+"is a different **shuffle** better?", while the question admins actually have is
+"is a different **preset** better?" — which the old flow could not express at
+all.
+
+This supersedes D-019's compare-two decision and revisits its rejection of an
+N-candidate gallery. That rejection was made on build cost; the cheaper thing was
+built and failed in use, which is evidence rather than opinion.
+
+**Impact:** `SchedulePreview`'s `compareRun`/`onCompare`/`onPickRun`/
+`onCancelCompare` props and `ComparePanel` all go when the view lands.
+**Sequencing:** blocked on M3.6 Finding 4 (deferred generation), now landed —
+the view generates several schedules at once, which under the old synchronous
+click would have frozen the main thread for seconds with no spinner. The
+plain-English diff must follow **D-022** (say what a player would notice: "2
+fewer repeat opponents", never cost deltas).

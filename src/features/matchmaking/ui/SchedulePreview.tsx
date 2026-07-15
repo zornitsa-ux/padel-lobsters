@@ -1,4 +1,4 @@
-import { Shuffle, Columns2, X } from 'lucide-react'
+import { Shuffle, Columns2, Loader2, X } from 'lucide-react'
 import type { ScheduleRun } from '../domain/types'
 import QualityReport from './QualityReport'
 
@@ -174,6 +174,8 @@ export default function SchedulePreview({
   comparing,
   saving,
 }: SchedulePreviewProps) {
+  // Any in-flight work blocks all three: they all mutate or replace the run.
+  const busy = reshuffling || comparing || saving
   return (
     <div className="space-y-4">
       {compareRun && (
@@ -200,26 +202,26 @@ export default function SchedulePreview({
         <button
           type="button"
           onClick={onReshuffle}
-          disabled={reshuffling}
-          className="flex-1 py-2 text-sm rounded-xl font-semibold bg-gray-100 text-gray-600 flex items-center justify-center gap-2 disabled:opacity-50"
+          disabled={busy}
+          className="flex-1 btn-secondary text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <Shuffle size={16} />
+          {reshuffling ? <Loader2 size={16} className="animate-spin" /> : <Shuffle size={16} />}
           {reshuffling ? 'Reshuffling…' : 'Reshuffle'}
         </button>
         <button
           type="button"
           onClick={onCompare}
-          disabled={comparing}
-          className="flex-1 py-2 text-sm rounded-xl font-semibold bg-gray-100 text-gray-600 flex items-center justify-center gap-2 disabled:opacity-50"
+          disabled={busy}
+          className="flex-1 btn-secondary text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <Columns2 size={16} />
+          {comparing ? <Loader2 size={16} className="animate-spin" /> : <Columns2 size={16} />}
           {comparing ? 'Comparing…' : 'Compare'}
         </button>
         <button
           type="button"
           onClick={onSave}
-          disabled={saving}
-          className="flex-1 btn-primary disabled:opacity-50"
+          disabled={busy}
+          className="flex-1 btn-primary text-sm"
         >
           {saving ? 'Saving…' : 'Save'}
         </button>
