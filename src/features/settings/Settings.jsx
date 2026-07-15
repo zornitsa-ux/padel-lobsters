@@ -30,6 +30,7 @@ export default function Settings() {
   const [form, setForm] = useState({
     whatsappLink: '',
     groupName: 'Padel Lobsters',
+    matchmakingV2Enabled: false,
   })
   // ── Unified Account sign-in state ──────────────────────────
   // A single PIN field handles BOTH admin + player sign-in via auto-detect.
@@ -227,6 +228,7 @@ export default function Settings() {
       setForm({
         whatsappLink: settings.whatsappLink || '',
         groupName: settings.groupName || 'Padel Lobsters',
+        matchmakingV2Enabled: settings.matchmakingV2Enabled ?? false,
       })
       setTips(settings.padelTips && settings.padelTips.length > 0 ? settings.padelTips : null)
     }
