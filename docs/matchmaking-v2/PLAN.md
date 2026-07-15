@@ -542,11 +542,17 @@ boolean not null default false`; applied+verified on local, owner pushes).
   new literacy V2 demands is reading a quality bar, so novelty spend goes "there
   and nowhere else". The exchange rates are a **second, unbudgeted literacy**, and
   a strictly harder one — a bar is self-evident, a level-gap-equivalence is not.
-  They are designer diagnostics that leaked into an admin surface. Needs an owner
-  call on direction (options + recommendation put to the owner 2026-07-15;
-  see the next handoff note). Whatever wins, the sentences as written should not
-  survive to M4.2 — they are the one place V2 asks an admin to think like the
-  cost model instead of like an organizer.
+  They are designer diagnostics that leaked into an admin surface. Also
+  **non-actionable**: four of the six describe weights no Advanced knob changes.
+  **Owner resolved same day → D-021 (built, committed `6553483`):** reframe, plus
+  surface preset intent outside Advanced. `exchangeRateSentences` deleted;
+  `PRESET_INTENT` (always-visible one-liner) + `matcherPriorities` (tie-break
+  order, inside Advanced) replace it. Key finding while building: the weight
+  ranking is **preset-invariant** — presets differ in banding
+  (`socialDial`/`maxCourtSpread`), not weights — so a per-preset "gives up X
+  first" list would look dynamic and never change; the ranking is therefore
+  framed as an engine explainer and the intent one-liner carries the preset
+  difference. Presentation only; no engine behavior change. 604 pass.
 
 ### Phase 4 — Cutover & cleanup
 
