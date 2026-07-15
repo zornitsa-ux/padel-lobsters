@@ -613,3 +613,46 @@ behavior changes: weights, costs, and goldens are untouched — this is presenta
 only. The deeper "show consequences, not descriptions" option (re-run on dial
 change, show bar deltas) stays deferred; it depends on Finding 4's deferred
 generation landing first.
+
+---
+
+## D-022 — Admin copy speaks padel, never the cost model (2026-07-15)
+
+**Decision:** All matchmaking admin copy describes **what a player would notice
+on court**, in Playtomic levels. The cost model's vocabulary is banned from the
+UI: no "free", no "excess", no "units" of anything, no weights, no exchange
+rates, no "counts against". Where a setting has a level threshold, the copy
+shows a worked example in levels ("a 3.0 sharing a court with a 4.3"). Where it
+has no honest level meaning, the copy says what you trade and shows no number.
+Owner call, 2026-07-15, on the third iteration of the same failure.
+
+**Why:** This is the third time the model's mental furniture leaked into an admin
+surface, each time one level less obvious. D-021 removed exchange rates ("0.42-
+level team-sum gap") and replaced them with thresholds described as "free" and a
+"unit of imbalance" — the same mistake in plainer words. Owner: "I don't know
+what it means for the levels to be free… What is a unit of imbalance?" The tell
+is that each rewrite felt concrete _to someone holding the cost function_.
+"Free" is only meaningful if you know costs accrue on excess; "one unit" is only
+meaningful if you know dimensions are normalized. Both encode `cost.ts` and
+neither survives contact with an organizer. The target reader plays padel and
+reads Playtomic levels; they do not have a cost function and are not going to
+acquire one.
+
+**Rule of thumb for future copy:** if a sentence cannot be checked by picturing a
+court, it is wrong. "A 3.0 can end up with anyone from 2.0 to 4.0" is checkable.
+"A 0.5-level team gap counts as one full unit of imbalance" is not.
+
+**Impact:** `NUMERIC_KNOBS` in `ConfigPanel.tsx` carries `describe` (what this
+setting does now) + `effect` (what you give up), both rewritten; the rule is
+recorded in a comment on the type so the next editor sees it. Worked examples
+anchor on `EXAMPLE_LEVEL = 3.0` and format through one helper, so the stated gap
+and the example levels can't disagree (they did: "about 0.75 levels apart — a
+3.0 with a 3.8", and "about 1 levels apart"). Two accuracy fixes fell out of
+reading the rendered strings rather than the code: `socialDial = 0` claimed "a
+3.0 is always with other 3.0s" when a strict sort actually seats you with the
+_nearest_ levels, and `balanceTolerance` now carries **no worked number** on
+purpose — it is a divisor, not a threshold, so any number reads as an allowance
+and means the opposite of the truth. The D-021 priority list is reworded on the
+same rule. Presentation only; no engine change. The deferred "show consequences"
+work (dial moves → bars move) is the real fix and makes most of this copy
+redundant when it lands.

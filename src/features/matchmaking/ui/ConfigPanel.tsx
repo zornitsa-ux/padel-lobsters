@@ -53,14 +53,21 @@ type NumericKnob = 'socialDial' | 'maxCourtSpread' | 'maxPartnerGap' | 'balanceT
 
 const round2 = (n: number): number => Math.round(n * 100) / 100
 
+// Worked examples are anchored on a mid-table player so the copy reads in
+// Playtomic levels — the only scale admins actually think in.
+const EXAMPLE_LEVEL = 3.0
+const lvl = (n: number): string => round2(n).toFixed(1)
+
 const NUMERIC_KNOBS: {
   key: NumericKnob
   label: string
   min: number
   max: number
   step: number
-  // What the current value means, in levels. Effect names the quality bars it
-  // moves, in the QualityReport's own vocabulary (D-019: one set of terms).
+  // Copy rule (D-022): say what a player would notice on court, in Playtomic
+  // levels. Never the cost model's vocabulary — no "free", "excess", "units",
+  // no weights or exchange rates. describe = what this setting does now;
+  // effect = what you trade for it.
   describe: (value: number) => string
   effect: string
   // balanceTolerance is lower = stricter, so the slider is reversed to make
@@ -74,11 +81,16 @@ const NUMERIC_KNOBS: {
     min: 0,
     max: 1,
     step: 0.05,
-    describe: (value) =>
-      value === 0
-        ? 'No shuffle — courts are a strict level sort, identical every reshuffle.'
-        : `Shuffles each player up to ±${round2(value * COURT_JITTER_SCALE)} levels before seeding courts, so they can land a court above or below their own.`,
-    effect: 'More mixing → Variety up, Balance down.',
+    describe: (value) => {
+      if (value === 0) {
+        return 'Courts are set strictly by level — you play with the three people closest to you, and reshuffling gives you the same courts every time.'
+      }
+      const swing = value * COURT_JITTER_SCALE
+      return `A ${lvl(EXAMPLE_LEVEL)} player can end up on a court with anyone from ${lvl(
+        EXAMPLE_LEVEL - swing,
+      )} to ${lvl(EXAMPLE_LEVEL + swing)}, so people regularly play outside their usual group.`
+    },
+    effect: 'More mixing means you meet more of the room, but games are less even.',
   },
   {
     key: 'maxCourtSpread',
@@ -87,8 +99,13 @@ const NUMERIC_KNOBS: {
     max: 3.0,
     step: 0.25,
     describe: (value) =>
-      `A court spanning up to ${value} levels is free; only the excess beyond that counts.`,
-    effect: 'Wider → Variety up, Balance down.',
+      `The strongest and weakest player in one game can be about ${lvl(
+        value,
+      )} levels apart — a ${lvl(EXAMPLE_LEVEL)} sharing a court with a ${lvl(
+        EXAMPLE_LEVEL + value,
+      )}. Push it wider and the matcher starts breaking those courts up.`,
+    effect:
+      'Wider courts mix the room more, but the weakest player in the game can feel out of their depth.',
   },
   {
     key: 'maxPartnerGap',
@@ -97,8 +114,13 @@ const NUMERIC_KNOBS: {
     max: 2.0,
     step: 0.25,
     describe: (value) =>
-      `Partners up to ${value} levels apart are free; only the excess beyond that counts.`,
-    effect: 'Wider → more pairing options, Partner fairness down.',
+      `You and your partner can be about ${lvl(value)} levels apart — a ${lvl(
+        EXAMPLE_LEVEL,
+      )} playing with a ${lvl(
+        EXAMPLE_LEVEL + value,
+      )}. Beyond that the matcher tries to split the pair up.`,
+    effect:
+      'Bigger gaps open up more partner combinations, but the weaker partner tends to get picked on.',
   },
   {
     key: 'balanceTolerance',
@@ -107,9 +129,17 @@ const NUMERIC_KNOBS: {
     max: 1.5,
     step: 0.1,
     invert: true,
-    describe: (value) =>
-      `Nothing is free here — every lopsided court counts. A ${value}-level team gap counts as one full unit of imbalance.`,
-    effect: 'Stricter → Balance up, Variety down.',
+    // No worked number here on purpose: unlike the others this isn't a
+    // level threshold, it's how heavily any gap weighs. A number would read
+    // as an allowance and mean the opposite of the truth.
+    describe: () =>
+      `The two teams in a game are compared by adding their levels together — a ${lvl(
+        EXAMPLE_LEVEL,
+      )} and a ${lvl(EXAMPLE_LEVEL + 1)} make ${lvl(
+        EXAMPLE_LEVEL * 2 + 1,
+      )}. This is how close those totals need to be, so games finish tight instead of 6-1.`,
+    effect:
+      'Stricter gives you closer games, but to find them the matcher repeats opponents and mixes courts more. Looser accepts the odd one-sided game and keeps matchups fresh.',
   },
 ]
 
@@ -271,8 +301,8 @@ export default function ConfigPanel({
           {priorities.length > 0 && (
             <div className="pt-1">
               <p className="text-xs text-gray-500">
-                When it can&apos;t satisfy everything, the matcher protects these in order —
-                the last ones give first:
+                No schedule can be perfect at everything. When the matcher has to choose, this
+                is what it hangs on to longest — the ones at the bottom slip first:
               </p>
               <ol className="mt-1 space-y-0.5 text-xs text-gray-500 list-decimal pl-4">
                 {priorities.map(({ key }) => (
