@@ -518,6 +518,35 @@ boolean not null default false`; applied+verified on local, owner pushes).
   Seeing the checkbox under a Lobster event as admin means the flag is **not**
   active — useful as a diagnostic. The toggle + its `usePersistentBoolean` key
   (`lobster_use_score_for_matcher`) die with `ScheduleGeneratorControls` at M4.3.
+  **Finding 4 (real defect — generate has no feedback).** Owner clicked Generate
+  Schedule and did not notice the preview appear. Confirmed in code: the M3.4
+  deferred-generation gap is worse than "the spinner flags are unused". Today
+  `previewSchedule` is synchronous on the main thread (~0.6–1.1s at 32p), the
+  container hard-codes `generating={false}` (`MatchmakingContainer.tsx:118`), and
+  the preview mounts via a bare `{preview && ...}` (`:121`) — so the click
+  produces **no pressed state, no spinner, no transition, no scroll, and no
+  announcement**; the thread simply blocks, then new content appears below the
+  fold. On mobile (the D-019 target) the result is indistinguishable from a dead
+  button. The prior deferral note assumed the only missing piece was wiring the
+  booleans; the discoverability failure is separate and is what actually bites.
+  Fix is container-scoped: defer the compute off the click (yield/idle or worker)
+  so `generating` is real, then make arrival perceptible (scroll-into-view or
+  focus move to the preview heading + a live-region announcement for a11y).
+  **Finding 5 (design gap — exchange rates are unreadable).** Owner: "I and other
+  admins don't really understand how to think about things like 'repeat partner
+  for a second time is worth X'." The six `exchangeRateSentences`
+  (`presets.ts:57-70`, rendered in ConfigPanel's Advanced disclosure at `:211`)
+  are all of the form "…costs as much as a 0.42-level team-sum gap" — a currency
+  conversion between two abstractions, one of which (**team-sum gap**) is never
+  defined anywhere in the UI. This contradicts a **D-019 premise**: that the only
+  new literacy V2 demands is reading a quality bar, so novelty spend goes "there
+  and nowhere else". The exchange rates are a **second, unbudgeted literacy**, and
+  a strictly harder one — a bar is self-evident, a level-gap-equivalence is not.
+  They are designer diagnostics that leaked into an admin surface. Needs an owner
+  call on direction (options + recommendation put to the owner 2026-07-15;
+  see the next handoff note). Whatever wins, the sentences as written should not
+  survive to M4.2 — they are the one place V2 asks an admin to think like the
+  cost model instead of like an organizer.
 
 ### Phase 4 — Cutover & cleanup
 
