@@ -11,6 +11,7 @@ const rootElement = document.getElementById('root')
 if (!rootElement) {
   throw new Error('Root element not found')
 }
+const hi = 'hi'
 
 ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
