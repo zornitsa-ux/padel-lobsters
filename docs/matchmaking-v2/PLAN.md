@@ -11,13 +11,13 @@ holds it. This file carries current state, remaining work, and the protocol.
 
 ## 1. Status
 
-| Phase           | Goal                         | Gate to next                           | State                          |
-| --------------- | ---------------------------- | -------------------------------------- | ------------------------------ |
-| 0 Discovery     | Audit data + wiring          | findings recorded                      | done                           |
-| 1 Rating engine | Pure domain + calibration    | backtest ≥ Glicko-2 parity             | done (gate met, D-010)         |
-| 2 Matcher       | Pure domain + shadow mode    | shadow report reviewed on real rosters | done (gate met, D-015)         |
-| 3 Integration   | Schema, services, admin UI   | V2 generates a real event              | done                           |
-| 4 Cutover       | Ratings live, legacy deleted | two clean events on V2                 | in progress (M4.1 not started) |
+| Phase           | Goal                         | Gate to next                           | State                            |
+| --------------- | ---------------------------- | -------------------------------------- | -------------------------------- |
+| 0 Discovery     | Audit data + wiring          | findings recorded                      | done                             |
+| 1 Rating engine | Pure domain + calibration    | backtest ≥ Glicko-2 parity             | done (gate met, D-010)           |
+| 2 Matcher       | Pure domain + shadow mode    | shadow report reviewed on real rosters | done (gate met, D-015)           |
+| 3 Integration   | Schema, services, admin UI   | V2 generates a real event              | done                             |
+| 4 Cutover       | Ratings live, legacy deleted | two clean events on V2                 | in progress (M4.1 awaiting push) |
 
 **What exists.** V2 is the unconditional generator for every event an admin
 opens (D-028, D-030) — `format` no longer gates anything. The pure engine lives
@@ -31,20 +31,49 @@ event's roster. V1 code (`lobsterMatcher.js`, `glicko2.js`,
 path reaching it (D-028).
 
 Gates as of 2026-07-25: typecheck clean, lint 0 errors (136 pre-existing
-warnings), **707 pass / 2 skip**, build clean, 9 goldens byte-identical.
+warnings), **722 pass / 3 skip**, build clean, 9 goldens byte-identical.
 
 ### Open items
 
-- **Migration `20260713000001_matchmaking_v2.sql` is not pushed to production.**
-  Applied and replayed clean on local only; `npx supabase db push` stays the
-  owner's manual step. It carries the whole V2 schema plus, in its own marked
+- **Migration `20260713000001_matchmaking_v2.sql` is live in production**
+  (pushed 2026-07-25). Carries the whole V2 schema plus, in its own marked
   section, the unrelated pre-existing `settings` write-grant fix — settings
-  writes have 403'd in production since 2026-05-18 (`20260518000008` revoked
-  INSERT/UPDATE and never re-granted), so that section is worth pushing on its
-  own merits.
-- **No player has an `mm_rating` yet** — until M4.1 back-fills, everyone enters
-  their first V2 event at the `playtomic_level` prior and the admin drawer's
-  "Learned level" row stays hidden.
+  writes had 403'd in production since 2026-05-18 (`20260518000008` revoked
+  INSERT/UPDATE and never re-granted); that's now repaired too.
+- **`20260725000001_mm_seed_ratings.sql` is written, verified, and NOT pushed.**
+  It seeds **65 players** from the production-only replay (D-031 write
+  mechanism, D-032 source). Production is still all-null, so until it lands
+  everyone enters their first V2 event at the `playtomic_level` prior and the
+  admin drawer's "Learned level" row stays hidden. **The push is the owner's
+  manual step** (`npx supabase db push` from `main`, §5). It is guarded to
+  no-op on any player whose `mm_rating` is already set, so a Finish landing
+  before the push always wins — but the seed goes stale as events complete, so
+  **regenerate the migration (re-run the harness against a fresh snapshot) if a
+  real event is finished before pushing.** LOBS #9 is 2026-07-26 with 40
+  registered, which is what the push is racing.
+- **9 players deliberately take no seed** (D-032) and enter their next event on
+  the raw playtomic prior; 3 of them are registered for LOBS #9 (`5c666c28`,
+  `ab780f88`, `c81f46d1`). Expected, not a defect — they pick
+  up a learned level after their first production event. 5 more #9 registrants
+  have no history in any source and are in the same position. (Players are keyed
+  by id prefix throughout these docs — public repo, and D-017 keeps a learned
+  level admin-only.)
+- **The oscillation guardrail cannot fire in production** (D-033) —
+  `Schedule.jsx:252` hard-codes `previousDeltas: []`, so §4.3's third flag is
+  dead wiring. The data it needs is already persisted in
+  `rating_events.proposed_delta`; nothing reads it. Deferred out of M4.1 on
+  purpose (needs a new admin read + a Finish-path change, not a rider on a data
+  migration). The seed replay itself does implement the chain, so its "0
+  oscillation flags" is a real result.
+- **Sigma inactivity inflation is dead code.** `inflateForInactivity`
+  (`domain/rating/model.ts`) is called from nowhere: not the live Finish path,
+  and deliberately not the seed replay (D-031). Either wire it in or delete it —
+  it needs a decision, not more drift.
+- **Six `playtomic_level = 0` players remain** (almost certainly "never set").
+  None has match history and none is registered for an upcoming event, so
+  nothing is blocked; they matter the moment one of them plays, because 0 would
+  be the prior the engine anchors on. Player `12cdb8df` was the seventh and is
+  fixed (→ 2.23, owner-supplied, D-032).
 - **Live verification is partial.** The rating loop was verified end-to-end on
   local against a two-event fixture (engine output matched simulation to 3
   decimals; learned mu/sigma provably carried into event ②). The newer UI work
@@ -158,12 +187,23 @@ and in the code each task produced.
 
 ### Phase 4 — Cutover & cleanup
 
-- `[ ]` **M4.1 — Seed ratings** (C, S) — full-history recompute into
-  `mm_rating`/`mm_sigma` so players stop entering events at the raw
-  `playtomic_level` prior. Sanity-compare the result against the old
-  `learned_rating` and report outliers to the owner before writing.
-  **Acceptance:** every player with match history has an `mm_*` value; the
-  admin drawer's learned-level row renders for them; outlier list reviewed.
+- `[~]` **M4.1 — Seed ratings** (C, S) — built and dry-run reviewed; **only the
+  production push is left**, and it is the owner's manual step. The pure replay
+  is `domain/rating/seed.ts` (15 acceptance tests); `seed.harness.test.ts`
+  (env-gated on `MM_SEED_FIXTURE`, writes nothing to any DB) generates both the
+  owner-facing dry run `seed-ratings.md` and the migration. Result: **65 of 105
+  players seeded across 4 production events** (174 matches; History excluded per
+  D-032), max shift from playtomic 0.48 levels, sigma 0.26–0.46, 4 flagged
+  player-events (all `over_cap`). Cross-check against V1: **88% direction
+  agreement** (46/52); the raw distance is large (median 0.41) because uncapped
+  Glicko-2 swings far harder than V2's ±0.30/event — that is the model change
+  D-010 made on purpose, not an error. Write mechanism is D-031; match source is
+  D-032.
+  **Acceptance:** every player with **production** match history has an `mm_*`
+  value ✅ (65/65 after the push — the 9 History-only players are excluded by
+  D-032, not missed); the admin drawer's learned-level row renders for them ⏳
+  (needs the push, then an owner check); outlier list reviewed ✅ (owner,
+  2026-07-25, and it drove D-032).
 - `[~]` **M4.2 — Live** (C, —) — two-event observation window. There is no flag
   to enable (D-028); this is watching two real events and capturing owner
   feedback. Watch specifically: schedule quality against the shadow-report
@@ -212,6 +252,12 @@ and in the code each task produced.
   by it. `RecentResultsList.jsx` is dead code.
 - **Migration safety:** house rule — local reset + advisors before any push;
   production push stays manual and owner-triggered.
+- **`20260725000001_mm_seed_ratings.sql` is generated, not hand-written.** Its
+  74 rows come from `seed.harness.test.ts` replaying a production snapshot;
+  editing the SQL by hand silently decouples it from the engine that produced it.
+  Regenerate instead. Its guard (`AND p.mm_rating IS NULL`) means a stale copy
+  fails quiet rather than loud — it will simply skip players a real event has
+  since rated, leaving a partial seed nobody is told about.
 
 ---
 

@@ -1129,3 +1129,172 @@ Verified on local: `db:reset` replays clean, both seeded events come back
 probe insert omitting `format` really does land on `lobster_matching`
 (row deleted after). Gates: typecheck clean, lint 0 errors (136 pre-existing
 warnings, unchanged), **707 pass / 2 skip**, build clean, goldens byte-identical.
+
+## D-031 — Seed ratings land as one UPDATE + a `kind='seed'` provenance row, not a per-tournament RPC replay (2026-07-25)
+
+**Decision:** M4.1's back-fill ships as a generated migration
+(`20260725000001_mm_seed_ratings.sql`) that does a single `UPDATE` of
+`mm_rating`/`mm_sigma`/`mm_rating_updated_at` per player, plus **one
+`rating_events` row per player with `kind = 'seed'`** carrying the whole replay:
+`tournament_id = null`, `prior_mu = playtomic_level`, `prior_sigma = 0.7`
+(`SIGMA_PRIOR`), `proposed_delta` = the sum of the per-event uncapped deltas,
+`applied_delta` = the net shift that actually moved `mm_rating`, `flagged =
+false`, and a **per-event** summary in `breakdown`. It does **not** call
+`admin_apply_tournament_ratings` once per historical tournament. Owner confirmed
+2026-07-25 after reviewing the dry run.
+
+**Why not the RPC path.** It cannot represent the data. Two of the six replayed
+events (`dec2025`, `mar2026` — 55 of the 171 rows it would write) are
+History.jsx events with **no `tournaments` row**, and
+`rating_events.tournament_id` is an FK to `tournaments` that the RPC requires
+non-null. Routing only the four production tournaments through it would leave
+the first one's `prior_mu` silently unequal to `playtomic_level` with nothing in
+the audit trail explaining the gap — a trail that lies by omission is worse than
+one that is honestly coarse. Two secondary costs: the RPC's double-apply guard
+would permanently block re-applying those four tournaments (a re-seed would need
+row deletion first), and each call stamps `mm_rating_updated_at = now()`, so all
+six "events" would carry the same timestamp anyway.
+
+**The review-queue worry turned out to be unfounded, and is not why.** The dry
+run shows only **5** flagged player-events across all six (5 × `over_cap`, 0
+`drift`, 0 `oscillation`) — a 5-item queue, not a backlog. The RPC path was
+rejected on representability, not volume. Nothing else is lost either: no code
+computes from historical `rating_events`. `Schedule.jsx:252` hard-codes
+`previousDeltas: []`, so the oscillation guardrail never consults past events;
+the rows are read only by the flagged review queue and the just-finished event's
+explainability.
+
+**Faithfulness rules the replay follows** (`domain/rating/seed.ts`, pure): mu
+advances by the guardrail-**capped** `appliedDelta`, never `proposedDelta` — a
+withheld remainder stays withheld, exactly as live, and seeding does not
+retroactively approve anything; `previousDeltas` accumulate each player's
+earlier **proposed** deltas so the oscillation flag sees the sequence it would
+have lived. This is where seeding deliberately differs from the M1.6 backtest,
+which replays raw uncapped deltas because it measures predictive power only.
+`inflateForInactivity` is **not** applied — the live path never calls it, so
+using it here would invent a policy no later event maintains (flagged as its own
+open question, not settled by this entry).
+
+**History.jsx matches are included** (owner, 2026-07-25) — the 54 alias-linked
+ones only; the 16 unaliased names / 62 unattributable matches stay out, as they
+must. This does **not** reopen D-010: that exclusion was about bias in a
+_parameter fit_, where an unattributable court corrupts the estimate. Seeding is
+a _coverage_ question, and the 54 are fully attributed. Concretely: 74 players
+seeded instead of 65 — 9 would otherwise enter their next event on the raw
+playtomic prior — and for players present in both replays the largest divergence
+is 0.28 levels, most under 0.15.
+
+**Safety.** Both statements are guarded so the migration is a no-op where the
+player row is absent (local `db:reset` has none of these ids) and where
+`mm_rating` is already set — so a live Finish landing between generation and
+push always wins over the stale seeded value. Verified on local against probe
+rows carrying the real ids: 74 updated, 74 provenance rows, re-run inserts 0, a
+pre-set "live" value survives untouched, and the flagged review queue stays
+empty.
+
+**Impact:** new pure module `domain/rating/seed.ts` (+ `seed.test.ts`, 15
+acceptance tests) and dev harness `seed.harness.test.ts`, which generates both
+the migration and the owner-facing dry run `docs/matchmaking-v2/seed-ratings.md`.
+Fixture construction shared with the M1.6 harness is extracted to
+`src/features/matchmaking/historyFixture.ts` (CLAUDE.md de-dup rule); the
+extraction is provably behaviour-identical — the calibration harness regenerates
+`calibration.md` byte-for-byte against the original code on the same fixture.
+`kind` gains a fourth value, `'seed'`, joining `tournament | self_reset |
+admin_edit`; `breakdown` on a `'seed'` row is a per-event summary, not the
+per-match `breakdownRowSchema` shape a `'tournament'` row carries — nothing
+renders it today (only flagged rows reach `RatingReview`), but a future reader
+must not assume one shape. The migration is **generated, not hand-written**:
+regenerate by re-running the harness rather than editing it.
+
+## D-032 — Seed from production matches only; History.jsx is out (2026-07-25)
+
+**Decision:** M4.1 seeds from the **174 production matches across 4 events**
+only. The 54 alias-linked History.jsx matches that D-031 had included are
+excluded, reversing that part of D-031 the same day, before anything was pushed.
+Owner call after reading both replays side by side in `seed-ratings.md`: the
+production-only numbers are the ones that match how these players actually play.
+
+**Why this overrides the argument D-031 made.** D-031 reasoned from coverage —
+9 more players seeded, and a maximum divergence of 0.28 levels for anyone in
+both replays, so including History looked like upside with a small tail. That
+reasoning was sound and still lost, because it weighed the wrong thing. The
+owner has watched these people play; a replay's internal consistency is not
+evidence against someone who knows the players. The two History events are also
+the oldest data in the set (dec2025, mar2026) and reach the seed through an
+alias table, i.e. through an identity mapping that was never verified for this
+purpose. Where a divergence showed up it was almost always on players whose
+production record is thin, which is exactly where a stale event drags hardest.
+
+**What it costs, accepted:** 9 players get **no seed at all** and enter their
+next event on the raw `playtomic_level` prior — `12cdb8df`, `1cb37c71`,
+`38dc6f48`, `4336f8a4`, `5c666c28`, `5d8a1471`, `98f573a7`, `ab780f88`,
+`c81f46d1`. Three of them (`5c666c28`, `ab780f88`, `c81f46d1`) are registered
+for LOBS #9. (Players are keyed by id prefix, not name: this repo is public and
+D-017 keeps a learned level admin-only. Re-run the seed harness with
+`MM_SEED_NAMES=1` for a local named copy.) This is not a regression — it is the
+status quo for them, and they pick up a learned level after their first
+production event.
+
+**Consequence for D-031 that must not be lost.** D-031's _primary_ argument for
+a direct UPDATE over `admin_apply_tournament_ratings` was representability: two
+of its six events were History.jsx events with no `tournaments` row, so the RPC
+literally could not record them. With History excluded that argument is gone —
+all 4 remaining events have `tournaments` rows and the RPC path is now
+_possible_. The direct UPDATE stands on the surviving secondary reasons: the
+RPC's double-apply guard would permanently block re-applying these 4 tournaments
+(a re-seed would need row deletion first), every event would carry the same
+`mm_rating_updated_at` regardless, and a generated migration fits the manual
+owner-triggered push story better than 4 sequential RPC calls. **This is now a
+preference, not an impossibility** — revisit if per-match historical breakdowns
+are ever wanted in the admin UI. The migration header says so in place.
+
+**Also settled:** player `12cdb8df`'s `playtomic_level` was `0` (never set); the
+owner supplied her real Playtomic level, **2.23**, and it was written to
+production directly (`adjusted_level` mirrored to match, no `mm_rating` existed
+so D-018's reset semantics were moot). She has no production match history, so
+under this decision she takes no seed — which makes the level fix the thing that
+actually matters for her: it is the prior she now enters events on. Six
+`playtomic_level = 0` players remain in the roster; none has match history and
+none is registered for an upcoming event.
+
+**Impact:** `seed.harness.test.ts` ships `prodOnly` as `chosen` and keeps
+`withHistory` computed so the report can show the rejected alternative;
+`seed-ratings.md` regenerated (65 players, 4 events, max shift 0.483, sigma
+0.263–0.462, 4 flagged player-events, 88% direction agreement with V1);
+`20260725000001_mm_seed_ratings.sql` regenerated at 65 rows and re-verified on
+local against probe rows carrying the real ids. `domain/rating/seed.ts` is
+unchanged — the source choice is a harness input, never engine behaviour.
+
+## D-033 — The oscillation guardrail is unreachable in production (2026-07-25)
+
+**Not a decision — a defect, recorded here because it was found while reasoning
+about D-031 and must not be lost again.**
+
+`applyGuardrails` flags `oscillation` when a player's last `OSCILLATION_RUN`
+proposed deltas all exceed 0.2 with alternating sign (DESIGN §4.3: "the model
+can't settle this player"). It is implemented, unit-tested, and **cannot fire
+live**: `Schedule.jsx:252` passes `previousDeltas: []` on every Finish, so the
+sequence the guardrail inspects is always length 1 and the
+`previousDeltas.length >= tailSize` precondition is never met.
+
+The data it needs exists and is already persisted — `rating_events.proposed_delta`
+for `kind = 'tournament'` rows, ordered by `created_at`. Nothing reads it. There
+is no RPC that returns a player's prior deltas, which is presumably why the
+literal `[]` was written in the first place; before M4.1 the table was empty in
+production anyway, so the gap cost nothing and stayed invisible.
+
+**Why it is not fixed in this session:** M4.1's seed had to land before LOBS #9
+(2026-07-26), and this needs a new admin-gated read plus a change to the Finish
+path — a separate, testable piece of work, not a rider on a data migration.
+
+**Note:** the M4.1 replay itself does implement the chain correctly — it
+accumulates each player's proposed deltas across events and feeds them forward
+(`seed.ts`), which is why the dry run can state 0 oscillation flags as a real
+result rather than a vacuous one. So the seeded values are faithful to §4.3 even
+though the live path is not yet.
+
+**Follow-up shape:** extend `admin_get_mm_ratings()` (or add a sibling) to return
+the last `OSCILLATION_RUN - 1` proposed deltas per player, and have
+`applyV2Ratings` pass them through the `previousDeltas` field that
+`RatingApplyPlayer` already carries. The client contract needs no change — the
+field is there and typed, just never populated. Tracked in PLAN §1.
