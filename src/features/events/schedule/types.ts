@@ -5,8 +5,7 @@ export interface SchedulePlayer {
   name: string
   gender?: string
   isLeftHanded?: boolean
-  adjustedLevel?: number
-  learnedLevel?: number | null
+  playtomicLevel?: number
 }
 
 export interface ScheduleMatch {

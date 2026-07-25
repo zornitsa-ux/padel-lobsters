@@ -12,6 +12,7 @@ vi.mock('../events/matchQueries', () => ({ saveMatches: mockSaveMatches }))
 
 import {
   commitSchedule,
+  fetchMmRatings,
   previewSchedule,
   recordScheduleRun,
   scheduleRunToMatchRows,
@@ -146,5 +147,69 @@ describe('commitSchedule', () => {
     expect(mockSaveMatches.mock.invocationCallOrder[0]).toBeLessThan(
       mockRpc.mock.invocationCallOrder[0],
     )
+  })
+})
+
+// Regression: mm_* is admin-only and therefore absent from players_public, so
+// the learned prior has to arrive via this RPC. When it didn't, the roster's
+// mmRating was structurally always null and every event silently re-seeded from
+// playtomic_level — ratings were written but never read back.
+describe('fetchMmRatings', () => {
+  it('keys the learned prior by player id', async () => {
+    mockRpc.mockResolvedValue({
+      data: [
+        { player_id: 'p1', mm_rating: 4.2, mm_sigma: 0.31 },
+        { player_id: 'p2', mm_rating: 2.05, mm_sigma: 0.5 },
+      ],
+      error: null,
+    })
+
+    await expect(fetchMmRatings()).resolves.toEqual({
+      p1: { mu: 4.2, sigma: 0.31 },
+      p2: { mu: 2.05, sigma: 0.5 },
+    })
+    expect(mockRpc).toHaveBeenCalledWith('admin_get_mm_ratings')
+  })
+
+  it('returns an empty map when no player has been rated yet', async () => {
+    mockRpc.mockResolvedValue({ data: [], error: null })
+    await expect(fetchMmRatings()).resolves.toEqual({})
+  })
+
+  it('throws when the admin RPC errors rather than silently falling back', async () => {
+    mockRpc.mockResolvedValue({ data: null, error: { message: 'not admin' } })
+    await expect(fetchMmRatings()).rejects.toEqual({ message: 'not admin' })
+  })
+
+  it('feeds toPlayerInput a learned prior that overrides playtomic_level', async () => {
+    mockRpc.mockResolvedValue({
+      data: [{ player_id: 'p1', mm_rating: 4.2, mm_sigma: 0.31 }],
+      error: null,
+    })
+    const learned = await fetchMmRatings()
+
+    const rated = toPlayerInput({
+      playerId: 'p1',
+      name: 'Ann',
+      playtomicLevel: 3.0,
+      mmRating: learned.p1?.mu ?? null,
+      mmSigma: learned.p1?.sigma ?? null,
+      isLeftHanded: false,
+      gender: 'female',
+    })
+    const unrated = toPlayerInput({
+      playerId: 'p2',
+      name: 'Bo',
+      playtomicLevel: 3.0,
+      mmRating: learned.p2?.mu ?? null,
+      mmSigma: learned.p2?.sigma ?? null,
+      isLeftHanded: false,
+      gender: 'male',
+    })
+
+    expect(rated.mu).toBe(4.2)
+    expect(rated.sigma).toBe(0.31)
+    expect(unrated.mu).toBe(3.0)
+    expect(unrated.mu).not.toBe(rated.mu)
   })
 })

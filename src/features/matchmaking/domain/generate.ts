@@ -4,6 +4,7 @@ import { resolveConfig } from './presets'
 import { refineSchedule } from './refine'
 import { buildScheduleRun } from './report'
 import { createRng } from './rng'
+import { leftyIdSet } from './scheduleOps'
 import { coSitOverlap, planSitouts } from './sitouts'
 import { splitCourt } from './teams'
 import type { GenerateInput, PlayerInput, Schedule, ScheduleRun } from './types'
@@ -38,7 +39,7 @@ export function generateSchedule(input: GenerateInput): ScheduleRun {
 
   const rng = createRng(config.seed)
   const byId = new Map(players.map((p) => [p.playerId, p]))
-  const leftyIds = new Set(players.filter((p) => p.isLeftHanded).map((p) => p.playerId))
+  const leftyIds = leftyIdSet(players)
 
   const sitPlan = planSitouts({
     playerIds: players.map((p) => p.playerId),

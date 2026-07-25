@@ -8,14 +8,14 @@ export function pairScore(a, b, partnerHistory, avoidWWPairs) {
   if (avoidWWPairs && a.gender === 'female' && b.gender === 'female') score += 50
   // PREFER complementary levels: pair strong with weak so teams are balanced.
   // This is a nice-to-have — it yields to the hard constraints above.
-  score -= Math.abs((a.adjustedLevel || 0) - (b.adjustedLevel || 0)) * 0.8
+  score -= Math.abs((a.playtomicLevel || 0) - (b.playtomicLevel || 0)) * 0.8
   score += Math.random() * 0.3 // jitter: break ties randomly so each reshuffle differs
   return score
 }
 
 /** Score how good it is to put pair t1 against pair t2 on same court. */
 export function courtScore(t1, t2, opponentHistory, isMixed) {
-  const lvl = (pair) => pair.reduce((s, p) => s + (p.adjustedLevel || 0), 0)
+  const lvl = (pair) => pair.reduce((s, p) => s + (p.playtomicLevel || 0), 0)
   const levelDiff = Math.abs(lvl(t1) - lvl(t2))
   let oppPenalty = 0
   t1.forEach((p) =>
@@ -142,7 +142,7 @@ export function pairsToCourtMatches(
   genderMode = 'mixed',
 ) {
   const isMixed = genderMode === 'mixed'
-  const lvl = (pair) => pair.reduce((s, p) => s + (p.adjustedLevel || 0), 0)
+  const lvl = (pair) => pair.reduce((s, p) => s + (p.playtomicLevel || 0), 0)
   const hasW = (pair) => pair.some((p) => p.gender === 'female')
 
   const pickBest = (target, pool) => {

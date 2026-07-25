@@ -66,9 +66,9 @@ export default function PlayersList({
                 </div>
                 <div className="flex-shrink-0 text-right flex flex-col items-end gap-1">
                   <span
-                    className={`text-sm font-bold px-2.5 py-1 rounded-lg ${levelBadge(p.adjustedLevel)}`}
+                    className={`text-sm font-bold px-2.5 py-1 rounded-lg ${levelBadge(p.playtomicLevel)}`}
                   >
-                    {(p.adjustedLevel || 0).toFixed(1)}
+                    {(p.playtomicLevel || 0).toFixed(1)}
                   </span>
                   {isAdmin && (p.pinChanges ?? 0) > 0 && (
                     <span

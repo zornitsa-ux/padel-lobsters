@@ -2,13 +2,9 @@ import { useState } from 'react'
 import { ChevronDown, ChevronRight, Loader2, RotateCcw, Shuffle } from 'lucide-react'
 import { COURT_JITTER_SCALE } from '../domain/courts'
 import type { MatcherPriority } from '../domain/presets'
-import type {
-  FeasibilityResult,
-  MatchConfig,
-  MatchPreset,
-  ResolvedConfig,
-} from '../domain/types'
+import type { FeasibilityResult, MatchConfig, MatchPreset, ResolvedConfig } from '../domain/types'
 import { DIMENSION_LABELS } from './dimensions'
+import { segmentedButtonClass } from './segmentedButton'
 
 export type ConfigPanelProps = {
   // Controlled config: preset + optional knob overrides. Container owns state.
@@ -29,6 +25,9 @@ export type ConfigPanelProps = {
   playerCount: number
   onGenerate: () => void
   generating: boolean
+  // Idle-state button label; defaults to 'Generate schedule'. The alternative
+  // panel passes 'Generate alternative' / 'Regenerate alternative'.
+  generateIdleLabel?: string
 }
 
 const PRESETS: { value: MatchPreset; label: string }[] = [
@@ -165,6 +164,7 @@ export default function ConfigPanel({
   playerCount,
   onGenerate,
   generating,
+  generateIdleLabel = 'Generate schedule',
 }: ConfigPanelProps) {
   const [advancedOpen, setAdvancedOpen] = useState(false)
 
@@ -184,9 +184,7 @@ export default function ConfigPanel({
               key={value}
               type="button"
               onClick={() => onConfigChange({ preset: value })}
-              className={`flex-1 py-2 text-sm rounded-xl font-semibold transition-all ${
-                config.preset === value ? 'bg-lob-teal text-white' : 'bg-gray-100 text-gray-600'
-              }`}
+              className={segmentedButtonClass(config.preset === value)}
             >
               {label}
             </button>
@@ -258,7 +256,10 @@ export default function ConfigPanel({
               <label className="label mb-0">Lefty rule</label>
               {config.leftyRule !== undefined && (
                 <span className="flex items-center gap-1 text-xs text-gray-500">
-                  <span className="text-lob-teal font-medium" title="Overridden from preset default">
+                  <span
+                    className="text-lob-teal font-medium"
+                    title="Overridden from preset default"
+                  >
                     overridden
                   </span>
                   <button
@@ -276,22 +277,14 @@ export default function ConfigPanel({
               <button
                 type="button"
                 onClick={() => onConfigChange({ ...config, leftyRule: 'hard' })}
-                className={`flex-1 py-2 text-sm rounded-xl font-semibold transition-all ${
-                  resolvedConfig.leftyRule === 'hard'
-                    ? 'bg-lob-teal text-white'
-                    : 'bg-gray-100 text-gray-600'
-                }`}
+                className={segmentedButtonClass(resolvedConfig.leftyRule === 'hard')}
               >
                 Keep lefties apart
               </button>
               <button
                 type="button"
                 onClick={() => onConfigChange({ ...config, leftyRule: 'off' })}
-                className={`flex-1 py-2 text-sm rounded-xl font-semibold transition-all ${
-                  resolvedConfig.leftyRule === 'off'
-                    ? 'bg-lob-teal text-white'
-                    : 'bg-gray-100 text-gray-600'
-                }`}
+                className={segmentedButtonClass(resolvedConfig.leftyRule === 'off')}
               >
                 Ignore
               </button>
@@ -301,8 +294,8 @@ export default function ConfigPanel({
           {priorities.length > 0 && (
             <div className="pt-1">
               <p className="text-xs text-gray-500">
-                No schedule can be perfect at everything. When the matcher has to choose, this
-                is what it hangs on to longest — the ones at the bottom slip first:
+                No schedule can be perfect at everything. When the matcher has to choose, this is
+                what it hangs on to longest — the ones at the bottom slip first:
               </p>
               <ol className="mt-1 space-y-0.5 text-xs text-gray-500 list-decimal pl-4">
                 {priorities.map(({ key }) => (
@@ -339,7 +332,7 @@ export default function ConfigPanel({
         className="btn-primary w-full flex items-center justify-center gap-2"
       >
         {generating ? <Loader2 size={16} className="animate-spin" /> : <Shuffle size={16} />}
-        {generating ? 'Generating…' : 'Generate schedule'}
+        {generating ? 'Generating…' : generateIdleLabel}
       </button>
 
       {notEnoughPlayers && (

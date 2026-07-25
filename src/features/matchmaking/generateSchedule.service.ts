@@ -11,6 +11,12 @@ import type { GenerateInput, PlayerInput, PlayerGender, ScheduleRun } from './do
 // through the admin_record_schedule_run RPC (D-016). schedule_runs is a
 // commit-time audit blob, intentionally not atomic with the matches write.
 
+export type MmRating = { mu: number; sigma: number }
+
+const mmRatingRowsSchema = z.array(
+  z.object({ player_id: z.string(), mm_rating: z.number(), mm_sigma: z.number() }),
+)
+
 // Raw admin roster row → domain PlayerInput. Prior rating is mm_* when the
 // engine has seen the player, else the self-reported-level prior (D-002).
 // Gender normalizes '' / null / anything unexpected to 'unknown' (D-011).
@@ -39,6 +45,23 @@ export function toPlayerInput(row: {
 
 function normalizeGender(g: string | null): PlayerGender {
   return g === 'male' || g === 'female' ? g : 'unknown'
+}
+
+// The learned prior, keyed by player id. mm_* is admin-only (DESIGN §5) and so
+// is absent from players_public, which backs the client roster — without this
+// admin-gated read the roster's mmRating/mmSigma are structurally always null
+// and the engine re-seeds every event from playtomic_level, never compounding
+// what it learned. Players the engine has not yet seen are simply absent.
+export async function fetchMmRatings(): Promise<Record<string, MmRating>> {
+  const { data, error } = await supabase.rpc('admin_get_mm_ratings')
+  if (error) {
+    console.error('admin_get_mm_ratings error:', error)
+    throw error
+  }
+  const rows = mmRatingRowsSchema.parse(data ?? [])
+  return Object.fromEntries(
+    rows.map((row) => [row.player_id, { mu: row.mm_rating, sigma: row.mm_sigma }]),
+  )
 }
 
 // Pure preview: run the domain matcher. No writes — throwaway generations must

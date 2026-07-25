@@ -37,7 +37,6 @@ export const emptyForm = {
   email: '',
   phone: '',
   playtomicLevel: '',
-  adjustment: '0',
   playtomicUsername: '',
   notes: '',
   gender: '',

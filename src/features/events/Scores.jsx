@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react'
+import { useApp } from '../../context/useApp'
 import { usePlayers } from '../players/usePlayers'
 import { useMatches } from './useMatches'
 import { useRegistrations } from './useRegistrations'
@@ -9,10 +10,13 @@ import { useScoreSync } from './useScoreSync'
 import { useOscarResults } from '../oscars/useOscarResults'
 import { groupOscarResultsByCategory } from '../oscars/oscarResults'
 import { buildRounds } from './buildRounds'
+import { resultsWithheld } from './resultsPhase'
 import ScoresRankingTab from './ScoresRankingTab'
 import ScoresMatchesTab from './ScoresMatchesTab'
 
 export default function Scores({ tournament, onNavigate }) {
+  const { session } = useApp()
+  const isAdmin = session?.user?.app_metadata?.role === 'admin'
   const { data: players = [] } = usePlayers()
   const { data: allMatches = [] } = useMatches(tournament?.id)
   const { data: regsData = [] } = useRegistrations(tournament?.id)
@@ -65,6 +69,11 @@ export default function Scores({ tournament, onNavigate }) {
     )
   }
 
+  // D-029: players already saw their own match scores live, so only the final
+  // ranking/podium is embargoed until the admin reveals it (Schedule.jsx, post-
+  // Finish). Admins always see the real ranking.
+  const withheld = resultsWithheld({ tournament, isAdmin })
+
   return (
     <div className="space-y-4">
       {/* Tab switcher — Ranking | Matches | Lobster Games.
@@ -82,7 +91,9 @@ export default function Scores({ tournament, onNavigate }) {
       />
 
       {/* ── RANKING tab ─────────────────────────────────────────────────── */}
-      {tab === 'ranking' && <ScoresRankingTab standings={standings} matches={matches} />}
+      {tab === 'ranking' && (
+        <ScoresRankingTab standings={standings} matches={matches} withheld={withheld} />
+      )}
 
       {/* ── MATCHES tab ─────────────────────────────────────────────────── */}
       {tab === 'matches' && (

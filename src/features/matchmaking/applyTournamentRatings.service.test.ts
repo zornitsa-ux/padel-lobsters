@@ -1,12 +1,28 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import type { MatchResult } from './domain/types'
+import type { MatchResult, RatingUpdate } from './domain/types'
 
-const { mockRpc, mockFrom } = vi.hoisted(() => ({
+const { mockRpc, mockFrom, mockUpdateRatingsForTournament } = vi.hoisted(() => ({
   mockRpc: vi.fn(),
   mockFrom: vi.fn(),
+  mockUpdateRatingsForTournament: vi.fn(),
 }))
 
 vi.mock('../../supabase', () => ({ supabase: { rpc: mockRpc, from: mockFrom } }))
+
+// Partial mock: default to the real implementation for every existing test,
+// but let one test (the unknown-player guard below) override the return
+// value directly — that guard is otherwise unreachable through the public
+// `buildRatingUpdatePayload` surface, since `ratings` and the service's own
+// `byId` are both derived from the same `players` array.
+vi.mock('./domain/rating/update', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./domain/rating/update')>()
+  return {
+    ...actual,
+    updateRatingsForTournament: mockUpdateRatingsForTournament.mockImplementation(
+      actual.updateRatingsForTournament,
+    ),
+  }
+})
 
 import {
   applyTournamentRatings,
@@ -72,6 +88,31 @@ describe('buildRatingUpdatePayload', () => {
     expect(p1.new_mu).toBeCloseTo(3.3, 10)
     expect(p1.flagged).toBe(true)
   })
+
+  it('throws when a rating update refers to a player not in the players list', () => {
+    // updateRatingsForTournament is mocked here to return a phantom player id
+    // that never appeared in `players` — unreachable via the real domain
+    // function, since its own `ratings` array is built from the same
+    // `players` the service uses for lookup. This isolates the service's own
+    // defensive guard (applyTournamentRatings.service.ts ~line 50).
+    const ghostUpdate: RatingUpdate = {
+      playerId: 'ghost',
+      priorMu: 3,
+      priorSigma: 0.7,
+      proposedDelta: 0.1,
+      newSigma: 0.65,
+      matchDeltas: [],
+    }
+    mockUpdateRatingsForTournament.mockReturnValueOnce([ghostUpdate])
+
+    expect(() =>
+      buildRatingUpdatePayload({
+        tournamentId: 't1',
+        players: players(['p1', 'p2', 'p3', 'p4']),
+        matches: [],
+      }),
+    ).toThrow('rating update for unknown player ghost')
+  })
 })
 
 describe('applyTournamentRatings', () => {
@@ -129,6 +170,15 @@ describe('reviewRatingEvent', () => {
     mockRpc.mockResolvedValue({ data: row, error: null })
     await reviewRatingEvent({ eventId: 'e1', action: 'approve' })
     expect(mockRpc.mock.calls[0][1].input_delta).toBeNull()
+  })
+
+  it('rejects with a zod error when the RPC "succeeds" but the row is malformed', async () => {
+    // No transport error — the RPC reports success, but the payload is
+    // missing a required column (id). ratingEventRowSchema.parse must reject
+    // this rather than let a malformed row silently through.
+    const { id: _id, ...malformedRow } = row
+    mockRpc.mockResolvedValue({ data: malformedRow, error: null })
+    await expect(reviewRatingEvent({ eventId: 'e1', action: 'approve' })).rejects.toThrow()
   })
 })
 

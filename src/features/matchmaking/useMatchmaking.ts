@@ -6,13 +6,29 @@ import {
   fetchRatingReviewQueue,
   reviewRatingEvent,
 } from './applyTournamentRatings.service'
-import { commitSchedule } from './generateSchedule.service'
+import { commitSchedule, fetchMmRatings } from './generateSchedule.service'
 import { matchmakingKeys } from './matchmakingKeys'
 
-export function useRatingReviewQueue() {
+// Flagged, unresolved rating events across all tournaments (admin-only via
+// RLS). `enabled` avoids the query for non-admin/non-V2 views, matching
+// useMmRatings below.
+export function useRatingReviewQueue({ enabled = true }: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: matchmakingKeys.reviewQueue(),
     queryFn: fetchRatingReviewQueue,
+    enabled,
+  })
+}
+
+// Learned priors for seeding the matcher and the next rating update. Admin-only
+// (require_admin inside the RPC), so `enabled` keeps non-admins from firing a
+// call that would only 403. Applying ratings and reviewing events both
+// invalidate this alongside the review queue.
+export function useMmRatings({ enabled }: { enabled: boolean }) {
+  return useQuery({
+    queryKey: matchmakingKeys.mmRatings(),
+    queryFn: fetchMmRatings,
+    enabled,
   })
 }
 
@@ -36,6 +52,7 @@ export function useApplyTournamentRatings() {
     mutationFn: applyTournamentRatings,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: matchmakingKeys.reviewQueue() })
+      qc.invalidateQueries({ queryKey: matchmakingKeys.mmRatings() })
       qc.invalidateQueries({ queryKey: playerKeys.all() })
     },
   })
@@ -47,6 +64,7 @@ export function useReviewRatingEvent() {
     mutationFn: reviewRatingEvent,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: matchmakingKeys.reviewQueue() })
+      qc.invalidateQueries({ queryKey: matchmakingKeys.mmRatings() })
       qc.invalidateQueries({ queryKey: playerKeys.all() })
     },
   })

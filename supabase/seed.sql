@@ -111,8 +111,8 @@ UPDATE players SET role = 'admin' WHERE name = 'Jon Grim';
 
 INSERT INTO tournaments (name, date, time, location, max_players, format, status, duration, gender_mode, notes)
 VALUES
-  ('Upcoming Test Tournament',  CURRENT_DATE + INTERVAL '7 days',  '18:00', 'Test Courts Amsterdam', 16, 'americano', 'upcoming', 90, 'mixed', 'Auto-generated for local development'),
-  ('Past Test Tournament',      CURRENT_DATE - INTERVAL '14 days', '17:30', 'Test Courts Amsterdam', 16, 'americano', 'completed', 90, 'mixed', 'Auto-generated for local development')
+  ('Upcoming Test Tournament',  CURRENT_DATE + INTERVAL '7 days',  '18:00', 'Test Courts Amsterdam', 16, 'lobster_matching', 'upcoming', 90, 'mixed', 'Auto-generated for local development'),
+  ('Past Test Tournament',      CURRENT_DATE - INTERVAL '14 days', '17:30', 'Test Courts Amsterdam', 16, 'lobster_matching', 'completed', 90, 'mixed', 'Auto-generated for local development')
 ON CONFLICT DO NOTHING;
 
 -- ── Raffle winners (historical) ──────────────────────────────────────────────

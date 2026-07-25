@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { auditFeasibility } from './feasibility'
-import { HIGH_SIGMA_FLAG_THRESHOLD, buildScheduleRun } from './report'
+import { buildScheduleRun } from './report'
 import { mkConfig, mkPlayer, mkSchedule } from './testkit'
 import type { GenderMode, PlayerInput, Schedule } from './types'
 import { scheduleRunSchema } from './types'
@@ -153,15 +153,6 @@ describe('report (M2.8)', () => {
     expect(run.quality.overall.variety).toBeCloseTo(50, 10)
     expect(run.quality.perRound.map((q) => q.variety)).toEqual([100, 50, 0])
     expect(run.quality.overall.balance).toBe(100)
-  })
-
-  it('flags high-sigma players on their court only', () => {
-    const players = flatEight.map((p) =>
-      p.playerId === 'p1' ? { ...p, sigma: HIGH_SIGMA_FLAG_THRESHOLD } : p,
-    )
-    const run = build({ players, schedule: perfectSchedule, courts: 2, rounds: 2 })
-    expect(run.rounds[0].courts[0].flags).toContain('high-sigma-player')
-    expect(run.rounds[0].courts[1].flags).not.toContain('high-sigma-player')
   })
 
   it('flags opponent rematches in the round they recur', () => {

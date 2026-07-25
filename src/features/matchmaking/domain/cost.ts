@@ -29,14 +29,54 @@ import type {
 //                   containing an unknown-gender player never count (D-011)
 // - sitGroupOverlap: max(0, coSitOverlap(sit plan) − baselineCoSitOverlap)
 
-const pairKey = (a: string, b: string): string => (a < b ? `${a}|${b}` : `${b}|${a}`)
-
 const isSameGenderTeam = (a: PlayerInput, b: PlayerInput): boolean =>
   a.gender !== 'unknown' && a.gender === b.gender
 
 const partnerGapExcess = (a: PlayerInput, b: PlayerInput, maxPartnerGap: number): number =>
   Math.max(0, Math.abs(a.mu - b.mu) - maxPartnerGap) / maxPartnerGap
 
+// Column view of the roster, memoized per players array. scoreSchedule runs
+// ~20k times per generate against an unchanging roster, so rebuilding the id
+// index and re-reading object fields per call dominated the search cost.
+// Numeric ids also let pair counts key on an integer instead of a built string.
+const GENDER_UNKNOWN = 0
+const GENDER_MALE = 1
+const GENDER_FEMALE = 2
+
+type RosterView = {
+  index: Map<string, number>
+  mu: Float64Array
+  sigma: Float64Array
+  gender: Int8Array
+  size: number
+}
+
+const rosterViews = new WeakMap<PlayerInput[], RosterView>()
+
+function rosterView(players: PlayerInput[]): RosterView {
+  const cached = rosterViews.get(players)
+  if (cached) return cached
+
+  const size = players.length
+  const view: RosterView = {
+    index: new Map(players.map((p, i) => [p.playerId, i])),
+    mu: new Float64Array(size),
+    sigma: new Float64Array(size),
+    gender: new Int8Array(size),
+    size,
+  }
+  players.forEach((p, i) => {
+    view.mu[i] = p.mu
+    view.sigma[i] = p.sigma
+    view.gender[i] =
+      p.gender === 'male' ? GENDER_MALE : p.gender === 'female' ? GENDER_FEMALE : GENDER_UNKNOWN
+  })
+  rosterViews.set(players, view)
+  return view
+}
+
+// Summation order here is load-bearing: the golden snapshots pin exact floats,
+// so any optimization must accumulate in the same order (PLAN §3).
 export function scoreSchedule({
   schedule,
   players,
@@ -51,64 +91,96 @@ export function scoreSchedule({
   // coSitOverlap of the stage-1 plan; defaults to 0.
   baselineCoSitOverlap?: number
 }): ScheduleCost {
-  const byId = new Map(players.map((p) => [p.playerId, p]))
-  const get = (id: string): PlayerInput => {
-    const p = byId.get(id)
-    if (!p) throw new Error(`scoreSchedule: unknown player ${id}`)
-    return p
+  const { index, mu, sigma, gender, size } = rosterView(players)
+  const idx = (id: string): number => {
+    const i = index.get(id)
+    if (i === undefined) throw new Error(`scoreSchedule: unknown player ${id}`)
+    return i
   }
+  // Canonical integer key for an unordered pair — replaces building a string
+  // per pair, six times per match, on every one of ~20k scoring passes.
+  const pairId = (a: number, b: number): number => (a < b ? a * size + b : b * size + a)
 
   const raw = Object.fromEntries(DIMENSION_KEYS.map((k) => [k, 0])) as DimensionScores
-  const partnerCounts = new Map<string, number>()
-  const opponentCounts = new Map<string, number>()
+  const partnerCounts = new Map<number, number>()
+  const opponentCounts = new Map<number, number>()
+  const { balanceTolerance, maxPartnerGap, maxCourtSpread } = config
 
   for (const round of schedule) {
     let sameGenderTeams = 0
+    let maleCount = 0
+    let femaleCount = 0
+    let playingCount = 0
 
     for (const match of round.matches) {
-      const team1 = [get(match.team1[0]), get(match.team1[1])] as const
-      const team2 = [get(match.team2[0]), get(match.team2[1])] as const
-      const four = [...team1, ...team2]
+      const a1 = idx(match.team1[0])
+      const b1 = idx(match.team1[1])
+      const a2 = idx(match.team2[0])
+      const b2 = idx(match.team2[1])
+      const muA1 = mu[a1]
+      const muB1 = mu[b1]
+      const muA2 = mu[a2]
+      const muB2 = mu[b2]
 
-      const sum1 = team1[0].mu + team1[1].mu
-      const sum2 = team2[0].mu + team2[1].mu
-      raw.teamBalance += Math.abs(sum1 - sum2) / config.balanceTolerance
+      raw.teamBalance += Math.abs(muA1 + muB1 - (muA2 + muB2)) / balanceTolerance
 
-      for (const [a, b] of [team1, team2]) {
-        raw.partnerGap += partnerGapExcess(a, b, config.maxPartnerGap)
-        if (isSameGenderTeam(a, b)) sameGenderTeams += 1
-      }
+      raw.partnerGap += Math.max(0, Math.abs(muA1 - muB1) - maxPartnerGap) / maxPartnerGap
+      if (gender[a1] !== GENDER_UNKNOWN && gender[a1] === gender[b1]) sameGenderTeams += 1
+      raw.partnerGap += Math.max(0, Math.abs(muA2 - muB2) - maxPartnerGap) / maxPartnerGap
+      if (gender[a2] !== GENDER_UNKNOWN && gender[a2] === gender[b2]) sameGenderTeams += 1
 
-      const mus = four.map((p) => p.mu)
-      const spread = Math.max(...mus) - Math.min(...mus)
-      const cap = config.maxCourtSpread + Math.max(...four.map((p) => p.sigma)) / 2
-      raw.courtSpread += Math.max(0, spread - cap) / config.maxCourtSpread
+      let maxMu = muA1
+      let minMu = muA1
+      if (muB1 > maxMu) maxMu = muB1
+      if (muB1 < minMu) minMu = muB1
+      if (muA2 > maxMu) maxMu = muA2
+      if (muA2 < minMu) minMu = muA2
+      if (muB2 > maxMu) maxMu = muB2
+      if (muB2 < minMu) minMu = muB2
 
-      for (const team of [match.team1, match.team2]) {
-        const key = pairKey(team[0], team[1])
-        const meetings = (partnerCounts.get(key) ?? 0) + 1
-        partnerCounts.set(key, meetings)
-        if (meetings >= 2) raw.partnerRepeat += 1
-      }
-      for (const a of match.team1) {
-        for (const b of match.team2) {
-          const key = pairKey(a, b)
+      let maxSigma = sigma[a1]
+      if (sigma[b1] > maxSigma) maxSigma = sigma[b1]
+      if (sigma[a2] > maxSigma) maxSigma = sigma[a2]
+      if (sigma[b2] > maxSigma) maxSigma = sigma[b2]
+
+      const cap = maxCourtSpread + maxSigma / 2
+      raw.courtSpread += Math.max(0, maxMu - minMu - cap) / maxCourtSpread
+
+      const partner1 = pairId(a1, b1)
+      const meetings1 = (partnerCounts.get(partner1) ?? 0) + 1
+      partnerCounts.set(partner1, meetings1)
+      if (meetings1 >= 2) raw.partnerRepeat += 1
+      const partner2 = pairId(a2, b2)
+      const meetings2 = (partnerCounts.get(partner2) ?? 0) + 1
+      partnerCounts.set(partner2, meetings2)
+      if (meetings2 >= 2) raw.partnerRepeat += 1
+
+      for (const a of [a1, b1]) {
+        for (const b of [a2, b2]) {
+          const key = pairId(a, b)
           const meetings = (opponentCounts.get(key) ?? 0) + 1
           opponentCounts.set(key, meetings)
           if (meetings === 2) raw.opponentRepeat += 0.5
           else if (meetings >= 3) raw.opponentRepeat += 1
         }
       }
+
+      if (gender[a1] === GENDER_MALE) maleCount += 1
+      else if (gender[a1] === GENDER_FEMALE) femaleCount += 1
+      if (gender[b1] === GENDER_MALE) maleCount += 1
+      else if (gender[b1] === GENDER_FEMALE) femaleCount += 1
+      if (gender[a2] === GENDER_MALE) maleCount += 1
+      else if (gender[a2] === GENDER_FEMALE) femaleCount += 1
+      if (gender[b2] === GENDER_MALE) maleCount += 1
+      else if (gender[b2] === GENDER_FEMALE) femaleCount += 1
+      playingCount += 4
     }
 
     if (genderMode === 'mixed') {
-      const playing = round.matches.flatMap((m) => [...m.team1, ...m.team2]).map(get)
-      const maleCount = playing.filter((p) => p.gender === 'male').length
-      const femaleCount = playing.filter((p) => p.gender === 'female').length
       const quota = sameGenderQuotaForRound({
         maleCount,
         femaleCount,
-        unknownCount: playing.length - maleCount - femaleCount,
+        unknownCount: playingCount - maleCount - femaleCount,
         courtsUsed: round.matches.length,
       })
       raw.mixedPreference += Math.max(0, sameGenderTeams - quota)

@@ -57,6 +57,26 @@ describe('feasibility (M2.2)', () => {
       expect(r.entries.some((e) => e.status === 'infeasible')).toBe(true)
     })
 
+    it('rejects courts < 1 even with an otherwise-valid player count', () => {
+      const r = audit({ count: 8, courts: 0 })
+      expect(r.feasible).toBe(false)
+      const entry = r.entries.find((e) => e.status === 'infeasible')
+      expect(entry?.rule).toBe('structure')
+      expect(entry?.detail).toBe(
+        '8 players, 0 courts, 5 rounds: need at least 4 players, 1 court, and 1 round',
+      )
+    })
+
+    it('rejects rounds < 1 even with an otherwise-valid player count', () => {
+      const r = audit({ count: 8, courts: 2, rounds: 0 })
+      expect(r.feasible).toBe(false)
+      const entry = r.entries.find((e) => e.status === 'infeasible')
+      expect(entry?.rule).toBe('structure')
+      expect(entry?.detail).toBe(
+        '8 players, 2 courts, 0 rounds: need at least 4 players, 1 court, and 1 round',
+      )
+    })
+
     it('rejects sit-out loads that force consecutive sitting', () => {
       // 20 players on 2 courts: 12 sit each round — more than half the field.
       const r = audit({ count: 20, courts: 2 })

@@ -70,49 +70,20 @@ export default function ProfileSection({
               <p className="text-3xl font-bold text-lob-teal">
                 {(parseFloat(myPlayer.playtomicLevel) || 0).toFixed(1)}
               </p>
-              <p className="text-xs text-gray-400 mt-1">
-                Adjustment: {parseFloat(myPlayer.adjustment) >= 0 ? '+' : ''}
-                {myPlayer.adjustment || 0}
-                {' → '}
-                <span className="font-bold text-gray-600">
-                  {(
-                    (parseFloat(myPlayer.playtomicLevel) || 0) +
-                    (parseFloat(myPlayer.adjustment) || 0)
-                  ).toFixed(1)}
-                </span>
-              </p>
             </div>
-            <div className="space-y-3">
-              <div>
-                <label className="text-xs font-semibold text-gray-600 mb-1 block">
-                  New Playtomic Level
-                </label>
-                <input
-                  className="input text-center text-lg font-bold"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  max="10"
-                  value={profileForm.playtomicLevel}
-                  onChange={(e) =>
-                    setProfileForm((f) => ({ ...f, playtomicLevel: e.target.value }))
-                  }
-                />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-gray-600 mb-1 block">
-                  Adjustment (+/-)
-                </label>
-                <input
-                  className="input text-center text-lg font-bold"
-                  type="number"
-                  step="0.1"
-                  min="-3"
-                  max="3"
-                  value={profileForm.adjustment}
-                  onChange={(e) => setProfileForm((f) => ({ ...f, adjustment: e.target.value }))}
-                />
-              </div>
+            <div>
+              <label className="text-xs font-semibold text-gray-600 mb-1 block">
+                New Playtomic Level
+              </label>
+              <input
+                className="input text-center text-lg font-bold"
+                type="number"
+                step="0.01"
+                min="0"
+                max="10"
+                value={profileForm.playtomicLevel}
+                onChange={(e) => setProfileForm((f) => ({ ...f, playtomicLevel: e.target.value }))}
+              />
             </div>
             {profileError && (
               <p className="text-xs text-red-600 bg-red-50 rounded-lg p-2">{profileError}</p>
@@ -162,17 +133,9 @@ export default function ProfileSection({
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-gray-800 truncate">{myPlayer.name}</p>
               <p className="text-xs text-gray-500">
-                Level:{' '}
+                Playtomic level:{' '}
                 <span className="font-bold text-lob-teal">
-                  {(
-                    (parseFloat(myPlayer.playtomicLevel) || 0) +
-                    (parseFloat(myPlayer.adjustment) || 0)
-                  ).toFixed(1)}
-                </span>
-                <span className="text-gray-400 ml-1">
-                  (Playtomic {(parseFloat(myPlayer.playtomicLevel) || 0).toFixed(1)}{' '}
-                  {parseFloat(myPlayer.adjustment) >= 0 ? '+' : ''}
-                  {myPlayer.adjustment || 0})
+                  {(parseFloat(myPlayer.playtomicLevel) || 0).toFixed(1)}
                 </span>
               </p>
             </div>
@@ -336,7 +299,7 @@ export default function ProfileSection({
                 </div>
               </div>
 
-              {/* Playtomic level + adjustment */}
+              {/* Playtomic level */}
               <div className="bg-blue-50 rounded-xl p-4 space-y-3">
                 <p className="text-xs font-bold text-blue-700 uppercase tracking-wide">
                   Playtomic Level
@@ -356,29 +319,8 @@ export default function ProfileSection({
                     }
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    Check your Playtomic app — it shows your current level
-                  </p>
-                </div>
-                <div>
-                  <label className="label">Personal Adjustment</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    min="-3"
-                    max="3"
-                    className="input"
-                    placeholder="0"
-                    value={profileForm.adjustment}
-                    onChange={(e) => setProfileForm((f) => ({ ...f, adjustment: e.target.value }))}
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Positive = stronger · Negative = weaker
-                    <br />
-                    Adjusted Level ={' '}
-                    {(
-                      (parseFloat(profileForm.playtomicLevel) || 0) +
-                      (parseFloat(profileForm.adjustment) || 0)
-                    ).toFixed(1)}
+                    Check your Playtomic app — it shows your current level. Update it whenever it
+                    changes: your matches are built from it.
                   </p>
                 </div>
               </div>

@@ -19,7 +19,7 @@ import CountryPicker from './ui/CountryPicker'
 //
 //  Flow:
 //    1. User fills the full profile (first/last name, country, gender,
-//       hand, preferred side, Playtomic level, optional adjustment, email,
+//       hand, preferred side, Playtomic level, email,
 //       phone, birthday, rotating "lobby prompt" note).
 //    2. If a player with the same full name already exists in the roster
 //       we show a merge banner and pre-fill the form from that record —
@@ -61,7 +61,6 @@ const emptyForm = {
   email: '',
   phone: '',
   playtomicLevel: '',
-  adjustment: '0',
   notes: '',
   gender: '',
   isLeftHanded: false,
@@ -149,7 +148,6 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
       email: p.email || '',
       phone: p.phone || '',
       playtomicLevel: p.playtomicLevel ?? '',
-      adjustment: p.adjustment ?? '0',
       notes: p.notes || '',
       gender: p.gender || '',
       isLeftHanded: p.isLeftHanded || false,
@@ -245,7 +243,6 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
         email: form.email.trim(),
         phone: form.phone.trim(),
         playtomicLevel: parseFloat(form.playtomicLevel) || 0,
-        adjustment: parseFloat(form.adjustment) || 0,
         notes: form.notes || '',
         gender: form.gender || '',
         isLeftHanded: form.isLeftHanded || false,
@@ -637,28 +634,8 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
                 onChange={(e) => setForm((f) => ({ ...f, playtomicLevel: e.target.value }))}
               />
               <p className="text-xs text-gray-500 mt-1">
-                Check your Playtomic app — it shows your current level
-              </p>
-            </div>
-            <div>
-              <label className="label">Personal Adjustment</label>
-              <input
-                type="number"
-                step="0.1"
-                min="-3"
-                max="3"
-                className="input"
-                placeholder="0"
-                value={form.adjustment}
-                onChange={(e) => setForm((f) => ({ ...f, adjustment: e.target.value }))}
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Positive = stronger · Negative = weaker
-                <br />
-                Adjusted Level ={' '}
-                {(
-                  (parseFloat(form.playtomicLevel) || 0) + (parseFloat(form.adjustment) || 0)
-                ).toFixed(1)}
+                Check your Playtomic app — it shows your current level. We use it to build balanced
+                matches, and it improves as you play.
               </p>
             </div>
           </div>

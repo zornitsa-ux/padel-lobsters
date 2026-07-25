@@ -1,14 +1,5 @@
 import React from 'react'
-import {
-  MessageCircle,
-  Save,
-  Info,
-  Lightbulb,
-  Plus,
-  Trash2,
-  RotateCcw,
-  TrendingUp,
-} from 'lucide-react'
+import { MessageCircle, Save, Info, Lightbulb, Plus, Trash2, RotateCcw } from 'lucide-react'
 import AdminSecurityPanels from '../../components/AdminSecurityPanels'
 
 export default function AdminSection({
@@ -17,10 +8,6 @@ export default function AdminSection({
   saving,
   saved,
   handleSave,
-  // Glicko-2 recompute
-  recomputing,
-  recomputeResult,
-  handleRecomputeRatings,
   // Tips
   activeTips,
   isCustom,
@@ -90,56 +77,7 @@ export default function AdminSection({
           These are only visible when isAdmin is true and only mount
           their internal RPCs once visible — no admin-only network
           traffic for non-admin users. */}
-      <div className="card space-y-3">
-        <h3 className="font-bold text-gray-700 text-sm flex items-center gap-2">
-          <TrendingUp size={15} className="text-lob-teal" /> Lobster Score (Glicko-2)
-        </h3>
-        <p className="text-xs text-gray-500">
-          Rebuilds shadow ratings from every known tournament (history file + DB) in chronological
-          order. Re-run after registering a new historical player or completing a tournament.
-        </p>
-        <button
-          onClick={handleRecomputeRatings}
-          disabled={recomputing}
-          className="bg-lob-teal text-white text-sm font-semibold px-4 py-2 rounded-xl active:scale-95 transition-all disabled:opacity-60"
-        >
-          {recomputing ? 'Recomputing…' : 'Recompute ratings'}
-        </button>
-        {recomputeResult && recomputeResult.ok && (
-          <p className="text-xs text-green-600">
-            ✓ Updated {recomputeResult.playersUpdated} players from{' '}
-            {recomputeResult.eventsProcessed} events.
-            {recomputeResult.droppedMatches > 0 &&
-              ` (${recomputeResult.droppedMatches} historical matches skipped — unmatched names)`}
-          </p>
-        )}
-        {recomputeResult && !recomputeResult.ok && (
-          <p className="text-xs text-red-600">✗ {recomputeResult.message}</p>
-        )}
-      </div>
-
       <AdminSecurityPanels />
-
-      {/* Matchmaking V2 rollout flag */}
-      <div className="card space-y-3">
-        <h3 className="font-bold text-gray-700 text-sm flex items-center gap-2">
-          <TrendingUp size={15} className="text-lob-teal" /> Matchmaking
-        </h3>
-        <label className="flex items-start gap-2 p-3 rounded-xl bg-lob-cream/40 border border-lob-teal/20 cursor-pointer active:scale-[0.99] transition-transform">
-          <input
-            type="checkbox"
-            checked={!!form.matchmakingV2Enabled}
-            onChange={(e) => setForm((f) => ({ ...f, matchmakingV2Enabled: e.target.checked }))}
-            className="mt-0.5 w-4 h-4 accent-lob-teal"
-          />
-          <span className="text-xs text-gray-700 leading-snug">
-            <span className="font-semibold text-lob-teal">Matchmaking V2</span>
-            <span className="block text-[11px] text-gray-500 mt-0.5">
-              Use the new matcher for Lobster events (admin preview rollout).
-            </span>
-          </span>
-        </label>
-      </div>
 
       {/* Padel Tips */}
       <div className="card space-y-4">

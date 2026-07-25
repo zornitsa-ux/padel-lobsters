@@ -81,6 +81,16 @@ export async function applyTournamentRatings(payload: RatingUpdatePayload): Prom
   return z.coerce.number().int().parse(data)
 }
 
+// True when an admin_apply_tournament_ratings call failed because this
+// tournament's ratings were already applied (the RPC's double-apply guard,
+// migration §5: "ratings already applied for tournament %"). A caller that
+// retries Finish after the ratings-apply step succeeded but a later step
+// failed should treat this as "already done", not as a fresh failure.
+export function isRatingsAlreadyAppliedError(err: unknown): boolean {
+  const message = (err as { message?: string } | null)?.message ?? ''
+  return message.includes('ratings already applied for tournament')
+}
+
 // Resolves a flagged event once (approve | edit | discard). Returns the row.
 export async function reviewRatingEvent({
   eventId,

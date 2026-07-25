@@ -13,7 +13,7 @@ export const emptyForm = {
   location: '',
   maxPlayers: '16',
   duration: 90,
-  format: 'americano',
+  format: 'lobster_matching',
   genderMode: 'mixed',
   courtBookingMode: 'admin_all',
   courts: [{ name: '', booked: false, costPerPerson: '', responsible: '', tikkieLink: '' }],

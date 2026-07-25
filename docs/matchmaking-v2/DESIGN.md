@@ -4,9 +4,12 @@ Next-generation matchmaking and level-learning for Padel Lobsters Americano even
 Replaces `src/lib/lobsterMatcher.js` (simulated-annealing scheduler) and
 `src/lib/glicko2.js` / `src/lib/ratingsRecompute.js` (client-side Glicko-2).
 
-Companion documents: [`PLAN.md`](./PLAN.md) — living implementation plan and
-session protocol; [`DECISIONS.md`](./DECISIONS.md) — append-only decision log.
-This document is the _what and why_; material changes require a DECISIONS entry.
+Companion documents: [`PLAN.md`](./PLAN.md) — status and remaining work;
+[`DECISIONS.md`](./DECISIONS.md) — append-only decision log.
+
+This document is the _what and why_ as designed. It is kept current on the model
+and the reasoning, not on every implementation detail — **where it conflicts
+with DECISIONS.md, DECISIONS wins.** Material changes require a DECISIONS entry.
 
 **Scope (D-001):** only the Lobster (Americano) generation path is replaced. The
 other generators in `src/features/events/scheduleHelpers.js` (Americano-simple,
@@ -167,8 +170,11 @@ tolerable), so weights are true exchange rates between dimensions.
 Because units are shared, the defaults _say something checkable_: "a third
 meeting with the same opponent (1.0 × 0.6) costs about the same as a 0.3-level
 team-sum gap; a second meeting costs half that" (corrected by D-013 — the
-original sentence double-counted). The config UI renders these sentences
-automatically from the live weights, so tuning is legible instead of numerology.
+original sentence double-counted). These exchange-rate sentences are a
+**designer diagnostic and stay out of the admin UI** (D-021): they convert
+between two abstractions, one of which — team-sum gap — the UI never defines.
+Admins get preset intent plus the engine's tie-break order instead, phrased in
+padel terms (D-022).
 
 Three constraint classes:
 
@@ -194,13 +200,19 @@ interface MatchConfig {
 }
 ```
 
-Preset intent (exact values tuned against replayed real events, §6):
+Preset knobs (tuned against replayed real events, §6; live table is
+`PRESET_KNOBS` in `presets.ts`):
 
 |                        | competitive | balanced | social |
 | ---------------------- | ----------- | -------- | ------ |
-| socialDial `J`         | 0.0         | 0.35     | 0.8    |
+| socialDial `J`         | 0.0         | 0.5      | 0.8    |
 | maxCourtSpread         | 0.75        | 1.25     | 2.5    |
 | opponent-repeat weight | 0.3         | 0.6      | 1.0    |
+
+`balanced.socialDial` moved 0.35 → 0.5 on the M2.11 shadow evidence (D-015).
+Presets differ **only** in banding tightness and opponent-repeat weight — the
+rest of the weight vector is preset-invariant, so the matcher's tie-break order
+is a property of the engine, not of the chosen preset (D-021).
 
 ### 3.4 Schedule report (the debug artifact)
 
@@ -219,7 +231,7 @@ interface ScheduleRun {
       teams: [Team, Team]
       teamSums: [number, number]
       courtSpread: number
-      flags: string[] // e.g. 'high-sigma-player', 'opponent-rematch'
+      flags: string[] // 'opponent-rematch' (high-sigma is now a per-player UI mark; D-024)
     }>
     sitters: PlayerInput[]
   }>
@@ -387,8 +399,8 @@ Per the repo's feature architecture pattern (TypeScript, Zod, domain pure):
 src/features/matchmaking/
   domain/
     types.ts            // PlayerInput, MatchConfig, ScheduleRun … (+ Zod schemas)
-    presets.ts          // preset → resolved knobs; exchange-rate sentence gen
-    rng.ts              // seeded PRNG (mulberry32 or similar), injected everywhere
+    presets.ts          // preset → resolved knobs; preset intent + priority order
+    rng.ts              // seeded PRNG (mulberry32) + hashSeed, injected everywhere
     feasibility.ts      // Stage 0: audits, relaxation quotas
     sitouts.ts          // Stage 1
     courts.ts           // Stage 2: banding + social dial
@@ -397,6 +409,8 @@ src/features/matchmaking/
     refine.ts           // Stage 4: move generation + bounded search
     report.ts           // Stage 5: ScheduleRun assembly + quality rollup
     generate.ts         // pipeline orchestration: audit → … → report (D-013)
+    scheduleOps.ts      // shared schedule primitives (clone, canonicalize, pairKey)
+    swaps.ts            // post-generation manual opponent swap (D-026)
     testkit.ts          // test-only fixture builders + invariant assertions
     rating/
       model.ts          // mu/sigma types, priors, inactivity inflation
@@ -404,16 +418,28 @@ src/features/matchmaking/
       guardrails.ts     // caps, flags
       explain.ts        // per-match breakdown rows
       calibrate.ts      // §6 fitting, dev-time
-  application/
-    generateSchedule.service.ts       // roster fetch → domain → matches insert + schedule_runs insert
-    applyTournamentRatings.service.ts // results → domain → rating_events + players.mm_* RPCs
+  generateSchedule.service.ts       // roster → domain → matches insert + schedule_runs insert
+  applyTournamentRatings.service.ts // results → domain → rating_events + players.mm_* RPCs
+  matchmakingSchemas.ts             // Zod boundary
+  matchmakingKeys.ts                // React Query keys
+  useMatchmaking.ts                 // query + mutation hooks
+  useConfigDerivations.ts           // resolve → intent → priorities → feasibility
   ui/
-    SchedulePreview.tsx  // rounds + per-court sums/flags
-    QualityReport.tsx    // dimension percentages, violations list
-    ConfigPanel.tsx      // preset picker + advanced knobs
-    RatingReview.tsx     // flagged-adjustment queue with breakdowns
-  MatchmakingContainer.tsx
+    ConfigPanel.tsx        // preset picker, advanced knobs, preflight chips
+    SchedulePreview.tsx    // court cards + inline quality report + actions
+    ScheduleRounds.tsx     // round/court rendering, shared with CompareView
+    QualityReport.tsx      // dimension bars, violations list
+    CompareView.tsx        // full-screen original vs alternative (D-023)
+    RematchFixPanel.tsx    // ranked swap suggestions overlay (D-026)
+    RatingReview.tsx       // flagged-adjustment queue (D-027)
+    dimensions.ts          // dimension labels + plain-English diffs (D-022)
+    ratingRecommendation.ts// pre-selects the review mode from the evidence
+  MatchmakingContainer.tsx // all wiring; mounted by Schedule.jsx
 ```
+
+The services sit at the feature root rather than in an `application/`
+subdirectory — the repo's other features do the same, and the split was not
+worth one extra level for two files.
 
 Everything in `domain/` is pure and deterministic — the whole engine is
 testable without Supabase or React. Test emphasis (addresses "no tests on core
@@ -437,7 +463,10 @@ algorithms" debt):
    matcher for 1–2 real events (report-only, not played) and compare quality
    reports; tune presets.
 3. **Schema + admin UI.** Migrations (§5), ConfigPanel, SchedulePreview,
-   QualityReport, RatingReview. V2 becomes the generator behind a feature flag.
+   QualityReport, RatingReview. V2 becomes the generator. A settings flag was
+   built for this phase and then removed before production (D-028): falling back
+   to V1 is a code change, deliberately, so an admin cannot half-disable the
+   matcher between events.
 4. **Cutover.** Seed `mm_rating/mm_sigma` by full-history recompute; enable
    auto-adjustments with guardrails; after two clean events delete
    `lobsterMatcher.js`, `glicko2.js`, `ratingsRecompute.js`, the unused

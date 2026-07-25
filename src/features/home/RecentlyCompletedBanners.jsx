@@ -1,4 +1,5 @@
 import React from 'react'
+import { resultsWithheld } from '../events/resultsPhase'
 
 // ── Recently completed — see results ──────────────────── */
 // Loops over tournaments completed in the last 48 hours and renders
@@ -8,12 +9,17 @@ export default function RecentlyCompletedBanners({
   getTournamentMatches,
   getTournamentRegistrations,
   players,
+  isAdmin,
   onNavigate,
 }) {
   if (!recentlyCompleted || recentlyCompleted.length === 0) return null
   return (
     <>
       {recentlyCompleted.map((t) => {
+        // D-029: winner name is exactly the spoiler the reveal gate protects —
+        // players already saw their own match scores live, so only the final
+        // "who won" line is withheld here.
+        const withheld = resultsWithheld({ tournament: t, isAdmin })
         const tMatches = getTournamentMatches(t.id)
         const tRegs = getTournamentRegistrations(t.id).filter((r) => r.status === 'registered')
         const stats = {}
@@ -60,16 +66,20 @@ export default function RecentlyCompletedBanners({
               </p>
             </div>
             <h3 className="font-bold text-base mb-0.5">{t.name}</h3>
-            {winner && (
-              <p className="text-sm opacity-90 mb-3">
-                🥇 Winner: <span className="font-bold">{winner.name}</span>
-              </p>
+            {withheld ? (
+              <p className="text-sm opacity-90 mb-3">Results pending — check back soon!</p>
+            ) : (
+              winner && (
+                <p className="text-sm opacity-90 mb-3">
+                  🥇 Winner: <span className="font-bold">{winner.name}</span>
+                </p>
+              )
             )}
             <button
               onClick={() => onNavigate('scores', t)}
               className="w-full bg-white/20 hover:bg-white/30 text-white font-semibold py-2 rounded-xl text-sm active:scale-95 transition-all"
             >
-              See Full Results
+              {withheld ? 'View Matches' : 'See Full Results'}
             </button>
           </div>
         )

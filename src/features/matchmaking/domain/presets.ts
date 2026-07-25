@@ -1,10 +1,5 @@
 import { hashSeed } from './rng'
-import type {
-  MatchConfig,
-  MatchPreset,
-  QualityDimensions,
-  ResolvedConfig,
-} from './types'
+import type { MatchConfig, MatchPreset, QualityDimensions, ResolvedConfig } from './types'
 import { DEFAULT_WEIGHTS } from './types'
 
 // Preset knob table (DESIGN.md §3.3) — contract data, frozen by M2.1.

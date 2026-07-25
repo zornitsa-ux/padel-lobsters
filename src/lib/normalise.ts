@@ -14,11 +14,6 @@ export interface Player {
   id: string
   name: string
   playtomicLevel: number
-  adjustment: number
-  adjustedLevel: number
-  learnedLevel: number | null
-  learnedRd: number | null
-  learnedMatchesCount: number
   playtomicUsername: string
   gender: string
   status: string
@@ -38,11 +33,6 @@ export function normalisePlayers(players: RawPlayerRow[]): Player[] {
     ...p,
     name: p.name ?? '',
     playtomicLevel: p.playtomic_level ?? p.playtomicLevel ?? 0,
-    adjustment: p.adjustment ?? 0,
-    adjustedLevel: p.adjusted_level ?? p.adjustedLevel ?? 0,
-    learnedLevel: p.learned_rating != null ? (Number(p.learned_rating) - 1200) / 100 : null,
-    learnedRd: p.learned_rd != null ? Number(p.learned_rd) : null,
-    learnedMatchesCount: p.learned_matches_count ?? 0,
     playtomicUsername: p.playtomic_username ?? p.playtomicUsername ?? '',
     gender: p.gender ?? '',
     status: p.status ?? 'active',
@@ -92,6 +82,9 @@ export interface NormalisedTournament {
   tikkieLink: string
   genderMode: string
   completedAt: string | null
+  // D-029: null while a completed tournament's final ranking is withheld from
+  // players (admins always see it regardless). See resultsPhase().
+  resultsSharedAt: string | null
   [key: string]: any
 }
 
@@ -113,6 +106,7 @@ export function normaliseTournaments(tournaments: RawTournamentRow[]): Normalise
     tikkieLink: t.tikkie_link ?? t.tikkieLink ?? '',
     genderMode: t.gender_mode ?? t.genderMode ?? 'mixed',
     completedAt: t.completed_at ?? t.completedAt ?? null,
+    resultsSharedAt: t.results_shared_at ?? t.resultsSharedAt ?? null,
   }))
 }
 

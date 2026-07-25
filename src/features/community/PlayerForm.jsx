@@ -233,28 +233,8 @@ export default function PlayerForm({
                 onChange={(e) => setForm((f) => ({ ...f, playtomicLevel: e.target.value }))}
               />
               <p className="text-xs text-gray-500 mt-1">
-                Check your Playtomic app — it shows your current level
-              </p>
-            </div>
-            <div>
-              <label className="label">Personal Adjustment</label>
-              <input
-                type="number"
-                step="0.1"
-                min="-3"
-                max="3"
-                className="input"
-                placeholder="0"
-                value={form.adjustment}
-                onChange={(e) => setForm((f) => ({ ...f, adjustment: e.target.value }))}
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Positive = stronger · Negative = weaker
-                <br />
-                Adjusted Level ={' '}
-                {(
-                  (parseFloat(form.playtomicLevel) || 0) + (parseFloat(form.adjustment) || 0)
-                ).toFixed(1)}
+                Check your Playtomic app — it shows your current level. Editing it re-anchors the
+                player's learned level.
               </p>
             </div>
           </div>

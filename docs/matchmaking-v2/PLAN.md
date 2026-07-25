@@ -1,1046 +1,245 @@
 # Matchmaking V2 — Implementation Plan
 
-Living document. [`DESIGN.md`](./DESIGN.md) is the what/why;
-[`DECISIONS.md`](./DECISIONS.md) is the log; this file is the how/when/who and
-the **single source of truth for status**. Every working session updates it.
+Living document and the **single source of truth for status**.
+[`DESIGN.md`](./DESIGN.md) is the what/why; [`DECISIONS.md`](./DECISIONS.md) is
+the append-only log of every material call and its reasoning.
+
+Completed-session narration is not kept here — `git log -p docs/matchmaking-v2/`
+holds it. This file carries current state, remaining work, and the protocol.
 
 ---
 
-## 1. Session protocol
+## 1. Status
 
-Work spans many chat sessions and two model tiers. The repo, not the
-conversation, carries the state.
+| Phase           | Goal                         | Gate to next                           | State                          |
+| --------------- | ---------------------------- | -------------------------------------- | ------------------------------ |
+| 0 Discovery     | Audit data + wiring          | findings recorded                      | done                           |
+| 1 Rating engine | Pure domain + calibration    | backtest ≥ Glicko-2 parity             | done (gate met, D-010)         |
+| 2 Matcher       | Pure domain + shadow mode    | shadow report reviewed on real rosters | done (gate met, D-015)         |
+| 3 Integration   | Schema, services, admin UI   | V2 generates a real event              | done                           |
+| 4 Cutover       | Ratings live, legacy deleted | two clean events on V2                 | in progress (M4.1 not started) |
 
-**Roles**
+**What exists.** V2 is the unconditional generator for every event an admin
+opens (D-028, D-030) — `format` no longer gates anything. The pure engine lives
+in `src/features/matchmaking/domain/` (feasibility → sit-outs → banding → team
+split → refinement → report), the services in `src/features/matchmaking/`, and
+the admin UI mounts inside the Schedule tab: configure → generate → compare /
+fix repeats → save, then Finish applies ratings and raises the flagged-review
+queue. Learned levels (`mm_rating`/`mm_sigma`) are admin-only and feed the next
+event's roster. V1 code (`lobsterMatcher.js`, `glicko2.js`,
+`ratingsRecompute.js`, `pairingEngine.js`) is still in the tree with no data
+path reaching it (D-028).
 
-- **Coordinator** (Fable/Opus): owns contracts (`types.ts`, function
-  signatures, Zod schemas, test specifications), all numerics
-  (`update.ts`, `calibrate.ts`), search correctness (`cost.ts`, `refine.ts`,
-  `feasibility.ts`), task sequencing, and review of all worker output.
-- **Worker** (Sonnet): implements one task at a time against a frozen contract
-  and its acceptance tests. Workers never edit contracts, this plan's task
-  definitions, or files outside their task's "files owned" list.
+Gates as of 2026-07-25: typecheck clean, lint 0 errors (136 pre-existing
+warnings), **707 pass / 2 skip**, build clean, 9 goldens byte-identical.
 
-**Every session starts by reading:** this file top-to-bottom (§4 status first),
-the DECISIONS.md tail, and the DESIGN.md sections the current task cites.
+### Open items
 
-**Every session ends by:** updating task statuses below, appending any
-DECISIONS entries, and leaving a one-line handoff note in §4 if a task is
-mid-flight.
+- **Migration `20260713000001_matchmaking_v2.sql` is not pushed to production.**
+  Applied and replayed clean on local only; `npx supabase db push` stays the
+  owner's manual step. It carries the whole V2 schema plus, in its own marked
+  section, the unrelated pre-existing `settings` write-grant fix — settings
+  writes have 403'd in production since 2026-05-18 (`20260518000008` revoked
+  INSERT/UPDATE and never re-granted), so that section is worth pushing on its
+  own merits.
+- **No player has an `mm_rating` yet** — until M4.1 back-fills, everyone enters
+  their first V2 event at the `playtomic_level` prior and the admin drawer's
+  "Learned level" row stays hidden.
+- **Live verification is partial.** The rating loop was verified end-to-end on
+  local against a two-event fixture (engine output matched simulation to 3
+  decimals; learned mu/sigma provably carried into event ②). The newer UI work
+  — Compare overlay (M3.7), Fix-repeat overlay (M3.8), redesigned RatingReview
+  (M3.8/D-027), results-reveal gating (D-029) — is code-complete and statically
+  green but has not had an owner walkthrough on a phone.
 
-**Status markers**
+---
 
-- `[ ]` not started · `[~]` in progress (add date + one-line state)
-- `[x]` done (add PR/commit ref) · `[!]` blocked (say on what)
+## 2. Session protocol
 
-**Contract freeze rule.** After a phase's contracts task (M1.1 / M2.1) merges,
-any change to frozen types or signatures requires a DECISIONS.md entry made by
-the coordinator — workers who hit a contract problem stop and report instead
-of adapting the contract.
+Work spans many sessions and two model tiers. The repo, not the conversation,
+carries the state.
 
-**Worker brief template** (coordinator fills per task, in the task prompt —
-briefs are generated from this plan, not stored separately):
+- **Coordinator** (Fable/Opus): owns contracts (`types.ts`, signatures, Zod
+  schemas, test specs), all numerics (`update.ts`, `calibrate.ts`), search
+  correctness (`cost.ts`, `refine.ts`, `feasibility.ts`, `swaps.ts`), container
+  wiring, task sequencing, and review of all worker output.
+- **Worker** (Sonnet): implements one task against a frozen contract and its
+  acceptance tests. Workers never edit contracts, this plan's task definitions,
+  or files outside their task's "files owned" list.
+
+**Every session starts by reading** §1 here, the DECISIONS.md tail, and the
+DESIGN.md sections the current task cites. **Every session ends by** updating §1,
+appending any DECISIONS entries, and noting anything left mid-flight.
+
+**Contract freeze rule.** Changing a frozen type or signature requires a
+DECISIONS entry made by the coordinator — a worker who hits a contract problem
+stops and reports instead of adapting the contract.
+
+Status markers: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked.
+
+**Worker brief template** (coordinator fills per task, in the task prompt):
 
 ```
 Task:            <ID + title from PLAN.md>
 Read first:      DESIGN.md §<...>; contracts in <files>
 Files owned:     <only files the worker may create/edit>
 Do not touch:    contracts, PLAN.md task definitions, anything not owned
-Acceptance:      <tests that must pass / invariants; from PLAN.md>
+Acceptance:      <tests that must pass / invariants>
 Out of scope:    <explicit non-goals, incl. adjacent temptations>
 Done means:      npm run typecheck && npm run lint && npm test all pass;
-                 tests written before implementation where the task is domain logic
+                 tests written before implementation for domain logic
 ```
 
 ---
 
-## 2. Engineering ground rules
+## 3. Engineering ground rules
 
 - **Domain purity is absolute.** Nothing in `src/features/matchmaking/domain/`
   imports React, Supabase, or anything with side effects. No `Math.random`, no
-  `Date.now` — the RNG and clock are injected. This is what makes the engine
-  testable and every schedule reproducible.
+  `Date.now` — the RNG and clock are injected.
 - **Tests first for domain logic.** Each domain task's acceptance criteria are
   its test list; write them as failing tests, then implement. UI tasks are
   exempt (manual verify + typecheck).
-- **TypeScript + Zod at every boundary** per the house feature pattern
-  (ARCHITECTURE.md "New Feature Architecture Pattern"). `z.infer` for types;
-  `safeParse` in user-facing flows.
-- **Small files, single purpose** — the §7 module map in DESIGN.md is the file
-  plan; if a file wants to grow past ~200 lines, split it rather than nest it.
-- **One task = one PR-sized change.** Land vertically (module + its tests), keep
-  `main` green. Migrations follow house rules (local first, manual push,
-  `require_admin()` RPCs, no direct table writes from the client).
-- **Comments** per CLAUDE.md: only for non-obvious constraints (e.g., _why_ a
-  quota exists), never narration.
+- **TypeScript + Zod at every boundary** per ARCHITECTURE.md's feature pattern.
+- **Small files, single purpose** — DESIGN §7 is the file plan; split rather
+  than nest past ~200 lines.
+- **One task = one PR-sized change.** Migrations follow house rules (local
+  first, manual push, `require_admin()` RPCs for V2 tables per D-016).
 - **Determinism is a feature.** Same inputs + config + seed ⇒ byte-identical
-  `ScheduleRun`. Any PR that breaks a golden test must explain why the behavior
-  change is intended.
+  `ScheduleRun`. Any PR that breaks a golden must explain why the behavior
+  change is intended. **This binds optimization work too:** the scoring loop's
+  floating-point summation order and rng draw order are load-bearing, which is
+  why the 3.5× speed-up preserved both. True incremental delta scoring would be
+  faster still but cannot preserve summation order — it needs an explicit owner
+  call to move the goldens.
 
 ---
 
-## 3. Dependency overview
-
-```
-P0.1 data audit ──► M1.6 calibration        M1.1 contracts ──► M1.2..M1.5
-P0.2 wiring survey ──► M2.11, M3.*          M2.1 contracts ──► M2.2..M2.10
-Phase 1 gate (backtest ≥ parity) ──► Phase 2 shadow gate ──► Phase 3 ──► Phase 4
-```
-
-Phases 0 and 1 can run in parallel (the audit informs calibration constants,
-not the update-rule code).
-
----
-
-## 4. Current status
-
-> **Next up:** **M3.6 — End-to-end verify** (C, S). Everything through M3.5 is
-> built + statically green + the migration is applied/verified on local; what
-> remains is a live `/verify`-style walkthrough on the local stack (needs
-> `npm run dev:local` + admin auth + a Lobster tournament with ≥4 registered):
-> flip the **Matchmaking V2** toggle in Settings → open a Lobster event →
-> configure (preset/Advanced/preflight chips) → generate → reshuffle/compare →
-> save → enter scores → **Finish** → confirm auto-applied summary + flagged
-> `RatingReview` queue (Approve/Edit/Discard) → verify `mm_*` moved + a
-> `schedule_runs` row + `rating_events` rows exist. Also spot-check: flag **off**
-> ⇒ legacy Lobster path unchanged; the **typed-`REGENERATE` score guard** fires
-> when re-saving over entered scores. Migrations `...0003` **and `...0004`** still
-> need the owner `npx supabase db push` (applied to local only). Watch the M3.5b
-> compound-failure edge (apply-ok + complete-fail blocks retry via the
-> double-apply guard).
-> Handoff note (2026-07-15, thirteenth session): **M3.6 walkthrough started by the
-> owner; M3.4+M3.5 committed as a checkpoint** (tree had carried both milestones
-> uncommitted). Owner's first finding is recorded in the M3.6 bullet: the
-> `settings` write grant was dropped by RBAC Phase C in May — a **pre-existing
-> production bug affecting all settings writes**, surfaced by (not caused by) the
-> V2 flag toggle; fix is migration `...0004`, coordinator-verified against
-> `20260518000008` (grant list omits settings; no later re-grant). Also committed:
-> Supabase CLI 2.98.0→2.109.1 with the matching `[inbucket]`→`[local_smtp]`
-> config rename. Static state unchanged and green (typecheck clean, lint 0 errors,
-> 601 pass / 2 skip). Awaiting further owner findings.
-> Handoff note (2026-07-14, twelfth session): **M3.5 done — V2 is live behind the
-> flag.** Migration `20260714000003_settings_matchmaking_v2_flag.sql` (applied +
-> verified on local; owner pushes). Settings flag plumbing (Sonnet worker) +
-> `Settings.jsx` seed gap closed by coordinator. `Schedule.jsx` seam swaps the
-> Lobster controls region for `MatchmakingContainer` when `v2Enabled && isLobster
-&& isAdmin`; saved-schedule display/score-entry reused. Container gained a
-> typed-confirmation **score guard** (owner ask). Owner chose **apply V2 ratings
-> on finish** → `handleFinishTournament` applies ratings + renders `RatingReview`
-> inline (M3.5b). All five files + Schedule.jsx typecheck + lint clean; 601 pass.
-> Deferred parity gaps under V2 (swap-edit, CSV export, deferred-generation
-> spinner) noted in the M3.5a bullet. No new DECISIONS entry (all calls sit inside
-> D-019/D-016 latitude; the rating-apply choice is an owner selection recorded in
-> the M3.5b bullet). Next: M3.6 live e2e.
-> Prior handoff (2026-07-14, eleventh session): **M3.4 code-complete.** Built the
-> three remaining presentational components via Sonnet workers against frozen
-> props (`QualityReport` + `RatingReview` in parallel, then `SchedulePreview`
-> which composes `QualityReport`), all in-tree on `matchmaking-v2` (no worktree),
-> each coordinator-reviewed for contract adherence + scope + types-only domain
-> imports. Wrote `MatchmakingContainer.tsx` myself (wiring/orchestration =
-> coordinator territory): config/preview/compare state machine + pure domain
-> calls + `useCommitSchedule`. All five files typecheck + lint clean; `npm test`
-> 601 pass / 2 skip (pure additions, nothing existing touched). Frozen props for
-> all four components recorded in the M3.4 task bullet. Live manual-verify is the
-> one open piece and is gated on M3.5 giving the container a mount point. No new
-> DECISIONS entry needed — the container's conservative calls (compare=re-seed,
-> default balanced, RatingReview→M3.5) sit inside D-019's deferral latitude.
-> Prior handoff (2026-07-14, tenth session): **M3.4 `ConfigPanel` landed.**
-> Coordinator froze the `ConfigPanelProps` contract, delegated the presentational
-> build to a Sonnet worker, reviewed the diff. Prior action pinned the compare-two
-> container state model before delegating `SchedulePreview`.
-> Prior handoff (2026-07-14, ninth session): **UX design settled → D-019.**
-> Owner-reviewed a mobile UX sketch (throwaway artifact, not committed), approved
-> the "deepen the existing flow" shape, and locked all five product forks to the
-> recommended picks (see D-019). PLAN M3.4 task expanded to per-component briefs
-> carrying the shape. No code changed this session — decisions + plan only. Next
-> action: start M3.4 (first component, likely `ConfigPanel`).
-> Prior handoff (2026-07-14, eighth session): **M3.1 committed** (6e53d42),
-> **M3.2 done** (4bac68d), **D-017** (78a94ee — redact `mm_*` from
-> `get_my_profile_v2`), **M3.3 done** (this commit — self/admin level-edit reset
-> hook + D-018). M3.2 added the `src/features/matchmaking/`
-> service slice: `generateSchedule.service.ts`, `applyTournamentRatings.service.ts`,
-> `matchmakingKeys.ts`, `matchmakingSchemas.ts` (Zod boundary), `useMatchmaking.ts`
-> (query + 3 mutation hooks). Preview generation stays pure; `commitSchedule`
-> writes `matches` (existing RLS `saveMatches`) then records the run via
-> `admin_record_schedule_run` (D-016 ordering). `buildRatingUpdatePayload` is the
-> pure update→guardrails→breakdown composition feeding
-> `admin_apply_tournament_ratings`. 21 new tests (mocked client; invalidation
-> keys asserted); typecheck/lint green; 601 pass. Also **D-017 applied** (owner
-> pulled it forward): `get_my_profile_v2()` now redacts `mm_*` (nulls the three
-> columns, keeps `SETOF players` — no client change) so the learned rating is
-> admin-only per DESIGN §5; migration `20260714000001_mm_admin_only_profile.sql`,
-> verified on local. §6 `mm_*` self-visibility watch item resolved.
-> Prior handoff (2026-07-13, sixth session): **M2.11 shadow comparison done +
-> D-015 applied.**
-> Dev harness `shadow.harness.test.ts` (fixture-gated on `MM_SHADOW_FIXTURE`,
-> mirrors the M1.6 calibrate harness) runs V2 (3 presets, deterministic) vs the
-> legacy annealed matcher (5-seed sweep at the prod 5000-iter budget) on two
-> anonymized real rosters (32p/8c and 24p/6c, both mixed, 6 rounds), scores both
-> under one common `balanced` cost model, and writes `shadow-report.md`.
-> **Result: V2 is a decisive win on lopsidedness** (avg team-sum gap 0.7→0.1,
-> Balance quality 16–34% → 87–92%), parity on hard rules / partner-repeats /
-> gender (all zero violations), and a _tunable_ regression on opponent variety
-> in competitive/balanced (social recovers it). Fixture kept out of git
-> (anonymized levels/gender/handedness only, in scratchpad) per the calibrate-
-> harness privacy pattern; report is the committed deliverable. Owner reviewed
-> and approved → **D-015** applied (`balanced` socialDial 0.35→0.5; the three
-> pinned assertions, three `× balanced` goldens, and the report regenerated).
-> Prior: Phase 0+1 complete (D-010), Phase 2 engine M2.2–M2.10 green
-> (D-011..D-014).
-
-| Phase           | Goal                         | Gate to next                               | State                                    |
-| --------------- | ---------------------------- | ------------------------------------------ | ---------------------------------------- |
-| 0 Discovery     | Audit data + wiring          | findings recorded below                    | done                                     |
-| 1 Rating engine | Pure domain + calibration    | backtest ≥ Glicko-2 parity                 | done (gate met, D-010)                   |
-| 2 Matcher       | Pure domain + shadow mode    | shadow report reviewed on 1–2 real rosters | done (gate met; D-015)                   |
-| 3 Integration   | Schema, services, admin UI   | feature-flagged V2 generates a real event  | in progress (M3.1–5 done; M3.6 e2e left) |
-| 4 Cutover       | Ratings live, legacy deleted | two clean events on V2                     | not started                              |
-
----
-
-## 5. Work breakdown
+## 4. Work breakdown
 
 Owner column: **C** = coordinator, **W** = worker (coordinator reviews all).
-Size: S ≈ half-day, M ≈ 1–2 days, L ≈ needs splitting when reached.
 
-### Phase 0 — Discovery & audit
+### Phases 0–3 — complete
 
-- `[x]` **P0.1 — Historical data audit** (W, M — done 2026-07-10, uncommitted)
-  Delivered: 290 scored matches (116 History.jsx + 174 prod DB); median match
-  total 7 → D-006; 16/68 historical names unlinked; local stack confirmed
-  seed-only, so DB-era numbers came from read-only prod queries. Verdict:
-  volume fine for calibration; gates are N_ref units (resolved) + aliases.
-  Script in `scripts/mm-audit.mjs` (dev-only, committed) that parses the
-  `TOURNAMENTS` constant in `src/components/History.jsx` + DB `matches`
-  (local stack) and reports: matches with usable scores per era, point-total
-  distribution (→ `N_ref`), players/rounds per event distribution, alias
-  coverage gaps. **Deliverable:** `docs/matchmaking-v2/data-audit.md` with the
-  numbers and a one-paragraph verdict on §6 calibration feasibility.
-  **Acceptance:** doc answers: How many matches have scores? What is median
-  total points? Which historical players are unlinked?
-- `[x]` **P0.2 — Integration wiring survey** (W, S — done 2026-07-09, uncommitted)
-  Appendix A filled. Key findings: matches/settings use RLS-gated direct
-  writes (not RPCs) today; duration→rounds constant duplicated in two files;
-  prod `players.gender` has 7 `''` + 2 `null` rows (~9%) — see §6 watch items.
-  Read `Schedule.jsx`, `scheduleHelpers.js`, `useMatchActions`; document in an
-  appendix at the bottom of this file: how generation is triggered, how
-  `matches` rows are inserted, where duration→rounds is derived, the settings
-  feature-flag mechanism, and the distinct values of `players.gender` in prod
-  (`select distinct gender`). **Acceptance:** appendix filled in; no code changes.
-- `[x]` **P0.3 — `adjustment` deprecation inventory** (W, S — done 2026-07-10,
-  uncommitted) Appendix B filled. Surprise: `admin_update_player` also writes
-  both columns — owner decision queued in §4.
-  List every read/write of `adjustment` / `adjusted_level` (client, RPCs,
-  views) in the appendix, as the checklist for M3.3 and Phase 4 drops.
-  **Acceptance:** grep-complete list with file:line refs.
+Task IDs are cited by the domain test suites (`// M2.5 acceptance tests — frozen
+by M2.1`) and by DECISIONS entries, so the index stays. Detail is in git history
+and in the code each task produced.
 
-### Phase 1 — Rating engine (pure domain)
-
-- `[x]` **M1.1 — Rating contracts + test specs** (C, M — done 2026-07-10, uncommitted)
-  Created `src/features/matchmaking/domain/types.ts` (rating-side types + Zod),
-  `rng.ts` (seeded mulberry32 + FNV-1a hash, fully implemented and
-  golden-tested), signatures for `rating/{model,update,guardrails,explain}.ts`
-  (stubs throw), and complete acceptance suites for M1.2–M1.5 staged as
-  `describe.skip` (49 tests; the implementing task removes only the `.skip` —
-  D-005). **Frozen:** rating contracts. `nRef` default 7 per audit (D-006).
-- `[x]` **M1.2 — `rating/model.ts`** (W, S — done 2026-07-10, uncommitted)
-  Priors from `playtomic_level`, sigma floor/inflation, self-reset transition
-  (D-002). **Acceptance:** M1.1 tests for priors, inflation cap, reset.
-- `[x]` **M1.3 — `rating/update.ts`** (C, M — done 2026-07-10, uncommitted)
-  Batch tournament update per DESIGN §4.2. **Acceptance:** zero-sum symmetry;
-  sigma monotone decrease under play; reliability weighting; K-gain asymmetry
-  (high-sigma player moves more); no update for players without matches.
-- `[x]` **M1.4 — `rating/guardrails.ts`** (W, S — done 2026-07-10, uncommitted)
-  Cap/clamp/flag logic per §4.3. **Acceptance:** cap arithmetic incl. sign;
-  drift + oscillation flags; flagged remainder preserved exactly.
-- `[x]` **M1.5 — `rating/explain.ts`** (W, S — done 2026-07-10, uncommitted)
-  Per-match breakdown rows. **Acceptance:** rows sum exactly to Δ (property
-  test over random tournaments); stable row ordering.
-- `[x]` **M1.6 — `rating/calibrate.ts` + backtest harness** (C, L — done
-  2026-07-10, uncommitted) Pure `calibrate.ts` (`backtestBrier` chronological
-  predict-then-learn replay + coordinate-descent `fitParams`) with tests; dev
-  harness `calibrate.harness.test.ts` (skipped without `MM_CALIB_FIXTURE`)
-  builds the dataset from prod + alias-resolved History and writes
-  `calibration.md`. Fit on 228 matches. Adopted levelScale 6→7, held the
-  learning params (D-010). `expectedShare` extracted to a shared `update.ts`
-  export. **Gate MET:** V2 Brier 0.0541 ≤ Glicko-2 0.0577 → Phase 2 proceeds.
-
-### Phase 2 — Matcher engine (pure domain)
-
-- `[x]` **M2.1 — Matcher contracts + test specs** (C, M — done 2026-07-13,
-  uncommitted) `types.ts` extended, `presets.ts` skeleton (knob table real),
-  contract-docblock stubs for all pipeline modules **plus `generate.ts`
-  (D-013)**, `testkit.ts`, `describe.skip` acceptance suites for M2.2–M2.10
-  incl. golden snapshot harness. Decisions: D-011 (unknown gender), D-012
-  (seeded sweeps + vitest-snapshot goldens; no fast-check), D-013 (contract
-  clarifications + task sequencing). **Frozen:** matcher contracts.
-- `[x]` **M2.2 — `feasibility.ts`** (C, M — done 2026-07-13, uncommitted)
-  Stage-0 audits + relaxation quotas per DESIGN §3.1. **Acceptance:** lefty
-  quota math across roster shapes; sit-out arithmetic; gender-mode audits;
-  human-readable entries for every relaxation. Partner-repeat quota for
-  P < 8 generalized to `2·max(0, rounds − floor(P(P−1)/4))` (each no-repeat
-  round consumes 2 of the C(P,2) pairs; matches the frozen P=4 cases).
-- `[x]` **M2.3 — `sitouts.ts`** (W→C, M — done 2026-07-13, uncommitted;
-  Sonnet worker was killed by a session limit before writing anything, so the
-  coordinator implemented inline) Greedy debt-first assignment with rng
-  tie-breaks + first-improvement same-round swap passes.
-  **Acceptance (invariants):** never consecutive; counts within 1; co-sit
-  overlap minimized vs brute force on small fields; deterministic.
-- `[x]` **M2.4 — `courts.ts`** (W, S — done 2026-07-13, uncommitted; Sonnet
-  worker, coordinator-reviewed) Banding + social dial. **Acceptance:** J=0 ⇒
-  strictly level-sorted courts; jitter deterministic per seed. (Sigma slack
-  moved to M2.6 — D-013.)
-- `[x]` **M2.5 — `teams.ts`** (W→C, S — done 2026-07-13, uncommitted, landed
-  after M2.6 as sequenced; coordinator-implemented for session-limit reasons)
-  Court split + lefty/gender legality. **Acceptance:** never exceeds lefty
-  quota; picks min-cost legal split (exhaustive check — only 3 splits).
-- `[x]` **M2.6 — `cost.ts`** (C, M — done 2026-07-13, uncommitted)
-  Normalized dimensions per DESIGN §3.2, single scoring entry point used by
-  both refine and report. **Acceptance:** each dimension 0 at ideal; unit tests
-  pinning the exchange-rate examples from the design; court-spread sigma slack
-  (cap′ = cap + max sigma / 2 — D-013).
-- `[x]` **M2.7 — `refine.ts`** (C, M — done 2026-07-13, uncommitted)
-  Bounded local search; hard rules as move filters, with lexicographic
-  violation-repair acceptance + targeted lefty repair (D-014). **Acceptance:**
-  never emits quota-exceeding schedule (property sweep 8–32 players × 4–6
-  rounds × 0–4 lefties); cost non-increasing; iteration budget respected;
-  deterministic.
-- `[x]` **M2.8 — `report.ts` + `generate.ts`** (W→C, S — done 2026-07-13,
-  uncommitted, landed after M2.9 as sequenced; coordinator-implemented)
-  ScheduleRun assembly + quality rollup (per-round attribution via prefix
-  diffs of `scoreSchedule`), plus the pipeline orchestrator (D-013).
-  **Acceptance:** quality percentages match hand-computed fixtures; violations
-  list mirrors relaxations used; generate determinism + hard-legality suite.
-- `[x]` **M2.9 — `presets.ts`** (W→C, S — done 2026-07-13, uncommitted;
-  Sonnet worker killed by the same session limit, coordinator-implemented)
-  Preset→knob resolution + exchange-rate sentence generation. **Acceptance:**
-  override precedence (knob beats preset); sentences match live weights.
-- `[x]` **M2.10 — Property + golden suite completion** (C, M — done
-  2026-07-13, uncommitted) Golden snapshots written for 3 rosters × 3 presets
-  (`__snapshots__/golden.test.ts.snap`); all 9 runs emit zero violations.
-  **Acceptance:** full invariant list from DESIGN §7 covered; `npm test` < 30s
-  (8.4s observed, 580 passing).
-- `[x]` **M2.11 — Shadow-mode comparison** (C, M — done 2026-07-13)
-  `shadow.harness.test.ts` (fixture-gated, dev-only) runs V2 (3 presets) vs the
-  legacy annealed matcher (5-seed sweep) on two real anonymized rosters, scores
-  both under one common `balanced` model, writes `shadow-report.md`. Verdict: V2
-  decisively wins balance/lopsidedness, parity on hard rules, tunable variety
-  regression on competitive/balanced. Preset-tuning frontier drove **D-015**
-  (balanced socialDial 0.35→0.5), **owner-approved and applied** (goldens +
-  report regenerated). **Gate MET:** owner reviewed the comparison → Phase 3.
-
-### Phase 3 — Schema, services, admin UI
-
-- `[x]` **M3.1 — Migrations + RPCs** (W→C, M — done 2026-07-13, uncommitted;
-  coordinator-implemented) `supabase/migrations/20260713000001_matchmaking_v2_schema.sql`:
-  `players.mm_rating/mm_sigma/mm_rating_updated_at`, `rating_events`,
-  `schedule_runs` per DESIGN §5, RLS admin-only SELECT + house grant posture
-  (anon revoked; authenticated SELECT-only; functions EXECUTE revoked from
-  anon/public), three `require_admin()` SECURITY DEFINER RPCs. **Frozen RPC
-  contracts for M3.2:**
-  - `admin_apply_tournament_ratings(jsonb) → int` — payload `{ tournament_id,
-updates: [{ player_id, prior_mu, prior_sigma, new_mu, new_sigma,
-proposed_delta, applied_delta, flagged, breakdown }] }`. Inserts one
-    `rating_events` row (kind `tournament`) + updates `players.mm_*` per player,
-    one transaction. Refuses to double-apply a tournament (guard on existing
-    `tournament`-kind events). Domain supplies the already-capped `applied_delta`.
-  - `admin_review_rating_event(uuid, text, numeric) → rating_events` — actions
-    `approve` (apply withheld remainder `proposed−applied`), `edit` (apply the
-    passed delta on top), `discard` (no change); each resolves exactly once
-    (rejects already-reviewed / non-flagged), stamps `review_status`/`reviewed_by`/
-    `reviewed_at`, and sets `applied_delta` to the true total that hit `mm_rating`.
-  - `admin_record_schedule_run(jsonb) → uuid` — payload `{ tournament_id, config,
-seed, report }`; single insert, returns the run id.
-    **Acceptance MET:** `npm run db:reset` clean; advisor adds no ERROR and no
-    new anon exposure (remaining `authenticated_*` WARNs match the house baseline
-    for every admin RPC + `matches`/`players`/`settings`); scripted SQL proved all
-    three RPCs reject non-admins and the admin apply→cap→review-approve flow +
-    double-apply guard behave correctly. typecheck/lint/test green (580 pass).
-- `[x]` **M3.2 — Application services** (W→C, M — done 2026-07-14,
-  coordinator-implemented) `generateSchedule.service.ts` (`toPlayerInput`
-  rating/gender boundary mapping, pure `previewSchedule`, `scheduleRunToMatchRows`,
-  `recordScheduleRun` + `commitSchedule` = saveMatches-then-record per D-016),
-  `applyTournamentRatings.service.ts` (pure `buildRatingUpdatePayload` =
-  update→guardrails→breakdown composition, `applyTournamentRatings`,
-  `reviewRatingEvent`, `fetchRatingReviewQueue`), plus `matchmakingKeys.ts`,
-  `matchmakingSchemas.ts` (Zod boundary), `useMatchmaking.ts` (query +
-  mutation hooks). **Acceptance MET:** 21 new tests (mocked supabase client;
-  invalidation keys asserted for all three mutations). typecheck/lint green;
-  601 pass.
-- `[x]` **M3.3 — Self-edit reset hook** (C, S — done 2026-07-14) Migration
-  `20260714000002_mm_self_reset_hook.sql`: shared `record_mm_reset()` helper
-  (mm reset + audit insert, execute revoked from client roles), `update_my_profile`
-  logs `self_reset`, `admin_update_player` logs `admin_edit` (D-008); both stop
-  writing `adjustment` and keep `adjusted_level = playtomic_level` for display
-  through M4.3 (D-018). **Acceptance MET** (scripted SQL on local): level edit
-  resets `mm_rating`→new / `mm_sigma`→0.7 with a `self_reset` row
-  (`applied_delta = new−prior`, `flagged=f`, `tournament_id=null`); no-op /
-  non-level edits don't reset; admin level edit resets + logs `admin_edit`;
-  `adjustment` never written. db:reset + db lint clean; typecheck/lint green;
-  601 pass.
-- `[~]` **M3.4 — Admin UI** (W ×4, M each — 2026-07-14: **all four components +
-  `MatchmakingContainer` built & statically verified**; only the live
-  manual-verify on local stack remains, which is gated on M3.5 mounting the
-  container) — build to the **D-019** shape (deepen the existing Schedule-tab
-  flow; four beats configure → generate → review → save). One task per
-  component, presentational per house pattern, wired via container:
-  - `[x]` `ConfigPanel` (Sonnet worker, coordinator-reviewed) — preset
-    segmented control (Competitive/Balanced/Social, always visible) + collapsed
-    "Advanced" disclosure for the five knobs (socialDial, maxCourtSpread,
-    maxPartnerGap, balanceTolerance, leftyRule) with `exchangeRateSentences`
-    helper text + **preflight feasibility chips** (Stage-0 audit before
-    generate). `src/features/matchmaking/ui/ConfigPanel.tsx`, purely
-    presentational (types-only domain import). **Frozen props contract** the
-    container + siblings build against: `{ config: MatchConfig; onConfigChange;
-resolvedConfig: ResolvedConfig; exchangeSentences: string[]; feasibility:
-FeasibilityResult; playerCount; onGenerate; generating }`. Preset select
-    emits `onConfigChange({ preset })` (clears all knob overrides); a knob is
-    "overridden" iff its `config` field is defined; effective values read from
-    `resolvedConfig`. Container owes the pure calls: `resolveConfig` →
-    `exchangeRateSentences` → `auditFeasibility({players, courts, rounds,
-genderMode, config: resolved})`. typecheck + lint green; standalone
-    render (no container yet) so full manual-verify defers to container wiring.
-  - `[x]` `QualityReport` (Sonnet worker, coordinator-reviewed) — inline
-    `src/features/matchmaking/ui/QualityReport.tsx`. Overall grade + five
-    `QualityDimensions` bars always visible; per-round table + violations behind
-    a "Details" disclosure. **Frozen props:** `{ quality: { overall; perRound };
-violations; compact? }` (compact = grade+bars only, for the compare panel).
-    Overall grade = **mean of the five dims** (UI-only rollup; domain exposes no
-    scalar) with bands ≥90 Excellent / ≥80 Good / ≥70 Fair / <70 Needs work.
-  - `[x]` `SchedulePreview` (Sonnet worker, coordinator-reviewed) —
-    `src/features/matchmaking/ui/SchedulePreview.tsx`. Court cards (names via the
-    court's `players` snapshot, 🤚 lefty marker, teamSums, spread, flag chips) +
-    sitters line; inline full `QualityReport`; action row Reshuffle/Compare/Save.
-    **Compare-two** panel (shown when `compareRun` set): two-column compact
-    `QualityReport`s + preset/seed labels + "Use this schedule" pick + cancel.
-    N-candidate gallery out of scope. **Frozen props:** `{ run; compareRun?;
-onReshuffle; onCompare; onPickRun('current'|'compare'); onCancelCompare;
-onSave; reshuffling; comparing; saving }`.
-  - `[x]` `RatingReview` (Sonnet worker, coordinator-reviewed) —
-    `src/features/matchmaking/ui/RatingReview.tsx`. Auto-applied summary +
-    flagged queue; each card: player, prior→proposed, held remainder
-    (`proposed−applied`), per-match breakdown disclosure, Approve/Edit/Discard
-    (Edit = minimal inline delta input; the full Edit-remainder modal stays
-    deferred). **Frozen props:** `{ appliedCount; queue: RatingEventRow[];
-playerNamesById; onReview({eventId, action, delta?}); reviewing }`. NOT yet
-    mounted — its Finish-flow wiring + queue/name data are **M3.5**.
-  - `[x]` `MatchmakingContainer.tsx` (C — coordinator-owned wiring, not
-    delegated) — composes ConfigPanel + SchedulePreview; owns `config`/`preview`/
-    `compareRun` state; makes the pure domain calls (`toPlayerInput` roster map →
-    `resolveConfig` → `exchangeRateSentences` → `auditFeasibility`;
-    `previewSchedule`) and the M3.2 `useCommitSchedule` write. Props: `{
-tournamentId; roster: RosterRow[]; courts; rounds; genderMode }`. **Conservative
-    calls (D-019 "iterate live" latitude):** Compare = re-seed same preset
-    (preset-vs-preset compare deferred); default preset `balanced`; roster passed
-    in (mm\_\* sourcing via `get_all_players_with_pii_v2` is M3.5's Schedule.jsx
-    job); RatingReview not composed here (Finish flow, M3.5).
-    Deferred (iterate on the live first-cut): per-round breakdown layout, the
-    Edit-remainder modal, empty/first-run states, and **deferred generation** so
-    the `generating`/`reshuffling`/`comparing` booleans can go live (today
-    `previewSchedule` is synchronous — ~0.6–1.1s main-thread for 32p; container
-    passes `false`; components already accept the flags, so it's a container-only
-    change in M3.5).
-    **Static verification MET** (2026-07-14): typecheck + lint (all five files
-    exit 0) + `npm test` 601 pass / 2 skip; every component types-only domain
-    import, no Supabase/React-Query/domain-logic in the leaves. **Remaining:** live
-    manual-verify on local stack once M3.5 mounts the container behind the flag.
-- `[x]` **M3.5 — Feature flag + Schedule.jsx integration** (W→C, S — done
-  2026-07-14; M3.5a + M3.5b both landed, coordinator-implemented)
-  V2 behind a settings flag; old path untouched when off. **Acceptance:** flag
-  off ⇒ zero behavior change; flag on ⇒ V2 generates + persists `schedule_runs`.
-  - `[x]` **M3.5a — flag + generate-path swap + score guard.** Migration
-    `20260714000003_settings_matchmaking_v2_flag.sql` (`settings.matchmaking_v2_enabled
-boolean not null default false`; applied+verified on local, owner pushes).
-    Settings client plumbing (`settingsSchemas`/`settingsQueries`/`AdminSection`
-    toggle via Sonnet worker; `Settings.jsx` form init+seed closed by coordinator).
-    `Schedule.jsx` seam: `useV2Matcher = v2Enabled && isLobster && isAdmin` swaps
-    the controls region for `<MatchmakingContainer>` (roster from
-    `registeredPlayers`, `mm_*` null for now → playtomic prior, correct while
-    unseeded pre-M4.1; rounds derived `duration>=120?6:5` for Lobster parity;
-    genderMode coerced to enum). Saved-schedule display/score-entry/finish all
-    reused unchanged (V2 commits via same `saveMatches`). **Score guard (owner
-    ask):** container gates commit behind a typed `REGENERATE` confirmation when
-    `scoresEntered`. typecheck+lint clean; 601 pass. **Deferred parity gaps**
-    (in the now-hidden `ScheduleGeneratorControls`): saved-schedule swap-edit,
-    CSV export; plus deferred generation for the in-flight spinner flags.
-  - `[x]` **M3.5b — RatingReview in the Finish flow.** Owner chose **apply V2
-    ratings on finish** during the flagged trial (full loop; real `mm_*` move via
-    the new engine pre-cutover, priors = playtomic since unseeded). `Schedule.jsx`
-    `handleFinishTournament` branches on `useV2Matcher`: builds the payload from
-    saved scores + priors (`initialRating` when `mm_*` absent), applies via
-    `applyTournamentRatings` **before** marking completed (a failure stays
-    finishable), then renders `<RatingReview>` inline (auto-applied count +
-    flagged queue filtered to this tournament); `handleV2Review` wires
-    Approve/Edit/Discard via `reviewRatingEvent` + refetch. Legacy Glicko
-    recompute left intact (drops at M4.3). typecheck+lint clean; 601 pass.
-    **Known edge (first-cut):** if apply succeeds but the completed-status write
-    fails, the RPC double-apply guard blocks a retry — rare compound failure,
-    flagged for M3.6/owner. **Static + DB layers verified; live e2e is M3.6.**
-- `[~]` **M3.6 — End-to-end verify** (C, S — owner walkthrough in progress
-  2026-07-15) Full local-stack run: roster → generate → play scores → apply
-  ratings → review queue. Use `/verify`-style walkthrough; record in this file.
-  **Finding 1 (pre-existing prod bug, not V2).** Toggling the V2 flag surfaced
-  that every client write to `settings` has 403'd since
-  `20260518000008_rbac_phase_c.sql`: its `REVOKE ALL ON ALL TABLES` reset lists
-  `public.settings` under `GRANT SELECT` but omits it from the
-  `GRANT INSERT, UPDATE, DELETE` block, and no later migration re-grants it.
-  Table privileges are checked before RLS, so `settings_admin_write` was never
-  reached — admins included. Blast radius is every settings field (whatsapp
-  link, group name, padel tips, raffle cooldown), not just the V2 flag; it has
-  been silently broken in production since 2026-05-18. Fix:
-  `20260714000004_grant_settings_write.sql` (`grant insert, update` only —
-  upsert needs INSERT; the single row is never client-deleted; writes stay
-  admin-only via the existing RLS policy). Applied to local. **Owner push
-  needed for `...0003` and `...0004` — `0004` is worth pushing on its own
-  merits regardless of the V2 timeline.**
-  **Finding 2 (format list is fiction — fix at M4.3).** The Edit Event format
-  select (`EventFormModal.jsx:97-101`) offers five formats; production has only
-  ever used one. `select format, count(*) from tournaments group by format` on
-  prod returns a single row: **`lobster_matching` × 6, most recent 2026-08-23**.
-  Nothing else has ever been created. Worse, `knockout` is offered but has **no
-  branch** in `handleGenerate` (`Schedule.jsx:332-350` handles
-  `lobster_matching` / `mexicano` / `roundrobin`, else Americano) — picking
-  Knockout silently generates an Americano schedule under a Knockout label.
-  `tournaments.format` is bare `text default 'americano'`
-  (`init.sql:69`) with no CHECK, so nothing constrains it at the DB either.
-  D-001 already slates the americano/mexicano/roundrobin generators for
-  deletion at M4.3, which turns those three options into the same silent-
-  fallthrough trap `knockout` is today — so the select must be cut back in the
-  same change that deletes the generators. **Owner resolved same day → D-020:
-  Lobster-only, select removed outright.** Recorded in M4.3 scope.
-  **Finding 3 (no action — expected).** The "use Lobster score for matching"
-  checkbox does not apply under V2 and is not rendered there: it lives inside
-  `ScheduleGeneratorControls`, which the seam (`Schedule.jsx:411`) swaps out
-  wholesale. `useLobsterScore` feeds only `playersForMatcher` in the legacy
-  `handleGenerate` (`Schedule.jsx:324`), swapping `adjustedLevel`→`learnedLevel`
-  — both legacy fields dropped at M4.3. The V2 roster (`Schedule.jsx:157`) reads
-  `playtomicLevel` + `mmRating`/`mmSigma` instead, so the toggle cannot reach it.
-  Seeing the checkbox under a Lobster event as admin means the flag is **not**
-  active — useful as a diagnostic. The toggle + its `usePersistentBoolean` key
-  (`lobster_use_score_for_matcher`) die with `ScheduleGeneratorControls` at M4.3.
-  **Finding 4 (real defect — generate has no feedback).** Owner clicked Generate
-  Schedule and did not notice the preview appear. Confirmed in code: the M3.4
-  deferred-generation gap is worse than "the spinner flags are unused". Today
-  `previewSchedule` is synchronous on the main thread (~0.6–1.1s at 32p), the
-  container hard-codes `generating={false}` (`MatchmakingContainer.tsx:118`), and
-  the preview mounts via a bare `{preview && ...}` (`:121`) — so the click
-  produces **no pressed state, no spinner, no transition, no scroll, and no
-  announcement**; the thread simply blocks, then new content appears below the
-  fold. On mobile (the D-019 target) the result is indistinguishable from a dead
-  button. The prior deferral note assumed the only missing piece was wiring the
-  booleans; the discoverability failure is separate and is what actually bites.
-  Fix is container-scoped: defer the compute off the click (yield/idle or worker)
-  so `generating` is real, then make arrival perceptible (scroll-into-view or
-  focus move to the preview heading + a live-region announcement for a11y).
-  **Also covers Reshuffle** (M3.6 Finding 7): `reshuffling`/`comparing` are the
-  same hard-coded `false`, so `'Reshuffling…'` is dead code that can never render.
-  **Finding 5 (design gap — exchange rates are unreadable).** Owner: "I and other
-  admins don't really understand how to think about things like 'repeat partner
-  for a second time is worth X'." The six `exchangeRateSentences`
-  (`presets.ts:57-70`, rendered in ConfigPanel's Advanced disclosure at `:211`)
-  are all of the form "…costs as much as a 0.42-level team-sum gap" — a currency
-  conversion between two abstractions, one of which (**team-sum gap**) is never
-  defined anywhere in the UI. This contradicts a **D-019 premise**: that the only
-  new literacy V2 demands is reading a quality bar, so novelty spend goes "there
-  and nowhere else". The exchange rates are a **second, unbudgeted literacy**, and
-  a strictly harder one — a bar is self-evident, a level-gap-equivalence is not.
-  They are designer diagnostics that leaked into an admin surface. Also
-  **non-actionable**: four of the six describe weights no Advanced knob changes.
-  **Owner resolved same day → D-021 (built, committed `6553483`):** reframe, plus
-  surface preset intent outside Advanced. `exchangeRateSentences` deleted;
-  `PRESET_INTENT` (always-visible one-liner) + `matcherPriorities` (tie-break
-  order, inside Advanced) replace it. Key finding while building: the weight
-  ranking is **preset-invariant** — presets differ in banding
-  (`socialDial`/`maxCourtSpread`), not weights — so a per-preset "gives up X
-  first" list would look dynamic and never change; the ranking is therefore
-  framed as an engine explainer and the intent one-liner carries the preset
-  difference. Presentation only; no engine behavior change. 604 pass. Second
-  round of copy work → **D-022** (per-knob copy in padel terms; owner rejected
-  "free"/"excess"/"unit of imbalance" as the same leak one level down).
-  **Finding 6 (D-022 violation — raw flag strings, owner asked to note).** Court
-  flag chips render the **domain identifier verbatim** (`SchedulePreview.tsx:77`
-  prints `{flag}`), so admins see `high-sigma-player` and `opponent-rematch` as
-  UI text. Owner: "Organizers will not know what that means." `high-sigma-player`
-  means someone on the court has an uncertain rating (`sigma ≥ 0.5`,
-  `report.ts:18,122`) — a new or recently-reset player whose level we don't trust
-  yet, so that court's balance is a guess. `opponent-rematch` means a repeat
-  meeting. **Fix belongs in the UI, not the domain:** these strings are persisted
-  inside the `schedule_runs` report blob (D-016), so renaming them in `report.ts`
-  would break historical rows. Add a flag→label map next to `ui/dimensions.ts`
-  (the same one-vocabulary pattern) and leave the domain identifiers alone.
-  Reconsider the wording per D-022 — probably "new player, level uncertain" and
-  "playing each other again".
-  **Finding 7 (real defect — Reshuffle/Compare read as disabled).** Owner: "the
-  reshuffle and compare buttons both look disabled, but they do work." Confirmed:
-  both use `bg-gray-100 text-gray-600` (`SchedulePreview.tsx:203,214`) — the
-  **exact classes ConfigPanel uses for an _unselected_ preset**
-  (`ConfigPanel.tsx`), so grey-on-grey already means "off" in this app's visual
-  language. Sitting beside `btn-primary` Save, they read as inert. Worse, the
-  actual disabled state is only `disabled:opacity-50` — a fainter grey — so
-  enabled and disabled are nearly indistinguishable. Needs a real secondary
-  button style (outline/bordered), distinct from both unselected-chip and
-  disabled. Cheap, independent of Finding 8.
-  **Finding 8 (design rejected by owner — the compare flow).** Owner: "The
-  compare is very confusing. I didn't think it worked at all for a while but then
-  I happened to scroll up and saw there is a comparison… I do not like this
-  compare flow at all." Three separate causes, all confirmed:
-  (a) **Placement** — `ComparePanel` renders at the **top** of `SchedulePreview`
-  (`:179`), above the quality card and every round, while the Compare button sits
-  at the **bottom** (`:212`) under the full round list. On mobile the result
-  appears entirely off-screen; nothing scrolls, focuses, or announces.
-  (b) **Opaque provenance** — `handleCompare` (`MatchmakingContainer.tsx:80`) is
-  `{ ...config, seed: freshSeed() }`: same preset, new shuffle. The admin never
-  chose that and is never told. `RunLabel` (`:104`) shows `preset · seed 1837…`,
-  so **both columns read "balanced"** and differ only by a meaningless integer.
-  Hence "I don't understand how the two schedules were chosen."
-  (c) **Wrong shape** — a passive side-by-side of two grades, not a task. Owner
-  wants compare to be a **focused, front-and-center activity where the admin
-  chooses what is being compared** (modal or equivalent). Supersedes the D-019
-  compare-two decision; options put to the owner 2026-07-15 → needs a DECISIONS
-  entry once a direction is picked. Note the D-019 rejection of an N-candidate
-  gallery is worth revisiting as part of this, since "pick what to compare" and
-  "show me the options" converge.
+| ID    | Title                               | Landed     | Notes                                                                        |
+| ----- | ----------------------------------- | ---------- | ---------------------------------------------------------------------------- |
+| P0.1  | Historical data audit               | 2026-07-10 | `data-audit.md`; 290 scored matches; median total 7 → D-006                  |
+| P0.2  | Integration wiring survey           | 2026-07-09 | matches/settings write via RLS not RPC → D-016; gender gaps → D-011          |
+| P0.3  | `adjustment` deprecation inventory  | 2026-07-10 | drove D-018/D-028; DB remnant is the appendix below                          |
+| M1.1  | Rating contracts + test specs       | 2026-07-10 | **froze rating contracts**; D-005, D-006                                     |
+| M1.2  | `rating/model.ts`                   | 2026-07-10 | priors, sigma floor/inflation, self-reset (D-002)                            |
+| M1.3  | `rating/update.ts`                  | 2026-07-10 | batch tournament update, DESIGN §4.2                                         |
+| M1.4  | `rating/guardrails.ts`              | 2026-07-10 | cap/clamp/flag, DESIGN §4.3                                                  |
+| M1.5  | `rating/explain.ts`                 | 2026-07-10 | per-match breakdown rows summing exactly to Δ                                |
+| M1.6  | `calibrate.ts` + backtest harness   | 2026-07-10 | `calibration.md`; **gate met** V2 Brier 0.0541 ≤ Glicko 0.0577               |
+| M2.1  | Matcher contracts + test specs      | 2026-07-13 | **froze matcher contracts**; D-011, D-012, D-013                             |
+| M2.2  | `feasibility.ts`                    | 2026-07-13 | Stage-0 audits + relaxation quotas                                           |
+| M2.3  | `sitouts.ts`                        | 2026-07-13 | debt-first assignment; never-consecutive invariant                           |
+| M2.4  | `courts.ts`                         | 2026-07-13 | banding + social dial                                                        |
+| M2.5  | `teams.ts`                          | 2026-07-13 | court split + lefty/gender legality                                          |
+| M2.6  | `cost.ts`                           | 2026-07-13 | normalized dimensions; sigma slack (D-013)                                   |
+| M2.7  | `refine.ts`                         | 2026-07-13 | bounded local search; quota repair (D-014)                                   |
+| M2.8  | `report.ts` + `generate.ts`         | 2026-07-13 | ScheduleRun assembly + pipeline orchestration                                |
+| M2.9  | `presets.ts`                        | 2026-07-13 | preset → knob resolution                                                     |
+| M2.10 | Property + golden suite             | 2026-07-13 | 3 rosters × 3 presets, zero violations                                       |
+| M2.11 | Shadow-mode comparison              | 2026-07-13 | `shadow-report.md`; **gate met**; drove D-015                                |
+| M3.1  | Migrations + RPCs                   | 2026-07-13 | `mm_*`, `rating_events`, `schedule_runs`, 3 admin RPCs (D-016)               |
+| M3.2  | Application services                | 2026-07-14 | services, keys, Zod boundary, query/mutation hooks                           |
+| M3.3  | Self-edit reset hook                | 2026-07-14 | level edit resets prior + audits it (D-008, D-018)                           |
+| M3.4  | Admin UI                            | 2026-07-14 | ConfigPanel, QualityReport, SchedulePreview, RatingReview, container (D-019) |
+| M3.5  | Schedule.jsx integration            | 2026-07-14 | generate-path swap, score guard, ratings-on-finish                           |
+| M3.6  | End-to-end verify + owner findings  | 2026-07-25 | 8 findings → D-020 … D-025, D-027, D-030; all resolved                       |
+| M3.7  | Compare → Alternatives overlay      | 2026-07-23 | D-023                                                                        |
+| M3.8  | Manual opponent-swap ("Fix" repeat) | 2026-07-23 | D-026; `domain/swaps.ts`                                                     |
 
 ### Phase 4 — Cutover & cleanup
 
-- `[ ]` **M4.1 — Seed ratings** (C, S) — full-history recompute into `mm_*`;
-  sanity-compare against `learned_rating` (report outliers to owner).
-- `[ ]` **M4.2 — Live** (C, —) — flag on for a real event; auto-adjust enabled;
-  monitor two events; capture owner feedback here.
-- `[ ]` **M4.3 — Delete legacy** (W, M) — `lobsterMatcher.js`, `glicko2.js`,
-  `ratingsRecompute.js`, unused generators (D-001), `learned_rating`/
-  `learned_rd`/`adjustment`/`adjusted_level` columns + UI (D-002, P0.3 list).
-  **Also in scope — the format select** (M3.6 Finding 2): deleting the
-  americano/mexicano/roundrobin generators strands the options that invoke them,
-  so `EventFormModal.jsx:97-101` must be cut back in the same change, along with
-  `formatLabel` (`eventHelpers.js:20-26`), the `format` branch in
-  `Schedule.jsx:332-350`, `eventConstants.js:16` + `Tournament.jsx:94` +
-  `Registration.jsx:114` (`|| 'americano'` defaults), and the
-  `!isLobster && (americano|mexicano)` rounds picker
-  (`ScheduleGeneratorControls.tsx:71`). **Resolved by D-020 (2026-07-15):
-  Lobster-only — the select is removed outright, not trimmed.** With one format,
-  `isLobster` collapses out of `Schedule.jsx` (incl. `useV2Matcher` →
-  `v2Enabled && isAdmin`). Add a CHECK constraint (or default-and-drop the
-  column) on `tournaments.format` — bare `text default 'americano'` today
-  (`init.sql:69`), a default that goes stale once Americano is deleted. All 6
-  prod rows are already `lobster_matching`; no backfill.
-  **Acceptance:** grep-clean; app fully functional; ARCHITECTURE.md updated; no
-  reachable code path can select or generate a non-Lobster format.
+- `[ ]` **M4.1 — Seed ratings** (C, S) — full-history recompute into
+  `mm_rating`/`mm_sigma` so players stop entering events at the raw
+  `playtomic_level` prior. Sanity-compare the result against the old
+  `learned_rating` and report outliers to the owner before writing.
+  **Acceptance:** every player with match history has an `mm_*` value; the
+  admin drawer's learned-level row renders for them; outlier list reviewed.
+- `[~]` **M4.2 — Live** (C, —) — two-event observation window. There is no flag
+  to enable (D-028); this is watching two real events and capturing owner
+  feedback. Watch specifically: schedule quality against the shadow-report
+  expectation, the flagged-review queue's volume and whether the D-027
+  recommendation thresholds (`STRONG_SURPRISE` 0.22 / `WEAK_SURPRISE` 0.08) are
+  right at real volume, and the Compare/Fix overlays on a phone.
+- `[~]` **M4.3 — Delete legacy** (W, M) — the UI half is done (D-028): no
+  user-facing surface reaches a V1 concept. What remains is code + schema
+  deletion.
+  - **Code:** `src/lib/lobsterMatcher.js`, `src/lib/glicko2.js`,
+    `src/lib/ratingsRecompute.js`, `src/features/events/pairingEngine.js`, and
+    the unused generators in `scheduleHelpers.js` (D-001). With those gone, the
+    `!isLobster` branch, `formatLabel` (`eventHelpers.js`), the rounds picker in
+    `ScheduleGeneratorControls.tsx` and `isLobster` itself all collapse out of
+    `Schedule.jsx`.
+  - **Schema:** drop `players.learned_rating`, `learned_rd`, `adjustment`,
+    `adjusted_level` — see the appendix for the full DB-side checklist.
+  - **Also:** a CHECK constraint on `tournaments.format` (the default is now
+    `lobster_matching` per D-030, but nothing constrains the column).
+  - **Acceptance:** grep-clean; app fully functional; ARCHITECTURE.md and
+    CLAUDE.md's "Active Initiative" section updated; no reachable code path can
+    select or generate a non-Lobster format.
 
 ---
 
-## 6. Risks & watch items
+## 5. Watch items
 
-- **Thin calibration data** (P0.1 may reveal): fallback = hand-set constants +
-  live-event tuning; the design survives, §6 promises soften (see M1.6 gate).
-- **Refine/quota correctness** is the highest-risk code; it stays coordinator-
-  owned and property-tested. Never delegate M2.7 wholesale.
-- **Worker scope creep**: briefs must carry the "files owned" list; reviewer
-  checks the diff touches nothing else.
-- **Migration safety**: house rule — local reset + advisors before any push;
+- **Refine/quota correctness** is the highest-risk code; it stays
+  coordinator-owned and property-tested. Never delegate `refine.ts` wholesale.
+- **The golden snapshots are whole-`ScheduleRun` dumps** (14k lines). Any change
+  to the `ScheduleRun` shape pressures toward `--update`-and-eyeball, which
+  would defeat their purpose. If `ScheduleRun` is ever refactored, replace them
+  with a derived fingerprint first.
+- **`mm_*` is deliberately absent from `players_public`** (D-017, DESIGN §5), so
+  the client roster cannot carry ratings — they must come from
+  `admin_get_mm_ratings()`. Building a roster from `usePlayers` alone silently
+  yields null ratings and an engine that re-learns from scratch every event;
+  that defect shipped once and went unnoticed for weeks. Guard comments sit at
+  `generateSchedule.service.ts:51` and `Schedule.jsx:156`.
+- **`matches` writes are not atomic with `schedule_runs`** (D-016) — a failed
+  save can be partial, which is why the save-failure copy never claims nothing
+  changed.
+- **Pre-existing, out of scope, still true:** `PlayerProfileDrawer`'s
+  head-to-head and nemesis stats aggregate any match marked `completed`, so they
+  leak results before Finish — broader than the D-029 reveal gating and untouched
+  by it. `RecentResultsList.jsx` is dead code.
+- **Migration safety:** house rule — local reset + advisors before any push;
   production push stays manual and owner-triggered.
-- **The two-generator trap**: `pairingEngine.js` paths still exist until M4.3;
-  never "fix" or extend them in the meantime.
-- ~~**Gender data is not binary in prod** (P0.2): 7 `''` + 2 `null` of 103
-  players.~~ Resolved 2026-07-13 (D-011): explicit `unknown` bucket — never
-  penalized, never blocking, offsets the mixed-mode quota; informational audit
-  entries only.
-- ~~**RPC vs direct-write mismatch** (P0.2)~~ Resolved 2026-07-13 (D-016): new
-  V2 tables (`mm_*`, `rating_events`, `schedule_runs`) write through
-  `require_admin()` RPCs; `matches` keeps its RLS-gated delete+insert (nothing
-  FKs a match id, and delete+insert drives realtime schedule liveness).
-  `schedule_runs` is a commit-time, unlinked audit blob — intentionally not
-  atomic with the `matches` write (M3.2).
-- ~~**`mm_*` self-visibility via `get_my_profile_v2`** (M3.1)~~ Resolved
-  2026-07-14 (D-017): `get_my_profile_v2()` now nulls `mm_rating`/`mm_sigma`/
-  `mm_rating_updated_at` in its returned row, keeping the `SETOF players`
-  signature (no client type change). Admin visibility preserved via
-  `get_all_players_with_pii_v2()`; `players_public` already omits `mm_*`.
-  Migration `20260714000001_mm_admin_only_profile.sql`; verified on local (self
-  path returns NULL `mm_*`, owner-direct read still holds the value).
-- ~~**Alias coverage gap** (P0.1): 16/68 historical names unlinked~~ Resolved
-  2026-07-10 (D-010): owner chose not to link them; M1.6 dropped the 62
-  affected History matches (incl. all of apr2026 + standings-only jan2026) and
-  fit on 174 prod + 54 alias-resolved History matches. Parity gate still met.
-  Re-linking later only enlarges the calibration set — a future re-fit, not a
-  blocker.
-- ~~**No TypeScript linting**~~ Resolved 2026-07-10 (D-009): typescript-eslint
-  now lints `**/*.{ts,tsx}` and `strictNullChecks` is on; `npm run lint` is a
-  real gate again (0 errors). Remaining debt, deliberately deferred: full
-  `strict` (42 errors) and `no-explicit-any` warn → error (68 warns).
 
 ---
 
-## Appendix A — P0.2 wiring survey findings
+## Appendix — legacy column drop checklist (M4.3)
 
-_Read-only survey. No code changed._
+The client no longer reads or writes `adjustment` / `adjusted_level` anywhere
+(D-028 removed all 25 client sites; `grep -rn "adjustedLevel\|adjusted_level"
+src/` is clean outside tests). What remains is DB-side, from the P0.3 inventory:
 
-### 1. Schedule generation trigger
+- `20250503000000_init.sql:31-32` — the two column definitions on `players`.
+- `players_public` view — current body at
+  `20260512000001_rbac_phase1_role_column.sql:19-32`, selects both columns.
+  Must be rebuilt without them.
+- `admin_add_player` (`20260512000003_rbac_phase4_admin_rpcs.sql:31-61`) —
+  INSERTs `adjustment`, computes `adjusted_level`.
+- `admin_update_player` (`20260526000001_fix_blank_email_overwrite.sql:65-86`) —
+  same, on UPDATE.
+- `update_my_profile` (`20260701000000_player_self_adjustment.sql:12-55`) —
+  same, plus `adjustment` participates in the `playtomic_updated_at` freshness
+  check.
+- `self_signup_player` (`20250503000000_init.sql:1077-1130`, lines 1116,
+  1123-1124) — INSERTs both.
+- `supabase/seed.sql:36` — seed insert column list.
+- `get_my_profile_v2` / `get_all_players_with_pii_v2` return `SETOF players`, so
+  their row shape changes implicitly when the columns drop — no column list to
+  edit, but client Zod schemas must not expect them.
 
-`Schedule.jsx:198` `handleGenerate()` is the single entry point (admin-only,
-gated on `isAdmin` at `Schedule.jsx:199`). It builds `playersForMatcher`
-(`Schedule.jsx:214-219`: swaps `adjustedLevel` for `learnedLevel` when the
-`useLobsterScore` toggle is on) then branches on `tournament.format`
-(`Schedule.jsx:221-240`):
-
-- `lobster_matching` → `generateLobsterAnnealed` (imported as alias from
-  `src/lib/lobsterMatcher.js`, `Schedule.jsx:8,229-235`). Inputs:
-  `(playersForMatcher, numCourts, genderMode, tournament.duration || 90, { pastMatches })`,
-  where `pastMatches` is every completed match outside this tournament
-  (`Schedule.jsx:226-228`) — used for decayed partner/opponent memory.
-- `mexicano` → `generateMexicano` (`scheduleHelpers.js:120`) — generates only
-  round 1 up front; later rounds are placeholders regenerated after scores
-  land (not traced further, out of scope).
-- `roundrobin` → `generateRoundRobin` (`scheduleHelpers.js:132`).
-- default (`americano`) → `generateAmericano` (`scheduleHelpers.js:89`).
-
-Americano/roundrobin/mexicano all funnel through `buildOneRound()`
-(`scheduleHelpers.js:30`), which calls into `pairingEngine.js`
-(`buildSmartPairs`, `pairsToCourtMatches`, `assertRoundCoverage`,
-`updateHistories`) — the **legacy generator** referenced in PLAN §6's
-"two-generator trap." `generateLobsterAnnealed` is the **second, independent
-generator** (own annealing/cost logic in `src/lib/lobsterMatcher.js`) — not
-traced further here per task scope.
-
-Result is staged into local state (`setGenerated`, `Schedule.jsx:242`) and
-validated client-side (`validateSchedule`, `Schedule.jsx:243`) before the
-admin explicitly saves.
-
-### 2. How `matches` rows are persisted
-
-Direct table writes, not RPC. `handleSave()` (`Schedule.jsx:249-262`) calls
-`saveMatches(tournament.id, generated.map(r => r.matches))` from
-`useMatchActions()` (`useMatches.ts:26,37-43`), which calls
-`q.saveMatches` (`matchQueries.ts:82-97`):
-
-```
-await supabase.from('matches').delete().eq('tournament_id', tournamentId)
-// ...map GeneratedMatch (camelCase) -> MatchRow (snake_case)...
-await supabase.from('matches').insert(rows)
-```
-
-Full delete + re-insert per save (no diffing/upsert). Row shape: `tournament_id,
-round, court, team1_ids, team2_ids, team1_level, team2_level, score1, score2,
-completed`. Score edits go through `updateMatch()` (`matchQueries.ts:99-105`,
-`.update()` on `id`), wrapped by `useMatchActions().updateMatch`
-(`useMatches.ts:45-67`) which does an optimistic cache patch + Broadcast
-fan-out (`scoreChannel.ts`), not a DB round-trip for peers.
-
-**Authorization note:** both `matches` and `settings` (see §4) are writable
-directly from the client with no RPC layer — protected only by RLS
-(`matches_admin_write` / `settings_admin_write` policies, both
-`(auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'`). This is the _actual_
-current pattern, not the `require_admin()` RPC pattern PLAN §2 describes as
-house rule — see "Surprises" below. M3.1/M3.2 should decide explicitly
-whether new `mm_*`/`rating_events`/`schedule_runs` writes follow the RPC
-pattern (as DESIGN §5 specifies) or this table+RLS pattern already in use for
-matches/settings.
-
-### 3. Duration → rounds derivation
-
-Two different mechanisms depending on format, **not unified**:
-
-- **Lobster:** hard-coded in the generator itself —
-  `lobsterMatcher.js:84`: `const numRounds = duration >= 120 ? 6 : 5`. The
-  same `duration >= 120 ? 6 : 5` expression is **duplicated** for display
-  only in `ScheduleGeneratorControls.tsx:66` (a badge showing "X rounds ·
-  partners rotate"). If the threshold ever changes it must change in both
-  places.
-- **Americano/Mexicano:** `rounds` is a plain UI selection, not derived from
-  duration at all — `Schedule.jsx:51` (`useState(4)`), set via 2–6 buttons in
-  `ScheduleGeneratorControls.tsx:71-88`, passed straight through to
-  `generateAmericano`/`generateMexicano`.
-- **Round robin:** rounds = `min(active.length - 1, 6)`
-  (`scheduleHelpers.js:143`), independent of duration or the `rounds` state.
-
-### 4. Settings / feature-flag mechanism
-
-Single-row (`id = 1`) table `public.settings`, defined in
-`supabase/migrations/20250503000000_init.sql:88-95`, extended over time via
-plain `ALTER TABLE` (e.g. `raffle_cooldown_tournaments` added in
-`supabase/migrations/20260527000001_raffle_rebuild.sql:16-17`). Columns today:
-`whatsapp_link`, `group_name`, `padel_tips` (jsonb), `auto_trust_until`,
-`raffle_cooldown_tournaments` — no boolean flags exist yet.
-
-- **Read:** `useSettings()` (`src/features/settings/useSettings.ts:5-11`) →
-  React Query → `fetchSettings()` (`settingsQueries.ts:14-23`), which
-  explicitly names columns in its `.select()` (not `select('*')`) — any new
-  column must be added to that list plus `settingsRowSchema`
-  (`settingsSchemas.ts:7-15`) to reach the client at all.
-- **Write:** `useSaveSettings()` (`useSettings.ts:13-19`) → `saveSettings()`
-  (`settingsQueries.ts:29-49`) → `supabase.from('settings').upsert(payload)` —
-  direct write, gated by RLS policy `settings_admin_write`
-  (`(auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'`,
-  `supabase/migrations/20260518000014_rbac_jwt_admin.sql:65-67`), not an RPC.
-  Called from `Settings.jsx:270` (`handleSave`); admin-only form lives in
-  `AdminSection.jsx`, rendered conditionally at `Settings.jsx:375-399`.
-- **A `matchmaking_v2_enabled`-style flag** would most naturally be a new
-  boolean column on `settings`, added the same way
-  `raffle_cooldown_tournaments` was, then wired into `fetchSettings`'s select
-  list + `settingsRowSchema` + `saveSettings`'s payload + an `AdminSection.jsx`
-  toggle, and read in `Schedule.jsx` via `useSettings()` — the same hook
-  `Settings.jsx` already uses. No new RLS policy needed (existing
-  `settings_admin_write` covers any column on the table).
-- **Do not confuse with `useLobsterScore`:** the existing
-  `useLobsterScore` toggle in `Schedule.jsx:63-66` is **not** a settings-table
-  flag — it's `usePersistentBoolean('lobster_use_score_for_matcher', false)`
-  (`schedule/usePersistentBoolean.ts`), a per-browser `localStorage` value
-  with no admin gating and no server round-trip. It is the wrong model to
-  copy for a global "V2 enabled" flag (M3.5 needs a flag shared across all
-  clients/admins, not per-device).
-
-### 5. `players.gender` distinct values (production)
-
-Queried directly against **production** via `mcp__supabase__execute_sql`
-(remote MCP server, read-only `select`):
-
-```sql
-select gender, count(*) from players group by gender order by count(*) desc;
-```
-
-| gender              | count |
-| ------------------- | ----- |
-| `male`              | 64    |
-| `female`            | 30    |
-| `''` (empty string) | 7     |
-| `null`              | 2     |
-
-No non-binary/other value is present, but **both empty-string and null exist**
-alongside `male`/`female` — 9 of 103 players (~9%) are in neither bucket.
-DESIGN §3.1's gender-mode composition audit (stage 0) needs an explicit
-policy for these 9 players (exclude from mixed-mode gender balancing? treat
-as a third bucket? block them from gender-restricted events?) — not just a
-binary split.
-
-### Surprises for the coordinator
-
-- **RLS-gated direct writes, not RPCs, is the existing pattern** for both
-  `matches` and `settings` — contradicts PLAN §2's stated house rule
-  ("no direct table writes from the client"). DESIGN §5 already commits new
-  M3.1 tables to `require_admin()` RPCs; worth an explicit DECISIONS note on
-  why the new tables diverge from the established matches/settings pattern
-  (or don't).
-- **Two independent duration→rounds constants** (`lobsterMatcher.js:84` and
-  `ScheduleGeneratorControls.tsx:66`) that must be kept in sync by hand today.
-- **`players.gender` has empty-string and null rows in prod**, not just
-  male/female — a real input V2's feasibility audit must handle.
-- `saveMatches` does a full delete+insert per save/reshuffle rather than a
-  diff/upsert — relevant if M3.2's service layer wants to preserve match
-  `id`s (e.g. for `schedule_runs` linkage or in-flight score entry) across a
-  regenerate.
-
-## Appendix B — P0.3 `adjustment` inventory
-
-Grep-complete inventory of every read/write of `players.adjustment` /
-`players.adjusted_level` (and camelCase `adjustment`/`adjustedLevel` on the
-client) as of 2026-07-10. Method: `grep -rniE "adjustment|adjusted_level"`
-across `src/`, `supabase/` (migrations + seed), excluding `node_modules`,
-`.git`, `dist`, `build`; every hit triaged by hand below. No generated
-`database.types.ts` exists in this repo (Supabase types aren't codegen'd),
-and no edge function under `supabase/functions/` references either field.
-
-### DB schema / RPCs / views (source of truth — drive M3.3 and M4.3)
-
-- `supabase/migrations/20250503000000_init.sql:31-32` — `players` table:
-  column defs `adjustment numeric default 0`, `adjusted_level numeric default 0`.
-  **Drop target for M4.3.**
-- `supabase/migrations/20250503000000_init.sql:395-408` (superseded by
-  `20260512000001_rbac_phase1_role_column.sql:19-32`, the current view body) —
-  `players_public` view SELECTs `adjustment, adjusted_level`. **Client read
-  path** (`fetchPlayers`); must drop both columns from the view at M4.3.
-- `supabase/migrations/20250503000000_init.sql:951` /
-  `20260512000005_rbac_phase4c_player_rpcs.sql:114-129` — `get_my_profile_v2()`
-  returns `SETOF players` (i.e. `SELECT *`); implicit read of both columns,
-  no explicit column list to edit, but the returned row shape changes once
-  M4.3 drops the columns.
-- `supabase/migrations/20260512000003_rbac_phase4_admin_rpcs.sql:542-557` —
-  `get_all_players_with_pii_v2()` also `SETOF players` / `SELECT *`; same
-  implicit-read note as above.
-- `supabase/migrations/20260512000003_rbac_phase4_admin_rpcs.sql:31-61`
-  (`admin_add_player`) — INSERT writes `adjustment` (from payload, default 0)
-  and computes `adjusted_level = playtomic_level + adjustment`. **Write.**
-  This is the only version; not redefined later.
-- `admin_update_player` (current definition:
-  `supabase/migrations/20260526000001_fix_blank_email_overwrite.sql:65-86`;
-  earlier superseded versions at `20260512000003_rbac_phase4_admin_rpcs.sql:471-495`) —
-  UPDATE writes `adjustment = coalesce(payload->>'adjustment', p.adjustment)`
-  and recomputes `adjusted_level`. **Write. Target for M4.3** (admin path
-  survives cutover only if the admin UI keeps a manual-override field post-V2;
-  otherwise drop these two lines too — see M4.3 scope note).
-- `update_my_profile` (current/final definition:
-  `supabase/migrations/20260701000000_player_self_adjustment.sql:12-55`;
-  superseded prior versions at `20260512000005_rbac_phase4c_player_rpcs.sql:133-175`,
-  `20260518000013_rbac_phase7_device_trust.sql:31-73`,
-  `20260526000001_fix_blank_email_overwrite.sql:22-64`,
-  `20260528000000_magic_link_auth.sql:391-`) — UPDATE writes
-  `adjustment = coalesce(payload->>'adjustment', p.adjustment)`, recomputes
-  `adjusted_level`, and includes `adjustment` in the `playtomic_updated_at`
-  freshness check (line 47). **This is the exact RPC M3.3 targets** — the
-  migration this whole task chain (D-002) exists to undo. Self-edit should
-  instead reset `mu`/`sigma` per D-002 and drop these three fields entirely.
-- `self_signup_player` (`supabase/migrations/20250503000000_init.sql:1077-1130`,
-  specifically lines 1116, 1123-1124) — INSERT writes `adjustment` from
-  payload and computes `adjusted_level`. **Write.** Not redefined in any
-  later migration.
-- `supabase/migrations/20260512000001_rbac_phase1_role_column.sql:31-32` —
-  re-declaration of `players_public` view column list (part of the RBAC
-  view rebuild), includes `adjustment, adjusted_level` — same view as above,
-  listed separately because it's a distinct migration file.
-- `supabase/seed.sql:36` — `INSERT INTO players (..., adjustment,
-adjusted_level, ...)` seed data column list. **Write (fixture).** Must
-  update at M4.3 alongside the column drop.
-- Not applicable — `players.pin` collision-check functions
-  (`verify_player_pin`, `regenerate_pin`, `admin_regenerate_pin`,
-  `self_signup_player`'s PIN block, league signup RPC) mentioned in
-  CLAUDE.md's "Known Open Work" are a **different deprecation** (plaintext
-  `pin` column) and do not reference `adjustment`/`adjusted_level` — verified
-  by grep, no overlap.
-- Not applicable — `supabase/migrations/20260523000001_league_schema.sql` has
-  zero hits for `adjustment`/`adjusted_level`; league signup does not touch
-  this mechanism.
-
-### Client writes (feed the RPCs above — targets for M3.3/M4.3 UI removal)
-
-- `src/api/auth.js:210` — `selfSignup()` builds the `self_signup_player`
-  payload; sets `adjustment: String(parseFloat(data.adjustment) || 0)`.
-- `src/features/players/playerQueries.ts:49` — `addPlayer()` builds the
-  `admin_add_player` payload; sets `adjustment: parseFloat(data.adjustment) || 0`.
-- `src/features/players/playerQueries.ts:100` — `updatePlayer()` conditionally
-  sets `adjustment` on the shared payload used for both `admin_update_player`
-  and `update_my_profile` (role-gated at call site, same field name for both).
-- `src/features/community/Players.jsx:406` — admin Players form submit;
-  passes `form.adjustment` into `updatePlayer`/`addPlayer` via the payload
-  built at that line.
-- `src/features/community/Players.jsx:194,227,293` — form-state reads that
-  become writes on submit: `acceptMerge()`, `openEdit()`, and
-  `handleLinkConfirm()` pre-fill/merge `form.adjustment` from an existing
-  player row before the eventual RPC call.
-- `src/features/settings/Settings.jsx:72,111,196` — self-service profile form
-  default, load-from-`myPlayer`, and submit payload (`profileForm.adjustment`
-  → `updatePlayer` → `update_my_profile`). **Primary self-edit UI M3.3/M4.3
-  removes.**
-- `src/features/settings/ProfileSection.jsx:112-113,371-372` — controlled
-  `<input>` for the adjustment field inside the Settings form (`onChange`
-  writes `profileForm.adjustment`); rendering-only uses of the same file are
-  listed under client reads below.
-- `src/components/SignupRequest.jsx:64,152,248,652-653` — public signup form
-  default, prefill, submit payload, and controlled `<input>` for "Personal
-  Adjustment" (feeds `selfSignup` → `self_signup_player`).
-- `src/features/community/PlayerForm.jsx:240,248-249,256` — admin add/edit
-  player form's "Personal Adjustment" field (label, controlled `<input>`,
-  live preview) feeding `addPlayer`/`updatePlayer`.
-- `src/features/community/playerConstants.js:40` — shared form default
-  object `{ adjustment: '0', ... }` used to initialize the above forms.
-
-### Client reads (display-only; badges/derived values — targets for M4.3 UI removal)
-
-- `src/features/players/playerQueries.ts:16` — `fetchPlayers()` SELECT column
-  list includes `adjustment, adjusted_level` from `players_public`.
-- `src/features/players/playerSchemas.ts:24-25` — Zod
-  `playerPublicRowSchema` fields `adjustment`, `adjusted_level`
-  (`nullableNumber`); gates both the public-roster and `get_my_profile_v2`
-  parse paths (`myProfileRowSchema` extends this schema).
-- `src/lib/normalise.ts:17-18,41-42` — `Player` type fields `adjustment`,
-  `adjustedLevel`; `normalisePlayers()` maps snake_case `adjustment`/
-  `adjusted_level` → camelCase, the single normalisation choke point every
-  other camelCase read below depends on.
-- `src/features/settings/ProfileSection.jsx:74-75,80,169,174-175` — renders
-  "Adjustment: +N -> effective level" text and the computed
-  `playtomicLevel + adjustment` preview in the read-only profile view.
-- `src/features/community/PlayerProfileDrawer.jsx:134-136,139-140,153,156-157` —
-  renders the admin player-detail drawer's adjustment badge, `adjustedLevel`
-  level badge, and a learned-vs-adjusted delta comparison.
-- `src/features/community/PlayersList.jsx:69,71` — renders `adjustedLevel`
-  level badge in the community player list.
-- `src/features/community/LinkPlayerModal.jsx:51` — renders `adjustedLevel`
-  badge ("Lv X.X") when picking an existing player to link a pending signup to.
-- `src/features/community/PendingApprovalsList.jsx:22` — renders
-  `adjustedLevel` badge in the pending-approvals list.
-- `src/components/PlayerAliasMatcher.jsx:336` — renders
-  `adjustedLevel || adjusted_level` badge (handles both cases — reads a row
-  that may not have gone through `normalisePlayers`).
-- `src/components/TransferSpotModal.jsx:139` — renders `adjustedLevel` badge
-  in the spot-transfer picker.
-- `src/features/events/registration/AddPlayerCard.jsx:78` — renders
-  `adjustedLevel` badge when adding a player to an event roster.
-- `src/features/events/registration/RegisteredSection.jsx:57` — renders
-  `adjustedLevel` badge in the registered-players section.
-- `src/features/community/reviewScenarios.js:54` — `corpReview()` reads
-  `player.adjustedLevel` to pick a level-based joke-review scenario bucket
-  (`level-mid`/`level-high`/`level-elite`).
-
-### Scheduling/matchmaking legacy consumers (drop at Phase 4 per D-001; ported code must not reintroduce)
-
-- `src/features/events/Schedule.jsx:108` — sums `adjustedLevel` across a
-  team's player ids for a level display.
-- `src/features/events/Schedule.jsx:210-217` — "Lobster Score" toggle:
-  synthesizes a working player list where `adjustedLevel` is swapped for
-  `learnedLevel` when available, falling back to `adjustedLevel` otherwise —
-  this is the live bridge between the legacy and learned-rating worlds today;
-  **the M1–M3 rating engine replaces this fallback chain, not just the field
-  name.**
-- `src/features/events/schedule/types.ts:8` — `SchedulePlayer.adjustedLevel?:
-number` type field consumed by the generators below.
-- `src/features/events/scheduleHelpers.js:59,90,133` — three generator
-  functions sort players by `adjustedLevel` descending (Americano-simple,
-  Mexicano, RoundRobin per D-001's naming — confirm exact generator names
-  against `scheduleHelpers.js` if reused).
-- `src/lib/lobsterMatcher.js:65,121,237` — legacy annealed Lobster matcher:
-  JSDoc param note, sort-by-level, and the `level` array passed into the
-  optimizer all key off `adjustedLevel`. **This is the generator V2 replaces
-  (D-001); its `adjustedLevel` usage does not carry forward.**
-- `src/features/events/pairingEngine.js:11,18,145` — cost-scoring pair
-  builder scores pairs by `adjustedLevel` difference/sum. Per D-001 this
-  generator is deleted at cutover (never used in production), so this usage
-  is dropped wholesale rather than migrated.
-
-### Tests / fixtures / docs
-
-- `src/features/players/players.test.ts:19,32` — fixture rows with
-  `adjusted_level`/`adjustedLevel` values exercising `normalisePlayers`.
-- `src/lib/normalise.test.ts:16,35,44-45,62-63,84,98` — `normalisePlayers`
-  unit tests covering the `adjustment`/`adjustedLevel` mapping (present,
-  zero, and fallback-missing cases).
-- `docs/matchmaking-v2/DESIGN.md:44,68,278,345,400,428,431` — design doc's
-  own references to the mechanism being dropped (D-002 rationale, Phase 4
-  deletion list, `RatingReview.tsx` naming note). Not code; no action needed
-  beyond what Phase 4 tasks already reference.
-- `docs/matchmaking-v2/DECISIONS.md:30-46` — D-002 itself (decision record,
-  not a usage).
-- `docs/matchmaking-v2/PLAN.md:238,260,299` — this plan's own task
-  descriptions (M3.3, M4.3, and the Appendix A note about
-  `Schedule.jsx:214-219`'s `adjustedLevel`/`learnedLevel` swap). Not a usage;
-  cross-referenced here for completeness.
-
-### Incidental matches (not applicable — word "adjustment" unrelated to this mechanism)
-
-- `src/data/padelTips.ts:19` — a padel tip string: "Small adjustment steps
-  between shots keep you balanced..." — unrelated English usage, also
-  duplicated verbatim inside the JSON blob at `supabase/seed.sql:22`.
-
-### Counts
-
-- DB schema/RPCs/views: 9 distinct definitions/declarations (2 table
-  columns, 1 view in 2 migration files, 2 `SELECT *` RPCs, 3 write RPCs
-  across their current + superseded versions, 1 seed insert), plus 2
-  explicit not-applicable checks.
-- Client writes: 12 call sites across 9 files (`auth.js`, `playerQueries.ts`
-  ×2, `Players.jsx` ×4, `Settings.jsx` ×3, `ProfileSection.jsx` ×1 (2 lines),
-  `SignupRequest.jsx` ×1 (4 lines), `PlayerForm.jsx` ×1 (3 lines),
-  `playerConstants.js` ×1).
-- Client reads (display-only): 13 render/derive sites across 11 files.
-- Scheduling/matchmaking legacy consumers: 6 sites across 5 files (all
-  slated for deletion under D-001/D-002, not migration).
-- Tests/fixtures: 2 files, 8 line groups.
-- Docs (self-referential, no action): 3 files.
-- Incidental (not applicable): 1 pair (padelTips.ts + seed.sql copy).
-
-No unexpected writers turned up — every write path traces to one of the four
-RPCs already named in D-002/CLAUDE.md (`admin_add_player`, `admin_update_player`,
-`update_my_profile`, `self_signup_player`). The one thing worth flagging to
-the coordinator: `admin_update_player` also writes `adjustment` today, and
-D-002/M4.3 don't explicitly say whether the **admin** manual-override path
-is kept as a different mechanism or dropped alongside the player self-edit —
-worth a one-line decision before M4.3 executes the column drop, since admin
-and self-edit currently share the same two columns but conceptually could
-diverge.
+All four write RPCs already `coalesce` the payload key and no client sends it,
+so `adjusted_level` currently just mirrors `playtomic_level` (D-018).
+`learned_rating` / `learned_rd` / `learned_matches_count` drop in the same
+change; `glicko2.js` and `ratingsRecompute.js` are their only remaining writers.

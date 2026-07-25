@@ -274,6 +274,7 @@ export default function Dashboard({ onNavigate }) {
           getTournamentMatches={getTournamentMatches}
           getTournamentRegistrations={getTournamentRegistrations}
           players={players}
+          isAdmin={isAdmin}
           onNavigate={onNavigate}
         />
 

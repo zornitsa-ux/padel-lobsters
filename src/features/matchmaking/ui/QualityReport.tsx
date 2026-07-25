@@ -44,7 +44,11 @@ function violationLabel(violation: Violation): string {
   return `Round ${violation.round}${courtSegment} · ${violation.rule}: ${violation.reason}`
 }
 
-export default function QualityReport({ quality, violations, compact = false }: QualityReportProps) {
+export default function QualityReport({
+  quality,
+  violations,
+  compact = false,
+}: QualityReportProps) {
   const [detailsOpen, setDetailsOpen] = useState(false)
 
   const overallPct = meanOverall(quality.overall)

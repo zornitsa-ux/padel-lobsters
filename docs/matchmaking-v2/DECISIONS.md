@@ -697,3 +697,435 @@ the view generates several schedules at once, which under the old synchronous
 click would have frozen the main thread for seconds with no spinner. The
 plain-English diff must follow **D-022** (say what a player would notice: "2
 fewer repeat opponents", never cost deltas).
+
+**Resolution (2026-07-23) — shape locked; the open decision point is closed.**
+Owner steered the "which candidates" question to a concrete answer: the view does
+**not** auto-generate a preset gallery. It compares **exactly two** schedules —
+the **frozen original** (the current preview) and **one admin-built alternative**
+— and the admin composes the alternative with the _same_ config UX used for the
+first generation (preset picker + Advanced knobs), then generates/regenerates it.
+This is a stronger read of D-023's own diagnosis ("the admin chooses what is
+being compared"): rather than the app guessing candidates, the admin authors the
+one comparison they care about. Confirmed forks (owner, 2026-07-23):
+
+- **Container:** a **full-screen overlay** over the Schedule tab (not a router
+  route, not `components/ui/Modal.tsx` — that is a `max-w-lg` bottom sheet, too
+  narrow). Keeps `MatchmakingContainer` state alive underneath, so "Keep
+  original" is a pure dismiss and the original is never at risk.
+- **Layout:** the two **reports** (compact grade + five bars) sit **side-by-side**
+  at the top for the at-a-glance compare, with a plain-English diff line
+  (D-022 wording, derived from the five dimensions — no cost deltas). The bulky
+  **rounds** are **stacked** — full Original section, then full Alternative
+  section — never two columns of court cards (unreadable on mobile, the D-019
+  target).
+- **Original is immutable inside compare.** No regenerate/reshuffle affordance on
+  the original side; it is preserved verbatim for "Keep original".
+- **Alternative is fully re-configurable** via `ConfigPanel` bound to a _separate_
+  `altConfig` (a `ScheduleRun` carries only resolved `config` + `seed`, not the
+  user-facing `MatchConfig`, so the alt needs its own `MatchConfig` state).
+  **The admin owns generation — the app never auto-generates.** Opening compare
+  seeds `altConfig` from the current config and opens on an _empty_ alternative
+  pane; the admin picks settings and clicks Generate alternative themselves.
+  (Owner correction, 2026-07-23: an earlier cut auto-generated one alternative on
+  open, which took the choice away from the admin — reverted.) A same-settings
+  regenerate _is_ a reshuffle, so Reshuffle is covered without a separate button,
+  but only when the admin asks for it.
+- **No automatic scrolling.** The overlay does not scroll the alternative (or any
+  section) into view on generation — the owner found the auto-scroll nauseating
+  (2026-07-23). Arrival is announced via an `aria-live` region only.
+- **Exit:** **Keep original** (dismiss, original preview untouched) or **Use
+  alternative** (promote `altRun` → `preview`, dismiss; disabled until an
+  alternative exists). "Use alternative" does **not** auto-save — the admin still
+  Saves from the main preview through the existing score-guard flow.
+- **Standalone Reshuffle button is removed** from `SchedulePreview` (its
+  "different shuffle?" question is now answered inside Compare via an
+  admin-triggered same-settings regenerate); the action row becomes Compare +
+  Save. Finding 7's secondary-button restyle already landed (`60e6208`), so the
+  remaining Compare button reads correctly.
+
+**Contract changes (coordinator-made, per §1 freeze rule):**
+`SchedulePreview` loses `compareRun`/`onPickRun`/`onCancelCompare`/`comparing`/
+`onReshuffle`/`reshuffling`; keeps `onCompare` (now = open the overlay). New
+presentational `ui/CompareView.tsx` and `ui/ScheduleRounds.tsx` (round rendering
+extracted from `SchedulePreview` and shared by both). `ConfigPanel` gains one
+optional `generateIdleLabel?: string` (default "Generate schedule"; the alt
+passes "Generate alternative" / "Regenerate alternative"). `ui/dimensions.ts`
+gains a pure `describeQualityDiff`. Container owns the new session state
+(`comparing`, `altConfig`, `altRun`, alt busy flag) and the config derivations
+extracted to a reusable `useConfigDerivations` hook (used for both primary and
+alt). No engine/domain behavior change — presentation + wiring only.
+
+## D-024 — Schedule flags become plain-language, per-player marks (2026-07-23)
+
+**Decision:** Replace the raw court-flag chips (`high-sigma-player`,
+`opponent-rematch` printed verbatim) with admin-legible cues, and move the
+uncertainty signal from the court onto the specific player. Resolves M3.6
+Finding 6 (D-022 violation — raw flag strings). Owner steered the wording:
+"the badge isn't clear who it's referring to, and we don't want math jargon."
+
+- **`high-sigma-player` → per-player 🌱 mark**, rendered next to the player's
+  name exactly like the lefty 🤚 (title "Level still being learned"), derived
+  in the UI from the persisted `player.sigma ≥ PROVISIONAL_LEVEL_SIGMA` (0.5).
+  This answers "who?" — the old court-level chip never named anyone.
+- **`opponent-rematch` → "Repeat opponents"** chip via a UI flag→label map,
+  the one-vocabulary pattern from `ui/dimensions.ts`.
+- **A legend ("Key:")** heads the schedule, listing only the marks that
+  actually appear (🤚 left-handed, 🌱 level still being learned, Repeat
+  opponents), so admins can read the marks without a data dictionary.
+
+**Why the domain changed (departure from Finding 6's "UI-only" note).** Finding
+6 warned against _renaming_ flags in `report.ts` because the strings are
+persisted in the `schedule_runs` report blob (D-016) and a rename breaks
+historical rows. Moving the signal per-player is different from a rename:
+`buildScheduleRun` **stops emitting** `high-sigma-player` (the constant is
+renamed `HIGH_SIGMA_FLAG_THRESHOLD` → `PROVISIONAL_LEVEL_SIGMA`, kept for the
+UI threshold), and the UI derives the 🌱 mark from `player.sigma`, which is
+also persisted. Historical rows therefore render identically: `ScheduleRounds`
+drops the legacy `high-sigma-player` chip via `visibleFlags` and shows the
+per-player mark from their stored sigma. `opponent-rematch` is left in the
+domain untouched (still emitted) and mapped only at render time — no
+persistence risk.
+
+**Impact:** `domain/report.ts` (no high-sigma flag; renamed threshold + doc),
+`domain/report.test.ts` (drops the obsolete court-flag test), `ui/ScheduleRounds.tsx`
+(per-player mark, legend, flag→label map, legacy-flag filter). Applies
+everywhere schedules render — `SchedulePreview` and `CompareView` both delegate
+to `ScheduleRounds`. No engine behavior change.
+
+## D-025 — Scale mark replaces 🌱; rematch chip names the exact pair (2026-07-23)
+
+**Decision:** Two follow-on tweaks to D-024's admin-legible marks, both owner
+feedback on the same session's UI:
+
+- **🌱 → 📏** for the provisional-level mark. 🌱 read as "new/growing," not
+  "measurement still settling"; a scale better fits "we don't trust this
+  number yet."
+- **"Repeat opponents" chip → named pair.** The generic chip told the admin
+  a court had a rematch but not who; the chip now reads e.g. "Priya vs Sam —
+  repeat," naming the specific opposing pair that's meeting again.
+
+**Why UI-only again.** Same reasoning as D-024: the exact rematching pair is
+derivable at render time from `court.teams`, which has always been persisted
+per court. `ui/ScheduleRounds.tsx` now walks `rounds` once, replaying the same
+meeting-count logic `report.ts` uses internally (`pairKey` + a running count),
+and attributes each pair that hits its 2nd+ meeting to the court it recurs on.
+The domain's `opponent-rematch` flag is untouched and still emitted — the UI
+simply stops reading it, so historical `schedule_runs` rows (which only ever
+had the boolean flag, not named pairs) render identically since the pair
+identity was always recoverable from `teams`.
+
+**Impact:** `ui/ScheduleRounds.tsx` only (`rematchesByCourt` helper, per-court
+named chips, legend wording). No `domain/report.ts` or schema change, no test
+changes outside this file (it has no dedicated test yet). No engine behavior
+change.
+
+## D-026 — Admin manual opponent-swap on the schedule preview (2026-07-23)
+
+**Decision:** Add an admin control (M3.8, "Option A") that, on any court where an
+opposing pair is meeting again, offers same-round player swaps that break that
+specific rematch without dramatically unbalancing the court. The admin clicks a
+"Fix" affordance on a repeat chip, is shown a short ranked list of concrete swaps
+("Swap Dana for Priya — no new repeats, balance barely moves"), and picks one;
+the preview rebuilds in place. A pure domain engine (`domain/swaps.ts`,
+`suggestOpponentSwaps`) enumerates candidates, filters to hard-legal +
+balance-safe, ranks by variety then balance, and returns each with a fully
+rebuilt `ScheduleRun`. Scope is deliberately narrow: swaps between two
+currently-playing players in the same round only.
+
+**Why this doesn't violate DESIGN §2 "no admin pair overrides."** That principle
+bars _persistent, generator-level_ pair inputs — cross-event memory, cohort
+spreading, "always/never pair these two" rules that the matcher would carry
+forward. A one-off, post-generation hand-edit of a single previewed schedule is a
+different thing: it changes only this run, feeds nothing back into ratings or
+future generations, and is re-scored by the same cost model the generator uses.
+The admin is editing an artifact, not steering the engine.
+
+**Correctness constraints (why the engine, not per-round UI patching):**
+opponent- and partner-repeat costs accumulate chronologically (`cost.ts`,
+`report.ts`), so a swap in round R changes flags/quality for R **and every later
+round**. Any swap therefore reconstructs the working `Schedule`, applies the move,
+and re-runs `buildScheduleRun` over the whole thing — a single round cannot be
+patched in isolation without the badges lying. Legality reuses `hardViolations`
+(now exported from `refine.ts` — no behavior change). The stage-1 sit-out baseline
+is recomputed deterministically from the run's seed + roster
+(`baselineCoSitOverlapFor`), so sit-out fairness stays byte-identical (Option-A
+swaps never move sitters). "Won't dramatically unbalance" = a ceiling on the
+weighted teamBalance+courtSpread delta (`DEFAULT_MAX_BALANCE_DELTA`, tunable).
+
+**Provenance (no schema change).** An edited run persists through the existing
+`commitSchedule` path; its report stays internally consistent because the whole
+run is re-scored. The stored `seed`/`config` still describe the _generator_, and
+we accept that a saved run may have been hand-tweaked — acceptable for an audit
+blob. A "manually adjusted" flag on `schedule_runs` is **deferred** unless owners
+ask for it; revisit if audit trails need to distinguish edited runs.
+
+**Contract (coordinator-frozen, per §1 freeze rule):** new pure module
+`domain/swaps.ts` — `suggestOpponentSwaps({ run, players, genderMode, feasibility,
+roundIndex, pair, maxBalanceDelta?, limit? }): SwapSuggestion[]`, plus
+`scheduleFromRun` / `baselineCoSitOverlapFor` helpers and `DEFAULT_MAX_BALANCE_DELTA`;
+`refine.hardViolations` exported. UI: `ScheduleRounds` gains an optional
+`onFixRematch?` prop (absent ⇒ today's read-only rendering, so CompareView and
+historical rows are unaffected); a small presentational `RematchFixPanel` lists
+suggestions; `SchedulePreview` threads the prop; `MatchmakingContainer` owns the
+`fixing` session state and computes suggestions via the existing `runDeferred`
+pattern. No engine/generator or golden change — the generator is untouched; this
+is a post-generation editing layer.
+
+## D-027 — Rating review is a single "how far?" decision with a recommendation (2026-07-24)
+
+**Owner finding (M3.6 walkthrough).** The flagged-adjustment card
+(`RatingReview.tsx`) asked organizers to make a rating call they had no way to
+reason about: an unexplained header (`1.70 → 1.21 · −0.19 held for review`, where
+the arrow points at a level the player _isn't_ at — the cap already applied −0.30,
+so she sits at 1.40), unexplained per-round numbers, an Edit box whose raw value
+is added on top of the hidden cap (so typing `0` does nothing), two look-alike
+coral primary buttons, and cramped inline Edit/Discard. Owner reviewed a
+three-option sketch and chose **Option B (decision-first card)**.
+
+**Decision.** Reframe the card around the one human question — _"we've already
+moved them the nightly max; how far past that do you want to go?"_ — with three
+modes on a single axis and exactly one primary action:
+
+- **Keep cautious** → the existing `discard` action (retains the auto-applied cap;
+  it never removed the auto-move — the owner's worry that Discard wiped everything
+  was unfounded, but the standalone "Discard drop" button is gone regardless).
+- **Custom** → `edit` with `delta = target − cautiousLevel`, a stepper bounded to
+  `[full … cautious]` (step 0.05). The UI always works in _resulting level_; the
+  frozen `admin_review_rating_event` still receives a delta underneath. Bounds are
+  intentional for now (revisit if a beyond-proposal override is ever needed).
+- **Apply full** → `approve`.
+
+**Recommendation with evidence (owner: yes, show it).** A pure helper
+`ui/ratingRecommendation.ts` reads the per-match breakdown and returns a tone +
+headline + evidence chips. Heuristic: `strong` (⇒ pre-select Apply full) when
+**every** match agrees in direction and the average |actual−expected| points
+surprise ≥ 0.22; `mixed` (⇒ pre-select Keep cautious) when ≤ half agree or the
+average surprise < 0.08; else `moderate` (⇒ Apply full, with an "off night" hedge).
+The recommended mode is the card's default selection; the organizer still confirms.
+Thresholds are blessed starting values, expected to move once live flag volume is
+seen (open question deferred: is flag frequency itself the real lever?).
+
+**Level line.** Always drawn low-to-high left-to-right regardless of drop vs raise
+— the `before`/`results say`/`now` labels carry direction — so it reads
+consistently both ways; **coral for a drop, teal for a raise** (lob tokens).
+Endpoint labels anchor to opposite edges with `now` below to fix the overlap the
+owner flagged. Per-match rows relabelled ("Predicted N% of points · won N%") with
+a one-line legend.
+
+**No contract/schema/engine change.** `RatingReviewProps` and the three RPC
+actions are untouched; this is presentation + a pure UI helper. Vocabulary stays
+"level" (owner-confirmed). Static gates green (typecheck, lint, `ratingRecommendation`
+5/5, matchmaking 237 pass / 2 skip); live walkthrough pending like M3.6–M3.8.
+
+## D-028 — Ship V2 by removing the flag and the adjustment UI, not the V1 code (2026-07-25)
+
+**Owner decision (pre-production cleanup).** V2 goes live immediately. Rather
+than executing M4.3 wholesale, this session splits it: **all user-facing V1
+concepts are removed now; V1 code, RPC fields and DB columns stay in place** as
+an untouched fallback. Nothing in the UI can reach them.
+
+**Decisions taken:**
+
+- **No rollout flag.** `settings.matchmaking_v2_enabled` is gone from the client
+  (schema, query, save payload, admin card); `Schedule.jsx` computes
+  `useV2Matcher = isLobster && isAdmin`. The column stays in the DB, unread.
+  Falling back to V1 is now a code change, deliberately — an admin can no longer
+  half-disable the matcher between events.
+- **`adjustment` / `adjusted_level` leave the UI entirely** (D-002/D-018 endgame):
+  the "Personal Adjustment" input is deleted from the self-profile, the admin
+  player form and public signup; the four write RPCs simply stop receiving the
+  key (all four `coalesce` it, so `adjusted_level` lands on `playtomic_level` —
+  verified, no migration needed). The ~13 display sites now read
+  **`playtomicLevel`** rather than `adjusted_level`, which avoids showing a stale
+  baked-in adjustment on rows never re-saved since D-018. Both columns are
+  dropped from the `fetchPlayers` select, the Zod row schema and
+  `normalisePlayers`, so the client no longer reads them at all.
+- **The Glicko-2 "Lobster Score" UI is retired too** — it is a V1 mechanism that
+  stops updating for V2 events and would silently freeze. Removed: the Settings
+  "Recompute ratings" card, the per-team `Lobster N.NN` averages on the schedule,
+  and the `useLobsterScore` matcher toggle (plus its now-unused
+  `usePersistentBoolean` hook). `learned_rating`/`learned_rd`/
+  `learned_matches_count` are likewise dropped from the read plumbing.
+  `lib/glicko2.js` + `lib/ratingsRecompute.js` and their write path (legacy
+  finish, alias save) are **left running** — writes to columns nobody reads, kept
+  so a V1 fallback would still maintain its own ratings.
+- **The admin drawer gains the V2 replacement:** learned level from
+  `mm_rating`/`mm_sigma` via `useMmRatings` (`admin_get_mm_ratings`, admin-gated
+  and `enabled`-guarded so non-admins never call it), shown as
+  `3.90 (+0.40 vs Playtomic) ±0.45`. Two regression tests cover the admin and
+  non-admin paths.
+- **Lobster-only, now** (executes D-020's UI half): the format select is removed
+  from `EventFormModal` and every `|| 'americano'` fallback becomes
+  `lobster_matching`. The V1 generators and the `!isLobster` branch survive for
+  pre-existing non-Lobster events; no reachable path creates one. `tournaments.format`
+  keeps its stale `default 'americano'` — the client always sends the format
+  explicitly, so no migration was taken.
+
+**Deferred to M4.3 proper:** deleting `lobsterMatcher.js` / `glicko2.js` /
+`ratingsRecompute.js` / `pairingEngine.js` / the unused generators, dropping the
+four legacy columns + `players_public` view members, and the `tournaments.format`
+CHECK constraint.
+
+---
+
+## D-029 — Split "scores done" from "results revealed" (2026-07-25)
+
+**Decision.** `completed` keeps its current meaning exactly — scores locked,
+ratings computed, admin can review. A new **independent** nullable timestamp,
+`tournaments.results_shared_at`, gates only whether **non-admin players** see
+the final ranking/podium/winner. Mirrors the existing `lobster_oscars_sessions`
+`closed_at`/`shared_at` split (`oscarsPhase.ts::derivePhase` — `ended`: admin
+sees rankings, players wait; `shared`: players see them too), reusing a pattern
+already proven in this codebase rather than inventing a new one.
+
+```
+resultsPhase(t, isAdmin):
+  if t.status !== 'completed'        → 'not_completed'
+  if isAdmin                         → 'revealed'   (admins always see everything)
+  if !t.results_shared_at            → 'pending_reveal'
+  else                                → 'revealed'
+```
+
+Real-world motivation (owner): admins want a beat between "scores are in" and
+"the room finds out who won" — reviewing ratings, running the raffle/Lobster
+Oscars, then revealing standings as a moment, not a silent background update.
+
+**Owner-confirmed forks (both asked directly, 2026-07-25):**
+
+1. **What players see while withheld → "Teaser, no ranking."** A player's own
+   match scores were already visible live as they were entered — that's not a
+   spoiler, they were there. The spoiler is the **final ranking / podium /
+   winner**. So: the tournament still shows up everywhere as completed (home
+   banners, History, "Past Events"), with a neutral "Results pending — check
+   back soon" teaser wherever a ranking/winner would render, and per-round match
+   scores stay visible unchanged. This is deliberately the middle option between
+   "hide the whole event" (loses the "something happened, come find out" pull)
+   and "just gate the ranking tab" (leaves winner names in home banners, which
+   was the original leak the owner was reacting to).
+2. **Where the reveal action lives → Schedule.jsx, post-Finish.** Same screen
+   the admin already lands on after Finish, alongside the M3.5b rating-review
+   card built this session. Not gated on reviewing every flagged rating —
+   revealing and reviewing are independent actions; an admin can do either
+   first. Button: "Reveal results to players", shown when
+   `status === 'completed' && !results_shared_at && isAdmin`.
+
+**Surfaces audited, with the teaser rule applied:**
+
+- **`Scores.jsx` / `ScoresRankingTab.jsx`** — ranking tab renders the teaser
+  instead of the podium/standings table for non-admins in `pending_reveal`.
+  `ScoresMatchesTab.jsx` (per-round scores) is **untouched** — not a spoiler
+  per the rule above. The "Lobster Games" tab (Oscars results) already has its
+  own independent `shared_at` gate; unaffected.
+- **`RecentlyCompletedBanners.jsx`** (home) — currently computes and prints
+  `🥇 Winner: <name>`. In `pending_reveal`, drops the winner line and swaps the
+  button copy from "See Full Results" to something that doesn't promise a
+  ranking is there yet; the banner itself (and its 48h "recently completed"
+  window) is unaffected.
+- **`RecentResultsList.jsx`** — same winner-line change **in principle**, but
+  this component is currently **dead code**: grep found no import of it
+  anywhere in `src`. Noted for whoever implements D-030; not being wired up as
+  part of this work unless asked — that would be new scope, not a gate.
+- **`History.jsx` (~line 331, DB-tournament "Full Standings" tab)** — same
+  teaser as `ScoresRankingTab` for `pending_reveal` rows; its "Matches" tab
+  (~line 595) and the hardcoded pre-DB `TOURNAMENTS` history are untouched
+  (all pre-cutover, already public, definitionally `revealed`).
+- **`Dashboard.jsx`** — no gate of its own; it only feeds `recentlyCompleted`
+  (`status === 'completed'`, unchanged) into `RecentlyCompletedBanners`, so the
+  fix lives entirely in that child.
+- **`PlayerProfileDrawer.jsx` (~line 329, tournament chip)** — left as-is. The
+  chip still navigates to Scores; Scores itself renders the teaser. No separate
+  gate needed at the chip.
+- **Schedule.jsx post-Finish `navigate('scores')`** — moot for the V2 path,
+  which already stays on Schedule.jsx to render the rating-review card (M3.5b)
+  rather than navigating away; this is also now where the Reveal button lives
+  (fork 2). The legacy (non-V2) path still auto-navigates to Scores on Finish —
+  unchanged, and it'll show the teaser there like any other pre-reveal view.
+
+**Explicitly out of scope, flagged not fixed:** `PlayerProfileDrawer`'s
+head-to-head / nemesis / partner stats (`buildPlayerStats`) aggregate over any
+match with `completed = true`, which is set as scores are entered — **before**
+Finish, let alone before a reveal. That's a pre-existing live-leak in the same
+family as the one this decision fixes for `ScoresRankingTab`, but broader
+(season totals, medal counts) and outside the surface list this session
+audited. Revisit separately if it matters in practice.
+
+**Backfill, so nothing already-public gets newly hidden.** The migration
+backfills `results_shared_at = coalesce(completed_at, now())` for every row
+where `status = 'completed'` at migration time. Prod's 4 completed tournaments
+(all long since announced) stay visible with zero admin action; only
+tournaments completed **after** this ships start in `pending_reveal`.
+
+**No new RPC.** `results_shared_at` writes through the existing
+`updateTournament` → `tournaments` direct-update path (`tournamentQueries.ts`,
+same allowlist pattern as `completedAt`/`status` today) — a single-column write
+on one row, not a multi-row transaction, so D-016's reasoning for RPC-gating
+the rating surfaces doesn't apply here. Reuses the client's existing
+admin-gated write posture; no new RLS policy.
+
+**Impact:** new column folded into the unpushed
+`20260713000001_matchmaking_v2.sql` (no extra push, per the original framing of
+this work item) — costs nothing since that migration hasn't reached prod. New
+pure helper `resultsPhase()` (naming/location: colocate with `schedule/utils.ts`
+or a new `tournamentPhase.ts`, implementer's call, mirroring
+`oscarsPhase.ts`'s pattern but not literally reusing its code — different
+table, different phase set). D-030 reserved for any build-time fork that comes
+up while implementing (mirrors how D-023 was resolved in a follow-up dated
+addendum) — if none arises, this entry stands alone and D-030 goes unused.
+
+## D-030 — V2 serves every format; `format` never gates the generator (2026-07-25)
+
+**Decision:** `Schedule.jsx`'s routing drops the format check —
+`useV2Matcher = isAdmin`, not `isLobster && isAdmin`. Matchmaking V2 is the
+generator for **every** event an admin opens, whatever `tournaments.format`
+says. The V1 annealed generator and `handleGenerate`'s format branches stay in
+the tree per D-028, but no longer have a data path reaching them.
+
+Alongside it, two DB-side V1 defaults that D-020 left behind are closed in §13
+of the unpushed `20260713000001_matchmaking_v2.sql`:
+`tournaments.format` default flips `'americano'` → `'lobster_matching'`, and a
+backfill rewrites any non-Lobster row. `supabase/seed.sql` stops seeding its two
+test tournaments as `'americano'`.
+
+**Why:** D-020 removed the format _picker_ but nothing changed the _defaults_
+behind it. `init.sql:69` still declared `format text default 'americano'`, and
+`seed.sql` hardcoded `'americano'` for both local test events — so a `db:reset`
+produced two events that the V2 matcher refused to serve. The owner hit exactly
+this: opening a freshly-seeded event showed an "Americano" chip and the legacy
+generator, on a branch where V2 is supposed to be the only path.
+
+The gate was the real defect, not just the data. Three properties made it a trap:
+the fallback `tournament.format || 'lobster_matching'` (`Schedule.jsx:138`)
+only catches null/empty, so a _present but stale_ `'americano'` sails through;
+any insert omitting `format` silently minted a V1 event; and with the picker
+gone, `Tournament.jsx`/`Registration.jsx` pass the existing format straight back
+on edit, so an affected event could never be converted from the UI — it was
+stuck on V1 permanently. Fixing only the data would leave a correctness
+invariant resting on "no row ever holds a non-Lobster format", which is exactly
+the assumption that just failed.
+
+**Why this doesn't contradict D-028.** D-028 chose to keep V1 as a _code-only_
+fallback for pre-cutover events. That is preserved: the code is still there and
+still compiles. What D-028 did not intend — and what the format gate actually
+produced — was a _live routing decision_ driven by a column whose default
+pointed at V1. Keeping the code is compatible with denying it a data path.
+
+**Safety of re-routing.** `format` drives only three things, all checked:
+`handleGenerate`'s generator branch, the prose chip (`formatLabel`), and the
+legacy `ScheduleGeneratorControls`. Nothing in scoring, ranking, or the saved
+schedule display reads it, so regenerating is the only behaviour that changes —
+and old completed events display their persisted `matches` rows exactly as
+before. The backfill is deliberately unconditional on `status` for the same
+reason. In production it is a no-op regardless: all 6 rows are already
+`lobster_matching` (M3.6 Finding 2).
+
+**Impact:** `Schedule.jsx:146`; §13 of the unpushed migration; `seed.sql`.
+`Schedule.test.tsx`'s "still falls back to the legacy generator for a
+pre-cutover non-Lobster event" is **inverted** into the regression pin — an
+`it.each` over `americano`/`mexicano`/`roundrobin`/`knockout`/`''` asserting all
+five now reach V2. The "no Lobster Score toggle" test was retargeted off the
+legacy path (unreachable for admins now, so the assertion had gone vacuous).
+Verified on local: `db:reset` replays clean, both seeded events come back
+`lobster_matching`, the column default is `'lobster_matching'::text`, and a
+probe insert omitting `format` really does land on `lobster_matching`
+(row deleted after). Gates: typecheck clean, lint 0 errors (136 pre-existing
+warnings, unchanged), **707 pass / 2 skip**, build clean, goldens byte-identical.

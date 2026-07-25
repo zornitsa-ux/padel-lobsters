@@ -10,6 +10,7 @@ import { recomputeAllRatings } from '../../lib/ratingsRecompute'
 import { supabase } from '../../supabase'
 import { letterColor } from '../../lib/letterColors'
 import validateSchedule from './validateSchedule'
+import { formatLabel } from './eventHelpers'
 import {
   shortName,
   generateAmericano,
@@ -20,17 +21,19 @@ import ScoreEntry from './ScoreEntry'
 import { useScoreSync } from './useScoreSync'
 import ScheduleGeneratorControls from './schedule/ScheduleGeneratorControls'
 import ScheduleValidationSummary from './schedule/ScheduleValidationSummary'
-import usePersistentBoolean from './schedule/usePersistentBoolean'
 import MatchmakingContainer from '../matchmaking/MatchmakingContainer'
 import RatingReview from '../matchmaking/ui/RatingReview'
 import {
-  applyTournamentRatings,
   buildRatingUpdatePayload,
-  fetchRatingReviewQueue,
-  reviewRatingEvent,
+  isRatingsAlreadyAppliedError,
 } from '../matchmaking/applyTournamentRatings.service'
 import { initialRating } from '../matchmaking/domain/rating/model'
-import { useSettings } from '../settings/useSettings'
+import {
+  useApplyTournamentRatings,
+  useMmRatings,
+  useRatingReviewQueue,
+  useReviewRatingEvent,
+} from '../matchmaking/useMatchmaking'
 import {
   buildPlayerById,
   buildSavedRounds,
@@ -38,6 +41,7 @@ import {
   cloneRounds,
   downloadCsvFile,
   hasAllMatchesScored,
+  roundsForDuration,
 } from './schedule/utils'
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -56,7 +60,6 @@ export default function Schedule({ tournament, onNavigate }) {
   // All-tournament match history: used by the Lobster annealing matcher to
   // avoid repeating partner/opponent pairs across events.
   const { data: allMatches = [] } = useAllMatches()
-  const { data: settings } = useSettings()
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
 
   const [rounds, setRounds] = useState(4)
@@ -68,13 +71,6 @@ export default function Schedule({ tournament, onNavigate }) {
   const [swapFirst, setSwapFirst] = useState(null) // { roundIdx, matchIdx, team, playerIdx, playerId }
   const [swapWarnings, setSwapWarnings] = useState([]) // warnings after a swap
   const [scheduleWarnings, setScheduleWarnings] = useState([]) // full validation after generate
-
-  // Admin toggle: feed Lobster Scores (Glicko-2 shadow ratings) into the
-  // matcher instead of adjusted Playtomic levels. Persisted across sessions.
-  const [useLobsterScore, setUseLobsterScore] = usePersistentBoolean(
-    'lobster_use_score_for_matcher',
-    false,
-  )
 
   // Load saved schedule into edit preview
   const handleEditSchedule = () => {
@@ -116,7 +112,7 @@ export default function Schedule({ tournament, onNavigate }) {
       dstArr[playerIdx] = tmp
       // Recalculate levels
       const lvl = (ids) =>
-        ids.reduce((s, id) => s + (playerById.get(String(id))?.adjustedLevel || 0), 0)
+        ids.reduce((s, id) => s + (playerById.get(String(id))?.playtomicLevel || 0), 0)
       srcMatch.team1Level = lvl(srcMatch.team1Ids)
       srcMatch.team2Level = lvl(srcMatch.team2Ids)
       dstMatch.team1Level = lvl(dstMatch.team1Ids)
@@ -139,33 +135,53 @@ export default function Schedule({ tournament, onNavigate }) {
     return players.filter((player) => registeredIds.has(String(player.id)))
   }, [players, regs])
   const numCourts = tournament ? (tournament.courts || []).length || 1 : 1
-  const format = tournament ? tournament.format || 'americano' : 'americano'
+  const format = tournament ? tournament.format || 'lobster_matching' : 'lobster_matching'
   const genderMode = tournament ? tournament.genderMode || 'mixed' : 'mixed'
   const isLobster = format === 'lobster_matching'
 
-  // Matchmaking V2 rollout (M3.5): when the settings flag is on, the Lobster
-  // path is served by MatchmakingContainer instead of the legacy annealed
-  // matcher (D-019 silent swap). Flag off ⇒ the legacy path is untouched.
-  const v2Enabled = Boolean(settings?.matchmakingV2Enabled)
-  const useV2Matcher = v2Enabled && isLobster && isAdmin
+  // Matchmaking V2 is the only generator, for every event regardless of
+  // `format`. Gating this on `isLobster` was the bug: init.sql defaulted
+  // `format` to 'americano', so any event created without an explicit format
+  // (seed rows, anything predating D-020) silently fell through to the legacy
+  // annealed path. `handleGenerate`'s format branches are now unreachable for
+  // admins; V1 is retained as code only (D-028), with no data path to it.
+  const useV2Matcher = isAdmin
   const v2GenderMode = ['men', 'women', 'mixed'].includes(genderMode) ? genderMode : 'mixed'
-  const v2Rounds = (tournament?.duration || 90) >= 120 ? 6 : 5
+  const v2Rounds = roundsForDuration(tournament?.duration)
   const scoresEntered = useMemo(
     () => (savedMatches || []).some((m) => m.score1 != null || m.score2 != null),
     [savedMatches],
   )
+  // The learned prior comes from the admin-only RPC, not the roster: mm_* is
+  // excluded from players_public (DESIGN §5), so reading it off `players` would
+  // always be null and every event would re-seed from playtomic_level.
+  const { data: mmRatings } = useMmRatings({ enabled: useV2Matcher })
+  // Re-derived on mount rather than relying on post-Finish component state:
+  // a flagged rating_events row (flagged=true, review_status=null) stays
+  // unresolved until an admin acts on it, so it must stay reachable across a
+  // navigate-away or refresh, not just for the session that created it.
+  const { data: reviewQueueAll } = useRatingReviewQueue({ enabled: useV2Matcher })
+  const v2ReviewQueue = useMemo(
+    () => (reviewQueueAll || []).filter((e) => e.tournament_id === String(tournament?.id)),
+    [reviewQueueAll, tournament?.id],
+  )
+  const applyRatingsMutation = useApplyTournamentRatings()
+  const reviewMutation = useReviewRatingEvent()
   const v2Roster = useMemo(
     () =>
-      registeredPlayers.map((p) => ({
-        playerId: String(p.id),
-        name: p.name,
-        playtomicLevel: p.playtomicLevel ?? 0,
-        mmRating: p.mmRating ?? null,
-        mmSigma: p.mmSigma ?? null,
-        isLeftHanded: Boolean(p.isLeftHanded),
-        gender: p.gender ?? null,
-      })),
-    [registeredPlayers],
+      registeredPlayers.map((p) => {
+        const learned = mmRatings?.[String(p.id)]
+        return {
+          playerId: String(p.id),
+          name: p.name,
+          playtomicLevel: p.playtomicLevel ?? 0,
+          mmRating: learned?.mu ?? null,
+          mmSigma: learned?.sigma ?? null,
+          isLeftHanded: Boolean(p.isLeftHanded),
+          gender: p.gender ?? null,
+        }
+      }),
+    [registeredPlayers, mmRatings],
   )
   const v2PlayerNames = useMemo(
     () => Object.fromEntries(registeredPlayers.map((p) => [String(p.id), p.name])),
@@ -185,9 +201,12 @@ export default function Schedule({ tournament, onNavigate }) {
   const sn = (p) => shortName(p, registeredPlayers) // smart short name
   const [finishing, setFinishing] = useState(false)
   const [finishError, setFinishError] = useState('')
-  // V2 rating review after Finish (M3.5b): { appliedCount, queue } | null.
-  const [v2Review, setV2Review] = useState(null)
-  const [v2Reviewing, setV2Reviewing] = useState(false)
+  // Count of adjustments auto-applied without review on THIS Finish action.
+  // Session-only (unlike the queue, this has no persisted source to re-derive
+  // from post-refresh), so it's null except right after a same-session Finish.
+  const [v2AppliedCount, setV2AppliedCount] = useState(null)
+  const [revealing, setRevealing] = useState(false)
+  const [revealError, setRevealError] = useState('')
 
   // Sync peer score updates in real-time while the tournament is active.
   // Disabled for completed events — scores are frozen.
@@ -214,17 +233,17 @@ export default function Schedule({ tournament, onNavigate }) {
   const display = generated || savedRounds
   const isTournamentCompleted = tournament.status === 'completed'
 
-  // V2 (M3.5b): apply the learned-rating update for this event, then surface the
-  // flagged queue for admin review. Priors are the ratings used to generate —
-  // mm_* when present, else the playtomic-level prior (unseeded pre-M4.1), which
-  // matches how MatchmakingContainer built the roster. Applied BEFORE marking
-  // completed so a failure leaves the tournament finishable again.
+  // V2 (M3.5b): apply the learned-rating update for this event; the flagged
+  // queue itself comes from `v2ReviewQueue` above (react-query, invalidated by
+  // the mutation below), not local state. Priors are the ratings used to
+  // generate — the learned mm_* when the engine has seen the player, else the
+  // playtomic-level prior — read from the same admin RPC that seeded the roster
+  // so the chain compounds instead of restarting each event. Applied BEFORE
+  // marking completed so a failure leaves the tournament finishable again.
   const applyV2Ratings = async () => {
     const players = registeredPlayers.map((p) => {
-      const prior =
-        p.mmRating != null && p.mmSigma != null
-          ? { mu: p.mmRating, sigma: p.mmSigma }
-          : initialRating({ playtomicLevel: p.playtomicLevel ?? 0 })
+      const learned = mmRatings?.[String(p.id)]
+      const prior = learned ?? initialRating({ playtomicLevel: p.playtomicLevel ?? 0 })
       return {
         playerId: String(p.id),
         mu: prior.mu,
@@ -248,26 +267,33 @@ export default function Schedule({ tournament, onNavigate }) {
       players,
       matches,
     })
-    const appliedCount = payload.updates.filter((u) => !u.flagged).length
-    await applyTournamentRatings(payload)
-    const queue = (await fetchRatingReviewQueue()).filter(
-      (e) => e.tournament_id === String(tournament.id),
-    )
-    setV2Review({ appliedCount, queue })
+    await applyRatingsMutation.mutateAsync(payload)
+    // Only set once persisted: on a retry after the RPC's double-apply guard
+    // rejects a repeat call, this freshly-recomputed payload no longer
+    // matches what was actually written the first time, so it must not
+    // overwrite the "auto-applied" count with a number that never landed.
+    setV2AppliedCount(payload.updates.filter((u) => !u.flagged).length)
   }
 
   const handleV2Review = async ({ eventId, action, delta }) => {
-    setV2Reviewing(true)
     try {
-      await reviewRatingEvent({ eventId, action, delta })
-      const queue = (await fetchRatingReviewQueue()).filter(
-        (e) => e.tournament_id === String(tournament.id),
-      )
-      setV2Review((prev) => (prev ? { ...prev, queue } : prev))
+      await reviewMutation.mutateAsync({ eventId, action, delta })
     } catch (err) {
       setFinishError(err?.message || 'Could not record review.')
+    }
+  }
+
+  // D-029: independent of rating review — an admin can reveal before, after,
+  // or interleaved with resolving flagged ratings.
+  const handleRevealResults = async () => {
+    setRevealing(true)
+    setRevealError('')
+    try {
+      await updateTournament(tournament.id, { resultsSharedAt: new Date().toISOString() })
+    } catch (err) {
+      setRevealError(err?.message || 'Could not reveal results.')
     } finally {
-      setV2Reviewing(false)
+      setRevealing(false)
     }
   }
 
@@ -281,7 +307,17 @@ export default function Schedule({ tournament, onNavigate }) {
     try {
       if (useV2Matcher) {
         // V2 event: apply learned ratings first, then complete, then review.
-        await applyV2Ratings()
+        try {
+          await applyV2Ratings()
+        } catch (err) {
+          // A prior Finish click can have applied ratings successfully and
+          // then failed on the status update below — the RPC's double-apply
+          // guard then rejects every retry's apply step, permanently
+          // blocking completion even though there's nothing left to apply.
+          // Treat "already applied" as done and proceed to mark completed;
+          // any other error still aborts (caught below).
+          if (!isRatingsAlreadyAppliedError(err)) throw err
+        }
         await updateTournament(tournament.id, {
           status: 'completed',
           completedAt: new Date().toISOString(),
@@ -317,17 +353,6 @@ export default function Schedule({ tournament, onNavigate }) {
     setGenerating(true)
     await new Promise((r) => setTimeout(r, 300)) // small delay for UX
 
-    // When the Lobster Score toggle is on, swap each player's adjustedLevel
-    // with their learnedLevel (Padel-scale Glicko rating). Players without a
-    // learned rating fall back to their adjustedLevel so brand-new joiners
-    // don't get matched as 0-rated.
-    const playersForMatcher = useLobsterScore
-      ? registeredPlayers.map((p) => ({
-          ...p,
-          adjustedLevel: p.learnedLevel != null ? p.learnedLevel : p.adjustedLevel || 0,
-        }))
-      : registeredPlayers
-
     let newRounds
     if (format === 'lobster_matching') {
       // Decayed cohort memory pulls from EVERY past completed match outside
@@ -337,17 +362,17 @@ export default function Schedule({ tournament, onNavigate }) {
         (m) => m.tournamentId !== tournament.id && m.completed,
       )
       newRounds = generateLobsterAnnealed(
-        playersForMatcher,
+        registeredPlayers,
         numCourts,
         genderMode,
         tournament.duration || 90,
         { pastMatches },
       )
     } else if (format === 'mexicano')
-      newRounds = generateMexicano(playersForMatcher, numCourts, rounds, genderMode)
+      newRounds = generateMexicano(registeredPlayers, numCourts, rounds, genderMode)
     else if (format === 'roundrobin')
-      newRounds = generateRoundRobin(playersForMatcher, numCourts, genderMode)
-    else newRounds = generateAmericano(playersForMatcher, numCourts, rounds, genderMode)
+      newRounds = generateRoundRobin(registeredPlayers, numCourts, genderMode)
+    else newRounds = generateAmericano(registeredPlayers, numCourts, rounds, genderMode)
 
     setGenerated(newRounds)
     setScheduleWarnings(validateSchedule(newRounds, registeredPlayers, genderMode))
@@ -399,15 +424,16 @@ export default function Schedule({ tournament, onNavigate }) {
           <Users size={15} className="text-lob-teal" />
           {registeredPlayers.length} players · {numCourts} court{numCourts > 1 ? 's' : ''}
         </div>
-        <span className="text-xs font-semibold bg-lob-cream text-lob-teal px-2.5 py-1 rounded-full capitalize">
-          {format}
+        <span className="text-xs font-semibold bg-lob-cream text-lob-teal px-2.5 py-1 rounded-full">
+          {formatLabel(format)}
         </span>
       </div>
 
       {/* Generator controls — admin-only. Players never see this box;
           they only see the saved schedule once an admin has generated it.
-          Matchmaking V2 (flag on, Lobster events) swaps this whole region for
-          MatchmakingContainer; the saved-schedule display below is shared. */}
+          Lobster events are served by MatchmakingContainer; the legacy controls
+          below only appear for older non-Lobster events. The saved-schedule
+          display underneath is shared by both. */}
       {useV2Matcher ? (
         <MatchmakingContainer
           tournamentId={String(tournament.id)}
@@ -428,8 +454,6 @@ export default function Schedule({ tournament, onNavigate }) {
           numCourts={numCourts}
           rounds={rounds}
           setRounds={setRounds}
-          useLobsterScore={useLobsterScore}
-          setUseLobsterScore={setUseLobsterScore}
           onGenerate={handleGenerate}
           generating={generating}
           savedRounds={savedRounds}
@@ -648,21 +672,6 @@ export default function Schedule({ tournament, onNavigate }) {
                             Avg {(match.team1Level / 2).toFixed(1)}
                           </p>
                         )}
-                        {isAdmin &&
-                          (() => {
-                            const rated = t1.filter((p) => p.learnedLevel != null)
-                            if (rated.length === 0) return null
-                            const avg = rated.reduce((s, p) => s + p.learnedLevel, 0) / rated.length
-                            return (
-                              <p
-                                className="text-[10px] text-lob-teal/70 font-semibold mt-0.5"
-                                title="Lobster Score team average (Glicko-2 shadow rating)"
-                              >
-                                Lobster {avg.toFixed(2)}
-                                {rated.length < t1.length ? '*' : ''}
-                              </p>
-                            )
-                          })()}
                       </div>
 
                       {/* Score */}
@@ -716,21 +725,6 @@ export default function Schedule({ tournament, onNavigate }) {
                             Avg {(match.team2Level / 2).toFixed(1)}
                           </p>
                         )}
-                        {isAdmin &&
-                          (() => {
-                            const rated = t2.filter((p) => p.learnedLevel != null)
-                            if (rated.length === 0) return null
-                            const avg = rated.reduce((s, p) => s + p.learnedLevel, 0) / rated.length
-                            return (
-                              <p
-                                className="text-[10px] text-lob-teal/70 font-semibold mt-0.5"
-                                title="Lobster Score team average (Glicko-2 shadow rating)"
-                              >
-                                Lobster {avg.toFixed(2)}
-                                {rated.length < t2.length ? '*' : ''}
-                              </p>
-                            )
-                          })()}
                       </div>
                     </div>
                   </div>
@@ -768,17 +762,39 @@ export default function Schedule({ tournament, onNavigate }) {
         </div>
       )}
 
-      {/* ── V2 rating review (after Finish) ──────────────────── */}
-      {v2Review && isAdmin && (
+      {/* ── V2 rating review — shown after Finish in this session (via
+          v2AppliedCount) AND re-derived on every mount/refresh from
+          unresolved flagged rating_events, so a queued review is never
+          stranded by a navigate-away. ──────────────────────────────── */}
+      {(v2AppliedCount !== null || v2ReviewQueue.length > 0) && isAdmin && (
         <div className="space-y-2">
           <p className="font-semibold text-gray-700 text-sm">Rating review</p>
           <RatingReview
-            appliedCount={v2Review.appliedCount}
-            queue={v2Review.queue}
+            appliedCount={v2AppliedCount ?? 0}
+            queue={v2ReviewQueue}
             playerNamesById={v2PlayerNames}
             onReview={handleV2Review}
-            reviewing={v2Reviewing}
+            reviewing={reviewMutation.isPending}
           />
+        </div>
+      )}
+
+      {/* ── Reveal results to players (D-029) — independent of rating review;
+          admins always see full results themselves via View Results below. ── */}
+      {isTournamentCompleted && isAdmin && !tournament.resultsSharedAt && (
+        <div className="space-y-2">
+          <button
+            onClick={handleRevealResults}
+            disabled={revealing}
+            className="w-full bg-lob-teal hover:bg-lob-teal/90 text-white font-bold py-3 rounded-2xl text-sm active:scale-[0.98] transition-all disabled:opacity-60"
+          >
+            {revealing ? 'Revealing...' : 'Reveal Results to Players'}
+          </button>
+          {revealError && (
+            <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg p-2">
+              {revealError}
+            </p>
+          )}
         </div>
       )}
 

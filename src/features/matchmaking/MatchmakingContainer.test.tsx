@@ -33,8 +33,7 @@ const renderContainer = () =>
     />,
   )
 
-const button = (name: RegExp) =>
-  screen.queryByRole('button', { name }) as HTMLButtonElement | null
+const button = (name: RegExp) => screen.queryByRole('button', { name }) as HTMLButtonElement | null
 
 describe('MatchmakingContainer — generate feedback (M3.6 Finding 4)', () => {
   beforeEach(() => {
@@ -48,14 +47,14 @@ describe('MatchmakingContainer — generate feedback (M3.6 Finding 4)', () => {
 
   it('renders no preview until generate is clicked', () => {
     renderContainer()
-    expect(button(/reshuffle/i)).toBeNull()
+    expect(button(/^compare$/i)).toBeNull()
   })
 
   it('shows the schedule and scrolls it into view after generating', async () => {
     renderContainer()
     fireEvent.click(screen.getByRole('button', { name: /generate schedule/i }))
 
-    await waitFor(() => expect(button(/reshuffle/i)).not.toBeNull())
+    await waitFor(() => expect(button(/^compare$/i)).not.toBeNull())
     // The arrival must be brought on screen — the whole point of Finding 4.
     expect(Element.prototype.scrollIntoView).toHaveBeenCalled()
   })
@@ -69,17 +68,70 @@ describe('MatchmakingContainer — generate feedback (M3.6 Finding 4)', () => {
     })
   })
 
-  it('reshuffle replaces the run and re-announces', async () => {
+  it('compare opens the overlay with no alternative until the admin generates one', async () => {
     renderContainer()
     fireEvent.click(screen.getByRole('button', { name: /generate schedule/i }))
-    await waitFor(() => expect(button(/reshuffle/i)).not.toBeNull())
-    vi.mocked(Element.prototype.scrollIntoView).mockClear()
+    await waitFor(() => expect(button(/^compare$/i)).not.toBeNull())
 
-    fireEvent.click(screen.getByRole('button', { name: /reshuffle/i }))
+    fireEvent.click(screen.getByRole('button', { name: /^compare$/i }))
 
-    await waitFor(() => {
-      expect(screen.getByRole('status').textContent).toMatch(/new schedule generated/i)
-    })
-    expect(Element.prototype.scrollIntoView).toHaveBeenCalled()
+    // Overlay is open, but the admin controls whether an alternative exists:
+    // none is generated automatically, so "Use alternative" starts disabled.
+    const useAlt = await screen.findByRole('button', { name: /use alternative/i })
+    expect((useAlt as HTMLButtonElement).disabled).toBe(true)
+
+    fireEvent.click(screen.getByRole('button', { name: /generate alternative/i }))
+
+    await waitFor(() => expect((useAlt as HTMLButtonElement).disabled).toBe(false))
+  })
+})
+
+describe('MatchmakingContainer — Fix repeat (M3.8, D-026)', () => {
+  beforeEach(() => {
+    Element.prototype.scrollIntoView = vi.fn()
+  })
+
+  afterEach(cleanup)
+
+  // This roster/courts/rounds/seed combination is known (fixture-checked) to
+  // produce several rematch chips; not every chip admits a legal, balance-safe
+  // swap, so the test walks the chips until it finds one that does rather than
+  // hardcoding which chip that is (keeps it robust to generator retuning).
+  it('shows ranked swap suggestions and applies one into the preview', async () => {
+    renderContainer()
+    fireEvent.click(screen.getByRole('button', { name: /generate schedule/i }))
+    await waitFor(() => expect(button(/^compare$/i)).not.toBeNull())
+
+    const fixButtons = () => screen.getAllByRole('button', { name: /^fix$/i })
+    expect(fixButtons().length).toBeGreaterThan(0)
+
+    let applyButton: HTMLButtonElement | null = null
+    for (let i = 0; i < fixButtons().length; i++) {
+      fireEvent.click(fixButtons()[i])
+      await waitFor(() => expect(screen.getByText(/fix this repeat/i)).toBeTruthy())
+      const applies = screen.queryAllByRole('button', { name: /^apply$/i })
+      if (applies.length > 0) {
+        applyButton = applies[0] as HTMLButtonElement
+        break
+      }
+      fireEvent.click(screen.getByRole('button', { name: /^cancel$/i }))
+    }
+
+    expect(applyButton).not.toBeNull()
+    fireEvent.click(applyButton as HTMLButtonElement)
+
+    await waitFor(() => expect(screen.queryByText(/fix this repeat/i)).toBeNull())
+  })
+
+  it('cancel dismisses the panel without changing the preview', async () => {
+    renderContainer()
+    fireEvent.click(screen.getByRole('button', { name: /generate schedule/i }))
+    await waitFor(() => expect(button(/^compare$/i)).not.toBeNull())
+
+    fireEvent.click(screen.getAllByRole('button', { name: /^fix$/i })[0])
+    await waitFor(() => expect(screen.getByText(/fix this repeat/i)).toBeTruthy())
+
+    fireEvent.click(screen.getByRole('button', { name: /^cancel$/i }))
+    expect(screen.queryByText(/fix this repeat/i)).toBeNull()
   })
 })

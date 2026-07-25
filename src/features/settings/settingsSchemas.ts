@@ -11,7 +11,6 @@ export const settingsRowSchema = z
     group_name: nullableString,
     padel_tips: z.array(z.string()).nullable().optional(),
     auto_trust_until: nullableString,
-    matchmaking_v2_enabled: z.boolean().nullable().optional(),
   })
   .passthrough()
 
@@ -24,6 +23,5 @@ export interface Settings {
   groupName: string
   padelTips: string[] | null
   autoTrustUntil: string | null
-  matchmakingV2Enabled: boolean
   [key: string]: any
 }

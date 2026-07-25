@@ -52,8 +52,7 @@ export function splitCourt({
     }
   }
 
-  const ids = (t: [PlayerInput, PlayerInput]): Team =>
-    [t[0].playerId, t[1].playerId].sort() as Team
+  const ids = (t: [PlayerInput, PlayerInput]): Team => [t[0].playerId, t[1].playerId].sort() as Team
   const [a, b] = [ids(best.team1), ids(best.team2)]
   return a.join('|') < b.join('|') ? { team1: a, team2: b } : { team1: b, team2: a }
 }

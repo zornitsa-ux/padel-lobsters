@@ -1,11 +1,18 @@
 import { scoreSchedule } from './cost'
+import {
+  canonicalizeMatch as canonicalize,
+  cloneSchedule,
+  cloneScheduleWithRound,
+  getSlot,
+  leftyIdSet,
+  setSlot,
+} from './scheduleOps'
 import { leftyQuotaForRound } from './feasibility'
 import { coSitOverlap } from './sitouts'
 import type { Rng } from './rng'
 import type {
   FeasibilityResult,
   GenderMode,
-  MatchAssignment,
   PlayerInput,
   ResolvedConfig,
   Schedule,
@@ -25,41 +32,27 @@ export interface RefineResult {
   iterations: number
 }
 
-const cloneSchedule = (schedule: Schedule): Schedule =>
-  schedule.map((round) => ({
-    matches: round.matches.map((m) => ({
-      team1: [...m.team1] as Team,
-      team2: [...m.team2] as Team,
-    })),
-    sitters: [...round.sitters],
-  }))
-
-const canonicalize = (m: MatchAssignment): MatchAssignment => {
-  const t1 = [...m.team1].sort() as Team
-  const t2 = [...m.team2].sort() as Team
-  return t1.join('|') < t2.join('|') ? { team1: t1, team2: t2 } : { team1: t2, team2: t1 }
-}
-
-const getSlot = (m: MatchAssignment, i: number): string => (i < 2 ? m.team1[i] : m.team2[i - 2])
-const setSlot = (m: MatchAssignment, i: number, id: string): void => {
-  if (i < 2) m.team1[i] = id
-  else m.team2[i - 2] = id
-}
-
-/** One rng-driven candidate move on a cloned schedule; null when inapplicable. */
+/**
+ * One rng-driven candidate move; null when inapplicable. Every move kind touches
+ * exactly one round, so the candidate copy-on-writes that round and shares the
+ * rest. The rng draw order is load-bearing — it defines the search path, and any
+ * reordering changes every generated schedule.
+ */
 function proposeMove(current: Schedule, rng: Rng): Schedule | null {
-  const next = cloneSchedule(current)
-  const round = next[rng.int(next.length)]
+  const roundIndex = rng.int(current.length)
   const kind = rng.int(3)
+  const source = current[roundIndex]
 
   if (kind === 0) {
     // Swap two players across courts in the same round.
-    if (round.matches.length < 2) return null
-    const c1 = rng.int(round.matches.length)
-    let c2 = rng.int(round.matches.length - 1)
+    if (source.matches.length < 2) return null
+    const c1 = rng.int(source.matches.length)
+    let c2 = rng.int(source.matches.length - 1)
     if (c2 >= c1) c2 += 1
     const s1 = rng.int(4)
     const s2 = rng.int(4)
+    const next = cloneScheduleWithRound(current, roundIndex)
+    const round = next[roundIndex]
     const id1 = getSlot(round.matches[c1], s1)
     const id2 = getSlot(round.matches[c2], s2)
     setSlot(round.matches[c1], s1, id2)
@@ -71,10 +64,12 @@ function proposeMove(current: Schedule, rng: Rng): Schedule | null {
 
   if (kind === 1) {
     // Swap a sitter with a playing player.
-    if (round.sitters.length === 0) return null
-    const si = rng.int(round.sitters.length)
-    const c = rng.int(round.matches.length)
+    if (source.sitters.length === 0) return null
+    const si = rng.int(source.sitters.length)
+    const c = rng.int(source.matches.length)
     const slot = rng.int(4)
+    const next = cloneScheduleWithRound(current, roundIndex)
+    const round = next[roundIndex]
     const sitter = round.sitters[si]
     const playing = getSlot(round.matches[c], slot)
     setSlot(round.matches[c], slot, sitter)
@@ -85,21 +80,24 @@ function proposeMove(current: Schedule, rng: Rng): Schedule | null {
   }
 
   // Re-split a court: replace with one of its three splits.
-  const c = rng.int(round.matches.length)
+  const c = rng.int(source.matches.length)
+  const [a, b, x, y] = SPLITS[rng.int(3)]
+  const next = cloneScheduleWithRound(current, roundIndex)
+  const round = next[roundIndex]
   const m = round.matches[c]
   const four = [m.team1[0], m.team1[1], m.team2[0], m.team2[1]]
-  const splits: Array<[number, number, number, number]> = [
-    [0, 1, 2, 3],
-    [0, 2, 1, 3],
-    [0, 3, 1, 2],
-  ]
-  const [a, b, x, y] = splits[rng.int(3)]
   round.matches[c] = canonicalize({
     team1: [four[a], four[b]] as Team,
     team2: [four[x], four[y]] as Team,
   })
   return next
 }
+
+const SPLITS: Array<[number, number, number, number]> = [
+  [0, 1, 2, 3],
+  [0, 2, 1, 3],
+  [0, 3, 1, 2],
+]
 
 /**
  * Targeted repair for a round whose double-lefty teams exceed quota: enumerate
@@ -139,7 +137,7 @@ function proposeLeftyRepair({
           if (c2 === c1) continue
           for (let s2 = 0; s2 < 4; s2++) {
             if (leftyIds.has(getSlot(round.matches[c2], s2))) continue
-            const candidate = cloneSchedule(current)
+            const candidate = cloneScheduleWithRound(current, r)
             const m1 = candidate[r].matches[c1]
             const m2 = candidate[r].matches[c2]
             const id1 = getSlot(m1, s1)
@@ -170,9 +168,11 @@ function proposeLeftyRepair({
 /**
  * Total hard-rule excess beyond quota (lefty + partner repeats), or null when
  * a sit-out rule is broken (absolute reject — stage 1 inputs are always
- * sit-legal, so moves never need to trade against these).
+ * sit-legal, so moves never need to trade against these). Exported for the
+ * manual opponent-swap engine (swaps.ts), which reuses the identical legality
+ * definition rather than re-deriving it (D-026).
  */
-function hardViolations({
+export function hardViolations({
   schedule,
   leftyIds,
   quotas,
@@ -187,45 +187,79 @@ function hardViolations({
   const partnerCounts = new Map<string, number>()
   let violations = 0
 
+  // Runs once per search iteration alongside scoreSchedule, so the body stays
+  // allocation-free: no per-round flatMap/filter arrays, and partner keys are
+  // ordered inline rather than via sort+join.
   for (let r = 0; r < schedule.length; r++) {
     const round = schedule[r]
 
     if (r > 0) {
-      const prev = new Set(schedule[r - 1].sitters)
-      if (round.sitters.some((id) => prev.has(id))) return null
+      const prev = schedule[r - 1].sitters
+      for (const id of round.sitters) {
+        if (prev.includes(id)) return null
+      }
     }
     for (const id of round.sitters) sitCounts.set(id, (sitCounts.get(id) ?? 0) + 1)
 
+    let doubleLefty = 0
+    let playingLefties = 0
+
+    for (const m of round.matches) {
+      const t1a = m.team1[0]
+      const t1b = m.team1[1]
+      const t2a = m.team2[0]
+      const t2b = m.team2[1]
+
+      if (leftyRule === 'hard') {
+        const l1a = leftyIds.has(t1a)
+        const l1b = leftyIds.has(t1b)
+        const l2a = leftyIds.has(t2a)
+        const l2b = leftyIds.has(t2b)
+        if (l1a && l1b) doubleLefty += 1
+        if (l2a && l2b) doubleLefty += 1
+        if (l1a) playingLefties += 1
+        if (l1b) playingLefties += 1
+        if (l2a) playingLefties += 1
+        if (l2b) playingLefties += 1
+      }
+
+      const key1 = t1a < t1b ? `${t1a}|${t1b}` : `${t1b}|${t1a}`
+      partnerCounts.set(key1, (partnerCounts.get(key1) ?? 0) + 1)
+      const key2 = t2a < t2b ? `${t2a}|${t2b}` : `${t2b}|${t2a}`
+      partnerCounts.set(key2, (partnerCounts.get(key2) ?? 0) + 1)
+    }
+
     if (leftyRule === 'hard') {
-      const teams = round.matches.flatMap((m) => [m.team1, m.team2])
-      const doubleLefty = teams.filter((t) => t.every((id) => leftyIds.has(id))).length
-      const playingLefties = teams.flat().filter((id) => leftyIds.has(id)).length
       const quota = leftyQuotaForRound({
         leftyCount: playingLefties,
         courtsUsed: round.matches.length,
       })
       violations += Math.max(0, doubleLefty - quota)
     }
+  }
 
-    for (const m of round.matches) {
-      for (const t of [m.team1, m.team2]) {
-        const key = [...t].sort().join('|')
-        partnerCounts.set(key, (partnerCounts.get(key) ?? 0) + 1)
-      }
+  if (sitCounts.size > 0) {
+    let maxSat = -Infinity
+    let minSat = Infinity
+    for (const count of sitCounts.values()) {
+      if (count > maxSat) maxSat = count
+      if (count < minSat) minSat = count
     }
-  }
-
-  const everSat = [...sitCounts.values()]
-  if (everSat.length > 0) {
     // Never-sitters count 0: min is 0 unless every roster player sat.
-    const rosterSize = new Set(
-      schedule[0].matches.flatMap((m) => [...m.team1, ...m.team2]).concat(schedule[0].sitters),
-    ).size
-    const min = sitCounts.size < rosterSize ? 0 : Math.min(...everSat)
-    if (Math.max(...everSat) - min > 1) return null
+    const roster = new Set<string>()
+    for (const m of schedule[0].matches) {
+      roster.add(m.team1[0])
+      roster.add(m.team1[1])
+      roster.add(m.team2[0])
+      roster.add(m.team2[1])
+    }
+    for (const id of schedule[0].sitters) roster.add(id)
+    const min = sitCounts.size < roster.size ? 0 : minSat
+    if (maxSat - min > 1) return null
   }
 
-  const repeats = [...partnerCounts.values()].reduce((s, n) => s + Math.max(0, n - 1), 0)
+  let repeats = 0
+  for (const count of partnerCounts.values()) repeats += Math.max(0, count - 1)
   return violations + Math.max(0, repeats - quotas.partnerRepeatsTotal)
 }
 
@@ -267,10 +301,15 @@ export function refineSchedule({
   const baselineCoSitOverlap = coSitOverlap({ plan: schedule.map((r) => r.sitters) })
   const score = (s: Schedule) =>
     scoreSchedule({ schedule: s, players, config, genderMode, baselineCoSitOverlap })
-  const leftyIds = new Set(players.filter((p) => p.isLeftHanded).map((p) => p.playerId))
+  const leftyIds = leftyIdSet(players)
 
   const violationsOf = (s: Schedule) =>
-    hardViolations({ schedule: s, leftyIds, quotas: feasibility.quotas, leftyRule: config.leftyRule })
+    hardViolations({
+      schedule: s,
+      leftyIds,
+      quotas: feasibility.quotas,
+      leftyRule: config.leftyRule,
+    })
 
   let current = cloneSchedule(schedule)
   let currentCost = score(current)
@@ -288,8 +327,7 @@ export function refineSchedule({
     if (candidateViolations === null || candidateViolations > currentViolations) continue
     const candidateCost = score(candidate)
     const accept =
-      candidateViolations < currentViolations ||
-      candidateCost.total < currentCost.total - 1e-12
+      candidateViolations < currentViolations || candidateCost.total < currentCost.total - 1e-12
     if (accept) {
       current = candidate
       currentCost = candidateCost

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock'
 
 interface ModalProps {
   open: boolean
@@ -13,13 +14,7 @@ export function Modal({ open, onClose, title, children, footer }: ModalProps) {
   const [dragY, setDragY] = useState(0)
   const scrollRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    if (!open) return
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = ''
-    }
-  }, [open])
+  useBodyScrollLock(open)
 
   useEffect(() => {
     if (!open) setDragY(0)

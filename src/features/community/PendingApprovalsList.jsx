@@ -19,7 +19,7 @@ export default function PendingApprovalsList({ pendingPlayers, onApprove, onReje
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-gray-800 truncate">{p.name}</p>
               <p className="text-xs text-gray-500">
-                Lv {(p.adjustedLevel || 0).toFixed(1)}
+                Lv {(p.playtomicLevel || 0).toFixed(1)}
                 {p.email && ` · ${p.email}`}
               </p>
             </div>

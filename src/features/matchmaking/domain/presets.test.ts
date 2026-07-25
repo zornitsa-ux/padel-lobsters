@@ -89,9 +89,7 @@ describe('presets (M2.9)', () => {
 
     it('groups weights exactly as report.ts derives the bars', () => {
       const config = resolve({ preset: 'balanced' })
-      const by = Object.fromEntries(
-        matcherPriorities({ config }).map((p) => [p.key, p.weight]),
-      )
+      const by = Object.fromEntries(matcherPriorities({ config }).map((p) => [p.key, p.weight]))
       const { weights } = config
       expect(by.balance).toBe(weights.teamBalance + weights.courtSpread)
       expect(by.variety).toBe(weights.opponentRepeat + weights.partnerRepeat)

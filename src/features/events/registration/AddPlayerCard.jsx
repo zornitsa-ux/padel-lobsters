@@ -75,7 +75,7 @@ export default function AddPlayerCard({
             <span
               className={`text-xs font-bold ${selectedPlayer === p.id ? 'text-white' : 'text-gray-500'}`}
             >
-              Lv {(p.adjustedLevel || 0).toFixed(1)}
+              Lv {(p.playtomicLevel || 0).toFixed(1)}
             </span>
           </button>
         ))}

@@ -51,7 +51,7 @@ export function corpReview(
   tournaments = [],
   aliasMap = {},
 ) {
-  const lvl = player.adjustedLevel || 0
+  const lvl = player.playtomicLevel || 0
   const name = (player.name || 'Employee').split(' ')[0]
   const pid = player.id
 

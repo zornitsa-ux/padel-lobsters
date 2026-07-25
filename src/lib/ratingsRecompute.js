@@ -4,13 +4,16 @@
 //   1. Historical tournaments hardcoded in src/data/historicalTournaments.js
 //   2. Match data stored in the database (T#5 onward)
 //
+// LEGACY (D-028): Matchmaking V2's mm_rating/mm_sigma is the live level model.
+// Nothing reads learned_rating/learned_rd any more — these writes are kept only
+// so a V1 fallback would still find maintained ratings. Deleted at M4.3.
+//
 // Idempotent: always recomputes from zero, so re-running never causes drift.
-// Trigger this whenever the source data changes meaningfully:
-//   - admin marks a tournament as completed
+// Remaining triggers (the on-demand admin button is gone):
+//   - admin marks a non-Lobster tournament as completed
 //   - admin adds/edits a player_aliases row (mapping a historical first-name
 //     to a real player_id) — historical matches involving that name suddenly
 //     become resolvable and should be folded back in
-//   - admin clicks the "Recompute ratings" button on demand
 //
 // Names in historical matches are resolved through the player_aliases table.
 // Matches where ANY of the four players has no alias are dropped (we don't

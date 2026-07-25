@@ -12,9 +12,8 @@
 //
 // Fair-comparison choices (see the report's Method section):
 // - Both engines get identical player strengths: mu = playtomic_level,
-//   sigma = SIGMA_PRIOR. The legacy adjustedLevel is fed the same playtomic
-//   level, so this isolates the *matcher*, not the rating layer (mm_* isn't
-//   seeded until Phase 4).
+//   sigma = SIGMA_PRIOR. Both read the same playtomic level, so this isolates
+//   the *matcher*, not the rating layer (mm_* isn't seeded until Phase 4).
 // - The legacy matcher is stochastic (simulated annealing); V2 is
 //   deterministic. Legacy is swept over SEEDS at the production iteration
 //   budget and reported as mean + best-of-sweep.
@@ -297,7 +296,7 @@ run('M2.11 shadow comparison harness', () => {
 
       const legacyPlayers = roster.players.map((p, i) => ({
         id: `${roster.id}-p${String(i + 1).padStart(2, '0')}`,
-        adjustedLevel: p.playtomicLevel,
+        playtomicLevel: p.playtomicLevel,
         gender: p.gender,
         isLeftHanded: p.isLeftHanded,
       }))
@@ -431,7 +430,11 @@ run('M2.11 shadow comparison harness', () => {
           courts: roster.courts,
           rounds: roster.rounds,
           genderMode: roster.genderMode,
-          config: { preset: 'balanced', socialDial: c.socialDial, weights: { opponentRepeat: c.oppW } },
+          config: {
+            preset: 'balanced',
+            socialDial: c.socialDial,
+            weights: { opponentRepeat: c.oppW },
+          },
         })
         const sched: Schedule = rep.rounds.map((round) => ({
           matches: round.courts.map((ct) => ({ team1: ct.teams[0], team2: ct.teams[1] })),
@@ -472,7 +475,7 @@ run('M2.11 shadow comparison harness', () => {
     lines.push(
       '- **Matcher isolated from ratings.** Both engines see mu = playtomic level (sigma = ' +
         SIGMA_PRIOR +
-        '). The legacy `adjustedLevel` input is fed the same playtomic level, so nothing here ' +
+        '). Both engines read the same playtomic level, so nothing here ' +
         'depends on the not-yet-seeded `mm_*` learned ratings — this is purely a scheduling ' +
         'comparison.',
     )

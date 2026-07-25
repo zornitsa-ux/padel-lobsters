@@ -1,4 +1,11 @@
-import type { FeasibilityEntry, FeasibilityResult, GenderMode, PlayerInput, RelaxationQuotas, ResolvedConfig } from './types'
+import type {
+  FeasibilityEntry,
+  FeasibilityResult,
+  GenderMode,
+  PlayerInput,
+  RelaxationQuotas,
+  ResolvedConfig,
+} from './types'
 
 // Stage 0 (DESIGN.md §3.1): audit every hard rule against the roster before
 // any search. Event-level quotas are the *reported* relaxation plan;
@@ -120,7 +127,12 @@ export function auditFeasibility({
   const unknownCount = playerCount - maleCount - femaleCount
 
   if (genderMode === 'mixed') {
-    const genderQuota = sameGenderQuotaForRound({ maleCount, femaleCount, unknownCount, courtsUsed })
+    const genderQuota = sameGenderQuotaForRound({
+      maleCount,
+      femaleCount,
+      unknownCount,
+      courtsUsed,
+    })
     quotas.sameGenderTeamsPerRound = genderQuota
     entries.push({
       rule: 'gender',

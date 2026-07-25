@@ -56,7 +56,7 @@ export function buildOneRound(
 
 export function generateLobsterLegacy(players, numCourts, genderMode = 'mixed', duration = 90) {
   const numRounds = duration >= 120 ? 6 : 5 // 2h → 6 rounds, 90min → 5 rounds (18min each)
-  const sorted = [...players].sort((a, b) => (b.adjustedLevel || 0) - (a.adjustedLevel || 0))
+  const sorted = [...players].sort((a, b) => (b.playtomicLevel || 0) - (a.playtomicLevel || 0))
   const active = sorted.slice(0, numCourts * 4),
     sitting = sorted.slice(numCourts * 4)
   const partnerHistory = {},
@@ -87,7 +87,7 @@ export function generateLobsterLegacy(players, numCourts, genderMode = 'mixed', 
 }
 
 export function generateAmericano(players, numCourts, rounds = 4, genderMode = 'mixed') {
-  const sorted = [...players].sort((a, b) => (b.adjustedLevel || 0) - (a.adjustedLevel || 0))
+  const sorted = [...players].sort((a, b) => (b.playtomicLevel || 0) - (a.playtomicLevel || 0))
   const active = sorted.slice(0, numCourts * 4),
     sitting = sorted.slice(numCourts * 4)
   const partnerHistory = {},
@@ -130,7 +130,7 @@ export function generateMexicano(players, numCourts, rounds = 4, genderMode = 'm
 }
 
 export function generateRoundRobin(players, numCourts, genderMode = 'mixed') {
-  const sorted = [...players].sort((a, b) => (b.adjustedLevel || 0) - (a.adjustedLevel || 0))
+  const sorted = [...players].sort((a, b) => (b.playtomicLevel || 0) - (a.playtomicLevel || 0))
   const active = sorted.slice(0, numCourts * 4),
     sitting = sorted.slice(numCourts * 4)
   const partnerHistory = {},

@@ -4,6 +4,7 @@ import { buildHistoricalAppearances, summariseAppearances } from '../../lib/play
 import { buildPlayerStats } from '../../lib/playerStats'
 import { TOURNAMENTS } from '../../data/historicalTournaments'
 import { LEVEL_COLORS } from './playerConstants'
+import { useMmRatings } from '../matchmaking/useMatchmaking'
 
 export default function PlayerProfileDrawer({
   player: p,
@@ -18,6 +19,12 @@ export default function PlayerProfileDrawer({
   onDelete,
   onRegeneratePin,
 }) {
+  // Learned level (mm_rating/mm_sigma) is admin-only — it lives behind
+  // admin_get_mm_ratings, not players_public, so non-admins never fetch it.
+  const { data: mmRatings } = useMmRatings({ enabled: Boolean(isAdmin) })
+  const learned = mmRatings?.[String(p.id)] ?? null
+  const learnedDelta = learned ? learned.mu - (p.playtomicLevel || 0) : 0
+
   const stats = buildPlayerStats(
     p.id,
     matches,
@@ -87,8 +94,8 @@ export default function PlayerProfileDrawer({
   const totalEvents =
     stats.playerTournaments.length + historical.filter((h) => !dbIds.has(h.id)).length
 
-  const levelBadge = (adjusted) => {
-    const idx = Math.min(7, Math.max(0, Math.floor(adjusted || 0)))
+  const levelBadge = (level) => {
+    const idx = Math.min(7, Math.max(0, Math.floor(level || 0)))
     return LEVEL_COLORS[idx] || LEVEL_COLORS[0]
   }
 
@@ -130,44 +137,35 @@ export default function PlayerProfileDrawer({
 
       {/* Level row — compact */}
       <div className="flex items-center gap-1.5 text-xs text-gray-500">
-        <span>Playtomic {(p.playtomicLevel || 0).toFixed(1)}</span>
-        <span className={parseFloat(p.adjustment) >= 0 ? 'text-green-600' : 'text-red-500'}>
-          {parseFloat(p.adjustment) >= 0 ? '+' : ''}
-          {p.adjustment || 0}
-        </span>
-        <span>→</span>
-        <span className={`font-bold px-1.5 py-0.5 rounded ${levelBadge(p.adjustedLevel)}`}>
-          {(p.adjustedLevel || 0).toFixed(1)}
+        <span>Playtomic</span>
+        <span className={`font-bold px-1.5 py-0.5 rounded ${levelBadge(p.playtomicLevel)}`}>
+          {(p.playtomicLevel || 0).toFixed(1)}
         </span>
       </div>
 
-      {/* Lobster Ladder — admin-only Glicko-2 shadow rating */}
-      {isAdmin && p.learnedLevel != null && (
+      {/* Learned level — admin-only (mm_rating/mm_sigma, admin RPC) */}
+      {isAdmin && learned && (
         <div className="flex items-center gap-1.5 text-xs text-gray-500">
           <span className="text-[10px] font-bold text-lob-teal uppercase tracking-wider">
-            Lobster Score
+            Learned level
           </span>
-          <span className="font-bold text-gray-700">{p.learnedLevel.toFixed(2)}</span>
-          <span
-            className={
-              p.learnedLevel - (p.adjustedLevel || 0) >= 0 ? 'text-green-600' : 'text-red-500'
-            }
-          >
-            ({p.learnedLevel - (p.adjustedLevel || 0) >= 0 ? '+' : ''}
-            {(p.learnedLevel - (p.adjustedLevel || 0)).toFixed(2)} vs adjusted)
+          <span className="font-bold text-gray-700">{learned.mu.toFixed(2)}</span>
+          <span className={learnedDelta >= 0 ? 'text-green-600' : 'text-red-500'}>
+            ({learnedDelta >= 0 ? '+' : ''}
+            {learnedDelta.toFixed(2)} vs Playtomic)
           </span>
           <span className="text-gray-400">·</span>
           <span
-            title={`Rating Deviation — lower means more confident. ~80 is "stable", 350 means brand new.`}
+            title="Uncertainty in level units — 0.70 is a brand-new player, 0.15 is as confident as the model gets."
             className={
-              (p.learnedRd ?? 350) < 100
+              learned.sigma < 0.3
                 ? 'text-green-600'
-                : (p.learnedRd ?? 350) < 200
+                : learned.sigma < 0.5
                   ? 'text-amber-600'
                   : 'text-gray-400'
             }
           >
-            ±{Math.round((p.learnedRd ?? 0) / 100)} · {p.learnedMatchesCount || 0}m
+            ±{learned.sigma.toFixed(2)}
           </span>
         </div>
       )}

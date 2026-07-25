@@ -6,4 +6,5 @@ export const matchmakingKeys = {
   scheduleRuns: (tournamentId: string) => ['matchmaking', 'scheduleRuns', tournamentId] as const,
   ratingEvents: () => ['matchmaking', 'ratingEvents'] as const,
   reviewQueue: () => ['matchmaking', 'ratingEvents', 'reviewQueue'] as const,
+  mmRatings: () => ['matchmaking', 'mmRatings'] as const,
 }

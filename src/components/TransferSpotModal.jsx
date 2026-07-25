@@ -136,7 +136,7 @@ export default function TransferSpotModal({ tournament, onClose, onTransferCreat
                       </span>
                     )}
                   </p>
-                  <p className="text-xs text-gray-500">Lv {(p.adjustedLevel || 0).toFixed(1)}</p>
+                  <p className="text-xs text-gray-500">Lv {(p.playtomicLevel || 0).toFixed(1)}</p>
                 </div>
                 <ArrowRightLeft size={14} className="text-lob-teal flex-shrink-0" />
               </button>

@@ -13,10 +13,6 @@ describe('normalisePlayers', () => {
       {
         id: 'p1',
         playtomic_level: 4.7,
-        adjusted_level: 4.5,
-        learned_rating: '1300',
-        learned_rd: '35',
-        learned_matches_count: 12,
         playtomic_username: 'lobster_ace',
         is_left_handed: true,
         avatar_url: 'https://example.com/avatar.png',
@@ -32,20 +28,11 @@ describe('normalisePlayers', () => {
         id: 'p1',
         name: '',
         playtomic_level: 4.7,
-        adjusted_level: 4.5,
-        learned_rating: '1300',
-        learned_rd: '35',
-        learned_matches_count: 12,
         playtomic_username: 'lobster_ace',
         is_left_handed: true,
         avatar_url: 'https://example.com/avatar.png',
         preferred_position: 'right',
         playtomicLevel: 4.7,
-        adjustment: 0,
-        adjustedLevel: 4.5,
-        learnedLevel: 1,
-        learnedRd: 35,
-        learnedMatchesCount: 12,
         playtomicUsername: 'lobster_ace',
         gender: '',
         status: 'active',
@@ -59,11 +46,6 @@ describe('normalisePlayers', () => {
         id: 'p2',
         name: '',
         playtomicLevel: 0,
-        adjustment: 0,
-        adjustedLevel: 0,
-        learnedLevel: null,
-        learnedRd: null,
-        learnedMatchesCount: 0,
         playtomicUsername: '',
         gender: '',
         status: 'active',
@@ -81,9 +63,6 @@ describe('normalisePlayers', () => {
       {
         id: 'p3',
         playtomicLevel: 3.8,
-        adjustedLevel: 4,
-        learned_rating: 1400,
-        learned_rd: 42,
         playtomicUsername: 'camel_case',
         isLeftHanded: true,
         avatarUrl: 'https://example.com/p3.png',
@@ -95,9 +74,6 @@ describe('normalisePlayers', () => {
     expect(result).toMatchObject({
       id: 'p3',
       playtomicLevel: 3.8,
-      adjustedLevel: 4,
-      learnedLevel: 2,
-      learnedRd: 42,
       playtomicUsername: 'camel_case',
       isLeftHanded: true,
       avatarUrl: 'https://example.com/p3.png',
@@ -117,6 +93,7 @@ describe('normaliseTournaments', () => {
         tikkie_link: 'https://pay.example/1',
         gender_mode: 'women',
         completed_at: '2026-05-17T12:00:00Z',
+        results_shared_at: '2026-05-17T14:00:00Z',
       },
       { id: 't2' },
     ])
@@ -132,6 +109,7 @@ describe('normaliseTournaments', () => {
       tikkieLink: 'https://pay.example/1',
       genderMode: 'women',
       completedAt: '2026-05-17T12:00:00Z',
+      resultsSharedAt: '2026-05-17T14:00:00Z',
     })
     expect(result[1]).toMatchObject({
       id: 't2',
@@ -144,6 +122,7 @@ describe('normaliseTournaments', () => {
       tikkieLink: '',
       genderMode: 'mixed',
       completedAt: null,
+      resultsSharedAt: null,
     })
   })
 })

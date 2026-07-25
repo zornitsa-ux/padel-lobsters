@@ -1,4 +1,5 @@
 import { scoreSchedule } from './cost'
+import { leftyIdSet, pairKey } from './scheduleOps'
 import type {
   DimensionScores,
   FeasibilityResult,
@@ -15,10 +16,11 @@ import { DIMENSION_KEYS } from './types'
 
 // Stage 5 (DESIGN.md §3.4): assemble the persisted ScheduleRun.
 
-/** Courts flag 'high-sigma-player' at or above this sigma. */
-export const HIGH_SIGMA_FLAG_THRESHOLD = 0.5
-
-const pairKey = (a: string, b: string): string => (a < b ? `${a}|${b}` : `${b}|${a}`)
+/**
+ * At or above this sigma a player's level is still unsettled; the schedule UI
+ * marks them as "level still being learned" (per-player, like the lefty mark).
+ */
+export const PROVISIONAL_LEVEL_SIGMA = 0.5
 
 const diffRaw = (a: DimensionScores, b: DimensionScores): DimensionScores =>
   Object.fromEntries(DIMENSION_KEYS.map((k) => [k, a[k] - b[k]])) as DimensionScores
@@ -50,9 +52,8 @@ const qualityFrom = ({
  * - rounds/courts numbered 1-based; court players and sitters are full
  *   PlayerInput snapshots (sitters sorted by playerId); teams canonical;
  *   teamSums = team mu sums; courtSpread = max mu − min mu on the court
- * - flags: 'high-sigma-player' (any sigma ≥ HIGH_SIGMA_FLAG_THRESHOLD),
- *   'opponent-rematch' (the court contains an opposing pair meeting ≥ 2nd
- *   time, attributed to the round where the rematch occurs)
+ * - flags: 'opponent-rematch' (the court contains an opposing pair meeting
+ *   ≥ 2nd time, attributed to the round where the rematch occurs)
  * - violations: one entry per double-lefty team (rule 'lefty') and per
  *   repeated partnership occurrence (rule 'partner-repeat'); sit-rule
  *   violations carry court: null
@@ -68,31 +69,20 @@ const qualityFrom = ({
  *   (repeat costs attribute to the round of the repeat; sitoutFairness
  *   repeats the event-level value)
  */
-export function buildScheduleRun({
-  tournamentId,
+/** Job 1: prefix-diff repeat costs, attributing chronological repeats to the round they occur in. */
+function computeRoundCosts({
   schedule,
   players,
   config,
   genderMode,
-  feasibility,
-  baselineCoSitOverlap = 0,
+  baselineCoSitOverlap,
 }: {
-  tournamentId: string
   schedule: Schedule
   players: PlayerInput[]
   config: ResolvedConfig
   genderMode: GenderMode
-  feasibility: FeasibilityResult
-  baselineCoSitOverlap?: number
-}): ScheduleRun {
-  const byId = new Map(players.map((p) => [p.playerId, p]))
-  const get = (id: string): PlayerInput => {
-    const p = byId.get(id)
-    if (!p) throw new Error(`buildScheduleRun: unknown player ${id}`)
-    return p
-  }
-
-  // Prefix diffs attribute chronological repeat costs to the round they occur.
+  baselineCoSitOverlap: number
+}): { overallRaw: DimensionScores; roundRaws: DimensionScores[] } {
   const prefixRaws = schedule.map(
     (_, i) =>
       scoreSchedule({
@@ -105,8 +95,19 @@ export function buildScheduleRun({
   )
   const overallRaw = prefixRaws[prefixRaws.length - 1]
   const roundRaws = prefixRaws.map((raw, i) => (i === 0 ? raw : diffRaw(raw, prefixRaws[i - 1])))
+  return { overallRaw, roundRaws }
+}
 
-  const leftyIds = new Set(players.filter((p) => p.isLeftHanded).map((p) => p.playerId))
+/** Job 2: per-court reports plus the lefty / partner-repeat / consecutive-sit-out violations found while walking the schedule. */
+function buildRoundReports({
+  schedule,
+  get,
+  leftyIds,
+}: {
+  schedule: Schedule
+  get: (id: string) => PlayerInput
+  leftyIds: Set<string>
+}): { rounds: RoundReport[]; violations: Violation[]; sitCounts: Map<string, number> } {
   const partnerCounts = new Map<string, number>()
   const opponentCounts = new Map<string, number>()
   const sitCounts = new Map<string, number>()
@@ -118,8 +119,6 @@ export function buildScheduleRun({
       const team2 = [get(m.team2[0]), get(m.team2[1])] as const
       const four = [...team1, ...team2]
       const flags: string[] = []
-
-      if (four.some((p) => p.sigma >= HIGH_SIGMA_FLAG_THRESHOLD)) flags.push('high-sigma-player')
 
       let rematch = false
       for (const a of m.team1) {
@@ -181,19 +180,45 @@ export function buildScheduleRun({
     return { courts, sitters: [...round.sitters].sort().map(get) }
   })
 
-  const everSitting = [...sitCounts.values()]
-  if (everSitting.length > 0) {
-    const min = sitCounts.size < players.length ? 0 : Math.min(...everSitting)
-    if (Math.max(...everSitting) - min > 1) {
-      violations.push({
-        round: schedule.length,
-        court: null,
-        rule: 'sit-outs',
-        reason: 'sit-out counts differ by more than 1 across the roster',
-      })
-    }
-  }
+  return { rounds, violations, sitCounts }
+}
 
+/** Job 3: post-pass over accumulated sit counts, flagging an uneven roster-wide sit-out spread. */
+function sitCountViolations({
+  sitCounts,
+  rosterSize,
+  totalRounds,
+}: {
+  sitCounts: Map<string, number>
+  rosterSize: number
+  totalRounds: number
+}): Violation[] {
+  const everSitting = [...sitCounts.values()]
+  if (everSitting.length === 0) return []
+  const min = sitCounts.size < rosterSize ? 0 : Math.min(...everSitting)
+  if (Math.max(...everSitting) - min <= 1) return []
+  return [
+    {
+      round: totalRounds,
+      court: null,
+      rule: 'sit-outs',
+      reason: 'sit-out counts differ by more than 1 across the roster',
+    },
+  ]
+}
+
+/** Job 4: assemble the overall + per-round quality dimensions from raw costs. */
+function assembleQuality({
+  schedule,
+  overallRaw,
+  roundRaws,
+  genderMode,
+}: {
+  schedule: Schedule
+  overallRaw: DimensionScores
+  roundRaws: DimensionScores[]
+  genderMode: GenderMode
+}): ScheduleRun['quality'] {
   const anySitters = schedule.some((r) => r.sitters.length > 0)
   const totalMatches = schedule.reduce((s, r) => s + r.matches.length, 0)
   const sitoutFairness = anySitters
@@ -202,17 +227,67 @@ export function buildScheduleRun({
   const isMixed = genderMode === 'mixed'
 
   return {
+    overall: qualityFrom({ raw: overallRaw, matches: totalMatches, sitoutFairness, isMixed }),
+    perRound: roundRaws.map((raw, i) =>
+      qualityFrom({ raw, matches: schedule[i].matches.length, sitoutFairness, isMixed }),
+    ),
+  }
+}
+
+export function buildScheduleRun({
+  tournamentId,
+  schedule,
+  players,
+  config,
+  genderMode,
+  feasibility,
+  baselineCoSitOverlap = 0,
+}: {
+  tournamentId: string
+  schedule: Schedule
+  players: PlayerInput[]
+  config: ResolvedConfig
+  genderMode: GenderMode
+  feasibility: FeasibilityResult
+  baselineCoSitOverlap?: number
+}): ScheduleRun {
+  const byId = new Map(players.map((p) => [p.playerId, p]))
+  const get = (id: string): PlayerInput => {
+    const p = byId.get(id)
+    if (!p) throw new Error(`buildScheduleRun: unknown player ${id}`)
+    return p
+  }
+
+  const { overallRaw, roundRaws } = computeRoundCosts({
+    schedule,
+    players,
+    config,
+    genderMode,
+    baselineCoSitOverlap,
+  })
+
+  const leftyIds = leftyIdSet(players)
+  const {
+    rounds,
+    violations: roundViolations,
+    sitCounts,
+  } = buildRoundReports({
+    schedule,
+    get,
+    leftyIds,
+  })
+  const violations = [
+    ...roundViolations,
+    ...sitCountViolations({ sitCounts, rosterSize: players.length, totalRounds: schedule.length }),
+  ]
+
+  return {
     tournamentId,
     config,
     seed: config.seed,
     feasibility: feasibility.entries,
     rounds,
-    quality: {
-      overall: qualityFrom({ raw: overallRaw, matches: totalMatches, sitoutFairness, isMixed }),
-      perRound: roundRaws.map((raw, i) =>
-        qualityFrom({ raw, matches: schedule[i].matches.length, sitoutFairness, isMixed }),
-      ),
-    },
+    quality: assembleQuality({ schedule, overallRaw, roundRaws, genderMode }),
     violations,
   }
 }
