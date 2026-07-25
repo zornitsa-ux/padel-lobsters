@@ -13,7 +13,7 @@ export async function fetchPlayers(): Promise<Player[]> {
   const { data, error } = await supabase
     .from('players_public')
     .select(
-      'id, name, status, gender, is_left_handed, preferred_position, country, tagline, tagline_label, playtomic_level, adjustment, adjusted_level, avatar_url, created_at, birthday_md, birthday_month, birthday_day, pin_changes, learned_rating, learned_rd, learned_matches_count',
+      'id, name, status, gender, is_left_handed, preferred_position, country, tagline, tagline_label, playtomic_level, avatar_url, created_at, birthday_md, birthday_month, birthday_day, pin_changes',
     )
     .order('name')
   if (error) throw error
@@ -46,7 +46,6 @@ export async function addPlayer(data: any) {
     phone: data.phone || '',
     notes: data.notes || '',
     playtomic_level: parseFloat(data.playtomicLevel) || 0,
-    adjustment: parseFloat(data.adjustment) || 0,
     playtomic_username: data.playtomicUsername || '',
     gender: data.gender || '',
     status: data.status || 'active',
@@ -97,7 +96,6 @@ export async function updatePlayer(id: any, data: any, role: string) {
   setIf(data.preferredPosition !== undefined, 'preferred_position', data.preferredPosition ?? '')
   setIf(data.tagline !== undefined, 'tagline', data.tagline ?? '')
   setIf(data.taglineLabel !== undefined, 'tagline_label', data.taglineLabel ?? '')
-  setIf(data.adjustment !== undefined, 'adjustment', String(parseFloat(data.adjustment) || 0))
   // Admin-only fields
   if (role === 'admin') {
     setIf(data.notes !== undefined, 'notes', data.notes ?? '')

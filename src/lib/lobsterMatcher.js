@@ -62,7 +62,7 @@ const COHORT_HALF_LIFE_DAYS = 60
 /**
  * Generate a Lobster Matching schedule.
  *
- * @param {Array} players          Registered players (must include id, adjustedLevel,
+ * @param {Array} players          Registered players (must include id, playtomicLevel,
  *                                 gender, isLeftHanded).
  * @param {number} numCourts       Number of courts available.
  * @param {string} genderMode      'mixed' | 'open' | 'women' | 'men'
@@ -118,7 +118,7 @@ export function generateSchedule(players, numCourts, numRounds, genderMode, opts
 function buildContext(players, numCourts, numRounds, genderMode, pastMatches) {
   // Sort by level (descending). Used for seeding only; the optimiser ignores
   // this order entirely once seeding is done.
-  const sorted = [...players].sort((a, b) => (b.adjustedLevel || 0) - (a.adjustedLevel || 0))
+  const sorted = [...players].sort((a, b) => (b.playtomicLevel || 0) - (a.playtomicLevel || 0))
   const capacity = numCourts * 4
 
   // Roster: how many sit per round, and which roster lines play.
@@ -234,7 +234,7 @@ function buildContext(players, numCourts, numRounds, genderMode, pastMatches) {
     genderMode,
     isFemale: playerByIdx.map((p) => p.gender === 'female'),
     isLefty: playerByIdx.map((p) => p.isLeftHanded === true),
-    level: playerByIdx.map((p) => p.adjustedLevel || 0),
+    level: playerByIdx.map((p) => p.playtomicLevel || 0),
     unavoidableClashesPerRound,
   }
 }

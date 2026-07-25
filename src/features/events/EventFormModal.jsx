@@ -73,34 +73,19 @@ export default function EventFormModal({
           </div>
         </div>
 
-        {/* Max players & Format */}
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="label">Max Players</label>
-            <input
-              type="number"
-              min="4"
-              max="64"
-              step="4"
-              className="input"
-              value={form.maxPlayers}
-              onChange={(e) => setForm((f) => ({ ...f, maxPlayers: e.target.value }))}
-            />
-          </div>
-          <div>
-            <label className="label">Format</label>
-            <select
-              className="input"
-              value={form.format}
-              onChange={(e) => setForm((f) => ({ ...f, format: e.target.value }))}
-            >
-              <option value="americano">Americano</option>
-              <option value="mexicano">Mexicano</option>
-              <option value="lobster_matching">Lobster Matching</option>
-              <option value="roundrobin">Round Robin</option>
-              <option value="knockout">Knockout</option>
-            </select>
-          </div>
+        {/* Max players — every event is Lobster Matching (D-020), so there is
+            no format picker: the matcher is the only generator. */}
+        <div>
+          <label className="label">Max Players</label>
+          <input
+            type="number"
+            min="4"
+            max="64"
+            step="4"
+            className="input"
+            value={form.maxPlayers}
+            onChange={(e) => setForm((f) => ({ ...f, maxPlayers: e.target.value }))}
+          />
         </div>
 
         {/* Duration */}

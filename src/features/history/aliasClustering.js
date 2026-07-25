@@ -53,7 +53,7 @@ export function buildPlayerJourney(canonicalName, aliases) {
     }
   })
   // Compute ranks
-  TOURNAMENTS.forEach((t, ti) => {
+  TOURNAMENTS.forEach((t) => {
     const sorted = t.players ? [...t.players].sort((a, b) => b.total - a.total) : []
     sorted.forEach((p, idx) => {
       if (matches.has(normalize(p.name))) {

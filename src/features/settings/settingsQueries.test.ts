@@ -121,3 +121,35 @@ describe('saveSettings', () => {
     expect(console.error).toHaveBeenCalled()
   })
 })
+
+// ── Matchmaking V2 rollout flag removed (D-028) ──────────────────────────
+
+describe('the matchmaking rollout flag is gone from the settings slice', () => {
+  it('does not request matchmaking_v2_enabled', async () => {
+    await fetchSettings()
+
+    const columns = mockSelect.mock.calls[0][0] as string
+    expect(columns).toContain('group_name')
+    expect(columns).not.toContain('matchmaking_v2_enabled')
+  })
+
+  it('does not normalise a flag onto the settings object', async () => {
+    mockSingle.mockResolvedValue({
+      data: { id: 1, group_name: 'Lobsters', matchmaking_v2_enabled: true },
+      error: null,
+    })
+
+    // .passthrough() keeps the raw column, but no camelCase flag is derived —
+    // nothing in the app reads one any more.
+    expect(await fetchSettings()).not.toHaveProperty('matchmakingV2Enabled')
+  })
+
+  it('never writes the flag, even if a stale caller passes it', async () => {
+    await saveSettings({
+      groupName: 'Lobsters',
+      matchmakingV2Enabled: true,
+    } as Parameters<typeof saveSettings>[0])
+
+    expect(mockUpsert.mock.calls[0][0]).not.toHaveProperty('matchmaking_v2_enabled')
+  })
+})

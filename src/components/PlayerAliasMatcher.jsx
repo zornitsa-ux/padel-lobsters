@@ -333,7 +333,7 @@ function PlayerPicker({ historicalName, players, onPick, onClose }) {
             >
               <span className="text-sm font-semibold text-gray-800 truncate">{p.name}</span>
               <span className="text-[11px] text-gray-400">
-                Lv {(p.adjustedLevel || p.adjusted_level || 0).toFixed(1)}
+                Lv {(p.playtomicLevel || p.playtomic_level || 0).toFixed(1)}
               </span>
             </button>
           ))}

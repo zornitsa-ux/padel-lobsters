@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react'
 import { ChevronDown, ChevronUp, Gamepad2, Trophy } from 'lucide-react'
+import { useApp } from '../../context/useApp'
 import { useTournaments } from '../events/useTournaments'
 import { usePlayers } from '../players/usePlayers'
 import { useAllMatches } from '../events/useMatches'
@@ -10,11 +11,14 @@ import { loadAliases, resolveName } from './aliasStorage'
 import { smartSort, buildDisplayNames } from './historicalStats'
 import { medalColor, medalStyleH } from './medals'
 import { groupOscarResultsByCategory } from '../oscars/oscarResults'
+import { resultsWithheld } from '../events/resultsPhase'
 import Podium from './Podium'
 import { TabSwitcher } from '../../components/ui/TabSwitcher'
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function History({ onNavigate }) {
+  const { session } = useApp()
+  const isAdmin = session?.user?.app_metadata?.role === 'admin'
   const { data: tournaments = [] } = useTournaments()
   const { data: players = [] } = usePlayers()
   const { data: allMatchesData = [] } = useAllMatches()
@@ -261,11 +265,14 @@ export default function History({ onNavigate }) {
                 const gameResults = dbGameResults[t.id] || []
                 const hasGameResults = gameResults.length > 0
                 const hasMatches = tMatches.length > 0
+                // D-029: match scores stay visible (players already saw their own
+                // live), but the podium/final-ranking is embargoed until revealed.
+                const withheld = resultsWithheld({ tournament: t, isAdmin })
 
                 return (
                   <div className="mt-4 space-y-3">
                     {/* Podium */}
-                    {top3.length >= 2 && (
+                    {!withheld && top3.length >= 2 && (
                       <div className="flex items-end justify-center gap-2 py-2">
                         <div className="flex flex-col items-center gap-1 flex-1">
                           <span className="text-xl">🥈</span>
@@ -328,7 +335,12 @@ export default function History({ onNavigate }) {
                     />
 
                     {/* ── Full Standings ── */}
-                    {dbTab === 'standings' && rankings.length > 0 && (
+                    {dbTab === 'standings' && withheld && (
+                      <p className="text-sm text-gray-400 text-center py-4">
+                        Results pending — the final ranking will be revealed soon.
+                      </p>
+                    )}
+                    {dbTab === 'standings' && !withheld && rankings.length > 0 && (
                       <div className="overflow-x-auto">
                         <table className="w-full text-xs">
                           <thead>
@@ -364,7 +376,7 @@ export default function History({ onNavigate }) {
                         </table>
                       </div>
                     )}
-                    {dbTab === 'standings' && rankings.length === 0 && (
+                    {dbTab === 'standings' && !withheld && rankings.length === 0 && (
                       <p className="text-sm text-gray-400 text-center py-2">
                         No match data available
                       </p>

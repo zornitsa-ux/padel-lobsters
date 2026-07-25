@@ -54,7 +54,7 @@ export default function RegisteredSection({
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm truncate">{displayName(p)}</p>
                     <p className="text-xs text-gray-400">
-                      Level {(p.adjustedLevel || 0).toFixed(1)}
+                      Level {(p.playtomicLevel || 0).toFixed(1)}
                     </p>
                   </div>
                   <PaymentStatusBadge paymentStatus={reg.paymentStatus} />

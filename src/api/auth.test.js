@@ -20,7 +20,7 @@ vi.mock('../lib/deviceId', () => ({
 }))
 
 import { supabase } from '../supabase'
-import { sendMagicLink, requestMyEmailChange, bootstrapDeviceSession } from './auth'
+import { sendMagicLink, requestMyEmailChange, bootstrapDeviceSession, selfSignup } from './auth'
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -163,5 +163,34 @@ describe('bootstrapDeviceSession', () => {
     supabase.rpc.mockRejectedValue(new Error('rpc blew up'))
     await expect(bootstrapDeviceSession()).resolves.toBeNull()
     expect(supabase.auth.refreshSession).not.toHaveBeenCalled()
+  })
+})
+
+// ----------------------------------------------------------------------
+// selfSignup
+// ----------------------------------------------------------------------
+// D-028: the public signup form no longer collects a Playtomic adjustment,
+// so the RPC payload must not carry one. self_signup_player still has the
+// column and coalesces a missing key to 0, which lands adjusted_level on
+// playtomic_level — but only as long as we stop sending a value.
+describe('selfSignup payload', () => {
+  it('sends playtomic_level and no adjustment', async () => {
+    supabase.rpc.mockResolvedValue({
+      data: [{ player_id: 'p1', pin: '1234', was_existing: false }],
+      error: null,
+    })
+
+    await selfSignup({
+      name: 'Ada Lovelace',
+      email: 'ada@example.com',
+      playtomicLevel: '3.5',
+      adjustment: '0.5',
+    })
+
+    const [rpcName, args] = supabase.rpc.mock.calls[0]
+    expect(rpcName).toBe('self_signup_player')
+    expect(args.input_payload.playtomic_level).toBe('3.5')
+    expect(args.input_payload).not.toHaveProperty('adjustment')
+    expect(args.input_payload).not.toHaveProperty('adjusted_level')
   })
 })

@@ -207,7 +207,6 @@ export async function selfSignup(data) {
     phone: (data.phone || '').trim(),
     notes: data.notes || '',
     playtomic_level: String(parseFloat(data.playtomicLevel) || 0),
-    adjustment: String(parseFloat(data.adjustment) || 0),
     playtomic_username: data.playtomicUsername || '',
     gender: data.gender || '',
     is_left_handed: String(!!data.isLeftHanded),

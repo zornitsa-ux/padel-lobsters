@@ -85,6 +85,7 @@ export async function updateTournament(id: string, data: any): Promise<void> {
   if (data.notes !== undefined) payload.notes = data.notes
   if (data.status !== undefined) payload.status = data.status
   if (data.completedAt !== undefined) payload.completed_at = data.completedAt
+  if (data.resultsSharedAt !== undefined) payload.results_shared_at = data.resultsSharedAt
   const { error } = await supabase.from('tournaments').update(payload).eq('id', id)
   if (error) {
     console.error('updateTournament error:', error)

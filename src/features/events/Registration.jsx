@@ -111,7 +111,7 @@ export default function Registration({ tournament, onNavigate }) {
       location: t.location || '',
       maxPlayers: String(t.maxPlayers || 16),
       duration: t.duration || 90,
-      format: t.format || 'americano',
+      format: t.format || 'lobster_matching',
       genderMode: t.genderMode || 'mixed',
       courtBookingMode: t.courtBookingMode || 'admin_all',
       courts: t.courts?.length

@@ -10,7 +10,17 @@ const medalColor = (i) => {
 }
 const medalStyle = (i) => (i === 2 ? { color: '#CD7F32' } : {})
 
-export default function ScoresRankingTab({ standings, matches }) {
+export default function ScoresRankingTab({ standings, matches, withheld = false }) {
+  if (withheld) {
+    return (
+      <div className="card py-8 text-center text-gray-400">
+        <Trophy size={36} className="mx-auto mb-2 opacity-30" />
+        <p className="text-sm font-semibold text-gray-500">Results pending</p>
+        <p className="text-xs mt-1">The final ranking will be revealed soon — check back!</p>
+      </div>
+    )
+  }
+
   return (
     <>
       {matches.length === 0 && (

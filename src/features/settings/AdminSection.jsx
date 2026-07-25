@@ -1,14 +1,5 @@
 import React from 'react'
-import {
-  MessageCircle,
-  Save,
-  Info,
-  Lightbulb,
-  Plus,
-  Trash2,
-  RotateCcw,
-  TrendingUp,
-} from 'lucide-react'
+import { MessageCircle, Save, Info, Lightbulb, Plus, Trash2, RotateCcw } from 'lucide-react'
 import AdminSecurityPanels from '../../components/AdminSecurityPanels'
 
 export default function AdminSection({
@@ -17,10 +8,6 @@ export default function AdminSection({
   saving,
   saved,
   handleSave,
-  // Glicko-2 recompute
-  recomputing,
-  recomputeResult,
-  handleRecomputeRatings,
   // Tips
   activeTips,
   isCustom,
@@ -90,34 +77,6 @@ export default function AdminSection({
           These are only visible when isAdmin is true and only mount
           their internal RPCs once visible — no admin-only network
           traffic for non-admin users. */}
-      <div className="card space-y-3">
-        <h3 className="font-bold text-gray-700 text-sm flex items-center gap-2">
-          <TrendingUp size={15} className="text-lob-teal" /> Lobster Score (Glicko-2)
-        </h3>
-        <p className="text-xs text-gray-500">
-          Rebuilds shadow ratings from every known tournament (history file + DB) in chronological
-          order. Re-run after registering a new historical player or completing a tournament.
-        </p>
-        <button
-          onClick={handleRecomputeRatings}
-          disabled={recomputing}
-          className="bg-lob-teal text-white text-sm font-semibold px-4 py-2 rounded-xl active:scale-95 transition-all disabled:opacity-60"
-        >
-          {recomputing ? 'Recomputing…' : 'Recompute ratings'}
-        </button>
-        {recomputeResult && recomputeResult.ok && (
-          <p className="text-xs text-green-600">
-            ✓ Updated {recomputeResult.playersUpdated} players from{' '}
-            {recomputeResult.eventsProcessed} events.
-            {recomputeResult.droppedMatches > 0 &&
-              ` (${recomputeResult.droppedMatches} historical matches skipped — unmatched names)`}
-          </p>
-        )}
-        {recomputeResult && !recomputeResult.ok && (
-          <p className="text-xs text-red-600">✗ {recomputeResult.message}</p>
-        )}
-      </div>
-
       <AdminSecurityPanels />
 
       {/* Padel Tips */}

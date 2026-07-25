@@ -5,7 +5,6 @@ import { useMyProfile, usePlayerActions } from '../players/usePlayers'
 import { supabase } from '../../supabase'
 import { isE164 } from '../../lib/whatsapp'
 import DEFAULT_TIPS from '../../data/padelTips'
-import { recomputeAllRatings } from '../../lib/ratingsRecompute'
 import { processAvatar } from '../../lib/processAvatar'
 import { LOBBY_PROMPTS } from './settingsHelpers'
 import AccountSection from './AccountSection'
@@ -37,22 +36,6 @@ export default function Settings() {
   const [signInError, setSignInError] = useState('')
   const [signingIn, setSigningIn] = useState(false)
 
-  // ── Glicko-2 ratings recompute (admin) ────────────────────────────
-  const [recomputing, setRecomputing] = useState(false)
-  const [recomputeResult, setRecomputeResult] = useState(null)
-  const handleRecomputeRatings = async () => {
-    if (recomputing) return
-    setRecomputing(true)
-    setRecomputeResult(null)
-    try {
-      const result = await recomputeAllRatings(supabase)
-      setRecomputeResult({ ok: true, ...result })
-    } catch (e) {
-      setRecomputeResult({ ok: false, message: e.message || String(e) })
-    } finally {
-      setRecomputing(false)
-    }
-  }
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [tips, setTips] = useState(null) // null = use defaults
@@ -69,7 +52,6 @@ export default function Settings() {
     isLeftHanded: false,
     preferredPosition: '',
     playtomicLevel: '',
-    adjustment: '0',
     tagline: '',
     email: '',
     phone: '',
@@ -108,7 +90,6 @@ export default function Settings() {
         isLeftHanded: myPlayer.isLeftHanded || myPlayer.is_left_handed || false,
         preferredPosition: myPlayer.preferredPosition || myPlayer.preferred_position || '',
         playtomicLevel: myPlayer.playtomicLevel > 0 ? String(myPlayer.playtomicLevel) : '',
-        adjustment: String(myPlayer.adjustment || '0'),
         tagline: myPlayer.tagline || '',
         email: myPlayer.email || '',
         phone: myPlayer.phone || '',
@@ -193,7 +174,6 @@ export default function Settings() {
         isLeftHanded: profileForm.isLeftHanded,
         preferredPosition: profileForm.preferredPosition,
         playtomicLevel: profileForm.playtomicLevel,
-        adjustment: profileForm.adjustment,
         tagline: profileForm.tagline,
         taglineLabel: LOBBY_PROMPTS[activePrompt].label,
         // email intentionally not included — self-service email change
@@ -379,9 +359,6 @@ export default function Settings() {
             saving={saving}
             saved={saved}
             handleSave={handleSave}
-            recomputing={recomputing}
-            recomputeResult={recomputeResult}
-            handleRecomputeRatings={handleRecomputeRatings}
             activeTips={activeTips}
             isCustom={isCustom}
             tipsExpanded={tipsExpanded}

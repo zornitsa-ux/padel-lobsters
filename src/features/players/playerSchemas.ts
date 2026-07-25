@@ -21,13 +21,8 @@ export const playerPublicRowSchema = z
     tagline: nullableString,
     tagline_label: nullableString,
     playtomic_level: nullableNumber,
-    adjustment: nullableNumber,
-    adjusted_level: nullableNumber,
     avatar_url: nullableString,
     playtomic_username: nullableString,
-    learned_rating: nullableNumber,
-    learned_rd: nullableNumber,
-    learned_matches_count: z.coerce.number().nullable().optional(),
   })
   .passthrough()
 

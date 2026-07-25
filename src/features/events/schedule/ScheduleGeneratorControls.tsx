@@ -1,6 +1,7 @@
 import React from 'react'
 import { Download, Shuffle } from 'lucide-react'
 import type { SchedulePlayer, ScheduleRound } from './types'
+import { roundsForDuration } from './utils'
 
 type Props = {
   generated: unknown
@@ -12,8 +13,6 @@ type Props = {
   numCourts: number
   rounds: number
   setRounds: (value: number) => void
-  useLobsterScore: boolean
-  setUseLobsterScore: (value: boolean) => void
   onGenerate: () => void
   generating: boolean
   savedRounds: ScheduleRound[]
@@ -32,8 +31,6 @@ export default function ScheduleGeneratorControls({
   numCourts,
   rounds,
   setRounds,
-  useLobsterScore,
-  setUseLobsterScore,
   onGenerate,
   generating,
   savedRounds,
@@ -63,7 +60,7 @@ export default function ScheduleGeneratorControls({
         )}
         {isLobster && (
           <span className="text-xs bg-lob-cream text-lob-teal px-2 py-0.5 rounded-full font-medium">
-            🦞 {(tournamentDuration || 90) >= 120 ? 6 : 5} rounds · partners rotate
+            🦞 {roundsForDuration(tournamentDuration)} rounds · partners rotate
           </span>
         )}
       </div>
@@ -86,22 +83,6 @@ export default function ScheduleGeneratorControls({
           </div>
         </div>
       )}
-
-      <label className="flex items-start gap-2 p-3 rounded-xl bg-lob-cream/40 border border-lob-teal/20 cursor-pointer active:scale-[0.99] transition-transform">
-        <input
-          type="checkbox"
-          checked={useLobsterScore}
-          onChange={(event) => setUseLobsterScore(event.target.checked)}
-          className="mt-0.5 w-4 h-4 accent-lob-teal"
-        />
-        <span className="text-xs text-gray-700 leading-snug">
-          <span className="font-semibold text-lob-teal">Use Lobster Score for matching</span>
-          <span className="block text-[11px] text-gray-500 mt-0.5">
-            When on, the matcher uses Glicko-2 shadow ratings instead of Playtomic-adjusted levels.
-            Players without a Lobster Score yet fall back to their adjusted level.
-          </span>
-        </span>
-      </label>
 
       <button
         onClick={onGenerate}

@@ -13,7 +13,7 @@ export async function listMyPendingDevices() {
       return []
     }
     return Array.isArray(data) ? data : []
-  } catch (e) {
+  } catch {
     return []
   }
 }
@@ -32,7 +32,7 @@ export async function approveMyDevice(targetDeviceId) {
       return { ok: false, reason: 'error' }
     }
     return { ok: data === 'ok', reason: data }
-  } catch (e) {
+  } catch {
     return { ok: false, reason: 'error' }
   }
 }
@@ -52,7 +52,7 @@ export async function rejectMyDevice(targetDeviceId) {
       return { ok: false, reason: 'error' }
     }
     return { ok: data === 'ok', reason: data }
-  } catch (e) {
+  } catch {
     return { ok: false, reason: 'error' }
   }
 }
@@ -66,7 +66,7 @@ export async function adminListPendingDevices() {
       return []
     }
     return Array.isArray(data) ? data : []
-  } catch (e) {
+  } catch {
     return []
   }
 }
@@ -82,7 +82,7 @@ export async function adminListSecurityEvents(limit = 100) {
       return []
     }
     return Array.isArray(data) ? data : []
-  } catch (e) {
+  } catch {
     return []
   }
 }
@@ -99,7 +99,7 @@ export async function adminApproveDevice(targetPlayerId, targetDeviceId) {
       return { ok: false }
     }
     return { ok: data === 'ok', reason: data }
-  } catch (e) {
+  } catch {
     return { ok: false }
   }
 }
@@ -117,7 +117,7 @@ export async function adminDenyDevice(targetPlayerId, targetDeviceId) {
       return { ok: false }
     }
     return { ok: data === 'ok', reason: data }
-  } catch (e) {
+  } catch {
     return { ok: false }
   }
 }
@@ -137,7 +137,7 @@ export async function adminUnlockPlayer(targetPlayerId, targetDeviceId = null) {
       return { ok: false }
     }
     return { ok: data === 'ok', reason: data }
-  } catch (e) {
+  } catch {
     return { ok: false }
   }
 }

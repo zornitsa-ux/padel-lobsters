@@ -51,7 +51,7 @@ export function corpReview(
   tournaments = [],
   aliasMap = {},
 ) {
-  const lvl = player.adjustedLevel || 0
+  const lvl = player.playtomicLevel || 0
   const name = (player.name || 'Employee').split(' ')[0]
   const pid = player.id
 
@@ -130,8 +130,6 @@ export function corpReview(
   // what's been logged inside the app.
   const historicalNew = historical.filter((h) => !dbAttendedIds.has(String(h.id)))
   const tournamentsPlayed = dbAttendedIds.size + historicalNew.length
-  // totalTournaments counts every past event we know about (DB + hardcoded history).
-  const totalTournaments = pastTournaments.length + TOURNAMENTS.length
   const eventsAttended = tournamentsPlayed // alias for clarity below
 
   // ── Mixed-only attendance (for Ironman / Ghost) ─────────────────────────
@@ -168,7 +166,6 @@ export function corpReview(
     .map((h) => ({ id: h.id, date: h.date, rank: h.rank, total: h.players }))
   const allTournamentRanks = [...dbTournamentRanks, ...historicalRanks]
   const lastPlaceCount = allTournamentRanks.filter((r) => r.rank === r.total).length
-  const podiumCount = allTournamentRanks.filter((r) => r.rank <= 3).length
 
   // "Most recent tournament rank" — prefer DB, fall back to historical.
   let lastTournamentRank = dbTournamentRanks[0]?.rank ?? null

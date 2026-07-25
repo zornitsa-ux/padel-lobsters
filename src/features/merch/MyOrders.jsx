@@ -13,8 +13,6 @@ export default function MyOrders({ myOrders, items }) {
           .map((o) => {
             const item = items.find((i) => i.id === o.merch_item_id)
             const status = o.status || 'ordered'
-            const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.ordered
-            const StatusIcon = cfg.icon
             return (
               <div
                 key={o.id}

@@ -129,7 +129,7 @@ export function buildScheduleCsv(args: {
 
   const header = [
     `# ${tournament.name || 'Padel Lobsters'} — schedule ${isPreview ? 'preview' : 'saved'}`,
-    `# Format: ${tournament.format || 'americano'} · Courts: ${numCourts} · Registered: ${registeredCount}`,
+    `# Format: ${tournament.format || 'lobster_matching'} · Courts: ${numCourts} · Registered: ${registeredCount}`,
     `# Generated at ${new Date().toLocaleString()}`,
     '',
   ].join('\r\n')
@@ -150,4 +150,11 @@ export function downloadCsvFile(filename: string, content: string): void {
   anchor.click()
   document.body.removeChild(anchor)
   setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
+
+// Lobster round count derives from event duration. Single source for the rule —
+// it drives both the generated schedule and the round-count chip that advertises
+// it, which previously computed it independently and could drift.
+export function roundsForDuration(duration: number | null | undefined): number {
+  return (duration || 90) >= 120 ? 6 : 5
 }

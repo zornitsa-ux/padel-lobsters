@@ -3,7 +3,9 @@ import { supabase } from '../supabase'
 import * as authApi from '../api/auth'
 
 export default function useAuth() {
-  const [session, setSession] = useState(null)
+  const [session, setSession] = useState(
+    /** @type {import('@supabase/supabase-js').Session | null} */ (null),
+  )
   const roleRef = useRef('guest')
 
   useEffect(() => {

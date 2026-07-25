@@ -3,7 +3,7 @@ import { clearDeviceId, getDeviceId, getUserAgentSummary } from './deviceId'
 
 describe('deviceId helpers', () => {
   beforeEach(() => {
-    let store: Record<string, string> = {}
+    const store: Record<string, string> = {}
     const localStorageMock = {
       getItem: vi.fn((k: string) => store[k] ?? null),
       setItem: vi.fn((k: string, v: string) => {

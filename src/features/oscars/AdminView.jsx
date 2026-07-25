@@ -14,7 +14,6 @@ import ErrorBanner from './ErrorBanner'
    ════════════════════════════════════════════════════════════════════════════ */
 export default function AdminView({
   phase,
-  tournament,
   session,
   categories,
   regPlayers,
@@ -24,7 +23,6 @@ export default function AdminView({
   busy,
   error,
   onDismissError,
-  onBack,
   onStart,
   onEnd,
   onShare,
