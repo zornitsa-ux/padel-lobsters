@@ -11,13 +11,13 @@ holds it. This file carries current state, remaining work, and the protocol.
 
 ## 1. Status
 
-| Phase           | Goal                         | Gate to next                           | State                            |
-| --------------- | ---------------------------- | -------------------------------------- | -------------------------------- |
-| 0 Discovery     | Audit data + wiring          | findings recorded                      | done                             |
-| 1 Rating engine | Pure domain + calibration    | backtest ≥ Glicko-2 parity             | done (gate met, D-010)           |
-| 2 Matcher       | Pure domain + shadow mode    | shadow report reviewed on real rosters | done (gate met, D-015)           |
-| 3 Integration   | Schema, services, admin UI   | V2 generates a real event              | done                             |
-| 4 Cutover       | Ratings live, legacy deleted | two clean events on V2                 | in progress (M4.1 awaiting push) |
+| Phase           | Goal                         | Gate to next                           | State                                   |
+| --------------- | ---------------------------- | -------------------------------------- | --------------------------------------- |
+| 0 Discovery     | Audit data + wiring          | findings recorded                      | done                                    |
+| 1 Rating engine | Pure domain + calibration    | backtest ≥ Glicko-2 parity             | done (gate met, D-010)                  |
+| 2 Matcher       | Pure domain + shadow mode    | shadow report reviewed on real rosters | done (gate met, D-015)                  |
+| 3 Integration   | Schema, services, admin UI   | V2 generates a real event              | done                                    |
+| 4 Cutover       | Ratings live, legacy deleted | two clean events on V2                 | in progress (M4.1 live; M4.2 observing) |
 
 **What exists.** V2 is the unconditional generator for every event an admin
 opens (D-028, D-030) — `format` no longer gates anything. The pure engine lives
@@ -40,17 +40,20 @@ warnings), **722 pass / 3 skip**, build clean, 9 goldens byte-identical.
   section, the unrelated pre-existing `settings` write-grant fix — settings
   writes had 403'd in production since 2026-05-18 (`20260518000008` revoked
   INSERT/UPDATE and never re-granted); that's now repaired too.
-- **`20260725000001_mm_seed_ratings.sql` is written, verified, and NOT pushed.**
-  It seeds **65 players** from the production-only replay (D-031 write
-  mechanism, D-032 source). Production is still all-null, so until it lands
-  everyone enters their first V2 event at the `playtomic_level` prior and the
-  admin drawer's "Learned level" row stays hidden. **The push is the owner's
-  manual step** (`npx supabase db push` from `main`, §5). It is guarded to
-  no-op on any player whose `mm_rating` is already set, so a Finish landing
-  before the push always wins — but the seed goes stale as events complete, so
-  **regenerate the migration (re-run the harness against a fresh snapshot) if a
-  real event is finished before pushing.** LOBS #9 is 2026-07-26 with 40
-  registered, which is what the push is racing.
+- **Migration `20260725000001_mm_seed_ratings.sql` is live in production**
+  (pushed 2026-07-25 from `main`, after PR #19 merged). **65 players carry a
+  learned level**, seeded from the production-only replay (D-031 write
+  mechanism, D-032 source). Verified post-push against the engine's own output:
+  all 65 mu **and** sigma match to 1e-6, 65 `kind = 'seed'` provenance rows,
+  flagged review queue empty, `mm_rating` spans 0.517–3.866 and `mm_sigma`
+  0.263–0.462. Production advisors unchanged (110 findings, all pre-existing
+  categories — the migration is DML only, so it adds no DDL surface).
+  Pre-flight confirmed the seed was not stale: still the same 4 completed
+  tournaments and 174 scored matches as when it was generated.
+- **Coverage going into LOBS #9** (2026-07-26, the first event to run on seeded
+  ratings): **32 of 40** registrants have a learned level, 8 enter on the raw
+  playtomic prior. No registrant is above the 0.5 provisional-level mark, so no
+  📏 marks should appear on the schedule. LOBS #10: 24 of 29.
 - **9 players deliberately take no seed** (D-032) and enter their next event on
   the raw playtomic prior; 3 of them are registered for LOBS #9 (`5c666c28`,
   `ab780f88`, `c81f46d1`). Expected, not a defect — they pick
@@ -187,29 +190,42 @@ and in the code each task produced.
 
 ### Phase 4 — Cutover & cleanup
 
-- `[~]` **M4.1 — Seed ratings** (C, S) — built and dry-run reviewed; **only the
-  production push is left**, and it is the owner's manual step. The pure replay
-  is `domain/rating/seed.ts` (15 acceptance tests); `seed.harness.test.ts`
-  (env-gated on `MM_SEED_FIXTURE`, writes nothing to any DB) generates both the
-  owner-facing dry run `seed-ratings.md` and the migration. Result: **65 of 105
-  players seeded across 4 production events** (174 matches; History excluded per
-  D-032), max shift from playtomic 0.48 levels, sigma 0.26–0.46, 4 flagged
-  player-events (all `over_cap`). Cross-check against V1: **88% direction
-  agreement** (46/52); the raw distance is large (median 0.41) because uncapped
-  Glicko-2 swings far harder than V2's ±0.30/event — that is the model change
-  D-010 made on purpose, not an error. Write mechanism is D-031; match source is
-  D-032.
+- `[x]` **M4.1 — Seed ratings** (C, S) — **live in production 2026-07-25.** The
+  pure replay is `domain/rating/seed.ts` (15 acceptance tests);
+  `seed.harness.test.ts` (env-gated on `MM_SEED_FIXTURE`, writes to no DB)
+  generates both the dry run `seed-ratings.md` and the migration. Result:
+  **65 of 105 players seeded across 4 production events** (174 matches; History
+  excluded per D-032), max shift from playtomic 0.48 levels, sigma 0.26–0.46,
+  4 flagged player-events (all `over_cap`). Cross-check against V1: **88%
+  direction agreement** (46/52); the raw distance is large (median 0.41) because
+  uncapped Glicko-2 swings far harder than V2's ±0.30/event — that is the model
+  change D-010 made on purpose, not an error. Write mechanism is D-031; match
+  source is D-032. PR #19.
   **Acceptance:** every player with **production** match history has an `mm_*`
-  value ✅ (65/65 after the push — the 9 History-only players are excluded by
-  D-032, not missed); the admin drawer's learned-level row renders for them ⏳
-  (needs the push, then an owner check); outlier list reviewed ✅ (owner,
-  2026-07-25, and it drove D-032).
-- `[~]` **M4.2 — Live** (C, —) — two-event observation window. There is no flag
-  to enable (D-028); this is watching two real events and capturing owner
-  feedback. Watch specifically: schedule quality against the shadow-report
-  expectation, the flagged-review queue's volume and whether the D-027
-  recommendation thresholds (`STRONG_SURPRISE` 0.22 / `WEAK_SURPRISE` 0.08) are
-  right at real volume, and the Compare/Fix overlays on a phone.
+  value ✅ (65/65 in production, values verified against the engine's own output
+  to 1e-6 — the 9 History-only players are excluded by D-032, not missed);
+  outlier list reviewed ✅ (owner, 2026-07-25, and it drove D-032); the admin
+  drawer's learned-level row renders for them — **the one item not yet
+  confirmed**, it needs eyes on a real device and is folded into M4.2's
+  walkthrough below rather than left dangling here.
+- `[~]` **M4.2 — Live** (C, —) — two-event observation window, and **LOBS #9
+  (2026-07-26) is the first event generated from seeded ratings**. There is no
+  flag to enable (D-028); this is watching two real events and capturing owner
+  feedback. Watch specifically:
+  - **The M4.1 acceptance item still open:** open the admin drawer on a player
+    with a learned level and confirm the "Learned level" row renders
+    (`3.90 (+0.40 vs Playtomic) ±0.45` shape, D-028).
+  - Schedule quality against the shadow-report expectation — now with real
+    priors rather than raw playtomic levels for 32 of 40 registrants, which is
+    the first time banding has had learned input.
+  - The flagged-review queue's volume and whether the D-027 recommendation
+    thresholds (`STRONG_SURPRISE` 0.22 / `WEAK_SURPRISE` 0.08) are right at real
+    volume. Baseline for calibration: the historical replay fired only 4
+    `over_cap` flags across 4 events (~1/event).
+  - Whether the 8 unseeded registrants (playtomic prior, σ 0.7) get visibly
+    mis-banded — they are the roster's genuine unknowns, and the sit-out/banding
+    behaviour around them is untested with a mixed-confidence field.
+  - The Compare/Fix overlays on a phone.
 - `[~]` **M4.3 — Delete legacy** (W, M) — the UI half is done (D-028): no
   user-facing surface reaches a V1 concept. What remains is code + schema
   deletion.
