@@ -35,13 +35,11 @@ warnings), **707 pass / 2 skip**, build clean, 9 goldens byte-identical.
 
 ### Open items
 
-- **Migration `20260713000001_matchmaking_v2.sql` is not pushed to production.**
-  Applied and replayed clean on local only; `npx supabase db push` stays the
-  owner's manual step. It carries the whole V2 schema plus, in its own marked
+- **Migration `20260713000001_matchmaking_v2.sql` is live in production**
+  (pushed 2026-07-25). Carries the whole V2 schema plus, in its own marked
   section, the unrelated pre-existing `settings` write-grant fix — settings
-  writes have 403'd in production since 2026-05-18 (`20260518000008` revoked
-  INSERT/UPDATE and never re-granted), so that section is worth pushing on its
-  own merits.
+  writes had 403'd in production since 2026-05-18 (`20260518000008` revoked
+  INSERT/UPDATE and never re-granted); that's now repaired too.
 - **No player has an `mm_rating` yet** — until M4.1 back-fills, everyone enters
   their first V2 event at the `playtomic_level` prior and the admin drawer's
   "Learned level" row stays hidden.
