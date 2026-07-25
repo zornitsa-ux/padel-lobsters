@@ -4,6 +4,10 @@ import { screen, waitFor, cleanup } from '@testing-library/react'
 import { renderWithClient } from '../../test/renderWithClient'
 
 vi.mock('../matchmaking/generateSchedule.service', () => ({ fetchMmRatings: vi.fn() }))
+// useMatchmaking also pulls in applyTournamentRatings.service, which imports
+// the real supabase client at module scope; stub it so the import doesn't
+// require live env vars.
+vi.mock('../../supabase', () => ({ supabase: {} }))
 
 import { fetchMmRatings } from '../matchmaking/generateSchedule.service'
 import PlayerProfileDrawer from './PlayerProfileDrawer'

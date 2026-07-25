@@ -9,6 +9,9 @@ import MatchmakingContainer from './MatchmakingContainer'
 vi.mock('./useMatchmaking', () => ({
   useCommitSchedule: () => ({ mutate: vi.fn(), isPending: false }),
 }))
+// generateSchedule.service imports the real supabase client at module scope;
+// stub it so loading the module doesn't require live env vars.
+vi.mock('../../supabase', () => ({ supabase: {} }))
 
 const roster = (count: number) =>
   Array.from({ length: count }, (_, i) => ({
