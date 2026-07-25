@@ -15,65 +15,17 @@ import { readFileSync, writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import { describe, it, expect } from 'vitest'
-import { TOURNAMENTS as HISTORICAL_TOURNAMENTS } from '../../../../data/historicalTournaments'
 import { applyTournamentRatings, defaultRating, type GlickoState } from '../../../../lib/glicko2'
-import type { MatchResult, RatedPlayer } from '../types'
+import { buildReplayDataset, FALLBACK_LEVEL, type Fixture } from '../../historyFixture'
+import type { RatedPlayer } from '../types'
 import { DEFAULT_RATING_PARAMS } from '../types'
 import { SIGMA_PRIOR } from './model'
-import {
-  backtestBrier,
-  fitParams,
-  type CalibrationDataset,
-  type CalibrationEvent,
-} from './calibrate'
+import { backtestBrier, fitParams, type CalibrationDataset } from './calibrate'
 
 const FIXTURE = process.env.MM_CALIB_FIXTURE
 const GLICKO_SCALE = 173.7178 // glicko2.ts internal constant (not exported)
-const FALLBACK_LEVEL = 3 // matches glicko2.ts defaultRating for missing levels
 
 const run = FIXTURE ? describe : describe.skip
-
-// ── date parsing (mirrors ratingsRecompute.js parseEventDate) ────────────────
-const MONTHS: Record<string, number> = {
-  january: 0,
-  february: 1,
-  march: 2,
-  april: 3,
-  may: 4,
-  june: 5,
-  july: 6,
-  august: 7,
-  september: 8,
-  october: 9,
-  november: 10,
-  december: 11,
-}
-function parseEventDate(d: unknown): number {
-  if (!d) return 0
-  const s = String(d).trim()
-  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/)
-  if (iso) return Date.UTC(+iso[1], +iso[2] - 1, +iso[3])
-  const my = s.match(/(\w+)\s+(\d{4})/)
-  if (my && MONTHS[my[1].toLowerCase()] != null)
-    return Date.UTC(+my[2], MONTHS[my[1].toLowerCase()], 15)
-  const t = Date.parse(s)
-  return Number.isNaN(t) ? 0 : t
-}
-
-interface Fixture {
-  players: { id: string; playtomic_level: number | null }[]
-  aliases: { historical_name: string; player_id: string | null; skipped: boolean }[]
-  tournaments: { id: string; name: string; date: string | null; status: string }[]
-  matches: {
-    id: string
-    tournament_id: string
-    round: number
-    team1_ids: string[]
-    team2_ids: string[]
-    score1: number | null
-    score2: number | null
-  }[]
-}
 
 interface DbMatch {
   team1Ids: string[]
@@ -82,116 +34,46 @@ interface DbMatch {
   score2: number | null
 }
 
+// Dataset construction is shared with the M4.1 seeding harness
+// (historyFixture.ts); this only reshapes it for the two replays below.
 function buildDataset(fx: Fixture): {
   dataset: CalibrationDataset
   glickoEvents: { eventId: string; sortKey: number; matches: DbMatch[] }[]
   levelByPid: Record<string, number>
   stats: { historicalKept: number; historicalDropped: number; dbKept: number; players: number }
 } {
-  const levelByPid: Record<string, number> = {}
-  for (const p of fx.players) {
-    const n = Number(p.playtomic_level)
-    levelByPid[p.id] = p.playtomic_level == null || Number.isNaN(n) ? FALLBACK_LEVEL : n
-  }
-  const aliasMap = new Map(
-    fx.aliases
-      .filter((a) => a.player_id && !a.skipped)
-      .map((a) => [a.historical_name, a.player_id!]),
-  )
+  const { events, participants, levelByPlayerId, stats } = buildReplayDataset({ fixture: fx })
 
-  const events: CalibrationEvent[] = []
-  const glickoEvents: { eventId: string; sortKey: number; matches: DbMatch[] }[] = []
-  const participants = new Set<string>()
-  let historicalKept = 0
-  let historicalDropped = 0
-  let dbKept = 0
-
-  // History.jsx events, resolved through existing aliases only.
-  type HistRound = {
-    round: number
-    matches?: { court: number; t1: string[]; t2: string[]; s1: number; s2: number }[]
-  }
-  type HistTournament = { id: string; date: string; rounds?: HistRound[] }
-  for (const t of HISTORICAL_TOURNAMENTS as HistTournament[]) {
-    if (!Array.isArray(t.rounds) || t.rounds.length === 0) continue
-    const matches: MatchResult[] = []
-    const gmatches: DbMatch[] = []
-    for (const round of t.rounds) {
-      for (const m of round.matches || []) {
-        const t1 = (m.t1 || []).map((n) => aliasMap.get(n))
-        const t2 = (m.t2 || []).map((n) => aliasMap.get(n))
-        if (t1.length === 2 && t2.length === 2 && t1.every(Boolean) && t2.every(Boolean)) {
-          const a = t1 as string[]
-          const b = t2 as string[]
-          historicalKept++
-          matches.push({
-            matchId: `${t.id}-r${round.round}-c${m.court}`,
-            round: round.round,
-            team1: [a[0], a[1]],
-            team2: [b[0], b[1]],
-            score1: m.s1,
-            score2: m.s2,
-          })
-          gmatches.push({ team1Ids: a, team2Ids: b, score1: m.s1, score2: m.s2 })
-          ;[...a, ...b].forEach((id) => participants.add(id))
-        } else {
-          historicalDropped++
-        }
-      }
-    }
-    if (matches.length > 0) {
-      const sortKey = parseEventDate(t.date)
-      events.push({ eventId: t.id, sortKey, matches })
-      glickoEvents.push({ eventId: t.id, sortKey, matches: gmatches })
-    }
-  }
-
-  // Production DB events (already player_id-keyed).
-  const completed = new Set(fx.tournaments.filter((t) => t.status === 'completed').map((t) => t.id))
-  const dateById = new Map(fx.tournaments.map((t) => [t.id, t.date]))
-  const byTournament = new Map<string, typeof fx.matches>()
-  for (const m of fx.matches) {
-    if (!completed.has(m.tournament_id) || m.score1 == null || m.score2 == null) continue
-    if (!byTournament.has(m.tournament_id)) byTournament.set(m.tournament_id, [])
-    byTournament.get(m.tournament_id)!.push(m)
-  }
-  for (const [tid, rows] of byTournament) {
-    const matches: MatchResult[] = []
-    const gmatches: DbMatch[] = []
-    for (const m of rows) {
-      matches.push({
-        matchId: m.id,
-        round: m.round,
-        team1: [m.team1_ids[0], m.team1_ids[1]],
-        team2: [m.team2_ids[0], m.team2_ids[1]],
-        score1: m.score1!,
-        score2: m.score2!,
-      })
-      gmatches.push({
-        team1Ids: m.team1_ids,
-        team2Ids: m.team2_ids,
-        score1: m.score1,
-        score2: m.score2,
-      })
-      ;[...m.team1_ids, ...m.team2_ids].forEach((id) => participants.add(id))
-      dbKept++
-    }
-    const sortKey = parseEventDate(dateById.get(tid))
-    events.push({ eventId: tid, sortKey, matches })
-    glickoEvents.push({ eventId: tid, sortKey, matches: gmatches })
-  }
-
-  const priors: RatedPlayer[] = [...participants].map((id) => ({
+  const priors: RatedPlayer[] = participants.map((id) => ({
     playerId: id,
-    mu: levelByPid[id] ?? FALLBACK_LEVEL,
+    mu: levelByPlayerId[id] ?? FALLBACK_LEVEL,
     sigma: SIGMA_PRIOR,
   }))
 
+  const glickoEvents = events.map((ev) => ({
+    eventId: ev.eventId,
+    sortKey: ev.sortKey,
+    matches: ev.matches.map((m) => ({
+      team1Ids: [...m.team1],
+      team2Ids: [...m.team2],
+      score1: m.score1,
+      score2: m.score2,
+    })),
+  }))
+
   return {
-    dataset: { priors, events },
+    dataset: {
+      priors,
+      events: events.map(({ eventId, sortKey, matches }) => ({ eventId, sortKey, matches })),
+    },
     glickoEvents,
-    levelByPid,
-    stats: { historicalKept, historicalDropped, dbKept, players: participants.size },
+    levelByPid: levelByPlayerId,
+    stats: {
+      historicalKept: stats.historyKept,
+      historicalDropped: stats.historyDropped,
+      dbKept: stats.productionKept,
+      players: stats.players,
+    },
   }
 }
 
