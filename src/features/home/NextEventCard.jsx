@@ -1,6 +1,7 @@
 import React from 'react'
 import { Calendar, CalendarDays, CreditCard } from 'lucide-react'
 import DateTile from '../../components/ui/DateTile'
+import { EmptyState } from '../../components/ui/EmptyState'
 import AddToCalendarButton from '../../components/ui/AddToCalendarButton'
 import ShareWhatsAppButton from '../../components/ui/ShareWhatsAppButton'
 import { fmtEur } from '../../lib/format'
@@ -16,21 +17,21 @@ export default function NextEventCard({
 }) {
   if (!upcoming) {
     return (
-      <div className="card flex flex-col items-center py-8 text-center gap-2">
-        <Calendar size={36} className="text-gray-300" />
-        <p className="text-sm text-gray-500">No upcoming events right now</p>
-        <p className="text-xs text-gray-400">
-          Check back soon — next tournament is around the corner.
-        </p>
-        {isAdmin && (
-          <button
-            onClick={() => onNavigate('tournament')}
-            className="btn-primary text-sm py-2 px-4 mt-2"
-          >
-            Create an Event
-          </button>
-        )}
-      </div>
+      <EmptyState
+        icon={<Calendar size={36} />}
+        title="No upcoming events right now"
+        description="Check back soon — next tournament is around the corner."
+        action={
+          isAdmin && (
+            <button
+              onClick={() => onNavigate('tournament')}
+              className="btn-primary text-sm py-2 px-4 mt-2"
+            >
+              Create an Event
+            </button>
+          )
+        }
+      />
     )
   }
 

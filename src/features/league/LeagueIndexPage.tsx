@@ -1,6 +1,7 @@
 import { Navigate, Link } from 'react-router-dom'
 import { Badge } from '../../components/ui/Badge'
 import { PageHeader } from '../../components/ui/PageHeader'
+import { Spinner } from '../../components/ui/Spinner'
 import type { BadgeProps } from '../../components/ui/Badge'
 import { useActiveLeague, useAllLeagues } from './hooks/useLeagueQueries'
 
@@ -17,19 +18,11 @@ function leagueBadge(status: string): { variant: BadgeProps['variant']; label: s
   }
 }
 
-function LoadingSpinner() {
-  return (
-    <div className="flex justify-center py-16">
-      <div className="w-8 h-8 border-2 border-lob-teal border-t-transparent rounded-full animate-spin" />
-    </div>
-  )
-}
-
 export default function LeagueIndexPage() {
   const { data: active, isLoading: loadingActive } = useActiveLeague()
   const { data: allLeagues = [], isLoading: loadingAll } = useAllLeagues()
 
-  if (loadingActive) return <LoadingSpinner />
+  if (loadingActive) return <Spinner />
   if (active) return <Navigate to={`/league/${active.id}`} replace />
 
   return (
@@ -37,7 +30,7 @@ export default function LeagueIndexPage() {
       <PageHeader title="Leagues" />
       <div className="px-4 pt-4 space-y-4">
         {loadingAll ? (
-          <LoadingSpinner />
+          <Spinner />
         ) : allLeagues.length === 0 ? (
           <p className="text-sm text-lob-muted text-center py-8">No leagues yet.</p>
         ) : (

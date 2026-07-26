@@ -7,7 +7,7 @@ import {
   useDeleteTournament,
 } from './useTournaments'
 import { useTransfers } from './useTransfers'
-import { Plus, Trophy, Clock, ChevronDown, ChevronUp } from 'lucide-react'
+import { Plus, Trophy, Clock } from 'lucide-react'
 import HistoryContent from '../history/History'
 import AdminTransferPanel from '../../components/AdminTransferPanel'
 import { DEFAULT_EVENT_DESCRIPTION, emptyForm } from './eventConstants'
@@ -17,6 +17,8 @@ import UpcomingEventCard from './UpcomingEventCard'
 import PastEventCard from './PastEventCard'
 import { LeagueDashboardCard } from '../league/ui/LeagueDashboardCard'
 import { PageHeader } from '../../components/ui/PageHeader'
+import { CollapsibleSection } from '../../components/ui/CollapsibleSection'
+import { EmptyState } from '../../components/ui/EmptyState'
 
 export { DEFAULT_EVENT_DESCRIPTION }
 
@@ -234,10 +236,10 @@ export default function Tournament({ onNavigate }) {
         {/* Upcoming events */}
         <div className="space-y-3">
           {upcoming.length === 0 && (
-            <div className="card py-10 text-center text-gray-400">
-              <Trophy size={36} className="mx-auto mb-2 opacity-30" />
-              <p>No upcoming events. Create your first one!</p>
-            </div>
+            <EmptyState
+              icon={<Trophy size={36} />}
+              title="No upcoming events. Create your first one!"
+            />
           )}
 
           {upcoming.map((t) => (
@@ -256,42 +258,30 @@ export default function Tournament({ onNavigate }) {
         </div>
 
         {/* Past events + History — collapsible */}
-        <div>
-          <button
-            onClick={() => setShowHistory((h) => !h)}
-            className="w-full flex items-center justify-between py-3 px-1"
-          >
-            <span className="text-[10px] font-bold text-lob-muted uppercase tracking-widest flex items-center gap-2">
-              <Clock size={13} className="text-lob-muted opacity-60" />
-              Past
-            </span>
-            {showHistory ? (
-              <ChevronUp size={14} className="text-lob-muted opacity-60" />
-            ) : (
-              <ChevronDown size={14} className="text-lob-muted opacity-60" />
-            )}
-          </button>
+        <CollapsibleSection
+          title="Past"
+          icon={<Clock size={13} className="text-lob-muted opacity-60" />}
+          expanded={showHistory}
+          onToggle={() => setShowHistory((h) => !h)}
+        >
+          <div className="space-y-3">
+            {past.map((t) => (
+              <PastEventCard
+                key={t.id}
+                t={t}
+                isAdmin={isAdmin}
+                onNavigate={onNavigate}
+                onEdit={openEdit}
+                onDelete={handleDelete}
+              />
+            ))}
 
-          {showHistory && (
-            <div className="space-y-3">
-              {past.map((t) => (
-                <PastEventCard
-                  key={t.id}
-                  t={t}
-                  isAdmin={isAdmin}
-                  onNavigate={onNavigate}
-                  onEdit={openEdit}
-                  onDelete={handleDelete}
-                />
-              ))}
-
-              {/* Legacy History Records */}
-              <div className="mt-4">
-                <HistoryContent onNavigate={onNavigate} />
-              </div>
+            {/* Legacy History Records */}
+            <div className="mt-4">
+              <HistoryContent onNavigate={onNavigate} />
             </div>
-          )}
-        </div>
+          </div>
+        </CollapsibleSection>
 
         <EventFormModal
           open={showForm}

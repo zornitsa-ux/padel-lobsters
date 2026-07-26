@@ -6,6 +6,7 @@ import { useRegistrations } from './useRegistrations'
 import { AlertCircle } from 'lucide-react'
 import { computeTournamentStandings } from '../../lib/standings'
 import { TabSwitcher } from '../../components/ui/TabSwitcher'
+import { EmptyState } from '../../components/ui/EmptyState'
 import { useScoreSync } from './useScoreSync'
 import { useOscarResults } from '../oscars/useOscarResults'
 import { groupOscarResultsByCategory } from '../oscars/oscarResults'
@@ -56,16 +57,18 @@ export default function Scores({ tournament, onNavigate }) {
 
   if (!tournament) {
     return (
-      <div className="card py-10 text-center text-gray-400">
-        <AlertCircle size={36} className="mx-auto mb-2 opacity-30" />
-        <p>No event selected</p>
-        <button
-          onClick={() => onNavigate('tournament')}
-          className="btn-primary mt-4 py-2 px-5 text-sm"
-        >
-          Go to Events
-        </button>
-      </div>
+      <EmptyState
+        icon={<AlertCircle size={36} />}
+        title="No event selected"
+        action={
+          <button
+            onClick={() => onNavigate('tournament')}
+            className="btn-primary mt-2 py-2 px-5 text-sm"
+          >
+            Go to Events
+          </button>
+        }
+      />
     )
   }
 

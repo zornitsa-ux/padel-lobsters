@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { X, Ban } from 'lucide-react'
 import { supabase } from '../../supabase'
+import { EmptyState } from '../../components/ui/EmptyState'
 import { STATUS_CONFIG } from './statusConfig'
 import { formatOrderTime, getPlayerName } from './formatters'
 
@@ -225,9 +226,7 @@ export default function OrdersTable({ activeOrders, interests, items, players, l
           )}
         </div>
       ) : (
-        <div className="card py-6 text-center text-gray-400 text-sm">
-          No orders yet — orders will appear here when players place them from the Shop tab
-        </div>
+        <EmptyState title="No orders yet — orders will appear here when players place them from the Shop tab" />
       )}
     </div>
   )

@@ -9,6 +9,7 @@ import {
   useDeleteWinner,
 } from './useRaffle'
 import type { RaffleWinner } from './raffleSchemas'
+import { EmptyState } from '../../components/ui/EmptyState'
 import PrizeEditor from './ui/PrizeEditor'
 import Confetti from './ui/Confetti'
 
@@ -54,12 +55,7 @@ export default function RaffleContainer({
   }, [confetti])
 
   if (!tournament) {
-    return (
-      <div className="card py-8 text-center text-gray-400">
-        <Gift size={32} className="mx-auto mb-2 opacity-30" />
-        <p className="text-sm">Open a tournament first to run a raffle</p>
-      </div>
-    )
+    return <EmptyState icon={<Gift size={32} />} title="Open a tournament first to run a raffle" />
   }
 
   const runDraw = async () => {
@@ -184,10 +180,10 @@ export default function RaffleContainer({
         )}
 
         {isPast && committed.length === 0 && (
-          <div className="card py-8 text-center text-gray-400">
-            <Gift size={32} className="mx-auto mb-2 opacity-30" />
-            <p className="text-sm">No raffle was recorded for this tournament</p>
-          </div>
+          <EmptyState
+            icon={<Gift size={32} />}
+            title="No raffle was recorded for this tournament"
+          />
         )}
       </div>
     </>

@@ -1,5 +1,6 @@
 import React from 'react'
 import { AlertCircle } from 'lucide-react'
+import { EmptyState } from '../../components/ui/EmptyState'
 
 export default function ScoresMatchesTab({ rounds, activeRoundIdx, onSelectRound, players }) {
   const nameMap = new Map(players.map((p) => [p.id, (p.name || '').split(' ')[0]]))
@@ -8,10 +9,7 @@ export default function ScoresMatchesTab({ rounds, activeRoundIdx, onSelectRound
   return (
     <>
       {rounds.length === 0 ? (
-        <div className="card py-8 text-center text-gray-400">
-          <AlertCircle size={36} className="mx-auto mb-2 opacity-30" />
-          <p className="text-sm">No matches for this tournament.</p>
-        </div>
+        <EmptyState icon={<AlertCircle size={36} />} title="No matches for this tournament." />
       ) : (
         <>
           {/* Round selector — same as History */}

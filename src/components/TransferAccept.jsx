@@ -12,6 +12,7 @@ import { usePlayers } from '../features/players/usePlayers'
 import { useTournaments } from '../features/events/useTournaments'
 import { useTransfers, useTransferActions } from '../features/events/useTransfers'
 import { letterColor } from '../lib/letterColors'
+import { EmptyState } from './ui/EmptyState'
 
 // Landing page Melanie hits after tapping the WhatsApp link
 // (https://padelobsters.nl/?transfer=<id>). Shows the offer details and an
@@ -96,34 +97,36 @@ export default function TransferAccept({ transferId, onNavigate }) {
 
   if (!transferId) {
     return (
-      <div className="card py-10 text-center">
-        <AlertCircle size={36} className="mx-auto mb-2 text-gray-300" />
-        <p className="text-sm text-gray-500">No transfer link found.</p>
-        <button
-          onClick={() => onNavigate?.('dashboard')}
-          className="btn-primary mt-4 py-2 px-5 text-sm"
-        >
-          Back to home
-        </button>
-      </div>
+      <EmptyState
+        icon={<AlertCircle size={36} />}
+        title="No transfer link found."
+        action={
+          <button
+            onClick={() => onNavigate?.('dashboard')}
+            className="btn-primary mt-2 py-2 px-5 text-sm"
+          >
+            Back to home
+          </button>
+        }
+      />
     )
   }
 
   if (!transfer) {
     return (
-      <div className="card py-10 text-center">
-        <AlertCircle size={36} className="mx-auto mb-2 text-gray-300" />
-        <p className="text-sm text-gray-500">We couldn't find this transfer.</p>
-        <p className="text-xs text-gray-400 mt-1">
-          It may have been cancelled or already accepted.
-        </p>
-        <button
-          onClick={() => onNavigate?.('dashboard')}
-          className="btn-primary mt-4 py-2 px-5 text-sm"
-        >
-          Back to home
-        </button>
-      </div>
+      <EmptyState
+        icon={<AlertCircle size={36} />}
+        title="We couldn't find this transfer."
+        description="It may have been cancelled or already accepted."
+        action={
+          <button
+            onClick={() => onNavigate?.('dashboard')}
+            className="btn-primary mt-2 py-2 px-5 text-sm"
+          >
+            Back to home
+          </button>
+        }
+      />
     )
   }
 
@@ -137,18 +140,20 @@ export default function TransferAccept({ transferId, onNavigate }) {
         auto_closed: 'closed because the event has started',
       }[transfer.status] || 'already closed'
     return (
-      <div className="card py-10 text-center">
-        <AlertCircle size={36} className="mx-auto mb-2 text-gray-300" />
-        <p className="text-sm text-gray-600">This transfer has {stateLabel}.</p>
-        {tournament && (
-          <button
-            onClick={() => onNavigate?.('registration', tournament)}
-            className="btn-primary mt-4 py-2 px-5 text-sm"
-          >
-            See the event
-          </button>
-        )}
-      </div>
+      <EmptyState
+        icon={<AlertCircle size={36} />}
+        title={`This transfer has ${stateLabel}.`}
+        action={
+          tournament && (
+            <button
+              onClick={() => onNavigate?.('registration', tournament)}
+              className="btn-primary mt-2 py-2 px-5 text-sm"
+            >
+              See the event
+            </button>
+          )
+        }
+      />
     )
   }
 

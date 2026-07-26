@@ -10,6 +10,7 @@ import validateSchedule from './validateSchedule'
 import { formatLabel } from './eventHelpers'
 import { shortName } from './scheduleHelpers'
 import ScoreEntry from './ScoreEntry'
+import { EmptyState } from '../../components/ui/EmptyState'
 import { useScoreSync } from './useScoreSync'
 import ScheduleGeneratorControls from './schedule/ScheduleGeneratorControls'
 import ScheduleValidationSummary from './schedule/ScheduleValidationSummary'
@@ -205,16 +206,18 @@ export default function Schedule({ tournament, onNavigate }) {
 
   if (!tournament) {
     return (
-      <div className="card py-10 text-center text-gray-400">
-        <AlertCircle size={36} className="mx-auto mb-2 opacity-30" />
-        <p>No event selected</p>
-        <button
-          onClick={() => onNavigate('tournament')}
-          className="btn-primary mt-4 py-2 px-5 text-sm"
-        >
-          Go to Events
-        </button>
-      </div>
+      <EmptyState
+        icon={<AlertCircle size={36} />}
+        title="No event selected"
+        action={
+          <button
+            onClick={() => onNavigate('tournament')}
+            className="btn-primary mt-2 py-2 px-5 text-sm"
+          >
+            Go to Events
+          </button>
+        }
+      />
     )
   }
 
@@ -706,10 +709,7 @@ export default function Schedule({ tournament, onNavigate }) {
       )}
 
       {display.length === 0 && !isAdmin && (
-        <div className="card py-10 text-center text-gray-400">
-          <Shuffle size={36} className="mx-auto mb-2 opacity-30" />
-          <p>No schedule generated yet</p>
-        </div>
+        <EmptyState icon={<Shuffle size={36} />} title="No schedule generated yet" />
       )}
 
       {/* ── V2 rating review — shown after Finish in this session (via

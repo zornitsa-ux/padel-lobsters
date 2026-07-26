@@ -1,6 +1,7 @@
 import React from 'react'
 import { ShoppingBag, ShoppingCart, Check } from 'lucide-react'
 import { SignInBanner } from '../../components/ui/AuthGate'
+import { EmptyState } from '../../components/ui/EmptyState'
 import { sizeRank } from './sizes'
 
 // ── Shop tab — public-facing item grid with order flow ──────────────────────
@@ -196,10 +197,7 @@ export default function Shop({
       })}
 
       {!loading && items.length === 0 && (
-        <div className="card py-10 text-center text-gray-400">
-          <ShoppingBag size={36} className="mx-auto mb-2 opacity-30" />
-          <p>No merch items yet</p>
-        </div>
+        <EmptyState icon={<ShoppingBag size={36} />} title="No merch items yet" />
       )}
     </div>
   )

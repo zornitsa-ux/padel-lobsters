@@ -1,5 +1,6 @@
 import React from 'react'
 import { ShoppingBag, Ban, Package } from 'lucide-react'
+import { EmptyState } from '../../components/ui/EmptyState'
 import { STATUS_CONFIG } from './statusConfig'
 import { formatOrderTime } from './formatters'
 
@@ -88,10 +89,10 @@ export default function MyOrders({ myOrders, items }) {
             )
           })
       ) : (
-        <div className="card py-8 text-center text-gray-400">
-          <Package size={32} className="mx-auto mb-2 opacity-30" />
-          <p className="text-sm">No orders yet — browse the Shop to get started</p>
-        </div>
+        <EmptyState
+          icon={<Package size={32} />}
+          title="No orders yet — browse the Shop to get started"
+        />
       )}
     </div>
   )

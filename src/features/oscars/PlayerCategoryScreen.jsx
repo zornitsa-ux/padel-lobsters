@@ -2,7 +2,7 @@ import React from 'react'
 import { ChevronLeft, X, Check } from 'lucide-react'
 import { letterColor } from '../../lib/letterColors'
 import { computeHistory } from './gameHelpers'
-import ErrorBanner from './ErrorBanner'
+import { AlertBox } from '../../components/ui/AlertBox'
 
 /* ─── Player: category screen with player tiles + match-history ───────── */
 export default function PlayerCategoryScreen({
@@ -46,7 +46,9 @@ export default function PlayerCategoryScreen({
       <div className="py-3">
         {error && (
           <div className="mb-2">
-            <ErrorBanner message={error} onDismiss={onDismissError} />
+            <AlertBox variant="error" onDismiss={onDismissError}>
+              {error}
+            </AlertBox>
           </div>
         )}
         {tournamentParticipants.length === 0 ? (

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { BarChart2, CheckCircle, ChevronLeft } from 'lucide-react'
 import { SectionHeader } from '../../components/ui/SectionHeader'
+import { Spinner } from '../../components/ui/Spinner'
 import { GroupStandingsTable } from './ui/GroupStandingsTable'
 import { LeagueMatchCard } from './ui/LeagueMatchCard'
 import { TeamPage } from './ui/TeamPage'
@@ -15,14 +16,6 @@ const DIVISION_LABELS: Record<Division, string> = {
   womens: "Women's",
 }
 
-function LoadingSpinner() {
-  return (
-    <div className="flex justify-center py-16">
-      <div className="w-8 h-8 border-2 border-lob-teal border-t-transparent rounded-full animate-spin" />
-    </div>
-  )
-}
-
 export default function GroupStageHistoryPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -33,7 +26,7 @@ export default function GroupStageHistoryPage() {
   const { data: teams = [] } = useLeagueTeams(league?.id)
   const { data: matches = [] } = useLeagueMatches(league?.id)
 
-  if (isLoading) return <LoadingSpinner />
+  if (isLoading) return <Spinner />
   if (!league) return null
 
   const safeDivision = league.divisions.includes(division)

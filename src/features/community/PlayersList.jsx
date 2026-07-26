@@ -2,6 +2,7 @@ import React from 'react'
 import { ChevronDown, ChevronUp, User, RotateCcw } from 'lucide-react'
 import { FlagImg } from '../../components/ui/CountryPicker'
 import Avatar from '../../components/ui/Avatar'
+import { EmptyState } from '../../components/ui/EmptyState'
 import { corpReview } from './reviewScenarios'
 import PlayerProfileDrawer from './PlayerProfileDrawer'
 
@@ -28,10 +29,7 @@ export default function PlayersList({
   return (
     <div className="space-y-2">
       {!hasPlayers && (
-        <div className="card py-10 text-center text-gray-400">
-          <User size={36} className="mx-auto mb-2 opacity-30" />
-          <p>No players yet. Be the first to join!</p>
-        </div>
+        <EmptyState icon={<User size={36} />} title="No players yet. Be the first to join!" />
       )}
 
       {orderedForRender.map(({ p, idx, isSelf }) => {

@@ -11,6 +11,7 @@ import {
   MoreVertical,
 } from 'lucide-react'
 import { fmtEur } from '../../lib/format'
+import { EmptyState } from '../../components/ui/EmptyState'
 
 const METHODS = [
   { value: 'tikkie', label: 'Tikkie' },
@@ -27,16 +28,18 @@ export default function Payments({ tournament, onNavigate }) {
 
   if (!tournament) {
     return (
-      <div className="card py-10 text-center text-gray-400">
-        <AlertCircle size={36} className="mx-auto mb-2 opacity-30" />
-        <p>No event selected</p>
-        <button
-          onClick={() => onNavigate('tournament')}
-          className="btn-primary mt-4 py-2 px-5 text-sm"
-        >
-          Go to Events
-        </button>
-      </div>
+      <EmptyState
+        icon={<AlertCircle size={36} />}
+        title="No event selected"
+        action={
+          <button
+            onClick={() => onNavigate('tournament')}
+            className="btn-primary mt-2 py-2 px-5 text-sm"
+          >
+            Go to Events
+          </button>
+        }
+      />
     )
   }
 
@@ -266,10 +269,7 @@ export default function Payments({ tournament, onNavigate }) {
       {/* Payment list */}
       <div className="space-y-2">
         {filtered.length === 0 && (
-          <div className="card py-6 text-center text-gray-400">
-            <CheckCircle size={28} className="mx-auto mb-2 opacity-30" />
-            <p className="text-sm">No players here</p>
-          </div>
+          <EmptyState icon={<CheckCircle size={28} />} title="No players here" />
         )}
 
         {filtered.map((reg) => {

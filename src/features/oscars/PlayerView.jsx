@@ -1,9 +1,10 @@
 import React from 'react'
-import { Loader2, RotateCw } from 'lucide-react'
+import { RotateCw } from 'lucide-react'
 import { Shell } from './OscarsShell'
 import CategoryGrid from './CategoryGrid'
 import ResultsView from './ResultsView'
-import ErrorBanner from './ErrorBanner'
+import { AlertBox } from '../../components/ui/AlertBox'
+import { Spinner } from '../../components/ui/Spinner'
 
 /* ════════════════════════════════════════════════════════════════════════════
    PlayerView — the participant-facing screens for the games home (everything
@@ -45,7 +46,11 @@ export default function PlayerView({
             admin closes the games.
           </p>
         </div>
-        {error && <ErrorBanner message={error} onDismiss={onDismissError} />}
+        {error && (
+          <AlertBox variant="error" onDismiss={onDismissError}>
+            {error}
+          </AlertBox>
+        )}
         <CategoryGrid
           categories={categories}
           myVoteByCat={myVoteByCat}
@@ -86,9 +91,7 @@ export default function PlayerView({
   return (
     <Shell title="🦞 The Results" headerRight={headerRight}>
       {playerResults === null ? (
-        <div className="flex justify-center py-10">
-          <Loader2 className="animate-spin text-lob-teal" size={28} />
-        </div>
+        <Spinner className="py-10" />
       ) : (
         <ResultsView results={playerResults} highlightWinners />
       )}

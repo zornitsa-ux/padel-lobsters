@@ -7,6 +7,7 @@ import {
   isMatchVisibleForPlayer,
 } from './utils'
 import ScoreEntry from '../ScoreEntry'
+import { TabSwitcher } from '../../../components/ui/TabSwitcher'
 
 export default function ScoresAndRankingSection({
   tournament,
@@ -88,24 +89,14 @@ export default function ScoresAndRankingSection({
       )}
 
       {isCompleted && (
-        <div className="flex gap-1 bg-gray-100 p-1 rounded-xl">
-          <button
-            onClick={() => setCompletedTab('ranking')}
-            className={`flex-1 py-2 text-sm rounded-lg font-semibold transition-all ${
-              completedTab === 'ranking' ? 'bg-white text-lob-teal shadow-sm' : 'text-gray-500'
-            }`}
-          >
-            🥇 Final Ranking
-          </button>
-          <button
-            onClick={() => setCompletedTab('matches')}
-            className={`flex-1 py-2 text-sm rounded-lg font-semibold transition-all ${
-              completedTab === 'matches' ? 'bg-white text-lob-teal shadow-sm' : 'text-gray-500'
-            }`}
-          >
-            📋 Matches
-          </button>
-        </div>
+        <TabSwitcher
+          tabs={[
+            { id: 'ranking', label: '🥇 Final Ranking' },
+            { id: 'matches', label: '📋 Matches' },
+          ]}
+          value={completedTab}
+          onChange={setCompletedTab}
+        />
       )}
 
       {(allScored || isCompleted) &&

@@ -14,6 +14,7 @@ import { useApp } from './context/useApp'
 import { useTournaments } from './features/events/useTournaments'
 import type { NormalisedTournament } from './lib/normalise'
 import Layout from './components/Layout'
+import { Spinner } from './components/ui/Spinner'
 import Dashboard from './features/home/Dashboard'
 import SetupGuard from './components/SetupGuard'
 import VerificationGate from './components/VerificationGate'
@@ -113,12 +114,7 @@ export default function App() {
 // minimal — the app shell (header/nav) is already painted around it, so this
 // only fills the content area for the brief fetch on first visit to a route.
 function RouteFallback() {
-  return (
-    <div className="flex items-center justify-center py-24" role="status" aria-live="polite">
-      <div className="h-8 w-8 animate-spin rounded-full border-2 border-lob-muted border-t-lob-teal" />
-      <span className="sr-only">Loading…</span>
-    </div>
-  )
+  return <Spinner className="py-24" />
 }
 
 type NavigatePayload = { id?: string | number; focusPlayerId?: string } & Record<string, unknown>

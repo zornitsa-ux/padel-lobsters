@@ -4,6 +4,7 @@ import { usePlayers } from '../players/usePlayers'
 import { supabase } from '../../supabase'
 import useRefreshOnFocus from '../../hooks/useRefreshOnFocus'
 import { useAuthPrompt } from '../../components/ui/AuthGate'
+import { TabSwitcher } from '../../components/ui/TabSwitcher'
 import { emptyItem } from './itemForm'
 import Lightbox from './Lightbox'
 import Shop from './Shop'
@@ -385,17 +386,7 @@ export default function Merch({ initialTab, onNavigate }) {
       <h2 className="text-lg font-bold text-gray-800">Padel Lobsters Merch</h2>
 
       {/* Tab bar */}
-      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl">
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${tab === t.id ? 'bg-white text-lob-teal shadow-sm' : 'text-gray-500'}`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <TabSwitcher tabs={TABS} value={tab} onChange={setTab} />
 
       {/* ── SHOP TAB ── */}
       {tab === 'shop' && (

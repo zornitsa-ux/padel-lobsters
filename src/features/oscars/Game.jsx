@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
-import { Loader2 } from 'lucide-react'
 import useRefreshOnFocus from '../../hooks/useRefreshOnFocus'
 import { useOscarsSession } from './useOscarsSession'
 import { defaultViewMode, canToggleViewMode } from './oscarsPhase'
@@ -7,6 +6,7 @@ import AdminView from './AdminView'
 import PlayerView from './PlayerView'
 import PlayerCategoryScreen from './PlayerCategoryScreen'
 import AdminMenu from './AdminMenu'
+import { Spinner } from '../../components/ui/Spinner'
 
 /* ════════════════════════════════════════════════════════════════════════════
    Lobster Oscars container — wires useOscarsSession to the admin and player
@@ -130,11 +130,7 @@ export default function Game({ tournament, onNavigate }) {
   /* ── Render ───────────────────────────────────────────────────────────── */
 
   if (phase === 'loading') {
-    return (
-      <div className="flex items-center justify-center py-16">
-        <Loader2 className="animate-spin text-lob-teal" size={32} />
-      </div>
-    )
+    return <Spinner />
   }
 
   const menu = canToggle ? (

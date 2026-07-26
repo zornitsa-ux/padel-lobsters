@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ArrowLeft, Check, Users, Save, Clock, Trophy } from 'lucide-react'
+import { EmptyState } from '../../components/ui/EmptyState'
 import { usePlayers } from '../players/usePlayers'
 import { useRegistrations } from '../events/useRegistrations'
 import { useExclusions, useIneligible, useSetExclusions } from './useRaffle'
@@ -117,7 +118,7 @@ export default function RaffleEligibilityContainer({
       </div>
 
       {registered.length === 0 ? (
-        <div className="card py-8 text-center text-gray-400 text-sm">No registered players yet</div>
+        <EmptyState title="No registered players yet" />
       ) : (
         <div className="card space-y-2">
           {registered.map((id: string) => {

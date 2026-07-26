@@ -1,6 +1,7 @@
 import React from 'react'
 import { Trophy } from 'lucide-react'
 import Avatar from '../../components/ui/Avatar'
+import { EmptyState } from '../../components/ui/EmptyState'
 
 const medalColor = (i) => {
   if (i === 0) return 'text-yellow-500'
@@ -13,22 +14,22 @@ const medalStyle = (i) => (i === 2 ? { color: '#CD7F32' } : {})
 export default function ScoresRankingTab({ standings, matches, withheld = false }) {
   if (withheld) {
     return (
-      <div className="card py-8 text-center text-gray-400">
-        <Trophy size={36} className="mx-auto mb-2 opacity-30" />
-        <p className="text-sm font-semibold text-gray-500">Results pending</p>
-        <p className="text-xs mt-1">The final ranking will be revealed soon — check back!</p>
-      </div>
+      <EmptyState
+        icon={<Trophy size={36} />}
+        title="Results pending"
+        description="The final ranking will be revealed soon — check back!"
+      />
     )
   }
 
   return (
     <>
       {matches.length === 0 && (
-        <div className="card py-8 text-center text-gray-400">
-          <Trophy size={36} className="mx-auto mb-2 opacity-30" />
-          <p className="text-sm">No scores entered yet.</p>
-          <p className="text-xs mt-1">Enter scores in the Schedule tab.</p>
-        </div>
+        <EmptyState
+          icon={<Trophy size={36} />}
+          title="No scores entered yet."
+          description="Enter scores in the Schedule tab."
+        />
       )}
 
       {standings.length > 0 && (

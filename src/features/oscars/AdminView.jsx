@@ -5,7 +5,7 @@ import { buildDefaultCategories } from './oscarCategories'
 import CategoryEditor from './CategoryEditor'
 import StatRow from './StatRow'
 import ResultsView from './ResultsView'
-import ErrorBanner from './ErrorBanner'
+import { AlertBox } from '../../components/ui/AlertBox'
 
 /* ════════════════════════════════════════════════════════════════════════════
    AdminView — the admin control surface across phases (configure/start, live
@@ -80,7 +80,11 @@ export default function AdminView({
             onReset={() => setEditCats(buildDefaultCategories(regPlayers))}
           />
 
-          {error && <ErrorBanner message={error} onDismiss={onDismissError} />}
+          {error && (
+            <AlertBox variant="error" onDismiss={onDismissError}>
+              {error}
+            </AlertBox>
+          )}
 
           <button
             onClick={handleStart}
@@ -123,7 +127,11 @@ export default function AdminView({
           ))}
           <p className="text-[11px] text-gray-400 text-center pt-1">Refreshes every 10 seconds.</p>
 
-          {error && <ErrorBanner message={error} onDismiss={onDismissError} />}
+          {error && (
+            <AlertBox variant="error" onDismiss={onDismissError}>
+              {error}
+            </AlertBox>
+          )}
 
           <button
             onClick={onEnd}
@@ -151,7 +159,11 @@ export default function AdminView({
 
         <ResultsView results={adminResults} collapsible />
 
-        {error && <ErrorBanner message={error} onDismiss={onDismissError} />}
+        {error && (
+          <AlertBox variant="error" onDismiss={onDismissError}>
+            {error}
+          </AlertBox>
+        )}
 
         <div className="pt-2">
           {phase === 'ended' ? (
