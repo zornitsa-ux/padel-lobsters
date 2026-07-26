@@ -12,9 +12,6 @@ type MyOrdersProps = {
   items: MerchItem[]
 }
 
-// Reads raw columns (size, custom_name, status) rather than the normalised
-// fields so Settings → Account, which still passes unnormalised rows, renders
-// the same until it moves onto the slice.
 // ── My Orders tab (player-facing) ───────────────────────────────────────────
 export default function MyOrders({ myOrders, items }: MyOrdersProps) {
   return (
@@ -24,7 +21,7 @@ export default function MyOrders({ myOrders, items }: MyOrdersProps) {
           .sort((a, b) => orderTimestamp(b.created_at) - orderTimestamp(a.created_at))
           .map((o) => {
             const item = items.find((i) => i.id === o.merch_item_id)
-            const status = o.status || 'ordered'
+            const status = o.status
             return (
               <div
                 key={o.id}
@@ -32,8 +29,8 @@ export default function MyOrders({ myOrders, items }: MyOrdersProps) {
               >
                 <div className="flex items-start gap-3">
                   <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100">
-                    {item?.image_url ? (
-                      <img src={item.image_url} className="w-full h-full object-cover" alt="" />
+                    {item?.images[0] ? (
+                      <img src={item.images[0]} className="w-full h-full object-cover" alt="" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
                         <ShoppingBag size={18} className="text-gray-400" />
@@ -48,9 +45,9 @@ export default function MyOrders({ myOrders, items }: MyOrdersProps) {
                           {o.size}
                         </span>
                       )}
-                      {(o.custom_name || '').trim() && (
+                      {o.customName && (
                         <span className="text-xs bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full font-medium">
-                          Name: {o.custom_name}
+                          Name: {o.customName}
                         </span>
                       )}
                       <span className="text-[11px] text-gray-400">

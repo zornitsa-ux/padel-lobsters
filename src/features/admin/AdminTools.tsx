@@ -1,12 +1,11 @@
-import React, { useMemo, useState, useEffect, useCallback } from 'react'
+import React, { useMemo, useState } from 'react'
 import { useApp } from '../../context/useApp'
 import { useTournaments } from '../events/useTournaments'
 import { usePlayers } from '../players/usePlayers'
 import { useAllRegistrations } from '../events/useRegistrations'
 import { useAllMatches } from '../events/useMatches'
 import usePlayerAliases from '../../hooks/usePlayerAliases'
-import useRefreshOnFocus from '../../hooks/useRefreshOnFocus'
-import { supabase } from '../../supabase'
+import { useMerchInterests } from '../merch/useMerch'
 import { SignInBanner } from '../../components/ui/AuthGate'
 import PlayerAliasMatcher from '../../components/PlayerAliasMatcher'
 import ReviewBreakdownModal from '../community/ReviewBreakdownModal'
@@ -48,7 +47,7 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
   const { playerAliases, setPlayerAlias, removePlayerAlias } = usePlayerAliases()
   const [showAliasMatcher, setShowAliasMatcher] = useState(false)
   const [showReviewBreakdown, setShowReviewBreakdown] = useState(false)
-  const [newOrdersCount, setNewOrdersCount] = useState(0)
+  const { data: interests = [] } = useMerchInterests()
 
   // ── Pending-action counts ───────────────────────────────────────────────────
   const pendingSignups = useMemo(
@@ -70,20 +69,14 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
     ).length
   }, [tournaments, allRegs])
 
-  const loadNewOrders = useCallback(async () => {
-    if (!isAdmin) return
+  // Counted off the merch slice's cached rows. The previous head:true count
+  // query returned no rows, so reading `data.length` always yielded 0 and the
+  // badge never appeared.
+  const newOrdersCount = useMemo(() => {
+    if (!isAdmin) return 0
     const lastChecked = localStorage.getItem(LAST_CHECK_KEY) || new Date(0).toISOString()
-    const { data } = await supabase
-      .from('merch_interests')
-      .select('id', { count: 'exact', head: true })
-      .gte('created_at', lastChecked)
-    setNewOrdersCount((data as any)?.length ?? 0)
-  }, [isAdmin])
-
-  useEffect(() => {
-    loadNewOrders()
-  }, [loadNewOrders])
-  useRefreshOnFocus(loadNewOrders)
+    return interests.filter((o) => (o.created_at || '') >= lastChecked).length
+  }, [isAdmin, interests])
 
   const totalPending = pendingSignups + unpaidForNextEvent + newOrdersCount
 

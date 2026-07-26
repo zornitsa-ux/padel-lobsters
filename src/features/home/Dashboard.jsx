@@ -3,11 +3,10 @@ import { useApp } from '../../context/useApp'
 import { useSettings } from '../settings/useSettings'
 import { useTournaments } from '../events/useTournaments'
 import { useTransfers, useTransferActions } from '../events/useTransfers'
-import useRefreshOnFocus from '../../hooks/useRefreshOnFocus'
 import { usePlayers } from '../players/usePlayers'
 import { useAllMatches } from '../events/useMatches'
 import { useAllRegistrations } from '../events/useRegistrations'
-import { supabase } from '../../supabase'
+import { useMerchInterests, useMerchItems } from '../merch/useMerch'
 import DEFAULT_TIPS from '../../data/padelTips'
 import TransferPendingModal from '../../components/TransferPendingModal'
 import { mark } from '../../lib/perfMarks'
@@ -22,6 +21,9 @@ import NextEventCard from './NextEventCard'
 import RecentlyCompletedBanners from './RecentlyCompletedBanners'
 import AdminAlerts from './AdminAlerts'
 import { LeagueDashboardCard } from '../league/ui/LeagueDashboardCard'
+
+const LAST_CHECK_KEY = 'pl_merch_last_checked'
+const MAX_NEW_ORDERS = 20
 
 export default function Dashboard({ onNavigate }) {
   const { session, sessionSettled } = useApp()
@@ -83,43 +85,32 @@ export default function Dashboard({ onNavigate }) {
   const claimedPlayer = claimedId ? players.find((p) => p.id === claimedId) : null
 
   // ── New merch orders since last admin check ─────────────────────────────────
-  const [newOrders, setNewOrders] = useState([])
-  const LAST_CHECK_KEY = 'pl_merch_last_checked'
+  // Derived from the merch slice's cached rows rather than a dedicated query, so
+  // this shares one cache with the shop and the admin order table.
+  const [lastChecked, setLastChecked] = useState(
+    () => localStorage.getItem(LAST_CHECK_KEY) || new Date(0).toISOString(),
+  )
+  const { data: merchInterests = [] } = useMerchInterests()
+  const { data: merchItems = [] } = useMerchItems()
 
-  const loadNewOrders = useCallback(async () => {
-    if (!isAdmin) return
-    const lastChecked = localStorage.getItem(LAST_CHECK_KEY) || new Date(0).toISOString()
-    const [ordersRes, itemsRes] = await Promise.all([
-      supabase
-        .from('merch_interests')
-        .select('*')
-        .gte('created_at', lastChecked)
-        .order('created_at', { ascending: false })
-        .limit(20),
-      supabase.from('merch_items').select('id, name').eq('active', true),
-    ])
-    const orders = ordersRes.data || []
-    const itemMap = Object.fromEntries((itemsRes.data || []).map((i) => [i.id, i.name]))
-    // Match player names from context players array
-    setNewOrders(
-      orders.map((o) => {
-        const p = players.find((pl) => String(pl.id) === String(o.player_id))
-        return { ...o, playerName: p?.name || null, itemName: itemMap[o.merch_item_id] || 'item' }
-      }),
-    )
-  }, [isAdmin, players])
-
-  useEffect(() => {
-    loadNewOrders()
-  }, [loadNewOrders])
-
-  // Flat read (tournament IO refactor): refresh new-order count on tab focus
-  // instead of holding a realtime channel open.
-  useRefreshOnFocus(loadNewOrders)
+  const newOrders = useMemo(() => {
+    if (!isAdmin) return []
+    const itemName = new Map(merchItems.map((i) => [i.id, i.name]))
+    return merchInterests
+      .filter((o) => (o.created_at || '') >= lastChecked)
+      .sort((a, b) => ((a.created_at || '') < (b.created_at || '') ? 1 : -1))
+      .slice(0, MAX_NEW_ORDERS)
+      .map((o) => ({
+        ...o,
+        playerName: players.find((p) => String(p.id) === o.playerId)?.name || null,
+        itemName: itemName.get(o.merch_item_id) || 'item',
+      }))
+  }, [isAdmin, merchInterests, merchItems, players, lastChecked])
 
   const dismissMerchOrders = () => {
-    localStorage.setItem(LAST_CHECK_KEY, new Date().toISOString())
-    setNewOrders([])
+    const now = new Date().toISOString()
+    localStorage.setItem(LAST_CHECK_KEY, now)
+    setLastChecked(now)
   }
 
   const formatUpdateTime = (ts) => {

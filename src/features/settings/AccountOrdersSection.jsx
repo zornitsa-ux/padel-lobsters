@@ -1,35 +1,22 @@
-import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { ShoppingBag } from 'lucide-react'
-import { supabase } from '../../supabase'
-import useRefreshOnFocus from '../../hooks/useRefreshOnFocus'
+import { useMerchItems, useMerchInterests } from '../merch/useMerch'
+import { ordersForPlayer } from '../merch/merchSelectors'
 import MyOrders from '../merch/MyOrders'
 
+// Split so the merch queries only mount once there is a player to read orders
+// for — the previous direct fetch bailed out on a missing id the same way.
+function OrdersList({ playerId }) {
+  // Every item, active or not, so an order for a retired item still resolves
+  // its name and image.
+  const { data: items = [] } = useMerchItems({ activeOnly: false })
+  const { data: interests = [] } = useMerchInterests()
+
+  return <MyOrders myOrders={ordersForPlayer({ interests, playerId })} items={items} />
+}
+
 export default function AccountOrdersSection({ myPlayer }) {
-  const [items, setItems] = useState([])
-  const [interests, setInterests] = useState([])
-
-  const loadData = useCallback(async () => {
-    if (!myPlayer?.id) return
-    const [itemsRes, interestsRes] = await Promise.all([
-      supabase.from('merch_items').select('*').order('display_order').order('id'),
-      supabase.from('merch_interests').select('*'),
-    ])
-    if (itemsRes.data) setItems(itemsRes.data)
-    if (interestsRes.data) setInterests(interestsRes.data)
-  }, [myPlayer?.id])
-
-  useEffect(() => {
-    loadData()
-  }, [loadData])
-
-  useRefreshOnFocus(loadData)
-
   if (!myPlayer) return null
-
-  const myOrders = interests.filter(
-    (o) => o.player_id === myPlayer.id || String(o.player_id) === String(myPlayer.id),
-  )
 
   return (
     <section>
@@ -41,7 +28,7 @@ export default function AccountOrdersSection({ myPlayer }) {
           Browse shop →
         </Link>
       </div>
-      <MyOrders myOrders={myOrders} items={items} />
+      <OrdersList playerId={myPlayer.id} />
     </section>
   )
 }
