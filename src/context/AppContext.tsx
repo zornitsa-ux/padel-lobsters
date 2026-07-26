@@ -19,7 +19,7 @@ export function AppProvider({ children }: AppProviderProps) {
   const [loading, setLoading] = useState(true)
 
   const auth = useAuth()
-  const { session, role } = auth
+  const { session, sessionSettled, role } = auth
   const queryClient = useQueryClient()
 
   useScheduleRealtime({ setLoading })
@@ -48,6 +48,7 @@ export function AppProvider({ children }: AppProviderProps) {
       value={{
         loading,
         session,
+        sessionSettled,
         role,
         loginWithPin: auth.loginWithPin,
         logout: auth.logout,

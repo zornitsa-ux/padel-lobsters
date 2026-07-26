@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
 import { useCallback, useMemo } from 'react'
 import { playerKeys } from './playerKeys'
 import { fetchPlayers, fetchMyProfile, type Player } from './playerQueries'
@@ -19,6 +19,13 @@ const ROSTER_OPTIONS = {
 
 export function usePlayers() {
   return useQuery({ queryKey: playerKeys.list(), queryFn: fetchPlayers, ...ROSTER_OPTIONS })
+}
+
+// Start the roster request before React mounts. Declared here so it can't drift
+// from usePlayers' key/fetcher/staleTime — a mismatch on any of the three would
+// make the hook refetch and cost a request rather than save one.
+export function prefetchPlayers(qc: QueryClient): void {
+  void qc.prefetchQuery({ queryKey: playerKeys.list(), queryFn: fetchPlayers, ...ROSTER_OPTIONS })
 }
 
 // One player derived from the shared roster cache via `select` — no extra

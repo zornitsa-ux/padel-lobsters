@@ -19,6 +19,7 @@ import SetupGuard from './components/SetupGuard'
 import VerificationGate from './components/VerificationGate'
 import AuthConfirm from './components/AuthConfirm'
 import { useEventDataLoader } from './features/events/useEventDataLoader'
+import { mark } from './lib/perfMarks'
 import EventShell from './features/events/EventShell'
 import CommunityShell from './features/community/CommunityShell'
 
@@ -54,6 +55,7 @@ const GroupStageHistoryPage = lazy(() => import('./features/league/GroupStageHis
 // Phase 2 feature refactors will switch each component to call useNavigate
 // directly and the adapter can be deleted then.
 export default function App() {
+  useEffect(() => mark('react-mount'), [])
   return (
     <AppProvider>
       <SetupGuard>

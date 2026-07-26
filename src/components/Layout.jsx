@@ -93,8 +93,10 @@ export default function Layout({ children }) {
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden bg-white">
                 <img
-                  src="/logo-hd.png"
+                  src="/logo-256.webp"
                   alt="Padel Lobsters"
+                  width="40"
+                  height="40"
                   className="w-full h-full object-contain"
                 />
               </div>

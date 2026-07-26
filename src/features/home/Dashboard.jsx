@@ -10,7 +10,9 @@ import { useAllRegistrations } from '../events/useRegistrations'
 import { supabase } from '../../supabase'
 import DEFAULT_TIPS from '../../data/padelTips'
 import TransferPendingModal from '../../components/TransferPendingModal'
+import { mark } from '../../lib/perfMarks'
 import { getGreeting } from './greetings'
+import useGreetingName from './useGreetingName'
 import useCountdown from './useCountdown'
 import Greeting from './Greeting'
 import TransferOfferBanners from './TransferOfferBanners'
@@ -22,14 +24,14 @@ import AdminAlerts from './AdminAlerts'
 import { LeagueDashboardCard } from '../league/ui/LeagueDashboardCard'
 
 export default function Dashboard({ onNavigate }) {
-  const { session } = useApp()
-  const { data: tournaments = [] } = useTournaments()
+  const { session, sessionSettled } = useApp()
+  const { data: tournaments = [], isSuccess: tournamentsLoaded } = useTournaments()
   const { data: transfers = [] } = useTransfers()
   const { respondToTransfer, cancelTransfer } = useTransferActions({ session })
   const { data: settings } = useSettings()
-  const { data: players = [] } = usePlayers()
+  const { data: players = [], isPending: playersPending } = usePlayers()
   const { data: matches = [] } = useAllMatches()
-  const { data: registrations = [] } = useAllRegistrations()
+  const { data: registrations = [], isSuccess: registrationsLoaded } = useAllRegistrations()
 
   const getTournamentMatches = useCallback(
     (id) => matches.filter((m) => m.tournamentId === id),
@@ -217,10 +219,27 @@ export default function Dashboard({ onNavigate }) {
   // (no claimed player, no admin, no league admin) get a generic welcome
   // that invites them to sign in. Keeps the home page identical for
   // logged-in and logged-out visitors except for the top line.
+  //
+  // The name comes from the roster, which lands after the session does. Rather
+  // than greet a placeholder and swap (see useGreetingName), reuse the name
+  // cached from the last visit, and if there isn't one, hold the greeting until
+  // the roster resolves.
   const isGuest = !claimedId && !isAdmin
+  const greetingName = useGreetingName({ playerId: claimedId, name: claimedPlayer?.name })
+  const nameStillLoading = !!claimedId && !greetingName && playersPending
   const [greetHello, greetSub] = isGuest
     ? ['Welcome to Padel Lobsters!', 'Sign in with your PIN to join the fun.']
-    : getGreeting(claimedPlayer?.name || (isAdmin ? 'Admin' : null))
+    : getGreeting(greetingName || (isAdmin ? 'Admin' : null))
+
+  // Marks are first-call-wins, so both conditions have to mean "settled", not
+  // "nothing loaded yet": before the session resolves claimedId is null, and an
+  // empty list is a legitimate loaded state.
+  const greetingReady = sessionSettled && !nameStillLoading
+  const homeDataReady = tournamentsLoaded && registrationsLoaded
+  useEffect(() => {
+    if (greetingReady) mark('greeting')
+    if (homeDataReady) mark('home-data')
+  }, [greetingReady, homeDataReady])
 
   const tips =
     settings?.padelTips && settings.padelTips.length > 0 ? settings.padelTips : DEFAULT_TIPS
@@ -233,7 +252,7 @@ export default function Dashboard({ onNavigate }) {
   return (
     <div className="-mx-4">
       <div className="px-4 pt-4 space-y-5">
-        <Greeting hello={greetHello} sub={greetSub} />
+        <Greeting hello={greetHello} sub={greetSub} loading={nameStillLoading} />
 
         <TransferOfferBanners
           incomingTransfers={myIncomingTransfers}

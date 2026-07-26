@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
 import { tournamentKeys } from './tournamentKeys'
 import {
   fetchTournaments,
@@ -12,6 +12,11 @@ export function useTournaments() {
     queryKey: tournamentKeys.all(),
     queryFn: fetchTournaments,
   })
+}
+
+// See prefetchPlayers — starts the request before React mounts.
+export function prefetchTournaments(qc: QueryClient): void {
+  void qc.prefetchQuery({ queryKey: tournamentKeys.all(), queryFn: fetchTournaments })
 }
 
 export function useAddTournament() {

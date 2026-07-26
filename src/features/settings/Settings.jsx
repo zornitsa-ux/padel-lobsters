@@ -378,8 +378,10 @@ export default function Settings() {
         {/* App info */}
         <div className="card text-center space-y-1 py-5">
           <img
-            src="/logo-hd.png"
+            src="/logo-256.webp"
             alt="Padel Lobsters"
+            width="56"
+            height="56"
             className="w-14 h-14 rounded-full bg-white p-1 object-contain mx-auto mb-2"
           />
           <p className="font-bold text-gray-700">Padel Lobsters</p>
