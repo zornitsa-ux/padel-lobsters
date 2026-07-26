@@ -26,9 +26,10 @@ split → refinement → report), the services in `src/features/matchmaking/`, a
 the admin UI mounts inside the Schedule tab: configure → generate → compare /
 fix repeats → save, then Finish applies ratings and raises the flagged-review
 queue. Learned levels (`mm_rating`/`mm_sigma`) are admin-only and feed the next
-event's roster. V1 code (`lobsterMatcher.js`, `glicko2.js`,
-`ratingsRecompute.js`, `pairingEngine.js`) is still in the tree with no data
-path reaching it (D-028).
+event's roster. The V1 **generator** code is gone (2026-07-26): `lobsterMatcher.js`,
+`pairingEngine.js`, the unused generators in `scheduleHelpers.js`, and
+`shadow.harness.test.ts` are deleted. V1 **rating** code (`glicko2.js`,
+`ratingsRecompute.js`) is still in the tree with no data path reaching it (D-028).
 
 Gates as of 2026-07-25: typecheck clean, lint 0 errors (136 pre-existing
 warnings), **722 pass / 3 skip**, build clean, 9 goldens byte-identical.
@@ -229,12 +230,23 @@ and in the code each task produced.
 - `[~]` **M4.3 — Delete legacy** (W, M) — the UI half is done (D-028): no
   user-facing surface reaches a V1 concept. What remains is code + schema
   deletion.
-  - **Code:** `src/lib/lobsterMatcher.js`, `src/lib/glicko2.js`,
-    `src/lib/ratingsRecompute.js`, `src/features/events/pairingEngine.js`, and
-    the unused generators in `scheduleHelpers.js` (D-001). With those gone, the
-    `!isLobster` branch, `formatLabel` (`eventHelpers.js`), the rounds picker in
-    `ScheduleGeneratorControls.tsx` and `isLobster` itself all collapse out of
-    `Schedule.jsx`.
+  - **Code — generators: done (2026-07-26).** Deleted `src/lib/lobsterMatcher.js`,
+    `src/features/events/pairingEngine.js`, the unused generators in
+    `scheduleHelpers.js` (it now exports only `shortName`), and
+    `domain/shadow.harness.test.ts` (D-001; `shadow-report.md` is the artifact).
+    `Schedule.jsx`'s `handleGenerate` collapsed to the non-admin redirect and
+    dropped its `useAllMatches` read.
+  - **Code — remaining:** `src/lib/glicko2.js`, `src/lib/ratingsRecompute.js`,
+    and the UI collapse — the `!isLobster` branch, `formatLabel`
+    (`eventHelpers.js`), the rounds picker in `ScheduleGeneratorControls.tsx`,
+    and `isLobster` itself.
+  - **Do NOT delete the `generated` preview block in `Schedule.jsx`.** With
+    `handleGenerate` now inert it looks unreachable, but `handleEditSchedule`
+    (`Schedule.jsx:67`) still sets `generated` from `savedRounds` for admins and
+    enables swap mode. That path is live: it drives the manual player swap, the
+    save, and the `validateSchedule` call at `:112` (covered by
+    `validateSchedule.test.js`). Deleting it would remove working admin
+    functionality.
   - **Schema:** drop `players.learned_rating`, `learned_rd`, `adjustment`,
     `adjusted_level` — see the appendix for the full DB-side checklist.
   - **Also:** a CHECK constraint on `tournaments.format` (the default is now

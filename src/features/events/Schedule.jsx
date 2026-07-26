@@ -2,21 +2,15 @@ import React, { useCallback, useMemo, useState } from 'react'
 import { useApp } from '../../context/useApp'
 import { useUpdateTournament } from './useTournaments'
 import { usePlayers } from '../players/usePlayers'
-import { useMatches, useAllMatches, useMatchActions } from './useMatches'
+import { useMatches, useMatchActions } from './useMatches'
 import { useRegistrations } from './useRegistrations'
 import { Shuffle, AlertCircle, Trophy, Users, Download } from 'lucide-react'
-import { generateLobster as generateLobsterAnnealed } from '../../lib/lobsterMatcher'
 import { recomputeAllRatings } from '../../lib/ratingsRecompute'
 import { supabase } from '../../supabase'
 import { letterColor } from '../../lib/letterColors'
 import validateSchedule from './validateSchedule'
 import { formatLabel } from './eventHelpers'
-import {
-  shortName,
-  generateAmericano,
-  generateMexicano,
-  generateRoundRobin,
-} from './scheduleHelpers'
+import { shortName } from './scheduleHelpers'
 import ScoreEntry from './ScoreEntry'
 import { useScoreSync } from './useScoreSync'
 import ScheduleGeneratorControls from './schedule/ScheduleGeneratorControls'
@@ -57,9 +51,6 @@ export default function Schedule({ tournament, onNavigate }) {
   const { data: players = [] } = usePlayers()
   const { data: savedMatches = [] } = useMatches(tournament?.id)
   const { data: regsData = [] } = useRegistrations(tournament?.id)
-  // All-tournament match history: used by the Lobster annealing matcher to
-  // avoid repeating partner/opponent pairs across events.
-  const { data: allMatches = [] } = useAllMatches()
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
 
   const [rounds, setRounds] = useState(4)
@@ -143,8 +134,7 @@ export default function Schedule({ tournament, onNavigate }) {
   // `format`. Gating this on `isLobster` was the bug: init.sql defaulted
   // `format` to 'americano', so any event created without an explicit format
   // (seed rows, anything predating D-020) silently fell through to the legacy
-  // annealed path. `handleGenerate`'s format branches are now unreachable for
-  // admins; V1 is retained as code only (D-028), with no data path to it.
+  // annealed path — since deleted along with the other V1 generators.
   const useV2Matcher = isAdmin
   const v2GenderMode = ['men', 'women', 'mixed'].includes(genderMode) ? genderMode : 'mixed'
   const v2Rounds = roundsForDuration(tournament?.duration)
@@ -341,44 +331,10 @@ export default function Schedule({ tournament, onNavigate }) {
     }
   }
 
-  const handleGenerate = async () => {
-    if (!isAdmin) {
-      onNavigate?.('settings')
-      return
-    }
-    if (registeredPlayers.length < 4) {
-      alert('Need at least 4 registered players to generate a schedule.')
-      return
-    }
-    setGenerating(true)
-    await new Promise((r) => setTimeout(r, 300)) // small delay for UX
-
-    let newRounds
-    if (format === 'lobster_matching') {
-      // Decayed cohort memory pulls from EVERY past completed match outside
-      // this tournament. Excluding this tournament's own matches prevents
-      // re-generation from biasing against itself if the admin reshuffles.
-      const pastMatches = (allMatches || []).filter(
-        (m) => m.tournamentId !== tournament.id && m.completed,
-      )
-      newRounds = generateLobsterAnnealed(
-        registeredPlayers,
-        numCourts,
-        genderMode,
-        tournament.duration || 90,
-        { pastMatches },
-      )
-    } else if (format === 'mexicano')
-      newRounds = generateMexicano(registeredPlayers, numCourts, rounds, genderMode)
-    else if (format === 'roundrobin')
-      newRounds = generateRoundRobin(registeredPlayers, numCourts, genderMode)
-    else newRounds = generateAmericano(registeredPlayers, numCourts, rounds, genderMode)
-
-    setGenerated(newRounds)
-    setScheduleWarnings(validateSchedule(newRounds, registeredPlayers, genderMode))
-    setSaved(false)
-    setGenerating(false)
-    setActiveRound(0)
+  // MatchmakingContainer is the only generator (`useV2Matcher = isAdmin`), so
+  // this handler is only ever reached by a non-admin, who gets bounced.
+  const handleGenerate = () => {
+    onNavigate?.('settings')
   }
 
   const handleSave = async () => {
