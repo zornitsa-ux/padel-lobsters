@@ -5,8 +5,6 @@ import { usePlayers } from '../players/usePlayers'
 import { useMatches, useMatchActions } from './useMatches'
 import { useRegistrations } from './useRegistrations'
 import { Shuffle, AlertCircle, Trophy, Users, Download } from 'lucide-react'
-import { recomputeAllRatings } from '../../lib/ratingsRecompute'
-import { supabase } from '../../supabase'
 import { letterColor } from '../../lib/letterColors'
 import validateSchedule from './validateSchedule'
 import { formatLabel } from './eventHelpers'
@@ -319,10 +317,6 @@ export default function Schedule({ tournament, onNavigate }) {
         status: 'completed',
         completedAt: new Date().toISOString(),
       })
-      // Fire-and-forget Glicko recompute — folds this tournament's matches
-      // into shadow ratings. Errors are non-fatal; admin can also re-trigger
-      // manually from Settings.
-      recomputeAllRatings(supabase).catch((e) => console.warn('recompute on finish failed:', e))
       onNavigate('scores', tournament)
     } catch (err) {
       setFinishError(err?.message || 'Could not finish tournament.')

@@ -120,7 +120,7 @@ All DB access goes through the Supabase JS client (`src/supabase.js`) using the 
 
 **`players`**
 
-- `id`, `name`, `email`, `pin_hash` (bcrypt), `pin` (plaintext — **pending drop**, see Open Work), `nationality`, `avatar_url`, `playtomic_level`, `learned_rating` (Glicko-2 in DB units), `learned_rd`, `role` (`player_role` enum: `'player'` | `'admin'`), `created_at`
+- `id`, `name`, `email`, `pin_hash` (bcrypt), `pin` (plaintext — **pending drop**, see Open Work), `nationality`, `avatar_url`, `playtomic_level`, `learned_rating` / `learned_rd` / `learned_volatility` / `learned_matches_count` / `learned_updated_at` (Glicko-2 V1 — **dead, pending drop**: no reader, and as of M4.3 no writer either), `role` (`player_role` enum: `'player'` | `'admin'`), `created_at`
 - **`role`** is the single source of truth for authorization. Baked into JWT `app_metadata.role` by the `verify-pin` Edge Function on every login.
 - RLS: admins have full access via JWT claim policy; players can read/update their own row; anon reads go through the `players_public` view. Direct table access for non-owners is denied.
 
@@ -202,28 +202,28 @@ All write operations go through RPCs, never direct INSERT/UPDATE:
 
 Authorization pattern: player RPCs use `auth.uid()` + `require_trusted_device()`; admin RPCs use `require_admin()` (reads JWT `app_metadata.role`).
 
-| RPC                             | Auth                   | Purpose                                          |
-| ------------------------------- | ---------------------- | ------------------------------------------------ |
-| `admin_add_player`              | `require_admin()`      | Create player                                    |
-| `admin_update_player`           | `require_admin()`      | Update any player field                          |
-| `admin_delete_player`           | `require_admin()`      | Delete player                                    |
-| `admin_regenerate_pin`          | `require_admin()`      | Regenerate a player's PIN                        |
-| `admin_approve_device`          | `require_admin()`      | Approve a pending device                         |
-| `update_my_profile`             | `auth.uid()` + trusted | Player updates own name/email/avatar/nationality |
-| `create_transfer`               | `auth.uid()` + trusted | Player initiates a spot transfer                 |
-| `cancel_transfer`               | `auth.uid()` + trusted | Player cancels their pending transfer            |
-| `respond_to_transfer`           | `auth.uid()` + trusted | Recipient accepts or declines transfer           |
-| `approve_device`                | `auth.uid()`           | Player approves a pending device (no trust gate) |
-| `reject_device`                 | `auth.uid()`           | Player rejects a pending device (no trust gate)  |
-| `get_my_profile_v2`             | `auth.uid()`           | Fetch own full record (email/phone)              |
-| `lobster_oscars_cast_vote`      | `auth.uid()` + trusted | Cast/update a vote                               |
-| `lobster_oscars_clear_vote`     | `auth.uid()` + trusted | Remove own vote                                  |
-| `lobster_oscars_admin_*`        | `require_admin()`      | Oscars session management                        |
-| `admin_persist_learned_ratings` | `require_admin()`      | Persist Glicko-2 ratings to DB                   |
-| `admin_record_raffle_winners`   | `require_admin()`      | Draw raffle winners (enforces cooldown)          |
-| `verify_player_pin_v2`          | anon                   | PIN check + rate limiting (called by Edge Fn)    |
-| `self_signup_player`            | anon                   | Self-service player registration                 |
-| `forgot_my_pin`                 | anon                   | Email-based PIN reset                            |
+| RPC                             | Auth                   | Purpose                                                                |
+| ------------------------------- | ---------------------- | ---------------------------------------------------------------------- |
+| `admin_add_player`              | `require_admin()`      | Create player                                                          |
+| `admin_update_player`           | `require_admin()`      | Update any player field                                                |
+| `admin_delete_player`           | `require_admin()`      | Delete player                                                          |
+| `admin_regenerate_pin`          | `require_admin()`      | Regenerate a player's PIN                                              |
+| `admin_approve_device`          | `require_admin()`      | Approve a pending device                                               |
+| `update_my_profile`             | `auth.uid()` + trusted | Player updates own name/email/avatar/nationality                       |
+| `create_transfer`               | `auth.uid()` + trusted | Player initiates a spot transfer                                       |
+| `cancel_transfer`               | `auth.uid()` + trusted | Player cancels their pending transfer                                  |
+| `respond_to_transfer`           | `auth.uid()` + trusted | Recipient accepts or declines transfer                                 |
+| `approve_device`                | `auth.uid()`           | Player approves a pending device (no trust gate)                       |
+| `reject_device`                 | `auth.uid()`           | Player rejects a pending device (no trust gate)                        |
+| `get_my_profile_v2`             | `auth.uid()`           | Fetch own full record (email/phone)                                    |
+| `lobster_oscars_cast_vote`      | `auth.uid()` + trusted | Cast/update a vote                                                     |
+| `lobster_oscars_clear_vote`     | `auth.uid()` + trusted | Remove own vote                                                        |
+| `lobster_oscars_admin_*`        | `require_admin()`      | Oscars session management                                              |
+| `admin_persist_learned_ratings` | `require_admin()`      | Persist Glicko-2 V1 ratings — **caller-less since M4.3, pending drop** |
+| `admin_record_raffle_winners`   | `require_admin()`      | Draw raffle winners (enforces cooldown)                                |
+| `verify_player_pin_v2`          | anon                   | PIN check + rate limiting (called by Edge Fn)                          |
+| `self_signup_player`            | anon                   | Self-service player registration                                       |
+| `forgot_my_pin`                 | anon                   | Email-based PIN reset                                                  |
 
 ### Edge Functions
 
@@ -382,26 +382,28 @@ excludes `mm_*` by design; use `admin_get_mm_ratings()`.
 V2 engine. The simulated-annealing scheduler, the greedy `pairingEngine.js`, and
 the unused Americano/Mexicano/RoundRobin generators in `scheduleHelpers.js` were
 dead-but-bundled and have been deleted (D-001). `scheduleHelpers.js` now exports
-only `shortName`. The remaining V1 rating code (`glicko2.js`,
-`ratingsRecompute.js`) and the `adjustment` / `adjusted_level` / `learned_*`
-columns go at M4.3. The V1↔V2 comparison it was kept for is preserved as
-`docs/matchmaking-v2/shadow-report.md`.
+only `shortName`. `ratingsRecompute.js` — the last writer of the `learned_*`
+columns — has also been deleted (M4.3). The V1↔V2 comparison it was kept for is
+preserved as `docs/matchmaking-v2/shadow-report.md`.
 
-### Glicko-2 Ratings (`src/lib/glicko2.js`)
+### Glicko-2 Ratings (`src/lib/glicko2.ts`) — offline only
 
-Standard Glicko-2 (TAU=0.5, SCALE=173.7178).
+Standard Glicko-2 (TAU=0.5, SCALE=173.7178). Scale mapping:
+`padel_level = (rating - 1200) / 100` (Padel 3.0 ≈ Glicko 1500).
 
-Scale mapping: `padel_level = (rating - 1200) / 100`
-
-- Padel 3.0 ≈ Glicko 1500
+**No longer part of the app.** Its only runtime caller, `ratingsRecompute.js`,
+was deleted at M4.3; nothing in the shipped bundle imports it. It survives
+solely as the V1 baseline for two offline calibration harnesses
+(`domain/rating/calibrate.harness.test.ts` — Brier parity gate vs. the V2
+engine — and `seed.harness.test.ts`, via `ratingToPadel`), both of which are
+`describe.skip` unless an `MM_*_FIXTURE` env var points at a production
+snapshot. It goes when those harnesses do.
 
 `applyTournamentRatings(priorByPlayerId, matches, playtomicByPlayerId)`:
 
 - Team rating = average of individual ratings
 - Match score = proportion: `s1/(s1+s2)` and `s2/(s1+s2)`
 - Returns updated ratings only for players who played
-
-`learnedLevel` on player objects = `(learned_rating - 1200) / 100`. Persisted to DB via `recomputeAllRatings()`.
 
 ### Historical Data Stitching (`src/lib/playerHistory.js`, `src/lib/playerStats.js`)
 
@@ -415,20 +417,19 @@ The `player_aliases` table maps historical name strings → current player UUIDs
 
 ## Utility Modules (`src/lib/`)
 
-| Module                | Purpose                                                             |
-| --------------------- | ------------------------------------------------------------------- |
-| `standings.js`        | Americano tournament standings (shared)                             |
-| `playerStats.js`      | Per-player lifetime stats (shared between Dashboard + Players)      |
-| `playerHistory.js`    | Historical appearances from hardcoded data                          |
-| `glicko2.js`          | Glicko-2 rating calculations                                        |
-| `ratingsRecompute.js` | Full Glicko-2 rebuild from scratch (`recomputeAllRatings`)          |
-| `letterColors.js`     | Deterministic A–Z → hex color map (LOCKED — do not change)          |
-| `processAvatar.js`    | Center-crop to 256×256 WebP (HEIC-safe via `createImageBitmap`)     |
-| `calendar.js`         | .ics generator + Google Calendar URL builder (two alarms: 24h + 2h) |
-| `whatsapp.js`         | WhatsApp deep link builders; hardcoded group URL                    |
-| `format.js`           | `fmtEur`, `fmtEur0`, `fmtNum2` using `Intl.NumberFormat('en-GB')`   |
-| `deviceId.js`         | UUID v4 persisted in `localStorage['lobster_device_id']`            |
-| `authPaths.js`        | `PUBLIC_PAGES` list and access-control helpers                      |
+| Module             | Purpose                                                             |
+| ------------------ | ------------------------------------------------------------------- |
+| `standings.js`     | Americano tournament standings (shared)                             |
+| `playerStats.js`   | Per-player lifetime stats (shared between Dashboard + Players)      |
+| `playerHistory.js` | Historical appearances from hardcoded data                          |
+| `glicko2.ts`       | Glicko-2 rating calculations (offline harnesses only — not shipped) |
+| `letterColors.js`  | Deterministic A–Z → hex color map (LOCKED — do not change)          |
+| `processAvatar.js` | Center-crop to 256×256 WebP (HEIC-safe via `createImageBitmap`)     |
+| `calendar.js`      | .ics generator + Google Calendar URL builder (two alarms: 24h + 2h) |
+| `whatsapp.js`      | WhatsApp deep link builders; hardcoded group URL                    |
+| `format.js`        | `fmtEur`, `fmtEur0`, `fmtNum2` using `Intl.NumberFormat('en-GB')`   |
+| `deviceId.js`      | UUID v4 persisted in `localStorage['lobster_device_id']`            |
+| `authPaths.js`     | `PUBLIC_PAGES` list and access-control helpers                      |
 
 ---
 

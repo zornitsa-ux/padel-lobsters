@@ -61,7 +61,6 @@ vi.mock('../matchmaking/applyTournamentRatings.service', () => ({
   fetchRatingReviewQueue: vi.fn(),
   reviewRatingEvent: vi.fn(),
 }))
-vi.mock('../../lib/ratingsRecompute', () => ({ recomputeAllRatings: vi.fn() }))
 vi.mock('../../supabase', () => ({ supabase: {} }))
 
 import Schedule from './Schedule'

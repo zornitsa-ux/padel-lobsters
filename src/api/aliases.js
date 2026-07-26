@@ -1,5 +1,4 @@
 import { supabase } from '../supabase'
-import { recomputeAllRatings } from '../lib/ratingsRecompute'
 
 export async function loadPlayerAliases() {
   // Map of historical_name → player_id (or sentinel '__not_in_roster__'
@@ -38,9 +37,6 @@ export async function setPlayerAlias(historicalName, playerId) {
     alert('Could not save alias: ' + error.message)
     return false
   }
-  // Fire-and-forget Glicko recompute. A new alias may unlock historical
-  // matches for this player; ratings should reflect that on next page load.
-  recomputeAllRatings(supabase).catch((e) => console.warn('recompute after alias save failed:', e))
   return true
 }
 
@@ -53,8 +49,5 @@ export async function removePlayerAlias(historicalName) {
     console.error(error)
     return false
   }
-  recomputeAllRatings(supabase).catch((e) =>
-    console.warn('recompute after alias remove failed:', e),
-  )
   return true
 }
