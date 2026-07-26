@@ -4,6 +4,7 @@ import type { Session } from '@supabase/supabase-js'
 export interface AppContextValue {
   loading: boolean
   session: Session | null
+  sessionSettled: boolean
   role: string
   loginWithPin: (pin: string) => Promise<{ success: boolean; role: string; error: unknown }>
   logout: () => Promise<void>

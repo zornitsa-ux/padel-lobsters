@@ -1,12 +1,15 @@
 -- =============================================================================
 --  PADEL LOBSTERS — Local Development Seed Data
 --
---  Generated from production on 2025-05-03.
+--  Generated from production on 2026-07-26.
 --  This file is run automatically by `supabase db reset` after all migrations.
 --  It populates the local database with realistic data so you can develop and
 --  test without touching production.
 --
---  PINs: A handful of players get PIN '1234' for login testing.
+--  Known logins: PIN '9999' = admin (Jon Grim), PIN '1234' = plain player (Trunal).
+--  Trunal holds the player-login PIN instead of Zornitsa Mihaylova (used pre-2026-07-26)
+--  because Zornitsa is now an admin in production — keeping the test PINs on a
+--  non-admin/admin pair avoids surprising a "log in as player" test with admin UI.
 --  Emails: All replaced with @lobsters.test addresses.
 --
 --  NOTE: This is NOT run against production. It is local-only.
@@ -29,83 +32,127 @@ ON CONFLICT (id) DO UPDATE SET
   auto_trust_until = EXCLUDED.auto_trust_until;
 
 -- ── Players ──────────────────────────────────────────────────────────────────
--- Full roster from production with sanitised emails.
--- Players marked with pin = '1234' can be used to test the login flow.
+-- Full roster from production with sanitised emails (105 players, incl.
+-- status='placeholder' shadow accounts for league teammates without app
+-- accounts — see docs on the placeholder player pattern).
+-- Players marked with pin = '9999' or '1234' can be used to test the login flow.
 -- The sync_player_pin_hash trigger will bcrypt-hash the PIN on insert.
 
 INSERT INTO players (name, gender, playtomic_level, adjustment, adjusted_level, status, is_left_handed, country, preferred_position, email, pin)
 VALUES
-  ('Adriana Dinu',          'female', 1.5, 0,    1.5, 'active', false, 'RO', 'right', 'adriana@lobsters.test',    ''),
-  ('Aimée van der Pijl',    'female', 2.8, 0,    2.8, 'active', false, 'NL', 'left',  'aimee@lobsters.test',      ''),
-  ('ALEJANDRO González',    'male',   2.2, 0,    2.2, 'active', true,  'ES', 'right', 'alejandro.g@lobsters.test',''),
-  ('Alejandro Muñoz',       'male',   2.5, 0,    2.5, 'active', false, 'ES', 'left',  'alejandro.m@lobsters.test',''),
-  ('Alex B',                'male',   3.0, 0,    3.0, 'active', false, 'RO', 'left',  'alex.b@lobsters.test',     ''),
-  ('Alex Gomez',            'male',   3.0, 0,    3.0, 'active', true,  'ES', 'right', 'alex.gomez@lobsters.test', ''),
-  ('Andres Mendoza',        'male',   1.2, 0.3,  1.5, 'active', true,  'MX', 'right', 'andres@lobsters.test',     ''),
-  ('Anthony Kay',           'male',   2.0, 0.3,  2.3, 'active', false, 'GB', 'right', 'anthony@lobsters.test',    ''),
-  ('Arda Yucel',            'male',   2.5, 0,    2.5, 'active', false, 'TR', 'left',  'arda@lobsters.test',       ''),
-  ('Ashwanth',              'male',   2.0, 0,    2.0, 'active', false, 'NL', 'left',  'ashwanth@lobsters.test',   ''),
-  ('Baturay Ucer',          'male',   2.0, 0.5,  2.5, 'active', false, 'NL', 'right', 'baturay@lobsters.test',    ''),
-  ('Bianca Hoogkamer',      'female', 2.5, -0.5, 2.0, 'active', false, 'NL', 'left',  'bianca@lobsters.test',     ''),
-  ('Can Bezmen',            'male',   2.0, 0,    2.0, 'active', false, 'TR', 'right', 'can@lobsters.test',        ''),
-  ('Carolien van den Berg', 'female', 2.0, 0,    2.0, 'active', true,  'NL', 'right', 'carolien@lobsters.test',   ''),
-  ('Chloe Precey',          'female', 1.7, 0,    1.7, 'active', true,  'GB', '',      'chloe@lobsters.test',      ''),
-  ('Chris Desjardins ',     'male',   1.4, 0,    1.4, 'active', false, 'NL', 'both',  'chris@lobsters.test',      ''),
-  ('Daniel Net Hitter',     'male',   2.8, 0,    2.8, 'active', false, 'NL', 'left',  'daniel@lobsters.test',     ''),
-  ('Davide Di Domenico',    'male',   2.7, 0,    2.7, 'active', false, 'IT', '',      'davide@lobsters.test',     ''),
-  ('Dominika Rychlewicz',   'female', 2.0, 0,    2.0, 'active', false, 'NL', 'left',  'dominika@lobsters.test',   ''),
-  ('Elena Jiménez ',        'female', 3.0, 0,    3.0, 'active', false, 'ES', 'right', 'elena@lobsters.test',      ''),
-  ('Elisabeth Vaudevire ',  'female', 2.0, 0,    2.0, 'active', false, 'FR', 'left',  'elisabeth@lobsters.test',  ''),
-  ('Emiliano Cenizo',       'male',   0.8, 0,    0.8, 'active', false, 'AR', 'right', 'emiliano@lobsters.test',   ''),
-  ('Eric ten Kate',         'male',   2.0, 0,    2.0, 'active', false, 'NL', 'both',  'eric@lobsters.test',       ''),
-  ('Erica van Asten',       'female', 1.3, 0.3,  1.6, 'active', false, 'NL', 'left',  'erica@lobsters.test',      ''),
-  ('Francesco Di Vincenzo', 'male',   2.2, 0,    2.2, 'active', false, 'IT', 'right', 'francesco@lobsters.test',  ''),
-  ('Gabriela Malovrh',      'female', 1.0, 0,    1.0, 'active', false, 'AR', 'both',  'gabriela@lobsters.test',   ''),
-  ('Gagan Shetty',          'male',   1.3, 0.2,  1.5, 'active', false, 'IN', '',      'gagan@lobsters.test',      ''),
-  ('Gino',                  'male',   3.0, 0,    3.0, 'active', false, 'IT', 'both',  'gino@lobsters.test',       ''),
-  ('Greg',                  'male',   1.3, 0.7,  2.0, 'active', false, 'FR', 'both',  'greg@lobsters.test',       ''),
-  ('Gregorio .',             'male',   2.2, 0,    2.2, 'active', false, 'IT', 'both',  'gregorio@lobsters.test',   ''),
-  ('Ilaria .',               'female', 2.0, 0,    2.0, 'active', false, 'NL', '',      'ilaria@lobsters.test',     ''),
-  ('Ingrid Oudejans',       'female', 2.7, 0,    2.7, 'active', false, 'NL', '',      'ingrid@lobsters.test',     ''),
-  ('Ini',                   'female', 1.9, 0.4,  2.3, 'active', false, 'ES', 'left',  'ini@lobsters.test',        ''),
-  ('Jens N',                'male',   2.0, 0,    2.0, 'active', false, 'NL', 'right', 'jens@lobsters.test',       ''),
-  ('Jessica Spotowski',     'female', 2.4, -1.0, 1.4, 'active', false, 'NL', 'both',  'jessica@lobsters.test',    ''),
+  ('Adriana Dinu', 'female', 1.5, 0, 1.5, 'active', false, 'RO', 'right', 'adriana@lobsters.test', ''),
+  ('Aimée van der Pijl', 'female', 2.8, 0, 2.8, 'active', false, 'NL', 'left', 'aimee@lobsters.test', ''),
+  ('Alejandro González', 'male', 2.2, 0, 2.2, 'active', true, 'ES', 'right', 'alejandro.g@lobsters.test', ''),
+  ('Alejandro Muñoz', 'male', 2.5, 0, 2.5, 'active', false, 'ES', 'left', 'alejandro.m@lobsters.test', ''),
+  ('Alex B', 'male', 3, 0, 3, 'active', false, 'RO', 'left', 'alex.b@lobsters.test', ''),
+  ('Alex Gomez', 'male', 3, 0, 3, 'active', true, 'ES', 'right', 'alex.g@lobsters.test', ''),
+  ('Andres Mendoza', 'male', 1.2, 1.3, 2.5, 'active', true, 'MX', 'right', 'andres@lobsters.test', ''),
+  ('Anne Lamsveldt', '', 0, 0, 0, 'placeholder', false, NULL, NULL, 'anne@lobsters.test', ''),
+  ('Anthony Kay', 'male', 2, 0.3, 2.3, 'active', false, 'GB', 'right', 'anthony@lobsters.test', ''),
+  ('Anton Volodin', 'male', 2.5, 0, 2.5, 'active', false, 'NL', 'both', 'anton@lobsters.test', ''),
+  ('Arda Yucel', 'male', 2.5, 0, 2.5, 'active', false, 'TR', 'left', 'arda@lobsters.test', ''),
+  ('Ashwanth', 'male', 2, 0, 2, 'active', false, 'NL', 'left', 'ashwanth@lobsters.test', ''),
+  ('Aysegul Muslu', 'female', 2.5, 0, 2.5, 'active', false, 'NL', 'both', 'aysegul@lobsters.test', ''),
+  ('Baris Evruke', 'male', 2, 0, 2, 'active', false, 'NL', 'both', 'baris@lobsters.test', ''),
+  ('Baturay Ucer', 'male', 2, 0.5, 2.5, 'active', false, 'TR', 'right', 'baturay@lobsters.test', ''),
+  ('Bianca Hoogkamer', 'female', 2.5, -0.5, 2, 'active', false, 'NL', 'left', 'bianca@lobsters.test', ''),
+  ('Can Bezmen', 'male', 2, 0, 2, 'active', false, 'TR', 'right', 'can@lobsters.test', ''),
+  ('Carolien van den Berg', 'female', 2, 0, 2, 'active', true, 'NL', 'right', 'carolien@lobsters.test', ''),
+  ('Chelsea Veldman', '', 2, 0, 2, 'active', false, NULL, NULL, 'chelsea@lobsters.test', ''),
+  ('Chloe Precey', 'female', 1.7, 0, 1.7, 'active', true, 'GB', '', 'chloe@lobsters.test', ''),
+  ('Chris Desjardins ', 'male', 1.4, 0, 1.4, 'active', false, 'NL', 'both', 'chris@lobsters.test', ''),
+  ('Craig Butler', 'male', 3.3, 0, 3.3, 'active', false, 'NL', 'right', 'craig@lobsters.test', ''),
+  ('Daniel Net Hitter', 'male', 2.8, 0, 2.8, 'active', false, 'NL', 'left', 'daniel@lobsters.test', ''),
+  ('Davide Di Domenico', 'male', 2.7, 0, 2.7, 'active', false, 'IT', '', 'davide@lobsters.test', ''),
+  ('Dominika Rychlewicz', 'female', 2, 0, 2, 'active', false, 'NL', 'left', 'dominika@lobsters.test', ''),
+  ('Elena Jiménez ', 'female', 3, 0, 3, 'active', false, 'ES', 'right', 'elena.j@lobsters.test', ''),
+  ('Elena Quesada', '', 0, 0, 0, 'placeholder', false, NULL, NULL, 'elena.q@lobsters.test', ''),
+  ('Elisabeth Vaudevire ', 'female', 2, 0, 2, 'active', false, 'FR', 'left', 'elisabeth@lobsters.test', ''),
+  ('Emiliano Cenizo', 'male', 0.8, 0, 0.8, 'active', false, 'AR', 'right', 'emiliano@lobsters.test', ''),
+  ('Emre Can Turkkan', 'male', 2.5, 0, 2.5, 'active', false, 'NL', 'left', 'emre.t@lobsters.test', ''),
+  ('Emre Can Türkkan', '', 0, 0, 0, 'placeholder', false, NULL, NULL, 'emre.tu@lobsters.test', ''),
+  ('Eric ten Kate', 'male', 2, 0, 2, 'active', false, 'NL', 'both', 'eric@lobsters.test', ''),
+  ('Erica van Asten', 'female', 1.3, 0.3, 1.6, 'active', false, 'NL', 'left', 'erica@lobsters.test', ''),
+  ('Favio Gerometta', 'male', 1, 0.5, 1.5, 'active', false, 'AR', 'both', 'favio@lobsters.test', ''),
+  ('Francesco Di Vincenzo', 'male', 2.2, 0, 2.2, 'active', false, 'IT', 'right', 'francesco@lobsters.test', ''),
+  ('Gabriela Malovrh', 'female', 1, 0, 1, 'active', false, 'AR', 'both', 'gabriela@lobsters.test', ''),
+  ('Gagan Shetty', 'male', 1.3, 0.2, 1.5, 'active', false, 'IN', '', 'gagan@lobsters.test', ''),
+  ('George Chondrompilas', 'male', 2.27, 0.3, 2.57, 'active', false, 'GR', 'both', 'george@lobsters.test', ''),
+  ('Gino', 'male', 3, 0, 3, 'active', false, 'IT', 'both', 'gino@lobsters.test', ''),
+  ('Gonzalo Espeche', 'male', 3, -0.5, 2.5, 'active', false, 'AR', 'both', 'gonzalo@lobsters.test', ''),
+  ('Greg', 'male', 1.3, 0.7, 2, 'active', false, 'FR', 'both', 'greg@lobsters.test', ''),
+  ('Gregorio .', 'male', 2.2, 0, 2.2, 'active', false, 'IT', 'both', 'gregorio@lobsters.test', ''),
+  ('Ilaria .', 'female', 2, 0, 2, 'active', false, 'NL', '', 'ilaria@lobsters.test', ''),
+  ('Ingrid Oudejans', 'female', 2.7, 0, 2.7, 'active', false, 'NL', NULL, 'ingrid@lobsters.test', ''),
+  ('Ini', 'female', 1.9, 0.4, 2.3, 'active', false, 'ES', 'left', 'ini@lobsters.test', ''),
+  ('Jens N', 'male', 2, 0, 2, 'active', false, 'NL', 'right', 'jens@lobsters.test', ''),
+  ('Jessica Spotowski', 'female', 2.4, -1, 1.4, 'active', false, 'NL', 'both', 'jessica@lobsters.test', ''),
   -- Jon (admin) gets a unique test PIN. Keep this distinct from any other
   -- seeded PIN so admin login is unambiguous when verify_player_pin_v2
   -- matches by bcrypt and there are multiple seeded test PINs.
-  ('Jon Grim',              'male',   2.6, 0.4,  3.0, 'active', false, 'US', 'both',  'jon@lobsters.test',        '9999'),
-  ('Josephine Tolley',      'female', 1.0, 1.0,  2.0, 'active', false, 'NL', 'right', 'josephine@lobsters.test',  ''),
-  ('Juan Blas Diaz',        'male',   2.6, 0,    2.6, 'active', false, 'AR', 'both',  'juan.blas@lobsters.test',  ''),
-  ('Juan Dominguez',        'male',   2.0, 0.5,  2.5, 'active', false, 'AR', 'both',  'juan.d@lobsters.test',     ''),
-  ('Julian Keerl',          'male',   2.5, 0,    2.5, 'active', false, 'NL', 'both',  'julian@lobsters.test',     ''),
-  ('Kemal',                 'male',   1.6, 0.7,  2.3, 'active', false, 'TR', 'both',  'kemal@lobsters.test',      ''),
-  ('Lara Leser',            'female', 2.0, 0,    2.0, 'active', false, 'NL', 'right', 'lara@lobsters.test',       ''),
-  ('Laura Schelhaas',       'female', 1.9, 0,    1.9, 'active', false, 'NL', 'left',  'laura@lobsters.test',      ''),
-  ('Lucia Juelke',          'female', 2.5, 0,    2.5, 'active', true,  'DE', 'right', 'lucia@lobsters.test',      ''),
-  ('Marielle Braak',        'female', 1.5, 0,    1.5, 'active', false, 'NL', 'right', 'marielle@lobsters.test',   ''),
-  ('Markus',                'male',   1.9, 0,    1.9, 'active', false, 'DE', 'right', 'markus@lobsters.test',     ''),
-  ('Mauricio Wiersma',      'male',   3.5, 0,    3.5, 'active', false, 'AR', 'left',  'mauricio@lobsters.test',   ''),
-  ('Melanie Burger',        'female', 1.0, 0.5,  1.5, 'active', false, 'NL', 'both',  'melanie@lobsters.test',    ''),
-  ('Mert Gulleroglu',       'male',   1.7, 0,    1.7, 'active', false, 'NL', 'right', 'mert@lobsters.test',       ''),
-  ('Milan Kölling',         'male',   3.0, 0,    3.0, 'active', false, 'DE', 'left',  'milan@lobsters.test',      ''),
-  ('Nico Tzinieris',        'male',   1.9, 0.1,  2.0, 'active', false, 'DE', 'left',  'nico@lobsters.test',       ''),
-  ('Nik van der Poel',      'male',   2.7, 0,    2.7, 'active', false, 'NL', 'left',  'nik@lobsters.test',        ''),
-  ('Omar younis',           'male',   2.0, 0,    2.0, 'active', true,  'NL', 'right', 'omar@lobsters.test',       ''),
-  ('Orhan Ozkan',           'male',   2.0, 0,    2.0, 'active', false, 'NL', 'both',  'orhan@lobsters.test',      ''),
-  ('Paola Hasbún Lopez',    'female', 1.0, 0.8,  1.8, 'active', false, 'CL', 'left',  'paola@lobsters.test',      ''),
-  ('Sebas solis',           'male',   2.7, 0.3,  3.0, 'active', false, 'CR', 'left',  'sebas@lobsters.test',      ''),
-  ('Sebastian Fennell',     'male',   3.0, 0,    3.0, 'active', false, 'AR', 'left',  'sebastian@lobsters.test',  ''),
-  ('Timothy Tjen',          'male',   3.0, -0.2, 2.8, 'active', false, 'NL', 'left',  'timothy@lobsters.test',    ''),
-  ('Trunal',                'male',   2.5, 0,    2.5, 'active', false, 'NL', 'both',  'trunal@lobsters.test',     ''),
-  ('Uziel Brito',           'male',   3.3, -0.3, 3.0, 'active', false, 'CL', 'right', 'uziel@lobsters.test',      ''),
-  ('Valesca',               'female', 2.4, 0,    2.4, 'active', false, 'NL', 'left',  'valesca@lobsters.test',    ''),
-  ('Zeyon Henry',           'male',   2.5, 0,    2.5, 'active', false, 'NL', 'both',  'zeyon@lobsters.test',      ''),
-  -- Zornitsa gets a test PIN for admin/login testing
-  ('Zornitsa Mihaylova',    'female', 1.6, 0.4,  2.0, 'active', false, 'BG', 'both',  'zornitsa@lobsters.test',   '1234')
+  ('Jon Grim', 'male', 3, 0, 3, 'active', false, 'US', 'both', 'jon@lobsters.test', '9999'),
+  ('Josephine Tolley', 'female', 1, 1, 2, 'active', false, 'NL', 'right', 'josephine@lobsters.test', ''),
+  ('Juan Blas Diaz', 'male', 2.6, 0, 2.6, 'active', false, 'AR', 'both', 'juan.d@lobsters.test', ''),
+  ('Juan Dominguez', 'male', 2, 0.5, 2.5, 'active', false, 'AR', 'both', 'juan.do@lobsters.test', ''),
+  ('Julian Keerl', 'male', 2.5, 0, 2.5, 'active', false, 'NL', 'both', 'julian@lobsters.test', ''),
+  ('Karlijn Oortman', '', 2.23, 0, 2.23, 'placeholder', false, NULL, NULL, 'karlijn@lobsters.test', ''),
+  ('Kate Adams', '', 0, 0, 0, 'active', false, NULL, NULL, 'kate@lobsters.test', ''),
+  ('Keita Eriawan', 'male', 2.7, 0.3, 3.0, 'active', false, 'ID', 'left', 'keita@lobsters.test', ''),
+  ('Kemal', 'male', 1.6, 0.7, 2.3, 'active', false, 'TR', 'both', 'kemal@lobsters.test', ''),
+  ('Kyle Fiore', 'male', 3, 0, 3, 'active', false, 'NL', 'left', 'kyle@lobsters.test', ''),
+  ('Lara Leser', 'female', 2, 0, 2, 'active', false, 'NL', 'right', 'lara@lobsters.test', ''),
+  ('Lars Theunissen', 'male', 3, 0, 3, 'active', false, 'NL', 'left', 'lars@lobsters.test', ''),
+  ('Laura Schelhaas', 'female', 1.9, 0, 1.9, 'active', false, 'NL', 'left', 'laura@lobsters.test', ''),
+  ('Lucas Eichhorn', 'male', 2.3, 0.5, 2.8, 'active', false, 'AR', 'right', 'lucas@lobsters.test', ''),
+  ('Lucia Juelke', 'female', 2.5, 0, 2.5, 'active', true, 'DE', 'right', 'lucia@lobsters.test', ''),
+  ('Lucie', '', 0, 0, 0, 'placeholder', false, NULL, NULL, 'lucie@lobsters.test', ''),
+  ('Lucie Johnston', 'female', 2.5, 0, 2.5, 'active', false, 'NL', 'right', 'lucie.j@lobsters.test', ''),
+  ('Maria Mata', '', 2, 0, 2, 'active', false, NULL, NULL, 'maria@lobsters.test', ''),
+  ('Marielle Braak', 'female', 1.5, 0, 1.5, 'active', false, 'NL', 'right', 'marielle@lobsters.test', ''),
+  ('Mario Villani', 'male', 2, 0, 2, 'active', false, 'IT', 'both', 'mario@lobsters.test', ''),
+  ('Markus', 'male', 1.9, 0, 1.9, 'active', false, 'DE', 'right', 'markus@lobsters.test', ''),
+  ('Massiel Dongo', 'female', 2.2, 0, 2.2, 'active', false, 'ES', 'both', 'massiel@lobsters.test', ''),
+  ('Mauricio Wiersma', 'male', 3.5, 0, 3.5, 'active', false, 'AR', 'left', 'mauricio@lobsters.test', ''),
+  ('Melanie Burger', 'female', 1, 0.5, 1.5, 'active', false, 'NL', 'both', 'melanie@lobsters.test', ''),
+  ('Melvin Veldhuizen', 'male', 2.5, 0, 2.5, 'active', false, 'NL', 'left', 'melvin@lobsters.test', ''),
+  ('Mert Gulleroglu', 'male', 2, 0.5, 2.5, 'active', false, 'NL', 'right', 'mert@lobsters.test', ''),
+  ('Mick De Nijs', 'male', 2.5, 0, 2.5, 'active', false, 'NL', 'left', 'mick@lobsters.test', ''),
+  ('Miguel Lopez', 'male', 2.1, 0.4, 2.5, 'active', false, 'US', NULL, 'miguel@lobsters.test', ''),
+  ('Milan Kölling', 'male', 3, 0, 3, 'active', false, 'DE', 'left', 'milan@lobsters.test', ''),
+  ('Miriam Hendriks', 'female', 2.4, 0, 2.4, 'active', false, 'NL', 'left', 'miriam@lobsters.test', ''),
+  ('Nazar T.', 'male', 1.3, 1.7, 3.0, 'active', false, 'NL', 'right', 'nazar@lobsters.test', ''),
+  ('Niall Hurley', 'male', 2.2, 0, 2.2, 'active', false, 'NL', 'left', 'niall@lobsters.test', ''),
+  ('Nico Tzinieris', 'male', 1.9, 0.1, 2.0, 'active', false, 'DE', 'left', 'nico@lobsters.test', ''),
+  ('Nicole Charlene', 'female', 0.7, 0.5, 1.2, 'active', false, 'ID', 'left', 'nicole@lobsters.test', ''),
+  ('Nik van der Poel', 'male', 2.7, 0, 2.7, 'active', false, 'NL', 'left', 'nik@lobsters.test', ''),
+  ('Noyan Tufekcioglu', 'male', 3.5, 0, 3.5, 'active', false, 'NL', 'left', 'noyan@lobsters.test', ''),
+  ('Omar younis', 'male', 2, 0, 2, 'active', true, 'NL', 'right', 'omar@lobsters.test', ''),
+  ('Omid H', 'male', 2, 0, 2, 'active', false, 'NL', 'left', 'omid@lobsters.test', ''),
+  ('Orhan Ozkan', 'male', 2, 0, 2, 'active', false, 'NL', 'both', 'orhan@lobsters.test', ''),
+  ('Özer Yılmaz', 'male', 3.5, 0, 3.5, 'active', false, 'NL', '', 'ozer@lobsters.test', ''),
+  ('Paola Hasbún Lopez', 'female', 1, 0.8, 1.8, 'active', false, 'CL', 'left', 'paola@lobsters.test', ''),
+  ('Paul Wood', 'male', 2.4, 0, 2.4, 'active', false, 'NL', 'left', 'paul@lobsters.test', ''),
+  ('Raoul Chamuleau', 'male', 3.6, 0, 3.6, 'active', false, 'NL', 'both', 'raoul@lobsters.test', ''),
+  ('Ravi Panday', 'male', 3.5, 0, 3.5, 'active', false, 'NL', 'both', 'ravi@lobsters.test', ''),
+  ('Rowan Hesta', 'female', 1.5, 0.5, 2.0, 'active', false, 'NL', 'both', 'rowan@lobsters.test', ''),
+  ('Sebas solis', 'male', 2.9, 0.3, 3.2, 'active', false, 'CR', 'left', 'sebas@lobsters.test', ''),
+  ('Sebastian Araneda', 'male', 2.5, 0.3, 2.8, 'active', false, 'CL', 'right', 'sebastian.a@lobsters.test', ''),
+  ('Sebastian Fennell', 'male', 3, 0, 3, 'active', false, 'AR', 'left', 'sebastian.f@lobsters.test', ''),
+  ('Shivam Aggarwal', 'male', 1.4, 0.3, 1.7, 'active', false, 'NL', 'left', 'shivam@lobsters.test', ''),
+  ('Stephanie v. Baarsen', 'female', 3, 0, 3, 'active', false, 'NL', 'both', 'stephanie@lobsters.test', ''),
+  ('Timothy Tjen', 'male', 2.5, 0, 2.5, 'active', false, 'NL', 'left', 'timothy@lobsters.test', ''),
+  -- Trunal gets the plain player test PIN — see header note.
+  ('Trunal', 'male', 2.5, 0, 2.5, 'active', false, 'NL', 'both', 'trunal@lobsters.test', '1234'),
+  ('Uziel Brito', 'male', 3, -0.3, 2.7, 'active', false, 'CL', 'right', 'uziel@lobsters.test', ''),
+  ('Valesca', 'female', 2.4, 0, 2.4, 'active', false, 'NL', 'left', 'valesca@lobsters.test', ''),
+  ('Xander Bliek', 'male', 0.5, 0, 0.5, 'active', false, 'NL', 'right', 'xander@lobsters.test', ''),
+  ('Yaiza Lopez', '', 0, 0, 0, 'active', false, NULL, NULL, 'yaiza@lobsters.test', ''),
+  ('Zeyon Henry', 'male', 2.5, 0, 2.5, 'active', false, 'NL', 'both', 'zeyon@lobsters.test', ''),
+  ('Zornitsa Mihaylova', 'female', 1.6, 0.4, 2.0, 'active', false, 'BG', 'both', 'zornitsa@lobsters.test', '')
 ON CONFLICT DO NOTHING;
 
--- Grant admin role to Jon so PIN 9999 works as admin without a manual DB edit.
-UPDATE players SET role = 'admin' WHERE name = 'Jon Grim';
+-- Grant admin role to match production (Jon Grim, Uziel Brito, Zornitsa Mihaylova).
+UPDATE players SET role = 'admin' WHERE name IN ('Jon Grim', 'Uziel Brito', 'Zornitsa Mihaylova');
 
 -- ── Tournaments ──────────────────────────────────────────────────────────────
 
@@ -122,7 +169,7 @@ ON CONFLICT DO NOTHING;
 INSERT INTO public.raffle_winners (player_id, tournament_id, won_at_date, tournament_label, cooldown_offset, prize)
 SELECT p.id, NULL, v.won_at_date, v.tournament_label, v.cooldown_offset, v.prize
 FROM (VALUES
-  ('ALEJANDRO González', '2026-03-22'::date, 'LOBStournament #3', 1, 'tshirt'),
+  ('Alejandro González', '2026-03-22'::date, 'LOBStournament #3', 1, 'tshirt'),
   ('Alejandro Muñoz',    '2026-03-22'::date, 'LOBStournament #3', 1, 'grips'),
   ('Gagan Shetty',       '2026-03-22'::date, 'LOBStournament #3', 1, 'sticker'),
   ('Baturay Ucer',       '2026-03-22'::date, 'LOBStournament #3', 1, 'canvas bag'),

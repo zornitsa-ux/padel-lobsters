@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Badge } from '../../../components/ui/Badge'
 import type { BadgeProps } from '../../../components/ui/Badge'
-import { useActiveLeague, useLeagueTeams, useLeagueMatches } from '../hooks/useLeagueQueries'
+import { useActiveLeagueBundle } from '../hooks/useLeagueQueries'
 import { computeGroupStandings } from '../domain/standings'
 import { resolveTeamShortName } from '../domain/teamDisplay'
 import type { LeagueStatus } from '../domain/types'
@@ -20,9 +20,10 @@ const STATUS_BADGE: Record<LeagueStatus, { label: string; variant: BadgeProps['v
 
 export function LeagueDashboardCard({ myPlayerId }: LeagueDashboardCardProps) {
   const navigate = useNavigate()
-  const { data: league } = useActiveLeague()
-  const { data: teams = [] } = useLeagueTeams(league?.id)
-  const { data: matches = [] } = useLeagueMatches(league?.id)
+  const { data } = useActiveLeagueBundle()
+  const league = data?.league ?? null
+  const teams = data?.teams ?? []
+  const matches = data?.matches ?? []
 
   const myTeam = useMemo(
     () => teams.find((t) => t.player1_id === myPlayerId || t.player2_id === myPlayerId) ?? null,
