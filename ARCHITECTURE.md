@@ -16,7 +16,7 @@ Padel Lobsters is a private-league management SPA for a recurring Americano-form
 | Email      | Resend API via Supabase Edge Function                           |
 | Ratings    | Matchmaking V2 level model (`mm_rating`/`mm_sigma`)             |
 
-Vitest unit test suite exists (`npm test`) covering `src/lib/` and `src/data/` modules. No react-router-dom routing (despite it being installed).
+Vitest unit test suite exists (`npm test`) — ~78 test files across `src/lib/`, `src/features/**` (including the full Matchmaking V2 domain), and component-level tests. Routing is `react-router-dom` v6.
 
 ---
 
@@ -24,24 +24,51 @@ Vitest unit test suite exists (`npm test`) covering `src/lib/` and `src/data/` m
 
 ### Page Router
 
-`App.jsx` implements a custom string-state page machine. The active page is a string held in React state; `<Layout>` renders a component switch. There is no URL-based routing except for two special entry points:
+`src/App.tsx` uses `react-router-dom` (`BrowserRouter` / `Routes` / `Route`). The tree is: `AppProvider` → `SetupGuard` → `BrowserRouter` → `Layout` → `VerificationGate` → `Suspense` → `Routes`. Every route except the landing page is `lazy()`-loaded into its own Rollup chunk; the app shell plus `Dashboard` stay in the entry chunk.
 
-- `/?transfer=<id>` — renders `TransferAccept.jsx` (spot transfer deep link)
-- Any other `?` param is ignored
+| Path                      | Renders                                                     |
+| ------------------------- | ----------------------------------------------------------- |
+| `/`                       | redirect → `/home`                                          |
+| `/home`                   | `features/home/Dashboard`                                   |
+| `/auth/confirm`           | `components/AuthConfirm` (magic-link landing)               |
+| `/events`                 | `features/events/Tournament`                                |
+| `/events/:id`             | `features/events/EventShell` (layout route; index → `info`) |
+| `/events/:id/info`        | `features/events/Registration`                              |
+| `/events/:id/schedule`    | `features/events/Schedule`                                  |
+| `/events/:id/results`     | `features/events/Scores` (`/scores` redirects here)         |
+| `/events/:id/payments`    | `features/events/Payments` (admin; else → `info`)           |
+| `/events/:id/oscars`      | `features/oscars/Game`                                      |
+| `/events/:id/raffle`      | `features/raffle/RaffleContainer` (admin)                   |
+| `/events/:id/eligibility` | `features/raffle/RaffleEligibilityContainer` (admin)        |
+| `/community`              | `features/community/CommunityShell` → `Players`             |
+| `/community/:id`          | `Players` with `focusPlayerId`                              |
+| `/community/shop`         | `features/merch/Merch`                                      |
+| `/merch`                  | redirect → `/community/shop`                                |
+| `/admin`                  | `features/admin/AdminTools`                                 |
+| `/account`                | `features/settings/Settings` (`/settings` redirects here)   |
+| `/history`                | redirect → `/events` (history renders inside `Tournament`)  |
+| `/transfer/:id`           | `components/TransferAccept`                                 |
+| `/league`                 | `features/league/LeagueIndexPage`                           |
+| `/league/:id`             | `features/league/LeaguePage`                                |
+| `/league/:id/group-stage` | `features/league/GroupStageHistoryPage`                     |
+| `*`                       | redirect → `/home`                                          |
 
-Pages: `dashboard`, `players`, `tournament`, `registration`, `payments`, `schedule`, `scores`, `merch`, `settings`, `history`, `game`, `league`, `transfer-accept`
+Two compatibility shims live in `App.tsx`:
 
-Access control is in `src/lib/authPaths.js`:
+- `DeepLinkMigrator` — rewrites legacy `/?transfer=<id>` and `/?event=<id>` query deep links (still circulating in old WhatsApp/calendar shares) to `/transfer/:id` and `/events/:id`.
+- `useLegacyNavigate` — adapts the pre-router `onNavigate(page, tournament?)` signature to `useNavigate` so components written against the string-state machine keep working. Components are being migrated to `useNavigate` directly; the adapter goes when the last one is.
 
-- `PUBLIC_PAGES = ['dashboard']` — visible to guests
-- All other pages are protected (require at least a claimed player identity)
-- Default-deny: anything not in the list is treated as protected
+Access control is in `src/lib/authPaths.ts`:
+
+- `PUBLIC_PATHS = ['/', '/home', '/auth/confirm']` — path prefixes a guest can browse (boundary-aware prefix match: `/home/foo` matches, `/homer` does not)
+- `PROTECTED_PATHS` is documentation only — `isPublicPath()` is default-deny, so anything not allowlisted is protected
+- `VerificationGate` shows the PIN prompt for guests on a non-public path
 
 ### AppContext — Auth/Session Provider (was the monolith)
 
-`src/context/AppContext.jsx` used to be a ~2012-line global store. It has been **dismantled into per-feature TanStack Query + Zod slices** under `src/features/**` (see "Feature Data Slices" below). What remains (~65 lines) is a thin auth/session provider consumed via `useApp()`: it holds `session`/`role` (from `useAuth`), the app-level `loading` flag, the auth passthrough actions (`loginWithPin`, `logout`, `fetchMyProfile`, `fetchAllPlayersWithPii`, `sendMagicLink`, `requestMyEmailChange`), and `selfSignup` (wraps `useAuth`'s version to also invalidate the roster cache). It is intentionally the single place the Supabase auth session is subscribed.
+`src/context/AppContext.tsx` used to be a ~2012-line global store. It has been **dismantled into per-feature TanStack Query + Zod slices** under `src/features/**` (see "Feature Data Slices" below). What remains (~65 lines) is a thin auth/session provider consumed via `useApp()`: it holds `session`/`role` (from `useAuth`), the app-level `loading` flag, the auth passthrough actions (`loginWithPin`, `logout`, `fetchMyProfile`, `fetchAllPlayersWithPii`, `sendMagicLink`, `requestMyEmailChange`), and `selfSignup` (wraps `useAuth`'s version to also invalidate the roster cache). It is intentionally the single place the Supabase auth session is subscribed.
 
-`src/hooks/useScheduleRealtime.js` (mounted once by the provider) flips the initial `loading` flag and runs the one remaining Realtime subscription — matches INSERT/DELETE (schedule generation) — invalidating the `matches` query cache. Score UPDATEs are optimistically applied by `useMatchActions().updateMatch` and broadcast peer-to-peer, not over Realtime.
+`src/hooks/useScheduleRealtime.ts` (mounted once by the provider) flips the initial `loading` flag and runs the one remaining Realtime subscription — matches INSERT/DELETE (schedule generation) — invalidating the `matches` query cache. Score UPDATEs are optimistically applied by `useMatchActions().updateMatch` and broadcast peer-to-peer, not over Realtime.
 
 #### Feature Data Slices (default pattern)
 
@@ -65,21 +92,29 @@ The context now exposes ~10 auth/session values to consumers. All player writes 
 
 ### Component Sizes (largest first)
 
-| File               | ~Lines | Role                                   |
-| ------------------ | ------ | -------------------------------------- |
-| `Merch.jsx`        | 1812   | Merch shop + raffle + admin management |
-| `League.jsx`       | 1532   | Lobster League competition             |
-| `Game.jsx`         | 1286   | Lobster Oscars voting                  |
-| `Tournament.jsx`   | 1037   | Event management                       |
-| `Dashboard.jsx`    | 1200   | Home page                              |
-| `AppContext.jsx`   | ~65    | Auth/session provider (was 2012)       |
-| `History.jsx`      | ~900   | Hardcoded historical tournament data   |
-| `Players.jsx`      | ~800   | Player profiles + stats                |
-| `Settings.jsx`     | ~700   | Profile + admin settings               |
-| `Registration.jsx` | ~600   | Event sign-up                          |
-| `Scores.jsx`       | ~500   | Live standings                         |
-| `Schedule.jsx`     | ~500   | Match schedule                         |
-| `Payments.jsx`     | ~400   | Payment tracking                       |
+Measured 2026-07-26. League is no longer one file — it is `features/league/LeaguePage.tsx` plus `features/league/ui/*`.
+
+| File                                            | Lines | Role                                 |
+| ----------------------------------------------- | ----- | ------------------------------------ |
+| `features/events/Schedule.jsx`                  | 801   | Match schedule                       |
+| `features/history/History.jsx`                  | 784   | Historical tournament rendering      |
+| `components/SignupRequest.jsx`                  | 714   | Self-serve signup flow               |
+| `features/events/Registration.jsx`              | 623   | Event sign-up + detail               |
+| `features/league/LeagueAdminSection.tsx`        | 585   | League admin controls                |
+| `features/community/Players.jsx`                | 583   | Roster + player stats                |
+| `features/community/PlayerProfileDrawer.jsx`    | 491   | Player profile drawer                |
+| `features/merch/Merch.jsx`                      | 473   | Merch shop                           |
+| `features/events/Payments.jsx`                  | 470   | Payment tracking                     |
+| `features/settings/ProfileSection.jsx`          | 467   | Profile editing (+ Playtomic prompt) |
+| `features/matchmaking/ui/RatingReview.tsx`      | 434   | Rating-delta admin review            |
+| `components/AdminSecurityPanels.jsx`            | 415   | Security event panels                |
+| `features/settings/Settings.jsx`                | 394   | Account page shell                   |
+| `components/VerificationGate.jsx`               | 394   | Guest PIN gate                       |
+| `features/matchmaking/MatchmakingContainer.tsx` | 373   | Schedule generation container        |
+| `features/home/Dashboard.jsx`                   | 313   | Home page                            |
+| `features/events/Tournament.jsx`                | 311   | Event list (+ history tab)           |
+| `App.tsx`                                       | 307   | Router + route shims                 |
+| `context/AppContext.tsx`                        | 65    | Auth/session provider (was 2012)     |
 
 ### Design System
 
@@ -96,14 +131,15 @@ Tailwind custom colors defined in `tailwind.config.js`:
 
 Display font: Georgia serif (CSS class `font-display`). UI font: system sans-serif.
 
-`src/lib/letterColors.js` — deterministic A–Z letter→hex map for avatar fallbacks. **Locked 2026-04-30** (changing it would shift every avatar color site-wide).
+`src/lib/letterColors.ts` — deterministic A–Z letter→hex map for avatar fallbacks. **Locked 2026-04-30** (changing it would shift every avatar color site-wide).
 
 ### Navigation Shell
 
 `Layout.jsx` renders:
 
 - Sticky header: logo (`/logo-hd.png`), Instagram link, WhatsApp group button
-- Bottom nav (mobile-first): Home, Events, Players, Merch, Settings
+- Bottom nav (mobile-first): Home, Events, League, Community, Account — plus Admin for admin sessions
+- `DeviceTrustBanner` / `DeviceTrustIndicator`, driven by the `is_my_device_trusted` RPC
 - `pb-safe` padding for iOS home-indicator safe area
 
 ---
@@ -260,7 +296,7 @@ Two roles: `'player'` and `'admin'`. Role lives in `players.role` (Postgres enum
 - `require_admin()` — raises if `(auth.jwt() -> 'app_metadata' ->> 'role') IS DISTINCT FROM 'admin'`
 - `require_trusted_device()` — raises `pending_device_approval` if `(auth.jwt() -> 'app_metadata' ->> 'device_trusted')::boolean IS NOT TRUE`
 
-**Client-side role reading** — `useAuth.js`:
+**Client-side role reading** — `src/hooks/useAuth.ts`:
 
 ```javascript
 const role = session?.user?.app_metadata?.role ?? 'guest'
@@ -299,7 +335,7 @@ Every browser has a stable UUID v4 `deviceId` in `localStorage['lobster_device_i
 - All 6 player write RPCs (`update_my_profile`, `create_transfer`, `cancel_transfer`, `respond_to_transfer`, `lobster_oscars_cast_vote`, `lobster_oscars_clear_vote`) call `require_trusted_device()` — an untrusted device gets `pending_device_approval` from the server
 - `approve_device` / `reject_device` are **not** trust-gated (gating them would deadlock the approval flow)
 - `settings.auto_trust_until` grace window: devices that log in during this period are auto-trusted; used when onboarding players in bulk
-- **Client UX for untrusted devices is not yet implemented** — the server correctly rejects writes, but there is no ribbon or prompt explaining why to the user (see Open Work)
+- Client UX is live: `Layout.jsx` polls `is_my_device_trusted` and renders `DeviceTrustBanner` (dismissible explainer) and `DeviceTrustIndicator` in the header when the current device is untrusted
 
 ### RLS Policies
 
@@ -335,7 +371,7 @@ Enforced inside `verify_player_pin_v2` (not middleware):
 
 ## Core Algorithms
 
-### Americano Standings (`src/lib/standings.js`)
+### Americano Standings (`src/lib/standings.ts`)
 
 Sort order (single source of truth for Scores tab and Player profiles):
 
@@ -405,9 +441,9 @@ snapshot. It goes when those harnesses do.
 - Match score = proportion: `s1/(s1+s2)` and `s2/(s1+s2)`
 - Returns updated ratings only for players who played
 
-### Historical Data Stitching (`src/lib/playerHistory.js`, `src/lib/playerStats.js`)
+### Historical Data Stitching (`src/lib/playerHistory.js`, `src/lib/playerStats.ts`)
 
-Pre-Supabase tournaments are hardcoded in `src/components/History.jsx` as a `TOURNAMENTS` constant array. Each tournament has `players` (standings with `total` points and optional `podium` override) and `rounds` (match data with name strings instead of IDs).
+Pre-Supabase tournaments are hardcoded in `src/data/historicalTournaments.js` (~404 lines), imported by ~10 modules — `src/features/history/History.jsx` is one consumer, alongside `playerHistory.js`, `playerStats.ts`, `historicalStats.js`, `aliasClustering.js`, `PlayerProfileDrawer.jsx`, `AccountStatsSection.jsx`, and the matchmaking `historyFixture.ts`. Each tournament has `players` (standings with `total` points and optional `podium` override) and `rounds` (match data with name strings instead of IDs).
 
 The `player_aliases` table maps historical name strings → current player UUIDs. `buildHistoricalAppearances()` and `buildPlayerStats()` both read this map to stitch historical records into a player's lifetime stats.
 
@@ -417,19 +453,24 @@ The `player_aliases` table maps historical name strings → current player UUIDs
 
 ## Utility Modules (`src/lib/`)
 
-| Module             | Purpose                                                             |
-| ------------------ | ------------------------------------------------------------------- |
-| `standings.js`     | Americano tournament standings (shared)                             |
-| `playerStats.js`   | Per-player lifetime stats (shared between Dashboard + Players)      |
-| `playerHistory.js` | Historical appearances from hardcoded data                          |
-| `glicko2.ts`       | Glicko-2 rating calculations (offline harnesses only — not shipped) |
-| `letterColors.js`  | Deterministic A–Z → hex color map (LOCKED — do not change)          |
-| `processAvatar.js` | Center-crop to 256×256 WebP (HEIC-safe via `createImageBitmap`)     |
-| `calendar.js`      | .ics generator + Google Calendar URL builder (two alarms: 24h + 2h) |
-| `whatsapp.js`      | WhatsApp deep link builders; hardcoded group URL                    |
-| `format.js`        | `fmtEur`, `fmtEur0`, `fmtNum2` using `Intl.NumberFormat('en-GB')`   |
-| `deviceId.js`      | UUID v4 persisted in `localStorage['lobster_device_id']`            |
-| `authPaths.js`     | `PUBLIC_PAGES` list and access-control helpers                      |
+| Module              | Purpose                                                             |
+| ------------------- | ------------------------------------------------------------------- |
+| `standings.ts`      | Americano tournament standings (shared)                             |
+| `playerStats.ts`    | Per-player lifetime stats (shared between Dashboard + Players)      |
+| `playerHistory.js`  | Historical appearances from hardcoded data                          |
+| `glicko2.ts`        | Glicko-2 rating calculations (offline harnesses only — not shipped) |
+| `letterColors.ts`   | Deterministic A–Z → hex color map (LOCKED — do not change)          |
+| `processAvatar.js`  | Center-crop to 256×256 WebP (HEIC-safe via `createImageBitmap`)     |
+| `calendar.ts`       | .ics generator + Google Calendar URL builder (two alarms: 24h + 2h) |
+| `whatsapp.ts`       | WhatsApp deep link builders; hardcoded group URL                    |
+| `format.ts`         | `fmtEur`, `fmtEur0`, `fmtNum2` using `Intl.NumberFormat('en-GB')`   |
+| `deviceId.ts`       | UUID v4 persisted in `localStorage['lobster_device_id']`            |
+| `authPaths.ts`      | `PUBLIC_PATHS` / `PROTECTED_PATHS` and `isPublicPath()`             |
+| `normalise.ts`      | Supabase row → app shape normalisers                                |
+| `tournamentDate.ts` | Tournament date/time parsing + comparison                           |
+| `queryClient.ts`    | TanStack Query client configuration                                 |
+| `env.ts`            | Typed access to `import.meta.env`                                   |
+| `perfMarks.ts`      | `performance.mark` instrumentation for load-time work               |
 
 ---
 
@@ -500,22 +541,16 @@ Concrete tasks that are scoped but not yet done, ordered by risk.
 ### High — Security / Data Integrity
 
 - **Drop `players.pin` plaintext column** — the bcrypt `pin_hash` column is the live credential; the plaintext `pin` is a data exposure risk. Migration: `ALTER TABLE players DROP COLUMN pin;`. Gate on confirming no client code reads `players.pin` directly (grep clean).
-- **Device trust ribbon (client UX)** — `require_trusted_device()` is live and correctly rejects writes from untrusted sessions with `pending_device_approval`. The UX is missing: add a slim ribbon at the top of the app when `session.user.app_metadata.device_trusted === false`, explaining the device is read-only until approved, with a CTA to open Settings. Write-action buttons should surface this instead of silently failing.
-- **Apply all migrations to staging + production** — all migrations through `20260518000014_rbac_jwt_admin.sql` are applied locally. They have not been pushed to other environments.
+- **Apply all migrations to staging + production** — all migrations through `20260726073250_restore_league_read_grants.sql` are applied locally. Pushing to production is manual (`npx supabase db push` from `main`); the last recorded prod push was `20260725000001_mm_seed_ratings.sql`.
 
 ### Medium — Code Hygiene
 
-- **`src/api/auth.js` `logout()` cleanup** — removes several legacy localStorage keys (`lobster_admin`, `lobster_league_admin`, `lobster_claimed_id`, `lobster_session_admin_pin`, etc.) that no longer exist in the live app. The comment "drops both admin statuses" is stale. Clean up the key list and comment once confident all active user sessions have migrated.
 - **`search_path = ''` on SECURITY DEFINER function bodies** — `require_admin()` and `require_trusted_device()` already have `search_path = ''`. The larger SECURITY DEFINER RPCs (`admin_add_player`, `update_my_profile`, etc.) use `search_path = 'pg_catalog, public, extensions'` (safe but not maximally strict). Setting `search_path = ''` on all of them requires qualifying every unqualified table/function reference — deferred until there is a broader function audit.
 - **No migration CI gate** — migrations are manually pushed. A bad migration to production is difficult to reverse. Consider adding `supabase db diff` check to CI or at minimum a pre-push hook.
-- **`src/firebase.js`** — legacy Firebase config, entirely unused; safe to delete.
-- **`PlayerProfile.jsx` and `PlaytomicUpdatePrompt.jsx`** — currently unused components.
 
 ### Low — Optional Improvements
 
 - **RLS for admin ops (RBAC Phase 8)** — some SECURITY DEFINER admin RPCs could be replaced with direct table operations guarded by RLS admin policies, reducing the SECURITY DEFINER surface area. Low urgency; replace one at a time.
-- **`react-router-dom` installed but unused** — the custom string-state router works but standard routing would enable deep links, browser back/forward, and bookmarking.
-- **Hardcoded test player names** — `TEST_PLAYER_FIRST_NAMES = ['zornitsa', 'jon', 'uziel']` in multiple components. Should be a single constant or DB flag.
 - **`AddToCalendarButton` opens Google Calendar URL** — `.ics` download was intentionally avoided to prevent iOS popup blocking; Android/desktop users lose native calendar integration.
 - **Role staleness** — if a player's `role` is changed in the DB mid-session, `app_metadata.role` in the JWT updates only at the next token refresh (~1 hour). Acceptable for this threat model; if immediate revocation is ever needed, force sign-out via Auth Admin API in `admin_update_player` when role is changed.
 
@@ -525,16 +560,12 @@ Concrete tasks that are scoped but not yet done, ordered by risk.
 
 ### High Priority
 
-- **No tests on core algorithms** — the matcher, standings algorithm, and Glicko-2 are untested.
-- ~~**Monolithic AppContext**~~ — **Done.** Fully dismantled into per-feature TanStack Query + Zod slices; `AppContext.jsx` is now a ~65-line auth/session provider. See "AppContext — Auth/Session Provider".
+- ~~**No tests on core algorithms**~~ — **Done.** `src/lib/standings.test.ts` and `src/lib/glicko2.test.ts` cover standings and Glicko-2; Matchmaking V2 has ~25 test files (17 under `domain/`, 8 of those under `domain/rating/`) including a golden-snapshot determinism gate; `src/features/events/validateSchedule.test.js` covers schedule validation. The legacy matcher is deleted, so its untested status is moot.
+- ~~**Monolithic AppContext**~~ — **Done.** Fully dismantled into per-feature TanStack Query + Zod slices; `AppContext.tsx` is now a 65-line auth/session provider. See "AppContext — Auth/Session Provider".
 
 ### Medium Priority
 
-- **Hardcoded historical data** — pre-Supabase tournaments are hardcoded in `History.jsx`. No migration path exists for adding new historical data without a code change.
-
-### Low Priority
-
-- **Hardcoded podium fallback** — `['Alex B', 'Uziel', 'Karlijn']` in `Dashboard.jsx`.
+- **Hardcoded historical data** — pre-Supabase tournaments live in `src/data/historicalTournaments.js` (~404 lines), imported by ~10 modules. No DB path exists, so adding a historical tournament requires a code change and a deploy.
 
 ---
 
