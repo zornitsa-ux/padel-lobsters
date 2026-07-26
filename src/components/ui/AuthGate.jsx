@@ -96,24 +96,6 @@ export function SignInBanner({ role, onNavigate, message, compact }) {
 }
 
 /**
- * Thin helper hook for imperative call-sites (e.g. "on click, if not admin
- * redirect to settings"). Returns a fn that returns true when allowed and
- * navigates away when not — so existing `if (!isAdmin) { setShowLogin(true) }`
- * patterns become `if (!requireRole('admin')) return`.
- */
-export function useRequireRole(onNavigate) {
-  const { session } = useApp()
-  const userRole = session?.user?.app_metadata?.role ?? 'guest'
-  const isAdmin = userRole === 'admin'
-  const isPlayer = userRole === 'player'
-  return (role) => {
-    const ok = role === 'admin' ? isAdmin : role === 'player' ? isPlayer || isAdmin : true
-    if (!ok) onNavigate?.('settings')
-    return ok
-  }
-}
-
-/**
  * The PIN prompt modal — single inline sign-in surface used everywhere a
  * player (or admin) clicks something that requires identity. They can also
  * always go to Settings → Account to sign in / out, but this lets us nudge

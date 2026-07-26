@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { ChevronDown } from 'lucide-react'
 
-export const COUNTRIES = [
+const COUNTRIES = [
   ['', 'Select country…'],
   ['AR', 'Argentina'],
   ['AU', 'Australia'],
@@ -68,15 +68,6 @@ export const COUNTRIES = [
   ['UY', 'Uruguay'],
   ['VE', 'Venezuela'],
 ]
-
-export const countryFlag = (code) => {
-  if (!code || code.length !== 2) return ''
-  return code
-    .toUpperCase()
-    .split('')
-    .map((c) => String.fromCodePoint(0x1f1e6 + c.charCodeAt(0) - 65))
-    .join('')
-}
 
 export function FlagImg({ code, className = '' }) {
   if (!code || code.length !== 2) return null

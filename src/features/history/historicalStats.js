@@ -96,20 +96,3 @@ export function buildDisplayNames(names) {
   })
   return out
 }
-
-// ── Collect all unique hardcoded names ───────────────────────────────────────
-import { TOURNAMENTS } from '../../data/historicalTournaments'
-
-export function getAllHardcodedNames() {
-  const names = new Set()
-  TOURNAMENTS.forEach((t) => {
-    t.players?.forEach((p) => names.add(p.name))
-    t.rounds?.forEach((r) =>
-      r.matches?.forEach((m) => {
-        m.t1?.forEach((n) => names.add(n))
-        m.t2?.forEach((n) => names.add(n))
-      }),
-    )
-  })
-  return [...names].sort((a, b) => a.localeCompare(b))
-}

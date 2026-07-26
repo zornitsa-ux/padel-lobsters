@@ -80,11 +80,11 @@ League tile is gated: visible to `admin` or players with first name in `TEST_PLA
 
 ### Event Discovery
 
-| Feature                                    | guest | player | admin |
-| ------------------------------------------ | ----- | ------ | ----- |
-| View upcoming events (GuestTournamentView) | 👁    | 👁     | 👁    |
-| See registration counts                    | 👁    | 👁     | 👁    |
-| See registered player names                | ❌    | ✅     | ✅    |
+| Feature                     | guest | player | admin |
+| --------------------------- | ----- | ------ | ----- |
+| View upcoming events        | 👁    | 👁     | 👁    |
+| See registration counts     | 👁    | 👁     | 👁    |
+| See registered player names | ❌    | ✅     | ✅    |
 
 Guest view is powered by `public_tournament_registration_counts` view — never exposes player names.
 

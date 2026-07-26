@@ -8,14 +8,6 @@ import type {
 
 const toIdString = (id: EntityId) => String(id)
 
-export function formatScheduleDate(dateValue?: string | null): string {
-  if (!dateValue) return '—'
-  return new Date(dateValue).toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'short',
-  })
-}
-
 export function cloneRounds(rounds: ScheduleRound[]): ScheduleRound[] {
   return rounds.map((round) => ({
     ...round,

@@ -547,6 +547,8 @@ Concrete tasks that are scoped but not yet done, ordered by risk.
 
 - **`search_path = ''` on SECURITY DEFINER function bodies** — `require_admin()` and `require_trusted_device()` already have `search_path = ''`. The larger SECURITY DEFINER RPCs (`admin_add_player`, `update_my_profile`, etc.) use `search_path = 'pg_catalog, public, extensions'` (safe but not maximally strict). Setting `search_path = ''` on all of them requires qualifying every unqualified table/function reference — deferred until there is a broader function audit.
 - **No migration CI gate** — migrations are manually pushed. A bad migration to production is difficult to reverse. Consider adding `supabase db diff` check to CI or at minimum a pre-push hook.
+- **`src/data/leagueContent.ts` has no renderer** — open product question, not dead code. It exports `LEAGUE_SECTIONS`, `EXPERIENCE_LEVELS` and `DIVISION_LABEL`, is covered by `leagueContent.test.ts`, and nothing renders it. It was likely written for a league landing page that was never built, or that `features/league/ui/LeagueHome.tsx` superseded. Decide whether to surface the content or drop the module; kept deliberately in the meantime.
+- **Orphaned writers in `src/features/history/aliasStorage.js`** — after `SmartMatchPanel.jsx` was deleted, `loadSkipped`, `saveAliases` and `saveSkipped` have no callers. `History.jsx` still reads aliases via `loadAliases` / `resolveName`, so the alias map is now read-only with no UI to edit it. Either rebuild an alias-matching admin surface or delete the writers along with the localStorage-backed alias feature.
 
 ### Low — Optional Improvements
 

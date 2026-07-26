@@ -121,23 +121,3 @@ export async function adminDenyDevice(targetPlayerId, targetDeviceId) {
     return { ok: false }
   }
 }
-
-// Admin: clear a player's lockout state. Optionally also auto-trust
-// a target device (useful for "they lost their old phone" recovery).
-export async function adminUnlockPlayer(targetPlayerId, targetDeviceId = null) {
-  const adminDeviceId = getDeviceId()
-  try {
-    const { data, error } = await supabase.rpc('admin_unlock_player', {
-      input_target_player: targetPlayerId,
-      input_target_device: targetDeviceId,
-      input_admin_device_id: adminDeviceId,
-    })
-    if (error) {
-      console.error('admin_unlock_player error:', error)
-      return { ok: false }
-    }
-    return { ok: data === 'ok', reason: data }
-  } catch {
-    return { ok: false }
-  }
-}
