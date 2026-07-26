@@ -1,6 +1,22 @@
-import React from 'react'
+import React, { type ChangeEvent, type Dispatch, type FormEvent, type SetStateAction } from 'react'
 import { X, Upload } from 'lucide-react'
 import { SIZES_APPAREL, SIZES_SOCKS } from './sizes'
+import type { ItemFormState } from './itemForm'
+import type { MerchItem } from './merchSchemas'
+
+type ItemEditorFormProps = {
+  showForm: boolean
+  setShowForm: (open: boolean) => void
+  editItem: MerchItem | null
+  form: ItemFormState
+  setForm: Dispatch<SetStateAction<ItemFormState>>
+  saving: boolean
+  uploading: boolean
+  handleSaveItem: (e: FormEvent<HTMLFormElement>) => void
+  handleImageUpload: (e: ChangeEvent<HTMLInputElement>) => void
+  handleRemoveImage: (idx: number) => void
+  toggleSize: (size: string) => void
+}
 
 // ── Add / Edit item modal form (admin) ──────────────────────────────────────
 export default function ItemEditorForm({
@@ -15,7 +31,7 @@ export default function ItemEditorForm({
   handleImageUpload,
   handleRemoveImage,
   toggleSize,
-}) {
+}: ItemEditorFormProps) {
   if (!showForm) return null
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center">

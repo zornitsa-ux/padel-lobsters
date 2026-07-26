@@ -2,7 +2,15 @@ import React, { useState } from 'react'
 import { X } from 'lucide-react'
 
 // ── Image Lightbox ────────────────────────────────────────────────────────────
-export default function Lightbox({ images, startIndex = 0, onClose }) {
+export type LightboxState = { images: string[]; index: number }
+
+type LightboxProps = {
+  images: string[]
+  startIndex?: number
+  onClose: () => void
+}
+
+export default function Lightbox({ images, startIndex = 0, onClose }: LightboxProps) {
   const [current, setCurrent] = useState(startIndex)
   return (
     <div

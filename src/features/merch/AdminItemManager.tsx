@@ -1,6 +1,23 @@
-import React from 'react'
+import React, { type DragEvent } from 'react'
 import { Plus, Pencil, X, ShoppingBag, GripVertical } from 'lucide-react'
 import { IconButton } from '../../components/ui/IconButton'
+import type { MerchItem } from './merchSchemas'
+
+type DragHandler = (idx: number) => (e: DragEvent<HTMLDivElement>) => void
+
+type AdminItemManagerProps = {
+  items: MerchItem[]
+  openAdd: () => void
+  openEdit: (item: MerchItem) => void
+  handleDeleteItem: (id: number) => void
+  orderCount: (id: number) => number
+  dragIdx: number | null
+  overIdx: number | null
+  handleDragStart: DragHandler
+  handleDragOver: DragHandler
+  handleDrop: DragHandler
+  handleDragEnd: () => void
+}
 
 // ── Manage tab (admin) — drag-and-drop CRUD list of merch items ─────────────
 export default function AdminItemManager({
@@ -15,7 +32,7 @@ export default function AdminItemManager({
   handleDragOver,
   handleDrop,
   handleDragEnd,
-}) {
+}: AdminItemManagerProps) {
   return (
     <div className="space-y-4">
       <button
@@ -59,7 +76,7 @@ export default function AdminItemManager({
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-gray-800 truncate">{item.name}</p>
               <p className="text-xs text-gray-500">
-                €{parseFloat(item.price).toFixed(0)} · {orderCount(item.id)}{' '}
+                €{item.price.toFixed(0)} · {orderCount(item.id)}{' '}
                 {orderCount(item.id) === 1 ? 'order' : 'orders'}
               </p>
             </div>

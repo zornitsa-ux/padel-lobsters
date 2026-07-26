@@ -1,15 +1,33 @@
 import React, { useState } from 'react'
 import { X, Ban } from 'lucide-react'
-import { supabase } from '../../supabase'
+import type { Player } from '../../lib/normalise'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { STATUS_CONFIG } from './statusConfig'
-import { formatOrderTime, getPlayerName } from './formatters'
+import { errorMessage, formatOrderTime, getPlayerName, orderTimestamp } from './formatters'
+import { useMerchActions } from './useMerch'
+import type { MerchInterest, MerchItem } from './merchSchemas'
+
+type OrdersTableProps = {
+  activeOrders: MerchInterest[]
+  interests: MerchInterest[]
+  items: MerchItem[]
+  players: Player[]
+}
 
 // ── Orders tab (admin-facing) ────────────────────────────────────────────────
-export default function OrdersTable({ activeOrders, interests, items, players, loadInterests }) {
+export default function OrdersTable({ activeOrders, interests, items, players }: OrdersTableProps) {
+  const { markOrder, cancelOrder } = useMerchActions()
   // Cancel order modal state
-  const [cancelTarget, setCancelTarget] = useState(null)
+  const [cancelTarget, setCancelTarget] = useState<MerchInterest | null>(null)
   const [cancelComment, setCancelComment] = useState('')
+
+  // A failed status write used to be swallowed, leaving the button looking like
+  // it had worked until the next refetch.
+  const onError = (err: unknown) => alert('Could not update the order: ' + errorMessage(err))
+
+  const cancelledOrders = interests.filter(
+    (o) => o.status === 'cancelled' && getPlayerName({ order: o, players }),
+  )
 
   return (
     <div className="space-y-4">
@@ -30,8 +48,10 @@ export default function OrdersTable({ activeOrders, interests, items, players, l
             </div>
             <p className="text-sm text-gray-500">
               Cancel order for{' '}
-              <strong>{getPlayerName(cancelTarget, players)?.split(' ')[0] || 'player'}</strong> —{' '}
-              {items.find((i) => i.id === cancelTarget.merch_item_id)?.name}?
+              <strong>
+                {getPlayerName({ order: cancelTarget, players })?.split(' ')[0] || 'player'}
+              </strong>{' '}
+              — {items.find((i) => i.id === cancelTarget.merch_item_id)?.name}?
             </p>
             <textarea
               placeholder="Add a comment for the player (optional)…"
@@ -41,33 +61,19 @@ export default function OrdersTable({ activeOrders, interests, items, players, l
             />
             <button
               onClick={async () => {
-                const { error } = await supabase
-                  .from('merch_interests')
-                  .update({
-                    status: 'cancelled',
-                    admin_comment: cancelComment || null,
-                    cancelled_at: new Date().toISOString(),
-                    paid: false,
-                    delivered: false,
-                  })
-                  .eq('id', cancelTarget.id)
-                if (error) {
-                  // Fallback: try without status fields (pre-v12)
-                  await supabase
-                    .from('merch_interests')
-                    .update({
-                      paid: false,
-                      delivered: false,
-                    })
-                    .eq('id', cancelTarget.id)
+                try {
+                  await cancelOrder.mutateAsync({ id: cancelTarget.id, comment: cancelComment })
+                } catch (err) {
+                  alert('Could not cancel the order: ' + errorMessage(err))
+                  return
                 }
                 setCancelTarget(null)
                 setCancelComment('')
-                await loadInterests()
               }}
-              className="w-full py-2.5 rounded-xl bg-red-500 text-white font-semibold text-sm active:scale-95 transition-all"
+              disabled={cancelOrder.isPending}
+              className="w-full py-2.5 rounded-xl bg-red-500 text-white font-semibold text-sm active:scale-95 transition-all disabled:opacity-50"
             >
-              Cancel Order
+              {cancelOrder.isPending ? 'Cancelling…' : 'Cancel Order'}
             </button>
           </div>
         </div>
@@ -80,7 +86,7 @@ export default function OrdersTable({ activeOrders, interests, items, players, l
             <span>{activeOrders.length} orders</span>
             <span>·</span>
             <span className="text-amber-600">
-              {activeOrders.filter((o) => (o.status || 'ordered') === 'ordered').length} pending
+              {activeOrders.filter((o) => o.status === 'ordered').length} pending
             </span>
             <span>·</span>
             <span className="text-green-600">
@@ -94,16 +100,16 @@ export default function OrdersTable({ activeOrders, interests, items, players, l
 
           {/* Order cards */}
           {[...activeOrders]
-            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+            .sort((a, b) => orderTimestamp(b.created_at) - orderTimestamp(a.created_at))
             .map((o) => {
-              const playerName = getPlayerName(o, players)
+              const playerName = getPlayerName({ order: o, players })
               const item = items.find((i) => i.id === o.merch_item_id)
-              const status = o.status || 'ordered'
-              const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.ordered
+              const status = o.status
+              const cfg = STATUS_CONFIG[status]
               const StatusIcon = cfg.icon
-              const basePrice = item ? parseFloat(item.price) : 0
-              const hasCustomName = (o.custom_name || '').trim().length > 0
-              const isShirt = item && /shirt/i.test(item.name)
+              const basePrice = item ? item.price : 0
+              const hasCustomName = o.customName.length > 0
+              const isShirt = item ? /shirt/i.test(item.name) : false
               const orderPrice = basePrice + (isShirt && hasCustomName ? 5 : 0)
               return (
                 <div key={o.id} className="card space-y-2">
@@ -141,14 +147,8 @@ export default function OrdersTable({ activeOrders, interests, items, players, l
                   {/* Status action buttons */}
                   <div className="flex gap-1.5">
                     <button
-                      onClick={async () => {
-                        await supabase
-                          .from('merch_interests')
-                          .update({ status: 'paid', paid: true })
-                          .eq('id', o.id)
-                        await loadInterests()
-                      }}
-                      disabled={status === 'paid' || status === 'delivered'}
+                      onClick={() => markOrder.mutate({ id: o.id, status: 'paid' }, { onError })}
+                      disabled={status === 'paid' || status === 'delivered' || markOrder.isPending}
                       className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                         status === 'paid' || status === 'delivered'
                           ? 'bg-green-100 text-green-600'
@@ -158,14 +158,10 @@ export default function OrdersTable({ activeOrders, interests, items, players, l
                       {status === 'paid' || status === 'delivered' ? '✓ Paid' : 'Mark Paid'}
                     </button>
                     <button
-                      onClick={async () => {
-                        await supabase
-                          .from('merch_interests')
-                          .update({ status: 'delivered', delivered: true })
-                          .eq('id', o.id)
-                        await loadInterests()
-                      }}
-                      disabled={status === 'delivered'}
+                      onClick={() =>
+                        markOrder.mutate({ id: o.id, status: 'delivered' }, { onError })
+                      }
+                      disabled={status === 'delivered' || markOrder.isPending}
                       className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                         status === 'delivered'
                           ? 'bg-blue-100 text-blue-600'
@@ -186,41 +182,30 @@ export default function OrdersTable({ activeOrders, interests, items, players, l
             })}
 
           {/* Cancelled orders (collapsed) */}
-          {interests.filter((o) => o.status === 'cancelled' && getPlayerName(o, players)).length >
-            0 && (
+          {cancelledOrders.length > 0 && (
             <details className="mt-3">
               <summary className="text-xs text-gray-400 cursor-pointer font-medium px-1">
-                {
-                  interests.filter((o) => o.status === 'cancelled' && getPlayerName(o, players))
-                    .length
-                }{' '}
-                cancelled order
-                {interests.filter((o) => o.status === 'cancelled' && getPlayerName(o, players))
-                  .length > 1
-                  ? 's'
-                  : ''}
+                {cancelledOrders.length} cancelled order{cancelledOrders.length > 1 ? 's' : ''}
               </summary>
               <div className="space-y-2 mt-2">
-                {interests
-                  .filter((o) => o.status === 'cancelled' && getPlayerName(o, players))
-                  .map((o) => {
-                    const playerName = getPlayerName(o, players)
-                    const item = items.find((i) => i.id === o.merch_item_id)
-                    return (
-                      <div key={o.id} className="card opacity-60 space-y-1">
-                        <p className="text-sm text-gray-500 line-through">
-                          {playerName?.split(' ')[0] || 'Unknown'} — {item?.name}{' '}
-                          {o.size && `(${o.size})`}
-                        </p>
-                        {o.admin_comment && (
-                          <p className="text-xs text-red-400 italic">"{o.admin_comment}"</p>
-                        )}
-                        <p className="text-[10px] text-gray-400">
-                          {formatOrderTime(o.cancelled_at || o.created_at)}
-                        </p>
-                      </div>
-                    )
-                  })}
+                {cancelledOrders.map((o) => {
+                  const playerName = getPlayerName({ order: o, players })
+                  const item = items.find((i) => i.id === o.merch_item_id)
+                  return (
+                    <div key={o.id} className="card opacity-60 space-y-1">
+                      <p className="text-sm text-gray-500 line-through">
+                        {playerName?.split(' ')[0] || 'Unknown'} — {item?.name}{' '}
+                        {o.size && `(${o.size})`}
+                      </p>
+                      {o.admin_comment && (
+                        <p className="text-xs text-red-400 italic">"{o.admin_comment}"</p>
+                      )}
+                      <p className="text-[10px] text-gray-400">
+                        {formatOrderTime(o.cancelled_at || o.created_at)}
+                      </p>
+                    </div>
+                  )
+                })}
               </div>
             </details>
           )}

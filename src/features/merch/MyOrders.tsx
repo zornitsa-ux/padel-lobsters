@@ -2,15 +2,26 @@ import React from 'react'
 import { ShoppingBag, Ban, Package } from 'lucide-react'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { STATUS_CONFIG } from './statusConfig'
-import { formatOrderTime } from './formatters'
+import { formatOrderTime, orderTimestamp } from './formatters'
+import type { MerchInterest, MerchItem, OrderStatus } from './merchSchemas'
 
+const STEPS: readonly OrderStatus[] = ['ordered', 'paid', 'delivered']
+
+type MyOrdersProps = {
+  myOrders: MerchInterest[]
+  items: MerchItem[]
+}
+
+// Reads raw columns (size, custom_name, status) rather than the normalised
+// fields so Settings → Account, which still passes unnormalised rows, renders
+// the same until it moves onto the slice.
 // ── My Orders tab (player-facing) ───────────────────────────────────────────
-export default function MyOrders({ myOrders, items }) {
+export default function MyOrders({ myOrders, items }: MyOrdersProps) {
   return (
     <div className="space-y-3">
       {myOrders.length > 0 ? (
-        myOrders
-          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+        [...myOrders]
+          .sort((a, b) => orderTimestamp(b.created_at) - orderTimestamp(a.created_at))
           .map((o) => {
             const item = items.find((i) => i.id === o.merch_item_id)
             const status = o.status || 'ordered'
@@ -50,12 +61,11 @@ export default function MyOrders({ myOrders, items }) {
                 </div>
                 {/* Status timeline */}
                 <div className="flex items-center gap-1 pt-1">
-                  {['ordered', 'paid', 'delivered'].map((s, i) => {
+                  {STEPS.map((s, i) => {
                     const sCfg = STATUS_CONFIG[s]
                     const SIcon = sCfg.icon
-                    const steps = ['ordered', 'paid', 'delivered']
-                    const currentIdx = status === 'cancelled' ? -1 : steps.indexOf(status)
-                    const active = steps.indexOf(s) <= currentIdx
+                    const currentIdx = status === 'cancelled' ? -1 : STEPS.indexOf(status)
+                    const active = STEPS.indexOf(s) <= currentIdx
                     return (
                       <React.Fragment key={s}>
                         {i > 0 && (

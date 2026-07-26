@@ -1,8 +1,31 @@
-import React from 'react'
+import React, { type Dispatch, type SetStateAction } from 'react'
 import { ShoppingBag, ShoppingCart, Check } from 'lucide-react'
 import { SignInBanner } from '../../components/ui/AuthGate'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { sizeRank } from './sizes'
+import type { LightboxState } from './Lightbox'
+import type { MerchItem } from './merchSchemas'
+
+type ByItem<T> = Record<number, T>
+
+type ShopProps = {
+  items: MerchItem[]
+  loading: boolean
+  isAdmin: boolean
+  claimedId: string | null
+  onNavigate?: (path: string) => void
+  selectedSize: ByItem<string>
+  setSelectedSize: Dispatch<SetStateAction<ByItem<string>>>
+  sizeError: ByItem<boolean>
+  setSizeError: Dispatch<SetStateAction<ByItem<boolean>>>
+  customName: ByItem<string>
+  setCustomName: Dispatch<SetStateAction<ByItem<string>>>
+  ordered: ByItem<boolean>
+  placeOrder: (itemId: number) => void
+  orderCount: (itemId: number) => number
+  websiteOrderCount: (itemId: number) => number
+  setLightbox: (state: LightboxState | null) => void
+}
 
 // ── Shop tab — public-facing item grid with order flow ──────────────────────
 export default function Shop({
@@ -22,7 +45,7 @@ export default function Shop({
   orderCount,
   websiteOrderCount,
   setLightbox,
-}) {
+}: ShopProps) {
   return (
     <div className="space-y-3">
       <p className="text-xs text-gray-500">
@@ -43,8 +66,7 @@ export default function Shop({
       {loading && <p className="text-center text-gray-400 py-8 text-sm">Loading…</p>}
 
       {items.map((item) => {
-        const allImgs =
-          item.image_urls?.length > 0 ? item.image_urls : item.image_url ? [item.image_url] : []
+        const allImgs = item.images
         return (
           <div key={item.id} className="card space-y-3">
             {/* Image(s) — tap to zoom */}
@@ -93,7 +115,7 @@ export default function Shop({
                 )}
               </div>
               <span className="text-lg font-bold text-lob-teal flex-shrink-0 ml-2">
-                €{parseFloat(item.price).toFixed(0)}
+                €{item.price.toFixed(0)}
                 {/shirt/i.test(item.name) &&
                   !/tank/i.test(item.name) &&
                   (customName[item.id] || '').trim() && (
@@ -105,7 +127,7 @@ export default function Shop({
             </div>
 
             {/* Size picker */}
-            {item.sizes?.length > 0 && (
+            {item.sizes.length > 0 && (
               <div>
                 <p
                   className={`text-xs mb-1.5 font-medium ${sizeError[item.id] ? 'text-red-500' : 'text-gray-500'}`}
@@ -180,7 +202,7 @@ export default function Shop({
                 orderCount(item.id) > 0 &&
                 (() => {
                   const web = websiteOrderCount(item.id)
-                  const ext = parseInt(item.external_orders) || 0
+                  const ext = item.externalOrders
                   return (
                     <span
                       className="text-xs text-gray-400 flex-shrink-0"
