@@ -1298,3 +1298,53 @@ the last `OSCILLATION_RUN - 1` proposed deltas per player, and have
 `applyV2Ratings` pass them through the `previousDeltas` field that
 `RatingApplyPlayer` already carries. The client contract needs no change — the
 field is there and typed, just never populated. Tracked in PLAN §1.
+
+## D-034 — Golden snapshots serialize player ids, not PlayerInput objects (2026-07-26)
+
+**Decision:** The M2.10 golden snapshots stop inlining `PlayerInput` objects at
+every court and sitter slot. `golden.test.ts` now snapshots a projection of the
+`ScheduleRun`: court teams render as `"p01+p11 vs p04+p06"`, sitters as an id
+list, and `court.players` is dropped as an exact duplicate of the flattened
+teams. Three additions keep the suite at least as strong as before:
+
+1. **One fixture snapshot per roster** (3, not 9) pins the full `GenerateInput`
+   — every `PlayerInput` verbatim — plus the resolved config for all three
+   presets. The input contract is pinned exactly once instead of 1,002 times.
+2. **An explicit `expect(run.violations).toEqual([])`** per run. D-014 already
+   _relies_ on "the golden suite confirms all 9 roster × preset runs emit zero
+   violations", but nothing asserted it — a regression that introduced
+   violations only produced a snapshot diff a reviewer could wave through.
+3. **An assertion that `court.players` equals the flattened `teams`**, so the
+   one field the projection drops cannot silently diverge.
+
+**Why:** The snapshot file was **14,251 lines for 9 snapshots**, of which ~7,000
+were inlined player objects and ~18 mentioned `violations`, `quality`, or
+`score`. Adding one field to `PlayerInput` rewrote ~7,000 lines across all nine
+snapshots, and a reviewer could not distinguish that from real behaviour drift.
+That defeats D-015's discipline — "this entry authorizes the snapshot
+regeneration" only means something if a human can read the diff. The roster is
+already pinned deterministically by `mkRoster` (`testkit.ts`), so inlining it at
+every slot pinned nothing extra; it was pure duplication. Result: **14,251 →
+4,144 lines**, and every surviving line is assignment, cost, violation, or
+quality signal.
+
+**Faithfulness was proved, not assumed** — a lossy projection would be worse
+than the status quo. Two perturbations, each applied and reverted:
+`REFINE_ITERATION_BUDGET` 20000 → 300 failed all 9 run snapshots (balance
+95.0 → 71.7, variety 76.3 → 58.8, teamSums shifted) while the 3 fixture
+snapshots correctly stayed green; `mkRoster` `muTop` 4.5 → 4.6 failed all 12,
+confirming mu drift is still caught through `teamSums`/`courtSpread` even though
+mu is no longer inlined per slot. Setting the budget to 0 fired the new
+violations assertion loudly (41, 51, … violations) instead of yielding a
+wave-through-able diff.
+
+**This does not touch D-013 item 5.** That entry froze `report.ts`'s _output_
+convention — "player refs are full `PlayerInput` snapshots" — and
+`buildScheduleRun` still returns exactly that. What changed is only how the test
+serializes that output for review. No engine, `report.ts`, or persisted
+`schedule_runs` shape changes; the 9 runs are byte-identical to before.
+
+**Impact:** `domain/golden.test.ts` (projection + fixture snapshots + the two
+new assertions) and `domain/__snapshots__/golden.test.ts.snap` (regenerated —
+this entry authorizes it; 12 snapshots now, 9 runs + 3 fixtures). D-012's
+"goldens via vitest snapshots" mechanism is unchanged.
