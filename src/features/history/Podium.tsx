@@ -1,7 +1,20 @@
 import React from 'react'
-import { smartSort } from './historicalStats'
+import { smartSort, type ArchiveRound, type ArchiveStanding } from './historicalStats'
 
-export default function Podium({ players, rounds = [], rn = (n) => n, dn = (n) => n }) {
+interface PodiumProps {
+  players: ArchiveStanding[]
+  rounds?: ArchiveRound[]
+  // rn: alias resolution (historical name → canonical). dn: display shortening.
+  rn?: (name: string) => string
+  dn?: (name: string) => string
+}
+
+export default function Podium({
+  players,
+  rounds = [],
+  rn = (n) => n,
+  dn = (n) => n,
+}: PodiumProps) {
   const sorted =
     rounds.length > 0 ? smartSort(players, rounds) : [...players].sort((a, b) => b.total - a.total)
   const top3 = sorted.slice(0, 3)

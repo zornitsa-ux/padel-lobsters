@@ -1,23 +1,46 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react'
+import React, { useState, useMemo, useCallback } from 'react'
 import { ChevronDown, ChevronUp, Gamepad2, Trophy } from 'lucide-react'
 import { useApp } from '../../context/useApp'
 import { useTournaments } from '../events/useTournaments'
 import { usePlayers } from '../players/usePlayers'
 import { useAllMatches } from '../events/useMatches'
 import { useAllRegistrations } from '../events/useRegistrations'
-import * as oscarsApi from '../../api/oscars'
-import { TOURNAMENTS } from '../../data/historicalTournaments'
+import type { Player, NormalisedTournament } from '../../lib/normalise'
+import type { NormalisedMatch } from '../events/matchQueries'
+import type { NormalisedRegistration } from '../events/registrationQueries'
+import { TOURNAMENTS as TOURNAMENTS_RAW } from '../../data/historicalTournaments'
 import { loadAliases, resolveName } from './aliasStorage'
-import { smartSort, buildDisplayNames } from './historicalStats'
+import { smartSort, buildDisplayNames, type ArchiveTournament } from './historicalStats'
 import { medalColor, medalStyleH } from './medals'
 import { groupOscarResultsByCategory } from '../oscars/oscarResults'
+import { useOscarResultsFor } from '../oscars/useOscarResultsFor'
 import { resultsWithheld } from '../events/resultsPhase'
 import Podium from './Podium'
 import { TabSwitcher } from '../../components/ui/TabSwitcher'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
 
+// `historicalTournaments.js` is deliberately untyped (hardcoded pre-app archive);
+// this is the single boundary where its shape is asserted.
+const TOURNAMENTS = TOURNAMENTS_RAW as unknown as ArchiveTournament[]
+
+type TabId = 'standings' | 'matches' | 'games'
+
+interface DbStandingRow {
+  player: Player
+  played: number
+  won: number
+  lost: number
+  pf: number
+  pa: number
+  pts: number
+}
+
+interface HistoryProps {
+  onNavigate?: (view: string, tournament: NormalisedTournament) => void
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
-export default function History({ onNavigate }) {
+export default function History({ onNavigate }: HistoryProps) {
   const { session } = useApp()
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
   const { data: tournaments = [] } = useTournaments()
@@ -26,27 +49,26 @@ export default function History({ onNavigate }) {
   const { data: allRegsData = [] } = useAllRegistrations()
 
   const getTournamentMatches = useCallback(
-    (id) => allMatchesData.filter((m) => m.tournamentId === id),
+    (id: string): NormalisedMatch[] => allMatchesData.filter((m) => m.tournamentId === id),
     [allMatchesData],
   )
   const getTournamentRegistrations = useCallback(
-    (id) => allRegsData.filter((r) => r.tournamentId === id),
+    (id: string): NormalisedRegistration[] => allRegsData.filter((r) => r.tournamentId === id),
     [allRegsData],
   )
 
-  const [expandedId, setExpandedId] = useState(null)
-  const [activeTab, setActiveTab] = useState({}) // id → 'standings' | 'matches' | 'games'
-  const [activeRound, setActiveRound] = useState({}) // id → roundIndex
-  const [dbActiveTab, setDbActiveTab] = useState({}) // dbId → 'standings' | 'matches' | 'games'
-  const [dbActiveRound, setDbActiveRound] = useState({}) // dbId → roundIndex
-  const [dbGameResults, setDbGameResults] = useState({}) // tId → array
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<Record<string, TabId>>({}) // id → tab
+  const [activeRound, setActiveRound] = useState<Record<string, number>>({}) // id → roundIndex
+  const [dbActiveTab, setDbActiveTab] = useState<Record<string, TabId>>({}) // dbId → tab
+  const [dbActiveRound, setDbActiveRound] = useState<Record<string, number>>({}) // dbId → roundIndex
   const [aliases] = useState(loadAliases)
-  const rn = useCallback((name) => resolveName(name, aliases), [aliases])
+  const rn = useCallback((name: string) => resolveName(name, aliases), [aliases])
 
-  const getTab = (id) => activeTab[id] || 'standings'
-  const getRound = (id) => activeRound[id] ?? 0
-  const getDbTab = (id) => dbActiveTab[id] || 'standings'
-  const getDbRound = (id) => dbActiveRound[id] ?? 0
+  const getTab = (id: string): TabId => activeTab[id] || 'standings'
+  const getRound = (id: string): number => activeRound[id] ?? 0
+  const getDbTab = (id: string): TabId => dbActiveTab[id] || 'standings'
+  const getDbRound = (id: string): number => dbActiveRound[id] ?? 0
 
   const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000
 
@@ -67,7 +89,7 @@ export default function History({ onNavigate }) {
   // Built once and reused by every tournament card so names don't flip
   // between cards depending on local roster.
   const globalDnMap = useMemo(() => {
-    const names = new Set()
+    const names = new Set<string>()
     players.forEach((p) => {
       if (p?.name) names.add(p.name)
     })
@@ -94,29 +116,18 @@ export default function History({ onNavigate }) {
     return buildDisplayNames([...names])
   }, [players, rn])
   const globalDn = useCallback(
-    (n) => globalDnMap[n] || (n || '').split(' ')[0] || '',
+    (n: string): string => globalDnMap[n] || (n || '').split(' ')[0] || '',
     [globalDnMap],
   )
 
-  // Fetch shared Lobster Oscars results for any completed dynamic tournament
-  // that doesn't have them cached yet — used by the "Lobster games" tab on
-  // those event cards. Returns empty until the admin pressed Share for that
-  // tournament's session (share gate enforced server-side).
-  useEffect(() => {
-    let active = true
-    dynamicTournaments.forEach((t) => {
-      if (dbGameResults[t.id] !== undefined) return
-      ;(async () => {
-        const { data } = await oscarsApi.getResults(t.id)
-        if (active) {
-          setDbGameResults((prev) => ({ ...prev, [t.id]: data || [] }))
-        }
-      })()
-    })
-    return () => {
-      active = false
-    }
-  }, [dynamicTournaments, dbGameResults])
+  // Shared Lobster Oscars results per completed tournament — used by the
+  // "Lobster Games" tab on those event cards. Empty until the admin pressed
+  // Share for that tournament's session (share gate enforced server-side).
+  const dynamicTournamentIds = useMemo(
+    () => dynamicTournaments.map((t) => t.id),
+    [dynamicTournaments],
+  )
+  const { byTournamentId: oscarResultsById } = useOscarResultsFor(dynamicTournamentIds)
 
   return (
     <div className="space-y-4">
@@ -127,7 +138,7 @@ export default function History({ onNavigate }) {
         const tRegs = getTournamentRegistrations(t.id).filter((r) => r.status === 'registered')
 
         // Compute standings
-        const stats = {}
+        const stats: Record<string, DbStandingRow> = {}
         tRegs.forEach((r) => {
           const p = players.find((x) => x.id === r.playerId)
           if (p) stats[r.playerId] = { player: p, played: 0, won: 0, lost: 0, pf: 0, pa: 0, pts: 0 }
@@ -139,7 +150,7 @@ export default function History({ onNavigate }) {
               s2 = m.score2
             const t1w = s1 > s2,
               t2w = s2 > s1
-            ;(m.team1Ids || []).forEach((id) => {
+            ;((m.team1Ids || []) as string[]).forEach((id) => {
               if (!stats[id]) return
               stats[id].played++
               stats[id].pf += s1
@@ -148,7 +159,7 @@ export default function History({ onNavigate }) {
               if (t1w) stats[id].won++
               else if (t2w) stats[id].lost++
             })
-            ;(m.team2Ids || []).forEach((id) => {
+            ;((m.team2Ids || []) as string[]).forEach((id) => {
               if (!stats[id]) return
               stats[id].played++
               stats[id].pf += s2
@@ -168,7 +179,7 @@ export default function History({ onNavigate }) {
         const top3 = rankings.slice(0, 3)
 
         // Derive category pill from gender mode + registered roster
-        const tCategory = (() => {
+        const tCategory: 'mixed' | 'ladies' | 'mens' | 'same' | null = (() => {
           if (t.genderMode === 'mixed') return 'mixed'
           if (t.genderMode === 'same_gender') {
             const genders = new Set(
@@ -238,18 +249,18 @@ export default function History({ onNavigate }) {
               (() => {
                 const dbTab = getDbTab(t.id)
                 const dbRi = getDbRound(t.id)
-                const playerNameById = (id) => players.find((p) => p.id === id)?.name || '?'
+                const playerNameById = (id: string) => players.find((p) => p.id === id)?.name || '?'
                 // Use the global display-name map so names render consistently
                 // across all event cards, regardless of who's in this roster.
                 const dbDn = globalDn
-                const dbDnId = (id) => globalDn(playerNameById(id))
+                const dbDnId = (id: string) => globalDn(playerNameById(id))
 
                 // Group completed matches by round, sort within round by court number.
-                const courtNum = (label) => {
+                const courtNum = (label: unknown) => {
                   const mm = String(label ?? '').match(/(\d+)/)
                   return mm ? parseInt(mm[1], 10) : Number.MAX_SAFE_INTEGER
                 }
-                const byRound = {}
+                const byRound: Record<number, NormalisedMatch[]> = {}
                 tMatches.forEach((mt) => {
                   const r = mt.round || 1
                   if (!byRound[r]) byRound[r] = []
@@ -263,7 +274,7 @@ export default function History({ onNavigate }) {
                   .sort((a, b) => a - b)
                   .map((n) => ({ round: n, matches: byRound[n] }))
 
-                const gameResults = dbGameResults[t.id] || []
+                const gameResults = oscarResultsById[t.id] || []
                 const hasGameResults = gameResults.length > 0
                 const hasMatches = tMatches.length > 0
                 // D-029: match scores stay visible (players already saw their own
@@ -332,7 +343,7 @@ export default function History({ onNavigate }) {
                         ...(hasGameResults ? [{ id: 'games', label: '🦞 Lobster Games' }] : []),
                       ]}
                       value={dbTab}
-                      onChange={(id) => setDbActiveTab((s) => ({ ...s, [t.id]: id }))}
+                      onChange={(id) => setDbActiveTab((s) => ({ ...s, [t.id]: id as TabId }))}
                     />
 
                     {/* ── Full Standings ── */}
@@ -403,8 +414,8 @@ export default function History({ onNavigate }) {
                             const scored = mt.completed && s1 != null && s2 != null
                             const t1won = scored && s1 > s2
                             const t2won = scored && s2 > s1
-                            const t1Names = (mt.team1Ids || []).map(dbDnId)
-                            const t2Names = (mt.team2Ids || []).map(dbDnId)
+                            const t1Names = ((mt.team1Ids || []) as string[]).map(dbDnId)
+                            const t2Names = ((mt.team2Ids || []) as string[]).map(dbDnId)
                             return (
                               <div key={mt.id} className="bg-gray-50 rounded-xl p-3">
                                 <div className="flex items-center justify-between mb-1.5">
@@ -543,7 +554,7 @@ export default function History({ onNavigate }) {
         const sorted = t.players ? smartSort(t.players, t.rounds || []) : []
         // Use the global display-name map so first-name collisions are
         // disambiguated consistently across every event card.
-        const dn = (n) => globalDn(rn(n))
+        const dn = (n: string) => globalDn(rn(n))
 
         return (
           <div key={t.id} className="card overflow-hidden border-l-4 border-yellow-400">
@@ -605,7 +616,7 @@ export default function History({ onNavigate }) {
                     ...(t.rounds ? [{ id: 'matches', label: 'Match Results' }] : []),
                   ]}
                   value={tab}
-                  onChange={(id) => setActiveTab((s) => ({ ...s, [t.id]: id }))}
+                  onChange={(id) => setActiveTab((s) => ({ ...s, [t.id]: id as TabId }))}
                   className="mb-3"
                 />
 

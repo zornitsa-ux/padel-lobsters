@@ -74,6 +74,8 @@ Access control is in `src/lib/authPaths.ts`:
 
 Each domain owns its data next to where it's used. Per slice (all TypeScript): `<feat>Keys.ts` (query-key factory) · `<feat>Schemas.ts` (Zod boundary validation, `.passthrough()`) · `<feat>Queries.ts` (fetch + mutation fns, Zod-parse then `normaliseX`) · `use<Feat>.ts` (`useQuery` + `useMutation`/action hooks with `onSuccess` invalidation). Live slices: `features/players` (usePlayers, usePlayerActions), `features/settings` (useSettings), `features/events` (useTournaments, useTransfers, useMatches/useMatchActions, useRegistrations/useRegistrationActions), `features/raffle`, `features/oscars`. Session-dependent guards (admin authorization, `not_authenticated`) are passed `session`/`role` as hook args so slices stay free of context imports. Reads follow the flat-reads model: mount load + `refetchOnWindowFocus`; writes invalidate their key.
 
+Not every feature folder owns server data — `features/history` composes other slices and owns none. Before adding slice files to a feature, check ownership first: `docs/conversions.md` is the step-by-step playbook for the in-flight feature conversions (TypeScript + slice ownership), written from the `features/history` pass.
+
 **Role derivation** — derived from the JWT session on every render:
 
 ```javascript
@@ -97,7 +99,7 @@ Measured 2026-07-26. League is no longer one file — it is `features/league/Lea
 | File                                            | Lines | Role                                 |
 | ----------------------------------------------- | ----- | ------------------------------------ |
 | `features/events/Schedule.jsx`                  | 801   | Match schedule                       |
-| `features/history/History.jsx`                  | 784   | Historical tournament rendering      |
+| `features/history/History.tsx`                  | 788   | Historical tournament rendering      |
 | `components/SignupRequest.jsx`                  | 714   | Self-serve signup flow               |
 | `features/events/Registration.jsx`              | 623   | Event sign-up + detail               |
 | `features/league/LeagueAdminSection.tsx`        | 585   | League admin controls                |
@@ -443,7 +445,7 @@ snapshot. It goes when those harnesses do.
 
 ### Historical Data Stitching (`src/lib/playerHistory.js`, `src/lib/playerStats.ts`)
 
-Pre-Supabase tournaments are hardcoded in `src/data/historicalTournaments.js` (~404 lines), imported by ~10 modules — `src/features/history/History.jsx` is one consumer, alongside `playerHistory.js`, `playerStats.ts`, `historicalStats.js`, `aliasClustering.js`, `PlayerProfileDrawer.jsx`, `AccountStatsSection.jsx`, and the matchmaking `historyFixture.ts`. Each tournament has `players` (standings with `total` points and optional `podium` override) and `rounds` (match data with name strings instead of IDs).
+Pre-Supabase tournaments are hardcoded in `src/data/historicalTournaments.js` (~404 lines), imported by ~10 modules — `src/features/history/History.tsx` is one consumer, alongside `playerHistory.js`, `playerStats.ts`, `historicalStats.ts`, `aliasClustering.js`, `PlayerProfileDrawer.jsx`, `AccountStatsSection.jsx`, and the matchmaking `historyFixture.ts`. Each tournament has `players` (standings with `total` points and optional `podium` override) and `rounds` (match data with name strings instead of IDs).
 
 The `player_aliases` table maps historical name strings → current player UUIDs. `buildHistoricalAppearances()` and `buildPlayerStats()` both read this map to stitch historical records into a player's lifetime stats.
 
@@ -548,7 +550,7 @@ Concrete tasks that are scoped but not yet done, ordered by risk.
 - **`search_path = ''` on SECURITY DEFINER function bodies** — `require_admin()` and `require_trusted_device()` already have `search_path = ''`. The larger SECURITY DEFINER RPCs (`admin_add_player`, `update_my_profile`, etc.) use `search_path = 'pg_catalog, public, extensions'` (safe but not maximally strict). Setting `search_path = ''` on all of them requires qualifying every unqualified table/function reference — deferred until there is a broader function audit.
 - **No migration CI gate** — migrations are manually pushed. A bad migration to production is difficult to reverse. Consider adding `supabase db diff` check to CI or at minimum a pre-push hook.
 - **`src/data/leagueContent.ts` has no renderer** — open product question, not dead code. It exports `LEAGUE_SECTIONS`, `EXPERIENCE_LEVELS` and `DIVISION_LABEL`, is covered by `leagueContent.test.ts`, and nothing renders it. It was likely written for a league landing page that was never built, or that `features/league/ui/LeagueHome.tsx` superseded. Decide whether to surface the content or drop the module; kept deliberately in the meantime.
-- **Orphaned writers in `src/features/history/aliasStorage.js`** — after `SmartMatchPanel.jsx` was deleted, `loadSkipped`, `saveAliases` and `saveSkipped` have no callers. `History.jsx` still reads aliases via `loadAliases` / `resolveName`, so the alias map is now read-only with no UI to edit it. Either rebuild an alias-matching admin surface or delete the writers along with the localStorage-backed alias feature.
+- **Orphaned writers in `src/features/history/aliasStorage.ts`** — after `SmartMatchPanel.jsx` was deleted, `loadSkipped`, `saveAliases` and `saveSkipped` have no callers. `History.tsx` still reads aliases via `loadAliases` / `resolveName`, so the alias map is now read-only with no UI to edit it. Either rebuild an alias-matching admin surface or delete the writers along with the localStorage-backed alias feature.
 
 ### Low — Optional Improvements
 

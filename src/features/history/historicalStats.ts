@@ -1,11 +1,59 @@
+import type { HistoricalMatch, HistoricalRound } from '../../lib/playerStats'
+
+// ── Archive shapes ────────────────────────────────────────────────────────────
+// `src/data/historicalTournaments.js` is untyped by design (hardcoded pre-app
+// archive). These interfaces are the boundary contract History casts it to.
+// The match/round shapes narrow the ones playerStats already declares so the
+// archive's two consumers can't drift apart.
+
+export interface ArchiveMatch extends HistoricalMatch {
+  court?: number | string
+  s1: number
+  s2: number
+}
+
+export interface ArchiveRound extends HistoricalRound {
+  round: number
+  matches: ArchiveMatch[]
+}
+
+// A final-standings row. `r` (per-round scores) is only recorded for some
+// tournaments.
+export interface ArchiveStanding {
+  name: string
+  total: number
+  r?: number[]
+}
+
+export interface ArchiveTournament {
+  id: string
+  name: string
+  date?: string
+  type?: string
+  players?: ArchiveStanding[]
+  rounds?: ArchiveRound[] | null
+  numRounds?: number | null
+  numCourts?: number | null
+  note?: string
+}
+
+export interface PlayerTiebreakStats {
+  matchesWon: number
+  pointsFor: number
+  pointsAgainst: number
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 /**
  * Calculate match wins and point differential for tiebreaking.
  * Analyzes rounds data to count wins per player and calculate point differential.
  */
-export function calculateStats(players, rounds) {
-  const stats = {}
+export function calculateStats(
+  players: ArchiveStanding[],
+  rounds: ArchiveRound[],
+): Record<string, PlayerTiebreakStats> {
+  const stats: Record<string, PlayerTiebreakStats> = {}
   players.forEach((p) => {
     stats[p.name] = { matchesWon: 0, pointsFor: 0, pointsAgainst: 0 }
   })
@@ -40,7 +88,7 @@ export function calculateStats(players, rounds) {
 /**
  * Smart ranking: Points → Matches Won → Differential → Alphabetical
  */
-export function smartSort(players, rounds) {
+export function smartSort(players: ArchiveStanding[], rounds: ArchiveRound[]): ArchiveStanding[] {
   const stats = calculateStats(players, rounds)
   return [...players].sort((a, b) => {
     // 1. By total points (descending)
@@ -66,15 +114,15 @@ export function smartSort(players, rounds) {
 // • If multiple players share a first name, append the rest of the name —
 //   the original last token if it's already short (≤2 chars, e.g. "Alex M"),
 //   otherwise just the last name's initial (e.g. "Daniel Net Hitter" → "Daniel N").
-export function buildDisplayNames(names) {
-  const groups = {}
+export function buildDisplayNames(names: readonly string[]): Record<string, string> {
+  const groups: Record<string, string[]> = {}
   ;(names || []).forEach((n) => {
     if (!n) return
     const f = n.trim().split(/\s+/)[0] || n
     if (!groups[f]) groups[f] = []
     groups[f].push(n)
   })
-  const out = {}
+  const out: Record<string, string> = {}
   Object.entries(groups).forEach(([first, group]) => {
     const unique = [...new Set(group)]
     if (unique.length === 1) {
