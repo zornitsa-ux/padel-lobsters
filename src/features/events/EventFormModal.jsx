@@ -2,6 +2,7 @@ import React from 'react'
 import { Plus, X, ShieldCheck, UserCog } from 'lucide-react'
 import { fmtEur } from '../../lib/format'
 import { Modal } from '../../components/ui/Modal'
+import { SegmentedControl } from '../../components/ui/SegmentedControl'
 
 export default function EventFormModal({
   open,
@@ -91,42 +92,31 @@ export default function EventFormModal({
         {/* Duration */}
         <div>
           <label className="label">Duration</label>
-          <div className="grid grid-cols-4 gap-2">
-            {[60, 90, 120, 180].map((d) => (
-              <button
-                key={d}
-                type="button"
-                onClick={() => setForm((f) => ({ ...f, duration: d }))}
-                className={`py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                  form.duration === d ? 'bg-lob-teal text-white' : 'bg-gray-100 text-gray-600'
-                }`}
-              >
-                {d === 60 ? '1h' : d === 90 ? '1.5h' : d === 120 ? '2h' : '3h'}
-              </button>
-            ))}
-          </div>
+          <SegmentedControl
+            ariaLabel="Duration"
+            options={[
+              { value: 60, label: '1h' },
+              { value: 90, label: '1.5h' },
+              { value: 120, label: '2h' },
+              { value: 180, label: '3h' },
+            ]}
+            value={form.duration}
+            onChange={(d) => setForm((f) => ({ ...f, duration: d }))}
+          />
         </div>
 
         {/* Gender Mode */}
         <div>
           <label className="label">Player Mix</label>
-          <div className="flex gap-2">
-            {[
-              ['mixed', '🚺🚹 Mixed'],
-              ['same_gender', '👥 Same Gender'],
-            ].map(([val, lbl]) => (
-              <button
-                type="button"
-                key={val}
-                onClick={() => setForm((f) => ({ ...f, genderMode: val }))}
-                className={`flex-1 py-2.5 rounded-xl font-semibold text-sm transition-all ${
-                  form.genderMode === val ? 'bg-lob-teal text-white' : 'bg-gray-100 text-gray-600'
-                }`}
-              >
-                {lbl}
-              </button>
-            ))}
-          </div>
+          <SegmentedControl
+            ariaLabel="Player mix"
+            options={[
+              { value: 'mixed', label: '🚺🚹 Mixed' },
+              { value: 'same_gender', label: '👥 Same Gender' },
+            ]}
+            value={form.genderMode}
+            onChange={(val) => setForm((f) => ({ ...f, genderMode: val }))}
+          />
           {form.genderMode === 'mixed' && (
             <p className="text-xs text-gray-400 mt-1">
               Schedule will balance gender per court and keep left-handed players on opposite teams

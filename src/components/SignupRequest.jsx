@@ -6,6 +6,7 @@ import { isE164 } from '../lib/whatsapp'
 import { processAvatar } from '../lib/processAvatar'
 import { ArrowLeft, UserPlus, Check, Loader2, Copy, User, Camera } from 'lucide-react'
 import CountryPicker from './ui/CountryPicker'
+import { SegmentedControl } from './ui/SegmentedControl'
 
 // =============================================================================
 //  SignupRequest — the self-serve "Join the Lobsters" form shown inside the
@@ -554,23 +555,15 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
           <div>
             <label className="label">Gender</label>
             <p className="text-xs text-gray-400 mb-2">For optimal pair matching</p>
-            <div className="flex gap-3">
-              {[
-                ['male', 'Male'],
-                ['female', 'Female'],
-              ].map(([val, lbl]) => (
-                <button
-                  type="button"
-                  key={val}
-                  onClick={() => setForm((f) => ({ ...f, gender: f.gender === val ? '' : val }))}
-                  className={`flex-1 py-2.5 rounded-xl font-semibold text-sm transition-all ${
-                    form.gender === val ? 'bg-lob-teal text-white' : 'bg-gray-100 text-gray-600'
-                  }`}
-                >
-                  {lbl}
-                </button>
-              ))}
-            </div>
+            <SegmentedControl
+              ariaLabel="Gender"
+              options={[
+                { value: 'male', label: 'Male' },
+                { value: 'female', label: 'Female' },
+              ]}
+              value={form.gender}
+              onChange={(val) => setForm((f) => ({ ...f, gender: f.gender === val ? '' : val }))}
+            />
           </div>
 
           <div>

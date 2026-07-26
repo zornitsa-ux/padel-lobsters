@@ -1,5 +1,6 @@
 import React from 'react'
 import { Plus, Pencil, X, ShoppingBag, GripVertical } from 'lucide-react'
+import { IconButton } from '../../components/ui/IconButton'
 
 // ── Manage tab (admin) — drag-and-drop CRUD list of merch items ─────────────
 export default function AdminItemManager({
@@ -63,18 +64,17 @@ export default function AdminItemManager({
               </p>
             </div>
             <div className="flex gap-1.5 flex-shrink-0">
-              <button
-                onClick={() => openEdit(item)}
-                className="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center"
-              >
-                <Pencil size={13} className="text-gray-500" />
-              </button>
-              <button
+              <IconButton onClick={() => openEdit(item)} aria-label={`Edit ${item.name}`} size="sm">
+                <Pencil size={13} />
+              </IconButton>
+              <IconButton
                 onClick={() => handleDeleteItem(item.id)}
-                className="w-8 h-8 rounded-xl bg-red-50 flex items-center justify-center"
+                aria-label={`Delete ${item.name}`}
+                variant="destructive"
+                size="sm"
               >
-                <X size={13} className="text-red-500" />
-              </button>
+                <X size={13} />
+              </IconButton>
             </div>
           </div>
         ))}

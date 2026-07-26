@@ -8,6 +8,7 @@ import {
   Pencil,
   Trash2,
 } from 'lucide-react'
+import { IconButton } from '../../components/ui/IconButton'
 
 // Shared admin-tools overflow menu for a tournament. Renders nothing for
 // non-admins. Each action is optional — pass only the handlers the surface
@@ -55,15 +56,14 @@ export default function EventAdminMenu({
 
   return (
     <div className="relative flex-shrink-0">
-      <button
+      <IconButton
         onClick={() => setOpen((v) => !v)}
         aria-label="Admin tools"
         aria-haspopup="menu"
         aria-expanded={open}
-        className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-100 text-gray-600 active:scale-95"
       >
         <MoreVertical size={16} />
-      </button>
+      </IconButton>
 
       {open && (
         <>

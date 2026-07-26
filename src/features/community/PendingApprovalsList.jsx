@@ -1,6 +1,7 @@
 import React from 'react'
 import { Clock, X } from 'lucide-react'
 import Avatar from '../../components/ui/Avatar'
+import { IconButton } from '../../components/ui/IconButton'
 
 export default function PendingApprovalsList({ pendingPlayers, onApprove, onReject, onLink }) {
   if (pendingPlayers.length === 0) return null
@@ -23,12 +24,15 @@ export default function PendingApprovalsList({ pendingPlayers, onApprove, onReje
                 {p.email && ` · ${p.email}`}
               </p>
             </div>
-            <button
+            <IconButton
               onClick={() => onReject(p.id)}
-              className="w-8 h-8 flex items-center justify-center rounded-xl bg-red-50 active:scale-95 flex-shrink-0"
+              aria-label={`Reject ${p.name}`}
+              variant="destructive"
+              size="sm"
+              className="flex-shrink-0"
             >
-              <X size={13} className="text-red-500" />
-            </button>
+              <X size={13} />
+            </IconButton>
           </div>
           <div className="flex gap-2">
             <button

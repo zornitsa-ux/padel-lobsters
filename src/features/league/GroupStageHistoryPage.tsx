@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { BarChart2, CheckCircle, ChevronLeft } from 'lucide-react'
 import { SectionHeader } from '../../components/ui/SectionHeader'
 import { Spinner } from '../../components/ui/Spinner'
+import { SegmentedControl } from '../../components/ui/SegmentedControl'
 import { GroupStandingsTable } from './ui/GroupStandingsTable'
 import { LeagueMatchCard } from './ui/LeagueMatchCard'
 import { TeamPage } from './ui/TeamPage'
@@ -59,18 +60,16 @@ export default function GroupStageHistoryPage() {
       </div>
 
       {league.divisions.length > 1 && (
-        <div className="-mx-4 px-4 py-2 bg-lob-cream border-b border-gray-100 sticky top-0 z-10 flex gap-2 mb-4">
-          {league.divisions.map((div) => (
-            <button
-              key={div}
-              onClick={() => setDivision(div)}
-              className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                safeDivision === div ? 'bg-lob-teal text-white' : 'bg-gray-100 text-gray-500'
-              }`}
-            >
-              {DIVISION_LABELS[div]}
-            </button>
-          ))}
+        <div className="-mx-4 px-4 py-2 bg-lob-cream border-b border-gray-100 sticky top-0 z-10 mb-4">
+          <SegmentedControl
+            ariaLabel="Division"
+            layout="wrap"
+            size="md"
+            shape="pill"
+            options={league.divisions.map((div) => ({ value: div, label: DIVISION_LABELS[div] }))}
+            value={safeDivision}
+            onChange={(div) => setDivision(div)}
+          />
         </div>
       )}
 

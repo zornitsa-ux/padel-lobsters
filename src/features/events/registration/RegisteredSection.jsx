@@ -2,6 +2,7 @@ import React from 'react'
 import { ArrowRightLeft, CheckCircle, Clock, X } from 'lucide-react'
 import { letterColor } from '../../../lib/letterColors'
 import PaymentStatusBadge from './PaymentStatusBadge'
+import { IconButton } from '../../../components/ui/IconButton'
 
 export default function RegisteredSection({
   isCompleted,
@@ -58,12 +59,14 @@ export default function RegisteredSection({
                     </p>
                   </div>
                   <PaymentStatusBadge paymentStatus={reg.paymentStatus} />
-                  <button
+                  <IconButton
                     onClick={() => onCancelRegistration(reg)}
-                    className="w-8 h-8 flex items-center justify-center rounded-xl bg-red-50 active:scale-95"
+                    aria-label="Cancel registration"
+                    variant="destructive"
+                    size="sm"
                   >
-                    <X size={14} className="text-red-500" />
-                  </button>
+                    <X size={14} />
+                  </IconButton>
                 </div>
 
                 {(() => {

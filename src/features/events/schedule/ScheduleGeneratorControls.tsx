@@ -2,6 +2,7 @@ import React from 'react'
 import { Download, Shuffle } from 'lucide-react'
 import type { SchedulePlayer, ScheduleRound } from './types'
 import { roundsForDuration } from './utils'
+import { SegmentedControl } from '../../../components/ui/SegmentedControl'
 
 type Props = {
   generated: unknown
@@ -68,19 +69,12 @@ export default function ScheduleGeneratorControls({
       {!isLobster && (format === 'americano' || format === 'mexicano') && (
         <div>
           <label className="label">Number of rounds</label>
-          <div className="flex gap-2">
-            {[2, 3, 4, 5, 6].map((value) => (
-              <button
-                key={value}
-                onClick={() => setRounds(value)}
-                className={`flex-1 py-2 text-sm rounded-xl font-semibold transition-all ${
-                  rounds === value ? 'bg-lob-teal text-white' : 'bg-gray-100 text-gray-600'
-                }`}
-              >
-                {value}
-              </button>
-            ))}
-          </div>
+          <SegmentedControl
+            ariaLabel="Number of rounds"
+            options={[2, 3, 4, 5, 6].map((value) => ({ value, label: String(value) }))}
+            value={rounds}
+            onChange={setRounds}
+          />
         </div>
       )}
 

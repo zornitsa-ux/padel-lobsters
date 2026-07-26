@@ -4,6 +4,7 @@ import { Pencil, Trash2, Calendar, Users, MapPin, Clock, Building2 } from 'lucid
 import DateTile from '../../components/ui/DateTile'
 import { fmtEur } from '../../lib/format'
 import { formatDate, pricePerPlayer } from './eventHelpers'
+import { IconButton } from '../../components/ui/IconButton'
 
 function InfoChip({ icon, label, warn }) {
   return (
@@ -78,18 +79,16 @@ export default function PastEventCard({ t, isAdmin, onNavigate, onEdit, onDelete
         </button>
         {isAdmin && (
           <>
-            <button
-              onClick={() => onEdit(t)}
-              className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-100 active:scale-95"
-            >
-              <Pencil size={14} className="text-gray-600" />
-            </button>
-            <button
+            <IconButton aria-label="Edit event" onClick={() => onEdit(t)}>
+              <Pencil size={14} />
+            </IconButton>
+            <IconButton
+              aria-label="Delete event"
+              variant="destructive"
               onClick={() => onDelete(t.id)}
-              className="w-9 h-9 flex items-center justify-center rounded-xl bg-red-50 active:scale-95"
             >
-              <Trash2 size={14} className="text-red-500" />
-            </button>
+              <Trash2 size={14} />
+            </IconButton>
           </>
         )}
       </div>

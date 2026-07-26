@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react'
 import { Save, User, ChevronDown, ChevronUp, Camera, Mail, Check } from 'lucide-react'
 import CountryPicker from '../../components/ui/CountryPicker'
 import Avatar from '../../components/ui/Avatar'
+import { SegmentedControl } from '../../components/ui/SegmentedControl'
 import { useApp } from '../../context/useApp'
 import { LOBBY_PROMPTS } from './settingsHelpers'
 
@@ -190,20 +191,16 @@ export default function ProfileSection({
               {/* War Cry — toggleable prompt categories */}
               <div>
                 <label className="label">War Cry</label>
-                <div className="flex gap-1.5 flex-wrap mb-2">
-                  {LOBBY_PROMPTS.map((p, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => setActivePrompt(i)}
-                      className={`text-[11px] px-2.5 py-1 rounded-full font-semibold transition-all active:scale-95 ${
-                        activePrompt === i ? 'bg-lob-teal text-white' : 'bg-gray-100 text-gray-500'
-                      }`}
-                    >
-                      {p.label}
-                    </button>
-                  ))}
-                </div>
+                <SegmentedControl
+                  ariaLabel="War cry prompt"
+                  layout="wrap"
+                  size="sm"
+                  shape="pill"
+                  className="mb-2"
+                  options={LOBBY_PROMPTS.map((p, i) => ({ value: i, label: p.label }))}
+                  value={activePrompt}
+                  onChange={setActivePrompt}
+                />
                 <input
                   className="input"
                   type="text"

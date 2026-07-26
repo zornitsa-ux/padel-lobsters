@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react'
 import { X, Check, GitMerge, Search, ChevronRight, RotateCcw, UserX } from 'lucide-react'
 import { buildAliasInventory, suggestPlayers, NOT_IN_ROSTER } from '../lib/playerHistory'
+import { SegmentedControl } from './ui/SegmentedControl'
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Admin modal: walk through every historical name from the hardcoded
@@ -104,24 +105,21 @@ export default function PlayerAliasMatcher({
           </p>
 
           {/* Filter pills */}
-          <div className="flex gap-1 mt-3">
-            {[
-              { k: 'unmatched', label: `To do (${counts.unmatched})` },
-              { k: 'matched', label: `Matched (${counts.matched})` },
-              { k: 'skipped', label: `Skipped (${counts.skipped})` },
-              { k: 'all', label: `All (${counts.all})` },
-            ].map((p) => (
-              <button
-                key={p.k}
-                onClick={() => setFilter(p.k)}
-                className={`text-[11px] font-semibold px-2.5 py-1 rounded-full transition-all ${
-                  filter === p.k ? 'bg-lob-teal text-white' : 'bg-gray-100 text-gray-500'
-                }`}
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
+          <SegmentedControl
+            ariaLabel="Filter"
+            layout="wrap"
+            size="sm"
+            shape="pill"
+            className="mt-3"
+            options={[
+              { value: 'unmatched', label: `To do (${counts.unmatched})` },
+              { value: 'matched', label: `Matched (${counts.matched})` },
+              { value: 'skipped', label: `Skipped (${counts.skipped})` },
+              { value: 'all', label: `All (${counts.all})` },
+            ]}
+            value={filter}
+            onChange={setFilter}
+          />
 
           {/* Search */}
           <div className="relative mt-2">

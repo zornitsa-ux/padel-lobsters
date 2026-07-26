@@ -1,5 +1,6 @@
 import React from 'react'
 import { Clock, X } from 'lucide-react'
+import { IconButton } from '../../../components/ui/IconButton'
 
 export default function WaitlistSection({
   isCompleted,
@@ -41,12 +42,14 @@ export default function WaitlistSection({
                   >
                     Confirm
                   </button>
-                  <button
+                  <IconButton
                     onClick={() => onCancel(reg)}
-                    className="w-8 h-8 flex items-center justify-center rounded-xl bg-red-50"
+                    aria-label="Remove from waitlist"
+                    variant="destructive"
+                    size="sm"
                   >
-                    <X size={14} className="text-red-500" />
-                  </button>
+                    <X size={14} />
+                  </IconButton>
                 </div>
               )}
             </div>

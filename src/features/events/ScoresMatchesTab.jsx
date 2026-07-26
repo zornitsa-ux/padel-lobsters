@@ -1,6 +1,7 @@
 import React from 'react'
 import { AlertCircle } from 'lucide-react'
 import { EmptyState } from '../../components/ui/EmptyState'
+import { SegmentedControl } from '../../components/ui/SegmentedControl'
 
 export default function ScoresMatchesTab({ rounds, activeRoundIdx, onSelectRound, players }) {
   const nameMap = new Map(players.map((p) => [p.id, (p.name || '').split(' ')[0]]))
@@ -12,20 +13,15 @@ export default function ScoresMatchesTab({ rounds, activeRoundIdx, onSelectRound
         <EmptyState icon={<AlertCircle size={36} />} title="No matches for this tournament." />
       ) : (
         <>
-          {/* Round selector — same as History */}
-          <div className="flex gap-1.5 overflow-x-auto pb-2">
-            {rounds.map((r, i) => (
-              <button
-                key={r.round}
-                onClick={() => onSelectRound(i)}
-                className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                  activeRoundIdx === i ? 'bg-lob-teal text-white' : 'bg-gray-100 text-gray-600'
-                }`}
-              >
-                R{r.round}
-              </button>
-            ))}
-          </div>
+          <SegmentedControl
+            ariaLabel="Round"
+            layout="scroll"
+            size="md"
+            className="pb-2"
+            options={rounds.map((r, i) => ({ value: i, label: `R${r.round}` }))}
+            value={activeRoundIdx}
+            onChange={onSelectRound}
+          />
 
           {/* Match cards for the selected round */}
           <div className="space-y-2">

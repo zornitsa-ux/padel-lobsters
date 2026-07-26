@@ -1,5 +1,6 @@
 import React from 'react'
 import { Share2 } from 'lucide-react'
+import { IconButton } from './IconButton'
 
 // ============================================================================
 //  ShareWhatsAppButton
@@ -51,15 +52,15 @@ export default function ShareWhatsAppButton({ tournament, variant = 'icon', clas
 
   if (variant === 'icon') {
     return (
-      <button
-        type="button"
+      <IconButton
         onClick={handleClick}
         aria-label="Share on WhatsApp"
         title="Share on WhatsApp"
-        className={`w-9 h-9 flex items-center justify-center rounded-xl bg-green-50 text-green-600 active:scale-95 transition-all ${className}`}
+        variant="success"
+        className={className}
       >
         <Share2 size={16} />
-      </button>
+      </IconButton>
     )
   }
 

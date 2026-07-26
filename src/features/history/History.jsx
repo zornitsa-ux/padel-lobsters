@@ -14,6 +14,7 @@ import { groupOscarResultsByCategory } from '../oscars/oscarResults'
 import { resultsWithheld } from '../events/resultsPhase'
 import Podium from './Podium'
 import { TabSwitcher } from '../../components/ui/TabSwitcher'
+import { SegmentedControl } from '../../components/ui/SegmentedControl'
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function History({ onNavigate }) {
@@ -385,19 +386,15 @@ export default function History({ onNavigate }) {
                     {/* ── Match Results ── */}
                     {dbTab === 'matches' && hasMatches && (
                       <div>
-                        <div className="flex gap-1.5 overflow-x-auto pb-2 mb-3">
-                          {dbRounds.map((r, i) => (
-                            <button
-                              key={r.round}
-                              onClick={() => setDbActiveRound((s) => ({ ...s, [t.id]: i }))}
-                              className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                                dbRi === i ? 'bg-lob-teal text-white' : 'bg-gray-100 text-gray-600'
-                              }`}
-                            >
-                              R{r.round}
-                            </button>
-                          ))}
-                        </div>
+                        <SegmentedControl
+                          ariaLabel="Round"
+                          layout="scroll"
+                          size="md"
+                          className="pb-2 mb-3"
+                          options={dbRounds.map((r, i) => ({ value: i, label: `R${r.round}` }))}
+                          value={dbRi}
+                          onChange={(i) => setDbActiveRound((s) => ({ ...s, [t.id]: i }))}
+                        />
 
                         <div className="space-y-2">
                           {dbRounds[dbRi]?.matches.map((mt) => {
@@ -703,19 +700,15 @@ export default function History({ onNavigate }) {
                 {tab === 'matches' && t.rounds && (
                   <div>
                     {/* Round selector */}
-                    <div className="flex gap-1.5 overflow-x-auto pb-2 mb-3">
-                      {t.rounds.map((r, i) => (
-                        <button
-                          key={i}
-                          onClick={() => setActiveRound((s) => ({ ...s, [t.id]: i }))}
-                          className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                            ri === i ? 'bg-lob-teal text-white' : 'bg-gray-100 text-gray-600'
-                          }`}
-                        >
-                          R{r.round}
-                        </button>
-                      ))}
-                    </div>
+                    <SegmentedControl
+                      ariaLabel="Round"
+                      layout="scroll"
+                      size="md"
+                      className="pb-2 mb-3"
+                      options={t.rounds.map((r, i) => ({ value: i, label: `R${r.round}` }))}
+                      value={ri}
+                      onChange={(i) => setActiveRound((s) => ({ ...s, [t.id]: i }))}
+                    />
 
                     {/* Match cards for selected round */}
                     <div className="space-y-2">

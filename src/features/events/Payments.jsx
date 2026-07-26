@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { fmtEur } from '../../lib/format'
 import { EmptyState } from '../../components/ui/EmptyState'
+import { IconButton } from '../../components/ui/IconButton'
 
 const METHODS = [
   { value: 'tikkie', label: 'Tikkie' },
@@ -424,13 +425,9 @@ function StatusOverrideMenu({ currentStatus, onSelect }) {
   const [open, setOpen] = useState(false)
   return (
     <div className="relative">
-      <button
-        onClick={() => setOpen(!open)}
-        aria-label="More payment options"
-        className="w-8 h-8 flex items-center justify-center rounded-xl bg-gray-100 active:scale-95 transition-all"
-      >
-        <MoreVertical size={14} className="text-gray-500" />
-      </button>
+      <IconButton onClick={() => setOpen(!open)} aria-label="More payment options" size="sm">
+        <MoreVertical size={14} />
+      </IconButton>
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
