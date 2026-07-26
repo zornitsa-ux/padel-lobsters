@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ArrowLeft, Check, Users, Save, Clock, Trophy } from 'lucide-react'
 import { EmptyState } from '../../components/ui/EmptyState'
+import { PlayerRow } from '../../components/ui/PlayerRow'
 import { usePlayers } from '../players/usePlayers'
 import { useRegistrations } from '../events/useRegistrations'
 import { useExclusions, useIneligible, useSetExclusions } from './useRaffle'
@@ -12,7 +13,6 @@ interface Tournament {
 }
 
 const fullNameOf = (name?: string | null) => (name || '').trim() || 'Player'
-const initialOf = (name?: string | null) => fullNameOf(name).charAt(0).toUpperCase() || '?'
 
 export default function RaffleEligibilityContainer({
   tournament,
@@ -126,50 +126,42 @@ export default function RaffleEligibilityContainer({
             const isEligible = !skip && !excluded.has(id)
             const dimmed = !isEligible
             return (
-              <button
+              <PlayerRow
                 key={id}
+                player={{ name: fullNameOf(nameOf(id)) }}
+                avatarTone={isEligible ? 'bg-amber-400 text-white' : 'bg-gray-300 text-white'}
                 onClick={() => toggle(id)}
                 disabled={!!skip}
-                className={`w-full flex items-center gap-3 rounded-xl p-3 border transition-all ${
+                className={`w-full rounded-xl p-3 border transition-all ${
                   isEligible ? 'bg-white border-gray-100' : 'bg-gray-50 border-gray-100'
                 } ${skip ? 'cursor-default' : ''} ${dimmed ? 'opacity-70' : ''}`}
-              >
-                <div
-                  className={`w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0 ${
-                    isEligible ? 'bg-amber-400' : 'bg-gray-300'
-                  }`}
-                >
-                  {initialOf(nameOf(id))}
-                </div>
-                <p
-                  className={`flex-1 min-w-0 text-left font-semibold truncate ${
-                    isEligible ? 'text-gray-800' : 'text-gray-400 line-through'
-                  }`}
-                >
-                  {fullNameOf(nameOf(id))}
-                </p>
-
-                {skip ? (
-                  <span
-                    className={`flex items-center gap-1 text-xs font-semibold rounded-full px-2.5 py-1 flex-shrink-0 ${
-                      skip === 'cooldown'
-                        ? 'bg-amber-50 text-amber-700'
-                        : 'bg-gray-200 text-gray-600'
-                    }`}
-                  >
-                    {skip === 'cooldown' ? <Clock size={12} /> : <Trophy size={12} />}
-                    {skip === 'cooldown' ? 'On cooldown' : 'Won this raffle'}
-                  </span>
-                ) : (
-                  <span
-                    className={`w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 ${
-                      isEligible ? 'bg-lob-teal text-white' : 'border-2 border-gray-300'
-                    }`}
-                  >
-                    {isEligible && <Check size={16} />}
-                  </span>
-                )}
-              </button>
+                name={fullNameOf(nameOf(id))}
+                nameClassName={`font-semibold truncate ${
+                  isEligible ? 'text-lob-dark' : 'text-lob-muted line-through'
+                }`}
+                trailing={
+                  skip ? (
+                    <span
+                      className={`flex items-center gap-1 text-xs font-semibold rounded-full px-2.5 py-1 flex-shrink-0 ${
+                        skip === 'cooldown'
+                          ? 'bg-amber-50 text-amber-700'
+                          : 'bg-gray-200 text-gray-600'
+                      }`}
+                    >
+                      {skip === 'cooldown' ? <Clock size={12} /> : <Trophy size={12} />}
+                      {skip === 'cooldown' ? 'On cooldown' : 'Won this raffle'}
+                    </span>
+                  ) : (
+                    <span
+                      className={`w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 ${
+                        isEligible ? 'bg-lob-teal text-white' : 'border-2 border-gray-300'
+                      }`}
+                    >
+                      {isEligible && <Check size={16} />}
+                    </span>
+                  )
+                }
+              />
             )
           })}
         </div>

@@ -130,7 +130,7 @@ export default function ProfileSection({
 
           {/* Always-visible summary */}
           <div className="flex items-center gap-3">
-            <Avatar player={myPlayer} size="md" className="flex-shrink-0" />
+            <Avatar player={myPlayer} size="lg" />
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-gray-800 truncate">{myPlayer.name}</p>
               <p className="text-xs text-gray-500">

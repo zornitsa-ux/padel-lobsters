@@ -1,4 +1,5 @@
 import { Modal } from '../../../components/ui/Modal'
+import { PlayerRow } from '../../../components/ui/PlayerRow'
 import { Badge } from '../../../components/ui/Badge'
 import { LeagueMatchCard } from './LeagueMatchCard'
 import { getTeamRecord } from '../domain/standings'
@@ -20,34 +21,20 @@ const EXPERIENCE_BADGE: Record<string, 'info' | 'gold' | 'silver'> = {
   beginner: 'silver',
 }
 
-function PlayerRow({
+function TeamPlayerRow({
   player,
 }: {
   player: { id: string; name: string; avatar_url: string | null } | undefined
 }) {
   if (!player) return null
-  const initials = player.name
-    .split(' ')
-    .map((w) => w[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase()
-
   return (
-    <div className="flex items-center gap-3 py-2">
-      {player.avatar_url ? (
-        <img
-          src={player.avatar_url}
-          alt={player.name}
-          className="w-8 h-8 rounded-full object-cover"
-        />
-      ) : (
-        <div className="w-8 h-8 rounded-full bg-lob-teal/20 flex items-center justify-center">
-          <span className="text-xs font-bold text-lob-teal">{initials}</span>
-        </div>
-      )}
-      <span className="text-sm font-medium text-lob-dark">{player.name}</span>
-    </div>
+    <PlayerRow
+      player={{ name: player.name, avatarUrl: player.avatar_url }}
+      avatarSize="sm"
+      className="py-2"
+      name={player.name}
+      nameClassName="text-sm font-medium text-lob-dark truncate"
+    />
   )
 }
 
@@ -101,8 +88,8 @@ export function TeamPage({ team, matches, teamById, onClose, onTeamClick }: Team
         {/* Players */}
         <div>
           <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Players</p>
-          <PlayerRow player={team.player1} />
-          <PlayerRow player={team.player2} />
+          <TeamPlayerRow player={team.player1} />
+          <TeamPlayerRow player={team.player2} />
         </div>
 
         {/* Preferred play times */}

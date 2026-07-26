@@ -13,6 +13,7 @@ import {
 import { fmtEur } from '../../lib/format'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { IconButton } from '../../components/ui/IconButton'
+import { PlayerRow } from '../../components/ui/PlayerRow'
 
 const METHODS = [
   { value: 'tikkie', label: 'Tikkie' },
@@ -299,76 +300,73 @@ export default function Payments({ tournament, onNavigate }) {
 
           return (
             <div key={reg.id} className={`card transition-all border-l-4 ${borderColor}`}>
-              <div className="flex items-center gap-3">
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center font-bold flex-shrink-0 ${avatarColor}`}
-                >
-                  {player.name[0]}
+              <PlayerRow
+                player={player}
+                avatarSize="lg"
+                avatarTone={avatarColor}
+                name={player.name}
+                trailing={
+                  isAdmin && (
+                    <div className="flex items-center gap-1">
+                      {/* Primary action — varies by status, keeps the most common
+                          next step one tap away for the admin. */}
+                      {isConfirmed ? (
+                        <button
+                          onClick={() => handleMarkUnpaid(reg)}
+                          className="text-xs text-lob-muted border border-gray-200 px-3 py-1.5 rounded-xl font-semibold active:scale-95 transition-all"
+                        >
+                          Undo
+                        </button>
+                      ) : isSelfPaid || isTikkied ? (
+                        <button
+                          onClick={() => handleMarkPaid(reg, reg.paymentMethod || 'tikkie')}
+                          className="text-xs bg-green-500 text-white px-3 py-1.5 rounded-xl font-semibold active:scale-95 transition-all"
+                        >
+                          Confirm ✓
+                        </button>
+                      ) : (
+                        <PaymentMethodPicker onSelect={(method) => handleMarkPaid(reg, method)} />
+                      )}
+                      {/* Manual override — lets the admin set any status directly,
+                          e.g. correcting a misclick or manually marking Tikkied. */}
+                      <StatusOverrideMenu
+                        currentStatus={ps}
+                        onSelect={(s) => handleSetStatus(reg, s)}
+                      />
+                    </div>
+                  )
+                }
+              >
+                <div className="flex items-center gap-2 flex-wrap">
+                  {isTransferred ? (
+                    <span className="text-xs font-semibold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                      ↔ Transferred
+                    </span>
+                  ) : isConfirmed ? (
+                    <span className="text-xs font-semibold bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                      ✓ Confirmed{' '}
+                      {reg.paymentMethod
+                        ? `· ${METHODS.find((m) => m.value === reg.paymentMethod)?.label || reg.paymentMethod}`
+                        : ''}
+                    </span>
+                  ) : isSelfPaid ? (
+                    <span className="text-xs font-semibold bg-sky-100 text-sky-700 px-2 py-0.5 rounded-full">
+                      💬 Paid (self-declared)
+                    </span>
+                  ) : isTikkied ? (
+                    <span className="text-xs font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+                      🔗 Tikkied
+                    </span>
+                  ) : (
+                    <span className="text-xs font-semibold bg-lob-coral-light text-lob-coral px-2 py-0.5 rounded-full">
+                      ⚠ Unpaid
+                    </span>
+                  )}
+                  {costPerPlayer > 0 && !isTransferred && (
+                    <span className="text-xs text-lob-muted">{fmtEur(costPerPlayer)}</span>
+                  )}
                 </div>
-
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm truncate">{player.name}</p>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {isTransferred ? (
-                      <span className="text-xs font-semibold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
-                        ↔ Transferred
-                      </span>
-                    ) : isConfirmed ? (
-                      <span className="text-xs font-semibold bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-                        ✓ Confirmed{' '}
-                        {reg.paymentMethod
-                          ? `· ${METHODS.find((m) => m.value === reg.paymentMethod)?.label || reg.paymentMethod}`
-                          : ''}
-                      </span>
-                    ) : isSelfPaid ? (
-                      <span className="text-xs font-semibold bg-sky-100 text-sky-700 px-2 py-0.5 rounded-full">
-                        💬 Paid (self-declared)
-                      </span>
-                    ) : isTikkied ? (
-                      <span className="text-xs font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
-                        🔗 Tikkied
-                      </span>
-                    ) : (
-                      <span className="text-xs font-semibold bg-lob-coral-light text-lob-coral px-2 py-0.5 rounded-full">
-                        ⚠ Unpaid
-                      </span>
-                    )}
-                    {costPerPlayer > 0 && !isTransferred && (
-                      <span className="text-xs text-gray-400">{fmtEur(costPerPlayer)}</span>
-                    )}
-                  </div>
-                </div>
-
-                {isAdmin && (
-                  <div className="flex items-center gap-1">
-                    {/* Primary action — varies by status, keeps the most common
-                        next step one tap away for the admin. */}
-                    {isConfirmed ? (
-                      <button
-                        onClick={() => handleMarkUnpaid(reg)}
-                        className="text-xs text-gray-500 border border-gray-200 px-3 py-1.5 rounded-xl font-semibold active:scale-95 transition-all"
-                      >
-                        Undo
-                      </button>
-                    ) : isSelfPaid || isTikkied ? (
-                      <button
-                        onClick={() => handleMarkPaid(reg, reg.paymentMethod || 'tikkie')}
-                        className="text-xs bg-green-500 text-white px-3 py-1.5 rounded-xl font-semibold active:scale-95 transition-all"
-                      >
-                        Confirm ✓
-                      </button>
-                    ) : (
-                      <PaymentMethodPicker onSelect={(method) => handleMarkPaid(reg, method)} />
-                    )}
-                    {/* Manual override — lets the admin set any status directly,
-                        e.g. correcting a miscick or manually marking Tikkied. */}
-                    <StatusOverrideMenu
-                      currentStatus={ps}
-                      onSelect={(s) => handleSetStatus(reg, s)}
-                    />
-                  </div>
-                )}
-              </div>
+              </PlayerRow>
             </div>
           )
         })}

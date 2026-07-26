@@ -1,7 +1,7 @@
 import React from 'react'
 import { ChevronDown, ChevronUp, User, RotateCcw } from 'lucide-react'
 import { FlagImg } from '../../components/ui/CountryPicker'
-import Avatar from '../../components/ui/Avatar'
+import { PlayerRow } from '../../components/ui/PlayerRow'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { corpReview } from './reviewScenarios'
 import PlayerProfileDrawer from './PlayerProfileDrawer'
@@ -41,13 +41,16 @@ export default function PlayersList({
             className={`card transition-all${isSelf ? ' ring-2 ring-lob-teal/40' : ''}`}
           >
             <div className="w-full" onClick={() => setExpandedId(expanded ? null : p.id)}>
-              <div className="flex items-center gap-3">
-                <span className="text-xs font-bold text-gray-400 w-5 text-center flex-shrink-0">
-                  #{idx + 1}
-                </span>
-                <Avatar player={p} />
-                <div className="flex-1 text-left min-w-0">
-                  <p className="font-semibold text-gray-800 truncate flex items-center gap-1.5">
+              <PlayerRow
+                player={p}
+                avatarSize="lg"
+                prefix={
+                  <span className="text-xs font-bold text-lob-muted w-5 text-center flex-shrink-0">
+                    #{idx + 1}
+                  </span>
+                }
+                name={
+                  <>
                     {p.country && <FlagImg code={p.country} />}
                     {displayName(p)}
                     {p.isLeftHanded && (
@@ -60,30 +63,35 @@ export default function PlayersList({
                         You
                       </span>
                     )}
-                  </p>
-                </div>
-                <div className="flex-shrink-0 text-right flex flex-col items-end gap-1">
-                  <span
-                    className={`text-sm font-bold px-2.5 py-1 rounded-lg ${levelBadge(p.playtomicLevel)}`}
-                  >
-                    {(p.playtomicLevel || 0).toFixed(1)}
-                  </span>
-                  {isAdmin && (p.pinChanges ?? 0) > 0 && (
-                    <span
-                      className="text-[10px] font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded-md flex items-center gap-1"
-                      title={`PIN reset ${p.pinChanges} time${p.pinChanges === 1 ? '' : 's'}`}
-                    >
-                      <RotateCcw size={10} />
-                      {p.pinChanges}
-                    </span>
-                  )}
-                </div>
-                {expanded ? (
-                  <ChevronUp size={16} className="text-gray-400 flex-shrink-0" />
-                ) : (
-                  <ChevronDown size={16} className="text-gray-400 flex-shrink-0" />
-                )}
-              </div>
+                  </>
+                }
+                nameClassName="font-semibold text-lob-dark truncate flex items-center gap-1.5"
+                trailing={
+                  <>
+                    <div className="flex-shrink-0 text-right flex flex-col items-end gap-1">
+                      <span
+                        className={`text-sm font-bold px-2.5 py-1 rounded-lg ${levelBadge(p.playtomicLevel)}`}
+                      >
+                        {(p.playtomicLevel || 0).toFixed(1)}
+                      </span>
+                      {isAdmin && (p.pinChanges ?? 0) > 0 && (
+                        <span
+                          className="text-[10px] font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded-md flex items-center gap-1"
+                          title={`PIN reset ${p.pinChanges} time${p.pinChanges === 1 ? '' : 's'}`}
+                        >
+                          <RotateCcw size={10} />
+                          {p.pinChanges}
+                        </span>
+                      )}
+                    </div>
+                    {expanded ? (
+                      <ChevronUp size={16} className="text-lob-muted flex-shrink-0" />
+                    ) : (
+                      <ChevronDown size={16} className="text-lob-muted flex-shrink-0" />
+                    )}
+                  </>
+                }
+              />
 
               <div className="mt-2 pl-8">
                 <p className="text-[10px] font-bold text-lob-teal uppercase tracking-wider mb-0.5">

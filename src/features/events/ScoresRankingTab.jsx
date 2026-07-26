@@ -118,7 +118,7 @@ export default function ScoresRankingTab({ standings, matches, withheld = false 
                       </td>
                       <td className="py-2.5">
                         <div className="flex items-center gap-2">
-                          <Avatar player={s.player} size="sm" className="!w-7 !h-7 flex-shrink-0" />
+                          <Avatar player={s.player} size="xs" />
                           <span className="font-medium truncate max-w-[100px]">
                             {s.player.name}
                           </span>

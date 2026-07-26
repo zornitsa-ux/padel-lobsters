@@ -11,7 +11,7 @@ import { useApp } from '../context/useApp'
 import { usePlayers } from '../features/players/usePlayers'
 import { useTournaments } from '../features/events/useTournaments'
 import { useTransfers, useTransferActions } from '../features/events/useTransfers'
-import { letterColor } from '../lib/letterColors'
+import Avatar from './ui/Avatar'
 import { EmptyState } from './ui/EmptyState'
 
 // Landing page Melanie hits after tapping the WhatsApp link
@@ -239,27 +239,17 @@ export default function TransferAccept({ transferId, onNavigate }) {
         </div>
 
         <div className="flex items-center gap-3">
-          <div
-            className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
-            style={{ backgroundColor: letterColor(fromPlayer?.name || '?') }}
-          >
-            {(fromPlayer?.name || '?')[0]}
-          </div>
+          <Avatar player={{ name: fromPlayer?.name || '?' }} size="lg" />
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-sm">{dn(fromPlayer)}</p>
-            <p className="text-xs text-gray-400">From</p>
+            <p className="text-xs text-lob-muted">From</p>
           </div>
           <ArrowRightLeft size={16} className="text-gray-300" />
           <div className="flex-1 min-w-0 text-right">
             <p className="font-semibold text-sm">{dn(toPlayer)}</p>
-            <p className="text-xs text-gray-400">To you</p>
+            <p className="text-xs text-lob-muted">To you</p>
           </div>
-          <div
-            className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
-            style={{ backgroundColor: letterColor(toPlayer?.name || '?') }}
-          >
-            {(toPlayer?.name || '?')[0]}
-          </div>
+          <Avatar player={{ name: toPlayer?.name || '?' }} size="lg" />
         </div>
 
         <p className="text-xs text-gray-500 leading-relaxed">

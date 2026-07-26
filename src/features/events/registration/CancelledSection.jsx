@@ -1,5 +1,6 @@
 import React from 'react'
 import { UserX } from 'lucide-react'
+import { PlayerRow } from '../../../components/ui/PlayerRow'
 
 export default function CancelledSection({ isCompleted, cancelled, getPlayer, displayName }) {
   if (isCompleted || cancelled.length === 0) return null
@@ -16,12 +17,14 @@ export default function CancelledSection({ isCompleted, cancelled, getPlayer, di
           if (!p) return null
 
           return (
-            <div key={reg.id} className="card flex items-center gap-3">
-              <div className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 font-bold text-sm flex-shrink-0">
-                {p.name[0]}
-              </div>
-              <p className="text-sm text-gray-500 line-through">{displayName(p)}</p>
-            </div>
+            <PlayerRow
+              key={reg.id}
+              player={p}
+              avatarTone="bg-lob-teal-light text-lob-muted"
+              className="card"
+              name={displayName(p)}
+              nameClassName="text-sm text-lob-muted line-through"
+            />
           )
         })}
       </div>

@@ -4,7 +4,7 @@ import { useApp } from '../context/useApp'
 import { usePlayers } from '../features/players/usePlayers'
 import { useRegistrations } from '../features/events/useRegistrations'
 import { useTransferActions } from '../features/events/useTransfers'
-import { letterColor } from '../lib/letterColors'
+import { PlayerRow } from './ui/PlayerRow'
 
 // Picker modal Josephine sees when she taps "Transfer spot to another player".
 // Lists waitlist players first (so transferring to them is a one-tap promotion
@@ -115,31 +115,26 @@ export default function TransferSpotModal({ tournament, onClose, onTransferCreat
           {candidates.map((p) => {
             const isWait = waitlistedIds.includes(String(p.id))
             return (
-              <button
+              <PlayerRow
                 key={p.id}
+                player={p}
                 onClick={() => handlePick(p)}
                 disabled={busy}
-                className="w-full flex items-center gap-3 p-3 rounded-2xl bg-gray-50 hover:bg-lob-cream active:scale-[0.98] transition-all text-left disabled:opacity-40"
-              >
-                <div
-                  className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
-                  style={{ backgroundColor: letterColor(p.name) }}
-                >
-                  {(p.name || '?')[0]}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm text-gray-800 flex items-center gap-1.5">
+                className="w-full p-3 rounded-2xl bg-gray-50 hover:bg-lob-cream active:scale-[0.98] transition-all disabled:opacity-40"
+                name={
+                  <>
                     {displayName(p)}
                     {isWait && (
                       <span className="text-[10px] font-semibold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full">
                         On waitlist
                       </span>
                     )}
-                  </p>
-                  <p className="text-xs text-gray-500">Lv {(p.playtomicLevel || 0).toFixed(1)}</p>
-                </div>
-                <ArrowRightLeft size={14} className="text-lob-teal flex-shrink-0" />
-              </button>
+                  </>
+                }
+                nameClassName="font-semibold text-sm text-lob-dark flex items-center gap-1.5"
+                subtitle={`Lv ${(p.playtomicLevel || 0).toFixed(1)}`}
+                trailing={<ArrowRightLeft size={14} className="text-lob-teal flex-shrink-0" />}
+              />
             )
           })}
         </div>

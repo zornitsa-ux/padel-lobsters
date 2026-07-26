@@ -1,6 +1,6 @@
 import React from 'react'
 import { Clock, X } from 'lucide-react'
-import Avatar from '../../components/ui/Avatar'
+import { PlayerRow } from '../../components/ui/PlayerRow'
 import { IconButton } from '../../components/ui/IconButton'
 
 export default function PendingApprovalsList({ pendingPlayers, onApprove, onReject, onLink }) {
@@ -15,25 +15,29 @@ export default function PendingApprovalsList({ pendingPlayers, onApprove, onReje
       </div>
       {pendingPlayers.map((p) => (
         <div key={p.id} className="card border-l-4 border-orange-300 space-y-2">
-          <div className="flex items-center gap-3">
-            <Avatar player={p} />
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-gray-800 truncate">{p.name}</p>
-              <p className="text-xs text-gray-500">
+          <PlayerRow
+            player={p}
+            avatarSize="lg"
+            name={p.name}
+            nameClassName="font-semibold text-lob-dark truncate"
+            subtitle={
+              <>
                 Lv {(p.playtomicLevel || 0).toFixed(1)}
                 {p.email && ` · ${p.email}`}
-              </p>
-            </div>
-            <IconButton
-              onClick={() => onReject(p.id)}
-              aria-label={`Reject ${p.name}`}
-              variant="destructive"
-              size="sm"
-              className="flex-shrink-0"
-            >
-              <X size={13} />
-            </IconButton>
-          </div>
+              </>
+            }
+            trailing={
+              <IconButton
+                onClick={() => onReject(p.id)}
+                aria-label={`Reject ${p.name}`}
+                variant="destructive"
+                size="sm"
+                className="flex-shrink-0"
+              >
+                <X size={13} />
+              </IconButton>
+            }
+          />
           <div className="flex gap-2">
             <button
               onClick={() => onApprove(p)}

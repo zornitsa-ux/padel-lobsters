@@ -55,7 +55,7 @@ export default function AccountSection({
       ) : signedInPlayer ? (
         // ── Signed in as player ─────────────────────────────────
         <div className="rounded-xl border border-lob-teal/30 bg-lob-cream p-3 flex items-center gap-3">
-          <Avatar player={signedInPlayer} size="sm" className="!w-9 !h-9 flex-shrink-0" />
+          <Avatar player={signedInPlayer} size="md" />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-gray-800 truncate">
               Signed in as {signedInPlayer.name} <span className="text-lob-teal text-xs">✓</span>

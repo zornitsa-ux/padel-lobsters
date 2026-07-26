@@ -1,7 +1,8 @@
 import React from 'react'
 import { ArrowRightLeft, CheckCircle, Clock, X } from 'lucide-react'
-import { letterColor } from '../../../lib/letterColors'
 import PaymentStatusBadge from './PaymentStatusBadge'
+import Avatar from '../../../components/ui/Avatar'
+import { PlayerRow } from '../../../components/ui/PlayerRow'
 import { IconButton } from '../../../components/ui/IconButton'
 
 export default function RegisteredSection({
@@ -42,32 +43,29 @@ export default function RegisteredSection({
 
             return (
               <div key={reg.id} className="card space-y-2">
-                <div className="flex items-center gap-3">
-                  <span className="text-xs text-gray-400 w-5 text-center font-bold">
-                    #{idx + 1}
-                  </span>
-                  <div
-                    className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
-                    style={{ backgroundColor: letterColor(p.name) }}
-                  >
-                    {p.name[0]}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm truncate">{displayName(p)}</p>
-                    <p className="text-xs text-gray-400">
-                      Level {(p.playtomicLevel || 0).toFixed(1)}
-                    </p>
-                  </div>
-                  <PaymentStatusBadge paymentStatus={reg.paymentStatus} />
-                  <IconButton
-                    onClick={() => onCancelRegistration(reg)}
-                    aria-label="Cancel registration"
-                    variant="destructive"
-                    size="sm"
-                  >
-                    <X size={14} />
-                  </IconButton>
-                </div>
+                <PlayerRow
+                  player={p}
+                  prefix={
+                    <span className="text-xs text-lob-muted w-5 text-center font-bold">
+                      #{idx + 1}
+                    </span>
+                  }
+                  name={displayName(p)}
+                  subtitle={`Level ${(p.playtomicLevel || 0).toFixed(1)}`}
+                  trailing={
+                    <>
+                      <PaymentStatusBadge paymentStatus={reg.paymentStatus} />
+                      <IconButton
+                        onClick={() => onCancelRegistration(reg)}
+                        aria-label="Cancel registration"
+                        variant="destructive"
+                        size="sm"
+                      >
+                        <X size={14} />
+                      </IconButton>
+                    </>
+                  }
+                />
 
                 {(() => {
                   const myPending = pendingByFromPlayerId.get(String(reg.playerId))
@@ -134,21 +132,8 @@ export default function RegisteredSection({
                     key={reg.id}
                     className="bg-white border border-gray-200 rounded-xl px-2 py-1.5 flex items-center gap-2 min-w-0"
                   >
-                    {p.avatarUrl ? (
-                      <img
-                        src={p.avatarUrl}
-                        alt={p.name}
-                        className="w-8 h-8 rounded-full object-cover flex-shrink-0"
-                      />
-                    ) : (
-                      <div
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0"
-                        style={{ backgroundColor: letterColor(p.name) }}
-                      >
-                        {p.name[0]}
-                      </div>
-                    )}
-                    <span className="text-xs font-semibold text-gray-800 truncate flex-1">
+                    <Avatar player={p} size="sm" />
+                    <span className="text-xs font-semibold text-lob-dark truncate flex-1">
                       {displayName(p)}
                     </span>
                   </div>

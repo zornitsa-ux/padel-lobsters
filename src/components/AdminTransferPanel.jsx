@@ -3,7 +3,7 @@ import { X, ArrowRightLeft, AlertTriangle, Clock } from 'lucide-react'
 import { useApp } from '../context/useApp'
 import { usePlayers } from '../features/players/usePlayers'
 import { useTransfers, useTransferActions } from '../features/events/useTransfers'
-import { letterColor } from '../lib/letterColors'
+import Avatar from './ui/Avatar'
 
 // Admin-only modal that lists every pending transfer for a tournament and
 // surfaces the two admin actions:
@@ -118,21 +118,11 @@ export default function AdminTransferPanel({ tournament, onClose }) {
               className="border border-amber-200 bg-amber-50 rounded-xl p-3 space-y-3"
             >
               <div className="flex items-center gap-3">
-                <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0"
-                  style={{ backgroundColor: letterColor(fromP?.name || '?') }}
-                >
-                  {(fromP?.name || '?')[0]}
-                </div>
-                <div className="text-sm font-semibold text-gray-700">{fromP?.name || '—'}</div>
-                <ArrowRightLeft size={14} className="text-gray-400" />
-                <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0"
-                  style={{ backgroundColor: letterColor(toP?.name || '?') }}
-                >
-                  {(toP?.name || '?')[0]}
-                </div>
-                <div className="flex-1 text-sm font-semibold text-gray-700 truncate">
+                <Avatar player={{ name: fromP?.name || '?' }} size="sm" />
+                <div className="text-sm font-semibold text-lob-dark">{fromP?.name || '—'}</div>
+                <ArrowRightLeft size={14} className="text-lob-muted" />
+                <Avatar player={{ name: toP?.name || '?' }} size="sm" />
+                <div className="flex-1 text-sm font-semibold text-lob-dark truncate">
                   {toP?.name || '—'}
                 </div>
               </div>
