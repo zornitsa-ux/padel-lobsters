@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useApp } from '../../context/useApp'
 import { usePlayers } from '../players/usePlayers'
 import { useMatches } from './useMatches'
@@ -13,9 +13,19 @@ import { groupOscarResultsByCategory } from '../oscars/oscarResults'
 import { buildRounds } from './buildRounds'
 import { resultsWithheld } from './resultsPhase'
 import ScoresRankingTab from './ScoresRankingTab'
+import type { TournamentStandingRow } from './ScoresRankingTab'
 import ScoresMatchesTab from './ScoresMatchesTab'
+import type { NormalisedTournament } from './tournamentQueries'
+import type { EventNavigate } from './eventHelpers'
 
-export default function Scores({ tournament, onNavigate }) {
+type ScoresTabId = 'ranking' | 'matches' | 'games'
+
+interface ScoresProps {
+  tournament: NormalisedTournament | null | undefined
+  onNavigate: EventNavigate
+}
+
+export default function Scores({ tournament, onNavigate }: ScoresProps) {
   const { session } = useApp()
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
   const { data: players = [] } = usePlayers()
@@ -25,7 +35,7 @@ export default function Scores({ tournament, onNavigate }) {
   // Tab switcher: ranking (podium + standings), matches (round-by-round
   // cards, same layout as History), or lobster-games (per-category winners
   // from a shared Lobster Oscars session).
-  const [tab, setTab] = useState('ranking')
+  const [tab, setTab] = useState<ScoresTabId>('ranking')
   const [activeRoundIdx, setActiveRoundIdx] = useState(0)
 
   // Keep displayed scores current while the event is still running.
@@ -43,12 +53,15 @@ export default function Scores({ tournament, onNavigate }) {
   const registeredPlayers = players.filter((p) => regs.some((r) => r.playerId === p.id))
 
   // Standings via the shared helper — same source the Lobster Review reads.
-  const standings = useMemo(() => {
+  const standings = useMemo((): TournamentStandingRow[] => {
     if (!tournament) return []
     const seededIds = registeredPlayers.map((p) => p.id)
     const raw = computeTournamentStandings(tournament.id, matches, seededIds)
-    const byId = Object.fromEntries(players.map((p) => [String(p.id), p]))
-    return raw.map((s) => ({ ...s, player: byId[String(s.id)] })).filter((s) => s.player)
+    const byId = new Map(players.map((p) => [String(p.id), p]))
+    return raw.flatMap((s) => {
+      const player = byId.get(String(s.id))
+      return player ? [{ ...s, player }] : []
+    })
   }, [matches, registeredPlayers, tournament, players])
 
   // Group matches by round, then sort within each round by court number
@@ -89,7 +102,7 @@ export default function Scores({ tournament, onNavigate }) {
           ...(hasGameResults ? [{ id: 'games', label: '🦞 Lobster Games' }] : []),
         ]}
         value={tab}
-        onChange={setTab}
+        onChange={(id) => setTab(id as ScoresTabId)}
         className="overflow-x-auto"
       />
 

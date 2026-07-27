@@ -1,8 +1,21 @@
-import React from 'react'
 import { UserX } from 'lucide-react'
 import { PlayerRow } from '../../../components/ui/PlayerRow'
+import type { NormalisedRegistration } from '../registrationQueries'
+import type { DisplayName, GetPlayer } from './utils'
 
-export default function CancelledSection({ isCompleted, cancelled, getPlayer, displayName }) {
+interface CancelledSectionProps {
+  isCompleted: boolean
+  cancelled: NormalisedRegistration[]
+  getPlayer: GetPlayer
+  displayName: DisplayName
+}
+
+export default function CancelledSection({
+  isCompleted,
+  cancelled,
+  getPlayer,
+  displayName,
+}: CancelledSectionProps) {
   if (isCompleted || cancelled.length === 0) return null
 
   return (

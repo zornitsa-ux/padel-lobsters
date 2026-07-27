@@ -1,7 +1,18 @@
-import React from 'react'
 import { Clock, X } from 'lucide-react'
 import { IconButton } from '../../../components/ui/IconButton'
 import { PlayerRow } from '../../../components/ui/PlayerRow'
+import type { NormalisedRegistration } from '../registrationQueries'
+import type { DisplayName, GetPlayer } from './utils'
+
+interface WaitlistSectionProps {
+  isCompleted: boolean
+  waitlisted: NormalisedRegistration[]
+  getPlayer: GetPlayer
+  displayName: DisplayName
+  isAdmin: boolean
+  onMoveToRegistered: (reg: NormalisedRegistration) => void
+  onCancel: (reg: NormalisedRegistration) => void
+}
 
 export default function WaitlistSection({
   isCompleted,
@@ -11,7 +22,7 @@ export default function WaitlistSection({
   isAdmin,
   onMoveToRegistered,
   onCancel,
-}) {
+}: WaitlistSectionProps) {
   if (isCompleted || waitlisted.length === 0) return null
 
   return (

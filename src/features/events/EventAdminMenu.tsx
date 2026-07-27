@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
+import type { LucideIcon } from 'lucide-react'
 import {
   MoreVertical,
   Gift,
@@ -14,6 +15,25 @@ import { IconButton } from '../../components/ui/IconButton'
 // non-admins. Each action is optional — pass only the handlers the surface
 // needs, and the matching item appears. Dependency-free dropdown: a fixed
 // transparent backdrop catches outside clicks.
+interface EventAdminMenuProps {
+  isAdmin: boolean
+  onRaffle?: () => void
+  onEligibility?: () => void
+  onPayments?: () => void
+  onScores?: () => void
+  onEdit?: () => void
+  onDelete?: () => void
+  align?: 'left' | 'right'
+}
+
+interface MenuItem {
+  key: string
+  label: string
+  icon: LucideIcon
+  onClick: () => void
+  danger?: boolean
+}
+
 export default function EventAdminMenu({
   isAdmin,
   onRaffle = undefined,
@@ -23,7 +43,7 @@ export default function EventAdminMenu({
   onEdit = undefined,
   onDelete = undefined,
   align = 'right',
-}) {
+}: EventAdminMenuProps) {
   const [open, setOpen] = useState(false)
   if (!isAdmin) return null
 
@@ -45,11 +65,11 @@ export default function EventAdminMenu({
       onClick: onDelete,
       danger: true,
     },
-  ].filter(Boolean)
+  ].filter((it): it is MenuItem => Boolean(it))
 
   if (items.length === 0) return null
 
-  const run = (fn) => {
+  const run = (fn: () => void) => {
     setOpen(false)
     fn()
   }

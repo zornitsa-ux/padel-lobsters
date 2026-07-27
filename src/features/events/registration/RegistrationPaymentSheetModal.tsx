@@ -1,7 +1,21 @@
-import React from 'react'
 import { ExternalLink, Send, X } from 'lucide-react'
 import AddToCalendarButton from '../../../components/ui/AddToCalendarButton'
 import { fmtEur } from '../../../lib/format'
+import type { NormalisedTournament } from '../tournamentQueries'
+import type { PaymentSheet } from './utils'
+
+interface RegistrationPaymentSheetModalProps {
+  isOpen: boolean
+  tournament: NormalisedTournament
+  paymentSheet: PaymentSheet | null
+  costPerPlayer: number
+  isAdminAll: boolean
+  tikkieClicked: boolean
+  declaring: boolean
+  onClose: () => void
+  onTikkieClick: (regId: string, currentStatus: string | undefined) => void
+  onSelfDeclare: () => void
+}
 
 export default function RegistrationPaymentSheetModal({
   isOpen,
@@ -14,7 +28,7 @@ export default function RegistrationPaymentSheetModal({
   onClose,
   onTikkieClick,
   onSelfDeclare,
-}) {
+}: RegistrationPaymentSheetModalProps) {
   if (!isOpen || !paymentSheet) return null
 
   return (

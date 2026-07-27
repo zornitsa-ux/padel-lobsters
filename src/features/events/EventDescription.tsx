@@ -1,5 +1,12 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Pencil, Check } from 'lucide-react'
+import type { NormalisedTournament } from './tournamentQueries'
+
+interface EventDescriptionProps {
+  tournament: NormalisedTournament
+  isAdmin: boolean
+  onSave: (notes: string) => void | Promise<unknown>
+}
 
 // ─── Event description block ──────────────────────────────────────────────
 // Read-only card for players. For admins, clicking the pencil swaps the
@@ -7,7 +14,7 @@ import { Pencil, Check } from 'lucide-react'
 // opening the full event-edit form. An empty description is still shown
 // to admins (as a "+ Add description" prompt) so they can start one on
 // the spot without leaving the page.
-export default function EventDescription({ tournament, isAdmin, onSave }) {
+export default function EventDescription({ tournament, isAdmin, onSave }: EventDescriptionProps) {
   const original = tournament.notes || ''
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(original)

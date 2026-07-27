@@ -3,10 +3,17 @@ import { useRegistrations } from './useRegistrations'
 import { Pencil, Trash2, Calendar, Users, MapPin, Clock, Building2 } from 'lucide-react'
 import DateTile from '../../components/ui/DateTile'
 import { fmtEur } from '../../lib/format'
-import { formatDate, pricePerPlayer } from './eventHelpers'
+import { formatDate, pricePerPlayer, type EventNavigate } from './eventHelpers'
 import { IconButton } from '../../components/ui/IconButton'
+import type { NormalisedTournament } from './tournamentQueries'
 
-function InfoChip({ icon, label, warn }) {
+interface InfoChipProps {
+  icon: React.ReactNode
+  label: React.ReactNode
+  warn?: boolean
+}
+
+function InfoChip({ icon, label, warn }: InfoChipProps) {
   return (
     <div
       className={`flex items-center gap-1 text-xs rounded-lg px-2 py-1.5 ${warn ? 'bg-orange-50 text-orange-600' : 'bg-gray-50 text-gray-600'}`}
@@ -17,7 +24,21 @@ function InfoChip({ icon, label, warn }) {
   )
 }
 
-export default function PastEventCard({ t, isAdmin, onNavigate, onEdit, onDelete }) {
+interface PastEventCardProps {
+  t: NormalisedTournament
+  isAdmin: boolean
+  onNavigate: EventNavigate
+  onEdit: (tournament: NormalisedTournament) => void
+  onDelete: (id: string) => void
+}
+
+export default function PastEventCard({
+  t,
+  isAdmin,
+  onNavigate,
+  onEdit,
+  onDelete,
+}: PastEventCardProps) {
   const { data: regsData = [] } = useRegistrations(t?.id)
   const bookedCount = (t.courts || []).filter((c) => c.booked).length
   const totalCourts = (t.courts || []).length

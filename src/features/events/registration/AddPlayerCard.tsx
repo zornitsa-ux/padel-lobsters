@@ -1,5 +1,24 @@
-import React from 'react'
 import { Plus, Search, X } from 'lucide-react'
+import type { Player } from '../../../lib/normalise'
+import type { DisplayName } from './utils'
+
+interface AddPlayerCardProps {
+  isCompleted: boolean
+  showAdd: boolean
+  onOpen: () => void
+  onClose: () => void
+  search: string
+  onSearchChange: (value: string) => void
+  availablePlayers: Player[]
+  /** Selected player id, or '' when none is picked. */
+  selectedPlayer: string
+  onSelectPlayer: (id: string) => void
+  onAdd: () => void
+  saving: boolean
+  registeredCount: number
+  maxPlayers: number
+  displayName: DisplayName
+}
 
 export default function AddPlayerCard({
   isCompleted,
@@ -16,7 +35,7 @@ export default function AddPlayerCard({
   registeredCount,
   maxPlayers,
   displayName,
-}) {
+}: AddPlayerCardProps) {
   if (isCompleted) return null
 
   if (!showAdd) {

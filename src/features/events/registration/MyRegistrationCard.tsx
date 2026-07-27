@@ -1,6 +1,35 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { ArrowRightLeft, CheckCircle, Clock, ExternalLink, Send } from 'lucide-react'
 import { fmtEur } from '../../../lib/format'
+import type { NormalisedTournament } from '../tournamentQueries'
+import type { NormalisedRegistration } from '../registrationQueries'
+import type { NormalisedTransfer } from '../transferQueries'
+import type { GetPlayer, TransferShareTarget } from './utils'
+
+interface MyRegistrationCardProps {
+  myReg: NormalisedRegistration | undefined
+  myWaitlistReg: NormalisedRegistration | undefined
+  /** 1-based position in the waitlist, or 0/undefined when unknown. */
+  waitlistPosition?: number
+  isEventFull: boolean
+  tournament: NormalisedTournament
+  isAdminAll: boolean
+  hasTikkie: boolean
+  costPerPlayer: number
+  pendingFromMe: NormalisedTransfer | undefined
+  incomingForMe: NormalisedTransfer[]
+  /** Transfer id currently being acted on, if any. */
+  respondingTo: string | null
+  onRegister: () => void
+  onMarkTikkied: (regId: string, currentStatus: string | undefined) => void
+  onSelfDeclare: (regId: string) => Promise<void>
+  onStartTransfer: (reg: NormalisedRegistration) => void
+  onCancelMyOffer: () => void
+  onOpenShareModal: (target: TransferShareTarget) => void
+  onIncomingResponse: (xfer: NormalisedTransfer, accept: boolean) => void
+  getPlayer: GetPlayer
+  saving: boolean
+}
 
 export default function MyRegistrationCard({
   myReg,
@@ -23,7 +52,7 @@ export default function MyRegistrationCard({
   onIncomingResponse,
   getPlayer,
   saving,
-}) {
+}: MyRegistrationCardProps) {
   const [tikkieClicked, setTikkieClicked] = useState(false)
   const [declaring, setDeclaring] = useState(false)
 
@@ -36,6 +65,7 @@ export default function MyRegistrationCard({
   const needsPayment = isRegistered && (!ps || ps === 'unpaid') && hasTikkie
 
   const handleSelfDeclare = async () => {
+    if (!myReg) return
     setDeclaring(true)
     try {
       await onSelfDeclare(myReg.id)
@@ -170,7 +200,7 @@ export default function MyRegistrationCard({
   )
 
   if (needsPayment) {
-    const tikkieLinks = isAdminAll
+    const tikkieLinks: Array<{ label: string | null; url: string }> = isAdminAll
       ? tournament.tikkieLink
         ? [{ label: null, url: tournament.tikkieLink }]
         : []

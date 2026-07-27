@@ -1,6 +1,10 @@
-import React from 'react'
+interface PaymentStatusBadgeProps {
+  paymentStatus?: string | null
+}
 
-export default function PaymentStatusBadge({ paymentStatus }) {
+// Legacy `badge-unpaid` class retained deliberately — migrating this to <Badge>
+// is design-system phase 3.
+export default function PaymentStatusBadge({ paymentStatus }: PaymentStatusBadgeProps) {
   if (paymentStatus === 'paid') {
     return (
       <span className="text-xs font-semibold bg-green-100 text-green-700 px-2 py-0.5 rounded-full">

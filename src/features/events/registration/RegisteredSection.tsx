@@ -1,9 +1,28 @@
-import React from 'react'
 import { ArrowRightLeft, CheckCircle, Clock, X } from 'lucide-react'
 import PaymentStatusBadge from './PaymentStatusBadge'
 import Avatar from '../../../components/ui/Avatar'
 import { PlayerRow } from '../../../components/ui/PlayerRow'
 import { IconButton } from '../../../components/ui/IconButton'
+import type { NormalisedRegistration } from '../registrationQueries'
+import type { NormalisedTransfer } from '../transferQueries'
+import type { DisplayName, GetPlayer, TransferShareTarget } from './utils'
+
+interface RegisteredSectionProps {
+  isCompleted: boolean
+  getPlayer: GetPlayer
+  registered: NormalisedRegistration[]
+  maxPlayers: number
+  isAdmin: boolean
+  displayName: DisplayName
+  onCancelRegistration: (reg: NormalisedRegistration) => void
+  /** Pending outgoing transfer per registration owner, keyed by String(playerId). */
+  pendingByFromPlayerId: Map<string, NormalisedTransfer>
+  /** Transfer id currently being acted on, if any. */
+  respondingTo: string | null
+  onOpenShareModal: (target: TransferShareTarget) => void
+  onCancelMyOffer: () => void
+  onStartTransfer: (reg: NormalisedRegistration) => void
+}
 
 export default function RegisteredSection({
   isCompleted,
@@ -18,7 +37,7 @@ export default function RegisteredSection({
   onOpenShareModal,
   onCancelMyOffer,
   onStartTransfer,
-}) {
+}: RegisteredSectionProps) {
   if (isCompleted) return null
 
   return (
@@ -38,8 +57,6 @@ export default function RegisteredSection({
             if (!p) return null
 
             if (!isAdmin) return null
-
-            const canTransfer = true
 
             return (
               <div key={reg.id} className="card space-y-2">
@@ -72,7 +89,6 @@ export default function RegisteredSection({
                   if (myPending) {
                     const recipient = getPlayer(myPending.toPlayerId)
                     const recipientFirst = (recipient?.name || '').split(/\s+/)[0] || 'them'
-                    const isOwner = isAdmin
                     return (
                       <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 space-y-2">
                         <div className="flex items-center gap-2 text-xs text-amber-800">
@@ -82,7 +98,7 @@ export default function RegisteredSection({
                             acceptance.
                           </span>
                         </div>
-                        {isOwner && recipient && (
+                        {recipient && (
                           <div className="flex gap-2">
                             <button
                               onClick={() =>
@@ -105,7 +121,7 @@ export default function RegisteredSection({
                     )
                   }
 
-                  if (canTransfer && reg.paymentStatus !== 'transferred') {
+                  if (reg.paymentStatus !== 'transferred') {
                     return (
                       <button
                         onClick={() => onStartTransfer(reg)}

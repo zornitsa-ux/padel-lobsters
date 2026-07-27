@@ -1,11 +1,29 @@
-import React from 'react'
 import { AlertCircle } from 'lucide-react'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
+import type { Player } from '../../lib/normalise'
+import type { NormalisedMatch } from './matchQueries'
 
-export default function ScoresMatchesTab({ rounds, activeRoundIdx, onSelectRound, players }) {
+export interface MatchRound {
+  round: number
+  matches: NormalisedMatch[]
+}
+
+interface ScoresMatchesTabProps {
+  rounds: MatchRound[]
+  activeRoundIdx: number
+  onSelectRound: (index: number) => void
+  players: Player[]
+}
+
+export default function ScoresMatchesTab({
+  rounds,
+  activeRoundIdx,
+  onSelectRound,
+  players,
+}: ScoresMatchesTabProps) {
   const nameMap = new Map(players.map((p) => [p.id, (p.name || '').split(' ')[0]]))
-  const nameFor = (id) => nameMap.get(id) ?? '?'
+  const nameFor = (id: string): string => nameMap.get(id) ?? '?'
 
   return (
     <>
@@ -31,8 +49,8 @@ export default function ScoresMatchesTab({ rounds, activeRoundIdx, onSelectRound
               const scored = m.completed && s1 != null && s2 != null
               const t1won = scored && s1 > s2
               const t2won = scored && s2 > s1
-              const t1Names = (m.team1Ids || []).map(nameFor)
-              const t2Names = (m.team2Ids || []).map(nameFor)
+              const t1Names: string[] = (m.team1Ids || []).map(nameFor)
+              const t2Names: string[] = (m.team2Ids || []).map(nameFor)
               return (
                 <div key={m.id} className="bg-gray-50 rounded-xl p-3">
                   <div className="flex items-center justify-between mb-1.5">

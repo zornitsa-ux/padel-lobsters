@@ -7,6 +7,7 @@ afterEach(cleanup)
 
 const standings = [
   {
+    id: 'p1',
     player: { id: 'p1', name: 'Ada Lovelace' },
     played: 4,
     won: 3,

@@ -15,16 +15,21 @@ import PlayersList from './PlayersList'
 import PendingApprovalsList from './PendingApprovalsList'
 import RegisteredSection from '../events/registration/RegisteredSection'
 import { LEVEL_COLORS } from './playerConstants'
+import { normalisePlayers } from '../../lib/normalise'
 
-const stalePlayer = {
-  id: 'p1',
-  name: 'Ada Lovelace',
-  playtomicLevel: 3.5,
-  // Legacy columns still present on the row but no longer read.
-  adjustment: 1,
-  adjustedLevel: 4.5,
-  status: 'active',
-}
+// Built through the real normaliser so the fixture is a complete Player rather
+// than a hand-written subset.
+const [stalePlayer] = normalisePlayers([
+  {
+    id: 'p1',
+    name: 'Ada Lovelace',
+    playtomic_level: 3.5,
+    // Legacy columns still present on the row but no longer read.
+    adjustment: 1,
+    adjustedLevel: 4.5,
+    status: 'active',
+  },
+])
 
 const levelBadge = (level: number) => LEVEL_COLORS[Math.min(7, Math.max(0, Math.floor(level || 0)))]
 

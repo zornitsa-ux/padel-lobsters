@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   groupMatchesByRound,
   getSortedRoundNumbers,
@@ -6,8 +6,26 @@ import {
   computeRankings,
   isMatchVisibleForPlayer,
 } from './utils'
+import type { MatchesByRound } from './utils'
 import ScoreEntry from '../ScoreEntry'
 import { TabSwitcher } from '../../../components/ui/TabSwitcher'
+import type { Player } from '../../../lib/normalise'
+import type { NormalisedTournament } from '../tournamentQueries'
+import type { NormalisedRegistration } from '../registrationQueries'
+import type { MatchScoreUpdate, NormalisedMatch } from '../matchQueries'
+
+type CompletedTabId = 'ranking' | 'matches'
+
+interface ScoresAndRankingSectionProps {
+  tournament: NormalisedTournament
+  players: Player[]
+  isAdmin: boolean
+  claimedId: string | null | undefined
+  matches: NormalisedMatch[]
+  registrations: NormalisedRegistration[]
+  updateMatch: (id: string, data: MatchScoreUpdate) => void | Promise<unknown>
+  updateTournament: (id: string, data: Record<string, unknown>) => Promise<unknown>
+}
 
 export default function ScoresAndRankingSection({
   tournament,
@@ -18,8 +36,8 @@ export default function ScoresAndRankingSection({
   registrations: regs,
   updateMatch,
   updateTournament,
-}) {
-  const [completedTab, setCompletedTab] = useState('ranking')
+}: ScoresAndRankingSectionProps) {
+  const [completedTab, setCompletedTab] = useState<CompletedTabId>('ranking')
   const [marking, setMarking] = useState(false)
   const [tournamentError, setTournamentError] = useState('')
   const byRound = useMemo(() => groupMatchesByRound(savedMatches), [savedMatches])
@@ -43,7 +61,7 @@ export default function ScoresAndRankingSection({
   const claimedStr = claimedId ? String(claimedId) : null
   const visibleMatchesByRound = useMemo(() => {
     if (!isPlayerView) return byRound
-    const visibleByRound = {}
+    const visibleByRound: MatchesByRound = {}
     for (const round of roundNums) {
       const roundMatches = byRound[round] || []
       visibleByRound[round] = roundMatches.filter((m) => isMatchVisibleForPlayer(m, claimedStr))
@@ -62,7 +80,9 @@ export default function ScoresAndRankingSection({
         completedAt: new Date().toISOString(),
       })
     } catch (err) {
-      setTournamentError(err?.message || 'Could not mark tournament as complete.')
+      setTournamentError(
+        (err instanceof Error && err.message) || 'Could not mark tournament as complete.',
+      )
     } finally {
       setMarking(false)
     }
@@ -95,7 +115,7 @@ export default function ScoresAndRankingSection({
             { id: 'matches', label: '📋 Matches' },
           ]}
           value={completedTab}
-          onChange={setCompletedTab}
+          onChange={(id) => setCompletedTab(id as CompletedTabId)}
         />
       )}
 
@@ -228,10 +248,10 @@ export default function ScoresAndRankingSection({
                   )}
                   {visibleMatches.map((match) => {
                     const t1 = (match.team1Ids || [])
-                      .map((id) => getPlayerFirstName(players, id))
+                      .map((id: string) => getPlayerFirstName(players, id))
                       .join(' & ')
                     const t2 = (match.team2Ids || [])
-                      .map((id) => getPlayerFirstName(players, id))
+                      .map((id: string) => getPlayerFirstName(players, id))
                       .join(' & ')
                     return (
                       <div

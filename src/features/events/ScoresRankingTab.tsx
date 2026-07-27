@@ -2,16 +2,42 @@ import React from 'react'
 import { Trophy } from 'lucide-react'
 import Avatar from '../../components/ui/Avatar'
 import { EmptyState } from '../../components/ui/EmptyState'
+import type { PlayerStanding } from '../../lib/standings'
+import type { NormalisedMatch } from './matchQueries'
 
-const medalColor = (i) => {
+// The subset of a Player this table renders. `Player` satisfies it.
+export interface StandingPlayer {
+  id: string
+  name: string
+  avatarUrl?: string | null
+}
+
+// A computeTournamentStandings row joined back to its player.
+export interface TournamentStandingRow extends PlayerStanding {
+  player: StandingPlayer
+}
+
+interface ScoresRankingTabProps {
+  standings: TournamentStandingRow[]
+  /** Completed matches only — used to decide whether ranks mean anything yet. */
+  matches: NormalisedMatch[]
+  /** D-029: hide the final ranking until the admin reveals it. */
+  withheld?: boolean
+}
+
+const medalColor = (i: number): string => {
   if (i === 0) return 'text-yellow-500'
   if (i === 1) return 'text-gray-400'
   if (i === 2) return ''
   return 'text-gray-300'
 }
-const medalStyle = (i) => (i === 2 ? { color: '#CD7F32' } : {})
+const medalStyle = (i: number): React.CSSProperties => (i === 2 ? { color: '#CD7F32' } : {})
 
-export default function ScoresRankingTab({ standings, matches, withheld = false }) {
+export default function ScoresRankingTab({
+  standings,
+  matches,
+  withheld = false,
+}: ScoresRankingTabProps) {
   if (withheld) {
     return (
       <EmptyState
