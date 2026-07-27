@@ -1,9 +1,29 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { act } from '@testing-library/react'
-import { renderHookWithClient, makeTestQueryClient } from '../../test/renderWithClient'
+import { act, renderHook } from '@testing-library/react'
+import { QueryClientProvider } from '@tanstack/react-query'
+import type { ReactNode } from 'react'
+import { makeTestQueryClient } from '../../test/renderWithClient'
 import { registrationKeys } from './registrationKeys'
 import { useRegistrationActions } from './useRegistrations'
+import { ToastContext } from '../../lib/toastBus'
+
+// useRegistrationActions calls useToast(), which throws outside a
+// ToastContext.Provider. renderHookWithClient only wires up
+// QueryClientProvider, so tests that exercise the error path need this
+// wrapper too — still built on makeTestQueryClient(), never a hand-rolled one.
+function renderHookWithClientAndToast<TResult>(
+  hook: () => TResult,
+  client = makeTestQueryClient(),
+) {
+  const showToast = vi.fn()
+  const Wrapper = ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={client}>
+      <ToastContext.Provider value={{ showToast }}>{children}</ToastContext.Provider>
+    </QueryClientProvider>
+  )
+  return { client, showToast, ...renderHook(hook, { wrapper: Wrapper }) }
+}
 
 vi.mock('./registrationQueries', () => ({
   fetchRegistrations: vi.fn(),
@@ -39,7 +59,7 @@ describe('useRegistrationActions — registerPlayer', () => {
     client.setQueryData(registrationKeys.list('tid-1'), cachedRegs)
     vi.spyOn(client, 'invalidateQueries')
 
-    const { result } = renderHookWithClient(() => useRegistrationActions(), client)
+    const { result } = renderHookWithClientAndToast(() => useRegistrationActions(), client)
 
     let res: unknown
     await act(async () => {
@@ -60,7 +80,7 @@ describe('useRegistrationActions — registerPlayer', () => {
     const client = makeTestQueryClient()
     vi.spyOn(client, 'invalidateQueries')
 
-    const { result } = renderHookWithClient(() => useRegistrationActions(), client)
+    const { result } = renderHookWithClientAndToast(() => useRegistrationActions(), client)
 
     await act(async () => {
       await result.current.registerPlayer('tid-1', 'player-5', 16)
@@ -80,7 +100,7 @@ describe('useRegistrationActions — registerPlayer', () => {
     const client = makeTestQueryClient()
     vi.spyOn(client, 'invalidateQueries')
 
-    const { result } = renderHookWithClient(() => useRegistrationActions(), client)
+    const { result } = renderHookWithClientAndToast(() => useRegistrationActions(), client)
 
     await act(async () => {
       await result.current.registerPlayer('tid-1', 'player-5', 16)
@@ -97,7 +117,7 @@ describe('useRegistrationActions — registerPlayer', () => {
 
     const client = makeTestQueryClient()
     // no cache seed — cold cache
-    const { result } = renderHookWithClient(() => useRegistrationActions(), client)
+    const { result } = renderHookWithClientAndToast(() => useRegistrationActions(), client)
 
     await act(async () => {
       await result.current.registerPlayer('tid-empty', 'player-9', 8)
@@ -122,7 +142,7 @@ describe('useRegistrationActions — cancelRegistration', () => {
     client.setQueryData(registrationKeys.list('tid-1'), cachedRegs)
     vi.spyOn(client, 'invalidateQueries')
 
-    const { result } = renderHookWithClient(() => useRegistrationActions(), client)
+    const { result } = renderHookWithClientAndToast(() => useRegistrationActions(), client)
 
     await act(async () => {
       await result.current.cancelRegistration('r1', 'tid-1')
@@ -142,7 +162,7 @@ describe('useRegistrationActions — cancelRegistration', () => {
 
     const client = makeTestQueryClient()
     // cold cache — no seed
-    const { result } = renderHookWithClient(() => useRegistrationActions(), client)
+    const { result } = renderHookWithClientAndToast(() => useRegistrationActions(), client)
 
     await act(async () => {
       await result.current.cancelRegistration('r-any', 'tid-cold')
@@ -161,7 +181,7 @@ describe('useRegistrationActions — updateRegistration', () => {
     const client = makeTestQueryClient()
     vi.spyOn(client, 'invalidateQueries')
 
-    const { result } = renderHookWithClient(() => useRegistrationActions(), client)
+    const { result } = renderHookWithClientAndToast(() => useRegistrationActions(), client)
 
     await act(async () => {
       await result.current.updateRegistration('r1', { paymentStatus: 'paid' }, 'tid-1')
@@ -173,16 +193,21 @@ describe('useRegistrationActions — updateRegistration', () => {
     })
   })
 
-  it('swallows errors (they are already logged in the api layer)', async () => {
+  it('does not throw and surfaces a toast when the write fails', async () => {
     ;(q.updateRegistration as ReturnType<typeof vi.fn>).mockRejectedValue(
       new Error('network error'),
     )
 
-    const { result } = renderHookWithClient(() => useRegistrationActions())
+    const { result, showToast } = renderHookWithClientAndToast(() => useRegistrationActions())
 
     // Should not throw
     await act(async () => {
       await result.current.updateRegistration('r1', { paymentStatus: 'paid' }, 'tid-1')
+    })
+
+    expect(showToast).toHaveBeenCalledWith({
+      variant: 'error',
+      message: expect.any(String),
     })
   })
 })

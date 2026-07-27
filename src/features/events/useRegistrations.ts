@@ -4,6 +4,7 @@ import { registrationKeys } from './registrationKeys'
 import { fetchRegistrations, fetchAllRegistrations } from './registrationQueries'
 import * as q from './registrationQueries'
 import type { NormalisedRegistration, RegistrationInput } from './registrationQueries'
+import { useToast } from '../../lib/toastBus'
 
 // Registrations for a single tournament. Only fetches when tournamentId is present.
 export function useRegistrations(tournamentId: string | null | undefined) {
@@ -24,6 +25,7 @@ export function useAllRegistrations() {
 
 export function useRegistrationActions() {
   const qc = useQueryClient()
+  const { showToast } = useToast()
 
   const invalidateRegistrations = useCallback(
     (tournamentId?: string) =>
@@ -52,11 +54,18 @@ export function useRegistrationActions() {
       try {
         await q.updateRegistration(id, data)
         invalidateRegistrations(tournamentId)
-      } catch {
-        /* error already logged in api */
+      } catch (error) {
+        console.error('updateRegistration failed:', error)
+        // Callers (Registration.tsx, Payments.tsx) fire-and-forget this call
+        // with no try/catch of their own, so a thrown error here would only
+        // become an unhandled rejection — surface it via toast instead.
+        showToast({
+          variant: 'error',
+          message: 'Could not save the payment status. Please try again.',
+        })
       }
     },
-    [invalidateRegistrations],
+    [invalidateRegistrations, showToast],
   )
 
   const cancelRegistration = useCallback(

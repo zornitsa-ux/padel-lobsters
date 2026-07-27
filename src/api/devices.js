@@ -1,7 +1,11 @@
 import { supabase } from '../supabase'
 import { getDeviceId } from '../lib/deviceId'
+import { emitToast } from '../lib/toastBus'
 
-// Player-side: list this player's own pending devices.
+// Player-side: list this player's own pending devices. Runs unattended on
+// every Settings mount, so a transient failure stays quiet rather than
+// toasting the player for something they didn't trigger — the widget just
+// renders as if there's nothing to approve, same as it would while loading.
 export async function listMyPendingDevices() {
   const deviceId = getDeviceId()
   try {
@@ -13,7 +17,8 @@ export async function listMyPendingDevices() {
       return []
     }
     return Array.isArray(data) ? data : []
-  } catch {
+  } catch (error) {
+    console.error('list_pending_devices error:', error)
     return []
   }
 }
@@ -32,7 +37,8 @@ export async function approveMyDevice(targetDeviceId) {
       return { ok: false, reason: 'error' }
     }
     return { ok: data === 'ok', reason: data }
-  } catch {
+  } catch (error) {
+    console.error('approve_device error:', error)
     return { ok: false, reason: 'error' }
   }
 }
@@ -52,26 +58,35 @@ export async function rejectMyDevice(targetDeviceId) {
       return { ok: false, reason: 'error' }
     }
     return { ok: data === 'ok', reason: data }
-  } catch {
+  } catch (error) {
+    console.error('reject_device error:', error)
     return { ok: false, reason: 'error' }
   }
 }
 
-// Admin: list all pending devices across all players.
+// Admin: list all pending devices across all players. Read feeds the
+// security panel an admin explicitly opened — a failure here can look
+// identical to "nothing pending" (a false negative in a security review),
+// so it's toasted rather than left quiet.
 export async function adminListPendingDevices() {
   try {
     const { data, error } = await supabase.rpc('admin_list_pending_devices')
     if (error) {
       console.error('admin_list_pending_devices error:', error)
+      emitToast({ variant: 'error', message: 'Could not load pending device approvals.' })
       return []
     }
     return Array.isArray(data) ? data : []
-  } catch {
+  } catch (error) {
+    console.error('admin_list_pending_devices error:', error)
+    emitToast({ variant: 'error', message: 'Could not load pending device approvals.' })
     return []
   }
 }
 
 // Admin: recent security events feed (pin_attempts, joined to player names).
+// Same reasoning as adminListPendingDevices — an admin reviewing security
+// events needs to know the feed didn't load, not see an empty log.
 export async function adminListSecurityEvents(limit = 100) {
   try {
     const { data, error } = await supabase.rpc('admin_list_security_events', {
@@ -79,10 +94,13 @@ export async function adminListSecurityEvents(limit = 100) {
     })
     if (error) {
       console.error('admin_list_security_events error:', error)
+      emitToast({ variant: 'error', message: 'Could not load recent security events.' })
       return []
     }
     return Array.isArray(data) ? data : []
-  } catch {
+  } catch (error) {
+    console.error('admin_list_security_events error:', error)
+    emitToast({ variant: 'error', message: 'Could not load recent security events.' })
     return []
   }
 }
@@ -96,11 +114,12 @@ export async function adminApproveDevice(targetPlayerId, targetDeviceId) {
     })
     if (error) {
       console.error('admin_approve_device error:', error)
-      return { ok: false }
+      return { ok: false, reason: 'error' }
     }
     return { ok: data === 'ok', reason: data }
-  } catch {
-    return { ok: false }
+  } catch (error) {
+    console.error('admin_approve_device error:', error)
+    return { ok: false, reason: 'error' }
   }
 }
 
@@ -114,10 +133,11 @@ export async function adminDenyDevice(targetPlayerId, targetDeviceId) {
     })
     if (error) {
       console.error('admin_deny_device error:', error)
-      return { ok: false }
+      return { ok: false, reason: 'error' }
     }
     return { ok: data === 'ok', reason: data }
-  } catch {
-    return { ok: false }
+  } catch (error) {
+    console.error('admin_deny_device error:', error)
+    return { ok: false, reason: 'error' }
   }
 }

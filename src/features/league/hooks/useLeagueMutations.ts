@@ -101,6 +101,9 @@ export function useDeleteTeam(leagueId: string) {
   })
 }
 
+// Renders its error inline (GroupFormationTool's AlertBox keyed off
+// confirmGroups.error) — suppress the global toast so a failed confirm
+// isn't reported twice.
 export function useConfirmGroups(leagueId: string) {
   const qc = useQueryClient()
   return useMutation({
@@ -108,9 +111,13 @@ export function useConfirmGroups(leagueId: string) {
       await supabase.rpc('admin_confirm_league_groups', { input_payload }).throwOnError()
     },
     onSuccess: () => invalidateLeague({ qc, leagueId, teams: true, matches: true }),
+    meta: { suppressErrorToast: true },
   })
 }
 
+// Renders its error inline (ScoreEntryForm's AlertBox keyed off
+// recordResult.error) — suppress the global toast so a failed save isn't
+// reported twice.
 export function useRecordResult(leagueId: string) {
   const qc = useQueryClient()
   return useMutation({
@@ -118,9 +125,13 @@ export function useRecordResult(leagueId: string) {
       await supabase.rpc('admin_record_league_match_result', { input_payload }).throwOnError()
     },
     onSuccess: () => invalidateLeague({ qc, leagueId, matches: true }),
+    meta: { suppressErrorToast: true },
   })
 }
 
+// Renders its error inline (LeagueAdminSection's AlertBox keyed off
+// createBracket.error) — suppress the global toast so a failed generation
+// isn't reported twice.
 export function useCreateBracket(leagueId: string) {
   const qc = useQueryClient()
   return useMutation({
@@ -130,9 +141,13 @@ export function useCreateBracket(leagueId: string) {
         .throwOnError()
     },
     onSuccess: () => invalidateLeague({ qc, leagueId, matches: true }),
+    meta: { suppressErrorToast: true },
   })
 }
 
+// Renders its error inline (InvitePlayerModal's AlertBox keyed off
+// invite.error) — suppress the global toast so a failed invite isn't
+// reported twice.
 export function useInviteLeaguePlayer(leagueId: string) {
   const qc = useQueryClient()
   return useMutation({
@@ -148,5 +163,6 @@ export function useInviteLeaguePlayer(leagueId: string) {
         .throwOnError()
     },
     onSuccess: () => invalidateLeague({ qc, leagueId, teams: true }),
+    meta: { suppressErrorToast: true },
   })
 }

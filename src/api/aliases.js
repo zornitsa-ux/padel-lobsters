@@ -1,9 +1,13 @@
 import { supabase } from '../supabase'
+import { emitToast } from '../lib/toastBus'
+
+// Postgres/PostgREST codes for "the table isn't there yet" — the expected
+// state before the v16 migration has run. Any other error is a real failure.
+const TABLE_MISSING_CODES = new Set(['42P01', 'PGRST205'])
 
 export async function loadPlayerAliases() {
   // Map of historical_name → player_id (or sentinel '__not_in_roster__'
-  // when the row was explicitly skipped). Fails silently if the v16
-  // migration hasn't run yet so the rest of the app keeps working.
+  // when the row was explicitly skipped).
   try {
     const { data, error } = await supabase.from('player_aliases').select('*')
     if (error) throw error
@@ -12,7 +16,17 @@ export async function loadPlayerAliases() {
       map[row.historical_name] = row.skipped ? '__not_in_roster__' : row.player_id
     })
     return map
-  } catch {
+  } catch (error) {
+    console.error('loadPlayerAliases error:', error)
+    if (!TABLE_MISSING_CODES.has(error?.code)) {
+      // A genuine failure (not the expected pre-migration state) — the admin
+      // relies on this map to avoid re-mapping names that are already known,
+      // so a silent empty result would cause duplicate work.
+      emitToast({
+        variant: 'error',
+        message: 'Could not load saved name mappings. Some names may look unmapped.',
+      })
+    }
     // Table not present — historical features just degrade to "no aliases".
     return {}
   }

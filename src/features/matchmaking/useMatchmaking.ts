@@ -34,6 +34,9 @@ export function useMmRatings({ enabled }: { enabled: boolean }) {
 
 // Commit a previewed run: writes matches + records the run. Invalidates the
 // tournament's match list (schedule changed) and its schedule-run history.
+// Renders its error inline (MatchmakingContainer's alert banner keyed off
+// commit.isError) — suppress the global toast so a failed save isn't
+// reported twice.
 export function useCommitSchedule() {
   const qc = useQueryClient()
   return useMutation({
@@ -42,6 +45,7 @@ export function useCommitSchedule() {
       qc.invalidateQueries({ queryKey: matchKeys.list(run.tournamentId) })
       qc.invalidateQueries({ queryKey: matchmakingKeys.scheduleRuns(run.tournamentId) })
     },
+    meta: { suppressErrorToast: true },
   })
 }
 

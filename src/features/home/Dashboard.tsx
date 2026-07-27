@@ -9,6 +9,7 @@ import { useAllRegistrations } from '../events/useRegistrations'
 import { useMerchInterests, useMerchItems } from '../merch/useMerch'
 import DEFAULT_TIPS from '../../data/padelTips'
 import TransferPendingModal from '../../components/TransferPendingModal'
+import { AlertBox } from '../../components/ui/AlertBox'
 import { mark } from '../../lib/perfMarks'
 import { getGreeting } from './greetings'
 import useGreetingName from './useGreetingName'
@@ -40,13 +41,38 @@ interface TransferShare {
 
 export default function Dashboard({ onNavigate }: DashboardProps) {
   const { session, sessionSettled } = useApp()
-  const { data: tournaments = [], isSuccess: tournamentsLoaded } = useTournaments()
-  const { data: transfers = [] } = useTransfers()
+  const {
+    data: tournaments = [],
+    isSuccess: tournamentsLoaded,
+    isError: tournamentsError,
+  } = useTournaments()
+  const { data: transfers = [], isError: transfersError } = useTransfers()
   const { respondToTransfer, cancelTransfer } = useTransferActions({ session })
-  const { data: settings } = useSettings()
-  const { data: players = [], isPending: playersPending } = usePlayers()
-  const { data: matches = [] } = useAllMatches()
-  const { data: registrations = [], isSuccess: registrationsLoaded } = useAllRegistrations()
+  const { data: settings, isError: settingsError } = useSettings()
+  const { data: players = [], isPending: playersPending, isError: playersError } = usePlayers()
+  const { data: matches = [], isError: matchesError } = useAllMatches()
+  const {
+    data: registrations = [],
+    isSuccess: registrationsLoaded,
+    isError: registrationsError,
+  } = useAllRegistrations()
+  const { data: merchInterests = [], isError: merchInterestsError } = useMerchInterests()
+  const { data: merchItems = [], isError: merchItemsError } = useMerchItems()
+
+  // A failed read renders as an empty list/undefined, which looks identical
+  // to "genuinely nothing there" (e.g. NextEventCard's "No upcoming events"
+  // empty state). One combined banner is enough to tell the player the page
+  // is missing data rather than reflecting reality — the rest of the
+  // dashboard still renders with whatever partial data did load.
+  const hasLoadError =
+    tournamentsError ||
+    transfersError ||
+    settingsError ||
+    playersError ||
+    matchesError ||
+    registrationsError ||
+    merchInterestsError ||
+    merchItemsError
 
   const getTournamentMatches = useCallback(
     (id: string): NormalisedMatch[] => matches.filter((m) => m.tournamentId === id),
@@ -103,8 +129,6 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
   const [lastChecked, setLastChecked] = useState(
     () => localStorage.getItem(LAST_CHECK_KEY) || new Date(0).toISOString(),
   )
-  const { data: merchInterests = [] } = useMerchInterests()
-  const { data: merchItems = [] } = useMerchItems()
 
   const newOrders = useMemo<NewMerchOrder[]>(() => {
     if (!isAdmin) return []
@@ -244,6 +268,12 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
     <div className="-mx-4">
       <div className="px-4 pt-4 space-y-5">
         <Greeting hello={greetHello} sub={greetSub} loading={nameStillLoading} />
+
+        {hasLoadError && (
+          <AlertBox variant="error">
+            Some dashboard data couldn&apos;t load. Pull to refresh or try again in a moment.
+          </AlertBox>
+        )}
 
         <TransferOfferBanners
           incomingTransfers={myIncomingTransfers}
