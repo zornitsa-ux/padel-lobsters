@@ -9,7 +9,6 @@ export interface AppContextValue {
   loginWithPin: (pin: string) => Promise<{ success: boolean; role: string; error: unknown }>
   logout: () => Promise<void>
   fetchMyProfile: () => Promise<unknown>
-  fetchAllPlayersWithPii: () => Promise<unknown>
   selfSignup: (data: unknown) => Promise<unknown>
   sendMagicLink: (email: string) => Promise<unknown>
   requestMyEmailChange: (email: string) => Promise<unknown>

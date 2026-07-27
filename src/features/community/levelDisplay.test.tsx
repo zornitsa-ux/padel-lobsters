@@ -42,7 +42,7 @@ describe('roster level badges read the Playtomic level', () => {
         setExpandedId={() => {}}
         isAdmin={false}
         levelBadge={levelBadge}
-        displayName={(p: { name: string }) => p.name}
+        displayName={(p) => p.name || ''}
         matches={[]}
         registrations={[]}
         tournaments={[]}

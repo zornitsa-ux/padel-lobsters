@@ -5,6 +5,28 @@ export type PlayerLike = {
   created_at?: string | null
 }
 
+// Everything the community screens read off a roster row. Deliberately all
+// optional: the normalised `Player` from lib/normalise is a superset, and the
+// admin PII overlay only fills in some of these.
+export interface CommunityPlayer extends PlayerLike {
+  avatarUrl?: string | null
+  playtomicLevel?: number | null
+  playtomicUsername?: string | null
+  country?: string | null
+  gender?: string | null
+  isLeftHanded?: boolean | null
+  preferredPosition?: string | null
+  email?: string | null
+  phone?: string | null
+  birthday?: string | null
+  notes?: string | null
+  tagline?: string | null
+  taglineLabel?: string | null
+  tagline_label?: string | null
+  pin?: string | null
+  pinChanges?: number | null
+}
+
 export type OrderedPlayer<T extends PlayerLike> = {
   p: T
   idx: number

@@ -1,6 +1,55 @@
 import { buildHistoricalAppearances, summariseAppearances } from '../../lib/playerHistory'
-import { computeTournamentStandings } from '../../lib/standings'
-import { TOURNAMENTS } from '../../data/historicalTournaments'
+import { computeTournamentStandings, type MatchForStandings } from '../../lib/standings'
+import { TOURNAMENTS as TOURNAMENTS_RAW } from '../../data/historicalTournaments'
+import type { AppearanceSummary, HistoricalAppearance } from '../../lib/playerHistoryTypes'
+
+const TOURNAMENTS = TOURNAMENTS_RAW as unknown as HistoricalTournamentRow[]
+
+interface HistoricalTournamentRow {
+  id: string | number
+  type?: string
+}
+
+export interface ReviewScenario {
+  id: string
+  label: string
+  performance?: boolean
+}
+
+// Minimum a player row needs for a review — every caller passes a full
+// normalised Player, which is a superset.
+export interface ReviewPlayer {
+  id: string | number
+  name?: string | null
+  playtomicLevel?: number | null
+}
+
+export interface ReviewRegistration {
+  playerId: string | number
+  tournamentId: string | number
+  status?: string | null
+}
+
+export interface ReviewTournament {
+  id: string | number
+  date?: string | null
+  status?: string | null
+}
+
+interface TournamentRank {
+  id: string | number
+  date: string
+  rank: number
+  total: number
+}
+
+export interface CorpReview {
+  text: string
+  body: string
+  scenario: string
+  scenarioLabel: string
+  hasLabel: boolean
+}
 
 // Stable list of all possible review scenarios — used by the admin
 // "Review breakdown" panel to surface what each branch produces.
@@ -8,7 +57,7 @@ import { TOURNAMENTS } from '../../data/historicalTournaments'
 // The 10 PERFORMANCE messages (the ones we actually designed) are tagged
 // with `performance: true` so the breakdown panel can highlight them
 // separately from welcome/historical/level-fallback scenarios.
-export const REVIEW_SCENARIOS = [
+export const REVIEW_SCENARIOS: ReviewScenario[] = [
   // ── The performance messages ───────────────────────────────────────────
   { id: 'last-place-elite', label: '🎯 Playtomic: Fake News', performance: true },
   { id: 'last-place', label: '💀 The Anchor', performance: true },
@@ -45,12 +94,12 @@ export const REVIEW_SCENARIOS = [
 // Returns a structured review so admins can see which branch fired.
 // Existing callers wanting plain text should read `.text`.
 export function corpReview(
-  player,
-  matches = [],
-  registrations = [],
-  tournaments = [],
-  aliasMap = {},
-) {
+  player: ReviewPlayer,
+  matches: MatchForStandings[] = [],
+  registrations: ReviewRegistration[] = [],
+  tournaments: ReviewTournament[] = [],
+  aliasMap: Record<string, string> = {},
+): CorpReview {
   const lvl = player.playtomicLevel || 0
   const name = (player.name || 'Employee').split(' ')[0]
   const pid = player.id
@@ -68,7 +117,7 @@ export function corpReview(
     'level-elite',
     'shows-up-no-data',
   ])
-  const tag = (scenario, text) => {
+  const tag = (scenario: string, text: string): CorpReview => {
     const label = REVIEW_SCENARIOS.find((s) => s.id === scenario)?.label || scenario
     const hasLabel = !UNTITLED_SCENARIOS.has(scenario)
     const finalText = hasLabel ? `${label} — ${text}` : text
@@ -81,8 +130,8 @@ export function corpReview(
   // ── Historical tournament signal (from player_aliases + History.jsx) ─────
   // Includes Dec 2025, Jan 2026, Mar 2026, Apr 2026 — events that pre-date
   // the in-app registration flow but are still part of each player's story.
-  const historical = buildHistoricalAppearances(pid, aliasMap || {})
-  const histSummary = summariseAppearances(historical)
+  const historical = buildHistoricalAppearances(pid, aliasMap || {}) as HistoricalAppearance[]
+  const histSummary = summariseAppearances(historical) as AppearanceSummary
   const hasHistory = historical.length > 0
 
   // ── Compute match stats ──────────────────────────────────────────────────
@@ -98,8 +147,10 @@ export function corpReview(
     dbLosses = 0
   playedDb.forEach((m) => {
     const onTeam1 = m.team1Ids?.map(String).includes(spid)
-    const s1 = m.score1 ?? 0,
-      s2 = m.score2 ?? 0
+    // parseInt matches computeTournamentStandings / buildPlayerStats, so the
+    // review can't disagree with the standings screen on who won.
+    const s1 = parseInt(String(m.score1)) || 0,
+      s2 = parseInt(String(m.score2)) || 0
     if ((onTeam1 && s1 > s2) || (!onTeam1 && s2 > s1)) dbWins++
     else dbLosses++
   })
@@ -111,7 +162,7 @@ export function corpReview(
   // ── Compute tournament attendance ────────────────────────────────────────
   const today = new Date()
   const pastTournaments = tournaments.filter(
-    (t) => t.status === 'completed' || new Date(t.date) <= today,
+    (t) => t.status === 'completed' || new Date(t.date ?? '') <= today,
   )
   const pastTournamentIds = new Set(pastTournaments.map((t) => String(t.id)))
 
@@ -148,15 +199,20 @@ export function corpReview(
   // Lobster Review never contradicts the official standings screen.
   // We keep the full list so we can detect multi-event patterns (e.g. The
   // Anchor = 2+ last-place finishes), not just the most recent result.
-  const dbTournamentRanks = []
+  const dbTournamentRanks: TournamentRank[] = []
   ;[...tournaments]
-    .sort((a, b) => new Date(b.date) - new Date(a.date))
+    .sort((a, b) => new Date(b.date ?? '').getTime() - new Date(a.date ?? '').getTime())
     .forEach((t) => {
       const standings = computeTournamentStandings(t.id, matches)
       if (standings.length < 4) return
       const pos = standings.findIndex((s) => String(s.id) === spid)
       if (pos >= 0) {
-        dbTournamentRanks.push({ id: t.id, date: t.date, rank: pos + 1, total: standings.length })
+        dbTournamentRanks.push({
+          id: t.id,
+          date: t.date ?? '',
+          rank: pos + 1,
+          total: standings.length,
+        })
       }
     })
 

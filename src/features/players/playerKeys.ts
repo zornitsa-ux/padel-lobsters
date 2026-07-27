@@ -5,4 +5,5 @@ export const playerKeys = {
   all: () => ['players'] as const,
   list: () => ['players', 'list'] as const,
   me: () => ['players', 'me'] as const,
+  pii: () => ['players', 'pii'] as const,
 }

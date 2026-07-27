@@ -1,6 +1,17 @@
 import React from 'react'
 import { X } from 'lucide-react'
 import Avatar from '../../components/ui/Avatar'
+import type { CommunityPlayer } from './playersSelectors'
+
+interface LinkPlayerModalProps {
+  /** The pending signup being linked; null keeps the modal closed. */
+  linkModal: CommunityPlayer | null
+  linkSearch: string
+  setLinkSearch: (value: string) => void
+  activePlayers: CommunityPlayer[]
+  onClose: () => void
+  onConfirm: (player: CommunityPlayer) => void
+}
 
 export default function LinkPlayerModal({
   linkModal,
@@ -9,7 +20,7 @@ export default function LinkPlayerModal({
   activePlayers,
   onClose,
   onConfirm,
-}) {
+}: LinkPlayerModalProps) {
   if (!linkModal) return null
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center">
@@ -37,7 +48,7 @@ export default function LinkPlayerModal({
 
         <div className="overflow-y-auto flex-1 space-y-2">
           {activePlayers
-            .filter((p) => p.name.toLowerCase().includes(linkSearch.toLowerCase()))
+            .filter((p) => (p.name || '').toLowerCase().includes(linkSearch.toLowerCase()))
             .map((p) => (
               <button
                 key={p.id}

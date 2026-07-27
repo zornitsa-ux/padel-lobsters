@@ -1,15 +1,16 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { useApp } from '../../context/useApp'
 import { useTournaments } from '../events/useTournaments'
-import { usePlayers, usePlayerActions } from '../players/usePlayers'
+import { usePlayers, usePlayersPii, usePlayerActions, useAvatarUpload } from '../players/usePlayers'
+import { randomAvatarFilename } from '../players/playerQueries'
 import { useAllMatches } from '../events/useMatches'
 import { useAllRegistrations } from '../events/useRegistrations'
 import usePlayerAliases from '../../hooks/usePlayerAliases'
-import { supabase } from '../../supabase'
 import { Search } from 'lucide-react'
 import { processAvatar } from '../../lib/processAvatar'
-import { LEVEL_COLORS, randomPrompt, emptyForm } from './playerConstants'
+import { LEVEL_COLORS, randomPrompt, emptyForm, type PlayerFormState } from './playerConstants'
 import { corpReview } from './reviewScenarios'
+import { errorMessage } from '../../lib/errors'
 import PlayerForm from './PlayerForm'
 import LinkPlayerModal from './LinkPlayerModal'
 import PinRevealModal from './PinRevealModal'
@@ -23,6 +24,8 @@ import {
   orderPlayersForRender,
   sortPlayersChronological,
 } from './playersSelectors'
+import type { CommunityPlayer } from './playersSelectors'
+import type { PinReveal } from './PinRevealModal'
 
 const GENERIC_REVIEW_IDS = new Set([
   'level-low',
@@ -32,12 +35,41 @@ const GENERIC_REVIEW_IDS = new Set([
   'welcome',
 ])
 
-export default function Players({ onNavigate, focusPlayerId }) {
-  const { session, role, fetchAllPlayersWithPii } = useApp()
+// Fill the add/edit form from an existing player. The stored single-string
+// `name` is split so the two-field form populates: single-word names go
+// entirely into firstName and admin can fill in the surname.
+function formFromPlayer(p: CommunityPlayer): PlayerFormState {
+  const nameParts = (p.name || '').trim().split(/\s+/)
+  return {
+    firstName: nameParts[0] || '',
+    lastName: nameParts.slice(1).join(' '),
+    name: p.name || '',
+    email: p.email || '',
+    phone: p.phone || '',
+    playtomicLevel: p.playtomicLevel ?? '',
+    playtomicUsername: p.playtomicUsername || '',
+    notes: p.notes || '',
+    gender: p.gender || '',
+    isLeftHanded: p.isLeftHanded || false,
+    country: p.country || '',
+    avatarUrl: p.avatarUrl || '',
+    birthday: p.birthday || '',
+    preferredPosition: p.preferredPosition || '',
+  }
+}
+
+interface PlayersProps {
+  onNavigate?: (page: string, payload?: unknown) => void
+  focusPlayerId?: string | null
+}
+
+export default function Players({ onNavigate, focusPlayerId }: PlayersProps) {
+  const { session, role } = useApp()
   const { addPlayer, updatePlayer, deletePlayer, regeneratePin } = usePlayerActions({
     session,
     role,
   })
+  const uploadAvatar = useAvatarUpload()
   const { data: tournaments = [] } = useTournaments()
   const { data: players = [] } = usePlayers()
   const { data: matches = [] } = useAllMatches()
@@ -47,46 +79,17 @@ export default function Players({ onNavigate, focusPlayerId }) {
   const claimedId = session?.user?.id ?? null
 
   // ── Admin PII overlay ───────────────────────────────────────────────
-  // After Phase 3 locks down players.email/phone/birthday from the anon
-  // key, the `players` array we get from context (fed by players_public)
-  // won't carry those fields. While admin is signed in we fetch the
-  // full-PII rows via the admin-gated RPC and overlay them by id.
-  const [piiById, setPiiById] = useState({})
-  useEffect(() => {
-    if (!isAdmin) {
-      setPiiById({})
-      return
-    }
-    let cancelled = false
-    ;(async () => {
-      const rows = await fetchAllPlayersWithPii()
-      if (cancelled || !rows) return
-      const map = {}
-      for (const r of rows) {
-        map[r.id] = {
-          email: r.email ?? '',
-          phone: r.phone ?? '',
-          birthday: r.birthday ?? '',
-          notes: r.notes ?? '',
-          pin: r.pin ?? '',
-          pin_changes: r.pin_changes ?? 0,
-          pinChanges: r.pin_changes ?? 0,
-        }
-      }
-      setPiiById(map)
-    })()
-    return () => {
-      cancelled = true
-    }
-  }, [isAdmin, fetchAllPlayersWithPii])
+  // players_public withholds email/phone/birthday/notes/pin, so for admins we
+  // fetch the full rows through the admin-gated RPC and overlay them by id.
+  // The query is disabled for everyone else (see usePlayersPii).
+  const { data: piiById, error: piiError } = usePlayersPii({ role })
 
   // Merge a player record with the admin PII overlay. Non-admins get the
   // record unchanged (which means empty PII fields after Phase 3 — fine,
   // the admin-gated UI hides those fields anyway).
   const withPii = useCallback(
-    (p) => {
-      if (!p) return p
-      const extra = piiById[p.id]
+    <T extends CommunityPlayer>(p: T): T => {
+      const extra = piiById?.[String(p.id)]
       if (!extra) return p
       return {
         ...p,
@@ -100,30 +103,33 @@ export default function Players({ onNavigate, focusPlayerId }) {
     [piiById],
   )
   const [showForm, setShowForm] = useState(false)
-  const [editId, setEditId] = useState(null)
-  const [form, setForm] = useState(emptyForm)
+  const [editId, setEditId] = useState<string | number | null>(null)
+  const [form, setForm] = useState<PlayerFormState>(emptyForm)
   const lobbyPrompt = useMemo(() => randomPrompt(), [])
   const [search, setSearch] = useState('')
-  const [expandedId, setExpandedId] = useState(focusPlayerId || null)
-  const focusRef = useRef(null)
+  const [expandedId, setExpandedId] = useState<string | number | null>(focusPlayerId || null)
+  const focusRef = useRef<HTMLDivElement | null>(null)
 
   // Auto-scroll to focused player card
   useEffect(() => {
     if (focusPlayerId && focusRef.current) {
       setTimeout(() => {
-        focusRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        focusRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
       }, 150)
     }
   }, [focusPlayerId])
   const [saving, setSaving] = useState(false)
-  const [avatarFile, setAvatarFile] = useState(null)
-  const [avatarPreview, setAvatarPreview] = useState(null)
-  const [mergePlayer, setMergePlayer] = useState(null) // existing player found by name
-  const [pinReveal, setPinReveal] = useState(null) // { name, pin } — shown after registration
-  const [linkModal, setLinkModal] = useState(null) // pending player being linked { pendingPlayer }
+  const [avatarFile, setAvatarFile] = useState<File | null>(null)
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+  // existing player found by name
+  const [mergePlayer, setMergePlayer] = useState<CommunityPlayer | null>(null)
+  // shown after registration
+  const [pinReveal, setPinReveal] = useState<PinReveal | null>(null)
+  // pending player being linked
+  const [linkModal, setLinkModal] = useState<CommunityPlayer | null>(null)
   const [linkSearch, setLinkSearch] = useState('') // search in link modal
   const [error, setError] = useState('')
-  const fileInputRef = useRef(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Overlay admin PII onto every record up-front so downstream filtering,
   // rendering, and form-fill calls just see the merged object.
@@ -161,11 +167,11 @@ export default function Players({ onNavigate, focusPlayerId }) {
   // ── Name display: first name only; both players get a surname initial
   //    the moment a duplicate first name exists in the group ────────────────
   const firstNameCount = useMemo(() => buildFirstNameCount(activePlayers), [activePlayers])
-  const displayName = (p) => getDisplayName(p.name, firstNameCount)
+  const displayName = (p: CommunityPlayer) => getDisplayName(p.name, firstNameCount)
 
   // Debounced duplicate check — fires 400ms after the user stops typing the name.
   // Reliable on both desktop and mobile (doesn't depend on onBlur).
-  const mergeDebounceRef = useRef(null)
+  const mergeDebounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   useEffect(() => {
     if (editId) return // never prompt when already editing
     clearTimeout(mergeDebounceRef.current)
@@ -183,62 +189,29 @@ export default function Players({ onNavigate, focusPlayerId }) {
 
   // Accept merge: pre-fill form with existing player data, switch to update mode
   const acceptMerge = () => {
+    if (!mergePlayer) return
     // Re-resolve through the PII-overlay so email/phone/birthday are
     // filled in if admin has fetched them.
     const p = withPii(mergePlayer)
-    setForm({
-      name: p.name || '',
-      email: p.email || '',
-      phone: p.phone || '',
-      playtomicLevel: p.playtomicLevel ?? '',
-      playtomicUsername: p.playtomicUsername || '',
-      notes: p.notes || '',
-      gender: p.gender || '',
-      isLeftHanded: p.isLeftHanded || false,
-      country: p.country || '',
-      avatarUrl: p.avatarUrl || '',
-      birthday: p.birthday || '',
-    })
+    setForm(formFromPlayer(p))
     setAvatarPreview(p.avatarUrl || null)
     setEditId(p.id)
     setMergePlayer(null)
   }
 
-  const openEdit = (p) => {
+  const openEdit = (p: CommunityPlayer) => {
     if (!isAdmin) {
       onNavigate?.('settings')
       return
     }
-    // Split existing single-string name into first + last so the new two-field
-    // form populates correctly. Single-word names go entirely into firstName
-    // (with an empty lastName) — admin can fill in the surname when they
-    // edit the player.
-    const nameParts = (p.name || '').trim().split(/\s+/)
-    const firstName = nameParts[0] || ''
-    const lastName = nameParts.slice(1).join(' ')
-    setForm({
-      firstName,
-      lastName,
-      name: p.name || '',
-      email: p.email || '',
-      phone: p.phone || '',
-      playtomicLevel: p.playtomicLevel ?? '',
-      playtomicUsername: p.playtomicUsername || '',
-      notes: p.notes || '',
-      gender: p.gender || '',
-      isLeftHanded: p.isLeftHanded || false,
-      country: p.country || '',
-      avatarUrl: p.avatarUrl || '',
-      birthday: p.birthday || '',
-      preferredPosition: p.preferredPosition || '',
-    })
+    setForm(formFromPlayer(p))
     setAvatarFile(null)
     setAvatarPreview(p.avatarUrl || null)
     setEditId(p.id)
     setShowForm(true)
   }
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id: string | number) => {
     if (!isAdmin) {
       onNavigate?.('settings')
       return
@@ -248,11 +221,11 @@ export default function Players({ onNavigate, focusPlayerId }) {
     try {
       await deletePlayer(id)
     } catch (err) {
-      setError(err?.message || 'Could not remove player.')
+      setError(errorMessage(err, 'Could not remove player.'))
     }
   }
 
-  const handleApprove = async (p) => {
+  const handleApprove = async (p: CommunityPlayer) => {
     setError('')
     try {
       await updatePlayer(p.id, { ...p, status: 'active' })
@@ -260,23 +233,23 @@ export default function Players({ onNavigate, focusPlayerId }) {
       // WhatsApp on approval. If the player lost their PIN, they use
       // "Forgot PIN?" on the sign-in screen for self-service recovery.
     } catch (err) {
-      setError(err?.message || 'Could not approve player.')
+      setError(errorMessage(err, 'Could not approve player.'))
     }
   }
 
-  const handleReject = async (id) => {
+  const handleReject = async (id: string | number) => {
     if (!confirm('Reject and remove this registration request?')) return
     setError('')
     try {
       await deletePlayer(id)
     } catch (err) {
-      setError(err?.message || 'Could not reject player.')
+      setError(errorMessage(err, 'Could not reject player.'))
     }
   }
 
   // Admin links a pending new joiner to an existing player profile:
   // copies their contact info onto the existing player, deletes the pending entry, sends existing PIN
-  const handleLinkConfirm = async (existingPlayer) => {
+  const handleLinkConfirm = async (existingPlayer: CommunityPlayer) => {
     const pending = linkModal
     if (!pending || !existingPlayer) return
 
@@ -301,14 +274,14 @@ export default function Players({ onNavigate, focusPlayerId }) {
       setLinkModal(null)
       setLinkSearch('')
     } catch (err) {
-      setError(err?.message || 'Could not link player.')
+      setError(errorMessage(err, 'Could not link player.'))
     }
     // Phase 2d: linked profiles already had a PIN. If the player can't
     // recall it, "Forgot PIN?" on the sign-in screen sends a fresh one
     // to their email. Admin no longer needs to share via WhatsApp.
   }
 
-  const handleRegeneratePin = async (p) => {
+  const handleRegeneratePin = async (p: CommunityPlayer) => {
     // Phase 2d: admin_regenerate_pin RPC also calls send_pin_email, so
     // the new PIN is emailed automatically. We surface the new PIN in a
     // modal (no alert) — useful when the email is bouncing or admin needs
@@ -321,20 +294,20 @@ export default function Players({ onNavigate, focusPlayerId }) {
         setPinReveal({ name: firstName, pin: result.pin })
       }
     } catch (err) {
-      setError(err?.message || 'Could not regenerate PIN.')
+      setError(errorMessage(err, 'Could not regenerate PIN.'))
     }
   }
 
-  const handleAvatarChange = (e) => {
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
     setAvatarFile(file)
     const reader = new FileReader()
-    reader.onload = (ev) => setAvatarPreview(ev.target.result)
+    reader.onload = (ev) => setAvatarPreview(String(ev.target?.result ?? ''))
     reader.readAsDataURL(file)
   }
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
     // First + Last are required on every registration (new or self-edit).
@@ -368,48 +341,43 @@ export default function Players({ onNavigate, focusPlayerId }) {
     try {
       let avatarUrl = form.avatarUrl || ''
       if (avatarFile) {
-        let processed
+        let processed: Blob
         try {
           processed = await processAvatar(avatarFile)
         } catch (err) {
           console.error('Avatar processing error:', err)
-          alert('Photo could not be processed: ' + err.message)
+          alert('Photo could not be processed: ' + errorMessage(err))
           setSaving(false)
           return
         }
-        const filename = `player-${Date.now()}-${Math.random().toString(36).slice(2)}.webp`
-        const { error: uploadError } = await supabase.storage
-          .from('avatars')
-          .upload(filename, processed, { upsert: true, contentType: 'image/webp' })
-        if (uploadError) {
-          console.error('Avatar upload error:', uploadError)
+        // A failed upload is non-fatal: the player is still saved, just
+        // without the new photo.
+        try {
+          avatarUrl = await uploadAvatar.mutateAsync({
+            file: processed,
+            filename: randomAvatarFilename(),
+          })
+        } catch (err) {
+          console.error('Avatar upload error:', err)
           alert(
             'Photo could not be saved: ' +
-              uploadError.message +
+              errorMessage(err) +
               '\n\nMake sure the "avatars" storage bucket exists and is set to public in Supabase.',
           )
-        } else {
-          const {
-            data: { publicUrl },
-          } = supabase.storage.from('avatars').getPublicUrl(filename)
-          avatarUrl = publicUrl
         }
       }
+      // firstName / lastName are transient — the DB only knows about `name`.
+      const { firstName: _f, lastName: _l, ...rest } = form
       const data = {
-        ...form,
+        ...rest,
         name: combinedName, // overwrite whatever was on form.name — single source of truth
         avatarUrl,
-        playtomicLevel: parseFloat(form.playtomicLevel) || 0,
+        playtomicLevel: parseFloat(String(form.playtomicLevel)) || 0,
         isLeftHanded: form.isLeftHanded || false,
         birthday: form.birthday || null,
         taglineLabel: lobbyPrompt.label,
         status: 'active',
       }
-      // Drop the transient firstName / lastName fields — the DB only knows
-      // about `name`. Keeping them in the payload would let the API tolerate
-      // unknown columns (currently fine) but it's cleaner to be explicit.
-      delete data.firstName
-      delete data.lastName
       try {
         if (editId) {
           await updatePlayer(editId, data)
@@ -430,14 +398,14 @@ export default function Players({ onNavigate, focusPlayerId }) {
         setAvatarPreview(null)
         setMergePlayer(null)
       } catch (err) {
-        setError(err?.message || 'Could not save player.')
+        setError(errorMessage(err, 'Could not save player.'))
       }
     } finally {
       setSaving(false)
     }
   }
 
-  const levelBadge = (adjusted) => {
+  const levelBadge = (adjusted: number | null | undefined) => {
     const idx = Math.min(7, Math.max(0, Math.floor(adjusted || 0)))
     return LEVEL_COLORS[idx] || LEVEL_COLORS[0]
   }
@@ -454,6 +422,14 @@ export default function Players({ onNavigate, focusPlayerId }) {
           >
             ×
           </button>
+        </div>
+      )}
+      {/* A failed PII dump used to be silent, leaving admins with a roster
+          that looked like it simply had no contact details. */}
+      {piiError && (
+        <div className="bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-lg p-2">
+          Contact details could not be loaded:{' '}
+          {errorMessage(piiError, 'the admin roster request failed.')}
         </div>
       )}
       {/* Header */}

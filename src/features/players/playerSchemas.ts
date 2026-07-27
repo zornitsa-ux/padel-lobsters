@@ -35,5 +35,21 @@ export const myProfileRowSchema = playerPublicRowSchema.extend({
   birthday: nullableString,
 })
 
+// get_all_players_with_pii_v2 also returns SETOF players, but the admin roster
+// overlay only reads the contact/admin columns — everything else already comes
+// from players_public, so the rest passes through unmodelled.
+export const playerPiiRowSchema = z
+  .object({
+    id: z.string(),
+    email: nullableString,
+    phone: nullableString,
+    birthday: nullableString,
+    notes: nullableString,
+    pin: nullableString,
+    pin_changes: nullableNumber,
+  })
+  .passthrough()
+
 export type PlayerPublicRow = z.infer<typeof playerPublicRowSchema>
 export type MyProfileRow = z.infer<typeof myProfileRowSchema>
+export type PlayerPiiRow = z.infer<typeof playerPiiRowSchema>

@@ -2,8 +2,21 @@ import React from 'react'
 import { Clock, X } from 'lucide-react'
 import { PlayerRow } from '../../components/ui/PlayerRow'
 import { IconButton } from '../../components/ui/IconButton'
+import type { CommunityPlayer } from './playersSelectors'
 
-export default function PendingApprovalsList({ pendingPlayers, onApprove, onReject, onLink }) {
+interface PendingApprovalsListProps {
+  pendingPlayers: CommunityPlayer[]
+  onApprove: (player: CommunityPlayer) => void
+  onReject: (id: string | number) => void
+  onLink: (player: CommunityPlayer) => void
+}
+
+export default function PendingApprovalsList({
+  pendingPlayers,
+  onApprove,
+  onReject,
+  onLink,
+}: PendingApprovalsListProps) {
   if (pendingPlayers.length === 0) return null
   return (
     <div className="space-y-2">

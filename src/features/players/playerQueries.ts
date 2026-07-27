@@ -2,9 +2,20 @@ import { z } from 'zod'
 import { supabase } from '../../supabase'
 import { normalisePlayers, type Player } from '../../lib/normalise'
 import { fetchMyProfile as fetchMyProfileRpc } from '../../api/auth'
-import { playerPublicRowSchema, myProfileRowSchema } from './playerSchemas'
+import { playerPublicRowSchema, myProfileRowSchema, playerPiiRowSchema } from './playerSchemas'
 
 export type { Player }
+
+// Contact/admin columns the redacted players_public view withholds. Empty
+// strings rather than nulls so the overlay merges straight into form state.
+export interface PlayerPii {
+  email: string
+  phone: string
+  birthday: string
+  notes: string
+  pin: string
+  pinChanges: number
+}
 
 // Full roster from the redacted players_public view. Validated at the boundary,
 // then run through the existing normalisePlayers so the output is identical to
@@ -29,6 +40,55 @@ export async function fetchMyProfile(): Promise<Player | null> {
   if (!row) return null
   const parsed = myProfileRowSchema.parse(row)
   return normalisePlayers([parsed])[0] ?? null
+}
+
+// Admin-only full-PII roster, keyed by player id for overlay lookups. The RPC
+// is gated on require_admin() and writes a pin_attempts audit row per call, so
+// callers must keep it disabled for non-admins. Errors propagate: a failed
+// dump must not be indistinguishable from "this roster has no contact details".
+export async function fetchPlayersPii(): Promise<Record<string, PlayerPii>> {
+  const { data, error } = await supabase.rpc('get_all_players_with_pii_v2')
+  if (error) throw error
+  const rows = z.array(playerPiiRowSchema).parse(data ?? [])
+  return Object.fromEntries(
+    rows.map((r) => [
+      String(r.id),
+      {
+        email: r.email ?? '',
+        phone: r.phone ?? '',
+        birthday: r.birthday ?? '',
+        notes: r.notes ?? '',
+        pin: r.pin ?? '',
+        pinChanges: r.pin_changes ?? 0,
+      },
+    ]),
+  )
+}
+
+// ── Avatar upload ─────────────────────────────────────────────────────
+// Shared by every avatar-picking form. Returns the public URL; the caller
+// persists it via updatePlayer/addPlayer.
+export async function uploadAvatar({
+  file,
+  filename,
+}: {
+  file: Blob
+  filename: string
+}): Promise<string> {
+  const { error } = await supabase.storage
+    .from('avatars')
+    .upload(filename, file, { upsert: true, contentType: 'image/webp' })
+  if (error) throw error
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from('avatars').getPublicUrl(filename)
+  return publicUrl
+}
+
+// Collision-free name for a one-off upload. Forms that overwrite a player's
+// single avatar (Settings) pass their own stable `player-<id>.webp` instead.
+export function randomAvatarFilename(): string {
+  return `player-${Date.now()}-${Math.random().toString(36).slice(2)}.webp`
 }
 
 // ── Players write path ────────────────────────────────────────────────

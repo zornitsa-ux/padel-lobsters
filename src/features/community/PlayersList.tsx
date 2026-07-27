@@ -3,8 +3,31 @@ import { ChevronDown, ChevronUp, User, RotateCcw } from 'lucide-react'
 import { FlagImg } from '../../components/ui/CountryPicker'
 import { PlayerRow } from '../../components/ui/PlayerRow'
 import { EmptyState } from '../../components/ui/EmptyState'
-import { corpReview } from './reviewScenarios'
+import { corpReview, type ReviewRegistration, type ReviewTournament } from './reviewScenarios'
 import PlayerProfileDrawer from './PlayerProfileDrawer'
+import type { CommunityPlayer, OrderedPlayer } from './playersSelectors'
+import type { DbMatchForStats } from '../../lib/playerStats'
+
+interface PlayersListProps {
+  orderedForRender: OrderedPlayer<CommunityPlayer>[]
+  hasPlayers: boolean
+  focusPlayerId?: string | number | null
+  focusRef?: React.RefObject<HTMLDivElement> | null
+  expandedId: string | number | null
+  setExpandedId: (id: string | number | null) => void
+  isAdmin: boolean
+  levelBadge: (level: number) => string
+  displayName: (player: CommunityPlayer) => string
+  matches: DbMatchForStats[]
+  registrations: ReviewRegistration[]
+  tournaments: ReviewTournament[]
+  playerAliases: Record<string, string>
+  players: CommunityPlayer[]
+  onNavigate?: (page: string, payload?: unknown) => void
+  onEdit: (player: CommunityPlayer) => void
+  onDelete: (id: string | number) => void
+  onRegeneratePin: (player: CommunityPlayer) => void
+}
 
 export default function PlayersList({
   orderedForRender,
@@ -25,7 +48,7 @@ export default function PlayersList({
   onEdit,
   onDelete,
   onRegeneratePin,
-}) {
+}: PlayersListProps) {
   return (
     <div className="space-y-2">
       {!hasPlayers && (
@@ -70,7 +93,7 @@ export default function PlayersList({
                   <>
                     <div className="flex-shrink-0 text-right flex flex-col items-end gap-1">
                       <span
-                        className={`text-sm font-bold px-2.5 py-1 rounded-lg ${levelBadge(p.playtomicLevel)}`}
+                        className={`text-sm font-bold px-2.5 py-1 rounded-lg ${levelBadge(p.playtomicLevel || 0)}`}
                       >
                         {(p.playtomicLevel || 0).toFixed(1)}
                       </span>

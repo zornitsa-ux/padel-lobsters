@@ -11,15 +11,8 @@ export const formatOrderTime = (ts: string | null | undefined): string => {
   )
 }
 
-// Supabase rejects with PostgrestError, not Error, so `err.message` needs a
-// guard before it reaches an alert.
-export const errorMessage = (err: unknown): string => {
-  if (err instanceof Error) return err.message
-  if (typeof err === 'object' && err !== null && 'message' in err) {
-    return String((err as { message: unknown }).message)
-  }
-  return 'Unknown error'
-}
+// Shared with the other features that surface a rejected Supabase call.
+export { errorMessage } from '../../lib/errors'
 
 // Sort key for order lists. A missing/unparseable timestamp sorts last rather
 // than producing NaN comparisons.

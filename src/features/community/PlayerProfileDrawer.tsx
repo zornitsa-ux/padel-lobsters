@@ -1,10 +1,39 @@
 import React from 'react'
 import { Pencil, Trash2, RotateCcw } from 'lucide-react'
 import { buildHistoricalAppearances, summariseAppearances } from '../../lib/playerHistory'
-import { buildPlayerStats } from '../../lib/playerStats'
-import { TOURNAMENTS } from '../../data/historicalTournaments'
+import {
+  buildPlayerStats,
+  type DbMatchForStats,
+  type HistoricalTournament,
+  type TournamentForStats,
+} from '../../lib/playerStats'
+import { TOURNAMENTS as TOURNAMENTS_RAW } from '../../data/historicalTournaments'
+import type { AppearanceSummary, HistoricalAppearance } from '../../lib/playerHistoryTypes'
 import { LEVEL_COLORS } from './playerConstants'
+import type { CommunityPlayer } from './playersSelectors'
 import { useMmRatings } from '../matchmaking/useMatchmaking'
+
+const TOURNAMENTS = TOURNAMENTS_RAW as unknown as HistoricalTournament[]
+
+// buildPlayerStats only models { id, date } on a tournament, but the chip row
+// prefers the event's name when it has one.
+interface NamedTournament extends TournamentForStats {
+  name?: string | null
+}
+
+interface PlayerProfileDrawerProps {
+  player: CommunityPlayer
+  players: CommunityPlayer[]
+  matches: DbMatchForStats[]
+  tournaments: NamedTournament[]
+  registrations: unknown[]
+  playerAliases: Record<string, string>
+  isAdmin: boolean
+  onNavigate?: (page: string, payload?: unknown) => void
+  onEdit: (player: CommunityPlayer) => void
+  onDelete: (id: string | number) => void
+  onRegeneratePin: (player: CommunityPlayer) => void
+}
 
 export default function PlayerProfileDrawer({
   player: p,
@@ -18,27 +47,30 @@ export default function PlayerProfileDrawer({
   onEdit,
   onDelete,
   onRegeneratePin,
-}) {
+}: PlayerProfileDrawerProps) {
   // Learned level (mm_rating/mm_sigma) is admin-only — it lives behind
   // admin_get_mm_ratings, not players_public, so non-admins never fetch it.
   const { data: mmRatings } = useMmRatings({ enabled: Boolean(isAdmin) })
   const learned = mmRatings?.[String(p.id)] ?? null
   const learnedDelta = learned ? learned.mu - (p.playtomicLevel || 0) : 0
 
+  const firstNameOf = (id: string): string | null => {
+    const found = players.find((x) => String(x.id) === id)
+    return found ? (found.name || '').split(' ')[0] : null
+  }
+
   const stats = buildPlayerStats(
-    p.id,
+    String(p.id),
     matches,
     tournaments,
     registrations,
-    players,
+    players.map((x) => ({ id: String(x.id), name: x.name || '' })),
     playerAliases || {},
     TOURNAMENTS,
   )
   const topH2HPairs = Object.values(stats.h2hPairs)
     .map((rec) => ({
-      names: rec.ids
-        .map((id) => (players.find((pl) => pl.id === id)?.name || '').split(' ')[0])
-        .filter(Boolean),
+      names: rec.ids.map((id) => firstNameOf(id)).filter((n): n is string => !!n),
       ...rec,
     }))
     .filter((h) => h.names.length > 0)
@@ -51,10 +83,10 @@ export default function PlayerProfileDrawer({
     Object.entries(stats.h2h)
       .filter(([, r]) => r.lost >= 1)
       .map(([oppId, r]) => {
-        const opp = players.find((x) => x.id === oppId)
-        return opp ? { name: opp.name.split(' ')[0], ...r } : null
+        const name = firstNameOf(oppId)
+        return name === null ? null : { name, ...r }
       })
-      .filter(Boolean)
+      .filter((x): x is NonNullable<typeof x> => x !== null)
       .sort((a, b) => b.lost - b.won - (a.lost - a.won) || b.lost - a.lost)[0] || null
 
   // 🤝 Best partner — teammate you win the most with.
@@ -62,18 +94,18 @@ export default function PlayerProfileDrawer({
   const partnerRows = Object.entries(stats.partners)
     .filter(([, r]) => r.games >= 1)
     .map(([pid, r]) => {
-      const partner = players.find((x) => x.id === pid)
-      return partner
-        ? {
-            name: partner.name.split(' ')[0],
+      const name = firstNameOf(pid)
+      return name === null
+        ? null
+        : {
+            name,
             wins: r.wins,
             losses: r.losses,
             games: r.games,
             winRate: r.games > 0 ? r.wins / r.games : 0,
           }
-        : null
     })
-    .filter(Boolean)
+    .filter((x): x is NonNullable<typeof x> => x !== null)
   const bestPartner =
     [...partnerRows]
       .filter((r) => r.wins >= 1)
@@ -85,16 +117,20 @@ export default function PlayerProfileDrawer({
       .filter((r) => r.losses >= 1)
       .sort((a, b) => b.losses - a.losses || a.winRate - b.winRate)[0] || null
 
+  // Rows come straight back out of the `tournaments` prop, so the name the
+  // stats type drops is still there.
+  const playerTournaments = stats.playerTournaments as NamedTournament[]
+
   // Historical tournaments (Dec 2025 → Apr 2026, hardcoded in History.jsx).
   // Linked via the player_aliases table.
-  const historical = buildHistoricalAppearances(p.id, playerAliases || {})
-  const histSummary = summariseAppearances(historical)
+  const historical = buildHistoricalAppearances(p.id, playerAliases || {}) as HistoricalAppearance[]
+  const histSummary = summariseAppearances(historical) as AppearanceSummary
   // Combined headline counts (DB tournaments + historical, deduped on id).
   const dbIds = new Set(stats.playerTournaments.map((t) => t.id))
   const totalEvents =
     stats.playerTournaments.length + historical.filter((h) => !dbIds.has(h.id)).length
 
-  const levelBadge = (level) => {
+  const levelBadge = (level: number | null | undefined) => {
     const idx = Math.min(7, Math.max(0, Math.floor(level || 0)))
     return LEVEL_COLORS[idx] || LEVEL_COLORS[0]
   }
@@ -321,17 +357,17 @@ export default function PlayerProfileDrawer({
             Tournaments
           </p>
           <div className="flex flex-wrap gap-1.5">
-            {stats.playerTournaments.map((t) => (
+            {playerTournaments.map((t) => (
               <button
                 key={t.id}
                 onClick={(e) => {
                   e.stopPropagation()
-                  onNavigate && onNavigate('scores', t)
+                  onNavigate?.('scores', t)
                 }}
                 className="text-xs bg-lob-cream text-lob-teal px-2.5 py-1 rounded-lg font-semibold hover:bg-lob-teal hover:text-white transition-all active:scale-95"
               >
                 {t.name ||
-                  new Date(t.date).toLocaleDateString('en-GB', {
+                  new Date(t.date ?? '').toLocaleDateString('en-GB', {
                     month: 'short',
                     year: '2-digit',
                   })}
@@ -450,7 +486,7 @@ export default function PlayerProfileDrawer({
           <div>
             <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider mb-0.5">
               Access PIN
-              {p.pinChanges > 0 && (
+              {(p.pinChanges ?? 0) > 0 && (
                 <span className="ml-1.5 text-amber-500/80 font-semibold normal-case tracking-normal">
                   · reset {p.pinChanges}×
                 </span>

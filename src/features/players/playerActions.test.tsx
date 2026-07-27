@@ -12,6 +12,9 @@ vi.mock('./playerQueries', () => ({
   updatePlayer: vi.fn(),
   deletePlayer: vi.fn(),
   regeneratePin: vi.fn(),
+  fetchPlayersPii: vi.fn(),
+  uploadAvatar: vi.fn(),
+  randomAvatarFilename: vi.fn(() => 'player-test.webp'),
 }))
 
 import * as q from './playerQueries'

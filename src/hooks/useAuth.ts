@@ -69,10 +69,6 @@ export default function useAuth() {
     return authApi.selfSignup(data)
   }, [])
 
-  const fetchAllPlayersWithPii = useCallback(async () => {
-    return authApi.fetchAllPlayersWithPii()
-  }, [])
-
   const logout = useCallback(async () => {
     await authApi.logout()
     setSession(null)
@@ -89,6 +85,5 @@ export default function useAuth() {
     sendMagicLink,
     requestMyEmailChange,
     selfSignup,
-    fetchAllPlayersWithPii,
   }
 }

@@ -2,6 +2,27 @@ import React from 'react'
 import { X, User, Camera } from 'lucide-react'
 import CountryPicker from '../../components/ui/CountryPicker'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
+import type { LobbyPrompt, PlayerFormState } from './playerConstants'
+import type { CommunityPlayer } from './playersSelectors'
+
+interface PlayerFormProps {
+  showForm: boolean
+  editId: string | number | null
+  isAdmin: boolean
+  form: PlayerFormState
+  setForm: React.Dispatch<React.SetStateAction<PlayerFormState>>
+  avatarPreview: string | null
+  fileInputRef: React.RefObject<HTMLInputElement>
+  handleAvatarChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+  handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void
+  saving: boolean
+  /** Existing player matching the typed name; drives the merge banner. */
+  mergePlayer: CommunityPlayer | null
+  setMergePlayer: (player: CommunityPlayer | null) => void
+  acceptMerge: () => void
+  lobbyPrompt: LobbyPrompt
+  onClose: () => void
+}
 
 export default function PlayerForm({
   showForm,
@@ -19,7 +40,7 @@ export default function PlayerForm({
   acceptMerge,
   lobbyPrompt,
   onClose,
-}) {
+}: PlayerFormProps) {
   if (!showForm) return null
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center">
@@ -127,7 +148,7 @@ export default function PlayerForm({
                 className="w-full py-2.5 bg-amber-500 text-white rounded-xl font-semibold text-sm active:scale-95 transition-all"
               >
                 {isAdmin
-                  ? `Update ${mergePlayer.name.split(' ')[0]}'s profile`
+                  ? `Update ${(mergePlayer.name || '').split(' ')[0]}'s profile`
                   : 'Yes, complete my profile'}
               </button>
               <button
@@ -144,7 +165,7 @@ export default function PlayerForm({
             <label className="label">Country</label>
             <CountryPicker
               value={form.country}
-              onChange={(val) => setForm((f) => ({ ...f, country: val }))}
+              onChange={(val: string) => setForm((f) => ({ ...f, country: val }))}
             />
           </div>
 
@@ -159,7 +180,9 @@ export default function PlayerForm({
                 { value: 'female', label: 'Female' },
               ]}
               value={form.gender}
-              onChange={(val) => setForm((f) => ({ ...f, gender: f.gender === val ? '' : val }))}
+              onChange={(val: string) =>
+                setForm((f) => ({ ...f, gender: f.gender === val ? '' : val }))
+              }
             />
           </div>
 

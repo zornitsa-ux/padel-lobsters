@@ -127,27 +127,9 @@ export async function fetchMyProfile() {
   }
 }
 
-// Admin-only: fetch all players with full PII via the admin-gated RPC.
-//
-// Phase 2b: uses get_all_players_with_pii_v2 which adds a 24h quota
-// (default 3 successful dumps per day, audit-logged) and per-device
-// rate limiting. Returns null on quota exhaustion or admin re-auth
-// failure — caller should treat null as "try again later or contact
-// another admin." Every successful call is visible in the admin
-// security-events panel.
-export async function fetchAllPlayersWithPii() {
-  try {
-    const { data, error } = await supabase.rpc('get_all_players_with_pii_v2')
-    if (error) {
-      console.error('get_all_players_with_pii_v2 error:', error)
-      return null
-    }
-    return Array.isArray(data) ? data : []
-  } catch (e) {
-    console.error('get_all_players_with_pii_v2 threw:', e)
-    return null
-  }
-}
+// Admin-only full-PII roster: moved to the players slice as fetchPlayersPii
+// (src/features/players/playerQueries.ts). It lived here only so AppContext
+// could expose it, and this version swallowed errors into a null return.
 
 // ── Self-service email change ───────────────────────────────────────
 // Wraps supabase.auth.updateUser. Supabase sends a confirmation link to

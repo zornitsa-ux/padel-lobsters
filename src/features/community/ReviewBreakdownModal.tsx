@@ -2,14 +2,37 @@ import React from 'react'
 import { X } from 'lucide-react'
 import { REVIEW_SCENARIOS } from './reviewScenarios'
 
-export default function ReviewBreakdownModal({ reviewBreakdown, onClose }) {
+// One message variant plus how many players receive it.
+export interface ReviewSample {
+  text: string
+  count: number
+}
+
+// A scenario bucket built by AdminTools: who lands in it and which message
+// variants fired. `samples` is keyed by message text.
+export interface ReviewBucket {
+  id: string
+  label: string
+  players: { id: string | number; name?: string | null }[]
+  samples: Map<string, ReviewSample>
+}
+
+interface ReviewBreakdownModalProps {
+  reviewBreakdown: ReviewBucket[]
+  onClose: () => void
+}
+
+export default function ReviewBreakdownModal({
+  reviewBreakdown,
+  onClose,
+}: ReviewBreakdownModalProps) {
   const PERF_IDS = new Set(REVIEW_SCENARIOS.filter((s) => s.performance).map((s) => s.id))
   const perfBuckets = reviewBreakdown.filter((b) => PERF_IDS.has(b.id))
   const otherBuckets = reviewBreakdown.filter((b) => !PERF_IDS.has(b.id))
   const perfPlayers = perfBuckets.reduce((n, b) => n + b.players.length, 0)
   const perfFiring = perfBuckets.length
 
-  const renderBucket = (b, accent) => (
+  const renderBucket = (b: ReviewBucket, accent: 'perf' | 'hist' | 'generic') => (
     <div
       key={b.id}
       className={`rounded-2xl border-2 px-3 py-3 ${

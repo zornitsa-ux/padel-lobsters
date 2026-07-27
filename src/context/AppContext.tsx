@@ -53,7 +53,6 @@ export function AppProvider({ children }: AppProviderProps) {
         loginWithPin: auth.loginWithPin,
         logout: auth.logout,
         fetchMyProfile: auth.fetchMyProfile,
-        fetchAllPlayersWithPii: auth.fetchAllPlayersWithPii,
         selfSignup,
         sendMagicLink: auth.sendMagicLink,
         requestMyEmailChange: auth.requestMyEmailChange,

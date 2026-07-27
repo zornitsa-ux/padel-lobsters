@@ -1,7 +1,13 @@
-import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
 import { useCallback, useMemo } from 'react'
 import { playerKeys } from './playerKeys'
-import { fetchPlayers, fetchMyProfile, type Player } from './playerQueries'
+import {
+  fetchPlayers,
+  fetchMyProfile,
+  fetchPlayersPii,
+  uploadAvatar,
+  type Player,
+} from './playerQueries'
 import * as mut from './playerQueries'
 import { mergeMyProfile } from './playerSelectors'
 
@@ -65,6 +71,30 @@ export function useMyProfile(id: string | null | undefined) {
     isLoading: base.isLoading || pii.isLoading,
     isError: base.isError || pii.isError,
   }
+}
+
+// Admin-only PII overlay for the roster, keyed by player id. `role` is passed
+// in rather than read from AppContext so the slice stays context-free; it is
+// the same value AppContext exposes (session.user.app_metadata.role).
+//
+// Every successful call writes a pin_attempts audit row, so this deliberately
+// does not refetch on focus — a tab-switch storm would spam that table. The
+// 5-minute staleTime matches the roster's, and playerKeys.all() invalidation
+// after a write still refreshes the overlay while the page is mounted.
+export function usePlayersPii({ role }: { role: string }) {
+  return useQuery({
+    queryKey: playerKeys.pii(),
+    queryFn: fetchPlayersPii,
+    enabled: role === 'admin',
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  })
+}
+
+// No cache to invalidate — the returned URL goes into the form and is
+// persisted by the following addPlayer/updatePlayer call.
+export function useAvatarUpload() {
+  return useMutation({ mutationFn: uploadAvatar })
 }
 
 export function usePlayerActions({ session, role }: { session: any; role: string }) {

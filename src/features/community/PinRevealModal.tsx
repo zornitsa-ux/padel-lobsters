@@ -1,6 +1,16 @@
 import React from 'react'
 
-export default function PinRevealModal({ pinReveal, onClose }) {
+export interface PinReveal {
+  name: string
+  pin: string
+}
+
+interface PinRevealModalProps {
+  pinReveal: PinReveal | null
+  onClose: () => void
+}
+
+export default function PinRevealModal({ pinReveal, onClose }: PinRevealModalProps) {
   if (!pinReveal) return null
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
