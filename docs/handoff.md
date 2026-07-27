@@ -1,7 +1,8 @@
 # Code-hygiene sweep — handoff
 
-State as of 2026-07-27, branch `clean-code-26-07`, **28 commits, nothing pushed**.
-Delete this file when the remaining work is done.
+State as of 2026-07-27 (second session), branch `clean-code-26-07`,
+**33 commits, nothing pushed**. Delete this file when the remaining work is
+done.
 
 Companion docs: `docs/conversions.md` (the conversion playbook — read it, it
 carries hard-won process rules), `ARCHITECTURE.md`, `CLAUDE.md`.
@@ -52,7 +53,7 @@ extraction, test review, and data slices with strong types.
 
 | Metric            | Start           | Now                              |
 | ----------------- | --------------- | -------------------------------- |
-| Tests             | 729             | 1016                             |
+| Tests             | 729             | 1047                             |
 | Lint              | 139 warnings    | 64 warnings, 0 errors (gates CI) |
 | `no-explicit-any` | 68              | 0 — rule is now `error`          |
 | TypeScript        | `strict: false` | `strict: true`                   |
@@ -81,64 +82,103 @@ fetches moved into the slice that owns the table; `src/components/ui/` grew from
   time.
 - `leagues.divisions` is nullable and every reader dereferenced it.
 - History counted half-scored matches; the event page did not.
+- `leagues.status` had a live production row (`signups_open`) outside the app's
+  union, and both `LeagueHome` and `LeagueDashboardCard` destructured the
+  status→badge lookup unguarded, so it rendered a TypeError rather than a badge.
+
+### Second session (2026-07-27): #16, #17/#18, #20 closed
+
+- **#16** (`dfb11b1`) — the grant leak was **47 functions, not the 3 recorded
+  here**. Still defence-in-depth: 36 call `require_admin()` internally and 5
+  are trigger functions Postgres won't invoke directly. One real gap closed —
+  `is_my_device_trusted` is SECURITY DEFINER, takes an arbitrary
+  `input_player_id` with no check that it belongs to the caller, and was
+  anon-granted.
+- **#17/#18** (`815fa6c`, `18d01c0`) — toast system + `MutationCache.onError`,
+  then the paths the global handler can't see. All remaining bare `catch {}`
+  in `src/` were audited and are legitimate (browser-API guards, date
+  fallbacks, a clipboard write whose failure is harmless).
+- **#20** (`6c3ac87`) — CHECK constraint plus a `statusPill` helper making both
+  lookups total.
+
+### Corrections to what this file used to say
+
+Three claims here were wrong and cost time to disprove — they are fixed above,
+recorded so nobody reinstates them:
+
+- **`forgot_my_pin` does not exist.** Dropped in `20260528000000`. It was
+  listed as intentionally anon-callable. Do not write a grant for it.
+- **`leagues.status`'s default was already fixed.** `20260523000001:38` changed
+  it from `'signups_open'` to `'draft'` long ago. The real problem was the
+  pre-existing _row_, not the default.
+- **The #16 blast radius was understated** — 3 functions listed, 47 actual.
 
 ---
 
 ## Remaining work
 
-Open tasks are in the task list (#15–#18, #20). Ordered by value:
+Open tasks: #15 (two parts) and the unscheduled TypeScript conversion. The
+2026-07-27 session closed #16, #17/#18 and #20 — see "What was done".
 
-1. **#16 — SECURITY, needs owner go-ahead.**
-   `20260518000007_...:5` does `REVOKE EXECUTE ON ALL FUNCTIONS IN SCHEMA public
-FROM anon, authenticated` — which leaves Postgres's default **PUBLIC** grant
-   intact, so the lockdown never took effect. `has_function_privilege('anon', …)`
-   is true for `admin_add_player`, `admin_regenerate_pin`,
-   `get_all_players_with_pii_v2`. Defence-in-depth failure, not a confirmed leak
-   (those RPCs call `require_admin()` internally). Fix needs
-   `REVOKE … FROM PUBLIC` plus explicit re-grants, checked function by function —
-   four functions are intentionally anon-callable (`verify_player_pin_v2`,
-   `self_signup_player`, `forgot_my_pin`, `is_my_device_trusted`).
+1. **#15 design-system phase 3, part A — bottom sheets.** Not cosmetic:
+   **12 of 14 hand-rolled bottom sheets lack the body-scroll-lock and
+   drag-to-close that `ui/Modal` provides**, which is a real mobile UX defect.
+   Highest-value item left.
 
-2. **#17 + #18 — swallowed errors, ~15 sites.** Eleven-plus instances of
-   swallow-and-continue were found across the sweep; these are what remain.
-   Widest: `useRegistrations.ts:52` has a bare `catch {}`, so every payment-status
-   write in `Registration.tsx` and `Payments.tsx` silently no-ops while the UI
-   shows the old value. Also `Dashboard` reads `data` from eight hooks and checks
-   `isError` on none — a failed `useTournaments` renders "No upcoming events
-   right now" with a Create Event button. **These want one project-wide
-   convention for surfacing failures, not fifteen ad-hoc fixes.** That is a
-   design decision for the owner.
+2. **#15 part B — remaining components.** `CollapsibleCard`, `StatTile`,
+   `ProgressBar`, `ConfirmDialog` (14 `window.confirm` calls), and ~650
+   remaining `text-gray-*`.
 
-3. **#20 — `leagues.status` migration.** No CHECK constraint, and the column
-   default `'signups_open'` is not in the app's `LeagueStatus` union, so
-   `PHASE_PILL[status]` would throw on such a row. Latent because
-   `admin_create_league` hardcodes `'draft'`. Maps are keyed by `string` as a
-   stopgap.
-
-4. **#15 — design-system phase 3.** Backlog with evidence in the task. Most
-   valuable item is not cosmetic: **12 of 14 hand-rolled bottom sheets lack the
-   body-scroll-lock and drag-to-close that `ui/Modal` provides** — a real mobile
-   UX defect. Also `CollapsibleCard`, `StatTile`, `ProgressBar`, `ConfirmDialog`
-   (14 `window.confirm` calls), and ~650 remaining `text-gray-*`.
-
-5. **Not scheduled:** `src/features/settings/`, `src/features/oscars/` and
-   `src/components/` are still JS/JSX (~43 files). They were never in scope.
-   `PlayerForm.tsx`/`SignupRequest.jsx` are a copy-paste pair worth extracting.
+3. **TypeScript conversion of `src/features/settings/`, `src/features/oscars/`
+   and `src/components/`** (~43 files). Never in scope originally; now the last
+   big untyped surface. `PlayerForm.tsx`/`SignupRequest.jsx` are a copy-paste
+   pair worth extracting. Follow `docs/conversions.md`.
 
 ## Owner action items (blocking)
 
-- **Push `supabase/migrations/20260726234531_remove_pii_dump_quota.sql` to
-  production.** Commit `eb14e5e` depends on it: the community conversion slices
-  the PII fetch, and under the old 3-reads/24h cap an admin would get an empty
-  roster. Manual `npx supabase db push` from `main`.
-- **Visual pass over the design-system changes** in the running app. 21 controls
-  changed token (`bg-gray-100` → `bg-lob-teal-light`), five avatars now show
-  photos where they showed letters, `TeamPage` markers went two letters → one,
-  and oscars error banners are coral rather than red. No test can tell you
-  whether that looks right.
-- Decide #16 and the #17/#18 error convention.
+- **Push two migrations to production** — manual `npx supabase db push` from
+  `main`:
+  - `20260726234531_remove_pii_dump_quota.sql` — commit `eb14e5e` depends on
+    it; without it an admin gets an empty roster under the old 3-reads/24h cap.
+  - `20260727195327_league_status_check_constraint.sql` — **this one DELETES
+    production data** (one stale league plus 3 cascading `league_interests`
+    signups), unlike everything else on this branch. Confirmed, but push it
+    knowingly.
+  - `20260727194010_lock_down_function_grants.sql` is additive and safe, but
+    it narrows who can call what. If an RPC starts returning "permission
+    denied for function" after deploy, the allowlist missed a caller — the fix
+    is a grant, not a revert.
+- **Visual pass over the design-system changes** in the running app. 21
+  controls changed token (`bg-gray-100` → `bg-lob-teal-light`), five avatars
+  now show photos where they showed letters, `TeamPage` markers went two
+  letters → one, oscars error banners are coral rather than red. Also new:
+  the toast component (`src/components/ui/Toast.tsx`) has never been seen on a
+  real device — check it clears the bottom nav and reads well over content.
+  No test can tell you whether any of that looks right.
 
 ## Landmines — do not trip these
+
+- **Never commit while a worker is mid-flight.** The `lint-staged` pre-commit
+  hook runs `git stash` to back up unstaged changes. With a worker editing the
+  tree, that stashes its in-progress work. This is the documented
+  two-workers-collided failure arriving by a different route — the coordinator
+  is not exempt from it just because only one worker is running.
+- **`ALTER DEFAULT PRIVILEGES` does not lock down functions on this stack.**
+  It was tried in `20260727194010` and removed. The `pg_default_acl` row stores
+  correctly without PUBLIC, yet functions created afterwards still come out
+  with `=X` (PUBLIC EXECUTE); no event trigger explains it. It also cuts
+  against Supabase, which ships its own default ACL granting
+  anon/authenticated on `public` functions — that model expects
+  `SECURITY DEFINER` plus an internal check. Regression protection is
+  `npm run db:grants:check` in CI, and that is deliberate, not a shortcut.
+- **`verify_player_pin_v2` must keep its `anon` grant.** Nothing in the browser
+  calls it, so it reads as droppable. The `verify-pin` Edge Function calls it
+  with the **anon** key (`supabase/functions/verify-pin/index.ts:75`,
+  `anonHeaders`), so removing the grant breaks every PIN login.
+- **`supabase/expected_function_grants.txt` is a deliberate allowlist.** When
+  `db:grants:check` fails, read the diff before regenerating — `npm run
+db:grants` will happily bless a leak. A new function that should not be
+  client-callable needs `REVOKE ... FROM PUBLIC` in the migration creating it.
 
 - **`Schedule.tsx`'s `generated` preview/save block is LIVE.** After the V1
   matcher deletion it reads as unreachable. It is not: `handleEditSchedule`
