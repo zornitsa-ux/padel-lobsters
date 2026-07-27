@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { Badge } from '../../../components/ui/Badge'
+import { statusPill } from './statusPill'
+import type { StatusPill } from './statusPill'
 import { PageHeader } from '../../../components/ui/PageHeader'
 import { DivisionPills } from './DivisionPills'
 import { DraftSection } from './DraftSection'
@@ -10,15 +12,7 @@ import { TeamPage } from './TeamPage'
 import { leagueDivisions } from '../domain/types'
 import type { Division, League, LeagueTeam, LeagueMatch } from '../domain/types'
 
-// Keyed by the raw `leagues.status` string: the column has no CHECK constraint,
-// so an unknown status must not be a compile-time impossibility.
-const PHASE_PILL: Record<
-  string,
-  {
-    variant: 'league-draft' | 'league-group-stage' | 'league-knockout' | 'league-completed'
-    label: string
-  }
-> = {
+const PHASE_PILL: Record<string, StatusPill> = {
   draft: { variant: 'league-draft', label: 'Registering' },
   group_stage: { variant: 'league-group-stage', label: 'Group Stage' },
   knockout: { variant: 'league-knockout', label: 'Knockout' },
@@ -57,7 +51,7 @@ export function LeagueHome({ league, teams, matches, myTeam }: LeagueHomeProps) 
         })
     : []
 
-  const pill = PHASE_PILL[league.status]
+  const pill = statusPill(PHASE_PILL, league.status)
 
   return (
     <div className="-mx-4">
