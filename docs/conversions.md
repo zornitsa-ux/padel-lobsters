@@ -125,11 +125,33 @@ npm test && npm run typecheck && npm run lint && npm run format:check && npm run
 ```
 
 Record the before/after numbers for tests, lint warnings and `no-explicit-any`
-count, and don't regress any of them. If the tree is dirty, take the baseline
-with `git stash -u` (the `-u` matters — untracked test files change the count).
+count, and don't regress any of them.
+
+### Never `git stash` to take a baseline
+
+Earlier revisions of this doc said to use `git stash -u` when the tree is dirty.
+**Don't.** Stash is global git state, so on 2026-07-27 the community conversion
+stashed the home conversion's in-flight work twice while both were running. No
+work was lost, but the `git mv` renames were split into staged-adds plus
+unstaged-deletes and a repo-wide `npm run format` reflowed the other worker's
+files. File-level scopes being disjoint does not make two workers safe if they
+both touch git state.
+
+Use a read-only worktree at HEAD instead — it cannot disturb anyone:
+
+```bash
+git worktree add /tmp/baseline HEAD
+(cd /tmp/baseline && npm ci --silent && npm test && npx eslint .)
+git worktree remove /tmp/baseline
+```
+
+If a baseline isn't worth that, report your own numbers and say they are
+unverified against HEAD. Also: scope `git add` to your own paths, and never
+`git add -A` — the same lesson, one command over.
 
 Run `npm run format` before `format:check`; Prettier will reflow the renamed
-files.
+files. If another conversion is running concurrently, scope it
+(`npx prettier --write src/features/<yours>/`) rather than reformatting the repo.
 
 ## Ordering note
 
