@@ -100,6 +100,12 @@ fetches moved into the slice that owns the table; `src/components/ui/` grew from
   fallbacks, a clipboard write whose failure is harmless).
 - **#20** (`6c3ac87`) — CHECK constraint plus a `statusPill` helper making both
   lookups total.
+- **#15 bottom sheets** (`a18d87f`) — ten of twelve migrated to `ui/Modal`.
+  `RematchFixPanel` and `AuthGate`'s `PinPrompt` deliberately left alone;
+  their contracts genuinely differ (see the commit). `Modal` gained a
+  `dismissible` prop so long forms can't be dismissed by a mis-tap.
+- **#15 `ConfirmDialog`** (`8a2e2bb`) — all 17 blocking `confirm()` calls
+  replaced with a promise-based dialog built on `ui/Modal`.
 
 ### Corrections to what this file used to say
 
@@ -117,22 +123,30 @@ recorded so nobody reinstates them:
 
 ## Remaining work
 
-Open tasks: #15 (two parts) and the unscheduled TypeScript conversion. The
-2026-07-27 session closed #16, #17/#18 and #20 — see "What was done".
+The 2026-07-27 session closed #16, #17/#18, #20, and both the bottom sheets
+and `ConfirmDialog` from #15 — see "What was done". What is left:
 
-1. **#15 design-system phase 3, part A — bottom sheets.** Not cosmetic:
-   **12 of 14 hand-rolled bottom sheets lack the body-scroll-lock and
-   drag-to-close that `ui/Modal` provides**, which is a real mobile UX defect.
-   Highest-value item left.
+1. **#15 — three display components not yet extracted:** `CollapsibleCard`,
+   `StatTile`, `ProgressBar`. Find the duplicated markup before designing the
+   props; do not invent an API from the names alone.
 
-2. **#15 part B — remaining components.** `CollapsibleCard`, `StatTile`,
-   `ProgressBar`, `ConfirmDialog` (14 `window.confirm` calls), and ~650
-   remaining `text-gray-*`.
+2. **#15 — the `text-gray-*` token sweep.** Measured: **633 occurrences across
+   90 files** (the "~650" previously recorded is accurate). Mechanical, but it
+   is the single largest source of visual risk left, and it cannot be verified
+   by any test. **Do it in one pass, immediately before a visual review**, not
+   interleaved with behavioural work — otherwise a regression it causes gets
+   attributed to whatever else shipped alongside it.
 
 3. **TypeScript conversion of `src/features/settings/`, `src/features/oscars/`
    and `src/components/`** (~43 files). Never in scope originally; now the last
    big untyped surface. `PlayerForm.tsx`/`SignupRequest.jsx` are a copy-paste
    pair worth extracting. Follow `docs/conversions.md`.
+
+**Sequencing note:** the visual-review debt is now substantial — the design
+system changes from the first session, plus (second session) the toast
+component, ten migrated bottom sheets, and 17 replaced confirm dialogs.
+Getting a visual pass done before starting the `text-gray-*` sweep will make
+any regression far cheaper to attribute.
 
 ## Owner action items (blocking)
 
