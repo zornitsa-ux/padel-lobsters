@@ -43,9 +43,16 @@ jobs:
       - name: Start Supabase
         run: supabase start
 
+      - name: Install dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      # Piped through Prettier because the committed file is formatted (it goes
+      # through lint-staged like any other source file), while the generator
+      # emits unformatted output. Diffing raw output against it fails always.
       - name: Check for drift
         run: |
-          supabase gen types typescript --local > /tmp/generated.ts
+          supabase gen types typescript --local \
+            | npx prettier --stdin-filepath database.types.ts > /tmp/generated.ts
           if ! diff -u src/lib/database.types.ts /tmp/generated.ts; then
             echo ''
             echo '::error::database.types.ts is stale. Run `npm run db:types` and commit the result.'
