@@ -59,3 +59,10 @@ jobs:
             exit 1
           fi
           echo 'database.types.ts matches the migrations.'
+
+      # Same idea as the types check above, applied to function EXECUTE grants:
+      # the stack from `supabase start` is already running, so checking the
+      # anon/authenticated allowlist here is nearly free and catches a
+      # migration that silently re-widens (or narrows) who can call what.
+      - name: Check for function grant drift
+        run: npm run db:grants:check
