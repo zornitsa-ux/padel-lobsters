@@ -36,15 +36,36 @@ import {
   hasAllMatchesScored,
   roundsForDuration,
 } from './schedule/utils'
+import { errorMessage } from '../../lib/errors'
+import type { EntityId, ScheduleRound, ScheduleWarning } from './schedule/types'
+import type { EventNavigate } from './eventHelpers'
+import type { NormalisedTournament, Player } from '../../lib/normalise'
+import type { GenderMode } from '../matchmaking/domain/types'
+import type { RatingReviewProps } from '../matchmaking/ui/RatingReview'
+
+// A player slot the admin has tapped first in swap mode.
+interface SwapAnchor {
+  roundIdx: number
+  matchIdx: number
+  team: 1 | 2
+  playerIdx: number
+  playerId: EntityId
+}
 
 // ── Component ────────────────────────────────────────────────────────────────
 
-export default function Schedule({ tournament, onNavigate }) {
+export default function Schedule({
+  tournament,
+  onNavigate,
+}: {
+  tournament: NormalisedTournament | null
+  onNavigate: EventNavigate
+}) {
   const { session } = useApp()
   const { saveMatches, updateMatch } = useMatchActions()
   const updateMut = useUpdateTournament()
   const updateTournament = useCallback(
-    (id, data) => updateMut.mutateAsync({ id, data }),
+    (id: string, data: Partial<NormalisedTournament>) => updateMut.mutateAsync({ id, data }),
     [updateMut],
   )
   const { data: players = [] } = usePlayers()
@@ -54,13 +75,13 @@ export default function Schedule({ tournament, onNavigate }) {
 
   const [rounds, setRounds] = useState(4)
   const [generating, setGenerating] = useState(false)
-  const [generated, setGenerated] = useState(null)
+  const [generated, setGenerated] = useState<ScheduleRound[] | null>(null)
   const [saved, setSaved] = useState(false)
   const [activeRound, setActiveRound] = useState(0)
   const [swapMode, setSwapMode] = useState(false)
-  const [swapFirst, setSwapFirst] = useState(null) // { roundIdx, matchIdx, team, playerIdx, playerId }
-  const [swapWarnings, setSwapWarnings] = useState([]) // warnings after a swap
-  const [scheduleWarnings, setScheduleWarnings] = useState([]) // full validation after generate
+  const [swapFirst, setSwapFirst] = useState<SwapAnchor | null>(null)
+  const [swapWarnings, setSwapWarnings] = useState<string[]>([]) // warnings after a swap
+  const [scheduleWarnings, setScheduleWarnings] = useState<ScheduleWarning[]>([]) // full validation after generate
 
   // Load saved schedule into edit preview
   const handleEditSchedule = () => {
@@ -73,7 +94,13 @@ export default function Schedule({ tournament, onNavigate }) {
     setSwapMode(true)
   }
 
-  const handlePlayerTap = (roundIdx, matchIdx, team, playerIdx, playerId) => {
+  const handlePlayerTap = (
+    roundIdx: number,
+    matchIdx: number,
+    team: 1 | 2,
+    playerIdx: number,
+    playerId: EntityId,
+  ) => {
     if (!swapMode || !generated) return
     if (!swapFirst) {
       setSwapFirst({ roundIdx, matchIdx, team, playerIdx, playerId })
@@ -85,28 +112,31 @@ export default function Schedule({ tournament, onNavigate }) {
     }
     // Perform swap
     setGenerated((prev) => {
+      if (!prev) return prev
+      const anchor = swapFirst
       const next = prev.map((r) => ({
         ...r,
         matches: r.matches.map((m) => ({
           ...m,
-          team1Ids: [...m.team1Ids],
-          team2Ids: [...m.team2Ids],
+          team1Ids: [...(m.team1Ids || [])],
+          team2Ids: [...(m.team2Ids || [])],
         })),
       }))
-      const srcMatch = next[swapFirst.roundIdx].matches[swapFirst.matchIdx]
+      const srcMatch = next[anchor.roundIdx].matches[anchor.matchIdx]
       const dstMatch = next[roundIdx].matches[matchIdx]
-      const srcArr = swapFirst.team === 1 ? srcMatch.team1Ids : srcMatch.team2Ids
+      const srcArr = anchor.team === 1 ? srcMatch.team1Ids : srcMatch.team2Ids
       const dstArr = team === 1 ? dstMatch.team1Ids : dstMatch.team2Ids
-      const tmp = srcArr[swapFirst.playerIdx]
-      srcArr[swapFirst.playerIdx] = dstArr[playerIdx]
+      if (!srcArr || !dstArr) return prev
+      const tmp = srcArr[anchor.playerIdx]
+      srcArr[anchor.playerIdx] = dstArr[playerIdx]
       dstArr[playerIdx] = tmp
       // Recalculate levels
-      const lvl = (ids) =>
-        ids.reduce((s, id) => s + (playerById.get(String(id))?.playtomicLevel || 0), 0)
-      srcMatch.team1Level = lvl(srcMatch.team1Ids)
-      srcMatch.team2Level = lvl(srcMatch.team2Ids)
-      dstMatch.team1Level = lvl(dstMatch.team1Ids)
-      dstMatch.team2Level = lvl(dstMatch.team2Ids)
+      const lvl = (ids: EntityId[]) =>
+        ids.reduce<number>((s, id) => s + (playerById.get(String(id))?.playtomicLevel || 0), 0)
+      srcMatch.team1Level = lvl(srcMatch.team1Ids || [])
+      srcMatch.team2Level = lvl(srcMatch.team2Ids || [])
+      dstMatch.team1Level = lvl(dstMatch.team1Ids || [])
+      dstMatch.team2Level = lvl(dstMatch.team2Ids || [])
       // Re-validate entire schedule after swap
       const allWarnings = validateSchedule(next, registeredPlayers, genderMode)
       setScheduleWarnings(allWarnings)
@@ -135,7 +165,11 @@ export default function Schedule({ tournament, onNavigate }) {
   // (seed rows, anything predating D-020) silently fell through to the legacy
   // annealed path — since deleted along with the other V1 generators.
   const useV2Matcher = isAdmin
-  const v2GenderMode = ['men', 'women', 'mixed'].includes(genderMode) ? genderMode : 'mixed'
+  const v2GenderMode: GenderMode = (['men', 'women', 'mixed'] as const).includes(
+    genderMode as GenderMode,
+  )
+    ? (genderMode as GenderMode)
+    : 'mixed'
   const v2Rounds = roundsForDuration(tournament?.duration)
   const scoresEntered = useMemo(
     () => (savedMatches || []).some((m) => m.score1 != null || m.score2 != null),
@@ -186,14 +220,14 @@ export default function Schedule({ tournament, onNavigate }) {
   const allMatchesScored = useMemo(() => hasAllMatchesScored(savedRounds), [savedRounds])
 
   const playerById = useMemo(() => buildPlayerById(players), [players])
-  const getPlayer = useCallback((id) => playerById.get(String(id)), [playerById])
-  const sn = (p) => shortName(p, registeredPlayers) // smart short name
+  const getPlayer = useCallback((id: EntityId) => playerById.get(String(id)), [playerById])
+  const sn = (p: Player) => shortName(p, registeredPlayers) // smart short name
   const [finishing, setFinishing] = useState(false)
   const [finishError, setFinishError] = useState('')
   // Count of adjustments auto-applied without review on THIS Finish action.
   // Session-only (unlike the queue, this has no persisted source to re-derive
   // from post-refresh), so it's null except right after a same-session Finish.
-  const [v2AppliedCount, setV2AppliedCount] = useState(null)
+  const [v2AppliedCount, setV2AppliedCount] = useState<number | null>(null)
   const [revealing, setRevealing] = useState(false)
   const [revealError, setRevealError] = useState('')
 
@@ -266,11 +300,11 @@ export default function Schedule({ tournament, onNavigate }) {
     setV2AppliedCount(payload.updates.filter((u) => !u.flagged).length)
   }
 
-  const handleV2Review = async ({ eventId, action, delta }) => {
+  const handleV2Review: RatingReviewProps['onReview'] = async ({ eventId, action, delta }) => {
     try {
       await reviewMutation.mutateAsync({ eventId, action, delta })
     } catch (err) {
-      setFinishError(err?.message || 'Could not record review.')
+      setFinishError(errorMessage(err, 'Could not record review.'))
     }
   }
 
@@ -282,7 +316,7 @@ export default function Schedule({ tournament, onNavigate }) {
     try {
       await updateTournament(tournament.id, { resultsSharedAt: new Date().toISOString() })
     } catch (err) {
-      setRevealError(err?.message || 'Could not reveal results.')
+      setRevealError(errorMessage(err, 'Could not reveal results.'))
     } finally {
       setRevealing(false)
     }
@@ -322,7 +356,7 @@ export default function Schedule({ tournament, onNavigate }) {
       })
       onNavigate('scores', tournament)
     } catch (err) {
-      setFinishError(err?.message || 'Could not finish tournament.')
+      setFinishError(errorMessage(err, 'Could not finish tournament.'))
     } finally {
       setFinishing(false)
     }
@@ -535,8 +569,9 @@ export default function Schedule({ tournament, onNavigate }) {
               )}
 
               {display[activeRound].matches.map((match, i) => {
-                const t1 = match.team1Ids?.map(getPlayer).filter(Boolean) || []
-                const t2 = match.team2Ids?.map(getPlayer).filter(Boolean) || []
+                const isPlayer = (p: Player | undefined): p is Player => Boolean(p)
+                const t1 = match.team1Ids?.map(getPlayer).filter(isPlayer) || []
+                const t2 = match.team2Ids?.map(getPlayer).filter(isPlayer) || []
                 const isSwapping = swapMode && generated
 
                 return (
@@ -631,7 +666,16 @@ export default function Schedule({ tournament, onNavigate }) {
                       <div className="flex-shrink-0 flex flex-col items-center gap-1">
                         <span className="text-xs text-gray-400 font-medium">vs</span>
                         {match.id && isAdmin ? (
-                          <ScoreEntry match={match} onUpdate={updateMatch} variant="input" />
+                          <ScoreEntry
+                            match={{
+                              id: String(match.id),
+                              score1: match.score1 ?? null,
+                              score2: match.score2 ?? null,
+                              completed: Boolean(match.completed),
+                            }}
+                            onUpdate={updateMatch}
+                            variant="input"
+                          />
                         ) : (
                           <div className="flex items-center gap-1 text-lg font-bold text-gray-600">
                             <span>{match.score1 ?? '—'}</span>
@@ -685,11 +729,11 @@ export default function Schedule({ tournament, onNavigate }) {
               })}
 
               {/* Sitting out */}
-              {display[activeRound].sitting?.length > 0 && (
+              {(display[activeRound].sitting || []).length > 0 && (
                 <div className="bg-gray-50 rounded-xl p-3">
                   <p className="text-xs font-semibold text-gray-500 mb-2">Sitting out this round</p>
                   <div className="flex flex-wrap gap-2">
-                    {display[activeRound].sitting.map((id) => {
+                    {(display[activeRound].sitting || []).map((id) => {
                       const p = getPlayer(id)
                       return p ? (
                         <span

@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useMemo, useState, type FormEvent } from 'react'
 import { useApp } from '../../context/useApp'
 import { useUpdateTournament } from './useTournaments'
 import { useTransfers, useTransferActions } from './useTransfers'
@@ -35,8 +35,28 @@ import WaitlistSection from './registration/WaitlistSection'
 import CancelledSection from './registration/CancelledSection'
 import ScoresAndRankingSection from './registration/ScoresAndRankingSection'
 import { useScoreSync } from './useScoreSync'
+import { errorMessage } from '../../lib/errors'
+import type { EventFormValues } from './eventConstants'
+import type { EventNavigate } from './eventHelpers'
+import type { NormalisedTournament } from '../../lib/normalise'
+import type { Player } from '../../lib/normalise'
+import type { NormalisedRegistration } from './registrationQueries'
+import type { NormalisedTransfer } from './transferQueries'
+import type { SetEventFormCourt } from './EventFormModal'
+import type {
+  DisplayName,
+  GetPlayer,
+  PaymentSheet,
+  TransferShareTarget,
+} from './registration/utils'
 
-export default function Registration({ tournament, onNavigate }) {
+export default function Registration({
+  tournament,
+  onNavigate,
+}: {
+  tournament: NormalisedTournament | null
+  onNavigate: EventNavigate
+}) {
   const { session } = useApp()
   const { registerPlayer, updateRegistration, cancelRegistration } = useRegistrationActions()
   const { updateMatch } = useMatchActions()
@@ -44,7 +64,7 @@ export default function Registration({ tournament, onNavigate }) {
   const { respondToTransfer, cancelTransfer } = useTransferActions({ session })
   const updateMut = useUpdateTournament()
   const updateTournament = useCallback(
-    (id, data) => updateMut.mutateAsync({ id, data }),
+    (id: string, data: Partial<NormalisedTournament>) => updateMut.mutateAsync({ id, data }),
     [updateMut],
   )
   const { data: players = [] } = usePlayers()
@@ -61,7 +81,7 @@ export default function Registration({ tournament, onNavigate }) {
   })
 
   // Show first name for players, full name for admins
-  const displayName = useCallback(
+  const displayName = useCallback<DisplayName>(
     (p) => (isAdmin ? p.name : (p.name || '').split(' ')[0]),
     [isAdmin],
   )
@@ -72,7 +92,7 @@ export default function Registration({ tournament, onNavigate }) {
   const [saving, setSaving] = useState(false)
 
   // Post-registration payment sheet
-  const [paymentSheet, setPaymentSheet] = useState(null) // { regId, playerId, status }
+  const [paymentSheet, setPaymentSheet] = useState<PaymentSheet | null>(null)
   const [tikkieClicked, setTikkieClicked] = useState(false)
   const [declaring, setDeclaring] = useState(false)
 
@@ -81,7 +101,7 @@ export default function Registration({ tournament, onNavigate }) {
     tournamentDate: tournament?.date,
   })
 
-  const openPaymentSheet = (sheet) => {
+  const openPaymentSheet = (sheet: PaymentSheet) => {
     setPaymentSheet(sheet)
     setTikkieClicked(false)
   }
@@ -95,16 +115,17 @@ export default function Registration({ tournament, onNavigate }) {
   //   shareModal   : { transferId, toPlayer } when the share-actions /
   //                  pending modal is open (after creating an offer or
   //                  via 'Resend WhatsApp' on a persistent pending banner)
-  const [pickerForReg, setPickerForReg] = useState(null)
-  const [shareModal, setShareModal] = useState(null)
-  const [respondingTo, setRespondingTo] = useState(null) // transferId being acted on
+  const [pickerForReg, setPickerForReg] = useState<{ reg: NormalisedRegistration } | null>(null)
+  const [shareModal, setShareModal] = useState<TransferShareTarget | null>(null)
+  const [respondingTo, setRespondingTo] = useState<string | null>(null) // transferId being acted on
 
   const [showEditForm, setShowEditForm] = useState(false)
-  const [editForm, setEditForm] = useState(emptyForm)
+  const [editForm, setEditForm] = useState<EventFormValues>(emptyForm)
   const [editSaving, setEditSaving] = useState(false)
 
   const openEdit = useCallback(() => {
     const t = tournament
+    if (!t) return
     setEditForm({
       name: t.name || '',
       date: t.date || '',
@@ -134,11 +155,12 @@ export default function Registration({ tournament, onNavigate }) {
     setShowEditForm(true)
   }, [tournament])
 
-  const handleEditSubmit = async (e) => {
+  const handleEditSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    if (!tournament) return
     setEditSaving(true)
     try {
-      const mp = parseInt(editForm.maxPlayers) || 16
+      const mp = parseInt(String(editForm.maxPlayers)) || 16
       const data = {
         name: editForm.name,
         date: editForm.date,
@@ -148,10 +170,10 @@ export default function Registration({ tournament, onNavigate }) {
         format: editForm.format,
         genderMode: editForm.genderMode,
         courtBookingMode: editForm.courtBookingMode,
-        duration: editForm.duration || 90,
+        duration: Number(editForm.duration) || 90,
         totalPrice:
           editForm.courtBookingMode === 'admin_all'
-            ? (parseFloat(editForm.pricePerPerson) || 0) * mp
+            ? (parseFloat(String(editForm.pricePerPerson)) || 0) * mp
             : 0,
         tikkieLink: editForm.courtBookingMode === 'admin_all' ? editForm.tikkieLink || '' : '',
         courts: editForm.courts.map((c) => ({
@@ -159,7 +181,7 @@ export default function Registration({ tournament, onNavigate }) {
           booked: !!c.booked,
           costPerPerson:
             editForm.courtBookingMode === 'player_responsible'
-              ? parseFloat(c.costPerPerson) || 0
+              ? parseFloat(String(c.costPerPerson)) || 0
               : 0,
           responsible:
             editForm.courtBookingMode === 'player_responsible' ? c.responsible || '' : '',
@@ -183,10 +205,10 @@ export default function Registration({ tournament, onNavigate }) {
       ],
     }))
 
-  const removeEditCourt = (i) =>
+  const removeEditCourt = (i: number) =>
     setEditForm((f) => ({ ...f, courts: f.courts.filter((_, idx) => idx !== i) }))
 
-  const setEditCourt = (i, field, value) =>
+  const setEditCourt: SetEventFormCourt = (i, field, value) =>
     setEditForm((f) => ({
       ...f,
       courts: f.courts.map((c, idx) => (idx === i ? { ...c, [field]: value } : c)),
@@ -212,11 +234,11 @@ export default function Registration({ tournament, onNavigate }) {
   )
 
   const playerById = useMemo(() => {
-    const map = new Map()
+    const map = new Map<string, Player>()
     for (const player of players) map.set(player.id, player)
     return map
   }, [players])
-  const getPlayer = useCallback((id) => playerById.get(id), [playerById])
+  const getPlayer = useCallback<GetPlayer>((id) => playerById.get(id), [playerById])
 
   const pendingForTournament = useMemo(() => {
     if (!tournamentId) return []
@@ -267,9 +289,13 @@ export default function Registration({ tournament, onNavigate }) {
     try {
       const { regId, status } = await registerPlayer(tournament.id, selectedPlayer, maxPlayers)
       // Only show payment sheet for directly-registered players (not waitlist),
-      // and only if there's a Tikkie link or a cost set
-      if (status === 'registered' && (hasTikkie || costPerPlayer > 0)) {
-        openPaymentSheet({ regId, playerId: selectedPlayer, status })
+      // and only if there's a Tikkie link or a cost set. A null regId means the
+      // insert failed (registerPlayer swallows the error and still reports the
+      // status it *would* have used), so there is no registration to pay for.
+      if (regId && status === 'registered' && (hasTikkie || costPerPlayer > 0)) {
+        // registerPlayer inserts every row with payment_status 'unpaid'; the
+        // sheet's Tikkie handler needs the *payment* status, not `status`.
+        openPaymentSheet({ regId, playerId: selectedPlayer, paymentStatus: 'unpaid' })
       }
       setSelectedPlayer('')
       setShowAdd(false)
@@ -291,7 +317,7 @@ export default function Registration({ tournament, onNavigate }) {
   }
 
   // ── Self-declare payment by reg ID (used by MyRegistrationCard) ───────────
-  const handleSelfDeclareById = async (regId) => {
+  const handleSelfDeclareById = async (regId: string) => {
     await updateRegistration(
       regId,
       { paymentStatus: 'pending_confirmation', paymentMethod: 'tikkie' },
@@ -316,7 +342,7 @@ export default function Registration({ tournament, onNavigate }) {
   // Only upgrades from unpaid → tikkied. Never downgrades someone who already
   // self-declared "paid" or whom the admin already confirmed — even if they
   // re-open the Tikkie link (e.g. to check their payment history).
-  const markTikkied = async (regId, currentStatus) => {
+  const markTikkied = async (regId: string, currentStatus: string | undefined) => {
     if (!regId) return
     if (currentStatus && currentStatus !== 'unpaid') return
     try {
@@ -333,7 +359,7 @@ export default function Registration({ tournament, onNavigate }) {
   }
 
   // ── Cancel ────────────────────────────────────────────────────────────────
-  const handleCancel = async (reg) => {
+  const handleCancel = async (reg: NormalisedRegistration) => {
     if (!isAdmin) {
       onNavigate?.('settings')
       return
@@ -342,7 +368,7 @@ export default function Registration({ tournament, onNavigate }) {
     await cancelRegistration(reg.id, tournament.id)
   }
 
-  const handleMoveToRegistered = async (reg) => {
+  const handleMoveToRegistered = async (reg: NormalisedRegistration) => {
     if (!isAdmin) {
       onNavigate?.('settings')
       return
@@ -355,14 +381,14 @@ export default function Registration({ tournament, onNavigate }) {
   // registration_transfers. The actual swap of the registration rows
   // happens server-side once the recipient accepts (respond_to_transfer)
   // or the admin force-accepts.
-  const startTransfer = (reg) => {
+  const startTransfer = (reg: NormalisedRegistration) => {
     if (!claimedId && !isAdmin) {
       onNavigate?.('settings')
       return
     }
     setPickerForReg({ reg })
   }
-  const handleTransferCreated = ({ transferId, toPlayer }) => {
+  const handleTransferCreated = ({ transferId, toPlayer }: TransferShareTarget) => {
     setPickerForReg(null)
     setShareModal({ transferId, toPlayer })
   }
@@ -378,12 +404,12 @@ export default function Registration({ tournament, onNavigate }) {
     await cancelTransfer(pendingFromMe.id)
     setRespondingTo(null)
   }
-  const handleIncomingResponse = async (xfer, accept) => {
+  const handleIncomingResponse = async (xfer: NormalisedTransfer, accept: boolean) => {
     setRespondingTo(xfer.id)
     const r = await respondToTransfer(xfer.id, accept)
     setRespondingTo(null)
     if (!r.ok) {
-      const map = {
+      const map: Record<string, string> = {
         wrong_pin: 'Sign in again to respond.',
         forbidden: 'This transfer is for a different player.',
         not_pending: 'This transfer was already responded to or closed.',
@@ -433,7 +459,7 @@ export default function Registration({ tournament, onNavigate }) {
             try {
               await updateTournament(tournament.id, { notes: next })
             } catch (err) {
-              alert(err?.message || 'Could not save description.')
+              alert(errorMessage(err, 'Could not save description.'))
             }
           }}
         />
@@ -443,7 +469,7 @@ export default function Registration({ tournament, onNavigate }) {
         <MyRegistrationCard
           myReg={myReg}
           myWaitlistReg={myWaitlistReg}
-          waitlistPosition={myWaitlistPosition}
+          waitlistPosition={myWaitlistPosition ?? undefined}
           isEventFull={registered.length >= maxPlayers}
           tournament={tournament}
           isAdminAll={isAdminAll}

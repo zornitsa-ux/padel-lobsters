@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, type ReactNode } from 'react'
 import { useRegistrations } from './useRegistrations'
 import {
   Calendar,
@@ -16,9 +16,13 @@ import DateTile from '../../components/ui/DateTile'
 import AddToCalendarButton from '../../components/ui/AddToCalendarButton'
 import ShareWhatsAppButton from '../../components/ui/ShareWhatsAppButton'
 import { fmtEur } from '../../lib/format'
+import { errorMessage } from '../../lib/errors'
 import { formatDate, formatLabel, pricePerPlayer } from './eventHelpers'
+import type { EventNavigate } from './eventHelpers'
+import type { NormalisedTournament, TournamentCourt } from '../../lib/normalise'
+import type { NormalisedTransfer } from './transferQueries'
 
-function InfoChip({ icon, label, warn }) {
+function InfoChip({ icon, label, warn }: { icon: ReactNode; label: string; warn?: boolean }) {
   return (
     <div
       className={`flex items-center gap-1 text-xs rounded-lg px-2 py-1.5 ${warn ? 'bg-orange-50 text-orange-600' : 'bg-gray-50 text-gray-600'}`}
@@ -27,6 +31,17 @@ function InfoChip({ icon, label, warn }) {
       <span className="font-medium">{label}</span>
     </div>
   )
+}
+
+interface UpcomingEventCardProps {
+  t: NormalisedTournament
+  isAdmin: boolean
+  transfers: NormalisedTransfer[]
+  onNavigate: EventNavigate
+  onEdit: (t: NormalisedTournament) => void
+  onDelete: (id: string) => void
+  onOpenTransfers: (t: NormalisedTournament) => void
+  updateTournament: (id: string, data: { courts: TournamentCourt[] }) => Promise<unknown>
 }
 
 export default function UpcomingEventCard({
@@ -38,7 +53,7 @@ export default function UpcomingEventCard({
   onDelete,
   onOpenTransfers,
   updateTournament,
-}) {
+}: UpcomingEventCardProps) {
   const { data: regsData = [] } = useRegistrations(t?.id)
   const allBooked = (t.courts || []).every((c) => c.booked)
   const bookedCount = (t.courts || []).filter((c) => c.booked).length
@@ -46,9 +61,9 @@ export default function UpcomingEventCard({
   const ppCost = pricePerPlayer(t)
   const isAdminAll = !t.courtBookingMode || t.courtBookingMode === 'admin_all'
   const [bookError, setBookError] = useState('')
-  const [bookingIndex, setBookingIndex] = useState(null)
+  const [bookingIndex, setBookingIndex] = useState<number | null>(null)
 
-  const handleBookCourt = async (i) => {
+  const handleBookCourt = async (i: number) => {
     setBookError('')
     setBookingIndex(i)
     try {
@@ -56,7 +71,7 @@ export default function UpcomingEventCard({
       courts[i] = { ...courts[i], booked: true }
       await updateTournament(t.id, { courts })
     } catch (err) {
-      setBookError(err?.message || 'Could not book court.')
+      setBookError(errorMessage(err, 'Could not book court.'))
     } finally {
       setBookingIndex(null)
     }
@@ -211,7 +226,7 @@ export default function UpcomingEventCard({
               {!isAdminAll && c.responsible && (
                 <span className="text-purple-600 ml-0.5">({c.responsible})</span>
               )}
-              {isAdmin && !isAdminAll && c.costPerPerson > 0 && (
+              {isAdmin && !isAdminAll && Number(c.costPerPerson) > 0 && (
                 <span className="text-gray-400 ml-0.5">{fmtEur(c.costPerPerson)}</span>
               )}
               {isAdmin && !c.booked && (

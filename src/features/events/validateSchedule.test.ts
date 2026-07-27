@@ -1,13 +1,22 @@
 import { describe, expect, it } from 'vitest'
 import validateSchedule from './validateSchedule'
+import type {
+  ScheduleMatch,
+  SchedulePlayer,
+  ScheduleRound,
+  ScheduleWarning,
+} from './schedule/types'
 
 // ─── Factories ────────────────────────────────────────────────────────────────
 
-const ids = (n) => Array.from({ length: n }, (_, i) => `p${i + 1}`)
+const ids = (n: number): string[] => Array.from({ length: n }, (_, i) => `p${i + 1}`)
 
 // Names are `<id> Lastname` so getName() (first word) returns the id — warning
 // messages then read as the player ids used in each fixture.
-const makePlayers = (playerIds, overrides = {}) =>
+const makePlayers = (
+  playerIds: string[],
+  overrides: Record<string, Partial<SchedulePlayer>> = {},
+): SchedulePlayer[] =>
   playerIds.map((id) => ({
     id,
     name: `${id} Lastname`,
@@ -16,11 +25,22 @@ const makePlayers = (playerIds, overrides = {}) =>
     ...(overrides[id] || {}),
   }))
 
-const match = (court, team1Ids, team2Ids) => ({ court, team1Ids, team2Ids })
+const match = (court: string, team1Ids: string[], team2Ids: string[]): ScheduleMatch => ({
+  court,
+  team1Ids,
+  team2Ids,
+})
 
-const round = (n, matches, extra = {}) => ({ round: n, matches, ...extra })
+// `matches` is deliberately allowed to be undefined: validateSchedule guards
+// `r.matches || []` and one case below pins that.
+const round = (
+  n: number,
+  matches: ScheduleMatch[] | undefined,
+  extra: Partial<ScheduleRound> = {},
+): ScheduleRound => ({ round: n, label: `Round ${n}`, matches, ...extra }) as ScheduleRound
 
-const shape = (warnings) => warnings.map(({ type, severity, round: r }) => ({ type, severity, r }))
+const shape = (warnings: ScheduleWarning[]) =>
+  warnings.map(({ type, severity, round: r }) => ({ type, severity, r }))
 
 // ─── Fixtures shared by several cases ─────────────────────────────────────────
 
@@ -287,8 +307,11 @@ describe('validateSchedule', () => {
 // ─── Messages ─────────────────────────────────────────────────────────────────
 
 describe('validateSchedule — messages', () => {
-  const messageOf = (rounds, players, genderMode) =>
-    validateSchedule(rounds, players, genderMode)[0].message
+  const messageOf = (
+    rounds: ScheduleRound[],
+    players: SchedulePlayer[],
+    genderMode?: string,
+  ): string => validateSchedule(rounds, players, genderMode)[0].message
 
   it('names the missing players and pluralises', () => {
     const msg = messageOf(

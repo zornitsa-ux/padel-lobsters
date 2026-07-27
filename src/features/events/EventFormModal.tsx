@@ -1,8 +1,31 @@
-import React from 'react'
+import React, { type Dispatch, type FormEvent, type SetStateAction } from 'react'
 import { Plus, X, ShieldCheck, UserCog } from 'lucide-react'
 import { fmtEur } from '../../lib/format'
 import { Modal } from '../../components/ui/Modal'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
+import type { EventFormCourt, EventFormValues } from './eventConstants'
+
+// A court field edit. `booked` is the checkbox; every other field comes off a
+// text/number input as a string.
+export type SetEventFormCourt = <K extends keyof EventFormCourt>(
+  index: number,
+  field: K,
+  value: EventFormCourt[K],
+) => void
+
+interface EventFormModalProps {
+  open: boolean
+  /** Present when editing an existing event, null when creating one. */
+  editId: string | null
+  form: EventFormValues
+  setForm: Dispatch<SetStateAction<EventFormValues>>
+  saving: boolean
+  onSubmit: (e: FormEvent<HTMLFormElement>) => void
+  onClose: () => void
+  addCourt: () => void
+  removeCourt: (index: number) => void
+  setCourt: SetEventFormCourt
+}
 
 export default function EventFormModal({
   open,
@@ -15,7 +38,7 @@ export default function EventFormModal({
   addCourt,
   removeCourt,
   setCourt,
-}) {
+}: EventFormModalProps) {
   return (
     <Modal
       open={open}
@@ -267,10 +290,13 @@ export default function EventFormModal({
               value={form.pricePerPerson}
               onChange={(e) => setForm((f) => ({ ...f, pricePerPerson: e.target.value }))}
             />
-            {form.pricePerPerson && parseInt(form.maxPlayers) > 0 && (
+            {form.pricePerPerson && parseInt(String(form.maxPlayers)) > 0 && (
               <p className="text-sm font-semibold text-lob-teal mt-1.5">
                 {form.maxPlayers} players × {fmtEur(form.pricePerPerson)} ={' '}
-                {fmtEur((parseFloat(form.pricePerPerson) || 0) * (parseInt(form.maxPlayers) || 0))}
+                {fmtEur(
+                  (parseFloat(String(form.pricePerPerson)) || 0) *
+                    (parseInt(String(form.maxPlayers)) || 0),
+                )}
                 <span className="text-xs font-normal text-gray-400"> total</span>
               </p>
             )}
@@ -281,7 +307,9 @@ export default function EventFormModal({
           <p className="text-xs text-gray-500">
             Total per player:{' '}
             <span className="font-semibold text-gray-700">
-              {fmtEur(form.courts.reduce((s, c) => s + (parseFloat(c.costPerPerson) || 0), 0))}
+              {fmtEur(
+                form.courts.reduce((s, c) => s + (parseFloat(String(c.costPerPerson)) || 0), 0),
+              )}
             </span>
           </p>
         )}

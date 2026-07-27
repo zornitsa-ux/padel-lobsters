@@ -11,15 +11,15 @@ export type GetPlayer = (id: string) => Player | undefined
 export type DisplayName = (player: Player) => string
 
 // Post-registration payment sheet state.
-// NOTE: the container sets `status` (the *registration* status returned by
-// registerPlayer) while RegistrationPaymentSheetModal reads `paymentStatus`,
-// which is therefore always undefined. Both are declared here so the mismatch
-// is visible; reconciling it means touching Registration.jsx.
+// `paymentStatus` is the registration's *payment* status, which is what the
+// sheet's Tikkie handler guards on (`markTikkied` only upgrades unpaid → tikkied).
+// The registration status ('registered' / 'waitlist') deliberately does not
+// travel: it is a precondition the container checks before opening the sheet at
+// all, and nothing inside the sheet reads it.
 export interface PaymentSheet {
   regId: string
   playerId: string
-  status?: string
-  paymentStatus?: string
+  paymentStatus: string
 }
 
 export interface TransferShareTarget {

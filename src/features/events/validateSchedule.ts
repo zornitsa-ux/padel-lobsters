@@ -2,14 +2,24 @@
 // Scans every round and returns a list of human-readable warnings so the
 // admin can see at a glance whether the engine had to break any rule.
 
-export default function validateSchedule(rounds, allPlayers, genderMode) {
-  const warnings = []
-  const getName = (id) => {
+import type { EntityId, SchedulePlayer, ScheduleRound, ScheduleWarning } from './schedule/types'
+
+export default function validateSchedule(
+  rounds: ScheduleRound[],
+  allPlayers: SchedulePlayer[],
+  // Optional: callers pass through a possibly-unset event field; anything other
+  // than 'mixed' disables the gender rules.
+  genderMode?: string,
+): ScheduleWarning[] {
+  const warnings: ScheduleWarning[] = []
+  const getName = (id: EntityId): string => {
     const p = allPlayers.find((x) => x.id === id)
-    return p ? (p.name || '').split(' ')[0] : id
+    return p ? (p.name || '').split(' ')[0] : String(id)
   }
-  const isLefty = (id) => allPlayers.find((x) => x.id === id)?.isLeftHanded
-  const isFemale = (id) => allPlayers.find((x) => x.id === id)?.gender === 'female'
+  const isLefty = (id: EntityId): boolean =>
+    Boolean(allPlayers.find((x) => x.id === id)?.isLeftHanded)
+  const isFemale = (id: EntityId): boolean =>
+    allPlayers.find((x) => x.id === id)?.gender === 'female'
   const isMixed = genderMode === 'mixed'
 
   // ── Unavoidable gender-clash analysis ─────────────────────────────────────
@@ -45,15 +55,15 @@ export default function validateSchedule(rounds, allPlayers, genderMode) {
     })
   }
   // Per-round running sum of mismatch already counted toward the unavoidable quota.
-  const mismatchUsedByRound = {}
+  const mismatchUsedByRound: Record<number, number> = {}
 
   // Track partnerships and opponents across rounds
-  const partnersSeen = {} // "idA:idB" → [round numbers]
-  const opponentsSeen = {} // "idA:idB" → [round numbers]
+  const partnersSeen: Record<string, number[]> = {} // "idA:idB" → [round numbers]
+  const opponentsSeen: Record<string, number[]> = {} // "idA:idB" → [round numbers]
   // Per-round counts of all-male / all-female courts (one summary row per round)
-  const allMaleByRound = {}
-  const allFemaleByRound = {}
-  const totalMatchesByRound = {}
+  const allMaleByRound: Record<number, number> = {}
+  const allFemaleByRound: Record<number, number> = {}
+  const totalMatchesByRound: Record<number, number> = {}
 
   // Roster we expect every round to cover — respect "sitting" for formats that
   // rotate a subset per round. If no sitting array was set, every player
@@ -67,8 +77,8 @@ export default function validateSchedule(rounds, allPlayers, genderMode) {
     // needs to know instead of finding out mid-tournament.
     const sittingIds = new Set((r.sitting || []).map(String))
     const expected = new Set([...allPlayerIds].filter((id) => !sittingIds.has(id)))
-    const seen = new Map() // id → count
-    const foreign = []
+    const seen = new Map<string, number>() // id → count
+    const foreign: string[] = []
     ;(r.matches || []).forEach((m) => {
       ;[...(m.team1Ids || []), ...(m.team2Ids || [])].forEach((id) => {
         const sid = String(id)
@@ -109,7 +119,7 @@ export default function validateSchedule(rounds, allPlayers, genderMode) {
       const t2 = m.team2Ids || []
 
       // Rule 1: repeat partners
-      const checkPair = (ids) => {
+      const checkPair = (ids: EntityId[]) => {
         if (ids.length !== 2) return
         const key = [...ids].sort().join(':')
         if (!partnersSeen[key]) partnersSeen[key] = []
@@ -127,7 +137,7 @@ export default function validateSchedule(rounds, allPlayers, genderMode) {
       checkPair(t2)
 
       // Rule 2: two lefties on same team
-      const checkLefties = (ids, teamLabel) => {
+      const checkLefties = (ids: EntityId[], teamLabel: string) => {
         const lefties = ids.filter(isLefty)
         if (lefties.length >= 2) {
           warnings.push({
@@ -185,18 +195,18 @@ export default function validateSchedule(rounds, allPlayers, genderMode) {
   })
 
   // Per-round all-male / all-female summary (one row per round)
-  Object.keys(totalMatchesByRound).forEach((round) => {
-    const total = totalMatchesByRound[round]
+  Object.entries(totalMatchesByRound).forEach(([key, total]) => {
+    const round = Number(key)
     const am = allMaleByRound[round] || 0
     const af = allFemaleByRound[round] || 0
     if (am === 0 && af === 0) return
-    const parts = []
+    const parts: string[] = []
     if (am > 0) parts.push(`${am}/${total} Men`)
     if (af > 0) parts.push(`${af}/${total} Ladies`)
     warnings.push({
       type: 'gender-court-composition',
       severity: 'info',
-      round: Number(round),
+      round,
       message: `R${round}: ${parts.join(' · ')}`,
     })
   })

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react'
+import React, { useCallback, useState, type FormEvent } from 'react'
 import { useApp } from '../../context/useApp'
 import {
   useTournaments,
@@ -19,33 +19,41 @@ import { LeagueDashboardCard } from '../league/ui/LeagueDashboardCard'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { CollapsibleSection } from '../../components/ui/CollapsibleSection'
 import { EmptyState } from '../../components/ui/EmptyState'
+import { errorMessage } from '../../lib/errors'
+import type { EventNavigate } from './eventHelpers'
+import type { NormalisedTournament } from '../../lib/normalise'
+import type { SetEventFormCourt } from './EventFormModal'
 
 export { DEFAULT_EVENT_DESCRIPTION }
 
-export default function Tournament({ onNavigate }) {
+export default function Tournament({ onNavigate }: { onNavigate: EventNavigate }) {
   const { session } = useApp()
   const { data: tournaments = [] } = useTournaments()
   const { data: transfers = [] } = useTransfers()
   const addMut = useAddTournament()
   const updateMut = useUpdateTournament()
   const deleteMut = useDeleteTournament()
-  const addTournament = useCallback((data) => addMut.mutateAsync(data), [addMut])
+  const addTournament = useCallback(
+    (data: Partial<NormalisedTournament>) => addMut.mutateAsync(data),
+    [addMut],
+  )
   const updateTournament = useCallback(
-    (id, data) => updateMut.mutateAsync({ id, data }),
+    (id: string, data: Partial<NormalisedTournament>) => updateMut.mutateAsync({ id, data }),
     [updateMut],
   )
-  const deleteTournament = useCallback((id) => deleteMut.mutateAsync(id), [deleteMut])
+  const deleteTournament = useCallback((id: string) => deleteMut.mutateAsync(id), [deleteMut])
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
   const claimedId = session?.user?.id ?? null
 
   const [showForm, setShowForm] = useState(false)
-  const [editId, setEditId] = useState(null)
+  const [editId, setEditId] = useState<string | null>(null)
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
   const [showHistory, setShowHistory] = useState(true)
   const [error, setError] = useState('')
   // Admin pending-transfer panel — open for one tournament at a time.
-  const [adminTransferTournament, setAdminTransferTournament] = useState(null)
+  const [adminTransferTournament, setAdminTransferTournament] =
+    useState<NormalisedTournament | null>(null)
 
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -53,7 +61,7 @@ export default function Tournament({ onNavigate }) {
   // <HistoryContent /> renders it as a podium card, so don't also list it
   // here as a past-event card — that's what produced the duplicate render.
   const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000
-  const isInHistory = (t) => {
+  const isInHistory = (t: NormalisedTournament) => {
     if (t.status !== 'completed') return false
     const ref = t.date || t.completedAt
     if (!ref) return true
@@ -81,7 +89,7 @@ export default function Tournament({ onNavigate }) {
     setShowForm(true)
   }
 
-  const openEdit = (t) => {
+  const openEdit = (t: NormalisedTournament) => {
     if (!isAdmin) {
       onNavigate?.('settings')
       return
@@ -106,8 +114,10 @@ export default function Tournament({ onNavigate }) {
           }))
         : [{ name: '', booked: false, costPerPerson: '', responsible: '', tikkieLink: '' }],
       pricePerPerson:
-        parseFloat(t.totalPrice) > 0 && parseInt(t.maxPlayers) > 0
-          ? (parseFloat(t.totalPrice) / parseInt(t.maxPlayers)).toFixed(2).replace(/\.00$/, '')
+        parseFloat(String(t.totalPrice)) > 0 && parseInt(String(t.maxPlayers)) > 0
+          ? (parseFloat(String(t.totalPrice)) / parseInt(String(t.maxPlayers)))
+              .toFixed(2)
+              .replace(/\.00$/, '')
           : (t.totalPrice ?? ''),
       tikkieLink: t.tikkieLink || '',
       notes: t.notes || '',
@@ -116,7 +126,7 @@ export default function Tournament({ onNavigate }) {
     setShowForm(true)
   }
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id: string) => {
     if (!isAdmin) {
       onNavigate?.('settings')
       return
@@ -126,16 +136,16 @@ export default function Tournament({ onNavigate }) {
     try {
       await deleteTournament(id)
     } catch (err) {
-      setError(err?.message || 'Could not delete event.')
+      setError(errorMessage(err, 'Could not delete event.'))
     }
   }
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setSaving(true)
     setError('')
     try {
-      const mp = parseInt(form.maxPlayers) || 16
+      const mp = parseInt(String(form.maxPlayers)) || 16
       const data = {
         name: form.name,
         date: form.date,
@@ -145,17 +155,20 @@ export default function Tournament({ onNavigate }) {
         format: form.format,
         genderMode: form.genderMode,
         courtBookingMode: form.courtBookingMode,
-        duration: parseInt(form.duration) || 90,
+        duration: parseInt(String(form.duration)) || 90,
         totalPrice:
           form.courtBookingMode === 'admin_all'
-            ? (parseFloat(form.pricePerPerson) || 0) * (parseInt(form.maxPlayers) || 16)
+            ? (parseFloat(String(form.pricePerPerson)) || 0) *
+              (parseInt(String(form.maxPlayers)) || 16)
             : 0,
         tikkieLink: form.courtBookingMode === 'admin_all' ? form.tikkieLink || '' : '',
         courts: form.courts.map((c) => ({
           name: c.name,
           booked: !!c.booked,
           costPerPerson:
-            form.courtBookingMode === 'player_responsible' ? parseFloat(c.costPerPerson) || 0 : 0,
+            form.courtBookingMode === 'player_responsible'
+              ? parseFloat(String(c.costPerPerson)) || 0
+              : 0,
           responsible: form.courtBookingMode === 'player_responsible' ? c.responsible || '' : '',
           tikkieLink: form.courtBookingMode === 'player_responsible' ? c.tikkieLink || '' : '',
         })),
@@ -166,7 +179,7 @@ export default function Tournament({ onNavigate }) {
         else await addTournament(data)
         setShowForm(false)
       } catch (err) {
-        setError(err?.message || 'Could not save event.')
+        setError(errorMessage(err, 'Could not save event.'))
       }
     } finally {
       setSaving(false)
@@ -182,13 +195,13 @@ export default function Tournament({ onNavigate }) {
       ],
     }))
 
-  const removeCourt = (i) =>
+  const removeCourt = (i: number) =>
     setForm((f) => ({
       ...f,
       courts: f.courts.filter((_, idx) => idx !== i),
     }))
 
-  const setCourt = (i, field, value) =>
+  const setCourt: SetEventFormCourt = (i, field, value) =>
     setForm((f) => ({
       ...f,
       courts: f.courts.map((c, idx) => (idx === i ? { ...c, [field]: value } : c)),

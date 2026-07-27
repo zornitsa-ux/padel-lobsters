@@ -14,19 +14,30 @@ import { fmtEur } from '../../lib/format'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { IconButton } from '../../components/ui/IconButton'
 import { PlayerRow } from '../../components/ui/PlayerRow'
+import type { EventNavigate } from './eventHelpers'
+import type { NormalisedTournament } from '../../lib/normalise'
+import type { NormalisedRegistration } from './registrationQueries'
 
 const METHODS = [
   { value: 'tikkie', label: 'Tikkie' },
   { value: 'playtomic', label: 'Playtomic' },
 ]
 
-export default function Payments({ tournament, onNavigate }) {
+type PaymentFilter = 'all' | 'paid' | 'pending' | 'tikkied' | 'unpaid'
+
+export default function Payments({
+  tournament,
+  onNavigate,
+}: {
+  tournament: NormalisedTournament | null
+  onNavigate: EventNavigate
+}) {
   const { session } = useApp()
   const { updateRegistration } = useRegistrationActions()
   const { data: players = [] } = usePlayers()
   const { data: regsData = [] } = useRegistrations(tournament?.id)
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
-  const [filter, setFilter] = useState('all')
+  const [filter, setFilter] = useState<PaymentFilter>('all')
 
   if (!tournament) {
     return (
@@ -62,7 +73,7 @@ export default function Payments({ tournament, onNavigate }) {
     ? tournament.totalPrice > 0
       ? tournament.totalPrice / (tournament.maxPlayers || regs.length || 1)
       : 0
-    : (tournament.courts || []).reduce((s, c) => s + (parseFloat(c.costPerPerson) || 0), 0)
+    : (tournament.courts || []).reduce((s, c) => s + (parseFloat(String(c.costPerPerson)) || 0), 0)
 
   const totalCollected = confirmed.length * costPerPlayer
   const totalExpected = regs.length * costPerPlayer
@@ -77,9 +88,40 @@ export default function Payments({ tournament, onNavigate }) {
           : filter === 'unpaid'
             ? trulyUnpaid
             : regs
-  const getPlayer = (id) => players.find((p) => p.id === id)
+  const getPlayer = (id: string) => players.find((p) => p.id === id)
 
-  const handleMarkPaid = async (reg, method) => {
+  // Order follows the payment funnel: everyone → unpaid (never clicked) →
+  // tikkied → paid (self-declared) → confirmed (admin verified).
+  const filterTabs: { value: PaymentFilter; label: string; count: number; activeClass: string }[] =
+    [
+      { value: 'all', label: 'All', count: regs.length, activeClass: 'bg-lob-coral text-white' },
+      {
+        value: 'unpaid',
+        label: 'Unpaid',
+        count: trulyUnpaid.length,
+        activeClass: 'bg-red-500 text-white',
+      },
+      {
+        value: 'tikkied',
+        label: 'Tikkied',
+        count: tikkied.length,
+        activeClass: 'bg-amber-500 text-white',
+      },
+      {
+        value: 'pending',
+        label: 'Paid',
+        count: selfPaid.length,
+        activeClass: 'bg-sky-500 text-white',
+      },
+      {
+        value: 'paid',
+        label: 'Confirmed',
+        count: confirmed.length,
+        activeClass: 'bg-green-600 text-white',
+      },
+    ]
+
+  const handleMarkPaid = async (reg: NormalisedRegistration, method: string) => {
     if (!isAdmin) {
       onNavigate?.('settings')
       return
@@ -91,7 +133,7 @@ export default function Payments({ tournament, onNavigate }) {
     )
   }
 
-  const handleMarkUnpaid = async (reg) => {
+  const handleMarkUnpaid = async (reg: NormalisedRegistration) => {
     if (!isAdmin) {
       onNavigate?.('settings')
       return
@@ -101,7 +143,7 @@ export default function Payments({ tournament, onNavigate }) {
 
   // Manual status override — admin can jump to any state regardless of the
   // natural flow (for bookkeeping fixes, correcting miscicks, etc.)
-  const handleSetStatus = async (reg, status) => {
+  const handleSetStatus = async (reg: NormalisedRegistration, status: string) => {
     if (!isAdmin) {
       onNavigate?.('settings')
       return
@@ -168,7 +210,7 @@ export default function Payments({ tournament, onNavigate }) {
                     {c.responsible && (
                       <p className="text-xs text-gray-500">Responsible: {c.responsible}</p>
                     )}
-                    {c.costPerPerson > 0 && (
+                    {Number(c.costPerPerson) > 0 && (
                       <p className="text-xs text-gray-500">{fmtEur(c.costPerPerson)}/pp</p>
                     )}
                   </div>
@@ -238,17 +280,9 @@ export default function Payments({ tournament, onNavigate }) {
         )}
       </div>
 
-      {/* Filter tabs — pill style. Order follows the payment funnel:
-          everyone → unpaid (never clicked) → tikkied → paid (self-declared)
-          → confirmed (admin verified). */}
+      {/* Filter tabs — pill style */}
       <div className="flex gap-1.5 overflow-x-auto -mx-1 px-1">
-        {[
-          ['all', 'All', regs.length, 'bg-lob-coral text-white'],
-          ['unpaid', 'Unpaid', trulyUnpaid.length, 'bg-red-500 text-white'],
-          ['tikkied', 'Tikkied', tikkied.length, 'bg-amber-500 text-white'],
-          ['pending', 'Paid', selfPaid.length, 'bg-sky-500 text-white'],
-          ['paid', 'Confirmed', confirmed.length, 'bg-green-600 text-white'],
-        ].map(([v, l, count, activeClass]) => (
+        {filterTabs.map(({ value: v, label: l, count, activeClass }) => (
           <button
             key={v}
             onClick={() => setFilter(v)}
@@ -375,7 +409,7 @@ export default function Payments({ tournament, onNavigate }) {
   )
 }
 
-function PaymentMethodPicker({ onSelect }) {
+function PaymentMethodPicker({ onSelect }: { onSelect: (method: string) => void }) {
   const [open, setOpen] = useState(false)
   return (
     <div className="relative">
@@ -419,7 +453,13 @@ const OVERRIDE_STATUSES = [
   { value: 'transferred', label: 'Transferred', hint: 'Gave up their spot' },
 ]
 
-function StatusOverrideMenu({ currentStatus, onSelect }) {
+function StatusOverrideMenu({
+  currentStatus,
+  onSelect,
+}: {
+  currentStatus: string | null | undefined
+  onSelect: (status: string) => void
+}) {
   const [open, setOpen] = useState(false)
   return (
     <div className="relative">
