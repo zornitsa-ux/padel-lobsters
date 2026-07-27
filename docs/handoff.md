@@ -136,8 +136,8 @@ Open tasks: #15 (two parts) and the unscheduled TypeScript conversion. The
 
 ## Owner action items (blocking)
 
-- **Push two migrations to production** — manual `npx supabase db push` from
-  `main`:
+- **Push three migrations to production** — manual `npx supabase db push` from
+  `main`. They go together; read the notes before running it:
   - `20260726234531_remove_pii_dump_quota.sql` — commit `eb14e5e` depends on
     it; without it an admin gets an empty roster under the old 3-reads/24h cap.
   - `20260727195327_league_status_check_constraint.sql` — **this one DELETES
