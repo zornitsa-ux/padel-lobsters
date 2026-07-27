@@ -78,7 +78,7 @@ describe('usePlayerActions — addPlayer', () => {
       client,
     )
 
-    let res: any
+    let res: unknown
     await act(async () => {
       res = await result.current.addPlayer({ name: 'Test' })
     })
@@ -114,7 +114,7 @@ describe('usePlayerActions — updatePlayer', () => {
       client,
     )
 
-    let res: any
+    let res: unknown
     await act(async () => {
       res = await result.current.updatePlayer('player-uid', { name: 'Updated' })
     })
@@ -135,7 +135,7 @@ describe('usePlayerActions — updatePlayer', () => {
       client,
     )
 
-    let res: any
+    let res: unknown
     await act(async () => {
       res = await result.current.updatePlayer('other-id', { name: 'Updated by admin' })
     })
@@ -160,7 +160,7 @@ describe('usePlayerActions — deletePlayer', () => {
       client,
     )
 
-    let res: any
+    let res: unknown
     await act(async () => {
       res = await result.current.deletePlayer('some-id')
     })
@@ -197,7 +197,7 @@ describe('usePlayerActions — regeneratePin', () => {
       client,
     )
 
-    let res: any
+    let res: unknown
     await act(async () => {
       res = await result.current.regeneratePin('player-id')
     })

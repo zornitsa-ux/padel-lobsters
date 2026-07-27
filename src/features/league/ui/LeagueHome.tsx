@@ -7,10 +7,13 @@ import { GroupStageContent } from './GroupStageContent'
 import { KnockoutContent } from './KnockoutContent'
 import { PendingMatchCard } from './PendingMatchCard'
 import { TeamPage } from './TeamPage'
-import type { Division, League, LeagueTeam, LeagueMatch, LeagueStatus } from '../domain/types'
+import { leagueDivisions } from '../domain/types'
+import type { Division, League, LeagueTeam, LeagueMatch } from '../domain/types'
 
+// Keyed by the raw `leagues.status` string: the column has no CHECK constraint,
+// so an unknown status must not be a compile-time impossibility.
 const PHASE_PILL: Record<
-  LeagueStatus,
+  string,
   {
     variant: 'league-draft' | 'league-group-stage' | 'league-knockout' | 'league-completed'
     label: string
@@ -30,7 +33,8 @@ interface LeagueHomeProps {
 }
 
 export function LeagueHome({ league, teams, matches, myTeam }: LeagueHomeProps) {
-  const [division, setDivision] = useState<Division>(() => league.divisions[0] ?? 'mens')
+  const divisions = leagueDivisions(league)
+  const [division, setDivision] = useState<Division>(() => divisions[0])
   const [selectedTeam, setSelectedTeam] = useState<LeagueTeam | null>(null)
 
   const divTeams = teams.filter((t) => t.division === division)
@@ -63,8 +67,8 @@ export function LeagueHome({ league, teams, matches, myTeam }: LeagueHomeProps) 
         backLink={{ to: '/league', label: 'Seasons' }}
         badge={<Badge variant={pill.variant} label={pill.label} />}
         tabStrip={
-          league.divisions.length > 1 ? (
-            <DivisionPills divisions={league.divisions} value={division} onChange={setDivision} />
+          divisions.length > 1 ? (
+            <DivisionPills divisions={divisions} value={division} onChange={setDivision} />
           ) : undefined
         }
       />

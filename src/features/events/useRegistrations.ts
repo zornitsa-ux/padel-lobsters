@@ -3,6 +3,7 @@ import { useCallback } from 'react'
 import { registrationKeys } from './registrationKeys'
 import { fetchRegistrations, fetchAllRegistrations } from './registrationQueries'
 import * as q from './registrationQueries'
+import type { NormalisedRegistration, RegistrationInput } from './registrationQueries'
 
 // Registrations for a single tournament. Only fetches when tournamentId is present.
 export function useRegistrations(tournamentId: string | null | undefined) {
@@ -36,7 +37,8 @@ export function useRegistrationActions() {
     async (tournamentId: string, playerId: string, maxPlayers: number) => {
       // Read current count from TanStack Query cache. Falls back to 0 if the
       // cache is cold (the server's own insert-guard is the authoritative check).
-      const cached = (qc.getQueryData(registrationKeys.list(tournamentId)) ?? []) as any[]
+      const cached =
+        qc.getQueryData<NormalisedRegistration[]>(registrationKeys.list(tournamentId)) ?? []
       const current = cached.filter((r) => r.status === 'registered').length
       const result = await q.registerPlayer(tournamentId, playerId, current, maxPlayers)
       if (result.regId) invalidateRegistrations(tournamentId)
@@ -46,7 +48,7 @@ export function useRegistrationActions() {
   )
 
   const updateRegistration = useCallback(
-    async (id: string, data: Record<string, any>, tournamentId?: string) => {
+    async (id: string, data: RegistrationInput, tournamentId?: string) => {
       try {
         await q.updateRegistration(id, data)
         invalidateRegistrations(tournamentId)
@@ -62,7 +64,8 @@ export function useRegistrationActions() {
       await q.cancelRegistration(id)
       // Promote first waitlisted player. Read the cached normalised registrations
       // (they still carry the snake_case tournament_id from the spread in normalise).
-      const cached = (qc.getQueryData(registrationKeys.list(tournamentId)) ?? []) as any[]
+      const cached =
+        qc.getQueryData<NormalisedRegistration[]>(registrationKeys.list(tournamentId)) ?? []
       await q.promoteWaitlist(tournamentId, cached)
       invalidateRegistrations(tournamentId)
     },

@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { supabase } from '../../supabase'
 import { normaliseRegistrations } from '../../lib/normalise'
+import type { TablesUpdate } from '../../lib/database.types'
 
 const nullableString = z.string().nullable().optional()
 
@@ -60,8 +61,15 @@ export async function registerPlayer(
   return { regId: inserted?.id ?? null, status }
 }
 
-export async function updateRegistration(id: string, data: Record<string, any>) {
-  const payload: Record<string, any> = {}
+// The camelCase patch the payments/registration UIs submit.
+export interface RegistrationInput {
+  status?: string
+  paymentStatus?: string
+  paymentMethod?: string
+}
+
+export async function updateRegistration(id: string, data: RegistrationInput) {
+  const payload: TablesUpdate<'registrations'> = {}
   if (data.status !== undefined) payload.status = data.status
   if (data.paymentStatus !== undefined) payload.payment_status = data.paymentStatus
   if (data.paymentMethod !== undefined) payload.payment_method = data.paymentMethod
@@ -76,10 +84,13 @@ export async function cancelRegistration(id: string) {
 // Promote first waitlisted player (oldest by created_at). Caller passes
 // the current registrations array so the api stays state-free. Returns
 // the promoted reg id, or null if there were no waitlisted players.
-export async function promoteWaitlist(tournamentId: string, currentRegistrations: any[]) {
+export async function promoteWaitlist(
+  tournamentId: string,
+  currentRegistrations: NormalisedRegistration[],
+) {
   const waitlisted = currentRegistrations
     .filter((r) => r.tournament_id === tournamentId && r.status === 'waitlist')
-    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+    .sort((a, b) => new Date(a.created_at ?? 0).getTime() - new Date(b.created_at ?? 0).getTime())
   if (waitlisted.length > 0) {
     await supabase.from('registrations').update({ status: 'registered' }).eq('id', waitlisted[0].id)
     return waitlisted[0].id

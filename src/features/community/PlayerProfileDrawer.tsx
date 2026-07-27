@@ -32,7 +32,7 @@ interface PlayerProfileDrawerProps {
   isAdmin: boolean
   onNavigate?: EventNavigate
   onEdit: (player: CommunityPlayer) => void
-  onDelete: (id: string | number) => void
+  onDelete: (id: string) => void
   onRegeneratePin: (player: CommunityPlayer) => void
 }
 

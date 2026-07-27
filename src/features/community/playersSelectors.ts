@@ -1,5 +1,6 @@
 export type PlayerLike = {
-  id: string | number
+  // `players.id` is a uuid — string, never a number.
+  id: string
   name?: string | null
   status?: string | null
   created_at?: string | null

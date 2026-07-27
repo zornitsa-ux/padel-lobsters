@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import type { Tables } from '../../lib/database.types'
 
 // Boundary validation for the settings row. .passthrough() lets any column
 // not explicitly listed survive into the normalised output (mirrors playerSchemas).
@@ -16,12 +17,13 @@ export const settingsRowSchema = z
 
 export type SettingsRow = z.infer<typeof settingsRowSchema>
 
-// camelCase shape the UI consumes. The index signature lets the raw snake_case
-// columns pass through (spread before normalisation, matching the existing style).
-export interface Settings {
+// camelCase shape the UI consumes. The raw snake_case columns are spread
+// through before normalisation, so the generated row is carried alongside —
+// `padel_tips` is re-typed off the generated `Json` to what the app writes.
+export interface Settings extends Partial<Omit<Tables<'settings'>, 'padel_tips'>> {
+  padel_tips?: string[] | null
   whatsappLink: string
   groupName: string
   padelTips: string[] | null
   autoTrustUntil: string | null
-  [key: string]: any
 }

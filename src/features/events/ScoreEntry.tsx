@@ -22,7 +22,8 @@ interface ScoreEntryMatch {
   id: string
   score1?: number | null
   score2?: number | null
-  completed?: boolean
+  // Nullable in the `matches` table (column default false, no NOT NULL).
+  completed?: boolean | null
 }
 
 interface ScoreEntryProps {

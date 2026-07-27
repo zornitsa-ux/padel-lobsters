@@ -7,7 +7,7 @@ import type { CommunityPlayer } from './playersSelectors'
 
 interface PlayerFormProps {
   showForm: boolean
-  editId: string | number | null
+  editId: string | null
   isAdmin: boolean
   form: PlayerFormState
   setForm: React.Dispatch<React.SetStateAction<PlayerFormState>>

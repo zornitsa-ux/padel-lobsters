@@ -7,7 +7,7 @@ import type { CommunityPlayer } from './playersSelectors'
 interface PendingApprovalsListProps {
   pendingPlayers: CommunityPlayer[]
   onApprove: (player: CommunityPlayer) => void
-  onReject: (id: string | number) => void
+  onReject: (id: string) => void
   onLink: (player: CommunityPlayer) => void
 }
 

@@ -1,53 +1,50 @@
+import type { Tables } from '../../../lib/database.types'
+
+// `leagues.status` has no CHECK constraint in the DB, so it is typed as the
+// generated `string`; these are the values the app itself writes and branches
+// on. The other four unions are enforced server-side by CHECK constraints and
+// re-checked at the fetch boundary by leagueSchemas.
 export type LeagueStatus = 'draft' | 'group_stage' | 'knockout' | 'completed'
 export type Division = 'mens' | 'womens'
 export type ExperienceLevel = 'beginner' | 'intermediate' | 'advanced'
 export type GroupLabel = 'A' | 'B'
 export type MatchStage = 'group' | 'gold_semi' | 'silver_semi' | 'gold_final' | 'silver_final'
 
-export interface League {
-  id: string
-  name: string
-  status: LeagueStatus
-  divisions: Division[]
-  group_stage_start: string | null
-  group_stage_end: string | null
-  created_at: string
+export type League = Tables<'leagues'>
+
+const KNOWN_DIVISIONS: Division[] = ['mens', 'womens']
+
+// `leagues.divisions` is a nullable, unconstrained text[]. Every UI that reads
+// it indexes/maps it, so it is resolved through here: null falls back to the
+// column's own DB default and unrecognised entries are dropped rather than
+// rendered as blank options.
+export function leagueDivisions(league: League): Division[] {
+  const raw = league.divisions
+  if (!raw) return KNOWN_DIVISIONS
+  const known = raw.filter((d): d is Division => (KNOWN_DIVISIONS as string[]).includes(d))
+  return known.length > 0 ? known : KNOWN_DIVISIONS
 }
 
-export interface LeagueTeam {
-  id: string
-  league_id: string
+export type LeagueTeam = Omit<
+  Tables<'league_teams'>,
+  'division' | 'experience_level' | 'group_label'
+> & {
   division: Division
-  player1_id: string
-  player2_id: string
-  team_name: string | null
-  team_song: string | null
-  spirit_animal: string | null
   experience_level: ExperienceLevel
-  preferred_play_times: string | null
   group_label: GroupLabel | null
-  created_at: string
-  player1?: { id: string; name: string; avatar_url: string | null; status?: string }
-  player2?: { id: string; name: string; avatar_url: string | null; status?: string }
+  player1?: { id: string; name: string; avatar_url: string | null; status?: string | null }
+  player2?: { id: string; name: string; avatar_url: string | null; status?: string | null }
 }
 
-export interface SetScore {
+export type SetScore = {
   t1: number
   t2: number
 }
 
-export interface LeagueMatch {
-  id: string
-  league_id: string
+export type LeagueMatch = Omit<Tables<'league_matches'>, 'division' | 'stage' | 'set_scores'> & {
   division: Division
   stage: MatchStage
-  team1_id: string | null
-  team2_id: string | null
   set_scores: SetScore[] | null
-  winner_id: string | null
-  played_on: string | null
-  location: string | null
-  created_at: string
 }
 
 export interface GroupStanding {
@@ -60,7 +57,7 @@ export interface GroupStanding {
   rank: number
 }
 
-export interface BracketPairing {
+export type BracketPairing = {
   division: Division
   stage: MatchStage
   team1_id: string

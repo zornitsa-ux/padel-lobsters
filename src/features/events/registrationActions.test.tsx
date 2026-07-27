@@ -41,7 +41,7 @@ describe('useRegistrationActions — registerPlayer', () => {
 
     const { result } = renderHookWithClient(() => useRegistrationActions(), client)
 
-    let res: any
+    let res: unknown
     await act(async () => {
       res = await result.current.registerPlayer('tid-1', 'player-5', 16)
     })

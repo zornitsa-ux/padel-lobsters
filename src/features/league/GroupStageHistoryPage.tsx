@@ -10,6 +10,7 @@ import { TeamPage } from './ui/TeamPage'
 import { useLeagueById, useLeagueTeams, useLeagueMatches } from './hooks/useLeagueQueries'
 import { computeGroupStandings } from './domain/standings'
 import { sortMatchesAsc } from './domain/matchDisplay'
+import { leagueDivisions } from './domain/types'
 import type { Division, LeagueTeam } from './domain/types'
 
 const DIVISION_LABELS: Record<Division, string> = {
@@ -30,9 +31,8 @@ export default function GroupStageHistoryPage() {
   if (isLoading) return <Spinner />
   if (!league) return null
 
-  const safeDivision = league.divisions.includes(division)
-    ? division
-    : (league.divisions[0] ?? 'mens')
+  const divisions = leagueDivisions(league)
+  const safeDivision = divisions.includes(division) ? division : divisions[0]
   const divTeams = teams.filter((t) => t.division === safeDivision)
   const divMatches = matches.filter((m) => m.division === safeDivision)
   const teamById = Object.fromEntries(teams.map((t) => [t.id, t]))
@@ -59,14 +59,14 @@ export default function GroupStageHistoryPage() {
         <h1 className="text-xl font-bold text-lob-dark">Group Stage</h1>
       </div>
 
-      {league.divisions.length > 1 && (
+      {divisions.length > 1 && (
         <div className="-mx-4 px-4 py-2 bg-lob-cream border-b border-gray-100 sticky top-0 z-10 mb-4">
           <SegmentedControl
             ariaLabel="Division"
             layout="wrap"
             size="md"
             shape="pill"
-            options={league.divisions.map((div) => ({ value: div, label: DIVISION_LABELS[div] }))}
+            options={divisions.map((div) => ({ value: div, label: DIVISION_LABELS[div] }))}
             value={safeDivision}
             onChange={(div) => setDivision(div)}
           />

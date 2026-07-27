@@ -27,7 +27,7 @@ const [stalePlayer] = normalisePlayers([
     playtomic_level: 3.5,
     // Legacy columns still present on the row but no longer read.
     adjustment: 1,
-    adjustedLevel: 4.5,
+    adjusted_level: 4.5,
     status: 'active',
   },
 ])

@@ -149,7 +149,7 @@ export function ScoreEntryForm({
         sets,
         played_on: playedOn,
         location: location || undefined,
-      } as Record<string, unknown>)
+      })
       onSuccess()
     } catch {
       // error is surfaced via recordResult.error

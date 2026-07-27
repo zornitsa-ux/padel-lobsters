@@ -55,10 +55,10 @@ export default function RaffleEligibilityContainer({
   const registered = useMemo(() => {
     const seen = new Set<string>()
     return regsData
-      .filter((r: { status?: string }) => r.status === 'registered')
-      .map((r: { playerId: string }) => r.playerId)
-      .filter((id: string) => (seen.has(id) ? false : (seen.add(id), true)))
-      .sort((a: string, b: string) => fullNameOf(nameOf(a)).localeCompare(fullNameOf(nameOf(b))))
+      .filter((r) => r.status === 'registered')
+      .map((r) => r.playerId)
+      .filter((id) => (seen.has(id) ? false : (seen.add(id), true)))
+      .sort((a, b) => fullNameOf(nameOf(a)).localeCompare(fullNameOf(nameOf(b))))
   }, [regsData, nameOf])
 
   const toggle = (id: string) => {

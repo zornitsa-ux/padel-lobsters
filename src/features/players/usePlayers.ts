@@ -9,6 +9,7 @@ import {
   type Player,
 } from './playerQueries'
 import * as mut from './playerQueries'
+import type { PlayerInput } from './playerQueries'
 import { mergeMyProfile } from './playerSelectors'
 
 // Full redacted roster. One shared cache across every list view — TanStack
@@ -97,7 +98,15 @@ export function useAvatarUpload() {
   return useMutation({ mutationFn: uploadAvatar })
 }
 
-export function usePlayerActions({ session, role }: { session: any; role: string }) {
+// Only the signed-in user's id is read here — every write is re-authorised
+// server-side by require_admin() or auth.uid().
+export function usePlayerActions({
+  session,
+  role,
+}: {
+  session: { user?: { id: string } | null } | null
+  role: string
+}) {
   const qc = useQueryClient()
   const invalidatePlayers = useCallback(
     () => qc.invalidateQueries({ queryKey: playerKeys.all() }),
@@ -105,7 +114,7 @@ export function usePlayerActions({ session, role }: { session: any; role: string
   )
 
   const addPlayer = useCallback(
-    async (data: any) => {
+    async (data: PlayerInput) => {
       if (!session?.user) throw new Error('Admin sign-in required to add a player.')
       const inserted = await mut.addPlayer(data)
       if (!inserted) throw new Error('Could not save player. Check your admin sign-in.')
@@ -116,7 +125,7 @@ export function usePlayerActions({ session, role }: { session: any; role: string
   )
 
   const updatePlayer = useCallback(
-    async (id: any, data: any) => {
+    async (id: string, data: PlayerInput) => {
       if (role !== 'admin' && String(id) !== String(session?.user?.id)) {
         throw new Error('Not authorized to edit this player')
       }
@@ -128,7 +137,7 @@ export function usePlayerActions({ session, role }: { session: any; role: string
   )
 
   const deletePlayer = useCallback(
-    async (id: any) => {
+    async (id: string) => {
       await mut.deletePlayer(id)
       await invalidatePlayers()
       return { ok: true }
@@ -137,7 +146,7 @@ export function usePlayerActions({ session, role }: { session: any; role: string
   )
 
   const regeneratePin = useCallback(
-    async (playerId: any) => {
+    async (playerId: string) => {
       const data = await mut.regeneratePin(playerId)
       if (!data) throw new Error('Could not reset PIN.')
       await invalidatePlayers()

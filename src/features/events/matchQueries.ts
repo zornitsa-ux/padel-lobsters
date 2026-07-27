@@ -20,17 +20,19 @@ export interface MatchRow {
   created_at: string
 }
 
-// One match produced by a schedule generator, before it's persisted.
+// One match produced by a schedule generator, before it's persisted. The
+// nullable fields mirror their `matches` columns — saveMatches supplies the
+// column defaults for round and completed.
 export interface GeneratedMatch {
-  round?: number
-  court?: string
-  team1Ids: string[]
-  team2Ids: string[]
-  team1Level?: number
-  team2Level?: number
+  round?: number | null
+  court?: string | null
+  team1Ids?: (string | number)[]
+  team2Ids?: (string | number)[]
+  team1Level?: number | null
+  team2Level?: number | null
   score1?: number | null
   score2?: number | null
-  completed?: boolean
+  completed?: boolean | null
 }
 
 // The fields the score UI patches via updateMatch.
@@ -85,8 +87,8 @@ export async function saveMatches(tournamentId: string, rounds: GeneratedMatch[]
     tournament_id: tournamentId,
     round: m.round || 1,
     court: m.court,
-    team1_ids: m.team1Ids,
-    team2_ids: m.team2Ids,
+    team1_ids: (m.team1Ids ?? []).map(String),
+    team2_ids: (m.team2Ids ?? []).map(String),
     team1_level: m.team1Level,
     team2_level: m.team2Level,
     score1: m.score1,

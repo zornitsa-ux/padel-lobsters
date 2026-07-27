@@ -104,11 +104,11 @@ export default function Players({ onNavigate, focusPlayerId }: PlayersProps) {
     [piiById],
   )
   const [showForm, setShowForm] = useState(false)
-  const [editId, setEditId] = useState<string | number | null>(null)
+  const [editId, setEditId] = useState<string | null>(null)
   const [form, setForm] = useState<PlayerFormState>(emptyForm)
   const lobbyPrompt = useMemo(() => randomPrompt(), [])
   const [search, setSearch] = useState('')
-  const [expandedId, setExpandedId] = useState<string | number | null>(focusPlayerId || null)
+  const [expandedId, setExpandedId] = useState<string | null>(focusPlayerId || null)
   const focusRef = useRef<HTMLDivElement | null>(null)
 
   // Auto-scroll to focused player card
@@ -212,7 +212,7 @@ export default function Players({ onNavigate, focusPlayerId }: PlayersProps) {
     setShowForm(true)
   }
 
-  const handleDelete = async (id: string | number) => {
+  const handleDelete = async (id: string) => {
     if (!isAdmin) {
       onNavigate?.('settings')
       return
@@ -238,7 +238,7 @@ export default function Players({ onNavigate, focusPlayerId }: PlayersProps) {
     }
   }
 
-  const handleReject = async (id: string | number) => {
+  const handleReject = async (id: string) => {
     if (!confirm('Reject and remove this registration request?')) return
     setError('')
     try {

@@ -31,7 +31,7 @@ export function useDrawWinners() {
     }: {
       tournamentId: string
       numWinners: number
-      prizes?: (string | null)[]
+      prizes?: string[]
     }) => drawWinners(tournamentId, numWinners, prizes),
     onSuccess: () => qc.invalidateQueries({ queryKey: raffleKeys.all() }),
   })

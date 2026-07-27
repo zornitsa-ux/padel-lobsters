@@ -1,16 +1,33 @@
-// Raw player row as it arrives from the players_public view or the
-// get_my_profile_v2 RPC (snake_case). Loosely typed because callers validate
-// with Zod at the fetch boundary before normalising.
-export interface RawPlayerRow {
+import type { Tables } from './database.types'
+
+// Rows reach the normalisers through a `.passthrough()` Zod parse and, on some
+// paths, a partial `select()` list, so every generated column is widened to
+// optional-and-nullable here. Column names and value types still come from the
+// DB — this only expresses "may not have been selected", which is exactly the
+// contract each normaliser's `?? default` chain is written against.
+type LooseRow<T> = { [K in keyof T]?: T[K] | null }
+
+// Raw player row as it arrives from the players_public view, the players table
+// or the get_my_profile_v2 RPC (snake_case). Every column is optional because
+// each of those three sources exposes a different subset; the shape itself
+// comes from the generated `players` row so the DB stays the single source of
+// truth. The camelCase aliases are accepted because normalisation is
+// idempotent — already-normalised players are re-normalised in a few places.
+export interface RawPlayerRow extends LooseRow<Tables<'players'>> {
   id: string
-  [key: string]: any
+  playtomicLevel?: number | null
+  playtomicUsername?: string | null
+  isLeftHanded?: boolean | null
+  avatarUrl?: string | null
+  preferredPosition?: string | null
+  taglineLabel?: string | null
 }
 
 // The normalised player shape consumed across the app: the raw row is spread
 // through (so snake_case columns and any future columns remain accessible),
 // with these camelCase aliases layered on top. PII fields are present only when
 // the row came from get_my_profile_v2 (see useMyProfile).
-export interface Player {
+export interface Player extends RawPlayerRow {
   id: string
   name: string
   playtomicLevel: number
@@ -22,10 +39,6 @@ export interface Player {
   country: string
   preferredPosition: string
   taglineLabel: string
-  email?: string | null
-  phone?: string | null
-  birthday?: string | null
-  [key: string]: any
 }
 
 export function normalisePlayers(players: RawPlayerRow[]): Player[] {
@@ -44,17 +57,10 @@ export function normalisePlayers(players: RawPlayerRow[]): Player[] {
   }))
 }
 
-// Raw `tournaments` row as it arrives from the fetch boundary (snake_case,
-// Zod-validated). Loosely typed with an index signature because callers spread
-// unlisted passthrough columns straight through normalisation.
-export interface RawTournamentRow {
-  id: string
-  [key: string]: any
-}
-
 // A single court entry, stored (and edited) in camelCase inside the row's
-// `courts` JSON column.
-export interface TournamentCourt {
+// `courts` JSON column. The column itself is `jsonb`, so this shape is the
+// app's contract with itself rather than something the DB enforces.
+export type TournamentCourt = {
   name: string
   booked: boolean
   costPerPerson: number | string
@@ -62,10 +68,25 @@ export interface TournamentCourt {
   tikkieLink: string
 }
 
+// Raw `tournaments` row as it arrives from the fetch boundary (snake_case,
+// Zod-validated). Columns are optional because partial selects are common;
+// `courts` is re-typed off the generated `Json` to the shape the app writes.
+export interface RawTournamentRow extends LooseRow<Omit<Tables<'tournaments'>, 'courts'>> {
+  id: string
+  courts?: TournamentCourt[] | null
+  maxPlayers?: number | null
+  courtBookingMode?: string | null
+  totalPrice?: number | null
+  tikkieLink?: string | null
+  genderMode?: string | null
+  completedAt?: string | null
+  resultsSharedAt?: string | null
+}
+
 // The normalised tournament consumed across the app: the raw row spread through
-// (snake_case + future columns stay accessible via the index signature) with
-// these camelCase aliases and defaults layered on top.
-export interface NormalisedTournament {
+// (snake_case + future columns stay accessible) with these camelCase aliases
+// and defaults layered on top.
+export interface NormalisedTournament extends RawTournamentRow {
   id: string
   name: string
   date: string
@@ -85,7 +106,6 @@ export interface NormalisedTournament {
   // D-029: null while a completed tournament's final ranking is withheld from
   // players (admins always see it regardless). See resultsPhase().
   resultsSharedAt: string | null
-  [key: string]: any
 }
 
 export function normaliseTournaments(tournaments: RawTournamentRow[]): NormalisedTournament[] {
@@ -113,14 +133,10 @@ export function normaliseTournaments(tournaments: RawTournamentRow[]): Normalise
 // Raw `registrations` row from the fetch boundary (Zod-validated). The
 // camelCase variants are accepted because normalisation is idempotent —
 // already-normalised rows are re-normalised in a few places.
-export interface RawRegistrationRow {
+export interface RawRegistrationRow extends LooseRow<Tables<'registrations'>> {
   id: string
   tournament_id: string
   player_id: string
-  status: string
-  payment_status?: string | null
-  payment_method?: string | null
-  created_at?: string | null
   tournamentId?: string | null
   playerId?: string | null
   paymentStatus?: string | null
@@ -151,19 +167,9 @@ export function normaliseRegistrations(
 
 // Raw `matches` row from the fetch boundary (Zod-validated), plus the camelCase
 // variants normalisation accepts.
-export interface RawMatchRow {
+export interface RawMatchRow extends LooseRow<Tables<'matches'>> {
   id: string
   tournament_id: string
-  round: number
-  court?: string | null
-  team1_ids?: string[] | null
-  team2_ids?: string[] | null
-  team1_level?: number | null
-  team2_level?: number | null
-  score1?: number | null
-  score2?: number | null
-  completed: boolean
-  created_at?: string | null
   tournamentId?: string | null
   team1Ids?: string[] | null
   team2Ids?: string[] | null
@@ -192,16 +198,8 @@ export function normaliseMatches(matches: RawMatchRow[]): NormalisedMatch[] {
 
 // Raw `registration_transfers` row from the fetch boundary (Zod-validated),
 // plus the camelCase variants normalisation accepts.
-export interface RawTransferRow {
+export interface RawTransferRow extends LooseRow<Tables<'registration_transfers'>> {
   id: string
-  tournament_id?: string | null
-  from_player_id?: string | null
-  to_player_id?: string | null
-  status?: string | null
-  closed_reason?: string | null
-  responded_at?: string | null
-  closed_at?: string | null
-  created_at?: string | null
   tournamentId?: string | null
   fromPlayerId?: string | null
   toPlayerId?: string | null

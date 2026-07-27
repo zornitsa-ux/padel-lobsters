@@ -287,7 +287,8 @@ export default function Schedule({
       const [t2a, t2b] = (m.team2Ids || []).map(String)
       matches.push({
         matchId: String(m.id),
-        round: m.round,
+        // `matches.round` is nullable; 1 is the column's own default.
+        round: m.round ?? 1,
         team1: [t1a, t1b],
         team2: [t2a, t2b],
         score1,

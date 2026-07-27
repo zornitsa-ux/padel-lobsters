@@ -3,9 +3,9 @@ import { buildGoogleCalendarUrl, buildTournamentIcs, downloadTournamentIcs } fro
 
 describe('calendar helpers', () => {
   it('returns null outputs when tournament date is missing', () => {
-    expect(buildTournamentIcs({ id: 't1' } as any)).toBeNull()
-    expect(buildGoogleCalendarUrl({ id: 't1' } as any)).toBeNull()
-    expect(downloadTournamentIcs({ id: 't1' } as any)).toBe(false)
+    expect(buildTournamentIcs({ id: 't1' })).toBeNull()
+    expect(buildGoogleCalendarUrl({ id: 't1' })).toBeNull()
+    expect(downloadTournamentIcs({ id: 't1' })).toBe(false)
   })
 
   it('builds an ICS payload with event and alarm blocks', () => {

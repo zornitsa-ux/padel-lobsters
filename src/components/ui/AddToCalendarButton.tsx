@@ -1,6 +1,6 @@
 import React from 'react'
 import { CalendarPlus } from 'lucide-react'
-import { buildGoogleCalendarUrl } from '../../lib/calendar'
+import { buildGoogleCalendarUrl, type CalendarEvent } from '../../lib/calendar'
 import { IconButton } from './IconButton'
 
 // ============================================================================
@@ -18,7 +18,7 @@ import { IconButton } from './IconButton'
 // ============================================================================
 
 interface AddToCalendarButtonProps {
-  tournament: { date?: string | null } & Record<string, unknown>
+  tournament: CalendarEvent
   variant?: 'full' | 'icon'
   className?: string
   label?: React.ReactNode

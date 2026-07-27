@@ -51,7 +51,7 @@ describe('useTransferActions', () => {
   it('createTransfer returns not_authenticated without calling query fn when session is null', async () => {
     const { result } = renderHookWithClient(() => useTransferActions({ session: null }))
 
-    let res: any
+    let res: unknown
     await act(async () => {
       res = await result.current.createTransfer('pid-2', 'tid-1')
     })

@@ -227,7 +227,7 @@ export function TeamForm({
       return
     }
     setValidationErrors({})
-    const payload: Record<string, unknown> = {
+    const payload = {
       ...result.data,
       league_id: leagueId,
       division,

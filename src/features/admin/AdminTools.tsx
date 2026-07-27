@@ -9,7 +9,9 @@ import { useMerchInterests } from '../merch/useMerch'
 import { SignInBanner } from '../../components/ui/AuthGate'
 import PlayerAliasMatcher from '../../components/PlayerAliasMatcher'
 import ReviewBreakdownModal from '../community/ReviewBreakdownModal'
+import type { ReviewBucket } from '../community/ReviewBreakdownModal'
 import { REVIEW_SCENARIOS, corpReview } from '../community/reviewScenarios'
+import type { LucideIcon } from 'lucide-react'
 import {
   GitMerge,
   Users,
@@ -32,14 +34,14 @@ type ToolCard = {
   title: string
   description: string
   actionLabel: string
-  icon: React.ComponentType<any>
+  icon: LucideIcon
   onClick: () => void
 }
 
 const LAST_CHECK_KEY = 'pl_merch_last_checked'
 
 export default function AdminTools({ onNavigate }: AdminToolsProps) {
-  const { session } = useApp() as any
+  const { session } = useApp()
   const { data: tournaments = [] } = useTournaments()
   const { data: players = [] } = usePlayers()
   const { data: allRegs = [] } = useAllRegistrations()
@@ -52,17 +54,17 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
 
   // ── Pending-action counts ───────────────────────────────────────────────────
   const pendingSignups = useMemo(
-    () => (players as any[]).filter((p: any) => p.status === 'pending').length,
+    () => players.filter((p) => p.status === 'pending').length,
     [players],
   )
 
   const unpaidForNextEvent = useMemo(() => {
-    const next = (tournaments as any[])
-      .filter((t: any) => t.status === 'upcoming' || t.status === 'active')
-      .sort((a: any, b: any) => ((a.date || '') < (b.date || '') ? -1 : 1))[0]
+    const next = tournaments
+      .filter((t) => t.status === 'upcoming' || t.status === 'active')
+      .sort((a, b) => ((a.date || '') < (b.date || '') ? -1 : 1))[0]
     if (!next) return 0
-    return (allRegs as any[]).filter(
-      (r: any) =>
+    return allRegs.filter(
+      (r) =>
         r.tournamentId === next.id &&
         r.status === 'registered' &&
         r.paymentStatus !== 'paid' &&
@@ -82,16 +84,16 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
   const totalPending = pendingSignups + unpaidForNextEvent + newOrdersCount
 
   const activePlayers = useMemo(
-    () => (players || []).filter((p: any) => (p?.status || 'active') === 'active'),
+    () => players.filter((p) => (p.status || 'active') === 'active'),
     [players],
   )
 
   const reviewBreakdown = useMemo(() => {
-    const byScenario = new Map<string, any>()
-    REVIEW_SCENARIOS.forEach((s: any) => {
+    const byScenario = new Map<string, ReviewBucket>()
+    REVIEW_SCENARIOS.forEach((s) => {
       byScenario.set(s.id, { id: s.id, label: s.label, players: [], samples: new Map() })
     })
-    activePlayers.forEach((p: any) => {
+    activePlayers.forEach((p) => {
       const r = corpReview(p, allMatches, allRegs, tournaments, playerAliases)
       let bucket = byScenario.get(r.scenario)
       if (!bucket) {

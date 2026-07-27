@@ -151,7 +151,7 @@ export function GroupFormationTool({
     await confirmGroups.mutateAsync({
       league_id: leagueId,
       group_assignments: { [division]: { A: groupA, B: groupB } },
-    } as Record<string, unknown>)
+    })
     onSuccess()
   }
 

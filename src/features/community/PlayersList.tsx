@@ -12,10 +12,10 @@ import type { EventNavigate } from '../events/eventHelpers'
 interface PlayersListProps {
   orderedForRender: OrderedPlayer<CommunityPlayer>[]
   hasPlayers: boolean
-  focusPlayerId?: string | number | null
+  focusPlayerId?: string | null
   focusRef?: React.RefObject<HTMLDivElement> | null
-  expandedId: string | number | null
-  setExpandedId: (id: string | number | null) => void
+  expandedId: string | null
+  setExpandedId: (id: string | null) => void
   isAdmin: boolean
   levelBadge: (level: number) => string
   displayName: (player: CommunityPlayer) => string
@@ -26,7 +26,7 @@ interface PlayersListProps {
   players: CommunityPlayer[]
   onNavigate?: EventNavigate
   onEdit: (player: CommunityPlayer) => void
-  onDelete: (id: string | number) => void
+  onDelete: (id: string) => void
   onRegeneratePin: (player: CommunityPlayer) => void
 }
 

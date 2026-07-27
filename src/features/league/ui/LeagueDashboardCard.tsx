@@ -5,13 +5,13 @@ import type { BadgeProps } from '../../../components/ui/Badge'
 import { useActiveLeagueBundle } from '../hooks/useLeagueQueries'
 import { computeGroupStandings } from '../domain/standings'
 import { resolveTeamShortName } from '../domain/teamDisplay'
-import type { LeagueStatus } from '../domain/types'
 
 interface LeagueDashboardCardProps {
   myPlayerId: string | null
 }
 
-const STATUS_BADGE: Record<LeagueStatus, { label: string; variant: BadgeProps['variant'] }> = {
+// Keyed by the raw `leagues.status` string — the column has no CHECK constraint.
+const STATUS_BADGE: Record<string, { label: string; variant: BadgeProps['variant'] }> = {
   draft: { label: 'Coming Soon', variant: 'league-draft' },
   group_stage: { label: 'Group Stage', variant: 'league-group-stage' },
   knockout: { label: 'Knockout Stage', variant: 'league-knockout' },

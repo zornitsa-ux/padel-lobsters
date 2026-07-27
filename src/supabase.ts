@@ -5,6 +5,7 @@
 // ============================================================
 
 import { createClient } from '@supabase/supabase-js'
+import type { Database } from './lib/database.types'
 import { env } from './lib/env'
 import { mark } from './lib/perfMarks'
 
@@ -15,13 +16,13 @@ const supabaseKey = env.VITE_SUPABASE_ANON_KEY
 // (_getAccessToken), so the gap between the 'session' and 'first-query' marks
 // is the auth cost that data loading is serialised behind. Marking here rather
 // than in a query hook catches the true first request whichever one wins.
-const instrumentedFetch = (input, init) => {
-  const url = typeof input === 'string' ? input : (input?.url ?? '')
+const instrumentedFetch: typeof fetch = (input, init) => {
+  const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
   if (url.includes('/rest/v1/')) mark('first-query')
   return fetch(input, init)
 }
 
-export const supabase = createClient(supabaseUrl, supabaseKey, {
+export const supabase = createClient<Database>(supabaseUrl, supabaseKey, {
   global: { fetch: instrumentedFetch },
 })
 

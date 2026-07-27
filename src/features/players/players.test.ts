@@ -54,7 +54,7 @@ describe('players_public validate → normalise pipeline', () => {
 
   it('passes unknown/future columns through untouched', () => {
     const [player] = runPipeline([{ id: 'p4', name: 'Di', some_new_column: 'keep me' }])
-    expect(player.some_new_column).toBe('keep me')
+    expect(player).toMatchObject({ some_new_column: 'keep me' })
   })
 
   it('rejects a row missing the id (fails loudly at the boundary)', () => {
@@ -63,8 +63,12 @@ describe('players_public validate → normalise pipeline', () => {
 })
 
 describe('mergeMyProfile', () => {
-  const base = { id: 'me', name: 'Me', playtomicLevel: 4 } as any
-  const pii = { id: 'me', name: 'Me', email: 'me@example.com', phone: '+31600000000' } as any
+  const [base] = normalisePlayers([{ id: 'me', name: 'Me', playtomic_level: 4 }])
+  // get_my_profile_v2 returns SETOF players, so the PII row is a full row —
+  // not a sparse overlay.
+  const [pii] = normalisePlayers([
+    { id: 'me', name: 'Me', playtomic_level: 4, email: 'me@example.com', phone: '+31600000000' },
+  ])
 
   it('returns null when neither source is present (signed out)', () => {
     expect(mergeMyProfile(null, null)).toBeNull()
