@@ -40,7 +40,7 @@ import { errorMessage } from '../../lib/errors'
 import type { EntityId, ScheduleRound, ScheduleWarning } from './schedule/types'
 import type { EventNavigate } from './eventHelpers'
 import type { NormalisedTournament, Player } from '../../lib/normalise'
-import type { GenderMode } from '../matchmaking/domain/types'
+import type { GenderMode, MatchResult } from '../matchmaking/domain/types'
 import type { RatingReviewProps } from '../matchmaking/ui/RatingReview'
 
 // A player slot the admin has tapped first in swap mode.
@@ -277,16 +277,23 @@ export default function Schedule({
         previousDeltas: [],
       }
     })
-    const matches = (savedMatches || [])
-      .filter((m) => m.score1 != null && m.score2 != null)
-      .map((m) => ({
+    // Padel is always 2v2, so the pairs are read off positionally — MatchResult
+    // types both teams as a 2-tuple.
+    const matches: MatchResult[] = []
+    for (const m of savedMatches || []) {
+      const { score1, score2 } = m
+      if (score1 == null || score2 == null) continue
+      const [t1a, t1b] = (m.team1Ids || []).map(String)
+      const [t2a, t2b] = (m.team2Ids || []).map(String)
+      matches.push({
         matchId: String(m.id),
         round: m.round,
-        team1: (m.team1Ids || []).map(String),
-        team2: (m.team2Ids || []).map(String),
-        score1: m.score1,
-        score2: m.score2,
-      }))
+        team1: [t1a, t1b],
+        team2: [t2a, t2b],
+        score1,
+        score2,
+      })
+    }
     const payload = buildRatingUpdatePayload({
       tournamentId: String(tournament.id),
       players,

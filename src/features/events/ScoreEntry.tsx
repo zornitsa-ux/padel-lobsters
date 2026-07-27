@@ -20,9 +20,9 @@ import type { MatchScoreUpdate } from './matchQueries'
 // Only the fields ScoreEntry reads off a (normalised) match row.
 interface ScoreEntryMatch {
   id: string
-  score1: number | null
-  score2: number | null
-  completed: boolean
+  score1?: number | null
+  score2?: number | null
+  completed?: boolean
 }
 
 interface ScoreEntryProps {

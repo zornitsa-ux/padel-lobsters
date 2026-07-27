@@ -22,6 +22,7 @@ import AuthConfirm from './components/AuthConfirm'
 import { useEventDataLoader } from './features/events/useEventDataLoader'
 import { mark } from './lib/perfMarks'
 import EventShell from './features/events/EventShell'
+import type { EventNavigate } from './features/events/eventHelpers'
 import CommunityShell from './features/community/CommunityShell'
 
 // Code-split every route off the first paint. The app shell (Layout,
@@ -117,13 +118,11 @@ function RouteFallback() {
   return <Spinner className="py-24" />
 }
 
-type NavigatePayload = { id?: string | number; focusPlayerId?: string } & Record<string, unknown>
-
 // Translate the legacy onNavigate(page, tournament?) signature to URL
 // navigation. Existing components keep working without internal changes.
-function useLegacyNavigate() {
+function useLegacyNavigate(): EventNavigate {
   const navigate = useNavigate()
-  return (page: string, payload?: NavigatePayload | null) => {
+  return (page, payload) => {
     const t = payload && typeof payload === 'object' ? payload : null
     switch (page) {
       case 'home':

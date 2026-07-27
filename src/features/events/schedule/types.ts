@@ -11,7 +11,7 @@ export interface SchedulePlayer {
 export interface ScheduleMatch {
   id?: EntityId
   round?: number
-  court?: string
+  court?: string | null
   team1Ids?: EntityId[]
   team2Ids?: EntityId[]
   team1Level?: number

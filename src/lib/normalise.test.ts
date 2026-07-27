@@ -135,11 +135,12 @@ describe('normaliseRegistrations', () => {
         id: 'r1',
         tournament_id: 't1',
         player_id: 'p1',
+        status: 'registered',
         payment_status: 'pending_confirmation',
         payment_method: 'bank_transfer',
         created_at: createdAt,
       },
-      { id: 'r2', tournamentId: 't2', playerId: 'p2' },
+      { id: 'r2', tournament_id: 't2', player_id: 'p2', status: 'registered' },
     ])
 
     expect(result[0]).toMatchObject({
@@ -167,12 +168,14 @@ describe('normaliseMatches', () => {
       {
         id: 'm1',
         tournament_id: 't1',
+        round: 1,
+        completed: false,
         team1_ids: ['p1', 'p2'],
         team2_ids: ['p3', 'p4'],
         team1_level: 8.5,
         team2_level: 8.3,
       },
-      { id: 'm2', tournamentId: 't2' },
+      { id: 'm2', tournament_id: 't2', round: 1, completed: false },
     ])
 
     expect(result[0]).toMatchObject({
@@ -225,9 +228,9 @@ describe('normaliseTransfers', () => {
     const [result] = normaliseTransfers([
       {
         id: 'tr2',
-        tournamentId: 't2',
-        fromPlayerId: 'p7',
-        toPlayerId: 'p8',
+        tournament_id: 't2',
+        from_player_id: 'p7',
+        to_player_id: 'p8',
       },
     ])
 

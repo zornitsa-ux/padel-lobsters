@@ -21,9 +21,10 @@ import {
 } from 'lucide-react'
 import LeagueAdminSection from '../league/LeagueAdminSection'
 import { PageHeader } from '../../components/ui/PageHeader'
+import type { EventNavigate } from '../events/eventHelpers'
 
 type AdminToolsProps = {
-  onNavigate?: (page: string, payload?: unknown) => void
+  onNavigate?: EventNavigate
 }
 
 type ToolCard = {

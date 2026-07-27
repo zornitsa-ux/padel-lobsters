@@ -143,32 +143,31 @@ export default function History({ onNavigate }: HistoryProps) {
           const p = players.find((x) => x.id === r.playerId)
           if (p) stats[r.playerId] = { player: p, played: 0, won: 0, lost: 0, pf: 0, pa: 0, pts: 0 }
         })
-        tMatches
-          .filter((m) => m.completed && m.score1 != null)
-          .forEach((m) => {
-            const s1 = m.score1,
-              s2 = m.score2
-            const t1w = s1 > s2,
-              t2w = s2 > s1
-            ;((m.team1Ids || []) as string[]).forEach((id) => {
-              if (!stats[id]) return
-              stats[id].played++
-              stats[id].pf += s1
-              stats[id].pa += s2
-              stats[id].pts += s1
-              if (t1w) stats[id].won++
-              else if (t2w) stats[id].lost++
-            })
-            ;((m.team2Ids || []) as string[]).forEach((id) => {
-              if (!stats[id]) return
-              stats[id].played++
-              stats[id].pf += s2
-              stats[id].pa += s1
-              stats[id].pts += s2
-              if (t2w) stats[id].won++
-              else if (t1w) stats[id].lost++
-            })
+        tMatches.forEach((m) => {
+          if (!m.completed || m.score1 == null) return
+          const s1 = m.score1,
+            s2 = m.score2 ?? 0
+          const t1w = s1 > s2,
+            t2w = s2 > s1
+          ;(m.team1Ids || []).forEach((id) => {
+            if (!stats[id]) return
+            stats[id].played++
+            stats[id].pf += s1
+            stats[id].pa += s2
+            stats[id].pts += s1
+            if (t1w) stats[id].won++
+            else if (t2w) stats[id].lost++
           })
+          ;(m.team2Ids || []).forEach((id) => {
+            if (!stats[id]) return
+            stats[id].played++
+            stats[id].pf += s2
+            stats[id].pa += s1
+            stats[id].pts += s2
+            if (t2w) stats[id].won++
+            else if (t1w) stats[id].lost++
+          })
+        })
         const rankings = Object.values(stats).sort((a, b) =>
           b.pts !== a.pts
             ? b.pts - a.pts

@@ -26,6 +26,7 @@ import {
 } from './playersSelectors'
 import type { CommunityPlayer } from './playersSelectors'
 import type { PinReveal } from './PinRevealModal'
+import type { EventNavigate } from '../events/eventHelpers'
 
 const GENERIC_REVIEW_IDS = new Set([
   'level-low',
@@ -59,7 +60,7 @@ function formFromPlayer(p: CommunityPlayer): PlayerFormState {
 }
 
 interface PlayersProps {
-  onNavigate?: (page: string, payload?: unknown) => void
+  onNavigate?: EventNavigate
   focusPlayerId?: string | null
 }
 

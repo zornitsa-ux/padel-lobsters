@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { normalisePlayers } from '../../../lib/normalise'
+import type { NormalisedMatch, NormalisedRegistration } from '../../../lib/normalise'
+import { mkMatch, mkRegistration, mkTransfer } from '../../../test/factories'
 import {
   splitRegistrationsByStatus,
   getInTournamentPlayerIds,
@@ -25,12 +27,22 @@ const players = normalisePlayers([
   { id: 'p4', name: 'Ken Thompson' },
 ])
 
-const reg = (id: string, playerId: string, status: string, seconds?: number) => ({
-  id,
-  playerId,
-  status,
-  registeredAt: seconds == null ? undefined : { seconds },
-})
+const reg = (
+  id: string,
+  playerId: string,
+  status: string,
+  seconds?: number,
+): NormalisedRegistration =>
+  mkRegistration({
+    id,
+    player_id: playerId,
+    playerId,
+    status,
+    registeredAt: { seconds: seconds ?? 0 },
+  })
+
+const mkMatches = (ms: (Partial<NormalisedMatch> & { id: string })[]): NormalisedMatch[] =>
+  ms.map(mkMatch)
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
@@ -210,7 +222,7 @@ describe('transfer selectors', () => {
     { id: 't2', status: 'accepted', tournamentId: '7', fromPlayerId: 'p3', toPlayerId: 'p4' },
     { id: 't3', status: 'pending', tournamentId: '8', fromPlayerId: 'p1', toPlayerId: 'p2' },
     { id: 't4', status: 'pending', tournamentId: '7', fromPlayerId: 'p4', toPlayerId: 'p2' },
-  ]
+  ].map(mkTransfer)
 
   it('keeps only pending offers for the given tournament, comparing ids as strings', () => {
     expect(getPendingTransfersForTournament(transfers, 7).map((t) => t.id)).toEqual(['t1', 't4'])
@@ -244,12 +256,12 @@ describe('transfer selectors', () => {
 
 describe('groupMatchesByRound', () => {
   it('groups by round and orders each round by court number', () => {
-    const matches = [
+    const matches = mkMatches([
       { id: 'm1', round: 2, court: 'Court 2' },
       { id: 'm2', round: 1, court: 'Court 10' },
       { id: 'm3', round: 1, court: 'Court 2' },
       { id: 'm4', round: 2, court: 'Centre' },
-    ]
+    ])
 
     const byRound = groupMatchesByRound(matches)
 
@@ -258,14 +270,16 @@ describe('groupMatchesByRound', () => {
   })
 
   it('treats a missing round as round 1', () => {
-    expect(groupMatchesByRound([{ id: 'm1' }])[1].map((m) => m.id)).toEqual(['m1'])
+    expect(groupMatchesByRound(mkMatches([{ id: 'm1' }]))[1].map((m) => m.id)).toEqual(['m1'])
   })
 
   it('returns rounds in ascending order', () => {
-    const byRound = groupMatchesByRound([
-      { id: 'a', round: 3 },
-      { id: 'b', round: 1 },
-    ])
+    const byRound = groupMatchesByRound(
+      mkMatches([
+        { id: 'a', round: 3 },
+        { id: 'b', round: 1 },
+      ]),
+    )
 
     expect(getSortedRoundNumbers(byRound)).toEqual([1, 3])
     expect(getSortedRoundNumbers()).toEqual([])
@@ -309,7 +323,7 @@ describe('computeRankings', () => {
   })
 
   it('accumulates points for and against and ranks on total points', () => {
-    const matches = [
+    const matches = mkMatches([
       {
         id: 'm1',
         completed: true,
@@ -326,7 +340,7 @@ describe('computeRankings', () => {
         team1Ids: ['p4'],
         team2Ids: ['p1'],
       },
-    ]
+    ])
 
     const rankings = computeRankings({ matches, regs, players })
 
@@ -336,18 +350,18 @@ describe('computeRankings', () => {
   })
 
   it('skips matches that are not completed or missing a score', () => {
-    const matches = [
+    const matches = mkMatches([
       { id: 'm1', completed: false, score1: 6, score2: 3, team1Ids: ['p1'], team2Ids: ['p2'] },
       { id: 'm2', completed: true, score1: null, score2: 3, team1Ids: ['p1'], team2Ids: ['p2'] },
-    ]
+    ])
 
     expect(computeRankings({ matches, regs, players }).every((r) => r.played === 0)).toBe(true)
   })
 
   it('a draw counts as played but neither won nor lost', () => {
-    const matches = [
+    const matches = mkMatches([
       { id: 'm1', completed: true, score1: 4, score2: 4, team1Ids: ['p1'], team2Ids: ['p2'] },
-    ]
+    ])
 
     const p1 = computeRankings({ matches, regs, players }).find((r) => r.player.id === 'p1')
 
@@ -355,11 +369,11 @@ describe('computeRankings', () => {
   })
 
   it('breaks a points tie on matches won, then on point difference', () => {
-    const matches = [
+    const matches = mkMatches([
       { id: 'm1', completed: true, score1: 6, score2: 0, team1Ids: ['p1'], team2Ids: ['p2'] },
       { id: 'm2', completed: true, score1: 3, score2: 3, team1Ids: ['p4'], team2Ids: ['p2'] },
       { id: 'm3', completed: true, score1: 3, score2: 3, team1Ids: ['p4'], team2Ids: ['p2'] },
-    ]
+    ])
 
     // p1 and p4 both hold 6 points; p1 won a match, p4 drew twice.
     const rankings = computeRankings({ matches, regs, players })
@@ -368,9 +382,9 @@ describe('computeRankings', () => {
   })
 
   it('does not mutate its inputs', () => {
-    const matches = [
+    const matches = mkMatches([
       { id: 'm1', completed: true, score1: 6, score2: 3, team1Ids: ['p1'], team2Ids: ['p2'] },
-    ]
+    ])
     const snapshot = JSON.stringify({ matches, regs, players })
 
     computeRankings({ matches, regs, players })
@@ -380,7 +394,7 @@ describe('computeRankings', () => {
 })
 
 describe('isMatchVisibleForPlayer', () => {
-  const match = { team1Ids: [1, 2], team2Ids: [3, 4] }
+  const match = mkMatch({ id: 'm1', team1Ids: ['1', '2'], team2Ids: ['3', '4'] })
 
   it('matches on either team, comparing ids as strings', () => {
     expect(isMatchVisibleForPlayer(match, '1')).toBe(true)

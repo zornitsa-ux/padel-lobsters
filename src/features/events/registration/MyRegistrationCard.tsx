@@ -7,8 +7,8 @@ import type { NormalisedTransfer } from '../transferQueries'
 import type { GetPlayer, TransferShareTarget } from './utils'
 
 interface MyRegistrationCardProps {
-  myReg: NormalisedRegistration | undefined
-  myWaitlistReg: NormalisedRegistration | undefined
+  myReg: NormalisedRegistration | null | undefined
+  myWaitlistReg: NormalisedRegistration | null | undefined
   /** 1-based position in the waitlist, or 0/undefined when unknown. */
   waitlistPosition?: number
   isEventFull: boolean
@@ -111,7 +111,24 @@ export default function MyRegistrationCard({
       </div>
     ) : null
 
-  if (!isRegistered && !isWaitlisted) {
+  if (isWaitlisted) {
+    return (
+      <>
+        {incomingCards}
+        <div className="card bg-amber-50 border border-amber-200 space-y-1">
+          <div className="flex items-center gap-2">
+            <Clock size={14} className="text-amber-600 flex-shrink-0" />
+            <p className="text-sm font-semibold text-amber-800">
+              You&apos;re on the waitlist{waitlistPosition ? ` · #${waitlistPosition}` : ''}
+            </p>
+          </div>
+          <p className="text-xs text-amber-700 pl-5">You&apos;ll be notified if a spot opens up.</p>
+        </div>
+      </>
+    )
+  }
+
+  if (!myReg) {
     return (
       <>
         {incomingCards}
@@ -126,23 +143,6 @@ export default function MyRegistrationCard({
           >
             {saving ? 'Signing up…' : isEventFull ? 'Join the waitlist' : 'Register for this event'}
           </button>
-        </div>
-      </>
-    )
-  }
-
-  if (isWaitlisted) {
-    return (
-      <>
-        {incomingCards}
-        <div className="card bg-amber-50 border border-amber-200 space-y-1">
-          <div className="flex items-center gap-2">
-            <Clock size={14} className="text-amber-600 flex-shrink-0" />
-            <p className="text-sm font-semibold text-amber-800">
-              You&apos;re on the waitlist{waitlistPosition ? ` · #${waitlistPosition}` : ''}
-            </p>
-          </div>
-          <p className="text-xs text-amber-700 pl-5">You&apos;ll be notified if a spot opens up.</p>
         </div>
       </>
     )

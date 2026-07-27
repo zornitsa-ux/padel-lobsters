@@ -19,13 +19,14 @@ import MyOrders from './MyOrders'
 import OrdersTable from './OrdersTable'
 import AdminItemManager from './AdminItemManager'
 import ItemEditorForm from './ItemEditorForm'
+import type { EventNavigate } from '../events/eventHelpers'
 
 type TabId = 'shop' | 'myorders' | 'orders' | 'manage'
 type ByItem<T> = Record<number, T>
 
 type MerchProps = {
   initialTab?: string | null
-  onNavigate?: (dest: string, payload?: unknown) => void
+  onNavigate?: EventNavigate
 }
 
 // ── Main Merch component ──────────────────────────────────────────────────────

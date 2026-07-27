@@ -49,8 +49,8 @@ export default function RecentlyCompletedBanners<T extends CompletedTournament>(
         tMatches
           .filter((m) => m.completed && m.score1 != null)
           .forEach((m) => {
-            const s1 = parseInt(m.score1) || 0,
-              s2 = parseInt(m.score2) || 0
+            const s1 = m.score1 ?? 0,
+              s2 = m.score2 ?? 0
             ;(m.team1Ids || []).forEach((id: string) => {
               if (stats[id]) {
                 stats[id].pts += s1

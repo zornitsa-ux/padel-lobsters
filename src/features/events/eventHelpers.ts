@@ -1,8 +1,13 @@
-import type { NormalisedTournament } from './tournamentQueries'
+// The only fields the App-level navigation shim reads off the payload. Callers
+// usually pass a whole NormalisedTournament, which satisfies this.
+export interface NavigateTarget {
+  id?: string | number
+  focusPlayerId?: string
+}
 
 // App-level navigation callback threaded through every event surface: a
 // destination name plus (usually) the tournament being navigated into.
-export type EventNavigate = (destination: string, tournament?: NormalisedTournament) => void
+export type EventNavigate = (destination: string, target?: NavigateTarget | null) => void
 
 // Structural subset of a tournament (or an in-flight event form) needed to
 // derive the per-player price. NormalisedTournament satisfies it.

@@ -16,6 +16,7 @@ import PendingApprovalsList from './PendingApprovalsList'
 import RegisteredSection from '../events/registration/RegisteredSection'
 import { LEVEL_COLORS } from './playerConstants'
 import { normalisePlayers } from '../../lib/normalise'
+import { mkRegistration } from '../../test/factories'
 
 // Built through the real normaliser so the fixture is a complete Player rather
 // than a hand-written subset.
@@ -83,7 +84,7 @@ describe('roster level badges read the Playtomic level', () => {
       <RegisteredSection
         isCompleted={false}
         getPlayer={() => stalePlayer}
-        registered={[{ id: 'r1', playerId: 'p1', paymentStatus: 'unpaid' }]}
+        registered={[mkRegistration({ id: 'r1', playerId: 'p1', paymentStatus: 'unpaid' })]}
         maxPlayers={16}
         isAdmin
         displayName={(p: { name: string }) => p.name}

@@ -6,7 +6,7 @@ import type { NormalisedTransfer } from '../transferQueries'
 const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000
 
 // Lookups the Registration container hands down to every section.
-export type GetPlayer = (id: string) => Player | undefined
+export type GetPlayer = (id: string | null | undefined) => Player | undefined
 /** First name for players, full name for admins. */
 export type DisplayName = (player: Player) => string
 
@@ -221,33 +221,32 @@ export const computeRankings = ({
     if (p) stats[id] = { player: p, played: 0, won: 0, lost: 0, pf: 0, pa: 0, pts: 0 }
   })
 
-  matches
-    .filter((m) => m.completed && m.score1 != null && m.score2 != null)
-    .forEach((m) => {
-      const s1 = m.score1
-      const s2 = m.score2
-      const t1won = s1 > s2
-      const t2won = s2 > s1
+  matches.forEach((m) => {
+    const s1 = m.score1
+    const s2 = m.score2
+    if (!m.completed || s1 == null || s2 == null) return
+    const t1won = s1 > s2
+    const t2won = s2 > s1
 
-      ;(m.team1Ids || []).forEach((id: string) => {
-        if (!stats[id]) return
-        stats[id].played++
-        stats[id].pf += s1
-        stats[id].pa += s2
-        stats[id].pts += s1
-        if (t1won) stats[id].won++
-        else if (t2won) stats[id].lost++
-      })
-      ;(m.team2Ids || []).forEach((id: string) => {
-        if (!stats[id]) return
-        stats[id].played++
-        stats[id].pf += s2
-        stats[id].pa += s1
-        stats[id].pts += s2
-        if (t2won) stats[id].won++
-        else if (t1won) stats[id].lost++
-      })
+    ;(m.team1Ids || []).forEach((id: string) => {
+      if (!stats[id]) return
+      stats[id].played++
+      stats[id].pf += s1
+      stats[id].pa += s2
+      stats[id].pts += s1
+      if (t1won) stats[id].won++
+      else if (t2won) stats[id].lost++
     })
+    ;(m.team2Ids || []).forEach((id: string) => {
+      if (!stats[id]) return
+      stats[id].played++
+      stats[id].pf += s2
+      stats[id].pa += s1
+      stats[id].pts += s2
+      if (t2won) stats[id].won++
+      else if (t1won) stats[id].lost++
+    })
+  })
 
   return Object.values(stats).sort((a, b) =>
     b.pts !== a.pts ? b.pts - a.pts : b.won !== a.won ? b.won - a.won : b.pf - b.pa - (a.pf - a.pa),

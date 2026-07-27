@@ -238,7 +238,10 @@ export default function Registration({
     for (const player of players) map.set(player.id, player)
     return map
   }, [players])
-  const getPlayer = useCallback<GetPlayer>((id) => playerById.get(id), [playerById])
+  const getPlayer = useCallback<GetPlayer>(
+    (id) => (id == null ? undefined : playerById.get(id)),
+    [playerById],
+  )
 
   const pendingForTournament = useMemo(() => {
     if (!tournamentId) return []

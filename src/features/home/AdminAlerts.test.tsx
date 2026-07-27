@@ -3,6 +3,7 @@ import React from 'react'
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { render, screen, cleanup, fireEvent } from '@testing-library/react'
 import AdminAlerts, { type NewMerchOrder } from './AdminAlerts'
+import { mkRegistration } from '../../test/factories'
 
 afterEach(cleanup)
 
@@ -39,7 +40,7 @@ describe('AdminAlerts', () => {
   it('renders nothing for a non-admin, even with alerts to show', () => {
     const { container } = renderAlerts({
       isAdmin: false,
-      unpaid: [{ id: 'r1' }, { id: 'r2' }],
+      unpaid: [mkRegistration({ id: 'r1' }), mkRegistration({ id: 'r2' })],
       newOrders: [order(1)],
     })
     expect(container.innerHTML).toBe('')
@@ -51,7 +52,7 @@ describe('AdminAlerts', () => {
   })
 
   it('shows the unpaid count', () => {
-    renderAlerts({ unpaid: [{ id: 'r1' }, { id: 'r2' }] })
+    renderAlerts({ unpaid: [mkRegistration({ id: 'r1' }), mkRegistration({ id: 'r2' })] })
     expect(screen.getByText(/2 players haven't paid yet/i)).toBeTruthy()
   })
 

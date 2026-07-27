@@ -12,6 +12,7 @@ import type { AppearanceSummary, HistoricalAppearance } from '../../lib/playerHi
 import { LEVEL_COLORS } from './playerConstants'
 import type { CommunityPlayer } from './playersSelectors'
 import { useMmRatings } from '../matchmaking/useMatchmaking'
+import type { EventNavigate } from '../events/eventHelpers'
 
 const TOURNAMENTS = TOURNAMENTS_RAW as unknown as HistoricalTournament[]
 
@@ -29,7 +30,7 @@ interface PlayerProfileDrawerProps {
   registrations: unknown[]
   playerAliases: Record<string, string>
   isAdmin: boolean
-  onNavigate?: (page: string, payload?: unknown) => void
+  onNavigate?: EventNavigate
   onEdit: (player: CommunityPlayer) => void
   onDelete: (id: string | number) => void
   onRegeneratePin: (player: CommunityPlayer) => void

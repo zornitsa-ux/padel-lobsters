@@ -6,6 +6,7 @@ import { usePlayers } from '../players/usePlayers'
 import { useRegistrations } from '../events/useRegistrations'
 import { useExclusions, useIneligible, useSetExclusions } from './useRaffle'
 import type { IneligibleReason } from './raffleQueries'
+import type { EventNavigate } from '../events/eventHelpers'
 
 interface Tournament {
   id: string
@@ -19,7 +20,7 @@ export default function RaffleEligibilityContainer({
   onNavigate,
 }: {
   tournament: Tournament
-  onNavigate?: (page: string, payload?: unknown) => void
+  onNavigate?: EventNavigate
 }) {
   const { data: players = [] } = usePlayers()
   const { data: regsData = [] } = useRegistrations(tournament?.id)

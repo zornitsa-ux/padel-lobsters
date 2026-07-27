@@ -9,6 +9,7 @@ import {
   useDeleteWinner,
 } from './useRaffle'
 import type { RaffleWinner } from './raffleSchemas'
+import type { EventNavigate } from '../events/eventHelpers'
 import { EmptyState } from '../../components/ui/EmptyState'
 import PrizeEditor from './ui/PrizeEditor'
 import Confetti from './ui/Confetti'
@@ -28,7 +29,7 @@ export default function RaffleContainer({
   onNavigate,
 }: {
   tournament: Tournament
-  onNavigate?: (page: string, payload?: unknown) => void
+  onNavigate?: EventNavigate
 }) {
   const { data: players = [] } = usePlayers()
   const { data: committed = [] } = useRaffleWinners(tournament?.id)

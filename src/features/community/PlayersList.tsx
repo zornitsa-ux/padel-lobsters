@@ -7,6 +7,7 @@ import { corpReview, type ReviewRegistration, type ReviewTournament } from './re
 import PlayerProfileDrawer from './PlayerProfileDrawer'
 import type { CommunityPlayer, OrderedPlayer } from './playersSelectors'
 import type { DbMatchForStats } from '../../lib/playerStats'
+import type { EventNavigate } from '../events/eventHelpers'
 
 interface PlayersListProps {
   orderedForRender: OrderedPlayer<CommunityPlayer>[]
@@ -23,7 +24,7 @@ interface PlayersListProps {
   tournaments: ReviewTournament[]
   playerAliases: Record<string, string>
   players: CommunityPlayer[]
-  onNavigate?: (page: string, payload?: unknown) => void
+  onNavigate?: EventNavigate
   onEdit: (player: CommunityPlayer) => void
   onDelete: (id: string | number) => void
   onRegeneratePin: (player: CommunityPlayer) => void

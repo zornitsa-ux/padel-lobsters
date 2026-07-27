@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { render, screen, cleanup } from '@testing-library/react'
 import RecentlyCompletedBanners from './RecentlyCompletedBanners'
+import { mkMatch, mkRegistration } from '../../test/factories'
 
 afterEach(cleanup)
 
@@ -11,18 +12,19 @@ const players = [
 ]
 
 const matches = [
-  {
+  mkMatch({
+    id: 'm1',
     completed: true,
     score1: 21,
     score2: 10,
     team1Ids: ['p1'],
     team2Ids: ['p2'],
-  },
+  }),
 ]
 
 const registrations = [
-  { playerId: 'p1', status: 'registered' },
-  { playerId: 'p2', status: 'registered' },
+  mkRegistration({ id: 'r1', playerId: 'p1', status: 'registered' }),
+  mkRegistration({ id: 'r2', playerId: 'p2', status: 'registered' }),
 ]
 
 const renderBanners = ({

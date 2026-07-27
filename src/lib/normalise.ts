@@ -110,7 +110,35 @@ export function normaliseTournaments(tournaments: RawTournamentRow[]): Normalise
   }))
 }
 
-export function normaliseRegistrations(registrations) {
+// Raw `registrations` row from the fetch boundary (Zod-validated). The
+// camelCase variants are accepted because normalisation is idempotent —
+// already-normalised rows are re-normalised in a few places.
+export interface RawRegistrationRow {
+  id: string
+  tournament_id: string
+  player_id: string
+  status: string
+  payment_status?: string | null
+  payment_method?: string | null
+  created_at?: string | null
+  tournamentId?: string | null
+  playerId?: string | null
+  paymentStatus?: string | null
+  paymentMethod?: string | null
+}
+
+export interface NormalisedRegistration extends RawRegistrationRow {
+  tournamentId: string
+  playerId: string
+  paymentStatus: string
+  paymentMethod: string
+  // Legacy Firestore-shaped timestamp kept for the consumers that sort on it.
+  registeredAt: { seconds: number }
+}
+
+export function normaliseRegistrations(
+  registrations: RawRegistrationRow[],
+): NormalisedRegistration[] {
   return registrations.map((r) => ({
     ...r,
     tournamentId: r.tournament_id ?? r.tournamentId,
@@ -121,7 +149,37 @@ export function normaliseRegistrations(registrations) {
   }))
 }
 
-export function normaliseMatches(matches) {
+// Raw `matches` row from the fetch boundary (Zod-validated), plus the camelCase
+// variants normalisation accepts.
+export interface RawMatchRow {
+  id: string
+  tournament_id: string
+  round: number
+  court?: string | null
+  team1_ids?: string[] | null
+  team2_ids?: string[] | null
+  team1_level?: number | null
+  team2_level?: number | null
+  score1?: number | null
+  score2?: number | null
+  completed: boolean
+  created_at?: string | null
+  tournamentId?: string | null
+  team1Ids?: string[] | null
+  team2Ids?: string[] | null
+  team1Level?: number | null
+  team2Level?: number | null
+}
+
+export interface NormalisedMatch extends RawMatchRow {
+  tournamentId: string
+  team1Ids: string[]
+  team2Ids: string[]
+  team1Level: number
+  team2Level: number
+}
+
+export function normaliseMatches(matches: RawMatchRow[]): NormalisedMatch[] {
   return matches.map((m) => ({
     ...m,
     tournamentId: m.tournament_id ?? m.tournamentId,
@@ -132,7 +190,38 @@ export function normaliseMatches(matches) {
   }))
 }
 
-export function normaliseTransfers(transfers) {
+// Raw `registration_transfers` row from the fetch boundary (Zod-validated),
+// plus the camelCase variants normalisation accepts.
+export interface RawTransferRow {
+  id: string
+  tournament_id?: string | null
+  from_player_id?: string | null
+  to_player_id?: string | null
+  status?: string | null
+  closed_reason?: string | null
+  responded_at?: string | null
+  closed_at?: string | null
+  created_at?: string | null
+  tournamentId?: string | null
+  fromPlayerId?: string | null
+  toPlayerId?: string | null
+  closedReason?: string | null
+  respondedAt?: string | null
+  closedAt?: string | null
+  createdAt?: string | null
+}
+
+export interface NormalisedTransfer extends RawTransferRow {
+  tournamentId?: string | null
+  fromPlayerId?: string | null
+  toPlayerId?: string | null
+  closedReason: string | null
+  respondedAt: string | null
+  closedAt: string | null
+  createdAt: string | null
+}
+
+export function normaliseTransfers(transfers: RawTransferRow[]): NormalisedTransfer[] {
   return transfers.map((t) => ({
     ...t,
     tournamentId: t.tournament_id ?? t.tournamentId,

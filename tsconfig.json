@@ -7,15 +7,7 @@
     "jsx": "react-jsx",
     "allowJs": true,
     "checkJs": false,
-    // Ratcheting to `strict: true` one flag at a time (task #10). Remaining:
-    // strictFunctionTypes (7 errors), noImplicitAny (34, all in src/lib).
-    "strict": false,
-    "strictNullChecks": true,
-    "strictBindCallApply": true,
-    "strictPropertyInitialization": true,
-    "noImplicitThis": true,
-    "alwaysStrict": true,
-    "useUnknownInCatchVariables": true,
+    "strict": true,
     "noEmit": true,
     "isolatedModules": true,
     "skipLibCheck": true,

@@ -40,7 +40,7 @@ export const PROTECTED_PATHS = Object.freeze([
   '/transfer', // accept-spot-transfer deep link
 ])
 
-const matchesPrefix = (pathname, prefix) => {
+const matchesPrefix = (pathname: string, prefix: string): boolean => {
   if (pathname === prefix) return true
   if (prefix === '/') return false // '/' only matches the root literal
   return pathname.startsWith(prefix + '/')
@@ -50,7 +50,7 @@ const matchesPrefix = (pathname, prefix) => {
  * Returns true if a logged-out visitor is allowed to view this URL path.
  * Default-deny — anything not allowlisted is treated as protected.
  */
-export function isPublicPath(pathname) {
+export function isPublicPath(pathname: string | null | undefined): boolean {
   if (!pathname) return false
   return PUBLIC_PATHS.some((p) => matchesPrefix(pathname, p))
 }

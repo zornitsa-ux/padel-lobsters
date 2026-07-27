@@ -11,8 +11,22 @@
 //  with the player's device clock and doesn't require shipping a tzdb.
 // ============================================================================
 
+// The subset of a tournament the calendar helpers read.
+// NormalisedTournament satisfies it.
+export interface CalendarEvent {
+  id?: string | number | null
+  name?: string | null
+  date?: string | null
+  time?: string | null
+  duration?: number | string | null
+  format?: string | null
+  maxPlayers?: number | string | null
+  notes?: string | null
+  location?: string | null
+}
+
 // Escape a string for safe inclusion in an ICS TEXT property.
-const icsEscape = (s) =>
+const icsEscape = (s: string | null | undefined): string =>
   String(s ?? '')
     .replace(/\\/g, '\\\\')
     .replace(/\r?\n/g, '\\n')
@@ -20,7 +34,7 @@ const icsEscape = (s) =>
     .replace(/;/g, '\\;')
 
 // Format a Date as an ICS UTC timestamp: 20260415T190000Z
-const toIcsUtc = (d) =>
+const toIcsUtc = (d: Date): string =>
   d
     .toISOString()
     .replace(/[-:]/g, '')
@@ -29,7 +43,7 @@ const toIcsUtc = (d) =>
 // Parse a tournament's (date, time) into a local Date. Defaults to 19:00 if
 // no time is set. `tournament.date` is stored as YYYY-MM-DD; `tournament.time`
 // is a free-text field (e.g. "19:00", "7:30pm"). We accept HH:mm primarily.
-const parseTournamentStart = (t) => {
+const parseTournamentStart = (t: CalendarEvent | null | undefined): Date | null => {
   if (!t?.date) return null
   const time = (t.time || '19:00').trim()
   // Normalise "7pm", "19:00", "19.00" → "HH:mm"
@@ -56,10 +70,10 @@ const parseTournamentStart = (t) => {
 
 // Build the full ICS string for a single tournament. Returns null if the
 // tournament has no date.
-export function buildTournamentIcs(tournament) {
+export function buildTournamentIcs(tournament: CalendarEvent): string | null {
   const start = parseTournamentStart(tournament)
   if (!start) return null
-  const durationMin = parseInt(tournament.duration) || 90
+  const durationMin = parseInt(String(tournament.duration ?? ''), 10) || 90
   const end = new Date(start.getTime() + durationMin * 60 * 1000)
   const now = new Date()
   const uid = `tournament-${tournament.id || 'x'}@padellobsters.app`
@@ -125,13 +139,13 @@ export function buildTournamentIcs(tournament) {
 // Build a Google Calendar "add event" URL. Opens instantly in the browser
 // or Google Calendar app — no file download, no "Save in…" dialog.
 // Format: YYYYMMDDTHHmmssZ/YYYYMMDDTHHmmssZ (UTC pair)
-export function buildGoogleCalendarUrl(tournament) {
+export function buildGoogleCalendarUrl(tournament: CalendarEvent): string | null {
   const start = parseTournamentStart(tournament)
   if (!start) return null
-  const durationMin = parseInt(tournament.duration) || 90
+  const durationMin = parseInt(String(tournament.duration ?? ''), 10) || 90
   const end = new Date(start.getTime() + durationMin * 60 * 1000)
 
-  const fmt = (d) =>
+  const fmt = (d: Date): string =>
     d
       .toISOString()
       .replace(/[-:]/g, '')
@@ -164,7 +178,7 @@ export function buildGoogleCalendarUrl(tournament) {
 // point the button calls. Works on iPhone (opens the calendar add sheet),
 // Android (opens the calendar), and desktop (downloads the file, which the
 // default calendar client opens on double-click).
-export function downloadTournamentIcs(tournament) {
+export function downloadTournamentIcs(tournament: CalendarEvent): boolean {
   const ics = buildTournamentIcs(tournament)
   if (!ics) return false
   const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' })

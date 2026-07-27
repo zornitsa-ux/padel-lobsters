@@ -3,7 +3,7 @@
 // Every avatar's color is determined by the first letter of the player's name,
 // so every "A" is the same red, every "B" is the same navy, etc.
 
-export const LETTER_COLORS = {
+export const LETTER_COLORS: Record<string, string> = {
   A: '#E63946', // red
   B: '#1D3557', // navy
   C: '#2A9D8F', // teal
@@ -40,12 +40,12 @@ export const LETTER_COLORS = {
 // Fallback color for unknown / non-A-Z first letters.
 const FALLBACK = '#999'
 
-export function letterColor(name) {
+export function letterColor(name: string | null | undefined): string {
   const ch = ((name || '').trim()[0] || '?').toUpperCase()
   return LETTER_COLORS[ch] || FALLBACK
 }
 
-export function initials(name) {
+export function initials(name: string | null | undefined): string {
   return (name || '')
     .split(/\s+/)
     .map((p) => p[0])
