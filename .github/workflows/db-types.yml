@@ -1,0 +1,54 @@
+name: DB types
+
+# Fails if src/lib/database.types.ts is out of date with supabase/migrations.
+#
+# Deliberately its own workflow rather than a step in ci.yml: generating types
+# needs a running Postgres, which costs a couple of minutes, and the types can
+# only go stale when a migration changes. Path-filtering keeps that cost off
+# every other PR.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/**'
+      - 'src/lib/database.types.ts'
+      - '.github/workflows/db-types.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/**'
+      - 'src/lib/database.types.ts'
+
+jobs:
+  drift:
+    name: database.types.ts is current
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      # `db start` replays every migration in supabase/migrations, so the
+      # generated types reflect the repo rather than whatever is deployed.
+      - name: Start Supabase
+        run: supabase start
+
+      - name: Check for drift
+        run: |
+          supabase gen types typescript --local > /tmp/generated.ts
+          if ! diff -u src/lib/database.types.ts /tmp/generated.ts; then
+            echo ''
+            echo '::error::database.types.ts is stale. Run `npm run db:types` and commit the result.'
+            exit 1
+          fi
+          echo 'database.types.ts matches the migrations.'
