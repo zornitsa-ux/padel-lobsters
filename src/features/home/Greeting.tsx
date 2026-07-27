@@ -1,10 +1,16 @@
 import React from 'react'
 
+interface GreetingProps {
+  hello: string
+  sub: string
+  loading?: boolean
+}
+
 // ── Greeting ──────────────────────────────────────────── */
 // `loading` covers the first-ever visit, where the player's name hasn't
 // arrived yet and there's no cached name to fall back on. Placeholder bars
 // match the text metrics below so the greeting doesn't shift when it lands.
-export default function Greeting({ hello, sub, loading = false }) {
+export default function Greeting({ hello, sub, loading = false }: GreetingProps) {
   if (loading) {
     return (
       <div aria-hidden="true">

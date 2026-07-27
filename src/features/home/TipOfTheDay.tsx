@@ -1,8 +1,12 @@
 import React from 'react'
 import { Lightbulb } from 'lucide-react'
 
+interface TipOfTheDayProps {
+  tip: string | null | undefined
+}
+
 // ── Tip of the Day ────────────────────────────────────────
-export default function TipOfTheDay({ tip }) {
+export default function TipOfTheDay({ tip }: TipOfTheDayProps) {
   if (!tip) return null
   return (
     <div className="bg-amber-50/70 border border-amber-200 rounded-2xl px-4 py-3 flex items-start gap-3">

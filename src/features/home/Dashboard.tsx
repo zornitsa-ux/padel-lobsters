@@ -12,20 +12,33 @@ import TransferPendingModal from '../../components/TransferPendingModal'
 import { mark } from '../../lib/perfMarks'
 import { getGreeting } from './greetings'
 import useGreetingName from './useGreetingName'
-import useCountdown from './useCountdown'
+import useCountdown, { tournamentStartMs } from './useCountdown'
 import Greeting from './Greeting'
 import TransferOfferBanners from './TransferOfferBanners'
 import CountdownClock from './CountdownClock'
 import TipOfTheDay from './TipOfTheDay'
 import NextEventCard from './NextEventCard'
 import RecentlyCompletedBanners from './RecentlyCompletedBanners'
-import AdminAlerts from './AdminAlerts'
+import AdminAlerts, { type NewMerchOrder } from './AdminAlerts'
 import { LeagueDashboardCard } from '../league/ui/LeagueDashboardCard'
+import type { Player, NormalisedTournament } from '../../lib/normalise'
+import type { NormalisedMatch } from '../events/matchQueries'
+import type { NormalisedRegistration } from '../events/registrationQueries'
+import type { NormalisedTransfer } from '../events/transferQueries'
 
 const LAST_CHECK_KEY = 'pl_merch_last_checked'
 const MAX_NEW_ORDERS = 20
 
-export default function Dashboard({ onNavigate }) {
+interface DashboardProps {
+  onNavigate: (page: string, payload?: NormalisedTournament) => void
+}
+
+interface TransferShare {
+  transferId: string
+  toPlayer: Player | undefined
+}
+
+export default function Dashboard({ onNavigate }: DashboardProps) {
   const { session, sessionSettled } = useApp()
   const { data: tournaments = [], isSuccess: tournamentsLoaded } = useTournaments()
   const { data: transfers = [] } = useTransfers()
@@ -36,11 +49,11 @@ export default function Dashboard({ onNavigate }) {
   const { data: registrations = [], isSuccess: registrationsLoaded } = useAllRegistrations()
 
   const getTournamentMatches = useCallback(
-    (id) => matches.filter((m) => m.tournamentId === id),
+    (id: string): NormalisedMatch[] => matches.filter((m) => m.tournamentId === id),
     [matches],
   )
   const getTournamentRegistrations = useCallback(
-    (id) => registrations.filter((r) => r.tournamentId === id),
+    (id: string): NormalisedRegistration[] => registrations.filter((r) => r.tournamentId === id),
     [registrations],
   )
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
@@ -56,14 +69,14 @@ export default function Dashboard({ onNavigate }) {
   const myOutgoingTransfers = transfers.filter(
     (t) => t.status === 'pending' && claimedId && String(t.fromPlayerId) === String(claimedId),
   )
-  const [transferShare, setTransferShare] = useState(null) // { transferId, toPlayer }
-  const [transferBusy, setTransferBusy] = useState(null) // transferId being acted on
-  const handleIncomingResponse = async (xfer, accept) => {
+  const [transferShare, setTransferShare] = useState<TransferShare | null>(null)
+  const [transferBusy, setTransferBusy] = useState<string | null>(null)
+  const handleIncomingResponse = async (xfer: NormalisedTransfer, accept: boolean) => {
     setTransferBusy(xfer.id)
     const r = await respondToTransfer(xfer.id, accept)
     setTransferBusy(null)
     if (!r.ok) {
-      const map = {
+      const map: Record<string, string> = {
         wrong_pin: 'Sign in again to respond.',
         forbidden: 'This transfer is for a different player.',
         not_pending: 'This transfer was already responded to or closed.',
@@ -72,13 +85,13 @@ export default function Dashboard({ onNavigate }) {
       alert(map[r.status] || 'Could not record your response.')
     }
   }
-  const handleOutgoingCancel = async (xfer) => {
+  const handleOutgoingCancel = async (xfer: NormalisedTransfer) => {
     if (!confirm('Cancel the transfer offer? Your spot stays registered to you.')) return
     setTransferBusy(xfer.id)
     await cancelTransfer(xfer.id)
     setTransferBusy(null)
   }
-  const handleOutgoingShare = (xfer, toPlayer) => {
+  const handleOutgoingShare = (xfer: NormalisedTransfer, toPlayer: Player | undefined) => {
     setTransferShare({ transferId: xfer.id, toPlayer })
   }
 
@@ -93,7 +106,7 @@ export default function Dashboard({ onNavigate }) {
   const { data: merchInterests = [] } = useMerchInterests()
   const { data: merchItems = [] } = useMerchItems()
 
-  const newOrders = useMemo(() => {
+  const newOrders = useMemo<NewMerchOrder[]>(() => {
     if (!isAdmin) return []
     const itemName = new Map(merchItems.map((i) => [i.id, i.name]))
     return merchInterests
@@ -103,7 +116,7 @@ export default function Dashboard({ onNavigate }) {
       .map((o) => ({
         ...o,
         playerName: players.find((p) => String(p.id) === o.playerId)?.name || null,
-        itemName: itemName.get(o.merch_item_id) || 'item',
+        itemName: (o.merch_item_id != null && itemName.get(o.merch_item_id)) || 'item',
       }))
   }, [isAdmin, merchInterests, merchItems, players, lastChecked])
 
@@ -113,9 +126,9 @@ export default function Dashboard({ onNavigate }) {
     setLastChecked(now)
   }
 
-  const formatUpdateTime = (ts) => {
+  const formatUpdateTime = (ts: string | null | undefined): string => {
     if (!ts) return ''
-    const diff = (Date.now() - new Date(ts)) / 1000
+    const diff = (Date.now() - new Date(ts).getTime()) / 1000
     if (diff < 60) return 'just now'
     if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
     if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
@@ -124,6 +137,8 @@ export default function Dashboard({ onNavigate }) {
 
   // Recently completed tournaments (within 48 hours of tournament date)
   const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000
+  const completedAtMs = (t: NormalisedTournament) =>
+    new Date(t.date || t.completedAt || 0).getTime()
   const recentlyCompleted = tournaments
     .filter((t) => {
       if (t.status !== 'completed') return false
@@ -131,7 +146,7 @@ export default function Dashboard({ onNavigate }) {
       if (!refDate) return false
       return Date.now() - new Date(refDate).getTime() < TWO_DAYS_MS
     })
-    .sort((a, b) => new Date(b.date || b.completedAt) - new Date(a.date || a.completedAt))
+    .sort((a, b) => completedAtMs(b) - completedAtMs(a))
 
   // Next upcoming tournament
   const upcoming = tournaments
@@ -157,23 +172,8 @@ export default function Dashboard({ onNavigate }) {
     .sort((a, b) => ((a.date || '') < (b.date || '') ? -1 : 1))
   const countdownTournament =
     allUpcoming.find((t) => {
-      if (!t.date) return false
-      const [y, mo, d] = t.date.split('-').map(Number)
-      if (!y) return false
-      const timeStr = (t.time || '').trim()
-      let hh = 19,
-        mm = 0
-      const ampm = timeStr.match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)$/i)
-      const hm = timeStr.match(/^(\d{1,2})[:.](\d{2})$/)
-      if (ampm) {
-        hh = parseInt(ampm[1], 10) % 12
-        if (/pm/i.test(ampm[3])) hh += 12
-        mm = parseInt(ampm[2] || '0', 10)
-      } else if (hm) {
-        hh = parseInt(hm[1], 10)
-        mm = parseInt(hm[2], 10)
-      }
-      return new Date(y, mo - 1, d, hh, mm).getTime() > Date.now()
+      const start = tournamentStartMs(t)
+      return start !== null && start > Date.now()
     }) || null
   const countdown = useCountdown(countdownTournament)
 
@@ -197,7 +197,7 @@ export default function Dashboard({ onNavigate }) {
     return s
   }, [claimedId, tournaments, getTournamentRegistrations])
 
-  const formatDate = (d) => {
+  const formatDate = (d: string | null | undefined): string => {
     if (!d) return '—'
     return new Date(d).toLocaleDateString('en-GB', {
       weekday: 'long',

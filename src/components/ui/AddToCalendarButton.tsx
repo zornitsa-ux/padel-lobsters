@@ -17,12 +17,19 @@ import { IconButton } from './IconButton'
 //  needing server-side push.
 // ============================================================================
 
+interface AddToCalendarButtonProps {
+  tournament: { date?: string | null } & Record<string, unknown>
+  variant?: 'full' | 'icon'
+  className?: string
+  label?: React.ReactNode
+}
+
 export default function AddToCalendarButton({
   tournament,
   variant = 'full',
   className = '',
   label,
-}) {
+}: AddToCalendarButtonProps) {
   if (!tournament?.date) return null
   const gcalUrl = buildGoogleCalendarUrl(tournament)
   if (!gcalUrl) return null

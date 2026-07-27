@@ -1,5 +1,19 @@
 import React from 'react'
 import { ArrowRightLeft, Clock } from 'lucide-react'
+import type { Player } from '../../lib/normalise'
+import type { NormalisedTournament } from '../../lib/normalise'
+import type { NormalisedTransfer } from '../events/transferQueries'
+
+interface TransferOfferBannersProps {
+  incomingTransfers: NormalisedTransfer[]
+  outgoingTransfers: NormalisedTransfer[]
+  players: Player[]
+  tournaments: NormalisedTournament[]
+  transferBusy: string | null
+  onIncomingResponse: (xfer: NormalisedTransfer, accept: boolean) => void
+  onOutgoingCancel: (xfer: NormalisedTransfer) => void
+  onOutgoingShare: (xfer: NormalisedTransfer, toPlayer: Player | undefined) => void
+}
 
 // ── Pending transfers ──────────────────────────────────
 //     Both incoming offers (someone wants to transfer to me) and
@@ -15,7 +29,7 @@ export default function TransferOfferBanners({
   onIncomingResponse,
   onOutgoingCancel,
   onOutgoingShare,
-}) {
+}: TransferOfferBannersProps) {
   if (incomingTransfers.length === 0 && outgoingTransfers.length === 0) return null
   return (
     <div className="space-y-2">

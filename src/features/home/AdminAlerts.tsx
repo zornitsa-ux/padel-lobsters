@@ -1,5 +1,27 @@
 import React from 'react'
 import { AlertCircle, ShoppingBag } from 'lucide-react'
+import type { NormalisedTournament } from '../../lib/normalise'
+import type { MerchInterest } from '../merch/merchSchemas'
+import type { NormalisedRegistration } from '../events/registrationQueries'
+import { upcomingBirthdays, type BirthdayPlayer } from './homeHelpers'
+
+// A merch order joined with the two display names the alert renders. Built by
+// Dashboard from the merch slice's cached rows.
+export type NewMerchOrder = MerchInterest & {
+  playerName: string | null
+  itemName: string
+}
+
+interface AdminAlertsProps {
+  isAdmin: boolean
+  unpaid: NormalisedRegistration[]
+  upcomingEvent: NormalisedTournament | undefined
+  players: BirthdayPlayer[]
+  newOrders: NewMerchOrder[]
+  onDismissMerch: () => void
+  formatUpdateTime: (ts: string | null | undefined) => string
+  onNavigate: (page: string, tournament?: NormalisedTournament) => void
+}
 
 // ── Admin alerts ──────────────────────────────────────── */
 // Bundles the three admin-only home-page alerts:
@@ -16,23 +38,10 @@ export default function AdminAlerts({
   onDismissMerch,
   formatUpdateTime,
   onNavigate,
-}) {
+}: AdminAlertsProps) {
   if (!isAdmin) return null
 
-  // Birthday calc — same shape as the inline IIFE on the original Dashboard.
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const upcoming7 = players
-    .filter((p) => p.birthday)
-    .map((p) => {
-      const d = new Date(p.birthday)
-      let bday = new Date(today.getFullYear(), d.getMonth(), d.getDate())
-      if (bday < today) bday = new Date(today.getFullYear() + 1, d.getMonth(), d.getDate())
-      const diff = Math.round((bday - today) / 86400000)
-      return { p, diff }
-    })
-    .filter(({ diff }) => diff <= 7)
-    .sort((a, b) => a.diff - b.diff)
+  const upcoming7 = upcomingBirthdays({ players, today: new Date() })
 
   return (
     <>

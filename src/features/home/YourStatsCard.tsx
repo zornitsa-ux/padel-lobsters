@@ -1,12 +1,33 @@
 import React from 'react'
 import { Award, Flame } from 'lucide-react'
 
+// Shape produced by AccountStatsSection from lib/playerStats — only the
+// fields this card renders are modelled here.
+export interface YourStats {
+  played: number
+  won: number
+  lost: number
+  winRate: number
+  pts: number
+  pointsFor: number
+  pointsAgainst: number
+  bestWinStreak: number
+  nemesis: { name: string; won: number; lost: number } | null
+  bestPartner: { name: string; wins: number; games: number } | null
+}
+
+interface YourStatsCardProps {
+  claimedId: string | null
+  myStats: YourStats | null
+  onNavigate: (page: string, payload?: { focusPlayerId: string }) => void
+}
+
 // ── Your Stats (personal) ─────────────────────────────── */
 // Shows whenever a player identity is claimed. Empty state kicks in
 // when there are no DB matches yet, so the card doesn't silently
 // disappear for brand-new players or those with only historical
 // (pre-app) matches.
-export default function YourStatsCard({ claimedId, myStats, onNavigate }) {
+export default function YourStatsCard({ claimedId, myStats, onNavigate }: YourStatsCardProps) {
   if (!claimedId || !myStats) return null
   return (
     <section>

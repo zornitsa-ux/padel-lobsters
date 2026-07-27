@@ -5,6 +5,17 @@ import { EmptyState } from '../../components/ui/EmptyState'
 import AddToCalendarButton from '../../components/ui/AddToCalendarButton'
 import ShareWhatsAppButton from '../../components/ui/ShareWhatsAppButton'
 import { fmtEur } from '../../lib/format'
+import type { NormalisedTournament } from '../../lib/normalise'
+import { perPersonCost } from './homeHelpers'
+
+interface NextEventCardProps {
+  upcoming: NormalisedTournament | undefined
+  isAdmin: boolean
+  claimedId: string | null
+  isRegistered: boolean
+  onNavigate: (page: string, tournament?: NormalisedTournament) => void
+  formatDate: (date: string | null | undefined) => string
+}
 
 // ── Next event — glass card ───────────────────────────── */
 export default function NextEventCard({
@@ -14,7 +25,7 @@ export default function NextEventCard({
   isRegistered,
   onNavigate,
   formatDate,
-}) {
+}: NextEventCardProps) {
   if (!upcoming) {
     return (
       <EmptyState
@@ -34,6 +45,8 @@ export default function NextEventCard({
       />
     )
   }
+
+  const ppCost = perPersonCost(upcoming)
 
   return (
     <div className="card-elevated">
@@ -62,24 +75,11 @@ export default function NextEventCard({
               {upcoming.duration ? ` · ${upcoming.duration}min` : ''}
             </p>
           )}
-          {(() => {
-            const tp = parseFloat(upcoming.totalPrice) || 0
-            const mp = parseInt(upcoming.maxPlayers) || 16
-            const ppCost =
-              !upcoming.courtBookingMode || upcoming.courtBookingMode === 'admin_all'
-                ? tp > 0
-                  ? tp / mp
-                  : 0
-                : (upcoming.courts || []).reduce(
-                    (s, c) => s + (parseFloat(c.costPerPerson) || 0),
-                    0,
-                  )
-            return ppCost > 0 ? (
-              <p className="text-sm font-semibold text-lob-teal leading-tight mt-0.5">
-                {fmtEur(ppCost)}/pp
-              </p>
-            ) : null
-          })()}
+          {ppCost > 0 && (
+            <p className="text-sm font-semibold text-lob-teal leading-tight mt-0.5">
+              {fmtEur(ppCost)}/pp
+            </p>
+          )}
         </div>
         <div className="flex gap-1 flex-shrink-0">
           <ShareWhatsAppButton tournament={upcoming} variant="icon" />

@@ -1,8 +1,14 @@
 import React from 'react'
 import { Flame } from 'lucide-react'
+import type { Countdown } from './useCountdown'
+
+interface CountdownClockProps {
+  countdown: Countdown | null
+  streak: number
+}
 
 // ── Countdown flip clock + streak ────────────────────────
-export default function CountdownClock({ countdown, streak }) {
+export default function CountdownClock({ countdown, streak }: CountdownClockProps) {
   if (countdown) {
     return (
       <div className="text-center">

@@ -1,17 +1,37 @@
 import React from 'react'
 import { resultsWithheld } from '../events/resultsPhase'
+import type { Player, NormalisedTournament } from '../../lib/normalise'
+import type { NormalisedMatch } from '../events/matchQueries'
+import type { NormalisedRegistration } from '../events/registrationQueries'
+
+// Only the fields this banner reads, so callers can pass a full
+// NormalisedTournament / Player without the component claiming to depend on
+// the rest of those shapes.
+type CompletedTournament = Pick<NormalisedTournament, 'id' | 'name' | 'status' | 'resultsSharedAt'>
+type BannerPlayer = Pick<Player, 'id' | 'name'>
+
+// Generic over the tournament type so `onNavigate` hands the caller back the
+// same object it passed in, not the narrowed subset this component reads.
+interface RecentlyCompletedBannersProps<T extends CompletedTournament> {
+  recentlyCompleted: T[]
+  getTournamentMatches: (id: string) => NormalisedMatch[]
+  getTournamentRegistrations: (id: string) => NormalisedRegistration[]
+  players: BannerPlayer[]
+  isAdmin: boolean
+  onNavigate: (page: string, tournament: NoInfer<T>) => void
+}
 
 // ── Recently completed — see results ──────────────────── */
 // Loops over tournaments completed in the last 48 hours and renders
 // a celebratory "Tournament Complete!" tile linking to scores.
-export default function RecentlyCompletedBanners({
+export default function RecentlyCompletedBanners<T extends CompletedTournament>({
   recentlyCompleted,
   getTournamentMatches,
   getTournamentRegistrations,
   players,
   isAdmin,
   onNavigate,
-}) {
+}: RecentlyCompletedBannersProps<T>) {
   if (!recentlyCompleted || recentlyCompleted.length === 0) return null
   return (
     <>
@@ -22,7 +42,7 @@ export default function RecentlyCompletedBanners({
         const withheld = resultsWithheld({ tournament: t, isAdmin })
         const tMatches = getTournamentMatches(t.id)
         const tRegs = getTournamentRegistrations(t.id).filter((r) => r.status === 'registered')
-        const stats = {}
+        const stats: Record<string, { pts: number; won: number }> = {}
         tRegs.forEach((r) => {
           stats[r.playerId] = { pts: 0, won: 0 }
         })
@@ -31,13 +51,13 @@ export default function RecentlyCompletedBanners({
           .forEach((m) => {
             const s1 = parseInt(m.score1) || 0,
               s2 = parseInt(m.score2) || 0
-            ;(m.team1Ids || []).forEach((id) => {
+            ;(m.team1Ids || []).forEach((id: string) => {
               if (stats[id]) {
                 stats[id].pts += s1
                 if (s1 > s2) stats[id].won++
               }
             })
-            ;(m.team2Ids || []).forEach((id) => {
+            ;(m.team2Ids || []).forEach((id: string) => {
               if (stats[id]) {
                 stats[id].pts += s2
                 if (s2 > s1) stats[id].won++
