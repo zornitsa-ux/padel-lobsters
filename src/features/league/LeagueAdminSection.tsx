@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { Plus, Trophy } from 'lucide-react'
 import useAuth from '../../hooks/useAuth'
 import { Modal } from '../../components/ui/Modal'
+import { useConfirm } from '../../lib/confirmBus'
 import { Badge } from '../../components/ui/Badge'
 import { AlertBox } from '../../components/ui/AlertBox'
 import { TabSwitcher } from '../../components/ui/TabSwitcher'
@@ -125,10 +126,17 @@ function LeagueStatusBar({
   league: League
   updateStatus: ReturnType<typeof useUpdateLeagueStatus>
 }) {
+  const confirm = useConfirm()
+
   async function handleAdvanceStatus() {
     const next = NEXT_STATUS[league.status]
     if (!next) return
-    if (!confirm(`Advance league to "${STATUS_LABELS[next]}"? This cannot be undone.`)) return
+    if (
+      !(await confirm({
+        message: `Advance league to "${STATUS_LABELS[next]}"? This cannot be undone.`,
+      }))
+    )
+      return
     await updateStatus.mutateAsync({ input_league_id: league.id, input_status: next })
   }
 
@@ -173,6 +181,7 @@ function TeamManagementSection({
   const [editTeam, setEditTeam] = useState<LeagueTeam | null>(null)
   const [invitePlayer, setInvitePlayer] = useState<{ id: string; name: string } | null>(null)
   const [showGroupFormation, setShowGroupFormation] = useState(false)
+  const confirm = useConfirm()
 
   const deleteTeam = useDeleteTeam(league.id)
 
@@ -258,7 +267,13 @@ function TeamManagementSection({
                     <button
                       className="text-xs text-lob-muted hover:text-lob-coral"
                       onClick={async () => {
-                        if (!confirm(`Remove ${resolveTeamName(t)}?`)) return
+                        if (
+                          !(await confirm({
+                            message: `Remove ${resolveTeamName(t)}?`,
+                            destructive: true,
+                          }))
+                        )
+                          return
                         await deleteTeam.mutateAsync(t.id)
                       }}
                     >
@@ -343,6 +358,7 @@ interface MatchManagementSectionProps {
 
 function MatchManagementSection({ league, teams, matches, division }: MatchManagementSectionProps) {
   const [scoreMatch, setScoreMatch] = useState<LeagueMatch | null>(null)
+  const confirm = useConfirm()
 
   const createBracket = useCreateBracket(league.id)
 
@@ -383,11 +399,11 @@ function MatchManagementSection({ league, teams, matches, division }: MatchManag
   async function handleGenerateBracket(force: boolean) {
     if (!force && !allGroupMatchesDone) return
     if (
-      !confirm(
-        force
+      !(await confirm({
+        message: force
           ? 'Generate bracket with pending matches still outstanding?'
           : 'Generate knockout bracket?',
-      )
+      }))
     )
       return
 

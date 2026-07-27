@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useApp } from '../../context/useApp'
 import { usePlayers } from '../players/usePlayers'
 import { useRegistrations } from '../events/useRegistrations'
+import { useConfirm } from '../../lib/confirmBus'
 import * as oscarsApi from '../../api/oscars'
 import { derivePhase, castVoteErrorMessage } from './oscarsPhase'
 import { shortLabelMap } from './gameHelpers'
@@ -16,6 +17,7 @@ import { shortLabelMap } from './gameHelpers'
    which view is on screen.
    ════════════════════════════════════════════════════════════════════════════ */
 export function useOscarsSession(tournament) {
+  const confirm = useConfirm()
   const { session: authSession } = useApp()
   const { data: players = [] } = usePlayers()
   const isAdmin = authSession?.user?.app_metadata?.role === 'admin'
@@ -191,23 +193,27 @@ export function useOscarsSession(tournament) {
     [busy, players],
   )
 
-  const clearVote = useCallback(async (categoryId) => {
-    if (!window.confirm('Clear your vote for this category?')) return false
-    setBusy(true)
-    setError(null)
-    const { data, error: err } = await oscarsApi.clearVote(categoryId)
-    setBusy(false)
-    if (err) {
-      setError(err.message)
+  const clearVote = useCallback(
+    async (categoryId) => {
+      if (!(await confirm({ message: 'Clear your vote for this category?', destructive: true })))
+        return false
+      setBusy(true)
+      setError(null)
+      const { data, error: err } = await oscarsApi.clearVote(categoryId)
+      setBusy(false)
+      if (err) {
+        setError(err.message)
+        return false
+      }
+      if (data === 'cleared' || data === 'no_vote') {
+        setMyVotes((prev) => prev.filter((v) => v.category_id !== categoryId))
+        return true
+      }
+      setError(`Could not clear vote: ${data}`)
       return false
-    }
-    if (data === 'cleared' || data === 'no_vote') {
-      setMyVotes((prev) => prev.filter((v) => v.category_id !== categoryId))
-      return true
-    }
-    setError(`Could not clear vote: ${data}`)
-    return false
-  }, [])
+    },
+    [confirm],
+  )
 
   const startGame = useCallback(
     async (cats) => {
@@ -244,9 +250,10 @@ export function useOscarsSession(tournament) {
 
   const endGame = useCallback(async () => {
     if (
-      !window.confirm(
-        'End voting now? Players will see a "waiting for results" screen until you press Share.',
-      )
+      !(await confirm({
+        message:
+          'End voting now? Players will see a "waiting for results" screen until you press Share.',
+      }))
     )
       return false
     setBusy(true)
@@ -263,10 +270,16 @@ export function useOscarsSession(tournament) {
     }
     setError(`Could not end: ${data}`)
     return false
-  }, [tournamentId, loadSession])
+  }, [confirm, tournamentId, loadSession])
 
   const shareResults = useCallback(async () => {
-    if (!window.confirm('Share results with all players now? This cannot be undone.')) return false
+    if (
+      !(await confirm({
+        message: 'Share results with all players now? This cannot be undone.',
+        destructive: true,
+      }))
+    )
+      return false
     setBusy(true)
     setError(null)
     const { data, error: err } = await oscarsApi.adminShare(tournamentId)
@@ -281,7 +294,7 @@ export function useOscarsSession(tournament) {
     }
     setError(`Could not share: ${data}`)
     return false
-  }, [tournamentId, loadSession])
+  }, [confirm, tournamentId, loadSession])
 
   return {
     // identity / derived

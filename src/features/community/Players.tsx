@@ -11,6 +11,7 @@ import { processAvatar } from '../../lib/processAvatar'
 import { LEVEL_COLORS, randomPrompt, emptyForm, type PlayerFormState } from './playerConstants'
 import { corpReview } from './reviewScenarios'
 import { errorMessage } from '../../lib/errors'
+import { useConfirm } from '../../lib/confirmBus'
 import PlayerForm from './PlayerForm'
 import LinkPlayerModal from './LinkPlayerModal'
 import PinRevealModal from './PinRevealModal'
@@ -65,6 +66,7 @@ interface PlayersProps {
 }
 
 export default function Players({ onNavigate, focusPlayerId }: PlayersProps) {
+  const confirm = useConfirm()
   const { session, role } = useApp()
   const { addPlayer, updatePlayer, deletePlayer, regeneratePin } = usePlayerActions({
     session,
@@ -217,7 +219,7 @@ export default function Players({ onNavigate, focusPlayerId }: PlayersProps) {
       onNavigate?.('settings')
       return
     }
-    if (!confirm('Remove this player?')) return
+    if (!(await confirm({ message: 'Remove this player?', destructive: true }))) return
     setError('')
     try {
       await deletePlayer(id)
@@ -239,7 +241,13 @@ export default function Players({ onNavigate, focusPlayerId }: PlayersProps) {
   }
 
   const handleReject = async (id: string) => {
-    if (!confirm('Reject and remove this registration request?')) return
+    if (
+      !(await confirm({
+        message: 'Reject and remove this registration request?',
+        destructive: true,
+      }))
+    )
+      return
     setError('')
     try {
       await deletePlayer(id)

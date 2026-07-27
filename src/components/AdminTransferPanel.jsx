@@ -5,6 +5,7 @@ import { usePlayers } from '../features/players/usePlayers'
 import { useTransfers, useTransferActions } from '../features/events/useTransfers'
 import Avatar from './ui/Avatar'
 import { Modal } from './ui/Modal'
+import { useConfirm } from '../lib/confirmBus'
 
 // Admin-only modal that lists every pending transfer for a tournament and
 // surfaces the two admin actions:
@@ -20,6 +21,7 @@ import { Modal } from './ui/Modal'
 //   tournament: tournament object whose pending transfers are listed
 //   onClose():  dismiss the panel
 export default function AdminTransferPanel({ tournament, onClose }) {
+  const confirm = useConfirm()
   const { session } = useApp()
   const { data: transfers = [] } = useTransfers()
   const { forceAcceptTransfer, adminCancelTransfer } = useTransferActions({ session })
@@ -51,9 +53,9 @@ export default function AdminTransferPanel({ tournament, onClose }) {
 
   const handleForceAccept = async (xfer) => {
     if (
-      !confirm(
-        `Force-accept this transfer? The spot moves to ${getPlayer(xfer.toPlayerId)?.name || 'the recipient'}.`,
-      )
+      !(await confirm({
+        message: `Force-accept this transfer? The spot moves to ${getPlayer(xfer.toPlayerId)?.name || 'the recipient'}.`,
+      }))
     )
       return
     setBusyId(xfer.id)
@@ -73,7 +75,13 @@ export default function AdminTransferPanel({ tournament, onClose }) {
   }
 
   const handleCancel = async (xfer) => {
-    if (!confirm('Cancel this transfer offer? The spot stays with the from-player.')) return
+    if (
+      !(await confirm({
+        message: 'Cancel this transfer offer? The spot stays with the from-player.',
+        destructive: true,
+      }))
+    )
+      return
     setBusyId(xfer.id)
     setErrorById((e) => ({ ...e, [xfer.id]: null }))
     const r = await adminCancelTransfer(xfer.id)

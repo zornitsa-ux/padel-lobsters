@@ -13,6 +13,7 @@ import { useTournaments } from '../features/events/useTournaments'
 import { useTransfers, useTransferActions } from '../features/events/useTransfers'
 import Avatar from './ui/Avatar'
 import { EmptyState } from './ui/EmptyState'
+import { useConfirm } from '../lib/confirmBus'
 
 // Landing page Melanie hits after tapping the WhatsApp link
 // (https://padelobsters.nl/?transfer=<id>). Shows the offer details and an
@@ -28,6 +29,7 @@ import { EmptyState } from './ui/EmptyState'
 //   transferId: from the ?transfer=<id> deep link
 //   onNavigate(page, tournament?): standard nav helper used across the app
 export default function TransferAccept({ transferId, onNavigate }) {
+  const confirm = useConfirm()
   const { session, logout, loading } = useApp()
   const { data: tournaments = [] } = useTournaments()
   const { data: transfers = [] } = useTransfers()
@@ -77,13 +79,12 @@ export default function TransferAccept({ transferId, onNavigate }) {
     setError(map[r.status] || 'Could not record your response.')
   }
 
-  const handleSignOut = () => {
-    if (confirm('Sign out so you can sign in with a different PIN?')) {
-      logout?.()
-      // After logout, claimedId becomes null and VerificationGate will
-      // re-prompt for PIN on this same page (the ?transfer= deep link is
-      // gone from the URL but our prop persists across the re-render).
-    }
+  const handleSignOut = async () => {
+    if (!(await confirm({ message: 'Sign out so you can sign in with a different PIN?' }))) return
+    logout?.()
+    // After logout, claimedId becomes null and VerificationGate will
+    // re-prompt for PIN on this same page (the ?transfer= deep link is
+    // gone from the URL but our prop persists across the re-render).
   }
 
   // ── Loading / not-found / error states ───────────────────────────────────

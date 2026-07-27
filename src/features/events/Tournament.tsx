@@ -20,6 +20,7 @@ import { PageHeader } from '../../components/ui/PageHeader'
 import { CollapsibleSection } from '../../components/ui/CollapsibleSection'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { errorMessage } from '../../lib/errors'
+import { useConfirm } from '../../lib/confirmBus'
 import type { EventNavigate } from './eventHelpers'
 import type { NormalisedTournament } from '../../lib/normalise'
 import type { SetEventFormCourt } from './EventFormModal'
@@ -27,6 +28,7 @@ import type { SetEventFormCourt } from './EventFormModal'
 export { DEFAULT_EVENT_DESCRIPTION }
 
 export default function Tournament({ onNavigate }: { onNavigate: EventNavigate }) {
+  const confirm = useConfirm()
   const { session } = useApp()
   const { data: tournaments = [] } = useTournaments()
   const { data: transfers = [] } = useTransfers()
@@ -131,7 +133,7 @@ export default function Tournament({ onNavigate }: { onNavigate: EventNavigate }
       onNavigate?.('settings')
       return
     }
-    if (!confirm('Delete this event?')) return
+    if (!(await confirm({ message: 'Delete this event?', destructive: true }))) return
     setError('')
     try {
       await deleteTournament(id)

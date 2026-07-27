@@ -3,6 +3,7 @@ import { MessageCircle, Users, Clock } from 'lucide-react'
 import { useApp } from '../context/useApp'
 import { useTransferActions } from '../features/events/useTransfers'
 import { Modal } from './ui/Modal'
+import { useConfirm } from '../lib/confirmBus'
 import {
   buildTransferMessage,
   isE164,
@@ -26,6 +27,7 @@ import {
 //   onClose():  dismiss
 //   onCancel(): user explicitly cancels the offer (calls cancelTransfer)
 export default function TransferPendingModal({ transferId, toPlayer, onClose, onCancel }) {
+  const confirm = useConfirm()
   const { session } = useApp()
   const { getTransferRecipientContact, cancelTransfer } = useTransferActions({ session })
 
@@ -70,7 +72,13 @@ export default function TransferPendingModal({ transferId, toPlayer, onClose, on
 
   const handleCancelOffer = async () => {
     if (busyAction) return
-    if (!confirm('Cancel the transfer offer? Your spot will stay registered to you.')) return
+    if (
+      !(await confirm({
+        message: 'Cancel the transfer offer? Your spot will stay registered to you.',
+        destructive: true,
+      }))
+    )
+      return
     setBusyAction('cancel')
     const r = await cancelTransfer(transferId)
     setBusyAction(null)

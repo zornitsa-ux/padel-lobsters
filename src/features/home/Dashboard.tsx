@@ -10,6 +10,7 @@ import { useMerchInterests, useMerchItems } from '../merch/useMerch'
 import DEFAULT_TIPS from '../../data/padelTips'
 import TransferPendingModal from '../../components/TransferPendingModal'
 import { AlertBox } from '../../components/ui/AlertBox'
+import { useConfirm } from '../../lib/confirmBus'
 import { mark } from '../../lib/perfMarks'
 import { getGreeting } from './greetings'
 import useGreetingName from './useGreetingName'
@@ -40,6 +41,7 @@ interface TransferShare {
 }
 
 export default function Dashboard({ onNavigate }: DashboardProps) {
+  const confirm = useConfirm()
   const { session, sessionSettled } = useApp()
   const {
     data: tournaments = [],
@@ -112,7 +114,13 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
     }
   }
   const handleOutgoingCancel = async (xfer: NormalisedTransfer) => {
-    if (!confirm('Cancel the transfer offer? Your spot stays registered to you.')) return
+    if (
+      !(await confirm({
+        message: 'Cancel the transfer offer? Your spot stays registered to you.',
+        destructive: true,
+      }))
+    )
+      return
     setTransferBusy(xfer.id)
     await cancelTransfer(xfer.id)
     setTransferBusy(null)

@@ -2,6 +2,7 @@ import React, { useState, useEffect, type ChangeEvent, type DragEvent, type Form
 import { useApp } from '../../context/useApp'
 import { usePlayers } from '../players/usePlayers'
 import { useAuthPrompt } from '../../components/ui/AuthGate'
+import { useConfirm } from '../../lib/confirmBus'
 import { TabSwitcher } from '../../components/ui/TabSwitcher'
 import { emptyItem, itemFormFrom, toItemPayload, type ItemFormState } from './itemForm'
 import { errorMessage } from './formatters'
@@ -31,6 +32,7 @@ type MerchProps = {
 
 // ── Main Merch component ──────────────────────────────────────────────────────
 export default function Merch({ initialTab, onNavigate }: MerchProps) {
+  const confirm = useConfirm()
   const { session } = useApp()
   const { data: players = [] } = usePlayers()
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
@@ -136,7 +138,7 @@ export default function Merch({ initialTab, onNavigate }: MerchProps) {
   }
 
   const handleDeleteItem = async (id: number) => {
-    if (!confirm('Remove this item?')) return
+    if (!(await confirm({ message: 'Remove this item?', destructive: true }))) return
     try {
       await deactivateItem.mutateAsync({ id })
     } catch (err) {

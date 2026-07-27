@@ -27,6 +27,7 @@ import {
   buildPendingByFromPlayerId,
 } from './registration/utils'
 import { useTournamentResultsBanner } from './registration/useTournamentResultsBanner'
+import { useConfirm } from '../../lib/confirmBus'
 import RegistrationPaymentSheetModal from './registration/RegistrationPaymentSheetModal'
 import AddPlayerCard from './registration/AddPlayerCard'
 import MyRegistrationCard from './registration/MyRegistrationCard'
@@ -57,6 +58,7 @@ export default function Registration({
   tournament: NormalisedTournament | null
   onNavigate: EventNavigate
 }) {
+  const confirm = useConfirm()
   const { session } = useApp()
   const { registerPlayer, updateRegistration, cancelRegistration } = useRegistrationActions()
   const { updateMatch } = useMatchActions()
@@ -367,7 +369,13 @@ export default function Registration({
       onNavigate?.('settings')
       return
     }
-    if (!confirm(`Cancel ${getPlayer(reg.playerId)?.name}'s registration?`)) return
+    if (
+      !(await confirm({
+        message: `Cancel ${getPlayer(reg.playerId)?.name}'s registration?`,
+        destructive: true,
+      }))
+    )
+      return
     await cancelRegistration(reg.id, tournament.id)
   }
 
@@ -402,7 +410,13 @@ export default function Registration({
   // loaded from the DB on app boot, so this state is reproducible.
   const handleCancelMyOffer = async () => {
     if (!pendingFromMe) return
-    if (!confirm('Cancel the transfer offer? Your spot stays registered to you.')) return
+    if (
+      !(await confirm({
+        message: 'Cancel the transfer offer? Your spot stays registered to you.',
+        destructive: true,
+      }))
+    )
+      return
     setRespondingTo(pendingFromMe.id)
     await cancelTransfer(pendingFromMe.id)
     setRespondingTo(null)
