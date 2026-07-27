@@ -21,7 +21,12 @@ one table means two caches that drift.
 How to check, per feature folder:
 
 ```bash
-grep -rn "supabase\.\|from '\.\./\.\./api/" src/features/<feat>/
+# Match `supabase` BARE, not `supabase\.` — the dot is often on the next line:
+#     const { data } = await supabase
+#       .from('lobster_oscars_sessions')
+# A `supabase\.` pattern scores zero on that, which is exactly how the events
+# step 0 missed useTournamentResultsBanner.js on 2026-07-27.
+grep -rn "supabase\|from '\.\./\.\./api/" src/features/<feat>/
 grep -rn "use[A-Z].*(" src/features/<feat>/ | grep -v "useState\|useMemo\|useCallback\|useEffect"
 ```
 
