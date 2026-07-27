@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react'
-import { X, Check, GitMerge, Search, ChevronRight, RotateCcw, UserX } from 'lucide-react'
+import { Check, Search, ChevronRight, RotateCcw, UserX } from 'lucide-react'
 import { buildAliasInventory, suggestPlayers, NOT_IN_ROSTER } from '../lib/playerHistory'
+import { Modal } from './ui/Modal'
 import { SegmentedControl } from './ui/SegmentedControl'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -69,72 +70,64 @@ export default function PlayerAliasMatcher({
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-end justify-center">
-      <div
-        className="bg-white rounded-t-3xl w-full max-w-md flex flex-col"
-        style={{ maxHeight: '92vh' }}
-      >
-        {/* Header */}
-        <div className="px-5 pt-5 pb-3 border-b border-gray-100">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <h2 className="font-bold text-gray-800 flex items-center gap-2">
-                <GitMerge size={18} className="text-lob-teal" />
-                Match Historical Names
-              </h2>
-              <p className="text-xs text-gray-400 mt-0.5">
-                Tag each name from past tournaments to its player profile
-              </p>
-            </div>
-            <button onClick={onClose}>
-              <X size={20} className="text-gray-400" />
-            </button>
-          </div>
+    <Modal
+      open
+      onClose={onClose}
+      title="Match Historical Names"
+      footer={
+        <button onClick={onClose} className="btn-primary w-full">
+          Done
+        </button>
+      }
+    >
+      <div className="-mt-1">
+        <p className="text-xs text-gray-400 mb-3">
+          Tag each name from past tournaments to its player profile
+        </p>
 
-          {/* Progress bar */}
-          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-lob-teal rounded-full transition-all duration-500"
-              style={{
-                width: `${counts.all > 0 ? ((counts.matched + counts.skipped) / counts.all) * 100 : 0}%`,
-              }}
-            />
-          </div>
-          <p className="text-[10px] text-gray-400 mt-1 text-right">
-            {counts.matched} matched · {counts.skipped} skipped · {counts.unmatched} to go
-          </p>
-
-          {/* Filter pills */}
-          <SegmentedControl
-            ariaLabel="Filter"
-            layout="wrap"
-            size="sm"
-            shape="pill"
-            className="mt-3"
-            options={[
-              { value: 'unmatched', label: `To do (${counts.unmatched})` },
-              { value: 'matched', label: `Matched (${counts.matched})` },
-              { value: 'skipped', label: `Skipped (${counts.skipped})` },
-              { value: 'all', label: `All (${counts.all})` },
-            ]}
-            value={filter}
-            onChange={setFilter}
+        {/* Progress bar */}
+        <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-lob-teal rounded-full transition-all duration-500"
+            style={{
+              width: `${counts.all > 0 ? ((counts.matched + counts.skipped) / counts.all) * 100 : 0}%`,
+            }}
           />
+        </div>
+        <p className="text-[10px] text-gray-400 mt-1 text-right">
+          {counts.matched} matched · {counts.skipped} skipped · {counts.unmatched} to go
+        </p>
 
-          {/* Search */}
-          <div className="relative mt-2">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search historical name…"
-              className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-lob-teal"
-            />
-          </div>
+        {/* Filter pills */}
+        <SegmentedControl
+          ariaLabel="Filter"
+          layout="wrap"
+          size="sm"
+          shape="pill"
+          className="mt-3"
+          options={[
+            { value: 'unmatched', label: `To do (${counts.unmatched})` },
+            { value: 'matched', label: `Matched (${counts.matched})` },
+            { value: 'skipped', label: `Skipped (${counts.skipped})` },
+            { value: 'all', label: `All (${counts.all})` },
+          ]}
+          value={filter}
+          onChange={setFilter}
+        />
+
+        {/* Search */}
+        <div className="relative mt-2 mb-3">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search historical name…"
+            className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-lob-teal"
+          />
         </div>
 
         {/* List */}
-        <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2">
+        <div className="space-y-2">
           {visible.length === 0 && (
             <div className="text-center py-10 text-gray-400 text-sm">
               {filter === 'unmatched' ? '🎉 All names matched!' : 'Nothing here.'}
@@ -263,13 +256,6 @@ export default function PlayerAliasMatcher({
             )
           })}
         </div>
-
-        {/* Footer */}
-        <div className="px-5 py-3 border-t border-gray-100">
-          <button onClick={onClose} className="btn-primary w-full">
-            Done
-          </button>
-        </div>
       </div>
 
       {/* Full picker overlay */}
@@ -281,7 +267,7 @@ export default function PlayerAliasMatcher({
           onClose={() => setPicker(null)}
         />
       )}
-    </div>
+    </Modal>
   )
 }
 
@@ -298,22 +284,9 @@ function PlayerPicker({ historicalName, players, onPick, onClose }) {
   }, [players, q])
 
   return (
-    <div
-      className="fixed inset-0 z-[60] bg-black/60 flex items-end justify-center"
-      onClick={onClose}
-    >
-      <div
-        className="bg-white rounded-t-3xl w-full max-w-md flex flex-col"
-        style={{ maxHeight: '85vh' }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="px-5 pt-5 pb-3 border-b border-gray-100">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="font-bold text-gray-800">Pick a player for "{historicalName}"</h3>
-            <button onClick={onClose}>
-              <X size={20} className="text-gray-400" />
-            </button>
-          </div>
+    <Modal open onClose={onClose} title={`Pick a player for "${historicalName}"`}>
+      <div className="-mt-2 -mx-5">
+        <div className="px-5">
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
@@ -322,7 +295,7 @@ function PlayerPicker({ historicalName, players, onPick, onClose }) {
             className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-lob-teal"
           />
         </div>
-        <div className="flex-1 overflow-y-auto p-3 space-y-1">
+        <div className="p-3 space-y-1">
           {list.map((p) => (
             <button
               key={p.id}
@@ -340,6 +313,6 @@ function PlayerPicker({ historicalName, players, onPick, onClose }) {
           )}
         </div>
       </div>
-    </div>
+    </Modal>
   )
 }

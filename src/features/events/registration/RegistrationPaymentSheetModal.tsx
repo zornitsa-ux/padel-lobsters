@@ -1,5 +1,6 @@
-import { ExternalLink, Send, X } from 'lucide-react'
+import { ExternalLink, Send } from 'lucide-react'
 import AddToCalendarButton from '../../../components/ui/AddToCalendarButton'
+import { Modal } from '../../../components/ui/Modal'
 import { fmtEur } from '../../../lib/format'
 import type { NormalisedTournament } from '../tournamentQueries'
 import type { PaymentSheet } from './utils'
@@ -29,21 +30,16 @@ export default function RegistrationPaymentSheetModal({
   onTikkieClick,
   onSelfDeclare,
 }: RegistrationPaymentSheetModalProps) {
-  if (!isOpen || !paymentSheet) return null
+  if (!paymentSheet) return null
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center">
-      <div className="bg-white rounded-t-3xl w-full max-w-md p-6 space-y-5">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xl">🦞</p>
-            <h3 className="font-bold text-gray-800 mt-1">
-              You&apos;re in! Now pay to lock your spot
-            </h3>
-          </div>
-          <button onClick={onClose}>
-            <X size={22} className="text-gray-400" />
-          </button>
+    <Modal open={isOpen} onClose={onClose}>
+      <div className="space-y-5">
+        <div>
+          <p className="text-xl">🦞</p>
+          <h3 className="font-bold text-gray-800 mt-1">
+            You&apos;re in! Now pay to lock your spot
+          </h3>
         </div>
 
         {costPerPlayer > 0 && (
@@ -114,6 +110,6 @@ export default function RegistrationPaymentSheetModal({
           calendar.
         </p>
       </div>
-    </div>
+    </Modal>
   )
 }

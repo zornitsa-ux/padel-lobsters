@@ -1,6 +1,6 @@
 import React from 'react'
-import { X } from 'lucide-react'
 import Avatar from '../../components/ui/Avatar'
+import { Modal } from '../../components/ui/Modal'
 import type { CommunityPlayer } from './playersSelectors'
 
 interface LinkPlayerModalProps {
@@ -23,19 +23,11 @@ export default function LinkPlayerModal({
 }: LinkPlayerModalProps) {
   if (!linkModal) return null
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center">
-      <div className="bg-white rounded-t-3xl w-full max-w-md p-5 space-y-3 max-h-[85vh] flex flex-col">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="font-bold text-gray-800">Link to existing player</h3>
-            <p className="text-xs text-gray-500 mt-0.5">
-              Who is <strong>{linkModal.name}</strong> in the system?
-            </p>
-          </div>
-          <button onClick={onClose}>
-            <X size={22} className="text-gray-400" />
-          </button>
-        </div>
+    <Modal open onClose={onClose} title="Link to existing player">
+      <div className="space-y-3">
+        <p className="text-xs text-gray-500 -mt-2">
+          Who is <strong>{linkModal.name}</strong> in the system?
+        </p>
 
         <input
           type="text"
@@ -46,7 +38,7 @@ export default function LinkPlayerModal({
           autoFocus
         />
 
-        <div className="overflow-y-auto flex-1 space-y-2">
+        <div className="space-y-2">
           {activePlayers
             .filter((p) => (p.name || '').toLowerCase().includes(linkSearch.toLowerCase()))
             .map((p) => (
@@ -72,6 +64,6 @@ export default function LinkPlayerModal({
           them their PIN.
         </p>
       </div>
-    </div>
+    </Modal>
   )
 }

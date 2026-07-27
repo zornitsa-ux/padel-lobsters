@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
-import { X, Ban } from 'lucide-react'
+import { Ban } from 'lucide-react'
 import type { Player } from '../../lib/normalise'
+import { Modal } from '../../components/ui/Modal'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { STATUS_CONFIG } from './statusConfig'
 import { errorMessage, formatOrderTime, getPlayerName, orderTimestamp } from './formatters'
@@ -29,23 +30,39 @@ export default function OrdersTable({ activeOrders, interests, items, players }:
     (o) => o.status === 'cancelled' && getPlayerName({ order: o, players }),
   )
 
+  const closeCancelModal = () => {
+    setCancelTarget(null)
+    setCancelComment('')
+  }
+
   return (
     <div className="space-y-4">
       {/* Cancel order modal */}
-      {cancelTarget && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center">
-          <div className="bg-white rounded-t-3xl w-full max-w-md p-5 space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="font-bold text-gray-800">Cancel Order</h3>
-              <button
-                onClick={() => {
-                  setCancelTarget(null)
-                  setCancelComment('')
-                }}
-              >
-                <X size={22} className="text-gray-400" />
-              </button>
-            </div>
+      <Modal
+        open={!!cancelTarget}
+        onClose={closeCancelModal}
+        title="Cancel Order"
+        footer={
+          <button
+            onClick={async () => {
+              if (!cancelTarget) return
+              try {
+                await cancelOrder.mutateAsync({ id: cancelTarget.id, comment: cancelComment })
+              } catch (err) {
+                alert('Could not cancel the order: ' + errorMessage(err))
+                return
+              }
+              closeCancelModal()
+            }}
+            disabled={cancelOrder.isPending}
+            className="w-full py-2.5 rounded-xl bg-red-500 text-white font-semibold text-sm active:scale-95 transition-all disabled:opacity-50"
+          >
+            {cancelOrder.isPending ? 'Cancelling…' : 'Cancel Order'}
+          </button>
+        }
+      >
+        {cancelTarget && (
+          <div className="space-y-3">
             <p className="text-sm text-gray-500">
               Cancel order for{' '}
               <strong>
@@ -59,25 +76,9 @@ export default function OrdersTable({ activeOrders, interests, items, players }:
               onChange={(e) => setCancelComment(e.target.value)}
               className="input text-sm w-full h-20 resize-none"
             />
-            <button
-              onClick={async () => {
-                try {
-                  await cancelOrder.mutateAsync({ id: cancelTarget.id, comment: cancelComment })
-                } catch (err) {
-                  alert('Could not cancel the order: ' + errorMessage(err))
-                  return
-                }
-                setCancelTarget(null)
-                setCancelComment('')
-              }}
-              disabled={cancelOrder.isPending}
-              className="w-full py-2.5 rounded-xl bg-red-500 text-white font-semibold text-sm active:scale-95 transition-all disabled:opacity-50"
-            >
-              {cancelOrder.isPending ? 'Cancelling…' : 'Cancel Order'}
-            </button>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
 
       {activeOrders.length > 0 ? (
         <div className="space-y-2">

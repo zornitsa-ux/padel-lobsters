@@ -1,9 +1,10 @@
 import React, { useState, useMemo } from 'react'
-import { X, ArrowRightLeft, Search } from 'lucide-react'
+import { ArrowRightLeft, Search } from 'lucide-react'
 import { useApp } from '../context/useApp'
 import { usePlayers } from '../features/players/usePlayers'
 import { useRegistrations } from '../features/events/useRegistrations'
 import { useTransferActions } from '../features/events/useTransfers'
+import { Modal } from './ui/Modal'
 import { PlayerRow } from './ui/PlayerRow'
 
 // Picker modal Josephine sees when she taps "Transfer spot to another player".
@@ -76,19 +77,17 @@ export default function TransferSpotModal({ tournament, onClose, onTransferCreat
   }
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center">
-      <div className="bg-white rounded-t-3xl w-full max-w-md p-5 space-y-4 max-h-[85vh] flex flex-col">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="font-bold text-gray-800">Transfer your spot</h3>
-            <p className="text-xs text-gray-400 mt-0.5">
-              Pick who takes over. They'll be asked to accept — your spot stays held until they do.
-            </p>
-          </div>
-          <button onClick={onClose} disabled={busy}>
-            <X size={22} className="text-gray-400" />
-          </button>
-        </div>
+    <Modal
+      open
+      onClose={() => {
+        if (!busy) onClose()
+      }}
+      title="Transfer your spot"
+    >
+      <div className="space-y-4">
+        <p className="text-xs text-gray-400 -mt-2">
+          Pick who takes over. They'll be asked to accept — your spot stays held until they do.
+        </p>
 
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-xl px-3 py-2 text-xs text-red-700">
@@ -108,7 +107,7 @@ export default function TransferSpotModal({ tournament, onClose, onTransferCreat
           />
         </div>
 
-        <div className="overflow-y-auto flex-1 space-y-2">
+        <div className="space-y-2">
           {candidates.length === 0 && (
             <p className="text-sm text-gray-400 text-center py-4">No matching players found</p>
           )}
@@ -139,6 +138,6 @@ export default function TransferSpotModal({ tournament, onClose, onTransferCreat
           })}
         </div>
       </div>
-    </div>
+    </Modal>
   )
 }

@@ -1,9 +1,10 @@
 import React, { useState } from 'react'
-import { X, ArrowRightLeft, AlertTriangle, Clock } from 'lucide-react'
+import { ArrowRightLeft, AlertTriangle, Clock } from 'lucide-react'
 import { useApp } from '../context/useApp'
 import { usePlayers } from '../features/players/usePlayers'
 import { useTransfers, useTransferActions } from '../features/events/useTransfers'
 import Avatar from './ui/Avatar'
+import { Modal } from './ui/Modal'
 
 // Admin-only modal that lists every pending transfer for a tournament and
 // surfaces the two admin actions:
@@ -89,17 +90,9 @@ export default function AdminTransferPanel({ tournament, onClose }) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center">
-      <div className="bg-white rounded-t-3xl w-full max-w-md p-5 space-y-4 max-h-[90vh] flex flex-col overflow-y-auto">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="font-bold text-gray-800">Pending transfers</h3>
-            <p className="text-xs text-gray-400 mt-0.5">{tournament?.name}</p>
-          </div>
-          <button onClick={onClose}>
-            <X size={22} className="text-gray-400" />
-          </button>
-        </div>
+    <Modal open onClose={onClose} title="Pending transfers">
+      <div className="space-y-4">
+        <p className="text-xs text-gray-400 -mt-2">{tournament?.name}</p>
 
         {pending.length === 0 && (
           <p className="text-sm text-gray-400 text-center py-6">
@@ -163,6 +156,6 @@ export default function AdminTransferPanel({ tournament, onClose }) {
           and the from-player's registration is cancelled.
         </p>
       </div>
-    </div>
+    </Modal>
   )
 }

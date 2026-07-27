@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react'
-import { X, MessageCircle, Users, Clock } from 'lucide-react'
+import { MessageCircle, Users, Clock } from 'lucide-react'
 import { useApp } from '../context/useApp'
 import { useTransferActions } from '../features/events/useTransfers'
+import { Modal } from './ui/Modal'
 import {
   buildTransferMessage,
   isE164,
@@ -82,20 +83,12 @@ export default function TransferPendingModal({ transferId, toPlayer, onClose, on
   }
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center">
-      <div className="bg-white rounded-t-3xl w-full max-w-md p-5 space-y-4 max-h-[90vh] flex flex-col overflow-y-auto">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="inline-block w-2 h-2 rounded-full bg-amber-500"></span>
-            <h3 className="font-bold text-gray-800">
-              Awaiting {(toPlayer?.name || 'their').split(/\s+/)[0]}'s response
-            </h3>
-          </div>
-          <button onClick={onClose}>
-            <X size={22} className="text-gray-400" />
-          </button>
-        </div>
-
+    <Modal
+      open
+      onClose={onClose}
+      title={`Awaiting ${(toPlayer?.name || 'their').split(/\s+/)[0]}'s response`}
+    >
+      <div className="space-y-4">
         <p className="text-xs text-gray-500 leading-relaxed">
           Your spot is held in <strong>pending transfer</strong> until{' '}
           {(toPlayer?.name || 'they').split(/\s+/)[0]} accepts. Send the link via WhatsApp so they
@@ -157,6 +150,6 @@ export default function TransferPendingModal({ transferId, toPlayer, onClose, on
           </button>
         </div>
       </div>
-    </div>
+    </Modal>
   )
 }
