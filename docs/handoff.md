@@ -172,11 +172,21 @@ any regression far cheaper to attribute.
 
 ## Landmines — do not trip these
 
-- **Never commit while a worker is mid-flight.** The `lint-staged` pre-commit
-  hook runs `git stash` to back up unstaged changes. With a worker editing the
-  tree, that stashes its in-progress work. This is the documented
-  two-workers-collided failure arriving by a different route — the coordinator
-  is not exempt from it just because only one worker is running.
+- **`lint-staged`'s backup stash is _not_ a hazard — don't "fix" it.** The
+  pre-commit hook prints `Backed up original state in git stash (<hash>)`,
+  which reads like the `git stash` this project has been bitten by. It isn't.
+  With default options (`hideUnstaged: false`, `lib/state.js`) lint-staged
+  takes the `git stash create` + `git stash store` branch
+  (`gitWorkflow.js:272-274`): that records a stash _object_ and leaves the
+  working tree untouched. The destructive `git stash push --keep-index`
+  branch only runs under `--hide-unstaged`, which nothing here passes.
+  An earlier revision of this file claimed committing mid-worker would stash
+  a worker's work. It would not.
+  The one real working-tree mutation is `hidePartiallyStagedChanges`
+  (`shouldHidePartiallyStaged` defaults true): for files with **both staged
+  and unstaged hunks** it reverts the unstaged hunks while tasks run, then
+  restores them. Staging whole files — which the "stage explicit paths" rule
+  already gives you — avoids it entirely.
 - **`ALTER DEFAULT PRIVILEGES` does not lock down functions on this stack.**
   It was tried in `20260727194010` and removed. The `pg_default_acl` row stores
   correctly without PUBLIC, yet functions created afterwards still come out
