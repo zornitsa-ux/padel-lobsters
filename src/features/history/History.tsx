@@ -144,9 +144,12 @@ export default function History({ onNavigate }: HistoryProps) {
           if (p) stats[r.playerId] = { player: p, played: 0, won: 0, lost: 0, pf: 0, pa: 0, pts: 0 }
         })
         tMatches.forEach((m) => {
-          if (!m.completed || m.score1 == null) return
+          // Both scores required: a half-scored match is incomplete. Matches
+          // computeRankings in events/registration/utils.ts so History and the
+          // event page cannot disagree about the same tournament.
+          if (!m.completed || m.score1 == null || m.score2 == null) return
           const s1 = m.score1,
-            s2 = m.score2 ?? 0
+            s2 = m.score2
           const t1w = s1 > s2,
             t2w = s2 > s1
           ;(m.team1Ids || []).forEach((id) => {
