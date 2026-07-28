@@ -1,5 +1,6 @@
 import React from 'react'
 import { Award, Flame } from 'lucide-react'
+import { StatTile } from '../../components/ui/StatTile'
 
 // Shape produced by AccountStatsSection from lib/playerStats — only the
 // fields this card renders are modelled here.
@@ -47,22 +48,14 @@ export default function YourStatsCard({ claimedId, myStats, onNavigate }: YourSt
         style={{ backdropFilter: 'blur(12px)' }}
       >
         <div className="grid grid-cols-4 gap-2 text-center">
-          <div>
-            <p className="text-lg font-bold text-gray-800">{myStats.played}</p>
-            <p className="text-[9px] text-gray-400 font-medium">Played</p>
-          </div>
-          <div>
-            <p className="text-lg font-bold text-green-600">{myStats.won}</p>
-            <p className="text-[9px] text-gray-400 font-medium">Won</p>
-          </div>
-          <div>
-            <p className="text-lg font-bold text-red-500">{myStats.lost}</p>
-            <p className="text-[9px] text-gray-400 font-medium">Lost</p>
-          </div>
-          <div>
-            <p className="text-lg font-bold text-lob-coral">{myStats.winRate}%</p>
-            <p className="text-[9px] text-gray-400 font-medium">Win Rate</p>
-          </div>
+          <StatTile value={myStats.played} label="Played" valueClassName="text-gray-800" />
+          <StatTile value={myStats.won} label="Won" valueClassName="text-green-600" />
+          <StatTile value={myStats.lost} label="Lost" valueClassName="text-red-500" />
+          <StatTile
+            value={`${myStats.winRate}%`}
+            label="Win Rate"
+            valueClassName="text-lob-coral"
+          />
         </div>
 
         {myStats.played === 0 ? (

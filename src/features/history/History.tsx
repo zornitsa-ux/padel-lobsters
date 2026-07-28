@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react'
-import { ChevronDown, ChevronUp, Gamepad2, Trophy } from 'lucide-react'
+import { Gamepad2, Trophy } from 'lucide-react'
 import { useApp } from '../../context/useApp'
 import { useTournaments } from '../events/useTournaments'
 import { usePlayers } from '../players/usePlayers'
@@ -18,6 +18,8 @@ import { resultsWithheld } from '../events/resultsPhase'
 import Podium from './Podium'
 import { TabSwitcher } from '../../components/ui/TabSwitcher'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
+import { ProgressBar } from '../../components/ui/ProgressBar'
+import { CollapsibleCard } from '../../components/ui/CollapsibleCard'
 
 // `historicalTournaments.js` is deliberately untyped (hardcoded pre-app archive);
 // this is the single boundary where its shape is asserted.
@@ -195,11 +197,13 @@ export default function History({ onNavigate }: HistoryProps) {
         })()
 
         return (
-          <div key={`db-${t.id}`} className="card overflow-hidden border-l-4 border-yellow-400">
-            <button
-              className="w-full flex items-center justify-between gap-3"
-              onClick={() => setExpandedId(open ? null : `db-${t.id}`)}
-            >
+          <CollapsibleCard
+            key={`db-${t.id}`}
+            className="card overflow-hidden border-l-4 border-yellow-400"
+            headerClassName="gap-3"
+            expanded={open}
+            onToggle={() => setExpandedId(open ? null : `db-${t.id}`)}
+            header={
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-yellow-50 rounded-xl flex items-center justify-center flex-shrink-0">
                   <Trophy size={20} className="text-yellow-500" />
@@ -240,13 +244,8 @@ export default function History({ onNavigate }: HistoryProps) {
                   </p>
                 </div>
               </div>
-              {open ? (
-                <ChevronUp size={16} className="text-gray-400 flex-shrink-0" />
-              ) : (
-                <ChevronDown size={16} className="text-gray-400 flex-shrink-0" />
-              )}
-            </button>
-
+            }
+          >
             {open &&
               (() => {
                 const dbTab = getDbTab(t.id)
@@ -513,14 +512,11 @@ export default function History({ onNavigate }: HistoryProps) {
                                       <span className="text-[10px] w-16 truncate text-gray-600">
                                         {(r.target_name || '').split(' ')[0]}
                                       </span>
-                                      <div className="flex-1 h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                                        <div
-                                          className="h-full bg-lob-teal rounded-full transition-all"
-                                          style={{
-                                            width: `${(Number(r.votes_count) / cat.maxVotes) * 100}%`,
-                                          }}
-                                        />
-                                      </div>
+                                      <ProgressBar
+                                        value={(Number(r.votes_count) / cat.maxVotes) * 100}
+                                        size="md"
+                                        className="flex-1"
+                                      />
                                       <span className="text-[10px] text-gray-500 w-3 text-right">
                                         {Number(r.votes_count)}
                                       </span>
@@ -544,7 +540,7 @@ export default function History({ onNavigate }: HistoryProps) {
                   </div>
                 )
               })()}
-          </div>
+          </CollapsibleCard>
         )
       })}
 
@@ -559,12 +555,13 @@ export default function History({ onNavigate }: HistoryProps) {
         const dn = (n: string) => globalDn(rn(n))
 
         return (
-          <div key={t.id} className="card overflow-hidden border-l-4 border-yellow-400">
-            {/* Card header */}
-            <button
-              className="w-full flex items-center justify-between gap-3"
-              onClick={() => setExpandedId(open ? null : t.id)}
-            >
+          <CollapsibleCard
+            key={t.id}
+            className="card overflow-hidden border-l-4 border-yellow-400"
+            headerClassName="gap-3"
+            expanded={open}
+            onToggle={() => setExpandedId(open ? null : t.id)}
+            header={
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-yellow-50 rounded-xl flex items-center justify-center flex-shrink-0">
                   <Trophy size={20} className="text-yellow-500" />
@@ -597,13 +594,8 @@ export default function History({ onNavigate }: HistoryProps) {
                   </p>
                 </div>
               </div>
-              {open ? (
-                <ChevronUp size={16} className="text-gray-400 flex-shrink-0" />
-              ) : (
-                <ChevronDown size={16} className="text-gray-400 flex-shrink-0" />
-              )}
-            </button>
-
+            }
+          >
             {open && (
               <div className="mt-4">
                 {/* Podium */}
@@ -782,7 +774,7 @@ export default function History({ onNavigate }: HistoryProps) {
                 )}
               </div>
             )}
-          </div>
+          </CollapsibleCard>
         )
       })}
     </div>

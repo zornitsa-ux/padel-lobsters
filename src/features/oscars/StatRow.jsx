@@ -1,5 +1,6 @@
 import React from 'react'
 import { ChevronDown } from 'lucide-react'
+import { ProgressBar } from '../../components/ui/ProgressBar'
 
 /* ─── Admin: per-category live participation row ──────────────────────── */
 export default function StatRow({ stat, expanded, voters, onToggle }) {
@@ -25,12 +26,7 @@ export default function StatRow({ stat, expanded, voters, onToggle }) {
             className={`text-gray-400 transition-transform flex-shrink-0 ${expanded ? 'rotate-180' : ''}`}
           />
         </div>
-        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-gradient-to-r from-lob-teal to-lob-coral transition-all"
-            style={{ width: `${pct}%` }}
-          />
-        </div>
+        <ProgressBar value={pct} fillClassName="bg-gradient-to-r from-lob-teal to-lob-coral" />
       </button>
       {expanded && (
         <div className="px-3 pb-3 pt-2 border-t border-gray-100 grid grid-cols-2 gap-3">

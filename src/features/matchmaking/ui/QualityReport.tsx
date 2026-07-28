@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import type { QualityDimensions, Violation } from '../domain/types'
 import { DIMENSIONS } from './dimensions'
+import { ProgressBar } from '../../../components/ui/ProgressBar'
 
 export type QualityReportProps = {
   quality: { overall: QualityDimensions; perRound: QualityDimensions[] }
@@ -29,12 +30,7 @@ function DimensionBar({ label, value }: { label: string; value: number }) {
         <span className="label mb-0">{label}</span>
         <span className="font-medium text-gray-700">{Math.round(value)}%</span>
       </div>
-      <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
-        <div
-          className="h-full rounded-full bg-lob-teal/70"
-          style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
-        />
-      </div>
+      <ProgressBar value={value} fillClassName="bg-lob-teal/70" />
     </div>
   )
 }

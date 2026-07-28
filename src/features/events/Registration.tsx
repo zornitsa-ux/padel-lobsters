@@ -10,6 +10,7 @@ import TransferSpotModal from '../../components/TransferSpotModal'
 import TransferPendingModal from '../../components/TransferPendingModal'
 import DateTile from '../../components/ui/DateTile'
 import { EmptyState } from '../../components/ui/EmptyState'
+import { StatTile } from '../../components/ui/StatTile'
 import AddToCalendarButton from '../../components/ui/AddToCalendarButton'
 import ShareWhatsAppButton from '../../components/ui/ShareWhatsAppButton'
 import EventDescription from './EventDescription'
@@ -509,28 +510,22 @@ export default function Registration({
 
       {/* Summary bar */}
       <div className="bg-lob-teal rounded-xl p-4 text-white flex items-center justify-between">
-        <div className="text-center">
-          <p className="text-2xl font-bold">{registered.length}</p>
-          <p className="text-xs opacity-75">Registered</p>
-        </div>
-        <div className="text-center">
-          <p className={`text-2xl font-bold ${waitlisted.length > 0 ? 'text-lob-amber' : ''}`}>
-            {waitlisted.length}
-          </p>
-          <p className="text-xs opacity-75">Waitlist</p>
-        </div>
-        <div className="text-center">
-          <p className="text-2xl font-bold">{maxPlayers}</p>
-          <p className="text-xs opacity-75">Max players</p>
-        </div>
-        <div className="text-center">
-          <p
-            className={`text-2xl font-bold ${registered.length >= maxPlayers ? 'text-lob-amber' : 'text-green-300'}`}
-          >
-            {Math.max(0, maxPlayers - registered.length)}
-          </p>
-          <p className="text-xs opacity-75">Spots left</p>
-        </div>
+        <StatTile value={registered.length} label="Registered" size="md" labelVariant="inverted" />
+        <StatTile
+          value={waitlisted.length}
+          label="Waitlist"
+          size="md"
+          labelVariant="inverted"
+          valueClassName={waitlisted.length > 0 ? 'text-lob-amber' : ''}
+        />
+        <StatTile value={maxPlayers} label="Max players" size="md" labelVariant="inverted" />
+        <StatTile
+          value={Math.max(0, maxPlayers - registered.length)}
+          label="Spots left"
+          size="md"
+          labelVariant="inverted"
+          valueClassName={registered.length >= maxPlayers ? 'text-lob-amber' : 'text-green-300'}
+        />
       </div>
 
       {/* Lobster Games Over — results banner (visible for the 48h window) */}

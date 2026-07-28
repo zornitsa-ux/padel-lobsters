@@ -3,6 +3,7 @@ import { Check, Search, ChevronRight, RotateCcw, UserX } from 'lucide-react'
 import { buildAliasInventory, suggestPlayers, NOT_IN_ROSTER } from '../lib/playerHistory'
 import { Modal } from './ui/Modal'
 import { SegmentedControl } from './ui/SegmentedControl'
+import { ProgressBar } from './ui/ProgressBar'
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Admin modal: walk through every historical name from the hardcoded
@@ -86,14 +87,11 @@ export default function PlayerAliasMatcher({
         </p>
 
         {/* Progress bar */}
-        <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-lob-teal rounded-full transition-all duration-500"
-            style={{
-              width: `${counts.all > 0 ? ((counts.matched + counts.skipped) / counts.all) * 100 : 0}%`,
-            }}
-          />
-        </div>
+        <ProgressBar
+          value={counts.all > 0 ? ((counts.matched + counts.skipped) / counts.all) * 100 : 0}
+          size="xs"
+          fillClassName="bg-lob-teal duration-500"
+        />
         <p className="text-[10px] text-gray-400 mt-1 text-right">
           {counts.matched} matched · {counts.skipped} skipped · {counts.unmatched} to go
         </p>

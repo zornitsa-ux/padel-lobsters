@@ -7,6 +7,7 @@ import { AlertCircle } from 'lucide-react'
 import { computeTournamentStandings } from '../../lib/standings'
 import { TabSwitcher } from '../../components/ui/TabSwitcher'
 import { EmptyState } from '../../components/ui/EmptyState'
+import { ProgressBar } from '../../components/ui/ProgressBar'
 import { useScoreSync } from './useScoreSync'
 import { useOscarResults } from '../oscars/useOscarResults'
 import { groupOscarResultsByCategory } from '../oscars/oscarResults'
@@ -171,12 +172,11 @@ export default function Scores({ tournament, onNavigate }: ScoresProps) {
                         <span className="text-xs w-16 truncate text-gray-600">
                           {(r.target_name || '').split(' ')[0]}
                         </span>
-                        <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-lob-teal rounded-full transition-all"
-                            style={{ width: `${(Number(r.votes_count) / cat.maxVotes) * 100}%` }}
-                          />
-                        </div>
+                        <ProgressBar
+                          value={(Number(r.votes_count) / cat.maxVotes) * 100}
+                          size="lg"
+                          className="flex-1"
+                        />
                         <span className="text-xs text-gray-500 w-3 text-right">
                           {Number(r.votes_count)}
                         </span>

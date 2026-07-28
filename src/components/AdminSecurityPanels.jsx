@@ -11,9 +11,8 @@ import {
   Lock,
   KeyRound,
   UserCheck,
-  ChevronDown,
-  ChevronUp,
 } from 'lucide-react'
+import { CollapsibleCard } from './ui/CollapsibleCard'
 
 /**
  * Admin-only Security panels.
@@ -221,13 +220,12 @@ function SecurityEventsPanel() {
   const failureCount = loaded ? events.filter((e) => e.succeeded === false).length : null
 
   return (
-    <div className="card space-y-3">
-      <button
-        type="button"
-        onClick={() => setExpanded((v) => !v)}
-        className="flex items-center justify-between w-full"
-        aria-expanded={expanded}
-      >
+    <CollapsibleCard
+      className="card space-y-3"
+      chevronClassName="text-gray-400"
+      expanded={expanded}
+      onToggle={() => setExpanded((v) => !v)}
+      header={
         <h3 className="font-bold text-gray-700 text-sm flex items-center gap-2">
           <Activity size={15} className="text-lob-teal" />
           Recent security events
@@ -237,13 +235,8 @@ function SecurityEventsPanel() {
             </span>
           )}
         </h3>
-        {expanded ? (
-          <ChevronUp size={16} className="text-gray-400" />
-        ) : (
-          <ChevronDown size={16} className="text-gray-400" />
-        )}
-      </button>
-
+      }
+    >
       {expanded && (
         <>
           <div className="flex items-center justify-between">
@@ -306,7 +299,7 @@ function SecurityEventsPanel() {
           )}
         </>
       )}
-    </div>
+    </CollapsibleCard>
   )
 }
 

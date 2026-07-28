@@ -1,6 +1,7 @@
 import { Modal } from '../../../components/ui/Modal'
 import { PlayerRow } from '../../../components/ui/PlayerRow'
 import { Badge } from '../../../components/ui/Badge'
+import { StatTile } from '../../../components/ui/StatTile'
 import { LeagueMatchCard } from './LeagueMatchCard'
 import { getTeamRecord } from '../domain/standings'
 import { resolveTeamName } from '../domain/teamDisplay'
@@ -14,6 +15,8 @@ interface TeamPageProps {
   onClose: () => void
   onTeamClick?: (team: LeagueTeam) => void
 }
+
+const statTileProps = { size: 'sm', labelVariant: 'caps', valueClassName: 'text-lob-dark' } as const
 
 const EXPERIENCE_BADGE: Record<string, 'info' | 'gold' | 'silver'> = {
   advanced: 'info',
@@ -35,15 +38,6 @@ function TeamPlayerRow({
       name={player.name}
       nameClassName="text-sm font-medium text-lob-dark truncate"
     />
-  )
-}
-
-function StatCell({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="flex flex-col items-center">
-      <span className="text-lg font-bold text-lob-dark">{value}</span>
-      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{label}</span>
-    </div>
   )
 }
 
@@ -112,10 +106,10 @@ export function TeamPage({ team, matches, teamById, onClose, onTeamClick }: Team
             Group Stage Record
           </p>
           <div className="grid grid-cols-4 gap-2 bg-gray-50 rounded-xl p-4">
-            <StatCell label="W" value={record.wins} />
-            <StatCell label="L" value={record.losses} />
-            <StatCell label="Pts" value={record.wins} />
-            <StatCell label="Set +/−" value={formatSetDiff(record.setDiff)} />
+            <StatTile label="W" value={record.wins} {...statTileProps} />
+            <StatTile label="L" value={record.losses} {...statTileProps} />
+            <StatTile label="Pts" value={record.wins} {...statTileProps} />
+            <StatTile label="Set +/−" value={formatSetDiff(record.setDiff)} {...statTileProps} />
           </div>
         </div>
 

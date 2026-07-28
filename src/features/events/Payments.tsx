@@ -14,6 +14,8 @@ import { fmtEur } from '../../lib/format'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { IconButton } from '../../components/ui/IconButton'
 import { PlayerRow } from '../../components/ui/PlayerRow'
+import { ProgressBar } from '../../components/ui/ProgressBar'
+import { StatTile } from '../../components/ui/StatTile'
 import type { EventNavigate } from './eventHelpers'
 import type { NormalisedTournament } from '../../lib/normalise'
 import type { NormalisedRegistration } from './registrationQueries'
@@ -234,22 +236,34 @@ export default function Payments({
       {/* Summary */}
       <div className="bg-lob-teal rounded-2xl p-4 text-white shadow-lg">
         <div className="grid grid-cols-4 gap-2 mb-4">
-          <div className="text-center">
-            <p className="text-2xl font-bold text-green-300">{confirmed.length}</p>
-            <p className="text-xs opacity-75">Confirmed</p>
-          </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold text-sky-300">{selfPaid.length}</p>
-            <p className="text-xs opacity-75">Paid</p>
-          </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold text-amber-300">{tikkied.length}</p>
-            <p className="text-xs opacity-75">Tikkied</p>
-          </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold text-red-300">{trulyUnpaid.length}</p>
-            <p className="text-xs opacity-75">Unpaid</p>
-          </div>
+          <StatTile
+            value={confirmed.length}
+            label="Confirmed"
+            size="md"
+            labelVariant="inverted"
+            valueClassName="text-green-300"
+          />
+          <StatTile
+            value={selfPaid.length}
+            label="Paid"
+            size="md"
+            labelVariant="inverted"
+            valueClassName="text-sky-300"
+          />
+          <StatTile
+            value={tikkied.length}
+            label="Tikkied"
+            size="md"
+            labelVariant="inverted"
+            valueClassName="text-amber-300"
+          />
+          <StatTile
+            value={trulyUnpaid.length}
+            label="Unpaid"
+            size="md"
+            labelVariant="inverted"
+            valueClassName="text-red-300"
+          />
         </div>
 
         {costPerPlayer > 0 && (
@@ -268,14 +282,13 @@ export default function Payments({
                 {fmtEur(totalExpected - totalCollected)}
               </span>
             </div>
-            <div className="mt-3 bg-white/20 rounded-full h-3 overflow-hidden progress-bar">
-              <div
-                className="h-full bg-gradient-to-r from-green-300 to-green-400 rounded-full transition-all"
-                style={{
-                  width: totalExpected > 0 ? `${(totalCollected / totalExpected) * 100}%` : '0%',
-                }}
-              />
-            </div>
+            <ProgressBar
+              value={totalExpected > 0 ? (totalCollected / totalExpected) * 100 : 0}
+              size="lg"
+              trackClassName="bg-white/20"
+              fillClassName="bg-gradient-to-r from-green-300 to-green-400"
+              className="mt-3 w-full"
+            />
           </div>
         )}
       </div>
