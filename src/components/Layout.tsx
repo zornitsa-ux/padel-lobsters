@@ -62,12 +62,15 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
     setBannerDismissed(stored === 'true')
   }, [])
 
+  // Only clear once the device is known-trusted. Keying this off
+  // `!isDeviceProbationary` also fired on mount, while trust was still
+  // undefined, wiping a stored dismissal before the RPC resolved.
   useEffect(() => {
-    if (!isDeviceProbationary && typeof window !== 'undefined') {
+    if (deviceTrustedDb === true && typeof window !== 'undefined') {
       window.localStorage.removeItem(DEVICE_TRUST_BANNER_KEY)
       setBannerDismissed(false)
     }
-  }, [isDeviceProbationary])
+  }, [deviceTrustedDb])
 
   const handleDismissBanner = useCallback(() => {
     if (typeof window !== 'undefined') {

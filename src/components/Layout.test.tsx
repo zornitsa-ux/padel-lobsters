@@ -70,15 +70,13 @@ describe('Layout — device trust banner', () => {
     expect(screen.getByText('trust-indicator')).toBeTruthy()
   })
 
-  // Documented as-is: the "clear the flag once trusted" effect also runs on
-  // mount, while trust is still unknown, so a stored dismissal is wiped and
-  // the banner comes back on the next load.
-  it('does not survive a reload — a stored dismissal is cleared on mount', async () => {
+  it('survives a reload — a stored dismissal shows the indicator, not the banner', async () => {
     window.localStorage.setItem(BANNER_KEY, 'true')
     mockIsMyDeviceTrusted.mockResolvedValue(false)
     render(<Layout>content</Layout>)
-    expect(await screen.findByText('trust-banner')).toBeTruthy()
-    expect(window.localStorage.getItem(BANNER_KEY)).toBeNull()
+    expect(await screen.findByText('trust-indicator')).toBeTruthy()
+    expect(screen.queryByText('trust-banner')).toBeNull()
+    expect(window.localStorage.getItem(BANNER_KEY)).toBe('true')
   })
 
   it('clears the stored dismissal once the device becomes trusted', async () => {
