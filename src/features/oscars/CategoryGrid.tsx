@@ -1,5 +1,14 @@
-import React from 'react'
 import { Check } from 'lucide-react'
+import type { CategoryRow } from './oscarsSchemas'
+import type { OscarVote } from './useOscarsSession'
+
+interface CategoryGridProps {
+  categories: CategoryRow[]
+  myVoteByCat: Record<string, OscarVote>
+  /** null renders the grid read-only (the post-voting recap). */
+  onSelect: ((categoryId: string) => void) | null
+  showWaitingState?: boolean
+}
 
 /* ─── Player: home tile grid ──────────────────────────────────────────── */
 export default function CategoryGrid({
@@ -7,7 +16,7 @@ export default function CategoryGrid({
   myVoteByCat,
   onSelect,
   showWaitingState = false,
-}) {
+}: CategoryGridProps) {
   return (
     <div className="grid grid-cols-2 gap-2.5">
       {categories.map((c) => {

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Play, X, Share2, Loader2, Check } from 'lucide-react'
 import { Shell, SectionLabel, PhaseBanner } from './OscarsShell'
 import { buildDefaultCategories } from './oscarCategories'
@@ -6,6 +6,36 @@ import CategoryEditor from './CategoryEditor'
 import StatRow from './StatRow'
 import ResultsView from './ResultsView'
 import { AlertBox } from '../../components/ui/AlertBox'
+import type { EditableCategory } from './CategoryEditor'
+import type { OscarsPhase } from './oscarsPhase'
+import type {
+  AdminStatRow,
+  CategoryRow,
+  CategoryVoterRow,
+  ResultRow,
+  SessionRow,
+} from './oscarsSchemas'
+import type { OscarCategoryInput } from './useOscarsSession'
+import type { Player } from '../../lib/normalise'
+
+interface AdminViewProps {
+  phase: OscarsPhase
+  session: SessionRow | null | undefined
+  categories: CategoryRow[]
+  regPlayers: Player[]
+  adminStats: AdminStatRow[]
+  adminResults: ResultRow[]
+  categoryVoters: Record<string, CategoryVoterRow[]>
+  busy: boolean
+  error: string | null
+  onDismissError: () => void
+  onBack: () => void
+  onStart: (cats: OscarCategoryInput[]) => void
+  onEnd: () => void
+  onShare: () => void
+  loadCategoryVoters: (categoryId: string) => void
+  headerRight?: ReactNode
+}
 
 /* ════════════════════════════════════════════════════════════════════════════
    AdminView — the admin control surface across phases (configure/start, live
@@ -28,11 +58,12 @@ export default function AdminView({
   onShare,
   loadCategoryVoters,
   headerRight,
-}) {
-  const [editCats, setEditCats] = useState(null) // null = derive from saved/defaults
-  const [expandedStatCatId, setExpandedStatCatId] = useState(null)
+}: AdminViewProps) {
+  // null = derive from the saved categories (or the defaults)
+  const [editCats, setEditCats] = useState<EditableCategory[] | null>(null)
+  const [expandedStatCatId, setExpandedStatCatId] = useState<string | null>(null)
 
-  const baseCats = useMemo(() => {
+  const baseCats = useMemo<EditableCategory[]>(() => {
     if (editCats) return editCats
     if (categories.length) {
       return categories.map((c) => ({
@@ -107,7 +138,7 @@ export default function AdminView({
     return (
       <Shell title="🦞 Lobster Games" headerRight={headerRight}>
         <div className="space-y-3">
-          <PhaseBanner status="active" startedAt={session.started_at} />
+          <PhaseBanner status="active" startedAt={session?.started_at} />
           <SectionLabel>Live participation</SectionLabel>
           {adminStats.length === 0 && (
             <div className="bg-white rounded-2xl p-4 text-center text-sm text-gray-400">
@@ -152,9 +183,9 @@ export default function AdminView({
       <div className="space-y-3">
         <PhaseBanner
           status={phase}
-          startedAt={session.started_at}
-          closedAt={session.closed_at}
-          sharedAt={session.shared_at}
+          startedAt={session?.started_at}
+          closedAt={session?.closed_at}
+          sharedAt={session?.shared_at}
         />
 
         <ResultsView results={adminResults} collapsible />

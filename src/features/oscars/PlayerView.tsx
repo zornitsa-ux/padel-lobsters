@@ -1,10 +1,26 @@
-import React from 'react'
+import type { ReactNode } from 'react'
 import { RotateCw } from 'lucide-react'
 import { Shell } from './OscarsShell'
 import CategoryGrid from './CategoryGrid'
 import ResultsView from './ResultsView'
 import { AlertBox } from '../../components/ui/AlertBox'
 import { Spinner } from '../../components/ui/Spinner'
+import type { OscarsPhase } from './oscarsPhase'
+import type { CategoryRow, ResultRow } from './oscarsSchemas'
+import type { OscarVote } from './useOscarsSession'
+
+interface PlayerViewProps {
+  phase: OscarsPhase
+  categories: CategoryRow[]
+  myVoteByCat: Record<string, OscarVote>
+  /** null while the published results are still loading. */
+  playerResults: ResultRow[] | null
+  onSelectCategory: (categoryId: string) => void
+  onBack: () => void
+  error: string | null
+  onDismissError: () => void
+  headerRight?: ReactNode
+}
 
 /* ════════════════════════════════════════════════════════════════════════════
    PlayerView — the participant-facing screens for the games home (everything
@@ -20,7 +36,7 @@ export default function PlayerView({
   error,
   onDismissError,
   headerRight,
-}) {
+}: PlayerViewProps) {
   // Not started yet
   if (phase === 'not_created' || phase === 'pre_start') {
     return (

@@ -1,5 +1,11 @@
-import React, { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Settings, X, Gamepad2, SlidersHorizontal } from 'lucide-react'
+import type { ViewMode } from './oscarsPhase'
+
+interface AdminMenuProps {
+  viewMode: ViewMode
+  onSetViewMode: (mode: ViewMode) => void
+}
 
 /* ════════════════════════════════════════════════════════════════════════════
    AdminMenu — header trigger + slide-over for registered admins. Lets an admin
@@ -7,10 +13,10 @@ import { Settings, X, Gamepad2, SlidersHorizontal } from 'lucide-react'
    admin controls ("Admin controls"). Only mounted when the viewer can toggle
    (admin AND registered for this tournament); plain admins never see it.
    ════════════════════════════════════════════════════════════════════════════ */
-export default function AdminMenu({ viewMode, onSetViewMode }) {
+export default function AdminMenu({ viewMode, onSetViewMode }: AdminMenuProps) {
   const [open, setOpen] = useState(false)
 
-  const select = (mode) => {
+  const select = (mode: ViewMode) => {
     onSetViewMode(mode)
     setOpen(false)
   }
@@ -70,7 +76,15 @@ export default function AdminMenu({ viewMode, onSetViewMode }) {
   )
 }
 
-function MenuOption({ active, icon, title, subtitle, onClick }) {
+interface MenuOptionProps {
+  active: boolean
+  icon: ReactNode
+  title: string
+  subtitle: string
+  onClick: () => void
+}
+
+function MenuOption({ active, icon, title, subtitle, onClick }: MenuOptionProps) {
   return (
     <button
       onClick={onClick}

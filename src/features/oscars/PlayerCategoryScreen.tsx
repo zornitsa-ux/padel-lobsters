@@ -1,8 +1,26 @@
-import React from 'react'
 import { ChevronLeft, X, Check } from 'lucide-react'
 import { letterColor } from '../../lib/letterColors'
 import { computeHistory } from './gameHelpers'
+import type { OscarMatch } from './gameHelpers'
 import { AlertBox } from '../../components/ui/AlertBox'
+import type { CategoryRow } from './oscarsSchemas'
+import type { OscarVote, ShortNamePlayer } from './useOscarsSession'
+import type { Player } from '../../lib/normalise'
+
+interface PlayerCategoryScreenProps {
+  category: CategoryRow
+  tournamentParticipants: Player[]
+  claimedId: string | null
+  matches: OscarMatch[]
+  shortName: (player: ShortNamePlayer | null | undefined) => string
+  myVote: OscarVote | null
+  onBack: () => void
+  onVote: (targetId: string) => void
+  onClear: () => void
+  busy: boolean
+  error: string | null
+  onDismissError: () => void
+}
 
 /* ─── Player: category screen with player tiles + match-history ───────── */
 export default function PlayerCategoryScreen({
@@ -18,7 +36,7 @@ export default function PlayerCategoryScreen({
   busy,
   error,
   onDismissError,
-}) {
+}: PlayerCategoryScreenProps) {
   return (
     <div>
       <div className="pb-3 border-b border-gray-100 mb-3">

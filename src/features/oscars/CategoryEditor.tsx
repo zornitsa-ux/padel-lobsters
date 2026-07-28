@@ -1,13 +1,28 @@
-import React from 'react'
 import { X, Plus } from 'lucide-react'
 
+/* A category row while it is being edited: the fields are still loose because
+   they come either from a saved `lobster_oscars_categories` row (nullable
+   columns) or from a blank row the admin just added. AdminView tightens them
+   into OscarCategoryInput on submit. */
+export interface EditableCategory {
+  name?: string | null
+  icon?: string | null
+  display_order?: number | null
+}
+
+interface CategoryEditorProps {
+  cats: EditableCategory[]
+  onChange: (next: EditableCategory[]) => void
+  onReset: () => void
+}
+
 /* ─── Admin: editable categories list ─────────────────────────────────── */
-export default function CategoryEditor({ cats, onChange, onReset }) {
-  const update = (i, patch) => {
+export default function CategoryEditor({ cats, onChange, onReset }: CategoryEditorProps) {
+  const update = (i: number, patch: Partial<EditableCategory>) => {
     const next = cats.map((c, idx) => (idx === i ? { ...c, ...patch } : c))
     onChange(next)
   }
-  const remove = (i) => {
+  const remove = (i: number) => {
     const next = cats.filter((_, idx) => idx !== i).map((c, idx) => ({ ...c, display_order: idx }))
     onChange(next)
   }

@@ -1,9 +1,16 @@
-import React from 'react'
 import { ChevronDown } from 'lucide-react'
 import { ProgressBar } from '../../components/ui/ProgressBar'
+import type { AdminStatRow, CategoryVoterRow } from './oscarsSchemas'
+
+interface StatRowProps {
+  stat: AdminStatRow
+  expanded: boolean
+  voters: CategoryVoterRow[] | undefined
+  onToggle: () => void
+}
 
 /* ─── Admin: per-category live participation row ──────────────────────── */
-export default function StatRow({ stat, expanded, voters, onToggle }) {
+export default function StatRow({ stat, expanded, voters, onToggle }: StatRowProps) {
   const pct =
     stat.total_participants > 0 ? Math.round((stat.votes_count / stat.total_participants) * 100) : 0
   const voted = (voters || []).filter((v) => v.voted)

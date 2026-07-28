@@ -1,11 +1,30 @@
-import React, { useState, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { ChevronDown, Trophy } from 'lucide-react'
+import type { ResultRow } from './oscarsSchemas'
+
+interface ResultsViewProps {
+  results: ResultRow[]
+  highlightWinners?: boolean
+  collapsible?: boolean
+}
+
+interface ResultCategory {
+  id: string
+  name: string | null | undefined
+  icon: string | null | undefined
+  display_order: number | null | undefined
+  rows: ResultRow[]
+}
 
 /* ─── Results view (used by both admin post-end and player post-share) ── */
-export default function ResultsView({ results, highlightWinners = false, collapsible = false }) {
+export default function ResultsView({
+  results,
+  highlightWinners = false,
+  collapsible = false,
+}: ResultsViewProps) {
   // Track which categories are revealed (only used when collapsible)
-  const [openIds, setOpenIds] = useState(() => new Set())
-  const toggle = (id) => {
+  const [openIds, setOpenIds] = useState<Set<string>>(() => new Set())
+  const toggle = (id: string) => {
     setOpenIds((prev) => {
       const next = new Set(prev)
       if (next.has(id)) next.delete(id)
@@ -16,7 +35,7 @@ export default function ResultsView({ results, highlightWinners = false, collaps
 
   // Group by category
   const byCat = useMemo(() => {
-    const m = new Map()
+    const m = new Map<string, ResultCategory>()
     for (const r of results) {
       if (!m.has(r.category_id)) {
         m.set(r.category_id, {
@@ -27,7 +46,7 @@ export default function ResultsView({ results, highlightWinners = false, collaps
           rows: [],
         })
       }
-      m.get(r.category_id).rows.push(r)
+      m.get(r.category_id)!.rows.push(r)
     }
     return Array.from(m.values()).sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
   }, [results])

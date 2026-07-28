@@ -1,12 +1,21 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import useRefreshOnFocus from '../../hooks/useRefreshOnFocus'
 import { useOscarsSession } from './useOscarsSession'
+import type { OscarCategoryInput } from './useOscarsSession'
 import { defaultViewMode, canToggleViewMode } from './oscarsPhase'
+import type { ViewMode } from './oscarsPhase'
 import AdminView from './AdminView'
 import PlayerView from './PlayerView'
 import PlayerCategoryScreen from './PlayerCategoryScreen'
 import AdminMenu from './AdminMenu'
 import { Spinner } from '../../components/ui/Spinner'
+import type { NormalisedTournament } from '../../lib/normalise'
+import type { EventNavigate } from '../events/eventHelpers'
+
+interface GameProps {
+  tournament: NormalisedTournament | null | undefined
+  onNavigate: EventNavigate
+}
 
 /* ════════════════════════════════════════════════════════════════════════════
    Lobster Oscars container — wires useOscarsSession to the admin and player
@@ -20,7 +29,7 @@ import { Spinner } from '../../components/ui/Spinner'
    gates on role — only on registration + trusted device — so no RPC changes are
    needed to let admins vote.
    ════════════════════════════════════════════════════════════════════════════ */
-export default function Game({ tournament, onNavigate }) {
+export default function Game({ tournament, onNavigate }: GameProps) {
   const s = useOscarsSession(tournament)
   const {
     isAdmin,
@@ -52,8 +61,8 @@ export default function Game({ tournament, onNavigate }) {
     shareResults,
   } = s
 
-  const [viewModeOverride, setViewModeOverride] = useState(null)
-  const [selectedCatId, setSelectedCatId] = useState(null)
+  const [viewModeOverride, setViewModeOverride] = useState<ViewMode | null>(null)
+  const [selectedCatId, setSelectedCatId] = useState<string | null>(null)
 
   const canToggle = canToggleViewMode({ isAdmin, amRegistered })
   const viewMode = useMemo(() => {
@@ -110,7 +119,7 @@ export default function Game({ tournament, onNavigate }) {
   // letting the phase-based default flip them into the play view.
   const stayAdmin = () => canToggle && setViewModeOverride('admin')
 
-  const handleStart = async (cats) => {
+  const handleStart = async (cats: OscarCategoryInput[]) => {
     if (await startGame(cats)) stayAdmin()
   }
   const handleEnd = async () => {
@@ -120,10 +129,10 @@ export default function Game({ tournament, onNavigate }) {
     if (await shareResults()) stayAdmin()
   }
 
-  const handleVote = async (categoryId, targetId) => {
+  const handleVote = async (categoryId: string, targetId: string) => {
     if (await castVote(categoryId, targetId)) setSelectedCatId(null)
   }
-  const handleClear = async (categoryId) => {
+  const handleClear = async (categoryId: string) => {
     if (await clearVote(categoryId)) setSelectedCatId(null)
   }
 
@@ -141,7 +150,6 @@ export default function Game({ tournament, onNavigate }) {
     return (
       <AdminView
         phase={phase}
-        tournament={tournament}
         session={session}
         categories={categories}
         regPlayers={regPlayers}
@@ -184,7 +192,6 @@ export default function Game({ tournament, onNavigate }) {
   return (
     <PlayerView
       phase={phase}
-      tournament={tournament}
       categories={categories}
       myVoteByCat={myVoteByCat}
       playerResults={playerResults}

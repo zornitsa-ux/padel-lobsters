@@ -1,7 +1,14 @@
-import React from 'react'
+import type { ReactNode } from 'react'
+import type { OscarsPhase } from './oscarsPhase'
+
+interface ShellProps {
+  title: string
+  headerRight?: ReactNode
+  children: ReactNode
+}
 
 /* ─── Content shell with title and an optional header-right slot ── */
-export function Shell({ title, headerRight, children }) {
+export function Shell({ title, headerRight, children }: ShellProps) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2 pb-2 border-b border-gray-100">
@@ -13,7 +20,7 @@ export function Shell({ title, headerRight, children }) {
   )
 }
 
-export function SectionLabel({ children }) {
+export function SectionLabel({ children }: { children: ReactNode }) {
   return (
     <p className="text-[11px] uppercase tracking-wider font-bold text-gray-400 mt-2 mb-2 px-1">
       {children}
@@ -21,8 +28,15 @@ export function SectionLabel({ children }) {
   )
 }
 
-export function PhaseBanner({ status, startedAt, closedAt, sharedAt }) {
-  const stamp = (iso) =>
+interface PhaseBannerProps {
+  status: OscarsPhase
+  startedAt?: string | null
+  closedAt?: string | null
+  sharedAt?: string | null
+}
+
+export function PhaseBanner({ status, startedAt, closedAt, sharedAt }: PhaseBannerProps) {
+  const stamp = (iso: string | null | undefined) =>
     iso ? new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''
   if (status === 'active') {
     return (
