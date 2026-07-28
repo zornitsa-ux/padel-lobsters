@@ -33,12 +33,12 @@ export default function MyOrders({ myOrders, items }: MyOrdersProps) {
                       <img src={item.images[0]} className="w-full h-full object-cover" alt="" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <ShoppingBag size={18} className="text-gray-400" />
+                        <ShoppingBag size={18} className="text-lob-muted-light" />
                       </div>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-800">{item?.name || 'Item'}</p>
+                    <p className="font-semibold text-lob-dark">{item?.name || 'Item'}</p>
                     <div className="flex items-center gap-2 flex-wrap mt-0.5">
                       {o.size && (
                         <span className="text-xs font-bold bg-lob-cream text-lob-teal px-2 py-0.5 rounded-full">
@@ -50,7 +50,7 @@ export default function MyOrders({ myOrders, items }: MyOrdersProps) {
                           Name: {o.customName}
                         </span>
                       )}
-                      <span className="text-[11px] text-gray-400">
+                      <span className="text-[11px] text-lob-muted-light">
                         {formatOrderTime(o.created_at)}
                       </span>
                     </div>
@@ -72,7 +72,9 @@ export default function MyOrders({ myOrders, items }: MyOrdersProps) {
                         )}
                         <div
                           className={`flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-full ${
-                            active ? `${sCfg.bg} ${sCfg.text}` : 'bg-gray-100 text-gray-300'
+                            active
+                              ? `${sCfg.bg} ${sCfg.text}`
+                              : 'bg-gray-100 text-lob-muted-light/60'
                           }`}
                         >
                           <SIcon size={10} /> {sCfg.label}

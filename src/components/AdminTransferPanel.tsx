@@ -109,10 +109,10 @@ export default function AdminTransferPanel({ tournament, onClose }: AdminTransfe
   return (
     <Modal open onClose={onClose} title="Pending transfers">
       <div className="space-y-4">
-        <p className="text-xs text-gray-400 -mt-2">{tournament?.name}</p>
+        <p className="text-xs text-lob-muted-light -mt-2">{tournament?.name}</p>
 
         {pending.length === 0 && (
-          <p className="text-sm text-gray-400 text-center py-6">
+          <p className="text-sm text-lob-muted-light text-center py-6">
             No pending transfers for this event.
           </p>
         )}
@@ -168,7 +168,7 @@ export default function AdminTransferPanel({ tournament, onClose }: AdminTransfe
           )
         })}
 
-        <p className="text-[11px] text-gray-400 text-center pt-1">
+        <p className="text-[11px] text-lob-muted-light text-center pt-1">
           Force accept finalises the transfer immediately. The recipient's spot becomes registered,
           and the from-player's registration is cancelled.
         </p>

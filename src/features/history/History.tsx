@@ -209,7 +209,7 @@ export default function History({ onNavigate }: HistoryProps) {
                   <Trophy size={20} className="text-yellow-500" />
                 </div>
                 <div className="text-left">
-                  <p className="font-bold text-gray-800 text-sm flex items-center gap-1.5 flex-wrap">
+                  <p className="font-bold text-lob-dark text-sm flex items-center gap-1.5 flex-wrap">
                     <span>{t.name}</span>
                     {tCategory === 'ladies' && (
                       <span className="text-[10px] font-bold bg-pink-100 text-pink-600 px-1.5 py-0.5 rounded-full">
@@ -227,12 +227,12 @@ export default function History({ onNavigate }: HistoryProps) {
                       </span>
                     )}
                     {tCategory === 'same' && (
-                      <span className="text-[10px] font-bold bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full">
+                      <span className="text-[10px] font-bold bg-gray-100 text-lob-slate px-1.5 py-0.5 rounded-full">
                         Same Gender
                       </span>
                     )}
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-lob-muted">
                     {t.date
                       ? new Date(t.date).toLocaleDateString('en-GB', {
                           day: 'numeric',
@@ -289,14 +289,14 @@ export default function History({ onNavigate }: HistoryProps) {
                       <div className="flex items-end justify-center gap-2 py-2">
                         <div className="flex flex-col items-center gap-1 flex-1">
                           <span className="text-xl">🥈</span>
-                          <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-bold text-gray-600">
+                          <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-bold text-lob-slate">
                             {top3[1].player.name[0]}
                           </div>
                           <p className="text-sm font-semibold w-full text-center leading-tight px-1">
                             {dbDn(top3[1].player.name)}
                           </p>
                           <div className="bg-gray-200 w-full h-10 rounded-t-xl flex items-center justify-center">
-                            <span className="text-xs font-bold text-gray-600">
+                            <span className="text-xs font-bold text-lob-slate">
                               {top3[1].pts}pts
                             </span>
                           </div>
@@ -349,7 +349,7 @@ export default function History({ onNavigate }: HistoryProps) {
 
                     {/* ── Full Standings ── */}
                     {dbTab === 'standings' && withheld && (
-                      <p className="text-sm text-gray-400 text-center py-4">
+                      <p className="text-sm text-lob-muted-light text-center py-4">
                         Results pending — the final ranking will be revealed soon.
                       </p>
                     )}
@@ -357,19 +357,21 @@ export default function History({ onNavigate }: HistoryProps) {
                       <div className="overflow-x-auto">
                         <table className="w-full text-xs">
                           <thead>
-                            <tr className="text-gray-400 uppercase border-b border-gray-100">
+                            <tr className="text-lob-muted-light uppercase border-b border-gray-100">
                               <th className="text-left pb-1.5 pl-1">#</th>
                               <th className="text-left pb-1.5">Player</th>
                               <th className="text-center pb-1.5">W</th>
                               <th className="text-center pb-1.5">L</th>
                               <th className="text-center pb-1.5">+/-</th>
-                              <th className="text-center pb-1.5 text-gray-600 font-bold">Pts</th>
+                              <th className="text-center pb-1.5 text-lob-slate font-bold">Pts</th>
                             </tr>
                           </thead>
                           <tbody>
                             {rankings.map((s, i) => (
                               <tr key={s.player.id} className="border-b border-gray-50">
-                                <td className="py-1.5 pl-1 text-gray-400 font-bold">{i + 1}</td>
+                                <td className="py-1.5 pl-1 text-lob-muted-light font-bold">
+                                  {i + 1}
+                                </td>
                                 <td className="py-1.5 font-medium text-sm">
                                   {dbDn(s.player.name)}
                                 </td>
@@ -377,7 +379,7 @@ export default function History({ onNavigate }: HistoryProps) {
                                   {s.won}
                                 </td>
                                 <td className="text-center py-1.5 text-red-400">{s.lost}</td>
-                                <td className="text-center py-1.5 text-gray-400">
+                                <td className="text-center py-1.5 text-lob-muted-light">
                                   {s.pf}-{s.pa}
                                 </td>
                                 <td className="text-center py-1.5 font-bold text-lob-teal">
@@ -390,7 +392,7 @@ export default function History({ onNavigate }: HistoryProps) {
                       </div>
                     )}
                     {dbTab === 'standings' && !withheld && rankings.length === 0 && (
-                      <p className="text-sm text-gray-400 text-center py-2">
+                      <p className="text-sm text-lob-muted-light text-center py-2">
                         No match data available
                       </p>
                     )}
@@ -424,14 +426,14 @@ export default function History({ onNavigate }: HistoryProps) {
                                     {mt.court || `Round ${mt.round}`}
                                   </span>
                                   {scored && s1 === s2 && (
-                                    <span className="text-[10px] text-gray-400 font-medium">
+                                    <span className="text-[10px] text-lob-muted-light font-medium">
                                       Draw
                                     </span>
                                   )}
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <div
-                                    className={`flex-1 min-w-0 ${t1won ? 'text-green-700' : 'text-gray-600'}`}
+                                    className={`flex-1 min-w-0 ${t1won ? 'text-green-700' : 'text-lob-slate'}`}
                                   >
                                     {t1Names.map((name, i) => (
                                       <p key={i} className="text-sm font-semibold leading-tight">
@@ -441,19 +443,19 @@ export default function History({ onNavigate }: HistoryProps) {
                                   </div>
                                   <div className="flex items-center gap-1 flex-shrink-0">
                                     <span
-                                      className={`text-lg font-bold w-7 text-center ${t1won ? 'text-green-600' : 'text-gray-400'}`}
+                                      className={`text-lg font-bold w-7 text-center ${t1won ? 'text-green-600' : 'text-lob-muted-light'}`}
                                     >
                                       {scored ? s1 : '—'}
                                     </span>
-                                    <span className="text-gray-300 text-sm">–</span>
+                                    <span className="text-lob-muted-light/60 text-sm">–</span>
                                     <span
-                                      className={`text-lg font-bold w-7 text-center ${t2won ? 'text-green-600' : 'text-gray-400'}`}
+                                      className={`text-lg font-bold w-7 text-center ${t2won ? 'text-green-600' : 'text-lob-muted-light'}`}
                                     >
                                       {scored ? s2 : '—'}
                                     </span>
                                   </div>
                                   <div
-                                    className={`flex-1 min-w-0 text-right ${t2won ? 'text-green-700' : 'text-gray-600'}`}
+                                    className={`flex-1 min-w-0 text-right ${t2won ? 'text-green-700' : 'text-lob-slate'}`}
                                   >
                                     {t2Names.map((name, i) => (
                                       <p key={i} className="text-sm font-semibold leading-tight">
@@ -478,8 +480,8 @@ export default function History({ onNavigate }: HistoryProps) {
                           <div className="space-y-2">
                             <div className="flex items-center gap-2 px-1">
                               <Gamepad2 size={14} className="text-lob-teal" />
-                              <p className="text-xs font-bold text-gray-700">🏆 Lobster Oscars</p>
-                              <span className="text-[10px] text-gray-400 ml-auto">
+                              <p className="text-xs font-bold text-lob-slate">🏆 Lobster Oscars</p>
+                              <span className="text-[10px] text-lob-muted-light ml-auto">
                                 {cats.length} categor{cats.length === 1 ? 'y' : 'ies'}
                               </span>
                             </div>
@@ -488,28 +490,28 @@ export default function History({ onNavigate }: HistoryProps) {
                                 key={cat.id}
                                 className="bg-white rounded-xl p-3 space-y-1.5 border border-gray-100"
                               >
-                                <p className="font-bold text-xs text-gray-700">
+                                <p className="font-bold text-xs text-lob-slate">
                                   <span className="mr-1">{cat.icon}</span>
                                   {cat.name}
                                 </p>
                                 {cat.winners.length > 0 ? (
-                                  <p className="text-xs text-gray-600">
+                                  <p className="text-xs text-lob-slate">
                                     🏆{' '}
                                     <span className="font-bold">
                                       {cat.winners.map((w) => w.target_name).join(', ')}
                                     </span>{' '}
-                                    <span className="text-gray-400">
+                                    <span className="text-lob-muted-light">
                                       ({cat.topVotes} vote{cat.topVotes !== 1 ? 's' : ''}
                                       {cat.winners.length > 1 ? ' — tie' : ''})
                                     </span>
                                   </p>
                                 ) : (
-                                  <p className="text-[10px] text-gray-400">No votes</p>
+                                  <p className="text-[10px] text-lob-muted-light">No votes</p>
                                 )}
                                 <div className="space-y-0.5">
                                   {cat.rows.map((r) => (
                                     <div key={r.target_id} className="flex items-center gap-2">
-                                      <span className="text-[10px] w-16 truncate text-gray-600">
+                                      <span className="text-[10px] w-16 truncate text-lob-slate">
                                         {(r.target_name || '').split(' ')[0]}
                                       </span>
                                       <ProgressBar
@@ -517,7 +519,7 @@ export default function History({ onNavigate }: HistoryProps) {
                                         size="md"
                                         className="flex-1"
                                       />
-                                      <span className="text-[10px] text-gray-500 w-3 text-right">
+                                      <span className="text-[10px] text-lob-muted w-3 text-right">
                                         {Number(r.votes_count)}
                                       </span>
                                     </div>
@@ -567,7 +569,7 @@ export default function History({ onNavigate }: HistoryProps) {
                   <Trophy size={20} className="text-yellow-500" />
                 </div>
                 <div className="text-left">
-                  <p className="font-bold text-gray-800 text-sm flex items-center gap-1.5">
+                  <p className="font-bold text-lob-dark text-sm flex items-center gap-1.5">
                     {t.name}
                     {t.type === 'ladies' && (
                       <span className="text-[10px] font-bold bg-pink-100 text-pink-600 px-1.5 py-0.5 rounded-full">
@@ -580,7 +582,7 @@ export default function History({ onNavigate }: HistoryProps) {
                       </span>
                     )}
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-lob-muted">
                     {t.date
                       ? new Date(t.date).toLocaleDateString('en-GB', {
                           day: 'numeric',
@@ -616,7 +618,7 @@ export default function History({ onNavigate }: HistoryProps) {
 
                 {/* Note (when no pairings available) */}
                 {tab === 'standings' && t.note && (
-                  <p className="text-xs text-gray-400 italic mb-3 px-1">{t.note}</p>
+                  <p className="text-xs text-lob-muted-light italic mb-3 px-1">{t.note}</p>
                 )}
 
                 {/* ── Standings tab ── */}
@@ -624,7 +626,7 @@ export default function History({ onNavigate }: HistoryProps) {
                   <div className="space-y-1">
                     {/* Column headers */}
                     <div
-                      className="grid text-[10px] font-bold text-gray-400 uppercase px-2 mb-1"
+                      className="grid text-[10px] font-bold text-lob-muted-light uppercase px-2 mb-1"
                       style={{
                         gridTemplateColumns:
                           t.id === 'jan2026'
@@ -683,7 +685,7 @@ export default function History({ onNavigate }: HistoryProps) {
                         {p.r ? (
                           <>
                             {p.r.map((score, ri) => (
-                              <span key={ri} className="text-center text-xs text-gray-600">
+                              <span key={ri} className="text-center text-xs text-lob-slate">
                                 {score}
                               </span>
                             ))}
@@ -727,13 +729,15 @@ export default function History({ onNavigate }: HistoryProps) {
                                 Court {m.court}
                               </span>
                               {m.s1 === m.s2 && (
-                                <span className="text-[10px] text-gray-400 font-medium">Draw</span>
+                                <span className="text-[10px] text-lob-muted-light font-medium">
+                                  Draw
+                                </span>
                               )}
                             </div>
                             <div className="flex items-center gap-2">
                               {/* Team A */}
                               <div
-                                className={`flex-1 min-w-0 ${t1won ? 'text-green-700' : 'text-gray-600'}`}
+                                className={`flex-1 min-w-0 ${t1won ? 'text-green-700' : 'text-lob-slate'}`}
                               >
                                 {m.t1.map((name) => (
                                   <p key={name} className="text-sm font-semibold leading-tight">
@@ -744,20 +748,20 @@ export default function History({ onNavigate }: HistoryProps) {
                               {/* Score */}
                               <div className="flex items-center gap-1 flex-shrink-0">
                                 <span
-                                  className={`text-lg font-bold w-7 text-center ${t1won ? 'text-green-600' : 'text-gray-400'}`}
+                                  className={`text-lg font-bold w-7 text-center ${t1won ? 'text-green-600' : 'text-lob-muted-light'}`}
                                 >
                                   {m.s1}
                                 </span>
-                                <span className="text-gray-300 text-sm">–</span>
+                                <span className="text-lob-muted-light/60 text-sm">–</span>
                                 <span
-                                  className={`text-lg font-bold w-7 text-center ${t2won ? 'text-green-600' : 'text-gray-400'}`}
+                                  className={`text-lg font-bold w-7 text-center ${t2won ? 'text-green-600' : 'text-lob-muted-light'}`}
                                 >
                                   {m.s2}
                                 </span>
                               </div>
                               {/* Team B */}
                               <div
-                                className={`flex-1 min-w-0 text-right ${t2won ? 'text-green-700' : 'text-gray-600'}`}
+                                className={`flex-1 min-w-0 text-right ${t2won ? 'text-green-700' : 'text-lob-slate'}`}
                               >
                                 {m.t2.map((name) => (
                                   <p key={name} className="text-sm font-semibold leading-tight">

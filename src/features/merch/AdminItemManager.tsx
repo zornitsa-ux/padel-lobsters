@@ -56,7 +56,7 @@ export default function AdminItemManager({
               dragIdx === idx ? 'opacity-40 scale-[0.97]' : ''
             } ${overIdx === idx && dragIdx !== idx ? 'ring-2 ring-lob-teal ring-offset-1' : ''}`}
           >
-            <div className="cursor-grab active:cursor-grabbing touch-none flex-shrink-0 text-gray-300 hover:text-gray-500 -ml-1">
+            <div className="cursor-grab active:cursor-grabbing touch-none flex-shrink-0 text-lob-muted-light/60 hover:text-lob-muted -ml-1">
               <GripVertical size={18} />
             </div>
             <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100">
@@ -69,13 +69,13 @@ export default function AdminItemManager({
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
-                  <ShoppingBag size={18} className="text-gray-400" />
+                  <ShoppingBag size={18} className="text-lob-muted-light" />
                 </div>
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-gray-800 truncate">{item.name}</p>
-              <p className="text-xs text-gray-500">
+              <p className="font-semibold text-lob-dark truncate">{item.name}</p>
+              <p className="text-xs text-lob-muted">
                 €{item.price.toFixed(0)} · {orderCount(item.id)}{' '}
                 {orderCount(item.id) === 1 ? 'order' : 'orders'}
               </p>

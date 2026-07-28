@@ -25,7 +25,7 @@ import type { NormalisedTransfer } from './transferQueries'
 function InfoChip({ icon, label, warn }: { icon: ReactNode; label: string; warn?: boolean }) {
   return (
     <div
-      className={`flex items-center gap-1 text-xs rounded-lg px-2 py-1.5 ${warn ? 'bg-orange-50 text-orange-600' : 'bg-gray-50 text-gray-600'}`}
+      className={`flex items-center gap-1 text-xs rounded-lg px-2 py-1.5 ${warn ? 'bg-orange-50 text-orange-600' : 'bg-gray-50 text-lob-slate'}`}
     >
       {icon}
       <span className="font-medium">{label}</span>
@@ -84,7 +84,7 @@ export default function UpcomingEventCard({
       <div className="flex items-start gap-3 mb-3">
         <DateTile date={t.date} size="md" />
         <div className="flex-1 min-w-0">
-          <h3 className="font-bold text-gray-800 truncate">
+          <h3 className="font-bold text-lob-dark truncate">
             <button
               onClick={() => onNavigate('registration', t)}
               className="hover:text-lob-teal active:scale-95 transition-all text-left"
@@ -92,9 +92,9 @@ export default function UpcomingEventCard({
               {t.name}
             </button>
           </h3>
-          <p className="text-sm font-semibold text-gray-700 flex items-center gap-1 mt-0.5">
+          <p className="text-sm font-semibold text-lob-slate flex items-center gap-1 mt-0.5">
             <Calendar size={13} /> {formatDate(t.date)}
-            {t.time && <span className="text-gray-500">· {t.time}</span>}
+            {t.time && <span className="text-lob-muted">· {t.time}</span>}
           </p>
           {t.location && (
             <p className="text-xs text-lob-teal flex items-center gap-1 mt-0.5">
@@ -106,7 +106,7 @@ export default function UpcomingEventCard({
           <span
             className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
               t.status === 'completed'
-                ? 'bg-gray-100 text-gray-500'
+                ? 'bg-gray-100 text-lob-muted'
                 : t.status === 'active'
                   ? 'bg-green-100 text-green-700'
                   : 'bg-blue-100 text-blue-700'
@@ -200,7 +200,7 @@ export default function UpcomingEventCard({
             </span>
           )}
           {isAdminAll && t.totalPrice > 0 && (
-            <span className="ml-2 text-xs text-gray-500">
+            <span className="ml-2 text-xs text-lob-muted">
               Total {fmtEur(t.totalPrice)} incl. courts + food + prizes
             </span>
           )}
@@ -214,20 +214,20 @@ export default function UpcomingEventCard({
             <div
               key={i}
               className={`inline-flex items-center gap-1 text-xs rounded-full px-2.5 py-1 font-medium ${
-                c.booked ? 'bg-green-50 text-green-700' : 'bg-gray-50 text-gray-500'
+                c.booked ? 'bg-green-50 text-green-700' : 'bg-gray-50 text-lob-muted'
               }`}
             >
               {c.booked ? (
                 <CheckCircle size={11} className="text-green-500 flex-shrink-0" />
               ) : (
-                <Circle size={11} className="text-gray-300 flex-shrink-0" />
+                <Circle size={11} className="text-lob-muted-light/60 flex-shrink-0" />
               )}
               <span>{c.name || `Court ${i + 1}`}</span>
               {!isAdminAll && c.responsible && (
                 <span className="text-purple-600 ml-0.5">({c.responsible})</span>
               )}
               {isAdmin && !isAdminAll && Number(c.costPerPerson) > 0 && (
-                <span className="text-gray-400 ml-0.5">{fmtEur(c.costPerPerson)}</span>
+                <span className="text-lob-muted-light ml-0.5">{fmtEur(c.costPerPerson)}</span>
               )}
               {isAdmin && !c.booked && (
                 <button
@@ -249,8 +249,8 @@ export default function UpcomingEventCard({
       )}
 
       {/* Format chip */}
-      <p className="text-xs text-gray-400 mb-3">
-        Format: <span className="font-medium text-gray-600">{formatLabel(t.format)}</span>
+      <p className="text-xs text-lob-muted-light mb-3">
+        Format: <span className="font-medium text-lob-slate">{formatLabel(t.format)}</span>
       </p>
 
       {/* Actions */}
@@ -263,7 +263,7 @@ export default function UpcomingEventCard({
         </button>
         <button
           onClick={() => onNavigate('schedule', t)}
-          className="flex-1 text-xs font-semibold text-gray-600 py-2 rounded-xl bg-gray-100 active:scale-95 transition-all"
+          className="flex-1 text-xs font-semibold text-lob-slate py-2 rounded-xl bg-gray-100 active:scale-95 transition-all"
         >
           Schedule
         </button>

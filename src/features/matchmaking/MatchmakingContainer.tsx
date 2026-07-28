@@ -361,7 +361,7 @@ export default function MatchmakingContainer({
                 setConfirmText('')
               }}
               disabled={commit.isPending}
-              className="flex-1 py-2 text-sm rounded-xl font-semibold bg-gray-100 text-gray-600 disabled:opacity-50"
+              className="flex-1 py-2 text-sm rounded-xl font-semibold bg-gray-100 text-lob-slate disabled:opacity-50"
             >
               Cancel
             </button>

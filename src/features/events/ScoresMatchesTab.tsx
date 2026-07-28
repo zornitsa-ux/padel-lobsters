@@ -58,12 +58,14 @@ export default function ScoresMatchesTab({
                       {m.court || `Round ${m.round}`}
                     </span>
                     {scored && s1 === s2 && (
-                      <span className="text-[10px] text-gray-400 font-medium">Draw</span>
+                      <span className="text-[10px] text-lob-muted-light font-medium">Draw</span>
                     )}
                   </div>
                   <div className="flex items-center gap-2">
                     {/* Team A */}
-                    <div className={`flex-1 min-w-0 ${t1won ? 'text-green-700' : 'text-gray-600'}`}>
+                    <div
+                      className={`flex-1 min-w-0 ${t1won ? 'text-green-700' : 'text-lob-slate'}`}
+                    >
                       {t1Names.map((name, i) => (
                         <p key={i} className="text-xs font-semibold truncate">
                           {name}
@@ -73,20 +75,20 @@ export default function ScoresMatchesTab({
                     {/* Score */}
                     <div className="flex items-center gap-1 flex-shrink-0">
                       <span
-                        className={`text-lg font-bold w-7 text-center ${t1won ? 'text-green-600' : 'text-gray-400'}`}
+                        className={`text-lg font-bold w-7 text-center ${t1won ? 'text-green-600' : 'text-lob-muted-light'}`}
                       >
                         {scored ? s1 : '—'}
                       </span>
-                      <span className="text-gray-300 text-sm">–</span>
+                      <span className="text-lob-muted-light/60 text-sm">–</span>
                       <span
-                        className={`text-lg font-bold w-7 text-center ${t2won ? 'text-green-600' : 'text-gray-400'}`}
+                        className={`text-lg font-bold w-7 text-center ${t2won ? 'text-green-600' : 'text-lob-muted-light'}`}
                       >
                         {scored ? s2 : '—'}
                       </span>
                     </div>
                     {/* Team B */}
                     <div
-                      className={`flex-1 min-w-0 text-right ${t2won ? 'text-green-700' : 'text-gray-600'}`}
+                      className={`flex-1 min-w-0 text-right ${t2won ? 'text-green-700' : 'text-lob-slate'}`}
                     >
                       {t2Names.map((name, i) => (
                         <p key={i} className="text-xs font-semibold truncate">

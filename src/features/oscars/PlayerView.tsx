@@ -43,8 +43,8 @@ export default function PlayerView({
       <Shell title="🦞 Lobster Games" headerRight={headerRight}>
         <div className="bg-white rounded-2xl p-6 text-center space-y-3">
           <p className="text-5xl">🎮</p>
-          <p className="text-lg font-bold text-gray-700">Voting hasn&apos;t started yet</p>
-          <p className="text-sm text-gray-500">
+          <p className="text-lg font-bold text-lob-slate">Voting hasn&apos;t started yet</p>
+          <p className="text-sm text-lob-muted">
             Your admin will open Lobster Oscars at some point during the tournament.
           </p>
         </div>
@@ -57,7 +57,7 @@ export default function PlayerView({
     return (
       <Shell title="🦞 Lobster Games" headerRight={headerRight}>
         <div className="bg-white rounded-2xl p-4 mb-3">
-          <p className="text-sm text-gray-600 leading-snug">
+          <p className="text-sm text-lob-slate leading-snug">
             Vote for your favorites in each category. You can change your vote anytime until the
             admin closes the games.
           </p>
@@ -72,8 +72,8 @@ export default function PlayerView({
           myVoteByCat={myVoteByCat}
           onSelect={onSelectCategory}
         />
-        <p className="text-center text-xs text-gray-400 pt-3">
-          <span className="font-semibold text-gray-700">{Object.keys(myVoteByCat).length}</span> of{' '}
+        <p className="text-center text-xs text-lob-muted-light pt-3">
+          <span className="font-semibold text-lob-slate">{Object.keys(myVoteByCat).length}</span> of{' '}
           {categories.length} voted
         </p>
       </Shell>
@@ -85,7 +85,7 @@ export default function PlayerView({
     return (
       <Shell title="🦞 Voting closed" headerRight={headerRight}>
         <div className="bg-white rounded-2xl p-4 mb-3">
-          <p className="text-sm text-gray-600 leading-snug">
+          <p className="text-sm text-lob-slate leading-snug">
             Voting is closed. Your admin will share the final results shortly. Below is a recap of
             who you voted for.
           </p>
@@ -96,7 +96,7 @@ export default function PlayerView({
           onSelect={null}
           showWaitingState
         />
-        <p className="text-center text-xs text-gray-400 pt-3 flex items-center justify-center gap-1">
+        <p className="text-center text-xs text-lob-muted-light pt-3 flex items-center justify-center gap-1">
           <RotateCw size={11} className="animate-spin" /> waiting for the admin to share
         </p>
       </Shell>

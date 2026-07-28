@@ -17,8 +17,8 @@ export default function TipOfTheDay({ tip }: TipOfTheDayProps) {
         <p className="text-[11px] font-bold text-amber-700 uppercase tracking-wide mb-1">
           Tip of the Day
         </p>
-        <p className="text-sm text-gray-700 leading-relaxed">{tip}</p>
-        <p className="text-xs text-gray-400 italic mt-1.5">– ask Jon for more tips</p>
+        <p className="text-sm text-lob-slate leading-relaxed">{tip}</p>
+        <p className="text-xs text-lob-muted-light italic mt-1.5">– ask Jon for more tips</p>
       </div>
     </div>
   )

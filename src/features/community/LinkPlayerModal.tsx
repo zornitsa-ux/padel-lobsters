@@ -25,7 +25,7 @@ export default function LinkPlayerModal({
   return (
     <Modal open onClose={onClose} title="Link to existing player">
       <div className="space-y-3">
-        <p className="text-xs text-gray-500 -mt-2">
+        <p className="text-xs text-lob-muted -mt-2">
           Who is <strong>{linkModal.name}</strong> in the system?
         </p>
 
@@ -49,8 +49,8 @@ export default function LinkPlayerModal({
               >
                 <Avatar player={p} size="sm" />
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm text-gray-800">{p.name}</p>
-                  <p className="text-xs text-gray-500">
+                  <p className="font-semibold text-sm text-lob-dark">{p.name}</p>
+                  <p className="text-xs text-lob-muted">
                     Lv {(p.playtomicLevel || 0).toFixed(1)}
                     {p.email && ` · ${p.email}`}
                   </p>
@@ -59,7 +59,7 @@ export default function LinkPlayerModal({
             ))}
         </div>
 
-        <p className="text-xs text-gray-400 text-center pt-1">
+        <p className="text-xs text-lob-muted-light text-center pt-1">
           This will merge {linkModal.name}'s new contact info onto the existing profile and send
           them their PIN.
         </p>

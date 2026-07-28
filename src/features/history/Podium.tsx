@@ -24,14 +24,14 @@ export default function Podium({
       {/* 2nd */}
       <div className="flex flex-col items-center gap-1 flex-1">
         <span className="text-xl">🥈</span>
-        <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-bold text-gray-600">
+        <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-bold text-lob-slate">
           {rn(top3[1]?.name || '')[0]}
         </div>
         <p className="text-sm font-semibold w-full text-center leading-tight px-1">
           {dn(rn(top3[1]?.name || ''))}
         </p>
         <div className="bg-gray-200 w-full h-10 rounded-t-xl flex items-center justify-center">
-          <span className="text-xs font-bold text-gray-600">{top3[1]?.total}pts</span>
+          <span className="text-xs font-bold text-lob-slate">{top3[1]?.total}pts</span>
         </div>
       </div>
       {/* 1st */}

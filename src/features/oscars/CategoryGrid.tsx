@@ -38,7 +38,7 @@ export default function CategoryGrid({
             <span className="text-2xl">{c.icon}</span>
             <div>
               <p
-                className={`font-bold text-sm leading-tight ${voted ? 'text-gray-600' : 'text-gray-800'}`}
+                className={`font-bold text-sm leading-tight ${voted ? 'text-lob-slate' : 'text-lob-dark'}`}
               >
                 {c.name}
               </p>
@@ -46,13 +46,15 @@ export default function CategoryGrid({
                 <p className="text-[11px] text-green-600 font-semibold mt-1 flex items-center gap-1">
                   <Check size={11} /> Voted: {voted.name}
                   {clickable && (
-                    <span className="text-gray-400 font-normal ml-0.5">· tap to change</span>
+                    <span className="text-lob-muted-light font-normal ml-0.5">· tap to change</span>
                   )}
                 </p>
               ) : showWaitingState ? (
-                <p className="text-[11px] text-gray-400 font-medium mt-1">You didn&apos;t vote</p>
+                <p className="text-[11px] text-lob-muted-light font-medium mt-1">
+                  You didn&apos;t vote
+                </p>
               ) : (
-                <p className="text-[11px] text-gray-400 mt-1">Tap to vote</p>
+                <p className="text-[11px] text-lob-muted-light mt-1">Tap to vote</p>
               )}
             </div>
           </button>

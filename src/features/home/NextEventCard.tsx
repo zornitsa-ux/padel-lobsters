@@ -53,7 +53,7 @@ export default function NextEventCard({
       <p className="text-[10px] font-bold text-lob-coral uppercase tracking-wide mb-1">
         Your Next Event
       </p>
-      <h2 className="text-lg font-bold text-gray-800">
+      <h2 className="text-lg font-bold text-lob-dark">
         <button
           onClick={() => onNavigate('registration', upcoming)}
           className="hover:text-lob-teal active:scale-95 transition-all text-left"
@@ -66,11 +66,11 @@ export default function NextEventCard({
       <div className="mt-2 mb-3 flex items-center gap-3">
         <DateTile date={upcoming.date} size="md" />
         <div className="flex-1 min-w-0">
-          <p className="text-base font-semibold text-gray-800 leading-tight">
+          <p className="text-base font-semibold text-lob-dark leading-tight">
             {formatDate(upcoming.date)}
           </p>
           {upcoming.time && (
-            <p className="text-sm text-gray-500 leading-tight mt-0.5">
+            <p className="text-sm text-lob-muted leading-tight mt-0.5">
               {upcoming.time}
               {upcoming.duration ? ` · ${upcoming.duration}min` : ''}
             </p>
@@ -108,7 +108,7 @@ export default function NextEventCard({
 
       {/* Event description — preserves line breaks from the admin form. */}
       {upcoming.notes && upcoming.notes.trim() && (
-        <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-line mb-3">
+        <p className="text-xs text-lob-slate leading-relaxed whitespace-pre-line mb-3">
           {upcoming.notes}
         </p>
       )}
@@ -123,14 +123,14 @@ export default function NextEventCard({
         </button>
         <button
           onClick={() => onNavigate('schedule', upcoming)}
-          className="flex-none bg-gray-100 text-gray-600 font-semibold py-1.5 px-3 rounded-lg text-[11px] active:scale-95 transition-all flex items-center gap-1"
+          className="flex-none bg-gray-100 text-lob-slate font-semibold py-1.5 px-3 rounded-lg text-[11px] active:scale-95 transition-all flex items-center gap-1"
         >
           <CalendarDays size={12} /> Schedule
         </button>
         {isAdmin && (
           <button
             onClick={() => onNavigate('payments', upcoming)}
-            className="flex-none bg-gray-100 text-gray-600 font-semibold py-1.5 px-3 rounded-lg text-[11px] active:scale-95 transition-all flex items-center gap-1"
+            className="flex-none bg-gray-100 text-lob-slate font-semibold py-1.5 px-3 rounded-lg text-[11px] active:scale-95 transition-all flex items-center gap-1"
           >
             <CreditCard size={12} /> Payments
           </button>

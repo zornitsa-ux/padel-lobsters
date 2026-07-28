@@ -84,7 +84,7 @@ export function SignInBanner({
   const bg = accent === 'amber' ? 'bg-amber-50 border-amber-200' : 'bg-lob-cream border-lob-teal/30'
   const iconTxt = accent === 'amber' ? 'text-amber-600' : 'text-lob-teal'
   const title = accent === 'amber' ? 'text-amber-800' : 'text-lob-teal'
-  const body = accent === 'amber' ? 'text-amber-700' : 'text-gray-600'
+  const body = accent === 'amber' ? 'text-amber-700' : 'text-lob-slate'
 
   const defaultCopy = isAdmin
     ? 'Sign in as admin from Settings → Account to manage this.'
@@ -228,16 +228,16 @@ export function PinPrompt({
             <div className={`w-8 h-8 rounded-full ${accentBg} flex items-center justify-center`}>
               <KeyRound size={15} className={accentTxt} />
             </div>
-            <h3 className="font-bold text-gray-800">
+            <h3 className="font-bold text-lob-dark">
               {title || (isAdminAsk ? 'Admin PIN' : 'Enter your PIN')}
             </h3>
           </div>
           <button onClick={onClose} aria-label="Close">
-            <X size={22} className="text-gray-400" />
+            <X size={22} className="text-lob-muted-light" />
           </button>
         </div>
 
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-lob-muted">
           {subtitle ||
             (isAdminAsk
               ? 'Enter the admin PIN to continue.'
@@ -272,7 +272,7 @@ export function PinPrompt({
         {onNavigate && (
           <button
             onClick={goToSettings}
-            className="w-full text-xs text-gray-500 underline-offset-2 hover:underline"
+            className="w-full text-xs text-lob-muted underline-offset-2 hover:underline"
           >
             Manage profile in Settings →
           </button>

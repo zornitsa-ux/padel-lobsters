@@ -33,7 +33,7 @@ export default function YourStatsCard({ claimedId, myStats, onNavigate }: YourSt
   return (
     <section>
       <div className="flex items-center justify-between mb-2">
-        <h3 className="font-bold text-gray-700 flex items-center gap-1.5">
+        <h3 className="font-bold text-lob-slate flex items-center gap-1.5">
           <Award size={15} className="text-lob-coral" /> Your Stats
         </h3>
         <button
@@ -48,7 +48,7 @@ export default function YourStatsCard({ claimedId, myStats, onNavigate }: YourSt
         style={{ backdropFilter: 'blur(12px)' }}
       >
         <div className="grid grid-cols-4 gap-2 text-center">
-          <StatTile value={myStats.played} label="Played" valueClassName="text-gray-800" />
+          <StatTile value={myStats.played} label="Played" valueClassName="text-lob-dark" />
           <StatTile value={myStats.won} label="Won" valueClassName="text-green-600" />
           <StatTile value={myStats.lost} label="Lost" valueClassName="text-red-500" />
           <StatTile
@@ -59,7 +59,7 @@ export default function YourStatsCard({ claimedId, myStats, onNavigate }: YourSt
         </div>
 
         {myStats.played === 0 ? (
-          <div className="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500 text-center">
+          <div className="mt-3 pt-3 border-t border-gray-100 text-xs text-lob-muted text-center">
             No matches logged yet — your stats will populate as soon as a tournament result is
             recorded. Tap <span className="font-semibold text-lob-teal">View full profile</span> for
             your historical record.
@@ -90,7 +90,7 @@ export default function YourStatsCard({ claimedId, myStats, onNavigate }: YourSt
               </div>
             )}
 
-            <div className="mt-2 pt-2 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
+            <div className="mt-2 pt-2 border-t border-gray-100 flex items-center justify-between text-xs text-lob-muted">
               <span>{myStats.pts} total points</span>
               <span>
                 Game diff: {myStats.pointsFor - myStats.pointsAgainst > 0 ? '+' : ''}

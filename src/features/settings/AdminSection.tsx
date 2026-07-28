@@ -50,7 +50,7 @@ export default function AdminSection({
     <form onSubmit={handleSave} className="space-y-4">
       {/* Group info */}
       <div className="card space-y-4">
-        <h3 className="font-bold text-gray-700 text-sm flex items-center gap-2">
+        <h3 className="font-bold text-lob-slate text-sm flex items-center gap-2">
           <Info size={15} className="text-lob-teal" /> Group Info
         </h3>
         <div>
@@ -66,7 +66,7 @@ export default function AdminSection({
 
       {/* WhatsApp */}
       <div className="card space-y-4">
-        <h3 className="font-bold text-gray-700 text-sm flex items-center gap-2">
+        <h3 className="font-bold text-lob-slate text-sm flex items-center gap-2">
           <MessageCircle size={15} className="text-green-600" /> WhatsApp Community
         </h3>
         <div>
@@ -78,7 +78,7 @@ export default function AdminSection({
             value={form.whatsappLink}
             onChange={(e) => setForm((f) => ({ ...f, whatsappLink: e.target.value }))}
           />
-          <p className="text-xs text-gray-400 mt-1.5">
+          <p className="text-xs text-lob-muted-light mt-1.5">
             Opens in WhatsApp when tapped in the header. Find it in your WhatsApp group → Invite via
             link.
           </p>
@@ -105,7 +105,7 @@ export default function AdminSection({
       {/* Padel Tips */}
       <div className="card space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="font-bold text-gray-700 text-sm flex items-center gap-2">
+          <h3 className="font-bold text-lob-slate text-sm flex items-center gap-2">
             <Lightbulb size={15} className="text-amber-500" /> Padel Tips
           </h3>
           <div className="flex items-center gap-2">
@@ -113,7 +113,7 @@ export default function AdminSection({
               <button
                 type="button"
                 onClick={handleResetTips}
-                className="flex items-center gap-1 text-[10px] text-gray-400 font-semibold"
+                className="flex items-center gap-1 text-[10px] text-lob-muted-light font-semibold"
               >
                 <RotateCcw size={10} /> Reset to defaults
               </button>
@@ -127,7 +127,7 @@ export default function AdminSection({
             </button>
           </div>
         </div>
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-lob-muted-light">
           One tip shows per day on the home page.{' '}
           {isCustom ? 'Using custom tips.' : 'Using 50 default tips.'} Changes save automatically.
         </p>
@@ -155,7 +155,7 @@ export default function AdminSection({
           <div className="space-y-1.5 max-h-64 overflow-y-auto">
             {activeTips.map((tip, i) => (
               <div key={i} className="flex items-start gap-2 bg-gray-50 rounded-xl px-3 py-2 group">
-                <span className="text-[10px] text-gray-400 font-mono mt-0.5 flex-shrink-0 w-5">
+                <span className="text-[10px] text-lob-muted-light font-mono mt-0.5 flex-shrink-0 w-5">
                   {i + 1}
                 </span>
                 {editingTip?.index === i ? (
@@ -179,7 +179,7 @@ export default function AdminSection({
                     <button
                       type="button"
                       onClick={() => setEditingTip(null)}
-                      className="text-xs text-gray-400 font-semibold px-1"
+                      className="text-xs text-lob-muted-light font-semibold px-1"
                     >
                       Cancel
                     </button>
@@ -187,7 +187,7 @@ export default function AdminSection({
                 ) : (
                   <>
                     <p
-                      className="flex-1 text-xs text-gray-600 leading-relaxed cursor-pointer"
+                      className="flex-1 text-xs text-lob-slate leading-relaxed cursor-pointer"
                       onClick={() => handleEditTip(i)}
                     >
                       {tip}
@@ -195,7 +195,7 @@ export default function AdminSection({
                     <button
                       type="button"
                       onClick={() => handleDeleteTip(i)}
-                      className="text-gray-300 hover:text-red-500 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="text-lob-muted-light/60 hover:text-red-500 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
                     >
                       <Trash2 size={13} />
                     </button>

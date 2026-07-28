@@ -67,8 +67,8 @@ export default function AdminAlerts({
           {upcoming7.map(({ p, diff }) => (
             <div key={p.id} className="flex items-center gap-2">
               <span className="text-base">{diff === 0 ? '🎉' : '🎂'}</span>
-              <span className="text-sm font-semibold text-gray-700">{p.name.split(' ')[0]}</span>
-              <span className="text-xs text-gray-500 ml-auto">
+              <span className="text-sm font-semibold text-lob-slate">{p.name.split(' ')[0]}</span>
+              <span className="text-xs text-lob-muted ml-auto">
                 {diff === 0 ? 'Today! 🎈' : diff === 1 ? 'Tomorrow' : `In ${diff} days`}
               </span>
             </div>
@@ -80,7 +80,7 @@ export default function AdminAlerts({
       {newOrders.length > 0 && (
         <div className="card border-l-4 border-lob-teal space-y-2.5">
           <div className="flex items-center justify-between">
-            <p className="font-bold text-sm text-gray-700 flex items-center gap-1.5">
+            <p className="font-bold text-sm text-lob-slate flex items-center gap-1.5">
               <ShoppingBag size={14} className="text-lob-teal" /> New Merch Orders
               <span className="bg-lob-teal text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
                 {newOrders.length}
@@ -96,7 +96,7 @@ export default function AdminAlerts({
               >
                 View all
               </button>
-              <button onClick={onDismissMerch} className="text-xs text-gray-400 font-medium">
+              <button onClick={onDismissMerch} className="text-xs text-lob-muted-light font-medium">
                 Dismiss
               </button>
             </div>
@@ -111,18 +111,18 @@ export default function AdminAlerts({
                   <ShoppingBag size={12} className="text-lob-teal" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-gray-700 truncate">
+                  <p className="text-lob-slate truncate">
                     <span className="font-semibold">{playerName}</span> ordered{' '}
                     <span className="font-medium">{itemName}</span>
-                    {o.size && <span className="text-gray-400"> · {o.size}</span>}
+                    {o.size && <span className="text-lob-muted-light"> · {o.size}</span>}
                   </p>
                 </div>
-                <span className="text-xs text-gray-400 flex-shrink-0">{ago}</span>
+                <span className="text-xs text-lob-muted-light flex-shrink-0">{ago}</span>
               </div>
             )
           })}
           {newOrders.length > 5 && (
-            <p className="text-xs text-gray-400 text-center">+{newOrders.length - 5} more</p>
+            <p className="text-xs text-lob-muted-light text-center">+{newOrders.length - 5} more</p>
           )}
         </div>
       )}

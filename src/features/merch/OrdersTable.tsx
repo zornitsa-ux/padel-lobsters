@@ -63,7 +63,7 @@ export default function OrdersTable({ activeOrders, interests, items, players }:
       >
         {cancelTarget && (
           <div className="space-y-3">
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-lob-muted">
               Cancel order for{' '}
               <strong>
                 {getPlayerName({ order: cancelTarget, players })?.split(' ')[0] || 'player'}
@@ -83,7 +83,7 @@ export default function OrdersTable({ activeOrders, interests, items, players }:
       {activeOrders.length > 0 ? (
         <div className="space-y-2">
           {/* Summary stats */}
-          <div className="flex gap-2 text-[11px] text-gray-500 px-1">
+          <div className="flex gap-2 text-[11px] text-lob-muted px-1">
             <span>{activeOrders.length} orders</span>
             <span>·</span>
             <span className="text-amber-600">
@@ -116,9 +116,9 @@ export default function OrdersTable({ activeOrders, interests, items, players }:
                 <div key={o.id} className="card space-y-2">
                   <div className="flex items-start gap-3">
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-800">
+                      <p className="font-semibold text-lob-dark">
                         {playerName?.split(' ')[0] || `Player #${o.player_id}`}
-                        <span className="font-normal text-gray-500 ml-1.5 text-xs">
+                        <span className="font-normal text-lob-muted ml-1.5 text-xs">
                           {item?.name || '—'}
                         </span>
                       </p>
@@ -134,7 +134,7 @@ export default function OrdersTable({ activeOrders, interests, items, players }:
                           </span>
                         )}
                         <span className="text-xs font-bold text-lob-teal">€{orderPrice}</span>
-                        <span className="text-[11px] text-gray-400">
+                        <span className="text-[11px] text-lob-muted-light">
                           {formatOrderTime(o.created_at)}
                         </span>
                       </div>
@@ -153,7 +153,7 @@ export default function OrdersTable({ activeOrders, interests, items, players }:
                       className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                         status === 'paid' || status === 'delivered'
                           ? 'bg-green-100 text-green-600'
-                          : 'bg-gray-100 text-gray-500 active:scale-95'
+                          : 'bg-gray-100 text-lob-muted active:scale-95'
                       }`}
                     >
                       {status === 'paid' || status === 'delivered' ? '✓ Paid' : 'Mark Paid'}
@@ -166,7 +166,7 @@ export default function OrdersTable({ activeOrders, interests, items, players }:
                       className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                         status === 'delivered'
                           ? 'bg-blue-100 text-blue-600'
-                          : 'bg-gray-100 text-gray-500 active:scale-95'
+                          : 'bg-gray-100 text-lob-muted active:scale-95'
                       }`}
                     >
                       {status === 'delivered' ? '✓ Delivered' : 'Mark Delivered'}
@@ -185,7 +185,7 @@ export default function OrdersTable({ activeOrders, interests, items, players }:
           {/* Cancelled orders (collapsed) */}
           {cancelledOrders.length > 0 && (
             <details className="mt-3">
-              <summary className="text-xs text-gray-400 cursor-pointer font-medium px-1">
+              <summary className="text-xs text-lob-muted-light cursor-pointer font-medium px-1">
                 {cancelledOrders.length} cancelled order{cancelledOrders.length > 1 ? 's' : ''}
               </summary>
               <div className="space-y-2 mt-2">
@@ -194,14 +194,14 @@ export default function OrdersTable({ activeOrders, interests, items, players }:
                   const item = items.find((i) => i.id === o.merch_item_id)
                   return (
                     <div key={o.id} className="card opacity-60 space-y-1">
-                      <p className="text-sm text-gray-500 line-through">
+                      <p className="text-sm text-lob-muted line-through">
                         {playerName?.split(' ')[0] || 'Unknown'} — {item?.name}{' '}
                         {o.size && `(${o.size})`}
                       </p>
                       {o.admin_comment && (
                         <p className="text-xs text-red-400 italic">"{o.admin_comment}"</p>
                       )}
-                      <p className="text-[10px] text-gray-400">
+                      <p className="text-[10px] text-lob-muted-light">
                         {formatOrderTime(o.cancelled_at || o.created_at)}
                       </p>
                     </div>

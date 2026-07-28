@@ -444,11 +444,11 @@ export default function Registration({
         <div className="flex items-center gap-3">
           <DateTile date={tournament.date} size="md" />
           <div className="flex-1 min-w-0">
-            <p className="text-base font-semibold text-gray-800 leading-tight">
+            <p className="text-base font-semibold text-lob-dark leading-tight">
               {formatEventDate(tournament.date)}
             </p>
             {tournament.time && (
-              <p className="text-sm text-gray-500 leading-tight mt-0.5">
+              <p className="text-sm text-lob-muted leading-tight mt-0.5">
                 {tournament.time}
                 {tournament.duration ? ` · ${tournament.duration}min` : ''}
               </p>
@@ -532,7 +532,7 @@ export default function Registration({
       {showResultsBanner && (
         <button
           onClick={() => onNavigate('game', tournament)}
-          className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-yellow-400 via-amber-400 to-orange-400 text-gray-900 font-bold text-sm shadow-md active:scale-95 transition-all"
+          className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-yellow-400 via-amber-400 to-orange-400 text-lob-dark font-bold text-sm shadow-md active:scale-95 transition-all"
         >
           🏆 Lobster Games Over — See Results!
         </button>

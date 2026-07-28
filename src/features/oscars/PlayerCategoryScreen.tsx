@@ -42,13 +42,13 @@ export default function PlayerCategoryScreen({
       <div className="pb-3 border-b border-gray-100 mb-3">
         <button
           onClick={onBack}
-          className="inline-flex items-center gap-1.5 bg-white border border-gray-200 rounded-xl px-3 py-1.5 text-sm font-semibold text-gray-800 active:scale-95 transition-all"
+          className="inline-flex items-center gap-1.5 bg-white border border-gray-200 rounded-xl px-3 py-1.5 text-sm font-semibold text-lob-dark active:scale-95 transition-all"
         >
           <ChevronLeft size={15} /> Games home
         </button>
         <div className="mt-3 flex items-center gap-2">
           <span className="text-2xl">{category.icon}</span>
-          <h2 className="text-xl font-bold text-gray-800 flex-1">{category.name}</h2>
+          <h2 className="text-xl font-bold text-lob-dark flex-1">{category.name}</h2>
           {myVote && (
             <button
               onClick={onClear}
@@ -70,10 +70,10 @@ export default function PlayerCategoryScreen({
           </div>
         )}
         {tournamentParticipants.length === 0 ? (
-          <div className="text-center py-10 text-gray-500">
+          <div className="text-center py-10 text-lob-muted">
             <p className="text-4xl mb-2">🤷</p>
-            <p className="text-sm font-semibold text-gray-700">No registered players</p>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-sm font-semibold text-lob-slate">No registered players</p>
+            <p className="text-xs text-lob-muted mt-1">
               This tournament doesn&apos;t have any registered players yet, so there&apos;s no one
               to vote for.
             </p>
@@ -104,17 +104,17 @@ export default function PlayerCategoryScreen({
                     >
                       {(p.name || '?').trim()[0]?.toUpperCase() || '?'}
                     </span>
-                    <span className="font-semibold text-[13px] flex-1 min-w-0 truncate text-gray-800">
+                    <span className="font-semibold text-[13px] flex-1 min-w-0 truncate text-lob-dark">
                       {shortName(p)}
                     </span>
                     {isYou && (
-                      <span className="text-[9px] uppercase tracking-wide font-semibold text-gray-500 bg-gray-200 rounded px-1.5 py-0.5">
+                      <span className="text-[9px] uppercase tracking-wide font-semibold text-lob-muted bg-gray-200 rounded px-1.5 py-0.5">
                         you
                       </span>
                     )}
                     {isMyVote && <Check size={14} className="text-lob-teal flex-shrink-0" />}
                   </div>
-                  <div className="text-[10.5px] text-gray-500 leading-snug space-y-0.5">
+                  <div className="text-[10.5px] text-lob-muted leading-snug space-y-0.5">
                     {isYou ? (
                       <span className="italic opacity-70">that&apos;s you</span>
                     ) : history.length === 0 ? (
@@ -125,7 +125,7 @@ export default function PlayerCategoryScreen({
                           return (
                             <div key={i} className="truncate">
                               R{h.round}: you &amp;{' '}
-                              <strong className="text-gray-800">{shortName(p)}</strong>
+                              <strong className="text-lob-dark">{shortName(p)}</strong>
                             </div>
                           )
                         }
@@ -134,7 +134,7 @@ export default function PlayerCategoryScreen({
                         )
                         return (
                           <div key={i} className="truncate">
-                            <strong className="text-gray-800">
+                            <strong className="text-lob-dark">
                               R{h.round}: vs {shortName(p)}
                             </strong>
                             {partner ? <> &amp; {shortName(partner)}</> : null}
@@ -148,7 +148,7 @@ export default function PlayerCategoryScreen({
             })}
           </div>
         )}
-        <p className="text-center text-[11px] text-gray-400 pt-3">
+        <p className="text-center text-[11px] text-lob-muted-light pt-3">
           Tap a player to vote. You can change your mind until the admin ends the games.
         </p>
       </div>

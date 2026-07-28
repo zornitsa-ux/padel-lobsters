@@ -27,7 +27,7 @@ export default function WaitlistSection({
 
   return (
     <section>
-      <h3 className="font-bold text-gray-700 mb-2 flex items-center gap-2">
+      <h3 className="font-bold text-lob-slate mb-2 flex items-center gap-2">
         <Clock size={16} className="text-orange-400" />
         Waitlist ({waitlisted.length})
       </h3>

@@ -22,11 +22,11 @@ const variantClasses: Record<BadgeProps['variant'], string> = {
   waitlist: 'bg-lob-amber/15 text-lob-amber',
   info: 'bg-lob-teal/10 text-lob-teal',
   gold: 'bg-yellow-50 text-yellow-700',
-  silver: 'bg-gray-100 text-gray-600',
+  silver: 'bg-gray-100 text-lob-slate',
   'league-draft': 'bg-lob-amber/15 text-lob-amber',
   'league-group-stage': 'bg-white text-lob-teal ring-1 ring-lob-teal/30',
   'league-knockout': 'bg-lob-coral/10 text-lob-coral',
-  'league-completed': 'bg-gray-100 text-gray-500',
+  'league-completed': 'bg-gray-100 text-lob-muted',
 }
 
 export function Badge({ variant, label, icon }: BadgeProps) {

@@ -101,7 +101,7 @@ export default function ItemEditorForm({
         <div>
           <label className="label">
             Offline orders{' '}
-            <span className="text-gray-400 font-normal">(bought outside the app)</span>
+            <span className="text-lob-muted-light font-normal">(bought outside the app)</span>
           </label>
           <input
             type="number"
@@ -112,7 +112,7 @@ export default function ItemEditorForm({
             value={form.external_orders ?? 0}
             onChange={(e) => setForm((f) => ({ ...f, external_orders: e.target.value }))}
           />
-          <p className="text-[11px] text-gray-400 mt-1">
+          <p className="text-[11px] text-lob-muted-light mt-1">
             Counts toward the "X lobsters already ordered" badge players see in the shop.
           </p>
         </div>
@@ -140,7 +140,7 @@ export default function ItemEditorForm({
                   type="button"
                   key={s}
                   onClick={() => toggleSize(s)}
-                  className={`text-xs px-2.5 py-1 rounded-lg font-medium border transition-all ${form.sizes.includes(s) ? 'bg-lob-teal text-white border-lob-teal' : 'border-gray-200 text-gray-600'}`}
+                  className={`text-xs px-2.5 py-1 rounded-lg font-medium border transition-all ${form.sizes.includes(s) ? 'bg-lob-teal text-white border-lob-teal' : 'border-gray-200 text-lob-slate'}`}
                 >
                   {s}
                 </button>
@@ -152,14 +152,14 @@ export default function ItemEditorForm({
                   type="button"
                   key={s}
                   onClick={() => toggleSize(s)}
-                  className={`text-xs px-2.5 py-1 rounded-lg font-medium border transition-all ${form.sizes.includes(s) ? 'bg-lob-teal text-white border-lob-teal' : 'border-gray-200 text-gray-600'}`}
+                  className={`text-xs px-2.5 py-1 rounded-lg font-medium border transition-all ${form.sizes.includes(s) ? 'bg-lob-teal text-white border-lob-teal' : 'border-gray-200 text-lob-slate'}`}
                 >
                   {s}
                 </button>
               ))}
             </div>
             {form.sizes.length === 0 && (
-              <p className="text-xs text-gray-400">No sizes = one-size item</p>
+              <p className="text-xs text-lob-muted-light">No sizes = one-size item</p>
             )}
           </div>
         </div>
@@ -167,7 +167,7 @@ export default function ItemEditorForm({
         {/* Images — up to 3 */}
         <div>
           <label className="label">
-            Product Photos <span className="text-gray-400 font-normal">(up to 3)</span>
+            Product Photos <span className="text-lob-muted-light font-normal">(up to 3)</span>
           </label>
 
           {/* Thumbnails row */}
@@ -200,7 +200,7 @@ export default function ItemEditorForm({
           {/* Upload button — only show if under 3 */}
           {(form.image_urls || []).length < 3 && (
             <label
-              className={`flex items-center justify-center gap-2 w-full py-3 rounded-xl border-2 border-dashed border-gray-300 text-sm text-gray-500 font-medium cursor-pointer transition-all hover:border-lob-teal hover:text-lob-teal ${uploading ? 'opacity-50' : ''}`}
+              className={`flex items-center justify-center gap-2 w-full py-3 rounded-xl border-2 border-dashed border-gray-300 text-sm text-lob-muted font-medium cursor-pointer transition-all hover:border-lob-teal hover:text-lob-teal ${uploading ? 'opacity-50' : ''}`}
             >
               <Upload size={16} />
               {uploading

@@ -12,7 +12,7 @@ export default function CountdownClock({ countdown, streak }: CountdownClockProp
   if (countdown) {
     return (
       <div className="text-center">
-        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">
+        <p className="text-[10px] font-bold text-lob-muted-light uppercase tracking-widest mb-2">
           Next Lobster Event in
         </p>
         <div className="flex justify-center gap-2">
@@ -42,7 +42,7 @@ export default function CountdownClock({ countdown, streak }: CountdownClockProp
           </div>
         </div>
         {streak > 0 && (
-          <p className="text-[11px] text-gray-500 font-semibold mt-2 flex items-center justify-center gap-1">
+          <p className="text-[11px] text-lob-muted font-semibold mt-2 flex items-center justify-center gap-1">
             <Flame size={13} className="text-orange-500" />
             {streak} event{streak > 1 ? 's' : ''} in a row
           </p>
@@ -53,7 +53,7 @@ export default function CountdownClock({ countdown, streak }: CountdownClockProp
   if (streak > 0) {
     return (
       <div className="flex items-center gap-2">
-        <span className="text-[11px] bg-white border border-gray-200 text-gray-600 font-semibold px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1.5">
+        <span className="text-[11px] bg-white border border-gray-200 text-lob-slate font-semibold px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1.5">
           <Flame size={13} className="text-orange-500" />
           {streak} event{streak > 1 ? 's' : ''} in a row
         </span>

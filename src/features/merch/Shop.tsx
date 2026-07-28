@@ -48,7 +48,7 @@ export default function Shop({
 }: ShopProps) {
   return (
     <div className="space-y-3">
-      <p className="text-xs text-gray-500">
+      <p className="text-xs text-lob-muted">
         Place an order — the organizers will see what you need and get in touch. Prices include
         shipping.
       </p>
@@ -63,7 +63,7 @@ export default function Shop({
         />
       )}
 
-      {loading && <p className="text-center text-gray-400 py-8 text-sm">Loading…</p>}
+      {loading && <p className="text-center text-lob-muted-light py-8 text-sm">Loading…</p>}
 
       {items.map((item) => {
         const allImgs = item.images
@@ -98,9 +98,9 @@ export default function Shop({
             {/* Info */}
             <div className="flex items-start justify-between">
               <div>
-                <p className="font-bold text-gray-800">{item.name}</p>
+                <p className="font-bold text-lob-dark">{item.name}</p>
                 {item.description && (
-                  <p className="text-xs text-gray-500 mt-0.5">{item.description}</p>
+                  <p className="text-xs text-lob-muted mt-0.5">{item.description}</p>
                 )}
                 {/* FOMO counter — combines website orders + offline sales.
                   Singular copy below 1, so "1 lobster has this" sounds
@@ -130,7 +130,7 @@ export default function Shop({
             {item.sizes.length > 0 && (
               <div>
                 <p
-                  className={`text-xs mb-1.5 font-medium ${sizeError[item.id] ? 'text-red-500' : 'text-gray-500'}`}
+                  className={`text-xs mb-1.5 font-medium ${sizeError[item.id] ? 'text-red-500' : 'text-lob-muted'}`}
                 >
                   {sizeError[item.id] ? '⚠ Please select a size:' : 'Select size:'}
                 </p>
@@ -148,8 +148,8 @@ export default function Shop({
                           selectedSize[item.id] === s
                             ? 'bg-lob-teal text-white border-lob-teal'
                             : sizeError[item.id]
-                              ? 'border-red-300 text-gray-600'
-                              : 'border-gray-200 text-gray-600'
+                              ? 'border-red-300 text-lob-slate'
+                              : 'border-gray-200 text-lob-slate'
                         }`}
                       >
                         {s}
@@ -162,7 +162,7 @@ export default function Shop({
             {/* Name on item — only for shirts (+€5), not tank tops */}
             {/shirt/i.test(item.name) && !/tank/i.test(item.name) && (
               <div>
-                <label className="text-xs font-medium text-gray-500 block mb-1">
+                <label className="text-xs font-medium text-lob-muted block mb-1">
                   Name customization <span className="text-amber-600 font-semibold">(+€5)</span>
                 </label>
                 <input
@@ -172,7 +172,7 @@ export default function Shop({
                   disabled={ordered[item.id]}
                   value={customName[item.id] || ''}
                   onChange={(e) => setCustomName((n) => ({ ...n, [item.id]: e.target.value }))}
-                  className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-800 placeholder-gray-300 focus:outline-none focus:border-lob-teal focus:ring-1 focus:ring-lob-teal transition-all disabled:opacity-40 disabled:bg-gray-50"
+                  className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm text-lob-dark placeholder-gray-300 focus:outline-none focus:border-lob-teal focus:ring-1 focus:ring-lob-teal transition-all disabled:opacity-40 disabled:bg-gray-50"
                 />
               </div>
             )}
@@ -205,7 +205,7 @@ export default function Shop({
                   const ext = item.externalOrders
                   return (
                     <span
-                      className="text-xs text-gray-400 flex-shrink-0"
+                      className="text-xs text-lob-muted-light flex-shrink-0"
                       title="Website orders + offline orders"
                     >
                       {web}

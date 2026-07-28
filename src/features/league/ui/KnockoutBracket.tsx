@@ -111,11 +111,11 @@ export function KnockoutBracket({
   return (
     <div className="overflow-x-auto pb-2">
       <div className="flex min-w-max mb-2">
-        <div className="w-36 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-center">
+        <div className="w-36 text-[10px] font-bold text-lob-muted-light uppercase tracking-wider text-center">
           Semi-finals
         </div>
         <div className="w-10" />
-        <div className="w-36 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-center">
+        <div className="w-36 text-[10px] font-bold text-lob-muted-light uppercase tracking-wider text-center">
           Final
         </div>
       </div>

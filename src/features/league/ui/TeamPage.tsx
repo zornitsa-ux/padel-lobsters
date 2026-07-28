@@ -81,7 +81,9 @@ export function TeamPage({ team, matches, teamById, onClose, onTeamClick }: Team
 
         {/* Players */}
         <div>
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Players</p>
+          <p className="text-xs font-bold text-lob-muted-light uppercase tracking-wider mb-1">
+            Players
+          </p>
           <TeamPlayerRow player={team.player1} />
           <TeamPlayerRow player={team.player2} />
         </div>
@@ -89,7 +91,7 @@ export function TeamPage({ team, matches, teamById, onClose, onTeamClick }: Team
         {/* Preferred play times */}
         {team.preferred_play_times && (
           <div>
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
+            <p className="text-xs font-bold text-lob-muted-light uppercase tracking-wider mb-1">
               Preferred Play Times
             </p>
             <div className="text-sm text-lob-dark space-y-0.5">
@@ -102,7 +104,7 @@ export function TeamPage({ team, matches, teamById, onClose, onTeamClick }: Team
 
         {/* Group stage record */}
         <div>
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
+          <p className="text-xs font-bold text-lob-muted-light uppercase tracking-wider mb-3">
             Group Stage Record
           </p>
           <div className="grid grid-cols-4 gap-2 bg-gray-50 rounded-xl p-4">
@@ -116,7 +118,7 @@ export function TeamPage({ team, matches, teamById, onClose, onTeamClick }: Team
         {/* Match history */}
         {teamMatches.length > 0 && (
           <div>
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+            <p className="text-xs font-bold text-lob-muted-light uppercase tracking-wider mb-2">
               Match History
             </p>
             <div className="space-y-2">

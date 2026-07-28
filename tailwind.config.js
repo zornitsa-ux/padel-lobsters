@@ -14,6 +14,8 @@ export default {
           cream: '#F5F0E8',
           dark: '#1C2B30',
           muted: '#6B8A92',
+          'muted-light': '#97ADB3',
+          slate: '#40565C',
         },
       },
       keyframes: {

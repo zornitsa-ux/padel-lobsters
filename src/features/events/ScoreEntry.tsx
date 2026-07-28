@@ -91,7 +91,7 @@ export default function ScoreEntry({ match, onUpdate, variant = 'input' }: Score
             </option>
           ))}
         </select>
-        <span className="text-gray-400 font-bold text-sm">-</span>
+        <span className="text-lob-muted-light font-bold text-sm">-</span>
         <select
           aria-label="Team 2 score"
           value={s2}
@@ -123,7 +123,7 @@ export default function ScoreEntry({ match, onUpdate, variant = 'input' }: Score
         onChange={(e) => setS1(e.target.value)}
         onBlur={() => commit(s1, s2)}
       />
-      <span className="text-gray-400">-</span>
+      <span className="text-lob-muted-light">-</span>
       <input
         type="number"
         min="0"

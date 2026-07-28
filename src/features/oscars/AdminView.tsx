@@ -97,8 +97,8 @@ export default function AdminView({
       <Shell title="🦞 Lobster Games" headerRight={headerRight}>
         <div className="space-y-3">
           <div className="bg-white rounded-2xl p-4">
-            <p className="text-sm text-gray-600 leading-snug">
-              <span className="font-semibold text-gray-800">Async Lobster Oscars.</span> Once you
+            <p className="text-sm text-lob-slate leading-snug">
+              <span className="font-semibold text-lob-dark">Async Lobster Oscars.</span> Once you
               start, players vote any time during the tournament. End voting when the tournament
               wraps up. Results stay private to you until you press <em>Share</em>.
             </p>
@@ -125,7 +125,7 @@ export default function AdminView({
             {busy ? <Loader2 className="animate-spin" size={18} /> : <Play size={18} />}
             {busy ? 'Starting…' : 'Start Lobster Games'}
           </button>
-          <p className="text-[11px] text-gray-400 text-center -mt-1">
+          <p className="text-[11px] text-lob-muted-light text-center -mt-1">
             Once started, categories can&apos;t be edited. You can end voting at any time.
           </p>
         </div>
@@ -141,7 +141,7 @@ export default function AdminView({
           <PhaseBanner status="active" startedAt={session?.started_at} />
           <SectionLabel>Live participation</SectionLabel>
           {adminStats.length === 0 && (
-            <div className="bg-white rounded-2xl p-4 text-center text-sm text-gray-400">
+            <div className="bg-white rounded-2xl p-4 text-center text-sm text-lob-muted-light">
               No data yet — refreshing…
             </div>
           )}
@@ -156,7 +156,9 @@ export default function AdminView({
               }
             />
           ))}
-          <p className="text-[11px] text-gray-400 text-center pt-1">Refreshes every 10 seconds.</p>
+          <p className="text-[11px] text-lob-muted-light text-center pt-1">
+            Refreshes every 10 seconds.
+          </p>
 
           {error && (
             <AlertBox variant="error" onDismiss={onDismissError}>

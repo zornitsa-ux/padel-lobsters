@@ -128,7 +128,7 @@ export default function CountryPicker({ value, onChange }: CountryPickerProps) {
         {value && !open && <FlagImg code={value} />}
         <input
           type="text"
-          className="flex-1 bg-transparent outline-none text-sm text-gray-800 placeholder-gray-400 min-w-0"
+          className="flex-1 bg-transparent outline-none text-sm text-lob-dark placeholder-gray-400 min-w-0"
           placeholder={open ? 'Type to search…' : selectedLabel || 'Select country…'}
           value={open ? query : selectedLabel || ''}
           onChange={(e) => {
@@ -137,20 +137,20 @@ export default function CountryPicker({ value, onChange }: CountryPickerProps) {
           }}
           onFocus={() => setOpen(true)}
         />
-        <ChevronDown size={14} className="text-gray-400 flex-shrink-0" />
+        <ChevronDown size={14} className="text-lob-muted-light flex-shrink-0" />
       </div>
 
       {open && (
         <div className="absolute z-50 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-52 overflow-y-auto">
           {filtered.length === 0 && (
-            <p className="text-xs text-gray-400 px-3 py-3 text-center">No countries found</p>
+            <p className="text-xs text-lob-muted-light px-3 py-3 text-center">No countries found</p>
           )}
           {filtered.map(([code, label]) => (
             <button
               key={code}
               type="button"
               onMouseDown={() => select(code)}
-              className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left transition-colors hover:bg-lob-cream ${value === code ? 'bg-lob-cream font-semibold text-lob-teal' : 'text-gray-700'}`}
+              className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left transition-colors hover:bg-lob-cream ${value === code ? 'bg-lob-cream font-semibold text-lob-teal' : 'text-lob-slate'}`}
             >
               <FlagImg code={code} />
               {label}

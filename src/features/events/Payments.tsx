@@ -168,14 +168,17 @@ export default function Payments({
         <div className="bg-lob-teal-light rounded-2xl p-4 space-y-2 border border-lob-teal/10">
           <div className="flex items-center gap-2 mb-1">
             <ShieldCheck size={15} className="text-lob-teal" />
-            <span className="text-sm font-bold text-gray-700">Admin booked all courts</span>
+            <span className="text-sm font-bold text-lob-slate">Admin booked all courts</span>
           </div>
           {tournament.totalPrice > 0 && (
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-lob-slate">
               Total:{' '}
-              <span className="font-bold text-gray-800">{fmtEur(tournament.totalPrice)}</span> · Per
+              <span className="font-bold text-lob-dark">{fmtEur(tournament.totalPrice)}</span> · Per
               player: <span className="font-bold text-lob-teal">{fmtEur(costPerPlayer)}</span>
-              <span className="text-xs text-gray-400"> (÷ {tournament.maxPlayers} players)</span>
+              <span className="text-xs text-lob-muted-light">
+                {' '}
+                (÷ {tournament.maxPlayers} players)
+              </span>
             </p>
           )}
           {tournament.tikkieLink && (
@@ -189,7 +192,7 @@ export default function Payments({
             </a>
           )}
           {!tournament.tikkieLink && (
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-lob-muted-light">
               No Tikkie link set — payment via Playtomic or cash
             </p>
           )}
@@ -200,20 +203,20 @@ export default function Payments({
           <div className="bg-purple-50 rounded-2xl p-4 space-y-2">
             <div className="flex items-center gap-2 mb-1">
               <UserCog size={15} className="text-purple-600" />
-              <span className="text-sm font-bold text-gray-700">Court payments</span>
+              <span className="text-sm font-bold text-lob-slate">Court payments</span>
             </div>
             {(tournament.courts || []).map((c, i) =>
               c.responsible || c.tikkieLink ? (
                 <div key={i} className="flex items-center justify-between gap-2">
                   <div>
-                    <p className="text-sm font-medium text-gray-700">
+                    <p className="text-sm font-medium text-lob-slate">
                       {c.name || `Court ${i + 1}`}
                     </p>
                     {c.responsible && (
-                      <p className="text-xs text-gray-500">Responsible: {c.responsible}</p>
+                      <p className="text-xs text-lob-muted">Responsible: {c.responsible}</p>
                     )}
                     {Number(c.costPerPerson) > 0 && (
-                      <p className="text-xs text-gray-500">{fmtEur(c.costPerPerson)}/pp</p>
+                      <p className="text-xs text-lob-muted">{fmtEur(c.costPerPerson)}/pp</p>
                     )}
                   </div>
                   {c.tikkieLink && (
@@ -443,7 +446,7 @@ function PaymentMethodPicker({ onSelect }: { onSelect: (method: string) => void 
                   onSelect(m.value)
                   setOpen(false)
                 }}
-                className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 active:bg-gray-100"
+                className="w-full text-left px-4 py-2.5 text-sm font-medium text-lob-slate hover:bg-gray-50 active:bg-gray-100"
               >
                 {m.label}
               </button>
@@ -483,7 +486,7 @@ function StatusOverrideMenu({
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div className="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-xl border border-gray-100 z-50 min-w-[190px] overflow-hidden">
-            <div className="px-3 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider bg-gray-50">
+            <div className="px-3 py-1.5 text-[10px] font-bold text-lob-muted-light uppercase tracking-wider bg-gray-50">
               Set status
             </div>
             {OVERRIDE_STATUSES.map((s) => {
@@ -498,15 +501,17 @@ function StatusOverrideMenu({
                   disabled={isCurrent}
                   className={`w-full text-left px-3 py-2 text-sm font-medium transition-all ${
                     isCurrent
-                      ? 'bg-gray-50 text-gray-400 cursor-default'
-                      : 'text-gray-700 hover:bg-gray-50 active:bg-gray-100'
+                      ? 'bg-gray-50 text-lob-muted-light cursor-default'
+                      : 'text-lob-slate hover:bg-gray-50 active:bg-gray-100'
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <span>{s.label}</span>
-                    {isCurrent && <span className="text-[10px] text-gray-400">· current</span>}
+                    {isCurrent && (
+                      <span className="text-[10px] text-lob-muted-light">· current</span>
+                    )}
                   </div>
-                  <p className="text-[10px] text-gray-400 leading-tight">{s.hint}</p>
+                  <p className="text-[10px] text-lob-muted-light leading-tight">{s.hint}</p>
                 </button>
               )
             })}

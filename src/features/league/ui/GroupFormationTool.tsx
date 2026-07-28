@@ -192,7 +192,7 @@ export function GroupFormationTool({
                       <button
                         type="button"
                         onClick={() => removeFromGroup(id)}
-                        className="text-gray-400 hover:text-lob-coral text-xs ml-1"
+                        className="text-lob-muted-light hover:text-lob-coral text-xs ml-1"
                         aria-label="Remove from group"
                       >
                         ✕
@@ -201,7 +201,9 @@ export function GroupFormationTool({
                   />
                 ),
             )}
-            {groupA.length === 0 && <p className="text-xs text-gray-400 px-2">No teams assigned</p>}
+            {groupA.length === 0 && (
+              <p className="text-xs text-lob-muted-light px-2">No teams assigned</p>
+            )}
           </div>
         </div>
 
@@ -218,7 +220,7 @@ export function GroupFormationTool({
                       <button
                         type="button"
                         onClick={() => removeFromGroup(id)}
-                        className="text-gray-400 hover:text-lob-coral text-xs ml-1"
+                        className="text-lob-muted-light hover:text-lob-coral text-xs ml-1"
                         aria-label="Remove from group"
                       >
                         ✕
@@ -227,14 +229,18 @@ export function GroupFormationTool({
                   />
                 ),
             )}
-            {groupB.length === 0 && <p className="text-xs text-gray-400 px-2">No teams assigned</p>}
+            {groupB.length === 0 && (
+              <p className="text-xs text-lob-muted-light px-2">No teams assigned</p>
+            )}
           </div>
         </div>
       </div>
 
       {unassigned.length > 0 && (
         <div>
-          <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Unassigned</p>
+          <p className="text-xs font-bold text-lob-muted uppercase tracking-wide mb-2">
+            Unassigned
+          </p>
           <div className="space-y-2">
             {unassigned.map((t) => (
               <TeamCard

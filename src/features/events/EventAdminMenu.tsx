@@ -100,10 +100,13 @@ export default function EventAdminMenu({
                 role="menuitem"
                 onClick={() => run(it.onClick)}
                 className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-left active:bg-gray-50 ${
-                  it.danger ? 'text-red-600 hover:bg-red-50' : 'text-gray-700 hover:bg-gray-50'
+                  it.danger ? 'text-red-600 hover:bg-red-50' : 'text-lob-slate hover:bg-gray-50'
                 }`}
               >
-                <it.icon size={16} className={it.danger ? 'text-red-500' : 'text-gray-400'} />
+                <it.icon
+                  size={16}
+                  className={it.danger ? 'text-red-500' : 'text-lob-muted-light'}
+                />
                 {it.label}
               </button>
             ))}

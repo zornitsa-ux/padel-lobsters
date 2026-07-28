@@ -37,14 +37,14 @@ export default function RegistrationPaymentSheetModal({
       <div className="space-y-5">
         <div>
           <p className="text-xl">🦞</p>
-          <h3 className="font-bold text-gray-800 mt-1">
+          <h3 className="font-bold text-lob-dark mt-1">
             You&apos;re in! Now pay to lock your spot
           </h3>
         </div>
 
         {costPerPlayer > 0 && (
           <div className="bg-lob-cream rounded-2xl px-4 py-3 flex items-center justify-between">
-            <span className="text-sm text-gray-600">Your share</span>
+            <span className="text-sm text-lob-slate">Your share</span>
             <span className="text-2xl font-bold text-lob-teal">{fmtEur(costPerPlayer)}</span>
           </div>
         )}
@@ -57,7 +57,7 @@ export default function RegistrationPaymentSheetModal({
             onClick={() => onTikkieClick(paymentSheet.regId, paymentSheet.paymentStatus)}
             className={`flex items-center justify-center gap-2 w-full text-base font-bold py-3.5 rounded-2xl transition-all ${
               tikkieClicked
-                ? 'bg-gray-200 text-gray-500 pointer-events-none'
+                ? 'bg-gray-200 text-lob-muted pointer-events-none'
                 : 'bg-[#FF6B35] text-white active:scale-95'
             }`}
           >
@@ -78,7 +78,7 @@ export default function RegistrationPaymentSheetModal({
                 onClick={() => onTikkieClick(paymentSheet.regId, paymentSheet.paymentStatus)}
                 className={`flex items-center justify-center gap-2 w-full text-sm font-bold py-3 rounded-2xl transition-all ${
                   tikkieClicked
-                    ? 'bg-gray-200 text-gray-500 pointer-events-none'
+                    ? 'bg-gray-200 text-lob-muted pointer-events-none'
                     : 'bg-[#FF6B35] text-white active:scale-95'
                 }`}
               >
@@ -98,14 +98,14 @@ export default function RegistrationPaymentSheetModal({
             >
               <Send size={16} /> {declaring ? 'Saving…' : "I've sent the payment"}
             </button>
-            <p className="text-xs text-gray-400 text-center -mt-2">
+            <p className="text-xs text-lob-muted-light text-center -mt-2">
               This notifies the admin to confirm your payment
             </p>
           </>
         )}
 
         <AddToCalendarButton tournament={tournament} />
-        <p className="text-xs text-gray-400 text-center -mt-2">
+        <p className="text-xs text-lob-muted-light text-center -mt-2">
           We&apos;ll nudge you 24h and 2h before. No notifications from us — it runs from your own
           calendar.
         </p>

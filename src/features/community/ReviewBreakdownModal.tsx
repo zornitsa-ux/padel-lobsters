@@ -50,7 +50,7 @@ export default function ReviewBreakdownModal({
               ? 'text-amber-800'
               : accent === 'hist'
                 ? 'text-teal-700'
-                : 'text-gray-500'
+                : 'text-lob-muted'
           }`}
         >
           {b.label}
@@ -61,7 +61,7 @@ export default function ReviewBreakdownModal({
               ? 'bg-amber-500 text-white'
               : accent === 'hist'
                 ? 'bg-teal-500 text-white'
-                : 'bg-gray-200 text-gray-600'
+                : 'bg-gray-200 text-lob-slate'
           }`}
         >
           {b.players.length}
@@ -71,7 +71,7 @@ export default function ReviewBreakdownModal({
         {b.players.map((p) => (
           <span
             key={p.id}
-            className="text-[11px] bg-white border border-gray-200 px-2 py-0.5 rounded-md text-gray-700"
+            className="text-[11px] bg-white border border-gray-200 px-2 py-0.5 rounded-md text-lob-slate"
           >
             {(p.name || '').split(' ')[0]}
           </span>
@@ -80,12 +80,12 @@ export default function ReviewBreakdownModal({
       <div className="space-y-1.5">
         {[...b.samples.values()].map((s, i) => (
           <details key={i} className="text-[11px]">
-            <summary className="cursor-pointer text-gray-500 font-semibold">
+            <summary className="cursor-pointer text-lob-muted font-semibold">
               {b.samples.size > 1
                 ? `Variant ${i + 1} (${s.count} player${s.count > 1 ? 's' : ''})`
                 : 'Show message'}
             </summary>
-            <p className="mt-1 italic text-gray-600 leading-relaxed">"{s.text}"</p>
+            <p className="mt-1 italic text-lob-slate leading-relaxed">"{s.text}"</p>
           </details>
         ))}
       </div>
@@ -103,7 +103,7 @@ export default function ReviewBreakdownModal({
         </button>
       }
     >
-      <p className="text-xs text-gray-400 -mt-2 mb-3">
+      <p className="text-xs text-lob-muted-light -mt-2 mb-3">
         Who's getting which Lobster Review, grouped by scenario
       </p>
 
@@ -128,7 +128,7 @@ export default function ReviewBreakdownModal({
         {/* Other scenarios (historical + filler) */}
         {otherBuckets.length > 0 && (
           <>
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-2 px-1">
+            <p className="text-[10px] font-bold text-lob-muted-light uppercase tracking-wider mt-2 px-1">
               Other scenarios
             </p>
             <div className="space-y-2">
@@ -141,7 +141,9 @@ export default function ReviewBreakdownModal({
         )}
 
         {reviewBreakdown.length === 0 && (
-          <p className="text-center text-gray-400 text-sm py-10">No reviews to break down yet.</p>
+          <p className="text-center text-lob-muted-light text-sm py-10">
+            No reviews to break down yet.
+          </p>
         )}
       </div>
     </Modal>

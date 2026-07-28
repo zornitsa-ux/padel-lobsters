@@ -174,13 +174,13 @@ function BreakdownRow({
 
   return (
     <li className="grid grid-cols-[1fr_auto] gap-x-3 text-xs border-t border-gray-100 pt-2 first:border-t-0 first:pt-0">
-      <span className="text-gray-600">
+      <span className="text-lob-slate">
         Round {row.round} · with {partnerName} vs {opponentNames}
       </span>
-      <span className="self-start text-right font-mono tabular-nums font-medium text-gray-700 whitespace-nowrap">
+      <span className="self-start text-right font-mono tabular-nums font-medium text-lob-slate whitespace-nowrap">
         {formatSigned({ value: row.delta })}
       </span>
-      <span className="col-start-1 mt-0.5 text-gray-400">
+      <span className="col-start-1 mt-0.5 text-lob-muted-light">
         Predicted {(row.expectedShare * 100).toFixed(0)}% of points · won{' '}
         {(row.actualShare * 100).toFixed(0)}%
       </span>
@@ -210,12 +210,12 @@ function ModeButton({
       disabled={disabled}
       aria-pressed={active}
       className={`flex-1 px-2 py-2 text-center border-r last:border-r-0 border-gray-200 transition-colors disabled:opacity-50 ${
-        active ? 'bg-lob-coral text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
+        active ? 'bg-lob-coral text-white' : 'bg-white text-lob-slate hover:bg-gray-50'
       }`}
     >
       <span className="block text-sm font-semibold">{title}</span>
       <span
-        className={`block font-mono tabular-nums text-xs ${active ? 'text-white/85' : 'text-gray-400'}`}
+        className={`block font-mono tabular-nums text-xs ${active ? 'text-white/85' : 'text-lob-muted-light'}`}
       >
         {sub}
       </span>
@@ -283,7 +283,7 @@ function QueueCard({
   return (
     <div className="card space-y-3">
       <div className="flex items-start justify-between gap-3">
-        <p className="font-semibold text-gray-700">{playerDisplayName}</p>
+        <p className="font-semibold text-lob-slate">{playerDisplayName}</p>
         <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-amber-50 text-amber-700 whitespace-nowrap">
           Needs review
         </span>
@@ -291,7 +291,7 @@ function QueueCard({
 
       <LevelLine before={before} cautious={cautiousLevel} full={fullLevel} direction={direction} />
 
-      <p className="text-xs text-gray-500">
+      <p className="text-xs text-lob-muted">
         Already {direction === 'down' ? 'lowered' : 'raised'} to{' '}
         <span className="font-mono tabular-nums">{formatLevel(cautiousLevel)}</span> (the most we
         change in one night). The last{' '}
@@ -336,7 +336,7 @@ function QueueCard({
               onClick={() => nudgeCustom(-1)}
               disabled={reviewing || customTarget <= loLevel + 1e-9}
               aria-label="Lower target level"
-              className="w-10 h-10 grid place-items-center rounded-lg border border-gray-200 text-gray-600 disabled:opacity-40 hover:bg-gray-50"
+              className="w-10 h-10 grid place-items-center rounded-lg border border-gray-200 text-lob-slate disabled:opacity-40 hover:bg-gray-50"
             >
               <Minus size={18} />
             </button>
@@ -348,11 +348,11 @@ function QueueCard({
               onClick={() => nudgeCustom(1)}
               disabled={reviewing || customTarget >= hiLevel - 1e-9}
               aria-label="Raise target level"
-              className="w-10 h-10 grid place-items-center rounded-lg border border-gray-200 text-gray-600 disabled:opacity-40 hover:bg-gray-50"
+              className="w-10 h-10 grid place-items-center rounded-lg border border-gray-200 text-lob-slate disabled:opacity-40 hover:bg-gray-50"
             >
               <Plus size={18} />
             </button>
-            <span className="text-xs text-gray-400">
+            <span className="text-xs text-lob-muted-light">
               between {formatLevel(loLevel)} and {formatLevel(hiLevel)}
             </span>
           </div>
@@ -371,7 +371,7 @@ function QueueCard({
           </button>
           {breakdownOpen && (
             <>
-              <p className="mt-1.5 text-xs text-gray-400">
+              <p className="mt-1.5 text-xs text-lob-muted-light">
                 Each match nudges the level by the amount on the right; they add up to the full
                 move.
               </p>
@@ -408,7 +408,7 @@ export default function RatingReview({
   return (
     <div className="space-y-3">
       {appliedCount > 0 && (
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-lob-slate">
           {appliedCount} adjustment{appliedCount === 1 ? '' : 's'} auto-applied.
         </p>
       )}

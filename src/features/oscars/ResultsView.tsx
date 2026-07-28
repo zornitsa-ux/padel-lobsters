@@ -55,7 +55,7 @@ export default function ResultsView({
     return (
       <div className="bg-white rounded-2xl p-6 text-center">
         <p className="text-3xl mb-2">🤷</p>
-        <p className="text-sm text-gray-500">No votes were cast.</p>
+        <p className="text-sm text-lob-muted">No votes were cast.</p>
       </div>
     )
   }
@@ -70,14 +70,14 @@ export default function ResultsView({
         const Header = (
           <div className="flex items-center gap-2">
             <span className="text-lg">{cat.icon}</span>
-            <span className="flex-1 font-bold text-sm text-gray-800">{cat.name}</span>
+            <span className="flex-1 font-bold text-sm text-lob-dark">{cat.name}</span>
             {collapsible && !isOpen && (
-              <span className="text-[11px] text-gray-400 italic">tap to reveal</span>
+              <span className="text-[11px] text-lob-muted-light italic">tap to reveal</span>
             )}
             {collapsible && (
               <ChevronDown
                 size={14}
-                className={`text-gray-400 transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}
+                className={`text-lob-muted-light transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}
               />
             )}
           </div>
@@ -108,13 +108,13 @@ export default function ResultsView({
                 {others.map((r, i) => (
                   <div
                     key={`${r.target_id}-${i}`}
-                    className="flex items-center gap-2 text-xs text-gray-600"
+                    className="flex items-center gap-2 text-xs text-lob-slate"
                   >
-                    <span className="w-5 text-center font-semibold text-gray-400">
+                    <span className="w-5 text-center font-semibold text-lob-muted-light">
                       {r.rank_in_category}
                     </span>
                     <span className="flex-1 truncate">{r.target_name}</span>
-                    <span className="text-gray-500">
+                    <span className="text-lob-muted">
                       {r.votes_count} vote{Number(r.votes_count) === 1 ? '' : 's'}
                     </span>
                   </div>

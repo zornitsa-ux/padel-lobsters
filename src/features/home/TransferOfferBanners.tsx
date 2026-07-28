@@ -59,7 +59,7 @@ export default function TransferOfferBanners({
               <button
                 onClick={() => onIncomingResponse(xfer, false)}
                 disabled={busy}
-                className="flex-1 border border-gray-300 text-gray-700 font-semibold py-2 rounded-xl text-sm active:scale-[0.98] disabled:opacity-50"
+                className="flex-1 border border-gray-300 text-lob-slate font-semibold py-2 rounded-xl text-sm active:scale-[0.98] disabled:opacity-50"
               >
                 {busy ? 'Declining…' : 'Decline'}
               </button>

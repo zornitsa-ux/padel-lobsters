@@ -52,14 +52,17 @@ export default function AddPlayerCard({
   return (
     <div className="card space-y-3">
       <div className="flex items-center justify-between">
-        <p className="font-semibold text-gray-700">Select Player</p>
+        <p className="font-semibold text-lob-slate">Select Player</p>
         <button onClick={onClose}>
-          <X size={18} className="text-gray-400" />
+          <X size={18} className="text-lob-muted-light" />
         </button>
       </div>
 
       <div className="relative">
-        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+        <Search
+          size={14}
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-lob-muted-light"
+        />
         <input
           className="input pl-9 py-2 text-sm"
           placeholder="Search..."
@@ -70,7 +73,9 @@ export default function AddPlayerCard({
 
       <div className="max-h-48 overflow-y-auto space-y-1">
         {availablePlayers.length === 0 && (
-          <p className="text-sm text-gray-400 text-center py-3">All players already registered</p>
+          <p className="text-sm text-lob-muted-light text-center py-3">
+            All players already registered
+          </p>
         )}
 
         {availablePlayers.map((p) => (
@@ -80,7 +85,7 @@ export default function AddPlayerCard({
             className={`w-full flex items-center gap-3 p-2.5 rounded-xl transition-all ${
               selectedPlayer === p.id
                 ? 'bg-lob-teal text-white'
-                : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                : 'bg-gray-50 text-lob-slate hover:bg-gray-100'
             }`}
           >
             <div
@@ -92,7 +97,7 @@ export default function AddPlayerCard({
             </div>
             <span className="flex-1 text-left font-medium text-sm">{displayName(p)}</span>
             <span
-              className={`text-xs font-bold ${selectedPlayer === p.id ? 'text-white' : 'text-gray-500'}`}
+              className={`text-xs font-bold ${selectedPlayer === p.id ? 'text-white' : 'text-lob-muted'}`}
             >
               Lv {(p.playtomicLevel || 0).toFixed(1)}
             </span>

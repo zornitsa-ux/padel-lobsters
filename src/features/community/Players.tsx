@@ -443,7 +443,7 @@ export default function Players({ onNavigate, focusPlayerId }: PlayersProps) {
       )}
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold text-gray-800">
+        <h2 className="text-lg font-bold text-lob-dark">
           Players ({activePlayers.length})
           {pendingPlayers.length > 0 && isAdmin && (
             <span className="ml-2 text-xs bg-orange-100 text-orange-600 font-semibold px-2 py-0.5 rounded-full">
@@ -465,10 +465,10 @@ export default function Players({ onNavigate, focusPlayerId }: PlayersProps) {
           <span className="bg-teal-50 text-teal-700 font-semibold px-2 py-0.5 rounded-full">
             ✦ {personalisedCount} personalised
           </span>
-          <span className="bg-gray-100 text-gray-500 font-semibold px-2 py-0.5 rounded-full">
+          <span className="bg-gray-100 text-lob-muted font-semibold px-2 py-0.5 rounded-full">
             {genericCount} generic
           </span>
-          <span className="text-gray-400">
+          <span className="text-lob-muted-light">
             {activePlayers.length > 0
               ? Math.round((personalisedCount / activePlayers.length) * 100)
               : 0}
@@ -505,7 +505,10 @@ export default function Players({ onNavigate, focusPlayerId }: PlayersProps) {
 
       {/* Search */}
       <div className="relative">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+        <Search
+          size={16}
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-lob-muted-light"
+        />
         <input
           className="input pl-9"
           placeholder="Search players..."

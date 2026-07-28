@@ -107,7 +107,7 @@ export default function TransferAccept({ transferId, onNavigate }: TransferAccep
   // ── Loading / not-found / error states ───────────────────────────────────
   if (loading) {
     return (
-      <div className="card py-10 text-center text-gray-400">
+      <div className="card py-10 text-center text-lob-muted-light">
         <p>Loading transfer…</p>
       </div>
     )
@@ -177,10 +177,10 @@ export default function TransferAccept({ transferId, onNavigate }: TransferAccep
         {isAccept ? (
           <CheckCircle size={42} className="mx-auto text-green-500" />
         ) : (
-          <XCircle size={42} className="mx-auto text-gray-400" />
+          <XCircle size={42} className="mx-auto text-lob-muted-light" />
         )}
         <h2 className="font-bold text-lg">{isAccept ? `You're in!` : `Offer declined`}</h2>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-lob-slate">
           {isAccept
             ? `You've taken over ${dn(fromPlayer)}'s spot for ${tournament?.name || 'the event'}. They'll send you the payment link separately.`
             : `We've let ${dn(fromPlayer)} know you can't take the spot.`}
@@ -203,7 +203,7 @@ export default function TransferAccept({ transferId, onNavigate }: TransferAccep
       <div className="card py-8 text-center space-y-3">
         <AlertCircle size={36} className="mx-auto text-amber-500" />
         <h2 className="font-bold text-base">This transfer is for {dn(toPlayer)}</h2>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-lob-slate">
           You're currently signed in as someone else. Sign out and back in with {dn(toPlayer)}'s PIN
           to accept or decline.
         </p>
@@ -222,7 +222,7 @@ export default function TransferAccept({ transferId, onNavigate }: TransferAccep
     <div className="space-y-4">
       <button
         onClick={() => onNavigate?.('dashboard')}
-        className="text-xs text-gray-400 inline-flex items-center gap-1"
+        className="text-xs text-lob-muted-light inline-flex items-center gap-1"
       >
         <ChevronLeft size={14} /> Home
       </button>
@@ -237,7 +237,7 @@ export default function TransferAccept({ transferId, onNavigate }: TransferAccep
 
         <div>
           <h2 className="font-bold text-lg">{tournament?.name || 'Event'}</h2>
-          <p className="text-xs text-gray-500 mt-0.5">
+          <p className="text-xs text-lob-muted mt-0.5">
             {tournament?.date
               ? new Date(tournament.date).toLocaleDateString('en-GB', {
                   weekday: 'long',
@@ -256,7 +256,7 @@ export default function TransferAccept({ transferId, onNavigate }: TransferAccep
             <p className="font-semibold text-sm">{dn(fromPlayer)}</p>
             <p className="text-xs text-lob-muted">From</p>
           </div>
-          <ArrowRightLeft size={16} className="text-gray-300" />
+          <ArrowRightLeft size={16} className="text-lob-muted-light/60" />
           <div className="flex-1 min-w-0 text-right">
             <p className="font-semibold text-sm">{dn(toPlayer)}</p>
             <p className="text-xs text-lob-muted">To you</p>
@@ -264,7 +264,7 @@ export default function TransferAccept({ transferId, onNavigate }: TransferAccep
           <Avatar player={{ name: toPlayer?.name || '?' }} size="lg" />
         </div>
 
-        <p className="text-xs text-gray-500 leading-relaxed">
+        <p className="text-xs text-lob-muted leading-relaxed">
           If you accept, the spot moves to you and {dn(fromPlayer)}'s registration is cancelled.
           They'll share the payment link with you separately on WhatsApp.
         </p>
@@ -279,7 +279,7 @@ export default function TransferAccept({ transferId, onNavigate }: TransferAccep
           <button
             onClick={() => handleRespond(false)}
             disabled={!!busy}
-            className="flex-1 border border-gray-300 text-gray-700 font-semibold py-3 rounded-xl active:scale-[0.98] disabled:opacity-50 transition-all"
+            className="flex-1 border border-gray-300 text-lob-slate font-semibold py-3 rounded-xl active:scale-[0.98] disabled:opacity-50 transition-all"
           >
             {busy === 'decline' ? 'Declining…' : 'Decline'}
           </button>

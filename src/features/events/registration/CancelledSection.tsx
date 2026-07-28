@@ -20,7 +20,7 @@ export default function CancelledSection({
 
   return (
     <section>
-      <h3 className="font-bold text-gray-700 mb-2 flex items-center gap-2 opacity-60">
+      <h3 className="font-bold text-lob-slate mb-2 flex items-center gap-2 opacity-60">
         <UserX size={16} />
         Cancelled ({cancelled.length})
       </h3>

@@ -22,7 +22,7 @@ export default function AccountOrdersSection({ myPlayer }: { myPlayer: Player | 
   return (
     <section>
       <div className="flex items-center justify-between mb-3">
-        <h3 className="font-bold text-gray-700 flex items-center gap-1.5">
+        <h3 className="font-bold text-lob-slate flex items-center gap-1.5">
           <ShoppingBag size={15} className="text-lob-teal" /> My Orders
         </h3>
         <Link to="/community/shop" className="text-xs text-lob-teal font-semibold">

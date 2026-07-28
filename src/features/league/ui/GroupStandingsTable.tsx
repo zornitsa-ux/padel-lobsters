@@ -20,22 +20,22 @@ export function GroupStandingsTable({
     <table className="w-full text-sm">
       <thead>
         <tr className="border-b border-gray-100">
-          <th className="text-[10px] font-bold text-gray-400 uppercase tracking-wider text-left pb-2 w-6">
+          <th className="text-[10px] font-bold text-lob-muted-light uppercase tracking-wider text-left pb-2 w-6">
             #
           </th>
-          <th className="text-[10px] font-bold text-gray-400 uppercase tracking-wider text-left pb-2">
+          <th className="text-[10px] font-bold text-lob-muted-light uppercase tracking-wider text-left pb-2">
             Team
           </th>
-          <th className="text-[10px] font-bold text-gray-400 uppercase tracking-wider text-center pb-2 w-8">
+          <th className="text-[10px] font-bold text-lob-muted-light uppercase tracking-wider text-center pb-2 w-8">
             W
           </th>
-          <th className="text-[10px] font-bold text-gray-400 uppercase tracking-wider text-center pb-2 w-8">
+          <th className="text-[10px] font-bold text-lob-muted-light uppercase tracking-wider text-center pb-2 w-8">
             L
           </th>
-          <th className="text-[10px] font-bold text-gray-400 uppercase tracking-wider text-center pb-2 w-8">
+          <th className="text-[10px] font-bold text-lob-muted-light uppercase tracking-wider text-center pb-2 w-8">
             Pts
           </th>
-          <th className="text-[10px] font-bold text-gray-400 uppercase tracking-wider text-center pb-2 w-8">
+          <th className="text-[10px] font-bold text-lob-muted-light uppercase tracking-wider text-center pb-2 w-8">
             Set +/−
           </th>
         </tr>
@@ -48,7 +48,7 @@ export function GroupStandingsTable({
           return (
             <React.Fragment key={standing.team.id}>
               <tr className={isMine ? 'bg-lob-teal/5 border-l-2 border-lob-teal' : ''}>
-                <td className="py-2 text-xs text-gray-500 pl-1">{`#${standing.rank}`}</td>
+                <td className="py-2 text-xs text-lob-muted pl-1">{`#${standing.rank}`}</td>
                 <td className="py-2">
                   <div
                     className={`flex items-center gap-2 ${onTeamClick ? 'cursor-pointer active:opacity-70' : ''}`}

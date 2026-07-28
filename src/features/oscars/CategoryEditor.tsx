@@ -52,7 +52,7 @@ export default function CategoryEditor({ cats, onChange, onReset }: CategoryEdit
           />
           <button
             onClick={() => remove(i)}
-            className="text-gray-300 hover:text-red-400 transition-colors p-1"
+            className="text-lob-muted-light/60 hover:text-red-400 transition-colors p-1"
             aria-label="Remove category"
           >
             <X size={16} />
@@ -68,7 +68,7 @@ export default function CategoryEditor({ cats, onChange, onReset }: CategoryEdit
         </button>
         <button
           onClick={onReset}
-          className="text-gray-500 text-xs font-semibold px-3 hover:text-gray-700"
+          className="text-lob-muted text-xs font-semibold px-3 hover:text-lob-slate"
         >
           Reset to defaults
         </button>

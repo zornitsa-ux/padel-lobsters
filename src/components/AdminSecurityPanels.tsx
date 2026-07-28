@@ -109,7 +109,7 @@ function PendingDevicesPanel() {
   return (
     <div className="card space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="font-bold text-gray-700 text-sm flex items-center gap-2">
+        <h3 className="font-bold text-lob-slate text-sm flex items-center gap-2">
           <ShieldCheck size={15} className="text-amber-600" />
           Pending device approvals
           {rows.length > 0 && (
@@ -118,11 +118,15 @@ function PendingDevicesPanel() {
             </span>
           )}
         </h3>
-        <button onClick={load} aria-label="Refresh" className="text-gray-400 hover:text-lob-teal">
+        <button
+          onClick={load}
+          aria-label="Refresh"
+          className="text-lob-muted-light hover:text-lob-teal"
+        >
           <RefreshCw size={14} />
         </button>
       </div>
-      <p className="text-xs text-gray-500 leading-snug">
+      <p className="text-xs text-lob-muted leading-snug">
         Devices that successfully entered a player PIN but haven't been approved. Approve only if
         you trust the user / device pair.
       </p>
@@ -135,9 +139,9 @@ function PendingDevicesPanel() {
       )}
 
       {loading ? (
-        <p className="text-xs text-gray-400 italic">Loading…</p>
+        <p className="text-xs text-lob-muted-light italic">Loading…</p>
       ) : rows.length === 0 ? (
-        <div className="text-xs text-gray-400 italic flex items-center gap-1.5">
+        <div className="text-xs text-lob-muted-light italic flex items-center gap-1.5">
           <Check size={12} className="text-green-600" />
           No devices waiting for approval.
         </div>
@@ -153,13 +157,13 @@ function PendingDevicesPanel() {
                 <div className="flex items-start gap-2">
                   <Smartphone size={14} className="text-amber-700 flex-shrink-0 mt-0.5" />
                   <div className="flex-1 min-w-0 text-xs">
-                    <p className="font-semibold text-gray-800 truncate">
+                    <p className="font-semibold text-lob-dark truncate">
                       {row.player_name || 'Unknown player'}
                     </p>
-                    <p className="text-gray-500 break-words mt-0.5">
+                    <p className="text-lob-muted break-words mt-0.5">
                       {row.user_agent || 'Unknown user agent'}
                     </p>
-                    <p className="text-gray-400 mt-0.5">
+                    <p className="text-lob-muted-light mt-0.5">
                       First seen {formatTime(row.first_seen)} · code{' '}
                       <span className="font-mono">{String(row.device_id).slice(0, 8)}</span>
                     </p>
@@ -177,7 +181,7 @@ function PendingDevicesPanel() {
                   <button
                     onClick={() => onDeny(row)}
                     disabled={!!busy[key]}
-                    className="flex-1 text-xs font-semibold text-gray-600 bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-50 py-1.5 rounded-lg flex items-center justify-center gap-1"
+                    className="flex-1 text-xs font-semibold text-lob-slate bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-50 py-1.5 rounded-lg flex items-center justify-center gap-1"
                   >
                     <X size={12} />
                     {busy[key] === 'deny' ? 'Denying…' : 'Deny'}
@@ -235,11 +239,11 @@ function SecurityEventsPanel() {
   return (
     <CollapsibleCard
       className="card space-y-3"
-      chevronClassName="text-gray-400"
+      chevronClassName="text-lob-muted-light"
       expanded={expanded}
       onToggle={() => setExpanded((v) => !v)}
       header={
-        <h3 className="font-bold text-gray-700 text-sm flex items-center gap-2">
+        <h3 className="font-bold text-lob-slate text-sm flex items-center gap-2">
           <Activity size={15} className="text-lob-teal" />
           Recent security events
           {failureCount !== null && failureCount > 0 && (
@@ -253,14 +257,14 @@ function SecurityEventsPanel() {
       {expanded && (
         <>
           <div className="flex items-center justify-between">
-            <p className="text-xs text-gray-500 leading-snug flex-1 pr-2">
+            <p className="text-xs text-lob-muted leading-snug flex-1 pr-2">
               Every PIN attempt, device approval, and PII dump is logged. Watch for bursts of
               failures, locked accounts, or unexpected pii_dump calls.
             </p>
             <button
               onClick={load}
               aria-label="Refresh"
-              className="text-gray-400 hover:text-lob-teal flex-shrink-0"
+              className="text-lob-muted-light hover:text-lob-teal flex-shrink-0"
             >
               <RefreshCw size={14} />
             </button>
@@ -274,7 +278,7 @@ function SecurityEventsPanel() {
                 className={`text-[11px] px-2 py-1 rounded-lg border transition-all ${
                   filter === f.id
                     ? 'bg-lob-teal text-white border-lob-teal'
-                    : 'bg-white text-gray-600 border-gray-200 hover:border-lob-teal/50'
+                    : 'bg-white text-lob-slate border-gray-200 hover:border-lob-teal/50'
                 }`}
               >
                 {f.label}
@@ -293,9 +297,9 @@ function SecurityEventsPanel() {
           </div>
 
           {loading ? (
-            <p className="text-xs text-gray-400 italic">Loading…</p>
+            <p className="text-xs text-lob-muted-light italic">Loading…</p>
           ) : filtered.length === 0 ? (
-            <p className="text-xs text-gray-400 italic">No events match this filter.</p>
+            <p className="text-xs text-lob-muted-light italic">No events match this filter.</p>
           ) : (
             <div className="max-h-96 overflow-y-auto -mx-1 px-1">
               <div className="space-y-1.5">
@@ -330,11 +334,11 @@ function EventRow({ ev }: { ev: SecurityEventRow }) {
               new device
             </span>
           )}
-          <span className="text-gray-400 ml-auto whitespace-nowrap">
+          <span className="text-lob-muted-light ml-auto whitespace-nowrap">
             {formatTime(ev.attempted_at)}
           </span>
         </div>
-        <p className="text-gray-600 truncate mt-0.5">
+        <p className="text-lob-slate truncate mt-0.5">
           {ev.player_name || <span className="italic">unknown player</span>}
           {ev.device_id && (
             <>
@@ -396,7 +400,7 @@ function colorsForEvent(ev: SecurityEventRow): { bg: string; text: string; icon:
   if (ev.was_new_device) {
     return { bg: 'bg-blue-50 border-blue-100', text: 'text-blue-800', icon: 'text-blue-600' }
   }
-  return { bg: 'bg-gray-50 border-gray-100', text: 'text-gray-700', icon: 'text-gray-500' }
+  return { bg: 'bg-gray-50 border-gray-100', text: 'text-lob-slate', icon: 'text-lob-muted' }
 }
 
 function formatTime(iso?: string | null): string {

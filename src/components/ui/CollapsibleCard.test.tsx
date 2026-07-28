@@ -37,7 +37,7 @@ describe('CollapsibleCard', () => {
     const [button] = childrenOf(CollapsibleCard({ ...base, expanded: false }))
     const [, chevron] = childrenOf(button)
     expect(propsOf(chevron).size).toBe(16)
-    expect(propsOf(chevron).className).toBe('text-gray-400 flex-shrink-0')
+    expect(propsOf(chevron).className).toBe('text-lob-muted-light flex-shrink-0')
   })
 
   it('accepts className, headerClassName and chevronClassName overrides', () => {

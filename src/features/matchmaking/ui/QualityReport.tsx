@@ -26,9 +26,9 @@ function meanOverall(overall: QualityDimensions): number {
 function DimensionBar({ label, value }: { label: string; value: number }) {
   return (
     <div>
-      <div className="flex items-center justify-between text-xs text-gray-600 mb-0.5">
+      <div className="flex items-center justify-between text-xs text-lob-slate mb-0.5">
         <span className="label mb-0">{label}</span>
-        <span className="font-medium text-gray-700">{Math.round(value)}%</span>
+        <span className="font-medium text-lob-slate">{Math.round(value)}%</span>
       </div>
       <ProgressBar value={value} fillClassName="bg-lob-teal/70" />
     </div>
@@ -85,7 +85,7 @@ export default function QualityReport({
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs">
                     <thead>
-                      <tr className="text-gray-500">
+                      <tr className="text-lob-muted">
                         <th className="text-left font-medium py-1 pr-2">Round</th>
                         {DIMENSIONS.map(({ key, short, label }) => (
                           <th key={key} className="text-right font-medium py-1 pl-2" title={label}>
@@ -97,9 +97,11 @@ export default function QualityReport({
                     <tbody>
                       {quality.perRound.map((round, index) => (
                         <tr key={index} className="border-t border-gray-100">
-                          <td className="py-1 pr-2 text-gray-700 font-medium">Round {index + 1}</td>
+                          <td className="py-1 pr-2 text-lob-slate font-medium">
+                            Round {index + 1}
+                          </td>
                           {DIMENSIONS.map(({ key }) => (
-                            <td key={key} className="py-1 pl-2 text-right text-gray-600">
+                            <td key={key} className="py-1 pl-2 text-right text-lob-slate">
                               {Math.round(round[key])}%
                             </td>
                           ))}
@@ -113,7 +115,7 @@ export default function QualityReport({
               <div>
                 <p className="label">Violations</p>
                 {violations.length === 0 ? (
-                  <p className="text-xs text-gray-500">No rule violations.</p>
+                  <p className="text-xs text-lob-muted">No rule violations.</p>
                 ) : (
                   <ul className="space-y-1">
                     {violations.map((violation, index) => (

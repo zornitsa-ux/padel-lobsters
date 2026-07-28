@@ -70,15 +70,15 @@ export default function CompareView({
       <div className="max-w-2xl mx-auto">
         <div className="sticky top-0 bg-white z-10 px-4 py-3 border-b border-gray-100 flex items-start justify-between gap-4">
           <div>
-            <p className="font-semibold text-gray-700 text-base">Compare schedules</p>
-            <p className="text-xs text-gray-500 mt-0.5">
+            <p className="font-semibold text-lob-slate text-base">Compare schedules</p>
+            <p className="text-xs text-lob-muted mt-0.5">
               Your current schedule stays unless you choose the alternative.
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 flex-shrink-0"
+            className="text-lob-muted-light hover:text-lob-slate flex-shrink-0"
             aria-label="Close compare"
           >
             <X size={20} />
@@ -87,7 +87,7 @@ export default function CompareView({
 
         <div className="px-4 py-4 space-y-4">
           <div className="card space-y-3">
-            <p className="font-semibold text-gray-700 text-sm">How they compare</p>
+            <p className="font-semibold text-lob-slate text-sm">How they compare</p>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <p className="label">Current schedule</p>
@@ -102,14 +102,16 @@ export default function CompareView({
                 {altRun ? (
                   <QualityReport quality={altRun.quality} violations={altRun.violations} compact />
                 ) : (
-                  <p className="text-xs text-gray-400">Generate an alternative to compare.</p>
+                  <p className="text-xs text-lob-muted-light">
+                    Generate an alternative to compare.
+                  </p>
                 )}
               </div>
             </div>
             {altRun && diffLines.length > 0 && (
               <div className="space-y-0.5">
                 {diffLines.map((line) => (
-                  <p key={line} className="text-xs text-gray-500">
+                  <p key={line} className="text-xs text-lob-muted">
                     Alternative: {line}
                   </p>
                 ))}
@@ -151,7 +153,7 @@ export default function CompareView({
               ) : altRun ? (
                 <ScheduleRounds rounds={altRun.rounds} />
               ) : (
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-lob-muted-light">
                   Generate an alternative above to see its rounds here.
                 </p>
               )}

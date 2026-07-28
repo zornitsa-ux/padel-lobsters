@@ -99,7 +99,7 @@ export default function TransferSpotModal({
       title="Transfer your spot"
     >
       <div className="space-y-4">
-        <p className="text-xs text-gray-400 -mt-2">
+        <p className="text-xs text-lob-muted-light -mt-2">
           Pick who takes over. They'll be asked to accept — your spot stays held until they do.
         </p>
 
@@ -110,7 +110,10 @@ export default function TransferSpotModal({
         )}
 
         <div className="relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search
+            size={14}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-lob-muted-light"
+          />
           <input
             type="text"
             placeholder="Search player…"
@@ -123,7 +126,9 @@ export default function TransferSpotModal({
 
         <div className="space-y-2">
           {candidates.length === 0 && (
-            <p className="text-sm text-gray-400 text-center py-4">No matching players found</p>
+            <p className="text-sm text-lob-muted-light text-center py-4">
+              No matching players found
+            </p>
           )}
           {candidates.map((p) => {
             const isWait = waitlistedIds.includes(String(p.id))

@@ -25,13 +25,16 @@ interface ScoresRankingTabProps {
   withheld?: boolean
 }
 
+// Silver and bronze are medal colours, not neutrals — they stay literal so the
+// design-system token sweep can't tint them teal alongside real body text.
+const MEDAL_HEX: Record<number, string> = { 1: '#9CA3AF', 2: '#CD7F32' }
+
 const medalColor = (i: number): string => {
   if (i === 0) return 'text-yellow-500'
-  if (i === 1) return 'text-gray-400'
-  if (i === 2) return ''
-  return 'text-gray-300'
+  if (i === 1 || i === 2) return ''
+  return 'text-lob-muted-light/60'
 }
-const medalStyle = (i: number): React.CSSProperties => (i === 2 ? { color: '#CD7F32' } : {})
+const medalStyle = (i: number): React.CSSProperties => (MEDAL_HEX[i] ? { color: MEDAL_HEX[i] } : {})
 
 export default function ScoresRankingTab({
   standings,
@@ -63,19 +66,19 @@ export default function ScoresRankingTab({
           {/* Top 3 podium */}
           {standings.length >= 3 && matches.length > 0 && (
             <div className="card">
-              <h3 className="font-bold text-center text-gray-700 mb-4">Podium</h3>
+              <h3 className="font-bold text-center text-lob-slate mb-4">Podium</h3>
               <div className="flex items-end justify-center gap-3">
                 {/* 2nd */}
                 <div className="flex flex-col items-center gap-1 flex-1">
                   <p className="text-2xl">🥈</p>
-                  <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center font-bold text-gray-600 text-lg">
+                  <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center font-bold text-lob-slate text-lg">
                     {standings[1]?.player.name[0]}
                   </div>
-                  <p className="text-xs font-semibold text-center text-gray-700 truncate w-full">
+                  <p className="text-xs font-semibold text-center text-lob-slate truncate w-full">
                     {standings[1]?.player.name.split(' ')[0]}
                   </p>
                   <div className="bg-gray-200 w-full h-12 rounded-t-xl flex items-center justify-center">
-                    <span className="font-bold text-gray-600">{standings[1]?.points}pts</span>
+                    <span className="font-bold text-lob-slate">{standings[1]?.points}pts</span>
                   </div>
                 </div>
                 {/* 1st */}
@@ -84,7 +87,7 @@ export default function ScoresRankingTab({
                   <div className="w-14 h-14 bg-yellow-400 rounded-full flex items-center justify-center font-bold text-white text-xl">
                     {standings[0]?.player.name[0]}
                   </div>
-                  <p className="text-xs font-bold text-center text-gray-800 truncate w-full">
+                  <p className="text-xs font-bold text-center text-lob-dark truncate w-full">
                     {standings[0]?.player.name.split(' ')[0]}
                   </p>
                   <div className="bg-yellow-400 w-full h-20 rounded-t-xl flex items-center justify-center">
@@ -100,7 +103,7 @@ export default function ScoresRankingTab({
                   >
                     {standings[2]?.player.name[0]}
                   </div>
-                  <p className="text-xs font-semibold text-center text-gray-700 truncate w-full">
+                  <p className="text-xs font-semibold text-center text-lob-slate truncate w-full">
                     {standings[2]?.player.name.split(' ')[0]}
                   </p>
                   <div
@@ -116,18 +119,18 @@ export default function ScoresRankingTab({
 
           {/* Full standings table */}
           <div className="card overflow-hidden">
-            <h3 className="font-bold text-gray-700 mb-3">Full Standings</h3>
+            <h3 className="font-bold text-lob-slate mb-3">Full Standings</h3>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-xs text-gray-400 uppercase border-b border-gray-100">
+                  <tr className="text-xs text-lob-muted-light uppercase border-b border-gray-100">
                     <th className="text-left pb-2 pl-1">#</th>
                     <th className="text-left pb-2">Player</th>
                     <th className="text-center pb-2">P</th>
                     <th className="text-center pb-2">W</th>
                     <th className="text-center pb-2">L</th>
                     <th className="text-center pb-2">+/-</th>
-                    <th className="text-center pb-2 font-bold text-gray-600">Pts</th>
+                    <th className="text-center pb-2 font-bold text-lob-slate">Pts</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -150,10 +153,10 @@ export default function ScoresRankingTab({
                           </span>
                         </div>
                       </td>
-                      <td className="text-center py-2.5 text-gray-600">{s.played}</td>
+                      <td className="text-center py-2.5 text-lob-slate">{s.played}</td>
                       <td className="text-center py-2.5 text-green-600 font-semibold">{s.won}</td>
                       <td className="text-center py-2.5 text-red-500">{s.lost}</td>
-                      <td className="text-center py-2.5 text-gray-500 text-xs">
+                      <td className="text-center py-2.5 text-lob-muted text-xs">
                         {s.pointsFor}-{s.pointsAgainst}
                       </td>
                       <td className="text-center py-2.5 font-bold text-lob-teal">{s.points}</td>
@@ -162,7 +165,7 @@ export default function ScoresRankingTab({
                 </tbody>
               </table>
             </div>
-            <p className="text-xs text-gray-400 mt-2">
+            <p className="text-xs text-lob-muted-light mt-2">
               Total game points · Tiebreak: matches won → head-to-head
             </p>
           </div>

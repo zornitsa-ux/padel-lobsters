@@ -278,7 +278,7 @@ export default function Merch({ initialTab, onNavigate }: MerchProps) {
         />
       )}
 
-      <h2 className="text-lg font-bold text-gray-800">Padel Lobsters Merch</h2>
+      <h2 className="text-lg font-bold text-lob-dark">Padel Lobsters Merch</h2>
 
       {/* A failed read is surfaced rather than rendered as an empty shop. */}
       {loadError && (

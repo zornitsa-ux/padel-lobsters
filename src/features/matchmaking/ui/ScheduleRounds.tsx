@@ -55,7 +55,7 @@ function TeamNames({
         return (
           <div
             key={id}
-            className="flex items-center gap-1 text-sm font-medium text-gray-700 truncate"
+            className="flex items-center gap-1 text-sm font-medium text-lob-slate truncate"
           >
             <span className="truncate">{player?.name ?? id}</span>
             {player?.isLeftHanded && <span title="Left-handed">🤚</span>}
@@ -92,18 +92,18 @@ function CourtCard({
         <span className="text-xs font-bold text-lob-teal bg-lob-cream px-2 py-0.5 rounded-full">
           Court {index + 1}
         </span>
-        <span className="text-xs text-gray-400">Spread {court.courtSpread.toFixed(2)}</span>
+        <span className="text-xs text-lob-muted-light">Spread {court.courtSpread.toFixed(2)}</span>
       </div>
 
       <div className="flex items-center gap-2">
         <div className="flex-1">
           <TeamNames ids={team1} players={players} />
-          <p className="text-xs text-gray-400 mt-0.5">{sum1.toFixed(1)}</p>
+          <p className="text-xs text-lob-muted-light mt-0.5">{sum1.toFixed(1)}</p>
         </div>
-        <span className="text-xs text-gray-400 font-medium flex-shrink-0">vs</span>
+        <span className="text-xs text-lob-muted-light font-medium flex-shrink-0">vs</span>
         <div className="flex-1 text-right">
           <TeamNames ids={team2} players={players} />
-          <p className="text-xs text-gray-400 mt-0.5">{sum2.toFixed(1)}</p>
+          <p className="text-xs text-lob-muted-light mt-0.5">{sum2.toFixed(1)}</p>
         </div>
       </div>
 
@@ -149,7 +149,7 @@ function RoundSection({
 }) {
   return (
     <div className="space-y-2">
-      <p className="font-semibold text-gray-700 text-sm">Round {index + 1}</p>
+      <p className="font-semibold text-lob-slate text-sm">Round {index + 1}</p>
       <div className="space-y-2">
         {round.courts.map((court, courtIndex) => (
           <CourtCard
@@ -163,7 +163,7 @@ function RoundSection({
         ))}
       </div>
       {round.sitters.length > 0 && (
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-lob-muted">
           Sitting out: {round.sitters.map((sitter) => sitter.name).join(', ')}
         </p>
       )}
@@ -180,8 +180,8 @@ function Legend({ rounds }: { rounds: ScheduleRun['rounds'] }) {
   if (!hasLefty && !hasProvisional) return null
 
   return (
-    <div className="flex flex-col gap-x-4 gap-y-1 text-xs text-gray-500">
-      <span className="font-medium text-gray-400">Key:</span>
+    <div className="flex flex-col gap-x-4 gap-y-1 text-xs text-lob-muted">
+      <span className="font-medium text-lob-muted-light">Key:</span>
       {hasLefty && (
         <span className="flex items-center gap-1">
           <span aria-hidden>🤚</span> Left-handed

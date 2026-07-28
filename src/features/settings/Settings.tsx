@@ -405,9 +405,9 @@ export default function Settings() {
             height="56"
             className="w-14 h-14 rounded-full bg-white p-1 object-contain mx-auto mb-2"
           />
-          <p className="font-bold text-gray-700">Padel Lobsters</p>
-          <p className="text-xs text-gray-400">Tournament Manager · v1.0</p>
-          <p className="text-xs text-gray-300 mt-2">Made with 🦞 for the crew</p>
+          <p className="font-bold text-lob-slate">Padel Lobsters</p>
+          <p className="text-xs text-lob-muted-light">Tournament Manager · v1.0</p>
+          <p className="text-xs text-lob-muted-light/60 mt-2">Made with 🦞 for the crew</p>
         </div>
       </div>
     </div>

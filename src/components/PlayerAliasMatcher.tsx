@@ -98,7 +98,7 @@ export default function PlayerAliasMatcher({
       }
     >
       <div className="-mt-1">
-        <p className="text-xs text-gray-400 mb-3">
+        <p className="text-xs text-lob-muted-light mb-3">
           Tag each name from past tournaments to its player profile
         </p>
 
@@ -108,7 +108,7 @@ export default function PlayerAliasMatcher({
           size="xs"
           fillClassName="bg-lob-teal duration-500"
         />
-        <p className="text-[10px] text-gray-400 mt-1 text-right">
+        <p className="text-[10px] text-lob-muted-light mt-1 text-right">
           {counts.matched} matched · {counts.skipped} skipped · {counts.unmatched} to go
         </p>
 
@@ -131,7 +131,10 @@ export default function PlayerAliasMatcher({
 
         {/* Search */}
         <div className="relative mt-2 mb-3">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search
+            size={14}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-lob-muted-light"
+          />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -143,7 +146,7 @@ export default function PlayerAliasMatcher({
         {/* List */}
         <div className="space-y-2">
           {visible.length === 0 && (
-            <div className="text-center py-10 text-gray-400 text-sm">
+            <div className="text-center py-10 text-lob-muted-light text-sm">
               {filter === 'unmatched' ? '🎉 All names matched!' : 'Nothing here.'}
             </div>
           )}
@@ -170,12 +173,12 @@ export default function PlayerAliasMatcher({
                 {/* Name + tournament chips */}
                 <div className="flex items-center justify-between gap-2">
                   <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-sm text-gray-800 truncate">{item.name}</p>
-                    <p className="text-[10px] text-gray-400 truncate">
+                    <p className="font-semibold text-sm text-lob-dark truncate">{item.name}</p>
+                    <p className="text-[10px] text-lob-muted-light truncate">
                       {item.tournamentLabels.join(' · ')}
                     </p>
                   </div>
-                  <span className="text-xs text-gray-400 flex-shrink-0">
+                  <span className="text-xs text-lob-muted-light flex-shrink-0">
                     {item.tournamentCount}×{' '}
                     {item.tournamentCount >= 3 ? '🔥' : item.tournamentCount === 2 ? '⚡' : ''}
                   </span>
@@ -190,7 +193,7 @@ export default function PlayerAliasMatcher({
                     </div>
                     <button
                       onClick={() => handleClear(item.name)}
-                      className="text-[11px] text-gray-400 hover:text-red-500 flex items-center gap-1"
+                      className="text-[11px] text-lob-muted-light hover:text-red-500 flex items-center gap-1"
                     >
                       <RotateCcw size={11} /> Reset
                     </button>
@@ -200,12 +203,12 @@ export default function PlayerAliasMatcher({
                 {isSkipped && (
                   <div className="mt-2 flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2 text-xs">
-                      <UserX size={14} className="text-gray-400" />
-                      <span className="font-semibold text-gray-500">Not in roster</span>
+                      <UserX size={14} className="text-lob-muted-light" />
+                      <span className="font-semibold text-lob-muted">Not in roster</span>
                     </div>
                     <button
                       onClick={() => handleClear(item.name)}
-                      className="text-[11px] text-gray-400 hover:text-red-500 flex items-center gap-1"
+                      className="text-[11px] text-lob-muted-light hover:text-red-500 flex items-center gap-1"
                     >
                       <RotateCcw size={11} /> Undo
                     </button>
@@ -216,7 +219,7 @@ export default function PlayerAliasMatcher({
                 {!item.playerId && (
                   <div className="mt-2 space-y-1.5">
                     {suggestions.length > 0 && (
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">
+                      <p className="text-[10px] font-bold text-lob-muted-light uppercase tracking-wide">
                         Tap a match to confirm:
                       </p>
                     )}
@@ -247,21 +250,21 @@ export default function PlayerAliasMatcher({
                       </button>
                     ))}
                     {suggestions.length === 0 && (
-                      <p className="text-[11px] text-gray-400 italic">
+                      <p className="text-[11px] text-lob-muted-light italic">
                         No close match found in your roster — pick from the full list or skip.
                       </p>
                     )}
                     <div className="flex gap-1.5">
                       <button
                         onClick={() => setPicker({ name: item.name })}
-                        className="flex-1 text-xs font-semibold text-gray-600 px-3 py-2 rounded-xl border border-gray-200 hover:bg-gray-50 active:scale-95 transition-all flex items-center justify-center gap-1"
+                        className="flex-1 text-xs font-semibold text-lob-slate px-3 py-2 rounded-xl border border-gray-200 hover:bg-gray-50 active:scale-95 transition-all flex items-center justify-center gap-1"
                       >
                         {suggestions.length > 0 ? 'Different player…' : 'Pick from roster…'}{' '}
                         <ChevronRight size={12} />
                       </button>
                       <button
                         onClick={() => handleSkip(item.name)}
-                        className="text-xs font-semibold text-gray-400 px-3 py-2 rounded-xl border border-gray-200 hover:bg-gray-50 active:scale-95 transition-all flex items-center gap-1"
+                        className="text-xs font-semibold text-lob-muted-light px-3 py-2 rounded-xl border border-gray-200 hover:bg-gray-50 active:scale-95 transition-all flex items-center gap-1"
                       >
                         <UserX size={12} /> Not in roster
                       </button>
@@ -328,14 +331,14 @@ function PlayerPicker({
               onClick={() => onPick(p.id)}
               className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-gray-50 hover:bg-teal-50 active:scale-[0.98] transition-all text-left"
             >
-              <span className="text-sm font-semibold text-gray-800 truncate">{p.name}</span>
-              <span className="text-[11px] text-gray-400">
+              <span className="text-sm font-semibold text-lob-dark truncate">{p.name}</span>
+              <span className="text-[11px] text-lob-muted-light">
                 Lv {(p.playtomicLevel || p.playtomic_level || 0).toFixed(1)}
               </span>
             </button>
           ))}
           {list.length === 0 && (
-            <p className="text-center text-sm text-gray-400 py-6">No players match.</p>
+            <p className="text-center text-sm text-lob-muted-light py-6">No players match.</p>
           )}
         </div>
       </div>

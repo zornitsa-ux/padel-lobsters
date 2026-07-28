@@ -141,7 +141,7 @@ export default function PlayerProfileDrawer({
       {/* Match record + tags row */}
       <div className="flex items-center gap-2 flex-wrap">
         {stats.played > 0 && (
-          <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-lg font-semibold">
+          <span className="text-xs bg-gray-100 text-lob-slate px-2 py-1 rounded-lg font-semibold">
             {stats.played} played · {stats.won}W {stats.lost}L
             {stats.draws > 0 ? ` ${stats.draws}D` : ''} · {stats.winRate}%
           </span>
@@ -168,12 +168,12 @@ export default function PlayerProfileDrawer({
               day: 'numeric',
               month: 'short',
             })
-            return <span className="text-xs text-gray-400">🎂 {dayMonth}</span>
+            return <span className="text-xs text-lob-muted-light">🎂 {dayMonth}</span>
           })()}
       </div>
 
       {/* Level row — compact */}
-      <div className="flex items-center gap-1.5 text-xs text-gray-500">
+      <div className="flex items-center gap-1.5 text-xs text-lob-muted">
         <span>Playtomic</span>
         <span className={`font-bold px-1.5 py-0.5 rounded ${levelBadge(p.playtomicLevel)}`}>
           {(p.playtomicLevel || 0).toFixed(1)}
@@ -182,16 +182,16 @@ export default function PlayerProfileDrawer({
 
       {/* Learned level — admin-only (mm_rating/mm_sigma, admin RPC) */}
       {isAdmin && learned && (
-        <div className="flex items-center gap-1.5 text-xs text-gray-500">
+        <div className="flex items-center gap-1.5 text-xs text-lob-muted">
           <span className="text-[10px] font-bold text-lob-teal uppercase tracking-wider">
             Learned level
           </span>
-          <span className="font-bold text-gray-700">{learned.mu.toFixed(2)}</span>
+          <span className="font-bold text-lob-slate">{learned.mu.toFixed(2)}</span>
           <span className={learnedDelta >= 0 ? 'text-green-600' : 'text-red-500'}>
             ({learnedDelta >= 0 ? '+' : ''}
             {learnedDelta.toFixed(2)} vs Playtomic)
           </span>
-          <span className="text-gray-400">·</span>
+          <span className="text-lob-muted-light">·</span>
           <span
             title="Uncertainty in level units — 0.70 is a brand-new player, 0.15 is as confident as the model gets."
             className={
@@ -199,7 +199,7 @@ export default function PlayerProfileDrawer({
                 ? 'text-green-600'
                 : learned.sigma < 0.5
                   ? 'text-amber-600'
-                  : 'text-gray-400'
+                  : 'text-lob-muted-light'
             }
           >
             ±{learned.sigma.toFixed(2)}
@@ -210,7 +210,7 @@ export default function PlayerProfileDrawer({
       {/* Recent form — last 5 matches */}
       {stats.recentForm.length > 0 && (
         <div>
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
+          <p className="text-[10px] font-bold text-lob-muted-light uppercase tracking-wider mb-1.5">
             Last {stats.recentForm.length}
           </p>
           <div className="flex gap-1">
@@ -222,7 +222,7 @@ export default function PlayerProfileDrawer({
                     ? 'bg-green-100 text-green-700'
                     : r === 'L'
                       ? 'bg-red-100 text-red-600'
-                      : 'bg-gray-100 text-gray-500'
+                      : 'bg-gray-100 text-lob-muted'
                 }`}
               >
                 {r}
@@ -235,15 +235,15 @@ export default function PlayerProfileDrawer({
       {/* Detailed match metrics — game points, streaks, averages */}
       {stats.played > 0 && (
         <div>
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
+          <p className="text-[10px] font-bold text-lob-muted-light uppercase tracking-wider mb-1.5">
             Match Metrics
           </p>
           <div className="grid grid-cols-2 gap-1.5 text-xs">
             <div className="bg-gray-50 rounded-lg px-2.5 py-1.5">
-              <span className="text-gray-400 text-[10px] font-semibold uppercase tracking-wide block">
+              <span className="text-lob-muted-light text-[10px] font-semibold uppercase tracking-wide block">
                 Points for / against
               </span>
-              <span className="text-gray-700 font-bold">
+              <span className="text-lob-slate font-bold">
                 {stats.pointsFor} – {stats.pointsAgainst}
                 <span
                   className={`ml-1 font-normal ${stats.pointDiff >= 0 ? 'text-green-600' : 'text-red-500'}`}
@@ -254,16 +254,16 @@ export default function PlayerProfileDrawer({
               </span>
             </div>
             <div className="bg-gray-50 rounded-lg px-2.5 py-1.5">
-              <span className="text-gray-400 text-[10px] font-semibold uppercase tracking-wide block">
+              <span className="text-lob-muted-light text-[10px] font-semibold uppercase tracking-wide block">
                 Avg per match
               </span>
-              <span className="text-gray-700 font-bold">
+              <span className="text-lob-slate font-bold">
                 {stats.avgPointsFor.toFixed(1)} – {stats.avgPointsAgainst.toFixed(1)}
               </span>
             </div>
             {stats.bestWinStreak > 0 && (
               <div className="bg-gray-50 rounded-lg px-2.5 py-1.5">
-                <span className="text-gray-400 text-[10px] font-semibold uppercase tracking-wide block">
+                <span className="text-lob-muted-light text-[10px] font-semibold uppercase tracking-wide block">
                   Best win streak
                 </span>
                 <span className="text-green-700 font-bold">🔥 {stats.bestWinStreak}</span>
@@ -271,7 +271,7 @@ export default function PlayerProfileDrawer({
             )}
             {stats.worstLossStreak > 0 && (
               <div className="bg-gray-50 rounded-lg px-2.5 py-1.5">
-                <span className="text-gray-400 text-[10px] font-semibold uppercase tracking-wide block">
+                <span className="text-lob-muted-light text-[10px] font-semibold uppercase tracking-wide block">
                   Longest skid
                 </span>
                 <span className="text-red-600 font-bold">🧊 {stats.worstLossStreak}</span>
@@ -284,13 +284,13 @@ export default function PlayerProfileDrawer({
       {/* Nemesis + Best / Worst partner row */}
       {(nemesis || bestPartner || worstPartner) && (
         <div>
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
+          <p className="text-[10px] font-bold text-lob-muted-light uppercase tracking-wider mb-1.5">
             Rivalries & Chemistry
           </p>
           <div className="flex flex-col gap-1 text-xs">
             {nemesis && (
               <div className="flex items-center justify-between bg-red-50 rounded-lg px-2.5 py-1.5">
-                <span className="text-gray-700">
+                <span className="text-lob-slate">
                   😈 <span className="font-semibold">Nemesis</span> · {nemesis.name}
                 </span>
                 <span className="font-semibold">
@@ -301,7 +301,7 @@ export default function PlayerProfileDrawer({
             )}
             {bestPartner && (
               <div className="flex items-center justify-between bg-green-50 rounded-lg px-2.5 py-1.5">
-                <span className="text-gray-700">
+                <span className="text-lob-slate">
                   🤝 <span className="font-semibold">Best partner</span> · {bestPartner.name}
                 </span>
                 <span className="font-semibold text-green-700">
@@ -311,7 +311,7 @@ export default function PlayerProfileDrawer({
             )}
             {worstPartner && worstPartner.name !== bestPartner?.name && (
               <div className="flex items-center justify-between bg-amber-50 rounded-lg px-2.5 py-1.5">
-                <span className="text-gray-700">
+                <span className="text-lob-slate">
                   💔 <span className="font-semibold">Jinx partner</span> · {worstPartner.name}
                 </span>
                 <span className="font-semibold text-amber-700">
@@ -326,13 +326,13 @@ export default function PlayerProfileDrawer({
       {/* Head-to-head — top 5 opponent pairs */}
       {topH2HPairs.length > 0 && (
         <div>
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
+          <p className="text-[10px] font-bold text-lob-muted-light uppercase tracking-wider mb-1.5">
             Head to Head
           </p>
           <div className="space-y-1">
             {topH2HPairs.map((h, i) => (
               <div key={i} className="flex items-center justify-between text-xs">
-                <span className="text-gray-700 truncate max-w-[160px]">
+                <span className="text-lob-slate truncate max-w-[160px]">
                   vs {h.names.join(' & ')}
                 </span>
                 <span className="font-semibold">
@@ -341,7 +341,7 @@ export default function PlayerProfileDrawer({
                   {h.draws > 0 && (
                     <>
                       {' '}
-                      <span className="text-gray-400">{h.draws}D</span>
+                      <span className="text-lob-muted-light">{h.draws}D</span>
                     </>
                   )}
                 </span>
@@ -354,7 +354,7 @@ export default function PlayerProfileDrawer({
       {/* Tournament history — clickable */}
       {stats.playerTournaments.length > 0 && (
         <div>
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
+          <p className="text-[10px] font-bold text-lob-muted-light uppercase tracking-wider mb-1.5">
             Tournaments
           </p>
           <div className="flex flex-wrap gap-1.5">
@@ -382,10 +382,10 @@ export default function PlayerProfileDrawer({
       {historical.length > 0 && (
         <div>
           <div className="flex items-center justify-between mb-1.5">
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+            <p className="text-[10px] font-bold text-lob-muted-light uppercase tracking-wider">
               Tournament History
             </p>
-            <p className="text-[10px] font-semibold text-gray-500">
+            <p className="text-[10px] font-semibold text-lob-muted">
               {totalEvents} played
               {histSummary.played > 0 &&
                 ` · ${histSummary.won}W ${histSummary.lost}L · ${histSummary.winRate}%`}
@@ -401,7 +401,7 @@ export default function PlayerProfileDrawer({
                 </span>
               )}
               {histSummary.silvers > 0 && (
-                <span className="text-[11px] bg-gray-100 border border-gray-200 text-gray-600 px-2 py-0.5 rounded-lg font-bold">
+                <span className="text-[11px] bg-gray-100 border border-gray-200 text-lob-slate px-2 py-0.5 rounded-lg font-bold">
                   🥈 ×{histSummary.silvers}
                 </span>
               )}
@@ -418,7 +418,7 @@ export default function PlayerProfileDrawer({
                 </span>
               )}
               {histSummary.bestRank && histSummary.bestRank > 3 && (
-                <span className="text-[11px] bg-gray-50 text-gray-500 px-2 py-0.5 rounded-lg font-semibold">
+                <span className="text-[11px] bg-gray-50 text-lob-muted px-2 py-0.5 rounded-lg font-semibold">
                   Best #{histSummary.bestRank}
                 </span>
               )}
@@ -435,14 +435,14 @@ export default function PlayerProfileDrawer({
                   key={h.id}
                   className="flex items-center gap-2 text-xs bg-gray-50 rounded-lg px-2.5 py-1.5"
                 >
-                  <span className="font-bold text-gray-600 w-7 text-center flex-shrink-0">
+                  <span className="font-bold text-lob-slate w-7 text-center flex-shrink-0">
                     {medal}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-700 truncate">
+                    <p className="font-semibold text-lob-slate truncate">
                       {h.name.replace('Lobster Tournament · ', '')}
                     </p>
-                    <p className="text-[10px] text-gray-400">
+                    <p className="text-[10px] text-lob-muted-light">
                       {h.date} ·{' '}
                       {h.played > 0
                         ? `${h.won}-${h.lost}${h.draws ? `-${h.draws}` : ''}`
@@ -462,11 +462,11 @@ export default function PlayerProfileDrawer({
       {/* Admin info */}
       {isAdmin && (p.email || p.phone) && (
         <div className="space-y-1">
-          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
+          <p className="text-[10px] font-semibold text-lob-muted-light uppercase tracking-wider">
             Admin only
           </p>
-          {p.email && <p className="text-xs text-gray-500">✉ {p.email}</p>}
-          {p.phone && <p className="text-xs text-gray-500">📞 {p.phone}</p>}
+          {p.email && <p className="text-xs text-lob-muted">✉ {p.email}</p>}
+          {p.phone && <p className="text-xs text-lob-muted">📞 {p.phone}</p>}
         </div>
       )}
       {/* Player tagline / notes with saved prompt label */}
@@ -475,7 +475,7 @@ export default function PlayerProfileDrawer({
           <p className="text-[10px] font-bold text-lob-teal uppercase tracking-wider mb-0.5">
             {p.taglineLabel || p.tagline_label || '💬 War Cry'}
           </p>
-          <p className="text-xs text-gray-700 italic">"{p.tagline || p.notes}"</p>
+          <p className="text-xs text-lob-slate italic">"{p.tagline || p.notes}"</p>
         </div>
       )}
 

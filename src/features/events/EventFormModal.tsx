@@ -141,7 +141,7 @@ export default function EventFormModal({
             onChange={(val) => setForm((f) => ({ ...f, genderMode: val }))}
           />
           {form.genderMode === 'mixed' && (
-            <p className="text-xs text-gray-400 mt-1">
+            <p className="text-xs text-lob-muted-light mt-1">
               Schedule will balance gender per court and keep left-handed players on opposite teams
             </p>
           )}
@@ -164,12 +164,12 @@ export default function EventFormModal({
                 <ShieldCheck
                   size={15}
                   className={
-                    form.courtBookingMode === 'admin_all' ? 'text-lob-teal' : 'text-gray-400'
+                    form.courtBookingMode === 'admin_all' ? 'text-lob-teal' : 'text-lob-muted-light'
                   }
                 />
-                <span className="font-semibold text-sm text-gray-800">Admin books all courts</span>
+                <span className="font-semibold text-sm text-lob-dark">Admin books all courts</span>
               </div>
-              <p className="text-xs text-gray-500 ml-5">
+              <p className="text-xs text-lob-muted ml-5">
                 You book all courts centrally. One total price covers courts + food, drinks &amp;
                 prizes — split equally among players.
               </p>
@@ -190,14 +190,14 @@ export default function EventFormModal({
                   className={
                     form.courtBookingMode === 'player_responsible'
                       ? 'text-purple-600'
-                      : 'text-gray-400'
+                      : 'text-lob-muted-light'
                   }
                 />
-                <span className="font-semibold text-sm text-gray-800">
+                <span className="font-semibold text-sm text-lob-dark">
                   Players help book courts
                 </span>
               </div>
-              <p className="text-xs text-gray-500 ml-5">
+              <p className="text-xs text-lob-muted ml-5">
                 Each court has a responsible player who books it on Playtomic. Set a cost per person
                 per court.
               </p>
@@ -229,7 +229,7 @@ export default function EventFormModal({
                   />
                   {form.courts.length > 1 && (
                     <button type="button" onClick={() => removeCourt(i)}>
-                      <X size={16} className="text-gray-400" />
+                      <X size={16} className="text-lob-muted-light" />
                     </button>
                   )}
                 </div>
@@ -260,7 +260,7 @@ export default function EventFormModal({
                   </div>
                 )}
 
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-600 cursor-pointer">
+                <label className="flex items-center gap-2 text-sm font-medium text-lob-slate cursor-pointer">
                   <input
                     type="checkbox"
                     checked={c.booked}
@@ -278,7 +278,7 @@ export default function EventFormModal({
         {form.courtBookingMode === 'admin_all' && (
           <div>
             <label className="label">Price per Person (€)</label>
-            <p className="text-xs text-gray-500 mb-2">
+            <p className="text-xs text-lob-muted mb-2">
               All-in amount per player covering courts, food, drinks and prizes.
             </p>
             <input
@@ -297,16 +297,16 @@ export default function EventFormModal({
                   (parseFloat(String(form.pricePerPerson)) || 0) *
                     (parseInt(String(form.maxPlayers)) || 0),
                 )}
-                <span className="text-xs font-normal text-gray-400"> total</span>
+                <span className="text-xs font-normal text-lob-muted-light"> total</span>
               </p>
             )}
           </div>
         )}
 
         {form.courtBookingMode === 'player_responsible' && form.courts.length > 0 && (
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-lob-muted">
             Total per player:{' '}
-            <span className="font-semibold text-gray-700">
+            <span className="font-semibold text-lob-slate">
               {fmtEur(
                 form.courts.reduce((s, c) => s + (parseFloat(String(c.costPerPerson)) || 0), 0),
               )}
@@ -318,7 +318,7 @@ export default function EventFormModal({
         {form.courtBookingMode === 'admin_all' && (
           <div>
             <label className="label">Tikkie Link (optional)</label>
-            <p className="text-xs text-gray-500 mb-2">
+            <p className="text-xs text-lob-muted mb-2">
               Paste your Tikkie link here so players can pay directly from the registration page.
             </p>
             <input
@@ -333,7 +333,7 @@ export default function EventFormModal({
         {/* Description */}
         <div>
           <label className="label">Description</label>
-          <p className="text-xs text-gray-500 mb-2">
+          <p className="text-xs text-lob-muted mb-2">
             Shown to players on the home screen and event page. Feel free to edit — the default
             covers check-in, what's included, and pairings.
           </p>

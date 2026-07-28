@@ -415,7 +415,7 @@ export default function Schedule({
     <div className="space-y-4">
       {/* Info */}
       <div className="card flex items-center justify-between">
-        <div className="flex items-center gap-2 text-sm text-gray-600">
+        <div className="flex items-center gap-2 text-sm text-lob-slate">
           <Users size={15} className="text-lob-teal" />
           {registeredPlayers.length} players · {numCourts} court{numCourts > 1 ? 's' : ''}
         </div>
@@ -473,7 +473,7 @@ export default function Schedule({
                   setSwapWarnings([])
                   setScheduleWarnings([])
                 }}
-                className="text-xs text-gray-500 font-semibold px-2 py-1"
+                className="text-xs text-lob-muted font-semibold px-2 py-1"
               >
                 Cancel
               </button>
@@ -510,7 +510,7 @@ export default function Schedule({
               className={`w-full py-2 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
                 swapMode
                   ? 'bg-orange-100 text-orange-700 border-2 border-orange-300'
-                  : 'bg-gray-100 text-gray-600'
+                  : 'bg-gray-100 text-lob-slate'
               }`}
             >
               {swapMode
@@ -555,7 +555,7 @@ export default function Schedule({
                 className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
                   activeRound === i
                     ? 'bg-lob-teal text-white'
-                    : 'bg-white text-gray-600 border border-gray-200'
+                    : 'bg-white text-lob-slate border border-gray-200'
                 }`}
               >
                 {r.label}
@@ -567,13 +567,15 @@ export default function Schedule({
           {display[activeRound] && (
             <div className="space-y-3">
               {display[activeRound].note && (
-                <div className="bg-gray-50 rounded-xl p-3 text-sm text-gray-500 text-center">
+                <div className="bg-gray-50 rounded-xl p-3 text-sm text-lob-muted text-center">
                   {display[activeRound].note}
                 </div>
               )}
 
               {display[activeRound].matches.length === 0 && !display[activeRound].note && (
-                <p className="text-sm text-gray-400 text-center py-4">No matches for this round</p>
+                <p className="text-sm text-lob-muted-light text-center py-4">
+                  No matches for this round
+                </p>
               )}
 
               {display[activeRound].matches.map((match, i) => {
@@ -664,7 +666,7 @@ export default function Schedule({
                         })}
 
                         {match.team1Level && (
-                          <p className="text-xs text-gray-400 mt-1">
+                          <p className="text-xs text-lob-muted-light mt-1">
                             Avg {(match.team1Level / 2).toFixed(1)}
                           </p>
                         )}
@@ -672,7 +674,7 @@ export default function Schedule({
 
                       {/* Score */}
                       <div className="flex-shrink-0 flex flex-col items-center gap-1">
-                        <span className="text-xs text-gray-400 font-medium">vs</span>
+                        <span className="text-xs text-lob-muted-light font-medium">vs</span>
                         {match.id && isAdmin ? (
                           <ScoreEntry
                             match={{
@@ -685,9 +687,9 @@ export default function Schedule({
                             variant="input"
                           />
                         ) : (
-                          <div className="flex items-center gap-1 text-lg font-bold text-gray-600">
+                          <div className="flex items-center gap-1 text-lg font-bold text-lob-slate">
                             <span>{match.score1 ?? '—'}</span>
-                            <span className="text-gray-300">-</span>
+                            <span className="text-lob-muted-light/60">-</span>
                             <span>{match.score2 ?? '—'}</span>
                           </div>
                         )}
@@ -726,7 +728,7 @@ export default function Schedule({
                         })}
 
                         {match.team2Level && (
-                          <p className="text-xs text-gray-400 mt-1">
+                          <p className="text-xs text-lob-muted-light mt-1">
                             Avg {(match.team2Level / 2).toFixed(1)}
                           </p>
                         )}
@@ -739,14 +741,16 @@ export default function Schedule({
               {/* Sitting out */}
               {(display[activeRound].sitting || []).length > 0 && (
                 <div className="bg-gray-50 rounded-xl p-3">
-                  <p className="text-xs font-semibold text-gray-500 mb-2">Sitting out this round</p>
+                  <p className="text-xs font-semibold text-lob-muted mb-2">
+                    Sitting out this round
+                  </p>
                   <div className="flex flex-wrap gap-2">
                     {(display[activeRound].sitting || []).map((id) => {
                       const p = getPlayer(id)
                       return p ? (
                         <span
                           key={id}
-                          className="text-xs bg-white border border-gray-200 text-gray-600 px-2 py-1 rounded-full"
+                          className="text-xs bg-white border border-gray-200 text-lob-slate px-2 py-1 rounded-full"
                         >
                           {p.name}
                         </span>
@@ -770,7 +774,7 @@ export default function Schedule({
           stranded by a navigate-away. ──────────────────────────────── */}
       {(v2AppliedCount !== null || v2ReviewQueue.length > 0) && isAdmin && (
         <div className="space-y-2">
-          <p className="font-semibold text-gray-700 text-sm">Rating review</p>
+          <p className="font-semibold text-lob-slate text-sm">Rating review</p>
           <RatingReview
             appliedCount={v2AppliedCount ?? 0}
             queue={v2ReviewQueue}

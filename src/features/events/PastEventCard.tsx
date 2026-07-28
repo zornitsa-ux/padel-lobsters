@@ -16,7 +16,7 @@ interface InfoChipProps {
 function InfoChip({ icon, label, warn }: InfoChipProps) {
   return (
     <div
-      className={`flex items-center gap-1 text-xs rounded-lg px-2 py-1.5 ${warn ? 'bg-orange-50 text-orange-600' : 'bg-gray-50 text-gray-600'}`}
+      className={`flex items-center gap-1 text-xs rounded-lg px-2 py-1.5 ${warn ? 'bg-orange-50 text-orange-600' : 'bg-gray-50 text-lob-slate'}`}
     >
       {icon}
       <span className="font-medium">{label}</span>
@@ -49,7 +49,7 @@ export default function PastEventCard({
       <div className="flex items-start gap-3 mb-3">
         <DateTile date={t.date} size="sm" className="grayscale" />
         <div className="flex-1 min-w-0">
-          <h3 className="font-bold text-gray-700 truncate">
+          <h3 className="font-bold text-lob-slate truncate">
             <button
               onClick={() => onNavigate('registration', t)}
               className="hover:text-lob-teal active:scale-95 transition-all text-left"
@@ -57,17 +57,17 @@ export default function PastEventCard({
               {t.name}
             </button>
           </h3>
-          <p className="text-sm font-semibold text-gray-600 flex items-center gap-1 mt-0.5">
+          <p className="text-sm font-semibold text-lob-slate flex items-center gap-1 mt-0.5">
             <Calendar size={12} /> {formatDate(t.date)}
-            {t.time && <span className="text-gray-400">· {t.time}</span>}
+            {t.time && <span className="text-lob-muted-light">· {t.time}</span>}
           </p>
           {t.location && (
-            <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
+            <p className="text-xs text-lob-muted-light flex items-center gap-1 mt-0.5">
               <Building2 size={11} /> {t.location}
             </p>
           )}
         </div>
-        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 flex-shrink-0">
+        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-lob-muted flex-shrink-0">
           completed
         </span>
       </div>
@@ -94,7 +94,7 @@ export default function PastEventCard({
         </button>
         <button
           onClick={() => onNavigate('schedule', t)}
-          className="flex-1 text-xs font-semibold text-gray-600 py-2 rounded-xl bg-gray-100 active:scale-95 transition-all"
+          className="flex-1 text-xs font-semibold text-lob-slate py-2 rounded-xl bg-gray-100 active:scale-95 transition-all"
         >
           Schedule
         </button>

@@ -22,7 +22,7 @@ export function CollapsibleCard({
   children,
   className = 'card',
   headerClassName = '',
-  chevronClassName = 'text-gray-400 flex-shrink-0',
+  chevronClassName = 'text-lob-muted-light flex-shrink-0',
 }: CollapsibleCardProps) {
   const Chevron = expanded ? ChevronUp : ChevronDown
   return (

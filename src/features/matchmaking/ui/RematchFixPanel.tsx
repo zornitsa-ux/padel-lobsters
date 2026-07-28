@@ -69,8 +69,8 @@ export default function RematchFixPanel({
       >
         <div className="sticky top-0 bg-white px-4 py-3 border-b border-gray-100 flex items-start justify-between gap-4 rounded-t-2xl">
           <div>
-            <p className="font-semibold text-gray-700 text-sm">Fix this repeat</p>
-            <p className="text-xs text-gray-500 mt-0.5">
+            <p className="font-semibold text-lob-slate text-sm">Fix this repeat</p>
+            <p className="text-xs text-lob-muted mt-0.5">
               {playerName({ id: a, playerNamesById })} vs {playerName({ id: b, playerNamesById })}{' '}
               are meeting again.
             </p>
@@ -78,7 +78,7 @@ export default function RematchFixPanel({
           <button
             type="button"
             onClick={onCancel}
-            className="text-gray-400 hover:text-gray-600 flex-shrink-0"
+            className="text-lob-muted-light hover:text-lob-slate flex-shrink-0"
             aria-label="Cancel fix"
           >
             <X size={20} />
@@ -87,7 +87,7 @@ export default function RematchFixPanel({
 
         <div className="px-4 py-4">
           {suggestions.length === 0 ? (
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-lob-muted">
               No swap breaks this rematch without unbalancing the court too much.
             </p>
           ) : (
@@ -101,7 +101,7 @@ export default function RematchFixPanel({
                     key={`${move.outPlayerId}-${move.inPlayerId}`}
                     className="flex items-center justify-between gap-3"
                   >
-                    <p className="text-sm text-gray-700">
+                    <p className="text-sm text-lob-slate">
                       Swap <span className="font-semibold">{outName}</span> for{' '}
                       <span className="font-semibold">{inName}</span> —{' '}
                       {varietyPhrase(suggestion.opponentRepeatDelta)},{' '}

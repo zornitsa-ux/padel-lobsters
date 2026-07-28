@@ -203,8 +203,8 @@ export default function VerificationGate({ children }: { children?: React.ReactN
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-lob-cream mb-3">
             <span className="text-4xl">🦞</span>
           </div>
-          <h1 className="text-xl font-extrabold text-gray-800">Padel Lobsters</h1>
-          <p className="text-xs text-gray-500 mt-1">
+          <h1 className="text-xl font-extrabold text-lob-dark">Padel Lobsters</h1>
+          <p className="text-xs text-lob-muted mt-1">
             {mode === 'signin' && 'Sign in with your 4-digit PIN to continue.'}
             {mode === 'signup' && 'New here? Set up your Lobster profile.'}
             {mode === 'magic' && "We'll email you a one-tap sign-in link."}
@@ -267,7 +267,7 @@ export default function VerificationGate({ children }: { children?: React.ReactN
                   setError('')
                   resetMagicFlow()
                 }}
-                className="w-full text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 border border-gray-200 py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all"
+                className="w-full text-sm font-semibold text-lob-slate bg-gray-100 hover:bg-gray-200 border border-gray-200 py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all"
               >
                 <Mail size={14} />
                 Email me a sign-in link
@@ -300,14 +300,14 @@ export default function VerificationGate({ children }: { children?: React.ReactN
                 setMode('signin')
                 resetMagicFlow()
               }}
-              className="text-sm text-gray-600 hover:text-lob-teal flex items-center gap-1"
+              className="text-sm text-lob-slate hover:text-lob-teal flex items-center gap-1"
             >
               <ArrowLeft size={14} /> Back to sign in
             </button>
 
             {magicStage === 'form' && (
               <>
-                <p className="text-sm text-gray-700 leading-snug">
+                <p className="text-sm text-lob-slate leading-snug">
                   Enter the email on your Lobster account and we'll send you a one-tap sign-in link.
                   Use this if you've forgotten your PIN or just prefer email. Didn't sign up with an
                   email? Write to{' '}
@@ -366,7 +366,7 @@ export default function VerificationGate({ children }: { children?: React.ReactN
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-lob-teal">Check your inbox</p>
-                    <p className="text-xs text-gray-600 mt-1 leading-snug">
+                    <p className="text-xs text-lob-slate mt-1 leading-snug">
                       We sent a sign-in link to{' '}
                       <span className="font-semibold break-all">{magicSentTo}</span>. Tap it from
                       this device and you'll be signed in. Check spam if it doesn't show up.

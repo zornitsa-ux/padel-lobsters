@@ -43,12 +43,12 @@ export default function ScheduleGeneratorControls({
 
   return (
     <div className="card space-y-3">
-      <p className="font-semibold text-gray-700 text-sm">Generate Schedule</p>
+      <p className="font-semibold text-lob-slate text-sm">Generate Schedule</p>
 
       <div className="flex flex-wrap gap-1.5">
         <span
           className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-            genderMode === 'mixed' ? 'bg-pink-50 text-pink-700' : 'bg-gray-100 text-gray-600'
+            genderMode === 'mixed' ? 'bg-pink-50 text-pink-700' : 'bg-gray-100 text-lob-slate'
           }`}
         >
           {genderMode === 'mixed' ? '🚺🚹 Mixed · gender balanced' : '👥 Same gender'}
@@ -101,7 +101,7 @@ export default function ScheduleGeneratorControls({
           </button>
           <button
             onClick={onDownloadCsv}
-            className="w-full py-2 text-sm text-gray-600 font-semibold border border-gray-200 rounded-xl flex items-center justify-center gap-2"
+            className="w-full py-2 text-sm text-lob-slate font-semibold border border-gray-200 rounded-xl flex items-center justify-center gap-2"
             title="Download the saved schedule as a CSV"
           >
             <Download size={14} /> Download schedule (CSV)
@@ -109,7 +109,7 @@ export default function ScheduleGeneratorControls({
         </>
       )}
 
-      <p className="text-xs text-gray-500">
+      <p className="text-xs text-lob-muted">
         {registeredPlayers.length} players · {numCourts} court{numCourts > 1 ? 's' : ''}
       </p>
     </div>

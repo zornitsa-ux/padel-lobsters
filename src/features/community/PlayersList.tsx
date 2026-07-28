@@ -124,7 +124,7 @@ export default function PlayersList({
                 {(() => {
                   const r = corpReview(p, matches, registrations, tournaments, playerAliases)
                   return (
-                    <p className="text-xs text-gray-500 leading-relaxed">
+                    <p className="text-xs text-lob-muted leading-relaxed">
                       {r.hasLabel && (
                         <span className="font-bold text-lob-teal">{r.scenarioLabel}</span>
                       )}

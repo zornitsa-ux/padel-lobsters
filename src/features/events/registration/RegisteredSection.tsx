@@ -43,13 +43,15 @@ export default function RegisteredSection({
   return (
     <>
       <section>
-        <h3 className="font-bold text-gray-700 mb-2 flex items-center gap-2">
+        <h3 className="font-bold text-lob-slate mb-2 flex items-center gap-2">
           <CheckCircle size={16} className="text-green-500" />
           Registered ({registered.length}/{maxPlayers})
         </h3>
         <div className="space-y-2">
           {registered.length === 0 && (
-            <p className="text-sm text-gray-400 card py-4 text-center">No players registered yet</p>
+            <p className="text-sm text-lob-muted-light card py-4 text-center">
+              No players registered yet
+            </p>
           )}
 
           {registered.map((reg, idx) => {
@@ -125,7 +127,7 @@ export default function RegisteredSection({
                     return (
                       <button
                         onClick={() => onStartTransfer(reg)}
-                        className="w-full flex items-center justify-center gap-1.5 text-xs text-gray-500 border border-gray-200 rounded-xl py-1.5 font-medium active:scale-95 transition-all"
+                        className="w-full flex items-center justify-center gap-1.5 text-xs text-lob-muted border border-gray-200 rounded-xl py-1.5 font-medium active:scale-95 transition-all"
                       >
                         <ArrowRightLeft size={12} /> Transfer spot to another player
                       </button>

@@ -102,18 +102,18 @@ export default function RaffleEligibilityContainer({
       <div className="card space-y-1">
         <div className="flex items-center gap-2">
           <Users size={18} className="text-lob-teal" />
-          <p className="font-bold text-gray-800">Raffle eligibility</p>
+          <p className="font-bold text-lob-dark">Raffle eligibility</p>
         </div>
-        <p className="text-sm text-gray-500">{tournament.name}</p>
-        <p className="text-xs text-gray-400 leading-snug pt-1">
+        <p className="text-sm text-lob-muted">{tournament.name}</p>
+        <p className="text-xs text-lob-muted-light leading-snug pt-1">
           Everyone registered is eligible by default. Uncheck anyone to drop them from this
           tournament's draw only — it doesn't affect their chances in any future raffle. Players on
           cooldown from a recent win are skipped automatically.
         </p>
-        <p className="text-sm font-semibold text-gray-700 pt-2">
+        <p className="text-sm font-semibold text-lob-slate pt-2">
           {eligibleCount} of {registered.length} eligible
           {cooldownCount > 0 && (
-            <span className="font-normal text-gray-400"> · {cooldownCount} on cooldown</span>
+            <span className="font-normal text-lob-muted-light"> · {cooldownCount} on cooldown</span>
           )}
         </p>
       </div>
@@ -146,7 +146,7 @@ export default function RaffleEligibilityContainer({
                       className={`flex items-center gap-1 text-xs font-semibold rounded-full px-2.5 py-1 flex-shrink-0 ${
                         skip === 'cooldown'
                           ? 'bg-amber-50 text-amber-700'
-                          : 'bg-gray-200 text-gray-600'
+                          : 'bg-gray-200 text-lob-slate'
                       }`}
                     >
                       {skip === 'cooldown' ? <Clock size={12} /> : <Trophy size={12} />}

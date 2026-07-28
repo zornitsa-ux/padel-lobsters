@@ -132,8 +132,8 @@ export default function Scores({ tournament, onNavigate }: ScoresProps) {
           return (
             <div className="space-y-4">
               <div className="card">
-                <p className="font-bold text-gray-700">🏆 Lobster Oscars</p>
-                <p className="text-xs text-gray-400">
+                <p className="font-bold text-lob-slate">🏆 Lobster Oscars</p>
+                <p className="text-xs text-lob-muted-light">
                   {cats.length} categor{cats.length === 1 ? 'y' : 'ies'}
                   {totalVoters > 0 && (
                     <>
@@ -148,28 +148,28 @@ export default function Scores({ tournament, onNavigate }: ScoresProps) {
                   key={cat.id}
                   className="bg-white rounded-2xl p-4 space-y-2 border border-gray-100"
                 >
-                  <p className="font-bold text-sm text-gray-700">
+                  <p className="font-bold text-sm text-lob-slate">
                     <span className="mr-1">{cat.icon}</span>
                     {cat.name}
                   </p>
                   {cat.winners.length > 0 ? (
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-lob-slate">
                       🏆{' '}
                       <span className="font-bold">
                         {cat.winners.map((w) => w.target_name).join(', ')}
                       </span>{' '}
-                      <span className="text-gray-400">
+                      <span className="text-lob-muted-light">
                         ({cat.topVotes} vote{cat.topVotes !== 1 ? 's' : ''}
                         {cat.winners.length > 1 ? ' — tie' : ''})
                       </span>
                     </p>
                   ) : (
-                    <p className="text-xs text-gray-400">No votes</p>
+                    <p className="text-xs text-lob-muted-light">No votes</p>
                   )}
                   <div className="space-y-1">
                     {cat.rows.map((r) => (
                       <div key={r.target_id} className="flex items-center gap-2">
-                        <span className="text-xs w-16 truncate text-gray-600">
+                        <span className="text-xs w-16 truncate text-lob-slate">
                           {(r.target_name || '').split(' ')[0]}
                         </span>
                         <ProgressBar
@@ -177,7 +177,7 @@ export default function Scores({ tournament, onNavigate }: ScoresProps) {
                           size="lg"
                           className="flex-1"
                         />
-                        <span className="text-xs text-gray-500 w-3 text-right">
+                        <span className="text-xs text-lob-muted w-3 text-right">
                           {Number(r.votes_count)}
                         </span>
                       </div>

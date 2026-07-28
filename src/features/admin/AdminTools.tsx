@@ -187,41 +187,41 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
         {/* Needs Attention */}
         {totalPending > 0 && (
           <div className="card space-y-2 border-l-4 border-lob-amber">
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-wide flex items-center gap-1.5">
+            <p className="text-xs font-bold text-lob-muted uppercase tracking-wide flex items-center gap-1.5">
               <AlertCircle size={13} className="text-lob-amber" /> Needs attention
             </p>
             {unpaidForNextEvent > 0 && (
               <button
                 onClick={() => onNavigate?.('merch-orders')}
-                className="w-full flex items-center justify-between text-sm text-gray-700 hover:text-lob-teal"
+                className="w-full flex items-center justify-between text-sm text-lob-slate hover:text-lob-teal"
               >
                 <span>
                   {unpaidForNextEvent} unpaid registration{unpaidForNextEvent !== 1 ? 's' : ''} for
                   next event
                 </span>
-                <ChevronRight size={14} className="text-gray-400" />
+                <ChevronRight size={14} className="text-lob-muted-light" />
               </button>
             )}
             {pendingSignups > 0 && (
               <button
                 onClick={() => onNavigate?.('players')}
-                className="w-full flex items-center justify-between text-sm text-gray-700 hover:text-lob-teal"
+                className="w-full flex items-center justify-between text-sm text-lob-slate hover:text-lob-teal"
               >
                 <span>
                   {pendingSignups} player signup{pendingSignups !== 1 ? 's' : ''} awaiting approval
                 </span>
-                <ChevronRight size={14} className="text-gray-400" />
+                <ChevronRight size={14} className="text-lob-muted-light" />
               </button>
             )}
             {newOrdersCount > 0 && (
               <button
                 onClick={() => onNavigate?.('merch-orders')}
-                className="w-full flex items-center justify-between text-sm text-gray-700 hover:text-lob-teal"
+                className="w-full flex items-center justify-between text-sm text-lob-slate hover:text-lob-teal"
               >
                 <span>
                   {newOrdersCount} new merch order{newOrdersCount !== 1 ? 's' : ''}
                 </span>
-                <ChevronRight size={14} className="text-gray-400" />
+                <ChevronRight size={14} className="text-lob-muted-light" />
               </button>
             )}
           </div>
@@ -237,8 +237,8 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
                     <Icon size={16} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-800">{tool.title}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{tool.description}</p>
+                    <p className="text-sm font-semibold text-lob-dark">{tool.title}</p>
+                    <p className="text-xs text-lob-muted mt-0.5">{tool.description}</p>
                     <button
                       onClick={tool.onClick}
                       className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-lob-teal hover:underline"

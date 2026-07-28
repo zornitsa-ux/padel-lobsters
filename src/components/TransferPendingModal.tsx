@@ -112,14 +112,14 @@ export default function TransferPendingModal({
       title={`Awaiting ${(toPlayer?.name || 'their').split(/\s+/)[0]}'s response`}
     >
       <div className="space-y-4">
-        <p className="text-xs text-gray-500 leading-relaxed">
+        <p className="text-xs text-lob-muted leading-relaxed">
           Your spot is held in <strong>pending transfer</strong> until{' '}
           {(toPlayer?.name || 'they').split(/\s+/)[0]} accepts. Send the link via WhatsApp so they
           know to open it.
         </p>
 
-        <div className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-xs text-gray-700 leading-relaxed">
-          <p className="font-semibold text-gray-500 text-[10px] uppercase tracking-wide mb-1">
+        <div className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-xs text-lob-slate leading-relaxed">
+          <p className="font-semibold text-lob-muted text-[10px] uppercase tracking-wide mb-1">
             Pre-filled message
           </p>
           <p className="whitespace-pre-line">{message}</p>
@@ -148,20 +148,20 @@ export default function TransferPendingModal({
         </button>
 
         {groupNote && (
-          <p className="text-[11px] text-gray-500 text-center">
+          <p className="text-[11px] text-lob-muted text-center">
             Message copied to your clipboard — paste it in the group chat.
           </p>
         )}
 
         {phone === '' && (
-          <p className="text-[11px] text-gray-400 text-center">
+          <p className="text-[11px] text-lob-muted-light text-center">
             No WhatsApp number on file for {(toPlayer?.name || 'this player').split(/\s+/)[0]} — use
             the group instead.
           </p>
         )}
 
         <div className="border-t border-gray-100 pt-3 flex items-center justify-between text-xs">
-          <span className="text-gray-400 inline-flex items-center gap-1">
+          <span className="text-lob-muted-light inline-flex items-center gap-1">
             <Clock size={12} /> No expiry — closes when the event starts
           </span>
           <button

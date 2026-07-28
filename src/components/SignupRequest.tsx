@@ -422,10 +422,10 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
             <div className="w-12 h-12 bg-teal-50 rounded-full flex items-center justify-center mx-auto">
               <Check className="text-lob-teal" size={24} />
             </div>
-            <h1 className="text-lg font-extrabold text-gray-800">
+            <h1 className="text-lg font-extrabold text-lob-dark">
               {pinReveal.wasExisting ? 'Welcome back 🦞' : "You're in 🦞"}
             </h1>
-            <p className="text-sm text-gray-600 leading-snug">
+            <p className="text-sm text-lob-slate leading-snug">
               {pinReveal.wasExisting
                 ? 'We found your existing Lobster profile and pulled up your PIN.'
                 : "Your Lobster profile is ready. Save your PIN — you'll need it next time."}
@@ -450,7 +450,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
             </button>
           </div>
 
-          <p className="text-[11px] text-gray-500 leading-snug">
+          <p className="text-[11px] text-lob-muted leading-snug">
             This PIN unlocks the app on any device. Save it in your password manager — we don't
             email or text it automatically.
           </p>
@@ -484,7 +484,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
       {onBack && (
         <button
           onClick={onBack}
-          className="text-sm text-gray-600 hover:text-lob-teal flex items-center gap-1"
+          className="text-sm text-lob-slate hover:text-lob-teal flex items-center gap-1"
           type="button"
         >
           <ArrowLeft size={14} /> Back to sign in
@@ -493,11 +493,11 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
 
       <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 space-y-4">
         <header className="space-y-1">
-          <h1 className="text-lg font-extrabold text-gray-800 flex items-center gap-2">
+          <h1 className="text-lg font-extrabold text-lob-dark flex items-center gap-2">
             <UserPlus size={18} className="text-lob-teal" />
             Join the Lobsters 🦞
           </h1>
-          <p className="text-xs text-gray-500 leading-snug">
+          <p className="text-xs text-lob-muted leading-snug">
             You'll get an access PIN to use in the app. Fill in the full profile — it powers
             matchmaking, your Lobster Review, and the leaderboards.
           </p>
@@ -514,7 +514,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
                   className="w-20 h-20 rounded-full object-cover border-2 border-lob-teal"
                 />
               ) : (
-                <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-300">
+                <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center text-lob-muted-light border-2 border-dashed border-gray-300">
                   <User size={28} />
                 </div>
               )}
@@ -526,7 +526,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
                 <Camera size={13} />
               </button>
             </div>
-            <p className="text-xs text-gray-400">Tap camera icon to add photo</p>
+            <p className="text-xs text-lob-muted-light">Tap camera icon to add photo</p>
             <input
               ref={fileInputRef}
               type="file"
@@ -600,7 +600,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
 
           <div>
             <label className="label">Gender</label>
-            <p className="text-xs text-gray-400 mb-2">For optimal pair matching</p>
+            <p className="text-xs text-lob-muted-light mb-2">For optimal pair matching</p>
             <SegmentedControl
               ariaLabel="Gender"
               options={[
@@ -620,7 +620,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all w-full justify-center ${
                 form.isLeftHanded
                   ? 'bg-amber-100 text-amber-700 border-2 border-amber-300'
-                  : 'bg-gray-100 text-gray-500'
+                  : 'bg-gray-100 text-lob-muted'
               }`}
             >
               🤚 {form.isLeftHanded ? 'Left-handed (tap to undo)' : 'Tap if left-handed'}
@@ -647,7 +647,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
                   className={`flex-1 py-2 rounded-xl font-semibold text-sm transition-all ${
                     form.preferredPosition === val
                       ? 'bg-blue-500 text-white'
-                      : 'bg-gray-100 text-gray-600'
+                      : 'bg-gray-100 text-lob-slate'
                   }`}
                 >
                   {lbl}
@@ -672,7 +672,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
                 value={form.playtomicLevel}
                 onChange={(e) => setForm((f) => ({ ...f, playtomicLevel: e.target.value }))}
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-lob-muted mt-1">
                 Check your Playtomic app — it shows your current level. We use it to build balanced
                 matches, and it improves as you play.
               </p>
@@ -688,7 +688,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
               value={form.email}
               onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
             />
-            <p className="text-xs text-gray-400 mt-1">Visible for organizers only</p>
+            <p className="text-xs text-lob-muted-light mt-1">Visible for organizers only</p>
           </div>
 
           <div>
@@ -700,7 +700,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
               value={form.phone}
               onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
             />
-            <p className="text-xs text-gray-400 mt-1">
+            <p className="text-xs text-lob-muted-light mt-1">
               Start with + and your country code, e.g. +31 for the Netherlands. Visible to
               organizers only.
             </p>

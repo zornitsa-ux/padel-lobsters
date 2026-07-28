@@ -82,7 +82,7 @@ export default function RaffleContainer({
           <div className="card space-y-3">
             <div className="flex items-center gap-2">
               <Check size={16} className="text-green-600" />
-              <p className="font-bold text-gray-800">Winners{isPast ? '' : ' so far'}</p>
+              <p className="font-bold text-lob-dark">Winners{isPast ? '' : ' so far'}</p>
             </div>
             {committed.map((w: RaffleWinner, i: number) => (
               <div
@@ -95,7 +95,7 @@ export default function RaffleContainer({
                   {initialOf(nameOf(w.playerId))}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-bold text-gray-800 truncate">
+                  <p className="font-bold text-lob-dark truncate">
                     {fullNameOf(nameOf(w.playerId))}
                   </p>
                   <PrizeEditor
@@ -108,7 +108,7 @@ export default function RaffleContainer({
                   <button
                     onClick={() => removeWinner.mutate(w.id)}
                     title="Remove winner"
-                    className="text-gray-400 hover:text-red-500 p-2 flex-shrink-0"
+                    className="text-lob-muted-light hover:text-red-500 p-2 flex-shrink-0"
                   >
                     <Trash2 size={16} />
                   </button>
@@ -146,7 +146,7 @@ export default function RaffleContainer({
                     onClick={() => setNumPrizes(n)}
                     className={`flex-1 max-w-[64px] py-3 rounded-xl text-lg font-extrabold transition-all ${
                       numPrizes === n
-                        ? 'bg-yellow-400 text-gray-900 scale-110 shadow-md'
+                        ? 'bg-yellow-400 text-lob-dark scale-110 shadow-md'
                         : 'bg-white/15 text-white hover:bg-white/25'
                     }`}
                   >
@@ -159,7 +159,7 @@ export default function RaffleContainer({
             <button
               onClick={runDraw}
               disabled={draw.isPending}
-              className="w-full bg-yellow-400 hover:bg-yellow-500 disabled:opacity-40 disabled:cursor-not-allowed text-gray-900 font-black text-lg sm:text-xl py-4 sm:py-5 rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all shadow-lg"
+              className="w-full bg-yellow-400 hover:bg-yellow-500 disabled:opacity-40 disabled:cursor-not-allowed text-lob-dark font-black text-lg sm:text-xl py-4 sm:py-5 rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all shadow-lg"
             >
               <Shuffle size={22} className={draw.isPending ? 'animate-spin' : ''} />
               {draw.isPending

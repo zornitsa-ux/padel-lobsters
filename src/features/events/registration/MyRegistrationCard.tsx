@@ -93,7 +93,7 @@ export default function MyRegistrationCard({
                 <button
                   onClick={() => onIncomingResponse(xfer, false)}
                   disabled={busy}
-                  className="flex-1 border border-gray-300 text-gray-700 font-semibold py-2 rounded-xl text-sm active:scale-[0.98] disabled:opacity-50"
+                  className="flex-1 border border-gray-300 text-lob-slate font-semibold py-2 rounded-xl text-sm active:scale-[0.98] disabled:opacity-50"
                 >
                   {busy ? 'Declining…' : 'Decline'}
                 </button>
@@ -133,7 +133,7 @@ export default function MyRegistrationCard({
       <>
         {incomingCards}
         <div className="card space-y-3">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-lob-muted">
             {isEventFull ? 'This event is full.' : "You haven't signed up yet."}
           </p>
           <button
@@ -158,7 +158,7 @@ export default function MyRegistrationCard({
         <div className="card space-y-3">
           <div className="flex items-center gap-2">
             <CheckCircle size={14} className="text-green-500" />
-            <span className="text-sm font-semibold text-gray-800">You&apos;re registered</span>
+            <span className="text-sm font-semibold text-lob-dark">You&apos;re registered</span>
           </div>
           <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 space-y-2">
             <div className="flex items-center gap-2 text-xs text-amber-800">
@@ -193,7 +193,7 @@ export default function MyRegistrationCard({
   const transferButton = (
     <button
       onClick={() => onStartTransfer(myReg)}
-      className="w-full flex items-center justify-center gap-1.5 text-xs text-gray-500 border border-gray-200 rounded-xl py-1.5 font-medium active:scale-95 transition-all"
+      className="w-full flex items-center justify-center gap-1.5 text-xs text-lob-muted border border-gray-200 rounded-xl py-1.5 font-medium active:scale-95 transition-all"
     >
       <ArrowRightLeft size={12} /> Transfer spot to another player
     </button>
@@ -214,7 +214,7 @@ export default function MyRegistrationCard({
         <div className="card space-y-3">
           <div className="flex items-center gap-2">
             <CheckCircle size={14} className="text-green-500" />
-            <span className="text-sm font-semibold text-gray-800">You&apos;re registered!</span>
+            <span className="text-sm font-semibold text-lob-dark">You&apos;re registered!</span>
           </div>
           <div className="bg-orange-50 border border-orange-200 rounded-xl px-3 py-3 space-y-2">
             <p className="text-xs font-semibold text-orange-800">
@@ -259,7 +259,7 @@ export default function MyRegistrationCard({
         <div className="card space-y-3">
           <div className="flex items-center gap-2">
             <CheckCircle size={14} className="text-green-500" />
-            <span className="text-sm font-semibold text-gray-800">You&apos;re registered</span>
+            <span className="text-sm font-semibold text-lob-dark">You&apos;re registered</span>
           </div>
           <div className="bg-sky-50 border border-sky-200 rounded-xl px-3 py-2">
             <p className="text-xs font-semibold text-sky-700">
@@ -282,7 +282,7 @@ export default function MyRegistrationCard({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <CheckCircle size={14} className="text-green-500" />
-              <span className="text-sm font-semibold text-gray-800">You&apos;re registered</span>
+              <span className="text-sm font-semibold text-lob-dark">You&apos;re registered</span>
             </div>
             <span className="text-xs font-semibold text-green-700 bg-green-50 border border-green-200 px-2 py-0.5 rounded-full">
               ✓ Confirmed
@@ -301,7 +301,7 @@ export default function MyRegistrationCard({
       <div className="card space-y-3">
         <div className="flex items-center gap-2">
           <CheckCircle size={14} className="text-green-500" />
-          <span className="text-sm font-semibold text-gray-800">You&apos;re registered!</span>
+          <span className="text-sm font-semibold text-lob-dark">You&apos;re registered!</span>
         </div>
         {transferButton}
       </div>

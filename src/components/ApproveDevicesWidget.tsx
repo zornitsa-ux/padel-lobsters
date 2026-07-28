@@ -107,12 +107,12 @@ export default function ApproveDevicesWidget() {
             className="bg-white rounded-xl p-3 border border-amber-100 space-y-2"
           >
             <div className="flex items-start gap-2">
-              <Smartphone size={14} className="text-gray-500 flex-shrink-0 mt-0.5" />
+              <Smartphone size={14} className="text-lob-muted flex-shrink-0 mt-0.5" />
               <div className="flex-1 min-w-0 text-xs">
-                <p className="font-semibold text-gray-800 break-words">
+                <p className="font-semibold text-lob-dark break-words">
                   {d.user_agent || 'Unknown device'}
                 </p>
-                <p className="text-gray-500 mt-0.5">
+                <p className="text-lob-muted mt-0.5">
                   First seen {formatTime(d.first_seen)} · code{' '}
                   <span className="font-mono">{String(d.device_id).slice(0, 8)}</span>
                 </p>
@@ -130,7 +130,7 @@ export default function ApproveDevicesWidget() {
               <button
                 onClick={() => onReject(d.device_id)}
                 disabled={!!busy[d.device_id]}
-                className="flex-1 text-xs font-semibold text-gray-600 bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-50 py-2 rounded-lg flex items-center justify-center gap-1.5"
+                className="flex-1 text-xs font-semibold text-lob-slate bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-50 py-2 rounded-lg flex items-center justify-center gap-1.5"
               >
                 <X size={12} />
                 {busy[d.device_id] === 'reject' ? 'Denying…' : 'Deny'}

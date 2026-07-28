@@ -88,8 +88,8 @@ export default function ProfileSection({
           <div className="bg-white rounded-3xl w-full max-w-sm p-6 space-y-4 shadow-xl">
             <div className="text-center">
               <div className="text-4xl mb-2">🦞</div>
-              <h3 className="text-lg font-bold text-gray-800">Has your Playtomic score changed?</h3>
-              <p className="text-sm text-gray-500 mt-1">
+              <h3 className="text-lg font-bold text-lob-dark">Has your Playtomic score changed?</h3>
+              <p className="text-sm text-lob-muted mt-1">
                 It's been a while! Your current level on file:
               </p>
             </div>
@@ -99,7 +99,7 @@ export default function ProfileSection({
               </p>
             </div>
             <div>
-              <label className="text-xs font-semibold text-gray-600 mb-1 block">
+              <label className="text-xs font-semibold text-lob-slate mb-1 block">
                 New Playtomic Level
               </label>
               <input
@@ -119,7 +119,7 @@ export default function ProfileSection({
               <button
                 type="button"
                 onClick={dismissPlaytomicPrompt}
-                className="flex-1 text-sm font-semibold text-gray-500 py-2.5 rounded-xl border border-gray-200 active:scale-95 transition-all"
+                className="flex-1 text-sm font-semibold text-lob-muted py-2.5 rounded-xl border border-gray-200 active:scale-95 transition-all"
               >
                 No change
               </button>
@@ -144,13 +144,13 @@ export default function ProfileSection({
             onClick={() => setProfileExpanded((e) => !e)}
             className="w-full flex items-center justify-between"
           >
-            <h3 className="font-bold text-gray-700 text-sm flex items-center gap-2">
+            <h3 className="font-bold text-lob-slate text-sm flex items-center gap-2">
               <User size={15} className="text-lob-coral" /> My Lobster Profile
             </h3>
             {profileExpanded ? (
-              <ChevronUp size={16} className="text-gray-400" />
+              <ChevronUp size={16} className="text-lob-muted-light" />
             ) : (
-              <ChevronDown size={16} className="text-gray-400" />
+              <ChevronDown size={16} className="text-lob-muted-light" />
             )}
           </button>
 
@@ -158,8 +158,8 @@ export default function ProfileSection({
           <div className="flex items-center gap-3">
             <Avatar player={myPlayer} size="lg" />
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-gray-800 truncate">{myPlayer.name}</p>
-              <p className="text-xs text-gray-500">
+              <p className="font-semibold text-lob-dark truncate">{myPlayer.name}</p>
+              <p className="text-xs text-lob-muted">
                 Playtomic level:{' '}
                 <span className="font-bold text-lob-teal">
                   {(parseFloat(String(myPlayer.playtomicLevel)) || 0).toFixed(1)}
@@ -181,7 +181,7 @@ export default function ProfileSection({
                       className="w-20 h-20 rounded-full object-cover border-2 border-lob-teal"
                     />
                   ) : (
-                    <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-300">
+                    <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center text-lob-muted-light border-2 border-dashed border-gray-300">
                       <User size={28} />
                     </div>
                   )}
@@ -193,7 +193,7 @@ export default function ProfileSection({
                     <Camera size={13} />
                   </button>
                 </div>
-                <p className="text-xs text-gray-400">Tap camera icon to change photo</p>
+                <p className="text-xs text-lob-muted-light">Tap camera icon to change photo</p>
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -235,7 +235,7 @@ export default function ProfileSection({
                   value={profileForm.tagline}
                   onChange={(e) => setProfileForm((f) => ({ ...f, tagline: e.target.value }))}
                 />
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-xs text-lob-muted-light mt-1">
                   Appears on your player card. {80 - profileForm.tagline.length} chars left.
                 </p>
               </div>
@@ -252,7 +252,7 @@ export default function ProfileSection({
               {/* Gender */}
               <div>
                 <label className="label">Gender</label>
-                <p className="text-xs text-gray-400 mb-2">For optimal pair matching</p>
+                <p className="text-xs text-lob-muted-light mb-2">For optimal pair matching</p>
                 <div className="flex gap-3">
                   {[
                     ['male', 'Male'],
@@ -267,7 +267,7 @@ export default function ProfileSection({
                       className={`flex-1 py-2.5 rounded-xl font-semibold text-sm transition-all ${
                         profileForm.gender === val
                           ? 'bg-lob-teal text-white'
-                          : 'bg-gray-100 text-gray-600'
+                          : 'bg-gray-100 text-lob-slate'
                       }`}
                     >
                       {lbl}
@@ -285,7 +285,7 @@ export default function ProfileSection({
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all w-full justify-center ${
                     profileForm.isLeftHanded
                       ? 'bg-amber-100 text-amber-700 border-2 border-amber-300'
-                      : 'bg-gray-100 text-gray-500'
+                      : 'bg-gray-100 text-lob-muted'
                   }`}
                 >
                   🤚 {profileForm.isLeftHanded ? 'Left-handed (tap to undo)' : 'Tap if left-handed'}
@@ -313,7 +313,7 @@ export default function ProfileSection({
                       className={`flex-1 py-2 rounded-xl font-semibold text-sm transition-all ${
                         profileForm.preferredPosition === val
                           ? 'bg-blue-500 text-white'
-                          : 'bg-gray-100 text-gray-600'
+                          : 'bg-gray-100 text-lob-slate'
                       }`}
                     >
                       {lbl}
@@ -341,7 +341,7 @@ export default function ProfileSection({
                       setProfileForm((f) => ({ ...f, playtomicLevel: e.target.value }))
                     }
                   />
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-lob-muted mt-1">
                     Check your Playtomic app — it shows your current level. Update it whenever it
                     changes: your matches are built from it.
                   </p>
@@ -356,8 +356,10 @@ export default function ProfileSection({
                 <label className="label">Email</label>
                 {!emailEditing && (
                   <div className="flex items-center gap-2">
-                    <div className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-700 truncate">
-                      {profileForm.email || <span className="text-gray-400">No email on file</span>}
+                    <div className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-gray-50 border border-gray-200 text-sm text-lob-slate truncate">
+                      {profileForm.email || (
+                        <span className="text-lob-muted-light">No email on file</span>
+                      )}
                     </div>
                     <button
                       type="button"
@@ -397,7 +399,7 @@ export default function ProfileSection({
                           setEmailEditing(false)
                           setEmailStatus('')
                         }}
-                        className="flex-1 text-sm font-semibold text-gray-600 bg-gray-100 py-2 rounded-xl active:scale-95"
+                        className="flex-1 text-sm font-semibold text-lob-slate bg-gray-100 py-2 rounded-xl active:scale-95"
                       >
                         Cancel
                       </button>
@@ -410,7 +412,7 @@ export default function ProfileSection({
                         {emailBusy ? 'Sending…' : 'Send confirmation'}
                       </button>
                     </div>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-lob-muted">
                       We'll email a confirmation link to the new address. The change only takes
                       effect once you click it.
                     </p>
@@ -420,7 +422,7 @@ export default function ProfileSection({
                   <div className="space-y-2">
                     <div className="rounded-xl bg-lob-cream border border-lob-teal/30 p-3 flex items-start gap-2">
                       <Check size={14} className="text-lob-teal mt-0.5 flex-shrink-0" />
-                      <p className="text-xs text-gray-700 leading-snug">
+                      <p className="text-xs text-lob-slate leading-snug">
                         Confirmation sent to{' '}
                         <span className="font-semibold break-all">{newEmail.trim()}</span>. Click
                         the link in that email to finish the change.
@@ -438,7 +440,7 @@ export default function ProfileSection({
                     </button>
                   </div>
                 )}
-                <p className="text-xs text-gray-400 mt-1">Visible for organizers only</p>
+                <p className="text-xs text-lob-muted-light mt-1">Visible for organizers only</p>
               </div>
 
               {/* Phone */}
@@ -451,7 +453,7 @@ export default function ProfileSection({
                   value={profileForm.phone}
                   onChange={(e) => setProfileForm((f) => ({ ...f, phone: e.target.value }))}
                 />
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-xs text-lob-muted-light mt-1">
                   Start with + and country code, e.g. +31 for the Netherlands. Visible to organizers
                   only.
                 </p>

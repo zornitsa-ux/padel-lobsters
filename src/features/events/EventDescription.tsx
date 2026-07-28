@@ -66,7 +66,7 @@ export default function EventDescription({ tournament, isAdmin, onSave }: EventD
             type="button"
             onClick={cancel}
             disabled={saving}
-            className="text-xs font-semibold text-gray-600 px-3 py-1.5 rounded-lg bg-white border border-gray-200 active:scale-95 transition-all"
+            className="text-xs font-semibold text-lob-slate px-3 py-1.5 rounded-lg bg-white border border-gray-200 active:scale-95 transition-all"
           >
             Cancel
           </button>
@@ -89,18 +89,18 @@ export default function EventDescription({ tournament, isAdmin, onSave }: EventD
   return (
     <div className="mt-3 bg-gray-50 rounded-xl px-3 py-2.5 border border-gray-100 relative">
       {hasText ? (
-        <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line pr-7">
+        <p className="text-sm text-lob-slate leading-relaxed whitespace-pre-line pr-7">
           {tournament.notes}
         </p>
       ) : (
-        <p className="text-sm text-gray-400 italic pr-7">No description yet.</p>
+        <p className="text-sm text-lob-muted-light italic pr-7">No description yet.</p>
       )}
       {isAdmin && (
         <button
           type="button"
           onClick={startEdit}
           aria-label="Edit description"
-          className="absolute top-1.5 right-1.5 w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-lob-teal hover:bg-white active:scale-95 transition-all"
+          className="absolute top-1.5 right-1.5 w-7 h-7 flex items-center justify-center rounded-lg text-lob-muted-light hover:text-lob-teal hover:bg-white active:scale-95 transition-all"
         >
           <Pencil size={13} />
         </button>

@@ -21,9 +21,9 @@ describe('StatTile', () => {
   })
 
   it.each([
-    ['muted', 'text-[9px] text-gray-400 font-medium'],
+    ['muted', 'text-[9px] text-lob-muted-light font-medium'],
     ['inverted', 'text-xs opacity-75'],
-    ['caps', 'text-[10px] font-bold text-gray-400 uppercase tracking-wider'],
+    ['caps', 'text-[10px] font-bold text-lob-muted-light uppercase tracking-wider'],
   ] as const)('maps labelVariant %s to %s', (labelVariant, expected) => {
     const [, label] = childrenOf(StatTile({ value: 1, label: 'l', labelVariant }))
     expect(propsOf(label).className).toBe(expected)
@@ -33,7 +33,7 @@ describe('StatTile', () => {
     const el = StatTile({ value: 1, label: 'Won', valueClassName: 'text-green-600' })
     const [value, label] = childrenOf(el)
     expect(propsOf(value).className).toBe('text-lg font-bold text-green-600')
-    expect(propsOf(label).className).toBe('text-[9px] text-gray-400 font-medium')
+    expect(propsOf(label).className).toBe('text-[9px] text-lob-muted-light font-medium')
   })
 
   it('appends className to the wrapper', () => {
