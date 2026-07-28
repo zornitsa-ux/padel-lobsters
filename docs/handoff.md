@@ -1,8 +1,9 @@
 # Code-hygiene sweep — handoff
 
-State as of 2026-07-27 (second session), branch `clean-code-26-07`,
-**33 commits, nothing pushed**. Delete this file when the remaining work is
-done.
+State as of 2026-07-28 (third session), branch `clean-code-26-07`,
+**45 commits, nothing pushed**. All planned work is complete; what is left is
+the owner's, listed under "Owner action items". Delete this file once those
+are done.
 
 Companion docs: `docs/conversions.md` (the conversion playbook — read it, it
 carries hard-won process rules), `ARCHITECTURE.md`, `CLAUDE.md`.
@@ -53,11 +54,11 @@ extraction, test review, and data slices with strong types.
 
 | Metric            | Start           | Now                              |
 | ----------------- | --------------- | -------------------------------- |
-| Tests             | 729             | 1047                             |
-| Lint              | 139 warnings    | 64 warnings, 0 errors (gates CI) |
+| Tests             | 729             | 1175                             |
+| Lint              | 139 warnings    | 61 warnings, 0 errors (gates CI) |
 | `no-explicit-any` | 68              | 0 — rule is now `error`          |
 | TypeScript        | `strict: false` | `strict: true`                   |
-| TS share of `src` | 57%             | 85%                              |
+| TS share of `src` | 57%             | 99% (only api/hooks/lib/data)    |
 | Supabase client   | untyped         | `createClient<Database>`         |
 | Net               | —               | 246 files, +12099 / −16914       |
 
@@ -107,6 +108,44 @@ fetches moved into the slice that owns the table; `src/components/ui/` grew from
 - **#15 `ConfirmDialog`** (`8a2e2bb`) — all 17 blocking `confirm()` calls
   replaced with a promise-based dialog built on `ui/Modal`.
 
+### Third session (2026-07-28): #15 closed, TypeScript conversion finished
+
+- **Three display components** (`fbbef35`) — `ProgressBar` (6 sites),
+  `StatTile` (13 tiles across 4 files, incl. `TeamPage`'s local `StatCell`),
+  `CollapsibleCard` (4 of 8 chevron disclosures). Each API was derived from
+  the measured duplication, not from the component name. `ProfileSection` was
+  correctly refused: an always-visible summary sits between its toggle button
+  and its collapsed block, so `CollapsibleCard` does not fit it.
+- **`src/features/settings/`** (`e6787f6`) — 7 files. Its hand-rolled
+  `supabase.storage` avatar upload moved to the players slice's
+  `useAvatarUpload`, which already anticipated this caller in a comment.
+- **`src/features/oscars/`** (`a205b47`) — 11 files, and the session's real
+  find. `useOscarsSession.js` had 8 direct fetchers; three re-read tables
+  another surface already cached. **Live bug:** an admin pressing Share
+  updated only the local `useState` copy, so `oscarKeys.session(id)` stayed
+  stale and the registration results banner did not flip until `staleTime`
+  expired. Session row, shared results and matches now go through their
+  owning slices, reusing existing keys.
+- **`src/components/`** (`e7aabde`) — 15 files, the last untyped surface.
+  `Layout`'s `is_my_device_trusted` RPC was found only because the Step 0
+  grep matches `supabase` **bare** — the call chains across a line break.
+- **`fix(layout)`** (`3915716`) — the device-trust banner dismissal never
+  survived a reload: the "clear once trusted" effect keyed off
+  `!isDeviceProbationary`, which is also true while the RPC is in flight, so
+  it wiped the stored flag on mount. The conversion worker had pinned this in
+  a test _documenting the bug_; the test now asserts the fix.
+- **`text-gray-*` sweep** (`374b393`) — 630 occurrences, one pass, isolated
+  from behavioural work on purpose. Two tokens added
+  (`lob-muted-light` `#97ADB3`, `lob-slate` `#40565C`), each holding
+  perceived lightness constant against the gray it replaces, so the intended
+  delta is **hue only**. `ScoresRankingTab`'s 2nd-place marker was excluded:
+  it was `text-gray-400` acting as a _silver medal_, and now sits alongside
+  bronze as a literal hex.
+
+Metrics: tests **1060 → 1175**, lint flat at **61 warnings / 0 errors**
+throughout, typecheck clean, `src/` has no untyped files outside `api/`,
+`hooks/`, `lib/` and `data/`.
+
 ### Corrections to what this file used to say
 
 Three claims here were wrong and cost time to disprove — they are fixed above,
@@ -123,30 +162,39 @@ recorded so nobody reinstates them:
 
 ## Remaining work
 
-The 2026-07-27 session closed #16, #17/#18, #20, and both the bottom sheets
-and `ConfirmDialog` from #15 — see "What was done". What is left:
+**None.** The 2026-07-28 session closed the three display components, the
+`text-gray-*` sweep and the TypeScript conversion — the whole of what this
+file previously listed. See "Third session" above.
 
-1. **#15 — three display components not yet extracted:** `CollapsibleCard`,
-   `StatTile`, `ProgressBar`. Find the duplicated markup before designing the
-   props; do not invent an API from the names alone.
+Open questions that were surfaced but are the owner's to decide, not
+oversights:
 
-2. **#15 — the `text-gray-*` token sweep.** Measured: **633 occurrences across
-   90 files** (the "~650" previously recorded is accurate). Mechanical, but it
-   is the single largest source of visual risk left, and it cannot be verified
-   by any test. **Do it in one pass, immediately before a visual review**, not
-   interleaved with behavioural work — otherwise a regression it causes gets
-   attributed to whatever else shipped alongside it.
-
-3. **TypeScript conversion of `src/features/settings/`, `src/features/oscars/`
-   and `src/components/`** (~43 files). Never in scope originally; now the last
-   big untyped surface. `PlayerForm.tsx`/`SignupRequest.jsx` are a copy-paste
-   pair worth extracting. Follow `docs/conversions.md`.
-
-**Sequencing note:** the visual-review debt is now substantial — the design
-system changes from the first session, plus (second session) the toast
-component, ten migrated bottom sheets, and 17 replaced confirm dialogs.
-Getting a visual pass done before starting the `text-gray-*` sweep will make
-any regression far cheaper to attribute.
+1. **`AuthGate`'s default export has zero call sites.** `grep -rn "<AuthGate"
+src/` returns 0; only `SignInBanner` and `useAuthPrompt` from that module
+   are used. Typed and kept, not deleted — same category as the orphans in
+   `ARCHITECTURE.md` Open Work.
+2. **`formatTime` is duplicated** between `AdminSecurityPanels` and
+   `ApproveDevicesWidget` and the two **behave differently** (the admin one
+   has a `>7d` branch and a different fallback). Merging changes rendered
+   timestamps, so it was left alone rather than force the de-dup CLAUDE.md
+   asks for.
+3. **`.progress-bar` / `.progress-fill` / `.progress-paid` in `index.css` now
+   have no users.** Deleting CSS is its own review surface; left in place.
+4. **`api/oscars.ts`'s `loadOscarMatches` is uncalled.** Removing it strands
+   `oscarMatchRowSchema` and its tests — drop the function, schema, type and
+   test block as one piece or not at all.
+5. **`SignupRequest` / `PlayerForm` were NOT de-duplicated.** This is
+   answered, not deferred: they have drifted past free extraction (modal vs
+   card container, four `isAdmin` copy variants in one and none in the other,
+   divergent playtomic and phone-hint wording). Extracting needs a prop per
+   divergence and puts rendered copy at risk.
+6. **Five oscars reads stay imperative** (categories, my votes, admin
+   stats/results/voters). No existing key, no consumer outside `Game`; moving
+   them means designing new keys and reworking phase-driven loading — a
+   behavioural refactor, not a conversion.
+7. **`AppContextValue` types `loginWithPin`'s `error` and `selfSignup` as
+   `unknown`** because they wrap untyped `api/auth.js`. Three call sites now
+   carry `typeof === 'string'` guards that typing that module would remove.
 
 ## Owner action items (blocking)
 
@@ -169,8 +217,45 @@ any regression far cheaper to attribute.
   the toast component (`src/components/ui/Toast.tsx`) has never been seen on a
   real device — check it clears the bottom nav and reads well over content.
   No test can tell you whether any of that looks right.
+- **Visual pass over the `text-gray-*` sweep** (`374b393`) — the largest
+  unverifiable change on the branch, and the reason it was landed alone and
+  last. Body text across the whole app moved from neutral gray to the
+  teal-tinted `lob` family. Look at these first, worst-first:
+  1. **`RaffleContainer` and `Registration`** — all three `text-gray-900`
+     sites were dark text on saturated yellow/amber. Teal-on-yellow is the
+     most complementary pairing in the sweep, so this is where the tint shows
+     most. Contrast is still high; it is a taste question, not a legibility
+     one.
+  2. **`History` and `PlayerProfileDrawer`** (16 sites each) — the heaviest
+     `text-gray-400` users. Dense metadata screens where most text is at the
+     lightest tier, so the cast of the _whole screen_ moves, not one label.
+  3. **`PlayerAliasMatcher` and `AdminSecurityPanels`** — light-tier text on
+     `bg-gray-*` surfaces that did **not** move. Neutral-gray backgrounds
+     under teal-tinted text is exactly where a tint reads as a mistake rather
+     than a choice. Best place to judge whether the two families coexist.
+  4. **The 14 `/60` sites** — the only ones whose opacity changed as well as
+     hue. `#97ADB3` at 60% lands near `#C7D3D6` vs `gray-300`'s `#D1D5DB`.
+     Check the BYE dashes (`LeagueMatchCard`, `BracketMatchSlot`) and the
+     hover-revealed delete icons (`AdminSection`, `CategoryEditor`) — if
+     anything now reads too faint or not faint enough, it is one of these.
+  5. **`TeamPage`'s stat cells** went from `flex flex-col items-center` +
+     `<span>` to `text-center` + `<p>`. Identical unless a label wraps, and
+     `"Set +/−"` is the one that might on a narrow screen — it would now
+     centre where it previously left-aligned. Check that modal on a phone.
 
 ## Landmines — do not trip these
+
+- **`src/` has no `text-gray-*` left — keep it that way.** Neutral text uses
+  `lob-dark` / `lob-slate` / `lob-muted` / `lob-muted-light`. Nothing enforces
+  this, so a new `text-gray-500` will slip in unnoticed and read as a
+  near-invisible inconsistency next to the tinted family. `bg-gray-*` and
+  `border-gray-*` were deliberately **not** swept (234 occurrences, unchanged)
+  — surfaces and borders are a separate decision from text.
+- **`ScoresRankingTab`'s medal colours are literal hexes on purpose.** Silver
+  (`#9CA3AF`) and bronze (`#CD7F32`) live in `MEDAL_HEX`, outside the token
+  system, because silver was previously `text-gray-400` and a token sweep
+  tints it teal — which breaks the metaphor rather than restyling it. Do not
+  "finish the job" by tokenising them.
 
 - **`lint-staged`'s backup stash is _not_ a hazard — don't "fix" it.** The
   pre-commit hook prints `Backed up original state in git stash (<hash>)`,
