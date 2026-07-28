@@ -1,10 +1,36 @@
-import React, { useRef, useState } from 'react'
+import React, {
+  useRef,
+  useState,
+  type ChangeEvent,
+  type Dispatch,
+  type FormEvent,
+  type SetStateAction,
+} from 'react'
 import { Save, User, ChevronDown, ChevronUp, Camera, Mail, Check } from 'lucide-react'
 import CountryPicker from '../../components/ui/CountryPicker'
 import Avatar from '../../components/ui/Avatar'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
 import { useApp } from '../../context/useApp'
-import { LOBBY_PROMPTS } from './settingsHelpers'
+import { LOBBY_PROMPTS, type ProfileForm } from './settingsHelpers'
+import type { Player } from '../../lib/normalise'
+
+interface ProfileSectionProps {
+  myPlayer: Player | null
+  profileExpanded: boolean
+  setProfileExpanded: Dispatch<SetStateAction<boolean>>
+  profileForm: ProfileForm
+  setProfileForm: (updater: (form: ProfileForm) => ProfileForm) => void
+  profileSaving: boolean
+  profileSaved: boolean
+  profileError: string
+  avatarPreview: string | null
+  handleAvatarChange: (e: ChangeEvent<HTMLInputElement>) => void
+  handleProfileSave: () => void
+  activePrompt: number
+  setActivePrompt: (index: number) => void
+  showPlaytomicPrompt: boolean
+  dismissPlaytomicPrompt: () => void
+}
 
 export default function ProfileSection({
   myPlayer,
@@ -22,8 +48,8 @@ export default function ProfileSection({
   setActivePrompt,
   showPlaytomicPrompt,
   dismissPlaytomicPrompt,
-}) {
-  const fileInputRef = useRef(null)
+}: ProfileSectionProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Self-service email change. We keep state local to this section because
   // the flow is self-contained: type new email -> requestMyEmailChange ->
@@ -36,7 +62,7 @@ export default function ProfileSection({
   const [newEmail, setNewEmail] = useState('')
   const [emailBusy, setEmailBusy] = useState(false)
   const [emailStatus, setEmailStatus] = useState('') // '' | 'sent' | error string
-  const submitEmailChange = async (e) => {
+  const submitEmailChange = async (e: FormEvent) => {
     e?.preventDefault?.()
     if (emailBusy) return
     setEmailBusy(true)
@@ -69,7 +95,7 @@ export default function ProfileSection({
             </div>
             <div className="bg-lob-cream rounded-2xl p-4 text-center">
               <p className="text-3xl font-bold text-lob-teal">
-                {(parseFloat(myPlayer.playtomicLevel) || 0).toFixed(1)}
+                {(parseFloat(String(myPlayer.playtomicLevel)) || 0).toFixed(1)}
               </p>
             </div>
             <div>
@@ -136,7 +162,7 @@ export default function ProfileSection({
               <p className="text-xs text-gray-500">
                 Playtomic level:{' '}
                 <span className="font-bold text-lob-teal">
-                  {(parseFloat(myPlayer.playtomicLevel) || 0).toFixed(1)}
+                  {(parseFloat(String(myPlayer.playtomicLevel)) || 0).toFixed(1)}
                 </span>
               </p>
             </div>
@@ -219,7 +245,7 @@ export default function ProfileSection({
                 <label className="label">Country</label>
                 <CountryPicker
                   value={profileForm.country}
-                  onChange={(val) => setProfileForm((f) => ({ ...f, country: val }))}
+                  onChange={(val: string) => setProfileForm((f) => ({ ...f, country: val }))}
                 />
               </div>
 

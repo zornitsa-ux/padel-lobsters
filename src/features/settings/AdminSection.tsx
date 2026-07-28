@@ -1,6 +1,29 @@
-import React from 'react'
+import React, { type Dispatch, type FormEvent, type SetStateAction } from 'react'
 import { MessageCircle, Save, Info, Lightbulb, Plus, Trash2, RotateCcw } from 'lucide-react'
 import AdminSecurityPanels from '../../components/AdminSecurityPanels'
+import type { EditingTip, SettingsForm } from './settingsHelpers'
+
+interface AdminSectionProps {
+  form: SettingsForm
+  setForm: Dispatch<SetStateAction<SettingsForm>>
+  saving: boolean
+  saved: boolean
+  handleSave: (e: FormEvent) => void
+  // Tips
+  activeTips: string[]
+  isCustom: boolean
+  tipsExpanded: boolean
+  setTipsExpanded: Dispatch<SetStateAction<boolean>>
+  newTip: string
+  setNewTip: (tip: string) => void
+  editingTip: EditingTip | null
+  setEditingTip: Dispatch<SetStateAction<EditingTip | null>>
+  handleAddTip: () => void
+  handleDeleteTip: (index: number) => void
+  handleEditTip: (index: number) => void
+  handleSaveEdit: () => void
+  handleResetTips: () => void
+}
 
 export default function AdminSection({
   form,
@@ -22,7 +45,7 @@ export default function AdminSection({
   handleEditTip,
   handleSaveEdit,
   handleResetTips,
-}) {
+}: AdminSectionProps) {
   return (
     <form onSubmit={handleSave} className="space-y-4">
       {/* Group info */}
@@ -140,7 +163,9 @@ export default function AdminSection({
                     <input
                       className="input flex-1 text-xs py-1"
                       value={editingTip.text}
-                      onChange={(e) => setEditingTip((prev) => ({ ...prev, text: e.target.value }))}
+                      onChange={(e) =>
+                        setEditingTip((prev) => (prev ? { ...prev, text: e.target.value } : prev))
+                      }
                       onKeyDown={(e) => e.key === 'Enter' && handleSaveEdit()}
                       autoFocus
                     />

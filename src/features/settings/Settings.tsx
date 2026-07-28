@@ -1,12 +1,24 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  type ChangeEvent,
+  type FormEvent,
+} from 'react'
 import { useApp } from '../../context/useApp'
 import { useSettings, useSaveSettings } from './useSettings'
-import { useMyProfile, usePlayerActions } from '../players/usePlayers'
-import { supabase } from '../../supabase'
+import { useMyProfile, usePlayerActions, useAvatarUpload } from '../players/usePlayers'
 import { isE164 } from '../../lib/whatsapp'
+import { errorMessage } from '../../lib/errors'
 import DEFAULT_TIPS from '../../data/padelTips'
 import { processAvatar } from '../../lib/processAvatar'
-import { LOBBY_PROMPTS } from './settingsHelpers'
+import {
+  LOBBY_PROMPTS,
+  type EditingTip,
+  type ProfileForm,
+  type SettingsForm,
+} from './settingsHelpers'
 import AccountSection from './AccountSection'
 import ProfileSection from './ProfileSection'
 import AccountStatsSection from './AccountStatsSection'
@@ -17,6 +29,7 @@ import { PageHeader } from '../../components/ui/PageHeader'
 export default function Settings() {
   const { session, role, loginWithPin, logout } = useApp()
   const { updatePlayer } = usePlayerActions({ session, role })
+  const avatarUpload = useAvatarUpload()
   const { data: settings } = useSettings()
   const saveSettingsMutation = useSaveSettings()
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
@@ -26,7 +39,7 @@ export default function Settings() {
   // poll/overlay, so a background refetch can't flash or stomp the form.
   const { data: myPlayer } = useMyProfile(claimedId)
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<SettingsForm>({
     whatsappLink: '',
     groupName: 'Padel Lobsters',
   })
@@ -38,14 +51,14 @@ export default function Settings() {
 
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
-  const [tips, setTips] = useState(null) // null = use defaults
+  const [tips, setTips] = useState<string[] | null>(null) // null = use defaults
   const [newTip, setNewTip] = useState('')
-  const [editingTip, setEditingTip] = useState(null) // { index, text }
+  const [editingTip, setEditingTip] = useState<EditingTip | null>(null)
   const [tipsExpanded, setTipsExpanded] = useState(false)
 
   // ── My Lobster Profile ──────────────────────────────────────────────────
   const [profileExpanded, setProfileExpanded] = useState(false)
-  const [profileForm, setProfileForm] = useState({
+  const [profileForm, setProfileForm] = useState<ProfileForm>({
     name: '',
     country: '',
     gender: '',
@@ -66,12 +79,12 @@ export default function Settings() {
   // invalidation cannot wipe out unsaved edits. Reset to false after a
   // successful save so the form re-seeds from the server's saved values.
   const profileDirty = useRef(false)
-  const editProfileForm = useCallback((updater) => {
+  const editProfileForm = useCallback((updater: (form: ProfileForm) => ProfileForm) => {
     profileDirty.current = true
     setProfileForm(updater)
   }, [])
-  const [avatarFile, setAvatarFile] = useState(null)
-  const [avatarPreview, setAvatarPreview] = useState(null)
+  const [avatarFile, setAvatarFile] = useState<File | null>(null)
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
   const [activePrompt, setActivePrompt] = useState(2) // default to "War Cry"
 
   // Playtomic update popup — show if player hasn't visited settings in 30+ days
@@ -112,13 +125,17 @@ export default function Settings() {
     }
   }, [myPlayer, claimedId])
 
-  const handleAvatarChange = (e) => {
+  const handleAvatarChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
     profileDirty.current = true
     setAvatarFile(file)
     const reader = new FileReader()
-    reader.onload = (ev) => setAvatarPreview(ev.target.result)
+    // readAsDataURL always yields a string; the guard is for the union type.
+    reader.onload = (ev) => {
+      const { result } = ev.target ?? {}
+      setAvatarPreview(typeof result === 'string' ? result : null)
+    }
     reader.readAsDataURL(file)
   }
 
@@ -142,28 +159,28 @@ export default function Settings() {
     try {
       let avatarUrl = profileForm.avatarUrl || ''
       if (avatarFile) {
-        let processed
+        let processed: Blob
         try {
           processed = await processAvatar(avatarFile)
         } catch (err) {
           console.error('Avatar processing error:', err)
-          alert('Photo could not be processed: ' + err.message)
+          alert('Photo could not be processed: ' + errorMessage(err))
           setProfileSaving(false)
           return
         }
-        const filename = `player-${myPlayer.id}.webp`
-        const { error: uploadError } = await supabase.storage
-          .from('avatars')
-          .upload(filename, processed, { upsert: true, contentType: 'image/webp' })
-        if (uploadError) {
-          console.error('Avatar upload error:', uploadError)
-          alert('Photo could not be saved: ' + uploadError.message)
-        } else {
-          const {
-            data: { publicUrl },
-          } = supabase.storage.from('avatars').getPublicUrl(filename)
-          // Cache buster so the CDN serves the new image immediately on re-upload.
+        // A failed upload is non-fatal: the profile still saves, just with the
+        // previous photo.
+        try {
+          const publicUrl = await avatarUpload.mutateAsync({
+            file: processed,
+            // Stable filename (upsert) so a player only ever has one avatar
+            // object; the cache buster makes the CDN serve the new one.
+            filename: `player-${myPlayer.id}.webp`,
+          })
           avatarUrl = `${publicUrl}?v=${Date.now()}`
+        } catch (err) {
+          console.error('Avatar upload error:', err)
+          alert('Photo could not be saved: ' + errorMessage(err))
         }
       }
       await updatePlayer(myPlayer.id, {
@@ -191,7 +208,7 @@ export default function Settings() {
       setProfileSaved(true)
       setTimeout(() => setProfileSaved(false), 2500)
     } catch (err) {
-      setProfileError(err?.message || 'Could not save profile.')
+      setProfileError(errorMessage(err, 'Could not save profile.'))
     } finally {
       setProfileSaving(false)
     }
@@ -220,14 +237,18 @@ export default function Settings() {
   // discrete fold-out at the bottom of the page (Group Owner Access).
   // This keeps the UI focused for the 99% case (a player verifying their
   // identity) and avoids giving away the admin entry point.
-  const handleSignIn = async (e) => {
+  const handleSignIn = async (e: FormEvent) => {
     e?.preventDefault?.()
     if (signingIn) return
     setSigningIn(true)
     setSignInError('')
     const result = await loginWithPin(signInPin)
     if (!result.success) {
-      setSignInError(result.error || 'Sign-in failed')
+      // loginWithPin's `error` is typed unknown by AppContext; the auth API
+      // only ever puts a string there.
+      setSignInError(
+        typeof result.error === 'string' && result.error ? result.error : 'Sign-in failed',
+      )
       setSignInPin('')
     } else if (result.role === 'admin') {
       // If somebody happens to type the admin PIN in the player field,
@@ -242,7 +263,7 @@ export default function Settings() {
     setSigningIn(false)
   }
 
-  const handleSave = async (e) => {
+  const handleSave = async (e: FormEvent) => {
     e.preventDefault()
     if (!isAdmin) return // admin-only form is hidden when not admin
     setSaving(true)
@@ -251,7 +272,7 @@ export default function Settings() {
       setSaved(true)
       setTimeout(() => setSaved(false), 2500)
     } catch (err) {
-      alert('Could not save settings: ' + (err?.message || 'unknown error'))
+      alert('Could not save settings: ' + errorMessage(err, 'unknown error'))
     } finally {
       setSaving(false)
     }
@@ -263,12 +284,12 @@ export default function Settings() {
   // down and click "Save Settings" — a forgotten click meant the delete
   // was lost on the next page load and the old tip reappeared. Errors
   // now roll back the optimistic UI so the admin sees the true state.
-  const persistTips = async (nextTips, prevTipsForRollback) => {
+  const persistTips = async (nextTips: string[] | null, prevTipsForRollback: string[] | null) => {
     try {
       await saveSettingsMutation.mutateAsync({ ...form, padelTips: nextTips })
     } catch (err) {
       setTips(prevTipsForRollback) // revert UI if DB write failed
-      alert('Could not save tip change: ' + (err?.message || 'unknown error'))
+      alert('Could not save tip change: ' + errorMessage(err, 'unknown error'))
     }
   }
 
@@ -281,7 +302,7 @@ export default function Settings() {
     persistTips(updated, prev)
   }
 
-  const handleDeleteTip = (idx) => {
+  const handleDeleteTip = (idx: number) => {
     const prev = tips
     const updated = activeTips.filter((_, i) => i !== idx)
     const next = updated.length > 0 ? updated : null
@@ -289,7 +310,7 @@ export default function Settings() {
     persistTips(next, prev)
   }
 
-  const handleEditTip = (idx) => {
+  const handleEditTip = (idx: number) => {
     setEditingTip({ index: idx, text: activeTips[idx] })
   }
 

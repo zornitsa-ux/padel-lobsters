@@ -5,11 +5,15 @@ import { useAllMatches } from '../events/useMatches'
 import { useAllRegistrations } from '../events/useRegistrations'
 import { useTournaments } from '../events/useTournaments'
 import usePlayerAliases from '../../hooks/usePlayerAliases'
-import { buildPlayerStats } from '../../lib/playerStats'
-import { TOURNAMENTS as LEGACY_TOURNAMENTS } from '../../data/historicalTournaments'
+import { buildPlayerStats, type HistoricalTournament } from '../../lib/playerStats'
+import { TOURNAMENTS as LEGACY_TOURNAMENTS_RAW } from '../../data/historicalTournaments'
 import YourStatsCard from '../home/YourStatsCard'
 
-export default function AccountStatsSection({ claimedId }) {
+// Single assertion boundary for the untyped historical archive — same one
+// PlayerProfileDrawer uses.
+const LEGACY_TOURNAMENTS = LEGACY_TOURNAMENTS_RAW as unknown as HistoricalTournament[]
+
+export default function AccountStatsSection({ claimedId }: { claimedId: string | null }) {
   const navigate = useNavigate()
   const { data: tournaments = [] } = useTournaments()
   const { data: players = [] } = usePlayers()
@@ -18,7 +22,7 @@ export default function AccountStatsSection({ claimedId }) {
   const { playerAliases } = usePlayerAliases()
 
   const getTournamentRegistrations = useCallback(
-    (id) => allRegsData.filter((r) => r.tournamentId === id),
+    (id: string) => allRegsData.filter((r) => r.tournamentId === id),
     [allRegsData],
   )
 
@@ -41,7 +45,7 @@ export default function AccountStatsSection({ claimedId }) {
           const p = players.find((x) => x.id === oppId)
           return p ? { name: p.name.split(' ')[0], won: rec.won, lost: rec.lost } : null
         })
-        .filter(Boolean)
+        .filter((x): x is NonNullable<typeof x> => x !== null)
         .sort((a, b) => b.lost - b.won - (a.lost - a.won))[0] || null
 
     const bestPartner =
@@ -51,7 +55,7 @@ export default function AccountStatsSection({ claimedId }) {
           const p = players.find((x) => x.id === pId)
           return p ? { name: p.name.split(' ')[0], wins: rec.wins, games: rec.games } : null
         })
-        .filter(Boolean)
+        .filter((x): x is NonNullable<typeof x> => x !== null)
         .sort((a, b) => b.wins - a.wins)[0] || null
 
     const completedSorted = tournaments
@@ -90,7 +94,7 @@ export default function AccountStatsSection({ claimedId }) {
 
   if (!claimedId || !myStats) return null
 
-  const onNavigate = (page, payload) => {
+  const onNavigate = (page: string, payload?: { focusPlayerId: string }) => {
     if (page === 'players' && payload?.focusPlayerId) {
       navigate(`/community/${payload.focusPlayerId}`)
     }

@@ -1,7 +1,21 @@
-import React from 'react'
+import React, { type FormEvent } from 'react'
 import { Shield, User, LogIn, LogOut } from 'lucide-react'
 import ApproveDevicesWidget from '../../components/ApproveDevicesWidget'
 import Avatar from '../../components/ui/Avatar'
+import type { Player } from '../../lib/normalise'
+
+interface AccountSectionProps {
+  isAdmin: boolean
+  signedInPlayer: Player | null
+  logout: () => void
+  // guest sign-in props
+  signInPin: string
+  setSignInPin: (pin: string) => void
+  signInError: string
+  setSignInError: (message: string) => void
+  signingIn: boolean
+  handleSignIn: (e: FormEvent) => void
+}
 
 export default function AccountSection({
   isAdmin,
@@ -14,7 +28,7 @@ export default function AccountSection({
   setSignInError,
   signingIn,
   handleSignIn,
-}) {
+}: AccountSectionProps) {
   return (
     <div className="card space-y-3">
       <div className="flex items-center gap-2">
