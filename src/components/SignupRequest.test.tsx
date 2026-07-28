@@ -16,6 +16,7 @@ vi.mock('../context/useApp', () => ({
 vi.mock('../features/players/usePlayers', () => ({
   usePlayers: () => ({ data: [] }),
   usePlayerActions: () => ({ updatePlayer: vi.fn() }),
+  useAvatarUpload: () => ({ mutateAsync: vi.fn() }),
 }))
 vi.mock('../supabase', () => ({ supabase: { storage: { from: () => ({}) } } }))
 vi.mock('../lib/processAvatar', () => ({ processAvatar: vi.fn() }))

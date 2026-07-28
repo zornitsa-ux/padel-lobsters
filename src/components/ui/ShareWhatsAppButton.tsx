@@ -13,10 +13,30 @@ import { IconButton } from './IconButton'
 //  Two variants: 'icon' (compact square) and 'full' (wide CTA pill).
 // ============================================================================
 
-export default function ShareWhatsAppButton({ tournament, variant = 'icon', className = '' }) {
+// Structural subset of a tournament this button reads. NormalisedTournament
+// satisfies it.
+export interface ShareableEvent {
+  id?: string | number | null
+  name?: string | null
+  date?: string | null
+  time?: string | null
+  location?: string | null
+}
+
+interface ShareWhatsAppButtonProps {
+  tournament?: ShareableEvent | null
+  variant?: 'icon' | 'full'
+  className?: string
+}
+
+export default function ShareWhatsAppButton({
+  tournament,
+  variant = 'icon',
+  className = '',
+}: ShareWhatsAppButtonProps) {
   if (!tournament?.id) return null
 
-  const handleClick = (e) => {
+  const handleClick = (e: React.MouseEvent<HTMLElement>) => {
     e?.preventDefault?.()
     e?.stopPropagation?.()
 

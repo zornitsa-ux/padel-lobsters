@@ -1,6 +1,9 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react'
 import { useApp } from '../../context/useApp'
+import type { AppContextValue } from '../../context/useApp'
 import { Shield, User, LogIn, X, KeyRound } from 'lucide-react'
+
+type LoginResult = Awaited<ReturnType<AppContextValue['loginWithPin']>>
 
 /**
  * Site-wide auth middleware.
@@ -19,7 +22,29 @@ import { Shield, User, LogIn, X, KeyRound } from 'lucide-react'
  *   fallback    if provided, render this instead of the default banner
  *               (e.g. `null` to hide entirely)
  */
-export default function AuthGate({ role, onNavigate, message, compact, fallback, children }) {
+export type GateRole = 'admin' | 'player'
+
+// The navigation callback these surfaces use ('settings' is the only
+// destination they ever ask for).
+export type GateNavigate = (destination: string) => void
+
+interface AuthGateProps {
+  role: GateRole
+  onNavigate?: GateNavigate
+  message?: string
+  compact?: boolean
+  fallback?: React.ReactNode
+  children?: React.ReactNode
+}
+
+export default function AuthGate({
+  role,
+  onNavigate,
+  message,
+  compact,
+  fallback,
+  children,
+}: AuthGateProps) {
   const { session } = useApp()
   const userRole = session?.user?.app_metadata?.role ?? 'guest'
   const isAdmin = userRole === 'admin'
@@ -33,7 +58,7 @@ export default function AuthGate({ role, onNavigate, message, compact, fallback,
         : true
 
   if (allowed) return <>{children}</>
-  if (fallback !== undefined) return fallback
+  if (fallback !== undefined) return <>{fallback}</>
   return <SignInBanner role={role} onNavigate={onNavigate} message={message} compact={compact} />
 }
 
@@ -41,7 +66,17 @@ export default function AuthGate({ role, onNavigate, message, compact, fallback,
  * Standalone banner — exported so pages can surface it at the top of a
  * section without wrapping children (e.g. "read-only view" notices).
  */
-export function SignInBanner({ role, onNavigate, message, compact }) {
+export function SignInBanner({
+  role,
+  onNavigate,
+  message,
+  compact,
+}: {
+  role: GateRole
+  onNavigate?: GateNavigate
+  message?: string
+  compact?: boolean
+}) {
   const isAdmin = role === 'admin'
   const Icon = isAdmin ? Shield : User
   const accent = isAdmin ? 'amber' : 'teal'
@@ -111,12 +146,20 @@ export function PinPrompt({
   title,
   subtitle,
   onNavigate,
+}: {
+  open: boolean
+  onClose?: () => void
+  onSuccess?: (result: LoginResult) => void
+  role?: GateRole
+  title?: string | null
+  subtitle?: string | null
+  onNavigate?: GateNavigate
 }) {
   const { loginWithPin, logout } = useApp()
   const [pin, setPin] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
-  const inputRef = useRef(null)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   // Reset state every time the modal opens
   useEffect(() => {
@@ -131,7 +174,7 @@ export function PinPrompt({
 
   if (!open) return null
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault?.()
     if (busy) return
     setBusy(true)
@@ -154,7 +197,9 @@ export function PinPrompt({
       onSuccess?.(result)
       onClose?.()
     } else {
-      setError(result.error || 'Invalid PIN')
+      // `error` is typed unknown by AppContext; the auth API only ever puts
+      // a string there.
+      setError(typeof result.error === 'string' && result.error ? result.error : 'Invalid PIN')
       setBusy(false)
     }
   }
@@ -249,25 +294,29 @@ export function PinPrompt({
  * immediately. Otherwise the modal opens, and the callback runs after a
  * successful sign-in.
  */
-export function useAuthPrompt({ onNavigate } = {}) {
+export function useAuthPrompt({ onNavigate }: { onNavigate?: GateNavigate } = {}) {
   const { session } = useApp()
   const userRole = session?.user?.app_metadata?.role ?? 'guest'
   const isAdmin = userRole === 'admin'
   const isPlayer = userRole === 'player'
   const [open, setOpen] = useState(false)
-  const [askRole, setAskRole] = useState('player')
-  const [askTitle, setAskTitle] = useState(null)
-  const [askSub, setAskSub] = useState(null)
-  const pendingRef = useRef(null)
+  const [askRole, setAskRole] = useState<GateRole>('player')
+  const [askTitle, setAskTitle] = useState<string | null>(null)
+  const [askSub, setAskSub] = useState<string | null>(null)
+  const pendingRef = useRef<(() => void) | null>(null)
 
   const requireAuth = useCallback(
-    (role, cb, options = {}) => {
+    (
+      role: GateRole,
+      cb?: () => void,
+      options: { title?: string; subtitle?: string } = {},
+    ): void => {
       const ok = role === 'admin' ? isAdmin : role === 'player' ? isPlayer || isAdmin : true
       if (ok) {
         cb?.()
         return
       }
-      pendingRef.current = cb
+      pendingRef.current = cb ?? null
       setAskRole(role || 'player')
       setAskTitle(options.title || null)
       setAskSub(options.subtitle || null)

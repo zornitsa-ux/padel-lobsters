@@ -1,6 +1,8 @@
 import React, { useMemo, useState } from 'react'
 import { Check, Search, ChevronRight, RotateCcw, UserX } from 'lucide-react'
 import { buildAliasInventory, suggestPlayers, NOT_IN_ROSTER } from '../lib/playerHistory'
+import type { AliasInventoryItem } from '../lib/playerHistoryTypes'
+import type { Player } from '../lib/normalise'
 import { Modal } from './ui/Modal'
 import { SegmentedControl } from './ui/SegmentedControl'
 import { ProgressBar } from './ui/ProgressBar'
@@ -12,21 +14,35 @@ import { ProgressBar } from './ui/ProgressBar'
 //  tournament history (count, list, podium finishes, total points).
 // ─────────────────────────────────────────────────────────────────────────────
 
+type AliasFilter = 'unmatched' | 'matched' | 'skipped' | 'all'
+
+interface PlayerAliasMatcherProps {
+  players: Player[]
+  /** historical name → player id (or the NOT_IN_ROSTER sentinel). */
+  playerAliases: Record<string, string>
+  setPlayerAlias: (name: string, playerId: string) => Promise<unknown>
+  removePlayerAlias: (name: string) => Promise<unknown>
+  onClose: () => void
+}
+
 export default function PlayerAliasMatcher({
   players,
   playerAliases,
   setPlayerAlias,
   removePlayerAlias,
   onClose,
-}) {
-  const inventory = useMemo(() => buildAliasInventory(playerAliases), [playerAliases])
+}: PlayerAliasMatcherProps) {
+  const inventory: AliasInventoryItem[] = useMemo(
+    () => buildAliasInventory(playerAliases),
+    [playerAliases],
+  )
 
-  const [filter, setFilter] = useState('unmatched') // 'unmatched' | 'matched' | 'all'
+  const [filter, setFilter] = useState<AliasFilter>('unmatched')
   const [search, setSearch] = useState('')
-  const [picker, setPicker] = useState(null) // { name } | null
+  const [picker, setPicker] = useState<{ name: string } | null>(null)
 
   const playersById = useMemo(() => {
-    const m = {}
+    const m: Record<string, Player> = {}
     ;(players || []).forEach((p) => {
       m[p.id] = p
     })
@@ -57,16 +73,16 @@ export default function PlayerAliasMatcher({
     return [...rows].sort((a, b) => b.tournamentCount - a.tournamentCount)
   }, [inventory, filter, search])
 
-  const handleConfirm = async (name, playerId) => {
+  const handleConfirm = async (name: string, playerId: string) => {
     await setPlayerAlias(name, playerId)
     setPicker(null)
   }
 
-  const handleSkip = async (name) => {
+  const handleSkip = async (name: string) => {
     await setPlayerAlias(name, NOT_IN_ROSTER)
   }
 
-  const handleClear = async (name) => {
+  const handleClear = async (name: string) => {
     await removePlayerAlias(name)
   }
 
@@ -110,7 +126,7 @@ export default function PlayerAliasMatcher({
             { value: 'all', label: `All (${counts.all})` },
           ]}
           value={filter}
-          onChange={setFilter}
+          onChange={(v) => setFilter(v as AliasFilter)}
         />
 
         {/* Search */}
@@ -136,7 +152,9 @@ export default function PlayerAliasMatcher({
             const linkedPlayer =
               item.playerId && item.playerId !== NOT_IN_ROSTER ? playersById[item.playerId] : null
             const isSkipped = item.playerId === NOT_IN_ROSTER
-            const suggestions = !item.playerId ? suggestPlayers(item.name, players, 3) : []
+            const suggestions: Player[] = !item.playerId
+              ? suggestPlayers(item.name, players, 3)
+              : []
 
             return (
               <div
@@ -272,7 +290,17 @@ export default function PlayerAliasMatcher({
 // ─────────────────────────────────────────────────────────────────────────────
 //  Full-roster picker — used when fuzzy suggestions miss the right player
 // ─────────────────────────────────────────────────────────────────────────────
-function PlayerPicker({ historicalName, players, onPick, onClose }) {
+function PlayerPicker({
+  historicalName,
+  players,
+  onPick,
+  onClose,
+}: {
+  historicalName: string
+  players: Player[]
+  onPick: (playerId: string) => void
+  onClose: () => void
+}) {
   const [q, setQ] = useState('')
   const list = useMemo(() => {
     const sorted = [...(players || [])].sort((a, b) => (a.name || '').localeCompare(b.name || ''))

@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useApp } from '../context/useApp'
-import { usePlayers, usePlayerActions } from '../features/players/usePlayers'
-import { supabase } from '../supabase'
+import { usePlayers, usePlayerActions, useAvatarUpload } from '../features/players/usePlayers'
+import { randomAvatarFilename } from '../features/players/playerQueries'
+import type { Player } from '../lib/normalise'
 import { isE164 } from '../lib/whatsapp'
 import { processAvatar } from '../lib/processAvatar'
 import { ArrowLeft, UserPlus, Check, Loader2, Copy, User, Camera } from 'lucide-react'
@@ -56,7 +57,44 @@ const LOBBY_PROMPTS = [
 ]
 const randomPrompt = () => LOBBY_PROMPTS[Math.floor(Math.random() * LOBBY_PROMPTS.length)]
 
-const emptyForm = {
+const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null
+
+// `selfSignup` is typed `Promise<unknown>` by AppContext because it wraps the
+// untyped auth API. Read the three fields this form branches on off it rather
+// than asserting a shape onto the whole payload.
+function readSignupResult(result: unknown): {
+  failed: boolean
+  errorMessage: string
+  wasExisting: boolean
+  pin: string
+} {
+  const root = isRecord(result) ? result : {}
+  const payload = isRecord(root.data) ? root.data : null
+  const error = isRecord(root.error) ? root.error : null
+  return {
+    failed: error !== null,
+    errorMessage: typeof error?.message === 'string' ? error.message : '',
+    wasExisting: payload?.was_existing === true,
+    pin: typeof payload?.pin === 'string' ? payload.pin : '',
+  }
+}
+
+interface SignupFormState {
+  firstName: string
+  lastName: string
+  email: string
+  phone: string
+  playtomicLevel: string
+  notes: string
+  gender: string
+  isLeftHanded: boolean
+  country: string
+  avatarUrl: string
+  birthday: string
+  preferredPosition: string
+}
+
+const emptyForm: SignupFormState = {
   firstName: '',
   lastName: '',
   email: '',
@@ -71,10 +109,17 @@ const emptyForm = {
   preferredPosition: '',
 }
 
-export default function SignupRequest({ onComplete, onBack, compact = false }) {
+interface SignupRequestProps {
+  onComplete?: (role: string) => void
+  onBack?: () => void
+  compact?: boolean
+}
+
+export default function SignupRequest({ onComplete, onBack, compact = false }: SignupRequestProps) {
   const { selfSignup, loginWithPin, session, role } = useApp()
   const { updatePlayer } = usePlayerActions({ session, role })
   const { data: players = [] } = usePlayers()
+  const avatarUpload = useAvatarUpload()
 
   const [form, setForm] = useState(emptyForm)
   // useState's lazy initializer rolls a prompt on first mount, but in
@@ -95,19 +140,19 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
   // we show a banner offering to complete that existing profile instead of
   // creating a duplicate row. `mergePlayer` holds the candidate; `editId`
   // flips the submit path from selfSignup → updatePlayer.
-  const [mergePlayer, setMergePlayer] = useState(null)
-  const [editId, setEditId] = useState(null)
+  const [mergePlayer, setMergePlayer] = useState<Player | null>(null)
+  const [editId, setEditId] = useState<string | null>(null)
 
   // Avatar upload state — file is the pending upload (flushed to storage
   // on submit), preview is the dataURL so the user sees their pick
   // immediately.
-  const [avatarFile, setAvatarFile] = useState(null)
-  const [avatarPreview, setAvatarPreview] = useState(null)
-  const fileInputRef = useRef(null)
+  const [avatarFile, setAvatarFile] = useState<File | null>(null)
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Post-submit screen — { pin, wasExisting }. When set we show the PIN
   // reveal instead of the form.
-  const [pinReveal, setPinReveal] = useState(null)
+  const [pinReveal, setPinReveal] = useState<{ pin: string; wasExisting: boolean } | null>(null)
   const [copied, setCopied] = useState(false)
   // Tracks the "Continue to the app" retry state on the success screen.
   // Separate from the form's `saving` so a retry can't re-trigger form
@@ -118,7 +163,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
   // Debounced duplicate check — fires ~400ms after the user stops typing
   // the full name. Same predicate Players.jsx uses so the behaviour is
   // consistent across surfaces.
-  const mergeDebounceRef = useRef(null)
+  const mergeDebounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   useEffect(() => {
     if (editId) return
     clearTimeout(mergeDebounceRef.current)
@@ -148,7 +193,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
       lastName: nameParts.slice(1).join(' '),
       email: p.email || '',
       phone: p.phone || '',
-      playtomicLevel: p.playtomicLevel ?? '',
+      playtomicLevel: p.playtomicLevel != null ? String(p.playtomicLevel) : '',
       notes: p.notes || '',
       gender: p.gender || '',
       isLeftHanded: p.isLeftHanded || false,
@@ -162,16 +207,19 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
     setMergePlayer(null)
   }
 
-  const handleAvatarChange = (e) => {
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
     setAvatarFile(file)
     const reader = new FileReader()
-    reader.onload = (ev) => setAvatarPreview(ev.target.result)
+    reader.onload = (ev) => {
+      const result = ev.target?.result
+      setAvatarPreview(typeof result === 'string' ? result : null)
+    }
     reader.readAsDataURL(file)
   }
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (saving) return
     setError('')
@@ -214,23 +262,19 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
 
     setSaving(true)
     try {
-      // Avatar upload — same bucket and naming pattern the in-app form used.
+      // Avatar upload — same bucket and naming pattern the in-app form uses.
       let avatarUrl = form.avatarUrl || ''
       if (avatarFile) {
         try {
           const processed = await processAvatar(avatarFile)
-          const filename = `player-${Date.now()}-${Math.random().toString(36).slice(2)}.webp`
-          const { error: uploadError } = await supabase.storage
-            .from('avatars')
-            .upload(filename, processed, { upsert: true, contentType: 'image/webp' })
-          if (uploadError) {
-            console.error('Avatar upload error:', uploadError)
+          try {
+            avatarUrl = await avatarUpload.mutateAsync({
+              file: processed,
+              filename: randomAvatarFilename(),
+            })
+          } catch (uploadError) {
             // Non-fatal — signup still proceeds without the photo.
-          } else {
-            const {
-              data: { publicUrl },
-            } = supabase.storage.from('avatars').getPublicUrl(filename)
-            avatarUrl = publicUrl
+            console.error('Avatar upload error:', uploadError)
           }
         } catch (err) {
           // Non-fatal — signup still proceeds without the photo if the
@@ -280,18 +324,18 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
         // addPlayer — addPlayer requires the admin PIN and would refuse
         // for a brand-new user with "Admin sign-in required to add a
         // player." (the original production bug fixed in migration 0014).
-        const { data: signup, error: signupError } = await selfSignup(data)
-        if (signupError) {
+        const signup = readSignupResult(await selfSignup(data))
+        if (signup.failed) {
           // Rate-limit, invalid input, network — show the message
           // straight from the RPC so the user has something actionable.
           setError(
-            signupError.message?.includes('rate limited')
+            signup.errorMessage.includes('rate limited')
               ? "We've seen too many signups from this device today. Please try again tomorrow or ask an admin to add you."
-              : signupError.message || 'Could not create your profile — please try again.',
+              : signup.errorMessage || 'Could not create your profile — please try again.',
           )
           return
         }
-        if (signup?.was_existing) {
+        if (signup.wasExisting) {
           // Email is already on an active roster row. The RPC deliberately
           // does NOT return the PIN to a stranger holding the email —
           // route the user to the Forgot-my-PIN flow instead.
@@ -300,7 +344,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
           )
           return
         }
-        if (!signup?.pin) {
+        if (!signup.pin) {
           setError(
             "Your profile was created but we couldn't read the PIN back. Please ask an admin to resend it.",
           )
@@ -352,8 +396,10 @@ export default function SignupRequest({ onComplete, onBack, compact = false }) {
       if (result?.success) {
         onComplete?.(result.role || 'player')
       } else {
+        // `error` is typed unknown by AppContext; the auth API only ever puts
+        // a string there.
         setContinueError(
-          result?.error ||
+          (typeof result?.error === 'string' ? result.error : '') ||
             "We couldn't sign you in automatically. Copy your PIN and try again from the sign-in screen.",
         )
       }

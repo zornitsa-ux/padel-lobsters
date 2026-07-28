@@ -28,15 +28,17 @@ import SignupRequest from './SignupRequest'
  *   - forgot:  WhatsApp-the-admin deep link. No auto-reset flow yet —
  *              matches the "leave pin-only auth simple" product brief.
  */
-export default function VerificationGate({ children }) {
+type GateMode = 'signin' | 'signup' | 'magic'
+
+export default function VerificationGate({ children }: { children?: React.ReactNode }) {
   const { role, loading, loginWithPin, sendMagicLink } = useApp()
   const location = useLocation()
 
-  const [mode, setMode] = useState('signin') // signin | signup | magic
+  const [mode, setMode] = useState<GateMode>('signin')
   const [pin, setPin] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
-  const inputRef = useRef(null)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   // Forgot-PIN flow state. Two sub-states:
   //   form  - email input, default; also where contact_admin errors land
@@ -47,7 +49,7 @@ export default function VerificationGate({ children }) {
   // recovery on the same self-service rail rather than dead-ending at
   // an admin handoff.
   const [magicEmail, setMagicEmail] = useState('')
-  const [magicStage, setMagicStage] = useState('form') // form | sent
+  const [magicStage, setMagicStage] = useState<'form' | 'sent'>('form')
   const [magicBusy, setMagicBusy] = useState(false)
   const [magicError, setMagicError] = useState('')
   const [magicSentTo, setMagicSentTo] = useState('')
@@ -72,7 +74,7 @@ export default function VerificationGate({ children }) {
   // into view), so the card lands 1/3 down the page with "Country" at the
   // top instead of the "Padel Lobsters" header. We reset scrollTop=0 on
   // every mode change so the new surface always opens at the top.
-  const scrollRef = useRef(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
 
   // Focus the PIN input whenever the gate returns to the signin mode so
   // mobile keyboards pop up ready to type.
@@ -111,14 +113,19 @@ export default function VerificationGate({ children }) {
   if (isPublicPath(location.pathname)) return <>{children}</>
   if (role !== 'guest') return <>{children}</>
 
-  const handleSignin = async (e) => {
+  const handleSignin = async (e?: React.FormEvent) => {
     e?.preventDefault?.()
     if (busy || !pin) return
     setBusy(true)
     setError('')
     const result = await loginWithPin(pin)
     if (!result?.success) {
-      setError(result?.error || "That PIN didn't match any Lobster. Try again.")
+      // `error` is typed unknown by AppContext; the auth API only ever puts a
+      // string there.
+      setError(
+        (typeof result?.error === 'string' ? result.error : '') ||
+          "That PIN didn't match any Lobster. Try again.",
+      )
       setPin('')
       setBusy(false)
       setTimeout(() => inputRef.current?.focus(), 10)
@@ -135,7 +142,7 @@ export default function VerificationGate({ children }) {
     setMagicSentTo('')
   }
 
-  const handleMagicSubmit = async (e) => {
+  const handleMagicSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault?.()
     if (magicBusy) return
     const email = magicEmail.trim()

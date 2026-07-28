@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { ChevronDown } from 'lucide-react'
 
-const COUNTRIES = [
+const COUNTRIES: ReadonlyArray<readonly [string, string]> = [
   ['', 'Select country…'],
   ['AR', 'Argentina'],
   ['AU', 'Australia'],
@@ -69,7 +69,7 @@ const COUNTRIES = [
   ['VE', 'Venezuela'],
 ]
 
-export function FlagImg({ code, className = '' }) {
+export function FlagImg({ code, className = '' }: { code?: string | null; className?: string }) {
   if (!code || code.length !== 2) return null
   return (
     <img
@@ -82,14 +82,19 @@ export function FlagImg({ code, className = '' }) {
   )
 }
 
-export default function CountryPicker({ value, onChange }) {
+interface CountryPickerProps {
+  value?: string | null
+  onChange: (code: string) => void
+}
+
+export default function CountryPicker({ value, onChange }: CountryPickerProps) {
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState(false)
-  const containerRef = useRef(null)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const handler = (e) => {
-      if (containerRef.current && !containerRef.current.contains(e.target)) {
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setOpen(false)
         setQuery('')
       }
@@ -105,7 +110,7 @@ export default function CountryPicker({ value, onChange }) {
       code.toLowerCase().includes(query.toLowerCase()),
   )
 
-  const select = (code) => {
+  const select = (code: string) => {
     onChange(code)
     setOpen(false)
     setQuery('')

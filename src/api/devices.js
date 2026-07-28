@@ -2,6 +2,18 @@ import { supabase } from '../supabase'
 import { getDeviceId } from '../lib/deviceId'
 import { emitToast } from '../lib/toastBus'
 
+// Player-side: is the device I'm on trusted for this player? Deliberately
+// unguarded: an RPC error yields `data === null`, which reads as "not
+// trusted" and surfaces the read-only banner — the safe direction.
+export async function isMyDeviceTrusted(playerId) {
+  const deviceId = getDeviceId()
+  const { data } = await supabase.rpc('is_my_device_trusted', {
+    input_player_id: playerId,
+    input_device_id: deviceId,
+  })
+  return data === true
+}
+
 // Player-side: list this player's own pending devices. Runs unattended on
 // every Settings mount, so a transient failure stays quiet rather than
 // toasting the player for something they didn't trigger — the widget just

@@ -14,6 +14,8 @@ import { useTransfers, useTransferActions } from '../features/events/useTransfer
 import Avatar from './ui/Avatar'
 import { EmptyState } from './ui/EmptyState'
 import { useConfirm } from '../lib/confirmBus'
+import type { Player } from '../lib/normalise'
+import type { EventNavigate } from '../features/events/eventHelpers'
 
 // Landing page Melanie hits after tapping the WhatsApp link
 // (https://padelobsters.nl/?transfer=<id>). Shows the offer details and an
@@ -28,7 +30,30 @@ import { useConfirm } from '../lib/confirmBus'
 // Props:
 //   transferId: from the ?transfer=<id> deep link
 //   onNavigate(page, tournament?): standard nav helper used across the app
-export default function TransferAccept({ transferId, onNavigate }) {
+interface TransferAcceptProps {
+  transferId?: string | null
+  onNavigate?: EventNavigate
+}
+
+// RPC status code → recipient-facing message.
+const RESPOND_ERRORS: Record<string, string> = {
+  wrong_pin: 'Sign in again to respond.',
+  forbidden: 'This transfer is for a different player.',
+  not_found: 'This transfer no longer exists.',
+  not_pending: 'This transfer was already responded to or closed.',
+  tournament_started: 'Too late — the event has already started.',
+  error: 'Something went wrong. Try again.',
+}
+
+// How a non-pending transfer is described on the "already resolved" card.
+const CLOSED_STATE_LABELS: Record<string, string> = {
+  accepted: 'already accepted',
+  declined: 'already declined',
+  cancelled: 'been cancelled',
+  auto_closed: 'closed because the event has started',
+}
+
+export default function TransferAccept({ transferId, onNavigate }: TransferAcceptProps) {
   const confirm = useConfirm()
   const { session, logout, loading } = useApp()
   const { data: tournaments = [] } = useTournaments()
@@ -38,9 +63,9 @@ export default function TransferAccept({ transferId, onNavigate }) {
   const claimedId = session?.user?.id ?? null
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
 
-  const [busy, setBusy] = useState(null) // 'accept' | 'decline' | null
-  const [done, setDone] = useState(null) // { kind: 'accepted' | 'declined' }
-  const [error, setError] = useState(null)
+  const [busy, setBusy] = useState<'accept' | 'decline' | null>(null)
+  const [done, setDone] = useState<{ kind: string } | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   const transfer = useMemo(
     () => transfers.find((t) => String(t.id) === String(transferId)),
@@ -53,12 +78,12 @@ export default function TransferAccept({ transferId, onNavigate }) {
 
   // First name only for non-admins (matches the rest of the app's privacy
   // posture — players_public hides full names).
-  const dn = (p) => (p ? (isAdmin ? p.name : (p.name || '').split(/\s+/)[0]) : '—')
+  const dn = (p?: Player | null) => (p ? (isAdmin ? p.name : (p.name || '').split(/\s+/)[0]) : '—')
 
   const isMyOffer = transfer && claimedId && String(claimedId) === String(transfer.toPlayerId)
   const wrongIdentity = transfer && claimedId && !isMyOffer
 
-  const handleRespond = async (accept) => {
+  const handleRespond = async (accept: boolean) => {
     if (busy || done || !transfer) return
     setBusy(accept ? 'accept' : 'decline')
     setError(null)
@@ -68,15 +93,7 @@ export default function TransferAccept({ transferId, onNavigate }) {
       setDone({ kind: r.status }) // 'accepted' or 'declined'
       return
     }
-    const map = {
-      wrong_pin: 'Sign in again to respond.',
-      forbidden: 'This transfer is for a different player.',
-      not_found: 'This transfer no longer exists.',
-      not_pending: 'This transfer was already responded to or closed.',
-      tournament_started: 'Too late — the event has already started.',
-      error: 'Something went wrong. Try again.',
-    }
-    setError(map[r.status] || 'Could not record your response.')
+    setError(RESPOND_ERRORS[r.status] || 'Could not record your response.')
   }
 
   const handleSignOut = async () => {
@@ -133,13 +150,7 @@ export default function TransferAccept({ transferId, onNavigate }) {
 
   // ── Already-resolved state ───────────────────────────────────────────────
   if (transfer.status !== 'pending' && !done) {
-    const stateLabel =
-      {
-        accepted: 'already accepted',
-        declined: 'already declined',
-        cancelled: 'been cancelled',
-        auto_closed: 'closed because the event has started',
-      }[transfer.status] || 'already closed'
+    const stateLabel = CLOSED_STATE_LABELS[transfer.status ?? ''] || 'already closed'
     return (
       <EmptyState
         icon={<AlertCircle size={36} />}

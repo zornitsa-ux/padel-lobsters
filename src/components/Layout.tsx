@@ -2,8 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useApp } from '../context/useApp'
 import { useSettings } from '../features/settings/useSettings'
-import { supabase } from '../supabase'
-import { getDeviceId } from '../lib/deviceId'
+import useDevices from '../hooks/useDevices'
 import {
   LayoutDashboard,
   Users,
@@ -35,11 +34,12 @@ import DeviceTrustBanner from './device-trust/DeviceTrustBanner'
 import DeviceTrustIndicator from './device-trust/DeviceTrustIndicator'
 const DEVICE_TRUST_BANNER_KEY = 'pl_device_trust_banner_dismissed'
 
-export default function Layout({ children }) {
+export default function Layout({ children }: { children?: React.ReactNode }) {
   const { session } = useApp()
   const { data: settings } = useSettings()
+  const { isMyDeviceTrusted } = useDevices()
   const [bannerDismissed, setBannerDismissed] = useState(false)
-  const [deviceTrustedDb, setDeviceTrustedDb] = useState(undefined)
+  const [deviceTrustedDb, setDeviceTrustedDb] = useState<boolean | undefined>(undefined)
 
   useEffect(() => {
     const uid = session?.user?.id
@@ -47,11 +47,8 @@ export default function Layout({ children }) {
       setDeviceTrustedDb(undefined)
       return
     }
-    const deviceId = getDeviceId()
-    supabase
-      .rpc('is_my_device_trusted', { input_player_id: uid, input_device_id: deviceId })
-      .then(({ data }) => setDeviceTrustedDb(data === true))
-  }, [session?.user?.id])
+    isMyDeviceTrusted(uid).then(setDeviceTrustedDb)
+  }, [session?.user?.id, isMyDeviceTrusted])
 
   // Use live DB result; while it's loading (undefined) don't show the banner to
   // avoid false positives from stale JWT claims.

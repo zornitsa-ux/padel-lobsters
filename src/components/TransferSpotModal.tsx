@@ -6,6 +6,7 @@ import { useRegistrations } from '../features/events/useRegistrations'
 import { useTransferActions } from '../features/events/useTransfers'
 import { Modal } from './ui/Modal'
 import { PlayerRow } from './ui/PlayerRow'
+import type { Player } from '../lib/normalise'
 
 // Picker modal Josephine sees when she taps "Transfer spot to another player".
 // Lists waitlist players first (so transferring to them is a one-tap promotion
@@ -18,7 +19,28 @@ import { PlayerRow } from './ui/PlayerRow'
 //   onTransferCreated: ({ transferId, toPlayer }) => void
 //                      called after the RPC returns 'ok' so the caller can
 //                      open the share modal next.
-export default function TransferSpotModal({ tournament, onClose, onTransferCreated }) {
+interface TransferSpotModalProps {
+  tournament: { id: string }
+  onClose: () => void
+  onTransferCreated?: (result: { transferId: string; toPlayer: Player }) => void
+}
+
+// RPC status code → player-facing message.
+const CREATE_ERRORS: Record<string, string> = {
+  wrong_pin: 'Sign in again to send a transfer.',
+  invalid_target: "That player can't receive a transfer.",
+  not_registered: 'You are no longer registered for this event.',
+  target_already_registered: 'That player is already registered.',
+  tournament_started: 'Too late — the event has already started.',
+  already_pending: 'You already have a pending transfer for this event.',
+  error: 'Something went wrong. Try again.',
+}
+
+export default function TransferSpotModal({
+  tournament,
+  onClose,
+  onTransferCreated,
+}: TransferSpotModalProps) {
   const { session } = useApp()
   const { createTransfer } = useTransferActions({ session })
   const { data: players = [] } = usePlayers()
@@ -28,9 +50,9 @@ export default function TransferSpotModal({ tournament, onClose, onTransferCreat
 
   const [search, setSearch] = useState('')
   const [busy, setBusy] = useState(false)
-  const [error, setError] = useState(null)
+  const [error, setError] = useState<string | null>(null)
 
-  const displayName = (p) => (isAdmin ? p.name : (p.name || '').split(' ')[0])
+  const displayName = (p: Player) => (isAdmin ? p.name : (p.name || '').split(' ')[0])
   const registeredIds = regs.filter((r) => r.status === 'registered').map((r) => String(r.playerId))
   const waitlistedIds = regs.filter((r) => r.status === 'waitlist').map((r) => String(r.playerId))
 
@@ -53,27 +75,19 @@ export default function TransferSpotModal({ tournament, onClose, onTransferCreat
     return list
   }, [players, claimedId, registeredIds.join(','), waitlistedIds.join(','), search])
 
-  const handlePick = async (toPlayer) => {
+  const handlePick = async (toPlayer: Player) => {
     if (busy) return
     setBusy(true)
     setError(null)
     const result = await createTransfer(toPlayer.id, tournament.id)
     setBusy(false)
     if (result.ok) {
-      onTransferCreated?.({ transferId: result.transferId, toPlayer })
+      // create_transfer always returns the id alongside an ok status, so the
+      // guard is a type narrowing rather than a reachable branch.
+      if (result.transferId) onTransferCreated?.({ transferId: result.transferId, toPlayer })
       return
     }
-    // Map the RPC's status code to a human-readable error.
-    const map = {
-      wrong_pin: 'Sign in again to send a transfer.',
-      invalid_target: "That player can't receive a transfer.",
-      not_registered: 'You are no longer registered for this event.',
-      target_already_registered: 'That player is already registered.',
-      tournament_started: 'Too late — the event has already started.',
-      already_pending: 'You already have a pending transfer for this event.',
-      error: 'Something went wrong. Try again.',
-    }
-    setError(map[result.status] || 'Could not send the transfer offer.')
+    setError(CREATE_ERRORS[result.status] || 'Could not send the transfer offer.')
   }
 
   return (

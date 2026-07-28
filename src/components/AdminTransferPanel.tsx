@@ -3,6 +3,7 @@ import { ArrowRightLeft, AlertTriangle, Clock } from 'lucide-react'
 import { useApp } from '../context/useApp'
 import { usePlayers } from '../features/players/usePlayers'
 import { useTransfers, useTransferActions } from '../features/events/useTransfers'
+import type { NormalisedTransfer } from '../features/events/transferQueries'
 import Avatar from './ui/Avatar'
 import { Modal } from './ui/Modal'
 import { useConfirm } from '../lib/confirmBus'
@@ -20,7 +21,26 @@ import { useConfirm } from '../lib/confirmBus'
 // Props:
 //   tournament: tournament object whose pending transfers are listed
 //   onClose():  dismiss the panel
-export default function AdminTransferPanel({ tournament, onClose }) {
+// RPC status code → admin-facing message.
+const FORCE_ACCEPT_ERRORS: Record<string, string> = {
+  wrong_admin_pin: 'Admin PIN required. Sign in as admin in Settings.',
+  not_found: 'Transfer no longer exists.',
+  not_pending: 'Transfer was already responded to.',
+  tournament_started: 'Too late — the event has already started.',
+}
+
+const CANCEL_ERRORS: Record<string, string> = {
+  wrong_admin_pin: 'Admin PIN required. Sign in as admin in Settings.',
+  not_found: 'Transfer no longer exists.',
+  not_pending: 'Transfer was already responded to.',
+}
+
+interface AdminTransferPanelProps {
+  tournament?: { id?: string | number | null; name?: string | null } | null
+  onClose: () => void
+}
+
+export default function AdminTransferPanel({ tournament, onClose }: AdminTransferPanelProps) {
   const confirm = useConfirm()
   const { session } = useApp()
   const { data: transfers = [] } = useTransfers()
@@ -28,8 +48,8 @@ export default function AdminTransferPanel({ tournament, onClose }) {
   const { data: players = [] } = usePlayers()
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
 
-  const [busyId, setBusyId] = useState(null)
-  const [errorById, setErrorById] = useState({})
+  const [busyId, setBusyId] = useState<string | null>(null)
+  const [errorById, setErrorById] = useState<Record<string, string | null>>({})
 
   if (!isAdmin) return null
 
@@ -37,9 +57,9 @@ export default function AdminTransferPanel({ tournament, onClose }) {
     (t) => t.status === 'pending' && String(t.tournamentId) === String(tournament?.id),
   )
 
-  const getPlayer = (id) => players.find((p) => String(p.id) === String(id))
+  const getPlayer = (id?: string | null) => players.find((p) => String(p.id) === String(id))
 
-  const formatElapsed = (createdAt) => {
+  const formatElapsed = (createdAt?: string | null) => {
     if (!createdAt) return ''
     const ms = Date.now() - new Date(createdAt).getTime()
     if (ms < 0) return 'just now'
@@ -51,7 +71,7 @@ export default function AdminTransferPanel({ tournament, onClose }) {
     return `${d}d ago`
   }
 
-  const handleForceAccept = async (xfer) => {
+  const handleForceAccept = async (xfer: NormalisedTransfer) => {
     if (
       !(await confirm({
         message: `Force-accept this transfer? The spot moves to ${getPlayer(xfer.toPlayerId)?.name || 'the recipient'}.`,
@@ -63,18 +83,12 @@ export default function AdminTransferPanel({ tournament, onClose }) {
     const r = await forceAcceptTransfer(xfer.id)
     setBusyId(null)
     if (!r.ok) {
-      const msg =
-        {
-          wrong_admin_pin: 'Admin PIN required. Sign in as admin in Settings.',
-          not_found: 'Transfer no longer exists.',
-          not_pending: 'Transfer was already responded to.',
-          tournament_started: 'Too late — the event has already started.',
-        }[r.status] || 'Could not force-accept the transfer.'
+      const msg = FORCE_ACCEPT_ERRORS[r.status] || 'Could not force-accept the transfer.'
       setErrorById((e) => ({ ...e, [xfer.id]: msg }))
     }
   }
 
-  const handleCancel = async (xfer) => {
+  const handleCancel = async (xfer: NormalisedTransfer) => {
     if (
       !(await confirm({
         message: 'Cancel this transfer offer? The spot stays with the from-player.',
@@ -87,12 +101,7 @@ export default function AdminTransferPanel({ tournament, onClose }) {
     const r = await adminCancelTransfer(xfer.id)
     setBusyId(null)
     if (!r.ok) {
-      const msg =
-        {
-          wrong_admin_pin: 'Admin PIN required. Sign in as admin in Settings.',
-          not_found: 'Transfer no longer exists.',
-          not_pending: 'Transfer was already responded to.',
-        }[r.status] || 'Could not cancel the transfer.'
+      const msg = CANCEL_ERRORS[r.status] || 'Could not cancel the transfer.'
       setErrorById((e) => ({ ...e, [xfer.id]: msg }))
     }
   }

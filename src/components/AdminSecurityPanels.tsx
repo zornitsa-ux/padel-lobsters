@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import useDevices from '../hooks/useDevices'
+import type { DeviceActionResult, PendingDeviceRow, SecurityEventRow } from '../hooks/useDevices'
 import {
   ShieldCheck,
   AlertTriangle,
@@ -12,6 +13,7 @@ import {
   KeyRound,
   UserCheck,
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { CollapsibleCard } from './ui/CollapsibleCard'
 
 /**
@@ -34,6 +36,16 @@ import { CollapsibleCard } from './ui/CollapsibleCard'
  * Both panels are only mounted by Settings when isAdmin is true; this
  * component does not gate itself, so callers must check.
  */
+type BusyAction = 'approve' | 'deny' | null
+type EventFilter = 'all' | 'failures' | 'pii' | 'locks'
+
+const EVENT_FILTERS: ReadonlyArray<{ id: EventFilter; label: string }> = [
+  { id: 'all', label: 'All' },
+  { id: 'failures', label: 'Failures only' },
+  { id: 'pii', label: 'PII dumps' },
+  { id: 'locks', label: 'Unlocks' },
+]
+
 export default function AdminSecurityPanels() {
   return (
     <div className="space-y-4">
@@ -45,14 +57,15 @@ export default function AdminSecurityPanels() {
 
 function PendingDevicesPanel() {
   const { adminListPendingDevices, adminApproveDevice, adminDenyDevice } = useDevices()
-  const [rows, setRows] = useState([])
+  const [rows, setRows] = useState<PendingDeviceRow[]>([])
   const [loading, setLoading] = useState(true)
-  const [busy, setBusy] = useState({}) // keyed by `${player_id}|${device_id}`
+  // keyed by `${player_id}|${device_id}`
+  const [busy, setBusy] = useState<Record<string, BusyAction>>({})
   const [error, setError] = useState('')
 
   const load = useCallback(async () => {
     setLoading(true)
-    const data = await adminListPendingDevices()
+    const data: PendingDeviceRow[] = await adminListPendingDevices()
     setRows(data)
     setLoading(false)
   }, [adminListPendingDevices])
@@ -61,11 +74,11 @@ function PendingDevicesPanel() {
     load()
   }, [load])
 
-  const onApprove = async (row) => {
+  const onApprove = async (row: PendingDeviceRow) => {
     const key = `${row.player_id}|${row.device_id}`
     setBusy((b) => ({ ...b, [key]: 'approve' }))
     setError('')
-    const result = await adminApproveDevice(row.player_id, row.device_id)
+    const result: DeviceActionResult = await adminApproveDevice(row.player_id, row.device_id)
     setBusy((b) => ({ ...b, [key]: null }))
     if (!result.ok) {
       setError(
@@ -78,11 +91,11 @@ function PendingDevicesPanel() {
     )
   }
 
-  const onDeny = async (row) => {
+  const onDeny = async (row: PendingDeviceRow) => {
     const key = `${row.player_id}|${row.device_id}`
     setBusy((b) => ({ ...b, [key]: 'deny' }))
     setError('')
-    const result = await adminDenyDevice(row.player_id, row.device_id)
+    const result: DeviceActionResult = await adminDenyDevice(row.player_id, row.device_id)
     setBusy((b) => ({ ...b, [key]: null }))
     if (!result.ok) {
       setError(`Could not deny ${row.player_name}'s device — ${result.reason || 'unknown error'}`)
@@ -181,16 +194,16 @@ function PendingDevicesPanel() {
 
 function SecurityEventsPanel() {
   const { adminListSecurityEvents } = useDevices()
-  const [events, setEvents] = useState([])
+  const [events, setEvents] = useState<SecurityEventRow[]>([])
   const [loading, setLoading] = useState(false)
   const [loaded, setLoaded] = useState(false)
   const [limit, setLimit] = useState(50)
-  const [filter, setFilter] = useState('all') // all | failures | pii | locks
+  const [filter, setFilter] = useState<EventFilter>('all')
   const [expanded, setExpanded] = useState(false) // collapsed by default — admin can expand on demand
 
   const load = useCallback(async () => {
     setLoading(true)
-    const data = await adminListSecurityEvents(limit)
+    const data: SecurityEventRow[] = await adminListSecurityEvents(limit)
     setEvents(data)
     setLoading(false)
     setLoaded(true)
@@ -254,12 +267,7 @@ function SecurityEventsPanel() {
           </div>
 
           <div className="flex flex-wrap gap-1.5">
-            {[
-              { id: 'all', label: 'All' },
-              { id: 'failures', label: 'Failures only' },
-              { id: 'pii', label: 'PII dumps' },
-              { id: 'locks', label: 'Unlocks' },
-            ].map((f) => (
+            {EVENT_FILTERS.map((f) => (
               <button
                 key={f.id}
                 onClick={() => setFilter(f.id)}
@@ -303,7 +311,7 @@ function SecurityEventsPanel() {
   )
 }
 
-function EventRow({ ev }) {
+function EventRow({ ev }: { ev: SecurityEventRow }) {
   const Icon = iconForKind(ev.attempt_kind)
   const colors = colorsForEvent(ev)
   return (
@@ -340,7 +348,7 @@ function EventRow({ ev }) {
   )
 }
 
-function labelForKind(kind) {
+function labelForKind(kind: string): string {
   switch (kind) {
     case 'player':
       return 'Player sign-in'
@@ -359,7 +367,7 @@ function labelForKind(kind) {
   }
 }
 
-function iconForKind(kind) {
+function iconForKind(kind: string): LucideIcon {
   switch (kind) {
     case 'player':
       return KeyRound
@@ -378,7 +386,7 @@ function iconForKind(kind) {
   }
 }
 
-function colorsForEvent(ev) {
+function colorsForEvent(ev: SecurityEventRow): { bg: string; text: string; icon: string } {
   if (ev.succeeded === false) {
     return { bg: 'bg-red-50 border-red-100', text: 'text-red-800', icon: 'text-red-600' }
   }
@@ -391,12 +399,12 @@ function colorsForEvent(ev) {
   return { bg: 'bg-gray-50 border-gray-100', text: 'text-gray-700', icon: 'text-gray-500' }
 }
 
-function formatTime(iso) {
+function formatTime(iso?: string | null): string {
   if (!iso) return '—'
   try {
     const d = new Date(iso)
     const now = new Date()
-    const diffMin = Math.round((now - d) / 60000)
+    const diffMin = Math.round((now.getTime() - d.getTime()) / 60000)
     if (diffMin < 1) return 'just now'
     if (diffMin < 60) return `${diffMin} min ago`
     if (diffMin < 1440) return `${Math.round(diffMin / 60)}h ago`

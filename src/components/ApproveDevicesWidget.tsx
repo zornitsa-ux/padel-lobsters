@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import useDevices from '../hooks/useDevices'
+import type { DeviceActionResult, MyPendingDeviceRow } from '../hooks/useDevices'
 import { ShieldCheck, Smartphone, RefreshCw, Check, X, AlertCircle } from 'lucide-react'
 
 /**
@@ -13,16 +14,19 @@ import { ShieldCheck, Smartphone, RefreshCw, Check, X, AlertCircle } from 'lucid
  * devices (the common case). When something appears, it surfaces near
  * the top of Settings → Account.
  */
+type BusyAction = 'approve' | 'reject' | null
+
 export default function ApproveDevicesWidget() {
   const { listMyPendingDevices, approveMyDevice, rejectMyDevice } = useDevices()
-  const [devices, setDevices] = useState([])
+  const [devices, setDevices] = useState<MyPendingDeviceRow[]>([])
   const [loading, setLoading] = useState(true)
-  const [busy, setBusy] = useState({}) // { [device_id]: 'approve' | 'reject' | null }
+  // { [device_id]: 'approve' | 'reject' | null }
+  const [busy, setBusy] = useState<Record<string, BusyAction>>({})
   const [error, setError] = useState('')
 
   const load = useCallback(async () => {
     setLoading(true)
-    const rows = await listMyPendingDevices()
+    const rows: MyPendingDeviceRow[] = await listMyPendingDevices()
     setDevices(rows)
     setLoading(false)
   }, [listMyPendingDevices])
@@ -31,10 +35,10 @@ export default function ApproveDevicesWidget() {
     load()
   }, [load])
 
-  const onApprove = async (targetDeviceId) => {
+  const onApprove = async (targetDeviceId: string) => {
     setBusy((b) => ({ ...b, [targetDeviceId]: 'approve' }))
     setError('')
-    const result = await approveMyDevice(targetDeviceId)
+    const result: DeviceActionResult = await approveMyDevice(targetDeviceId)
     setBusy((b) => ({ ...b, [targetDeviceId]: null }))
     if (!result.ok) {
       setError(
@@ -48,10 +52,10 @@ export default function ApproveDevicesWidget() {
     load()
   }
 
-  const onReject = async (targetDeviceId) => {
+  const onReject = async (targetDeviceId: string) => {
     setBusy((b) => ({ ...b, [targetDeviceId]: 'reject' }))
     setError('')
-    const result = await rejectMyDevice(targetDeviceId)
+    const result: DeviceActionResult = await rejectMyDevice(targetDeviceId)
     setBusy((b) => ({ ...b, [targetDeviceId]: null }))
     if (!result.ok) {
       setError(
@@ -138,12 +142,12 @@ export default function ApproveDevicesWidget() {
   )
 }
 
-function formatTime(iso) {
+function formatTime(iso?: string | null) {
   if (!iso) return '—'
   try {
     const d = new Date(iso)
     const now = new Date()
-    const diffMin = Math.round((now - d) / 60000)
+    const diffMin = Math.round((now.getTime() - d.getTime()) / 60000)
     if (diffMin < 1) return 'just now'
     if (diffMin < 60) return `${diffMin} min ago`
     if (diffMin < 1440) return `${Math.round(diffMin / 60)}h ago`

@@ -9,7 +9,15 @@ import React from 'react'
 //  see at a glance which event is on which day.
 // ============================================================================
 
-export default function DateTile({ date, size = 'md', className = '' }) {
+export type DateTileSize = 'sm' | 'md' | 'lg'
+
+interface DateTileProps {
+  date?: string | number | Date | null
+  size?: DateTileSize
+  className?: string
+}
+
+export default function DateTile({ date, size = 'md', className = '' }: DateTileProps) {
   if (!date) return null
   const d = new Date(date)
   if (isNaN(d.getTime())) return null

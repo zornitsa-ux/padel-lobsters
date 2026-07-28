@@ -1,7 +1,7 @@
 import React from 'react'
 import { useApp } from '../context/useApp'
 
-export default function SetupGuard({ children }) {
+export default function SetupGuard({ children }: { children?: React.ReactNode }) {
   const { loading } = useApp()
 
   if (loading) {
@@ -19,5 +19,5 @@ export default function SetupGuard({ children }) {
     )
   }
 
-  return children
+  return <>{children}</>
 }

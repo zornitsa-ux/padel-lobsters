@@ -26,13 +26,28 @@ import {
 //               .phone via the privacy-respecting RPC)
 //   onClose():  dismiss
 //   onCancel(): user explicitly cancels the offer (calls cancelTransfer)
-export default function TransferPendingModal({ transferId, toPlayer, onClose, onCancel }) {
+interface TransferPendingModalProps {
+  transferId: string
+  /** Only the recipient's name is read here; the phone comes from the RPC. */
+  toPlayer?: { name?: string | null } | null
+  onClose: () => void
+  onCancel?: () => void
+}
+
+type PendingAction = 'whatsapp' | 'group' | 'cancel' | null
+
+export default function TransferPendingModal({
+  transferId,
+  toPlayer,
+  onClose,
+  onCancel,
+}: TransferPendingModalProps) {
   const confirm = useConfirm()
   const { session } = useApp()
   const { getTransferRecipientContact, cancelTransfer } = useTransferActions({ session })
 
-  const [phone, setPhone] = useState(null) // null = loading, '' = no phone
-  const [busyAction, setBusyAction] = useState(null) // 'whatsapp' | 'group' | 'cancel' | null
+  const [phone, setPhone] = useState<string | null>(null) // null = loading, '' = no phone
+  const [busyAction, setBusyAction] = useState<PendingAction>(null)
   const [groupNote, setGroupNote] = useState(false)
 
   useEffect(() => {

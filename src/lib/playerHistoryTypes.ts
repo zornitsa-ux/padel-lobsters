@@ -3,6 +3,16 @@
 // each consumer casts once at its call site instead of the module being
 // retyped for every importer.
 
+// One row of buildAliasInventory(): a historical name plus its current
+// mapping. `playerId` is a player id, the NOT_IN_ROSTER sentinel, or null.
+export interface AliasInventoryItem {
+  name: string
+  playerId: string | null
+  skipped: boolean
+  tournamentCount: number
+  tournamentLabels: string[]
+}
+
 export interface HistoricalAppearance {
   id: string | number
   name: string
