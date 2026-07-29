@@ -5,12 +5,18 @@ import { matchKeys } from './matchKeys'
 import { registrationKeys } from './registrationKeys'
 import { fetchMatches } from './matchQueries'
 import { fetchRegistrations } from './registrationQueries'
-import useRefreshOnFocus from '../../hooks/useRefreshOnFocus'
 
 // Ensures match and registration queries are active when any event sub-route
 // mounts. TanStack Query will fetch if the cache is cold and skip if it's
 // already fresh — no duplicate requests within the staleTime window.
 // Called by useTournamentFromUrl() so every event route gets it for free.
+//
+// Freshness on refocus comes from the query client's global
+// refetchOnWindowFocus (src/lib/queryClient.ts). The manual useRefreshOnFocus
+// invalidation this hook used to do was a second, unconditional refetch of the
+// same two queries on every focus — during an event that is ~30 phones waking
+// repeatedly, each paying twice and ignoring staleTime. Removed; the same
+// redundancy was already removed from the merch slice.
 export function useEventDataLoader() {
   const { id: tournamentId } = useParams<{ id: string }>()
   const queryClient = useQueryClient()
@@ -27,10 +33,4 @@ export function useEventDataLoader() {
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tournamentId])
-
-  useRefreshOnFocus(() => {
-    if (!tournamentId) return
-    queryClient.invalidateQueries({ queryKey: matchKeys.list(tournamentId) })
-    queryClient.invalidateQueries({ queryKey: registrationKeys.list(tournamentId) })
-  })
 }

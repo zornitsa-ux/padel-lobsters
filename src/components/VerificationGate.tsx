@@ -31,7 +31,7 @@ import SignupRequest from './SignupRequest'
 type GateMode = 'signin' | 'signup' | 'magic'
 
 export default function VerificationGate({ children }: { children?: React.ReactNode }) {
-  const { role, loading, loginWithPin, sendMagicLink } = useApp()
+  const { role, sessionSettled, loginWithPin, sendMagicLink } = useApp()
   const location = useLocation()
 
   const [mode, setMode] = useState<GateMode>('signin')
@@ -79,10 +79,10 @@ export default function VerificationGate({ children }: { children?: React.ReactN
   // Focus the PIN input whenever the gate returns to the signin mode so
   // mobile keyboards pop up ready to type.
   useEffect(() => {
-    if (mode === 'signin' && role === 'guest' && !loading) {
+    if (mode === 'signin' && role === 'guest' && sessionSettled) {
       setTimeout(() => inputRef.current?.focus(), 100)
     }
-  }, [mode, role, loading])
+  }, [mode, role, sessionSettled])
 
   // Reset the overlay's scroll position every time the mode changes.
   // Runs after the mode-change render commits, so the new form's height
@@ -109,7 +109,9 @@ export default function VerificationGate({ children }: { children?: React.ReactN
     return () => cancelAnimationFrame(raf)
   }, [mode])
 
-  if (loading) return null
+  // Hold children back until auth has resolved: role is 'guest' until then,
+  // so rendering early flashes the PIN overlay at an already-signed-in user.
+  if (!sessionSettled) return null
   if (isPublicPath(location.pathname)) return <>{children}</>
   if (role !== 'guest') return <>{children}</>
 

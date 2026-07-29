@@ -36,7 +36,7 @@ import RegisteredSection from './registration/RegisteredSection'
 import WaitlistSection from './registration/WaitlistSection'
 import CancelledSection from './registration/CancelledSection'
 import ScoresAndRankingSection from './registration/ScoresAndRankingSection'
-import { useScoreSync } from './useScoreSync'
+import { useTournamentSync } from './useTournamentSync'
 import { errorMessage } from '../../lib/errors'
 import type { EventFormValues } from './eventConstants'
 import type { EventNavigate } from './eventHelpers'
@@ -78,7 +78,7 @@ export default function Registration({
 
   // Sync peer score updates while the tournament is active.
   // Disabled for completed events — scores are frozen.
-  useScoreSync({
+  useTournamentSync({
     tournamentId: tournament?.id,
     enabled: tournament != null && tournament.status !== 'completed',
   })

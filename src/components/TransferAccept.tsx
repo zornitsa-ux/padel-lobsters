@@ -55,7 +55,7 @@ const CLOSED_STATE_LABELS: Record<string, string> = {
 
 export default function TransferAccept({ transferId, onNavigate }: TransferAcceptProps) {
   const confirm = useConfirm()
-  const { session, logout, loading } = useApp()
+  const { session, logout, sessionSettled } = useApp()
   const { data: tournaments = [] } = useTournaments()
   const { data: transfers = [] } = useTransfers()
   const { respondToTransfer } = useTransferActions({ session })
@@ -105,7 +105,7 @@ export default function TransferAccept({ transferId, onNavigate }: TransferAccep
   }
 
   // ── Loading / not-found / error states ───────────────────────────────────
-  if (loading) {
+  if (!sessionSettled) {
     return (
       <div className="card py-10 text-center text-lob-muted-light">
         <p>Loading transfer…</p>

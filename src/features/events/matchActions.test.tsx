@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { act } from '@testing-library/react'
-import { renderHookWithClient, makeTestQueryClient } from '../../test/renderWithClient'
+import { act, waitFor } from '@testing-library/react'
+import { QueryClient } from '@tanstack/react-query'
+import { renderHookWithClient } from '../../test/renderWithClient'
 import { matchKeys } from './matchKeys'
 import { useMatchActions } from './useMatches'
 
@@ -12,25 +13,46 @@ vi.mock('./matchQueries', () => ({
   updateMatch: vi.fn(),
 }))
 
-vi.mock('./scoreChannel', () => ({
+vi.mock('./tournamentChannel', () => ({
   broadcastScore: vi.fn(),
-  subscribeScores: vi.fn(() => () => {}),
+  broadcastSchedule: vi.fn(),
+  subscribeTournament: vi.fn(() => () => {}),
 }))
 
 import * as q from './matchQueries'
-import { broadcastScore } from './scoreChannel'
+import { broadcastScore, broadcastSchedule } from './tournamentChannel'
 
 beforeEach(() => {
   vi.clearAllMocks()
 })
 
+// The shared harness uses gcTime: 0, which collects a setQueryData-seeded
+// cache the moment a timer runs — racing these optimistic-cache assertions.
+const makeClient = () =>
+  new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  })
+
+const STAMP = '2026-07-29T19:30:00.500000+00:00'
+
+const makeMatch = (id: string, tournamentId: string) => ({
+  id,
+  tournamentId,
+  score1: null,
+  score2: null,
+  completed: false,
+  updatedAt: '2026-07-29T19:00:00.000000+00:00',
+})
+
+const writeOk = (updated_at: string | null = STAMP) => ({ data: { updated_at }, error: null })
+
 // ── saveMatches ───────────────────────────────────────────────────────────────
 
 describe('useMatchActions — saveMatches', () => {
-  it('calls the mutation and invalidates the tournament match list', async () => {
+  it('calls the mutation, invalidates the tournament match list and tells peers', async () => {
     ;(q.saveMatches as ReturnType<typeof vi.fn>).mockResolvedValue(undefined)
 
-    const client = makeTestQueryClient()
+    const client = makeClient()
     vi.spyOn(client, 'invalidateQueries')
 
     const { result } = renderHookWithClient(() => useMatchActions(), client)
@@ -44,97 +66,136 @@ describe('useMatchActions — saveMatches', () => {
     expect(client.invalidateQueries).toHaveBeenCalledWith({
       queryKey: matchKeys.list('tid-1'),
     })
+    // Replaces the old postgres_changes INSERT/DELETE subscription.
+    expect(broadcastSchedule).toHaveBeenCalledWith({ tournamentId: 'tid-1' })
   })
 })
 
 // ── updateMatch ───────────────────────────────────────────────────────────────
 
 describe('useMatchActions — updateMatch', () => {
-  it('optimistically patches the matching cache entry and broadcasts on success', async () => {
-    const existingMatch = {
-      id: 'match-1',
-      tournamentId: 'tid-1',
-      score1: null,
-      score2: null,
-      completed: false,
-    }
-    ;(q.updateMatch as ReturnType<typeof vi.fn>).mockResolvedValue({ data: null, error: null })
+  it('optimistically patches the cache before the write resolves', async () => {
+    let resolveWrite: (value: unknown) => void = () => {}
+    ;(q.updateMatch as ReturnType<typeof vi.fn>).mockReturnValue(
+      new Promise((resolve) => {
+        resolveWrite = resolve
+      }),
+    )
 
-    const client = makeTestQueryClient()
-    // Seed cache with a flat list under matchKeys.all() (simulating fetchAllMatches)
-    client.setQueryData(matchKeys.all(), [existingMatch])
-    vi.spyOn(client, 'invalidateQueries')
-    const setQueriesDataSpy = vi.spyOn(client, 'setQueriesData')
+    const client = makeClient()
+    client.setQueryData(matchKeys.all(), [makeMatch('match-1', 'tid-1')])
+
+    const { result } = renderHookWithClient(() => useMatchActions(), client)
+
+    // Flush onMutate's microtasks without letting timers run, so the assertion
+    // sees the optimistic state while the write is still in flight.
+    await act(async () => {
+      result.current.updateMatch('match-1', { score1: 6, score2: 3, completed: true })
+    })
+
+    const cached = client.getQueryData<ReturnType<typeof makeMatch>[]>(matchKeys.all())
+    expect(cached?.[0].score1).toBe(6)
+    expect(cached?.[0].completed).toBe(true)
+
+    await act(async () => {
+      resolveWrite({ data: null, error: null })
+    })
+  })
+
+  it('cancels in-flight match fetches so a stale GET cannot land on the write', async () => {
+    ;(q.updateMatch as ReturnType<typeof vi.fn>).mockResolvedValue(writeOk())
+
+    const client = makeClient()
+    client.setQueryData(matchKeys.all(), [makeMatch('match-1', 'tid-1')])
+    const cancelSpy = vi.spyOn(client, 'cancelQueries')
 
     const { result } = renderHookWithClient(() => useMatchActions(), client)
 
     await act(async () => {
-      await result.current.updateMatch('match-1', { score1: 6, score2: 3, completed: true })
+      result.current.updateMatch('match-1', { score1: 6, score2: 3, completed: true })
     })
 
-    // The optimistic setQueriesData was called across the matchKeys.all() key space
-    expect(setQueriesDataSpy).toHaveBeenCalledWith(
-      { queryKey: matchKeys.all() },
-      expect.any(Function),
-    )
-
-    // Broadcast contains ONLY the written fields + the id. tournamentId is
-    // extracted during the cache scan, proving the match was found in cache.
-    expect(broadcastScore).toHaveBeenCalledWith({
-      tournamentId: 'tid-1',
-      payload: { id: 'match-1', score1: 6, score2: 3, completed: true },
-    })
-
-    // No invalidation on success
-    expect(client.invalidateQueries).not.toHaveBeenCalled()
+    await waitFor(() => expect(cancelSpy).toHaveBeenCalledWith({ queryKey: matchKeys.all() }))
   })
 
-  it('invalidates all matches on error instead of broadcasting', async () => {
-    const existingMatch = {
-      id: 'match-2',
-      tournamentId: 'tid-2',
-      score1: null,
-      score2: null,
-      completed: false,
-    }
+  it('broadcasts only the written fields and reconciles the list once settled', async () => {
+    ;(q.updateMatch as ReturnType<typeof vi.fn>).mockResolvedValue(writeOk())
+
+    const client = makeClient()
+    client.setQueryData(matchKeys.all(), [makeMatch('match-1', 'tid-1')])
+    vi.spyOn(client, 'invalidateQueries')
+
+    const { result } = renderHookWithClient(() => useMatchActions(), client)
+
+    await act(async () => {
+      result.current.updateMatch('match-1', { score1: 6, score2: 3, completed: true })
+    })
+
+    // tournamentId is extracted during the optimistic cache scan; updatedAt is
+    // the server's stamp, which peers use to reject older deltas.
+    await waitFor(() =>
+      expect(broadcastScore).toHaveBeenCalledWith({
+        tournamentId: 'tid-1',
+        payload: { id: 'match-1', score1: 6, score2: 3, completed: true, updatedAt: STAMP },
+      }),
+    )
+    expect(client.invalidateQueries).toHaveBeenCalledWith({ queryKey: matchKeys.list('tid-1') })
+  })
+
+  it("watermarks the cache with the server's stamp on success", async () => {
+    ;(q.updateMatch as ReturnType<typeof vi.fn>).mockResolvedValue(writeOk())
+
+    const client = makeClient()
+    client.setQueryData(matchKeys.all(), [makeMatch('match-1', 'tid-1')])
+
+    const { result } = renderHookWithClient(() => useMatchActions(), client)
+
+    await act(async () => {
+      result.current.updateMatch('match-1', { score1: 6, score2: 3, completed: true })
+    })
+
+    await waitFor(() => {
+      const cached = client.getQueryData<Record<string, unknown>[]>(matchKeys.all())
+      expect(cached?.[0].updatedAt).toBe(STAMP)
+    })
+  })
+
+  it('rolls the cache back and does not broadcast when the write fails', async () => {
     ;(q.updateMatch as ReturnType<typeof vi.fn>).mockResolvedValue({
       data: null,
       error: { message: 'DB write failed' },
     })
 
-    const client = makeTestQueryClient()
-    client.setQueryData(matchKeys.all(), [existingMatch])
-    vi.spyOn(client, 'invalidateQueries')
+    const client = makeClient()
+    client.setQueryData(matchKeys.all(), [makeMatch('match-2', 'tid-2')])
 
     const { result } = renderHookWithClient(() => useMatchActions(), client)
 
     await act(async () => {
-      await result.current.updateMatch('match-2', { score1: 4, score2: 7, completed: true })
+      result.current.updateMatch('match-2', { score1: 4, score2: 7, completed: true })
     })
 
-    // Should NOT broadcast
+    await waitFor(() => {
+      const cached = client.getQueryData<ReturnType<typeof makeMatch>[]>(matchKeys.all())
+      expect(cached?.[0].score1).toBeNull()
+      expect(cached?.[0].completed).toBe(false)
+    })
     expect(broadcastScore).not.toHaveBeenCalled()
-
-    // Should invalidate all matches
-    expect(client.invalidateQueries).toHaveBeenCalledWith({
-      queryKey: matchKeys.all(),
-    })
   })
 
-  it('does not broadcast when match is not found in any cache (no tournamentId)', async () => {
-    ;(q.updateMatch as ReturnType<typeof vi.fn>).mockResolvedValue({ data: null, error: null })
+  it('does not broadcast when the match is in no cache (no tournamentId)', async () => {
+    ;(q.updateMatch as ReturnType<typeof vi.fn>).mockResolvedValue(writeOk())
 
-    const client = makeTestQueryClient()
-    // empty cache — match not found
+    const client = makeClient()
     client.setQueryData(matchKeys.all(), [])
 
     const { result } = renderHookWithClient(() => useMatchActions(), client)
 
     await act(async () => {
-      await result.current.updateMatch('unknown-match', { score1: 1, score2: 2, completed: true })
+      result.current.updateMatch('unknown-match', { score1: 1, score2: 2, completed: true })
     })
 
-    // tournamentId stays undefined → no broadcast
+    await waitFor(() => expect(q.updateMatch).toHaveBeenCalled())
     expect(broadcastScore).not.toHaveBeenCalled()
   })
 })

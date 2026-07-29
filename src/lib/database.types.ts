@@ -460,6 +460,7 @@ export type Database = {
           team2_ids: string[] | null
           team2_level: number | null
           tournament_id: string
+          updated_at: string
         }
         Insert: {
           completed?: boolean | null
@@ -474,6 +475,7 @@ export type Database = {
           team2_ids?: string[] | null
           team2_level?: number | null
           tournament_id: string
+          updated_at?: string
         }
         Update: {
           completed?: boolean | null
@@ -488,6 +490,7 @@ export type Database = {
           team2_ids?: string[] | null
           team2_level?: number | null
           tournament_id?: string
+          updated_at?: string
         }
         Relationships: [
           {

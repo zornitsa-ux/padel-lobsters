@@ -2,7 +2,6 @@ import { createContext, useContext } from 'react'
 import type { Session } from '@supabase/supabase-js'
 
 export interface AppContextValue {
-  loading: boolean
   session: Session | null
   sessionSettled: boolean
   role: string

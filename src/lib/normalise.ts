@@ -175,6 +175,7 @@ export interface RawMatchRow extends LooseRow<Tables<'matches'>> {
   team2Ids?: string[] | null
   team1Level?: number | null
   team2Level?: number | null
+  updatedAt?: string | null
 }
 
 export interface NormalisedMatch extends RawMatchRow {
@@ -193,6 +194,7 @@ export function normaliseMatches(matches: RawMatchRow[]): NormalisedMatch[] {
     team2Ids: m.team2_ids ?? m.team2Ids ?? [],
     team1Level: m.team1_level ?? m.team1Level ?? 0,
     team2Level: m.team2_level ?? m.team2Level ?? 0,
+    updatedAt: m.updated_at ?? m.updatedAt ?? null,
   }))
 }
 
