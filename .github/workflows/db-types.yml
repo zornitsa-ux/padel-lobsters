@@ -34,9 +34,13 @@ jobs:
           node-version-file: '.nvmrc'
           cache: 'npm'
 
+      # Pinned to match the `supabase` devDependency in package.json — `latest`
+      # drifted ahead of it and changed `db query --output-format json`'s
+      # shape (bare array instead of `{rows: [...]}`), breaking the jq filter
+      # in dump-function-grants.sh with no code change on our side.
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: 2.109.1
 
       # `db start` replays every migration in supabase/migrations, so the
       # generated types reflect the repo rather than whatever is deployed.

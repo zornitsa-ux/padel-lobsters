@@ -8,6 +8,10 @@ vi.mock('../../components/ApproveDevicesWidget', () => ({
   default: () => <div data-testid="approve-devices" />,
 }))
 
+// AccountOrdersSection pulls in the merch data layer, which imports the
+// supabase client module — mock it so import doesn't require real env vars.
+vi.mock('../../supabase', () => ({ supabase: {} }))
+
 import AccountSection from './AccountSection'
 import AccountOrdersSection from './AccountOrdersSection'
 
