@@ -3,7 +3,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest'
 // Mock the supabase client + device helpers BEFORE importing the module
 // under test so the module-level `import { supabase }` picks up the
 // mocked client.
-vi.mock('../supabase', () => ({
+const { supabase } = vi.hoisted(() => ({
   supabase: {
     auth: {
       signInWithOtp: vi.fn(),
@@ -14,13 +14,20 @@ vi.mock('../supabase', () => ({
   },
 }))
 
+vi.mock('../supabase', () => ({ supabase }))
+
 vi.mock('../lib/deviceId', () => ({
   getDeviceId: vi.fn(() => 'test-device-id'),
   getUserAgentSummary: vi.fn(() => 'TestAgent'),
 }))
 
-import { supabase } from '../supabase'
-import { sendMagicLink, requestMyEmailChange, bootstrapDeviceSession, selfSignup } from './auth'
+import {
+  sendMagicLink,
+  requestMyEmailChange,
+  bootstrapDeviceSession,
+  selfSignup,
+  type SelfSignupInput,
+} from './auth'
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -180,12 +187,14 @@ describe('selfSignup payload', () => {
       error: null,
     })
 
+    // `adjustment` is a stray field a stale caller might still send — cast
+    // to simulate that, since the real type no longer declares it.
     await selfSignup({
       name: 'Ada Lovelace',
       email: 'ada@example.com',
       playtomicLevel: '3.5',
       adjustment: '0.5',
-    })
+    } as SelfSignupInput & { adjustment: string })
 
     const [rpcName, args] = supabase.rpc.mock.calls[0]
     expect(rpcName).toBe('self_signup_player')

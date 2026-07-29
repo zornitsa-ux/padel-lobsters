@@ -49,7 +49,7 @@ export default function useAuth() {
     if (result.success && result.session) {
       setSession(result.session)
     }
-    return { success: result.success, role: result.role, error: result.error }
+    return { success: result.success, role: result.role ?? 'guest', error: result.error }
   }, [])
 
   const fetchMyProfile = useCallback(async () => {
@@ -66,7 +66,7 @@ export default function useAuth() {
   }, [])
 
   const selfSignup = useCallback(async (data: unknown) => {
-    return authApi.selfSignup(data)
+    return authApi.selfSignup(data as authApi.SelfSignupInput)
   }, [])
 
   const logout = useCallback(async () => {

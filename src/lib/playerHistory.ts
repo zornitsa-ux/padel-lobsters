@@ -8,18 +8,26 @@
 //  the rounds data, and best finish.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { TOURNAMENTS } from '../data/historicalTournaments'
+import { TOURNAMENTS, type HistoricalStanding } from '../data/historicalTournaments'
+import type { Player } from './normalise'
+import type {
+  AliasInventoryItem,
+  AppearanceSummary,
+  HistoricalAppearance,
+} from './playerHistoryTypes'
+
+type AliasMap = Record<string, string>
 
 /** Lower-case + strip whitespace/punctuation for forgiving comparisons. */
-export function normaliseName(n) {
+export function normaliseName(n: string | null | undefined): string {
   return String(n || '')
     .toLowerCase()
     .replace(/[\s.\-_]/g, '')
 }
 
 /** Collect every unique historical name across all tournaments + rounds. */
-export function getAllHistoricalNames() {
-  const names = new Set()
+export function getAllHistoricalNames(): string[] {
+  const names = new Set<string>()
   TOURNAMENTS.forEach((t) => {
     t.players?.forEach((p) => names.add(p.name))
     t.rounds?.forEach((r) =>
@@ -36,7 +44,7 @@ export function getAllHistoricalNames() {
  * Given an alias map and a player_id, return the set of historical names
  * (raw + normalised) that resolve to this player.
  */
-function namesForPlayer(playerId, aliasMap) {
+function namesForPlayer(playerId: string, aliasMap: AliasMap) {
   const raw = Object.entries(aliasMap || {})
     .filter(([, pid]) => pid === playerId)
     .map(([name]) => name)
@@ -62,14 +70,14 @@ function namesForPlayer(playerId, aliasMap) {
  * This lets us record real-world podium results when ties on total points
  * would otherwise resolve incorrectly via input order.
  */
-export function rankPlayers(players) {
+export function rankPlayers(players: HistoricalStanding[]): HistoricalStanding[] {
   const sorted = [...players].sort((a, b) => b.total - a.total)
-  const withPodium = sorted.filter((p) => p.podium >= 1 && p.podium <= 3)
-  const others = sorted.filter((p) => !(p.podium >= 1 && p.podium <= 3))
+  const withPodium = sorted.filter((p) => p.podium !== undefined && p.podium >= 1 && p.podium <= 3)
+  const others = sorted.filter((p) => !(p.podium !== undefined && p.podium >= 1 && p.podium <= 3))
 
-  const ranked = new Array(sorted.length)
+  const ranked: HistoricalStanding[] = new Array(sorted.length)
   withPodium.forEach((p) => {
-    ranked[p.podium - 1] = p
+    ranked[p.podium! - 1] = p
   })
 
   let oi = 0
@@ -79,12 +87,15 @@ export function rankPlayers(players) {
   return ranked
 }
 
-export function buildHistoricalAppearances(playerId, aliasMap) {
+export function buildHistoricalAppearances(
+  playerId: string | null | undefined,
+  aliasMap: AliasMap,
+): HistoricalAppearance[] {
   if (!playerId) return []
   const { norm } = namesForPlayer(playerId, aliasMap)
   if (norm.size === 0) return []
 
-  const out = []
+  const out: HistoricalAppearance[] = []
 
   TOURNAMENTS.forEach((t) => {
     const players = t.players || []
@@ -154,8 +165,8 @@ export function buildHistoricalAppearances(playerId, aliasMap) {
  *   { tournaments, podiums, golds, totalPoints, played, won, lost, winRate,
  *     bestRank, bestRankTournamentName }
  */
-export function summariseAppearances(appearances) {
-  const out = {
+export function summariseAppearances(appearances: HistoricalAppearance[]): AppearanceSummary {
+  const out: AppearanceSummary = {
     tournaments: appearances.length,
     podiums: 0,
     golds: 0,
@@ -195,13 +206,13 @@ export function summariseAppearances(appearances) {
  * status + a count of which tournaments it appears in.
  *   [{ name, playerId|null, tournamentCount, tournamentLabels }]
  */
-export function buildAliasInventory(aliasMap) {
-  const inventory = []
+export function buildAliasInventory(aliasMap: AliasMap): AliasInventoryItem[] {
+  const inventory: AliasInventoryItem[] = []
   const all = getAllHistoricalNames()
 
   all.forEach((name) => {
     const norm = normaliseName(name)
-    const tournaments = []
+    const tournaments: string[] = []
     TOURNAMENTS.forEach((t) => {
       const inStandings = (t.players || []).some((p) => normaliseName(p.name) === norm)
       const inRounds = (t.rounds || []).some((r) =>
@@ -234,7 +245,7 @@ export const NOT_IN_ROSTER = '__not_in_roster__'
  * Suggest current players whose names are similar to a historical name.
  * Returns a list of player objects sorted by best match first.
  */
-export function suggestPlayers(historicalName, players, max = 4) {
+export function suggestPlayers(historicalName: string, players: Player[], max = 4): Player[] {
   const target = normaliseName(historicalName)
   const tokens = String(historicalName).toLowerCase().split(/\s+/)
   const firstTok = tokens[0]

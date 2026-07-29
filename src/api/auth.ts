@@ -1,8 +1,20 @@
+import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../supabase'
 import { getDeviceId, getUserAgentSummary } from '../lib/deviceId'
+import type { Database } from '../lib/database.types'
+
+type Fn = Database['public']['Functions']
+export type MyProfileRow = Fn['get_my_profile_v2']['Returns'][number]
+
+export interface LoginResult {
+  success: boolean
+  error?: string
+  role?: string
+  session?: Session | null
+}
 
 // ── Auth ─────────────────────────────────────────────────
-export async function loginWithPin(enteredPin) {
+export async function loginWithPin(enteredPin: string): Promise<LoginResult> {
   const pin = String(enteredPin || '').trim()
   if (!pin) return { success: false, error: 'Enter your PIN' }
   const deviceId = getDeviceId()
@@ -35,19 +47,15 @@ export function logout() {
   return supabase.auth.signOut()
 }
 
+export type MagicLinkResult = 'sent' | 'unknown' | 'invalid' | 'error'
+
 // ── Magic link sign-in ──────────────────────────────────────────
 // shouldCreateUser:false enforces the 1:1 players↔auth.users invariant:
 // Supabase will refuse to sign in an email that has no matching
 // auth.users row. To become a player you still go through the
 // admin-invite or self_signup_player path; magic link is purely a way
 // for an existing player to authenticate.
-//
-// Returns one of:
-//   'sent'     — link emailed, tell the user to check their inbox
-//   'unknown'  — email is not on file (Supabase returns an error)
-//   'invalid'  — input failed basic validation
-//   'error'    — network / unexpected
-export async function sendMagicLink(email) {
+export async function sendMagicLink(email: string | null | undefined): Promise<MagicLinkResult> {
   const trimmed = String(email || '')
     .trim()
     .toLowerCase()
@@ -112,7 +120,7 @@ export async function bootstrapDeviceSession() {
 // Phase 2b: uses get_my_profile_v2 which requires the calling device to
 // be trusted. A probationary device gets an empty response — Settings
 // should not call this until trust is confirmed.
-export async function fetchMyProfile() {
+export async function fetchMyProfile(): Promise<MyProfileRow | null> {
   try {
     const { data, error } = await supabase.rpc('get_my_profile_v2')
     if (error) {
@@ -131,6 +139,8 @@ export async function fetchMyProfile() {
 // (src/features/players/playerQueries.ts). It lived here only so AppContext
 // could expose it, and this version swallowed errors into a null return.
 
+export type EmailChangeResult = 'sent' | 'invalid' | 'taken' | 'error'
+
 // ── Self-service email change ───────────────────────────────────────
 // Wraps supabase.auth.updateUser. Supabase sends a confirmation link to
 // the new address (and, with double_confirm_changes enabled in
@@ -138,13 +148,7 @@ export async function fetchMyProfile() {
 // auth.users.email changes — the sync_auth_email_to_player trigger
 // mirrors the new value back to players.email. We do not write
 // players.email here; the confirmation flow is the source of truth.
-//
-// Returns:
-//   'sent'    — confirmation email(s) dispatched
-//   'invalid' — input failed basic validation
-//   'taken'   — email already on another auth.users row
-//   'error'   — anything else
-export async function requestMyEmailChange(email) {
+export async function requestMyEmailChange(email: string): Promise<EmailChangeResult> {
   const trimmed = String(email || '')
     .trim()
     .toLowerCase()
@@ -166,6 +170,29 @@ export async function requestMyEmailChange(email) {
   }
 }
 
+// Loose input shape for selfSignup — the caller (SignupRequest.tsx) builds
+// this from form state, same fields as admin_add_player's payload.
+export interface SelfSignupInput {
+  name?: string | null
+  email?: string | null
+  phone?: string | null
+  notes?: string | null
+  playtomicLevel?: number | string | null
+  playtomicUsername?: string | null
+  gender?: string | null
+  isLeftHanded?: boolean | null
+  country?: string | null
+  avatarUrl?: string | null
+  birthday?: string | null
+  preferredPosition?: string | null
+  taglineLabel?: string | null
+}
+
+export interface SelfSignupResult {
+  data: { player_id: string; pin: string; was_existing: boolean } | null
+  error: { message: string } | unknown
+}
+
 // ── Self-serve signup (Phase 3: "create a Lobster from the PIN prompt") ──
 // Wraps the v25 self_signup_player RPC. Returns { data, error } so the
 // signup form can render inline feedback. data is { player_id, pin,
@@ -174,7 +201,9 @@ export async function requestMyEmailChange(email) {
 // Intentionally no auto-login here — the caller handles that so the UI
 // can show the PIN to the user first. Keeps this function focused on
 // one job.
-export async function selfSignup(data) {
+export async function selfSignup(
+  data: SelfSignupInput | null | undefined,
+): Promise<SelfSignupResult> {
   const name = (data?.name || '').trim()
   const email = (data?.email || '').trim()
   if (!name || !email) {
@@ -186,17 +215,17 @@ export async function selfSignup(data) {
   const payload = {
     name,
     email,
-    phone: (data.phone || '').trim(),
-    notes: data.notes || '',
-    playtomic_level: String(parseFloat(data.playtomicLevel) || 0),
-    playtomic_username: data.playtomicUsername || '',
-    gender: data.gender || '',
-    is_left_handed: String(!!data.isLeftHanded),
-    country: data.country || '',
-    avatar_url: data.avatarUrl || '',
-    birthday: data.birthday || '',
-    preferred_position: data.preferredPosition || '',
-    tagline_label: data.taglineLabel || '',
+    phone: (data?.phone || '').trim(),
+    notes: data?.notes || '',
+    playtomic_level: String(parseFloat(String(data?.playtomicLevel)) || 0),
+    playtomic_username: data?.playtomicUsername || '',
+    gender: data?.gender || '',
+    is_left_handed: String(!!data?.isLeftHanded),
+    country: data?.country || '',
+    avatar_url: data?.avatarUrl || '',
+    birthday: data?.birthday || '',
+    preferred_position: data?.preferredPosition || '',
+    tagline_label: data?.taglineLabel || '',
   }
   const deviceId = getDeviceId()
   const userAgent = getUserAgentSummary()
@@ -204,7 +233,7 @@ export async function selfSignup(data) {
     const { data: rows, error } = await supabase.rpc('self_signup_player', {
       input_payload: payload,
       input_device_id: deviceId,
-      input_user_agent: userAgent,
+      input_user_agent: userAgent ?? undefined,
     })
     if (error) {
       console.error('self_signup_player error:', error)

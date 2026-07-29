@@ -3,6 +3,7 @@ import {
   loadPlayerAliases,
   setPlayerAlias as apiSetAlias,
   removePlayerAlias as apiRemoveAlias,
+  type AliasMap,
 } from '../api/aliases'
 
 // Aliases change rarely (admin maps an unrecognised name to a player) and the
@@ -10,13 +11,13 @@ import {
 // read: load once on mount. The realtime channel it used to hold was silent
 // anyway — player_aliases isn't in the supabase_realtime publication.
 export default function usePlayerAliases() {
-  const [playerAliases, setPlayerAliases] = useState({})
+  const [playerAliases, setPlayerAliases] = useState<AliasMap>({})
 
   useEffect(() => {
     loadPlayerAliases().then(setPlayerAliases)
   }, [])
 
-  const setPlayerAlias = useCallback(async (name, playerId) => {
+  const setPlayerAlias = useCallback(async (name: string, playerId: string) => {
     const ok = await apiSetAlias(name, playerId)
     if (ok) {
       setPlayerAliases((prev) => ({ ...prev, [name]: playerId }))
@@ -24,7 +25,7 @@ export default function usePlayerAliases() {
     return ok
   }, [])
 
-  const removePlayerAlias = useCallback(async (name) => {
+  const removePlayerAlias = useCallback(async (name: string) => {
     const ok = await apiRemoveAlias(name)
     if (ok) {
       setPlayerAliases((prev) => {

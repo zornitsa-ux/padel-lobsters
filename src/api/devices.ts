@@ -1,11 +1,17 @@
 import { supabase } from '../supabase'
 import { getDeviceId } from '../lib/deviceId'
 import { emitToast } from '../lib/toastBus'
+import type {
+  DeviceActionResult,
+  MyPendingDeviceRow,
+  PendingDeviceRow,
+  SecurityEventRow,
+} from '../hooks/useDevices'
 
 // Player-side: is the device I'm on trusted for this player? Deliberately
 // unguarded: an RPC error yields `data === null`, which reads as "not
 // trusted" and surfaces the read-only banner — the safe direction.
-export async function isMyDeviceTrusted(playerId) {
+export async function isMyDeviceTrusted(playerId: string): Promise<boolean> {
   const deviceId = getDeviceId()
   const { data } = await supabase.rpc('is_my_device_trusted', {
     input_player_id: playerId,
@@ -18,7 +24,7 @@ export async function isMyDeviceTrusted(playerId) {
 // every Settings mount, so a transient failure stays quiet rather than
 // toasting the player for something they didn't trigger — the widget just
 // renders as if there's nothing to approve, same as it would while loading.
-export async function listMyPendingDevices() {
+export async function listMyPendingDevices(): Promise<MyPendingDeviceRow[]> {
   const deviceId = getDeviceId()
   try {
     const { data, error } = await supabase.rpc('list_pending_devices', {
@@ -37,7 +43,7 @@ export async function listMyPendingDevices() {
 
 // Player-side: approve one of my own pending devices.
 // Returns { ok, reason } where reason ∈ 'ok' | 'denied' | 'no_such_device' | 'error'.
-export async function approveMyDevice(targetDeviceId) {
+export async function approveMyDevice(targetDeviceId: string): Promise<DeviceActionResult> {
   const deviceId = getDeviceId()
   try {
     const { data, error } = await supabase.rpc('approve_device', {
@@ -58,7 +64,7 @@ export async function approveMyDevice(targetDeviceId) {
 // Player-side: reject one of my own pending devices. Mirrors approve
 // but deletes the pending row instead of marking it trusted. Same
 // auth gates as approve (caller must be trusted for this player).
-export async function rejectMyDevice(targetDeviceId) {
+export async function rejectMyDevice(targetDeviceId: string): Promise<DeviceActionResult> {
   const deviceId = getDeviceId()
   try {
     const { data, error } = await supabase.rpc('reject_device', {
@@ -80,7 +86,7 @@ export async function rejectMyDevice(targetDeviceId) {
 // security panel an admin explicitly opened — a failure here can look
 // identical to "nothing pending" (a false negative in a security review),
 // so it's toasted rather than left quiet.
-export async function adminListPendingDevices() {
+export async function adminListPendingDevices(): Promise<PendingDeviceRow[]> {
   try {
     const { data, error } = await supabase.rpc('admin_list_pending_devices')
     if (error) {
@@ -99,7 +105,7 @@ export async function adminListPendingDevices() {
 // Admin: recent security events feed (pin_attempts, joined to player names).
 // Same reasoning as adminListPendingDevices — an admin reviewing security
 // events needs to know the feed didn't load, not see an empty log.
-export async function adminListSecurityEvents(limit = 100) {
+export async function adminListSecurityEvents(limit = 100): Promise<SecurityEventRow[]> {
   try {
     const { data, error } = await supabase.rpc('admin_list_security_events', {
       input_limit: limit,
@@ -118,7 +124,10 @@ export async function adminListSecurityEvents(limit = 100) {
 }
 
 // Admin: approve a pending device by sidestepping the trusted-device requirement.
-export async function adminApproveDevice(targetPlayerId, targetDeviceId) {
+export async function adminApproveDevice(
+  targetPlayerId: string,
+  targetDeviceId: string,
+): Promise<DeviceActionResult> {
   try {
     const { data, error } = await supabase.rpc('admin_approve_device', {
       input_target_player: targetPlayerId,
@@ -137,7 +146,10 @@ export async function adminApproveDevice(targetPlayerId, targetDeviceId) {
 
 // Admin: drop a pending device row entirely (user can re-trigger by
 // logging in again with the right PIN).
-export async function adminDenyDevice(targetPlayerId, targetDeviceId) {
+export async function adminDenyDevice(
+  targetPlayerId: string,
+  targetDeviceId: string,
+): Promise<DeviceActionResult> {
   try {
     const { data, error } = await supabase.rpc('admin_deny_device', {
       input_target_player: targetPlayerId,

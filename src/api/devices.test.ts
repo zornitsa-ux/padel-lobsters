@@ -1,9 +1,9 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 
+const { mockRpc } = vi.hoisted(() => ({ mockRpc: vi.fn() }))
+
 vi.mock('../supabase', () => ({
-  supabase: {
-    rpc: vi.fn(),
-  },
+  supabase: { rpc: mockRpc },
 }))
 
 vi.mock('../lib/deviceId', () => ({
@@ -14,7 +14,6 @@ vi.mock('../lib/toastBus', () => ({
   emitToast: vi.fn(),
 }))
 
-import { supabase } from '../supabase'
 import { emitToast } from '../lib/toastBus'
 import {
   listMyPendingDevices,
@@ -30,7 +29,7 @@ beforeEach(() => {
 
 describe('listMyPendingDevices', () => {
   it('returns [] and stays quiet (no toast) when the RPC throws', async () => {
-    supabase.rpc.mockRejectedValue(new Error('network down'))
+    mockRpc.mockRejectedValue(new Error('network down'))
 
     await expect(listMyPendingDevices()).resolves.toEqual([])
     expect(console.error).toHaveBeenCalled()
@@ -38,7 +37,7 @@ describe('listMyPendingDevices', () => {
   })
 
   it('returns [] and stays quiet when the RPC responds with an error', async () => {
-    supabase.rpc.mockResolvedValue({ data: null, error: { message: 'boom' } })
+    mockRpc.mockResolvedValue({ data: null, error: { message: 'boom' } })
 
     await expect(listMyPendingDevices()).resolves.toEqual([])
     expect(emitToast).not.toHaveBeenCalled()
@@ -47,14 +46,14 @@ describe('listMyPendingDevices', () => {
 
 describe('adminListPendingDevices', () => {
   it('returns [] and toasts when the RPC throws', async () => {
-    supabase.rpc.mockRejectedValue(new Error('network down'))
+    mockRpc.mockRejectedValue(new Error('network down'))
 
     await expect(adminListPendingDevices()).resolves.toEqual([])
     expect(emitToast).toHaveBeenCalledWith(expect.objectContaining({ variant: 'error' }))
   })
 
   it('returns [] and toasts when the RPC responds with an error', async () => {
-    supabase.rpc.mockResolvedValue({ data: null, error: { message: 'boom' } })
+    mockRpc.mockResolvedValue({ data: null, error: { message: 'boom' } })
 
     await expect(adminListPendingDevices()).resolves.toEqual([])
     expect(emitToast).toHaveBeenCalledWith(expect.objectContaining({ variant: 'error' }))
@@ -63,7 +62,7 @@ describe('adminListPendingDevices', () => {
 
 describe('adminListSecurityEvents', () => {
   it('returns [] and toasts when the RPC throws', async () => {
-    supabase.rpc.mockRejectedValue(new Error('network down'))
+    mockRpc.mockRejectedValue(new Error('network down'))
 
     await expect(adminListSecurityEvents()).resolves.toEqual([])
     expect(emitToast).toHaveBeenCalledWith(expect.objectContaining({ variant: 'error' }))
@@ -72,7 +71,7 @@ describe('adminListSecurityEvents', () => {
 
 describe('adminApproveDevice', () => {
   it('returns a distinguishable { ok: false, reason: "error" } when the RPC throws', async () => {
-    supabase.rpc.mockRejectedValue(new Error('network down'))
+    mockRpc.mockRejectedValue(new Error('network down'))
 
     await expect(adminApproveDevice('p1', 'd1')).resolves.toEqual({
       ok: false,
@@ -84,7 +83,7 @@ describe('adminApproveDevice', () => {
   })
 
   it('returns { ok: true } on success', async () => {
-    supabase.rpc.mockResolvedValue({ data: 'ok', error: null })
+    mockRpc.mockResolvedValue({ data: 'ok', error: null })
 
     await expect(adminApproveDevice('p1', 'd1')).resolves.toEqual({ ok: true, reason: 'ok' })
   })

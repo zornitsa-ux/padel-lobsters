@@ -21,8 +21,42 @@
 //  consumers gracefully degrade — `rounds: null` is allowed.
 // ============================================================================
 
+export interface HistoricalStanding {
+  name: string
+  total: number
+  /** Per-round scores — only recorded for some tournaments. */
+  r?: number[]
+  /** Explicit final-position override (1-3); see rankPlayers in playerHistory.ts. */
+  podium?: number
+}
+
+export interface HistoricalMatch {
+  court: number
+  t1: string[]
+  t2: string[]
+  s1: number
+  s2: number
+}
+
+export interface HistoricalRound {
+  round: number
+  matches: HistoricalMatch[]
+}
+
+export interface HistoricalTournament {
+  id: string
+  name: string
+  date: string
+  type: 'mixed' | 'ladies'
+  players: HistoricalStanding[]
+  rounds: HistoricalRound[] | null
+  numRounds: number
+  numCourts: number | null
+  note?: string
+}
+
 // ── December 2025 ─────────────────────────────────────────────────────────────
-const DEC_STANDINGS = [
+const DEC_STANDINGS: HistoricalStanding[] = [
   { name: 'Ian', total: 34 },
   { name: 'Alex M', total: 33 },
   { name: 'Mariano', total: 33 },
@@ -57,7 +91,7 @@ const DEC_STANDINGS = [
   { name: 'Maria', total: 11 },
 ].sort((a, b) => b.total - a.total)
 
-const DEC_ROUNDS = [
+const DEC_ROUNDS: HistoricalRound[] = [
   {
     round: 1,
     matches: [
@@ -139,7 +173,7 @@ const DEC_ROUNDS = [
 ]
 
 // ── January 2026 ──────────────────────────────────────────────────────────────
-const JAN_PLAYERS = [
+const JAN_PLAYERS: HistoricalStanding[] = [
   { name: 'Ingrid', r: [5, 4, 5, 5, 4, 6], total: 29 },
   { name: 'Marielle', r: [4, 3, 5, 4, 6, 6], total: 28 },
   { name: 'Vasilya', r: [7, 4, 3, 7, 5, 2], total: 28 },
@@ -175,7 +209,7 @@ const JAN_PLAYERS = [
 ]
 
 // ── March 2026 ────────────────────────────────────────────────────────────────
-const MAR_STANDINGS = [
+const MAR_STANDINGS: HistoricalStanding[] = [
   { name: 'Alex B', total: 29 },
   { name: 'Alex M', total: 27 },
   { name: 'Karlijn', total: 27 },
@@ -210,7 +244,7 @@ const MAR_STANDINGS = [
   { name: 'Juan Manuel', total: 13 },
 ].sort((a, b) => b.total - a.total)
 
-const MAR_ROUNDS = [
+const MAR_ROUNDS: HistoricalRound[] = [
   {
     round: 1,
     matches: [
@@ -292,7 +326,7 @@ const MAR_ROUNDS = [
 ]
 
 // ── April 2026 — Padel Queen Sunday Smash (Friday Edition) — Ladies ──────────
-const APR_STANDINGS = [
+const APR_STANDINGS: HistoricalStanding[] = [
   { name: 'Julie', total: 23 },
   { name: 'Aimee', total: 23 },
   { name: 'Ini', total: 18 },
@@ -315,7 +349,7 @@ const APR_STANDINGS = [
   { name: 'Chrissy', total: 9 },
 ].sort((a, b) => b.total - a.total)
 
-const APR_ROUNDS = [
+const APR_ROUNDS: HistoricalRound[] = [
   {
     round: 1,
     matches: [
@@ -359,7 +393,7 @@ const APR_ROUNDS = [
 ]
 
 // ── Tournament list (newest first) ────────────────────────────────────────────
-export const TOURNAMENTS = [
+export const TOURNAMENTS: HistoricalTournament[] = [
   {
     id: 'apr2026',
     name: 'Padel Queen Sunday Smash (Friday Edition)',

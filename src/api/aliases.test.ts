@@ -1,21 +1,20 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 
+const { mockFrom } = vi.hoisted(() => ({ mockFrom: vi.fn() }))
+
 vi.mock('../supabase', () => ({
-  supabase: {
-    from: vi.fn(),
-  },
+  supabase: { from: mockFrom },
 }))
 
 vi.mock('../lib/toastBus', () => ({
   emitToast: vi.fn(),
 }))
 
-import { supabase } from '../supabase'
 import { emitToast } from '../lib/toastBus'
 import { loadPlayerAliases } from './aliases'
 
-function mockSelect(result) {
-  supabase.from.mockReturnValue({
+function mockSelect(result: { data: unknown; error: unknown }) {
+  mockFrom.mockReturnValue({
     select: vi.fn().mockResolvedValue(result),
   })
 }

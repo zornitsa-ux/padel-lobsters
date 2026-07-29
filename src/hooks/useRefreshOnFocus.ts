@@ -8,7 +8,10 @@ import { useEffect, useRef } from 'react'
 // TanStack-Query surfaces already get this via `refetchOnWindowFocus` in
 // src/lib/queryClient.ts — use this hook for the context/local-state slices that
 // don't go through the query cache.
-export default function useRefreshOnFocus(callback, { throttleMs = 10_000 } = {}) {
+export default function useRefreshOnFocus(
+  callback: () => void,
+  { throttleMs = 10_000 }: { throttleMs?: number } = {},
+) {
   const cbRef = useRef(callback)
   cbRef.current = callback
   const lastRunRef = useRef(0)

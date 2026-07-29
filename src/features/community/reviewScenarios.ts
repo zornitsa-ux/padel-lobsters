@@ -130,8 +130,8 @@ export function corpReview(
   // ── Historical tournament signal (from player_aliases + History.jsx) ─────
   // Includes Dec 2025, Jan 2026, Mar 2026, Apr 2026 — events that pre-date
   // the in-app registration flow but are still part of each player's story.
-  const historical = buildHistoricalAppearances(pid, aliasMap || {}) as HistoricalAppearance[]
-  const histSummary = summariseAppearances(historical) as AppearanceSummary
+  const historical: HistoricalAppearance[] = buildHistoricalAppearances(spid, aliasMap || {})
+  const histSummary: AppearanceSummary = summariseAppearances(historical)
   const hasHistory = historical.length > 0
 
   // ── Compute match stats ──────────────────────────────────────────────────

@@ -5,20 +5,23 @@ import { emitToast } from '../lib/toastBus'
 // state before the v16 migration has run. Any other error is a real failure.
 const TABLE_MISSING_CODES = new Set(['42P01', 'PGRST205'])
 
-export async function loadPlayerAliases() {
+export type AliasMap = Record<string, string>
+
+export async function loadPlayerAliases(): Promise<AliasMap> {
   // Map of historical_name → player_id (or sentinel '__not_in_roster__'
   // when the row was explicitly skipped).
   try {
     const { data, error } = await supabase.from('player_aliases').select('*')
     if (error) throw error
-    const map = {}
+    const map: AliasMap = {}
     ;(data || []).forEach((row) => {
-      map[row.historical_name] = row.skipped ? '__not_in_roster__' : row.player_id
+      map[row.historical_name] = row.skipped ? '__not_in_roster__' : (row.player_id ?? '')
     })
     return map
   } catch (error) {
     console.error('loadPlayerAliases error:', error)
-    if (!TABLE_MISSING_CODES.has(error?.code)) {
+    const code = (error as { code?: string })?.code
+    if (!code || !TABLE_MISSING_CODES.has(code)) {
       // A genuine failure (not the expected pre-migration state) — the admin
       // relies on this map to avoid re-mapping names that are already known,
       // so a silent empty result would cause duplicate work.
@@ -33,7 +36,7 @@ export async function loadPlayerAliases() {
 }
 
 // ── Historical name → player_id alias map ─────────────────
-export async function setPlayerAlias(historicalName, playerId) {
+export async function setPlayerAlias(historicalName: string, playerId: string): Promise<boolean> {
   // Upsert. playerId can be a real UUID or the '__not_in_roster__' sentinel.
   // The DB stores skipped status as a separate boolean (player_id is NULL
   // for skipped rows) — translate the sentinel here.
@@ -54,7 +57,7 @@ export async function setPlayerAlias(historicalName, playerId) {
   return true
 }
 
-export async function removePlayerAlias(historicalName) {
+export async function removePlayerAlias(historicalName: string): Promise<boolean> {
   const { error } = await supabase
     .from('player_aliases')
     .delete()

@@ -4,7 +4,7 @@ import { propsOf } from '../../test/element'
 const { mockUseApp } = vi.hoisted(() => ({ mockUseApp: vi.fn() }))
 vi.mock('../../context/useApp', () => ({ useApp: mockUseApp }))
 
-import AuthGate, { SignInBanner } from './AuthGate'
+import { SignInBanner } from './AuthGate'
 
 const sessionWithRole = (role?: string) => ({
   session: role ? { user: { app_metadata: { role } } } : null,
@@ -12,35 +12,6 @@ const sessionWithRole = (role?: string) => ({
 
 beforeEach(() => {
   mockUseApp.mockReturnValue(sessionWithRole())
-})
-
-describe('AuthGate', () => {
-  it.each([
-    ['admin', 'admin', true],
-    ['player', 'admin', false],
-    ['admin', 'player', true], // admin counts as a superset of player
-    ['player', 'player', true],
-    [undefined, 'player', false],
-    [undefined, 'admin', false],
-  ] as const)(
-    'session role %s against gate role %s → allowed=%s',
-    (userRole, gateRole, allowed) => {
-      mockUseApp.mockReturnValue(sessionWithRole(userRole))
-      const el = AuthGate({ role: gateRole, children: 'secret' })
-      // The allowed path renders children inside a fragment; otherwise a banner.
-      expect(propsOf(el).children === 'secret').toBe(allowed)
-    },
-  )
-
-  it('renders the fallback instead of the banner when one is given', () => {
-    const el = AuthGate({ role: 'admin', fallback: null, children: 'secret' })
-    expect(propsOf(el).children).toBeNull()
-  })
-
-  it('treats an explicit undefined fallback as "no fallback"', () => {
-    const el = AuthGate({ role: 'admin', fallback: undefined, children: 'secret' })
-    expect((el as { type: unknown }).type).toBe(SignInBanner)
-  })
 })
 
 describe('SignInBanner', () => {

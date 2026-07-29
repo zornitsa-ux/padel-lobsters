@@ -15,7 +15,9 @@
 const SIZE = 256
 const QUALITY = 0.85
 
-export async function processAvatar(file) {
+type DecodedImage = ImageBitmap | HTMLImageElement
+
+export async function processAvatar(file: File): Promise<Blob> {
   if (!file) throw new Error('No file provided')
 
   const bitmap = await decode(file)
@@ -30,10 +32,11 @@ export async function processAvatar(file) {
   canvas.width = SIZE
   canvas.height = SIZE
   const ctx = canvas.getContext('2d')
+  if (!ctx) throw new Error('Could not get canvas context')
   ctx.imageSmoothingEnabled = true
   ctx.imageSmoothingQuality = 'high'
   ctx.drawImage(bitmap, offsetX, offsetY, minDim, minDim, 0, 0, SIZE, SIZE)
-  if (typeof bitmap.close === 'function') bitmap.close()
+  if ('close' in bitmap && typeof bitmap.close === 'function') bitmap.close()
 
   // Try WebP first; fall back to JPEG on the rare browser that can't encode
   // WebP (very old Safari mostly). The extension is still .webp on Supabase
@@ -46,7 +49,7 @@ export async function processAvatar(file) {
   }
 }
 
-function canvasToBlob(canvas, type, quality) {
+function canvasToBlob(canvas: HTMLCanvasElement, type: string, quality: number): Promise<Blob> {
   return new Promise((resolve, reject) => {
     canvas.toBlob(
       (b) => (b ? resolve(b) : reject(new Error('Could not encode image'))),
@@ -61,7 +64,7 @@ function canvasToBlob(canvas, type, quality) {
 // For browsers that reject the format (e.g. HEIC on Chrome), we fall back to
 // an <img> with an object URL — and if that fails too, the user gets a
 // clear "couldn't read this image" error to swap to a JPEG.
-async function decode(file) {
+async function decode(file: File): Promise<DecodedImage> {
   if (typeof createImageBitmap === 'function') {
     try {
       return await createImageBitmap(file)
@@ -72,7 +75,7 @@ async function decode(file) {
   return await loadViaImg(file)
 }
 
-function loadViaImg(file) {
+function loadViaImg(file: File): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file)
     const img = new Image()
