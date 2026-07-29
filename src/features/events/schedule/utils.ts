@@ -5,6 +5,7 @@ import type {
   ScheduleRound,
   TournamentSummary,
 } from './types'
+import { allMatchesScored } from '../eventPhase'
 
 const toIdString = (id: EntityId) => String(id)
 
@@ -46,12 +47,7 @@ export function buildSavedRounds(savedMatches: ScheduleMatch[]): ScheduleRound[]
 }
 
 export function hasAllMatchesScored(savedRounds: ScheduleRound[]): boolean {
-  if (!savedRounds.length) return false
-  const allMatches = savedRounds.flatMap((round) => round.matches)
-  if (!allMatches.length) return false
-  return allMatches.every(
-    (match) => match.completed && match.score1 != null && match.score2 != null,
-  )
+  return allMatchesScored(savedRounds.flatMap((round) => round.matches))
 }
 
 // Generic in the player so callers holding a richer row (e.g. `Player`) keep it

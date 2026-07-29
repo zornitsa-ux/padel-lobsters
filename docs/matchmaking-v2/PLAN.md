@@ -33,8 +33,16 @@ event's roster. The V1 **generator** code is gone (2026-07-26): `lobsterMatcher.
 `Schedule.jsx`'s Finish handler, the unreachable `:325` branch) are deleted.
 `src/lib/glicko2.ts` remains — **not shipped, offline-only**; see M4.3 below.
 
-Gates as of 2026-07-28: typecheck clean, lint 0 errors (61 pre-existing
-warnings), **1175 pass / 2 skip**, build clean, 9 goldens byte-identical.
+Gates as of 2026-07-29: typecheck clean, lint 0 errors (61 pre-existing
+warnings), **1262 pass / 2 skip**, build clean, 9 goldens byte-identical.
+
+**Tournament IA redesign is in progress on branch `tournament-ia-redesign`**
+(2026-07-29, see `docs/tournament-redesign/IMPLEMENTATION_BRIEF.md`). It touches
+matchmaking in exactly one intended way: the run-of-show panel becomes the
+single caller of `applyTournamentRatings`, replacing Schedule's Finish button.
+No domain, service or golden is touched. Workstream A landed the shared phase
+module `src/features/events/eventPhase.ts` (75 tests) and de-duplicated
+`hasAllMatchesScored` onto its `allMatchesScored` predicate.
 
 The 2026-07-28 code-hygiene session touched matchmaking in one place only:
 `ui/QualityReport.tsx`'s `DimensionBar` now uses the shared
