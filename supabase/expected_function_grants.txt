@@ -4,8 +4,8 @@ public.admin_approve_device(input_target_player uuid, input_target_device text) 
 public.admin_cancel_transfer(input_transfer_id uuid) authenticated
 public.admin_confirm_league_groups(input_payload jsonb) authenticated
 public.admin_create_bracket_matches(input_league_id uuid, input_payload jsonb) authenticated
-public.admin_create_league_team(input_payload jsonb) authenticated
 public.admin_create_league(input_payload jsonb) authenticated
+public.admin_create_league_team(input_payload jsonb) authenticated
 public.admin_delete_league_team(input_team_id uuid) authenticated
 public.admin_delete_player(input_target_id uuid) authenticated
 public.admin_delete_raffle_winner(input_winner_id uuid) authenticated

@@ -13,6 +13,11 @@
 #
 # pg_get_function_identity_arguments (not pg_get_function_arguments) so the
 # rendering omits DEFAULT clauses and stays stable when a default changes.
+#
+# LC_ALL=C on the sort is load-bearing: macOS collation orders `_` before `(`
+# and Linux's C collation does the reverse, so a file generated on a dev's Mac
+# could never match what CI produced (`admin_create_league` vs
+# `admin_create_league_team`). The ordering must not depend on who ran it.
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -48,7 +53,7 @@ dump() {
        and a.privilege_type = 'EXECUTE'
        and r.rolname in ('anon', 'authenticated')
      order by line
-  " | jq -r '[.. | objects | select(has("line")) | .line] | .[]' | sort
+  " | jq -r '[.. | objects | select(has("line")) | .line] | .[]' | LC_ALL=C sort
 }
 
 output="$(dump)"
