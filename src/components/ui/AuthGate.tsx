@@ -28,40 +28,6 @@ export type GateRole = 'admin' | 'player'
 // destination they ever ask for).
 export type GateNavigate = (destination: string) => void
 
-interface AuthGateProps {
-  role: GateRole
-  onNavigate?: GateNavigate
-  message?: string
-  compact?: boolean
-  fallback?: React.ReactNode
-  children?: React.ReactNode
-}
-
-export default function AuthGate({
-  role,
-  onNavigate,
-  message,
-  compact,
-  fallback,
-  children,
-}: AuthGateProps) {
-  const { session } = useApp()
-  const userRole = session?.user?.app_metadata?.role ?? 'guest'
-  const isAdmin = userRole === 'admin'
-  const isPlayer = userRole === 'player'
-
-  const allowed =
-    role === 'admin'
-      ? isAdmin
-      : role === 'player'
-        ? isPlayer || isAdmin // admin counts as a superset
-        : true
-
-  if (allowed) return <>{children}</>
-  if (fallback !== undefined) return <>{fallback}</>
-  return <SignInBanner role={role} onNavigate={onNavigate} message={message} compact={compact} />
-}
-
 /**
  * Standalone banner — exported so pages can surface it at the top of a
  * section without wrapping children (e.g. "read-only view" notices).
