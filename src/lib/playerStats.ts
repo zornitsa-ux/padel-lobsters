@@ -13,12 +13,12 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface DbMatchForStats {
-  completed: boolean | null | undefined
+  completed?: boolean | null
   tournamentId: string | number
   team1Ids: (string | number)[]
   team2Ids: (string | number)[]
-  score1: string | number | null | undefined
-  score2: string | number | null | undefined
+  score1?: string | number | null
+  score2?: string | number | null
   round?: number | null
 }
 

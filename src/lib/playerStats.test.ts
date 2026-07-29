@@ -37,24 +37,28 @@ const T2 = { id: 't2', date: '2026-04-01' }
 describe('buildPlayerStats — empty inputs', () => {
   const s = buildPlayerStats('p1')
 
-  it('played is 0', () => expect(s.played).toBe(0))
-  it('won is 0', () => expect(s.won).toBe(0))
-  it('lost is 0', () => expect(s.lost).toBe(0))
-  it('draws is 0', () => expect(s.draws).toBe(0))
-  it('points is 0', () => expect(s.points).toBe(0))
-  it('pointsFor is 0', () => expect(s.pointsFor).toBe(0))
-  it('pointsAgainst is 0', () => expect(s.pointsAgainst).toBe(0))
-  it('pointDiff is 0', () => expect(s.pointDiff).toBe(0))
-  it('winRate is 0', () => expect(s.winRate).toBe(0))
-  it('avgPointsFor is 0', () => expect(s.avgPointsFor).toBe(0))
-  it('avgPointsAgainst is 0', () => expect(s.avgPointsAgainst).toBe(0))
-  it('recentForm is []', () => expect(s.recentForm).toEqual([]))
-  it('bestWinStreak is 0', () => expect(s.bestWinStreak).toBe(0))
-  it('worstLossStreak is 0', () => expect(s.worstLossStreak).toBe(0))
-  it('h2h is {}', () => expect(s.h2h).toEqual({}))
-  it('h2hPairs is {}', () => expect(s.h2hPairs).toEqual({}))
-  it('partners is {}', () => expect(s.partners).toEqual({}))
-  it('playerTournaments is []', () => expect(s.playerTournaments).toEqual([]))
+  it('returns a fully zeroed stats object', () => {
+    expect(s).toEqual({
+      played: 0,
+      won: 0,
+      lost: 0,
+      draws: 0,
+      points: 0,
+      pointsFor: 0,
+      pointsAgainst: 0,
+      pointDiff: 0,
+      winRate: 0,
+      avgPointsFor: 0,
+      avgPointsAgainst: 0,
+      recentForm: [],
+      bestWinStreak: 0,
+      worstLossStreak: 0,
+      h2h: {},
+      h2hPairs: {},
+      partners: {},
+      playerTournaments: [],
+    })
+  })
 })
 
 // ─── Win / loss / draw ────────────────────────────────────────────────────────

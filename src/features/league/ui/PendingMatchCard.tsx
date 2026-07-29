@@ -1,3 +1,4 @@
+import { PlayerRow } from '../../../components/ui/PlayerRow'
 import { resolveTeamName } from '../domain/teamDisplay'
 import { stageToLabel } from '../domain/matchDisplay'
 import type { LeagueMatch, LeagueTeam, GroupLabel } from '../domain/types'
@@ -32,26 +33,23 @@ export function PendingMatchCard({
       </p>
       <div className="divide-y divide-lob-coral/10">
         {pendingMatches.map(({ match, opponent }) => (
-          <button
+          <PlayerRow
             key={match.id}
-            className="w-full flex items-center gap-3 px-4 py-3 text-left active:bg-lob-coral/[0.06] transition-colors"
+            className="w-full px-4 py-3 active:bg-lob-coral/[0.06] transition-colors"
             onClick={() => onOpponentClick(opponent)}
-          >
-            <div className="w-8 h-8 rounded-full bg-lob-coral/20 flex items-center justify-center flex-shrink-0">
-              <span className="text-xs font-bold text-lob-coral">
-                {resolveTeamName(opponent).slice(0, 2).toUpperCase()}
-              </span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-lob-dark text-sm truncate">
-                {resolveTeamName(opponent)}
-              </p>
-              <p className="text-xs text-lob-muted">
-                {stageToLabel(match.stage, myTeamGroupLabel)}
-              </p>
-            </div>
-            <span className="text-xs font-semibold text-lob-coral flex-shrink-0">View →</span>
-          </button>
+            avatar={
+              <div className="w-8 h-8 rounded-full bg-lob-coral/20 flex items-center justify-center flex-shrink-0">
+                <span className="text-xs font-bold text-lob-coral">
+                  {resolveTeamName(opponent).slice(0, 2).toUpperCase()}
+                </span>
+              </div>
+            }
+            name={resolveTeamName(opponent)}
+            subtitle={stageToLabel(match.stage, myTeamGroupLabel)}
+            trailing={
+              <span className="text-xs font-semibold text-lob-coral flex-shrink-0">View →</span>
+            }
+          />
         ))}
       </div>
     </div>

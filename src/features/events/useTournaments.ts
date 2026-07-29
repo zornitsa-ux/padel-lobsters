@@ -6,6 +6,7 @@ import {
   updateTournament,
   deleteTournament,
 } from './tournamentQueries'
+import type { TournamentInput } from './tournamentQueries'
 
 export function useTournaments() {
   return useQuery({
@@ -30,7 +31,7 @@ export function useAddTournament() {
 export function useUpdateTournament() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) => updateTournament(id, data),
+    mutationFn: ({ id, data }: { id: string; data: TournamentInput }) => updateTournament(id, data),
     onSuccess: () => qc.invalidateQueries({ queryKey: tournamentKeys.all() }),
   })
 }

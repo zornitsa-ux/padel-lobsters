@@ -8,14 +8,6 @@ import type {
 
 const toIdString = (id: EntityId) => String(id)
 
-export function formatScheduleDate(dateValue?: string | null): string {
-  if (!dateValue) return '—'
-  return new Date(dateValue).toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'short',
-  })
-}
-
 export function cloneRounds(rounds: ScheduleRound[]): ScheduleRound[] {
   return rounds.map((round) => ({
     ...round,
@@ -62,7 +54,9 @@ export function hasAllMatchesScored(savedRounds: ScheduleRound[]): boolean {
   )
 }
 
-export function buildPlayerById(players: SchedulePlayer[]): Map<string, SchedulePlayer> {
+// Generic in the player so callers holding a richer row (e.g. `Player`) keep it
+// through the lookup instead of being widened to SchedulePlayer.
+export function buildPlayerById<T extends { id: EntityId }>(players: T[]): Map<string, T> {
   return new Map(players.map((player) => [toIdString(player.id), player]))
 }
 

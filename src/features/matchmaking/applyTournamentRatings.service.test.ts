@@ -166,10 +166,13 @@ describe('reviewRatingEvent', () => {
     expect(result.review_status).toBe('approved')
   })
 
-  it('sends null delta when none is provided', async () => {
+  // `input_delta numeric DEFAULT NULL`: omitting the key and sending an
+  // explicit null both resolve to NULL server-side. What must not happen is a
+  // stale delta leaking into an approve.
+  it('sends no delta when none is provided', async () => {
     mockRpc.mockResolvedValue({ data: row, error: null })
     await reviewRatingEvent({ eventId: 'e1', action: 'approve' })
-    expect(mockRpc.mock.calls[0][1].input_delta).toBeNull()
+    expect(mockRpc.mock.calls[0][1].input_delta ?? null).toBeNull()
   })
 
   it('rejects with a zod error when the RPC "succeeds" but the row is malformed', async () => {

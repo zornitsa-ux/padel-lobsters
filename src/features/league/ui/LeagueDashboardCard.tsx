@@ -1,17 +1,17 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Badge } from '../../../components/ui/Badge'
-import type { BadgeProps } from '../../../components/ui/Badge'
+import { statusPill } from './statusPill'
+import type { StatusPill } from './statusPill'
 import { useActiveLeagueBundle } from '../hooks/useLeagueQueries'
 import { computeGroupStandings } from '../domain/standings'
 import { resolveTeamShortName } from '../domain/teamDisplay'
-import type { LeagueStatus } from '../domain/types'
 
 interface LeagueDashboardCardProps {
   myPlayerId: string | null
 }
 
-const STATUS_BADGE: Record<LeagueStatus, { label: string; variant: BadgeProps['variant'] }> = {
+const STATUS_BADGE: Record<string, StatusPill> = {
   draft: { label: 'Coming Soon', variant: 'league-draft' },
   group_stage: { label: 'Group Stage', variant: 'league-group-stage' },
   knockout: { label: 'Knockout Stage', variant: 'league-knockout' },
@@ -49,7 +49,7 @@ export function LeagueDashboardCard({ myPlayerId }: LeagueDashboardCardProps) {
 
   if (!league || league.status === 'completed') return null
 
-  const { label, variant } = STATUS_BADGE[league.status]
+  const { label, variant } = statusPill(STATUS_BADGE, league.status)
 
   const myPendingMatches = myTeam
     ? matches.filter(

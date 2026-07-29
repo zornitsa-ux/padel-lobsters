@@ -14,6 +14,7 @@ import { useApp } from './context/useApp'
 import { useTournaments } from './features/events/useTournaments'
 import type { NormalisedTournament } from './lib/normalise'
 import Layout from './components/Layout'
+import { Spinner } from './components/ui/Spinner'
 import Dashboard from './features/home/Dashboard'
 import SetupGuard from './components/SetupGuard'
 import VerificationGate from './components/VerificationGate'
@@ -21,6 +22,7 @@ import AuthConfirm from './components/AuthConfirm'
 import { useEventDataLoader } from './features/events/useEventDataLoader'
 import { mark } from './lib/perfMarks'
 import EventShell from './features/events/EventShell'
+import type { EventNavigate } from './features/events/eventHelpers'
 import CommunityShell from './features/community/CommunityShell'
 
 // Code-split every route off the first paint. The app shell (Layout,
@@ -113,21 +115,14 @@ export default function App() {
 // minimal — the app shell (header/nav) is already painted around it, so this
 // only fills the content area for the brief fetch on first visit to a route.
 function RouteFallback() {
-  return (
-    <div className="flex items-center justify-center py-24" role="status" aria-live="polite">
-      <div className="h-8 w-8 animate-spin rounded-full border-2 border-lob-muted border-t-lob-teal" />
-      <span className="sr-only">Loading…</span>
-    </div>
-  )
+  return <Spinner className="py-24" />
 }
-
-type NavigatePayload = { id?: string | number; focusPlayerId?: string } & Record<string, unknown>
 
 // Translate the legacy onNavigate(page, tournament?) signature to URL
 // navigation. Existing components keep working without internal changes.
-function useLegacyNavigate() {
+function useLegacyNavigate(): EventNavigate {
   const navigate = useNavigate()
-  return (page: string, payload?: NavigatePayload | null) => {
+  return (page, payload) => {
     const t = payload && typeof payload === 'object' ? payload : null
     switch (page) {
       case 'home':

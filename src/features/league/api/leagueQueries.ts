@@ -1,5 +1,6 @@
 import { supabase } from '../../../supabase'
 import type { League, LeagueTeam, LeagueMatch } from '../domain/types'
+import { parseLeagueMatches, parseLeagueTeams } from './leagueSchemas'
 
 export interface PlayerOption {
   id: string
@@ -48,16 +49,13 @@ export async function fetchActiveLeagueBundle(): Promise<{
   if (error) throw error
   if (!data) return { league: null, teams: [], matches: [] }
 
-  const {
-    league_teams: teams,
-    league_matches: matches,
-    ...league
-  } = data as unknown as League & {
-    league_teams: LeagueTeam[] | null
-    league_matches: LeagueMatch[] | null
-  }
+  const { league_teams: teams, league_matches: matches, ...league } = data
 
-  return { league, teams: teams ?? [], matches: matches ?? [] }
+  return {
+    league,
+    teams: parseLeagueTeams(teams ?? []),
+    matches: parseLeagueMatches(matches ?? []),
+  }
 }
 
 export async function fetchLeagueTeams(leagueId: string): Promise<LeagueTeam[]> {
@@ -67,7 +65,7 @@ export async function fetchLeagueTeams(leagueId: string): Promise<LeagueTeam[]> 
     .eq('league_id', leagueId)
     .order('created_at')
   if (error) throw error
-  return data ?? []
+  return parseLeagueTeams(data ?? [])
 }
 
 export async function fetchLeagueMatches(leagueId: string): Promise<LeagueMatch[]> {
@@ -77,7 +75,7 @@ export async function fetchLeagueMatches(leagueId: string): Promise<LeagueMatch[
     .eq('league_id', leagueId)
     .order('created_at')
   if (error) throw error
-  return data ?? []
+  return parseLeagueMatches(data ?? [])
 }
 
 export async function fetchLeagueById(id: string): Promise<League | null> {

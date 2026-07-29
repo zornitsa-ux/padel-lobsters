@@ -1,6 +1,7 @@
 import React from 'react'
 import { CalendarPlus } from 'lucide-react'
-import { buildGoogleCalendarUrl } from '../../lib/calendar'
+import { buildGoogleCalendarUrl, type CalendarEvent } from '../../lib/calendar'
+import { IconButton } from './IconButton'
 
 // ============================================================================
 //  AddToCalendarButton
@@ -16,12 +17,19 @@ import { buildGoogleCalendarUrl } from '../../lib/calendar'
 //  needing server-side push.
 // ============================================================================
 
+interface AddToCalendarButtonProps {
+  tournament: CalendarEvent
+  variant?: 'full' | 'icon'
+  className?: string
+  label?: React.ReactNode
+}
+
 export default function AddToCalendarButton({
   tournament,
   variant = 'full',
   className = '',
   label,
-}) {
+}: AddToCalendarButtonProps) {
   if (!tournament?.date) return null
   const gcalUrl = buildGoogleCalendarUrl(tournament)
   if (!gcalUrl) return null
@@ -30,17 +38,18 @@ export default function AddToCalendarButton({
   // instead of blocking it as a popup (which window.open would trigger).
   if (variant === 'icon') {
     return (
-      <a
+      <IconButton
         href={gcalUrl}
         target="_blank"
         rel="noopener noreferrer"
         onClick={(e) => e.stopPropagation()}
         aria-label="Add to Google Calendar"
         title="Add to Google Calendar"
-        className={`w-9 h-9 flex items-center justify-center rounded-xl bg-lob-cream text-lob-teal active:scale-95 transition-all ${className}`}
+        variant="accent"
+        className={className}
       >
         <CalendarPlus size={16} />
-      </a>
+      </IconButton>
     )
   }
 

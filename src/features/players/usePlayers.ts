@@ -1,8 +1,15 @@
-import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
 import { useCallback, useMemo } from 'react'
 import { playerKeys } from './playerKeys'
-import { fetchPlayers, fetchMyProfile, type Player } from './playerQueries'
+import {
+  fetchPlayers,
+  fetchMyProfile,
+  fetchPlayersPii,
+  uploadAvatar,
+  type Player,
+} from './playerQueries'
 import * as mut from './playerQueries'
+import type { PlayerInput } from './playerQueries'
 import { mergeMyProfile } from './playerSelectors'
 
 // Full redacted roster. One shared cache across every list view — TanStack
@@ -67,7 +74,39 @@ export function useMyProfile(id: string | null | undefined) {
   }
 }
 
-export function usePlayerActions({ session, role }: { session: any; role: string }) {
+// Admin-only PII overlay for the roster, keyed by player id. `role` is passed
+// in rather than read from AppContext so the slice stays context-free; it is
+// the same value AppContext exposes (session.user.app_metadata.role).
+//
+// Every successful call writes a pin_attempts audit row, so this deliberately
+// does not refetch on focus — a tab-switch storm would spam that table. The
+// 5-minute staleTime matches the roster's, and playerKeys.all() invalidation
+// after a write still refreshes the overlay while the page is mounted.
+export function usePlayersPii({ role }: { role: string }) {
+  return useQuery({
+    queryKey: playerKeys.pii(),
+    queryFn: fetchPlayersPii,
+    enabled: role === 'admin',
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  })
+}
+
+// No cache to invalidate — the returned URL goes into the form and is
+// persisted by the following addPlayer/updatePlayer call.
+export function useAvatarUpload() {
+  return useMutation({ mutationFn: uploadAvatar })
+}
+
+// Only the signed-in user's id is read here — every write is re-authorised
+// server-side by require_admin() or auth.uid().
+export function usePlayerActions({
+  session,
+  role,
+}: {
+  session: { user?: { id: string } | null } | null
+  role: string
+}) {
   const qc = useQueryClient()
   const invalidatePlayers = useCallback(
     () => qc.invalidateQueries({ queryKey: playerKeys.all() }),
@@ -75,7 +114,7 @@ export function usePlayerActions({ session, role }: { session: any; role: string
   )
 
   const addPlayer = useCallback(
-    async (data: any) => {
+    async (data: PlayerInput) => {
       if (!session?.user) throw new Error('Admin sign-in required to add a player.')
       const inserted = await mut.addPlayer(data)
       if (!inserted) throw new Error('Could not save player. Check your admin sign-in.')
@@ -86,7 +125,7 @@ export function usePlayerActions({ session, role }: { session: any; role: string
   )
 
   const updatePlayer = useCallback(
-    async (id: any, data: any) => {
+    async (id: string, data: PlayerInput) => {
       if (role !== 'admin' && String(id) !== String(session?.user?.id)) {
         throw new Error('Not authorized to edit this player')
       }
@@ -98,7 +137,7 @@ export function usePlayerActions({ session, role }: { session: any; role: string
   )
 
   const deletePlayer = useCallback(
-    async (id: any) => {
+    async (id: string) => {
       await mut.deletePlayer(id)
       await invalidatePlayers()
       return { ok: true }
@@ -107,7 +146,7 @@ export function usePlayerActions({ session, role }: { session: any; role: string
   )
 
   const regeneratePin = useCallback(
-    async (playerId: any) => {
+    async (playerId: string) => {
       const data = await mut.regeneratePin(playerId)
       if (!data) throw new Error('Could not reset PIN.')
       await invalidatePlayers()

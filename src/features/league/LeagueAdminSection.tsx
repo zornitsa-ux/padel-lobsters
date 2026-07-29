@@ -2,10 +2,12 @@ import { useState, useMemo } from 'react'
 import { Plus, Trophy } from 'lucide-react'
 import useAuth from '../../hooks/useAuth'
 import { Modal } from '../../components/ui/Modal'
+import { useConfirm } from '../../lib/confirmBus'
 import { Badge } from '../../components/ui/Badge'
 import { AlertBox } from '../../components/ui/AlertBox'
 import { TabSwitcher } from '../../components/ui/TabSwitcher'
 import { SectionHeader } from '../../components/ui/SectionHeader'
+import { PlayerRow } from '../../components/ui/PlayerRow'
 import { TeamForm } from './ui/TeamForm'
 import { InvitePlayerModal } from './ui/InvitePlayerModal'
 import { ScoreEntryForm } from './ui/ScoreEntryForm'
@@ -124,10 +126,17 @@ function LeagueStatusBar({
   league: League
   updateStatus: ReturnType<typeof useUpdateLeagueStatus>
 }) {
+  const confirm = useConfirm()
+
   async function handleAdvanceStatus() {
     const next = NEXT_STATUS[league.status]
     if (!next) return
-    if (!confirm(`Advance league to "${STATUS_LABELS[next]}"? This cannot be undone.`)) return
+    if (
+      !(await confirm({
+        message: `Advance league to "${STATUS_LABELS[next]}"? This cannot be undone.`,
+      }))
+    )
+      return
     await updateStatus.mutateAsync({ input_league_id: league.id, input_status: next })
   }
 
@@ -172,6 +181,7 @@ function TeamManagementSection({
   const [editTeam, setEditTeam] = useState<LeagueTeam | null>(null)
   const [invitePlayer, setInvitePlayer] = useState<{ id: string; name: string } | null>(null)
   const [showGroupFormation, setShowGroupFormation] = useState(false)
+  const confirm = useConfirm()
 
   const deleteTeam = useDeleteTeam(league.id)
 
@@ -203,12 +213,12 @@ function TeamManagementSection({
             const isPlaceholder1 = t.player1?.status === 'placeholder'
             const isPlaceholder2 = t.player2?.status === 'placeholder'
             return (
-              <div key={t.id} className="card flex items-center gap-3">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-lob-dark truncate">
-                    {resolveTeamName(t)}
-                  </p>
-                  <p className="text-xs text-lob-muted">
+              <PlayerRow
+                key={t.id}
+                className="card"
+                name={resolveTeamName(t)}
+                subtitle={
+                  <>
                     {t.player1?.name ?? '?'}
                     {isPlaceholder1 && (
                       <button
@@ -231,37 +241,47 @@ function TeamManagementSection({
                         (invite)
                       </button>
                     )}
-                  </p>
-                </div>
-                <Badge
-                  variant={
-                    t.experience_level === 'advanced'
-                      ? 'info'
-                      : t.experience_level === 'intermediate'
-                        ? 'gold'
-                        : 'silver'
-                  }
-                  label={t.experience_level}
-                />
-                <button
-                  className="text-xs text-lob-muted hover:text-lob-teal"
-                  onClick={() => {
-                    setEditTeam(t)
-                    setShowTeamModal(true)
-                  }}
-                >
-                  Edit
-                </button>
-                <button
-                  className="text-xs text-lob-muted hover:text-lob-coral"
-                  onClick={async () => {
-                    if (!confirm(`Remove ${resolveTeamName(t)}?`)) return
-                    await deleteTeam.mutateAsync(t.id)
-                  }}
-                >
-                  Remove
-                </button>
-              </div>
+                  </>
+                }
+                trailing={
+                  <>
+                    <Badge
+                      variant={
+                        t.experience_level === 'advanced'
+                          ? 'info'
+                          : t.experience_level === 'intermediate'
+                            ? 'gold'
+                            : 'silver'
+                      }
+                      label={t.experience_level}
+                    />
+                    <button
+                      className="text-xs text-lob-muted hover:text-lob-teal"
+                      onClick={() => {
+                        setEditTeam(t)
+                        setShowTeamModal(true)
+                      }}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="text-xs text-lob-muted hover:text-lob-coral"
+                      onClick={async () => {
+                        if (
+                          !(await confirm({
+                            message: `Remove ${resolveTeamName(t)}?`,
+                            destructive: true,
+                          }))
+                        )
+                          return
+                        await deleteTeam.mutateAsync(t.id)
+                      }}
+                    >
+                      Remove
+                    </button>
+                  </>
+                }
+              />
             )
           })}
         </div>
@@ -338,6 +358,7 @@ interface MatchManagementSectionProps {
 
 function MatchManagementSection({ league, teams, matches, division }: MatchManagementSectionProps) {
   const [scoreMatch, setScoreMatch] = useState<LeagueMatch | null>(null)
+  const confirm = useConfirm()
 
   const createBracket = useCreateBracket(league.id)
 
@@ -378,11 +399,11 @@ function MatchManagementSection({ league, teams, matches, division }: MatchManag
   async function handleGenerateBracket(force: boolean) {
     if (!force && !allGroupMatchesDone) return
     if (
-      !confirm(
-        force
+      !(await confirm({
+        message: force
           ? 'Generate bracket with pending matches still outstanding?'
           : 'Generate knockout bracket?',
-      )
+      }))
     )
       return
 

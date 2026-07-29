@@ -2,11 +2,13 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import { render, screen, cleanup } from '@testing-library/react'
 import ScoresRankingTab from './ScoresRankingTab'
+import { mkMatch } from '../../test/factories'
 
 afterEach(cleanup)
 
 const standings = [
   {
+    id: 'p1',
     player: { id: 'p1', name: 'Ada Lovelace' },
     played: 4,
     won: 3,
@@ -16,7 +18,7 @@ const standings = [
     points: 3,
   },
 ]
-const matches = [{ id: 'm1', completed: true, score1: 21, score2: 15 }]
+const matches = [mkMatch({ id: 'm1', completed: true, score1: 21, score2: 15 })]
 
 describe('ScoresRankingTab — results withheld (D-029)', () => {
   it('shows a teaser instead of standings when withheld', () => {

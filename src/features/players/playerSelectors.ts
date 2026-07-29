@@ -10,6 +10,7 @@ export function mergeMyProfile(
   base: Player | null | undefined,
   pii: Player | null | undefined,
 ): Player | null {
-  if (!base && !pii) return null
-  return { ...(base ?? {}), ...(pii ?? {}) } as Player
+  if (!base) return pii ? { ...pii } : null
+  if (!pii) return { ...base }
+  return { ...base, ...pii }
 }

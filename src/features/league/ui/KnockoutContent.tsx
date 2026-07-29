@@ -49,7 +49,7 @@ export function KnockoutContent({
         <button
           key={tab}
           onClick={() => setBracketTab(tab)}
-          className={`px-2 py-1 capitalize ${bracketTab === tab ? 'bg-lob-teal text-white' : 'bg-white text-gray-500'}`}
+          className={`px-2 py-1 capitalize ${bracketTab === tab ? 'bg-lob-teal text-white' : 'bg-white text-lob-muted'}`}
         >
           {tab}
         </button>

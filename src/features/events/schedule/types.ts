@@ -8,15 +8,17 @@ export interface SchedulePlayer {
   playtomicLevel?: number
 }
 
+// `round` and `completed` are nullable in the `matches` table (both have a
+// column default but no NOT NULL), so persisted rows can carry null.
 export interface ScheduleMatch {
   id?: EntityId
-  round?: number
-  court?: string
+  round?: number | null
+  court?: string | null
   team1Ids?: EntityId[]
   team2Ids?: EntityId[]
   team1Level?: number
   team2Level?: number
-  completed?: boolean
+  completed?: boolean | null
   score1?: number | null
   score2?: number | null
 }

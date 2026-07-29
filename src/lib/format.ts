@@ -17,10 +17,13 @@ const eur0 = new Intl.NumberFormat('en-GB', {
 })
 
 // Format a number as "€1,000.00". Safely coerces strings / nullish → 0.
-export const fmtEur = (n) => `€${eur2.format(Number(n) || 0)}`
+export const fmtEur = (n: number | string | null | undefined): string =>
+  `€${eur2.format(Number(n) || 0)}`
 
 // Whole-euro variant for merch prices etc. → "€25"
-export const fmtEur0 = (n) => `€${eur0.format(Number(n) || 0)}`
+export const fmtEur0 = (n: number | string | null | undefined): string =>
+  `€${eur0.format(Number(n) || 0)}`
 
 // Plain number with "1,000.00" style, no currency sign
-export const fmtNum2 = (n) => eur2.format(Number(n) || 0)
+export const fmtNum2 = (n: number | string | null | undefined): string =>
+  eur2.format(Number(n) || 0)

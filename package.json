@@ -19,6 +19,10 @@
     "db:stop": "supabase stop",
     "db:reset": "supabase db reset",
     "db:migration": "supabase migration new",
+    "db:types": "supabase gen types typescript --local | prettier --stdin-filepath database.types.ts > src/lib/database.types.ts",
+    "db:types:check": "supabase gen types typescript --local | prettier --stdin-filepath database.types.ts | diff -u src/lib/database.types.ts - || (echo 'database.types.ts is stale — run npm run db:types' && exit 1)",
+    "db:grants": "./scripts/dump-function-grants.sh --write",
+    "db:grants:check": "./scripts/dump-function-grants.sh | diff -u supabase/expected_function_grants.txt - || (echo 'Function EXECUTE grants for anon/authenticated drifted from supabase/expected_function_grants.txt — review the diff above. If the change is intentional, run `npm run db:grants` and commit the result.' && exit 1)",
     "functions:serve": "supabase functions serve",
     "claude": "claude --strict-mcp-config --mcp-config .mcp.json",
     "lint": "eslint .",
@@ -66,7 +70,7 @@
     "vitest": "^2.1.8"
   },
   "lint-staged": {
-    "*.{js,jsx}": [
+    "*.{js,jsx,ts,tsx}": [
       "prettier --write",
       "eslint --fix"
     ],

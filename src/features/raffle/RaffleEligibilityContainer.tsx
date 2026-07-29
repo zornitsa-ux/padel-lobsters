@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ArrowLeft, Check, Users, Save, Clock, Trophy } from 'lucide-react'
+import { EmptyState } from '../../components/ui/EmptyState'
+import { PlayerRow } from '../../components/ui/PlayerRow'
 import { usePlayers } from '../players/usePlayers'
 import { useRegistrations } from '../events/useRegistrations'
 import { useExclusions, useIneligible, useSetExclusions } from './useRaffle'
 import type { IneligibleReason } from './raffleQueries'
+import type { EventNavigate } from '../events/eventHelpers'
 
 interface Tournament {
   id: string
@@ -11,14 +14,13 @@ interface Tournament {
 }
 
 const fullNameOf = (name?: string | null) => (name || '').trim() || 'Player'
-const initialOf = (name?: string | null) => fullNameOf(name).charAt(0).toUpperCase() || '?'
 
 export default function RaffleEligibilityContainer({
   tournament,
   onNavigate,
 }: {
   tournament: Tournament
-  onNavigate?: (page: string, payload?: unknown) => void
+  onNavigate?: EventNavigate
 }) {
   const { data: players = [] } = usePlayers()
   const { data: regsData = [] } = useRegistrations(tournament?.id)
@@ -53,10 +55,10 @@ export default function RaffleEligibilityContainer({
   const registered = useMemo(() => {
     const seen = new Set<string>()
     return regsData
-      .filter((r: { status?: string }) => r.status === 'registered')
-      .map((r: { playerId: string }) => r.playerId)
-      .filter((id: string) => (seen.has(id) ? false : (seen.add(id), true)))
-      .sort((a: string, b: string) => fullNameOf(nameOf(a)).localeCompare(fullNameOf(nameOf(b))))
+      .filter((r) => r.status === 'registered')
+      .map((r) => r.playerId)
+      .filter((id) => (seen.has(id) ? false : (seen.add(id), true)))
+      .sort((a, b) => fullNameOf(nameOf(a)).localeCompare(fullNameOf(nameOf(b))))
   }, [regsData, nameOf])
 
   const toggle = (id: string) => {
@@ -100,24 +102,24 @@ export default function RaffleEligibilityContainer({
       <div className="card space-y-1">
         <div className="flex items-center gap-2">
           <Users size={18} className="text-lob-teal" />
-          <p className="font-bold text-gray-800">Raffle eligibility</p>
+          <p className="font-bold text-lob-dark">Raffle eligibility</p>
         </div>
-        <p className="text-sm text-gray-500">{tournament.name}</p>
-        <p className="text-xs text-gray-400 leading-snug pt-1">
+        <p className="text-sm text-lob-muted">{tournament.name}</p>
+        <p className="text-xs text-lob-muted-light leading-snug pt-1">
           Everyone registered is eligible by default. Uncheck anyone to drop them from this
           tournament's draw only — it doesn't affect their chances in any future raffle. Players on
           cooldown from a recent win are skipped automatically.
         </p>
-        <p className="text-sm font-semibold text-gray-700 pt-2">
+        <p className="text-sm font-semibold text-lob-slate pt-2">
           {eligibleCount} of {registered.length} eligible
           {cooldownCount > 0 && (
-            <span className="font-normal text-gray-400"> · {cooldownCount} on cooldown</span>
+            <span className="font-normal text-lob-muted-light"> · {cooldownCount} on cooldown</span>
           )}
         </p>
       </div>
 
       {registered.length === 0 ? (
-        <div className="card py-8 text-center text-gray-400 text-sm">No registered players yet</div>
+        <EmptyState title="No registered players yet" />
       ) : (
         <div className="card space-y-2">
           {registered.map((id: string) => {
@@ -125,50 +127,42 @@ export default function RaffleEligibilityContainer({
             const isEligible = !skip && !excluded.has(id)
             const dimmed = !isEligible
             return (
-              <button
+              <PlayerRow
                 key={id}
+                player={{ name: fullNameOf(nameOf(id)) }}
+                avatarTone={isEligible ? 'bg-amber-400 text-white' : 'bg-gray-300 text-white'}
                 onClick={() => toggle(id)}
                 disabled={!!skip}
-                className={`w-full flex items-center gap-3 rounded-xl p-3 border transition-all ${
+                className={`w-full rounded-xl p-3 border transition-all ${
                   isEligible ? 'bg-white border-gray-100' : 'bg-gray-50 border-gray-100'
                 } ${skip ? 'cursor-default' : ''} ${dimmed ? 'opacity-70' : ''}`}
-              >
-                <div
-                  className={`w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0 ${
-                    isEligible ? 'bg-amber-400' : 'bg-gray-300'
-                  }`}
-                >
-                  {initialOf(nameOf(id))}
-                </div>
-                <p
-                  className={`flex-1 min-w-0 text-left font-semibold truncate ${
-                    isEligible ? 'text-gray-800' : 'text-gray-400 line-through'
-                  }`}
-                >
-                  {fullNameOf(nameOf(id))}
-                </p>
-
-                {skip ? (
-                  <span
-                    className={`flex items-center gap-1 text-xs font-semibold rounded-full px-2.5 py-1 flex-shrink-0 ${
-                      skip === 'cooldown'
-                        ? 'bg-amber-50 text-amber-700'
-                        : 'bg-gray-200 text-gray-600'
-                    }`}
-                  >
-                    {skip === 'cooldown' ? <Clock size={12} /> : <Trophy size={12} />}
-                    {skip === 'cooldown' ? 'On cooldown' : 'Won this raffle'}
-                  </span>
-                ) : (
-                  <span
-                    className={`w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 ${
-                      isEligible ? 'bg-lob-teal text-white' : 'border-2 border-gray-300'
-                    }`}
-                  >
-                    {isEligible && <Check size={16} />}
-                  </span>
-                )}
-              </button>
+                name={fullNameOf(nameOf(id))}
+                nameClassName={`font-semibold truncate ${
+                  isEligible ? 'text-lob-dark' : 'text-lob-muted line-through'
+                }`}
+                trailing={
+                  skip ? (
+                    <span
+                      className={`flex items-center gap-1 text-xs font-semibold rounded-full px-2.5 py-1 flex-shrink-0 ${
+                        skip === 'cooldown'
+                          ? 'bg-amber-50 text-amber-700'
+                          : 'bg-gray-200 text-lob-slate'
+                      }`}
+                    >
+                      {skip === 'cooldown' ? <Clock size={12} /> : <Trophy size={12} />}
+                      {skip === 'cooldown' ? 'On cooldown' : 'Won this raffle'}
+                    </span>
+                  ) : (
+                    <span
+                      className={`w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 ${
+                        isEligible ? 'bg-lob-teal text-white' : 'border-2 border-gray-300'
+                      }`}
+                    >
+                      {isEligible && <Check size={16} />}
+                    </span>
+                  )
+                }
+              />
             )
           })}
         </div>

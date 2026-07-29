@@ -1,5 +1,7 @@
 import { Modal } from '../../../components/ui/Modal'
+import { PlayerRow } from '../../../components/ui/PlayerRow'
 import { Badge } from '../../../components/ui/Badge'
+import { StatTile } from '../../../components/ui/StatTile'
 import { LeagueMatchCard } from './LeagueMatchCard'
 import { getTeamRecord } from '../domain/standings'
 import { resolveTeamName } from '../domain/teamDisplay'
@@ -14,49 +16,28 @@ interface TeamPageProps {
   onTeamClick?: (team: LeagueTeam) => void
 }
 
+const statTileProps = { size: 'sm', labelVariant: 'caps', valueClassName: 'text-lob-dark' } as const
+
 const EXPERIENCE_BADGE: Record<string, 'info' | 'gold' | 'silver'> = {
   advanced: 'info',
   intermediate: 'gold',
   beginner: 'silver',
 }
 
-function PlayerRow({
+function TeamPlayerRow({
   player,
 }: {
   player: { id: string; name: string; avatar_url: string | null } | undefined
 }) {
   if (!player) return null
-  const initials = player.name
-    .split(' ')
-    .map((w) => w[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase()
-
   return (
-    <div className="flex items-center gap-3 py-2">
-      {player.avatar_url ? (
-        <img
-          src={player.avatar_url}
-          alt={player.name}
-          className="w-8 h-8 rounded-full object-cover"
-        />
-      ) : (
-        <div className="w-8 h-8 rounded-full bg-lob-teal/20 flex items-center justify-center">
-          <span className="text-xs font-bold text-lob-teal">{initials}</span>
-        </div>
-      )}
-      <span className="text-sm font-medium text-lob-dark">{player.name}</span>
-    </div>
-  )
-}
-
-function StatCell({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="flex flex-col items-center">
-      <span className="text-lg font-bold text-lob-dark">{value}</span>
-      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{label}</span>
-    </div>
+    <PlayerRow
+      player={{ name: player.name, avatarUrl: player.avatar_url }}
+      avatarSize="sm"
+      className="py-2"
+      name={player.name}
+      nameClassName="text-sm font-medium text-lob-dark truncate"
+    />
   )
 }
 
@@ -100,15 +81,17 @@ export function TeamPage({ team, matches, teamById, onClose, onTeamClick }: Team
 
         {/* Players */}
         <div>
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Players</p>
-          <PlayerRow player={team.player1} />
-          <PlayerRow player={team.player2} />
+          <p className="text-xs font-bold text-lob-muted-light uppercase tracking-wider mb-1">
+            Players
+          </p>
+          <TeamPlayerRow player={team.player1} />
+          <TeamPlayerRow player={team.player2} />
         </div>
 
         {/* Preferred play times */}
         {team.preferred_play_times && (
           <div>
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
+            <p className="text-xs font-bold text-lob-muted-light uppercase tracking-wider mb-1">
               Preferred Play Times
             </p>
             <div className="text-sm text-lob-dark space-y-0.5">
@@ -121,21 +104,21 @@ export function TeamPage({ team, matches, teamById, onClose, onTeamClick }: Team
 
         {/* Group stage record */}
         <div>
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
+          <p className="text-xs font-bold text-lob-muted-light uppercase tracking-wider mb-3">
             Group Stage Record
           </p>
           <div className="grid grid-cols-4 gap-2 bg-gray-50 rounded-xl p-4">
-            <StatCell label="W" value={record.wins} />
-            <StatCell label="L" value={record.losses} />
-            <StatCell label="Pts" value={record.wins} />
-            <StatCell label="Set +/−" value={formatSetDiff(record.setDiff)} />
+            <StatTile label="W" value={record.wins} {...statTileProps} />
+            <StatTile label="L" value={record.losses} {...statTileProps} />
+            <StatTile label="Pts" value={record.wins} {...statTileProps} />
+            <StatTile label="Set +/−" value={formatSetDiff(record.setDiff)} {...statTileProps} />
           </div>
         </div>
 
         {/* Match history */}
         {teamMatches.length > 0 && (
           <div>
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+            <p className="text-xs font-bold text-lob-muted-light uppercase tracking-wider mb-2">
               Match History
             </p>
             <div className="space-y-2">

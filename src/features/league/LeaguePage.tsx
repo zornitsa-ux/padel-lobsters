@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useParams } from 'react-router-dom'
 import useAuth from '../../hooks/useAuth'
-import { LoadingSpinner } from './ui/LoadingSpinner'
+import { Spinner } from '../../components/ui/Spinner'
 import { LeagueNotFound } from './ui/LeagueNotFound'
 import { LeagueHome } from './ui/LeagueHome'
 import { useLeagueById, useLeagueTeams, useLeagueMatches } from './hooks/useLeagueQueries'
@@ -20,7 +20,7 @@ export default function LeaguePage() {
     [teams, session],
   )
 
-  if (isLoading) return <LoadingSpinner />
+  if (isLoading) return <Spinner />
   if (!league) return <LeagueNotFound />
 
   return <LeagueHome league={league} teams={teams} matches={matches} myTeam={myTeam} />

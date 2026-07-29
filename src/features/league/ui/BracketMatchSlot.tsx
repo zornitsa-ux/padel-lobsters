@@ -39,12 +39,12 @@ function TeamRow({
   onTeamClick?: (team: LeagueTeam) => void
 }) {
   const textClass = isBye
-    ? 'text-gray-300 italic'
+    ? 'text-lob-muted-light/60 italic'
     : played
       ? isWinner
         ? 'font-bold text-lob-dark'
-        : 'text-gray-400'
-      : 'text-gray-400'
+        : 'text-lob-muted-light'
+      : 'text-lob-muted-light'
 
   return (
     <div

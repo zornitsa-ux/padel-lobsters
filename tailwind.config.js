@@ -14,16 +14,8 @@ export default {
           cream: '#F5F0E8',
           dark: '#1C2B30',
           muted: '#6B8A92',
-        },
-        // Keep old lobster names for backward compatibility
-        lobster: {
-          teal: '#3D7A8A',
-          'teal-dark': '#2A5A68',
-          'teal-light': '#EAF4F7',
-          orange: '#D94F2B',
-          'orange-light': '#FAEAE5',
-          cream: '#F5F0E8',
-          gold: '#E8A030',
+          'muted-light': '#97ADB3',
+          slate: '#40565C',
         },
       },
       keyframes: {

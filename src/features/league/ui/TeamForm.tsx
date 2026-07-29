@@ -4,6 +4,7 @@ import type { Division, GroupLabel, LeagueTeam } from '../domain/types'
 import { suggestGroupForTeam } from '../domain/groupBalancer'
 import { TabSwitcher } from '../../../components/ui/TabSwitcher'
 import { AlertBox } from '../../../components/ui/AlertBox'
+import Avatar from '../../../components/ui/Avatar'
 import { useCreateTeam, useUpdateTeam } from '../hooks/useLeagueMutations'
 
 interface PlayerOption {
@@ -106,9 +107,7 @@ function PlayerPicker({
                   setOpen(false)
                 }}
               >
-                <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold bg-lob-teal/10 text-lob-teal flex-shrink-0">
-                  {p.name.charAt(0).toUpperCase()}
-                </div>
+                <Avatar player={p} size="xs" tone="bg-lob-teal/10 text-lob-teal" />
                 <span className="text-sm text-lob-dark">{p.name}</span>
               </button>
             ))}
@@ -228,7 +227,7 @@ export function TeamForm({
       return
     }
     setValidationErrors({})
-    const payload: Record<string, unknown> = {
+    const payload = {
       ...result.data,
       league_id: leagueId,
       division,

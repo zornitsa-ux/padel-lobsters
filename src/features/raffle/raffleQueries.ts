@@ -34,12 +34,13 @@ export async function fetchWinners(tournamentId: string): Promise<RaffleWinner[]
 export async function drawWinners(
   tournamentId: string,
   numWinners: number,
-  prizes?: (string | null)[],
+  prizes?: string[],
 ): Promise<RaffleWinner[]> {
+  // Omitted rather than sent as null: the RPC's `input_prizes` defaults to NULL.
   const { data, error } = await supabase.rpc('admin_draw_raffle_winners', {
     input_tournament_id: tournamentId,
     input_num_winners: numWinners,
-    input_prizes: prizes ?? null,
+    input_prizes: prizes,
   })
   if (error) throw error
   return z

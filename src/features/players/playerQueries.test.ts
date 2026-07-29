@@ -21,8 +21,8 @@ beforeEach(() => {
   vi.spyOn(console, 'error').mockImplementation(() => {})
   selectedColumns = ''
   mockFrom.mockImplementation(() => ({
-    select: (cols: string) => {
-      selectedColumns = cols
+    select: (cols?: string) => {
+      selectedColumns = cols ?? ''
       return { order: mockOrder }
     },
   }))

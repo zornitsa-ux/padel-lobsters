@@ -104,7 +104,8 @@ export async function reviewRatingEvent({
   const { data, error } = await supabase.rpc('admin_review_rating_event', {
     input_event_id: eventId,
     input_action: action,
-    input_delta: delta ?? null,
+    // Omitted rather than sent as null: the RPC's `input_delta` defaults to NULL.
+    input_delta: delta,
   })
   if (error) {
     console.error('admin_review_rating_event error:', error)

@@ -15,6 +15,7 @@ vi.mock('../../context/useApp', () => ({
 
 import AdminSection from './AdminSection'
 import ProfileSection from './ProfileSection'
+import { normalisePlayers } from '../../lib/normalise'
 
 const noop = () => {}
 
@@ -41,7 +42,12 @@ const adminSection = (
   />
 )
 
-const myPlayer = { id: 'p1', name: 'Ada Lovelace', playtomicLevel: 3.5, adjustment: 0.5 }
+// `adjustment` is deliberately still on the fixture: the assertions below check
+// the UI never surfaces it, which only means something if the field is present.
+const myPlayer = {
+  ...normalisePlayers([{ id: 'p1', name: 'Ada Lovelace', playtomic_level: 3.5 }])[0],
+  adjustment: 0.5,
+}
 
 const profileForm = {
   name: 'Ada Lovelace',

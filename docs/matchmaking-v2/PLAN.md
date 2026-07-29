@@ -26,12 +26,29 @@ split → refinement → report), the services in `src/features/matchmaking/`, a
 the admin UI mounts inside the Schedule tab: configure → generate → compare /
 fix repeats → save, then Finish applies ratings and raises the flagged-review
 queue. Learned levels (`mm_rating`/`mm_sigma`) are admin-only and feed the next
-event's roster. V1 code (`lobsterMatcher.js`, `glicko2.js`,
-`ratingsRecompute.js`, `pairingEngine.js`) is still in the tree with no data
-path reaching it (D-028).
+event's roster. The V1 **generator** code is gone (2026-07-26): `lobsterMatcher.js`,
+`pairingEngine.js`, the unused generators in `scheduleHelpers.js`, and
+`shadow.harness.test.ts` are deleted. The V1 **rating write path** is gone too
+(2026-07-26): `ratingsRecompute.js` and its three call sites (`api/aliases.js`,
+`Schedule.jsx`'s Finish handler, the unreachable `:325` branch) are deleted.
+`src/lib/glicko2.ts` remains — **not shipped, offline-only**; see M4.3 below.
 
-Gates as of 2026-07-25: typecheck clean, lint 0 errors (136 pre-existing
-warnings), **722 pass / 3 skip**, build clean, 9 goldens byte-identical.
+Gates as of 2026-07-28: typecheck clean, lint 0 errors (61 pre-existing
+warnings), **1175 pass / 2 skip**, build clean, 9 goldens byte-identical.
+
+The 2026-07-28 code-hygiene session touched matchmaking in one place only:
+`ui/QualityReport.tsx`'s `DimensionBar` now uses the shared
+`components/ui/ProgressBar`, and its bar gained a width transition (motion
+only — static pixels unchanged). No domain, service or golden was touched.
+
+**Golden snapshots are reviewable again (2026-07-26, D-034).** The snapshot file
+went **14,251 → 4,144 lines**: court/sitter slots serialize player ids instead of
+inlining a `PlayerInput` object 1,002 times, with the full roster + resolved
+configs pinned once per roster fixture (12 snapshots: 9 runs + 3 fixtures). The
+9 runs are byte-identical — engine behaviour is untouched. Two new assertions
+came with it: every run must emit `violations: []` (the claim D-014 already
+leaned on, previously unasserted) and `court.players` must equal the flattened
+`teams` (guards the one field the projection drops).
 
 ### Open items
 
@@ -229,14 +246,48 @@ and in the code each task produced.
 - `[~]` **M4.3 — Delete legacy** (W, M) — the UI half is done (D-028): no
   user-facing surface reaches a V1 concept. What remains is code + schema
   deletion.
-  - **Code:** `src/lib/lobsterMatcher.js`, `src/lib/glicko2.js`,
-    `src/lib/ratingsRecompute.js`, `src/features/events/pairingEngine.js`, and
-    the unused generators in `scheduleHelpers.js` (D-001). With those gone, the
-    `!isLobster` branch, `formatLabel` (`eventHelpers.js`), the rounds picker in
-    `ScheduleGeneratorControls.tsx` and `isLobster` itself all collapse out of
-    `Schedule.jsx`.
-  - **Schema:** drop `players.learned_rating`, `learned_rd`, `adjustment`,
-    `adjusted_level` — see the appendix for the full DB-side checklist.
+  - **Code — generators: done (2026-07-26).** Deleted `src/lib/lobsterMatcher.js`,
+    `src/features/events/pairingEngine.js`, the unused generators in
+    `scheduleHelpers.js` (it now exports only `shortName`), and
+    `domain/shadow.harness.test.ts` (D-001; `shadow-report.md` is the artifact).
+    `Schedule.jsx`'s `handleGenerate` collapsed to the non-admin redirect and
+    dropped its `useAllMatches` read.
+  - **Code — rating writes: done (2026-07-26).** Deleted
+    `src/lib/ratingsRecompute.js` and all three call sites: the import + call in
+    `api/aliases.js` (the live one — an admin alias edit fired a full recompute;
+    the alias upsert/delete itself is unchanged), and the import + Finish-handler
+    call in `Schedule.jsx` (`:325`, provably unreachable since `useV2Matcher =
+isAdmin`), plus its `vi.mock` in `Schedule.test.tsx`. `Schedule.jsx`'s now
+    orphaned `supabase` import went with it. - **Consequence — schema drop is unblocked.** `players.learned_rating`,
+    `learned_rd`, `learned_volatility`, `learned_matches_count`,
+    `learned_updated_at` and `tournaments.ratings_applied_at` now have **zero
+    writers and zero readers**. The `admin_persist_learned_ratings` RPC
+    (defined `20260512000003:291`, granted `20260518000007:40`) is
+    **caller-less** and should be dropped in the same migration.
+  - **Code — `glicko2.ts`: deliberately kept, blocked on the harnesses.** Its
+    last runtime importer is gone, so it is no longer in the shipped bundle, but
+    two offline calibration harnesses under `domain/rating/` still import it:
+    `calibrate.harness.test.ts` (`applyTournamentRatings` / `defaultRating` /
+    `GlickoState` — it _is_ the V1 Brier baseline the M1.6 parity gate is
+    measured against) and `seed.harness.test.ts` (`ratingToPadel`, for the V1
+    comparison column in `seed-ratings.md`). Neither use is excisable without
+    changing what the harness measures. Delete `glicko2.ts` + `glicko2.test.ts`
+    when those harnesses are retired — not before.
+  - **Code — remaining:** the UI collapse — the `!isLobster` branch,
+    `formatLabel` (`eventHelpers.js`), the rounds picker in
+    `ScheduleGeneratorControls.tsx`, and `isLobster` itself.
+  - **Do NOT delete the `generated` preview block in `Schedule.jsx`.** With
+    `handleGenerate` now inert it looks unreachable, but `handleEditSchedule`
+    (`Schedule.jsx:67`) still sets `generated` from `savedRounds` for admins and
+    enables swap mode. That path is live: it drives the manual player swap, the
+    save, and the `validateSchedule` call at `:112` (covered by
+    `validateSchedule.test.js`). Deleting it would remove working admin
+    functionality.
+  - **Schema:** drop `players.learned_rating`, `learned_rd`,
+    `learned_volatility`, `learned_matches_count`, `learned_updated_at`,
+    `adjustment`, `adjusted_level`, `tournaments.ratings_applied_at`, and the
+    `admin_persist_learned_ratings` function — see the appendix for the full
+    DB-side checklist. **No longer blocked by anything in the client.**
   - **Also:** a CHECK constraint on `tournaments.format` (the default is now
     `lobster_matching` per D-030, but nothing constrains the column).
   - **Acceptance:** grep-clean; app fully functional; ARCHITECTURE.md and
@@ -303,5 +354,13 @@ src/` is clean outside tests). What remains is DB-side, from the P0.3 inventory:
 
 All four write RPCs already `coalesce` the payload key and no client sends it,
 so `adjusted_level` currently just mirrors `playtomic_level` (D-018).
-`learned_rating` / `learned_rd` / `learned_matches_count` drop in the same
-change; `glicko2.js` and `ratingsRecompute.js` are their only remaining writers.
+`learned_rating` / `learned_rd` / `learned_volatility` /
+`learned_matches_count` / `learned_updated_at` and
+`tournaments.ratings_applied_at` drop in the same change. As of 2026-07-26 they
+have **no writer at all** — `ratingsRecompute.js` was their only one and is
+deleted — so also drop `public.admin_persist_learned_ratings(jsonb, uuid[])`
+(body at `20260512000003_rbac_phase4_admin_rpcs.sql:291`, grant at
+`20260518000007_security_phase_a_function_grants.sql:40`; the older `(text,
+jsonb, uuid[])` overload was already dropped by `20260512000004`). Note
+`players_public` (`20260512000001:41-45`) selects all five `learned_*` columns
+and must be rebuilt without them.

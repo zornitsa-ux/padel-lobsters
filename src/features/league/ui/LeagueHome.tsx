@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { Badge } from '../../../components/ui/Badge'
+import { statusPill } from './statusPill'
+import type { StatusPill } from './statusPill'
 import { PageHeader } from '../../../components/ui/PageHeader'
 import { DivisionPills } from './DivisionPills'
 import { DraftSection } from './DraftSection'
@@ -7,15 +9,10 @@ import { GroupStageContent } from './GroupStageContent'
 import { KnockoutContent } from './KnockoutContent'
 import { PendingMatchCard } from './PendingMatchCard'
 import { TeamPage } from './TeamPage'
-import type { Division, League, LeagueTeam, LeagueMatch, LeagueStatus } from '../domain/types'
+import { leagueDivisions } from '../domain/types'
+import type { Division, League, LeagueTeam, LeagueMatch } from '../domain/types'
 
-const PHASE_PILL: Record<
-  LeagueStatus,
-  {
-    variant: 'league-draft' | 'league-group-stage' | 'league-knockout' | 'league-completed'
-    label: string
-  }
-> = {
+const PHASE_PILL: Record<string, StatusPill> = {
   draft: { variant: 'league-draft', label: 'Registering' },
   group_stage: { variant: 'league-group-stage', label: 'Group Stage' },
   knockout: { variant: 'league-knockout', label: 'Knockout' },
@@ -30,7 +27,8 @@ interface LeagueHomeProps {
 }
 
 export function LeagueHome({ league, teams, matches, myTeam }: LeagueHomeProps) {
-  const [division, setDivision] = useState<Division>(() => league.divisions[0] ?? 'mens')
+  const divisions = leagueDivisions(league)
+  const [division, setDivision] = useState<Division>(() => divisions[0])
   const [selectedTeam, setSelectedTeam] = useState<LeagueTeam | null>(null)
 
   const divTeams = teams.filter((t) => t.division === division)
@@ -53,7 +51,7 @@ export function LeagueHome({ league, teams, matches, myTeam }: LeagueHomeProps) 
         })
     : []
 
-  const pill = PHASE_PILL[league.status]
+  const pill = statusPill(PHASE_PILL, league.status)
 
   return (
     <div className="-mx-4">
@@ -63,8 +61,8 @@ export function LeagueHome({ league, teams, matches, myTeam }: LeagueHomeProps) 
         backLink={{ to: '/league', label: 'Seasons' }}
         badge={<Badge variant={pill.variant} label={pill.label} />}
         tabStrip={
-          league.divisions.length > 1 ? (
-            <DivisionPills divisions={league.divisions} value={division} onChange={setDivision} />
+          divisions.length > 1 ? (
+            <DivisionPills divisions={divisions} value={division} onChange={setDivision} />
           ) : undefined
         }
       />

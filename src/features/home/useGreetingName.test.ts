@@ -57,7 +57,12 @@ describe('useGreetingName', () => {
     const { result, rerender } = renderHook(
       ({ playerId, name }: { playerId: string | null; name?: string }) =>
         useGreetingName({ playerId, name }),
-      { initialProps: { playerId: 'p1' as string | null, name: 'Ada Lovelace' } },
+      {
+        initialProps: {
+          playerId: 'p1' as string | null,
+          name: 'Ada Lovelace' as string | undefined,
+        },
+      },
     )
     await waitFor(() => expect(result.current).toBe('Ada Lovelace'))
 

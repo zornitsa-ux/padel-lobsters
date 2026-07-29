@@ -1,0 +1,118 @@
+import React from 'react'
+import { useRegistrations } from './useRegistrations'
+import { Pencil, Trash2, Calendar, Users, MapPin, Clock, Building2 } from 'lucide-react'
+import DateTile from '../../components/ui/DateTile'
+import { fmtEur } from '../../lib/format'
+import { formatDate, pricePerPlayer, type EventNavigate } from './eventHelpers'
+import { IconButton } from '../../components/ui/IconButton'
+import type { NormalisedTournament } from './tournamentQueries'
+
+interface InfoChipProps {
+  icon: React.ReactNode
+  label: React.ReactNode
+  warn?: boolean
+}
+
+function InfoChip({ icon, label, warn }: InfoChipProps) {
+  return (
+    <div
+      className={`flex items-center gap-1 text-xs rounded-lg px-2 py-1.5 ${warn ? 'bg-orange-50 text-orange-600' : 'bg-gray-50 text-lob-slate'}`}
+    >
+      {icon}
+      <span className="font-medium">{label}</span>
+    </div>
+  )
+}
+
+interface PastEventCardProps {
+  t: NormalisedTournament
+  isAdmin: boolean
+  onNavigate: EventNavigate
+  onEdit: (tournament: NormalisedTournament) => void
+  onDelete: (id: string) => void
+}
+
+export default function PastEventCard({
+  t,
+  isAdmin,
+  onNavigate,
+  onEdit,
+  onDelete,
+}: PastEventCardProps) {
+  const { data: regsData = [] } = useRegistrations(t?.id)
+  const bookedCount = (t.courts || []).filter((c) => c.booked).length
+  const totalCourts = (t.courts || []).length
+  const ppCost = pricePerPlayer(t)
+
+  return (
+    <div className="card opacity-80">
+      <div className="flex items-start gap-3 mb-3">
+        <DateTile date={t.date} size="sm" className="grayscale" />
+        <div className="flex-1 min-w-0">
+          <h3 className="font-bold text-lob-slate truncate">
+            <button
+              onClick={() => onNavigate('registration', t)}
+              className="hover:text-lob-teal active:scale-95 transition-all text-left"
+            >
+              {t.name}
+            </button>
+          </h3>
+          <p className="text-sm font-semibold text-lob-slate flex items-center gap-1 mt-0.5">
+            <Calendar size={12} /> {formatDate(t.date)}
+            {t.time && <span className="text-lob-muted-light">· {t.time}</span>}
+          </p>
+          {t.location && (
+            <p className="text-xs text-lob-muted-light flex items-center gap-1 mt-0.5">
+              <Building2 size={11} /> {t.location}
+            </p>
+          )}
+        </div>
+        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-lob-muted flex-shrink-0">
+          completed
+        </span>
+      </div>
+      {(() => {
+        const regCount = regsData.filter((r) => r.status === 'registered').length
+        return (
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            <InfoChip icon={<Users size={12} />} label={`${regCount}/${t.maxPlayers || '?'}`} />
+            <InfoChip icon={<MapPin size={12} />} label={`${bookedCount}/${totalCourts}`} />
+            <InfoChip
+              icon={<Clock size={12} />}
+              label={t.duration ? `${t.duration}min` : '90min'}
+            />
+            <InfoChip icon={null} label={ppCost > 0 ? `${fmtEur(ppCost)}/pp` : 'Free'} />
+          </div>
+        )
+      })()}
+      <div className="flex gap-2 pt-2 border-t border-gray-100">
+        <button
+          onClick={() => onNavigate('registration', t)}
+          className="flex-1 text-xs font-semibold text-lob-teal py-2 rounded-xl bg-lob-cream active:scale-95 transition-all"
+        >
+          Registrations
+        </button>
+        <button
+          onClick={() => onNavigate('schedule', t)}
+          className="flex-1 text-xs font-semibold text-lob-slate py-2 rounded-xl bg-gray-100 active:scale-95 transition-all"
+        >
+          Schedule
+        </button>
+        {isAdmin && (
+          <>
+            <IconButton aria-label="Edit event" onClick={() => onEdit(t)}>
+              <Pencil size={14} />
+            </IconButton>
+            <IconButton
+              aria-label="Delete event"
+              variant="destructive"
+              onClick={() => onDelete(t.id)}
+            >
+              <Trash2 size={14} />
+            </IconButton>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}

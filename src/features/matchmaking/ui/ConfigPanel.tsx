@@ -174,7 +174,7 @@ export default function ConfigPanel({
 
   return (
     <div className="card space-y-3">
-      <p className="font-semibold text-gray-700 text-sm">Configure schedule</p>
+      <p className="font-semibold text-lob-slate text-sm">Configure schedule</p>
 
       <div>
         <label className="label">Preset</label>
@@ -190,7 +190,7 @@ export default function ConfigPanel({
             </button>
           ))}
         </div>
-        <p className="mt-2 text-xs text-gray-500">{presetIntent}</p>
+        <p className="mt-2 text-xs text-lob-muted">{presetIntent}</p>
       </div>
 
       <button
@@ -212,7 +212,7 @@ export default function ConfigPanel({
               <div key={key}>
                 <div className="flex items-center justify-between">
                   <label className="label mb-0">{label}</label>
-                  <span className="flex items-center gap-1 text-xs text-gray-500">
+                  <span className="flex items-center gap-1 text-xs text-lob-muted">
                     {toDisplay(value)}
                     {overridden && (
                       <>
@@ -225,7 +225,7 @@ export default function ConfigPanel({
                         <button
                           type="button"
                           onClick={() => onConfigChange(clearOverride({ config, key }))}
-                          className="text-gray-400 hover:text-gray-600"
+                          className="text-lob-muted-light hover:text-lob-slate"
                           title="Reset to preset default"
                         >
                           <RotateCcw size={12} />
@@ -245,8 +245,8 @@ export default function ConfigPanel({
                   }
                   className="w-full accent-lob-teal"
                 />
-                <p className="text-xs text-gray-500">{describe(value)}</p>
-                <p className="text-xs text-gray-400">{effect}</p>
+                <p className="text-xs text-lob-muted">{describe(value)}</p>
+                <p className="text-xs text-lob-muted-light">{effect}</p>
               </div>
             )
           })}
@@ -255,7 +255,7 @@ export default function ConfigPanel({
             <div className="flex items-center justify-between">
               <label className="label mb-0">Lefty rule</label>
               {config.leftyRule !== undefined && (
-                <span className="flex items-center gap-1 text-xs text-gray-500">
+                <span className="flex items-center gap-1 text-xs text-lob-muted">
                   <span
                     className="text-lob-teal font-medium"
                     title="Overridden from preset default"
@@ -265,7 +265,7 @@ export default function ConfigPanel({
                   <button
                     type="button"
                     onClick={() => onConfigChange(clearOverride({ config, key: 'leftyRule' }))}
-                    className="text-gray-400 hover:text-gray-600"
+                    className="text-lob-muted-light hover:text-lob-slate"
                     title="Reset to preset default"
                   >
                     <RotateCcw size={12} />
@@ -293,11 +293,11 @@ export default function ConfigPanel({
 
           {priorities.length > 0 && (
             <div className="pt-1">
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-lob-muted">
                 No schedule can be perfect at everything. When the matcher has to choose, this is
                 what it hangs on to longest — the ones at the bottom slip first:
               </p>
-              <ol className="mt-1 space-y-0.5 text-xs text-gray-500 list-decimal pl-4">
+              <ol className="mt-1 space-y-0.5 text-xs text-lob-muted list-decimal pl-4">
                 {priorities.map(({ key }) => (
                   <li key={key}>{DIMENSION_LABELS[key]}</li>
                 ))}
@@ -308,7 +308,7 @@ export default function ConfigPanel({
       )}
 
       <div className="flex flex-wrap gap-1.5">
-        <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-medium">
+        <span className="text-xs bg-gray-100 text-lob-slate px-2 py-0.5 rounded-full font-medium">
           {feasibility.courtsUsed} court{feasibility.courtsUsed === 1 ? '' : 's'} ·{' '}
           {feasibility.sittersPerRound} sit-out{feasibility.sittersPerRound === 1 ? '' : 's'}/round
         </span>
@@ -317,7 +317,7 @@ export default function ConfigPanel({
             key={entry.rule}
             title={entry.detail}
             className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-              CHIP_STATUS_CLASSES[entry.status] ?? 'bg-gray-100 text-gray-600'
+              CHIP_STATUS_CLASSES[entry.status] ?? 'bg-gray-100 text-lob-slate'
             }`}
           >
             {entry.rule} · {RULE_LABELS[entry.status] ?? entry.status}

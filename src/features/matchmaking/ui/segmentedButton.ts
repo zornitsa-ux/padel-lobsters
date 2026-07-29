@@ -3,5 +3,5 @@
 // caller used before this was extracted.
 export const segmentedButtonClass = (active: boolean): string =>
   `flex-1 py-2 text-sm rounded-xl font-semibold transition-all ${
-    active ? 'bg-lob-teal text-white' : 'bg-gray-100 text-gray-600'
+    active ? 'bg-lob-teal text-white' : 'bg-gray-100 text-lob-slate'
   }`

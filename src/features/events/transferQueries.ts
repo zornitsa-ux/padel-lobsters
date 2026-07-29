@@ -17,10 +17,10 @@ export async function fetchTransfers(): Promise<NormalisedTransfer[]> {
       .order('created_at', { ascending: false })
     if (error) throw error
     return normaliseTransfers(z.array(transferRowSchema).parse(data ?? []))
-  } catch (e: any) {
+  } catch (e: unknown) {
     // Migration may not be applied yet on this environment — degrade
     // gracefully so the rest of the app still works.
-    console.warn('loadTransfers skipped:', e?.message)
+    console.warn('loadTransfers skipped:', e instanceof Error ? e.message : e)
     return []
   }
 }

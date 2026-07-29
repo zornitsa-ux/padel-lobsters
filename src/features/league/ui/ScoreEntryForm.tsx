@@ -45,7 +45,7 @@ function SetInput({ label, t1, t2, onT1, onT2, team1Label, team2Label, error }: 
           onChange={(e) => onT1(e.target.value)}
           className="input w-16 text-center text-lg font-bold [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
         />
-        <span className="text-sm text-gray-400">vs</span>
+        <span className="text-sm text-lob-muted-light">vs</span>
         <input
           type="number"
           min="0"
@@ -149,7 +149,7 @@ export function ScoreEntryForm({
         sets,
         played_on: playedOn,
         location: location || undefined,
-      } as Record<string, unknown>)
+      })
       onSuccess()
     } catch {
       // error is surfaced via recordResult.error

@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { screen, cleanup, fireEvent, waitFor } from '@testing-library/react'
 import { renderWithClient } from '../../test/renderWithClient'
+import type { NormalisedTournament } from '../../lib/normalise'
 
 // D-028: V2 is the only generator, with no settings flag in the picture. These
 // tests pin the routing decision (`isAdmin` alone — format must not gate it) and
@@ -61,7 +62,6 @@ vi.mock('../matchmaking/applyTournamentRatings.service', () => ({
   fetchRatingReviewQueue: vi.fn(),
   reviewRatingEvent: vi.fn(),
 }))
-vi.mock('../../lib/ratingsRecompute', () => ({ recomputeAllRatings: vi.fn() }))
 vi.mock('../../supabase', () => ({ supabase: {} }))
 
 import Schedule from './Schedule'
@@ -86,8 +86,12 @@ const lobsterEvent = {
   status: 'upcoming',
 }
 
-const renderSchedule = (tournament: object) =>
-  renderWithClient(<Schedule tournament={tournament} onNavigate={vi.fn()} />)
+// Fixtures are minimal event stubs — Schedule reads only a handful of fields,
+// so they are cast at this one boundary rather than filled out in full.
+const renderSchedule = (tournament: Record<string, unknown>) =>
+  renderWithClient(
+    <Schedule tournament={tournament as unknown as NormalisedTournament} onNavigate={vi.fn()} />,
+  )
 
 const legacyGenerateButton = () => screen.queryByRole('button', { name: /generate pairings/i })
 

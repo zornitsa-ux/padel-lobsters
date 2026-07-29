@@ -11,7 +11,13 @@ export function useTransfers() {
   })
 }
 
-export function useTransferActions({ session }: { session: any }) {
+// Only the presence of an authenticated user matters here — the RPCs derive
+// identity from auth.uid() server-side.
+export function useTransferActions({
+  session,
+}: {
+  session: { user?: { id: string } | null } | null
+}) {
   const qc = useQueryClient()
   const invalidateTransfers = useCallback(
     () => qc.invalidateQueries({ queryKey: transferKeys.all() }),

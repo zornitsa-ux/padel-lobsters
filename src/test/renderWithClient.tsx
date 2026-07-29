@@ -1,6 +1,7 @@
 import React, { type ReactNode } from 'react'
 import { render, renderHook } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { ConfirmProvider } from '../components/ui/ConfirmDialog'
 
 // Shared test harness for slice hooks/components that read TanStack Query.
 // Each call gets a fresh QueryClient with retries off so a rejected queryFn
@@ -14,9 +15,15 @@ export function makeTestQueryClient() {
   })
 }
 
+// Components under test may call useConfirm() (Dashboard, Registration,
+// etc.), so the wrapper carries ConfirmProvider alongside QueryClientProvider
+// — otherwise every such component throws "useConfirm must be used within a
+// ConfirmProvider" as soon as it mounts.
 export function createWrapper(client = makeTestQueryClient()) {
   const Wrapper = ({ children }: { children: ReactNode }) => (
-    <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    <QueryClientProvider client={client}>
+      <ConfirmProvider>{children}</ConfirmProvider>
+    </QueryClientProvider>
   )
   return { client, Wrapper }
 }

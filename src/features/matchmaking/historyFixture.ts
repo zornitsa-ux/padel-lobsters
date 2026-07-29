@@ -76,7 +76,7 @@ const MONTHS: Record<string, number> = {
   december: 11,
 }
 
-/** Mirrors ratingsRecompute.js parseEventDate: ISO, "Month YYYY", else Date.parse. */
+/** Event date parsing: ISO, "Month YYYY", else Date.parse. */
 export function parseEventDate(d: unknown): number {
   if (!d) return 0
   const s = String(d).trim()

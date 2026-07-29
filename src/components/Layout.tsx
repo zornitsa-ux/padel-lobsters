@@ -1,0 +1,173 @@
+import React, { useState, useEffect, useCallback } from 'react'
+import { NavLink } from 'react-router-dom'
+import { useApp } from '../context/useApp'
+import { useSettings } from '../features/settings/useSettings'
+import useDevices from '../hooks/useDevices'
+import {
+  LayoutDashboard,
+  Users,
+  Trophy,
+  Medal,
+  CircleUser,
+  Shield,
+  MessageCircle,
+} from 'lucide-react'
+
+// Bottom nav — five tabs, each a NavLink so the active state tracks the URL.
+// `end={false}` for /events and /community so the tab stays highlighted on
+// nested routes (e.g. /events/123/schedule keeps Events highlighted).
+const NAV = [
+  { to: '/home', label: 'Home', icon: LayoutDashboard, end: true },
+  { to: '/events', label: 'Events', icon: Trophy, end: false },
+  { to: '/league', label: 'League', icon: Medal, end: false },
+  { to: '/community', label: 'Community', icon: Users, end: false },
+  { to: '/account', label: 'Account', icon: CircleUser, end: false },
+]
+
+const InstagramIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" />
+  </svg>
+)
+
+import DeviceTrustBanner from './device-trust/DeviceTrustBanner'
+import DeviceTrustIndicator from './device-trust/DeviceTrustIndicator'
+const DEVICE_TRUST_BANNER_KEY = 'pl_device_trust_banner_dismissed'
+
+export default function Layout({ children }: { children?: React.ReactNode }) {
+  const { session } = useApp()
+  const { data: settings } = useSettings()
+  const { isMyDeviceTrusted } = useDevices()
+  const [bannerDismissed, setBannerDismissed] = useState(false)
+  const [deviceTrustedDb, setDeviceTrustedDb] = useState<boolean | undefined>(undefined)
+
+  useEffect(() => {
+    const uid = session?.user?.id
+    if (!uid) {
+      setDeviceTrustedDb(undefined)
+      return
+    }
+    isMyDeviceTrusted(uid).then(setDeviceTrustedDb)
+  }, [session?.user?.id, isMyDeviceTrusted])
+
+  // Use live DB result; while it's loading (undefined) don't show the banner to
+  // avoid false positives from stale JWT claims.
+  const isDeviceProbationary = deviceTrustedDb === false
+  const showBanner = isDeviceProbationary && !bannerDismissed
+  const showIndicator = isDeviceProbationary && bannerDismissed
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const stored = window.localStorage.getItem(DEVICE_TRUST_BANNER_KEY)
+    setBannerDismissed(stored === 'true')
+  }, [])
+
+  // Only clear once the device is known-trusted. Keying this off
+  // `!isDeviceProbationary` also fired on mount, while trust was still
+  // undefined, wiping a stored dismissal before the RPC resolved.
+  useEffect(() => {
+    if (deviceTrustedDb === true && typeof window !== 'undefined') {
+      window.localStorage.removeItem(DEVICE_TRUST_BANNER_KEY)
+      setBannerDismissed(false)
+    }
+  }, [deviceTrustedDb])
+
+  const handleDismissBanner = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(DEVICE_TRUST_BANNER_KEY, 'true')
+    }
+    setBannerDismissed(true)
+  }, [])
+  const isAdmin = session?.user?.app_metadata?.role === 'admin'
+  const navItems = isAdmin
+    ? [...NAV, { to: '/admin', label: 'Admin', icon: Shield, end: false }]
+    : NAV
+
+  return (
+    <div className="min-h-screen bg-lob-cream flex flex-col max-w-md mx-auto relative">
+      {/* Page content */}
+      <main className="flex-1 pb-24">
+        {/* App header */}
+        <header className="text-white px-4 pt-4 pb-3 header-gradient">
+          <div className="flex items-center justify-between mb-0">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden bg-white">
+                <img
+                  src="/logo-256.webp"
+                  alt="Padel Lobsters"
+                  width="40"
+                  height="40"
+                  className="w-full h-full object-contain"
+                />
+              </div>
+              <div>
+                <h1 className="font-bold text-base leading-tight tracking-tight">Padel Lobsters</h1>
+                <p className="text-[9px] opacity-60 leading-tight tracking-wide">
+                  Amsterdam Padel Community
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <a
+                href="https://www.instagram.com/padelobsters?utm_source=qr&igsh=MTVwcHdod3pkanQxaQ=="
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center w-8 h-8 rounded-2xl text-white transition-all active:scale-95"
+                style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)' }}
+              >
+                <InstagramIcon />
+              </a>
+              {settings?.whatsappLink && (
+                <a
+                  href={settings.whatsappLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 text-white text-xs font-semibold px-3 py-2 rounded-2xl transition-all active:scale-95"
+                  style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)' }}
+                >
+                  <MessageCircle size={14} />
+                  WhatsApp
+                </a>
+              )}
+              <DeviceTrustIndicator visible={showIndicator} />
+            </div>
+          </div>
+        </header>
+
+        {showBanner && <DeviceTrustBanner onDismiss={handleDismissBanner} />}
+
+        <div className="px-4">{children}</div>
+      </main>
+
+      {/* Bottom navigation */}
+      <nav
+        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white pb-safe z-30"
+        style={{ boxShadow: '0 -1px 0 rgba(0,0,0,0.06), 0 -4px 16px rgba(0,0,0,0.06)' }}
+      >
+        <div className="flex items-center justify-around py-2">
+          {navItems.map(({ to, label, icon: Icon, end }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={end}
+              className={({ isActive }) =>
+                `flex flex-col items-center gap-1 px-2 py-1.5 rounded-xl transition-all ${
+                  isActive ? 'bg-lob-coral/15 text-lob-coral' : 'text-lob-muted hover:bg-white/10'
+                }`
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  <Icon size={20} strokeWidth={isActive ? 2.5 : 1.8} />
+                  <span className={`text-[9px] ${isActive ? 'font-bold' : 'font-medium'}`}>
+                    {label}
+                  </span>
+                </>
+              )}
+            </NavLink>
+          ))}
+        </div>
+      </nav>
+    </div>
+  )
+}

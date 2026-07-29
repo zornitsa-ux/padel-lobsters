@@ -2,25 +2,20 @@ import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { BarChart2, CheckCircle, ChevronLeft } from 'lucide-react'
 import { SectionHeader } from '../../components/ui/SectionHeader'
+import { Spinner } from '../../components/ui/Spinner'
+import { SegmentedControl } from '../../components/ui/SegmentedControl'
 import { GroupStandingsTable } from './ui/GroupStandingsTable'
 import { LeagueMatchCard } from './ui/LeagueMatchCard'
 import { TeamPage } from './ui/TeamPage'
 import { useLeagueById, useLeagueTeams, useLeagueMatches } from './hooks/useLeagueQueries'
 import { computeGroupStandings } from './domain/standings'
 import { sortMatchesAsc } from './domain/matchDisplay'
+import { leagueDivisions } from './domain/types'
 import type { Division, LeagueTeam } from './domain/types'
 
 const DIVISION_LABELS: Record<Division, string> = {
   mens: "Men's",
   womens: "Women's",
-}
-
-function LoadingSpinner() {
-  return (
-    <div className="flex justify-center py-16">
-      <div className="w-8 h-8 border-2 border-lob-teal border-t-transparent rounded-full animate-spin" />
-    </div>
-  )
 }
 
 export default function GroupStageHistoryPage() {
@@ -33,12 +28,11 @@ export default function GroupStageHistoryPage() {
   const { data: teams = [] } = useLeagueTeams(league?.id)
   const { data: matches = [] } = useLeagueMatches(league?.id)
 
-  if (isLoading) return <LoadingSpinner />
+  if (isLoading) return <Spinner />
   if (!league) return null
 
-  const safeDivision = league.divisions.includes(division)
-    ? division
-    : (league.divisions[0] ?? 'mens')
+  const divisions = leagueDivisions(league)
+  const safeDivision = divisions.includes(division) ? division : divisions[0]
   const divTeams = teams.filter((t) => t.division === safeDivision)
   const divMatches = matches.filter((m) => m.division === safeDivision)
   const teamById = Object.fromEntries(teams.map((t) => [t.id, t]))
@@ -65,19 +59,17 @@ export default function GroupStageHistoryPage() {
         <h1 className="text-xl font-bold text-lob-dark">Group Stage</h1>
       </div>
 
-      {league.divisions.length > 1 && (
-        <div className="-mx-4 px-4 py-2 bg-lob-cream border-b border-gray-100 sticky top-0 z-10 flex gap-2 mb-4">
-          {league.divisions.map((div) => (
-            <button
-              key={div}
-              onClick={() => setDivision(div)}
-              className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                safeDivision === div ? 'bg-lob-teal text-white' : 'bg-gray-100 text-gray-500'
-              }`}
-            >
-              {DIVISION_LABELS[div]}
-            </button>
-          ))}
+      {divisions.length > 1 && (
+        <div className="-mx-4 px-4 py-2 bg-lob-cream border-b border-gray-100 sticky top-0 z-10 mb-4">
+          <SegmentedControl
+            ariaLabel="Division"
+            layout="wrap"
+            size="md"
+            shape="pill"
+            options={divisions.map((div) => ({ value: div, label: DIVISION_LABELS[div] }))}
+            value={safeDivision}
+            onChange={(div) => setDivision(div)}
+          />
         </div>
       )}
 

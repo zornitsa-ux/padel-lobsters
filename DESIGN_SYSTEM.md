@@ -14,7 +14,7 @@ The palette is defined in `tailwind.config.js` under the `lob` namespace. Use **
 | `lob-coral`       | `#D94F2B` | Primary CTAs, active nav tab, destructive alerts |
 | `lob-coral-light` | `#FAEAE5` | Alert/warning card backgrounds                   |
 | `lob-amber`       | `#E8A030` | Warnings, in-progress, streak indicators         |
-| `lob-cream`       | `#FAF3E4` | Page background (set on `body`)                  |
+| `lob-cream`       | `#F5F0E8` | Page background (set on `body`)                  |
 | `lob-dark`        | `#1C2B30` | All headings and body text                       |
 | `lob-muted`       | `#6B8A92` | Secondary text, placeholders, inactive icons     |
 

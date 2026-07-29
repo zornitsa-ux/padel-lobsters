@@ -18,9 +18,9 @@ export interface MatchForStandings {
   tournamentId: string | number
   team1Ids: (string | number)[]
   team2Ids: (string | number)[]
-  score1: string | number | null | undefined
-  score2: string | number | null | undefined
-  completed: boolean | null | undefined
+  score1?: string | number | null
+  score2?: string | number | null
+  completed?: boolean | null
 }
 
 export interface PlayerStanding {

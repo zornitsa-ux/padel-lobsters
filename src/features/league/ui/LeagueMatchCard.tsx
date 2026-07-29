@@ -55,7 +55,7 @@ export function LeagueMatchCard({
     if (isBye) {
       return (
         <div className="flex items-center gap-2 py-1">
-          <span className="text-gray-300 text-sm italic">BYE</span>
+          <span className="text-lob-muted-light/60 text-sm italic">BYE</span>
         </div>
       )
     }
@@ -63,14 +63,14 @@ export function LeagueMatchCard({
       return (
         <div className="flex items-center gap-2 py-1">
           <span className="text-base">?</span>
-          <span className="text-gray-400 text-sm">TBD</span>
+          <span className="text-lob-muted-light text-sm">TBD</span>
         </div>
       )
     }
 
     return (
       <div
-        className={`flex items-center gap-2 py-1 ${played ? (isWinner ? 'font-bold text-lob-dark' : 'text-gray-400') : ''} ${onTeamClick ? 'cursor-pointer active:opacity-70' : ''}`}
+        className={`flex items-center gap-2 py-1 ${played ? (isWinner ? 'font-bold text-lob-dark' : 'text-lob-muted-light') : ''} ${onTeamClick ? 'cursor-pointer active:opacity-70' : ''}`}
         onClick={() => onTeamClick?.(team)}
       >
         <span className="flex-1">{resolveTeamName(team)}</span>
@@ -82,7 +82,7 @@ export function LeagueMatchCard({
     <div className="rounded-xl bg-white border border-gray-100 px-4 py-3">
       <TeamRow team={team1} isWinner={team1Won} />
 
-      <div className="text-[10px] font-bold text-gray-500 text-center my-1">vs</div>
+      <div className="text-[10px] font-bold text-lob-muted text-center my-1">vs</div>
 
       <TeamRow team={team2} isWinner={team2Won} isBye={isByeMatch} />
 

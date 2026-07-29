@@ -20,12 +20,12 @@ export const LOBSTERS_GROUP_URL = 'https://chat.whatsapp.com/KigGKm4ERxR3UY9uq0G
 // E.164: leading '+', country code + subscriber digits, 8–15 digits total
 // (per ITU-T E.164 recommendation). We strip spaces, dashes, and parens
 // before checking so that "+31 6 12345678" or "+31-6-1234-5678" both pass.
-export function normalizePhone(phone) {
+export function normalizePhone(phone: string | null | undefined): string {
   if (!phone) return ''
   return String(phone).replace(/[\s\-()]/g, '')
 }
 
-export function isE164(phone) {
+export function isE164(phone: string | null | undefined): boolean {
   const s = normalizePhone(phone)
   return /^\+\d{8,15}$/.test(s)
 }
@@ -33,12 +33,15 @@ export function isE164(phone) {
 // Build the deep link Melanie will tap from WhatsApp. Lands directly on
 // the transfer-accept route. Legacy ?transfer=<id> links from older
 // messages still resolve via App.jsx's DeepLinkMigrator.
-export function buildTransferUrl(transferId) {
+export function buildTransferUrl(transferId: string): string {
   return `${APP_BASE_URL}/transfer/${encodeURIComponent(transferId)}`
 }
 
 // Pre-filled message — wording locked with user 2026-05-03.
-export function buildTransferMessage(toPlayerName, transferId) {
+export function buildTransferMessage(
+  toPlayerName: string | null | undefined,
+  transferId: string,
+): string {
   const firstName = (toPlayerName || '').split(/\s+/)[0] || 'there'
   const url = buildTransferUrl(transferId)
   return (
@@ -49,7 +52,10 @@ export function buildTransferMessage(toPlayerName, transferId) {
 
 // Direct chat URL — opens WhatsApp to a 1:1 conversation with the recipient
 // and pre-fills the message. Returns null if the phone isn't E.164-valid.
-export function buildDirectChatUrl(phone, message) {
+export function buildDirectChatUrl(
+  phone: string | null | undefined,
+  message: string,
+): string | null {
   if (!isE164(phone)) return null
   const cleaned = normalizePhone(phone).replace(/^\+/, '')
   return `https://wa.me/${cleaned}?text=${encodeURIComponent(message)}`
@@ -57,7 +63,7 @@ export function buildDirectChatUrl(phone, message) {
 
 // Copy a string to the clipboard. Returns true on success. Falls back to
 // the legacy execCommand path for older browsers / WebView contexts.
-export async function copyToClipboard(text) {
+export async function copyToClipboard(text: string): Promise<boolean> {
   try {
     if (navigator.clipboard && window.isSecureContext) {
       await navigator.clipboard.writeText(text)
@@ -83,7 +89,7 @@ export async function copyToClipboard(text) {
 // Open the Lobsters group invite URL. Caller is expected to have copied the
 // message to clipboard first; we surface that as a side-effect here so the
 // two-step UX is always atomic from the component's perspective.
-export async function shareToLobstersGroup(message) {
+export async function shareToLobstersGroup(message: string): Promise<void> {
   await copyToClipboard(message)
   window.open(LOBSTERS_GROUP_URL, '_blank', 'noopener,noreferrer')
 }
@@ -91,7 +97,7 @@ export async function shareToLobstersGroup(message) {
 // Open the direct WhatsApp chat to the recipient. Returns false (no-op) if
 // the phone isn't E.164 — the calling component should hide the button in
 // that case rather than relying on this fallback.
-export function shareToDirectChat(phone, message) {
+export function shareToDirectChat(phone: string | null | undefined, message: string): boolean {
   const url = buildDirectChatUrl(phone, message)
   if (!url) return false
   window.open(url, '_blank', 'noopener,noreferrer')
