@@ -139,3 +139,42 @@ describe('ScoreEntry — peer updates vs. a local draft', () => {
     expect(conflictButton()?.textContent).toContain('Another admin: 3–5')
   })
 })
+
+describe('ScoreEntry — mobile keypad and auto-advance (input variant)', () => {
+  it('raises a numeric keypad on both boxes', () => {
+    render(<ScoreEntry match={match()} onUpdate={vi.fn()} />)
+    expect(boxes().t1.getAttribute('inputmode')).toBe('numeric')
+    expect(boxes().t2.getAttribute('inputmode')).toBe('numeric')
+  })
+
+  it('advances focus to team 2 after an unambiguous single digit (2-9)', () => {
+    render(<ScoreEntry match={match()} onUpdate={vi.fn()} />)
+    fireEvent.change(boxes().t1, { target: { value: '6' } })
+    expect(document.activeElement).toBe(boxes().t2)
+  })
+
+  it('does not steal focus after an ambiguous leading digit (0 or 1)', () => {
+    render(<ScoreEntry match={match()} onUpdate={vi.fn()} />)
+    fireEvent.change(boxes().t1, { target: { value: '1' } })
+    expect(document.activeElement).not.toBe(boxes().t2)
+  })
+
+  it('advances focus once a second digit completes a two-digit score', () => {
+    render(<ScoreEntry match={match()} onUpdate={vi.fn()} />)
+    fireEvent.change(boxes().t1, { target: { value: '1' } })
+    fireEvent.change(boxes().t1, { target: { value: '15' } })
+    expect(document.activeElement).toBe(boxes().t2)
+  })
+
+  // The auto-advance-triggered blur must commit team 1's fresh value, not the
+  // one from before the keystroke — see the comment in ScoreEntry.tsx on why
+  // the focus() call is deferred to an effect rather than fired inline.
+  it('commits the just-typed value, not a stale one, when auto-advance fires', () => {
+    const onUpdate = vi.fn()
+    render(<ScoreEntry match={match()} onUpdate={onUpdate} />)
+    fireEvent.change(boxes().t1, { target: { value: '6' } })
+    fireEvent.change(boxes().t2, { target: { value: '4' } })
+    fireEvent.blur(boxes().t2)
+    expect(onUpdate).toHaveBeenCalledWith('m1', { score1: 6, score2: 4, completed: true })
+  })
+})

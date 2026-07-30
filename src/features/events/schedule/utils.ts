@@ -5,7 +5,7 @@ import type {
   ScheduleRound,
   TournamentSummary,
 } from './types'
-import { allMatchesScored } from '../eventPhase'
+import { allMatchesScored, isMatchScored } from '../eventPhase'
 
 const toIdString = (id: EntityId) => String(id)
 
@@ -48,6 +48,28 @@ export function buildSavedRounds(savedMatches: ScheduleMatch[]): ScheduleRound[]
 
 export function hasAllMatchesScored(savedRounds: ScheduleRound[]): boolean {
   return allMatchesScored(savedRounds.flatMap((round) => round.matches))
+}
+
+export interface NextUnscoredMatch {
+  roundIndex: number
+  matchIndex: number
+  matchId: EntityId | undefined
+}
+
+/**
+ * First unscored match in round then court order — where "unscored" is
+ * `isMatchScored` failing, not just `completed` being falsy, so a row flagged
+ * `completed` with a missing score still counts as needing attention.
+ */
+export function findNextUnscoredMatch(rounds: ScheduleRound[]): NextUnscoredMatch | null {
+  for (let roundIndex = 0; roundIndex < rounds.length; roundIndex++) {
+    const matches = rounds[roundIndex].matches || []
+    const matchIndex = matches.findIndex((match) => !isMatchScored(match))
+    if (matchIndex !== -1) {
+      return { roundIndex, matchIndex, matchId: matches[matchIndex].id }
+    }
+  }
+  return null
 }
 
 // Generic in the player so callers holding a richer row (e.g. `Player`) keep it

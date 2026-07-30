@@ -130,6 +130,92 @@ describe('Schedule — V2 routing without a rollout flag (D-028)', () => {
   )
 })
 
+describe('Schedule — scoring progress', () => {
+  it('shows no progress card with no saved schedule', () => {
+    renderSchedule(lobsterEvent)
+    expect(screen.queryByText(/of \d+ scored/)).toBeNull()
+  })
+
+  it('counts scored vs total using isMatchScored, not a hand-rolled check', () => {
+    savedMatches = [
+      { id: 'm1', round: 1, court: '1', team1Ids: ['p0', 'p1'], team2Ids: ['p2', 'p3'] },
+      {
+        id: 'm2',
+        round: 1,
+        court: '2',
+        team1Ids: ['p4', 'p5'],
+        team2Ids: ['p6', 'p7'],
+        completed: true,
+        score1: 6,
+        score2: 3,
+      },
+      // Flagged completed but missing a score — must still count as unscored.
+      {
+        id: 'm3',
+        round: 2,
+        court: '1',
+        team1Ids: ['p0', 'p2'],
+        team2Ids: ['p1', 'p3'],
+        completed: true,
+        score1: null,
+        score2: null,
+      },
+    ]
+    renderSchedule(lobsterEvent)
+
+    expect(screen.getByText('1 of 3 scored')).toBeTruthy()
+  })
+
+  it('offers a jump to the next unscored match for an admin viewing the saved schedule', () => {
+    savedMatches = [
+      {
+        id: 'm1',
+        round: 1,
+        court: '1',
+        team1Ids: ['p0', 'p1'],
+        team2Ids: ['p2', 'p3'],
+        completed: true,
+        score1: 6,
+        score2: 3,
+      },
+      { id: 'm2', round: 1, court: '2', team1Ids: ['p4', 'p5'], team2Ids: ['p6', 'p7'] },
+    ]
+    renderSchedule(lobsterEvent)
+
+    expect(screen.getByText(/next unscored match/i)).toBeTruthy()
+  })
+
+  it('offers no jump once every saved match is scored', () => {
+    savedMatches = [
+      {
+        id: 'm1',
+        round: 1,
+        court: '1',
+        team1Ids: ['p0', 'p1'],
+        team2Ids: ['p2', 'p3'],
+        completed: true,
+        score1: 6,
+        score2: 3,
+      },
+    ]
+    renderSchedule(lobsterEvent)
+
+    expect(screen.getByText('1 of 1 scored')).toBeTruthy()
+    expect(screen.queryByText(/next unscored match/i)).toBeNull()
+  })
+
+  it('offers no jump to a non-admin (score entry is admin-only)', () => {
+    mockSession = { user: { app_metadata: { role: 'player' } } }
+    savedMatches = [
+      { id: 'm1', round: 1, court: '1', team1Ids: ['p0', 'p1'], team2Ids: ['p2', 'p3'] },
+    ]
+    renderSchedule(lobsterEvent)
+
+    expect(screen.getByText('0 of 1 scored')).toBeTruthy()
+    expect(screen.queryByText(/next unscored match/i)).toBeNull()
+  })
+})
+
 describe('Schedule — retired Glicko surfaces (D-028)', () => {
   // The legacy controls are no longer reachable for an admin at any format, so
   // this now pins the V2 path (the only generator) rather than the V1 one.

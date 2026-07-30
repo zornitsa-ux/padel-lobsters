@@ -1,26 +1,29 @@
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useApp } from '../../context/useApp'
 import { usePlayers } from '../players/usePlayers'
 import { useMatches, useMatchActions } from './useMatches'
 import { useRegistrations } from './useRegistrations'
-import { Shuffle, AlertCircle, Trophy, Users, Download } from 'lucide-react'
+import { Shuffle, AlertCircle, Trophy, Users, Download, ArrowRight } from 'lucide-react'
 import { letterColor } from '../../lib/letterColors'
 import validateSchedule from './validateSchedule'
 import { formatLabel } from './eventHelpers'
 import { shortName } from './scheduleHelpers'
 import ScoreEntry from './ScoreEntry'
 import { EmptyState } from '../../components/ui/EmptyState'
+import { ProgressBar } from '../../components/ui/ProgressBar'
 import { useTournamentSync } from './useTournamentSync'
 import ScheduleGeneratorControls from './schedule/ScheduleGeneratorControls'
 import ScheduleValidationSummary from './schedule/ScheduleValidationSummary'
 import MatchmakingContainer from '../matchmaking/MatchmakingContainer'
 import { useMmRatings } from '../matchmaking/useMatchmaking'
+import { isMatchScored } from './eventPhase'
 import {
   buildPlayerById,
   buildSavedRounds,
   buildScheduleCsv,
   cloneRounds,
   downloadCsvFile,
+  findNextUnscoredMatch,
   roundsForDuration,
 } from './schedule/utils'
 import type { EntityId, ScheduleRound, ScheduleWarning } from './schedule/types'
@@ -62,6 +65,9 @@ export default function Schedule({
   const [swapFirst, setSwapFirst] = useState<SwapAnchor | null>(null)
   const [swapWarnings, setSwapWarnings] = useState<string[]>([]) // warnings after a swap
   const [scheduleWarnings, setScheduleWarnings] = useState<ScheduleWarning[]>([]) // full validation after generate
+  // Match to scroll/focus once its round becomes active — set by "Next unscored match".
+  const [pendingFocusMatchId, setPendingFocusMatchId] = useState<EntityId | null>(null)
+  const matchRefs = useRef<Map<string, HTMLDivElement>>(new Map())
 
   // Load saved schedule into edit preview
   const handleEditSchedule = () => {
@@ -181,9 +187,36 @@ export default function Schedule({
   // sees courts in the same natural order.
   const savedRounds = useMemo(() => buildSavedRounds(savedMatches), [savedMatches])
 
+  // Scoring progress is read off the saved schedule, not a live preview —
+  // an in-progress reshuffle has no real scores to count.
+  const savedFlatMatches = useMemo(() => savedRounds.flatMap((r) => r.matches), [savedRounds])
+  const scoredCount = useMemo(
+    () => savedFlatMatches.filter(isMatchScored).length,
+    [savedFlatMatches],
+  )
+  const totalMatchCount = savedFlatMatches.length
+  const nextUnscored = useMemo(() => findNextUnscoredMatch(savedRounds), [savedRounds])
+
   const playerById = useMemo(() => buildPlayerById(players), [players])
   const getPlayer = useCallback((id: EntityId) => playerById.get(String(id)), [playerById])
   const sn = (p: Player) => shortName(p, registeredPlayers) // smart short name
+
+  const handleJumpToNextUnscored = useCallback(() => {
+    if (!nextUnscored) return
+    setActiveRound(nextUnscored.roundIndex)
+    setPendingFocusMatchId(nextUnscored.matchId ?? null)
+  }, [nextUnscored])
+
+  // Runs after the target round has rendered (activeRound in the deps),
+  // once the match's ref is mounted.
+  useEffect(() => {
+    if (pendingFocusMatchId == null) return
+    const el = matchRefs.current.get(String(pendingFocusMatchId))
+    if (!el) return
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    el.querySelector<HTMLInputElement>('input, select')?.focus()
+    setPendingFocusMatchId(null)
+  }, [pendingFocusMatchId, activeRound])
 
   // Sync peer score updates in real-time while the tournament is active.
   // Disabled for completed events — scores are frozen.
@@ -265,6 +298,27 @@ export default function Schedule({
           {formatLabel(format)}
         </span>
       </div>
+
+      {/* Scoring progress — saved schedule only; a live preview has nothing
+          real to count yet. */}
+      {totalMatchCount > 0 && (
+        <div className="card space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-sm font-bold text-lob-slate">
+              {scoredCount} of {totalMatchCount} scored
+            </span>
+            {isAdmin && !generated && nextUnscored && (
+              <button
+                onClick={handleJumpToNextUnscored}
+                className="text-xs font-semibold text-lob-teal flex items-center gap-1 active:scale-95"
+              >
+                Next unscored match <ArrowRight size={12} />
+              </button>
+            )}
+          </div>
+          <ProgressBar value={(scoredCount / totalMatchCount) * 100} />
+        </div>
+      )}
 
       {/* Generator controls — admin-only. Players never see this box;
           they only see the saved schedule once an admin has generated it.
@@ -429,6 +483,12 @@ export default function Schedule({
                 return (
                   <div
                     key={match.id || i}
+                    ref={(el) => {
+                      const key = match.id != null ? String(match.id) : null
+                      if (!key) return
+                      if (el) matchRefs.current.set(key, el)
+                      else matchRefs.current.delete(key)
+                    }}
                     className={`card transition-all ${isSwapping ? 'ring-2 ring-orange-200' : ''}`}
                   >
                     <div className="flex items-center justify-between mb-3">
