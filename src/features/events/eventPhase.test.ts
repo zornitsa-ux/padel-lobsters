@@ -8,6 +8,7 @@ import {
   isOscarsTabVisible,
   defaultEventTab,
   isRunOfShowVisible,
+  raffleWinnersWithheld,
   EVENT_PHASES,
 } from './eventPhase'
 import type { EventPhase, EventTab, PhaseMatch } from './eventPhase'
@@ -400,6 +401,31 @@ describe('defaultEventTab', () => {
     for (const phase of ['open', 'set', 'sealed', 'social'] as EventPhase[]) {
       expect(defaultEventTab({ phase })).toBe('info')
     }
+  })
+})
+
+describe('raffleWinnersWithheld', () => {
+  const drawn = { rafflePublishedAt: null }
+  const published = { rafflePublishedAt: '2026-07-29T21:30:00Z' }
+
+  it('withholds a drawn-but-unpublished raffle from players', () => {
+    expect(raffleWinnersWithheld({ tournament: drawn, isAdmin: false })).toBe(true)
+  })
+
+  it('never withholds from admins', () => {
+    expect(raffleWinnersWithheld({ tournament: drawn, isAdmin: true })).toBe(false)
+    expect(raffleWinnersWithheld({ tournament: published, isAdmin: true })).toBe(false)
+  })
+
+  it('stops withholding once published', () => {
+    expect(raffleWinnersWithheld({ tournament: published, isAdmin: false })).toBe(false)
+  })
+
+  it('is independent of the standings reveal', () => {
+    // Publishing the raffle before revealing standings, and vice versa, are
+    // both legitimate — neither gate reads the other.
+    expect(raffleWinnersWithheld({ tournament: published, isAdmin: false })).toBe(false)
+    expect(raffleWinnersWithheld({ tournament: drawn, isAdmin: false })).toBe(true)
   })
 })
 

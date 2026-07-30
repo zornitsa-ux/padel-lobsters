@@ -163,6 +163,22 @@ export function defaultEventTab({ phase }: { phase: EventPhase }): EventTab {
   return 'info'
 }
 
+/**
+ * Whether THIS viewer should have the raffle winners withheld. Mirrors
+ * `resultsWithheld` — the draw and the announcement are deliberately separate
+ * beats so the room hears it from the admin first, and the two reveals are
+ * independent of each other in either direction.
+ */
+export function raffleWinnersWithheld({
+  tournament,
+  isAdmin,
+}: {
+  tournament: { rafflePublishedAt?: string | null }
+  isAdmin: boolean
+}): boolean {
+  return !isAdmin && !tournament.rafflePublishedAt
+}
+
 /** The run-of-show is the closing sequence — irrelevant before scores are in. */
 export function isRunOfShowVisible({
   phase,

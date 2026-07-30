@@ -14,6 +14,11 @@ vi.mock('./useMatches', () => ({ useMatches: vi.fn() }))
 vi.mock('./useRegistrations', () => ({ useRegistrations: vi.fn() }))
 vi.mock('./useEventPhase', () => ({ useEventPhase: vi.fn() }))
 
+// The panel's own behaviour is covered by RunOfShow.test.tsx; here we only
+// assert that the slot appears at the right phase.
+vi.mock('./RunOfShow', () => ({
+  default: () => <div data-testid="run-of-show" />,
+}))
 vi.mock('./Payments', () => ({
   default: () => <div data-testid="payments-mock" />,
 }))

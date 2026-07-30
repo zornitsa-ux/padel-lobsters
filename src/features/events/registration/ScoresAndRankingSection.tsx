@@ -24,6 +24,10 @@ interface ScoresAndRankingSectionProps {
   matches: NormalisedMatch[]
   registrations: NormalisedRegistration[]
   updateMatch: (id: string, data: MatchScoreUpdate) => void | Promise<unknown>
+  // No longer called from here — completion now goes through RunOfShow's
+  // Finish step, which applies learned ratings before marking the tournament
+  // complete. Kept in the prop type so Registration.tsx's call site (owned by
+  // a separate workstream) doesn't need touching.
   updateTournament: (id: string, data: Record<string, unknown>) => Promise<unknown>
 }
 
@@ -35,11 +39,9 @@ export default function ScoresAndRankingSection({
   matches: savedMatches,
   registrations: regs,
   updateMatch,
-  updateTournament,
+  updateTournament: _updateTournament,
 }: ScoresAndRankingSectionProps) {
   const [completedTab, setCompletedTab] = useState<CompletedTabId>('ranking')
-  const [marking, setMarking] = useState(false)
-  const [tournamentError, setTournamentError] = useState('')
   const byRound = useMemo(() => groupMatchesByRound(savedMatches), [savedMatches])
   const roundNums = useMemo(() => getSortedRoundNumbers(byRound), [byRound])
   const rankings = useMemo(
@@ -70,23 +72,6 @@ export default function ScoresAndRankingSection({
   }, [isPlayerView, byRound, roundNums, claimedStr])
 
   if (savedMatches.length === 0 && tournament.status !== 'completed') return null
-
-  const handleMarkComplete = async () => {
-    setMarking(true)
-    setTournamentError('')
-    try {
-      await updateTournament(tournament.id, {
-        status: 'completed',
-        completedAt: new Date().toISOString(),
-      })
-    } catch (err) {
-      setTournamentError(
-        (err instanceof Error && err.message) || 'Could not mark tournament as complete.',
-      )
-    } finally {
-      setMarking(false)
-    }
-  }
 
   return (
     <section className="space-y-4">
@@ -209,21 +194,6 @@ export default function ScoresAndRankingSection({
             </p>
           </div>
         )}
-
-      {isAdmin && allScored && !isCompleted && (
-        <button
-          onClick={handleMarkComplete}
-          disabled={marking}
-          className="w-full flex items-center justify-center gap-2 bg-green-600 text-white font-bold py-3 rounded-2xl active:scale-95 transition-all disabled:opacity-50"
-        >
-          {marking ? 'Saving…' : '✓ Mark Tournament as Complete'}
-        </button>
-      )}
-      {isAdmin && tournamentError && (
-        <p className="text-xs text-red-600 text-center" role="alert">
-          {tournamentError}
-        </p>
-      )}
 
       {(!isCompleted || completedTab === 'matches') && (
         <div>
