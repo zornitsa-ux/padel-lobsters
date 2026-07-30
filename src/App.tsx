@@ -76,15 +76,6 @@ export default function App() {
                   <Route path="scores" element={<Navigate to="../results" replace />} />
                   <Route path="oscars" element={<EventOscarsRoute />} />
                   <Route path="manage" element={<EventManageRoute />} />
-                  <Route
-                    path="payments"
-                    element={<EventManageSectionRedirect section="payments" />}
-                  />
-                  <Route path="raffle" element={<EventManageSectionRedirect section="raffle" />} />
-                  <Route
-                    path="eligibility"
-                    element={<EventManageSectionRedirect section="eligibility" />}
-                  />
                 </Route>
 
                 <Route path="/community" element={<CommunityShell />}>
@@ -131,14 +122,16 @@ function useLegacyNavigate(): EventNavigate {
         return t?.id ? navigate(`/events/${t.id}/schedule`) : navigate('/events')
       case 'scores':
         return t?.id ? navigate(`/events/${t.id}/results`) : navigate('/events')
+      // Payments, raffle and eligibility are sections of /manage now, not
+      // routes of their own — navigate straight there rather than via a hop.
       case 'payments':
-        return t?.id ? navigate(`/events/${t.id}/payments`) : navigate('/events')
+        return t?.id ? navigate(`/events/${t.id}/manage?section=payments`) : navigate('/events')
       case 'game':
         return t?.id ? navigate(`/events/${t.id}/oscars`) : navigate('/events')
       case 'raffle':
-        return t?.id ? navigate(`/events/${t.id}/raffle`) : navigate('/events')
+        return t?.id ? navigate(`/events/${t.id}/manage?section=raffle`) : navigate('/events')
       case 'eligibility':
-        return t?.id ? navigate(`/events/${t.id}/eligibility`) : navigate('/events')
+        return t?.id ? navigate(`/events/${t.id}/manage?section=eligibility`) : navigate('/events')
       case 'players':
         if (t?.focusPlayerId) return navigate(`/community/${t.focusPlayerId}`)
         return navigate('/community')
@@ -240,19 +233,6 @@ function EventManageRoute() {
     <AdminEventRouteGuard>
       {(tournament) => <EventManage tournament={tournament} onNavigate={onNavigate} />}
     </AdminEventRouteGuard>
-  )
-}
-
-// Payments, Raffle and Eligibility stopped being tabs and became sections of
-// /manage. The routes stay alive as redirects so bookmarks and the old admin
-// menu keep working.
-function EventManageSectionRedirect({ section }: { section: string }) {
-  return (
-    <EventRouteGuard>
-      {(tournament) => (
-        <Navigate to={`/events/${tournament.id}/manage?section=${section}`} replace />
-      )}
-    </EventRouteGuard>
   )
 }
 
