@@ -5,3 +5,5 @@ package-lock.json
 supabase/.temp
 *.sql
 .claude/
+test-results
+playwright-report
