@@ -33,16 +33,32 @@ event's roster. The V1 **generator** code is gone (2026-07-26): `lobsterMatcher.
 `Schedule.jsx`'s Finish handler, the unreachable `:325` branch) are deleted.
 `src/lib/glicko2.ts` remains — **not shipped, offline-only**; see M4.3 below.
 
-Gates as of 2026-07-29: typecheck clean, lint 0 errors (61 pre-existing
-warnings), **1262 pass / 2 skip**, build clean, 9 goldens byte-identical.
+Gates as of 2026-07-30: typecheck clean, lint 0 errors (61 pre-existing
+warnings), **1456 pass / 2 skip**, build clean, 9 goldens byte-identical.
 
-**Tournament IA redesign is in progress on branch `tournament-ia-redesign`**
-(2026-07-29, see `docs/tournament-redesign/IMPLEMENTATION_BRIEF.md`). It touches
-matchmaking in exactly one intended way: the run-of-show panel becomes the
-single caller of `applyTournamentRatings`, replacing Schedule's Finish button.
-No domain, service or golden is touched. Workstream A landed the shared phase
-module `src/features/events/eventPhase.ts` (75 tests) and de-duplicated
-`hasAllMatchesScored` onto its `allMatchesScored` predicate.
+**Tournament IA redesign is on branch `tournament-ia-redesign`, not yet merged**
+(2026-07-29→30, see `docs/tournament-redesign/IMPLEMENTATION_BRIEF.md`).
+Workstreams A–E are done and committed; only the E2E spike is open.
+
+It touches matchmaking in exactly one intended way: **`useEventLifecycle.ts` is
+now the single caller of `applyTournamentRatings`**, replacing Schedule's Finish
+button. The rating-application body moved verbatim out of `Schedule.tsx` — no
+domain, service or golden was touched, and `Schedule.test.tsx`'s Finish /
+reveal / rating-review assertions moved to `useEventLifecycle.test.tsx` rather
+than being dropped (both owner-reported 2026-07-25 cases are still pinned: the
+double-apply dead-end and the stranded review queue).
+
+Two things to know before merging:
+
+- **A migration is applied locally but NOT pushed to prod:**
+  `20260730000000_tournaments_raffle_published_at.sql`. Run `npx supabase db push`
+  from `main` after merge. It splits "raffle drawn" from "winners announced";
+  nothing existing could hold that second state.
+- The redesign deleted the Info tab's second "Mark Tournament as Complete"
+  button, which wrote `status` without calling `applyTournamentRatings` and,
+  because Schedule's correct Finish was gated on `!isTournamentCompleted`, made
+  the right path disappear — silently stranding that event's learned ratings.
+  There is now exactly one completion control in the app.
 
 The 2026-07-28 code-hygiene session touched matchmaking in one place only:
 `ui/QualityReport.tsx`'s `DimensionBar` now uses the shared
