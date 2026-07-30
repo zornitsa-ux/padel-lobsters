@@ -16,6 +16,7 @@ import { resultsWithheld } from './resultsPhase'
 import ScoresRankingTab from './ScoresRankingTab'
 import type { TournamentStandingRow } from './ScoresRankingTab'
 import ScoresMatchesTab from './ScoresMatchesTab'
+import RaffleWinnersBlock from './RaffleWinnersBlock'
 import type { NormalisedTournament } from './tournamentQueries'
 import type { EventNavigate } from './eventHelpers'
 
@@ -109,7 +110,10 @@ export default function Scores({ tournament, onNavigate }: ScoresProps) {
 
       {/* ── RANKING tab ─────────────────────────────────────────────────── */}
       {tab === 'ranking' && (
-        <ScoresRankingTab standings={standings} matches={matches} withheld={withheld} />
+        <>
+          <ScoresRankingTab standings={standings} matches={matches} withheld={withheld} />
+          <RaffleWinnersBlock tournament={tournament} isAdmin={isAdmin} />
+        </>
       )}
 
       {/* ── MATCHES tab ─────────────────────────────────────────────────── */}

@@ -3,20 +3,19 @@ import { useApp } from '../../context/useApp'
 import { useUpdateTournament } from './useTournaments'
 import { useTransfers, useTransferActions } from './useTransfers'
 import { usePlayers } from '../players/usePlayers'
-import { useMatches, useMatchActions } from './useMatches'
 import { useRegistrations, useRegistrationActions } from './useRegistrations'
-import { AlertCircle } from 'lucide-react'
+import { AlertCircle, Building2 } from 'lucide-react'
 import TransferSpotModal from '../../components/TransferSpotModal'
 import TransferPendingModal from '../../components/TransferPendingModal'
 import DateTile from '../../components/ui/DateTile'
 import { EmptyState } from '../../components/ui/EmptyState'
-import { StatTile } from '../../components/ui/StatTile'
 import AddToCalendarButton from '../../components/ui/AddToCalendarButton'
 import ShareWhatsAppButton from '../../components/ui/ShareWhatsAppButton'
 import EventDescription from './EventDescription'
 import EventAdminMenu from './EventAdminMenu'
 import EventFormModal from './EventFormModal'
 import { emptyForm } from './eventConstants'
+import { formatLabel } from './eventHelpers'
 import {
   splitRegistrationsByStatus,
   getAvailablePlayers,
@@ -27,16 +26,13 @@ import {
   getIncomingForPlayer,
   buildPendingByFromPlayerId,
 } from './registration/utils'
-import { useTournamentResultsBanner } from './registration/useTournamentResultsBanner'
 import { useConfirm } from '../../lib/confirmBus'
 import RegistrationPaymentSheetModal from './registration/RegistrationPaymentSheetModal'
 import AddPlayerCard from './registration/AddPlayerCard'
-import MyRegistrationCard from './registration/MyRegistrationCard'
+import TransferSpotCard from './registration/TransferSpotCard'
 import RegisteredSection from './registration/RegisteredSection'
 import WaitlistSection from './registration/WaitlistSection'
 import CancelledSection from './registration/CancelledSection'
-import ScoresAndRankingSection from './registration/ScoresAndRankingSection'
-import { useTournamentSync } from './useTournamentSync'
 import { errorMessage } from '../../lib/errors'
 import type { EventFormValues } from './eventConstants'
 import type { EventNavigate } from './eventHelpers'
@@ -61,8 +57,8 @@ export default function Registration({
 }) {
   const confirm = useConfirm()
   const { session } = useApp()
-  const { registerPlayer, updateRegistration, cancelRegistration } = useRegistrationActions()
-  const { updateMatch } = useMatchActions()
+  const { updateRegistration, cancelRegistration } = useRegistrationActions()
+  const { registerPlayer } = useRegistrationActions()
   const { data: transfers = [] } = useTransfers()
   const { respondToTransfer, cancelTransfer } = useTransferActions({ session })
   const updateMut = useUpdateTournament()
@@ -72,16 +68,8 @@ export default function Registration({
   )
   const { data: players = [] } = usePlayers()
   const { data: regsData = [] } = useRegistrations(tournament?.id)
-  const { data: matchesData = [] } = useMatches(tournament?.id)
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
   const claimedId = session?.user?.id ?? null
-
-  // Sync peer score updates while the tournament is active.
-  // Disabled for completed events — scores are frozen.
-  useTournamentSync({
-    tournamentId: tournament?.id,
-    enabled: tournament != null && tournament.status !== 'completed',
-  })
 
   // Show first name for players, full name for admins
   const displayName = useCallback<DisplayName>(
@@ -93,21 +81,14 @@ export default function Registration({
   const [showAdd, setShowAdd] = useState(false)
   const [selectedPlayer, setSelectedPlayer] = useState('')
   const [saving, setSaving] = useState(false)
+  const [cancelledExpanded, setCancelledExpanded] = useState(false)
 
-  // Post-registration payment sheet
+  // Post-registration payment sheet — shown to the admin after adding a
+  // player, so a Tikkie link is on screen to hand over on the spot.
   const [paymentSheet, setPaymentSheet] = useState<PaymentSheet | null>(null)
   const [tikkieClicked, setTikkieClicked] = useState(false)
   const [declaring, setDeclaring] = useState(false)
 
-  const { showResultsBanner } = useTournamentResultsBanner({
-    tournamentId: tournament?.id,
-    tournamentDate: tournament?.date,
-  })
-
-  const openPaymentSheet = (sheet: PaymentSheet) => {
-    setPaymentSheet(sheet)
-    setTikkieClicked(false)
-  }
   const closePaymentSheet = () => {
     setPaymentSheet(null)
     setTikkieClicked(false)
@@ -266,10 +247,6 @@ export default function Registration({
   const myReg = claimedId
     ? (registered.find((r) => String(r.playerId) === String(claimedId)) ?? null)
     : null
-  const myWaitlistReg = claimedId
-    ? (waitlisted.find((r) => String(r.playerId) === String(claimedId)) ?? null)
-    : null
-  const myWaitlistPosition = myWaitlistReg ? waitlisted.indexOf(myWaitlistReg) + 1 : null
 
   if (!tournament) {
     return (
@@ -288,7 +265,7 @@ export default function Registration({
     )
   }
 
-  // ── Register ──────────────────────────────────────────────────────────────
+  // ── Register (admin adding another player) ─────────────────────────────────
   const handleAdd = async () => {
     if (!selectedPlayer) return
     setSaving(true)
@@ -301,7 +278,8 @@ export default function Registration({
       if (regId && status === 'registered' && (hasTikkie || costPerPlayer > 0)) {
         // registerPlayer inserts every row with payment_status 'unpaid'; the
         // sheet's Tikkie handler needs the *payment* status, not `status`.
-        openPaymentSheet({ regId, playerId: selectedPlayer, paymentStatus: 'unpaid' })
+        setPaymentSheet({ regId, playerId: selectedPlayer, paymentStatus: 'unpaid' })
+        setTikkieClicked(false)
       }
       setSelectedPlayer('')
       setShowAdd(false)
@@ -311,27 +289,7 @@ export default function Registration({
     }
   }
 
-  // ── Direct self-registration (used by MyRegistrationCard) ────────────────
-  const handleSelfRegister = async () => {
-    if (!claimedId) return
-    setSaving(true)
-    try {
-      await registerPlayer(tournament.id, claimedId, maxPlayers)
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  // ── Self-declare payment by reg ID (used by MyRegistrationCard) ───────────
-  const handleSelfDeclareById = async (regId: string) => {
-    await updateRegistration(
-      regId,
-      { paymentStatus: 'pending_confirmation', paymentMethod: 'tikkie' },
-      tournamentId,
-    )
-  }
-
-  // ── Self-declare payment ──────────────────────────────────────────────────
+  // ── Self-declare payment (post-add payment sheet) ──────────────────────────
   const handleSelfDeclare = async () => {
     if (!paymentSheet?.regId) return
     setDeclaring(true)
@@ -439,8 +397,8 @@ export default function Registration({
 
   return (
     <div className="space-y-4">
-      {/* Event meta + actions */}
-      <div>
+      {/* 1. Event meta — date, time, location, format. One card. */}
+      <div className="card space-y-3">
         <div className="flex items-center gap-3">
           <DateTile date={tournament.date} size="md" />
           <div className="flex-1 min-w-0">
@@ -453,93 +411,58 @@ export default function Registration({
                 {tournament.duration ? ` · ${tournament.duration}min` : ''}
               </p>
             )}
+            {tournament.location && (
+              <p className="text-xs text-lob-teal flex items-center gap-1 mt-0.5">
+                <Building2 size={11} /> {tournament.location}
+              </p>
+            )}
           </div>
-          <div className="flex gap-1 flex-shrink-0">
-            <ShareWhatsAppButton tournament={tournament} variant="icon" />
-            <AddToCalendarButton tournament={tournament} variant="icon" />
-            <EventAdminMenu isAdmin={isAdmin} onEdit={openEdit} />
-          </div>
+          <EventAdminMenu isAdmin={isAdmin} onEdit={openEdit} />
         </div>
-
-        {/* Event description — read-only for players, inline-editable for
-            admins (click the pencil → textarea with Save / Cancel). */}
-        <EventDescription
-          tournament={tournament}
-          isAdmin={isAdmin}
-          onSave={async (next) => {
-            try {
-              await updateTournament(tournament.id, { notes: next })
-            } catch (err) {
-              alert(errorMessage(err, 'Could not save description.'))
-            }
-          }}
-        />
+        <p className="text-xs text-lob-muted-light pt-2 border-t border-gray-100">
+          Format:{' '}
+          <span className="font-medium text-lob-slate">{formatLabel(tournament.format)}</span>
+        </p>
       </div>
 
+      {/* 2. Description — read-only for players, inline-editable for admins
+          (click the pencil → textarea with Save / Cancel). */}
+      <EventDescription
+        tournament={tournament}
+        isAdmin={isAdmin}
+        onSave={async (next) => {
+          try {
+            await updateTournament(tournament.id, { notes: next })
+          } catch (err) {
+            alert(errorMessage(err, 'Could not save description.'))
+          }
+        }}
+      />
+
+      {/* Spot-transfer flow — registration and payment now live on /me;
+          this stays here since /me deliberately doesn't host transfers. */}
       {!isAdmin && claimedId && !isCompleted && (
-        <MyRegistrationCard
+        <TransferSpotCard
           myReg={myReg}
-          myWaitlistReg={myWaitlistReg}
-          waitlistPosition={myWaitlistPosition ?? undefined}
-          isEventFull={registered.length >= maxPlayers}
-          tournament={tournament}
-          isAdminAll={isAdminAll}
-          hasTikkie={hasTikkie}
-          costPerPlayer={costPerPlayer}
           pendingFromMe={pendingFromMe}
           incomingForMe={incomingForMe}
           respondingTo={respondingTo}
-          onRegister={handleSelfRegister}
-          onMarkTikkied={markTikkied}
-          onSelfDeclare={handleSelfDeclareById}
           onStartTransfer={startTransfer}
           onCancelMyOffer={handleCancelMyOffer}
           onOpenShareModal={setShareModal}
           onIncomingResponse={handleIncomingResponse}
           getPlayer={getPlayer}
-          saving={saving}
         />
       )}
 
-      {/* Summary bar */}
-      <div className="bg-lob-teal rounded-xl p-4 text-white flex items-center justify-between">
-        <StatTile value={registered.length} label="Registered" size="md" labelVariant="inverted" />
-        <StatTile
-          value={waitlisted.length}
-          label="Waitlist"
-          size="md"
-          labelVariant="inverted"
-          valueClassName={waitlisted.length > 0 ? 'text-lob-amber' : ''}
-        />
-        <StatTile value={maxPlayers} label="Max players" size="md" labelVariant="inverted" />
-        <StatTile
-          value={Math.max(0, maxPlayers - registered.length)}
-          label="Spots left"
-          size="md"
-          labelVariant="inverted"
-          valueClassName={registered.length >= maxPlayers ? 'text-lob-amber' : 'text-green-300'}
-        />
-      </div>
-
-      {/* Lobster Games Over — results banner (visible for the 48h window) */}
-      {showResultsBanner && (
-        <button
-          onClick={() => onNavigate('game', tournament)}
-          className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-yellow-400 via-amber-400 to-orange-400 text-lob-dark font-bold text-sm shadow-md active:scale-95 transition-all"
-        >
-          🏆 Lobster Games Over — See Results!
-        </button>
-      )}
-
-      {/* Game button — hidden once the tournament is completed, since the
-          results live on the Scores page as a Lobster Games tab. */}
+      {/* 3. Roster — the two numbers that matter. */}
       {!isCompleted && (
-        <button
-          onClick={() => onNavigate('game', tournament)}
-          className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-violet-400 text-white font-semibold text-sm shadow"
-        >
-          🎮 Lobster Games
-        </button>
+        <p className="text-sm font-semibold text-lob-slate px-1">
+          {registered.length} of {maxPlayers}
+          {waitlisted.length > 0 && (
+            <span className="text-lob-muted font-normal"> · {waitlisted.length} waiting</span>
+          )}
+        </p>
       )}
 
       {isAdmin && (
@@ -564,6 +487,7 @@ export default function Registration({
         />
       )}
 
+      {/* 4. Registered · Waitlist · Cancelled (collapsed). */}
       <RegisteredSection
         isCompleted={isCompleted}
         getPlayer={getPlayer}
@@ -589,25 +513,22 @@ export default function Registration({
         onCancel={handleCancel}
       />
 
-      <ScoresAndRankingSection
-        tournament={tournament}
-        players={players}
-        isAdmin={isAdmin}
-        claimedId={claimedId}
-        matches={matchesData}
-        registrations={regsData}
-        updateMatch={updateMatch}
-        updateTournament={updateTournament}
-      />
-
       <CancelledSection
         isCompleted={isCompleted}
         cancelled={cancelled}
         getPlayer={getPlayer}
         displayName={displayName}
+        expanded={cancelledExpanded}
+        onToggle={() => setCancelledExpanded((v) => !v)}
       />
 
-      {/* ── POST-REGISTRATION PAYMENT SHEET ── */}
+      {/* 5. Footer — share + calendar. */}
+      <div className="flex gap-2">
+        <ShareWhatsAppButton tournament={tournament} variant="full" />
+        <AddToCalendarButton tournament={tournament} variant="full" />
+      </div>
+
+      {/* ── POST-ADD PAYMENT SHEET (admin) ── */}
       <RegistrationPaymentSheetModal
         isOpen={!!paymentSheet}
         tournament={tournament}
