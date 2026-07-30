@@ -1236,6 +1236,7 @@ export type Database = {
           name: string
           notes: string | null
           prize_item_ids: number[] | null
+          raffle_published_at: string | null
           ratings_applied_at: string | null
           results_shared_at: string | null
           status: string | null
@@ -1258,6 +1259,7 @@ export type Database = {
           name: string
           notes?: string | null
           prize_item_ids?: number[] | null
+          raffle_published_at?: string | null
           ratings_applied_at?: string | null
           results_shared_at?: string | null
           status?: string | null
@@ -1280,6 +1282,7 @@ export type Database = {
           name?: string
           notes?: string | null
           prize_item_ids?: number[] | null
+          raffle_published_at?: string | null
           ratings_applied_at?: string | null
           results_shared_at?: string | null
           status?: string | null

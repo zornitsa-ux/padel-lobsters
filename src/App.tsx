@@ -10,15 +10,15 @@ import {
   useSearchParams,
 } from 'react-router-dom'
 import { AppProvider } from './context/AppContext'
-import { useApp } from './context/useApp'
-import { useTournaments } from './features/events/useTournaments'
+import { useEventPhase } from './features/events/useEventPhase'
+import { defaultEventTab } from './features/events/eventPhase'
+import { EventRouteGuard, AdminEventRouteGuard } from './features/events/EventRouteGuard'
 import type { NormalisedTournament } from './lib/normalise'
 import Layout from './components/Layout'
-import { Spinner } from './components/ui/Spinner'
+import { RouteFallback } from './components/ui/RouteFallback'
 import Dashboard from './features/home/Dashboard'
 import VerificationGate from './components/VerificationGate'
 import AuthConfirm from './components/AuthConfirm'
-import { useEventDataLoader } from './features/events/useEventDataLoader'
 import { mark } from './lib/perfMarks'
 import EventShell from './features/events/EventShell'
 import type { EventNavigate } from './features/events/eventHelpers'
@@ -32,16 +32,13 @@ import CommunityShell from './features/community/CommunityShell'
 const Players = lazy(() => import('./features/community/Players'))
 const Tournament = lazy(() => import('./features/events/Tournament'))
 const Registration = lazy(() => import('./features/events/Registration'))
-const Payments = lazy(() => import('./features/events/Payments'))
+const MyTournament = lazy(() => import('./features/events/MyTournament'))
+const EventManage = lazy(() => import('./features/events/EventManage'))
 const Schedule = lazy(() => import('./features/events/Schedule'))
 const Scores = lazy(() => import('./features/events/Scores'))
 const Merch = lazy(() => import('./features/merch/Merch'))
 const Account = lazy(() => import('./features/settings/Settings'))
 const Game = lazy(() => import('./features/oscars/Game'))
-const RaffleContainer = lazy(() => import('./features/raffle/RaffleContainer'))
-const RaffleEligibilityContainer = lazy(
-  () => import('./features/raffle/RaffleEligibilityContainer'),
-)
 const Admin = lazy(() => import('./features/admin/AdminTools'))
 const TransferAccept = lazy(() => import('./components/TransferAccept'))
 const LeaguePage = lazy(() => import('./features/league/LeaguePage'))
@@ -71,15 +68,23 @@ export default function App() {
 
                 <Route path="/events" element={<EventsRoute />} />
                 <Route path="/events/:id" element={<EventShellRoute />}>
-                  <Route index element={<Navigate to="info" replace />} />
+                  <Route index element={<EventIndexRoute />} />
                   <Route path="info" element={<EventDetailRoute />} />
+                  <Route path="me" element={<EventMeRoute />} />
                   <Route path="schedule" element={<EventScheduleRoute />} />
                   <Route path="results" element={<EventScoresRoute />} />
                   <Route path="scores" element={<Navigate to="../results" replace />} />
-                  <Route path="payments" element={<EventPaymentsRoute />} />
                   <Route path="oscars" element={<EventOscarsRoute />} />
-                  <Route path="raffle" element={<EventRaffleRoute />} />
-                  <Route path="eligibility" element={<EventEligibilityRoute />} />
+                  <Route path="manage" element={<EventManageRoute />} />
+                  <Route
+                    path="payments"
+                    element={<EventManageSectionRedirect section="payments" />}
+                  />
+                  <Route path="raffle" element={<EventManageSectionRedirect section="raffle" />} />
+                  <Route
+                    path="eligibility"
+                    element={<EventManageSectionRedirect section="eligibility" />}
+                  />
                 </Route>
 
                 <Route path="/community" element={<CommunityShell />}>
@@ -106,13 +111,6 @@ export default function App() {
       </BrowserRouter>
     </AppProvider>
   )
-}
-
-// Shown while a lazily-loaded route chunk is in flight. Kept deliberately
-// minimal — the app shell (header/nav) is already painted around it, so this
-// only fills the content area for the brief fetch on first visit to a route.
-function RouteFallback() {
-  return <Spinner className="py-24" />
 }
 
 // Translate the legacy onNavigate(page, tournament?) signature to URL
@@ -162,17 +160,6 @@ function useLegacyNavigate(): EventNavigate {
   }
 }
 
-// Look up a tournament by URL :id. Returns null while data is still loading
-// (route renders nothing) and redirects to /events if the id doesn't exist.
-// Also mounts useEventDataLoader so matches + registrations load lazily when
-// any event route is active (every event route calls this hook).
-function useTournamentFromUrl(): NormalisedTournament | null {
-  const { id } = useParams()
-  const { data: tournaments = [] } = useTournaments()
-  useEventDataLoader()
-  return tournaments.find((t) => String(t.id) === String(id)) ?? null
-}
-
 function HomeRoute() {
   const onNavigate = useLegacyNavigate()
   return <Dashboard onNavigate={onNavigate} />
@@ -184,67 +171,89 @@ function EventsRoute() {
 }
 
 function EventShellRoute() {
-  const tournament = useTournamentFromUrl()
-  if (!tournament) return <Navigate to="/events" replace />
-  return <EventShell tournament={tournament} />
+  return <EventRouteGuard>{(tournament) => <EventShell tournament={tournament} />}</EventRouteGuard>
+}
+
+// `/events/:id` with no tab named — lands wherever the phase says is most
+// useful (during Live that is the player's own tournament, not Info).
+function EventIndexRoute() {
+  return (
+    <EventRouteGuard>
+      {(tournament) => <EventDefaultTabRedirect tournament={tournament} />}
+    </EventRouteGuard>
+  )
+}
+
+function EventDefaultTabRedirect({ tournament }: { tournament: NormalisedTournament }) {
+  const { phase } = useEventPhase(tournament)
+  return <Navigate to={defaultEventTab({ phase })} replace />
 }
 
 function EventDetailRoute() {
-  const tournament = useTournamentFromUrl()
   const onNavigate = useLegacyNavigate()
-  if (!tournament) return <Navigate to="/events" replace />
-  return <Registration tournament={tournament} onNavigate={onNavigate} />
+  return (
+    <EventRouteGuard>
+      {(tournament) => <Registration tournament={tournament} onNavigate={onNavigate} />}
+    </EventRouteGuard>
+  )
+}
+
+function EventMeRoute() {
+  const onNavigate = useLegacyNavigate()
+  return (
+    <EventRouteGuard>
+      {(tournament) => <MyTournament tournament={tournament} onNavigate={onNavigate} />}
+    </EventRouteGuard>
+  )
 }
 
 function EventScheduleRoute() {
-  const tournament = useTournamentFromUrl()
   const onNavigate = useLegacyNavigate()
-  if (!tournament) return <Navigate to="/events" replace />
-  return <Schedule tournament={tournament} onNavigate={onNavigate} />
+  return (
+    <EventRouteGuard>
+      {(tournament) => <Schedule tournament={tournament} onNavigate={onNavigate} />}
+    </EventRouteGuard>
+  )
 }
 
 function EventScoresRoute() {
-  const tournament = useTournamentFromUrl()
   const onNavigate = useLegacyNavigate()
-  if (!tournament) return <Navigate to="/events" replace />
-  return <Scores tournament={tournament} onNavigate={onNavigate} />
-}
-
-function EventPaymentsRoute() {
-  const tournament = useTournamentFromUrl()
-  const { session } = useApp()
-  const onNavigate = useLegacyNavigate()
-  const isAdmin = session?.user?.app_metadata?.role === 'admin'
-  if (!tournament) return <Navigate to="/events" replace />
-  if (!isAdmin) return <Navigate to={`/events/${tournament.id}/info`} replace />
-  return <Payments tournament={tournament} onNavigate={onNavigate} />
+  return (
+    <EventRouteGuard>
+      {(tournament) => <Scores tournament={tournament} onNavigate={onNavigate} />}
+    </EventRouteGuard>
+  )
 }
 
 function EventOscarsRoute() {
-  const tournament = useTournamentFromUrl()
   const onNavigate = useLegacyNavigate()
-  if (!tournament) return <Navigate to="/events" replace />
-  return <Game tournament={tournament} onNavigate={onNavigate} />
+  return (
+    <EventRouteGuard>
+      {(tournament) => <Game tournament={tournament} onNavigate={onNavigate} />}
+    </EventRouteGuard>
+  )
 }
 
-function EventRaffleRoute() {
-  const tournament = useTournamentFromUrl()
-  const { session } = useApp()
+function EventManageRoute() {
   const onNavigate = useLegacyNavigate()
-  const isAdmin = session?.user?.app_metadata?.role === 'admin'
-  if (!tournament) return <Navigate to="/events" replace />
-  if (!isAdmin) return <Navigate to={`/events/${tournament.id}`} replace />
-  return <RaffleContainer tournament={tournament} onNavigate={onNavigate} />
+  return (
+    <AdminEventRouteGuard>
+      {(tournament) => <EventManage tournament={tournament} onNavigate={onNavigate} />}
+    </AdminEventRouteGuard>
+  )
 }
 
-function EventEligibilityRoute() {
-  const tournament = useTournamentFromUrl()
-  const { session } = useApp()
-  const onNavigate = useLegacyNavigate()
-  const isAdmin = session?.user?.app_metadata?.role === 'admin'
-  if (!tournament) return <Navigate to="/events" replace />
-  if (!isAdmin) return <Navigate to={`/events/${tournament.id}`} replace />
-  return <RaffleEligibilityContainer tournament={tournament} onNavigate={onNavigate} />
+// Payments, Raffle and Eligibility stopped being tabs and became sections of
+// /manage. The routes stay alive as redirects so bookmarks and the old admin
+// menu keep working.
+function EventManageSectionRedirect({ section }: { section: string }) {
+  return (
+    <EventRouteGuard>
+      {(tournament) => (
+        <Navigate to={`/events/${tournament.id}/manage?section=${section}`} replace />
+      )}
+    </EventRouteGuard>
+  )
 }
 
 function CommunityMembersRoute() {

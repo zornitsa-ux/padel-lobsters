@@ -269,9 +269,6 @@ export default function UpcomingEventCard({
         </button>
         <EventAdminMenu
           isAdmin={isAdmin}
-          onRaffle={() => onNavigate('raffle', t)}
-          onEligibility={() => onNavigate('eligibility', t)}
-          onPayments={() => onNavigate('payments', t)}
           onEdit={() => onEdit(t)}
           onDelete={() => onDelete(t.id)}
         />

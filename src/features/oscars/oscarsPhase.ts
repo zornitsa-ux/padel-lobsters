@@ -21,6 +21,33 @@ export type SessionState = OscarsSession | null | undefined
 export type OscarsPhase = 'loading' | 'not_created' | 'pre_start' | 'active' | 'ended' | 'shared'
 
 /**
+ * Narrow a loaded `lobster_oscars_sessions` row to what the phase model needs.
+ * The Zod row types the three timestamps as optional; `derivePhase` models them
+ * as required-but-nullable. Narrow here rather than loosening the phase model.
+ * The `undefined`/`null` loading sentinels pass straight through.
+ */
+export function toPhaseSession(
+  row:
+    | {
+        id: string
+        started_at?: string | null
+        closed_at?: string | null
+        shared_at?: string | null
+      }
+    | null
+    | undefined,
+): SessionState {
+  if (row === undefined) return undefined
+  if (row === null) return null
+  return {
+    id: row.id,
+    started_at: row.started_at ?? null,
+    closed_at: row.closed_at ?? null,
+    shared_at: row.shared_at ?? null,
+  }
+}
+
+/**
  * Derive the lifecycle phase from the loaded session.
  *   not_created  → no row
  *   pre_start    → row exists, started_at IS NULL  (admin still configuring)

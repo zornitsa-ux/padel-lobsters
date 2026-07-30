@@ -457,14 +457,7 @@ export default function Registration({
           <div className="flex gap-1 flex-shrink-0">
             <ShareWhatsAppButton tournament={tournament} variant="icon" />
             <AddToCalendarButton tournament={tournament} variant="icon" />
-            <EventAdminMenu
-              isAdmin={isAdmin}
-              onRaffle={() => onNavigate('raffle', tournament)}
-              onEligibility={() => onNavigate('eligibility', tournament)}
-              onPayments={() => onNavigate('payments', tournament)}
-              onScores={() => onNavigate('scores', tournament)}
-              onEdit={openEdit}
-            />
+            <EventAdminMenu isAdmin={isAdmin} onEdit={openEdit} />
           </div>
         </div>
 
