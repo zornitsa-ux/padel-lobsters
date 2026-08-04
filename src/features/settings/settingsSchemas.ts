@@ -11,6 +11,7 @@ export const settingsRowSchema = z
     group_name: nullableString,
     padel_tips: z.array(z.string()).nullable().optional(),
     auto_trust_until: nullableString,
+    lobster_way_content: z.array(z.record(z.string(), z.any())).nullable().optional(),
   })
   .passthrough()
 
@@ -23,5 +24,6 @@ export interface Settings {
   groupName: string
   padelTips: string[] | null
   autoTrustUntil: string | null
+  lobsterWayContent: Record<string, any>[] | null
   [key: string]: any
 }

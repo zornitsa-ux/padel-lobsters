@@ -8,13 +8,14 @@ function normaliseSettings(row: ReturnType<typeof settingsRowSchema.parse>): Set
     groupName: row.group_name ?? 'Padel Lobsters',
     padelTips: row.padel_tips ?? null,
     autoTrustUntil: row.auto_trust_until ?? null,
+    lobsterWayContent: row.lobster_way_content ?? null,
   }
 }
 
 export async function fetchSettings(): Promise<Settings | null> {
   const { data, error } = await supabase
     .from('settings')
-    .select('id, whatsapp_link, group_name, padel_tips, auto_trust_until')
+    .select('id, whatsapp_link, group_name, padel_tips, auto_trust_until, lobster_way_content')
     .eq('id', 1)
     .single()
   if (error) throw error
@@ -30,10 +31,12 @@ export async function saveSettings({
   whatsappLink,
   groupName,
   padelTips,
+  lobsterWayContent,
 }: {
   whatsappLink?: string
   groupName?: string
   padelTips?: string[] | null
+  lobsterWayContent?: Record<string, unknown>[] | null
 }): Promise<void> {
   const payload: Record<string, unknown> = {
     id: 1,
@@ -41,6 +44,7 @@ export async function saveSettings({
     group_name: groupName ?? 'Padel Lobsters',
   }
   if (padelTips !== undefined) payload.padel_tips = padelTips
+  if (lobsterWayContent !== undefined) payload.lobster_way_content = lobsterWayContent
   const { error } = await supabase.from('settings').upsert(payload)
   if (error) {
     console.error('saveSettings error:', error)

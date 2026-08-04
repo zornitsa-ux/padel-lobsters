@@ -19,6 +19,7 @@ import {
   BarChart3,
   ChevronRight,
   AlertCircle,
+  Megaphone,
 } from 'lucide-react'
 import LeagueAdminSection from '../league/LeagueAdminSection'
 import { PageHeader } from '../../components/ui/PageHeader'
@@ -163,6 +164,14 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
         icon: ShoppingBag,
         actionLabel: 'Go to Shop',
         onClick: () => onNavigate?.('merch'),
+      },
+      {
+        id: 'lobster-way',
+        title: 'The Lobster Way',
+        description: 'Add, edit, reorder, or remove FAQ categories and questions.',
+        icon: Megaphone,
+        actionLabel: 'Edit content',
+        onClick: () => onNavigate?.('lobster-way-admin'),
       },
     ],
     [onNavigate, personalisedCount, genericCount],

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, Link } from 'react-router-dom'
 import { useApp } from '../context/useApp'
 import { useSettings } from '../features/settings/useSettings'
 import { supabase } from '../supabase'
@@ -12,6 +12,7 @@ import {
   CircleUser,
   Shield,
   MessageCircle,
+  Info,
 } from 'lucide-react'
 
 // Bottom nav — five tabs, each a NavLink so the active state tracks the URL.
@@ -106,6 +107,14 @@ export default function Layout({ children }) {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <Link
+                to="/lobster-way"
+                aria-label="The Lobster way — help and FAQ"
+                className="flex items-center justify-center w-8 h-8 rounded-2xl text-white transition-all active:scale-95"
+                style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)' }}
+              >
+                <Info size={14} />
+              </Link>
               <a
                 href="https://www.instagram.com/padelobsters?utm_source=qr&igsh=MTVwcHdod3pkanQxaQ=="
                 target="_blank"
