@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useApp } from '../../context/useApp'
-import { usePlayers } from '../players/usePlayers'
+import { usePlayers, usePlayersPii } from '../players/usePlayers'
 import { useRegistrations, useRegistrationActions } from './useRegistrations'
 import {
   CheckCircle,
@@ -9,6 +9,7 @@ import {
   UserCog,
   ShieldCheck,
   MoreVertical,
+  MessageCircle,
 } from 'lucide-react'
 import { fmtEur } from '../../lib/format'
 import { EmptyState } from '../../components/ui/EmptyState'
@@ -27,6 +28,25 @@ const METHODS = [
 
 type PaymentFilter = 'all' | 'paid' | 'pending' | 'tikkied' | 'unpaid'
 
+// wa.me link pre-filled with a short Tikkie nudge. Returns null when the
+// player has no phone on file or the event has no Tikkie link, so callers can
+// skip rendering the button entirely.
+function tikkieReminderLink({
+  name,
+  phone,
+  tournament,
+}: {
+  name: string
+  phone: string
+  tournament: NormalisedTournament
+}): string | null {
+  if (!phone || !tournament.tikkieLink) return null
+  const digits = phone.replace(/[^0-9]/g, '')
+  if (!digits) return null
+  const text = `Hi ${name}! Friendly reminder to pay for ${tournament.name} via Tikkie: ${tournament.tikkieLink} 🙏`
+  return `https://wa.me/${digits}?text=${encodeURIComponent(text)}`
+}
+
 export default function Payments({
   tournament,
   onNavigate,
@@ -34,9 +54,13 @@ export default function Payments({
   tournament: NormalisedTournament | null
   onNavigate: EventNavigate
 }) {
-  const { session } = useApp()
+  const { session, role } = useApp()
   const { updateRegistration } = useRegistrationActions()
   const { data: players = [] } = usePlayers()
+  // players_public redacts phone numbers, so the roster alone can't build a
+  // WhatsApp link. usePlayersPii is admin-gated and returns undefined for
+  // everyone else, which just means no Remind buttons render.
+  const { data: piiById } = usePlayersPii({ role })
   const { data: regsData = [] } = useRegistrations(tournament?.id)
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
   const [filter, setFilter] = useState<PaymentFilter>('all')
@@ -332,6 +356,14 @@ export default function Payments({
           const isSelfPaid = ps === 'pending_confirmation'
           const isTikkied = ps === 'tikkied'
           const isTransferred = ps === 'transferred'
+          const reminderLink =
+            !isConfirmed && !isSelfPaid
+              ? tikkieReminderLink({
+                  name: player.name,
+                  phone: piiById?.[String(player.id)]?.phone ?? '',
+                  tournament,
+                })
+              : null
 
           const borderColor = isConfirmed
             ? 'border-green-400'
@@ -376,6 +408,17 @@ export default function Payments({
                         </button>
                       ) : (
                         <PaymentMethodPicker onSelect={(method) => handleMarkPaid(reg, method)} />
+                      )}
+                      {reminderLink && (
+                        <a
+                          href={reminderLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Send a WhatsApp payment reminder"
+                          className="text-xs bg-[#25D366] text-white px-3 py-1.5 rounded-xl font-semibold active:scale-95 transition-all inline-flex items-center gap-1"
+                        >
+                          <MessageCircle size={12} /> Remind
+                        </a>
                       )}
                       {/* Manual override — lets the admin set any status directly,
                           e.g. correcting a misclick or manually marking Tikkied. */}
