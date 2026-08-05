@@ -1149,6 +1149,7 @@ export type Database = {
           auto_trust_until: string | null
           group_name: string | null
           id: number
+          lobster_way_content: Json | null
           padel_tips: Json | null
           raffle_cooldown_tournaments: number
           whatsapp_link: string | null
@@ -1157,6 +1158,7 @@ export type Database = {
           auto_trust_until?: string | null
           group_name?: string | null
           id?: number
+          lobster_way_content?: Json | null
           padel_tips?: Json | null
           raffle_cooldown_tournaments?: number
           whatsapp_link?: string | null
@@ -1165,6 +1167,7 @@ export type Database = {
           auto_trust_until?: string | null
           group_name?: string | null
           id?: number
+          lobster_way_content?: Json | null
           padel_tips?: Json | null
           raffle_cooldown_tournaments?: number
           whatsapp_link?: string | null
