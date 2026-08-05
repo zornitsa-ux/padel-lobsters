@@ -2,7 +2,17 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { screen, cleanup } from '@testing-library/react'
 import { renderWithClient } from '../../test/renderWithClient'
+import { MemoryRouter } from 'react-router-dom'
 import Dashboard from './Dashboard'
+
+// The Lobster Way entry point at the foot of the dashboard renders a
+// react-router <Link>, which needs router context to mount.
+const renderDashboard = () =>
+  renderWithClient(
+    <MemoryRouter>
+      <Dashboard onNavigate={vi.fn()} />
+    </MemoryRouter>,
+  )
 
 vi.mock('../../context/useApp', () => ({
   useApp: () => ({ session: null, sessionSettled: true }),
@@ -67,7 +77,7 @@ afterEach(() => {
 describe('Dashboard — load failures vs genuine empty state', () => {
   it('does not show a load-error banner when every read succeeds with empty data', () => {
     setAllOk()
-    renderWithClient(<Dashboard onNavigate={vi.fn()} />)
+    renderDashboard()
 
     expect(screen.queryByText(/couldn.t load/i)).toBeNull()
     // Genuine empty state still renders normally.
@@ -77,7 +87,7 @@ describe('Dashboard — load failures vs genuine empty state', () => {
   it('shows a load-error banner when useTournaments fails, instead of a bare empty state', () => {
     setAllOk()
     tournamentsQuery.mockReturnValue(errorResult([]))
-    renderWithClient(<Dashboard onNavigate={vi.fn()} />)
+    renderDashboard()
 
     expect(screen.queryByText(/couldn.t load/i)).not.toBeNull()
   })
@@ -85,7 +95,7 @@ describe('Dashboard — load failures vs genuine empty state', () => {
   it('shows the load-error banner when a background read (merch) fails', () => {
     setAllOk()
     merchInterestsQuery.mockReturnValue(errorResult([]))
-    renderWithClient(<Dashboard onNavigate={vi.fn()} />)
+    renderDashboard()
 
     expect(screen.queryByText(/couldn.t load/i)).not.toBeNull()
   })
