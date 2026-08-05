@@ -18,6 +18,9 @@ supabase/snippets/
 # Lighthouse CI lab results
 .lighthouseci/
 
+# Generated test run output
+test-results/
+
 # Claude Code agent worktrees (ephemeral, session-local)
 .claude/worktrees/
 
