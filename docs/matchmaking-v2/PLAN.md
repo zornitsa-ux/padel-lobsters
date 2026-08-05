@@ -33,12 +33,16 @@ event's roster. The V1 **generator** code is gone (2026-07-26): `lobsterMatcher.
 `Schedule.jsx`'s Finish handler, the unreachable `:325` branch) are deleted.
 `src/lib/glicko2.ts` remains — **not shipped, offline-only**; see M4.3 below.
 
-Gates as of 2026-07-30: typecheck clean, lint 0 errors (61 pre-existing
+Gates as of 2026-08-05: typecheck clean, lint 0 errors (63 pre-existing
 warnings), **1456 pass / 2 skip**, build clean, 9 goldens byte-identical.
+Re-run on `tournament-ia-redesign` after it was brought up to date with
+`main`; `db:types:check` and `db:grants:check` also clean.
 
 **Tournament IA redesign is on branch `tournament-ia-redesign`, not yet merged**
 (2026-07-29→30, see `docs/tournament-redesign/IMPLEMENTATION_BRIEF.md`).
 Workstreams A–E are done and committed; only the E2E spike is open.
+**Current with `main` as of 2026-08-05** — it now also carries the score-syncing
+work, the Lobster Way FAQ, and the migration-drift reconciliation (PR #23).
 
 It touches matchmaking in exactly one intended way: **`useEventLifecycle.ts` is
 now the single caller of `applyTournamentRatings`**, replacing Schedule's Finish
@@ -79,6 +83,18 @@ leaned on, previously unasserted) and `court.players` must equal the flattened
 
 ### Open items
 
+- **Prod migration history was reconciled 2026-08-05 (PR #23).** The Lobster Way
+  FAQ was pushed straight to `main` and its migration hand-applied to prod,
+  leaving three migrations live that the repo had never recorded
+  (`20260805110159`, plus the applied-then-reverted `20260805151259` /
+  `20260805151846` pair, net effect zero). All three are now in
+  `supabase/migrations/`. The two score-sync migrations
+  (`20260805160000` drop matches from the realtime publication,
+  `20260805160100` `matches.updated_at`) were renumbered to sort after prod's
+  raised head and **pushed to prod 2026-08-05**. Repo and prod histories match.
+  Note for any future un-pushed migration: anything hand-applied to prod raises
+  the remote head and strands older local timestamps — check
+  `npx supabase migration list --linked` before assuming `db push` will work.
 - **Migration `20260713000001_matchmaking_v2.sql` is live in production**
   (pushed 2026-07-25). Carries the whole V2 schema plus, in its own marked
   section, the unrelated pre-existing `settings` write-grant fix — settings
