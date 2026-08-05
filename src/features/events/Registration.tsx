@@ -29,7 +29,10 @@ import {
 import { useConfirm } from '../../lib/confirmBus'
 import RegistrationPaymentSheetModal from './registration/RegistrationPaymentSheetModal'
 import AddPlayerCard from './registration/AddPlayerCard'
+import JoinEventCard from './registration/JoinEventCard'
+import { useSelfRegister } from './registration/useSelfRegister'
 import TransferSpotCard from './registration/TransferSpotCard'
+import { myRegistrationSummary } from './nextMatch'
 import RegisteredSection from './registration/RegisteredSection'
 import WaitlistSection from './registration/WaitlistSection'
 import CancelledSection from './registration/CancelledSection'
@@ -211,6 +214,11 @@ export default function Registration({
   )
 
   const maxPlayers = tournament?.maxPlayers || 16
+  const selfRegister = useSelfRegister({
+    tournamentId: tournament?.id,
+    playerId: claimedId,
+    maxPlayers,
+  })
   const isCompleted = tournament?.status === 'completed'
   const { isAdminAll, hasTikkie, costPerPlayer } = useMemo(
     () => computePaymentConfig(tournament),
@@ -265,6 +273,7 @@ export default function Registration({
     )
   }
 
+  // ── Register (the signed-in player, from the Info tab) ─────────────────────
   // ── Register (admin adding another player) ─────────────────────────────────
   const handleAdd = async () => {
     if (!selectedPlayer) return
@@ -419,10 +428,17 @@ export default function Registration({
           </div>
           <EventAdminMenu isAdmin={isAdmin} onEdit={openEdit} />
         </div>
-        <p className="text-xs text-lob-muted-light pt-2 border-t border-gray-100">
-          Format:{' '}
-          <span className="font-medium text-lob-slate">{formatLabel(tournament.format)}</span>
-        </p>
+        <div className="flex items-center justify-between gap-2 flex-wrap pt-2 border-t border-gray-100">
+          <p className="text-xs text-lob-muted-light">
+            Format:{' '}
+            <span className="font-medium text-lob-slate">{formatLabel(tournament.format)}</span>
+          </p>
+          {/* Share + calendar sit with the date and time they act on. */}
+          <div className="flex gap-2">
+            <ShareWhatsAppButton tournament={tournament} variant="chip" />
+            <AddToCalendarButton tournament={tournament} variant="chip" />
+          </div>
+        </div>
       </div>
 
       {/* 2. Description — read-only for players, inline-editable for admins
@@ -439,8 +455,22 @@ export default function Registration({
         }}
       />
 
-      {/* Spot-transfer flow — registration and payment now live on /me;
-          this stays here since /me deliberately doesn't host transfers. */}
+      {/* 3. Sign-up — the player's own way in, next to what they just read.
+             /me still owns payment; this links there rather than repeat it. */}
+      {!isAdmin && claimedId && !isCompleted && (
+        <JoinEventCard
+          summary={myRegistrationSummary({ registrations: regs, playerId: claimedId })}
+          isEventFull={registered.length >= maxPlayers}
+          hasTikkie={hasTikkie}
+          registering={selfRegister.registering}
+          error={selfRegister.error}
+          onRegister={() => void selfRegister.register()}
+          onGoToPayment={() => onNavigate('me', tournament)}
+        />
+      )}
+
+      {/* Spot-transfer flow — payment lives on /me; this stays here since /me
+          deliberately doesn't host transfers. */}
       {!isAdmin && claimedId && !isCompleted && (
         <TransferSpotCard
           myReg={myReg}
@@ -521,12 +551,6 @@ export default function Registration({
         expanded={cancelledExpanded}
         onToggle={() => setCancelledExpanded((v) => !v)}
       />
-
-      {/* 5. Footer — share + calendar. */}
-      <div className="flex gap-2">
-        <ShareWhatsAppButton tournament={tournament} variant="full" />
-        <AddToCalendarButton tournament={tournament} variant="full" />
-      </div>
 
       {/* ── POST-ADD PAYMENT SHEET (admin) ── */}
       <RegistrationPaymentSheetModal

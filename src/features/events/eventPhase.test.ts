@@ -5,6 +5,7 @@ import {
   isMatchScored,
   isPhaseAtLeast,
   visibleEventTabs,
+  anyResultsRevealed,
   isOscarsTabVisible,
   defaultEventTab,
   isRunOfShowVisible,
@@ -340,8 +341,8 @@ describe('visibleEventTabs', () => {
     ['open', ['info', 'me', 'schedule', 'manage']],
     ['set', ['info', 'me', 'schedule', 'manage']],
     ['live', ['info', 'me', 'schedule', 'manage']],
-    ['sealed', ['info', 'me', 'schedule', 'results', 'manage']],
-    ['social', ['info', 'me', 'schedule', 'results', 'manage']],
+    ['sealed', ['info', 'me', 'schedule', 'manage']],
+    ['social', ['info', 'me', 'schedule', 'manage']],
     ['revealed', ['info', 'me', 'schedule', 'results', 'manage']],
   ]
 
@@ -356,9 +357,52 @@ describe('visibleEventTabs', () => {
     expect(player('revealed')).toContain('results')
   })
 
-  it('DEFECT GUARD — no Results tab for anyone before a full set of scores', () => {
-    for (const phase of ['open', 'set', 'live'] as EventPhase[]) {
+  it('DEFECT GUARD — no Results tab for an admin before the reveal either', () => {
+    for (const phase of ['open', 'set', 'live', 'sealed', 'social'] as EventPhase[]) {
       expect(admin(phase)).not.toContain('results')
+    }
+    expect(admin('revealed')).toContain('results')
+  })
+
+  it('gates Results identically for both roles at every phase', () => {
+    for (const phase of EVENT_PHASES) {
+      expect(admin(phase).includes('results')).toBe(player(phase).includes('results'))
+    }
+  })
+
+  // Standings, Oscars winners and raffle winners are three independent reveals.
+  // Any one of them landing opens the Results door; each sub-tab inside keeps
+  // its own gate.
+  it('opens Results when the Oscars winners are shared, with standings still embargoed', () => {
+    expect(visibleEventTabs({ phase: 'social', isAdmin: false, oscarsPhase: 'shared' })).toContain(
+      'results',
+    )
+  })
+
+  it('opens Results when the raffle is published, with standings still embargoed', () => {
+    expect(visibleEventTabs({ phase: 'social', isAdmin: false, rafflePublished: true })).toContain(
+      'results',
+    )
+    expect(visibleEventTabs({ phase: 'social', isAdmin: true, rafflePublished: true })).toContain(
+      'results',
+    )
+  })
+
+  it('DEFECT GUARD — a published raffle is never stranded behind a closed Results tab', () => {
+    for (const phase of EVENT_PHASES) {
+      expect(visibleEventTabs({ phase, isAdmin: false, rafflePublished: true })).toContain(
+        'results',
+      )
+    }
+  })
+
+  it('keeps Results shut while none of the three has been revealed', () => {
+    for (const phase of ['open', 'set', 'live', 'sealed', 'social'] as EventPhase[]) {
+      for (const oscarsPhase of ['not_created', 'pre_start', 'active', 'ended'] as OscarsPhase[]) {
+        expect(
+          visibleEventTabs({ phase, isAdmin: true, oscarsPhase, rafflePublished: false }),
+        ).not.toContain('results')
+      }
     }
   })
 
@@ -385,6 +429,20 @@ describe('visibleEventTabs', () => {
       ['info', 'me', 'schedule', 'results', 'oscars', 'manage'].indexOf(t),
     )
     expect(indices).toEqual([...indices].sort((a, b) => a - b))
+  })
+})
+
+describe('anyResultsRevealed', () => {
+  it('is false until one of the three reveals lands', () => {
+    expect(anyResultsRevealed({ phase: 'social' })).toBe(false)
+    expect(anyResultsRevealed({ phase: 'sealed', oscarsPhase: 'ended' })).toBe(false)
+    expect(anyResultsRevealed({ phase: 'live', rafflePublished: false })).toBe(false)
+  })
+
+  it('is true on standings, Oscars or raffle, independently', () => {
+    expect(anyResultsRevealed({ phase: 'revealed' })).toBe(true)
+    expect(anyResultsRevealed({ phase: 'social', oscarsPhase: 'shared' })).toBe(true)
+    expect(anyResultsRevealed({ phase: 'social', rafflePublished: true })).toBe(true)
   })
 })
 

@@ -10,10 +10,8 @@ import {
   useSearchParams,
 } from 'react-router-dom'
 import { AppProvider } from './context/AppContext'
-import { useEventPhase } from './features/events/useEventPhase'
-import { defaultEventTab } from './features/events/eventPhase'
 import { EventRouteGuard, AdminEventRouteGuard } from './features/events/EventRouteGuard'
-import type { NormalisedTournament } from './lib/normalise'
+import EventDefaultTabRedirect from './features/events/EventDefaultTabRedirect'
 import Layout from './components/Layout'
 import { RouteFallback } from './components/ui/RouteFallback'
 import Dashboard from './features/home/Dashboard'
@@ -122,6 +120,8 @@ function useLegacyNavigate(): EventNavigate {
         return navigate('/events')
       case 'registration':
         return t?.id ? navigate(`/events/${t.id}/info`) : navigate('/events')
+      case 'me':
+        return t?.id ? navigate(`/events/${t.id}/me`) : navigate('/events')
       case 'schedule':
         return t?.id ? navigate(`/events/${t.id}/schedule`) : navigate('/events')
       case 'scores':
@@ -173,19 +173,12 @@ function EventShellRoute() {
   return <EventRouteGuard>{(tournament) => <EventShell tournament={tournament} />}</EventRouteGuard>
 }
 
-// `/events/:id` with no tab named — lands wherever the phase says is most
-// useful (during Live that is the player's own tournament, not Info).
 function EventIndexRoute() {
   return (
     <EventRouteGuard>
       {(tournament) => <EventDefaultTabRedirect tournament={tournament} />}
     </EventRouteGuard>
   )
-}
-
-function EventDefaultTabRedirect({ tournament }: { tournament: NormalisedTournament }) {
-  const { phase } = useEventPhase(tournament)
-  return <Navigate to={defaultEventTab({ phase })} replace />
 }
 
 function EventDetailRoute() {

@@ -158,6 +158,48 @@ export function isSittingOutCurrentRound({
   return !myMatches.some((v) => v.round === round)
 }
 
+// ── Per-round view ───────────────────────────────────────────────────────────
+
+export type MyRoundStatus = 'complete' | 'next' | 'upcoming'
+
+export interface MyRoundView {
+  round: number
+  /** Null when the player sits this round out. */
+  match: MyMatchView | null
+  status: MyRoundStatus
+}
+
+/**
+ * Every round of the tournament from one player's point of view — one entry per
+ * round, whether they play it or sit it out. At most one round is 'next': the
+ * one holding their soonest unscored match. A sat-out round counts as complete
+ * only once every match in it is scored.
+ */
+export function myRoundsForPlayer({
+  matches,
+  playerId,
+}: {
+  matches: NormalisedMatch[]
+  playerId: string | null | undefined
+}): MyRoundView[] {
+  const myMatches = matchesForPlayer({ matches, playerId })
+  const nextRound = nextMatchForPlayer(myMatches)?.round ?? null
+  const rounds = [...new Set(matches.map((m) => m.round ?? 1))].sort((a, b) => a - b)
+
+  return rounds.map((round) => {
+    const mine = myMatches.find((v) => v.round === round) ?? null
+    const complete = mine
+      ? mine.scored
+      : matches.filter((m) => (m.round ?? 1) === round).every(isMatchScored)
+
+    return {
+      round,
+      match: mine,
+      status: complete ? 'complete' : round === nextRound ? 'next' : 'upcoming',
+    }
+  })
+}
+
 // ── Aggregate view ───────────────────────────────────────────────────────────
 
 export interface MyTournamentView {
@@ -166,6 +208,7 @@ export interface MyTournamentView {
   nextMatch: MyMatchView | null
   upcomingMatches: MyMatchView[]
   completedMatches: MyMatchView[]
+  rounds: MyRoundView[]
   currentRound: number | null
   sittingOutCurrentRound: boolean
 }
@@ -189,6 +232,7 @@ export function buildMyTournamentView({
     nextMatch: nextMatchForPlayer(myMatches),
     upcomingMatches: upcomingMatchesForPlayer(myMatches),
     completedMatches: completedMatchesForPlayer(myMatches),
+    rounds: myRoundsForPlayer({ matches, playerId }),
     currentRound: round,
     sittingOutCurrentRound: isSittingOutCurrentRound({
       registrationStatus: registration.status,

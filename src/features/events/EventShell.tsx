@@ -28,7 +28,14 @@ export default function EventShell({ tournament }: Props) {
 
   // Which tabs exist is a phase question, not a role question — splitting on
   // `isAdmin` alone is what put a Results tab on events with no scores.
-  const tabs: PageHeaderTab[] = visibleEventTabs({ phase, isAdmin, oscarsPhase }).map((tab) => ({
+  // `rafflePublished` comes off the tournament row, so opening the Results door
+  // for a published raffle costs no extra query here.
+  const tabs: PageHeaderTab[] = visibleEventTabs({
+    phase,
+    isAdmin,
+    oscarsPhase,
+    rafflePublished: Boolean(tournament.rafflePublishedAt),
+  }).map((tab) => ({
     label: TAB_LABELS[tab],
     to: `${base}/${tab}`,
     isActive: (p) => p === `${base}/${tab}`,

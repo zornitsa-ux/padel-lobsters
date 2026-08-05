@@ -212,6 +212,43 @@ describe('RunOfShow — D-029 independence', () => {
   })
 })
 
+describe('RunOfShow — preview standings before revealing', () => {
+  const previewLink = () =>
+    screen.queryByRole('link', { name: /preview standings/i }) as HTMLAnchorElement | null
+
+  it('offers a preview link to the results route once Reveal is actionable', () => {
+    setup({ status: 'completed' })
+
+    expect(previewLink()?.getAttribute('href')).toBe('/events/t1/results')
+  })
+
+  it('hides the preview while Reveal is still locked — there are no standings yet', () => {
+    setup({ status: 'active', matches: [scored(), unscored()] })
+
+    expect(previewLink()).toBeNull()
+  })
+
+  it('drops the preview once results are revealed and the Results tab exists', () => {
+    setup({ status: 'completed', resultsSharedAt: '2026-08-01T12:00:00.000Z' })
+
+    expect(previewLink()).toBeNull()
+  })
+
+  it('previewing does not reveal anything', () => {
+    setup({ status: 'completed' })
+
+    fireEvent.click(previewLink()!)
+
+    expect(revealResults).not.toHaveBeenCalled()
+  })
+
+  it('offers no preview link on the other steps', () => {
+    setup({ status: 'completed' })
+
+    expect(screen.getAllByRole('link', { name: /preview/i })).toHaveLength(1)
+  })
+})
+
 describe('RunOfShow — actions', () => {
   it('Finish calls finishTournament', () => {
     setup({ matches: [scored()] })
@@ -221,6 +258,14 @@ describe('RunOfShow — actions', () => {
 
   it('Publish calls publishRaffleWinners', () => {
     setup({ raffleWinners: [{ id: 'w1' }] })
+    fireEvent.click(button(/publish raffle winners/i)!)
+    expect(publishRaffleWinners).toHaveBeenCalledTimes(1)
+  })
+
+  it('publishes the raffle without waiting on the standings reveal', () => {
+    setup({ status: 'completed', raffleWinners: [{ id: 'w1' }] })
+
+    expect(button(/publish raffle winners/i)?.disabled).toBe(false)
     fireEvent.click(button(/publish raffle winners/i)!)
     expect(publishRaffleWinners).toHaveBeenCalledTimes(1)
   })

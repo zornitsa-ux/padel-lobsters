@@ -177,4 +177,33 @@ describe('ScoreEntry — mobile keypad and auto-advance (input variant)', () => 
     fireEvent.blur(boxes().t2)
     expect(onUpdate).toHaveBeenCalledWith('m1', { score1: 6, score2: 4, completed: true })
   })
+
+  // The auto-advance flag is cleared by an effect keyed on s1, so it would
+  // strand on `true` — and steal focus on some later unrelated s1 change — if
+  // handleTeam1Change could ever run without changing s1. It cannot: React's
+  // value tracker suppresses the change event entirely when the value is
+  // unchanged, so retyping the digit already in the box is a no-op.
+  it('ignores a keystroke that does not change the value, leaving no armed advance', () => {
+    const onUpdate = vi.fn()
+    const { rerender } = render(<ScoreEntry match={match()} onUpdate={onUpdate} />)
+
+    fireEvent.change(boxes().t1, { target: { value: '6' } })
+    fireEvent.change(boxes().t2, { target: { value: '4' } })
+    fireEvent.blur(boxes().t2)
+    rerender(
+      <ScoreEntry match={match({ score1: 6, score2: 4, completed: true })} onUpdate={onUpdate} />,
+    )
+
+    fireEvent.change(boxes().t1, { target: { value: '6' } })
+    fireEvent.blur(boxes().t1)
+    boxes().t1.focus()
+
+    // A peer's score lands while the admin sits in team 1.
+    rerender(
+      <ScoreEntry match={match({ score1: 3, score2: 5, completed: true })} onUpdate={onUpdate} />,
+    )
+
+    expect(boxes().t1.value).toBe('3')
+    expect(document.activeElement).toBe(boxes().t1)
+  })
 })

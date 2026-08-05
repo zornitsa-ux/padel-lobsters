@@ -40,6 +40,11 @@ vi.mock('./useEventPhase', () => ({
   useEventPhase: () => ({ phase: mockPhase, oscarsPhase: 'not_created' }),
 }))
 
+const mockSync = vi.fn()
+vi.mock('./useTournamentSync', () => ({
+  useTournamentSync: (args: unknown) => mockSync(args),
+}))
+
 import MyTournament from './MyTournament'
 
 const baseTournament: Partial<NormalisedTournament> = {
@@ -192,7 +197,7 @@ describe('MyTournament — still renders after completion', () => {
 
     renderMyTournament({ status: 'completed', resultsSharedAt: null })
 
-    expect(screen.getByText(/your results/i)).not.toBeNull()
+    expect(screen.getByText(/your rounds/i)).not.toBeNull()
     expect(screen.getByText('6–4')).not.toBeNull()
   })
 
@@ -215,7 +220,114 @@ describe('MyTournament — still renders after completion', () => {
 
     renderMyTournament({ status: 'completed', resultsSharedAt: null })
 
-    expect(screen.getByText(/your results/i)).not.toBeNull()
+    expect(screen.getByText(/your rounds/i)).not.toBeNull()
+  })
+})
+
+describe('MyTournament — live score sync', () => {
+  it('subscribes to the tournament channel while scores can still move', () => {
+    registrations = [mkRegistration({ id: 'r1', playerId: 'p1', status: 'registered' })]
+
+    renderMyTournament({ status: 'upcoming' })
+
+    expect(mockSync).toHaveBeenCalledWith({ tournamentId: 't1', enabled: true })
+  })
+
+  it('does not subscribe once the event is completed and scores are frozen', () => {
+    registrations = [mkRegistration({ id: 'r1', playerId: 'p1', status: 'registered' })]
+    mockPhase = 'social'
+
+    renderMyTournament({ status: 'completed' })
+
+    expect(mockSync).toHaveBeenCalledWith({ tournamentId: 't1', enabled: false })
+  })
+
+  it('does not subscribe for a signed-out viewer', () => {
+    mockSession = null
+
+    renderMyTournament({ status: 'upcoming' })
+
+    expect(mockSync).toHaveBeenCalledWith({ tournamentId: 't1', enabled: false })
+  })
+})
+
+describe('MyTournament — every round is visible', () => {
+  const fourRounds = () => [
+    mkMatch({
+      id: 'm1',
+      round: 1,
+      court: '1',
+      team1Ids: ['p1', 'p2'],
+      team2Ids: ['p3', 'p4'],
+      completed: true,
+      score1: 6,
+      score2: 3,
+    }),
+    mkMatch({
+      id: 'm2',
+      round: 2,
+      court: '2',
+      team1Ids: ['p1', 'p3'],
+      team2Ids: ['p2', 'p4'],
+      completed: false,
+    }),
+    mkMatch({
+      id: 'm3',
+      round: 3,
+      court: '3',
+      team1Ids: ['p1', 'p4'],
+      team2Ids: ['p2', 'p3'],
+      completed: false,
+    }),
+    // p1 sits round 4 out.
+    mkMatch({ id: 'm4', round: 4, court: '4', team1Ids: ['p2', 'p3'], team2Ids: ['p4', 'p5'] }),
+  ]
+
+  it('lists every round, not just the next one', () => {
+    registrations = [mkRegistration({ id: 'r1', playerId: 'p1', status: 'registered' })]
+    matches = fourRounds()
+
+    renderMyTournament()
+
+    expect(screen.getByText(/Round 1/)).not.toBeNull()
+    expect(screen.getByText('Round 2')).not.toBeNull() // hero chip
+    expect(screen.getByText(/Round 3/)).not.toBeNull()
+    expect(screen.getByText(/Round 4 · Sitting out/)).not.toBeNull()
+  })
+
+  it('marks only the soonest unscored round as up next', () => {
+    registrations = [mkRegistration({ id: 'r1', playerId: 'p1', status: 'registered' })]
+    matches = fourRounds()
+
+    renderMyTournament()
+
+    expect(screen.getAllByText(/up next/i)).toHaveLength(1)
+    expect(screen.getByText(/Court 2/)).not.toBeNull() // the up-next court
+  })
+
+  it('shows the score and outcome on rounds that are already saved', () => {
+    registrations = [mkRegistration({ id: 'r1', playerId: 'p1', status: 'registered' })]
+    matches = fourRounds()
+
+    renderMyTournament()
+
+    expect(screen.getByText('6–3')).not.toBeNull()
+    expect(screen.getByText('Won')).not.toBeNull()
+    // Rounds still to play carry no score.
+    expect(screen.getByText('Later')).not.toBeNull()
+  })
+
+  it('shows every round in the set phase, before any score exists', () => {
+    registrations = [mkRegistration({ id: 'r1', playerId: 'p1', status: 'registered' })]
+    matches = fourRounds().map((m) => ({ ...m, completed: false, score1: null, score2: null }))
+    mockPhase = 'set'
+
+    renderMyTournament()
+
+    expect(screen.getByText('Round 1')).not.toBeNull() // hero chip
+    expect(screen.getByText(/Round 2/)).not.toBeNull()
+    expect(screen.getByText(/Round 3/)).not.toBeNull()
+    expect(screen.getByText(/Round 4 · Sitting out/)).not.toBeNull()
   })
 })
 

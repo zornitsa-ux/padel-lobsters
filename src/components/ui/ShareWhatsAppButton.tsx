@@ -1,6 +1,7 @@
 import React from 'react'
 import { Share2 } from 'lucide-react'
 import { IconButton } from './IconButton'
+import { ActionChip } from './ActionChip'
 
 // ============================================================================
 //  ShareWhatsAppButton
@@ -10,7 +11,9 @@ import { IconButton } from './IconButton'
 //  registration page for that tournament. Legacy ?event=<id> links from
 //  older messages still resolve via App.jsx's DeepLinkMigrator.
 //
-//  Two variants: 'icon' (compact square) and 'full' (wide CTA pill).
+//  Three variants: 'icon' (compact square), 'chip' (tertiary ghost chip, for
+//  a utility action sitting under content) and 'full' (wide CTA pill, only
+//  where sharing is the point of the surface).
 // ============================================================================
 
 // Structural subset of a tournament this button reads. NormalisedTournament
@@ -25,7 +28,7 @@ export interface ShareableEvent {
 
 interface ShareWhatsAppButtonProps {
   tournament?: ShareableEvent | null
-  variant?: 'icon' | 'full'
+  variant?: 'icon' | 'chip' | 'full'
   className?: string
 }
 
@@ -81,6 +84,20 @@ export default function ShareWhatsAppButton({
       >
         <Share2 size={16} />
       </IconButton>
+    )
+  }
+
+  if (variant === 'chip') {
+    return (
+      <ActionChip
+        onClick={handleClick}
+        title="Share on WhatsApp"
+        aria-label="Share on WhatsApp"
+        icon={<Share2 size={13} />}
+        className={className}
+      >
+        Share
+      </ActionChip>
     )
   }
 

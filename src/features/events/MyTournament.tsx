@@ -1,36 +1,26 @@
 import { useMemo, useState, type ReactNode } from 'react'
-import {
-  CheckCircle,
-  Clock,
-  ExternalLink,
-  Send,
-  Trophy,
-  MapPin,
-  Users,
-  UserRoundX,
-} from 'lucide-react'
+import { CheckCircle, Clock, ExternalLink, Send, Trophy, UserRoundX } from 'lucide-react'
 import { useApp } from '../../context/useApp'
 import { useRegistrations, useRegistrationActions } from './useRegistrations'
 import { useMatches } from './useMatches'
 import { usePlayers } from '../players/usePlayers'
 import { useEventPhase } from './useEventPhase'
+import { useTournamentSync } from './useTournamentSync'
 import { resultsWithheld } from './resultsPhase'
 import { splitRegistrationsByStatus, computePaymentConfig } from './registration/utils'
 import { fmtEur } from '../../lib/format'
 import { EmptyState } from '../../components/ui/EmptyState'
-import Avatar from '../../components/ui/Avatar'
-import { buildMyTournamentView, matchOutcome, myFinalPlacing, type MyMatchView } from './nextMatch'
+import MyRounds from './MyRounds'
+import { useSelfRegister } from './registration/useSelfRegister'
+import { buildMyTournamentView, myFinalPlacing } from './nextMatch'
 import type { EventPhase } from './eventPhase'
-import type { NormalisedTournament, Player } from '../../lib/normalise'
+import type { NormalisedTournament } from '../../lib/normalise'
 import type { EventNavigate } from './eventHelpers'
 
 type Props = {
   tournament: NormalisedTournament
   onNavigate: EventNavigate
 }
-
-const firstName = (player: Player | undefined, fallback: string): string =>
-  player ? (player.name || fallback).split(' ')[0] : fallback
 
 export default function MyTournament({ tournament, onNavigate }: Props) {
   const { session } = useApp()
@@ -40,10 +30,20 @@ export default function MyTournament({ tournament, onNavigate }: Props) {
   const { data: registrations = [] } = useRegistrations(tournament.id)
   const { data: matches = [] } = useMatches(tournament.id)
   const { data: players = [] } = usePlayers()
-  const { registerPlayer, updateRegistration } = useRegistrationActions()
+  const { updateRegistration } = useRegistrationActions()
 
   const { phase } = useEventPhase(tournament)
   const withheld = resultsWithheld({ tournament, isAdmin })
+
+  // Scores land here without a refresh: peers' score deltas merge into the match
+  // cache and a schedule rewrite refetches it. Broadcast-only, so this adds no
+  // database load however many players hold the tab open — but it does make /me
+  // the widest subscriber on the channel. See ARCHITECTURE.md "Live-update
+  // scope". Same gate as Schedule and Scores: off once scores are frozen.
+  useTournamentSync({
+    tournamentId: tournament.id,
+    enabled: claimedId != null && tournament.status !== 'completed',
+  })
 
   const playerById = useMemo(() => new Map(players.map((p) => [p.id, p])), [players])
   const getPlayer = (id: string | null) => (id ? playerById.get(id) : undefined)
@@ -73,19 +73,14 @@ export default function MyTournament({ tournament, onNavigate }: Props) {
     })
   }, [withheld, claimedId, tournament.id, matches, registered])
 
-  const [registering, setRegistering] = useState(false)
   const [tikkieClicked, setTikkieClicked] = useState(false)
   const [declaring, setDeclaring] = useState(false)
 
-  const handleRegister = async () => {
-    if (!claimedId) return
-    setRegistering(true)
-    try {
-      await registerPlayer(tournament.id, claimedId, tournament.maxPlayers || 16)
-    } finally {
-      setRegistering(false)
-    }
-  }
+  const selfRegister = useSelfRegister({
+    tournamentId: tournament.id,
+    playerId: claimedId,
+    maxPlayers: tournament.maxPlayers || 16,
+  })
 
   const handleTikkieClick = () => {
     setTikkieClicked(true)
@@ -142,45 +137,33 @@ export default function MyTournament({ tournament, onNavigate }: Props) {
       tournament={tournament}
       tikkieClicked={tikkieClicked}
       declaring={declaring}
-      registering={registering}
-      onRegister={handleRegister}
+      registering={selfRegister.registering}
+      registerError={selfRegister.error}
+      onRegister={() => void selfRegister.register()}
       onTikkieClick={handleTikkieClick}
       onSelfDeclare={handleSelfDeclare}
     />
   )
 
-  const nextMatchSection =
-    view.nextMatch || view.sittingOutCurrentRound ? (
-      <NextMatchCard
-        key="next-match"
-        nextMatch={view.nextMatch}
-        sittingOut={view.sittingOutCurrentRound}
-        currentRound={view.currentRound}
-        getPlayer={getPlayer}
-      />
-    ) : null
-
-  const laterMatches = view.upcomingMatches.slice(view.nextMatch ? 1 : 0)
-  const matchesSection =
-    laterMatches.length > 0 || view.completedMatches.length > 0 ? (
-      <MyMatchesCard
-        key="matches"
-        later={laterMatches}
-        completed={view.completedMatches}
-        getPlayer={getPlayer}
-      />
-    ) : null
+  const roundsSection = (
+    <MyRounds
+      key="rounds"
+      rounds={view.rounds}
+      currentRound={view.currentRound}
+      getPlayer={getPlayer}
+    />
+  )
 
   const placingSection =
     !withheld && placing ? <PlacingCard key="placing" placing={placing} /> : null
 
   const sectionsByPhase: Record<EventPhase, ReactNode[]> = {
     open: [registrationSection],
-    set: [registrationSection, nextMatchSection],
-    live: [nextMatchSection, matchesSection, registrationSection],
-    sealed: [matchesSection, registrationSection],
-    social: [matchesSection, registrationSection],
-    revealed: [placingSection, matchesSection, registrationSection],
+    set: [registrationSection, roundsSection],
+    live: [roundsSection, registrationSection],
+    sealed: [roundsSection, registrationSection],
+    social: [roundsSection, registrationSection],
+    revealed: [placingSection, roundsSection, registrationSection],
   }
 
   return <div className="space-y-4">{sectionsByPhase[phase]}</div>
@@ -199,6 +182,7 @@ function RegistrationCard({
   tikkieClicked,
   declaring,
   registering,
+  registerError,
   onRegister,
   onTikkieClick,
   onSelfDeclare,
@@ -213,10 +197,18 @@ function RegistrationCard({
   tikkieClicked: boolean
   declaring: boolean
   registering: boolean
+  /** Set when the sign-up failed; blank otherwise. */
+  registerError?: string
   onRegister: () => void
   onTikkieClick: () => void
   onSelfDeclare: () => void
 }) {
+  const registerErrorNotice = registerError ? (
+    <p role="alert" className="text-xs font-semibold text-red-600">
+      {registerError}
+    </p>
+  ) : null
+
   if (registration.status === 'not_registered') {
     return (
       <div className="card space-y-3">
@@ -234,6 +226,7 @@ function RegistrationCard({
               ? 'Join the waitlist'
               : 'Register for this event'}
         </button>
+        {registerErrorNotice}
       </div>
     )
   }
@@ -252,6 +245,7 @@ function RegistrationCard({
         >
           {registering ? 'Signing up…' : 'Register again'}
         </button>
+        {registerErrorNotice}
       </div>
     )
   }
@@ -357,165 +351,6 @@ function RegistrationCard({
 
   // Registered, no payment required (free event or no Tikkie configured)
   return <div className="card">{badge}</div>
-}
-
-// ── Next match hero ──────────────────────────────────────────────────────────
-
-function NextMatchCard({
-  nextMatch,
-  sittingOut,
-  currentRound,
-  getPlayer,
-}: {
-  nextMatch: MyMatchView | null
-  sittingOut: boolean
-  currentRound: number | null
-  getPlayer: (id: string | null) => Player | undefined
-}) {
-  if (!nextMatch) {
-    return (
-      <div className="card-elevated bg-lob-cream text-center space-y-1">
-        <p className="text-sm font-semibold text-lob-slate">
-          Sitting out{currentRound ? ` — Round ${currentRound}` : ' this round'}
-        </p>
-        <p className="text-xs text-lob-muted">Grab a drink — you&apos;re back next round.</p>
-      </div>
-    )
-  }
-
-  const partner = getPlayer(nextMatch.partnerId)
-  const opponents = nextMatch.opponentIds.map((id) => getPlayer(id))
-
-  return (
-    <div className="card-elevated space-y-4">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-bold text-lob-teal bg-lob-cream px-2.5 py-1 rounded-full">
-          Round {nextMatch.round}
-        </span>
-        {nextMatch.court && (
-          <span className="flex items-center gap-1 text-sm font-bold text-lob-dark">
-            <MapPin size={14} className="text-lob-coral" />
-            Court {nextMatch.court}
-          </span>
-        )}
-      </div>
-
-      <div className="flex items-center justify-center gap-2">
-        <Avatar player={partner ?? { name: '?' }} size="lg" />
-        <div className="text-left">
-          <p className="text-xs text-lob-muted-light">with</p>
-          <p className="font-bold text-lob-dark">{firstName(partner, 'Partner TBD')}</p>
-        </div>
-      </div>
-
-      <div className="text-center">
-        <p className="text-xs font-semibold text-lob-muted-light uppercase tracking-wide">vs</p>
-        <div className="flex items-center justify-center gap-3 mt-1">
-          {opponents.map((opp, i) => (
-            <div key={nextMatch.opponentIds[i] ?? i} className="flex items-center gap-1.5">
-              <Avatar player={opp ?? { name: '?' }} size="sm" />
-              <span className="text-sm font-medium text-lob-slate">{firstName(opp, 'TBD')}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {sittingOut && (
-        <p className="text-xs text-center text-lob-muted-light">
-          (Sitting out the current round — this is your next match up)
-        </p>
-      )}
-    </div>
-  )
-}
-
-// ── My matches list ───────────────────────────────────────────────────────────
-
-function MatchRow({
-  view,
-  getPlayer,
-}: {
-  view: MyMatchView
-  getPlayer: (id: string | null) => Player | undefined
-}) {
-  const partner = getPlayer(view.partnerId)
-  const opponents = view.opponentIds.map((id) => getPlayer(id))
-  const outcome = matchOutcome(view)
-
-  const outcomeBadge =
-    outcome === 'win' ? (
-      <span className="text-xs font-bold text-green-700 bg-green-50 border border-green-200 px-2 py-0.5 rounded-full">
-        Won
-      </span>
-    ) : outcome === 'loss' ? (
-      <span className="text-xs font-bold text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">
-        Lost
-      </span>
-    ) : outcome === 'tie' ? (
-      <span className="text-xs font-bold text-lob-muted bg-gray-100 border border-gray-200 px-2 py-0.5 rounded-full">
-        Tied
-      </span>
-    ) : null
-
-  return (
-    <div className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-      <div className="min-w-0">
-        <p className="text-xs text-lob-muted-light">
-          Round {view.round}
-          {view.court ? ` · Court ${view.court}` : ''}
-        </p>
-        <p className="text-sm text-lob-slate truncate">
-          with <span className="font-medium">{firstName(partner, 'Partner TBD')}</span> vs{' '}
-          {opponents.map((o) => firstName(o, 'TBD')).join(' & ')}
-        </p>
-      </div>
-      <div className="flex items-center gap-2 flex-shrink-0 pl-2">
-        {view.scored ? (
-          <>
-            <span className="text-sm font-bold text-lob-slate">
-              {view.myScore}–{view.opponentScore}
-            </span>
-            {outcomeBadge}
-          </>
-        ) : (
-          <span className="text-xs text-lob-muted-light">Upcoming</span>
-        )}
-      </div>
-    </div>
-  )
-}
-
-function MyMatchesCard({
-  later,
-  completed,
-  getPlayer,
-}: {
-  later: MyMatchView[]
-  completed: MyMatchView[]
-  getPlayer: (id: string | null) => Player | undefined
-}) {
-  return (
-    <div className="space-y-3">
-      {later.length > 0 && (
-        <div className="card">
-          <h3 className="font-bold text-lob-slate text-sm mb-1">Your remaining matches</h3>
-          {later.map((v) => (
-            <MatchRow key={v.match.id} view={v} getPlayer={getPlayer} />
-          ))}
-        </div>
-      )}
-      {completed.length > 0 && (
-        <div className="card">
-          <h3 className="font-bold text-lob-slate text-sm mb-1 flex items-center gap-1.5">
-            <Users size={14} className="text-lob-teal" /> Your results
-          </h3>
-          {completed.map((v) => (
-            <MatchRow key={v.match.id} view={v} getPlayer={getPlayer} />
-          ))}
-        </div>
-      )}
-    </div>
-  )
 }
 
 // ── Final placing (revealed phase only) ───────────────────────────────────────

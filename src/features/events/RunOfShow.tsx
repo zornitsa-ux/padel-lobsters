@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { CheckCircle2, Lock, Eye } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
+import { ArrowUpRight, CheckCircle2, Lock, Eye } from 'lucide-react'
 import { useMatches } from './useMatches'
 import { useEventPhase } from './useEventPhase'
 import { useEventLifecycle } from './useEventLifecycle'
@@ -18,9 +18,19 @@ const stepNumber = (index: number): string => String(index + 1).padStart(2, '0')
  * Where a step's control lives: a plain button, an embedded component (the
  * rating review queue), or nothing (the step navigates and has no server
  * write of its own — the schedule tab owns that state).
+ *
+ * `link` is an optional read-only side door beside the button, for looking at
+ * what the step is about to do. Rendered only while the step is actionable.
  */
 type StepAction =
-  | { kind: 'button'; label: string; busyLabel?: string; busy: boolean; onClick: () => void }
+  | {
+      kind: 'button'
+      label: string
+      busyLabel?: string
+      busy: boolean
+      onClick: () => void
+      link?: { label: string; to: string }
+    }
   | { kind: 'custom'; content: ReactNode }
   | null
 
@@ -95,6 +105,11 @@ function useStepActions({
       busyLabel: 'Revealing…',
       busy: lifecycle.busy === 'reveal' || revealingOscars,
       onClick: () => void handleReveal(),
+      // The Results tab stays hidden until the reveal (`visibleEventTabs`), so
+      // this is the admin's door to the standings beforehand. Read-only: the
+      // route renders the same page, which shows admins the real ranking while
+      // players still get the withheld teaser (D-029).
+      link: { label: 'Preview standings', to: `/events/${tournament.id}/results` },
     },
     draw_raffle: {
       kind: 'button',
@@ -162,14 +177,25 @@ function StepRow({
                   action.content
                 )
               ) : (
-                <button
-                  type="button"
-                  onClick={action.onClick}
-                  disabled={locked || action.busy}
-                  className="btn-secondary py-2 px-4 text-xs disabled:opacity-50"
-                >
-                  {action.busy ? (action.busyLabel ?? action.label) : action.label}
-                </button>
+                <div className="flex items-center gap-3 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={action.onClick}
+                    disabled={locked || action.busy}
+                    className="btn-secondary py-2 px-4 text-xs disabled:opacity-50"
+                  >
+                    {action.busy ? (action.busyLabel ?? action.label) : action.label}
+                  </button>
+                  {/* Hidden while locked — there is nothing to look at yet. */}
+                  {action.link && !locked && (
+                    <Link
+                      to={action.link.to}
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-lob-teal underline underline-offset-2 decoration-lob-teal/40"
+                    >
+                      <ArrowUpRight size={12} /> {action.link.label}
+                    </Link>
+                  )}
+                </div>
               )}
             </div>
           )}

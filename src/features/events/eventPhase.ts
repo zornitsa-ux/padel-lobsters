@@ -131,23 +131,47 @@ export function isOscarsTabVisible({
   return true
 }
 
+/**
+ * The three results the admin reveals independently, each on its own beat:
+ * standings (`results_shared_at` → phase `revealed`), Oscars winners (the
+ * session's `shared_at`), and raffle winners (`raffle_published_at`). The
+ * Results tab is the shared home for all three.
+ */
+export function anyResultsRevealed({
+  phase,
+  oscarsPhase = 'not_created',
+  rafflePublished = false,
+}: {
+  phase: EventPhase
+  oscarsPhase?: OscarsPhase
+  rafflePublished?: boolean
+}): boolean {
+  return phase === 'revealed' || oscarsPhase === 'shared' || rafflePublished
+}
+
 export function visibleEventTabs({
   phase,
   isAdmin,
   oscarsPhase = 'not_created',
+  rafflePublished = false,
 }: {
   phase: EventPhase
   isAdmin: boolean
   oscarsPhase?: OscarsPhase
+  rafflePublished?: boolean
 }): EventTab[] {
   const tabs: EventTab[] = ['info', 'me']
 
   // Admins reach Schedule from `open` because that is where they build it.
   if (isAdmin || isPhaseAtLeast(phase, 'set')) tabs.push('schedule')
 
-  // Players get Results only once the embargo lifts; admins once there is a
-  // complete set of scores to rank.
-  if (isAdmin ? isPhaseAtLeast(phase, 'sealed') : phase === 'revealed') tabs.push('results')
+  // Results opens as soon as ANY of its three reveals has landed, for everyone
+  // including admins — the door is one gate, and each sub-tab inside then keeps
+  // its own. Gating the door on the standings reveal alone stranded published
+  // raffle winners behind a tab nobody could open. Nothing revealed yet means no
+  // tab; an admin can still open `/events/:id/results` directly to preview,
+  // since the route itself is not phase-gated.
+  if (anyResultsRevealed({ phase, oscarsPhase, rafflePublished })) tabs.push('results')
 
   if (isOscarsTabVisible({ oscarsPhase, isAdmin })) tabs.push('oscars')
 

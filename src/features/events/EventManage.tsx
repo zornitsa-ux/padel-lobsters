@@ -43,11 +43,13 @@ export default function EventManage({ tournament, onNavigate }: Props) {
     ? (searchParams.get('section') as Section)
     : 'overview'
 
+  // replace, not push: a tab strip that stacks history entries turns the back
+  // button into a section-by-section rewind instead of an exit from /manage.
   const setSection = (next: Section) => {
     const params = new URLSearchParams(searchParams)
     if (next === 'overview') params.delete('section')
     else params.set('section', next)
-    setSearchParams(params)
+    setSearchParams(params, { replace: true })
   }
 
   return (
@@ -93,10 +95,6 @@ function Overview({ tournament }: { tournament: NormalisedTournament }) {
   const scoredCount = matches.filter(isMatchScored).length
   const sealed = allMatchesScored(matches)
 
-  // Closes over `tournament` so the exact slot below stays prop-free, per the
-  // run-of-show contract — RunOfShow itself is owned by workstream C.
-  const RunOfShowSlot = () => <RunOfShow tournament={tournament} />
-
   return (
     <div className="space-y-4">
       <div className="card grid grid-cols-3 gap-2">
@@ -125,8 +123,11 @@ function Overview({ tournament }: { tournament: NormalisedTournament }) {
         {sealed && <p className="text-xs text-lob-teal font-semibold">All matches scored</p>}
       </div>
 
-      {/* The end-of-event sequence. Owned by RunOfShow — see workstream C. */}
-      {isRunOfShowVisible({ phase, isAdmin: true }) && <RunOfShowSlot />}
+      {/* The end-of-event sequence. Owned by RunOfShow — see workstream C.
+          Rendered as an element, never as a component defined in this render
+          body: a fresh function identity each pass remounts RunOfShow, which
+          owns the Finish/reveal lifecycle state (appliedCount, busy, error). */}
+      {isRunOfShowVisible({ phase, isAdmin: true }) && <RunOfShow tournament={tournament} />}
     </div>
   )
 }

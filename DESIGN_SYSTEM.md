@@ -116,9 +116,15 @@ Four variants only. Do not create custom one-off button styles.
 | `.btn-primary`   | Coral, `rounded-full`, `py-3 px-5`                          | One per screen max — the single key action |
 | `.btn-secondary` | White/teal border, `rounded-full`, `py-3 px-5`              | Alongside a primary                        |
 | `.btn-danger`    | Red, `rounded-full`, `py-2 px-4`                            | Destructive confirm                        |
-| Ghost chip       | `bg-gray-100 text-lob-muted rounded-lg px-3 py-1.5 text-xs` | Tertiary (Share, Schedule…)                |
+| `<ActionChip>`   | `bg-gray-100 text-lob-muted rounded-lg px-3 py-1.5 text-xs` | Tertiary (Share, Add to calendar…)         |
 
-Do not override `.btn-primary` padding. If you need a smaller action button, use the ghost chip pattern.
+Do not override `.btn-primary` padding. If you need a smaller action button, use `<ActionChip>`.
+
+`<ActionChip>` (`components/ui/ActionChip.tsx`) is width-of-its-label by design — never give it `w-full`. Two stretched outline pills is what "Share on WhatsApp" and "Add to Google Calendar" used to be on the event Info tab, and they read as primary actions competing with registration. A tertiary utility should sit quietly under the content it belongs to. It renders an `<a>` when given an `href` and a `<button>` otherwise, so link-based actions keep working on iOS Safari.
+
+### Where component styles live
+
+The first three rows above are global classes in `src/index.css`, kept because they are used in dozens of places across every feature. **New component styling does not go there.** Co-locate it with the component as a CSS module — `ActionChip.tsx` + `ActionChip.module.css` is the reference pair. Compose from Tailwind theme tokens with `@apply` inside the module so the token layer stays the single source of truth for colour and spacing; do not hard-code hex values in a module.
 
 ---
 

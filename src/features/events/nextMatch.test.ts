@@ -8,6 +8,7 @@ import {
   matchOutcome,
   currentRound,
   isSittingOutCurrentRound,
+  myRoundsForPlayer,
   buildMyTournamentView,
   myFinalPlacing,
 } from './nextMatch'
@@ -205,6 +206,57 @@ describe('isSittingOutCurrentRound', () => {
     expect(
       isSittingOutCurrentRound({ registrationStatus: 'registered', myMatches: [], round: null }),
     ).toBe(false)
+  })
+})
+
+describe('myRoundsForPlayer', () => {
+  const schedule = [
+    scoredMatch({ id: 'm1', round: 1, team1Ids: ['p1', 'a'], team2Ids: ['b', 'c'] }),
+    mkMatch({ id: 'm2', round: 2, team1Ids: ['p1', 'b'], team2Ids: ['a', 'c'] }),
+    mkMatch({ id: 'm3', round: 3, team1Ids: ['p1', 'c'], team2Ids: ['a', 'b'] }),
+    mkMatch({ id: 'm4', round: 4, team1Ids: ['a', 'b'], team2Ids: ['c', 'd'] }), // p1 sits out
+  ]
+
+  it('returns one entry per round in ascending order', () => {
+    const rounds = myRoundsForPlayer({ matches: schedule, playerId: 'p1' })
+    expect(rounds.map((r) => r.round)).toEqual([1, 2, 3, 4])
+  })
+
+  it('marks scored rounds complete, the soonest unscored one next, the rest upcoming', () => {
+    const rounds = myRoundsForPlayer({ matches: schedule, playerId: 'p1' })
+    expect(rounds.map((r) => r.status)).toEqual(['complete', 'next', 'upcoming', 'upcoming'])
+  })
+
+  it('never marks more than one round as next', () => {
+    const rounds = myRoundsForPlayer({ matches: schedule, playerId: 'p1' })
+    expect(rounds.filter((r) => r.status === 'next')).toHaveLength(1)
+  })
+
+  it('reports a null match for rounds the player sits out', () => {
+    const rounds = myRoundsForPlayer({ matches: schedule, playerId: 'p1' })
+    expect(rounds[3].match).toBeNull()
+    expect(rounds[0].match?.match.id).toBe('m1')
+  })
+
+  it('counts a sat-out round complete only once every match in it is scored', () => {
+    const matches = [
+      scoredMatch({ id: 'm1', round: 1, team1Ids: ['a', 'b'], team2Ids: ['c', 'd'] }),
+      mkMatch({ id: 'm2', round: 1, team1Ids: ['e', 'f'], team2Ids: ['g', 'h'] }),
+      scoredMatch({ id: 'm3', round: 2, team1Ids: ['a', 'b'], team2Ids: ['c', 'd'] }),
+    ]
+    const rounds = myRoundsForPlayer({ matches, playerId: 'p1' })
+    expect(rounds.map((r) => r.status)).toEqual(['upcoming', 'complete'])
+  })
+
+  it('returns no rounds when there is no schedule', () => {
+    expect(myRoundsForPlayer({ matches: [], playerId: 'p1' })).toEqual([])
+  })
+
+  it('still lists the rounds for a player with no matches at all', () => {
+    const rounds = myRoundsForPlayer({ matches: schedule, playerId: 'nobody' })
+    expect(rounds).toHaveLength(4)
+    expect(rounds.every((r) => r.match === null)).toBe(true)
+    expect(rounds.some((r) => r.status === 'next')).toBe(false)
   })
 })
 

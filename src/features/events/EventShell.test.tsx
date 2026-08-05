@@ -23,10 +23,12 @@ function renderShell({
   phase,
   isAdmin,
   oscarsPhase = 'not_created',
+  rafflePublishedAt = null,
 }: {
   phase: EventPhase
   isAdmin: boolean
   oscarsPhase?: OscarsPhase
+  rafflePublishedAt?: string | null
 }) {
   useApp.mockReturnValue({
     session: { user: { app_metadata: { role: isAdmin ? 'admin' : 'player' }, id: 'u1' } },
@@ -34,7 +36,7 @@ function renderShell({
   useEventPhase.mockReturnValue({ phase, oscarsPhase })
   render(
     <MemoryRouter initialEntries={[`/events/evt-1/info`]}>
-      <EventShell tournament={TOURNAMENT} />
+      <EventShell tournament={{ ...TOURNAMENT, rafflePublishedAt } as NormalisedTournament} />
     </MemoryRouter>,
   )
 }
@@ -68,8 +70,8 @@ describe('EventShell tab strip — phase × role matrix', () => {
     ['open', ['Info', 'You', 'Schedule', 'Manage']],
     ['set', ['Info', 'You', 'Schedule', 'Manage']],
     ['live', ['Info', 'You', 'Schedule', 'Manage']],
-    ['sealed', ['Info', 'You', 'Schedule', 'Results', 'Manage']],
-    ['social', ['Info', 'You', 'Schedule', 'Results', 'Manage']],
+    ['sealed', ['Info', 'You', 'Schedule', 'Manage']],
+    ['social', ['Info', 'You', 'Schedule', 'Manage']],
     ['revealed', ['Info', 'You', 'Schedule', 'Results', 'Manage']],
   ]
 
@@ -86,6 +88,18 @@ describe('EventShell tab strip — phase × role matrix', () => {
       expect(shownTabs()).not.toContain('Results')
       cleanup()
     }
+  })
+
+  it('DEFECT GUARD — a published raffle opens Results even with standings embargoed', () => {
+    // The winners were stranded: publishing put them on the Results tab, which
+    // was gated on the standings reveal, so nobody could open it.
+    renderShell({ phase: 'social', isAdmin: false, rafflePublishedAt: '2026-08-01T20:00:00Z' })
+    expect(shownTabs()).toContain('Results')
+  })
+
+  it('shared Oscars winners open Results on their own too', () => {
+    renderShell({ phase: 'social', isAdmin: false, oscarsPhase: 'shared' })
+    expect(shownTabs()).toContain('Results')
   })
 
   it('DEFECT GUARD — a player keeps an Oscars tab after the tournament completes', () => {

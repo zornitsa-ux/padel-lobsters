@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useApp } from '../../context/useApp'
 import { usePlayers } from '../players/usePlayers'
 import { useMatches } from './useMatches'
@@ -10,9 +10,11 @@ import { EmptyState } from '../../components/ui/EmptyState'
 import { ProgressBar } from '../../components/ui/ProgressBar'
 import { useTournamentSync } from './useTournamentSync'
 import { useOscarResults } from '../oscars/useOscarResults'
+import { useRaffleWinners } from '../raffle/useRaffle'
 import { groupOscarResultsByCategory } from '../oscars/oscarResults'
 import { buildRounds } from './buildRounds'
 import { resultsWithheld } from './resultsPhase'
+import { raffleWinnersWithheld } from './eventPhase'
 import ScoresRankingTab from './ScoresRankingTab'
 import type { TournamentStandingRow } from './ScoresRankingTab'
 import ScoresMatchesTab from './ScoresMatchesTab'
@@ -20,7 +22,7 @@ import RaffleWinnersBlock from './RaffleWinnersBlock'
 import type { NormalisedTournament } from './tournamentQueries'
 import type { EventNavigate } from './eventHelpers'
 
-type ScoresTabId = 'ranking' | 'matches' | 'games'
+type ScoresTabId = 'ranking' | 'matches' | 'games' | 'raffle'
 
 interface ScoresProps {
   tournament: NormalisedTournament | null | undefined
@@ -34,9 +36,11 @@ export default function Scores({ tournament, onNavigate }: ScoresProps) {
   const { data: allMatches = [] } = useMatches(tournament?.id)
   const { data: regsData = [] } = useRegistrations(tournament?.id)
 
-  // Tab switcher: ranking (podium + standings), matches (round-by-round
-  // cards, same layout as History), or lobster-games (per-category winners
-  // from a shared Lobster Oscars session).
+  // Tab switcher: ranking (podium + standings), matches (round-by-round cards,
+  // same layout as History), lobster-games (per-category winners from a shared
+  // Lobster Oscars session), or raffle (published prize winners). Each of the
+  // three results tabs appears only once its own reveal has landed, so the strip
+  // grows as the admin works through the run-of-show.
   const [tab, setTab] = useState<ScoresTabId>('ranking')
   const [activeRoundIdx, setActiveRoundIdx] = useState(0)
 
@@ -47,8 +51,31 @@ export default function Scores({ tournament, onNavigate }: ScoresProps) {
     enabled: tournament != null && tournament.status !== 'completed',
   })
 
+  // `lobster_oscars_get_results` returns nothing until the session's `shared_at`
+  // is set, for admins too — the Oscars gate is server-side, so a non-empty
+  // result set IS the reveal.
   const { data: oscarRows = [] } = useOscarResults(tournament?.id)
   const hasGameResults = oscarRows.length > 0
+
+  const { data: raffleWinners = [] } = useRaffleWinners(tournament?.id)
+
+  // Admins see drawn-but-unpublished winners (the block labels them as such),
+  // which mirrors how they see standings before the reveal.
+  const hasRaffleResults =
+    tournament != null &&
+    raffleWinners.length > 0 &&
+    !raffleWinnersWithheld({ tournament, isAdmin })
+
+  // A tab the viewer is sitting on can stop existing — the admin publishes,
+  // then unpublishes, or the query settles to an empty set. Move them off it
+  // rather than render a blank panel. This resets `tab` itself, not just what
+  // gets displayed: leaving the dead value in state meant a later refetch that
+  // re-populated the tab would snap the viewer back onto it unprompted.
+  useEffect(() => {
+    if ((tab === 'games' && !hasGameResults) || (tab === 'raffle' && !hasRaffleResults)) {
+      setTab('ranking')
+    }
+  }, [tab, hasGameResults, hasRaffleResults])
 
   const matches = allMatches.filter((m) => m.completed)
   const regs = regsData.filter((r) => r.status === 'registered')
@@ -92,32 +119,36 @@ export default function Scores({ tournament, onNavigate }: ScoresProps) {
   // Finish). Admins always see the real ranking.
   const withheld = resultsWithheld({ tournament, isAdmin })
 
+  // Guards the frame between the tab disappearing and the effect above
+  // committing the reset, so the panel is never blank in between.
+  const activeTab: ScoresTabId =
+    (tab === 'games' && !hasGameResults) || (tab === 'raffle' && !hasRaffleResults)
+      ? 'ranking'
+      : tab
+
   return (
     <div className="space-y-4">
-      {/* Tab switcher — Ranking | Matches | Lobster Games.
-          The Lobster Games tab only shows up if at least one game was
-          played + finished for this tournament. */}
+      {/* Tab switcher — Ranking | Matches | Lobster Games | Prize Raffle.
+          Games and Raffle appear only once their own reveal has landed. */}
       <TabSwitcher
         tabs={[
           { id: 'ranking', label: '🥇 Final Ranking' },
           { id: 'matches', label: '📋 Matches' },
           ...(hasGameResults ? [{ id: 'games', label: '🦞 Lobster Games' }] : []),
+          ...(hasRaffleResults ? [{ id: 'raffle', label: '🎁 Prize Raffle' }] : []),
         ]}
-        value={tab}
+        value={activeTab}
         onChange={(id) => setTab(id as ScoresTabId)}
         className="overflow-x-auto"
       />
 
       {/* ── RANKING tab ─────────────────────────────────────────────────── */}
-      {tab === 'ranking' && (
-        <>
-          <ScoresRankingTab standings={standings} matches={matches} withheld={withheld} />
-          <RaffleWinnersBlock tournament={tournament} isAdmin={isAdmin} />
-        </>
+      {activeTab === 'ranking' && (
+        <ScoresRankingTab standings={standings} matches={matches} withheld={withheld} />
       )}
 
       {/* ── MATCHES tab ─────────────────────────────────────────────────── */}
-      {tab === 'matches' && (
+      {activeTab === 'matches' && (
         <ScoresMatchesTab
           rounds={rounds}
           activeRoundIdx={activeRoundIdx}
@@ -127,7 +158,7 @@ export default function Scores({ tournament, onNavigate }: ScoresProps) {
       )}
 
       {/* ── LOBSTER GAMES tab ───────────────────────────────────────────── */}
-      {tab === 'games' &&
+      {activeTab === 'games' &&
         (() => {
           if (!oscarRows.length) return null
           const cats = groupOscarResultsByCategory(oscarRows)
@@ -192,6 +223,9 @@ export default function Scores({ tournament, onNavigate }: ScoresProps) {
             </div>
           )
         })()}
+
+      {/* ── PRIZE RAFFLE tab ────────────────────────────────────────────── */}
+      {activeTab === 'raffle' && <RaffleWinnersBlock tournament={tournament} isAdmin={isAdmin} />}
     </div>
   )
 }

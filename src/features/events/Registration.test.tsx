@@ -44,14 +44,18 @@ const players = Array.from({ length: 4 }, (_, i) => ({
   playtomicLevel: 3,
 }))
 
-const registrations = players.map((p, i) => ({
-  id: `r${i}`,
-  playerId: p.id,
-  tournamentId: 't1',
-  status: 'registered',
-  paymentStatus: 'paid',
-  registeredAt: { seconds: i },
-}))
+const allRegistered = () =>
+  players.map((p, i) => ({
+    id: `r${i}`,
+    playerId: p.id,
+    tournamentId: 't1',
+    status: 'registered',
+    paymentStatus: 'paid',
+    registeredAt: { seconds: i },
+  }))
+
+// Reassigned per test; the mock factory reads it lazily.
+let registrations: unknown[] = allRegistered()
 
 const baseTournament = {
   id: 't1',
@@ -103,7 +107,10 @@ const PHASES: Array<[string, Partial<NormalisedTournament>]> = [
   ],
 ]
 
-beforeEach(() => vi.clearAllMocks())
+beforeEach(() => {
+  vi.clearAllMocks()
+  registrations = allRegistered()
+})
 afterEach(cleanup)
 
 describe('Info tab — no results leak at any phase', () => {
@@ -173,5 +180,64 @@ describe('Info tab — the event, and only the event', () => {
     renderInfo({ status: 'completed' })
 
     expect(screen.queryByText('Padel Inc')).not.toBeNull()
+  })
+})
+
+describe('Info tab — players sign themselves up here', () => {
+  // p0 is the signed-in viewer in `renderInfo`.
+  const withoutViewer = () => allRegistered().filter((r) => r.playerId !== 'p0')
+
+  it('offers registration to a signed-in player who has not joined', () => {
+    registrations = withoutViewer()
+
+    renderInfo()
+
+    expect(screen.getByRole('button', { name: /register for this event/i })).not.toBeNull()
+  })
+
+  it('offers the waitlist once the roster is full', () => {
+    registrations = withoutViewer()
+
+    renderInfo({ maxPlayers: 3 })
+
+    expect(screen.getByRole('button', { name: /join the waitlist/i })).not.toBeNull()
+  })
+
+  it('confirms rather than re-offers when the viewer is already registered', () => {
+    renderInfo()
+
+    expect(screen.getByText(/you're registered/i)).not.toBeNull()
+    expect(screen.queryByRole('button', { name: /register for this event/i })).toBeNull()
+  })
+
+  it('offers no self-registration once the event is over', () => {
+    registrations = withoutViewer()
+
+    renderInfo({ status: 'completed' })
+
+    expect(screen.queryByRole('button', { name: /register for this event/i })).toBeNull()
+  })
+
+  it('leaves admins the add-player flow, not a self-registration button', () => {
+    registrations = withoutViewer()
+
+    renderInfo({ isAdmin: true })
+
+    expect(screen.queryByRole('button', { name: /register for this event/i })).toBeNull()
+  })
+})
+
+describe('Info tab — share and calendar sit with the date', () => {
+  it('puts both chips inside the date and time card', () => {
+    renderInfo()
+
+    const share = screen.getByTitle('Share on WhatsApp')
+    const calendar = screen.getByTitle('Add to Google Calendar')
+    // The meta card is the one holding the location; both chips live in it.
+    const metaCard = screen.getByText('Padel Inc').closest('.card')
+
+    expect(metaCard).not.toBeNull()
+    expect(metaCard?.contains(share)).toBe(true)
+    expect(metaCard?.contains(calendar)).toBe(true)
   })
 })

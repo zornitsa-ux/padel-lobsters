@@ -268,10 +268,26 @@ describe('draw_raffle and publish_raffle', () => {
     expect(stepOf('draw_raffle', { hasRaffleWinners: true }).playersSee).toContain('not published')
   })
 
+  // Publishing the raffle opens the Results tab by itself and lands the winners
+  // on their own sub-tab there, so it waits on nothing — in either direction.
   it('is independent of the standings reveal in both directions', () => {
-    // Publish before reveal, and reveal before publish, are both reachable.
-    expect(stateOf('publish_raffle', { ...SEALED, hasRaffleWinners: true })).toBe('available')
+    expect(stateOf('publish_raffle', { ...COMPLETED, hasRaffleWinners: true })).toBe('available')
+    expect(stateOf('publish_raffle', { ...REVEALED, hasRaffleWinners: true })).toBe('available')
     expect(stateOf('reveal', { ...COMPLETED, hasRaffleWinners: false })).toBe('available')
+    expect(stateOf('reveal', { ...COMPLETED, hasRaffleWinners: true })).toBe('available')
+  })
+
+  it('promises players the winners as soon as it is published, reveal or not', () => {
+    const publishedNotRevealed = stepOf('publish_raffle', {
+      hasRaffleWinners: true,
+      tournament: {
+        status: 'completed',
+        resultsSharedAt: null,
+        rafflePublishedAt: '2026-07-29T21:30:00Z',
+      },
+    })
+    expect(publishedNotRevealed.state).toBe('done')
+    expect(publishedNotRevealed.playersSee).toBe('The raffle winners')
   })
 })
 

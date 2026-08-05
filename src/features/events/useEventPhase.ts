@@ -15,6 +15,12 @@ import type { OscarsPhase } from '../oscars/oscarsPhase'
  *
  * The two phases are returned side by side but derived independently: the
  * tournament phase never reads the Oscars session and vice versa.
+ *
+ * `isPending` is true while the matches query is still in flight. Most callers
+ * ignore it — an event surface rendering one phase early then settling is
+ * harmless. Callers that take an irreversible action on the phase (redirects)
+ * must wait, because a pending matches query reads as zero matches, and zero
+ * matches is indistinguishable from phase `open`.
  */
 export function useEventPhase(
   tournament: {
@@ -23,8 +29,8 @@ export function useEventPhase(
     date?: string | null
     resultsSharedAt: string | null
   } | null,
-): { phase: EventPhase; oscarsPhase: OscarsPhase } {
-  const { data: matches = [] } = useMatches(tournament?.id)
+): { phase: EventPhase; oscarsPhase: OscarsPhase; isPending: boolean } {
+  const { data: matches = [], isPending: matchesPending } = useMatches(tournament?.id)
   const { data: oscarsSession } = useOscarsSessionRow(tournament?.id)
 
   const phase = useMemo(
@@ -36,5 +42,7 @@ export function useEventPhase(
   // sentinel; `null` means the tournament has no Oscars session row.
   const oscarsPhase = derivePhase(toPhaseSession(oscarsSession), Boolean(tournament))
 
-  return { phase, oscarsPhase }
+  // No tournament means there is nothing in flight to wait for — react-query
+  // reports a disabled query as pending forever.
+  return { phase, oscarsPhase, isPending: tournament != null && matchesPending }
 }

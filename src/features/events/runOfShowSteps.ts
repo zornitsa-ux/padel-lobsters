@@ -92,6 +92,10 @@ export function runOfShowSteps({
         ? 'available'
         : 'locked'
   const revealState: RunOfShowStepState = isRevealed ? 'done' : isCompleted ? 'available' : 'locked'
+
+  // Publishing is independent of the standings reveal, in the data model (D-029)
+  // and now in the UI too: publishing opens the Results tab on its own and puts
+  // the winners on their own sub-tab there, so it no longer waits on anything.
   const publishState: RunOfShowStepState = isRafflePublished
     ? 'done'
     : hasRaffleWinners
@@ -182,7 +186,9 @@ export function runOfShowSteps({
       id: 'publish_raffle',
       title: 'Publish raffle winners',
       state: publishState,
-      detail: isRafflePublished ? 'Winners are public' : 'Adds the winners to everyone’s Results',
+      detail: isRafflePublished
+        ? 'Winners are public'
+        : 'Opens Results for everyone, on its own Prize Raffle tab',
       lockedReason: lockedBecause(publishState, 'Draw the raffle first'),
       playersSee: isRafflePublished ? 'The raffle winners' : 'Nothing yet',
     },

@@ -243,7 +243,6 @@ export default function Schedule({
   }
 
   const display = generated || savedRounds
-  const isTournamentCompleted = tournament.status === 'completed'
 
   // MatchmakingContainer is the only generator (`useV2Matcher = isAdmin`), so
   // this handler is only ever reached by a non-admin, who gets bounced.
@@ -668,16 +667,6 @@ export default function Schedule({
 
       {display.length === 0 && !isAdmin && (
         <EmptyState icon={<Shuffle size={36} />} title="No schedule generated yet" />
-      )}
-
-      {/* ── Tournament completed → View Results ──────────────── */}
-      {isTournamentCompleted && (
-        <button
-          onClick={() => onNavigate('scores', tournament)}
-          className="w-full bg-gradient-to-r from-yellow-400 to-lob-coral text-white font-bold py-3 rounded-2xl text-sm active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-        >
-          <Trophy size={18} /> View Results
-        </button>
       )}
     </div>
   )
