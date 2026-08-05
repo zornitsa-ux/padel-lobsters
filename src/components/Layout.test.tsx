@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import type { ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 
@@ -15,6 +16,7 @@ vi.mock('../hooks/useDevices', () => ({
 }))
 vi.mock('react-router-dom', () => ({
   NavLink: ({ to }: { to: string }) => <a href={to}>{to}</a>,
+  Link: ({ to, children }: { to: string; children?: ReactNode }) => <a href={to}>{children}</a>,
 }))
 vi.mock('./device-trust/DeviceTrustBanner', () => ({
   default: ({ onDismiss }: { onDismiss: () => void }) => (

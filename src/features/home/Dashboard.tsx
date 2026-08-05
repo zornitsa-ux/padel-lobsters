@@ -22,6 +22,7 @@ import TipOfTheDay from './TipOfTheDay'
 import NextEventCard from './NextEventCard'
 import RecentlyCompletedBanners from './RecentlyCompletedBanners'
 import AdminAlerts, { type NewMerchOrder } from './AdminAlerts'
+import LobsterWayLink from '../../components/LobsterWayLink'
 import { LeagueDashboardCard } from '../league/ui/LeagueDashboardCard'
 import type { Player, NormalisedTournament } from '../../lib/normalise'
 import type { NormalisedMatch } from '../events/matchQueries'
@@ -336,6 +337,8 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
           formatUpdateTime={formatUpdateTime}
           onNavigate={onNavigate}
         />
+
+        <LobsterWayLink />
       </div>
     </div>
   )

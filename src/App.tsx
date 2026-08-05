@@ -48,6 +48,8 @@ const TransferAccept = lazy(() => import('./components/TransferAccept'))
 const LeaguePage = lazy(() => import('./features/league/LeaguePage'))
 const LeagueIndexPage = lazy(() => import('./features/league/LeagueIndexPage'))
 const GroupStageHistoryPage = lazy(() => import('./features/league/GroupStageHistoryPage'))
+const LobsterWay = lazy(() => import('./features/lobster-way/LobsterWay'))
+const LobsterWayAdmin = lazy(() => import('./features/lobster-way/admin/LobsterWayAdmin'))
 
 // URL routing — replaces the previous string-state page machine.
 //
@@ -93,6 +95,8 @@ export default function App() {
                   <Route path="/merch" element={<Navigate to="/community/shop" replace />} />
                   <Route path="/admin" element={<AdminRoute />} />
                   <Route path="/account" element={<AccountRoute />} />
+                  <Route path="/lobster-way" element={<LobsterWay />} />
+                  <Route path="/admin/lobster-way" element={<LobsterWayAdmin />} />
                   <Route path="/settings" element={<Navigate to="/account" replace />} />
                   <Route path="/history" element={<Navigate to="/events" replace />} />
                   <Route path="/transfer/:id" element={<TransferRoute />} />
@@ -157,6 +161,8 @@ function useLegacyNavigate(): EventNavigate {
         return navigate('/events')
       case 'settings':
         return navigate('/account')
+      case 'lobster-way-admin':
+        return navigate('/admin/lobster-way')
       case 'league':
         return navigate('/league')
       default:

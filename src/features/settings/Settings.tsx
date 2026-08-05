@@ -25,6 +25,7 @@ import AccountStatsSection from './AccountStatsSection'
 import AccountOrdersSection from './AccountOrdersSection'
 import AdminSection from './AdminSection'
 import { PageHeader } from '../../components/ui/PageHeader'
+import LobsterWayLink from '../../components/LobsterWayLink'
 
 export default function Settings() {
   const { session, role, loginWithPin, logout } = useApp()
@@ -371,6 +372,8 @@ export default function Settings() {
         <AccountStatsSection claimedId={claimedId} />
 
         <AccountOrdersSection myPlayer={myPlayer} />
+
+        <LobsterWayLink />
 
         {/* App config — admin only */}
         {isAdmin && (
