@@ -11,7 +11,7 @@ import { formatLabel } from './eventHelpers'
 import { shortName } from './scheduleHelpers'
 import ScoreEntry from './ScoreEntry'
 import { EmptyState } from '../../components/ui/EmptyState'
-import { useScoreSync } from './useScoreSync'
+import { useTournamentSync } from './useTournamentSync'
 import ScheduleGeneratorControls from './schedule/ScheduleGeneratorControls'
 import ScheduleValidationSummary from './schedule/ScheduleValidationSummary'
 import MatchmakingContainer from '../matchmaking/MatchmakingContainer'
@@ -233,7 +233,7 @@ export default function Schedule({
 
   // Sync peer score updates in real-time while the tournament is active.
   // Disabled for completed events — scores are frozen.
-  useScoreSync({
+  useTournamentSync({
     tournamentId: tournament?.id,
     enabled: tournament != null && tournament.status !== 'completed',
   })

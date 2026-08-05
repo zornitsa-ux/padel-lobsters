@@ -21,12 +21,15 @@ export type SettingsRow = z.infer<typeof settingsRowSchema>
 
 // camelCase shape the UI consumes. The raw snake_case columns are spread
 // through before normalisation, so the generated row is carried alongside —
-// `padel_tips` is re-typed off the generated `Json` to what the app writes.
+// `padel_tips` and `lobster_way_content` are both re-typed off the generated
+// `Json` to what the app writes, so both are omitted from the base first.
 //
 // `lobster_way_content` stays loose here: the schema only validates it as an
 // array of objects, and the shape is asserted once in normaliseSettings when
 // it's mapped to the camelCase `lobsterWayContent` the UI actually reads.
-export interface Settings extends Partial<Omit<Tables<'settings'>, 'padel_tips'>> {
+export interface Settings extends Partial<
+  Omit<Tables<'settings'>, 'padel_tips' | 'lobster_way_content'>
+> {
   padel_tips?: string[] | null
   lobster_way_content?: Record<string, unknown>[] | null
   whatsappLink: string

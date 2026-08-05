@@ -24,7 +24,7 @@ Vitest unit test suite exists (`npm test`) — ~78 test files across `src/lib/`,
 
 ### Page Router
 
-`src/App.tsx` uses `react-router-dom` (`BrowserRouter` / `Routes` / `Route`). The tree is: `AppProvider` → `SetupGuard` → `BrowserRouter` → `Layout` → `VerificationGate` → `Suspense` → `Routes`. Every route except the landing page is `lazy()`-loaded into its own Rollup chunk; the app shell plus `Dashboard` stay in the entry chunk.
+`src/App.tsx` uses `react-router-dom` (`BrowserRouter` / `Routes` / `Route`). The tree is: `AppProvider` → `BrowserRouter` → `Layout` → `VerificationGate` → `Suspense` → `Routes`. Every route except the landing page is `lazy()`-loaded into its own Rollup chunk; the app shell plus `Dashboard` stay in the entry chunk.
 
 | Path                      | Renders                                                     |
 | ------------------------- | ----------------------------------------------------------- |
@@ -66,9 +66,20 @@ Access control is in `src/lib/authPaths.ts`:
 
 ### AppContext — Auth/Session Provider (was the monolith)
 
-`src/context/AppContext.tsx` used to be a ~2012-line global store. It has been **dismantled into per-feature TanStack Query + Zod slices** under `src/features/**` (see "Feature Data Slices" below). What remains (~65 lines) is a thin auth/session provider consumed via `useApp()`: it holds `session`/`role` (from `useAuth`), the app-level `loading` flag, the auth passthrough actions (`loginWithPin`, `logout`, `fetchMyProfile`, `sendMagicLink`, `requestMyEmailChange`), and `selfSignup` (wraps `useAuth`'s version to also invalidate the roster cache). It is intentionally the single place the Supabase auth session is subscribed.
+`src/context/AppContext.tsx` used to be a ~2012-line global store. It has been **dismantled into per-feature TanStack Query + Zod slices** under `src/features/**` (see "Feature Data Slices" below). What remains (~65 lines) is a thin auth/session provider consumed via `useApp()`: it holds `session`/`role` and `sessionSettled` (from `useAuth`), the auth passthrough actions (`loginWithPin`, `logout`, `fetchMyProfile`, `sendMagicLink`, `requestMyEmailChange`), and `selfSignup` (wraps `useAuth`'s version to also invalidate the roster cache). It is intentionally the single place the Supabase auth session is subscribed.
 
-`src/hooks/useScheduleRealtime.ts` (mounted once by the provider) flips the initial `loading` flag and runs the one remaining Realtime subscription — matches INSERT/DELETE (schedule generation) — invalidating the `matches` query cache. Score UPDATEs are optimistically applied by `useMatchActions().updateMatch` and broadcast peer-to-peer, not over Realtime.
+**The app no longer uses `postgres_changes` at all** — the `supabase_realtime` publication is empty as of `20260729190000`, because Realtime's WAL polling and per-subscription `apply_rls` accounted for ~79% of all database time (a standing cost that continued even with zero connected clients). All live updates ride a single per-tournament Broadcast channel (`src/features/events/tournamentChannel.ts`, wire name `scores:<id>`), which is WebSocket fan-out and never touches Postgres:
+
+- `score` — a peer wrote a score; `useTournamentSync` merges the delta into the match cache (coalesced over 250 ms).
+- `schedule` — a peer regenerated the schedule; receivers invalidate that tournament's match list.
+
+Score writes go through `useMatchActions().updateMatch`, a full optimistic mutation (cancel in-flight fetches → patch → rollback on error → invalidate on settle), because they race window-focus refetches and peers' edits. The write reads back `matches.updated_at` (trigger-stamped, `20260729210000`) and carries it in the broadcast; receivers drop any delta not strictly newer than the watermark they hold, so unordered or duplicated Broadcast delivery can't reinstate a superseded score. `ScoreEntry` never lets an incoming delta overwrite a half-typed draft — it parks the peer's value and offers it.
+
+##### Live-update scope — only the in-tournament views (deliberate)
+
+Only `Schedule` and `Scores` mount `useTournamentSync`, and both disable it once the tournament is completed. Every other match-reading view stays on the flat-reads floor (`staleTime: 30_000` + `refetchOnWindowFocus`), because the only place two people watch the same number at once is a court-side admin entering a score. **The accepted cost: a score entry or schedule regeneration doesn't reach a client sitting on `/home` or `/community` until it refocuses or the 30s `staleTime` lapses.** Bounded staleness, never permanent — Broadcast is a targeted accelerant on top of flat-reads, not a replacement for it.
+
+Hence `onSchedule` invalidates `matchKeys.list(tournamentId)`, not `matchKeys.all()`: the narrow key matches the subscriber set. Widening it would refetch the `useAllMatches` cache — every match row in the database — to service views nobody has open. Add a subscriber and widen the key in the same change, so the two stay in step.
 
 #### Feature Data Slices (default pattern)
 

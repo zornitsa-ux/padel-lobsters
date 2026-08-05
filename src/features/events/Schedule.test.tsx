@@ -39,7 +39,7 @@ vi.mock('./useRegistrations', () => ({
     data: players.map((p) => ({ playerId: p.id, status: 'registered' })),
   }),
 }))
-vi.mock('./useScoreSync', () => ({ useScoreSync: vi.fn() }))
+vi.mock('./useTournamentSync', () => ({ useTournamentSync: vi.fn() }))
 vi.mock('./ScoreEntry', () => ({ default: () => <div data-testid="score-entry" /> }))
 vi.mock('../matchmaking/useMatchmaking', () => ({
   useMmRatings: mockUseMmRatings,

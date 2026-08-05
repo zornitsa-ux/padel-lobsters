@@ -460,6 +460,7 @@ export type Database = {
           team2_ids: string[] | null
           team2_level: number | null
           tournament_id: string
+          updated_at: string
         }
         Insert: {
           completed?: boolean | null
@@ -474,6 +475,7 @@ export type Database = {
           team2_ids?: string[] | null
           team2_level?: number | null
           tournament_id: string
+          updated_at?: string
         }
         Update: {
           completed?: boolean | null
@@ -488,6 +490,7 @@ export type Database = {
           team2_ids?: string[] | null
           team2_level?: number | null
           tournament_id?: string
+          updated_at?: string
         }
         Relationships: [
           {
@@ -1146,6 +1149,7 @@ export type Database = {
           auto_trust_until: string | null
           group_name: string | null
           id: number
+          lobster_way_content: Json | null
           padel_tips: Json | null
           raffle_cooldown_tournaments: number
           whatsapp_link: string | null
@@ -1154,6 +1158,7 @@ export type Database = {
           auto_trust_until?: string | null
           group_name?: string | null
           id?: number
+          lobster_way_content?: Json | null
           padel_tips?: Json | null
           raffle_cooldown_tournaments?: number
           whatsapp_link?: string | null
@@ -1162,6 +1167,7 @@ export type Database = {
           auto_trust_until?: string | null
           group_name?: string | null
           id?: number
+          lobster_way_content?: Json | null
           padel_tips?: Json | null
           raffle_cooldown_tournaments?: number
           whatsapp_link?: string | null

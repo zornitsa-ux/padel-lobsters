@@ -8,7 +8,7 @@ import { computeTournamentStandings } from '../../lib/standings'
 import { TabSwitcher } from '../../components/ui/TabSwitcher'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { ProgressBar } from '../../components/ui/ProgressBar'
-import { useScoreSync } from './useScoreSync'
+import { useTournamentSync } from './useTournamentSync'
 import { useOscarResults } from '../oscars/useOscarResults'
 import { groupOscarResultsByCategory } from '../oscars/oscarResults'
 import { buildRounds } from './buildRounds'
@@ -41,7 +41,7 @@ export default function Scores({ tournament, onNavigate }: ScoresProps) {
 
   // Keep displayed scores current while the event is still running.
   // Disabled for completed events — scores are frozen.
-  useScoreSync({
+  useTournamentSync({
     tournamentId: tournament?.id,
     enabled: tournament != null && tournament.status !== 'completed',
   })

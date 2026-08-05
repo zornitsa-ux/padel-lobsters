@@ -1,28 +1,24 @@
-import React, { useState, useCallback } from 'react'
+import React, { useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import useAuth from '../hooks/useAuth'
-import useScheduleRealtime from '../hooks/useScheduleRealtime'
 import { playerKeys } from '../features/players/playerKeys'
 import { AppContext } from './useApp'
 
 // Auth/session provider
 // Domain data lives in per-feature TanStack Query slices (src/features/**);
 // this context intentionally remains as the single place the auth session is
-// subscribed and shared, plus the app-level loading flag. `selfSignup` is the
-// one action kept here: it wraps useAuth's version to also refresh the roster.
+// subscribed and shared. `selfSignup` is the one action kept here: it wraps
+// useAuth's version to also refresh the roster. Consumers that need to know
+// whether auth has resolved read `sessionSettled`.
 
 interface AppProviderProps {
   children: React.ReactNode
 }
 
 export function AppProvider({ children }: AppProviderProps) {
-  const [loading, setLoading] = useState(true)
-
   const auth = useAuth()
   const { session, sessionSettled, role } = auth
   const queryClient = useQueryClient()
-
-  useScheduleRealtime({ setLoading })
 
   // ── Invalidation helpers ────────────────────────────────────
   const invalidatePlayers = useCallback(
@@ -46,7 +42,6 @@ export function AppProvider({ children }: AppProviderProps) {
   return (
     <AppContext.Provider
       value={{
-        loading,
         session,
         sessionSettled,
         role,

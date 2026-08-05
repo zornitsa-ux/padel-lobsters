@@ -16,7 +16,6 @@ import type { NormalisedTournament } from './lib/normalise'
 import Layout from './components/Layout'
 import { Spinner } from './components/ui/Spinner'
 import Dashboard from './features/home/Dashboard'
-import SetupGuard from './components/SetupGuard'
 import VerificationGate from './components/VerificationGate'
 import AuthConfirm from './components/AuthConfirm'
 import { useEventDataLoader } from './features/events/useEventDataLoader'
@@ -26,7 +25,7 @@ import type { EventNavigate } from './features/events/eventHelpers'
 import CommunityShell from './features/community/CommunityShell'
 
 // Code-split every route off the first paint. The app shell (Layout,
-// VerificationGate, SetupGuard) and the logged-out landing (Dashboard) stay
+// VerificationGate) and the logged-out landing (Dashboard) stay
 // in the entry chunk; everything below loads on demand the first time its
 // route is hit. Each lazy() becomes its own Rollup chunk — see the bundle
 // treemap (`npm run build:analyze`) for the split.
@@ -62,55 +61,53 @@ export default function App() {
   useEffect(() => mark('react-mount'), [])
   return (
     <AppProvider>
-      <SetupGuard>
-        <BrowserRouter>
-          <DeepLinkMigrator />
-          <Layout>
-            <VerificationGate>
-              <Suspense fallback={<RouteFallback />}>
-                <Routes>
-                  <Route path="/" element={<Navigate to="/home" replace />} />
-                  <Route path="/home" element={<HomeRoute />} />
-                  <Route path="/auth/confirm" element={<AuthConfirm />} />
+      <BrowserRouter>
+        <DeepLinkMigrator />
+        <Layout>
+          <VerificationGate>
+            <Suspense fallback={<RouteFallback />}>
+              <Routes>
+                <Route path="/" element={<Navigate to="/home" replace />} />
+                <Route path="/home" element={<HomeRoute />} />
+                <Route path="/auth/confirm" element={<AuthConfirm />} />
 
-                  <Route path="/events" element={<EventsRoute />} />
-                  <Route path="/events/:id" element={<EventShellRoute />}>
-                    <Route index element={<Navigate to="info" replace />} />
-                    <Route path="info" element={<EventDetailRoute />} />
-                    <Route path="schedule" element={<EventScheduleRoute />} />
-                    <Route path="results" element={<EventScoresRoute />} />
-                    <Route path="scores" element={<Navigate to="../results" replace />} />
-                    <Route path="payments" element={<EventPaymentsRoute />} />
-                    <Route path="oscars" element={<EventOscarsRoute />} />
-                    <Route path="raffle" element={<EventRaffleRoute />} />
-                    <Route path="eligibility" element={<EventEligibilityRoute />} />
-                  </Route>
+                <Route path="/events" element={<EventsRoute />} />
+                <Route path="/events/:id" element={<EventShellRoute />}>
+                  <Route index element={<Navigate to="info" replace />} />
+                  <Route path="info" element={<EventDetailRoute />} />
+                  <Route path="schedule" element={<EventScheduleRoute />} />
+                  <Route path="results" element={<EventScoresRoute />} />
+                  <Route path="scores" element={<Navigate to="../results" replace />} />
+                  <Route path="payments" element={<EventPaymentsRoute />} />
+                  <Route path="oscars" element={<EventOscarsRoute />} />
+                  <Route path="raffle" element={<EventRaffleRoute />} />
+                  <Route path="eligibility" element={<EventEligibilityRoute />} />
+                </Route>
 
-                  <Route path="/community" element={<CommunityShell />}>
-                    <Route index element={<CommunityMembersRoute />} />
-                    <Route path="shop" element={<MerchRoute />} />
-                    <Route path=":id" element={<CommunityMembersRoute />} />
-                  </Route>
+                <Route path="/community" element={<CommunityShell />}>
+                  <Route index element={<CommunityMembersRoute />} />
+                  <Route path="shop" element={<MerchRoute />} />
+                  <Route path=":id" element={<CommunityMembersRoute />} />
+                </Route>
 
-                  <Route path="/merch" element={<Navigate to="/community/shop" replace />} />
-                  <Route path="/admin" element={<AdminRoute />} />
-                  <Route path="/account" element={<AccountRoute />} />
-                  <Route path="/lobster-way" element={<LobsterWay />} />
-                  <Route path="/admin/lobster-way" element={<LobsterWayAdmin />} />
-                  <Route path="/settings" element={<Navigate to="/account" replace />} />
-                  <Route path="/history" element={<Navigate to="/events" replace />} />
-                  <Route path="/transfer/:id" element={<TransferRoute />} />
-                  <Route path="/league" element={<LeagueIndexPage />} />
-                  <Route path="/league/:id" element={<LeaguePage />} />
-                  <Route path="/league/:id/group-stage" element={<GroupStageHistoryPage />} />
+                <Route path="/merch" element={<Navigate to="/community/shop" replace />} />
+                <Route path="/admin" element={<AdminRoute />} />
+                <Route path="/account" element={<AccountRoute />} />
+                <Route path="/lobster-way" element={<LobsterWay />} />
+                <Route path="/admin/lobster-way" element={<LobsterWayAdmin />} />
+                <Route path="/settings" element={<Navigate to="/account" replace />} />
+                <Route path="/history" element={<Navigate to="/events" replace />} />
+                <Route path="/transfer/:id" element={<TransferRoute />} />
+                <Route path="/league" element={<LeagueIndexPage />} />
+                <Route path="/league/:id" element={<LeaguePage />} />
+                <Route path="/league/:id/group-stage" element={<GroupStageHistoryPage />} />
 
-                  <Route path="*" element={<Navigate to="/home" replace />} />
-                </Routes>
-              </Suspense>
-            </VerificationGate>
-          </Layout>
-        </BrowserRouter>
-      </SetupGuard>
+                <Route path="*" element={<Navigate to="/home" replace />} />
+              </Routes>
+            </Suspense>
+          </VerificationGate>
+        </Layout>
+      </BrowserRouter>
     </AppProvider>
   )
 }

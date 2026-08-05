@@ -18,6 +18,7 @@ export interface MatchRow {
   score2: number | null
   completed: boolean
   created_at: string
+  updated_at: string
 }
 
 // One match produced by a schedule generator, before it's persisted. The
@@ -58,6 +59,7 @@ export const matchRowSchema = z
     score2: nullableNumber,
     completed: z.boolean(),
     created_at: z.string().nullable().optional(),
+    updated_at: z.string().nullable().optional(),
   })
   .passthrough()
 
@@ -98,10 +100,12 @@ export async function saveMatches(tournamentId: string, rounds: GeneratedMatch[]
   if (rows.length > 0) await supabase.from('matches').insert(rows)
 }
 
+// Returns the trigger-stamped updated_at so the caller can watermark its cache
+// and its broadcast — see 20260729210000_matches_updated_at.sql.
 export async function updateMatch(id: string, data: MatchScoreUpdate) {
   const payload: MatchScoreUpdate = {}
   if (data.score1 !== undefined) payload.score1 = data.score1
   if (data.score2 !== undefined) payload.score2 = data.score2
   if (data.completed !== undefined) payload.completed = data.completed
-  return supabase.from('matches').update(payload).eq('id', id)
+  return supabase.from('matches').update(payload).eq('id', id).select('updated_at').maybeSingle()
 }
