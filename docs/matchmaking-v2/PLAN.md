@@ -51,9 +51,12 @@ double-apply dead-end and the stranded review queue).
 Two things to know before merging:
 
 - **A migration is applied locally but NOT pushed to prod:**
-  `20260730000000_tournaments_raffle_published_at.sql`. Run `npx supabase db push`
+  `20260805160200_tournaments_raffle_published_at.sql`. Run `npx supabase db push`
   from `main` after merge. It splits "raffle drawn" from "winners announced";
   nothing existing could hold that second state.
+  (Renumbered from `20260730000000` on 2026-08-05: three migrations were applied
+  to prod out-of-band that day, so the original timestamp sorted before prod's
+  head and `db push` would have rejected it as out-of-order.)
 - The redesign deleted the Info tab's second "Mark Tournament as Complete"
   button, which wrote `status` without calling `applyTournamentRatings` and,
   because Schedule's correct Finish was gated on `!isTournamentCompleted`, made
