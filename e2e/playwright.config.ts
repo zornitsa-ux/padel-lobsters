@@ -26,6 +26,8 @@ export default defineConfig({
     command: 'npm run dev:local',
     url: baseURL,
     reuseExistingServer: !process.env.CI,
-    timeout: 30_000,
+    // 60s, not 30s: a cold CI runner has no node_modules/.vite cache, so the
+    // first request pays for dep pre-bundling.
+    timeout: 60_000,
   },
 })
