@@ -6,6 +6,7 @@ import { TabSwitcher } from '../../../components/ui/TabSwitcher'
 import { AlertBox } from '../../../components/ui/AlertBox'
 import Avatar from '../../../components/ui/Avatar'
 import { useCreateTeam, useUpdateTeam } from '../hooks/useLeagueMutations'
+import { isSelectablePlayer } from '../../players/playerSelectors'
 
 interface PlayerOption {
   id: string
@@ -64,7 +65,9 @@ function PlayerPicker({
     return () => document.removeEventListener('mousedown', onClickOutside)
   }, [])
 
-  const eligible = players.filter((p) => p.status !== 'placeholder' && p.id !== excludeId)
+  const eligible = players.filter(
+    (p) => isSelectablePlayer(p) && p.status !== 'placeholder' && p.id !== excludeId,
+  )
   const filtered = query.trim()
     ? eligible.filter((p) => p.name.toLowerCase().includes(query.toLowerCase()))
     : eligible

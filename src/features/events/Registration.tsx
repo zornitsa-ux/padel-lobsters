@@ -27,6 +27,7 @@ import {
   buildPendingByFromPlayerId,
 } from './registration/utils'
 import { useConfirm } from '../../lib/confirmBus'
+import { useToast } from '../../lib/toastBus'
 import RegistrationPaymentSheetModal from './registration/RegistrationPaymentSheetModal'
 import AddPlayerCard from './registration/AddPlayerCard'
 import JoinEventCard from './registration/JoinEventCard'
@@ -37,6 +38,7 @@ import RegisteredSection from './registration/RegisteredSection'
 import WaitlistSection from './registration/WaitlistSection'
 import CancelledSection from './registration/CancelledSection'
 import { errorMessage } from '../../lib/errors'
+import { REGISTER_FAILURE_MESSAGES, registrationMessage } from './registrationStatusMessages'
 import type { EventFormValues } from './eventConstants'
 import type { EventNavigate } from './eventHelpers'
 import type { NormalisedTournament } from '../../lib/normalise'
@@ -59,9 +61,10 @@ export default function Registration({
   onNavigate: EventNavigate
 }) {
   const confirm = useConfirm()
+  const { showToast } = useToast()
   const { session } = useApp()
-  const { updateRegistration, cancelRegistration } = useRegistrationActions()
-  const { registerPlayer } = useRegistrationActions()
+  const { updateRegistration, cancelRegistration, registerPlayer, promoteWaitlistRegistration } =
+    useRegistrationActions()
   const { data: transfers = [] } = useTransfers()
   const { respondToTransfer, cancelTransfer } = useTransferActions({ session })
   const updateMut = useUpdateTournament()
@@ -213,11 +216,9 @@ export default function Registration({
     [players, regs, search],
   )
 
-  const maxPlayers = tournament?.maxPlayers || 16
   const selfRegister = useSelfRegister({
     tournamentId: tournament?.id,
     playerId: claimedId,
-    maxPlayers,
   })
   const isCompleted = tournament?.status === 'completed'
   const { isAdminAll, hasTikkie, costPerPlayer } = useMemo(
@@ -273,13 +274,26 @@ export default function Registration({
     )
   }
 
+  // No fallback: max_players is NOT NULL and > 0 in the database
+  // (20260806213000), so this is the same number the server enforces.
+  const maxPlayers = tournament.maxPlayers
+
   // ── Register (the signed-in player, from the Info tab) ─────────────────────
   // ── Register (admin adding another player) ─────────────────────────────────
   const handleAdd = async () => {
     if (!selectedPlayer) return
     setSaving(true)
     try {
-      const { regId, status } = await registerPlayer(tournament.id, selectedPlayer, maxPlayers)
+      const { regId, status } = await registerPlayer(tournament.id, selectedPlayer)
+      // Anything but a sign-up leaves the picker open with the reason on
+      // screen — closing it would look exactly like a successful add.
+      if (status !== 'registered' && status !== 'waitlist') {
+        showToast({
+          variant: 'error',
+          message: registrationMessage({ map: REGISTER_FAILURE_MESSAGES, status }),
+        })
+        return
+      }
       // Only show payment sheet for directly-registered players (not waitlist),
       // and only if there's a Tikkie link or a cost set. A null regId means the
       // insert failed (registerPlayer swallows the error and still reports the
@@ -344,7 +358,14 @@ export default function Registration({
       }))
     )
       return
-    await cancelRegistration(reg.id, tournament.id)
+    const { promotedPlayerId } = await cancelRegistration(reg.id, tournament.id)
+    if (promotedPlayerId) {
+      const promoted = getPlayer(promotedPlayerId)
+      showToast({
+        variant: 'success',
+        message: `${promoted ? displayName(promoted) : 'The next player'} moved off the waitlist.`,
+      })
+    }
   }
 
   const handleMoveToRegistered = async (reg: NormalisedRegistration) => {
@@ -352,7 +373,7 @@ export default function Registration({
       onNavigate?.('settings')
       return
     }
-    await updateRegistration(reg.id, { status: 'registered' }, tournamentId)
+    await promoteWaitlistRegistration(reg.id, tournament.id)
   }
 
   // ── Transfer (acceptance flow) ──────────────────────────────────────────────────

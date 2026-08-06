@@ -985,6 +985,45 @@ export type Database = {
           },
         ]
       }
+      registration_status_events: {
+        Row: {
+          actor_id: string | null
+          actor_role: string | null
+          created_at: string
+          id: number
+          new_status: string | null
+          old_status: string | null
+          player_id: string
+          registration_id: string
+          source: string
+          tournament_id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_role?: string | null
+          created_at?: string
+          id?: never
+          new_status?: string | null
+          old_status?: string | null
+          player_id: string
+          registration_id: string
+          source?: string
+          tournament_id: string
+        }
+        Update: {
+          actor_id?: string | null
+          actor_role?: string | null
+          created_at?: string
+          id?: never
+          new_status?: string | null
+          old_status?: string | null
+          player_id?: string
+          registration_id?: string
+          source?: string
+          tournament_id?: string
+        }
+        Relationships: []
+      }
       registration_transfers: {
         Row: {
           closed_at: string | null
@@ -1235,7 +1274,7 @@ export type Database = {
           gender_mode: string | null
           id: string
           location: string | null
-          max_players: number | null
+          max_players: number
           name: string
           notes: string | null
           prize_item_ids: number[] | null
@@ -1258,7 +1297,7 @@ export type Database = {
           gender_mode?: string | null
           id?: string
           location?: string | null
-          max_players?: number | null
+          max_players?: number
           name: string
           notes?: string | null
           prize_item_ids?: number[] | null
@@ -1281,7 +1320,7 @@ export type Database = {
           gender_mode?: string | null
           id?: string
           location?: string | null
-          max_players?: number | null
+          max_players?: number
           name?: string
           notes?: string | null
           prize_item_ids?: number[] | null
@@ -1613,6 +1652,10 @@ export type Database = {
         Args: { input_applied_tournament_ids?: string[]; input_updates: Json }
         Returns: number
       }
+      admin_purge_player: {
+        Args: { input_target_id: string }
+        Returns: boolean
+      }
       admin_record_league_match_result: {
         Args: { input_payload: Json }
         Returns: {
@@ -1741,6 +1784,10 @@ export type Database = {
         Args: { input_prize: string; input_winner_id: string }
         Returns: boolean
       }
+      apply_registration_transfer: {
+        Args: { input_transfer_id: string }
+        Returns: string
+      }
       approve_device: {
         Args: {
           input_requesting_device_id: string
@@ -1749,6 +1796,14 @@ export type Database = {
         Returns: string
       }
       bootstrap_device_session: { Args: { p_device_id: string }; Returns: Json }
+      cancel_registration: {
+        Args: { input_registration_id: string }
+        Returns: {
+          promoted_player_id: string
+          promoted_registration_id: string
+          status: string
+        }[]
+      }
       cancel_transfer: {
         Args: { input_transfer_id: string }
         Returns: {
@@ -1962,6 +2017,12 @@ export type Database = {
           votes_count: number
         }[]
       }
+      promote_waitlist_registration: {
+        Args: { input_registration_id: string }
+        Returns: {
+          status: string
+        }[]
+      }
       record_mm_reset: {
         Args: {
           input_kind: string
@@ -1971,6 +2032,13 @@ export type Database = {
           input_prior_sigma: number
         }
         Returns: undefined
+      }
+      register_for_tournament: {
+        Args: { input_player_id: string; input_tournament_id: string }
+        Returns: {
+          registration_id: string
+          status: string
+        }[]
       }
       reject_device: {
         Args: {

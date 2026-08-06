@@ -3,8 +3,13 @@ import { useCallback } from 'react'
 import { registrationKeys } from './registrationKeys'
 import { fetchRegistrations, fetchAllRegistrations } from './registrationQueries'
 import * as q from './registrationQueries'
-import type { NormalisedRegistration, RegistrationInput } from './registrationQueries'
+import type { RegistrationInput } from './registrationQueries'
 import { useToast } from '../../lib/toastBus'
+import {
+  CANCEL_FAILURE_MESSAGES,
+  PROMOTE_FAILURE_MESSAGES,
+  registrationMessage,
+} from './registrationStatusMessages'
 
 // Registrations for a single tournament. Only fetches when tournamentId is present.
 export function useRegistrations(tournamentId: string | null | undefined) {
@@ -36,17 +41,12 @@ export function useRegistrationActions() {
   )
 
   const registerPlayer = useCallback(
-    async (tournamentId: string, playerId: string, maxPlayers: number) => {
-      // Read current count from TanStack Query cache. Falls back to 0 if the
-      // cache is cold (the server's own insert-guard is the authoritative check).
-      const cached =
-        qc.getQueryData<NormalisedRegistration[]>(registrationKeys.list(tournamentId)) ?? []
-      const current = cached.filter((r) => r.status === 'registered').length
-      const result = await q.registerPlayer(tournamentId, playerId, current, maxPlayers)
+    async (tournamentId: string, playerId: string) => {
+      const result = await q.registerPlayer(tournamentId, playerId)
       if (result.regId) invalidateRegistrations(tournamentId)
       return result
     },
-    [qc, invalidateRegistrations],
+    [invalidateRegistrations],
   )
 
   const updateRegistration = useCallback(
@@ -68,18 +68,64 @@ export function useRegistrationActions() {
     [invalidateRegistrations, showToast],
   )
 
+  // Cancelling and back-filling the freed spot is one server-side operation:
+  // the promotion has to see the cancellation, and only promote when the
+  // cancelled player was actually occupying a spot.
+  //
+  // Both writes below own their error handling for the same reason
+  // updateRegistration does: callers fire them from click handlers with no
+  // try/catch, so a rejection would surface as an unhandled one and the UI
+  // would sit there unchanged. Every outcome that isn't the happy path gets a
+  // toast, and the list is invalidated either way — a non-success status means
+  // the client's view of the roster already disagrees with the server's.
   const cancelRegistration = useCallback(
     async (id: string, tournamentId: string) => {
-      await q.cancelRegistration(id)
-      // Promote first waitlisted player. Read the cached normalised registrations
-      // (they still carry the snake_case tournament_id from the spread in normalise).
-      const cached =
-        qc.getQueryData<NormalisedRegistration[]>(registrationKeys.list(tournamentId)) ?? []
-      await q.promoteWaitlist(tournamentId, cached)
+      let result: Awaited<ReturnType<typeof q.cancelRegistration>>
+      try {
+        result = await q.cancelRegistration(id)
+      } catch (error) {
+        console.error('cancelRegistration failed:', error)
+        showToast({ variant: 'error', message: CANCEL_FAILURE_MESSAGES.error })
+        return { status: 'error', promotedPlayerId: null }
+      }
       invalidateRegistrations(tournamentId)
+      if (result.status !== 'cancelled') {
+        showToast({
+          variant: 'error',
+          message: registrationMessage({ map: CANCEL_FAILURE_MESSAGES, status: result.status }),
+        })
+      }
+      return result
     },
-    [qc, invalidateRegistrations],
+    [invalidateRegistrations, showToast],
   )
 
-  return { registerPlayer, updateRegistration, cancelRegistration }
+  const promoteWaitlistRegistration = useCallback(
+    async (id: string, tournamentId: string) => {
+      let status: string
+      try {
+        status = await q.promoteWaitlistRegistration(id)
+      } catch (error) {
+        console.error('promoteWaitlistRegistration failed:', error)
+        showToast({ variant: 'error', message: PROMOTE_FAILURE_MESSAGES.error })
+        return 'error'
+      }
+      invalidateRegistrations(tournamentId)
+      if (status !== 'promoted') {
+        showToast({
+          variant: 'error',
+          message: registrationMessage({ map: PROMOTE_FAILURE_MESSAGES, status }),
+        })
+      }
+      return status
+    },
+    [invalidateRegistrations, showToast],
+  )
+
+  return {
+    registerPlayer,
+    updateRegistration,
+    cancelRegistration,
+    promoteWaitlistRegistration,
+  }
 }

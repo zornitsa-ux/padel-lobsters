@@ -8,20 +8,21 @@ export const SELF_REGISTER_ERROR = 'Could not sign you up. Please try again.'
  * /me's RegistrationCard — the two surfaces that offer the same button.
  *
  * The error handling is the reason this is a hook rather than two inline
- * handlers: `registerPlayer` swallows the Postgres error and still reports the
- * status it *would* have used, so a null `regId` is the only signal that an RLS
- * denial, a dropped connection, or a double-tap hitting the active-registration
- * unique index failed the insert. Both callers previously ignored the result and
- * left the player looking at an unchanged "You haven't signed up yet".
+ * handlers: `registerPlayer` swallows the Postgres error and reports
+ * status 'error', so a null `regId` is the only signal that an RLS denial or a
+ * dropped connection failed the call. Both callers previously ignored the
+ * result and left the player looking at an unchanged "You haven't signed up
+ * yet".
+ *
+ * A double-tap is not an error: the second call finds the row the first one
+ * created and returns 'already_registered' / 'already_waitlist' with its id.
  */
 export function useSelfRegister({
   tournamentId,
   playerId,
-  maxPlayers,
 }: {
   tournamentId: string | null | undefined
   playerId: string | null
-  maxPlayers: number
 }) {
   const { registerPlayer } = useRegistrationActions()
   const [registering, setRegistering] = useState(false)
@@ -32,7 +33,7 @@ export function useSelfRegister({
     setRegistering(true)
     setError('')
     try {
-      const { regId } = await registerPlayer(tournamentId, playerId, maxPlayers)
+      const { regId } = await registerPlayer(tournamentId, playerId)
       // A null regId is the failure signal — see the note above.
       if (!regId) setError(SELF_REGISTER_ERROR)
     } finally {

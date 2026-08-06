@@ -19,6 +19,10 @@ export function makeTestQueryClient() {
 // etc.), so the wrapper carries ConfirmProvider alongside QueryClientProvider
 // — otherwise every such component throws "useConfirm must be used within a
 // ConfirmProvider" as soon as it mounts.
+//
+// ToastProvider is deliberately NOT here: Toast.test.tsx mounts its own to
+// assert on it, and a second one from this wrapper would nest. Component tests
+// that reach useToast() mock '../../lib/toastBus' instead.
 export function createWrapper(client = makeTestQueryClient()) {
   const Wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={client}>

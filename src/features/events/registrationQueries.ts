@@ -37,28 +37,24 @@ export async function fetchAllRegistrations(): Promise<NormalisedRegistration[]>
 }
 
 // ── Registrations write path ──────────────────────────────────────
-export async function registerPlayer(
-  tournamentId: string,
-  playerId: string,
-  currentRegisteredCount: number,
-  maxPlayers: number,
-) {
-  const status = currentRegisteredCount < maxPlayers ? 'registered' : 'waitlist'
-  const { data: inserted, error } = await supabase
-    .from('registrations')
-    .insert({
-      tournament_id: tournamentId,
-      player_id: playerId,
-      status,
-      payment_status: 'unpaid',
-      payment_method: '',
-    })
-    .select()
-    .single()
+// Capacity lives in the database. `register_for_tournament` decides
+// registered-vs-waitlist under the tournament row lock, so it is correct even
+// when two people tap at once — which the old client-side count of the query
+// cache never was.
+const firstRow = <T>(data: T[] | T | null): T | null =>
+  (Array.isArray(data) ? data[0] : data) ?? null
+
+export async function registerPlayer(tournamentId: string, playerId: string) {
+  const { data, error } = await supabase.rpc('register_for_tournament', {
+    input_tournament_id: tournamentId,
+    input_player_id: playerId,
+  })
   if (error) {
-    return { regId: null, status }
+    console.error('register_for_tournament error:', error)
+    return { regId: null, status: 'error' }
   }
-  return { regId: inserted?.id ?? null, status }
+  const row = firstRow(data)
+  return { regId: row?.registration_id ?? null, status: row?.status ?? 'error' }
 }
 
 // The camelCase patch the payments/registration UIs submit.
@@ -77,23 +73,27 @@ export async function updateRegistration(id: string, data: RegistrationInput) {
   if (error) throw error
 }
 
+// Cancels, and promotes the oldest waitlisted player only if the cancellation
+// actually freed a spot — someone leaving the waitlist was never occupying one.
+// Returns the promoted player so the caller can name them in a toast.
 export async function cancelRegistration(id: string) {
-  await supabase.from('registrations').update({ status: 'cancelled' }).eq('id', id)
+  const { data, error } = await supabase.rpc('cancel_registration', {
+    input_registration_id: id,
+  })
+  if (error) throw error
+  const row = firstRow(data)
+  return {
+    status: row?.status ?? 'error',
+    promotedPlayerId: row?.promoted_player_id ?? null,
+  }
 }
 
-// Promote first waitlisted player (oldest by created_at). Caller passes
-// the current registrations array so the api stays state-free. Returns
-// the promoted reg id, or null if there were no waitlisted players.
-export async function promoteWaitlist(
-  tournamentId: string,
-  currentRegistrations: NormalisedRegistration[],
-) {
-  const waitlisted = currentRegistrations
-    .filter((r) => r.tournament_id === tournamentId && r.status === 'waitlist')
-    .sort((a, b) => new Date(a.created_at ?? 0).getTime() - new Date(b.created_at ?? 0).getTime())
-  if (waitlisted.length > 0) {
-    await supabase.from('registrations').update({ status: 'registered' }).eq('id', waitlisted[0].id)
-    return waitlisted[0].id
-  }
-  return null
+// The waitlist "Confirm" button. Returns 'tournament_full' rather than throwing
+// when the event has no room, so the caller can say so plainly.
+export async function promoteWaitlistRegistration(id: string) {
+  const { data, error } = await supabase.rpc('promote_waitlist_registration', {
+    input_registration_id: id,
+  })
+  if (error) throw error
+  return firstRow(data)?.status ?? 'error'
 }

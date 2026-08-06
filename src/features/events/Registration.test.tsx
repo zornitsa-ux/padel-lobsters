@@ -31,10 +31,12 @@ vi.mock('./useRegistrations', () => ({
   useRegistrationActions: () => ({
     registerPlayer: vi.fn(),
     updateRegistration: vi.fn(),
-    cancelRegistration: vi.fn(),
+    cancelRegistration: vi.fn().mockResolvedValue({ status: 'cancelled', promotedPlayerId: null }),
+    promoteWaitlistRegistration: vi.fn(),
   }),
 }))
 vi.mock('../../lib/confirmBus', () => ({ useConfirm: () => vi.fn() }))
+vi.mock('../../lib/toastBus', () => ({ useToast: () => ({ showToast: vi.fn() }) }))
 
 const Registration = (await import('./Registration')).default
 
