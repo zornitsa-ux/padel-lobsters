@@ -31,7 +31,7 @@ vi.mock('./registrationQueries', () => ({
   registerPlayer: vi.fn(),
   updateRegistration: vi.fn(),
   cancelRegistration: vi.fn(),
-  promoteWaitlist: vi.fn(),
+  promoteWaitlistRegistration: vi.fn(),
 }))
 
 import * as q from './registrationQueries'
@@ -43,32 +43,31 @@ beforeEach(() => {
 // ── registerPlayer ────────────────────────────────────────────────────────────
 
 describe('useRegistrationActions — registerPlayer', () => {
-  it('reads registered count from cache and passes it through to the mutation', async () => {
-    const cachedRegs = [
-      { id: 'r1', status: 'registered', tournament_id: 'tid-1' },
-      { id: 'r2', status: 'registered', tournament_id: 'tid-1' },
-      { id: 'r3', status: 'waitlist', tournament_id: 'tid-1' },
-    ]
+  // The registered-vs-waitlist decision is the database's, made under the
+  // tournament row lock. The hook no longer counts anything, which is the whole
+  // point: the cache count it used to read was 0 on a cold mount and stale on a
+  // backgrounded tab, and either one registered people into a full event.
+  it('passes only the tournament and player through — no client-side count', async () => {
     ;(q.registerPlayer as ReturnType<typeof vi.fn>).mockResolvedValue({
       regId: 'new-reg',
-      status: 'registered',
+      status: 'waitlist',
     })
 
     const client = makeTestQueryClient()
-    // Seed the cache with the existing registrations
-    client.setQueryData(registrationKeys.list('tid-1'), cachedRegs)
-    vi.spyOn(client, 'invalidateQueries')
+    client.setQueryData(registrationKeys.list('tid-1'), [
+      { id: 'r1', status: 'registered', tournament_id: 'tid-1' },
+      { id: 'r2', status: 'registered', tournament_id: 'tid-1' },
+    ])
 
     const { result } = renderHookWithClientAndToast(() => useRegistrationActions(), client)
 
     let res: unknown
     await act(async () => {
-      res = await result.current.registerPlayer('tid-1', 'player-5', 16)
+      res = await result.current.registerPlayer('tid-1', 'player-5')
     })
 
-    // The two 'registered' rows should produce currentCount=2
-    expect(q.registerPlayer).toHaveBeenCalledWith('tid-1', 'player-5', 2, 16)
-    expect(res).toEqual({ regId: 'new-reg', status: 'registered' })
+    expect(q.registerPlayer).toHaveBeenCalledWith('tid-1', 'player-5')
+    expect(res).toEqual({ regId: 'new-reg', status: 'waitlist' })
   })
 
   it('invalidates the tournament registrations when regId is present', async () => {
@@ -83,7 +82,7 @@ describe('useRegistrationActions — registerPlayer', () => {
     const { result } = renderHookWithClientAndToast(() => useRegistrationActions(), client)
 
     await act(async () => {
-      await result.current.registerPlayer('tid-1', 'player-5', 16)
+      await result.current.registerPlayer('tid-1', 'player-5')
     })
 
     expect(client.invalidateQueries).toHaveBeenCalledWith({
@@ -91,10 +90,10 @@ describe('useRegistrationActions — registerPlayer', () => {
     })
   })
 
-  it('does NOT invalidate when regId is null (insert failed)', async () => {
+  it('does NOT invalidate when regId is null (the call failed)', async () => {
     ;(q.registerPlayer as ReturnType<typeof vi.fn>).mockResolvedValue({
       regId: null,
-      status: 'registered',
+      status: 'error',
     })
 
     const client = makeTestQueryClient()
@@ -103,72 +102,176 @@ describe('useRegistrationActions — registerPlayer', () => {
     const { result } = renderHookWithClientAndToast(() => useRegistrationActions(), client)
 
     await act(async () => {
-      await result.current.registerPlayer('tid-1', 'player-5', 16)
+      await result.current.registerPlayer('tid-1', 'player-5')
     })
 
     expect(client.invalidateQueries).not.toHaveBeenCalled()
-  })
-
-  it('falls back to count=0 when cache is empty', async () => {
-    ;(q.registerPlayer as ReturnType<typeof vi.fn>).mockResolvedValue({
-      regId: 'r-new',
-      status: 'waitlist',
-    })
-
-    const client = makeTestQueryClient()
-    // no cache seed — cold cache
-    const { result } = renderHookWithClientAndToast(() => useRegistrationActions(), client)
-
-    await act(async () => {
-      await result.current.registerPlayer('tid-empty', 'player-9', 8)
-    })
-
-    expect(q.registerPlayer).toHaveBeenCalledWith('tid-empty', 'player-9', 0, 8)
   })
 })
 
 // ── cancelRegistration ────────────────────────────────────────────────────────
 
 describe('useRegistrationActions — cancelRegistration', () => {
-  it('calls cancelRegistration then promoteWaitlist with the cached rows', async () => {
-    const cachedRegs = [
-      { id: 'r1', status: 'registered', tournament_id: 'tid-1', created_at: '2026-01-01' },
-      { id: 'r2', status: 'waitlist', tournament_id: 'tid-1', created_at: '2026-01-02' },
-    ]
-    ;(q.cancelRegistration as ReturnType<typeof vi.fn>).mockResolvedValue(undefined)
-    ;(q.promoteWaitlist as ReturnType<typeof vi.fn>).mockResolvedValue('r2')
+  it('cancels and surfaces who was promoted, without promoting client-side', async () => {
+    ;(q.cancelRegistration as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: 'cancelled',
+      promotedPlayerId: 'player-2',
+    })
 
     const client = makeTestQueryClient()
-    client.setQueryData(registrationKeys.list('tid-1'), cachedRegs)
     vi.spyOn(client, 'invalidateQueries')
 
     const { result } = renderHookWithClientAndToast(() => useRegistrationActions(), client)
 
+    let res: unknown
     await act(async () => {
-      await result.current.cancelRegistration('r1', 'tid-1')
+      res = await result.current.cancelRegistration('r1', 'tid-1')
     })
 
     expect(q.cancelRegistration).toHaveBeenCalledWith('r1')
-    // promoteWaitlist receives the cached rows (which still carry snake_case tournament_id)
-    expect(q.promoteWaitlist).toHaveBeenCalledWith('tid-1', cachedRegs)
+    expect(res).toEqual({ status: 'cancelled', promotedPlayerId: 'player-2' })
     expect(client.invalidateQueries).toHaveBeenCalledWith({
       queryKey: registrationKeys.list('tid-1'),
     })
   })
 
-  it('passes empty array to promoteWaitlist when cache is cold', async () => {
-    ;(q.cancelRegistration as ReturnType<typeof vi.fn>).mockResolvedValue(undefined)
-    ;(q.promoteWaitlist as ReturnType<typeof vi.fn>).mockResolvedValue(null)
+  it('toasts instead of rejecting when the RPC throws', async () => {
+    // cancelRegistration throws now that the query layer re-raises Postgres
+    // errors, and the click handler has no try/catch — without this the confirm
+    // dialog would close on an unhandled rejection with nothing on screen.
+    ;(q.cancelRegistration as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('timeout'))
+
+    const { result, showToast } = renderHookWithClientAndToast(() => useRegistrationActions())
+
+    let res: { status: string } | undefined
+    await act(async () => {
+      res = await result.current.cancelRegistration('r1', 'tid-1')
+    })
+
+    expect(res?.status).toBe('error')
+    expect(showToast).toHaveBeenCalledWith(
+      expect.objectContaining({ variant: 'error', message: expect.any(String) }),
+    )
+  })
+
+  it('toasts when the registration was already cancelled elsewhere', async () => {
+    ;(q.cancelRegistration as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: 'already_cancelled',
+      promotedPlayerId: null,
+    })
+
+    const { result, showToast } = renderHookWithClientAndToast(() => useRegistrationActions())
+
+    await act(async () => {
+      await result.current.cancelRegistration('r1', 'tid-1')
+    })
+
+    expect(showToast).toHaveBeenCalledWith(
+      expect.objectContaining({ message: expect.stringContaining('already cancelled') }),
+    )
+  })
+
+  it('reports no promotion when the cancelled player was only waitlisted', async () => {
+    // The LOBS #10 defect: a waitlisted player leaving frees no spot, so nobody
+    // moves up. The server decides this now; the hook must not second-guess it.
+    ;(q.cancelRegistration as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: 'cancelled',
+      promotedPlayerId: null,
+    })
 
     const client = makeTestQueryClient()
-    // cold cache — no seed
+    const { result } = renderHookWithClientAndToast(() => useRegistrationActions(), client)
+
+    let res: { promotedPlayerId: string | null } | undefined
+    await act(async () => {
+      res = await result.current.cancelRegistration('r-waitlisted', 'tid-1')
+    })
+
+    expect(res?.promotedPlayerId).toBeNull()
+  })
+})
+
+// ── promoteWaitlistRegistration ───────────────────────────────────────────────
+
+describe('useRegistrationActions — promoteWaitlistRegistration', () => {
+  it('invalidates on a successful promotion', async () => {
+    ;(q.promoteWaitlistRegistration as ReturnType<typeof vi.fn>).mockResolvedValue('promoted')
+
+    const client = makeTestQueryClient()
+    vi.spyOn(client, 'invalidateQueries')
+
     const { result } = renderHookWithClientAndToast(() => useRegistrationActions(), client)
 
     await act(async () => {
-      await result.current.cancelRegistration('r-any', 'tid-cold')
+      await result.current.promoteWaitlistRegistration('r2', 'tid-1')
     })
 
-    expect(q.promoteWaitlist).toHaveBeenCalledWith('tid-cold', [])
+    expect(client.invalidateQueries).toHaveBeenCalledWith({
+      queryKey: registrationKeys.list('tid-1'),
+    })
+  })
+
+  it('toasts when the event is full', async () => {
+    ;(q.promoteWaitlistRegistration as ReturnType<typeof vi.fn>).mockResolvedValue(
+      'tournament_full',
+    )
+
+    const { result, showToast } = renderHookWithClientAndToast(() => useRegistrationActions())
+
+    await act(async () => {
+      await result.current.promoteWaitlistRegistration('r2', 'tid-1')
+    })
+
+    expect(showToast).toHaveBeenCalledWith(
+      expect.objectContaining({ variant: 'error', message: expect.stringContaining('full') }),
+    )
+  })
+
+  // Every non-'promoted' status means the row moved under the admin's feet, so
+  // each one needs words and a refetch — silence here reads as a dead button.
+  it.each([
+    ['not_found', 'no longer exists'],
+    ['not_waitlisted', 'no longer on the waitlist'],
+    ['already_registered', 'already registered'],
+  ])('toasts and refetches on %s', async (status, expected) => {
+    ;(q.promoteWaitlistRegistration as ReturnType<typeof vi.fn>).mockResolvedValue(status)
+
+    const client = makeTestQueryClient()
+    vi.spyOn(client, 'invalidateQueries')
+
+    const { result, showToast } = renderHookWithClientAndToast(
+      () => useRegistrationActions(),
+      client,
+    )
+
+    await act(async () => {
+      await result.current.promoteWaitlistRegistration('r2', 'tid-1')
+    })
+
+    expect(showToast).toHaveBeenCalledWith(
+      expect.objectContaining({ message: expect.stringContaining(expected) }),
+    )
+    expect(client.invalidateQueries).toHaveBeenCalledWith({
+      queryKey: registrationKeys.list('tid-1'),
+    })
+  })
+
+  it('toasts instead of rejecting when the RPC throws', async () => {
+    ;(q.promoteWaitlistRegistration as ReturnType<typeof vi.fn>).mockRejectedValue(
+      new Error('network error'),
+    )
+
+    const { result, showToast } = renderHookWithClientAndToast(() => useRegistrationActions())
+
+    let status: string | undefined
+    await act(async () => {
+      status = await result.current.promoteWaitlistRegistration('r2', 'tid-1')
+    })
+
+    expect(status).toBe('error')
+    expect(showToast).toHaveBeenCalledWith(
+      expect.objectContaining({ variant: 'error', message: expect.any(String) }),
+    )
   })
 })
 

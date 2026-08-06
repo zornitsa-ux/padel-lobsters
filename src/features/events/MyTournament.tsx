@@ -79,7 +79,6 @@ export default function MyTournament({ tournament, onNavigate }: Props) {
   const selfRegister = useSelfRegister({
     tournamentId: tournament.id,
     playerId: claimedId,
-    maxPlayers: tournament.maxPlayers || 16,
   })
 
   const handleTikkieClick = () => {

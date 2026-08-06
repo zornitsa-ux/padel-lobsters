@@ -19,7 +19,7 @@ import { LeagueDashboardCard } from '../league/ui/LeagueDashboardCard'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { CollapsibleSection } from '../../components/ui/CollapsibleSection'
 import { EmptyState } from '../../components/ui/EmptyState'
-import { errorMessage } from '../../lib/errors'
+import { errorMessage, errorCode, FOREIGN_KEY_VIOLATION } from '../../lib/errors'
 import { useConfirm } from '../../lib/confirmBus'
 import type { EventNavigate } from './eventHelpers'
 import type { NormalisedTournament } from '../../lib/normalise'
@@ -138,7 +138,15 @@ export default function Tournament({ onNavigate }: { onNavigate: EventNavigate }
     try {
       await deleteTournament(id)
     } catch (err) {
-      setError(errorMessage(err, 'Could not delete event.'))
+      // registrations.tournament_id is ON DELETE RESTRICT (20260806211102), so
+      // an event anyone ever signed up for can't be removed — cancelled rows
+      // count, since registrations are never hard-deleted. Without this the
+      // admin gets the raw constraint sentence.
+      setError(
+        errorCode(err) === FOREIGN_KEY_VIOLATION
+          ? "This event has sign-up history, so it can't be deleted. That history is kept on purpose — mark the event completed instead."
+          : errorMessage(err, 'Could not delete event.'),
+      )
     }
   }
 

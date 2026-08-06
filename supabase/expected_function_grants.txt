@@ -31,6 +31,7 @@ public.admin_update_player(input_target_id uuid, input_payload jsonb) authentica
 public.admin_update_raffle_winner_prize(input_winner_id uuid, input_prize text) authenticated
 public.approve_device(input_requesting_device_id text, input_target_device_id text) authenticated
 public.bootstrap_device_session(p_device_id text) authenticated
+public.cancel_registration(input_registration_id uuid) authenticated
 public.cancel_transfer(input_transfer_id uuid) authenticated
 public.create_transfer(input_to_player_id uuid, input_tournament_id uuid) authenticated
 public.get_all_players_with_pii_v2() authenticated
@@ -50,6 +51,8 @@ public.lobster_oscars_cast_vote(input_category_id uuid, input_target_id uuid) au
 public.lobster_oscars_clear_vote(input_category_id uuid) authenticated
 public.lobster_oscars_get_my_votes(input_tournament_id uuid) authenticated
 public.lobster_oscars_get_results(input_tournament_id uuid) authenticated
+public.promote_waitlist_registration(input_registration_id uuid) authenticated
+public.register_for_tournament(input_tournament_id uuid, input_player_id uuid) authenticated
 public.reject_device(input_requesting_device_id text, input_target_device_id text) authenticated
 public.respond_to_transfer(input_transfer_id uuid, input_accept boolean) authenticated
 public.self_signup_player(input_payload jsonb, input_device_id text, input_user_agent text) anon

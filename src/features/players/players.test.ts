@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { normalisePlayers } from '../../lib/normalise'
 import { playerPublicRowSchema } from './playerSchemas'
-import { mergeMyProfile } from './playerSelectors'
+import { mergeMyProfile, isSelectablePlayer } from './playerSelectors'
 
 // fetchPlayers does: validate rows with Zod, then run them through
 // normalisePlayers. We exercise that exact pipeline here without touching the
@@ -90,5 +90,19 @@ describe('mergeMyProfile', () => {
       email: 'me@example.com',
       phone: '+31600000000',
     })
+  })
+})
+
+describe('isSelectablePlayer', () => {
+  // Deleting a player is a soft delete, so the roster query keeps returning
+  // them — the filter is what stops a deleted player showing up as a choice.
+  it('excludes deleted players', () => {
+    expect(isSelectablePlayer({ status: 'deleted' })).toBe(false)
+  })
+
+  it('keeps everyone else, including rows with no status at all', () => {
+    for (const status of ['active', 'pending', 'placeholder', undefined, null]) {
+      expect(isSelectablePlayer({ status })).toBe(true)
+    }
   })
 })
