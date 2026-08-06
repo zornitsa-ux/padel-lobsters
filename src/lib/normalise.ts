@@ -81,6 +81,7 @@ export interface RawTournamentRow extends LooseRow<Omit<Tables<'tournaments'>, '
   genderMode?: string | null
   completedAt?: string | null
   resultsSharedAt?: string | null
+  rafflePublishedAt?: string | null
 }
 
 // The normalised tournament consumed across the app: the raw row spread through
@@ -106,6 +107,7 @@ export interface NormalisedTournament extends RawTournamentRow {
   // D-029: null while a completed tournament's final ranking is withheld from
   // players (admins always see it regardless). See resultsPhase().
   resultsSharedAt: string | null
+  rafflePublishedAt: string | null
 }
 
 export function normaliseTournaments(tournaments: RawTournamentRow[]): NormalisedTournament[] {
@@ -127,6 +129,7 @@ export function normaliseTournaments(tournaments: RawTournamentRow[]): Normalise
     genderMode: t.gender_mode ?? t.genderMode ?? 'mixed',
     completedAt: t.completed_at ?? t.completedAt ?? null,
     resultsSharedAt: t.results_shared_at ?? t.resultsSharedAt ?? null,
+    rafflePublishedAt: t.raffle_published_at ?? t.rafflePublishedAt ?? null,
   }))
 }
 

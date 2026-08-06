@@ -26,32 +26,50 @@ Vitest unit test suite exists (`npm test`) — ~78 test files across `src/lib/`,
 
 `src/App.tsx` uses `react-router-dom` (`BrowserRouter` / `Routes` / `Route`). The tree is: `AppProvider` → `BrowserRouter` → `Layout` → `VerificationGate` → `Suspense` → `Routes`. Every route except the landing page is `lazy()`-loaded into its own Rollup chunk; the app shell plus `Dashboard` stay in the entry chunk.
 
-| Path                      | Renders                                                     |
-| ------------------------- | ----------------------------------------------------------- |
-| `/`                       | redirect → `/home`                                          |
-| `/home`                   | `features/home/Dashboard`                                   |
-| `/auth/confirm`           | `components/AuthConfirm` (magic-link landing)               |
-| `/events`                 | `features/events/Tournament`                                |
-| `/events/:id`             | `features/events/EventShell` (layout route; index → `info`) |
-| `/events/:id/info`        | `features/events/Registration`                              |
-| `/events/:id/schedule`    | `features/events/Schedule`                                  |
-| `/events/:id/results`     | `features/events/Scores` (`/scores` redirects here)         |
-| `/events/:id/payments`    | `features/events/Payments` (admin; else → `info`)           |
-| `/events/:id/oscars`      | `features/oscars/Game`                                      |
-| `/events/:id/raffle`      | `features/raffle/RaffleContainer` (admin)                   |
-| `/events/:id/eligibility` | `features/raffle/RaffleEligibilityContainer` (admin)        |
-| `/community`              | `features/community/CommunityShell` → `Players`             |
-| `/community/:id`          | `Players` with `focusPlayerId`                              |
-| `/community/shop`         | `features/merch/Merch`                                      |
-| `/merch`                  | redirect → `/community/shop`                                |
-| `/admin`                  | `features/admin/AdminTools`                                 |
-| `/account`                | `features/settings/Settings` (`/settings` redirects here)   |
-| `/history`                | redirect → `/events` (history renders inside `Tournament`)  |
-| `/transfer/:id`           | `components/TransferAccept`                                 |
-| `/league`                 | `features/league/LeagueIndexPage`                           |
-| `/league/:id`             | `features/league/LeaguePage`                                |
-| `/league/:id/group-stage` | `features/league/GroupStageHistoryPage`                     |
-| `*`                       | redirect → `/home`                                          |
+| Path                      | Renders                                                            |
+| ------------------------- | ------------------------------------------------------------------ |
+| `/`                       | redirect → `/home`                                                 |
+| `/home`                   | `features/home/Dashboard`                                          |
+| `/auth/confirm`           | `components/AuthConfirm` (magic-link landing)                      |
+| `/events`                 | `features/events/Tournament`                                       |
+| `/events/:id`             | `features/events/EventShell` (layout route; index → phase default) |
+| `/events/:id/info`        | `features/events/Registration` (the event, and only the event)     |
+| `/events/:id/me`          | `features/events/MyTournament` (the player's own tournament)       |
+| `/events/:id/schedule`    | `features/events/Schedule`                                         |
+| `/events/:id/results`     | `features/events/Scores` (`/scores` redirects here)                |
+| `/events/:id/oscars`      | `features/oscars/Game`                                             |
+| `/events/:id/manage`      | `features/events/EventManage` (admin console; else → `info`)       |
+| `/community`              | `features/community/CommunityShell` → `Players`                    |
+| `/community/:id`          | `Players` with `focusPlayerId`                                     |
+| `/community/shop`         | `features/merch/Merch`                                             |
+| `/merch`                  | redirect → `/community/shop`                                       |
+| `/admin`                  | `features/admin/AdminTools`                                        |
+| `/account`                | `features/settings/Settings` (`/settings` redirects here)          |
+| `/history`                | redirect → `/events` (history renders inside `Tournament`)         |
+| `/transfer/:id`           | `components/TransferAccept`                                        |
+| `/league`                 | `features/league/LeagueIndexPage`                                  |
+| `/league/:id`             | `features/league/LeaguePage`                                       |
+| `/league/:id/group-stage` | `features/league/GroupStageHistoryPage`                            |
+| `*`                       | redirect → `/home`                                                 |
+
+`/events/:id/payments`, `/raffle` and `/eligibility` were retired outright when they became sections of `/manage` — old links to them now fall through to `*` → `/home`. `useLegacyNavigate` points the in-app callers straight at `/manage?section=…`.
+
+Every event route resolves its `:id` through `EventRouteGuard` (`features/events/EventRouteGuard.tsx`), which consumes `useTournamentFromUrl()`'s `isPending` flag. Keeping "loading" distinct from "not found" is load-bearing: `useTournaments()` yields `data === undefined` while in flight, so collapsing the two made every cold deep link redirect to `/events` in its first render pass — and `replace` destroyed the URL so Back could not recover it. Pending renders `RouteFallback`; the redirect fires only once the list has settled without the id. `AdminEventRouteGuard` wraps it for `/manage` and sends non-admins to the event's Info tab rather than out of the event.
+
+#### Event phase model (`features/events/eventPhase.ts`)
+
+One pure module owns "where is this event in its life?", so no surface re-derives it from whichever single flag is nearest to hand — the failure mode behind four shipped IA defects. Sits alongside `resultsPhase.ts` and `oscarsPhase.ts`, and is unit-tested in the node environment like both.
+
+`eventPhase({ tournament, matches, now })` → `open` → `set` → `live` → `sealed` → `social` → `revealed`, derived from `status`, `date`, whether matches are saved, and whether all are scored. Every tab, button and guard reads it.
+
+Two deliberate boundaries:
+
+- **The cascade reads only the tournament and its matches.** Oscars and raffle state feed the visibility helpers (`visibleEventTabs`, `isOscarsTabVisible`, `raffleWinnersWithheld`), never the phase. `eventPhase()` has nowhere to pass a session, so the coupling that locked players out of Oscars voting after Finish cannot return, and D-029's reveal independence holds by construction rather than by convention.
+- **`status` is the sole authority on completion, not `completedAt`** — a Finish can apply ratings and then fail the status write, and the retry path keys off `status`.
+
+`runOfShowSteps.ts` is the companion pure module for the eight-step closing sequence rendered by `RunOfShow.tsx` inside `/manage`. Ordering there is presentational; a step locks only where the data genuinely requires it (you cannot close voting you never opened).
+
+**Three independent reveals, one door.** Standings (`results_shared_at` → phase `revealed`), Oscars winners (the session's `shared_at`) and raffle winners (`raffle_published_at`) are revealed separately, in any order, and all three live on the Results tab. So `anyResultsRevealed()` opens that tab when **any** of them has landed, and each sub-tab inside `Scores.tsx` keeps its own gate: Ranking shows the D-029 teaser until standings are shared, Lobster Games appears only when `lobster_oscars_get_results` returns rows (a server-side `shared_at` gate that applies to admins too), and Prize Raffle appears when winners exist and `raffleWinnersWithheld()` passes. Gating the door on the standings reveal alone stranded published raffle winners behind a tab nobody could open; gating it on `isAdmin` put a Results tab on events with no scores. Both are covered by defect-guard tests. `useEventLifecycle.ts` holds the lifecycle writes — finish (applies learned ratings first), reveal, publish raffle winners — and is the app's **only** completion control.
 
 Two compatibility shims live in `App.tsx`:
 
@@ -77,9 +95,11 @@ Score writes go through `useMatchActions().updateMatch`, a full optimistic mutat
 
 ##### Live-update scope — only the in-tournament views (deliberate)
 
-Only `Schedule` and `Scores` mount `useTournamentSync`, and both disable it once the tournament is completed. Every other match-reading view stays on the flat-reads floor (`staleTime: 30_000` + `refetchOnWindowFocus`), because the only place two people watch the same number at once is a court-side admin entering a score. **The accepted cost: a score entry or schedule regeneration doesn't reach a client sitting on `/home` or `/community` until it refocuses or the 30s `staleTime` lapses.** Bounded staleness, never permanent — Broadcast is a targeted accelerant on top of flat-reads, not a replacement for it.
+Only `Schedule`, `Scores` and `MyTournament` (the `/me` tab) mount `useTournamentSync`, and all three disable it once the tournament is completed. Every other match-reading view stays on the flat-reads floor (`staleTime: 30_000` + `refetchOnWindowFocus`). **The accepted cost: a score entry or schedule regeneration doesn't reach a client sitting on `/home` or `/community` until it refocuses or the 30s `staleTime` lapses.** Bounded staleness, never permanent — Broadcast is a targeted accelerant on top of flat-reads, not a replacement for it.
 
-Hence `onSchedule` invalidates `matchKeys.list(tournamentId)`, not `matchKeys.all()`: the narrow key matches the subscriber set. Widening it would refetch the `useAllMatches` cache — every match row in the database — to service views nobody has open. Add a subscriber and widen the key in the same change, so the two stay in step.
+`/me` is the one player-facing subscriber, and it changes the shape of the fan-out: the channel goes from a couple of admins to potentially every player at the event, each holding their round list open. That is affordable because Broadcast is WebSocket-only — N subscribers cost N deliveries of a message the writer sends once, and zero database work either way. The disk-IO incident was `postgres_changes` on `public.matches`, which is gone (`20260729190000_drop_matches_realtime_publication.sql`); adding Broadcast subscribers does not walk back toward it. What does scale with subscriber count is Realtime concurrent connections, so the gate stays tight: signed-in viewer, event not completed.
+
+Hence `onSchedule` invalidates `matchKeys.list(tournamentId)`, not `matchKeys.all()`: the narrow key matches the subscriber set. All three subscribers read exactly that key (`useMatches(tournamentId)`), so `/me` joined the set without widening it. Widening would refetch the `useAllMatches` cache — every match row in the database — to service views nobody has open. Add a subscriber that reads a different key and widen the key in the same change, so the two stay in step.
 
 #### Feature Data Slices (default pattern)
 
@@ -176,6 +196,8 @@ All DB access goes through the Supabase JS client (`src/supabase.js`) using the 
 **`tournaments`**
 
 - `id`, `date`, `time`, `location`, `courts`, `max_players`, `price_per_person`, `status`, `description`, `booking_mode` (`admin_all` | `player_responsible`), `court_links` (JSONB array of Tikkie URLs), `gender_mode`, `duration`
+- `status` is constrained to `upcoming` | `active` | `completed` — there is no `cancelled` and no `open`. The `open` event phase is derived, not stored.
+- Three independent player-visibility gates, all nullable timestamps, none of which reads the others (D-029): `results_shared_at` (final standings), the Oscars session's own `shared_at`, and `raffle_published_at` (raffle winners, separating the draw from the announcement so the room hears it from the admin first).
 
 **`registrations`**
 

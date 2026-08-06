@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import ShareWhatsAppButton from './ShareWhatsAppButton'
 import { IconButton } from './IconButton'
+import { ActionChip } from './ActionChip'
 import { propsOf } from '../../test/element'
 
 const tournament = {
@@ -49,6 +50,22 @@ describe('ShareWhatsAppButton', () => {
     const el = ShareWhatsAppButton({ tournament, variant: 'full' })
     expect((el as { type: unknown }).type).toBe('button')
     expect(String(propsOf(el).className)).toContain('w-full')
+  })
+
+  it('renders the chip variant as a shared ActionChip, not a stretched pill', () => {
+    const el = ShareWhatsAppButton({ tournament, variant: 'chip' })
+    expect((el as { type: unknown }).type).toBe(ActionChip)
+    // A tertiary chip must never stretch — that is what made it read as a CTA.
+    expect(String(propsOf(el).className ?? '')).not.toContain('w-full')
+    expect(propsOf(el).title).toBe('Share on WhatsApp')
+    expect(propsOf(el)['aria-label']).toBe('Share on WhatsApp')
+    expect(propsOf(el).children).toBe('Share')
+  })
+
+  it('shares the same link from the chip variant as from the others', () => {
+    expect(openedText(ShareWhatsAppButton({ tournament, variant: 'chip' }))).toContain(
+      'https://padelobsters.nl/events/t1',
+    )
   })
 
   it('builds the share text with name, date, time, location and event URL', () => {

@@ -2,12 +2,15 @@ import React from 'react'
 import { CalendarPlus } from 'lucide-react'
 import { buildGoogleCalendarUrl, type CalendarEvent } from '../../lib/calendar'
 import { IconButton } from './IconButton'
+import { ActionChip } from './ActionChip'
 
 // ============================================================================
 //  AddToCalendarButton
 //
-//  Opens a Google Calendar pre-fill URL for the tournament. Two variants:
-//    - 'full' → a pill-shaped CTA button with label (used in the post-reg popup)
+//  Opens a Google Calendar pre-fill URL for the tournament. Three variants:
+//    - 'full' → a pill-shaped CTA button with label (used in the post-reg popup,
+//              where it matches the full-width control above it)
+//    - 'chip' → a tertiary ghost chip, for a utility action under content
 //    - 'icon' → a small square icon button (used next to the date on the
 //              event detail page and anywhere space is tight)
 //
@@ -19,7 +22,7 @@ import { IconButton } from './IconButton'
 
 interface AddToCalendarButtonProps {
   tournament: CalendarEvent
-  variant?: 'full' | 'icon'
+  variant?: 'full' | 'chip' | 'icon'
   className?: string
   label?: React.ReactNode
 }
@@ -50,6 +53,22 @@ export default function AddToCalendarButton({
       >
         <CalendarPlus size={16} />
       </IconButton>
+    )
+  }
+
+  if (variant === 'chip') {
+    return (
+      <ActionChip
+        href={gcalUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={(e) => e.stopPropagation()}
+        title="Add to Google Calendar"
+        icon={<CalendarPlus size={13} />}
+        className={className}
+      >
+        {label || 'Add to calendar'}
+      </ActionChip>
     )
   }
 

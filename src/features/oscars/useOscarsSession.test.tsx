@@ -74,6 +74,7 @@ const tournament: NormalisedTournament = {
   genderMode: 'mixed',
   completedAt: null,
   resultsSharedAt: null,
+  rafflePublishedAt: null,
 }
 
 const sessionRow = {

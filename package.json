@@ -14,6 +14,7 @@
     "measure": "node scripts/measure-load.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "playwright test --config=e2e/playwright.config.ts",
     "typecheck": "tsc --noEmit",
     "db:start": "supabase start",
     "db:stop": "supabase stop",
@@ -44,6 +45,7 @@
   "devDependencies": {
     "@eslint/js": "9.39.4",
     "@lhci/cli": "^0.15.1",
+    "@playwright/test": "^1.62.0",
     "@testing-library/react": "^16.3.2",
     "@types/react": "^18.3.24",
     "@types/react-dom": "^18.3.7",

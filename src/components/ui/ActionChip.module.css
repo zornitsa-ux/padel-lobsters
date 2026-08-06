@@ -1,0 +1,13 @@
+/* Tertiary utility action — Share, Add to calendar. Sized to its label so it
+   sits quietly under the content it belongs to, never competing with the
+   screen's primary CTA. Tokens come from the Tailwind theme via @apply, so the
+   design system stays the single source of truth for colour and spacing. */
+.chip {
+  @apply inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5;
+  @apply bg-gray-100 text-lob-muted text-xs font-semibold;
+  @apply transition-all duration-150 active:scale-95;
+}
+
+.chip:hover {
+  @apply bg-gray-200 text-lob-slate;
+}

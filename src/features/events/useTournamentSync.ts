@@ -29,10 +29,10 @@ function mergeDelta(match: NormalisedMatch, delta: ScorePayload): NormalisedMatc
  * rapid sequence collapses into one write), and a schedule rewrite invalidates
  * the tournament's match list so it refetches once.
  *
- * SCOPE — only the in-tournament views subscribe (Schedule and Scores today).
- * Every other match-reading view deliberately stays on the flat-reads floor,
- * accepting staleness until refocus. Read ARCHITECTURE.md "Live-update scope"
- * before adding a subscriber.
+ * SCOPE — only the in-tournament views subscribe (Schedule, Scores and
+ * MyTournament today). Every other match-reading view deliberately stays on the
+ * flat-reads floor, accepting staleness until refocus. Read ARCHITECTURE.md
+ * "Live-update scope" before adding a subscriber.
  */
 export function useTournamentSync({
   tournamentId,

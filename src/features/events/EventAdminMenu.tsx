@@ -1,26 +1,17 @@
 import { useState } from 'react'
 import type { LucideIcon } from 'lucide-react'
-import {
-  MoreVertical,
-  Gift,
-  SlidersHorizontal,
-  Wallet,
-  ListOrdered,
-  Pencil,
-  Trash2,
-} from 'lucide-react'
+import { MoreVertical, Pencil, Trash2 } from 'lucide-react'
 import { IconButton } from '../../components/ui/IconButton'
 
 // Shared admin-tools overflow menu for a tournament. Renders nothing for
 // non-admins. Each action is optional — pass only the handlers the surface
 // needs, and the matching item appears. Dependency-free dropdown: a fixed
 // transparent backdrop catches outside clicks.
+//
+// Raffle, eligibility, payments and scores moved to /manage's tabs/sections
+// (EventManage.tsx) — this menu now only carries Edit/Delete.
 interface EventAdminMenuProps {
   isAdmin: boolean
-  onRaffle?: () => void
-  onEligibility?: () => void
-  onPayments?: () => void
-  onScores?: () => void
   onEdit?: () => void
   onDelete?: () => void
   align?: 'left' | 'right'
@@ -36,10 +27,6 @@ interface MenuItem {
 
 export default function EventAdminMenu({
   isAdmin,
-  onRaffle = undefined,
-  onEligibility = undefined,
-  onPayments = undefined,
-  onScores = undefined,
   onEdit = undefined,
   onDelete = undefined,
   align = 'right',
@@ -48,15 +35,6 @@ export default function EventAdminMenu({
   if (!isAdmin) return null
 
   const items = [
-    onRaffle && { key: 'raffle', label: 'Prize Raffle', icon: Gift, onClick: onRaffle },
-    onEligibility && {
-      key: 'eligibility',
-      label: 'Manage eligibility',
-      icon: SlidersHorizontal,
-      onClick: onEligibility,
-    },
-    onPayments && { key: 'payments', label: 'Payments', icon: Wallet, onClick: onPayments },
-    onScores && { key: 'scores', label: 'Scores', icon: ListOrdered, onClick: onScores },
     onEdit && { key: 'edit', label: 'Edit event', icon: Pencil, onClick: onEdit },
     onDelete && {
       key: 'delete',

@@ -52,7 +52,7 @@ export default function EventDescription({ tournament, isAdmin, onSave }: EventD
 
   if (editing) {
     return (
-      <div className="mt-3 bg-gray-50 rounded-xl px-3 py-2.5 border border-gray-200 space-y-2">
+      <div className="card space-y-2">
         <textarea
           autoFocus
           className="input resize-none w-full text-sm leading-relaxed"
@@ -87,7 +87,7 @@ export default function EventDescription({ tournament, isAdmin, onSave }: EventD
   if (!hasText && !isAdmin) return null
 
   return (
-    <div className="mt-3 bg-gray-50 rounded-xl px-3 py-2.5 border border-gray-100 relative">
+    <div className="card relative">
       {hasText ? (
         <p className="text-sm text-lob-slate leading-relaxed whitespace-pre-line pr-7">
           {tournament.notes}

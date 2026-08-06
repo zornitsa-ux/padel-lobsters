@@ -1,47 +1,35 @@
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useApp } from '../../context/useApp'
-import { useUpdateTournament } from './useTournaments'
 import { usePlayers } from '../players/usePlayers'
 import { useMatches, useMatchActions } from './useMatches'
 import { useRegistrations } from './useRegistrations'
-import { Shuffle, AlertCircle, Trophy, Users, Download } from 'lucide-react'
+import { Shuffle, AlertCircle, Trophy, Users, Download, ArrowRight } from 'lucide-react'
 import { letterColor } from '../../lib/letterColors'
 import validateSchedule from './validateSchedule'
 import { formatLabel } from './eventHelpers'
 import { shortName } from './scheduleHelpers'
 import ScoreEntry from './ScoreEntry'
 import { EmptyState } from '../../components/ui/EmptyState'
+import { ProgressBar } from '../../components/ui/ProgressBar'
 import { useTournamentSync } from './useTournamentSync'
 import ScheduleGeneratorControls from './schedule/ScheduleGeneratorControls'
 import ScheduleValidationSummary from './schedule/ScheduleValidationSummary'
 import MatchmakingContainer from '../matchmaking/MatchmakingContainer'
-import RatingReview from '../matchmaking/ui/RatingReview'
-import {
-  buildRatingUpdatePayload,
-  isRatingsAlreadyAppliedError,
-} from '../matchmaking/applyTournamentRatings.service'
-import { initialRating } from '../matchmaking/domain/rating/model'
-import {
-  useApplyTournamentRatings,
-  useMmRatings,
-  useRatingReviewQueue,
-  useReviewRatingEvent,
-} from '../matchmaking/useMatchmaking'
+import { useMmRatings } from '../matchmaking/useMatchmaking'
+import { isMatchScored } from './eventPhase'
 import {
   buildPlayerById,
   buildSavedRounds,
   buildScheduleCsv,
   cloneRounds,
   downloadCsvFile,
-  hasAllMatchesScored,
+  findNextUnscoredMatch,
   roundsForDuration,
 } from './schedule/utils'
-import { errorMessage } from '../../lib/errors'
 import type { EntityId, ScheduleRound, ScheduleWarning } from './schedule/types'
 import type { EventNavigate } from './eventHelpers'
 import type { NormalisedTournament, Player } from '../../lib/normalise'
-import type { GenderMode, MatchResult } from '../matchmaking/domain/types'
-import type { RatingReviewProps } from '../matchmaking/ui/RatingReview'
+import type { GenderMode } from '../matchmaking/domain/types'
 
 // A player slot the admin has tapped first in swap mode.
 interface SwapAnchor {
@@ -63,11 +51,6 @@ export default function Schedule({
 }) {
   const { session } = useApp()
   const { saveMatches, updateMatch } = useMatchActions()
-  const updateMut = useUpdateTournament()
-  const updateTournament = useCallback(
-    (id: string, data: Partial<NormalisedTournament>) => updateMut.mutateAsync({ id, data }),
-    [updateMut],
-  )
   const { data: players = [] } = usePlayers()
   const { data: savedMatches = [] } = useMatches(tournament?.id)
   const { data: regsData = [] } = useRegistrations(tournament?.id)
@@ -82,6 +65,9 @@ export default function Schedule({
   const [swapFirst, setSwapFirst] = useState<SwapAnchor | null>(null)
   const [swapWarnings, setSwapWarnings] = useState<string[]>([]) // warnings after a swap
   const [scheduleWarnings, setScheduleWarnings] = useState<ScheduleWarning[]>([]) // full validation after generate
+  // Match to scroll/focus once its round becomes active — set by "Next unscored match".
+  const [pendingFocusMatchId, setPendingFocusMatchId] = useState<EntityId | null>(null)
+  const matchRefs = useRef<Map<string, HTMLDivElement>>(new Map())
 
   // Load saved schedule into edit preview
   const handleEditSchedule = () => {
@@ -179,17 +165,6 @@ export default function Schedule({
   // excluded from players_public (DESIGN §5), so reading it off `players` would
   // always be null and every event would re-seed from playtomic_level.
   const { data: mmRatings } = useMmRatings({ enabled: useV2Matcher })
-  // Re-derived on mount rather than relying on post-Finish component state:
-  // a flagged rating_events row (flagged=true, review_status=null) stays
-  // unresolved until an admin acts on it, so it must stay reachable across a
-  // navigate-away or refresh, not just for the session that created it.
-  const { data: reviewQueueAll } = useRatingReviewQueue({ enabled: useV2Matcher })
-  const v2ReviewQueue = useMemo(
-    () => (reviewQueueAll || []).filter((e) => e.tournament_id === String(tournament?.id)),
-    [reviewQueueAll, tournament?.id],
-  )
-  const applyRatingsMutation = useApplyTournamentRatings()
-  const reviewMutation = useReviewRatingEvent()
   const v2Roster = useMemo(
     () =>
       registeredPlayers.map((p) => {
@@ -206,30 +181,42 @@ export default function Schedule({
       }),
     [registeredPlayers, mmRatings],
   )
-  const v2PlayerNames = useMemo(
-    () => Object.fromEntries(registeredPlayers.map((p) => [String(p.id), p.name])),
-    [registeredPlayers],
-  )
 
   // Group saved matches by round, and keep matches within a round sorted
   // by court number ascending (Court 1 first, etc.) so the admin always
   // sees courts in the same natural order.
   const savedRounds = useMemo(() => buildSavedRounds(savedMatches), [savedMatches])
 
-  // Check if all matches have scores filled in
-  const allMatchesScored = useMemo(() => hasAllMatchesScored(savedRounds), [savedRounds])
+  // Scoring progress is read off the saved schedule, not a live preview —
+  // an in-progress reshuffle has no real scores to count.
+  const savedFlatMatches = useMemo(() => savedRounds.flatMap((r) => r.matches), [savedRounds])
+  const scoredCount = useMemo(
+    () => savedFlatMatches.filter(isMatchScored).length,
+    [savedFlatMatches],
+  )
+  const totalMatchCount = savedFlatMatches.length
+  const nextUnscored = useMemo(() => findNextUnscoredMatch(savedRounds), [savedRounds])
 
   const playerById = useMemo(() => buildPlayerById(players), [players])
   const getPlayer = useCallback((id: EntityId) => playerById.get(String(id)), [playerById])
   const sn = (p: Player) => shortName(p, registeredPlayers) // smart short name
-  const [finishing, setFinishing] = useState(false)
-  const [finishError, setFinishError] = useState('')
-  // Count of adjustments auto-applied without review on THIS Finish action.
-  // Session-only (unlike the queue, this has no persisted source to re-derive
-  // from post-refresh), so it's null except right after a same-session Finish.
-  const [v2AppliedCount, setV2AppliedCount] = useState<number | null>(null)
-  const [revealing, setRevealing] = useState(false)
-  const [revealError, setRevealError] = useState('')
+
+  const handleJumpToNextUnscored = useCallback(() => {
+    if (!nextUnscored) return
+    setActiveRound(nextUnscored.roundIndex)
+    setPendingFocusMatchId(nextUnscored.matchId ?? null)
+  }, [nextUnscored])
+
+  // Runs after the target round has rendered (activeRound in the deps),
+  // once the match's ref is mounted.
+  useEffect(() => {
+    if (pendingFocusMatchId == null) return
+    const el = matchRefs.current.get(String(pendingFocusMatchId))
+    if (!el) return
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    el.querySelector<HTMLInputElement>('input, select')?.focus()
+    setPendingFocusMatchId(null)
+  }, [pendingFocusMatchId, activeRound])
 
   // Sync peer score updates in real-time while the tournament is active.
   // Disabled for completed events — scores are frozen.
@@ -256,119 +243,6 @@ export default function Schedule({
   }
 
   const display = generated || savedRounds
-  const isTournamentCompleted = tournament.status === 'completed'
-
-  // V2 (M3.5b): apply the learned-rating update for this event; the flagged
-  // queue itself comes from `v2ReviewQueue` above (react-query, invalidated by
-  // the mutation below), not local state. Priors are the ratings used to
-  // generate — the learned mm_* when the engine has seen the player, else the
-  // playtomic-level prior — read from the same admin RPC that seeded the roster
-  // so the chain compounds instead of restarting each event. Applied BEFORE
-  // marking completed so a failure leaves the tournament finishable again.
-  const applyV2Ratings = async () => {
-    const players = registeredPlayers.map((p) => {
-      const learned = mmRatings?.[String(p.id)]
-      const prior = learned ?? initialRating({ playtomicLevel: p.playtomicLevel ?? 0 })
-      return {
-        playerId: String(p.id),
-        mu: prior.mu,
-        sigma: prior.sigma,
-        playtomicLevel: p.playtomicLevel ?? 0,
-        previousDeltas: [],
-      }
-    })
-    // Padel is always 2v2, so the pairs are read off positionally — MatchResult
-    // types both teams as a 2-tuple.
-    const matches: MatchResult[] = []
-    for (const m of savedMatches || []) {
-      const { score1, score2 } = m
-      if (score1 == null || score2 == null) continue
-      const [t1a, t1b] = (m.team1Ids || []).map(String)
-      const [t2a, t2b] = (m.team2Ids || []).map(String)
-      matches.push({
-        matchId: String(m.id),
-        // `matches.round` is nullable; 1 is the column's own default.
-        round: m.round ?? 1,
-        team1: [t1a, t1b],
-        team2: [t2a, t2b],
-        score1,
-        score2,
-      })
-    }
-    const payload = buildRatingUpdatePayload({
-      tournamentId: String(tournament.id),
-      players,
-      matches,
-    })
-    await applyRatingsMutation.mutateAsync(payload)
-    // Only set once persisted: on a retry after the RPC's double-apply guard
-    // rejects a repeat call, this freshly-recomputed payload no longer
-    // matches what was actually written the first time, so it must not
-    // overwrite the "auto-applied" count with a number that never landed.
-    setV2AppliedCount(payload.updates.filter((u) => !u.flagged).length)
-  }
-
-  const handleV2Review: RatingReviewProps['onReview'] = async ({ eventId, action, delta }) => {
-    try {
-      await reviewMutation.mutateAsync({ eventId, action, delta })
-    } catch (err) {
-      setFinishError(errorMessage(err, 'Could not record review.'))
-    }
-  }
-
-  // D-029: independent of rating review — an admin can reveal before, after,
-  // or interleaved with resolving flagged ratings.
-  const handleRevealResults = async () => {
-    setRevealing(true)
-    setRevealError('')
-    try {
-      await updateTournament(tournament.id, { resultsSharedAt: new Date().toISOString() })
-    } catch (err) {
-      setRevealError(errorMessage(err, 'Could not reveal results.'))
-    } finally {
-      setRevealing(false)
-    }
-  }
-
-  const handleFinishTournament = async () => {
-    if (!isAdmin) {
-      onNavigate?.('settings')
-      return
-    }
-    setFinishing(true)
-    setFinishError('')
-    try {
-      if (useV2Matcher) {
-        // V2 event: apply learned ratings first, then complete, then review.
-        try {
-          await applyV2Ratings()
-        } catch (err) {
-          // A prior Finish click can have applied ratings successfully and
-          // then failed on the status update below — the RPC's double-apply
-          // guard then rejects every retry's apply step, permanently
-          // blocking completion even though there's nothing left to apply.
-          // Treat "already applied" as done and proceed to mark completed;
-          // any other error still aborts (caught below).
-          if (!isRatingsAlreadyAppliedError(err)) throw err
-        }
-        await updateTournament(tournament.id, {
-          status: 'completed',
-          completedAt: new Date().toISOString(),
-        })
-        // Do not navigate away — the flagged-rating review renders inline.
-        return
-      }
-      await updateTournament(tournament.id, {
-        status: 'completed',
-        completedAt: new Date().toISOString(),
-      })
-      onNavigate('scores', tournament)
-    } catch (err) {
-      setFinishError(errorMessage(err, 'Could not finish tournament.'))
-    } finally {
-      setFinishing(false)
-    }
-  }
 
   // MatchmakingContainer is the only generator (`useV2Matcher = isAdmin`), so
   // this handler is only ever reached by a non-admin, who gets bounced.
@@ -423,6 +297,27 @@ export default function Schedule({
           {formatLabel(format)}
         </span>
       </div>
+
+      {/* Scoring progress — saved schedule only; a live preview has nothing
+          real to count yet. */}
+      {totalMatchCount > 0 && (
+        <div className="card space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-sm font-bold text-lob-slate">
+              {scoredCount} of {totalMatchCount} scored
+            </span>
+            {isAdmin && !generated && nextUnscored && (
+              <button
+                onClick={handleJumpToNextUnscored}
+                className="text-xs font-semibold text-lob-teal flex items-center gap-1 active:scale-95"
+              >
+                Next unscored match <ArrowRight size={12} />
+              </button>
+            )}
+          </div>
+          <ProgressBar value={(scoredCount / totalMatchCount) * 100} />
+        </div>
+      )}
 
       {/* Generator controls — admin-only. Players never see this box;
           they only see the saved schedule once an admin has generated it.
@@ -587,6 +482,12 @@ export default function Schedule({
                 return (
                   <div
                     key={match.id || i}
+                    ref={(el) => {
+                      const key = match.id != null ? String(match.id) : null
+                      if (!key) return
+                      if (el) matchRefs.current.set(key, el)
+                      else matchRefs.current.delete(key)
+                    }}
                     className={`card transition-all ${isSwapping ? 'ring-2 ring-orange-200' : ''}`}
                   >
                     <div className="flex items-center justify-between mb-3">
@@ -766,91 +667,6 @@ export default function Schedule({
 
       {display.length === 0 && !isAdmin && (
         <EmptyState icon={<Shuffle size={36} />} title="No schedule generated yet" />
-      )}
-
-      {/* ── V2 rating review — shown after Finish in this session (via
-          v2AppliedCount) AND re-derived on every mount/refresh from
-          unresolved flagged rating_events, so a queued review is never
-          stranded by a navigate-away. ──────────────────────────────── */}
-      {(v2AppliedCount !== null || v2ReviewQueue.length > 0) && isAdmin && (
-        <div className="space-y-2">
-          <p className="font-semibold text-lob-slate text-sm">Rating review</p>
-          <RatingReview
-            appliedCount={v2AppliedCount ?? 0}
-            queue={v2ReviewQueue}
-            playerNamesById={v2PlayerNames}
-            onReview={handleV2Review}
-            reviewing={reviewMutation.isPending}
-          />
-        </div>
-      )}
-
-      {/* ── Reveal results to players (D-029) — independent of rating review;
-          admins always see full results themselves via View Results below. ── */}
-      {isTournamentCompleted && isAdmin && !tournament.resultsSharedAt && (
-        <div className="space-y-2">
-          <button
-            onClick={handleRevealResults}
-            disabled={revealing}
-            className="w-full bg-lob-teal hover:bg-lob-teal/90 text-white font-bold py-3 rounded-2xl text-sm active:scale-[0.98] transition-all disabled:opacity-60"
-          >
-            {revealing ? 'Revealing...' : 'Reveal Results to Players'}
-          </button>
-          {revealError && (
-            <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg p-2">
-              {revealError}
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* ── Tournament completed → View Results ──────────────── */}
-      {isTournamentCompleted && (
-        <button
-          onClick={() => onNavigate('scores', tournament)}
-          className="w-full bg-gradient-to-r from-yellow-400 to-lob-coral text-white font-bold py-3 rounded-2xl text-sm active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-        >
-          <Trophy size={18} /> View Results
-        </button>
-      )}
-
-      {/* ── All scores filled → Finish Tournament ────────────── */}
-      {allMatchesScored && !isTournamentCompleted && !generated && isAdmin && (
-        <div className="bg-green-50 border border-green-200 rounded-2xl p-4 space-y-3">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
-              <Trophy size={20} className="text-white" />
-            </div>
-            <div>
-              <p className="font-bold text-green-800 text-sm">All scores are in!</p>
-              <p className="text-xs text-green-600">
-                Finish the tournament to generate the final standings.
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={handleFinishTournament}
-            disabled={finishing}
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl text-sm active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-60"
-          >
-            <Trophy size={16} />
-            {finishing ? 'Finishing...' : 'Finish Tournament & See Results'}
-          </button>
-          {finishError && (
-            <p className="mt-2 text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg p-2">
-              {finishError}
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* ── Non-admin: all scored but not finished → hint ──── */}
-      {allMatchesScored && !isTournamentCompleted && !isAdmin && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 text-center">
-          <p className="text-sm text-yellow-700 font-medium">
-            All matches scored — waiting for admin to finish the tournament.
-          </p>
-        </div>
       )}
     </div>
   )

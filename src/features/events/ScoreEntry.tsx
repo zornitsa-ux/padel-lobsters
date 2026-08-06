@@ -54,6 +54,9 @@ export default function ScoreEntry({ match, onUpdate, variant = 'input' }: Score
   draftRef.current = { s1, s2 }
   // True once the admin has typed something that hasn't been persisted yet.
   const dirtyRef = useRef(false)
+  // input variant only: focus target + flag for the auto-advance effect below.
+  const team2InputRef = useRef<HTMLInputElement>(null)
+  const autoAdvanceRef = useRef(false)
 
   const applyExternal = useCallback((next1: string, next2: string) => {
     dirtyRef.current = false
@@ -108,6 +111,15 @@ export default function ScoreEntry({ match, onUpdate, variant = 'input' }: Score
   const markDirty = useCallback(() => {
     dirtyRef.current = true
   }, [])
+
+  // input variant only (autoAdvanceRef is only ever set true from
+  // handleTeam1Change below), but declared unconditionally — hooks can't
+  // follow the variant==='select' early return below.
+  useEffect(() => {
+    if (!autoAdvanceRef.current) return
+    autoAdvanceRef.current = false
+    team2InputRef.current?.focus()
+  }, [s1])
 
   // Rendered under both variants when a peer's score landed mid-edit. Capped
   // and wrapping because the Schedule grid's score column is ~90px wide between
@@ -179,22 +191,41 @@ export default function ScoreEntry({ match, onUpdate, variant = 'input' }: Score
     markDirty()
     setter(value)
   }
+  // A single digit of 2–9 (or any 2-digit string) can't extend into a larger
+  // valid score — 20–99 all exceed MAX_SCORE — so it's safe to jump ahead
+  // without waiting for blur. '0' and '1' stay ambiguous (10–15 are still
+  // reachable) and wait for a second digit or an explicit blur/tab.
+  const isUnambiguousEntry = (value: string) =>
+    value.length >= 2 || (value.length === 1 && value !== '0' && value !== '1')
+
+  const handleTeam1Change = (value: string) => {
+    onType(setS1)(value)
+    // Flag only — the actual focus() call is deferred to the effect above.
+    // Calling it synchronously here would blur team 1 before this render's
+    // setS1 has committed, so commit(s1, s2) would read the PREVIOUS s1 —
+    // the same staleness the resync effect guards against, but self-inflicted.
+    if (isUnambiguousEntry(value)) autoAdvanceRef.current = true
+  }
+
   return (
     <div className="flex flex-col items-stretch">
       <div className="flex items-center gap-1">
         <input
           type="number"
+          inputMode="numeric"
           min="0"
           max={MAX_SCORE}
           aria-label="Team 1 score"
           className={inputClass}
           value={s1}
-          onChange={(e) => onType(setS1)(e.target.value)}
+          onChange={(e) => handleTeam1Change(e.target.value)}
           onBlur={() => commit(s1, s2)}
         />
         <span className="text-lob-muted-light">-</span>
         <input
+          ref={team2InputRef}
           type="number"
+          inputMode="numeric"
           min="0"
           max={MAX_SCORE}
           aria-label="Team 2 score"

@@ -33,8 +33,61 @@ event's roster. The V1 **generator** code is gone (2026-07-26): `lobsterMatcher.
 `Schedule.jsx`'s Finish handler, the unreachable `:325` branch) are deleted.
 `src/lib/glicko2.ts` remains — **not shipped, offline-only**; see M4.3 below.
 
-Gates as of 2026-07-28: typecheck clean, lint 0 errors (61 pre-existing
-warnings), **1175 pass / 2 skip**, build clean, 9 goldens byte-identical.
+Gates as of 2026-08-06: typecheck clean, lint 0 errors (63 pre-existing
+warnings), **1536 pass / 2 skip**, build clean, 9 goldens byte-identical.
+Re-run on `tournament-ia-redesign` after it was brought up to date with
+`main`; `db:types:check` and `db:grants:check` also clean.
+
+**Tournament IA redesign is on branch `tournament-ia-redesign`, not yet merged**
+(2026-07-29→30, see `docs/tournament-redesign/IMPLEMENTATION_BRIEF.md`).
+Workstreams A–E are done and committed; only the E2E spike is open.
+**Current with `main` as of 2026-08-05** — it now also carries the score-syncing
+work, the Lobster Way FAQ, and the migration-drift reconciliation (PR #23).
+
+It touches matchmaking in exactly one intended way: **`useEventLifecycle.ts` is
+now the single caller of `applyTournamentRatings`**, replacing Schedule's Finish
+button. The rating-application body moved verbatim out of `Schedule.tsx` — no
+domain, service or golden was touched, and `Schedule.test.tsx`'s Finish /
+reveal / rating-review assertions moved to `useEventLifecycle.test.tsx` rather
+than being dropped (both owner-reported 2026-07-25 cases are still pinned: the
+double-apply dead-end and the stranded review queue).
+
+Two things to know before merging:
+
+- **A migration is applied locally but NOT pushed to prod:**
+  `20260805160200_tournaments_raffle_published_at.sql`. Run `npx supabase db push`
+  from `main` after merge. It splits "raffle drawn" from "winners announced";
+  nothing existing could hold that second state.
+  (Renumbered from `20260730000000` on 2026-08-05: three migrations were applied
+  to prod out-of-band that day, so the original timestamp sorted before prod's
+  head and `db push` would have rejected it as out-of-order.)
+- The redesign deleted the Info tab's second "Mark Tournament as Complete"
+  button, which wrote `status` without calling `applyTournamentRatings` and,
+  because Schedule's correct Finish was gated on `!isTournamentCompleted`, made
+  the right path disappear — silently stranding that event's learned ratings.
+  There is now exactly one completion control in the app.
+
+**Code review of the redesign, 2026-08-06.** Six defects fixed on the branch,
+one touching matchmaking's surface: with nothing flagged (the normal outcome)
+the run-of-show's `resolve_flags` step is `done`, done steps render no action,
+so `RatingReview` never mounted and the "N ratings applied automatically"
+confirmation that `Schedule.tsx` used to show after every Finish was gone.
+`appliedCount` now feeds the step's own detail line instead — `useEventLifecycle`
+and `applyTournamentRatings` are untouched. The other five: the default-tab
+redirect sent signed-out share-link recipients to the You tab's sign-in wall;
+the Oscars tab was hidden until a session existed, which (with every other door
+deleted) made the session uncreatable before `sealed`; the run-of-show swallowed
+the Oscars hook's errors; and a declined Oscars share inside a reveal marked the
+step done with the winners still embargoed — the reveal step now stays
+actionable until both writes land. A seventh finding (a stale auto-advance flag
+in `ScoreEntry`) did not hold: React's input value tracker suppresses the change
+event when the typed value matches, which `ScoreEntry.test.tsx` already pins.
+
+Run-of-show progress now counts a **three-step required spine** — enter scores →
+finish → reveal. Oscars and raffle steps are `optional`, since neither can ever
+reach `done` on an event that does not run them (a raffle has no state until it
+is drawn; `open_voting` sits on `available` with no session), which pinned every
+such event below 100% permanently.
 
 The 2026-07-28 code-hygiene session touched matchmaking in one place only:
 `ui/QualityReport.tsx`'s `DimensionBar` now uses the shared
@@ -52,6 +105,18 @@ leaned on, previously unasserted) and `court.players` must equal the flattened
 
 ### Open items
 
+- **Prod migration history was reconciled 2026-08-05 (PR #23).** The Lobster Way
+  FAQ was pushed straight to `main` and its migration hand-applied to prod,
+  leaving three migrations live that the repo had never recorded
+  (`20260805110159`, plus the applied-then-reverted `20260805151259` /
+  `20260805151846` pair, net effect zero). All three are now in
+  `supabase/migrations/`. The two score-sync migrations
+  (`20260805160000` drop matches from the realtime publication,
+  `20260805160100` `matches.updated_at`) were renumbered to sort after prod's
+  raised head and **pushed to prod 2026-08-05**. Repo and prod histories match.
+  Note for any future un-pushed migration: anything hand-applied to prod raises
+  the remote head and strands older local timestamps — check
+  `npx supabase migration list --linked` before assuming `db push` will work.
 - **Migration `20260713000001_matchmaking_v2.sql` is live in production**
   (pushed 2026-07-25). Carries the whole V2 schema plus, in its own marked
   section, the unrelated pre-existing `settings` write-grant fix — settings

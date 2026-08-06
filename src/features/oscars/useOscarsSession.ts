@@ -5,8 +5,8 @@ import { useRegistrations } from '../events/useRegistrations'
 import { useMatches } from '../events/useMatches'
 import { useConfirm } from '../../lib/confirmBus'
 import * as oscarsApi from '../../api/oscars'
-import { derivePhase, castVoteErrorMessage } from './oscarsPhase'
-import type { OscarsPhase, OscarsSession, SessionState } from './oscarsPhase'
+import { derivePhase, castVoteErrorMessage, toPhaseSession } from './oscarsPhase'
+import type { OscarsPhase } from './oscarsPhase'
 import { shortLabelMap } from './gameHelpers'
 import type { OscarMatch } from './gameHelpers'
 import { useOscarsSessionRow } from './useOscarsSessionRow'
@@ -85,21 +85,6 @@ export interface OscarsSessionState {
   startGame: (cats: OscarCategoryInput[]) => Promise<boolean>
   endGame: () => Promise<boolean>
   shareResults: () => Promise<boolean>
-}
-
-// `derivePhase` branches on the three timestamps only and models them as
-// required-but-nullable; the Zod row types them as optional. Narrow here rather
-// than loosening the phase model.
-function toPhaseSession(row: SessionRow | null | undefined): SessionState {
-  if (row === undefined) return undefined
-  if (row === null) return null
-  const session: OscarsSession = {
-    id: row.id,
-    started_at: row.started_at ?? null,
-    closed_at: row.closed_at ?? null,
-    shared_at: row.shared_at ?? null,
-  }
-  return session
 }
 
 export function useOscarsSession(
