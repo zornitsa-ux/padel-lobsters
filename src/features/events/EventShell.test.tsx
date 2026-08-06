@@ -66,13 +66,15 @@ describe('EventShell tab strip — phase × role matrix', () => {
     expect(shownTabs()).toEqual(expected)
   })
 
+  // Oscars is there throughout for an admin: with no session yet the tab is the
+  // setup screen, and it is the only way to create one.
   const adminMatrix: Array<[EventPhase, string[]]> = [
-    ['open', ['Info', 'You', 'Schedule', 'Manage']],
-    ['set', ['Info', 'You', 'Schedule', 'Manage']],
-    ['live', ['Info', 'You', 'Schedule', 'Manage']],
-    ['sealed', ['Info', 'You', 'Schedule', 'Manage']],
-    ['social', ['Info', 'You', 'Schedule', 'Manage']],
-    ['revealed', ['Info', 'You', 'Schedule', 'Results', 'Manage']],
+    ['open', ['Info', 'You', 'Schedule', 'Oscars', 'Manage']],
+    ['set', ['Info', 'You', 'Schedule', 'Oscars', 'Manage']],
+    ['live', ['Info', 'You', 'Schedule', 'Oscars', 'Manage']],
+    ['sealed', ['Info', 'You', 'Schedule', 'Oscars', 'Manage']],
+    ['social', ['Info', 'You', 'Schedule', 'Oscars', 'Manage']],
+    ['revealed', ['Info', 'You', 'Schedule', 'Results', 'Oscars', 'Manage']],
   ]
 
   it.each(adminMatrix)('admin at %s sees %j', (phase, expected) => {

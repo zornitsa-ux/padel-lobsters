@@ -48,6 +48,7 @@ type Setup = {
   adminStats?: unknown[]
   sessionId?: string | null
   error?: string
+  oscarsError?: string | null
 }
 
 function setup({
@@ -61,6 +62,7 @@ function setup({
   adminStats = [],
   sessionId = null,
   error = '',
+  oscarsError = null,
 }: Setup = {}) {
   const tournament = {
     id: 't1',
@@ -90,6 +92,7 @@ function setup({
     session: sessionId ? { id: sessionId } : null,
     adminStats,
     busy: false,
+    error: oscarsError,
     endGame,
     shareResults,
     loadAdminStats,
@@ -142,20 +145,40 @@ describe('RunOfShow — the eight steps', () => {
     expect(screen.getAllByText(/Players see:/).length).toBe(8)
   })
 
-  it('shows overall progress, excluding the optional step', () => {
+  it('shows overall progress over the required spine only', () => {
     setup()
-    // Seven required steps; only `enter_scores` is done with one scored match.
-    expect(screen.queryByText('1 of 7 done')).not.toBeNull()
+    // Three required steps; only `enter_scores` is done with one scored match.
+    expect(screen.queryByText('1 of 3 done')).not.toBeNull()
   })
 
-  it('marks the optional step as optional', () => {
+  it('reads as complete once an event with no Oscars and no raffle is closed out', () => {
+    setup({ status: 'completed', resultsSharedAt: '2026-07-29T21:00:00Z' })
+    expect(screen.queryByText('3 of 3 done')).not.toBeNull()
+  })
+
+  it('marks the skippable steps as optional', () => {
     setup({ status: 'completed', reviewQueue: [{ id: 'e1' }] })
-    expect(screen.queryByText('Optional')).not.toBeNull()
+    // Flag review, both Oscars steps and both raffle steps — all still pending.
+    expect(screen.getAllByText('Optional')).toHaveLength(5)
   })
 
   it('surfaces a lifecycle error', () => {
     setup({ error: 'ratings service unavailable' })
     expect(screen.queryByText('ratings service unavailable')).not.toBeNull()
+  })
+
+  // Close voting and the Oscars half of Reveal write through the Oscars hook,
+  // which keeps its own error. Reading only the lifecycle's left a failed close
+  // looking identical to a mis-click: the button un-busies, the step stays
+  // available, nothing says why.
+  it('DEFECT GUARD — surfaces an Oscars error too', () => {
+    setup({ oscarsPhase: 'active', oscarsError: 'could not end: not_admin' })
+    expect(screen.queryByText('could not end: not_admin')).not.toBeNull()
+  })
+
+  it('surfaces both error sources at once', () => {
+    setup({ error: 'ratings service unavailable', oscarsError: 'could not share' })
+    expect(screen.getAllByRole('alert')).toHaveLength(2)
   })
 })
 
@@ -209,6 +232,51 @@ describe('RunOfShow — D-029 independence', () => {
   it('Reveal does not require voting to be closed', () => {
     setup({ status: 'completed', oscarsPhase: 'active' })
     expect(button(/reveal the results/i)?.disabled).toBe(false)
+  })
+})
+
+// The reveal is two independent writes: `results_shared_at` on the tournament,
+// and the Oscars share (its own confirm, its own RPC). A declined or failed
+// share used to be discarded, marking the step done while the winners were
+// still embargoed and removing the only control that could send them.
+describe('RunOfShow — a half-landed reveal', () => {
+  const REVEALED_NOT_SHARED = {
+    status: 'completed',
+    resultsSharedAt: '2026-07-29T21:00:00Z',
+    oscarsPhase: 'ended' as OscarsPhase,
+  }
+
+  it('shares the Oscars winners as part of a reveal once voting has closed', async () => {
+    setup({ status: 'completed', oscarsPhase: 'ended' })
+
+    fireEvent.click(button(/reveal the results/i)!)
+    await vi.waitFor(() => expect(shareResults).toHaveBeenCalledTimes(1))
+    expect(revealResults).toHaveBeenCalledTimes(1)
+  })
+
+  it('DEFECT GUARD — stays actionable when the share was declined', () => {
+    setup(REVEALED_NOT_SHARED)
+
+    const retry = button(/share oscars winners/i)
+    expect(retry).not.toBeNull()
+    expect(retry?.disabled).toBe(false)
+    expect(screen.queryByText(/Players see: Standings$/)).not.toBeNull()
+  })
+
+  it('retries only the share, leaving the already-public standings alone', async () => {
+    setup(REVEALED_NOT_SHARED)
+
+    fireEvent.click(button(/share oscars winners/i)!)
+
+    await vi.waitFor(() => expect(shareResults).toHaveBeenCalledTimes(1))
+    expect(revealResults).not.toHaveBeenCalled()
+  })
+
+  it('is done once both writes have landed', () => {
+    setup({ ...REVEALED_NOT_SHARED, oscarsPhase: 'shared' })
+
+    expect(button(/share oscars winners/i)).toBeNull()
+    expect(button(/reveal the results/i)).toBeNull()
   })
 })
 

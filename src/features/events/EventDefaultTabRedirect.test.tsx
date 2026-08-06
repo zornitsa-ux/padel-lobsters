@@ -4,9 +4,11 @@ import { render, screen, cleanup } from '@testing-library/react'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 
 const useMatches = vi.fn()
+let mockSession: { user: { id: string } } | null = { user: { id: 'player-1' } }
 
 vi.mock('./useMatches', () => ({ useMatches: () => useMatches() }))
 vi.mock('../oscars/useOscarsSessionRow', () => ({ useOscarsSessionRow: () => ({ data: null }) }))
+vi.mock('../../context/useApp', () => ({ useApp: () => ({ session: mockSession }) }))
 
 // The real useEventPhase runs against the mocked queries, so the pending gate is
 // covered through the hook rather than around it.
@@ -56,6 +58,7 @@ const spinner = () => document.querySelector('.animate-spin')
 afterEach(() => {
   cleanup()
   vi.clearAllMocks()
+  mockSession = { user: { id: 'player-1' } }
 })
 
 describe('EventDefaultTabRedirect', () => {
@@ -79,6 +82,19 @@ describe('EventDefaultTabRedirect', () => {
 
     expect(meTab()).not.toBeNull()
     expect(infoTab()).toBeNull()
+  })
+
+  // Shared links are bare /events/:id, so the recipient of a "register and see
+  // details" WhatsApp message landed on the You tab's sign-in wall — the one
+  // audience guaranteed to have nothing there.
+  it('DEFECT GUARD — sends a signed-out visitor to Info, not the sign-in wall', () => {
+    useMatches.mockReturnValue(settled(unscored))
+    mockSession = null
+
+    renderRedirect()
+
+    expect(infoTab()).not.toBeNull()
+    expect(meTab()).toBeNull()
   })
 
   it('sends an event with no schedule to Info', () => {

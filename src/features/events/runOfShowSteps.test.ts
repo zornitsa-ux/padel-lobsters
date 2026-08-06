@@ -110,6 +110,28 @@ describe('D-029 — reveal is independent of rating review', () => {
   it('reveal is done once shared', () => {
     expect(stateOf('reveal', { ...REVEALED, flaggedCount: 5 })).toBe('done')
   })
+
+  // The reveal is two writes. The Oscars share has its own confirm and its own
+  // failure modes, so `resultsSharedAt` is not evidence the winners went out.
+  it('DEFECT GUARD — stays actionable when the standings landed but the winners did not', () => {
+    const step = stepOf('reveal', { ...REVEALED, oscarsPhase: 'ended' })
+    expect(step.state).toBe('available')
+    expect(step.detail).toContain('still hidden')
+  })
+
+  it('DEFECT GUARD — never claims players can see winners that were not shared', () => {
+    expect(stepOf('reveal', { ...REVEALED, oscarsPhase: 'ended' }).playersSee).toBe('Standings')
+    expect(stepOf('reveal', { ...REVEALED, oscarsPhase: 'not_created' }).playersSee).toBe(
+      'Standings',
+    )
+    expect(stepOf('reveal', { ...REVEALED, oscarsPhase: 'shared' }).playersSee).toBe(
+      'Standings and Oscars winners',
+    )
+  })
+
+  it('is done once both halves have landed', () => {
+    expect(stateOf('reveal', { ...REVEALED, oscarsPhase: 'shared' })).toBe('done')
+  })
 })
 
 describe('Oscars steps never read tournament status', () => {
@@ -235,6 +257,30 @@ describe('resolve_flags', () => {
   it('is done with an empty queue', () => {
     expect(stateOf('resolve_flags', { ...COMPLETED, flaggedCount: 0 })).toBe('done')
   })
+
+  // A done step renders no action, so the review panel that used to carry this
+  // number never mounts — which is the common case, since most Finishes flag
+  // nothing. The confirmation moves onto the step's own line.
+  it('reports what Finish applied automatically when there is nothing to review', () => {
+    expect(
+      stepOf('resolve_flags', { ...COMPLETED, flaggedCount: 0, appliedCount: 12 }).detail,
+    ).toBe('12 ratings applied automatically, nothing to review')
+    expect(stepOf('resolve_flags', { ...COMPLETED, flaggedCount: 0, appliedCount: 1 }).detail).toBe(
+      '1 rating applied automatically, nothing to review',
+    )
+  })
+
+  it('falls back to a bare line outside the post-Finish window', () => {
+    expect(stepOf('resolve_flags', { ...COMPLETED, flaggedCount: 0 }).detail).toBe(
+      'Nothing to review',
+    )
+  })
+
+  it('lets the queue win over the applied count', () => {
+    expect(stepOf('resolve_flags', { ...COMPLETED, flaggedCount: 2, appliedCount: 9 }).detail).toBe(
+      '2 ratings to review',
+    )
+  })
 })
 
 describe('draw_raffle and publish_raffle', () => {
@@ -300,7 +346,30 @@ describe('runOfShowProgress', () => {
       flaggedCount: 4,
     })
     const { total } = runOfShowProgress(steps)
-    expect(total).toBe(7) // eight steps, minus the optional flag review
+    // Eight steps, minus flag review and the two per-event extras (Oscars,
+    // raffle) — leaving the spine: enter scores → finish → reveal.
+    expect(total).toBe(3)
+  })
+
+  it('the required spine is exactly enter_scores, finish and reveal', () => {
+    expect(
+      build()
+        .filter((s) => !s.optional)
+        .map((s) => s.id),
+    ).toEqual(['enter_scores', 'finish', 'reveal'])
+  })
+
+  // An event with no Oscars leaves open_voting on 'available' forever, and one
+  // with no raffle leaves draw_raffle the same way — neither can ever reach
+  // 'done', so counting them pinned every such event below 100%.
+  it('DEFECT GUARD — completes for an event that runs neither Oscars nor a raffle', () => {
+    const steps = build({
+      ...REVEALED,
+      matches: [scored()],
+      oscarsPhase: 'not_created',
+      hasRaffleWinners: false,
+    })
+    expect(runOfShowProgress(steps)).toEqual({ done: 3, total: 3, allDone: true })
   })
 
   it('reports all done when the whole sequence has run', () => {

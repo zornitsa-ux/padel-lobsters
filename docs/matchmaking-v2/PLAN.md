@@ -33,8 +33,8 @@ event's roster. The V1 **generator** code is gone (2026-07-26): `lobsterMatcher.
 `Schedule.jsx`'s Finish handler, the unreachable `:325` branch) are deleted.
 `src/lib/glicko2.ts` remains — **not shipped, offline-only**; see M4.3 below.
 
-Gates as of 2026-08-05: typecheck clean, lint 0 errors (63 pre-existing
-warnings), **1456 pass / 2 skip**, build clean, 9 goldens byte-identical.
+Gates as of 2026-08-06: typecheck clean, lint 0 errors (63 pre-existing
+warnings), **1536 pass / 2 skip**, build clean, 9 goldens byte-identical.
 Re-run on `tournament-ia-redesign` after it was brought up to date with
 `main`; `db:types:check` and `db:grants:check` also clean.
 
@@ -66,6 +66,28 @@ Two things to know before merging:
   because Schedule's correct Finish was gated on `!isTournamentCompleted`, made
   the right path disappear — silently stranding that event's learned ratings.
   There is now exactly one completion control in the app.
+
+**Code review of the redesign, 2026-08-06.** Six defects fixed on the branch,
+one touching matchmaking's surface: with nothing flagged (the normal outcome)
+the run-of-show's `resolve_flags` step is `done`, done steps render no action,
+so `RatingReview` never mounted and the "N ratings applied automatically"
+confirmation that `Schedule.tsx` used to show after every Finish was gone.
+`appliedCount` now feeds the step's own detail line instead — `useEventLifecycle`
+and `applyTournamentRatings` are untouched. The other five: the default-tab
+redirect sent signed-out share-link recipients to the You tab's sign-in wall;
+the Oscars tab was hidden until a session existed, which (with every other door
+deleted) made the session uncreatable before `sealed`; the run-of-show swallowed
+the Oscars hook's errors; and a declined Oscars share inside a reveal marked the
+step done with the winners still embargoed — the reveal step now stays
+actionable until both writes land. A seventh finding (a stale auto-advance flag
+in `ScoreEntry`) did not hold: React's input value tracker suppresses the change
+event when the typed value matches, which `ScoreEntry.test.tsx` already pins.
+
+Run-of-show progress now counts a **three-step required spine** — enter scores →
+finish → reveal. Oscars and raffle steps are `optional`, since neither can ever
+reach `done` on an event that does not run them (a raffle has no state until it
+is drawn; `open_voting` sits on `available` with no session), which pinned every
+such event below 100% permanently.
 
 The 2026-07-28 code-hygiene session touched matchmaking in one place only:
 `ui/QualityReport.tsx`'s `DimensionBar` now uses the shared

@@ -1,5 +1,6 @@
 import { Navigate } from 'react-router-dom'
 import { RouteFallback } from '../../components/ui/RouteFallback'
+import { useApp } from '../../context/useApp'
 import { useEventPhase } from './useEventPhase'
 import { defaultEventTab } from './eventPhase'
 import type { NormalisedTournament } from '../../lib/normalise'
@@ -18,7 +19,10 @@ export default function EventDefaultTabRedirect({
 }: {
   tournament: NormalisedTournament
 }) {
+  const { session } = useApp()
   const { phase, isPending } = useEventPhase(tournament)
   if (isPending) return <RouteFallback />
-  return <Navigate to={defaultEventTab({ phase })} replace />
+  return (
+    <Navigate to={defaultEventTab({ phase, isSignedIn: Boolean(session?.user?.id) })} replace />
+  )
 }

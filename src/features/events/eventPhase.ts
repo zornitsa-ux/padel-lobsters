@@ -116,8 +116,10 @@ export const EVENT_TAB_ORDER: readonly EventTab[] = [
 
 /**
  * Players see Oscars for the whole voting-through-results stretch. Admins also
- * see it while still configuring (`pre_start`), since that is where categories
- * are picked.
+ * see it before there is anything to see — `not_created` and `pre_start` both
+ * render the setup screen (`AdminView`), and that is the only door to it: the
+ * run-of-show step that links here appears at `sealed`, so hiding the tab until
+ * a session exists made the session uncreatable until every match was scored.
  */
 export function isOscarsTabVisible({
   oscarsPhase,
@@ -126,8 +128,8 @@ export function isOscarsTabVisible({
   oscarsPhase: OscarsPhase
   isAdmin: boolean
 }): boolean {
-  if (oscarsPhase === 'loading' || oscarsPhase === 'not_created') return false
-  if (oscarsPhase === 'pre_start') return isAdmin
+  if (oscarsPhase === 'loading') return false
+  if (oscarsPhase === 'not_created' || oscarsPhase === 'pre_start') return isAdmin
   return true
 }
 
@@ -180,9 +182,22 @@ export function visibleEventTabs({
   return tabs
 }
 
-/** Where `/events/:id` lands when no tab is named. */
-export function defaultEventTab({ phase }: { phase: EventPhase }): EventTab {
-  if (phase === 'live') return 'me'
+/**
+ * Where `/events/:id` lands when no tab is named.
+ *
+ * `isSignedIn` is not a nicety: shared links are bare `/events/:id`
+ * (`ShareWhatsAppButton`), so the recipient of a "register and see details"
+ * message is exactly the viewer who has nothing on the You tab — sending them
+ * there lands them on a sign-in wall instead of the event.
+ */
+export function defaultEventTab({
+  phase,
+  isSignedIn,
+}: {
+  phase: EventPhase
+  isSignedIn: boolean
+}): EventTab {
+  if (phase === 'live') return isSignedIn ? 'me' : 'info'
   if (phase === 'revealed') return 'results'
   return 'info'
 }

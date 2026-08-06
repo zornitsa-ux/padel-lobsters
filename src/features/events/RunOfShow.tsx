@@ -48,15 +48,19 @@ function useStepActions({
   const navigate = useNavigate()
   const [revealingOscars, setRevealingOscars] = useState(false)
 
+  // Two independent writes. Re-runnable: with the standings already public the
+  // first is skipped, so this doubles as the retry for an Oscars share that was
+  // declined at its confirm or failed on the server.
+  const alreadyRevealed = Boolean(tournament.resultsSharedAt)
+
   const handleReveal = async () => {
-    const ok = await lifecycle.revealResults()
-    if (ok && oscarsPhase === 'ended') {
-      setRevealingOscars(true)
-      try {
-        await oscars.shareResults()
-      } finally {
-        setRevealingOscars(false)
-      }
+    const ok = alreadyRevealed || (await lifecycle.revealResults())
+    if (!ok || oscarsPhase !== 'ended') return
+    setRevealingOscars(true)
+    try {
+      await oscars.shareResults()
+    } finally {
+      setRevealingOscars(false)
     }
   }
 
@@ -101,7 +105,7 @@ function useStepActions({
     },
     reveal: {
       kind: 'button',
-      label: 'Reveal the results',
+      label: alreadyRevealed ? 'Share Oscars winners' : 'Reveal the results',
       busyLabel: 'Revealing…',
       busy: lifecycle.busy === 'reveal' || revealingOscars,
       onClick: () => void handleReveal(),
@@ -227,6 +231,7 @@ export default function RunOfShow({ tournament }: { tournament: NormalisedTourna
     matches,
     oscarsPhase,
     flaggedCount: lifecycle.reviewQueue.length,
+    appliedCount: lifecycle.appliedCount,
     hasRaffleWinners: raffleWinners.length > 0,
     turnout,
   })
@@ -242,11 +247,18 @@ export default function RunOfShow({ tournament }: { tournament: NormalisedTourna
         </span>
       </div>
 
-      {lifecycle.error && (
-        <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg p-2">
-          {lifecycle.error}
+      {/* Two step controls write through the Oscars hook, which keeps its own
+          error — without this a failed close/share left the step "available"
+          with no explanation. */}
+      {[lifecycle.error, oscars.error].filter(Boolean).map((message) => (
+        <p
+          key={message}
+          role="alert"
+          className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg p-2"
+        >
+          {message}
         </p>
-      )}
+      ))}
 
       <ol className="space-y-3">
         {steps.map((step, i) => (

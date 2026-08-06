@@ -296,7 +296,7 @@ describe('isOscarsTabVisible', () => {
     ['loading', false, false],
     ['loading', true, false],
     ['not_created', false, false],
-    ['not_created', true, false],
+    ['not_created', true, true],
     ['pre_start', false, false],
     ['pre_start', true, true],
     ['active', false, true],
@@ -309,6 +309,14 @@ describe('isOscarsTabVisible', () => {
 
   it.each(table)('%s / admin=%s → %s', (oscarsPhase, isAdmin, expected) => {
     expect(isOscarsTabVisible({ oscarsPhase, isAdmin })).toBe(expected)
+  })
+
+  // Every other door to /oscars was removed with the old admin menu, and the
+  // run-of-show link to it only appears at `sealed`. Hidden here, an admin could
+  // not create the session until the last match was scored.
+  it('DEFECT GUARD — admins can reach Oscars before a session exists', () => {
+    expect(isOscarsTabVisible({ oscarsPhase: 'not_created', isAdmin: true })).toBe(true)
+    expect(isOscarsTabVisible({ oscarsPhase: 'not_created', isAdmin: false })).toBe(false)
   })
 
   it('DEFECT GUARD — an active session stays visible to players after Finish', () => {
@@ -337,13 +345,15 @@ describe('visibleEventTabs', () => {
     expect(player(phase)).toEqual(expected)
   })
 
+  // Oscars is present throughout: an admin's door to it is open from `open`,
+  // since with no session yet the tab is where one gets created.
   const adminTable: Array<[EventPhase, EventTab[]]> = [
-    ['open', ['info', 'me', 'schedule', 'manage']],
-    ['set', ['info', 'me', 'schedule', 'manage']],
-    ['live', ['info', 'me', 'schedule', 'manage']],
-    ['sealed', ['info', 'me', 'schedule', 'manage']],
-    ['social', ['info', 'me', 'schedule', 'manage']],
-    ['revealed', ['info', 'me', 'schedule', 'results', 'manage']],
+    ['open', ['info', 'me', 'schedule', 'oscars', 'manage']],
+    ['set', ['info', 'me', 'schedule', 'oscars', 'manage']],
+    ['live', ['info', 'me', 'schedule', 'oscars', 'manage']],
+    ['sealed', ['info', 'me', 'schedule', 'oscars', 'manage']],
+    ['social', ['info', 'me', 'schedule', 'oscars', 'manage']],
+    ['revealed', ['info', 'me', 'schedule', 'results', 'oscars', 'manage']],
   ]
 
   it.each(adminTable)('admin at %s sees %j', (phase, expected) => {
@@ -447,17 +457,27 @@ describe('anyResultsRevealed', () => {
 })
 
 describe('defaultEventTab', () => {
-  it('lands on /me while the event is live', () => {
-    expect(defaultEventTab({ phase: 'live' })).toBe('me')
+  it('lands a signed-in player on /me while the event is live', () => {
+    expect(defaultEventTab({ phase: 'live', isSignedIn: true })).toBe('me')
   })
 
-  it('lands on results once revealed', () => {
-    expect(defaultEventTab({ phase: 'revealed' })).toBe('results')
+  // Shared links are bare /events/:id, so this viewer is the one the share was
+  // aimed at — sending them to /me shows a sign-in wall instead of the event.
+  it('DEFECT GUARD — never sends a signed-out visitor to /me', () => {
+    for (const phase of EVENT_PHASES) {
+      expect(defaultEventTab({ phase, isSignedIn: false })).not.toBe('me')
+    }
+    expect(defaultEventTab({ phase: 'live', isSignedIn: false })).toBe('info')
+  })
+
+  it('lands on results once revealed, signed in or not', () => {
+    expect(defaultEventTab({ phase: 'revealed', isSignedIn: true })).toBe('results')
+    expect(defaultEventTab({ phase: 'revealed', isSignedIn: false })).toBe('results')
   })
 
   it('lands on info everywhere else', () => {
     for (const phase of ['open', 'set', 'sealed', 'social'] as EventPhase[]) {
-      expect(defaultEventTab({ phase })).toBe('info')
+      expect(defaultEventTab({ phase, isSignedIn: true })).toBe('info')
     }
   })
 })

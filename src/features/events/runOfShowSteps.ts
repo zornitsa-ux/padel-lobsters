@@ -9,6 +9,12 @@
    flagged ratings — the admin can reveal before, after, or interleaved with
    resolving them. And per the Oscars decoupling rule, no Oscars step reads
    `tournaments.status`.
+
+   Only three steps are required: enter scores → finish → reveal. Oscars and the
+   raffle are per-event extras most events never run, and nothing exists to
+   derive "this event has one" from — a raffle has no state at all until it is
+   drawn. Counting them meant an event that was genuinely closed out sat at
+   "6 of 7 done" forever, reading as an unfinished checklist.
    ════════════════════════════════════════════════════════════════════════════ */
 
 import { allMatchesScored, isMatchScored } from './eventPhase'
@@ -51,6 +57,8 @@ export type RunOfShowInput = {
   oscarsPhase: OscarsPhase
   /** Unresolved flagged rating events. */
   flaggedCount: number
+  /** Ratings auto-applied by this session's Finish; null outside that window. */
+  appliedCount?: number | null
   hasRaffleWinners: boolean
   /** Live voting turnout, once a session exists. */
   turnout?: { voted: number; total: number } | null
@@ -67,6 +75,7 @@ export function runOfShowSteps({
   matches,
   oscarsPhase,
   flaggedCount,
+  appliedCount = null,
   hasRaffleWinners,
   turnout = null,
 }: RunOfShowInput): RunOfShowStep[] {
@@ -91,7 +100,12 @@ export function runOfShowSteps({
       : oscarsPhase === 'active'
         ? 'available'
         : 'locked'
-  const revealState: RunOfShowStepState = isRevealed ? 'done' : isCompleted ? 'available' : 'locked'
+  // Voting closed but the winners not shared leaves the reveal half-done, so the
+  // step stays actionable: the admin can decline (or lose) the Oscars share
+  // inside a reveal, and that is the only control that can finish the job.
+  const oscarsAwaitingShare = oscarsPhase === 'ended'
+  const revealState: RunOfShowStepState =
+    isRevealed && !oscarsAwaitingShare ? 'done' : isCompleted ? 'available' : 'locked'
 
   // Publishing is independent of the standings reveal, in the data model (D-029)
   // and now in the UI too: publishing opens the Results tab on its own and puts
@@ -127,9 +141,11 @@ export function runOfShowSteps({
       // Skippable by design (D-029): it never gates the reveal below.
       state: flagsState,
       detail:
-        flaggedCount === 0
-          ? 'Nothing to review'
-          : `${plural(flaggedCount, 'rating', 'ratings')} to review`,
+        flaggedCount > 0
+          ? `${plural(flaggedCount, 'rating', 'ratings')} to review`
+          : appliedCount != null
+            ? `${plural(appliedCount, 'rating', 'ratings')} applied automatically, nothing to review`
+            : 'Nothing to review',
       lockedReason: lockedBecause(flagsState, 'Finish the tournament first'),
       playersSee: 'Nothing — ratings are admin-only',
       optional: true,
@@ -148,6 +164,7 @@ export function runOfShowSteps({
             : 'Voting has opened',
       lockedReason: lockedBecause(openVotingState, 'Loading the Oscars session'),
       playersSee: 'The Oscars tab, and they can vote',
+      optional: true,
     },
     {
       id: 'close_voting',
@@ -158,6 +175,7 @@ export function runOfShowSteps({
         : 'Turnout appears once voting opens',
       lockedReason: lockedBecause(closeVotingState, 'Voting has not opened yet'),
       playersSee: '"Results coming up"',
+      optional: true,
     },
     {
       id: 'reveal',
@@ -168,12 +186,21 @@ export function runOfShowSteps({
       // Oscars winners when there are any to fold in.
       state: revealState,
       detail: isRevealed
-        ? 'Standings are public'
-        : oscarsPhase === 'ended'
+        ? oscarsAwaitingShare
+          ? 'Standings are public · Oscars winners still hidden'
+          : 'Standings are public'
+        : oscarsAwaitingShare
           ? 'Standings and Oscars winners together'
           : 'Standings',
       lockedReason: lockedBecause(revealState, 'Finish the tournament first'),
-      playersSee: isRevealed ? 'Standings and Oscars winners' : 'Nothing yet',
+      // Only what has actually landed: `resultsSharedAt` says nothing about the
+      // Oscars winners, which are shared by a separate write that can fail or be
+      // declined.
+      playersSee: !isRevealed
+        ? 'Nothing yet'
+        : oscarsPhase === 'shared'
+          ? 'Standings and Oscars winners'
+          : 'Standings',
     },
     {
       id: 'draw_raffle',
@@ -181,6 +208,7 @@ export function runOfShowSteps({
       state: hasRaffleWinners ? 'done' : 'available',
       detail: hasRaffleWinners ? 'Winners drawn' : 'Server-side fair draw, with cooldown',
       playersSee: 'Nothing — the draw is not published yet',
+      optional: true,
     },
     {
       id: 'publish_raffle',
@@ -191,6 +219,7 @@ export function runOfShowSteps({
         : 'Opens Results for everyone, on its own Prize Raffle tab',
       lockedReason: lockedBecause(publishState, 'Draw the raffle first'),
       playersSee: isRafflePublished ? 'The raffle winners' : 'Nothing yet',
+      optional: true,
     },
   ]
 }
