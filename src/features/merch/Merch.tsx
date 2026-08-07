@@ -7,6 +7,7 @@ import { TabSwitcher } from '../../components/ui/TabSwitcher'
 import { emptyItem, itemFormFrom, toItemPayload, type ItemFormState } from './itemForm'
 import { errorMessage } from './formatters'
 import { useMerchActions, useMerchInterests, useMerchItems } from './useMerch'
+import { markMerchOrdersChecked } from './lastChecked'
 import {
   countOrders,
   countWebsiteOrders,
@@ -41,6 +42,12 @@ export default function Merch({ initialTab, onNavigate }: MerchProps) {
   useEffect(() => {
     if (initialTab) setTab(initialTab as TabId)
   }, [initialTab])
+
+  // Reading the orders table is what "checking" merch orders means, so the
+  // Admin Tools pending badge clears from here.
+  useEffect(() => {
+    if (isAdmin && tab === 'orders') markMerchOrdersChecked()
+  }, [isAdmin, tab])
 
   // Flat reads: mount load plus the query client's global refetchOnWindowFocus.
   // The manual useRefreshOnFocus call this component used to make is redundant

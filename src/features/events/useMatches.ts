@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
 import { matchKeys } from './matchKeys'
-import { fetchMatches, fetchAllMatches } from './matchQueries'
+import { fetchMatches, fetchAllMatches, fetchRecentMatches } from './matchQueries'
 import type { GeneratedMatch, MatchScoreUpdate, NormalisedMatch } from './matchQueries'
 import * as q from './matchQueries'
 import { broadcastScore, broadcastSchedule } from './tournamentChannel'
@@ -17,12 +17,36 @@ export function useMatches(tournamentId: string | null | undefined) {
   })
 }
 
-// All matches across every tournament — for History and Dashboard screens
-// that need cross-tournament data.
+// All matches across every tournament. Genuinely all-time consumers only —
+// History, career stats, the community player pages. It is the single largest
+// read in the app (~110KB), so anything that just needs "what happened lately"
+// wants useRecentMatches instead.
 export function useAllMatches() {
   return useQuery({
     queryKey: matchKeys.all(),
     queryFn: fetchAllMatches,
+  })
+}
+
+// How far back useRecentMatches reaches. Deliberately wider than the 48h
+// recently-completed window it serves, so a tournament dated a day either side
+// of its real finish still has its matches.
+export const RECENT_MATCH_WINDOW_DAYS = 7
+
+const DAY_MS = 86_400_000
+
+/** Start of the window as YYYY-MM-DD — stable for a whole day, so is the key. */
+export function recentMatchesSince(now: number = Date.now()): string {
+  return new Date(now - RECENT_MATCH_WINDOW_DAYS * DAY_MS).toISOString().slice(0, 10)
+}
+
+// Matches for events inside the recent window. The home screen's banners are
+// the only consumer, and they never look further back than 48 hours.
+export function useRecentMatches() {
+  const since = recentMatchesSince()
+  return useQuery({
+    queryKey: matchKeys.recent(since),
+    queryFn: () => fetchRecentMatches(since),
   })
 }
 

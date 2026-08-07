@@ -1,14 +1,12 @@
-import React, { useMemo, useState, useEffect, useCallback } from 'react'
+import React, { lazy, Suspense, useMemo, useState, useEffect, useCallback } from 'react'
 import { useApp } from '../../context/useApp'
 import { useSettings } from '../settings/useSettings'
 import { useTournaments } from '../events/useTournaments'
 import { useTransfers, useTransferActions } from '../events/useTransfers'
 import { usePlayers } from '../players/usePlayers'
-import { useAllMatches } from '../events/useMatches'
+import { useRecentMatches } from '../events/useMatches'
 import { useAllRegistrations } from '../events/useRegistrations'
-import { useMerchInterests, useMerchItems } from '../merch/useMerch'
 import DEFAULT_TIPS from '../../data/padelTips'
-import TransferPendingModal from '../../components/TransferPendingModal'
 import { AlertBox } from '../../components/ui/AlertBox'
 import { useConfirm } from '../../lib/confirmBus'
 import { mark } from '../../lib/perfMarks'
@@ -21,7 +19,7 @@ import CountdownClock from './CountdownClock'
 import TipOfTheDay from './TipOfTheDay'
 import NextEventCard from './NextEventCard'
 import RecentlyCompletedBanners from './RecentlyCompletedBanners'
-import AdminAlerts, { type NewMerchOrder } from './AdminAlerts'
+import AdminAlerts from './AdminAlerts'
 import LobsterWayLink from '../../components/LobsterWayLink'
 import { LeagueDashboardCard } from '../league/ui/LeagueDashboardCard'
 import type { Player, NormalisedTournament } from '../../lib/normalise'
@@ -29,8 +27,8 @@ import type { NormalisedMatch } from '../events/matchQueries'
 import type { NormalisedRegistration } from '../events/registrationQueries'
 import type { NormalisedTransfer } from '../events/transferQueries'
 
-const LAST_CHECK_KEY = 'pl_merch_last_checked'
-const MAX_NEW_ORDERS = 20
+// Only mounts after the player taps "share" on an outgoing transfer offer.
+const TransferPendingModal = lazy(() => import('../../components/TransferPendingModal'))
 
 interface DashboardProps {
   onNavigate: (page: string, payload?: NormalisedTournament) => void
@@ -47,20 +45,23 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
   const {
     data: tournaments = [],
     isSuccess: tournamentsLoaded,
+    isPending: tournamentsPending,
     isError: tournamentsError,
   } = useTournaments()
   const { data: transfers = [], isError: transfersError } = useTransfers()
   const { respondToTransfer, cancelTransfer } = useTransferActions({ session })
   const { data: settings, isError: settingsError } = useSettings()
   const { data: players = [], isPending: playersPending, isError: playersError } = usePlayers()
-  const { data: matches = [], isError: matchesError } = useAllMatches()
+  // Only the recently-completed banners read matches, and only for events
+  // inside their 48h window — the all-time set is ~110KB the home screen has
+  // no use for.
+  const { data: matches = [], isError: matchesError } = useRecentMatches()
   const {
     data: registrations = [],
     isSuccess: registrationsLoaded,
+    isPending: registrationsPending,
     isError: registrationsError,
   } = useAllRegistrations()
-  const { data: merchInterests = [], isError: merchInterestsError } = useMerchInterests()
-  const { data: merchItems = [], isError: merchItemsError } = useMerchItems()
 
   // A failed read renders as an empty list/undefined, which looks identical
   // to "genuinely nothing there" (e.g. NextEventCard's "No upcoming events"
@@ -73,9 +74,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
     settingsError ||
     playersError ||
     matchesError ||
-    registrationsError ||
-    merchInterestsError ||
-    merchItemsError
+    registrationsError
 
   const getTournamentMatches = useCallback(
     (id: string): NormalisedMatch[] => matches.filter((m) => m.tournamentId === id),
@@ -132,43 +131,8 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
 
   const claimedPlayer = claimedId ? players.find((p) => p.id === claimedId) : null
 
-  // ── New merch orders since last admin check ─────────────────────────────────
-  // Derived from the merch slice's cached rows rather than a dedicated query, so
-  // this shares one cache with the shop and the admin order table.
-  const [lastChecked, setLastChecked] = useState(
-    () => localStorage.getItem(LAST_CHECK_KEY) || new Date(0).toISOString(),
-  )
-
-  const newOrders = useMemo<NewMerchOrder[]>(() => {
-    if (!isAdmin) return []
-    const itemName = new Map(merchItems.map((i) => [i.id, i.name]))
-    return merchInterests
-      .filter((o) => (o.created_at || '') >= lastChecked)
-      .sort((a, b) => ((a.created_at || '') < (b.created_at || '') ? 1 : -1))
-      .slice(0, MAX_NEW_ORDERS)
-      .map((o) => ({
-        ...o,
-        playerName: players.find((p) => String(p.id) === o.playerId)?.name || null,
-        itemName: (o.merch_item_id != null && itemName.get(o.merch_item_id)) || 'item',
-      }))
-  }, [isAdmin, merchInterests, merchItems, players, lastChecked])
-
-  const dismissMerchOrders = () => {
-    const now = new Date().toISOString()
-    localStorage.setItem(LAST_CHECK_KEY, now)
-    setLastChecked(now)
-  }
-
-  const formatUpdateTime = (ts: string | null | undefined): string => {
-    if (!ts) return ''
-    const diff = (Date.now() - new Date(ts).getTime()) / 1000
-    if (diff < 60) return 'just now'
-    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
-    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
-    return new Date(ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
-  }
-
-  // Recently completed tournaments (within 48 hours of tournament date)
+  // Recently completed tournaments. The window must stay inside
+  // RECENT_MATCH_WINDOW_DAYS, or a banner renders with no matches to score.
   const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000
   const completedAtMs = (t: NormalisedTournament) =>
     new Date(t.date || t.completedAt || 0).getTime()
@@ -248,9 +212,13 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
   // than greet a placeholder and swap (see useGreetingName), reuse the name
   // cached from the last visit, and if there isn't one, hold the greeting until
   // the roster resolves.
+  //
+  // Before the session settles claimedId is null, which is indistinguishable
+  // from a real guest — greeting a member with "sign in with your PIN" and then
+  // swapping is worse than holding the line for the few ms auth takes.
   const isGuest = !claimedId && !isAdmin
   const greetingName = useGreetingName({ playerId: claimedId, name: claimedPlayer?.name })
-  const nameStillLoading = !!claimedId && !greetingName && playersPending
+  const nameStillLoading = !sessionSettled || (!!claimedId && !greetingName && playersPending)
   const [greetHello, greetSub] = isGuest
     ? ['Welcome to Padel Lobsters!', 'Sign in with your PIN to join the fun.']
     : getGreeting(greetingName || (isAdmin ? 'Admin' : null))
@@ -295,15 +263,17 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
           onOutgoingShare={handleOutgoingShare}
         />
         {transferShare && (
-          <TransferPendingModal
-            transferId={transferShare.transferId}
-            toPlayer={transferShare.toPlayer}
-            onClose={() => setTransferShare(null)}
-            onCancel={() => setTransferShare(null)}
-          />
+          <Suspense fallback={null}>
+            <TransferPendingModal
+              transferId={transferShare.transferId}
+              toPlayer={transferShare.toPlayer}
+              onClose={() => setTransferShare(null)}
+              onCancel={() => setTransferShare(null)}
+            />
+          </Suspense>
         )}
 
-        <CountdownClock countdown={countdown} streak={myStreak} />
+        <CountdownClock countdown={countdown} streak={myStreak} loading={tournamentsPending} />
 
         <TipOfTheDay tip={todayTip} />
 
@@ -314,6 +284,8 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
           isAdmin={isAdmin}
           claimedId={claimedId}
           isRegistered={isRegistered}
+          loading={tournamentsPending}
+          registrationsPending={registrationsPending}
           onNavigate={onNavigate}
           formatDate={formatDate}
         />
@@ -332,9 +304,6 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
           unpaid={unpaid}
           upcomingEvent={upcoming}
           players={players}
-          newOrders={newOrders}
-          onDismissMerch={dismissMerchOrders}
-          formatUpdateTime={formatUpdateTime}
           onNavigate={onNavigate}
         />
 
