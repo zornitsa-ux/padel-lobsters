@@ -1,9 +1,14 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useApp } from '../context/useApp'
 import { KeyRound, LogIn, UserPlus, ArrowLeft, Mail, Check, AlertCircle } from 'lucide-react'
 import { isPublicPath } from '../lib/authPaths'
-import SignupRequest from './SignupRequest'
+import { RouteFallback } from './ui/RouteFallback'
+
+// The gate itself is entry-critical — it decides what the first paint shows.
+// The signup form is not: it only renders once someone taps "sign up", and it
+// carries the country picker with it.
+const SignupRequest = lazy(() => import('./SignupRequest'))
 
 // Recovery + alternative sign-in is now via emailed magic link.
 // Users without an email on file are directed to mail
@@ -280,17 +285,19 @@ export default function VerificationGate({ children }: { children?: React.ReactN
 
         {/* ── Mode: SIGN UP ──────────────────────────────────────────────── */}
         {mode === 'signup' && (
-          <SignupRequest
-            key={signupKey}
-            compact
-            onBack={() => setMode('signin')}
-            // After successful signup the RPC returns a PIN and we auto-login;
-            // AppContext flips the role, this component unmounts. No explicit
-            // navigation needed here.
-            onComplete={() => {
-              /* no-op — role change unmounts the gate */
-            }}
-          />
+          <Suspense fallback={<RouteFallback />}>
+            <SignupRequest
+              key={signupKey}
+              compact
+              onBack={() => setMode('signin')}
+              // After successful signup the RPC returns a PIN and we auto-login;
+              // AppContext flips the role, this component unmounts. No explicit
+              // navigation needed here.
+              onComplete={() => {
+                /* no-op — role change unmounts the gate */
+              }}
+            />
+          </Suspense>
         )}
 
         {/* ── Mode: MAGIC LINK ───────────────────────────────────────────── */}

@@ -16,7 +16,6 @@ import Layout from './components/Layout'
 import { RouteFallback } from './components/ui/RouteFallback'
 import Dashboard from './features/home/Dashboard'
 import VerificationGate from './components/VerificationGate'
-import AuthConfirm from './components/AuthConfirm'
 import { mark } from './lib/perfMarks'
 import EventShell from './features/events/EventShell'
 import type { EventNavigate } from './features/events/eventHelpers'
@@ -27,6 +26,7 @@ import CommunityShell from './features/community/CommunityShell'
 // in the entry chunk; everything below loads on demand the first time its
 // route is hit. Each lazy() becomes its own Rollup chunk — see the bundle
 // treemap (`npm run build:analyze`) for the split.
+const AuthConfirm = lazy(() => import('./components/AuthConfirm'))
 const Players = lazy(() => import('./features/community/Players'))
 const Tournament = lazy(() => import('./features/events/Tournament'))
 const Registration = lazy(() => import('./features/events/Registration'))

@@ -1,0 +1,7 @@
+/* Placeholder block shown while a value is still in flight. The fill is a
+   low-opacity brand teal rather than lob-teal-light, which is too close to the
+   lob-cream page background to read as anything at all. Derived from the token
+   so the design system stays the single source of truth. */
+.skeleton {
+  @apply rounded bg-lob-teal/20 animate-pulse;
+}

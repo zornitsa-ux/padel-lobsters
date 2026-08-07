@@ -1,4 +1,5 @@
 import React from 'react'
+import { Skeleton } from '../../components/ui/Skeleton'
 
 interface GreetingProps {
   hello: string
@@ -13,9 +14,10 @@ interface GreetingProps {
 export default function Greeting({ hello, sub, loading = false }: GreetingProps) {
   if (loading) {
     return (
-      <div aria-hidden="true">
-        <div className="h-7 w-48 rounded bg-gray-200 animate-pulse" />
-        <div className="mt-1.5 h-5 w-64 rounded bg-gray-100 animate-pulse" />
+      <div role="status" aria-busy="true">
+        <span className="sr-only">Loading your greeting…</span>
+        <Skeleton className="h-7 w-48" />
+        <Skeleton className="mt-1.5 h-5 w-64" />
       </div>
     )
   }

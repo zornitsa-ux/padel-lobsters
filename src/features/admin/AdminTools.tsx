@@ -6,6 +6,7 @@ import { useAllRegistrations } from '../events/useRegistrations'
 import { useAllMatches } from '../events/useMatches'
 import usePlayerAliases from '../../hooks/usePlayerAliases'
 import { useMerchInterests } from '../merch/useMerch'
+import { readMerchLastChecked } from '../merch/lastChecked'
 import { SignInBanner } from '../../components/ui/AuthGate'
 import PlayerAliasMatcher from '../../components/PlayerAliasMatcher'
 import ReviewBreakdownModal from '../community/ReviewBreakdownModal'
@@ -38,8 +39,6 @@ type ToolCard = {
   icon: LucideIcon
   onClick: () => void
 }
-
-const LAST_CHECK_KEY = 'pl_merch_last_checked'
 
 export default function AdminTools({ onNavigate }: AdminToolsProps) {
   const { session } = useApp()
@@ -78,7 +77,7 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
   // badge never appeared.
   const newOrdersCount = useMemo(() => {
     if (!isAdmin) return 0
-    const lastChecked = localStorage.getItem(LAST_CHECK_KEY) || new Date(0).toISOString()
+    const lastChecked = readMerchLastChecked()
     return interests.filter((o) => (o.created_at || '') >= lastChecked).length
   }, [isAdmin, interests])
 

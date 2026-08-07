@@ -2,6 +2,7 @@ import React from 'react'
 import { Calendar, CalendarDays, CreditCard } from 'lucide-react'
 import DateTile from '../../components/ui/DateTile'
 import { EmptyState } from '../../components/ui/EmptyState'
+import { Skeleton } from '../../components/ui/Skeleton'
 import AddToCalendarButton from '../../components/ui/AddToCalendarButton'
 import ShareWhatsAppButton from '../../components/ui/ShareWhatsAppButton'
 import { fmtEur } from '../../lib/format'
@@ -13,8 +14,36 @@ interface NextEventCardProps {
   isAdmin: boolean
   claimedId: string | null
   isRegistered: boolean
+  /** No tournaments read yet — "no upcoming events" would be a guess, not a fact. */
+  loading?: boolean
+  /** Registrations still in flight, so this player's sign-up state is unknown. */
+  registrationsPending?: boolean
   onNavigate: (page: string, tournament?: NormalisedTournament) => void
   formatDate: (date: string | null | undefined) => string
+}
+
+// Placeholder that mirrors the loaded card's metrics — eyebrow, title, the
+// md DateTile's 3.5rem × 4rem box, two meta lines, action row — so the real
+// event lands in place instead of shoving the page around.
+function NextEventSkeleton() {
+  return (
+    <div className="card-elevated" role="status" aria-busy="true">
+      <span className="sr-only">Loading your next event…</span>
+      <Skeleton className="h-3 w-24 mb-1" />
+      <Skeleton className="h-6 w-3/5" />
+      <div className="mt-2 mb-3 flex items-center gap-3">
+        <Skeleton className="w-14 h-16 rounded-xl flex-shrink-0" />
+        <div className="flex-1 min-w-0 space-y-1.5">
+          <Skeleton className="h-4 w-44" />
+          <Skeleton className="h-3.5 w-28" />
+        </div>
+      </div>
+      <div className="flex gap-2">
+        <Skeleton className="h-8 flex-1 rounded-xl" />
+        <Skeleton className="h-8 w-24 rounded-lg" />
+      </div>
+    </div>
+  )
 }
 
 // ── Next event — glass card ───────────────────────────── */
@@ -23,9 +52,13 @@ export default function NextEventCard({
   isAdmin,
   claimedId,
   isRegistered,
+  loading = false,
+  registrationsPending = false,
   onNavigate,
   formatDate,
 }: NextEventCardProps) {
+  if (loading) return <NextEventSkeleton />
+
   if (!upcoming) {
     return (
       <EmptyState
@@ -87,8 +120,12 @@ export default function NextEventCard({
         </div>
       </div>
 
-      {/* Registration status badge */}
+      {/* Registration status badge. Held back until registrations land —
+          `isRegistered` defaults to false, so rendering early tells a
+          signed-up player they haven't signed up. */}
+      {claimedId && registrationsPending && <Skeleton className="h-7 w-40 rounded-lg mb-3" />}
       {claimedId &&
+        !registrationsPending &&
         (isRegistered ? (
           <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-1.5 inline-flex items-center gap-1.5 mb-3">
             <span className="text-green-600 text-xs">✓</span>

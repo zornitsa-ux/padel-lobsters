@@ -75,6 +75,24 @@ export async function fetchMatches(tournamentId: string): Promise<NormalisedMatc
   return normaliseMatches(rows)
 }
 
+// Matches for events on or after `sinceDate` (a YYYY-MM-DD day, so callers
+// share one cache entry per day rather than per millisecond).
+//
+// `matches` has no date of its own, so the window is applied to the parent
+// tournament through an inner-join embed — `!inner()` with an empty projection
+// filters without pulling the joined columns down the wire. This stays a single
+// independent request, so it still fires in parallel with the tournaments read
+// instead of waterfalling behind it.
+export async function fetchRecentMatches(sinceDate: string): Promise<NormalisedMatch[]> {
+  const { data, error } = await supabase
+    .from('matches')
+    .select('*, tournaments!inner()')
+    .gte('tournaments.date', sinceDate)
+  if (error) throw error
+  const rows = z.array(matchRowSchema).parse(data ?? [])
+  return normaliseMatches(rows)
+}
+
 export async function fetchAllMatches(): Promise<NormalisedMatch[]> {
   const { data, error } = await supabase.from('matches').select('*')
   if (error) throw error
