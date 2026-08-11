@@ -1265,7 +1265,6 @@ export type Database = {
       tournaments: {
         Row: {
           completed_at: string | null
-          court_booking_mode: string | null
           courts: Json | null
           created_at: string | null
           date: string | null
@@ -1288,7 +1287,6 @@ export type Database = {
         }
         Insert: {
           completed_at?: string | null
-          court_booking_mode?: string | null
           courts?: Json | null
           created_at?: string | null
           date?: string | null
@@ -1311,7 +1309,6 @@ export type Database = {
         }
         Update: {
           completed_at?: string | null
-          court_booking_mode?: string | null
           courts?: Json | null
           created_at?: string | null
           date?: string | null
@@ -1436,6 +1433,7 @@ export type Database = {
       }
     }
     Functions: {
+      _url_encode: { Args: { input: string }; Returns: string }
       admin_add_player: {
         Args: { input_payload: Json }
         Returns: {
@@ -1905,6 +1903,10 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      get_payment_reminder_link: {
+        Args: { input_registration_id: string }
+        Returns: string
       }
       get_transfer_recipient_phone: {
         Args: { input_transfer_id: string }

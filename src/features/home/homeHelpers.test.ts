@@ -2,61 +2,18 @@ process.env.TZ = 'UTC'
 
 import { describe, it, expect } from 'vitest'
 import { perPersonCost, upcomingBirthdays } from './homeHelpers'
-import type { TournamentCourt } from '../../lib/normalise'
-
-const court = (costPerPerson: number | string): TournamentCourt => ({
-  name: 'Court 1',
-  booked: true,
-  costPerPerson,
-  responsible: '',
-  tikkieLink: '',
-})
 
 describe('perPersonCost', () => {
-  it('splits the total price across the player cap when the admin books', () => {
-    expect(
-      perPersonCost({ courtBookingMode: 'admin_all', totalPrice: 80, maxPlayers: 16, courts: [] }),
-    ).toBe(5)
-  })
-
-  it('treats a missing booking mode as admin-booked', () => {
-    expect(
-      perPersonCost({ courtBookingMode: '', totalPrice: 80, maxPlayers: 16, courts: [] }),
-    ).toBe(5)
+  it('splits the total price across the player cap', () => {
+    expect(perPersonCost({ totalPrice: 80, maxPlayers: 16 })).toBe(5)
   })
 
   it('defaults the cap to 16 when it is missing', () => {
-    expect(
-      perPersonCost({ courtBookingMode: 'admin_all', totalPrice: 32, maxPlayers: 0, courts: [] }),
-    ).toBe(2)
+    expect(perPersonCost({ totalPrice: 32, maxPlayers: 0 })).toBe(2)
   })
 
   it('is zero when no total price is set', () => {
-    expect(
-      perPersonCost({ courtBookingMode: 'admin_all', totalPrice: 0, maxPlayers: 16, courts: [] }),
-    ).toBe(0)
-  })
-
-  it('sums each court when players book their own', () => {
-    expect(
-      perPersonCost({
-        courtBookingMode: 'players',
-        totalPrice: 999,
-        maxPlayers: 16,
-        courts: [court(4.5), court('3.5')],
-      }),
-    ).toBe(8)
-  })
-
-  it('ignores courts with an unparseable cost', () => {
-    expect(
-      perPersonCost({
-        courtBookingMode: 'players',
-        totalPrice: 0,
-        maxPlayers: 16,
-        courts: [court(4), court('')],
-      }),
-    ).toBe(4)
+    expect(perPersonCost({ totalPrice: 0, maxPlayers: 16 })).toBe(0)
   })
 })
 

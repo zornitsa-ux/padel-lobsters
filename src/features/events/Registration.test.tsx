@@ -71,7 +71,6 @@ const baseTournament = {
   maxPlayers: 8,
   duration: 90,
   courts: [],
-  courtBookingMode: 'admin_all',
   totalPrice: 0,
   tikkieLink: '',
   genderMode: 'mixed',

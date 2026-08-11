@@ -105,16 +105,9 @@ export default function Tournament({ onNavigate }: { onNavigate: EventNavigate }
       duration: t.duration || 90,
       format: t.format || 'lobster_matching',
       genderMode: t.genderMode || 'mixed',
-      courtBookingMode: t.courtBookingMode || 'admin_all',
       courts: t.courts?.length
-        ? t.courts.map((c) => ({
-            name: c.name || '',
-            booked: !!c.booked,
-            costPerPerson: c.costPerPerson || '',
-            responsible: c.responsible || '',
-            tikkieLink: c.tikkieLink || '',
-          }))
-        : [{ name: '', booked: false, costPerPerson: '', responsible: '', tikkieLink: '' }],
+        ? t.courts.map((c) => ({ name: c.name || '', booked: !!c.booked }))
+        : [{ name: '', booked: false }],
       pricePerPerson:
         parseFloat(String(t.totalPrice)) > 0 && parseInt(String(t.maxPlayers)) > 0
           ? (parseFloat(String(t.totalPrice)) / parseInt(String(t.maxPlayers)))
@@ -164,24 +157,12 @@ export default function Tournament({ onNavigate }: { onNavigate: EventNavigate }
         maxPlayers: mp,
         format: form.format,
         genderMode: form.genderMode,
-        courtBookingMode: form.courtBookingMode,
         duration: parseInt(String(form.duration)) || 90,
         totalPrice:
-          form.courtBookingMode === 'admin_all'
-            ? (parseFloat(String(form.pricePerPerson)) || 0) *
-              (parseInt(String(form.maxPlayers)) || 16)
-            : 0,
-        tikkieLink: form.courtBookingMode === 'admin_all' ? form.tikkieLink || '' : '',
-        courts: form.courts.map((c) => ({
-          name: c.name,
-          booked: !!c.booked,
-          costPerPerson:
-            form.courtBookingMode === 'player_responsible'
-              ? parseFloat(String(c.costPerPerson)) || 0
-              : 0,
-          responsible: form.courtBookingMode === 'player_responsible' ? c.responsible || '' : '',
-          tikkieLink: form.courtBookingMode === 'player_responsible' ? c.tikkieLink || '' : '',
-        })),
+          (parseFloat(String(form.pricePerPerson)) || 0) *
+          (parseInt(String(form.maxPlayers)) || 16),
+        tikkieLink: form.tikkieLink || '',
+        courts: form.courts.map((c) => ({ name: c.name, booked: !!c.booked })),
         notes: form.notes,
       }
       try {
@@ -199,10 +180,7 @@ export default function Tournament({ onNavigate }: { onNavigate: EventNavigate }
   const addCourt = () =>
     setForm((f) => ({
       ...f,
-      courts: [
-        ...f.courts,
-        { name: '', booked: false, costPerPerson: '', responsible: '', tikkieLink: '' },
-      ],
+      courts: [...f.courts, { name: '', booked: false }],
     }))
 
   const removeCourt = (i: number) =>

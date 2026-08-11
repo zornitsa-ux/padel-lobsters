@@ -6,9 +6,9 @@ import {
   CheckCircle,
   AlertCircle,
   ExternalLink,
-  UserCog,
   ShieldCheck,
   MoreVertical,
+  MessageCircle,
 } from 'lucide-react'
 import { fmtEur } from '../../lib/format'
 import { EmptyState } from '../../components/ui/EmptyState'
@@ -16,7 +16,8 @@ import { IconButton } from '../../components/ui/IconButton'
 import { PlayerRow } from '../../components/ui/PlayerRow'
 import { ProgressBar } from '../../components/ui/ProgressBar'
 import { StatTile } from '../../components/ui/StatTile'
-import type { EventNavigate } from './eventHelpers'
+import PaymentReminderModal from './PaymentReminderModal'
+import { pricePerPlayer, type EventNavigate } from './eventHelpers'
 import type { NormalisedTournament } from '../../lib/normalise'
 import type { NormalisedRegistration } from './registrationQueries'
 
@@ -40,6 +41,7 @@ export default function Payments({
   const { data: regsData = [] } = useRegistrations(tournament?.id)
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
   const [filter, setFilter] = useState<PaymentFilter>('all')
+  const [reminderTarget, setReminderTarget] = useState<{ regId: string; name: string } | null>(null)
 
   if (!tournament) {
     return (
@@ -58,8 +60,6 @@ export default function Payments({
     )
   }
 
-  const isAdminAll = !tournament.courtBookingMode || tournament.courtBookingMode === 'admin_all'
-
   const regs = regsData.filter((r) => r.status === 'registered')
   // Status buckets — see Registration.jsx PayBadge for semantics.
   const confirmed = regs.filter(
@@ -70,12 +70,7 @@ export default function Payments({
   // True "ghost" unpaid — didn't even click the Tikkie link
   const trulyUnpaid = regs.filter((r) => !r.paymentStatus || r.paymentStatus === 'unpaid')
 
-  // Cost per player depends on booking mode
-  const costPerPlayer = isAdminAll
-    ? tournament.totalPrice > 0
-      ? tournament.totalPrice / (tournament.maxPlayers || regs.length || 1)
-      : 0
-    : (tournament.courts || []).reduce((s, c) => s + (parseFloat(String(c.costPerPerson)) || 0), 0)
+  const costPerPlayer = pricePerPlayer(tournament)
 
   const totalCollected = confirmed.length * costPerPlayer
   const totalExpected = regs.length * costPerPlayer
@@ -164,77 +159,37 @@ export default function Payments({
   return (
     <div className="space-y-4">
       {/* Payment info banner */}
-      {isAdminAll ? (
-        <div className="bg-lob-teal-light rounded-2xl p-4 space-y-2 border border-lob-teal/10">
-          <div className="flex items-center gap-2 mb-1">
-            <ShieldCheck size={15} className="text-lob-teal" />
-            <span className="text-sm font-bold text-lob-slate">Admin booked all courts</span>
-          </div>
-          {tournament.totalPrice > 0 && (
-            <p className="text-sm text-lob-slate">
-              Total:{' '}
-              <span className="font-bold text-lob-dark">{fmtEur(tournament.totalPrice)}</span> · Per
-              player: <span className="font-bold text-lob-teal">{fmtEur(costPerPlayer)}</span>
-              <span className="text-xs text-lob-muted-light">
-                {' '}
-                (÷ {tournament.maxPlayers} players)
-              </span>
-            </p>
-          )}
-          {tournament.tikkieLink && (
-            <a
-              href={tournament.tikkieLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 bg-[#FF6B35] text-white text-sm font-bold px-4 py-2 rounded-xl active:scale-95 transition-all"
-            >
-              <ExternalLink size={14} /> Pay via Tikkie
-            </a>
-          )}
-          {!tournament.tikkieLink && (
-            <p className="text-xs text-lob-muted-light">
-              No Tikkie link set — payment via Playtomic or cash
-            </p>
-          )}
+      <div className="bg-lob-teal-light rounded-2xl p-4 space-y-2 border border-lob-teal/10">
+        <div className="flex items-center gap-2 mb-1">
+          <ShieldCheck size={15} className="text-lob-teal" />
+          <span className="text-sm font-bold text-lob-slate">Admin booked all courts</span>
         </div>
-      ) : (
-        /* Player-responsible: show per-court Tikkie links */
-        (tournament.courts || []).some((c) => c.tikkieLink || c.responsible) && (
-          <div className="bg-purple-50 rounded-2xl p-4 space-y-2">
-            <div className="flex items-center gap-2 mb-1">
-              <UserCog size={15} className="text-purple-600" />
-              <span className="text-sm font-bold text-lob-slate">Court payments</span>
-            </div>
-            {(tournament.courts || []).map((c, i) =>
-              c.responsible || c.tikkieLink ? (
-                <div key={i} className="flex items-center justify-between gap-2">
-                  <div>
-                    <p className="text-sm font-medium text-lob-slate">
-                      {c.name || `Court ${i + 1}`}
-                    </p>
-                    {c.responsible && (
-                      <p className="text-xs text-lob-muted">Responsible: {c.responsible}</p>
-                    )}
-                    {Number(c.costPerPerson) > 0 && (
-                      <p className="text-xs text-lob-muted">{fmtEur(c.costPerPerson)}/pp</p>
-                    )}
-                  </div>
-                  {c.tikkieLink && (
-                    <a
-                      href={c.tikkieLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 bg-[#FF6B35] text-white text-xs font-bold px-3 py-1.5 rounded-lg active:scale-95 transition-all flex-shrink-0"
-                    >
-                      <ExternalLink size={12} /> Tikkie
-                    </a>
-                  )}
-                </div>
-              ) : null,
-            )}
-          </div>
-        )
-      )}
+        {tournament.totalPrice > 0 && (
+          <p className="text-sm text-lob-slate">
+            Total: <span className="font-bold text-lob-dark">{fmtEur(tournament.totalPrice)}</span>{' '}
+            · Per player: <span className="font-bold text-lob-teal">{fmtEur(costPerPlayer)}</span>
+            <span className="text-xs text-lob-muted-light">
+              {' '}
+              (÷ {tournament.maxPlayers} players)
+            </span>
+          </p>
+        )}
+        {tournament.tikkieLink && (
+          <a
+            href={tournament.tikkieLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 bg-[#FF6B35] text-white text-sm font-bold px-4 py-2 rounded-xl active:scale-95 transition-all"
+          >
+            <ExternalLink size={14} /> Pay via Tikkie
+          </a>
+        )}
+        {!tournament.tikkieLink && (
+          <p className="text-xs text-lob-muted-light">
+            No Tikkie link set — payment via Playtomic or cash
+          </p>
+        )}
+      </div>
 
       {/* Summary */}
       <div className="bg-lob-teal rounded-2xl p-4 text-white shadow-lg">
@@ -377,6 +332,17 @@ export default function Payments({
                       ) : (
                         <PaymentMethodPicker onSelect={(method) => handleMarkPaid(reg, method)} />
                       )}
+                      {!!tournament.tikkieLink && !isConfirmed && !isSelfPaid && (
+                        <button
+                          onClick={() =>
+                            setReminderTarget({ regId: reg.id, name: player.name || 'this player' })
+                          }
+                          title="Send a WhatsApp payment reminder"
+                          className="text-xs bg-[#25D366] text-white px-3 py-1.5 rounded-xl font-semibold active:scale-95 transition-all inline-flex items-center gap-1"
+                        >
+                          <MessageCircle size={12} /> Remind
+                        </button>
+                      )}
                       {/* Manual override — lets the admin set any status directly,
                           e.g. correcting a misclick or manually marking Tikkied. */}
                       <StatusOverrideMenu
@@ -421,6 +387,14 @@ export default function Payments({
           )
         })}
       </div>
+
+      {reminderTarget && (
+        <PaymentReminderModal
+          registrationId={reminderTarget.regId}
+          playerName={reminderTarget.name}
+          onClose={() => setReminderTarget(null)}
+        />
+      )}
     </div>
   )
 }

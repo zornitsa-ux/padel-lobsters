@@ -10,7 +10,6 @@ interface RegistrationPaymentSheetModalProps {
   tournament: NormalisedTournament
   paymentSheet: PaymentSheet | null
   costPerPlayer: number
-  isAdminAll: boolean
   tikkieClicked: boolean
   declaring: boolean
   onClose: () => void
@@ -23,7 +22,6 @@ export default function RegistrationPaymentSheetModal({
   tournament,
   paymentSheet,
   costPerPlayer,
-  isAdminAll,
   tikkieClicked,
   declaring,
   onClose,
@@ -49,7 +47,7 @@ export default function RegistrationPaymentSheetModal({
           </div>
         )}
 
-        {isAdminAll && tournament.tikkieLink && (
+        {tournament.tikkieLink && (
           <a
             href={tournament.tikkieLink}
             target="_blank"
@@ -65,29 +63,6 @@ export default function RegistrationPaymentSheetModal({
             {tikkieClicked ? 'Tikkie opened ✓' : 'Pay via Tikkie now'}
           </a>
         )}
-
-        {!isAdminAll &&
-          (tournament.courts || [])
-            .filter((c) => c.tikkieLink)
-            .map((c, i) => (
-              <a
-                key={i}
-                href={c.tikkieLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => onTikkieClick(paymentSheet.regId, paymentSheet.paymentStatus)}
-                className={`flex items-center justify-center gap-2 w-full text-sm font-bold py-3 rounded-2xl transition-all ${
-                  tikkieClicked
-                    ? 'bg-gray-200 text-lob-muted pointer-events-none'
-                    : 'bg-[#FF6B35] text-white active:scale-95'
-                }`}
-              >
-                <ExternalLink size={16} />
-                {tikkieClicked
-                  ? 'Tikkie opened ✓'
-                  : `Pay for ${c.name || `Court ${i + 1}`} via Tikkie`}
-              </a>
-            ))}
 
         {tikkieClicked && (
           <>

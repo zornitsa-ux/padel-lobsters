@@ -16,7 +16,6 @@ export const tournamentRowSchema = z
     format: nullableString,
     notes: nullableString,
     gender_mode: nullableString,
-    court_booking_mode: nullableString,
     tikkie_link: nullableString,
     completed_at: nullableString,
     created_at: nullableString,
