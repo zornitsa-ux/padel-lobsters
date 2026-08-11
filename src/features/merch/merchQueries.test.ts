@@ -1,4 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { mockSupabase } from '../../test/mockSupabase'
 
 type Result = { data?: unknown; error?: unknown }
 type Call = { table: string; method: string; args: unknown[] }
@@ -46,22 +47,20 @@ vi.mock('../../supabase', () => {
     return builder
   }
 
-  return {
-    supabase: {
-      from: (table: string) => makeBuilder(table),
-      storage: {
-        from: () => ({
-          upload: (filename: string, file: unknown) => {
-            h.uploads.push({ filename, file })
-            return Promise.resolve(h.uploadResult.current)
-          },
-          getPublicUrl: (filename: string) => ({
-            data: { publicUrl: `https://cdn.test/merch/${filename}` },
-          }),
+  return mockSupabase({
+    from: (table: string) => makeBuilder(table),
+    storage: {
+      from: () => ({
+        upload: (filename: string, file: unknown) => {
+          h.uploads.push({ filename, file })
+          return Promise.resolve(h.uploadResult.current)
+        },
+        getPublicUrl: (filename: string) => ({
+          data: { publicUrl: `https://cdn.test/merch/${filename}` },
         }),
-      },
+      }),
     },
-  }
+  })
 })
 
 import { merchInterestRowSchema, merchItemRowSchema } from './merchSchemas'

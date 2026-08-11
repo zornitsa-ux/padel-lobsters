@@ -1,4 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { mockSupabase } from '../test/mockSupabase'
 
 // Mock the supabase client + device helpers BEFORE importing the module
 // under test so the module-level `import { supabase }` picks up the
@@ -14,7 +15,7 @@ const { supabase } = vi.hoisted(() => ({
   },
 }))
 
-vi.mock('../supabase', () => ({ supabase }))
+vi.mock('../supabase', () => mockSupabase(supabase))
 
 vi.mock('../lib/deviceId', () => ({
   getDeviceId: vi.fn(() => 'test-device-id'),

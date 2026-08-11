@@ -1,10 +1,9 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { mockSupabase } from '../test/mockSupabase'
 
 const { mockRpc } = vi.hoisted(() => ({ mockRpc: vi.fn() }))
 
-vi.mock('../supabase', () => ({
-  supabase: { rpc: mockRpc },
-}))
+vi.mock('../supabase', () => mockSupabase({ rpc: mockRpc }))
 
 vi.mock('../lib/deviceId', () => ({
   getDeviceId: vi.fn(() => 'test-device-id'),

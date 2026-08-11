@@ -2,10 +2,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { waitFor } from '@testing-library/react'
 import { renderHookWithClient } from '../../test/renderWithClient'
+import { mockSupabase } from '../../test/mockSupabase'
 import { playerKeys } from './playerKeys'
 
 const { mockRpc } = vi.hoisted(() => ({ mockRpc: vi.fn() }))
-vi.mock('../../supabase', () => ({ supabase: { rpc: mockRpc } }))
+vi.mock('../../supabase', () => mockSupabase({ rpc: mockRpc }))
 
 import { fetchPlayersPii } from './playerQueries'
 import { usePlayersPii } from './usePlayers'

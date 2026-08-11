@@ -1,4 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { mockSupabase } from '../../test/mockSupabase'
 
 const { mockRpc, mockFrom, mockOrder, mockFetchMyProfileRpc } = vi.hoisted(() => {
   const mockOrder = vi.fn()
@@ -8,7 +9,7 @@ const { mockRpc, mockFrom, mockOrder, mockFetchMyProfileRpc } = vi.hoisted(() =>
   return { mockRpc: vi.fn(), mockFrom, mockOrder, mockFetchMyProfileRpc: vi.fn() }
 })
 
-vi.mock('../../supabase', () => ({ supabase: { rpc: mockRpc, from: mockFrom } }))
+vi.mock('../../supabase', () => mockSupabase({ rpc: mockRpc, from: mockFrom }))
 vi.mock('../../api/auth', () => ({ fetchMyProfile: mockFetchMyProfileRpc }))
 
 import { addPlayer, fetchPlayers, updatePlayer } from './playerQueries'

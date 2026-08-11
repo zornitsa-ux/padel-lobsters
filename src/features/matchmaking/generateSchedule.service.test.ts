@@ -1,13 +1,14 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import type { GenerateInput } from './domain/types'
 import { mkRoster } from './domain/testkit'
+import { mockSupabase } from '../../test/mockSupabase'
 
 const { mockRpc, mockSaveMatches } = vi.hoisted(() => ({
   mockRpc: vi.fn(),
   mockSaveMatches: vi.fn(),
 }))
 
-vi.mock('../../supabase', () => ({ supabase: { rpc: mockRpc } }))
+vi.mock('../../supabase', () => mockSupabase({ rpc: mockRpc }))
 vi.mock('../events/matchQueries', () => ({ saveMatches: mockSaveMatches }))
 
 import {

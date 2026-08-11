@@ -3,14 +3,15 @@ import { describe, it, expect, vi, afterEach } from 'vitest'
 import { render, screen, cleanup } from '@testing-library/react'
 import { childrenOf, propsOf } from '../../test/element'
 import { normalisePlayers } from '../../lib/normalise'
+import { mockSupabase } from '../../test/mockSupabase'
 
 vi.mock('../../components/ApproveDevicesWidget', () => ({
   default: () => <div data-testid="approve-devices" />,
 }))
 
 // AccountOrdersSection pulls in the merch data layer, which imports the
-// supabase client module — mock it so import doesn't require real env vars.
-vi.mock('../../supabase', () => ({ supabase: {} }))
+// supabase client module.
+vi.mock('../../supabase', () => mockSupabase())
 
 import AccountSection from './AccountSection'
 import AccountOrdersSection from './AccountOrdersSection'

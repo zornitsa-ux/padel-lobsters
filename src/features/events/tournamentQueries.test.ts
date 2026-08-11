@@ -1,4 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { mockSupabase } from '../../test/mockSupabase'
 
 // Chain helpers hoisted so the vi.mock factory can reference them.
 const { mockOrder, mockSelect, mockInsert, mockUpdate, mockEq, mockDelete, mockDeleteEq } =
@@ -12,8 +13,8 @@ const { mockOrder, mockSelect, mockInsert, mockUpdate, mockEq, mockDelete, mockD
     mockDeleteEq: vi.fn(),
   }))
 
-vi.mock('../../supabase', () => ({
-  supabase: {
+vi.mock('../../supabase', () =>
+  mockSupabase({
     from: vi.fn((table: string) => {
       if (table === 'tournaments') {
         return {
@@ -25,8 +26,8 @@ vi.mock('../../supabase', () => ({
       }
       return { select: mockSelect }
     }),
-  },
-}))
+  }),
+)
 
 import {
   fetchTournaments,

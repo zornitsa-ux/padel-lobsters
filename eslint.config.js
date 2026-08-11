@@ -67,4 +67,13 @@ export default [
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
     },
   },
+  {
+    // Pure domain modules must stay import-free of the Supabase client so a
+    // missing/invalid env can never take down a test that only needs pure
+    // logic (see docs/matchmaking-v2 and issue #25).
+    files: ['src/features/*/domain/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': ['error', { patterns: ['**/supabase', '**/supabase.ts'] }],
+    },
+  },
 ]

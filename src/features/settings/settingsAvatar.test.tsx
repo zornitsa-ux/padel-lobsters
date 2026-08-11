@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { fireEvent, render, screen, waitFor, cleanup } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
+import { mockSupabase } from '../../test/mockSupabase'
 
 // The avatar upload used to be a direct supabase.storage call inside Settings.
 // It now goes through the players slice (useAvatarUpload), so these tests pin
@@ -54,10 +55,7 @@ vi.mock('./AccountStatsSection', () => ({ default: () => null }))
 vi.mock('./AccountOrdersSection', () => ({ default: () => null }))
 vi.mock('../../components/ApproveDevicesWidget', () => ({ default: () => null }))
 vi.mock('../../lib/processAvatar', () => ({ processAvatar: processAvatarMock }))
-// Settings imports AdminSection -> AdminSecurityPanels -> useDevices, which
-// imports the supabase client module — mock it so import doesn't require
-// real env vars (AdminSection itself never renders here since role is 'player').
-vi.mock('../../supabase', () => ({ supabase: {} }))
+vi.mock('../../supabase', () => mockSupabase())
 
 import Settings from './Settings'
 

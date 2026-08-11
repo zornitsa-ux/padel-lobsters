@@ -9,14 +9,23 @@ const envSchema = z.object({
     .refine((value) => value.length > 0, 'VITE_SUPABASE_ANON_KEY is required'),
 })
 
-const rawEnv = (import.meta as ImportMeta & { env: Record<string, string | undefined> }).env
-const parsed = envSchema.safeParse(rawEnv)
+let cached: z.infer<typeof envSchema> | undefined
 
-if (!parsed.success) {
-  const details = parsed.error.issues
-    .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
-    .join('; ')
-  throw new Error(`Invalid environment configuration: ${details}`)
+// Validates lazily so importing this module can never throw — only the first
+// call that actually needs env vars pays for a missing/invalid config.
+export function getEnv() {
+  if (cached) return cached
+
+  const rawEnv = (import.meta as ImportMeta & { env: Record<string, string | undefined> }).env
+  const parsed = envSchema.safeParse(rawEnv)
+
+  if (!parsed.success) {
+    const details = parsed.error.issues
+      .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
+      .join('; ')
+    throw new Error(`Invalid environment configuration: ${details}`)
+  }
+
+  cached = parsed.data
+  return cached
 }
-
-export const env = parsed.data

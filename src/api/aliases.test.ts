@@ -1,10 +1,9 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { mockSupabase } from '../test/mockSupabase'
 
 const { mockFrom } = vi.hoisted(() => ({ mockFrom: vi.fn() }))
 
-vi.mock('../supabase', () => ({
-  supabase: { from: mockFrom },
-}))
+vi.mock('../supabase', () => mockSupabase({ from: mockFrom }))
 
 vi.mock('../lib/toastBus', () => ({
   emitToast: vi.fn(),

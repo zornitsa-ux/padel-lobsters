@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { screen, fireEvent, waitFor, cleanup } from '@testing-library/react'
 import { renderWithClient } from '../../test/renderWithClient'
+import { mockSupabase } from '../../test/mockSupabase'
 import MatchmakingContainer from './MatchmakingContainer'
 
 // The commit path is the only impure call here; the pure domain runs for real
@@ -9,9 +10,7 @@ import MatchmakingContainer from './MatchmakingContainer'
 vi.mock('./useMatchmaking', () => ({
   useCommitSchedule: () => ({ mutate: vi.fn(), isPending: false }),
 }))
-// generateSchedule.service imports the real supabase client at module scope;
-// stub it so loading the module doesn't require live env vars.
-vi.mock('../../supabase', () => ({ supabase: {} }))
+vi.mock('../../supabase', () => mockSupabase())
 
 const roster = (count: number) =>
   Array.from({ length: count }, (_, i) => ({

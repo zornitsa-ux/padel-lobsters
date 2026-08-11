@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react'
+import { mockSupabase } from '../test/mockSupabase'
 
 // D-028: the public "Join the Lobsters" form no longer collects a Playtomic
 // adjustment. The submit test drives the real form and asserts on what reaches
@@ -18,7 +19,7 @@ vi.mock('../features/players/usePlayers', () => ({
   usePlayerActions: () => ({ updatePlayer: vi.fn() }),
   useAvatarUpload: () => ({ mutateAsync: vi.fn() }),
 }))
-vi.mock('../supabase', () => ({ supabase: { storage: { from: () => ({}) } } }))
+vi.mock('../supabase', () => mockSupabase({ storage: { from: () => ({}) } }))
 vi.mock('../lib/processAvatar', () => ({ processAvatar: vi.fn() }))
 
 import SignupRequest from './SignupRequest'

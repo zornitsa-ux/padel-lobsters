@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { screen, cleanup } from '@testing-library/react'
 import { renderWithClient } from '../../test/renderWithClient'
+import { mockSupabase } from '../../test/mockSupabase'
 import type { NormalisedTournament } from '../../lib/normalise'
 
 // D-028: V2 is the only generator, with no settings flag in the picture. These
@@ -39,7 +40,7 @@ vi.mock('../matchmaking/useMatchmaking', () => ({
 vi.mock('../matchmaking/MatchmakingContainer', () => ({
   default: () => <div data-testid="v2-matchmaking" />,
 }))
-vi.mock('../../supabase', () => ({ supabase: {} }))
+vi.mock('../../supabase', () => mockSupabase())
 
 import Schedule from './Schedule'
 

@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
+import { mockSupabase } from '../../test/mockSupabase'
 import { supabase } from '../../supabase'
 import { subscribeTournament, broadcastScore, broadcastSchedule } from './tournamentChannel'
 
@@ -15,12 +16,12 @@ const { mockChannel, mockRemoveChannel } = vi.hoisted(() => {
   return { mockChannel: ch, mockRemoveChannel: vi.fn() }
 })
 
-vi.mock('../../supabase', () => ({
-  supabase: {
+vi.mock('../../supabase', () =>
+  mockSupabase({
     channel: vi.fn().mockReturnValue(mockChannel),
     removeChannel: mockRemoveChannel,
-  },
-}))
+  }),
+)
 
 // Track unsubs that need cleanup so tests stay independent.
 const pendingUnsubs: Array<() => void> = []
