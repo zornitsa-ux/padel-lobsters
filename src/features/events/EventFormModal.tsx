@@ -1,5 +1,5 @@
 import React, { type Dispatch, type FormEvent, type SetStateAction } from 'react'
-import { Plus, X, ShieldCheck, UserCog } from 'lucide-react'
+import { Plus, X } from 'lucide-react'
 import { fmtEur } from '../../lib/format'
 import { Modal } from '../../components/ui/Modal'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
@@ -147,64 +147,6 @@ export default function EventFormModal({
           )}
         </div>
 
-        {/* Court Booking Mode */}
-        <div>
-          <label className="label">Court Booking</label>
-          <div className="space-y-2">
-            <button
-              type="button"
-              onClick={() => setForm((f) => ({ ...f, courtBookingMode: 'admin_all' }))}
-              className={`w-full text-left p-3 rounded-xl border-2 transition-all ${
-                form.courtBookingMode === 'admin_all'
-                  ? 'border-lob-teal bg-teal-50'
-                  : 'border-gray-200 bg-gray-50'
-              }`}
-            >
-              <div className="flex items-center gap-2 mb-0.5">
-                <ShieldCheck
-                  size={15}
-                  className={
-                    form.courtBookingMode === 'admin_all' ? 'text-lob-teal' : 'text-lob-muted-light'
-                  }
-                />
-                <span className="font-semibold text-sm text-lob-dark">Admin books all courts</span>
-              </div>
-              <p className="text-xs text-lob-muted ml-5">
-                You book all courts centrally. One total price covers courts + food, drinks &amp;
-                prizes — split equally among players.
-              </p>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setForm((f) => ({ ...f, courtBookingMode: 'player_responsible' }))}
-              className={`w-full text-left p-3 rounded-xl border-2 transition-all ${
-                form.courtBookingMode === 'player_responsible'
-                  ? 'border-purple-400 bg-purple-50'
-                  : 'border-gray-200 bg-gray-50'
-              }`}
-            >
-              <div className="flex items-center gap-2 mb-0.5">
-                <UserCog
-                  size={15}
-                  className={
-                    form.courtBookingMode === 'player_responsible'
-                      ? 'text-purple-600'
-                      : 'text-lob-muted-light'
-                  }
-                />
-                <span className="font-semibold text-sm text-lob-dark">
-                  Players help book courts
-                </span>
-              </div>
-              <p className="text-xs text-lob-muted ml-5">
-                Each court has a responsible player who books it on Playtomic. Set a cost per person
-                per court.
-              </p>
-            </button>
-          </div>
-        </div>
-
         {/* Courts list */}
         <div>
           <div className="flex items-center justify-between mb-2">
@@ -234,32 +176,6 @@ export default function EventFormModal({
                   )}
                 </div>
 
-                {form.courtBookingMode === 'player_responsible' && (
-                  <div className="space-y-2">
-                    <input
-                      className="input py-2 text-sm w-full"
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="€ cost per person for this court"
-                      value={c.costPerPerson}
-                      onChange={(e) => setCourt(i, 'costPerPerson', e.target.value)}
-                    />
-                    <input
-                      className="input py-2 text-sm w-full"
-                      placeholder="Responsible player name (books on Playtomic)"
-                      value={c.responsible}
-                      onChange={(e) => setCourt(i, 'responsible', e.target.value)}
-                    />
-                    <input
-                      className="input py-2 text-sm w-full"
-                      placeholder="Tikkie link for this court (optional)"
-                      value={c.tikkieLink}
-                      onChange={(e) => setCourt(i, 'tikkieLink', e.target.value)}
-                    />
-                  </div>
-                )}
-
                 <label className="flex items-center gap-2 text-sm font-medium text-lob-slate cursor-pointer">
                   <input
                     type="checkbox"
@@ -274,61 +190,46 @@ export default function EventFormModal({
           </div>
         </div>
 
-        {/* Pricing — admin_all */}
-        {form.courtBookingMode === 'admin_all' && (
-          <div>
-            <label className="label">Price per Person (€)</label>
-            <p className="text-xs text-lob-muted mb-2">
-              All-in amount per player covering courts, food, drinks and prizes.
-            </p>
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              className="input"
-              placeholder="e.g. 35"
-              value={form.pricePerPerson}
-              onChange={(e) => setForm((f) => ({ ...f, pricePerPerson: e.target.value }))}
-            />
-            {form.pricePerPerson && parseInt(String(form.maxPlayers)) > 0 && (
-              <p className="text-sm font-semibold text-lob-teal mt-1.5">
-                {form.maxPlayers} players × {fmtEur(form.pricePerPerson)} ={' '}
-                {fmtEur(
-                  (parseFloat(String(form.pricePerPerson)) || 0) *
-                    (parseInt(String(form.maxPlayers)) || 0),
-                )}
-                <span className="text-xs font-normal text-lob-muted-light"> total</span>
-              </p>
-            )}
-          </div>
-        )}
-
-        {form.courtBookingMode === 'player_responsible' && form.courts.length > 0 && (
-          <p className="text-xs text-lob-muted">
-            Total per player:{' '}
-            <span className="font-semibold text-lob-slate">
-              {fmtEur(
-                form.courts.reduce((s, c) => s + (parseFloat(String(c.costPerPerson)) || 0), 0),
-              )}
-            </span>
+        {/* Pricing */}
+        <div>
+          <label className="label">Price per Person (€)</label>
+          <p className="text-xs text-lob-muted mb-2">
+            All-in amount per player covering courts, food, drinks and prizes.
           </p>
-        )}
-
-        {/* Tikkie link — admin_all only */}
-        {form.courtBookingMode === 'admin_all' && (
-          <div>
-            <label className="label">Tikkie Link (optional)</label>
-            <p className="text-xs text-lob-muted mb-2">
-              Paste your Tikkie link here so players can pay directly from the registration page.
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            className="input"
+            placeholder="e.g. 35"
+            value={form.pricePerPerson}
+            onChange={(e) => setForm((f) => ({ ...f, pricePerPerson: e.target.value }))}
+          />
+          {form.pricePerPerson && parseInt(String(form.maxPlayers)) > 0 && (
+            <p className="text-sm font-semibold text-lob-teal mt-1.5">
+              {form.maxPlayers} players × {fmtEur(form.pricePerPerson)} ={' '}
+              {fmtEur(
+                (parseFloat(String(form.pricePerPerson)) || 0) *
+                  (parseInt(String(form.maxPlayers)) || 0),
+              )}
+              <span className="text-xs font-normal text-lob-muted-light"> total</span>
             </p>
-            <input
-              className="input"
-              placeholder="https://tikkie.me/pay/..."
-              value={form.tikkieLink}
-              onChange={(e) => setForm((f) => ({ ...f, tikkieLink: e.target.value }))}
-            />
-          </div>
-        )}
+          )}
+        </div>
+
+        {/* Tikkie link */}
+        <div>
+          <label className="label">Tikkie Link (optional)</label>
+          <p className="text-xs text-lob-muted mb-2">
+            Paste your Tikkie link here so players can pay directly from the registration page.
+          </p>
+          <input
+            className="input"
+            placeholder="https://tikkie.me/pay/..."
+            value={form.tikkieLink}
+            onChange={(e) => setForm((f) => ({ ...f, tikkieLink: e.target.value }))}
+          />
+        </div>
 
         {/* Description */}
         <div>

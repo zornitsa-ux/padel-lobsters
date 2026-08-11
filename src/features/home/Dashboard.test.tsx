@@ -69,7 +69,6 @@ const UPCOMING = {
   status: 'upcoming',
   maxPlayers: 16,
   totalPrice: 0,
-  courtBookingMode: 'admin_all',
   courts: [],
   notes: '',
 }

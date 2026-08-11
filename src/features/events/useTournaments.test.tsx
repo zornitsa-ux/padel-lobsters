@@ -19,7 +19,6 @@ const mockTournaments = [
     id: 'abc',
     name: 'Summer Cup',
     maxPlayers: 16,
-    courtBookingMode: 'admin_all',
     totalPrice: 0,
   },
 ]

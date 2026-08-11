@@ -37,22 +37,11 @@ export function upcomingBirthdays({
     .sort((a, b) => a.diff - b.diff)
 }
 
-// Per-person cost: admin-booked events split one total price across the cap,
-// player-booked events sum each court's own per-person cost.
+// Per-person cost: one total price split across the player cap.
 export function perPersonCost(
-  tournament: Pick<
-    NormalisedTournament,
-    'courtBookingMode' | 'totalPrice' | 'maxPlayers' | 'courts'
-  >,
+  tournament: Pick<NormalisedTournament, 'totalPrice' | 'maxPlayers'>,
 ): number {
-  const adminBooked = !tournament.courtBookingMode || tournament.courtBookingMode === 'admin_all'
-  if (adminBooked) {
-    const total = tournament.totalPrice || 0
-    const maxPlayers = tournament.maxPlayers || 16
-    return total > 0 ? total / maxPlayers : 0
-  }
-  return (tournament.courts || []).reduce(
-    (sum, court) => sum + (parseFloat(String(court.costPerPerson)) || 0),
-    0,
-  )
+  const total = tournament.totalPrice || 0
+  const maxPlayers = tournament.maxPlayers || 16
+  return total > 0 ? total / maxPlayers : 0
 }

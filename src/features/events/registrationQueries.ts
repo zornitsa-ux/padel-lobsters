@@ -97,3 +97,17 @@ export async function promoteWaitlistRegistration(id: string) {
   if (error) throw error
   return firstRow(data)?.status ?? 'error'
 }
+
+// Admin-only, single-player WhatsApp reminder link — built and validated
+// server-side (E.164 check + wa.me URL) by get_payment_reminder_link so the
+// client never touches the raw phone number, only fetches it for the one
+// registration the admin is acting on, and never before the admin asks.
+// Returns null when there's no usable link (bad/missing phone, or the event
+// has no Tikkie link set).
+export async function fetchPaymentReminderLink(registrationId: string): Promise<string | null> {
+  const { data, error } = await supabase.rpc('get_payment_reminder_link', {
+    input_registration_id: registrationId,
+  })
+  if (error) throw error
+  return data ?? null
+}

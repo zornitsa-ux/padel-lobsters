@@ -68,7 +68,6 @@ const tournament: NormalisedTournament = {
   maxPlayers: 16,
   duration: 90,
   courts: [],
-  courtBookingMode: 'admin_all',
   totalPrice: 0,
   tikkieLink: '',
   genderMode: 'mixed',

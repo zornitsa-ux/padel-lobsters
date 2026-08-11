@@ -36,6 +36,7 @@ public.cancel_transfer(input_transfer_id uuid) authenticated
 public.create_transfer(input_to_player_id uuid, input_tournament_id uuid) authenticated
 public.get_all_players_with_pii_v2() authenticated
 public.get_my_profile_v2() authenticated
+public.get_payment_reminder_link(input_registration_id uuid) authenticated
 public.get_transfer_recipient_phone(input_transfer_id uuid) authenticated
 public.is_my_device_trusted(input_player_id uuid, input_device_id text) authenticated
 public.list_pending_devices(input_requesting_device_id text) authenticated

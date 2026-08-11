@@ -12,6 +12,7 @@ import {
   Lock,
   KeyRound,
   UserCheck,
+  MessageCircle,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { CollapsibleCard } from './ui/CollapsibleCard'
@@ -42,9 +43,12 @@ type EventFilter = 'all' | 'failures' | 'pii' | 'locks'
 const EVENT_FILTERS: ReadonlyArray<{ id: EventFilter; label: string }> = [
   { id: 'all', label: 'All' },
   { id: 'failures', label: 'Failures only' },
-  { id: 'pii', label: 'PII dumps' },
+  { id: 'pii', label: 'PII reads' },
   { id: 'locks', label: 'Unlocks' },
 ]
+
+// Kinds that record an admin reading player contact details.
+const PII_ATTEMPT_KINDS = ['pii_dump', 'payment_reminder']
 
 export default function AdminSecurityPanels() {
   return (
@@ -229,7 +233,7 @@ function SecurityEventsPanel() {
   const filtered = events.filter((e) => {
     if (filter === 'all') return true
     if (filter === 'failures') return e.succeeded === false
-    if (filter === 'pii') return e.attempt_kind === 'pii_dump'
+    if (filter === 'pii') return PII_ATTEMPT_KINDS.includes(e.attempt_kind)
     if (filter === 'locks') return e.attempt_kind === 'admin_unlock'
     return true
   })
@@ -360,6 +364,8 @@ function labelForKind(kind: string): string {
       return 'Admin sign-in'
     case 'pii_dump':
       return 'Full roster PII read'
+    case 'payment_reminder':
+      return 'Payment reminder sent'
     case 'approve_device':
       return 'Device approved'
     case 'admin_unlock':
@@ -379,6 +385,8 @@ function iconForKind(kind: string): LucideIcon {
       return ShieldCheck
     case 'pii_dump':
       return AlertTriangle
+    case 'payment_reminder':
+      return MessageCircle
     case 'approve_device':
       return UserCheck
     case 'admin_unlock':
@@ -394,7 +402,7 @@ function colorsForEvent(ev: SecurityEventRow): { bg: string; text: string; icon:
   if (ev.succeeded === false) {
     return { bg: 'bg-red-50 border-red-100', text: 'text-red-800', icon: 'text-red-600' }
   }
-  if (ev.attempt_kind === 'pii_dump') {
+  if (PII_ATTEMPT_KINDS.includes(ev.attempt_kind)) {
     return { bg: 'bg-amber-50 border-amber-100', text: 'text-amber-800', icon: 'text-amber-700' }
   }
   if (ev.was_new_device) {

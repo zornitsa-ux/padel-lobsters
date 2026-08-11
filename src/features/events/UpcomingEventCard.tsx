@@ -9,7 +9,6 @@ import {
   Circle,
   Building2,
   ShieldCheck,
-  UserCog,
 } from 'lucide-react'
 import EventAdminMenu from './EventAdminMenu'
 import DateTile from '../../components/ui/DateTile'
@@ -59,7 +58,6 @@ export default function UpcomingEventCard({
   const bookedCount = (t.courts || []).filter((c) => c.booked).length
   const totalCourts = (t.courts || []).length
   const ppCost = pricePerPlayer(t)
-  const isAdminAll = !t.courtBookingMode || t.courtBookingMode === 'admin_all'
   const [bookError, setBookError] = useState('')
   const [bookingIndex, setBookingIndex] = useState<number | null>(null)
 
@@ -190,16 +188,10 @@ export default function UpcomingEventCard({
       {/* Booking mode badge — admin only */}
       {isAdmin && (
         <div className="mb-2">
-          {isAdminAll ? (
-            <span className="inline-flex items-center gap-1 text-xs bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full font-medium">
-              <ShieldCheck size={11} /> Admin books all courts
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1 text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full font-medium">
-              <UserCog size={11} /> Players responsible per court
-            </span>
-          )}
-          {isAdminAll && t.totalPrice > 0 && (
+          <span className="inline-flex items-center gap-1 text-xs bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full font-medium">
+            <ShieldCheck size={11} /> Admin books all courts
+          </span>
+          {t.totalPrice > 0 && (
             <span className="ml-2 text-xs text-lob-muted">
               Total {fmtEur(t.totalPrice)} incl. courts + food + prizes
             </span>
@@ -223,12 +215,6 @@ export default function UpcomingEventCard({
                 <Circle size={11} className="text-lob-muted-light/60 flex-shrink-0" />
               )}
               <span>{c.name || `Court ${i + 1}`}</span>
-              {!isAdminAll && c.responsible && (
-                <span className="text-purple-600 ml-0.5">({c.responsible})</span>
-              )}
-              {isAdmin && !isAdminAll && Number(c.costPerPerson) > 0 && (
-                <span className="text-lob-muted-light ml-0.5">{fmtEur(c.costPerPerson)}</span>
-              )}
               {isAdmin && !c.booked && (
                 <button
                   onClick={() => handleBookCourt(i)}

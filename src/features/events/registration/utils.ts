@@ -2,6 +2,7 @@ import type { Player } from '../../../lib/normalise'
 import type { NormalisedRegistration } from '../registrationQueries'
 import type { NormalisedMatch } from '../matchQueries'
 import type { NormalisedTransfer } from '../transferQueries'
+import { pricePerPlayer } from '../eventHelpers'
 
 const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000
 
@@ -40,7 +41,6 @@ export interface InTournamentPlayerIds {
 }
 
 export interface PaymentConfig {
-  isAdminAll: boolean
   hasTikkie: boolean
   costPerPlayer: number
 }
@@ -48,14 +48,9 @@ export interface PaymentConfig {
 // The subset of a tournament that decides how a player pays.
 // NormalisedTournament satisfies it.
 export interface PayableEvent {
-  courtBookingMode?: string | null
   totalPrice?: number | null
   maxPlayers?: number | null
   tikkieLink?: string | null
-  courts?: ReadonlyArray<{
-    costPerPerson?: string | number | null
-    tikkieLink?: string | null
-  }> | null
 }
 
 // One row of the per-tournament ranking table. `pf`/`pa` are game points
@@ -111,21 +106,10 @@ export const getAvailablePlayers = ({
 export const computePaymentConfig = (
   tournament: PayableEvent | null | undefined,
 ): PaymentConfig => {
-  const isAdminAll = !tournament?.courtBookingMode || tournament.courtBookingMode === 'admin_all'
-  const hasTikkie = isAdminAll
-    ? !!tournament?.tikkieLink
-    : (tournament?.courts || []).some((c) => c.tikkieLink)
-  const totalPrice = tournament?.totalPrice ?? 0
-  const costPerPlayer = isAdminAll
-    ? totalPrice > 0
-      ? totalPrice / (tournament?.maxPlayers || 1)
-      : 0
-    : (tournament?.courts || []).reduce(
-        (s, c) => s + (parseFloat(String(c.costPerPerson ?? '')) || 0),
-        0,
-      )
-
-  return { isAdminAll, hasTikkie, costPerPlayer }
+  return {
+    hasTikkie: !!tournament?.tikkieLink,
+    costPerPlayer: pricePerPlayer(tournament),
+  }
 }
 
 export const formatEventDate = (dateValue: string | number | Date | null | undefined): string => {

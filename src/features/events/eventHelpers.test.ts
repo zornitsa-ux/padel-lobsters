@@ -51,10 +51,8 @@ describe('formatLabel', () => {
 })
 
 describe('pricePerPlayer', () => {
-  it('divides the total by max players in admin_all mode', () => {
-    expect(pricePerPlayer({ courtBookingMode: 'admin_all', totalPrice: 160, maxPlayers: 16 })).toBe(
-      10,
-    )
+  it('divides the total by max players', () => {
+    expect(pricePerPlayer({ totalPrice: 160, maxPlayers: 16 })).toBe(10)
   })
 
   it('coerces string column values', () => {
@@ -66,21 +64,8 @@ describe('pricePerPlayer', () => {
   })
 
   it('is free when no total price is set', () => {
-    expect(pricePerPlayer({ courtBookingMode: 'admin_all', totalPrice: 0 })).toBe(0)
+    expect(pricePerPlayer({ totalPrice: 0 })).toBe(0)
     expect(pricePerPlayer({})).toBe(0)
-  })
-
-  it('sums the per-court shares in player_responsible mode', () => {
-    expect(
-      pricePerPlayer({
-        courtBookingMode: 'player_responsible',
-        courts: [{ costPerPerson: '7.5' }, { costPerPerson: 2.5 }, { costPerPerson: null }],
-      }),
-    ).toBe(10)
-  })
-
-  it('is free when player_responsible has no courts', () => {
-    expect(pricePerPlayer({ courtBookingMode: 'player_responsible' })).toBe(0)
   })
 })
 
@@ -91,9 +76,7 @@ describe('emptyForm', () => {
 
   it('prefills the shared description and one blank court', () => {
     expect(emptyForm.notes).toBe(DEFAULT_EVENT_DESCRIPTION)
-    expect(emptyForm.courts).toEqual([
-      { name: '', booked: false, costPerPerson: '', responsible: '', tikkieLink: '' },
-    ])
+    expect(emptyForm.courts).toEqual([{ name: '', booked: false }])
   })
 })
 

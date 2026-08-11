@@ -125,16 +125,9 @@ export default function Registration({
       duration: t.duration || 90,
       format: t.format || 'lobster_matching',
       genderMode: t.genderMode || 'mixed',
-      courtBookingMode: t.courtBookingMode || 'admin_all',
       courts: t.courts?.length
-        ? t.courts.map((c) => ({
-            name: c.name || '',
-            booked: !!c.booked,
-            costPerPerson: String(c.costPerPerson || ''),
-            responsible: c.responsible || '',
-            tikkieLink: c.tikkieLink || '',
-          }))
-        : [{ name: '', booked: false, costPerPerson: '', responsible: '', tikkieLink: '' }],
+        ? t.courts.map((c) => ({ name: c.name || '', booked: !!c.booked }))
+        : [{ name: '', booked: false }],
       pricePerPerson:
         t.totalPrice > 0 && t.maxPlayers > 0
           ? (t.totalPrice / t.maxPlayers).toFixed(2).replace(/\.00$/, '')
@@ -159,24 +152,10 @@ export default function Registration({
         maxPlayers: mp,
         format: editForm.format,
         genderMode: editForm.genderMode,
-        courtBookingMode: editForm.courtBookingMode,
         duration: Number(editForm.duration) || 90,
-        totalPrice:
-          editForm.courtBookingMode === 'admin_all'
-            ? (parseFloat(String(editForm.pricePerPerson)) || 0) * mp
-            : 0,
-        tikkieLink: editForm.courtBookingMode === 'admin_all' ? editForm.tikkieLink || '' : '',
-        courts: editForm.courts.map((c) => ({
-          name: c.name,
-          booked: !!c.booked,
-          costPerPerson:
-            editForm.courtBookingMode === 'player_responsible'
-              ? parseFloat(String(c.costPerPerson)) || 0
-              : 0,
-          responsible:
-            editForm.courtBookingMode === 'player_responsible' ? c.responsible || '' : '',
-          tikkieLink: editForm.courtBookingMode === 'player_responsible' ? c.tikkieLink || '' : '',
-        })),
+        totalPrice: (parseFloat(String(editForm.pricePerPerson)) || 0) * mp,
+        tikkieLink: editForm.tikkieLink || '',
+        courts: editForm.courts.map((c) => ({ name: c.name, booked: !!c.booked })),
         notes: editForm.notes,
       }
       await updateTournament(tournament.id, data)
@@ -189,10 +168,7 @@ export default function Registration({
   const addEditCourt = () =>
     setEditForm((f) => ({
       ...f,
-      courts: [
-        ...f.courts,
-        { name: '', booked: false, costPerPerson: '', responsible: '', tikkieLink: '' },
-      ],
+      courts: [...f.courts, { name: '', booked: false }],
     }))
 
   const removeEditCourt = (i: number) =>
@@ -221,10 +197,7 @@ export default function Registration({
     playerId: claimedId,
   })
   const isCompleted = tournament?.status === 'completed'
-  const { isAdminAll, hasTikkie, costPerPlayer } = useMemo(
-    () => computePaymentConfig(tournament),
-    [tournament],
-  )
+  const { hasTikkie, costPerPlayer } = useMemo(() => computePaymentConfig(tournament), [tournament])
 
   const playerById = useMemo(() => {
     const map = new Map<string, Player>()
@@ -579,7 +552,6 @@ export default function Registration({
         tournament={tournament}
         paymentSheet={paymentSheet}
         costPerPlayer={costPerPlayer}
-        isAdminAll={isAdminAll}
         tikkieClicked={tikkieClicked}
         declaring={declaring}
         onClose={closePaymentSheet}

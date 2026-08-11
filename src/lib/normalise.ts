@@ -63,9 +63,6 @@ export function normalisePlayers(players: RawPlayerRow[]): Player[] {
 export type TournamentCourt = {
   name: string
   booked: boolean
-  costPerPerson: number | string
-  responsible: string
-  tikkieLink: string
 }
 
 // Raw `tournaments` row as it arrives from the fetch boundary (snake_case,
@@ -75,7 +72,6 @@ export interface RawTournamentRow extends LooseRow<Omit<Tables<'tournaments'>, '
   id: string
   courts?: TournamentCourt[] | null
   maxPlayers?: number | null
-  courtBookingMode?: string | null
   totalPrice?: number | null
   tikkieLink?: string | null
   genderMode?: string | null
@@ -99,7 +95,6 @@ export interface NormalisedTournament extends RawTournamentRow {
   maxPlayers: number
   duration: number
   courts: TournamentCourt[]
-  courtBookingMode: string
   totalPrice: number
   tikkieLink: string
   genderMode: string
@@ -123,7 +118,6 @@ export function normaliseTournaments(tournaments: RawTournamentRow[]): Normalise
     duration: t.duration ?? 90,
     courts: t.courts ?? [],
     location: t.location ?? '',
-    courtBookingMode: t.court_booking_mode ?? t.courtBookingMode ?? 'admin_all',
     totalPrice: t.total_price ?? t.totalPrice ?? 0,
     tikkieLink: t.tikkie_link ?? t.tikkieLink ?? '',
     genderMode: t.gender_mode ?? t.genderMode ?? 'mixed',

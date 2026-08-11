@@ -4,9 +4,6 @@
 export interface EventFormCourt {
   name: string
   booked: boolean
-  costPerPerson: string | number
-  responsible: string
-  tikkieLink: string
 }
 
 // Draft state behind EventFormModal: `emptyForm` for a new event, or hydrated
@@ -20,7 +17,6 @@ export interface EventFormValues {
   duration: string | number
   format: string
   genderMode: string
-  courtBookingMode: string
   courts: EventFormCourt[]
   pricePerPerson: string | number
   tikkieLink: string
@@ -44,8 +40,7 @@ export const emptyForm: EventFormValues = {
   duration: 90,
   format: 'lobster_matching',
   genderMode: 'mixed',
-  courtBookingMode: 'admin_all',
-  courts: [{ name: '', booked: false, costPerPerson: '', responsible: '', tikkieLink: '' }],
+  courts: [{ name: '', booked: false }],
   pricePerPerson: '',
   tikkieLink: '',
   notes: DEFAULT_EVENT_DESCRIPTION,

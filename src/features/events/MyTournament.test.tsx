@@ -53,7 +53,6 @@ const baseTournament: Partial<NormalisedTournament> = {
   maxPlayers: 16,
   status: 'upcoming',
   resultsSharedAt: null,
-  courtBookingMode: 'admin_all',
   totalPrice: 0,
   tikkieLink: '',
   courts: [],

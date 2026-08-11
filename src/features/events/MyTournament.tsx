@@ -57,10 +57,7 @@ export default function MyTournament({ tournament, onNavigate }: Props) {
     () => splitRegistrationsByStatus(registrations),
     [registrations],
   )
-  const { isAdminAll, hasTikkie, costPerPlayer } = useMemo(
-    () => computePaymentConfig(tournament),
-    [tournament],
-  )
+  const { hasTikkie, costPerPlayer } = useMemo(() => computePaymentConfig(tournament), [tournament])
   const isEventFull = registered.length >= (tournament.maxPlayers || 16)
 
   const placing = useMemo(() => {
@@ -131,7 +128,6 @@ export default function MyTournament({ tournament, onNavigate }: Props) {
       isEventFull={isEventFull}
       waitlistPosition={waitlisted.findIndex((r) => r.playerId === claimedId) + 1 || undefined}
       hasTikkie={hasTikkie}
-      isAdminAll={isAdminAll}
       costPerPlayer={costPerPlayer}
       tournament={tournament}
       tikkieClicked={tikkieClicked}
@@ -175,7 +171,6 @@ function RegistrationCard({
   isEventFull,
   waitlistPosition,
   hasTikkie,
-  isAdminAll,
   costPerPlayer,
   tournament,
   tikkieClicked,
@@ -190,7 +185,6 @@ function RegistrationCard({
   isEventFull: boolean
   waitlistPosition?: number
   hasTikkie: boolean
-  isAdminAll: boolean
   costPerPlayer: number
   tournament: NormalisedTournament
   tikkieClicked: boolean
@@ -278,13 +272,9 @@ function RegistrationCard({
   )
 
   if (needsPayment) {
-    const tikkieLinks: Array<{ label: string | null; url: string }> = isAdminAll
-      ? tournament.tikkieLink
-        ? [{ label: null, url: tournament.tikkieLink }]
-        : []
-      : (tournament.courts || [])
-          .filter((c) => c.tikkieLink)
-          .map((c, i) => ({ label: c.name || `Court ${i + 1}`, url: c.tikkieLink as string }))
+    const tikkieLinks: Array<{ label: string | null; url: string }> = tournament.tikkieLink
+      ? [{ label: null, url: tournament.tikkieLink }]
+      : []
 
     return (
       <div className="card space-y-3">

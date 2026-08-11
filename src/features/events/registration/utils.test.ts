@@ -125,59 +125,31 @@ describe('getAvailablePlayers', () => {
 })
 
 describe('computePaymentConfig', () => {
-  it('splits the total price across max players in admin_all mode', () => {
+  it('splits the total price across max players', () => {
     expect(
       computePaymentConfig({
-        courtBookingMode: 'admin_all',
         totalPrice: 160,
         maxPlayers: 16,
         tikkieLink: 'https://tikkie.example/x',
-        courts: [],
       }),
-    ).toEqual({ isAdminAll: true, hasTikkie: true, costPerPlayer: 10 })
+    ).toEqual({ hasTikkie: true, costPerPlayer: 10 })
   })
 
-  it('a missing booking mode is treated as admin_all', () => {
-    const cfg = computePaymentConfig({ totalPrice: 90, maxPlayers: 9 })
-
-    expect(cfg.isAdminAll).toBe(true)
-    expect(cfg.costPerPlayer).toBe(10)
-  })
-
-  it('falls back to a single share when maxPlayers is zero', () => {
-    expect(computePaymentConfig({ totalPrice: 40, maxPlayers: 0 }).costPerPlayer).toBe(40)
-  })
-
-  it('sums per-court costs in player_responsible mode', () => {
-    const cfg = computePaymentConfig({
-      courtBookingMode: 'player_responsible',
-      courts: [{ costPerPerson: '5.50' }, { costPerPerson: 4.5 }, { costPerPerson: '' }],
-    })
-
-    expect(cfg).toEqual({ isAdminAll: false, hasTikkie: false, costPerPlayer: 10 })
-  })
-
-  it('reports a Tikkie when any court carries one', () => {
-    const cfg = computePaymentConfig({
-      courtBookingMode: 'player_responsible',
-      courts: [{ costPerPerson: 5 }, { costPerPerson: 5, tikkieLink: 'https://t.example/1' }],
-    })
-
-    expect(cfg.hasTikkie).toBe(true)
+  // Shares pricePerPlayer's default so the payment sheet can't quote a
+  // different amount than the event card for the same event.
+  it('falls back to a 16-player split when maxPlayers is zero', () => {
+    expect(computePaymentConfig({ totalPrice: 160, maxPlayers: 0 }).costPerPlayer).toBe(10)
   })
 
   it('handles a missing tournament', () => {
     expect(computePaymentConfig(null)).toEqual({
-      isAdminAll: true,
       hasTikkie: false,
       costPerPlayer: 0,
     })
   })
 
   it('a free event costs nothing', () => {
-    expect(
-      computePaymentConfig({ courtBookingMode: 'admin_all', totalPrice: 0 }).costPerPlayer,
-    ).toBe(0)
+    expect(computePaymentConfig({ totalPrice: 0 }).costPerPlayer).toBe(0)
   })
 })
 

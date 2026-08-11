@@ -12,10 +12,8 @@ export type EventNavigate = (destination: string, target?: NavigateTarget | null
 // Structural subset of a tournament (or an in-flight event form) needed to
 // derive the per-player price. NormalisedTournament satisfies it.
 export interface PriceableEvent {
-  courtBookingMode?: string | null
   totalPrice?: string | number | null
   maxPlayers?: string | number | null
-  courts?: ReadonlyArray<{ costPerPerson?: string | number | null }> | null
 }
 
 // Parse ISO date-only strings ("YYYY-MM-DD") as LOCAL midnight to avoid UTC-offset misclassification
@@ -46,15 +44,14 @@ const FORMAT_LABELS: Record<string, string> = {
 
 export const formatLabel = (f: string): string => FORMAT_LABELS[f] || f
 
-// Price display helpers
-export const pricePerPlayer = (t: PriceableEvent): number => {
-  if (t.courtBookingMode === 'admin_all' || !t.courtBookingMode) {
-    const tp = parseFloat(String(t.totalPrice ?? '')) || 0
-    const mp = parseInt(String(t.maxPlayers ?? '')) || 16
-    return tp > 0 ? tp / mp : 0
-  }
-  return (t.courts || []).reduce(
-    (sum, c) => sum + (parseFloat(String(c.costPerPerson ?? '')) || 0),
-    0,
-  )
+// Single source of truth for per-player price. Every surface that shows a
+// price (event cards, payments tab, registration payment sheet) must go
+// through this, or the same event shows different amounts in each place.
+// A missing/zero maxPlayers falls back to the standard 16-player event.
+export const DEFAULT_MAX_PLAYERS = 16
+
+export const pricePerPlayer = (t: PriceableEvent | null | undefined): number => {
+  const tp = parseFloat(String(t?.totalPrice ?? '')) || 0
+  const mp = parseInt(String(t?.maxPlayers ?? '')) || DEFAULT_MAX_PLAYERS
+  return tp > 0 ? tp / mp : 0
 }

@@ -17,7 +17,6 @@ export interface TournamentInput {
   maxPlayers?: number | string
   duration?: number | string
   format?: string
-  courtBookingMode?: string
   totalPrice?: number | string
   tikkieLink?: string
   genderMode?: string
@@ -36,7 +35,7 @@ export async function fetchTournaments(): Promise<NormalisedTournament[]> {
   // returned zero rows to guests and the landing page showed "No upcoming
   // events". Until the v26 migration (supabase-migration-v26-public-
   // tournaments-fix.sql) is applied to correct the view's filter and
-  // expose time/duration/total_price/court_booking_mode/notes/courts, we
+  // expose time/duration/total_price/notes/courts, we
   // hit the raw table for everyone. Anon SELECT on the raw table is still
   // permitted (tracked in SECURITY-ROLLOUT.md), so this matches the
   // current production state.
@@ -79,7 +78,6 @@ export async function addTournament(data: TournamentInput): Promise<void> {
     max_players: parseInt(String(data.maxPlayers)) || 16,
     duration: parseInt(String(data.duration)) || 90,
     format: data.format,
-    court_booking_mode: data.courtBookingMode || 'admin_all',
     total_price: parseFloat(String(data.totalPrice)) || 0,
     tikkie_link: data.tikkieLink || '',
     gender_mode: data.genderMode || 'mixed',
@@ -103,7 +101,6 @@ export async function updateTournament(id: string, data: TournamentInput): Promi
   if (data.maxPlayers !== undefined) payload.max_players = parseInt(String(data.maxPlayers)) || 16
   if (data.duration !== undefined) payload.duration = parseInt(String(data.duration)) || 90
   if (data.format !== undefined) payload.format = data.format
-  if (data.courtBookingMode !== undefined) payload.court_booking_mode = data.courtBookingMode
   if (data.totalPrice !== undefined) payload.total_price = parseFloat(String(data.totalPrice)) || 0
   if (data.tikkieLink !== undefined) payload.tikkie_link = data.tikkieLink || ''
   if (data.genderMode !== undefined) payload.gender_mode = data.genderMode || 'mixed'
