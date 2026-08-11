@@ -2,12 +2,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { screen, waitFor, cleanup } from '@testing-library/react'
 import { renderWithClient } from '../../test/renderWithClient'
+import { mockSupabase } from '../../test/mockSupabase'
 import type { MerchInterest } from '../merch/merchSchemas'
 
 const h = vi.hoisted(() => ({ fetchMerchInterests: vi.fn(), fetchMerchItems: vi.fn() }))
 
 vi.mock('../merch/merchQueries', () => h)
-vi.mock('../../supabase', () => ({ supabase: {} }))
+vi.mock('../../supabase', () => mockSupabase())
 vi.mock('../../context/useApp', () => ({
   useApp: () => ({ session: { user: { app_metadata: { role: 'admin' } } } }),
 }))

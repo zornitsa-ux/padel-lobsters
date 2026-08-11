@@ -1,4 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { mockSupabase } from '../../test/mockSupabase'
 
 // Chain helpers hoisted so the vi.mock factory can reference them.
 const { mockSingle, mockEq, mockSelect, mockUpsert } = vi.hoisted(() => ({
@@ -8,14 +9,14 @@ const { mockSingle, mockEq, mockSelect, mockUpsert } = vi.hoisted(() => ({
   mockUpsert: vi.fn(),
 }))
 
-vi.mock('../../supabase', () => ({
-  supabase: {
+vi.mock('../../supabase', () =>
+  mockSupabase({
     from: vi.fn(() => ({
       select: mockSelect,
       upsert: mockUpsert,
     })),
-  },
-}))
+  }),
+)
 
 import { fetchSettings, saveSettings } from './settingsQueries'
 

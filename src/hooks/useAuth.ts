@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import type { Session } from '@supabase/supabase-js'
-import { supabase, sessionReady } from '../supabase'
+import { supabase, getSessionReady } from '../supabase'
 import * as authApi from '../api/auth'
 import { mark } from '../lib/perfMarks'
 
@@ -14,7 +14,7 @@ export default function useAuth() {
   useEffect(() => {
     // Resolves from the warm-up kicked off at module load (see supabase.js),
     // so this is usually already settled by the time the effect runs.
-    sessionReady.then((s) => {
+    getSessionReady().then((s) => {
       mark('session')
       setSession(s)
       setSessionSettled(true)

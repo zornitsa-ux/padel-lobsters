@@ -1,12 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { mockSupabase } from '../../test/mockSupabase'
 
 const h = vi.hoisted(() => ({
   uploads: [] as { bucket: string; filename: string; options: unknown }[],
   uploadResult: { current: { error: null as unknown } },
 }))
 
-vi.mock('../../supabase', () => ({
-  supabase: {
+vi.mock('../../supabase', () =>
+  mockSupabase({
     storage: {
       from: (bucket: string) => ({
         upload: (filename: string, _file: Blob, options: unknown) => {
@@ -18,8 +19,8 @@ vi.mock('../../supabase', () => ({
         }),
       }),
     },
-  },
-}))
+  }),
+)
 
 import { randomAvatarFilename, uploadAvatar } from './playerQueries'
 

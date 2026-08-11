@@ -6,7 +6,7 @@ import { useUpdateTournament } from './useTournaments'
 import {
   buildRatingUpdatePayload,
   isRatingsAlreadyAppliedError,
-} from '../matchmaking/applyTournamentRatings.service'
+} from '../matchmaking/domain/rating/applyPayload'
 import { initialRating } from '../matchmaking/domain/rating/model'
 import {
   useApplyTournamentRatings,
