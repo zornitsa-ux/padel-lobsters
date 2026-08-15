@@ -26,8 +26,8 @@ interface GameProps {
    they default to the play view during active/shared phases and reach the admin
    controls via the header menu (AdminMenu). Admins who aren't registered keep
    the admin-only experience unchanged. Backend (lobster_oscars_cast_vote) never
-   gates on role — only on registration + trusted device — so no RPC changes are
-   needed to let admins vote.
+   gates on role — only on registration — so no RPC changes are needed to let
+   admins vote.
    ════════════════════════════════════════════════════════════════════════════ */
 export default function Game({ tournament, onNavigate }: GameProps) {
   const s = useOscarsSession(tournament)

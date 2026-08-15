@@ -75,13 +75,13 @@ describe('mergeMyProfile', () => {
     expect(mergeMyProfile(undefined, undefined)).toBeNull()
   })
 
-  it('returns roster identity alone on an untrusted device (no PII row)', () => {
+  it('returns roster identity alone when there is no PII row', () => {
     const result = mergeMyProfile(base, null)
     expect(result).toMatchObject({ id: 'me', name: 'Me', playtomicLevel: 4 })
     expect(result?.email).toBeUndefined()
   })
 
-  it('overlays PII on top of roster identity when trusted', () => {
+  it('overlays PII on top of roster identity', () => {
     const result = mergeMyProfile(base, pii)
     expect(result).toMatchObject({
       id: 'me',

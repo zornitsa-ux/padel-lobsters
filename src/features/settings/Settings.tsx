@@ -201,8 +201,8 @@ export default function Settings() {
       // Explicit field list, not `{ ...myPlayer, ... }` — spreading myPlayer
       // used to reintroduce `email` (myPlayer.email, whatever it currently
       // is) into the payload despite the comment below, and admins route
-      // through admin_update_player which has no trusted-device gate, so an
-      // admin editing their own profile could silently null their own email.
+      // through admin_update_player, a different code path, so an admin
+      // editing their own profile could silently null their own email.
       await updatePlayer(myPlayer.id, {
         name: profileForm.name,
         country: profileForm.country,

@@ -16,7 +16,6 @@ const mockSettings = {
   whatsappLink: 'https://wa.me/test',
   groupName: 'Test Group',
   padelTips: null,
-  autoTrustUntil: null,
 }
 
 beforeEach(() => {

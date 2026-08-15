@@ -23,15 +23,14 @@ export default function useAuth() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, s) => {
       setSession(s)
-      // Magic-link / OAuth sessions arrive without a device_id baked
-      // into app_metadata (verify-pin sets that for the PIN flow). When
-      // we see a fresh sign-in that's missing it, register this device
-      // and refresh so the JWT picks up the new claim.
-      if (event === 'SIGNED_IN' && s && !s.user?.app_metadata?.device_id) {
+      // Magic-link / OAuth sessions arrive before the player's role is in
+      // app_metadata (verify-pin sets it for the PIN flow). Sync and refresh
+      // so the client stops treating them as a guest.
+      if (event === 'SIGNED_IN' && s && !s.user?.app_metadata?.role) {
         try {
-          await authApi.bootstrapDeviceSession()
+          await authApi.syncMyRole()
         } catch (e) {
-          console.warn('bootstrapDeviceSession failed', e)
+          console.warn('syncMyRole failed', e)
         }
       }
     })

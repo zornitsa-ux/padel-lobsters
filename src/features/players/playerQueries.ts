@@ -56,9 +56,9 @@ export async function fetchPlayers(): Promise<Player[]> {
   return normalisePlayers(rows)
 }
 
-// The signed-in user's own row including PII, via the trust-gated RPC. Returns
-// null for a probationary (untrusted) device — get_my_profile_v2 yields no row
-// in that case, and callers fall back to the public roster entry for identity.
+// The signed-in user's own row including PII, via get_my_profile_v2. Returns
+// the caller's own row, or null when there is no such row — callers fall
+// back to the public roster entry for identity in that case.
 export async function fetchMyProfile(): Promise<Player | null> {
   const row = await fetchMyProfileRpc()
   if (!row) return null

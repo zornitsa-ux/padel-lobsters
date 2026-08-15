@@ -1,14 +1,15 @@
 // =====================================================================
-// Device identity for the Phase 2 trust system.
+// Device identity.
 //
 // Generates a random UUID once per browser/profile, persists it in
 // localStorage, and reuses it forever (until the user clears storage or
-// switches browsers). Sent on every PIN auth call so the backend can
-// recognize "same device" across visits.
+// switches browsers). Sent on every PIN auth call so the backend can key
+// its per-device rate limits: verify_player_pin_v2's 10-failed-PINs/24h
+// cap and self_signup_player's 5-signups/24h cap, and so the admin audit
+// trail can tell attempts from the same browser apart.
 //
 // The device_id is opaque to the backend — it has no PII, no fingerprint,
-// no identifying info. It just lets the server keep a (player, device)
-// trust relationship.
+// no identifying info.
 // =====================================================================
 
 const DEVICE_ID_KEY = 'lobster_device_id'
@@ -59,7 +60,7 @@ export function getDeviceId() {
 /**
  * Returns a short-ish UA string for logging. We don't need full
  * fingerprinting — just enough to recognize "the iPhone" vs "the
- * laptop" in the admin pending-devices list.
+ * laptop" in the security-events feed.
  */
 export function getUserAgentSummary() {
   if (typeof navigator === 'undefined') return null
@@ -67,17 +68,4 @@ export function getUserAgentSummary() {
   // Truncate to keep audit log rows tidy. The full UA is rarely useful
   // and clutters the admin event feed.
   return ua.length > 200 ? ua.slice(0, 200) + '…' : ua
-}
-
-/**
- * Wipe the device_id. Called from logout if the user explicitly wants
- * to forget this device (rare — most logouts keep the device_id so
- * they can sign back in without going through approval again).
- */
-export function clearDeviceId() {
-  try {
-    localStorage.removeItem(DEVICE_ID_KEY)
-  } catch {
-    /* ignore */
-  }
 }

@@ -72,8 +72,7 @@ export function useMyProfile(id: string | null | undefined) {
   const isLoading = base.isLoading || pii.isLoading
   // True only once the PII overlay has actually resolved to a row. A
   // successful call that returns no row is a genuine "PII unavailable"
-  // state (not a normal one now that trusted devices are gone) and must
-  // block seeding/saving the same as isError does.
+  // state and must block seeding/saving the same as isError does.
   const hasPii = pii.isSuccess && pii.data != null
 
   return {

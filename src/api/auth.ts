@@ -88,38 +88,33 @@ export async function sendMagicLink(email: string | null | undefined): Promise<M
   }
 }
 
-// ── Post-sign-in device bootstrap ──────────────────────────────
-// Called after a magic-link (or future OAuth) sign-in to register the
-// current browser as a device for the player. Mirrors what verify-pin
-// does for the PIN flow. After this resolves we force a token refresh
-// so the custom_access_token_hook can bake the new device_id into the
-// JWT — without that refresh, require_trusted_device() would still see
-// the empty claim from the initial OTP-issued token.
-export async function bootstrapDeviceSession() {
-  const deviceId = getDeviceId()
+// ── Post-sign-in role sync ─────────────────────────────────────
+// Magic-link (and future OAuth) sessions are minted before the player's role
+// reaches auth.users.app_metadata — verify-pin does that for the PIN flow.
+// sync_my_role() writes it; the refresh pulls the updated user into the local
+// session so VerificationGate and the Admin tab see a non-guest role.
+export async function syncMyRole() {
   try {
-    const { data, error } = await supabase.rpc('bootstrap_device_session', {
-      p_device_id: deviceId,
-    })
+    const { data, error } = await supabase.rpc('sync_my_role')
     if (error) {
-      console.error('bootstrap_device_session error:', error)
+      console.error('sync_my_role error:', error)
       return null
     }
     await supabase.auth.refreshSession()
     return data
   } catch (e) {
-    console.error('bootstrap_device_session threw:', e)
+    console.error('sync_my_role threw:', e)
     return null
   }
 }
 
 // Fetch the signed-in player's full record (including email / phone / full
 // birthday) through the secure RPC. Resolves to null only for the genuine
-// no-row case (e.g. an untrusted/probationary device); a failed RPC call
-// throws so the caller's query lands in isError instead of a false "no PII"
-// success — swallowing that error previously made a permanent RPC failure
-// indistinguishable from "this player has no PII", and Settings would then
-// silently null out email/phone/birthday on the next profile save.
+// no-row case; a failed RPC call throws so the caller's query lands in
+// isError instead of a false "no PII" success — swallowing that error
+// previously made a permanent RPC failure indistinguishable from "this
+// player has no PII", and Settings would then silently null out
+// email/phone/birthday on the next profile save.
 export async function fetchMyProfile(): Promise<MyProfileRow | null> {
   const { data, error } = await supabase.rpc('get_my_profile_v2')
   if (error) {
