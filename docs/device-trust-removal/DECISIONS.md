@@ -17,10 +17,10 @@ enforcing, it should not exist.
 **D-2 — Keep `device_id`; it was doing a second job.** The browser id keys two
 things unrelated to trust: `verify_player_pin_v2`'s cap of 10 failed PINs per
 device per 24h, and `self_signup_player`'s cap of 5 signups per device per 24h —
-both off `pin_attempts.device_id`, not `player_devices`. `pin_attempts.ip_address`
-exists but has never been populated, so `device_id` is the _only_ key those limits
-have. Removing it would have quietly deleted the PIN brute-force protection under
-cover of removing device trust.
+both off `pin_attempts.device_id`, not `player_devices`. At the time it was the
+_only_ key those limits had, so removing it would have quietly deleted the PIN
+brute-force protection under cover of removing device trust. D-10 later added an
+IP-keyed cap alongside it.
 
 **D-3 — Drop `player_devices`, and the account lockout with it.**
 `verify_player_pin_v2` locked a player for 24h after 5 failed PINs on a device
