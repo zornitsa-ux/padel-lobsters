@@ -393,6 +393,9 @@ export default function Registration({
         forbidden: 'This transfer is for a different player.',
         not_pending: 'This transfer was already responded to or closed.',
         tournament_started: 'Too late — the event has already started.',
+        to_already_registered:
+          'You are already registered for this event, so there is nothing to accept.',
+        from_not_registered: 'That spot is no longer registered — the transfer can’t be completed.',
       }
       alert(map[r.status] || 'Could not record your response.')
     }

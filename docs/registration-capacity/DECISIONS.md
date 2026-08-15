@@ -108,6 +108,18 @@ survive), so the roster query still returns them. Every list that offers someone
 as a choice excludes `status = 'deleted'` via `isSelectablePlayer`; lookups by id
 are deliberately untouched so past events keep resolving names.
 
+**D-11 — A transfer never revives a cancelled row.** `apply_registration_transfer`
+resolves the recipient's single _active_ row (`registered` or `waitlist` — the
+`registrations_tournament_player_active_uniq` index already guarantees at most
+one exists) and branches on it: already `registered` returns
+`to_already_registered` before any write; `waitlist` is promoted in place by
+id; no active row means a fresh row is INSERTed. Stale `cancelled` rows are
+never touched. This matches `register_for_tournament`'s existing stance ("a
+new row rather than reviving a cancelled one: the cancellation stays in the
+record, and `registration_status_events` shows both") and keeps a `cancelled`
+row's `payment_method` — which can itself be evidence of an earlier transfer —
+intact. See §6 for why this mattered in practice.
+
 **D-10 — Deleting an event is for events nobody ever signed up for.** The
 `ON DELETE RESTRICT` on `registrations.tournament_id` applies to cancelled rows
 too, and registrations are never hard-deleted — so an event where _everyone_
@@ -161,3 +173,38 @@ Migrations must land **before** the frontend deploys — the client calls RPCs t
 will not exist otherwise. Prod has a history of hand-applied migrations raising
 the remote head, so run `npx supabase migration list` and reconcile drift before
 `npx supabase db push`.
+
+## 6. 2026-08-14 — transfer acceptance aborting with 23505
+
+Both transfer paths (`respond_to_transfer` and the admin force-accept) started
+failing in production: accepting a transfer raised `duplicate key value
+violates unique constraint "registrations_tournament_player_active_uniq"` and
+rolled back. Confirmed in Postgres logs (six occurrences, 2026-08-14
+15:30–15:33) and in the data — recipients holding a `registered` row plus two
+stale `cancelled` rows, or a `cancelled` row plus a `waitlist` row, on the same
+tournament.
+
+`apply_registration_transfer`'s second UPDATE matched the recipient's row by
+`(tournament_id, player_id, status IN ('waitlist', 'cancelled'))` with no
+row-id scoping. That predicate is not new — it was carried verbatim from the
+two copies in `respond_to_transfer` / `admin_force_accept_transfer` that this
+migration's own function extracted — so the Aug 6 refactor did not introduce
+it. What made it reachable is `20260806211102` (no hard deletes): before that,
+cancelled rows could in principle be pruned; after it, a recipient who
+cancels or gets transferred more than once on the same event permanently
+accumulates extra `cancelled` rows. Once a recipient had two or more rows
+matching that predicate, the UPDATE flipped all of them to `'registered'` in
+one statement, producing a duplicate active row for the same
+`(tournament_id, player_id)` pair. The lesson worth keeping: "no hard
+deletes" changes the cardinality assumptions of every query in the codebase
+that matches rows by natural key instead of by id, not just the ones the
+migration touched directly.
+
+Fixed by resolving the recipient's row before writing anything (D-11) instead
+of inferring behaviour from an UPDATE's row count — the same class of mistake
+as the `IF NOT FOUND` bug from §1. See
+`20260815050555_fix_apply_registration_transfer_row_scope.sql` and CHECK
+14a–14f in `supabase/tests/registration_integrity.sql`. No data remediation
+was needed: per D-5, the guard blocks new transitions without rewriting
+existing rows, and the stale `cancelled` rows are inert once nothing selects
+them by natural key anymore.

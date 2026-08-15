@@ -3,7 +3,8 @@
 --
 -- Covers the capacity guard (20260806211143), the capacity-aware RPCs
 -- (20260806211259), the audit trail (20260806210842), the no-hard-delete
--- changes (20260806211102) and the max_players constraints (20260806213000).
+-- changes (20260806211102), the max_players constraints (20260806213000)
+-- and the transfer row-scoping fix (20260815050555).
 --
 -- There is no pgTAP harness in this repo, so this is a plain script: every
 -- check raises on failure and the whole thing runs inside a transaction that
@@ -36,6 +37,15 @@ declare
   v_rows integer;
   v_err text;
   v_ok boolean;
+  v_t3 uuid;
+  v_tp uuid[];
+  v_xfer_id uuid;
+  v_from_reg uuid;
+  v_reg_a uuid;
+  v_reg_b uuid;
+  v_pm_a text;
+  v_pm_b text;
+  v_reason text;
 begin
   -- ── Fixtures: a 2-player event and 6 players ──────────────────────────────
   insert into public.tournaments (name, date, time, max_players, status)
@@ -316,6 +326,227 @@ begin
     null;
   end;
   raise notice 'CHECK 13 ok — max_players rejects null and non-positive values';
+
+  -- ── 14. apply_registration_transfer row scoping (20260815050555) ──────────
+  -- A dedicated event and 12 fresh players so nothing here interacts with the
+  -- capacity fixtures above.
+  insert into public.tournaments (name, date, time, max_players, status)
+  values ('TRANSFER TEST', current_date + 32, '18:00', 16, 'upcoming')
+  returning id into v_t3;
+
+  with ins as (
+    insert into public.players (name, status)
+    select 'Transfer Test P' || lpad(g::text, 2, '0'), 'active' from generate_series(1, 12) g
+    returning id, name
+  )
+  select array_agg(id order by name) into v_tp from ins;
+
+  -- 14a. Recipient has TWO stale cancelled rows and no active row. The old
+  -- code matched both with `status in ('waitlist','cancelled')` and flipped
+  -- both to 'registered' in one UPDATE, tripping the unique index — this is
+  -- the exact production crash (23505 on registrations_tournament_player_
+  -- active_uniq).
+  insert into public.registrations (tournament_id, player_id, status, payment_method)
+  values (v_t3, v_tp[1], 'registered', '')
+  returning id into v_from_reg;
+  insert into public.registrations (tournament_id, player_id, status, payment_method)
+  values (v_t3, v_tp[2], 'cancelled', 'old_pm_1')
+  returning id into v_reg_a;
+  insert into public.registrations (tournament_id, player_id, status, payment_method)
+  values (v_t3, v_tp[2], 'cancelled', 'old_pm_2')
+  returning id into v_reg_b;
+
+  insert into public.registration_transfers (tournament_id, from_player_id, to_player_id)
+  values (v_t3, v_tp[1], v_tp[2])
+  returning id into v_xfer_id;
+
+  select public.apply_registration_transfer(v_xfer_id) into v_status;
+  if v_status <> 'accepted' then
+    raise exception 'CHECK 14a FAILED: expected accepted, got %', v_status;
+  end if;
+  select count(*) into v_count from public.registrations
+   where tournament_id = v_t3 and player_id = v_tp[2] and status = 'registered';
+  if v_count <> 1 then
+    raise exception 'CHECK 14a FAILED: expected exactly 1 registered row for recipient, got %', v_count;
+  end if;
+  select payment_method, status into v_pm_a, v_status from public.registrations where id = v_reg_a;
+  if v_pm_a <> 'old_pm_1' or v_status <> 'cancelled' then
+    raise exception 'CHECK 14a FAILED: stale cancelled row % was mutated (status=%, payment_method=%)',
+      v_reg_a, v_status, v_pm_a;
+  end if;
+  select payment_method, status into v_pm_b, v_status from public.registrations where id = v_reg_b;
+  if v_pm_b <> 'old_pm_2' or v_status <> 'cancelled' then
+    raise exception 'CHECK 14a FAILED: stale cancelled row % was mutated (status=%, payment_method=%)',
+      v_reg_b, v_status, v_pm_b;
+  end if;
+  raise notice 'CHECK 14a ok — a recipient with 2 stale cancelled rows accepts without reviving either';
+
+  -- 14b. Recipient has one cancelled row and one waitlist row. Only the
+  -- waitlist row may become 'registered' — a cancelled row is never revived.
+  insert into public.registrations (tournament_id, player_id, status)
+  values (v_t3, v_tp[3], 'registered')
+  returning id into v_from_reg;
+  insert into public.registrations (tournament_id, player_id, status, payment_method)
+  values (v_t3, v_tp[4], 'cancelled', 'old_pm_3')
+  returning id into v_reg_a;
+  insert into public.registrations (tournament_id, player_id, status)
+  values (v_t3, v_tp[4], 'waitlist')
+  returning id into v_reg_b;
+
+  insert into public.registration_transfers (tournament_id, from_player_id, to_player_id)
+  values (v_t3, v_tp[3], v_tp[4])
+  returning id into v_xfer_id;
+
+  select public.apply_registration_transfer(v_xfer_id) into v_status;
+  if v_status <> 'accepted' then
+    raise exception 'CHECK 14b FAILED: expected accepted, got %', v_status;
+  end if;
+  select status into v_status from public.registrations where id = v_reg_b;
+  if v_status <> 'registered' then
+    raise exception 'CHECK 14b FAILED: the waitlist row was not promoted (now %)', v_status;
+  end if;
+  select payment_method, status into v_pm_a, v_status from public.registrations where id = v_reg_a;
+  if v_pm_a <> 'old_pm_3' or v_status <> 'cancelled' then
+    raise exception 'CHECK 14b FAILED: the cancelled row % was mutated (status=%, payment_method=%)',
+      v_reg_a, v_status, v_pm_a;
+  end if;
+  select count(*) into v_count from public.registrations
+   where tournament_id = v_t3 and player_id = v_tp[4];
+  if v_count <> 2 then
+    raise exception 'CHECK 14b FAILED: expected still 2 rows for recipient (no insert), got %', v_count;
+  end if;
+  raise notice 'CHECK 14b ok — a waitlist row is promoted in place, a sibling cancelled row is untouched';
+
+  -- 14c. Recipient already holds a registered row plus a stale cancelled row
+  -- (a transfer offer that went stale after the recipient separately
+  -- registered — the TOCTOU case). Must refuse before touching the from-side.
+  insert into public.registrations (tournament_id, player_id, status)
+  values (v_t3, v_tp[5], 'registered')
+  returning id into v_from_reg;
+  insert into public.registrations (tournament_id, player_id, status)
+  values (v_t3, v_tp[6], 'registered')
+  returning id into v_reg_a;
+  insert into public.registrations (tournament_id, player_id, status, payment_method)
+  values (v_t3, v_tp[6], 'cancelled', 'old_pm_4')
+  returning id into v_reg_b;
+
+  insert into public.registration_transfers (tournament_id, from_player_id, to_player_id)
+  values (v_t3, v_tp[5], v_tp[6])
+  returning id into v_xfer_id;
+
+  select public.apply_registration_transfer(v_xfer_id) into v_status;
+  if v_status <> 'to_already_registered' then
+    raise exception 'CHECK 14c FAILED: expected to_already_registered, got %', v_status;
+  end if;
+  select status into v_status from public.registrations where id = v_from_reg;
+  if v_status <> 'registered' then
+    raise exception 'CHECK 14c FAILED: from-side was written despite the refusal (now %)', v_status;
+  end if;
+  select count(*) into v_count from public.registrations
+   where tournament_id = v_t3 and player_id = v_tp[6];
+  if v_count <> 2 then
+    raise exception 'CHECK 14c FAILED: recipient row count changed (expected 2, got %)', v_count;
+  end if;
+  raise notice 'CHECK 14c ok — a recipient already registered refuses cleanly with no partial write';
+
+  -- 14d. From-side has no registered row at all.
+  insert into public.registrations (tournament_id, player_id, status, payment_method)
+  values (v_t3, v_tp[8], 'cancelled', 'old_pm_5')
+  returning id into v_reg_a;
+
+  insert into public.registration_transfers (tournament_id, from_player_id, to_player_id)
+  values (v_t3, v_tp[7], v_tp[8])
+  returning id into v_xfer_id;
+
+  select public.apply_registration_transfer(v_xfer_id) into v_status;
+  if v_status <> 'from_not_registered' then
+    raise exception 'CHECK 14d FAILED: expected from_not_registered, got %', v_status;
+  end if;
+  select payment_method, status into v_pm_a, v_status from public.registrations where id = v_reg_a;
+  if v_pm_a <> 'old_pm_5' or v_status <> 'cancelled' then
+    raise exception 'CHECK 14d FAILED: recipient row was mutated (status=%, payment_method=%)', v_status, v_pm_a;
+  end if;
+  raise notice 'CHECK 14d ok — a from-player who is not registered refuses without touching the recipient';
+
+  -- 14e. The single-active-row invariant is enforced by an index, not by this
+  -- file: sweeping for duplicate active rows could never fail, because the
+  -- offending UPDATE aborts the transaction with 23505 before any SELECT could
+  -- observe one. So assert the index itself is still there and still partial —
+  -- apply_registration_transfer's un-LIMITed `select ... into` relies on it to
+  -- bound the recipient lookup to one row. 14a–14d are the behavioural cover.
+  select exists(
+    select 1 from pg_index i
+      join pg_class c on c.oid = i.indexrelid
+     where c.relname = 'registrations_tournament_player_active_uniq'
+       and i.indisunique
+       and pg_get_expr(i.indpred, i.indrelid) is not null
+  ) into v_ok;
+  if not v_ok then
+    raise exception 'CHECK 14e FAILED: registrations_tournament_player_active_uniq is missing or no longer a partial unique index';
+  end if;
+  raise notice 'CHECK 14e ok — the partial unique index that bounds the recipient lookup is intact';
+
+  -- 14f. The audit trail still attributes both halves of the swap to the RPC
+  -- that ran it, through the extracted apply_registration_transfer. v_tp[2]
+  -- is 'registered' from 14a — reuse it as the from-player, sending to a
+  -- recipient (v_tp[7]) that holds no rows at all.
+  insert into public.registration_transfers (tournament_id, from_player_id, to_player_id)
+  values (v_t3, v_tp[2], v_tp[7])
+  returning id into v_xfer_id;
+
+  select r.status into v_status from public.admin_force_accept_transfer(v_xfer_id) r;
+  if v_status <> 'accepted' then
+    raise exception 'CHECK 14f FAILED: expected accepted, got %', v_status;
+  end if;
+  select count(*) into v_count from public.registration_status_events
+   where tournament_id = v_t3
+     and source = 'admin_force_accept_transfer'
+     and ((old_status = 'registered' and new_status = 'cancelled')
+       or (new_status = 'registered' and player_id = v_tp[7]));
+  if v_count <> 2 then
+    raise exception 'CHECK 14f FAILED: expected 2 audit rows tagged admin_force_accept_transfer, got %', v_count;
+  end if;
+  raise notice 'CHECK 14f ok — both halves of an admin-forced transfer are attributed in the audit trail';
+
+  -- 14g. A terminal refusal closes the offer instead of leaving it 'pending'.
+  -- A pending row keeps the accept banner on the recipient's dashboard, where
+  -- every tap re-fails, so the entry points must retire it.
+  insert into public.registrations (tournament_id, player_id, status)
+  values (v_t3, v_tp[9], 'registered');
+  insert into public.registrations (tournament_id, player_id, status)
+  values (v_t3, v_tp[10], 'registered');
+
+  insert into public.registration_transfers (tournament_id, from_player_id, to_player_id)
+  values (v_t3, v_tp[9], v_tp[10])
+  returning id into v_xfer_id;
+
+  select r.status into v_status from public.admin_force_accept_transfer(v_xfer_id) r;
+  if v_status <> 'to_already_registered' then
+    raise exception 'CHECK 14g FAILED: expected to_already_registered, got %', v_status;
+  end if;
+  select status, closed_reason into v_status, v_reason
+    from public.registration_transfers where id = v_xfer_id;
+  if v_status <> 'auto_closed' or v_reason <> 'to_already_registered' then
+    raise exception 'CHECK 14g FAILED: offer left as status=%, closed_reason=%', v_status, v_reason;
+  end if;
+  raise notice 'CHECK 14g ok — an offer to an already-registered recipient is auto-closed, not left pending';
+
+  -- 14h. Same for the other terminal refusal: the sender no longer holds a
+  -- registered row (they cancelled, or already transferred it away).
+  insert into public.registration_transfers (tournament_id, from_player_id, to_player_id)
+  values (v_t3, v_tp[11], v_tp[12])
+  returning id into v_xfer_id;
+
+  select r.status into v_status from public.admin_force_accept_transfer(v_xfer_id) r;
+  if v_status <> 'from_not_registered' then
+    raise exception 'CHECK 14h FAILED: expected from_not_registered, got %', v_status;
+  end if;
+  select status, closed_reason into v_status, v_reason
+    from public.registration_transfers where id = v_xfer_id;
+  if v_status <> 'auto_closed' or v_reason <> 'from_not_registered' then
+    raise exception 'CHECK 14h FAILED: offer left as status=%, closed_reason=%', v_status, v_reason;
+  end if;
+  raise notice 'CHECK 14h ok — an offer from a player who is no longer registered is auto-closed';
 
   raise notice '';
   raise notice 'All registration integrity checks passed.';
