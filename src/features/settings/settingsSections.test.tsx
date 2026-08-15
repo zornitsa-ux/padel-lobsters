@@ -63,9 +63,16 @@ const profileForm = {
   avatarUrl: '',
 }
 
-const profileSection = ({ expanded = true, prompt = false } = {}) => (
+const profileSection = ({
+  expanded = true,
+  prompt = false,
+  hasPii = true,
+  profileLoadFailed = false,
+} = {}) => (
   <ProfileSection
     myPlayer={myPlayer}
+    hasPii={hasPii}
+    profileLoadFailed={profileLoadFailed}
     profileExpanded={expanded}
     setProfileExpanded={noop}
     profileForm={profileForm}
@@ -141,5 +148,24 @@ describe('ProfileSection — self-service profile', () => {
     // One number input in the prompt: the level itself.
     const numberInputs = document.querySelectorAll('input[type="number"]')
     expect(numberInputs.length).toBe(1)
+  })
+
+  // Finding 2: a failed/unresolved profile RPC must not leave the Save
+  // button stuck on the misleading "Loading your profile…" label forever.
+  it('surfaces an explicit error and label when the profile failed to load', () => {
+    render(profileSection({ hasPii: false, profileLoadFailed: true }))
+
+    expect(
+      screen.getByText(/couldn't load your profile details\. check your connection and reload\./i),
+    ).toBeTruthy()
+    expect(screen.getByRole('button', { name: /profile unavailable/i })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: /loading your profile/i })).toBeNull()
+  })
+
+  it('still shows the loading label while the profile is merely in flight', () => {
+    render(profileSection({ hasPii: false, profileLoadFailed: false }))
+
+    expect(screen.getByRole('button', { name: /loading your profile/i })).toBeTruthy()
+    expect(screen.queryByText(/couldn't load your profile details/i)).toBeNull()
   })
 })

@@ -35,9 +35,10 @@ export const myProfileRowSchema = playerPublicRowSchema.extend({
   birthday: nullableString,
 })
 
-// get_all_players_with_pii_v2 also returns SETOF players, but the admin roster
-// overlay only reads the contact/admin columns — everything else already comes
-// from players_public, so the rest passes through unmodelled.
+// admin_get_player_pii returns a narrow, fixed projection for exactly one
+// player (not SETOF players) — see supabase/migrations/20260816120000_
+// scoped_player_pii.sql. No pin/pin_changes: pin is never read by any admin
+// surface any more, and pin_changes is already public via players_public.
 export const playerPiiRowSchema = z
   .object({
     id: z.string(),
@@ -45,8 +46,6 @@ export const playerPiiRowSchema = z
     phone: nullableString,
     birthday: nullableString,
     notes: nullableString,
-    pin: nullableString,
-    pin_changes: nullableNumber,
   })
   .passthrough()
 

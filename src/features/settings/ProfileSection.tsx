@@ -16,6 +16,8 @@ import type { Player } from '../../lib/normalise'
 
 interface ProfileSectionProps {
   myPlayer: Player | null
+  hasPii: boolean
+  profileLoadFailed?: boolean
   profileExpanded: boolean
   setProfileExpanded: Dispatch<SetStateAction<boolean>>
   profileForm: ProfileForm
@@ -34,6 +36,8 @@ interface ProfileSectionProps {
 
 export default function ProfileSection({
   myPlayer,
+  hasPii,
+  profileLoadFailed = false,
   profileExpanded,
   setProfileExpanded,
   profileForm,
@@ -470,16 +474,31 @@ export default function ProfileSection({
                 />
               </div>
 
-              {/* Save button */}
+              {/* Save button — disabled until the PII fetch has resolved, so
+                  a save can never write blanks over real phone/birthday/email
+                  while that overlay is still in flight or has failed. */}
               <button
                 type="button"
                 onClick={handleProfileSave}
-                disabled={profileSaving}
+                disabled={profileSaving || !hasPii}
                 className="btn-primary w-full flex items-center justify-center gap-2"
               >
                 <Save size={16} />
-                {profileSaving ? 'Saving…' : profileSaved ? '✓ Saved!' : 'Save Profile'}
+                {profileSaving
+                  ? 'Saving…'
+                  : profileLoadFailed
+                    ? 'Profile unavailable'
+                    : !hasPii
+                      ? 'Loading your profile…'
+                      : profileSaved
+                        ? '✓ Saved!'
+                        : 'Save Profile'}
               </button>
+              {profileLoadFailed && (
+                <p className="text-xs text-red-600 bg-red-50 rounded-lg p-2">
+                  Couldn't load your profile details. Check your connection and reload.
+                </p>
+              )}
               {profileError && (
                 <p className="text-xs text-red-600 bg-red-50 rounded-lg p-2">{profileError}</p>
               )}

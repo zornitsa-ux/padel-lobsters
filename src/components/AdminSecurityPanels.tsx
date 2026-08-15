@@ -13,6 +13,7 @@ import {
   KeyRound,
   UserCheck,
   MessageCircle,
+  Eye,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { CollapsibleCard } from './ui/CollapsibleCard'
@@ -31,8 +32,11 @@ import { CollapsibleCard } from './ui/CollapsibleCard'
  *
  *   2. Recent security events — last N rows of pin_attempts joined to
  *      player names, color-coded by outcome. Useful for spotting
- *      attack patterns: bursts of failures from one device, repeated
- *      pii_dump calls, locked accounts, etc.
+ *      attack patterns: bursts of failures from one device, an
+ *      unusually large number of player_pii_read rows, locked
+ *      accounts, etc. A 'pii_dump' row (the old whole-roster read) is
+ *      now itself anomalous — the admin Players screen only ever
+ *      requests one player's PII at a time (player_pii_read).
  *
  * Both panels are only mounted by Settings when isAdmin is true; this
  * component does not gate itself, so callers must check.
@@ -48,7 +52,13 @@ const EVENT_FILTERS: ReadonlyArray<{ id: EventFilter; label: string }> = [
 ]
 
 // Kinds that record an admin reading player contact details.
-const PII_ATTEMPT_KINDS = ['pii_dump', 'payment_reminder']
+//
+// player_id semantics differ across these: pii_dump names the ADMIN who
+// read the whole roster (auth.uid()); player_pii_read and payment_reminder
+// name the SUBJECT whose details were read. EventRow's "player_name" column
+// therefore means different things depending on the row's kind — acceptable
+// for now, same shape payment_reminder already had.
+const PII_ATTEMPT_KINDS = ['pii_dump', 'player_pii_read', 'payment_reminder']
 
 export default function AdminSecurityPanels() {
   return (
@@ -239,6 +249,13 @@ function SecurityEventsPanel() {
   })
 
   const failureCount = loaded ? events.filter((e) => e.succeeded === false).length : null
+  // Soft signal in place of a hard rate limit on admin_get_player_pii —
+  // see 20260816120000_scoped_player_pii.sql's header for why a per-player
+  // quota has no sane number. A high count here (relative to how many
+  // players were actually being worked on) is the thing to notice.
+  const piiReadCount = loaded
+    ? events.filter((e) => e.attempt_kind === 'player_pii_read').length
+    : null
 
   return (
     <CollapsibleCard
@@ -255,6 +272,11 @@ function SecurityEventsPanel() {
               {failureCount} fail
             </span>
           )}
+          {piiReadCount !== null && piiReadCount > 0 && (
+            <span className="text-[10px] text-white bg-amber-500 px-1.5 py-0.5 rounded-full font-bold">
+              {piiReadCount} PII read{piiReadCount === 1 ? '' : 's'}
+            </span>
+          )}
         </h3>
       }
     >
@@ -262,8 +284,9 @@ function SecurityEventsPanel() {
         <>
           <div className="flex items-center justify-between">
             <p className="text-xs text-lob-muted leading-snug flex-1 pr-2">
-              Every PIN attempt, device approval, and PII dump is logged. Watch for bursts of
-              failures, locked accounts, or unexpected pii_dump calls.
+              Every PIN attempt, device approval, and contact-details read is logged. Reads name the
+              player whose details were read. Watch for bursts of failures, locked accounts, or any
+              "Full roster PII read" — that path is no longer used and shouldn't appear.
             </p>
             <button
               onClick={load}
@@ -364,6 +387,8 @@ function labelForKind(kind: string): string {
       return 'Admin sign-in'
     case 'pii_dump':
       return 'Full roster PII read'
+    case 'player_pii_read':
+      return 'Player contact read'
     case 'payment_reminder':
       return 'Payment reminder sent'
     case 'approve_device':
@@ -385,6 +410,8 @@ function iconForKind(kind: string): LucideIcon {
       return ShieldCheck
     case 'pii_dump':
       return AlertTriangle
+    case 'player_pii_read':
+      return Eye
     case 'payment_reminder':
       return MessageCircle
     case 'approve_device':

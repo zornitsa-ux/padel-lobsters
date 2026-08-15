@@ -17,15 +17,23 @@ export interface CommunityPlayer extends PlayerLike {
   gender?: string | null
   isLeftHanded?: boolean | null
   preferredPosition?: string | null
+  // PII — only ever populated by a scoped admin_get_player_pii read (see
+  // useRevealPii); never present just from the public roster.
   email?: string | null
   phone?: string | null
   birthday?: string | null
   notes?: string | null
+  // Public (players_public), safe on every roster row: day+month only, no
+  // year, so a birthday chip can render without a PII fetch.
+  birthday_month?: number | null
+  birthday_day?: number | null
   tagline?: string | null
   taglineLabel?: string | null
   tagline_label?: string | null
-  pin?: string | null
-  pinChanges?: number | null
+  // Public (players_public) reset counter. No `pin` field — the plaintext
+  // PIN is never read by any admin surface (regenerating one is a separate,
+  // one-time reveal of a freshly generated value, not a stored read).
+  pin_changes?: number | null
 }
 
 export type OrderedPlayer<T extends PlayerLike> = {

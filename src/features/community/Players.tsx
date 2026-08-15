@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { useApp } from '../../context/useApp'
 import { useTournaments } from '../events/useTournaments'
-import { usePlayers, usePlayersPii, usePlayerActions, useAvatarUpload } from '../players/usePlayers'
+import { usePlayers, usePlayerActions, useAvatarUpload } from '../players/usePlayers'
 import { randomAvatarFilename } from '../players/playerQueries'
 import { useAllMatches } from '../events/useMatches'
 import { useAllRegistrations } from '../events/useRegistrations'
@@ -12,12 +12,15 @@ import { LEVEL_COLORS, randomPrompt, emptyForm, type PlayerFormState } from './p
 import { corpReview } from './reviewScenarios'
 import { errorMessage } from '../../lib/errors'
 import { useConfirm } from '../../lib/confirmBus'
+import { useResolvePlayerPii } from './useRevealPii'
+import { AlertBox } from '../../components/ui/AlertBox'
 import PlayerForm from './PlayerForm'
 import LinkPlayerModal from './LinkPlayerModal'
 import PinRevealModal from './PinRevealModal'
 import PendingApprovalsList from './PendingApprovalsList'
 import PlayersList from './PlayersList'
 import { getMissingPlayerFormFields } from './playerFormSchema'
+import { buildPlayerEditPatch } from './playerPatch'
 import {
   buildFirstNameCount,
   computeReviewCounts,
@@ -81,32 +84,36 @@ export default function Players({ onNavigate, focusPlayerId }: PlayersProps) {
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
   const claimedId = session?.user?.id ?? null
 
-  // ── Admin PII overlay ───────────────────────────────────────────────
-  // players_public withholds email/phone/birthday/notes/pin, so for admins we
-  // fetch the full rows through the admin-gated RPC and overlay them by id.
-  // The query is disabled for everyone else (see usePlayersPii).
-  const { data: piiById, error: piiError } = usePlayersPii({ role })
-
-  // Merge a player record with the admin PII overlay. Non-admins get the
-  // record unchanged (which means empty PII fields after Phase 3 — fine,
-  // the admin-gated UI hides those fields anyway).
-  const withPii = useCallback(
-    <T extends CommunityPlayer>(p: T): T => {
-      const extra = piiById?.[String(p.id)]
-      if (!extra) return p
-      return {
-        ...p,
-        email: extra.email || p.email || '',
-        phone: extra.phone || p.phone || '',
-        birthday: extra.birthday || p.birthday || '',
-        notes: extra.notes || p.notes || '',
-        pin: extra.pin || p.pin || '',
-      }
+  // ── Admin PII, per-player ────────────────────────────────────────────
+  // players_public withholds email/phone/birthday/notes, so admin write
+  // paths that need them resolve one player at a time through
+  // admin_get_player_pii — never a whole-roster fetch. Every admin action
+  // that seeds a form from a player record (or writes one back) must
+  // resolve through this first: reading a possibly-stale/unloaded cache
+  // directly is what once let an admin action silently null out a player's
+  // email (2026-08-15 incident). Display-only PII reveals (the drawer, the
+  // pending list, the link modal's candidates) go through useRevealPii
+  // instead — this resolver is for write paths only.
+  const resolvePlayerPii = useResolvePlayerPii()
+  const resolveWithPii = useCallback(
+    async <T extends CommunityPlayer>(p: T): Promise<T> => {
+      const pii = await resolvePlayerPii(String(p.id))
+      return { ...p, email: pii.email, phone: pii.phone, birthday: pii.birthday, notes: pii.notes }
     },
-    [piiById],
+    [resolvePlayerPii],
   )
   const [showForm, setShowForm] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
+  // The exact (PII-resolved) record that seeded the currently-open edit
+  // form. handleSubmit diffs against this rather than sending every field,
+  // so a field the admin never touched can never be sent as a blank clear.
+  // null while editId is set means the PII resolve is still in flight.
+  const [editSource, setEditSource] = useState<CommunityPlayer | null>(null)
+  // Merge-resolution is an explicit admin approval of a pending signup, so
+  // that save alone is allowed to also activate the record — a plain edit
+  // (openEdit) never should. See buildPlayerEditPatch.
+  const [editActivates, setEditActivates] = useState(false)
+  const [formReady, setFormReady] = useState(true)
   const [form, setForm] = useState<PlayerFormState>(emptyForm)
   const lobbyPrompt = useMemo(() => randomPrompt(), [])
   const [search, setSearch] = useState('')
@@ -134,11 +141,12 @@ export default function Players({ onNavigate, focusPlayerId }: PlayersProps) {
   const [error, setError] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Overlay admin PII onto every record up-front so downstream filtering,
-  // rendering, and form-fill calls just see the merged object.
-  const playersWithPii = useMemo(() => players.map(withPii), [players, withPii])
-  const activePlayers = playersWithPii.filter((p) => (p.status || 'active') === 'active')
-  const pendingPlayers = playersWithPii.filter((p) => p.status === 'pending')
+  // No PII overlay here — the roster (and everything derived from it below)
+  // is the public, redacted view. PII is revealed per-player, on demand, by
+  // the components that actually show it (PlayerProfileDrawer,
+  // PendingApprovalsList, LinkPlayerModal via useRevealPii).
+  const activePlayers = players.filter((p) => (p.status || 'active') === 'active')
+  const pendingPlayers = players.filter((p) => p.status === 'pending')
 
   const filtered = activePlayers.filter((p) => p.name?.toLowerCase().includes(search.toLowerCase()))
   const sorted = useMemo(() => sortPlayersChronological(filtered), [filtered])
@@ -190,28 +198,71 @@ export default function Players({ onNavigate, focusPlayerId }: PlayersProps) {
     return () => clearTimeout(mergeDebounceRef.current)
   }, [form.name, editId, players])
 
-  // Accept merge: pre-fill form with existing player data, switch to update mode
-  const acceptMerge = () => {
+  // Guards against out-of-order async resolves: opening player A then
+  // quickly player B, with A's PII resolving last, must not land A's data
+  // on a form that's now editing B. Shared by openEdit and acceptMerge —
+  // each bumps the token before awaiting, then checks it's still current
+  // before every state commit (including the error path) so a stale
+  // rejection can't unblock or error a newer, still-loading form.
+  const editRequestRef = useRef(0)
+
+  // Accept merge: pre-fill form with existing player data, switch to update mode.
+  // Also reachable by a self-registering (non-admin) player whose typed name
+  // matches an existing record — admin_get_player_pii is admin-gated, so
+  // only resolve through it for admins; a non-admin merge falls back to the
+  // (PII-less) roster record, which is safe because handleSubmit diffs
+  // against exactly this same object as its baseline (see buildPlayerEditPatch).
+  const acceptMerge = async () => {
     if (!mergePlayer) return
-    // Re-resolve through the PII-overlay so email/phone/birthday are
-    // filled in if admin has fetched them.
-    const p = withPii(mergePlayer)
-    setForm(formFromPlayer(p))
-    setAvatarPreview(p.avatarUrl || null)
-    setEditId(p.id)
-    setMergePlayer(null)
+    const token = ++editRequestRef.current
+    setError('')
+    setFormReady(false)
+    try {
+      const p = isAdmin ? await resolveWithPii(mergePlayer) : mergePlayer
+      if (editRequestRef.current !== token) return
+      setForm(formFromPlayer(p))
+      setAvatarPreview(p.avatarUrl || null)
+      setEditId(p.id)
+      setEditSource(p)
+      setEditActivates(p.status === 'pending')
+      setMergePlayer(null)
+    } catch (err) {
+      if (editRequestRef.current !== token) return
+      setError(errorMessage(err, "Could not load this player's details."))
+    } finally {
+      if (editRequestRef.current === token) setFormReady(true)
+    }
   }
 
-  const openEdit = (p: CommunityPlayer) => {
+  const openEdit = async (p: CommunityPlayer) => {
     if (!isAdmin) {
       onNavigate?.('settings')
       return
     }
-    setForm(formFromPlayer(p))
+    const token = ++editRequestRef.current
+    setError('')
     setAvatarFile(null)
-    setAvatarPreview(p.avatarUrl || null)
+    setAvatarPreview(null)
+    setForm(emptyForm)
     setEditId(p.id)
+    setEditSource(null)
+    setEditActivates(false)
+    setFormReady(false)
     setShowForm(true)
+    try {
+      const full = await resolveWithPii(p)
+      if (editRequestRef.current !== token) return
+      setForm(formFromPlayer(full))
+      setAvatarPreview(full.avatarUrl || null)
+      setEditSource(full)
+      setFormReady(true)
+    } catch (err) {
+      if (editRequestRef.current !== token) return
+      setError(errorMessage(err, 'Could not load this player for editing.'))
+      setShowForm(false)
+      setEditId(null)
+      setFormReady(true)
+    }
   }
 
   const handleDelete = async (id: string) => {
@@ -231,7 +282,11 @@ export default function Players({ onNavigate, focusPlayerId }: PlayersProps) {
   const handleApprove = async (p: CommunityPlayer) => {
     setError('')
     try {
-      await updatePlayer(p.id, { ...p, status: 'active' })
+      // Explicit status transition only — approving a signup should never
+      // also rewrite name/level/contact fields. Previously this spread the
+      // whole player record, which meant an unresolved PII overlay could
+      // silently blank fields on save (same class of bug as the edit form).
+      await updatePlayer(p.id, { status: 'active' })
       // Phase 2d: PIN was already emailed at signup; no need to share via
       // WhatsApp on approval. If the player lost their PIN, they use
       // "Forgot PIN?" on the sign-in screen for self-service recovery.
@@ -262,22 +317,32 @@ export default function Players({ onNavigate, focusPlayerId }: PlayersProps) {
     const pending = linkModal
     if (!pending || !existingPlayer) return
 
-    // Merge: fill in any missing fields on the existing player from the pending registration
-    const merged = {
-      name: existingPlayer.name,
-      email: existingPlayer.email || pending.email || '',
-      phone: existingPlayer.phone || pending.phone || '',
-      country: existingPlayer.country || pending.country || '',
-      gender: existingPlayer.gender || pending.gender || '',
-      playtomicLevel: existingPlayer.playtomicLevel || pending.playtomicLevel || 0,
-      playtomicUsername: existingPlayer.playtomicUsername || pending.playtomicUsername || '',
-      isLeftHanded: existingPlayer.isLeftHanded || pending.isLeftHanded || false,
-      avatarUrl: existingPlayer.avatarUrl || pending.avatarUrl || '',
-      notes: existingPlayer.notes || pending.notes || '',
-      status: 'active',
-    }
     setError('')
     try {
+      // Resolve full PII for BOTH records before merging — this used to
+      // read existingPlayer.email/phone/notes straight from the (possibly
+      // PII-unresolved) list props via `||`, which turns "unknown" into
+      // "blank" and can wipe the existing player's real contact info with
+      // no visible tell in the UI. Never merge from unresolved records.
+      const [existingFull, pendingFull] = await Promise.all([
+        resolveWithPii(existingPlayer),
+        resolveWithPii(pending),
+      ])
+      // Only fill genuinely-empty fields on the existing player from the
+      // pending signup — never overwrite a value the existing player
+      // already has.
+      const merged = {
+        name: existingFull.name,
+        email: existingFull.email || pendingFull.email || '',
+        phone: existingFull.phone || pendingFull.phone || '',
+        country: existingFull.country || pendingFull.country || '',
+        gender: existingFull.gender || pendingFull.gender || '',
+        playtomicLevel: existingFull.playtomicLevel || pendingFull.playtomicLevel || 0,
+        playtomicUsername: existingFull.playtomicUsername || pendingFull.playtomicUsername || '',
+        isLeftHanded: existingFull.isLeftHanded || pendingFull.isLeftHanded || false,
+        avatarUrl: existingFull.avatarUrl || pendingFull.avatarUrl || '',
+        notes: existingFull.notes || pendingFull.notes || '',
+      }
       await updatePlayer(existingPlayer.id, merged)
       await deletePlayer(pending.id)
       setLinkModal(null)
@@ -345,6 +410,14 @@ export default function Players({ onNavigate, focusPlayerId }: PlayersProps) {
       alert(`Please complete the following fields before registering:\n\n• ${missing.join('\n• ')}`)
       return
     }
+    // Defense in depth: editSource is set by openEdit/acceptMerge once the
+    // PII resolve completes. If some future entry point sets editId without
+    // going through one of those, refuse to submit rather than diff against
+    // nothing (which buildPlayerEditPatch requires a real source for).
+    if (editId && !editSource) {
+      setError('Player data is still loading — try again in a moment.')
+      return
+    }
     setSaving(true)
     setError('')
     try {
@@ -375,26 +448,36 @@ export default function Players({ onNavigate, focusPlayerId }: PlayersProps) {
           )
         }
       }
-      // firstName / lastName are transient — the DB only knows about `name`.
-      const { firstName: _f, lastName: _l, ...rest } = form
-      const data = {
-        ...rest,
-        name: combinedName, // overwrite whatever was on form.name — single source of truth
-        avatarUrl,
-        playtomicLevel: parseFloat(String(form.playtomicLevel)) || 0,
-        isLeftHanded: form.isLeftHanded || false,
-        birthday: form.birthday || null,
-        taglineLabel: lobbyPrompt.label,
-        status: 'active',
-      }
       try {
         if (editId) {
-          await updatePlayer(editId, data)
-          if (!isAdmin) {
-            const existing = players.find((p) => String(p.id) === String(editId))
-            if (existing?.pin) setPinReveal({ name: firstName, pin: existing.pin })
-          }
+          // Diff against the exact record that seeded the form — only
+          // genuinely-changed fields go in the payload. taglineLabel/status
+          // are deliberately NOT sent unconditionally here (they used to
+          // be): taglineLabel only follows an actual notes edit, and status
+          // transitions are explicit actions elsewhere (handleApprove),
+          // not a side effect of saving unrelated fields.
+          const patch = buildPlayerEditPatch({
+            form,
+            avatarUrl,
+            combinedName,
+            notesPromptLabel: lobbyPrompt.label,
+            source: editSource as CommunityPlayer,
+            activate: editActivates,
+          })
+          await updatePlayer(editId, patch)
         } else {
+          // firstName / lastName are transient — the DB only knows about `name`.
+          const { firstName: _f, lastName: _l, ...rest } = form
+          const data = {
+            ...rest,
+            name: combinedName, // overwrite whatever was on form.name — single source of truth
+            avatarUrl,
+            playtomicLevel: parseFloat(String(form.playtomicLevel)) || 0,
+            isLeftHanded: form.isLeftHanded || false,
+            birthday: form.birthday || null,
+            taglineLabel: lobbyPrompt.label,
+            status: 'active',
+          }
           const result = await addPlayer(data)
           // addPlayer now returns { ok, data: insertedRow } — pin lives on result.data.
           const insertedPin = result?.data?.pin
@@ -406,6 +489,8 @@ export default function Players({ onNavigate, focusPlayerId }: PlayersProps) {
         setAvatarFile(null)
         setAvatarPreview(null)
         setMergePlayer(null)
+        setEditSource(null)
+        setEditActivates(false)
       } catch (err) {
         setError(errorMessage(err, 'Could not save player.'))
       }
@@ -422,24 +507,9 @@ export default function Players({ onNavigate, focusPlayerId }: PlayersProps) {
   return (
     <div className="space-y-4">
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg p-2 flex items-start justify-between gap-2">
-          <span>{error}</span>
-          <button
-            onClick={() => setError('')}
-            className="text-red-500 font-bold leading-none px-1"
-            aria-label="Dismiss error"
-          >
-            ×
-          </button>
-        </div>
-      )}
-      {/* A failed PII dump used to be silent, leaving admins with a roster
-          that looked like it simply had no contact details. */}
-      {piiError && (
-        <div className="bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-lg p-2">
-          Contact details could not be loaded:{' '}
-          {errorMessage(piiError, 'the admin roster request failed.')}
-        </div>
+        <AlertBox variant="error" onDismiss={() => setError('')} className="text-xs">
+          {error}
+        </AlertBox>
       )}
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -556,6 +626,7 @@ export default function Players({ onNavigate, focusPlayerId }: PlayersProps) {
         handleAvatarChange={handleAvatarChange}
         handleSubmit={handleSubmit}
         saving={saving}
+        formReady={formReady}
         mergePlayer={mergePlayer}
         setMergePlayer={setMergePlayer}
         acceptMerge={acceptMerge}
@@ -564,6 +635,8 @@ export default function Players({ onNavigate, focusPlayerId }: PlayersProps) {
           setShowForm(false)
           setAvatarFile(null)
           setAvatarPreview(null)
+          setEditSource(null)
+          setEditActivates(false)
         }}
       />
     </div>

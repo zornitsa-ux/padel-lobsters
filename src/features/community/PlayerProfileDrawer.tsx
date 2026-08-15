@@ -1,5 +1,9 @@
 import React from 'react'
-import { Pencil, Trash2, RotateCcw } from 'lucide-react'
+import { Pencil, Trash2, RotateCcw, Mail, EyeOff, AlertTriangle } from 'lucide-react'
+import { Skeleton } from '../../components/ui/Skeleton'
+import { AlertBox } from '../../components/ui/AlertBox'
+import { ActionChip } from '../../components/ui/ActionChip'
+import { useRevealPii } from './useRevealPii'
 import { buildHistoricalAppearances, summariseAppearances } from '../../lib/playerHistory'
 import {
   buildPlayerStats,
@@ -15,6 +19,21 @@ import { useMmRatings } from '../matchmaking/useMatchmaking'
 import type { EventNavigate } from '../events/eventHelpers'
 
 const TOURNAMENTS = TOURNAMENTS_RAW as unknown as HistoricalTournament[]
+
+const MONTH_ABBR = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+]
 
 // buildPlayerStats only models { id, date } on a tournament, but the chip row
 // prefers the event's name when it has one.
@@ -52,6 +71,9 @@ export default function PlayerProfileDrawer({
   // Learned level (mm_rating/mm_sigma) is admin-only — it lives behind
   // admin_get_mm_ratings, not players_public, so non-admins never fetch it.
   const { data: mmRatings } = useMmRatings({ enabled: Boolean(isAdmin) })
+  // Contact details (email/phone) are PII — nothing is fetched until the
+  // admin explicitly taps "Show contact details" below.
+  const pii = useRevealPii(String(p.id))
   const learned = mmRatings?.[String(p.id)] ?? null
   const learnedDelta = learned ? learned.mu - (p.playtomicLevel || 0) : 0
 
@@ -160,16 +182,13 @@ export default function PlayerProfileDrawer({
             🤚 Lefty
           </span>
         )}
-        {p.birthday &&
-          (() => {
-            const [y, m, d] = p.birthday.split('-').map(Number)
-            const dt = new Date(y, m - 1, d)
-            const dayMonth = dt.toLocaleDateString('en-GB', {
-              day: 'numeric',
-              month: 'short',
-            })
-            return <span className="text-xs text-lob-muted-light">🎂 {dayMonth}</span>
-          })()}
+        {/* Day + month only, no year — this is public (players_public), not
+            PII, so it renders with zero contact-details fetch. */}
+        {p.birthday_month && p.birthday_day && (
+          <span className="text-xs text-lob-muted-light">
+            🎂 {p.birthday_day} {MONTH_ABBR[p.birthday_month - 1]}
+          </span>
+        )}
       </div>
 
       {/* Level row — compact */}
@@ -459,14 +478,52 @@ export default function PlayerProfileDrawer({
         </div>
       )}
 
-      {/* Admin info */}
-      {isAdmin && (p.email || p.phone) && (
+      {/* Admin info — contact details are PII, revealed on demand only. */}
+      {isAdmin && (
         <div className="space-y-1">
-          <p className="text-[10px] font-semibold text-lob-muted-light uppercase tracking-wider">
-            Admin only
-          </p>
-          {p.email && <p className="text-xs text-lob-muted">✉ {p.email}</p>}
-          {p.phone && <p className="text-xs text-lob-muted">📞 {p.phone}</p>}
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] font-semibold text-lob-muted-light uppercase tracking-wider">
+              Admin only
+            </p>
+            {pii.revealed && !pii.isLoading && (
+              <ActionChip icon={<EyeOff size={11} />} onClick={pii.hide}>
+                Hide
+              </ActionChip>
+            )}
+          </div>
+
+          {!pii.revealed && (
+            <ActionChip icon={<Mail size={11} />} onClick={pii.reveal}>
+              Show contact details
+            </ActionChip>
+          )}
+
+          {pii.revealed && pii.isLoading && (
+            <div className="space-y-1" role="status" aria-live="polite">
+              <span className="sr-only">Loading contact details…</span>
+              <Skeleton className="h-3 w-40" />
+              <Skeleton className="h-3 w-28" />
+            </div>
+          )}
+
+          {pii.revealed && pii.isError && (
+            <AlertBox variant="warning" icon={<AlertTriangle size={14} />}>
+              <div className="flex items-center justify-between gap-2">
+                <span>Couldn't load contact details.</span>
+                <ActionChip onClick={() => pii.retry()}>Try again</ActionChip>
+              </div>
+            </AlertBox>
+          )}
+
+          {pii.revealed && !pii.isLoading && !pii.isError && pii.pii && (
+            <>
+              {pii.pii.email && <p className="text-xs text-lob-muted">✉ {pii.pii.email}</p>}
+              {pii.pii.phone && <p className="text-xs text-lob-muted">📞 {pii.pii.phone}</p>}
+              {!pii.pii.email && !pii.pii.phone && (
+                <p className="text-xs text-lob-muted italic">No contact details on file.</p>
+              )}
+            </>
+          )}
         </div>
       )}
       {/* Player tagline / notes with saved prompt label */}
@@ -487,9 +544,9 @@ export default function PlayerProfileDrawer({
           <div>
             <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider mb-0.5">
               Access PIN
-              {(p.pinChanges ?? 0) > 0 && (
+              {(p.pin_changes ?? 0) > 0 && (
                 <span className="ml-1.5 text-amber-500/80 font-semibold normal-case tracking-normal">
-                  · reset {p.pinChanges}×
+                  · reset {p.pin_changes}×
                 </span>
               )}
             </p>

@@ -1,8 +1,46 @@
 import React from 'react'
-import { Clock, X } from 'lucide-react'
+import { Clock, X, Mail, RotateCcw } from 'lucide-react'
 import { PlayerRow } from '../../components/ui/PlayerRow'
 import { IconButton } from '../../components/ui/IconButton'
+import { ActionChip } from '../../components/ui/ActionChip'
+import { Skeleton } from '../../components/ui/Skeleton'
+import { useRevealPii } from './useRevealPii'
 import type { CommunityPlayer } from './playersSelectors'
+
+// Per-row, on-demand email reveal. Approve/Reject need no PII at all;
+// only "Played before?" (identity disambiguation) does, and that flow
+// fetches its own PII independently — so nothing here fetches until the
+// admin explicitly asks to see THIS row's email.
+function PendingEmailReveal({ playerId }: { playerId: string }) {
+  const { revealed, reveal, pii, isLoading, isError, retry } = useRevealPii(playerId)
+
+  if (!revealed) {
+    return (
+      <ActionChip icon={<Mail size={10} />} onClick={reveal}>
+        Show email
+      </ActionChip>
+    )
+  }
+  if (isLoading) {
+    return (
+      <span role="status" aria-live="polite">
+        <span className="sr-only">Loading email…</span>
+        <Skeleton className="h-3 w-32 inline-block align-middle" />
+      </span>
+    )
+  }
+  if (isError) {
+    return (
+      <span className="inline-flex items-center gap-1 text-lob-amber">
+        couldn't load
+        <IconButton aria-label="Retry loading email" size="sm" onClick={() => retry()}>
+          <RotateCcw size={10} />
+        </IconButton>
+      </span>
+    )
+  }
+  return <>{pii?.email || 'no email on file'}</>
+}
 
 interface PendingApprovalsListProps {
   pendingPlayers: CommunityPlayer[]
@@ -34,10 +72,10 @@ export default function PendingApprovalsList({
             name={p.name}
             nameClassName="font-semibold text-lob-dark truncate"
             subtitle={
-              <>
-                Lv {(p.playtomicLevel || 0).toFixed(1)}
-                {p.email && ` · ${p.email}`}
-              </>
+              <span className="inline-flex items-center gap-1">
+                Lv {(p.playtomicLevel || 0).toFixed(1)} ·{' '}
+                <PendingEmailReveal playerId={String(p.id)} />
+              </span>
             }
             trailing={
               <IconButton

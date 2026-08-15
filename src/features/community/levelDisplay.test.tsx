@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { render, screen, cleanup } from '@testing-library/react'
+import { renderWithClient } from '../../test/renderWithClient'
 
 // D-028: every roster/registration badge now reads playtomicLevel. A player
 // carrying a stale adjusted_level from before D-018 must not have it shown —
@@ -66,7 +67,10 @@ describe('roster level badges read the Playtomic level', () => {
   })
 
   it('PendingApprovalsList shows the Playtomic level', () => {
-    render(
+    // Needs a QueryClientProvider — each pending row's email reveal control
+    // is backed by usePlayerPii/useForgetPlayerPii now (not fetched until
+    // tapped, but the hooks still need a client in the tree).
+    renderWithClient(
       <PendingApprovalsList
         pendingPlayers={[stalePlayer]}
         onApprove={() => {}}

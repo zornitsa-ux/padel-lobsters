@@ -33,7 +33,7 @@ const myPlayer = {
 }
 
 vi.mock('../players/usePlayers', () => ({
-  useMyProfile: () => ({ data: myPlayer }),
+  useMyProfile: () => ({ data: myPlayer, hasPii: true }),
   usePlayerActions: () => ({ updatePlayer: updatePlayerMock }),
   useAvatarUpload: () => ({ mutateAsync: uploadMock }),
 }))

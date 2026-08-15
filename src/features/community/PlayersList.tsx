@@ -98,13 +98,13 @@ export default function PlayersList({
                       >
                         {(p.playtomicLevel || 0).toFixed(1)}
                       </span>
-                      {isAdmin && (p.pinChanges ?? 0) > 0 && (
+                      {isAdmin && (p.pin_changes ?? 0) > 0 && (
                         <span
                           className="text-[10px] font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded-md flex items-center gap-1"
-                          title={`PIN reset ${p.pinChanges} time${p.pinChanges === 1 ? '' : 's'}`}
+                          title={`PIN reset ${p.pin_changes} time${p.pin_changes === 1 ? '' : 's'}`}
                         >
                           <RotateCcw size={10} />
-                          {p.pinChanges}
+                          {p.pin_changes}
                         </span>
                       )}
                     </div>
