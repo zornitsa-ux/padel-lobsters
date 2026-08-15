@@ -1,6 +1,6 @@
 import React, { type Dispatch, type FormEvent, type SetStateAction } from 'react'
 import { MessageCircle, Save, Info, Lightbulb, Plus, Trash2, RotateCcw } from 'lucide-react'
-import AdminSecurityPanels from '../../components/AdminSecurityPanels'
+import SecurityEventsPanel from '../../components/SecurityEventsPanel'
 import type { EditingTip, SettingsForm } from './settingsHelpers'
 
 interface AdminSectionProps {
@@ -96,11 +96,10 @@ export default function AdminSection({
         )}
       </div>
 
-      {/* Phase 2b: Pending device approvals + recent security events.
-          These are only visible when isAdmin is true and only mount
-          their internal RPCs once visible — no admin-only network
-          traffic for non-admin users. */}
-      <AdminSecurityPanels />
+      {/* Recent security events. Only visible when isAdmin is true and
+          only mounts its internal RPC once expanded — no admin-only
+          network traffic for non-admin users. */}
+      <SecurityEventsPanel />
 
       {/* Padel Tips */}
       <div className="card space-y-4">

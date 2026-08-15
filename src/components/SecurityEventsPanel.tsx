@@ -1,15 +1,10 @@
 import React, { useCallback, useEffect, useState } from 'react'
-import useDevices from '../hooks/useDevices'
-import type { DeviceActionResult, PendingDeviceRow, SecurityEventRow } from '../hooks/useDevices'
+import { adminListSecurityEvents, type SecurityEventRow } from '../api/securityEvents'
 import {
   ShieldCheck,
   AlertTriangle,
-  Smartphone,
   RefreshCw,
-  Check,
-  X,
   Activity,
-  Lock,
   KeyRound,
   UserCheck,
   MessageCircle,
@@ -19,36 +14,24 @@ import type { LucideIcon } from 'lucide-react'
 import { CollapsibleCard } from './ui/CollapsibleCard'
 
 /**
- * Admin-only Security panels.
+ * Admin-only Security panel.
  *
- * Two cards rendered side-by-side (or stacked on mobile):
+ * Recent security events — last N rows of pin_attempts joined to player
+ * names, color-coded by outcome. Useful for spotting attack patterns:
+ * bursts of failures from one device, an unusually large number of
+ * player_pii_read rows, etc. A 'pii_dump' row (the old whole-roster read) is
+ * now itself anomalous — the admin Players screen only ever requests one
+ * player's PII at a time (player_pii_read).
  *
- *   1. Pending device approvals — list of (player, device) pairs that
- *      have authenticated but haven't been approved. Approve unlocks
- *      that device for that player; Deny drops the row entirely (the
- *      device will reappear here if the user logs in again with the
- *      right PIN, so this is more of a "clear noise" action than a
- *      permanent block).
- *
- *   2. Recent security events — last N rows of pin_attempts joined to
- *      player names, color-coded by outcome. Useful for spotting
- *      attack patterns: bursts of failures from one device, an
- *      unusually large number of player_pii_read rows, locked
- *      accounts, etc. A 'pii_dump' row (the old whole-roster read) is
- *      now itself anomalous — the admin Players screen only ever
- *      requests one player's PII at a time (player_pii_read).
- *
- * Both panels are only mounted by Settings when isAdmin is true; this
- * component does not gate itself, so callers must check.
+ * Only mounted by Settings when isAdmin is true; this component does not
+ * gate itself, so callers must check.
  */
-type BusyAction = 'approve' | 'deny' | null
-type EventFilter = 'all' | 'failures' | 'pii' | 'locks'
+type EventFilter = 'all' | 'failures' | 'pii'
 
 const EVENT_FILTERS: ReadonlyArray<{ id: EventFilter; label: string }> = [
   { id: 'all', label: 'All' },
   { id: 'failures', label: 'Failures only' },
   { id: 'pii', label: 'PII reads' },
-  { id: 'locks', label: 'Unlocks' },
 ]
 
 // Kinds that record an admin reading player contact details.
@@ -60,158 +43,7 @@ const EVENT_FILTERS: ReadonlyArray<{ id: EventFilter; label: string }> = [
 // for now, same shape payment_reminder already had.
 const PII_ATTEMPT_KINDS = ['pii_dump', 'player_pii_read', 'payment_reminder']
 
-export default function AdminSecurityPanels() {
-  return (
-    <div className="space-y-4">
-      <PendingDevicesPanel />
-      <SecurityEventsPanel />
-    </div>
-  )
-}
-
-function PendingDevicesPanel() {
-  const { adminListPendingDevices, adminApproveDevice, adminDenyDevice } = useDevices()
-  const [rows, setRows] = useState<PendingDeviceRow[]>([])
-  const [loading, setLoading] = useState(true)
-  // keyed by `${player_id}|${device_id}`
-  const [busy, setBusy] = useState<Record<string, BusyAction>>({})
-  const [error, setError] = useState('')
-
-  const load = useCallback(async () => {
-    setLoading(true)
-    const data: PendingDeviceRow[] = await adminListPendingDevices()
-    setRows(data)
-    setLoading(false)
-  }, [adminListPendingDevices])
-
-  useEffect(() => {
-    load()
-  }, [load])
-
-  const onApprove = async (row: PendingDeviceRow) => {
-    const key = `${row.player_id}|${row.device_id}`
-    setBusy((b) => ({ ...b, [key]: 'approve' }))
-    setError('')
-    const result: DeviceActionResult = await adminApproveDevice(row.player_id, row.device_id)
-    setBusy((b) => ({ ...b, [key]: null }))
-    if (!result.ok) {
-      setError(
-        `Could not approve ${row.player_name}'s device — ${result.reason || 'unknown error'}`,
-      )
-      return
-    }
-    setRows((rs) =>
-      rs.filter((r) => !(r.player_id === row.player_id && r.device_id === row.device_id)),
-    )
-  }
-
-  const onDeny = async (row: PendingDeviceRow) => {
-    const key = `${row.player_id}|${row.device_id}`
-    setBusy((b) => ({ ...b, [key]: 'deny' }))
-    setError('')
-    const result: DeviceActionResult = await adminDenyDevice(row.player_id, row.device_id)
-    setBusy((b) => ({ ...b, [key]: null }))
-    if (!result.ok) {
-      setError(`Could not deny ${row.player_name}'s device — ${result.reason || 'unknown error'}`)
-      return
-    }
-    setRows((rs) =>
-      rs.filter((r) => !(r.player_id === row.player_id && r.device_id === row.device_id)),
-    )
-  }
-
-  return (
-    <div className="card space-y-3">
-      <div className="flex items-center justify-between">
-        <h3 className="font-bold text-lob-slate text-sm flex items-center gap-2">
-          <ShieldCheck size={15} className="text-amber-600" />
-          Pending device approvals
-          {rows.length > 0 && (
-            <span className="text-[10px] text-white bg-amber-500 px-1.5 py-0.5 rounded-full font-bold">
-              {rows.length}
-            </span>
-          )}
-        </h3>
-        <button
-          onClick={load}
-          aria-label="Refresh"
-          className="text-lob-muted-light hover:text-lob-teal"
-        >
-          <RefreshCw size={14} />
-        </button>
-      </div>
-      <p className="text-xs text-lob-muted leading-snug">
-        Devices that successfully entered a player PIN but haven't been approved. Approve only if
-        you trust the user / device pair.
-      </p>
-
-      {error && (
-        <div className="flex items-start gap-1.5 text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg p-2">
-          <AlertTriangle size={12} className="flex-shrink-0 mt-0.5" />
-          <span>{error}</span>
-        </div>
-      )}
-
-      {loading ? (
-        <p className="text-xs text-lob-muted-light italic">Loading…</p>
-      ) : rows.length === 0 ? (
-        <div className="text-xs text-lob-muted-light italic flex items-center gap-1.5">
-          <Check size={12} className="text-green-600" />
-          No devices waiting for approval.
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {rows.map((row) => {
-            const key = `${row.player_id}|${row.device_id}`
-            return (
-              <div
-                key={key}
-                className="bg-amber-50 border border-amber-100 rounded-xl p-3 space-y-2"
-              >
-                <div className="flex items-start gap-2">
-                  <Smartphone size={14} className="text-amber-700 flex-shrink-0 mt-0.5" />
-                  <div className="flex-1 min-w-0 text-xs">
-                    <p className="font-semibold text-lob-dark truncate">
-                      {row.player_name || 'Unknown player'}
-                    </p>
-                    <p className="text-lob-muted break-words mt-0.5">
-                      {row.user_agent || 'Unknown user agent'}
-                    </p>
-                    <p className="text-lob-muted-light mt-0.5">
-                      First seen {formatTime(row.first_seen)} · code{' '}
-                      <span className="font-mono">{String(row.device_id).slice(0, 8)}</span>
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => onApprove(row)}
-                    disabled={!!busy[key]}
-                    className="flex-1 text-xs font-semibold text-white bg-amber-600 hover:bg-amber-700 disabled:opacity-50 py-1.5 rounded-lg flex items-center justify-center gap-1"
-                  >
-                    <Check size={12} />
-                    {busy[key] === 'approve' ? 'Approving…' : 'Approve'}
-                  </button>
-                  <button
-                    onClick={() => onDeny(row)}
-                    disabled={!!busy[key]}
-                    className="flex-1 text-xs font-semibold text-lob-slate bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-50 py-1.5 rounded-lg flex items-center justify-center gap-1"
-                  >
-                    <X size={12} />
-                    {busy[key] === 'deny' ? 'Denying…' : 'Deny'}
-                  </button>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      )}
-    </div>
-  )
-}
-
-function SecurityEventsPanel() {
-  const { adminListSecurityEvents } = useDevices()
+export default function SecurityEventsPanel() {
   const [events, setEvents] = useState<SecurityEventRow[]>([])
   const [loading, setLoading] = useState(false)
   const [loaded, setLoaded] = useState(false)
@@ -225,7 +57,7 @@ function SecurityEventsPanel() {
     setEvents(data)
     setLoading(false)
     setLoaded(true)
-  }, [adminListSecurityEvents, limit])
+  }, [limit])
 
   // Lazy-load: only fetch the events list once the admin actually opens
   // the panel. Saves an RPC round-trip on every Settings page render
@@ -244,7 +76,6 @@ function SecurityEventsPanel() {
     if (filter === 'all') return true
     if (filter === 'failures') return e.succeeded === false
     if (filter === 'pii') return PII_ATTEMPT_KINDS.includes(e.attempt_kind)
-    if (filter === 'locks') return e.attempt_kind === 'admin_unlock'
     return true
   })
 
@@ -356,11 +187,6 @@ function EventRow({ ev }: { ev: SecurityEventRow }) {
               fail
             </span>
           )}
-          {ev.was_new_device && (
-            <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded uppercase">
-              new device
-            </span>
-          )}
           <span className="text-lob-muted-light ml-auto whitespace-nowrap">
             {formatTime(ev.attempted_at)}
           </span>
@@ -393,8 +219,6 @@ function labelForKind(kind: string): string {
       return 'Payment reminder sent'
     case 'approve_device':
       return 'Device approved'
-    case 'admin_unlock':
-      return 'Admin unlocked player'
     case 'admin_action':
       return 'Admin action'
     default:
@@ -416,8 +240,6 @@ function iconForKind(kind: string): LucideIcon {
       return MessageCircle
     case 'approve_device':
       return UserCheck
-    case 'admin_unlock':
-      return Lock
     case 'admin_action':
       return ShieldCheck
     default:
@@ -431,9 +253,6 @@ function colorsForEvent(ev: SecurityEventRow): { bg: string; text: string; icon:
   }
   if (PII_ATTEMPT_KINDS.includes(ev.attempt_kind)) {
     return { bg: 'bg-amber-50 border-amber-100', text: 'text-amber-800', icon: 'text-amber-700' }
-  }
-  if (ev.was_new_device) {
-    return { bg: 'bg-blue-50 border-blue-100', text: 'text-blue-800', icon: 'text-blue-600' }
   }
   return { bg: 'bg-gray-50 border-gray-100', text: 'text-lob-slate', icon: 'text-lob-muted' }
 }
