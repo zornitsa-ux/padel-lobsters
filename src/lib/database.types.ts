@@ -722,7 +722,7 @@ export type Database = {
           cleared_at?: string
           cleared_by?: string | null
           cleared_via: string
-          id?: number
+          id?: never
           old_email: string
           player_id: string
         }
@@ -730,7 +730,7 @@ export type Database = {
           cleared_at?: string
           cleared_by?: string | null
           cleared_via?: string
-          id?: number
+          id?: never
           old_email?: string
           player_id?: string
         }
@@ -1636,11 +1636,11 @@ export type Database = {
       admin_get_player_pii: {
         Args: { input_target_id: string }
         Returns: {
-          birthday: string | null
-          email: string | null
+          birthday: string
+          email: string
           id: string
-          notes: string | null
-          phone: string | null
+          notes: string
+          phone: string
         }[]
       }
       admin_get_raffle_exclusions: {
