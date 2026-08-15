@@ -32,7 +32,12 @@ indicator · the `AccountSection.tsx` widget mount.
   `pg_get_functiondef` output with only the `PERFORM` line removed, so unrelated
   drift since 2026-05 is preserved.
 - `verify_player_pin_v2` — loses device registration, auto-trust, the lockout
-  branch and `is_new_device`.
+  branch and `is_new_device`; gains an `input_ip` parameter, a 20-failures-per-IP-
+  per-hour cap alongside the existing 10-per-device-per-24h one, and now
+  populates `pin_attempts.ip_address` (D-10). New index
+  `pin_attempts_by_ip_time`.
+- `supabase/functions/verify-pin/index.ts` — derives the caller's IP from the
+  rightmost `x-forwarded-for` hop and passes it as `input_ip`.
 - `custom_access_token_hook` — no longer injects `device_trusted`, and strips
   both `device_trusted` and `device_id` from claims on every issuance.
 - `admin_list_security_events` — return type loses `was_new_device`.
@@ -46,7 +51,9 @@ indicator · the `AccountSection.tsx` widget mount.
 
 - **`device_id`** (`src/lib/deviceId.ts`). It keys `verify_player_pin_v2`'s
   10-failed-PINs/24h cap and `self_signup_player`'s 5-signups/24h cap, both off
-  `pin_attempts.device_id`. This is now the only PIN brute-force protection.
+  `pin_attempts.device_id`. Since a client can rotate it freely, the per-IP cap
+  (D-10) is the one that actually bounds PIN brute force; `self_signup_player`
+  is still device-only.
 - **The `pin_attempts` audit history**, including `approve_device` and
   `admin_unlock` rows and the `attempt_kind` check constraint.
 - **`get_my_profile_v2`, `respond_to_transfer`, `register_for_tournament`,

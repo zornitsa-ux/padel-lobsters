@@ -8,6 +8,10 @@
 // cap and self_signup_player's 5-signups/24h cap, and so the admin audit
 // trail can tell attempts from the same browser apart.
 //
+// It is client-supplied and trivially rotated, so it is a convenience key,
+// not a security boundary — verify_player_pin_v2's per-IP cap is what
+// actually bounds PIN brute force.
+//
 // The device_id is opaque to the backend — it has no PII, no fingerprint,
 // no identifying info.
 // =====================================================================

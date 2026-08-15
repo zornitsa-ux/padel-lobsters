@@ -70,6 +70,26 @@ database still runs `require_trusted_device()` — writes failing with
 inverts that into a cosmetic failure: old bundles show a meaningless banner while
 their writes succeed.
 
+**D-10 — Add a per-IP PIN failure cap.** `input_device_id` is a client-supplied
+localStorage UUID, so the surviving device cap (D-2) throttles nobody who mints a
+fresh one per request — and `verify_player_pin_v2` matches the PIN against the
+whole roster, so that is one PIN against N players per attempt. The lockout was
+the only cross-device brake and D-3/D-4 removed it, so this restores a key the
+caller does not control: the edge function reads the connection's address from
+the rightmost `x-forwarded-for` hop (the one the platform edge appends; anything
+the client prepends is pushed left) and passes it as `input_ip`, never from the
+request body. 20 failures per IP per hour, deliberately looser and on a shorter
+window than the device cap's 10/24h because a club shares one NAT address and a
+day-long venue lockout would be worse than the attack. The IP check runs first
+and returns _without_ writing a `pin_attempts` row: a device_id-rotating caller
+would otherwise append one row per request indefinitely, and logging blocked
+attempts would let each one extend its own window instead of letting it slide. A
+null or unparseable IP degrades to device-only — the pre-D-10 behaviour.
+
+`self_signup_player`'s 5-signups-per-device-per-24h cap has the same weakness and
+is **not** addressed here; abusing it creates spam player rows rather than
+exposing a PIN.
+
 ## Found while tracing
 
 1. **`update_my_profile` had drifted twice** since the device-trust migration
@@ -91,21 +111,21 @@ payload ? 'x'` shape). Rebuilding the guarded RPCs from the old migration text
 
 1. **Any signed-in session can write.** A stolen or guessed PIN is now sufficient
    to mutate data from any browser. This is the loosening, stated plainly.
-2. **A rotating `device_id` defeats the surviving rate limit.** It is a
-   client-supplied localStorage UUID, so an attacker sending a fresh one per
-   request is never throttled, and `verify_player_pin_v2` matches the PIN against
-   the whole roster. The `locked_until` lockout was the only cross-device brake
-   (D-3). Populating `pin_attempts.ip_address` for an IP-keyed fallback is the
-   obvious fix if this ever needs one.
-3. **Wrong-PIN rows lose player attribution** — logged with `player_id = NULL` and
+2. **`pin_attempts.ip_address` is now populated** (D-10), so the table holds
+   personal data it previously didn't. There is no retention or purge job for
+   `pin_attempts` — rows accumulate indefinitely.
+3. **A shared NAT address can be throttled by one bad actor on it.** 20 failures
+   per hour from a venue's address blocks PIN sign-in for everyone behind it
+   until the window slides (D-10). Accepted as the cheaper failure mode.
+4. **Wrong-PIN rows lose player attribution** — logged with `player_id = NULL` and
    the `device_id` only, because attribution came from `player_devices`.
-4. **Historical `admin_unlock` rows** render with the raw kind string, since D-4
+5. **Historical `admin_unlock` rows** render with the raw kind string, since D-4
    removed that label arm.
-5. **Sessions minted before the migration** keep stale `device_trusted` /
+6. **Sessions minted before the migration** keep stale `device_trusted` /
    `device_id` claims until their next refresh. Nothing reads them; the migration
    strips both keys from `auth.users.raw_app_meta_data` and
    `custom_access_token_hook` strips them from claims on every future issuance.
-6. **`pl_device_trust_banner_dismissed`** stays in users' localStorage forever.
+7. **`pl_device_trust_banner_dismissed`** stays in users' localStorage forever.
    Not worth cleanup code.
-7. **The migration is not reversible by SQL** — it drops a table and three columns
+8. **The migration is not reversible by SQL** — it drops a table and three columns
    holding data. A rollback means a PITR restore.

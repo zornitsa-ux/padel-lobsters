@@ -2005,6 +2005,7 @@ export type Database = {
       verify_player_pin_v2: {
         Args: {
           input_device_id: string
+          input_ip?: string
           input_pin: string
           input_user_agent?: string
         }

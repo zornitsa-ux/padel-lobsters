@@ -50,4 +50,4 @@ public.respond_to_transfer(input_transfer_id uuid, input_accept boolean) authent
 public.self_signup_player(input_payload jsonb, input_device_id text, input_user_agent text) anon
 public.sync_my_role() authenticated
 public.update_my_profile(input_payload jsonb) authenticated
-public.verify_player_pin_v2(input_pin text, input_device_id text, input_user_agent text) anon
+public.verify_player_pin_v2(input_pin text, input_device_id text, input_user_agent text, input_ip text) anon
