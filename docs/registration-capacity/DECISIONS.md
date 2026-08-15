@@ -145,10 +145,9 @@ exemption; `handleDelete` maps SQLSTATE 23503 to copy that says so.
 
 ## 4. Open
 
-- **LOBS #10 is still 26/24**, handled out of band. Per D-8, transfers on it will
-  fail until it drains below 24; per the guard it cannot grow, and cancelling a
-  registered player promotes nobody until the count drops below cap, so it
-  converges on its own.
+- **LOBS #10 was resolved by raising its cap, not by draining.** It shipped at
+  26/24; as of 2026-08-11 it is 28/28 — an admin raised `max_players` to 28
+  rather than waiting for cancellations, which D-8 always allowed as the fix.
 - **Soft-deleting a player does not cancel their registrations.** A deleted
   player still occupies a spot on any upcoming event they had joined and still
   renders in that event's Registered list, which draws from registrations rather

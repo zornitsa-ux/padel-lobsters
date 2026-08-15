@@ -2,7 +2,7 @@
 
 ## Color Palette
 
-The palette is defined in `tailwind.config.js` under the `lob` namespace. Use **only** `lob-*` tokens. The legacy `lobster-*` aliases are being phased out — do not use them in new code.
+The palette is defined in `tailwind.config.js` under the `lob` namespace. Use **only** `lob-*` tokens.
 
 ### Token map
 
@@ -17,20 +17,6 @@ The palette is defined in `tailwind.config.js` under the `lob` namespace. Use **
 | `lob-cream`       | `#F5F0E8` | Page background (set on `body`)                  |
 | `lob-dark`        | `#1C2B30` | All headings and body text                       |
 | `lob-muted`       | `#6B8A92` | Secondary text, placeholders, inactive icons     |
-
-### Legacy migration map
-
-When touching a file, replace old tokens:
-
-| Old (`lobster-*`)      | New (`lob-*`)     |
-| ---------------------- | ----------------- |
-| `lobster-teal`         | `lob-teal`        |
-| `lobster-teal-dark`    | `lob-teal-dark`   |
-| `lobster-teal-light`   | `lob-teal-light`  |
-| `lobster-orange`       | `lob-coral`       |
-| `lobster-orange-light` | `lob-coral-light` |
-| `lobster-cream`        | `lob-cream`       |
-| `lobster-gold`         | `lob-amber`       |
 
 ### Raw gray ban
 
