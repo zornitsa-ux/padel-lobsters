@@ -1,6 +1,5 @@
 public.admin_add_player(input_payload jsonb) authenticated
 public.admin_apply_tournament_ratings(input_payload jsonb) authenticated
-public.admin_approve_device(input_target_player uuid, input_target_device text) authenticated
 public.admin_cancel_transfer(input_transfer_id uuid) authenticated
 public.admin_confirm_league_groups(input_payload jsonb) authenticated
 public.admin_create_bracket_matches(input_league_id uuid, input_payload jsonb) authenticated
@@ -9,7 +8,6 @@ public.admin_create_league_team(input_payload jsonb) authenticated
 public.admin_delete_league_team(input_team_id uuid) authenticated
 public.admin_delete_player(input_target_id uuid) authenticated
 public.admin_delete_raffle_winner(input_winner_id uuid) authenticated
-public.admin_deny_device(input_target_player uuid, input_target_device text) authenticated
 public.admin_draw_raffle_winners(input_tournament_id uuid, input_num_winners integer, input_prizes text[]) authenticated
 public.admin_force_accept_transfer(input_transfer_id uuid) authenticated
 public.admin_get_mm_ratings() authenticated
@@ -17,7 +15,6 @@ public.admin_get_player_pii(input_target_id uuid) authenticated
 public.admin_get_raffle_exclusions(input_tournament_id uuid) authenticated
 public.admin_get_raffle_ineligible(input_tournament_id uuid) authenticated
 public.admin_invite_league_player(input_player_id uuid, input_email text) authenticated
-public.admin_list_pending_devices() authenticated
 public.admin_list_security_events(input_limit integer) authenticated
 public.admin_persist_learned_ratings(input_updates jsonb, input_applied_tournament_ids uuid[]) authenticated
 public.admin_record_league_match_result(input_payload jsonb) authenticated
@@ -25,21 +22,16 @@ public.admin_record_schedule_run(input_payload jsonb) authenticated
 public.admin_regenerate_pin(input_target_id uuid) authenticated
 public.admin_review_rating_event(input_event_id uuid, input_action text, input_delta numeric) authenticated
 public.admin_set_raffle_exclusions(input_tournament_id uuid, input_player_ids uuid[]) authenticated
-public.admin_unlock_player(input_target_player uuid, input_target_device text) authenticated
 public.admin_update_league_status(input_league_id uuid, input_status text) authenticated
 public.admin_update_league_team(input_team_id uuid, input_payload jsonb) authenticated
 public.admin_update_player(input_target_id uuid, input_payload jsonb) authenticated
 public.admin_update_raffle_winner_prize(input_winner_id uuid, input_prize text) authenticated
-public.approve_device(input_requesting_device_id text, input_target_device_id text) authenticated
-public.bootstrap_device_session(p_device_id text) authenticated
 public.cancel_registration(input_registration_id uuid) authenticated
 public.cancel_transfer(input_transfer_id uuid) authenticated
 public.create_transfer(input_to_player_id uuid, input_tournament_id uuid) authenticated
 public.get_my_profile_v2() authenticated
 public.get_payment_reminder_link(input_registration_id uuid) authenticated
 public.get_transfer_recipient_phone(input_transfer_id uuid) authenticated
-public.is_my_device_trusted(input_player_id uuid, input_device_id text) authenticated
-public.list_pending_devices(input_requesting_device_id text) authenticated
 public.lobster_oscars_admin_end(input_tournament_id uuid) authenticated
 public.lobster_oscars_admin_get_category_voters(input_category_id uuid) authenticated
 public.lobster_oscars_admin_get_results(input_tournament_id uuid) authenticated
@@ -54,8 +46,8 @@ public.lobster_oscars_get_my_votes(input_tournament_id uuid) authenticated
 public.lobster_oscars_get_results(input_tournament_id uuid) authenticated
 public.promote_waitlist_registration(input_registration_id uuid) authenticated
 public.register_for_tournament(input_tournament_id uuid, input_player_id uuid) authenticated
-public.reject_device(input_requesting_device_id text, input_target_device_id text) authenticated
 public.respond_to_transfer(input_transfer_id uuid, input_accept boolean) authenticated
 public.self_signup_player(input_payload jsonb, input_device_id text, input_user_agent text) anon
+public.sync_my_role() authenticated
 public.update_my_profile(input_payload jsonb) authenticated
 public.verify_player_pin_v2(input_pin text, input_device_id text, input_user_agent text) anon

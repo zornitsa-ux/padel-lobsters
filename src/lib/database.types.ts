@@ -602,7 +602,6 @@ export type Database = {
           player_id: string | null
           succeeded: boolean
           user_agent: string | null
-          was_new_device: boolean | null
         }
         Insert: {
           attempt_kind: string
@@ -613,7 +612,6 @@ export type Database = {
           player_id?: string | null
           succeeded: boolean
           user_agent?: string | null
-          was_new_device?: boolean | null
         }
         Update: {
           attempt_kind?: string
@@ -624,7 +622,6 @@ export type Database = {
           player_id?: string | null
           succeeded?: boolean
           user_agent?: string | null
-          was_new_device?: boolean | null
         }
         Relationships: []
       }
@@ -657,51 +654,6 @@ export type Database = {
           },
           {
             foreignKeyName: 'player_aliases_player_id_fkey'
-            columns: ['player_id']
-            isOneToOne: false
-            referencedRelation: 'players_public'
-            referencedColumns: ['id']
-          },
-        ]
-      }
-      player_devices: {
-        Row: {
-          device_id: string
-          first_seen: string
-          id: string
-          last_seen: string
-          player_id: string
-          trusted_at: string | null
-          user_agent: string | null
-        }
-        Insert: {
-          device_id: string
-          first_seen?: string
-          id?: string
-          last_seen?: string
-          player_id: string
-          trusted_at?: string | null
-          user_agent?: string | null
-        }
-        Update: {
-          device_id?: string
-          first_seen?: string
-          id?: string
-          last_seen?: string
-          player_id?: string
-          trusted_at?: string | null
-          user_agent?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: 'player_devices_player_id_fkey'
-            columns: ['player_id']
-            isOneToOne: false
-            referencedRelation: 'players'
-            referencedColumns: ['id']
-          },
-          {
-            foreignKeyName: 'player_devices_player_id_fkey'
             columns: ['player_id']
             isOneToOne: false
             referencedRelation: 'players_public'
@@ -753,7 +705,6 @@ export type Database = {
           learned_rd: number | null
           learned_updated_at: string | null
           learned_volatility: number | null
-          locked_until: string | null
           mm_rating: number | null
           mm_rating_updated_at: string | null
           mm_sigma: number | null
@@ -788,7 +739,6 @@ export type Database = {
           learned_rd?: number | null
           learned_updated_at?: string | null
           learned_volatility?: number | null
-          locked_until?: string | null
           mm_rating?: number | null
           mm_rating_updated_at?: string | null
           mm_sigma?: number | null
@@ -823,7 +773,6 @@ export type Database = {
           learned_rd?: number | null
           learned_updated_at?: string | null
           learned_volatility?: number | null
-          locked_until?: string | null
           mm_rating?: number | null
           mm_rating_updated_at?: string | null
           mm_sigma?: number | null
@@ -1212,7 +1161,6 @@ export type Database = {
       }
       settings: {
         Row: {
-          auto_trust_until: string | null
           group_name: string | null
           id: number
           lobster_way_content: Json | null
@@ -1221,7 +1169,6 @@ export type Database = {
           whatsapp_link: string | null
         }
         Insert: {
-          auto_trust_until?: string | null
           group_name?: string | null
           id?: number
           lobster_way_content?: Json | null
@@ -1230,7 +1177,6 @@ export type Database = {
           whatsapp_link?: string | null
         }
         Update: {
-          auto_trust_until?: string | null
           group_name?: string | null
           id?: number
           lobster_way_content?: Json | null
@@ -1479,7 +1425,6 @@ export type Database = {
           learned_rd: number | null
           learned_updated_at: string | null
           learned_volatility: number | null
-          locked_until: string | null
           mm_rating: number | null
           mm_rating_updated_at: string | null
           mm_sigma: number | null
@@ -1508,10 +1453,6 @@ export type Database = {
       admin_apply_tournament_ratings: {
         Args: { input_payload: Json }
         Returns: number
-      }
-      admin_approve_device: {
-        Args: { input_target_device: string; input_target_player: string }
-        Returns: string
       }
       admin_cancel_transfer: {
         Args: { input_transfer_id: string }
@@ -1592,10 +1533,6 @@ export type Database = {
         Args: { input_winner_id: string }
         Returns: boolean
       }
-      admin_deny_device: {
-        Args: { input_target_device: string; input_target_player: string }
-        Returns: string
-      }
       admin_draw_raffle_winners: {
         Args: {
           input_num_winners: number
@@ -1658,17 +1595,6 @@ export type Database = {
         Args: { input_email: string; input_player_id: string }
         Returns: string
       }
-      admin_list_pending_devices: {
-        Args: never
-        Returns: {
-          device_id: string
-          first_seen: string
-          last_seen: string
-          player_id: string
-          player_name: string
-          user_agent: string
-        }[]
-      }
       admin_list_security_events: {
         Args: { input_limit?: number }
         Returns: {
@@ -1680,7 +1606,6 @@ export type Database = {
           player_name: string
           succeeded: boolean
           user_agent: string
-          was_new_device: boolean
         }[]
       }
       admin_persist_learned_ratings: {
@@ -1754,10 +1679,6 @@ export type Database = {
         Args: { input_player_ids: string[]; input_tournament_id: string }
         Returns: undefined
       }
-      admin_unlock_player: {
-        Args: { input_target_device?: string; input_target_player: string }
-        Returns: string
-      }
       admin_update_league_status: {
         Args: { input_league_id: string; input_status: string }
         Returns: {
@@ -1823,14 +1744,6 @@ export type Database = {
         Args: { input_transfer_id: string }
         Returns: string
       }
-      approve_device: {
-        Args: {
-          input_requesting_device_id: string
-          input_target_device_id: string
-        }
-        Returns: string
-      }
-      bootstrap_device_session: { Args: { p_device_id: string }; Returns: Json }
       cancel_registration: {
         Args: { input_registration_id: string }
         Returns: {
@@ -1871,7 +1784,6 @@ export type Database = {
           learned_rd: number | null
           learned_updated_at: string | null
           learned_volatility: number | null
-          locked_until: string | null
           mm_rating: number | null
           mm_rating_updated_at: string | null
           mm_sigma: number | null
@@ -1915,7 +1827,6 @@ export type Database = {
           learned_rd: number | null
           learned_updated_at: string | null
           learned_volatility: number | null
-          locked_until: string | null
           mm_rating: number | null
           mm_rating_updated_at: string | null
           mm_sigma: number | null
@@ -1951,19 +1862,6 @@ export type Database = {
           name: string
           phone: string
           status: string
-        }[]
-      }
-      is_my_device_trusted: {
-        Args: { input_device_id: string; input_player_id: string }
-        Returns: boolean
-      }
-      list_pending_devices: {
-        Args: { input_requesting_device_id: string }
-        Returns: {
-          device_id: string
-          first_seen: string
-          last_seen: string
-          user_agent: string
         }[]
       }
       lobster_oscars_admin_end: {
@@ -2079,15 +1977,7 @@ export type Database = {
           status: string
         }[]
       }
-      reject_device: {
-        Args: {
-          input_requesting_device_id: string
-          input_target_device_id: string
-        }
-        Returns: string
-      }
       require_admin: { Args: never; Returns: undefined }
-      require_trusted_device: { Args: never; Returns: undefined }
       respond_to_transfer: {
         Args: { input_accept: boolean; input_transfer_id: string }
         Returns: {
@@ -2106,6 +1996,7 @@ export type Database = {
           was_existing: boolean
         }[]
       }
+      sync_my_role: { Args: never; Returns: Json }
       tournament_start_ts: {
         Args: { input_tournament_id: string }
         Returns: string
@@ -2118,10 +2009,8 @@ export type Database = {
           input_user_agent?: string
         }
         Returns: {
-          is_new_device: boolean
           player_id: string
           status: string
-          trusted: boolean
         }[]
       }
     }
