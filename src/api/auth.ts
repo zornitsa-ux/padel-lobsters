@@ -114,30 +114,25 @@ export async function bootstrapDeviceSession() {
 }
 
 // Fetch the signed-in player's full record (including email / phone / full
-// birthday) through the secure RPC. Returns null if no PIN is cached or the
-// RPC call fails. Used by Settings' profile drawer.
-//
-// Phase 2b: uses get_my_profile_v2 which requires the calling device to
-// be trusted. A probationary device gets an empty response — Settings
-// should not call this until trust is confirmed.
+// birthday) through the secure RPC. Resolves to null only for the genuine
+// no-row case (e.g. an untrusted/probationary device); a failed RPC call
+// throws so the caller's query lands in isError instead of a false "no PII"
+// success — swallowing that error previously made a permanent RPC failure
+// indistinguishable from "this player has no PII", and Settings would then
+// silently null out email/phone/birthday on the next profile save.
 export async function fetchMyProfile(): Promise<MyProfileRow | null> {
-  try {
-    const { data, error } = await supabase.rpc('get_my_profile_v2')
-    if (error) {
-      console.error('get_my_profile_v2 error:', error)
-      return null
-    }
-    const row = Array.isArray(data) ? data[0] : data
-    return row || null
-  } catch (e) {
-    console.error('get_my_profile_v2 threw:', e)
-    return null
+  const { data, error } = await supabase.rpc('get_my_profile_v2')
+  if (error) {
+    console.error('get_my_profile_v2 error:', error)
+    throw error
   }
+  const row = Array.isArray(data) ? data[0] : data
+  return row || null
 }
 
-// Admin-only full-PII roster: moved to the players slice as fetchPlayersPii
-// (src/features/players/playerQueries.ts). It lived here only so AppContext
-// could expose it, and this version swallowed errors into a null return.
+// Admin-only per-player PII read: lives in the players slice as
+// fetchPlayerPii (src/features/players/playerQueries.ts), scoped to one
+// player at a time via admin_get_player_pii — never a whole-roster fetch.
 
 export type EmailChangeResult = 'sent' | 'invalid' | 'taken' | 'error'
 

@@ -709,6 +709,33 @@ export type Database = {
           },
         ]
       }
+      player_email_clears: {
+        Row: {
+          cleared_at: string
+          cleared_by: string | null
+          cleared_via: string
+          id: number
+          old_email: string
+          player_id: string
+        }
+        Insert: {
+          cleared_at?: string
+          cleared_by?: string | null
+          cleared_via: string
+          id?: never
+          old_email: string
+          player_id: string
+        }
+        Update: {
+          cleared_at?: string
+          cleared_by?: string | null
+          cleared_via?: string
+          id?: never
+          old_email?: string
+          player_id?: string
+        }
+        Relationships: []
+      }
       players: {
         Row: {
           adjusted_level: number | null
@@ -1604,6 +1631,16 @@ export type Database = {
           mm_rating: number
           mm_sigma: number
           player_id: string
+        }[]
+      }
+      admin_get_player_pii: {
+        Args: { input_target_id: string }
+        Returns: {
+          birthday: string
+          email: string
+          id: string
+          notes: string
+          phone: string
         }[]
       }
       admin_get_raffle_exclusions: {

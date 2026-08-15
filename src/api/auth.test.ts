@@ -27,6 +27,7 @@ import {
   requestMyEmailChange,
   bootstrapDeviceSession,
   selfSignup,
+  fetchMyProfile,
   type SelfSignupInput,
 } from './auth'
 
@@ -171,6 +172,26 @@ describe('bootstrapDeviceSession', () => {
     supabase.rpc.mockRejectedValue(new Error('rpc blew up'))
     await expect(bootstrapDeviceSession()).resolves.toBeNull()
     expect(supabase.auth.refreshSession).not.toHaveBeenCalled()
+  })
+})
+
+// ----------------------------------------------------------------------
+// fetchMyProfile
+// ----------------------------------------------------------------------
+// A swallowed RPC failure used to resolve to `null` — indistinguishable
+// from "this player genuinely has no PII" — which let Settings seed its
+// form from a blank record and then save those blanks over real
+// email/phone/birthday values (2026-08-15 incident). The RPC failure must
+// now surface as a thrown error so the caller's query lands in isError.
+describe('fetchMyProfile', () => {
+  it('resolves to null for the genuine no-row case (untrusted device)', async () => {
+    supabase.rpc.mockResolvedValue({ data: [], error: null })
+    await expect(fetchMyProfile()).resolves.toBeNull()
+  })
+
+  it('throws instead of swallowing an RPC error', async () => {
+    supabase.rpc.mockResolvedValue({ data: null, error: { message: 'db error' } })
+    await expect(fetchMyProfile()).rejects.toBeTruthy()
   })
 })
 

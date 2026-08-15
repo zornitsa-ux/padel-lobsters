@@ -13,6 +13,10 @@ export type { Player }
 export interface PlayerInput {
   name?: string | null
   email?: string | null
+  // Sentinel required by admin_update_player before it will actually NULL
+  // out a non-empty email — see buildPlayerEditPatch in
+  // src/features/community/playerPatch.ts, the only place that sets it.
+  emailCleared?: boolean
   phone?: string | null
   notes?: string | null
   playtomicLevel?: number | string | null
@@ -35,8 +39,6 @@ export interface PlayerPii {
   phone: string
   birthday: string
   notes: string
-  pin: string
-  pinChanges: number
 }
 
 // Full roster from the redacted players_public view. Validated at the boundary,
@@ -64,27 +66,30 @@ export async function fetchMyProfile(): Promise<Player | null> {
   return normalisePlayers([parsed])[0] ?? null
 }
 
-// Admin-only full-PII roster, keyed by player id for overlay lookups. The RPC
-// is gated on require_admin() and writes a pin_attempts audit row per call, so
-// callers must keep it disabled for non-admins. Errors propagate: a failed
-// dump must not be indistinguishable from "this roster has no contact details".
-export async function fetchPlayersPii(): Promise<Record<string, PlayerPii>> {
-  const { data, error } = await supabase.rpc('get_all_players_with_pii_v2')
+// Admin-only, single-player PII read via admin_get_player_pii — gated on
+// require_admin() and audited per call (attempt_kind 'player_pii_read',
+// keyed on the player being read). Deliberately scoped to one id at a time:
+// this replaces the old whole-roster get_all_players_with_pii_v2 fetch, so
+// opening the Players screen (or any other admin surface) no longer loads
+// every player's contact details as a side effect — a read only happens
+// when a specific action needs a specific player's PII.
+//
+// A missing row (bad id, or the RPC returning nothing) THROWS rather than
+// resolving to blanks — a failed/absent read must never be indistinguishable
+// from "this player has no contact details" (see the 2026-08 email-wipe
+// incident this whole PII-loading model exists to prevent).
+export async function fetchPlayerPii(id: string): Promise<PlayerPii> {
+  const { data, error } = await supabase.rpc('admin_get_player_pii', { input_target_id: id })
   if (error) throw error
-  const rows = z.array(playerPiiRowSchema).parse(data ?? [])
-  return Object.fromEntries(
-    rows.map((r) => [
-      String(r.id),
-      {
-        email: r.email ?? '',
-        phone: r.phone ?? '',
-        birthday: r.birthday ?? '',
-        notes: r.notes ?? '',
-        pin: r.pin ?? '',
-        pinChanges: r.pin_changes ?? 0,
-      },
-    ]),
-  )
+  const row = Array.isArray(data) ? data[0] : data
+  if (!row) throw new Error("Could not load this player's contact details.")
+  const parsed = playerPiiRowSchema.parse(row)
+  return {
+    email: parsed.email ?? '',
+    phone: parsed.phone ?? '',
+    birthday: parsed.birthday ?? '',
+    notes: parsed.notes ?? '',
+  }
 }
 
 // ── Avatar upload ─────────────────────────────────────────────────────
@@ -162,6 +167,9 @@ export async function updatePlayer(id: string, data: PlayerInput, role: string) 
   // bloating the payload.
   if (role === 'admin') {
     setIf(data.email !== undefined, 'email', data.email ?? '')
+    // admin_update_player ignores a blank email unless this is also set —
+    // see the migration guarding against accidental clears.
+    setIf(data.emailCleared !== undefined, 'email_cleared', !!data.emailCleared)
   }
   setIf(data.phone !== undefined, 'phone', data.phone ?? '')
   setIf(

@@ -35,10 +35,12 @@ export default function Settings() {
   const saveSettingsMutation = useSaveSettings()
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
   const claimedId = session?.user?.id ?? null
-  // Own profile: identity from the public roster (works on untrusted devices)
-  // merged with PII from the trust-gated RPC. Single source — no separate
-  // poll/overlay, so a background refetch can't flash or stomp the form.
-  const { data: myPlayer } = useMyProfile(claimedId)
+  // Own profile: identity from the public roster merged with PII from
+  // get_my_profile_v2. Single source — no separate poll/overlay, so a
+  // background refetch can't flash or stomp the form. profileLoadFailed
+  // surfaces a failed/empty PII read so the form doesn't sit blank and
+  // silently stuck on "Loading" forever.
+  const { data: myPlayer, hasPii, piiUnavailable: profileLoadFailed } = useMyProfile(claimedId)
 
   const [form, setForm] = useState<SettingsForm>({
     whatsappLink: '',
@@ -96,6 +98,10 @@ export default function Settings() {
   // overwritten by a refetch.
   useEffect(() => {
     if (profileDirty.current) return
+    // Don't seed from a record whose PII overlay hasn't resolved yet — a
+    // seed here would silently blank email/phone/birthday in the form, and
+    // saving would then write those blanks back over the real values.
+    if (!hasPii) return
     if (myPlayer) {
       setProfileForm({
         name: myPlayer.name || '',
@@ -124,7 +130,7 @@ export default function Settings() {
         setShowPlaytomicPrompt(true)
       }
     }
-  }, [myPlayer, claimedId])
+  }, [myPlayer, hasPii, claimedId])
 
   const handleAvatarChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -142,6 +148,14 @@ export default function Settings() {
 
   const handleProfileSave = async () => {
     if (!myPlayer) return
+    // hasPii guards against saving before the PII overlay has actually
+    // resolved to a row — the form fields below (phone/birthday especially)
+    // are only trustworthy once that overlay is in. Without this, a save
+    // issued in that window would write blanks over real values.
+    if (!hasPii) {
+      setProfileError('Your profile is still loading — try again in a moment.')
+      return
+    }
     // Phone validation: required to be E.164 so wa.me links work for
     // transfer offers. Allow blank (the user might have an empty phone
     // on file from before this validation existed) but reject malformed
@@ -184,8 +198,12 @@ export default function Settings() {
           alert('Photo could not be saved: ' + errorMessage(err))
         }
       }
+      // Explicit field list, not `{ ...myPlayer, ... }` — spreading myPlayer
+      // used to reintroduce `email` (myPlayer.email, whatever it currently
+      // is) into the payload despite the comment below, and admins route
+      // through admin_update_player which has no trusted-device gate, so an
+      // admin editing their own profile could silently null their own email.
       await updatePlayer(myPlayer.id, {
-        ...myPlayer,
         name: profileForm.name,
         country: profileForm.country,
         gender: profileForm.gender,
@@ -353,6 +371,8 @@ export default function Settings() {
 
         <ProfileSection
           myPlayer={myPlayer}
+          hasPii={hasPii}
+          profileLoadFailed={profileLoadFailed}
           profileExpanded={profileExpanded}
           setProfileExpanded={setProfileExpanded}
           profileForm={profileForm}

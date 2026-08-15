@@ -19,6 +19,7 @@ const renderForm = () =>
       handleAvatarChange={noop}
       handleSubmit={noop}
       saving={false}
+      formReady
       mergePlayer={null}
       setMergePlayer={noop}
       acceptMerge={noop}

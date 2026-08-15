@@ -13,6 +13,7 @@ public.admin_deny_device(input_target_player uuid, input_target_device text) aut
 public.admin_draw_raffle_winners(input_tournament_id uuid, input_num_winners integer, input_prizes text[]) authenticated
 public.admin_force_accept_transfer(input_transfer_id uuid) authenticated
 public.admin_get_mm_ratings() authenticated
+public.admin_get_player_pii(input_target_id uuid) authenticated
 public.admin_get_raffle_exclusions(input_tournament_id uuid) authenticated
 public.admin_get_raffle_ineligible(input_tournament_id uuid) authenticated
 public.admin_invite_league_player(input_player_id uuid, input_email text) authenticated
@@ -34,7 +35,6 @@ public.bootstrap_device_session(p_device_id text) authenticated
 public.cancel_registration(input_registration_id uuid) authenticated
 public.cancel_transfer(input_transfer_id uuid) authenticated
 public.create_transfer(input_to_player_id uuid, input_tournament_id uuid) authenticated
-public.get_all_players_with_pii_v2() authenticated
 public.get_my_profile_v2() authenticated
 public.get_payment_reminder_link(input_registration_id uuid) authenticated
 public.get_transfer_recipient_phone(input_transfer_id uuid) authenticated
