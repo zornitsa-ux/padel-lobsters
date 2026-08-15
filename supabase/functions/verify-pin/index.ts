@@ -2,8 +2,7 @@
 //
 // Authenticates a player by PIN and issues a Supabase session.
 // Public endpoint — no Authorization header required.
-// Rate limiting is handled by verify_player_pin_v2 in the DB, keyed on both
-// device_id and the caller's IP, which this function derives from the request.
+// Rate limiting is handled by verify_player_pin_v2 in the DB.
 //
 // Inputs (POST JSON body):
 //   pin:        string  - player's PIN (matched by bcrypt hash)
@@ -42,22 +41,6 @@ const fail = (stage: string, detail?: unknown) => {
   return json(500, { error: 'internal_error', stage })
 }
 
-// The client can prepend anything to x-forwarded-for, but the platform edge
-// appends the address it actually saw, so the rightmost entry is the only one
-// a caller can't forge — and forging it is the whole point of the per-IP cap
-// in verify_player_pin_v2. Never read this from the request body.
-const clientIp = (req: Request) => {
-  const forwarded = req.headers.get('x-forwarded-for')
-  if (forwarded) {
-    const hops = forwarded
-      .split(',')
-      .map((h) => h.trim())
-      .filter(Boolean)
-    if (hops.length > 0) return hops[hops.length - 1]
-  }
-  return req.headers.get('x-real-ip') ?? null
-}
-
 const anonHeaders = {
   apikey: SUPABASE_ANON_KEY,
   Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
@@ -94,7 +77,6 @@ serve(async (req) => {
       input_pin: pin,
       input_device_id: device_id,
       input_user_agent: user_agent,
-      input_ip: clientIp(req),
     }),
   })
 

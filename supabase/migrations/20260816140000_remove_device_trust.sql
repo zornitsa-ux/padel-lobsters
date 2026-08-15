@@ -1,9 +1,8 @@
 -- Remove the probationary device-trust system in its entirety: the
 -- player_devices table, require_trusted_device() and its five guarded RPCs,
 -- the approve/reject flow, the device_trusted JWT claim, the account lockout
--- that depended on it, and the new-device signal. §4 adds a per-IP PIN failure
--- cap to replace the cross-device brake the lockout was providing. See
--- docs/device-trust-removal/DECISIONS.md for the full rationale (D-1..D-10).
+-- that depended on it, and the new-device signal. See
+-- docs/device-trust-removal/DECISIONS.md for the full rationale (D-1..D-9).
 
 -- ============================================================================
 -- §1 — Re-create the five guarded RPCs without the require_trusted_device() guard.
@@ -330,18 +329,10 @@ update auth.users
 
 drop function if exists public.verify_player_pin_v2(text, text, text);
 
--- Two independent caps. The per-device one is the pre-existing limit; the
--- per-IP one exists because input_device_id is a client-supplied localStorage
--- UUID, so a caller that mints a fresh one per request is never throttled by
--- it. The account lockout used to be the cross-device brake — dropping it
--- (D-3/D-4) left the device cap alone, and this restores a server-derived key.
--- input_ip comes from the edge function's view of the connection, never from
--- the request body.
 create function public.verify_player_pin_v2(
   input_pin        text,
   input_device_id  text,
-  input_user_agent text default null,
-  input_ip         text default null
+  input_user_agent text default null
 )
 returns table (player_id uuid, status text)
 language plpgsql security definer
@@ -350,40 +341,13 @@ as $function$
 #variable_conflict use_column
 declare
   v_player_id    uuid;
-  v_ip           inet;
   v_failures_24h int;
-  v_ip_failures  int;
   c_max_per_device_24h constant int := 10;
-  -- Deliberately looser and on a shorter window than the device cap: a club
-  -- shares one NAT address, so this must not lock out a venue for a day.
-  c_max_per_ip_1h      constant int := 20;
 begin
   set local statement_timeout = '30s';
 
   if input_pin is null or length(input_pin) < 4 or input_device_id is null then
     return query select null::uuid, 'wrong_pin'::text; return;
-  end if;
-
-  begin
-    v_ip := nullif(btrim(input_ip), '')::inet;
-  exception when others then
-    v_ip := null;
-  end;
-
-  -- Checked before the device cap, and returns without logging: an attacker
-  -- rotating device_ids would otherwise write one pin_attempts row per
-  -- request forever. Not logging also lets the window actually slide instead
-  -- of each blocked attempt extending it.
-  if v_ip is not null then
-    select count(*) into v_ip_failures
-      from public.pin_attempts pa
-     where pa.ip_address = v_ip
-       and pa.succeeded = false
-       and pa.attempt_kind = 'player'
-       and pa.attempted_at > now() - interval '1 hour';
-    if v_ip_failures >= c_max_per_ip_1h then
-      return query select null::uuid, 'rate_limited'::text; return;
-    end if;
   end if;
 
   select count(*) into v_failures_24h
@@ -393,8 +357,8 @@ begin
      and pa.attempt_kind = 'player'
      and pa.attempted_at > now() - interval '24 hours';
   if v_failures_24h >= c_max_per_device_24h then
-    insert into public.pin_attempts(device_id, ip_address, user_agent, attempt_kind, succeeded)
-    values (input_device_id, v_ip, input_user_agent, 'player', false);
+    insert into public.pin_attempts(device_id, user_agent, attempt_kind, succeeded)
+    values (input_device_id, input_user_agent, 'player', false);
     return query select null::uuid, 'rate_limited'::text; return;
   end if;
 
@@ -405,29 +369,24 @@ begin
      and coalesce(p.status, 'active') = 'active'
    limit 1;
 
-  -- Wrong PIN: logged against the device and IP only. Attributing the attempt
-  -- to a player needed the device→player map in player_devices, which is gone.
+  -- Wrong PIN: logged against the device only. Attributing the attempt to a
+  -- player needed the device→player map in player_devices, which is gone.
   if v_player_id is null then
-    insert into public.pin_attempts(device_id, ip_address, user_agent, attempt_kind, succeeded)
-    values (input_device_id, v_ip, input_user_agent, 'player', false);
+    insert into public.pin_attempts(device_id, user_agent, attempt_kind, succeeded)
+    values (input_device_id, input_user_agent, 'player', false);
     return query select null::uuid, 'wrong_pin'::text; return;
   end if;
 
-  insert into public.pin_attempts(player_id, device_id, ip_address, user_agent, attempt_kind, succeeded)
-  values (v_player_id, input_device_id, v_ip, input_user_agent, 'player', true);
+  insert into public.pin_attempts(player_id, device_id, user_agent, attempt_kind, succeeded)
+  values (v_player_id, input_device_id, input_user_agent, 'player', true);
 
   return query select v_player_id, 'ok'::text;
 end
 $function$;
 
--- Mirrors pin_attempts_by_device_time for the new per-IP window scan.
-create index if not exists pin_attempts_by_ip_time
-  on public.pin_attempts using btree (ip_address, attempted_at desc)
-  where succeeded = false;
-
 -- DROP removed every grant; restore exactly what 20260727194010 established.
-revoke execute on function public.verify_player_pin_v2(text, text, text, text) from public, authenticated;
-grant  execute on function public.verify_player_pin_v2(text, text, text, text) to anon;
+revoke execute on function public.verify_player_pin_v2(text, text, text) from public, authenticated;
+grant  execute on function public.verify_player_pin_v2(text, text, text) to anon;
 
 -- ============================================================================
 -- §5 — admin_list_security_events: drop + recreate without was_new_device.
