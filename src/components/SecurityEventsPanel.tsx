@@ -115,9 +115,9 @@ export default function SecurityEventsPanel() {
         <>
           <div className="flex items-center justify-between">
             <p className="text-xs text-lob-muted leading-snug flex-1 pr-2">
-              Every PIN attempt, device approval, and contact-details read is logged. Reads name the
-              player whose details were read. Watch for bursts of failures, locked accounts, or any
-              "Full roster PII read" — that path is no longer used and shouldn't appear.
+              Every PIN attempt and contact-details read is logged. Reads name the player whose
+              details were read. Watch for bursts of failures or any "Full roster PII read" — that
+              path is no longer used and shouldn't appear.
             </p>
             <button
               onClick={load}

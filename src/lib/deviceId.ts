@@ -51,8 +51,8 @@ export function getDeviceId() {
     return id
   } catch {
     // localStorage unavailable (private browsing edge cases). Generate
-    // a per-session id so auth still works; the user just won't get
-    // device-trust persistence across reloads.
+    // a per-session id so auth still works — note this also resets the
+    // backend's per-device rate limits on every load.
     return newDeviceId()
   }
 }

@@ -2,7 +2,7 @@
 //
 // Authenticates a player by PIN and issues a Supabase session.
 // Public endpoint — no Authorization header required.
-// Rate limiting and lockout are handled by verify_player_pin_v2 in the DB.
+// Rate limiting is handled by verify_player_pin_v2 in the DB.
 //
 // Inputs (POST JSON body):
 //   pin:        string  - player's PIN (matched by bcrypt hash)
