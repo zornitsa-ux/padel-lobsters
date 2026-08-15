@@ -13,9 +13,8 @@ export function isSelectablePlayer(player: { status?: string | null }): boolean 
   return player.status !== 'deleted'
 }
 
-// Merge the signed-in user's roster identity (always available, even on an
-// untrusted device) with their PII row (present only when get_my_profile_v2
-// returned a row — i.e. the device is trusted).
+// Merge the signed-in user's roster identity (always available) with their
+// PII row (present only when get_my_profile_v2 returned a row).
 export function mergeMyProfile(
   base: Player | null | undefined,
   pii: Player | null | undefined,

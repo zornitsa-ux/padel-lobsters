@@ -4,10 +4,10 @@ import { screen, cleanup } from '@testing-library/react'
 import { render } from '@testing-library/react'
 
 // D-028: the Account page must expose neither the Matchmaking V2 rollout flag
-// nor any Playtomic-adjustment field. AdminSecurityPanels is mocked because it
+// nor any Playtomic-adjustment field. SecurityEventsPanel is mocked because it
 // owns its own RPCs and is unrelated to this change.
-vi.mock('../../components/AdminSecurityPanels', () => ({
-  default: () => <div data-testid="security-panels" />,
+vi.mock('../../components/SecurityEventsPanel', () => ({
+  default: () => <div data-testid="security-events-panel" />,
 }))
 vi.mock('../../context/useApp', () => ({
   useApp: () => ({ requestMyEmailChange: vi.fn() }),
@@ -113,7 +113,7 @@ describe('AdminSection', () => {
 
     expect(screen.getByText('Group Info')).toBeTruthy()
     expect(screen.getByText('Padel Tips')).toBeTruthy()
-    expect(screen.getByTestId('security-panels')).toBeTruthy()
+    expect(screen.getByTestId('security-events-panel')).toBeTruthy()
     expect(screen.getByRole('button', { name: /save settings/i })).toBeTruthy()
   })
 })

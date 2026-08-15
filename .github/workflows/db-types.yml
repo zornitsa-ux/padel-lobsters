@@ -48,15 +48,13 @@ jobs:
       - name: Start Supabase
         run: npx supabase start
 
-      # Piped through Prettier because the committed file is formatted (it goes
-      # through lint-staged like any other source file), while the generator
-      # emits unformatted output. Diffing raw output against it fails always.
+      # Delegates to scripts/gen-db-types.sh so CI and a developer's machine run
+      # byte-identical generation. This step used to inline its own copy of the
+      # pipeline, which is three places the Prettier step or the CLI flags had
+      # to be kept in sync; the annotation below is the only CI-specific part.
       - name: Check for drift
         run: |
-          npx supabase gen types typescript --local \
-            | npx prettier --stdin-filepath database.types.ts > /tmp/generated.ts
-          if ! diff -u src/lib/database.types.ts /tmp/generated.ts; then
-            echo ''
+          if ! npm run --silent db:types:check; then
             echo '::error::database.types.ts is stale. Run `npm run db:types` and commit the result.'
             exit 1
           fi

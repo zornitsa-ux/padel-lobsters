@@ -39,7 +39,6 @@ describe('fetchSettings', () => {
         whatsapp_link: 'https://wa.me/test',
         group_name: 'My Group',
         padel_tips: ['tip1', 'tip2'],
-        auto_trust_until: '2026-12-31',
       },
       error: null,
     })
@@ -50,7 +49,6 @@ describe('fetchSettings', () => {
       whatsappLink: 'https://wa.me/test',
       groupName: 'My Group',
       padelTips: ['tip1', 'tip2'],
-      autoTrustUntil: '2026-12-31',
     })
   })
 
@@ -61,7 +59,6 @@ describe('fetchSettings', () => {
         whatsapp_link: null,
         group_name: null,
         padel_tips: null,
-        auto_trust_until: null,
       },
       error: null,
     })
@@ -72,7 +69,6 @@ describe('fetchSettings', () => {
       whatsappLink: '',
       groupName: 'Padel Lobsters',
       padelTips: null,
-      autoTrustUntil: null,
     })
   })
 

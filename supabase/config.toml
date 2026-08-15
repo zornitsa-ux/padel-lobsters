@@ -82,10 +82,9 @@ subject = "Confirm your Padel Lobsters email change"
 content_path = "./supabase/templates/email_change.html"
 
 # Custom access token hook. Lives in the public schema (see migration
-# 20260528000000_magic_link_auth.sql). Injects {role, device_trusted}
-# claims into every token issuance regardless of sign-in method
-# (PIN, magic link, future OAuth) so authz reads the same JWT shape
-# for all paths.
+# 20260528000000_magic_link_auth.sql). Injects {role} claims into every
+# token issuance regardless of sign-in method (PIN, magic link, future
+# OAuth) so authz reads the same JWT shape for all paths.
 [auth.hook.custom_access_token]
 enabled = true
 uri = "pg-functions://postgres/public/custom_access_token_hook"

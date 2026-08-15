@@ -12,7 +12,6 @@ export const settingsRowSchema = z
     whatsapp_link: nullableString,
     group_name: nullableString,
     padel_tips: z.array(z.string()).nullable().optional(),
-    auto_trust_until: nullableString,
     lobster_way_content: z.array(z.record(z.string(), z.any())).nullable().optional(),
   })
   .passthrough()
@@ -35,6 +34,5 @@ export interface Settings extends Partial<
   whatsappLink: string
   groupName: string
   padelTips: string[] | null
-  autoTrustUntil: string | null
   lobsterWayContent: LobsterWayCategory[] | null
 }

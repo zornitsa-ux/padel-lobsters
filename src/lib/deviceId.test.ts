@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { clearDeviceId, getDeviceId, getUserAgentSummary } from './deviceId'
+import { getDeviceId, getUserAgentSummary } from './deviceId'
 
 describe('deviceId helpers', () => {
   beforeEach(() => {
@@ -32,12 +32,6 @@ describe('deviceId helpers', () => {
     expect(first).toBeTypeOf('string')
     expect(first).toBe(second)
     expect(localStorage.setItem).toHaveBeenCalledTimes(1)
-  })
-
-  it('clears persisted device id', () => {
-    getDeviceId()
-    clearDeviceId()
-    expect(localStorage.removeItem).toHaveBeenCalledWith('lobster_device_id')
   })
 
   it('returns a user-agent summary', () => {

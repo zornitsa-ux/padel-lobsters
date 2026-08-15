@@ -1,6 +1,5 @@
 import React, { type FormEvent } from 'react'
 import { Shield, User, LogIn, LogOut } from 'lucide-react'
-import ApproveDevicesWidget from '../../components/ApproveDevicesWidget'
 import Avatar from '../../components/ui/Avatar'
 import type { Player } from '../../lib/normalise'
 
@@ -89,13 +88,6 @@ export default function AccountSection({
           </button>
         </div>
       ) : null}
-
-      {/* Phase 2b: when the signed-in player has pending devices on
-          other browsers/phones (i.e. someone else logged in as them
-          and is waiting for trust), show the approve widget. The
-          widget renders nothing if there are no pending devices, so
-          it's silent in the common case. */}
-      {(signedInPlayer || isAdmin) && <ApproveDevicesWidget />}
 
       {!isAdmin && !signedInPlayer && (
         // ── Guest — player PIN sign-in ──────────────────────────

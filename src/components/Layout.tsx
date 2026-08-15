@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React from 'react'
 import { NavLink, Link } from 'react-router-dom'
 import { useApp } from '../context/useApp'
 import { useSettings } from '../features/settings/useSettings'
-import useDevices from '../hooks/useDevices'
 import {
   LayoutDashboard,
   Users,
@@ -31,54 +30,9 @@ const InstagramIcon = () => (
   </svg>
 )
 
-import DeviceTrustBanner from './device-trust/DeviceTrustBanner'
-import DeviceTrustIndicator from './device-trust/DeviceTrustIndicator'
-const DEVICE_TRUST_BANNER_KEY = 'pl_device_trust_banner_dismissed'
-
 export default function Layout({ children }: { children?: React.ReactNode }) {
   const { session } = useApp()
   const { data: settings } = useSettings()
-  const { isMyDeviceTrusted } = useDevices()
-  const [bannerDismissed, setBannerDismissed] = useState(false)
-  const [deviceTrustedDb, setDeviceTrustedDb] = useState<boolean | undefined>(undefined)
-
-  useEffect(() => {
-    const uid = session?.user?.id
-    if (!uid) {
-      setDeviceTrustedDb(undefined)
-      return
-    }
-    isMyDeviceTrusted(uid).then(setDeviceTrustedDb)
-  }, [session?.user?.id, isMyDeviceTrusted])
-
-  // Use live DB result; while it's loading (undefined) don't show the banner to
-  // avoid false positives from stale JWT claims.
-  const isDeviceProbationary = deviceTrustedDb === false
-  const showBanner = isDeviceProbationary && !bannerDismissed
-  const showIndicator = isDeviceProbationary && bannerDismissed
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    const stored = window.localStorage.getItem(DEVICE_TRUST_BANNER_KEY)
-    setBannerDismissed(stored === 'true')
-  }, [])
-
-  // Only clear once the device is known-trusted. Keying this off
-  // `!isDeviceProbationary` also fired on mount, while trust was still
-  // undefined, wiping a stored dismissal before the RPC resolved.
-  useEffect(() => {
-    if (deviceTrustedDb === true && typeof window !== 'undefined') {
-      window.localStorage.removeItem(DEVICE_TRUST_BANNER_KEY)
-      setBannerDismissed(false)
-    }
-  }, [deviceTrustedDb])
-
-  const handleDismissBanner = useCallback(() => {
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(DEVICE_TRUST_BANNER_KEY, 'true')
-    }
-    setBannerDismissed(true)
-  }, [])
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
   const navItems = isAdmin
     ? [...NAV, { to: '/admin', label: 'Admin', icon: Shield, end: false }]
@@ -138,12 +92,9 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
                   WhatsApp
                 </a>
               )}
-              <DeviceTrustIndicator visible={showIndicator} />
             </div>
           </div>
         </header>
-
-        {showBanner && <DeviceTrustBanner onDismiss={handleDismissBanner} />}
 
         <div className="px-4">{children}</div>
       </main>

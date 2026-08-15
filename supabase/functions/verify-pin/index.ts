@@ -2,16 +2,16 @@
 //
 // Authenticates a player by PIN and issues a Supabase session.
 // Public endpoint — no Authorization header required.
-// Rate limiting and lockout are handled by verify_player_pin_v2 in the DB.
+// Rate limiting is handled by verify_player_pin_v2 in the DB.
 //
 // Inputs (POST JSON body):
 //   pin:        string  - player's PIN (matched by bcrypt hash)
 //   device_id:  string  - stable device identifier (uuid or fingerprint)
 //   user_agent: string  - optional; falls back to request User-Agent header
 //
-// Returns 200 { access_token, refresh_token, role, is_new_device, is_trusted }
+// Returns 200 { access_token, refresh_token, role }
 //         400 { error: 'missing_fields' | 'invalid_json' }
-//         401 { error: 'wrong_pin' | 'rate_limited' | 'locked' | 'invalid_pin' }
+//         401 { error: 'wrong_pin' | 'rate_limited' | 'invalid_pin' }
 //         405 { error: 'method_not_allowed' }
 //         500 { error: 'internal_error' }
 
@@ -84,18 +84,13 @@ serve(async (req) => {
     return fail('verify_pin_rpc', `http ${rpcResp.status}`)
   }
 
-  const rpcData = (await rpcResp.json()) as Array<{
-    player_id: string
-    is_new_device: boolean
-    trusted: boolean
-    status: string
-  }>
+  const rpcData = (await rpcResp.json()) as Array<{ player_id: string; status: string }>
 
   const result = rpcData?.[0]
   if (!result) return json(401, { error: 'invalid_pin' })
   if (result.status !== 'ok') return json(401, { error: result.status })
 
-  const { player_id, is_new_device, trusted: is_trusted } = result
+  const { player_id } = result
 
   // Step 2: Fetch role from players table
   const playerResp = await fetch(
@@ -131,7 +126,7 @@ serve(async (req) => {
   const playerEmailRow = (await playerEmailResp.json()) as Array<{ email: string | null }>
   const realEmail = playerEmailRow[0]?.email?.trim() || ''
   const syntheticEmail = `player-${player_id}@padelobsters.internal`
-  const appMetadata = { role, device_trusted: is_trusted, device_id }
+  const appMetadata = { role }
 
   // Step 3: Check if auth.users entry exists and capture its current email.
   const getUserResp = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${player_id}`, {
@@ -208,5 +203,5 @@ serve(async (req) => {
     return fail('verify_no_tokens', `location=${location}`)
   }
 
-  return json(200, { access_token, refresh_token, role, is_new_device, is_trusted })
+  return json(200, { access_token, refresh_token, role })
 })

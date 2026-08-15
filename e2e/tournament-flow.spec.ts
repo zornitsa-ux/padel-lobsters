@@ -46,11 +46,9 @@ async function signInAt(page: Page, url: string, pin: string) {
   // The gate unmounts once `role` flips off 'guest' — confirms the sign-in
   // landed before we do anything else.
   await page.getByLabel('PIN').waitFor({ state: 'hidden' })
-  // A fresh PIN sign-in without a device_id claim kicks off an async
-  // bootstrapDeviceSession() call (see useAuth.ts) that refreshes the
-  // session. A hard page.goto() right after the button click can race that
-  // — the reload reads localStorage before the refreshed session (and its
-  // persistence write) lands, and briefly looks signed-out. Draining the
+  // The gate unmounting doesn't mean the session has been persisted yet. A
+  // hard page.goto() right after can race that write — the reload reads
+  // localStorage before it lands and briefly looks signed-out. Draining the
   // network queue here avoids hand-rolling a poll/retry around every
   // subsequent navigation.
   await page.waitForLoadState('networkidle')

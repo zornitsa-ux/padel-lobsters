@@ -5,10 +5,6 @@ import { childrenOf, propsOf } from '../../test/element'
 import { normalisePlayers } from '../../lib/normalise'
 import { mockSupabase } from '../../test/mockSupabase'
 
-vi.mock('../../components/ApproveDevicesWidget', () => ({
-  default: () => <div data-testid="approve-devices" />,
-}))
-
 // AccountOrdersSection pulls in the merch data layer, which imports the
 // supabase client module.
 vi.mock('../../supabase', () => mockSupabase())
@@ -36,11 +32,10 @@ const accountSection = (props: Partial<Parameters<typeof AccountSection>[0]> = {
 afterEach(cleanup)
 
 describe('AccountSection', () => {
-  it('shows the PIN form and no device widget for a guest', () => {
+  it('shows the PIN form for a guest', () => {
     render(accountSection())
 
     expect(screen.getByRole('button', { name: /sign in/i })).toBeTruthy()
-    expect(screen.queryByTestId('approve-devices')).toBeNull()
     expect(screen.queryByRole('button', { name: /sign out/i })).toBeNull()
   })
 
@@ -48,7 +43,6 @@ describe('AccountSection', () => {
     render(accountSection({ signedInPlayer: player }))
 
     expect(screen.getByText(/signed in as/i).textContent).toContain('Ada Lovelace')
-    expect(screen.getByTestId('approve-devices')).toBeTruthy()
     expect(screen.queryByRole('button', { name: /^sign in$/i })).toBeNull()
   })
 

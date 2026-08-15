@@ -53,7 +53,6 @@ vi.mock('../../context/useApp', () => ({
 // These two own their own query slices and are irrelevant to the upload path.
 vi.mock('./AccountStatsSection', () => ({ default: () => null }))
 vi.mock('./AccountOrdersSection', () => ({ default: () => null }))
-vi.mock('../../components/ApproveDevicesWidget', () => ({ default: () => null }))
 vi.mock('../../lib/processAvatar', () => ({ processAvatar: processAvatarMock }))
 vi.mock('../../supabase', () => mockSupabase())
 

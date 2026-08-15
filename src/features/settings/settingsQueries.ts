@@ -8,7 +8,6 @@ function normaliseSettings(row: ReturnType<typeof settingsRowSchema.parse>): Set
     whatsappLink: row.whatsapp_link ?? '',
     groupName: row.group_name ?? 'Padel Lobsters',
     padelTips: row.padel_tips ?? null,
-    autoTrustUntil: row.auto_trust_until ?? null,
     lobsterWayContent: (row.lobster_way_content as LobsterWayCategory[] | null) ?? null,
   }
 }
@@ -16,7 +15,7 @@ function normaliseSettings(row: ReturnType<typeof settingsRowSchema.parse>): Set
 export async function fetchSettings(): Promise<Settings | null> {
   const { data, error } = await supabase
     .from('settings')
-    .select('id, whatsapp_link, group_name, padel_tips, auto_trust_until, lobster_way_content')
+    .select('id, whatsapp_link, group_name, padel_tips, lobster_way_content')
     .eq('id', 1)
     .single()
   if (error) throw error

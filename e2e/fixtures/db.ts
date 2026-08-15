@@ -71,16 +71,6 @@ export async function seedTournament(): Promise<TournamentFixture> {
     playerIdByName('Gagan Shetty'),
   ])
 
-  // Device trust auto-grants only a player's FIRST-ever device (see
-  // require_trusted_device() / verify_player_pin — D-013). Re-running this
-  // spec against the same un-reset local DB (e.g. iterating locally without
-  // `db:reset` each time) leaves each player with a trusted device from the
-  // previous run, so a fresh Playwright browser context — a genuinely new
-  // device — no longer auto-trusts, and the player's vote in step 6 gets
-  // rejected as pending_device_approval. Clearing prior devices for exactly
-  // the players this fixture uses keeps every run behaving like the first.
-  await admin.from('player_devices').delete().in('player_id', [jon, trunal, p3, p4])
-
   const { data: tournament, error: tErr } = await admin
     .from('tournaments')
     .insert({

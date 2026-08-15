@@ -25,7 +25,7 @@ vi.mock('../lib/deviceId', () => ({
 import {
   sendMagicLink,
   requestMyEmailChange,
-  bootstrapDeviceSession,
+  syncMyRole,
   selfSignup,
   fetchMyProfile,
   type SelfSignupInput,
@@ -38,7 +38,7 @@ beforeEach(() => {
   supabase.auth.updateUser.mockResolvedValue({ error: null })
   supabase.auth.refreshSession.mockResolvedValue({ error: null })
   supabase.rpc.mockResolvedValue({
-    data: { device_id: 'test-device-id', trusted: true },
+    data: { role: 'player' },
     error: null,
   })
   // sendMagicLink reads window.location.origin; node has no window.
@@ -146,31 +146,29 @@ describe('requestMyEmailChange', () => {
 })
 
 // ----------------------------------------------------------------------
-// bootstrapDeviceSession
+// syncMyRole
 // ----------------------------------------------------------------------
-// Critical for magic-link UX: without the post-RPC refreshSession the
-// auth hook's role + device_trusted claims don't propagate into the
-// session.user object that VerificationGate reads.
-describe('bootstrapDeviceSession', () => {
-  it('calls bootstrap_device_session with the local device id and then refreshSession', async () => {
-    const result = await bootstrapDeviceSession()
-    expect(supabase.rpc).toHaveBeenCalledWith('bootstrap_device_session', {
-      p_device_id: 'test-device-id',
-    })
+// Critical for magic-link UX: without the post-RPC refreshSession the auth
+// hook's role claim doesn't propagate into the session.user object that
+// VerificationGate reads.
+describe('syncMyRole', () => {
+  it('calls sync_my_role and then refreshSession', async () => {
+    const result = await syncMyRole()
+    expect(supabase.rpc).toHaveBeenCalledWith('sync_my_role')
     expect(supabase.auth.refreshSession).toHaveBeenCalledOnce()
-    expect(result).toEqual({ device_id: 'test-device-id', trusted: true })
+    expect(result).toEqual({ role: 'player' })
   })
 
   it('refreshes only after the RPC reports success — no refresh on RPC error', async () => {
     supabase.rpc.mockResolvedValue({ data: null, error: { message: 'not authenticated' } })
-    const result = await bootstrapDeviceSession()
+    const result = await syncMyRole()
     expect(result).toBeNull()
     expect(supabase.auth.refreshSession).not.toHaveBeenCalled()
   })
 
   it('returns null on thrown exception without surfacing the throw to callers', async () => {
     supabase.rpc.mockRejectedValue(new Error('rpc blew up'))
-    await expect(bootstrapDeviceSession()).resolves.toBeNull()
+    await expect(syncMyRole()).resolves.toBeNull()
     expect(supabase.auth.refreshSession).not.toHaveBeenCalled()
   })
 })
@@ -184,7 +182,7 @@ describe('bootstrapDeviceSession', () => {
 // email/phone/birthday values (2026-08-15 incident). The RPC failure must
 // now surface as a thrown error so the caller's query lands in isError.
 describe('fetchMyProfile', () => {
-  it('resolves to null for the genuine no-row case (untrusted device)', async () => {
+  it('resolves to null for the genuine no-row case', async () => {
     supabase.rpc.mockResolvedValue({ data: [], error: null })
     await expect(fetchMyProfile()).resolves.toBeNull()
   })
