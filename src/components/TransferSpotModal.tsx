@@ -15,12 +15,19 @@ import type { Player } from '../lib/normalise'
 //
 // Props:
 //   tournament:        the tournament object
+//   fromPlayerId:       whose registration is being transferred. Omitted for
+//                       the player's own self-service transfer (defaults to
+//                       the signed-in player); an admin picking a recipient
+//                       on behalf of someone else's registration (from the
+//                       registered-players list) passes that player's id —
+//                       the RPC re-checks admin status server-side either way.
 //   onClose():         dismiss the modal without doing anything
 //   onTransferCreated: ({ transferId, toPlayer }) => void
 //                      called after the RPC returns 'ok' so the caller can
 //                      open the share modal next.
 interface TransferSpotModalProps {
   tournament: { id: string }
+  fromPlayerId?: string | null
   onClose: () => void
   onTransferCreated?: (result: { transferId: string; toPlayer: Player }) => void
 }
@@ -29,15 +36,16 @@ interface TransferSpotModalProps {
 const CREATE_ERRORS: Record<string, string> = {
   wrong_pin: 'Sign in again to send a transfer.',
   invalid_target: "That player can't receive a transfer.",
-  not_registered: 'You are no longer registered for this event.',
+  not_registered: 'That registration is no longer active.',
   target_already_registered: 'That player is already registered.',
   tournament_started: 'Too late — the event has already started.',
-  already_pending: 'You already have a pending transfer for this event.',
+  already_pending: 'There is already a pending transfer for this spot.',
   error: 'Something went wrong. Try again.',
 }
 
 export default function TransferSpotModal({
   tournament,
+  fromPlayerId,
   onClose,
   onTransferCreated,
 }: TransferSpotModalProps) {
@@ -47,6 +55,15 @@ export default function TransferSpotModal({
   const { data: regs = [] } = useRegistrations(tournament?.id)
   const claimedId = session?.user?.id ?? null
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
+
+  // The registration actually being transferred. Falls back to the signed-in
+  // player so the self-service call site (which never passes fromPlayerId)
+  // behaves exactly as before.
+  const effectiveFromId = fromPlayerId ?? claimedId
+  const isOnBehalf = !!fromPlayerId && String(fromPlayerId) !== String(claimedId)
+  const fromPlayer = isOnBehalf
+    ? players.find((p) => String(p.id) === String(effectiveFromId))
+    : null
 
   const [search, setSearch] = useState('')
   const [busy, setBusy] = useState(false)
@@ -59,11 +76,11 @@ export default function TransferSpotModal({
   // Build the candidate list. Waitlisted players surface first (one-tap
   // promotion off the waitlist), then everyone else alphabetically. We
   // exclude players who currently hold a registered spot — they can't
-  // receive a transfer, and we exclude the current user themselves.
+  // receive a transfer — and we exclude the player whose spot this is.
   const candidates = useMemo(() => {
     const list = players
       .filter((p) => (p.status || 'active') === 'active')
-      .filter((p) => String(p.id) !== String(claimedId))
+      .filter((p) => String(p.id) !== String(effectiveFromId))
       .filter((p) => !registeredIds.includes(String(p.id)))
       .filter((p) => !search || (p.name || '').toLowerCase().includes(search.toLowerCase()))
     list.sort((a, b) => {
@@ -73,13 +90,13 @@ export default function TransferSpotModal({
       return (a.name || '').localeCompare(b.name || '')
     })
     return list
-  }, [players, claimedId, registeredIds.join(','), waitlistedIds.join(','), search])
+  }, [players, effectiveFromId, registeredIds.join(','), waitlistedIds.join(','), search])
 
   const handlePick = async (toPlayer: Player) => {
     if (busy) return
     setBusy(true)
     setError(null)
-    const result = await createTransfer(toPlayer.id, tournament.id)
+    const result = await createTransfer(toPlayer.id, tournament.id, fromPlayerId)
     setBusy(false)
     if (result.ok) {
       // create_transfer always returns the id alongside an ok status, so the
@@ -96,11 +113,17 @@ export default function TransferSpotModal({
       onClose={() => {
         if (!busy) onClose()
       }}
-      title="Transfer your spot"
+      title={
+        isOnBehalf
+          ? `Transfer ${(fromPlayer?.name || 'their').split(/\s+/)[0]}'s spot`
+          : 'Transfer your spot'
+      }
     >
       <div className="space-y-4">
         <p className="text-xs text-lob-muted-light -mt-2">
-          Pick who takes over. They'll be asked to accept — your spot stays held until they do.
+          Pick who takes over. They'll be asked to accept —{' '}
+          {isOnBehalf ? `${(fromPlayer?.name || 'their').split(/\s+/)[0]}'s spot` : 'your spot'}{' '}
+          stays held until they do.
         </p>
 
         {error && (

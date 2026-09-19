@@ -37,17 +37,25 @@ export function buildTransferUrl(transferId: string): string {
   return `${APP_BASE_URL}/transfer/${encodeURIComponent(transferId)}`
 }
 
-// Pre-filled message — wording locked with user 2026-05-03.
+// Pre-filled message — wording locked with user 2026-05-03, updated
+// 2026-09-19: transfers are directly between the two players now, so the
+// Tikkie link (when the spot isn't paid yet) goes out with the offer
+// itself instead of a manual follow-up after acceptance.
 export function buildTransferMessage(
   toPlayerName: string | null | undefined,
   transferId: string,
+  tikkieLink?: string | null,
 ): string {
   const firstName = (toPlayerName || '').split(/\s+/)[0] || 'there'
   const url = buildTransferUrl(transferId)
-  return (
-    `Hi ${firstName}, can you please accept the transfer of my spot on ${url}? ` +
-    `Thanks a lot — I'll share the payment link after you accept.`
-  )
+  const base = `Hi ${firstName}, can you please accept the transfer of my spot on ${url}?`
+  if (tikkieLink) {
+    return (
+      `${base} It isn't paid yet — once you accept, please pay directly here: ${tikkieLink} ` +
+      `Thanks a lot!`
+    )
+  }
+  return `${base} It's already paid for, so there's nothing more to do after you accept. Thanks a lot!`
 }
 
 // Direct chat URL — opens WhatsApp to a 1:1 conversation with the recipient

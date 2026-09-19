@@ -96,7 +96,7 @@ describe('roster level badges read the Playtomic level', () => {
         pendingByFromPlayerId={new Map()}
         respondingTo={null}
         onOpenShareModal={() => {}}
-        onCancelMyOffer={() => {}}
+        onAdminCancelTransfer={() => {}}
         onStartTransfer={() => {}}
       />,
     )

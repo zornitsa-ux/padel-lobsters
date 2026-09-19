@@ -30,6 +30,9 @@ interface TransferPendingModalProps {
   transferId: string
   /** Only the recipient's name is read here; the phone comes from the RPC. */
   toPlayer?: { name?: string | null } | null
+  /** Set when the outgoing spot wasn't paid yet — folded into the pre-filled
+   *  WhatsApp message so the recipient can pay directly. */
+  tikkieLink?: string | null
   onClose: () => void
   onCancel?: () => void
 }
@@ -39,6 +42,7 @@ type PendingAction = 'whatsapp' | 'group' | 'cancel' | null
 export default function TransferPendingModal({
   transferId,
   toPlayer,
+  tikkieLink,
   onClose,
   onCancel,
 }: TransferPendingModalProps) {
@@ -63,7 +67,7 @@ export default function TransferPendingModal({
     }
   }, [transferId])
 
-  const message = buildTransferMessage(toPlayer?.name, transferId)
+  const message = buildTransferMessage(toPlayer?.name, transferId, tikkieLink)
   const phoneIsValid = phone !== null && isE164(phone)
 
   const handleDirect = () => {

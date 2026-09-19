@@ -66,7 +66,7 @@ export default function Registration({
   const { updateRegistration, cancelRegistration, registerPlayer, promoteWaitlistRegistration } =
     useRegistrationActions()
   const { data: transfers = [] } = useTransfers()
-  const { respondToTransfer, cancelTransfer } = useTransferActions({ session })
+  const { respondToTransfer, cancelTransfer, adminCancelTransfer } = useTransferActions({ session })
   const updateMut = useUpdateTournament()
   const updateTournament = useCallback(
     (id: string, data: Partial<NormalisedTournament>) => updateMut.mutateAsync({ id, data }),
@@ -197,7 +197,10 @@ export default function Registration({
     playerId: claimedId,
   })
   const isCompleted = tournament?.status === 'completed'
-  const { hasTikkie, costPerPlayer } = useMemo(() => computePaymentConfig(tournament), [tournament])
+  const { hasTikkie, tikkieLink, costPerPlayer } = useMemo(
+    () => computePaymentConfig(tournament),
+    [tournament],
+  )
 
   const playerById = useMemo(() => {
     const map = new Map<string, Player>()
@@ -362,8 +365,12 @@ export default function Registration({
     setPickerForReg({ reg })
   }
   const handleTransferCreated = ({ transferId, toPlayer }: TransferShareTarget) => {
+    // The outgoing registration is unpaid → fold the tournament's Tikkie
+    // link into the share message so the recipient can pay directly;
+    // transfers are between the two players now, not routed through us.
+    const fromPaid = pickerForReg?.reg?.paymentStatus === 'paid'
     setPickerForReg(null)
-    setShareModal({ transferId, toPlayer })
+    setShareModal({ transferId, toPlayer, tikkieLink: fromPaid ? null : tikkieLink })
   }
 
   // Pending transfers tied to this tournament. Used to render persistent
@@ -382,6 +389,25 @@ export default function Registration({
     setRespondingTo(pendingFromMe.id)
     await cancelTransfer(pendingFromMe.id)
     setRespondingTo(null)
+  }
+  // Admin cancelling a transfer started on behalf of someone else's
+  // registration (from the registered-players list). Uses admin_cancel_transfer
+  // rather than cancel_transfer — the caller isn't the transfer's from_player,
+  // so the self-service RPC would reject it as 'forbidden'.
+  const handleAdminCancelTransfer = async (transferId: string) => {
+    if (
+      !(await confirm({
+        message: 'Cancel this transfer offer? The spot stays registered to them.',
+        destructive: true,
+      }))
+    )
+      return
+    setRespondingTo(transferId)
+    const r = await adminCancelTransfer(transferId)
+    setRespondingTo(null)
+    if (!r.ok) {
+      alert('Could not cancel the offer. Please try again.')
+    }
   }
   const handleIncomingResponse = async (xfer: NormalisedTransfer, accept: boolean) => {
     setRespondingTo(xfer.id)
@@ -526,7 +552,7 @@ export default function Registration({
         pendingByFromPlayerId={pendingByFromPlayerId}
         respondingTo={respondingTo}
         onOpenShareModal={setShareModal}
-        onCancelMyOffer={handleCancelMyOffer}
+        onAdminCancelTransfer={handleAdminCancelTransfer}
         onStartTransfer={startTransfer}
       />
 
@@ -569,6 +595,7 @@ export default function Registration({
       {pickerForReg && (
         <TransferSpotModal
           tournament={tournament}
+          fromPlayerId={pickerForReg.reg.playerId}
           onClose={() => setPickerForReg(null)}
           onTransferCreated={handleTransferCreated}
         />
@@ -577,6 +604,7 @@ export default function Registration({
         <TransferPendingModal
           transferId={shareModal.transferId}
           toPlayer={shareModal.toPlayer}
+          tikkieLink={shareModal.tikkieLink}
           onClose={() => setShareModal(null)}
           onCancel={() => setShareModal(null)}
         />
