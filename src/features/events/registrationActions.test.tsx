@@ -112,10 +112,10 @@ describe('useRegistrationActions — registerPlayer', () => {
 // ── cancelRegistration ────────────────────────────────────────────────────────
 
 describe('useRegistrationActions — cancelRegistration', () => {
-  it('cancels and surfaces who was promoted, without promoting client-side', async () => {
+  it('cancels and reports that the spot was released, without promoting anyone', async () => {
     ;(q.cancelRegistration as ReturnType<typeof vi.fn>).mockResolvedValue({
       status: 'cancelled',
-      promotedPlayerId: 'player-2',
+      spotReleased: true,
     })
 
     const client = makeTestQueryClient()
@@ -129,7 +129,7 @@ describe('useRegistrationActions — cancelRegistration', () => {
     })
 
     expect(q.cancelRegistration).toHaveBeenCalledWith('r1')
-    expect(res).toEqual({ status: 'cancelled', promotedPlayerId: 'player-2' })
+    expect(res).toEqual({ status: 'cancelled', spotReleased: true })
     expect(client.invalidateQueries).toHaveBeenCalledWith({
       queryKey: registrationKeys.list('tid-1'),
     })
@@ -157,7 +157,7 @@ describe('useRegistrationActions — cancelRegistration', () => {
   it('toasts when the registration was already cancelled elsewhere', async () => {
     ;(q.cancelRegistration as ReturnType<typeof vi.fn>).mockResolvedValue({
       status: 'already_cancelled',
-      promotedPlayerId: null,
+      spotReleased: false,
     })
 
     const { result, showToast } = renderHookWithClientAndToast(() => useRegistrationActions())
@@ -171,23 +171,23 @@ describe('useRegistrationActions — cancelRegistration', () => {
     )
   })
 
-  it('reports no promotion when the cancelled player was only waitlisted', async () => {
-    // The LOBS #10 defect: a waitlisted player leaving frees no spot, so nobody
-    // moves up. The server decides this now; the hook must not second-guess it.
+  it('reports no released spot when the cancelled player was only waitlisted', async () => {
+    // The LOBS #10 defect: a waitlisted player leaving frees no spot. The server
+    // decides this; the hook must not second-guess it.
     ;(q.cancelRegistration as ReturnType<typeof vi.fn>).mockResolvedValue({
       status: 'cancelled',
-      promotedPlayerId: null,
+      spotReleased: false,
     })
 
     const client = makeTestQueryClient()
     const { result } = renderHookWithClientAndToast(() => useRegistrationActions(), client)
 
-    let res: { promotedPlayerId: string | null } | undefined
+    let res: { spotReleased: boolean } | undefined
     await act(async () => {
       res = await result.current.cancelRegistration('r-waitlisted', 'tid-1')
     })
 
-    expect(res?.promotedPlayerId).toBeNull()
+    expect(res?.spotReleased).toBe(false)
   })
 })
 

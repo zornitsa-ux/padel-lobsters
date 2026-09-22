@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useRegistrationActions } from '../useRegistrations'
 
 export const SELF_REGISTER_ERROR = 'Could not sign you up. Please try again.'
+export const SPOT_TAKEN_ERROR = 'No spot free right now — you’re still on the waitlist.'
 
 /**
  * A player signing themselves up, shared by the Info tab's JoinEventCard and
@@ -16,6 +17,8 @@ export const SELF_REGISTER_ERROR = 'Could not sign you up. Please try again.'
  *
  * A double-tap is not an error: the second call finds the row the first one
  * created and returns 'already_registered' / 'already_waitlist' with its id.
+ * The exception is a waitlisted player grabbing an open spot: 'already_waitlist'
+ * then means someone else took it first, and the player needs to be told.
  */
 export function useSelfRegister({
   tournamentId,
@@ -33,9 +36,10 @@ export function useSelfRegister({
     setRegistering(true)
     setError('')
     try {
-      const { regId } = await registerPlayer(tournamentId, playerId)
+      const { regId, status } = await registerPlayer(tournamentId, playerId)
       // A null regId is the failure signal — see the note above.
       if (!regId) setError(SELF_REGISTER_ERROR)
+      else if (status === 'already_waitlist') setError(SPOT_TAKEN_ERROR)
     } finally {
       setRegistering(false)
     }

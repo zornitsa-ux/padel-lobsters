@@ -1,5 +1,6 @@
-import { CheckCircle, Clock, UserRoundX } from 'lucide-react'
+import { CheckCircle, UserRoundX } from 'lucide-react'
 import type { MyRegistrationSummary } from '../nextMatch'
+import WaitlistStatusCard from './WaitlistStatusCard'
 
 interface JoinEventCardProps {
   /** Derived by `myRegistrationSummary` — the same source /me reads. */
@@ -10,6 +11,7 @@ interface JoinEventCardProps {
   registering: boolean
   /** Set when the sign-up failed; blank otherwise. */
   error?: string
+  /** Registers, joins the waitlist, or — for a waitlisted player — grabs an open spot. */
   onRegister: () => void
   /** Sends the player to /me, which owns the payment flow. */
   onGoToPayment: () => void
@@ -18,7 +20,8 @@ interface JoinEventCardProps {
 /**
  * Sign-up on the Info tab: the player's own way in, right where they are
  * reading about the event. Deliberately narrow — it registers, joins the
- * waitlist, and reports which of those happened. Payment lives on /me, so an
+ * waitlist, lets a waitlisted player grab an open spot, and reports which of
+ * those happened. Payment lives on /me, so an
  * outstanding balance links there rather than duplicating the Tikkie flow.
  */
 export default function JoinEventCard({
@@ -41,7 +44,7 @@ export default function JoinEventCard({
               Your registration was cancelled.
             </>
           ) : isEventFull ? (
-            'This event is full — join the waitlist and you’ll get the next spot that opens.'
+            'This event is full — join the waitlist and we’ll email you if a spot opens up.'
           ) : (
             "You haven't signed up yet."
           )}
@@ -70,16 +73,13 @@ export default function JoinEventCard({
 
   if (summary.status === 'waitlisted') {
     return (
-      <div className="card bg-amber-50 border border-amber-200 space-y-1">
-        <div className="flex items-center gap-2">
-          <Clock size={14} className="text-amber-600 flex-shrink-0" />
-          <p className="text-sm font-semibold text-amber-800">
-            You&apos;re on the waitlist
-            {summary.waitlistPosition ? ` · #${summary.waitlistPosition}` : ''}
-          </p>
-        </div>
-        <p className="text-xs text-amber-700 pl-5">You&apos;ll be notified if a spot opens up.</p>
-      </div>
+      <WaitlistStatusCard
+        waitlistPosition={summary.waitlistPosition}
+        spotOpen={!isEventFull}
+        registering={registering}
+        error={error}
+        onGrab={onRegister}
+      />
     )
   }
 

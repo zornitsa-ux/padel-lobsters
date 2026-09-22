@@ -331,12 +331,11 @@ export default function Registration({
       }))
     )
       return
-    const { promotedPlayerId } = await cancelRegistration(reg.id, tournament.id)
-    if (promotedPlayerId) {
-      const promoted = getPlayer(promotedPlayerId)
+    const { spotReleased } = await cancelRegistration(reg.id, tournament.id)
+    if (spotReleased) {
       showToast({
         variant: 'success',
-        message: `${promoted ? displayName(promoted) : 'The next player'} moved off the waitlist.`,
+        message: 'Spot released — all Lobsters not registered are being emailed.',
       })
     }
   }

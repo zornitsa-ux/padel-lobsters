@@ -1,7 +1,11 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
 import { registrationKeys } from './registrationKeys'
-import { fetchRegistrations, fetchAllRegistrations } from './registrationQueries'
+import {
+  fetchActivePaymentDeadlines,
+  fetchRegistrations,
+  fetchAllRegistrations,
+} from './registrationQueries'
 import * as q from './registrationQueries'
 import type { RegistrationInput } from './registrationQueries'
 import { useToast } from '../../lib/toastBus'
@@ -17,6 +21,22 @@ export function useRegistrations(tournamentId: string | null | undefined) {
     queryKey: registrationKeys.list(tournamentId ?? ''),
     queryFn: () => fetchRegistrations(tournamentId!),
     enabled: !!tournamentId,
+  })
+}
+
+// Active pay-by deadlines for one event. Admin-only (RLS), so only fetched for
+// admins; rows come from the database, so badges survive a reload.
+export function usePaymentDeadlines({
+  tournamentId,
+  enabled,
+}: {
+  tournamentId: string | null | undefined
+  enabled: boolean
+}) {
+  return useQuery({
+    queryKey: registrationKeys.paymentDeadlines(tournamentId ?? ''),
+    queryFn: () => fetchActivePaymentDeadlines(tournamentId!),
+    enabled: enabled && !!tournamentId,
   })
 }
 
@@ -86,7 +106,7 @@ export function useRegistrationActions() {
       } catch (error) {
         console.error('cancelRegistration failed:', error)
         showToast({ variant: 'error', message: CANCEL_FAILURE_MESSAGES.error })
-        return { status: 'error', promotedPlayerId: null }
+        return { status: 'error', spotReleased: false }
       }
       invalidateRegistrations(tournamentId)
       if (result.status !== 'cancelled') {

@@ -31,7 +31,7 @@ vi.mock('./useRegistrations', () => ({
   useRegistrationActions: () => ({
     registerPlayer: vi.fn(),
     updateRegistration: vi.fn(),
-    cancelRegistration: vi.fn().mockResolvedValue({ status: 'cancelled', promotedPlayerId: null }),
+    cancelRegistration: vi.fn().mockResolvedValue({ status: 'cancelled', spotReleased: false }),
     promoteWaitlistRegistration: vi.fn(),
   }),
 }))

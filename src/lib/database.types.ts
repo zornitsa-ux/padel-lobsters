@@ -592,6 +592,57 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_deadlines: {
+        Row: {
+          closed_at: string | null
+          created_at: string
+          created_by: string | null
+          deadline_at: string
+          id: string
+          player_id: string
+          registration_id: string
+          status: string
+          tournament_id: string
+        }
+        Insert: {
+          closed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          deadline_at: string
+          id?: string
+          player_id: string
+          registration_id: string
+          status?: string
+          tournament_id: string
+        }
+        Update: {
+          closed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          deadline_at?: string
+          id?: string
+          player_id?: string
+          registration_id?: string
+          status?: string
+          tournament_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'payment_deadlines_registration_id_fkey'
+            columns: ['registration_id']
+            isOneToOne: false
+            referencedRelation: 'registrations'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'payment_deadlines_tournament_id_fkey'
+            columns: ['tournament_id']
+            isOneToOne: false
+            referencedRelation: 'tournaments'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       pin_attempts: {
         Row: {
           attempt_kind: string
@@ -1186,6 +1237,47 @@ export type Database = {
         }
         Relationships: []
       }
+      spot_released_emails: {
+        Row: {
+          created_at: string
+          id: number
+          net_request_id: number | null
+          recipient_count: number
+          released_player_ids: string[]
+          spots: number
+          tournament_id: string
+          trigger_source: string
+        }
+        Insert: {
+          created_at?: string
+          id?: never
+          net_request_id?: number | null
+          recipient_count: number
+          released_player_ids?: string[]
+          spots: number
+          tournament_id: string
+          trigger_source: string
+        }
+        Update: {
+          created_at?: string
+          id?: never
+          net_request_id?: number | null
+          recipient_count?: number
+          released_player_ids?: string[]
+          spots?: number
+          tournament_id?: string
+          trigger_source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'spot_released_emails_tournament_id_fkey'
+            columns: ['tournament_id']
+            isOneToOne: false
+            referencedRelation: 'tournaments'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       tournament_reminders_sent: {
         Row: {
           error: string | null
@@ -1679,6 +1771,13 @@ export type Database = {
         Args: { input_player_ids: string[]; input_tournament_id: string }
         Returns: undefined
       }
+      admin_start_payment_deadline: {
+        Args: { input_deadline_at: string; input_registration_id: string }
+        Returns: {
+          deadline_id: string
+          status: string
+        }[]
+      }
       admin_update_league_status: {
         Args: { input_league_id: string; input_status: string }
         Returns: {
@@ -1747,8 +1846,7 @@ export type Database = {
       cancel_registration: {
         Args: { input_registration_id: string }
         Returns: {
-          promoted_player_id: string
-          promoted_registration_id: string
+          spot_released: boolean
           status: string
         }[]
       }
@@ -1851,6 +1949,13 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      get_payment_reminder: {
+        Args: { input_grace_hours?: number; input_registration_id: string }
+        Returns: {
+          deadline_at: string
+          url: string
+        }[]
       }
       get_payment_reminder_link: {
         Args: { input_registration_id: string }

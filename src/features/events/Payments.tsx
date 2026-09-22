@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useApp } from '../../context/useApp'
 import { usePlayers } from '../players/usePlayers'
-import { useRegistrations, useRegistrationActions } from './useRegistrations'
+import { usePaymentDeadlines, useRegistrations, useRegistrationActions } from './useRegistrations'
 import {
   CheckCircle,
   AlertCircle,
@@ -9,6 +9,7 @@ import {
   ShieldCheck,
   MoreVertical,
   MessageCircle,
+  Hourglass,
 } from 'lucide-react'
 import { fmtEur } from '../../lib/format'
 import { EmptyState } from '../../components/ui/EmptyState'
@@ -18,6 +19,7 @@ import { ProgressBar } from '../../components/ui/ProgressBar'
 import { StatTile } from '../../components/ui/StatTile'
 import PaymentReminderModal from './PaymentReminderModal'
 import { pricePerPlayer, type EventNavigate } from './eventHelpers'
+import { deadlineBadge } from './paymentDeadline'
 import type { NormalisedTournament } from '../../lib/normalise'
 import type { NormalisedRegistration } from './registrationQueries'
 
@@ -42,6 +44,12 @@ export default function Payments({
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
   const [filter, setFilter] = useState<PaymentFilter>('all')
   const [reminderTarget, setReminderTarget] = useState<{ regId: string; name: string } | null>(null)
+  const { data: deadlines = [] } = usePaymentDeadlines({
+    tournamentId: tournament?.id,
+    enabled: isAdmin,
+  })
+  const deadlineByRegId = new Map(deadlines.map((d) => [d.registrationId, d.deadlineAt]))
+  const now = new Date()
 
   if (!tournament) {
     return (
@@ -287,6 +295,10 @@ export default function Payments({
           const isSelfPaid = ps === 'pending_confirmation'
           const isTikkied = ps === 'tikkied'
           const isTransferred = ps === 'transferred'
+          const deadlineAt = isConfirmed ? undefined : deadlineByRegId.get(reg.id)
+          const badge = deadlineAt
+            ? deadlineBadge({ deadlineAt, now, unpaid: !ps || ps === 'unpaid' })
+            : null
 
           const borderColor = isConfirmed
             ? 'border-green-400'
@@ -381,6 +393,15 @@ export default function Payments({
                   {costPerPlayer > 0 && !isTransferred && (
                     <span className="text-xs text-lob-muted">{fmtEur(costPerPlayer)}</span>
                   )}
+                  {badge && (
+                    <span
+                      className={`text-xs font-semibold px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${
+                        badge.overdue ? 'bg-red-100 text-red-700' : 'bg-orange-50 text-orange-700'
+                      }`}
+                    >
+                      <Hourglass size={11} /> {badge.text}
+                    </span>
+                  )}
                 </div>
               </PlayerRow>
             </div>
@@ -391,6 +412,7 @@ export default function Payments({
       {reminderTarget && (
         <PaymentReminderModal
           registrationId={reminderTarget.regId}
+          tournamentId={tournament.id}
           playerName={reminderTarget.name}
           onClose={() => setReminderTarget(null)}
         />

@@ -1,5 +1,5 @@
 import { useMemo, useState, type ReactNode } from 'react'
-import { CheckCircle, Clock, ExternalLink, Send, Trophy, UserRoundX } from 'lucide-react'
+import { CheckCircle, ExternalLink, Send, Trophy, UserRoundX } from 'lucide-react'
 import { useApp } from '../../context/useApp'
 import { useRegistrations, useRegistrationActions } from './useRegistrations'
 import { useMatches } from './useMatches'
@@ -12,6 +12,7 @@ import { fmtEur } from '../../lib/format'
 import { EmptyState } from '../../components/ui/EmptyState'
 import MyRounds from './MyRounds'
 import { useSelfRegister } from './registration/useSelfRegister'
+import WaitlistStatusCard from './registration/WaitlistStatusCard'
 import { buildMyTournamentView, myFinalPlacing } from './nextMatch'
 import type { EventPhase } from './eventPhase'
 import type { NormalisedTournament } from '../../lib/normalise'
@@ -245,15 +246,13 @@ function RegistrationCard({
 
   if (registration.status === 'waitlisted') {
     return (
-      <div className="card bg-amber-50 border border-amber-200 space-y-1">
-        <div className="flex items-center gap-2">
-          <Clock size={14} className="text-amber-600 flex-shrink-0" />
-          <p className="text-sm font-semibold text-amber-800">
-            You&apos;re on the waitlist{waitlistPosition ? ` · #${waitlistPosition}` : ''}
-          </p>
-        </div>
-        <p className="text-xs text-amber-700 pl-5">You&apos;ll be notified if a spot opens up.</p>
-      </div>
+      <WaitlistStatusCard
+        waitlistPosition={waitlistPosition}
+        spotOpen={!isEventFull}
+        registering={registering}
+        error={registerError}
+        onGrab={onRegister}
+      />
     )
   }
 

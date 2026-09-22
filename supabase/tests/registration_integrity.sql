@@ -3,8 +3,9 @@
 --
 -- Covers the capacity guard (20260806211143), the capacity-aware RPCs
 -- (20260806211259), the audit trail (20260806210842), the no-hard-delete
--- changes (20260806211102), the max_players constraints (20260806213000)
--- and the transfer row-scoping fix (20260815050555).
+-- changes (20260806211102), the max_players constraints (20260806213000),
+-- the transfer row-scoping fix (20260815050555) and cancel-releases-the-spot
+-- (20260922150000).
 --
 -- There is no pgTAP harness in this repo, so this is a plain script: every
 -- check raises on failure and the whole thing runs inside a transaction that
@@ -32,7 +33,7 @@ declare
   v_reg uuid;
   v_id uuid;
   v_status text;
-  v_promoted uuid;
+  v_released boolean;
   v_count integer;
   v_rows integer;
   v_err text;
@@ -97,40 +98,70 @@ begin
   end;
   raise notice 'CHECK 2 ok  — raw waitlist->registered at cap raises tournament_full';
 
-  -- ── 3. Cancelling a WAITLISTED player promotes nobody  (the LOBS #10 bug) ─
+  -- ── 3. Cancelling a WAITLISTED player frees nothing  (the LOBS #10 bug) ───
   select r.id into v_reg from public.registrations r
    where r.tournament_id = v_t and r.player_id = v_players[4];
-  select c.status, c.promoted_registration_id into v_status, v_promoted
+  select c.status, c.spot_released into v_status, v_released
     from public.cancel_registration(v_reg) c;
 
   if v_status <> 'cancelled' then
     raise exception 'CHECK 3 FAILED: expected cancelled, got %', v_status;
   end if;
-  if v_promoted is not null then
-    raise exception 'CHECK 3 FAILED: a waitlist cancellation promoted someone (%)', v_promoted;
+  if v_released then
+    raise exception 'CHECK 3 FAILED: a waitlist cancellation reported a released spot';
   end if;
   select count(*) into v_count from public.registrations
    where tournament_id = v_t and status = 'registered';
   if v_count <> 2 then
     raise exception 'CHECK 3 FAILED: registered count moved to % after a waitlist cancel', v_count;
   end if;
-  raise notice 'CHECK 3 ok  — cancelling a waitlisted player promotes nobody';
+  raise notice 'CHECK 3 ok  — cancelling a waitlisted player frees nothing';
 
-  -- ── 4. Cancelling a REGISTERED player promotes exactly one ────────────────
+  -- ── 4. Cancelling a REGISTERED player releases the spot, promotes nobody ───
   select r.id into v_reg from public.registrations r
    where r.tournament_id = v_t and r.player_id = v_players[1];
-  select c.status, c.promoted_player_id into v_status, v_promoted
+  select c.status, c.spot_released into v_status, v_released
     from public.cancel_registration(v_reg) c;
 
-  if v_promoted is distinct from v_players[3] then
-    raise exception 'CHECK 4 FAILED: expected P3 promoted, got %', v_promoted;
+  if v_status <> 'cancelled' or not v_released then
+    raise exception 'CHECK 4 FAILED: expected cancelled + spot_released, got % / %',
+      v_status, v_released;
+  end if;
+  select count(*) into v_count from public.registrations
+   where tournament_id = v_t and status = 'registered';
+  if v_count <> 1 then
+    raise exception 'CHECK 4 FAILED: expected 1 registered (no promotion), got %', v_count;
+  end if;
+  select r.status into v_status from public.registrations r
+   where r.tournament_id = v_t and r.player_id = v_players[3] and r.status <> 'cancelled';
+  if v_status <> 'waitlist' then
+    raise exception 'CHECK 4 FAILED: P3 should still be waitlisted, is %', v_status;
+  end if;
+  raise notice 'CHECK 4 ok  — cancelling a registered player releases the spot, promotes nobody';
+
+  -- ── 4b. A waitlisted player grabs the open spot themselves ────────────────
+  perform set_config(
+    'request.jwt.claims', json_build_object('sub', v_players[3])::text, true
+  );
+  select r.status into v_status
+    from public.register_for_tournament(v_t, v_players[3]) r;
+  if v_status <> 'registered' then
+    raise exception 'CHECK 4b FAILED: expected registered, got %', v_status;
   end if;
   select count(*) into v_count from public.registrations
    where tournament_id = v_t and status = 'registered';
   if v_count <> 2 then
-    raise exception 'CHECK 4 FAILED: expected 2 registered after swap, got %', v_count;
+    raise exception 'CHECK 4b FAILED: expected the event full at 2 again, got %', v_count;
   end if;
-  raise notice 'CHECK 4 ok  — cancelling a registered player promotes the oldest waitlister';
+  perform set_config(
+    'request.jwt.claims',
+    json_build_object(
+      'sub', v_players[6],
+      'app_metadata', json_build_object('role', 'admin')
+    )::text,
+    true
+  );
+  raise notice 'CHECK 4b ok — a waitlisted player can take an open spot';
 
   -- ── 5. payment_status edits still work at cap ─────────────────────────────
   update public.registrations set payment_status = 'paid'
@@ -252,10 +283,17 @@ begin
    where tournament_id = v_t
      and source = 'cancel_registration'
      and old_status = 'waitlist' and new_status = 'registered';
-  if v_count <> 1 then
-    raise exception 'CHECK 8 FAILED: expected 1 auto-promotion tagged cancel_registration, got %', v_count;
+  if v_count <> 0 then
+    raise exception 'CHECK 8 FAILED: expected no promotion tagged cancel_registration, got %', v_count;
   end if;
-  raise notice 'CHECK 8 ok  — audit trail records the promotion and attributes it to the cancel';
+  select count(*) into v_count from public.registration_status_events
+   where tournament_id = v_t
+     and source = 'register_for_tournament'
+     and old_status = 'waitlist' and new_status = 'registered';
+  if v_count <> 1 then
+    raise exception 'CHECK 8 FAILED: expected 1 grab tagged register_for_tournament, got %', v_count;
+  end if;
+  raise notice 'CHECK 8 ok  — audit trail records the grab and attributes it to the sign-up';
 
   -- ── 9. Events with registrations cannot be deleted ────────────────────────
   begin

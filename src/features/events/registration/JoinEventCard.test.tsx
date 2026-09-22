@@ -95,10 +95,36 @@ describe('JoinEventCard — signing up', () => {
 
 describe('JoinEventCard — already in', () => {
   it('reports the waitlist position rather than offering to register again', () => {
-    renderCard({ summary: summaryOf({ status: 'waitlisted', waitlistPosition: 3 }) })
+    renderCard({
+      summary: summaryOf({ status: 'waitlisted', waitlistPosition: 3 }),
+      isEventFull: true,
+    })
 
     expect(screen.getByText(/on the waitlist · #3/i)).not.toBeNull()
-    expect(screen.queryByRole('button', { name: /register/i })).toBeNull()
+    expect(screen.queryByRole('button')).toBeNull()
+  })
+
+  // Nobody is promoted automatically any more: a released spot goes to whoever
+  // takes it first, and a waitlisted player has to be able to.
+  it('lets a waitlisted player grab a spot once one is open', () => {
+    const { onRegister } = renderCard({
+      summary: summaryOf({ status: 'waitlisted', waitlistPosition: 2 }),
+      isEventFull: false,
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /grab the spot/i }))
+
+    expect(onRegister).toHaveBeenCalledTimes(1)
+  })
+
+  it('tells a waitlisted player when someone else got the spot first', () => {
+    renderCard({
+      summary: summaryOf({ status: 'waitlisted', waitlistPosition: 2 }),
+      isEventFull: true,
+      error: 'No spot free right now — you’re still on the waitlist.',
+    })
+
+    expect(screen.getByRole('alert').textContent).toMatch(/still on the waitlist/i)
   })
 
   it('confirms a registered player and offers no second sign-up', () => {

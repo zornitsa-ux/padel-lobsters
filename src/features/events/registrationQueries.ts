@@ -73,9 +73,8 @@ export async function updateRegistration(id: string, data: RegistrationInput) {
   if (error) throw error
 }
 
-// Cancels, and promotes the oldest waitlisted player only if the cancellation
-// actually freed a spot — someone leaving the waitlist was never occupying one.
-// Returns the promoted player so the caller can name them in a toast.
+// Cancels and releases the spot; nobody is promoted. `spotReleased` is true
+// when the event was full, which is when everyone gets the "spot opened" email.
 export async function cancelRegistration(id: string) {
   const { data, error } = await supabase.rpc('cancel_registration', {
     input_registration_id: id,
@@ -84,7 +83,7 @@ export async function cancelRegistration(id: string) {
   const row = firstRow(data)
   return {
     status: row?.status ?? 'error',
-    promotedPlayerId: row?.promoted_player_id ?? null,
+    spotReleased: row?.spot_released ?? false,
   }
 }
 
@@ -98,16 +97,74 @@ export async function promoteWaitlistRegistration(id: string) {
   return firstRow(data)?.status ?? 'error'
 }
 
-// Admin-only, single-player WhatsApp reminder link — built and validated
-// server-side (E.164 check + wa.me URL) by get_payment_reminder_link so the
-// client never touches the raw phone number, only fetches it for the one
-// registration the admin is acting on, and never before the admin asks.
+// Admin-only, single-player WhatsApp reminder — built and validated
+// server-side (E.164 check + wa.me URL) by get_payment_reminder so the client
+// never touches the raw phone number, only fetches it for the one registration
+// the admin is acting on, and never before the admin asks. With graceHours the
+// message states a pay-by deadline, returned so it can be recorded as sent.
 // Returns null when there's no usable link (bad/missing phone, or the event
 // has no Tikkie link set).
-export async function fetchPaymentReminderLink(registrationId: string): Promise<string | null> {
-  const { data, error } = await supabase.rpc('get_payment_reminder_link', {
+export interface PaymentReminder {
+  url: string
+  deadlineAt: string | null
+}
+
+export async function fetchPaymentReminder({
+  registrationId,
+  graceHours,
+}: {
+  registrationId: string
+  graceHours: number
+}): Promise<PaymentReminder | null> {
+  const { data, error } = await supabase.rpc('get_payment_reminder', {
     input_registration_id: registrationId,
+    input_grace_hours: graceHours,
   })
   if (error) throw error
-  return data ?? null
+  const row = firstRow(data)
+  return row?.url ? { url: row.url, deadlineAt: row.deadline_at ?? null } : null
+}
+
+// Starts the clock once the reminder has actually been sent. Returns
+// 'started', or why not: invalid_deadline / not_found / not_registered /
+// already_paid.
+export async function startPaymentDeadline({
+  registrationId,
+  deadlineAt,
+}: {
+  registrationId: string
+  deadlineAt: string
+}): Promise<string> {
+  const { data, error } = await supabase.rpc('admin_start_payment_deadline', {
+    input_registration_id: registrationId,
+    input_deadline_at: deadlineAt,
+  })
+  if (error) throw error
+  return firstRow(data)?.status ?? 'error'
+}
+
+const paymentDeadlineRowSchema = z.object({
+  registration_id: z.string(),
+  deadline_at: z.string(),
+})
+
+export interface ActivePaymentDeadline {
+  registrationId: string
+  deadlineAt: string
+}
+
+// Admin-only (RLS). Active deadlines for one event, keyed by registration.
+export async function fetchActivePaymentDeadlines(
+  tournamentId: string,
+): Promise<ActivePaymentDeadline[]> {
+  const { data, error } = await supabase
+    .from('payment_deadlines')
+    .select('registration_id, deadline_at')
+    .eq('tournament_id', tournamentId)
+    .eq('status', 'active')
+  if (error) throw error
+  return z
+    .array(paymentDeadlineRowSchema)
+    .parse(data ?? [])
+    .map((r) => ({ registrationId: r.registration_id, deadlineAt: r.deadline_at }))
 }

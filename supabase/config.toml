@@ -100,5 +100,8 @@ verify_jwt = false
 [functions.send-pin-email]
 verify_jwt = false
 
+[functions.send-spot-released]
+verify_jwt = false
+
 [analytics]
 enabled = false
