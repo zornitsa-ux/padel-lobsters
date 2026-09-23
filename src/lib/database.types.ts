@@ -1679,6 +1679,16 @@ export type Database = {
         Args: { input_player_ids: string[]; input_tournament_id: string }
         Returns: undefined
       }
+      admin_transfer_registration: {
+        Args: {
+          input_from_player_id: string
+          input_to_player_id: string
+          input_tournament_id: string
+        }
+        Returns: {
+          status: string
+        }[]
+      }
       admin_update_league_status: {
         Args: { input_league_id: string; input_status: string }
         Returns: {
@@ -2000,6 +2010,10 @@ export type Database = {
       tournament_start_ts: {
         Args: { input_tournament_id: string }
         Returns: string
+      }
+      tournament_transfers_closed: {
+        Args: { input_tournament_id: string }
+        Returns: boolean
       }
       update_my_profile: { Args: { input_payload: Json }; Returns: boolean }
       verify_player_pin_v2: {

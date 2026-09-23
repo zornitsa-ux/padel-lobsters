@@ -22,6 +22,7 @@ public.admin_record_schedule_run(input_payload jsonb) authenticated
 public.admin_regenerate_pin(input_target_id uuid) authenticated
 public.admin_review_rating_event(input_event_id uuid, input_action text, input_delta numeric) authenticated
 public.admin_set_raffle_exclusions(input_tournament_id uuid, input_player_ids uuid[]) authenticated
+public.admin_transfer_registration(input_tournament_id uuid, input_from_player_id uuid, input_to_player_id uuid) authenticated
 public.admin_update_league_status(input_league_id uuid, input_status text) authenticated
 public.admin_update_league_team(input_team_id uuid, input_payload jsonb) authenticated
 public.admin_update_player(input_target_id uuid, input_payload jsonb) authenticated

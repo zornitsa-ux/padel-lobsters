@@ -37,6 +37,7 @@ vi.mock('./useRegistrations', () => ({
 }))
 vi.mock('../../lib/confirmBus', () => ({ useConfirm: () => vi.fn() }))
 vi.mock('../../lib/toastBus', () => ({ useToast: () => ({ showToast: vi.fn() }) }))
+vi.mock('../settings/useSettings', () => ({ useSettings: () => ({ data: { whatsappLink: '' } }) }))
 
 const Registration = (await import('./Registration')).default
 
