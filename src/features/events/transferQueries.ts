@@ -129,6 +129,36 @@ export async function adminCancelTransfer(transferId: string) {
   }
 }
 
+// Admin-only, immediate spot move: no pending offer, no waiting on the
+// outgoing player to respond. For emergencies where they're unreachable —
+// bypasses the 12h transfers-closed cutoff server-side (admin_transfer_registration).
+export async function adminTransferRegistration(
+  fromPlayerId: string,
+  toPlayerId: string,
+  tournamentId: string,
+) {
+  try {
+    const { data, error } = await supabase.rpc('admin_transfer_registration', {
+      input_tournament_id: tournamentId,
+      input_from_player_id: fromPlayerId,
+      input_to_player_id: toPlayerId,
+    })
+    if (error) {
+      console.error('admin_transfer_registration error:', error)
+      return { ok: false, status: 'error' }
+    }
+    const row = Array.isArray(data) ? data[0] : data
+    const status = row?.status
+    if (status === 'accepted') {
+      return { ok: true, status }
+    }
+    return { ok: false, status: status || 'error' }
+  } catch (e) {
+    console.error('admin_transfer_registration threw:', e)
+    return { ok: false, status: 'error' }
+  }
+}
+
 export async function forceAcceptTransfer(transferId: string) {
   try {
     const { data, error } = await supabase.rpc('admin_force_accept_transfer', {

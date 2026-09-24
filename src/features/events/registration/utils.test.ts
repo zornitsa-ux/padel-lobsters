@@ -9,6 +9,7 @@ import {
   computePaymentConfig,
   formatEventDate,
   isWithinResultsWindow,
+  isTransferWindowClosed,
   getPendingTransfersForTournament,
   getPendingFromPlayer,
   getIncomingForPlayer,
@@ -186,6 +187,56 @@ describe('isWithinResultsWindow', () => {
   it('is false for a missing or unparseable date', () => {
     expect(isWithinResultsWindow(null)).toBe(false)
     expect(isWithinResultsWindow('not-a-date')).toBe(false)
+  })
+})
+
+describe('isTransferWindowClosed', () => {
+  const NOW_MS = new Date('2026-08-01T12:00:00Z').getTime()
+
+  // isTransferWindowClosed parses `${date}T${time}` as local time (it's a
+  // display-side mirror of the server's Europe/Amsterdam gate, not a source
+  // of truth), so tests build inputs from NOW's *local* fields rather than
+  // hardcoding wall-clock strings — keeps the offset-from-now correct no
+  // matter what timezone the test runner is in.
+  const localDateTime = (ms: number) => {
+    const d = new Date(ms)
+    const pad = (n: number) => String(n).padStart(2, '0')
+    return {
+      date: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`,
+      time: `${pad(d.getHours())}:${pad(d.getMinutes())}`,
+    }
+  }
+  const HOUR_MS = 60 * 60 * 1000
+
+  it('is false more than 12h before tournament start', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(NOW_MS)
+
+    expect(isTransferWindowClosed(localDateTime(NOW_MS + 13 * HOUR_MS))).toBe(false)
+  })
+
+  it('is true within 12h of tournament start, and after start', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(NOW_MS)
+
+    expect(isTransferWindowClosed(localDateTime(NOW_MS + 11 * HOUR_MS))).toBe(true)
+    expect(isTransferWindowClosed(localDateTime(NOW_MS - HOUR_MS))).toBe(true)
+  })
+
+  it('is true exactly at the 12h cutoff', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(NOW_MS)
+
+    expect(isTransferWindowClosed(localDateTime(NOW_MS + 12 * HOUR_MS))).toBe(true)
+  })
+
+  it('is false for a missing date, and defaults time to midnight', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(NOW_MS)
+
+    expect(isTransferWindowClosed(null)).toBe(false)
+    expect(isTransferWindowClosed({ date: '', time: '13:00' })).toBe(false)
+    expect(isTransferWindowClosed({ date: '2026-08-05', time: '' })).toBe(false)
   })
 })
 

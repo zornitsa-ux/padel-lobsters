@@ -9,6 +9,12 @@ interface TransferSpotCardProps {
   incomingForMe: NormalisedTransfer[]
   /** Transfer id currently being acted on, if any. */
   respondingTo: string | null
+  /** True within 12h of tournament start — the "start a transfer" affordance
+   *  is replaced with a closed notice. Doesn't affect pre-existing pending
+   *  offers, which still render and let the server's own cutoff answer. */
+  transfersClosed: boolean
+  /** For the closed-notice's "reach out to the community admins" link. */
+  whatsappLink?: string | null
   onStartTransfer: (reg: NormalisedRegistration) => void
   onCancelMyOffer: () => void
   onOpenShareModal: (target: TransferShareTarget) => void
@@ -28,12 +34,34 @@ export default function TransferSpotCard({
   pendingFromMe,
   incomingForMe,
   respondingTo,
+  transfersClosed,
+  whatsappLink,
   onStartTransfer,
   onCancelMyOffer,
   onOpenShareModal,
   onIncomingResponse,
   getPlayer,
 }: TransferSpotCardProps) {
+  const closedNotice = (
+    <div className="card">
+      <p className="text-xs text-lob-muted text-center py-1.5">
+        Transfers are closed for this event. Reach out to the{' '}
+        {whatsappLink ? (
+          <a
+            href={whatsappLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-lob-teal font-semibold underline underline-offset-2"
+          >
+            community admins
+          </a>
+        ) : (
+          'community admins'
+        )}{' '}
+        for help.
+      </p>
+    </div>
+  )
   const incomingCards =
     incomingForMe.length > 0 ? (
       <div className="space-y-2">
@@ -113,6 +141,15 @@ export default function TransferSpotCard({
 
   // Already given away — nothing left to offer.
   if (myReg.paymentStatus === 'transferred') return incomingCards
+
+  if (transfersClosed) {
+    return (
+      <>
+        {incomingCards}
+        {closedNotice}
+      </>
+    )
+  }
 
   return (
     <>

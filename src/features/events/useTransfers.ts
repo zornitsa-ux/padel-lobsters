@@ -90,6 +90,18 @@ export function useTransferActions({
     [invalidateTransfers, invalidateRegistrations],
   )
 
+  const adminTransferRegistration = useCallback(
+    async (fromPlayerId: string, toPlayerId: string, tournamentId: string) => {
+      const result = await q.adminTransferRegistration(fromPlayerId, toPlayerId, tournamentId)
+      if (result.ok) {
+        await invalidateTransfers()
+        invalidateRegistrations()
+      }
+      return result
+    },
+    [invalidateTransfers, invalidateRegistrations],
+  )
+
   return {
     createTransfer,
     respondToTransfer,
@@ -97,5 +109,6 @@ export function useTransferActions({
     getTransferRecipientContact,
     adminCancelTransfer,
     forceAcceptTransfer,
+    adminTransferRegistration,
   }
 }
