@@ -29,11 +29,20 @@ export async function fetchTransfers(): Promise<NormalisedTransfer[]> {
 // Four wrappers around the SECURITY DEFINER RPCs added in migration
 // add_registration_transfers. Each one returns { ok, status, transferId? }
 // so callers can branch on the RPC's status text without parsing errors.
-export async function createTransfer(toPlayerId: string, tournamentId: string) {
+export async function createTransfer(
+  toPlayerId: string,
+  tournamentId: string,
+  fromPlayerId?: string | null,
+) {
   try {
     const { data, error } = await supabase.rpc('create_transfer', {
       input_to_player_id: toPlayerId,
       input_tournament_id: tournamentId,
+      // Omitted (undefined) for the normal self-service transfer — the RPC
+      // defaults it to auth.uid(). Set only when an admin is starting a
+      // transfer on behalf of a different player's registration; the RPC
+      // itself re-checks admin status server-side, this isn't a trust-the-client thing.
+      input_from_player_id: fromPlayerId ?? undefined,
     })
     if (error) {
       console.error('create_transfer error:', error)

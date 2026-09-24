@@ -29,9 +29,9 @@ export function useTransferActions({
   )
 
   const createTransfer = useCallback(
-    async (toPlayerId: string, tournamentId: string) => {
+    async (toPlayerId: string, tournamentId: string, fromPlayerId?: string | null) => {
       if (!session?.user) return { ok: false, status: 'not_authenticated' }
-      const result = await q.createTransfer(toPlayerId, tournamentId)
+      const result = await q.createTransfer(toPlayerId, tournamentId, fromPlayerId)
       if (result.ok) await invalidateTransfers()
       return result
     },

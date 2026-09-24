@@ -133,7 +133,7 @@ describe('computePaymentConfig', () => {
         maxPlayers: 16,
         tikkieLink: 'https://tikkie.example/x',
       }),
-    ).toEqual({ hasTikkie: true, costPerPlayer: 10 })
+    ).toEqual({ hasTikkie: true, tikkieLink: 'https://tikkie.example/x', costPerPlayer: 10 })
   })
 
   // Shares pricePerPlayer's default so the payment sheet can't quote a
@@ -145,6 +145,7 @@ describe('computePaymentConfig', () => {
   it('handles a missing tournament', () => {
     expect(computePaymentConfig(null)).toEqual({
       hasTikkie: false,
+      tikkieLink: null,
       costPerPlayer: 0,
     })
   })

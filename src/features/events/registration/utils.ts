@@ -27,6 +27,9 @@ export interface PaymentSheet {
 export interface TransferShareTarget {
   transferId: string
   toPlayer: Player
+  /** Set when the outgoing registration wasn't paid yet, so the recipient
+   *  owes payment directly — folded into the WhatsApp share message. */
+  tikkieLink?: string | null
 }
 
 export interface RegistrationSplit {
@@ -43,6 +46,8 @@ export interface InTournamentPlayerIds {
 
 export interface PaymentConfig {
   hasTikkie: boolean
+  /** A single Tikkie link to point a payer at. Null when none is set up. */
+  tikkieLink: string | null
   costPerPlayer: number
 }
 
@@ -109,6 +114,7 @@ export const computePaymentConfig = (
 ): PaymentConfig => {
   return {
     hasTikkie: !!tournament?.tikkieLink,
+    tikkieLink: tournament?.tikkieLink || null,
     costPerPlayer: pricePerPlayer(tournament),
   }
 }

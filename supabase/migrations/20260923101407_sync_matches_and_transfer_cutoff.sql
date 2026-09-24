@@ -14,17 +14,25 @@
 -- 3. Admins keep a one-tap, cutoff-bypassing override
 --    (admin_transfer_registration) for emergencies where the outgoing
 --    player is unreachable and waiting on an accept isn't an option.
+--
+-- Layered on top of 20260919123328/20260919131512/20260922084647 (admin
+-- on-behalf transfers, payment_status carry-over, decline-drops-waitlist) —
+-- every function this migration replaces keeps that behavior; this only
+-- adds the matches sync and swaps the tournament_started gate for the 12h
+-- cutoff.
 
 -- ── 1. Sync matches on transfer accept ──────────────────────────────────
 create or replace function public.apply_registration_transfer(input_transfer_id uuid)
-returns text
-language plpgsql
-security definer
-set search_path to 'pg_catalog', 'public', 'extensions'
+ returns text
+ language plpgsql
+ security definer
+ set search_path to 'pg_catalog', 'public', 'extensions'
 as $function$
 declare
   v_xfer public.registration_transfers%rowtype;
   v_from_reg_id uuid;
+  v_from_payment_status text;
+  v_new_payment_status text;
   v_to_reg_id uuid;
   v_to_status text;
 begin
@@ -35,7 +43,7 @@ begin
 
   perform 1 from public.tournaments t where t.id = v_xfer.tournament_id for update;
 
-  select r.id into v_from_reg_id
+  select r.id, r.payment_status into v_from_reg_id, v_from_payment_status
     from public.registrations r
    where r.tournament_id = v_xfer.tournament_id
      and r.player_id = v_xfer.from_player_id
@@ -45,6 +53,8 @@ begin
   if v_from_reg_id is null then
     return 'from_not_registered';
   end if;
+
+  v_new_payment_status := case when v_from_payment_status = 'paid' then 'paid' else 'unpaid' end;
 
   select r.id, r.status into v_to_reg_id, v_to_status
     from public.registrations r
@@ -65,7 +75,7 @@ begin
   if v_to_reg_id is not null then
     update public.registrations r
        set status = 'registered',
-           payment_status = 'transferred',
+           payment_status = v_new_payment_status,
            payment_method = 'transferred_from:' || v_xfer.from_player_id::text
      where r.id = v_to_reg_id;
   else
@@ -74,7 +84,7 @@ begin
       v_xfer.tournament_id,
       v_xfer.to_player_id,
       'registered',
-      'transferred',
+      v_new_payment_status,
       'transferred_from:' || v_xfer.from_player_id::text
     );
   end if;
@@ -94,6 +104,9 @@ begin
 end
 $function$;
 
+comment on function public.apply_registration_transfer(uuid) is
+  'Applies an accepted/force-accepted registration transfer: cancels the giving player''s registration, registers the recipient (carrying over payment_status), and syncs the transferred player''s id into any matches row already generated for this tournament.';
+
 -- ── 2. 12h transfer cutoff ──────────────────────────────────────────────
 -- Internal-only helper (same posture as tournament_start_ts): called from
 -- inside other SECURITY DEFINER functions, never invoked directly by a
@@ -108,13 +121,18 @@ $function$;
 revoke execute on function public.tournament_transfers_closed(uuid) from public, anon, authenticated;
 grant execute on function public.tournament_transfers_closed(uuid) to service_role;
 
-create or replace function public.create_transfer(input_to_player_id uuid, input_tournament_id uuid)
+create or replace function public.create_transfer(
+  input_to_player_id uuid,
+  input_tournament_id uuid,
+  input_from_player_id uuid default null
+)
  returns table(transfer_id uuid, status text)
  language plpgsql
  security definer
  set search_path to 'pg_catalog', 'public', 'extensions'
 as $function$
 declare
+  v_caller_id uuid;
   v_from_player_id uuid;
   v_target_status text;
   v_existing_pending uuid;
@@ -122,10 +140,20 @@ declare
   v_new_id uuid;
 begin
   set local statement_timeout = '30s';
-  v_from_player_id := auth.uid();
-  if v_from_player_id is null then
+  v_caller_id := auth.uid();
+  if v_caller_id is null then
     raise exception 'not_authenticated' using errcode = 'P0001';
   end if;
+
+  v_from_player_id := coalesce(input_from_player_id, v_caller_id);
+
+  -- Acting on someone else's registration requires admin. This is the
+  -- server-side gate; the client is never trusted to decide it may transfer
+  -- another player's spot just because it asked to.
+  if v_from_player_id is distinct from v_caller_id then
+    perform public.require_admin();
+  end if;
+
   if input_to_player_id is null or input_to_player_id = v_from_player_id then
     return query select null::uuid, 'invalid_target'::text; return;
   end if;
@@ -172,6 +200,13 @@ begin
 end
 $function$;
 
+comment on function public.create_transfer(uuid, uuid, uuid) is
+  'Creates a pending registration transfer. input_from_player_id defaults to auth.uid() (self-service); naming a different player requires the caller to be admin, checked server-side.';
+
+-- Same (uuid, uuid, uuid) signature as 20260919131512 established, so
+-- CREATE OR REPLACE preserves that migration's grants (authenticated,
+-- service_role) — nothing to reassert here.
+
 create or replace function public.respond_to_transfer(input_transfer_id uuid, input_accept boolean)
 returns table(status text)
 language plpgsql
@@ -197,6 +232,22 @@ begin
 
   if input_accept is not true then
     update public.registration_transfers set status = 'declined', responded_at = now() where id = v_xfer.id;
+
+    -- Drop the recipient off the waitlist too, if that's where they were
+    -- sitting — declining an offer means they're done waiting, not still
+    -- in line for the next one.
+    --
+    -- Table alias + qualified columns are load-bearing here, not style: this
+    -- function's RETURNS TABLE(status text) makes bare `status` ambiguous
+    -- between the registrations column and the function's own output column
+    -- (PL/pgSQL error 42702), which the unqualified form in the original
+    -- migration (20260922084647) hits whenever this branch actually runs.
+    update public.registrations r
+       set status = 'cancelled'
+     where r.tournament_id = v_xfer.tournament_id
+       and r.player_id = v_to_player_id
+       and r.status = 'waitlist';
+
     return query select 'declined'::text; return;
   end if;
 

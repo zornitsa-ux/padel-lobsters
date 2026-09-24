@@ -1,0 +1,15 @@
+-- Placeholder capturing an out-of-band hotfix applied directly to
+-- production (enjhugmqjtfakwivpmvf) as migration
+-- 20260919132018_create_transfer_drop_old_overload_fix_grants, between the
+-- prior create_transfer_explicit_from_player deploy and this repo's git
+-- history catching up. No original SQL text was preserved for it.
+--
+-- Verified against production (2026-09-24): create_transfer's live body and
+-- grants already match 20260919131512_create_transfer_explicit_from_player.sql
+-- exactly, and a fresh local db:reset through that migration alone passes
+-- db:grants:check with no drift. This hotfix's effect is therefore fully
+-- subsumed by that migration — this file exists only so every version
+-- recorded in production's migration history has a corresponding local
+-- file (required for `supabase db push` / `migration list` to agree with
+-- remote), not because there is any remaining schema change to apply.
+select 1;

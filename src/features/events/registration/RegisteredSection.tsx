@@ -20,7 +20,10 @@ interface RegisteredSectionProps {
   /** Transfer id currently being acted on, if any. */
   respondingTo: string | null
   onOpenShareModal: (target: TransferShareTarget) => void
-  onCancelMyOffer: () => void
+  /** Cancels a transfer started on someone else's registration — uses
+   *  admin_cancel_transfer, since the admin isn't the transfer's from_player
+   *  and the self-service cancel RPC would reject it. */
+  onAdminCancelTransfer: (transferId: string) => void
   onStartTransfer: (reg: NormalisedRegistration) => void
 }
 
@@ -35,7 +38,7 @@ export default function RegisteredSection({
   pendingByFromPlayerId,
   respondingTo,
   onOpenShareModal,
-  onCancelMyOffer,
+  onAdminCancelTransfer,
   onStartTransfer,
 }: RegisteredSectionProps) {
   if (isCompleted) return null
@@ -111,7 +114,7 @@ export default function RegisteredSection({
                               Resend WhatsApp
                             </button>
                             <button
-                              onClick={onCancelMyOffer}
+                              onClick={() => onAdminCancelTransfer(myPending.id)}
                               disabled={respondingTo === myPending.id}
                               className="flex-1 text-xs font-semibold text-red-600 border border-red-200 rounded-lg py-1.5 active:scale-95 transition-all disabled:opacity-50"
                             >
@@ -123,18 +126,17 @@ export default function RegisteredSection({
                     )
                   }
 
-                  if (reg.paymentStatus !== 'transferred') {
-                    return (
-                      <button
-                        onClick={() => onStartTransfer(reg)}
-                        className="w-full flex items-center justify-center gap-1.5 text-xs text-lob-muted border border-gray-200 rounded-xl py-1.5 font-medium active:scale-95 transition-all"
-                      >
-                        <ArrowRightLeft size={12} /> Transfer spot to another player
-                      </button>
-                    )
-                  }
-
-                  return null
+                  // A registration that arrived via a transfer can still be
+                  // transferred onward — payment_status stays 'transferred' as a
+                  // record of how the player got in, not a lock on the spot.
+                  return (
+                    <button
+                      onClick={() => onStartTransfer(reg)}
+                      className="w-full flex items-center justify-center gap-1.5 text-xs text-lob-muted border border-gray-200 rounded-xl py-1.5 font-medium active:scale-95 transition-all"
+                    >
+                      <ArrowRightLeft size={12} /> Transfer spot to another player
+                    </button>
+                  )
                 })()}
               </div>
             )
