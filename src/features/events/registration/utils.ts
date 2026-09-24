@@ -1,10 +1,11 @@
-import type { Player } from '../../../lib/normalise'
+import type { NormalisedTournament, Player } from '../../../lib/normalise'
 import type { NormalisedRegistration } from '../registrationQueries'
 import type { NormalisedMatch } from '../matchQueries'
 import type { NormalisedTransfer } from '../transferQueries'
 import { pricePerPlayer } from '../eventHelpers'
 
 const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000
+const TRANSFER_CUTOFF_MS = 12 * 60 * 60 * 1000
 
 // Lookups the Registration container hands down to every section.
 export type GetPlayer = (id: string | null | undefined) => Player | undefined
@@ -129,6 +130,18 @@ export const isWithinResultsWindow = (
   if (Number.isNaN(refMs)) return false
   const elapsed = Date.now() - refMs
   return elapsed >= -TWO_DAYS_MS && elapsed < TWO_DAYS_MS
+}
+
+// Mirrors the server's tournament_transfers_closed gate closely enough for a
+// UI gate — the RPCs remain the source of truth and reject regardless of
+// client clock skew.
+export const isTransferWindowClosed = (
+  tournament: Pick<NormalisedTournament, 'date' | 'time'> | null | undefined,
+): boolean => {
+  if (!tournament?.date) return false
+  const startMs = new Date(`${tournament.date}T${tournament.time || '00:00'}`).getTime()
+  if (Number.isNaN(startMs)) return false
+  return Date.now() >= startMs - TRANSFER_CUTOFF_MS
 }
 
 export const getPendingTransfersForTournament = (

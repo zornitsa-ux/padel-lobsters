@@ -13,40 +13,63 @@ import type { Player } from '../lib/normalise'
 // off the waitlist), then everyone else searchable. On confirm, calls
 // createTransfer() which writes the pending row in registration_transfers.
 //
+// Admins can also open this for someone else's registration (RegisteredSection's
+// per-row button) — pass `fromPlayerId` for that registration's owner. When it
+// differs from the admin's own id, picks go through adminTransferRegistration
+// instead: an immediate, cutoff-bypassing swap with no pending-offer step, since
+// the point of the admin path is that the outgoing player may be unreachable.
+//
 // Props:
-//   tournament:        the tournament object
-//   onClose():         dismiss the modal without doing anything
-//   onTransferCreated: ({ transferId, toPlayer }) => void
-//                      called after the RPC returns 'ok' so the caller can
-//                      open the share modal next.
+//   tournament:         the tournament object
+//   fromPlayerId:       whose spot this transfers. Defaults to the caller's own
+//                        id — no behavior change for the self-service call site.
+//   onClose():          dismiss the modal without doing anything
+//   onTransferCreated:  ({ transferId, toPlayer }) => void
+//                        called after createTransfer returns 'ok' so the caller
+//                        can open the share modal next (self-service path only).
+//   onTransferCompleted: (toPlayer) => void
+//                        called after an admin-on-behalf transfer completes —
+//                        there's no offer to share, the swap is already final.
 interface TransferSpotModalProps {
   tournament: { id: string }
+  fromPlayerId?: string | null
   onClose: () => void
   onTransferCreated?: (result: { transferId: string; toPlayer: Player }) => void
+  onTransferCompleted?: (toPlayer: Player) => void
 }
 
-// RPC status code → player-facing message.
+// RPC status code → player-facing message. Shared across create_transfer
+// (self-service) and admin_transfer_registration (admin-on-behalf) — their
+// status vocabularies overlap (invalid_target, not_registered) with a couple
+// of admin-only additions (tournament_completed).
 const CREATE_ERRORS: Record<string, string> = {
   wrong_pin: 'Sign in again to send a transfer.',
   invalid_target: "That player can't receive a transfer.",
   not_registered: 'You are no longer registered for this event.',
   target_already_registered: 'That player is already registered.',
   tournament_started: 'Too late — the event has already started.',
+  transfers_closed: 'Transfers are closed for this event.',
+  tournament_completed: "This event is already completed — the spot can't be moved.",
   already_pending: 'You already have a pending transfer for this event.',
   error: 'Something went wrong. Try again.',
 }
 
 export default function TransferSpotModal({
   tournament,
+  fromPlayerId,
   onClose,
   onTransferCreated,
+  onTransferCompleted,
 }: TransferSpotModalProps) {
   const { session } = useApp()
-  const { createTransfer } = useTransferActions({ session })
+  const { createTransfer, adminTransferRegistration } = useTransferActions({ session })
   const { data: players = [] } = usePlayers()
   const { data: regs = [] } = useRegistrations(tournament?.id)
   const claimedId = session?.user?.id ?? null
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
+  const effectiveFromId = fromPlayerId ?? claimedId
+  const isAdminOnBehalf =
+    isAdmin && !!effectiveFromId && String(effectiveFromId) !== String(claimedId)
 
   const [search, setSearch] = useState('')
   const [busy, setBusy] = useState(false)
@@ -59,11 +82,12 @@ export default function TransferSpotModal({
   // Build the candidate list. Waitlisted players surface first (one-tap
   // promotion off the waitlist), then everyone else alphabetically. We
   // exclude players who currently hold a registered spot — they can't
-  // receive a transfer, and we exclude the current user themselves.
+  // receive a transfer, and we exclude the spot's own owner (self or, for
+  // an admin-on-behalf transfer, the row being transferred).
   const candidates = useMemo(() => {
     const list = players
       .filter((p) => (p.status || 'active') === 'active')
-      .filter((p) => String(p.id) !== String(claimedId))
+      .filter((p) => String(p.id) !== String(effectiveFromId))
       .filter((p) => !registeredIds.includes(String(p.id)))
       .filter((p) => !search || (p.name || '').toLowerCase().includes(search.toLowerCase()))
     list.sort((a, b) => {
@@ -73,12 +97,22 @@ export default function TransferSpotModal({
       return (a.name || '').localeCompare(b.name || '')
     })
     return list
-  }, [players, claimedId, registeredIds.join(','), waitlistedIds.join(','), search])
+  }, [players, effectiveFromId, registeredIds.join(','), waitlistedIds.join(','), search])
 
   const handlePick = async (toPlayer: Player) => {
-    if (busy) return
+    if (busy || !effectiveFromId) return
     setBusy(true)
     setError(null)
+    if (isAdminOnBehalf) {
+      const result = await adminTransferRegistration(effectiveFromId, toPlayer.id, tournament.id)
+      setBusy(false)
+      if (result.ok) {
+        onTransferCompleted?.(toPlayer)
+        return
+      }
+      setError(CREATE_ERRORS[result.status] || 'Could not transfer the spot.')
+      return
+    }
     const result = await createTransfer(toPlayer.id, tournament.id)
     setBusy(false)
     if (result.ok) {
@@ -96,11 +130,13 @@ export default function TransferSpotModal({
       onClose={() => {
         if (!busy) onClose()
       }}
-      title="Transfer your spot"
+      title={isAdminOnBehalf ? 'Transfer this spot' : 'Transfer your spot'}
     >
       <div className="space-y-4">
         <p className="text-xs text-lob-muted-light -mt-2">
-          Pick who takes over. They'll be asked to accept — your spot stays held until they do.
+          {isAdminOnBehalf
+            ? 'Pick who takes over. This moves the spot immediately — no acceptance needed.'
+            : "Pick who takes over. They'll be asked to accept — your spot stays held until they do."}
         </p>
 
         {error && (

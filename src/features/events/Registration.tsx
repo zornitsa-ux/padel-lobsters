@@ -25,7 +25,9 @@ import {
   getPendingFromPlayer,
   getIncomingForPlayer,
   buildPendingByFromPlayerId,
+  isTransferWindowClosed,
 } from './registration/utils'
+import { useSettings } from '../settings/useSettings'
 import { useConfirm } from '../../lib/confirmBus'
 import { useToast } from '../../lib/toastBus'
 import RegistrationPaymentSheetModal from './registration/RegistrationPaymentSheetModal'
@@ -74,6 +76,8 @@ export default function Registration({
   )
   const { data: players = [] } = usePlayers()
   const { data: regsData = [] } = useRegistrations(tournament?.id)
+  const { data: settings } = useSettings()
+  const transfersClosed = isTransferWindowClosed(tournament)
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
   const claimedId = session?.user?.id ?? null
 
@@ -365,6 +369,12 @@ export default function Registration({
     setPickerForReg(null)
     setShareModal({ transferId, toPlayer })
   }
+  // Admin-on-behalf path: the swap is already final, there's no offer to
+  // share — just confirm and close.
+  const handleTransferCompleted = (toPlayer: Player) => {
+    setPickerForReg(null)
+    showToast({ variant: 'success', message: `Spot transferred to ${toPlayer.name}.` })
+  }
 
   // Pending transfers tied to this tournament. Used to render persistent
   // banners on registration cards and the incoming-offer banner at the
@@ -393,6 +403,8 @@ export default function Registration({
         forbidden: 'This transfer is for a different player.',
         not_pending: 'This transfer was already responded to or closed.',
         tournament_started: 'Too late — the event has already started.',
+        transfers_closed:
+          'Transfers are closed for this event — reach out to the community admins for help.',
         to_already_registered:
           'You are already registered for this event, so there is nothing to accept.',
         from_not_registered: 'That spot is no longer registered — the transfer can’t be completed.',
@@ -474,6 +486,8 @@ export default function Registration({
           pendingFromMe={pendingFromMe}
           incomingForMe={incomingForMe}
           respondingTo={respondingTo}
+          transfersClosed={transfersClosed}
+          whatsappLink={settings?.whatsappLink}
           onStartTransfer={startTransfer}
           onCancelMyOffer={handleCancelMyOffer}
           onOpenShareModal={setShareModal}
@@ -569,8 +583,10 @@ export default function Registration({
       {pickerForReg && (
         <TransferSpotModal
           tournament={tournament}
+          fromPlayerId={pickerForReg.reg.playerId}
           onClose={() => setPickerForReg(null)}
           onTransferCreated={handleTransferCreated}
+          onTransferCompleted={handleTransferCompleted}
         />
       )}
       {shareModal && (
