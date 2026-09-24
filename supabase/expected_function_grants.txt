@@ -28,7 +28,7 @@ public.admin_update_player(input_target_id uuid, input_payload jsonb) authentica
 public.admin_update_raffle_winner_prize(input_winner_id uuid, input_prize text) authenticated
 public.cancel_registration(input_registration_id uuid) authenticated
 public.cancel_transfer(input_transfer_id uuid) authenticated
-public.create_transfer(input_to_player_id uuid, input_tournament_id uuid) authenticated
+public.create_transfer(input_to_player_id uuid, input_tournament_id uuid, input_from_player_id uuid) authenticated
 public.get_my_profile_v2() authenticated
 public.get_payment_reminder_link(input_registration_id uuid) authenticated
 public.get_transfer_recipient_phone(input_transfer_id uuid) authenticated

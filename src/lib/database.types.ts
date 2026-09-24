@@ -1759,7 +1759,11 @@ export type Database = {
         }[]
       }
       create_transfer: {
-        Args: { input_to_player_id: string; input_tournament_id: string }
+        Args: {
+          input_from_player_id?: string
+          input_to_player_id: string
+          input_tournament_id: string
+        }
         Returns: {
           status: string
           transfer_id: string
