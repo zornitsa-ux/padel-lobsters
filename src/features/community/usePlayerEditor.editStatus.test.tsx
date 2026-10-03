@@ -2,12 +2,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/react'
 
-// Finding 4 (Players.tsx side): a plain edit reached via openEdit must never
-// send `status`, even for a pending player — only acceptMerge's activate
-// flag is allowed to flip status to active. PlayersList is stubbed with a
-// button that calls onEdit directly with a pending record: the real active-
-// only roster filter never reaches openEdit with a pending player today, but
-// openEdit itself must stay safe regardless of what calls it.
+// Finding 4: a plain edit must never send `status`, even for a pending
+// player — status transitions are explicit approval actions only.
 const { updatePlayerMock, ensurePlayerPiiMock } = vi.hoisted(() => ({
   updatePlayerMock: vi.fn(),
   ensurePlayerPiiMock: vi.fn(),
@@ -28,11 +24,6 @@ vi.mock('../../context/useApp', () => ({
     role: 'admin',
   }),
 }))
-vi.mock('../events/useTournaments', () => ({ useTournaments: () => ({ data: [] }) }))
-vi.mock('../events/useMatches', () => ({ useAllMatches: () => ({ data: [] }) }))
-vi.mock('../events/useRegistrations', () => ({ useAllRegistrations: () => ({ data: [] }) }))
-vi.mock('../../hooks/usePlayerAliases', () => ({ default: () => ({ playerAliases: {} }) }))
-vi.mock('../../lib/confirmBus', () => ({ useConfirm: () => vi.fn() }))
 vi.mock('../players/usePlayers', () => ({
   usePlayers: () => ({ data: [pendingPlayer] }),
   usePlayerPii: () => ({ data: undefined, isLoading: false, isError: false, refetch: vi.fn() }),
@@ -47,14 +38,19 @@ vi.mock('../players/usePlayers', () => ({
   useAvatarUpload: () => ({ mutateAsync: vi.fn() }),
 }))
 vi.mock('./playerQueries', () => ({ randomAvatarFilename: () => 'x.webp' }))
-vi.mock('./PlayersList', () => ({
-  default: ({ onEdit }: { onEdit: (p: typeof pendingPlayer) => void }) => (
-    <button onClick={() => onEdit(pendingPlayer)}>trigger edit</button>
-  ),
-}))
-vi.mock('./LinkPlayerModal', () => ({ default: () => null }))
 
-import Players from './Players'
+import PlayerForm from './PlayerForm'
+import { usePlayerEditor } from './usePlayerEditor'
+
+function Harness() {
+  const { openEdit, formProps } = usePlayerEditor({ isAdmin: true })
+  return (
+    <>
+      <button onClick={() => openEdit(pendingPlayer)}>trigger edit</button>
+      <PlayerForm {...formProps} />
+    </>
+  )
+}
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -69,9 +65,9 @@ beforeEach(() => {
 
 afterEach(cleanup)
 
-describe('Players — plain edit of a pending player', () => {
+describe('usePlayerEditor — plain edit of a pending player', () => {
   it('never sends status, unlike an accepted merge', async () => {
-    render(<Players />)
+    render(<Harness />)
 
     fireEvent.click(screen.getByText('trigger edit'))
 

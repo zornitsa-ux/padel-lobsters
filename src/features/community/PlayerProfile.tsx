@@ -4,21 +4,15 @@ import { Skeleton } from '../../components/ui/Skeleton'
 import { AlertBox } from '../../components/ui/AlertBox'
 import { ActionChip } from '../../components/ui/ActionChip'
 import { useRevealPii } from './useRevealPii'
-import { buildHistoricalAppearances, summariseAppearances } from '../../lib/playerHistory'
 import {
   buildPlayerStats,
   type DbMatchForStats,
-  type HistoricalTournament,
   type TournamentForStats,
 } from '../../lib/playerStats'
-import { TOURNAMENTS as TOURNAMENTS_RAW } from '../../data/historicalTournaments'
-import type { AppearanceSummary, HistoricalAppearance } from '../../lib/playerHistoryTypes'
-import { LEVEL_COLORS } from './playerConstants'
+import { levelBadgeClass } from './playerConstants'
 import type { CommunityPlayer } from './playersSelectors'
 import { useMmRatings } from '../matchmaking/useMatchmaking'
 import type { EventNavigate } from '../events/eventHelpers'
-
-const TOURNAMENTS = TOURNAMENTS_RAW as unknown as HistoricalTournament[]
 
 const MONTH_ABBR = [
   'Jan',
@@ -41,13 +35,12 @@ interface NamedTournament extends TournamentForStats {
   name?: string | null
 }
 
-interface PlayerProfileDrawerProps {
+interface PlayerProfileProps {
   player: CommunityPlayer
   players: CommunityPlayer[]
   matches: DbMatchForStats[]
   tournaments: NamedTournament[]
   registrations: unknown[]
-  playerAliases: Record<string, string>
   isAdmin: boolean
   onNavigate?: EventNavigate
   onEdit: (player: CommunityPlayer) => void
@@ -55,19 +48,18 @@ interface PlayerProfileDrawerProps {
   onRegeneratePin: (player: CommunityPlayer) => void
 }
 
-export default function PlayerProfileDrawer({
+export default function PlayerProfile({
   player: p,
   players,
   matches,
   tournaments,
   registrations,
-  playerAliases,
   isAdmin,
   onNavigate,
   onEdit,
   onDelete,
   onRegeneratePin,
-}: PlayerProfileDrawerProps) {
+}: PlayerProfileProps) {
   // Learned level (mm_rating/mm_sigma) is admin-only — it lives behind
   // admin_get_mm_ratings, not players_public, so non-admins never fetch it.
   const { data: mmRatings } = useMmRatings({ enabled: Boolean(isAdmin) })
@@ -82,15 +74,7 @@ export default function PlayerProfileDrawer({
     return found ? (found.name || '').split(' ')[0] : null
   }
 
-  const stats = buildPlayerStats(
-    String(p.id),
-    matches,
-    tournaments,
-    registrations,
-    players.map((x) => ({ id: String(x.id), name: x.name || '' })),
-    playerAliases || {},
-    TOURNAMENTS,
-  )
+  const stats = buildPlayerStats(String(p.id), matches, tournaments, registrations)
   const topH2HPairs = Object.values(stats.h2hPairs)
     .map((rec) => ({
       names: rec.ids.map((id) => firstNameOf(id)).filter((n): n is string => !!n),
@@ -144,22 +128,8 @@ export default function PlayerProfileDrawer({
   // stats type drops is still there.
   const playerTournaments = stats.playerTournaments as NamedTournament[]
 
-  // Historical tournaments (Dec 2025 → Apr 2026, hardcoded in History.jsx).
-  // Linked via the player_aliases table.
-  const historical = buildHistoricalAppearances(p.id, playerAliases || {}) as HistoricalAppearance[]
-  const histSummary = summariseAppearances(historical) as AppearanceSummary
-  // Combined headline counts (DB tournaments + historical, deduped on id).
-  const dbIds = new Set(stats.playerTournaments.map((t) => t.id))
-  const totalEvents =
-    stats.playerTournaments.length + historical.filter((h) => !dbIds.has(h.id)).length
-
-  const levelBadge = (level: number | null | undefined) => {
-    const idx = Math.min(7, Math.max(0, Math.floor(level || 0)))
-    return LEVEL_COLORS[idx] || LEVEL_COLORS[0]
-  }
-
   return (
-    <div className="mt-3 pt-3 border-t border-gray-100 space-y-3">
+    <div className="space-y-3">
       {/* Match record + tags row */}
       <div className="flex items-center gap-2 flex-wrap">
         {stats.played > 0 && (
@@ -194,7 +164,7 @@ export default function PlayerProfileDrawer({
       {/* Level row — compact */}
       <div className="flex items-center gap-1.5 text-xs text-lob-muted">
         <span>Playtomic</span>
-        <span className={`font-bold px-1.5 py-0.5 rounded ${levelBadge(p.playtomicLevel)}`}>
+        <span className={`font-bold px-1.5 py-0.5 rounded ${levelBadgeClass(p.playtomicLevel)}`}>
           {(p.playtomicLevel || 0).toFixed(1)}
         </span>
       </div>
@@ -393,87 +363,6 @@ export default function PlayerProfileDrawer({
                   })}
               </button>
             ))}
-          </div>
-        </div>
-      )}
-
-      {/* Historical tournaments — derived from player_aliases + History.jsx */}
-      {historical.length > 0 && (
-        <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <p className="text-[10px] font-bold text-lob-muted-light uppercase tracking-wider">
-              Tournament History
-            </p>
-            <p className="text-[10px] font-semibold text-lob-muted">
-              {totalEvents} played
-              {histSummary.played > 0 &&
-                ` · ${histSummary.won}W ${histSummary.lost}L · ${histSummary.winRate}%`}
-            </p>
-          </div>
-
-          {/* Medal chips */}
-          {histSummary.golds + histSummary.silvers + histSummary.bronzes > 0 && (
-            <div className="flex gap-1.5 mb-2">
-              {histSummary.golds > 0 && (
-                <span className="text-[11px] bg-yellow-50 border border-yellow-200 text-yellow-700 px-2 py-0.5 rounded-lg font-bold">
-                  🥇 ×{histSummary.golds}
-                </span>
-              )}
-              {histSummary.silvers > 0 && (
-                <span className="text-[11px] bg-gray-100 border border-gray-200 text-lob-slate px-2 py-0.5 rounded-lg font-bold">
-                  🥈 ×{histSummary.silvers}
-                </span>
-              )}
-              {histSummary.bronzes > 0 && (
-                <span
-                  className="text-[11px] border px-2 py-0.5 rounded-lg font-bold"
-                  style={{
-                    background: 'rgba(205,127,50,0.10)',
-                    borderColor: 'rgba(205,127,50,0.3)',
-                    color: '#8B5E3C',
-                  }}
-                >
-                  🥉 ×{histSummary.bronzes}
-                </span>
-              )}
-              {histSummary.bestRank && histSummary.bestRank > 3 && (
-                <span className="text-[11px] bg-gray-50 text-lob-muted px-2 py-0.5 rounded-lg font-semibold">
-                  Best #{histSummary.bestRank}
-                </span>
-              )}
-            </div>
-          )}
-
-          {/* Per-tournament rows */}
-          <div className="space-y-1">
-            {historical.map((h) => {
-              const medal =
-                h.rank === 1 ? '🥇' : h.rank === 2 ? '🥈' : h.rank === 3 ? '🥉' : `#${h.rank}`
-              return (
-                <div
-                  key={h.id}
-                  className="flex items-center gap-2 text-xs bg-gray-50 rounded-lg px-2.5 py-1.5"
-                >
-                  <span className="font-bold text-lob-slate w-7 text-center flex-shrink-0">
-                    {medal}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-lob-slate truncate">
-                      {h.name.replace('Lobster Tournament · ', '')}
-                    </p>
-                    <p className="text-[10px] text-lob-muted-light">
-                      {h.date} ·{' '}
-                      {h.played > 0
-                        ? `${h.won}-${h.lost}${h.draws ? `-${h.draws}` : ''}`
-                        : `${h.players} players`}
-                    </p>
-                  </div>
-                  <span className="text-xs font-bold text-lob-teal flex-shrink-0">
-                    {h.total} pts
-                  </span>
-                </div>
-              )
-            })}
           </div>
         </div>
       )}

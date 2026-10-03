@@ -1,14 +1,4 @@
-import { buildHistoricalAppearances, summariseAppearances } from '../../lib/playerHistory'
 import { computeTournamentStandings, type MatchForStandings } from '../../lib/standings'
-import { TOURNAMENTS as TOURNAMENTS_RAW } from '../../data/historicalTournaments'
-import type { AppearanceSummary, HistoricalAppearance } from '../../lib/playerHistoryTypes'
-
-const TOURNAMENTS = TOURNAMENTS_RAW as unknown as HistoricalTournamentRow[]
-
-interface HistoricalTournamentRow {
-  id: string | number
-  type?: string
-}
 
 export interface ReviewScenario {
   id: string
@@ -56,7 +46,7 @@ export interface CorpReview {
 //
 // The 10 PERFORMANCE messages (the ones we actually designed) are tagged
 // with `performance: true` so the breakdown panel can highlight them
-// separately from welcome/historical/level-fallback scenarios.
+// separately from welcome/level-fallback scenarios.
 export const REVIEW_SCENARIOS: ReviewScenario[] = [
   // ── The performance messages ───────────────────────────────────────────
   { id: 'last-place-elite', label: '🎯 Playtomic: Fake News', performance: true },
@@ -74,14 +64,6 @@ export const REVIEW_SCENARIOS: ReviewScenario[] = [
   { id: 'ghost', label: '👻 The Ghost', performance: true },
   { id: 'mediocre', label: '🤷 Perfectly Mediocre', performance: true },
 
-  // ── Historical / legacy-tournament context (only fires with alias map) ─
-  { id: 'hist-multi-champion', label: '👑 Historical multi-champion' },
-  { id: 'hist-champion', label: '🏅 Historical champion' },
-  { id: 'hist-multi-podium', label: '🥈 Multi-podium veteran' },
-  { id: 'hist-podium', label: '🥉 Historical podium' },
-  { id: 'hist-veteran', label: '🛡️ Tournament veteran' },
-  { id: 'hist-predates-app', label: '📜 Predates the app' },
-
   // ── Filler scenarios ───────────────────────────────────────────────────
   { id: 'shows-up-no-data', label: '📋 Registered, no match log' },
   { id: 'welcome', label: '👋 No history yet' },
@@ -98,7 +80,6 @@ export function corpReview(
   matches: MatchForStandings[] = [],
   registrations: ReviewRegistration[] = [],
   tournaments: ReviewTournament[] = [],
-  aliasMap: Record<string, string> = {},
 ): CorpReview {
   const lvl = player.playtomicLevel || 0
   const name = (player.name || 'Employee').split(' ')[0]
@@ -127,17 +108,7 @@ export function corpReview(
     return { text: finalText, body: text, scenario, scenarioLabel: label, hasLabel }
   }
 
-  // ── Historical tournament signal (from player_aliases + History.jsx) ─────
-  // Includes Dec 2025, Jan 2026, Mar 2026, Apr 2026 — events that pre-date
-  // the in-app registration flow but are still part of each player's story.
-  const historical: HistoricalAppearance[] = buildHistoricalAppearances(spid, aliasMap || {})
-  const histSummary: AppearanceSummary = summariseAppearances(historical)
-  const hasHistory = historical.length > 0
-
   // ── Compute match stats ──────────────────────────────────────────────────
-  // We fold the legacy History.jsx matches in with the in-app DB matches so
-  // the 10 performance scenarios (dominant / mediocre / committed-loser etc.)
-  // can actually fire for veterans whose play is mostly pre-app.
   const playedDb = matches.filter(
     (m) =>
       m.completed &&
@@ -154,8 +125,8 @@ export function corpReview(
     if ((onTeam1 && s1 > s2) || (!onTeam1 && s2 > s1)) dbWins++
     else dbLosses++
   })
-  const wins = dbWins + histSummary.won
-  const losses = dbLosses + histSummary.lost
+  const wins = dbWins
+  const losses = dbLosses
   const totalMatches = wins + losses
   const winRate = totalMatches >= 1 ? wins / totalMatches : null
 
@@ -176,22 +147,8 @@ export function corpReview(
       )
       .map((r) => String(r.tournamentId)),
   )
-  // tournamentsPlayed = DB regs + historical appearances (deduped on id) so
-  // ironman/ghost compare against the *whole* tournament history, not just
-  // what's been logged inside the app.
-  const historicalNew = historical.filter((h) => !dbAttendedIds.has(String(h.id)))
-  const tournamentsPlayed = dbAttendedIds.size + historicalNew.length
-  const eventsAttended = tournamentsPlayed // alias for clarity below
-
-  // ── Mixed-only attendance (for Ironman / Ghost) ─────────────────────────
-  // Ladies events exclude half the roster by design, so attendance ratios
-  // should be computed against mixed tournaments only. DB tournaments have
-  // no explicit type in the schema — treat them all as mixed.
-  const historicalMixed = historical.filter((h) => h.type !== 'ladies')
-  const historicalMixedNew = historicalMixed.filter((h) => !dbAttendedIds.has(String(h.id)))
-  const mixedTournamentsPlayed = dbAttendedIds.size + historicalMixedNew.length
-  const totalMixedHistorical = TOURNAMENTS.filter((t) => t.type !== 'ladies').length
-  const totalMixedTournaments = pastTournaments.length + totalMixedHistorical
+  const tournamentsPlayed = dbAttendedIds.size
+  const totalTournaments = pastTournaments.length
 
   // ── Compute per-tournament ranks across all played events ───────────────
   // Uses the SAME ranking algorithm as Scores.jsx (total game points →
@@ -216,23 +173,12 @@ export function corpReview(
       }
     })
 
-  // Combine DB + historical into one flat list for multi-event pattern checks.
-  const historicalRanks = historical
-    .filter((h) => h.players >= 4)
-    .map((h) => ({ id: h.id, date: h.date, rank: h.rank, total: h.players }))
-  const allTournamentRanks = [...dbTournamentRanks, ...historicalRanks]
-  const lastPlaceCount = allTournamentRanks.filter((r) => r.rank === r.total).length
+  const lastPlaceCount = dbTournamentRanks.filter((r) => r.rank === r.total).length
+  const lastTournamentRank = dbTournamentRanks[0]?.rank ?? null
+  const lastTournamentTotal = dbTournamentRanks[0]?.total ?? null
 
-  // "Most recent tournament rank" — prefer DB, fall back to historical.
-  let lastTournamentRank = dbTournamentRanks[0]?.rank ?? null
-  let lastTournamentTotal = dbTournamentRanks[0]?.total ?? null
-  if (lastTournamentRank === null && historical.length > 0) {
-    lastTournamentRank = historical[0].rank
-    lastTournamentTotal = historical[0].players
-  }
-
-  // ── No tournament history at all (DB or historical) ─────────────────────
-  if (tournamentsPlayed === 0 && !hasHistory) {
+  // ── No tournament history at all ─────────────────────────────────────────
+  if (tournamentsPlayed === 0) {
     const welcome = [
       `${name} hasn't played a tournament yet — which means the group hasn't seen what they can do. That needs to change. Sign up. Show up. Make it a story worth telling.`,
       `No tournament history yet. Every legend in this group started exactly here. The only difference between then and now is one registration. ${name}, the courts are waiting.`,
@@ -247,9 +193,6 @@ export function corpReview(
 
   // ── The 10 performance scenarios (priority block) ───────────────────────
   // These are the messages we actually designed for the Lobster Review.
-  // They run on the COMBINED dataset (in-app DB + legacy History.jsx),
-  // so a player with only historical match data still hits the right
-  // bucket (dominant / mediocre / lovable-loser etc.).
 
   // 🏆 Tournament winner — won the most recent tournament
   // A fresh win is the most notable thing you can say about a player.
@@ -282,20 +225,17 @@ export function corpReview(
     )
   }
 
-  // 🦁 The Ironman — attended EVERY mixed tournament we know about.
-  // Ladies-only events are excluded (they exclude half the roster by
-  // design), but EVERY mixed event — DB + historical — must be on the
-  // attendance record. Checked BEFORE Bridesmaid so long-term commitment
-  // beats a one-off podium finish.
-  if (totalMixedTournaments >= 3 && mixedTournamentsPlayed === totalMixedTournaments) {
+  // 🦁 The Ironman — attended every past tournament. Checked before Bridesmaid
+  // so long-term commitment beats a one-off podium finish.
+  if (totalTournaments >= 3 && tournamentsPlayed === totalTournaments) {
     return tag(
       'ironman',
       `Has attended every Lobster tournament. Rain, wind, scheduling conflicts, life events — none of it mattered. We're not sure if this is dedication or if they simply have nowhere else to be. Both are valid.`,
     )
   }
 
-  // 👻 The Ghost — ≤33% mixed attendance across ≥3 known mixed events
-  if (totalMixedTournaments >= 3 && mixedTournamentsPlayed / totalMixedTournaments <= 0.33) {
+  // 👻 The Ghost — ≤33% attendance across ≥3 past tournaments
+  if (totalTournaments >= 3 && tournamentsPlayed / totalTournaments <= 0.33) {
     return tag(
       'ghost',
       `Has appeared at approximately one tournament. Like a rare weather event — talked about, rarely witnessed. The group respects the mystery. Statistically, anything could happen next. Nobody knows. Not even ${name}.`,
@@ -377,66 +317,6 @@ export function corpReview(
       'mediocre',
       `A statistical masterpiece. Not good enough to be intimidating, not bad enough to be endearing. Just perfectly, beautifully average. The bell curve's favourite child.`,
     )
-  }
-
-  // ── Historical-tournament scenarios (secondary block) ───────────────────
-  // For players whose record IS personal but doesn't fit any of the 10
-  // performance buckets — surface a podium / champion / veteran line so the
-  // review still feels tailored.
-
-  // Multi-time champion across historical events
-  if (histSummary.golds >= 2) {
-    return tag(
-      'hist-multi-champion',
-      `${histSummary.golds} historical titles. ${name} has been winning Lobster Tournaments since before there was an app to record it. The data is not new. The dominance is not new. The rest of the group is, by now, used to it.`,
-    )
-  }
-
-  // Recent historical champion
-  if (histSummary.golds === 1) {
-    const goldT = historical.find((h) => h.rank === 1)?.name?.replace('Lobster Tournament · ', '')
-    return tag(
-      'hist-champion',
-      `Won ${goldT || 'a previous Lobster Tournament'}. The trophy may be metaphorical but the bragging rights are not. ${name} has receipts. The committee respects the receipts.`,
-    )
-  }
-
-  // Multi-podium veteran
-  if (histSummary.podiums >= 2) {
-    return tag(
-      'hist-multi-podium',
-      `${histSummary.podiums} podium finishes across the legacy tournaments. ${name} doesn't always win, but they've been close enough, often enough, that the medal photographer knows them by name.`,
-    )
-  }
-
-  // Single podium so far
-  if (histSummary.podiums === 1 && eventsAttended >= 1) {
-    const medal = histSummary.silvers ? '🥈 silver' : '🥉 bronze'
-    return tag(
-      'hist-podium',
-      `Has a ${medal} on the historical record. ${name} has tasted the podium. The committee is monitoring whether this proves to be a launchpad or a peak.`,
-    )
-  }
-
-  // Tournament veteran (3+ events with no podium yet)
-  if (eventsAttended >= 3 && histSummary.podiums === 0) {
-    return tag(
-      'hist-veteran',
-      `${eventsAttended} tournaments played. No podiums yet. The persistence is admirable, the stubbornness is documented, and the next one might just be the one. The group is rooting. Quietly.`,
-    )
-  }
-
-  // Has historical attendance but the modern in-app data is thin —
-  // surface their historical best so the review feels personal.
-  if (hasHistory && tournamentsPlayed === 0 && totalMatches === 0) {
-    const best = histSummary.bestRank
-    const bestT = histSummary.bestRankTournamentName?.replace('Lobster Tournament · ', '')
-    if (best && bestT) {
-      return tag(
-        'hist-predates-app',
-        `${name} predates the app. Best historical finish: rank ${best} at ${bestT}. The new system has yet to capture them in action. Veterans are encouraged to register for the next one and let the modern record begin.`,
-      )
-    }
   }
 
   // Has tournament history but no completed match data recorded

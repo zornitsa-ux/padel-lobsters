@@ -28,7 +28,6 @@ vi.mock('../../context/useApp', () => ({
 vi.mock('../events/useTournaments', () => ({ useTournaments: () => ({ data: [] }) }))
 vi.mock('../events/useMatches', () => ({ useAllMatches: () => ({ data: [] }) }))
 vi.mock('../events/useRegistrations', () => ({ useAllRegistrations: () => ({ data: [] }) }))
-vi.mock('../../hooks/usePlayerAliases', () => ({ default: () => ({ playerAliases: {} }) }))
 vi.mock('../../lib/confirmBus', () => ({ useConfirm: () => vi.fn() }))
 vi.mock('../players/usePlayers', () => ({
   usePlayers: () => ({ data: [pendingPlayer] }),

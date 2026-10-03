@@ -16,19 +16,6 @@ function dbMatch(overrides: Record<string, unknown> = {}) {
   }
 }
 
-function histTournament(overrides: Record<string, unknown> = {}) {
-  return {
-    id: 'h1',
-    date: '2025-06-01',
-    rounds: [],
-    ...overrides,
-  }
-}
-
-function histMatch(t1: string[], t2: string[], s1: number, s2: number) {
-  return { t1, t2, s1, s2 }
-}
-
 const T1 = { id: 't1', date: '2026-03-01' }
 const T2 = { id: 't2', date: '2026-04-01' }
 
@@ -346,109 +333,15 @@ describe('buildPlayerStats — playerTournaments', () => {
     expect(s.playerTournaments[0].id).toBe('t2') // T2 is newer (April)
     expect(s.playerTournaments[1].id).toBe('t1')
   })
-
-  it('excludes historical (hist:) tournament ids', () => {
-    const hist = histTournament({
-      rounds: [{ round: 1, matches: [histMatch(['Alice'], ['Bob'], 6, 4)] }],
-    })
-    const s = buildPlayerStats('p1', [], [T1], [], [{ id: 'p1', name: 'Alice' }], {}, [hist])
-    // The hist tournament should not appear in playerTournaments
-    const ids = s.playerTournaments.map((t) => t.id)
-    expect(ids.every((id) => !String(id).startsWith('hist:'))).toBe(true)
-  })
-})
-
-// ─── Historical matches ───────────────────────────────────────────────────────
-
-describe('buildPlayerStats — historical matches', () => {
-  it('counts a win from a historical match via aliasMap', () => {
-    const hist = histTournament({
-      rounds: [{ round: 1, matches: [histMatch(['Alice', 'Bob'], ['Carol', 'Dave'], 7, 3)] }],
-    })
-    const aliasMap = { Alice: 'p1', Bob: 'p2', Carol: 'p3', Dave: 'p4' }
-    const s = buildPlayerStats('p1', [], [], [], [], aliasMap, [hist])
-    expect(s.won).toBe(1)
-    expect(s.played).toBe(1)
-  })
-
-  it('counts a loss from a historical match', () => {
-    const hist = histTournament({
-      rounds: [{ round: 1, matches: [histMatch(['Alice', 'Bob'], ['Carol', 'Dave'], 3, 7)] }],
-    })
-    const aliasMap = { Alice: 'p1', Bob: 'p2', Carol: 'p3', Dave: 'p4' }
-    const s = buildPlayerStats('p1', [], [], [], [], aliasMap, [hist])
-    expect(s.lost).toBe(1)
-  })
-
-  it('resolves player by first name when not in aliasMap', () => {
-    const hist = histTournament({
-      rounds: [{ round: 1, matches: [histMatch(['Alice', 'Bob'], ['Carol', 'Dave'], 7, 3)] }],
-    })
-    const players = [{ id: 'p1', name: 'Alice Smith' }]
-    const s = buildPlayerStats('p1', [], [], [], players, {}, [hist])
-    // 'Alice' resolves to p1 via first-name fallback
-    expect(s.won).toBe(1)
-  })
-
-  it('skips h2h for opponents that do not resolve', () => {
-    const hist = histTournament({
-      rounds: [{ round: 1, matches: [histMatch(['Alice'], ['Unknown'], 7, 3)] }],
-    })
-    const aliasMap = { Alice: 'p1' }
-    const s = buildPlayerStats('p1', [], [], [], [], aliasMap, [hist])
-    // Win still counted but h2h empty because opponent didn't resolve
-    expect(s.won).toBe(1)
-    expect(s.h2h).toEqual({})
-  })
-
-  it('skips h2hPairs when one opponent is unresolved', () => {
-    const hist = histTournament({
-      rounds: [{ round: 1, matches: [histMatch(['Alice', 'Bob'], ['Carol', 'Unknown'], 7, 3)] }],
-    })
-    const aliasMap = { Alice: 'p1', Bob: 'p2', Carol: 'p3' }
-    const s = buildPlayerStats('p1', [], [], [], [], aliasMap, [hist])
-    expect(Object.keys(s.h2hPairs)).toHaveLength(0)
-  })
-
-  it('accumulates historical and DB matches together', () => {
-    const hist = histTournament({
-      date: '2025-01-01',
-      rounds: [{ round: 1, matches: [histMatch(['Alice'], ['Bob'], 7, 3)] }],
-    })
-    const aliasMap = { Alice: 'p1', Bob: 'p2' }
-    const dbM = dbMatch({
-      team1Ids: ['p1'],
-      team2Ids: ['p2'],
-      score1: 6,
-      score2: 4,
-      tournamentId: 't1',
-    })
-    const s = buildPlayerStats('p1', [dbM], [T1], [], [], aliasMap, [hist])
-    expect(s.played).toBe(2)
-    expect(s.won).toBe(2)
-  })
 })
 
 // ─── Chronological ordering ───────────────────────────────────────────────────
 
 describe('buildPlayerStats — event ordering for streaks', () => {
-  it('historical events (older date) are processed before DB events', () => {
-    // hist tournament in 2025, DB tournament in 2026.
-    // hist = win, DB = loss → final streak should be 1 loss (not 1 win).
-    const hist = histTournament({
-      date: '2025-01-01',
-      rounds: [{ round: 1, matches: [histMatch(['Alice'], ['Bob'], 7, 3)] }],
-    })
-    const aliasMap = { Alice: 'p1', Bob: 'p2' }
-    const dbM = dbMatch({
-      team1Ids: ['p1'],
-      team2Ids: ['p2'],
-      score1: 3,
-      score2: 7,
-      tournamentId: 't1',
-    })
-    const s = buildPlayerStats('p1', [dbM], [T1], [], [], aliasMap, [hist])
-    // recentForm in chronological order: [W (hist), L (db)]
+  it('processes older tournaments first, whatever order the matches arrive in', () => {
+    const newerLoss = dbMatch({ tournamentId: 't2', team1Ids: ['p1'], score1: 3, score2: 7 })
+    const olderWin = dbMatch({ tournamentId: 't1', team1Ids: ['p1'], score1: 7, score2: 3 })
+    const s = buildPlayerStats('p1', [newerLoss, olderWin], [T1, T2])
     expect(s.recentForm).toEqual(['W', 'L'])
   })
 })

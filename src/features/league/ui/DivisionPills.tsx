@@ -1,9 +1,5 @@
+import { DIVISION_LABELS } from '../domain/types'
 import type { Division } from '../domain/types'
-
-const DIVISION_LABELS: Record<Division, string> = {
-  mens: "Men's",
-  womens: "Women's",
-}
 
 export function DivisionPills({
   divisions,

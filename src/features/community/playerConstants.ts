@@ -9,6 +9,11 @@ export const LEVEL_COLORS: string[] = [
   'bg-purple-100 text-purple-700',
 ]
 
+export function levelBadgeClass(level: number | null | undefined): string {
+  const idx = Math.min(7, Math.max(0, Math.floor(level || 0)))
+  return LEVEL_COLORS[idx] || LEVEL_COLORS[0]
+}
+
 // Per-player stats live in ../lib/playerStats so Dashboard.jsx and
 // Players.jsx share a single source of truth — see imports above.
 

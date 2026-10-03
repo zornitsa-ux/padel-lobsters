@@ -38,7 +38,7 @@ export const scoreEntrySchema = z.object({
 
 export const createLeagueSchema = z.object({
   name: z.string().trim().min(1, 'League name is required'),
-  divisions: z.array(z.enum(['mens', 'womens'])).min(1),
+  divisions: z.array(z.enum(['mens', 'womens'])).min(1, 'Pick at least one division'),
   group_stage_start: z.string().date().optional(),
   group_stage_end: z.string().date().optional(),
 })

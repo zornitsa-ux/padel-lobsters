@@ -14,6 +14,11 @@ export type League = Tables<'leagues'>
 
 const KNOWN_DIVISIONS: Division[] = ['mens', 'womens']
 
+export const DIVISION_LABELS: Record<Division, string> = {
+  mens: "Men's",
+  womens: "Women's",
+}
+
 // `leagues.divisions` is a nullable, unconstrained text[]. Every UI that reads
 // it indexes/maps it, so it is resolved through here: null falls back to the
 // column's own DB default and unrecognised entries are dropped rather than

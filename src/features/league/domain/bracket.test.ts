@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest'
-import { buildBracketPairings, isBracketComplete } from './bracket'
+import {
+  buildBracketPairings,
+  buildDivisionBracket,
+  buildFinalPairings,
+  isBracketComplete,
+  isSeasonDecided,
+} from './bracket'
+import { mkLeagueMatch, mkLeagueTeam } from '../../../test/leagueFactories'
 import type { GroupStanding, LeagueMatch } from './types'
 
 // ---------------------------------------------------------------------------
@@ -292,5 +299,188 @@ describe('isBracketComplete', () => {
       ]
       expect(isBracketComplete(matches, 'final')).toBe(true)
     })
+  })
+})
+
+// ---------------------------------------------------------------------------
+// buildFinalPairings
+// ---------------------------------------------------------------------------
+
+describe('buildFinalPairings', () => {
+  const decidedSemis = [
+    mkLeagueMatch({
+      id: 'g1',
+      stage: 'gold_semi',
+      team1_id: 'A1',
+      team2_id: 'B2',
+      winner_id: 'A1',
+    }),
+    mkLeagueMatch({
+      id: 'g2',
+      stage: 'gold_semi',
+      team1_id: 'B1',
+      team2_id: 'A2',
+      winner_id: 'A2',
+    }),
+    mkLeagueMatch({
+      id: 's1',
+      stage: 'silver_semi',
+      team1_id: 'A3',
+      team2_id: 'B4',
+      winner_id: 'B4',
+    }),
+    mkLeagueMatch({
+      id: 's2',
+      stage: 'silver_semi',
+      team1_id: 'B3',
+      team2_id: 'A4',
+      winner_id: 'B3',
+    }),
+  ]
+
+  it('pairs semi winners in semi order for both tiers', () => {
+    expect(buildFinalPairings({ divMatches: decidedSemis, division: 'mens' })).toEqual([
+      { division: 'mens', stage: 'gold_final', team1_id: 'A1', team2_id: 'A2' },
+      { division: 'mens', stage: 'silver_final', team1_id: 'B4', team2_id: 'B3' },
+    ])
+  })
+
+  it('treats a bye semi (pre-awarded winner) as decided', () => {
+    const divMatches = [
+      ...decidedSemis.slice(0, 2),
+      mkLeagueMatch({
+        id: 's1',
+        stage: 'silver_semi',
+        team1_id: 'A3',
+        team2_id: null,
+        winner_id: 'A3',
+      }),
+      decidedSemis[3],
+    ]
+    expect(buildFinalPairings({ divMatches, division: 'mens' })).toContainEqual({
+      division: 'mens',
+      stage: 'silver_final',
+      team1_id: 'A3',
+      team2_id: 'B3',
+    })
+  })
+
+  it('skips a tier whose semis are not all decided', () => {
+    const divMatches = [...decidedSemis.slice(0, 3), { ...decidedSemis[3], winner_id: null }]
+    expect(buildFinalPairings({ divMatches, division: 'mens' }).map((p) => p.stage)).toEqual([
+      'gold_final',
+    ])
+  })
+
+  it('skips a tier whose final already exists', () => {
+    const divMatches = [...decidedSemis, mkLeagueMatch({ id: 'gf', stage: 'gold_final' })]
+    expect(buildFinalPairings({ divMatches, division: 'mens' }).map((p) => p.stage)).toEqual([
+      'silver_final',
+    ])
+  })
+
+  it('returns nothing when there are no semis', () => {
+    expect(buildFinalPairings({ divMatches: [], division: 'mens' })).toEqual([])
+  })
+})
+
+// ---------------------------------------------------------------------------
+// isSeasonDecided
+// ---------------------------------------------------------------------------
+
+describe('isSeasonDecided', () => {
+  function bracket(division: LeagueMatch['division'], finals: Partial<LeagueMatch>[] = []) {
+    return [
+      mkLeagueMatch({ id: `${division}-g`, stage: 'group', division, winner_id: 'x' }),
+      mkLeagueMatch({ id: `${division}-gs`, stage: 'gold_semi', division, winner_id: 'x' }),
+      mkLeagueMatch({ id: `${division}-ss`, stage: 'silver_semi', division, winner_id: 'x' }),
+      ...finals.map((f, i) =>
+        mkLeagueMatch({ id: `${division}-f${i}`, stage: 'gold_final', division, ...f }),
+      ),
+    ]
+  }
+
+  const bothFinalsDecided = [
+    { stage: 'gold_final' as const, winner_id: 'w' },
+    { stage: 'silver_final' as const, winner_id: 'w' },
+  ]
+
+  it('is false with no matches', () => {
+    expect(isSeasonDecided({ matches: [] })).toBe(false)
+  })
+
+  it('is true when every division has decided gold and silver finals', () => {
+    const matches = [...bracket('mens', bothFinalsDecided), ...bracket('womens', bothFinalsDecided)]
+    expect(isSeasonDecided({ matches })).toBe(true)
+  })
+
+  it('is false when a final has not been created', () => {
+    const matches = [...bracket('mens', [bothFinalsDecided[0]])]
+    expect(isSeasonDecided({ matches })).toBe(false)
+  })
+
+  it('is false when a final has no result', () => {
+    const matches = [
+      ...bracket('mens', [bothFinalsDecided[0], { stage: 'silver_final', winner_id: null }]),
+    ]
+    expect(isSeasonDecided({ matches })).toBe(false)
+  })
+
+  it('is false when one division has decided finals and the other does not', () => {
+    const matches = [...bracket('mens', bothFinalsDecided), ...bracket('womens')]
+    expect(isSeasonDecided({ matches })).toBe(false)
+  })
+
+  it('is false when a division never reached the knockout stage', () => {
+    const matches = [
+      ...bracket('mens', bothFinalsDecided),
+      mkLeagueMatch({ id: 'w-g', stage: 'group', division: 'womens', winner_id: 'x' }),
+    ]
+    expect(isSeasonDecided({ matches })).toBe(false)
+  })
+
+  it('does not require a silver final when no silver bracket was played', () => {
+    const matches = bracket('mens', [bothFinalsDecided[0]]).filter((m) => m.stage !== 'silver_semi')
+    expect(isSeasonDecided({ matches })).toBe(true)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// buildDivisionBracket
+// ---------------------------------------------------------------------------
+
+describe('buildDivisionBracket', () => {
+  const groupTeams = ['A1', 'A2', 'B1', 'B2'].map((id) =>
+    mkLeagueTeam({ id, group_label: id[0] as 'A' | 'B' }),
+  )
+  const groupMatches = [
+    mkLeagueMatch({ id: 'ga', stage: 'group', team1_id: 'A1', team2_id: 'A2', winner_id: 'A2' }),
+    mkLeagueMatch({ id: 'gb', stage: 'group', team1_id: 'B1', team2_id: 'B2', winner_id: 'B1' }),
+  ]
+
+  it('cross-seeds gold semis from the division standings', () => {
+    expect(
+      buildDivisionBracket({ teams: groupTeams, matches: groupMatches, division: 'mens' }),
+    ).toEqual([
+      { division: 'mens', stage: 'gold_semi', team1_id: 'A2', team2_id: 'B2' },
+      { division: 'mens', stage: 'gold_semi', team1_id: 'B1', team2_id: 'A1' },
+    ])
+  })
+
+  it('ignores teams and matches from the other division', () => {
+    const womens = mkLeagueTeam({ id: 'W1', division: 'womens', group_label: 'A' })
+    expect(
+      buildDivisionBracket({
+        teams: [...groupTeams, womens],
+        matches: groupMatches,
+        division: 'womens',
+      }),
+    ).toBeNull()
+  })
+
+  it('returns null when a group has fewer than 2 teams', () => {
+    expect(
+      buildDivisionBracket({ teams: groupTeams.slice(0, 3), matches: [], division: 'mens' }),
+    ).toBeNull()
   })
 })

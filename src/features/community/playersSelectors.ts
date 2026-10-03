@@ -90,21 +90,3 @@ export function getDisplayName(
   }
   return fn
 }
-
-export function computeReviewCounts<T>(opts: {
-  activePlayers: T[]
-  classifyScenario: (player: T) => string
-  genericIds: Set<string>
-}): { genericCount: number; personalisedCount: number } {
-  let genericCount = 0
-
-  opts.activePlayers.forEach((p) => {
-    const scenario = opts.classifyScenario(p)
-    if (opts.genericIds.has(scenario)) genericCount++
-  })
-
-  return {
-    genericCount,
-    personalisedCount: opts.activePlayers.length - genericCount,
-  }
-}

@@ -1,21 +1,17 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi, afterEach } from 'vitest'
+import { describe, it, expect, afterEach } from 'vitest'
 import { render, screen, cleanup } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import { renderWithClient } from '../../test/renderWithClient'
 
 // D-028: every roster/registration badge now reads playtomicLevel. A player
 // carrying a stale adjusted_level from before D-018 must not have it shown —
 // these renders pass a row where the two values differ, so a regression that
 // reads the legacy field shows 4.5 instead of 3.5.
-vi.mock('./reviewScenarios', () => ({
-  corpReview: () => ({ hasLabel: false, scenarioLabel: '', body: 'A review.' }),
-}))
-vi.mock('./PlayerProfileDrawer', () => ({ default: () => null }))
 
 import PlayersList from './PlayersList'
 import PendingApprovalsList from './PendingApprovalsList'
 import RegisteredSection from '../events/registration/RegisteredSection'
-import { LEVEL_COLORS } from './playerConstants'
 import { normalisePlayers } from '../../lib/normalise'
 import { mkRegistration } from '../../test/factories'
 
@@ -33,33 +29,17 @@ const [stalePlayer] = normalisePlayers([
   },
 ])
 
-const levelBadge = (level: number) => LEVEL_COLORS[Math.min(7, Math.max(0, Math.floor(level || 0)))]
-
 afterEach(cleanup)
 
 describe('roster level badges read the Playtomic level', () => {
   it('PlayersList shows the Playtomic level, not adjusted_level', () => {
     render(
-      <PlayersList
-        orderedForRender={[{ p: stalePlayer, idx: 0, isSelf: false }]}
-        hasPlayers
-        focusPlayerId={null}
-        focusRef={null}
-        expandedId={null}
-        setExpandedId={() => {}}
-        isAdmin={false}
-        levelBadge={levelBadge}
-        displayName={(p) => p.name || ''}
-        matches={[]}
-        registrations={[]}
-        tournaments={[]}
-        playerAliases={{}}
-        players={[stalePlayer]}
-        onNavigate={() => {}}
-        onEdit={() => {}}
-        onDelete={() => {}}
-        onRegeneratePin={() => {}}
-      />,
+      <MemoryRouter>
+        <PlayersList
+          orderedForRender={[{ p: stalePlayer, idx: 0, isSelf: false }]}
+          displayName={(p) => p.name || ''}
+        />
+      </MemoryRouter>,
     )
 
     expect(screen.getByText('3.5')).toBeTruthy()

@@ -1,3 +1,4 @@
+import { resolveTeamShortName } from '../domain/teamDisplay'
 import type { LeagueMatch, LeagueTeam } from '../domain/types'
 
 interface BracketMatchSlotProps {
@@ -9,11 +10,7 @@ interface BracketMatchSlotProps {
 
 function teamLabel(team: LeagueTeam | undefined, isBye?: boolean): string {
   if (isBye) return 'BYE'
-  if (!team) return 'TBD'
-  if (team.team_name) return team.team_name
-  const p1 = team.player1?.name?.split(' ')[0] ?? '?'
-  const p2 = team.player2?.name?.split(' ')[0] ?? '?'
-  return `${p1} & ${p2}`
+  return team ? resolveTeamShortName(team) : 'TBD'
 }
 
 function formatScore(sets: { t1: number; t2: number }[]): string {

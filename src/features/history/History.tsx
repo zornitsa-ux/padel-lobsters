@@ -8,22 +8,14 @@ import { useAllRegistrations } from '../events/useRegistrations'
 import type { Player, NormalisedTournament } from '../../lib/normalise'
 import type { NormalisedMatch } from '../events/matchQueries'
 import type { NormalisedRegistration } from '../events/registrationQueries'
-import { TOURNAMENTS as TOURNAMENTS_RAW } from '../../data/historicalTournaments'
-import { loadAliases, resolveName } from './aliasStorage'
-import { smartSort, buildDisplayNames, type ArchiveTournament } from './historicalStats'
-import { medalColor, medalStyleH } from './medals'
+import { buildDisplayNames } from './displayNames'
 import { groupOscarResultsByCategory } from '../oscars/oscarResults'
 import { useOscarResultsFor } from '../oscars/useOscarResultsFor'
 import { resultsWithheld } from '../events/resultsPhase'
-import Podium from './Podium'
 import { TabSwitcher } from '../../components/ui/TabSwitcher'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
 import { ProgressBar } from '../../components/ui/ProgressBar'
 import { CollapsibleCard } from '../../components/ui/CollapsibleCard'
-
-// `historicalTournaments.js` is deliberately untyped (hardcoded pre-app archive);
-// this is the single boundary where its shape is asserted.
-const TOURNAMENTS = TOURNAMENTS_RAW as unknown as ArchiveTournament[]
 
 type TabId = 'standings' | 'matches' | 'games'
 
@@ -60,15 +52,9 @@ export default function History({ onNavigate }: HistoryProps) {
   )
 
   const [expandedId, setExpandedId] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<Record<string, TabId>>({}) // id → tab
-  const [activeRound, setActiveRound] = useState<Record<string, number>>({}) // id → roundIndex
   const [dbActiveTab, setDbActiveTab] = useState<Record<string, TabId>>({}) // dbId → tab
   const [dbActiveRound, setDbActiveRound] = useState<Record<string, number>>({}) // dbId → roundIndex
-  const [aliases] = useState(loadAliases)
-  const rn = useCallback((name: string) => resolveName(name, aliases), [aliases])
 
-  const getTab = (id: string): TabId => activeTab[id] || 'standings'
-  const getRound = (id: string): number => activeRound[id] ?? 0
   const getDbTab = (id: string): TabId => dbActiveTab[id] || 'standings'
   const getDbRound = (id: string): number => dbActiveRound[id] ?? 0
 
@@ -95,28 +81,8 @@ export default function History({ onNavigate }: HistoryProps) {
     players.forEach((p) => {
       if (p?.name) names.add(p.name)
     })
-    // Include any hardcoded-tournament names that may not exist in players,
-    // resolved through aliases first.
-    TOURNAMENTS.forEach((t) => {
-      t.players?.forEach((p) => {
-        const r = rn(p.name)
-        if (r) names.add(r)
-      })
-      t.rounds?.forEach((r) =>
-        r.matches?.forEach((mm) => {
-          mm.t1?.forEach((n) => {
-            const x = rn(n)
-            if (x) names.add(x)
-          })
-          mm.t2?.forEach((n) => {
-            const x = rn(n)
-            if (x) names.add(x)
-          })
-        }),
-      )
-    })
     return buildDisplayNames([...names])
-  }, [players, rn])
+  }, [players])
   const globalDn = useCallback(
     (n: string): string => globalDnMap[n] || (n || '').split(' ')[0] || '',
     [globalDnMap],
@@ -542,242 +508,6 @@ export default function History({ onNavigate }: HistoryProps) {
                   </div>
                 )
               })()}
-          </CollapsibleCard>
-        )
-      })}
-
-      {/* Hardcoded past tournaments */}
-      {TOURNAMENTS.map((t) => {
-        const open = expandedId === t.id
-        const tab = getTab(t.id)
-        const ri = getRound(t.id)
-        const sorted = t.players ? smartSort(t.players, t.rounds || []) : []
-        // Use the global display-name map so first-name collisions are
-        // disambiguated consistently across every event card.
-        const dn = (n: string) => globalDn(rn(n))
-
-        return (
-          <CollapsibleCard
-            key={t.id}
-            className="card overflow-hidden border-l-4 border-yellow-400"
-            headerClassName="gap-3"
-            expanded={open}
-            onToggle={() => setExpandedId(open ? null : t.id)}
-            header={
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-yellow-50 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <Trophy size={20} className="text-yellow-500" />
-                </div>
-                <div className="text-left">
-                  <p className="font-bold text-lob-dark text-sm flex items-center gap-1.5">
-                    {t.name}
-                    {t.type === 'ladies' && (
-                      <span className="text-[10px] font-bold bg-pink-100 text-pink-600 px-1.5 py-0.5 rounded-full">
-                        Ladies
-                      </span>
-                    )}
-                    {t.type === 'mixed' && (
-                      <span className="text-[10px] font-bold bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full">
-                        Mixed
-                      </span>
-                    )}
-                  </p>
-                  <p className="text-xs text-lob-muted">
-                    {t.date
-                      ? new Date(t.date).toLocaleDateString('en-GB', {
-                          day: 'numeric',
-                          month: 'long',
-                          year: 'numeric',
-                        })
-                      : ''}
-                    {t.players ? `${t.date ? ' · ' : ''}${t.players.length} players` : '—'}
-                    {t.numRounds ? ` · ${t.numRounds} rounds` : ''}
-                    {t.numCourts ? ` · ${t.numCourts} courts` : ''}
-                  </p>
-                </div>
-              </div>
-            }
-          >
-            {open && (
-              <div className="mt-4">
-                {/* Podium */}
-                {sorted.length > 0 && (
-                  <Podium players={sorted} rounds={t.rounds || []} rn={rn} dn={dn} />
-                )}
-
-                {/* Tabs */}
-                <TabSwitcher
-                  tabs={[
-                    { id: 'standings', label: 'Full Standings' },
-                    ...(t.rounds ? [{ id: 'matches', label: 'Match Results' }] : []),
-                  ]}
-                  value={tab}
-                  onChange={(id) => setActiveTab((s) => ({ ...s, [t.id]: id as TabId }))}
-                  className="mb-3"
-                />
-
-                {/* Note (when no pairings available) */}
-                {tab === 'standings' && t.note && (
-                  <p className="text-xs text-lob-muted-light italic mb-3 px-1">{t.note}</p>
-                )}
-
-                {/* ── Standings tab ── */}
-                {tab === 'standings' && sorted.length > 0 && (
-                  <div className="space-y-1">
-                    {/* Column headers */}
-                    <div
-                      className="grid text-[10px] font-bold text-lob-muted-light uppercase px-2 mb-1"
-                      style={{
-                        gridTemplateColumns:
-                          t.id === 'jan2026'
-                            ? '28px 1fr 28px 28px 28px 28px 28px 28px 36px'
-                            : '28px 1fr 44px',
-                      }}
-                    >
-                      <span>#</span>
-                      <span>Player</span>
-                      {t.id === 'jan2026' ? (
-                        <>
-                          <span className="text-center">R1</span>
-                          <span className="text-center">R2</span>
-                          <span className="text-center">R3</span>
-                          <span className="text-center">R4</span>
-                          <span className="text-center">R5</span>
-                          <span className="text-center">R6</span>
-                          <span className="text-right">Tot</span>
-                        </>
-                      ) : (
-                        <span className="text-right">Total</span>
-                      )}
-                    </div>
-
-                    {sorted.map((p, idx) => (
-                      <div
-                        key={p.name}
-                        className={`grid items-center px-2 py-1.5 rounded-xl text-sm ${
-                          idx === 0
-                            ? 'bg-yellow-50 border border-yellow-200'
-                            : idx === 1
-                              ? 'bg-gray-50'
-                              : idx === 2
-                                ? ''
-                                : ''
-                        }`}
-                        style={{
-                          gridTemplateColumns:
-                            t.id === 'jan2026'
-                              ? '28px 1fr 28px 28px 28px 28px 28px 28px 36px'
-                              : '28px 1fr 44px',
-                          ...(idx === 2 ? { background: 'rgba(205,127,50,0.1)' } : {}),
-                        }}
-                      >
-                        <span
-                          className={`text-xs font-bold ${medalColor(idx)}`}
-                          style={medalStyleH(idx)}
-                        >
-                          {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : idx + 1}
-                        </span>
-                        <span
-                          className={`font-medium text-sm leading-tight ${idx < 3 ? 'font-bold' : ''}`}
-                        >
-                          {dn(p.name)}
-                        </span>
-                        {p.r ? (
-                          <>
-                            {p.r.map((score, ri) => (
-                              <span key={ri} className="text-center text-xs text-lob-slate">
-                                {score}
-                              </span>
-                            ))}
-                            <span className="text-right font-bold text-lob-teal text-xs">
-                              {p.total}
-                            </span>
-                          </>
-                        ) : (
-                          <span className="text-right font-bold text-lob-teal text-xs">
-                            {p.total}
-                          </span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* ── Matches tab ── */}
-                {tab === 'matches' && t.rounds && (
-                  <div>
-                    {/* Round selector */}
-                    <SegmentedControl
-                      ariaLabel="Round"
-                      layout="scroll"
-                      size="md"
-                      className="pb-2 mb-3"
-                      options={t.rounds.map((r, i) => ({ value: i, label: `R${r.round}` }))}
-                      value={ri}
-                      onChange={(i) => setActiveRound((s) => ({ ...s, [t.id]: i }))}
-                    />
-
-                    {/* Match cards for selected round */}
-                    <div className="space-y-2">
-                      {t.rounds[ri]?.matches.map((m, i) => {
-                        const t1won = m.s1 > m.s2
-                        const t2won = m.s2 > m.s1
-                        return (
-                          <div key={i} className="bg-gray-50 rounded-xl p-3">
-                            <div className="flex items-center justify-between mb-1.5">
-                              <span className="text-[10px] font-bold text-lob-teal bg-lob-cream px-2 py-0.5 rounded-full">
-                                Court {m.court}
-                              </span>
-                              {m.s1 === m.s2 && (
-                                <span className="text-[10px] text-lob-muted-light font-medium">
-                                  Draw
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-2">
-                              {/* Team A */}
-                              <div
-                                className={`flex-1 min-w-0 ${t1won ? 'text-green-700' : 'text-lob-slate'}`}
-                              >
-                                {m.t1.map((name) => (
-                                  <p key={name} className="text-sm font-semibold leading-tight">
-                                    {dn(name)}
-                                  </p>
-                                ))}
-                              </div>
-                              {/* Score */}
-                              <div className="flex items-center gap-1 flex-shrink-0">
-                                <span
-                                  className={`text-lg font-bold w-7 text-center ${t1won ? 'text-green-600' : 'text-lob-muted-light'}`}
-                                >
-                                  {m.s1}
-                                </span>
-                                <span className="text-lob-muted-light/60 text-sm">–</span>
-                                <span
-                                  className={`text-lg font-bold w-7 text-center ${t2won ? 'text-green-600' : 'text-lob-muted-light'}`}
-                                >
-                                  {m.s2}
-                                </span>
-                              </div>
-                              {/* Team B */}
-                              <div
-                                className={`flex-1 min-w-0 text-right ${t2won ? 'text-green-700' : 'text-lob-slate'}`}
-                              >
-                                {m.t2.map((name) => (
-                                  <p key={name} className="text-sm font-semibold leading-tight">
-                                    {dn(name)}
-                                  </p>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
           </CollapsibleCard>
         )
       })}

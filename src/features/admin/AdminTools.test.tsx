@@ -16,10 +16,6 @@ vi.mock('../events/useTournaments', () => ({ useTournaments: () => ({ data: [] }
 vi.mock('../players/usePlayers', () => ({ usePlayers: () => ({ data: [] }) }))
 vi.mock('../events/useRegistrations', () => ({ useAllRegistrations: () => ({ data: [] }) }))
 vi.mock('../events/useMatches', () => ({ useAllMatches: () => ({ data: [] }) }))
-vi.mock('../../hooks/usePlayerAliases', () => ({
-  default: () => ({ playerAliases: {}, setPlayerAlias: () => {}, removePlayerAlias: () => {} }),
-}))
-vi.mock('../league/LeagueAdminSection', () => ({ default: () => null }))
 
 import { MemoryRouter } from 'react-router-dom'
 import AdminTools from './AdminTools'

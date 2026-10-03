@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
+import { Settings } from 'lucide-react'
 import { Badge } from '../../../components/ui/Badge'
 import { statusPill } from './statusPill'
 import type { StatusPill } from './statusPill'
@@ -8,6 +10,8 @@ import { DraftSection } from './DraftSection'
 import { GroupStageContent } from './GroupStageContent'
 import { KnockoutContent } from './KnockoutContent'
 import { PendingMatchCard } from './PendingMatchCard'
+import { AlertBox } from '../../../components/ui/AlertBox'
+import { isPublished } from '../domain/lifecycle'
 import { TeamPage } from './TeamPage'
 import { leagueDivisions } from '../domain/types'
 import type { Division, League, LeagueTeam, LeagueMatch } from '../domain/types'
@@ -24,9 +28,10 @@ interface LeagueHomeProps {
   teams: LeagueTeam[]
   matches: LeagueMatch[]
   myTeam: LeagueTeam | null
+  isAdmin?: boolean
 }
 
-export function LeagueHome({ league, teams, matches, myTeam }: LeagueHomeProps) {
+export function LeagueHome({ league, teams, matches, myTeam, isAdmin = false }: LeagueHomeProps) {
   const divisions = leagueDivisions(league)
   const [division, setDivision] = useState<Division>(() => divisions[0])
   const [selectedTeam, setSelectedTeam] = useState<LeagueTeam | null>(null)
@@ -58,8 +63,18 @@ export function LeagueHome({ league, teams, matches, myTeam }: LeagueHomeProps) 
       <PageHeader
         title={league.name}
         eyebrow="🦞 Lobster League"
-        backLink={{ to: '/league', label: 'Seasons' }}
+        backLink={{ to: '/league/seasons', label: 'Seasons' }}
         badge={<Badge variant={pill.variant} label={pill.label} />}
+        rightAction={
+          isAdmin ? (
+            <Link
+              to={`/league/${league.id}/manage`}
+              className="flex items-center gap-1 text-xs font-semibold text-lob-teal"
+            >
+              <Settings size={14} aria-hidden="true" /> Manage
+            </Link>
+          ) : undefined
+        }
         tabStrip={
           divisions.length > 1 ? (
             <DivisionPills divisions={divisions} value={division} onChange={setDivision} />
@@ -68,6 +83,12 @@ export function LeagueHome({ league, teams, matches, myTeam }: LeagueHomeProps) 
       />
 
       <div className="px-4 pt-4 space-y-5">
+        {isAdmin && !isPublished(league) && (
+          <AlertBox variant="info">
+            This season is hidden from players. Publish it from Manage → Season.
+          </AlertBox>
+        )}
+
         {myPendingMatches.length > 0 && (
           <PendingMatchCard
             pendingMatches={myPendingMatches}

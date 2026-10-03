@@ -14,7 +14,7 @@ import { DEFAULT_EVENT_DESCRIPTION, emptyForm } from './eventConstants'
 import { parseLocalDate } from './eventHelpers'
 import EventFormModal from './EventFormModal'
 import UpcomingEventCard from './UpcomingEventCard'
-import PastEventCard from './PastEventCard'
+import { EventCard } from './EventCard'
 import { LeagueDashboardCard } from '../league/ui/LeagueDashboardCard'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { CollapsibleSection } from '../../components/ui/CollapsibleSection'
@@ -265,16 +265,9 @@ export default function Tournament({ onNavigate }: { onNavigate: EventNavigate }
           expanded={showHistory}
           onToggle={() => setShowHistory((h) => !h)}
         >
-          <div className="space-y-3">
+          <div className="space-y-2">
             {past.map((t) => (
-              <PastEventCard
-                key={t.id}
-                t={t}
-                isAdmin={isAdmin}
-                onNavigate={onNavigate}
-                onEdit={openEdit}
-                onDelete={handleDelete}
-              />
+              <EventCard key={t.id} tournament={t} past />
             ))}
 
             {/* Legacy History Records */}

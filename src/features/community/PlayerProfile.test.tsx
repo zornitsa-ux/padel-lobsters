@@ -9,20 +9,19 @@ vi.mock('../matchmaking/generateSchedule.service', () => ({ fetchMmRatings: vi.f
 vi.mock('../../supabase', () => mockSupabase({ rpc: mockRpc }))
 
 import { fetchMmRatings } from '../matchmaking/generateSchedule.service'
-import PlayerProfileDrawer from './PlayerProfileDrawer'
+import PlayerProfile from './PlayerProfile'
 
 const asMock = (fn: unknown) => fn as ReturnType<typeof vi.fn>
 
 const player = { id: 'p1', name: 'Ada Lovelace', playtomicLevel: 3.5 }
 
 const drawer = (isAdmin: boolean) => (
-  <PlayerProfileDrawer
+  <PlayerProfile
     player={player}
     players={[player]}
     matches={[]}
     tournaments={[]}
     registrations={[]}
-    playerAliases={{}}
     isAdmin={isAdmin}
     onNavigate={() => {}}
     onEdit={() => {}}
@@ -42,7 +41,7 @@ beforeEach(() => {
   })
 })
 
-describe('PlayerProfileDrawer level rows', () => {
+describe('PlayerProfile level rows', () => {
   // `globals` is off in vite.config.js, so RTL's auto-cleanup never registers.
   afterEach(cleanup)
 
@@ -64,7 +63,7 @@ describe('PlayerProfileDrawer level rows', () => {
   })
 })
 
-describe('PlayerProfileDrawer — contact details reveal', () => {
+describe('PlayerProfile — contact details reveal', () => {
   afterEach(cleanup)
 
   it('fetches nothing until the admin taps "Show contact details"', async () => {
