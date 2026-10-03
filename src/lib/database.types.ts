@@ -246,6 +246,7 @@ export type Database = {
           group_stage_start: string | null
           id: string
           name: string
+          published_at: string | null
           quarters_end: string | null
           quarters_start: string | null
           semis_end: string | null
@@ -267,6 +268,7 @@ export type Database = {
           group_stage_start?: string | null
           id?: string
           name: string
+          published_at?: string | null
           quarters_end?: string | null
           quarters_start?: string | null
           semis_end?: string | null
@@ -288,6 +290,7 @@ export type Database = {
           group_stage_start?: string | null
           id?: string
           name?: string
+          published_at?: string | null
           quarters_end?: string | null
           quarters_start?: string | null
           semis_end?: string | null
@@ -1483,6 +1486,7 @@ export type Database = {
           group_stage_start: string | null
           id: string
           name: string
+          published_at: string | null
           quarters_end: string | null
           quarters_start: string | null
           semis_end: string | null
@@ -1520,6 +1524,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      admin_delete_league: {
+        Args: { input_league_id: string }
+        Returns: string
       }
       admin_delete_league_team: {
         Args: { input_team_id: string }
@@ -1675,6 +1683,37 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      admin_set_league_published: {
+        Args: { input_league_id: string; input_published: boolean }
+        Returns: {
+          created_at: string | null
+          created_by: string | null
+          description_md: string | null
+          description_sections: Json | null
+          divisions: string[] | null
+          ends_at: string | null
+          finals_end: string | null
+          finals_start: string | null
+          group_stage_end: string | null
+          group_stage_start: string | null
+          id: string
+          name: string
+          published_at: string | null
+          quarters_end: string | null
+          quarters_start: string | null
+          semis_end: string | null
+          semis_start: string | null
+          signup_closes_at: string | null
+          starts_at: string | null
+          status: string
+        }
+        SetofOptions: {
+          from: '*'
+          to: 'leagues'
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       admin_set_raffle_exclusions: {
         Args: { input_player_ids: string[]; input_tournament_id: string }
         Returns: undefined
@@ -1688,6 +1727,37 @@ export type Database = {
         Returns: {
           status: string
         }[]
+      }
+      admin_update_league: {
+        Args: { input_league_id: string; input_payload: Json }
+        Returns: {
+          created_at: string | null
+          created_by: string | null
+          description_md: string | null
+          description_sections: Json | null
+          divisions: string[] | null
+          ends_at: string | null
+          finals_end: string | null
+          finals_start: string | null
+          group_stage_end: string | null
+          group_stage_start: string | null
+          id: string
+          name: string
+          published_at: string | null
+          quarters_end: string | null
+          quarters_start: string | null
+          semis_end: string | null
+          semis_start: string | null
+          signup_closes_at: string | null
+          starts_at: string | null
+          status: string
+        }
+        SetofOptions: {
+          from: '*'
+          to: 'leagues'
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       admin_update_league_status: {
         Args: { input_league_id: string; input_status: string }
@@ -1704,6 +1774,7 @@ export type Database = {
           group_stage_start: string | null
           id: string
           name: string
+          published_at: string | null
           quarters_end: string | null
           quarters_start: string | null
           semis_end: string | null

@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
 import { usePlayerPii, useEnsurePlayerPii, useForgetPlayerPii } from '../players/usePlayers'
 import type { PlayerPii } from '../players/playerQueries'
+import type { CommunityPlayer } from './playersSelectors'
 
 // Shared state machine behind every "reveal this player's contact details"
-// control (PlayerProfileDrawer, PendingApprovalsList, LinkPlayerModal).
+// control (PlayerProfile, PendingApprovalsList, LinkPlayerModal).
 // Nothing is fetched until `reveal()` is called — mounting a component that
 // uses this hook costs zero PII reads. Each surface owns its own markup
 // (a block, an inline chip, a per-row icon) since the three look nothing
@@ -47,4 +48,19 @@ export function useRevealPii(playerId: string) {
 export function useResolvePlayerPii() {
   const ensure = useEnsurePlayerPii()
   return useCallback((id: string) => ensure(id), [ensure])
+}
+
+// Overlays one player's resolved PII onto their (redacted) roster record.
+// Every admin write path that seeds a form from, or merges into, a player
+// must go through this — reading the unresolved roster record directly is
+// what once silently nulled a player's email (2026-08-15 incident).
+export function useResolveWithPii() {
+  const resolvePlayerPii = useResolvePlayerPii()
+  return useCallback(
+    async <T extends CommunityPlayer>(p: T): Promise<T> => {
+      const pii = await resolvePlayerPii(String(p.id))
+      return { ...p, email: pii.email, phone: pii.phone, birthday: pii.birthday, notes: pii.notes }
+    },
+    [resolvePlayerPii],
+  )
 }

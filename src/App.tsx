@@ -18,6 +18,7 @@ import Dashboard from './features/home/Dashboard'
 import VerificationGate from './components/VerificationGate'
 import { mark } from './lib/perfMarks'
 import EventShell from './features/events/EventShell'
+import { AdminLeagueRouteGuard } from './features/league/manage/AdminLeagueRouteGuard'
 import type { EventNavigate } from './features/events/eventHelpers'
 import CommunityShell from './features/community/CommunityShell'
 
@@ -28,6 +29,7 @@ import CommunityShell from './features/community/CommunityShell'
 // treemap (`npm run build:analyze`) for the split.
 const AuthConfirm = lazy(() => import('./components/AuthConfirm'))
 const Players = lazy(() => import('./features/community/Players'))
+const PlayerDetailPage = lazy(() => import('./features/community/PlayerDetailPage'))
 const Tournament = lazy(() => import('./features/events/Tournament'))
 const Registration = lazy(() => import('./features/events/Registration'))
 const MyTournament = lazy(() => import('./features/events/MyTournament'))
@@ -41,7 +43,9 @@ const Admin = lazy(() => import('./features/admin/AdminTools'))
 const TransferAccept = lazy(() => import('./components/TransferAccept'))
 const LeaguePage = lazy(() => import('./features/league/LeaguePage'))
 const LeagueIndexPage = lazy(() => import('./features/league/LeagueIndexPage'))
+const SeasonsPage = lazy(() => import('./features/league/SeasonsPage'))
 const GroupStageHistoryPage = lazy(() => import('./features/league/GroupStageHistoryPage'))
+const LeagueManagePage = lazy(() => import('./features/league/manage/LeagueManagePage'))
 const LobsterWay = lazy(() => import('./features/lobster-way/LobsterWay'))
 const LobsterWayAdmin = lazy(() => import('./features/lobster-way/admin/LobsterWayAdmin'))
 
@@ -79,11 +83,11 @@ export default function App() {
                 </Route>
 
                 <Route path="/community" element={<CommunityShell />}>
-                  <Route index element={<CommunityMembersRoute />} />
+                  <Route index element={<Players />} />
                   <Route path="shop" element={<MerchRoute />} />
-                  <Route path=":id" element={<CommunityMembersRoute />} />
                 </Route>
 
+                <Route path="/community/:id" element={<PlayerDetailRoute />} />
                 <Route path="/merch" element={<Navigate to="/community/shop" replace />} />
                 <Route path="/admin" element={<AdminRoute />} />
                 <Route path="/account" element={<AccountRoute />} />
@@ -93,8 +97,17 @@ export default function App() {
                 <Route path="/history" element={<Navigate to="/events" replace />} />
                 <Route path="/transfer/:id" element={<TransferRoute />} />
                 <Route path="/league" element={<LeagueIndexPage />} />
+                <Route path="/league/seasons" element={<SeasonsPage />} />
                 <Route path="/league/:id" element={<LeaguePage />} />
                 <Route path="/league/:id/group-stage" element={<GroupStageHistoryPage />} />
+                <Route
+                  path="/league/:id/manage"
+                  element={
+                    <AdminLeagueRouteGuard>
+                      <LeagueManagePage />
+                    </AdminLeagueRouteGuard>
+                  }
+                />
 
                 <Route path="*" element={<Navigate to="/home" replace />} />
               </Routes>
@@ -235,10 +248,10 @@ function EventManageRoute() {
   )
 }
 
-function CommunityMembersRoute() {
-  const { id } = useParams()
+function PlayerDetailRoute() {
+  const { id = '' } = useParams()
   const onNavigate = useLegacyNavigate()
-  return <Players onNavigate={onNavigate} focusPlayerId={id} />
+  return <PlayerDetailPage key={id} playerId={id} onNavigate={onNavigate} />
 }
 
 function MerchRoute() {

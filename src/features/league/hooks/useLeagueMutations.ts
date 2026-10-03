@@ -24,27 +24,47 @@ function invalidateLeague({
   const keys = [
     leagueKeys.activeBundle(),
     ...(teams ? [leagueKeys.teams(leagueId)] : []),
-    ...(matches ? [leagueKeys.matches(leagueId)] : []),
+    ...(matches ? [leagueKeys.matches(leagueId), leagueKeys.champions()] : []),
   ]
   return Promise.all(keys.map((queryKey) => qc.invalidateQueries({ queryKey })))
 }
 
-export function useCreateLeague() {
+// Season-level changes touch the current-league pick, the seasons list and the
+// league's own row, so they refresh every league query. `inlineError` callers
+// render the error themselves, so the global toast is suppressed. `navigatesAway`
+// callers leave the page on success, so the refresh isn't awaited — awaiting it
+// would re-render the page they are leaving against the post-mutation data.
+function useSeasonMutation<TInput, TResult>({
+  mutationFn,
+  inlineError = false,
+  navigatesAway = false,
+}: {
+  mutationFn: (input: TInput) => Promise<TResult>
+  inlineError?: boolean
+  navigatesAway?: boolean
+}) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (input_payload: JsonPayload) => {
-      await supabase.rpc('admin_create_league', { input_payload }).throwOnError()
+    mutationFn,
+    onSuccess: () => {
+      const refresh = qc.invalidateQueries({ queryKey: leagueKeys.all() })
+      return navigatesAway ? undefined : refresh
     },
-    onSuccess: async () => {
-      await qc.invalidateQueries({ queryKey: leagueKeys.all() })
-      await qc.invalidateQueries({ queryKey: leagueKeys.active() })
+    meta: inlineError ? { suppressErrorToast: true } : undefined,
+  })
+}
+
+export function useCreateLeague() {
+  return useSeasonMutation({
+    mutationFn: async (input_payload: JsonPayload) => {
+      const { data } = await supabase.rpc('admin_create_league', { input_payload }).throwOnError()
+      return data
     },
   })
 }
 
 export function useUpdateLeagueStatus() {
-  const qc = useQueryClient()
-  return useMutation({
+  return useSeasonMutation({
     mutationFn: async ({
       input_league_id,
       input_status,
@@ -56,10 +76,41 @@ export function useUpdateLeagueStatus() {
         .rpc('admin_update_league_status', { input_league_id, input_status })
         .throwOnError()
     },
-    onSuccess: async () => {
-      await qc.invalidateQueries({ queryKey: leagueKeys.active() })
-      await qc.invalidateQueries({ queryKey: leagueKeys.all() })
+  })
+}
+
+export function useSetLeaguePublished(leagueId: string) {
+  return useSeasonMutation({
+    mutationFn: async (published: boolean) => {
+      await supabase
+        .rpc('admin_set_league_published', {
+          input_league_id: leagueId,
+          input_published: published,
+        })
+        .throwOnError()
     },
+    inlineError: true,
+  })
+}
+
+export function useUpdateLeague(leagueId: string) {
+  return useSeasonMutation({
+    mutationFn: async (input_payload: JsonPayload) => {
+      await supabase
+        .rpc('admin_update_league', { input_league_id: leagueId, input_payload })
+        .throwOnError()
+    },
+    inlineError: true,
+  })
+}
+
+export function useDeleteLeague(leagueId: string) {
+  return useSeasonMutation({
+    mutationFn: async () => {
+      await supabase.rpc('admin_delete_league', { input_league_id: leagueId }).throwOnError()
+    },
+    inlineError: true,
+    navigatesAway: true,
   })
 }
 
@@ -129,7 +180,7 @@ export function useRecordResult(leagueId: string) {
   })
 }
 
-// Renders its error inline (LeagueAdminSection's AlertBox keyed off
+// Renders its error inline (ManageMatches' AlertBox keyed off
 // createBracket.error) — suppress the global toast so a failed generation
 // isn't reported twice.
 export function useCreateBracket(leagueId: string) {

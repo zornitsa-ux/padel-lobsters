@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { AlertBox } from '../../../components/ui/AlertBox'
 import type { LeagueMatch, LeagueTeam } from '../domain/types'
 import { useRecordResult } from '../hooks/useLeagueMutations'
+import { resolveTeamShortName } from '../domain/teamDisplay'
 
 interface ScoreEntryFormProps {
   match: LeagueMatch
@@ -10,14 +11,6 @@ interface ScoreEntryFormProps {
   leagueId: string
   onSuccess: () => void
   onCancel: () => void
-}
-
-function teamLabel(team: LeagueTeam | undefined): string {
-  if (!team) return '—'
-  if (team.team_name) return team.team_name
-  const p1 = team.player1?.name?.split(' ')[0] ?? '?'
-  const p2 = team.player2?.name?.split(' ')[0] ?? '?'
-  return `${p1} & ${p2}`
 }
 
 interface SetInputProps {
@@ -86,8 +79,8 @@ export function ScoreEntryForm({
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   const recordResult = useRecordResult(leagueId)
-  const t1Label = teamLabel(team1)
-  const t2Label = teamLabel(team2)
+  const t1Label = team1 ? resolveTeamShortName(team1) : '—'
+  const t2Label = team2 ? resolveTeamShortName(team2) : '—'
 
   function countWins() {
     let w1 = 0,

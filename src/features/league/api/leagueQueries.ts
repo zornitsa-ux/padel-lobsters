@@ -1,6 +1,7 @@
 import { supabase } from '../../../supabase'
 import type { League, LeagueTeam, LeagueMatch } from '../domain/types'
 import { parseLeagueMatches, parseLeagueTeams } from './leagueSchemas'
+import { pickCurrentLeague } from '../domain/lifecycle'
 
 export interface PlayerOption {
   id: string
@@ -14,24 +15,27 @@ export interface PlayerOption {
 const TEAM_SELECT =
   '*, player1:players!player1_id(id,name,avatar_url,status), player2:players!player2_id(id,name,avatar_url,status)'
 
-export async function fetchActiveLeague(): Promise<League | null> {
+const UNFINISHED = ['draft', 'group_stage', 'knockout']
+
+// Published, unfinished seasons — normally one, two while next season's draft
+// is published ahead of time. pickCurrentLeague chooses between them.
+export async function fetchCurrentLeague(): Promise<League | null> {
   const { data, error } = await supabase
     .from('leagues')
     .select('*')
-    .in('status', ['draft', 'group_stage', 'knockout'])
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
+    .in('status', UNFINISHED)
+    .not('published_at', 'is', null)
   if (error) throw error
-  return data
+  return pickCurrentLeague({ leagues: data ?? [] })
 }
 
-// The active league plus its teams and matches in one round trip.
+// The current league plus its teams and matches in one round trip.
 //
 // The home screen used to chain fetchActiveLeague -> (fetchLeagueTeams,
 // fetchLeagueMatches), which serialises two waves of requests because the
 // child queries need the league id. Embedding them collapses that to a single
-// request: measured against production, ~290ms instead of ~475ms.
+// request: measured against production, ~290ms instead of ~475ms. Candidates
+// are embedded together and chosen client-side so it stays one request.
 export async function fetchActiveLeagueBundle(): Promise<{
   league: League | null
   teams: LeagueTeam[]
@@ -40,16 +44,18 @@ export async function fetchActiveLeagueBundle(): Promise<{
   const { data, error } = await supabase
     .from('leagues')
     .select(`*, league_teams(${TEAM_SELECT}), league_matches(*)`)
-    .in('status', ['draft', 'group_stage', 'knockout'])
-    .order('created_at', { ascending: false })
+    .in('status', UNFINISHED)
+    .not('published_at', 'is', null)
     .order('created_at', { referencedTable: 'league_teams' })
     .order('created_at', { referencedTable: 'league_matches' })
-    .limit(1)
-    .maybeSingle()
   if (error) throw error
-  if (!data) return { league: null, teams: [], matches: [] }
 
-  const { league_teams: teams, league_matches: matches, ...league } = data
+  const rows = data ?? []
+  const current = pickCurrentLeague({ leagues: rows })
+  const row = rows.find((r) => r.id === current?.id)
+  if (!row) return { league: null, teams: [], matches: [] }
+
+  const { league_teams: teams, league_matches: matches, ...league } = row
 
   return {
     league,
@@ -91,4 +97,15 @@ export async function fetchAllLeagues(): Promise<League[]> {
     .order('created_at', { ascending: false })
   if (error) throw error
   return data ?? []
+}
+
+// Gold-final winners across every season, for the seasons list.
+export async function fetchSeasonChampions(): Promise<LeagueTeam[]> {
+  const { data, error } = await supabase
+    .from('league_matches')
+    .select(`winner:league_teams!winner_id(${TEAM_SELECT})`)
+    .eq('stage', 'gold_final')
+    .not('winner_id', 'is', null)
+  if (error) throw error
+  return parseLeagueTeams((data ?? []).flatMap((row) => (row.winner ? [row.winner] : [])))
 }

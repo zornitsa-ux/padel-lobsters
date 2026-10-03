@@ -6,8 +6,7 @@ const TABS: PageHeaderTab[] = [
   {
     label: 'Members',
     to: '/community',
-    isActive: (p) =>
-      p === '/community' || (p.startsWith('/community/') && !p.startsWith('/community/shop')),
+    isActive: (p) => p === '/community',
   },
   {
     label: 'Shop',

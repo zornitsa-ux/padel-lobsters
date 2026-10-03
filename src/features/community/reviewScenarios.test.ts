@@ -2,11 +2,9 @@ import { describe, it, expect } from 'vitest'
 import { REVIEW_SCENARIOS, corpReview } from './reviewScenarios'
 
 // corpReview is pure: same player + same match/registration/tournament data
-// always yields the same scenario. No alias map is passed anywhere below, so
-// the hardcoded historical TOURNAMENTS never contribute appearances — but they
-// do set the Ironman/Ghost denominator (3 non-ladies legacy events), which is
-// why the fixtures register for two DB tournaments: one is a 1-in-4 attendance
-// ratio and always trips the Ghost branch.
+// always yields the same scenario. The shared fixture has two past events, below
+// the three Ironman/Ghost need, so attendance branches only fire when a test
+// adds events of its own.
 
 const player = (over: Partial<{ id: string; name: string; playtomicLevel: number }> = {}) => ({
   id: 'p1',
@@ -103,8 +101,13 @@ describe('corpReview — scenario selection', () => {
     expect(r.hasLabel).toBe(false)
   })
 
-  it('calls a player who attended one of four known events a ghost', () => {
-    const r = corpReview(player(), [], [registrations[0]], [tournaments[0]])
+  it('calls a player who attended one of four past events a ghost', () => {
+    const fourEvents = ['t1', 't2', 't3', 't4'].map((id, i) => ({
+      id,
+      date: `2020-0${i + 1}-01`,
+      status: 'completed',
+    }))
+    const r = corpReview(player(), [], [registrations[0]], fourEvents)
 
     expect(r.scenario).toBe('ghost')
   })
@@ -131,5 +134,22 @@ describe('REVIEW_SCENARIOS', () => {
 
   it('gives every scenario a label', () => {
     expect(REVIEW_SCENARIOS.filter((s) => !s.label)).toEqual([])
+  })
+})
+
+describe('corpReview — attendance', () => {
+  const threeEvents = ['t1', 't2', 't3'].map((id, i) => ({
+    id,
+    date: `2020-0${i + 1}-01`,
+    status: 'completed',
+  }))
+
+  it('calls a player who attended every past event an ironman', () => {
+    const allThree = threeEvents.map((t) => ({
+      playerId: 'p1',
+      tournamentId: t.id,
+      status: 'registered',
+    }))
+    expect(corpReview(player(), [], allThree, threeEvents).scenario).toBe('ironman')
   })
 })

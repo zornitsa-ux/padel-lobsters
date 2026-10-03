@@ -5,6 +5,8 @@ import { SectionHeader } from '../../../components/ui/SectionHeader'
 import { GroupStandingsTable } from './GroupStandingsTable'
 import { LeagueMatchCard } from './LeagueMatchCard'
 import { KnockoutBracket } from './KnockoutBracket'
+import { ChampionBanner } from './ChampionBanner'
+import { divisionChampions } from '../domain/champions'
 import { computeGroupStandings } from '../domain/standings'
 import { sortMatchesDesc } from '../domain/matchDisplay'
 import type { LeagueTeam, LeagueMatch } from '../domain/types'
@@ -59,6 +61,12 @@ export function KnockoutContent({
 
   return (
     <>
+      <ChampionBanner
+        champions={divisionChampions({ divMatches })}
+        teamById={teamById}
+        onTeamClick={onTeamClick}
+      />
+
       <div className="card">
         <SectionHeader icon={<Trophy size={15} />} title="Bracket" action={bracketToggle} />
         {hasKnockout ? (

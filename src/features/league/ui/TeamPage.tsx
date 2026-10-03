@@ -6,6 +6,7 @@ import { LeagueMatchCard } from './LeagueMatchCard'
 import { getTeamRecord } from '../domain/standings'
 import { resolveTeamName } from '../domain/teamDisplay'
 import { formatSetDiff, sortMatchesDesc } from '../domain/matchDisplay'
+import { DIVISION_LABELS } from '../domain/types'
 import type { LeagueTeam, LeagueMatch } from '../domain/types'
 
 interface TeamPageProps {
@@ -60,7 +61,7 @@ export function TeamPage({ team, matches, teamById, onClose, onTeamClick }: Team
             variant={EXPERIENCE_BADGE[team.experience_level] ?? 'silver'}
             label={team.experience_level.charAt(0).toUpperCase() + team.experience_level.slice(1)}
           />
-          <Badge variant="info" label={team.division === 'mens' ? "Men's" : "Women's"} />
+          <Badge variant="info" label={DIVISION_LABELS[team.division]} />
         </div>
 
         {(team.spirit_animal || team.team_song) && (

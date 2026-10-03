@@ -3,19 +3,20 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { leagueKeys } from '../api/queryKeys'
 import { usePlayers } from '../../players/usePlayers'
 import {
-  fetchActiveLeague,
+  fetchCurrentLeague,
   fetchActiveLeagueBundle,
   fetchLeagueById,
   fetchLeagueTeams,
   fetchLeagueMatches,
   fetchAllLeagues,
+  fetchSeasonChampions,
 } from '../api/leagueQueries'
 
-export function useActiveLeague() {
-  return useQuery({ queryKey: leagueKeys.active(), queryFn: fetchActiveLeague })
+export function useCurrentLeague() {
+  return useQuery({ queryKey: leagueKeys.active(), queryFn: fetchCurrentLeague })
 }
 
-// Active league + its teams and matches in one request, for callers that need
+// Current league + its teams and matches in one request, for callers that need
 // all three at once (the home-screen card). Seeds the per-league caches on the
 // way through, so opening /league afterwards reuses this data instead of
 // refetching what we already have.
@@ -71,6 +72,10 @@ export function useLeagueMatches(leagueId: string | undefined) {
 
 export function useAllLeagues() {
   return useQuery({ queryKey: leagueKeys.all(), queryFn: fetchAllLeagues })
+}
+
+export function useSeasonChampions() {
+  return useQuery({ queryKey: leagueKeys.champions(), queryFn: fetchSeasonChampions })
 }
 
 // Delegates to the shared players roster cache so the league screen reuses the

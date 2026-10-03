@@ -10,13 +10,8 @@ import { TeamPage } from './ui/TeamPage'
 import { useLeagueById, useLeagueTeams, useLeagueMatches } from './hooks/useLeagueQueries'
 import { computeGroupStandings } from './domain/standings'
 import { sortMatchesAsc } from './domain/matchDisplay'
-import { leagueDivisions } from './domain/types'
+import { DIVISION_LABELS, leagueDivisions } from './domain/types'
 import type { Division, LeagueTeam } from './domain/types'
-
-const DIVISION_LABELS: Record<Division, string> = {
-  mens: "Men's",
-  womens: "Women's",
-}
 
 export default function GroupStageHistoryPage() {
   const { id } = useParams<{ id: string }>()

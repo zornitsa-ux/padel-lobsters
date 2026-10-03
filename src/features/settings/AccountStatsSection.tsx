@@ -4,14 +4,8 @@ import { usePlayers } from '../players/usePlayers'
 import { useAllMatches } from '../events/useMatches'
 import { useAllRegistrations } from '../events/useRegistrations'
 import { useTournaments } from '../events/useTournaments'
-import usePlayerAliases from '../../hooks/usePlayerAliases'
-import { buildPlayerStats, type HistoricalTournament } from '../../lib/playerStats'
-import { TOURNAMENTS as LEGACY_TOURNAMENTS_RAW } from '../../data/historicalTournaments'
+import { buildPlayerStats } from '../../lib/playerStats'
 import YourStatsCard from '../home/YourStatsCard'
-
-// Single assertion boundary for the untyped historical archive — same one
-// PlayerProfileDrawer uses.
-const LEGACY_TOURNAMENTS = LEGACY_TOURNAMENTS_RAW as unknown as HistoricalTournament[]
 
 export default function AccountStatsSection({ claimedId }: { claimedId: string | null }) {
   const navigate = useNavigate()
@@ -19,7 +13,6 @@ export default function AccountStatsSection({ claimedId }: { claimedId: string |
   const { data: players = [] } = usePlayers()
   const { data: allMatchesData = [] } = useAllMatches()
   const { data: allRegsData = [] } = useAllRegistrations()
-  const { playerAliases } = usePlayerAliases()
 
   const getTournamentRegistrations = useCallback(
     (id: string) => allRegsData.filter((r) => r.tournamentId === id),
@@ -28,15 +21,7 @@ export default function AccountStatsSection({ claimedId }: { claimedId: string |
 
   const myStats = useMemo(() => {
     if (!claimedId) return null
-    const base = buildPlayerStats(
-      claimedId,
-      allMatchesData,
-      tournaments,
-      allRegsData,
-      players,
-      playerAliases || {},
-      LEGACY_TOURNAMENTS,
-    )
+    const base = buildPlayerStats(claimedId, allMatchesData, tournaments, allRegsData)
 
     const nemesis =
       Object.entries(base.h2h)
@@ -82,15 +67,7 @@ export default function AccountStatsSection({ claimedId }: { claimedId: string |
       nemesis,
       bestPartner,
     }
-  }, [
-    claimedId,
-    allMatchesData,
-    tournaments,
-    allRegsData,
-    players,
-    playerAliases,
-    getTournamentRegistrations,
-  ])
+  }, [claimedId, allMatchesData, tournaments, allRegsData, players, getTournamentRegistrations])
 
   if (!claimedId || !myStats) return null
 

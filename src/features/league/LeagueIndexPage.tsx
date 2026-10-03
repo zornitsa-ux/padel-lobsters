@@ -1,53 +1,14 @@
-import { Navigate, Link } from 'react-router-dom'
-import { Badge } from '../../components/ui/Badge'
-import { PageHeader } from '../../components/ui/PageHeader'
+import { Navigate } from 'react-router-dom'
 import { Spinner } from '../../components/ui/Spinner'
-import type { BadgeProps } from '../../components/ui/Badge'
-import { useActiveLeague, useAllLeagues } from './hooks/useLeagueQueries'
+import { useCurrentLeague } from './hooks/useLeagueQueries'
+import { SeasonsList } from './SeasonsPage'
 
-function leagueBadge(status: string): { variant: BadgeProps['variant']; label: string } {
-  switch (status) {
-    case 'draft':
-      return { variant: 'league-draft', label: 'Draft' }
-    case 'group_stage':
-      return { variant: 'league-group-stage', label: 'Group Stage' }
-    case 'knockout':
-      return { variant: 'league-knockout', label: 'Knockout' }
-    default:
-      return { variant: 'league-completed', label: 'Completed' }
-  }
-}
-
+// The League tab: straight to the current season, or the seasons list when
+// there isn't one. The list itself always lives at /league/seasons.
 export default function LeagueIndexPage() {
-  const { data: active, isLoading: loadingActive } = useActiveLeague()
-  const { data: allLeagues = [], isLoading: loadingAll } = useAllLeagues()
+  const { data: current, isLoading } = useCurrentLeague()
 
-  if (loadingActive) return <Spinner />
-  if (active) return <Navigate to={`/league/${active.id}`} replace />
-
-  return (
-    <div className="-mx-4">
-      <PageHeader title="Leagues" />
-      <div className="px-4 pt-4 space-y-4">
-        {loadingAll ? (
-          <Spinner />
-        ) : allLeagues.length === 0 ? (
-          <p className="text-sm text-lob-muted text-center py-8">No leagues yet.</p>
-        ) : (
-          <div className="divide-y divide-gray-100">
-            {allLeagues.map((league) => (
-              <Link
-                key={league.id}
-                to={`/league/${league.id}`}
-                className="flex items-center justify-between py-3"
-              >
-                <span className="font-medium text-lob-dark">🦞 {league.name}</span>
-                <Badge {...leagueBadge(league.status)} />
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  )
+  if (isLoading) return <Spinner />
+  if (current) return <Navigate to={`/league/${current.id}`} replace />
+  return <SeasonsList />
 }

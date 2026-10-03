@@ -1,157 +1,71 @@
-import React from 'react'
-import { ChevronDown, ChevronUp, User, RotateCcw } from 'lucide-react'
+import { User } from 'lucide-react'
+import Avatar from '../../components/ui/Avatar'
 import { FlagImg } from '../../components/ui/CountryPicker'
-import { PlayerRow } from '../../components/ui/PlayerRow'
 import { EmptyState } from '../../components/ui/EmptyState'
-import { corpReview, type ReviewRegistration, type ReviewTournament } from './reviewScenarios'
-import PlayerProfileDrawer from './PlayerProfileDrawer'
+import { LinkCard } from '../../components/ui/LinkCard'
+import { levelBadgeClass } from './playerConstants'
 import type { CommunityPlayer, OrderedPlayer } from './playersSelectors'
-import type { DbMatchForStats } from '../../lib/playerStats'
-import type { EventNavigate } from '../events/eventHelpers'
 
 interface PlayersListProps {
   orderedForRender: OrderedPlayer<CommunityPlayer>[]
-  hasPlayers: boolean
-  focusPlayerId?: string | null
-  focusRef?: React.RefObject<HTMLDivElement> | null
-  expandedId: string | null
-  setExpandedId: (id: string | null) => void
-  isAdmin: boolean
-  levelBadge: (level: number) => string
   displayName: (player: CommunityPlayer) => string
-  matches: DbMatchForStats[]
-  registrations: ReviewRegistration[]
-  tournaments: ReviewTournament[]
-  playerAliases: Record<string, string>
-  players: CommunityPlayer[]
-  onNavigate?: EventNavigate
-  onEdit: (player: CommunityPlayer) => void
-  onDelete: (id: string) => void
-  onRegeneratePin: (player: CommunityPlayer) => void
+  emptyTitle?: string
+}
+
+function PlayerName({
+  player,
+  name,
+  isSelf,
+}: {
+  player: CommunityPlayer
+  name: string
+  isSelf: boolean
+}) {
+  return (
+    <span className="flex items-center gap-1.5 min-w-0">
+      {player.country && <FlagImg code={player.country} />}
+      <span className="truncate">{name}</span>
+      {player.isLeftHanded && (
+        <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-semibold">
+          L
+        </span>
+      )}
+      {isSelf && (
+        <span className="text-[10px] bg-lob-teal text-white px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider">
+          You
+        </span>
+      )}
+    </span>
+  )
 }
 
 export default function PlayersList({
   orderedForRender,
-  hasPlayers,
-  focusPlayerId,
-  focusRef,
-  expandedId,
-  setExpandedId,
-  isAdmin,
-  levelBadge,
   displayName,
-  matches,
-  registrations,
-  tournaments,
-  playerAliases,
-  players,
-  onNavigate,
-  onEdit,
-  onDelete,
-  onRegeneratePin,
+  emptyTitle = 'No players yet. Be the first to join!',
 }: PlayersListProps) {
+  if (orderedForRender.length === 0) {
+    return <EmptyState icon={<User size={36} />} title={emptyTitle} />
+  }
   return (
     <div className="space-y-2">
-      {!hasPlayers && (
-        <EmptyState icon={<User size={36} />} title="No players yet. Be the first to join!" />
-      )}
-
-      {orderedForRender.map(({ p, idx, isSelf }) => {
-        const expanded = expandedId === p.id
+      {orderedForRender.map(({ p, isSelf }) => {
+        const level = p.playtomicLevel || 0
         return (
-          <div
+          <LinkCard
             key={p.id}
-            ref={p.id === focusPlayerId ? focusRef : undefined}
-            className={`card transition-all${isSelf ? ' ring-2 ring-lob-teal/40' : ''}`}
-          >
-            <div className="w-full" onClick={() => setExpandedId(expanded ? null : p.id)}>
-              <PlayerRow
-                player={p}
-                avatarSize="lg"
-                prefix={
-                  <span className="text-xs font-bold text-lob-muted w-5 text-center flex-shrink-0">
-                    #{idx + 1}
-                  </span>
-                }
-                name={
-                  <>
-                    {p.country && <FlagImg code={p.country} />}
-                    {displayName(p)}
-                    {p.isLeftHanded && (
-                      <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-semibold ml-0.5">
-                        L
-                      </span>
-                    )}
-                    {isSelf && (
-                      <span className="text-[10px] bg-lob-teal text-white px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider ml-0.5">
-                        You
-                      </span>
-                    )}
-                  </>
-                }
-                nameClassName="font-semibold text-lob-dark truncate flex items-center gap-1.5"
-                trailing={
-                  <>
-                    <div className="flex-shrink-0 text-right flex flex-col items-end gap-1">
-                      <span
-                        className={`text-sm font-bold px-2.5 py-1 rounded-lg ${levelBadge(p.playtomicLevel || 0)}`}
-                      >
-                        {(p.playtomicLevel || 0).toFixed(1)}
-                      </span>
-                      {isAdmin && (p.pin_changes ?? 0) > 0 && (
-                        <span
-                          className="text-[10px] font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded-md flex items-center gap-1"
-                          title={`PIN reset ${p.pin_changes} time${p.pin_changes === 1 ? '' : 's'}`}
-                        >
-                          <RotateCcw size={10} />
-                          {p.pin_changes}
-                        </span>
-                      )}
-                    </div>
-                    {expanded ? (
-                      <ChevronUp size={16} className="text-lob-muted flex-shrink-0" />
-                    ) : (
-                      <ChevronDown size={16} className="text-lob-muted flex-shrink-0" />
-                    )}
-                  </>
-                }
-              />
-
-              <div className="mt-2 pl-8">
-                <p className="text-[10px] font-bold text-lob-teal uppercase tracking-wider mb-0.5">
-                  Lobster Review
-                </p>
-                {(() => {
-                  const r = corpReview(p, matches, registrations, tournaments, playerAliases)
-                  return (
-                    <p className="text-xs text-lob-muted leading-relaxed">
-                      {r.hasLabel && (
-                        <span className="font-bold text-lob-teal">{r.scenarioLabel}</span>
-                      )}
-                      {r.hasLabel ? ' — ' : ''}
-                      {r.body}
-                    </p>
-                  )
-                })()}
-              </div>
-            </div>
-
-            {expanded && (
-              <PlayerProfileDrawer
-                player={p}
-                players={players}
-                matches={matches}
-                tournaments={tournaments}
-                registrations={registrations}
-                playerAliases={playerAliases}
-                isAdmin={isAdmin}
-                onNavigate={onNavigate}
-                onEdit={onEdit}
-                onDelete={onDelete}
-                onRegeneratePin={onRegeneratePin}
-              />
-            )}
-          </div>
+            to={`/community/${p.id}`}
+            className={isSelf ? 'ring-2 ring-lob-teal/40' : undefined}
+            leading={<Avatar player={p} size="md" />}
+            title={<PlayerName player={p} name={displayName(p)} isSelf={isSelf} />}
+            trailing={
+              <span
+                className={`text-sm font-bold px-2.5 py-1 rounded-lg ${levelBadgeClass(level)}`}
+              >
+                {level.toFixed(1)}
+              </span>
+            }
+          />
         )
       })}
     </div>

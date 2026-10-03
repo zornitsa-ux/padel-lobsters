@@ -4,17 +4,14 @@ import { useTournaments } from '../events/useTournaments'
 import { usePlayers } from '../players/usePlayers'
 import { useAllRegistrations } from '../events/useRegistrations'
 import { useAllMatches } from '../events/useMatches'
-import usePlayerAliases from '../../hooks/usePlayerAliases'
 import { useMerchInterests } from '../merch/useMerch'
 import { readMerchLastChecked } from '../merch/lastChecked'
 import { SignInBanner } from '../../components/ui/AuthGate'
-import PlayerAliasMatcher from '../../components/PlayerAliasMatcher'
 import ReviewBreakdownModal from '../community/ReviewBreakdownModal'
 import type { ReviewBucket } from '../community/ReviewBreakdownModal'
 import { REVIEW_SCENARIOS, corpReview } from '../community/reviewScenarios'
 import type { LucideIcon } from 'lucide-react'
 import {
-  GitMerge,
   Users,
   Calculator,
   ShoppingBag,
@@ -22,9 +19,10 @@ import {
   ChevronRight,
   AlertCircle,
   Info,
+  Trophy,
 } from 'lucide-react'
-import LeagueAdminSection from '../league/LeagueAdminSection'
 import { PageHeader } from '../../components/ui/PageHeader'
+import { LinkCard, LinkCardIcon } from '../../components/ui/LinkCard'
 import type { EventNavigate } from '../events/eventHelpers'
 
 type AdminToolsProps = {
@@ -35,10 +33,8 @@ type ToolCard = {
   id: string
   title: string
   description: string
-  actionLabel: string
   icon: LucideIcon
-  onClick: () => void
-}
+} & ({ to: string } | { onClick: () => void })
 
 export default function AdminTools({ onNavigate }: AdminToolsProps) {
   const { session } = useApp()
@@ -47,8 +43,6 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
   const { data: allRegs = [] } = useAllRegistrations()
   const { data: allMatches = [] } = useAllMatches()
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
-  const { playerAliases, setPlayerAlias, removePlayerAlias } = usePlayerAliases()
-  const [showAliasMatcher, setShowAliasMatcher] = useState(false)
   const [showReviewBreakdown, setShowReviewBreakdown] = useState(false)
   const { data: interests = [] } = useMerchInterests()
 
@@ -94,7 +88,7 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
       byScenario.set(s.id, { id: s.id, label: s.label, players: [], samples: new Map() })
     })
     activePlayers.forEach((p) => {
-      const r = corpReview(p, allMatches, allRegs, tournaments, playerAliases)
+      const r = corpReview(p, allMatches, allRegs, tournaments)
       let bucket = byScenario.get(r.scenario)
       if (!bucket) {
         bucket = { id: r.scenario, label: r.scenarioLabel, players: [], samples: new Map() }
@@ -108,7 +102,7 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
     return [...byScenario.values()]
       .filter((b) => b.players.length > 0)
       .sort((a, b) => b.players.length - a.players.length)
-  }, [activePlayers, allMatches, allRegs, tournaments, playerAliases])
+  }, [activePlayers, allMatches, allRegs, tournaments])
 
   const GENERIC_IDS = new Set(['level-low', 'level-mid', 'level-high', 'level-elite', 'welcome'])
   const genericCount = reviewBreakdown
@@ -119,20 +113,10 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
   const tools = useMemo<ToolCard[]>(
     () => [
       {
-        id: 'match-history',
-        title: 'Match History Matcher',
-        description:
-          'Map historical tournament names to current player profiles so stats and history are accurate.',
-        icon: GitMerge,
-        actionLabel: 'Open tool',
-        onClick: () => setShowAliasMatcher(true),
-      },
-      {
         id: 'review-breakdown',
         title: 'Lobster Review Breakdown',
         description: `${personalisedCount} personalised vs ${genericCount} generic reviews. Inspect scenarios and message variants.`,
         icon: BarChart3,
-        actionLabel: 'Open breakdown',
         onClick: () => setShowReviewBreakdown(true),
       },
       {
@@ -141,35 +125,39 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
         description:
           'Review pending signups, approve/reject requests, or link them to an existing player.',
         icon: Users,
-        actionLabel: 'Go to Players',
-        onClick: () => onNavigate?.('players'),
+        to: '/community',
       },
       {
         id: 'ratings',
         title: 'Ratings & Admin Settings',
         description: 'Manage admin settings and run rating recompute from a single place.',
         icon: Calculator,
-        actionLabel: 'Go to Account',
-        onClick: () => onNavigate?.('settings'),
+        to: '/account',
       },
       {
         id: 'merch',
         title: 'Merch Admin',
         description: 'Manage shop items, order tracking, and tournament prizes.',
         icon: ShoppingBag,
-        actionLabel: 'Go to Shop',
-        onClick: () => onNavigate?.('merch'),
+        to: '/community/shop',
       },
       {
         id: 'lobster-way',
         title: 'The Lobster Way',
         description: 'Add, edit, reorder, or remove FAQ categories and questions.',
         icon: Info,
-        actionLabel: 'Edit content',
-        onClick: () => onNavigate?.('lobster-way-admin'),
+        to: '/admin/lobster-way',
+      },
+      {
+        id: 'league',
+        title: 'League',
+        description:
+          'Teams, scores, brackets and seasons are managed from the Manage button on each league.',
+        icon: Trophy,
+        to: '/league',
       },
     ],
-    [onNavigate, personalisedCount, genericCount],
+    [personalisedCount, genericCount],
   )
 
   if (!isAdmin) {
@@ -236,39 +224,20 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
         )}
 
         <div className="space-y-2">
-          {tools.map((tool) => {
-            const Icon = tool.icon
-            return (
-              <div key={tool.id} className="card">
-                <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-lob-cream text-lob-teal flex items-center justify-center flex-shrink-0">
-                    <Icon size={16} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-lob-dark">{tool.title}</p>
-                    <p className="text-xs text-lob-muted mt-0.5">{tool.description}</p>
-                    <button
-                      onClick={tool.onClick}
-                      className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-lob-teal hover:underline"
-                    >
-                      {tool.actionLabel} <ChevronRight size={12} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )
-          })}
+          {tools.map(({ id, title, description, icon: Icon, ...action }) => (
+            <LinkCard
+              key={id}
+              {...action}
+              leading={
+                <LinkCardIcon>
+                  <Icon size={16} />
+                </LinkCardIcon>
+              }
+              title={title}
+              subtitle={description}
+            />
+          ))}
         </div>
-
-        {showAliasMatcher && (
-          <PlayerAliasMatcher
-            players={players}
-            playerAliases={playerAliases}
-            setPlayerAlias={setPlayerAlias}
-            removePlayerAlias={removePlayerAlias}
-            onClose={() => setShowAliasMatcher(false)}
-          />
-        )}
 
         {showReviewBreakdown && (
           <ReviewBreakdownModal
@@ -276,10 +245,6 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
             onClose={() => setShowReviewBreakdown(false)}
           />
         )}
-
-        <div className="pt-2 border-t border-gray-100">
-          <LeagueAdminSection />
-        </div>
       </div>
     </div>
   )

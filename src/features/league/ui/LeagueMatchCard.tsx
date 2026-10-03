@@ -10,6 +10,8 @@ interface LeagueMatchCardProps {
   compact?: boolean
   onTeamClick?: (team: LeagueTeam) => void
   action?: React.ReactNode
+  /** Small heading above the teams, e.g. the match stage. */
+  label?: string
 }
 
 function formatSetScores(sets: SetScore[]): string {
@@ -34,6 +36,7 @@ export function LeagueMatchCard({
   compact = false,
   onTeamClick,
   action,
+  label,
 }: LeagueMatchCardProps) {
   const isByeMatch = match.team2_id === null
   const played = isByeMatch || (match.set_scores !== null && match.set_scores.length > 0)
@@ -80,6 +83,11 @@ export function LeagueMatchCard({
 
   return (
     <div className="rounded-xl bg-white border border-gray-100 px-4 py-3">
+      {label && (
+        <p className="text-[10px] font-bold uppercase tracking-wider text-lob-muted mb-1">
+          {label}
+        </p>
+      )}
       <TeamRow team={team1} isWinner={team1Won} />
 
       <div className="text-[10px] font-bold text-lob-muted text-center my-1">vs</div>

@@ -18,11 +18,6 @@ vi.mock('../../context/useApp', () => ({
     role: 'admin',
   }),
 }))
-vi.mock('../events/useTournaments', () => ({ useTournaments: () => ({ data: [] }) }))
-vi.mock('../events/useMatches', () => ({ useAllMatches: () => ({ data: [] }) }))
-vi.mock('../events/useRegistrations', () => ({ useAllRegistrations: () => ({ data: [] }) }))
-vi.mock('../../hooks/usePlayerAliases', () => ({ default: () => ({ playerAliases: {} }) }))
-vi.mock('../../lib/confirmBus', () => ({ useConfirm: () => vi.fn() }))
 vi.mock('../players/usePlayers', () => ({
   usePlayers: () => ({ data: [playerA, playerB] }),
   usePlayerPii: () => ({ data: undefined, isLoading: false, isError: false, refetch: vi.fn() }),
@@ -37,17 +32,20 @@ vi.mock('../players/usePlayers', () => ({
   useAvatarUpload: () => ({ mutateAsync: vi.fn() }),
 }))
 vi.mock('./playerQueries', () => ({ randomAvatarFilename: () => 'x.webp' }))
-vi.mock('./PlayersList', () => ({
-  default: ({ onEdit }: { onEdit: (p: typeof playerA) => void }) => (
-    <div>
-      <button onClick={() => onEdit(playerA)}>edit A</button>
-      <button onClick={() => onEdit(playerB)}>edit B</button>
-    </div>
-  ),
-}))
-vi.mock('./LinkPlayerModal', () => ({ default: () => null }))
 
-import Players from './Players'
+import PlayerForm from './PlayerForm'
+import { usePlayerEditor } from './usePlayerEditor'
+
+function Harness() {
+  const { openEdit, formProps } = usePlayerEditor({ isAdmin: true })
+  return (
+    <>
+      <button onClick={() => openEdit(playerA)}>edit A</button>
+      <button onClick={() => openEdit(playerB)}>edit B</button>
+      <PlayerForm {...formProps} />
+    </>
+  )
+}
 
 // A promise the test can resolve on demand, so it can control ordering.
 function deferred<T>() {
@@ -64,7 +62,7 @@ beforeEach(() => {
 
 afterEach(cleanup)
 
-describe('Players — openEdit request ordering', () => {
+describe('usePlayerEditor — openEdit request ordering', () => {
   it('a slower resolve for the first-opened player does not overwrite a later one', async () => {
     const pendingA = deferred<{ email: string; phone: string; birthday: string; notes: string }>()
     const pendingB = deferred<{ email: string; phone: string; birthday: string; notes: string }>()
@@ -72,7 +70,7 @@ describe('Players — openEdit request ordering', () => {
       id === 'a' ? pendingA.promise : pendingB.promise,
     )
 
-    render(<Players />)
+    render(<Harness />)
 
     fireEvent.click(screen.getByText('edit A'))
     fireEvent.click(screen.getByText('edit B'))
