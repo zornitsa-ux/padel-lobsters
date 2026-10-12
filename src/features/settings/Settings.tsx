@@ -13,6 +13,7 @@ import { isE164 } from '../../lib/whatsapp'
 import { errorMessage } from '../../lib/errors'
 import DEFAULT_TIPS from '../../data/padelTips'
 import { processAvatar } from '../../lib/processAvatar'
+import { ownAvatarFilename } from '../players/playerQueries'
 import {
   LOBBY_PROMPTS,
   type EditingTip,
@@ -190,7 +191,7 @@ export default function Settings() {
             file: processed,
             // Stable filename (upsert) so a player only ever has one avatar
             // object; the cache buster makes the CDN serve the new one.
-            filename: `player-${myPlayer.id}.webp`,
+            filename: ownAvatarFilename(myPlayer.id),
           })
           avatarUrl = `${publicUrl}?v=${Date.now()}`
         } catch (err) {
