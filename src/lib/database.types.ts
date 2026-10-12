@@ -2071,6 +2071,7 @@ export type Database = {
       }
       self_signup_player: {
         Args: {
+          input_claim_placeholder_id?: string
           input_device_id?: string
           input_payload: Json
           input_user_agent?: string

@@ -1,8 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useApp } from '../context/useApp'
 import { usePlayers, usePlayerActions, useAvatarUpload } from '../features/players/usePlayers'
-import { randomAvatarFilename } from '../features/players/playerQueries'
+import { randomAvatarFilename, setOwnAvatar } from '../features/players/playerQueries'
+import { playerKeys } from '../features/players/playerKeys'
+import { useQueryClient } from '@tanstack/react-query'
+import { parseLevel } from '../lib/parseLevel'
 import type { Player } from '../lib/normalise'
+import type { PlayerInput } from '../features/players/playerQueries'
 import { isE164 } from '../lib/whatsapp'
 import { processAvatar } from '../lib/processAvatar'
 import { ArrowLeft, UserPlus, Check, Loader2, Copy, User, Camera } from 'lucide-react'
@@ -55,6 +59,17 @@ const LOBBY_PROMPTS = [
   { label: '🤝 Personal Pledge', placeholder: 'What do you bring to the court?' },
   { label: '👀 Scouting Report', placeholder: 'Describe your playing style in one line…' },
 ]
+const ALREADY_A_LOBSTER =
+  'A Lobster with this name already has a profile. If that’s you, sign in with your PIN or use “Forgot my PIN”.'
+
+function signupErrorText(message: string): string {
+  if (message.includes('rate limited'))
+    return "We've seen too many signups from this device today. Please try again tomorrow or ask an admin to add you."
+  if (message.includes('placeholder not claimable'))
+    return 'We couldn’t link this to your existing profile. Please ask an admin to finish it for you.'
+  return message || 'Could not create your profile — please try again.'
+}
+
 const randomPrompt = () => LOBBY_PROMPTS[Math.floor(Math.random() * LOBBY_PROMPTS.length)]
 
 const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null
@@ -67,6 +82,7 @@ function readSignupResult(result: unknown): {
   errorMessage: string
   wasExisting: boolean
   pin: string
+  playerId: string
 } {
   const root = isRecord(result) ? result : {}
   const payload = isRecord(root.data) ? root.data : null
@@ -76,6 +92,7 @@ function readSignupResult(result: unknown): {
     errorMessage: typeof error?.message === 'string' ? error.message : '',
     wasExisting: payload?.was_existing === true,
     pin: typeof payload?.pin === 'string' ? payload.pin : '',
+    playerId: typeof payload?.player_id === 'string' ? payload.player_id : '',
   }
 }
 
@@ -120,6 +137,8 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
   const { updatePlayer } = usePlayerActions({ session, role })
   const { data: players = [] } = usePlayers()
   const avatarUpload = useAvatarUpload()
+  const qc = useQueryClient()
+  const isAdmin = role === 'admin'
 
   const [form, setForm] = useState(emptyForm)
   // useState's lazy initializer rolls a prompt on first mount, but in
@@ -148,6 +167,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
   // immediately.
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+  const [avatarWarning, setAvatarWarning] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Post-submit screen — { pin, wasExisting }. When set we show the PIN
@@ -186,7 +206,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
   // populated yet. Their PIN is preserved; submit switches to updatePlayer.
   const acceptMerge = () => {
     const p = mergePlayer
-    if (!p) return
+    if (!p || !canMerge(p)) return
     const nameParts = (p.name || '').trim().split(/\s+/)
     setForm({
       firstName: nameParts[0] || '',
@@ -207,6 +227,27 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
     setMergePlayer(null)
   }
 
+  // Admins can merge onto any row. Everyone else is anonymous at this point
+  // and may only claim an unclaimed placeholder (server-side, in
+  // self_signup_player); an active profile needs its PIN.
+  const canMerge = (p: Player) => isAdmin || p.status === 'placeholder'
+
+  // Runs after the PIN is shown. Signing in first is what lets a brand-new
+  // player write their own avatar (storage RLS: player-<auth.uid()>.webp).
+  // May outlive this component: the gate unmounts it once the role flips.
+  const finishSignup = async ({ pin, playerId }: { pin: string; playerId: string }) => {
+    const login = await loginWithPin(pin)
+    if (!login?.success || !avatarFile) return
+    try {
+      const processed = await processAvatar(avatarFile)
+      await setOwnAvatar({ playerId, file: processed })
+      await qc.invalidateQueries({ queryKey: playerKeys.all() })
+    } catch (err) {
+      console.error('Avatar upload after signup failed:', err)
+      setAvatarWarning(true)
+    }
+  }
+
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -217,6 +258,32 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
       setAvatarPreview(typeof result === 'string' ? result : null)
     }
     reader.readAsDataURL(file)
+  }
+
+  // Admin completing someone else's existing row. Admin may write any
+  // avatar filename, so the photo goes up before the profile update.
+  const adminCompleteProfile = async ({ id, data }: { id: string; data: PlayerInput }) => {
+    let avatarUrl = data.avatarUrl || ''
+    if (avatarFile) {
+      try {
+        const processed = await processAvatar(avatarFile)
+        avatarUrl = await avatarUpload.mutateAsync({
+          file: processed,
+          filename: randomAvatarFilename(),
+        })
+      } catch (err) {
+        console.error('Avatar upload error:', err)
+      }
+    }
+    await updatePlayer(id, { ...data, avatarUrl })
+    const pin = (players || []).find((p) => String(p.id) === String(id))?.pin || ''
+    if (!pin) {
+      setError(
+        "We found your existing profile but couldn't read your PIN. Ask an admin to resend it.",
+      )
+      return
+    }
+    setPinReveal({ pin, wasExisting: true })
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -235,6 +302,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
       const duplicate = (players || []).find((p) => (p.name || '').trim().toLowerCase() === typed)
       if (duplicate) {
         setMergePlayer(duplicate)
+        if (!canMerge(duplicate)) setError(ALREADY_A_LOBSTER)
         return
       }
     }
@@ -262,97 +330,51 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
 
     setSaving(true)
     try {
-      // Avatar upload — same bucket and naming pattern the in-app form uses.
-      let avatarUrl = form.avatarUrl || ''
-      if (avatarFile) {
-        try {
-          const processed = await processAvatar(avatarFile)
-          try {
-            avatarUrl = await avatarUpload.mutateAsync({
-              file: processed,
-              filename: randomAvatarFilename(),
-            })
-          } catch (uploadError) {
-            // Non-fatal — signup still proceeds without the photo.
-            console.error('Avatar upload error:', uploadError)
-          }
-        } catch (err) {
-          // Non-fatal — signup still proceeds without the photo if the
-          // image can't be decoded (e.g. unusual HEIC variant on Chrome).
-          console.error('Avatar processing error:', err)
-        }
-      }
-
       const data = {
         name: combinedName,
         email: form.email.trim(),
         phone: form.phone.trim(),
-        playtomicLevel: parseFloat(form.playtomicLevel) || 0,
+        playtomicLevel: parseLevel(form.playtomicLevel),
         notes: form.notes || '',
         gender: form.gender || '',
         isLeftHanded: form.isLeftHanded || false,
         country: form.country || '',
-        avatarUrl,
+        avatarUrl: form.avatarUrl || '',
         birthday: form.birthday || null,
         preferredPosition: form.preferredPosition || '',
         taglineLabel: lobbyPrompt.label,
         status: 'active',
       }
 
-      if (editId) {
-        // Merge path — write onto the existing row. PIN stays untouched.
-        await updatePlayer(editId, data)
-        const existing = (players || []).find((p) => String(p.id) === String(editId))
-        const pin = existing?.pin || ''
-        if (!pin) {
-          // Merge target has no PIN on record (unusual — would mean the
-          // roster row is missing it locally). Surface the problem
-          // instead of showing an empty reveal box.
-          setError(
-            "We found your existing profile but couldn't read your PIN. " +
-              'Ask an admin to resend it.',
-          )
-          return
-        }
-        setPinReveal({ pin, wasExisting: true })
-        // Auto-login is best-effort — the Continue button on the success
-        // screen retries explicitly if this fails (e.g. verify_player_pin
-        // timed out before the v27 migration ran).
-        loginWithPin(pin).catch(() => {})
-      } else {
-        // Self-serve: route through selfSignup (anon-callable RPC), NOT
-        // addPlayer — addPlayer requires the admin PIN and would refuse
-        // for a brand-new user with "Admin sign-in required to add a
-        // player." (the original production bug fixed in migration 0014).
-        const signup = readSignupResult(await selfSignup(data))
-        if (signup.failed) {
-          // Rate-limit, invalid input, network — show the message
-          // straight from the RPC so the user has something actionable.
-          setError(
-            signup.errorMessage.includes('rate limited')
-              ? "We've seen too many signups from this device today. Please try again tomorrow or ask an admin to add you."
-              : signup.errorMessage || 'Could not create your profile — please try again.',
-          )
-          return
-        }
-        if (signup.wasExisting) {
-          // Email is already on an active roster row. The RPC deliberately
-          // does NOT return the PIN to a stranger holding the email —
-          // route the user to the Forgot-my-PIN flow instead.
-          setError(
-            'An account with this email already exists. Use “Forgot my PIN” on the sign-in screen to recover it.',
-          )
-          return
-        }
-        if (!signup.pin) {
-          setError(
-            "Your profile was created but we couldn't read the PIN back. Please ask an admin to resend it.",
-          )
-          return
-        }
-        setPinReveal({ pin: signup.pin, wasExisting: false })
-        loginWithPin(signup.pin).catch(() => {})
+      if (editId && isAdmin) {
+        await adminCompleteProfile({ id: editId, data })
+        return
       }
+
+      // Self-serve: route through selfSignup (anon-callable RPC), NOT
+      // addPlayer — addPlayer requires the admin PIN. With editId set this
+      // claims the placeholder row instead of inserting a new one.
+      const signup = readSignupResult(await selfSignup({ ...data, claimPlaceholderId: editId }))
+      if (signup.failed) {
+        setError(signupErrorText(signup.errorMessage))
+        return
+      }
+      if (signup.wasExisting) {
+        // The RPC deliberately does NOT return the PIN to a stranger
+        // holding the email — route the user to Forgot-my-PIN instead.
+        setError(
+          'An account with this email already exists. Use “Forgot my PIN” on the sign-in screen to recover it.',
+        )
+        return
+      }
+      if (!signup.pin || !signup.playerId) {
+        setError(
+          "Your profile was created but we couldn't read the PIN back. Please ask an admin to resend it.",
+        )
+        return
+      }
+      setPinReveal({ pin: signup.pin, wasExisting: false })
+      finishSignup({ pin: signup.pin, playerId: signup.playerId }).catch(() => {})
     } catch (err) {
       console.error('Signup error:', err)
       setError('Something went wrong — please try again.')
@@ -454,6 +476,12 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
             This PIN unlocks the app on any device. Save it in your password manager — we don't
             email or text it automatically.
           </p>
+
+          {avatarWarning && (
+            <p className="text-xs text-amber-800 bg-amber-50 rounded-lg p-2">
+              Your profile is saved, but the photo didn’t upload. You can add it from your profile.
+            </p>
+          )}
 
           {continueError && (
             <p className="text-xs text-red-600 bg-red-50 rounded-lg p-2">{continueError}</p>
@@ -561,7 +589,12 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
 
           {/* Merge banner — same visual as the in-app form so veterans who've
               played before recognise the "complete your profile" flow. */}
-          {mergePlayer && !editId && (
+          {mergePlayer && !editId && !canMerge(mergePlayer) && (
+            <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-xl p-3">
+              {ALREADY_A_LOBSTER}
+            </p>
+          )}
+          {mergePlayer && !editId && canMerge(mergePlayer) && (
             <div className="rounded-2xl bg-amber-50 border border-amber-200 p-4 space-y-3">
               <div className="flex items-start gap-3">
                 <span className="text-2xl">🦞</span>

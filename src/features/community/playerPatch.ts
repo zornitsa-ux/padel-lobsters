@@ -1,6 +1,7 @@
 import type { PlayerFormState } from './playerConstants'
 import type { CommunityPlayer } from './playersSelectors'
 import type { PlayerInput } from '../players/playerQueries'
+import { parseLevel } from '../../lib/parseLevel'
 
 const normText = (v: string | number | null | undefined): string => String(v ?? '').trim()
 
@@ -39,7 +40,7 @@ export function buildPlayerEditPatch({
   activate,
 }: BuildEditPatchArgs): PlayerInput {
   const patch: PlayerInput = {}
-  const parsedLevel = parseFloat(String(form.playtomicLevel)) || 0
+  const parsedLevel = parseLevel(form.playtomicLevel)
 
   if (activate && source.status === 'pending') patch.status = 'active'
 
