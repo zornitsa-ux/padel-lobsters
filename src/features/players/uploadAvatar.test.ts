@@ -4,10 +4,12 @@ import { mockSupabase } from '../../test/mockSupabase'
 const h = vi.hoisted(() => ({
   uploads: [] as { bucket: string; filename: string; options: unknown }[],
   uploadResult: { current: { error: null as unknown } },
+  rpc: vi.fn(),
 }))
 
 vi.mock('../../supabase', () =>
   mockSupabase({
+    rpc: h.rpc,
     storage: {
       from: (bucket: string) => ({
         upload: (filename: string, _file: Blob, options: unknown) => {
@@ -22,11 +24,13 @@ vi.mock('../../supabase', () =>
   }),
 )
 
-import { randomAvatarFilename, uploadAvatar } from './playerQueries'
+import { randomAvatarFilename, setOwnAvatar, uploadAvatar } from './playerQueries'
 
 beforeEach(() => {
   h.uploads.length = 0
   h.uploadResult.current = { error: null }
+  h.rpc.mockReset()
+  h.rpc.mockResolvedValue({ error: null })
 })
 
 describe('uploadAvatar', () => {
@@ -60,5 +64,29 @@ describe('randomAvatarFilename', () => {
 
     expect(a).toMatch(/^player-\d+-[a-z0-9]+\.webp$/)
     expect(a).not.toBe(b)
+  })
+})
+
+describe('setOwnAvatar', () => {
+  const file = new Blob(['x'], { type: 'image/webp' })
+
+  it('uploads to player-<id>.webp, the only name storage RLS allows a player', async () => {
+    await setOwnAvatar({ playerId: 'abc-123', file })
+
+    expect(h.uploads[0]).toMatchObject({ bucket: 'avatars', filename: 'player-abc-123.webp' })
+  })
+
+  it('saves a cache-busted URL through update_my_profile', async () => {
+    const url = await setOwnAvatar({ playerId: 'abc-123', file })
+
+    expect(url).toMatch(/^https:\/\/cdn\.test\/avatars\/player-abc-123\.webp\?v=\d+$/)
+    expect(h.rpc).toHaveBeenCalledWith('update_my_profile', { input_payload: { avatar_url: url } })
+  })
+
+  it('leaves the profile alone when the upload is rejected', async () => {
+    h.uploadResult.current = { error: { message: 'new row violates row-level security policy' } }
+
+    await expect(setOwnAvatar({ playerId: 'abc-123', file })).rejects.toBeTruthy()
+    expect(h.rpc).not.toHaveBeenCalled()
   })
 })

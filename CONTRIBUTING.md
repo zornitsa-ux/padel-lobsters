@@ -45,6 +45,21 @@ npx supabase db push
 migrations. If a migration fails on production, do not edit or delete the
 failed file — write a new migration that fixes the issue.
 
+### Deploying Edge Functions
+
+Also manual, and also only from `main` after merge. A PR that changes
+anything under `supabase/functions/<name>/` must be followed by:
+
+```bash
+git checkout main && git pull
+npx supabase functions deploy <name>
+```
+
+Nothing else deploys them, so a merged change stays dormant until someone
+runs this. `verify-pin` sat on a May build for months this way, resetting
+players' auth emails on every PIN sign-in. When a PR touches both a function
+and migrations, its description should say which goes first.
+
 ---
 
 ## Pre-commit hook

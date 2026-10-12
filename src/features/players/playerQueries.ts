@@ -3,6 +3,7 @@ import { supabase } from '../../supabase'
 import { normalisePlayers, type Player } from '../../lib/normalise'
 import { fetchMyProfile as fetchMyProfileRpc } from '../../api/auth'
 import type { Json } from '../../lib/database.types'
+import { parseLevel } from '../../lib/parseLevel'
 import { playerPublicRowSchema, myProfileRowSchema, playerPiiRowSchema } from './playerSchemas'
 
 export type { Player }
@@ -112,6 +113,21 @@ export async function uploadAvatar({
   return publicUrl
 }
 
+// The one filename storage RLS lets a non-admin write: player-<auth.uid()>.webp,
+// and players.id === auth.users.id.
+export function ownAvatarFilename(playerId: string): string {
+  return `player-${playerId}.webp`
+}
+
+// Requires a session for `playerId`. The cache buster makes the CDN serve the
+// new image over the stable filename.
+export async function setOwnAvatar({ playerId, file }: { playerId: string; file: Blob }) {
+  const publicUrl = await uploadAvatar({ file, filename: ownAvatarFilename(playerId) })
+  const avatarUrl = `${publicUrl}?v=${Date.now()}`
+  await updatePlayer(playerId, { avatarUrl }, 'player')
+  return avatarUrl
+}
+
 // Collision-free name for a one-off upload. Forms that overwrite a player's
 // single avatar (Settings) pass their own stable `player-<id>.webp` instead.
 export function randomAvatarFilename(): string {
@@ -132,7 +148,7 @@ export async function addPlayer(data: PlayerInput) {
     email: data.email || '',
     phone: data.phone || '',
     notes: data.notes || '',
-    playtomic_level: parseFloat(String(data.playtomicLevel)) || 0,
+    playtomic_level: parseLevel(data.playtomicLevel) ?? 0,
     playtomic_username: data.playtomicUsername || '',
     gender: data.gender || '',
     status: data.status || 'active',
@@ -175,7 +191,7 @@ export async function updatePlayer(id: string, data: PlayerInput, role: string) 
   setIf(
     data.playtomicLevel !== undefined,
     'playtomic_level',
-    String(parseFloat(String(data.playtomicLevel)) || 0),
+    String(parseLevel(data.playtomicLevel) ?? 0),
   )
   setIf(data.playtomicUsername !== undefined, 'playtomic_username', data.playtomicUsername ?? '')
   setIf(data.gender !== undefined, 'gender', data.gender ?? '')

@@ -2,6 +2,7 @@ import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../supabase'
 import { getDeviceId, getUserAgentSummary } from '../lib/deviceId'
 import type { Database } from '../lib/database.types'
+import { parseLevel } from '../lib/parseLevel'
 
 type Fn = Database['public']['Functions']
 export type MyProfileRow = Fn['get_my_profile_v2']['Returns'][number]
@@ -207,7 +208,7 @@ export async function selfSignup(
     email,
     phone: (data?.phone || '').trim(),
     notes: data?.notes || '',
-    playtomic_level: String(parseFloat(String(data?.playtomicLevel)) || 0),
+    playtomic_level: String(parseLevel(data?.playtomicLevel) ?? 0),
     playtomic_username: data?.playtomicUsername || '',
     gender: data?.gender || '',
     is_left_handed: String(!!data?.isLeftHanded),

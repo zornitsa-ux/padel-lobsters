@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query'
 import { leagueKeys } from '../api/queryKeys'
+import { playerKeys } from '../../players/playerKeys'
 import { supabase } from '../../../supabase'
 import type { Json } from '../../../lib/database.types'
 
@@ -209,11 +210,18 @@ export function useInviteLeaguePlayer(leagueId: string) {
       input_player_id: string
       input_email: string
     }) => {
-      await supabase
+      // Resolves to the new PIN so the admin can pass it on if the email lags.
+      const { data } = await supabase
         .rpc('admin_invite_league_player', { input_player_id, input_email })
         .throwOnError()
+      return data
     },
-    onSuccess: () => invalidateLeague({ qc, leagueId, teams: true }),
+    // The invitee flips from placeholder to active in the roster too.
+    onSuccess: () =>
+      Promise.all([
+        invalidateLeague({ qc, leagueId, teams: true }),
+        qc.invalidateQueries({ queryKey: playerKeys.all() }),
+      ]),
     meta: { suppressErrorToast: true },
   })
 }
