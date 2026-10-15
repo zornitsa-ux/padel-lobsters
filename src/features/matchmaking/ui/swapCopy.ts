@@ -1,5 +1,5 @@
 import type { SwapSuggestion, SwapTarget } from '../domain/swaps'
-import { GENDER_UNEVEN_AVOIDABLE_FLAG } from '../domain/report'
+import { GENDER_UNEVEN_FLAG } from '../domain/report'
 import type { ScheduleRun } from '../domain/types'
 import { playerName, type PlayerNamesById } from './playerNames'
 import { violationLine } from './violationCopy'
@@ -19,9 +19,7 @@ export function balancePhrase(delta: number): string {
 }
 
 const unevenCourts = ({ run, roundIndex }: { run: ScheduleRun; roundIndex: number }): boolean[] =>
-  (run.rounds[roundIndex]?.courts ?? []).map((court) =>
-    court.flags.includes(GENDER_UNEVEN_AVOIDABLE_FLAG),
-  )
+  (run.rounds[roundIndex]?.courts ?? []).map((court) => court.flags.includes(GENDER_UNEVEN_FLAG))
 
 /** Gender effect of a swap, named by court, from the before/after court flags. */
 export function genderPhrase({

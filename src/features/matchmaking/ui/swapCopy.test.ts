@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import type { SwapSuggestion } from '../domain/swaps'
 import type { ScheduleRun, Violation } from '../domain/types'
-import { GENDER_UNEVEN_AVOIDABLE_FLAG } from '../domain/report'
+import { GENDER_UNEVEN_AVOIDABLE_FLAG, GENDER_UNEVEN_FLAG } from '../domain/report'
 import { balancePhrase, emptyCopy, genderPhrase, panelHeading, swapRowCopy } from './swapCopy'
 
 const runWithFlags = (courtFlags: string[][]): ScheduleRun =>
@@ -9,7 +9,8 @@ const runWithFlags = (courtFlags: string[][]): ScheduleRun =>
     rounds: [{ courts: courtFlags.map((flags) => ({ flags })), sitters: [] }],
   }) as unknown as ScheduleRun
 
-const UNEVEN = [GENDER_UNEVEN_AVOIDABLE_FLAG]
+const UNEVEN = [GENDER_UNEVEN_FLAG, GENDER_UNEVEN_AVOIDABLE_FLAG]
+const UNEVEN_AT_FLOOR = [GENDER_UNEVEN_FLAG]
 const names = { a: 'Dana', b: 'Sam', c: 'Kim' }
 
 const suggestion = (overrides: Partial<SwapSuggestion>, after: ScheduleRun): SwapSuggestion => ({
@@ -33,6 +34,12 @@ describe('genderPhrase', () => {
       'makes Court 3 uneven',
     )
     expect(genderPhrase({ before, after: before, roundIndex: 0 })).toBeNull()
+  })
+
+  it('does not claim a court evened out when it is only no longer avoidable', () => {
+    const before = runWithFlags([UNEVEN, UNEVEN])
+    const after = runWithFlags([[], UNEVEN_AT_FLOOR])
+    expect(genderPhrase({ before, after, roundIndex: 0 })).toBe('evens out Court 1')
   })
 
   it('joins both effects of a cross-court swap', () => {
