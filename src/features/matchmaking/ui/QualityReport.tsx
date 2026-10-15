@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronRight } from 'lucide-react'
-import type { QualityDimensions, Violation } from '../domain/types'
+import type { QualityDimensions, ScheduleRun, Violation } from '../domain/types'
+import { playerNamesById, violationLine, violationsSummary } from './violationCopy'
 import { DIMENSIONS } from './dimensions'
 import { ProgressBar } from '../../../components/ui/ProgressBar'
 
@@ -9,6 +10,8 @@ export type QualityReportProps = {
   violations: Violation[]
   // compact = grade + 5 bars only (no disclosure); used in the compare view.
   compact?: boolean
+  // Supplies player names so violations read in padel terms; without it the summary is hidden.
+  rounds?: ScheduleRun['rounds']
 }
 
 function gradeBand(pct: number): { label: string; textClass: string; bgClass: string } {
@@ -35,20 +38,27 @@ function DimensionBar({ label, value }: { label: string; value: number }) {
   )
 }
 
-function violationLabel(violation: Violation): string {
-  const courtSegment = violation.court !== null ? ` · Court ${violation.court}` : ''
-  return `Round ${violation.round}${courtSegment} · ${violation.rule}: ${violation.reason}`
+function ViolationsBanner({ summary }: { summary: string | null }) {
+  if (!summary) return null
+  return (
+    <p role="alert" className="text-xs text-red-700 bg-red-50 rounded-lg px-2 py-1.5">
+      {summary}
+    </p>
+  )
 }
 
 export default function QualityReport({
   quality,
   violations,
   compact = false,
+  rounds,
 }: QualityReportProps) {
   const [detailsOpen, setDetailsOpen] = useState(false)
 
   const overallPct = meanOverall(quality.overall)
   const band = gradeBand(overallPct)
+  const names = rounds ? playerNamesById({ rounds }) : null
+  const summary = names ? violationsSummary({ violations, names }) : null
 
   return (
     <div className="space-y-3">
@@ -60,6 +70,8 @@ export default function QualityReport({
           {band.label}
         </span>
       </div>
+
+      <ViolationsBanner summary={summary} />
 
       <div className="space-y-2">
         {DIMENSIONS.map(({ key, label }) => (
@@ -123,7 +135,7 @@ export default function QualityReport({
                         key={index}
                         className="text-xs text-amber-700 bg-amber-50 rounded-lg px-2 py-1"
                       >
-                        {violationLabel(violation)}
+                        {violationLine({ violation, names: names ?? {} })}
                       </li>
                     ))}
                   </ul>

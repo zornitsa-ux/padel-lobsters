@@ -2,6 +2,8 @@ import { useMemo } from 'react'
 import { PROVISIONAL_LEVEL_SIGMA } from '../domain/report'
 import { pairKey } from '../domain/scheduleOps'
 import type { ScheduleRun } from '../domain/types'
+import { courtChip, hasBothGenders } from './genderCopy'
+import { CourtGenderChip, GenderLegendEntries, GenderMark } from './genderMarks'
 
 type RoundReport = ScheduleRun['rounds'][number]
 type CourtReport = RoundReport['courts'][number]
@@ -44,9 +46,11 @@ function rematchesByCourt(rounds: ScheduleRun['rounds']): [string, string][][][]
 function TeamNames({
   ids,
   players,
+  showGender,
 }: {
   ids: [string, string]
   players: Record<string, PlayerInput>
+  showGender: boolean
 }) {
   return (
     <div className="space-y-0.5">
@@ -58,6 +62,7 @@ function TeamNames({
             className="flex items-center gap-1 text-sm font-medium text-lob-slate truncate"
           >
             <span className="truncate">{player?.name ?? id}</span>
+            {showGender && player && <GenderMark gender={player.gender} />}
             {player?.isLeftHanded && <span title="Left-handed">🤚</span>}
             {player && isProvisional(player) && <span title="Level still being learned">📏</span>}
           </div>
@@ -75,12 +80,14 @@ function CourtCard({
   rematches,
   roundIndex,
   onFixRematch,
+  showGender,
 }: {
   court: CourtReport
   index: number
   rematches: [string, string][]
   roundIndex: number
   onFixRematch?: OnFixRematch
+  showGender: boolean
 }) {
   const players = playerMap(court.players)
   const [team1, team2] = court.teams
@@ -89,20 +96,27 @@ function CourtCard({
   return (
     <div className="card space-y-2">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-bold text-lob-teal bg-lob-cream px-2 py-0.5 rounded-full">
-          Court {index + 1}
-        </span>
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs font-bold text-lob-teal bg-lob-cream px-2 py-0.5 rounded-full">
+            Court {index + 1}
+          </span>
+          {showGender && (
+            <CourtGenderChip
+              chip={courtChip({ teams: court.teams, players: court.players, flags: court.flags })}
+            />
+          )}
+        </div>
         <span className="text-xs text-lob-muted-light">Spread {court.courtSpread.toFixed(2)}</span>
       </div>
 
       <div className="flex items-center gap-2">
         <div className="flex-1">
-          <TeamNames ids={team1} players={players} />
+          <TeamNames ids={team1} players={players} showGender={showGender} />
           <p className="text-xs text-lob-muted-light mt-0.5">{sum1.toFixed(1)}</p>
         </div>
         <span className="text-xs text-lob-muted-light font-medium flex-shrink-0">vs</span>
         <div className="flex-1 text-right">
-          <TeamNames ids={team2} players={players} />
+          <TeamNames ids={team2} players={players} showGender={showGender} />
           <p className="text-xs text-lob-muted-light mt-0.5">{sum2.toFixed(1)}</p>
         </div>
       </div>
@@ -141,11 +155,13 @@ function RoundSection({
   index,
   rematches,
   onFixRematch,
+  showGender,
 }: {
   round: RoundReport
   index: number
   rematches: [string, string][][]
   onFixRematch?: OnFixRematch
+  showGender: boolean
 }) {
   return (
     <div className="space-y-2">
@@ -159,6 +175,7 @@ function RoundSection({
             rematches={rematches[courtIndex]}
             roundIndex={index}
             onFixRematch={onFixRematch}
+            showGender={showGender}
           />
         ))}
       </div>
@@ -172,16 +189,17 @@ function RoundSection({
 }
 
 // Only list markers that actually appear, so the key stays honest to the schedule.
-function Legend({ rounds }: { rounds: ScheduleRun['rounds'] }) {
+function Legend({ rounds, showGender }: { rounds: ScheduleRun['rounds']; showGender: boolean }) {
   const courtPlayers = rounds.flatMap((round) => round.courts.flatMap((court) => court.players))
   const hasLefty = courtPlayers.some((player) => player.isLeftHanded)
   const hasProvisional = courtPlayers.some(isProvisional)
 
-  if (!hasLefty && !hasProvisional) return null
+  if (!hasLefty && !hasProvisional && !showGender) return null
 
   return (
     <div className="flex flex-col gap-x-4 gap-y-1 text-xs text-lob-muted">
       <span className="font-medium text-lob-muted-light">Key:</span>
+      {showGender && <GenderLegendEntries />}
       {hasLefty && (
         <span className="flex items-center gap-1">
           <span aria-hidden>🤚</span> Left-handed
@@ -204,9 +222,13 @@ export default function ScheduleRounds({
   onFixRematch?: OnFixRematch
 }) {
   const rematches = useMemo(() => rematchesByCourt(rounds), [rounds])
+  const showGender = useMemo(
+    () => hasBothGenders(rounds.flatMap((round) => round.courts.flatMap((court) => court.players))),
+    [rounds],
+  )
   return (
     <div className="space-y-4">
-      <Legend rounds={rounds} />
+      <Legend rounds={rounds} showGender={showGender} />
       {rounds.map((round, index) => (
         <RoundSection
           key={index}
@@ -214,6 +236,7 @@ export default function ScheduleRounds({
           index={index}
           rematches={rematches[index]}
           onFixRematch={onFixRematch}
+          showGender={showGender}
         />
       ))}
     </div>

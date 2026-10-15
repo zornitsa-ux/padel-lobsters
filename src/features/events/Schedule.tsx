@@ -30,6 +30,7 @@ import type { EntityId, ScheduleRound, ScheduleWarning } from './schedule/types'
 import type { EventNavigate } from './eventHelpers'
 import type { NormalisedTournament, Player } from '../../lib/normalise'
 import type { GenderMode } from '../matchmaking/domain/types'
+import { savedCourtIsUneven } from '../matchmaking/ui/genderCopy'
 
 // A player slot the admin has tapped first in swap mode.
 interface SwapAnchor {
@@ -518,12 +519,13 @@ export default function Schedule({
                                 </span>
                               )
                             }
+                            const uneven = savedCourtIsUneven({ team1: t1, team2: t2 })
                             return (
                               <span
-                                title="Mixed court"
-                                className="text-xs font-semibold bg-teal-50 text-teal-700 px-3 py-0.5 rounded-full"
+                                title={uneven ? 'Uneven court' : 'Mixed court'}
+                                className={`text-xs font-semibold px-3 py-0.5 rounded-full ${uneven ? 'bg-amber-50 text-amber-700' : 'bg-teal-50 text-teal-700'}`}
                               >
-                                Mixed
+                                {uneven ? 'Uneven' : 'Mixed'}
                               </span>
                             )
                           })()}
