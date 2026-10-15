@@ -30,7 +30,7 @@ export default function SchedulePreview({
   return (
     <div className="space-y-4">
       <div className="card space-y-3">
-        <QualityReport quality={run.quality} violations={run.violations} />
+        <QualityReport quality={run.quality} violations={run.violations} rounds={run.rounds} />
         <RunLabel run={run} />
       </div>
 

@@ -94,13 +94,19 @@ export default function CompareView({
                 <QualityReport
                   quality={original.quality}
                   violations={original.violations}
+                  rounds={original.rounds}
                   compact
                 />
               </div>
               <div className="space-y-2">
                 <p className="label">Alternative</p>
                 {altRun ? (
-                  <QualityReport quality={altRun.quality} violations={altRun.violations} compact />
+                  <QualityReport
+                    quality={altRun.quality}
+                    violations={altRun.violations}
+                    rounds={altRun.rounds}
+                    compact
+                  />
                 ) : (
                   <p className="text-xs text-lob-muted-light">
                     Generate an alternative to compare.
