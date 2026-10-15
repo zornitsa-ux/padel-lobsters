@@ -75,6 +75,47 @@ genderRotation 1.0 / mixedPreference 0.3`.** The results table is in the
   - The owner accepted that trade over the literal 0.5-level weights.
   - Sweep artifacts and rosters stay in the session scratchpad, never in git.
 
+- 2026-10-15 — **T6: verification done, PRs opened.**
+  - **PR branches.** PR 1 is `gender-rebalance-engine` (T0, T1, T2, T3). PR 2
+    is `gender-rebalance-swaps` (T4, T5), stacked on PR 1. The working branch
+    `gender-rebalance` is superseded.
+  - **Gates.** Both branches pass typecheck, lint (0 errors, 65 warnings, same
+    as baseline), test and build. The build needs `VITE_SUPABASE_*` set; the
+    shell had no env.
+  - **Manual check** on the local stack: a 13M/7F event on 5 courts, driven
+    headless by Playwright with system Chrome.
+    - Gender marks, court chips and the legend render.
+    - 5 of the 6 rounds have exactly 1 uneven court, labelled unavoidable.
+      Round 3 kept 2 avoidable uneven courts: its best fix within the balance
+      limit only moves the unevenness to another court. This is the
+      sim-predicted remainder.
+    - Tap a player, apply a legal swap, Show all, apply a rule-breaking swap
+      (red summary appears), undo: all work. Save works, and the saved-view
+      chips work.
+    - Found and fixed: long names with marks overflowed the court card at
+      phone width.
+  - **`/code-review` (high) on both PRs.** Fixed:
+    - the violation-diff ordinal;
+    - rematch gender ranking in PR 1;
+    - saved-view floor tone, plus the guard for a court with a missing player;
+    - the undo/busy race;
+    - generate clearing undo before it succeeded;
+    - "fix" copy on the swap panel;
+    - duplicated helpers.
+
+    Declined, with reasons recorded in the commits or D-035:
+    - the bar counting unavoidable rotation (an edge case, documented);
+    - positional hot-loop primitives (deliberate);
+    - per-candidate rebuild cost (measured at about 5 ms).
+
+  - **Product note for after the event:** an uneven-court Fix whose only
+    legal swap moves the unevenness, rather than removing it, still counts as
+    "breaking" the target under D-036. Consider requiring the avoidable count
+    to fall.
+  - **Next:** owner checkpoint 2 (merge approval). After merge: confirm the
+    Vercel deploy, update `docs/matchmaking-v2/PLAN.md` §1, and add the
+    follow-ups to §6.
+
 **Baseline (2026-10-15, `scripts/mm-gender-sim.ts`, balanced, 10 seeds × 6 rounds).**
 Mean team gap is only ~0.1 level today, so the 0.5-level budget leaves plenty
 of room.
