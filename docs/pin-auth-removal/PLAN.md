@@ -27,9 +27,9 @@ signed in gets logged out.
 
 | ID  | Task                                                      | Owner | Depends on      | PR  | State |
 | --- | --------------------------------------------------------- | ----- | --------------- | --- | ----- |
-| T0a | Clear 44 orphan password hashes → `NULL`                  | C     | —               | 0a  | [ ]   |
-| T0b | Identity backfill + patch `ensure_auth_user_for_player`   | W     | —               | 0b  | [ ]   |
-| T0c | Auth settings: `config.toml` + dashboard; five templates  | C → O | —               | 0b  | [ ]   |
+| T0a | Clear 44 orphan password hashes → `NULL`                  | C     | —               | #43 | [~]   |
+| T0b | Identity backfill + patch `ensure_auth_user_for_player`   | C     | —               | #44 | [~]   |
+| T0c | Auth settings: `config.toml` + dashboard; five templates  | C → O | —               | #44 | [~]   |
 | T1  | Contract freeze (§3.1)                                    | C     | —               | —   | [ ]   |
 | T2  | Backend: hook, trigger, invite/add RPCs, readiness RPC    | W     | T0b, T1         | 1/3 | [ ]   |
 | T3  | `SignInForm`, `AuthConfirm`, gates, native signup         | W     | T1              | 2/3 | [ ]   |
@@ -52,6 +52,20 @@ States: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked.
   "Owner answers"). D-8 to D-13 were recorded. Production check: passwordless
   users hold `encrypted_password = NULL` (96 of them), and 44 users have a hash
   set.
+- 2026-10-15: Phase 0 built; PRs #43 (0a) and #44 (0b) await review. Gates
+  green, and the local Mailpit matrix row for 0b passed (all five emails,
+  driven through supabase-js). Production reads at build time: 44 hashes, 0
+  `''`; **47** identity-less users (up from 31 because of new players), 40 of
+  them holding a `role`; and **87 GoTrue identities still holding the
+  synthetic email** that `20261012140000` left behind. 0b's
+  `private.sync_email_identity` fixes all three and is also called from
+  `sync_player_email_to_auth`, so admin email edits stop recreating the drift.
+  The coordinator built T0b instead of a worker: the brief would have been the
+  implementation, and both would have shared the one local stack. Deviation:
+  `email_change` stays link-only, because no screen takes an email-change code
+  (#44 explains). For T1: `recovery` now carries a code, so `SignInForm`'s
+  forgot-password state can accept it. Open for the owner: check the Resend
+  plan's daily cap, since the free plan's 100/day is below the 150 target.
 
 ---
 
