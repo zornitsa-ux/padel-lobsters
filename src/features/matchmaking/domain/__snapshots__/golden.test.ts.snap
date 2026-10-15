@@ -276,7 +276,9 @@ exports[`matcher golden runs (M2.10) > men-32 fixture 1`] = `
       "seed": 1161971013,
       "socialDial": 0.5,
       "weights": {
+        "courtGender": 1,
         "courtSpread": 1.5,
+        "genderRotation": 0.5,
         "mixedPreference": 0.3,
         "opponentRepeat": 0.6,
         "partnerGap": 0.8,
@@ -294,7 +296,9 @@ exports[`matcher golden runs (M2.10) > men-32 fixture 1`] = `
       "seed": 1161971013,
       "socialDial": 0,
       "weights": {
+        "courtGender": 1,
         "courtSpread": 1.5,
+        "genderRotation": 0.5,
         "mixedPreference": 0.3,
         "opponentRepeat": 0.3,
         "partnerGap": 0.8,
@@ -312,7 +316,9 @@ exports[`matcher golden runs (M2.10) > men-32 fixture 1`] = `
       "seed": 1161971013,
       "socialDial": 0.8,
       "weights": {
+        "courtGender": 1,
         "courtSpread": 1.5,
+        "genderRotation": 0.5,
         "mixedPreference": 0.3,
         "opponentRepeat": 1,
         "partnerGap": 0.8,
@@ -1658,7 +1664,9 @@ exports[`matcher golden runs (M2.10) > mixed-16 fixture 1`] = `
       "seed": 3635110702,
       "socialDial": 0.5,
       "weights": {
+        "courtGender": 1,
         "courtSpread": 1.5,
+        "genderRotation": 0.5,
         "mixedPreference": 0.3,
         "opponentRepeat": 0.6,
         "partnerGap": 0.8,
@@ -1676,7 +1684,9 @@ exports[`matcher golden runs (M2.10) > mixed-16 fixture 1`] = `
       "seed": 3635110702,
       "socialDial": 0,
       "weights": {
+        "courtGender": 1,
         "courtSpread": 1.5,
+        "genderRotation": 0.5,
         "mixedPreference": 0.3,
         "opponentRepeat": 0.3,
         "partnerGap": 0.8,
@@ -1694,7 +1704,9 @@ exports[`matcher golden runs (M2.10) > mixed-16 fixture 1`] = `
       "seed": 3635110702,
       "socialDial": 0.8,
       "weights": {
+        "courtGender": 1,
         "courtSpread": 1.5,
+        "genderRotation": 0.5,
         "mixedPreference": 0.3,
         "opponentRepeat": 1,
         "partnerGap": 0.8,
@@ -1787,7 +1799,10 @@ exports[`matcher golden runs (M2.10) > mixed-16 × balanced 1`] = `
       "courts": [
         {
           "courtSpread": 0.8999999999999999,
-          "flags": [],
+          "flags": [
+            "gender-uneven",
+            "gender-uneven-avoidable",
+          ],
           "teamSums": [
             8.1,
             8.1,
@@ -1805,7 +1820,10 @@ exports[`matcher golden runs (M2.10) > mixed-16 × balanced 1`] = `
         },
         {
           "courtSpread": 0.9000000000000004,
-          "flags": [],
+          "flags": [
+            "gender-uneven",
+            "gender-uneven-avoidable",
+          ],
           "teamSums": [
             7.9,
             7.9,
@@ -1893,7 +1911,10 @@ exports[`matcher golden runs (M2.10) > mixed-16 × balanced 1`] = `
         },
         {
           "courtSpread": 0.5999999999999996,
-          "flags": [],
+          "flags": [
+            "gender-uneven",
+            "gender-uneven-avoidable",
+          ],
           "teamSums": [
             8,
             8,
@@ -1902,7 +1923,10 @@ exports[`matcher golden runs (M2.10) > mixed-16 × balanced 1`] = `
         },
         {
           "courtSpread": 1.2000000000000002,
-          "flags": [],
+          "flags": [
+            "gender-uneven",
+            "gender-uneven-avoidable",
+          ],
           "teamSums": [
             7.2,
             7.1,
@@ -2109,7 +2133,10 @@ exports[`matcher golden runs (M2.10) > mixed-16 × competitive 1`] = `
         },
         {
           "courtSpread": 0.5,
-          "flags": [],
+          "flags": [
+            "gender-uneven",
+            "gender-uneven-avoidable",
+          ],
           "teamSums": [
             7.1,
             7.1,
@@ -2118,7 +2145,10 @@ exports[`matcher golden runs (M2.10) > mixed-16 × competitive 1`] = `
         },
         {
           "courtSpread": 0.8999999999999999,
-          "flags": [],
+          "flags": [
+            "gender-uneven",
+            "gender-uneven-avoidable",
+          ],
           "teamSums": [
             6.9,
             6.8,
@@ -2177,6 +2207,8 @@ exports[`matcher golden runs (M2.10) > mixed-16 × competitive 1`] = `
           "courtSpread": 0.7999999999999998,
           "flags": [
             "opponent-rematch",
+            "gender-uneven",
+            "gender-uneven-avoidable",
           ],
           "teamSums": [
             8.2,
@@ -2186,7 +2218,10 @@ exports[`matcher golden runs (M2.10) > mixed-16 × competitive 1`] = `
         },
         {
           "courtSpread": 0.6999999999999997,
-          "flags": [],
+          "flags": [
+            "gender-uneven",
+            "gender-uneven-avoidable",
+          ],
           "teamSums": [
             7.9,
             8.1,
@@ -2271,6 +2306,8 @@ exports[`matcher golden runs (M2.10) > mixed-16 × competitive 1`] = `
           "courtSpread": 0.8999999999999999,
           "flags": [
             "opponent-rematch",
+            "gender-uneven",
+            "gender-uneven-avoidable",
           ],
           "teamSums": [
             8.1,
@@ -2282,6 +2319,8 @@ exports[`matcher golden runs (M2.10) > mixed-16 × competitive 1`] = `
           "courtSpread": 0.39999999999999947,
           "flags": [
             "opponent-rematch",
+            "gender-uneven",
+            "gender-uneven-avoidable",
           ],
           "teamSums": [
             7.8,
@@ -2410,7 +2449,10 @@ exports[`matcher golden runs (M2.10) > mixed-16 × social 1`] = `
         },
         {
           "courtSpread": 0.8999999999999999,
-          "flags": [],
+          "flags": [
+            "gender-uneven",
+            "gender-uneven-avoidable",
+          ],
           "teamSums": [
             8.1,
             8,
@@ -2428,7 +2470,10 @@ exports[`matcher golden runs (M2.10) > mixed-16 × social 1`] = `
         },
         {
           "courtSpread": 0.8999999999999999,
-          "flags": [],
+          "flags": [
+            "gender-uneven",
+            "gender-uneven-avoidable",
+          ],
           "teamSums": [
             6.9,
             6.6,
@@ -2582,6 +2627,8 @@ exports[`matcher golden runs (M2.10) > mixed-16 × social 1`] = `
           "courtSpread": 0.6000000000000001,
           "flags": [
             "opponent-rematch",
+            "gender-uneven",
+            "gender-uneven-avoidable",
           ],
           "teamSums": [
             7.800000000000001,
@@ -2602,6 +2649,8 @@ exports[`matcher golden runs (M2.10) > mixed-16 × social 1`] = `
           "courtSpread": 0.7999999999999998,
           "flags": [
             "opponent-rematch",
+            "gender-uneven",
+            "gender-uneven-avoidable",
           ],
           "teamSums": [
             6.8,
@@ -2807,7 +2856,9 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters fixture 1`] = `
       "seed": 1270010876,
       "socialDial": 0.5,
       "weights": {
+        "courtGender": 1,
         "courtSpread": 1.5,
+        "genderRotation": 0.5,
         "mixedPreference": 0.3,
         "opponentRepeat": 0.6,
         "partnerGap": 0.8,
@@ -2825,7 +2876,9 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters fixture 1`] = `
       "seed": 1270010876,
       "socialDial": 0,
       "weights": {
+        "courtGender": 1,
         "courtSpread": 1.5,
+        "genderRotation": 0.5,
         "mixedPreference": 0.3,
         "opponentRepeat": 0.3,
         "partnerGap": 0.8,
@@ -2843,7 +2896,9 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters fixture 1`] = `
       "seed": 1270010876,
       "socialDial": 0.8,
       "weights": {
+        "courtGender": 1,
         "courtSpread": 1.5,
+        "genderRotation": 0.5,
         "mixedPreference": 0.3,
         "opponentRepeat": 1,
         "partnerGap": 0.8,
@@ -2957,7 +3012,10 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × balanced 1`] = `
         },
         {
           "courtSpread": 1,
-          "flags": [],
+          "flags": [
+            "gender-uneven",
+            "gender-uneven-avoidable",
+          ],
           "teamSums": [
             6.6,
             6.6,
@@ -3027,7 +3085,10 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × balanced 1`] = `
         },
         {
           "courtSpread": 1.4000000000000004,
-          "flags": [],
+          "flags": [
+            "gender-uneven",
+            "gender-uneven-avoidable",
+          ],
           "teamSums": [
             7.4,
             7.5,
@@ -3052,7 +3113,10 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × balanced 1`] = `
       "courts": [
         {
           "courtSpread": 1,
-          "flags": [],
+          "flags": [
+            "gender-uneven",
+            "gender-uneven-avoidable",
+          ],
           "teamSums": [
             8,
             8,
@@ -3061,7 +3125,10 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × balanced 1`] = `
         },
         {
           "courtSpread": 1.1000000000000005,
-          "flags": [],
+          "flags": [
+            "gender-uneven",
+            "gender-uneven-avoidable",
+          ],
           "teamSums": [
             7.7,
             7.8,
@@ -3070,7 +3137,10 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × balanced 1`] = `
         },
         {
           "courtSpread": 1,
-          "flags": [],
+          "flags": [
+            "gender-uneven",
+            "gender-uneven-avoidable",
+          ],
           "teamSums": [
             6.4,
             6.3,
@@ -3130,7 +3200,10 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × balanced 1`] = `
         },
         {
           "courtSpread": 1,
-          "flags": [],
+          "flags": [
+            "gender-uneven",
+            "gender-uneven-avoidable",
+          ],
           "teamSums": [
             6.8,
             6.699999999999999,
@@ -3186,7 +3259,10 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × balanced 1`] = `
         },
         {
           "courtSpread": 1,
-          "flags": [],
+          "flags": [
+            "gender-uneven",
+            "gender-uneven-avoidable",
+          ],
           "teamSums": [
             8.2,
             7.9,
@@ -3206,6 +3282,8 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × balanced 1`] = `
           "courtSpread": 0.7000000000000002,
           "flags": [
             "opponent-rematch",
+            "gender-uneven",
+            "gender-uneven-avoidable",
           ],
           "teamSums": [
             6.5,
@@ -3400,7 +3478,10 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × competitive 1`] = `
         },
         {
           "courtSpread": 0.8999999999999999,
-          "flags": [],
+          "flags": [
+            "gender-uneven",
+            "gender-uneven-avoidable",
+          ],
           "teamSums": [
             6.300000000000001,
             6.3,
@@ -3494,6 +3575,8 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × competitive 1`] = `
           "courtSpread": 0.9000000000000004,
           "flags": [
             "opponent-rematch",
+            "gender-uneven",
+            "gender-uneven-avoidable",
           ],
           "teamSums": [
             7.9,
@@ -3623,6 +3706,8 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × competitive 1`] = `
           "courtSpread": 0.5000000000000004,
           "flags": [
             "opponent-rematch",
+            "gender-uneven",
+            "gender-uneven-avoidable",
           ],
           "teamSums": [
             6.699999999999999,
@@ -3953,7 +4038,10 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × social 1`] = `
         },
         {
           "courtSpread": 1.0999999999999996,
-          "flags": [],
+          "flags": [
+            "gender-uneven",
+            "gender-uneven-avoidable",
+          ],
           "teamSums": [
             6.5,
             6.8,
@@ -4036,6 +4124,8 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × social 1`] = `
           "courtSpread": 1,
           "flags": [
             "opponent-rematch",
+            "gender-uneven",
+            "gender-uneven-avoidable",
           ],
           "teamSums": [
             8,
@@ -4045,7 +4135,10 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × social 1`] = `
         },
         {
           "courtSpread": 0.6000000000000001,
-          "flags": [],
+          "flags": [
+            "gender-uneven",
+            "gender-uneven-avoidable",
+          ],
           "teamSums": [
             7.4,
             7.4,
@@ -4088,7 +4181,10 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × social 1`] = `
       "courts": [
         {
           "courtSpread": 1,
-          "flags": [],
+          "flags": [
+            "gender-uneven",
+            "gender-uneven-avoidable",
+          ],
           "teamSums": [
             7.6,
             7.8,
@@ -4097,7 +4193,10 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × social 1`] = `
         },
         {
           "courtSpread": 1.0000000000000004,
-          "flags": [],
+          "flags": [
+            "gender-uneven",
+            "gender-uneven-avoidable",
+          ],
           "teamSums": [
             7.800000000000001,
             7.9,

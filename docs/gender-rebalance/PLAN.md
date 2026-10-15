@@ -26,15 +26,28 @@ path. Code review before merge still is.
 
 | ID  | Task                                           | Owner                     | Depends on | State |
 | --- | ---------------------------------------------- | ------------------------- | ---------- | ----- |
-| T0  | Contracts, shared helper, DECISIONS entries    | C                         | —          | [ ]   |
-| T1  | Engine terms (uneven court + rotation)         | W, C reviews line by line | T0         | [ ]   |
+| T0  | Contracts, shared helper, DECISIONS entries    | C                         | —          | [x]   |
+| T1  | Engine terms (uneven court + rotation)         | W, C reviews line by line | T0         | [~]   |
 | T2  | Calibration + owner sign-off                   | C (runs W for sweeps)     | T1         | [ ]   |
-| T3  | Gender visibility in preview + saved view      | W                         | T0         | [ ]   |
-| T4  | Generalized swap engine                        | W, C reviews line by line | T0         | [ ]   |
+| T3  | Gender visibility in preview + saved view      | W                         | T0         | [~]   |
+| T4  | Generalized swap engine                        | W, C reviews line by line | T0         | [~]   |
 | T5  | Swap UI: Fix on uneven courts + tap-any-player | W                         | T3, T4     | [ ]   |
 | T6  | Verification + PRs                             | C                         | all        | [ ]   |
 
 Status markers: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked.
+
+**Log.**
+
+- 2026-10-15 — T0 committed on `gender-rebalance`. Three T0 calls depart
+  from §3/T0's text; all are recorded in D-035/D-036:
+  - the Gender bar and `matcherPriorities` drop `mixedPreference`, since the
+    owner said FF v FF and MM v MM are fine;
+  - `courtGenderShape().label` adds `'unknown'`;
+  - `unevenCourt`/`player` swaps may also swap with an opponent on the same
+    court (a re-split), so Fix can repair FF v MM.
+
+  Flags are emitted from T0 (not T1), so T3 works on real data. T1, T3 and T4
+  were dispatched in parallel worktrees.
 
 **Baseline (2026-10-15, `scripts/mm-gender-sim.ts`, balanced, 10 seeds × 6 rounds).**
 Mean team gap is only ~0.1 level today, so the 0.5-level budget leaves plenty
@@ -142,25 +155,25 @@ priority-order test that pins
 
 ### T0 — Contracts, shared helper, DECISIONS (coordinator)
 
-- [ ] **First commit on `gender-rebalance`:** `docs/gender-rebalance/` and
+- [x] **First commit on `gender-rebalance`:** `docs/gender-rebalance/` and
       `scripts/mm-gender-sim.ts`. They're untracked on `main`'s working tree,
       and worktree agents can't see untracked files. Leave the unrelated
       untracked `docs/pin-auth-removal/` out of it.
-- [ ] **New pure module `domain/genderBalance.ts`.** This is the only
+- [x] **New pure module `domain/genderBalance.ts`.** This is the only
       definition of §3, used by cost, report, swaps and the UI:
       `courtGenderShape({ teams, genderOf }) → { women: [n, n], uneven: boolean,
 loneId: string | null, label: 'mixed' | 'men' | 'women' | 'uneven' }` and
       `unevenFloorForRound({ playingIds, genderOf }) → 0 | 1`. Write its tests
       first.
-- [ ] **`types.ts` weights.** Add `courtGender` and `genderRotation` to
+- [x] **`types.ts` weights.** Add `courtGender` and `genderRotation` to
       `DIMENSION_KEYS`, `weightsSchema` and `DEFAULT_WEIGHTS`. Nothing parses
       persisted `schedule_runs` with Zod today (checked 2026-10-15), so old rows
       aren't at risk. Re-check before freezing.
-- [ ] **Report flag.** Add `'gender-uneven'` to the court flags in
+- [x] **Report flag.** Add `'gender-uneven'` to the court flags in
       `report.ts`, plus `'gender-uneven-avoidable'` when the round's uneven
       count exceeds its floor. `flags` is `string[]`, so there's no schema
       change. The UI reads these flags; it never recomputes from scratch.
-- [ ] **Swap contract in `domain/swaps.ts`.** Types and signatures only;
+- [x] **Swap contract in `domain/swaps.ts`.** Types and signatures only;
       T4 implements them.
 
   ```ts
@@ -195,9 +208,9 @@ loneId: string | null, label: 'mixed' | 'men' | 'women' | 'uneven' }` and
   `suggestOpponentSwaps` stays as a thin wrapper
   (`target.kind = 'rematch'`), so `swaps.test.ts` keeps passing unchanged.
 
-- [ ] **Write the T1 and T4 acceptance tests as failing tests** (lists in T1
+- [x] **Write the T1 and T4 acceptance tests as failing tests** (lists in T1
       and T4 below).
-- [ ] **DECISIONS entries in `docs/matchmaking-v2/DECISIONS.md`.**
+- [x] **DECISIONS entries in `docs/matchmaking-v2/DECISIONS.md`.**
   - **D-035:** court gender evenness and rotation terms. Covers §3, owner
     answers, starting weights and the golden impact.
   - **D-036:** generalized manual swap and the hard-rule override. Covers
@@ -205,7 +218,7 @@ loneId: string | null, label: 'mixed' | 'men' | 'women' | 'uneven' }` and
     The override is a one-off edit of an artifact, recorded in
     `run.violations`. The `schedule_runs` "manually adjusted" marker stays
     deferred (it needs a migration).
-- [ ] Commit to `gender-rebalance`. Gates: typecheck, lint, test.
+- [x] Commit to `gender-rebalance`. Gates: typecheck, lint, test.
 
 ### T1 — Engine terms (worker; coordinator reviews line by line)
 

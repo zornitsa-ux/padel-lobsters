@@ -391,3 +391,202 @@ describe('cost (M2.6)', () => {
     })
   })
 })
+
+// D-035 acceptance tests (coordinator-frozen at T0; T1 removes `.skip`).
+describe.skip('court gender (D-035)', () => {
+  const g = (playerId: string, mu = 3) =>
+    mkPlayer({ playerId, mu, gender: playerId.startsWith('f') ? 'female' : 'male' })
+  const mixed9 = ['m1', 'm2', 'm3', 'm4', 'm5', 'f1', 'f2', 'f3', 'f4'].map((id) => g(id))
+  const { weights } = mkConfig()
+  const round = (...courts: [[string, string], [string, string]][]) => ({ matches: courts })
+  const mixed = (schedule: Schedule, players: PlayerInput[] = mixed9) =>
+    score({ schedule, players, genderMode: 'mixed' })
+
+  it('a 2W2M court scores MF v MF below FF v MM', () => {
+    const mfmf = mkSchedule([
+      round([
+        ['f1', 'm1'],
+        ['f2', 'm2'],
+      ]),
+    ])
+    const ffmm = mkSchedule([
+      round([
+        ['f1', 'f2'],
+        ['m1', 'm2'],
+      ]),
+    ])
+    expect(mixed(mfmf).raw.courtGender).toBe(0)
+    expect(mixed(ffmm).raw.courtGender).toBe(1)
+    expect(mixed(ffmm).weighted.courtGender).toBeCloseTo(weights.courtGender, 10)
+    expect(mixed(mfmf).total).toBeLessThan(mixed(ffmm).total)
+
+    const [f1, f2, m1, m2] = ['f1', 'f2', 'm1', 'm2'].map((id) => g(id))
+    const split = (team1: [PlayerInput, PlayerInput], team2: [PlayerInput, PlayerInput]) =>
+      scoreSplit({ team1, team2, config: mkConfig(), genderMode: 'mixed' })
+    expect(split([f1, m1], [f2, m2])).toBeLessThan(split([f1, f2], [m1, m2]))
+    expect(split([f1, f2], [m1, m2]) - split([f1, m1], [f2, m2])).toBeCloseTo(
+      weights.courtGender + 2 * weights.mixedPreference,
+      10,
+    )
+  })
+
+  it('1W3M scores 0 when it is the round floor and 1 when it is not', () => {
+    // 3 women playing ⇒ floor 1
+    const atFloor = mkSchedule([
+      round(
+        [
+          ['f1', 'm1'],
+          ['m2', 'm3'],
+        ],
+        [
+          ['f2', 'm4'],
+          ['f3', 'm5'],
+        ],
+      ),
+    ])
+    expect(mixed(atFloor).raw.courtGender).toBe(0)
+
+    // still 3 women, but a second uneven court (FF v MM) ⇒ 1 above the floor
+    const aboveFloor = mkSchedule([
+      round(
+        [
+          ['f1', 'm1'],
+          ['m2', 'm3'],
+        ],
+        [
+          ['f2', 'f3'],
+          ['m4', 'm5'],
+        ],
+      ),
+    ])
+    expect(mixed(aboveFloor).raw.courtGender).toBe(1)
+
+    // 4 women ⇒ floor 0, both uneven courts count
+    const evenWomen = mkSchedule([
+      round(
+        [
+          ['f1', 'm1'],
+          ['m2', 'm3'],
+        ],
+        [
+          ['f2', 'm4'],
+          ['f3', 'f4'],
+        ],
+      ),
+    ])
+    expect(mixed(evenWomen).raw.courtGender).toBe(2)
+  })
+
+  it('any unknown on court gives 0 for both terms', () => {
+    const players = [g('f1'), g('m1'), g('m2'), mkPlayer({ playerId: 'u1' })]
+    const schedule = mkSchedule([
+      round([
+        ['f1', 'u1'],
+        ['m1', 'm2'],
+      ]),
+      round([
+        ['f1', 'm1'],
+        ['m2', 'u1'],
+      ]),
+      round([
+        ['f1', 'm2'],
+        ['m1', 'u1'],
+      ]),
+    ])
+    expect(mixed(schedule, players).raw.courtGender).toBe(0)
+    expect(mixed(schedule, players).raw.genderRotation).toBe(0)
+  })
+
+  it('men and women modes give 0 for both terms', () => {
+    const schedule = mkSchedule([
+      round([
+        ['f1', 'f2'],
+        ['m1', 'm2'],
+      ]),
+      round([
+        ['f1', 'm1'],
+        ['m2', 'm3'],
+      ]),
+      round([
+        ['f1', 'm2'],
+        ['m1', 'm3'],
+      ]),
+    ])
+    for (const genderMode of ['men', 'women'] as const) {
+      const c = score({ schedule, players: mixed9, genderMode })
+      expect(c.raw.courtGender).toBe(0)
+      expect(c.raw.genderRotation).toBe(0)
+    }
+  })
+
+  it('rotation counts only 2nd+ lone appearances, in the round they happen', () => {
+    // f1 is the lone woman (and the floor court) in all three rounds.
+    const players = [g('f1'), g('m1'), g('m2'), g('m3')]
+    const schedule = mkSchedule([
+      round([
+        ['f1', 'm1'],
+        ['m2', 'm3'],
+      ]),
+      round([
+        ['f1', 'm2'],
+        ['m1', 'm3'],
+      ]),
+      round([
+        ['f1', 'm3'],
+        ['m1', 'm2'],
+      ]),
+    ])
+    const prefix = (n: number) => mixed(schedule.slice(0, n), players)
+    expect(prefix(1).raw.genderRotation).toBe(0)
+    expect(prefix(2).raw.genderRotation).toBe(1)
+    expect(prefix(3).raw.genderRotation).toBe(2)
+    expect(prefix(3).raw.courtGender).toBe(0)
+    expect(prefix(3).weighted.genderRotation).toBeCloseTo(2 * weights.genderRotation, 10)
+
+    // the lone man on a 3W1M court counts the same way
+    const threeW = [g('f1'), g('f2'), g('f3'), g('m1')]
+    const lonely = mkSchedule([
+      round([
+        ['f1', 'm1'],
+        ['f2', 'f3'],
+      ]),
+      round([
+        ['f2', 'm1'],
+        ['f1', 'f3'],
+      ]),
+    ])
+    expect(mixed(lonely, threeW).raw.genderRotation).toBe(1)
+  })
+
+  it('FF v MM is uneven but has no lone player', () => {
+    const players = [g('f1'), g('f2'), g('m1'), g('m2')]
+    const schedule = mkSchedule([
+      round([
+        ['f1', 'f2'],
+        ['m1', 'm2'],
+      ]),
+      round([
+        ['f1', 'f2'],
+        ['m1', 'm2'],
+      ]),
+    ])
+    expect(mixed(schedule, players).raw.courtGender).toBe(2)
+    expect(mixed(schedule, players).raw.genderRotation).toBe(0)
+  })
+
+  it('adds the new terms after the existing ones in total', () => {
+    const schedule = mkSchedule([
+      round([
+        ['f1', 'f2'],
+        ['m1', 'm2'],
+      ]),
+    ])
+    const c = mixed(schedule)
+    const existing = DIMENSION_KEYS.filter((k) => k !== 'courtGender' && k !== 'genderRotation')
+    const expected =
+      existing.reduce((sum, k) => sum + c.weighted[k], 0) +
+      c.weighted.courtGender +
+      c.weighted.genderRotation
+    expect(c.total).toBe(expected)
+  })
+})

@@ -2,8 +2,16 @@ import { describe, expect, it } from 'vitest'
 import { auditFeasibility } from './feasibility'
 import { generateSchedule } from './generate'
 import { resolveConfig } from './presets'
-import { DEFAULT_MAX_BALANCE_DELTA, scheduleFromRun, suggestOpponentSwaps } from './swaps'
-import { assertHardLegal, mkRoster } from './testkit'
+import { buildScheduleRun } from './report'
+import {
+  addedViolations,
+  DEFAULT_MAX_BALANCE_DELTA,
+  scheduleFromRun,
+  suggestOpponentSwaps,
+  suggestSwaps,
+} from './swaps'
+import type { SwapSuggestion } from './swaps'
+import { assertHardLegal, mkConfig, mkPlayer, mkRoster, mkSchedule } from './testkit'
 import { scheduleRunSchema } from './types'
 import type { GenderMode, ScheduleRun } from './types'
 
@@ -319,5 +327,334 @@ describe('suggestOpponentSwaps (M3.8)', () => {
       pair,
     })
     expect(after).toEqual([])
+  })
+})
+
+// D-036 acceptance suite (coordinator-frozen at T0; T4 removes `.skip` and
+// implements suggestSwaps to green). The fixture is hand-built so it does not
+// depend on the engine: 4W/4M on 2 courts, round 1 has two avoidable uneven
+// courts (1W3M and 3W1M), rounds 2–3 are even, all 12 partnerships distinct.
+// m1 and f1 are left-handed and never partner.
+function mixedSetup() {
+  const mus: Record<string, number> = {
+    m1: 3.0,
+    m2: 2.8,
+    m3: 2.6,
+    m4: 2.4,
+    f1: 2.2,
+    f2: 2.0,
+    f3: 1.8,
+    f4: 1.6,
+  }
+  const players = Object.entries(mus).map(([playerId, mu]) =>
+    mkPlayer({
+      playerId,
+      mu,
+      gender: playerId.startsWith('f') ? 'female' : 'male',
+      isLeftHanded: playerId === 'm1' || playerId === 'f1',
+    }),
+  )
+  const schedule = mkSchedule([
+    {
+      matches: [
+        [
+          ['f1', 'm2'],
+          ['m3', 'm4'],
+        ],
+        [
+          ['f2', 'f3'],
+          ['f4', 'm1'],
+        ],
+      ],
+    },
+    {
+      matches: [
+        [
+          ['f1', 'm3'],
+          ['f2', 'm4'],
+        ],
+        [
+          ['f3', 'm1'],
+          ['f4', 'm2'],
+        ],
+      ],
+    },
+    {
+      matches: [
+        [
+          ['f1', 'm4'],
+          ['f3', 'm2'],
+        ],
+        [
+          ['f2', 'm1'],
+          ['f4', 'm3'],
+        ],
+      ],
+    },
+  ])
+  const config = mkConfig()
+  const genderMode: GenderMode = 'mixed'
+  const feasibility = auditFeasibility({ players, courts: 2, rounds: 3, genderMode, config })
+  const run = buildScheduleRun({
+    tournamentId: 't-mixed',
+    schedule,
+    players,
+    config,
+    genderMode,
+    feasibility,
+  })
+  return { players, feasibility, run, genderMode }
+}
+
+const courtFlags = (run: ScheduleRun, roundIndex: number, courtIndex: number) =>
+  run.rounds[roundIndex].courts[courtIndex].flags
+
+const avoidableInRound = (run: ScheduleRun, roundIndex: number) =>
+  run.rounds[roundIndex].courts.filter((c) => c.flags.includes('gender-uneven-avoidable')).length
+
+const breaksRules = (s: SwapSuggestion) => s.newViolations.length > 0
+
+/** Asserts the D-036 ranking: rule-free first, breaksTarget first, then the deltas. */
+const expectRanked = (suggestions: SwapSuggestion[]) => {
+  const key = (s: SwapSuggestion) => [
+    breaksRules(s) ? 1 : 0,
+    s.breaksTarget ? 0 : 1,
+    s.unevenCourtDelta,
+    s.opponentRepeatDelta,
+  ]
+  for (let i = 1; i < suggestions.length; i++) {
+    const a = key(suggestions[i - 1])
+    const b = key(suggestions[i])
+    const firstDiff = a.findIndex((v, k) => v !== b[k])
+    if (firstDiff >= 0) {
+      expect(a[firstDiff], `rank ${i}`).toBeLessThan(b[firstDiff])
+    } else {
+      expect(suggestions[i - 1].balanceDelta).toBeLessThanOrEqual(
+        suggestions[i].balanceDelta + 1e-9,
+      )
+    }
+  }
+}
+
+describe.skip('suggestSwaps (D-036)', () => {
+  it('fixture: round 1 has two avoidable uneven courts', () => {
+    const { run } = mixedSetup()
+    expect(courtFlags(run, 0, 0)).toContain('gender-uneven-avoidable')
+    expect(courtFlags(run, 0, 1)).toContain('gender-uneven-avoidable')
+    expect(run.violations).toEqual([])
+  })
+
+  describe('rematch', () => {
+    it('equals suggestOpponentSwaps', () => {
+      const { players, feasibility, run } = setup()
+      const { roundIndex, pair } = firstRematch(run)
+      const base = { run, players, genderMode: GENDER, feasibility }
+      expect(suggestSwaps({ ...base, target: { kind: 'rematch', roundIndex, pair } })).toEqual(
+        suggestOpponentSwaps({ ...base, roundIndex, pair }),
+      )
+    })
+  })
+
+  describe('unevenCourt', () => {
+    const target = { kind: 'unevenCourt', roundIndex: 0, courtIndex: 0 } as const
+
+    it('evens out the court without raising the round avoidable count', () => {
+      const { players, feasibility, run, genderMode } = mixedSetup()
+      const suggestions = suggestSwaps({ run, players, genderMode, feasibility, target })
+      expect(suggestions.length).toBeGreaterThan(0)
+      expect(suggestions.length).toBeLessThanOrEqual(3)
+      for (const s of suggestions) {
+        expect(s.breaksTarget).toBe(true)
+        expect(courtFlags(s.run, 0, 0)).not.toContain('gender-uneven')
+        expect(avoidableInRound(s.run, 0)).toBeLessThanOrEqual(avoidableInRound(run, 0))
+        expect(s.unevenCourtDelta).toBe(avoidableInRound(s.run, 0) - avoidableInRound(run, 0))
+        expect(s.newViolations).toEqual([])
+        expect(s.balanceDelta).toBeLessThanOrEqual(DEFAULT_MAX_BALANCE_DELTA + 1e-9)
+      }
+      expectRanked(suggestions)
+    })
+
+    it('moves a player from the target court', () => {
+      const { players, feasibility, run, genderMode } = mixedSetup()
+      const onCourt = run.rounds[0].courts[0].teams.flat()
+      for (const s of suggestSwaps({ run, players, genderMode, feasibility, target })) {
+        expect(onCourt).toContain(s.move.outPlayerId)
+        expect(s.move.roundIndex).toBe(0)
+      }
+    })
+
+    it('returns [] for a court that is not uneven, or out of range', () => {
+      const { players, feasibility, run, genderMode } = mixedSetup()
+      const base = { run, players, genderMode, feasibility }
+      expect(
+        suggestSwaps({ ...base, target: { kind: 'unevenCourt', roundIndex: 1, courtIndex: 0 } }),
+      ).toEqual([])
+      expect(
+        suggestSwaps({ ...base, target: { kind: 'unevenCourt', roundIndex: 0, courtIndex: 2 } }),
+      ).toEqual([])
+      expect(
+        suggestSwaps({ ...base, target: { kind: 'unevenCourt', roundIndex: 3, courtIndex: 0 } }),
+      ).toEqual([])
+    })
+  })
+
+  describe('player', () => {
+    const target = { kind: 'player', roundIndex: 0, playerId: 'f1' } as const
+
+    it('returns up to 5 legal swaps that all move the player', () => {
+      const { players, feasibility, run, genderMode } = mixedSetup()
+      const suggestions = suggestSwaps({ run, players, genderMode, feasibility, target })
+      expect(suggestions.length).toBeGreaterThan(0)
+      expect(suggestions.length).toBeLessThanOrEqual(5)
+      for (const s of suggestions) {
+        expect(s.move.outPlayerId).toBe('f1')
+        expect(s.breaksTarget).toBe(true)
+        expect(s.newViolations).toEqual([])
+        expect(() =>
+          assertHardLegal({
+            schedule: scheduleFromRun(s.run),
+            players,
+            quotas: feasibility.quotas,
+          }),
+        ).not.toThrow()
+      }
+      expectRanked(suggestions)
+    })
+
+    it('never offers the player their own partner', () => {
+      const { players, feasibility, run, genderMode } = mixedSetup()
+      const all = suggestSwaps({
+        run,
+        players,
+        genderMode,
+        feasibility,
+        target,
+        showAll: true,
+        allowRuleBreaks: true,
+      })
+      expect(all.map((s) => s.move.inPlayerId)).not.toContain('m2')
+    })
+
+    it('showAll + allowRuleBreaks returns every same-round candidate, incl. re-splits', () => {
+      const { players, feasibility, run, genderMode } = mixedSetup()
+      const all = suggestSwaps({
+        run,
+        players,
+        genderMode,
+        feasibility,
+        target,
+        showAll: true,
+        allowRuleBreaks: true,
+        maxBalanceDelta: -1000,
+      })
+      // f1's two opponents on court 1 (re-split) + all four players on court 2
+      expect(all.map((s) => s.move.inPlayerId).sort()).toEqual(['f2', 'f3', 'f4', 'm1', 'm3', 'm4'])
+      expectRanked(all)
+    })
+
+    it('rule-breaking swaps appear only with allowRuleBreaks, ranked last, with their violations', () => {
+      const { players, feasibility, run, genderMode } = mixedSetup()
+      const base = { run, players, genderMode, feasibility, target, showAll: true }
+      const legal = suggestSwaps(base)
+      expect(legal.some(breaksRules)).toBe(false)
+
+      const all = suggestSwaps({ ...base, allowRuleBreaks: true })
+      const firstBreaking = all.findIndex(breaksRules)
+      expect(firstBreaking).toBeGreaterThan(0)
+      expect(all.slice(firstBreaking).every(breaksRules)).toBe(true)
+
+      // f1 ↔ m3 re-splits court 1 into m2+m3 v f1+m4; f1+m4 already partner in round 3.
+      const resplit = all.find((s) => s.move.inPlayerId === 'm3')!
+      expect(resplit.newViolations).toEqual([
+        expect.objectContaining({ round: 3, rule: 'partner-repeat' }),
+      ])
+      // f1 ↔ f4 puts the two lefties (f1, m1) on one team, and f4+m2 already partner in round 2.
+      const lefty = all.find((s) => s.move.inPlayerId === 'f4')!
+      expect(lefty.newViolations).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ round: 1, court: 2, rule: 'lefty' }),
+          expect.objectContaining({ round: 2, rule: 'partner-repeat' }),
+        ]),
+      )
+
+      for (const s of all) {
+        expect(s.newViolations).toEqual(
+          addedViolations({ before: run.violations, after: s.run.violations }),
+        )
+      }
+    })
+
+    it('returns [] for a sitter', () => {
+      const players = mkRoster({ count: 9, muTop: 4.2, muStep: 0.15 })
+      const config = { preset: 'balanced' as const, seed: 7 }
+      const resolved = resolveConfig({ config, tournamentId: TOURNAMENT })
+      const feasibility = auditFeasibility({
+        players,
+        courts: 2,
+        rounds: 5,
+        genderMode: GENDER,
+        config: resolved,
+      })
+      const run = generateSchedule({
+        tournamentId: TOURNAMENT,
+        players,
+        courts: 2,
+        rounds: 5,
+        genderMode: GENDER,
+        config,
+      })
+      const roundIndex = run.rounds.findIndex((r) => r.sitters.length > 0)
+      const playerId = run.rounds[roundIndex].sitters[0].playerId
+      expect(
+        suggestSwaps({
+          run,
+          players,
+          genderMode: GENDER,
+          feasibility,
+          target: { kind: 'player', roundIndex, playerId },
+          showAll: true,
+          allowRuleBreaks: true,
+        }),
+      ).toEqual([])
+    })
+  })
+
+  it('keeps sitters and is deterministic for every kind and flag combination', () => {
+    const { players, feasibility, run, genderMode } = mixedSetup()
+    const targets = [
+      { kind: 'unevenCourt', roundIndex: 0, courtIndex: 1 },
+      { kind: 'player', roundIndex: 1, playerId: 'm2' },
+    ] as const
+    for (const target of targets) {
+      for (const showAll of [false, true]) {
+        for (const allowRuleBreaks of [false, true]) {
+          const args = { run, players, genderMode, feasibility, target, showAll, allowRuleBreaks }
+          const a = suggestSwaps(args)
+          expect(a).toEqual(suggestSwaps(args))
+          expectRanked(a)
+          for (const s of a) {
+            expect(sitterIds(s.run)).toEqual(sitterIds(run))
+            expect(() => scheduleRunSchema.parse(s.run)).not.toThrow()
+            if (!allowRuleBreaks) expect(breaksRules(s)).toBe(false)
+            if (!showAll) expect(s.breaksTarget).toBe(true)
+          }
+        }
+      }
+    }
+  })
+
+  it('reports unevenCourtDelta 0 outside mixed mode', () => {
+    const { players, feasibility, run } = setup()
+    const playerId = run.rounds[0].courts[0].teams[0][0]
+    for (const s of suggestSwaps({
+      run,
+      players,
+      genderMode: GENDER,
+      feasibility,
+      target: { kind: 'player', roundIndex: 0, playerId },
+      showAll: true,
+    })) {
+      expect(s.unevenCourtDelta).toBe(0)
+    }
   })
 })

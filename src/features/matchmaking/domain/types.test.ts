@@ -70,6 +70,8 @@ describe('matcher contracts (M2.1)', () => {
       partnerRepeat: 5.0,
       mixedPreference: 0.3,
       sitGroupOverlap: 0.4,
+      courtGender: 1.0,
+      genderRotation: 0.5,
     })
     expect(weightsSchema.safeParse(DEFAULT_WEIGHTS).success).toBe(true)
   })

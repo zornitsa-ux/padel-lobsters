@@ -1348,3 +1348,103 @@ serializes that output for review. No engine, `report.ts`, or persisted
 new assertions) and `domain/__snapshots__/golden.test.ts.snap` (regenerated —
 this entry authorizes it; 12 snapshots now, 9 runs + 3 fixtures). D-012's
 "goldens via vitest snapshots" mechanism is unchanged.
+
+## D-035 — Court gender evenness and rotation become cost terms (2026-10-15)
+
+**Decision:** Two new soft-cost dimensions, mixed mode only, defined once in
+the new pure module `domain/genderBalance.ts`
+([`../gender-rebalance/PLAN.md`](../gender-rebalance/PLAN.md) §3):
+
+- **`courtGender`** — per round, `max(0, unevenCourts − floor)`. A court is
+  _uneven_ when nobody on it is `unknown` and its teams hold different numbers
+  of women. MF v MF, MM v MM and FF v FF are equally good (owner answer #1,
+  2026-10-15). The _floor_ is 1 when an odd number of women play and nobody
+  playing is `unknown`, else 0.
+- **`genderRotation`** — per player, `max(0, loneCount − 1)` over the
+  schedule, attributed to the round of each repeat. The _lone player_ is the
+  woman on a 1-woman uneven court, or the man on a 3-woman one. FF v MM has
+  none.
+
+Starting weights: `courtGender: 1.0`, `genderRotation: 0.5`. At
+`balanceTolerance` 0.5, one avoidable uneven court costs the same as 0.5 level
+of extra team gap, which is owner answer #2. `genderRotation` and
+`mixedPreference` are tuned in T2; results get recorded here.
+
+**Why:** V2 made 18–27 avoidable uneven courts per event (#9–#11), up from
+zero under V1 (OPTIONS.md §2.1). `mixedPreference` only counts same-gender
+_teams_, so MM v MF costs the same as MM v MM. Raising it doesn't help: it
+pushes against FF teams, which removes good FF v FF courts (OPTIONS §2.2 sim).
+
+**Contract choices made at T0:**
+
+- `DIMENSION_KEYS` appends both keys **last**, so the existing dimensions keep
+  their floating-point summation order. Men/women-mode runs score them 0, so
+  men-32 goldens stay byte-identical. Persisted `schedule_runs` aren't
+  Zod-parsed anywhere (re-checked 2026-10-15), so old rows are unaffected.
+- **Court flags** (mixed mode only): `gender-uneven` on every uneven court,
+  plus `gender-uneven-avoidable` on each one when the round's uneven count is
+  above its floor. Any of those courts could be fixed, so all of them carry
+  it. The UI reads the flags for status and uses `courtGenderShape` for the
+  neutral label ("Mixed"/"Men"/"Women").
+- **`courtGenderShape().label`** gains `'unknown'` beyond the plan's four, for
+  courts with an unknown player. They're never uneven and get no chip.
+- **Gender preference bar** = `100·max(0, 1 − (courtGender/n +
+genderRotation/t))`, n = matches, t = teams. **`mixedPreference` leaves the
+  bar.** It counts FF v FF and MM v MM courts beyond the minimum as a cost,
+  and the owner said those are fine, so a bar that included it would mark
+  down schedules the owner wants. It stays in the cost model as a tie-breaker
+  (T2 sets its weight, possibly 0). The key stays in persisted configs.
+- **`matcherPriorities`** groups gender as `courtGender + genderRotation`,
+  which keeps D-021's rule that the list and the bars sum the same things.
+  PLAN §3 had suggested including `mixedPreference`; this departs from it for
+  that reason. At the default weights, gender moves from last to third.
+- **`scoreSplit`** adds `weights.courtGender` for an uneven split. That only
+  separates splits on a 2W2M court (1W/3W courts are uneven under every
+  split), so stage 3 prefers MF v MF unless it costs more than about 0.5
+  level of extra gap.
+
+**Impact:** `genderBalance.ts` (new), `types.ts` (keys, schema, defaults),
+`report.ts` (flags now, quality fold in T1), and in T1: `cost.ts`,
+`teams.ts`, `presets.ts`. Goldens: T0 changes the 3 fixture snapshots (new
+weight keys) and adds flag lines to the 6 mixed run snapshots, and nothing
+else (verified by diff). T1 moves the mixed runs; that PR explains the change.
+
+## D-036 — Generalized manual swap, with a hard-rule override (2026-10-15)
+
+**Decision:** `suggestSwaps({ run, players, genderMode, feasibility, target,
+allowRuleBreaks?, maxBalanceDelta?, showAll?, limit? })` generalizes D-026's
+rematch-only engine to three targets: `rematch` (unchanged),
+`unevenCourt` (a court flagged by D-035) and `player` (any playing player the
+admin taps). `suggestOpponentSwaps` stays as a thin wrapper. `SwapSuggestion`
+gains `unevenCourtDelta` (avoidable uneven courts after − before) and
+`newViolations` (entries in the new `run.violations` the input lacked).
+
+- **Candidate moves.** `rematch` keeps D-026's cross-court swaps so its
+  results don't change. `unevenCourt` and `player` also allow swapping with
+  an opponent on the same court (a re-split). Without that, Fix can't repair
+  FF v MM, and "swap Dana with Sam across the net" is the most natural move
+  to tap. Teammates are never candidates. Sitters never move (owner answer
+  #4).
+- **Override.** `allowRuleBreaks` keeps candidates that raise
+  `hardViolations` (partner repeat, double lefty). Sit-out breaks (`null`)
+  stay rejected. `showAll` drops the target filter, the balance ceiling and
+  the limit.
+- **Ranking.** Rows with no new violations first, then breaksTarget first,
+  then lower `unevenCourtDelta`, `opponentRepeatDelta`, `balanceDelta`, then
+  `inPlayerId`, then enumeration order (stable sort). Outside mixed mode,
+  `unevenCourtDelta` is always 0, so rematch order is unchanged.
+
+**Why this still respects DESIGN §2 "no admin pair overrides."** D-026's
+reasoning holds: this is a one-off edit of one previewed artifact. Nothing
+carries forward into ratings or future generations, and the same cost model
+re-scores it. Breaking a hard rule by hand (owner answer #3) is honest
+because the violation lands in `run.violations` and the saved report shows
+it. The UI keeps a red summary visible until it's fixed. The `schedule_runs`
+"manually adjusted" marker stays **deferred** because it needs a migration,
+which isn't in scope for the 2026-10-18 ship.
+
+**Impact:** `domain/swaps.ts`. T0 froze the types, signature, `addedViolations`
+and `avoidableUnevenInRound`, and filled the two new fields on the existing
+rematch path. T4 implements the other kinds against the skipped D-036 suite
+in `swaps.test.ts`. The UI (T5) consumes it. No engine, golden or schema
+change.

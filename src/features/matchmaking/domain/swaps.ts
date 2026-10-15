@@ -1,4 +1,5 @@
 import { scoreSchedule } from './cost'
+import { roundGenderSummary } from './genderBalance'
 import { hardViolations } from './refine'
 import { buildScheduleRun } from './report'
 import { createRng } from './rng'
@@ -11,6 +12,7 @@ import type {
   Schedule,
   ScheduleRun,
   Team,
+  Violation,
 } from './types'
 
 // Admin-facing manual repair: given a court where an opposing pair is meeting
@@ -24,13 +26,28 @@ import type {
 // invariant. Sitter-in / player-out swaps (which would touch sit-out fairness)
 // are out of scope.
 
-/** A same-round exchange: `outPlayerId` leaves its court slot, `inPlayerId` (on
- * a different court in the same round) takes it, and vice-versa. */
+/** A same-round exchange: `outPlayerId` leaves its court slot, `inPlayerId`
+ * takes it, and vice-versa. For 'rematch' targets `inPlayerId` is on a
+ * different court; for 'unevenCourt' and 'player' targets it may also be on the
+ * opposite team of the same court (a re-split, D-036). */
 export interface SwapMove {
   roundIndex: number
   outPlayerId: string
   inPlayerId: string
 }
+
+/**
+ * What the admin asked to fix (D-036). Candidate moves per kind:
+ * - rematch: a member of `pair` ↔ a player on another court (D-026).
+ * - unevenCourt: a player on `courtIndex` ↔ any playing player not on their
+ *   team. `outPlayerId` is the one on `courtIndex`.
+ * - player: `playerId` ↔ any playing player not on their team.
+ *   `outPlayerId` is always `playerId`. A sitter yields [].
+ */
+export type SwapTarget =
+  | { kind: 'rematch'; roundIndex: number; pair: [string, string] }
+  | { kind: 'unevenCourt'; roundIndex: number; courtIndex: number }
+  | { kind: 'player'; roundIndex: number; playerId: string }
 
 export interface SwapSuggestion {
   move: SwapMove
@@ -38,8 +55,9 @@ export interface SwapSuggestion {
   // recomputed over the whole schedule (repeat costs accumulate chronologically,
   // so a single round cannot be patched in isolation). Apply = use this run.
   run: ScheduleRun
-  // The targeted opposing pair no longer share a court in `roundIndex`. Always
-  // true for returned suggestions (it is a hard filter).
+  // rematch: the pair no longer oppose in `roundIndex`. unevenCourt: the court
+  // at `courtIndex` is no longer uneven and the round's avoidable uneven count
+  // does not rise. player: always true. A hard filter unless `showAll`.
   breaksTarget: boolean
   // Net change in repeat-opponent occurrences across the whole schedule
   // (raw.opponentRepeat after − before). Negative = fewer repeats overall;
@@ -50,6 +68,13 @@ export interface SwapSuggestion {
   // Positive = worse balance. Bounded by `maxBalanceDelta` for returned
   // suggestions — this is the "won't dramatically unbalance" guard.
   balanceDelta: number
+  // Avoidable uneven courts (genderBalance.ts) after − before, across the
+  // schedule. Always 0 outside mixed mode.
+  unevenCourtDelta: number
+  // Entries in `run.violations` that the input run's violations lack. Non-empty
+  // marks a rule-breaking row; without `allowRuleBreaks` only a swap that trades
+  // one within-quota violation for another can have any.
+  newViolations: Violation[]
 }
 
 /**
@@ -59,6 +84,47 @@ export interface SwapSuggestion {
  * court. Tunable by the caller; surfaced as a knob later if owners want it.
  */
 export const DEFAULT_MAX_BALANCE_DELTA = 1.0
+
+export const DEFAULT_SWAP_LIMIT = 3
+export const DEFAULT_PLAYER_SWAP_LIMIT = 5
+
+const violationKey = (v: Violation) => `${v.round}|${v.court}|${v.rule}|${v.reason}`
+
+/** Violations in `after` that `before` lacks (multiset difference by value). */
+export function addedViolations({
+  before,
+  after,
+}: {
+  before: Violation[]
+  after: Violation[]
+}): Violation[] {
+  const remaining = new Map<string, number>()
+  for (const v of before) remaining.set(violationKey(v), (remaining.get(violationKey(v)) ?? 0) + 1)
+  return after.filter((v) => {
+    const left = remaining.get(violationKey(v)) ?? 0
+    if (left === 0) return true
+    remaining.set(violationKey(v), left - 1)
+    return false
+  })
+}
+
+/** Avoidable uneven courts in one round; 0 outside mixed mode. */
+export function avoidableUnevenInRound({
+  round,
+  players,
+  genderMode,
+}: {
+  round: Schedule[number]
+  players: PlayerInput[]
+  genderMode: GenderMode
+}): number {
+  if (genderMode !== 'mixed') return 0
+  const gender = new Map(players.map((p) => [p.playerId, p.gender]))
+  return roundGenderSummary({
+    matches: round.matches,
+    genderOf: (id) => gender.get(id) ?? 'unknown',
+  }).avoidable
+}
 
 /** Court + slot (0..3) of a playing player within a round, or null if absent. */
 function findSlot(
@@ -153,6 +219,7 @@ function scoreSwapCandidate({
   baselineCoSitOverlap,
   baseViolations,
   before,
+  avoidableBefore,
   maxBalanceDelta,
 }: {
   candidate: SwapCandidate
@@ -166,6 +233,7 @@ function scoreSwapCandidate({
   baselineCoSitOverlap: number
   baseViolations: number
   before: ReturnType<typeof scoreSchedule>
+  avoidableBefore: number
   maxBalanceDelta: number
 }): SwapSuggestion | null {
   const { outPlayerId, inPlayerId, candidateSchedule } = candidate
@@ -212,6 +280,9 @@ function scoreSwapCandidate({
     breaksTarget: true,
     opponentRepeatDelta,
     balanceDelta,
+    unevenCourtDelta:
+      avoidableUnevenInRound({ round: candidateRound, players, genderMode }) - avoidableBefore,
+    newViolations: addedViolations({ before: run.violations, after: rebuiltRun.violations }),
   }
 }
 
@@ -285,6 +356,8 @@ export function suggestOpponentSwaps({
     baselineCoSitOverlap,
   })
 
+  const avoidableBefore = avoidableUnevenInRound({ round, players, genderMode })
+
   const candidates = enumerateSwapCandidates({ schedule, round, roundIndex, pair })
   const suggestions: SwapSuggestion[] = []
   for (const candidate of candidates) {
@@ -300,6 +373,7 @@ export function suggestOpponentSwaps({
       baselineCoSitOverlap,
       baseViolations,
       before,
+      avoidableBefore,
       maxBalanceDelta,
     })
     if (suggestion) suggestions.push(suggestion)
@@ -318,6 +392,61 @@ export function suggestOpponentSwaps({
   })
 
   return suggestions.slice(0, limit)
+}
+
+/**
+ * Generalized manual swap (D-036): same-round swaps aimed at `target`, each
+ * with its fully rebuilt run. Sitters never move.
+ *
+ * Filters, unless relaxed:
+ * - breaksTarget (dropped when `showAll`)
+ * - hard-legal: `hardViolations` non-null and not above the input run's count.
+ *   `allowRuleBreaks` keeps candidates that raise the count; a null
+ *   (sit-out rule) is always rejected.
+ * - balanceDelta <= maxBalanceDelta (ignored when `showAll`)
+ *
+ * Ranking, best first: no new violations before rule-breaking; breaksTarget
+ * before not; lower unevenCourtDelta; lower opponentRepeatDelta; lower
+ * balanceDelta (1e-9 tolerance); `inPlayerId` ascending; then enumeration
+ * order (stable sort). Returns at most `limit` (default 3, 5 for 'player'),
+ * or every candidate when `showAll`.
+ *
+ * Pure and deterministic. 'rematch' results equal `suggestOpponentSwaps`.
+ */
+export function suggestSwaps({
+  run,
+  players,
+  genderMode,
+  feasibility,
+  target,
+  allowRuleBreaks = false,
+  maxBalanceDelta = DEFAULT_MAX_BALANCE_DELTA,
+  showAll = false,
+  limit,
+}: {
+  run: ScheduleRun
+  players: PlayerInput[]
+  genderMode: GenderMode
+  feasibility: FeasibilityResult
+  target: SwapTarget
+  allowRuleBreaks?: boolean
+  maxBalanceDelta?: number
+  showAll?: boolean
+  limit?: number
+}): SwapSuggestion[] {
+  if (target.kind === 'rematch' && !allowRuleBreaks && !showAll) {
+    return suggestOpponentSwaps({
+      run,
+      players,
+      genderMode,
+      feasibility,
+      roundIndex: target.roundIndex,
+      pair: target.pair,
+      maxBalanceDelta,
+      limit: limit ?? DEFAULT_SWAP_LIMIT,
+    })
+  }
+  throw new Error(`suggestSwaps: ${target.kind} not implemented yet (T4)`)
 }
 
 /** Reconstruct the stage-1..4 working schedule from a persisted run. */

@@ -202,3 +202,142 @@ describe('report (M2.8)', () => {
     expect(run.rounds[0].sitters.map((p) => p.playerId)).toEqual(['p5'])
   })
 })
+
+// D-035 flags are emitted from T0; the quality fold is T1's.
+describe('report gender flags (D-035)', () => {
+  const g = (playerId: string) =>
+    mkPlayer({ playerId, gender: playerId.startsWith('f') ? 'female' : 'male' })
+  const eight = ['m1', 'm2', 'm3', 'm4', 'm5', 'f1', 'f2', 'f3'].map(g)
+  const oneRound = (b: [[string, string], [string, string]]) =>
+    mkSchedule([
+      {
+        matches: [
+          [
+            ['f1', 'm1'],
+            ['m2', 'm3'],
+          ],
+          b,
+        ],
+      },
+    ])
+  const flagsOf = (schedule: Schedule, genderMode: GenderMode = 'mixed') =>
+    build({ players: eight, schedule, courts: 2, rounds: 1, genderMode }).rounds[0].courts.map(
+      (c) => c.flags,
+    )
+
+  it('marks the floor court uneven but not avoidable', () => {
+    expect(
+      flagsOf(
+        oneRound([
+          ['f2', 'm4'],
+          ['f3', 'm5'],
+        ]),
+      ),
+    ).toEqual([['gender-uneven'], []])
+  })
+
+  it('marks every uneven court avoidable when the round exceeds its floor', () => {
+    expect(
+      flagsOf(
+        oneRound([
+          ['f2', 'f3'],
+          ['m4', 'm5'],
+        ]),
+      ),
+    ).toEqual([
+      ['gender-uneven', 'gender-uneven-avoidable'],
+      ['gender-uneven', 'gender-uneven-avoidable'],
+    ])
+  })
+
+  it('emits no gender flags outside mixed mode', () => {
+    expect(
+      flagsOf(
+        oneRound([
+          ['f2', 'f3'],
+          ['m4', 'm5'],
+        ]),
+        'men',
+      ),
+    ).toEqual([[], []])
+  })
+})
+
+describe.skip('report gender quality (D-035)', () => {
+  // f1 is the lone woman on the only court in all three rounds: each court is
+  // the round's floor, so courtGender = 0; genderRotation = 0, 1, 1.
+  const players = ['f1', 'm1', 'm2', 'm3'].map((playerId) =>
+    mkPlayer({ playerId, gender: playerId === 'f1' ? 'female' : 'male' }),
+  )
+  const schedule = mkSchedule([
+    {
+      matches: [
+        [
+          ['f1', 'm1'],
+          ['m2', 'm3'],
+        ],
+      ],
+    },
+    {
+      matches: [
+        [
+          ['f1', 'm2'],
+          ['m1', 'm3'],
+        ],
+      ],
+    },
+    {
+      matches: [
+        [
+          ['f1', 'm3'],
+          ['m1', 'm2'],
+        ],
+      ],
+    },
+  ])
+
+  it('folds courtGender / n + genderRotation / t into genderPreference', () => {
+    const run = build({ players, schedule, courts: 1, rounds: 3, genderMode: 'mixed' })
+    // n = 3 matches, t = 6 teams: 100·(1 − (0/3 + 2/6))
+    expect(run.quality.overall.genderPreference).toBeCloseTo(100 * (1 - 2 / 6), 10)
+    // per round: n = 1, t = 2
+    expect(run.quality.perRound.map((q) => q.genderPreference)).toEqual([
+      100,
+      expect.closeTo(50, 10),
+      expect.closeTo(50, 10),
+    ])
+  })
+
+  it('ignores mixedPreference: MM v MM and FF v FF courts score 100', () => {
+    const four = ['f1', 'f2', 'f3', 'f4', 'm1', 'm2', 'm3', 'm4'].map((playerId) =>
+      mkPlayer({ playerId, gender: playerId.startsWith('f') ? 'female' : 'male' }),
+    )
+    const sameGenderCourts = mkSchedule([
+      {
+        matches: [
+          [
+            ['f1', 'f2'],
+            ['f3', 'f4'],
+          ],
+          [
+            ['m1', 'm2'],
+            ['m3', 'm4'],
+          ],
+        ],
+      },
+    ])
+    const run = build({
+      players: four,
+      schedule: sameGenderCourts,
+      courts: 2,
+      rounds: 1,
+      genderMode: 'mixed',
+    })
+    expect(run.quality.overall.genderPreference).toBe(100)
+  })
+
+  it('stays 100 outside mixed mode', () => {
+    const run = build({ players, schedule, courts: 1, rounds: 3, genderMode: 'men' })
+    expect(run.quality.overall.genderPreference).toBe(100)
+  })
+})

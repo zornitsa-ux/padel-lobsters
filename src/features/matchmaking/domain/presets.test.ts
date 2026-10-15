@@ -115,6 +115,36 @@ describe('presets (M2.9)', () => {
     })
   })
 
+  // D-035 replacements (coordinator-frozen at T0). T1 deletes the two
+  // pre-D-035 specs above that these supersede ('ranks all five…' order and
+  // the genderPreference line of 'groups weights…') and removes `.skip`.
+  describe.skip('matcher priorities after D-035', () => {
+    it('groups gender as courtGender + genderRotation, like the bar', () => {
+      const config = resolve({ preset: 'balanced' })
+      const by = Object.fromEntries(matcherPriorities({ config }).map((p) => [p.key, p.weight]))
+      const { weights } = config
+      expect(by.genderPreference).toBe(weights.courtGender + weights.genderRotation)
+      expect(by.balance).toBe(weights.teamBalance + weights.courtSpread)
+      expect(by.variety).toBe(weights.opponentRepeat + weights.partnerRepeat)
+    })
+
+    it('ranks gender above partner and sit-out fairness at the defaults', () => {
+      const keys = matcherPriorities({ config: resolve({ preset: 'balanced' }) }).map((p) => p.key)
+      expect(keys).toEqual([
+        'variety',
+        'balance',
+        'genderPreference',
+        'partnerFairness',
+        'sitoutFairness',
+      ])
+    })
+
+    it('reorders when a gender override outweighs the preset', () => {
+      const config = resolve({ preset: 'balanced', weights: { courtGender: 99 } })
+      expect(matcherPriorities({ config })[0].key).toBe('genderPreference')
+    })
+  })
+
   describe('preset intent copy', () => {
     it('covers every preset with a nonempty one-liner', () => {
       for (const preset of Object.keys(PRESET_KNOBS) as MatchConfig['preset'][]) {
