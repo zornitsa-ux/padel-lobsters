@@ -137,3 +137,41 @@ describe('MatchmakingContainer — Fix repeat (M3.8, D-026)', () => {
     expect(screen.queryByText(/fix this repeat/i)).toBeNull()
   })
 })
+
+describe('MatchmakingContainer — tap a player, apply, undo (D-036)', () => {
+  beforeEach(() => {
+    Element.prototype.scrollIntoView = vi.fn()
+  })
+
+  afterEach(cleanup)
+
+  it('opens swap options for a tapped player, applies one, and undoes it', async () => {
+    renderContainer()
+    fireEvent.click(screen.getByRole('button', { name: /generate schedule/i }))
+    await waitFor(() => expect(button(/^compare$/i)).not.toBeNull())
+    expect(button(/undo last swap/i)).toBeNull()
+
+    fireEvent.click(screen.getAllByRole('button', { name: /^swap options for /i })[0])
+    await waitFor(() => expect(screen.getByText(/^swap options for /i)).toBeTruthy())
+
+    fireEvent.click(screen.getAllByRole('button', { name: /^apply$/i })[0])
+
+    await waitFor(() => expect(button(/undo last swap/i)).not.toBeNull())
+    expect(screen.queryByText(/^swap options for /i)).toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: /undo last swap/i }))
+    await waitFor(() => expect(button(/undo last swap/i)).toBeNull())
+  })
+
+  it('show all swaps re-queries and hides the control', async () => {
+    renderContainer()
+    fireEvent.click(screen.getByRole('button', { name: /generate schedule/i }))
+    await waitFor(() => expect(button(/^compare$/i)).not.toBeNull())
+
+    fireEvent.click(screen.getAllByRole('button', { name: /^swap options for /i })[0])
+    await waitFor(() => expect(button(/show all swaps/i)).not.toBeNull())
+    fireEvent.click(screen.getByRole('button', { name: /show all swaps/i }))
+
+    await waitFor(() => expect(button(/show all swaps/i)).toBeNull())
+  })
+})
