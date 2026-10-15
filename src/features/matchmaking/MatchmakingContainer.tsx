@@ -166,8 +166,9 @@ export default function MatchmakingContainer({
     runDeferred({
       kind: 'generate',
       work: () => {
+        const next = generateWith(config)
         setUndoRun(null)
-        setPreview(generateWith(config))
+        setPreview(next)
       },
       announce: 'Schedule generated. Review it below.',
     })
@@ -247,8 +248,10 @@ export default function MatchmakingContainer({
     setFixing(null)
   }
 
+  // Undo while a swap query is pending would let its stale suggestions reopen
+  // against the restored run, and Apply would silently redo the swap.
   const handleUndoSwap = () => {
-    if (!undoRun) return
+    if (!undoRun || busy) return
     setPreview(undoRun)
     setUndoRun(null)
   }
@@ -330,7 +333,7 @@ export default function MatchmakingContainer({
             onFixRematch={handleFixRematch}
             onFixUnevenCourt={handleFixUnevenCourt}
             onPickPlayer={handlePickPlayer}
-            onUndoSwap={undoRun ? handleUndoSwap : undefined}
+            onUndoSwap={undoRun && !busy ? handleUndoSwap : undefined}
           />
         </div>
       )}

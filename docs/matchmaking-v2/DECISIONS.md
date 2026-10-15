@@ -1511,3 +1511,16 @@ for a schedule that is already optimal, while the court chips correctly say
 shows up. The saved-schedule view now uses the same floor as the preview: an
 uneven court that the round's odd number of women forces gets a neutral
 chip, not an amber one.
+
+### D-036 addendum: rematch ranking after review (2026-10-15)
+
+D-026's order for rematch Fix (opponentRepeatDelta, then balanceDelta)
+changes in two places, both on purpose:
+
+- **Mixed mode:** `unevenCourtDelta` ranks first, so fixing a repeat doesn't
+  quietly create uneven courts that the engine now weights at 2.0.
+- **Any mode:** rows with `newViolations` rank after rows without. Such a
+  row can only reach the default list by trading one within-quota violation
+  for another.
+
+The M3.8 suite still passes unchanged.

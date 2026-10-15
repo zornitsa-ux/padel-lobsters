@@ -1,5 +1,6 @@
 import { scoreSchedule } from './cost'
 import { courtGenderShape, roundGenderSummary } from './genderBalance'
+import type { GenderOf } from './genderBalance'
 import { hardViolations } from './refine'
 import { buildScheduleRun } from './report'
 import { createRng } from './rng'
@@ -10,7 +11,6 @@ import { coSitOverlap, planSitouts } from './sitouts'
 import type {
   FeasibilityResult,
   GenderMode,
-  PlayerGender,
   PlayerInput,
   Schedule,
   ScheduleRun,
@@ -124,12 +124,7 @@ export function avoidableUnevenInRound({
   players: PlayerInput[]
   genderMode: GenderMode
 }): number {
-  if (genderMode !== 'mixed') return 0
-  const gender = new Map(players.map((p) => [p.playerId, p.gender]))
-  return roundGenderSummary({
-    matches: round.matches,
-    genderOf: (id) => gender.get(id) ?? 'unknown',
-  }).avoidable
+  return avoidableIn({ round, genderOf: genderLookup(players), genderMode })
 }
 
 /** Whether a and b oppose each other on some court in the round. */
@@ -139,8 +134,6 @@ function areOpposing(round: Schedule[number], a: string, b: string): boolean {
       (m.team1.includes(a) && m.team2.includes(b)) || (m.team1.includes(b) && m.team2.includes(a)),
   )
 }
-
-type GenderOf = (playerId: string) => PlayerGender
 
 const genderLookup = (players: PlayerInput[]): GenderOf => {
   const gender = new Map(players.map((p) => [p.playerId, p.gender]))
@@ -391,9 +384,9 @@ function compareSuggestions(a: SwapSuggestion, b: SwapSuggestion): number {
  * and sit quotas from `feasibility.quotas` / `run.config.leftyRule`); and
  * `balanceDelta <= maxBalanceDelta` (default `DEFAULT_MAX_BALANCE_DELTA`).
  *
- * Ranks best-first: lower `unevenCourtDelta` (mixed mode; always 0
- * otherwise), lower `opponentRepeatDelta`, then lower `balanceDelta`,
- * then `inPlayerId` ascending (determinism). Returns at most `limit`
+ * Ranks with `suggestSwaps`'s D-036 order: rows with no new violations first,
+ * then lower `unevenCourtDelta` (always 0 outside mixed mode),
+ * `opponentRepeatDelta`, `balanceDelta`, `inPlayerId`. Returns at most `limit`
  * suggestions (default 3), each carrying its rebuilt run.
  *
  * Pure and deterministic: same inputs ⇒ deep-equal output. Never mutates
@@ -446,7 +439,7 @@ export function suggestOpponentSwaps({
  * order (stable sort). Returns at most `limit` (default 3, 5 for 'player'),
  * or every candidate when `showAll`.
  *
- * Pure and deterministic. 'rematch' results equal `suggestOpponentSwaps`.
+ * Pure and deterministic.
  */
 export function suggestSwaps({
   run,

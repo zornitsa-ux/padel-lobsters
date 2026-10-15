@@ -86,7 +86,7 @@ export default function SwapPanel({
       onClick={onCancel}
     >
       <p className="sr-only" role="status" aria-live="polite">
-        {suggestions.length} fix option{suggestions.length === 1 ? '' : 's'}
+        {suggestions.length} swap option{suggestions.length === 1 ? '' : 's'}
       </p>
 
       <div
@@ -102,7 +102,7 @@ export default function SwapPanel({
             type="button"
             onClick={onCancel}
             className="text-lob-muted-light hover:text-lob-slate flex-shrink-0"
-            aria-label="Cancel fix"
+            aria-label="Close swap options"
           >
             <X size={20} />
           </button>
