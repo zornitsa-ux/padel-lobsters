@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import type { PlayerGender } from '../domain/types'
 import { GENDER_UNEVEN_AVOIDABLE_FLAG, GENDER_UNEVEN_FLAG } from '../domain/report'
-import { courtChip, hasBothGenders, savedCourtIsUneven } from './genderCopy'
+import {
+  courtChip,
+  hasBothGenders,
+  savedCourtIsUneven,
+  savedRoundHasAvoidableUneven,
+} from './genderCopy'
 
 const players = (genders: PlayerGender[]) =>
   genders.map((gender, i) => ({ playerId: `p${i}`, gender }))
@@ -64,5 +69,22 @@ describe('savedCourtIsUneven', () => {
   it('keeps even shapes and unknowns even', () => {
     expect(savedCourtIsUneven(court(['male', 'female', 'male', 'female']))).toBe(false)
     expect(savedCourtIsUneven(court(['male', '', 'male', 'female']))).toBe(false)
+  })
+})
+
+describe('saved-view unevenness', () => {
+  const m = (id: string) => ({ id, gender: 'male' })
+  const f = (id: string) => ({ id, gender: 'female' })
+
+  it('never calls a court with a missing player uneven', () => {
+    expect(savedCourtIsUneven({ team1: [f('f1')], team2: [m('m1'), m('m2')] })).toBe(false)
+  })
+
+  it('knows when a round has an uneven court beyond its odd-women floor', () => {
+    const lone = { team1: [f('f1'), m('m1')], team2: [m('m2'), m('m3')] }
+    const mixed = { team1: [f('f2'), m('m4')], team2: [f('f3'), m('m5')] }
+    const ffmm = { team1: [f('f2'), f('f3')], team2: [m('m4'), m('m5')] }
+    expect(savedRoundHasAvoidableUneven({ courts: [lone, mixed] })).toBe(false)
+    expect(savedRoundHasAvoidableUneven({ courts: [lone, ffmm] })).toBe(true)
   })
 })
