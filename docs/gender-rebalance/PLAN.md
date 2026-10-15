@@ -116,6 +116,11 @@ genderRotation 1.0 / mixedPreference 0.3`.** The results table is in the
     Vercel deploy, update `docs/matchmaking-v2/PLAN.md` §1, and add the
     follow-ups to §6.
 
+- 2026-10-15 — **Owner checkpoint 2: "Hold, I'll review first."** PRs #39
+  and #40 stay open for owner review. Nothing is merged. The cut line (§2:
+  merge #39 alone if #40 isn't review-clean by Sat 2026-10-17 midday) still
+  applies.
+
 **Baseline (2026-10-15, `scripts/mm-gender-sim.ts`, balanced, 10 seeds × 6 rounds).**
 Mean team gap is only ~0.1 level today, so the 0.5-level budget leaves plenty
 of room.
