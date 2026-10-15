@@ -26,7 +26,7 @@ export interface RoundGenderSummary {
   avoidable: number
 }
 
-type GenderOf = (playerId: string) => PlayerGender
+export type GenderOf = (playerId: string) => PlayerGender
 
 // Positional primitives for cost.ts's allocation-free hot loop.
 export const isUnevenCourt = (women1: number, women2: number, unknowns: number): boolean =>

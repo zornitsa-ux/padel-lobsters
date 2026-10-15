@@ -436,7 +436,7 @@ const expectRanked = (suggestions: SwapSuggestion[]) => {
   }
 }
 
-describe.skip('suggestSwaps (D-036)', () => {
+describe('suggestSwaps (D-036)', () => {
   it('fixture: round 1 has two avoidable uneven courts', () => {
     const { run } = mixedSetup()
     expect(courtFlags(run, 0, 0)).toContain('gender-uneven-avoidable')

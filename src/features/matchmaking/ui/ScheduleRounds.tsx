@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { PROVISIONAL_LEVEL_SIGMA } from '../domain/report'
+import { GENDER_UNEVEN_AVOIDABLE_FLAG, PROVISIONAL_LEVEL_SIGMA } from '../domain/report'
 import { pairKey } from '../domain/scheduleOps'
 import type { ScheduleRun } from '../domain/types'
 import { courtChip, hasBothGenders } from './genderCopy'
@@ -47,10 +47,12 @@ function TeamNames({
   ids,
   players,
   showGender,
+  onPickPlayer,
 }: {
   ids: [string, string]
   players: Record<string, PlayerInput>
   showGender: boolean
+  onPickPlayer?: (playerId: string) => void
 }) {
   return (
     <div className="space-y-0.5">
@@ -61,7 +63,18 @@ function TeamNames({
             key={id}
             className="flex items-center gap-1 text-sm font-medium text-lob-slate truncate"
           >
-            <span className="min-w-0 truncate">{player?.name ?? id}</span>
+            {onPickPlayer ? (
+              <button
+                type="button"
+                onClick={() => onPickPlayer(id)}
+                aria-label={`Swap options for ${player?.name ?? id}`}
+                className="min-w-0 truncate min-h-[40px] text-left font-medium hover:underline decoration-dotted underline-offset-2"
+              >
+                {player?.name ?? id}
+              </button>
+            ) : (
+              <span className="min-w-0 truncate">{player?.name ?? id}</span>
+            )}
             <span className="flex shrink-0 items-center gap-1">
               {showGender && player && <GenderMark gender={player.gender} />}
               {player?.isLeftHanded && <span title="Left-handed">🤚</span>}
@@ -75,6 +88,14 @@ function TeamNames({
 }
 
 export type OnFixRematch = (args: { roundIndex: number; pair: [string, string] }) => void
+export type OnFixUnevenCourt = (args: { roundIndex: number; courtIndex: number }) => void
+export type OnPickPlayer = (args: { roundIndex: number; playerId: string }) => void
+
+export type SwapHandlers = {
+  onFixRematch?: OnFixRematch
+  onFixUnevenCourt?: OnFixUnevenCourt
+  onPickPlayer?: OnPickPlayer
+}
 
 function CourtCard({
   court,
@@ -82,15 +103,18 @@ function CourtCard({
   rematches,
   roundIndex,
   onFixRematch,
+  onFixUnevenCourt,
+  onPickPlayer,
   showGender,
-}: {
+}: SwapHandlers & {
   court: CourtReport
   index: number
   rematches: [string, string][]
   roundIndex: number
-  onFixRematch?: OnFixRematch
   showGender: boolean
 }) {
+  const pickPlayer = onPickPlayer && ((playerId: string) => onPickPlayer({ roundIndex, playerId }))
+  const canEvenOut = onFixUnevenCourt && court.flags.includes(GENDER_UNEVEN_AVOIDABLE_FLAG)
   const players = playerMap(court.players)
   const [team1, team2] = court.teams
   const [sum1, sum2] = court.teamSums
@@ -105,6 +129,10 @@ function CourtCard({
           {showGender && (
             <CourtGenderChip
               chip={courtChip({ teams: court.teams, players: court.players, flags: court.flags })}
+              onFix={
+                canEvenOut ? () => onFixUnevenCourt({ roundIndex, courtIndex: index }) : undefined
+              }
+              fixLabel={`Even out Court ${index + 1}`}
             />
           )}
         </div>
@@ -113,12 +141,22 @@ function CourtCard({
 
       <div className="flex items-center gap-2">
         <div className="flex-1 min-w-0">
-          <TeamNames ids={team1} players={players} showGender={showGender} />
+          <TeamNames
+            ids={team1}
+            players={players}
+            showGender={showGender}
+            onPickPlayer={pickPlayer}
+          />
           <p className="text-xs text-lob-muted-light mt-0.5">{sum1.toFixed(1)}</p>
         </div>
         <span className="text-xs text-lob-muted-light font-medium flex-shrink-0">vs</span>
         <div className="flex-1 min-w-0 text-right">
-          <TeamNames ids={team2} players={players} showGender={showGender} />
+          <TeamNames
+            ids={team2}
+            players={players}
+            showGender={showGender}
+            onPickPlayer={pickPlayer}
+          />
           <p className="text-xs text-lob-muted-light mt-0.5">{sum2.toFixed(1)}</p>
         </div>
       </div>
@@ -156,13 +194,12 @@ function RoundSection({
   round,
   index,
   rematches,
-  onFixRematch,
   showGender,
-}: {
+  ...handlers
+}: SwapHandlers & {
   round: RoundReport
   index: number
   rematches: [string, string][][]
-  onFixRematch?: OnFixRematch
   showGender: boolean
 }) {
   return (
@@ -176,8 +213,8 @@ function RoundSection({
             index={courtIndex}
             rematches={rematches[courtIndex]}
             roundIndex={index}
-            onFixRematch={onFixRematch}
             showGender={showGender}
+            {...handlers}
           />
         ))}
       </div>
@@ -218,10 +255,9 @@ function Legend({ rounds, showGender }: { rounds: ScheduleRun['rounds']; showGen
 
 export default function ScheduleRounds({
   rounds,
-  onFixRematch,
-}: {
+  ...handlers
+}: SwapHandlers & {
   rounds: ScheduleRun['rounds']
-  onFixRematch?: OnFixRematch
 }) {
   const rematches = useMemo(() => rematchesByCourt(rounds), [rounds])
   const showGender = useMemo(
@@ -237,8 +273,8 @@ export default function ScheduleRounds({
           round={round}
           index={index}
           rematches={rematches[index]}
-          onFixRematch={onFixRematch}
           showGender={showGender}
+          {...handlers}
         />
       ))}
     </div>
