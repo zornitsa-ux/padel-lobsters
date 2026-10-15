@@ -101,4 +101,15 @@ describe('ManageMatches', () => {
     renderMatches({ status: 'draft', matches: [] })
     expect(screen.getByText(/assign groups in the Teams section/)).toBeTruthy()
   })
+
+  it('lists draft fixtures read-only once groups are assigned', () => {
+    const fixtures = [
+      mkLeagueMatch({ id: 'f1', stage: 'group', team1_id: 'A1', team2_id: 'A2' }),
+      mkLeagueMatch({ id: 'f2', stage: 'group', team1_id: 'B1', team2_id: 'B2' }),
+    ]
+    renderMatches({ status: 'draft', matches: fixtures })
+    expect(screen.getByText('Fixtures (2)')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Enter Score' })).toBeNull()
+    expect(screen.queryByText(/assign groups in the Teams section/)).toBeNull()
+  })
 })
