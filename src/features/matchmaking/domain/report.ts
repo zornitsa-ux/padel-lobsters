@@ -1,4 +1,5 @@
 import { scoreSchedule } from './cost'
+import { courtGenderShape, roundGenderSummary } from './genderBalance'
 import { leftyIdSet, pairKey } from './scheduleOps'
 import type {
   DimensionScores,
@@ -22,6 +23,10 @@ import { DIMENSION_KEYS } from './types'
  */
 export const PROVISIONAL_LEVEL_SIGMA = 0.5
 
+/** Court flags (D-035), mixed mode only. Avoidable marks every uneven court in a round whose uneven count exceeds its floor. */
+export const GENDER_UNEVEN_FLAG = 'gender-uneven'
+export const GENDER_UNEVEN_AVOIDABLE_FLAG = 'gender-uneven-avoidable'
+
 const diffRaw = (a: DimensionScores, b: DimensionScores): DimensionScores =>
   Object.fromEntries(DIMENSION_KEYS.map((k) => [k, a[k] - b[k]])) as DimensionScores
 
@@ -43,7 +48,7 @@ const qualityFrom = ({
     partnerFairness: pct(raw.partnerGap / n2),
     variety: pct((raw.opponentRepeat + raw.partnerRepeat) / n2),
     sitoutFairness,
-    genderPreference: isMixed ? pct(raw.mixedPreference / n2) : 100,
+    genderPreference: isMixed ? pct(raw.courtGender / matches + raw.genderRotation / n2) : 100,
   }
 }
 
@@ -53,7 +58,10 @@ const qualityFrom = ({
  *   PlayerInput snapshots (sitters sorted by playerId); teams canonical;
  *   teamSums = team mu sums; courtSpread = max mu − min mu on the court
  * - flags: 'opponent-rematch' (the court contains an opposing pair meeting
- *   ≥ 2nd time, attributed to the round where the rematch occurs)
+ *   ≥ 2nd time, attributed to the round where the rematch occurs); mixed mode
+ *   only (D-035): 'gender-uneven' on every uneven court, plus
+ *   'gender-uneven-avoidable' on each when the round's uneven count exceeds
+ *   its floor (genderBalance.ts)
  * - violations: one entry per double-lefty team (rule 'lefty') and per
  *   repeated partnership occurrence (rule 'partner-repeat'); sit-rule
  *   violations carry court: null
@@ -64,7 +72,10 @@ const qualityFrom = ({
  *     partnerFairness  = 100·max(0, 1 − raw.partnerGap / t)
  *     variety          = 100·max(0, 1 − (raw.opponentRepeat + raw.partnerRepeat) / 2n)
  *     sitoutFairness   = 100 when nobody sits, else 100·max(0, 1 − raw.sitGroupOverlap / R)
- *     genderPreference = 100 unless mixed mode, else 100·max(0, 1 − raw.mixedPreference / t)
+ *     genderPreference = 100 unless mixed mode, else
+ *                        100·max(0, 1 − (raw.courtGender / n + raw.genderRotation / t))
+ *                        (D-035; mixedPreference is a matcher tie-breaker only
+ *                        and no longer feeds the bar)
  *   perRound applies the same formulas to each round's own raw scores
  *   (repeat costs attribute to the round of the repeat; sitoutFairness
  *   repeats the event-level value)
@@ -103,17 +114,24 @@ function buildRoundReports({
   schedule,
   get,
   leftyIds,
+  genderMode,
 }: {
   schedule: Schedule
   get: (id: string) => PlayerInput
   leftyIds: Set<string>
+  genderMode: GenderMode
 }): { rounds: RoundReport[]; violations: Violation[]; sitCounts: Map<string, number> } {
   const partnerCounts = new Map<string, number>()
   const opponentCounts = new Map<string, number>()
   const sitCounts = new Map<string, number>()
   const violations: Violation[] = []
 
+  const genderOf = (id: string) => get(id).gender
+
   const rounds: RoundReport[] = schedule.map((round, r) => {
+    const avoidable =
+      genderMode === 'mixed' &&
+      roundGenderSummary({ matches: round.matches, genderOf }).avoidable > 0
     const courts = round.matches.map((m, c) => {
       const team1 = [get(m.team1[0]), get(m.team1[1])] as const
       const team2 = [get(m.team2[0]), get(m.team2[1])] as const
@@ -129,6 +147,13 @@ function buildRoundReports({
         }
       }
       if (rematch) flags.push('opponent-rematch')
+      if (
+        genderMode === 'mixed' &&
+        courtGenderShape({ teams: [m.team1, m.team2], genderOf }).uneven
+      ) {
+        flags.push(GENDER_UNEVEN_FLAG)
+        if (avoidable) flags.push(GENDER_UNEVEN_AVOIDABLE_FLAG)
+      }
 
       for (const team of [m.team1, m.team2]) {
         if (team.every((id) => leftyIds.has(id))) {
@@ -275,6 +300,7 @@ export function buildScheduleRun({
     schedule,
     get,
     leftyIds,
+    genderMode,
   })
   const violations = [
     ...roundViolations,

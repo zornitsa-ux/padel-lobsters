@@ -74,19 +74,6 @@ describe('presets (M2.9)', () => {
 
   // Replaces the M2.9 exchange-rate-sentence specs (D-021).
   describe('matcher priorities', () => {
-    it('ranks all five quality dimensions, most-protected first', () => {
-      const priorities = matcherPriorities({ config: resolve({ preset: 'balanced' }) })
-      expect(priorities.map((p) => p.key)).toEqual([
-        'variety',
-        'balance',
-        'partnerFairness',
-        'sitoutFairness',
-        'genderPreference',
-      ])
-      const weights = priorities.map((p) => p.weight)
-      expect([...weights].sort((a, b) => b - a)).toEqual(weights)
-    })
-
     it('groups weights exactly as report.ts derives the bars', () => {
       const config = resolve({ preset: 'balanced' })
       const by = Object.fromEntries(matcherPriorities({ config }).map((p) => [p.key, p.weight]))
@@ -95,12 +82,6 @@ describe('presets (M2.9)', () => {
       expect(by.variety).toBe(weights.opponentRepeat + weights.partnerRepeat)
       expect(by.partnerFairness).toBe(weights.partnerGap)
       expect(by.sitoutFairness).toBe(weights.sitGroupOverlap)
-      expect(by.genderPreference).toBe(weights.mixedPreference)
-    })
-
-    it('reorders when an override outweighs the preset', () => {
-      const config = resolve({ preset: 'balanced', weights: { mixedPreference: 99 } })
-      expect(matcherPriorities({ config })[0].key).toBe('genderPreference')
     })
 
     // M3.6 Finding 5: presets differ in banding, not weights. The list explains
@@ -112,6 +93,34 @@ describe('presets (M2.9)', () => {
         matcherPriorities({ config: resolve({ preset }) }).map((p) => p.key)
       expect(keys('competitive')).toEqual(keys('balanced'))
       expect(keys('social')).toEqual(keys('balanced'))
+    })
+  })
+
+  // D-035: gender is courtGender + genderRotation, which moves it up the list.
+  describe('matcher priorities after D-035', () => {
+    it('groups gender as courtGender + genderRotation, like the bar', () => {
+      const config = resolve({ preset: 'balanced' })
+      const by = Object.fromEntries(matcherPriorities({ config }).map((p) => [p.key, p.weight]))
+      const { weights } = config
+      expect(by.genderPreference).toBe(weights.courtGender + weights.genderRotation)
+      expect(by.balance).toBe(weights.teamBalance + weights.courtSpread)
+      expect(by.variety).toBe(weights.opponentRepeat + weights.partnerRepeat)
+    })
+
+    it('ranks gender second at the T2 defaults', () => {
+      const keys = matcherPriorities({ config: resolve({ preset: 'balanced' }) }).map((p) => p.key)
+      expect(keys).toEqual([
+        'variety',
+        'genderPreference',
+        'balance',
+        'partnerFairness',
+        'sitoutFairness',
+      ])
+    })
+
+    it('reorders when a gender override outweighs the preset', () => {
+      const config = resolve({ preset: 'balanced', weights: { courtGender: 99 } })
+      expect(matcherPriorities({ config })[0].key).toBe('genderPreference')
     })
   })
 

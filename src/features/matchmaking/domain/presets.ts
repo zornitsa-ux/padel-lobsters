@@ -70,8 +70,10 @@ export type MatcherPriority = { key: keyof QualityDimensions; weight: number }
  * i.e. what it sacrifices first when it cannot satisfy everything.
  *
  * Weights are grouped exactly as report.ts derives the quality bars, so this
- * list and QualityReport can never name different things. Comparing weights
- * directly is meaningful because every dimension's cost is weight × a
+ * list and QualityReport can never name different things. Gender is
+ * courtGender + genderRotation (D-035); mixedPreference is a tie-breaker and
+ * not listed. Comparing weights directly is meaningful because every
+ * dimension's cost is weight × a
  * normalized unit (DESIGN §3.2) — one "unit" of each concession is the same
  * size, so the weight *is* the exchange rate.
  *
@@ -86,7 +88,7 @@ export function matcherPriorities({ config }: { config: ResolvedConfig }): Match
     { key: 'balance', weight: weights.teamBalance + weights.courtSpread },
     { key: 'partnerFairness', weight: weights.partnerGap },
     { key: 'sitoutFairness', weight: weights.sitGroupOverlap },
-    { key: 'genderPreference', weight: weights.mixedPreference },
+    { key: 'genderPreference', weight: weights.courtGender + weights.genderRotation },
   ]
   return priorities.sort((a, b) => b.weight - a.weight)
 }

@@ -141,6 +141,9 @@ export const DIMENSION_KEYS = [
   'partnerRepeat',
   'mixedPreference',
   'sitGroupOverlap',
+  // D-035: appended last so the existing dimensions keep their summation order.
+  'courtGender',
+  'genderRotation',
 ] as const
 export type DimensionKey = (typeof DIMENSION_KEYS)[number]
 export type DimensionScores = Record<DimensionKey, number>
@@ -153,6 +156,8 @@ export const weightsSchema = z.object({
   partnerRepeat: z.number().nonnegative(),
   mixedPreference: z.number().nonnegative(),
   sitGroupOverlap: z.number().nonnegative(),
+  courtGender: z.number().nonnegative(),
+  genderRotation: z.number().nonnegative(),
 })
 export type Weights = z.infer<typeof weightsSchema>
 
@@ -164,6 +169,10 @@ export const DEFAULT_WEIGHTS: Weights = {
   partnerRepeat: 5.0,
   mixedPreference: 0.3,
   sitGroupOverlap: 0.4,
+  // D-035 (T2, owner-approved 2026-10-15): 2.0 accepts up to ~1.0 level of
+  // extra team gap to avoid an uneven court; 1.0 was too weak in the sweep.
+  courtGender: 2.0,
+  genderRotation: 1.0,
 }
 
 export const matchConfigSchema = z.object({

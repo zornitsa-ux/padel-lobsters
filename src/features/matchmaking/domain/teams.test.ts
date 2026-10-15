@@ -145,3 +145,36 @@ describe('teams (M2.5)', () => {
     }
   })
 })
+
+// D-035 acceptance tests (coordinator-frozen at T0; T1 removes `.skip`).
+// mixedPreference is zeroed so only courtGender trades against balance. The
+// weight is pinned at 1.0 (= 0.5 level of team gap at balanceTolerance 0.5)
+// to test the exchange rate, independent of the T2 default.
+describe('splitCourt court gender (D-035)', () => {
+  const genderConfig = mkConfig({ weights: { mixedPreference: 0, courtGender: 1.0 } })
+  const court = (mus: Record<string, number>): Court =>
+    Object.entries(mus).map(([playerId, mu]) =>
+      mkPlayer({ playerId, mu, gender: playerId.startsWith('f') ? 'female' : 'male' }),
+    ) as Court
+  const split = (players: Court) =>
+    splitCourt({ players, config: genderConfig, genderMode: 'mixed', allowDoubleLefty: false })
+
+  it('takes MF v MF over FF v MM when it costs < 0.5 level of extra gap', () => {
+    // FF v MM gap 0.2; best MF v MF gap 0.6 (+0.4)
+    const players = court({ m1: 2.4, m2: 1.6, f1: 2.0, f2: 2.2 })
+    expect(split(players)).toEqual(canonical([players[0], players[2]], [players[1], players[3]]))
+  })
+
+  it('keeps FF v MM when evening out costs > 0.5 level of extra gap', () => {
+    // FF v MM gap 0.2; best MF v MF gap 1.0 (+0.8)
+    const players = court({ m1: 2.6, m2: 1.4, f1: 2.0, f2: 2.2 })
+    expect(split(players)).toEqual(canonical([players[2], players[3]], [players[0], players[1]]))
+  })
+
+  it('is inert outside mixed mode', () => {
+    const players = court({ m1: 2.4, m2: 1.6, f1: 2.0, f2: 2.2 })
+    expect(
+      splitCourt({ players, config: genderConfig, genderMode: 'men', allowDoubleLefty: false }),
+    ).toEqual(canonical([players[2], players[3]], [players[0], players[1]]))
+  })
+})
