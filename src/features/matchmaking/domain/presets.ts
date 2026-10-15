@@ -72,8 +72,8 @@ export type MatcherPriority = { key: keyof QualityDimensions; weight: number }
  * Weights are grouped exactly as report.ts derives the quality bars, so this
  * list and QualityReport can never name different things. Gender is
  * courtGender + genderRotation (D-035); mixedPreference is a tie-breaker and
- * not listed. Comparing weights
- * directly is meaningful because every dimension's cost is weight × a
+ * not listed. Comparing weights directly is meaningful because every
+ * dimension's cost is weight × a
  * normalized unit (DESIGN §3.2) — one "unit" of each concession is the same
  * size, so the weight *is* the exchange rate.
  *

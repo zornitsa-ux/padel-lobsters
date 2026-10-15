@@ -96,9 +96,7 @@ describe('presets (M2.9)', () => {
     })
   })
 
-  // D-035 replacements (coordinator-frozen at T0). T1 deletes the two
-  // pre-D-035 specs above that these supersede ('ranks all five…' order and
-  // the genderPreference line of 'groups weights…') and removes `.skip`.
+  // D-035: gender is courtGender + genderRotation, which moves it up the list.
   describe('matcher priorities after D-035', () => {
     it('groups gender as courtGender + genderRotation, like the bar', () => {
       const config = resolve({ preset: 'balanced' })
