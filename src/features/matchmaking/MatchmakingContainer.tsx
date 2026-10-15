@@ -2,12 +2,12 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import ConfigPanel from './ui/ConfigPanel'
 import SchedulePreview from './ui/SchedulePreview'
 import CompareView from './ui/CompareView'
-import RematchFixPanel from './ui/RematchFixPanel'
+import SwapPanel from './ui/SwapPanel'
 import { previewSchedule, toPlayerInput } from './generateSchedule.service'
 import { useCommitSchedule } from './useMatchmaking'
 import { useConfigDerivations } from './useConfigDerivations'
-import { suggestOpponentSwaps } from './domain/swaps'
-import type { SwapSuggestion } from './domain/swaps'
+import { suggestSwaps } from './domain/swaps'
+import type { SwapSuggestion, SwapTarget } from './domain/swaps'
 import type { GenderMode, MatchConfig, ScheduleRun } from './domain/types'
 
 type RosterRow = Parameters<typeof toPlayerInput>[0]
@@ -31,7 +31,7 @@ const CONFIRM_PHRASE = 'REGENERATE'
 const FAILURE_MESSAGE = {
   generate: 'Could not generate a schedule. Check the court and player setup, then try again.',
   alt: 'Could not generate the alternative. Try again, or close and keep the original.',
-  fix: 'Could not work out fix options for that pair. Try again.',
+  fix: 'Could not work out swap options. Try again.',
 } as const
 
 // The matches write lands before the audit-run write and they are deliberately
@@ -88,10 +88,12 @@ export default function MatchmakingContainer({
   // Manual opponent-swap ("Fix" repeat) session state (D-026 / M3.8). Cleared
   // whenever the preview changes so a stale target never lingers.
   const [fixing, setFixing] = useState<{
-    roundIndex: number
-    pair: [string, string]
+    target: SwapTarget
     suggestions: SwapSuggestion[]
+    showAll: boolean
   } | null>(null)
+  // The run before the last applied swap; one-step undo (D-036).
+  const [undoRun, setUndoRun] = useState<ScheduleRun | null>(null)
 
   const commit = useCommitSchedule()
 
@@ -163,7 +165,10 @@ export default function MatchmakingContainer({
   const handleGenerate = () =>
     runDeferred({
       kind: 'generate',
-      work: () => setPreview(generateWith(config)),
+      work: () => {
+        setUndoRun(null)
+        setPreview(generateWith(config))
+      },
       announce: 'Schedule generated. Review it below.',
     })
 
@@ -183,7 +188,10 @@ export default function MatchmakingContainer({
     })
 
   const handleUseAlternative = () => {
-    if (altRun) setPreview(altRun)
+    if (altRun) {
+      setUndoRun(null)
+      setPreview(altRun)
+    }
     setComparing(false)
     setAltRun(null)
   }
@@ -193,31 +201,56 @@ export default function MatchmakingContainer({
     setAltRun(null)
   }
 
-  // Compute ranked swap suggestions for one repeat chip (D-026). Deferred
-  // through the same runDeferred pattern as generate/alt so the click stays
-  // responsive even though suggestOpponentSwaps rebuilds a run per candidate.
-  const handleFixRematch = ({ roundIndex, pair }: { roundIndex: number; pair: [string, string] }) =>
+  // Compute ranked swap suggestions for one target (D-026, D-036). Deferred
+  // through runDeferred so the click stays responsive even though suggestSwaps
+  // rebuilds a run per candidate.
+  const openSwaps = ({ target, showAll = false }: { target: SwapTarget; showAll?: boolean }) =>
     runDeferred({
       kind: 'fix',
       work: () => {
         if (!preview) return
-        const suggestions = suggestOpponentSwaps({
+        const suggestions = suggestSwaps({
           run: preview,
           players,
           genderMode,
           feasibility,
-          roundIndex,
-          pair,
+          target,
+          ...(showAll && { showAll: true, allowRuleBreaks: true }),
         })
-        setFixing({ roundIndex, pair, suggestions })
+        setFixing({ target, suggestions, showAll })
       },
-      announce: 'Fix options ready.',
+      announce: 'Swap options ready.',
       scroll: false,
     })
 
+  const handleFixRematch = ({ roundIndex, pair }: { roundIndex: number; pair: [string, string] }) =>
+    openSwaps({ target: { kind: 'rematch', roundIndex, pair } })
+
+  const handleFixUnevenCourt = ({
+    roundIndex,
+    courtIndex,
+  }: {
+    roundIndex: number
+    courtIndex: number
+  }) => openSwaps({ target: { kind: 'unevenCourt', roundIndex, courtIndex } })
+
+  const handlePickPlayer = ({ roundIndex, playerId }: { roundIndex: number; playerId: string }) =>
+    openSwaps({ target: { kind: 'player', roundIndex, playerId } })
+
+  const handleShowAll = () => {
+    if (fixing) openSwaps({ target: fixing.target, showAll: true })
+  }
+
   const handleApplyFix = (suggestion: SwapSuggestion) => {
+    setUndoRun(preview)
     setPreview(suggestion.run)
     setFixing(null)
+  }
+
+  const handleUndoSwap = () => {
+    if (!undoRun) return
+    setPreview(undoRun)
+    setUndoRun(null)
   }
 
   const handleCancelFix = () => setFixing(null)
@@ -246,6 +279,7 @@ export default function MatchmakingContainer({
       {
         onSuccess: () => {
           setPreview(null)
+          setUndoRun(null)
           setConfirming(false)
           setConfirmText('')
         },
@@ -294,17 +328,24 @@ export default function MatchmakingContainer({
             onSave={handleSave}
             saving={commit.isPending}
             onFixRematch={handleFixRematch}
+            onFixUnevenCourt={handleFixUnevenCourt}
+            onPickPlayer={handlePickPlayer}
+            onUndoSwap={undoRun ? handleUndoSwap : undefined}
           />
         </div>
       )}
 
-      {fixing && (
-        <RematchFixPanel
+      {fixing && preview && (
+        <SwapPanel
+          target={fixing.target}
           suggestions={fixing.suggestions}
+          currentRun={preview}
           playerNamesById={playerNamesById}
-          targetPair={fixing.pair}
+          showingAll={fixing.showAll}
+          onShowAll={handleShowAll}
           onApply={handleApplyFix}
           onCancel={handleCancelFix}
+          applying={busy === 'fix'}
         />
       )}
 

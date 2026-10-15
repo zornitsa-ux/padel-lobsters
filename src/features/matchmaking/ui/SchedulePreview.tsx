@@ -1,15 +1,15 @@
 import { Columns2 } from 'lucide-react'
 import type { ScheduleRun } from '../domain/types'
 import QualityReport from './QualityReport'
-import ScheduleRounds, { type OnFixRematch } from './ScheduleRounds'
+import ScheduleRounds, { type SwapHandlers } from './ScheduleRounds'
 
 export type SchedulePreviewProps = {
   run: ScheduleRun // the current preview
   onCompare: () => void // opens the Compare → Alternatives overlay
   onSave: () => void
   saving: boolean
-  onFixRematch?: OnFixRematch
-}
+  onUndoSwap?: () => void // present only when a swap can be undone
+} & SwapHandlers
 
 function RunLabel({ run }: { run: ScheduleRun }) {
   return (
@@ -24,7 +24,8 @@ export default function SchedulePreview({
   onCompare,
   onSave,
   saving,
-  onFixRematch,
+  onUndoSwap,
+  ...handlers
 }: SchedulePreviewProps) {
   const busy = saving
   return (
@@ -34,7 +35,18 @@ export default function SchedulePreview({
         <RunLabel run={run} />
       </div>
 
-      <ScheduleRounds rounds={run.rounds} onFixRematch={onFixRematch} />
+      {onUndoSwap && (
+        <button
+          type="button"
+          onClick={onUndoSwap}
+          disabled={busy}
+          className="btn-secondary text-sm w-full disabled:opacity-50"
+        >
+          Undo last swap
+        </button>
+      )}
+
+      <ScheduleRounds rounds={run.rounds} {...handlers} />
 
       <div className="flex gap-2">
         <button

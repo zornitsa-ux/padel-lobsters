@@ -36,14 +36,34 @@ const CHIP_TONES = {
   uneven: 'bg-amber-50 text-amber-700',
 } as const
 
-export function CourtGenderChip({ chip }: { chip: CourtChip | null }) {
+export function CourtGenderChip({
+  chip,
+  onFix,
+  fixLabel,
+}: {
+  chip: CourtChip | null
+  onFix?: () => void
+  fixLabel?: string
+}) {
   if (!chip) return null
   return (
-    <span
-      title={chip.title}
-      className={`text-xs px-2 py-0.5 rounded-full font-medium ${CHIP_TONES[chip.tone]}`}
-    >
-      {chip.text}
-    </span>
+    <>
+      <span
+        title={chip.title}
+        className={`text-xs px-2 py-0.5 rounded-full font-medium ${CHIP_TONES[chip.tone]}`}
+      >
+        {chip.text}
+      </span>
+      {onFix && (
+        <button
+          type="button"
+          onClick={onFix}
+          aria-label={fixLabel}
+          className="text-xs px-1.5 py-1 underline decoration-dotted underline-offset-2 text-amber-700 hover:text-amber-900"
+        >
+          Fix
+        </button>
+      )}
+    </>
   )
 }
