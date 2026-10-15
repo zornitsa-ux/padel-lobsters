@@ -1501,3 +1501,13 @@ six mixed runs end with 0 uneven courts, except mixed-16 social, which keeps
 
 `matcherPriorities` now ranks gender second, behind variety and ahead of
 balance. The order is the same for all three presets.
+
+**Known limit (from code review, 2026-10-15):** the Gender bar counts every
+repeat lone appearance, including unavoidable ones. Repeats can't be avoided
+when the round floors add up to more than the minority gender count, for
+example one woman playing every round. In that case the bar reads below 100
+for a schedule that is already optimal, while the court chips correctly say
+"unavoidable". This doesn't apply to any roster from #9–#12; revisit if it
+shows up. The saved-schedule view now uses the same floor as the preview: an
+uneven court that the round's odd number of women forces gets a neutral
+chip, not an amber one.

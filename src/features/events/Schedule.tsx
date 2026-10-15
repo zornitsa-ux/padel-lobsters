@@ -30,7 +30,7 @@ import type { EntityId, ScheduleRound, ScheduleWarning } from './schedule/types'
 import type { EventNavigate } from './eventHelpers'
 import type { NormalisedTournament, Player } from '../../lib/normalise'
 import type { GenderMode } from '../matchmaking/domain/types'
-import { savedCourtIsUneven } from '../matchmaking/ui/genderCopy'
+import { savedCourtIsUneven, savedRoundHasAvoidableUneven } from '../matchmaking/ui/genderCopy'
 
 // A player slot the admin has tapped first in swap mode.
 interface SwapAnchor {
@@ -520,10 +520,28 @@ export default function Schedule({
                               )
                             }
                             const uneven = savedCourtIsUneven({ team1: t1, team2: t2 })
+                            const avoidable =
+                              uneven &&
+                              savedRoundHasAvoidableUneven({
+                                courts: display[activeRound].matches.map((m) => ({
+                                  team1: m.team1Ids?.map(getPlayer).filter(isPlayer) || [],
+                                  team2: m.team2Ids?.map(getPlayer).filter(isPlayer) || [],
+                                })),
+                              })
+                            const title = !uneven
+                              ? 'Mixed court'
+                              : avoidable
+                                ? 'Uneven court'
+                                : 'Uneven court, unavoidable this round'
+                            const tone = !uneven
+                              ? 'bg-teal-50 text-teal-700'
+                              : avoidable
+                                ? 'bg-amber-50 text-amber-700'
+                                : 'bg-gray-100 text-lob-muted'
                             return (
                               <span
-                                title={uneven ? 'Uneven court' : 'Mixed court'}
-                                className={`text-xs font-semibold px-3 py-0.5 rounded-full ${uneven ? 'bg-amber-50 text-amber-700' : 'bg-teal-50 text-teal-700'}`}
+                                title={title}
+                                className={`text-xs font-semibold px-3 py-0.5 rounded-full ${tone}`}
                               >
                                 {uneven ? 'Uneven' : 'Mixed'}
                               </span>

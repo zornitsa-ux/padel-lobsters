@@ -91,7 +91,10 @@ export const DEFAULT_MAX_BALANCE_DELTA = 1.0
 export const DEFAULT_SWAP_LIMIT = 3
 export const DEFAULT_PLAYER_SWAP_LIMIT = 5
 
-const violationKey = (v: Violation) => `${v.round}|${v.court}|${v.rule}|${v.reason}`
+// The partner-repeat ordinal ("2nd"/"3rd time") shifts when an earlier round
+// changes, so it is not part of a violation's identity.
+const violationKey = (v: Violation) =>
+  `${v.round}|${v.court}|${v.rule}|${v.reason.replace(/\d+(st|nd|rd|th) time/, 'nth time')}`
 
 /** Violations in `after` that `before` lacks (multiset difference by value). */
 export function addedViolations({
@@ -388,7 +391,8 @@ function compareSuggestions(a: SwapSuggestion, b: SwapSuggestion): number {
  * and sit quotas from `feasibility.quotas` / `run.config.leftyRule`); and
  * `balanceDelta <= maxBalanceDelta` (default `DEFAULT_MAX_BALANCE_DELTA`).
  *
- * Ranks best-first: lower `opponentRepeatDelta`, then lower `balanceDelta`,
+ * Ranks best-first: lower `unevenCourtDelta` (mixed mode; always 0
+ * otherwise), lower `opponentRepeatDelta`, then lower `balanceDelta`,
  * then `inPlayerId` ascending (determinism). Returns at most `limit`
  * suggestions (default 3), each carrying its rebuilt run.
  *

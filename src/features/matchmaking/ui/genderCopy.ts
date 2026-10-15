@@ -1,4 +1,8 @@
-import { courtGenderShape, type CourtGenderShape } from '../domain/genderBalance'
+import {
+  courtGenderShape,
+  roundGenderSummary,
+  type CourtGenderShape,
+} from '../domain/genderBalance'
 import { GENDER_UNEVEN_AVOIDABLE_FLAG, GENDER_UNEVEN_FLAG } from '../domain/report'
 import type { PlayerGender } from '../domain/types'
 
@@ -51,19 +55,39 @@ type EntityIdLike = string | number
 const toPlayerGender = (gender: string | null | undefined): PlayerGender =>
   gender === 'female' ? 'female' : gender === 'male' ? 'male' : 'unknown'
 
-/** Saved matches carry no report flags, so unevenness is recomputed from the players' genders. */
-export function savedCourtIsUneven({
-  team1,
-  team2,
+type SavedCourt = { team1: readonly SavedPlayer[]; team2: readonly SavedPlayer[] }
+
+const isFullCourt = ({ team1, team2 }: SavedCourt) => team1.length === 2 && team2.length === 2
+
+const savedGenderOf = (courts: readonly SavedCourt[]) => {
+  const genders = new Map(
+    courts.flatMap(({ team1, team2 }) =>
+      [...team1, ...team2].map((p) => [String(p.id), toPlayerGender(p.gender)] as const),
+    ),
+  )
+  return (id: string): PlayerGender => genders.get(id) ?? 'unknown'
+}
+
+const savedTeams = ({ team1, team2 }: SavedCourt) =>
+  [team1.map((p) => String(p.id)), team2.map((p) => String(p.id))] as [string[], string[]]
+
+/** Saved matches carry no report flags, so unevenness is recomputed from the players' genders. A court with a missing player is never uneven. */
+export function savedCourtIsUneven(court: SavedCourt): boolean {
+  if (!isFullCourt(court)) return false
+  return courtGenderShape({ teams: savedTeams(court), genderOf: savedGenderOf([court]) }).uneven
+}
+
+/** Whether a saved round has more uneven courts than its odd-women floor forces. */
+export function savedRoundHasAvoidableUneven({
+  courts,
 }: {
-  team1: readonly SavedPlayer[]
-  team2: readonly SavedPlayer[]
+  courts: readonly SavedCourt[]
 }): boolean {
-  const all = [...team1, ...team2]
-  const genders = new Map(all.map((p) => [String(p.id), toPlayerGender(p.gender)]))
-  const ids = (team: readonly SavedPlayer[]) => team.map((p) => String(p.id))
-  return courtGenderShape({
-    teams: [ids(team1), ids(team2)],
-    genderOf: (id) => genders.get(id) ?? 'unknown',
-  }).uneven
+  const full = courts.filter(isFullCourt)
+  if (full.length < courts.length) return false
+  const matches = full.map((court) => {
+    const [team1, team2] = savedTeams(court)
+    return { team1: team1 as [string, string], team2: team2 as [string, string] }
+  })
+  return roundGenderSummary({ matches, genderOf: savedGenderOf(full) }).avoidable > 0
 }

@@ -658,3 +658,22 @@ describe('suggestSwaps (D-036)', () => {
     }
   })
 })
+
+describe('addedViolations (D-036)', () => {
+  const repeat = (round: number, times: string) => ({
+    round,
+    court: 1,
+    rule: 'partner-repeat',
+    reason: `a and b partner for the ${times} time`,
+  })
+
+  it('ignores a partner-repeat ordinal that shifted because an earlier round changed', () => {
+    expect(
+      addedViolations({ before: [repeat(3, '2nd'), repeat(5, '3rd')], after: [repeat(5, '2nd')] }),
+    ).toEqual([])
+  })
+
+  it('reports a genuinely new violation', () => {
+    expect(addedViolations({ before: [], after: [repeat(2, '2nd')] })).toEqual([repeat(2, '2nd')])
+  })
+})
