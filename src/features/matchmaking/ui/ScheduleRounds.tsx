@@ -68,16 +68,18 @@ function TeamNames({
                 type="button"
                 onClick={() => onPickPlayer(id)}
                 aria-label={`Swap options for ${player?.name ?? id}`}
-                className="truncate min-h-[40px] text-left font-medium hover:underline decoration-dotted underline-offset-2"
+                className="min-w-0 truncate min-h-[40px] text-left font-medium hover:underline decoration-dotted underline-offset-2"
               >
                 {player?.name ?? id}
               </button>
             ) : (
-              <span className="truncate">{player?.name ?? id}</span>
+              <span className="min-w-0 truncate">{player?.name ?? id}</span>
             )}
-            {showGender && player && <GenderMark gender={player.gender} />}
-            {player?.isLeftHanded && <span title="Left-handed">🤚</span>}
-            {player && isProvisional(player) && <span title="Level still being learned">📏</span>}
+            <span className="flex shrink-0 items-center gap-1">
+              {showGender && player && <GenderMark gender={player.gender} />}
+              {player?.isLeftHanded && <span title="Left-handed">🤚</span>}
+              {player && isProvisional(player) && <span title="Level still being learned">📏</span>}
+            </span>
           </div>
         )
       })}
@@ -138,7 +140,7 @@ function CourtCard({
       </div>
 
       <div className="flex items-center gap-2">
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <TeamNames
             ids={team1}
             players={players}
@@ -148,7 +150,7 @@ function CourtCard({
           <p className="text-xs text-lob-muted-light mt-0.5">{sum1.toFixed(1)}</p>
         </div>
         <span className="text-xs text-lob-muted-light font-medium flex-shrink-0">vs</span>
-        <div className="flex-1 text-right">
+        <div className="flex-1 min-w-0 text-right">
           <TeamNames
             ids={team2}
             players={players}
