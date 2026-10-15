@@ -57,6 +57,8 @@ export function LeagueHome({ league, teams, matches, myTeam, isAdmin = false }: 
     : []
 
   const pill = statusPill(PHASE_PILL, league.status)
+  const previewGroups =
+    isAdmin && league.status === 'draft' && divMatches.some((m) => m.stage === 'group')
 
   return (
     <div className="-mx-4">
@@ -97,11 +99,17 @@ export function LeagueHome({ league, teams, matches, myTeam, isAdmin = false }: 
           />
         )}
 
-        {league.status === 'draft' && (
+        {league.status === 'draft' && !previewGroups && (
           <DraftSection divTeams={divTeams} myTeam={myTeamForDiv} onTeamClick={setSelectedTeam} />
         )}
 
-        {league.status === 'group_stage' && (
+        {previewGroups && (
+          <AlertBox variant="info">
+            Admin preview: players see groups and fixtures once the season advances to Group Stage.
+          </AlertBox>
+        )}
+
+        {(league.status === 'group_stage' || previewGroups) && (
           <GroupStageContent
             divTeams={divTeams}
             divMatches={divMatches}

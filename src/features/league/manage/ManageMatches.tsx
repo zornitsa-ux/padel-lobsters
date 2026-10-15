@@ -114,18 +114,21 @@ function FinalsPanel({
   )
 }
 
+interface MatchAction {
+  label: string
+  onAction: (match: LeagueMatch) => void
+}
+
 function MatchList({
   title,
   matches,
   teamById,
-  actionLabel,
-  onAction,
+  action,
 }: {
   title: string
   matches: LeagueMatch[]
   teamById: Record<string, LeagueTeam>
-  actionLabel: string
-  onAction: (match: LeagueMatch) => void
+  action?: MatchAction
 }) {
   if (matches.length === 0) return null
   return (
@@ -140,17 +143,43 @@ function MatchList({
             team2={teamById[m.team2_id ?? '']}
             label={stageToLabel(m.stage, teamById[m.team1_id ?? '']?.group_label)}
             action={
-              <button
-                type="button"
-                className="text-xs font-semibold text-lob-teal"
-                onClick={() => onAction(m)}
-              >
-                {actionLabel}
-              </button>
+              action && (
+                <button
+                  type="button"
+                  className="text-xs font-semibold text-lob-teal"
+                  onClick={() => action.onAction(m)}
+                >
+                  {action.label}
+                </button>
+              )
             }
           />
         ))}
       </div>
+    </div>
+  )
+}
+
+function DraftFixtures({
+  matches,
+  teamById,
+}: {
+  matches: LeagueMatch[]
+  teamById: Record<string, LeagueTeam>
+}) {
+  if (matches.length === 0) {
+    return (
+      <p className="text-sm text-lob-muted">
+        Fixtures are created when you assign groups in the Teams section.
+      </p>
+    )
+  }
+  return (
+    <div className="space-y-5">
+      <AlertBox variant="info">
+        Scores can be entered once the season advances to Group Stage.
+      </AlertBox>
+      <MatchList title="Fixtures" matches={matches} teamById={teamById} />
     </div>
   )
 }
@@ -173,11 +202,7 @@ export function ManageMatches({ league, teams, matches, division }: ManageMatche
   const hasBracket = divMatches.some((m) => m.stage === 'gold_semi' || m.stage === 'silver_semi')
 
   if (league.status === 'draft') {
-    return (
-      <p className="text-sm text-lob-muted">
-        Fixtures are created when you assign groups in the Teams section.
-      </p>
-    )
+    return <DraftFixtures matches={divMatches} teamById={teamById} />
   }
 
   return (
@@ -186,8 +211,7 @@ export function ManageMatches({ league, teams, matches, division }: ManageMatche
         title="Pending Matches"
         matches={pending}
         teamById={teamById}
-        actionLabel="Enter Score"
-        onAction={setScoreMatch}
+        action={{ label: 'Enter Score', onAction: setScoreMatch }}
       />
 
       {league.status === 'group_stage' && hasGroupMatches && !hasBracket && (
@@ -206,8 +230,7 @@ export function ManageMatches({ league, teams, matches, division }: ManageMatche
         title="Results"
         matches={completed}
         teamById={teamById}
-        actionLabel="Edit"
-        onAction={setScoreMatch}
+        action={{ label: 'Edit', onAction: setScoreMatch }}
       />
 
       <Modal

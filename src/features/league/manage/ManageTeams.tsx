@@ -74,6 +74,9 @@ function TeamRow({
       }
       trailing={
         <>
+          {team.group_label && (
+            <Badge variant="league-group-stage" label={`Group ${team.group_label}`} />
+          )}
           <Badge
             variant={LEVEL_BADGE[team.experience_level] ?? 'silver'}
             label={team.experience_level}
