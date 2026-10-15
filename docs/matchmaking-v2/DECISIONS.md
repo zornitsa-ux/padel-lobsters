@@ -1448,3 +1448,56 @@ and `avoidableUnevenInRound`, and filled the two new fields on the existing
 rematch path. T4 implements the other kinds against the skipped D-036 suite
 in `swaps.test.ts`. The UI (T5) consumes it. No engine, golden or schema
 change.
+
+### D-035 addendum: T2 calibration result (2026-10-15)
+
+**Owner decision (checkpoint 1):** ship `courtGender 2.0`, `genderRotation 1.0`,
+`mixedPreference 0.3`, the best combination in the 27-combination sweep. The
+engine may now accept up to about **1.0 level** of extra team gap to avoid one
+uneven court, double owner answer #2's ~0.5. The owner accepted this with the
+table below, because the average gap rises only +0.03–0.04 level. At the
+literal 0.5-level weights (1.0/0.5), 88 avoidable uneven courts and 13 lone
+repeats remained across the real rosters.
+
+Balanced preset, 10 seeds × 6 rounds. Real rosters use current ratings, read
+read-only and anonymized.
+
+| Roster              | Avoidable uneven | Lone repeats | Gap mean / max            | Variety     |
+| ------------------- | ---------------: | -----------: | ------------------------- | ----------- |
+| #9 (22M/10F, 8c)    |         228 → 15 |      127 → 0 | 0.12 → 0.15 / 0.87 → 1.39 | 89.2 → 87.7 |
+| #10 (17M/11F, 7c)   |          126 → 0 |       72 → 0 | 0.13 → 0.15 / 1.00 → 1.17 | 89.2 → 87.6 |
+| #11 (18M/10F, 7c)   |          204 → 5 |       96 → 0 | 0.12 → 0.15 / 0.98 → 1.10 | 91.3 → 89.0 |
+| #12 (13M/7F, 5c)    |          106 → 1 |       81 → 0 | 0.13 → 0.17 / 0.85 → 1.06 | 83.5 → 80.5 |
+| 18M/10F 7c (synth.) |          163 → 1 |       70 → 0 | 0.09 → 0.10 / 0.91 → 0.72 | 95.2 → 92.8 |
+| 17M/11F 7c (synth.) |          120 → 0 |       70 → 0 | 0.09 → 0.10 / 0.82 → 1.52 | 94.9 → 94.8 |
+| 22M/10F 8c (synth.) |          196 → 1 |       99 → 0 | 0.08 → 0.10 / 0.58 → 0.95 | 95.5 → 94.3 |
+| 13M/7F 5c (synth.)  |           88 → 1 |       71 → 0 | 0.12 → 0.14 / 1.09 → 0.93 | 88.6 → 87.6 |
+
+**Results against the PLAN T2 criteria:**
+
+- **Met:**
+  - Lone repeats are 0 everywhere.
+  - The mean gap rises by at most 0.04, against a limit of 0.10.
+  - Variety drops by at most 3.0 on the real rosters, against a limit of 3.
+  - Synthetic rosters have ≤ 1% avoidable uneven courts.
+  - Generation time is flat, within ±3% when measured serially.
+- **Missed, and accepted by the owner:**
+  - Real rosters keep 1–15 avoidable uneven courts per 10 schedules (about
+    0.1–1.5 per event). Each one gets the Fix chip (D-036).
+  - Two single-court max-gap outliers exceed baseline max + 0.5 (#9 at 1.39,
+    17M/11F at 1.52).
+- **Other presets:** competitive and social show the same picture, with
+  about 97% fewer avoidable uneven courts.
+
+**Golden impact:** the fixture snapshots pick up the new weight values. All
+six mixed runs end with 0 uneven courts, except mixed-16 social, which keeps
+
+1. Their gender bar is 95–100. The men-32 runs are byte-identical. One outlier
+   is **mixed-16 competitive, where Variety drops from 76.3 to 63.7.** That
+   synthetic roster ranks all 8 men above all 8 women by level, so even courts
+   conflict with competitive's tight level bands, and repeat opponents rise to
+   pay for it. Real rosters are mixed by level, and their competitive Variety
+   moved at most 2.8. Watch this on a level-segregated real event.
+
+`matcherPriorities` now ranks gender second, behind variety and ahead of
+balance. The order is the same for all three presets.

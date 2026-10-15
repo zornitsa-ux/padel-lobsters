@@ -27,12 +27,12 @@ path. Code review before merge still is.
 | ID  | Task                                           | Owner                     | Depends on | State |
 | --- | ---------------------------------------------- | ------------------------- | ---------- | ----- |
 | T0  | Contracts, shared helper, DECISIONS entries    | C                         | —          | [x]   |
-| T1  | Engine terms (uneven court + rotation)         | W, C reviews line by line | T0         | [~]   |
-| T2  | Calibration + owner sign-off                   | C (runs W for sweeps)     | T1         | [ ]   |
-| T3  | Gender visibility in preview + saved view      | W                         | T0         | [~]   |
-| T4  | Generalized swap engine                        | W, C reviews line by line | T0         | [~]   |
-| T5  | Swap UI: Fix on uneven courts + tap-any-player | W                         | T3, T4     | [ ]   |
-| T6  | Verification + PRs                             | C                         | all        | [ ]   |
+| T1  | Engine terms (uneven court + rotation)         | W, C reviews line by line | T0         | [x]   |
+| T2  | Calibration + owner sign-off                   | C (runs W for sweeps)     | T1         | [x]   |
+| T3  | Gender visibility in preview + saved view      | W                         | T0         | [x]   |
+| T4  | Generalized swap engine                        | W, C reviews line by line | T0         | [x]   |
+| T5  | Swap UI: Fix on uneven courts + tap-any-player | W                         | T3, T4     | [x]   |
+| T6  | Verification + PRs                             | C                         | all        | [~]   |
 
 Status markers: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked.
 
@@ -48,6 +48,32 @@ Status markers: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` bl
 
   Flags are emitted from T0 (not T1), so T3 works on real data. T1, T3 and T4
   were dispatched in parallel worktrees.
+
+- 2026-10-15 — T1, T3 and T4 reviewed and merged.
+  - T1: the coordinator reviewed it line by line. It also changed one
+    pre-D-035 `scoreSplit` expectation, which is correct because an FF v MM
+    split now also costs `courtGender`.
+  - T3: the violations summary lives in `QualityReport`, fed by a new
+    `rounds` prop. The coordinator wired that prop into `SchedulePreview` and
+    `CompareView`. Players get a W/M letter badge; the glyph is to be
+    confirmed in review.
+  - T4: enumeration was split out into `domain/swapCandidates.ts`. A `player`
+    query with show-all takes about 5 ms on 28 players.
+  - At T1's starting weights, the sim's avoidable uneven courts fall from
+    163/120/196/88 to 17/0/12/0, lone repeats fall to 0–2, and ms/run is
+    flat.
+  - T2's sweep is running. T5 was dispatched.
+
+- 2026-10-15 — T5 merged. The coordinator fixed one copy bug in it: the row
+  text diffed the avoidable flag, not the uneven one.
+- 2026-10-15 — **Owner checkpoint 1: approved `courtGender 2.0 /
+genderRotation 1.0 / mixedPreference 0.3`.** The results table is in the
+  D-035 addendum.
+  - All 27 combinations missed at least one criterion. The best one leaves
+    1–15 avoidable uneven courts per 10 schedules on the real rosters, and
+    has two single-court max-gap outliers.
+  - The owner accepted that trade over the literal 0.5-level weights.
+  - Sweep artifacts and rosters stay in the session scratchpad, never in git.
 
 **Baseline (2026-10-15, `scripts/mm-gender-sim.ts`, balanced, 10 seeds × 6 rounds).**
 Mean team gap is only ~0.1 level today, so the 0.5-level budget leaves plenty
@@ -230,16 +256,16 @@ loneId: string | null, label: 'mixed' | 'men' | 'women' | 'uneven' }` and
 already covers swaps and re-splits; no change expected; if one seems needed,
 stop and report).
 
-- [ ] **`scoreSchedule`:** compute `courtGender` and `genderRotation` raw via
+- [x] **`scoreSchedule`:** compute `courtGender` and `genderRotation` raw via
       `genderBalance.ts`. Keep the allocation-free hot loop. Don't build
       closures or arrays per match (see `rosterView` comments). Changing the
       floating-point summation order of _existing_ dimensions breaks men-32
       goldens: add the new terms after the existing ones.
-- [ ] **`scoreSplit`:** add the court-evenness cost for the split, so stage 3
+- [x] **`scoreSplit`:** add the court-evenness cost for the split, so stage 3
       prefers MF v MF over FF v MM when a court has 2W2M.
-- [ ] **`report.ts`:** fold into `genderPreference` (T0 formula) and emit the
+- [x] **`report.ts`:** fold into `genderPreference` (T0 formula) and emit the
       T0 flags.
-- [ ] **Tests:**
+- [x] **Tests:**
   - a 2W2M court scores MF v MF below FF v MM;
   - 1W3M scores `courtGender` 0 when it is the round's floor and 1 when it
     isn't;
@@ -248,7 +274,7 @@ stop and report).
   - rotation counts only the second and later lone appearances, in the round
     they happen;
   - per-round quality sums are consistent.
-- [ ] **Goldens:** the men-32 run snapshots must stay **byte-identical**
+- [x] **Goldens:** the men-32 run snapshots must stay **byte-identical**
       (gender terms are inactive there). The fixture snapshot changes, since
       resolved weights now include the new keys. The mixed-16 and mixed-21
       snapshots change; explain why in the PR (§2 golden rule). Zero violations
@@ -256,13 +282,13 @@ stop and report).
 
 ### T2 — Calibration + owner sign-off (coordinator; sweeps can be delegated)
 
-- [ ] **Fetch real rosters** for #9, #10, #11 and #12 with the §7 query into
+- [x] **Fetch real rosters** for #9, #10, #11 and #12 with the §7 query into
       the session scratchpad (never commit them).
-- [ ] **Sweep** `courtGender ∈ {0.5, 1.0, 2.0}`, `genderRotation ∈ {0.25, 0.5,
+- [x] **Sweep** `courtGender ∈ {0.5, 1.0, 2.0}`, `genderRotation ∈ {0.25, 0.5,
 1.0}` and `mixedPreference ∈ {0, 0.1, 0.3}`. Run the 4 synthetic rosters
       and the 4 real ones, for all three presets:
       `npx vite-node scripts/mm-gender-sim.ts -- --preset <p> --weights '<json>' [--roster <file> --courts <n>]`.
-- [ ] **Acceptance (balanced preset; report competitive and social too):**
+- [x] **Acceptance (balanced preset; report competitive and social too):**
   - avoidable uneven courts ≤ 1% of courts on synthetic rosters, and 0 on each
     real roster;
   - lone repeats = 0 wherever the floor total ≤ the minority-gender player
@@ -272,11 +298,11 @@ stop and report).
     drops by ≤ 3 points on the real rosters (extend the sim to print it);
   - generation time rises by ≤ 25% (the sim prints ms/run). The preview runs
     on the main thread, about 1s at 32 players.
-- [ ] **Owner checkpoint:** show the before/after table for the chosen weights
+- [x] **Owner checkpoint:** show the before/after table for the chosen weights
       and record the answer in §1. If the trade is worse than the criteria,
       stop and present alternatives (e.g. option E from OPTIONS.md) rather
       than shipping.
-- [ ] Commit final `DEFAULT_WEIGHTS`, update the goldens, and record the
+- [x] Commit final `DEFAULT_WEIGHTS`, update the goldens, and record the
       results in D-035.
 
 ### T3 — Gender visibility (worker)
@@ -285,42 +311,42 @@ stop and report).
 similar), `ui/QualityReport.tsx` (violations visibility only),
 `events/Schedule.tsx` (saved-view court chip only), and their tests.
 
-- [ ] **Per-player gender mark** in `TeamNames`, styled like the existing 🤚/📏
+- [x] **Per-player gender mark** in `TeamNames`, styled like the existing 🤚/📏
       marks, with a Legend entry. Follow D-024's per-player-marks pattern;
       choose the glyph or label in review.
-- [ ] **Court chip** from the T0 flags: "Mixed", "Men" or "Women" (neutral),
+- [x] **Court chip** from the T0 flags: "Mixed", "Men" or "Women" (neutral),
       and "Uneven · 3M 1W" (amber). When the round's uneven court is the
       unavoidable one, the chip says so ("Uneven · unavoidable this round").
       Copy follows D-022: describe the court, never the cost model.
-- [ ] **Violations visible at a glance.** When `run.violations` isn't empty,
+- [x] **Violations visible at a glance.** When `run.violations` isn't empty,
       show a compact red summary above the rounds, not only inside
       **Details**. This is needed once B allows rule-breaking swaps.
-- [ ] **Saved-schedule view** (`events/Schedule.tsx`, the court chip block
+- [x] **Saved-schedule view** (`events/Schedule.tsx`, the court chip block
       near "Men"/"Ladies"/"Mixed"): label 3M1W/1M3W courts "Uneven", not
       "Mixed". Compute it with `genderBalance.ts`, since saved matches have no
       report flags.
-- [ ] Gate: typecheck, lint, test, and a manual check (T6).
+- [x] Gate: typecheck, lint, test, and a manual check (T6).
 
 ### T4 — Generalized swap engine (worker; coordinator reviews line by line)
 
 **Files owned:** `domain/swaps.ts` (implementation, not the T0 types),
 `domain/swaps.test.ts`.
 
-- [ ] **Implement `suggestSwaps`** for all three targets on the existing
+- [x] **Implement `suggestSwaps`** for all three targets on the existing
       same-round enumerate → score → filter → rank pipeline. Sitters never
       move (owner answer #4).
-- [ ] **What "breaks target" means for each kind:**
+- [x] **What "breaks target" means for each kind:**
   - `rematch`: as today.
   - `unevenCourt`: that court is no longer uneven, and avoidable uneven
     courts in the round don't go up.
   - `player`: any swap that moves `playerId`; there's no target filter.
-- [ ] **`allowRuleBreaks`:** keep candidates that raise `hardViolations`, and
+- [x] **`allowRuleBreaks`:** keep candidates that raise `hardViolations`, and
       fill `newViolations`. Sit-out rule breaks (`null`) can't happen because
       sitters never move, but stay rejected anyway.
-- [ ] **Ranking:** legal before rule-breaking, then lower `unevenCourtDelta`,
+- [x] **Ranking:** legal before rule-breaking, then lower `unevenCourtDelta`,
       lower `opponentRepeatDelta`, lower `balanceDelta`, then `inPlayerId` for
       determinism.
-- [ ] **Tests:**
+- [x] **Tests:**
   - every kind and flag combination;
   - existing `suggestOpponentSwaps` tests unchanged and green;
   - `showAll` returns every same-round candidate;
@@ -333,11 +359,11 @@ similar), `ui/QualityReport.tsx` (violations visibility only),
 rename and keep a re-export), `ui/ScheduleRounds.tsx` (only the entry points;
 T3 must be merged first), `MatchmakingContainer.tsx`, and tests.
 
-- [ ] **A — Fix on uneven courts.** Courts flagged
+- [x] **A — Fix on uneven courts.** Courts flagged
       `gender-uneven-avoidable` get a **Fix** affordance on the court chip. It
       opens the panel with `target.kind = 'unevenCourt'`. Heading: "Even out
       Court N".
-- [ ] **B — tap any player.** Player names in the preview are buttons
+- [x] **B — tap any player.** Player names in the preview are buttons
       (keyboard and screen-reader accessible; tap target ≥ 40px tall on
       mobile). Tapping opens the panel with `target.kind = 'player'`, showing
       the top 5 legal swaps.
@@ -347,14 +373,14 @@ T3 must be merged first), `MatchmakingContainer.tsx`, and tests.
     ("Dana & Sam partner again", "Two left-handers on one team").
   - **Applying one** leaves the T3 violations summary visible until it's
     fixed.
-- [ ] **Row copy (D-022):** "Swap Dana for Sam" plus what changes: gender
+- [x] **Row copy (D-022):** "Swap Dana for Sam" plus what changes: gender
       ("evens out Court 2", "makes Court 3 uneven"), then variety and balance,
       reusing the `RematchFixPanel` phrase helpers.
-- [ ] **Undo:** a one-step "Undo last swap" (keep the previous preview run in
+- [x] **Undo:** a one-step "Undo last swap" (keep the previous preview run in
       container state). Clear it when a new run is generated.
-- [ ] **Busy state:** reuse `runDeferred` (`kind: 'fix'`, `scroll: false`) for
+- [x] **Busy state:** reuse `runDeferred` (`kind: 'fix'`, `scroll: false`) for
       every query.
-- [ ] **Out of scope:** sitter swaps, edit after save, free tap-tap swap
+- [x] **Out of scope:** sitter swaps, edit after save, free tap-tap swap
       (option C), one-click even-out (option E), deleting the dead V1 swap code
       in `events/Schedule.tsx`. That deletion happens after the event.
 

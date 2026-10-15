@@ -169,9 +169,10 @@ export const DEFAULT_WEIGHTS: Weights = {
   partnerRepeat: 5.0,
   mixedPreference: 0.3,
   sitGroupOverlap: 0.4,
-  // D-035: 1.0 trades one avoidable uneven court for 0.5 level of team gap.
-  courtGender: 1.0,
-  genderRotation: 0.5,
+  // D-035 (T2, owner-approved 2026-10-15): 2.0 accepts up to ~1.0 level of
+  // extra team gap to avoid an uneven court; 1.0 was too weak in the sweep.
+  courtGender: 2.0,
+  genderRotation: 1.0,
 }
 
 export const matchConfigSchema = z.object({

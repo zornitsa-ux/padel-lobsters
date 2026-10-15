@@ -107,12 +107,12 @@ describe('presets (M2.9)', () => {
       expect(by.variety).toBe(weights.opponentRepeat + weights.partnerRepeat)
     })
 
-    it('ranks gender above partner and sit-out fairness at the defaults', () => {
+    it('ranks gender second at the T2 defaults', () => {
       const keys = matcherPriorities({ config: resolve({ preset: 'balanced' }) }).map((p) => p.key)
       expect(keys).toEqual([
         'variety',
-        'balance',
         'genderPreference',
+        'balance',
         'partnerFairness',
         'sitoutFairness',
       ])
