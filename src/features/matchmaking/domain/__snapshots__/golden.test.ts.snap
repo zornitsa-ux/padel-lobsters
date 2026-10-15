@@ -1750,47 +1750,47 @@ exports[`matcher golden runs (M2.10) > mixed-16 × balanced 1`] = `
   ],
   "quality": {
     "overall": {
-      "balance": 94.99999999999996,
-      "genderPreference": 75,
-      "partnerFairness": 96.5,
+      "balance": 92.99999999999999,
+      "genderPreference": 100,
+      "partnerFairness": 95.5,
       "sitoutFairness": 100,
-      "variety": 90,
+      "variety": 83.75,
     },
     "perRound": [
       {
-        "balance": 94.99999999999996,
-        "genderPreference": 50,
+        "balance": 89.99999999999997,
+        "genderPreference": 100,
         "partnerFairness": 100,
         "sitoutFairness": 100,
         "variety": 100,
       },
       {
-        "balance": 99.99999999999993,
-        "genderPreference": 100,
-        "partnerFairness": 95,
-        "sitoutFairness": 100,
-        "variety": 87.5,
-      },
-      {
-        "balance": 95,
-        "genderPreference": 25,
-        "partnerFairness": 97.5,
-        "sitoutFairness": 100,
-        "variety": 93.75,
-      },
-      {
-        "balance": 89.99999999999999,
-        "genderPreference": 100,
-        "partnerFairness": 93.75,
-        "sitoutFairness": 100,
-        "variety": 87.5,
-      },
-      {
         "balance": 94.99999999999996,
         "genderPreference": 100,
-        "partnerFairness": 96.24999999999999,
+        "partnerFairness": 98.75,
+        "sitoutFairness": 100,
+        "variety": 87.5,
+      },
+      {
+        "balance": 95.00000000000001,
+        "genderPreference": 100,
+        "partnerFairness": 100,
+        "sitoutFairness": 100,
+        "variety": 75,
+      },
+      {
+        "balance": 89.99999999999997,
+        "genderPreference": 100,
+        "partnerFairness": 88.75,
         "sitoutFairness": 100,
         "variety": 81.25,
+      },
+      {
+        "balance": 94.99999999999999,
+        "genderPreference": 100,
+        "partnerFairness": 89.99999999999999,
+        "sitoutFairness": 100,
+        "variety": 75,
       },
     ],
   },
@@ -1798,46 +1798,40 @@ exports[`matcher golden runs (M2.10) > mixed-16 × balanced 1`] = `
     {
       "courts": [
         {
-          "courtSpread": 0.8999999999999999,
-          "flags": [
-            "gender-uneven",
-            "gender-uneven-avoidable",
-          ],
-          "teamSums": [
-            8.1,
-            8.1,
-          ],
-          "teams": "p01+p10 vs p03+p08",
-        },
-        {
-          "courtSpread": 1.1000000000000005,
+          "courtSpread": 0.7000000000000002,
           "flags": [],
           "teamSums": [
-            7.4,
-            7.199999999999999,
+            8.3,
+            8.3,
           ],
-          "teams": "p04+p14 vs p05+p15",
-        },
-        {
-          "courtSpread": 0.9000000000000004,
-          "flags": [
-            "gender-uneven",
-            "gender-uneven-avoidable",
-          ],
-          "teamSums": [
-            7.9,
-            7.9,
-          ],
-          "teams": "p02+p11 vs p06+p07",
+          "teams": "p01+p08 vs p03+p06",
         },
         {
           "courtSpread": 0.7000000000000002,
           "flags": [],
           "teamSums": [
-            6.7,
-            6.699999999999999,
+            7.7,
+            7.699999999999999,
           ],
-          "teams": "p09+p16 vs p12+p13",
+          "teams": "p04+p11 vs p05+p10",
+        },
+        {
+          "courtSpread": 1.0000000000000004,
+          "flags": [],
+          "teamSums": [
+            7.800000000000001,
+            7.6,
+          ],
+          "teams": "p02+p12 vs p07+p09",
+        },
+        {
+          "courtSpread": 0.2999999999999998,
+          "flags": [],
+          "teamSums": [
+            6.3999999999999995,
+            6.2,
+          ],
+          "teams": "p13+p15 vs p14+p16",
         },
       ],
       "sitters": [],
@@ -1845,39 +1839,39 @@ exports[`matcher golden runs (M2.10) > mixed-16 × balanced 1`] = `
     {
       "courts": [
         {
-          "courtSpread": 1.2000000000000002,
+          "courtSpread": 0.9000000000000004,
           "flags": [
             "opponent-rematch",
           ],
           "teamSums": [
-            7.8,
-            7.8,
-          ],
-          "teams": "p01+p13 vs p05+p09",
-        },
-        {
-          "courtSpread": 0.8999999999999999,
-          "flags": [],
-          "teamSums": [
-            7.699999999999999,
-            7.7,
-          ],
-          "teams": "p03+p12 vs p04+p11",
-        },
-        {
-          "courtSpread": 1.2000000000000002,
-          "flags": [
-            "opponent-rematch",
-          ],
-          "teamSums": [
-            7.6000000000000005,
+            7.5,
             7.6,
           ],
-          "teams": "p02+p14 vs p06+p10",
+          "teams": "p04+p13 vs p06+p10",
+        },
+        {
+          "courtSpread": 1,
+          "flags": [],
+          "teamSums": [
+            8,
+            8.100000000000001,
+          ],
+          "teams": "p01+p11 vs p02+p09",
+        },
+        {
+          "courtSpread": 1.0999999999999996,
+          "flags": [],
+          "teamSums": [
+            7.5,
+            7.5,
+          ],
+          "teams": "p03+p14 vs p05+p12",
         },
         {
           "courtSpread": 0.8999999999999999,
-          "flags": [],
+          "flags": [
+            "opponent-rematch",
+          ],
           "teamSums": [
             6.9,
             6.8999999999999995,
@@ -1890,109 +1884,35 @@ exports[`matcher golden runs (M2.10) > mixed-16 × balanced 1`] = `
     {
       "courts": [
         {
-          "courtSpread": 0.7000000000000002,
-          "flags": [],
-          "teamSums": [
-            8.3,
-            8.4,
-          ],
-          "teams": "p01+p08 vs p02+p06",
-        },
-        {
-          "courtSpread": 0.30000000000000027,
+          "courtSpread": 0.6000000000000005,
           "flags": [
             "opponent-rematch",
           ],
+          "teamSums": [
+            8.2,
+            8.2,
+          ],
+          "teams": "p02+p08 vs p04+p06",
+        },
+        {
+          "courtSpread": 0.5,
+          "flags": [],
           "teamSums": [
             6.5,
-            6.5,
+            6.6,
           ],
-          "teams": "p12+p15 vs p13+p14",
+          "teams": "p11+p16 vs p12+p14",
         },
         {
-          "courtSpread": 0.5999999999999996,
-          "flags": [
-            "gender-uneven",
-            "gender-uneven-avoidable",
-          ],
-          "teamSums": [
-            8,
-            8,
-          ],
-          "teams": "p03+p09 vs p05+p07",
-        },
-        {
-          "courtSpread": 1.2000000000000002,
-          "flags": [
-            "gender-uneven",
-            "gender-uneven-avoidable",
-          ],
-          "teamSums": [
-            7.2,
-            7.1,
-          ],
-          "teams": "p04+p16 vs p10+p11",
-        },
-      ],
-      "sitters": [],
-    },
-    {
-      "courts": [
-        {
-          "courtSpread": 1.1,
+          "courtSpread": 0.8999999999999999,
           "flags": [
             "opponent-rematch",
           ],
           "teamSums": [
-            7.9,
+            8.1,
             8,
           ],
-          "teams": "p01+p12 vs p02+p10",
-        },
-        {
-          "courtSpread": 0.8999999999999995,
-          "flags": [],
-          "teamSums": [
-            7.3,
-            7.4,
-          ],
-          "teams": "p05+p14 vs p07+p11",
-        },
-        {
-          "courtSpread": 1.2999999999999998,
-          "flags": [
-            "opponent-rematch",
-          ],
-          "teamSums": [
-            7.3,
-            7.3,
-          ],
-          "teams": "p03+p16 vs p06+p13",
-        },
-        {
-          "courtSpread": 1.1000000000000005,
-          "flags": [],
-          "teamSums": [
-            7.3,
-            7.5,
-          ],
-          "teams": "p04+p15 vs p08+p09",
-        },
-      ],
-      "sitters": [],
-    },
-    {
-      "courts": [
-        {
-          "courtSpread": 1.0000000000000004,
-          "flags": [
-            "opponent-rematch",
-          ],
-          "teamSums": [
-            7.800000000000001,
-            7.8,
-          ],
-          "teams": "p02+p12 vs p03+p11",
+          "teams": "p01+p10 vs p03+p09",
         },
         {
           "courtSpread": 1,
@@ -2000,11 +1920,16 @@ exports[`matcher golden runs (M2.10) > mixed-16 × balanced 1`] = `
             "opponent-rematch",
           ],
           "teamSums": [
-            7,
-            7,
+            7.199999999999999,
+            7.199999999999999,
           ],
-          "teams": "p06+p16 vs p07+p15",
+          "teams": "p05+p15 vs p07+p13",
         },
+      ],
+      "sitters": [],
+    },
+    {
+      "courts": [
         {
           "courtSpread": 1.2999999999999998,
           "flags": [
@@ -2018,12 +1943,81 @@ exports[`matcher golden runs (M2.10) > mixed-16 × balanced 1`] = `
         },
         {
           "courtSpread": 0.7999999999999998,
-          "flags": [],
+          "flags": [
+            "opponent-rematch",
+          ],
           "teamSums": [
             7.3999999999999995,
             7.4,
           ],
-          "teams": "p05+p13 vs p08+p10",
+          "teams": "p05+p13 vs p06+p12",
+        },
+        {
+          "courtSpread": 1.2999999999999998,
+          "flags": [],
+          "teamSums": [
+            7.3,
+            7.4,
+          ],
+          "teams": "p03+p16 vs p07+p11",
+        },
+        {
+          "courtSpread": 1.3000000000000007,
+          "flags": [],
+          "teamSums": [
+            7.5,
+            7.4,
+          ],
+          "teams": "p02+p15 vs p08+p10",
+        },
+      ],
+      "sitters": [],
+    },
+    {
+      "courts": [
+        {
+          "courtSpread": 0.5,
+          "flags": [
+            "opponent-rematch",
+          ],
+          "teamSums": [
+            7.5,
+            7.5,
+          ],
+          "teams": "p06+p11 vs p07+p10",
+        },
+        {
+          "courtSpread": 1.4000000000000004,
+          "flags": [
+            "opponent-rematch",
+          ],
+          "teamSums": [
+            7.4,
+            7.3,
+          ],
+          "teams": "p02+p16 vs p05+p14",
+        },
+        {
+          "courtSpread": 1.4000000000000004,
+          "flags": [
+            "opponent-rematch",
+          ],
+          "teamSums": [
+            7.6,
+            7.6,
+          ],
+          "teams": "p01+p15 vs p04+p12",
+        },
+        {
+          "courtSpread": 1,
+          "flags": [
+            "opponent-rematch",
+          ],
+          "teamSums": [
+            7.6,
+            7.5,
+          ],
+          "teams": "p03+p13 vs p08+p09",
         },
       ],
       "sitters": [],
@@ -2066,47 +2060,47 @@ exports[`matcher golden runs (M2.10) > mixed-16 × competitive 1`] = `
   ],
   "quality": {
     "overall": {
-      "balance": 94.99999999999997,
-      "genderPreference": 50,
+      "balance": 89.99999999999999,
+      "genderPreference": 100,
       "partnerFairness": 99.5,
       "sitoutFairness": 100,
-      "variety": 76.25,
+      "variety": 63.74999999999999,
     },
     "perRound": [
       {
-        "balance": 91.66666666666667,
-        "genderPreference": 50,
-        "partnerFairness": 98.75,
+        "balance": 95,
+        "genderPreference": 100,
+        "partnerFairness": 100,
         "sitoutFairness": 100,
         "variety": 100,
       },
       {
-        "balance": 94.99999999999994,
-        "genderPreference": 50,
-        "partnerFairness": 100,
+        "balance": 84.99999999999997,
+        "genderPreference": 100,
+        "partnerFairness": 98.75,
         "sitoutFairness": 100,
-        "variety": 93.75,
+        "variety": 87.5,
       },
       {
-        "balance": 91.66666666666667,
-        "genderPreference": 50,
-        "partnerFairness": 98.75,
+        "balance": 96.66666666666666,
+        "genderPreference": 100,
+        "partnerFairness": 100,
         "sitoutFairness": 100,
         "variety": 75,
       },
       {
-        "balance": 98.3333333333333,
-        "genderPreference": 50,
-        "partnerFairness": 100,
+        "balance": 88.33333333333327,
+        "genderPreference": 100,
+        "partnerFairness": 98.75,
         "sitoutFairness": 100,
-        "variety": 62.5,
+        "variety": 37.5,
       },
       {
-        "balance": 98.3333333333333,
-        "genderPreference": 50,
+        "balance": 85.00000000000001,
+        "genderPreference": 100,
         "partnerFairness": 100,
         "sitoutFairness": 100,
-        "variety": 50,
+        "variety": 18.75,
       },
     ],
   },
@@ -2123,138 +2117,66 @@ exports[`matcher golden runs (M2.10) > mixed-16 × competitive 1`] = `
           "teams": "p01+p06 vs p02+p05",
         },
         {
-          "courtSpread": 1.0999999999999996,
+          "courtSpread": 0.5,
           "flags": [],
           "teamSums": [
-            7.5,
-            7.6,
+            8.1,
+            8.1,
           ],
-          "teams": "p03+p14 vs p04+p12",
+          "teams": "p03+p08 vs p04+p07",
         },
         {
-          "courtSpread": 0.5,
-          "flags": [
-            "gender-uneven",
-            "gender-uneven-avoidable",
-          ],
+          "courtSpread": 0.40000000000000036,
+          "flags": [],
           "teamSums": [
-            7.1,
+            7,
             7.1,
           ],
-          "teams": "p08+p13 vs p10+p11",
+          "teams": "p09+p13 vs p10+p11",
+        },
+        {
+          "courtSpread": 0.3999999999999999,
+          "flags": [],
+          "teamSums": [
+            6.4,
+            6.3,
+          ],
+          "teams": "p12+p16 vs p14+p15",
+        },
+      ],
+      "sitters": [],
+    },
+    {
+      "courts": [
+        {
+          "courtSpread": 0.9000000000000004,
+          "flags": [],
+          "teamSums": [
+            7.9,
+            7.9,
+          ],
+          "teams": "p02+p11 vs p03+p10",
         },
         {
           "courtSpread": 0.8999999999999999,
           "flags": [
-            "gender-uneven",
-            "gender-uneven-avoidable",
+            "opponent-rematch",
           ],
           "teamSums": [
-            6.9,
+            7,
             6.8,
           ],
-          "teams": "p07+p16 vs p09+p15",
-        },
-      ],
-      "sitters": [],
-    },
-    {
-      "courts": [
-        {
-          "courtSpread": 0.6000000000000001,
-          "flags": [
-            "opponent-rematch",
-          ],
-          "teamSums": [
-            8.4,
-            8.399999999999999,
-          ],
-          "teams": "p01+p07 vs p03+p05",
+          "teams": "p07+p15 vs p08+p16",
         },
         {
-          "courtSpread": 0.9000000000000004,
-          "flags": [],
-          "teamSums": [
-            7.1,
-            7,
-          ],
-          "teams": "p06+p15 vs p08+p14",
-        },
-        {
-          "courtSpread": 0.9000000000000004,
+          "courtSpread": 1.1,
           "flags": [],
           "teamSums": [
             7.9,
-            7.800000000000001,
+            7.7,
           ],
-          "teams": "p02+p11 vs p04+p10",
+          "teams": "p01+p12 vs p06+p09",
         },
-        {
-          "courtSpread": 0.7000000000000002,
-          "flags": [],
-          "teamSums": [
-            6.7,
-            6.699999999999999,
-          ],
-          "teams": "p09+p16 vs p12+p13",
-        },
-      ],
-      "sitters": [],
-    },
-    {
-      "courts": [
-        {
-          "courtSpread": 0.7999999999999998,
-          "flags": [
-            "opponent-rematch",
-            "gender-uneven",
-            "gender-uneven-avoidable",
-          ],
-          "teamSums": [
-            8.2,
-            8.2,
-          ],
-          "teams": "p01+p09 vs p02+p08",
-        },
-        {
-          "courtSpread": 0.6999999999999997,
-          "flags": [
-            "gender-uneven",
-            "gender-uneven-avoidable",
-          ],
-          "teamSums": [
-            7.9,
-            8.1,
-          ],
-          "teams": "p03+p10 vs p05+p06",
-        },
-        {
-          "courtSpread": 1.1000000000000005,
-          "flags": [
-            "opponent-rematch",
-          ],
-          "teamSums": [
-            7.3,
-            7.3,
-          ],
-          "teams": "p04+p15 vs p07+p12",
-        },
-        {
-          "courtSpread": 0.5,
-          "flags": [
-            "opponent-rematch",
-          ],
-          "teamSums": [
-            6.5,
-            6.5,
-          ],
-          "teams": "p11+p16 vs p13+p14",
-        },
-      ],
-      "sitters": [],
-    },
-    {
-      "courts": [
         {
           "courtSpread": 1,
           "flags": [],
@@ -2264,6 +2186,11 @@ exports[`matcher golden runs (M2.10) > mixed-16 × competitive 1`] = `
           ],
           "teams": "p04+p14 vs p05+p13",
         },
+      ],
+      "sitters": [],
+    },
+    {
+      "courts": [
         {
           "courtSpread": 0.7000000000000002,
           "flags": [
@@ -2273,7 +2200,114 @@ exports[`matcher golden runs (M2.10) > mixed-16 × competitive 1`] = `
             8.3,
             8.3,
           ],
-          "teams": "p01+p08 vs p02+p07",
+          "teams": "p01+p08 vs p03+p06",
+        },
+        {
+          "courtSpread": 1.0000000000000004,
+          "flags": [
+            "opponent-rematch",
+          ],
+          "teamSums": [
+            7.800000000000001,
+            7.800000000000001,
+          ],
+          "teams": "p02+p12 vs p04+p10",
+        },
+        {
+          "courtSpread": 0.7000000000000002,
+          "flags": [
+            "opponent-rematch",
+          ],
+          "teamSums": [
+            6.7,
+            6.7,
+          ],
+          "teams": "p09+p16 vs p11+p14",
+        },
+        {
+          "courtSpread": 1,
+          "flags": [],
+          "teamSums": [
+            7.199999999999999,
+            7.199999999999999,
+          ],
+          "teams": "p05+p15 vs p07+p13",
+        },
+      ],
+      "sitters": [],
+    },
+    {
+      "courts": [
+        {
+          "courtSpread": 1,
+          "flags": [
+            "opponent-rematch",
+          ],
+          "teamSums": [
+            7.6,
+            7.5,
+          ],
+          "teams": "p03+p13 vs p05+p12",
+        },
+        {
+          "courtSpread": 0.8999999999999999,
+          "flags": [
+            "opponent-rematch",
+          ],
+          "teamSums": [
+            8.1,
+            8.100000000000001,
+          ],
+          "teams": "p01+p10 vs p02+p09",
+        },
+        {
+          "courtSpread": 1.1000000000000005,
+          "flags": [
+            "opponent-rematch",
+          ],
+          "teamSums": [
+            7.3,
+            7.4,
+          ],
+          "teams": "p04+p15 vs p07+p11",
+        },
+        {
+          "courtSpread": 1,
+          "flags": [
+            "opponent-rematch",
+          ],
+          "teamSums": [
+            7,
+            7,
+          ],
+          "teams": "p06+p16 vs p08+p14",
+        },
+      ],
+      "sitters": [],
+    },
+    {
+      "courts": [
+        {
+          "courtSpread": 0.8999999999999999,
+          "flags": [
+            "opponent-rematch",
+          ],
+          "teamSums": [
+            8.2,
+            8,
+          ],
+          "teams": "p01+p09 vs p02+p10",
+        },
+        {
+          "courtSpread": 0.2999999999999998,
+          "flags": [
+            "opponent-rematch",
+          ],
+          "teamSums": [
+            8,
+            7.8,
+          ],
+          "teams": "p05+p07 vs p06+p08",
         },
         {
           "courtSpread": 0.8999999999999999,
@@ -2284,60 +2318,7 @@ exports[`matcher golden runs (M2.10) > mixed-16 × competitive 1`] = `
             7.699999999999999,
             7.7,
           ],
-          "teams": "p03+p12 vs p06+p09",
-        },
-        {
-          "courtSpread": 0.6000000000000001,
-          "flags": [
-            "opponent-rematch",
-          ],
-          "teamSums": [
-            6.6,
-            6.6,
-          ],
-          "teams": "p10+p16 vs p11+p15",
-        },
-      ],
-      "sitters": [],
-    },
-    {
-      "courts": [
-        {
-          "courtSpread": 0.8999999999999999,
-          "flags": [
-            "opponent-rematch",
-            "gender-uneven",
-            "gender-uneven-avoidable",
-          ],
-          "teamSums": [
-            8.1,
-            8.1,
-          ],
-          "teams": "p01+p10 vs p04+p07",
-        },
-        {
-          "courtSpread": 0.39999999999999947,
-          "flags": [
-            "opponent-rematch",
-            "gender-uneven",
-            "gender-uneven-avoidable",
-          ],
-          "teamSums": [
-            7.8,
-            7.8,
-          ],
-          "teams": "p05+p09 vs p06+p08",
-        },
-        {
-          "courtSpread": 1.0000000000000004,
-          "flags": [
-            "opponent-rematch",
-          ],
-          "teamSums": [
-            7.800000000000001,
-            7.8,
-          ],
-          "teams": "p02+p12 vs p03+p11",
+          "teams": "p03+p12 vs p04+p11",
         },
         {
           "courtSpread": 0.2999999999999998,
@@ -2345,10 +2326,10 @@ exports[`matcher golden runs (M2.10) > mixed-16 × competitive 1`] = `
             "opponent-rematch",
           ],
           "teamSums": [
-            6.3,
-            6.3,
+            6.3999999999999995,
+            6.2,
           ],
-          "teams": "p13+p16 vs p14+p15",
+          "teams": "p13+p15 vs p14+p16",
         },
       ],
       "sitters": [],
@@ -2391,45 +2372,45 @@ exports[`matcher golden runs (M2.10) > mixed-16 × social 1`] = `
   ],
   "quality": {
     "overall": {
-      "balance": 82.99999999999999,
-      "genderPreference": 80,
-      "partnerFairness": 94.75,
+      "balance": 82,
+      "genderPreference": 100,
+      "partnerFairness": 95.75,
       "sitoutFairness": 100,
-      "variety": 93.75,
+      "variety": 88.75,
     },
     "perRound": [
       {
-        "balance": 64.99999999999994,
-        "genderPreference": 75,
-        "partnerFairness": 100,
+        "balance": 79.99999999999999,
+        "genderPreference": 100,
+        "partnerFairness": 95,
         "sitoutFairness": 100,
         "variety": 100,
       },
       {
-        "balance": 95,
+        "balance": 85.00000000000001,
         "genderPreference": 100,
-        "partnerFairness": 93.75,
+        "partnerFairness": 98.75,
         "sitoutFairness": 100,
-        "variety": 93.75,
+        "variety": 100,
       },
       {
-        "balance": 84.99999999999994,
-        "genderPreference": 50,
+        "balance": 74.99999999999997,
+        "genderPreference": 100,
+        "partnerFairness": 95,
+        "sitoutFairness": 100,
+        "variety": 81.25,
+      },
+      {
+        "balance": 75.00000000000003,
+        "genderPreference": 100,
+        "partnerFairness": 98.75,
+        "sitoutFairness": 100,
+        "variety": 75,
+      },
+      {
+        "balance": 95.00000000000001,
+        "genderPreference": 100,
         "partnerFairness": 91.25,
-        "sitoutFairness": 100,
-        "variety": 93.75,
-      },
-      {
-        "balance": 84.99999999999999,
-        "genderPreference": 100,
-        "partnerFairness": 96.25,
-        "sitoutFairness": 100,
-        "variety": 93.75,
-      },
-      {
-        "balance": 85.00000000000003,
-        "genderPreference": 75,
-        "partnerFairness": 92.5,
         "sitoutFairness": 100,
         "variety": 87.5,
       },
@@ -2439,46 +2420,40 @@ exports[`matcher golden runs (M2.10) > mixed-16 × social 1`] = `
     {
       "courts": [
         {
+          "courtSpread": 0.9000000000000004,
+          "flags": [],
+          "teamSums": [
+            7.9,
+            7.3999999999999995,
+          ],
+          "teams": "p04+p09 vs p05+p13",
+        },
+        {
           "courtSpread": 1,
           "flags": [],
           "teamSums": [
-            7.6,
-            7.6,
-          ],
-          "teams": "p03+p13 vs p05+p11",
-        },
-        {
-          "courtSpread": 0.8999999999999999,
-          "flags": [
-            "gender-uneven",
-            "gender-uneven-avoidable",
-          ],
-          "teamSums": [
-            8.1,
             8,
+            7.9,
           ],
-          "teams": "p01+p10 vs p04+p08",
+          "teams": "p01+p11 vs p03+p10",
         },
         {
-          "courtSpread": 1.3000000000000007,
+          "courtSpread": 1.4000000000000004,
           "flags": [],
           "teamSums": [
-            8.100000000000001,
-            7.1,
+            7.4,
+            7.4,
           ],
-          "teams": "p02+p09 vs p06+p15",
+          "teams": "p02+p16 vs p06+p12",
         },
         {
-          "courtSpread": 0.8999999999999999,
-          "flags": [
-            "gender-uneven",
-            "gender-uneven-avoidable",
-          ],
+          "courtSpread": 0.8000000000000003,
+          "flags": [],
           "teamSums": [
-            6.9,
-            6.6,
+            7.1,
+            6.8999999999999995,
           ],
-          "teams": "p07+p16 vs p12+p14",
+          "teams": "p07+p14 vs p08+p15",
         },
       ],
       "sitters": [],
@@ -2486,42 +2461,40 @@ exports[`matcher golden runs (M2.10) > mixed-16 × social 1`] = `
     {
       "courts": [
         {
-          "courtSpread": 1.1,
+          "courtSpread": 0.6000000000000001,
           "flags": [],
           "teamSums": [
-            7.9,
-            7.9,
+            8.4,
+            8.4,
           ],
-          "teams": "p01+p12 vs p03+p10",
+          "teams": "p01+p07 vs p02+p06",
         },
         {
           "courtSpread": 0.7000000000000002,
           "flags": [],
           "teamSums": [
             7.7,
-            7.7,
+            7.5,
           ],
-          "teams": "p04+p11 vs p06+p09",
+          "teams": "p04+p11 vs p08+p09",
         },
         {
-          "courtSpread": 1.4000000000000004,
-          "flags": [
-            "opponent-rematch",
-          ],
-          "teamSums": [
-            7.4,
-            7.3,
-          ],
-          "teams": "p02+p16 vs p05+p14",
-        },
-        {
-          "courtSpread": 0.8000000000000003,
+          "courtSpread": 1.0999999999999996,
           "flags": [],
           "teamSums": [
-            7,
-            7.1,
+            7.5,
+            7.5,
           ],
-          "teams": "p07+p15 vs p08+p13",
+          "teams": "p03+p14 vs p05+p12",
+        },
+        {
+          "courtSpread": 0.6000000000000001,
+          "flags": [],
+          "teamSums": [
+            6.699999999999999,
+            6.3,
+          ],
+          "teams": "p10+p15 vs p13+p16",
         },
       ],
       "sitters": [],
@@ -2529,42 +2502,46 @@ exports[`matcher golden runs (M2.10) > mixed-16 × social 1`] = `
     {
       "courts": [
         {
-          "courtSpread": 1.2000000000000002,
+          "courtSpread": 1.4000000000000004,
           "flags": [
             "opponent-rematch",
           ],
           "teamSums": [
-            7.3999999999999995,
-            7.4,
+            7.5,
+            6.8,
           ],
-          "teams": "p03+p15 vs p08+p10",
+          "teams": "p02+p15 vs p08+p16",
         },
         {
-          "courtSpread": 1.5,
+          "courtSpread": 1.1,
           "flags": [],
           "teamSums": [
-            7.5,
-            7.5,
+            7.9,
+            7.8,
           ],
-          "teams": "p01+p16 vs p06+p11",
+          "teams": "p01+p12 vs p05+p09",
         },
         {
-          "courtSpread": 0.5000000000000004,
-          "flags": [],
+          "courtSpread": 0.3999999999999999,
+          "flags": [
+            "opponent-rematch",
+          ],
           "teamSums": [
-            8.5,
-            8.1,
+            8.2,
+            8.2,
           ],
-          "teams": "p02+p05 vs p04+p07",
+          "teams": "p03+p07 vs p04+p06",
         },
         {
-          "courtSpread": 0.5,
-          "flags": [],
+          "courtSpread": 0.3999999999999999,
+          "flags": [
+            "opponent-rematch",
+          ],
           "teamSums": [
             6.9,
-            6.699999999999999,
+            6.7,
           ],
-          "teams": "p09+p14 vs p12+p13",
+          "teams": "p10+p13 vs p11+p14",
         },
       ],
       "sitters": [],
@@ -2583,31 +2560,33 @@ exports[`matcher golden runs (M2.10) > mixed-16 × social 1`] = `
           "teams": "p01+p09 vs p02+p10",
         },
         {
+          "courtSpread": 1.0999999999999996,
+          "flags": [],
+          "teamSums": [
+            7.3,
+            7,
+          ],
+          "teams": "p05+p14 vs p06+p16",
+        },
+        {
           "courtSpread": 1,
           "flags": [],
           "teamSums": [
-            7.199999999999999,
-            7.2,
-          ],
-          "teams": "p05+p15 vs p06+p14",
-        },
-        {
-          "courtSpread": 0.8000000000000003,
-          "flags": [],
-          "teamSums": [
-            7.6,
-            7.3,
-          ],
-          "teams": "p04+p12 vs p08+p11",
-        },
-        {
-          "courtSpread": 1.2999999999999998,
-          "flags": [],
-          "teamSums": [
-            7.3,
+            7.699999999999999,
             7.199999999999999,
           ],
-          "teams": "p03+p16 vs p07+p13",
+          "teams": "p03+p12 vs p07+p13",
+        },
+        {
+          "courtSpread": 1.1000000000000005,
+          "flags": [
+            "opponent-rematch",
+          ],
+          "teamSums": [
+            7.3,
+            7.3,
+          ],
+          "teams": "p04+p15 vs p08+p11",
         },
       ],
       "sitters": [],
@@ -2624,39 +2603,33 @@ exports[`matcher golden runs (M2.10) > mixed-16 × social 1`] = `
           "teams": "p02+p14 vs p03+p11",
         },
         {
-          "courtSpread": 0.6000000000000001,
-          "flags": [
-            "opponent-rematch",
-            "gender-uneven",
-            "gender-uneven-avoidable",
-          ],
-          "teamSums": [
-            7.800000000000001,
-            7.9,
-          ],
-          "teams": "p04+p10 vs p06+p07",
-        },
-        {
-          "courtSpread": 1.4000000000000004,
+          "courtSpread": 0.8000000000000003,
           "flags": [],
           "teamSums": [
             7.6,
-            7.5,
+            7.6,
           ],
-          "teams": "p01+p15 vs p05+p12",
+          "teams": "p04+p12 vs p06+p10",
         },
         {
-          "courtSpread": 0.7999999999999998,
+          "courtSpread": 1.4000000000000004,
           "flags": [
             "opponent-rematch",
-            "gender-uneven",
-            "gender-uneven-avoidable",
           ],
           "teamSums": [
-            6.8,
-            7,
+            7.6,
+            7.6,
           ],
-          "teams": "p08+p16 vs p09+p13",
+          "teams": "p01+p15 vs p07+p09",
+        },
+        {
+          "courtSpread": 1.0999999999999996,
+          "flags": [],
+          "teamSums": [
+            7.1,
+            7.1,
+          ],
+          "teams": "p05+p16 vs p08+p13",
         },
       ],
       "sitters": [],
@@ -2947,54 +2920,54 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × balanced 1`] = `
   ],
   "quality": {
     "overall": {
-      "balance": 93.33333333333333,
-      "genderPreference": 71.66666666666667,
-      "partnerFairness": 92.66666666666666,
+      "balance": 90.39999999999996,
+      "genderPreference": 93.33333333333333,
+      "partnerFairness": 92.5,
       "sitoutFairness": 100,
-      "variety": 90,
+      "variety": 87.5,
     },
     "perRound": [
       {
-        "balance": 96.00000000000003,
-        "genderPreference": 60,
-        "partnerFairness": 97.99999999999999,
+        "balance": 92.39999999999992,
+        "genderPreference": 100,
+        "partnerFairness": 92,
         "sitoutFairness": 100,
         "variety": 100,
       },
       {
-        "balance": 94,
+        "balance": 95.99999999999996,
+        "genderPreference": 100,
+        "partnerFairness": 88.99999999999999,
+        "sitoutFairness": 100,
+        "variety": 95,
+      },
+      {
+        "balance": 81.99999999999997,
         "genderPreference": 80,
-        "partnerFairness": 84,
+        "partnerFairness": 100,
         "sitoutFairness": 100,
-        "variety": 100,
+        "variety": 90,
       },
       {
-        "balance": 96,
-        "genderPreference": 70,
+        "balance": 88,
+        "genderPreference": 100,
         "partnerFairness": 95,
         "sitoutFairness": 100,
         "variety": 85,
       },
       {
         "balance": 90,
-        "genderPreference": 70,
-        "partnerFairness": 99,
+        "genderPreference": 80,
+        "partnerFairness": 88,
+        "sitoutFairness": 100,
+        "variety": 80,
+      },
+      {
+        "balance": 93.99999999999993,
+        "genderPreference": 100,
+        "partnerFairness": 91,
         "sitoutFairness": 100,
         "variety": 75,
-      },
-      {
-        "balance": 92.00000000000001,
-        "genderPreference": 50,
-        "partnerFairness": 97,
-        "sitoutFairness": 100,
-        "variety": 90,
-      },
-      {
-        "balance": 92,
-        "genderPreference": 100,
-        "partnerFairness": 83,
-        "sitoutFairness": 100,
-        "variety": 90,
       },
     ],
   },
@@ -3002,34 +2975,31 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × balanced 1`] = `
     {
       "courts": [
         {
+          "courtSpread": 0.8999999999999999,
+          "flags": [],
+          "teamSums": [
+            5.9,
+            5.8,
+          ],
+          "teams": "p12+p21 vs p16+p18",
+        },
+        {
           "courtSpread": 1.1000000000000005,
           "flags": [],
           "teamSums": [
             7.3,
             7.3,
           ],
-          "teams": "p04+p15 vs p06+p13",
-        },
-        {
-          "courtSpread": 1,
-          "flags": [
-            "gender-uneven",
-            "gender-uneven-avoidable",
-          ],
-          "teamSums": [
-            6.6,
-            6.6,
-          ],
-          "teams": "p08+p18 vs p12+p14",
+          "teams": "p04+p15 vs p08+p11",
         },
         {
           "courtSpread": 0.5000000000000004,
           "flags": [],
           "teamSums": [
-            8.3,
-            8.399999999999999,
+            8.4,
+            8.2,
           ],
-          "teams": "p02+p07 vs p03+p05",
+          "teams": "p02+p06 vs p03+p07",
         },
         {
           "courtSpread": 1.1000000000000005,
@@ -3041,17 +3011,17 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × balanced 1`] = `
           "teams": "p09+p20 vs p10+p19",
         },
         {
-          "courtSpread": 1,
+          "courtSpread": 1.6,
           "flags": [],
           "teamSums": [
-            6,
-            5.9,
+            7.4,
+            7.3999999999999995,
           ],
-          "teams": "p11+p21 vs p16+p17",
+          "teams": "p01+p17 vs p05+p13",
         },
       ],
       "sitters": [
-        "p01",
+        "p14",
       ],
     },
     {
@@ -3061,113 +3031,47 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × balanced 1`] = `
           "flags": [],
           "teamSums": [
             7.6,
-            7.5,
+            7.6000000000000005,
           ],
-          "teams": "p01+p15 vs p03+p14",
+          "teams": "p01+p15 vs p02+p14",
         },
         {
-          "courtSpread": 0.9000000000000004,
-          "flags": [],
-          "teamSums": [
-            7.5,
-            7.5,
-          ],
-          "teams": "p04+p13 vs p05+p12",
-        },
-        {
-          "courtSpread": 1.4000000000000004,
-          "flags": [],
-          "teamSums": [
-            6.6,
-            6.6,
-          ],
-          "teams": "p06+p20 vs p09+p17",
-        },
-        {
-          "courtSpread": 1.4000000000000004,
+          "courtSpread": 0.6000000000000001,
           "flags": [
-            "gender-uneven",
-            "gender-uneven-avoidable",
+            "opponent-rematch",
           ],
           "teamSums": [
-            7.4,
-            7.5,
+            7.800000000000001,
+            7.7,
           ],
-          "teams": "p02+p16 vs p07+p10",
+          "teams": "p04+p10 vs p06+p09",
         },
         {
           "courtSpread": 1.2999999999999998,
           "flags": [],
           "teamSums": [
+            6.8999999999999995,
+            6.9,
+          ],
+          "teams": "p05+p18 vs p07+p16",
+        },
+        {
+          "courtSpread": 1.2000000000000002,
+          "flags": [],
+          "teamSums": [
+            6.3999999999999995,
             6.3,
-            6.2,
           ],
-          "teams": "p08+p21 vs p11+p19",
-        },
-      ],
-      "sitters": [
-        "p18",
-      ],
-    },
-    {
-      "courts": [
-        {
-          "courtSpread": 1,
-          "flags": [
-            "gender-uneven",
-            "gender-uneven-avoidable",
-          ],
-          "teamSums": [
-            8,
-            8,
-          ],
-          "teams": "p01+p11 vs p05+p07",
-        },
-        {
-          "courtSpread": 1.1000000000000005,
-          "flags": [
-            "gender-uneven",
-            "gender-uneven-avoidable",
-          ],
-          "teamSums": [
-            7.7,
-            7.8,
-          ],
-          "teams": "p02+p13 vs p06+p08",
+          "teams": "p08+p20 vs p12+p17",
         },
         {
           "courtSpread": 1,
-          "flags": [
-            "gender-uneven",
-            "gender-uneven-avoidable",
-          ],
+          "flags": [],
           "teamSums": [
-            6.4,
-            6.3,
+            6,
+            6,
           ],
-          "teams": "p09+p19 vs p14+p15",
-        },
-        {
-          "courtSpread": 1.4000000000000004,
-          "flags": [
-            "opponent-rematch",
-          ],
-          "teamSums": [
-            7,
-            7,
-          ],
-          "teams": "p04+p18 vs p10+p12",
-        },
-        {
-          "courtSpread": 0.5,
-          "flags": [
-            "opponent-rematch",
-          ],
-          "teamSums": [
-            5.5,
-            5.5,
-          ],
-          "teams": "p16+p21 vs p17+p20",
+          "teams": "p11+p21 vs p13+p19",
         },
       ],
       "sitters": [
@@ -3177,15 +3081,24 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × balanced 1`] = `
     {
       "courts": [
         {
-          "courtSpread": 0.40000000000000036,
+          "courtSpread": 0.6000000000000001,
           "flags": [
             "opponent-rematch",
           ],
           "teamSums": [
-            8.6,
-            8.5,
+            8.4,
+            8.2,
           ],
-          "teams": "p01+p05 vs p03+p04",
+          "teams": "p01+p07 vs p04+p06",
+        },
+        {
+          "courtSpread": 0.5999999999999996,
+          "flags": [],
+          "teamSums": [
+            8,
+            7.8999999999999995,
+          ],
+          "teams": "p03+p09 vs p05+p08",
         },
         {
           "courtSpread": 0.7999999999999998,
@@ -3193,42 +3106,31 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × balanced 1`] = `
             "opponent-rematch",
           ],
           "teamSums": [
-            7.2,
-            7.2,
+            5.8999999999999995,
+            5.5,
           ],
-          "teams": "p06+p14 vs p09+p11",
+          "teams": "p13+p20 vs p16+p21",
         },
         {
-          "courtSpread": 1,
+          "courtSpread": 0.8000000000000003,
           "flags": [
             "gender-uneven",
             "gender-uneven-avoidable",
           ],
           "teamSums": [
-            6.8,
-            6.699999999999999,
+            6.4,
+            6.4,
           ],
-          "teams": "p07+p17 vs p12+p13",
+          "teams": "p10+p18 vs p11+p17",
         },
         {
-          "courtSpread": 1.0999999999999996,
+          "courtSpread": 0.6999999999999997,
           "flags": [],
           "teamSums": [
-            6.5,
-            6.6,
+            6.1,
+            6.3,
           ],
-          "teams": "p08+p19 vs p10+p16",
-        },
-        {
-          "courtSpread": 0.5999999999999996,
-          "flags": [
-            "opponent-rematch",
-          ],
-          "teamSums": [
-            5.6,
-            5.3999999999999995,
-          ],
-          "teams": "p15+p21 vs p18+p20",
+          "teams": "p12+p19 vs p14+p15",
         },
       ],
       "sitters": [
@@ -3238,118 +3140,176 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × balanced 1`] = `
     {
       "courts": [
         {
-          "courtSpread": 0.7000000000000002,
+          "courtSpread": 1.4000000000000004,
+          "flags": [],
+          "teamSums": [
+            7.4,
+            7.5,
+          ],
+          "teams": "p02+p16 vs p06+p11",
+        },
+        {
+          "courtSpread": 1.0999999999999996,
+          "flags": [],
+          "teamSums": [
+            7.5,
+            7.5,
+          ],
+          "teams": "p03+p14 vs p04+p13",
+        },
+        {
+          "courtSpread": 0.49999999999999956,
           "flags": [
             "opponent-rematch",
           ],
           "teamSums": [
-            5.8999999999999995,
-            5.9,
+            7.699999999999999,
+            7.699999999999999,
           ],
-          "teams": "p13+p20 vs p14+p19",
+          "teams": "p05+p10 vs p07+p08",
         },
         {
-          "courtSpread": 0.3999999999999999,
-          "flags": [],
-          "teamSums": [
-            8.2,
-            8.2,
-          ],
-          "teams": "p03+p07 vs p04+p06",
-        },
-        {
-          "courtSpread": 1,
-          "flags": [
-            "gender-uneven",
-            "gender-uneven-avoidable",
-          ],
-          "teamSums": [
-            8.2,
-            7.9,
-          ],
-          "teams": "p01+p09 vs p02+p11",
-        },
-        {
-          "courtSpread": 1.2999999999999998,
-          "flags": [],
-          "teamSums": [
-            6.8999999999999995,
-            6.8,
-          ],
-          "teams": "p05+p18 vs p08+p16",
-        },
-        {
-          "courtSpread": 0.7000000000000002,
+          "courtSpread": 1.1000000000000005,
           "flags": [
             "opponent-rematch",
-            "gender-uneven",
-            "gender-uneven-avoidable",
           ],
           "teamSums": [
-            6.5,
-            6.5,
+            6.4,
+            6,
           ],
-          "teams": "p10+p17 vs p12+p15",
+          "teams": "p09+p19 vs p12+p20",
+        },
+        {
+          "courtSpread": 0.5999999999999996,
+          "flags": [
+            "opponent-rematch",
+          ],
+          "teamSums": [
+            5.6,
+            5.699999999999999,
+          ],
+          "teams": "p15+p21 vs p17+p18",
         },
       ],
       "sitters": [
-        "p21",
+        "p01",
       ],
     },
     {
       "courts": [
         {
-          "courtSpread": 1.0999999999999996,
+          "courtSpread": 0.6999999999999997,
+          "flags": [
+            "gender-uneven",
+            "gender-uneven-avoidable",
+          ],
+          "teamSums": [
+            7.5,
+            7.6,
+          ],
+          "teams": "p05+p12 vs p06+p10",
+        },
+        {
+          "courtSpread": 1.2999999999999998,
           "flags": [],
           "teamSums": [
-            7.1,
-            7.1,
-          ],
-          "teams": "p05+p16 vs p06+p15",
-        },
-        {
-          "courtSpread": 1.0000000000000004,
-          "flags": [
-            "opponent-rematch",
-          ],
-          "teamSums": [
-            7.800000000000001,
+            7.7,
             7.8,
           ],
-          "teams": "p02+p12 vs p03+p11",
+          "teams": "p01+p14 vs p03+p11",
         },
         {
-          "courtSpread": 1.4,
+          "courtSpread": 0.8000000000000003,
+          "flags": [],
+          "teamSums": [
+            7,
+            7,
+          ],
+          "teams": "p07+p15 vs p09+p13",
+        },
+        {
+          "courtSpread": 0.30000000000000027,
           "flags": [
             "opponent-rematch",
           ],
           "teamSums": [
-            6.4,
-            6.4,
+            5.5,
+            5.5,
           ],
-          "teams": "p07+p21 vs p10+p18",
+          "teams": "p17+p20 vs p18+p19",
         },
         {
           "courtSpread": 1.9000000000000004,
-          "flags": [],
-          "teamSums": [
-            7.1,
-            7.1,
+          "flags": [
+            "opponent-rematch",
           ],
-          "teams": "p01+p20 vs p08+p13",
-        },
-        {
-          "courtSpread": 1.3000000000000003,
-          "flags": [],
           "teamSums": [
-            7.1,
             6.9,
+            6.8,
           ],
-          "teams": "p04+p17 vs p09+p14",
+          "teams": "p02+p21 vs p08+p16",
         },
       ],
       "sitters": [
-        "p19",
+        "p04",
+      ],
+    },
+    {
+      "courts": [
+        {
+          "courtSpread": 1.2999999999999998,
+          "flags": [],
+          "teamSums": [
+            6.7,
+            6.6,
+          ],
+          "teams": "p06+p19 vs p08+p18",
+        },
+        {
+          "courtSpread": 0.8999999999999999,
+          "flags": [
+            "opponent-rematch",
+          ],
+          "teamSums": [
+            8.1,
+            8.3,
+          ],
+          "teams": "p01+p10 vs p02+p07",
+        },
+        {
+          "courtSpread": 1.4,
+          "flags": [],
+          "teamSums": [
+            7.199999999999999,
+            7.2,
+          ],
+          "teams": "p03+p17 vs p09+p11",
+        },
+        {
+          "courtSpread": 1.2000000000000002,
+          "flags": [
+            "opponent-rematch",
+          ],
+          "teamSums": [
+            7.2,
+            7.199999999999999,
+          ],
+          "teams": "p04+p16 vs p05+p15",
+        },
+        {
+          "courtSpread": 0.7999999999999998,
+          "flags": [
+            "opponent-rematch",
+          ],
+          "teamSums": [
+            5.8,
+            5.8,
+          ],
+          "teams": "p13+p21 vs p14+p20",
+        },
+      ],
+      "sitters": [
+        "p12",
       ],
     },
   ],
@@ -3395,54 +3355,54 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × competitive 1`] = `
   ],
   "quality": {
     "overall": {
-      "balance": 85.99999999999999,
-      "genderPreference": 63.33333333333333,
-      "partnerFairness": 91.83333333333333,
+      "balance": 90.2222222222222,
+      "genderPreference": 93.33333333333333,
+      "partnerFairness": 95.5,
       "sitoutFairness": 100,
-      "variety": 74.16666666666667,
+      "variety": 72.5,
     },
     "perRound": [
       {
-        "balance": 87.99999999999997,
-        "genderPreference": 60,
-        "partnerFairness": 96,
+        "balance": 94.66666666666666,
+        "genderPreference": 100,
+        "partnerFairness": 97,
         "sitoutFairness": 100,
         "variety": 100,
       },
       {
-        "balance": 86.66666666666663,
-        "genderPreference": 80,
-        "partnerFairness": 98,
+        "balance": 95.33333333333329,
+        "genderPreference": 100,
+        "partnerFairness": 99,
         "sitoutFairness": 100,
-        "variety": 90,
+        "variety": 75,
       },
       {
-        "balance": 95.99999999999997,
-        "genderPreference": 50,
+        "balance": 95.99999999999996,
+        "genderPreference": 100,
         "partnerFairness": 100,
         "sitoutFairness": 100,
         "variety": 80,
       },
       {
-        "balance": 69.99999999999999,
-        "genderPreference": 100,
-        "partnerFairness": 76.99999999999999,
+        "balance": 77.3333333333333,
+        "genderPreference": 80,
+        "partnerFairness": 77.99999999999999,
         "sitoutFairness": 100,
-        "variety": 75,
+        "variety": 70,
       },
       {
-        "balance": 93.99999999999999,
-        "genderPreference": 30.000000000000004,
+        "balance": 97.99999999999999,
+        "genderPreference": 80,
         "partnerFairness": 100,
         "sitoutFairness": 100,
-        "variety": 55.00000000000001,
+        "variety": 60,
       },
       {
-        "balance": 81.33333333333334,
-        "genderPreference": 60,
-        "partnerFairness": 80,
+        "balance": 80.00000000000004,
+        "genderPreference": 100,
+        "partnerFairness": 99,
         "sitoutFairness": 100,
-        "variety": 44.99999999999999,
+        "variety": 50,
       },
     ],
   },
@@ -3453,10 +3413,10 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × competitive 1`] = `
           "courtSpread": 0.2999999999999998,
           "flags": [],
           "teamSums": [
-            8.8,
-            8.600000000000001,
+            8.7,
+            8.7,
           ],
-          "teams": "p01+p03 vs p02+p04",
+          "teams": "p01+p04 vs p02+p03",
         },
         {
           "courtSpread": 0.7000000000000002,
@@ -3468,25 +3428,22 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × competitive 1`] = `
           "teams": "p06+p13 vs p08+p11",
         },
         {
-          "courtSpread": 1.1000000000000005,
+          "courtSpread": 0.8000000000000003,
           "flags": [],
           "teamSums": [
-            6.3,
-            6.3,
+            7,
+            7,
           ],
-          "teams": "p09+p20 vs p12+p17",
+          "teams": "p07+p15 vs p10+p12",
         },
         {
-          "courtSpread": 0.8999999999999999,
-          "flags": [
-            "gender-uneven",
-            "gender-uneven-avoidable",
-          ],
+          "courtSpread": 0.40000000000000036,
+          "flags": [],
           "teamSums": [
-            6.300000000000001,
-            6.3,
+            5.6,
+            5.6,
           ],
-          "teams": "p10+p19 vs p14+p15",
+          "teams": "p16+p20 vs p17+p19",
         },
         {
           "courtSpread": 1.2999999999999998,
@@ -3495,7 +3452,7 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × competitive 1`] = `
             6.8999999999999995,
             6.9,
           ],
-          "teams": "p05+p18 vs p07+p16",
+          "teams": "p05+p18 vs p09+p14",
         },
       ],
       "sitters": [
@@ -3505,57 +3462,61 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × competitive 1`] = `
     {
       "courts": [
         {
-          "courtSpread": 1.2000000000000002,
+          "courtSpread": 0.7000000000000002,
           "flags": [
             "opponent-rematch",
           ],
           "teamSums": [
-            7.8,
-            7.800000000000001,
+            8.3,
+            8.2,
           ],
-          "teams": "p01+p13 vs p02+p12",
+          "teams": "p01+p08 vs p03+p07",
         },
         {
-          "courtSpread": 0.6999999999999997,
-          "flags": [],
-          "teamSums": [
-            7.9,
-            7.8999999999999995,
+          "courtSpread": 0.49999999999999956,
+          "flags": [
+            "opponent-rematch",
           ],
-          "teams": "p03+p10 vs p05+p08",
+          "teamSums": [
+            7.699999999999999,
+            7.7,
+          ],
+          "teams": "p05+p10 vs p06+p09",
         },
         {
-          "courtSpread": 1,
-          "flags": [],
-          "teamSums": [
-            7.4,
-            7.5,
+          "courtSpread": 1.1000000000000005,
+          "flags": [
+            "opponent-rematch",
           ],
-          "teams": "p04+p14 vs p06+p11",
+          "teamSums": [
+            7.7,
+            7.7,
+          ],
+          "teams": "p02+p13 vs p04+p11",
         },
         {
           "courtSpread": 0.8999999999999999,
           "flags": [],
           "teamSums": [
-            7,
-            6.7,
+            5.9,
+            5.9,
           ],
-          "teams": "p07+p15 vs p09+p16",
+          "teams": "p12+p21 vs p14+p19",
         },
         {
-          "courtSpread": 0.3999999999999999,
+          "courtSpread": 0.5,
           "flags": [
             "opponent-rematch",
           ],
           "teamSums": [
-            5.4,
-            5.3999999999999995,
+            5.699999999999999,
+            5.699999999999999,
           ],
-          "teams": "p17+p21 vs p18+p20",
+          "teams": "p15+p20 vs p17+p18",
         },
       ],
       "sitters": [
-        "p19",
+        "p16",
       ],
     },
     {
@@ -3572,35 +3533,74 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × competitive 1`] = `
           "teams": "p01+p10 vs p03+p08",
         },
         {
-          "courtSpread": 0.9000000000000004,
+          "courtSpread": 0.7000000000000002,
+          "flags": [],
+          "teamSums": [
+            8.100000000000001,
+            7.9,
+          ],
+          "teams": "p02+p09 vs p06+p07",
+        },
+        {
+          "courtSpread": 0.8000000000000003,
+          "flags": [],
+          "teamSums": [
+            7.6,
+            7.6,
+          ],
+          "teams": "p04+p12 vs p05+p11",
+        },
+        {
+          "courtSpread": 0.2999999999999998,
           "flags": [
             "opponent-rematch",
-            "gender-uneven",
-            "gender-uneven-avoidable",
           ],
           "teamSums": [
-            7.9,
-            7.9,
+            5.8999999999999995,
+            5.9,
           ],
-          "teams": "p02+p11 vs p04+p09",
+          "teams": "p15+p18 vs p16+p17",
         },
         {
           "courtSpread": 0.7999999999999998,
-          "flags": [],
+          "flags": [
+            "opponent-rematch",
+          ],
+          "teamSums": [
+            5.8,
+            5.8,
+          ],
+          "teams": "p13+p21 vs p14+p20",
+        },
+      ],
+      "sitters": [
+        "p19",
+      ],
+    },
+    {
+      "courts": [
+        {
+          "courtSpread": 1.2000000000000002,
+          "flags": [
+            "opponent-rematch",
+          ],
           "teamSums": [
             7.2,
             7.199999999999999,
           ],
-          "teams": "p06+p14 vs p07+p13",
+          "teams": "p04+p16 vs p05+p15",
         },
         {
-          "courtSpread": 0.8999999999999999,
-          "flags": [],
-          "teamSums": [
-            5.9,
-            5.7,
+          "courtSpread": 0.8000000000000003,
+          "flags": [
+            "gender-uneven",
+            "gender-uneven-avoidable",
           ],
-          "teams": "p12+p21 vs p16+p19",
+          "teamSums": [
+            6.6,
+            6.6,
+          ],
+          "teams": "p09+p17 vs p12+p14",
         },
         {
           "courtSpread": 0.5,
@@ -3608,48 +3608,10 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × competitive 1`] = `
             "opponent-rematch",
           ],
           "teamSums": [
-            5.699999999999999,
-            5.699999999999999,
-          ],
-          "teams": "p15+p20 vs p17+p18",
-        },
-      ],
-      "sitters": [
-        "p05",
-      ],
-    },
-    {
-      "courts": [
-        {
-          "courtSpread": 1.0999999999999996,
-          "flags": [],
-          "teamSums": [
-            7.1,
-            7,
-          ],
-          "teams": "p05+p16 vs p08+p14",
-        },
-        {
-          "courtSpread": 1.4000000000000004,
-          "flags": [
-            "opponent-rematch",
-          ],
-          "teamSums": [
-            7.6,
-            7.6,
-          ],
-          "teams": "p01+p15 vs p03+p13",
-        },
-        {
-          "courtSpread": 0.30000000000000027,
-          "flags": [
-            "opponent-rematch",
-          ],
-          "teamSums": [
             7.1,
             7.1,
           ],
-          "teams": "p09+p12 vs p10+p11",
+          "teams": "p08+p13 vs p10+p11",
         },
         {
           "courtSpread": 1.5,
@@ -3664,18 +3626,16 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × competitive 1`] = `
         },
         {
           "courtSpread": 1.7000000000000002,
-          "flags": [
-            "opponent-rematch",
-          ],
+          "flags": [],
           "teamSums": [
             7.1000000000000005,
             7.1,
           ],
-          "teams": "p02+p19 vs p04+p17",
+          "teams": "p02+p19 vs p03+p18",
         },
       ],
       "sitters": [
-        "p18",
+        "p01",
       ],
     },
     {
@@ -3705,15 +3665,25 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × competitive 1`] = `
         {
           "courtSpread": 0.5000000000000004,
           "flags": [
-            "opponent-rematch",
             "gender-uneven",
             "gender-uneven-avoidable",
           ],
           "teamSums": [
             6.699999999999999,
-            6.9,
+            6.7,
           ],
-          "teams": "p10+p15 vs p11+p12",
+          "teams": "p10+p15 vs p11+p14",
+        },
+        {
+          "courtSpread": 0.6999999999999997,
+          "flags": [
+            "opponent-rematch",
+          ],
+          "teamSums": [
+            6.1,
+            6.1,
+          ],
+          "teams": "p12+p19 vs p13+p18",
         },
         {
           "courtSpread": 0.5,
@@ -3726,17 +3696,6 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × competitive 1`] = `
           ],
           "teams": "p16+p21 vs p17+p20",
         },
-        {
-          "courtSpread": 0.5999999999999996,
-          "flags": [
-            "opponent-rematch",
-          ],
-          "teamSums": [
-            6,
-            6,
-          ],
-          "teams": "p13+p19 vs p14+p18",
-        },
       ],
       "sitters": [
         "p02",
@@ -3745,40 +3704,7 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × competitive 1`] = `
     {
       "courts": [
         {
-          "courtSpread": 1.3999999999999995,
-          "flags": [
-            "opponent-rematch",
-          ],
-          "teamSums": [
-            6.8,
-            6.8,
-          ],
-          "teams": "p05+p19 vs p06+p18",
-        },
-        {
-          "courtSpread": 0.7000000000000002,
-          "flags": [
-            "opponent-rematch",
-          ],
-          "teamSums": [
-            8.3,
-            8.3,
-          ],
-          "teams": "p01+p08 vs p02+p07",
-        },
-        {
-          "courtSpread": 0.8000000000000003,
-          "flags": [
-            "opponent-rematch",
-          ],
-          "teamSums": [
-            6.6,
-            6.6,
-          ],
-          "teams": "p09+p17 vs p10+p16",
-        },
-        {
-          "courtSpread": 0.30000000000000027,
+          "courtSpread": 0.9000000000000004,
           "flags": [
             "opponent-rematch",
           ],
@@ -3786,18 +3712,51 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × competitive 1`] = `
             6.5,
             6.5,
           ],
-          "teams": "p12+p15 vs p13+p14",
+          "teams": "p09+p18 vs p10+p17",
         },
         {
-          "courtSpread": 1.7999999999999998,
+          "courtSpread": 0.6000000000000001,
           "flags": [
             "opponent-rematch",
           ],
           "teamSums": [
-            6.8,
-            6.8,
+            8.6,
+            8.3,
           ],
-          "teams": "p03+p21 vs p04+p20",
+          "teams": "p01+p05 vs p02+p07",
+        },
+        {
+          "courtSpread": 1,
+          "flags": [
+            "opponent-rematch",
+          ],
+          "teamSums": [
+            7,
+            7.199999999999999,
+          ],
+          "teams": "p06+p16 vs p08+p12",
+        },
+        {
+          "courtSpread": 0.5999999999999996,
+          "flags": [
+            "opponent-rematch",
+          ],
+          "teamSums": [
+            5.6,
+            5.3,
+          ],
+          "teams": "p15+p21 vs p19+p20",
+        },
+        {
+          "courtSpread": 1.0999999999999996,
+          "flags": [
+            "opponent-rematch",
+          ],
+          "teamSums": [
+            7.5,
+            7.5,
+          ],
+          "teams": "p03+p14 vs p04+p13",
         },
       ],
       "sitters": [
@@ -3847,54 +3806,54 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × social 1`] = `
   ],
   "quality": {
     "overall": {
-      "balance": 87.66666666666666,
-      "genderPreference": 71.66666666666667,
-      "partnerFairness": 87.33333333333333,
+      "balance": 90.99999999999999,
+      "genderPreference": 93.33333333333333,
+      "partnerFairness": 87.99999999999999,
       "sitoutFairness": 100,
-      "variety": 95,
+      "variety": 95.83333333333334,
     },
     "perRound": [
       {
-        "balance": 88.00000000000003,
+        "balance": 80,
         "genderPreference": 80,
-        "partnerFairness": 98,
+        "partnerFairness": 90,
         "sitoutFairness": 100,
         "variety": 100,
       },
       {
-        "balance": 91.99999999999997,
+        "balance": 95.99999999999997,
         "genderPreference": 100,
-        "partnerFairness": 76,
+        "partnerFairness": 87,
         "sitoutFairness": 100,
         "variety": 100,
       },
       {
-        "balance": 90,
-        "genderPreference": 50,
-        "partnerFairness": 92,
-        "sitoutFairness": 100,
-        "variety": 85,
-      },
-      {
-        "balance": 81.99999999999994,
-        "genderPreference": 90,
-        "partnerFairness": 78,
+        "balance": 92,
+        "genderPreference": 100,
+        "partnerFairness": 93,
         "sitoutFairness": 100,
         "variety": 95,
       },
       {
-        "balance": 86.00000000000003,
-        "genderPreference": 60,
-        "partnerFairness": 87,
+        "balance": 93.99999999999999,
+        "genderPreference": 100,
+        "partnerFairness": 87.99999999999999,
         "sitoutFairness": 100,
-        "variety": 90,
+        "variety": 95,
       },
       {
-        "balance": 88.00000000000001,
-        "genderPreference": 50,
+        "balance": 90,
+        "genderPreference": 100,
         "partnerFairness": 93,
         "sitoutFairness": 100,
-        "variety": 100,
+        "variety": 95,
+      },
+      {
+        "balance": 93.99999999999999,
+        "genderPreference": 80,
+        "partnerFairness": 76.99999999999999,
+        "sitoutFairness": 100,
+        "variety": 90,
       },
     ],
   },
@@ -3902,123 +3861,90 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × social 1`] = `
     {
       "courts": [
         {
-          "courtSpread": 1.0999999999999996,
-          "flags": [],
-          "teamSums": [
-            7.199999999999999,
-            7,
-          ],
-          "teams": "p05+p15 vs p06+p16",
-        },
-        {
-          "courtSpread": 1.1999999999999997,
-          "flags": [],
-          "teamSums": [
-            6.6,
-            6.6,
-          ],
-          "teams": "p07+p19 vs p08+p18",
-        },
-        {
-          "courtSpread": 0.2999999999999998,
-          "flags": [],
-          "teamSums": [
-            8.7,
-            8.7,
-          ],
-          "teams": "p01+p04 vs p02+p03",
-        },
-        {
-          "courtSpread": 1,
-          "flags": [],
-          "teamSums": [
-            6.1,
-            5.7,
-          ],
-          "teams": "p11+p20 vs p14+p21",
-        },
-        {
-          "courtSpread": 0.40000000000000036,
-          "flags": [],
-          "teamSums": [
-            7,
-            7,
-          ],
-          "teams": "p09+p13 vs p10+p12",
-        },
-      ],
-      "sitters": [
-        "p17",
-      ],
-    },
-    {
-      "courts": [
-        {
           "courtSpread": 1.7000000000000002,
           "flags": [],
           "teamSums": [
+            7.1000000000000005,
+            7.1,
+          ],
+          "teams": "p02+p19 vs p10+p11",
+        },
+        {
+          "courtSpread": 1,
+          "flags": [],
+          "teamSums": [
+            6.699999999999999,
+            6.5,
+          ],
+          "teams": "p08+p17 vs p09+p18",
+        },
+        {
+          "courtSpread": 0.9000000000000004,
+          "flags": [
+            "gender-uneven",
+            "gender-uneven-avoidable",
+          ],
+          "teamSums": [
+            7.5,
+            8.1,
+          ],
+          "teams": "p04+p13 vs p05+p06",
+        },
+        {
+          "courtSpread": 0.7000000000000002,
+          "flags": [],
+          "teamSums": [
+            5.8,
+            5.6,
+          ],
+          "teams": "p14+p20 vs p15+p21",
+        },
+        {
+          "courtSpread": 1.2999999999999998,
+          "flags": [],
+          "teamSums": [
             7.3,
             7.3,
           ],
-          "teams": "p01+p18 vs p06+p13",
+          "teams": "p03+p16 vs p07+p12",
+        },
+      ],
+      "sitters": [
+        "p01",
+      ],
+    },
+    {
+      "courts": [
+        {
+          "courtSpread": 1.2000000000000002,
+          "flags": [],
+          "teamSums": [
+            7.8,
+            7.800000000000001,
+          ],
+          "teams": "p01+p13 vs p02+p12",
         },
         {
           "courtSpread": 1,
           "flags": [],
           "teamSums": [
             7.4,
-            7.1,
-          ],
-          "teams": "p04+p14 vs p09+p12",
-        },
-        {
-          "courtSpread": 1.7999999999999998,
-          "flags": [],
-          "teamSums": [
-            6.8,
-            6.8,
-          ],
-          "teams": "p03+p21 vs p07+p17",
-        },
-        {
-          "courtSpread": 1.4000000000000004,
-          "flags": [],
-          "teamSums": [
             7.4,
-            7.3,
           ],
-          "teams": "p02+p16 vs p08+p11",
+          "teams": "p04+p14 vs p07+p11",
+        },
+        {
+          "courtSpread": 1.3999999999999995,
+          "flags": [],
+          "teamSums": [
+            6.8,
+            6.7,
+          ],
+          "teams": "p05+p19 vs p09+p16",
         },
         {
           "courtSpread": 1.5,
           "flags": [],
-          "teamSums": [
-            6.699999999999999,
-            6.699999999999999,
-          ],
-          "teams": "p05+p20 vs p10+p15",
-        },
-      ],
-      "sitters": [
-        "p19",
-      ],
-    },
-    {
-      "courts": [
-        {
-          "courtSpread": 0.6000000000000001,
-          "flags": [],
-          "teamSums": [
-            8.4,
-            8.3,
-          ],
-          "teams": "p01+p07 vs p04+p05",
-        },
-        {
-          "courtSpread": 1.5,
-          "flags": [
-            "opponent-rematch",
-          ],
           "teamSums": [
             7.1,
             7.1,
@@ -4026,182 +3952,157 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × social 1`] = `
           "teams": "p03+p18 vs p06+p15",
         },
         {
-          "courtSpread": 1.1000000000000005,
-          "flags": [
-            "opponent-rematch",
-          ],
+          "courtSpread": 1.2000000000000002,
+          "flags": [],
           "teamSums": [
-            6.3,
-            6.4,
-          ],
-          "teams": "p09+p20 vs p12+p16",
-        },
-        {
-          "courtSpread": 1.0999999999999996,
-          "flags": [
-            "gender-uneven",
-            "gender-uneven-avoidable",
-          ],
-          "teamSums": [
+            6.3999999999999995,
             6.5,
-            6.8,
           ],
-          "teams": "p08+p19 vs p11+p13",
-        },
-        {
-          "courtSpread": 1.1,
-          "flags": [
-            "opponent-rematch",
-          ],
-          "teamSums": [
-            6.1,
-            6.1,
-          ],
-          "teams": "p10+p21 vs p14+p17",
+          "teams": "p08+p20 vs p10+p17",
         },
       ],
       "sitters": [
-        "p02",
+        "p21",
       ],
     },
     {
       "courts": [
         {
-          "courtSpread": 1.9000000000000004,
+          "courtSpread": 0.2999999999999998,
           "flags": [
             "opponent-rematch",
           ],
           "teamSums": [
-            7.1,
-            7.300000000000001,
+            8.7,
+            8.7,
           ],
-          "teams": "p01+p20 vs p02+p17",
+          "teams": "p01+p04 vs p02+p03",
         },
         {
-          "courtSpread": 0.7999999999999998,
+          "courtSpread": 1.4000000000000004,
           "flags": [],
           "teamSums": [
-            7.2,
-            7.199999999999999,
-          ],
-          "teams": "p06+p14 vs p07+p13",
-        },
-        {
-          "courtSpread": 0.8000000000000003,
-          "flags": [],
-          "teamSums": [
-            7.6,
-            7.6,
-          ],
-          "teams": "p04+p12 vs p05+p11",
-        },
-        {
-          "courtSpread": 1.5999999999999996,
-          "flags": [],
-          "teamSums": [
-            7,
+            6.6,
             6.6,
           ],
-          "teams": "p03+p19 vs p10+p16",
+          "teams": "p06+p20 vs p07+p19",
+        },
+        {
+          "courtSpread": 0.5,
+          "flags": [],
+          "teamSums": [
+            6.1,
+            6.2,
+          ],
+          "teams": "p13+p18 vs p14+p16",
+        },
+        {
+          "courtSpread": 0.6999999999999997,
+          "flags": [],
+          "teamSums": [
+            7.5,
+            7.3,
+          ],
+          "teams": "p05+p12 vs p08+p11",
+        },
+        {
+          "courtSpread": 1.1,
+          "flags": [],
+          "teamSums": [
+            6.1,
+            6,
+          ],
+          "teams": "p10+p21 vs p15+p17",
+        },
+      ],
+      "sitters": [
+        "p09",
+      ],
+    },
+    {
+      "courts": [
+        {
+          "courtSpread": 1.6000000000000005,
+          "flags": [],
+          "teamSums": [
+            6.8,
+            6.699999999999999,
+          ],
+          "teams": "p04+p20 vs p12+p13",
+        },
+        {
+          "courtSpread": 0.6000000000000005,
+          "flags": [],
+          "teamSums": [
+            8.2,
+            8.2,
+          ],
+          "teams": "p02+p08 vs p03+p07",
+        },
+        {
+          "courtSpread": 1.4000000000000004,
+          "flags": [],
+          "teamSums": [
+            7.6,
+            7.6,
+          ],
+          "teams": "p01+p15 vs p05+p11",
+        },
+        {
+          "courtSpread": 0.5,
+          "flags": [
+            "opponent-rematch",
+          ],
+          "teamSums": [
+            5.9,
+            5.9,
+          ],
+          "teams": "p14+p19 vs p16+p17",
         },
         {
           "courtSpread": 1.2000000000000002,
           "flags": [],
           "teamSums": [
             6.2,
-            5.8999999999999995,
-          ],
-          "teams": "p09+p21 vs p15+p18",
-        },
-      ],
-      "sitters": [
-        "p08",
-      ],
-    },
-    {
-      "courts": [
-        {
-          "courtSpread": 1,
-          "flags": [
-            "opponent-rematch",
-            "gender-uneven",
-            "gender-uneven-avoidable",
-          ],
-          "teamSums": [
-            8,
-            8.1,
-          ],
-          "teams": "p01+p11 vs p04+p07",
-        },
-        {
-          "courtSpread": 0.6000000000000001,
-          "flags": [
-            "gender-uneven",
-            "gender-uneven-avoidable",
-          ],
-          "teamSums": [
-            7.4,
-            7.4,
-          ],
-          "teams": "p06+p12 vs p08+p10",
-        },
-        {
-          "courtSpread": 0.3999999999999999,
-          "flags": [],
-          "teamSums": [
-            6.199999999999999,
-            6.1,
-          ],
-          "teams": "p13+p17 vs p15+p16",
-        },
-        {
-          "courtSpread": 1.5999999999999996,
-          "flags": [],
-          "teamSums": [
-            6.6,
             6.4,
           ],
-          "teams": "p05+p21 vs p09+p19",
-        },
-        {
-          "courtSpread": 1.6000000000000005,
-          "flags": [],
-          "teamSums": [
-            7.2,
-            7.5,
-          ],
-          "teams": "p02+p18 vs p03+p14",
+          "teams": "p09+p21 vs p10+p18",
         },
       ],
       "sitters": [
-        "p20",
+        "p06",
       ],
     },
     {
       "courts": [
         {
-          "courtSpread": 1,
-          "flags": [
-            "gender-uneven",
-            "gender-uneven-avoidable",
-          ],
+          "courtSpread": 0.7999999999999998,
+          "flags": [],
           "teamSums": [
-            7.6,
-            7.8,
+            8.2,
+            8.1,
           ],
-          "teams": "p03+p13 vs p05+p09",
+          "teams": "p01+p09 vs p04+p07",
         },
         {
-          "courtSpread": 1.0000000000000004,
+          "courtSpread": 1.2000000000000002,
+          "flags": [],
+          "teamSums": [
+            7.6000000000000005,
+            7.4,
+          ],
+          "teams": "p02+p14 vs p06+p12",
+        },
+        {
+          "courtSpread": 0.7999999999999998,
           "flags": [
-            "gender-uneven",
-            "gender-uneven-avoidable",
+            "opponent-rematch",
           ],
           "teamSums": [
-            7.800000000000001,
-            7.9,
+            5.8,
+            5.8,
           ],
-          "teams": "p02+p12 vs p06+p07",
+          "teams": "p13+p21 vs p15+p19",
         },
         {
           "courtSpread": 1.0000000000000004,
@@ -4213,26 +4114,75 @@ exports[`matcher golden runs (M2.10) > mixed-21-sitters × social 1`] = `
           "teams": "p10+p20 vs p11+p18",
         },
         {
-          "courtSpread": 0.5,
+          "courtSpread": 1.4,
           "flags": [],
           "teamSums": [
-            5.9,
-            6,
+            7.199999999999999,
+            7.1,
           ],
-          "teams": "p14+p19 vs p15+p17",
-        },
-        {
-          "courtSpread": 1.7000000000000002,
-          "flags": [],
-          "teamSums": [
-            6.7,
-            6.8,
-          ],
-          "teams": "p04+p21 vs p08+p16",
+          "teams": "p03+p17 vs p05+p16",
         },
       ],
       "sitters": [
-        "p01",
+        "p08",
+      ],
+    },
+    {
+      "courts": [
+        {
+          "courtSpread": 1.6,
+          "flags": [],
+          "teamSums": [
+            7.4,
+            7.3,
+          ],
+          "teams": "p01+p17 vs p06+p13",
+        },
+        {
+          "courtSpread": 0.8999999999999999,
+          "flags": [
+            "opponent-rematch",
+            "gender-uneven",
+            "gender-uneven-avoidable",
+          ],
+          "teamSums": [
+            7.699999999999999,
+            7.699999999999999,
+          ],
+          "teams": "p03+p12 vs p05+p10",
+        },
+        {
+          "courtSpread": 1.4,
+          "flags": [
+            "opponent-rematch",
+          ],
+          "teamSums": [
+            6.4,
+            6.5,
+          ],
+          "teams": "p07+p21 vs p11+p16",
+        },
+        {
+          "courtSpread": 1.8000000000000007,
+          "flags": [],
+          "teamSums": [
+            7,
+            6.9,
+          ],
+          "teams": "p02+p20 vs p09+p14",
+        },
+        {
+          "courtSpread": 1.5,
+          "flags": [],
+          "teamSums": [
+            6.9,
+            6.8999999999999995,
+          ],
+          "teams": "p04+p19 vs p08+p15",
+        },
+      ],
+      "sitters": [
+        "p18",
       ],
     },
   ],

@@ -149,7 +149,7 @@ describe('teams (M2.5)', () => {
 // D-035 acceptance tests (coordinator-frozen at T0; T1 removes `.skip`).
 // mixedPreference is zeroed so only courtGender trades against balance:
 // courtGender 1.0 = 0.5 level of team gap at balanceTolerance 0.5.
-describe.skip('splitCourt court gender (D-035)', () => {
+describe('splitCourt court gender (D-035)', () => {
   const genderConfig = mkConfig({ weights: { mixedPreference: 0 } })
   const court = (mus: Record<string, number>): Court =>
     Object.entries(mus).map(([playerId, mu]) =>

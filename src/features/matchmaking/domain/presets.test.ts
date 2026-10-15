@@ -74,19 +74,6 @@ describe('presets (M2.9)', () => {
 
   // Replaces the M2.9 exchange-rate-sentence specs (D-021).
   describe('matcher priorities', () => {
-    it('ranks all five quality dimensions, most-protected first', () => {
-      const priorities = matcherPriorities({ config: resolve({ preset: 'balanced' }) })
-      expect(priorities.map((p) => p.key)).toEqual([
-        'variety',
-        'balance',
-        'partnerFairness',
-        'sitoutFairness',
-        'genderPreference',
-      ])
-      const weights = priorities.map((p) => p.weight)
-      expect([...weights].sort((a, b) => b - a)).toEqual(weights)
-    })
-
     it('groups weights exactly as report.ts derives the bars', () => {
       const config = resolve({ preset: 'balanced' })
       const by = Object.fromEntries(matcherPriorities({ config }).map((p) => [p.key, p.weight]))
@@ -95,12 +82,6 @@ describe('presets (M2.9)', () => {
       expect(by.variety).toBe(weights.opponentRepeat + weights.partnerRepeat)
       expect(by.partnerFairness).toBe(weights.partnerGap)
       expect(by.sitoutFairness).toBe(weights.sitGroupOverlap)
-      expect(by.genderPreference).toBe(weights.mixedPreference)
-    })
-
-    it('reorders when an override outweighs the preset', () => {
-      const config = resolve({ preset: 'balanced', weights: { mixedPreference: 99 } })
-      expect(matcherPriorities({ config })[0].key).toBe('genderPreference')
     })
 
     // M3.6 Finding 5: presets differ in banding, not weights. The list explains
@@ -118,7 +99,7 @@ describe('presets (M2.9)', () => {
   // D-035 replacements (coordinator-frozen at T0). T1 deletes the two
   // pre-D-035 specs above that these supersede ('ranks all five…' order and
   // the genderPreference line of 'groups weights…') and removes `.skip`.
-  describe.skip('matcher priorities after D-035', () => {
+  describe('matcher priorities after D-035', () => {
     it('groups gender as courtGender + genderRotation, like the bar', () => {
       const config = resolve({ preset: 'balanced' })
       const by = Object.fromEntries(matcherPriorities({ config }).map((p) => [p.key, p.weight]))

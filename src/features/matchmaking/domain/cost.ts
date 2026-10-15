@@ -1,4 +1,5 @@
 import { sameGenderQuotaForRound } from './feasibility'
+import { isUnevenCourt, loneGender, unevenFloor } from './genderBalance'
 import { coSitOverlap } from './sitouts'
 import { DIMENSION_KEYS } from './types'
 import type {
@@ -27,6 +28,12 @@ import type {
 // - mixedPreference: mixed mode only — per round,
 //                   max(0, sameGenderTeams − sameGenderQuotaForRound); teams
 //                   containing an unknown-gender player never count (D-011)
+// - courtGender:    mixed mode only — per round,
+//                   max(0, unevenCourts − unevenFloor); an uneven court has no
+//                   unknown player and unequal women per team (D-035)
+// - genderRotation: mixed mode only — each 2nd+ time a player is the lone
+//                   player of their gender on an uneven court, in the round
+//                   it occurs (D-035)
 // - sitGroupOverlap: max(0, coSitOverlap(sit plan) − baselineCoSitOverlap)
 
 const isSameGenderTeam = (a: PlayerInput, b: PlayerInput): boolean =>
@@ -34,6 +41,20 @@ const isSameGenderTeam = (a: PlayerInput, b: PlayerInput): boolean =>
 
 const partnerGapExcess = (a: PlayerInput, b: PlayerInput, maxPartnerGap: number): number =>
   Math.max(0, Math.abs(a.mu - b.mu) - maxPartnerGap) / maxPartnerGap
+
+const womenIn = (team: [PlayerInput, PlayerInput]): number =>
+  (team[0].gender === 'female' ? 1 : 0) + (team[1].gender === 'female' ? 1 : 0)
+
+const unknownsIn = (team: [PlayerInput, PlayerInput]): number =>
+  (team[0].gender === 'unknown' ? 1 : 0) + (team[1].gender === 'unknown' ? 1 : 0)
+
+const isUnevenSplit = ({
+  team1,
+  team2,
+}: {
+  team1: [PlayerInput, PlayerInput]
+  team2: [PlayerInput, PlayerInput]
+}): boolean => isUnevenCourt(womenIn(team1), womenIn(team2), unknownsIn(team1) + unknownsIn(team2))
 
 // Column view of the roster, memoized per players array. scoreSchedule runs
 // ~20k times per generate against an unchanging roster, so rebuilding the id
@@ -102,12 +123,14 @@ export function scoreSchedule({
   const pairId = (a: number, b: number): number => (a < b ? a * size + b : b * size + a)
 
   const raw = Object.fromEntries(DIMENSION_KEYS.map((k) => [k, 0])) as DimensionScores
+  const loneCounts = new Int32Array(size)
   const partnerCounts = new Map<number, number>()
   const opponentCounts = new Map<number, number>()
   const { balanceTolerance, maxPartnerGap, maxCourtSpread } = config
 
   for (const round of schedule) {
     let sameGenderTeams = 0
+    let unevenCourts = 0
     let maleCount = 0
     let femaleCount = 0
     let playingCount = 0
@@ -174,6 +197,33 @@ export function scoreSchedule({
       if (gender[b2] === GENDER_MALE) maleCount += 1
       else if (gender[b2] === GENDER_FEMALE) femaleCount += 1
       playingCount += 4
+
+      if (genderMode === 'mixed') {
+        const w1 = (gender[a1] === GENDER_FEMALE ? 1 : 0) + (gender[b1] === GENDER_FEMALE ? 1 : 0)
+        const w2 = (gender[a2] === GENDER_FEMALE ? 1 : 0) + (gender[b2] === GENDER_FEMALE ? 1 : 0)
+        const unknowns =
+          (gender[a1] === GENDER_UNKNOWN ? 1 : 0) +
+          (gender[b1] === GENDER_UNKNOWN ? 1 : 0) +
+          (gender[a2] === GENDER_UNKNOWN ? 1 : 0) +
+          (gender[b2] === GENDER_UNKNOWN ? 1 : 0)
+        if (isUnevenCourt(w1, w2, unknowns)) {
+          unevenCourts += 1
+          const lone = loneGender(w1 + w2)
+          if (lone !== null) {
+            const loneCode = lone === 'female' ? GENDER_FEMALE : GENDER_MALE
+            const loneIdx =
+              gender[a1] === loneCode
+                ? a1
+                : gender[b1] === loneCode
+                  ? b1
+                  : gender[a2] === loneCode
+                    ? a2
+                    : b2
+            loneCounts[loneIdx] += 1
+            if (loneCounts[loneIdx] >= 2) raw.genderRotation += 1
+          }
+        }
+      }
     }
 
     if (genderMode === 'mixed') {
@@ -184,6 +234,10 @@ export function scoreSchedule({
         courtsUsed: round.matches.length,
       })
       raw.mixedPreference += Math.max(0, sameGenderTeams - quota)
+      raw.courtGender += Math.max(
+        0,
+        unevenCourts - unevenFloor(femaleCount, playingCount - maleCount - femaleCount),
+      )
     }
   }
 
@@ -203,7 +257,8 @@ export function scoreSchedule({
  * Weighted split-local cost of one candidate match: teamBalance + partnerGap
  * + mixedPreference only (courtSpread is split-invariant; repeat dimensions
  * need cross-round context). Same-gender teams cost their full weight here —
- * no quota offset at split level. Used by teams.splitCourt.
+ * no quota offset at split level. In mixed mode an uneven split also
+ * costs courtGender (D-035). Used by teams.splitCourt.
  */
 export function scoreSplit({
   team1,
@@ -223,5 +278,6 @@ export function scoreSplit({
     cost += partnerGapExcess(a, b, config.maxPartnerGap) * config.weights.partnerGap
     if (genderMode === 'mixed' && isSameGenderTeam(a, b)) cost += config.weights.mixedPreference
   }
+  if (genderMode === 'mixed' && isUnevenSplit({ team1, team2 })) cost += config.weights.courtGender
   return cost
 }

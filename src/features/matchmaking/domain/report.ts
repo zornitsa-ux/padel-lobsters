@@ -48,7 +48,7 @@ const qualityFrom = ({
     partnerFairness: pct(raw.partnerGap / n2),
     variety: pct((raw.opponentRepeat + raw.partnerRepeat) / n2),
     sitoutFairness,
-    genderPreference: isMixed ? pct(raw.mixedPreference / n2) : 100,
+    genderPreference: isMixed ? pct(raw.courtGender / matches + raw.genderRotation / n2) : 100,
   }
 }
 

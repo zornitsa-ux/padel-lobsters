@@ -384,7 +384,7 @@ describe('cost (M2.6)', () => {
       const f2 = mkPlayer({ playerId: 'f2', gender: 'female' })
       expect(
         scoreSplit({ team1: [m1, m2], team2: [f1, f2], config, genderMode: 'mixed' }),
-      ).toBeCloseTo(0.6, 10)
+      ).toBeCloseTo(0.6 + config.weights.courtGender, 10)
       expect(
         scoreSplit({ team1: [m1, f1], team2: [m2, f2], config, genderMode: 'mixed' }),
       ).toBeCloseTo(0, 10)
@@ -393,7 +393,7 @@ describe('cost (M2.6)', () => {
 })
 
 // D-035 acceptance tests (coordinator-frozen at T0; T1 removes `.skip`).
-describe.skip('court gender (D-035)', () => {
+describe('court gender (D-035)', () => {
   const g = (playerId: string, mu = 3) =>
     mkPlayer({ playerId, mu, gender: playerId.startsWith('f') ? 'female' : 'male' })
   const mixed9 = ['m1', 'm2', 'm3', 'm4', 'm5', 'f1', 'f2', 'f3', 'f4'].map((id) => g(id))
