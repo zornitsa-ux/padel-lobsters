@@ -263,7 +263,7 @@ describe('report gender flags (D-035)', () => {
   })
 })
 
-describe.skip('report gender quality (D-035)', () => {
+describe('report gender quality (D-035)', () => {
   // f1 is the lone woman on the only court in all three rounds: each court is
   // the round's floor, so courtGender = 0; genderRotation = 0, 1, 1.
   const players = ['f1', 'm1', 'm2', 'm3'].map((playerId) =>
