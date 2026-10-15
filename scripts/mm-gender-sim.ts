@@ -48,6 +48,7 @@ type Tally = {
   ffTeamCourts: number
   gaps: number[]
   loneRepeats: number
+  variety: number
   ms: number
   runs: number
 }
@@ -183,6 +184,7 @@ const runCase = ({ testCase, options }: { testCase: Case; options: Options }): T
     ffTeamCourts: 0,
     gaps: [],
     loneRepeats: 0,
+    variety: 0,
     ms: 0,
     runs: 0,
   }
@@ -210,6 +212,7 @@ const runCase = ({ testCase, options }: { testCase: Case; options: Options }): T
     total.ffTeamCourts += tally.ffTeamCourts
     total.gaps.push(...tally.gaps)
     total.loneRepeats += tally.loneRepeats
+    total.variety += run.quality.overall.variety
   }
   return total
 }
@@ -231,6 +234,7 @@ const formatRow = ({ label, tally }: { label: string; tally: Tally }) => {
     `FF-team courts ${String(tally.ffTeamCourts).padStart(3)}`,
     `lone repeats ${String(tally.loneRepeats).padStart(3)}`,
     `gap mean ${meanGap.toFixed(2)} p90 ${percentile(tally.gaps, 0.9).toFixed(2)} max ${Math.max(...tally.gaps).toFixed(2)}`,
+    `variety ${(tally.variety / tally.runs).toFixed(1)}`,
     `${(tally.ms / tally.runs).toFixed(0)}ms/run`,
   ].join(' | ')
 }
