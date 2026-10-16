@@ -2,7 +2,7 @@
 
 This is the coordinator brief and the **single source of truth for status**.
 Read it with [`DESIGN.md`](./DESIGN.md), which holds the evidence (F-1 to F-10),
-the target design (§2) and the decisions (D-1 to D-13). The protocol from
+the target design (§2) and the decisions (D-1 to D-14). The protocol from
 [`../matchmaking-v2/PLAN.md`](../matchmaking-v2/PLAN.md) applies: §2 covers
 roles and the worker brief, §3 the ground rules.
 
@@ -66,6 +66,12 @@ States: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked.
   (#44 explains). For T1: `recovery` now carries a code, so `SignInForm`'s
   forgot-password state can accept it. Open for the owner: check the Resend
   plan's daily cap, since the free plan's 100/day is below the 150 target.
+- 2026-10-16: #43 (0a) merged and pushed. Owner review of #44: the sign-in
+  code can't ship before there's a field to type it into (D-14). #44 now keeps
+  `magic_link` link-only (`main`'s template and subject; only the expiry copy
+  says 30 minutes to match `otp_expiry`). The code-first `magic_link` moves to
+  PR 2/3 and is pasted at T₀ after the client deploys. Pre-T₀ code checks
+  (§4.3) use the `confirmation` email from a native signup.
 
 ---
 
@@ -110,11 +116,11 @@ interstitial and the readiness panel all read it. PR 4 deletes it.
   `ensure_auth_user_for_player` to insert the identity too. SQL test: the
   backfill shape, and that the patched function creates both rows.
 - **T0c (PR 0b + dashboard).** The `config.toml` `[auth]` changes from DESIGN §2's
-  settings table, except the hook, which ships with T2. Five templates:
-  `magic_link` (restore `{{ .Token }}`), `confirmation`, `recovery`,
-  `reauthentication`, `email_change`. Each shows the code first, then the
-  `token_hash` link, and never `{{ .ConfirmationURL }}`. Locally:
-  `supabase stop && supabase start`, then check all five in Mailpit with
+  settings table, except the hook, which ships with T2. Templates:
+  `confirmation`, `recovery` and `reauthentication` show the code first, then
+  the `token_hash` link, and never `{{ .ConfirmationURL }}`. `magic_link` stays
+  link-only until PR 2/3 (D-14), and `email_change` stays link-only (#44).
+  Locally: `supabase stop && supabase start`, then check all five in Mailpit with
   `enable_confirmations = true` temporarily on. Also produce a **dashboard
   checklist** in the PR description, one row per setting, for the owner to
   tick after merge. It includes checking Resend's daily cap against ≥150
@@ -176,6 +182,12 @@ send-invite-email` → enable the hook in the dashboard.
   and `PinRevealModal` handle `pin: null` and "Resend invite".
 - **T4:** the Account → Sign-in & security section (email, password with
   reauthenticate, sign out everywhere).
+- **Template (D-14):** `magic_link.html` gets the code first, in the shared
+  layout of `confirmation.html` (#44's first commit has the finished version),
+  and its subject becomes "Your Padel Lobsters sign-in code". The PR
+  description's release steps put the dashboard paste **after** Vercel
+  deploys: the new form with the old email still works through the link, but
+  the old client with the new email repeats the PIN-field trap.
 - **Tests:** unit and component tests for every `SignInForm` state (DESIGN §5),
   `AuthConfirm` and signup errors from the hook. e2e: `seed.sql` gets seeded
   passwords, `signInAt` (`e2e/tournament-flow.spec.ts:42`) switches to the
@@ -222,10 +234,11 @@ verify-pin`.
 
 | Flow                                                                 | PR  |
 | -------------------------------------------------------------------- | --- |
-| Five templates render a code and a `token_hash` link                 | 0b  |
-| Identity-less seeded user: request a code → verify → set a password  | 0b  |
+| Templates: three render a code + link; `magic_link` is link-only     | 0b  |
+| Identity-less seeded user: request a link → sign in → set a password | 0b  |
 | Native signup → code → `players` row; placeholder name rejected      | 1/3 |
 | Admin invite → invite email recorded, no PIN anywhere                | 1/3 |
+| `magic_link` renders the code; it signs in an existing user          | 2/3 |
 | Code sign-in on each of the three gate variants, staying on the page | 2/3 |
 | Magic link → tap to confirm → back to the original path              | 2/3 |
 | Password set, sign in, forgot → recovery → new password              | 2/3 |
@@ -248,6 +261,10 @@ full rehearsal.
 | **Outlook/Hotmail:** the link survives Safe Links (tap to confirm)  | **Recruit** one of the ~19 Microsoft-mailbox players, or a throwaway outlook.com account | Soft        |
 | Email change with double confirm                                    | Owner                                                                                    | Soft        |
 
+Until T₀ the production sign-in email has no code (D-14), so the two code-entry
+checks run on a fresh `+alias` signup: its `confirmation` email has the same
+layout and code. The existing-user sign-in code is checked at T₀ (§5).
+
 The iPhone check is hard because it's the whole reason the code is the primary
 sign-in (F-3). The Outlook check is soft because the code still works if a
 scanner burns the link. Record who tested what in §1's log.
@@ -255,8 +272,9 @@ scanner burns the link. Record who tested what in §1's log.
 ### 4.4 Production checks after each release (coordinator, read-only SQL and logs)
 
 - **R0:** count of non-null `encrypted_password` = 0.
-- **R1:** auth users with no identity = 0; the owner screenshots the auth
-  settings page against the T0c checklist.
+- **R1:** auth users with no identity = 0; identities whose email differs from
+  `auth.users.email` = 0; users with empty `providers` = 0. The owner
+  screenshots the auth settings page against the T0c checklist.
 - **R2:** the hook is enabled (owner screenshot). The production test signup
   produced exactly one `players` row.
 - **T₀ → cutover, daily:** new signups have player rows; PIN `pin_attempts`
@@ -274,8 +292,8 @@ the checklist in the PR and verifies afterwards (§4.4).
 **R0: Phase 0a.** Merge → `db push` → C verifies.
 
 **R1: Phase 0b.** Merge → `db push` → apply the dashboard checklist (settings
-and the five templates) → C verifies → the owner sends themself a code from
-production and checks the email.
+and the templates) → C verifies → the owner sends themself a sign-in link from
+production and checks the email (no code, "30 minutes").
 
 **R2: dark backend.** Tell the 3 admins that invites now send an email instead
 of showing a PIN. Merge 1/3 → `db push` → `functions deploy send-invite-email`
@@ -287,10 +305,13 @@ of showing a PIN. Merge 1/3 → `db push` → `functions deploy send-invite-emai
    holds.
 2. Set `PIN_SUNSET_DATE` (a commit on 3/3) → merge 2/3 then 3/3 → Vercel
    deploys.
-3. An admin pastes the new FAQ into LobsterWayAdmin.
-4. An admin sends the announcement email (BCC, club address) and the WhatsApp
+3. Once the deploy is live, paste the code-first `magic_link.html` and its
+   subject into the dashboard (D-14). The owner sends themself a sign-in code
+   from production and signs in with it.
+4. An admin pastes the new FAQ into LobsterWayAdmin.
+5. An admin sends the announcement email (BCC, club address) and the WhatsApp
    message (Appendix).
-5. Watch the readiness panel and the auth logs daily (§4.4).
+6. Watch the readiness panel and the auth logs daily (§4.4).
 
 **Cutover go/no-go** (D-11, hard gates only):
 
@@ -307,14 +328,14 @@ verify-pin` (the stub) → WhatsApp "PINs retired" → 48h watch.
 
 ### Rollback
 
-| Stage   | Symptom                                     | Rollback                                                                                                                            |
-| ------- | ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| R0/R1   | Migration error                             | No edits to applied files; write a forward-fix migration (CONTRIBUTING.md)                                                          |
-| R1      | Template or setting wrong                   | Fix it in the dashboard, then match `config.toml` in a follow-up PR                                                                 |
-| R2      | Hook or trigger blocks or misfires          | Disable the hook in the dashboard. The old `self_signup_player` signup still serves the live client. Forward-fix the trigger        |
-| T₀      | Sign-in UI broken                           | Vercel instant rollback to the pre-T₀ deployment. PIN sign-in is untouched, so players get the old flow back. The backend can stay  |
-| Cutover | Players locked out at scale                 | Vercel rollback, plus redeploy the previous `verify-pin` from its last commit. No migration is involved (D-12), so it takes minutes |
-| PR 5/6  | Problem found after the revoke or the drops | Forward-fix only, through review. That's why each one waits for a clean watch                                                       |
+| Stage   | Symptom                                     | Rollback                                                                                                                                                                                          |
+| ------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R0/R1   | Migration error                             | No edits to applied files; write a forward-fix migration (CONTRIBUTING.md)                                                                                                                        |
+| R1      | Template or setting wrong                   | Fix it in the dashboard, then match `config.toml` in a follow-up PR                                                                                                                               |
+| R2      | Hook or trigger blocks or misfires          | Disable the hook in the dashboard. The old `self_signup_player` signup still serves the live client. Forward-fix the trigger                                                                      |
+| T₀      | Sign-in UI broken                           | Vercel instant rollback to the pre-T₀ deployment, then re-paste `main`'s link-only `magic_link` template (D-14). PIN sign-in is untouched, so players get the old flow back. The backend can stay |
+| Cutover | Players locked out at scale                 | Vercel rollback, plus redeploy the previous `verify-pin` from its last commit. No migration is involved (D-12), so it takes minutes                                                               |
+| PR 5/6  | Problem found after the revoke or the drops | Forward-fix only, through review. That's why each one waits for a clean watch                                                                                                                     |
 
 ---
 
