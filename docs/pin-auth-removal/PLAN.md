@@ -2,7 +2,7 @@
 
 This is the coordinator brief and the **single source of truth for status**.
 Read it with [`DESIGN.md`](./DESIGN.md), which holds the evidence (F-1 to F-10),
-the target design (§2) and the decisions (D-1 to D-14). The protocol from
+the target design (§2) and the decisions (D-1 to D-16). The protocol from
 [`../matchmaking-v2/PLAN.md`](../matchmaking-v2/PLAN.md) applies: §2 covers
 roles and the worker brief, §3 the ground rules.
 
@@ -20,6 +20,10 @@ signed in gets logged out.
   writes the checklists and runs **read-only** verification queries afterwards.
 - **No sign-in-facing release within 3 days of a tournament** (F-7).
   Phase 0a is exempt because no sign-in path uses passwords.
+- **Testing is local only** (D-15). Nothing is tested on a Vercel preview.
+  Realism comes from loading a copy of production data into the local stack
+  (§4.5). Production is touched only by the release steps and the read-only
+  checks after them.
 
 ---
 
@@ -27,21 +31,26 @@ signed in gets logged out.
 
 | ID  | Task                                                      | Owner | Depends on      | PR  | State |
 | --- | --------------------------------------------------------- | ----- | --------------- | --- | ----- |
-| T0a | Clear 44 orphan password hashes → `NULL`                  | C     | —               | #43 | [~]   |
+| T0a | Clear 44 orphan password hashes → `NULL`                  | C     | —               | #43 | [x]   |
 | T0b | Identity backfill + patch `ensure_auth_user_for_player`   | C     | —               | #44 | [~]   |
 | T0c | Auth settings: `config.toml` + dashboard; five templates  | C → O | —               | #44 | [~]   |
+| T13 | Prod-data rehearsal kit: sync + integrity check (§4.5)    | C     | —               | 0c  | [ ]   |
 | T1  | Contract freeze (§3.1)                                    | C     | —               | —   | [ ]   |
 | T2  | Backend: hook, trigger, invite/add RPCs, readiness RPC    | W     | T0b, T1         | 1/3 | [ ]   |
 | T3  | `SignInForm`, `AuthConfirm`, gates, native signup         | W     | T1              | 2/3 | [ ]   |
 | T4  | Account → Sign-in & security                              | W     | T1              | 2/3 | [ ]   |
 | T5  | Comms: upgrade card, interstitial, readiness panel, copy  | W     | T1              | 3/3 | [ ]   |
-| T6  | Verification, local and on preview against production     | C + O | T2–T5           | —   | [ ]   |
+| T14 | Rehearsal sign-in + data-access parity script (§4.5)      | W     | T13, T1         | 0c  | [ ]   |
+| T6  | Verification: local matrix, local devices, rehearsal      | C + O | T2–T5, T14      | —   | [ ]   |
 | T7  | Dark backend release (R2)                                 | O     | T2 merged, T0c  | —   | [ ]   |
 | T8  | T₀ release and announcement (R3)                          | O     | T6, T7          | —   | [ ]   |
 | T9  | Cutover PR: remove PIN client path, `verify-pin` 410 stub | W     | T8              | 4   | [ ]   |
 | T10 | Revoke `verify_player_pin_v2` from anon (D-12)            | C     | T9 + 48h watch  | 5   | [ ]   |
 | T11 | Phase 4 cleanup (DESIGN §3 Phase 4)                       | W     | T10 + ≥2 weeks  | 6   | [ ]   |
 | T12 | Remove the "Used a PIN before?" explainer                 | W     | cutover + ~2 mo | 7   | [ ]   |
+| T15 | Phase 5a: client reads the role from token claims         | W     | cutover         | 8   | [ ]   |
+| T16 | Phase 5b: `auth.users` owns the email; Admin API writes   | W     | T11             | 9   | [ ]   |
+| T17 | Phase 5c: remove synthetic accounts + last auth writers   | W     | T15, T16        | 10  | [ ]   |
 
 C = coordinator · W = worker (worktree) · O = owner.
 States: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked.
@@ -72,6 +81,16 @@ States: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked.
   says 30 minutes to match `otp_expiry`). The code-first `magic_link` moves to
   PR 2/3 and is pasted at T₀ after the client deploys. Pre-T₀ code checks
   (§4.3) use the `confirmation` email from a native signup.
+- 2026-10-16: Owner: no testing on Vercel previews; all testing is local, with
+  production data synced into the local stack (D-15). §4.3 is now local
+  devices; §4.5 adds the prod-data rehearsal (T13, T14) and the auth integrity
+  check, both gates from R1 on. Owner: remove as much custom auth logic as
+  possible, so Phase 5 (D-16) adds T15–T17 after Phase 4. Production reads
+  (2026-10-16): 140 players, 0 without an auth account and 0 auth accounts
+  without a player; 0 duplicate auth emails; 0 unconfirmed, anonymous, SSO or
+  phone users; 0 password hashes; 3 active players and 10 placeholders on a
+  synthetic email; 47 / 87 identity drift (#44). 2 of the 3 no-email players
+  have `players.email = ''` rather than `NULL`; T2 normalizes them.
 
 ---
 
@@ -79,17 +98,20 @@ States: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked.
 
 Dates stay relative until tournament **#13** is scheduled. Then pin them here.
 
-| Milestone                        | When                                       | Rule                                                                        |
-| -------------------------------- | ------------------------------------------ | --------------------------------------------------------------------------- |
-| R0: Phase 0a merged + pushed     | Week of 15 Oct                             | Invisible; may land before #12 (18 Oct)                                     |
-| R1: Phase 0b merged + pushed     | From Wed 21 Oct                            | After #12 + 3 days; must be live **≥ 2 days before R2** so templates bed in |
-| R2: dark backend (PR 1/3)        | ≥ 2 days before T₀                         | Lets T6's production signup test run before players see anything            |
-| **T₀**: PRs 2/3 + 3/3 + announce | A Tue or Wed                               | T₀ ≤ #13 − 17 days                                                          |
-| WhatsApp reminder                | Cutover − 3 days                           |                                                                             |
-| **Cutover** (PR 4)               | T₀ + 14, a Tue or Wed                      | ≥ 3 days before #13; go/no-go in §5                                         |
-| Revoke (PR 5)                    | Cutover + 2 days                           | After the 48h watch is clean                                                |
-| Phase 4 cleanup (PR 6)           | ≥ Cutover + 14 days, once stub hits are ~0 | Not within 3 days of an event                                               |
-| Explainer removal (PR 7)         | Cutover + ~2 months                        |                                                                             |
+| Milestone                         | When                                       | Rule                                                                       |
+| --------------------------------- | ------------------------------------------ | -------------------------------------------------------------------------- |
+| R0: Phase 0a merged + pushed      | Week of 15 Oct                             | Invisible; may land before #12 (18 Oct)                                    |
+| R1: Phase 0b merged + pushed      | From Wed 21 Oct                            | After #12 + 3 days and a clean rehearsal (T13); **≥ 2 days before R2**     |
+| R2: dark backend (PR 1/3)         | ≥ 2 days before T₀                         | The hook and invite emails run in production before players see the new UI |
+| **T₀**: PRs 2/3 + 3/3 + announce  | A Tue or Wed                               | T₀ ≤ #13 − 17 days                                                         |
+| WhatsApp reminder                 | Cutover − 3 days                           |                                                                            |
+| **Cutover** (PR 4)                | T₀ + 14, a Tue or Wed                      | ≥ 3 days before #13; go/no-go in §5                                        |
+| Revoke (PR 5)                     | Cutover + 2 days                           | After the 48h watch is clean                                               |
+| Phase 4 cleanup (PR 6)            | ≥ Cutover + 14 days, once stub hits are ~0 | Not within 3 days of an event                                              |
+| Explainer removal (PR 7)          | Cutover + ~2 months                        |                                                                            |
+| Phase 5a: role from claims (PR 8) | After cutover                              | Client only; not within 3 days of an event                                 |
+| Phase 5b: email ownership (PR 9)  | After PR 6                                 | Not within 3 days of an event                                              |
+| Phase 5c: final cleanup (PR 10)   | ≥ 7 days after PRs 8 and 9                 | Stale clients have reloaded; not within 3 days of an event                 |
 
 **Worked example:** if #13 is Sun 15 Nov, then T₀ is Tue 27 Oct, the reminder
 goes out Sat 7 Nov, and cutover is Tue 10 Nov. If #13 is scheduled so early
@@ -149,6 +171,8 @@ change them (matchmaking-v2 §2 freeze rule):
   It uses the same Vault-secret pattern as `send-pin-email`.
 - **Readiness RPC** (admin-only): `{ no_email: [{id, name}], recent_pin_users: [{id, name, last_pin_at}], password_count }`.
   `recent_pin_users` is named, because admins nudge these people one by one.
+  `no_email` means a synthetic auth email; T2 makes blank `players.email`
+  impossible, so the two never disagree.
 - **Migration timestamps** are reserved for each PR so the stack orders
   correctly.
 
@@ -157,6 +181,8 @@ change them (matchmaking-v2 §2 freeze rule):
 - Migration: the `before_user_created_hook` function and its grants (DESIGN §2
   table). Add it to `expected_function_grants.txt`.
 - Migration: the confirmed-user trigger on `auth.users`.
+- Migration: `players.email` blank → `NULL` (2 rows in production on
+  2026-10-16), plus `check (email is null or btrim(email) <> '')`.
 - Migration: the invite/add RPCs drop PIN generation and call
   `private.send_invite_email`. Add `admin_resend_invite` and the readiness RPC.
 - Edge function `send-invite-email` (copied from `send-pin-email`, with no
@@ -219,6 +245,61 @@ verify-pin`.
   first, then db push.
 - **PR 7 (T12):** removes the explainer.
 
+### 3.7 PR 0c: prod-data rehearsal kit (T13, T14)
+
+No migration and nothing deployed, so it can merge any time. T13 must land
+before R1. T14 must land before T6.
+
+- **T13:** `scripts/prod-rehearsal/sync.sh` and
+  `scripts/prod-rehearsal/auth_integrity.sql`, doing exactly §4.5 steps 1–2 and
+  the integrity check. The script refuses to run if any of §4.5's safety
+  checks fails.
+- **T14:** `scripts/prod-rehearsal/parity.ts`, run with `tsx` and supabase-js
+  against the local stack (§4.5 steps 3 and 5). For every account with a real
+  email, it gets a code from `auth.admin.generateLink` (no email is sent), signs
+  in with `verifyOtp({ type: 'email' })` as the app does, and runs a fixed set
+  of RLS-protected reads through PostgREST with that token. It writes one hash
+  per account and read, so baseline and after can be diffed. It also sends real
+  codes to five accounts through Mailpit to cover the email path. It paces
+  itself under the local rate limits instead of changing them.
+
+### 3.8 PRs 8–10: Phase 5, native auth cleanup (DESIGN §3 Phase 5, D-16)
+
+Each PR passes the prod-data rehearsal (§4.5) before review.
+
+- **PR 8 (T15), client only:** one `useRole()`/`isAdmin` helper reads `role`
+  from `supabase.auth.getClaims()`. It replaces the 8 copies of
+  `session?.user?.app_metadata?.role === 'admin'` and the `syncMyRole()` call in
+  `useAuth`. `sync_my_role` itself is dropped in PR 10, after stale clients
+  have reloaded.
+- **PR 9 (T16):** `auth.users.email` becomes the only source of truth.
+  - **Edge function `admin-set-player-email`** (admin-only, checks the JWT
+    role). It sets a player's sign-in email through the Admin API:
+    `auth.admin.updateUserById` when the account exists, otherwise
+    `auth.admin.createUser({ id: player_id, email, email_confirm: true })`. The
+    admin email edit, add-player-with-email and placeholder invite all call it.
+  - **Migration:** drop the `players_email_sync` trigger and
+    `sync_player_email_to_auth`, `private.sync_email_identity`, and the
+    `ensure_auth_user` trigger and `ensure_auth_user_for_player`. Keep
+    `auth_users_email_sync` (auth → players), which is Supabase's documented
+    profile pattern.
+  - **Rehearsal must show** that `updateUserById` keeps the email identity in
+    step (integrity check: stale identity emails = 0 after an edit), and that
+    `createUser` accepts the player's id.
+  - **Deploy order** (in the PR description): `functions deploy
+admin-set-player-email` → merge (the client calls the function) → db push.
+- **PR 10 (T17):** the last direct writes to the `auth` schema go.
+  - **Migration:** drop `sync_my_role`, and remove the retired device-claim
+    stripping from `custom_access_token_hook`.
+  - **Migration:** delete the synthetic auth accounts (`@padelobsters.internal`)
+    with no refresh token used in the last 30 days: the 10 placeholders, plus
+    any no-email player who has gone quiet. The players' rows stay, and an
+    account is created when an email is added (PR 9). A migration is the only
+    write route CLAUDE.md allows. Deleting from `auth.users` cascades to
+    identities, sessions and refresh tokens. Before the PR, confirm that
+    nothing outside `auth` references these ids. Synthetic accounts with
+    recent sessions are left for admins to chase through the readiness panel.
+
 ---
 
 ## 4. Verification
@@ -229,6 +310,11 @@ verify-pin`.
 `db:types:check`, `db:grants:check`, `npm run db:reset`, and every
 `supabase/tests/*.sql` run as each file's header shows. For PRs 2–4, also run
 `npm run test:e2e` locally. The PR description records the results.
+
+**Every PR with a migration or an auth-flow change** also passes the
+prod-data rehearsal (§4.5): 0b (#44), 1/3, 2/3, 4, 5, 6, 8, 9 and 10. The PR
+description records the integrity counts and the parity diff summary (counts
+only, never names or emails).
 
 ### 4.2 Local manual matrix (Mailpit at `:54324`, before each PR is marked ready)
 
@@ -246,28 +332,38 @@ verify-pin`.
 | Upgrade card variants; interstitial after a PIN sign-in              | 3/3 |
 | A PIN call gets the 410 → explainer; no PIN UI left                  | 4   |
 
-### 4.3 Real devices and inboxes, against production (after R2, before T₀)
+### 4.3 Real devices and inboxes, on the local stack (before T₀)
 
-Vercel previews point at the production project. **Confirm that before
-relying on this.** After R2 the backend is live, so the PR 3/3 preview is a
-full rehearsal.
+No Vercel preview is involved (D-15). The phone and the dev machine share a
+Wi-Fi network. The app runs over plain http, and there's no service worker, so
+a home-screen install works from the LAN address.
 
-| Check                                                               | Who                                                                                      | Gate for T₀ |
-| ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ----------- |
-| Native signup with a `+alias` Gmail → `players` row (then clean up) | Owner                                                                                    | Hard        |
-| Code sign-in + autofill, Android Gmail                              | Owner                                                                                    | Hard        |
-| Desktop magic link + return path; password reset end to end         | Owner                                                                                    | Hard        |
-| **iPhone home-screen install:** code entry + autofill               | **Recruit** an admin or regular with an iPhone                                           | Hard        |
-| **Outlook/Hotmail:** the link survives Safe Links (tap to confirm)  | **Recruit** one of the ~19 Microsoft-mailbox players, or a throwaway outlook.com account | Soft        |
-| Email change with double confirm                                    | Owner                                                                                    | Soft        |
+**Setup (local only; nothing here is committed):**
 
-Until T₀ the production sign-in email has no code (D-14), so the two code-entry
-checks run on a fresh `+alias` signup: its `confirmation` email has the same
-layout and code. The existing-user sign-in code is checked at T₀ (§5).
+- `vite --mode localdev --host`, with `VITE_SUPABASE_URL` pointing at the dev
+  machine's LAN IP (`http://<lan-ip>:54321`).
+- Add `http://<lan-ip>:5173` to `site_url` / `additional_redirect_urls`.
+- **Real-inbox checks** need the local stack to send real email. Temporarily
+  enable `[auth.email.smtp]` with Resend credentials from the environment.
+  **Do this only with seed data loaded, never with a production snapshot**
+  (§4.5), so no player can be emailed by mistake.
+
+| Check                                                                       | Who                                                    | Gate for T₀ |
+| --------------------------------------------------------------------------- | ------------------------------------------------------ | ----------- |
+| Native signup with a `+alias` Gmail → `players` row                         | Owner                                                  | Hard        |
+| Code sign-in + autofill, Android Gmail                                      | Owner                                                  | Hard        |
+| Desktop magic link + return path; password reset end to end                 | Owner                                                  | Hard        |
+| **iPhone home-screen install:** code entry + autofill                       | **Recruit** an iPhone user, on the dev machine's Wi-Fi | Hard        |
+| Email change with double confirm                                            | Owner                                                  | Soft        |
+| Prod-data rehearsal (§4.5): every account signs in with a code, parity diff | Coordinator                                            | Hard        |
+
+**Outlook/Hotmail Safe Links can't be reproduced locally:** Microsoft's scanner
+can't reach a LAN link, so it can't burn the token. It moves to the production
+checks right after T₀ (§4.4, soft). The code still works if a scanner burns the
+link.
 
 The iPhone check is hard because it's the whole reason the code is the primary
-sign-in (F-3). The Outlook check is soft because the code still works if a
-scanner burns the link. Record who tested what in §1's log.
+sign-in (F-3). Record who tested what in §1's log.
 
 ### 4.4 Production checks after each release (coordinator, read-only SQL and logs)
 
@@ -275,12 +371,87 @@ scanner burns the link. Record who tested what in §1's log.
 - **R1:** auth users with no identity = 0; identities whose email differs from
   `auth.users.email` = 0; users with empty `providers` = 0. The owner
   screenshots the auth settings page against the T0c checklist.
-- **R2:** the hook is enabled (owner screenshot). The production test signup
-  produced exactly one `players` row.
+- **R2:** the hook is enabled (owner screenshot). The integrity check passes.
+  `self_signup_player` signups still produce exactly one `players` row.
+- **T₀, right after release (owner, production):** sign in with a code from
+  your own account; sign up with a `+alias` address and check that it creates
+  exactly one `players` row (then an admin removes it); and, if a tester is
+  available, tap a link in an Outlook mailbox to check Safe Links (soft).
 - **T₀ → cutover, daily:** new signups have player rows; PIN `pin_attempts`
   rows are trending down; auth logs show no 429s and no `otp_disabled` spikes.
 - **Cutover + 48h:** `pin_retired` stub hits, auth error rates, and the
   WhatsApp help thread.
+- **PRs 9 and 10:** the integrity check passes; synthetic accounts = the number
+  the PR description predicted.
+
+### 4.5 Prod-data rehearsal (local; gates every PR in §4.1)
+
+The local stack gets a copy of production's `public` and `auth` data. Then the
+PR's migrations run exactly as `db push` will run them. This is how we know,
+before production, that every account still signs in and sees the same data.
+
+**Safety (the sync script checks these and refuses to run otherwise):**
+
+- **The snapshot stays outside the repo** (e.g. `~/padel-lobsters-snapshots/`,
+  mode `600`). It's never committed and is deleted when the PR merges. PR
+  descriptions carry counts, never names or emails.
+- **Vault is never copied.** Several database functions post to **production**
+  edge function URLs, authenticated with a Vault secret. With no secret
+  locally, they fail closed. The script asserts `vault.secrets` is empty.
+- **Auth mail stays in Mailpit.** The script refuses to run if
+  `[auth.email.smtp]` is enabled.
+- **The local auth schema version matches production**
+  (`auth.schema_migrations`). If it doesn't, update the Supabase CLI first;
+  otherwise the data load can fail or misbehave.
+
+**Steps**
+
+1. **Sync (T13).** Check out `main` and confirm local and remote migrations
+   match (`npx supabase migration list --linked`). Run
+   `npx supabase db reset --local --no-seed`. Then
+   `npx supabase db dump --linked --data-only --schema public,auth` into the
+   snapshot directory, and load it with triggers off
+   (`session_replication_role = replica`).
+2. **Integrity check, before (T13).** Run `auth_integrity.sql` and save the
+   output.
+3. **Baseline (T14).** Run `parity.ts --record baseline`.
+4. **Apply the PR.** Check out the PR branch, then
+   `npx supabase migration up --local`. If `config.toml` changed, restart the
+   stack.
+5. **After (T14).** Run the integrity check again, then
+   `parity.ts --record after --compare baseline`.
+
+**Pass criteria**
+
+- The migrations apply cleanly.
+- The integrity check meets the stage's expected values (below).
+- Every account with a real email completes code sign-in.
+- The parity diff is empty, except for differences the PR description
+  predicts and explains.
+
+**Integrity check: expected values**
+
+| Count                                                        | From R1                           | From T₀ go/no-go           | From PR 10                   |
+| ------------------------------------------------------------ | --------------------------------- | -------------------------- | ---------------------------- |
+| Players without an auth account                              | 0                                 | 0                          | = synthetic accounts deleted |
+| **Confirmed** auth accounts without a player                 | 0                                 | 0                          | 0                            |
+| Unconfirmed auth accounts older than the OTP expiry (30 min) | 0                                 | listed (abandoned signups) | listed (abandoned signups)   |
+| Duplicate auth emails (case-insensitive)                     | 0                                 | 0                          | 0                            |
+| Duplicate real `players.email`                               | 0                                 | 0                          | 0                            |
+| Real `players.email` ≠ `auth.users.email`                    | 0                                 | 0                          | 0                            |
+| Auth accounts with no identity / stale identity email        | 0 / 0                             | 0 / 0                      | 0 / 0                        |
+| Empty `providers`                                            | 0                                 | 0                          | 0                            |
+| Anonymous, SSO or banned accounts                            | 0                                 | 0                          | 0                            |
+| Active players with no real email (named in the output)      | ≤ 3                               | each one owned by an admin | each one owned by an admin   |
+| Synthetic auth accounts (13 on 2026-10-16)                   | = no-email players + placeholders | same                       | 0, plus any kept on purpose  |
+
+"Real" email means not blank and not `@padelobsters.internal`. From T₀,
+native signups create unconfirmed accounts that only get a player row once
+confirmed (DESIGN §2). The query lists abandoned ones rather than failing on
+them.
+
+The same query runs read-only against production after each release (§4.4)
+and at the T₀ and cutover go/no-go points (§5).
 
 ---
 
@@ -291,9 +462,10 @@ the checklist in the PR and verifies afterwards (§4.4).
 
 **R0: Phase 0a.** Merge → `db push` → C verifies.
 
-**R1: Phase 0b.** Merge → `db push` → apply the dashboard checklist (settings
-and the templates) → C verifies → the owner sends themself a sign-in link from
-production and checks the email (no code, "30 minutes").
+**R1: Phase 0b.** Clean prod-data rehearsal of #44 (§4.5) → merge → `db push`
+→ apply the dashboard checklist (settings and the templates) → C runs the
+integrity check against production → the owner sends themself a sign-in link
+from production and checks the email (no code, "30 minutes").
 
 **R2: dark backend.** Tell the 3 admins that invites now send an email instead
 of showing a PIN. Merge 1/3 → `db push` → `functions deploy send-invite-email`
@@ -301,13 +473,14 @@ of showing a PIN. Merge 1/3 → `db push` → `functions deploy send-invite-emai
 
 **T₀**
 
-1. Go/no-go for T₀: every hard gate in §4.3 is green, and the #13 timing rule
+1. Go/no-go for T₀: every hard gate in §4.3 is green, the integrity check
+   against production meets the T₀ column (§4.5), and the #13 timing rule
    holds.
 2. Set `PIN_SUNSET_DATE` (a commit on 3/3) → merge 2/3 then 3/3 → Vercel
    deploys.
 3. Once the deploy is live, paste the code-first `magic_link.html` and its
-   subject into the dashboard (D-14). The owner sends themself a sign-in code
-   from production and signs in with it.
+   subject into the dashboard (D-14). Then run the T₀ production checks in
+   §4.4.
 4. An admin pastes the new FAQ into LobsterWayAdmin.
 5. An admin sends the announcement email (BCC, club address) and the WhatsApp
    message (Appendix).
@@ -319,12 +492,16 @@ of showing a PIN. Merge 1/3 → `db push` → `functions deploy send-invite-emai
   for each one by name.
 - Code sign-in and signup worked in production during the window, and no
   auth-email delivery issue is open.
+- The integrity check against production still meets the T₀ column.
 - The date is ≥ 3 days before #13.
 
 **Cutover.** Merge PR 4 → Vercel deploys the client → `functions deploy
 verify-pin` (the stub) → WhatsApp "PINs retired" → 48h watch.
 
 **Revoke (PR 5)** goes out after a clean watch: merge → `db push`.
+
+**Phase 5 (PRs 8–10).** Each one: clean rehearsal → merge → the deploy order
+in its PR description → C runs the integrity check against production.
 
 ### Rollback
 
@@ -336,6 +513,9 @@ verify-pin` (the stub) → WhatsApp "PINs retired" → 48h watch.
 | T₀      | Sign-in UI broken                           | Vercel instant rollback to the pre-T₀ deployment, then re-paste `main`'s link-only `magic_link` template (D-14). PIN sign-in is untouched, so players get the old flow back. The backend can stay |
 | Cutover | Players locked out at scale                 | Vercel rollback, plus redeploy the previous `verify-pin` from its last commit. No migration is involved (D-12), so it takes minutes                                                               |
 | PR 5/6  | Problem found after the revoke or the drops | Forward-fix only, through review. That's why each one waits for a clean watch                                                                                                                     |
+| PR 8    | Role missing or wrong in the UI             | Vercel rollback. The server side (RLS, token hook) is unchanged                                                                                                                                   |
+| PR 9    | Admin email edit or invite fails            | Vercel rollback to the version that writes `players.email`, plus a forward-fix migration that restores the dropped sync trigger                                                                   |
+| PR 10   | A deleted synthetic account is needed       | An admin adds the player's email, and PR 9's function creates a fresh account with the same id                                                                                                    |
 
 ---
 
