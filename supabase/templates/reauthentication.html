@@ -1,0 +1,145 @@
+<!--
+  Re-authentication email: sent by reauthenticate() before a password change
+  on a session older than 24h (secure_password_change). Code only: the app
+  passes it back as updateUser's nonce, so there is no link to follow.
+
+  Shared shape (docs/pin-auth-removal DESIGN §2): the 6-digit code first,
+  because a link tapped on iPhone opens Safari, not the home-screen app; then a
+  token_hash link through the SPA's /auth/confirm route, never
+  {{ .ConfirmationURL }} (see config.toml). confirmation, recovery and
+  reauthentication share this layout; keep them in step. magic_link adopts it
+  with the sign-in form (PR 2/3).
+-->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Confirm it's you</title>
+  </head>
+  <body>
+    <div
+      style="
+        margin: 0;
+        padding: 0;
+        background-color: #f5f0e8;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      "
+    >
+      <table
+        width="100%"
+        cellpadding="0"
+        cellspacing="0"
+        border="0"
+        style="background-color: #f5f0e8"
+      >
+        <tr>
+          <td align="center" style="padding: 32px 16px">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 520px">
+              <!-- Header -->
+              <tr>
+                <td
+                  style="
+                    background: #3d7a8a;
+                    border-radius: 12px 12px 0 0;
+                    padding: 32px 32px 24px;
+                    text-align: center;
+                  "
+                >
+                  <img
+                    src="https://enjhugmqjtfakwivpmvf.supabase.co/storage/v1/object/public/merch/logo-hd.png"
+                    alt="Padel Lobsters"
+                    width="80"
+                    height="80"
+                    style="
+                      border-radius: 50%;
+                      background: #fff;
+                      padding: 4px;
+                      border: 3px solid #8ab4be;
+                      display: block;
+                      margin: 0 auto 12px;
+                    "
+                  />
+                  <p
+                    style="
+                      margin: 0;
+                      color: #c2d8dd;
+                      font-size: 13px;
+                      letter-spacing: 0.08em;
+                      text-transform: uppercase;
+                    "
+                  >
+                    Padel Lobsters
+                  </p>
+                </td>
+              </tr>
+
+              <!-- Body -->
+              <tr>
+                <td
+                  style="
+                    background: #ffffff;
+                    padding: 36px 32px 28px;
+                    border-left: 1px solid #e8e0d4;
+                    border-right: 1px solid #e8e0d4;
+                  "
+                >
+                  <h1 style="margin: 0 0 12px; font-size: 22px; font-weight: 700; color: #1c2b30">
+                    Confirm it's you
+                  </h1>
+                  <p style="margin: 0 0 24px; font-size: 15px; line-height: 1.6; color: #4a5568">
+                    Type this code into the app to finish changing your password.
+                  </p>
+                  <p
+                    style="
+                      margin: 0 0 6px;
+                      font-size: 12px;
+                      color: #6b8a92;
+                      letter-spacing: 0.08em;
+                      text-transform: uppercase;
+                    "
+                  >
+                    Your code
+                  </p>
+                  <p
+                    style="
+                      margin: 0 0 24px;
+                      font-family: 'SF Mono', Menlo, Consolas, monospace;
+                      font-size: 34px;
+                      font-weight: 700;
+                      letter-spacing: 0.25em;
+                      color: #1c2b30;
+                    "
+                  >
+                    {{ .Token }}
+                  </p>
+                  <p style="margin: 0; font-size: 13px; color: #6b8a92; line-height: 1.5">
+                    The code works once and expires in 30 minutes.<br /><br />If you didn't try to
+                    change your password, don't share this code. Message a Padel Lobsters admin so
+                    we can check your account.
+                  </p>
+                </td>
+              </tr>
+
+              <!-- Footer -->
+              <tr>
+                <td
+                  style="
+                    background: #e8e4dc;
+                    border-radius: 0 0 12px 12px;
+                    padding: 16px 32px;
+                    text-align: center;
+                    border: 1px solid #e0d8cc;
+                    border-top: none;
+                  "
+                >
+                  <p style="margin: 0; font-size: 14px; color: #6b8a92">🦞 ❤️</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
