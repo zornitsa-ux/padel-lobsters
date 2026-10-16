@@ -244,7 +244,7 @@ rate limits, plus CAPTCHA if abuse appears.
 | Leaked password protection            | On                                                                           | Needs the Pro plan; the Micro compute in use suggests it's available, but **confirm**                                                                                                                                                                                                                                                                                                                 |
 | `[auth.email] secure_password_change` | `true`                                                                       | Re-auth for password change on sessions older than 24h                                                                                                                                                                                                                                                                                                                                                |
 | Templates                             | `magic_link`, `confirmation`, `recovery`, `reauthentication`, `email_change` | All show the **code** (`{{ .Token }}`) prominently plus the `token_hash` link, and **no** `{{ .ConfirmationURL }}`. `magic_link` gains its code only with `SignInForm` (D-14), and `email_change` stays link-only (#44). `confirmation` matters because hosted projects have confirmations **on**, so a brand-new signup's OTP email may use it; verify in Mailpit with confirmations enabled locally |
-| Redirect URLs                         | prod origin `/**` + Vercel preview pattern                                   | `resetPasswordForEmail` `redirectTo` must be allowlisted                                                                                                                                                                                                                                                                                                                                              |
+| Redirect URLs                         | prod origin `/**` only (no preview pattern; D-15)                            | `resetPasswordForEmail` `redirectTo` must be allowlisted                                                                                                                                                                                                                                                                                                                                              |
 | `enable_anonymous_sign_ins`           | `false`                                                                      | F-10                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `enable_signup`                       | `true` (unchanged)                                                           | Required for the native signup flow                                                                                                                                                                                                                                                                                                                                                                   |
 | Before User Created hook              | `pg-functions://postgres/public/before_user_created_hook`                    | Grant to `supabase_auth_admin`; revoke from `anon`, `authenticated`, `public`, and add to `expected_function_grants.txt`                                                                                                                                                                                                                                                                              |
@@ -374,10 +374,6 @@ One PR, one migration, with the PR description stating the deploy order
   and contact-details read is logged").
 - Rename `wrong_pin` statuses in the transfer RPCs to `not_signed_in` (client maps
   updated in the same PR).
-- Replace `ensure_auth_user_for_player` (raw `insert into auth.users`) with an
-  Admin-API path: the admin add/invite flows call an edge function that does
-  `auth.admin.createUser({ id: player_id, email, email_confirm: true })`. With
-  native signup (D-2), self-signups already arrive with a GoTrue-created user.
 - Delete `lib/deviceId.ts` if nothing else reads it.
 - Docs: `ARCHITECTURE.md` (auth section, the `VerificationGate` description),
   `SETUP.md` (local sign-in = email code via Mailpit at `:54324`, or a seeded
@@ -385,6 +381,45 @@ One PR, one migration, with the PR description stating the deploy order
   `seed.sql` (seed test passwords instead of PINs), `test-public-access.sh` (drop the
   `players.pin` case), `expected_function_grants.txt`.
 - Remove the "Used a PIN before?" explainer ~2 months after cutover.
+
+### Phase 5: Native auth cleanup (after Phase 4; D-16)
+
+After Phase 4 no PIN code is left, but four pieces of custom code still write
+straight into Supabase's `auth` schema. That's what caused F-5 and the stale
+identity emails #44 had to repair:
+
+| Custom piece today                                                                                     | Why it exists                                              | Supabase's intended way                                                                                                              |
+| ------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `ensure_auth_user_for_player`: raw `insert into auth.users` for **every** player                       | `verify-pin` needed an auth account to mint a session      | Create the account only when a real email exists, via `auth.admin.createUser` from an edge function                                  |
+| `players_email_sync` + `private.sync_email_identity`: raw writes to `auth.users` and `auth.identities` | Admin email edits are made on `players.email`              | `auth.users.email` is the only source of truth. Admin edits go through `auth.admin.updateUserById`, which keeps the identity in step |
+| `sync_my_role`: raw write to `auth.users.raw_app_meta_data`                                            | The client reads the role from `session.user.app_metadata` | The client reads the role from the token's claims (`supabase.auth.getClaims()`), which `custom_access_token_hook` already sets       |
+| 13 synthetic `@padelobsters.internal` accounts (3 active players, 10 placeholders)                     | Every player needed an account for the PIN                 | No account without a reachable email. A player row without an account is just a profile                                              |
+
+The changes ship as three PRs (PLAN §3.8):
+
+- **5a, client only.** The role is read from the token claims, through one
+  helper that replaces 8 inline copies.
+- **5b.** The `admin-set-player-email` edge function creates or updates the
+  player's account through the Admin API. It's used by admin email edits,
+  add player and placeholder invites. Drop `ensure_auth_user_for_player`, the
+  `players_email_sync` trigger and `private.sync_email_identity`. Keep the
+  auth → players email trigger: a trigger on `auth.users` that maintains a
+  profile table is Supabase's documented pattern.
+- **5c.** Drop `sync_my_role` and the retired device-claim stripping in the
+  token hook. A migration deletes the synthetic accounts that have no recent
+  session.
+
+**Data access doesn't change.** RLS uses `auth.uid()` (the player id, which
+never changes) and `auth.jwt()`'s `app_metadata.role` (set by the token hook
+from `players.role`). Nothing reads `amr`/`aal`, so the sign-in method doesn't
+matter. A player row without an auth account can't sign in, and no policy
+depends on one existing.
+
+**What remains custom after Phase 5** is only Supabase's own extension points:
+`custom_access_token_hook` (role claims), the `before_user_created` hook, the
+auth → players triggers (profile creation and the email mirror), and
+`send-invite-email`. A tokenless invite (D-3) isn't something GoTrue sends:
+`inviteUserByEmail` carries a token that expires.
 
 ---
 
@@ -422,24 +457,35 @@ One PR, one migration, with the PR description stating the deploy order
   card variants, and the `AuthConfirm` tap-to-confirm + return-path behavior.
 - **e2e:** `signInAt` signs in with a seeded password; one spec covers the code
   flow by reading the OTP from Mailpit's API.
-- **Manual before Phase 1:**
+- **Prod-data rehearsal** (PLAN §4.5): production's `public` and `auth` data
+  are loaded into the local stack, then the pending migrations are applied.
+  Every account with a real email signs in with a code, and its RLS-protected
+  reads are compared with a baseline taken before the migrations. An integrity
+  query checks that accounts, identities and emails line up. This gates every
+  PR with a migration or an auth-flow change.
+- **Manual before Phase 1, on the local stack** (PLAN §4.3; no Vercel previews,
+  D-15):
   - iPhone home-screen install: code entry and autofill;
-  - Outlook/Hotmail inbox: the link survives Safe Links;
   - Gmail on Android;
   - password reset end to end;
   - email change with double confirm;
   - transfer deep link signed out → sign in by code → lands back on the transfer.
+- **Production, right after T₀:** an Outlook/Hotmail inbox, to check that the link
+  survives Safe Links. A Microsoft scanner can't reach a local link, so this
+  can't be tested locally.
 
 ## 6. Risks
 
-| Risk                                                      | Mitigation                                                                                                                |
-| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| Auth emails delayed or in spam on tournament day          | Raised rate limits; cutover never near events; passwords as a no-email path; SPF/DKIM/DMARC checked on the sending domain |
-| Venue Wi-Fi hits per-IP limits                            | Per-IP limits raised to 150/5 min (F-7)                                                                                   |
-| Players don't know which email they registered with       | Upgrade card and announcement email show it; admin readiness panel; WhatsApp help thread                                  |
-| Hook or trigger bug blocks all signups                    | SQL tests; Phase 1 can roll back to the fallback RPC flow without touching sign-in                                        |
-| Hosted config drifts from `config.toml`                   | Dashboard checklist in the PR description; screenshot or Management API read of `/config/auth` after applying             |
-| Someone burns a single-use link via mail-scanner prefetch | Tap-to-confirm on `/auth/confirm`, and the code as primary                                                                |
+| Risk                                                                 | Mitigation                                                                                                                                                                                               |
+| -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Auth emails delayed or in spam on tournament day                     | Raised rate limits; cutover never near events; passwords as a no-email path; SPF/DKIM/DMARC checked on the sending domain                                                                                |
+| Venue Wi-Fi hits per-IP limits                                       | Per-IP limits raised to 150/5 min (F-7)                                                                                                                                                                  |
+| Players don't know which email they registered with                  | Upgrade card and announcement email show it; admin readiness panel; WhatsApp help thread                                                                                                                 |
+| Hook or trigger bug blocks all signups                               | SQL tests; Phase 1 can roll back to the fallback RPC flow without touching sign-in                                                                                                                       |
+| Hosted config drifts from `config.toml`                              | Dashboard checklist in the PR description; screenshot or Management API read of `/config/auth` after applying                                                                                            |
+| Someone burns a single-use link via mail-scanner prefetch            | Tap-to-confirm on `/auth/confirm`, and the code as primary                                                                                                                                               |
+| Production data on a dev machine (rehearsal)                         | Snapshot outside the repo, deleted after merge; Vault never copied, so DB functions that call production edge functions fail closed; real SMTP refused while a snapshot is loaded; PRs carry counts only |
+| Local stack differs from hosted (GoTrue version, dashboard settings) | Auth schema versions compared before each rehearsal; dashboard settings covered by the checklist and the post-release checks                                                                             |
 
 ## 7. Decisions
 
@@ -482,15 +528,28 @@ change. D-8 to D-13 come from the 2026-10-15 interview.
   redeploy, with no review cycle.
 - **D-13. The Phase 1 backend ships dark before T₀.** It's additive: the hook
   only affects GoTrue-created users, `self_signup_player` stays, and the
-  invite/add RPCs keep their return shape with `pin: null`. That lets native
-  signup be tested against production before any player sees it.
+  invite/add RPCs keep their return shape with `pin: null`. That keeps T₀ a
+  client-only release. The hook and the invite emails also run in production
+  for at least 2 days before players see the new UI.
 - **D-14. The sign-in code ships with `SignInForm`, not in Phase 0.** A code in
   the magic-link email with no field to type it into gets typed into the PIN
   field (why #9 removed it). `magic_link` stays link-only until T₀; at T₀ the
   client deploys first and the code-first template is pasted after, so the
-  link keeps working in between. Pre-T₀ code checks on production use the
-  `confirmation` email from a native signup, which has the same layout
+  link keeps working in between. Code checks before T₀ run on the local stack
+  (D-15). The production sign-in code is checked right after T₀
   (2026-10-16).
+- **D-15. All testing is local, and nothing is tested on a Vercel preview**
+  (owner, 2026-10-16). Production data is synced into the local stack (PLAN
+  §4.5), so migrations and sign-in are rehearsed on real accounts. Real-device
+  checks use the local stack over the LAN (PLAN §4.3). Production only gets
+  the release steps and the checks right after them. As a result, the
+  dashboard's redirect allow-list needs only the production origin.
+- **D-16. Phase 5 removes every direct write to the `auth` schema**
+  (owner, 2026-10-16: "remove as much of the custom logic as we can").
+  `auth.users` owns the sign-in email, and account changes go through the
+  Admin API. The client reads the role from token claims. No auth account
+  exists without a reachable email. This preserves data access because RLS
+  keys only on `auth.uid()` and the hook-set role claim.
 
 ## Owner answers (2026-10-15)
 
