@@ -79,14 +79,17 @@ otp_length = 6
 # Also governs recovery and email-change links.
 otp_expiry = 1800
 
-# Auth email templates. Each shows the 6-digit code first (typed into the app,
-# which works inside an iOS home-screen install) and then a token_hash link
-# through the SPA's /auth/confirm route. None uses {{ .ConfirmationURL }}: it
-# builds against GoTrue's external URL, and Kong only forwards /auth/v1/*, so
-# the bare /verify path 404s locally. The same files are pasted into the
-# hosted dashboard.
+# Auth email templates. All but magic_link show the 6-digit code first (typed
+# into the app, which works inside an iOS home-screen install), then a
+# token_hash link through the SPA's /auth/confirm route. None uses
+# {{ .ConfirmationURL }}: it builds against GoTrue's external URL, and Kong only
+# forwards /auth/v1/*, so the bare /verify path 404s locally. The same files are
+# pasted into the hosted dashboard.
+#
+# magic_link stays link-only until the sign-in form has a code field (PR 2/3):
+# a code with nowhere to type it gets typed into the PIN field.
 [auth.email.template.magic_link]
-subject = "Your Padel Lobsters sign-in code"
+subject = "Sign in to Padel Lobsters"
 content_path = "./supabase/templates/magic_link.html"
 
 # Sent instead of magic_link to a brand-new address when confirmations are on

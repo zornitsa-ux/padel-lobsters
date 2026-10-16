@@ -1,11 +1,21 @@
 <!--
-  Sign-in email: sent by signInWithOtp for an existing user.
+  Magic-link email template.
 
-  Shared shape (docs/pin-auth-removal DESIGN §2): the 6-digit code first,
-  because a link tapped on iPhone opens Safari, not the home-screen app; then a
-  token_hash link through the SPA's /auth/confirm route, never
-  {{ .ConfirmationURL }} (see config.toml). magic_link, confirmation, recovery
-  and reauthentication share this layout; keep them in step.
+  Why we override the default:
+  - GoTrue's built-in {{ .ConfirmationURL }} macro builds an URL against the
+    auth server's external URL (e.g. http://127.0.0.1:54321/verify?...).
+    Locally, Kong only forwards /auth/v1/* to GoTrue, so the bare /verify
+    path 404s. Rather than fight Kong path-prefix configuration, we route
+    the redemption through the SPA: the email link lands on
+    /auth/confirm, the SPA reads token_hash + type from the URL and calls
+    supabase.auth.verifyOtp() itself. Works identically locally and in
+    production.
+
+  We build the URL from {{ .SiteURL }} (always the configured site URL —
+  the SPA origin) rather than {{ .RedirectTo }} (the client's
+  emailRedirectTo, which GoTrue rejects to site_url when it's not on the
+  redirect allow-list, producing a malformed URL when we tried to append
+  to it).
 -->
 <!doctype html>
 <html lang="en">
@@ -85,33 +95,8 @@
                     Sign in to Padel Lobsters
                   </h1>
                   <p style="margin: 0 0 24px; font-size: 15px; line-height: 1.6; color: #4a5568">
-                    Type this code into the app when it asks for a sign-in code.
-                  </p>
-                  <p
-                    style="
-                      margin: 0 0 6px;
-                      font-size: 12px;
-                      color: #6b8a92;
-                      letter-spacing: 0.08em;
-                      text-transform: uppercase;
-                    "
-                  >
-                    Your sign-in code
-                  </p>
-                  <p
-                    style="
-                      margin: 0 0 24px;
-                      font-family: 'SF Mono', Menlo, Consolas, monospace;
-                      font-size: 34px;
-                      font-weight: 700;
-                      letter-spacing: 0.25em;
-                      color: #1c2b30;
-                    "
-                  >
-                    {{ .Token }}
-                  </p>
-                  <p style="margin: 0 0 16px; font-size: 15px; line-height: 1.6; color: #4a5568">
-                    Or sign in on this device with the button.
+                    Welcome back. Click the button below to sign in. This link expires in 30 minutes
+                    and can only be used once.
                   </p>
                   <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 28px">
                     <tr>
@@ -134,12 +119,11 @@
                     </tr>
                   </table>
                   <p style="margin: 0; font-size: 13px; color: #6b8a92; line-height: 1.5">
-                    The code and link work once and expire in 30 minutes. This code isn't a PIN.<br /><br />If
-                    you didn't ask to sign in, you can safely ignore this email.<br /><br />
+                    If you didn't request this, you can safely ignore this email.<br /><br />
                     Or copy and paste this link into your browser:<br />
                     <a
                       href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=magiclink&next=/home"
-                      style="color: #d94f2b; text-decoration: underline; word-break: break-all"
+                      style="color: #d94f2b; text-decoration: underline"
                       >{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash
                       }}&type=magiclink&next=/home</a
                     >
@@ -169,3 +153,9 @@
     </div>
   </body>
 </html>
+
+<!-- We intentionally do NOT render {{ .Token }} here. It's a Supabase OTP
+     code redeemable via verifyOtp(), not the player's PIN, and we don't
+     have a UI to enter it. Showing it sent users straight to the PIN
+     field, where it can't possibly work. The link above is the only
+     intended redemption path. -->
