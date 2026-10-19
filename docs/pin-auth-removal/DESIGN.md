@@ -487,16 +487,16 @@ auth → players triggers (profile creation and the email mirror), and
 
 ## 6. Risks
 
-| Risk                                                                 | Mitigation                                                                                                                                                                                                      |
-| -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Auth emails delayed or in spam on tournament day                     | Raised rate limits; cutover never near events; passwords as a no-email path; SPF/DKIM/DMARC checked on the sending domain; Resend usage watched on T₀ and tournament days, with an upgrade if it passes ~70/day |
-| Venue Wi-Fi hits per-IP limits                                       | Per-IP limits raised to 150/5 min (F-7)                                                                                                                                                                         |
-| Players don't know which email they registered with                  | Upgrade card and announcement email show it; admin readiness panel; WhatsApp help thread                                                                                                                        |
-| Hook or trigger bug blocks all signups                               | SQL tests; Phase 1 can roll back to the fallback RPC flow without touching sign-in                                                                                                                              |
-| Hosted config drifts from `config.toml`                              | Dashboard checklist in the PR description; screenshot or Management API read of `/config/auth` after applying                                                                                                   |
-| Someone burns a single-use link via mail-scanner prefetch            | Tap-to-confirm on `/auth/confirm`, and the code as primary                                                                                                                                                      |
-| Production data on a dev machine (rehearsal)                         | Snapshot outside the repo, deleted after merge; Vault never copied, so DB functions that call production edge functions fail closed; real SMTP refused while a snapshot is loaded; PRs carry counts only        |
-| Local stack differs from hosted (GoTrue version, dashboard settings) | Auth schema versions compared before each rehearsal; dashboard settings covered by the checklist and the post-release checks                                                                                    |
+| Risk                                                                 | Mitigation                                                                                                                                                                                                                  |
+| -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Auth emails delayed or in spam on tournament day                     | Raised rate limits; cutover never near events; passwords as a no-email path; SPF/DKIM/DMARC checked on the sending domain; Resend usage watched on T₀ and tournament days, with an upgrade if it passes ~70/day             |
+| Venue Wi-Fi hits per-IP limits                                       | Per-IP limits raised to 150/5 min (F-7)                                                                                                                                                                                     |
+| Players don't know which email they registered with                  | Upgrade card and announcement email show it; admin readiness panel; WhatsApp help thread                                                                                                                                    |
+| Hook or trigger bug blocks all signups                               | SQL tests; Phase 1 can roll back to the fallback RPC flow without touching sign-in                                                                                                                                          |
+| Hosted config drifts from `config.toml`                              | Dashboard checklist in the PR description; screenshot or Management API read of `/config/auth` after applying                                                                                                               |
+| Someone burns a single-use link via mail-scanner prefetch            | Tap-to-confirm on `/auth/confirm`, and the code as primary                                                                                                                                                                  |
+| Production data on a dev machine (rehearsal)                         | Dump in a private temp dir removed on exit, local copy cleared by `db:reset` afterwards; Vault never copied, so DB functions that call production edge functions fail closed; sync refuses real SMTP; PRs carry counts only |
+| Local stack differs from hosted (GoTrue version, dashboard settings) | Auth schema versions compared before each rehearsal; dashboard settings covered by the checklist and the post-release checks                                                                                                |
 
 ## 7. Decisions
 
@@ -582,8 +582,8 @@ change. D-8 to D-13 come from the 2026-10-15 interview.
    yet, so dates are relative until it is (PLAN.md §2).
 2. **Native signup (D-2) approved.**
 3. **Pro plan, and hosted auth mail already goes through Resend SMTP.**
-   Leaked-password protection stays in. Resend's daily cap is still to be
-   checked (task T0c).
+   Leaked-password protection stays in. Resend's daily cap was checked on
+   2026-10-19: the free plan, 100 sends/day (§2 settings, PLAN §5).
 4. **Admins send the email and the WhatsApp messages by hand** (D-10).
 5. The build follows the matchmaking-v2 workflow: a coordinator plus workers in
    worktrees, with Phase 1 as 3 stacked PRs. The owner reviews, merges and does
