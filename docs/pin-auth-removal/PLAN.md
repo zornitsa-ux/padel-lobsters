@@ -172,6 +172,11 @@ up` refuses it alone; a PR branch must contain `main`'s migrations. Noted:
   unmerged) onto #45 and #46 as identical copies, with no content lost. From
   now on they travel on the task branches (Constraints above).
 
+- 2026-10-19: The owner confirmed the last R1 step: after merging #44, they
+  sent themself a sign-in link from production and checked the email. R1 is
+  complete. There's no hook to check yet: it ships with PR 1/3 and is enabled
+  at R2 (§4.4 says what to look for).
+
 ---
 
 ## 2. Schedule
@@ -474,7 +479,10 @@ sign-in (F-3). Record who tested what in §1's log.
   `auth.users.email` = 0; users with empty `providers` = 0. The owner
   confirms the dashboard against the T0c checklist (done 2026-10-19, without
   screenshots).
-- **R2:** the hook is enabled (owner screenshot). The integrity check passes.
+- **R2:** the owner confirms in the dashboard (Authentication → Hooks) that
+  the Before User Created hook is on, with type Postgres and the function
+  `public.before_user_created_hook`. No screenshot. C checks read-only that
+  only `supabase_auth_admin` can execute the function. The integrity check passes.
   `self_signup_player` signups still produce exactly one `players` row.
 - **T₀, right after release (owner, production):** sign in with a code from
   your own account; sign up with a `+alias` address and check that it creates
