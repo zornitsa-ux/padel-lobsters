@@ -4,9 +4,10 @@
 #
 # Plants the three production drifts on seeded users (no identity row with
 # providers [], no identity row with no providers key, an identity holding the
-# synthetic email), replays the migration file itself, then checks the patched
-# ensure_auth_user_for_player and sync_player_email_to_auth triggers. Everything
-# runs inside one transaction that rolls back.
+# synthetic email with email_verified false), plus a user listing another
+# provider and an anonymous user. Replays the migration file itself, then checks
+# the patched ensure_auth_user_for_player and sync_player_email_to_auth
+# triggers. Everything runs inside one transaction that rolls back.
 #
 #   supabase/tests/auth_identities.sh
 # ============================================================================
@@ -25,29 +26,55 @@ select id, row_number() over (order by id) as n
   from auth.users
  where email not like 'player-%@padelobsters.internal'
  order by id
- limit 3;
+ limit 4;
 
-delete from auth.identities where user_id in (select id from planted where n in (1, 2));
+-- Each plant must hit exactly one row, so the checks never pass vacuously.
+create function pg_temp.expect_one(label text, row_count bigint) returns void
+language plpgsql as $$
+begin
+  if row_count <> 1 then
+    raise exception 'setup: % changed % rows, expected 1', label, row_count;
+  end if;
+end $$;
 
-update auth.users
-   set raw_app_meta_data = '{"role": "player", "providers": []}'
- where id = (select id from planted where n = 1);
-
-update auth.users
-   set raw_app_meta_data = '{}'
- where id = (select id from planted where n = 2);
-
-update auth.identities
-   set identity_data = identity_data
-                       || jsonb_build_object('email', format('player-%s@padelobsters.internal', user_id))
- where user_id = (select id from planted where n = 3);
+create temp table anon_user on commit drop as select gen_random_uuid() as id;
 
 do $$
+declare v_rows bigint;
 begin
-  if (select count(*) from auth.users u
-       where not exists (select 1 from auth.identities i where i.user_id = u.id)) < 2 then
-    raise exception 'setup: expected at least 2 identity-less users';
-  end if;
+  delete from auth.identities where user_id in (select id from planted where n in (1, 2, 4));
+
+  update auth.users
+     set raw_app_meta_data = '{"role": "player", "providers": []}'
+   where id = (select id from planted where n = 1);
+  get diagnostics v_rows = row_count; perform pg_temp.expect_one('providers []', v_rows);
+
+  update auth.users
+     set raw_app_meta_data = '{}'
+   where id = (select id from planted where n = 2);
+  get diagnostics v_rows = row_count; perform pg_temp.expect_one('no providers key', v_rows);
+
+  delete from auth.identities where user_id = (select id from planted where n = 3);
+  insert into auth.identities (provider_id, user_id, identity_data, provider, created_at, updated_at)
+  select p.id::text, p.id,
+         jsonb_build_object('sub', p.id::text,
+                            'email', format('player-%s@padelobsters.internal', p.id),
+                            'email_verified', false, 'phone_verified', false),
+         'email', now(), now()
+    from planted p where p.n = 3;
+  get diagnostics v_rows = row_count; perform pg_temp.expect_one('stale identity', v_rows);
+
+  update auth.users
+     set raw_app_meta_data = '{"provider": "phone", "providers": ["phone"]}'
+   where id = (select id from planted where n = 4);
+  get diagnostics v_rows = row_count; perform pg_temp.expect_one('other provider', v_rows);
+
+  insert into auth.users (id, instance_id, aud, role, email, is_anonymous, confirmation_token,
+                          recovery_token, email_change_token_new, email_change, raw_app_meta_data,
+                          created_at, updated_at)
+  values ((select id from anon_user), '00000000-0000-0000-0000-000000000000', 'authenticated',
+          'authenticated', null, true, '', '', '', '', '{"provider": "anonymous", "providers": ["anonymous"]}',
+          now(), now());
 end $$;
 SQL
   cat "$migration"
@@ -58,14 +85,17 @@ declare
   v_one     uuid := (select id from planted where n = 1);
   v_two     uuid := (select id from planted where n = 2);
   v_three   uuid := (select id from planted where n = 3);
+  v_four    uuid := (select id from planted where n = 4);
+  v_anon    uuid := (select id from anon_user);
   v_ident   auth.identities%rowtype;
   v_meta    jsonb;
   v_player  uuid;
   v_count   int;
 begin
-  -- CHECK 1: every auth user has an identity
+  -- CHECK 1: every auth user with an email has an identity
   if exists (select 1 from auth.users u
-              where not exists (select 1 from auth.identities i where i.user_id = u.id)) then
+              where u.email is not null and not u.is_anonymous
+                and not exists (select 1 from auth.identities i where i.user_id = u.id)) then
     raise exception 'CHECK 1 FAILED: identity-less users remain';
   end if;
   raise notice 'CHECK 1 ok: no identity-less users';
@@ -93,14 +123,28 @@ begin
   if v_meta <> '{"provider": "email", "providers": ["email"]}'::jsonb then
     raise exception 'CHECK 3 FAILED (no providers key): %', v_meta;
   end if;
+  select raw_app_meta_data into v_meta from auth.users where id = v_four;
+  if v_meta <> '{"provider": "phone", "providers": ["phone", "email"]}'::jsonb then
+    raise exception 'CHECK 3 FAILED (other provider): %', v_meta;
+  end if;
   raise notice 'CHECK 3 ok: app_metadata providers';
 
-  -- CHECK 4: a stale synthetic identity email follows auth.users.email
+  -- CHECK 4: a stale identity follows auth.users (email and email_verified)
   if (select identity_data ->> 'email' from auth.identities where user_id = v_three)
-     <> (select email from auth.users where id = v_three) then
+     <> (select email from auth.users where id = v_three)
+     or (select (identity_data ->> 'email_verified')::boolean from auth.identities
+          where user_id = v_three) is not true then
     raise exception 'CHECK 4 FAILED';
   end if;
-  raise notice 'CHECK 4 ok: stale identity email synced';
+  raise notice 'CHECK 4 ok: stale identity synced';
+
+  -- CHECK 4b: an anonymous user gets no email identity and keeps its providers
+  if exists (select 1 from auth.identities where user_id = v_anon)
+     or (select raw_app_meta_data -> 'providers' from auth.users where id = v_anon)
+        <> '["anonymous"]'::jsonb then
+    raise exception 'CHECK 4b FAILED';
+  end if;
+  raise notice 'CHECK 4b ok: anonymous user skipped';
 
   -- CHECK 5: idempotent
   select count(*) into v_count from auth.identities;
@@ -134,6 +178,20 @@ begin
     raise exception 'CHECK 7 FAILED (clear)';
   end if;
   raise notice 'CHECK 7 ok: email edits sync the identity';
+
+  -- CHECK 7b: an edit also repairs an identity when auth.users.email already
+  -- matches the new address
+  set local session_replication_role = replica;
+  update auth.users set email = 'probe3@test.invalid' where id = v_player;
+  update auth.identities set identity_data = identity_data || '{"email": "stale@test.invalid"}'
+   where user_id = v_player;
+  set local session_replication_role = origin;
+  update public.players set email = 'probe3@test.invalid' where id = v_player;
+  if (select identity_data ->> 'email' from auth.identities where user_id = v_player)
+     <> 'probe3@test.invalid' then
+    raise exception 'CHECK 7b FAILED';
+  end if;
+  raise notice 'CHECK 7b ok: edit repairs a drifted identity';
 
   -- CHECK 8: the helper is not callable by API roles
   if has_function_privilege('anon', 'private.sync_email_identity(uuid)', 'execute')

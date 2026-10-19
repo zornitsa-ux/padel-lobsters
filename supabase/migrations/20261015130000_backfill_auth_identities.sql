@@ -10,8 +10,10 @@
 --
 -- private.sync_email_identity mirrors a GoTrue-created row: provider 'email',
 -- provider_id = sub = user id, identity_data {sub, email, email_verified,
--- phone_verified}, app_metadata {provider: 'email', providers: ['email']}.
--- It is applied once to every user, then called from both triggers.
+-- phone_verified}, and 'email' listed in app_metadata.providers. An existing
+-- identity gets only its email and email_verified brought in step. Users with
+-- no email, and anonymous users, are skipped: GoTrue gives them no email
+-- identity. It is applied once to every user, then called from both triggers.
 
 create or replace function private.sync_email_identity(input_user_id uuid)
 returns void
@@ -34,18 +36,29 @@ as $$
          now()
     from auth.users u
    where u.id = input_user_id
+     and u.email is not null
+     and not u.is_anonymous
   on conflict (provider_id, provider) do update
      set identity_data = auth.identities.identity_data
-                         || jsonb_build_object('email', excluded.identity_data ->> 'email'),
+                         || jsonb_build_object(
+                              'email', excluded.identity_data -> 'email',
+                              'email_verified', excluded.identity_data -> 'email_verified'),
          updated_at    = now()
-   where auth.identities.identity_data ->> 'email'
-         is distinct from excluded.identity_data ->> 'email';
+   where auth.identities.identity_data -> 'email'
+         is distinct from excluded.identity_data -> 'email'
+      or auth.identities.identity_data -> 'email_verified'
+         is distinct from excluded.identity_data -> 'email_verified';
 
-  update auth.users
-     set raw_app_meta_data = coalesce(raw_app_meta_data, '{}'::jsonb)
-                             || '{"provider": "email", "providers": ["email"]}'::jsonb
-   where id = input_user_id
-     and coalesce(raw_app_meta_data -> 'providers', '[]'::jsonb) = '[]'::jsonb;
+  update auth.users u
+     set raw_app_meta_data = coalesce(u.raw_app_meta_data, '{}'::jsonb)
+                             || jsonb_build_object(
+                                  'provider', coalesce(u.raw_app_meta_data ->> 'provider', 'email'),
+                                  'providers', coalesce(u.raw_app_meta_data -> 'providers', '[]'::jsonb)
+                                               || '["email"]'::jsonb)
+   where u.id = input_user_id
+     and not coalesce(u.raw_app_meta_data -> 'providers', '[]'::jsonb) ? 'email'
+     and exists (select 1 from auth.identities i
+                  where i.user_id = u.id and i.provider = 'email');
 $$;
 
 revoke all on function private.sync_email_identity(uuid) from public, anon, authenticated;
@@ -108,7 +121,8 @@ end;
 $$;
 
 
--- Unchanged apart from the sync_email_identity call.
+-- Unchanged apart from calling sync_email_identity whenever players.email
+-- changes, including when auth.users.email already matches.
 create or replace function public.sync_player_email_to_auth()
 returns trigger
 language plpgsql
@@ -136,8 +150,8 @@ begin
               email_confirmed_at = coalesce(email_confirmed_at, now())
           where id = NEW.id;
       end if;
-      perform private.sync_email_identity(NEW.id);
     end if;
+    perform private.sync_email_identity(NEW.id);
   end if;
   return NEW;
 end;

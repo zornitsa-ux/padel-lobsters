@@ -79,9 +79,10 @@ otp_length = 6
 # Also governs recovery and email-change links.
 otp_expiry = 1800
 
-# Auth email templates. All but magic_link show the 6-digit code first (typed
-# into the app, which works inside an iOS home-screen install), then a
-# token_hash link through the SPA's /auth/confirm route. None uses
+# Auth email templates. confirmation, recovery and reauthentication show the
+# 6-digit code first (typed into the app, which works inside an iOS home-screen
+# install), then a token_hash link through the SPA's /auth/confirm route.
+# magic_link and email_change are link-only (see below). None uses
 # {{ .ConfirmationURL }}: it builds against GoTrue's external URL, and Kong only
 # forwards /auth/v1/*, so the bare /verify path 404s locally. The same files are
 # pasted into the hosted dashboard.
