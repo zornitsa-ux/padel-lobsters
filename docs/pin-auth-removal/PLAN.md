@@ -110,6 +110,13 @@ up` refuses it alone; a PR branch must contain `main`'s migrations. Noted:
   now: the 21 Oct date only kept clear of the 3 days after #12, which is over.
   Every other schedule rule protects the run-up to #13.
 
+- 2026-10-19: `/code-review` of #44 found no bugs in the main path. Its edge
+  cases are fixed (3f20e6e): no-email and anonymous users skipped, `'email'`
+  added to `providers` alongside another provider, `email_verified` synced, the
+  trigger repairing on every email edit, and the test plants asserted. Rehearsed
+  again: the same counts, plus all 141 identities' `email_verified` now match.
+  Template de-duplication was added to PR 2/3.
+
 ---
 
 ## 2. Schedule
@@ -232,6 +239,11 @@ send-invite-email` → enable the hook in the dashboard.
   description's release steps put the dashboard paste **after** Vercel
   deploys: the new form with the old email still works through the link, but
   the old client with the new email repeats the PIN-field trap.
+- **De-duplicate the templates (code review of #44).** Four (then five) files
+  repeat one ~170-line layout, kept in step by a header comment. GoTrue can't
+  share partials, so render them from one layout plus per-template copy with
+  a small build script, and add a CI check that the committed files match its
+  output.
 - **Tests:** unit and component tests for every `SignInForm` state (DESIGN §5),
   `AuthConfirm` and signup errors from the hook. e2e: `seed.sql` gets seeded
   passwords, `signInAt` (`e2e/tournament-flow.spec.ts:42`) switches to the
