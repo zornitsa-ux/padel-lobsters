@@ -103,6 +103,13 @@ up` refuses it alone; a PR branch must contain `main`'s migrations. Noted:
   (GoTrue doesn't update it on magic-link confirmation). Email sign-in ignores
   it. Sessions are never copied, which matters for PR 10 (§3.8).
 
+- 2026-10-19: #44 rebased onto `main` and rehearsed again on a fresh copy. The
+  counts were the same, and one account per group (no identity, stale identity
+  email, already fine) signed in after the migration by code and by link, with
+  its role, `providers: ['email']` and one identity. The owner moved R1 to
+  now: the 21 Oct date only kept clear of the 3 days after #12, which is over.
+  Every other schedule rule protects the run-up to #13.
+
 ---
 
 ## 2. Schedule
@@ -112,7 +119,7 @@ Dates stay relative until tournament **#13** is scheduled. Then pin them here.
 | Milestone                         | When                                       | Rule                                                                       |
 | --------------------------------- | ------------------------------------------ | -------------------------------------------------------------------------- |
 | R0: Phase 0a merged + pushed      | Week of 15 Oct                             | Invisible; may land before #12 (18 Oct)                                    |
-| R1: Phase 0b merged + pushed      | From Wed 21 Oct                            | After #12 + 3 days and a clean rehearsal (T13); **≥ 2 days before R2**     |
+| R1: Phase 0b merged + pushed      | Now (owner, 2026-10-19)                    | After a clean rehearsal (T13); **≥ 2 days before R2**                      |
 | R2: dark backend (PR 1/3)         | ≥ 2 days before T₀                         | The hook and invite emails run in production before players see the new UI |
 | **T₀**: PRs 2/3 + 3/3 + announce  | A Tue or Wed                               | T₀ ≤ #13 − 17 days                                                         |
 | WhatsApp reminder                 | Cutover − 3 days                           |                                                                            |
