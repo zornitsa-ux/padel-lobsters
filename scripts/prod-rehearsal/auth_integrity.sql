@@ -5,14 +5,7 @@
 -- which is safe to paste into a PR. auth_integrity_details.sql names the people
 -- behind the counts that need follow-up.
 --
--- A "real" email is non-blank and not the synthetic @padelobsters.internal
--- address that ensure_auth_user_for_player gives players without one.
-with real_players as (
-  select p.id, p.status, lower(btrim(p.email)) as email
-    from public.players p
-   where btrim(coalesce(p.email, '')) <> ''
-     and p.email not ilike '%@padelobsters.internal'
-)
+-- Not runnable on its own: integrity.sh prepends auth_sets.sql (the WITH).
 select check_name, value
   from (values
     (1, 'players_without_auth_account',
@@ -23,8 +16,7 @@ select check_name, value
           where u.email_confirmed_at is not null
             and not exists (select 1 from public.players p where p.id = u.id))),
     (3, 'unconfirmed_auth_accounts_older_than_30m',
-        (select count(*) from auth.users
-          where email_confirmed_at is null and created_at < now() - interval '30 minutes')),
+        (select count(*) from stale_unconfirmed_auth_accounts)),
     (4, 'duplicate_auth_emails',
         (select count(*) from (select lower(email) from auth.users
                                  where email is not null group by 1 having count(*) > 1) d)),
@@ -42,13 +34,15 @@ select check_name, value
             and lower(i.identity_data ->> 'email') is distinct from lower(u.email))),
     (9, 'empty_providers',
         (select count(*) from auth.users
-          where coalesce(raw_app_meta_data -> 'providers', '[]'::jsonb) = '[]'::jsonb)),
+          where case jsonb_typeof(raw_app_meta_data -> 'providers')
+                  when 'array' then jsonb_array_length(raw_app_meta_data -> 'providers') = 0
+                  else true  -- missing, JSON null, or not an array
+                end)),
     (10, 'anonymous_sso_banned_or_deleted',
         (select count(*) from auth.users
           where is_anonymous or is_sso_user or banned_until > now() or deleted_at is not null)),
     (11, 'active_players_without_real_email',
-        (select count(*) from public.players p
-          where p.status = 'active' and not exists (select 1 from real_players rp where rp.id = p.id))),
+        (select count(*) from active_players_without_real_email)),
     (12, 'players_without_real_email',
         (select count(*) from public.players p
           where not exists (select 1 from real_players rp where rp.id = p.id))),

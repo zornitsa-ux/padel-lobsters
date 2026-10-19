@@ -8,7 +8,9 @@
 set -euo pipefail
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-supabase_cli="$here/../../node_modules/.bin/supabase"
+source "$here/../lib/supabase-cli.sh"
+
+usage() { echo "usage: $0 --local|--linked [--details]  (--details is local only)" >&2 && exit 2; }
 
 target=""
 details=false
@@ -16,22 +18,27 @@ for arg in "$@"; do
   case "$arg" in
     --local | --linked) target="$arg" ;;
     --details) details=true ;;
-    *) echo "usage: $0 --local|--linked [--details]" >&2 && exit 2 ;;
+    *) usage ;;
   esac
 done
-[[ -n "$target" ]] || { echo "usage: $0 --local|--linked [--details]" >&2 && exit 2; }
+[[ -n "$target" ]] || usage
+# Names never come straight from production; load a copy with sync.sh instead.
+[[ "$target" == --local ]] || ! $details || usage
 
-# Same extraction as dump-function-grants.sh: survives the CLI changing how it
-# wraps rows in its JSON output.
+query_file="$(mktemp)"
+trap 'rm -f "$query_file"' EXIT
+
+# $1: the query file (auth_sets.sql is its WITH); $2: a key every row carries.
 rows() {
-  "$supabase_cli" db query "$target" --output-format json -f "$1" |
-    jq -c '[.. | objects | select(has("check_name") or has("kind"))] | .[]'
+  cat "$here/auth_sets.sql" "$1" >"$query_file"
+  "$supabase_cli" db query "$target" --output-format json -f "$query_file" | json_rows "$2"
 }
 
-rows "$here/auth_integrity.sql" | jq -r '"\(.check_name)\t\(.value)"' | column -t -s $'\t'
+rows "$here/auth_integrity.sql" check_name | jq -r '"\(.check_name)\t\(.value)"' |
+  column -t -s $'\t'
 
 if $details; then
   echo
-  rows "$here/auth_integrity_details.sql" | jq -r '"\(.kind)\t\(.id)\t\(.label)\t\(.created_at)"' |
-    column -t -s $'\t'
+  rows "$here/auth_integrity_details.sql" kind |
+    jq -r '"\(.kind)\t\(.id)\t\(.label)\t\(.created_at)"' | column -t -s $'\t'
 fi
