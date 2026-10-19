@@ -23,23 +23,13 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 expected_file="$repo_root/supabase/expected_function_grants.txt"
 
-# Always the repo-pinned CLI, never whatever `supabase` is on PATH. The JSON
-# shape of `db query --output-format json` changes between releases, so a
-# Homebrew/global install shadowing the pin silently breaks the extraction.
-supabase_cli="$repo_root/node_modules/.bin/supabase"
-if [[ ! -x "$supabase_cli" ]]; then
-  echo "error: $supabase_cli not found — run \`npm ci\`." >&2
-  exit 1
-fi
+source "$repo_root/scripts/lib/supabase-cli.sh"
 
 write_mode=false
 if [[ "${1:-}" == "--write" ]]; then
   write_mode=true
 fi
 
-# Pulls every object carrying a `line` key at any depth, so the extraction
-# survives the CLI wrapping its rows differently (bare array vs `{rows: [...]}`
-# vs the current boundary/warning envelope).
 dump() {
   "$supabase_cli" db query --local --output-format json "
     select 'public.' || p.proname
@@ -53,7 +43,7 @@ dump() {
        and a.privilege_type = 'EXECUTE'
        and r.rolname in ('anon', 'authenticated')
      order by line
-  " | jq -r '[.. | objects | select(has("line")) | .line] | .[]' | LC_ALL=C sort
+  " | json_rows line | jq -r .line | LC_ALL=C sort
 }
 
 output="$(dump)"

@@ -4,12 +4,14 @@
 
 ### Local database commands
 
-| Command                          | What it does                                               |
-| -------------------------------- | ---------------------------------------------------------- |
-| `npm run db:start`               | Start local Supabase (Postgres + Auth + Studio)            |
-| `npm run db:stop`                | Stop the local stack                                       |
-| `npm run db:reset`               | Wipe and recreate the local DB from migrations + seed data |
-| `npm run db:migration -- <name>` | Create a new empty migration file                          |
+| Command                                            | What it does                                               |
+| -------------------------------------------------- | ---------------------------------------------------------- |
+| `npm run db:start`                                 | Start local Supabase (Postgres + Auth + Studio)            |
+| `npm run db:stop`                                  | Stop the local stack                                       |
+| `npm run db:reset`                                 | Wipe and recreate the local DB from migrations + seed data |
+| `npm run db:migration -- <name>`                   | Create a new empty migration file                          |
+| `npm run rehearsal:sync`                           | Replace the local DB with production data (see below)      |
+| `npm run rehearsal:integrity -- --local\|--linked` | Auth integrity counts, local or production (read-only)     |
 
 ### Creating a database migration
 
@@ -24,6 +26,22 @@ npm run db:reset
 
 # 4. Commit the migration file and open a PR
 ```
+
+### Rehearsing a migration on production data
+
+For migrations that touch players or auth, rehearse on a copy of production
+before review:
+
+```bash
+git checkout main && npm run rehearsal:sync   # production data, credentials wiped
+git checkout <pr-branch> && npx supabase migration up --local
+npm run rehearsal:integrity -- --local
+npm run db:reset                               # back to seed data when done
+```
+
+The PR branch must contain every migration on `main`, or `migration up`
+refuses. Paste counts into the PR, never names or emails. `sync.sh` lists its
+safety checks at the top.
 
 **Never run SQL manually in the production Supabase dashboard.** All schema
 changes go through migration files so they're tracked in Git, reviewed in PRs,

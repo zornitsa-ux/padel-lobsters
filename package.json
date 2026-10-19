@@ -24,6 +24,8 @@
     "db:types:check": "./scripts/gen-db-types.sh | diff -u src/lib/database.types.ts - || (echo 'database.types.ts is stale — run npm run db:types' && exit 1)",
     "db:grants": "./scripts/dump-function-grants.sh --write",
     "db:grants:check": "./scripts/dump-function-grants.sh | diff -u supabase/expected_function_grants.txt - || (echo 'Function EXECUTE grants for anon/authenticated drifted from supabase/expected_function_grants.txt — review the diff above. If the change is intentional, run `npm run db:grants` and commit the result.' && exit 1)",
+    "rehearsal:sync": "./scripts/prod-rehearsal/sync.sh",
+    "rehearsal:integrity": "./scripts/prod-rehearsal/integrity.sh",
     "functions:serve": "supabase functions serve",
     "claude": "claude --strict-mcp-config --mcp-config .mcp.json",
     "lint": "eslint .",
