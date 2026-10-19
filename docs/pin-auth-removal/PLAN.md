@@ -34,13 +34,13 @@ signed in gets logged out.
 | T0a | Clear 44 orphan password hashes → `NULL`                  | C     | —               | #43 | [x]   |
 | T0b | Identity backfill + patch `ensure_auth_user_for_player`   | C     | —               | #44 | [~]   |
 | T0c | Auth settings: `config.toml` + dashboard; five templates  | C → O | —               | #44 | [~]   |
-| T13 | Prod-data rehearsal kit: sync + integrity check (§4.5)    | C     | —               | 0c  | [ ]   |
+| T13 | Prod-data rehearsal kit: sync + integrity check (§4.5)    | C     | —               | #45 | [~]   |
 | T1  | Contract freeze (§3.1)                                    | C     | —               | —   | [ ]   |
 | T2  | Backend: hook, trigger, invite/add RPCs, readiness RPC    | W     | T0b, T1         | 1/3 | [ ]   |
 | T3  | `SignInForm`, `AuthConfirm`, gates, native signup         | W     | T1              | 2/3 | [ ]   |
 | T4  | Account → Sign-in & security                              | W     | T1              | 2/3 | [ ]   |
 | T5  | Comms: upgrade card, interstitial, readiness panel, copy  | W     | T1              | 3/3 | [ ]   |
-| T14 | Rehearsal sign-in + data-access parity script (§4.5)      | W     | T13, T1         | 0c  | [ ]   |
+| T14 | Rehearsal sign-in + data-access parity script (§4.5)      | W     | T13, T1         | 0d  | [ ]   |
 | T6  | Verification: local matrix, local devices, rehearsal      | C + O | T2–T5, T14      | —   | [ ]   |
 | T7  | Dark backend release (R2)                                 | O     | T2 merged, T0c  | —   | [ ]   |
 | T8  | T₀ release and announcement (R3)                          | O     | T6, T7          | —   | [ ]   |
@@ -91,6 +91,17 @@ States: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked.
   phone users; 0 password hashes; 3 active players and 10 placeholders on a
   synthetic email; 47 / 87 identity drift (#44). 2 of the 3 no-email players
   have `players.email = ''` rather than `NULL`; T2 normalizes them.
+
+- 2026-10-19: T13 built (#45). First sync: 141 players and 141 auth users, with
+  integrity counts identical to production. The GoTrue version check caught
+  production on v2.197.0 against v2.195.0 locally (fixed by `supabase link`
+  and a restart). **#44 rehearsed on `main` + #44:** no identity 48 → 0, stale
+  identity email 87 → 0, empty `providers` 48 → 0, all 135 roles kept, and the
+  other counts unchanged. #44's branch predates #43's migration, so `migration
+up` refuses it alone; a PR branch must contain `main`'s migrations. Noted:
+  20 GoTrue-created identities have `email_verified: false` on confirmed users
+  (GoTrue doesn't update it on magic-link confirmation). Email sign-in ignores
+  it. Sessions are never copied, which matters for PR 10 (§3.8).
 
 ---
 
@@ -245,15 +256,15 @@ verify-pin`.
   first, then db push.
 - **PR 7 (T12):** removes the explainer.
 
-### 3.7 PR 0c: prod-data rehearsal kit (T13, T14)
+### 3.7 PRs 0c and 0d: prod-data rehearsal kit (T13, T14)
 
-No migration and nothing deployed, so it can merge any time. T13 must land
-before R1. T14 must land before T6.
+Neither has a migration or anything to deploy, so each can merge any time.
+T13 (0c) must land before R1. T14 (0d) must land before T6.
 
-- **T13:** `scripts/prod-rehearsal/sync.sh` and
-  `scripts/prod-rehearsal/auth_integrity.sql`, doing exactly §4.5 steps 1–2 and
-  the integrity check. The script refuses to run if any of §4.5's safety
-  checks fails.
+- **T13 (#45):** `scripts/prod-rehearsal/sync.sh`, `scrub_credentials.sql`,
+  `auth_integrity.sql` (+ `_details`) and `integrity.sh`, which together run
+  §4.5 steps 1–2. Run them as `npm run rehearsal:sync` and
+  `npm run rehearsal:integrity -- --local|--linked`.
 - **T14:** `scripts/prod-rehearsal/parity.ts`, run with `tsx` and supabase-js
   against the local stack (§4.5 steps 3 and 5). For every account with a real
   email, it gets a code from `auth.admin.generateLink` (no email is sent), signs
@@ -299,6 +310,10 @@ admin-set-player-email` → merge (the client calls the function) → db push.
     identities, sessions and refresh tokens. Before the PR, confirm that
     nothing outside `auth` references these ids. Synthetic accounts with
     recent sessions are left for admins to chase through the readiness panel.
+  - **The rehearsal can't predict which accounts go.** Sessions are never
+    copied (§4.5), so on the copy every synthetic account looks quiet. The PR
+    description states the expected count from a read-only production query
+    on `auth.refresh_tokens`, and the post-release check compares against it.
 
 ---
 
@@ -390,35 +405,43 @@ The local stack gets a copy of production's `public` and `auth` data. Then the
 PR's migrations run exactly as `db push` will run them. This is how we know,
 before production, that every account still signs in and sees the same data.
 
-**Safety (the sync script checks these and refuses to run otherwise):**
+**Safety (`sync.sh` checks these and refuses to run otherwise):**
 
-- **The snapshot stays outside the repo** (e.g. `~/padel-lobsters-snapshots/`,
-  mode `600`). It's never committed and is deleted when the PR merges. PR
-  descriptions carry counts, never names or emails.
-- **Vault is never copied.** Several database functions post to **production**
-  edge function URLs, authenticated with a Vault secret. With no secret
-  locally, they fail closed. The script asserts `vault.secrets` is empty.
-- **Auth mail stays in Mailpit.** The script refuses to run if
-  `[auth.email.smtp]` is enabled.
-- **The local auth schema version matches production**
-  (`auth.schema_migrations`). If it doesn't, update the Supabase CLI first;
-  otherwise the data load can fail or misbehave.
+- **Auth mail stays in Mailpit.** The script reads `GOTRUE_SMTP_HOST` from the
+  running auth container.
+- **Local GoTrue is production's version** (production's `/auth/v1/health`).
+  If not, run `npx supabase link`, then `npx supabase stop && npx supabase start`.
+- **Local migrations match production's exactly**, so run it from `main`.
+- **Vault is empty locally**, before and after the load. Several database
+  functions post to **production** edge function URLs, authenticated with a
+  Vault secret. With no secret they fail closed.
+
+**What is copied (`scrub_credentials.sql` runs in the load transaction):**
+
+- From `auth`, only `users`, `identities` and `instances`. This is an
+  allow-list, so sessions, refresh tokens, one-time tokens, MFA, OAuth/SSO,
+  WebAuthn and the audit log never leave production, and nor does any table a
+  future GoTrue adds.
+- In what is copied, live credentials are wiped: link tokens and password
+  hashes on `auth.users`, `players.pin`/`pin_hash`, and IPs and user agents in
+  `pin_attempts`.
+- The dump file lives in a `umask 077` temp directory that's removed on exit.
+  Nothing persists outside the local database. Run `npm run db:reset` when you're
+  done, and paste counts only into PRs, never names or emails.
 
 **Steps**
 
-1. **Sync (T13).** Check out `main` and confirm local and remote migrations
-   match (`npx supabase migration list --linked`). Run
-   `npx supabase db reset --local --no-seed`. Then
-   `npx supabase db dump --linked --data-only --schema public,auth` into the
-   snapshot directory, and load it with triggers off
-   (`session_replication_role = replica`).
-2. **Integrity check, before (T13).** Run `auth_integrity.sql` and save the
-   output.
+1. **Sync (T13).** On `main`: `npm run rehearsal:sync`. After the safety
+   checks, it runs `db reset --no-seed`, dumps production, and loads the dump
+   with triggers off. Then it checks that GoTrue's admin API lists every
+   loaded user and prints the integrity counts.
+2. **Integrity check, before (T13).** Step 1 prints it. Save the output.
 3. **Baseline (T14).** Run `parity.ts --record baseline`.
-4. **Apply the PR.** Check out the PR branch, then
+4. **Apply the PR.** Check out the PR branch, which must contain every
+   migration on `main` (otherwise `migration up` refuses), then
    `npx supabase migration up --local`. If `config.toml` changed, restart the
    stack.
-5. **After (T14).** Run the integrity check again, then
+5. **After (T14).** Run `npm run rehearsal:integrity -- --local`, then
    `parity.ts --record after --compare baseline`.
 
 **Pass criteria**
