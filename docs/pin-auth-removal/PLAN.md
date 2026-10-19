@@ -127,8 +127,7 @@ up` refuses it alone; a PR branch must contain `main`'s migrations. Noted:
   the four code templates from "30 minutes" to "1 hour"; the owner pastes those.
   Verified on a temporary local GoTrue v2.197.0: require current password
   applies only to sessions that signed in with a password, so first-password
-  and recovery flows aren't blocked. The 1h expiry is still open for
-  dashboard confirmation, as is the Resend daily cap.
+  and recovery flows aren't blocked. Still open: the Resend daily cap.
 
 ---
 
