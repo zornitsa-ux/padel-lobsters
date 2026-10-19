@@ -1457,6 +1457,7 @@ export type Database = {
         Args: { input_payload: Json }
         Returns: number
       }
+      admin_auth_readiness: { Args: never; Returns: Json }
       admin_cancel_transfer: {
         Args: { input_transfer_id: string }
         Returns: {
@@ -1654,6 +1655,10 @@ export type Database = {
         Args: { input_target_id: string }
         Returns: string
       }
+      admin_resend_invite: {
+        Args: { input_player_id: string }
+        Returns: string
+      }
       admin_review_rating_event: {
         Args: {
           input_action: string
@@ -1825,6 +1830,7 @@ export type Database = {
         Args: { input_transfer_id: string }
         Returns: string
       }
+      before_user_created_hook: { Args: { event: Json }; Returns: Json }
       cancel_registration: {
         Args: { input_registration_id: string }
         Returns: {
