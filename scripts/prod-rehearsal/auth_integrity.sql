@@ -15,7 +15,7 @@ select check_name, value
         (select count(*) from auth.users u
           where u.email_confirmed_at is not null
             and not exists (select 1 from public.players p where p.id = u.id))),
-    (3, 'unconfirmed_auth_accounts_older_than_30m',
+    (3, 'unconfirmed_auth_accounts_older_than_1h',
         (select count(*) from stale_unconfirmed_auth_accounts)),
     (4, 'duplicate_auth_emails',
         (select count(*) from (select lower(email) from auth.users

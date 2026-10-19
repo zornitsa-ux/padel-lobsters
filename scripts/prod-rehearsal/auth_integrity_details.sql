@@ -7,7 +7,7 @@
 select 'active_player_without_real_email' as kind, id, name as label, created_at
   from active_players_without_real_email
 union all
-select 'unconfirmed_auth_account_older_than_30m', id,
+select 'unconfirmed_auth_account_older_than_1h', id,
        coalesce(raw_user_meta_data ->> 'name', '(no name)'), created_at
   from stale_unconfirmed_auth_accounts
  order by kind, created_at;

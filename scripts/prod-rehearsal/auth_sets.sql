@@ -20,5 +20,5 @@ stale_unconfirmed_auth_accounts as (
   select u.id, u.raw_user_meta_data, u.created_at
     from auth.users u
    where u.email_confirmed_at is null
-     and u.created_at < now() - interval '30 minutes'
+     and u.created_at < now() - interval '1 hour'
 )
