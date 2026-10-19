@@ -29,28 +29,28 @@ signed in gets logged out.
 
 ## 1. Status
 
-| ID  | Task                                                      | Owner | Depends on      | PR       | State |
-| --- | --------------------------------------------------------- | ----- | --------------- | -------- | ----- |
-| T0a | Clear 44 orphan password hashes → `NULL`                  | C     | —               | #43      | [x]   |
-| T0b | Identity backfill + patch `ensure_auth_user_for_player`   | C     | —               | #44      | [x]   |
-| T0c | Auth settings: `config.toml` + dashboard; templates       | C → O | —               | #44, #46 | [~]   |
-| T13 | Prod-data rehearsal kit: sync + integrity check (§4.5)    | C     | —               | #45      | [~]   |
-| T1  | Contract freeze (§3.1)                                    | C     | —               | —        | [ ]   |
-| T2  | Backend: hook, trigger, invite/add RPCs, readiness RPC    | W     | T0b, T1         | 1/3      | [ ]   |
-| T3  | `SignInForm`, `AuthConfirm`, gates, native signup         | W     | T1              | 2/3      | [ ]   |
-| T4  | Account → Sign-in & security                              | W     | T1              | 2/3      | [ ]   |
-| T5  | Comms: upgrade card, interstitial, readiness panel, copy  | W     | T1              | 3/3      | [ ]   |
-| T14 | Rehearsal sign-in + data-access parity script (§4.5)      | W     | T13, T1         | 0d       | [ ]   |
-| T6  | Verification: local matrix, local devices, rehearsal      | C + O | T2–T5, T14      | —        | [ ]   |
-| T7  | Dark backend release (R2)                                 | O     | T2 merged, T0c  | —        | [ ]   |
-| T8  | T₀ release and announcement (R3)                          | O     | T6, T7          | —        | [ ]   |
-| T9  | Cutover PR: remove PIN client path, `verify-pin` 410 stub | W     | T8              | 4        | [ ]   |
-| T10 | Revoke `verify_player_pin_v2` from anon (D-12)            | C     | T9 + 48h watch  | 5        | [ ]   |
-| T11 | Phase 4 cleanup (DESIGN §3 Phase 4)                       | W     | T10 + ≥2 weeks  | 6        | [ ]   |
-| T12 | Remove the "Used a PIN before?" explainer                 | W     | cutover + ~2 mo | 7        | [ ]   |
-| T15 | Phase 5a: client reads the role from token claims         | W     | cutover         | 8        | [ ]   |
-| T16 | Phase 5b: `auth.users` owns the email; Admin API writes   | W     | T11             | 9        | [ ]   |
-| T17 | Phase 5c: remove synthetic accounts + last auth writers   | W     | T15, T16        | 10       | [ ]   |
+| ID  | Task                                                      | Owner | Depends on      | PR       | State                        |
+| --- | --------------------------------------------------------- | ----- | --------------- | -------- | ---------------------------- |
+| T0a | Clear 44 orphan password hashes → `NULL`                  | C     | —               | #43      | [x]                          |
+| T0b | Identity backfill + patch `ensure_auth_user_for_player`   | C     | —               | #44      | [x]                          |
+| T0c | Auth settings: `config.toml` + dashboard; templates       | C → O | —               | #44, #46 | [~] dashboard done; #46 open |
+| T13 | Prod-data rehearsal kit: sync + integrity check (§4.5)    | C     | —               | #45      | [~]                          |
+| T1  | Contract freeze (§3.1)                                    | C     | —               | —        | [ ]                          |
+| T2  | Backend: hook, trigger, invite/add RPCs, readiness RPC    | W     | T0b, T1         | 1/3      | [ ]                          |
+| T3  | `SignInForm`, `AuthConfirm`, gates, native signup         | W     | T1              | 2/3      | [ ]                          |
+| T4  | Account → Sign-in & security                              | W     | T1              | 2/3      | [ ]                          |
+| T5  | Comms: upgrade card, interstitial, readiness panel, copy  | W     | T1              | 3/3      | [ ]                          |
+| T14 | Rehearsal sign-in + data-access parity script (§4.5)      | W     | T13, T1         | 0d       | [ ]                          |
+| T6  | Verification: local matrix, local devices, rehearsal      | C + O | T2–T5, T14      | —        | [ ]                          |
+| T7  | Dark backend release (R2)                                 | O     | T2 merged, T0c  | —        | [ ]                          |
+| T8  | T₀ release and announcement (R3)                          | O     | T6, T7          | —        | [ ]                          |
+| T9  | Cutover PR: remove PIN client path, `verify-pin` 410 stub | W     | T8              | 4        | [ ]                          |
+| T10 | Revoke `verify_player_pin_v2` from anon (D-12)            | C     | T9 + 48h watch  | 5        | [ ]                          |
+| T11 | Phase 4 cleanup (DESIGN §3 Phase 4)                       | W     | T10 + ≥2 weeks  | 6        | [ ]                          |
+| T12 | Remove the "Used a PIN before?" explainer                 | W     | cutover + ~2 mo | 7        | [ ]                          |
+| T15 | Phase 5a: client reads the role from token claims         | W     | cutover         | 8        | [ ]                          |
+| T16 | Phase 5b: `auth.users` owns the email; Admin API writes   | W     | T11             | 9        | [ ]                          |
+| T17 | Phase 5c: remove synthetic accounts + last auth writers   | W     | T15, T16        | 10       | [ ]                          |
 
 C = coordinator · W = worker (worktree) · O = owner.
 States: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked.
@@ -127,7 +127,17 @@ up` refuses it alone; a PR branch must contain `main`'s migrations. Noted:
   the four code templates from "30 minutes" to "1 hour"; the owner pastes those.
   Verified on a temporary local GoTrue v2.197.0: require current password
   applies only to sessions that signed in with a password, so first-password
-  and recovery flows aren't blocked. Still open: the Resend daily cap.
+  and recovery flows aren't blocked.
+
+- 2026-10-19: The owner pasted #46's templates ("1 hour") into the dashboard and
+  confirmed the email settings, without screenshots. **Resend is on the free
+  plan: 100 sends/day**, below DESIGN's 150 target. That cap is shared by
+  Auth email (codes, links, invites) and the three tournament-reminder
+  functions. Demand from production: the busiest day in 60 days was #12
+  (2026-10-18) with 13 new sessions, and the busiest week had 40. A heavy day
+  with codes, resends and a reminder batch comes to roughly 60, so the cap
+  holds with some margin. The T₀ announcement goes from the club address, not
+  Resend. Upgrade-or-watch is an owner decision at the T₀ go/no-go (§5).
 
 ---
 
@@ -425,7 +435,8 @@ sign-in (F-3). Record who tested what in §1's log.
 - **R0:** count of non-null `encrypted_password` = 0.
 - **R1:** auth users with no identity = 0; identities whose email differs from
   `auth.users.email` = 0; users with empty `providers` = 0. The owner
-  screenshots the auth settings page against the T0c checklist.
+  confirms the dashboard against the T0c checklist (done 2026-10-19, without
+  screenshots).
 - **R2:** the hook is enabled (owner screenshot). The integrity check passes.
   `self_signup_player` signups still produce exactly one `players` row.
 - **T₀, right after release (owner, production):** sign in with a code from
@@ -538,7 +549,9 @@ of showing a PIN. Merge 1/3 → `db push` → `functions deploy send-invite-emai
 
 1. Go/no-go for T₀: every hard gate in §4.3 is green, the integrity check
    against production meets the T₀ column (§4.5), and the #13 timing rule
-   holds.
+   holds. **Owner decision on Resend:** stay on the free plan (100 sends/day)
+   with the watch below, or upgrade for the window. Resend's plans upgrade
+   immediately, so a mid-window upgrade is also an option.
 2. Set `PIN_SUNSET_DATE` (a commit on 3/3) → merge 2/3 then 3/3 → Vercel
    deploys.
 3. Once the deploy is live, paste the code-first `magic_link.html` and its
@@ -547,7 +560,9 @@ of showing a PIN. Merge 1/3 → `db push` → `functions deploy send-invite-emai
 4. An admin pastes the new FAQ into LobsterWayAdmin.
 5. An admin sends the announcement email (BCC, club address) and the WhatsApp
    message (Appendix).
-6. Watch the readiness panel and the auth logs daily (§4.4).
+6. Watch the readiness panel and the auth logs daily (§4.4). Check Resend's
+   daily usage on T₀ and on any tournament day. If it passes ~70 or GoTrue logs
+   SMTP errors, upgrade Resend.
 
 **Cutover go/no-go** (D-11, hard gates only):
 
