@@ -58,10 +58,12 @@ enable_refresh_token_rotation = true
 refresh_token_reuse_interval = 10
 enable_signup = true
 enable_anonymous_sign_ins = false
-# Settings from docs/pin-auth-removal/DESIGN.md §2. Hosted values live in the
-# dashboard; the T0c checklist (PR description) keeps them in step with these.
+# Settings from docs/pin-auth-removal/DESIGN.md §2 and D-17. Hosted values live
+# in the dashboard; keep these in step with it. The hosted "require current
+# password when updating" setting is on, but it has no key here, so it's off
+# locally. It applies only to sessions that signed in with a password.
 minimum_password_length = 10
-password_requirements = ""
+password_requirements = "lower_upper_letters_digits"
 
 # Raised for tournament day: shared venue Wi-Fi counts as one IP (F-7).
 [auth.rate_limit]
@@ -76,8 +78,8 @@ enable_confirmations = false
 secure_password_change = true
 max_frequency = "60s"
 otp_length = 6
-# Also governs recovery and email-change links.
-otp_expiry = 1800
+# Also governs recovery and email-change links. The templates say "1 hour".
+otp_expiry = 3600
 
 # Auth email templates. confirmation, recovery and reauthentication show the
 # 6-digit code first (typed into the app, which works inside an iOS home-screen
