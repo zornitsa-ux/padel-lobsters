@@ -222,8 +222,10 @@ begin
   insert into public.pin_attempts(player_id, attempt_kind, succeeded) values (v_ph, 'player', true);
   insert into public.pin_attempts(player_id, attempt_kind, succeeded, attempted_at)
   values (v_taken, 'player', true, now() - interval '15 days');
-  v_count := (select count(*) from auth.users where encrypted_password is not null);
-  update auth.users set encrypted_password = 'x' where id = v_ph and encrypted_password is null;
+  -- GoTrue stores '' for passwordless users it creates, so blank must not count.
+  update auth.users set encrypted_password = '' where id = v_ph2;
+  v_count := (select count(*) from auth.users where coalesce(encrypted_password, '') <> '');
+  update auth.users set encrypted_password = 'x' where id = v_ph and coalesce(encrypted_password, '') = '';
   v_ready := public.admin_auth_readiness();
   if (select array_agg(k order by k) from jsonb_object_keys(v_ready) k) <> array['no_email', 'password_count', 'recent_pin_users']
      or not v_ready -> 'no_email' @> jsonb_build_array(jsonb_build_object('id', v_taken, 'name', 'Taken Email'))

@@ -182,6 +182,26 @@ up` refuses it alone; a PR branch must contain `main`'s migrations. Noted:
   checkout. T14 follows on its own branch once T2 frees the local stack (both
   need it), and PR 1/3's prod-data rehearsal waits for T14's parity script.
 
+- 2026-10-19: **T2 built** (5 commits on `pin-auth-t2-backend`), and every
+  §4.1 gate passes except the prod-data rehearsal, which waits for T14. On
+  local GoTrue, all four hook rejections reach the client as `status: 400`
+  with the message unchanged; `error.code` is `unknown`, so C-3's mapping on
+  status plus message stands. Both trigger paths (insert-confirmed and
+  update-to-confirmed) create exactly one player and one identity, and a
+  `role` sent in `user_metadata` is ignored. Today's client copes with a null
+  PIN from `admin_add_player` (D-13). Coordinator review changes:
+  - C-7 `password_count` counts non-blank hashes, because GoTrue stores `''`
+    for the passwordless users it creates (matching `auth_integrity.sql`).
+  - C-3: the grants file lists only `anon` and `authenticated`, so the hook
+    is checked by its absence there and by `native_signup.sql`'s ACL check.
+  - C-4: the trigger skips a user with no usable name or email rather than
+    failing the confirmation.
+  - C-6: `team_name` comes from the most recently created league that has
+    the player on a team.
+
+  Like `send_pin_email`, `send_invite_email` raises when the Vault secret is
+  missing, so locally the invite and add RPCs abort unless a test stubs it.
+
 ---
 
 ## 2. Schedule

@@ -48,7 +48,9 @@ time, later than every migration on `main`.
 ## C-3. `public.before_user_created_hook(event jsonb) returns jsonb`
 
 - **Grants:** execute to `supabase_auth_admin` only; revoked from `public`,
-  `anon` and `authenticated`. It's added to `expected_function_grants.txt`.
+  `anon` and `authenticated`. `expected_function_grants.txt` only lists `anon`
+  and `authenticated` grants, so the hook's absence there is the check; T2's
+  SQL test asserts its ACL directly.
 - **`config.toml`:**
   `[auth.hook.before_user_created] enabled = true, uri = "pg-functions://postgres/public/before_user_created_hook"`.
 - **Input:** it reads `event->'user'->'user_metadata'` (C-2).
@@ -95,6 +97,9 @@ and new.email_confirmed_at is not null`). Both are `for each row`.
   the way `self_signup_player` parses them (`adjustment` 0,
   `adjusted_level` = level, `pin` and `pin_hash` NULL). It ends with
   `on conflict (id) do nothing`.
+- **It skips a user with no usable name or email** (created outside signup)
+  rather than failing the confirmation. The integrity check reports such a
+  user as a confirmed account without a player.
 - **Idempotent with the reverse path.** `ensure_auth_user_for_player` (a
   `players` insert → raw `auth.users` insert) already sets
   `email_confirmed_at`, and the player row exists by then. So this trigger
@@ -139,7 +144,7 @@ interface InvitePayload {
   email: string
   name: string // first name extracted, as send-pin-email does
   kind: 'league_invite' | 'added' | 'resend'
-  team_name: string | null // league_invite only: the player's team in the newest league season, else null
+  team_name: string | null // league_invite only: the player's team in the most recently created league that has them on a team, else null
 }
 ```
 
@@ -169,7 +174,7 @@ the grants file.
 interface AuthReadiness {
   no_email: { id: string; name: string }[] // active players whose auth email is synthetic; ordered by name
   recent_pin_users: { id: string; name: string; last_pin_at: string }[] // succeeded 'player' pin_attempts in the last 14 days, newest first
-  password_count: number // auth.users with encrypted_password not null
+  password_count: number // auth.users with a non-blank encrypted_password (GoTrue stores '' for passwordless users it creates)
 }
 ```
 

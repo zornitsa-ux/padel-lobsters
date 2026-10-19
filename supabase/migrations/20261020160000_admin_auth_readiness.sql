@@ -33,7 +33,7 @@ begin
            group by pa.player_id, p.name
         ) r
     ), '[]'::jsonb),
-    'password_count', (select count(*) from auth.users where encrypted_password is not null)
+    'password_count', (select count(*) from auth.users where coalesce(encrypted_password, '') <> '')
   );
 end;
 $function$;
