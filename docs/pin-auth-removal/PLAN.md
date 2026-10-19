@@ -35,7 +35,7 @@ signed in gets logged out.
 | T0b | Identity backfill + patch `ensure_auth_user_for_player`   | C     | —               | #44      | [x]                          |
 | T0c | Auth settings: `config.toml` + dashboard; templates       | C → O | —               | #44, #46 | [~] dashboard done; #46 open |
 | T13 | Prod-data rehearsal kit: sync + integrity check (§4.5)    | C     | —               | #45      | [~]                          |
-| T1  | Contract freeze (§3.1)                                    | C     | —               | —        | [ ]                          |
+| T1  | Contract freeze (§3.1, CONTRACTS.md)                      | C     | —               | —        | [x]                          |
 | T2  | Backend: hook, trigger, invite/add RPCs, readiness RPC    | W     | T0b, T1         | 1/3      | [ ]                          |
 | T3  | `SignInForm`, `AuthConfirm`, gates, native signup         | W     | T1              | 2/3      | [ ]                          |
 | T4  | Account → Sign-in & security                              | W     | T1              | 2/3      | [ ]                          |
@@ -139,6 +139,22 @@ up` refuses it alone; a PR branch must contain `main`'s migrations. Noted:
   holds with some margin. The T₀ announcement goes from the club address, not
   Resend. Upgrade-or-watch is an owner decision at the T₀ go/no-go (§5).
 
+- 2026-10-19: **T1 done:** the contracts are frozen in `CONTRACTS.md` (C-1 to
+  C-11). Changes from §3.1:
+  - The `send-invite-email` body is the whole message (`player_id`, `email`,
+    `name`, `kind`, `team_name`), so the function never reads the database,
+    the same as `send-pin-email`.
+  - New: `admin_resend_invite` returns the address it mailed.
+  - New: the readiness RPC is `admin_auth_readiness() returns jsonb`.
+  - New: the hook's four exact messages, with `http_code` 400.
+  - New: the PR 1/3 migration timestamps are reserved (`20261020120000`
+    to `…160000`).
+  - New: the `?signin=1&email=` deep link, the `pl_auth_return_path` key,
+    and the `OtpCodeStep` that signup shares with sign-in.
+
+  Invite copy must work before T₀, so it doesn't mention a code (R2 runs
+  dark against the link-only client).
+
 ---
 
 ## 2. Schedule
@@ -197,8 +213,10 @@ interstitial and the readiness panel all read it. PR 4 deletes it.
 
 ### 3.1 T1: contract freeze
 
-The coordinator commits these before dispatching T2–T5, and workers don't
-change them (matchmaking-v2 §2 freeze rule):
+**Frozen in [`CONTRACTS.md`](./CONTRACTS.md) (2026-10-19), which is the
+authority where it is more specific than this list.** The coordinator commits
+these before dispatching T2–T5, and workers don't change them (matchmaking-v2
+§2 freeze rule):
 
 - **`SignInForm` props:**
   `{ variant: 'page' | 'modal' | 'inline', initialEmail?, onSignedIn?, allowPin: boolean }`.
