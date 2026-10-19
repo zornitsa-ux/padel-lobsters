@@ -57,21 +57,56 @@ jwt_expiry = 3600
 enable_refresh_token_rotation = true
 refresh_token_reuse_interval = 10
 enable_signup = true
-enable_anonymous_sign_ins = true
+enable_anonymous_sign_ins = false
+# Settings from docs/pin-auth-removal/DESIGN.md §2. Hosted values live in the
+# dashboard; the T0c checklist (PR description) keeps them in step with these.
+minimum_password_length = 10
+password_requirements = ""
+
+# Raised for tournament day: shared venue Wi-Fi counts as one IP (F-7).
+[auth.rate_limit]
+email_sent = 150
+sign_in_sign_ups = 150
+token_verifications = 150
 
 [auth.email]
 enable_signup = true
 double_confirm_changes = true
 enable_confirmations = false
+secure_password_change = true
+max_frequency = "60s"
+otp_length = 6
+# Also governs recovery and email-change links.
+otp_expiry = 1800
 
-# Magic-link template override. The default `{{ .ConfirmationURL }}` macro
-# builds against GoTrue's external URL (http://127.0.0.1:54321), but Kong
-# only forwards /auth/v1/* — the bare /verify path 404s locally. This
-# template redirects through the SPA's /auth/confirm route, which calls
-# supabase.auth.verifyOtp() itself. Same template works in production.
+# Auth email templates. confirmation, recovery and reauthentication show the
+# 6-digit code first (typed into the app, which works inside an iOS home-screen
+# install), then a token_hash link through the SPA's /auth/confirm route.
+# magic_link and email_change are link-only (see below). None uses
+# {{ .ConfirmationURL }}: it builds against GoTrue's external URL, and Kong only
+# forwards /auth/v1/*, so the bare /verify path 404s locally. The same files are
+# pasted into the hosted dashboard.
+#
+# magic_link stays link-only until the sign-in form has a code field (PR 2/3):
+# a code with nowhere to type it gets typed into the PIN field.
 [auth.email.template.magic_link]
 subject = "Sign in to Padel Lobsters"
 content_path = "./supabase/templates/magic_link.html"
+
+# Sent instead of magic_link to a brand-new address when confirmations are on
+# (hosted has them on).
+[auth.email.template.confirmation]
+subject = "Confirm your email for Padel Lobsters"
+content_path = "./supabase/templates/confirmation.html"
+
+[auth.email.template.recovery]
+subject = "Reset your Padel Lobsters password"
+content_path = "./supabase/templates/recovery.html"
+
+# Code only: reauthenticate() expects the code back as updateUser's nonce.
+[auth.email.template.reauthentication]
+subject = "Your Padel Lobsters confirmation code"
+content_path = "./supabase/templates/reauthentication.html"
 
 # Email-change confirmation. Same Kong-prefix workaround as magic_link.
 # With double_confirm_changes=true (see above) this template is sent to
