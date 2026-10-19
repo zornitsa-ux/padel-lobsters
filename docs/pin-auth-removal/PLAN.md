@@ -24,6 +24,11 @@ signed in gets logged out.
   Realism comes from loading a copy of production data into the local stack
   (§4.5). Production is touched only by the release steps and the read-only
   checks after them.
+- **These docs travel on the task branches.** There's no separate docs
+  branch or docs PR. Each task branch carries DESIGN, PLAN and CONTRACTS and
+  updates PLAN's status and log itself; the docs reach `main` with the first
+  of those PRs to merge. Open branches carrying them must hold identical
+  copies, so a doc change goes onto every open one.
 
 ---
 
@@ -155,6 +160,18 @@ up` refuses it alone; a PR branch must contain `main`'s migrations. Noted:
   Invite copy must work before T₀, so it doesn't mention a code (R2 runs
   dark against the link-only client).
 
+- 2026-10-19: #45 review fixes (0cbeecc, rebased on `main`). `sync.sh` builds
+  the auth excludes from production's catalog and refuses a list missing the
+  copied or token tables. After the load, every other local auth table must
+  be empty, which replaces a Vault check after the load that could never
+  fail. `integrity.sh` refuses `--linked --details`, so names never come
+  straight from production. The unconfirmed-account threshold follows D-17's
+  1-hour OTP expiry (it was 30 minutes).
+
+- 2026-10-19: The docs moved off their standalone branch (#47, closed
+  unmerged) onto #45 and #46 as identical copies, with no content lost. From
+  now on they travel on the task branches (Constraints above).
+
 ---
 
 ## 2. Schedule
@@ -164,7 +181,7 @@ Dates stay relative until tournament **#13** is scheduled. Then pin them here.
 | Milestone                         | When                                       | Rule                                                                       |
 | --------------------------------- | ------------------------------------------ | -------------------------------------------------------------------------- |
 | R0: Phase 0a merged + pushed      | Week of 15 Oct                             | Invisible; may land before #12 (18 Oct)                                    |
-| R1: Phase 0b merged + pushed      | **Done 2026-10-19**                        | Verified in production (§4.4); dashboard checklist in progress             |
+| R1: Phase 0b merged + pushed      | **Done 2026-10-19**                        | Verified in production (§4.4); dashboard checklist done the same day       |
 | R2: dark backend (PR 1/3)         | ≥ 2 days before T₀                         | The hook and invite emails run in production before players see the new UI |
 | **T₀**: PRs 2/3 + 3/3 + announce  | A Tue or Wed                               | T₀ ≤ #13 − 17 days                                                         |
 | WhatsApp reminder                 | Cutover − 3 days                           |                                                                            |
@@ -209,7 +226,7 @@ interstitial and the readiness panel all read it. PR 4 deletes it.
   `enable_confirmations = true` temporarily on. Also produce a **dashboard
   checklist** in the PR description, one row per setting, for the owner to
   tick after merge. It includes checking Resend's daily cap against ≥150
-  sends/day.
+  sends/day (done 2026-10-19: the free plan's 100/day, §1 log).
 
 ### 3.1 T1: contract freeze
 
@@ -325,9 +342,11 @@ verify-pin`.
 ### 3.7 PRs 0c and 0d: prod-data rehearsal kit (T13, T14)
 
 Neither has a migration or anything to deploy, so each can merge any time.
-T13 (0c) must land before R1. T14 (0d) must land before T6.
+T13 (0c) gated R1 and was run from its branch for it. T14 (0d) must land
+before T6.
 
 - **T13 (#45):** `scripts/prod-rehearsal/sync.sh`, `scrub_credentials.sql`,
+  `auth_sets.sql` (the row sets shared by the counts and the names),
   `auth_integrity.sql` (+ `_details`) and `integrity.sh`, which together run
   §4.5 steps 1–2. Run them as `npm run rehearsal:sync` and
   `npm run rehearsal:integrity -- --local|--linked`.
@@ -481,9 +500,12 @@ before production, that every account still signs in and sees the same data.
 - **Local GoTrue is production's version** (production's `/auth/v1/health`).
   If not, run `npx supabase link`, then `npx supabase stop && npx supabase start`.
 - **Local migrations match production's exactly**, so run it from `main`.
-- **Vault is empty locally**, before and after the load. Several database
-  functions post to **production** edge function URLs, authenticated with a
-  Vault secret. With no secret they fail closed.
+- **Vault is empty locally** before the load. Several database functions post
+  to **production** edge function URLs, authenticated with a Vault secret.
+  With no secret they fail closed.
+- **After the load, every auth table except the three copied is empty**
+  (GoTrue's `schema_migrations` aside). This proves the excludes held.
+- **Names stay local.** `integrity.sh` refuses `--linked --details`.
 
 **What is copied (`scrub_credentials.sql` runs in the load transaction):**
 
@@ -527,7 +549,7 @@ before production, that every account still signs in and sees the same data.
 | ------------------------------------------------------------ | --------------------------------- | -------------------------- | ---------------------------- |
 | Players without an auth account                              | 0                                 | 0                          | = synthetic accounts deleted |
 | **Confirmed** auth accounts without a player                 | 0                                 | 0                          | 0                            |
-| Unconfirmed auth accounts older than the OTP expiry (30 min) | 0                                 | listed (abandoned signups) | listed (abandoned signups)   |
+| Unconfirmed auth accounts older than the OTP expiry (1 hour) | 0                                 | listed (abandoned signups) | listed (abandoned signups)   |
 | Duplicate auth emails (case-insensitive)                     | 0                                 | 0                          | 0                            |
 | Duplicate real `players.email`                               | 0                                 | 0                          | 0                            |
 | Real `players.email` ≠ `auth.users.email`                    | 0                                 | 0                          | 0                            |
@@ -557,7 +579,8 @@ the checklist in the PR and verifies afterwards (§4.4).
 **R1: Phase 0b.** Clean prod-data rehearsal of #44 (§4.5) → merge → `db push`
 → apply the dashboard checklist (settings and the templates) → C runs the
 integrity check against production → the owner sends themself a sign-in link
-from production and checks the email (no code, "30 minutes").
+from production and checks the email (no code, "1 hour" once #46's templates
+are pasted).
 
 **R2: dark backend.** Tell the 3 admins that invites now send an email instead
 of showing a PIN. Merge 1/3 → `db push` → `functions deploy send-invite-email`
