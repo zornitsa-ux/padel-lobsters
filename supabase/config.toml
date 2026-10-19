@@ -126,6 +126,12 @@ content_path = "./supabase/templates/email_change.html"
 enabled = true
 uri = "pg-functions://postgres/public/custom_access_token_hook"
 
+# Validates native signup metadata before GoTrue creates the user (migration
+# 20261020130000, docs/pin-auth-removal C-3).
+[auth.hook.before_user_created]
+enabled = true
+uri = "pg-functions://postgres/public/before_user_created_hook"
+
 [edge_runtime]
 enabled = true
 policy = "per_worker"
@@ -135,6 +141,9 @@ inspector_port = 8083
 verify_jwt = false
 
 [functions.send-pin-email]
+verify_jwt = false
+
+[functions.send-invite-email]
 verify_jwt = false
 
 [analytics]
