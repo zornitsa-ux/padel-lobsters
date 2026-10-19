@@ -34,28 +34,28 @@ signed in gets logged out.
 
 ## 1. Status
 
-| ID  | Task                                                      | Owner | Depends on      | PR       | State |
-| --- | --------------------------------------------------------- | ----- | --------------- | -------- | ----- |
-| T0a | Clear 44 orphan password hashes → `NULL`                  | C     | —               | #43      | [x]   |
-| T0b | Identity backfill + patch `ensure_auth_user_for_player`   | C     | —               | #44      | [x]   |
-| T0c | Auth settings: `config.toml` + dashboard; templates       | C → O | —               | #44, #46 | [x]   |
-| T13 | Prod-data rehearsal kit: sync + integrity check (§4.5)    | C     | —               | #45      | [x]   |
-| T1  | Contract freeze (§3.1, CONTRACTS.md)                      | C     | —               | —        | [x]   |
-| T2  | Backend: hook, trigger, invite/add RPCs, readiness RPC    | W     | T0b, T1         | 1/3      | [~]   |
-| T3  | `SignInForm`, `AuthConfirm`, gates, native signup         | W     | T1              | 2/3      | [ ]   |
-| T4  | Account → Sign-in & security                              | W     | T1              | 2/3      | [ ]   |
-| T5  | Comms: upgrade card, interstitial, readiness panel, copy  | W     | T1              | 3/3      | [ ]   |
-| T14 | Rehearsal sign-in + data-access parity script (§4.5)      | W     | T13, T1         | 0d       | [ ]   |
-| T6  | Verification: local matrix, local devices, rehearsal      | C + O | T2–T5, T14      | —        | [ ]   |
-| T7  | Dark backend release (R2)                                 | O     | T2 merged, T0c  | —        | [ ]   |
-| T8  | T₀ release and announcement (R3)                          | O     | T6, T7          | —        | [ ]   |
-| T9  | Cutover PR: remove PIN client path, `verify-pin` 410 stub | W     | T8              | 4        | [ ]   |
-| T10 | Revoke `verify_player_pin_v2` from anon (D-12)            | C     | T9 + 48h watch  | 5        | [ ]   |
-| T11 | Phase 4 cleanup (DESIGN §3 Phase 4)                       | W     | T10 + ≥2 weeks  | 6        | [ ]   |
-| T12 | Remove the "Used a PIN before?" explainer                 | W     | cutover + ~2 mo | 7        | [ ]   |
-| T15 | Phase 5a: client reads the role from token claims         | W     | cutover         | 8        | [ ]   |
-| T16 | Phase 5b: `auth.users` owns the email; Admin API writes   | W     | T11             | 9        | [ ]   |
-| T17 | Phase 5c: remove synthetic accounts + last auth writers   | W     | T15, T16        | 10       | [ ]   |
+| ID  | Task                                                      | Owner | Depends on      | PR       | State      |
+| --- | --------------------------------------------------------- | ----- | --------------- | -------- | ---------- |
+| T0a | Clear 44 orphan password hashes → `NULL`                  | C     | —               | #43      | [x]        |
+| T0b | Identity backfill + patch `ensure_auth_user_for_player`   | C     | —               | #44      | [x]        |
+| T0c | Auth settings: `config.toml` + dashboard; templates       | C → O | —               | #44, #46 | [x]        |
+| T13 | Prod-data rehearsal kit: sync + integrity check (§4.5)    | C     | —               | #45      | [x]        |
+| T1  | Contract freeze (§3.1, CONTRACTS.md)                      | C     | —               | —        | [x]        |
+| T2  | Backend: hook, trigger, invite/add RPCs, readiness RPC    | W     | T0b, T1         | #48      | [~] review |
+| T3  | `SignInForm`, `AuthConfirm`, gates, native signup         | W     | T1              | 2/3      | [ ]        |
+| T4  | Account → Sign-in & security                              | W     | T1              | 2/3      | [ ]        |
+| T5  | Comms: upgrade card, interstitial, readiness panel, copy  | W     | T1              | 3/3      | [ ]        |
+| T14 | Rehearsal sign-in + data-access parity script (§4.5)      | W     | T13, T1         | #49      | [~] review |
+| T6  | Verification: local matrix, local devices, rehearsal      | C + O | T2–T5, T14      | —        | [ ]        |
+| T7  | Dark backend release (R2)                                 | O     | T2 merged, T0c  | —        | [ ]        |
+| T8  | T₀ release and announcement (R3)                          | O     | T6, T7          | —        | [ ]        |
+| T9  | Cutover PR: remove PIN client path, `verify-pin` 410 stub | W     | T8              | 4        | [ ]        |
+| T10 | Revoke `verify_player_pin_v2` from anon (D-12)            | C     | T9 + 48h watch  | 5        | [ ]        |
+| T11 | Phase 4 cleanup (DESIGN §3 Phase 4)                       | W     | T10 + ≥2 weeks  | 6        | [ ]        |
+| T12 | Remove the "Used a PIN before?" explainer                 | W     | cutover + ~2 mo | 7        | [ ]        |
+| T15 | Phase 5a: client reads the role from token claims         | W     | cutover         | 8        | [ ]        |
+| T16 | Phase 5b: `auth.users` owns the email; Admin API writes   | W     | T11             | 9        | [ ]        |
+| T17 | Phase 5c: remove synthetic accounts + last auth writers   | W     | T15, T16        | 10       | [ ]        |
 
 C = coordinator · W = worker (worktree) · O = owner.
 States: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked.
@@ -201,6 +201,34 @@ up` refuses it alone; a PR branch must contain `main`'s migrations. Noted:
 
   Like `send_pin_email`, `send_invite_email` raises when the Vault secret is
   missing, so locally the invite and add RPCs abort unless a test stubs it.
+
+- 2026-10-20: **T14 built** (#49). `npm run rehearsal:parity` signs in every
+  real-email account with a code from `generateLink` and hashes 32
+  RLS-protected reads per account. Its records live outside the repo. A
+  determinism re-run on a production copy diffed clean. The coordinator
+  reviewed it: the script refuses non-local URLs, and nothing it does has a
+  side effect.
+
+- 2026-10-20: **#48 rehearsed on a fresh production copy** (§4.5), with the
+  parity files copied in temporarily:
+  - **Migrations:** all five applied cleanly, and the stack was restarted with
+    the hook on.
+  - **Integrity:** `blank_player_emails` went 2 → 0 and every other count is
+    unchanged (R1 column; 3 active players without a real email, 13 synthetic
+    accounts).
+  - **Parity:** 141 accounts, of which 128 have a real email. 128 of 128
+    signed in before and after, and 5 of 5 Mailpit codes passed. 0 changed
+    hashes on all 32 reads. That was expected: the two blank emails belong to
+    synthetic-email accounts, which parity skips.
+  - **Readiness RPC as an admin:** `no_email` 3, `recent_pin_users` 22,
+    `password_count` 0.
+  - **Hook:** only `supabase_auth_admin` can execute it. Through GoTrue, a
+    placeholder's name gets the 400 and its exact message, and no auth user is
+    created. A valid native signup creates one player and one identity, with
+    the fields parsed and no PIN.
+
+  Afterwards `db:reset` brought back the seed data, and the parity records
+  were deleted. #48 is ready for review.
 
 ---
 
