@@ -34,28 +34,28 @@ signed in gets logged out.
 
 ## 1. Status
 
-| ID  | Task                                                      | Owner | Depends on      | PR       | State                        |
-| --- | --------------------------------------------------------- | ----- | --------------- | -------- | ---------------------------- |
-| T0a | Clear 44 orphan password hashes → `NULL`                  | C     | —               | #43      | [x]                          |
-| T0b | Identity backfill + patch `ensure_auth_user_for_player`   | C     | —               | #44      | [x]                          |
-| T0c | Auth settings: `config.toml` + dashboard; templates       | C → O | —               | #44, #46 | [~] dashboard done; #46 open |
-| T13 | Prod-data rehearsal kit: sync + integrity check (§4.5)    | C     | —               | #45      | [~]                          |
-| T1  | Contract freeze (§3.1, CONTRACTS.md)                      | C     | —               | —        | [x]                          |
-| T2  | Backend: hook, trigger, invite/add RPCs, readiness RPC    | W     | T0b, T1         | 1/3      | [ ]                          |
-| T3  | `SignInForm`, `AuthConfirm`, gates, native signup         | W     | T1              | 2/3      | [ ]                          |
-| T4  | Account → Sign-in & security                              | W     | T1              | 2/3      | [ ]                          |
-| T5  | Comms: upgrade card, interstitial, readiness panel, copy  | W     | T1              | 3/3      | [ ]                          |
-| T14 | Rehearsal sign-in + data-access parity script (§4.5)      | W     | T13, T1         | 0d       | [ ]                          |
-| T6  | Verification: local matrix, local devices, rehearsal      | C + O | T2–T5, T14      | —        | [ ]                          |
-| T7  | Dark backend release (R2)                                 | O     | T2 merged, T0c  | —        | [ ]                          |
-| T8  | T₀ release and announcement (R3)                          | O     | T6, T7          | —        | [ ]                          |
-| T9  | Cutover PR: remove PIN client path, `verify-pin` 410 stub | W     | T8              | 4        | [ ]                          |
-| T10 | Revoke `verify_player_pin_v2` from anon (D-12)            | C     | T9 + 48h watch  | 5        | [ ]                          |
-| T11 | Phase 4 cleanup (DESIGN §3 Phase 4)                       | W     | T10 + ≥2 weeks  | 6        | [ ]                          |
-| T12 | Remove the "Used a PIN before?" explainer                 | W     | cutover + ~2 mo | 7        | [ ]                          |
-| T15 | Phase 5a: client reads the role from token claims         | W     | cutover         | 8        | [ ]                          |
-| T16 | Phase 5b: `auth.users` owns the email; Admin API writes   | W     | T11             | 9        | [ ]                          |
-| T17 | Phase 5c: remove synthetic accounts + last auth writers   | W     | T15, T16        | 10       | [ ]                          |
+| ID  | Task                                                      | Owner | Depends on      | PR       | State |
+| --- | --------------------------------------------------------- | ----- | --------------- | -------- | ----- |
+| T0a | Clear 44 orphan password hashes → `NULL`                  | C     | —               | #43      | [x]   |
+| T0b | Identity backfill + patch `ensure_auth_user_for_player`   | C     | —               | #44      | [x]   |
+| T0c | Auth settings: `config.toml` + dashboard; templates       | C → O | —               | #44, #46 | [x]   |
+| T13 | Prod-data rehearsal kit: sync + integrity check (§4.5)    | C     | —               | #45      | [x]   |
+| T1  | Contract freeze (§3.1, CONTRACTS.md)                      | C     | —               | —        | [x]   |
+| T2  | Backend: hook, trigger, invite/add RPCs, readiness RPC    | W     | T0b, T1         | 1/3      | [~]   |
+| T3  | `SignInForm`, `AuthConfirm`, gates, native signup         | W     | T1              | 2/3      | [ ]   |
+| T4  | Account → Sign-in & security                              | W     | T1              | 2/3      | [ ]   |
+| T5  | Comms: upgrade card, interstitial, readiness panel, copy  | W     | T1              | 3/3      | [ ]   |
+| T14 | Rehearsal sign-in + data-access parity script (§4.5)      | W     | T13, T1         | 0d       | [ ]   |
+| T6  | Verification: local matrix, local devices, rehearsal      | C + O | T2–T5, T14      | —        | [ ]   |
+| T7  | Dark backend release (R2)                                 | O     | T2 merged, T0c  | —        | [ ]   |
+| T8  | T₀ release and announcement (R3)                          | O     | T6, T7          | —        | [ ]   |
+| T9  | Cutover PR: remove PIN client path, `verify-pin` 410 stub | W     | T8              | 4        | [ ]   |
+| T10 | Revoke `verify_player_pin_v2` from anon (D-12)            | C     | T9 + 48h watch  | 5        | [ ]   |
+| T11 | Phase 4 cleanup (DESIGN §3 Phase 4)                       | W     | T10 + ≥2 weeks  | 6        | [ ]   |
+| T12 | Remove the "Used a PIN before?" explainer                 | W     | cutover + ~2 mo | 7        | [ ]   |
+| T15 | Phase 5a: client reads the role from token claims         | W     | cutover         | 8        | [ ]   |
+| T16 | Phase 5b: `auth.users` owns the email; Admin API writes   | W     | T11             | 9        | [ ]   |
+| T17 | Phase 5c: remove synthetic accounts + last auth writers   | W     | T15, T16        | 10       | [ ]   |
 
 C = coordinator · W = worker (worktree) · O = owner.
 States: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked.
@@ -176,6 +176,11 @@ up` refuses it alone; a PR branch must contain `main`'s migrations. Noted:
   sent themself a sign-in link from production and checked the email. R1 is
   complete. There's no hook to check yet: it ships with PR 1/3 and is enabled
   at R2 (§4.4 says what to look for).
+
+- 2026-10-19: The owner merged #45 (T13) and #46 (T0c), so the docs are on
+  `main`. T2 was dispatched to a worker on `pin-auth-t2-backend` in the main
+  checkout. T14 follows on its own branch once T2 frees the local stack (both
+  need it), and PR 1/3's prod-data rehearsal waits for T14's parity script.
 
 ---
 
