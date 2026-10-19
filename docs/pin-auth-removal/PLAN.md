@@ -2,7 +2,7 @@
 
 This is the coordinator brief and the **single source of truth for status**.
 Read it with [`DESIGN.md`](./DESIGN.md), which holds the evidence (F-1 to F-10),
-the target design (§2) and the decisions (D-1 to D-16). The protocol from
+the target design (§2) and the decisions (D-1 to D-17). The protocol from
 [`../matchmaking-v2/PLAN.md`](../matchmaking-v2/PLAN.md) applies: §2 covers
 roles and the worker brief, §3 the ground rules.
 
@@ -29,28 +29,28 @@ signed in gets logged out.
 
 ## 1. Status
 
-| ID  | Task                                                      | Owner | Depends on      | PR  | State |
-| --- | --------------------------------------------------------- | ----- | --------------- | --- | ----- |
-| T0a | Clear 44 orphan password hashes → `NULL`                  | C     | —               | #43 | [x]   |
-| T0b | Identity backfill + patch `ensure_auth_user_for_player`   | C     | —               | #44 | [~]   |
-| T0c | Auth settings: `config.toml` + dashboard; five templates  | C → O | —               | #44 | [~]   |
-| T13 | Prod-data rehearsal kit: sync + integrity check (§4.5)    | C     | —               | #45 | [~]   |
-| T1  | Contract freeze (§3.1)                                    | C     | —               | —   | [ ]   |
-| T2  | Backend: hook, trigger, invite/add RPCs, readiness RPC    | W     | T0b, T1         | 1/3 | [ ]   |
-| T3  | `SignInForm`, `AuthConfirm`, gates, native signup         | W     | T1              | 2/3 | [ ]   |
-| T4  | Account → Sign-in & security                              | W     | T1              | 2/3 | [ ]   |
-| T5  | Comms: upgrade card, interstitial, readiness panel, copy  | W     | T1              | 3/3 | [ ]   |
-| T14 | Rehearsal sign-in + data-access parity script (§4.5)      | W     | T13, T1         | 0d  | [ ]   |
-| T6  | Verification: local matrix, local devices, rehearsal      | C + O | T2–T5, T14      | —   | [ ]   |
-| T7  | Dark backend release (R2)                                 | O     | T2 merged, T0c  | —   | [ ]   |
-| T8  | T₀ release and announcement (R3)                          | O     | T6, T7          | —   | [ ]   |
-| T9  | Cutover PR: remove PIN client path, `verify-pin` 410 stub | W     | T8              | 4   | [ ]   |
-| T10 | Revoke `verify_player_pin_v2` from anon (D-12)            | C     | T9 + 48h watch  | 5   | [ ]   |
-| T11 | Phase 4 cleanup (DESIGN §3 Phase 4)                       | W     | T10 + ≥2 weeks  | 6   | [ ]   |
-| T12 | Remove the "Used a PIN before?" explainer                 | W     | cutover + ~2 mo | 7   | [ ]   |
-| T15 | Phase 5a: client reads the role from token claims         | W     | cutover         | 8   | [ ]   |
-| T16 | Phase 5b: `auth.users` owns the email; Admin API writes   | W     | T11             | 9   | [ ]   |
-| T17 | Phase 5c: remove synthetic accounts + last auth writers   | W     | T15, T16        | 10  | [ ]   |
+| ID  | Task                                                      | Owner | Depends on      | PR       | State |
+| --- | --------------------------------------------------------- | ----- | --------------- | -------- | ----- |
+| T0a | Clear 44 orphan password hashes → `NULL`                  | C     | —               | #43      | [x]   |
+| T0b | Identity backfill + patch `ensure_auth_user_for_player`   | C     | —               | #44      | [x]   |
+| T0c | Auth settings: `config.toml` + dashboard; templates       | C → O | —               | #44, #46 | [~]   |
+| T13 | Prod-data rehearsal kit: sync + integrity check (§4.5)    | C     | —               | #45      | [~]   |
+| T1  | Contract freeze (§3.1)                                    | C     | —               | —        | [ ]   |
+| T2  | Backend: hook, trigger, invite/add RPCs, readiness RPC    | W     | T0b, T1         | 1/3      | [ ]   |
+| T3  | `SignInForm`, `AuthConfirm`, gates, native signup         | W     | T1              | 2/3      | [ ]   |
+| T4  | Account → Sign-in & security                              | W     | T1              | 2/3      | [ ]   |
+| T5  | Comms: upgrade card, interstitial, readiness panel, copy  | W     | T1              | 3/3      | [ ]   |
+| T14 | Rehearsal sign-in + data-access parity script (§4.5)      | W     | T13, T1         | 0d       | [ ]   |
+| T6  | Verification: local matrix, local devices, rehearsal      | C + O | T2–T5, T14      | —        | [ ]   |
+| T7  | Dark backend release (R2)                                 | O     | T2 merged, T0c  | —        | [ ]   |
+| T8  | T₀ release and announcement (R3)                          | O     | T6, T7          | —        | [ ]   |
+| T9  | Cutover PR: remove PIN client path, `verify-pin` 410 stub | W     | T8              | 4        | [ ]   |
+| T10 | Revoke `verify_player_pin_v2` from anon (D-12)            | C     | T9 + 48h watch  | 5        | [ ]   |
+| T11 | Phase 4 cleanup (DESIGN §3 Phase 4)                       | W     | T10 + ≥2 weeks  | 6        | [ ]   |
+| T12 | Remove the "Used a PIN before?" explainer                 | W     | cutover + ~2 mo | 7        | [ ]   |
+| T15 | Phase 5a: client reads the role from token claims         | W     | cutover         | 8        | [ ]   |
+| T16 | Phase 5b: `auth.users` owns the email; Admin API writes   | W     | T11             | 9        | [ ]   |
+| T17 | Phase 5c: remove synthetic accounts + last auth writers   | W     | T15, T16        | 10       | [ ]   |
 
 C = coordinator · W = worker (worktree) · O = owner.
 States: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked.
@@ -117,6 +117,19 @@ up` refuses it alone; a PR branch must contain `main`'s migrations. Noted:
   again: the same counts, plus all 141 identities' `email_verified` now match.
   Template de-duplication was added to PR 2/3.
 
+- 2026-10-19: **R1 done.** The owner merged #44 and pushed the migration. The
+  integrity check against production matches the rehearsal: no identity,
+  stale identity email and empty `providers` are all 0; everything else is
+  unchanged. Dashboard settings applied by the owner (**D-17**): secure email
+  and password change on; require current password on; leaked-password check
+  on; minimum length 10 with lowercase, uppercase and digits; OTP 6 digits
+  expiring after **3600 s** (not 1800). #46 matches `config.toml` and changes
+  the four code templates from "30 minutes" to "1 hour"; the owner pastes those.
+  Verified on a temporary local GoTrue v2.197.0: require current password
+  applies only to sessions that signed in with a password, so first-password
+  and recovery flows aren't blocked. The 1h expiry is still open for
+  dashboard confirmation, as is the Resend daily cap.
+
 ---
 
 ## 2. Schedule
@@ -126,7 +139,7 @@ Dates stay relative until tournament **#13** is scheduled. Then pin them here.
 | Milestone                         | When                                       | Rule                                                                       |
 | --------------------------------- | ------------------------------------------ | -------------------------------------------------------------------------- |
 | R0: Phase 0a merged + pushed      | Week of 15 Oct                             | Invisible; may land before #12 (18 Oct)                                    |
-| R1: Phase 0b merged + pushed      | Now (owner, 2026-10-19)                    | After a clean rehearsal (T13); **≥ 2 days before R2**                      |
+| R1: Phase 0b merged + pushed      | **Done 2026-10-19**                        | Verified in production (§4.4); dashboard checklist in progress             |
 | R2: dark backend (PR 1/3)         | ≥ 2 days before T₀                         | The hook and invite emails run in production before players see the new UI |
 | **T₀**: PRs 2/3 + 3/3 + announce  | A Tue or Wed                               | T₀ ≤ #13 − 17 days                                                         |
 | WhatsApp reminder                 | Cutover − 3 days                           |                                                                            |
@@ -233,6 +246,13 @@ send-invite-email` → enable the hook in the dashboard.
   and `PinRevealModal` handle `pin: null` and "Resend invite".
 - **T4:** the Account → Sign-in & security section (email, password with
   reauthenticate, sign out everywhere).
+- **Password UI (T3 + T4, D-17):** state the rules up front: 10+ characters,
+  with a lowercase letter, an uppercase letter and a digit, and not found in a
+  known breach. Map `weak_password` `reasons` (`length`, `characters`,
+  `pwned`) to specific messages. Show a current-password field only when the
+  session signed in with a password (`amr` includes `password`), and map
+  `current_password_required` / `current_password_invalid`. First password,
+  code or link sessions, and the post-recovery screen don't need it.
 - **Template (D-14):** `magic_link.html` gets the code first, in the shared
   layout of `confirmation.html` (#44's first commit has the finished version),
   and its subject becomes "Your Padel Lobsters sign-in code". The PR
@@ -352,19 +372,21 @@ only, never names or emails).
 
 ### 4.2 Local manual matrix (Mailpit at `:54324`, before each PR is marked ready)
 
-| Flow                                                                 | PR  |
-| -------------------------------------------------------------------- | --- |
-| Templates: three render a code + link; `magic_link` is link-only     | 0b  |
-| Identity-less seeded user: request a link → sign in → set a password | 0b  |
-| Native signup → code → `players` row; placeholder name rejected      | 1/3 |
-| Admin invite → invite email recorded, no PIN anywhere                | 1/3 |
-| `magic_link` renders the code; it signs in an existing user          | 2/3 |
-| Code sign-in on each of the three gate variants, staying on the page | 2/3 |
-| Magic link → tap to confirm → back to the original path              | 2/3 |
-| Password set, sign in, forgot → recovery → new password              | 2/3 |
-| Signed-out transfer deep link → code → lands on the transfer         | 2/3 |
-| Upgrade card variants; interstitial after a PIN sign-in              | 3/3 |
-| A PIN call gets the 410 → explainer; no PIN UI left                  | 4   |
+| Flow                                                                      | PR  |
+| ------------------------------------------------------------------------- | --- |
+| Templates: three render a code + link; `magic_link` is link-only          | 0b  |
+| Identity-less seeded user: request a link → sign in → set a password      | 0b  |
+| Native signup → code → `players` row; placeholder name rejected           | 1/3 |
+| Admin invite → invite email recorded, no PIN anywhere                     | 1/3 |
+| `magic_link` renders the code; it signs in an existing user               | 2/3 |
+| Code sign-in on each of the three gate variants, staying on the page      | 2/3 |
+| Magic link → tap to confirm → back to the original path                   | 2/3 |
+| Password set, sign in, forgot → recovery → new password                   | 2/3 |
+| Password rules: length, characters, breached (hosted only) messages       | 2/3 |
+| Password session: change needs the current password; code session doesn't | 2/3 |
+| Signed-out transfer deep link → code → lands on the transfer              | 2/3 |
+| Upgrade card variants; interstitial after a PIN sign-in                   | 3/3 |
+| A PIN call gets the 410 → explainer; no PIN UI left                       | 4   |
 
 ### 4.3 Real devices and inboxes, on the local stack (before T₀)
 
