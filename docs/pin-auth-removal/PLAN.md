@@ -388,6 +388,21 @@ up` refuses it alone; a PR branch must contain `main`'s migrations. Noted:
   - **For T16 (C-3 note):** locally, `auth.admin.createUser` with no name in
     metadata is **not** blocked by the `before_user_created` hook. T16 still
     confirms this on the production copy.
+  - **`/code-review` of the C-12 commits:** 10 findings. Nine are client
+    fixes in 2/3:
+    - a failed refresh or a thrown error no longer locks the user out or
+      leaves the check pending;
+    - a session with no role isn't shown the sign-in form while the check
+      runs;
+    - the cached result is cleared on sign-out;
+    - the `players` read goes through React Query;
+    - the pop-up applies the role rule to player prompts too;
+    - `isAdmin` is exposed once from `useApp`;
+    - a dead fixture branch is fixed;
+    - the signup e2e asserts after the check settles.
+
+    The tenth needs a migration (the token hook keeps an old role when there
+    is no `players` row) and joins 3/3's migration (§3.4).
 
 ---
 
@@ -545,6 +560,10 @@ send-invite-email` → db push → enable the hook in the dashboard. The functio
   `password_count`), plus `db:types`. Retire integrity check 15 from the T₀
   column. 3/3 therefore passes the prod-data rehearsal, and its release
   steps run `db push` before the merge (the change is backward-compatible).
+- **Migration (C-12 complement):** `custom_access_token_hook` removes `role`
+  from the token's `app_metadata` when the user has no `players` row. Today
+  it keeps whatever `auth.users` holds, so a user whose row is gone could
+  still carry an old `admin` claim (`/code-review` of C-12, 2026-10-21).
 - The FAQ rewrite in `lobsterWayContent.ts`, plus copy: the Dashboard guest
   greeting, the `SignInBanner` default, `TransferAccept`, and "behind her PIN".
 - The production `lobster_way_content` copy is **edited by an admin in
