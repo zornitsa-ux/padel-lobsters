@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { LogOut, ShieldCheck } from 'lucide-react'
 import { useApp } from '../../context/useApp'
 import { signOutEverywhere } from '../auth/authActions'
@@ -14,12 +15,13 @@ export default function SignInSecuritySection() {
   const [passwordSaved, setPasswordSaved] = useState(false)
   const [signOutError, setSignOutError] = useState('')
   const usedPassword = sessionUsedPassword({ session })
+  const { hash } = useLocation()
   const sectionRef = useRef<HTMLDivElement>(null)
   const passwordLabel = usedPassword ? 'Change password' : 'Set or change password'
 
   useEffect(() => {
-    if (window.location.hash === `#${SIGN_IN_SECURITY_ID}`) sectionRef.current?.scrollIntoView?.()
-  }, [])
+    if (hash === `#${SIGN_IN_SECURITY_ID}`) sectionRef.current?.scrollIntoView?.()
+  }, [hash])
 
   async function handleSignOutEverywhere() {
     setSignOutError('')
