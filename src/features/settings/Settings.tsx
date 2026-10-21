@@ -21,6 +21,7 @@ import {
   type SettingsForm,
 } from './settingsHelpers'
 import AccountSection from './AccountSection'
+import SignInSecuritySection from './SignInSecuritySection'
 import ProfileSection from './ProfileSection'
 import AccountStatsSection from './AccountStatsSection'
 import AccountOrdersSection from './AccountOrdersSection'
@@ -29,7 +30,7 @@ import { PageHeader } from '../../components/ui/PageHeader'
 import LobsterWayLink from '../../components/LobsterWayLink'
 
 export default function Settings() {
-  const { session, role, loginWithPin, logout } = useApp()
+  const { session, role, logout } = useApp()
   const { updatePlayer } = usePlayerActions({ session, role })
   const avatarUpload = useAvatarUpload()
   const { data: settings } = useSettings()
@@ -47,12 +48,6 @@ export default function Settings() {
     whatsappLink: '',
     groupName: 'Padel Lobsters',
   })
-  // ── Unified Account sign-in state ──────────────────────────
-  // A single PIN field handles BOTH admin + player sign-in via auto-detect.
-  const [signInPin, setSignInPin] = useState('')
-  const [signInError, setSignInError] = useState('')
-  const [signingIn, setSigningIn] = useState(false)
-
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [tips, setTips] = useState<string[] | null>(null) // null = use defaults
@@ -252,37 +247,6 @@ export default function Settings() {
   const activeTips = tips || DEFAULT_TIPS
   const isCustom = tips !== null
 
-  // ── Player sign-in handler (player PINs only) ─────────────────────────
-  // Admin login is intentionally NOT exposed in this field — see the
-  // discrete fold-out at the bottom of the page (Group Owner Access).
-  // This keeps the UI focused for the 99% case (a player verifying their
-  // identity) and avoids giving away the admin entry point.
-  const handleSignIn = async (e: FormEvent) => {
-    e?.preventDefault?.()
-    if (signingIn) return
-    setSigningIn(true)
-    setSignInError('')
-    const result = await loginWithPin(signInPin)
-    if (!result.success) {
-      // loginWithPin's `error` is typed unknown by AppContext; the auth API
-      // only ever puts a string there.
-      setSignInError(
-        typeof result.error === 'string' && result.error ? result.error : 'Sign-in failed',
-      )
-      setSignInPin('')
-    } else if (result.role === 'admin') {
-      // If somebody happens to type the admin PIN in the player field,
-      // treat it as wrong — we don't want to encourage that behaviour and
-      // we don't want to surface the admin role here.
-      logout()
-      setSignInError("That PIN didn't match any Lobster — double-check and try again.")
-      setSignInPin('')
-    } else {
-      setSignInPin('')
-    }
-    setSigningIn(false)
-  }
-
   const handleSave = async (e: FormEvent) => {
     e.preventDefault()
     if (!isAdmin) return // admin-only form is hidden when not admin
@@ -358,17 +322,9 @@ export default function Settings() {
       <PageHeader title="Account" />
 
       <div className="px-4 pt-4 space-y-5">
-        <AccountSection
-          isAdmin={isAdmin}
-          signedInPlayer={signedInPlayer}
-          logout={logout}
-          signInPin={signInPin}
-          setSignInPin={setSignInPin}
-          signInError={signInError}
-          setSignInError={setSignInError}
-          signingIn={signingIn}
-          handleSignIn={handleSignIn}
-        />
+        <AccountSection isAdmin={isAdmin} signedInPlayer={signedInPlayer} logout={logout} />
+
+        {session && <SignInSecuritySection />}
 
         <ProfileSection
           myPlayer={myPlayer}

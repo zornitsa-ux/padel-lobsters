@@ -1,10 +1,13 @@
-import React, { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Loader2, AlertCircle, Check } from 'lucide-react'
 import type { AuthError, EmailOtpType } from '@supabase/auth-js'
 import { supabase } from '../supabase'
+import { useApp } from '../context/useApp'
+import { PasswordForm } from '../features/auth/PasswordForm'
+import { isSafeReturnPath, takeReturnPath } from '../features/auth/returnPath'
 
-type Status = 'verifying' | 'error' | 'email_change_confirmed'
+type Status = 'ready' | 'verifying' | 'error' | 'email_change_confirmed' | 'set_password'
 
 function friendlyVerifyError(err: AuthError): string {
   const msg = (err.message ?? '').toLowerCase()
@@ -15,76 +18,74 @@ function friendlyVerifyError(err: AuthError): string {
   return err.message ?? 'Could not complete verification.'
 }
 
-// Landing route for any auth email — magic link and email-change
-// confirmation share this single path. The email template embeds
-// token_hash + type, and we hand them to supabase.auth.verifyOtp().
+const readyTitle = ({ type }: { type: EmailOtpType }) =>
+  type === 'email_change' ? 'Confirm your email change' : 'Almost there'
+
+const readyButton = ({ type }: { type: EmailOtpType }) => {
+  if (type === 'email_change') return 'Tap to confirm the change'
+  return type === 'recovery' ? 'Tap to choose a new password' : 'Tap to finish signing in'
+}
+
+function recoveryView({
+  session,
+  sessionSettled,
+}: {
+  session: unknown
+  sessionSettled: boolean
+}): Status {
+  if (session) return 'set_password'
+  return sessionSettled ? 'error' : 'verifying'
+}
+
+const MISSING_TOKEN_ERROR = 'This link is missing its verification token. Request a new email.'
+
+// Landing route for any auth email link. The template embeds token_hash + type.
+// Verification waits for a tap: mail scanners (Outlook Safe Links, Defender)
+// execute links, and an automatic verify would burn the single-use token before
+// the person clicks.
 //
-// For magic-link we forward straight to `next` once verified. For
-// email-change we stop on a short confirmation screen so the user
-// understands what just happened — the change applies on the first
-// redemption (GoTrue v2.189 collapses the double-confirm requirement
-// for the token_hash flow); the second email's link will report
-// "expired" if clicked afterward, which is expected.
+// Sign-in types go to the saved return path, then `next`, then /home. A recovery
+// link lands on "Set a new password". email_change stops on a confirmation
+// screen: the change applies on the first redemption (GoTrue v2.189 collapses
+// the double confirm for the token_hash flow), so the second email's link
+// reports "expired", as expected.
 //
-// useAuth's onAuthStateChange listener still owns the device-bootstrap
-// side-effect on SIGNED_IN — we don't repeat it here.
+// `?verified=1` arrives from the in-app reset code, which is already verified:
+// the session exists and only the new password is missing.
+//
+// useAuth's onAuthStateChange listener owns the post-sign-in side effects.
 export default function AuthConfirm() {
   const [params] = useSearchParams()
   const navigate = useNavigate()
-  const [status, setStatus] = useState<Status>('verifying')
-  const [error, setError] = useState('')
-  // React 18 StrictMode mounts effects twice in dev; the token is single-use
-  // so the second call would always fail. Guard with a ref so verifyOtp runs
-  // exactly once per route mount.
-  const ranRef = useRef(false)
+  const { session, sessionSettled } = useApp()
+  const type = (params.get('type') ?? 'magiclink') as EmailOtpType
+  const tokenHash = params.get('token_hash')
+  const verifiedRecovery = params.get('verified') === '1' && type === 'recovery' && !tokenHash
+  const [status, setStatus] = useState<Status>(tokenHash ? 'ready' : 'error')
+  const [error, setError] = useState(tokenHash ? '' : MISSING_TOKEN_ERROR)
+  const view = verifiedRecovery ? recoveryView({ session, sessionSettled }) : status
 
-  // Capture type once so the success view can branch without re-reading
-  // search params after navigation.
-  const typeRef = useRef(params.get('type') ?? 'magiclink')
+  const goToDestination = () => {
+    const next = params.get('next')
+    navigate(takeReturnPath() ?? (isSafeReturnPath(next) ? next : '/home'), { replace: true })
+  }
 
-  useEffect(() => {
-    if (ranRef.current) return
-    ranRef.current = true
-
-    async function verifyAndRoute() {
-      const tokenHash = params.get('token_hash')
-      const type = (params.get('type') ?? 'magiclink') as EmailOtpType
-      const next = params.get('next') ?? '/home'
-
-      if (!tokenHash) {
-        setStatus('error')
-        setError('This link is missing its verification token. Request a new email.')
-        return
-      }
-
-      const { error: verifyError } = await supabase.auth.verifyOtp({
-        token_hash: tokenHash,
-        type,
-      })
-
-      if (verifyError) {
-        console.error('verifyOtp error:', verifyError)
-        setStatus('error')
-        setError(friendlyVerifyError(verifyError))
-        return
-      }
-
-      if (type === 'email_change') {
-        // Stay on a brief confirmation screen rather than silently
-        // navigating to /settings — the visible "Done" beat makes the
-        // change feel real, and gives a clear hint that the OTHER
-        // email's link will look broken if the user wanders back to it.
-        setStatus('email_change_confirmed')
-        return
-      }
-
-      navigate(next, { replace: true })
+  async function confirm() {
+    if (!tokenHash) return
+    setStatus('verifying')
+    const { error: verifyError } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type })
+    if (verifyError) {
+      console.error('verifyOtp error:', verifyError)
+      setError(friendlyVerifyError(verifyError))
+      setStatus('error')
+      return
     }
+    if (type === 'email_change') setStatus('email_change_confirmed')
+    else if (type === 'recovery') setStatus('set_password')
+    else goToDestination()
+  }
 
-    verifyAndRoute()
-  }, [params, navigate])
-
-  if (status === 'error') {
+  if (view === 'error') {
     return (
       <div className="mx-auto mt-16 max-w-md rounded-2xl border border-lob-coral/30 bg-white p-6 text-center shadow-sm">
         <AlertCircle className="mx-auto h-10 w-10 text-lob-coral" />
@@ -101,7 +102,7 @@ export default function AuthConfirm() {
     )
   }
 
-  if (status === 'email_change_confirmed') {
+  if (view === 'email_change_confirmed') {
     return (
       <div className="mx-auto mt-16 max-w-md rounded-2xl border border-lob-teal/20 bg-white p-6 text-center shadow-sm">
         <Check className="mx-auto h-10 w-10 text-lob-teal" />
@@ -121,12 +122,38 @@ export default function AuthConfirm() {
     )
   }
 
+  if (view === 'set_password') {
+    return (
+      <div className="mx-auto mt-16 max-w-md rounded-2xl border border-lob-teal/20 bg-white p-6 shadow-sm space-y-4">
+        <h2 className="text-xl font-semibold text-lob-dark text-center">Set a new password</h2>
+        <PasswordForm
+          requireCurrentPassword={false}
+          submitLabel="Save password"
+          onDone={goToDestination}
+        />
+      </div>
+    )
+  }
+
+  if (view === 'ready') {
+    return (
+      <div className="mx-auto mt-16 max-w-md rounded-2xl border border-lob-teal/20 bg-white p-6 text-center shadow-sm">
+        <h2 className="text-xl font-semibold text-lob-dark">{readyTitle({ type })}</h2>
+        <button
+          type="button"
+          onClick={confirm}
+          className="mt-5 inline-flex items-center rounded-lg bg-lob-teal px-4 py-2 text-sm font-medium text-white hover:bg-lob-teal/90"
+        >
+          {readyButton({ type })}
+        </button>
+      </div>
+    )
+  }
+
   return (
     <div className="mx-auto mt-16 max-w-md rounded-2xl border border-lob-teal/20 bg-white p-6 text-center shadow-sm">
       <Loader2 className="mx-auto h-10 w-10 animate-spin text-lob-teal" />
-      <h2 className="mt-3 text-xl font-semibold text-lob-dark">
-        {typeRef.current === 'email_change' ? 'Confirming email change…' : 'Signing you in…'}
-      </h2>
+      <h2 className="mt-3 text-xl font-semibold text-lob-dark">Just a moment…</h2>
       <p className="mt-2 text-sm text-lob-muted">Verifying your link.</p>
     </div>
   )

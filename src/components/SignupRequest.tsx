@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { useApp } from '../context/useApp'
+import type { Session } from '@supabase/supabase-js'
 import { usePlayers } from '../features/players/usePlayers'
 import { setOwnAvatar } from '../features/players/playerQueries'
 import { playerKeys } from '../features/players/playerKeys'
@@ -8,9 +8,17 @@ import type { Player } from '../lib/normalise'
 import { isE164 } from '../lib/whatsapp'
 import { parseLevel } from '../lib/parseLevel'
 import { processAvatar } from '../lib/processAvatar'
-import { ArrowLeft, UserPlus, Check, Loader2, Copy, User, Camera } from 'lucide-react'
+import { ArrowLeft, UserPlus, Loader2, User, Camera } from 'lucide-react'
 import CountryPicker from './ui/CountryPicker'
 import { SegmentedControl } from './ui/SegmentedControl'
+import { requestEmailCode, normaliseEmail } from '../features/auth/authActions'
+import { OtpCodeStep } from '../features/auth/OtpCodeStep'
+import { buildSignupMetadata } from '../features/auth/signupMetadata'
+import {
+  describeSignupError,
+  SIGNUP_HOOK_MESSAGES,
+  type SignupField,
+} from '../features/auth/signupErrors'
 
 // =============================================================================
 //  SignupRequest — the self-serve "Join the Lobsters" form shown inside the
@@ -29,16 +37,18 @@ import { SegmentedControl } from './ui/SegmentedControl'
 //    2. If the typed full name matches a placeholder (a teammate an admin
 //       entered by name), signup is blocked: placeholders are activated only
 //       through the admin invite, so an admin confirms who takes the profile.
-//       self_signup_player enforces the same rule. A match on an active
+//       the hook enforces the same rule. A match on an active
 //       player points them to sign-in, or "I'm a different person".
-//    3. Submit calls selfSignup and shows the PIN on a one-shot screen.
-//       Signing in waits for "Continue" — the gate unmounts this screen as
-//       soon as the role flips, so an automatic login would hide the PIN.
-//    4. The optional photo is uploaded after sign-in: storage RLS only lets
+//    3. Submit calls signInWithOtp (shouldCreateUser) with the profile as
+//       user_metadata. The before_user_created hook validates it; its
+//       rejections show next to the field they name.
+//    4. The player types the emailed code (OtpCodeStep). Confirming the email
+//       creates the players row.
+//    5. The optional photo is uploaded after sign-in: storage RLS only lets
 //       a player write player-<own id>.webp.
 //
 //  Props:
-//    onComplete?(role)  — called after successful auto-login. The gate
+//    onComplete?(role)  — called after the code is verified. The gate
 //                         uses this to dismiss itself; a standalone page
 //                         uses it to navigate.
 //    onBack?()          — called if the user cancels. Optional.
@@ -60,9 +70,7 @@ const LOBBY_PROMPTS = [
 ]
 const randomPrompt = () => LOBBY_PROMPTS[Math.floor(Math.random() * LOBBY_PROMPTS.length)]
 
-const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null
-
-// Same normalisation self_signup_player applies when matching a placeholder.
+// Same normalisation the hook applies when matching a placeholder.
 const normName = (name: string | null | undefined) =>
   (name || '').trim().replace(/\s+/g, ' ').toLowerCase()
 
@@ -74,49 +82,7 @@ const findNameMatch = ({ players, name }: { players: Player[]; name: string }) =
 
 const isPlaceholder = (p: Player | null | undefined) => p?.status === 'placeholder'
 
-const PLACEHOLDER_INVITE_TEXT =
-  'You’ve already been added to a Lobster team. To keep your profile safe, an admin needs to send you an invite — message an admin and they’ll email you your PIN.'
-
-// `selfSignup` is typed `Promise<unknown>` by AppContext because it wraps the
-// untyped auth API. Read the fields this form branches on off it rather
-// than asserting a shape onto the whole payload.
-function readSignupResult(result: unknown): {
-  failed: boolean
-  errorMessage: string
-  wasExisting: boolean
-  pin: string
-  playerId: string
-} {
-  const root = isRecord(result) ? result : {}
-  const payload = isRecord(root.data) ? root.data : null
-  const error = isRecord(root.error) ? root.error : null
-  return {
-    failed: error !== null,
-    errorMessage: typeof error?.message === 'string' ? error.message : '',
-    wasExisting: payload?.was_existing === true,
-    pin: typeof payload?.pin === 'string' ? payload.pin : '',
-    playerId: typeof payload?.player_id === 'string' ? payload.player_id : '',
-  }
-}
-
-// Messages raised by self_signup_player (see 20261012120000).
-const SIGNUP_ERRORS: [string, string][] = [
-  [
-    'rate limited',
-    "We've seen too many signups from this device today. Please try again tomorrow or ask an admin to add you.",
-  ],
-  ['placeholder needs invite', PLACEHOLDER_INVITE_TEXT],
-  [
-    'email in use',
-    'This email is already linked to another Lobster profile. Please ask an admin to help you sign in.',
-  ],
-  ['invalid level', 'Playtomic level must be a number, e.g. 3.5.'],
-]
-
-const signupErrorText = (message: string) =>
-  SIGNUP_ERRORS.find(([raised]) => message.includes(raised))?.[1] ||
-  message ||
-  'Could not create your profile — please try again.'
+const PLACEHOLDER_INVITE_TEXT = SIGNUP_HOOK_MESSAGES.placeholder
 
 // Runs after sign-in, possibly after this form has unmounted. A failure only
 // costs the photo; the player can add it from their profile.
@@ -167,7 +133,6 @@ interface SignupRequestProps {
 }
 
 export default function SignupRequest({ onComplete, onBack, compact = false }: SignupRequestProps) {
-  const { selfSignup, loginWithPin } = useApp()
   const { data: players = [] } = usePlayers()
   const queryClient = useQueryClient()
 
@@ -185,6 +150,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
   }, [])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<SignupField, string>>>({})
 
   // Name-match state. `nameMatch` is the roster row whose name equals the
   // typed one (drives the banner); `declinedId` is an active match the user
@@ -198,16 +164,8 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Post-submit screen. When set we show the PIN reveal instead of the form.
-  const [pinReveal, setPinReveal] = useState<{
-    pin: string
-    playerId: string
-  } | null>(null)
-  const [copied, setCopied] = useState(false)
-  // Separate from the form's `saving` so a retry can't re-trigger form
-  // submission logic.
-  const [continuing, setContinuing] = useState(false)
-  const [continueError, setContinueError] = useState('')
+  // Set once the code is on its way; the form state is kept for "Change email".
+  const [awaitingCode, setAwaitingCode] = useState(false)
 
   const combinedName = `${form.firstName.trim()} ${form.lastName.trim()}`.trim()
   // Placeholder matches can't be dismissed; only an admin invite resolves them.
@@ -283,151 +241,64 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
     }
 
     setSaving(true)
-    try {
-      const signup = readSignupResult(
-        await selfSignup({
-          name: combinedName,
-          email: form.email.trim(),
-          phone: form.phone.trim(),
-          playtomicLevel: parseLevel(form.playtomicLevel) ?? 0,
-          notes: form.notes || '',
-          gender: form.gender || '',
-          isLeftHanded: form.isLeftHanded || false,
-          country: form.country || '',
-          birthday: form.birthday || null,
-          preferredPosition: form.preferredPosition || '',
-          taglineLabel: lobbyPrompt.label,
-        }),
-      )
-      if (signup.failed) {
-        setError(signupErrorText(signup.errorMessage))
-        return
-      }
-      if (signup.wasExisting) {
-        // The RPC deliberately does NOT return the PIN to a stranger holding
-        // the email — route the user to recovery instead.
-        setError(
-          'An account with this email already exists. Go back and use “Email me a sign-in link” to get in.',
-        )
-        return
-      }
-      if (!signup.pin || !signup.playerId) {
-        setError(
-          "Your profile was created but we couldn't read the PIN back. Please ask an admin to resend it.",
-        )
-        return
-      }
-      setPinReveal({ pin: signup.pin, playerId: signup.playerId })
-    } catch (err) {
-      console.error('Signup error:', err)
-      setError('Something went wrong — please try again.')
-    } finally {
-      setSaving(false)
+    setFieldErrors({})
+    const { error: signupError } = await requestSignupCode()
+    setSaving(false)
+    if (!signupError) {
+      setAwaitingCode(true)
+      return
     }
+    const view = describeSignupError({ error: signupError })
+    if (view.field) setFieldErrors({ [view.field]: view.message })
+    else setError(view.message)
   }
 
-  const copyPin = async () => {
-    try {
-      await navigator.clipboard.writeText(pinReveal?.pin || '')
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
-    } catch {
-      /* secure context etc. — PIN is visible in the callout */
+  const signupMetadata = () =>
+    buildSignupMetadata({
+      profile: {
+        name: combinedName,
+        phone: form.phone,
+        playtomicLevel: form.playtomicLevel,
+        gender: form.gender,
+        isLeftHanded: form.isLeftHanded,
+        country: form.country,
+        birthday: form.birthday,
+        preferredPosition: form.preferredPosition,
+        taglineLabel: lobbyPrompt.label,
+        notes: form.notes,
+      },
+    })
+
+  const requestSignupCode = () =>
+    requestEmailCode({
+      email: normaliseEmail(form.email),
+      shouldCreateUser: true,
+      data: signupMetadata(),
+    })
+
+  const handleVerified = (session: Session) => {
+    void queryClient.invalidateQueries({ queryKey: playerKeys.all() })
+    if (avatarFile) {
+      void uploadSignupAvatar({ playerId: session.user.id, file: avatarFile }).then((ok) => {
+        if (ok) void queryClient.invalidateQueries({ queryKey: playerKeys.all() })
+      })
     }
+    onComplete?.('player')
   }
 
-  // "Continue to the app" — the one place a new player is signed in. Success
-  // flips the role and the gate unmounts this form; failure stays here with
-  // the PIN still on screen.
-  const continueToApp = async () => {
-    if (continuing) return
-    const pin = pinReveal?.pin || ''
-    if (!pin) return
-    setContinuing(true)
-    setContinueError('')
-    try {
-      const result = await loginWithPin(pin)
-      if (result?.success) {
-        if (avatarFile && pinReveal?.playerId) {
-          void uploadSignupAvatar({ playerId: pinReveal.playerId, file: avatarFile }).then((ok) => {
-            if (ok) void queryClient.invalidateQueries({ queryKey: playerKeys.all() })
-          })
-        }
-        onComplete?.(result.role || 'player')
-      } else {
-        // `error` is typed unknown by AppContext; the auth API only ever puts
-        // a string there.
-        setContinueError(
-          (typeof result?.error === 'string' ? result.error : '') ||
-            "We couldn't sign you in automatically. Copy your PIN and try again from the sign-in screen.",
-        )
-      }
-    } catch (err) {
-      console.error('Continue retry failed:', err)
-      setContinueError(
-        "We couldn't reach the server. Copy your PIN and try again from the sign-in screen.",
-      )
-    } finally {
-      setContinuing(false)
-    }
-  }
-
-  // ── Success state — one-shot PIN reveal ──────────────────────
-  if (pinReveal) {
+  // ── Code step — the email is confirmed, and the players row created, on verify ──
+  if (awaitingCode) {
     return (
       <div className={`space-y-4 ${compact ? '' : 'max-w-md mx-auto p-4'}`}>
         <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 space-y-4">
-          <div className="text-center space-y-1">
-            <div className="w-12 h-12 bg-teal-50 rounded-full flex items-center justify-center mx-auto">
-              <Check className="text-lob-teal" size={24} />
-            </div>
-            <h1 className="text-lg font-extrabold text-lob-dark">You’re in 🦞</h1>
-            <p className="text-sm text-lob-slate leading-snug">
-              Your Lobster profile is ready. Save your PIN — you’ll need it next time.
-            </p>
-          </div>
-
-          <div className="bg-teal-50 border border-teal-200 rounded-xl p-3 flex items-center justify-between">
-            <div>
-              <div className="text-[10px] text-lob-teal font-bold uppercase tracking-wide">
-                Your PIN
-              </div>
-              <div className="text-2xl font-extrabold tracking-[0.4em] text-lob-teal">
-                {pinReveal.pin || '????'}
-              </div>
-            </div>
-            <button
-              onClick={copyPin}
-              className="text-xs font-semibold text-lob-teal hover:text-teal-700 flex items-center gap-1"
-            >
-              <Copy size={12} />
-              {copied ? 'Copied' : 'Copy'}
-            </button>
-          </div>
-
-          <p className="text-[11px] text-lob-muted leading-snug">
-            This PIN unlocks the app on any device. Save it in your password manager — we don't
-            email or text it automatically.
-          </p>
-
-          {continueError && (
-            <p className="text-xs text-red-600 bg-red-50 rounded-lg p-2">{continueError}</p>
-          )}
-
-          <button
-            onClick={continueToApp}
-            disabled={continuing}
-            className="w-full bg-lob-teal text-white font-bold text-sm py-2.5 rounded-xl hover:bg-teal-700 transition disabled:opacity-60 flex items-center justify-center gap-2"
-          >
-            {continuing ? (
-              <>
-                <Loader2 size={14} className="animate-spin" />
-                Signing in…
-              </>
-            ) : (
-              <>Continue to the app →</>
-            )}
-          </button>
+          <h1 className="text-lg font-extrabold text-lob-dark">Confirm your email 🦞</h1>
+          <OtpCodeStep
+            email={normaliseEmail(form.email)}
+            submitLabel="Finish signing up"
+            onVerified={handleVerified}
+            onChangeEmail={() => setAwaitingCode(false)}
+            resend={requestSignupCode}
+          />
         </div>
       </div>
     )
@@ -453,8 +324,8 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
             Join the Lobsters 🦞
           </h1>
           <p className="text-xs text-lob-muted leading-snug">
-            You'll get an access PIN to use in the app. Fill in the full profile — it powers
-            matchmaking, your Lobster Review, and the leaderboards.
+            We'll email you a 6-digit code to confirm your address. Fill in the full profile — it
+            powers matchmaking, your Lobster Review, and the leaderboards.
           </p>
         </header>
 
@@ -516,6 +387,11 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
 
           {bannerMatch && (
             <NameMatchBanner match={bannerMatch} onSignIn={onBack} onDecline={declineMatch} />
+          )}
+          {fieldErrors.name && (
+            <p role="alert" className="text-xs text-red-600 bg-red-50 rounded-lg p-2">
+              {fieldErrors.name}
+            </p>
           )}
 
           <div>
@@ -598,6 +474,11 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
                 value={form.playtomicLevel}
                 onChange={(e) => setForm((f) => ({ ...f, playtomicLevel: e.target.value }))}
               />
+              {fieldErrors.level && (
+                <p role="alert" className="text-xs text-red-600 bg-red-50 rounded-lg p-2 mt-1">
+                  {fieldErrors.level}
+                </p>
+              )}
               <p className="text-xs text-lob-muted mt-1">
                 Check your Playtomic app — it shows your current level. We use it to build balanced
                 matches, and it improves as you play.
@@ -703,7 +584,7 @@ function NameMatchBanner({
           <p className="text-xs text-amber-700 mt-1">
             {needsInvite
               ? PLACEHOLDER_INVITE_TEXT
-              : `If you’re ${match.name}, go back and sign in with your PIN or “Email me a sign-in link”.`}
+              : `If you’re ${match.name}, go back and sign in with your email.`}
           </p>
         </div>
       </div>

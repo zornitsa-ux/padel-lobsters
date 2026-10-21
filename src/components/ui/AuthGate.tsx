@@ -1,9 +1,8 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
+import type { Session } from '@supabase/supabase-js'
 import { useApp } from '../../context/useApp'
-import type { AppContextValue } from '../../context/useApp'
-import { Shield, User, LogIn, X, KeyRound } from 'lucide-react'
-
-type LoginResult = Awaited<ReturnType<AppContextValue['loginWithPin']>>
+import { Shield, User, LogIn, X, Mail } from 'lucide-react'
+import SignInForm from '../../features/auth/SignInForm'
 
 /**
  * Site-wide auth middleware.
@@ -54,7 +53,7 @@ export function SignInBanner({
 
   const defaultCopy = isAdmin
     ? 'Sign in as admin from Settings → Account to manage this.'
-    : "Sign in from Settings → Account to post, react, or place orders — it's just your 4-digit PIN."
+    : "Sign in from Settings → Account to post, react, or place orders. We'll email you a code."
 
   const goToSettings = () => onNavigate?.('settings')
 
@@ -97,77 +96,39 @@ export function SignInBanner({
 }
 
 /**
- * The PIN prompt modal — single inline sign-in surface used everywhere a
- * player (or admin) clicks something that requires identity. They can also
- * always go to Settings → Account to sign in / out, but this lets us nudge
- * just-in-time without breaking the flow.
- *
- * Uses the same PIN auto-detect as Settings (admin PIN OR a player PIN).
+ * The sign-in modal: the just-in-time surface for anything that needs identity.
+ * Settings → Account stays the place to manage the account.
  */
-export function PinPrompt({
+export function SignInModal({
   open,
   onClose,
   onSuccess,
   role = 'player',
   title,
   subtitle,
+  initialEmail,
   onNavigate,
 }: {
   open: boolean
   onClose?: () => void
-  onSuccess?: (result: LoginResult) => void
+  onSuccess?: (session: Session) => void
   role?: GateRole
   title?: string | null
   subtitle?: string | null
+  initialEmail?: string
   onNavigate?: GateNavigate
 }) {
-  const { loginWithPin, logout } = useApp()
-  const [pin, setPin] = useState('')
-  const [error, setError] = useState('')
-  const [busy, setBusy] = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const { role: sessionRole } = useApp()
 
-  // Reset state every time the modal opens
   useEffect(() => {
-    if (open) {
-      setPin('')
-      setError('')
-      setBusy(false)
-      // Focus on next tick so iOS pulls up the numeric keyboard
-      setTimeout(() => inputRef.current?.focus(), 50)
-    }
-  }, [open])
+    if (open && sessionRole !== 'guest') onClose?.()
+  }, [open, sessionRole, onClose])
 
   if (!open) return null
 
-  const handleSubmit = async (e?: React.FormEvent) => {
-    e?.preventDefault?.()
-    if (busy) return
-    setBusy(true)
-    const result = await loginWithPin(pin)
-    if (result.success) {
-      // Role mismatch guards.
-      if (role === 'admin' && result.role !== 'admin') {
-        setError("That's a player PIN — admin PIN required for this action.")
-        setBusy(false)
-        return
-      }
-      // Don't silently elevate to admin from a player-only prompt.
-      // Admins reach admin mode through Settings → Group owner access.
-      if (role === 'player' && result.role === 'admin') {
-        logout()
-        setError("That doesn't look like your Lobster PIN. Try again.")
-        setBusy(false)
-        return
-      }
-      onSuccess?.(result)
-      onClose?.()
-    } else {
-      // `error` is typed unknown by AppContext; the auth API only ever puts
-      // a string there.
-      setError(typeof result.error === 'string' && result.error ? result.error : 'Invalid PIN')
-      setBusy(false)
-    }
+  const handleSignedIn = (signedInSession: Session) => {
+    onSuccess?.(signedInSession)
+    onClose?.()
   }
 
   const goToSettings = () => {
@@ -176,9 +137,8 @@ export function PinPrompt({
   }
 
   const isAdminAsk = role === 'admin'
-  const accent = isAdminAsk ? 'amber' : 'teal'
-  const accentBg = accent === 'amber' ? 'bg-amber-50' : 'bg-lob-cream'
-  const accentTxt = accent === 'amber' ? 'text-amber-700' : 'text-lob-teal'
+  const accentBg = isAdminAsk ? 'bg-amber-50' : 'bg-lob-cream'
+  const accentTxt = isAdminAsk ? 'text-amber-700' : 'text-lob-teal'
 
   return (
     <div
@@ -186,17 +146,15 @@ export function PinPrompt({
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-sm p-5 space-y-4"
+        className="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-sm p-5 space-y-4 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className={`w-8 h-8 rounded-full ${accentBg} flex items-center justify-center`}>
-              <KeyRound size={15} className={accentTxt} />
+              <Mail size={15} className={accentTxt} />
             </div>
-            <h3 className="font-bold text-lob-dark">
-              {title || (isAdminAsk ? 'Admin PIN' : 'Enter your PIN')}
-            </h3>
+            <h3 className="font-bold text-lob-dark">{title || 'Sign in'}</h3>
           </div>
           <button onClick={onClose} aria-label="Close">
             <X size={22} className="text-lob-muted-light" />
@@ -204,36 +162,15 @@ export function PinPrompt({
         </div>
 
         <p className="text-sm text-lob-muted">
-          {subtitle ||
-            (isAdminAsk
-              ? 'Enter the admin PIN to continue.'
-              : 'Enter your 4-digit PIN — you only need to do this once on this device.')}
+          {subtitle || "Sign in with your email. We'll send you a code."}
         </p>
 
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <input
-            ref={inputRef}
-            inputMode="numeric"
-            pattern="[0-9]*"
-            autoComplete="one-time-code"
-            maxLength={6}
-            value={pin}
-            onChange={(e) => {
-              setPin(e.target.value.replace(/\D/g, ''))
-              setError('')
-            }}
-            placeholder="••••"
-            className="input text-center text-2xl tracking-[0.5em] font-bold"
-          />
-          {error && <p className="text-xs text-lob-coral font-medium text-center">{error}</p>}
-          <button
-            type="submit"
-            disabled={busy || !pin}
-            className="btn-primary w-full disabled:opacity-50"
-          >
-            {busy ? 'Checking…' : 'Sign in 🦞'}
-          </button>
-        </form>
+        <SignInForm
+          variant="modal"
+          initialEmail={initialEmail}
+          onSignedIn={handleSignedIn}
+          allowPin={false}
+        />
 
         {onNavigate && (
           <button
@@ -249,7 +186,7 @@ export function PinPrompt({
 }
 
 /**
- * The hook every page uses to gate an action behind a PIN prompt.
+ * The hook every page uses to gate an action behind the sign-in modal.
  *
  *   const { requireAuth, AuthPromptModal } = useAuthPrompt({ onNavigate })
  *   ...
@@ -291,6 +228,8 @@ export function useAuthPrompt({ onNavigate }: { onNavigate?: GateNavigate } = {}
     [isAdmin, isPlayer],
   )
 
+  const closeModal = useCallback(() => setOpen(false), [])
+
   const handleSuccess = useCallback(() => {
     const cb = pendingRef.current
     pendingRef.current = null
@@ -300,9 +239,9 @@ export function useAuthPrompt({ onNavigate }: { onNavigate?: GateNavigate } = {}
 
   const AuthPromptModal = useCallback(
     () => (
-      <PinPrompt
+      <SignInModal
         open={open}
-        onClose={() => setOpen(false)}
+        onClose={closeModal}
         onSuccess={handleSuccess}
         role={askRole}
         title={askTitle}
@@ -310,7 +249,7 @@ export function useAuthPrompt({ onNavigate }: { onNavigate?: GateNavigate } = {}
         onNavigate={onNavigate}
       />
     ),
-    [open, askRole, askTitle, askSub, onNavigate, handleSuccess],
+    [open, askRole, askTitle, askSub, onNavigate, handleSuccess, closeModal],
   )
 
   return { requireAuth, AuthPromptModal }

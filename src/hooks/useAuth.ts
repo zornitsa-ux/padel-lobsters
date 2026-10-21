@@ -56,16 +56,8 @@ export default function useAuth() {
     return authApi.fetchMyProfile()
   }, [session])
 
-  const sendMagicLink = useCallback(async (email: string) => {
-    return authApi.sendMagicLink(email)
-  }, [])
-
   const requestMyEmailChange = useCallback(async (email: string) => {
     return authApi.requestMyEmailChange(email)
-  }, [])
-
-  const selfSignup = useCallback(async (data: unknown) => {
-    return authApi.selfSignup(data as authApi.SelfSignupInput)
   }, [])
 
   const logout = useCallback(async () => {
@@ -81,8 +73,6 @@ export default function useAuth() {
     loginWithPin,
     logout,
     fetchMyProfile,
-    sendMagicLink,
     requestMyEmailChange,
-    selfSignup,
   }
 }

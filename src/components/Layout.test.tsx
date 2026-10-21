@@ -10,6 +10,10 @@ const { mockUseApp, mockUseSettings } = vi.hoisted(() => ({
 
 vi.mock('../context/useApp', () => ({ useApp: mockUseApp }))
 vi.mock('../features/settings/useSettings', () => ({ useSettings: mockUseSettings }))
+vi.mock('../features/auth/useSignInDeepLink', () => ({
+  useSignInDeepLink: () => ({ open: false, initialEmail: '', close: () => {} }),
+}))
+vi.mock('./ui/AuthGate', () => ({ SignInModal: () => null }))
 vi.mock('react-router-dom', () => ({
   NavLink: ({ to }: { to: string }) => <a href={to}>{to}</a>,
   Link: ({ to, children }: { to: string; children?: ReactNode }) => <a href={to}>{children}</a>,

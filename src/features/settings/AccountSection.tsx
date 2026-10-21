@@ -1,33 +1,15 @@
-import React, { type FormEvent } from 'react'
 import { Shield, User, LogIn, LogOut } from 'lucide-react'
 import Avatar from '../../components/ui/Avatar'
 import type { Player } from '../../lib/normalise'
+import SignInForm from '../auth/SignInForm'
 
 interface AccountSectionProps {
   isAdmin: boolean
   signedInPlayer: Player | null
   logout: () => void
-  // guest sign-in props
-  signInPin: string
-  setSignInPin: (pin: string) => void
-  signInError: string
-  setSignInError: (message: string) => void
-  signingIn: boolean
-  handleSignIn: (e: FormEvent) => void
 }
 
-export default function AccountSection({
-  isAdmin,
-  signedInPlayer,
-  logout,
-  // guest sign-in props
-  signInPin,
-  setSignInPin,
-  signInError,
-  setSignInError,
-  signingIn,
-  handleSignIn,
-}: AccountSectionProps) {
+export default function AccountSection({ isAdmin, signedInPlayer, logout }: AccountSectionProps) {
   return (
     <div className="card space-y-3">
       <div className="flex items-center gap-2">
@@ -90,44 +72,16 @@ export default function AccountSection({
       ) : null}
 
       {!isAdmin && !signedInPlayer && (
-        // ── Guest — player PIN sign-in ──────────────────────────
-        <form onSubmit={handleSignIn} className="space-y-3">
+        <>
           <div className="text-center py-2">
             <div className="text-3xl mb-1">🦞</div>
-            <p className="text-sm font-semibold text-lob-dark">Enter your 4-digit Lobster PIN</p>
+            <p className="text-sm font-semibold text-lob-dark">Sign in with your email</p>
             <p className="text-[11px] text-lob-muted mt-0.5">
-              It&rsquo;s the code you got via WhatsApp when you joined the crew.
+              We&rsquo;ll email you a 6-digit code. No password needed.
             </p>
           </div>
-          <input
-            type="password"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            maxLength={8}
-            placeholder="• • • •"
-            className="input text-center text-2xl tracking-[0.5em] font-bold"
-            value={signInPin}
-            onChange={(e) => {
-              setSignInPin(e.target.value.replace(/\D/g, '').slice(0, 8))
-              setSignInError('')
-            }}
-            autoFocus
-          />
-          {signInError && (
-            <p className="text-xs text-red-500 text-center font-medium">{signInError}</p>
-          )}
-          <button
-            type="submit"
-            disabled={signingIn || signInPin.length < 4}
-            className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-40"
-          >
-            <LogIn size={14} />
-            {signingIn ? 'Signing in…' : 'Sign in'}
-          </button>
-          <p className="text-[11px] text-lob-muted-light text-center">
-            Lost your PIN? Ask an admin to resend it from the Players page.
-          </p>
-        </form>
+          <SignInForm variant="inline" allowPin={false} />
+        </>
       )}
     </div>
   )

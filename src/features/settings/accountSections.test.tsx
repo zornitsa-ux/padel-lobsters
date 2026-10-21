@@ -8,6 +8,11 @@ import { mockSupabase } from '../../test/mockSupabase'
 // AccountOrdersSection pulls in the merch data layer, which imports the
 // supabase client module.
 vi.mock('../../supabase', () => mockSupabase())
+vi.mock('../auth/SignInForm', () => ({
+  default: ({ variant, allowPin }: { variant: string; allowPin: boolean }) => (
+    <div data-testid="sign-in-form" data-variant={variant} data-allow-pin={String(allowPin)} />
+  ),
+}))
 
 import AccountSection from './AccountSection'
 import AccountOrdersSection from './AccountOrdersSection'
@@ -15,35 +20,26 @@ import AccountOrdersSection from './AccountOrdersSection'
 const player = normalisePlayers([{ id: 'p1', name: 'Ada Lovelace' }])[0]
 
 const accountSection = (props: Partial<Parameters<typeof AccountSection>[0]> = {}) => (
-  <AccountSection
-    isAdmin={false}
-    signedInPlayer={null}
-    logout={() => {}}
-    signInPin=""
-    setSignInPin={() => {}}
-    signInError=""
-    setSignInError={() => {}}
-    signingIn={false}
-    handleSignIn={() => {}}
-    {...props}
-  />
+  <AccountSection isAdmin={false} signedInPlayer={null} logout={() => {}} {...props} />
 )
 
 afterEach(cleanup)
 
 describe('AccountSection', () => {
-  it('shows the PIN form for a guest', () => {
+  it('shows the inline sign-in form, without PIN, for a guest', () => {
     render(accountSection())
 
-    expect(screen.getByRole('button', { name: /sign in/i })).toBeTruthy()
+    const form = screen.getByTestId('sign-in-form')
+    expect(form.getAttribute('data-variant')).toBe('inline')
+    expect(form.getAttribute('data-allow-pin')).toBe('false')
     expect(screen.queryByRole('button', { name: /sign out/i })).toBeNull()
   })
 
-  it('shows the signed-in player instead of the PIN form', () => {
+  it('shows the signed-in player instead of the sign-in form', () => {
     render(accountSection({ signedInPlayer: player }))
 
     expect(screen.getByText(/signed in as/i).textContent).toContain('Ada Lovelace')
-    expect(screen.queryByRole('button', { name: /^sign in$/i })).toBeNull()
+    expect(screen.queryByTestId('sign-in-form')).toBeNull()
   })
 
   it('shows admin mode, with the player first name when both are active', () => {
@@ -57,15 +53,6 @@ describe('AccountSection', () => {
     render(accountSection({ isAdmin: true }))
 
     expect(screen.getByText(/you can edit all data/i)).toBeTruthy()
-  })
-
-  it('disables the submit button until the PIN is long enough', () => {
-    const { rerender } = render(accountSection({ signInPin: '12' }))
-    const submit = () => screen.getByRole('button', { name: /sign in/i }) as HTMLButtonElement
-    expect(submit().disabled).toBe(true)
-
-    rerender(accountSection({ signInPin: '1234' }))
-    expect(submit().disabled).toBe(false)
   })
 })
 
