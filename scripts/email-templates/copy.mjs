@@ -1,9 +1,10 @@
 const SHARED = `  Shared shape (docs/pin-auth-removal DESIGN §2): the 6-digit code first,
   because a link tapped on iPhone opens Safari, not the home-screen app; then a
   token_hash link through the SPA's /auth/confirm route, never
-  {{ .ConfirmationURL }} (see config.toml). confirmation, recovery and
-  reauthentication share this layout; keep them in step. magic_link adopts it
-  with the sign-in form (PR 2/3).`
+  {{ .ConfirmationURL }} (see config.toml). magic_link, confirmation, recovery
+  and reauthentication share this layout.
+
+  Generated: edit scripts/email-templates/, then run \`npm run templates:build\`.`
 
 const EMAIL_CHANGE_COMMENT = `  Email-change confirmation template.
 
@@ -18,9 +19,25 @@ const EMAIL_CHANGE_COMMENT = `  Email-change confirmation template.
   click any link to confirm, ignore if you didn't request the change.
 
   Like magic_link.html, we route through /auth/confirm rather than
-  {{ .ConfirmationURL }} (which 404s through Kong locally).`
+  {{ .ConfirmationURL }} (which 404s through Kong locally).
+
+  Generated: edit scripts/email-templates/, then run \`npm run templates:build\`.`
 
 export const TEMPLATES = {
+  magic_link: {
+    comment: `  Sign-in email: sent by signInWithOtp for an existing user.
+
+${SHARED}`,
+    title: 'Sign in to Padel Lobsters',
+    heading: 'Sign in to Padel Lobsters',
+    intro: 'Type this code into the app when it asks for a sign-in code.',
+    codeLabel: 'Your sign-in code',
+    buttonIntro: 'Or sign in on this device with the button.',
+    buttonLabel: 'Sign in',
+    link: { type: 'magiclink', next: '/home' },
+    wrapLinkText: true,
+    footnote: `The code and link work once and expire in 1 hour.<br /><br />If you didn't ask to sign in, you can safely ignore this email.<br /><br />`,
+  },
   confirmation: {
     comment: `  Sign-up email: sent instead of magic_link to a brand-new address while
   email confirmations are on (they are on in the hosted project).
