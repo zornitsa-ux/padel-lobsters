@@ -196,9 +196,14 @@ interface AuthReadiness {
   before it mints the session through a magic link, so session `amr` can't
   tell PIN from email. Otherwise it **was by email** (code, link or
   password). A player with no `last_sign_in_at` is in neither count.
-- **T5 checks on local GoTrue** that a token refresh doesn't move
-  `last_sign_in_at`, and measures the PIN-row-to-sign-in gap. If either
-  breaks the rule above, T5 stops and reports.
+- "No more than 5 minutes before" means `pin_at <= last_sign_in_at` and
+  `last_sign_in_at - pin_at <= 5 minutes`. A succeeded PIN row **after**
+  `last_sign_in_at` (a session that was never minted) doesn't count as a PIN
+  sign-in.
+- **Checked 2026-10-21** (PLAN §1 log): on local GoTrue v2.197.0 a token
+  refresh doesn't move `last_sign_in_at`, and the PIN row comes 0.06–0.07 s
+  before the sign-in. In production every gap is between 0 and 7.7 s, and
+  none is negative.
 - **There are no other keys.** It only adds a field after a change here.
 
 ## C-8. `SignInForm` (`src/features/auth/SignInForm.tsx`, T3)
