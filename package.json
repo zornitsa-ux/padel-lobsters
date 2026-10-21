@@ -26,6 +26,7 @@
     "db:grants:check": "./scripts/dump-function-grants.sh | diff -u supabase/expected_function_grants.txt - || (echo 'Function EXECUTE grants for anon/authenticated drifted from supabase/expected_function_grants.txt — review the diff above. If the change is intentional, run `npm run db:grants` and commit the result.' && exit 1)",
     "rehearsal:sync": "./scripts/prod-rehearsal/sync.sh",
     "rehearsal:integrity": "./scripts/prod-rehearsal/integrity.sh",
+    "rehearsal:parity": "node scripts/prod-rehearsal/parity.ts",
     "functions:serve": "supabase functions serve",
     "claude": "claude --strict-mcp-config --mcp-config .mcp.json",
     "lint": "eslint .",
