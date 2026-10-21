@@ -484,6 +484,19 @@ up` refuses it alone; a PR branch must contain `main`'s migrations. Noted:
 
     `db:reset` afterwards, and the parity records were deleted.
 
+- 2026-10-21: **Owner review while testing locally.**
+  - **Change on #50:** every password field gets a show/hide toggle (one
+    shared `PasswordInput`). 3/3 was rebased onto it, and its e2e password
+    locator is now exact, because "Show password" also matches
+    `getByLabel('Password')`.
+  - **Tap-to-confirm on `/auth/confirm` stays.** Mail scanners (Safe Links,
+    Defender) would otherwise use up the one-time link. Of the 128 active
+    real emails, 19 are Microsoft consumer addresses and 14 are work or own
+    domains (read-only, counts only).
+  - **Gates on the rebased 3/3:** all §4.1 gates pass, plus `test:e2e`
+    13/13 three times in a row. `--repeat-each` isn't a valid flake test for
+    the email spec: repeats hit GoTrue's 60 s per-address send limit.
+
 ---
 
 ## 2. Schedule

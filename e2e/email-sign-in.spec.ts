@@ -287,7 +287,7 @@ async function deletePlayerUser({ id }: { id: string }) {
 async function signInWithPassword({ page, email }: { page: Page; email: string }) {
   await page.getByRole('button', { name: /sign in with password/i }).click()
   await page.getByLabel('Email').fill(email)
-  await page.getByLabel('Password').fill(CARD_PASSWORD)
+  await page.getByLabel('Password', { exact: true }).fill(CARD_PASSWORD)
   await page.getByRole('button', { name: /^sign in$/i }).click()
 }
 
