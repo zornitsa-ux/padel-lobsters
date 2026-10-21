@@ -45,7 +45,7 @@ signed in gets logged out.
 | T3  | `SignInForm`, `AuthConfirm`, gates, native signup         | W     | T1              | 2/3      | [ ]        |
 | T4  | Account → Sign-in & security                              | W     | T1              | 2/3      | [ ]        |
 | T5  | Comms: upgrade card, interstitial, readiness panel, copy  | W     | T1              | 3/3      | [ ]        |
-| T14 | Rehearsal sign-in + data-access parity script (§4.5)      | W     | T13, T1         | #49      | [~] review |
+| T14 | Rehearsal sign-in + data-access parity script (§4.5)      | W     | T13, T1         | #49      | [x]        |
 | T6  | Verification: local matrix, local devices, rehearsal      | C + O | T2–T5, T14      | —        | [ ]        |
 | T7  | Dark backend release (R2)                                 | O     | T2 merged, T0c  | —        | [ ]        |
 | T8  | T₀ release and announcement (R3)                          | O     | T6, T7          | —        | [ ]        |
@@ -230,6 +230,36 @@ up` refuses it alone; a PR branch must contain `main`'s migrations. Noted:
   Afterwards `db:reset` brought back the seed data, and the parity records
   were deleted. #48 is ready for review.
 
+- 2026-10-21: The owner merged #49 (T14). A `/code-review` of #48 found no
+  blockers; its fixes are in #48:
+  - **Confirmation can't fail on odd input.** The hook and the level parser
+    accept ASCII digits only, because a full-width digit passed `\d` and then
+    failed the cast. The trigger skips the player row on a `unique_violation`
+    (an email another player holds) instead of aborting the confirmation.
+  - **No phantom invites.** `admin_add_player` and `admin_resend_invite`
+    raise `invalid email` for a malformed address.
+  - **Release order:** `send-invite-email` is deployed before `db push`.
+  - **Confirm email must be on before the hook is enabled.** With it off, an
+    OTP request creates a confirmed user and the trigger adds a roster row
+    before any code is entered. The owner confirmed it's on in production
+    (screenshot), and it's now an R2 check.
+
+  #48 was rebased on `main` and rehearsed again on a fresh production copy.
+  The integrity and parity results were the same as on 2026-10-20: 128 of 128
+  accounts signed in, 0 changed hashes on 32 reads, and 0 of 128 real emails
+  fail the new validation.
+
+  **Follow-ups:**
+  - **`password_count` (C-7) over-counts from T₀.** GoTrue stores a random
+    bcrypt hash for OTP-created users, not `''`, so the count and integrity
+    check 15 can't tell who set a password. Redefine both before T5 builds
+    the readiness panel. One option is to have T4's set-password flow record
+    it.
+  - **A pending, unconfirmed signup holds its address.** GoTrue doesn't
+    update its metadata on a retry, and admin invites or adds to that address
+    fail with `email in use`. T3 should cover the retry; the integrity
+    check's abandoned-signup list needs an admin action (T5/T16).
+
 ---
 
 ## 2. Schedule
@@ -333,8 +363,9 @@ these before dispatching T2–T5, and workers don't change them (matchmaking-v2
   paths and is idempotent), plus updates to `admin_invite.sql` (no PIN is
   stored or returned, and the invite email is recorded).
 - `npm run db:types` and `npm run db:grants`.
-- **The PR description lists the deploy order:** db push → `functions deploy
-send-invite-email` → enable the hook in the dashboard.
+- **The PR description lists the deploy order:** `functions deploy
+send-invite-email` → db push → enable the hook in the dashboard. The function
+  goes first so no invite sent after the push hits a missing function.
 
 ### 3.3 PR 2/3: sign-in surfaces (T3 + T4), stacked on 1/3
 
@@ -532,7 +563,11 @@ sign-in (F-3). Record who tested what in §1's log.
   `auth.users.email` = 0; users with empty `providers` = 0. The owner
   confirms the dashboard against the T0c checklist (done 2026-10-19, without
   screenshots).
-- **R2:** the owner confirms in the dashboard (Authentication → Hooks) that
+- **R2:** before the hook goes on, Confirm email must be on (Authentication →
+  Sign In / Providers); the owner confirmed it on 2026-10-21 with a
+  screenshot. Without it, an OTP request creates a confirmed user and the
+  trigger adds a roster row before any code is entered. The owner confirms
+  in the dashboard (Authentication → Hooks) that
   the Before User Created hook is on, with type Postgres and the function
   `public.before_user_created_hook`. No screenshot. C checks read-only that
   only `supabase_auth_admin` can execute the function. The integrity check passes.
@@ -644,8 +679,8 @@ from production and checks the email (no code, "1 hour" once #46's templates
 are pasted).
 
 **R2: dark backend.** Tell the 3 admins that invites now send an email instead
-of showing a PIN. Merge 1/3 → `db push` → `functions deploy send-invite-email`
-→ enable the Before User Created hook → run §4.3.
+of showing a PIN. Merge 1/3 → `functions deploy send-invite-email` → `db push`
+→ check Confirm email is on → enable the Before User Created hook → run §4.3.
 
 **T₀**
 
