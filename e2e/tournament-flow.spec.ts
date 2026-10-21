@@ -23,6 +23,13 @@ import type { TournamentFixture } from './fixtures/db'
    slower and flakier without exercising anything new.
    ════════════════════════════════════════════════════════════════════════════ */
 
+interface Credentials {
+  email: string
+  password: string
+}
+const ADMIN: Credentials = { email: 'jon@lobsters.test', password: 'Lobster-Admin-9999' }
+const PLAYER: Credentials = { email: 'trunal@lobsters.test', password: 'Lobster-Player-1234' }
+
 let fixture: TournamentFixture
 
 test.beforeAll(async () => {
@@ -35,17 +42,20 @@ test.afterAll(async () => {
 
 // A fresh (unauthenticated) context hitting any protected path — which is
 // every path here, see src/lib/authPaths.ts — gets VerificationGate's
-// full-screen PIN prompt in place of the route, then renders the route in
+// full-screen sign-in in place of the route, then renders the route in
 // place once signed in. So signing in *at* the deep link, rather than via
 // /account first, is both simpler and a more faithful repro of "cold link
-// while logged out" than a two-step sign-in-then-navigate would be.
-async function signInAt(page: Page, url: string, pin: string) {
+// while logged out" than a two-step sign-in-then-navigate would be. The seeded
+// passwords (supabase/seed.sql) avoid a Mailpit round trip per sign-in.
+async function signInAt(page: Page, url: string, credentials: Credentials) {
   await page.goto(url)
-  await page.getByLabel('PIN').fill(pin)
-  await page.getByRole('button', { name: /sign in/i }).click()
+  await page.getByRole('button', { name: /sign in with password/i }).click()
+  await page.getByLabel('Email').fill(credentials.email)
+  await page.getByLabel('Password').fill(credentials.password)
+  await page.getByRole('button', { name: /^sign in$/i }).click()
   // The gate unmounts once `role` flips off 'guest' — confirms the sign-in
   // landed before we do anything else.
-  await page.getByLabel('PIN').waitFor({ state: 'hidden' })
+  await page.getByLabel('Password').waitFor({ state: 'hidden' })
   // The gate unmounting doesn't mean the session has been persisted yet. A
   // hard page.goto() right after can race that write — the reload reads
   // localStorage before it lands and briefly looks signed-out. Draining the
@@ -68,7 +78,7 @@ test('run-of-show: schedule → finish → oscars → reveal (admin + player)', 
     // A full navigation straight to the nested Schedule route, not a
     // client-side tab click. The regression this guards against: this used
     // to bounce to /events before the tournament/session resolved.
-    await signInAt(admin, `${eventPath}/schedule`, '9999')
+    await signInAt(admin, `${eventPath}/schedule`, ADMIN)
     await expect(admin).toHaveURL(new RegExp(`${fixture.tournamentId}/schedule$`))
     await expect(admin.getByRole('button', { name: 'Round 1' })).toBeVisible()
 
@@ -88,7 +98,7 @@ test('run-of-show: schedule → finish → oscars → reveal (admin + player)', 
     await expect(admin.getByText('Ratings applied, tournament complete')).toBeVisible()
 
     // ── 4. Player still cannot see standings ──────────────────────────────
-    await signInAt(player, eventPath, '1234')
+    await signInAt(player, eventPath, PLAYER)
     await expect(player.getByRole('link', { name: 'Results', exact: true })).toHaveCount(0)
     // Defense in depth: the route itself withholds standings even if hit
     // directly, independent of the tab strip.

@@ -7,6 +7,8 @@
 --  test without touching production.
 --
 --  Known logins: PIN '9999' = admin (Jon Grim), PIN '1234' = plain player (Trunal).
+--  Passwords (e2e): jon@lobsters.test / Lobster-Admin-9999, trunal@lobsters.test /
+--  Lobster-Player-1234. Any @lobsters.test address also takes an email code via Mailpit.
 --  Trunal holds the player-login PIN instead of Zornitsa Mihaylova (used pre-2026-07-26)
 --  because Zornitsa is now an admin in production — keeping the test PINs on a
 --  non-admin/admin pair avoids surprising a "log in as player" test with admin UI.
@@ -153,6 +155,15 @@ ON CONFLICT DO NOTHING;
 
 -- Grant admin role to match production (Jon Grim, Uziel Brito, Zornitsa Mihaylova).
 UPDATE players SET role = 'admin' WHERE name IN ('Jon Grim', 'Uziel Brito', 'Zornitsa Mihaylova');
+
+-- Seeded passwords for the e2e sign-in (they meet the D-17 rules). Local only.
+-- PIN sign-in is retiring; signInAt in e2e/tournament-flow.spec.ts uses these.
+UPDATE auth.users
+SET encrypted_password = extensions.crypt('Lobster-Admin-9999', extensions.gen_salt('bf'))
+WHERE email = 'jon@lobsters.test';
+UPDATE auth.users
+SET encrypted_password = extensions.crypt('Lobster-Player-1234', extensions.gen_salt('bf'))
+WHERE email = 'trunal@lobsters.test';
 
 -- ── Tournaments ──────────────────────────────────────────────────────────────
 
