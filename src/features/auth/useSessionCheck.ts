@@ -1,16 +1,27 @@
 import { useEffect, useState } from 'react'
+import { useQueryClient, type QueryClient } from '@tanstack/react-query'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../../supabase'
-import { fetchMyProfile } from '../../api/auth'
+import { fetchMyProfile } from '../players/playerQueries'
+import { playerKeys } from '../players/playerKeys'
 import { evaluateSession, type SessionCheckResult } from './sessionCheck'
 
 export type SessionCheckState = { status: 'pending' } | SessionCheckResult
 
-const refresh = async () => (await supabase.auth.refreshSession()).data.session
+// null: the refresh failed, which is not evidence about the account.
+async function refresh(): Promise<Session | null> {
+  const { data, error } = await supabase.auth.refreshSession()
+  return error ? null : data.session
+}
 
-async function ownPlayerExists(): Promise<boolean | null> {
+// Shares the cache with Settings' own-profile read. null: the read failed.
+async function ownPlayerExists({ queryClient }: { queryClient: QueryClient }) {
   try {
-    return (await fetchMyProfile()) !== null
+    const profile = await queryClient.fetchQuery({
+      queryKey: playerKeys.me(),
+      queryFn: fetchMyProfile,
+    })
+    return profile !== null
   } catch {
     return null
   }
@@ -24,18 +35,28 @@ export function useSessionCheck({
   session: Session | null
   sessionSettled: boolean
 }): SessionCheckState {
+  const queryClient = useQueryClient()
   const userId = session?.user?.id ?? null
   const [done, setDone] = useState<{ userId: string; result: SessionCheckResult } | null>(null)
 
   useEffect(() => {
-    if (!sessionSettled || !session || !userId) return
+    if (!sessionSettled) return
+    if (!session || !userId) {
+      setDone(null)
+      return
+    }
     let cancelled = false
-    void evaluateSession({ session, refresh, ownPlayerExists }).then((result) => {
-      if (result.status === 'incomplete') {
-        console.error('[auth] incomplete session', { reason: result.reason })
-      }
-      if (!cancelled) setDone({ userId, result })
-    })
+    evaluateSession({ session, refresh, ownPlayerExists: () => ownPlayerExists({ queryClient }) })
+      .catch((error): SessionCheckResult => {
+        console.warn('[auth] session check failed', error)
+        return { status: 'complete' }
+      })
+      .then((result) => {
+        if (result.status === 'incomplete') {
+          console.error('[auth] incomplete session', { reason: result.reason })
+        }
+        if (!cancelled) setDone({ userId, result })
+      })
     return () => {
       cancelled = true
     }

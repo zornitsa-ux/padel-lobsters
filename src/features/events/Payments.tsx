@@ -35,11 +35,10 @@ export default function Payments({
   tournament: NormalisedTournament | null
   onNavigate: EventNavigate
 }) {
-  const { role } = useApp()
+  const { isAdmin } = useApp()
   const { updateRegistration } = useRegistrationActions()
   const { data: players = [] } = usePlayers()
   const { data: regsData = [] } = useRegistrations(tournament?.id)
-  const isAdmin = role === 'admin'
   const [filter, setFilter] = useState<PaymentFilter>('all')
   const [reminderTarget, setReminderTarget] = useState<{ regId: string; name: string } | null>(null)
 

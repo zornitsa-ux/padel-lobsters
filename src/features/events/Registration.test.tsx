@@ -87,6 +87,7 @@ function renderInfo({
   mockUseApp.mockReturnValue({
     session: { user: { id: 'p0' } },
     role: isAdmin ? 'admin' : 'player',
+    isAdmin,
   })
   render(
     <MemoryRouter>

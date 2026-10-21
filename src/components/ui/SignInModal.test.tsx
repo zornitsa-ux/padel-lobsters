@@ -81,6 +81,11 @@ describe('SignInModal — role', () => {
   })
 })
 
+const tokenSession = (role?: string) => ({
+  access_token: `h.${btoa(JSON.stringify(role ? { app_metadata: { role } } : {}))}.s`,
+  user: { id: 'u1' },
+})
+
 const signInThroughCode = async () => {
   fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'ada@example.com' } })
   fireEvent.click(screen.getByRole('button', { name: /email me a sign-in code/i }))
@@ -90,7 +95,7 @@ const signInThroughCode = async () => {
 
 describe('SignInModal — pending callback', () => {
   it('runs it for a player prompt after a player signs in', async () => {
-    verifyEmailCode.mockResolvedValue({ session: { user: { app_metadata: {} } }, error: null })
+    verifyEmailCode.mockResolvedValue({ session: tokenSession('player'), error: null })
     const onSuccess = vi.fn()
     renderModal({ onSuccess })
     await signInThroughCode()
@@ -98,11 +103,19 @@ describe('SignInModal — pending callback', () => {
     await waitFor(() => expect(onSuccess).toHaveBeenCalled())
   })
 
+  it('runs nothing and just closes for a role-less session', async () => {
+    verifyEmailCode.mockResolvedValue({ session: tokenSession(), error: null })
+    const onSuccess = vi.fn()
+    const onClose = vi.fn()
+    renderModal({ onSuccess, onClose })
+    await signInThroughCode()
+
+    await waitFor(() => expect(onClose).toHaveBeenCalled())
+    expect(onSuccess).not.toHaveBeenCalled()
+  })
+
   it('does not run an admin callback when a player signs in', async () => {
-    verifyEmailCode.mockResolvedValue({
-      session: { user: { app_metadata: { role: 'player' } } },
-      error: null,
-    })
+    verifyEmailCode.mockResolvedValue({ session: tokenSession('player'), error: null })
     const onSuccess = vi.fn()
     const onClose = vi.fn()
     renderModal({ role: 'admin', onSuccess, onClose })

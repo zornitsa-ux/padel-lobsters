@@ -21,7 +21,7 @@ const players = [
 ]
 
 vi.mock('../../context/useApp', () => ({
-  useApp: () => ({ session: mockSession, role: fixtureRole(mockSession) }),
+  useApp: () => fixtureAuth(mockSession),
 }))
 vi.mock('../players/usePlayers', () => ({
   usePlayers: () => ({ data: players }),
@@ -46,7 +46,7 @@ vi.mock('./useTournamentSync', () => ({
 }))
 
 import MyTournament from './MyTournament'
-import { fixtureRole } from '../../test/sessions'
+import { fixtureAuth } from '../../test/sessions'
 
 const baseTournament: Partial<NormalisedTournament> = {
   id: 't1',

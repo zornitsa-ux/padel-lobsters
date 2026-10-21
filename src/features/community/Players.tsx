@@ -21,11 +21,10 @@ import type { CommunityPlayer } from './playersSelectors'
 // actions load on the player's own page (PlayerDetailPage).
 export default function Players() {
   const confirm = useConfirm()
-  const { session, role } = useApp()
+  const { session, role, isAdmin } = useApp()
   const { updatePlayer, deletePlayer } = usePlayerActions({ session, role })
   const { data: players = [] } = usePlayers()
   const resolveWithPii = useResolveWithPii()
-  const isAdmin = role === 'admin'
   const claimedId = session?.user?.id ?? null
 
   const [search, setSearch] = useState('')

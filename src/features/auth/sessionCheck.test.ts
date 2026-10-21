@@ -48,11 +48,11 @@ describe('evaluateSession', () => {
     expect(ownPlayerExists).not.toHaveBeenCalled()
   })
 
-  it('is incomplete (no_role) when the refresh yields no session', async () => {
-    await expect(run({ session: token(), refreshed: null }).result).resolves.toEqual({
-      status: 'incomplete',
-      reason: 'no_role',
-    })
+  it('does not lock anyone out when the refresh itself failed', async () => {
+    const { result, ownPlayerExists } = run({ session: token(), refreshed: null })
+
+    await expect(result).resolves.toEqual({ status: 'complete' })
+    expect(ownPlayerExists).not.toHaveBeenCalled()
   })
 
   it('is incomplete (no_player) with a role but no players row, refreshing at most never', async () => {

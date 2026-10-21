@@ -34,9 +34,8 @@ type MerchProps = {
 // ── Main Merch component ──────────────────────────────────────────────────────
 export default function Merch({ initialTab, onNavigate }: MerchProps) {
   const confirm = useConfirm()
-  const { session, role } = useApp()
+  const { session, isAdmin } = useApp()
   const { data: players = [] } = usePlayers()
-  const isAdmin = role === 'admin'
   const claimedId = session?.user?.id ?? null
   const [tab, setTab] = useState<TabId>((initialTab as TabId) || 'shop')
   useEffect(() => {

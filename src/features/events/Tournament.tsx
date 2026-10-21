@@ -29,7 +29,7 @@ export { DEFAULT_EVENT_DESCRIPTION }
 
 export default function Tournament({ onNavigate }: { onNavigate: EventNavigate }) {
   const confirm = useConfirm()
-  const { session, role } = useApp()
+  const { session, isAdmin } = useApp()
   const { data: tournaments = [] } = useTournaments()
   const { data: transfers = [] } = useTransfers()
   const addMut = useAddTournament()
@@ -44,7 +44,6 @@ export default function Tournament({ onNavigate }: { onNavigate: EventNavigate }
     [updateMut],
   )
   const deleteTournament = useCallback((id: string) => deleteMut.mutateAsync(id), [deleteMut])
-  const isAdmin = role === 'admin'
   const claimedId = session?.user?.id ?? null
 
   const [showForm, setShowForm] = useState(false)

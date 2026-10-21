@@ -21,8 +21,7 @@ type Props = {
 }
 
 export default function EventShell({ tournament }: Props) {
-  const { role } = useApp()
-  const isAdmin = role === 'admin'
+  const { isAdmin } = useApp()
   const { phase, oscarsPhase } = useEventPhase(tournament)
   const base = `/events/${tournament.id}`
 

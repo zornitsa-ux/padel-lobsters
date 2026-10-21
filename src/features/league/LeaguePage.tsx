@@ -8,7 +8,7 @@ import { useLeagueById, useLeagueTeams, useLeagueMatches } from './hooks/useLeag
 
 export default function LeaguePage() {
   const { id } = useParams<{ id: string }>()
-  const { session, role } = useApp()
+  const { session, isAdmin } = useApp()
   const { data: league, isLoading } = useLeagueById(id)
   const { data: teams = [] } = useLeagueTeams(league?.id)
   const { data: matches = [] } = useLeagueMatches(league?.id)
@@ -22,8 +22,6 @@ export default function LeaguePage() {
 
   if (isLoading) return <Spinner />
   if (!league) return <LeagueNotFound />
-
-  const isAdmin = role === 'admin'
 
   return (
     <LeagueHome league={league} teams={teams} matches={matches} myTeam={myTeam} isAdmin={isAdmin} />

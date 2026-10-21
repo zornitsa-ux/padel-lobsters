@@ -76,8 +76,7 @@ function PlayerHero({
 export default function PlayerDetailPage({ playerId, onNavigate }: PlayerDetailPageProps) {
   const navigate = useNavigate()
   const confirm = useConfirm()
-  const { session, role } = useApp()
-  const isAdmin = role === 'admin'
+  const { session, role, isAdmin } = useApp()
   const { deletePlayer, resendInvite } = usePlayerActions({ session, role })
   const { data: players = [], isLoading } = usePlayers()
   const { data: tournaments = [] } = useTournaments()

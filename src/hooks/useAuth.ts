@@ -28,6 +28,7 @@ export default function useAuth() {
 
   // C-12: the role is the token's own claim, never a second copy in app_metadata.
   const role = sessionRole({ session })
+  const isAdmin = role === 'admin'
 
   useEffect(() => {
     roleRef.current = role
@@ -59,6 +60,7 @@ export default function useAuth() {
     session,
     sessionSettled,
     role,
+    isAdmin,
     roleRef,
     loginWithPin,
     logout,

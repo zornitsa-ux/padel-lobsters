@@ -58,13 +58,12 @@ const CLOSED_STATE_LABELS: Record<string, string> = {
 
 export default function TransferAccept({ transferId, onNavigate }: TransferAcceptProps) {
   const confirm = useConfirm()
-  const { session, logout, sessionSettled, role } = useApp()
+  const { session, logout, sessionSettled, isAdmin } = useApp()
   const { data: tournaments = [] } = useTournaments()
   const { data: transfers = [] } = useTransfers()
   const { respondToTransfer } = useTransferActions({ session })
   const { data: players = [] } = usePlayers()
   const claimedId = session?.user?.id ?? null
-  const isAdmin = role === 'admin'
 
   const [busy, setBusy] = useState<'accept' | 'decline' | null>(null)
   const [done, setDone] = useState<{ kind: string } | null>(null)

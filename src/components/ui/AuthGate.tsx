@@ -136,8 +136,13 @@ export function SignInModal({
   if (!open) return null
 
   const handleSignedIn = (signedInSession: Session) => {
-    // A player prompt takes any signed-in session; the session check handles a missing role.
-    if (role === 'admin' && sessionRole({ session: signedInSession }) !== 'admin') {
+    const signedInRole = sessionRole({ session: signedInSession })
+    // A role-less session runs nothing: the session check takes over.
+    if (signedInRole === 'guest') {
+      onClose?.()
+      return
+    }
+    if (!roleSatisfies({ required: role, role: signedInRole })) {
       setNotice(ADMIN_REQUIRED_NOTICE)
       return
     }

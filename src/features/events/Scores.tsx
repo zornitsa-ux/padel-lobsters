@@ -30,8 +30,7 @@ interface ScoresProps {
 }
 
 export default function Scores({ tournament, onNavigate }: ScoresProps) {
-  const { role } = useApp()
-  const isAdmin = role === 'admin'
+  const { isAdmin } = useApp()
   const { data: players = [] } = usePlayers()
   const { data: allMatches = [] } = useMatches(tournament?.id)
   const { data: regsData = [] } = useRegistrations(tournament?.id)

@@ -63,8 +63,7 @@ function SeasonGroup({
 }
 
 export function SeasonsList() {
-  const { role } = useApp()
-  const isAdmin = role === 'admin'
+  const { isAdmin } = useApp()
   const { data: leagues = [], isLoading } = useAllLeagues()
   const { data: champions = [] } = useSeasonChampions()
   const { current, upcoming, past } = groupSeasons({ leagues })

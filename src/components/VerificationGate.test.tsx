@@ -38,6 +38,22 @@ describe('VerificationGate — session check', () => {
     expect(screen.getByText('page content')).toBeTruthy()
   })
 
+  it('renders nothing for a signed-in session with no role claim while pending', () => {
+    mockUseApp.mockReturnValue({ role: 'guest', session: {}, sessionSettled: true, logout })
+    mockCheck.mockReturnValue({ status: 'pending' })
+    const view = renderGate('/events')
+
+    expect(view.container.innerHTML).toBe('')
+  })
+
+  it('still shows the sign-in form to a signed-out guest', () => {
+    mockUseApp.mockReturnValue({ role: 'guest', session: null, sessionSettled: true, logout })
+    mockCheck.mockReturnValue({ status: 'complete' })
+    renderGate('/events')
+
+    expect(screen.getByText('sign-in form')).toBeTruthy()
+  })
+
   it('shows only the panel for an incomplete session, on any route, and signs out', () => {
     mockCheck.mockReturnValue({ status: 'incomplete', reason: 'no_player' })
     renderGate('/home')

@@ -33,10 +33,9 @@ const InstagramIcon = () => (
 )
 
 export default function Layout({ children }: { children?: React.ReactNode }) {
-  const { role } = useApp()
+  const { isAdmin } = useApp()
   const { data: settings } = useSettings()
   const signInLink = useSignInDeepLink()
-  const isAdmin = role === 'admin'
   const navItems = isAdmin
     ? [...NAV, { to: '/admin', label: 'Admin', icon: Shield, end: false }]
     : NAV

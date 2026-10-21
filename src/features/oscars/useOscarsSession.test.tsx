@@ -43,7 +43,7 @@ const { mockSession, mockPlayers, mockRegistrations, mockMatches } = vi.hoisted(
 }))
 
 vi.mock('../../context/useApp', () => ({
-  useApp: () => ({ session: mockSession, role: fixtureRole(mockSession) }),
+  useApp: () => fixtureAuth(mockSession),
 }))
 vi.mock('../players/usePlayers', () => ({ usePlayers: () => ({ data: mockPlayers }) }))
 vi.mock('../events/useRegistrations', () => ({
@@ -52,7 +52,7 @@ vi.mock('../events/useRegistrations', () => ({
 vi.mock('../events/useMatches', () => ({ useMatches: () => ({ data: mockMatches }) }))
 
 import { loadSession, loadCategories, getMyVotes, getResults } from '../../api/oscars'
-import { fixtureRole } from '../../test/sessions'
+import { fixtureAuth } from '../../test/sessions'
 
 const mockLoadSession = vi.mocked(loadSession)
 const mockLoadCategories = vi.mocked(loadCategories)

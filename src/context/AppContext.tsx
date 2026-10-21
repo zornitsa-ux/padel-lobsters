@@ -21,6 +21,7 @@ export function AppProvider({ children }: AppProviderProps) {
         session: auth.session,
         sessionSettled: auth.sessionSettled,
         role: auth.role,
+        isAdmin: auth.isAdmin,
         loginWithPin: auth.loginWithPin,
         logout: auth.logout,
         fetchMyProfile: auth.fetchMyProfile,

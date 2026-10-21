@@ -33,6 +33,7 @@ function renderShell({
   useApp.mockReturnValue({
     session: { user: { id: 'u1' } },
     role: isAdmin ? 'admin' : 'player',
+    isAdmin,
   })
   useEventPhase.mockReturnValue({ phase, oscarsPhase })
   render(

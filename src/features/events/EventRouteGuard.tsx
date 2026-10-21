@@ -27,8 +27,7 @@ export function EventRouteGuard({ children }: GuardProps) {
  * `/events`, so a shared link to an admin surface still shows them the event.
  */
 export function AdminEventRouteGuard({ children }: GuardProps) {
-  const { role } = useApp()
-  const isAdmin = role === 'admin'
+  const { isAdmin } = useApp()
   return (
     <EventRouteGuard>
       {(tournament) =>

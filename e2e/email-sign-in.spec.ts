@@ -106,11 +106,17 @@ test('native signup: code creates the players row', async ({ page }) => {
 
   await enterCode({ page, code: await waitForCode({ to: email, since }) })
   await expect(page.getByLabel('Code')).toBeHidden()
-  await expect(page.getByText(/your account isn.t fully set up/i)).toHaveCount(0)
 
   await expect
     .poll(async () => (await admin.from('players').select('name, status').eq('email', email)).data)
     .toMatchObject([{ status: 'active' }])
+  // Reload and wait for the check's own-profile read, so the assertion can't run before it settles.
+  const ownProfileRead = page.waitForResponse((res) => res.url().includes('get_my_profile_v2'))
+  await page.reload()
+  await ownProfileRead
+  await page.waitForLoadState('networkidle')
+  await expect(page.getByLabel('Code')).toBeHidden()
+  await expect(page.getByText(/your account isn.t fully set up/i)).toHaveCount(0)
 })
 
 test('signup retry after 60 s: only the newest code works', async ({ page }) => {

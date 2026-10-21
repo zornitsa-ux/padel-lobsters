@@ -91,9 +91,8 @@ export function useOscarsSession(
   tournament: NormalisedTournament | null | undefined,
 ): OscarsSessionState {
   const confirm = useConfirm()
-  const { session: authSession, role } = useApp()
+  const { session: authSession, isAdmin } = useApp()
   const { data: players = [] } = usePlayers()
-  const isAdmin = role === 'admin'
   const claimedId = authSession?.user?.id ?? null
   const tournamentId = tournament?.id || ''
   const { data: regsData = [] } = useRegistrations(tournamentId || null)

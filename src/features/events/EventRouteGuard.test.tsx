@@ -104,10 +104,12 @@ describe('AdminEventRouteGuard', () => {
   const adminSession = {
     session: { user: { app_metadata: { role: 'admin' }, id: 'u1' } },
     role: 'admin',
+    isAdmin: true,
   }
   const playerSession = {
     session: { user: { app_metadata: { role: 'player' }, id: 'u2' } },
     role: 'player',
+    isAdmin: false,
   }
 
   it('renders for an admin once settled', () => {

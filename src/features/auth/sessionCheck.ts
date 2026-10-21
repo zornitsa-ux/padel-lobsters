@@ -11,7 +11,8 @@ const hasRole = (session: Session | null) => sessionRole({ session }) !== 'guest
 
 // C-12: complete = a player/admin role claim and the user's own players row. A missing
 // claim gets exactly one refresh (the token may predate its players row).
-// `ownPlayerExists` resolves null when the read itself failed: that never blocks sign-in.
+// A failed refresh (null) or players read (null) never blocks sign-in: only a successful
+// refresh whose token still lacks the role is no_role.
 export async function evaluateSession({
   session,
   refresh,
@@ -21,8 +22,10 @@ export async function evaluateSession({
   refresh: () => Promise<Session | null>
   ownPlayerExists: () => Promise<boolean | null>
 }): Promise<SessionCheckResult> {
-  if (!hasRole(session) && !hasRole(await refresh())) {
-    return { status: 'incomplete', reason: 'no_role' }
+  if (!hasRole(session)) {
+    const refreshed = await refresh()
+    if (!refreshed) return { status: 'complete' }
+    if (!hasRole(refreshed)) return { status: 'incomplete', reason: 'no_role' }
   }
   return (await ownPlayerExists()) === false
     ? { status: 'incomplete', reason: 'no_player' }

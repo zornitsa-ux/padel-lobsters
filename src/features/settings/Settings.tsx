@@ -30,12 +30,11 @@ import { PageHeader } from '../../components/ui/PageHeader'
 import LobsterWayLink from '../../components/LobsterWayLink'
 
 export default function Settings() {
-  const { session, role, logout } = useApp()
+  const { session, role, logout, isAdmin } = useApp()
   const { updatePlayer } = usePlayerActions({ session, role })
   const avatarUpload = useAvatarUpload()
   const { data: settings } = useSettings()
   const saveSettingsMutation = useSaveSettings()
-  const isAdmin = role === 'admin'
   const claimedId = session?.user?.id ?? null
   // Own profile: identity from the public roster merged with PII from
   // get_my_profile_v2. Single source — no separate poll/overlay, so a

@@ -16,6 +16,7 @@ vi.mock('../../context/useApp', () => ({
   useApp: () => ({
     session: { user: { id: 'admin-1', app_metadata: { role: 'admin' } } },
     role: 'admin',
+    isAdmin: true,
   }),
 }))
 vi.mock('../players/usePlayers', () => ({
