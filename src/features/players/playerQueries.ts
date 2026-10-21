@@ -142,7 +142,7 @@ export function randomAvatarFilename(): string {
 // anon's direct grants on public.players. PINs are now generated
 // server-side (atomic — no client/server collision race).
 export async function addPlayer(data: PlayerInput) {
-  // PIN omitted — admin_add_player generates one and returns it on the row.
+  // admin_add_player emails an invite when there is an email; no PIN exists.
   const payload = {
     name: data.name,
     email: data.email || '',
@@ -238,17 +238,15 @@ export async function deletePlayer(id: string) {
   }
 }
 
-// ── PIN / Identity ───────────────────────────────────────────────
-// Phase 2c: PIN generation moves server-side. admin_regenerate_pin
-// also bumps pin_changes via the sync_player_pin_hash trigger.
-// Returns the new PIN so admin can share it with the player.
-export async function regeneratePin(playerId: string) {
-  const { data, error } = await supabase.rpc('admin_regenerate_pin', {
-    input_target_id: playerId,
+// ── Invite ───────────────────────────────────────────────────────
+// Returns the address the invite was mailed to.
+export async function resendInvite(playerId: string) {
+  const { data, error } = await supabase.rpc('admin_resend_invite', {
+    input_player_id: playerId,
   })
   if (error) {
-    console.error('admin_regenerate_pin error:', error)
+    console.error('admin_resend_invite error:', error)
     throw error
   }
-  return data || null
+  return data
 }

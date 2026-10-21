@@ -11,7 +11,7 @@ vi.mock('./playerQueries', () => ({
   addPlayer: vi.fn(),
   updatePlayer: vi.fn(),
   deletePlayer: vi.fn(),
-  regeneratePin: vi.fn(),
+  resendInvite: vi.fn(),
   fetchPlayerPii: vi.fn(),
   uploadAvatar: vi.fn(),
   randomAvatarFilename: vi.fn(() => 'player-test.webp'),
@@ -171,38 +171,36 @@ describe('usePlayerActions — deletePlayer', () => {
   })
 })
 
-// ── regeneratePin ─────────────────────────────────────────────────────────────
+// ── resendInvite ──────────────────────────────────────────────────────────────
 
-describe('usePlayerActions — regeneratePin', () => {
-  it('throws "Could not reset PIN." when mutation returns null', async () => {
-    ;(q.regeneratePin as ReturnType<typeof vi.fn>).mockResolvedValue(null)
+describe('usePlayerActions — resendInvite', () => {
+  it('returns the address it mailed', async () => {
+    ;(q.resendInvite as ReturnType<typeof vi.fn>).mockResolvedValue('ada@example.com')
 
     const { result } = renderHookWithClient(() =>
       usePlayerActions({ session: authedSession, role: adminRole }),
     )
 
-    await expect(act(async () => result.current.regeneratePin('player-id'))).rejects.toThrow(
-      'Could not reset PIN.',
-    )
-  })
-
-  it('returns { ok: true, pin } and invalidates playerKeys.all() on success', async () => {
-    ;(q.regeneratePin as ReturnType<typeof vi.fn>).mockResolvedValue('9999')
-
-    const client = makeTestQueryClient()
-    vi.spyOn(client, 'invalidateQueries')
-
-    const { result } = renderHookWithClient(
-      () => usePlayerActions({ session: authedSession, role: adminRole }),
-      client,
-    )
-
     let res: unknown
     await act(async () => {
-      res = await result.current.regeneratePin('player-id')
+      res = await result.current.resendInvite('player-id')
     })
 
-    expect(res).toEqual({ ok: true, pin: '9999' })
-    expect(client.invalidateQueries).toHaveBeenCalledWith({ queryKey: playerKeys.all() })
+    expect(res).toEqual({ ok: true, email: 'ada@example.com' })
+    expect(q.resendInvite).toHaveBeenCalledWith('player-id')
+  })
+
+  it('lets the RPC error through for the caller to map', async () => {
+    ;(q.resendInvite as ReturnType<typeof vi.fn>).mockRejectedValue(
+      new Error('player has no email'),
+    )
+
+    const { result } = renderHookWithClient(() =>
+      usePlayerActions({ session: authedSession, role: adminRole }),
+    )
+
+    await expect(act(async () => result.current.resendInvite('player-id'))).rejects.toThrow(
+      'player has no email',
+    )
   })
 })

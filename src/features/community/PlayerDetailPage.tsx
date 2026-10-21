@@ -16,13 +16,14 @@ import { errorMessage } from '../../lib/errors'
 import { useConfirm } from '../../lib/confirmBus'
 import PlayerProfile from './PlayerProfile'
 import PlayerForm from './PlayerForm'
-import PinRevealModal from './PinRevealModal'
+import InviteSentModal from './InviteSentModal'
 import { corpReview } from './reviewScenarios'
 import { levelBadgeClass } from './playerConstants'
 import { usePlayerEditor } from './usePlayerEditor'
 import { buildFirstNameCount, getDisplayName } from './playersSelectors'
 import type { CommunityPlayer } from './playersSelectors'
-import type { PinReveal } from './PinRevealModal'
+import type { InviteSent } from './InviteSentModal'
+import { describeInviteError } from '../players/inviteErrors'
 import type { EventNavigate } from '../events/eventHelpers'
 
 const BACK_LINK = { to: '/community', label: 'Community' }
@@ -77,13 +78,13 @@ export default function PlayerDetailPage({ playerId, onNavigate }: PlayerDetailP
   const confirm = useConfirm()
   const { session, role } = useApp()
   const isAdmin = session?.user?.app_metadata?.role === 'admin'
-  const { deletePlayer, regeneratePin } = usePlayerActions({ session, role })
+  const { deletePlayer, resendInvite } = usePlayerActions({ session, role })
   const { data: players = [], isLoading } = usePlayers()
   const { data: tournaments = [] } = useTournaments()
   const { data: matches = [] } = useAllMatches()
   const { data: registrations = [] } = useAllRegistrations()
   const editor = usePlayerEditor({ isAdmin })
-  const [pinReveal, setPinReveal] = useState<PinReveal | null>(null)
+  const [inviteSent, setInviteSent] = useState<InviteSent | null>(null)
   const [error, setError] = useState('')
 
   const player = players.find((p) => String(p.id) === playerId) ?? null
@@ -115,16 +116,13 @@ export default function PlayerDetailPage({ playerId, onNavigate }: PlayerDetailP
     }
   }
 
-  // admin_regenerate_pin also emails the PIN; the modal covers bounced email.
-  const handleRegeneratePin = async (p: CommunityPlayer) => {
+  const handleResendInvite = async (p: CommunityPlayer) => {
     setError('')
     try {
-      const result = await regeneratePin(p.id)
-      if (result?.ok && result.pin) {
-        setPinReveal({ name: (p.name || '').split(' ')[0] || 'Player', pin: result.pin })
-      }
+      const result = await resendInvite(p.id)
+      setInviteSent({ name: (p.name || '').split(' ')[0] || 'Player', email: result.email })
     } catch (err) {
-      setError(errorMessage(err, 'Could not regenerate PIN.'))
+      setError(describeInviteError({ error: err, fallback: 'Could not resend the invite.' }))
     }
   }
 
@@ -163,11 +161,11 @@ export default function PlayerDetailPage({ playerId, onNavigate }: PlayerDetailP
             onNavigate={onNavigate}
             onEdit={editor.openEdit}
             onDelete={handleDelete}
-            onRegeneratePin={handleRegeneratePin}
+            onResendInvite={handleResendInvite}
           />
         </div>
       </div>
-      <PinRevealModal pinReveal={pinReveal} onClose={() => setPinReveal(null)} />
+      <InviteSentModal inviteSent={inviteSent} onClose={() => setInviteSent(null)} />
       <PlayerForm {...editor.formProps} />
     </div>
   )

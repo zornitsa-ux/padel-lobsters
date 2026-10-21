@@ -1,5 +1,5 @@
 import React from 'react'
-import { Pencil, Trash2, RotateCcw, Mail, EyeOff, AlertTriangle } from 'lucide-react'
+import { Pencil, Trash2, Mail, EyeOff, AlertTriangle } from 'lucide-react'
 import { Skeleton } from '../../components/ui/Skeleton'
 import { AlertBox } from '../../components/ui/AlertBox'
 import { ActionChip } from '../../components/ui/ActionChip'
@@ -45,7 +45,7 @@ interface PlayerProfileProps {
   onNavigate?: EventNavigate
   onEdit: (player: CommunityPlayer) => void
   onDelete: (id: string) => void
-  onRegeneratePin: (player: CommunityPlayer) => void
+  onResendInvite: (player: CommunityPlayer) => void
 }
 
 export default function PlayerProfile({
@@ -58,7 +58,7 @@ export default function PlayerProfile({
   onNavigate,
   onEdit,
   onDelete,
-  onRegeneratePin,
+  onResendInvite,
 }: PlayerProfileProps) {
   // Learned level (mm_rating/mm_sigma) is admin-only — it lives behind
   // admin_get_mm_ratings, not players_public, so non-admins never fetch it.
@@ -425,30 +425,24 @@ export default function PlayerProfile({
         </div>
       )}
 
-      {/* PIN reset — admin only. PIN itself is no longer
-      shown in admin UI; it's delivered to the player by
-      email on creation and on every reset. */}
+      {/* Sign-in invite — admin only. Players sign in with an emailed code,
+      so there is nothing to reset: resending just repeats the invite email. */}
       {isAdmin && (
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center justify-between gap-3">
           <div>
             <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider mb-0.5">
-              Access PIN
-              {(p.pin_changes ?? 0) > 0 && (
-                <span className="ml-1.5 text-amber-500/80 font-semibold normal-case tracking-normal">
-                  · reset {p.pin_changes}×
-                </span>
-              )}
+              Sign-in invite
             </p>
             <p className="text-xs text-amber-700/80 leading-snug">
-              Emailed to the player. Click to generate a fresh one.
+              Emails the player how to sign in. Contains no password or code.
             </p>
           </div>
           <button
-            onClick={() => onRegeneratePin(p)}
+            onClick={() => onResendInvite(p)}
             className="text-xs bg-amber-500 text-white px-3 py-1.5 rounded-xl font-semibold active:scale-95 transition-all flex items-center gap-1.5 flex-shrink-0"
           >
-            <RotateCcw size={12} />
-            Reset &amp; email
+            <Mail size={12} />
+            Resend invite
           </button>
         </div>
       )}
