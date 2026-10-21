@@ -497,20 +497,37 @@ up` refuses it alone; a PR branch must contain `main`'s migrations. Noted:
     13/13 three times in a row. `--repeat-each` isn't a valid flake test for
     the email spec: repeats hit GoTrue's 60 s per-address send limit.
 
+- 2026-10-21: **T₀ go/no-go (owner): release tonight.**
+  - **Cutover is Thu 5 Nov** (T₀ + 15; the owner chose a Thursday). That
+    puts the reminder on Mon 2 Nov, and **#13 must be on or after Sun 8
+    Nov**. `PIN_SUNSET_DATE` is now `2026-11-05` on 3/3.
+  - **Resend stays on the free plan, with monitoring** (§5 step 6).
+  - **The owner sends the announcements.**
+  - **§4.3's device checks didn't run before T₀.** They're now hard gates
+    for the cutover (§5). PINs work through the window, and rollback is a
+    Vercel redeploy, so the T₀ risk is bounded.
+  - **Production integrity check (read-only)** meets the T₀ column, with
+    every count unchanged. No real signup has gone through the hook yet (0
+    new auth users today), so the T₀ `+alias` signup is its first real test.
+  - **Release order corrected:** §5's "`db push` before the merge" broke
+    CLAUDE.md (migrations only after merge). It's now merge, then `db push`
+    from `main`.
+
 ---
 
 ## 2. Schedule
 
-Dates stay relative until tournament **#13** is scheduled. Then pin them here.
+Dates pinned 2026-10-21 (owner): T₀ tonight, cutover Thu 5 Nov. **#13 must be
+on or after Sun 8 Nov** (cutover ≥ 3 days before it).
 
 | Milestone                        | When                                       | Rule                                                                       |
 | -------------------------------- | ------------------------------------------ | -------------------------------------------------------------------------- |
 | R0: Phase 0a merged + pushed     | Week of 15 Oct                             | Invisible; may land before #12 (18 Oct)                                    |
 | R1: Phase 0b merged + pushed     | **Done 2026-10-19**                        | Verified in production (§4.4); dashboard checklist done the same day       |
 | R2: dark backend (PR 1/3)        | **Done 2026-10-21**                        | The hook and invite emails run in production before players see the new UI |
-| **T₀**: PRs 2/3 + 3/3 + announce | A Tue or Wed                               | T₀ ≤ #13 − 17 days                                                         |
-| WhatsApp reminder                | Cutover − 3 days                           |                                                                            |
-| **Cutover** (PR 4)               | T₀ + 14, a Tue or Wed                      | ≥ 3 days before #13; go/no-go in §5                                        |
+| **T₀**: PRs 2/3 + 3/3 + announce | **Wed 21 Oct 2026** (owner)                | T₀ ≤ #13 − 17 days                                                         |
+| WhatsApp reminder                | **Mon 2 Nov** (cutover − 3 days)           |                                                                            |
+| **Cutover** (PR 4)               | **Thu 5 Nov** (owner; T₀ + 15)             | ≥ 3 days before #13; go/no-go in §5                                        |
 | Revoke (PR 5)                    | Cutover + 2 days                           | After the 48h watch is clean                                               |
 | Phase 4 cleanup (PR 6)           | ≥ Cutover + 14 days, once stub hits are ~0 | Not within 3 days of an event                                              |
 | Explainer removal (PR 7)         | Cutover + ~2 months                        |                                                                            |
@@ -946,10 +963,12 @@ of showing a PIN. Merge 1/3 → `functions deploy send-invite-email` → `db pus
    holds. **Owner decision on Resend:** stay on the free plan (100 sends/day)
    with the watch below, or upgrade for the window. Resend's plans upgrade
    immediately, so a mid-window upgrade is also an option.
-2. Set `PIN_SUNSET_DATE` (a commit on 3/3) → `db push` of 3/3's migration
-   (backward-compatible: the live client never reads `password_count`, and
-   the hook only drops a role from users with no `players` row) → merge 2/3
-   then 3/3 → Vercel deploys.
+2. Set `PIN_SUNSET_DATE` (a commit on 3/3) → merge 2/3 (squash) → C rebases
+   3/3 onto `main` (`git rebase --onto main pin-auth-2-signin`), reruns the
+   gates and force-pushes → merge 3/3 → Vercel deploys → `npx supabase db
+push` from `main` right away (CLAUDE.md: migrations only after merge).
+   Until the push, the readiness panel shows "Could not load" to admins (the
+   old RPC's shape); nothing else depends on it.
 3. Once the deploy is live, paste the code-first `magic_link.html` and its
    subject into the dashboard (D-14). Then run the T₀ production checks in
    §4.4.
@@ -970,6 +989,9 @@ of showing a PIN. Merge 1/3 → `functions deploy send-invite-email` → `db pus
   auth-email delivery issue is open.
 - The integrity check against production still meets the T₀ column.
 - The date is ≥ 3 days before #13.
+- **§4.3's device checks pass** (moved here from T₀, 2026-10-21): `+alias`
+  signup, Android Gmail code + autofill, desktop link + password reset, and
+  the iPhone home-screen code entry with a recruited tester.
 
 **Cutover.** Merge PR 4 → Vercel deploys the client → `functions deploy
 verify-pin` (the stub) → WhatsApp "PINs retired" → 48h watch.
