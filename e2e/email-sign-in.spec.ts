@@ -260,3 +260,110 @@ test('an account with no players row sees the incomplete-account panel and can s
     await admin.auth.admin.deleteUser(data.user.id)
   }
 })
+
+/* ════════════════════════════════════════════════════════════════════════════
+   PIN sunset comms: post-PIN interstitial and the Home upgrade card.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+const PIN_PLAYER = { email: 'trunal@lobsters.test', pin: '1234' }
+const CARD_PASSWORD = 'Card-Password-2026'
+
+async function createPasswordPlayer({ email }: { email: string }): Promise<string> {
+  const { data, error } = await admin.auth.admin.createUser({
+    email,
+    password: CARD_PASSWORD,
+    email_confirm: true,
+    user_metadata: { name: `E2E Card ${Date.now()}` },
+  })
+  if (error || !data.user) throw new Error(`Could not create ${email}: ${error?.message}`)
+  return data.user.id
+}
+
+async function deletePlayerUser({ id }: { id: string }) {
+  await admin.from('players').delete().eq('id', id)
+  await admin.auth.admin.deleteUser(id)
+}
+
+async function signInWithPassword({ page, email }: { page: Page; email: string }) {
+  await page.getByRole('button', { name: /sign in with password/i }).click()
+  await page.getByLabel('Email').fill(email)
+  await page.getByLabel('Password').fill(CARD_PASSWORD)
+  await page.getByRole('button', { name: /^sign in$/i }).click()
+}
+
+async function openHomeSignedIn({ page, email }: { page: Page; email: string }) {
+  // A stale Playtomic level pops a modal over the page whenever the profile loads.
+  await page.addLocatorHandler(page.getByRole('button', { name: /no change/i }), (button) =>
+    button.click(),
+  )
+  await page.goto('/events')
+  await signInWithPassword({ page, email })
+  await page.goto('/home')
+}
+
+test('PIN sign-in shows the interstitial once, with the player email', async ({ page }) => {
+  await page.goto('/events')
+  await page.getByRole('button', { name: /sign in with pin \(until/i }).click()
+  await page.getByLabel(/your pin/i).fill(PIN_PLAYER.pin)
+  await page.getByRole('button', { name: /^sign in with pin$/i }).click()
+
+  const dialogTitle = page.getByText(/^PINs stop working on /)
+  await expect(dialogTitle).toBeVisible()
+  await expect(page.getByText(PIN_PLAYER.email)).toBeVisible()
+  await page.getByRole('button', { name: /^got it$/i }).click()
+  await expect(dialogTitle).toHaveCount(0)
+
+  await page.reload()
+  await page.waitForLoadState('networkidle')
+  await expect(dialogTitle).toHaveCount(0)
+})
+
+test('upgrade card on Home: shows the email, Got it dismisses it for good', async ({ page }) => {
+  const email = `e2e-card-${Date.now()}@lobsters.test`
+  const id = await createPasswordPlayer({ email })
+  try {
+    await openHomeSignedIn({ page, email })
+    const card = page.getByTestId('pin-upgrade-card')
+    await expect(card).toContainText('Signing in is getting easier')
+    await expect(card).toContainText(email)
+
+    await card.getByRole('button', { name: /^got it$/i }).click()
+    await expect(card).toHaveCount(0)
+
+    await page.reload()
+    await page.waitForLoadState('networkidle')
+    await expect(page.getByText('Welcome to Padel Lobsters!')).toHaveCount(0)
+    await expect(page.getByTestId('pin-upgrade-card')).toHaveCount(0)
+  } finally {
+    await deletePlayerUser({ id })
+  }
+})
+
+test('synthetic account sees the add-email card until an admin sets a real email', async ({
+  page,
+}) => {
+  const synthetic = `player-${crypto.randomUUID()}@padelobsters.internal`
+  const realEmail = `e2e-fixed-${Date.now()}@lobsters.test`
+  const id = await createPasswordPlayer({ email: synthetic })
+  try {
+    await openHomeSignedIn({ page, email: synthetic })
+    const card = page.getByTestId('pin-upgrade-card')
+    await expect(card).toContainText('Add your email so you can keep signing in')
+    await expect(card.getByRole('button')).toHaveCount(0)
+    await expect(page.getByText('padelobsters.internal')).toHaveCount(0)
+
+    const { error } = await admin.from('players').update({ email: realEmail }).eq('id', id)
+    if (error) throw new Error(`Could not set the real email: ${error.message}`)
+    await expect
+      .poll(async () => (await admin.auth.admin.getUserById(id)).data.user?.email)
+      .toBe(realEmail)
+
+    await page.goto('/account')
+    await page.getByRole('button', { name: /^sign out$/i }).click()
+    await signInWithPassword({ page, email: realEmail })
+    await page.goto('/home')
+    await expect(page.getByTestId('pin-upgrade-card')).toContainText('Signing in is getting easier')
+  } finally {
+    await deletePlayerUser({ id })
+  }
+})
