@@ -22,10 +22,10 @@ import type { EventNavigate } from '../features/events/eventHelpers'
 // Accept / Decline action that calls respondToTransfer().
 //
 // VerificationGate wraps this page (it isn't in PUBLIC_PAGES), so by the
-// time the user reaches this component they've already passed PIN entry.
+// time the user reaches this component they've already signed in.
 // If they're signed in as a different person than the offer's recipient,
 // we show that explicitly and offer to sign out so they can sign in again
-// with the right PIN.
+// as the recipient.
 //
 // Props:
 //   transferId: from the ?transfer=<id> deep link
@@ -99,10 +99,10 @@ export default function TransferAccept({ transferId, onNavigate }: TransferAccep
   }
 
   const handleSignOut = async () => {
-    if (!(await confirm({ message: 'Sign out so you can sign in with a different PIN?' }))) return
+    if (!(await confirm({ message: `Sign out so you can sign in as ${dn(toPlayer)}?` }))) return
     logout?.()
     // After logout, claimedId becomes null and VerificationGate will
-    // re-prompt for PIN on this same page (the ?transfer= deep link is
+    // re-prompt for sign-in on this same page (the ?transfer= deep link is
     // gone from the URL but our prop persists across the re-render).
   }
 
@@ -206,8 +206,8 @@ export default function TransferAccept({ transferId, onNavigate }: TransferAccep
         <AlertCircle size={36} className="mx-auto text-amber-500" />
         <h2 className="font-bold text-base">This transfer is for {dn(toPlayer)}</h2>
         <p className="text-sm text-lob-slate">
-          You're currently signed in as someone else. Sign out and back in with {dn(toPlayer)}'s PIN
-          to accept or decline.
+          You're currently signed in as someone else. Sign out and back in with {dn(toPlayer)}'s
+          email to accept or decline.
         </p>
         <button
           onClick={handleSignOut}

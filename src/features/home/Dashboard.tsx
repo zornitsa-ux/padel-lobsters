@@ -217,13 +217,13 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
   // the roster resolves.
   //
   // Before the session settles claimedId is null, which is indistinguishable
-  // from a real guest — greeting a member with "sign in with your PIN" and then
+  // from a real guest — greeting a member with "sign in with your email" and then
   // swapping is worse than holding the line for the few ms auth takes.
   const isGuest = !claimedId && !isAdmin
   const greetingName = useGreetingName({ playerId: claimedId, name: claimedPlayer?.name })
   const nameStillLoading = !sessionSettled || (!!claimedId && !greetingName && playersPending)
   const [greetHello, greetSub] = isGuest
-    ? ['Welcome to Padel Lobsters!', 'Sign in with your PIN to join the fun.']
+    ? ['Welcome to Padel Lobsters!', 'Sign in with your email to join the fun.']
     : getGreeting(greetingName || (isAdmin ? 'Admin' : null))
 
   // Marks are first-call-wins, so both conditions have to mean "settled", not

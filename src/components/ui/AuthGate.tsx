@@ -16,7 +16,7 @@ import { sessionRole } from '../../features/auth/sessionClaims'
  *
  * Props
  *   role        'admin' | 'player' — who is allowed to see the children
- *   onNavigate  the app-level navigate fn (required so "Go to Settings" works)
+ *   onNavigate  the app-level navigate fn (required so "Sign in" works)
  *   message     optional override for the banner body copy
  *   compact     render a slim inline banner rather than a full card
  *   fallback    if provided, render this instead of the default banner
@@ -60,8 +60,8 @@ export function SignInBanner({
   const body = accent === 'amber' ? 'text-amber-700' : 'text-lob-slate'
 
   const defaultCopy = isAdmin
-    ? 'Sign in as admin from Settings → Account to manage this.'
-    : "Sign in from Settings → Account to post, react, or place orders. We'll email you a code."
+    ? "Sign in with your admin email to manage this. We'll send you a code."
+    : "Sign in with your email to post, react, or place orders. We'll send you a code."
 
   const goToSettings = () => onNavigate?.('settings')
 
@@ -96,7 +96,7 @@ export function SignInBanner({
           onClick={goToSettings}
           className="mt-2 text-xs font-bold text-white bg-lob-teal px-3 py-1.5 rounded-lg active:scale-95 transition-all inline-flex items-center gap-1"
         >
-          <LogIn size={12} /> Go to Settings
+          <LogIn size={12} /> Sign in
         </button>
       </div>
     </div>
