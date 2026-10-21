@@ -31,11 +31,11 @@ beforeEach(() => {
 afterEach(cleanup)
 
 describe('VerificationGate — session check', () => {
-  it('renders nothing while the check is pending, even on a public path', () => {
+  it('renders the page while the check is pending', () => {
     mockCheck.mockReturnValue({ status: 'pending' })
-    const view = renderGate('/home')
+    renderGate('/events')
 
-    expect(view.container.innerHTML).toBe('')
+    expect(screen.getByText('page content')).toBeTruthy()
   })
 
   it('shows only the panel for an incomplete session, on any route, and signs out', () => {

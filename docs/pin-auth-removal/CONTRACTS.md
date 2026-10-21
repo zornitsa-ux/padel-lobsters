@@ -320,5 +320,8 @@ Added 2026-10-21 by the coordinator (owner decision; PLAN §1 log).
 - It logs `console.error('[auth] incomplete session', { reason })` with the
   reason (`no_role` / `no_player`) and no personal data. Recording it
   server-side is deferred (PLAN §1 log, 2026-10-21).
-- While the check is pending, the app renders as it does while the session
-  settles (nothing on protected paths).
+- **While the check is pending, the app renders as usual** (amended
+  2026-10-21). It's a safety net, not a gate: blocking would unmount the page
+  on every sign-in (losing an in-progress action such as a Merch order) and
+  make every reload wait on the `players` read. The panel replaces the page
+  only once the session is confirmed incomplete.

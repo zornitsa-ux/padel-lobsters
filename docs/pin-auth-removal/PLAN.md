@@ -372,6 +372,23 @@ up` refuses it alone; a PR branch must contain `main`'s migrations. Noted:
     for a broader look at error tracking in the app, which today has no
     error-reporting service. Until then the check logs to the console.
 
+- 2026-10-21: **T15 and the session check built** (3469305; C-12).
+  - **Role:** every client read now uses the token's claim (25 files), and
+    `syncMyRole` is gone from the client.
+  - **Check:** the session check is mounted in `VerificationGate`. A new e2e
+    test creates an account the way C-4 skips (confirmed, no `players` row),
+    signs it in by code, and gets the panel and a working Sign out.
+  - **Observed on local GoTrue:** the token from a native signup's
+    `verifyOtp` already carries `role: player`, so the one-refresh rule
+    didn't fire. Code, password, recovery and PIN sign-ins all land with the
+    right role (`admin` for the seeded admin).
+  - **Coordinator change:** the check no longer blanks the page while it
+    runs. Blocking unmounted the page on every sign-in and made every reload
+    wait on the `players` read (C-12 amended).
+  - **For T16 (C-3 note):** locally, `auth.admin.createUser` with no name in
+    metadata is **not** blocked by the `before_user_created` hook. T16 still
+    confirms this on the production copy.
+
 ---
 
 ## 2. Schedule

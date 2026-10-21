@@ -69,7 +69,9 @@ export default function VerificationGate({ children }: { children?: React.ReactN
 
   // Hold children back until auth has resolved: role is 'guest' until then,
   // so rendering early flashes the sign-in overlay at an already-signed-in user.
-  if (!sessionSettled || check.status === 'pending') return null
+  if (!sessionSettled) return null
+  // The check is a safety net: while it runs the page renders as usual, so a
+  // sign-in never unmounts the page and a reload never waits on it.
   if (check.status === 'incomplete') return <IncompleteAccountPanel />
   if (isPublicPath(location.pathname)) return <>{children}</>
   if (role !== 'guest') return <>{children}</>
