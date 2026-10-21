@@ -36,6 +36,9 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Check email templates are in step with their source
+        run: npm run templates:check
+
       - name: Typecheck
         run: npm run typecheck
 
