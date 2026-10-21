@@ -288,7 +288,8 @@ and `PIN_SUNSET_LABEL` (e.g. `10 November`).
 
 - **T3 creates it** with a placeholder date, and every PIN-sunset string
   reads from it.
-- **The coordinator sets the real date at T₀.**
+- **The coordinator sets the real date at T₀.** Set 2026-10-21 (#51):
+  `2026-11-05`, "5 November" (owner).
 - **PR 4 deletes it.**
 
 ## C-12. Role source and session check (T15, in PR 2/3)
