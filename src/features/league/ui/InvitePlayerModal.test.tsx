@@ -35,7 +35,7 @@ const typeEmail = (email: string) =>
 
 beforeEach(() => {
   invite.current = {
-    mutateAsync: vi.fn().mockResolvedValue('4821'),
+    mutateAsync: vi.fn().mockResolvedValue(null),
     reset: vi.fn(),
     isPending: false,
     isSuccess: false,
@@ -56,12 +56,12 @@ describe('InvitePlayerModal', () => {
     })
   })
 
-  it('shows the new PIN after a successful invite and waits for Done', () => {
-    invite.current = { ...invite.current, isSuccess: true, data: '4821' }
+  it('confirms the sent invite, shows no PIN, and waits for Done', () => {
+    invite.current = { ...invite.current, isSuccess: true, data: null }
     renderModal()
     typeEmail('Ada@Example.com')
 
-    expect(screen.getByText('4821')).toBeTruthy()
+    expect(screen.queryByText(/pin/i)).toBeNull()
     expect(screen.getByText(/invite sent to ada@example\.com/i)).toBeTruthy()
     expect(screen.getByRole('button', { name: /done/i })).toBeTruthy()
   })

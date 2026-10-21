@@ -17,8 +17,7 @@ import LobsterWayAdminCategory, { emptyCategory } from './LobsterWayAdminCategor
 // resolveLobsterWayContent), the same column the public page reads from.
 export default function LobsterWayAdmin() {
   const navigate = useNavigate()
-  const { session } = useApp()
-  const isAdmin = session?.user?.app_metadata?.role === 'admin'
+  const { isAdmin } = useApp()
   const { data: settings } = useSettings()
   const saveSettingsMutation = useSaveSettings()
 

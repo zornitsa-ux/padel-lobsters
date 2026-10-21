@@ -10,7 +10,11 @@ const h = vi.hoisted(() => ({ fetchMerchInterests: vi.fn(), fetchMerchItems: vi.
 vi.mock('../merch/merchQueries', () => h)
 vi.mock('../../supabase', () => mockSupabase())
 vi.mock('../../context/useApp', () => ({
-  useApp: () => ({ session: { user: { app_metadata: { role: 'admin' } } } }),
+  useApp: () => ({
+    session: { user: { app_metadata: { role: 'admin' } } },
+    role: 'admin',
+    isAdmin: true,
+  }),
 }))
 vi.mock('../events/useTournaments', () => ({ useTournaments: () => ({ data: [] }) }))
 vi.mock('../players/usePlayers', () => ({ usePlayers: () => ({ data: [] }) }))

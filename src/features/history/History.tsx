@@ -35,8 +35,7 @@ interface HistoryProps {
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function History({ onNavigate }: HistoryProps) {
-  const { session } = useApp()
-  const isAdmin = session?.user?.app_metadata?.role === 'admin'
+  const { isAdmin } = useApp()
   const { data: tournaments = [] } = useTournaments()
   const { data: players = [] } = usePlayers()
   const { data: allMatchesData = [] } = useAllMatches()

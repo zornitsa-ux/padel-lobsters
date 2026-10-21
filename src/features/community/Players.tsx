@@ -21,11 +21,10 @@ import type { CommunityPlayer } from './playersSelectors'
 // actions load on the player's own page (PlayerDetailPage).
 export default function Players() {
   const confirm = useConfirm()
-  const { session, role } = useApp()
+  const { session, role, isAdmin } = useApp()
   const { updatePlayer, deletePlayer } = usePlayerActions({ session, role })
   const { data: players = [] } = usePlayers()
   const resolveWithPii = useResolveWithPii()
-  const isAdmin = session?.user?.app_metadata?.role === 'admin'
   const claimedId = session?.user?.id ?? null
 
   const [search, setSearch] = useState('')
@@ -53,9 +52,6 @@ export default function Players() {
       // whole player record, which meant an unresolved PII overlay could
       // silently blank fields on save (same class of bug as the edit form).
       await updatePlayer(p.id, { status: 'active' })
-      // Phase 2d: PIN was already emailed at signup; no need to share via
-      // WhatsApp on approval. If the player lost their PIN, they use
-      // "Forgot PIN?" on the sign-in screen for self-service recovery.
     } catch (err) {
       setError(errorMessage(err, 'Could not approve player.'))
     }
@@ -116,9 +112,6 @@ export default function Players() {
     } catch (err) {
       setError(errorMessage(err, 'Could not link player.'))
     }
-    // Phase 2d: linked profiles already had a PIN. If the player can't
-    // recall it, "Forgot PIN?" on the sign-in screen sends a fresh one
-    // to their email. Admin no longer needs to share via WhatsApp.
   }
 
   return (

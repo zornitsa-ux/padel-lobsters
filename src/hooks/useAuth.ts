@@ -3,6 +3,7 @@ import type { Session } from '@supabase/supabase-js'
 import { supabase, getSessionReady } from '../supabase'
 import * as authApi from '../api/auth'
 import { mark } from '../lib/perfMarks'
+import { sessionRole } from '../features/auth/sessionClaims'
 
 export default function useAuth() {
   const [session, setSession] = useState<Session | null>(null)
@@ -21,23 +22,13 @@ export default function useAuth() {
     })
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, s) => {
-      setSession(s)
-      // Magic-link / OAuth sessions arrive before the player's role is in
-      // app_metadata (verify-pin sets it for the PIN flow). Sync and refresh
-      // so the client stops treating them as a guest.
-      if (event === 'SIGNED_IN' && s && !s.user?.app_metadata?.role) {
-        try {
-          await authApi.syncMyRole()
-        } catch (e) {
-          console.warn('syncMyRole failed', e)
-        }
-      }
-    })
+    } = supabase.auth.onAuthStateChange((_event, s) => setSession(s))
     return () => subscription.unsubscribe()
   }, [])
 
-  const role = session?.user?.app_metadata?.role ?? 'guest'
+  // C-12: the role is the token's own claim, never a second copy in app_metadata.
+  const role = sessionRole({ session })
+  const isAdmin = role === 'admin'
 
   useEffect(() => {
     roleRef.current = role
@@ -56,16 +47,8 @@ export default function useAuth() {
     return authApi.fetchMyProfile()
   }, [session])
 
-  const sendMagicLink = useCallback(async (email: string) => {
-    return authApi.sendMagicLink(email)
-  }, [])
-
   const requestMyEmailChange = useCallback(async (email: string) => {
     return authApi.requestMyEmailChange(email)
-  }, [])
-
-  const selfSignup = useCallback(async (data: unknown) => {
-    return authApi.selfSignup(data as authApi.SelfSignupInput)
   }, [])
 
   const logout = useCallback(async () => {
@@ -77,12 +60,11 @@ export default function useAuth() {
     session,
     sessionSettled,
     role,
+    isAdmin,
     roleRef,
     loginWithPin,
     logout,
     fetchMyProfile,
-    sendMagicLink,
     requestMyEmailChange,
-    selfSignup,
   }
 }

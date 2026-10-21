@@ -31,7 +31,9 @@ function renderShell({
   rafflePublishedAt?: string | null
 }) {
   useApp.mockReturnValue({
-    session: { user: { app_metadata: { role: isAdmin ? 'admin' : 'player' }, id: 'u1' } },
+    session: { user: { id: 'u1' } },
+    role: isAdmin ? 'admin' : 'player',
+    isAdmin,
   })
   useEventPhase.mockReturnValue({ phase, oscarsPhase })
   render(

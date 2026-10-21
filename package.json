@@ -27,6 +27,8 @@
     "rehearsal:sync": "./scripts/prod-rehearsal/sync.sh",
     "rehearsal:integrity": "./scripts/prod-rehearsal/integrity.sh",
     "rehearsal:parity": "node scripts/prod-rehearsal/parity.ts",
+    "templates:build": "node scripts/build-email-templates.mjs",
+    "templates:check": "node scripts/build-email-templates.mjs --check",
     "functions:serve": "supabase functions serve",
     "claude": "claude --strict-mcp-config --mcp-config .mcp.json",
     "lint": "eslint .",

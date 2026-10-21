@@ -5,9 +5,10 @@
   Shared shape (docs/pin-auth-removal DESIGN §2): the 6-digit code first,
   because a link tapped on iPhone opens Safari, not the home-screen app; then a
   token_hash link through the SPA's /auth/confirm route, never
-  {{ .ConfirmationURL }} (see config.toml). confirmation, recovery and
-  reauthentication share this layout; keep them in step. magic_link adopts it
-  with the sign-in form (PR 2/3).
+  {{ .ConfirmationURL }} (see config.toml). magic_link, confirmation, recovery
+  and reauthentication share this layout.
+
+  Generated: edit scripts/email-templates/, then run `npm run templates:build`.
 -->
 <!doctype html>
 <html lang="en">

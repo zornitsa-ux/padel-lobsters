@@ -210,7 +210,6 @@ export function useInviteLeaguePlayer(leagueId: string) {
       input_player_id: string
       input_email: string
     }) => {
-      // Resolves to the new PIN so the admin can pass it on if the email lags.
       const { data } = await supabase
         .rpc('admin_invite_league_player', { input_player_id, input_email })
         .throwOnError()

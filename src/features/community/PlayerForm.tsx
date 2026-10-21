@@ -82,7 +82,7 @@ export default function PlayerForm({
     >
       <form id="player-form" onSubmit={handleSubmit} className="space-y-4">
         {!editId && !isAdmin && (
-          <p className="text-xs text-lob-muted -mt-2">You'll get an access PIN to use in the app</p>
+          <p className="text-xs text-lob-muted -mt-2">You'll sign in with a code we email you</p>
         )}
         {editId && !formReady && (
           <p className="text-xs text-lob-muted bg-gray-50 rounded-lg p-2 -mt-2">

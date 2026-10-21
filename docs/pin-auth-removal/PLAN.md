@@ -24,38 +24,36 @@ signed in gets logged out.
   Realism comes from loading a copy of production data into the local stack
   (§4.5). Production is touched only by the release steps and the read-only
   checks after them.
-- **These docs travel on the task branches.** There's no separate docs
-  branch or docs PR. Each task branch carries DESIGN, PLAN and CONTRACTS and
-  updates PLAN's status and log itself; the docs reach `main` with the first
-  of those PRs to merge. Open branches carrying them must hold identical
-  copies, so a doc change goes onto every open one.
+- **The docs are on `main` and are ordinary files.** Each PR edits PLAN as
+  part of its own diff. There's **no** syncing of docs across branches any
+  more.
 
 ---
 
 ## 1. Status
 
-| ID  | Task                                                      | Owner | Depends on      | PR       | State      |
-| --- | --------------------------------------------------------- | ----- | --------------- | -------- | ---------- |
-| T0a | Clear 44 orphan password hashes → `NULL`                  | C     | —               | #43      | [x]        |
-| T0b | Identity backfill + patch `ensure_auth_user_for_player`   | C     | —               | #44      | [x]        |
-| T0c | Auth settings: `config.toml` + dashboard; templates       | C → O | —               | #44, #46 | [x]        |
-| T13 | Prod-data rehearsal kit: sync + integrity check (§4.5)    | C     | —               | #45      | [x]        |
-| T1  | Contract freeze (§3.1, CONTRACTS.md)                      | C     | —               | —        | [x]        |
-| T2  | Backend: hook, trigger, invite/add RPCs, readiness RPC    | W     | T0b, T1         | #48      | [~] review |
-| T3  | `SignInForm`, `AuthConfirm`, gates, native signup         | W     | T1              | 2/3      | [ ]        |
-| T4  | Account → Sign-in & security                              | W     | T1              | 2/3      | [ ]        |
-| T5  | Comms: upgrade card, interstitial, readiness panel, copy  | W     | T1              | 3/3      | [ ]        |
-| T14 | Rehearsal sign-in + data-access parity script (§4.5)      | W     | T13, T1         | #49      | [x]        |
-| T6  | Verification: local matrix, local devices, rehearsal      | C + O | T2–T5, T14      | —        | [ ]        |
-| T7  | Dark backend release (R2)                                 | O     | T2 merged, T0c  | —        | [ ]        |
-| T8  | T₀ release and announcement (R3)                          | O     | T6, T7          | —        | [ ]        |
-| T9  | Cutover PR: remove PIN client path, `verify-pin` 410 stub | W     | T8              | 4        | [ ]        |
-| T10 | Revoke `verify_player_pin_v2` from anon (D-12)            | C     | T9 + 48h watch  | 5        | [ ]        |
-| T11 | Phase 4 cleanup (DESIGN §3 Phase 4)                       | W     | T10 + ≥2 weeks  | 6        | [ ]        |
-| T12 | Remove the "Used a PIN before?" explainer                 | W     | cutover + ~2 mo | 7        | [ ]        |
-| T15 | Phase 5a: client reads the role from token claims         | W     | cutover         | 8        | [ ]        |
-| T16 | Phase 5b: `auth.users` owns the email; Admin API writes   | W     | T11             | 9        | [ ]        |
-| T17 | Phase 5c: remove synthetic accounts + last auth writers   | W     | T15, T16        | 10       | [ ]        |
+| ID  | Task                                                      | Owner | Depends on      | PR       | State |
+| --- | --------------------------------------------------------- | ----- | --------------- | -------- | ----- |
+| T0a | Clear 44 orphan password hashes → `NULL`                  | C     | —               | #43      | [x]   |
+| T0b | Identity backfill + patch `ensure_auth_user_for_player`   | C     | —               | #44      | [x]   |
+| T0c | Auth settings: `config.toml` + dashboard; templates       | C → O | —               | #44, #46 | [x]   |
+| T13 | Prod-data rehearsal kit: sync + integrity check (§4.5)    | C     | —               | #45      | [x]   |
+| T1  | Contract freeze (§3.1, CONTRACTS.md)                      | C     | —               | —        | [x]   |
+| T2  | Backend: hook, trigger, invite/add RPCs, readiness RPC    | W     | T0b, T1         | #48      | [x]   |
+| T3  | `SignInForm`, `AuthConfirm`, gates, native signup         | W     | T1              | 2/3      | [~]   |
+| T4  | Account → Sign-in & security                              | W     | T1              | 2/3      | [~]   |
+| T5  | Comms: upgrade card, interstitial, readiness panel, copy  | W     | T1              | 3/3      | [ ]   |
+| T14 | Rehearsal sign-in + data-access parity script (§4.5)      | W     | T13, T1         | #49      | [x]   |
+| T6  | Verification: local matrix, local devices, rehearsal      | C + O | T2–T5, T14      | —        | [ ]   |
+| T7  | Dark backend release (R2)                                 | O     | T2 merged, T0c  | —        | [x]   |
+| T8  | T₀ release and announcement (R3)                          | O     | T6, T7          | —        | [ ]   |
+| T9  | Cutover PR: remove PIN client path, `verify-pin` 410 stub | W     | T8              | 4        | [ ]   |
+| T10 | Revoke `verify_player_pin_v2` from anon (D-12)            | C     | T9 + 48h watch  | 5        | [ ]   |
+| T11 | Phase 4 cleanup (DESIGN §3 Phase 4)                       | W     | T10 + ≥2 weeks  | 6        | [ ]   |
+| T12 | Remove the "Used a PIN before?" explainer                 | W     | cutover + ~2 mo | 7        | [ ]   |
+| T15 | Phase 5a: client reads the role from token claims         | W     | T1              | 2/3      | [~]   |
+| T16 | Phase 5b: `auth.users` owns the email; Admin API writes   | W     | T11             | 9        | [ ]   |
+| T17 | Phase 5c: remove synthetic accounts + last auth writers   | W     | T15, T16        | 10       | [ ]   |
 
 C = coordinator · W = worker (worktree) · O = owner.
 States: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked.
@@ -260,26 +258,172 @@ up` refuses it alone; a PR branch must contain `main`'s migrations. Noted:
     fail with `email in use`. T3 should cover the retry; the integrity
     check's abandoned-signup list needs an admin action (T5/T16).
 
+- 2026-10-21: **R2 done.** The owner deployed `send-invite-email`, then ran
+  `db push`, confirmed Confirm email is on (screenshot), and enabled the
+  Before User Created hook. Read-only checks passed:
+  - all 5 migrations applied;
+  - the new functions and triggers are present;
+  - blank player emails = 0;
+  - the hook can't be executed by `anon` or `authenticated`. Production also
+    grants `service_role`, Supabase's default, which is harmless;
+  - the integrity check meets the R1 column (3 active players without a real
+    email, 13 synthetic accounts, 0 password hashes);
+  - auth logs show no errors.
+
+  **Still open:** no real signup has gone through the hook yet. Rerun
+  `npm run rehearsal:integrity -- --linked` once one has. The owner is to
+  confirm that the 3 admins were told invites now send an email.
+
+- 2026-10-21: **C-7 redefined (owner).** `password_count` is dropped rather
+  than repaired. Passwords are optional and the code and link stay, so the
+  count gates nothing, and from T₀ GoTrue's random hash for code signups
+  makes it meaningless. Password readiness comes from verification instead:
+  the §4.2 rows, §4.3's reset gate and a new e2e spec (§3.3). The readiness
+  RPC instead reports who has **switched**: a player whose
+  `last_sign_in_at` is more than 5 minutes after their latest successful PIN
+  attempt (`verify-pin` writes the attempt seconds before it mints the
+  session, through a magic link, so session `amr` can't tell PIN from
+  email). `recent_pin_users` narrows to players whose latest sign-in was a
+  PIN. The migration ships in **PR 3/3** with the panel, so 2/3 stays
+  migration-free and 3/3 gains `db push` and the rehearsal. Integrity check
+  15 (`password_hashes`) is retired after the R1 column, also in 3/3.
+
+- 2026-10-21: **Signup retry, observed** on local GoTrue v2.197.0 with Confirm
+  email on (as in production):
+  - The first submit creates an unconfirmed account with that submit's
+    metadata and emails a code (the `confirmation` template). No player row.
+  - A second submit within 60 s gets `429 over_email_send_rate_limit`.
+  - After 60 s it succeeds and sends a new code, but **the metadata isn't
+    updated and the hook doesn't run** (an invalid level was accepted).
+  - The first code then fails with `otp_expired`; the newest signs in, and
+    the player row gets the **first** submit's details.
+
+  So a retry signs the person in, and nothing invalid reaches `players`,
+  because the stored metadata passed the hook on the first submit. Changed
+  details on a retry are lost; the player edits them in Profile. T3 handles
+  only the 429 on the signup form and tells the user to use the newest
+  code. The `email in use` problem for admins stays with T5/T16. Not yet
+  observed: a retry after the 1-hour expiry. T3 checks it on the local stack
+  with `otp_expiry` shortened temporarily.
+
+- 2026-10-21: T3 and T4 go to **one worker** on `pin-auth-2-signin` (based on
+  `main`, since 1/3 is merged), in order: T4 reuses T3's password rules, error
+  mapping and code entry, both edit `AccountSection`, and both need the one
+  local stack.
+
+- 2026-10-21: **PR 2/3 built** (T3 + T4, `pin-auth-2-signin`).
+  - **Built:** `SignInForm` is on the gate, the modal and Account.
+    `AuthConfirm` is tap-to-confirm. Native signup replaces the PIN reveal.
+    Account → Sign-in & security is in, and the client no longer calls
+    `admin_regenerate_pin`.
+  - **Templates:** generated from one layout, with a CI check. The four
+    existing files came out byte-identical before `magic_link` went
+    code-first.
+  - **Config:** local `enable_confirmations` is now `true`, as in production.
+  - **GoTrue:** supabase-js 2.101.1's `updateUser` takes `current_password`
+    and `nonce` natively. A signup retry after the first code has expired
+    behaves like a retry within the hour.
+  - **Contract amendments (coordinator):** C-8/C-9 take the reset code in
+    the app (`verified=1`), and C-10 uses the gate's form instead of a modal
+    on protected paths.
+  - **`/code-review`:** no crashes; 10 findings, all fixed (f27ebbe). They
+    were: stale modal and return-path state, the admin-role prompt, the
+    avatar overwrite on an existing-account signup, the modal remounting
+    mid-code, a double-tap resend, the password label, one error message,
+    the duplicated email field, and two de-duplications.
+  - **Gates:** every §4.1 gate passes, including all 7 `supabase/tests`
+    scripts and `test:e2e`.
+  - **Rehearsal (§4.5)** on a fresh production copy: no migrations to apply,
+    and the stack restarted for the config. The integrity counts are
+    identical before and after (R1 column). Parity: 128 of 128 real-email
+    accounts signed in before and after; 5 of 5 Mailpit codes passed
+    (after: code-first templates, confirmations on); 0 changed hashes on
+    all 32 reads. `db:reset` afterwards, and the parity records were
+    deleted.
+  - **§4.2 rows for 2/3 are now e2e tests** (9 in the email spec): the code
+    on the page gate and the deep-link modal; magic link → tap → original
+    path; forgot → reset code → the length and character messages → new
+    password → password sign-in; first password on a code session and a
+    change that asks for the current one; the signed-out transfer link →
+    code → the transfer; and signup with its retry. `pwned` is hosted-only,
+    so only its unit test covers it. The `inline` variant can't be reached
+    signed out (`/account` is behind the gate, as on `main`), so component
+    tests cover it.
+  - **Bug found by the reset e2e, fixed:** a reset code or link signs in with
+    `PASSWORD_RECOVERY`, not `SIGNED_IN`, so `useAuth` never synced the role
+    and a player whose token has no `role` stayed a guest after resetting.
+    It's now synced on both events, with a unit test. Production
+    (read-only): 6 of 141 accounts have no `role`, all synthetic-email, so
+    no real-email account would have hit it today.
+
+- 2026-10-21: **T15 moves into PR 2/3, plus a session check (owner).** The
+  reset bug was one case of a wider design fault: the token hook already
+  stamps the role from `players` into every token, for every sign-in method
+  and refresh, but the client read a second copy (`auth.users` app_metadata)
+  that only `sync_my_role` fills, after the events `useAuth` happens to list.
+  Reading the role from the token removes that list (C-12). A check after
+  sign-in catches what we can't predict: a signed-in user with no role in
+  the token, or no `players` row (for example C-4's skipped confirmation),
+  gets one session refresh and then a "your account isn't fully set up,
+  message an admin" screen, instead of a guest view or a blank page.
+  `require_admin()` reads `players`, not the stored copy, so the server is
+  unaffected.
+  - **Deferred (owner):** recording these anomalies in a table. That waits
+    for a broader look at error tracking in the app, which today has no
+    error-reporting service. Until then the check logs to the console.
+
+- 2026-10-21: **T15 and the session check built** (3469305; C-12).
+  - **Role:** every client read now uses the token's claim (25 files), and
+    `syncMyRole` is gone from the client.
+  - **Check:** the session check is mounted in `VerificationGate`. A new e2e
+    test creates an account the way C-4 skips (confirmed, no `players` row),
+    signs it in by code, and gets the panel and a working Sign out.
+  - **Observed on local GoTrue:** the token from a native signup's
+    `verifyOtp` already carries `role: player`, so the one-refresh rule
+    didn't fire. Code, password, recovery and PIN sign-ins all land with the
+    right role (`admin` for the seeded admin).
+  - **Coordinator change:** the check no longer blanks the page while it
+    runs. Blocking unmounted the page on every sign-in and made every reload
+    wait on the `players` read (C-12 amended).
+  - **For T16 (C-3 note):** locally, `auth.admin.createUser` with no name in
+    metadata is **not** blocked by the `before_user_created` hook. T16 still
+    confirms this on the production copy.
+  - **`/code-review` of the C-12 commits:** 10 findings. Nine are client
+    fixes in 2/3:
+    - a failed refresh or a thrown error no longer locks the user out or
+      leaves the check pending;
+    - a session with no role isn't shown the sign-in form while the check
+      runs;
+    - the cached result is cleared on sign-out;
+    - the `players` read goes through React Query;
+    - the pop-up applies the role rule to player prompts too;
+    - `isAdmin` is exposed once from `useApp`;
+    - a dead fixture branch is fixed;
+    - the signup e2e asserts after the check settles.
+
+    The tenth needs a migration (the token hook keeps an old role when there
+    is no `players` row) and joins 3/3's migration (§3.4).
+
 ---
 
 ## 2. Schedule
 
 Dates stay relative until tournament **#13** is scheduled. Then pin them here.
 
-| Milestone                         | When                                       | Rule                                                                       |
-| --------------------------------- | ------------------------------------------ | -------------------------------------------------------------------------- |
-| R0: Phase 0a merged + pushed      | Week of 15 Oct                             | Invisible; may land before #12 (18 Oct)                                    |
-| R1: Phase 0b merged + pushed      | **Done 2026-10-19**                        | Verified in production (§4.4); dashboard checklist done the same day       |
-| R2: dark backend (PR 1/3)         | ≥ 2 days before T₀                         | The hook and invite emails run in production before players see the new UI |
-| **T₀**: PRs 2/3 + 3/3 + announce  | A Tue or Wed                               | T₀ ≤ #13 − 17 days                                                         |
-| WhatsApp reminder                 | Cutover − 3 days                           |                                                                            |
-| **Cutover** (PR 4)                | T₀ + 14, a Tue or Wed                      | ≥ 3 days before #13; go/no-go in §5                                        |
-| Revoke (PR 5)                     | Cutover + 2 days                           | After the 48h watch is clean                                               |
-| Phase 4 cleanup (PR 6)            | ≥ Cutover + 14 days, once stub hits are ~0 | Not within 3 days of an event                                              |
-| Explainer removal (PR 7)          | Cutover + ~2 months                        |                                                                            |
-| Phase 5a: role from claims (PR 8) | After cutover                              | Client only; not within 3 days of an event                                 |
-| Phase 5b: email ownership (PR 9)  | After PR 6                                 | Not within 3 days of an event                                              |
-| Phase 5c: final cleanup (PR 10)   | ≥ 7 days after PRs 8 and 9                 | Stale clients have reloaded; not within 3 days of an event                 |
+| Milestone                        | When                                       | Rule                                                                       |
+| -------------------------------- | ------------------------------------------ | -------------------------------------------------------------------------- |
+| R0: Phase 0a merged + pushed     | Week of 15 Oct                             | Invisible; may land before #12 (18 Oct)                                    |
+| R1: Phase 0b merged + pushed     | **Done 2026-10-19**                        | Verified in production (§4.4); dashboard checklist done the same day       |
+| R2: dark backend (PR 1/3)        | **Done 2026-10-21**                        | The hook and invite emails run in production before players see the new UI |
+| **T₀**: PRs 2/3 + 3/3 + announce | A Tue or Wed                               | T₀ ≤ #13 − 17 days                                                         |
+| WhatsApp reminder                | Cutover − 3 days                           |                                                                            |
+| **Cutover** (PR 4)               | T₀ + 14, a Tue or Wed                      | ≥ 3 days before #13; go/no-go in §5                                        |
+| Revoke (PR 5)                    | Cutover + 2 days                           | After the 48h watch is clean                                               |
+| Phase 4 cleanup (PR 6)           | ≥ Cutover + 14 days, once stub hits are ~0 | Not within 3 days of an event                                              |
+| Explainer removal (PR 7)         | Cutover + ~2 months                        |                                                                            |
+| Phase 5a: role from claims       | **In PR 2/3, at T₀** (owner, 2026-10-21)   | Client only                                                                |
+| Phase 5b: email ownership (PR 9) | After PR 6                                 | Not within 3 days of an event                                              |
+| Phase 5c: final cleanup (PR 10)  | ≥ 7 days after PRs 8 and 9                 | Stale clients have reloaded; not within 3 days of an event                 |
 
 **Worked example:** if #13 is Sun 15 Nov, then T₀ is Tue 27 Oct, the reminder
 goes out Sat 7 Nov, and cutover is Tue 10 Nov. If #13 is scheduled so early
@@ -367,7 +511,7 @@ these before dispatching T2–T5, and workers don't change them (matchmaking-v2
 send-invite-email` → db push → enable the hook in the dashboard. The function
   goes first so no invite sent after the push hits a missing function.
 
-### 3.3 PR 2/3: sign-in surfaces (T3 + T4), stacked on 1/3
+### 3.3 PR 2/3: sign-in surfaces (T3 + T4), based on `main`
 
 - **T3:** `features/auth/SignInForm` (DESIGN §2), mounted in
   `VerificationGate`, `ui/AuthGate.tsx` (which replaces `PinPrompt`) and
@@ -375,7 +519,10 @@ send-invite-email` → db push → enable the hook in the dashboard. The functio
   `allowPin`/"Sign in with PIN (until <date>)" on the full-page variant only.
   `AuthConfirm`: tap-to-confirm, the return path, and the `type=recovery` → set
   new password screen. `SignupRequest`: native signup (DESIGN §2 Sign-up),
-  with the PIN reveal screen deleted. `InvitePlayerModal`, `PlayerDetailPage`
+  with the PIN reveal screen deleted. A repeat submit within 60 s gets
+  `429 over_email_send_rate_limit`: the form shows the wait, not the generic
+  error. The code step says only the newest code works (§1 log, signup
+  retry). `InvitePlayerModal`, `PlayerDetailPage`
   and `PinRevealModal` handle `pin: null` and "Resend invite".
 - **T4:** the Account → Sign-in & security section (email, password with
   reauthenticate, sign out everywhere).
@@ -400,12 +547,23 @@ send-invite-email` → db push → enable the hook in the dashboard. The functio
 - **Tests:** unit and component tests for every `SignInForm` state (DESIGN §5),
   `AuthConfirm` and signup errors from the hook. e2e: `seed.sql` gets seeded
   passwords, `signInAt` (`e2e/tournament-flow.spec.ts:42`) switches to the
-  password, and a new spec reads the code from Mailpit's API.
+  password, and a new spec reads the code from Mailpit's API. It covers
+  native signup (including a retry after 60 s), and the password path end
+  to end: set a first password on a code session, sign out, sign in with
+  it, then change it, which asks for the current password.
 
 ### 3.4 PR 3/3: comms (T5), stacked on 2/3
 
 - The upgrade card (and its synthetic-email variant), the post-PIN
   interstitial, and the admin readiness panel (in Admin tools).
+- **Migration:** redefine `admin_auth_readiness` to C-7 (switched counts, no
+  `password_count`), plus `db:types`. Retire integrity check 15 from the T₀
+  column. 3/3 therefore passes the prod-data rehearsal, and its release
+  steps run `db push` before the merge (the change is backward-compatible).
+- **Migration (C-12 complement):** `custom_access_token_hook` removes `role`
+  from the token's `app_metadata` when the user has no `players` row. Today
+  it keeps whatever `auth.users` holds, so a user whose row is gone could
+  still carry an old `admin` claim (`/code-review` of C-12, 2026-10-21).
 - The FAQ rewrite in `lobsterWayContent.ts`, plus copy: the Dashboard guest
   greeting, the `SignInBanner` default, `TransferAccept`, and "behind her PIN".
 - The production `lobster_way_content` copy is **edited by an admin in
@@ -452,11 +610,11 @@ before T6.
 
 Each PR passes the prod-data rehearsal (§4.5) before review.
 
-- **PR 8 (T15), client only:** one `useRole()`/`isAdmin` helper reads `role`
-  from `supabase.auth.getClaims()`. It replaces the 8 copies of
-  `session?.user?.app_metadata?.role === 'admin'` and the `syncMyRole()` call in
-  `useAuth`. `sync_my_role` itself is dropped in PR 10, after stale clients
-  have reloaded.
+- **PR 8 (T15) moved into PR 2/3** (owner, 2026-10-21; CONTRACTS C-12). The
+  client reads `role` from the access token's claims, replacing every read of
+  `session.user.app_metadata.role` and the `syncMyRole()` call in `useAuth`.
+  `sync_my_role` itself is still dropped in PR 10, after stale clients have
+  reloaded. There is no PR 8 any more.
 - **PR 9 (T16):** `auth.users.email` becomes the only source of truth.
   - **Edge function `admin-set-player-email`** (admin-only, checks the JWT
     role). It sets a player's sign-in email through the Admin API:
@@ -501,7 +659,7 @@ admin-set-player-email` → merge (the client calls the function) → db push.
 `npm run test:e2e` locally. The PR description records the results.
 
 **Every PR with a migration or an auth-flow change** also passes the
-prod-data rehearsal (§4.5): 0b (#44), 1/3, 2/3, 4, 5, 6, 8, 9 and 10. The PR
+prod-data rehearsal (§4.5): 0b (#44), 1/3, 2/3, 3/3, 4, 5, 6, 8, 9 and 10. The PR
 description records the integrity counts and the parity diff summary (counts
 only, never names or emails).
 
@@ -720,17 +878,17 @@ in its PR description → C runs the integrity check against production.
 
 ### Rollback
 
-| Stage   | Symptom                                     | Rollback                                                                                                                                                                                          |
-| ------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| R0/R1   | Migration error                             | No edits to applied files; write a forward-fix migration (CONTRIBUTING.md)                                                                                                                        |
-| R1      | Template or setting wrong                   | Fix it in the dashboard, then match `config.toml` in a follow-up PR                                                                                                                               |
-| R2      | Hook or trigger blocks or misfires          | Disable the hook in the dashboard. The old `self_signup_player` signup still serves the live client. Forward-fix the trigger                                                                      |
-| T₀      | Sign-in UI broken                           | Vercel instant rollback to the pre-T₀ deployment, then re-paste `main`'s link-only `magic_link` template (D-14). PIN sign-in is untouched, so players get the old flow back. The backend can stay |
-| Cutover | Players locked out at scale                 | Vercel rollback, plus redeploy the previous `verify-pin` from its last commit. No migration is involved (D-12), so it takes minutes                                                               |
-| PR 5/6  | Problem found after the revoke or the drops | Forward-fix only, through review. That's why each one waits for a clean watch                                                                                                                     |
-| PR 8    | Role missing or wrong in the UI             | Vercel rollback. The server side (RLS, token hook) is unchanged                                                                                                                                   |
-| PR 9    | Admin email edit or invite fails            | Vercel rollback to the version that writes `players.email`, plus a forward-fix migration that restores the dropped sync trigger                                                                   |
-| PR 10   | A deleted synthetic account is needed       | An admin adds the player's email, and PR 9's function creates a fresh account with the same id                                                                                                    |
+| Stage     | Symptom                                                                      | Rollback                                                                                                                                                                                          |
+| --------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R0/R1     | Migration error                                                              | No edits to applied files; write a forward-fix migration (CONTRIBUTING.md)                                                                                                                        |
+| R1        | Template or setting wrong                                                    | Fix it in the dashboard, then match `config.toml` in a follow-up PR                                                                                                                               |
+| R2        | Hook or trigger blocks or misfires                                           | Disable the hook in the dashboard. The old `self_signup_player` signup still serves the live client. Forward-fix the trigger                                                                      |
+| T₀        | Sign-in UI broken                                                            | Vercel instant rollback to the pre-T₀ deployment, then re-paste `main`'s link-only `magic_link` template (D-14). PIN sign-in is untouched, so players get the old flow back. The backend can stay |
+| Cutover   | Players locked out at scale                                                  | Vercel rollback, plus redeploy the previous `verify-pin` from its last commit. No migration is involved (D-12), so it takes minutes                                                               |
+| PR 5/6    | Problem found after the revoke or the drops                                  | Forward-fix only, through review. That's why each one waits for a clean watch                                                                                                                     |
+| T₀ (C-12) | Role missing or wrong in the UI, or many "account isn't fully set up" panels | The T₀ Vercel rollback above. The server side (RLS, token hook) is unchanged                                                                                                                      |
+| PR 9      | Admin email edit or invite fails                                             | Vercel rollback to the version that writes `players.email`, plus a forward-fix migration that restores the dropped sync trigger                                                                   |
+| PR 10     | A deleted synthetic account is needed                                        | An admin adds the player's email, and PR 9's function creates a fresh account with the same id                                                                                                    |
 
 ---
 

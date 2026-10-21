@@ -5,11 +5,10 @@ export interface AppContextValue {
   session: Session | null
   sessionSettled: boolean
   role: string
+  isAdmin: boolean
   loginWithPin: (pin: string) => Promise<{ success: boolean; role: string; error: unknown }>
   logout: () => Promise<void>
   fetchMyProfile: () => Promise<unknown>
-  selfSignup: (data: unknown) => Promise<unknown>
-  sendMagicLink: (email: string) => Promise<unknown>
   requestMyEmailChange: (email: string) => Promise<unknown>
 }
 

@@ -111,8 +111,7 @@ export default function LinkPlayerModal({
         )}
 
         <p className="text-xs text-lob-muted-light text-center pt-1">
-          This will merge {linkModal.name}'s new contact info onto the existing profile and send
-          them their PIN.
+          This will merge {linkModal.name}'s new contact info onto the existing profile.
         </p>
       </div>
     </Modal>

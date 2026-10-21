@@ -85,7 +85,9 @@ function renderInfo({
   ...overrides
 }: { isAdmin?: boolean } & Partial<NormalisedTournament> = {}) {
   mockUseApp.mockReturnValue({
-    session: { user: { app_metadata: { role: isAdmin ? 'admin' : 'player' }, id: 'p0' } },
+    session: { user: { id: 'p0' } },
+    role: isAdmin ? 'admin' : 'player',
+    isAdmin,
   })
   render(
     <MemoryRouter>

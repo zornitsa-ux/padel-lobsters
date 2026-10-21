@@ -9,8 +9,7 @@ import { RouteFallback } from '../../../components/ui/RouteFallback'
  */
 export function AdminLeagueRouteGuard({ children }: { children: ReactElement }) {
   const { id } = useParams<{ id: string }>()
-  const { session, sessionSettled } = useApp()
+  const { sessionSettled, isAdmin } = useApp()
   if (!sessionSettled) return <RouteFallback />
-  const isAdmin = session?.user?.app_metadata?.role === 'admin'
   return isAdmin ? children : <Navigate to={`/league/${id}`} replace />
 }

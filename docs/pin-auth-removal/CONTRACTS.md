@@ -9,7 +9,8 @@ rule). DESIGN §2 is the behaviour; this file is the interfaces.
 Contents: C-1 migration timestamps · C-2 signup metadata · C-3 the hook ·
 C-4 the confirmed-user trigger · C-5 the admin RPCs · C-6 the invite email ·
 C-7 readiness · C-8 `SignInForm` · C-9 return path and `AuthConfirm` ·
-C-10 the `signin` deep link · C-11 the sunset date.
+C-10 the `signin` deep link · C-11 the sunset date · C-12 the role source
+and the session check.
 
 ---
 
@@ -26,7 +27,8 @@ order:
 | `20261020150000` | `_invite_email_without_pin.sql`      | C-5 and C-6's `private.send_invite_email`                                               |
 | `20261020160000` | `_admin_auth_readiness.sql`          | C-7                                                                                     |
 
-PRs 2/3, 3/3 and 4 have no migrations. PR 5 onwards take a timestamp at build
+PRs 2/3 and 4 have no migrations. PR 3/3 has one, redefining C-7
+(coordinator, 2026-10-21). PR 3/3 and PR 5 onwards take a timestamp at build
 time, later than every migration on `main`.
 
 ## C-2. Signup metadata (`user_metadata`)
@@ -172,16 +174,31 @@ Responses are the same as `send-pin-email`'s: `200 { ok, resend_id }`,
 `require_admin()`, `stable`. It's granted to `authenticated` only, and added to
 the grants file.
 
+**Redefined 2026-10-21 (owner); PR 3/3's migration ships it.** #48's version
+returns `password_count`, which is dropped: passwords are optional, and from
+T₀ GoTrue's random hash for code signups makes the count meaningless. The
+T₀ client never reads it.
+
 ```ts
 interface AuthReadiness {
   no_email: { id: string; name: string }[] // active players whose auth email is synthetic; ordered by name
-  recent_pin_users: { id: string; name: string; last_pin_at: string }[] // succeeded 'player' pin_attempts in the last 14 days, newest first
-  password_count: number // auth.users with a non-blank encrypted_password. KNOWN WRONG from T₀: OTP signups get a random hash (redefine before T5)
+  recent_pin_users: { id: string; name: string; last_pin_at: string }[] // active players whose latest sign-in was a PIN, with that PIN in the last 14 days; newest first
+  switched_count: number // active players whose latest sign-in was by email
+  still_pin_count: number // active players whose latest sign-in was a PIN, at any time
 }
 ```
 
 - "Active" means `coalesce(status, 'active') = 'active'`, so placeholders
   aren't in `no_email`.
+- **A player's latest sign-in** is `auth.users.last_sign_in_at`. It **was a
+  PIN** when the player's latest succeeded `'player'` `pin_attempts` row is
+  no more than 5 minutes before it. `verify-pin` writes that row seconds
+  before it mints the session through a magic link, so session `amr` can't
+  tell PIN from email. Otherwise it **was by email** (code, link or
+  password). A player with no `last_sign_in_at` is in neither count.
+- **T5 checks on local GoTrue** that a token refresh doesn't move
+  `last_sign_in_at`, and measures the PIN-row-to-sign-in gap. If either
+  breaks the rule above, T5 stops and reports.
 - **There are no other keys.** It only adds a field after a change here.
 
 ## C-8. `SignInForm` (`src/features/auth/SignInForm.tsx`, T3)
@@ -202,6 +219,11 @@ export interface SignInFormProps {
     then `verifyOtp({ email, token, type: 'email' })`.
   - Password: `signInWithPassword`.
   - Forgot: `resetPasswordForEmail(email, { redirectTo: <origin>/auth/confirm?type=recovery } )`.
+    **Amended 2026-10-21 (coordinator, from T3):** the form then shows
+    `OtpCodeStep` with `type: 'recovery'`, because the recovery email leads
+    with a code. Once the code verifies, it navigates to
+    `/auth/confirm?type=recovery&verified=1` (C-9). The link in the email
+    still works as before.
 - **The OTP input** has `autocomplete="one-time-code"`, `inputmode="numeric"`
   and a 6-digit length. Resend is disabled for 60 s, with a countdown.
 - **`onSignedIn`** fires once, with the new session. Without it, the form does
@@ -230,6 +252,9 @@ export interface SignInFormProps {
   - `magiclink`, `signup` and `email` → navigate to the destination.
   - `recovery` → the "Set a new password" screen (`updateUser({ password })`,
     with no current-password field), then the destination.
+  - `type=recovery&verified=1` with no `token_hash` (amended 2026-10-21):
+    the code was already verified in `SignInForm`, so it shows "Set a new
+    password" when a session exists, and an error otherwise.
   - `email_change` → today's confirmation screen.
 - **All five templates keep today's link shape:**
   `/auth/confirm?token_hash={{ .TokenHash }}&type=<type>&next=...`. T3 doesn't
@@ -239,12 +264,17 @@ export interface SignInFormProps {
 
 `?signin=1[&email=<addr>]` on any route:
 
-- **Signed out:** it opens `SignInForm` as a `modal` with
+- **Signed out, on a public path:** it opens `SignInForm` as a `modal` with
   `initialEmail = email` (trimmed and lower-cased; ignored unless it contains
   `@`).
+- **Signed out, on a protected path** (amended 2026-10-21, coordinator, from
+  T3): `VerificationGate` already covers the page, so it shows its `page`
+  form with the same `initialEmail` instead of a modal on top.
 - **Signed in:** it does nothing.
-- **Either way,** both params are removed with `replace` navigation. This lives
-  in one hook, `useSignInDeepLink()`, mounted in `Layout` (T3).
+- **The params are removed** with `replace` navigation: at once on a public
+  path or when signed in, and after sign-in on a protected path (the gate
+  reads them until then). This lives in one hook, `useSignInDeepLink()`,
+  mounted in `Layout` (T3).
 
 ## C-11. Sunset date
 
@@ -255,3 +285,43 @@ and `PIN_SUNSET_LABEL` (e.g. `10 November`).
   reads from it.
 - **The coordinator sets the real date at T₀.**
 - **PR 4 deletes it.**
+
+## C-12. Role source and session check (T15, in PR 2/3)
+
+Added 2026-10-21 by the coordinator (owner decision; PLAN §1 log).
+
+**The role comes from the access token only.** `custom_access_token_hook`
+(`20260816140000`) sets `app_metadata.role` in every token from
+`players.role`, on every sign-in method and every refresh.
+
+- One helper decodes `session.access_token` and returns the `role` claim
+  (`'admin' | 'player'`), or `'guest'` without a session. `useAuth` exposes
+  it, and every client read of `session.user.app_metadata.role` goes through
+  it. Nothing reads `session.user.app_metadata` for the role any more.
+- It decodes locally rather than calling `getClaims()`: with this project's
+  signing keys `getClaims()` makes a network call, and the role is display
+  only. The server enforces with the token's claims and `require_admin()`
+  (which reads `players`).
+- `useAuth` no longer calls `syncMyRole()`; the client function and its
+  tests go. The `sync_my_role` RPC stays until PR 10.
+
+**Session check.** Once the session has settled, a signed-in session is
+**complete** when both hold:
+
+1. the token's `role` claim is `'player'` or `'admin'`, and
+2. the user's own `players` row exists (read through an existing query;
+   no new RPC).
+
+- If (1) fails, the client refreshes the session **once** and checks again.
+  That covers a token minted before its `players` row was visible.
+- If the session is still incomplete, every route shows a full-screen panel:
+  "Your account isn't fully set up. Message an admin on WhatsApp and we'll
+  sort it out." with a **Sign out** button. Nothing else renders behind it.
+- It logs `console.error('[auth] incomplete session', { reason })` with the
+  reason (`no_role` / `no_player`) and no personal data. Recording it
+  server-side is deferred (PLAN §1 log, 2026-10-21).
+- **While the check is pending, the app renders as usual** (amended
+  2026-10-21). It's a safety net, not a gate: blocking would unmount the page
+  on every sign-in (losing an in-progress action such as a Merch order) and
+  make every reload wait on the `players` read. The panel replaces the page
+  only once the session is confirmed incomplete.

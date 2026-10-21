@@ -74,7 +74,8 @@ token_verifications = 150
 [auth.email]
 enable_signup = true
 double_confirm_changes = true
-enable_confirmations = false
+# On, as in production. Off makes a code signup confirm before any code is entered.
+enable_confirmations = true
 secure_password_change = true
 max_frequency = "60s"
 otp_length = 6
@@ -83,16 +84,14 @@ otp_expiry = 3600
 
 # Auth email templates. confirmation, recovery and reauthentication show the
 # 6-digit code first (typed into the app, which works inside an iOS home-screen
-# install), then a token_hash link through the SPA's /auth/confirm route.
-# magic_link and email_change are link-only (see below). None uses
-# {{ .ConfirmationURL }}: it builds against GoTrue's external URL, and Kong only
-# forwards /auth/v1/*, so the bare /verify path 404s locally. The same files are
-# pasted into the hosted dashboard.
-#
-# magic_link stays link-only until the sign-in form has a code field (PR 2/3):
-# a code with nowhere to type it gets typed into the PIN field.
+# install), then a token_hash link through the SPA's /auth/confirm route, and so
+# does magic_link now that the sign-in form has a code field. email_change is
+# link-only. None uses {{ .ConfirmationURL }}: it builds against GoTrue's external
+# URL, and Kong only forwards /auth/v1/*, so the bare /verify path 404s locally.
+# The files are generated: `npm run templates:build` (see scripts/email-templates).
+# The same files are pasted into the hosted dashboard.
 [auth.email.template.magic_link]
-subject = "Sign in to Padel Lobsters"
+subject = "Your Padel Lobsters sign-in code"
 content_path = "./supabase/templates/magic_link.html"
 
 # Sent instead of magic_link to a brand-new address when confirmations are on

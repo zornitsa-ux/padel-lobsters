@@ -225,15 +225,10 @@ export function usePlayerActions({
     [invalidatePlayers, qc],
   )
 
-  const regeneratePin = useCallback(
-    async (playerId: string) => {
-      const data = await mut.regeneratePin(playerId)
-      if (!data) throw new Error('Could not reset PIN.')
-      await invalidatePlayers()
-      return { ok: true, pin: data }
-    },
-    [invalidatePlayers],
-  )
+  const resendInvite = useCallback(async (playerId: string) => {
+    const email = await mut.resendInvite(playerId)
+    return { ok: true, email }
+  }, [])
 
-  return { addPlayer, updatePlayer, deletePlayer, regeneratePin }
+  return { addPlayer, updatePlayer, deletePlayer, resendInvite }
 }

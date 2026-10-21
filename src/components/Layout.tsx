@@ -2,6 +2,8 @@ import React from 'react'
 import { NavLink, Link } from 'react-router-dom'
 import { useApp } from '../context/useApp'
 import { useSettings } from '../features/settings/useSettings'
+import { useSignInDeepLink } from '../features/auth/useSignInDeepLink'
+import { SignInModal } from './ui/AuthGate'
 import {
   LayoutDashboard,
   Users,
@@ -31,9 +33,9 @@ const InstagramIcon = () => (
 )
 
 export default function Layout({ children }: { children?: React.ReactNode }) {
-  const { session } = useApp()
+  const { isAdmin } = useApp()
   const { data: settings } = useSettings()
-  const isAdmin = session?.user?.app_metadata?.role === 'admin'
+  const signInLink = useSignInDeepLink()
   const navItems = isAdmin
     ? [...NAV, { to: '/admin', label: 'Admin', icon: Shield, end: false }]
     : NAV
@@ -128,6 +130,11 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
           ))}
         </div>
       </nav>
+      <SignInModal
+        open={signInLink.open}
+        onClose={signInLink.close}
+        initialEmail={signInLink.initialEmail}
+      />
     </div>
   )
 }

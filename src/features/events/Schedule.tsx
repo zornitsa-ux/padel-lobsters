@@ -50,12 +50,11 @@ export default function Schedule({
   tournament: NormalisedTournament | null
   onNavigate: EventNavigate
 }) {
-  const { session } = useApp()
+  const { isAdmin } = useApp()
   const { saveMatches, updateMatch } = useMatchActions()
   const { data: players = [] } = usePlayers()
   const { data: savedMatches = [] } = useMatches(tournament?.id)
   const { data: regsData = [] } = useRegistrations(tournament?.id)
-  const isAdmin = session?.user?.app_metadata?.role === 'admin'
 
   const [rounds, setRounds] = useState(4)
   const [generating, setGenerating] = useState(false)
