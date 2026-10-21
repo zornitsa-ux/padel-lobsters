@@ -26,6 +26,7 @@ vi.mock('react-router-dom', async (importOriginal) => ({
   useNavigate: () => mockNavigate,
 }))
 
+import { hasPinSignIn } from './pinSignInFlag'
 import { SignInForm, type SignInFormProps } from './SignInForm'
 
 const session = { user: { id: 'u1' } }
@@ -51,6 +52,7 @@ const click = (name: RegExp) => fireEvent.click(screen.getByRole('button', { nam
 
 beforeEach(() => {
   vi.clearAllMocks()
+  sessionStorage.clear()
   actions.requestEmailCode.mockResolvedValue({ error: null })
   actions.verifyEmailCode.mockResolvedValue({ session, error: null })
   actions.signInWithPassword.mockResolvedValue({ session, error: null })
@@ -323,6 +325,16 @@ describe('SignInForm — PIN sub-state', () => {
 
     await waitFor(() => expect(onSignedIn).toHaveBeenCalledWith(session))
     expect(loginWithPin).toHaveBeenCalledWith('1234')
+    expect(hasPinSignIn()).toBe(true)
+  })
+
+  it('does not flag an email-code sign-in', async () => {
+    const onSignedIn = vi.fn()
+    renderForm({ onSignedIn })
+    typeEmail('ada@example.com')
+    click(/email me a sign-in code/i)
+    await screen.findByLabelText(/code/i)
+    expect(hasPinSignIn()).toBe(false)
   })
 
   it('shows the server error for a wrong PIN', async () => {
