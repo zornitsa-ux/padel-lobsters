@@ -182,6 +182,26 @@ begin
     raise exception 'CHECK 10 FAILED: player created without a name';
   end if;
   raise notice 'CHECK 10 ok: nameless user skipped';
+
+  -- CHECK 11: non-ASCII digits are refused by the hook and parse to 0, so a
+  -- level can never fail the confirmation's numeric cast
+  if pg_temp.hook_message('{"name":"A","playtomic_level":"２"}') is distinct from c_level_msg
+     or private.parse_metadata_level('２') <> 0 then
+    raise exception 'CHECK 11 FAILED: full-width digit';
+  end if;
+  raise notice 'CHECK 11 ok: ASCII digits only';
+
+  -- CHECK 12: confirming an address another player holds (in any case) skips
+  -- the player row instead of failing the confirmation
+  insert into public.players (name, email) values ('Holder', 'holder@test.invalid');
+  v_id := gen_random_uuid();
+  perform pg_temp.insert_auth_user(v_id, 'HOLDER@test.invalid', '{"name":"Late Signup"}', false);
+  update auth.users set email_confirmed_at = now() where id = v_id;
+  if exists (select 1 from public.players where id = v_id)
+     or (select email_confirmed_at from auth.users where id = v_id) is null then
+    raise exception 'CHECK 12 FAILED: collision not skipped';
+  end if;
+  raise notice 'CHECK 12 ok: email collision skipped';
 end;
 $$;
 

@@ -24,7 +24,7 @@ begin
   if length(v_name) > 100 then
     return private.signup_rejection(input_message => 'Your name can be at most 100 characters.');
   end if;
-  if v_level <> '' and v_level !~ '^\d+(\.\d+)?$' then
+  if v_level <> '' and v_level !~ '^[0-9]+(\.[0-9]+)?$' then
     return private.signup_rejection(input_message => 'Enter your Playtomic level as a number, like 2.5.');
   end if;
   if exists (

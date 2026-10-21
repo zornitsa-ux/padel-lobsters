@@ -12,7 +12,8 @@
 -- reach this trigger as an insert without a player row.
 --
 -- Users without a usable name (created outside signup, e.g. an admin API call)
--- are skipped rather than failing the confirmation.
+-- are skipped rather than failing the confirmation, and so are users whose
+-- email another player already holds.
 
 create or replace function private.parse_metadata_level(input_text text)
  returns numeric
@@ -21,7 +22,7 @@ create or replace function private.parse_metadata_level(input_text text)
  set search_path to 'pg_catalog'
 as $function$
   select case
-    when replace(btrim(coalesce(input_text, '')), ',', '.') ~ '^\d+(\.\d+)?$'
+    when replace(btrim(coalesce(input_text, '')), ',', '.') ~ '^[0-9]+(\.[0-9]+)?$'
       then replace(btrim(input_text), ',', '.')::numeric
     else 0
   end
@@ -55,32 +56,38 @@ begin
     return new;
   end if;
 
-  insert into public.players(
-    id, name, email, phone, notes,
-    playtomic_level, adjustment, adjusted_level,
-    playtomic_username, gender, status, is_left_handed,
-    country, birthday, preferred_position, tagline_label, pin, pin_hash
-  ) values (
-    new.id,
-    left(v_name, 100),
-    lower(new.email),
-    coalesce(nullif(btrim(v_meta ->> 'phone'), ''), ''),
-    coalesce(v_meta ->> 'notes', ''),
-    v_level,
-    0,
-    v_level,
-    coalesce(v_meta ->> 'playtomic_username', ''),
-    coalesce(v_meta ->> 'gender', ''),
-    'active',
-    coalesce(v_meta ->> 'is_left_handed', '') = 'true',
-    coalesce(v_meta ->> 'country', ''),
-    private.parse_metadata_date(v_meta ->> 'birthday'),
-    coalesce(v_meta ->> 'preferred_position', ''),
-    coalesce(v_meta ->> 'tagline_label', ''),
-    null,
-    null
-  )
-  on conflict (id) do nothing;
+  -- An email already held by another player (case-insensitive) must not abort
+  -- GoTrue's confirmation; the integrity check reports the user instead.
+  begin
+    insert into public.players(
+      id, name, email, phone, notes,
+      playtomic_level, adjustment, adjusted_level,
+      playtomic_username, gender, status, is_left_handed,
+      country, birthday, preferred_position, tagline_label, pin, pin_hash
+    ) values (
+      new.id,
+      left(v_name, 100),
+      lower(new.email),
+      coalesce(nullif(btrim(v_meta ->> 'phone'), ''), ''),
+      coalesce(v_meta ->> 'notes', ''),
+      v_level,
+      0,
+      v_level,
+      coalesce(v_meta ->> 'playtomic_username', ''),
+      coalesce(v_meta ->> 'gender', ''),
+      'active',
+      coalesce(v_meta ->> 'is_left_handed', '') = 'true',
+      coalesce(v_meta ->> 'country', ''),
+      private.parse_metadata_date(v_meta ->> 'birthday'),
+      coalesce(v_meta ->> 'preferred_position', ''),
+      coalesce(v_meta ->> 'tagline_label', ''),
+      null,
+      null
+    )
+    on conflict (id) do nothing;
+  exception when unique_violation then
+    return new;
+  end;
 
   return new;
 end;

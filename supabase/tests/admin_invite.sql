@@ -36,6 +36,7 @@ declare
   v_ph     uuid;
   v_ph2    uuid;
   v_taken  uuid;
+  v_typo   uuid;
   v_pin    text;
   v_added  public.players%rowtype;
   v_ready  jsonb;
@@ -180,10 +181,17 @@ begin
      or exists (select 1 from sent_invite_emails where player_id = v_added.id) then
     raise exception 'CHECK 8 FAILED (blank): %', row_to_json(v_added);
   end if;
+  v_err := null;
+  begin perform public.admin_add_player(jsonb_build_object('name', 'Added Typo', 'email', 'typo@gmail'));
+  exception when others then v_err := sqlstate || ' ' || sqlerrm; end;
+  if v_err is distinct from '22023 invalid email'
+     or exists (select 1 from public.players where name = 'Added Typo') then
+    raise exception 'CHECK 8 FAILED (malformed): got %', v_err;
+  end if;
   raise notice 'CHECK 8 ok: add player';
 
   -- CHECK 9: resend returns the address, records a 'resend' email and an
-  -- admin_action row, and refuses unknown, placeholder and email-less players
+  -- admin_action row, and refuses unknown, placeholder, email-less and malformed-email players
   delete from sent_invite_emails;
   v_err := public.admin_resend_invite(v_ph);
   if v_err <> 'one@test.invalid'
@@ -206,6 +214,15 @@ begin
   begin perform public.admin_resend_invite(v_taken);
   exception when others then v_err := sqlstate || ' ' || sqlerrm; end;
   if v_err is distinct from '22023 player has no email' then raise exception 'CHECK 9 FAILED (synthetic): got %', v_err; end if;
+  insert into public.players (name, status, email) values ('Legacy Typo', 'active', 'legacy-typo@gmail')
+  returning id into v_typo;
+  delete from sent_invite_emails;
+  v_err := null;
+  begin perform public.admin_resend_invite(v_typo);
+  exception when others then v_err := sqlstate || ' ' || sqlerrm; end;
+  if v_err is distinct from '22023 invalid email' or exists (select 1 from sent_invite_emails) then
+    raise exception 'CHECK 9 FAILED (malformed): got %', v_err;
+  end if;
   perform set_config('request.jwt.claims',
     json_build_object('sub', v_taken, 'role', 'authenticated')::text, true);
   v_err := null;

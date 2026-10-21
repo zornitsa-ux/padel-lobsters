@@ -7,6 +7,18 @@
 -- client; admin_regenerate_pin and self_signup_player stay until the PIN
 -- sunset so the current client keeps working.
 
+-- ── private.is_valid_email ──────────────────────────────────────────────────
+create or replace function private.is_valid_email(input_email text)
+ returns boolean
+ language sql
+ immutable
+ set search_path to 'pg_catalog'
+as $function$
+  select coalesce(input_email ~ '^[^@\s]+@[^@\s]+\.[^@\s]+$', false)
+$function$;
+
+revoke all on function private.is_valid_email(text) from public, anon, authenticated;
+
 -- ── private.send_invite_email ───────────────────────────────────────────────
 create or replace function private.send_invite_email(input_player_id uuid, input_kind text)
  returns bigint
@@ -23,8 +35,7 @@ begin
     raise exception 'send_invite_email: invalid kind: %', input_kind;
   end if;
   select email, name into v_email, v_name from public.players where id = input_player_id limit 1;
-  if v_email is null or length(trim(v_email)) < 3 or v_email !~ '^[^@\s]+@[^@\s]+\.[^@\s]+$'
-     or v_email like '%@padelobsters.internal' then
+  if not private.is_valid_email(v_email) or v_email like '%@padelobsters.internal' then
     return null;
   end if;
   if input_kind = 'league_invite' then
@@ -70,7 +81,7 @@ begin
   if input_player_id is null or v_email is null then
     raise exception 'player_id and email are required' using errcode = '22023';
   end if;
-  if v_email !~ '^[^@\s]+@[^@\s]+\.[^@\s]+$' then
+  if not private.is_valid_email(v_email) then
     raise exception 'invalid email' using errcode = '22023';
   end if;
 
@@ -116,17 +127,21 @@ as $function$
 #variable_conflict use_column
 declare
   v_inserted public.players%rowtype;
+  v_email    text := nullif(btrim(input_payload->>'email'), '');
 begin
   set local statement_timeout = '30s';
   perform public.require_admin();
   if input_payload is null then return; end if;
+  if v_email is not null and not private.is_valid_email(v_email) then
+    raise exception 'invalid email' using errcode = '22023';
+  end if;
 
   insert into public.players(name, email, phone, notes, playtomic_level, adjustment, adjusted_level,
     playtomic_username, gender, status, is_left_handed, country, avatar_url, birthday,
     preferred_position, tagline_label, pin, pin_hash)
   values (
     coalesce(input_payload->>'name', ''),
-    nullif(btrim(input_payload->>'email'), ''),
+    v_email,
     coalesce(input_payload->>'phone', ''),
     coalesce(input_payload->>'notes', ''),
     coalesce((input_payload->>'playtomic_level')::numeric, 0),
@@ -181,6 +196,9 @@ begin
         where u.id = input_player_id and u.email like '%@padelobsters.internal'
      ) then
     raise exception 'player has no email' using errcode = '22023';
+  end if;
+  if not private.is_valid_email(v_email) then
+    raise exception 'invalid email' using errcode = '22023';
   end if;
 
   insert into public.pin_attempts(player_id, attempt_kind, succeeded)
