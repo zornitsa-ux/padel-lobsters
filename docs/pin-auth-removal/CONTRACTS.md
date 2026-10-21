@@ -218,6 +218,11 @@ export interface SignInFormProps {
     then `verifyOtp({ email, token, type: 'email' })`.
   - Password: `signInWithPassword`.
   - Forgot: `resetPasswordForEmail(email, { redirectTo: <origin>/auth/confirm?type=recovery } )`.
+    **Amended 2026-10-21 (coordinator, from T3):** the form then shows
+    `OtpCodeStep` with `type: 'recovery'`, because the recovery email leads
+    with a code. Once the code verifies, it navigates to
+    `/auth/confirm?type=recovery&verified=1` (C-9). The link in the email
+    still works as before.
 - **The OTP input** has `autocomplete="one-time-code"`, `inputmode="numeric"`
   and a 6-digit length. Resend is disabled for 60 s, with a countdown.
 - **`onSignedIn`** fires once, with the new session. Without it, the form does
@@ -246,6 +251,9 @@ export interface SignInFormProps {
   - `magiclink`, `signup` and `email` → navigate to the destination.
   - `recovery` → the "Set a new password" screen (`updateUser({ password })`,
     with no current-password field), then the destination.
+  - `type=recovery&verified=1` with no `token_hash` (amended 2026-10-21):
+    the code was already verified in `SignInForm`, so it shows "Set a new
+    password" when a session exists, and an error otherwise.
   - `email_change` → today's confirmation screen.
 - **All five templates keep today's link shape:**
   `/auth/confirm?token_hash={{ .TokenHash }}&type=<type>&next=...`. T3 doesn't
@@ -255,12 +263,17 @@ export interface SignInFormProps {
 
 `?signin=1[&email=<addr>]` on any route:
 
-- **Signed out:** it opens `SignInForm` as a `modal` with
+- **Signed out, on a public path:** it opens `SignInForm` as a `modal` with
   `initialEmail = email` (trimmed and lower-cased; ignored unless it contains
   `@`).
+- **Signed out, on a protected path** (amended 2026-10-21, coordinator, from
+  T3): `VerificationGate` already covers the page, so it shows its `page`
+  form with the same `initialEmail` instead of a modal on top.
 - **Signed in:** it does nothing.
-- **Either way,** both params are removed with `replace` navigation. This lives
-  in one hook, `useSignInDeepLink()`, mounted in `Layout` (T3).
+- **The params are removed** with `replace` navigation: at once on a public
+  path or when signed in, and after sign-in on a protected path (the gate
+  reads them until then). This lives in one hook, `useSignInDeepLink()`,
+  mounted in `Layout` (T3).
 
 ## C-11. Sunset date
 

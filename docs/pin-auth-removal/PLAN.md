@@ -311,6 +311,51 @@ up` refuses it alone; a PR branch must contain `main`'s migrations. Noted:
   mapping and code entry, both edit `AccountSection`, and both need the one
   local stack.
 
+- 2026-10-21: **PR 2/3 built** (T3 + T4, `pin-auth-2-signin`).
+  - **Built:** `SignInForm` is on the gate, the modal and Account.
+    `AuthConfirm` is tap-to-confirm. Native signup replaces the PIN reveal.
+    Account → Sign-in & security is in, and the client no longer calls
+    `admin_regenerate_pin`.
+  - **Templates:** generated from one layout, with a CI check. The four
+    existing files came out byte-identical before `magic_link` went
+    code-first.
+  - **Config:** local `enable_confirmations` is now `true`, as in production.
+  - **GoTrue:** supabase-js 2.101.1's `updateUser` takes `current_password`
+    and `nonce` natively. A signup retry after the first code has expired
+    behaves like a retry within the hour.
+  - **Contract amendments (coordinator):** C-8/C-9 take the reset code in
+    the app (`verified=1`), and C-10 uses the gate's form instead of a modal
+    on protected paths.
+  - **`/code-review`:** no crashes; 10 findings, all fixed (f27ebbe). They
+    were: stale modal and return-path state, the admin-role prompt, the
+    avatar overwrite on an existing-account signup, the modal remounting
+    mid-code, a double-tap resend, the password label, one error message,
+    the duplicated email field, and two de-duplications.
+  - **Gates:** every §4.1 gate passes, including all 7 `supabase/tests`
+    scripts and `test:e2e`.
+  - **Rehearsal (§4.5)** on a fresh production copy: no migrations to apply,
+    and the stack restarted for the config. The integrity counts are
+    identical before and after (R1 column). Parity: 128 of 128 real-email
+    accounts signed in before and after; 5 of 5 Mailpit codes passed
+    (after: code-first templates, confirmations on); 0 changed hashes on
+    all 32 reads. `db:reset` afterwards, and the parity records were
+    deleted.
+  - **§4.2 rows for 2/3 are now e2e tests** (9 in the email spec): the code
+    on the page gate and the deep-link modal; magic link → tap → original
+    path; forgot → reset code → the length and character messages → new
+    password → password sign-in; first password on a code session and a
+    change that asks for the current one; the signed-out transfer link →
+    code → the transfer; and signup with its retry. `pwned` is hosted-only,
+    so only its unit test covers it. The `inline` variant can't be reached
+    signed out (`/account` is behind the gate, as on `main`), so component
+    tests cover it.
+  - **Bug found by the reset e2e, fixed:** a reset code or link signs in with
+    `PASSWORD_RECOVERY`, not `SIGNED_IN`, so `useAuth` never synced the role
+    and a player whose token has no `role` stayed a guest after resetting.
+    It's now synced on both events, with a unit test. Production
+    (read-only): 6 of 141 accounts have no `role`, all synthetic-email, so
+    no real-email account would have hit it today.
+
 ---
 
 ## 2. Schedule
