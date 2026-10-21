@@ -13,7 +13,7 @@ export default function SignInSecuritySection() {
   const [passwordSaved, setPasswordSaved] = useState(false)
   const [signOutError, setSignOutError] = useState('')
   const usedPassword = sessionUsedPassword({ session })
-  const passwordLabel = usedPassword ? 'Change password' : 'Set a password'
+  const passwordLabel = usedPassword ? 'Change password' : 'Set or change password'
 
   async function handleSignOutEverywhere() {
     setSignOutError('')

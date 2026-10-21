@@ -13,6 +13,8 @@ import CountryPicker from './ui/CountryPicker'
 import { SegmentedControl } from './ui/SegmentedControl'
 import { requestEmailCode, normaliseEmail } from '../features/auth/authActions'
 import { OtpCodeStep } from '../features/auth/OtpCodeStep'
+import { confirmedJustNow } from '../features/auth/newAccount'
+import { takeReturnPath } from '../features/auth/returnPath'
 import { buildSignupMetadata } from '../features/auth/signupMetadata'
 import {
   describeSignupError,
@@ -278,7 +280,9 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
 
   const handleVerified = (session: Session) => {
     void queryClient.invalidateQueries({ queryKey: playerKeys.all() })
-    if (avatarFile) {
+    takeReturnPath()
+    // GoTrue signs an existing account in on this path: never overwrite its photo.
+    if (avatarFile && confirmedJustNow({ emailConfirmedAt: session.user.email_confirmed_at })) {
       void uploadSignupAvatar({ playerId: session.user.id, file: avatarFile }).then((ok) => {
         if (ok) void queryClient.invalidateQueries({ queryKey: playerKeys.all() })
       })

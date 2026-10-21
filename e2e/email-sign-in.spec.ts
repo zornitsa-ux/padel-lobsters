@@ -121,7 +121,7 @@ test('password path: set on a code session, sign in with it, change it', async (
   const code = await requestCode({ page, email: PASSWORD_PLAYER })
   await enterCode({ page, code })
 
-  await page.getByRole('button', { name: /set a password/i }).click()
+  await page.getByRole('button', { name: /set or change password/i }).click()
   await expect(page.getByLabel('Current password')).toHaveCount(0)
   await page.getByLabel('New password').fill(FIRST_PASSWORD)
   await page.getByRole('button', { name: /save password/i }).click()

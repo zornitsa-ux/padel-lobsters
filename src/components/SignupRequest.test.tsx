@@ -62,7 +62,10 @@ beforeEach(() => {
   roster.players = []
   mockSetOwnAvatar.mockResolvedValue('https://cdn.test/avatars/player-p1.webp')
   mockRequestCode.mockResolvedValue({ error: null })
-  mockVerifyCode.mockResolvedValue({ session: { user: { id: 'p1' } }, error: null })
+  mockVerifyCode.mockResolvedValue({
+    session: { user: { id: 'p1', email_confirmed_at: new Date().toISOString() } },
+    error: null,
+  })
 })
 
 afterEach(cleanup)
@@ -239,6 +242,27 @@ describe('SignupRequest — code step', () => {
     await waitFor(() =>
       expect(mockSetOwnAvatar).toHaveBeenCalledWith({ playerId: 'p1', file: photo }),
     )
+  })
+
+  it('does not overwrite the photo of an account that already existed', async () => {
+    mockVerifyCode.mockResolvedValue({
+      session: { user: { id: 'p1', email_confirmed_at: '2026-01-01T00:00:00Z' } },
+      error: null,
+    })
+    const { onComplete } = await toCodeStep()
+
+    enterCode()
+    await waitFor(() => expect(onComplete).toHaveBeenCalled())
+    expect(mockSetOwnAvatar).not.toHaveBeenCalled()
+  })
+
+  it('discards the saved return path once signed in', async () => {
+    window.localStorage.setItem('pl_auth_return_path', '/events')
+    const { onComplete } = await toCodeStep()
+
+    enterCode()
+    await waitFor(() => expect(onComplete).toHaveBeenCalled())
+    expect(window.localStorage.getItem('pl_auth_return_path')).toBeNull()
   })
 
   it('skips the photo and stays on the step when the code is wrong', async () => {

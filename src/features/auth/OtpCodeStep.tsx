@@ -1,13 +1,13 @@
-import { useState, type FormEvent } from 'react'
+import { useRef, useState, type FormEvent } from 'react'
 import type { EmailOtpType, Session } from '@supabase/supabase-js'
 import { Check } from 'lucide-react'
 import { describeSignInError, rateLimitWaitSeconds } from './authErrors'
 import { requestEmailCode, verifyEmailCode, type AuthResult } from './authActions'
 import { FormError } from './FormError'
+import { CODE_LENGTH, sanitiseCode } from './otpCode'
 import { formatCountdown, useCountdown } from './useCountdown'
 
 const RESEND_SECONDS = 60
-const CODE_LENGTH = 6
 
 export interface OtpCodeStepProps {
   email: string
@@ -30,6 +30,7 @@ export function OtpCodeStep({
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [busy, setBusy] = useState(false)
+  const resendingRef = useRef(false)
   const { remaining, restart } = useCountdown({ seconds: RESEND_SECONDS })
 
   async function handleSubmit(event: FormEvent) {
@@ -47,10 +48,12 @@ export function OtpCodeStep({
   }
 
   async function handleResend() {
-    if (remaining > 0) return
+    if (remaining > 0 || resendingRef.current) return
+    resendingRef.current = true
     setError('')
     setNotice('')
     const { error: resendError } = await (resend ?? (() => requestEmailCode({ email })))()
+    resendingRef.current = false
     if (resendError) {
       setError(describeSignInError({ error: resendError, step: 'request' }))
       restart({ seconds: rateLimitWaitSeconds({ error: resendError }) ?? RESEND_SECONDS })
@@ -84,7 +87,7 @@ export function OtpCodeStep({
           id="otp-code"
           value={code}
           onChange={(e) => {
-            setCode(e.target.value.replace(/\D/g, '').slice(0, CODE_LENGTH))
+            setCode(sanitiseCode({ value: e.target.value }))
             setError('')
           }}
           autoComplete="one-time-code"

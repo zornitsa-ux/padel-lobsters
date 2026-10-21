@@ -49,6 +49,19 @@ describe('useSignInDeepLink', () => {
     expect(result.current.link.open).toBe(false)
   })
 
+  it('clears the modal when a session appears another way', async () => {
+    const { result, rerender } = render({ url: '/home?signin=1', session: null })
+    await waitFor(() => expect(result.current.link.open).toBe(true))
+
+    mockUseApp.mockReturnValue({ session: { user: {} }, sessionSettled: true })
+    rerender()
+    expect(result.current.link.open).toBe(false)
+    mockUseApp.mockReturnValue({ session: null, sessionSettled: true })
+    rerender()
+
+    expect(result.current.link.open).toBe(false)
+  })
+
   it('leaves a protected path to the gate', () => {
     const { result } = render({ url: '/events?signin=1&email=ada%40example.com', session: null })
 

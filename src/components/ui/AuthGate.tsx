@@ -23,6 +23,13 @@ import SignInForm from '../../features/auth/SignInForm'
  */
 export type GateRole = 'admin' | 'player'
 
+// A fresh session may not carry its role yet (it syncs just after sign-in), so
+// any signed-in session satisfies a player prompt.
+export const roleSatisfies = ({ required, role }: { required: GateRole; role: string }) =>
+  required === 'admin' ? role === 'admin' : role !== 'guest'
+
+const ADMIN_REQUIRED_NOTICE = 'This needs an admin account.'
+
 // The navigation callback these surfaces use ('settings' is the only
 // destination they ever ask for).
 export type GateNavigate = (destination: string) => void
@@ -119,14 +126,20 @@ export function SignInModal({
   onNavigate?: GateNavigate
 }) {
   const { role: sessionRole } = useApp()
+  const [notice, setNotice] = useState('')
 
   useEffect(() => {
-    if (open && sessionRole !== 'guest') onClose?.()
-  }, [open, sessionRole, onClose])
+    if (open && roleSatisfies({ required: role, role: sessionRole })) onClose?.()
+  }, [open, role, sessionRole, onClose])
 
   if (!open) return null
 
   const handleSignedIn = (signedInSession: Session) => {
+    const signedInRole = signedInSession.user?.app_metadata?.role ?? 'player'
+    if (!roleSatisfies({ required: role, role: signedInRole })) {
+      setNotice(ADMIN_REQUIRED_NOTICE)
+      return
+    }
     onSuccess?.(signedInSession)
     onClose?.()
   }
@@ -164,6 +177,12 @@ export function SignInModal({
         <p className="text-sm text-lob-muted">
           {subtitle || "Sign in with your email. We'll send you a code."}
         </p>
+
+        {notice && (
+          <p role="alert" className="text-xs text-red-500 font-medium">
+            {notice}
+          </p>
+        )}
 
         <SignInForm
           variant="modal"
@@ -237,20 +256,20 @@ export function useAuthPrompt({ onNavigate }: { onNavigate?: GateNavigate } = {}
     setTimeout(() => cb?.(), 0)
   }, [])
 
-  const AuthPromptModal = useCallback(
-    () => (
-      <SignInModal
-        open={open}
-        onClose={closeModal}
-        onSuccess={handleSuccess}
-        role={askRole}
-        title={askTitle}
-        subtitle={askSub}
-        onNavigate={onNavigate}
-      />
-    ),
-    [open, askRole, askTitle, askSub, onNavigate, handleSuccess, closeModal],
-  )
+  // The latest props live in a ref so the component's identity stays stable:
+  // a new onNavigate closure on every parent render must not remount the modal
+  // (that would reset the form mid-code).
+  const latest = useRef<Parameters<typeof SignInModal>[0]>({ open: false })
+  latest.current = {
+    open,
+    onClose: closeModal,
+    onSuccess: handleSuccess,
+    role: askRole,
+    title: askTitle,
+    subtitle: askSub,
+    onNavigate,
+  }
+  const AuthPromptModal = useCallback(() => <SignInModal {...latest.current} />, [])
 
   return { requireAuth, AuthPromptModal }
 }

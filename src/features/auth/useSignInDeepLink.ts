@@ -39,6 +39,10 @@ export function useSignInDeepLink() {
     navigate({ pathname, search: withoutDeepLinkParams({ search }), hash }, { replace: true })
   }, [settled, session, modalPath, link.email, pathname, search, hash, navigate])
 
+  useEffect(() => {
+    if (session) setModal(null)
+  }, [session])
+
   const close = useCallback(() => setModal(null), [])
   return { open: modal !== null && !session, initialEmail: modal?.email ?? '', close }
 }

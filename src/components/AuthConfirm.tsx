@@ -37,6 +37,9 @@ function recoveryView({
   return sessionSettled ? 'error' : 'verifying'
 }
 
+const RESET_ENDED_ERROR =
+  'Your reset session has ended. Ask for a new reset code from the sign-in screen.'
+
 const MISSING_TOKEN_ERROR = 'This link is missing its verification token. Request a new email.'
 
 // Landing route for any auth email link. The template embeds token_hash + type.
@@ -62,7 +65,9 @@ export default function AuthConfirm() {
   const tokenHash = params.get('token_hash')
   const verifiedRecovery = params.get('verified') === '1' && type === 'recovery' && !tokenHash
   const [status, setStatus] = useState<Status>(tokenHash ? 'ready' : 'error')
-  const [error, setError] = useState(tokenHash ? '' : MISSING_TOKEN_ERROR)
+  const [error, setError] = useState(
+    tokenHash ? '' : verifiedRecovery ? RESET_ENDED_ERROR : MISSING_TOKEN_ERROR,
+  )
   const view = verifiedRecovery ? recoveryView({ session, sessionSettled }) : status
 
   const goToDestination = () => {

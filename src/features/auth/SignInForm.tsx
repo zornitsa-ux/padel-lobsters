@@ -10,9 +10,9 @@ import {
   requestEmailCode,
   sendPasswordReset,
   signInWithPassword,
-  type AuthResult,
 } from './authActions'
-import { describeSignInError, type SignInStep } from './authErrors'
+import { describeSignInError, type AuthErrorLike, type SignInStep } from './authErrors'
+import { takeReturnPath } from './returnPath'
 import { FormError } from './FormError'
 import { OtpCodeStep } from './OtpCodeStep'
 import { PIN_SUNSET_LABEL } from './pinSunset'
@@ -72,6 +72,7 @@ export function SignInForm({ variant, initialEmail = '', onSignedIn, allowPin }:
   function signedIn(session: Session) {
     if (firedRef.current) return
     firedRef.current = true
+    takeReturnPath()
     setStep('done')
     onSignedIn?.(session)
   }
@@ -84,13 +85,12 @@ export function SignInForm({ variant, initialEmail = '', onSignedIn, allowPin }:
   async function submit({
     action,
     errorStep,
-    next,
+    onSuccess,
   }: {
-    action: () => Promise<AuthResult>
+    action: () => Promise<{ error: AuthErrorLike | null; session?: Session | null }>
     errorStep: SignInStep
-    next: Step
+    onSuccess: (session: Session | null | undefined) => void
   }) {
-    const address = normaliseEmail(email)
     if (busy) return
     if (!looksLikeEmail(address)) {
       setError(INVALID_EMAIL_MESSAGE)
@@ -98,10 +98,10 @@ export function SignInForm({ variant, initialEmail = '', onSignedIn, allowPin }:
     }
     setBusy(true)
     setError('')
-    const { error: actionError } = await action()
+    const { error: actionError, session } = await action()
     setBusy(false)
     if (actionError) setError(describeSignInError({ error: actionError, step: errorStep }))
-    else setStep(next)
+    else onSuccess(session)
   }
 
   const address = normaliseEmail(email)
@@ -111,7 +111,7 @@ export function SignInForm({ variant, initialEmail = '', onSignedIn, allowPin }:
     void submit({
       action: () => requestEmailCode({ email: address }),
       errorStep: 'request',
-      next: 'code',
+      onSuccess: () => setStep('code'),
     })
   }
 
@@ -120,26 +120,23 @@ export function SignInForm({ variant, initialEmail = '', onSignedIn, allowPin }:
     void submit({
       action: () => sendPasswordReset({ email: address }),
       errorStep: 'reset',
-      next: 'recovery-code',
+      onSuccess: () => setStep('recovery-code'),
     })
   }
 
-  async function handlePasswordSubmit(event: FormEvent) {
+  function handlePasswordSubmit(event: FormEvent) {
     event.preventDefault()
-    if (busy) return
-    if (!looksLikeEmail(address)) {
-      setError(INVALID_EMAIL_MESSAGE)
-      return
-    }
-    setBusy(true)
-    setError('')
-    const { session, error: signInError } = await signInWithPassword({ email: address, password })
-    setBusy(false)
-    if (signInError || !session) {
-      setError(describeSignInError({ error: signInError ?? {}, step: 'password' }))
-      return
-    }
-    signedIn(session)
+    void submit({
+      action: async () => {
+        const { session, error: signInError } = await signInWithPassword({
+          email: address,
+          password,
+        })
+        return { session, error: signInError ?? (session ? null : {}) }
+      },
+      errorStep: 'password',
+      onSuccess: (session) => session && signedIn(session),
+    })
   }
 
   async function handlePinSubmit(event: FormEvent) {

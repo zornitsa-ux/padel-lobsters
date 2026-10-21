@@ -38,10 +38,10 @@ describe('SignInSecuritySection', () => {
     expect(screen.getByText('email:ada@example.com')).toBeTruthy()
   })
 
-  it('offers "Set a password" with no current-password need for a code session', () => {
+  it('offers "Set or change password" with no current-password need for a code session', () => {
     mockUseApp.mockReturnValue({ session: sessionWith([{ method: 'otp' }]) })
     render(<SignInSecuritySection />)
-    fireEvent.click(screen.getByRole('button', { name: /set a password/i }))
+    fireEvent.click(screen.getByRole('button', { name: /set or change password/i }))
 
     expect(screen.getByText('password form current:false')).toBeTruthy()
   })

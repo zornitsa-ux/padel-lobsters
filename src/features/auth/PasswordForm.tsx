@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { requestReauthentication, setPassword } from './authActions'
 import { FormError } from './FormError'
+import { CODE_LENGTH, sanitiseCode } from './otpCode'
 import { describePasswordError, PASSWORD_RULES_COPY } from './passwordErrors'
 
 export interface PasswordFormProps {
@@ -86,10 +87,10 @@ export function PasswordForm({ requireCurrentPassword, submitLabel, onDone }: Pa
           <input
             id="reauth-code"
             value={nonce}
-            onChange={(e) => setNonce(e.target.value.replace(/\D/g, '').slice(0, 6))}
+            onChange={(e) => setNonce(sanitiseCode({ value: e.target.value }))}
             autoComplete="one-time-code"
             inputMode="numeric"
-            maxLength={6}
+            maxLength={CODE_LENGTH}
             className="input"
           />
           <button
@@ -105,7 +106,7 @@ export function PasswordForm({ requireCurrentPassword, submitLabel, onDone }: Pa
       <FormError message={error} />
       <button
         type="submit"
-        disabled={busy || !password || (needsCode && nonce.length !== 6)}
+        disabled={busy || !password || (needsCode && nonce.length !== CODE_LENGTH)}
         className="btn-primary w-full disabled:opacity-50"
       >
         {busy ? 'Saving…' : submitLabel}

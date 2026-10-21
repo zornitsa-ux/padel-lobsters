@@ -184,11 +184,46 @@ describe('SignInForm — code step', () => {
     }
   })
 
+  it('sends one request for a double-tapped resend', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: false })
+    try {
+      renderForm({ initialEmail: 'ada@example.com' })
+      await act(async () => click(/email me a sign-in code/i))
+      await tick(60)
+      let release: (value: { error: null }) => void = () => {}
+      actions.requestEmailCode.mockReturnValueOnce(new Promise((resolve) => (release = resolve)))
+      const resend = screen.getByRole('button', { name: /resend code/i })
+      await act(async () => {
+        fireEvent.click(resend)
+        fireEvent.click(resend)
+      })
+      release({ error: null })
+
+      expect(actions.requestEmailCode).toHaveBeenCalledTimes(2)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   it('goes back to the email step on Change email', async () => {
     await toCodeStep()
     click(/change email/i)
 
     expect(screen.getByLabelText('Email')).toBeTruthy()
+  })
+})
+
+describe('SignInForm — return path', () => {
+  it('discards a saved return path when sign-in completes in the app', async () => {
+    window.localStorage.setItem('pl_auth_return_path', '/transfer/9')
+    const onSignedIn = vi.fn()
+    renderForm({ initialEmail: 'ada@example.com', onSignedIn })
+    click(/email me a sign-in code/i)
+    fireEvent.change(await screen.findByLabelText('Code'), { target: { value: '123456' } })
+    click(/^sign in$/i)
+
+    await waitFor(() => expect(onSignedIn).toHaveBeenCalled())
+    expect(window.localStorage.getItem('pl_auth_return_path')).toBeNull()
   })
 })
 

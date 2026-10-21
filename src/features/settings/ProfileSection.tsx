@@ -3,7 +3,6 @@ import { Save, User, ChevronDown, ChevronUp, Camera } from 'lucide-react'
 import CountryPicker from '../../components/ui/CountryPicker'
 import Avatar from '../../components/ui/Avatar'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
-import { EmailChangeField } from './EmailChangeField'
 import { LOBBY_PROMPTS, type ProfileForm } from './settingsHelpers'
 import type { Player } from '../../lib/normalise'
 
@@ -316,13 +315,17 @@ export default function ProfileSection({
                 </div>
               </div>
 
-              {/* Email — confirmation-gated. Self-service writes never
-                  touch players.email directly; we route through
-                  supabase.auth.updateUser so the new address is verified
-                  before it becomes the account's source of truth. */}
+              {/* Email is read-only here: changes go through the confirmed flow in Sign-in & security. */}
               <div>
                 <label className="label">Email</label>
-                <EmailChangeField email={profileForm.email} />
+                <div className="px-3 py-2 rounded-xl bg-gray-50 border border-gray-200 text-sm text-lob-slate truncate">
+                  {profileForm.email || (
+                    <span className="text-lob-muted-light">No email on file</span>
+                  )}
+                </div>
+                <p className="text-xs text-lob-muted-light mt-1">
+                  Change it under Sign-in &amp; security.
+                </p>
                 <p className="text-xs text-lob-muted-light mt-1">Visible for organizers only</p>
               </div>
 

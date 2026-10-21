@@ -113,7 +113,7 @@ describe('AuthConfirm — recovery', () => {
   it('errors when the in-app recovery has no session', () => {
     renderAt('/auth/confirm?type=recovery&verified=1')
 
-    expect(screen.getByText(/didn't work/i)).toBeTruthy()
+    expect(screen.getByText(/reset session has ended/i)).toBeTruthy()
   })
 })
 
