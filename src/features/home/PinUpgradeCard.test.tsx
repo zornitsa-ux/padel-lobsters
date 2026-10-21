@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 
 const h = vi.hoisted(() => ({ useApp: vi.fn(), navigate: vi.fn() }))
 vi.mock('../../context/useApp', () => ({ useApp: h.useApp }))
@@ -8,6 +8,7 @@ vi.mock('react-router-dom', () => ({ useNavigate: () => h.navigate }))
 vi.mock('../auth/pinSunset', () => ({ PIN_SUNSET_LABEL: '10 November' }))
 
 import PinUpgradeCard from './PinUpgradeCard'
+import { dismissUpgradeCard } from './upgradeCardDismissal'
 
 const asUser = (user: { id: string; email: string } | null) =>
   h.useApp.mockReturnValue({ session: user ? { user } : null })
@@ -80,5 +81,12 @@ describe('PinUpgradeCard', () => {
     expect(screen.getByText(/Message an admin on WhatsApp/)).toBeTruthy()
     expect(screen.queryByText('Got it')).toBeNull()
     expect(document.body.textContent).not.toContain('padelobsters.internal')
+  })
+
+  it('hides when dismissed elsewhere while mounted', () => {
+    asUser({ id: 'p1', email: 'ada@example.com' })
+    render(<PinUpgradeCard />)
+    act(() => dismissUpgradeCard({ playerId: 'p1' }))
+    expect(screen.queryByText('Got it')).toBeNull()
   })
 })

@@ -4,6 +4,7 @@ import { useApp } from '../../context/useApp'
 import { Modal } from '../../components/ui/Modal'
 import { PIN_SUNSET_LABEL } from './pinSunset'
 import { clearPinSignIn, hasPinSignIn, PIN_SIGN_IN_EVENT } from './pinSignInFlag'
+import { dismissUpgradeCard } from '../home/upgradeCardDismissal'
 import { isSyntheticEmail } from './syntheticEmail'
 import { ADD_EMAIL_REQUEST, SIGN_IN_SECURITY_PATH } from './upgradeCopy'
 
@@ -36,8 +37,14 @@ export default function PinSignInInterstitial() {
   const { session } = useApp()
   const navigate = useNavigate()
   const email = session?.user?.email ?? ''
-  const { pending, close } = usePinSignInFlag({ signedIn: !!session })
+  const { pending, close: closeFlag } = usePinSignInFlag({ signedIn: !!session })
   const synthetic = isSyntheticEmail(email)
+  const playerId = session?.user?.id
+
+  const close = () => {
+    closeFlag()
+    if (!synthetic && playerId) dismissUpgradeCard({ playerId })
+  }
 
   const setPasswordNow = () => {
     close()

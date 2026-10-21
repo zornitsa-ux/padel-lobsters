@@ -1,10 +1,14 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../../context/useApp'
 import { PIN_SUNSET_LABEL } from '../auth/pinSunset'
 import { isSyntheticEmail } from '../auth/syntheticEmail'
 import { ADD_EMAIL_REQUEST, SIGN_IN_SECURITY_PATH } from '../auth/upgradeCopy'
-import { dismissUpgradeCard, isUpgradeCardDismissed } from './upgradeCardDismissal'
+import {
+  dismissUpgradeCard,
+  isUpgradeCardDismissed,
+  UPGRADE_CARD_DISMISSED_EVENT,
+} from './upgradeCardDismissal'
 
 const secondaryButton =
   'text-xs font-semibold text-lob-slate bg-gray-100 border border-gray-200 px-3 py-2 rounded-xl active:scale-95'
@@ -26,6 +30,11 @@ function SyntheticCard() {
 function RealEmailCard({ email, playerId }: { email: string; playerId: string }) {
   const navigate = useNavigate()
   const [dismissed, setDismissed] = useState(() => isUpgradeCardDismissed({ playerId }))
+  useEffect(() => {
+    const sync = () => setDismissed(isUpgradeCardDismissed({ playerId }))
+    window.addEventListener(UPGRADE_CARD_DISMISSED_EVENT, sync)
+    return () => window.removeEventListener(UPGRADE_CARD_DISMISSED_EVENT, sync)
+  }, [playerId])
   if (dismissed) return null
 
   const goToSecurity = () => navigate(SIGN_IN_SECURITY_PATH)

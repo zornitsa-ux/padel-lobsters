@@ -16,6 +16,7 @@ const signedInAs = (email: string | null) =>
 beforeEach(() => {
   vi.clearAllMocks()
   sessionStorage.clear()
+  localStorage.clear()
 })
 afterEach(cleanup)
 
@@ -69,5 +70,21 @@ describe('PinSignInInterstitial', () => {
     signedInAs(null)
     view.rerender(<PinSignInInterstitial />)
     expect(hasPinSignIn()).toBe(false)
+  })
+
+  it('dismisses the upgrade card when a real-email interstitial closes', () => {
+    signedInAs('ada@example.com')
+    render(<PinSignInInterstitial />)
+    act(() => markPinSignIn())
+    fireEvent.click(screen.getByText('Got it'))
+    expect(localStorage.getItem('pl_upgrade_card_dismissed:p1')).toBe('1')
+  })
+
+  it('leaves the synthetic upgrade card alone', () => {
+    signedInAs('player-abc@padelobsters.internal')
+    render(<PinSignInInterstitial />)
+    act(() => markPinSignIn())
+    fireEvent.click(screen.getByText('Got it'))
+    expect(localStorage.getItem('pl_upgrade_card_dismissed:p1')).toBeNull()
   })
 })
