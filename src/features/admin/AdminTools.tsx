@@ -23,6 +23,7 @@ import {
 } from 'lucide-react'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { LinkCard, LinkCardIcon } from '../../components/ui/LinkCard'
+import AuthReadinessPanel from './AuthReadinessPanel'
 import type { EventNavigate } from '../events/eventHelpers'
 
 type AdminToolsProps = {
@@ -221,6 +222,8 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
             )}
           </div>
         )}
+
+        <AuthReadinessPanel />
 
         <div className="space-y-2">
           {tools.map(({ id, title, description, icon: Icon, ...action }) => (
