@@ -106,6 +106,7 @@ test('native signup: code creates the players row', async ({ page }) => {
 
   await enterCode({ page, code: await waitForCode({ to: email, since }) })
   await expect(page.getByLabel('Code')).toBeHidden()
+  await expect(page.getByText(/your account isn.t fully set up/i)).toHaveCount(0)
 
   await expect
     .poll(async () => (await admin.from('players').select('name, status').eq('email', email)).data)
@@ -231,5 +232,25 @@ test('signed-out transfer deep link: code sign-in lands on the transfer', async 
     await expect(page.getByRole('button', { name: /accept transfer/i })).toBeVisible()
   } finally {
     await admin.from('registration_transfers').delete().eq('id', transferId)
+  }
+})
+
+test('an account with no players row sees the incomplete-account panel and can sign out', async ({
+  page,
+}) => {
+  const email = `e2e-orphan-${Date.now()}@lobsters.test`
+  // No name metadata: the C-4 trigger skips the players row.
+  const { data, error } = await admin.auth.admin.createUser({ email, email_confirm: true })
+  if (error || !data.user) throw new Error(`Could not create the orphan user: ${error?.message}`)
+  try {
+    await page.goto(`/home?signin=1&email=${email}`)
+    const code = await requestCode({ page, email })
+    await enterCode({ page, code })
+
+    await expect(page.getByText(/your account isn.t fully set up/i)).toBeVisible()
+    await page.getByRole('button', { name: /^sign out$/i }).click()
+    await expect(page.getByText(/your account isn.t fully set up/i)).toHaveCount(0)
+  } finally {
+    await admin.auth.admin.deleteUser(data.user.id)
   }
 })

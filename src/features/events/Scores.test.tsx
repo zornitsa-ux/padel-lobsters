@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, cleanup } from '@testing-library/react'
 import type { NormalisedTournament } from './tournamentQueries'
+import { fixtureRole } from '../../test/sessions'
 import { mkMatch, mkRegistration } from '../../test/factories'
 
 let mockSession: unknown = { user: { id: 'p1', app_metadata: { role: 'player' } } }
@@ -17,7 +18,9 @@ const players = [
   { id: 'p4', name: 'Margaret Hamilton' },
 ]
 
-vi.mock('../../context/useApp', () => ({ useApp: () => ({ session: mockSession }) }))
+vi.mock('../../context/useApp', () => ({
+  useApp: () => ({ session: mockSession, role: fixtureRole(mockSession) }),
+}))
 vi.mock('../players/usePlayers', () => ({ usePlayers: () => ({ data: players }) }))
 vi.mock('./useMatches', () => ({ useMatches: () => ({ data: matches }) }))
 vi.mock('./useRegistrations', () => ({ useRegistrations: () => ({ data: registrations }) }))

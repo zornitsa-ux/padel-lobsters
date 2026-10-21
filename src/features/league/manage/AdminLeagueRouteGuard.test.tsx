@@ -36,13 +36,13 @@ afterEach(() => {
 
 describe('AdminLeagueRouteGuard', () => {
   it('renders the manage page for an admin', () => {
-    useApp.mockReturnValue({ session: admin, sessionSettled: true })
+    useApp.mockReturnValue({ session: admin, role: 'admin', sessionSettled: true })
     renderGuard()
     expect(screen.getByText('MANAGE')).toBeTruthy()
   })
 
   it('sends a non-admin to the league page', () => {
-    useApp.mockReturnValue({ session: player, sessionSettled: true })
+    useApp.mockReturnValue({ session: player, role: 'player', sessionSettled: true })
     renderGuard()
     expect(screen.getByText('LEAGUE HOME')).toBeTruthy()
     expect(screen.queryByText('MANAGE')).toBeNull()

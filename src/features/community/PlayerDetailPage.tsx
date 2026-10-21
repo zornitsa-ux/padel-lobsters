@@ -77,7 +77,7 @@ export default function PlayerDetailPage({ playerId, onNavigate }: PlayerDetailP
   const navigate = useNavigate()
   const confirm = useConfirm()
   const { session, role } = useApp()
-  const isAdmin = session?.user?.app_metadata?.role === 'admin'
+  const isAdmin = role === 'admin'
   const { deletePlayer, resendInvite } = usePlayerActions({ session, role })
   const { data: players = [], isLoading } = usePlayers()
   const { data: tournaments = [] } = useTournaments()

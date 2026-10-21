@@ -22,7 +22,7 @@ vi.mock('../lib/deviceId', () => ({
   getUserAgentSummary: vi.fn(() => 'TestAgent'),
 }))
 
-import { requestMyEmailChange, syncMyRole, fetchMyProfile } from './auth'
+import { requestMyEmailChange, fetchMyProfile } from './auth'
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -75,34 +75,6 @@ describe('requestMyEmailChange', () => {
 
     supabase.auth.updateUser.mockRejectedValue(new Error('boom'))
     await expect(requestMyEmailChange('bob@lobsters.test')).resolves.toBe('error')
-  })
-})
-
-// ----------------------------------------------------------------------
-// syncMyRole
-// ----------------------------------------------------------------------
-// Critical for magic-link UX: without the post-RPC refreshSession the auth
-// hook's role claim doesn't propagate into the session.user object that
-// VerificationGate reads.
-describe('syncMyRole', () => {
-  it('calls sync_my_role and then refreshSession', async () => {
-    const result = await syncMyRole()
-    expect(supabase.rpc).toHaveBeenCalledWith('sync_my_role')
-    expect(supabase.auth.refreshSession).toHaveBeenCalledOnce()
-    expect(result).toEqual({ role: 'player' })
-  })
-
-  it('refreshes only after the RPC reports success — no refresh on RPC error', async () => {
-    supabase.rpc.mockResolvedValue({ data: null, error: { message: 'not authenticated' } })
-    const result = await syncMyRole()
-    expect(result).toBeNull()
-    expect(supabase.auth.refreshSession).not.toHaveBeenCalled()
-  })
-
-  it('returns null on thrown exception without surfacing the throw to callers', async () => {
-    supabase.rpc.mockRejectedValue(new Error('rpc blew up'))
-    await expect(syncMyRole()).resolves.toBeNull()
-    expect(supabase.auth.refreshSession).not.toHaveBeenCalled()
   })
 })
 

@@ -3,6 +3,7 @@ import type { Session } from '@supabase/supabase-js'
 import { useApp } from '../../context/useApp'
 import { Shield, User, LogIn, X, Mail } from 'lucide-react'
 import SignInForm from '../../features/auth/SignInForm'
+import { sessionRole } from '../../features/auth/sessionClaims'
 
 /**
  * Site-wide auth middleware.
@@ -125,18 +126,18 @@ export function SignInModal({
   initialEmail?: string
   onNavigate?: GateNavigate
 }) {
-  const { role: sessionRole } = useApp()
+  const { role: appRole } = useApp()
   const [notice, setNotice] = useState('')
 
   useEffect(() => {
-    if (open && roleSatisfies({ required: role, role: sessionRole })) onClose?.()
-  }, [open, role, sessionRole, onClose])
+    if (open && roleSatisfies({ required: role, role: appRole })) onClose?.()
+  }, [open, role, appRole, onClose])
 
   if (!open) return null
 
   const handleSignedIn = (signedInSession: Session) => {
-    const signedInRole = signedInSession.user?.app_metadata?.role ?? 'player'
-    if (!roleSatisfies({ required: role, role: signedInRole })) {
+    // A player prompt takes any signed-in session; the session check handles a missing role.
+    if (role === 'admin' && sessionRole({ session: signedInSession }) !== 'admin') {
       setNotice(ADMIN_REQUIRED_NOTICE)
       return
     }
@@ -217,8 +218,7 @@ export function SignInModal({
  * successful sign-in.
  */
 export function useAuthPrompt({ onNavigate }: { onNavigate?: GateNavigate } = {}) {
-  const { session } = useApp()
-  const userRole = session?.user?.app_metadata?.role ?? 'guest'
+  const { role: userRole } = useApp()
   const isAdmin = userRole === 'admin'
   const isPlayer = userRole === 'player'
   const [open, setOpen] = useState(false)

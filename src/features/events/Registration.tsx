@@ -64,7 +64,7 @@ export default function Registration({
 }) {
   const confirm = useConfirm()
   const { showToast } = useToast()
-  const { session } = useApp()
+  const { session, role } = useApp()
   const { updateRegistration, cancelRegistration, registerPlayer, promoteWaitlistRegistration } =
     useRegistrationActions()
   const { data: transfers = [] } = useTransfers()
@@ -78,7 +78,7 @@ export default function Registration({
   const { data: regsData = [] } = useRegistrations(tournament?.id)
   const { data: settings } = useSettings()
   const transfersClosed = isTransferWindowClosed(tournament)
-  const isAdmin = session?.user?.app_metadata?.role === 'admin'
+  const isAdmin = role === 'admin'
   const claimedId = session?.user?.id ?? null
 
   // Show first name for players, full name for admins

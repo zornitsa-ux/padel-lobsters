@@ -47,26 +47,6 @@ export function logout() {
   return supabase.auth.signOut()
 }
 
-// ── Post-sign-in role sync ─────────────────────────────────────
-// Magic-link (and future OAuth) sessions are minted before the player's role
-// reaches auth.users.app_metadata — verify-pin does that for the PIN flow.
-// sync_my_role() writes it; the refresh pulls the updated user into the local
-// session so VerificationGate and the Admin tab see a non-guest role.
-export async function syncMyRole() {
-  try {
-    const { data, error } = await supabase.rpc('sync_my_role')
-    if (error) {
-      console.error('sync_my_role error:', error)
-      return null
-    }
-    await supabase.auth.refreshSession()
-    return data
-  } catch (e) {
-    console.error('sync_my_role threw:', e)
-    return null
-  }
-}
-
 // Fetch the signed-in player's full record (including email / phone / full
 // birthday) through the secure RPC. Resolves to null only for the genuine
 // no-row case; a failed RPC call throws so the caller's query lands in

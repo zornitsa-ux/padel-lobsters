@@ -44,11 +44,11 @@ interface AdminTransferPanelProps {
 
 export default function AdminTransferPanel({ tournament, onClose }: AdminTransferPanelProps) {
   const confirm = useConfirm()
-  const { session } = useApp()
+  const { session, role } = useApp()
   const { data: transfers = [] } = useTransfers()
   const { forceAcceptTransfer, adminCancelTransfer } = useTransferActions({ session })
   const { data: players = [] } = usePlayers()
-  const isAdmin = session?.user?.app_metadata?.role === 'admin'
+  const isAdmin = role === 'admin'
 
   const [busyId, setBusyId] = useState<string | null>(null)
   const [errorById, setErrorById] = useState<Record<string, string | null>>({})

@@ -4,7 +4,7 @@ import { useApp } from '../../context/useApp'
 import { signOutEverywhere } from '../auth/authActions'
 import { FormError } from '../auth/FormError'
 import { PasswordForm } from '../auth/PasswordForm'
-import { sessionUsedPassword } from '../auth/sessionAmr'
+import { sessionUsedPassword } from '../auth/sessionClaims'
 import { EmailChangeField } from './EmailChangeField'
 
 export default function SignInSecuritySection() {

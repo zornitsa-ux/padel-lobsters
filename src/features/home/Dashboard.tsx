@@ -41,7 +41,7 @@ interface TransferShare {
 
 export default function Dashboard({ onNavigate }: DashboardProps) {
   const confirm = useConfirm()
-  const { session, sessionSettled } = useApp()
+  const { session, sessionSettled, role } = useApp()
   const {
     data: tournaments = [],
     isSuccess: tournamentsLoaded,
@@ -84,7 +84,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
     (id: string): NormalisedRegistration[] => registrations.filter((r) => r.tournamentId === id),
     [registrations],
   )
-  const isAdmin = session?.user?.app_metadata?.role === 'admin'
+  const isAdmin = role === 'admin'
   const claimedId = session?.user?.id ?? null
 
   // Pending-transfer state surfaced on the home screen so the player

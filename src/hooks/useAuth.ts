@@ -3,6 +3,7 @@ import type { Session } from '@supabase/supabase-js'
 import { supabase, getSessionReady } from '../supabase'
 import * as authApi from '../api/auth'
 import { mark } from '../lib/perfMarks'
+import { sessionRole } from '../features/auth/sessionClaims'
 
 export default function useAuth() {
   const [session, setSession] = useState<Session | null>(null)
@@ -21,25 +22,12 @@ export default function useAuth() {
     })
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, s) => {
-      setSession(s)
-      // Magic-link / OAuth sessions arrive before the player's role is in
-      // app_metadata (verify-pin sets it for the PIN flow). Sync and refresh
-      // so the client stops treating them as a guest. A reset code or link
-      // signs in with PASSWORD_RECOVERY instead of SIGNED_IN.
-      const signedIn = event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY'
-      if (signedIn && s && !s.user?.app_metadata?.role) {
-        try {
-          await authApi.syncMyRole()
-        } catch (e) {
-          console.warn('syncMyRole failed', e)
-        }
-      }
-    })
+    } = supabase.auth.onAuthStateChange((_event, s) => setSession(s))
     return () => subscription.unsubscribe()
   }, [])
 
-  const role = session?.user?.app_metadata?.role ?? 'guest'
+  // C-12: the role is the token's own claim, never a second copy in app_metadata.
+  const role = sessionRole({ session })
 
   useEffect(() => {
     roleRef.current = role

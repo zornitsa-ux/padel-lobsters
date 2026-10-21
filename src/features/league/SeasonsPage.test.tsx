@@ -39,8 +39,8 @@ const hidden = mkLeague({
 })
 const past = mkLeague({ id: 'past', name: 'Spring 2026', status: 'completed' })
 
-const admin = { session: { user: { app_metadata: { role: 'admin' } } } }
-const player = { session: { user: { app_metadata: {} } } }
+const admin = { session: { user: { app_metadata: { role: 'admin' } } }, role: 'admin' }
+const player = { session: { user: { app_metadata: {} } }, role: 'guest' }
 
 function renderAt(path: string) {
   return renderWithClient(

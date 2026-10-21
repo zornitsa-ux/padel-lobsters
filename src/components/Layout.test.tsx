@@ -24,7 +24,7 @@ import Layout from './Layout'
 beforeEach(() => {
   vi.clearAllMocks()
   window.localStorage.clear()
-  mockUseApp.mockReturnValue({ session: { user: { id: 'p1', app_metadata: {} } } })
+  mockUseApp.mockReturnValue({ session: { user: { id: 'p1' } }, role: 'player' })
   mockUseSettings.mockReturnValue({ data: {} })
 })
 
@@ -35,7 +35,7 @@ describe('Layout — shell', () => {
     render(<Layout>content</Layout>)
     expect(screen.queryByText('/admin')).toBeNull()
     cleanup()
-    mockUseApp.mockReturnValue({ session: { user: { id: 'p1', app_metadata: { role: 'admin' } } } })
+    mockUseApp.mockReturnValue({ session: { user: { id: 'p1' } }, role: 'admin' })
     render(<Layout>content</Layout>)
     expect(screen.getByText('/admin')).toBeTruthy()
   })

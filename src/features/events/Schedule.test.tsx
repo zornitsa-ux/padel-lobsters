@@ -17,7 +17,7 @@ const { mockUseMmRatings } = vi.hoisted(() => ({
 }))
 
 vi.mock('../../context/useApp', () => ({
-  useApp: () => ({ session: mockSession }),
+  useApp: () => ({ session: mockSession, role: fixtureRole(mockSession) }),
 }))
 vi.mock('../players/usePlayers', () => ({
   usePlayers: () => ({ data: players }),
@@ -43,6 +43,7 @@ vi.mock('../matchmaking/MatchmakingContainer', () => ({
 vi.mock('../../supabase', () => mockSupabase())
 
 import Schedule from './Schedule'
+import { fixtureRole } from '../../test/sessions'
 
 const players = Array.from({ length: 8 }, (_, i) => ({
   id: `p${i}`,

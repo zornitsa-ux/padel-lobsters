@@ -25,7 +25,7 @@ export default function Players() {
   const { updatePlayer, deletePlayer } = usePlayerActions({ session, role })
   const { data: players = [] } = usePlayers()
   const resolveWithPii = useResolveWithPii()
-  const isAdmin = session?.user?.app_metadata?.role === 'admin'
+  const isAdmin = role === 'admin'
   const claimedId = session?.user?.id ?? null
 
   const [search, setSearch] = useState('')

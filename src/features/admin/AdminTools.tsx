@@ -37,12 +37,12 @@ type ToolCard = {
 } & ({ to: string } | { onClick: () => void })
 
 export default function AdminTools({ onNavigate }: AdminToolsProps) {
-  const { session } = useApp()
+  const { role } = useApp()
   const { data: tournaments = [] } = useTournaments()
   const { data: players = [] } = usePlayers()
   const { data: allRegs = [] } = useAllRegistrations()
   const { data: allMatches = [] } = useAllMatches()
-  const isAdmin = session?.user?.app_metadata?.role === 'admin'
+  const isAdmin = role === 'admin'
   const [showReviewBreakdown, setShowReviewBreakdown] = useState(false)
   const { data: interests = [] } = useMerchInterests()
 

@@ -35,7 +35,7 @@ export default function Settings() {
   const avatarUpload = useAvatarUpload()
   const { data: settings } = useSettings()
   const saveSettingsMutation = useSaveSettings()
-  const isAdmin = session?.user?.app_metadata?.role === 'admin'
+  const isAdmin = role === 'admin'
   const claimedId = session?.user?.id ?? null
   // Own profile: identity from the public roster merged with PII from
   // get_my_profile_v2. Single source — no separate poll/overlay, so a

@@ -4,6 +4,8 @@ import { useApp } from '../context/useApp'
 import { UserPlus } from 'lucide-react'
 import { isPublicPath } from '../lib/authPaths'
 import { RouteFallback } from './ui/RouteFallback'
+import { IncompleteAccountPanel } from '../features/auth/IncompleteAccountPanel'
+import { useSessionCheck } from '../features/auth/useSessionCheck'
 import SignInForm from '../features/auth/SignInForm'
 import { parseSignInDeepLink } from '../features/auth/useSignInDeepLink'
 
@@ -31,7 +33,8 @@ const SignupRequest = lazy(() => import('./SignupRequest'))
 type GateMode = 'signin' | 'signup'
 
 export default function VerificationGate({ children }: { children?: React.ReactNode }) {
-  const { role, sessionSettled } = useApp()
+  const { role, session, sessionSettled } = useApp()
+  const check = useSessionCheck({ session, sessionSettled })
   const location = useLocation()
   const [mode, setMode] = useState<GateMode>('signin')
   const [initialEmail] = useState(() => parseSignInDeepLink({ search: location.search }).email)
@@ -66,7 +69,8 @@ export default function VerificationGate({ children }: { children?: React.ReactN
 
   // Hold children back until auth has resolved: role is 'guest' until then,
   // so rendering early flashes the sign-in overlay at an already-signed-in user.
-  if (!sessionSettled) return null
+  if (!sessionSettled || check.status === 'pending') return null
+  if (check.status === 'incomplete') return <IncompleteAccountPanel />
   if (isPublicPath(location.pathname)) return <>{children}</>
   if (role !== 'guest') return <>{children}</>
 

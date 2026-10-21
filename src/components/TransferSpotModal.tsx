@@ -68,12 +68,12 @@ export default function TransferSpotModal({
   onTransferCreated,
   onTransferCompleted,
 }: TransferSpotModalProps) {
-  const { session } = useApp()
+  const { session, role } = useApp()
   const { createTransfer, adminTransferRegistration } = useTransferActions({ session })
   const { data: players = [] } = usePlayers()
   const { data: regs = [] } = useRegistrations(tournament?.id)
   const claimedId = session?.user?.id ?? null
-  const isAdmin = session?.user?.app_metadata?.role === 'admin'
+  const isAdmin = role === 'admin'
 
   // The registration actually being transferred. Falls back to the signed-in
   // player so the self-service call site (which never passes fromPlayerId)

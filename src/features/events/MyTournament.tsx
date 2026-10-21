@@ -23,8 +23,8 @@ type Props = {
 }
 
 export default function MyTournament({ tournament, onNavigate }: Props) {
-  const { session } = useApp()
-  const isAdmin = session?.user?.app_metadata?.role === 'admin'
+  const { session, role } = useApp()
+  const isAdmin = role === 'admin'
   const claimedId = session?.user?.id ?? null
 
   const { data: registrations = [] } = useRegistrations(tournament.id)

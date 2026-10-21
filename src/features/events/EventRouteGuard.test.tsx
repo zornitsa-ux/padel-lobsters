@@ -101,8 +101,14 @@ describe('EventRouteGuard — deep link loading vs not-found', () => {
 })
 
 describe('AdminEventRouteGuard', () => {
-  const adminSession = { session: { user: { app_metadata: { role: 'admin' }, id: 'u1' } } }
-  const playerSession = { session: { user: { app_metadata: { role: 'player' }, id: 'u2' } } }
+  const adminSession = {
+    session: { user: { app_metadata: { role: 'admin' }, id: 'u1' } },
+    role: 'admin',
+  }
+  const playerSession = {
+    session: { user: { app_metadata: { role: 'player' }, id: 'u2' } },
+    role: 'player',
+  }
 
   it('renders for an admin once settled', () => {
     useTournaments.mockReturnValue(settled([EVENT]))
