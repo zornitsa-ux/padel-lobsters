@@ -9,7 +9,8 @@ rule). DESIGN §2 is the behaviour; this file is the interfaces.
 Contents: C-1 migration timestamps · C-2 signup metadata · C-3 the hook ·
 C-4 the confirmed-user trigger · C-5 the admin RPCs · C-6 the invite email ·
 C-7 readiness · C-8 `SignInForm` · C-9 return path and `AuthConfirm` ·
-C-10 the `signin` deep link · C-11 the sunset date.
+C-10 the `signin` deep link · C-11 the sunset date · C-12 the role source
+and the session check.
 
 ---
 
@@ -284,3 +285,40 @@ and `PIN_SUNSET_LABEL` (e.g. `10 November`).
   reads from it.
 - **The coordinator sets the real date at T₀.**
 - **PR 4 deletes it.**
+
+## C-12. Role source and session check (T15, in PR 2/3)
+
+Added 2026-10-21 by the coordinator (owner decision; PLAN §1 log).
+
+**The role comes from the access token only.** `custom_access_token_hook`
+(`20260816140000`) sets `app_metadata.role` in every token from
+`players.role`, on every sign-in method and every refresh.
+
+- One helper decodes `session.access_token` and returns the `role` claim
+  (`'admin' | 'player'`), or `'guest'` without a session. `useAuth` exposes
+  it, and every client read of `session.user.app_metadata.role` goes through
+  it. Nothing reads `session.user.app_metadata` for the role any more.
+- It decodes locally rather than calling `getClaims()`: with this project's
+  signing keys `getClaims()` makes a network call, and the role is display
+  only. The server enforces with the token's claims and `require_admin()`
+  (which reads `players`).
+- `useAuth` no longer calls `syncMyRole()`; the client function and its
+  tests go. The `sync_my_role` RPC stays until PR 10.
+
+**Session check.** Once the session has settled, a signed-in session is
+**complete** when both hold:
+
+1. the token's `role` claim is `'player'` or `'admin'`, and
+2. the user's own `players` row exists (read through an existing query;
+   no new RPC).
+
+- If (1) fails, the client refreshes the session **once** and checks again.
+  That covers a token minted before its `players` row was visible.
+- If the session is still incomplete, every route shows a full-screen panel:
+  "Your account isn't fully set up. Message an admin on WhatsApp and we'll
+  sort it out." with a **Sign out** button. Nothing else renders behind it.
+- It logs `console.error('[auth] incomplete session', { reason })` with the
+  reason (`no_role` / `no_player`) and no personal data. Recording it
+  server-side is deferred (PLAN §1 log, 2026-10-21).
+- While the check is pending, the app renders as it does while the session
+  settles (nothing on protected paths).

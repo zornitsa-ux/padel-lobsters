@@ -51,7 +51,7 @@ signed in gets logged out.
 | T10 | Revoke `verify_player_pin_v2` from anon (D-12)            | C     | T9 + 48h watch  | 5        | [ ]   |
 | T11 | Phase 4 cleanup (DESIGN §3 Phase 4)                       | W     | T10 + ≥2 weeks  | 6        | [ ]   |
 | T12 | Remove the "Used a PIN before?" explainer                 | W     | cutover + ~2 mo | 7        | [ ]   |
-| T15 | Phase 5a: client reads the role from token claims         | W     | cutover         | 8        | [ ]   |
+| T15 | Phase 5a: client reads the role from token claims         | W     | T1              | 2/3      | [~]   |
 | T16 | Phase 5b: `auth.users` owns the email; Admin API writes   | W     | T11             | 9        | [ ]   |
 | T17 | Phase 5c: remove synthetic accounts + last auth writers   | W     | T15, T16        | 10       | [ ]   |
 
@@ -356,26 +356,42 @@ up` refuses it alone; a PR branch must contain `main`'s migrations. Noted:
     (read-only): 6 of 141 accounts have no `role`, all synthetic-email, so
     no real-email account would have hit it today.
 
+- 2026-10-21: **T15 moves into PR 2/3, plus a session check (owner).** The
+  reset bug was one case of a wider design fault: the token hook already
+  stamps the role from `players` into every token, for every sign-in method
+  and refresh, but the client read a second copy (`auth.users` app_metadata)
+  that only `sync_my_role` fills, after the events `useAuth` happens to list.
+  Reading the role from the token removes that list (C-12). A check after
+  sign-in catches what we can't predict: a signed-in user with no role in
+  the token, or no `players` row (for example C-4's skipped confirmation),
+  gets one session refresh and then a "your account isn't fully set up,
+  message an admin" screen, instead of a guest view or a blank page.
+  `require_admin()` reads `players`, not the stored copy, so the server is
+  unaffected.
+  - **Deferred (owner):** recording these anomalies in a table. That waits
+    for a broader look at error tracking in the app, which today has no
+    error-reporting service. Until then the check logs to the console.
+
 ---
 
 ## 2. Schedule
 
 Dates stay relative until tournament **#13** is scheduled. Then pin them here.
 
-| Milestone                         | When                                       | Rule                                                                       |
-| --------------------------------- | ------------------------------------------ | -------------------------------------------------------------------------- |
-| R0: Phase 0a merged + pushed      | Week of 15 Oct                             | Invisible; may land before #12 (18 Oct)                                    |
-| R1: Phase 0b merged + pushed      | **Done 2026-10-19**                        | Verified in production (§4.4); dashboard checklist done the same day       |
-| R2: dark backend (PR 1/3)         | **Done 2026-10-21**                        | The hook and invite emails run in production before players see the new UI |
-| **T₀**: PRs 2/3 + 3/3 + announce  | A Tue or Wed                               | T₀ ≤ #13 − 17 days                                                         |
-| WhatsApp reminder                 | Cutover − 3 days                           |                                                                            |
-| **Cutover** (PR 4)                | T₀ + 14, a Tue or Wed                      | ≥ 3 days before #13; go/no-go in §5                                        |
-| Revoke (PR 5)                     | Cutover + 2 days                           | After the 48h watch is clean                                               |
-| Phase 4 cleanup (PR 6)            | ≥ Cutover + 14 days, once stub hits are ~0 | Not within 3 days of an event                                              |
-| Explainer removal (PR 7)          | Cutover + ~2 months                        |                                                                            |
-| Phase 5a: role from claims (PR 8) | After cutover                              | Client only; not within 3 days of an event                                 |
-| Phase 5b: email ownership (PR 9)  | After PR 6                                 | Not within 3 days of an event                                              |
-| Phase 5c: final cleanup (PR 10)   | ≥ 7 days after PRs 8 and 9                 | Stale clients have reloaded; not within 3 days of an event                 |
+| Milestone                        | When                                       | Rule                                                                       |
+| -------------------------------- | ------------------------------------------ | -------------------------------------------------------------------------- |
+| R0: Phase 0a merged + pushed     | Week of 15 Oct                             | Invisible; may land before #12 (18 Oct)                                    |
+| R1: Phase 0b merged + pushed     | **Done 2026-10-19**                        | Verified in production (§4.4); dashboard checklist done the same day       |
+| R2: dark backend (PR 1/3)        | **Done 2026-10-21**                        | The hook and invite emails run in production before players see the new UI |
+| **T₀**: PRs 2/3 + 3/3 + announce | A Tue or Wed                               | T₀ ≤ #13 − 17 days                                                         |
+| WhatsApp reminder                | Cutover − 3 days                           |                                                                            |
+| **Cutover** (PR 4)               | T₀ + 14, a Tue or Wed                      | ≥ 3 days before #13; go/no-go in §5                                        |
+| Revoke (PR 5)                    | Cutover + 2 days                           | After the 48h watch is clean                                               |
+| Phase 4 cleanup (PR 6)           | ≥ Cutover + 14 days, once stub hits are ~0 | Not within 3 days of an event                                              |
+| Explainer removal (PR 7)         | Cutover + ~2 months                        |                                                                            |
+| Phase 5a: role from claims       | **In PR 2/3, at T₀** (owner, 2026-10-21)   | Client only                                                                |
+| Phase 5b: email ownership (PR 9) | After PR 6                                 | Not within 3 days of an event                                              |
+| Phase 5c: final cleanup (PR 10)  | ≥ 7 days after PRs 8 and 9                 | Stale clients have reloaded; not within 3 days of an event                 |
 
 **Worked example:** if #13 is Sun 15 Nov, then T₀ is Tue 27 Oct, the reminder
 goes out Sat 7 Nov, and cutover is Tue 10 Nov. If #13 is scheduled so early
@@ -558,11 +574,11 @@ before T6.
 
 Each PR passes the prod-data rehearsal (§4.5) before review.
 
-- **PR 8 (T15), client only:** one `useRole()`/`isAdmin` helper reads `role`
-  from `supabase.auth.getClaims()`. It replaces the 8 copies of
-  `session?.user?.app_metadata?.role === 'admin'` and the `syncMyRole()` call in
-  `useAuth`. `sync_my_role` itself is dropped in PR 10, after stale clients
-  have reloaded.
+- **PR 8 (T15) moved into PR 2/3** (owner, 2026-10-21; CONTRACTS C-12). The
+  client reads `role` from the access token's claims, replacing every read of
+  `session.user.app_metadata.role` and the `syncMyRole()` call in `useAuth`.
+  `sync_my_role` itself is still dropped in PR 10, after stale clients have
+  reloaded. There is no PR 8 any more.
 - **PR 9 (T16):** `auth.users.email` becomes the only source of truth.
   - **Edge function `admin-set-player-email`** (admin-only, checks the JWT
     role). It sets a player's sign-in email through the Admin API:
