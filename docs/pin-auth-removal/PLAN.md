@@ -40,18 +40,18 @@ signed in gets logged out.
 | T13 | Prod-data rehearsal kit: sync + integrity check (§4.5)    | C     | —               | #45      | [x]   |
 | T1  | Contract freeze (§3.1, CONTRACTS.md)                      | C     | —               | —        | [x]   |
 | T2  | Backend: hook, trigger, invite/add RPCs, readiness RPC    | W     | T0b, T1         | #48      | [x]   |
-| T3  | `SignInForm`, `AuthConfirm`, gates, native signup         | W     | T1              | 2/3      | [~]   |
-| T4  | Account → Sign-in & security                              | W     | T1              | 2/3      | [~]   |
-| T5  | Comms: upgrade card, interstitial, readiness panel, copy  | W     | T1              | 3/3      | [~]   |
+| T3  | `SignInForm`, `AuthConfirm`, gates, native signup         | W     | T1              | #50      | [x]   |
+| T4  | Account → Sign-in & security                              | W     | T1              | #50      | [x]   |
+| T5  | Comms: upgrade card, interstitial, readiness panel, copy  | W     | T1              | #51      | [x]   |
 | T14 | Rehearsal sign-in + data-access parity script (§4.5)      | W     | T13, T1         | #49      | [x]   |
-| T6  | Verification: local matrix, local devices, rehearsal      | C + O | T2–T5, T14      | —        | [ ]   |
+| T6  | Verification: local matrix, local devices, rehearsal      | C + O | T2–T5, T14      | —        | [~]   |
 | T7  | Dark backend release (R2)                                 | O     | T2 merged, T0c  | —        | [x]   |
-| T8  | T₀ release and announcement (R3)                          | O     | T6, T7          | —        | [ ]   |
+| T8  | T₀ release and announcement (R3)                          | O     | T6, T7          | —        | [~]   |
 | T9  | Cutover PR: remove PIN client path, `verify-pin` 410 stub | W     | T8              | 4        | [ ]   |
 | T10 | Revoke `verify_player_pin_v2` from anon (D-12)            | C     | T9 + 48h watch  | 5        | [ ]   |
 | T11 | Phase 4 cleanup (DESIGN §3 Phase 4)                       | W     | T10 + ≥2 weeks  | 6        | [ ]   |
 | T12 | Remove the "Used a PIN before?" explainer                 | W     | cutover + ~2 mo | 7        | [ ]   |
-| T15 | Phase 5a: client reads the role from token claims         | W     | T1              | 2/3      | [~]   |
+| T15 | Phase 5a: client reads the role from token claims         | W     | T1              | #50      | [x]   |
 | T16 | Phase 5b: `auth.users` owns the email; Admin API writes   | W     | T11             | 9        | [ ]   |
 | T17 | Phase 5c: remove synthetic accounts + last auth writers   | W     | T15, T16        | 10       | [ ]   |
 
@@ -513,6 +513,75 @@ up` refuses it alone; a PR branch must contain `main`'s migrations. Noted:
     CLAUDE.md (migrations only after merge). It's now merge, then `db push`
     from `main`.
 
+- 2026-10-21: **T₀ released (R3).** The owner squash-merged #50, then #51
+  (3/3 was rebased onto `main` first: the trees matched, and all gates and CI
+  passed). Then the owner ran `db push` from `main` and pasted the code-first
+  `magic_link.html` and its subject.
+
+  **Production checks (C, read-only):**
+  - **Migration and functions:** `20261021120000` is applied. The readiness
+    RPC has only C-7's keys and isn't executable by `anon`. The hook drops
+    `role` when there's no `players` row. `lobster_way_content` is still
+    NULL, so the new FAQ is live.
+  - **Readiness RPC as admin:** `no_email` 3, `recent_pin_users` 16,
+    `still_pin_count` 86, `switched_count` 36 (35 plus the test signup).
+  - **`+alias` signup (owner):** exactly one confirmed auth user, one
+    identity and one `players` row (`player`, `active`). The auth logs show
+    the before-user-created hook ran: the first real signup through it, which
+    closes R2's open item.
+  - **Owner's account:**
+    - **Password:** set. Production asked for reauthentication on the old
+      session (`400 Password update requires reauthentication` →
+      `/reauthenticate` → success), and 2/3's code step handled it.
+    - **Sign-in:** the owner then signed in by code and link. The email had
+      the code, and the link went to tap-to-confirm.
+  - **Auth logs since 17:00 UTC:** no errors, only GoTrue deprecation
+    notices.
+
+  **Test account removed (owner's decision; not CLAUDE.md's route).** The
+  owner ran one guarded `delete` (by id and email) in the dashboard SQL
+  editor, an exception to CLAUDE.md's "no SQL in the dashboard".
+  - **Mapped first (C, read-only):** only `public.players`, `auth.users`,
+    `auth.identities`, `auth.sessions` and its refresh tokens held the
+    account. That covered every uuid, text and jsonb column in
+    `public`/`auth`/`storage`/`private`/`realtime`. A few audit-log entries
+    remain, unlinked.
+  - **Afterwards:** 141 players and 141 auth users, and the integrity check
+    meets the T₀ column, with every count unchanged and 0 unconfirmed.
+
+  **Gap found:** no app path removes a player's **auth account**.
+  `admin_delete_player` and `admin_purge_player` touch `players` only, and
+  the orphan that leaves would be listed by integrity check 2 (and get
+  C-12's panel). This belongs with T16/T17 (auth ownership via the Admin API).
+
+**Resume here (as of 2026-10-21, after T₀):**
+
+- **Owner, now:** send the announcement email and the T₀ WhatsApp (Appendix,
+  date "5 November"). Confirm the 3 admins were told that invites send an
+  email (open since R2). Then T8 is `[x]`.
+- **Daily until cutover (C, read-only):** the readiness RPC (counts), the
+  auth logs (429s, `otp_disabled`, SMTP errors), new signups having player
+  rows, and Resend usage on tournament days (upgrade above ~70/day). §4.4.
+- **Mon 2 Nov:** the WhatsApp reminder (owner).
+- **Before cutover, hard gates (§5):**
+  - **§4.3 devices:** recruit the iPhone tester, plus Android Gmail,
+    desktop link and password reset, and a `+alias` signup.
+  - **The 3 no-email players:** each has a real email, or an admin has
+    accepted the risk by name.
+  - **The integrity check:** still meets the T₀ column.
+  - **#13:** on or after Sun 8 Nov.
+- **Build PR 4 (T9) during the window:** remove the PIN client path and
+  `pinSunset.ts` (the FAQ, card, interstitial and panel import it), add the
+  "Used a PIN before?" explainer, and replace `verify-pin` with the 410 stub.
+  It carries PLAN's next log entry, and gets the §4.5 rehearsal (§4.1).
+- **Cutover Thu 5 Nov:** merge PR 4 → Vercel → `functions deploy verify-pin`
+  → WhatsApp → 48h watch → PR 5 (revoke).
+- **Noted for later:**
+  - an admin path that deletes the auth account (T16/T17);
+  - the dead `invalid_pin` text in `oscarsPhase.ts`, which goes in PR 6;
+  - session-email staleness after an admin email fix: the card catches up at
+    the next token refresh.
+
 ---
 
 ## 2. Schedule
@@ -525,13 +594,13 @@ on or after Sun 8 Nov** (cutover ≥ 3 days before it).
 | R0: Phase 0a merged + pushed     | Week of 15 Oct                             | Invisible; may land before #12 (18 Oct)                                    |
 | R1: Phase 0b merged + pushed     | **Done 2026-10-19**                        | Verified in production (§4.4); dashboard checklist done the same day       |
 | R2: dark backend (PR 1/3)        | **Done 2026-10-21**                        | The hook and invite emails run in production before players see the new UI |
-| **T₀**: PRs 2/3 + 3/3 + announce | **Wed 21 Oct 2026** (owner)                | T₀ ≤ #13 − 17 days                                                         |
+| **T₀**: PRs 2/3 + 3/3 + announce | **Done 2026-10-21** (owner)                | T₀ ≤ #13 − 17 days                                                         |
 | WhatsApp reminder                | **Mon 2 Nov** (cutover − 3 days)           |                                                                            |
 | **Cutover** (PR 4)               | **Thu 5 Nov** (owner; T₀ + 15)             | ≥ 3 days before #13; go/no-go in §5                                        |
 | Revoke (PR 5)                    | Cutover + 2 days                           | After the 48h watch is clean                                               |
 | Phase 4 cleanup (PR 6)           | ≥ Cutover + 14 days, once stub hits are ~0 | Not within 3 days of an event                                              |
 | Explainer removal (PR 7)         | Cutover + ~2 months                        |                                                                            |
-| Phase 5a: role from claims       | **In PR 2/3, at T₀** (owner, 2026-10-21)   | Client only                                                                |
+| Phase 5a: role from claims       | **Done 2026-10-21** (#50, at T₀)           | Client only                                                                |
 | Phase 5b: email ownership (PR 9) | After PR 6                                 | Not within 3 days of an event                                              |
 | Phase 5c: final cleanup (PR 10)  | ≥ 7 days after PRs 8 and 9                 | Stale clients have reloaded; not within 3 days of an event                 |
 
