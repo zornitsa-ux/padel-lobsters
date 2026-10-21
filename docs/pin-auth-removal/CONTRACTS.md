@@ -48,14 +48,17 @@ time, later than every migration on `main`.
 ## C-3. `public.before_user_created_hook(event jsonb) returns jsonb`
 
 - **Grants:** execute to `supabase_auth_admin` only; revoked from `public`,
-  `anon` and `authenticated`. It's added to `expected_function_grants.txt`.
+  `anon` and `authenticated`. `expected_function_grants.txt` only lists `anon`
+  and `authenticated` grants, so the hook's absence there is the check; T2's
+  SQL test asserts its ACL directly.
 - **`config.toml`:**
   `[auth.hook.before_user_created] enabled = true, uri = "pg-functions://postgres/public/before_user_created_hook"`.
 - **Input:** it reads `event->'user'->'user_metadata'` (C-2).
 - **Normalisation:** it uses the same rules as `self_signup_player`
   (`20261012120000`). The name is trimmed and internal whitespace collapsed.
   The level is trimmed with `,` → `.`; `''` means 0, and anything else must
-  match `^\d+(\.\d+)?$`.
+  match `^[0-9]+(\.[0-9]+)?$` (ASCII digits only, so the trigger's cast can't
+  fail on a digit the hook accepted).
 - **Accept:** it returns `'{}'::jsonb`.
 - **Reject:** it returns
   `jsonb_build_object('error', jsonb_build_object('http_code', 400, 'message', <msg>))`.
@@ -95,6 +98,10 @@ and new.email_confirmed_at is not null`). Both are `for each row`.
   the way `self_signup_player` parses them (`adjustment` 0,
   `adjusted_level` = level, `pin` and `pin_hash` NULL). It ends with
   `on conflict (id) do nothing`.
+- **It skips a user with no usable name or email** (created outside signup),
+  or **whose email another player already holds** (a `unique_violation`),
+  rather than failing the confirmation. The integrity check reports such a
+  user as a confirmed account without a player.
 - **Idempotent with the reverse path.** `ensure_auth_user_for_player` (a
   `players` insert → raw `auth.users` insert) already sets
   `email_confirmed_at`, and the player row exists by then. So this trigger
@@ -106,13 +113,13 @@ and new.email_confirmed_at is not null`). Both are `for each row`.
 
 ## C-5. Admin RPCs
 
-| RPC                                                                               | Contract                                                                                                                                                                                                                                                                                                                                  |
-| --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `admin_invite_league_player(input_player_id uuid, input_email text) returns text` | **Signature and checks unchanged.** No PIN is generated or stored, and it **returns `NULL`** (D-13; the current client already hides a null PIN). It calls `private.send_invite_email(input_player_id, 'league_invite')`, and keeps the `pin_attempts` `admin_action` row.                                                                |
-| `admin_add_player(input_payload jsonb) returns setof players`                     | **Signature unchanged.** No PIN: the row's `pin` and `pin_hash` are `NULL`. A blank email is stored as `NULL` (the C-1 check). With an email, it calls `send_invite_email(id, 'added')`.                                                                                                                                                  |
-| `admin_resend_invite(input_player_id uuid) returns text`                          | **New.** `require_admin()`. It returns the address it mailed. It raises `22023` with `player not found`, with `player is a placeholder` (they need the invite flow), and with `player has no email` (also raised for a synthetic auth email). It calls `send_invite_email(id, 'resend')` and writes an `admin_action` `pin_attempts` row. |
-| `admin_regenerate_pin(uuid)`                                                      | **Unchanged until Phase 4 (PR 6).** The T₀ client stops calling it.                                                                                                                                                                                                                                                                       |
-| `self_signup_player(...)`                                                         | **Unchanged until Phase 4.** The pre-T₀ client still uses it, and D-13 needs it to keep working dark.                                                                                                                                                                                                                                     |
+| RPC                                                                               | Contract                                                                                                                                                                                                                                                                                                                                                                                |
+| --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `admin_invite_league_player(input_player_id uuid, input_email text) returns text` | **Signature and checks unchanged.** No PIN is generated or stored, and it **returns `NULL`** (D-13; the current client already hides a null PIN). It calls `private.send_invite_email(input_player_id, 'league_invite')`, and keeps the `pin_attempts` `admin_action` row.                                                                                                              |
+| `admin_add_player(input_payload jsonb) returns setof players`                     | **Signature unchanged.** No PIN: the row's `pin` and `pin_hash` are `NULL`. A blank email is stored as `NULL` (the C-1 check). A malformed one raises `22023` `invalid email`. With an email, it calls `send_invite_email(id, 'added')`.                                                                                                                                                |
+| `admin_resend_invite(input_player_id uuid) returns text`                          | **New.** `require_admin()`. It returns the address it mailed. It raises `22023` with `player not found`, with `player is a placeholder` (they need the invite flow), with `player has no email` (also raised for a synthetic auth email), and with `invalid email` for a malformed address. It calls `send_invite_email(id, 'resend')` and writes an `admin_action` `pin_attempts` row. |
+| `admin_regenerate_pin(uuid)`                                                      | **Unchanged until Phase 4 (PR 6).** The T₀ client stops calling it.                                                                                                                                                                                                                                                                                                                     |
+| `self_signup_player(...)`                                                         | **Unchanged until Phase 4.** The pre-T₀ client still uses it, and D-13 needs it to keep working dark.                                                                                                                                                                                                                                                                                   |
 
 ## C-6. Invite email
 
@@ -139,7 +146,7 @@ interface InvitePayload {
   email: string
   name: string // first name extracted, as send-pin-email does
   kind: 'league_invite' | 'added' | 'resend'
-  team_name: string | null // league_invite only: the player's team in the newest league season, else null
+  team_name: string | null // league_invite only: the player's team in the most recently created league that has them on a team, else null
 }
 ```
 
@@ -169,7 +176,7 @@ the grants file.
 interface AuthReadiness {
   no_email: { id: string; name: string }[] // active players whose auth email is synthetic; ordered by name
   recent_pin_users: { id: string; name: string; last_pin_at: string }[] // succeeded 'player' pin_attempts in the last 14 days, newest first
-  password_count: number // auth.users with encrypted_password not null
+  password_count: number // auth.users with a non-blank encrypted_password. KNOWN WRONG from T₀: OTP signups get a random hash (redefine before T5)
 }
 ```
 
