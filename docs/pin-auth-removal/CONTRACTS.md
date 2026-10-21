@@ -26,7 +26,8 @@ order:
 | `20261020150000` | `_invite_email_without_pin.sql`      | C-5 and C-6's `private.send_invite_email`                                               |
 | `20261020160000` | `_admin_auth_readiness.sql`          | C-7                                                                                     |
 
-PRs 2/3, 3/3 and 4 have no migrations. PR 5 onwards take a timestamp at build
+PRs 2/3 and 4 have no migrations. PR 3/3 has one, redefining C-7
+(coordinator, 2026-10-21). PR 3/3 and PR 5 onwards take a timestamp at build
 time, later than every migration on `main`.
 
 ## C-2. Signup metadata (`user_metadata`)
@@ -172,16 +173,31 @@ Responses are the same as `send-pin-email`'s: `200 { ok, resend_id }`,
 `require_admin()`, `stable`. It's granted to `authenticated` only, and added to
 the grants file.
 
+**Redefined 2026-10-21 (owner); PR 3/3's migration ships it.** #48's version
+returns `password_count`, which is dropped: passwords are optional, and from
+T₀ GoTrue's random hash for code signups makes the count meaningless. The
+T₀ client never reads it.
+
 ```ts
 interface AuthReadiness {
   no_email: { id: string; name: string }[] // active players whose auth email is synthetic; ordered by name
-  recent_pin_users: { id: string; name: string; last_pin_at: string }[] // succeeded 'player' pin_attempts in the last 14 days, newest first
-  password_count: number // auth.users with a non-blank encrypted_password. KNOWN WRONG from T₀: OTP signups get a random hash (redefine before T5)
+  recent_pin_users: { id: string; name: string; last_pin_at: string }[] // active players whose latest sign-in was a PIN, with that PIN in the last 14 days; newest first
+  switched_count: number // active players whose latest sign-in was by email
+  still_pin_count: number // active players whose latest sign-in was a PIN, at any time
 }
 ```
 
 - "Active" means `coalesce(status, 'active') = 'active'`, so placeholders
   aren't in `no_email`.
+- **A player's latest sign-in** is `auth.users.last_sign_in_at`. It **was a
+  PIN** when the player's latest succeeded `'player'` `pin_attempts` row is
+  no more than 5 minutes before it. `verify-pin` writes that row seconds
+  before it mints the session through a magic link, so session `amr` can't
+  tell PIN from email. Otherwise it **was by email** (code, link or
+  password). A player with no `last_sign_in_at` is in neither count.
+- **T5 checks on local GoTrue** that a token refresh doesn't move
+  `last_sign_in_at`, and measures the PIN-row-to-sign-in gap. If either
+  breaks the rule above, T5 stops and reports.
 - **There are no other keys.** It only adds a field after a change here.
 
 ## C-8. `SignInForm` (`src/features/auth/SignInForm.tsx`, T3)

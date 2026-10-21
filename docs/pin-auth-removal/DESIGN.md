@@ -320,7 +320,8 @@ no new PINs are created.
   - players with no real email (named, since admins must contact them);
   - players who signed in with a PIN in the last 14 days (from `pin_attempts`
     `player` rows). These are the people to nudge;
-  - count with a password set.
+  - counts of players whose latest sign-in was by email versus by PIN
+    (CONTRACTS C-7; this replaced a password count on 2026-10-21).
 - FAQ rewrite in `lobsterWayContent.ts` (and the DB `lobster_way_content` copy):
   replace "forgot my PIN" with "How do I sign in?" / "I don't get the email" / "Do
   I need a password?". Fix "behind her PIN" in the transfer walkthrough.
