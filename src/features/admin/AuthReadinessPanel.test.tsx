@@ -20,7 +20,7 @@ describe('AuthReadinessPanel', () => {
   it('shows the lists, counts and sunset date', async () => {
     h.fetchAuthReadiness.mockResolvedValue({
       no_email: [{ id: 'a', name: 'Ana Nomail' }],
-      recent_pin_users: [{ id: 'b', name: 'Ben Pin', last_pin_at: new Date().toISOString() }],
+      recent_pin_users: [{ id: 'b', name: 'Ben Pin', last_pin_at: '2026-10-18T10:00:00Z' }],
       switched_count: 7,
       still_pin_count: 3,
     })
@@ -29,7 +29,7 @@ describe('AuthReadinessPanel', () => {
     expect(screen.getByText('No real email — contact these players')).toBeTruthy()
     expect(screen.getByText('Signed in with a PIN in the last 14 days')).toBeTruthy()
     expect(screen.getByText('Ben Pin')).toBeTruthy()
-    expect(screen.getByText('today')).toBeTruthy()
+    expect(screen.getByText('18 Oct')).toBeTruthy()
     expect(screen.getByText('Switched to email: 7 · Still on PIN: 3')).toBeTruthy()
     expect(screen.getByText(/10 November/)).toBeTruthy()
   })

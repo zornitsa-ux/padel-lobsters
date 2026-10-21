@@ -2,7 +2,9 @@ import React from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { PIN_SUNSET_LABEL } from '../auth/pinSunset'
 import { authReadinessKey, fetchAuthReadiness, type AuthReadiness } from './authReadiness'
-import { relativeDay } from './relativeDay'
+
+const formatPinDate = (iso: string) =>
+  new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
 
 function NameList({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -13,7 +15,7 @@ function NameList({ title, children }: { title: string; children: React.ReactNod
   )
 }
 
-function ReadinessBody({ readiness, now }: { readiness: AuthReadiness; now: Date }) {
+function ReadinessBody({ readiness }: { readiness: AuthReadiness }) {
   const { no_email, recent_pin_users, switched_count, still_pin_count } = readiness
   return (
     <>
@@ -32,7 +34,7 @@ function ReadinessBody({ readiness, now }: { readiness: AuthReadiness; now: Date
           {recent_pin_users.map((p) => (
             <li key={p.id} className="flex justify-between gap-2">
               <span>{p.name}</span>
-              <span className="text-lob-muted">{relativeDay({ iso: p.last_pin_at, now })}</span>
+              <span className="text-lob-muted">{formatPinDate(p.last_pin_at)}</span>
             </li>
           ))}
         </NameList>
@@ -54,7 +56,7 @@ export default function AuthReadinessPanel() {
       </p>
       {isLoading && <p className="text-sm text-lob-muted">Loading…</p>}
       {isError && <p className="text-sm text-red-600">Could not load sign-in readiness.</p>}
-      {data && <ReadinessBody readiness={data} now={new Date()} />}
+      {data && <ReadinessBody readiness={data} />}
     </div>
   )
 }
