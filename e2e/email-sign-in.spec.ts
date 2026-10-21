@@ -7,7 +7,9 @@ import { clearInbox, waitForCode } from './fixtures/mailpit'
    Mailpit's API. Seeded @lobsters.test players already have auth users.
    ════════════════════════════════════════════════════════════════════════════ */
 
+// Separate players: GoTrue allows one code per address per 60 s.
 const CODE_PLAYER = 'ilaria@lobsters.test'
+const MODAL_PLAYER = 'ingrid@lobsters.test'
 const PASSWORD_PLAYER = 'adriana@lobsters.test'
 const FIRST_PASSWORD = 'First-Password-2026'
 const NEXT_PASSWORD = 'Second-Password-2026'
@@ -55,11 +57,11 @@ test('code sign-in on the page gate stays on the page', async ({ page }) => {
 })
 
 test('code sign-in in the deep-link modal stays on the page', async ({ page }) => {
-  await page.goto(`/home?signin=1&email=${CODE_PLAYER}`)
-  await expect(page.getByLabel('Email')).toHaveValue(CODE_PLAYER)
+  await page.goto(`/home?signin=1&email=${MODAL_PLAYER}`)
+  await expect(page.getByLabel('Email')).toHaveValue(MODAL_PLAYER)
   await expect(page).toHaveURL(/\/home$/)
 
-  const code = await requestCode({ page, email: CODE_PLAYER })
+  const code = await requestCode({ page, email: MODAL_PLAYER })
   await enterCode({ page, code })
 
   await expect(page.getByLabel('Code')).toBeHidden()
