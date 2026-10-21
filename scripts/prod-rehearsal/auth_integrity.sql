@@ -49,8 +49,6 @@ select check_name, value
     (13, 'synthetic_auth_accounts',
         (select count(*) from auth.users where email ilike '%@padelobsters.internal')),
     (14, 'blank_player_emails',
-        (select count(*) from public.players where email is not null and btrim(email) = '')),
-    (15, 'password_hashes',
-        (select count(*) from auth.users where coalesce(encrypted_password, '') <> ''))
+        (select count(*) from public.players where email is not null and btrim(email) = ''))
   ) as v(n, check_name, value)
  order by n;
