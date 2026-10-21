@@ -25,8 +25,10 @@ export default function useAuth() {
       setSession(s)
       // Magic-link / OAuth sessions arrive before the player's role is in
       // app_metadata (verify-pin sets it for the PIN flow). Sync and refresh
-      // so the client stops treating them as a guest.
-      if (event === 'SIGNED_IN' && s && !s.user?.app_metadata?.role) {
+      // so the client stops treating them as a guest. A reset code or link
+      // signs in with PASSWORD_RECOVERY instead of SIGNED_IN.
+      const signedIn = event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY'
+      if (signedIn && s && !s.user?.app_metadata?.role) {
         try {
           await authApi.syncMyRole()
         } catch (e) {

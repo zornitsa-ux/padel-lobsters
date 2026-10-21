@@ -18,19 +18,44 @@ async function newestMessage({ to }: { to: string }): Promise<MailpitMessage | n
   return messages[0] ?? null
 }
 
-// Polls for a message that arrived after `since` (ms) and returns its 6-digit code.
-export async function waitForCode({ to, since }: { to: string; since: number }): Promise<string> {
+interface MailpitBody {
+  Text: string
+  HTML: string
+}
+
+// Polls for a message to `to` that arrived after `since` (ms).
+async function waitForMessage({ to, since }: { to: string; since: number }): Promise<MailpitBody> {
   const deadline = Date.now() + 15_000
   while (Date.now() < deadline) {
     const newest = await newestMessage({ to })
     if (newest && new Date(newest.Created).getTime() >= since) {
-      const msg = await json<{ Text: string }>(`/api/v1/message/${newest.ID}`)
-      const code = /\b(\d{6})\b/.exec(msg.Text)?.[1]
-      if (code) return code
+      return json<MailpitBody>(`/api/v1/message/${newest.ID}`)
     }
     await new Promise((resolve) => setTimeout(resolve, 300))
   }
-  throw new Error(`No sign-in code arrived for ${to}`)
+  throw new Error(`No email arrived for ${to}`)
+}
+
+export async function waitForCode({ to, since }: { to: string; since: number }): Promise<string> {
+  const { Text } = await waitForMessage({ to, since })
+  const code = /\b(\d{6})\b/.exec(Text)?.[1]
+  if (!code) throw new Error(`The email to ${to} has no 6-digit code`)
+  return code
+}
+
+// The email's /auth/confirm link as a path, so the test can open it on its own base URL.
+export async function waitForConfirmPath({
+  to,
+  since,
+}: {
+  to: string
+  since: number
+}): Promise<string> {
+  const { HTML } = await waitForMessage({ to, since })
+  const href = /href="([^"]*\/auth\/confirm\?[^"]*)"/.exec(HTML)?.[1]
+  if (!href) throw new Error(`The email to ${to} has no /auth/confirm link`)
+  const url = new URL(href.replace(/&amp;/g, '&'))
+  return url.pathname + url.search
 }
 
 export async function clearInbox({ to }: { to: string }): Promise<void> {

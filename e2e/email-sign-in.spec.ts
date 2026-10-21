@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test'
 import { admin } from './fixtures/db'
-import { clearInbox, waitForCode } from './fixtures/mailpit'
+import { clearInbox, waitForCode, waitForConfirmPath } from './fixtures/mailpit'
 
 /* ════════════════════════════════════════════════════════════════════════════
    Email-code and password sign-in against the local stack. Codes come from
@@ -11,6 +11,11 @@ import { clearInbox, waitForCode } from './fixtures/mailpit'
 const CODE_PLAYER = 'ilaria@lobsters.test'
 const MODAL_PLAYER = 'ingrid@lobsters.test'
 const PASSWORD_PLAYER = 'adriana@lobsters.test'
+const LINK_PLAYER = 'erica@lobsters.test'
+const RESET_PLAYER = 'favio@lobsters.test'
+const TRANSFER_FROM = 'gabriela@lobsters.test'
+const TRANSFER_TO = 'francesco@lobsters.test'
+const RESET_PASSWORD = 'Reset-Password-2026'
 const FIRST_PASSWORD = 'First-Password-2026'
 const NEXT_PASSWORD = 'Second-Password-2026'
 
@@ -21,6 +26,27 @@ async function requestCode({ page, email }: { page: Page; email: string }) {
   await page.getByRole('button', { name: /email me a sign-in code/i }).click()
   await page.getByLabel('Code').waitFor()
   return waitForCode({ to: email, since })
+}
+
+async function playerId({ email }: { email: string }): Promise<string> {
+  const { data, error } = await admin.from('players').select('id').eq('email', email).single()
+  if (error || !data) throw new Error(`No seeded player ${email}`)
+  return data.id
+}
+
+async function createTransfer(): Promise<string> {
+  const { data: tournament } = await admin.from('tournaments').select('id').limit(1).single()
+  const { data, error } = await admin
+    .from('registration_transfers')
+    .insert({
+      tournament_id: tournament?.id,
+      from_player_id: await playerId({ email: TRANSFER_FROM }),
+      to_player_id: await playerId({ email: TRANSFER_TO }),
+    })
+    .select('id')
+    .single()
+  if (error || !data) throw new Error(`Could not create a transfer: ${error?.message}`)
+  return data.id
 }
 
 async function enterCode({ page, code }: { page: Page; code: string }) {
@@ -139,4 +165,71 @@ test('password path: set on a code session, sign in with it, change it', async (
   await page.getByLabel('New password').fill(NEXT_PASSWORD)
   await page.getByRole('button', { name: /save password/i }).click()
   await expect(page.getByText('Password saved.')).toBeVisible()
+})
+
+test('magic link: tap to confirm returns to the page it was requested from', async ({ page }) => {
+  await page.goto('/events')
+  await clearInbox({ to: LINK_PLAYER })
+  const since = Date.now() - 1000
+  await page.getByLabel('Email').fill(LINK_PLAYER)
+  await page.getByRole('button', { name: /email me a sign-in code/i }).click()
+  await page.getByLabel('Code').waitFor()
+
+  await page.goto(await waitForConfirmPath({ to: LINK_PLAYER, since }))
+  await page.getByRole('button', { name: /tap to finish signing in/i }).click()
+
+  await expect(page).toHaveURL(/\/events$/)
+  await expect(page.getByLabel('Email')).toHaveCount(0)
+})
+
+test('forgot password: reset code, rule messages, new password signs in', async ({ page }) => {
+  const stalePrompt = page.getByRole('button', { name: /no change/i })
+  await page.addLocatorHandler(stalePrompt, (button) => button.click())
+  await page.goto('/events')
+  await page.getByRole('button', { name: /sign in with password/i }).click()
+  await page.getByRole('button', { name: /forgot password/i }).click()
+  await clearInbox({ to: RESET_PLAYER })
+  const since = Date.now() - 1000
+  await page.getByLabel('Email').fill(RESET_PLAYER)
+  await page.getByRole('button', { name: /send reset code/i }).click()
+  await page.getByLabel('Code').fill(await waitForCode({ to: RESET_PLAYER, since }))
+  await page.getByRole('button', { name: /^continue$/i }).click()
+
+  await expect(page.getByRole('heading', { name: /set a new password/i })).toBeVisible()
+  const save = page.getByRole('button', { name: /save password/i })
+  await page.getByLabel('New password').fill('Short1')
+  await save.click()
+  await expect(page.getByText(/needs at least 10 characters/i)).toBeVisible()
+  await page.getByLabel('New password').fill('alllowercase1234')
+  await save.click()
+  await expect(
+    page.getByText(/add a lowercase letter, an uppercase letter and a digit/i),
+  ).toBeVisible()
+  await page.getByLabel('New password').fill(RESET_PASSWORD)
+  await save.click()
+  await expect(page).toHaveURL(/\/events$/)
+
+  await page.goto('/account')
+  await page.getByRole('button', { name: /^sign out$/i }).click()
+  await page.getByRole('button', { name: /sign in with password/i }).click()
+  await page.getByLabel('Email').fill(RESET_PLAYER)
+  await page.getByLabel('Password').fill(RESET_PASSWORD)
+  await page.getByRole('button', { name: /^sign in$/i }).click()
+  await expect(page.getByRole('button', { name: /^sign in$/i })).toHaveCount(0)
+  await expect(page).toHaveURL(/\/account$/)
+})
+
+test('signed-out transfer deep link: code sign-in lands on the transfer', async ({ page }) => {
+  const transferId = await createTransfer()
+  try {
+    await page.goto(`/transfer/${transferId}`)
+    const code = await requestCode({ page, email: TRANSFER_TO })
+    await enterCode({ page, code })
+
+    await expect(page).toHaveURL(new RegExp(`/transfer/${transferId}$`))
+    await expect(page.getByText(/wants to transfer their spot to you/i)).toBeVisible()
+    await expect(page.getByRole('button', { name: /accept transfer/i })).toBeVisible()
+  } finally {
+    await admin.from('registration_transfers').delete().eq('id', transferId)
+  }
 })
