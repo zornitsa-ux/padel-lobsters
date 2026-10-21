@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { MemoryRouter, useNavigate } from 'react-router-dom'
 
 const { mockUseApp, signOutEverywhere } = vi.hoisted(() => ({
   mockUseApp: vi.fn(),
@@ -19,6 +20,19 @@ vi.mock('../auth/PasswordForm', () => ({
 
 import SignInSecuritySection from './SignInSecuritySection'
 
+function HashLink() {
+  const navigate = useNavigate()
+  return <button onClick={() => navigate('/account#sign-in-security')}>go</button>
+}
+
+const renderSection = () =>
+  render(
+    <MemoryRouter initialEntries={['/account']}>
+      <HashLink />
+      <SignInSecuritySection />
+    </MemoryRouter>,
+  )
+
 const sessionWith = (amr: { method: string }[]) => ({
   access_token: `h.${btoa(JSON.stringify({ amr }))}.s`,
   user: { email: 'ada@example.com' },
@@ -33,14 +47,14 @@ afterEach(cleanup)
 describe('SignInSecuritySection', () => {
   it('shows the sign-in email', () => {
     mockUseApp.mockReturnValue({ session: sessionWith([{ method: 'otp' }]) })
-    render(<SignInSecuritySection />)
+    renderSection()
 
     expect(screen.getByText('email:ada@example.com')).toBeTruthy()
   })
 
   it('offers "Set or change password" with no current-password need for a code session', () => {
     mockUseApp.mockReturnValue({ session: sessionWith([{ method: 'otp' }]) })
-    render(<SignInSecuritySection />)
+    renderSection()
     fireEvent.click(screen.getByRole('button', { name: /set or change password/i }))
 
     expect(screen.getByText('password form current:false')).toBeTruthy()
@@ -48,7 +62,7 @@ describe('SignInSecuritySection', () => {
 
   it('offers "Change password" and needs the current one for a password session', () => {
     mockUseApp.mockReturnValue({ session: sessionWith([{ method: 'password' }]) })
-    render(<SignInSecuritySection />)
+    renderSection()
     fireEvent.click(screen.getByRole('button', { name: /change password/i }))
 
     expect(screen.getByText('password form current:true')).toBeTruthy()
@@ -56,7 +70,7 @@ describe('SignInSecuritySection', () => {
 
   it('signs out of all devices', async () => {
     mockUseApp.mockReturnValue({ session: sessionWith([{ method: 'otp' }]) })
-    render(<SignInSecuritySection />)
+    renderSection()
     fireEvent.click(screen.getByRole('button', { name: /sign out of all devices/i }))
 
     await waitFor(() => expect(signOutEverywhere).toHaveBeenCalledTimes(1))
@@ -65,9 +79,20 @@ describe('SignInSecuritySection', () => {
   it('reports a failed global sign-out', async () => {
     signOutEverywhere.mockResolvedValue({ error: { message: 'x' } })
     mockUseApp.mockReturnValue({ session: sessionWith([{ method: 'otp' }]) })
-    render(<SignInSecuritySection />)
+    renderSection()
     fireEvent.click(screen.getByRole('button', { name: /sign out of all devices/i }))
 
     expect((await screen.findByRole('alert')).textContent).toMatch(/could not sign you out/i)
+  })
+
+  it('scrolls when the hash changes on an already-mounted section', () => {
+    const scrollIntoView = vi.fn()
+    Element.prototype.scrollIntoView = scrollIntoView
+    mockUseApp.mockReturnValue({ session: sessionWith([{ method: 'otp' }]) })
+    renderSection()
+    expect(scrollIntoView).not.toHaveBeenCalled()
+
+    fireEvent.click(screen.getByText('go'))
+    expect(scrollIntoView).toHaveBeenCalledTimes(1)
   })
 })

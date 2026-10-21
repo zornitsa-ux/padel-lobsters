@@ -40,7 +40,6 @@ declare
   v_pin    text;
   v_added  public.players%rowtype;
   v_ready  jsonb;
-  v_count  integer;
   v_login  record;
   v_player public.players%rowtype;
   v_err    text;
@@ -231,26 +230,17 @@ begin
   if v_err not like 'unauthorized%' then raise exception 'CHECK 9 FAILED (non-admin): got %', v_err; end if;
   raise notice 'CHECK 9 ok: resend';
 
-  -- CHECK 10: readiness lists synthetic-email active players, recent PIN
-  -- users and the password count, and is admin only
+  -- CHECK 10: readiness lists synthetic-email active players and is admin
+  -- only (the sign-in counts are covered by auth_readiness.sql)
   perform set_config('request.jwt.claims',
     json_build_object('sub', v_admin, 'role', 'authenticated',
                       'app_metadata', json_build_object('role', 'admin'))::text, true);
-  insert into public.pin_attempts(player_id, attempt_kind, succeeded) values (v_ph, 'player', true);
-  insert into public.pin_attempts(player_id, attempt_kind, succeeded, attempted_at)
-  values (v_taken, 'player', true, now() - interval '15 days');
-  -- GoTrue stores '' for passwordless users it creates, so blank must not count.
-  update auth.users set encrypted_password = '' where id = v_ph2;
-  v_count := (select count(*) from auth.users where coalesce(encrypted_password, '') <> '');
-  update auth.users set encrypted_password = 'x' where id = v_ph and coalesce(encrypted_password, '') = '';
   v_ready := public.admin_auth_readiness();
-  if (select array_agg(k order by k) from jsonb_object_keys(v_ready) k) <> array['no_email', 'password_count', 'recent_pin_users']
+  if (select array_agg(k order by k) from jsonb_object_keys(v_ready) k)
+       <> array['no_email', 'recent_pin_users', 'still_pin_count', 'switched_count']
      or not v_ready -> 'no_email' @> jsonb_build_array(jsonb_build_object('id', v_taken, 'name', 'Taken Email'))
      or v_ready -> 'no_email' @> jsonb_build_array(jsonb_build_object('id', v_ph2, 'name', 'Invitee Two'))
-     or exists (select 1 from jsonb_array_elements(v_ready -> 'no_email') e where e ->> 'id' = v_ph::text)
-     or (v_ready -> 'recent_pin_users' -> 0 ->> 'id')::uuid <> v_ph
-     or jsonb_array_length(v_ready -> 'recent_pin_users') <> 1
-     or (v_ready ->> 'password_count')::int <> v_count + 1 then
+     or exists (select 1 from jsonb_array_elements(v_ready -> 'no_email') e where e ->> 'id' = v_ph::text) then
     raise exception 'CHECK 10 FAILED: %', v_ready;
   end if;
   perform set_config('request.jwt.claims',

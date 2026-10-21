@@ -1,3 +1,5 @@
+import { readStorage, removeStorage, writeStorage } from '../../lib/safeStorage'
+
 const STORAGE_KEY = 'pl_auth_return_path'
 
 export function isSafeReturnPath(path: string | null | undefined): path is string {
@@ -6,20 +8,12 @@ export function isSafeReturnPath(path: string | null | undefined): path is strin
 }
 
 export function saveReturnPath(): void {
-  try {
-    const { pathname, search, hash } = window.location
-    window.localStorage.setItem(STORAGE_KEY, pathname + search + hash)
-  } catch {
-    /* storage blocked: sign-in falls back to /home */
-  }
+  const { pathname, search, hash } = window.location
+  writeStorage({ area: 'local', key: STORAGE_KEY, value: pathname + search + hash })
 }
 
 export function takeReturnPath(): string | null {
-  try {
-    const path = window.localStorage.getItem(STORAGE_KEY)
-    window.localStorage.removeItem(STORAGE_KEY)
-    return isSafeReturnPath(path) ? path : null
-  } catch {
-    return null
-  }
+  const path = readStorage({ area: 'local', key: STORAGE_KEY })
+  removeStorage({ area: 'local', key: STORAGE_KEY })
+  return isSafeReturnPath(path) ? path : null
 }

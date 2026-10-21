@@ -61,7 +61,7 @@ export default function Merch({ initialTab, onNavigate }: MerchProps) {
     useMerchActions()
 
   // Identity is managed in Settings → Account, but for friction-free ordering
-  // we also pop a PIN prompt right where the player tapped.
+  // we also pop a sign-in prompt right where the player tapped.
   const { requireAuth, AuthPromptModal } = useAuthPrompt({ onNavigate })
   const goToSignIn = () => onNavigate?.('settings')
   const [showForm, setShowForm] = useState(false)
@@ -201,11 +201,11 @@ export default function Merch({ initialTab, onNavigate }: MerchProps) {
   const orderCount = (itemId: number) => countOrders({ interests, items, itemId })
 
   const submitOrder = async (itemId: number) => {
-    // If the player isn't signed in yet, pop the inline PIN prompt and
+    // If the player isn't signed in yet, pop the inline sign-in prompt and
     // re-run the order on success — no navigation away from the shop.
     if (!claimedId) {
       requireAuth('player', () => submitOrder(itemId), {
-        subtitle: 'Enter your PIN to place this order.',
+        subtitle: 'Sign in to place this order.',
       })
       return
     }

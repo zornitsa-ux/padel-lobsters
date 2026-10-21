@@ -21,7 +21,9 @@ describe('SignInBanner', () => {
     const [, body] = propsOf(el).children as unknown[]
     const [title, copy] = propsOf(body).children as unknown[]
     expect(propsOf(title).children).toBe('Admin sign-in required')
-    expect(propsOf(copy).children).toBe('Sign in as admin from Settings → Account to manage this.')
+    expect(propsOf(copy).children).toBe(
+      "Sign in with your admin email to manage this. We'll send you a code.",
+    )
   })
 
   it('uses teal styling and player copy for the player role', () => {

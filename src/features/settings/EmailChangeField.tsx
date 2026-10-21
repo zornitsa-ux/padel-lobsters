@@ -1,6 +1,8 @@
 import { useState, type FormEvent } from 'react'
 import { Mail, Check } from 'lucide-react'
 import { useApp } from '../../context/useApp'
+import { isSyntheticEmail } from '../auth/syntheticEmail'
+import { ADD_EMAIL_REQUEST } from '../auth/upgradeCopy'
 
 // Self-service email change: type new email -> requestMyEmailChange -> Supabase
 // emails a confirmation link to the new (and old, since double_confirm_changes
@@ -8,6 +10,21 @@ import { useApp } from '../../context/useApp'
 // sync_auth_email_to_player trigger mirrors it back to players.email. We never
 // write players.email directly from the client.
 export function EmailChangeField({ email }: { email: string }) {
+  if (isSyntheticEmail(email)) return <MissingEmailNotice />
+  return <EmailChangeForm email={email} />
+}
+
+// A synthetic address never receives mail, so double_confirm_changes can't
+// complete a self-service change; an admin sets the email instead.
+function MissingEmailNotice() {
+  return (
+    <p className="text-sm text-lob-slate leading-snug">
+      Your account has no email yet. {ADD_EMAIL_REQUEST}
+    </p>
+  )
+}
+
+function EmailChangeForm({ email }: { email: string }) {
   const { requestMyEmailChange } = useApp()
   const [emailEditing, setEmailEditing] = useState(false)
   const [newEmail, setNewEmail] = useState('')

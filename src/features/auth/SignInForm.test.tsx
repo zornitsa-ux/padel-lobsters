@@ -26,6 +26,8 @@ vi.mock('react-router-dom', async (importOriginal) => ({
   useNavigate: () => mockNavigate,
 }))
 
+import { hasPinSignIn } from './pinSignInFlag'
+import { PIN_SUNSET_LABEL } from './pinSunset'
 import { SignInForm, type SignInFormProps } from './SignInForm'
 
 const session = { user: { id: 'u1' } }
@@ -47,10 +49,11 @@ const typeEmail = (email: string) =>
 const tick = async (seconds: number) => {
   for (let i = 0; i < seconds; i++) await act(async () => vi.advanceTimersByTimeAsync(1000))
 }
-const click = (name: RegExp) => fireEvent.click(screen.getByRole('button', { name }))
+const click = (name: RegExp | string) => fireEvent.click(screen.getByRole('button', { name }))
 
 beforeEach(() => {
   vi.clearAllMocks()
+  sessionStorage.clear()
   actions.requestEmailCode.mockResolvedValue({ error: null })
   actions.verifyEmailCode.mockResolvedValue({ session, error: null })
   actions.signInWithPassword.mockResolvedValue({ session, error: null })
@@ -317,12 +320,22 @@ describe('SignInForm — PIN sub-state', () => {
   it('labels the PIN link with the sunset date and reuses loginWithPin', async () => {
     const onSignedIn = vi.fn()
     renderForm({ allowPin: true, onSignedIn })
-    click(/sign in with pin \(until 10 november\)/i)
+    click(`Sign in with PIN (until ${PIN_SUNSET_LABEL})`)
     fireEvent.change(screen.getByLabelText(/your pin/i), { target: { value: '1234' } })
     click(/sign in with pin$/i)
 
     await waitFor(() => expect(onSignedIn).toHaveBeenCalledWith(session))
     expect(loginWithPin).toHaveBeenCalledWith('1234')
+    expect(hasPinSignIn()).toBe(true)
+  })
+
+  it('does not flag an email-code sign-in', async () => {
+    const onSignedIn = vi.fn()
+    renderForm({ onSignedIn })
+    typeEmail('ada@example.com')
+    click(/email me a sign-in code/i)
+    await screen.findByLabelText(/code/i)
+    expect(hasPinSignIn()).toBe(false)
   })
 
   it('shows the server error for a wrong PIN', async () => {

@@ -10,6 +10,7 @@
 //            categories, profile fields)
 //   - steps: [{ title, text }]           — numbered walkthrough
 //   - note:  string                      — short closing aside
+import { PIN_SUNSET_LABEL } from '../features/auth/pinSunset'
 
 // ── Content shape ────────────────────────────────────────────────────────────
 export interface LobsterWayListRow {
@@ -74,8 +75,16 @@ const LOBSTER_WAY_CONTENT: LobsterWayCategory[] = [
         note: "We're a small operation, run with a lot of love. We genuinely can't handle refunds, creative excuses, and \"I'll get you next time\" math, so please just pay your part on time and keep it fair for everyone. Easy.",
       },
       {
-        q: '🔑 What do I do if I forgot my PIN?',
-        a: 'No panic needed. Tap "Email me a sign-up link." If you really want your PIN back, email us at pin@padelobsters.nl.',
+        q: '🔑 How do I sign in?',
+        a: `Enter your email and we'll send you a 6-digit code. Type it in, or tap the link in the same email. PINs stop working on ${PIN_SUNSET_LABEL}, so it's worth switching to email now.`,
+      },
+      {
+        q: "📬 I don't get the email",
+        a: 'Check your spam or promotions folder first. Then wait a minute and ask for a new code. Also make sure it\'s the email address on your account. Still nothing? Post in the "Lobster App Help / Feedback" thread in the WhatsApp group and we\'ll sort it out.',
+      },
+      {
+        q: '🔐 Do I need a password?',
+        a: 'No. A code by email is all you need. If you like passwords, you can set one in Account → Sign-in & security. It is completely optional.',
       },
     ],
   },
@@ -231,7 +240,7 @@ const LOBSTER_WAY_CONTENT: LobsterWayCategory[] = [
           },
           {
             title: 'Kim opens the link and responds.',
-            text: "Tapping the WhatsApp message takes her straight to the offer in the app (behind her PIN if she isn't already signed in). She sees who it's from, the event details, and Decline / Accept transfer buttons. If she's already signed into the app, the same offer also shows up right on her own registration card, so she doesn't even need to tap the link.",
+            text: "Tapping the WhatsApp message takes her straight to the offer in the app (behind a quick email sign-in if she isn't already signed in). She sees who it's from, the event details, and Decline / Accept transfer buttons. If she's already signed into the app, the same offer also shows up right on her own registration card, so she doesn't even need to tap the link.",
             image: '/lobster-way/transfer-step-5.png',
           },
           {

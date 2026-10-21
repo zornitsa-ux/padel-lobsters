@@ -16,6 +16,7 @@ import { takeReturnPath } from './returnPath'
 import { FormError } from './FormError'
 import { PasswordInput } from './PasswordInput'
 import { OtpCodeStep } from './OtpCodeStep'
+import { markPinSignIn } from './pinSignInFlag'
 import { PIN_SUNSET_LABEL } from './pinSunset'
 
 export interface SignInFormProps {
@@ -153,6 +154,7 @@ export function SignInForm({ variant, initialEmail = '', onSignedIn, allowPin }:
       setError(typeof result.error === 'string' && result.error ? result.error : 'Login failed')
       return
     }
+    markPinSignIn()
     signedIn(session)
   }
 

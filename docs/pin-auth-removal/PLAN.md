@@ -42,7 +42,7 @@ signed in gets logged out.
 | T2  | Backend: hook, trigger, invite/add RPCs, readiness RPC    | W     | T0b, T1         | #48      | [x]   |
 | T3  | `SignInForm`, `AuthConfirm`, gates, native signup         | W     | T1              | 2/3      | [~]   |
 | T4  | Account → Sign-in & security                              | W     | T1              | 2/3      | [~]   |
-| T5  | Comms: upgrade card, interstitial, readiness panel, copy  | W     | T1              | 3/3      | [ ]   |
+| T5  | Comms: upgrade card, interstitial, readiness panel, copy  | W     | T1              | 3/3      | [~]   |
 | T14 | Rehearsal sign-in + data-access parity script (§4.5)      | W     | T13, T1         | #49      | [x]   |
 | T6  | Verification: local matrix, local devices, rehearsal      | C + O | T2–T5, T14      | —        | [ ]   |
 | T7  | Dark backend release (R2)                                 | O     | T2 merged, T0c  | —        | [x]   |
@@ -404,20 +404,130 @@ up` refuses it alone; a PR branch must contain `main`'s migrations. Noted:
     The tenth needs a migration (the token hook keeps an old role when there
     is no `players` row) and joins 3/3's migration (§3.4).
 
+- 2026-10-21: **C-7's checks, observed before T5 was briefed** (coordinator):
+  - **Local GoTrue v2.197.0:** three token refreshes left `last_sign_in_at`
+    unchanged. Six `verify-pin` sign-ins put `last_sign_in_at` 0.06–0.07 s
+    after their `pin_attempts` row, never before it.
+  - **Production (read-only, active players, counts only):** 83 are within
+    0–7.7 s of their latest PIN, 3 between 10 s and 5 min, and 28 more than
+    5 min after it. None has a sign-in before its latest PIN. 7 never used a
+    PIN and 10 never signed in. The 5-minute rule stands without a tolerance
+    below zero.
+  - **A synthetic-email account can't change its own email.** With
+    `double_confirm_changes` on, confirming only the new address leaves
+    `email_change_confirm_status = 1` and the email unchanged, and the
+    synthetic side never gets mail. So the card's synthetic variant asks the
+    player to message an admin (owner), and so does 2/3's email field in
+    Sign-in & security. Admins fix the address through the player edit
+    (`players.email` → sync trigger, no confirmation).
+  - **Production `settings.lobster_way_content` is NULL**, so the app serves
+    the bundled FAQ and 3/3's rewrite reaches production with the deploy.
+    There's no T₀ paste unless an admin edits it first (§5).
+
+- 2026-10-21: **PR 3/3 built** (T5, `pin-auth-3-comms`, stacked on 2/3). One
+  worker, 13 commits.
+  - **Migration `20261021120000`:** `admin_auth_readiness` follows C-7
+    (`switched_count`, `still_pin_count`, `recent_pin_users` narrowed to PIN
+    as the latest sign-in), and `custom_access_token_hook` drops `role` when
+    there's no `players` row. `db:types` and `db:grants` are unchanged
+    (jsonb, same signature). New `supabase/tests/auth_readiness.sql`;
+    `admin_invite.sql` check 10 follows the new keys.
+  - **Integrity check 15 (`password_hashes`) is deleted** from
+    `auth_integrity.sql`. The file has no stage columns, and §4.5's table
+    never listed it.
+  - **Client changes:**
+    - the readiness panel at the top of Admin tools;
+    - the upgrade card on Home. Its dismissal is stored per player in
+      localStorage, and the synthetic variant can't be dismissed;
+    - the post-PIN interstitial, which is mounted in `App` and set by a
+      sessionStorage flag. Closing it also dismisses the card;
+    - the synthetic notice in Sign-in & security;
+    - the FAQ, which reads `PIN_SUNSET_LABEL`;
+    - copy: the guest greeting, `SignInBanner`, `TransferAccept`, and Merch's
+      "Enter your PIN" subtitle (2/3 showed it above the email form).
+  - **`/code-review`** (medium): 10 findings, 4 fixed. The fixes:
+    - the scroll to Sign-in & security on a hash change;
+    - the interstitial and card repeating each other;
+    - the 24-hour "yesterday", replaced by plain dates;
+    - a shared `src/lib/safeStorage.ts` for four storage wrappers.
+
+    Declined:
+    - **a date guard on the card:** PR 4 deletes it at cutover;
+    - **"switched" including players who never used a PIN:** C-7 says so;
+    - **a PIN row after the sign-in counting as email:** also C-7;
+    - **a stale session email after an admin fix:** it catches up within the
+      hour, at the next token refresh;
+    - **synthetic matching differing between the client and SQL:** no real
+      account is affected;
+    - **"—" in the transfer confirm:** cosmetic.
+
+    Left as is: `oscarsPhase.ts`'s `invalid_pin` text, which is dead and goes
+    in PR 6, plus the admin-only "Admin PIN required" and security-log PIN
+    text.
+
+  - **Gates:** every §4.1 gate passes, including all 8 `supabase/tests` and
+    `test:e2e` (13/13, 3 of them new for the §4.2 row).
+  - **Rehearsal (§4.5)** on a fresh production copy:
+    - the migration applied cleanly, and the stack restarted for 2/3's
+      config;
+    - the integrity counts are identical before and after (R1 column, check
+      15 gone);
+    - parity: 128 of 128 real-email accounts signed in before and after, 5
+      of 5 Mailpit codes passed, and 0 of 4,096 reads changed, token claims
+      included.
+
+    **Readiness RPC as an admin, on a second fresh copy:** parity's own code
+    sign-ins move `last_sign_in_at`, so these counts must come before any
+    parity run. Results: `no_email` 3, `recent_pin_users` 16 (20 under the
+    old definition), `still_pin_count` 86, `switched_count` 35; the other 10
+    active players have never signed in.
+
+    `db:reset` afterwards, and the parity records were deleted.
+
+- 2026-10-21: **Owner review while testing locally.**
+  - **Change on #50:** every password field gets a show/hide toggle (one
+    shared `PasswordInput`). 3/3 was rebased onto it, and its e2e password
+    locator is now exact, because "Show password" also matches
+    `getByLabel('Password')`.
+  - **Tap-to-confirm on `/auth/confirm` stays.** Mail scanners (Safe Links,
+    Defender) would otherwise use up the one-time link. Of the 128 active
+    real emails, 19 are Microsoft consumer addresses and 14 are work or own
+    domains (read-only, counts only).
+  - **Gates on the rebased 3/3:** all §4.1 gates pass, plus `test:e2e`
+    13/13 three times in a row. `--repeat-each` isn't a valid flake test for
+    the email spec: repeats hit GoTrue's 60 s per-address send limit.
+
+- 2026-10-21: **T₀ go/no-go (owner): release tonight.**
+  - **Cutover is Thu 5 Nov** (T₀ + 15; the owner chose a Thursday). That
+    puts the reminder on Mon 2 Nov, and **#13 must be on or after Sun 8
+    Nov**. `PIN_SUNSET_DATE` is now `2026-11-05` on 3/3.
+  - **Resend stays on the free plan, with monitoring** (§5 step 6).
+  - **The owner sends the announcements.**
+  - **§4.3's device checks didn't run before T₀.** They're now hard gates
+    for the cutover (§5). PINs work through the window, and rollback is a
+    Vercel redeploy, so the T₀ risk is bounded.
+  - **Production integrity check (read-only)** meets the T₀ column, with
+    every count unchanged. No real signup has gone through the hook yet (0
+    new auth users today), so the T₀ `+alias` signup is its first real test.
+  - **Release order corrected:** §5's "`db push` before the merge" broke
+    CLAUDE.md (migrations only after merge). It's now merge, then `db push`
+    from `main`.
+
 ---
 
 ## 2. Schedule
 
-Dates stay relative until tournament **#13** is scheduled. Then pin them here.
+Dates pinned 2026-10-21 (owner): T₀ tonight, cutover Thu 5 Nov. **#13 must be
+on or after Sun 8 Nov** (cutover ≥ 3 days before it).
 
 | Milestone                        | When                                       | Rule                                                                       |
 | -------------------------------- | ------------------------------------------ | -------------------------------------------------------------------------- |
 | R0: Phase 0a merged + pushed     | Week of 15 Oct                             | Invisible; may land before #12 (18 Oct)                                    |
 | R1: Phase 0b merged + pushed     | **Done 2026-10-19**                        | Verified in production (§4.4); dashboard checklist done the same day       |
 | R2: dark backend (PR 1/3)        | **Done 2026-10-21**                        | The hook and invite emails run in production before players see the new UI |
-| **T₀**: PRs 2/3 + 3/3 + announce | A Tue or Wed                               | T₀ ≤ #13 − 17 days                                                         |
-| WhatsApp reminder                | Cutover − 3 days                           |                                                                            |
-| **Cutover** (PR 4)               | T₀ + 14, a Tue or Wed                      | ≥ 3 days before #13; go/no-go in §5                                        |
+| **T₀**: PRs 2/3 + 3/3 + announce | **Wed 21 Oct 2026** (owner)                | T₀ ≤ #13 − 17 days                                                         |
+| WhatsApp reminder                | **Mon 2 Nov** (cutover − 3 days)           |                                                                            |
+| **Cutover** (PR 4)               | **Thu 5 Nov** (owner; T₀ + 15)             | ≥ 3 days before #13; go/no-go in §5                                        |
 | Revoke (PR 5)                    | Cutover + 2 days                           | After the 48h watch is clean                                               |
 | Phase 4 cleanup (PR 6)           | ≥ Cutover + 14 days, once stub hits are ~0 | Not within 3 days of an event                                              |
 | Explainer removal (PR 7)         | Cutover + ~2 months                        |                                                                            |
@@ -566,9 +676,11 @@ send-invite-email` → db push → enable the hook in the dashboard. The functio
   still carry an old `admin` claim (`/code-review` of C-12, 2026-10-21).
 - The FAQ rewrite in `lobsterWayContent.ts`, plus copy: the Dashboard guest
   greeting, the `SignInBanner` default, `TransferAccept`, and "behind her PIN".
-- The production `lobster_way_content` copy is **edited by an admin in
-  LobsterWayAdmin at T₀** (an app write, not SQL). The PR includes the exact
-  text to paste.
+- The production `lobster_way_content` copy is NULL (read-only check,
+  2026-10-21), so the app serves the bundled FAQ and the rewrite ships with
+  the deploy. If an admin saves edits in LobsterWayAdmin before T₀, the
+  stored copy overrides the bundle. Then "Reset to default" brings in the new
+  FAQ, but it throws away those edits (§5).
 
 ### 3.5 PR 4: cutover (T9), built during the window
 
@@ -813,6 +925,10 @@ before production, that every account still signs in and sees the same data.
 | Active players with no real email (named in the output)      | ≤ 3                               | each one owned by an admin | each one owned by an admin   |
 | Synthetic auth accounts (13 on 2026-10-16)                   | = no-email players + placeholders | same                       | 0, plus any kept on purpose  |
 
+The script's `password_hashes` count (check 15, 0 at R1) was retired in PR
+3/3. From T₀, GoTrue's random hash for code signups makes it meaningless
+(C-7).
+
 "Real" email means not blank and not `@padelobsters.internal`. From T₀,
 native signups create unconfirmed accounts that only get a player row once
 confirmed (DESIGN §2). The query lists abandoned ones rather than failing on
@@ -847,12 +963,18 @@ of showing a PIN. Merge 1/3 → `functions deploy send-invite-email` → `db pus
    holds. **Owner decision on Resend:** stay on the free plan (100 sends/day)
    with the watch below, or upgrade for the window. Resend's plans upgrade
    immediately, so a mid-window upgrade is also an option.
-2. Set `PIN_SUNSET_DATE` (a commit on 3/3) → merge 2/3 then 3/3 → Vercel
-   deploys.
+2. Set `PIN_SUNSET_DATE` (a commit on 3/3) → merge 2/3 (squash) → C rebases
+   3/3 onto `main` (`git rebase --onto main pin-auth-2-signin`), reruns the
+   gates and force-pushes → merge 3/3 → Vercel deploys → `npx supabase db
+push` from `main` right away (CLAUDE.md: migrations only after merge).
+   Until the push, the readiness panel shows "Could not load" to admins (the
+   old RPC's shape); nothing else depends on it.
 3. Once the deploy is live, paste the code-first `magic_link.html` and its
    subject into the dashboard (D-14). Then run the T₀ production checks in
    §4.4.
-4. An admin pastes the new FAQ into LobsterWayAdmin.
+4. C checks read-only that `settings.lobster_way_content` is still NULL, so
+   the new FAQ is live. If an admin has saved edits since, an admin taps
+   "Reset to default" in LobsterWayAdmin and saves their edits again (§3.4).
 5. An admin sends the announcement email (BCC, club address) and the WhatsApp
    message (Appendix).
 6. Watch the readiness panel and the auth logs daily (§4.4). Check Resend's
@@ -867,6 +989,9 @@ of showing a PIN. Merge 1/3 → `functions deploy send-invite-email` → `db pus
   auth-email delivery issue is open.
 - The integrity check against production still meets the T₀ column.
 - The date is ≥ 3 days before #13.
+- **§4.3's device checks pass** (moved here from T₀, 2026-10-21): `+alias`
+  signup, Android Gmail code + autofill, desktop link + password reset, and
+  the iPhone home-screen code entry with a recruited tester.
 
 **Cutover.** Merge PR 4 → Vercel deploys the client → `functions deploy
 verify-pin` (the stub) → WhatsApp "PINs retired" → 48h watch.
