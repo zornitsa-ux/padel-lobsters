@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { requestReauthentication, setPassword } from './authActions'
 import { FormError } from './FormError'
+import { PasswordInput } from './PasswordInput'
 import { CODE_LENGTH, sanitiseCode } from './otpCode'
 import { describePasswordError, PASSWORD_RULES_COPY } from './passwordErrors'
 
@@ -52,13 +53,11 @@ export function PasswordForm({ requireCurrentPassword, submitLabel, onDone }: Pa
           <label htmlFor="current-password" className="label">
             Current password
           </label>
-          <input
+          <PasswordInput
             id="current-password"
-            type="password"
             autoComplete="current-password"
             value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
-            className="input"
+            onChange={setCurrentPassword}
           />
         </div>
       )}
@@ -66,14 +65,12 @@ export function PasswordForm({ requireCurrentPassword, submitLabel, onDone }: Pa
         <label htmlFor="new-password" className="label">
           New password
         </label>
-        <input
+        <PasswordInput
           id="new-password"
-          type="password"
           autoComplete="new-password"
           value={password}
-          onChange={(e) => setNewPassword(e.target.value)}
+          onChange={setNewPassword}
           aria-describedby="password-rules"
-          className="input"
         />
         <p id="password-rules" className="text-xs text-lob-muted-light mt-1">
           {PASSWORD_RULES_COPY}

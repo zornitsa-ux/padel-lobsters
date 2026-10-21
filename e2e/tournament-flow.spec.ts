@@ -51,11 +51,11 @@ async function signInAt(page: Page, url: string, credentials: Credentials) {
   await page.goto(url)
   await page.getByRole('button', { name: /sign in with password/i }).click()
   await page.getByLabel('Email').fill(credentials.email)
-  await page.getByLabel('Password').fill(credentials.password)
+  await page.getByLabel('Password', { exact: true }).fill(credentials.password)
   await page.getByRole('button', { name: /^sign in$/i }).click()
   // The gate unmounts once `role` flips off 'guest' — confirms the sign-in
   // landed before we do anything else.
-  await page.getByLabel('Password').waitFor({ state: 'hidden' })
+  await page.getByLabel('Password', { exact: true }).waitFor({ state: 'hidden' })
   // The gate unmounting doesn't mean the session has been persisted yet. A
   // hard page.goto() right after can race that write — the reload reads
   // localStorage before it lands and briefly looks signed-out. Draining the

@@ -14,6 +14,7 @@ import {
 import { describeSignInError, type AuthErrorLike, type SignInStep } from './authErrors'
 import { takeReturnPath } from './returnPath'
 import { FormError } from './FormError'
+import { PasswordInput } from './PasswordInput'
 import { OtpCodeStep } from './OtpCodeStep'
 import { PIN_SUNSET_LABEL } from './pinSunset'
 
@@ -195,13 +196,11 @@ export function SignInForm({ variant, initialEmail = '', onSignedIn, allowPin }:
             <label htmlFor="signin-password" className="label">
               Password
             </label>
-            <input
+            <PasswordInput
               id="signin-password"
-              type="password"
               autoComplete="current-password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="input"
+              onChange={setPassword}
             />
           </div>
           <FormError message={error} />

@@ -163,7 +163,7 @@ test('password path: set on a code session, sign in with it, change it', async (
   await page.getByRole('button', { name: /^sign out$/i }).click()
   await page.getByRole('button', { name: /sign in with password/i }).click()
   await page.getByLabel('Email').fill(PASSWORD_PLAYER)
-  await page.getByLabel('Password').fill(FIRST_PASSWORD)
+  await page.getByLabel('Password', { exact: true }).fill(FIRST_PASSWORD)
   await page.getByRole('button', { name: /^sign in$/i }).click()
 
   await page.getByRole('button', { name: /change password/i }).click()
@@ -220,7 +220,7 @@ test('forgot password: reset code, rule messages, new password signs in', async 
   await page.getByRole('button', { name: /^sign out$/i }).click()
   await page.getByRole('button', { name: /sign in with password/i }).click()
   await page.getByLabel('Email').fill(RESET_PLAYER)
-  await page.getByLabel('Password').fill(RESET_PASSWORD)
+  await page.getByLabel('Password', { exact: true }).fill(RESET_PASSWORD)
   await page.getByRole('button', { name: /^sign in$/i }).click()
   await expect(page.getByRole('button', { name: /^sign in$/i })).toHaveCount(0)
   await expect(page).toHaveURL(/\/account$/)
