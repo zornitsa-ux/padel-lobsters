@@ -11,13 +11,10 @@ export const isKingOfTheCourt = ({ format }: { format: string }) => format === '
 export const formatOption = ({ format }: { format: string }) =>
   isKingOfTheCourt({ format }) ? KING_OF_THE_COURT : AMERICANO
 
-export function effectiveMaxTeams({ form }: { form: EventFormValues }): number {
-  const typed = parseInt(String(form.maxTeams ?? ''))
-  return typed > 0 ? typed : 2 * form.courts.length
-}
+export const teamsForCourts = ({ courts }: { courts: unknown[] }): number => 2 * courts.length
 
 export function effectiveMaxPlayers({ form }: { form: EventFormValues }): number {
-  if (isKingOfTheCourt(form)) return 2 * effectiveMaxTeams({ form })
+  if (isKingOfTheCourt(form)) return 2 * teamsForCourts({ courts: form.courts })
   return parseInt(String(form.maxPlayers)) || 16
 }
 
@@ -55,16 +52,4 @@ export function hasSignups({
 export function isEntryModeLocked(err: unknown): boolean {
   const message = typeof err === 'object' && err !== null && 'message' in err ? err.message : ''
   return String(message).includes('entry_mode_locked')
-}
-
-export function maxTeamsFromTournament({
-  format,
-  maxPlayers,
-}: {
-  format?: string | null
-  maxPlayers?: number | string | null
-}): string {
-  if (!isKingOfTheCourt({ format: format ?? '' })) return ''
-  const teams = (parseInt(String(maxPlayers)) || 0) / 2
-  return teams > 0 ? String(teams) : ''
 }

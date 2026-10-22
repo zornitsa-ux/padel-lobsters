@@ -12,6 +12,7 @@ import ScoreEntry from './ScoreEntry'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { ProgressBar } from '../../components/ui/ProgressBar'
 import { useTournamentSync } from './useTournamentSync'
+import { isTeamEvent } from '../matchmaking/generateSchedule.service'
 import ScheduleGeneratorControls from './schedule/ScheduleGeneratorControls'
 import ScheduleValidationSummary from './schedule/ScheduleValidationSummary'
 import MatchmakingContainer from '../matchmaking/MatchmakingContainer'
@@ -150,7 +151,8 @@ export default function Schedule({
   // `format` to 'americano', so any event created without an explicit format
   // (seed rows, anything predating D-020) silently fell through to the legacy
   // annealed path — since deleted along with the other V1 generators.
-  const useV2Matcher = isAdmin
+  const teamEvent = tournament ? isTeamEvent(tournament) : false
+  const useV2Matcher = isAdmin && !teamEvent
   const v2GenderMode: GenderMode = (['men', 'women', 'mixed'] as const).includes(
     genderMode as GenderMode,
   )
@@ -332,6 +334,7 @@ export default function Schedule({
           rounds={v2Rounds}
           genderMode={v2GenderMode}
           scoresEntered={scoresEntered}
+          tournament={tournament}
         />
       ) : (
         <ScheduleGeneratorControls
@@ -350,6 +353,7 @@ export default function Schedule({
           onEditSchedule={handleEditSchedule}
           onDownloadCsv={handleDownloadCsv}
           tournamentDuration={tournament.duration}
+          isTeamEvent={teamEvent}
         />
       )}
 

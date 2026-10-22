@@ -13,6 +13,7 @@ vi.mock('../events/matchQueries', () => ({ saveMatches: mockSaveMatches }))
 
 import {
   commitSchedule,
+  TEAM_EVENT_GENERATOR_ERROR,
   fetchMmRatings,
   previewSchedule,
   recordScheduleRun,
@@ -212,5 +213,31 @@ describe('fetchMmRatings', () => {
     expect(rated.sigma).toBe(0.31)
     expect(unrated.mu).toBe(3.0)
     expect(unrated.mu).not.toBe(rated.mu)
+  })
+})
+
+describe('team event guard', () => {
+  const run = previewSchedule(baseInput)
+
+  it.each([
+    ['entry mode team', { entryMode: 'team' }],
+    ['king of the court format', { format: 'king_of_court' }],
+  ])('refuses to preview for %s', (_label, tournament) => {
+    expect(() => previewSchedule(baseInput, { tournament })).toThrow(TEAM_EVENT_GENERATOR_ERROR)
+  })
+
+  it('refuses to commit for a team event without writing', async () => {
+    await expect(commitSchedule({ run, tournament: { entryMode: 'team' } })).rejects.toThrow(
+      TEAM_EVENT_GENERATOR_ERROR,
+    )
+    expect(mockSaveMatches).not.toHaveBeenCalled()
+  })
+
+  it('still previews an individual Americano event', () => {
+    expect(
+      previewSchedule(baseInput, {
+        tournament: { entryMode: 'individual', format: 'lobster_matching' },
+      }).rounds,
+    ).toHaveLength(3)
   })
 })

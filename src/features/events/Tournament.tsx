@@ -8,12 +8,7 @@ import {
 } from './useTournaments'
 import { useTransfers } from './useTransfers'
 import { useRegistrations } from './useRegistrations'
-import {
-  buildEventData,
-  hasSignups,
-  isEntryModeLocked,
-  maxTeamsFromTournament,
-} from './eventFormModel'
+import { buildEventData, hasSignups, isEntryModeLocked } from './eventFormModel'
 import { Plus, Trophy, Clock } from 'lucide-react'
 import HistoryContent from '../history/History'
 import AdminTransferPanel from '../../components/AdminTransferPanel'
@@ -116,7 +111,6 @@ export default function Tournament({ onNavigate }: { onNavigate: EventNavigate }
       duration: t.duration || 90,
       format: t.format || 'lobster_matching',
       entryMode: t.entryMode || 'individual',
-      maxTeams: maxTeamsFromTournament(t),
       genderMode: t.genderMode || 'mixed',
       courts: t.courts?.length
         ? t.courts.map((c) => ({ name: c.name || '', booked: !!c.booked }))
