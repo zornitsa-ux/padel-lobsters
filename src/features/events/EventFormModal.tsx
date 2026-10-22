@@ -3,6 +3,13 @@ import { Plus, X } from 'lucide-react'
 import { fmtEur } from '../../lib/format'
 import { Modal } from '../../components/ui/Modal'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
+import {
+  FORMAT_LOCKED_NOTE,
+  formatOption,
+  isKingOfTheCourt,
+  effectiveMaxTeams,
+  teamTotal,
+} from './eventFormModel'
 import type { EventFormCourt, EventFormValues } from './eventConstants'
 
 // A court field edit. `booked` is the checkbox; every other field comes off a
@@ -20,6 +27,8 @@ interface EventFormModalProps {
   form: EventFormValues
   setForm: Dispatch<SetStateAction<EventFormValues>>
   saving: boolean
+  /** True when people have signed up, so the format can't change. */
+  formatLocked?: boolean
   onSubmit: (e: FormEvent<HTMLFormElement>) => void
   onClose: () => void
   addCourt: () => void
@@ -33,12 +42,14 @@ export default function EventFormModal({
   form,
   setForm,
   saving,
+  formatLocked = false,
   onSubmit,
   onClose,
   addCourt,
   removeCourt,
   setCourt,
 }: EventFormModalProps) {
+  const kotc = isKingOfTheCourt(form)
   return (
     <Modal
       open={open}
@@ -97,20 +108,53 @@ export default function EventFormModal({
           </div>
         </div>
 
-        {/* Max players — every event is Lobster Matching (D-020), so there is
-            no format picker: the matcher is the only generator. */}
+        {/* Format */}
         <div>
-          <label className="label">Max Players</label>
-          <input
-            type="number"
-            min="4"
-            max="64"
-            step="4"
-            className="input"
-            value={form.maxPlayers}
-            onChange={(e) => setForm((f) => ({ ...f, maxPlayers: e.target.value }))}
+          <label className="label">Format</label>
+          <SegmentedControl
+            ariaLabel="Format"
+            disabled={formatLocked}
+            options={[
+              { value: 'lobster_matching', label: 'Americano' },
+              { value: 'king_of_court', label: 'King of the Court' },
+            ]}
+            value={form.format}
+            onChange={(format) => setForm((f) => ({ ...f, ...formatOption({ format }) }))}
           />
+          {formatLocked && (
+            <p className="text-xs text-lob-muted-light mt-1">{FORMAT_LOCKED_NOTE}</p>
+          )}
         </div>
+
+        {kotc ? (
+          <div>
+            <label className="label" htmlFor="event-max-teams">
+              Max Teams
+            </label>
+            <input
+              type="number"
+              id="event-max-teams"
+              min="1"
+              max="32"
+              className="input"
+              value={form.maxTeams === '' ? effectiveMaxTeams({ form }) : form.maxTeams}
+              onChange={(e) => setForm((f) => ({ ...f, maxTeams: e.target.value }))}
+            />
+          </div>
+        ) : (
+          <div>
+            <label className="label">Max Players</label>
+            <input
+              type="number"
+              min="4"
+              max="64"
+              step="4"
+              className="input"
+              value={form.maxPlayers}
+              onChange={(e) => setForm((f) => ({ ...f, maxPlayers: e.target.value }))}
+            />
+          </div>
+        )}
 
         {/* Duration */}
         <div>
@@ -159,6 +203,11 @@ export default function EventFormModal({
               <Plus size={13} /> Add court
             </button>
           </div>
+          {kotc && (
+            <p className="text-xs text-lob-muted-light mb-2">
+              Court order is the ladder: the first court is the King court.
+            </p>
+          )}
           <div className="space-y-2">
             {form.courts.map((c, i) => (
               <div key={i} className="bg-gray-50 rounded-xl p-3 space-y-2">
@@ -205,7 +254,12 @@ export default function EventFormModal({
             value={form.pricePerPerson}
             onChange={(e) => setForm((f) => ({ ...f, pricePerPerson: e.target.value }))}
           />
-          {form.pricePerPerson && parseInt(String(form.maxPlayers)) > 0 && (
+          {kotc && form.pricePerPerson && (
+            <p className="text-sm font-semibold text-lob-teal mt-1.5">
+              Team total: {fmtEur(teamTotal({ pricePerPerson: form.pricePerPerson }))}
+            </p>
+          )}
+          {!kotc && form.pricePerPerson && parseInt(String(form.maxPlayers)) > 0 && (
             <p className="text-sm font-semibold text-lob-teal mt-1.5">
               {form.maxPlayers} players × {fmtEur(form.pricePerPerson)} ={' '}
               {fmtEur(
