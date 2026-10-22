@@ -29,6 +29,7 @@ export default function TeamJoinCard({
 }: TeamJoinCardProps) {
   const [open, setOpen] = useState(false)
   const [choice, setChoice] = useState<PartnerChoice | null>(null)
+  const [lastChoice, setLastChoice] = useState<PartnerChoice | null>(null)
   const signup = useTeamSignup({
     tournamentId: tournament.id,
     captainId: viewerId,
@@ -40,6 +41,7 @@ export default function TeamJoinCard({
   const close = () => {
     setOpen(false)
     setChoice(null)
+    setLastChoice(null)
     signup.clearError()
   }
 
@@ -75,6 +77,7 @@ export default function TeamJoinCard({
         <div className="flex gap-2">
           <button
             onClick={() => {
+              setLastChoice(choice)
               setChoice(null)
               signup.clearError()
             }}
@@ -101,6 +104,7 @@ export default function TeamJoinCard({
         candidates={candidates}
         displayName={displayName}
         submitLabel="Continue"
+        initialChoice={lastChoice}
         onSubmit={({ choice: next }) => setChoice(next)}
         onCancel={close}
       />

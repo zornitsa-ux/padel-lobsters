@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useToast } from '../../../lib/toastBus'
 import type { NormalisedRegistration } from '../../../lib/normalise'
+import { playerKeys } from '../../players/playerKeys'
 import { registrationKeys } from '../registrationKeys'
 import { registrationMessage } from '../registrationStatusMessages'
 import * as q from './teamQueries'
@@ -125,6 +126,8 @@ export function useTeamActions() {
         qc.invalidateQueries({ queryKey: teamKeys.list(tournamentId) }),
         qc.invalidateQueries({ queryKey: teamKeys.allInvites() }),
         qc.invalidateQueries({ queryKey: teamKeys.myInvites() }),
+        // A new partner is a new player; the roster must know their name.
+        qc.invalidateQueries({ queryKey: playerKeys.all() }),
       ]),
     [qc],
   )

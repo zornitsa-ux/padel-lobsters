@@ -41,6 +41,17 @@ export const draftToChoice = ({ draft }: { draft: NewPartnerDraft }): PartnerCho
   return { kind: 'new', partner, consent: draft.consent }
 }
 
+// Back from the confirm step reopens the form as the captain left it.
+export const choiceToDraft = ({ choice }: { choice: PartnerChoice | null }): NewPartnerDraft =>
+  choice?.kind === 'new'
+    ? {
+        name: choice.partner.name,
+        email: choice.partner.email,
+        level: choice.partner.playtomicLevel === null ? '' : String(choice.partner.playtomicLevel),
+        consent: choice.consent,
+      }
+    : EMPTY_DRAFT
+
 export const eligiblePlayers = ({
   players,
   regs,

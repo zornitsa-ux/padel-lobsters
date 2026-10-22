@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { EMPTY_DRAFT, isDraftComplete, isLevelValid } from './teamHelpers'
+import {
+  EMPTY_DRAFT,
+  choiceToDraft,
+  draftToChoice,
+  isDraftComplete,
+  isLevelValid,
+} from './teamHelpers'
 
 describe('new partner draft', () => {
   const filled = { ...EMPTY_DRAFT, name: 'A', email: 'a@test.invalid', consent: true }
@@ -15,5 +21,17 @@ describe('new partner draft', () => {
     expect(isLevelValid({ level: 'abc' })).toBe(false)
     expect(isLevelValid({ level: '9' })).toBe(false)
     expect(isDraftComplete({ draft: { ...filled, level: 'abc' } })).toBe(false)
+  })
+})
+
+describe('choiceToDraft', () => {
+  it('round-trips a new partner so Back keeps what was typed', () => {
+    const draft = { name: 'A', email: 'a@test.invalid', level: '3.5', consent: true }
+    expect(choiceToDraft({ choice: draftToChoice({ draft }) })).toEqual(draft)
+  })
+
+  it('starts empty for a member or no choice', () => {
+    expect(choiceToDraft({ choice: { kind: 'member', playerId: 'p1' } })).toEqual(EMPTY_DRAFT)
+    expect(choiceToDraft({ choice: null })).toEqual(EMPTY_DRAFT)
   })
 })
