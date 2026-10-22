@@ -16,10 +16,12 @@ type LinkState =
 export default function PaymentReminderModal({
   registrationId,
   playerName,
+  isTeam = false,
   onClose,
 }: {
   registrationId: string
   playerName: string
+  isTeam?: boolean
   onClose: () => void
 }) {
   const [state, setState] = useState<LinkState>({ status: 'loading' })
@@ -59,7 +61,8 @@ export default function PaymentReminderModal({
         {state.status === 'ready' && (
           <>
             <p className="text-xs text-lob-muted leading-relaxed">
-              Opens WhatsApp with a pre-filled Tikkie payment nudge to {firstName}.
+              Opens WhatsApp with a pre-filled Tikkie payment nudge to {firstName}
+              {isTeam ? ', the team captain, who pays for both players' : ''}.
             </p>
             <button
               onClick={handleSend}

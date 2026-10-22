@@ -17,6 +17,8 @@ import { PlayerRow } from '../../components/ui/PlayerRow'
 import { ProgressBar } from '../../components/ui/ProgressBar'
 import { StatTile } from '../../components/ui/StatTile'
 import PaymentReminderModal from './PaymentReminderModal'
+import { useEventTeams } from './teams/useTeams'
+import { buildPaymentRows } from './payments/teamPaymentRows'
 import { pricePerPlayer, type EventNavigate } from './eventHelpers'
 import type { NormalisedTournament } from '../../lib/normalise'
 import type { NormalisedRegistration } from './registrationQueries'
@@ -39,6 +41,8 @@ export default function Payments({
   const { updateRegistration } = useRegistrationActions()
   const { data: players = [] } = usePlayers()
   const { data: regsData = [] } = useRegistrations(tournament?.id)
+  const teamMode = tournament?.entryMode === 'team'
+  const { data: teams = [] } = useEventTeams({ tournamentId: tournament?.id, enabled: teamMode })
   const [filter, setFilter] = useState<PaymentFilter>('all')
   const [reminderTarget, setReminderTarget] = useState<{ regId: string; name: string } | null>(null)
 
@@ -59,7 +63,11 @@ export default function Payments({
     )
   }
 
-  const regs = regsData.filter((r) => r.status === 'registered')
+  const { regs, partnerIdByRegId, unitsPerRow } = buildPaymentRows({
+    teamMode,
+    registrations: regsData,
+    teams,
+  })
   // Status buckets — see Registration.jsx PayBadge for semantics.
   const confirmed = regs.filter(
     (r) => r.paymentStatus === 'paid' || r.paymentStatus === 'transferred',
@@ -69,7 +77,8 @@ export default function Payments({
   // True "ghost" unpaid — didn't even click the Tikkie link
   const trulyUnpaid = regs.filter((r) => !r.paymentStatus || r.paymentStatus === 'unpaid')
 
-  const costPerPlayer = pricePerPlayer(tournament)
+  const costPerPlayer = pricePerPlayer(tournament) * unitsPerRow
+  const unitLabel = teamMode ? 'team' : 'player'
 
   const totalCollected = confirmed.length * costPerPlayer
   const totalExpected = regs.length * costPerPlayer
@@ -85,6 +94,11 @@ export default function Payments({
             ? trulyUnpaid
             : regs
   const getPlayer = (id: string) => players.find((p) => p.id === id)
+  const rowName = (reg: NormalisedRegistration, captainName: string) => {
+    const partnerId = partnerIdByRegId.get(reg.id)
+    const partnerName = partnerId ? getPlayer(partnerId)?.name : null
+    return partnerName ? `${captainName} & ${partnerName}` : captainName
+  }
 
   // Order follows the payment funnel: everyone → unpaid (never clicked) →
   // tikkied → paid (self-declared) → confirmed (admin verified).
@@ -166,10 +180,11 @@ export default function Payments({
         {tournament.totalPrice > 0 && (
           <p className="text-sm text-lob-slate">
             Total: <span className="font-bold text-lob-dark">{fmtEur(tournament.totalPrice)}</span>{' '}
-            · Per player: <span className="font-bold text-lob-teal">{fmtEur(costPerPlayer)}</span>
+            · Per {unitLabel}:{' '}
+            <span className="font-bold text-lob-teal">{fmtEur(costPerPlayer)}</span>
             <span className="text-xs text-lob-muted-light">
               {' '}
-              (÷ {tournament.maxPlayers} players)
+              (÷ {tournament.maxPlayers} players{teamMode ? ', 2 per team' : ''})
             </span>
           </p>
         )}
@@ -226,7 +241,7 @@ export default function Payments({
         {costPerPlayer > 0 && (
           <div className="bg-white/10 rounded-xl p-3">
             <div className="flex justify-between text-sm mb-1">
-              <span className="opacity-80">Cost per player</span>
+              <span className="opacity-80">Cost per {unitLabel}</span>
               <span className="font-bold">{fmtEur(costPerPlayer)}</span>
             </div>
             <div className="flex justify-between text-sm mb-1">
@@ -275,7 +290,10 @@ export default function Payments({
       {/* Payment list */}
       <div className="space-y-2">
         {filtered.length === 0 && (
-          <EmptyState icon={<CheckCircle size={28} />} title="No players here" />
+          <EmptyState
+            icon={<CheckCircle size={28} />}
+            title={teamMode ? 'No teams here' : 'No players here'}
+          />
         )}
 
         {filtered.map((reg) => {
@@ -308,7 +326,7 @@ export default function Payments({
                 player={player}
                 avatarSize="lg"
                 avatarTone={avatarColor}
-                name={player.name}
+                name={rowName(reg, player.name)}
                 trailing={
                   isAdmin && (
                     <div className="flex items-center gap-1">
@@ -364,6 +382,10 @@ export default function Payments({
                         ? `· ${METHODS.find((m) => m.value === reg.paymentMethod)?.label || reg.paymentMethod}`
                         : ''}
                     </span>
+                  ) : ps === 'covered' ? (
+                    <span className="text-xs font-semibold bg-gray-100 text-lob-muted px-2 py-0.5 rounded-full">
+                      Covered by captain
+                    </span>
                   ) : isSelfPaid ? (
                     <span className="text-xs font-semibold bg-sky-100 text-sky-700 px-2 py-0.5 rounded-full">
                       💬 Paid (self-declared)
@@ -391,6 +413,7 @@ export default function Payments({
         <PaymentReminderModal
           registrationId={reminderTarget.regId}
           playerName={reminderTarget.name}
+          isTeam={teamMode}
           onClose={() => setReminderTarget(null)}
         />
       )}
