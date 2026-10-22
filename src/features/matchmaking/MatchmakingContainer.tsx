@@ -3,7 +3,7 @@ import ConfigPanel from './ui/ConfigPanel'
 import SchedulePreview from './ui/SchedulePreview'
 import CompareView from './ui/CompareView'
 import SwapPanel from './ui/SwapPanel'
-import { previewSchedule, toPlayerInput } from './generateSchedule.service'
+import { previewSchedule, toPlayerInput, type EventKind } from './generateSchedule.service'
 import { useCommitSchedule } from './useMatchmaking'
 import { useConfigDerivations } from './useConfigDerivations'
 import { suggestSwaps } from './domain/swaps'
@@ -22,6 +22,7 @@ export type MatchmakingContainerProps = {
   // schedule wipes them (saveMatches delete+insert), so it is gated behind a
   // typed confirmation.
   scoresEntered: boolean
+  tournament?: EventKind
 }
 
 const DEFAULT_CONFIG: MatchConfig = { preset: 'balanced' }
@@ -67,6 +68,7 @@ export default function MatchmakingContainer({
   rounds,
   genderMode,
   scoresEntered,
+  tournament,
 }: MatchmakingContainerProps) {
   const [config, setConfig] = useState<MatchConfig>(DEFAULT_CONFIG)
   const [preview, setPreview] = useState<ScheduleRun | null>(null)
@@ -123,7 +125,10 @@ export default function MatchmakingContainer({
   })
 
   const generateWith = (overrides: MatchConfig): ScheduleRun =>
-    previewSchedule({ tournamentId, players, courts, rounds, genderMode, config: overrides })
+    previewSchedule(
+      { tournamentId, players, courts, rounds, genderMode, config: overrides },
+      { tournament },
+    )
 
   // Run a synchronous domain call without freezing the click: flip the busy
   // flag, let it paint, then compute. The thread still blocks during the
@@ -278,7 +283,7 @@ export default function MatchmakingContainer({
     if (!preview) return
     setError(null)
     commit.mutate(
-      { run: preview },
+      { run: preview, tournament },
       {
         onSuccess: () => {
           setPreview(null)

@@ -7,7 +7,8 @@ import {
   FORMAT_LOCKED_NOTE,
   formatOption,
   isKingOfTheCourt,
-  effectiveMaxTeams,
+  effectiveMaxPlayers,
+  teamsForCourts,
   teamTotal,
 } from './eventFormModel'
 import type { EventFormCourt, EventFormValues } from './eventConstants'
@@ -127,20 +128,9 @@ export default function EventFormModal({
         </div>
 
         {kotc ? (
-          <div>
-            <label className="label" htmlFor="event-max-teams">
-              Max Teams
-            </label>
-            <input
-              type="number"
-              id="event-max-teams"
-              min="1"
-              max="32"
-              className="input"
-              value={form.maxTeams === '' ? effectiveMaxTeams({ form }) : form.maxTeams}
-              onChange={(e) => setForm((f) => ({ ...f, maxTeams: e.target.value }))}
-            />
-          </div>
+          <p className="text-sm text-lob-slate">
+            {`${teamsForCourts({ courts: form.courts })} teams · 2 per court (${effectiveMaxPlayers({ form })} players)`}
+          </p>
         ) : (
           <div>
             <label className="label">Max Players</label>

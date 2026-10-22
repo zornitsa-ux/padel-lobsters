@@ -4,12 +4,7 @@ import { describe, it, expect, afterEach } from 'vitest'
 import { render, screen, cleanup, fireEvent } from '@testing-library/react'
 import EventFormModal from './EventFormModal'
 import { emptyForm, type EventFormValues } from './eventConstants'
-import {
-  buildEventData,
-  hasSignups,
-  isEntryModeLocked,
-  maxTeamsFromTournament,
-} from './eventFormModel'
+import { buildEventData, hasSignups, isEntryModeLocked } from './eventFormModel'
 
 const noop = () => {}
 
@@ -36,7 +31,9 @@ function Harness({
       formatLocked={formatLocked}
       onSubmit={noop}
       onClose={noop}
-      addCourt={noop}
+      addCourt={() =>
+        setForm((f) => ({ ...f, courts: [...f.courts, { name: '', booked: false }] }))
+      }
       removeCourt={noop}
       setCourt={noop}
     />
@@ -100,31 +97,38 @@ describe('EventFormModal — King of the Court', () => {
     render(<Harness initial={kotcForm({ courts })} />)
 
     expect(screen.queryByText('Max Players')).toBeNull()
-    expect((screen.getByLabelText('Max Teams') as HTMLInputElement).value).toBe('6')
+    expect(screen.queryByLabelText('Max Teams')).toBeNull()
+    expect(screen.getByText('6 teams · 2 per court (12 players)')).toBeTruthy()
     expect(
       screen.getByText('Court order is the ladder: the first court is the King court.'),
     ).toBeTruthy()
   })
 
-  it('saves an even max_players from the default and from a typed value', () => {
-    const courts = [
-      { name: 'A', booked: false },
-      { name: 'B', booked: false },
-    ]
-    expect(buildEventData({ form: kotcForm({ courts }) })).toMatchObject({
+  it('saves max_players as 4 x courts', () => {
+    const courts = (n: number) => Array.from({ length: n }, () => ({ name: '', booked: false }))
+    expect(buildEventData({ form: kotcForm({ courts: courts(2) }) })).toMatchObject({
       maxPlayers: 8,
       entryMode: 'team',
     })
-    expect(buildEventData({ form: kotcForm({ courts, maxTeams: '5' }) }).maxPlayers).toBe(10)
+    expect(buildEventData({ form: kotcForm({ courts: courts(5) }) }).maxPlayers).toBe(20)
   })
 
-  it('loads an existing event as max_players / 2', () => {
-    expect(maxTeamsFromTournament({ format: 'king_of_court', maxPlayers: 12 })).toBe('6')
-    expect(maxTeamsFromTournament({ format: 'lobster_matching', maxPlayers: 12 })).toBe('')
+  it('updates the capacity line as courts are added', () => {
+    render(<Harness initial={kotcForm({ courts: [{ name: 'A', booked: false }] })} />)
+    expect(screen.getByText('2 teams · 2 per court (4 players)')).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', { name: /add court/i }))
+
+    expect(screen.getByText('4 teams · 2 per court (8 players)')).toBeTruthy()
   })
 
   it('prices the event as price x max_players', () => {
-    const data = buildEventData({ form: kotcForm({ maxTeams: '4', pricePerPerson: '15' }) })
+    const data = buildEventData({
+      form: kotcForm({
+        courts: Array.from({ length: 2 }, () => ({ name: '', booked: false })),
+        pricePerPerson: '15',
+      }),
+    })
 
     expect(data.totalPrice).toBe(120)
   })
