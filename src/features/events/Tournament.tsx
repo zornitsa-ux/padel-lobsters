@@ -7,6 +7,13 @@ import {
   useDeleteTournament,
 } from './useTournaments'
 import { useTransfers } from './useTransfers'
+import { useRegistrations } from './useRegistrations'
+import {
+  buildEventData,
+  hasSignups,
+  isEntryModeLocked,
+  maxTeamsFromTournament,
+} from './eventFormModel'
 import { Plus, Trophy, Clock } from 'lucide-react'
 import HistoryContent from '../history/History'
 import AdminTransferPanel from '../../components/AdminTransferPanel'
@@ -50,6 +57,10 @@ export default function Tournament({ onNavigate }: { onNavigate: EventNavigate }
   const [editId, setEditId] = useState<string | null>(null)
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
+  const [serverLocked, setServerLocked] = useState(false)
+  const { data: editRegistrations = [] } = useRegistrations(editId)
+  const formatLocked =
+    !!editId && (serverLocked || hasSignups({ registrations: editRegistrations }))
   const [showHistory, setShowHistory] = useState(true)
   const [error, setError] = useState('')
   // Admin pending-transfer panel — open for one tournament at a time.
@@ -87,6 +98,7 @@ export default function Tournament({ onNavigate }: { onNavigate: EventNavigate }
     }
     setForm(emptyForm)
     setEditId(null)
+    setServerLocked(false)
     setShowForm(true)
   }
 
@@ -103,6 +115,8 @@ export default function Tournament({ onNavigate }: { onNavigate: EventNavigate }
       maxPlayers: t.maxPlayers || '16',
       duration: t.duration || 90,
       format: t.format || 'lobster_matching',
+      entryMode: t.entryMode || 'individual',
+      maxTeams: maxTeamsFromTournament(t),
       genderMode: t.genderMode || 'mixed',
       courts: t.courts?.length
         ? t.courts.map((c) => ({ name: c.name || '', booked: !!c.booked }))
@@ -117,6 +131,7 @@ export default function Tournament({ onNavigate }: { onNavigate: EventNavigate }
       notes: t.notes || '',
     })
     setEditId(t.id)
+    setServerLocked(false)
     setShowForm(true)
   }
 
@@ -147,29 +162,14 @@ export default function Tournament({ onNavigate }: { onNavigate: EventNavigate }
     setSaving(true)
     setError('')
     try {
-      const mp = parseInt(String(form.maxPlayers)) || 16
-      const data = {
-        name: form.name,
-        date: form.date,
-        time: form.time,
-        location: form.location,
-        maxPlayers: mp,
-        format: form.format,
-        genderMode: form.genderMode,
-        duration: parseInt(String(form.duration)) || 90,
-        totalPrice:
-          (parseFloat(String(form.pricePerPerson)) || 0) *
-          (parseInt(String(form.maxPlayers)) || 16),
-        tikkieLink: form.tikkieLink || '',
-        courts: form.courts.map((c) => ({ name: c.name, booked: !!c.booked })),
-        notes: form.notes,
-      }
+      const data = buildEventData({ form }) as Partial<NormalisedTournament>
       try {
         if (editId) await updateTournament(editId, data)
         else await addTournament(data)
         setShowForm(false)
       } catch (err) {
-        setError(errorMessage(err, 'Could not save event.'))
+        if (isEntryModeLocked(err)) setServerLocked(true)
+        else setError(errorMessage(err, 'Could not save event.'))
       }
     } finally {
       setSaving(false)
@@ -282,6 +282,7 @@ export default function Tournament({ onNavigate }: { onNavigate: EventNavigate }
           form={form}
           setForm={setForm}
           saving={saving}
+          formatLocked={formatLocked}
           onSubmit={handleSubmit}
           onClose={() => setShowForm(false)}
           addCourt={addCourt}
