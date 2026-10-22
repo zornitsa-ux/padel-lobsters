@@ -4,6 +4,7 @@ import { fmtEur } from '../../../../lib/format'
 import type { PartnerChoice } from '../../teams/teamTypes'
 import type { NormalisedTournament } from '../../tournamentQueries'
 import type { DisplayName, GetPlayer } from '../utils'
+import { COMPLETE_TEAMS_NOTE } from '../../teams/teamStatusMessages'
 import PartnerChoiceForm from './PartnerChoiceForm'
 import { choicePartnerName, teamPrice } from './teamHelpers'
 import { useTeamSignup, type TeamSignupResult } from './useTeamSignup'
@@ -13,6 +14,8 @@ interface TeamJoinCardProps {
   viewerId: string
   candidates: Player[]
   isEventFull: boolean
+  open: boolean
+  onOpenChange: (open: boolean) => void
   getPlayer: GetPlayer
   displayName: DisplayName
   onSignedUp: (result: TeamSignupResult) => void
@@ -23,11 +26,12 @@ export default function TeamJoinCard({
   viewerId,
   candidates,
   isEventFull,
+  open,
+  onOpenChange,
   getPlayer,
   displayName,
   onSignedUp,
 }: TeamJoinCardProps) {
-  const [open, setOpen] = useState(false)
   const [choice, setChoice] = useState<PartnerChoice | null>(null)
   const [lastChoice, setLastChoice] = useState<PartnerChoice | null>(null)
   const signup = useTeamSignup({
@@ -39,7 +43,7 @@ export default function TeamJoinCard({
   })
 
   const close = () => {
-    setOpen(false)
+    onOpenChange(false)
     setChoice(null)
     setLastChoice(null)
     signup.clearError()
@@ -53,7 +57,7 @@ export default function TeamJoinCard({
             ? 'This event is full. Sign up as a team to join the waitlist.'
             : "You haven't signed up yet. Pick a partner to enter as a team."}
         </p>
-        <button onClick={() => setOpen(true)} className="btn-primary w-full py-2.5 text-sm">
+        <button onClick={() => onOpenChange(true)} className="btn-primary w-full py-2.5 text-sm">
           Sign up as a team
         </button>
       </div>
@@ -69,6 +73,7 @@ export default function TeamJoinCard({
           You + {partner}
           {price > 0 && ` · ${fmtEur(price)} for the team`}
         </p>
+        <p className="text-xs text-lob-muted">{COMPLETE_TEAMS_NOTE}</p>
         {signup.error && (
           <p role="alert" className="text-xs font-semibold text-red-600">
             {signup.error}
@@ -100,6 +105,7 @@ export default function TeamJoinCard({
   return (
     <div className="card space-y-3">
       <p className="font-semibold text-lob-slate">Choose your partner</p>
+      <p className="text-xs text-lob-muted">{COMPLETE_TEAMS_NOTE}</p>
       <PartnerChoiceForm
         candidates={candidates}
         displayName={displayName}

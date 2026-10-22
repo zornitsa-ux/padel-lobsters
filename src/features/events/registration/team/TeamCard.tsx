@@ -1,9 +1,8 @@
-import { useState } from 'react'
 import type { Player } from '../../../../lib/normalise'
 import type { TeamEntry } from '../../teams/teamTypes'
 import PaymentStatusBadge from '../PaymentStatusBadge'
 import type { DisplayName, GetPlayer } from '../utils'
-import ChangePartnerPanel from './ChangePartnerPanel'
+import { CaptainPendingActions, PartnerPendingActions } from './TeamCardActions'
 
 interface TeamCardProps {
   entry: TeamEntry
@@ -46,7 +45,6 @@ export default function TeamCard({
   getPlayer,
   displayName,
 }: TeamCardProps) {
-  const [changing, setChanging] = useState(false)
   const isCaptain = entry.captain.playerId === viewerId
   const other = isCaptain ? entry.partner : entry.captain
   const otherName = firstNameOf({ playerId: other.playerId, getPlayer, displayName })
@@ -64,26 +62,49 @@ export default function TeamCard({
           </span>
         )}
       </div>
-      <p className={`text-sm ${waitlisted ? 'text-amber-800' : 'text-lob-muted'}`}>
-        {waitlisted ? "You're both on the waitlist." : 'Your team is registered.'}
-      </p>
-      {isCaptain && !changing && (
-        <button
-          onClick={() => setChanging(true)}
-          className="text-xs font-semibold text-lob-teal underline underline-offset-2"
-        >
-          Change partner
-        </button>
-      )}
-      {isCaptain && changing && (
-        <ChangePartnerPanel
+      <TeamStatusLine entry={entry} isCaptain={isCaptain} otherName={otherName} />
+      {!entry.confirmed && isCaptain && (
+        <CaptainPendingActions
+          entry={entry}
           tournamentId={tournamentId}
-          teamId={entry.team.id}
+          otherName={otherName}
           candidates={candidates}
           displayName={displayName}
-          onClose={() => setChanging(false)}
         />
       )}
+      {!entry.confirmed && !isCaptain && (
+        <PartnerPendingActions entry={entry} tournamentId={tournamentId} otherName={otherName} />
+      )}
     </div>
+  )
+}
+
+function TeamStatusLine({
+  entry,
+  isCaptain,
+  otherName,
+}: {
+  entry: TeamEntry
+  isCaptain: boolean
+  otherName: string
+}) {
+  const waitlisted = entry.status === 'waitlist'
+  const tone = waitlisted ? 'text-amber-800' : 'text-lob-muted'
+  if (!entry.confirmed) {
+    const line = isCaptain
+      ? `Waiting for ${otherName} to accept`
+      : `${otherName} has entered you as their partner`
+    return (
+      <p className={`text-sm ${tone}`}>
+        {line}
+        {waitlisted && " · You're both on the waitlist."}
+      </p>
+    )
+  }
+  return (
+    <p className={`text-sm ${tone}`}>
+      <span className="font-semibold text-green-700">Confirmed ✓</span>
+      {waitlisted ? " · You're both on the waitlist." : ' · Your team is registered.'}
+    </p>
   )
 }

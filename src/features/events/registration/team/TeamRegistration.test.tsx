@@ -10,6 +10,8 @@ const m = vi.hoisted(() => ({
   changeTeamPartner: vi.fn(),
   adminCancelTeam: vi.fn(),
   adminPromoteTeam: vi.fn(),
+  cancelMyTeam: vi.fn(),
+  respondToTeamInvite: vi.fn(),
   confirm: vi.fn(),
   teams: [] as unknown[],
   invites: [] as unknown[],
@@ -39,6 +41,8 @@ vi.mock('../../teams/useTeams', () => ({
     changeTeamPartner: m.changeTeamPartner,
     adminCancelTeam: m.adminCancelTeam,
     adminPromoteTeam: m.adminPromoteTeam,
+    cancelMyTeam: m.cancelMyTeam,
+    respondToTeamInvite: m.respondToTeamInvite,
   }),
 }))
 vi.mock('../../../../lib/confirmBus', () => ({ useConfirm: () => m.confirm }))
@@ -65,25 +69,39 @@ const players = [
   player('ghost', 'Pia', 'placeholder'),
 ]
 
-const reg = (id: string, playerId: string, teamId: string | null, status: string) => ({
+const reg = (
+  id: string,
+  playerId: string,
+  teamId: string | null,
+  status: string,
+  acceptedAt: string | null = '2026-10-01T10:00:00Z',
+) => ({
   id,
   playerId,
   tournamentId: 't1',
   status,
   teamId,
+  acceptedAt,
   paymentStatus: 'unpaid',
   registeredAt: { seconds: 1 },
 })
 
 let registrations: unknown[] = []
 
-const team = (id: string, captainId: string, createdAt: string) => ({
+const team = (
+  id: string,
+  captainId: string,
+  createdAt: string,
+  cancelledReason: string | null = null,
+) => ({
   id,
   tournamentId: 't1',
   captainId,
   seed: null,
   finalRank: null,
   createdAt,
+  cancelledAt: cancelledReason ? createdAt : null,
+  cancelledReason,
 })
 
 const teamTournament = {
@@ -109,11 +127,13 @@ function renderInfo({
   tournament = teamTournament,
 }: { isAdmin?: boolean; tournament?: NormalisedTournament } = {}) {
   m.useApp.mockReturnValue({ session: { user: { id: 'me' } }, role: 'player', isAdmin })
-  render(
+  const ui = () => (
     <MemoryRouter>
       <Registration tournament={tournament} onNavigate={vi.fn()} />
-    </MemoryRouter>,
+    </MemoryRouter>
   )
+  const { rerender } = render(ui())
+  return { rerender: () => rerender(ui()) }
 }
 
 const openNewPartnerForm = () => {
@@ -195,9 +215,7 @@ describe('team join card', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Sign up' }))
 
     expect(
-      await screen.findByText(
-        'Gus can sign in with gus@example.com any time to see the event. Let them know!',
-      ),
+      await screen.findByText('Gus can sign in with gus@example.com to accept. Let them know!'),
     ).not.toBeNull()
   })
 
@@ -214,7 +232,7 @@ describe('team join card', () => {
 })
 
 describe('team lists and card', () => {
-  it('renders teams as "A & B" and no transfer UI', () => {
+  it('renders teams as "A & B" and no transfer UI for a viewer without a team', () => {
     renderInfo()
 
     expect(screen.getByText('Cara & Dan')).not.toBeNull()
@@ -232,7 +250,10 @@ describe('team lists and card', () => {
   })
 
   it('lets the captain change partner and shows the message inline', async () => {
-    registrations = [reg('r1', 'me', 'tm1', 'registered'), reg('r2', 'p1', 'tm1', 'registered')]
+    registrations = [
+      reg('r1', 'me', 'tm1', 'registered'),
+      reg('r2', 'p1', 'tm1', 'registered', null),
+    ]
     m.teams = [team('tm1', 'me', '2026-10-01T10:00:00Z')]
     m.changeTeamPartner.mockResolvedValue({ status: 'change_closed', partnerId: null })
     renderInfo()
@@ -242,6 +263,179 @@ describe('team lists and card', () => {
     fireEvent.click(screen.getAllByRole('button', { name: 'Change partner' }).pop()!)
 
     expect((await screen.findByRole('alert')).textContent).toMatch(/close 12 hours/i)
+  })
+})
+
+const mine = ({ partnerAccepted }: { partnerAccepted: boolean }) => {
+  registrations = [
+    reg('r1', 'me', 'tm1', 'registered'),
+    reg('r2', 'p1', 'tm1', 'registered', partnerAccepted ? '2026-10-02T10:00:00Z' : null),
+  ]
+  m.teams = [team('tm1', 'me', '2026-10-01T10:00:00Z')]
+}
+
+const theirs = ({ partnerAccepted }: { partnerAccepted: boolean }) => {
+  registrations = [
+    reg('r1', 'p1', 'tm1', 'registered'),
+    reg('r2', 'me', 'tm1', 'registered', partnerAccepted ? '2026-10-02T10:00:00Z' : null),
+  ]
+  m.teams = [team('tm1', 'p1', '2026-10-01T10:00:00Z')]
+}
+
+describe('pending and confirmed team card', () => {
+  it('lets a captain with a pending partner change partner or cancel the team', async () => {
+    mine({ partnerAccepted: false })
+    m.cancelMyTeam.mockResolvedValue({ status: 'cancelled', promotedTeamId: null })
+    renderInfo()
+
+    expect(screen.getByText(/waiting for bob to accept/i)).not.toBeNull()
+    expect(screen.getByRole('button', { name: 'Change partner' })).not.toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel team' }))
+
+    await waitFor(() =>
+      expect(m.cancelMyTeam).toHaveBeenCalledWith({ tournamentId: 't1', teamId: 'tm1' }),
+    )
+  })
+
+  it('does not cancel when the captain backs out of the confirm', () => {
+    mine({ partnerAccepted: false })
+    m.confirm.mockResolvedValue(false)
+    renderInfo()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel team' }))
+
+    expect(m.cancelMyTeam).not.toHaveBeenCalled()
+  })
+
+  it('shows a confirmed team as confirmed, with transfer and no cancel or change', () => {
+    mine({ partnerAccepted: true })
+    renderInfo()
+
+    expect(screen.getByText(/confirmed ✓/i)).not.toBeNull()
+    expect(screen.queryByRole('button', { name: 'Cancel team' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Change partner' })).toBeNull()
+    expect(screen.getByRole('button', { name: /transfer spot/i })).not.toBeNull()
+  })
+
+  it('hides transfer while the partner is pending', () => {
+    mine({ partnerAccepted: false })
+    renderInfo()
+
+    expect(screen.queryByRole('button', { name: /transfer spot/i })).toBeNull()
+  })
+
+  it('hides transfer for a confirmed team on the waitlist', () => {
+    mine({ partnerAccepted: true })
+    registrations = (registrations as Array<{ status: string }>).map((r) => ({
+      ...r,
+      status: 'waitlist',
+    }))
+    renderInfo()
+
+    expect(screen.queryByRole('button', { name: /transfer spot/i })).toBeNull()
+  })
+
+  it('lets a pending partner accept', async () => {
+    theirs({ partnerAccepted: false })
+    m.respondToTeamInvite.mockResolvedValue('accepted')
+    renderInfo()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Accept' }))
+
+    await waitFor(() =>
+      expect(m.respondToTeamInvite).toHaveBeenCalledWith({
+        tournamentId: 't1',
+        teamId: 'tm1',
+        accept: true,
+      }),
+    )
+  })
+
+  it('asks before "I\'m not playing" and says the team is cancelled', async () => {
+    theirs({ partnerAccepted: false })
+    m.respondToTeamInvite.mockResolvedValue('declined')
+    renderInfo()
+
+    fireEvent.click(screen.getByRole('button', { name: "I'm not playing" }))
+
+    await waitFor(() =>
+      expect(m.confirm).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: expect.stringMatching(/team is cancelled.*keep spots for complete teams/i),
+        }),
+      ),
+    )
+    await waitFor(() =>
+      expect(m.respondToTeamInvite).toHaveBeenCalledWith({
+        tournamentId: 't1',
+        teamId: 'tm1',
+        accept: false,
+      }),
+    )
+  })
+
+  it('does not decline when the partner backs out of the confirm', async () => {
+    theirs({ partnerAccepted: false })
+    m.confirm.mockResolvedValue(false)
+    renderInfo()
+
+    fireEvent.click(screen.getByRole('button', { name: "I'm not playing" }))
+
+    await waitFor(() => expect(m.confirm).toHaveBeenCalled())
+    expect(m.respondToTeamInvite).not.toHaveBeenCalled()
+  })
+})
+
+describe('ended team notice', () => {
+  const ended = (reason: string) => {
+    m.teams = [team('tm1', 'me', '2026-10-01T10:00:00Z', reason)]
+    registrations = [reg('r1', 'me', 'tm1', 'cancelled'), reg('r2', 'p1', 'tm1', 'cancelled', null)]
+  }
+
+  it('tells the captain their partner declined and reopens the join card', () => {
+    ended('partner_declined')
+    renderInfo()
+
+    expect(screen.getByText(/bob declined, so your team was cancelled/i)).not.toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Sign up again' }))
+
+    expect(screen.getByText('Choose your partner')).not.toBeNull()
+    expect(screen.queryByText(/bob declined/i)).toBeNull()
+  })
+
+  it('tells the team an admin cancelled it', () => {
+    ended('admin_cancelled')
+    renderInfo()
+
+    expect(screen.getByText('An admin cancelled your team.')).not.toBeNull()
+  })
+
+  it('says nothing when the captain cancelled', () => {
+    ended('captain_cancelled')
+    renderInfo()
+
+    expect(screen.queryByRole('button', { name: 'Sign up again' })).toBeNull()
+  })
+
+  it('says nothing to the partner who declined', () => {
+    m.teams = [team('tm1', 'p1', '2026-10-01T10:00:00Z', 'partner_declined')]
+    registrations = [reg('r1', 'p1', 'tm1', 'cancelled'), reg('r2', 'me', 'tm1', 'cancelled', null)]
+    renderInfo()
+
+    expect(screen.queryByRole('button', { name: 'Sign up again' })).toBeNull()
+  })
+
+  it('says nothing once the viewer has signed up again', () => {
+    ended('partner_declined')
+    registrations = [
+      ...registrations,
+      reg('r3', 'me', 'tm2', 'registered'),
+      reg('r4', 'p4', 'tm2', 'registered', null),
+    ]
+    m.teams = [...m.teams, team('tm2', 'me', '2026-10-05T10:00:00Z')]
+    renderInfo()
+
+    expect(screen.queryByRole('button', { name: 'Sign up again' })).toBeNull()
   })
 })
 
@@ -282,6 +476,32 @@ describe('admin team actions', () => {
     expect(screen.getAllByText(/hasn't signed in yet/i)).toHaveLength(1)
   })
 
+  it('badges pending and confirmed teams', () => {
+    registrations = [
+      reg('r1', 'p2', 'tm1', 'registered'),
+      reg('r2', 'p3', 'tm1', 'registered', null),
+      reg('r3', 'p4', 'tm2', 'waitlist'),
+      reg('r4', 'p5', 'tm2', 'waitlist'),
+    ]
+    renderInfo({ isAdmin: true })
+
+    expect(screen.getByText('Waiting for Dan to accept')).not.toBeNull()
+    expect(screen.getByText('Confirmed')).not.toBeNull()
+    expect(screen.getAllByRole('button', { name: 'Change partner' }).length).toBe(2)
+  })
+
+  it('labels the new-partner link from the admin point of view', () => {
+    renderInfo({ isAdmin: true })
+
+    fireEvent.click(screen.getByRole('button', { name: /add team/i }))
+    fireEvent.click(screen.getByRole('button', { name: /alma/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }))
+
+    expect(
+      screen.getByRole('button', { name: /^their partner isn't on padel lobsters/i }),
+    ).not.toBeNull()
+  })
+
   it('adds a team for a chosen captain', async () => {
     m.registerTeam.mockResolvedValue({ status: 'registered', teamId: 'tm9', partnerId: 'p1' })
     renderInfo({ isAdmin: true })
@@ -299,6 +519,71 @@ describe('admin team actions', () => {
         choice: { kind: 'member', playerId: 'p1' },
       }),
     )
+  })
+})
+
+describe('roster line', () => {
+  it('counts teams on a team event', () => {
+    m.teams = [team('tm1', 'p2', '2026-10-01T10:00:00Z'), team('tm2', 'p4', '2026-10-02T10:00:00Z')]
+    registrations = [
+      reg('r1', 'p2', 'tm1', 'registered'),
+      reg('r2', 'p3', 'tm1', 'registered'),
+      reg('r3', 'p4', 'tm2', 'waitlist'),
+      reg('r4', 'p5', 'tm2', 'waitlist'),
+    ]
+    renderInfo()
+
+    expect(screen.getByText(/1 of 4 teams/)).not.toBeNull()
+    expect(screen.getByText(/1 team waiting/)).not.toBeNull()
+  })
+})
+
+describe('signup notices', () => {
+  const signUpWithBob = (status: 'registered' | 'waitlist' = 'registered') => {
+    m.registerTeam.mockResolvedValue({ status, teamId: 'tm9', partnerId: 'p1' })
+    const view = renderInfo()
+    fireEvent.click(screen.getByRole('button', { name: /sign up as a team/i }))
+    fireEvent.click(screen.getByRole('button', { name: /bob/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+    expect(screen.getByText(/we keep spots for complete teams/i)).not.toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: /sign up|join the waitlist/i }))
+    return view
+  }
+
+  it('asks a member partner to accept in the app', async () => {
+    signUpWithBob()
+
+    expect(
+      await screen.findByText("We've asked Bob to accept in the app. Let them know!"),
+    ).not.toBeNull()
+  })
+
+  it('can be dismissed', async () => {
+    signUpWithBob()
+    await screen.findByText(/we've asked bob/i)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }))
+
+    expect(screen.queryByText(/we've asked bob/i)).toBeNull()
+  })
+
+  it('clears when the team is promoted off the waitlist', async () => {
+    const view = signUpWithBob('waitlist')
+    await screen.findByText("You're both on the waitlist.")
+
+    const rows = (status: string) => [
+      reg('r1', 'me', 'tm9', status),
+      reg('r2', 'p1', 'tm9', status, null),
+    ]
+    m.teams = [team('tm9', 'me', '2026-10-01T10:00:00Z')]
+    registrations = rows('waitlist')
+    view.rerender()
+    expect(screen.getAllByText(/both on the waitlist/i).length).toBeGreaterThan(0)
+    expect(screen.getByRole('button', { name: 'Dismiss' })).not.toBeNull()
+
+    registrations = rows('registered')
+    view.rerender()
+    expect(screen.queryByRole('button', { name: 'Dismiss' })).toBeNull()
   })
 })
 

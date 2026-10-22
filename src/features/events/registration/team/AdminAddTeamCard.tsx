@@ -60,7 +60,7 @@ export default function AdminAddTeamCard({
   if (!open) {
     return (
       <div className="space-y-2">
-        <TeamNotices notices={notices} />
+        <TeamNotices notices={notices} onDismiss={() => setNotices([])} />
         <button
           onClick={() => {
             setNotices([])
@@ -89,6 +89,7 @@ export default function AdminAddTeamCard({
           candidates={partners}
           displayName={displayName}
           submitLabel="Add team"
+          newPartnerLabel="Their partner isn't on Padel Lobsters →"
           busy={signup.busy}
           error={signup.error}
           onSubmit={(args) => void signup.submit(args)}

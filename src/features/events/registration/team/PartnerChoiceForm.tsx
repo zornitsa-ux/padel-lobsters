@@ -10,6 +10,7 @@ interface PartnerChoiceFormProps {
   candidates: Player[]
   displayName: DisplayName
   submitLabel: string
+  newPartnerLabel?: string
   initialChoice?: PartnerChoice | null
   busy?: boolean
   error?: string
@@ -21,6 +22,7 @@ export default function PartnerChoiceForm({
   candidates,
   displayName,
   submitLabel,
+  newPartnerLabel = "My partner isn't on Padel Lobsters →",
   initialChoice = null,
   busy = false,
   error = '',
@@ -68,7 +70,7 @@ export default function PartnerChoiceForm({
             onClick={() => setMode('new')}
             className="text-sm font-semibold text-lob-teal"
           >
-            My partner isn&apos;t on Padel Lobsters →
+            {newPartnerLabel}
           </button>
         </>
       )}
