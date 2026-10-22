@@ -51,7 +51,7 @@
 | T0  | Research, owner interview, docs                                                                                                                                                                                          | 0     | —          |     | [x]   |
 | T1  | Migration: `entry_mode`, `starting_courts_published_at`, `event_teams` (seed, final_rank), `registrations.team_id`, `covered`, `partner_invites`; team RPCs; guards on individual/transfer RPCs; `supabase/tests` script | 1     | T0         | #56 | [x]   |
 | T2  | Partner invites: `admin_send_event_invite`, `event_invite` email kind + template, admin Partner invites list (not invited / invited / signed in)                                                                         | 1     | T1         |     | [ ]   |
-| T3  | Event form: Format picker, Max teams, team price                                                                                                                                                                         | 1     | T1         |     | [ ]   |
+| T3  | Event form: Format picker, Max teams, team price                                                                                                                                                                         | 1     | T1         | #58 | [x]   |
 | T4  | Join flow: partner search (active members), new-partner form, confirm + pay (captain)                                                                                                                                    | 1     | T1         |     | [ ]   |
 | T5  | Team card + registration list (teams, waitlist, change partner, transfers hidden)                                                                                                                                        | 1     | T1         |     | [ ]   |
 | T6  | Admin: add/cancel/promote team, change partner, team Payments view + reminder                                                                                                                                            | 1     | T1         |     | [ ]   |
@@ -207,3 +207,4 @@ placeholders as partners, was withdrawn by D-010: placeholders aren't offered.)
   - A notification system was added to §3.
   - `team_events.sql` now has 24 checks, including acceptance, decline,
     captain cancel, transfers after acceptance and the payment RPC.
+- 2026-10-22: T3 event form: Format picker (Americano / King of the Court), team total, ladder hint, format locked once anyone signs up. Capacity derives from courts (D-017) and the schedule generator refuses team events (D-018).
