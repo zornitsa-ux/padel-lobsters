@@ -14,6 +14,7 @@ import ShareWhatsAppButton from '../../components/ui/ShareWhatsAppButton'
 import EventDescription from './EventDescription'
 import EventAdminMenu from './EventAdminMenu'
 import EventFormModal from './EventFormModal'
+import { buildEventData, formFromTournament, hasSignups } from './eventFormModel'
 import { emptyForm } from './eventConstants'
 import { formatLabel } from './eventHelpers'
 import {
@@ -127,25 +128,7 @@ export default function Registration({
   const openEdit = useCallback(() => {
     const t = tournament
     if (!t) return
-    setEditForm({
-      name: t.name || '',
-      date: t.date || '',
-      time: t.time || '',
-      location: t.location || '',
-      maxPlayers: String(t.maxPlayers || 16),
-      duration: t.duration || 90,
-      format: t.format || 'lobster_matching',
-      genderMode: t.genderMode || 'mixed',
-      courts: t.courts?.length
-        ? t.courts.map((c) => ({ name: c.name || '', booked: !!c.booked }))
-        : [{ name: '', booked: false }],
-      pricePerPerson:
-        t.totalPrice > 0 && t.maxPlayers > 0
-          ? (t.totalPrice / t.maxPlayers).toFixed(2).replace(/\.00$/, '')
-          : String(t.totalPrice ?? ''),
-      tikkieLink: t.tikkieLink || '',
-      notes: t.notes || '',
-    })
+    setEditForm(formFromTournament({ tournament: t }))
     setShowEditForm(true)
   }, [tournament])
 
@@ -154,21 +137,7 @@ export default function Registration({
     if (!tournament) return
     setEditSaving(true)
     try {
-      const mp = parseInt(String(editForm.maxPlayers)) || 16
-      const data = {
-        name: editForm.name,
-        date: editForm.date,
-        time: editForm.time,
-        location: editForm.location,
-        maxPlayers: mp,
-        format: editForm.format,
-        genderMode: editForm.genderMode,
-        duration: Number(editForm.duration) || 90,
-        totalPrice: (parseFloat(String(editForm.pricePerPerson)) || 0) * mp,
-        tikkieLink: editForm.tikkieLink || '',
-        courts: editForm.courts.map((c) => ({ name: c.name, booked: !!c.booked })),
-        notes: editForm.notes,
-      }
+      const data = buildEventData({ form: editForm }) as Partial<NormalisedTournament>
       await updateTournament(tournament.id, data)
       setShowEditForm(false)
     } finally {
@@ -690,6 +659,7 @@ export default function Registration({
         form={editForm}
         setForm={setEditForm}
         saving={editSaving}
+        formatLocked={hasSignups({ registrations: regs })}
         onSubmit={handleEditSubmit}
         onClose={() => setShowEditForm(false)}
         addCourt={addEditCourt}

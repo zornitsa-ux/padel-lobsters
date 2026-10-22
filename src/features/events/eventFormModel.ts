@@ -1,4 +1,5 @@
 import type { EventFormValues } from './eventConstants'
+import type { NormalisedTournament } from '../../lib/normalise'
 import type { TournamentInput } from './tournamentQueries'
 
 export const AMERICANO = { format: 'lobster_matching', entryMode: 'individual' } as const
@@ -69,4 +70,29 @@ export function isFormatLocked({
 export function isEntryModeLocked(err: unknown): boolean {
   const message = typeof err === 'object' && err !== null && 'message' in err ? err.message : ''
   return String(message).includes('entry_mode_locked')
+}
+
+const perPersonPrice = ({ totalPrice, maxPlayers }: NormalisedTournament) =>
+  totalPrice > 0 && maxPlayers > 0
+    ? (totalPrice / maxPlayers).toFixed(2).replace(/\.00$/, '')
+    : String(totalPrice ?? '')
+
+export function formFromTournament({ tournament: t }: { tournament: NormalisedTournament }) {
+  return {
+    name: t.name || '',
+    date: t.date || '',
+    time: t.time || '',
+    location: t.location || '',
+    maxPlayers: String(t.maxPlayers || 16),
+    duration: t.duration || 90,
+    format: t.format || 'lobster_matching',
+    entryMode: t.entryMode || 'individual',
+    genderMode: t.genderMode || 'mixed',
+    courts: t.courts?.length
+      ? t.courts.map((c) => ({ name: c.name || '', booked: !!c.booked }))
+      : [{ name: '', booked: false }],
+    pricePerPerson: perPersonPrice(t),
+    tikkieLink: t.tikkieLink || '',
+    notes: t.notes || '',
+  } satisfies EventFormValues
 }
