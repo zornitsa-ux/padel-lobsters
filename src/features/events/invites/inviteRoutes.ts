@@ -1,3 +1,5 @@
+import { formatEventDate } from '../registration/utils'
+import type { TeamInvite } from '../teams/teamTypes'
 export const TEAM_INVITES_PATH = '/team-invites'
 
 export const inviteSeenKey = ({ playerId }: { playerId: string }) =>
@@ -18,3 +20,6 @@ export const shouldRedirectToInvites = ({
   alreadySeen: boolean
 }): boolean =>
   inviteCount > 0 && !alreadySeen && !EXEMPT_PREFIXES.some((p) => pathname.startsWith(p))
+
+export const inviteMessage = ({ invite }: { invite: TeamInvite }) =>
+  `${invite.captainName} has entered you as their partner for ${invite.tournamentName} on ${formatEventDate(invite.tournamentDate)}.`
