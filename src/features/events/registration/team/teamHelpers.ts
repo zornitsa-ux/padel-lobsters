@@ -16,13 +16,21 @@ export interface NewPartnerDraft {
 
 export const EMPTY_DRAFT: NewPartnerDraft = { name: '', email: '', level: '', consent: false }
 
-export const isDraftComplete = ({ draft }: { draft: NewPartnerDraft }): boolean =>
-  draft.consent && draft.name.trim() !== '' && draft.email.trim() !== ''
-
 const parseLevel = (level: string): number | null => {
   const trimmed = level.trim()
   return trimmed === '' ? null : Number(trimmed.replace(',', '.'))
 }
+
+export const isLevelValid = ({ level }: { level: string }): boolean => {
+  const value = parseLevel(level)
+  return value === null || (Number.isFinite(value) && value >= 0 && value <= 7)
+}
+
+export const isDraftComplete = ({ draft }: { draft: NewPartnerDraft }): boolean =>
+  draft.consent &&
+  draft.name.trim() !== '' &&
+  draft.email.trim() !== '' &&
+  isLevelValid({ level: draft.level })
 
 export const draftToChoice = ({ draft }: { draft: NewPartnerDraft }): PartnerChoice => {
   const partner: NewPartnerInput = {

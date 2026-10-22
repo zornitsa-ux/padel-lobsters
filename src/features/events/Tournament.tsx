@@ -8,7 +8,13 @@ import {
 } from './useTournaments'
 import { useTransfers } from './useTransfers'
 import { useRegistrations } from './useRegistrations'
-import { buildEventData, formatOption, isEntryModeLocked, isFormatLocked } from './eventFormModel'
+import {
+  buildEventData,
+  formatOption,
+  formFromTournament,
+  isEntryModeLocked,
+  isFormatLocked,
+} from './eventFormModel'
 import { Plus, Trophy, Clock } from 'lucide-react'
 import HistoryContent from '../history/History'
 import AdminTransferPanel from '../../components/AdminTransferPanel'
@@ -107,28 +113,7 @@ export default function Tournament({ onNavigate }: { onNavigate: EventNavigate }
       onNavigate?.('settings')
       return
     }
-    setForm({
-      name: t.name || '',
-      date: t.date || '',
-      time: t.time || '',
-      location: t.location || '',
-      maxPlayers: t.maxPlayers || '16',
-      duration: t.duration || 90,
-      format: t.format || 'lobster_matching',
-      entryMode: t.entryMode || 'individual',
-      genderMode: t.genderMode || 'mixed',
-      courts: t.courts?.length
-        ? t.courts.map((c) => ({ name: c.name || '', booked: !!c.booked }))
-        : [{ name: '', booked: false }],
-      pricePerPerson:
-        parseFloat(String(t.totalPrice)) > 0 && parseInt(String(t.maxPlayers)) > 0
-          ? (parseFloat(String(t.totalPrice)) / parseInt(String(t.maxPlayers)))
-              .toFixed(2)
-              .replace(/\.00$/, '')
-          : (t.totalPrice ?? ''),
-      tikkieLink: t.tikkieLink || '',
-      notes: t.notes || '',
-    })
+    setForm(formFromTournament({ tournament: t }))
     setEditId(t.id)
     setServerLocked(false)
     setShowForm(true)
