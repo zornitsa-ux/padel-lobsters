@@ -1,7 +1,8 @@
 # Team events and King of the Court: plan
 
 **Single source of truth for status.** Read it with [`DESIGN.md`](./DESIGN.md)
-(findings F-1 to F-7, the target design, rules) and
+(findings F-1 to F-7, the target design, rules),
+[`CONTRACTS.md`](./CONTRACTS.md) (exact RPC, schema and client contracts) and
 [`DECISIONS.md`](./DECISIONS.md) (D-001 onwards, append-only).
 
 **Goal.** Run a men's **team King of the Court** event:
@@ -48,7 +49,7 @@
 | ID  | Task                                                                                                                                                                                                                     | Phase | Depends on | PR  | State |
 | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----- | ---------- | --- | ----- |
 | T0  | Research, owner interview, docs                                                                                                                                                                                          | 0     | —          |     | [x]   |
-| T1  | Migration: `entry_mode`, `starting_courts_published_at`, `event_teams` (seed, final_rank), `registrations.team_id`, `covered`, `partner_invites`; team RPCs; guards on individual/transfer RPCs; `supabase/tests` script | 1     | T0         |     | [ ]   |
+| T1  | Migration: `entry_mode`, `starting_courts_published_at`, `event_teams` (seed, final_rank), `registrations.team_id`, `covered`, `partner_invites`; team RPCs; guards on individual/transfer RPCs; `supabase/tests` script | 1     | T0         | #56 | [x]   |
 | T2  | Partner invites: `admin_send_event_invite`, `event_invite` email kind + template, admin Partner invites list (not invited / invited / signed in)                                                                         | 1     | T1         |     | [ ]   |
 | T3  | Event form: Format picker, Max teams, team price                                                                                                                                                                         | 1     | T1         |     | [ ]   |
 | T4  | Join flow: partner search (active members), new-partner form, confirm + pay (captain)                                                                                                                                    | 1     | T1         |     | [ ]   |
@@ -182,3 +183,9 @@ placeholders as partners, was withdrawn by D-010: placeholders aren't offered.)
     account, and needs a ticked permission checkbox. The server requires and
     records the consent (`partner_invites.consent_confirmed_at`).
   - **D-012:** leagues will move to this partner model later (§3).
+- 2026-10-22: **T1** schema and RPCs. Contracts frozen in `CONTRACTS.md`.
+  D-013 (consent attester, admins exempt from the cap) and D-014 (team
+  invariants enforced by the database). `supabase/tests/team_events.sql`
+  covers every T1 case (19 checks). The existing DB scripts still pass. A
+  production read-only check found only `lobster_matching` events and even
+  capacities, so the new check constraints are safe.

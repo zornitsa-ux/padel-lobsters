@@ -14,6 +14,7 @@ export const registrationRowSchema = z
     payment_status: nullableString,
     payment_method: nullableString,
     created_at: z.string().nullable().optional(),
+    team_id: nullableString,
   })
   .passthrough()
 

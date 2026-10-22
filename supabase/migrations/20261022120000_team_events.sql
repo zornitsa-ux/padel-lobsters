@@ -1,0 +1,1023 @@
+-- ============================================================================
+-- Team events (docs/team-events, T1). The one migration for the initiative:
+-- Phase 2 (King of the Court seeding and final standings) writes only columns
+-- created here.
+--
+-- Contracts: docs/team-events/CONTRACTS.md. Registrations stay the per-player
+-- truth; a team is a grouping on top (DESIGN F-1). Only the team RPCs write
+-- team rows, and the database enforces that the pair never diverges.
+--
+-- Lock order is the house order from 20260806211259: tournaments row first,
+-- then registrations.
+-- ============================================================================
+
+-- ── 1. Columns and tables ───────────────────────────────────────────────────
+
+alter table public.tournaments
+  add column entry_mode text not null default 'individual',
+  add column starting_courts_published_at timestamptz,
+  add constraint tournaments_entry_mode_check check (entry_mode in ('individual', 'team')),
+  add constraint tournaments_format_check check (format in ('lobster_matching', 'king_of_court')),
+  add constraint tournaments_kotc_is_team check (format is distinct from 'king_of_court' or entry_mode = 'team'),
+  -- D-004: capacity stays in players; a team event holds whole teams.
+  add constraint tournaments_team_capacity_even check (entry_mode <> 'team' or max_players % 2 = 0);
+
+create table public.event_teams (
+  id uuid primary key default gen_random_uuid(),
+  tournament_id uuid not null references public.tournaments(id) on delete restrict,
+  captain_id uuid not null references public.players(id),
+  seed integer check (seed > 0),
+  final_rank integer check (final_rank > 0),
+  created_at timestamptz not null default clock_timestamp(),
+  created_by uuid references public.players(id) on delete set null
+);
+create index event_teams_tournament_id_idx on public.event_teams(tournament_id);
+
+alter table public.registrations
+  add column team_id uuid references public.event_teams(id) on delete restrict;
+create index registrations_team_id_idx on public.registrations(team_id) where team_id is not null;
+
+-- D-005: the partner's row on a team carries no payment of its own.
+alter table public.registrations drop constraint registrations_payment_status_check;
+alter table public.registrations add constraint registrations_payment_status_check
+  check (payment_status = any (array['unpaid', 'tikkied', 'pending_confirmation', 'paid', 'transferred', 'covered']));
+
+-- Provenance for accounts a captain created (D-010, D-011). The email lives on
+-- players.email under the normal PII scoping; this table holds no PII.
+create table public.partner_invites (
+  id uuid primary key default gen_random_uuid(),
+  player_id uuid not null unique references public.players(id) on delete cascade,
+  tournament_id uuid not null references public.tournaments(id) on delete cascade,
+  requested_by uuid not null references public.players(id),
+  consent_confirmed_at timestamptz not null,
+  created_at timestamptz not null default clock_timestamp(),
+  invited_at timestamptz,
+  invited_by uuid references public.players(id)
+);
+create index partner_invites_requested_by_idx on public.partner_invites(requested_by, created_at);
+
+-- ── 2. Access ───────────────────────────────────────────────────────────────
+
+alter table public.event_teams enable row level security;
+alter table public.partner_invites enable row level security;
+
+revoke all on public.event_teams from public, anon, authenticated;
+revoke all on public.partner_invites from public, anon, authenticated;
+
+grant select on public.event_teams to authenticated;
+-- Phase 2 seeding and final standings are admin edits of these two columns.
+grant update (seed, final_rank) on public.event_teams to authenticated;
+grant select on public.partner_invites to authenticated;
+
+create policy event_teams_read_all on public.event_teams
+  for select to authenticated using (true);
+create policy event_teams_admin_update on public.event_teams
+  for update to authenticated
+  using ((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin')
+  with check ((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin');
+create policy partner_invites_admin_read on public.partner_invites
+  for select to authenticated
+  using ((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin');
+
+-- ── 3. Invariants ───────────────────────────────────────────────────────────
+
+-- Security invoker on purpose: current_user is the API role for a direct
+-- PostgREST write and the definer (postgres) inside an RPC. That is the line
+-- between "the team RPCs" and everything else, and a client can't forge it.
+create or replace function public.registrations_guard_team_rows()
+returns trigger
+language plpgsql
+set search_path to 'pg_catalog', 'public'
+as $function$
+declare
+  v_entry_mode text;
+  v_direct boolean := current_user in ('authenticated', 'anon');
+begin
+  select t.entry_mode into v_entry_mode from public.tournaments t where t.id = NEW.tournament_id;
+
+  if v_entry_mode is distinct from 'team' then
+    if NEW.team_id is not null then
+      raise exception 'team_not_allowed' using errcode = 'P0001';
+    end if;
+    return NEW;
+  end if;
+
+  if v_direct and TG_OP = 'INSERT' then
+    raise exception 'team_event' using errcode = 'P0001';
+  end if;
+  if v_direct and (NEW.status is distinct from OLD.status
+                   or NEW.team_id is distinct from OLD.team_id
+                   or NEW.player_id is distinct from OLD.player_id
+                   or NEW.tournament_id is distinct from OLD.tournament_id) then
+    raise exception 'use_team_rpc' using errcode = 'P0001';
+  end if;
+  if NEW.status in ('registered', 'waitlist') and NEW.team_id is null then
+    raise exception 'team_required' using errcode = 'P0001';
+  end if;
+  return NEW;
+end
+$function$;
+
+create trigger registrations_guard_team_rows
+  before insert or update on public.registrations
+  for each row execute function public.registrations_guard_team_rows();
+
+-- Checked at commit, so an RPC can cancel one partner and insert the next.
+create or replace function public.registrations_team_consistent()
+returns trigger
+language plpgsql
+security definer
+set search_path to 'pg_catalog', 'public'
+as $function$
+declare
+  v_active integer;
+  v_statuses integer;
+  v_has_captain boolean;
+begin
+  select count(*),
+         count(distinct r.status),
+         coalesce(bool_or(r.player_id = et.captain_id), false)
+    into v_active, v_statuses, v_has_captain
+    from public.event_teams et
+    left join public.registrations r
+      on r.team_id = et.id and r.status in ('registered', 'waitlist')
+   where et.id = NEW.team_id
+     and r.id is not null;
+
+  if v_active = 0 then
+    return null;
+  end if;
+  if v_active <> 2 or v_statuses <> 1 or not v_has_captain then
+    raise exception 'team_inconsistent'
+      using errcode = 'P0001',
+            detail = format('Team %s has %s active rows, %s statuses, captain present: %s.',
+                            NEW.team_id, v_active, v_statuses, v_has_captain);
+  end if;
+  return null;
+end
+$function$;
+
+create constraint trigger registrations_team_consistent
+  after insert or update on public.registrations
+  deferrable initially deferred
+  for each row when (NEW.team_id is not null)
+  execute function public.registrations_team_consistent();
+
+create or replace function public.tournaments_guard_entry_mode()
+returns trigger
+language plpgsql
+security definer
+set search_path to 'pg_catalog', 'public'
+as $function$
+begin
+  if exists (
+    select 1 from public.registrations r
+     where r.tournament_id = NEW.id and r.status in ('registered', 'waitlist')
+  ) then
+    raise exception 'entry_mode_locked'
+      using errcode = 'P0001',
+            hint = 'Cancel every registration before switching between individual and team entry.';
+  end if;
+  return NEW;
+end
+$function$;
+
+create trigger tournaments_guard_entry_mode
+  before update of entry_mode on public.tournaments
+  for each row when (OLD.entry_mode is distinct from NEW.entry_mode)
+  execute function public.tournaments_guard_entry_mode();
+
+-- ── 4. Partner creation (shared with leagues later, D-012) ─────────────────
+
+create or replace function private.caller_is_admin()
+returns boolean
+language sql
+stable
+set search_path to 'pg_catalog'
+as $function$
+  select coalesce((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin', false)
+$function$;
+
+-- The first non-admin path that creates a sign-in-able account for someone
+-- else, so every bound lives here, not in the callers: consent recorded,
+-- unused email, one account per call, 3 a day per person attesting.
+create or replace function private.create_partner_player(
+  input_requested_by uuid,
+  input_tournament_id uuid,
+  input_new_partner jsonb,
+  input_consent boolean,
+  input_skip_daily_cap boolean
+)
+returns table(status text, player_id uuid)
+language plpgsql
+security definer
+set search_path to 'pg_catalog', 'public', 'extensions'
+as $function$
+declare
+  v_name text := nullif(regexp_replace(btrim(coalesce(input_new_partner ->> 'name', '')), '\s+', ' ', 'g'), '');
+  v_email text := lower(nullif(btrim(coalesce(input_new_partner ->> 'email', '')), ''));
+  v_level_text text := nullif(btrim(coalesce(input_new_partner ->> 'playtomic_level', '')), '');
+  v_level numeric := 0;
+  v_id uuid;
+begin
+  if input_consent is not true then
+    return query select 'consent_required'::text, null::uuid; return;
+  end if;
+  if v_name is null or length(v_name) > 100 then
+    return query select 'invalid_name'::text, null::uuid; return;
+  end if;
+  if not private.is_valid_email(v_email) or v_email like '%@padelobsters.internal' then
+    return query select 'invalid_email'::text, null::uuid; return;
+  end if;
+  if v_level_text is not null then
+    if v_level_text !~ '^[0-9]+(\.[0-9]+)?$' or v_level_text::numeric > 7 then
+      return query select 'invalid_level'::text, null::uuid; return;
+    end if;
+    v_level := v_level_text::numeric;
+  end if;
+  if exists (select 1 from public.players p where lower(p.email) = v_email)
+     or exists (select 1 from auth.users u where lower(u.email) = v_email) then
+    return query select 'email_in_use'::text, null::uuid; return;
+  end if;
+
+  if not input_skip_daily_cap then
+    perform pg_advisory_xact_lock(hashtextextended('partner_cap:' || input_requested_by::text, 0));
+    if (select count(*) from public.partner_invites pi
+         where pi.requested_by = input_requested_by
+           and pi.created_at > now() - interval '24 hours') >= 3 then
+      return query select 'partner_cap_reached'::text, null::uuid; return;
+    end if;
+  end if;
+
+  begin
+    insert into public.players(name, email, phone, notes, playtomic_level, adjustment, adjusted_level,
+      playtomic_username, gender, status, is_left_handed, country, avatar_url, birthday,
+      preferred_position, tagline_label, pin, pin_hash)
+    values (v_name, v_email, '', '', v_level, 0, v_level,
+      '', '', 'active', false, '', '', null,
+      '', '', null, null)
+    returning id into v_id;
+  exception when unique_violation then
+    -- A concurrent signup took the email between the check and the insert.
+    return query select 'email_in_use'::text, null::uuid; return;
+  end;
+
+  insert into public.partner_invites(player_id, tournament_id, requested_by, consent_confirmed_at)
+  values (v_id, input_tournament_id, input_requested_by, now());
+
+  return query select 'ok'::text, v_id;
+end
+$function$;
+
+-- Validates the partner for a team: an existing active member not already in
+-- the event, or a new account via create_partner_player.
+create or replace function private.resolve_team_partner(
+  input_tournament_id uuid,
+  input_exclude_player_id uuid,
+  input_partner_id uuid,
+  input_new_partner jsonb,
+  input_consent boolean
+)
+returns table(status text, player_id uuid)
+language plpgsql
+security definer
+set search_path to 'pg_catalog', 'public', 'extensions'
+as $function$
+begin
+  if (input_partner_id is null) = (input_new_partner is null)
+     or input_partner_id = input_exclude_player_id then
+    return query select 'invalid_partner'::text, null::uuid; return;
+  end if;
+
+  if input_new_partner is not null then
+    return query select * from private.create_partner_player(
+      auth.uid(), input_tournament_id, input_new_partner, input_consent, private.caller_is_admin());
+    return;
+  end if;
+
+  if not exists (
+    select 1 from public.players p where p.id = input_partner_id and p.status = 'active'
+  ) then
+    return query select 'partner_not_active'::text, null::uuid; return;
+  end if;
+  if exists (
+    select 1 from public.registrations r
+     where r.tournament_id = input_tournament_id
+       and r.player_id = input_partner_id
+       and r.status in ('registered', 'waitlist')
+  ) then
+    return query select 'partner_already_entered'::text, null::uuid; return;
+  end if;
+  return query select 'ok'::text, input_partner_id;
+end
+$function$;
+
+-- ── 5. Team RPCs ────────────────────────────────────────────────────────────
+
+create or replace function public.register_team_for_tournament(
+  input_tournament_id uuid,
+  input_captain_id uuid,
+  input_partner_id uuid default null,
+  input_new_partner jsonb default null,
+  input_partner_consent boolean default false
+)
+returns table(status text, team_id uuid, partner_id uuid)
+language plpgsql
+security definer
+set search_path to 'pg_catalog', 'public', 'extensions'
+as $function$
+declare
+  v_t public.tournaments%rowtype;
+  v_existing public.registrations%rowtype;
+  v_partner record;
+  v_count integer;
+  v_status text;
+  v_team_id uuid;
+begin
+  set local statement_timeout = '30s';
+  perform set_config('app.audit_source', 'register_team_for_tournament', true);
+
+  if auth.uid() is null then
+    raise exception 'not_authenticated' using errcode = 'P0001';
+  end if;
+  if input_captain_id is distinct from auth.uid() then
+    perform public.require_admin();
+  end if;
+
+  select * into v_t from public.tournaments t where t.id = input_tournament_id for update;
+  if not found then
+    return query select 'not_found'::text, null::uuid, null::uuid; return;
+  end if;
+  if v_t.entry_mode <> 'team' then
+    return query select 'not_team_event'::text, null::uuid, null::uuid; return;
+  end if;
+  if v_t.status = 'completed' then
+    return query select 'tournament_completed'::text, null::uuid, null::uuid; return;
+  end if;
+  if not exists (
+    select 1 from public.players p where p.id = input_captain_id and p.status = 'active'
+  ) then
+    return query select 'captain_not_active'::text, null::uuid, null::uuid; return;
+  end if;
+
+  -- A double tap lands here: report the team rather than tripping the
+  -- active-row unique index.
+  select * into v_existing
+    from public.registrations r
+   where r.tournament_id = input_tournament_id
+     and r.player_id = input_captain_id
+     and r.status in ('registered', 'waitlist')
+   limit 1;
+  if found then
+    return query
+      select ('already_' || v_existing.status)::text, v_existing.team_id,
+             (select r.player_id from public.registrations r
+               where r.team_id = v_existing.team_id
+                 and r.player_id <> input_captain_id
+                 and r.status in ('registered', 'waitlist')
+               limit 1);
+    return;
+  end if;
+
+  select * into v_partner from private.resolve_team_partner(
+    input_tournament_id, input_captain_id, input_partner_id, input_new_partner, input_partner_consent);
+  if v_partner.status <> 'ok' then
+    return query select v_partner.status, null::uuid, null::uuid; return;
+  end if;
+
+  select count(*) into v_count
+    from public.registrations r
+   where r.tournament_id = input_tournament_id and r.status = 'registered';
+  v_status := case when v_count + 2 <= v_t.max_players then 'registered' else 'waitlist' end;
+
+  insert into public.event_teams(tournament_id, captain_id, created_by)
+  values (input_tournament_id, input_captain_id, auth.uid())
+  returning id into v_team_id;
+
+  insert into public.registrations(tournament_id, player_id, status, payment_status, payment_method, team_id)
+  values (input_tournament_id, input_captain_id, v_status, 'unpaid', '', v_team_id),
+         (input_tournament_id, v_partner.player_id, v_status, 'covered', '', v_team_id);
+
+  return query select v_status, v_team_id, v_partner.player_id;
+end
+$function$;
+
+create or replace function public.change_team_partner(
+  input_team_id uuid,
+  input_partner_id uuid default null,
+  input_new_partner jsonb default null,
+  input_partner_consent boolean default false
+)
+returns table(status text, partner_id uuid)
+language plpgsql
+security definer
+set search_path to 'pg_catalog', 'public', 'extensions'
+as $function$
+declare
+  v_team public.event_teams%rowtype;
+  v_t public.tournaments%rowtype;
+  v_old public.registrations%rowtype;
+  v_partner record;
+  v_status text;
+begin
+  set local statement_timeout = '30s';
+  perform set_config('app.audit_source', 'change_team_partner', true);
+
+  if auth.uid() is null then
+    raise exception 'not_authenticated' using errcode = 'P0001';
+  end if;
+
+  select * into v_team from public.event_teams et where et.id = input_team_id;
+  if not found then
+    return query select 'not_found'::text, null::uuid; return;
+  end if;
+  if v_team.captain_id is distinct from auth.uid() then
+    perform public.require_admin();
+  end if;
+
+  select * into v_t from public.tournaments t where t.id = v_team.tournament_id for update;
+
+  select * into v_old
+    from public.registrations r
+   where r.team_id = input_team_id
+     and r.player_id <> v_team.captain_id
+     and r.status in ('registered', 'waitlist')
+   for update;
+  if not found then
+    return query select 'team_cancelled'::text, null::uuid; return;
+  end if;
+  if v_t.status = 'completed' then
+    return query select 'tournament_completed'::text, null::uuid; return;
+  end if;
+  if not private.caller_is_admin() and coalesce(public.tournament_transfers_closed(v_t.id), true) then
+    return query select 'change_closed'::text, null::uuid; return;
+  end if;
+  if input_partner_id = v_old.player_id then
+    return query select 'same_partner'::text, null::uuid; return;
+  end if;
+
+  select * into v_partner from private.resolve_team_partner(
+    v_t.id, v_team.captain_id, input_partner_id, input_new_partner, input_partner_consent);
+  if v_partner.status <> 'ok' then
+    return query select v_partner.status, null::uuid; return;
+  end if;
+
+  v_status := v_old.status;
+  update public.registrations r set status = 'cancelled' where r.id = v_old.id;
+  insert into public.registrations(tournament_id, player_id, status, payment_status, payment_method, team_id)
+  values (v_t.id, v_partner.player_id, v_status, 'covered', '', input_team_id);
+
+  return query select 'changed'::text, v_partner.player_id;
+end
+$function$;
+
+create or replace function public.admin_cancel_team(input_team_id uuid)
+returns table(status text, promoted_team_id uuid)
+language plpgsql
+security definer
+set search_path to 'pg_catalog', 'public', 'extensions'
+as $function$
+declare
+  v_team public.event_teams%rowtype;
+  v_max integer;
+  v_status text;
+  v_count integer;
+  v_promoted uuid;
+begin
+  set local statement_timeout = '30s';
+  perform set_config('app.audit_source', 'admin_cancel_team', true);
+  perform public.require_admin();
+
+  select * into v_team from public.event_teams et where et.id = input_team_id;
+  if not found then
+    return query select 'not_found'::text, null::uuid; return;
+  end if;
+
+  select t.max_players into v_max from public.tournaments t where t.id = v_team.tournament_id for update;
+
+  -- Re-read under the lock: two concurrent cancels must not both see
+  -- 'registered' and promote two teams into one opening.
+  perform 1 from public.registrations r
+   where r.team_id = input_team_id and r.status in ('registered', 'waitlist')
+   for update;
+  select max(r.status) into v_status
+    from public.registrations r
+   where r.team_id = input_team_id and r.status in ('registered', 'waitlist');
+  if v_status is null then
+    return query select 'already_cancelled'::text, null::uuid; return;
+  end if;
+
+  update public.registrations r set status = 'cancelled'
+   where r.team_id = input_team_id and r.status in ('registered', 'waitlist');
+
+  if v_status <> 'registered' then
+    return query select 'cancelled'::text, null::uuid; return;
+  end if;
+
+  select count(*) into v_count
+    from public.registrations r
+   where r.tournament_id = v_team.tournament_id and r.status = 'registered';
+  if v_count + 2 > v_max then
+    return query select 'cancelled'::text, null::uuid; return;
+  end if;
+
+  select et.id into v_promoted
+    from public.event_teams et
+   where et.tournament_id = v_team.tournament_id
+     and exists (select 1 from public.registrations r where r.team_id = et.id and r.status = 'waitlist')
+   order by et.created_at, et.id
+   limit 1;
+  if v_promoted is null then
+    return query select 'cancelled'::text, null::uuid; return;
+  end if;
+
+  update public.registrations r set status = 'registered'
+   where r.team_id = v_promoted and r.status = 'waitlist';
+  return query select 'cancelled'::text, v_promoted;
+end
+$function$;
+
+create or replace function public.admin_promote_team(input_team_id uuid)
+returns table(status text)
+language plpgsql
+security definer
+set search_path to 'pg_catalog', 'public', 'extensions'
+as $function$
+declare
+  v_team public.event_teams%rowtype;
+  v_max integer;
+  v_status text;
+  v_count integer;
+begin
+  set local statement_timeout = '30s';
+  perform set_config('app.audit_source', 'admin_promote_team', true);
+  perform public.require_admin();
+
+  select * into v_team from public.event_teams et where et.id = input_team_id;
+  if not found then
+    return query select 'not_found'::text; return;
+  end if;
+
+  select t.max_players into v_max from public.tournaments t where t.id = v_team.tournament_id for update;
+
+  perform 1 from public.registrations r
+   where r.team_id = input_team_id and r.status in ('registered', 'waitlist')
+   for update;
+  select max(r.status) into v_status
+    from public.registrations r
+   where r.team_id = input_team_id and r.status in ('registered', 'waitlist');
+  if v_status is null then
+    return query select 'not_waitlisted'::text; return;
+  end if;
+  if v_status = 'registered' then
+    return query select 'already_registered'::text; return;
+  end if;
+
+  select count(*) into v_count
+    from public.registrations r
+   where r.tournament_id = v_team.tournament_id and r.status = 'registered';
+  if v_count + 2 > v_max then
+    return query select 'tournament_full'::text; return;
+  end if;
+
+  update public.registrations r set status = 'registered'
+   where r.team_id = input_team_id and r.status = 'waitlist';
+  return query select 'promoted'::text;
+end
+$function$;
+
+create or replace function public.admin_list_partner_invites(input_tournament_id uuid default null)
+returns table(
+  player_id uuid,
+  tournament_id uuid,
+  player_name text,
+  email text,
+  requested_by uuid,
+  consent_confirmed_at timestamptz,
+  created_at timestamptz,
+  invited_at timestamptz,
+  invited_by uuid,
+  last_sign_in_at timestamptz,
+  has_active_registration boolean
+)
+language plpgsql
+security definer
+set search_path to 'pg_catalog', 'public', 'extensions'
+as $function$
+begin
+  set local statement_timeout = '30s';
+  perform public.require_admin();
+
+  return query
+    select pi.player_id, pi.tournament_id, p.name, p.email,
+           pi.requested_by, pi.consent_confirmed_at, pi.created_at,
+           pi.invited_at, pi.invited_by,
+           u.last_sign_in_at,
+           exists (
+             select 1 from public.registrations r
+              where r.player_id = pi.player_id
+                and r.status in ('registered', 'waitlist')
+                and (input_tournament_id is null or r.tournament_id = input_tournament_id)
+           )
+      from public.partner_invites pi
+      join public.players p on p.id = pi.player_id
+      left join auth.users u on u.id = pi.player_id
+     where input_tournament_id is null or pi.tournament_id = input_tournament_id
+     order by pi.created_at;
+end
+$function$;
+
+-- ── 6. Guards on the individual RPCs ────────────────────────────────────────
+-- Bodies as in 20260806211259 (register, cancel, promote), 20260923101407
+-- (create_transfer) and 20260919123328 (apply_registration_transfer), plus the
+-- team-event guard. A transfer or an individual cancel would split a team.
+
+create or replace function public.register_for_tournament(
+  input_tournament_id uuid,
+  input_player_id uuid
+)
+returns table(status text, registration_id uuid)
+language plpgsql
+security definer
+set search_path to 'pg_catalog', 'public', 'extensions'
+as $function$
+declare
+  v_max integer;
+  v_entry_mode text;
+  v_count integer;
+  v_existing public.registrations%rowtype;
+  v_status text;
+  v_id uuid;
+begin
+  set local statement_timeout = '30s';
+  perform set_config('app.audit_source', 'register_for_tournament', true);
+
+  if auth.uid() is null then
+    raise exception 'not_authenticated' using errcode = 'P0001';
+  end if;
+  if input_player_id is distinct from auth.uid() then
+    perform public.require_admin();
+  end if;
+
+  select t.max_players, t.entry_mode into v_max, v_entry_mode
+    from public.tournaments t where t.id = input_tournament_id
+   for update;
+  if not found then
+    return query select 'not_found'::text, null::uuid; return;
+  end if;
+  if v_entry_mode = 'team' then
+    return query select 'team_event'::text, null::uuid; return;
+  end if;
+
+  -- An active row already exists: report it rather than tripping
+  -- registrations_tournament_player_active_uniq. A double-tap lands here.
+  select * into v_existing
+    from public.registrations r
+   where r.tournament_id = input_tournament_id
+     and r.player_id = input_player_id
+     and r.status in ('registered', 'waitlist')
+   limit 1;
+  if found then
+    return query select ('already_' || v_existing.status)::text, v_existing.id; return;
+  end if;
+
+  select count(*) into v_count
+    from public.registrations r
+   where r.tournament_id = input_tournament_id
+     and r.status = 'registered';
+
+  v_status := case when v_count < v_max then 'registered' else 'waitlist' end;
+
+  -- A new row rather than reviving a cancelled one: the cancellation stays in
+  -- the record, and registration_status_events shows both.
+  insert into public.registrations (tournament_id, player_id, status, payment_status, payment_method)
+  values (input_tournament_id, input_player_id, v_status, 'unpaid', '')
+  returning id into v_id;
+
+  return query select v_status, v_id;
+end
+$function$;
+
+create or replace function public.cancel_registration(input_registration_id uuid)
+returns table(status text, promoted_registration_id uuid, promoted_player_id uuid)
+language plpgsql
+security definer
+set search_path to 'pg_catalog', 'public', 'extensions'
+as $function$
+declare
+  v_tournament_id uuid;
+  v_team_id uuid;
+  v_reg public.registrations%rowtype;
+  v_max integer;
+  v_count integer;
+  v_freed_a_spot boolean;
+  v_promoted public.registrations%rowtype;
+begin
+  set local statement_timeout = '30s';
+  perform set_config('app.audit_source', 'cancel_registration', true);
+  perform public.require_admin();
+
+  -- First read is only for the tournament id, so the locks can be taken in the
+  -- house order: tournament, then registration. The status is deliberately read
+  -- again below rather than trusted from here — two concurrent cancels of the
+  -- same row would otherwise both see 'registered', both set v_freed_a_spot,
+  -- and promote two waitlisters into one freed spot.
+  select r.tournament_id, r.team_id into v_tournament_id, v_team_id
+    from public.registrations r where r.id = input_registration_id;
+  if not found then
+    return query select 'not_found'::text, null::uuid, null::uuid; return;
+  end if;
+  if v_team_id is not null then
+    return query select 'use_cancel_team'::text, null::uuid, null::uuid; return;
+  end if;
+
+  select t.max_players into v_max
+    from public.tournaments t where t.id = v_tournament_id
+   for update;
+
+  select * into v_reg from public.registrations r
+   where r.id = input_registration_id
+   for update;
+  if not found then
+    return query select 'not_found'::text, null::uuid, null::uuid; return;
+  end if;
+  if v_reg.status = 'cancelled' then
+    return query select 'already_cancelled'::text, null::uuid, null::uuid; return;
+  end if;
+
+  v_freed_a_spot := v_reg.status = 'registered';
+
+  update public.registrations r set status = 'cancelled' where r.id = v_reg.id;
+
+  if not v_freed_a_spot then
+    return query select 'cancelled'::text, null::uuid, null::uuid; return;
+  end if;
+
+  select count(*) into v_count
+    from public.registrations r
+   where r.tournament_id = v_reg.tournament_id
+     and r.status = 'registered';
+
+  -- Only promote into an actual opening. On an event that is still over
+  -- capacity — LOBS #10 is, at 26/24 — this promotes nobody, so the event
+  -- converges back to its cap as people drop out instead of holding at 26.
+  if v_count >= v_max then
+    return query select 'cancelled'::text, null::uuid, null::uuid; return;
+  end if;
+
+  select * into v_promoted
+    from public.registrations r
+   where r.tournament_id = v_reg.tournament_id
+     and r.status = 'waitlist'
+   order by r.created_at, r.id
+   limit 1;
+  if not found then
+    return query select 'cancelled'::text, null::uuid, null::uuid; return;
+  end if;
+
+  update public.registrations r set status = 'registered' where r.id = v_promoted.id;
+
+  return query select 'cancelled'::text, v_promoted.id, v_promoted.player_id;
+end
+$function$;
+
+create or replace function public.promote_waitlist_registration(input_registration_id uuid)
+returns table(status text)
+language plpgsql
+security definer
+set search_path to 'pg_catalog', 'public', 'extensions'
+as $function$
+declare
+  v_reg public.registrations%rowtype;
+  v_max integer;
+  v_count integer;
+begin
+  set local statement_timeout = '30s';
+  perform set_config('app.audit_source', 'promote_waitlist_registration', true);
+  perform public.require_admin();
+
+  select * into v_reg from public.registrations r where r.id = input_registration_id;
+  if not found then
+    return query select 'not_found'::text; return;
+  end if;
+  if v_reg.team_id is not null then
+    return query select 'use_promote_team'::text; return;
+  end if;
+  if v_reg.status = 'registered' then
+    return query select 'already_registered'::text; return;
+  end if;
+  if v_reg.status <> 'waitlist' then
+    return query select 'not_waitlisted'::text; return;
+  end if;
+
+  select t.max_players into v_max
+    from public.tournaments t where t.id = v_reg.tournament_id
+   for update;
+
+  select count(*) into v_count
+    from public.registrations r
+   where r.tournament_id = v_reg.tournament_id
+     and r.status = 'registered';
+
+  if v_count >= v_max then
+    return query select 'tournament_full'::text; return;
+  end if;
+
+  update public.registrations r set status = 'registered' where r.id = v_reg.id;
+  return query select 'promoted'::text;
+end
+$function$;
+
+create or replace function public.create_transfer(
+  input_to_player_id uuid,
+  input_tournament_id uuid,
+  input_from_player_id uuid default null
+)
+ returns table(transfer_id uuid, status text)
+ language plpgsql
+ security definer
+ set search_path to 'pg_catalog', 'public', 'extensions'
+as $function$
+declare
+  v_caller_id uuid;
+  v_from_player_id uuid;
+  v_target_status text;
+  v_existing_pending uuid;
+  v_closed boolean;
+  v_new_id uuid;
+begin
+  set local statement_timeout = '30s';
+  v_caller_id := auth.uid();
+  if v_caller_id is null then
+    raise exception 'not_authenticated' using errcode = 'P0001';
+  end if;
+
+  v_from_player_id := coalesce(input_from_player_id, v_caller_id);
+
+  -- Acting on someone else's registration requires admin. This is the
+  -- server-side gate; the client is never trusted to decide it may transfer
+  -- another player's spot just because it asked to.
+  if v_from_player_id is distinct from v_caller_id then
+    perform public.require_admin();
+  end if;
+
+  if exists (
+    select 1 from public.tournaments t where t.id = input_tournament_id and t.entry_mode = 'team'
+  ) then
+    return query select null::uuid, 'team_event'::text; return;
+  end if;
+
+  if input_to_player_id is null or input_to_player_id = v_from_player_id then
+    return query select null::uuid, 'invalid_target'::text; return;
+  end if;
+  if not exists (
+    select 1 from public.players p
+     where p.id = input_to_player_id and coalesce(p.status, 'active') = 'active'
+  ) then
+    return query select null::uuid, 'invalid_target'::text; return;
+  end if;
+  if not exists (
+    select 1 from public.registrations r
+     where r.tournament_id = input_tournament_id
+       and r.player_id = v_from_player_id
+       and r.status = 'registered'
+  ) then
+    return query select null::uuid, 'not_registered'::text; return;
+  end if;
+  select r.status into v_target_status
+    from public.registrations r
+   where r.tournament_id = input_tournament_id
+     and r.player_id = input_to_player_id
+     and r.status = 'registered'
+   limit 1;
+  if v_target_status = 'registered' then
+    return query select null::uuid, 'target_already_registered'::text; return;
+  end if;
+  v_closed := public.tournament_transfers_closed(input_tournament_id);
+  if coalesce(v_closed, true) then
+    return query select null::uuid, 'transfers_closed'::text; return;
+  end if;
+  select rt.id into v_existing_pending
+    from public.registration_transfers rt
+   where rt.tournament_id = input_tournament_id
+     and rt.from_player_id = v_from_player_id
+     and rt.status = 'pending'
+   limit 1;
+  if v_existing_pending is not null then
+    return query select v_existing_pending, 'already_pending'::text; return;
+  end if;
+  insert into public.registration_transfers (tournament_id, from_player_id, to_player_id)
+  values (input_tournament_id, v_from_player_id, input_to_player_id)
+  returning id into v_new_id;
+  return query select v_new_id, 'ok'::text;
+end
+$function$;
+
+create or replace function public.apply_registration_transfer(input_transfer_id uuid)
+ returns text
+ language plpgsql
+ security definer
+ set search_path to 'pg_catalog', 'public', 'extensions'
+as $function$
+declare
+  v_xfer public.registration_transfers%rowtype;
+  v_entry_mode text;
+  v_from_reg_id uuid;
+  v_from_payment_status text;
+  v_new_payment_status text;
+  v_to_reg_id uuid;
+  v_to_status text;
+begin
+  select * into v_xfer from public.registration_transfers where id = input_transfer_id;
+  if not found then
+    return 'not_found';
+  end if;
+
+  select t.entry_mode into v_entry_mode from public.tournaments t where t.id = v_xfer.tournament_id for update;
+  if v_entry_mode = 'team' then
+    return 'team_event';
+  end if;
+
+  select r.id, r.payment_status into v_from_reg_id, v_from_payment_status
+    from public.registrations r
+   where r.tournament_id = v_xfer.tournament_id
+     and r.player_id = v_xfer.from_player_id
+     and r.status = 'registered'
+   for update;
+
+  if v_from_reg_id is null then
+    return 'from_not_registered';
+  end if;
+
+  v_new_payment_status := case when v_from_payment_status = 'paid' then 'paid' else 'unpaid' end;
+
+  select r.id, r.status into v_to_reg_id, v_to_status
+    from public.registrations r
+   where r.tournament_id = v_xfer.tournament_id
+     and r.player_id = v_xfer.to_player_id
+     and r.status in ('registered', 'waitlist')
+   for update;
+
+  if v_to_status = 'registered' then
+    return 'to_already_registered';
+  end if;
+
+  update public.registrations r
+     set status = 'cancelled',
+         payment_method = 'transferred_to:' || v_xfer.to_player_id::text
+   where r.id = v_from_reg_id;
+
+  if v_to_reg_id is not null then
+    update public.registrations r
+       set status = 'registered',
+           payment_status = v_new_payment_status,
+           payment_method = 'transferred_from:' || v_xfer.from_player_id::text
+     where r.id = v_to_reg_id;
+  else
+    insert into public.registrations (tournament_id, player_id, status, payment_status, payment_method)
+    values (
+      v_xfer.tournament_id,
+      v_xfer.to_player_id,
+      'registered',
+      v_new_payment_status,
+      'transferred_from:' || v_xfer.from_player_id::text
+    );
+  end if;
+
+  -- Schedule state is separate from registration state: a match generated
+  -- before this transfer was accepted still points at from_player_id. Keep
+  -- it truthful, or Finish Tournament's rating fold-in breaks on a player id
+  -- that no longer has a 'registered' row. array_replace is a no-op on rows
+  -- where the id isn't present.
+  update public.matches m
+     set team1_ids = array_replace(m.team1_ids, v_xfer.from_player_id, v_xfer.to_player_id),
+         team2_ids = array_replace(m.team2_ids, v_xfer.from_player_id, v_xfer.to_player_id)
+   where m.tournament_id = v_xfer.tournament_id
+     and (v_xfer.from_player_id = any(m.team1_ids) or v_xfer.from_player_id = any(m.team2_ids));
+
+  return 'accepted';
+end
+$function$;
+
+-- ── 7. Grants ───────────────────────────────────────────────────────────────
+-- Deny-all baseline (20260727194010). CREATE OR REPLACE kept the existing
+-- grants on the six guarded functions.
+
+revoke execute on function public.registrations_guard_team_rows() from public, anon, authenticated;
+revoke execute on function public.registrations_team_consistent() from public, anon, authenticated;
+revoke execute on function public.tournaments_guard_entry_mode() from public, anon, authenticated;
+revoke execute on function private.caller_is_admin() from public, anon, authenticated;
+revoke execute on function private.create_partner_player(uuid, uuid, jsonb, boolean, boolean) from public, anon, authenticated;
+revoke execute on function private.resolve_team_partner(uuid, uuid, uuid, jsonb, boolean) from public, anon, authenticated;
+
+revoke execute on function public.register_team_for_tournament(uuid, uuid, uuid, jsonb, boolean) from public, anon;
+revoke execute on function public.change_team_partner(uuid, uuid, jsonb, boolean) from public, anon;
+revoke execute on function public.admin_cancel_team(uuid) from public, anon;
+revoke execute on function public.admin_promote_team(uuid) from public, anon;
+revoke execute on function public.admin_list_partner_invites(uuid) from public, anon;
+
+grant execute on function public.register_team_for_tournament(uuid, uuid, uuid, jsonb, boolean) to authenticated;
+grant execute on function public.change_team_partner(uuid, uuid, jsonb, boolean) to authenticated;
+grant execute on function public.admin_cancel_team(uuid) to authenticated;
+grant execute on function public.admin_promote_team(uuid) to authenticated;
+grant execute on function public.admin_list_partner_invites(uuid) to authenticated;

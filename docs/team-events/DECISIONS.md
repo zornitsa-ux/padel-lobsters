@@ -194,3 +194,39 @@ synthetic sign-in accounts that PIN removal T17 is trying to retire.
   removed
 - `register_team_for_tournament`'s new-partner logic should become a shared
   private function, so that leagues reuse it rather than copy it
+
+## D-013 — Who attests consent, and the daily cap for admins (2026-10-22)
+
+**Decision:** `partner_invites.requested_by` is the person who ticked the
+consent box: the captain, or the admin when an admin enters or changes a team
+on someone's behalf. Admins are exempt from the 3-a-day new-partner cap.
+
+**Why:** The attestation has to name whoever actually gave it (D-011). An
+admin entering teams for people at the bar is the legitimate high-volume case,
+and admin actions are already trusted elsewhere.
+
+**Impact:** CONTRACTS §2. The Partner invites list (T2) shows "added by"
+from `requested_by`.
+
+## D-014 — Team invariants are enforced by the database (2026-10-22)
+
+**Decision:** Beyond the RPC rules, the database refuses anything that would
+split a team:
+
+- A trigger rejects direct (PostgREST) inserts and status, team, player or
+  event changes on team-event registrations. Only the `security definer` team
+  RPCs can make them. Payment edits stay allowed.
+- A deferred constraint trigger checks at commit that every team has 0 or 2
+  active rows, with one status and the captain present.
+- `entry_mode` can't change while anyone is entered.
+- `promote_waitlist_registration` refuses team rows (`use_promote_team`), as
+  `cancel_registration` does (`use_cancel_team`).
+- `event_teams.seed` and `final_rank` are admin-writable columns, so Phase 2
+  stays client-only.
+
+**Why:** Players can write their own `registrations` rows directly (RLS self
+insert and update, used by the payment sheet), so an RPC-only rule could be
+bypassed. A test alone would only show that today's code is right; the
+constraint keeps it right.
+
+**Impact:** CONTRACTS §1 "Invariants", §3.6. T1 tests 14–16 and 18.
