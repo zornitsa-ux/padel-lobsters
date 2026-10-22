@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState, type FormEvent } from 'react'
+import React, { useCallback, type ComponentProps, useMemo, useState, type FormEvent } from 'react'
 import { useApp } from '../../context/useApp'
 import { useUpdateTournament } from './useTournaments'
 import { useTransfers, useTransferActions } from './useTransfers'
@@ -35,6 +35,8 @@ import RegistrationPaymentSheetModal from './registration/RegistrationPaymentShe
 import AddPlayerCard from './registration/AddPlayerCard'
 import JoinEventCard from './registration/JoinEventCard'
 import { useSelfRegister } from './registration/useSelfRegister'
+import { rosterLine } from './registration/team/teamHelpers'
+import TeamTransferCard from './registration/team/TeamTransferCard'
 import TransferSpotCard from './registration/TransferSpotCard'
 import { myRegistrationSummary } from './nextMatch'
 import RegisteredSection from './registration/RegisteredSection'
@@ -511,30 +513,36 @@ export default function Registration({
 
       {/* Spot-transfer flow — payment lives on /me; this stays here since /me
           deliberately doesn't host transfers. */}
-      {!isTeamEvent && !isAdmin && claimedId && !isCompleted && (
-        <TransferSpotCard
-          myReg={myReg}
-          pendingFromMe={pendingFromMe}
-          incomingForMe={incomingForMe}
-          respondingTo={respondingTo}
-          transfersClosed={transfersClosed}
-          whatsappLink={settings?.whatsappLink}
-          onStartTransfer={startTransfer}
-          onCancelMyOffer={handleCancelMyOffer}
-          onOpenShareModal={setShareModal}
-          onIncomingResponse={handleIncomingResponse}
-          getPlayer={getPlayer}
+      {!isAdmin && claimedId && !isCompleted && (
+        <TransferSection
+          tournamentId={tournament.id}
+          viewerId={claimedId}
+          regs={regs}
+          isTeamEvent={isTeamEvent}
+          card={{
+            myReg,
+            pendingFromMe,
+            incomingForMe,
+            respondingTo,
+            transfersClosed,
+            whatsappLink: settings?.whatsappLink,
+            onStartTransfer: startTransfer,
+            onCancelMyOffer: handleCancelMyOffer,
+            onOpenShareModal: setShareModal,
+            onIncomingResponse: handleIncomingResponse,
+            getPlayer,
+          }}
         />
       )}
 
       {/* 3. Roster — the two numbers that matter. */}
       {!isCompleted && (
-        <p className="text-sm font-semibold text-lob-slate px-1">
-          {registered.length} of {maxPlayers}
-          {waitlisted.length > 0 && (
-            <span className="text-lob-muted font-normal"> · {waitlisted.length} waiting</span>
-          )}
-        </p>
+        <RosterLine
+          isTeamEvent={isTeamEvent}
+          registered={registered.length}
+          waitlisted={waitlisted.length}
+          maxPlayers={maxPlayers}
+        />
       )}
 
       {isTeamEvent && isAdmin && (
@@ -667,5 +675,50 @@ export default function Registration({
         setCourt={setEditCourt}
       />
     </div>
+  )
+}
+
+function TransferSection({
+  tournamentId,
+  viewerId,
+  regs,
+  isTeamEvent,
+  card,
+}: {
+  tournamentId: string
+  viewerId: string
+  regs: NormalisedRegistration[]
+  isTeamEvent: boolean
+  card: ComponentProps<typeof TransferSpotCard>
+}) {
+  if (!isTeamEvent) return <TransferSpotCard {...card} />
+  return (
+    <TeamTransferCard tournamentId={tournamentId} viewerId={viewerId} regs={regs} card={card} />
+  )
+}
+
+function RosterLine({
+  isTeamEvent,
+  registered,
+  waitlisted,
+  maxPlayers,
+}: {
+  isTeamEvent: boolean
+  registered: number
+  waitlisted: number
+  maxPlayers: number
+}) {
+  const teams = rosterLine({
+    registeredPlayers: registered,
+    waitlistedPlayers: waitlisted,
+    maxPlayers,
+  })
+  const main = isTeamEvent ? teams.main : `${registered} of ${maxPlayers}`
+  const waiting = isTeamEvent ? teams.waiting : waitlisted > 0 ? `${waitlisted} waiting` : null
+  return (
+    <p className="text-sm font-semibold text-lob-slate px-1">
+      {main}
+      {waiting && <span className="text-lob-muted font-normal"> · {waiting}</span>}
+    </p>
   )
 }

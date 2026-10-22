@@ -9,6 +9,7 @@ import ChangePartnerPanel from './ChangePartnerPanel'
 interface TeamRowProps {
   entry: TeamEntry
   label: string
+  partnerName: string
   position: string
   tournamentId: string
   candidates: Player[]
@@ -21,6 +22,7 @@ interface TeamRowProps {
 export default function TeamRow({
   entry,
   label,
+  partnerName,
   position,
   tournamentId,
   candidates,
@@ -37,6 +39,9 @@ export default function TeamRow({
         <span className="text-xs text-lob-muted w-6 text-center font-bold">{position}</span>
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-sm text-lob-dark truncate">{label}</p>
+          <p className={`text-xs ${entry.confirmed ? 'text-green-700' : 'text-amber-700'}`}>
+            {entry.confirmed ? 'Confirmed' : `Waiting for ${partnerName} to accept`}
+          </p>
           {neverSignedIn && (
             <p className="text-xs text-amber-700">Partner hasn&apos;t signed in yet</p>
           )}

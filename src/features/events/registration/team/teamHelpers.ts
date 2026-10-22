@@ -1,7 +1,7 @@
 import { pricePerPlayer } from '../../eventHelpers'
 import type { Player } from '../../../../lib/normalise'
 import type { NormalisedRegistration } from '../../registrationQueries'
-import type { NewPartnerInput, PartnerChoice, TeamEntry } from '../../teams/teamTypes'
+import type { EventTeam, NewPartnerInput, PartnerChoice, TeamEntry } from '../../teams/teamTypes'
 import type { DisplayName, GetPlayer } from '../utils'
 
 export const PARTNER_CONSENT_LABEL =
@@ -113,6 +113,16 @@ export const teamLabel = ({
     .filter(Boolean)
     .join(' & ')
 
+export const partnerNameOf = ({
+  entry,
+  getPlayer,
+  displayName,
+}: {
+  entry: TeamEntry
+  getPlayer: GetPlayer
+  displayName: DisplayName
+}): string => nameOf({ reg: entry.partner, getPlayer, displayName }) || 'the partner'
+
 export const signupNotices = ({
   status,
   choice,
@@ -131,12 +141,72 @@ export const signupNotices = ({
     status === 'waitlist'
       ? [waitlistNotice]
       : [viewerIsCaptain ? `You and ${partnerName} are signed up.` : 'The team is signed up.']
-  return choice.kind === 'new'
-    ? [
-        ...base,
-        `${partnerName} can sign in with ${choice.partner.email} any time to see the event. Let them know!`,
-      ]
-    : base
+  const ask =
+    choice.kind === 'new'
+      ? `${partnerName} can sign in with ${choice.partner.email} to accept. Let them know!`
+      : `We've asked ${partnerName} to accept in the app. Let them know!`
+  return [...base, ask]
+}
+
+export const teamCount = ({ players }: { players: number }): number => Math.floor(players / 2)
+
+export const rosterLine = ({
+  registeredPlayers,
+  waitlistedPlayers,
+  maxPlayers,
+}: {
+  registeredPlayers: number
+  waitlistedPlayers: number
+  maxPlayers: number
+}): { main: string; waiting: string | null } => {
+  const waiting = teamCount({ players: waitlistedPlayers })
+  return {
+    main: `${teamCount({ players: registeredPlayers })} of ${teamCount({ players: maxPlayers })} teams`,
+    waiting: waiting > 0 ? `${waiting} ${waiting === 1 ? 'team' : 'teams'} waiting` : null,
+  }
+}
+
+export type EndedTeamNotice = { kind: 'partner_declined' | 'admin_cancelled'; partnerName: string }
+
+const cancelledTeamOf = ({
+  teams,
+  regs,
+  viewerId,
+}: {
+  teams: EventTeam[]
+  regs: NormalisedRegistration[]
+  viewerId: string
+}): EventTeam | null => {
+  const mine = new Set(regs.filter((r) => r.playerId === viewerId && r.teamId).map((r) => r.teamId))
+  const own = teams.filter((t) => t.captainId === viewerId || mine.has(t.id))
+  return own.sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0] ?? null
+}
+
+// The viewer's latest team here when it ended without them cancelling it.
+// Only a captain is told about a decline; their partner just declined.
+export const endedTeamNotice = ({
+  teams,
+  regs,
+  viewerId,
+  getPlayer,
+  displayName,
+}: {
+  teams: EventTeam[]
+  regs: NormalisedRegistration[]
+  viewerId: string
+  getPlayer: GetPlayer
+  displayName: DisplayName
+}): EndedTeamNotice | null => {
+  const hasActive = regs.some(
+    (r) => r.playerId === viewerId && (r.status === 'registered' || r.status === 'waitlist'),
+  )
+  const team = hasActive ? null : cancelledTeamOf({ teams, regs, viewerId })
+  const reason = team?.cancelledReason
+  if (!team || (reason !== 'partner_declined' && reason !== 'admin_cancelled')) return null
+  if (reason === 'partner_declined' && team.captainId !== viewerId) return null
+  const other = regs.find((r) => r.teamId === team.id && r.playerId !== viewerId)
+  const otherPlayer = other ? getPlayer(other.playerId) : undefined
+  return { kind: reason, partnerName: otherPlayer ? displayName(otherPlayer) : 'Your partner' }
 }
 
 export const findMyEntry = ({

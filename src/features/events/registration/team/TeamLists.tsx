@@ -10,7 +10,7 @@ import { useEventTeams, usePartnerInvites, useTeamActions } from '../../teams/us
 import type { NormalisedTournament } from '../../tournamentQueries'
 import type { DisplayName, GetPlayer } from '../utils'
 import TeamRow from './TeamRow'
-import { eligiblePlayers, teamLabel } from './teamHelpers'
+import { eligiblePlayers, partnerNameOf, teamLabel } from './teamHelpers'
 
 interface TeamListsProps {
   tournament: NormalisedTournament
@@ -67,6 +67,7 @@ export default function TeamLists({
       key={entry.team.id}
       entry={entry}
       label={labelOf(entry)}
+      partnerName={partnerNameOf({ entry, getPlayer, displayName })}
       position={position}
       tournamentId={tournamentId}
       candidates={candidates}
