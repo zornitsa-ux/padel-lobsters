@@ -55,7 +55,7 @@
 | T5  | Team card + registration list (teams, waitlist, change partner, transfers hidden)                                                                                                                                        | 1     | T1         |     | [ ]   |
 | T6  | Admin: add/cancel/promote team, change partner, team Payments view + reminder                                                                                                                                            | 1     | T1         |     | [ ]   |
 | T7  | Verify Phase 1 locally (rehearsal data) → **R1**                                                                                                                                                                         | 1     | T1, T3–T6  |     | [ ]   |
-| T8  | King of the Court domain (pure, tests first): `teamStrength`, `seedTeams`, `startingCourts`, `rankFromFinalCourts`                                                                                                       | 2     | T0         |     | [ ]   |
+| T8  | King of the Court domain (pure, tests first): `teamStrength`, `seedTeams`, `startingCourts`, `rankFromFinalCourts`                                                                                                       | 2     | T0         |     | [x]   |
 | T9  | Lifecycle: `eventPhase` King of the Court branch, Finish with zero matches + no ratings, matcher guard                                                                                                                   | 2     | T1         |     | [ ]   |
 | T10 | Admin: seed reorder + Publish starting courts; Final standings entry                                                                                                                                                     | 2     | T8         |     | [ ]   |
 | T11 | Player views: starting court on Schedule / MyTournament / upcoming card; Results ranking; Lobster Review rank                                                                                                            | 2     | T8, T9     |     | [ ]   |
@@ -182,3 +182,4 @@ placeholders as partners, was withdrawn by D-010: placeholders aren't offered.)
     account, and needs a ticked permission checkbox. The server requires and
     records the consent (`partner_invites.consent_confirmed_at`).
   - **D-012:** leagues will move to this partner model later (§3).
+- 2026-10-22: T8 KotC domain: pure seeding, starting-court and final-rank functions with Zod contracts and tests in `src/features/events/kingOfCourt/domain/`.
