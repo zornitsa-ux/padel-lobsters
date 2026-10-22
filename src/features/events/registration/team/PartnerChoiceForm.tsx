@@ -4,12 +4,13 @@ import type { PartnerChoice } from '../../teams/teamTypes'
 import type { DisplayName } from '../utils'
 import NewPartnerForm from './NewPartnerForm'
 import PlayerPicker from './PlayerPicker'
-import { EMPTY_DRAFT, draftToChoice, isDraftComplete } from './teamHelpers'
+import { choiceToDraft, draftToChoice, isDraftComplete } from './teamHelpers'
 
 interface PartnerChoiceFormProps {
   candidates: Player[]
   displayName: DisplayName
   submitLabel: string
+  initialChoice?: PartnerChoice | null
   busy?: boolean
   error?: string
   onSubmit: (args: { choice: PartnerChoice }) => void
@@ -20,14 +21,19 @@ export default function PartnerChoiceForm({
   candidates,
   displayName,
   submitLabel,
+  initialChoice = null,
   busy = false,
   error = '',
   onSubmit,
   onCancel,
 }: PartnerChoiceFormProps) {
-  const [mode, setMode] = useState<'search' | 'new'>('search')
-  const [selectedId, setSelectedId] = useState('')
-  const [draft, setDraft] = useState(EMPTY_DRAFT)
+  const [mode, setMode] = useState<'search' | 'new'>(
+    initialChoice?.kind === 'new' ? 'new' : 'search',
+  )
+  const [selectedId, setSelectedId] = useState(
+    initialChoice?.kind === 'member' ? initialChoice.playerId : '',
+  )
+  const [draft, setDraft] = useState(() => choiceToDraft({ choice: initialChoice }))
 
   const isNew = mode === 'new'
   const ready = isNew ? isDraftComplete({ draft }) : selectedId !== ''
