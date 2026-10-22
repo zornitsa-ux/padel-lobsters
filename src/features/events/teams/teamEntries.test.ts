@@ -10,11 +10,26 @@ const team = (id: string, captainId: string, createdAt: string): EventTeam => ({
   seed: null,
   finalRank: null,
   createdAt,
+  cancelledAt: null,
+  cancelledReason: null,
 })
 
-const reg = (id: string, playerId: string, status: string, teamId: string | null) =>
+const reg = (
+  id: string,
+  playerId: string,
+  status: string,
+  teamId: string | null,
+  acceptedAt: string | null = '2026-10-22T09:00:00Z',
+) =>
   normaliseRegistrations([
-    { id, tournament_id: 'e1', player_id: playerId, status, team_id: teamId },
+    {
+      id,
+      tournament_id: 'e1',
+      player_id: playerId,
+      status,
+      team_id: teamId,
+      accepted_at: acceptedAt,
+    },
   ])[0]
 
 describe('buildTeamEntries', () => {
@@ -50,5 +65,18 @@ describe('buildTeamEntries', () => {
     })
     expect(entries).toHaveLength(1)
     expect(entries[0].partner.playerId).toBe('p5')
+  })
+
+  it('marks a team confirmed only once the partner has accepted', () => {
+    const entries = buildTeamEntries({
+      teams: [team('t1', 'p1', '2026-10-22T09:00:00Z'), team('t2', 'p3', '2026-10-22T10:00:00Z')],
+      registrations: [
+        reg('r1', 'p1', 'registered', 't1'),
+        reg('r2', 'p2', 'registered', 't1', null),
+        reg('r3', 'p3', 'registered', 't2'),
+        reg('r4', 'p4', 'registered', 't2'),
+      ],
+    })
+    expect(entries.map((e) => e.confirmed)).toEqual([false, true])
   })
 })

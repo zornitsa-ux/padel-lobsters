@@ -1,10 +1,19 @@
 import type {
+  CancelMyTeamStatus,
   CancelTeamStatus,
   ChangePartnerStatus,
   PartnerError,
   PromoteTeamStatus,
   RegisterTeamStatus,
+  RespondInviteStatus,
 } from './teamTypes'
+
+// D-015 copy. We hold spots for complete teams, so a decline cancels the team.
+export const COMPLETE_TEAMS_NOTE =
+  'We keep spots for complete teams. Your partner needs to accept; if they decline, your team is cancelled and the spots go to the next team on the waitlist.'
+
+export const PARTNER_DECLINED_NOTICE = (partnerName: string) =>
+  `${partnerName} declined, so your team was cancelled. We keep spots for complete teams. Sign up again with another partner if you'd still like to play.`
 
 // Every non-success status from the team RPCs (CONTRACTS.md §3) has words, so
 // a rejected form or button never looks like it did nothing.
@@ -39,8 +48,26 @@ export const CHANGE_PARTNER_MESSAGES: Partial<Record<ChangePartnerStatus | 'erro
   not_found: 'That team no longer exists. Refresh and try again.',
   team_cancelled: 'That team has been cancelled.',
   tournament_completed: 'This event has already finished.',
+  partner_accepted: 'Your partner has already accepted. Ask an admin to change the team.',
   change_closed: 'Partner changes close 12 hours before the start. Ask an admin.',
   same_partner: 'That is already your partner.',
+}
+
+export const CANCEL_MY_TEAM_MESSAGES: Partial<Record<CancelMyTeamStatus | 'error', string>> = {
+  error: 'Could not cancel your team. Please try again.',
+  not_found: 'That team no longer exists. Refresh and try again.',
+  team_cancelled: 'That team has already been cancelled.',
+  tournament_completed: 'This event has already finished.',
+  partner_accepted:
+    'Your partner has accepted, so the team is confirmed. You can transfer your spot instead.',
+  cancel_closed: 'Cancelling closes 12 hours before the start. Ask an admin.',
+}
+
+export const RESPOND_INVITE_MESSAGES: Partial<Record<RespondInviteStatus | 'error', string>> = {
+  error: 'Could not save your answer. Please try again.',
+  not_found: 'This invite is no longer open. The captain may have changed the team.',
+  not_pending: "You've already answered this invite.",
+  tournament_started: 'This event has already started.',
 }
 
 export const CANCEL_TEAM_MESSAGES: Partial<Record<CancelTeamStatus | 'error', string>> = {

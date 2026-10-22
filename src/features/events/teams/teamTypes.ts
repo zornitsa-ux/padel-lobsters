@@ -13,13 +13,20 @@ export interface EventTeam {
   seed: number | null
   finalRank: number | null
   createdAt: string
+  cancelledAt: string | null
+  cancelledReason: TeamCancelReason | null
 }
+
+export type TeamCancelReason = 'partner_declined' | 'captain_cancelled' | 'admin_cancelled'
 
 export interface TeamEntry {
   team: EventTeam
   status: 'registered' | 'waitlist'
   captain: NormalisedRegistration
   partner: NormalisedRegistration
+  // D-015: false until the partner accepts. Until then the captain can swap or
+  // cancel; afterwards each player can only transfer their own spot.
+  confirmed: boolean
 }
 
 export interface NewPartnerInput {
@@ -62,9 +69,37 @@ export type ChangePartnerStatus =
   | 'not_found'
   | 'team_cancelled'
   | 'tournament_completed'
+  | 'partner_accepted'
   | 'change_closed'
   | 'same_partner'
   | PartnerError
+
+export type CancelMyTeamStatus =
+  | 'cancelled'
+  | 'not_found'
+  | 'team_cancelled'
+  | 'tournament_completed'
+  | 'partner_accepted'
+  | 'cancel_closed'
+
+export type RespondInviteStatus =
+  | 'accepted'
+  | 'declined'
+  | 'not_found'
+  | 'not_pending'
+  | 'tournament_started'
+
+export interface TeamInvite {
+  teamId: string
+  tournamentId: string
+  tournamentName: string
+  tournamentDate: string | null
+  tournamentTime: string | null
+  captainId: string
+  captainName: string
+  teamStatus: 'registered' | 'waitlist'
+  accountCreatedByCaptain: boolean
+}
 
 export type CancelTeamStatus = 'cancelled' | 'already_cancelled' | 'not_found'
 

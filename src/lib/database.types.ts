@@ -30,6 +30,8 @@ export type Database = {
     Tables: {
       event_teams: {
         Row: {
+          cancelled_at: string | null
+          cancelled_reason: string | null
           captain_id: string
           created_at: string
           created_by: string | null
@@ -39,6 +41,8 @@ export type Database = {
           tournament_id: string
         }
         Insert: {
+          cancelled_at?: string | null
+          cancelled_reason?: string | null
           captain_id: string
           created_at?: string
           created_by?: string | null
@@ -48,6 +52,8 @@ export type Database = {
           tournament_id: string
         }
         Update: {
+          cancelled_at?: string | null
+          cancelled_reason?: string | null
           captain_id?: string
           created_at?: string
           created_by?: string | null
@@ -1226,6 +1232,7 @@ export type Database = {
       }
       registrations: {
         Row: {
+          accepted_at: string | null
           created_at: string | null
           id: string
           payment_method: string | null
@@ -1236,6 +1243,7 @@ export type Database = {
           tournament_id: string
         }
         Insert: {
+          accepted_at?: string | null
           created_at?: string | null
           id?: string
           payment_method?: string | null
@@ -1246,6 +1254,7 @@ export type Database = {
           tournament_id: string
         }
         Update: {
+          accepted_at?: string | null
           created_at?: string | null
           id?: string
           payment_method?: string | null
@@ -2025,6 +2034,13 @@ export type Database = {
         Returns: string
       }
       before_user_created_hook: { Args: { event: Json }; Returns: Json }
+      cancel_my_team: {
+        Args: { input_team_id: string }
+        Returns: {
+          promoted_team_id: string
+          status: string
+        }[]
+      }
       cancel_registration: {
         Args: { input_registration_id: string }
         Returns: {
@@ -2148,6 +2164,20 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      get_my_team_invites: {
+        Args: never
+        Returns: {
+          account_created_by_captain: boolean
+          captain_id: string
+          captain_name: string
+          team_id: string
+          team_status: string
+          tournament_date: string
+          tournament_id: string
+          tournament_name: string
+          tournament_time: string
+        }[]
       }
       get_payment_reminder_link: {
         Args: { input_registration_id: string }
@@ -2289,6 +2319,12 @@ export type Database = {
         }[]
       }
       require_admin: { Args: never; Returns: undefined }
+      respond_to_team_invite: {
+        Args: { input_accept: boolean; input_team_id: string }
+        Returns: {
+          status: string
+        }[]
+      }
       respond_to_transfer: {
         Args: { input_accept: boolean; input_transfer_id: string }
         Returns: {
@@ -2305,6 +2341,16 @@ export type Database = {
           pin: string
           player_id: string
           was_existing: boolean
+        }[]
+      }
+      set_registration_payment: {
+        Args: {
+          input_payment_method?: string
+          input_payment_status: string
+          input_registration_id: string
+        }
+        Returns: {
+          status: string
         }[]
       }
       sync_my_role: { Args: never; Returns: Json }

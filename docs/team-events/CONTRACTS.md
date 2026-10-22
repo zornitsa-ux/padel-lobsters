@@ -37,10 +37,13 @@ event_teams                                                                   (n
   final_rank     int null  check (final_rank > 0)
   created_at     timestamptz not null default clock_timestamp()   (waitlist order)
   created_by     uuid null → players on delete set null   (auth.uid() of whoever made it)
+  cancelled_at   timestamptz null
+  cancelled_reason text null  'partner_declined' | 'captain_cancelled' | 'admin_cancelled'  (D-015)
   index (tournament_id)
 
 registrations
   team_id        uuid null → event_teams on delete restrict, index (team_id)  (new)
+  accepted_at    timestamptz default now(); null only for a pending team partner  (D-015)
   payment_status check gains 'covered'                                         (D-005)
 
 partner_invites                                                               (new)
@@ -68,14 +71,9 @@ No Phase 2 migration is needed.
 
 ### Invariants (enforced in the database, not only tested)
 
-1. **Team rows are written only by the team RPCs.** Trigger
-   `registrations_guard_team_rows` (before insert/update) on a team event:
-   when `current_user` is an API role (`authenticated`/`anon`, meaning a direct
-   PostgREST write rather than a `security definer` RPC), it rejects inserts
-   (`team_event`) and any change to `status`, `team_id`, `player_id` or
-   `tournament_id` (`use_team_rpc`). Payment edits (`payment_status`,
-   `payment_method`) stay allowed, so the payment sheet, "mark Tikkied" and the
-   admin Payments view keep working.
+1. **Nobody writes `registrations` directly (D-016).** Insert, update and
+   delete are revoked from `anon` and `authenticated`, and the write policies
+   are dropped. Every change goes through a `security definer` RPC below.
 2. **An active row on a team event has a team, and an individual event has no
    team rows.** The same trigger checks it for every role (`team_required` /
    `team_not_allowed`).
@@ -195,6 +193,65 @@ The new partner's row gets `payment_status 'covered'`. The old partner's
 `partner_invites` row (if any) is left alone: it's how ghost accounts are
 found later.
 
+### 3.2a Acceptance (D-015)
+
+The partner's row is inserted with `accepted_at = null` (pending). The
+captain's row is accepted on insert. A team is **confirmed** when no active row
+is pending.
+
+`change_team_partner` adds a check: a non-admin caller gets `partner_accepted`
+once the partner has accepted. The new partner's row is always pending, admin
+swap included.
+
+```sql
+public.cancel_my_team(input_team_id uuid)
+returns table(status text, promoted_team_id uuid)
+```
+
+Captain only (anyone else gets `not_found`). Statuses: `cancelled` |
+`not_found` | `team_cancelled` | `tournament_completed` | `partner_accepted`
+(the team is confirmed: transfer instead) | `cancel_closed` (12h cutoff). Sets
+`cancelled_reason = 'captain_cancelled'` and promotes the oldest waitlisted
+team into the opening.
+
+```sql
+public.respond_to_team_invite(input_team_id uuid, input_accept boolean)
+returns table(status text)
+```
+
+The pending partner only (anyone else gets `not_found`). Statuses: `accepted` |
+`declined` | `not_found` | `not_pending` | `tournament_started`. A decline
+cancels both rows (`cancelled_reason = 'partner_declined'`) and promotes the
+waitlist.
+
+```sql
+public.get_my_team_invites()
+returns table(team_id uuid, tournament_id uuid, tournament_name text,
+  tournament_date date, tournament_time text, captain_id uuid, captain_name text,
+  team_status text, account_created_by_captain boolean)
+```
+
+The caller's pending invites on events that aren't completed.
+`account_created_by_captain` is true when the caller has a `partner_invites`
+row, which is when the profile step is offered (D-019).
+
+### 3.2b `set_registration_payment` (D-016)
+
+```sql
+public.set_registration_payment(input_registration_id uuid,
+  input_payment_status text, input_payment_method text default '')
+returns table(status text)
+```
+
+Statuses: `ok` | `not_found` | `covered` (the partner's row; only a transfer
+changes it) | `invalid_status` | `forbidden`.
+
+- **Players:** only their own active row, and only forward: `unpaid` →
+  `tikkied`, or `unpaid`/`tikkied` → `pending_confirmation`. The method is
+  forced to `tikkie`.
+- **Admins:** any of `unpaid`, `tikkied`, `pending_confirmation`, `paid` or
+  `transferred`, with any method (up to 40 characters).
+
 ### 3.3 `admin_cancel_team`
 
 ```sql
@@ -234,13 +291,13 @@ list (T2).
 
 ### 3.6 Guards on existing RPCs
 
-| RPC                             | New outcome                                                                                                                        |
-| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `register_for_tournament`       | `('team_event', null)` when `entry_mode = 'team'`                                                                                  |
-| `cancel_registration`           | `('use_cancel_team', null, null)` when the row has a `team_id`                                                                     |
-| `promote_waitlist_registration` | `('use_promote_team')` when the row has a `team_id`                                                                                |
-| `create_transfer`               | `(null, 'team_event')` on a team event                                                                                             |
-| `apply_registration_transfer`   | `'team_event'` on a team event. That covers `respond_to_transfer`, `admin_force_accept_transfer` and `admin_transfer_registration` |
+| RPC                             | New outcome                                                                                                                                                                                                                                                                     |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `register_for_tournament`       | `('team_event', null)` when `entry_mode = 'team'`                                                                                                                                                                                                                               |
+| `cancel_registration`           | `('use_cancel_team', null, null)` when the row has a `team_id`                                                                                                                                                                                                                  |
+| `promote_waitlist_registration` | `('use_promote_team')` when the row has a `team_id`                                                                                                                                                                                                                             |
+| `create_transfer`               | On a team event: `team_not_confirmed` unless the sender's team is confirmed; `target_already_registered` if the target has any active row in the event                                                                                                                          |
+| `apply_registration_transfer`   | On a team event the recipient takes the sender's place on the team (accepted). A captain hands over `captain_id` and the payment status (`paid` stays `paid`, anything else becomes `unpaid`); a partner's place is `covered`. It re-checks `team_not_confirmed` and the target |
 
 ---
 
@@ -271,11 +328,14 @@ export interface EventTeam {
 
 // Derived client-side: event_teams + the event's registrations, active only.
 export interface TeamEntry {
-  team: EventTeam
+  team: EventTeam // gains cancelledAt, cancelledReason
   status: 'registered' | 'waitlist'
   captain: NormalisedRegistration
   partner: NormalisedRegistration
+  confirmed: boolean // the partner has accepted (D-015)
 }
+// normaliseRegistrations also gains acceptedAt: string | null.
+// New: CancelMyTeamStatus, RespondInviteStatus, TeamInvite (teamTypes.ts).
 
 export interface NewPartnerInput {
   name: string
@@ -370,6 +430,9 @@ existing players list; there's no new endpoint.
 - `useEventTeams({ tournamentId, enabled? })`: the TanStack query for
   `fetchEventTeams`, keyed `teamKeys.list(tournamentId)`.
 - `usePartnerInvites({ tournamentId, enabled })`: admins only.
+- `useMyTeamInvites({ enabled })`: the caller's pending invites (D-019 screen).
+- `useTeamActions()` also has `cancelMyTeam` and `respondToTeamInvite`, which
+  toast on failure.
 - `useTeamActions()` → `registerTeam`, `changeTeamPartner` (each returns its
   status for the form to show inline), plus `adminCancelTeam` and
   `adminPromoteTeam` (which toast on failure). Every action invalidates the
@@ -378,5 +441,6 @@ existing players list; there's no new endpoint.
 `src/features/events/teams/teamStatusMessages.ts` has the copy for every status
 (`PARTNER_ERROR_MESSAGES`, `REGISTER_TEAM_MESSAGES`, `CHANGE_PARTNER_MESSAGES`,
 `CANCEL_TEAM_MESSAGES`, `PROMOTE_TEAM_MESSAGES`). Read them through
-`registrationMessage({ map, status })`. `registrationStatusMessages.ts` gains
+`registrationMessage({ map, status })`. It also has `CANCEL_MY_TEAM_MESSAGES`,
+`RESPOND_INVITE_MESSAGES`, `COMPLETE_TEAMS_NOTE` and `PARTNER_DECLINED_NOTICE(name)`. `registrationStatusMessages.ts` gains
 `team_event`, `use_cancel_team` and `use_promote_team`.

@@ -151,6 +151,7 @@ export interface RawRegistrationRow extends LooseRow<Tables<'registrations'>> {
   paymentStatus?: string | null
   paymentMethod?: string | null
   teamId?: string | null
+  acceptedAt?: string | null
 }
 
 export interface NormalisedRegistration extends RawRegistrationRow {
@@ -159,6 +160,8 @@ export interface NormalisedRegistration extends RawRegistrationRow {
   paymentStatus: string
   paymentMethod: string
   teamId: string | null
+  // Null only for a team partner who hasn't accepted yet (D-015).
+  acceptedAt: string | null
   // Legacy Firestore-shaped timestamp kept for the consumers that sort on it.
   registeredAt: { seconds: number }
 }
@@ -173,6 +176,7 @@ export function normaliseRegistrations(
     paymentStatus: r.payment_status ?? r.paymentStatus ?? 'unpaid',
     paymentMethod: r.payment_method ?? r.paymentMethod ?? '',
     teamId: r.team_id ?? r.teamId ?? null,
+    acceptedAt: r.accepted_at ?? r.acceptedAt ?? null,
     registeredAt: { seconds: r.created_at ? new Date(r.created_at).getTime() / 1000 : 0 },
   }))
 }

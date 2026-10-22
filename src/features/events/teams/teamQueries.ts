@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { supabase } from '../../../supabase'
 import type {
+  CancelMyTeamStatus,
   CancelTeamStatus,
   ChangePartnerStatus,
   EventTeam,
@@ -8,6 +9,9 @@ import type {
   PartnerInvite,
   PromoteTeamStatus,
   RegisterTeamStatus,
+  RespondInviteStatus,
+  TeamCancelReason,
+  TeamInvite,
 } from './teamTypes'
 
 const eventTeamRowSchema = z.object({
@@ -17,6 +21,20 @@ const eventTeamRowSchema = z.object({
   seed: z.number().nullable(),
   final_rank: z.number().nullable(),
   created_at: z.string(),
+  cancelled_at: z.string().nullable(),
+  cancelled_reason: z.enum(['partner_declined', 'captain_cancelled', 'admin_cancelled']).nullable(),
+})
+
+const teamInviteRowSchema = z.object({
+  team_id: z.string(),
+  tournament_id: z.string(),
+  tournament_name: z.string(),
+  tournament_date: z.string().nullable(),
+  tournament_time: z.string().nullable(),
+  captain_id: z.string(),
+  captain_name: z.string(),
+  team_status: z.enum(['registered', 'waitlist']),
+  account_created_by_captain: z.boolean(),
 })
 
 const partnerInviteRowSchema = z.object({
@@ -43,6 +61,20 @@ const toEventTeam = (row: z.infer<typeof eventTeamRowSchema>): EventTeam => ({
   seed: row.seed,
   finalRank: row.final_rank,
   createdAt: row.created_at,
+  cancelledAt: row.cancelled_at,
+  cancelledReason: row.cancelled_reason as TeamCancelReason | null,
+})
+
+const toTeamInvite = (row: z.infer<typeof teamInviteRowSchema>): TeamInvite => ({
+  teamId: row.team_id,
+  tournamentId: row.tournament_id,
+  tournamentName: row.tournament_name,
+  tournamentDate: row.tournament_date,
+  tournamentTime: row.tournament_time,
+  captainId: row.captain_id,
+  captainName: row.captain_name,
+  teamStatus: row.team_status,
+  accountCreatedByCaptain: row.account_created_by_captain,
 })
 
 const toPartnerInvite = (row: z.infer<typeof partnerInviteRowSchema>): PartnerInvite => ({
@@ -79,7 +111,9 @@ export async function fetchEventTeams({
 }): Promise<EventTeam[]> {
   const { data, error } = await supabase
     .from('event_teams')
-    .select('id, tournament_id, captain_id, seed, final_rank, created_at')
+    .select(
+      'id, tournament_id, captain_id, seed, final_rank, created_at, cancelled_at, cancelled_reason',
+    )
     .eq('tournament_id', tournamentId)
   if (error) throw error
   return z
@@ -144,6 +178,34 @@ export async function adminPromoteTeam({ teamId }: { teamId: string }) {
   const { data, error } = await supabase.rpc('admin_promote_team', { input_team_id: teamId })
   if (error) throw error
   return (firstRow(data)?.status ?? 'not_found') as PromoteTeamStatus
+}
+
+export async function cancelMyTeam({ teamId }: { teamId: string }) {
+  const { data, error } = await supabase.rpc('cancel_my_team', { input_team_id: teamId })
+  if (error) throw error
+  const row = firstRow(data)
+  return {
+    status: (row?.status ?? 'not_found') as CancelMyTeamStatus,
+    promotedTeamId: row?.promoted_team_id ?? null,
+  }
+}
+
+export async function respondToTeamInvite({ teamId, accept }: { teamId: string; accept: boolean }) {
+  const { data, error } = await supabase.rpc('respond_to_team_invite', {
+    input_team_id: teamId,
+    input_accept: accept,
+  })
+  if (error) throw error
+  return (firstRow(data)?.status ?? 'not_found') as RespondInviteStatus
+}
+
+export async function fetchMyTeamInvites(): Promise<TeamInvite[]> {
+  const { data, error } = await supabase.rpc('get_my_team_invites')
+  if (error) throw error
+  return z
+    .array(teamInviteRowSchema)
+    .parse(data ?? [])
+    .map(toTeamInvite)
 }
 
 export async function fetchPartnerInvites({

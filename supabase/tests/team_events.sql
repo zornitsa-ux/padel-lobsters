@@ -217,7 +217,8 @@ begin
   -- CHECK 9: cancelling a registered team promotes the oldest waitlisted team
   perform pg_temp.act(v_admin, true);
   select * into v_r from public.admin_cancel_team(v_team2);
-  if v_r.status <> 'cancelled' or v_r.promoted_team_id <> v_team3 then
+  if v_r.status <> 'cancelled' or v_r.promoted_team_id <> v_team3
+     or (select cancelled_reason from public.event_teams where id = v_team2) <> 'admin_cancelled' then
     raise exception 'CHECK 9a FAILED: % %', v_r.status, v_r.promoted_team_id;
   end if;
   if (select count(*) from public.registrations where team_id = v_team3 and status = 'registered') <> 2
@@ -286,7 +287,7 @@ begin
   if v_r.status <> 'team_event' then raise exception 'CHECK 13a FAILED: %', v_r.status; end if;
   perform pg_temp.act(v_p[5], false);
   select * into v_r from public.create_transfer(v_p[9], v_t);
-  if v_r.status <> 'team_event' then raise exception 'CHECK 13b FAILED: %', v_r.status; end if;
+  if v_r.status <> 'team_not_confirmed' then raise exception 'CHECK 13b FAILED: %', v_r.status; end if;
   perform pg_temp.act(v_admin, true);
   select r.id into v_new from public.registrations r where r.tournament_id = v_t and r.player_id = v_p[5] and r.status = 'registered';
   select * into v_r from public.cancel_registration(v_new);
@@ -294,38 +295,32 @@ begin
   select * into v_r from public.promote_waitlist_registration(v_new);
   if v_r.status <> 'use_promote_team' then raise exception 'CHECK 13d FAILED: %', v_r.status; end if;
   select * into v_r from public.admin_transfer_registration(v_t, v_p[5], v_p[9]);
-  if v_r.status <> 'team_event' then raise exception 'CHECK 13e FAILED: %', v_r.status; end if;
+  if v_r.status <> 'team_not_confirmed' then raise exception 'CHECK 13e FAILED: %', v_r.status; end if;
   -- a transfer created before the guard existed is refused on accept too
   insert into public.registration_transfers(tournament_id, from_player_id, to_player_id)
   values (v_t, v_p[5], v_p[9]);
   perform pg_temp.act(v_p[9], false);
   select * into v_r from public.respond_to_transfer(
     (select id from public.registration_transfers where tournament_id = v_t and status = 'pending'), true);
-  if v_r.status <> 'team_event' then raise exception 'CHECK 13f FAILED: %', v_r.status; end if;
+  if v_r.status <> 'team_not_confirmed' then raise exception 'CHECK 13f FAILED: %', v_r.status; end if;
   perform pg_temp.assert_teams(v_t);
-  raise notice 'CHECK 13 ok: register / cancel / promote / transfer guards';
+  raise notice 'CHECK 13 ok: register / cancel / promote guards; no transfer before both accept';
 
-  -- CHECK 14: direct writes can't touch team rows, except payment
+  -- CHECK 14: clients can't write registrations at all (D-016)
   perform pg_temp.act(v_p[5], false);
   execute 'set local role authenticated';
-  update public.registrations set payment_status = 'tikkied', payment_method = 'tikkie' where id = v_new;
   begin
-    update public.registrations set status = 'cancelled' where id = v_new;
-    raise exception 'CHECK 14a FAILED: direct status change allowed';
-  exception when others then
-    if sqlerrm <> 'use_team_rpc' then raise; end if;
+    update public.registrations set payment_status = 'paid' where id = v_new;
+    raise exception 'CHECK 14a FAILED: direct update allowed';
+  exception when insufficient_privilege then null;
   end;
   begin
     insert into public.registrations(tournament_id, player_id, status) values (v_t, v_p[5], 'waitlist');
     raise exception 'CHECK 14b FAILED: direct insert allowed';
-  exception when others then
-    if sqlerrm <> 'team_event' then raise; end if;
+  exception when insufficient_privilege then null;
   end;
   execute 'reset role';
-  if (select payment_status from public.registrations where id = v_new) <> 'tikkied' then
-    raise exception 'CHECK 14c FAILED: payment edit blocked';
-  end if;
-  raise notice 'CHECK 14 ok: direct writes guarded, payment edits allowed';
+  raise notice 'CHECK 14 ok: direct writes refused';
 
   -- CHECK 15: the pair can't diverge even through a privileged write
   begin
@@ -427,6 +422,10 @@ begin
   -- CHECK 19: grants on the private helpers
   if has_function_privilege('authenticated', 'private.create_partner_player(uuid, uuid, jsonb, boolean, boolean)', 'execute')
      or has_function_privilege('authenticated', 'private.resolve_team_partner(uuid, uuid, uuid, jsonb, boolean)', 'execute')
+     or has_function_privilege('authenticated', 'private.cancel_team_rows(uuid, text)', 'execute')
+     or has_function_privilege('authenticated', 'private.team_spot_transferable(uuid, uuid)', 'execute')
+     or has_function_privilege('anon', 'public.respond_to_team_invite(uuid, boolean)', 'execute')
+     or has_function_privilege('anon', 'public.set_registration_payment(uuid, text, text)', 'execute')
      or has_function_privilege('anon', 'public.register_team_for_tournament(uuid, uuid, uuid, jsonb, boolean)', 'execute') then
     raise exception 'CHECK 19 FAILED';
   end if;
@@ -436,6 +435,150 @@ begin
     raise exception 'FINAL FAILED: an email was queued during team flows';
   end if;
   raise notice 'ALL TEAM EVENT CHECKS PASSED';
+end $$;
+
+-- ── D-015 acceptance model and D-016 payment writes ────────────────────────
+do $$
+declare
+  v_admin uuid;
+  v_p uuid[];
+  v_outsider uuid;
+  v_t uuid;
+  v_r record;
+  v_a uuid; v_b uuid; v_c uuid;
+  v_new uuid;
+  v_xfer uuid;
+  v_reg uuid;
+begin
+  select id into v_admin from public.players where role = 'admin' and status = 'active' order by id limit 1;
+  select array_agg(id order by id) into v_p
+    from (select id from public.players where role = 'player' and status = 'active' order by id desc limit 10) s;
+  v_t := pg_temp.event(4, now() + interval '10 days');
+
+  -- CHECK 20: the captain is accepted on signup; the partner is pending and sees the invite
+  perform pg_temp.act(v_p[1], false);
+  select team_id into v_a from public.register_team_for_tournament(v_t, v_p[1], v_p[2]);
+  if (select accepted_at from public.registrations where team_id = v_a and player_id = v_p[1]) is null
+     or (select accepted_at from public.registrations where team_id = v_a and player_id = v_p[2]) is not null then
+    raise exception 'CHECK 20a FAILED: acceptance markers';
+  end if;
+  perform pg_temp.act(v_p[2], false);
+  if (select count(*) from public.get_my_team_invites() where team_id = v_a and captain_id = v_p[1]
+        and account_created_by_captain = false) <> 1 then
+    raise exception 'CHECK 20b FAILED: invite not listed';
+  end if;
+  perform pg_temp.act(v_p[3], false);
+  select * into v_r from public.respond_to_team_invite(v_a, true);
+  if v_r.status <> 'not_found' then raise exception 'CHECK 20c FAILED: %', v_r.status; end if;
+  raise notice 'CHECK 20 ok: pending partner, invite listed, only the partner can respond';
+
+  -- CHECK 21: while pending the captain can swap and cancel; after acceptance neither
+  perform pg_temp.act(v_p[1], false);
+  select * into v_r from public.change_team_partner(v_a, v_p[3]);
+  if v_r.status <> 'changed' then raise exception 'CHECK 21a FAILED: %', v_r.status; end if;
+  perform pg_temp.act(v_p[3], false);
+  select * into v_r from public.respond_to_team_invite(v_a, true);
+  if v_r.status <> 'accepted' or exists (select 1 from public.get_my_team_invites()) then
+    raise exception 'CHECK 21b FAILED: %', v_r.status;
+  end if;
+  select * into v_r from public.respond_to_team_invite(v_a, true);
+  if v_r.status <> 'not_pending' then raise exception 'CHECK 21c FAILED: %', v_r.status; end if;
+  perform pg_temp.act(v_p[1], false);
+  select * into v_r from public.change_team_partner(v_a, v_p[4]);
+  if v_r.status <> 'partner_accepted' then raise exception 'CHECK 21d FAILED: %', v_r.status; end if;
+  select * into v_r from public.cancel_my_team(v_a);
+  if v_r.status <> 'partner_accepted' then raise exception 'CHECK 21e FAILED: %', v_r.status; end if;
+  perform pg_temp.act(v_admin, true);
+  select * into v_r from public.change_team_partner(v_a, v_p[4]);
+  if v_r.status <> 'changed'
+     or (select accepted_at from public.registrations where team_id = v_a and player_id = v_p[4] and status = 'registered') is not null then
+    raise exception 'CHECK 21f FAILED: admin swap: %', v_r.status;
+  end if;
+  perform pg_temp.assert_teams(v_t);
+  raise notice 'CHECK 21 ok: swap while pending, locked after acceptance, admin still can';
+
+  -- CHECK 22: a captain's cancel while pending promotes the waitlist; a decline cancels the team
+  perform pg_temp.act(v_p[5], false);
+  select team_id into v_b from public.register_team_for_tournament(v_t, v_p[5], v_p[6]);
+  perform pg_temp.act(v_p[7], false);
+  select * into v_r from public.register_team_for_tournament(v_t, v_p[7], v_p[8]);
+  v_c := v_r.team_id;
+  if v_r.status <> 'waitlist' then raise exception 'CHECK 22a FAILED: %', v_r.status; end if;
+  perform pg_temp.act(v_p[6], false);
+  select * into v_r from public.cancel_my_team(v_b);
+  if v_r.status <> 'not_found' then raise exception 'CHECK 22b FAILED (partner cancelled): %', v_r.status; end if;
+  select * into v_r from public.respond_to_team_invite(v_b, false);
+  if v_r.status <> 'declined'
+     or (select cancelled_reason from public.event_teams where id = v_b) <> 'partner_declined'
+     or (select count(*) from public.registrations where team_id = v_b and status = 'cancelled') <> 2
+     or (select count(*) from public.registrations where team_id = v_c and status = 'registered') <> 2 then
+    raise exception 'CHECK 22c FAILED: decline: %', v_r.status;
+  end if;
+  perform pg_temp.act(v_p[7], false);
+  select * into v_r from public.cancel_my_team(v_c);
+  if v_r.status <> 'cancelled' or (select cancelled_reason from public.event_teams where id = v_c) <> 'captain_cancelled' then
+    raise exception 'CHECK 22d FAILED: %', v_r.status;
+  end if;
+  perform pg_temp.assert_teams(v_t);
+  raise notice 'CHECK 22 ok: decline and captain cancel cancel the whole team, waitlist promoted';
+
+  -- CHECK 23: once both accept, each player can transfer their own spot
+  perform pg_temp.act(v_p[4], false);
+  perform public.respond_to_team_invite(v_a, true);
+  perform pg_temp.act(v_admin, true);
+  perform public.set_registration_payment(
+    (select id from public.registrations where team_id = v_a and player_id = v_p[1] and status = 'registered'), 'paid', 'tikkie');
+  perform pg_temp.act(v_p[4], false);
+  select * into v_r from public.create_transfer(v_p[5], v_t);
+  if v_r.status <> 'ok' then raise exception 'CHECK 23a FAILED: %', v_r.status; end if;
+  perform pg_temp.act(v_p[5], false);
+  select * into v_r from public.respond_to_transfer(v_r.transfer_id, true);
+  if v_r.status <> 'accepted'
+     or not exists (select 1 from public.registrations where team_id = v_a and player_id = v_p[5]
+                      and status = 'registered' and payment_status = 'covered' and accepted_at is not null) then
+    raise exception 'CHECK 23b FAILED: partner transfer: %', v_r.status;
+  end if;
+  perform pg_temp.act(v_p[1], false);
+  select * into v_r from public.create_transfer(v_p[5], v_t);
+  if v_r.status <> 'target_already_registered' then raise exception 'CHECK 23c FAILED: %', v_r.status; end if;
+  select * into v_r from public.create_transfer(v_p[9], v_t);
+  perform pg_temp.act(v_p[9], false);
+  select * into v_r from public.respond_to_transfer(v_r.transfer_id, true);
+  if v_r.status <> 'accepted'
+     or (select captain_id from public.event_teams where id = v_a) <> v_p[9]
+     or (select payment_status from public.registrations where team_id = v_a and player_id = v_p[9] and status = 'registered') <> 'paid' then
+    raise exception 'CHECK 23d FAILED: captain transfer: %', v_r.status;
+  end if;
+  perform pg_temp.assert_teams(v_t);
+  raise notice 'CHECK 23 ok: transfers after acceptance; captaincy and payment move with the captain';
+
+  -- CHECK 24: payment writes go through set_registration_payment only
+  v_t := pg_temp.event(8, now() + interval '10 days');
+  update public.tournaments set entry_mode = 'individual', format = 'lobster_matching' where id = v_t;
+  perform pg_temp.act(v_p[10], false);
+  select registration_id into v_reg from public.register_for_tournament(v_t, v_p[10]);
+  select * into v_r from public.set_registration_payment(v_reg, 'paid', 'cash');
+  if v_r.status <> 'forbidden' then raise exception 'CHECK 24a FAILED: %', v_r.status; end if;
+  select * into v_r from public.set_registration_payment(v_reg, 'tikkied', 'whatever');
+  if v_r.status <> 'ok' or (select payment_method from public.registrations where id = v_reg) <> 'tikkie' then
+    raise exception 'CHECK 24b FAILED: %', v_r.status;
+  end if;
+  select * into v_r from public.set_registration_payment(v_reg, 'pending_confirmation', 'tikkie');
+  if v_r.status <> 'ok' then raise exception 'CHECK 24c FAILED: %', v_r.status; end if;
+  select * into v_r from public.set_registration_payment(v_reg, 'unpaid', '');
+  if v_r.status <> 'forbidden' then raise exception 'CHECK 24d FAILED: backwards allowed'; end if;
+  perform pg_temp.act(v_p[9], false);
+  select * into v_r from public.set_registration_payment(v_reg, 'tikkied', 'tikkie');
+  if v_r.status <> 'forbidden' then raise exception 'CHECK 24e FAILED: other player''s row'; end if;
+  perform pg_temp.act(v_admin, true);
+  select * into v_r from public.set_registration_payment(v_reg, 'paid', 'playtomic');
+  if v_r.status <> 'ok' then raise exception 'CHECK 24f FAILED: %', v_r.status; end if;
+  select * into v_r from public.set_registration_payment(
+    (select id from public.registrations where team_id = v_a and player_id = v_p[5] and status = 'registered'), 'paid', 'cash');
+  if v_r.status <> 'covered' then raise exception 'CHECK 24g FAILED: covered row changed'; end if;
+  raise notice 'CHECK 24 ok: payment RPC (player forward-only, admin any, covered immutable)';
+
+  raise notice 'ALL ACCEPTANCE AND PAYMENT CHECKS PASSED';
 end $$;
 
 rollback;

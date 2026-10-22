@@ -7,7 +7,13 @@ const toEntry = (team: EventTeam, rows: NormalisedRegistration[]): TeamEntry | n
   const captain = rows.find((r) => r.playerId === team.captainId)
   const partner = rows.find((r) => r.playerId !== team.captainId)
   if (rows.length !== 2 || !captain || !partner) return null
-  return { team, status: captain.status as TeamEntry['status'], captain, partner }
+  return {
+    team,
+    status: captain.status as TeamEntry['status'],
+    captain,
+    partner,
+    confirmed: partner.acceptedAt !== null,
+  }
 }
 
 // Active teams only, in the order the waitlist promotes (oldest first).

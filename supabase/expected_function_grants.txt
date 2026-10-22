@@ -35,11 +35,13 @@ public.admin_update_league_status(input_league_id uuid, input_status text) authe
 public.admin_update_league_team(input_team_id uuid, input_payload jsonb) authenticated
 public.admin_update_player(input_target_id uuid, input_payload jsonb) authenticated
 public.admin_update_raffle_winner_prize(input_winner_id uuid, input_prize text) authenticated
+public.cancel_my_team(input_team_id uuid) authenticated
 public.cancel_registration(input_registration_id uuid) authenticated
 public.cancel_transfer(input_transfer_id uuid) authenticated
 public.change_team_partner(input_team_id uuid, input_partner_id uuid, input_new_partner jsonb, input_partner_consent boolean) authenticated
 public.create_transfer(input_to_player_id uuid, input_tournament_id uuid, input_from_player_id uuid) authenticated
 public.get_my_profile_v2() authenticated
+public.get_my_team_invites() authenticated
 public.get_payment_reminder_link(input_registration_id uuid) authenticated
 public.get_transfer_recipient_phone(input_transfer_id uuid) authenticated
 public.lobster_oscars_admin_end(input_tournament_id uuid) authenticated
@@ -57,8 +59,10 @@ public.lobster_oscars_get_results(input_tournament_id uuid) authenticated
 public.promote_waitlist_registration(input_registration_id uuid) authenticated
 public.register_for_tournament(input_tournament_id uuid, input_player_id uuid) authenticated
 public.register_team_for_tournament(input_tournament_id uuid, input_captain_id uuid, input_partner_id uuid, input_new_partner jsonb, input_partner_consent boolean) authenticated
+public.respond_to_team_invite(input_team_id uuid, input_accept boolean) authenticated
 public.respond_to_transfer(input_transfer_id uuid, input_accept boolean) authenticated
 public.self_signup_player(input_payload jsonb, input_device_id text, input_user_agent text) anon
+public.set_registration_payment(input_registration_id uuid, input_payment_status text, input_payment_method text) authenticated
 public.sync_my_role() authenticated
 public.update_my_profile(input_payload jsonb) authenticated
 public.verify_player_pin_v2(input_pin text, input_device_id text, input_user_agent text) anon
