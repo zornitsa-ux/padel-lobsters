@@ -3,15 +3,11 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useApp } from '../../../context/useApp'
 import { useConfirm } from '../../../lib/confirmBus'
 import { EmptyState } from '../../../components/ui/EmptyState'
-import { formatEventDate } from '../registration/utils'
 import { COMPLETE_TEAMS_NOTE } from '../teams/teamStatusMessages'
 import { useMyTeamInvites, useTeamActions } from '../teams/useTeams'
 import type { TeamInvite } from '../teams/teamTypes'
-import { declineMessage } from '../registration/team/TeamCardActions'
-import { eventInfoPath } from './inviteRoutes'
-
-export const inviteMessage = ({ invite }: { invite: TeamInvite }) =>
-  `${invite.captainName} has entered you as their partner for ${invite.tournamentName} on ${formatEventDate(invite.tournamentDate)}.`
+import { declineMessage } from '../registration/team/teamHelpers'
+import { eventInfoPath, inviteMessage } from './inviteRoutes'
 
 function InviteCard({
   invite,

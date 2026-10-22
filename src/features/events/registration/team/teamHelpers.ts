@@ -220,3 +220,6 @@ export const findMyEntry = ({
     ? (entries.find((e) => e.captain.playerId === playerId || e.partner.playerId === playerId) ??
       null)
     : null
+
+export const declineMessage = ({ captainName }: { captainName: string }) =>
+  `If you're not playing, ${captainName}'s team is cancelled. We keep spots for complete teams, so the spots go to the next team on the waitlist.`
