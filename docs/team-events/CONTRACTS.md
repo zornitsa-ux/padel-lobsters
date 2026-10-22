@@ -359,10 +359,24 @@ The pure helper `buildTeamEntries({ teams, registrations }): TeamEntry[]` lives
 in `src/features/events/teams/teamEntries.ts`. It sorts by `team.createdAt`,
 the same order the waitlist promotes in.
 
-Status copy for every code above goes in `registrationStatusMessages.ts`
-(T4/T6). `email_in_use` reads: "That email already has an account. Search for
-them by name instead."
-
 **Partner search** (T4/T6) lists `players` with `status = 'active'` who have no
 registered or waitlisted row in this event, excluding the captain. It uses the
 existing players list; there's no new endpoint.
+
+### Hooks and copy (shared by T4–T6)
+
+`src/features/events/teams/useTeams.ts`:
+
+- `useEventTeams({ tournamentId, enabled? })`: the TanStack query for
+  `fetchEventTeams`, keyed `teamKeys.list(tournamentId)`.
+- `usePartnerInvites({ tournamentId, enabled })`: admins only.
+- `useTeamActions()` → `registerTeam`, `changeTeamPartner` (each returns its
+  status for the form to show inline), plus `adminCancelTeam` and
+  `adminPromoteTeam` (which toast on failure). Every action invalidates the
+  event's registrations, its teams and the partner invites.
+
+`src/features/events/teams/teamStatusMessages.ts` has the copy for every status
+(`PARTNER_ERROR_MESSAGES`, `REGISTER_TEAM_MESSAGES`, `CHANGE_PARTNER_MESSAGES`,
+`CANCEL_TEAM_MESSAGES`, `PROMOTE_TEAM_MESSAGES`). Read them through
+`registrationMessage({ map, status })`. `registrationStatusMessages.ts` gains
+`team_event`, `use_cancel_team` and `use_promote_team`.
