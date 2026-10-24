@@ -32,6 +32,10 @@ export interface TransferShareTarget {
   tikkieLink?: string | null
 }
 
+// Holds a spot or waits for one: the rows a player can't have twice in an event.
+export const isActiveRegistration = ({ status }: { status?: string | null }): boolean =>
+  status === 'registered' || status === 'waitlist'
+
 export interface RegistrationSplit {
   registered: NormalisedRegistration[]
   waitlisted: NormalisedRegistration[]

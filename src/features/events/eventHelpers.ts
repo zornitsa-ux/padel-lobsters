@@ -14,6 +14,7 @@ export type EventNavigate = (destination: string, target?: NavigateTarget | null
 export interface PriceableEvent {
   totalPrice?: string | number | null
   maxPlayers?: string | number | null
+  entryMode?: string | null
 }
 
 // Parse ISO date-only strings ("YYYY-MM-DD") as LOCAL midnight to avoid UTC-offset misclassification
@@ -55,3 +56,8 @@ export const pricePerPlayer = (t: PriceableEvent | null | undefined): number => 
   const mp = parseInt(String(t?.maxPlayers ?? '')) || DEFAULT_MAX_PLAYERS
   return tp > 0 ? tp / mp : 0
 }
+
+// What one signup owes: a player's share, or both players' on a team event,
+// where the captain pays for the team (D-005).
+export const pricePerEntry = (t: PriceableEvent | null | undefined): number =>
+  (t?.entryMode === 'team' ? 2 : 1) * pricePerPlayer(t)

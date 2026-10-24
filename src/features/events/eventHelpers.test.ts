@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest'
-import { parseLocalDate, formatDate, formatLabel, pricePerPlayer } from './eventHelpers'
+import {
+  parseLocalDate,
+  formatDate,
+  formatLabel,
+  pricePerEntry,
+  pricePerPlayer,
+} from './eventHelpers'
 import { DEFAULT_EVENT_DESCRIPTION, emptyForm } from './eventConstants'
 import { shortName } from './scheduleHelpers'
 
@@ -104,5 +110,15 @@ describe('shortName', () => {
 
   it('does not compare a player against themselves', () => {
     expect(shortName(ada, [ada])).toBe('Ada')
+  })
+})
+
+describe('pricePerEntry', () => {
+  it("is one player's share on an individual event", () => {
+    expect(pricePerEntry({ totalPrice: 160, maxPlayers: 16, entryMode: 'individual' })).toBe(10)
+  })
+
+  it('is both players on a team event, which the captain pays', () => {
+    expect(pricePerEntry({ totalPrice: 200, maxPlayers: 20, entryMode: 'team' })).toBe(20)
   })
 })

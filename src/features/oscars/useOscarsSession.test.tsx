@@ -77,6 +77,8 @@ const tournament: NormalisedTournament = {
   completedAt: null,
   resultsSharedAt: null,
   rafflePublishedAt: null,
+  entryMode: 'individual',
+  startingCourtsPublishedAt: null,
 }
 
 const sessionRow = {

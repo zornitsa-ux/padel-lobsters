@@ -18,6 +18,8 @@ export const tournamentRowSchema = z
     gender_mode: nullableString,
     tikkie_link: nullableString,
     completed_at: nullableString,
+    entry_mode: nullableString,
+    starting_courts_published_at: nullableString,
     created_at: nullableString,
     max_players: nullableNumber,
     duration: nullableNumber,

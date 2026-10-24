@@ -78,6 +78,8 @@ export interface RawTournamentRow extends LooseRow<Omit<Tables<'tournaments'>, '
   completedAt?: string | null
   resultsSharedAt?: string | null
   rafflePublishedAt?: string | null
+  entryMode?: EntryMode | null
+  startingCourtsPublishedAt?: string | null
 }
 
 // The normalised tournament consumed across the app: the raw row spread through
@@ -103,7 +105,14 @@ export interface NormalisedTournament extends RawTournamentRow {
   // players (admins always see it regardless). See resultsPhase().
   resultsSharedAt: string | null
   rafflePublishedAt: string | null
+  entryMode: EntryMode
+  startingCourtsPublishedAt: string | null
 }
+
+export type EntryMode = 'individual' | 'team'
+
+const toEntryMode = (value: string | null | undefined): EntryMode =>
+  value === 'team' ? 'team' : 'individual'
 
 export function normaliseTournaments(tournaments: RawTournamentRow[]): NormalisedTournament[] {
   return tournaments.map((t) => ({
@@ -124,6 +133,9 @@ export function normaliseTournaments(tournaments: RawTournamentRow[]): Normalise
     completedAt: t.completed_at ?? t.completedAt ?? null,
     resultsSharedAt: t.results_shared_at ?? t.resultsSharedAt ?? null,
     rafflePublishedAt: t.raffle_published_at ?? t.rafflePublishedAt ?? null,
+    entryMode: toEntryMode(t.entry_mode ?? t.entryMode),
+    startingCourtsPublishedAt:
+      t.starting_courts_published_at ?? t.startingCourtsPublishedAt ?? null,
   }))
 }
 
@@ -138,6 +150,8 @@ export interface RawRegistrationRow extends LooseRow<Tables<'registrations'>> {
   playerId?: string | null
   paymentStatus?: string | null
   paymentMethod?: string | null
+  teamId?: string | null
+  acceptedAt?: string | null
 }
 
 export interface NormalisedRegistration extends RawRegistrationRow {
@@ -145,6 +159,9 @@ export interface NormalisedRegistration extends RawRegistrationRow {
   playerId: string
   paymentStatus: string
   paymentMethod: string
+  teamId: string | null
+  // Null only for a team partner who hasn't accepted yet (D-015).
+  acceptedAt: string | null
   // Legacy Firestore-shaped timestamp kept for the consumers that sort on it.
   registeredAt: { seconds: number }
 }
@@ -158,6 +175,8 @@ export function normaliseRegistrations(
     playerId: r.player_id ?? r.playerId,
     paymentStatus: r.payment_status ?? r.paymentStatus ?? 'unpaid',
     paymentMethod: r.payment_method ?? r.paymentMethod ?? '',
+    teamId: r.team_id ?? r.teamId ?? null,
+    acceptedAt: r.accepted_at ?? r.acceptedAt ?? null,
     registeredAt: { seconds: r.created_at ? new Date(r.created_at).getTime() / 1000 : 0 },
   }))
 }
