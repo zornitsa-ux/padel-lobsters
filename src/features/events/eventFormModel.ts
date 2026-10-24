@@ -49,6 +49,16 @@ export function teamsWithoutCourt({
   return Math.max(0, registeredTeams - teamsForCourts({ courts: form.courts }))
 }
 
+export function countRegisteredTeams({
+  registrations,
+}: {
+  registrations: { status?: string | null; teamId?: string | null }[]
+}): number {
+  return new Set(
+    registrations.filter((r) => r.status === 'registered' && r.teamId).map((r) => r.teamId),
+  ).size
+}
+
 export function hasSignups({
   registrations,
 }: {

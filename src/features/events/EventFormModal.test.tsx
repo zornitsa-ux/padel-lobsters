@@ -10,6 +10,7 @@ import {
   isEntryModeLocked,
   isFormatLocked,
   teamsWithoutCourt,
+  countRegisteredTeams,
 } from './eventFormModel'
 
 const noop = () => {}
@@ -155,6 +156,18 @@ describe('EventFormModal — King of the Court', () => {
     expect(
       (screen.getByRole('button', { name: 'Create Event' }) as HTMLButtonElement).disabled,
     ).toBe(false)
+  })
+
+  it('counts registered teams, not rows', () => {
+    const registrations = [
+      { status: 'registered', teamId: 't1' },
+      { status: 'registered', teamId: 't1' },
+      { status: 'registered', teamId: 't2' },
+      { status: 'registered', teamId: 't2' },
+      { status: 'waitlist', teamId: 't3' },
+      { status: 'cancelled', teamId: 't4' },
+    ]
+    expect(countRegisteredTeams({ registrations })).toBe(2)
   })
 
   it('counts teams beyond the courts only on King of the Court', () => {

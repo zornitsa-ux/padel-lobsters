@@ -5,6 +5,7 @@ import { emptyForm, type EventFormValues } from './eventConstants'
 import type { SetEventFormCourt } from './EventFormModal'
 import {
   buildEventData,
+  countRegisteredTeams,
   formFromTournament,
   isEntryModeLocked,
   isFormatLocked,
@@ -86,7 +87,7 @@ export function useEventForm() {
         registrationsPending,
         registrations,
       }),
-      registeredTeams: registrations.filter((r) => r.status === 'registered').length / 2,
+      registeredTeams: countRegisteredTeams({ registrations }),
       onClose: () => setOpen(false),
       addCourt: () => setCourts((courts) => [...courts, { name: '', booked: false }]),
       removeCourt: (i: number) => setCourts((courts) => courts.filter((_, idx) => idx !== i)),

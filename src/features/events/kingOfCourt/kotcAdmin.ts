@@ -1,4 +1,4 @@
-import type { CourtResult, KotcTeam, StartingCourt } from './domain'
+import type { CourtResult, KotcTeam } from './domain'
 
 export type SeedUpdate = { id: string; seed: number }
 export type FinalRankUpdate = { id: string; finalRank: number | null }
@@ -58,21 +58,17 @@ export const finalRankUpdates = ({
     .filter(({ finalRank, saved }) => finalRank !== saved)
     .map(({ id, finalRank }) => ({ id, finalRank }))
 
-// DESIGN §3.3.5: saved standings come back as they were; otherwise the form
-// starts from the starting courts.
-export const initialCourtResults = ({
+// No prefill from the starting courts: saving makes standings public at once
+// (D-026), so an untouched form must not hold a made-up ranking.
+export const savedCourtResults = ({
   teams,
-  courts,
+  courtCount,
 }: {
   teams: KotcTeam[]
-  courts: StartingCourt[]
+  courtCount: number
 }): CourtResult[] => {
-  const ranked = teams.filter((t) => t.finalRank != null)
-  if (ranked.length === 0) {
-    return courts.map(({ teamIds }) => ({ first: teamIds[0] ?? null, second: teamIds[1] ?? null }))
-  }
-  const byRank = new Map(ranked.map((t) => [t.finalRank, t.id]))
-  return courts.map((_, k) => ({
+  const byRank = new Map(teams.filter((t) => t.finalRank != null).map((t) => [t.finalRank, t.id]))
+  return Array.from({ length: courtCount }, (_, k) => ({
     first: byRank.get(2 * k + 1) ?? null,
     second: byRank.get(2 * k + 2) ?? null,
   }))

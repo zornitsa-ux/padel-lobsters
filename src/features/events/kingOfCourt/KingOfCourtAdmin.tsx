@@ -8,7 +8,7 @@ import { rankFromFinalCourts } from './domain'
 import {
   finalRankUpdates,
   hasRepeatedTeam,
-  initialCourtResults,
+  savedCourtResults,
   moveTeam,
   seedUpdates,
 } from './kotcAdmin'
@@ -91,7 +91,7 @@ function SeedsCard({
       <p className="text-xs text-lob-muted">
         {publishedAt
           ? `Shown to players since ${shownAt(publishedAt)}. They see the saved order.`
-          : 'Strongest team first, from ratings. Reorder if needed, then show the assignments to players, usually a couple of hours before the start.'}
+          : 'Strongest team first, by Playtomic level. Reorder if needed, then show the assignments to players, usually a couple of hours before the start.'}
       </p>
 
       {order.length === 0 ? (
@@ -182,14 +182,23 @@ function SeedsCard({
 function FinalStandingsCard({ seeding, actions }: { seeding: Seeding; actions: Actions }) {
   const { order, teams, labelOf, layout } = seeding
   const [draft, setDraft] = useState<CourtResult[] | null>(null)
-  const results = draft ?? initialCourtResults({ teams, courts: layout.courts })
+  const saved = savedCourtResults({ teams, courtCount: layout.courts.length })
+  // Per court, so a court added after editing started is still editable.
+  const results = saved.map((result, k) => draft?.[k] ?? result)
   const repeated = hasRepeatedTeam({ courtResults: results })
   const patches = repeated
     ? []
     : finalRankUpdates({ ranks: rankFromFinalCourts({ courtResults: results }), teams })
 
-  const pick = (k: number, slot: keyof CourtResult, teamId: string) =>
-    setDraft(results.map((r, i) => (i === k ? { ...r, [slot]: teamId || null } : r)))
+  const pick = ({
+    court,
+    slot,
+    teamId,
+  }: {
+    court: number
+    slot: keyof CourtResult
+    teamId: string
+  }) => setDraft(results.map((r, k) => (k === court ? { ...r, [slot]: teamId || null } : r)))
 
   const save = async () => {
     if (await actions.saveStandings({ patches })) setDraft(null)
@@ -205,7 +214,7 @@ function FinalStandingsCard({ seeding, actions }: { seeding: Seeding; actions: A
       </div>
       <p className="text-xs text-lob-muted">
         Who finished 1st and 2nd on each court. Fill in as much as you know; the rest stay unranked.
-        Players see the ranking once you reveal the results.
+        Players see the ranking as soon as you save.
       </p>
 
       <ol className="space-y-3">
@@ -218,7 +227,7 @@ function FinalStandingsCard({ seeding, actions }: { seeding: Seeding; actions: A
                 <select
                   className="input flex-1 min-w-0 py-1.5 text-sm"
                   value={results[k]?.[slot] ?? ''}
-                  onChange={(e) => pick(k, slot, e.target.value)}
+                  onChange={(e) => pick({ court: k, slot, teamId: e.target.value })}
                 >
                   <option value="">Not recorded</option>
                   {order.map((teamId) => (

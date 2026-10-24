@@ -206,7 +206,6 @@ describe('KingOfCourtAdmin — final standings', () => {
   it('saves the ranks picked from the event day on', async () => {
     renderAdmin(tournament({ date: '2026-01-01' }))
     const selects = screen.getAllByRole('combobox')
-    // Prefilled from the starting courts: Centre = A, B; Two = C waiting.
     fireEvent.change(selects[0], { target: { value: 'team-b' } })
     fireEvent.change(selects[1], { target: { value: 'team-a' } })
     fireEvent.click(screen.getByRole('button', { name: 'Save standings' }))
@@ -221,9 +220,21 @@ describe('KingOfCourtAdmin — final standings', () => {
     )
   })
 
+  it('DEFECT GUARD — starts empty, so an untouched form publishes nothing (D-026)', () => {
+    renderAdmin(tournament({ date: '2026-01-01' }))
+    for (const select of screen.getAllByRole('combobox')) {
+      expect((select as HTMLSelectElement).value).toBe('')
+    }
+    expect(
+      (screen.getByRole('button', { name: 'Save standings' }) as HTMLButtonElement).disabled,
+    ).toBe(true)
+    expect(screen.getByText(/Players see the ranking as soon as you save/)).toBeTruthy()
+  })
+
   it('refuses a team picked twice', () => {
     renderAdmin(tournament({ date: '2026-01-01' }))
     const selects = screen.getAllByRole('combobox')
+    fireEvent.change(selects[0], { target: { value: 'team-a' } })
     fireEvent.change(selects[1], { target: { value: 'team-a' } })
 
     expect(screen.getByText('A team is picked more than once.')).toBeTruthy()

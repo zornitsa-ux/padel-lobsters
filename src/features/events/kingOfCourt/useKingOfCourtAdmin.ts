@@ -69,7 +69,7 @@ export function useKingOfCourtActions({ tournamentId }: { tournamentId: string }
   const [busy, setBusy] = useState<Busy>(null)
   const [error, setError] = useState('')
 
-  const run = async (kind: Exclude<Busy, null>, work: () => Promise<void>) => {
+  const run = async ({ kind, work }: { kind: Exclude<Busy, null>; work: () => Promise<void> }) => {
     setBusy(kind)
     setError('')
     try {
@@ -84,24 +84,27 @@ export function useKingOfCourtActions({ tournamentId }: { tournamentId: string }
     }
   }
 
-  const saveTeams = (patches: EventTeamPatch[]) =>
+  const saveTeams = ({ patches }: { patches: EventTeamPatch[] }) =>
     patches.length > 0 ? updateEventTeams({ patches }) : Promise.resolve()
 
   return {
     busy,
     error,
     saveSeeds: ({ patches }: { patches: EventTeamPatch[] }) =>
-      run('seeds', () => saveTeams(patches)),
+      run({ kind: 'seeds', work: () => saveTeams({ patches }) }),
     // Seeds are saved first, so players see the admin's order, reorders included.
     publish: ({ patches }: { patches: EventTeamPatch[] }) =>
-      run('publish', async () => {
-        await saveTeams(patches)
-        await updateTournament({
-          id: tournamentId,
-          data: { startingCourtsPublishedAt: new Date().toISOString() },
-        })
+      run({
+        kind: 'publish',
+        work: async () => {
+          await saveTeams({ patches })
+          await updateTournament({
+            id: tournamentId,
+            data: { startingCourtsPublishedAt: new Date().toISOString() },
+          })
+        },
       }),
     saveStandings: ({ patches }: { patches: EventTeamPatch[] }) =>
-      run('standings', () => saveTeams(patches)),
+      run({ kind: 'standings', work: () => saveTeams({ patches }) }),
   }
 }

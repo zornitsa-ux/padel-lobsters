@@ -2,12 +2,12 @@ import { describe, expect, it } from 'vitest'
 import {
   finalRankUpdates,
   hasRepeatedTeam,
-  initialCourtResults,
   moveTeam,
   reconcileOrder,
+  savedCourtResults,
   seedUpdates,
 } from './kotcAdmin'
-import type { KotcTeam, StartingCourt } from './domain'
+import type { KotcTeam } from './domain'
 
 const team = (id: string, extra: Partial<KotcTeam> = {}): KotcTeam => ({
   id,
@@ -17,13 +17,6 @@ const team = (id: string, extra: Partial<KotcTeam> = {}): KotcTeam => ({
   finalRank: null,
   createdAt: '2026-10-01T10:00:00Z',
   ...extra,
-})
-
-const court = (courtIndex: number, teamIds: string[]): StartingCourt => ({
-  courtIndex,
-  courtName: `Court ${courtIndex + 1}`,
-  teamIds,
-  waitingTeamId: null,
 })
 
 describe('moveTeam', () => {
@@ -84,20 +77,18 @@ describe('finalRankUpdates', () => {
   })
 })
 
-describe('initialCourtResults', () => {
-  const courts = [court(0, ['a', 'b']), court(1, ['c', 'd'])]
-
-  it('starts from the starting courts when nothing is saved', () => {
+describe('savedCourtResults', () => {
+  it('DEFECT GUARD — starts empty: never prefilled from the starting courts (D-026)', () => {
     const teams = ['a', 'b', 'c', 'd'].map((id) => team(id))
-    expect(initialCourtResults({ teams, courts })).toEqual([
-      { first: 'a', second: 'b' },
-      { first: 'c', second: 'd' },
+    expect(savedCourtResults({ teams, courtCount: 2 })).toEqual([
+      { first: null, second: null },
+      { first: null, second: null },
     ])
   })
 
   it('shows saved standings as they were, partial included', () => {
     const teams = [team('a'), team('b', { finalRank: 1 }), team('c'), team('d', { finalRank: 2 })]
-    expect(initialCourtResults({ teams, courts })).toEqual([
+    expect(savedCourtResults({ teams, courtCount: 2 })).toEqual([
       { first: 'b', second: 'd' },
       { first: null, second: null },
     ])
