@@ -739,6 +739,89 @@ $function$;
 -- D-016: the only way to change a payment status. Players move their own row
 -- forward (unpaid → tikkied → pending_confirmation); admins set any status
 -- except on a partner's 'covered' row, which only a transfer changes.
+-- 20260807140000's body; a captain's reminder names the partner and the team
+-- amount (D-005: the captain pays for both).
+create or replace function public.get_payment_reminder_link(input_registration_id uuid)
+returns text
+language plpgsql
+security definer
+set search_path to 'pg_catalog', 'public', 'extensions'
+as $function$
+declare
+  v_player_id uuid;
+  v_tournament_id uuid;
+  v_team_id uuid;
+  v_player_name text;
+  v_phone text;
+  v_tournament_name text;
+  v_tikkie_link text;
+  v_team_price numeric;
+  v_partner_name text;
+  v_digits text;
+  v_message text;
+begin
+  set local statement_timeout = '10s';
+  perform public.require_admin();
+
+  select r.player_id, r.tournament_id, r.team_id
+    into v_player_id, v_tournament_id, v_team_id
+    from public.registrations r
+   where r.id = input_registration_id;
+
+  if v_player_id is null then
+    raise exception 'registration_not_found' using errcode = 'P0002';
+  end if;
+
+  select p.name, p.phone into v_player_name, v_phone
+    from public.players p where p.id = v_player_id;
+
+  select t.name, t.tikkie_link, 2 * t.total_price / nullif(t.max_players, 0)
+    into v_tournament_name, v_tikkie_link, v_team_price
+    from public.tournaments t where t.id = v_tournament_id;
+
+  -- Audited unconditionally (the phone column was read either way), but
+  -- `succeeded` records whether a usable link came out.
+  if coalesce(v_tikkie_link, '') = '' then
+    insert into public.pin_attempts(player_id, attempt_kind, succeeded)
+    values (v_player_id, 'payment_reminder', false);
+    return null;
+  end if;
+
+  v_digits := regexp_replace(coalesce(v_phone, ''), '[\s\-()]', '', 'g');
+  if v_digits !~ '^\+\d{8,15}$' then
+    insert into public.pin_attempts(player_id, attempt_kind, succeeded)
+    values (v_player_id, 'payment_reminder', false);
+    return null;
+  end if;
+  v_digits := regexp_replace(v_digits, '^\+', '');
+
+  insert into public.pin_attempts(player_id, attempt_kind, succeeded)
+  values (v_player_id, 'payment_reminder', true);
+
+  if v_team_id is not null then
+    select p.name into v_partner_name
+      from public.registrations r
+      join public.players p on p.id = r.player_id
+     where r.team_id = v_team_id
+       and r.player_id <> v_player_id
+       and r.status in ('registered', 'waitlist');
+  end if;
+
+  v_message := 'Hi ' || coalesce(nullif(v_player_name, ''), 'there')
+    || '! Friendly reminder to pay for ' || coalesce(nullif(v_tournament_name, ''), 'the event');
+  if v_team_id is not null then
+    v_message := v_message || ' for your team (you and '
+      || coalesce(nullif(split_part(trim(v_partner_name), ' ', 1), ''), 'your partner') || ')'
+      || case when v_team_price > 0
+              then ', €' || regexp_replace(to_char(v_team_price, 'FM999990.00'), '\.00$', '')
+              else '' end;
+  end if;
+  v_message := v_message || ' via Tikkie: ' || v_tikkie_link || ' 🙏';
+
+  return 'https://wa.me/' || v_digits || '?text=' || public._url_encode(v_message);
+end;
+$function$;
+
 create or replace function public.set_registration_payment(
   input_registration_id uuid,
   input_payment_status text,

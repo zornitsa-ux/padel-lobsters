@@ -590,6 +590,7 @@ declare
   v_x record;
   v_team uuid;
   v_new uuid;
+  v_url text;
 begin
   select array_agg(id order by id) into v_p
     from (select id from public.players where role = 'player' and status = 'active' order by id limit 14) s;
@@ -634,6 +635,17 @@ begin
     raise exception 'CHECK 26c FAILED: flag not scoped to the event';
   end if;
   raise notice 'CHECK 26 ok: account_created_by_captain scoped to the event';
+
+  -- CHECK 27: a captain's payment reminder names the team and the team amount
+  update public.tournaments set tikkie_link = 'https://tikkie.me/pay/test', total_price = 80 where id = v_t;
+  update public.players set phone = '+31600000000' where id = v_p[11];
+  perform pg_temp.act((select id from public.players where role = 'admin' and status = 'active' order by id limit 1), true);
+  v_url := public.get_payment_reminder_link(
+    (select id from public.registrations where tournament_id = v_t and player_id = v_p[11] and status = 'registered'));
+  if v_url not like '%your%20team%20%28you%20and%20Scoped%29%2C%20%E2%82%AC20%20via%20Tikkie%' then
+    raise exception 'CHECK 27 FAILED: %', v_url;
+  end if;
+  raise notice 'CHECK 27 ok: team payment reminder copy';
 end $$;
 
 rollback;
