@@ -1,7 +1,8 @@
 # Team events and King of the Court: plan
 
 **Single source of truth for status.** Read it with [`DESIGN.md`](./DESIGN.md)
-(findings F-1 to F-7, the target design, rules) and
+(findings F-1 to F-7, the target design, rules),
+[`CONTRACTS.md`](./CONTRACTS.md) (exact RPC, schema and client contracts) and
 [`DECISIONS.md`](./DECISIONS.md) (D-001 onwards, append-only).
 
 **Goal.** Run a men's **team King of the Court** event:
@@ -35,11 +36,11 @@
 | Milestone                         | Target                           | Notes                                                  |
 | --------------------------------- | -------------------------------- | ------------------------------------------------------ |
 | Docs agreed                       | Wed 21 Oct                       | This PR                                                |
-| **R1: team signup live**          | Fri 23 Oct (signups open Sat 24) | T1, T3–T7. The one migration for the whole initiative  |
+| **R1: team signup live**          | Tue 27 Oct                       | T1, T3–T7. Slipped from Fri 23 for D-015/D-016         |
 | Partner invites live              | Within the first week of signups | T2 (edge function + RPC), so invites go out well ahead |
 | PIN cutover                       | Thu 5 Nov                        | Other initiative; no event 2–8 Nov                     |
 | **R2: seeding + final standings** | ≥ 3 days before the event        | Phase 2, client-only                                   |
-| Event                             | OQ-1                             | ≥ Sun 8 Nov                                            |
+| Event                             | Sun 15 Nov                       | 5 courts, 10 teams (OQ-1, D-017)                       |
 
 ---
 
@@ -48,7 +49,7 @@
 | ID  | Task                                                                                                                                                                                                                     | Phase | Depends on | PR  | State |
 | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----- | ---------- | --- | ----- |
 | T0  | Research, owner interview, docs                                                                                                                                                                                          | 0     | —          |     | [x]   |
-| T1  | Migration: `entry_mode`, `starting_courts_published_at`, `event_teams` (seed, final_rank), `registrations.team_id`, `covered`, `partner_invites`; team RPCs; guards on individual/transfer RPCs; `supabase/tests` script | 1     | T0         |     | [ ]   |
+| T1  | Migration: `entry_mode`, `starting_courts_published_at`, `event_teams` (seed, final_rank), `registrations.team_id`, `covered`, `partner_invites`; team RPCs; guards on individual/transfer RPCs; `supabase/tests` script | 1     | T0         | #56 | [x]   |
 | T2  | Partner invites: `admin_send_event_invite`, `event_invite` email kind + template, admin Partner invites list (not invited / invited / signed in)                                                                         | 1     | T1         |     | [ ]   |
 | T3  | Event form: Format picker, Max teams, team price                                                                                                                                                                         | 1     | T1         |     | [ ]   |
 | T4  | Join flow: partner search (active members), new-partner form, confirm + pay (captain)                                                                                                                                    | 1     | T1         |     | [ ]   |
@@ -129,7 +130,12 @@ signed in):
 
 ## 3. Later (Phase 3, not scheduled)
 
-- Partner accept step (D-003).
+- **Notification system** (owner, 2026-10-22). Today the app only shows state
+  when someone opens it (the acceptance screen, and "your partner declined"
+  from `event_teams.cancelled_reason`). Captains and partners would benefit
+  from being told: partner accepted or declined, team promoted off the
+  waitlist, transfer offered. That means an in-app inbox, and possibly email
+  through the existing Resend path or push. It needs its own design.
 - Men-only / gender signup check.
 - Team names.
 - Fixed-pair Americano (`team + lobster_matching`).
@@ -150,7 +156,6 @@ signed in):
 
 | ID   | Question                                                                 | Default if unanswered                                                   |
 | ---- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------- |
-| OQ-1 | Event date, number of courts, max teams?                                 | Needed before R1 so the admin can create the event                      |
 | OQ-4 | Starting courts when teams ≠ 2 × courts (an odd count, or under-filled)? | Fill from the top. An odd team is listed as waiting at the bottom court |
 | OQ-6 | Is this event separate from regular event #13?                           | Assume separate; both must be ≥ Sun 8 Nov                               |
 
@@ -182,3 +187,23 @@ placeholders as partners, was withdrawn by D-010: placeholders aren't offered.)
     account, and needs a ticked permission checkbox. The server requires and
     records the consent (`partner_invites.consent_confirmed_at`).
   - **D-012:** leagues will move to this partner model later (§3).
+- 2026-10-22: **T1** schema and RPCs. Contracts frozen in `CONTRACTS.md`.
+  D-013 (consent attester, admins exempt from the cap) and D-014 (team
+  invariants enforced by the database). `supabase/tests/team_events.sql`
+  covers every T1 case (19 checks). The existing DB scripts still pass. A
+  production read-only check found only `lobster_matching` events and even
+  capacities, so the new check constraints are safe.
+- 2026-10-22: Owner review of R1:
+  - D-013 and D-014 approved.
+  - **D-015:** the partner accepts. Until then the captain can swap or cancel,
+    and a decline cancels the team (complete teams keep the spots). Once
+    confirmed, players only transfer.
+  - **D-016:** all registration writes go through guarded RPCs.
+  - **D-017:** two teams per court.
+  - **D-018:** the schedule guard ships in R1.
+  - **D-019:** an acceptance screen after sign-in, with an optional finish
+    profile step.
+  - OQ-1 answered: Sun 15 Nov, 5 courts, 10 teams. R1 moves to Tue 27 Oct.
+  - A notification system was added to §3.
+  - `team_events.sql` now has 24 checks, including acceptance, decline,
+    captain cancel, transfers after acceptance and the payment RPC.

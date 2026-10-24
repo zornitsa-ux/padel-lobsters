@@ -14,6 +14,8 @@ export const mkRegistration = (r: WithId<NormalisedRegistration>): NormalisedReg
   status: 'registered',
   paymentStatus: 'unpaid',
   paymentMethod: '',
+  teamId: null,
+  acceptedAt: '2026-01-01T00:00:00Z',
   registeredAt: { seconds: 0 },
   ...r,
 })

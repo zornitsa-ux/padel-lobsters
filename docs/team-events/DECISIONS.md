@@ -194,3 +194,140 @@ synthetic sign-in accounts that PIN removal T17 is trying to retire.
   removed
 - `register_team_for_tournament`'s new-partner logic should become a shared
   private function, so that leagues reuse it rather than copy it
+
+## D-013 — Who attests consent, and the daily cap for admins (2026-10-22)
+
+**Decision:** `partner_invites.requested_by` is the person who ticked the
+consent box: the captain, or the admin when an admin enters or changes a team
+on someone's behalf. Admins are exempt from the 3-a-day new-partner cap.
+
+**Why:** The attestation has to name whoever actually gave it (D-011). An
+admin entering teams for people at the bar is the legitimate high-volume case,
+and admin actions are already trusted elsewhere.
+
+**Impact:** CONTRACTS §2. The Partner invites list (T2) shows "added by"
+from `requested_by`.
+
+## D-014 — Team invariants are enforced by the database (2026-10-22)
+
+**Decision:** Beyond the RPC rules, the database refuses anything that would
+split a team:
+
+- A trigger rejects direct (PostgREST) inserts and status, team, player or
+  event changes on team-event registrations. Only the `security definer` team
+  RPCs can make them. Payment edits stay allowed.
+- A deferred constraint trigger checks at commit that every team has 0 or 2
+  active rows, with one status and the captain present.
+- `entry_mode` can't change while anyone is entered.
+- `promote_waitlist_registration` refuses team rows (`use_promote_team`), as
+  `cancel_registration` does (`use_cancel_team`).
+- `event_teams.seed` and `final_rank` are admin-writable columns, so Phase 2
+  stays client-only.
+
+**Why:** Players can write their own `registrations` rows directly (RLS self
+insert and update, used by the payment sheet), so an RPC-only rule could be
+bypassed. A test alone would only show that today's code is right; the
+constraint keeps it right.
+
+**Impact:** CONTRACTS §1 "Invariants", §3.6. T1 tests 14–16 and 18.
+
+## D-015 — The partner accepts; complete teams keep the spots (2026-10-22)
+
+**Decision:** Supersedes D-003 (no accept step) and the captain swap in D-008.
+It applies to every partner, whether an existing member or an account the
+captain created.
+
+- **On signup:** the captain is accepted, and the partner is _pending_
+  (`registrations.accepted_at` is null). The team holds its spots while
+  pending, as `registered` or `waitlist`.
+- **While pending:**
+  - The captain can swap the partner (to a member or a new person, with
+    consent) or cancel the team, until the 12h cutoff.
+  - The partner can accept, or decline until the event starts. A decline
+    cancels the whole team and promotes the waitlist: we keep spots for
+    complete teams. The captain is told why (`event_teams.cancelled_reason`).
+- **Once both have accepted:** neither player can cancel or swap. Each can
+  only **transfer their own spot**, the same as individual events, under the
+  same 12h cutoff. The recipient takes their place on the team. A captain
+  hands over the captaincy and the team payment. A partner's place stays
+  `covered`.
+- **Admins** can add, swap, cancel and promote at any time. An admin swap
+  makes the new partner pending.
+- Players can't cancel individual events (unchanged). Spot transfers stay the
+  way out.
+
+**Why:** Owner decision. Registration is the only time a player adds someone
+else. An accept step stops anyone being entered without agreeing, and a
+complete-teams rule keeps the ladder full.
+
+**Impact:**
+
+- DESIGN §3.2.
+- CONTRACTS §1 and §3, with new RPCs `cancel_my_team`,
+  `respond_to_team_invite` and `get_my_team_invites`.
+- Transfers are re-enabled on team events once the team is confirmed.
+- T4/T5 UI: pending and confirmed states, an accept/decline screen after
+  sign-in (D-019), and the complete-teams copy at signup and on cancellation.
+
+## D-016 — Registrations are written only through guarded RPCs (2026-10-22)
+
+**Decision:** Direct table writes to `registrations` are revoked for every API
+role, and the self insert/update and admin write policies are dropped. Every
+change goes through a `security definer` function that allows one specific
+transition. Payment changes go through `set_registration_payment`:
+
+- a player can only move their own active row forward, from `unpaid` to
+  `tikkied` to `pending_confirmation`, and the method is set to `tikkie`
+- an admin can set any status, except on a partner's `covered` row, which only
+  a transfer changes
+
+**Why:** Owner request. RLS let a player set their own row to `paid`, or to
+`cancelled` without promoting the waitlist. D-014's trigger covered only team
+rows.
+
+**Impact:** D-014's direct-write check is gone (nothing can write directly);
+its invariants stay. The client's `updateRegistration` keeps its signature and
+calls the RPC. Individual events are covered too.
+
+## D-017 — Team capacity is two teams per court (2026-10-22)
+
+**Decision:** On King of the Court, `max_players = 4 × courts`, so 5 courts
+gives 10 teams and 20 players. The form shows it read-only and derives it from
+the court list.
+
+**Why:** Owner decision. The ladder needs exactly two teams per court.
+
+**Impact:** T3 (no Max teams input). OQ-1 is answered: Sun 15 Nov, 5 courts,
+10 teams.
+
+## D-018 — Schedule generator guard ships in R1 (2026-10-22)
+
+**Decision:** The Americano generator UI and `generateSchedule.service.ts`
+refuse team events from R1, rather than waiting for T9.
+
+**Why:** Owner decision. Otherwise an admin could generate an Americano
+schedule for a King of the Court event.
+
+**Impact:** #58. T9 keeps the `eventPhase` branch and the Finish changes.
+
+## D-019 — An acceptance screen after sign-in (2026-10-22)
+
+**Decision:** When a player has a pending team invite, signing in (or opening
+the app) takes them straight to a screen:
+
+> "{captain} has entered you as their partner for {event} on {date}."
+
+It has **Accept** and **I'm not playing** buttons, plus the complete-teams
+note. A partner whose account the captain created (`partner_invites`) is
+offered **Finish your profile** after accepting. It's optional, with a clear
+Skip. Existing members see the same screen.
+
+**Why:** Owner request: the invited account is marked, and the first sign-in
+should land on acknowledging the invite. That's also the natural moment to
+finish the profile.
+
+**Impact:** T4/T5 UI. It pulls forward part of PLAN §3's "finish your
+profile" item.
+
+**Owner approvals, 2026-10-22:** D-013 and D-014 approved. D-014's direct-write
+check is superseded by D-016.

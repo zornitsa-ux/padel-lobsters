@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { supabase } from '../../supabase'
 import { normaliseRegistrations } from '../../lib/normalise'
-import type { TablesUpdate } from '../../lib/database.types'
+import { firstRow } from '../../lib/firstRow'
 
 const nullableString = z.string().nullable().optional()
 
@@ -14,6 +14,8 @@ export const registrationRowSchema = z
     payment_status: nullableString,
     payment_method: nullableString,
     created_at: z.string().nullable().optional(),
+    team_id: nullableString,
+    accepted_at: nullableString,
   })
   .passthrough()
 
@@ -41,8 +43,6 @@ export async function fetchAllRegistrations(): Promise<NormalisedRegistration[]>
 // registered-vs-waitlist under the tournament row lock, so it is correct even
 // when two people tap at once — which the old client-side count of the query
 // cache never was.
-const firstRow = <T>(data: T[] | T | null): T | null =>
-  (Array.isArray(data) ? data[0] : data) ?? null
 
 export async function registerPlayer(tournamentId: string, playerId: string) {
   const { data, error } = await supabase.rpc('register_for_tournament', {
@@ -57,20 +57,23 @@ export async function registerPlayer(tournamentId: string, playerId: string) {
   return { regId: row?.registration_id ?? null, status: row?.status ?? 'error' }
 }
 
-// The camelCase patch the payments/registration UIs submit.
+// The camelCase patch the payments/registration UIs submit. Registrations
+// can't be written directly (D-016): set_registration_payment lets a player
+// move their own row forward and an admin set any status.
 export interface RegistrationInput {
-  status?: string
-  paymentStatus?: string
+  paymentStatus: string
   paymentMethod?: string
 }
 
 export async function updateRegistration(id: string, data: RegistrationInput) {
-  const payload: TablesUpdate<'registrations'> = {}
-  if (data.status !== undefined) payload.status = data.status
-  if (data.paymentStatus !== undefined) payload.payment_status = data.paymentStatus
-  if (data.paymentMethod !== undefined) payload.payment_method = data.paymentMethod
-  const { error } = await supabase.from('registrations').update(payload).eq('id', id)
+  const { data: rows, error } = await supabase.rpc('set_registration_payment', {
+    input_registration_id: id,
+    input_payment_status: data.paymentStatus,
+    input_payment_method: data.paymentMethod ?? '',
+  })
   if (error) throw error
+  const status = firstRow(rows)?.status
+  if (status !== 'ok') throw new Error(`set_registration_payment: ${status ?? 'no result'}`)
 }
 
 // Cancels, and promotes the oldest waitlisted player only if the cancellation

@@ -4,6 +4,7 @@ import type { NormalisedMatch, NormalisedRegistration } from '../../../lib/norma
 import { mkMatch, mkRegistration, mkTransfer } from '../../../test/factories'
 import {
   splitRegistrationsByStatus,
+  isActiveRegistration,
   getInTournamentPlayerIds,
   getAvailablePlayers,
   computePaymentConfig,
@@ -431,5 +432,15 @@ describe('isMatchVisibleForPlayer', () => {
 
   it('is false when nobody is claimed', () => {
     expect(isMatchVisibleForPlayer(match, null)).toBe(false)
+  })
+})
+
+describe('isActiveRegistration', () => {
+  it('is true for a held or waiting spot only', () => {
+    expect(
+      ['registered', 'waitlist', 'cancelled', null].map((status) =>
+        isActiveRegistration({ status }),
+      ),
+    ).toEqual([true, true, false, false])
   })
 })

@@ -10,12 +10,14 @@ export const REGISTER_FAILURE_MESSAGES: Record<string, string> = {
   not_found: 'This event no longer exists. Refresh and try again.',
   already_registered: 'They are already registered for this event.',
   already_waitlist: 'They are already on the waitlist for this event.',
+  team_event: 'This is a team event. Sign up as a team instead.',
 }
 
 export const CANCEL_FAILURE_MESSAGES: Record<string, string> = {
   error: 'Could not cancel the registration. Please try again.',
   not_found: 'That registration no longer exists. Refresh and try again.',
   already_cancelled: 'That registration was already cancelled.',
+  use_cancel_team: 'This player is on a team. Cancel the team instead.',
 }
 
 export const PROMOTE_FAILURE_MESSAGES: Record<string, string> = {
@@ -24,13 +26,14 @@ export const PROMOTE_FAILURE_MESSAGES: Record<string, string> = {
   not_found: 'That registration no longer exists. Refresh and try again.',
   not_waitlisted: 'That player is no longer on the waitlist.',
   already_registered: 'They are already registered.',
+  use_promote_team: 'This player is on a team. Confirm the team instead.',
 }
 
 export function registrationMessage({
   map,
   status,
 }: {
-  map: Record<string, string>
+  map: Partial<Record<string, string>>
   status: string
 }): string {
   return map[status] ?? FALLBACK

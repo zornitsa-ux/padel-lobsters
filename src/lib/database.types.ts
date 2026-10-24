@@ -28,6 +28,78 @@ export type Database = {
   }
   public: {
     Tables: {
+      event_teams: {
+        Row: {
+          cancelled_at: string | null
+          cancelled_reason: string | null
+          captain_id: string
+          created_at: string
+          created_by: string | null
+          final_rank: number | null
+          id: string
+          seed: number | null
+          tournament_id: string
+        }
+        Insert: {
+          cancelled_at?: string | null
+          cancelled_reason?: string | null
+          captain_id: string
+          created_at?: string
+          created_by?: string | null
+          final_rank?: number | null
+          id?: string
+          seed?: number | null
+          tournament_id: string
+        }
+        Update: {
+          cancelled_at?: string | null
+          cancelled_reason?: string | null
+          captain_id?: string
+          created_at?: string
+          created_by?: string | null
+          final_rank?: number | null
+          id?: string
+          seed?: number | null
+          tournament_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'event_teams_captain_id_fkey'
+            columns: ['captain_id']
+            isOneToOne: false
+            referencedRelation: 'players'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'event_teams_captain_id_fkey'
+            columns: ['captain_id']
+            isOneToOne: false
+            referencedRelation: 'players_public'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'event_teams_created_by_fkey'
+            columns: ['created_by']
+            isOneToOne: false
+            referencedRelation: 'players'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'event_teams_created_by_fkey'
+            columns: ['created_by']
+            isOneToOne: false
+            referencedRelation: 'players_public'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'event_teams_tournament_id_fkey'
+            columns: ['tournament_id']
+            isOneToOne: false
+            referencedRelation: 'tournaments'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       league_interests: {
         Row: {
           created_at: string | null
@@ -595,6 +667,92 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_invites: {
+        Row: {
+          account_acknowledged_at: string | null
+          consent_confirmed_at: string
+          created_at: string
+          id: string
+          invited_at: string | null
+          invited_by: string | null
+          player_id: string
+          requested_by: string
+          tournament_id: string
+        }
+        Insert: {
+          account_acknowledged_at?: string | null
+          consent_confirmed_at: string
+          created_at?: string
+          id?: string
+          invited_at?: string | null
+          invited_by?: string | null
+          player_id: string
+          requested_by: string
+          tournament_id: string
+        }
+        Update: {
+          account_acknowledged_at?: string | null
+          consent_confirmed_at?: string
+          created_at?: string
+          id?: string
+          invited_at?: string | null
+          invited_by?: string | null
+          player_id?: string
+          requested_by?: string
+          tournament_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'partner_invites_invited_by_fkey'
+            columns: ['invited_by']
+            isOneToOne: false
+            referencedRelation: 'players'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'partner_invites_invited_by_fkey'
+            columns: ['invited_by']
+            isOneToOne: false
+            referencedRelation: 'players_public'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'partner_invites_player_id_fkey'
+            columns: ['player_id']
+            isOneToOne: true
+            referencedRelation: 'players'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'partner_invites_player_id_fkey'
+            columns: ['player_id']
+            isOneToOne: true
+            referencedRelation: 'players_public'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'partner_invites_requested_by_fkey'
+            columns: ['requested_by']
+            isOneToOne: false
+            referencedRelation: 'players'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'partner_invites_requested_by_fkey'
+            columns: ['requested_by']
+            isOneToOne: false
+            referencedRelation: 'players_public'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'partner_invites_tournament_id_fkey'
+            columns: ['tournament_id']
+            isOneToOne: false
+            referencedRelation: 'tournaments'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       pin_attempts: {
         Row: {
           attempt_kind: string
@@ -1077,30 +1235,36 @@ export type Database = {
       }
       registrations: {
         Row: {
+          accepted_at: string | null
           created_at: string | null
           id: string
           payment_method: string | null
           payment_status: string | null
           player_id: string
           status: string | null
+          team_id: string | null
           tournament_id: string
         }
         Insert: {
+          accepted_at?: string | null
           created_at?: string | null
           id?: string
           payment_method?: string | null
           payment_status?: string | null
           player_id: string
           status?: string | null
+          team_id?: string | null
           tournament_id: string
         }
         Update: {
+          accepted_at?: string | null
           created_at?: string | null
           id?: string
           payment_method?: string | null
           payment_status?: string | null
           player_id?: string
           status?: string | null
+          team_id?: string | null
           tournament_id?: string
         }
         Relationships: [
@@ -1116,6 +1280,13 @@ export type Database = {
             columns: ['player_id']
             isOneToOne: false
             referencedRelation: 'players_public'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'registrations_team_id_fkey'
+            columns: ['team_id']
+            isOneToOne: false
+            referencedRelation: 'event_teams'
             referencedColumns: ['id']
           },
           {
@@ -1245,6 +1416,7 @@ export type Database = {
           created_at: string | null
           date: string | null
           duration: number | null
+          entry_mode: string
           format: string | null
           gender_mode: string | null
           id: string
@@ -1256,6 +1428,7 @@ export type Database = {
           raffle_published_at: string | null
           ratings_applied_at: string | null
           results_shared_at: string | null
+          starting_courts_published_at: string | null
           status: string | null
           tikkie_link: string | null
           time: string | null
@@ -1267,6 +1440,7 @@ export type Database = {
           created_at?: string | null
           date?: string | null
           duration?: number | null
+          entry_mode?: string
           format?: string | null
           gender_mode?: string | null
           id?: string
@@ -1278,6 +1452,7 @@ export type Database = {
           raffle_published_at?: string | null
           ratings_applied_at?: string | null
           results_shared_at?: string | null
+          starting_courts_published_at?: string | null
           status?: string | null
           tikkie_link?: string | null
           time?: string | null
@@ -1289,6 +1464,7 @@ export type Database = {
           created_at?: string | null
           date?: string | null
           duration?: number | null
+          entry_mode?: string
           format?: string | null
           gender_mode?: string | null
           id?: string
@@ -1300,6 +1476,7 @@ export type Database = {
           raffle_published_at?: string | null
           ratings_applied_at?: string | null
           results_shared_at?: string | null
+          starting_courts_published_at?: string | null
           status?: string | null
           tikkie_link?: string | null
           time?: string | null
@@ -1410,6 +1587,12 @@ export type Database = {
     }
     Functions: {
       _url_encode: { Args: { input: string }; Returns: string }
+      acknowledge_my_account: {
+        Args: never
+        Returns: {
+          status: string
+        }[]
+      }
       admin_add_player: {
         Args: { input_payload: Json }
         Returns: {
@@ -1458,6 +1641,13 @@ export type Database = {
         Returns: number
       }
       admin_auth_readiness: { Args: never; Returns: Json }
+      admin_cancel_team: {
+        Args: { input_team_id: string }
+        Returns: {
+          promoted_team_id: string
+          status: string
+        }[]
+      }
       admin_cancel_transfer: {
         Args: { input_transfer_id: string }
         Returns: {
@@ -1604,6 +1794,22 @@ export type Database = {
         Args: { input_email: string; input_player_id: string }
         Returns: string
       }
+      admin_list_partner_invites: {
+        Args: { input_tournament_id?: string }
+        Returns: {
+          consent_confirmed_at: string
+          created_at: string
+          email: string
+          has_active_registration: boolean
+          invited_at: string
+          invited_by: string
+          last_sign_in_at: string
+          player_id: string
+          player_name: string
+          requested_by: string
+          tournament_id: string
+        }[]
+      }
       admin_list_security_events: {
         Args: { input_limit?: number }
         Returns: {
@@ -1620,6 +1826,12 @@ export type Database = {
       admin_persist_learned_ratings: {
         Args: { input_applied_tournament_ids?: string[]; input_updates: Json }
         Returns: number
+      }
+      admin_promote_team: {
+        Args: { input_team_id: string }
+        Returns: {
+          status: string
+        }[]
       }
       admin_purge_player: {
         Args: { input_target_id: string }
@@ -1831,6 +2043,13 @@ export type Database = {
         Returns: string
       }
       before_user_created_hook: { Args: { event: Json }; Returns: Json }
+      cancel_my_team: {
+        Args: { input_team_id: string }
+        Returns: {
+          promoted_team_id: string
+          status: string
+        }[]
+      }
       cancel_registration: {
         Args: { input_registration_id: string }
         Returns: {
@@ -1841,6 +2060,24 @@ export type Database = {
       }
       cancel_transfer: {
         Args: { input_transfer_id: string }
+        Returns: {
+          status: string
+        }[]
+      }
+      change_team_partner: {
+        Args: {
+          input_new_partner?: Json
+          input_partner_consent?: boolean
+          input_partner_id?: string
+          input_team_id: string
+        }
+        Returns: {
+          partner_id: string
+          status: string
+        }[]
+      }
+      check_new_partner_email: {
+        Args: { input_email: string }
         Returns: {
           status: string
         }[]
@@ -1900,6 +2137,14 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_my_account_setup: {
+        Args: never
+        Returns: {
+          acknowledged: boolean
+          requested_by_name: string
+          tournament_name: string
+        }[]
+      }
       get_my_profile_v2: {
         Args: never
         Returns: {
@@ -1942,6 +2187,20 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      get_my_team_invites: {
+        Args: never
+        Returns: {
+          account_created_by_captain: boolean
+          captain_id: string
+          captain_name: string
+          team_id: string
+          team_status: string
+          tournament_date: string
+          tournament_id: string
+          tournament_name: string
+          tournament_time: string
+        }[]
       }
       get_payment_reminder_link: {
         Args: { input_registration_id: string }
@@ -2068,7 +2327,27 @@ export type Database = {
           status: string
         }[]
       }
+      register_team_for_tournament: {
+        Args: {
+          input_captain_id: string
+          input_new_partner?: Json
+          input_partner_consent?: boolean
+          input_partner_id?: string
+          input_tournament_id: string
+        }
+        Returns: {
+          partner_id: string
+          status: string
+          team_id: string
+        }[]
+      }
       require_admin: { Args: never; Returns: undefined }
+      respond_to_team_invite: {
+        Args: { input_accept: boolean; input_team_id: string }
+        Returns: {
+          status: string
+        }[]
+      }
       respond_to_transfer: {
         Args: { input_accept: boolean; input_transfer_id: string }
         Returns: {
@@ -2085,6 +2364,16 @@ export type Database = {
           pin: string
           player_id: string
           was_existing: boolean
+        }[]
+      }
+      set_registration_payment: {
+        Args: {
+          input_payment_method?: string
+          input_payment_status: string
+          input_registration_id: string
+        }
+        Returns: {
+          status: string
         }[]
       }
       sync_my_role: { Args: never; Returns: Json }
