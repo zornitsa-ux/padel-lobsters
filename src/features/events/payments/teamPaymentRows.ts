@@ -4,7 +4,6 @@ import type { TeamEntry } from '../teams/teamTypes'
 export interface PaymentRows {
   regs: NormalisedRegistration[]
   partnerIdByRegId: Map<string, string>
-  unitsPerRow: 1 | 2
 }
 
 // A team pays once, through the captain's row; the partner's 'covered' row is
@@ -22,13 +21,11 @@ export function buildPaymentRows({
     return {
       regs: registrations.filter((r) => r.status === 'registered'),
       partnerIdByRegId: new Map(),
-      unitsPerRow: 1,
     }
   }
   const entries = teamEntries.filter((e) => e.status === 'registered')
   return {
     regs: entries.map((e) => e.captain),
     partnerIdByRegId: new Map(entries.map((e) => [e.captain.id, e.partner.playerId])),
-    unitsPerRow: 2,
   }
 }
