@@ -19,6 +19,7 @@
 import { isEventDayReached, localDateString } from '../../lib/tournamentDate'
 import { isKingOfTheCourt } from './eventFormat'
 import { tournamentStartMs } from '../../lib/tournamentStart'
+import { DEFAULT_EVENT_DURATION_MINUTES } from '../../lib/normalise'
 import type { OscarsPhase } from '../oscars/oscarsPhase'
 
 /**
@@ -135,8 +136,6 @@ export type OverTournament = Pick<
   'status' | 'format' | 'date' | 'time' | 'duration'
 >
 
-const DEFAULT_DURATION_MINUTES = 90
-
 /**
  * Whether the event is over. Americano is over when the admin finishes it
  * (that applies the ratings). Nobody finishes King of the Court, so it is over
@@ -152,8 +151,20 @@ export function isEventOver({
   if (tournament.status === 'completed') return true
   if (!isKingOfTheCourt(tournament)) return false
   const start = tournamentStartMs(tournament)
-  const minutes = tournament.duration ?? DEFAULT_DURATION_MINUTES
+  const minutes = tournament.duration ?? DEFAULT_EVENT_DURATION_MINUTES
   return start != null && now.getTime() >= start + minutes * 60_000
+}
+
+/** Scheduled and not over yet: what Home and the admin tools call "next". */
+export function isEventUpcoming({
+  tournament,
+  now = new Date(),
+}: {
+  tournament: OverTournament
+  now?: Date
+}): boolean {
+  const scheduled = tournament.status === 'upcoming' || tournament.status === 'active'
+  return scheduled && !isEventOver({ tournament, now })
 }
 
 /* ── Tab visibility ─────────────────────────────────────────────────────────

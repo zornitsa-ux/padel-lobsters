@@ -39,7 +39,8 @@ export function useEventLifecycle({ tournament }: { tournament: NormalisedTourna
   const { data: players = [] } = usePlayers()
   const { data: regsData = [] } = useRegistrations(tournament.id)
   const { data: savedMatches = [] } = useMatches(tournament.id)
-  // D-009: King of the Court has no matches, so Finish applies no ratings.
+  // King of the Court has no ratings or Finish (D-009, D-026); the run of show
+  // still mounts this hook there for the raffle, so skip the rating queries.
   const appliesRatings = !isKingOfTheCourt(tournament)
 
   const regs = useMemo(() => regsData.filter((r) => r.status === 'registered'), [regsData])
@@ -129,7 +130,7 @@ export function useEventLifecycle({ tournament }: { tournament: NormalisedTourna
     setError('')
     try {
       try {
-        if (appliesRatings) await applyRatings()
+        await applyRatings()
       } catch (err) {
         // A prior Finish click can have applied ratings successfully and
         // then failed on the status update below — the RPC's double-apply

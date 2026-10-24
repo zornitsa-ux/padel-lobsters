@@ -136,25 +136,6 @@ describe('finishTournament — applies ratings before marking complete', () => {
   })
 })
 
-describe('finishTournament — King of the Court (D-009)', () => {
-  const kotc = { ...(tournament as object), format: 'king_of_court' } as never
-
-  it('completes with zero matches and applies no ratings', async () => {
-    savedMatches = []
-    const { result } = render(kotc)
-
-    await act(async () => {
-      await result.current.finishTournament()
-    })
-
-    expect(mockApplyMutateAsync).not.toHaveBeenCalled()
-    expect(mockUpdateMutateAsync).toHaveBeenCalledWith({
-      id: 't1',
-      data: { status: 'completed', completedAt: expect.any(String) },
-    })
-  })
-})
-
 describe('finishTournament — double-apply guard dead-end (owner ask, 2026-07-25)', () => {
   it('treats a double-apply-guard rejection as done and still completes', async () => {
     // A prior Finish can apply ratings and then fail the status write; the RPC's

@@ -28,7 +28,7 @@ import type { Player, NormalisedTournament } from '../../lib/normalise'
 import type { NormalisedMatch } from '../events/matchQueries'
 import type { NormalisedRegistration } from '../events/registrationQueries'
 import type { NormalisedTransfer } from '../events/transferQueries'
-import { isEventOver } from '../events/eventPhase'
+import { isEventOver, isEventUpcoming } from '../events/eventPhase'
 
 // Only mounts after the player taps "share" on an outgoing transfer offer.
 const TransferPendingModal = lazy(() => import('../../components/TransferPendingModal'))
@@ -152,9 +152,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
 
   // Next upcoming tournament
   const upcoming = tournaments
-    .filter(
-      (t) => (t.status === 'upcoming' || t.status === 'active') && !isEventOver({ tournament: t }),
-    )
+    .filter((t) => isEventUpcoming({ tournament: t }))
     .sort((a, b) => ((a.date || '') < (b.date || '') ? -1 : 1))[0]
 
   const regs = upcoming ? getTournamentRegistrations(upcoming.id) : []
@@ -172,9 +170,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
   // future. Once the current event starts, the clock automatically flips to the
   // next one so there's always a countdown visible when future events exist.
   const allUpcoming = tournaments
-    .filter(
-      (t) => (t.status === 'upcoming' || t.status === 'active') && !isEventOver({ tournament: t }),
-    )
+    .filter((t) => isEventUpcoming({ tournament: t }))
     .sort((a, b) => ((a.date || '') < (b.date || '') ? -1 : 1))
   const countdownTournament =
     allUpcoming.find((t) => {

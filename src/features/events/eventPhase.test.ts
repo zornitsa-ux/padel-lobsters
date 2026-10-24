@@ -10,6 +10,7 @@ import {
   defaultEventTab,
   isRunOfShowVisible,
   isEventOver,
+  isEventUpcoming,
   raffleWinnersWithheld,
   EVENT_PHASES,
 } from './eventPhase'
@@ -336,6 +337,23 @@ describe('eventPhase — King of the Court (D-006, D-026)', () => {
   it('leaves Americano on the match cascade', () => {
     const tournament = { ...kotc({ shown: true }), format: 'lobster_matching' }
     expect(phase(tournament)).toBe('open')
+  })
+})
+
+describe('isEventUpcoming', () => {
+  const event = (over: Record<string, unknown> = {}) => ({
+    status: 'upcoming',
+    format: 'king_of_court',
+    date: TODAY,
+    time: '10:00',
+    duration: 120,
+    ...over,
+  })
+
+  it('is a scheduled event that is not over yet', () => {
+    expect(isEventUpcoming({ tournament: event(), now: new Date(2026, 6, 29, 11) })).toBe(true)
+    expect(isEventUpcoming({ tournament: event(), now: new Date(2026, 6, 29, 12) })).toBe(false)
+    expect(isEventUpcoming({ tournament: event({ status: 'completed' }), now: NOW })).toBe(false)
   })
 })
 

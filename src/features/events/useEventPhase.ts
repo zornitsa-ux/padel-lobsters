@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useMatches } from './useMatches'
 import { useOscarsSessionRow } from '../oscars/useOscarsSessionRow'
 import { derivePhase, toPhaseSession } from '../oscars/oscarsPhase'
@@ -39,9 +39,14 @@ export function useEventPhase(tournament: (PhaseTournament & { id: string }) | n
   })
   const hasFinalStandings = Boolean(teams?.some((t) => t.finalRank != null && !t.cancelledAt))
 
+  const now = useMinuteClock({ enabled: kotc })
+
   const phase = useMemo(
-    () => (tournament ? eventPhase({ tournament, matches, hasFinalStandings }) : 'open'),
-    [tournament, matches, hasFinalStandings],
+    () =>
+      tournament
+        ? eventPhase({ tournament, matches, hasFinalStandings, now: kotc ? now : new Date() })
+        : 'open',
+    [tournament, matches, hasFinalStandings, kotc, now],
   )
 
   // react-query's `undefined` while loading is exactly derivePhase's loading
@@ -55,4 +60,16 @@ export function useEventPhase(tournament: (PhaseTournament & { id: string }) | n
     oscarsPhase,
     isPending: tournament != null && (matchesPending || (kotc && teamsPending)),
   }
+}
+
+// King of the Court's phase turns on the clock (the event day, the scheduled
+// end), not on data, so an open page re-derives it every minute.
+function useMinuteClock({ enabled }: { enabled: boolean }): Date {
+  const [now, setNow] = useState(() => new Date())
+  useEffect(() => {
+    if (!enabled) return
+    const id = setInterval(() => setNow(new Date()), 60_000)
+    return () => clearInterval(id)
+  }, [enabled])
+  return now
 }

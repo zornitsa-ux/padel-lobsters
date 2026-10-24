@@ -57,6 +57,9 @@ export function normalisePlayers(players: RawPlayerRow[]): Player[] {
   }))
 }
 
+// Used where an event's stored duration is missing.
+export const DEFAULT_EVENT_DURATION_MINUTES = 90
+
 // A single court entry, stored (and edited) in camelCase inside the row's
 // `courts` JSON column. The column itself is `jsonb`, so this shape is the
 // app's contract with itself rather than something the DB enforces.
@@ -124,7 +127,7 @@ export function normaliseTournaments(tournaments: RawTournamentRow[]): Normalise
     format: t.format ?? '',
     notes: t.notes ?? '',
     maxPlayers: t.max_players ?? t.maxPlayers ?? 16,
-    duration: t.duration ?? 90,
+    duration: t.duration ?? DEFAULT_EVENT_DURATION_MINUTES,
     courts: t.courts ?? [],
     location: t.location ?? '',
     totalPrice: t.total_price ?? t.totalPrice ?? 0,
