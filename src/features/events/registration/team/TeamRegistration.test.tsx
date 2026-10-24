@@ -190,7 +190,8 @@ describe('team join card', () => {
     fireEvent.click(screen.getByRole('checkbox'))
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
 
-    expect(screen.getByText(/you \+ gus · €20\.00 for the team/i)).not.toBeNull()
+    expect(screen.getByText('You + Gus')).not.toBeNull()
+    expect(screen.getByText(/€20\.00 for the team/i)).not.toBeNull()
     fireEvent.click(screen.getByRole('button', { name: 'Sign up' }))
 
     expect((await screen.findByRole('alert')).textContent).toMatch(/already has an account/i)
@@ -225,7 +226,7 @@ describe('team join card', () => {
     fireEvent.click(screen.getByRole('button', { name: /sign up as a team/i }))
     fireEvent.click(screen.getByRole('button', { name: /bob/i }))
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
-    fireEvent.click(screen.getByRole('button', { name: /sign up|join the waitlist/i }))
+    fireEvent.click(screen.getByRole('button', { name: /^(sign up|join the waitlist)$/i }))
 
     expect(await screen.findByText("You're both on the waitlist.")).not.toBeNull()
   })
@@ -546,7 +547,7 @@ describe('signup notices', () => {
     fireEvent.click(screen.getByRole('button', { name: /bob/i }))
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
     expect(screen.getByText(/we keep spots for complete teams/i)).not.toBeNull()
-    fireEvent.click(screen.getByRole('button', { name: /sign up|join the waitlist/i }))
+    fireEvent.click(screen.getByRole('button', { name: /^(sign up|join the waitlist)$/i }))
     return view
   }
 

@@ -79,6 +79,7 @@ export default function TeamSignup({
             getPlayer={getPlayer}
             displayName={displayName}
             onSignedUp={(result) => {
+              setJoinOpen(false)
               setSignup({ notices: result.notices, status: result.status })
               onSignedUp(result)
             }}
