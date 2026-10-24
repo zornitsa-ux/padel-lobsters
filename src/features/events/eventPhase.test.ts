@@ -11,7 +11,7 @@ import {
   isRunOfShowVisible,
   isEventOver,
   isEventUpcoming,
-  isInHistory,
+  eventTimeGroup,
   raffleWinnersWithheld,
   EVENT_PHASES,
 } from './eventPhase'
@@ -386,35 +386,30 @@ describe('isEventOver', () => {
   })
 })
 
-describe('isInHistory', () => {
+describe('eventTimeGroup', () => {
   const event = (over: Record<string, unknown> = {}) => ({
     status: 'upcoming',
-    format: 'king_of_court',
-    date: '2026-07-27',
+    format: 'lobster_matching',
+    date: YESTERDAY,
     time: '10:00',
     duration: 120,
     ...over,
   })
 
-  it('moves King of the Court to History 2 days after its date, with no Finish', () => {
-    expect(isInHistory({ tournament: event(), now: new Date('2026-07-28T23:00:00Z') })).toBe(false)
-    expect(isInHistory({ tournament: event(), now: new Date('2026-07-29T00:00:00Z') })).toBe(true)
+  it('puts an over event straight into finished, with no waiting period', () => {
+    const kotc = event({ format: 'king_of_court', date: TODAY, time: '08:00', duration: 60 })
+    expect(eventTimeGroup({ tournament: kotc, now: new Date(2026, 6, 29, 9) })).toBe('finished')
+    const americano = event({ status: 'completed', date: TODAY })
+    expect(eventTimeGroup({ tournament: americano, now: NOW })).toBe('finished')
   })
 
-  it('keeps an unfinished Americano out of History', () => {
-    const americano = event({ format: 'lobster_matching' })
-    const later = new Date('2026-08-05T00:00:00Z')
-    expect(isInHistory({ tournament: americano, now: later })).toBe(false)
-    expect(isInHistory({ tournament: { ...americano, status: 'completed' }, now: later })).toBe(
-      true,
-    )
+  it('holds an Americano past its date until Finish as awaiting results', () => {
+    expect(eventTimeGroup({ tournament: event(), now: NOW })).toBe('awaitingResults')
   })
 
-  it('falls back to completedAt, and to History when there is no date at all', () => {
-    const done = { ...event({ date: null, format: 'lobster_matching' }), status: 'completed' }
-    const recent = { ...done, completedAt: '2026-07-28T20:00:00Z' }
-    expect(isInHistory({ tournament: recent, now: NOW })).toBe(false)
-    expect(isInHistory({ tournament: done, now: NOW })).toBe(true)
+  it('keeps an event on its day, before it is over, upcoming', () => {
+    expect(eventTimeGroup({ tournament: event({ date: TODAY }), now: NOW })).toBe('upcoming')
+    expect(eventTimeGroup({ tournament: event({ date: TOMORROW }), now: NOW })).toBe('upcoming')
   })
 })
 

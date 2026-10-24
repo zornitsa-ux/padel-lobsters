@@ -58,7 +58,7 @@ export function useKingOfCourtActions({ tournamentId }: { tournamentId: string }
     } finally {
       await Promise.all([
         qc.invalidateQueries({ queryKey: teamKeys.list(tournamentId) }),
-        // History, Home and Lobster Review read this event's teams too.
+        // Past results, Home and Lobster Review read this event's teams too.
         qc.invalidateQueries({ queryKey: teamKeys.allForEvents() }),
       ])
       setBusy(null)

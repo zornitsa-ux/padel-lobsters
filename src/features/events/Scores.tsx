@@ -38,7 +38,7 @@ export default function Scores({ tournament, onNavigate }: ScoresProps) {
   const { data: regsData = [] } = useRegistrations(tournament?.id)
 
   // Tab switcher: ranking (podium + standings), matches (round-by-round cards,
-  // same layout as History), lobster-games (per-category winners from a shared
+  // same layout as Past results), lobster-games (per-category winners from a shared
   // Lobster Oscars session), or raffle (published prize winners). Each of the
   // three results tabs appears only once its own reveal has landed, so the strip
   // grows as the admin works through the run-of-show.

@@ -20,7 +20,7 @@ export function useRegistrations(tournamentId: string | null | undefined) {
   })
 }
 
-// All registrations across every tournament — for History and Dashboard screens.
+// All registrations across every tournament — for Past results and Dashboard screens.
 export function useAllRegistrations() {
   return useQuery({
     queryKey: registrationKeys.all(),

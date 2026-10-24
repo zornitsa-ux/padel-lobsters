@@ -33,7 +33,7 @@ import type { Player, NormalisedTournament } from '../../lib/normalise'
    Three reads go through slice hooks rather than direct api calls, because
    another surface already caches those rows under a shared key: the session row
    (`oscarKeys.session`, also read by the registration results banner), the
-   shared results (`oscarKeys.results`, also read by Scores and History) and the
+   shared results (`oscarKeys.results`, also read by Scores and Past results) and the
    tournament's matches (`matchKeys.list`, owned by the events slice).
    ════════════════════════════════════════════════════════════════════════════ */
 

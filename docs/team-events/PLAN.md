@@ -95,7 +95,7 @@ D-030**); DESIGN §3.3–3.4 describe what was built. In short:
   counts aren't designed for (D-029).
 - **Player views**: starting court on Schedule, You and Home's next-event
   card; the team ranking with courts moved and the Biggest climber on
-  Results, History and the recently-completed banner; the team's rank in
+  Results, the Past results cards and the recently-completed banner; the team's rank in
   Lobster Review (T11, T13).
 
 **Next, in order:**
@@ -142,7 +142,7 @@ nothing sign-in-facing ships from Thu 12 Nov.
   draft layer on top) and `useMyKingOfCourt` (viewer's team, starting court,
   placing). Pure helpers in `kotcPlayer.ts`. Views: `KingOfCourtPlayerSchedule`,
   `MyStartingCourtCard`, `MyKingOfCourtLine` (Home), `KingOfCourtResults`,
-  `TeamRankingList`. Multi-event surfaces (History, Home banner, Lobster
+  `TeamRankingList`. Multi-event surfaces (Past results, Home banner, Lobster
   Review) use `useTeamResultsByEvent`, one `event_teams` query over the King
   of the Court events only; `teamResultsByEvent` seeds each event the same
   way to give every result its `move`. Courts moved: `courtMoves` and
@@ -166,7 +166,7 @@ nothing sign-in-facing ships from Thu 12 Nov.
 - `tournaments.status` (`upcoming` | `active` | `completed`): nothing writes
   `active`, and on Americano `completed` means Finished (ratings applied),
   which `completed_at` also records. Display code should ask `isEventOver` /
-  `isInHistory`, never the raw status (#68 fixed the Events list). Dropping
+  `eventTimeGroup`, never the raw status (#68 fixed the Events list). Dropping
   the column is a migration across the RPC guards; not planned.
 - T12 UX notes, not fixed: a captain-created account is asked "Has your
   Playtomic score changed? It's been a while!" and sees the PIN-sunset
@@ -497,19 +497,26 @@ OQ-4, odd counts, was closed by D-029: capacity matches the courts.)
   - Past the end: Home's next event moved on; the run of show offered only
     Oscars and the raffle.
   - Partial standings were public at once on Results, You, the Home banner,
-    History and Lobster Review. Courts moved and the Biggest climber matched
+    Past and Lobster Review. Courts moved and the Biggest climber matched
     the shown layout, the waiting team counting from its court.
 
   Fixes in #68:
-  - The Events list kept a King of the Court event as a past-event card with
-    an "Upcoming" badge, and listed it twice once History took it (2 days
-    after its date): it decided History and the badge from
-    `status = 'completed'`, which King of the Court never reaches (D-026).
-    Both lists now share `isInHistory`, and the badge reads `isEventOver`.
+  - The Events page's Past section kept a King of the Court event as a
+    plain card with an "Upcoming" badge, and listed it twice once the results
+    cards took it (2 days after its date): the two halves of Past decided
+    from `status = 'completed'`, which King of the Court never reaches
+    (D-026), and from the clock. Both now ask `eventTimeGroup`, also used by
+    the card badge (**D-031**): a finished event gets its results card at
+    once, with no 2-day wait, and an event past its date but not finished
+    shows "Results pending" instead of "Upcoming".
+  - The results component (`features/history/History.tsx`, from the old
+    History page) is now `features/pastEvents/PastEventResults.tsx`, and
+    code comments say "Past results": users only ever see "Past".
   - The `courtMoves` comment and DESIGN §3.3 item 7 said the standings form
     lists every court; it lists the courts in play.
   - Owner decisions: **D-029** (team count matches the courts; odd counts
-    aren't designed for) and **D-030** (strength is the team's average
+    aren't designed for), **D-031** (Past without the wait; "Results
+    pending") and **D-030** (strength is the team's average
     level, shown as "Avg level").
 
   A read-only review of the team-event UI against `components/ui` and the

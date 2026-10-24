@@ -337,10 +337,10 @@ Built in #63 and #64; revised by D-024 to D-027.
    capped at the bottom court in play. The standings form lists only the
    courts in play, so the cap matters only when the layout shrinks after
    standings are saved (a court removed afterwards). A team with no rank, or no starting court (D-027), has no
-   move. Each ranked row on Results and History shows "Court 5 → King court
+   move. Each ranked row on Results and the Past results card shows "Court 5 → King court
    ↑4" ("↓1", "=", or "held" on the King court). `biggestClimbers` names the
    most courts gained, then the lower start, all still tied; nobody when no
-   team gained. Results and History show it above the ranking, and the
+   team gained. Results and the Past results card show it above the ranking, and the
    recently-completed banner under the winners.
 
 ### 3.4 Lifecycle changes
@@ -349,9 +349,15 @@ Built in #63 and #64; revised by D-024 to D-027.
   Americano when finished, King of the Court at start + duration. Home's next
   event and countdown, the admin unpaid count, attendance streaks, the Events
   list, the event card badge, signup and the admin team controls use it (or
-  `isEventUpcoming`) instead of `status = 'completed'`. So do History and the
-  recently-completed banner (T11), which show the team ranking and winning
-  team for King of the Court.
+  `isEventUpcoming`) instead of `status = 'completed'`. So do the Past
+  results cards and the recently-completed banner (T11), which show the team
+  ranking and winning team for King of the Court.
+- **The Events page's Past section** (D-031). `eventTimeGroup` sorts every
+  event: `finished` (over) gets a results card at once
+  (`PastEventResults`, called "History" before #68), `awaitingResults` (date
+  passed, not over: an Americano before Finish) gets a plain card with a
+  "Results pending" badge, and the rest are upcoming. Home's
+  recently-completed banner still shows for 48 hours after the date.
 - **Phase** for King of the Court (Americano unchanged):
 
   | When                                                | Phase          |

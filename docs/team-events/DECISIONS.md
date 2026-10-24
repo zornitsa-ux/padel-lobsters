@@ -517,3 +517,21 @@ single player's level.
 
 **Impact:** Supersedes the sum in D-025 (the Playtomic-only rule stands).
 DESIGN §3.3 item 1. `teamStrength` and its tests.
+
+## D-031 — Past shows results as soon as an event is over (2026-10-24)
+
+**Decision:** On the Events page's Past section, a finished event gets its
+results card as soon as it's over (King of the Court at its scheduled end,
+Americano at Finish), with no 2-day wait. An event whose date has passed but
+that isn't over (an Americano before Finish) gets a plain card with a
+"Results pending" badge, never "Upcoming". The results component and its
+folder are renamed from History to `PastEventResults`, since users only see
+"Past".
+
+**Why:** Owner, after T12: the 2-day wait came from the old History page
+(April), mirroring Home's 48-hour banner, and left a finished event with no
+ranking on the Events page. Nothing needs it. Home's recently-completed
+banner keeps its 48 hours, which recent-match scoring depends on.
+
+**Impact:** DESIGN §3.4. `eventTimeGroup` in `eventPhase.ts`, used by the
+Events list, the card badge and `PastEventResults`. #68.

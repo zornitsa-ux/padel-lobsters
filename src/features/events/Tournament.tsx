@@ -4,10 +4,9 @@ import { useTournaments, useUpdateTournament, useDeleteTournament } from './useT
 import { useTransfers } from './useTransfers'
 import { useEventForm } from './useEventForm'
 import { Plus, Trophy, Clock } from 'lucide-react'
-import HistoryContent from '../history/History'
+import PastEventResults from '../pastEvents/PastEventResults'
 import AdminTransferPanel from '../../components/AdminTransferPanel'
 import { DEFAULT_EVENT_DESCRIPTION } from './eventConstants'
-import { parseLocalDate } from './eventHelpers'
 import EventFormModal from './EventFormModal'
 import UpcomingEventCard from './UpcomingEventCard'
 import { EventCard } from './EventCard'
@@ -19,7 +18,7 @@ import { errorMessage, errorCode, FOREIGN_KEY_VIOLATION } from '../../lib/errors
 import { useConfirm } from '../../lib/confirmBus'
 import type { EventNavigate } from './eventHelpers'
 import type { NormalisedTournament } from '../../lib/normalise'
-import { isEventOver, isInHistory } from './eventPhase'
+import { eventTimeGroup } from './eventPhase'
 import type { TournamentInput } from './tournamentQueries'
 
 export { DEFAULT_EVENT_DESCRIPTION }
@@ -39,26 +38,16 @@ export default function Tournament({ onNavigate }: { onNavigate: EventNavigate }
   const claimedId = session?.user?.id ?? null
 
   const eventForm = useEventForm()
-  const [showHistory, setShowHistory] = useState(true)
+  const [showPast, setShowPast] = useState(true)
   const [error, setError] = useState('')
   // Admin pending-transfer panel — open for one tournament at a time.
   const [adminTransferTournament, setAdminTransferTournament] =
     useState<NormalisedTournament | null>(null)
 
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  // The embedded <HistoryContent /> renders these as podium cards.
-  const past = tournaments.filter((t) => {
-    if (isInHistory({ tournament: t })) return false
-    if (isEventOver({ tournament: t })) return true
-    const d = parseLocalDate(t.date)
-    return d !== null && d < today
-  })
-  const upcoming = tournaments.filter((t) => {
-    if (isEventOver({ tournament: t })) return false
-    const d = parseLocalDate(t.date)
-    return d === null || d >= today
-  })
+  const awaitingResults = tournaments.filter(
+    (t) => eventTimeGroup({ tournament: t }) === 'awaitingResults',
+  )
+  const upcoming = tournaments.filter((t) => eventTimeGroup({ tournament: t }) === 'upcoming')
 
   const openAdd = () => {
     if (!isAdmin) {
@@ -173,21 +162,20 @@ export default function Tournament({ onNavigate }: { onNavigate: EventNavigate }
           ))}
         </div>
 
-        {/* Past events + History — collapsible */}
+        {/* Past: events awaiting results, then results cards — collapsible */}
         <CollapsibleSection
           title="Past"
           icon={<Clock size={13} className="text-lob-muted opacity-60" />}
-          expanded={showHistory}
-          onToggle={() => setShowHistory((h) => !h)}
+          expanded={showPast}
+          onToggle={() => setShowPast((h) => !h)}
         >
           <div className="space-y-2">
-            {past.map((t) => (
+            {awaitingResults.map((t) => (
               <EventCard key={t.id} tournament={t} past />
             ))}
 
-            {/* Legacy History Records */}
             <div className="mt-4">
-              <HistoryContent onNavigate={onNavigate} />
+              <PastEventResults onNavigate={onNavigate} />
             </div>
           </div>
         </CollapsibleSection>

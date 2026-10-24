@@ -13,7 +13,7 @@ import { buildDisplayNames } from './displayNames'
 import { groupOscarResultsByCategory } from '../oscars/oscarResults'
 import { useOscarResultsFor } from '../oscars/useOscarResultsFor'
 import { resultsWithheld } from '../events/resultsPhase'
-import { isInHistory } from '../events/eventPhase'
+import { eventTimeGroup } from '../events/eventPhase'
 import { isKingOfTheCourt } from '../events/eventFormat'
 import { useTeamResultsByEvent } from '../events/kingOfCourt/useTeamResultsByEvent'
 import { teamResultLabel } from '../events/kingOfCourt/kotcPlayer'
@@ -36,12 +36,12 @@ interface DbStandingRow {
   pts: number
 }
 
-interface HistoryProps {
+interface PastEventResultsProps {
   onNavigate?: (view: string, tournament: NormalisedTournament) => void
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
-export default function History({ onNavigate }: HistoryProps) {
+export default function PastEventResults({ onNavigate }: PastEventResultsProps) {
   const { isAdmin, session } = useApp()
   const { data: tournaments = [] } = useTournaments()
   const { data: players = [] } = usePlayers()
@@ -66,7 +66,7 @@ export default function History({ onNavigate }: HistoryProps) {
 
   const dynamicTournaments = useMemo(() => {
     return tournaments
-      .filter((t) => isInHistory({ tournament: t }))
+      .filter((t) => eventTimeGroup({ tournament: t }) === 'finished')
       .sort((a, b) => ((b.date || b.completedAt || '') > (a.date || a.completedAt || '') ? 1 : -1))
   }, [tournaments])
 
@@ -119,7 +119,7 @@ export default function History({ onNavigate }: HistoryProps) {
         })
         tMatches.forEach((m) => {
           // Both scores required: a half-scored match is incomplete. Matches
-          // computeRankings in events/registration/utils.ts so History and the
+          // computeRankings in events/registration/utils.ts so Past and the
           // event page cannot disagree about the same tournament.
           if (!m.completed || m.score1 == null || m.score2 == null) return
           const s1 = m.score1,

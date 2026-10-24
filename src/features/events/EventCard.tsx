@@ -3,11 +3,13 @@ import { Badge } from '../../components/ui/Badge'
 import type { BadgeProps } from '../../components/ui/Badge'
 import { LinkCard } from '../../components/ui/LinkCard'
 import type { NormalisedTournament } from '../../lib/normalise'
-import { isEventOver } from './eventPhase'
+import { eventTimeGroup, type EventTimeGroup } from './eventPhase'
 
-type EventBadge = Pick<BadgeProps, 'variant' | 'label'>
-const UPCOMING: EventBadge = { variant: 'info', label: 'Upcoming' }
-const COMPLETED: EventBadge = { variant: 'silver', label: 'Completed' }
+const BADGES: Record<EventTimeGroup, Pick<BadgeProps, 'variant' | 'label'>> = {
+  upcoming: { variant: 'info', label: 'Upcoming' },
+  awaitingResults: { variant: 'pending', label: 'Results pending' },
+  finished: { variant: 'silver', label: 'Completed' },
+}
 
 interface EventCardProps {
   tournament: NormalisedTournament
@@ -15,7 +17,7 @@ interface EventCardProps {
 }
 
 export function EventCard({ tournament: t, past = false }: EventCardProps) {
-  const badge = isEventOver({ tournament: t }) ? COMPLETED : UPCOMING
+  const badge = BADGES[eventTimeGroup({ tournament: t })]
   const details = [t.time, t.location].filter(Boolean).join(' · ')
   return (
     <LinkCard

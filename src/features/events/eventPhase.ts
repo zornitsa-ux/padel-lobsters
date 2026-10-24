@@ -16,7 +16,7 @@
    D-029 requires the results reveal to stay independent of everything else.
    ════════════════════════════════════════════════════════════════════════════ */
 
-import { isEventDayReached, localDateString } from '../../lib/tournamentDate'
+import { isEventDayReached, isTournamentPast, localDateString } from '../../lib/tournamentDate'
 import { isKingOfTheCourt } from './eventFormat'
 import { tournamentStartMs } from '../../lib/tournamentStart'
 import { DEFAULT_EVENT_DURATION_MINUTES } from '../../lib/normalise'
@@ -155,23 +155,22 @@ export function isEventOver({
   return start != null && now.getTime() >= start + minutes * 60_000
 }
 
-const HISTORY_AFTER_MS = 2 * 24 * 60 * 60 * 1000
-
 /**
- * Over, and 2 days past its date: History shows it as a podium card, and the
- * Events list stops showing it as a past-event card.
+ * Where the Events page lists an event: `finished` events get a results card
+ * under Past; `awaitingResults` (date passed, not over: an Americano before
+ * Finish) get a plain card under Past; the rest are upcoming.
  */
-export function isInHistory({
+export type EventTimeGroup = 'upcoming' | 'awaitingResults' | 'finished'
+
+export function eventTimeGroup({
   tournament,
   now = new Date(),
 }: {
-  tournament: OverTournament & { completedAt?: string | null }
+  tournament: OverTournament
   now?: Date
-}): boolean {
-  if (!isEventOver({ tournament, now })) return false
-  const ref = tournament.date || tournament.completedAt
-  if (!ref) return true
-  return now.getTime() - new Date(ref).getTime() >= HISTORY_AFTER_MS
+}): EventTimeGroup {
+  if (isEventOver({ tournament, now })) return 'finished'
+  return isTournamentPast(tournament.date, now) ? 'awaitingResults' : 'upcoming'
 }
 
 /** Scheduled and not over yet: what Home and the admin tools call "next". */

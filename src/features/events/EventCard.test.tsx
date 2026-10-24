@@ -17,25 +17,32 @@ const tournament = (over: Partial<NormalisedTournament>) =>
     ...over,
   }) as NormalisedTournament
 
-const renderCard = (t: NormalisedTournament) =>
+const badgeOf = (t: NormalisedTournament) => {
   render(
     <MemoryRouter>
       <EventCard tournament={t} past />
     </MemoryRouter>,
   )
+  return ['Completed', 'Results pending', 'Upcoming'].filter((label) => screen.queryByText(label))
+}
 
 describe('EventCard', () => {
   afterEach(cleanup)
 
   it('marks King of the Court completed once its scheduled end has passed (D-026)', () => {
-    renderCard(tournament({}))
-    expect(screen.getByText('Completed')).toBeTruthy()
-    expect(screen.queryByText('Upcoming')).toBeNull()
+    expect(badgeOf(tournament({}))).toEqual(['Completed'])
+  })
+
+  it('marks an Americano past its date but not finished as results pending', () => {
+    expect(badgeOf(tournament({ format: 'lobster_matching' }))).toEqual(['Results pending'])
   })
 
   it('marks a finished Americano completed', () => {
-    renderCard(tournament({ format: 'lobster_matching', status: 'completed' }))
-    expect(screen.getByText('Completed')).toBeTruthy()
-    expect(screen.queryByText('Upcoming')).toBeNull()
+    const finished = tournament({ format: 'lobster_matching', status: 'completed' })
+    expect(badgeOf(finished)).toEqual(['Completed'])
+  })
+
+  it('marks a future event upcoming', () => {
+    expect(badgeOf(tournament({ date: '2099-01-10' }))).toEqual(['Upcoming'])
   })
 })
