@@ -6,6 +6,7 @@ import { mkRegistration } from '../../test/factories'
 const m = vi.hoisted(() => ({
   session: { user: { id: 'p1' } } as unknown,
   teamResults: new Map() as Map<string, unknown[]>,
+  pending: false,
 }))
 
 vi.mock('../../context/useApp', () => ({
@@ -21,7 +22,7 @@ vi.mock('../oscars/useOscarResultsFor', () => ({
   useOscarResultsFor: () => ({ byTournamentId: {} }),
 }))
 vi.mock('../events/kingOfCourt/useTeamResultsByEvent', () => ({
-  useTeamResultsByEvent: () => m.teamResults,
+  useTeamResultsByEvent: () => ({ byEvent: m.teamResults, isPending: m.pending }),
 }))
 
 const { default: History } = await import('./History')
@@ -58,6 +59,7 @@ const open = () => {
 
 beforeEach(() => {
   m.session = { user: { id: 'p1' } }
+  m.pending = false
   m.teamResults = new Map([
     [
       'k1',
@@ -81,6 +83,14 @@ describe('History on King of the Court', () => {
     expect(screen.queryByText(/results pending/i)).toBeNull()
     expect(screen.queryByText(/pts/)).toBeNull()
     expect(screen.getByRole('button', { name: 'View event results →' })).toBeTruthy()
+  })
+
+  it('claims nothing while the teams load', () => {
+    m.pending = true
+    open()
+
+    expect(screen.queryByText(/no final standings/i)).toBeNull()
+    expect(screen.queryByText('Katherine & Margaret')).toBeNull()
   })
 
   it('asks signed-out viewers to sign in for the standings', () => {

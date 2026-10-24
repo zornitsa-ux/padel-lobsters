@@ -44,7 +44,7 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
   const { data: tournaments = [] } = useTournaments()
   const { data: players = [] } = usePlayers()
   const { data: allRegs = [] } = useAllRegistrations()
-  const teamResults = useTeamResultsByEvent({
+  const { byEvent: teamResults } = useTeamResultsByEvent({
     tournaments,
     registrations: allRegs,
     enabled: isAdmin,
@@ -95,7 +95,13 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
       byScenario.set(s.id, { id: s.id, label: s.label, players: [], samples: new Map() })
     })
     activePlayers.forEach((p) => {
-      const r = corpReview(p, allMatches, allRegs, tournaments, teamResults)
+      const r = corpReview({
+        player: p,
+        matches: allMatches,
+        registrations: allRegs,
+        tournaments,
+        teamResults,
+      })
       let bucket = byScenario.get(r.scenario)
       if (!bucket) {
         bucket = { id: r.scenario, label: r.scenarioLabel, players: [], samples: new Map() }

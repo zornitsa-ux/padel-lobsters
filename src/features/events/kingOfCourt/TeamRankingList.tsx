@@ -51,3 +51,27 @@ export default function TeamRankingList({
     </div>
   )
 }
+
+// Signed-out viewers can't read event_teams; while loading, nothing claims
+// that no standings exist.
+export function TeamStandings({
+  signedIn,
+  isPending,
+  rows,
+  highlightTeamId = null,
+}: {
+  signedIn: boolean
+  isPending: boolean
+  rows: TeamRankingRow[]
+  highlightTeamId?: string | null
+}) {
+  if (!signedIn) {
+    return (
+      <p className="text-sm text-lob-muted-light text-center py-4">
+        Sign in to see the final standings.
+      </p>
+    )
+  }
+  if (isPending) return null
+  return <TeamRankingList rows={rows} highlightTeamId={highlightTeamId} />
+}

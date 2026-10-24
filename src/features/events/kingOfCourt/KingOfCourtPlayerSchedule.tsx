@@ -19,6 +19,7 @@ export default function KingOfCourtPlayerSchedule({
     tournament,
     registrations,
     playerId: session?.user?.id ?? null,
+    enabled: session != null,
   })
 
   if (!kotc.shown) {
@@ -30,6 +31,18 @@ export default function KingOfCourtPlayerSchedule({
       />
     )
   }
+
+  // Signed-out viewers can't read event_teams, so they'd see empty courts.
+  if (!session) {
+    return (
+      <EmptyState
+        icon={<Crown size={36} />}
+        title="Sign in to see the starting courts"
+        description="Starting courts are shown to signed-in players."
+      />
+    )
+  }
+  if (kotc.isPending) return null
 
   return (
     <div className="card space-y-3" data-testid="kotc-starting-courts">

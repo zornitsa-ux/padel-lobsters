@@ -163,7 +163,11 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
     .filter((t) => isEventUpcoming({ tournament: t }))
     .sort((a, b) => ((a.date || '') < (b.date || '') ? -1 : 1))[0]
 
-  const regs = upcoming ? getTournamentRegistrations(upcoming.id) : []
+  // Memoised: the King of the Court line derives its whole view model from it.
+  const regs = useMemo(
+    () => (upcoming ? getTournamentRegistrations(upcoming.id) : []),
+    [upcoming, getTournamentRegistrations],
+  )
   const unpaid = regs.filter(
     (r) =>
       r.status === 'registered' && r.paymentStatus !== 'paid' && r.paymentStatus !== 'transferred',
@@ -317,7 +321,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
           getTournamentMatches={getTournamentMatches}
           getTournamentRegistrations={getTournamentRegistrations}
           players={players}
-          teamResults={recentTeamResults}
+          teamResults={recentTeamResults.isPending ? null : recentTeamResults.byEvent}
           isAdmin={isAdmin}
           onNavigate={onNavigate}
         />

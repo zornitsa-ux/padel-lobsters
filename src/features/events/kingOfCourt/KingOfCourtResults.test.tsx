@@ -3,10 +3,14 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, cleanup, within } from '@testing-library/react'
 import type { NormalisedTournament } from '../../../lib/normalise'
 
-const m = vi.hoisted(() => ({ teams: [] as unknown[] }))
+const m = vi.hoisted(() => ({
+  teams: [] as unknown[],
+  signedIn: true,
+  pending: false,
+}))
 
 vi.mock('../../../context/useApp', () => ({
-  useApp: () => ({ session: { user: { id: 'c1' } } }),
+  useApp: () => ({ session: m.signedIn ? { user: { id: 'c1' } } : null }),
 }))
 vi.mock('../../players/usePlayers', () => ({ usePlayers: () => ({ data: players }) }))
 vi.mock('../useRegistrations', () => ({ useRegistrations: () => ({ data: registrations }) }))
@@ -15,6 +19,7 @@ vi.mock('../teams/useTeams', async () => {
   return {
     useTeamEntries: ({ registrations }: { registrations: never }) => ({
       entries: buildTeamEntries({ teams: m.teams as never, registrations }),
+      isPending: m.pending,
     }),
   }
 })
@@ -55,6 +60,8 @@ const tournament = {
 
 beforeEach(() => {
   m.teams = [team('a', null), team('b', 2), team('c', 1), team('d', 3)]
+  m.signedIn = true
+  m.pending = false
 })
 
 afterEach(cleanup)
@@ -80,5 +87,19 @@ describe('KingOfCourtResults', () => {
     render(<KingOfCourtResults tournament={tournament} />)
 
     expect(screen.getByText('No final standings were recorded for this event.')).toBeTruthy()
+  })
+
+  it('claims nothing while the teams load', () => {
+    m.pending = true
+    render(<KingOfCourtResults tournament={tournament} />)
+
+    expect(screen.queryByText(/no final standings/i)).toBeNull()
+  })
+
+  it('asks signed-out viewers to sign in', () => {
+    m.signedIn = false
+    render(<KingOfCourtResults tournament={tournament} />)
+
+    expect(screen.getByText('Sign in to see the final standings.')).toBeTruthy()
   })
 })

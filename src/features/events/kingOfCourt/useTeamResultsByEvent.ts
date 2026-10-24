@@ -17,16 +17,18 @@ export function useTeamResultsByEvent({
   tournaments: { id: string; format?: string | null }[]
   registrations: NormalisedRegistration[]
   enabled?: boolean
-}): TeamResultsByEvent {
+}): { byEvent: TeamResultsByEvent; isPending: boolean } {
   const ids = tournaments
     .filter((t) => isKingOfTheCourt(t))
     .map((t) => t.id)
     .sort()
   const key = ids.join(',')
   const tournamentIds = useMemo(() => (key ? key.split(',') : []), [key])
-  const { data: teams } = useTeamsForEvents({ tournamentIds, enabled })
-  return useMemo(
+  const { data: teams, isPending } = useTeamsForEvents({ tournamentIds, enabled })
+  const byEvent = useMemo(
     () => (teams ? teamResultsByEvent({ teams, registrations }) : NONE),
     [teams, registrations],
   )
+  // A disabled query reports pending forever; only an enabled one is loading.
+  return { byEvent, isPending: enabled && tournamentIds.length > 0 && isPending }
 }

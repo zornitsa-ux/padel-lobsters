@@ -44,7 +44,7 @@ const unrankedMatch = (score1: number, score2: number, round = 1) => ({
 
 describe('corpReview — scenario selection', () => {
   it('returns the welcome scenario when there is no history at all', () => {
-    const r = corpReview(player())
+    const r = corpReview({ player: player() })
 
     expect(r.scenario).toBe('welcome')
     expect(r.hasLabel).toBe(false)
@@ -54,17 +54,19 @@ describe('corpReview — scenario selection', () => {
   it('flags a player who won the most recent ranked tournament', () => {
     const matches = [match(6, 2), match(6, 3, 2), match(6, 4, 3)]
 
-    expect(corpReview(player(), matches, registrations, tournaments).scenario).toBe('recent-winner')
+    expect(corpReview({ player: player(), matches, registrations, tournaments }).scenario).toBe(
+      'recent-winner',
+    )
   })
 
   it('prefixes titled scenarios with their label but leaves filler untitled', () => {
-    const titled = corpReview(
-      player(),
-      [match(6, 2), match(6, 3, 2), match(6, 4, 3)],
+    const titled = corpReview({
+      player: player(),
+      matches: [match(6, 2), match(6, 3, 2), match(6, 4, 3)],
       registrations,
       tournaments,
-    )
-    const untitled = corpReview(player())
+    })
+    const untitled = corpReview({ player: player() })
 
     expect(titled.hasLabel).toBe(true)
     expect(titled.text).toBe(`${titled.scenarioLabel} — ${titled.body}`)
@@ -73,7 +75,12 @@ describe('corpReview — scenario selection', () => {
   })
 
   it('calls a player with a single match a rookie', () => {
-    const r = corpReview(player(), [unrankedMatch(6, 4)], registrations, tournaments)
+    const r = corpReview({
+      player: player(),
+      matches: [unrankedMatch(6, 4)],
+      registrations,
+      tournaments,
+    })
 
     expect(r.scenario).toBe('rookie')
   })
@@ -84,7 +91,7 @@ describe('corpReview — scenario selection', () => {
         ...Array.from({ length: wins }, (_, i) => unrankedMatch(6, 2, i + 1)),
         ...Array.from({ length: losses }, (_, i) => unrankedMatch(2, 6, wins + i + 1)),
       ]
-      return corpReview(player(), played, registrations, tournaments).scenario
+      return corpReview({ player: player(), matches: played, registrations, tournaments }).scenario
     }
 
     expect(scenarioFor(4, 0)).toBe('dominant') // 100%
@@ -95,7 +102,7 @@ describe('corpReview — scenario selection', () => {
   })
 
   it('reports attendance with no logged results as shows-up-no-data', () => {
-    const r = corpReview(player(), [], registrations, tournaments)
+    const r = corpReview({ player: player(), matches: [], registrations, tournaments })
 
     expect(r.scenario).toBe('shows-up-no-data')
     expect(r.hasLabel).toBe(false)
@@ -107,18 +114,23 @@ describe('corpReview — scenario selection', () => {
       date: `2020-0${i + 1}-01`,
       status: 'completed',
     }))
-    const r = corpReview(player(), [], [registrations[0]], fourEvents)
+    const r = corpReview({
+      player: player(),
+      matches: [],
+      registrations: [registrations[0]],
+      tournaments: fourEvents,
+    })
 
     expect(r.scenario).toBe('ghost')
   })
 
   it('is deterministic for the same player id', () => {
-    expect(corpReview(player()).text).toBe(corpReview(player()).text)
+    expect(corpReview({ player: player() }).text).toBe(corpReview({ player: player() }).text)
   })
 
   it('varies the welcome copy across player ids', () => {
     const variants = new Set(
-      ['a', 'b', 'c', 'd', 'e', 'f'].map((id) => corpReview(player({ id })).text),
+      ['a', 'b', 'c', 'd', 'e', 'f'].map((id) => corpReview({ player: player({ id }) }).text),
     )
 
     expect(variants.size).toBeGreaterThan(1)
@@ -150,7 +162,14 @@ describe('corpReview — attendance', () => {
       tournamentId: t.id,
       status: 'registered',
     }))
-    expect(corpReview(player(), [], allThree, threeEvents).scenario).toBe('ironman')
+    expect(
+      corpReview({
+        player: player(),
+        matches: [],
+        registrations: allThree,
+        tournaments: threeEvents,
+      }).scenario,
+    ).toBe('ironman')
   })
 })
 
@@ -169,19 +188,37 @@ describe('corpReview — King of the Court ranks by team (T11)', () => {
     ])
 
   it("uses the team's final rank for the most recent event", () => {
-    expect(corpReview(player(), [], registrations, tournaments, teams(1)).scenario).toBe(
-      'recent-winner',
-    )
+    expect(
+      corpReview({
+        player: player(),
+        matches: [],
+        registrations,
+        tournaments,
+        teamResults: teams(1),
+      }).scenario,
+    ).toBe('recent-winner')
   })
 
   it('leaves an event without a rank for the player out', () => {
     const matches = [match(6, 2), match(6, 3, 2), match(6, 4, 3)]
     // t1 (Americano) is the only ranked event left, and p1 won it.
-    expect(corpReview(player(), matches, registrations, tournaments, teams(null)).scenario).toBe(
-      'recent-winner',
-    )
-    expect(corpReview(player(), [], registrations, tournaments, teams(null)).scenario).toBe(
-      'shows-up-no-data',
-    )
+    expect(
+      corpReview({
+        player: player(),
+        matches,
+        registrations,
+        tournaments,
+        teamResults: teams(null),
+      }).scenario,
+    ).toBe('recent-winner')
+    expect(
+      corpReview({
+        player: player(),
+        matches: [],
+        registrations,
+        tournaments,
+        teamResults: teams(null),
+      }).scenario,
+    ).toBe('shows-up-no-data')
   })
 })

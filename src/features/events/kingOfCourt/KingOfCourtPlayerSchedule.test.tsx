@@ -3,10 +3,10 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, cleanup } from '@testing-library/react'
 import type { NormalisedTournament } from '../../../lib/normalise'
 
-const m = vi.hoisted(() => ({ viewerId: 'b1', teams: [] as unknown[] }))
+const m = vi.hoisted(() => ({ viewerId: 'b1' as string | null, teams: [] as unknown[] }))
 
 vi.mock('../../../context/useApp', () => ({
-  useApp: () => ({ session: { user: { id: m.viewerId } } }),
+  useApp: () => ({ session: m.viewerId ? { user: { id: m.viewerId } } : null }),
 }))
 vi.mock('../../players/usePlayers', () => ({ usePlayers: () => ({ data: players }) }))
 vi.mock('../useRegistrations', () => ({ useRegistrations: () => ({ data: registrations }) }))
@@ -102,5 +102,13 @@ describe('KingOfCourtPlayerSchedule', () => {
 
     expect(screen.queryByText(/You start|You wait/)).toBeNull()
     expect(screen.getByTestId('kotc-starting-courts')).toBeTruthy()
+  })
+
+  it('asks signed-out viewers to sign in instead of showing empty courts', () => {
+    m.viewerId = null
+    render(<KingOfCourtPlayerSchedule tournament={tournament()} />)
+
+    expect(screen.getByText('Sign in to see the starting courts')).toBeTruthy()
+    expect(screen.queryByTestId('kotc-starting-courts')).toBeNull()
   })
 })

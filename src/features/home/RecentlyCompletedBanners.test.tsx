@@ -86,7 +86,7 @@ describe('RecentlyCompletedBanners — King of the Court', () => {
     resultsSharedAt: null,
     format: 'king_of_court',
   }
-  const renderKotc = (teamResults: Map<string, unknown[]>) => {
+  const renderKotc = (teamResults: Map<string, unknown[]> | null) => {
     const onNavigate = vi.fn()
     render(
       <RecentlyCompletedBanners
@@ -110,6 +110,12 @@ describe('RecentlyCompletedBanners — King of the Court', () => {
     expect(screen.getByText('Ada Lovelace & Grace Hopper')).toBeTruthy()
     screen.getByRole('button', { name: 'See Full Results' }).click()
     expect(onNavigate).toHaveBeenCalledWith('scores', kotc)
+  })
+
+  it('holds the banner back while the teams load', () => {
+    renderKotc(null)
+
+    expect(screen.queryByText('King Sunday')).toBeNull()
   })
 
   it('links to the event when no standings were saved', () => {

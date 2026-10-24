@@ -76,13 +76,19 @@ export const REVIEW_SCENARIOS: ReviewScenario[] = [
 
 // Returns a structured review so admins can see which branch fired.
 // Existing callers wanting plain text should read `.text`.
-export function corpReview(
-  player: ReviewPlayer,
-  matches: MatchForStandings[] = [],
-  registrations: ReviewRegistration[] = [],
-  tournaments: ReviewTournament[] = [],
-  teamResults: TeamResultsByEvent = new Map(),
-): CorpReview {
+export function corpReview({
+  player,
+  matches = [],
+  registrations = [],
+  tournaments = [],
+  teamResults = new Map(),
+}: {
+  player: ReviewPlayer
+  matches?: MatchForStandings[]
+  registrations?: ReviewRegistration[]
+  tournaments?: ReviewTournament[]
+  teamResults?: TeamResultsByEvent
+}): CorpReview {
   const lvl = player.playtomicLevel || 0
   const name = (player.name || 'Employee').split(' ')[0]
   const pid = player.id

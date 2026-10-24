@@ -23,8 +23,8 @@ interface RecentlyCompletedBannersProps<T extends CompletedTournament> {
   getTournamentMatches: (id: string) => NormalisedMatch[]
   getTournamentRegistrations: (id: string) => NormalisedRegistration[]
   players: BannerPlayer[]
-  /** King of the Court events rank teams, not match scores. */
-  teamResults: TeamResultsByEvent
+  /** King of the Court events rank teams, not match scores. Null while loading. */
+  teamResults: TeamResultsByEvent | null
   isAdmin: boolean
   onNavigate: (page: string, tournament: NoInfer<T>) => void
 }
@@ -47,6 +47,8 @@ export default function RecentlyCompletedBanners<T extends CompletedTournament>(
     <>
       {recentlyCompleted.map((t) => {
         if (isKingOfTheCourt(t)) {
+          // Held back while loading, so it never offers the no-standings link first.
+          if (!teamResults) return null
           const winner = eventWinner({ results: teamResults.get(t.id) })
           return (
             <CompletedBanner

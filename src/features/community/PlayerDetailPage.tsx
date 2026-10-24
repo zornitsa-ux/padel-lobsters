@@ -83,7 +83,7 @@ export default function PlayerDetailPage({ playerId, onNavigate }: PlayerDetailP
   const { data: tournaments = [] } = useTournaments()
   const { data: matches = [] } = useAllMatches()
   const { data: registrations = [] } = useAllRegistrations()
-  const teamResults = useTeamResultsByEvent({
+  const { byEvent: teamResults } = useTeamResultsByEvent({
     tournaments,
     registrations,
     enabled: session != null,
@@ -132,7 +132,7 @@ export default function PlayerDetailPage({ playerId, onNavigate }: PlayerDetailP
   }
 
   const visibleError = error || editor.error
-  const review = corpReview(player, matches, registrations, tournaments, teamResults)
+  const review = corpReview({ player, matches, registrations, tournaments, teamResults })
 
   return (
     <div className="-mx-4">

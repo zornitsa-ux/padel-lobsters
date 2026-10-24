@@ -22,7 +22,11 @@ export function useKingOfCourtTeams({
   enabled?: boolean
 }) {
   const { data: players = [] } = usePlayers()
-  const { entries } = useTeamEntries({ tournamentId: tournament.id, registrations, enabled })
+  const { entries, isPending } = useTeamEntries({
+    tournamentId: tournament.id,
+    registrations,
+    enabled,
+  })
 
   const registered = useMemo(() => entries.filter((e) => e.status === 'registered'), [entries])
   const teams = useMemo(() => registered.map((entry) => toKotcTeam({ entry })), [registered])
@@ -48,7 +52,17 @@ export function useKingOfCourtTeams({
     }
   }, [registered, players])
 
-  return { registered, teams, courts, saved, strengthById, layout, labelOf }
+  // A disabled query reports pending forever; only an enabled one is loading.
+  return {
+    registered,
+    teams,
+    courts,
+    saved,
+    strengthById,
+    layout,
+    labelOf,
+    isPending: enabled && isPending,
+  }
 }
 
 // The viewer's registered team: its starting court once shown (D-024) and its
