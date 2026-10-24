@@ -8,7 +8,7 @@ import {
 } from './useTournaments'
 import { useTransfers } from './useTransfers'
 import { useRegistrations } from './useRegistrations'
-import { buildEventData, hasSignups, isEntryModeLocked } from './eventFormModel'
+import { buildEventData, formatOption, isEntryModeLocked, isFormatLocked } from './eventFormModel'
 import { Plus, Trophy, Clock } from 'lucide-react'
 import HistoryContent from '../history/History'
 import AdminTransferPanel from '../../components/AdminTransferPanel'
@@ -53,9 +53,14 @@ export default function Tournament({ onNavigate }: { onNavigate: EventNavigate }
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
   const [serverLocked, setServerLocked] = useState(false)
-  const { data: editRegistrations = [] } = useRegistrations(editId)
-  const formatLocked =
-    !!editId && (serverLocked || hasSignups({ registrations: editRegistrations }))
+  const { data: editRegistrations = [], isPending: editRegistrationsPending } =
+    useRegistrations(editId)
+  const formatLocked = isFormatLocked({
+    editing: !!editId,
+    serverLocked,
+    registrationsPending: editRegistrationsPending,
+    registrations: editRegistrations,
+  })
   const [showHistory, setShowHistory] = useState(true)
   const [error, setError] = useState('')
   // Admin pending-transfer panel — open for one tournament at a time.
@@ -151,6 +156,14 @@ export default function Tournament({ onNavigate }: { onNavigate: EventNavigate }
     }
   }
 
+  // Someone signed up while the form was open: put the saved format back so
+  // the next Save goes through, and lock the picker.
+  const revertFormat = () => {
+    const saved = tournaments.find((t) => t.id === editId)
+    if (saved) setForm((f) => ({ ...f, ...formatOption({ format: saved.format }) }))
+    setServerLocked(true)
+  }
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setSaving(true)
@@ -162,7 +175,7 @@ export default function Tournament({ onNavigate }: { onNavigate: EventNavigate }
         else await addTournament(data)
         setShowForm(false)
       } catch (err) {
-        if (isEntryModeLocked(err)) setServerLocked(true)
+        if (isEntryModeLocked(err)) revertFormat()
         else setError(errorMessage(err, 'Could not save event.'))
       }
     } finally {

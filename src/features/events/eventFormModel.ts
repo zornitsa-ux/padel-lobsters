@@ -49,6 +49,23 @@ export function hasSignups({
   return registrations.some((r) => r.status === 'registered' || r.status === 'waitlist')
 }
 
+// Locked until the registrations have loaded, so an empty first render can't
+// unlock it.
+export function isFormatLocked({
+  editing,
+  serverLocked,
+  registrationsPending,
+  registrations,
+}: {
+  editing: boolean
+  serverLocked: boolean
+  registrationsPending: boolean
+  registrations: { status?: string | null }[]
+}): boolean {
+  if (!editing) return false
+  return serverLocked || registrationsPending || hasSignups({ registrations })
+}
+
 export function isEntryModeLocked(err: unknown): boolean {
   const message = typeof err === 'object' && err !== null && 'message' in err ? err.message : ''
   return String(message).includes('entry_mode_locked')
