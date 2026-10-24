@@ -3,6 +3,7 @@ import { resultsWithheld } from '../events/resultsPhase'
 import { isKingOfTheCourt } from '../events/eventFormat'
 import { eventClimbers, eventWinner, teamResultLabel } from '../events/kingOfCourt/kotcPlayer'
 import type { TeamResultsByEvent } from '../events/kingOfCourt/kotcPlayer'
+import BiggestClimberLine from '../events/kingOfCourt/BiggestClimberLine'
 import type { Player, NormalisedTournament } from '../../lib/normalise'
 import type { NormalisedMatch } from '../events/matchQueries'
 import type { NormalisedRegistration } from '../events/registrationQueries'
@@ -63,11 +64,10 @@ export default function RecentlyCompletedBanners<T extends CompletedTournament>(
                     <span className="font-bold">{teamResultLabel({ result: winner, nameOf })}</span>
                     {climbers.length > 0 && (
                       <span className="block">
-                        🚀 {climbers.length > 1 ? 'Biggest climbers' : 'Biggest climber'}:{' '}
-                        <span className="font-bold">
-                          {climbers.map((result) => teamResultLabel({ result, nameOf })).join(', ')}
-                        </span>{' '}
-                        (↑{climbers[0].move!.gained})
+                        <BiggestClimberLine
+                          labels={climbers.map((result) => teamResultLabel({ result, nameOf }))}
+                          detail={`↑${climbers[0].move!.gained}`}
+                        />
                       </span>
                     )}
                   </>

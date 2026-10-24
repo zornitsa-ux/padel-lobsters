@@ -453,5 +453,15 @@ placeholders as partners, was withdrawn by D-010: placeholders aren't offered.)
   open: a rank whose court no team started on (an odd count, or spare
   courts) counts as the bottom court in play (DESIGN §3.3 item 7).
 
-  Checks: `typecheck` clean, 2151 tests passed, `format:check` clean, no new
+  A `/code-review` pass, and fixes:
+  - No courts moved or climber when the assignments were never shown, so a
+    past event's moves can't drift with players' levels.
+  - History, Home and Lobster Review wait for the players too, so moves never
+    render from an empty level map first.
+  - One `BiggestClimberLine` for the ranking and the banner.
+  - Not changed: no snapshot of the shown layout (it needs a migration;
+    D-028 accepts that a later reorder changes the moves), and the clamp of a
+    rank onto the bottom court in play stays.
+
+  Checks: `typecheck` clean, 2153 tests passed, `format:check` clean, no new
   lint warnings. Not checked in a browser yet (T12).

@@ -106,6 +106,8 @@ const regs = (teamId: string, tournamentId: string, status: string) =>
     })),
   )
 
+const event = { id: 'e1', courts: [{ name: 'Centre' }, { name: 'Back' }] }
+
 describe('teamResultsByEvent', () => {
   it('groups registered teams per event, ranked first', () => {
     const results = teamResultsByEvent({
@@ -149,7 +151,7 @@ describe('teamResultsByEvent', () => {
         team('t4', 'e1', null, { seed: 4 }),
       ],
       registrations: ['t1', 't2', 't3', 't4'].flatMap((id) => regs(id, 'e1', 'registered')),
-      tournaments: [{ id: 'e1', courts: [{ name: 'Centre' }, { name: 'Back' }] }],
+      tournaments: [{ ...event, startingCourtsPublishedAt: '2026-11-15T08:00:00Z' }],
       playersById: {},
     })
     expect(Object.fromEntries(results.get('e1')!.map((r) => [r.teamId, r.move]))).toEqual({
@@ -158,6 +160,16 @@ describe('teamResultsByEvent', () => {
       t2: { startCourtIndex: 0, finalCourtIndex: 1, gained: -1 },
       t4: null,
     })
+  })
+
+  it('has no moves when the starting courts were never shown', () => {
+    const results = teamResultsByEvent({
+      teams: [team('t1', 'e1', 2), team('t2', 'e1', 1)],
+      registrations: ['t1', 't2'].flatMap((id) => regs(id, 'e1', 'registered')),
+      tournaments: [{ ...event, startingCourtsPublishedAt: null }],
+      playersById: {},
+    })
+    expect(results.get('e1')!.map((r) => r.move)).toEqual([null, null])
   })
 })
 

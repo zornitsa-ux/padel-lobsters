@@ -56,6 +56,7 @@ const tournament = {
   id: 'e1',
   format: 'king_of_court',
   courts: [],
+  startingCourtsPublishedAt: '2026-11-15T08:00:00Z',
 } as unknown as NormalisedTournament
 
 beforeEach(() => {
@@ -109,6 +110,22 @@ describe('KingOfCourtResults', () => {
     )
 
     expect(screen.getAllByText('held')).toHaveLength(2)
+    expect(screen.queryByText(/Biggest climber/)).toBeNull()
+  })
+
+  it('shows no courts moved when the starting courts were never shown', () => {
+    m.teams = [team('a', 2), team('b', 3), team('c', 1), team('e', 4)]
+    const courts = [
+      { name: 'Centre', booked: true },
+      { name: 'Back', booked: true },
+    ]
+    render(
+      <KingOfCourtResults
+        tournament={{ ...tournament, courts, startingCourtsPublishedAt: null }}
+      />,
+    )
+
+    expect(screen.queryByText(/→|held/)).toBeNull()
     expect(screen.queryByText(/Biggest climber/)).toBeNull()
   })
 

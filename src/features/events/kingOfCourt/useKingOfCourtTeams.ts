@@ -2,9 +2,9 @@ import { useMemo } from 'react'
 import { usePlayers } from '../../players/usePlayers'
 import { useTeamEntries } from '../teams/useTeams'
 import { findMyEntry, teamLabel } from '../registration/team/teamHelpers'
-import { courtMoves, seedTeams, startingCourts } from './domain'
+import { seedTeams, startingCourts } from './domain'
 import { toCourts, toKotcTeam, toPlayersById } from './kotcInputs'
-import { myStartingCourt, teamPlacing } from './kotcPlayer'
+import { myStartingCourt, shownCourtMoves, teamPlacing } from './kotcPlayer'
 import type { NormalisedRegistration, NormalisedTournament } from '../../../lib/normalise'
 
 type KotcTournament = Pick<NormalisedTournament, 'id' | 'courts' | 'startingCourtsPublishedAt'>
@@ -37,9 +37,10 @@ export function useKingOfCourtTeams({
   const saved = useMemo(() => seeded.map((t) => t.teamId), [seeded])
   const strengthById = useMemo(() => new Map(seeded.map((t) => [t.teamId, t])), [seeded])
   const layout = useMemo(() => startingCourts({ seededTeamIds: saved, courts }), [saved, courts])
+  const shown = Boolean(tournament.startingCourtsPublishedAt)
   const moves = useMemo(
-    () => courtMoves({ seededTeamIds: saved, courts, teams }),
-    [saved, courts, teams],
+    () => shownCourtMoves({ shown, seededTeamIds: saved, courts, teams }),
+    [shown, saved, courts, teams],
   )
 
   const labelOf = useMemo(() => {
@@ -64,6 +65,7 @@ export function useKingOfCourtTeams({
     saved,
     strengthById,
     layout,
+    shown,
     moves,
     labelOf,
     isPending: enabled && isPending,
@@ -85,7 +87,7 @@ export function useMyKingOfCourt({
 }) {
   const kotc = useKingOfCourtTeams({ tournament, registrations, enabled })
   const myTeamId = findMyEntry({ entries: kotc.registered, playerId })?.team.id ?? null
-  const shown = Boolean(tournament.startingCourtsPublishedAt)
+  const { shown } = kotc
   const startingCourt = useMemo(
     () => (shown ? myStartingCourt({ layout: kotc.layout, teamId: myTeamId }) : null),
     [shown, kotc.layout, myTeamId],
@@ -95,5 +97,5 @@ export function useMyKingOfCourt({
     [kotc.teams, myTeamId],
   )
 
-  return { ...kotc, myTeamId, shown, startingCourt, placing }
+  return { ...kotc, myTeamId, startingCourt, placing }
 }

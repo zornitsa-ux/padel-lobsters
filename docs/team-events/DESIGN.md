@@ -324,7 +324,12 @@ Built in #63 and #64; revised by D-024 to D-027.
 7. **Courts moved and Biggest climber** (D-028, T13). `courtMoves` (domain)
    takes each ranked team's starting court from `startingCourts` over the
    saved order, the same layout players were shown; a waiting team starts
-   from the court it waited at. The final court is ⌈`final_rank` / 2⌉,
+   from the court it waited at. Moves exist only once the assignments were
+   shown: before that no seeds are saved, and an order from current levels
+   would change as levels do. Nothing snapshots the layout, so a court edit
+   or reorder after the event changes the moves (D-028 accepts this); team
+   changes can't happen then, since the admin team controls close at the
+   end. The final court is ⌈`final_rank` / 2⌉,
    capped at the bottom court in play: the standings form lists every court,
    so with an odd count or spare courts a rank can name a court nobody
    played on. A team with no rank, or no starting court (D-027), has no

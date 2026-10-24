@@ -1,5 +1,6 @@
 import type { Court, CourtMove } from './domain'
 import { courtMoveText, eventClimbers } from './kotcPlayer'
+import BiggestClimberLine from './BiggestClimberLine'
 
 export type TeamRankingRow = {
   teamId: string
@@ -76,18 +77,13 @@ function MoveLine({ move, courts }: { move: CourtMove; courts: Court[] }) {
   )
 }
 
-// D-028. Tied climbers share one start and gain, so one journey describes them all.
 function BiggestClimber({ rows, courts }: { rows: TeamRankingRow[]; courts: Court[] }) {
   const climbers = eventClimbers({ results: rows })
   if (climbers.length === 0) return null
   const { journey, change } = courtMoveText({ move: climbers[0].move!, courts })
   return (
     <p className="text-sm text-lob-dark rounded-xl bg-lob-cream px-3 py-2">
-      🚀 {climbers.length > 1 ? 'Biggest climbers' : 'Biggest climber'}:{' '}
-      <span className="font-bold">{climbers.map((r) => r.label).join(', ')}</span>{' '}
-      <span className="text-xs text-lob-muted">
-        ({journey} {change})
-      </span>
+      <BiggestClimberLine labels={climbers.map((r) => r.label)} detail={`${journey} ${change}`} />
     </p>
   )
 }

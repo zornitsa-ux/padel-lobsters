@@ -23,6 +23,12 @@ export type TeamResult = {
 
 export type CourtMoveText = { journey: string; change: string }
 
+export type ResultsEvent = {
+  id: string
+  courts?: unknown
+  startingCourtsPublishedAt?: string | null
+}
+
 export type TeamResultsByEvent = Map<string, TeamResult[]>
 
 export const courtLabel = ({ court }: { court: Pick<StartingCourt, 'courtName' | 'courtIndex'> }) =>
@@ -72,19 +78,31 @@ export const teamPlacing = ({
   return rank != null ? { rank, total: teams.length } : null
 }
 
+// D-028: moves count from the saved order players were shown. Before showing
+// there are no saved seeds, and an order from current levels would drift.
+export const shownCourtMoves = ({
+  shown,
+  ...input
+}: Parameters<typeof courtMoves>[0] & { shown: boolean }) => (shown ? courtMoves(input) : {})
+
 // The same saved order and courts as the event's own views (useKingOfCourtTeams).
 const eventTeamResults = ({
   entries,
-  courts,
+  event,
   playersById,
 }: {
   entries: TeamEntry[]
-  courts: Court[]
+  event: ResultsEvent | undefined
   playersById: PlayersById
 }): TeamResult[] => {
   const teams = entries.map((entry) => toKotcTeam({ entry }))
   const seededTeamIds = seedTeams({ teams, playersById }).map((t) => t.teamId)
-  const moves = courtMoves({ seededTeamIds, courts, teams })
+  const moves = shownCourtMoves({
+    shown: Boolean(event?.startingCourtsPublishedAt),
+    seededTeamIds,
+    courts: toCourts({ courts: event?.courts }),
+    teams,
+  })
   const results = entries.map((entry) => ({
     teamId: entry.team.id,
     playerIds: [entry.captain.playerId, entry.partner.playerId],
@@ -104,7 +122,7 @@ export const teamResultsByEvent = ({
 }: {
   teams: EventTeam[]
   registrations: NormalisedRegistration[]
-  tournaments: { id: string; courts?: unknown }[]
+  tournaments: ResultsEvent[]
   playersById: PlayersById
 }): TeamResultsByEvent => {
   const entriesByEvent = new Map<string, TeamEntry[]>()
@@ -114,11 +132,11 @@ export const teamResultsByEvent = ({
     entries.push(entry)
     entriesByEvent.set(entry.team.tournamentId, entries)
   }
-  const courtsOf = new Map(tournaments.map((t) => [t.id, toCourts({ courts: t.courts })]))
+  const eventOf = new Map(tournaments.map((t) => [t.id, t]))
   return new Map(
     [...entriesByEvent].map(([id, entries]) => [
       id,
-      eventTeamResults({ entries, courts: courtsOf.get(id) ?? [], playersById }),
+      eventTeamResults({ entries, event: eventOf.get(id), playersById }),
     ]),
   )
 }
