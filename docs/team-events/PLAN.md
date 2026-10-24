@@ -72,15 +72,15 @@ States: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked.
   merge and push the RPC migration.
 - **R2** is client-only.
 
-### Resume here (2026-10-24 checkpoint)
+### Resume here (2026-10-24, after the combined review)
 
-**Where we are.** Code review of #56–#60 done and fixed. The owner's walk-through
-(T7) is mostly done and judged good enough to proceed: the 14 integrity counts
-were unchanged and no email was queued. **Next: one comprehensive review of
-everything together**, looking for bugs, duplicated logic or components, and
-simplifications. Then the R1 merge.
+**Where we are.** The comprehensive review of `main...kotc-test` is done and
+its fixes are committed on the branches below. The owner confirmed two findings
+as known choices: an admin partner change leaves the team waiting for the new
+partner, and raising capacity doesn't promote waitlisted teams. **Next: the
+clean local apply, then the owner pushes and R1 merges.**
 
-**Branches** (all committed; several are ahead of GitHub):
+**Branches** (all committed; all ahead of GitHub):
 
 | Branch                              | PR   | Base                     | Remote                                        |
 | ----------------------------------- | ---- | ------------------------ | --------------------------------------------- |
@@ -98,52 +98,45 @@ it to `team-events-signup-ui`, merge the other three, and keep "ours" for the
 `PLAN.md` conflict. Review the whole change set with `git diff main...kotc-test`.
 
 **Local database.** The R1 migration file changed after it was first applied
-locally. The changed functions and the `account_acknowledged_at` column were
-applied by hand, and every function body in the file was checked against the
-database. Before R1, do a clean apply (`npm run db:reset`, then
-`npm run rehearsal:sync`, re-run `supabase/tests/team_events.sql` (29 checks)
-and the integrity counts). The local auth server was restarted to pick up the
-code email template (PIN removal DESIGN F-8).
+locally. Changed functions (most recently `respond_to_team_invite`, D-022) and
+the `account_acknowledged_at` column were applied by hand. Before R1, do a clean
+apply (`npm run db:reset`, then `npm run rehearsal:sync`, re-run
+`supabase/tests/team_events.sql` (29 checks) and the integrity counts). The
+local auth server was restarted to pick up the code email template (PIN removal
+DESIGN F-8).
 
-**Added since the first review:** D-020 (pay before acceptance), D-021
-(finish-your-account step + acknowledgement), the early new-partner email check
-(`check_new_partner_email`), team signup in a modal, the redesigned
-acceptance screen, full names on team events, looser member search, shared
-`ProfileFields`/`profileForm` (extracted from `SignupRequest`), and the
-query-cache reset when the account changes.
+**Fixed in the combined review:**
 
-**Known duplication and cleanup candidates** (from the per-PR reviews, not yet
-done; verify each before changing):
+- D-022: a captain-created partner can say "I'm not playing" without claiming
+  the account; `/account` is exempt from the finish-setup redirect (#56, #60).
+- /me is team-aware: team card, team amount for the captain, and a link to sign
+  up as a team instead of an individual signup the server refuses (#60).
+- `useTeamEntries` refetches teams that a registration points at, so a new team
+  can't drop out of the lists; the roster line counts the same entries (#56,
+  #60, #59).
+- Duplication: one decline dialog (`useConfirmDecline`), one `useEventForm`, one
+  `eventFormat` module, `isActiveRegistration`, `firstRow`, `pricePerEntry`,
+  `playerNameOf`, `teamKeys.allInvites`; team entries built once per render;
+  the player list refetched only after a new partner;
+  `TeamInviteRedirect` → `PartnerOnboardingRedirect`; Payments' dead "covered"
+  badge removed.
 
-- Accept/decline UI and its confirm dialog: `invites/TeamInvitesPage.tsx` and
-  `registration/team/TeamCardActions.tsx` (`PartnerPendingActions`).
-- Event edit form logic in both `Tournament.tsx` and `Registration.tsx`
-  (open, submit, courts, `entry_mode_locked` handling); only
-  `withSavedFormat` is shared. Both also cast to `Partial<NormalisedTournament>`
-  where the hooks should take `TournamentInput`.
-- "Active registration" defined three times: `hasSignups` (eventFormModel),
-  `isActive` (teams/teamEntries) and filters in `registration/utils`.
-- Format → entry mode mapping: `isTeamEvent` in `generateSchedule.service.ts`
-  vs `formatOption`/`isKingOfTheCourt` in `eventFormModel.ts`.
-- Team entries built three times per Registration render (`useMyTeamEntry` in
-  `TeamSignup` and `TeamTransferCard`, `buildTeamEntries` in `TeamLists`).
-- `firstRow` copied in `teams/teamQueries.ts` and `registrationQueries.ts`;
-  the hard-coded `['partnerInvites']` key in `useTeams`.
-- `useTeams` invalidates the whole player roster after every team action; only
-  new-partner paths need it.
-- Payments: `costPerPlayer` holds a per-team amount in team mode; rows of an
-  inconsistent team are dropped silently.
-- `TeamInviteRedirect` now also handles account setup (name no longer fits).
+**Still open (deliberately):**
+
 - `#57`: Zod schemas are exported but never parsed; `KotcTeam` repeats
-  `EventTeam` fields.
-- Server edge cases: `change_team_partner` raises `tournament_full` instead of
-  returning a status when over capacity; `apply_team_transfer` skips the
+  `EventTeam` fields. Do this in T10, when the domain gets its first caller and
+  #57 sits on the team-events code.
+- Server edge cases: `change_team_partner` and `apply_team_transfer` raise
+  `tournament_full` (from the capacity trigger) on an event an admin has pushed
+  over capacity, instead of returning a status; `apply_team_transfer` skips the
   matches sync (moot while team events have no matches).
+- `check_new_partner_email` has no rate limit (it reveals no more than signup).
+- `transferQueries.ts` and `playerQueries.ts` still unwrap RPC rows by hand;
+  switch them to `lib/firstRow` in a follow-up on `main`.
 
-**Gates before R1.** The comprehensive review and its fixes. The clean local
-apply above. The owner pushes the rebased branches. Merge in order: #56 →
-(#58 → #60, #59) → `db push` from `main`. #57 can merge any time. The cache fix
-ships on its own. Remember the 3-day rule around the Thu 5 Nov PIN cutover and
+**Gates before R1.** The clean local apply above. The owner pushes the rebased
+branches. Merge in order: #56 → (#58 → #60, #59) → `db push` from `main`. #57
+can merge any time. The cache fix ships on its own. Remember the 3-day rule around the Thu 5 Nov PIN cutover and
 the Sun 15 Nov event: R1 is sign-in-facing (the finish-your-account step).
 
 ---
