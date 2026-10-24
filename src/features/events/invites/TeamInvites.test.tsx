@@ -12,6 +12,9 @@ const m = vi.hoisted(() => ({
 
 vi.mock('../../../context/useApp', () => ({ useApp: () => ({ session: m.session }) }))
 vi.mock('../../../lib/confirmBus', () => ({ useConfirm: () => m.confirm }))
+vi.mock('../../players/usePlayers', () => ({
+  usePlayers: () => ({ data: [{ id: 'c1', name: 'Cara Diaz', avatarUrl: '' }] }),
+}))
 vi.mock('../teams/useTeams', () => ({
   useMyTeamInvites: () => ({ data: m.invites, isPending: false }),
   useTeamActions: () => ({ respondToTeamInvite: m.respondToTeamInvite }),
@@ -27,7 +30,7 @@ const invite = (overrides: Record<string, unknown> = {}) => ({
   tournamentDate: '2026-11-15',
   tournamentTime: '10:00',
   captainId: 'c1',
-  captainName: 'Cara',
+  captainName: 'Cara Diaz',
   teamStatus: 'registered',
   accountCreatedByCaptain: false,
   ...overrides,
@@ -57,13 +60,16 @@ beforeEach(() => {
 afterEach(cleanup)
 
 describe('acceptance screen', () => {
-  it('lists the invite with the complete-teams note', () => {
+  it("shows the event, the captain's full name and the note from the partner's side", () => {
     renderPage()
 
-    expect(
-      screen.getByText(/cara has entered you as their partner for king sunday on/i),
-    ).not.toBeNull()
-    expect(screen.getByText(/we keep spots for complete teams/i)).not.toBeNull()
+    expect(screen.getByRole('heading', { name: 'King Sunday' })).not.toBeNull()
+    expect(screen.getByText('Sun 15 Nov · 10:00')).not.toBeNull()
+    expect(screen.getByText('Cara Diaz')).not.toBeNull()
+    expect(screen.getByText('has entered you as their partner')).not.toBeNull()
+    const note = screen.getByText(/we keep spots for complete teams/i).textContent
+    expect(note).toMatch(/accept to confirm your team with cara diaz/i)
+    expect(note).not.toMatch(/your partner needs to accept/i)
   })
 
   it('goes to the event after accepting a regular invite', async () => {
