@@ -1,6 +1,7 @@
 import React from 'react'
 import { Modal } from '../../components/ui/Modal'
 import { REVIEW_SCENARIOS } from './reviewScenarios'
+import { Button } from '../../components/ui/Button'
 
 // One message variant plus how many players receive it.
 export interface ReviewSample {
@@ -98,9 +99,9 @@ export default function ReviewBreakdownModal({
       onClose={onClose}
       title="Review breakdown"
       footer={
-        <button onClick={onClose} className="btn-primary w-full">
+        <Button onClick={onClose} className="w-full">
           Close
-        </button>
+        </Button>
       }
     >
       <p className="text-xs text-lob-muted-light -mt-2 mb-3">

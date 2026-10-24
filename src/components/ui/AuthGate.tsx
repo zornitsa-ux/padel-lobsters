@@ -4,6 +4,7 @@ import { useApp } from '../../context/useApp'
 import { Shield, User, LogIn, X, Mail } from 'lucide-react'
 import SignInForm from '../../features/auth/SignInForm'
 import { sessionRole } from '../../features/auth/sessionClaims'
+import { TextButton } from './TextButton'
 
 /**
  * Site-wide auth middleware.
@@ -201,12 +202,9 @@ export function SignInModal({
         />
 
         {onNavigate && (
-          <button
-            onClick={goToSettings}
-            className="w-full text-xs text-lob-muted underline-offset-2 hover:underline"
-          >
+          <TextButton tone="neutral" className="w-full" onClick={goToSettings}>
             Manage profile in Settings →
-          </button>
+          </TextButton>
         )}
       </div>
     </div>

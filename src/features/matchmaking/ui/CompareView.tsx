@@ -10,6 +10,7 @@ import { segmentedButtonClass } from './segmentedButton'
 import QualityReport from './QualityReport'
 import ScheduleRounds from './ScheduleRounds'
 import { describeQualityDiff } from './dimensions'
+import { Button } from '../../../components/ui/Button'
 
 export type CompareViewProps = {
   open: boolean
@@ -168,17 +169,12 @@ export default function CompareView({
         </div>
 
         <div className="sticky bottom-0 bg-white border-t border-lob-line px-4 py-3 flex gap-2">
-          <button type="button" onClick={onClose} className="flex-1 btn-secondary text-sm">
+          <Button onClick={onClose} variant="secondary" size="sm" className="flex-1">
             Keep original
-          </button>
-          <button
-            type="button"
-            onClick={onUseAlternative}
-            disabled={!altRun}
-            className="flex-1 btn-primary text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-          >
+          </Button>
+          <Button onClick={onUseAlternative} disabled={!altRun} size="sm" className="flex-1">
             Use alternative
-          </button>
+          </Button>
         </div>
       </div>
     </div>,

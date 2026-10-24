@@ -63,6 +63,7 @@ import type {
   PaymentSheet,
   TransferShareTarget,
 } from './registration/utils'
+import { Button } from '../../components/ui/Button'
 
 export default function Registration({
   tournament,
@@ -224,12 +225,9 @@ export default function Registration({
         icon={<AlertCircle size={36} />}
         title="No event selected"
         action={
-          <button
-            onClick={() => onNavigate('tournament')}
-            className="btn-primary mt-2 py-2 px-5 text-sm"
-          >
+          <Button onClick={() => onNavigate('tournament')} size="sm" className="mt-2">
             Go to Events
-          </button>
+          </Button>
         }
       />
     )

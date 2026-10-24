@@ -22,6 +22,7 @@ import { buildPaymentRows } from './payments/teamPaymentRows'
 import { pricePerEntry, type EventNavigate } from './eventHelpers'
 import type { NormalisedTournament } from '../../lib/normalise'
 import type { NormalisedRegistration } from './registrationQueries'
+import { Button } from '../../components/ui/Button'
 
 const METHODS = [
   { value: 'tikkie', label: 'Tikkie' },
@@ -56,12 +57,9 @@ export default function Payments({
         icon={<AlertCircle size={36} />}
         title="No event selected"
         action={
-          <button
-            onClick={() => onNavigate('tournament')}
-            className="btn-primary mt-2 py-2 px-5 text-sm"
-          >
+          <Button onClick={() => onNavigate('tournament')} size="sm" className="mt-2">
             Go to Events
-          </button>
+          </Button>
         }
       />
     )

@@ -35,23 +35,23 @@ component doesn't fit, fix the component, not the call site.**
 
 ## Need X → use Y
 
-| Need                                 | Use                                                 | Status    |
-| ------------------------------------ | --------------------------------------------------- | --------- |
-| Error / warning / success / info box | `AlertBox variant=… (size="sm")`                    | size: P3  |
-| Field-level error text               | `FormError` (moving to `components/ui`)             | P3        |
-| Status pill                          | `Badge tone=…`                                      | tones: P4 |
-| Button                               | `Button variant=… size=…` (today: `.btn-*` classes) | P2        |
-| Underlined / inline text action      | `TextButton`                                        | P2        |
-| Icon-only button                     | `IconButton` (always with `aria-label`)             | exists    |
-| Empty list / nothing yet             | `EmptyState` (`variant="inline"` coming)            | P5        |
-| Signed-out viewer                    | `SignInPrompt`                                      | P5        |
-| Player or team row, ranked row       | `PlayerRow` + `RankMarker`                          | P6        |
-| Card title + pill + description      | `CardHeader`                                        | P6        |
-| Inset panel / well                   | `.panel` / `.panel-accent`                          | P6        |
-| Search field                         | `SearchInput`                                       | P6        |
-| Two-to-four way choice               | `SegmentedControl`                                  | exists    |
-| Loading                              | `Spinner` / `Skeleton`                              | exists    |
-| Eyebrow / overline                   | `.eyebrow` / `.eyebrow-accent`                      | P6        |
+| Need                                 | Use                                                  | Status     |
+| ------------------------------------ | ---------------------------------------------------- | ---------- |
+| Error / warning / success / info box | `AlertBox variant=… (size="sm")`                     | size: P3   |
+| Field-level error text               | `FormError` (moving to `components/ui`)              | P3         |
+| Status pill                          | `Badge tone=…`                                       | tones: P4  |
+| Button                               | `Button variant=… size=…`                            | exists     |
+| Underlined / inline text action      | `TextButton tone=… size=…` (`to` / `href` for links) | exists     |
+| Icon-only button                     | `IconButton` (always with `aria-label`)              | ghost: P2b |
+| Empty list / nothing yet             | `EmptyState` (`variant="inline"` coming)             | P5         |
+| Signed-out viewer                    | `SignInPrompt`                                       | P5         |
+| Player or team row, ranked row       | `PlayerRow` + `RankMarker`                           | P6         |
+| Card title + pill + description      | `CardHeader`                                         | P6         |
+| Inset panel / well                   | `.panel` / `.panel-accent`                           | P6         |
+| Search field                         | `SearchInput`                                        | P6         |
+| Two-to-four way choice               | `SegmentedControl`                                   | exists     |
+| Loading                              | `Spinner` / `Skeleton`                               | exists     |
+| Eyebrow / overline                   | `.eyebrow` / `.eyebrow-accent`                       | P6         |
 
 ## Steps
 
@@ -60,17 +60,18 @@ the gallery, and runs `npm run design:baseline` when counts drop.
 
 | #   | Step                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | Status                 |
 | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
-| P1  | **Tokens and migration.** Status/neutral/type/brand/shadow tokens; ui primitives and every status use moved onto them; CLAUDE.md rules; `design:check` ratchet.                                                                                                                                                                                                                                                                                                                                   | Branch `design-tokens` |
-| P2  | **`Button` and `TextButton`.** A `Button variant size` component replacing `.btn-*` plus overrides (about 50 `text-sm`/`py-2` overrides, 9 redundant `disabled:opacity-50`), and `TextButton` for the 10 hand-built text links. Bare icon buttons → `IconButton`. Sizes: `md` (default, today's `.btn-*`) and `sm` (`py-2 px-4 text-sm`, the common override). The 9 full-width `py-2.5 text-sm` card CTAs (sign up, join, add player, partner choice) become `md` (proposed; confirm in the PR). | Next                   |
+| P1  | **Tokens and migration.** Status/neutral/type/brand/shadow tokens; ui primitives and every status use moved onto them; CLAUDE.md rules; `design:check` ratchet.                                                                                                                                                                                                                                                                                                                                   | Done (#69)             |
+| P2  | **`Button` and `TextButton`.** A `Button variant size` component replacing `.btn-*` plus overrides (about 50 `text-sm`/`py-2` overrides, 9 redundant `disabled:opacity-50`), and `TextButton` for the 10 hand-built text links. Bare icon buttons → `IconButton`. Sizes: `md` (default, today's `.btn-*`) and `sm` (`py-2 px-4 text-sm`, the common override). The 9 full-width `py-2.5 text-sm` card CTAs (sign up, join, add player, partner choice) become `md` (proposed; confirm in the PR). | Branch `design-button` |
+| P2b | **Ghost `IconButton`.** About 15 bare icon buttons (close X, remove, delete, move up/down, refresh, back) are a muted icon with a hover colour. Add a `ghost` variant with a proper tap target, then migrate them.                                                                                                                                                                                                                                                                                | Next                   |
 | P3  | **`AlertBox` size and role, `FormError` in ui.** Migrate the 15 hand-built alert boxes and 7 field-error spellings.                                                                                                                                                                                                                                                                                                                                                                               |                        |
 | P4  | **`Badge` tones** (`success`, `neutral`, `warning`, `outline`) and **payment status single source** (`paymentStatus.ts`, `PaymentStatusBadge` on `Badge`; blue "transferred" gets a token). Rename team-state "Confirmed".                                                                                                                                                                                                                                                                        |                        |
 | P5  | **Empty and signed-out states.** `EmptyState variant="inline"`, `SignInPrompt`; loading states: a loading card keeps its title or header, so the viewer sees what is loading, and shows `Spinner` / `Skeleton` in the body instead of `return null`.                                                                                                                                                                                                                                              |                        |
 | P6  | **Layout pieces.** `RankMarker` + `PlayerRow highlighted`, `CardHeader`, `RosterHeading`, `.panel`, `.eyebrow`, `SearchInput`; `ProfileFields` preferred side → `SegmentedControl`.                                                                                                                                                                                                                                                                                                               |                        |
 | P7  | **Gallery and lock-down.** Dev-only `/design` route listing every component and variant. Tokens for decorative colours (medal gold, avatar palette, gender marks, selection states). Then switch `theme.extend.colors` to a restricted `theme.colors` so raw palette classes stop generating, and add a lint rule for unknown classes (e.g. `eslint-plugin-tailwindcss`, check ESLint 9 support). Retire `design:check` once the theme is locked.                                                 |                        |
 
-The gallery can start earlier: each of P2–P6 can add its components to it if
-the route exists by then. Build the route as the first part of P2 if that's
-cheap.
+The gallery exists: `/design` in dev (`src/features/design/DesignGallery.tsx`;
+open to guests in dev only, left out of the production build). Each step adds
+its components to it.
 
 **In parallel (not design system, same principle).** The review's logic
 helpers: `formatTeamName` / `fullName`, `isTeamEvent` at the 7 `entryMode`
@@ -100,3 +101,13 @@ sites, `registeredEntries`, and the King of the Court helpers (`isKingCourt`,
   P1); `AlertBox` `info` moves to `lob-info` (sky) so it differs from the
   brand teal (done in P1); loading cards keep their title (P5); revisit the
   card-heavy layout later.
+- **2026-10-25.** P2 built on `design-button`. `Button` (`primary`,
+  `secondary`, `neutral`, `danger` × `md`, `sm`) replaces every `.btn-*` use
+  (95 sites), and the `.btn-*` classes are gone from `index.css`. `neutral`
+  is new: the grey "quiet alternative" button hand-built in the sign-in form
+  and PIN upgrade card. All variants carry a 2px border so mixed pairs match
+  height. `TextButton` replaces 20 hand-built text links, which are now always
+  underlined (some were hover-only, so invisible on touch). Calls made in the
+  PR: `py-2.5 text-sm` CTAs → `md`; `text-xs` buttons → `sm`; "Delete season"
+  (secondary with coral text) → `danger sm`. Icon buttons split out to P2b.
+  The dotted-underline "explain" links in matchmaking stay as they are.

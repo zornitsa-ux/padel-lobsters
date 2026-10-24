@@ -34,6 +34,7 @@ import type { EventNavigate } from './eventHelpers'
 import type { NormalisedTournament, Player } from '../../lib/normalise'
 import type { GenderMode } from '../matchmaking/domain/types'
 import { savedCourtIsUneven, savedRoundHasAvoidableUneven } from '../matchmaking/ui/genderCopy'
+import { Button } from '../../components/ui/Button'
 
 // A player slot the admin has tapped first in swap mode.
 interface SwapAnchor {
@@ -234,12 +235,9 @@ export default function Schedule({
         icon={<AlertCircle size={36} />}
         title="No event selected"
         action={
-          <button
-            onClick={() => onNavigate('tournament')}
-            className="btn-primary mt-2 py-2 px-5 text-sm"
-          >
+          <Button onClick={() => onNavigate('tournament')} size="sm" className="mt-2">
             Go to Events
-          </button>
+          </Button>
         }
       />
     )

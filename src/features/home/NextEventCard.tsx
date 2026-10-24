@@ -8,6 +8,7 @@ import ShareWhatsAppButton from '../../components/ui/ShareWhatsAppButton'
 import { fmtEur } from '../../lib/format'
 import type { NormalisedTournament } from '../../lib/normalise'
 import { perPersonCost } from './homeHelpers'
+import { Button } from '../../components/ui/Button'
 
 interface NextEventCardProps {
   upcoming: NormalisedTournament | undefined
@@ -70,12 +71,9 @@ export default function NextEventCard({
         description="Check back soon — next tournament is around the corner."
         action={
           isAdmin && (
-            <button
-              onClick={() => onNavigate('tournament')}
-              className="btn-primary text-sm py-2 px-4 mt-2"
-            >
+            <Button onClick={() => onNavigate('tournament')} size="sm" className="mt-2">
               Create an Event
-            </button>
+            </Button>
           )
         }
       />

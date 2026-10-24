@@ -17,6 +17,7 @@ import { courtLabel } from './kotcPlayer'
 import { useKingOfCourtActions, useKingOfCourtSeeding } from './useKingOfCourtAdmin'
 import type { CourtResult } from './domain'
 import type { NormalisedTournament } from '../../../lib/normalise'
+import { Button } from '../../../components/ui/Button'
 
 // Shown on the event day, so the time matters more than the date.
 const shownAt = (iso: string) =>
@@ -151,28 +152,28 @@ function SeedsCard({
 
           <div className="flex gap-2 flex-wrap">
             {!publishedAt && (
-              <button
-                type="button"
-                className="btn-primary w-full py-2 px-4 text-sm"
+              <Button
+                size="sm"
+                className="w-full"
                 disabled={actions.busy != null}
                 onClick={() => void publish()}
               >
                 {actions.busy === 'publish'
                   ? 'Showing…'
                   : 'Show starting court assignments to players'}
-              </button>
+              </Button>
             )}
             {/* Before they're shown, Show saves the order. Saving earlier would pin
                 today's teams above stronger teams that sign up later. */}
             {publishedAt && patches.length > 0 && (
-              <button
-                type="button"
-                className="btn-secondary py-2 px-4 text-sm"
+              <Button
+                variant="secondary"
+                size="sm"
                 disabled={actions.busy != null}
                 onClick={() => void save()}
               >
                 {actions.busy === 'seeds' ? 'Saving…' : 'Save order'}
-              </button>
+              </Button>
             )}
           </div>
         </>
@@ -251,22 +252,21 @@ function FinalStandingsCard({ seeding, actions }: { seeding: Seeding; actions: A
       )}
 
       <div className="flex gap-2 flex-wrap">
-        <button
-          type="button"
-          className="btn-primary py-2 px-4 text-sm"
+        <Button
+          size="sm"
           disabled={repeated || patches.length === 0 || actions.busy != null}
           onClick={() => void save()}
         >
           {actions.busy === 'standings' ? 'Saving…' : 'Save standings'}
-        </button>
-        <button
-          type="button"
-          className="btn-secondary py-2 px-4 text-sm"
+        </Button>
+        <Button
+          variant="secondary"
+          size="sm"
           disabled={actions.busy != null}
           onClick={() => setDraft(layout.courts.map(() => ({ first: null, second: null })))}
         >
           Clear all
-        </button>
+        </Button>
       </div>
     </div>
   )

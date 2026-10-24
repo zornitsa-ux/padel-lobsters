@@ -112,7 +112,7 @@ describe('ConfirmDialog', () => {
     )
 
     fireEvent.click(screen.getByText('trigger'))
-    expect(screen.getByText('Confirm').className).toContain('btn-danger')
+    expect(screen.getByText('Confirm').className).toContain('bg-lob-danger-solid')
   })
 
   it('uses default labels when none are provided', () => {

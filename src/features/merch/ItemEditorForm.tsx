@@ -4,6 +4,7 @@ import { Modal } from '../../components/ui/Modal'
 import { SIZES_APPAREL, SIZES_SOCKS } from './sizes'
 import type { ItemFormState } from './itemForm'
 import type { MerchItem } from './merchSchemas'
+import { Button } from '../../components/ui/Button'
 
 type ItemEditorFormProps = {
   showForm: boolean
@@ -41,22 +42,22 @@ export default function ItemEditorForm({
       dismissible={false}
       footer={
         <div className="flex gap-2">
-          <button
-            type="button"
+          <Button
             onClick={() => setShowForm(false)}
             disabled={saving || uploading}
-            className="btn-secondary flex-1"
+            variant="secondary"
+            className="flex-1"
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
             form="item-editor-form"
             disabled={saving || uploading}
-            className="btn-primary flex-1"
+            className="flex-1"
           >
             {saving ? 'Saving…' : editItem ? 'Save Changes' : 'Add Item'}
-          </button>
+          </Button>
         </div>
       }
     >

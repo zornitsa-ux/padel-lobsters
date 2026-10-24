@@ -16,6 +16,7 @@ import { EmptyState } from './ui/EmptyState'
 import { useConfirm } from '../lib/confirmBus'
 import type { Player } from '../lib/normalise'
 import type { EventNavigate } from '../features/events/eventHelpers'
+import { Button } from './ui/Button'
 
 // Landing page Melanie hits after tapping the WhatsApp link
 // (https://padelobsters.nl/?transfer=<id>). Shows the offer details and an
@@ -121,12 +122,9 @@ export default function TransferAccept({ transferId, onNavigate }: TransferAccep
         icon={<AlertCircle size={36} />}
         title="No transfer link found."
         action={
-          <button
-            onClick={() => onNavigate?.('dashboard')}
-            className="btn-primary mt-2 py-2 px-5 text-sm"
-          >
+          <Button onClick={() => onNavigate?.('dashboard')} size="sm" className="mt-2">
             Back to home
-          </button>
+          </Button>
         }
       />
     )
@@ -139,12 +137,9 @@ export default function TransferAccept({ transferId, onNavigate }: TransferAccep
         title="We couldn't find this transfer."
         description="It may have been cancelled or already accepted."
         action={
-          <button
-            onClick={() => onNavigate?.('dashboard')}
-            className="btn-primary mt-2 py-2 px-5 text-sm"
-          >
+          <Button onClick={() => onNavigate?.('dashboard')} size="sm" className="mt-2">
             Back to home
-          </button>
+          </Button>
         }
       />
     )
@@ -159,12 +154,13 @@ export default function TransferAccept({ transferId, onNavigate }: TransferAccep
         title={`This transfer has ${stateLabel}.`}
         action={
           tournament && (
-            <button
+            <Button
               onClick={() => onNavigate?.('registration', tournament)}
-              className="btn-primary mt-2 py-2 px-5 text-sm"
+              size="sm"
+              className="mt-2"
             >
               See the event
-            </button>
+            </Button>
           )
         }
       />
@@ -188,12 +184,13 @@ export default function TransferAccept({ transferId, onNavigate }: TransferAccep
             : `We've let ${dn(fromPlayer)} know you can't take the spot.`}
         </p>
         {tournament && (
-          <button
+          <Button
             onClick={() => onNavigate?.('registration', tournament)}
-            className="btn-primary mt-2 py-2 px-5 text-sm"
+            size="sm"
+            className="mt-2"
           >
             {isAccept ? 'See the event' : 'Back to events'}
-          </button>
+          </Button>
         )}
       </div>
     )
@@ -209,12 +206,9 @@ export default function TransferAccept({ transferId, onNavigate }: TransferAccep
           You're currently signed in as someone else. Sign out and back in with {dn(toPlayer)}'s
           email to accept or decline.
         </p>
-        <button
-          onClick={handleSignOut}
-          className="btn-primary mt-2 py-2 px-5 text-sm inline-flex items-center gap-1"
-        >
+        <Button onClick={handleSignOut} size="sm" className="mt-2">
           <LogOut size={14} /> Sign out
-        </button>
+        </Button>
       </div>
     )
   }

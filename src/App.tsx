@@ -53,6 +53,10 @@ const GroupStageHistoryPage = lazy(() => import('./features/league/GroupStageHis
 const LeagueManagePage = lazy(() => import('./features/league/manage/LeagueManagePage'))
 const LobsterWay = lazy(() => import('./features/lobster-way/LobsterWay'))
 const LobsterWayAdmin = lazy(() => import('./features/lobster-way/admin/LobsterWayAdmin'))
+// Dev-only gallery; the ternary lets the production build drop the chunk.
+const DesignGallery = import.meta.env.DEV
+  ? lazy(() => import('./features/design/DesignGallery'))
+  : null
 
 // URL routing — replaces the previous string-state page machine.
 //
@@ -117,6 +121,8 @@ export default function App() {
                     </AdminLeagueRouteGuard>
                   }
                 />
+
+                {DesignGallery && <Route path="/design" element={<DesignGallery />} />}
 
                 <Route path="*" element={<Navigate to="/home" replace />} />
               </Routes>

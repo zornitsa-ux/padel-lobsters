@@ -23,6 +23,7 @@ import RaffleWinnersBlock from './RaffleWinnersBlock'
 import KingOfCourtResults from './kingOfCourt/KingOfCourtResults'
 import type { NormalisedTournament } from './tournamentQueries'
 import type { EventNavigate } from './eventHelpers'
+import { Button } from '../../components/ui/Button'
 
 type ScoresTabId = 'ranking' | 'matches' | 'games' | 'raffle'
 
@@ -103,12 +104,9 @@ export default function Scores({ tournament, onNavigate }: ScoresProps) {
         icon={<AlertCircle size={36} />}
         title="No event selected"
         action={
-          <button
-            onClick={() => onNavigate('tournament')}
-            className="btn-primary mt-2 py-2 px-5 text-sm"
-          >
+          <Button onClick={() => onNavigate('tournament')} size="sm" className="mt-2">
             Go to Events
-          </button>
+          </Button>
         }
       />
     )

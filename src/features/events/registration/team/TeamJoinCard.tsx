@@ -10,6 +10,7 @@ import PartnerChoiceForm from './PartnerChoiceForm'
 import { choicePartnerName } from './teamHelpers'
 import { pricePerEntry } from '../../eventHelpers'
 import { useTeamSignup, type TeamSignupResult } from './useTeamSignup'
+import { Button } from '../../../../components/ui/Button'
 
 interface TeamJoinCardProps {
   tournament: NormalisedTournament
@@ -62,9 +63,9 @@ export default function TeamJoinCard({
             ? 'This event is full. Sign up as a team to join the waitlist.'
             : "You haven't signed up yet. Pick a partner to enter as a team."}
         </p>
-        <button onClick={() => onOpenChange(true)} className="btn-primary w-full py-2.5 text-sm">
+        <Button onClick={() => onOpenChange(true)} className="w-full">
           Sign up as a team
-        </button>
+        </Button>
       </div>
 
       <Modal
@@ -75,24 +76,27 @@ export default function TeamJoinCard({
         footer={
           choice && (
             <div className="flex gap-2">
-              <button
+              <Button
                 onClick={() => {
                   setLastChoice(choice)
                   setChoice(null)
                   signup.clearError()
                 }}
                 disabled={signup.busy}
-                className="btn-secondary flex-1 py-3 text-sm"
+                variant="secondary"
+                size="sm"
+                className="flex-1"
               >
                 Back
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={() => void signup.submit({ choice })}
                 disabled={signup.busy}
-                className="btn-primary flex-1 py-3 text-sm"
+                size="sm"
+                className="flex-1"
               >
                 {submitLabel}
-              </button>
+              </Button>
             </div>
           )
         }

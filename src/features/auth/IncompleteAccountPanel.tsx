@@ -1,4 +1,5 @@
 import { useApp } from '../../context/useApp'
+import { Button } from '../../components/ui/Button'
 
 export function IncompleteAccountPanel() {
   const { logout } = useApp()
@@ -10,9 +11,9 @@ export function IncompleteAccountPanel() {
           Your account isn&rsquo;t fully set up. Message an admin on WhatsApp and we&rsquo;ll sort
           it out.
         </p>
-        <button type="button" onClick={() => void logout()} className="btn-primary w-full">
+        <Button onClick={() => void logout()} className="w-full">
           Sign out
-        </button>
+        </Button>
       </div>
     </div>
   )

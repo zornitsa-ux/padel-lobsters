@@ -5,6 +5,7 @@ import { Modal } from '../../components/ui/Modal'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
 import type { LobbyPrompt, PlayerFormState } from './playerConstants'
 import type { CommunityPlayer } from './playersSelectors'
+import { Button } from '../../components/ui/Button'
 
 interface PlayerFormProps {
   showForm: boolean
@@ -53,19 +54,14 @@ export default function PlayerForm({
       dismissible={false}
       footer={
         <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={saving}
-            className="btn-secondary flex-1"
-          >
+          <Button onClick={onClose} disabled={saving} variant="secondary" className="flex-1">
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
             form="player-form"
             disabled={saving || !formReady}
-            className="btn-primary flex-1"
+            className="flex-1"
           >
             {saving
               ? 'Saving...'
@@ -76,7 +72,7 @@ export default function PlayerForm({
                   : isAdmin
                     ? 'Add Player'
                     : 'Join the Lobsters 🦞'}
-          </button>
+          </Button>
         </div>
       }
     >

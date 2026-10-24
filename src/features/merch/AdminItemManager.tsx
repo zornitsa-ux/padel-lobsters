@@ -2,6 +2,7 @@ import React, { type DragEvent } from 'react'
 import { Plus, Pencil, X, ShoppingBag, GripVertical } from 'lucide-react'
 import { IconButton } from '../../components/ui/IconButton'
 import type { MerchItem } from './merchSchemas'
+import { Button } from '../../components/ui/Button'
 
 type DragHandler = (idx: number) => (e: DragEvent<HTMLDivElement>) => void
 
@@ -35,12 +36,9 @@ export default function AdminItemManager({
 }: AdminItemManagerProps) {
   return (
     <div className="space-y-4">
-      <button
-        onClick={openAdd}
-        className="btn-primary w-full flex items-center justify-center gap-2"
-      >
+      <Button onClick={openAdd} className="w-full">
         <Plus size={16} /> Add Merch Item
-      </button>
+      </Button>
 
       {/* Item list (draggable) */}
       <div className="space-y-2">

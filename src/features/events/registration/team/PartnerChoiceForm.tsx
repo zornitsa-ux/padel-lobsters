@@ -7,6 +7,8 @@ import type { DisplayName } from '../utils'
 import NewPartnerForm from './NewPartnerForm'
 import PlayerPicker from './PlayerPicker'
 import { choiceToDraft, draftToChoice, isDraftComplete } from './teamHelpers'
+import { Button } from '../../../../components/ui/Button'
+import { TextButton } from '../../../../components/ui/TextButton'
 
 interface PartnerChoiceFormProps {
   candidates: Player[]
@@ -69,13 +71,13 @@ export default function PartnerChoiceForm({
     <span role="alert" className="block mt-1 font-normal text-lob-danger">
       {PARTNER_ERROR_MESSAGES[emailProblem]}
       {emailProblem === 'email_in_use' && (
-        <button
-          type="button"
+        <TextButton
+          size="inherit"
+          className="block mt-1"
           onClick={() => searchMembers({ search: draft.name })}
-          className="block mt-1 font-semibold text-lob-teal underline underline-offset-2"
         >
           Search members
-        </button>
+        </TextButton>
       )}
     </span>
   )
@@ -92,13 +94,9 @@ export default function PartnerChoiceForm({
             }}
             emailError={emailError}
           />
-          <button
-            type="button"
-            onClick={() => searchMembers({ search: '' })}
-            className="text-xs font-semibold text-lob-teal underline underline-offset-2"
-          >
+          <TextButton onClick={() => searchMembers({ search: '' })}>
             ← Search members instead
-          </button>
+          </TextButton>
         </>
       ) : (
         <>
@@ -109,13 +107,9 @@ export default function PartnerChoiceForm({
             displayName={displayName}
             initialSearch={memberSearch}
           />
-          <button
-            type="button"
-            onClick={() => setMode('new')}
-            className="text-sm font-semibold text-lob-teal"
-          >
+          <TextButton size="sm" onClick={() => setMode('new')}>
             {newPartnerLabel}
-          </button>
+          </TextButton>
         </>
       )}
       {error && (
@@ -124,17 +118,12 @@ export default function PartnerChoiceForm({
         </p>
       )}
       <div className="flex gap-2">
-        <button type="button" onClick={onCancel} className="btn-secondary flex-1 py-2.5 text-sm">
+        <Button onClick={onCancel} variant="secondary" className="flex-1">
           Cancel
-        </button>
-        <button
-          type="button"
-          onClick={submit}
-          disabled={!ready || busy || checking}
-          className="btn-primary flex-1 py-2.5 text-sm"
-        >
+        </Button>
+        <Button onClick={submit} disabled={!ready || busy || checking} className="flex-1">
           {busy ? 'Saving…' : checking ? 'Checking…' : submitLabel}
-        </button>
+        </Button>
       </div>
     </div>
   )

@@ -12,6 +12,8 @@ import { useDeleteTeam } from '../hooks/useLeagueMutations'
 import { resolveTeamName } from '../domain/teamDisplay'
 import type { PlayerOption } from '../api/leagueQueries'
 import type { Division, League, LeagueTeam } from '../domain/types'
+import { Button } from '../../../components/ui/Button'
+import { TextButton } from '../../../components/ui/TextButton'
 
 type InviteTarget = { id: string; name: string }
 
@@ -34,12 +36,14 @@ function PlayerName({
     <>
       {player?.name ?? '?'}
       {player?.status === 'placeholder' && (
-        <button
-          className="ml-1 text-lob-amber underline"
+        <TextButton
+          tone="warning"
+          size="inherit"
+          className="ml-1"
           onClick={() => onInvite({ id: playerId, name: player.name })}
         >
           (invite)
-        </button>
+        </TextButton>
       )}
     </>
   )
@@ -135,12 +139,14 @@ export function ManageTeams({ league, teams, division, allPlayers }: ManageTeams
       )}
 
       {league.status === 'draft' && divisionTeams.length >= 4 && (
-        <button
-          className="btn-secondary text-sm w-full mt-3"
+        <Button
+          variant="secondary"
+          size="sm"
+          className="w-full mt-3"
           onClick={() => setShowGroupFormation(true)}
         >
           Assign Groups &amp; Generate Fixtures
-        </button>
+        </Button>
       )}
 
       <Modal

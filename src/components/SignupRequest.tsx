@@ -23,6 +23,7 @@ import {
   SIGNUP_HOOK_MESSAGES,
   type SignupField,
 } from '../features/auth/signupErrors'
+import { Button } from './ui/Button'
 
 // =============================================================================
 //  SignupRequest — the self-serve "Join the Lobsters" form shown inside the
@@ -383,11 +384,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
             <p className="text-xs text-lob-danger bg-lob-danger-light rounded-lg p-2">{error}</p>
           )}
 
-          <button
-            type="submit"
-            disabled={saving}
-            className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-60"
-          >
+          <Button type="submit" disabled={saving} className="w-full">
             {saving ? (
               <>
                 <Loader2 size={14} className="animate-spin" />
@@ -399,7 +396,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
                 Join the Lobsters 🦞
               </>
             )}
-          </button>
+          </Button>
         </form>
       </div>
     </div>

@@ -10,7 +10,7 @@ import styles from './ActionChip.module.css'
 //  popup — and as a <button> otherwise, mirroring IconButton.
 //
 //  Deliberately takes no size or colour props. A tertiary action that needs to
-//  stand out is not a chip; reach for .btn-secondary instead.
+//  stand out is not a chip; reach for `Button variant="secondary"` instead.
 // ============================================================================
 
 interface ActionChipProps {

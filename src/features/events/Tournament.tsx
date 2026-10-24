@@ -20,6 +20,7 @@ import type { EventNavigate } from './eventHelpers'
 import type { NormalisedTournament } from '../../lib/normalise'
 import { groupEventsByTime } from './eventPhase'
 import type { TournamentInput } from './tournamentQueries'
+import { Button } from '../../components/ui/Button'
 
 export { DEFAULT_EVENT_DESCRIPTION }
 
@@ -102,12 +103,9 @@ export default function Tournament({ onNavigate }: { onNavigate: EventNavigate }
         title="Events"
         rightAction={
           isAdmin ? (
-            <button
-              onClick={openAdd}
-              className="btn-secondary py-2 px-4 text-sm flex items-center gap-1.5"
-            >
+            <Button onClick={openAdd} variant="secondary" size="sm">
               <Plus size={16} /> New
-            </button>
+            </Button>
           ) : undefined
         }
       />

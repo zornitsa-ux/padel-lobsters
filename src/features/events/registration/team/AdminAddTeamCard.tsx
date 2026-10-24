@@ -10,6 +10,7 @@ import PlayerPicker from './PlayerPicker'
 import TeamNotices from './TeamNotices'
 import { eligiblePlayers } from './teamHelpers'
 import { useTeamSignup, type TeamSignupResult } from './useTeamSignup'
+import { Button } from '../../../../components/ui/Button'
 
 interface AdminAddTeamCardProps {
   tournament: NormalisedTournament
@@ -62,15 +63,15 @@ export default function AdminAddTeamCard({
     return (
       <div className="space-y-2">
         <TeamNotices notices={notices} onDismiss={() => setNotices([])} />
-        <button
+        <Button
           onClick={() => {
             setNotices([])
             setOpen(true)
           }}
-          className="btn-primary w-full flex items-center justify-center gap-2"
+          className="w-full"
         >
           <Plus size={18} /> Add team
-        </button>
+        </Button>
       </div>
     )
   }
@@ -107,13 +108,9 @@ export default function AdminAddTeamCard({
             onSelect={setCaptainId}
             displayName={displayName}
           />
-          <button
-            onClick={() => setCaptainChosen(true)}
-            disabled={!captainId}
-            className="btn-primary w-full py-2.5 text-sm"
-          >
+          <Button onClick={() => setCaptainChosen(true)} disabled={!captainId} className="w-full">
             Next
-          </button>
+          </Button>
         </>
       )}
     </div>

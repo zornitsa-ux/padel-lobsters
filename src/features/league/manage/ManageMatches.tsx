@@ -10,6 +10,7 @@ import { useCreateBracket } from '../hooks/useLeagueMutations'
 import { buildDivisionBracket, buildFinalPairings } from '../domain/bracket'
 import { sortMatchesDesc, stageToLabel } from '../domain/matchDisplay'
 import type { Division, League, LeagueMatch, LeagueTeam } from '../domain/types'
+import { Button } from '../../../components/ui/Button'
 
 function BracketPanel({
   league,
@@ -52,8 +53,9 @@ function BracketPanel({
           {pendingCount} group match{pendingCount !== 1 ? 'es' : ''} still pending.
         </AlertBox>
       )}
-      <button
-        className={`${allDone ? 'btn-primary' : 'btn-secondary'} text-sm`}
+      <Button
+        variant={allDone ? 'primary' : 'secondary'}
+        size="sm"
         disabled={createBracket.isPending}
         onClick={handleGenerate}
       >
@@ -62,7 +64,7 @@ function BracketPanel({
           : allDone
             ? 'Generate Bracket'
             : 'Generate Bracket (Override)'}
-      </button>
+      </Button>
       {createBracket.error && (
         <AlertBox variant="error">
           {(createBracket.error as Error).message ?? 'Failed to generate bracket.'}
@@ -98,13 +100,9 @@ function FinalsPanel({
       <AlertBox variant="success">
         Semi-finals decided. Ready to create the {tiers} final{pairings.length > 1 ? 's' : ''}.
       </AlertBox>
-      <button
-        className="btn-primary text-sm"
-        disabled={createBracket.isPending}
-        onClick={handleGenerate}
-      >
+      <Button size="sm" disabled={createBracket.isPending} onClick={handleGenerate}>
         {createBracket.isPending ? 'Generating…' : 'Generate Finals'}
-      </button>
+      </Button>
       {createBracket.error && (
         <AlertBox variant="error">
           {(createBracket.error as Error).message ?? 'Failed to generate finals.'}

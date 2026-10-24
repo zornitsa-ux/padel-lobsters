@@ -4,6 +4,7 @@ import { FormError } from './FormError'
 import { PasswordInput } from './PasswordInput'
 import { CODE_LENGTH, sanitiseCode } from './otpCode'
 import { describePasswordError, PASSWORD_RULES_COPY } from './passwordErrors'
+import { Button } from '../../components/ui/Button'
 
 export interface PasswordFormProps {
   requireCurrentPassword: boolean
@@ -101,13 +102,13 @@ export function PasswordForm({ requireCurrentPassword, submitLabel, onDone }: Pa
       )}
       {notice && <p className="text-xs text-lob-teal font-medium">{notice}</p>}
       <FormError message={error} />
-      <button
+      <Button
         type="submit"
         disabled={busy || !password || (needsCode && nonce.length !== CODE_LENGTH)}
-        className="btn-primary w-full disabled:opacity-50"
+        className="w-full"
       >
         {busy ? 'Saving…' : submitLabel}
-      </button>
+      </Button>
     </form>
   )
 }

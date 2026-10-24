@@ -1,0 +1,39 @@
+import { describe, expect, it, vi } from 'vitest'
+import { Link } from 'react-router-dom'
+import { TextButton } from './TextButton'
+import { propsOf } from '../../test/element'
+
+const classOf = (el: unknown) => String(propsOf(el).className)
+
+describe('TextButton', () => {
+  it('defaults to an underlined xs accent button', () => {
+    const onClick = vi.fn()
+    const el = TextButton({ children: 'Change partner', onClick })
+    expect((el as { type: string }).type).toBe('button')
+    expect(propsOf(el).type).toBe('button')
+    expect(propsOf(el).onClick).toBe(onClick)
+    expect(classOf(el)).toBe(
+      'font-semibold underline underline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed text-lob-teal text-xs',
+    )
+  })
+
+  it('applies tone and inherits size', () => {
+    const el = TextButton({ children: 'Cancel team', tone: 'destructive', size: 'inherit' })
+    expect(classOf(el)).toContain('text-lob-danger')
+    expect(classOf(el)).not.toContain('text-xs')
+  })
+
+  it('renders a router Link for `to`', () => {
+    const el = TextButton({ children: 'Open', to: '/events/1', icon: 'ICON' })
+    expect((el as { type: unknown }).type).toBe(Link)
+    expect(propsOf(el).to).toBe('/events/1')
+    expect(classOf(el).startsWith('inline-flex items-center gap-1')).toBe(true)
+  })
+
+  it('renders an external anchor for `href`', () => {
+    const el = TextButton({ children: 'Admins', href: 'https://example.com' })
+    expect((el as { type: string }).type).toBe('a')
+    expect(propsOf(el).target).toBe('_blank')
+    expect(propsOf(el).rel).toBe('noopener noreferrer')
+  })
+})

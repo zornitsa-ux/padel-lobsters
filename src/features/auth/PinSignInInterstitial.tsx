@@ -7,6 +7,7 @@ import { clearPinSignIn, hasPinSignIn, PIN_SIGN_IN_EVENT } from './pinSignInFlag
 import { dismissUpgradeCard } from '../home/upgradeCardDismissal'
 import { isSyntheticEmail } from './syntheticEmail'
 import { ADD_EMAIL_REQUEST, SIGN_IN_SECURITY_PATH } from './upgradeCopy'
+import { Button } from '../../components/ui/Button'
 
 function usePinSignInFlag({ signedIn }: { signedIn: boolean }) {
   const [pending, setPending] = useState(hasPinSignIn)
@@ -67,9 +68,9 @@ export default function PinSignInInterstitial() {
               Set a password now
             </button>
           )}
-          <button type="button" onClick={close} className="flex-1 btn-primary">
+          <Button onClick={close} className="flex-1">
             Got it
-          </button>
+          </Button>
         </div>
       }
     >

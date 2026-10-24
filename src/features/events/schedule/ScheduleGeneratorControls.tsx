@@ -3,6 +3,7 @@ import { Download, Shuffle } from 'lucide-react'
 import type { SchedulePlayer, ScheduleRound } from './types'
 import { roundsForDuration } from './utils'
 import { SegmentedControl } from '../../../components/ui/SegmentedControl'
+import { Button } from '../../../components/ui/Button'
 
 export const TEAM_EVENT_NOTE = "The Americano schedule generator doesn't run on team events."
 
@@ -83,14 +84,14 @@ export default function ScheduleGeneratorControls({
         </div>
       )}
 
-      <button
+      <Button
         onClick={onGenerate}
         disabled={generating || registeredPlayers.length < 4}
-        className="btn-primary w-full flex items-center justify-center gap-2"
+        className="w-full"
       >
         <Shuffle size={16} />
         {generating ? 'Generating...' : 'Generate Pairings'}
-      </button>
+      </Button>
 
       {registeredPlayers.length < 4 && (
         <p className="text-xs text-lob-warning">Register at least 4 players first</p>

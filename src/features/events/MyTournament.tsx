@@ -23,6 +23,7 @@ import type { EventPhase } from './eventPhase'
 import { isEventOver } from './eventPhase'
 import type { NormalisedTournament } from '../../lib/normalise'
 import type { EventNavigate } from './eventHelpers'
+import { Button } from '../../components/ui/Button'
 
 type Props = {
   tournament: NormalisedTournament
@@ -137,12 +138,9 @@ export default function MyTournament({ tournament, onNavigate }: Props) {
         icon={<UserRoundX size={36} />}
         title="Sign in to see your tournament"
         action={
-          <button
-            onClick={() => onNavigate('settings')}
-            className="btn-primary mt-2 py-2 px-5 text-sm"
-          >
+          <Button onClick={() => onNavigate('settings')} size="sm" className="mt-2">
             Go to Settings
-          </button>
+          </Button>
         }
       />
     )
@@ -279,17 +277,13 @@ function RegistrationCard({
         <p className="text-sm text-lob-muted">
           {isEventFull ? 'This event is full.' : "You haven't signed up yet."}
         </p>
-        <button
-          onClick={onRegister}
-          disabled={registering}
-          className="btn-primary w-full py-2.5 text-sm"
-        >
+        <Button onClick={onRegister} disabled={registering} className="w-full">
           {registering
             ? 'Signing up…'
             : isEventFull
               ? 'Join the waitlist'
               : 'Register for this event'}
-        </button>
+        </Button>
         {registerErrorNotice}
       </div>
     )
@@ -302,13 +296,9 @@ function RegistrationCard({
           <UserRoundX size={14} className="text-lob-muted flex-shrink-0" />
           <p className="text-sm font-semibold text-lob-slate">Your registration was cancelled</p>
         </div>
-        <button
-          onClick={onRegister}
-          disabled={registering}
-          className="btn-primary w-full py-2.5 text-sm"
-        >
+        <Button onClick={onRegister} disabled={registering} className="w-full">
           {registering ? 'Signing up…' : 'Register again'}
-        </button>
+        </Button>
         {registerErrorNotice}
       </div>
     )
