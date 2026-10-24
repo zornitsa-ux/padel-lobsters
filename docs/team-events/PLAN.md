@@ -55,7 +55,7 @@
 | T4  | Join flow: partner search (active members), new-partner form, confirm + pay (captain)                                                                                                                                    | 1     | T1         | #60      | [x]   |
 | T5  | Team card + registration list (teams, waitlist, change partner, transfers hidden)                                                                                                                                        | 1     | T1         | #60      | [x]   |
 | T6  | Admin: add/cancel/promote team, change partner, team Payments view + reminder                                                                                                                                            | 1     | T1         | #59, #60 | [x]   |
-| T7  | Verify Phase 1 locally (rehearsal data) → **R1**                                                                                                                                                                         | 1     | T1, T3–T6  | —        | [~]   |
+| T7  | Verify Phase 1 locally (rehearsal data) → **R1**                                                                                                                                                                         | 1     | T1, T3–T6  | #60      | [x]   |
 | T8  | King of the Court domain (pure, tests first): `teamStrength`, `seedTeams`, `startingCourts`, `rankFromFinalCourts`                                                                                                       | 2     | T0         | #57      | [x]   |
 | T9  | Lifecycle: `eventPhase` King of the Court branch, Finish with zero matches + no ratings, matcher guard                                                                                                                   | 2     | T1         |          | [ ]   |
 | T10 | Admin: seed reorder + Publish starting courts; Final standings entry                                                                                                                                                     | 2     | T8         |          | [ ]   |
@@ -72,25 +72,27 @@ States: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked.
   merge and push the RPC migration.
 - **R2** is client-only.
 
-### Resume here (2026-10-24, after the combined review)
+### Resume here (2026-10-24, R1 merged)
 
-**Where we are.** The comprehensive review of `main...kotc-test` is done and
-its fixes are committed on the branches below. The owner confirmed two findings
-as known choices: an admin partner change leaves the team waiting for the new
-partner, and raising capacity doesn't promote waitlisted teams. The clean local
-apply passed (below). **Next: the R1 merge.**
+**Where we are.** **R1 is on `main`** (#56, #58, #59, #60, plus the cache fix
+#61) and the migration is pushed to production. The comprehensive review of
+`main...kotc-test` was done first; the owner confirmed two findings as known
+choices: an admin partner change leaves the team waiting for the new partner,
+and raising capacity doesn't promote waitlisted teams. The clean local apply
+passed (below). **Next:** merge #57, then T2 (partner invites) and Phase 2
+(T9–T11).
 
-**Branches** (2026-10-24; #56, #58, #60 and #61 are squash-merged and the R1
+**Branches** (2026-10-24; #56, #58, #59, #60 and #61 are squash-merged and the R1
 migration is pushed to production):
 
-| Branch                              | PR  | Base   | Status                        |
-| ----------------------------------- | --- | ------ | ----------------------------- |
-| `team-events-schema`                | #56 | `main` | merged; `db push` done        |
-| `team-events-event-form`            | #58 | `main` | merged                        |
-| `team-events-signup-ui`             | #60 | `main` | merged                        |
-| `team-events-payments`              | #59 | `main` | open; rebased onto `main`     |
-| `team-events-kotc-domain`           | #57 | `main` | open; merge after #59 and #60 |
-| `fix/reset-cache-on-account-switch` | #61 | `main` | merged                        |
+| Branch                              | PR  | Base   | Status                    |
+| ----------------------------------- | --- | ------ | ------------------------- |
+| `team-events-schema`                | #56 | `main` | merged; `db push` done    |
+| `team-events-event-form`            | #58 | `main` | merged                    |
+| `team-events-signup-ui`             | #60 | `main` | merged                    |
+| `team-events-payments`              | #59 | `main` | merged                    |
+| `team-events-kotc-domain`           | #57 | `main` | open; rebased onto `main` |
+| `fix/reset-cache-on-account-switch` | #61 | `main` | merged                    |
 
 The integration branch `kotc-test` is local only, in the worktree
 `../padel-lobsters-kotc-test`: `team-events-signup-ui` merged with `-payments`,
