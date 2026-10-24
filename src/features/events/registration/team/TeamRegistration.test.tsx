@@ -19,7 +19,10 @@ const m = vi.hoisted(() => ({
 }))
 
 vi.mock('../../../../context/useApp', () => ({ useApp: () => m.useApp() }))
-vi.mock('../../useTournaments', () => ({ useUpdateTournament: () => ({ mutateAsync: vi.fn() }) }))
+vi.mock('../../useTournaments', () => ({
+  useUpdateTournament: () => ({ mutateAsync: vi.fn() }),
+  useAddTournament: () => ({ mutateAsync: vi.fn() }),
+}))
 vi.mock('../../useTransfers', () => ({
   useTransfers: () => ({ data: [] }),
   useTransferActions: () => ({}),
