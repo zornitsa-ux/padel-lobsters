@@ -33,14 +33,14 @@
 
 ## 0. Timeline
 
-| Milestone                         | Target                           | Notes                                                   |
-| --------------------------------- | -------------------------------- | ------------------------------------------------------- |
-| Docs agreed                       | Wed 21 Oct                       | #55                                                     |
-| **R1: team signup live**          | Tue 27 Oct                       | **Shipped Sat 24 Oct** (#56, #58–#61, migration pushed) |
-| Partner invites live              | Within the first week of signups | T2 (edge function + RPC), so invites go out well ahead  |
-| PIN cutover                       | Thu 5 Nov                        | Other initiative; no event 2–8 Nov                      |
-| **R2: seeding + final standings** | By Thu 12 Nov                    | Phase 2, client-only                                    |
-| Event                             | Sun 15 Nov                       | 5 courts, 10 teams (OQ-1, D-017)                        |
+| Milestone                         | Target           | Notes                                                   |
+| --------------------------------- | ---------------- | ------------------------------------------------------- |
+| Docs agreed                       | Wed 21 Oct       | #55                                                     |
+| **R1: team signup live**          | Tue 27 Oct       | **Shipped Sat 24 Oct** (#56, #58–#61, migration pushed) |
+| Partner invites live              | After R2 (D-023) | T2 (edge function + RPC); deprioritised behind Phase 2  |
+| PIN cutover                       | Thu 5 Nov        | Other initiative; no event 2–8 Nov                      |
+| **R2: seeding + final standings** | By Thu 12 Nov    | Phase 2, client-only                                    |
+| Event                             | Sun 15 Nov       | 5 courts, 10 teams (OQ-1, D-017)                        |
 
 ---
 
@@ -83,19 +83,10 @@ was done and fixed (2026-10-24 log). The owner confirmed two findings as known
 choices: an admin partner change leaves the team waiting for the new partner,
 and raising capacity doesn't promote waitlisted teams.
 
-**Next, in order:**
+**Next, in order** (owner reprioritised 2026-10-24, D-023: Phase 2 first,
+partner invites later):
 
-1. **T2: partner invites** (R1 follow-up, sign-in-facing). What exists:
-   `partner_invites.invited_at` / `invited_by`, `admin_list_partner_invites`,
-   `usePartnerInvites`, and the "hasn't signed in yet" hint on admin team rows.
-   What's needed: a new `event_invite` kind in the `send-invite-email` edge
-   function (today it accepts `league_invite`, `added`, `resend`) with the
-   captain and event names; `admin_send_event_invite` reusing
-   `private.send_invite_email` and setting `invited_at` / `invited_by`; an admin
-   "Send invite" action on the team rows or a Partner invites list (not invited /
-   invited / signed in). Check the email locally in Mailpit. Release: merge,
-   deploy the edge function from `main`, then `db push`.
-2. **Phase 2 → R2** (client-only, must be live by Thu 12 Nov, 3 days before
+1. **Phase 2 → R2** (client-only, must be live by Thu 12 Nov, 3 days before
    the Sun 15 Nov event):
    - **T9** lifecycle: the `eventPhase` King of the Court branch, Finish with
      zero matches and no rating changes, the matcher guard.
@@ -107,22 +98,37 @@ and raising capacity doesn't promote waitlisted teams.
      card; Results ranking; Lobster Review rank.
    - **T12** local verification (task notes below).
 
+   T9 and T10 don't depend on each other: each branches off `main` as its own
+   PR. T11 needs both, so it starts from `main` once they've merged. No PR is
+   stacked on another, so nothing needs rebasing or force-pushing.
+
+2. **T2: partner invites** (deprioritised). Until then a captain-created
+   partner gets no email: the captain is told to let them know, the partner
+   can sign in with that email at any time, and admins see "hasn't signed in
+   yet" on the team row. What exists: `partner_invites.invited_at` /
+   `invited_by`, `admin_list_partner_invites`, `usePartnerInvites`. What's
+   needed: a new `event_invite` kind in the `send-invite-email` edge function
+   (today it accepts `league_invite`, `added`, `resend`) with the captain and
+   event names; `admin_send_event_invite` reusing `private.send_invite_email`
+   and setting `invited_at` / `invited_by`; an admin "Send invite" action.
+   Check the email locally in Mailpit. Release: merge, deploy the edge function
+   from `main`, then `db push`. It's sign-in-facing, so not from Thu 12 Nov
+   until after the event.
+
 **Release windows.** No sign-in-facing release within 3 days of a tournament.
 The PIN cutover is Thu 5 Nov (other initiative). The event is Sun 15 Nov, so
-nothing sign-in-facing ships from Thu 12 Nov. T2 should go out well before
-then so invites reach partners early.
+nothing sign-in-facing ships from Thu 12 Nov.
 
 **Working notes.**
 
-- **Squash merges.** When a PR stacked on another merges, rebase the next one
-  onto `main` without the merged commits
-  (`git rebase --onto origin/main <old base branch>`), keep `main`'s
-  `PLAN.md` on conflict, and re-add anything only that branch logged.
-- **Force-pushes** are run by the owner (`git push --force-with-lease`); Claude
-  Code's auto mode blocks them.
+- **No stacked PRs.** Branch each task off `main`; if one task needs another,
+  start it after that one merges. When `main` moves under an open PR, merge
+  `origin/main` into the branch rather than rebasing, so a normal push is
+  enough. Update `PLAN.md` in a short docs PR after each merge, so feature PRs
+  don't conflict on it.
 - **Formatting.** Run `npm run format:check` before pushing: commits made in a
   worktree can skip the pre-commit formatter, and CI fails on it.
-- **Local database.** Production data from 2026-10-24 plus the R1 migration
+  **Local database.** Production data from 2026-10-24 plus the R1 migration
   (clean apply: 14 integrity counts unchanged, 29 `team_events.sql` checks,
   `db:grants:check` matched). `npm run db:reset` puts the seed data back. For
   a new migration, rehearse the same way: `rehearsal:sync` from `main`, then
@@ -327,3 +333,5 @@ placeholders as partners, was withdrawn by D-010: placeholders aren't offered.)
     unchanged by the migration, and `team_events.sql` passed 29 checks.
 - 2026-10-24: **R1 shipped.** #61, #56 (then `db push`), #58, #60, #59 and #57
   squash-merged in that order. T2 and Phase 2 are next (§1 "Resume here").
+- 2026-10-24: **D-023:** the owner moved Phase 2 (T9–T12) ahead of partner
+  invites (T2). Phase 2 tasks branch off `main` without stacking.

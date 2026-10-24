@@ -376,3 +376,17 @@ they could decline, and had no way to sign out.
 
 **Impact:** Amends D-021. `respond_to_team_invite` (CONTRACTS §3), the
 `/finish-account` screen and the invite redirect.
+
+## D-023 — Phase 2 before partner invites (2026-10-24)
+
+**Decision:** After R1, build Phase 2 (T9–T12: lifecycle, seeding and
+starting courts, player views, verification) before T2 (partner invite
+emails).
+
+**Why:** Owner decision. Seeding and starting courts are what the event on
+Sun 15 Nov needs. Partners can already sign in without an invite: the captain
+is told to let them know, and admins see who hasn't signed in yet.
+
+**Impact:** Supersedes the timeline row "partner invites within the first week
+of signups". T2 is sign-in-facing, so it can't ship from Thu 12 Nov until
+after the event.
