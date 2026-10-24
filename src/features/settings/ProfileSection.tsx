@@ -80,13 +80,15 @@ export default function ProfileSection({
               />
             </div>
             {profileError && (
-              <p className="text-xs text-red-600 bg-red-50 rounded-lg p-2">{profileError}</p>
+              <p className="text-xs text-lob-danger bg-lob-danger-light rounded-lg p-2">
+                {profileError}
+              </p>
             )}
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={dismissPlaytomicPrompt}
-                className="flex-1 text-sm font-semibold text-lob-muted py-2.5 rounded-xl border border-gray-200 active:scale-95 transition-all"
+                className="flex-1 text-sm font-semibold text-lob-muted py-2.5 rounded-xl border border-lob-line-strong active:scale-95 transition-all"
               >
                 No change
               </button>
@@ -137,7 +139,7 @@ export default function ProfileSection({
 
           {/* Expanded full edit form */}
           {profileExpanded && (
-            <div className="space-y-4 pt-2 border-t border-gray-100">
+            <div className="space-y-4 pt-2 border-t border-lob-line">
               {/* Avatar upload */}
               <div className="flex flex-col items-center gap-2">
                 <div className="relative">
@@ -318,7 +320,7 @@ export default function ProfileSection({
               {/* Email is read-only here: changes go through the confirmed flow in Sign-in & security. */}
               <div>
                 <label className="label">Email</label>
-                <div className="px-3 py-2 rounded-xl bg-gray-50 border border-gray-200 text-sm text-lob-slate truncate">
+                <div className="px-3 py-2 rounded-xl bg-lob-well border border-lob-line-strong text-sm text-lob-slate truncate">
                   {profileForm.email || (
                     <span className="text-lob-muted-light">No email on file</span>
                   )}
@@ -377,12 +379,14 @@ export default function ProfileSection({
                         : 'Save Profile'}
               </button>
               {profileLoadFailed && (
-                <p className="text-xs text-red-600 bg-red-50 rounded-lg p-2">
+                <p className="text-xs text-lob-danger bg-lob-danger-light rounded-lg p-2">
                   Couldn't load your profile details. Check your connection and reload.
                 </p>
               )}
               {profileError && (
-                <p className="text-xs text-red-600 bg-red-50 rounded-lg p-2">{profileError}</p>
+                <p className="text-xs text-lob-danger bg-lob-danger-light rounded-lg p-2">
+                  {profileError}
+                </p>
               )}
             </div>
           )}

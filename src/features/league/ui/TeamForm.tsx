@@ -97,12 +97,12 @@ function PlayerPicker({
           onFocus={() => setOpen(true)}
         />
         {open && (filtered.length > 0 || showCreate) && (
-          <div className="absolute z-10 w-full bg-white rounded-xl border border-gray-200 shadow-lg mt-1 max-h-48 overflow-y-auto">
+          <div className="absolute z-10 w-full bg-white rounded-xl border border-lob-line-strong shadow-lg mt-1 max-h-48 overflow-y-auto">
             {filtered.map((p) => (
               <button
                 key={p.id}
                 type="button"
-                className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 text-left"
+                className="w-full flex items-center gap-2 px-3 py-2 hover:bg-lob-well text-left"
                 onMouseDown={(e) => {
                   e.preventDefault()
                   onSelectPlayer(p.id)
@@ -117,7 +117,7 @@ function PlayerPicker({
             {showCreate && (
               <button
                 type="button"
-                className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 text-left border-t border-gray-100"
+                className="w-full flex items-center gap-2 px-3 py-2 hover:bg-lob-well text-left border-t border-lob-line"
                 onMouseDown={(e) => {
                   e.preventDefault()
                   onSelectPlaceholder(query.trim())
@@ -354,7 +354,7 @@ export function TeamForm({
                     'flex-1 py-2.5 rounded-xl border transition-colors text-center',
                     isSelected
                       ? 'bg-lob-teal text-white border-lob-teal'
-                      : 'bg-white text-lob-dark border-gray-200 hover:border-lob-teal/50',
+                      : 'bg-white text-lob-dark border-lob-line-strong hover:border-lob-teal/50',
                   ].join(' ')}
                   onClick={() => setSelectedGroup(g)}
                 >

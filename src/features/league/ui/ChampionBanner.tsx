@@ -21,7 +21,7 @@ export function ChampionBanner({ champions, teamById, onTeamClick }: ChampionBan
       <div className="flex items-center gap-3">
         <Trophy size={28} className="text-lob-amber shrink-0" aria-hidden="true" />
         <div className="min-w-0">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-lob-muted">Champions</p>
+          <p className="text-2xs font-bold uppercase tracking-wider text-lob-muted">Champions</p>
           <button
             type="button"
             className="text-lg font-bold text-lob-dark text-left truncate max-w-full"

@@ -209,7 +209,7 @@ export default function AdminView({
               Share with players
             </button>
           ) : (
-            <div className="w-full bg-green-50 text-green-700 font-semibold py-3 rounded-xl text-sm flex items-center justify-center gap-2">
+            <div className="w-full bg-lob-success-light text-lob-success font-semibold py-3 rounded-xl text-sm flex items-center justify-center gap-2">
               <Check size={16} /> Shared with players
             </div>
           )}

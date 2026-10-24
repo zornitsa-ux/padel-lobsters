@@ -42,7 +42,7 @@ function AnswerBody({ item }: { item: LobsterWayItem }) {
                   src={step.image}
                   alt={step.title}
                   loading="lazy"
-                  className="mt-2 w-full rounded-xl border border-gray-100"
+                  className="mt-2 w-full rounded-xl border border-lob-line"
                 />
               )}
             </li>
@@ -111,7 +111,7 @@ export default function LobsterWay() {
             ) : (
               <div className="card space-y-2">
                 <h2 className="font-bold text-gray-700 text-sm">{section.label}</h2>
-                <div className="divide-y divide-gray-100">
+                <div className="divide-y divide-lob-line">
                   {(section.items ?? []).map((item) => (
                     <details
                       key={item.q}

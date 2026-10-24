@@ -27,7 +27,7 @@ export default function DateTile({ date, size = 'md', className = '' }: DateTile
 
   const dims =
     size === 'lg'
-      ? { box: 'w-16 h-20', day: 'text-3xl', month: 'text-[10px] py-0.5', dow: 'text-[10px]' }
+      ? { box: 'w-16 h-20', day: 'text-3xl', month: 'text-2xs py-0.5', dow: 'text-2xs' }
       : size === 'sm'
         ? { box: 'w-11 h-12', day: 'text-lg', month: 'text-[8px]  py-[1px]', dow: 'text-[8px]' }
         : { box: 'w-14 h-16', day: 'text-2xl', month: 'text-[9px]  py-0.5', dow: 'text-[9px]' } // md

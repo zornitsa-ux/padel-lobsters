@@ -24,7 +24,7 @@ export function CollapsibleSection({
         onClick={onToggle}
         className="w-full flex items-center justify-between py-3 px-1"
       >
-        <span className="text-[10px] font-bold text-lob-muted uppercase tracking-widest flex items-center gap-2">
+        <span className="text-2xs font-bold text-lob-muted uppercase tracking-widest flex items-center gap-2">
           {icon}
           {title}
         </span>

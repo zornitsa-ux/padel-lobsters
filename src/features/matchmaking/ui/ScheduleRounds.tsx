@@ -168,8 +168,8 @@ function CourtCard({
               key={pairKey(a, b)}
               className={
                 onFixRematch
-                  ? 'inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium bg-amber-50 text-amber-700'
-                  : 'text-xs px-2 py-0.5 rounded-full font-medium bg-amber-50 text-amber-700'
+                  ? 'inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium bg-lob-warning-light text-lob-warning'
+                  : 'text-xs px-2 py-0.5 rounded-full font-medium bg-lob-warning-light text-lob-warning'
               }
             >
               {players[a]?.name ?? a} vs {players[b]?.name ?? b} — repeat
@@ -177,7 +177,7 @@ function CourtCard({
                 <button
                   type="button"
                   onClick={() => onFixRematch({ roundIndex, pair: [a, b] })}
-                  className="underline decoration-dotted underline-offset-2 hover:text-amber-900"
+                  className="underline decoration-dotted underline-offset-2 hover:text-lob-warning-strong"
                 >
                   Fix
                 </button>

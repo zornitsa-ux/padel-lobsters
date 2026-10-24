@@ -15,10 +15,16 @@ export type QualityReportProps = {
 }
 
 function gradeBand(pct: number): { label: string; textClass: string; bgClass: string } {
-  if (pct >= 90) return { label: 'Excellent', textClass: 'text-green-700', bgClass: 'bg-green-50' }
+  if (pct >= 90)
+    return { label: 'Excellent', textClass: 'text-lob-success', bgClass: 'bg-lob-success-light' }
   if (pct >= 80) return { label: 'Good', textClass: 'text-lob-teal', bgClass: 'bg-lob-teal/10' }
-  if (pct >= 70) return { label: 'Fair', textClass: 'text-amber-700', bgClass: 'bg-amber-50' }
-  return { label: 'Needs work', textClass: 'text-red-700', bgClass: 'bg-red-50' }
+  if (pct >= 70)
+    return { label: 'Fair', textClass: 'text-lob-warning', bgClass: 'bg-lob-warning-light' }
+  return {
+    label: 'Needs work',
+    textClass: 'text-lob-danger-strong',
+    bgClass: 'bg-lob-danger-light',
+  }
 }
 
 function meanOverall(overall: QualityDimensions): number {
@@ -41,7 +47,10 @@ function DimensionBar({ label, value }: { label: string; value: number }) {
 function ViolationsBanner({ summary }: { summary: string | null }) {
   if (!summary) return null
   return (
-    <p role="alert" className="text-xs text-red-700 bg-red-50 rounded-lg px-2 py-1.5">
+    <p
+      role="alert"
+      className="text-xs text-lob-danger-strong bg-lob-danger-light rounded-lg px-2 py-1.5"
+    >
       {summary}
     </p>
   )
@@ -108,7 +117,7 @@ export default function QualityReport({
                     </thead>
                     <tbody>
                       {quality.perRound.map((round, index) => (
-                        <tr key={index} className="border-t border-gray-100">
+                        <tr key={index} className="border-t border-lob-line">
                           <td className="py-1 pr-2 text-lob-slate font-medium">
                             Round {index + 1}
                           </td>
@@ -133,7 +142,7 @@ export default function QualityReport({
                     {violations.map((violation, index) => (
                       <li
                         key={index}
-                        className="text-xs text-amber-700 bg-amber-50 rounded-lg px-2 py-1"
+                        className="text-xs text-lob-warning bg-lob-warning-light rounded-lg px-2 py-1"
                       >
                         {violationLine({ violation, names: names ?? {} })}
                       </li>

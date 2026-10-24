@@ -68,7 +68,7 @@ export default function CompareView({
       </p>
 
       <div className="max-w-2xl mx-auto">
-        <div className="sticky top-0 bg-white z-10 px-4 py-3 border-b border-gray-100 flex items-start justify-between gap-4">
+        <div className="sticky top-0 bg-white z-10 px-4 py-3 border-b border-lob-line flex items-start justify-between gap-4">
           <div>
             <p className="font-semibold text-lob-slate text-base">Compare schedules</p>
             <p className="text-xs text-lob-muted mt-0.5">
@@ -167,7 +167,7 @@ export default function CompareView({
           </div>
         </div>
 
-        <div className="sticky bottom-0 bg-white border-t border-gray-100 px-4 py-3 flex gap-2">
+        <div className="sticky bottom-0 bg-white border-t border-lob-line px-4 py-3 flex gap-2">
           <button type="button" onClick={onClose} className="flex-1 btn-secondary text-sm">
             Keep original
           </button>

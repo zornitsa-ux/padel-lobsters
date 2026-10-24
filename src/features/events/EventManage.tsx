@@ -105,7 +105,7 @@ function Overview({ tournament }: { tournament: NormalisedTournament }) {
         <StatTile
           value={unpaid.length}
           label="Unpaid"
-          valueClassName={unpaid.length > 0 ? 'text-red-600' : ''}
+          valueClassName={unpaid.length > 0 ? 'text-lob-danger' : ''}
         />
         {scored && (
           <StatTile

@@ -6,7 +6,7 @@ const MARKS = {
   male: { letter: 'M', label: 'Man', className: 'bg-blue-100 text-blue-700' },
 } as const
 
-const BADGE = 'inline-flex items-center justify-center rounded-full text-[10px] font-bold w-4 h-4'
+const BADGE = 'inline-flex items-center justify-center rounded-full text-2xs font-bold w-4 h-4'
 
 export function GenderMark({ gender }: { gender: PlayerGender }) {
   if (gender === 'unknown') return null
@@ -33,7 +33,7 @@ export function GenderLegendEntries() {
 
 const CHIP_TONES = {
   neutral: 'bg-gray-100 text-lob-muted',
-  uneven: 'bg-amber-50 text-amber-700',
+  uneven: 'bg-lob-warning-light text-lob-warning',
 } as const
 
 export function CourtGenderChip({
@@ -59,7 +59,7 @@ export function CourtGenderChip({
           type="button"
           onClick={onFix}
           aria-label={fixLabel}
-          className="text-xs px-1.5 py-1 underline decoration-dotted underline-offset-2 text-amber-700 hover:text-amber-900"
+          className="text-xs px-1.5 py-1 underline decoration-dotted underline-offset-2 text-lob-warning hover:text-lob-warning-strong"
         >
           Fix
         </button>

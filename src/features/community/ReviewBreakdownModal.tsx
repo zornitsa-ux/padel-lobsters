@@ -37,17 +37,17 @@ export default function ReviewBreakdownModal({
       key={b.id}
       className={`rounded-2xl border-2 px-3 py-3 ${
         accent === 'perf'
-          ? 'bg-amber-50 border-amber-200'
+          ? 'bg-lob-warning-light border-lob-warning-border'
           : accent === 'hist'
             ? 'bg-teal-50 border-teal-200'
-            : 'bg-gray-50 border-gray-200'
+            : 'bg-lob-well border-lob-line-strong'
       }`}
     >
       <div className="flex items-center justify-between gap-2 mb-1.5">
         <p
           className={`text-xs font-bold ${
             accent === 'perf'
-              ? 'text-amber-800'
+              ? 'text-lob-warning-strong'
               : accent === 'hist'
                 ? 'text-teal-700'
                 : 'text-lob-muted'
@@ -58,7 +58,7 @@ export default function ReviewBreakdownModal({
         <span
           className={`text-xs font-bold px-2 py-0.5 rounded-full ${
             accent === 'perf'
-              ? 'bg-amber-500 text-white'
+              ? 'bg-lob-warning-solid text-white'
               : accent === 'hist'
                 ? 'bg-teal-500 text-white'
                 : 'bg-gray-200 text-lob-slate'
@@ -71,7 +71,7 @@ export default function ReviewBreakdownModal({
         {b.players.map((p) => (
           <span
             key={p.id}
-            className="text-[11px] bg-white border border-gray-200 px-2 py-0.5 rounded-md text-lob-slate"
+            className="text-[11px] bg-white border border-lob-line-strong px-2 py-0.5 rounded-md text-lob-slate"
           >
             {(p.name || '').split(' ')[0]}
           </span>
@@ -108,11 +108,11 @@ export default function ReviewBreakdownModal({
       </p>
 
       {/* Performance summary banner */}
-      <div className="-mx-5 px-5 py-3 bg-amber-50 border-y border-amber-100 mb-3">
-        <p className="text-xs font-bold text-amber-800 uppercase tracking-wide mb-1">
+      <div className="-mx-5 px-5 py-3 bg-lob-warning-light border-y border-lob-warning-border mb-3">
+        <p className="text-xs font-bold text-lob-warning-strong uppercase tracking-wide mb-1">
           ⭐ Performance messages
         </p>
-        <p className="text-xs text-amber-700">
+        <p className="text-xs text-lob-warning">
           <strong>{perfFiring} of 10</strong> performance scenarios firing, reaching{' '}
           <strong>{perfPlayers}</strong> player{perfPlayers === 1 ? '' : 's'}. Everyone else gets
           historical, welcome, or generic level-based reviews.
@@ -128,7 +128,7 @@ export default function ReviewBreakdownModal({
         {/* Other scenarios (historical + filler) */}
         {otherBuckets.length > 0 && (
           <>
-            <p className="text-[10px] font-bold text-lob-muted-light uppercase tracking-wider mt-2 px-1">
+            <p className="text-2xs font-bold text-lob-muted-light uppercase tracking-wider mt-2 px-1">
               Other scenarios
             </p>
             <div className="space-y-2">

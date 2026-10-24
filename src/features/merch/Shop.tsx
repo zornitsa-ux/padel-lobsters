@@ -106,8 +106,8 @@ export default function Shop({
                   Singular copy below 1, so "1 lobster has this" sounds
                   right when only one person has ordered so far. */}
                 {orderCount(item.id) > 0 && (
-                  <p className="text-[11px] font-semibold text-amber-600 mt-1 flex items-center gap-1">
-                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                  <p className="text-[11px] font-semibold text-lob-warning mt-1 flex items-center gap-1">
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-lob-warning-solid animate-pulse"></span>
                     {orderCount(item.id) === 1
                       ? '1 lobster already ordered 🦞'
                       : `${orderCount(item.id)} lobsters already ordered 🦞`}
@@ -119,7 +119,7 @@ export default function Shop({
                 {/shirt/i.test(item.name) &&
                   !/tank/i.test(item.name) &&
                   (customName[item.id] || '').trim() && (
-                    <span className="text-xs font-semibold text-amber-600 block text-right">
+                    <span className="text-xs font-semibold text-lob-warning block text-right">
                       +€5 name
                     </span>
                   )}
@@ -130,7 +130,7 @@ export default function Shop({
             {item.sizes.length > 0 && (
               <div>
                 <p
-                  className={`text-xs mb-1.5 font-medium ${sizeError[item.id] ? 'text-red-500' : 'text-lob-muted'}`}
+                  className={`text-xs mb-1.5 font-medium ${sizeError[item.id] ? 'text-lob-danger' : 'text-lob-muted'}`}
                 >
                   {sizeError[item.id] ? '⚠ Please select a size:' : 'Select size:'}
                 </p>
@@ -148,8 +148,8 @@ export default function Shop({
                           selectedSize[item.id] === s
                             ? 'bg-lob-teal text-white border-lob-teal'
                             : sizeError[item.id]
-                              ? 'border-red-300 text-lob-slate'
-                              : 'border-gray-200 text-lob-slate'
+                              ? 'border-lob-danger-border text-lob-slate'
+                              : 'border-lob-line-strong text-lob-slate'
                         }`}
                       >
                         {s}
@@ -163,7 +163,7 @@ export default function Shop({
             {/shirt/i.test(item.name) && !/tank/i.test(item.name) && (
               <div>
                 <label className="text-xs font-medium text-lob-muted block mb-1">
-                  Name customization <span className="text-amber-600 font-semibold">(+€5)</span>
+                  Name customization <span className="text-lob-warning font-semibold">(+€5)</span>
                 </label>
                 <input
                   type="text"
@@ -172,7 +172,7 @@ export default function Shop({
                   disabled={ordered[item.id]}
                   value={customName[item.id] || ''}
                   onChange={(e) => setCustomName((n) => ({ ...n, [item.id]: e.target.value }))}
-                  className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm text-lob-dark placeholder-gray-300 focus:outline-none focus:border-lob-teal focus:ring-1 focus:ring-lob-teal transition-all disabled:opacity-40 disabled:bg-gray-50"
+                  className="w-full rounded-xl border border-lob-line-strong px-3 py-2 text-sm text-lob-dark placeholder-gray-300 focus:outline-none focus:border-lob-teal focus:ring-1 focus:ring-lob-teal transition-all disabled:opacity-40 disabled:bg-lob-well"
                 />
               </div>
             )}
@@ -184,7 +184,7 @@ export default function Shop({
                 disabled={ordered[item.id]}
                 className={`flex-1 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all ${
                   ordered[item.id]
-                    ? 'bg-green-100 text-green-700'
+                    ? 'bg-lob-success-soft text-lob-success'
                     : 'bg-lob-teal text-white active:scale-95'
                 }`}
               >

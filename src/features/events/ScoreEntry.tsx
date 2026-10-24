@@ -129,7 +129,7 @@ export default function ScoreEntry({ match, onUpdate, variant = 'input' }: Score
       type="button"
       onClick={() => applyExternal(conflict.s1, conflict.s2)}
       aria-live="polite"
-      className="mt-1 w-full max-w-[96px] self-center text-[10px] leading-tight font-semibold text-amber-800 bg-amber-100 border border-amber-300 rounded-lg px-1 py-0.5"
+      className="mt-1 w-full max-w-[96px] self-center text-2xs leading-tight font-semibold text-lob-warning-strong bg-lob-warning-soft border border-lob-warning-border rounded-lg px-1 py-0.5"
     >
       Another admin: {conflict.s1 || '—'}–{conflict.s2 || '—'} · tap to use
     </button>
@@ -148,7 +148,7 @@ export default function ScoreEntry({ match, onUpdate, variant = 'input' }: Score
       }
     }
     const selectClass =
-      'w-11 h-9 text-center text-base font-bold border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-lob-teal bg-white'
+      'w-11 h-9 text-center text-base font-bold border border-lob-line-strong rounded-xl focus:outline-none focus:ring-2 focus:ring-lob-teal bg-white'
     const options = [
       <option key="blank" value="">
         —
@@ -186,7 +186,7 @@ export default function ScoreEntry({ match, onUpdate, variant = 'input' }: Score
   }
 
   const inputClass =
-    'w-10 h-9 text-center text-lg font-bold border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-lob-teal'
+    'w-10 h-9 text-center text-lg font-bold border border-lob-line-strong rounded-xl focus:outline-none focus:ring-2 focus:ring-lob-teal'
   const onType = (setter: (value: string) => void) => (value: string) => {
     markDirty()
     setter(value)

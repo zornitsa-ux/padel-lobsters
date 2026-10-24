@@ -66,7 +66,7 @@ export default function EventDescription({ tournament, isAdmin, onSave }: EventD
             type="button"
             onClick={cancel}
             disabled={saving}
-            className="text-xs font-semibold text-lob-slate px-3 py-1.5 rounded-lg bg-white border border-gray-200 active:scale-95 transition-all"
+            className="text-xs font-semibold text-lob-slate px-3 py-1.5 rounded-lg bg-white border border-lob-line-strong active:scale-95 transition-all"
           >
             Cancel
           </button>

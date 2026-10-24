@@ -131,7 +131,7 @@ function CandidateRow({
 }) {
   const pii = useRevealPii(String(p.id))
   return (
-    <div className="w-full flex items-center gap-2 p-3 rounded-2xl bg-gray-50 hover:bg-lob-cream transition-all">
+    <div className="w-full flex items-center gap-2 p-3 rounded-2xl bg-lob-well hover:bg-lob-cream transition-all">
       <button
         onClick={() => onConfirm(p)}
         className="flex-1 min-w-0 flex items-center gap-3 text-left active:scale-[0.98] transition-all"

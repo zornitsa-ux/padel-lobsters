@@ -99,12 +99,12 @@ export default function SecurityEventsPanel() {
           <Activity size={15} className="text-lob-teal" />
           Recent security events
           {failureCount !== null && failureCount > 0 && (
-            <span className="text-[10px] text-white bg-red-500 px-1.5 py-0.5 rounded-full font-bold">
+            <span className="text-2xs text-white bg-lob-danger-solid px-1.5 py-0.5 rounded-full font-bold">
               {failureCount} fail
             </span>
           )}
           {piiReadCount !== null && piiReadCount > 0 && (
-            <span className="text-[10px] text-white bg-amber-500 px-1.5 py-0.5 rounded-full font-bold">
+            <span className="text-2xs text-white bg-lob-warning-solid px-1.5 py-0.5 rounded-full font-bold">
               {piiReadCount} PII read{piiReadCount === 1 ? '' : 's'}
             </span>
           )}
@@ -136,7 +136,7 @@ export default function SecurityEventsPanel() {
                 className={`text-[11px] px-2 py-1 rounded-lg border transition-all ${
                   filter === f.id
                     ? 'bg-lob-teal text-white border-lob-teal'
-                    : 'bg-white text-lob-slate border-gray-200 hover:border-lob-teal/50'
+                    : 'bg-white text-lob-slate border-lob-line-strong hover:border-lob-teal/50'
                 }`}
               >
                 {f.label}
@@ -145,7 +145,7 @@ export default function SecurityEventsPanel() {
             <select
               value={limit}
               onChange={(e) => setLimit(parseInt(e.target.value, 10))}
-              className="text-[11px] px-2 py-1 rounded-lg border border-gray-200 bg-white ml-auto"
+              className="text-[11px] px-2 py-1 rounded-lg border border-lob-line-strong bg-white ml-auto"
             >
               <option value={25}>Last 25</option>
               <option value={50}>Last 50</option>
@@ -183,7 +183,7 @@ function EventRow({ ev }: { ev: SecurityEventRow }) {
         <div className="flex items-center gap-1.5 flex-wrap">
           <span className={`font-semibold ${colors.text}`}>{labelForKind(ev.attempt_kind)}</span>
           {ev.succeeded === false && (
-            <span className="text-[10px] font-bold text-red-700 bg-red-100 px-1.5 py-0.5 rounded uppercase">
+            <span className="text-2xs font-bold text-lob-danger-strong bg-lob-danger-soft px-1.5 py-0.5 rounded uppercase">
               fail
             </span>
           )}
@@ -249,12 +249,20 @@ function iconForKind(kind: string): LucideIcon {
 
 function colorsForEvent(ev: SecurityEventRow): { bg: string; text: string; icon: string } {
   if (ev.succeeded === false) {
-    return { bg: 'bg-red-50 border-red-100', text: 'text-red-800', icon: 'text-red-600' }
+    return {
+      bg: 'bg-lob-danger-light border-lob-danger-border',
+      text: 'text-lob-danger-strong',
+      icon: 'text-lob-danger-solid',
+    }
   }
   if (PII_ATTEMPT_KINDS.includes(ev.attempt_kind)) {
-    return { bg: 'bg-amber-50 border-amber-100', text: 'text-amber-800', icon: 'text-amber-700' }
+    return {
+      bg: 'bg-lob-warning-light border-lob-warning-border',
+      text: 'text-lob-warning-strong',
+      icon: 'text-lob-warning',
+    }
   }
-  return { bg: 'bg-gray-50 border-gray-100', text: 'text-lob-slate', icon: 'text-lob-muted' }
+  return { bg: 'bg-lob-well border-lob-line', text: 'text-lob-slate', icon: 'text-lob-muted' }
 }
 
 function formatTime(iso?: string | null): string {

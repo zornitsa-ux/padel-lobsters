@@ -17,7 +17,7 @@ beforeEach(() => {
 describe('SignInBanner', () => {
   it('uses amber styling and admin copy for the admin role', () => {
     const el = SignInBanner({ role: 'admin' })
-    expect(String(propsOf(el).className)).toContain('bg-amber-50')
+    expect(String(propsOf(el).className)).toContain('bg-lob-warning-light')
     const [, body] = propsOf(el).children as unknown[]
     const [title, copy] = propsOf(body).children as unknown[]
     expect(propsOf(title).children).toBe('Admin sign-in required')

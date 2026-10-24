@@ -52,19 +52,19 @@ export default function ScoresMatchesTab({
               const t1Names: string[] = (m.team1Ids || []).map(nameFor)
               const t2Names: string[] = (m.team2Ids || []).map(nameFor)
               return (
-                <div key={m.id} className="bg-gray-50 rounded-xl p-3">
+                <div key={m.id} className="bg-lob-well rounded-xl p-3">
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[10px] font-bold text-lob-teal bg-lob-cream px-2 py-0.5 rounded-full">
+                    <span className="text-2xs font-bold text-lob-teal bg-lob-cream px-2 py-0.5 rounded-full">
                       {m.court || `Round ${m.round}`}
                     </span>
                     {scored && s1 === s2 && (
-                      <span className="text-[10px] text-lob-muted-light font-medium">Draw</span>
+                      <span className="text-2xs text-lob-muted-light font-medium">Draw</span>
                     )}
                   </div>
                   <div className="flex items-center gap-2">
                     {/* Team A */}
                     <div
-                      className={`flex-1 min-w-0 ${t1won ? 'text-green-700' : 'text-lob-slate'}`}
+                      className={`flex-1 min-w-0 ${t1won ? 'text-lob-success' : 'text-lob-slate'}`}
                     >
                       {t1Names.map((name, i) => (
                         <p key={i} className="text-xs font-semibold truncate">
@@ -75,20 +75,20 @@ export default function ScoresMatchesTab({
                     {/* Score */}
                     <div className="flex items-center gap-1 flex-shrink-0">
                       <span
-                        className={`text-lg font-bold w-7 text-center ${t1won ? 'text-green-600' : 'text-lob-muted-light'}`}
+                        className={`text-lg font-bold w-7 text-center ${t1won ? 'text-lob-success' : 'text-lob-muted-light'}`}
                       >
                         {scored ? s1 : '—'}
                       </span>
                       <span className="text-lob-muted-light/60 text-sm">–</span>
                       <span
-                        className={`text-lg font-bold w-7 text-center ${t2won ? 'text-green-600' : 'text-lob-muted-light'}`}
+                        className={`text-lg font-bold w-7 text-center ${t2won ? 'text-lob-success' : 'text-lob-muted-light'}`}
                       >
                         {scored ? s2 : '—'}
                       </span>
                     </div>
                     {/* Team B */}
                     <div
-                      className={`flex-1 min-w-0 text-right ${t2won ? 'text-green-700' : 'text-lob-slate'}`}
+                      className={`flex-1 min-w-0 text-right ${t2won ? 'text-lob-success' : 'text-lob-slate'}`}
                     >
                       {t2Names.map((name, i) => (
                         <p key={i} className="text-xs font-semibold truncate">

@@ -45,7 +45,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
       {/* Page content */}
       <main className="flex-1 pb-24">
         {/* App header */}
-        <header className="text-white px-4 pt-4 pb-3 header-gradient">
+        <header className="text-white px-4 pt-4 pb-3 bg-header">
           <div className="flex items-center justify-between mb-0">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden bg-white">

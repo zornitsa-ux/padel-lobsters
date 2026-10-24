@@ -39,7 +39,7 @@ export default function LobsterWayAdminItem({
     set({ steps: replaceAt(item.steps ?? [], i, { ...(item.steps ?? [])[i], ...patch }) })
 
   return (
-    <div className="border border-gray-100 rounded-xl bg-gray-50/60">
+    <div className="border border-lob-line rounded-xl bg-lob-well/60">
       <div className="flex items-center gap-2 px-3 py-2">
         <MoveButtons index={index} count={count} onMove={(dir) => onMove(dir)} />
         <button
@@ -59,7 +59,7 @@ export default function LobsterWayAdminItem({
           type="button"
           onClick={onDelete}
           aria-label="Delete question"
-          className="text-gray-300 hover:text-red-500 flex-shrink-0"
+          className="text-gray-300 hover:text-lob-danger-solid flex-shrink-0"
         >
           <Trash2 size={14} />
         </button>
@@ -97,13 +97,13 @@ export default function LobsterWayAdminItem({
 
           {/* Bulleted list block (perks, vote categories, profile fields...) */}
           {item.list ? (
-            <div className="space-y-1.5 bg-white rounded-lg border border-gray-100 p-2">
+            <div className="space-y-1.5 bg-white rounded-lg border border-lob-line p-2">
               <div className="flex items-center justify-between">
                 <p className="label">Bullet list</p>
                 <button
                   type="button"
                   onClick={() => set({ list: undefined })}
-                  className="text-[10px] text-gray-400 font-semibold"
+                  className="text-2xs text-gray-400 font-semibold"
                 >
                   Remove list
                 </button>
@@ -131,7 +131,7 @@ export default function LobsterWayAdminItem({
                   <button
                     type="button"
                     onClick={() => set({ list: removeAt(item.list ?? [], i) })}
-                    className="text-gray-300 hover:text-red-500 flex-shrink-0"
+                    className="text-gray-300 hover:text-lob-danger-solid flex-shrink-0"
                   >
                     <Trash2 size={12} />
                   </button>
@@ -157,21 +157,21 @@ export default function LobsterWayAdminItem({
 
           {/* Numbered steps block (walkthroughs, e.g. transferring a spot) */}
           {item.steps ? (
-            <div className="space-y-2 bg-white rounded-lg border border-gray-100 p-2">
+            <div className="space-y-2 bg-white rounded-lg border border-lob-line p-2">
               <div className="flex items-center justify-between">
                 <p className="label">Numbered steps</p>
                 <button
                   type="button"
                   onClick={() => set({ steps: undefined })}
-                  className="text-[10px] text-gray-400 font-semibold"
+                  className="text-2xs text-gray-400 font-semibold"
                 >
                   Remove steps
                 </button>
               </div>
               {item.steps.map((step, i) => (
-                <div key={i} className="space-y-1 border-b border-gray-100 pb-2 last:border-0">
+                <div key={i} className="space-y-1 border-b border-lob-line pb-2 last:border-0">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] text-gray-400 font-mono w-4 flex-shrink-0">
+                    <span className="text-2xs text-gray-400 font-mono w-4 flex-shrink-0">
                       {i + 1}
                     </span>
                     <input
@@ -183,7 +183,7 @@ export default function LobsterWayAdminItem({
                     <button
                       type="button"
                       onClick={() => set({ steps: removeAt(item.steps ?? [], i) })}
-                      className="text-gray-300 hover:text-red-500 flex-shrink-0"
+                      className="text-gray-300 hover:text-lob-danger-solid flex-shrink-0"
                     >
                       <Trash2 size={12} />
                     </button>

@@ -43,9 +43,9 @@ const RULE_LABELS: Record<string, string> = {
 }
 
 const CHIP_STATUS_CLASSES: Record<string, string> = {
-  ok: 'bg-green-50 text-green-700',
-  relaxed: 'bg-amber-50 text-amber-700',
-  infeasible: 'bg-red-50 text-red-700',
+  ok: 'bg-lob-success-light text-lob-success',
+  relaxed: 'bg-lob-warning-light text-lob-warning',
+  infeasible: 'bg-lob-danger-light text-lob-danger-strong',
 }
 
 type NumericKnob = 'socialDial' | 'maxCourtSpread' | 'maxPartnerGap' | 'balanceTolerance'
@@ -336,10 +336,10 @@ export default function ConfigPanel({
       </button>
 
       {notEnoughPlayers && (
-        <p className="text-xs text-orange-600">Register at least 4 players first</p>
+        <p className="text-xs text-lob-warning">Register at least 4 players first</p>
       )}
       {!notEnoughPlayers && !feasibility.feasible && infeasibleEntry && (
-        <p className="text-xs text-red-600">{infeasibleEntry.detail}</p>
+        <p className="text-xs text-lob-danger">{infeasibleEntry.detail}</p>
       )}
     </div>
   )

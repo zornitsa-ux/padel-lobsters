@@ -121,11 +121,11 @@ export default function Tournament({ onNavigate }: { onNavigate: EventNavigate }
         )}
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg p-2 flex items-start justify-between gap-2">
+          <div className="bg-lob-danger-light border border-lob-danger-border text-lob-danger-strong text-xs rounded-lg p-2 flex items-start justify-between gap-2">
             <span>{error}</span>
             <button
               onClick={() => setError('')}
-              className="text-red-500 font-bold leading-none px-1"
+              className="text-lob-danger-solid font-bold leading-none px-1"
               aria-label="Dismiss error"
             >
               ×

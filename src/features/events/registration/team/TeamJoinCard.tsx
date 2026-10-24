@@ -99,7 +99,7 @@ export default function TeamJoinCard({
       >
         {choice ? (
           <div className="space-y-4">
-            <div className="rounded-xl bg-gray-50 px-4 py-3">
+            <div className="rounded-xl bg-lob-well px-4 py-3">
               <p className="font-semibold text-lob-dark">
                 You + {choicePartnerName({ choice, getPlayer })}
               </p>
@@ -110,7 +110,7 @@ export default function TeamJoinCard({
             </div>
             <p className="text-sm text-lob-slate leading-relaxed">{COMPLETE_TEAMS_NOTE}</p>
             {signup.error && (
-              <p role="alert" className="text-sm font-semibold text-red-600">
+              <p role="alert" className="text-sm font-semibold text-lob-danger">
                 {signup.error}
               </p>
             )}

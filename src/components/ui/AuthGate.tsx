@@ -54,10 +54,13 @@ export function SignInBanner({
   const Icon = isAdmin ? Shield : User
   const accent = isAdmin ? 'amber' : 'teal'
 
-  const bg = accent === 'amber' ? 'bg-amber-50 border-amber-200' : 'bg-lob-cream border-lob-teal/30'
-  const iconTxt = accent === 'amber' ? 'text-amber-600' : 'text-lob-teal'
-  const title = accent === 'amber' ? 'text-amber-800' : 'text-lob-teal'
-  const body = accent === 'amber' ? 'text-amber-700' : 'text-lob-slate'
+  const bg =
+    accent === 'amber'
+      ? 'bg-lob-warning-light border-lob-warning-border'
+      : 'bg-lob-cream border-lob-teal/30'
+  const iconTxt = accent === 'amber' ? 'text-lob-warning-solid' : 'text-lob-teal'
+  const title = accent === 'amber' ? 'text-lob-warning-strong' : 'text-lob-teal'
+  const body = accent === 'amber' ? 'text-lob-warning' : 'text-lob-slate'
 
   const defaultCopy = isAdmin
     ? "Sign in with your admin email to manage this. We'll send you a code."
@@ -156,8 +159,8 @@ export function SignInModal({
   }
 
   const isAdminAsk = role === 'admin'
-  const accentBg = isAdminAsk ? 'bg-amber-50' : 'bg-lob-cream'
-  const accentTxt = isAdminAsk ? 'text-amber-700' : 'text-lob-teal'
+  const accentBg = isAdminAsk ? 'bg-lob-warning-light' : 'bg-lob-cream'
+  const accentTxt = isAdminAsk ? 'text-lob-warning' : 'text-lob-teal'
 
   return (
     <div
@@ -185,7 +188,7 @@ export function SignInModal({
         </p>
 
         {notice && (
-          <p role="alert" className="text-xs text-red-500 font-medium">
+          <p role="alert" className="text-xs text-lob-danger font-medium">
             {notice}
           </p>
         )}

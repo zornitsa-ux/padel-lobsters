@@ -324,8 +324,10 @@ export default function MatchmakingContainer({
       </p>
 
       {(error || commit.isError) && (
-        <div role="alert" className="card border border-red-200 bg-red-50">
-          <p className="text-sm font-semibold text-red-700">{error ?? SAVE_FAILURE_MESSAGE}</p>
+        <div role="alert" className="card border border-lob-danger-border bg-lob-danger-light">
+          <p className="text-sm font-semibold text-lob-danger-strong">
+            {error ?? SAVE_FAILURE_MESSAGE}
+          </p>
         </div>
       )}
 
@@ -378,10 +380,10 @@ export default function MatchmakingContainer({
       )}
 
       {confirming && (
-        <div className="card space-y-3 border border-red-200 bg-red-50">
+        <div className="card space-y-3 border border-lob-danger-border bg-lob-danger-light">
           <div>
-            <p className="font-semibold text-red-700 text-sm">Discard entered scores?</p>
-            <p className="text-xs text-red-600 mt-0.5">
+            <p className="font-semibold text-lob-danger-strong text-sm">Discard entered scores?</p>
+            <p className="text-xs text-lob-danger mt-0.5">
               This tournament already has scores entered. Saving a new schedule replaces every match
               and permanently discards those scores. Type{' '}
               <span className="font-mono font-bold">{CONFIRM_PHRASE}</span> to confirm.
@@ -400,7 +402,7 @@ export default function MatchmakingContainer({
               type="button"
               onClick={doCommit}
               disabled={confirmText !== CONFIRM_PHRASE || commit.isPending}
-              className="flex-1 py-2 text-sm rounded-xl font-semibold bg-red-600 text-white disabled:opacity-50"
+              className="flex-1 py-2 text-sm rounded-xl font-semibold bg-lob-danger-solid text-white disabled:opacity-50"
             >
               {commit.isPending ? 'Saving…' : 'Discard scores & save'}
             </button>

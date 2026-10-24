@@ -141,7 +141,7 @@ export default function CountryPicker({ value, onChange }: CountryPickerProps) {
       </div>
 
       {open && (
-        <div className="absolute z-50 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-52 overflow-y-auto">
+        <div className="absolute z-50 left-0 right-0 mt-1 bg-white border border-lob-line-strong rounded-xl shadow-lg max-h-52 overflow-y-auto">
           {filtered.length === 0 && (
             <p className="text-xs text-lob-muted-light px-3 py-3 text-center">No countries found</p>
           )}

@@ -39,10 +39,10 @@ export default function PlayerCategoryScreen({
 }: PlayerCategoryScreenProps) {
   return (
     <div>
-      <div className="pb-3 border-b border-gray-100 mb-3">
+      <div className="pb-3 border-b border-lob-line mb-3">
         <button
           onClick={onBack}
-          className="inline-flex items-center gap-1.5 bg-white border border-gray-200 rounded-xl px-3 py-1.5 text-sm font-semibold text-lob-dark active:scale-95 transition-all"
+          className="inline-flex items-center gap-1.5 bg-white border border-lob-line-strong rounded-xl px-3 py-1.5 text-sm font-semibold text-lob-dark active:scale-95 transition-all"
         >
           <ChevronLeft size={15} /> Games home
         </button>
@@ -53,7 +53,7 @@ export default function PlayerCategoryScreen({
             <button
               onClick={onClear}
               disabled={busy}
-              className="text-xs font-semibold text-red-500 hover:text-red-600 disabled:opacity-50 px-2 py-1 rounded-lg bg-red-50 border border-red-100 active:scale-95 transition-all flex items-center gap-1"
+              className="text-xs font-semibold text-lob-danger hover:text-lob-danger disabled:opacity-50 px-2 py-1 rounded-lg bg-lob-danger-light border border-lob-danger-border active:scale-95 transition-all flex items-center gap-1"
             >
               <X size={12} /> Clear vote
             </button>
@@ -93,13 +93,13 @@ export default function PlayerCategoryScreen({
                     isMyVote
                       ? 'bg-lob-teal/10 border-lob-teal'
                       : isYou
-                        ? 'bg-gray-50 border-gray-100 opacity-50 cursor-not-allowed'
-                        : 'bg-white border-gray-100 active:scale-95'
+                        ? 'bg-lob-well border-lob-line opacity-50 cursor-not-allowed'
+                        : 'bg-white border-lob-line active:scale-95'
                   }`}
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <span
-                      className="flex-shrink-0 text-[10px] font-bold text-white px-1.5 py-0.5 rounded leading-none"
+                      className="flex-shrink-0 text-2xs font-bold text-white px-1.5 py-0.5 rounded leading-none"
                       style={{ backgroundColor: letterColor(p.name) }}
                     >
                       {(p.name || '?').trim()[0]?.toUpperCase() || '?'}

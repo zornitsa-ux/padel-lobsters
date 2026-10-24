@@ -21,7 +21,7 @@ export default function InviteSentModal({ inviteSent, onClose }: InviteSentModal
             {inviteSent.name} signs in with that address and a code we email them.
           </p>
         </div>
-        <p className="text-[10px] text-lob-muted-light">
+        <p className="text-2xs text-lob-muted-light">
           Nothing in the email works as a password, so it’s safe to resend.
         </p>
         <button onClick={onClose} className="btn-primary w-full">

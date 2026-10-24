@@ -288,7 +288,7 @@ export default function Merch({ initialTab, onNavigate }: MerchProps) {
 
       {/* A failed read is surfaced rather than rendered as an empty shop. */}
       {loadError && (
-        <p className="text-sm text-red-500">
+        <p className="text-sm text-lob-danger">
           Could not load the shop: {errorMessage(loadError)}. Try again shortly.
         </p>
       )}

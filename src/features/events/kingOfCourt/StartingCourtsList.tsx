@@ -47,7 +47,7 @@ export default function StartingCourtsList({
         ))}
       </ol>
       {overflowTeamIds.length > 0 && (
-        <p role="alert" className="text-xs text-red-600 bg-red-50 rounded-lg p-2">
+        <p role="alert" className="text-xs text-lob-danger bg-lob-danger-light rounded-lg p-2">
           No court for {overflowTeamIds.map(labelOf).join(', ')}.
           {overflowAction && ` ${overflowAction}`}
         </p>

@@ -59,13 +59,13 @@ export default function PendingApprovalsList({
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
-        <Clock size={14} className="text-orange-500" />
-        <p className="text-sm font-bold text-orange-600">
+        <Clock size={14} className="text-lob-warning-solid" />
+        <p className="text-sm font-bold text-lob-warning">
           Waiting for approval ({pendingPlayers.length})
         </p>
       </div>
       {pendingPlayers.map((p) => (
-        <div key={p.id} className="card border-l-4 border-orange-300 space-y-2">
+        <div key={p.id} className="card border-l-4 border-lob-warning-border space-y-2">
           <PlayerRow
             player={p}
             avatarSize="lg"
@@ -92,7 +92,7 @@ export default function PendingApprovalsList({
           <div className="flex gap-2">
             <button
               onClick={() => onApprove(p)}
-              className="flex-1 text-xs bg-green-500 text-white px-3 py-2 rounded-xl font-semibold active:scale-95 transition-all"
+              className="flex-1 text-xs bg-lob-success-solid text-white px-3 py-2 rounded-xl font-semibold active:scale-95 transition-all"
             >
               ✓ Approve as new player
             </button>

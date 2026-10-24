@@ -125,25 +125,25 @@ export default function Payments({
         value: 'unpaid',
         label: 'Unpaid',
         count: trulyUnpaid.length,
-        activeClass: 'bg-red-500 text-white',
+        activeClass: 'bg-lob-danger-solid text-white',
       },
       {
         value: 'tikkied',
         label: 'Tikkied',
         count: tikkied.length,
-        activeClass: 'bg-amber-500 text-white',
+        activeClass: 'bg-lob-warning-solid text-white',
       },
       {
         value: 'pending',
         label: 'Paid',
         count: selfPaid.length,
-        activeClass: 'bg-sky-500 text-white',
+        activeClass: 'bg-lob-info-solid text-white',
       },
       {
         value: 'paid',
         label: 'Confirmed',
         count: confirmed.length,
-        activeClass: 'bg-green-600 text-white',
+        activeClass: 'bg-lob-success-solid text-white',
       },
     ]
 
@@ -209,7 +209,7 @@ export default function Payments({
             href={tournament.tikkieLink}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 bg-[#FF6B35] text-white text-sm font-bold px-4 py-2 rounded-xl active:scale-95 transition-all"
+            className="inline-flex items-center gap-1.5 bg-tikkie text-white text-sm font-bold px-4 py-2 rounded-xl active:scale-95 transition-all"
           >
             <ExternalLink size={14} /> Pay via Tikkie
           </a>
@@ -229,28 +229,28 @@ export default function Payments({
             label="Confirmed"
             size="md"
             labelVariant="inverted"
-            valueClassName="text-green-300"
+            valueClassName="text-lob-success-on-dark"
           />
           <StatTile
             value={selfPaid.length}
             label="Paid"
             size="md"
             labelVariant="inverted"
-            valueClassName="text-sky-300"
+            valueClassName="text-lob-info-on-dark"
           />
           <StatTile
             value={tikkied.length}
             label="Tikkied"
             size="md"
             labelVariant="inverted"
-            valueClassName="text-amber-300"
+            valueClassName="text-lob-warning-on-dark"
           />
           <StatTile
             value={trulyUnpaid.length}
             label="Unpaid"
             size="md"
             labelVariant="inverted"
-            valueClassName="text-red-300"
+            valueClassName="text-lob-danger-on-dark"
           />
         </div>
 
@@ -262,11 +262,11 @@ export default function Payments({
             </div>
             <div className="flex justify-between text-sm mb-1">
               <span className="opacity-80">Collected</span>
-              <span className="font-bold text-green-300">{fmtEur(totalCollected)}</span>
+              <span className="font-bold text-lob-success-on-dark">{fmtEur(totalCollected)}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="opacity-80">Still owed</span>
-              <span className="font-bold text-red-300">
+              <span className="font-bold text-lob-danger-on-dark">
                 {fmtEur(totalExpected - totalCollected)}
               </span>
             </div>
@@ -322,19 +322,19 @@ export default function Payments({
           const isTransferred = ps === 'transferred'
 
           const borderColor = isConfirmed
-            ? 'border-green-400'
+            ? 'border-lob-success-solid'
             : isSelfPaid
-              ? 'border-sky-400'
+              ? 'border-lob-info-solid'
               : isTikkied
-                ? 'border-amber-400'
-                : 'border-red-300'
+                ? 'border-lob-warning-solid'
+                : 'border-lob-danger-border'
           const avatarColor = isConfirmed
-            ? 'bg-green-100 text-green-700'
+            ? 'bg-lob-success-soft text-lob-success'
             : isSelfPaid
-              ? 'bg-sky-100 text-sky-700'
+              ? 'bg-lob-info-soft text-lob-info'
               : isTikkied
-                ? 'bg-amber-100 text-amber-700'
-                : 'bg-red-100 text-red-600'
+                ? 'bg-lob-warning-soft text-lob-warning'
+                : 'bg-lob-danger-soft text-lob-danger'
 
           return (
             <div key={reg.id} className={`card transition-all border-l-4 ${borderColor}`}>
@@ -351,14 +351,14 @@ export default function Payments({
                       {isConfirmed ? (
                         <button
                           onClick={() => handleMarkUnpaid(reg)}
-                          className="text-xs text-lob-muted border border-gray-200 px-3 py-1.5 rounded-xl font-semibold active:scale-95 transition-all"
+                          className="text-xs text-lob-muted border border-lob-line-strong px-3 py-1.5 rounded-xl font-semibold active:scale-95 transition-all"
                         >
                           Undo
                         </button>
                       ) : isSelfPaid || isTikkied ? (
                         <button
                           onClick={() => handleMarkPaid(reg, reg.paymentMethod || 'tikkie')}
-                          className="text-xs bg-green-500 text-white px-3 py-1.5 rounded-xl font-semibold active:scale-95 transition-all"
+                          className="text-xs bg-lob-success-solid text-white px-3 py-1.5 rounded-xl font-semibold active:scale-95 transition-all"
                         >
                           Confirm ✓
                         </button>
@@ -371,7 +371,7 @@ export default function Payments({
                             setReminderTarget({ regId: reg.id, name: player.name || 'this player' })
                           }
                           title="Send a WhatsApp payment reminder"
-                          className="text-xs bg-[#25D366] text-white px-3 py-1.5 rounded-xl font-semibold active:scale-95 transition-all inline-flex items-center gap-1"
+                          className="text-xs bg-whatsapp text-white px-3 py-1.5 rounded-xl font-semibold active:scale-95 transition-all inline-flex items-center gap-1"
                         >
                           <MessageCircle size={12} /> Remind
                         </button>
@@ -392,18 +392,18 @@ export default function Payments({
                       ↔ Transferred
                     </span>
                   ) : isConfirmed ? (
-                    <span className="text-xs font-semibold bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                    <span className="text-xs font-semibold bg-lob-success-soft text-lob-success px-2 py-0.5 rounded-full">
                       ✓ Confirmed{' '}
                       {reg.paymentMethod
                         ? `· ${METHODS.find((m) => m.value === reg.paymentMethod)?.label || reg.paymentMethod}`
                         : ''}
                     </span>
                   ) : isSelfPaid ? (
-                    <span className="text-xs font-semibold bg-sky-100 text-sky-700 px-2 py-0.5 rounded-full">
+                    <span className="text-xs font-semibold bg-lob-info-soft text-lob-info px-2 py-0.5 rounded-full">
                       💬 Paid (self-declared)
                     </span>
                   ) : isTikkied ? (
-                    <span className="text-xs font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+                    <span className="text-xs font-semibold bg-lob-warning-soft text-lob-warning px-2 py-0.5 rounded-full">
                       🔗 Tikkied
                     </span>
                   ) : (
@@ -439,14 +439,14 @@ function PaymentMethodPicker({ onSelect }: { onSelect: (method: string) => void 
     <div className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="text-xs bg-green-500 text-white px-3 py-1.5 rounded-xl font-semibold active:scale-95 transition-all"
+        className="text-xs bg-lob-success-solid text-white px-3 py-1.5 rounded-xl font-semibold active:scale-95 transition-all"
       >
         Mark Paid ▾
       </button>
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-xl border border-gray-100 z-50 min-w-[130px] overflow-hidden">
+          <div className="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-xl border border-lob-line z-50 min-w-[130px] overflow-hidden">
             {METHODS.map((m) => (
               <button
                 key={m.value}
@@ -454,7 +454,7 @@ function PaymentMethodPicker({ onSelect }: { onSelect: (method: string) => void 
                   onSelect(m.value)
                   setOpen(false)
                 }}
-                className="w-full text-left px-4 py-2.5 text-sm font-medium text-lob-slate hover:bg-gray-50 active:bg-gray-100"
+                className="w-full text-left px-4 py-2.5 text-sm font-medium text-lob-slate hover:bg-lob-well active:bg-gray-100"
               >
                 {m.label}
               </button>
@@ -493,8 +493,8 @@ function StatusOverrideMenu({
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-xl border border-gray-100 z-50 min-w-[190px] overflow-hidden">
-            <div className="px-3 py-1.5 text-[10px] font-bold text-lob-muted-light uppercase tracking-wider bg-gray-50">
+          <div className="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-xl border border-lob-line z-50 min-w-[190px] overflow-hidden">
+            <div className="px-3 py-1.5 text-2xs font-bold text-lob-muted-light uppercase tracking-wider bg-lob-well">
               Set status
             </div>
             {OVERRIDE_STATUSES.map((s) => {
@@ -509,17 +509,15 @@ function StatusOverrideMenu({
                   disabled={isCurrent}
                   className={`w-full text-left px-3 py-2 text-sm font-medium transition-all ${
                     isCurrent
-                      ? 'bg-gray-50 text-lob-muted-light cursor-default'
-                      : 'text-lob-slate hover:bg-gray-50 active:bg-gray-100'
+                      ? 'bg-lob-well text-lob-muted-light cursor-default'
+                      : 'text-lob-slate hover:bg-lob-well active:bg-gray-100'
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <span>{s.label}</span>
-                    {isCurrent && (
-                      <span className="text-[10px] text-lob-muted-light">· current</span>
-                    )}
+                    {isCurrent && <span className="text-2xs text-lob-muted-light">· current</span>}
                   </div>
-                  <p className="text-[10px] text-lob-muted-light leading-tight">{s.hint}</p>
+                  <p className="text-2xs text-lob-muted-light leading-tight">{s.hint}</p>
                 </button>
               )
             })}

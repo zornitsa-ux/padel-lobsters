@@ -85,7 +85,7 @@ export default function AddPlayerCard({
             className={`w-full flex items-center gap-3 p-2.5 rounded-xl transition-all ${
               selectedPlayer === p.id
                 ? 'bg-lob-teal text-white'
-                : 'bg-gray-50 text-lob-slate hover:bg-gray-100'
+                : 'bg-lob-well text-lob-slate hover:bg-gray-100'
             }`}
           >
             <div

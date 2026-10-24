@@ -49,8 +49,8 @@ export default function YourStatsCard({ claimedId, myStats, onNavigate }: YourSt
       >
         <div className="grid grid-cols-4 gap-2 text-center">
           <StatTile value={myStats.played} label="Played" valueClassName="text-lob-dark" />
-          <StatTile value={myStats.won} label="Won" valueClassName="text-green-600" />
-          <StatTile value={myStats.lost} label="Lost" valueClassName="text-red-500" />
+          <StatTile value={myStats.won} label="Won" valueClassName="text-lob-success" />
+          <StatTile value={myStats.lost} label="Lost" valueClassName="text-lob-danger" />
           <StatTile
             value={`${myStats.winRate}%`}
             label="Win Rate"
@@ -59,7 +59,7 @@ export default function YourStatsCard({ claimedId, myStats, onNavigate }: YourSt
         </div>
 
         {myStats.played === 0 ? (
-          <div className="mt-3 pt-3 border-t border-gray-100 text-xs text-lob-muted text-center">
+          <div className="mt-3 pt-3 border-t border-lob-line text-xs text-lob-muted text-center">
             No matches logged yet — your stats will populate as soon as a tournament result is
             recorded. Tap <span className="font-semibold text-lob-teal">View full profile</span> for
             your historical record.
@@ -68,15 +68,15 @@ export default function YourStatsCard({ claimedId, myStats, onNavigate }: YourSt
           <>
             {/* Best win streak + Nemesis + Best partner row */}
             {(myStats.bestWinStreak > 1 || myStats.nemesis || myStats.bestPartner) && (
-              <div className="mt-3 pt-3 border-t border-gray-100 flex items-center gap-3 flex-wrap">
+              <div className="mt-3 pt-3 border-t border-lob-line flex items-center gap-3 flex-wrap">
                 {myStats.bestWinStreak > 1 && (
-                  <span className="text-xs bg-green-50 text-green-700 px-2.5 py-1 rounded-lg font-semibold flex items-center gap-1">
-                    <Flame size={12} className="text-green-500" />
+                  <span className="text-xs bg-lob-success-light text-lob-success px-2.5 py-1 rounded-lg font-semibold flex items-center gap-1">
+                    <Flame size={12} className="text-lob-success-solid" />
                     {myStats.bestWinStreak} wins in a row
                   </span>
                 )}
                 {myStats.nemesis && (
-                  <span className="text-xs bg-red-50 text-red-700 px-2.5 py-1 rounded-lg font-semibold">
+                  <span className="text-xs bg-lob-danger-light text-lob-danger-strong px-2.5 py-1 rounded-lg font-semibold">
                     😈 Nemesis: {myStats.nemesis.name} ({myStats.nemesis.won}W-
                     {myStats.nemesis.lost}L)
                   </span>
@@ -90,7 +90,7 @@ export default function YourStatsCard({ claimedId, myStats, onNavigate }: YourSt
               </div>
             )}
 
-            <div className="mt-2 pt-2 border-t border-gray-100 flex items-center justify-between text-xs text-lob-muted">
+            <div className="mt-2 pt-2 border-t border-lob-line flex items-center justify-between text-xs text-lob-muted">
               <span>{myStats.pts} total points</span>
               <span>
                 Game diff: {myStats.pointsFor - myStats.pointsAgainst > 0 ? '+' : ''}

@@ -85,7 +85,7 @@ export default function PlayerForm({
           <p className="text-xs text-lob-muted -mt-2">You'll sign in with a code we email you</p>
         )}
         {editId && !formReady && (
-          <p className="text-xs text-lob-muted bg-gray-50 rounded-lg p-2 -mt-2">
+          <p className="text-xs text-lob-muted bg-lob-well rounded-lg p-2 -mt-2">
             Loading this player's details…
           </p>
         )}
@@ -151,22 +151,24 @@ export default function PlayerForm({
 
           {/* Merge banner — shown for both admins and players when name already exists */}
           {mergePlayer && !editId && (
-            <div className="rounded-2xl bg-amber-50 border border-amber-200 p-4 space-y-3">
+            <div className="rounded-2xl bg-lob-warning-light border border-lob-warning-border p-4 space-y-3">
               <div className="flex items-start gap-3">
                 <span className="text-2xl">🦞</span>
                 <div>
                   {isAdmin ? (
                     <>
-                      <p className="font-semibold text-amber-800 text-sm">Player already exists!</p>
-                      <p className="text-xs text-amber-700 mt-1">
+                      <p className="font-semibold text-lob-warning-strong text-sm">
+                        Player already exists!
+                      </p>
+                      <p className="text-xs text-lob-warning mt-1">
                         <strong>{mergePlayer.name}</strong> is already in the system. Update their
                         existing profile instead of creating a duplicate?
                       </p>
                     </>
                   ) : (
                     <>
-                      <p className="font-semibold text-amber-800 text-sm">Welcome back!</p>
-                      <p className="text-xs text-amber-700 mt-1">
+                      <p className="font-semibold text-lob-warning-strong text-sm">Welcome back!</p>
+                      <p className="text-xs text-lob-warning mt-1">
                         Your profile already exists — you've played in a past Lobster tournament.
                         Finish setting up your profile and we'll link everything together.
                       </p>
@@ -177,7 +179,7 @@ export default function PlayerForm({
               <button
                 type="button"
                 onClick={acceptMerge}
-                className="w-full py-2.5 bg-amber-500 text-white rounded-xl font-semibold text-sm active:scale-95 transition-all"
+                className="w-full py-2.5 bg-lob-warning-solid text-white rounded-xl font-semibold text-sm active:scale-95 transition-all"
               >
                 {isAdmin
                   ? `Update ${(mergePlayer.name || '').split(' ')[0]}'s profile`
@@ -186,7 +188,7 @@ export default function PlayerForm({
               <button
                 type="button"
                 onClick={() => setMergePlayer(null)}
-                className="w-full py-2 text-amber-600 text-xs font-medium"
+                className="w-full py-2 text-lob-warning text-xs font-medium"
               >
                 {isAdmin ? 'No, create as a new player' : "No, I'm a different person"}
               </button>

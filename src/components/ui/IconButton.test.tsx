@@ -15,7 +15,7 @@ describe('IconButton', () => {
 
   it('applies the destructive variant tint', () => {
     const el = IconButton({ children: 'X', 'aria-label': 'Remove', variant: 'destructive' })
-    expect(String(propsOf(el).className)).toContain('bg-red-50 text-red-500')
+    expect(String(propsOf(el).className)).toContain('bg-lob-danger-light text-lob-danger-solid')
   })
 
   it('supports the sm size', () => {

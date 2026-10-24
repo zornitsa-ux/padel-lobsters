@@ -68,7 +68,7 @@ export default function EventAdminMenu({
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} aria-hidden />
           <div
             role="menu"
-            className={`absolute z-50 mt-2 w-52 rounded-2xl bg-white shadow-xl border border-gray-100 py-1 ${
+            className={`absolute z-50 mt-2 w-52 rounded-2xl bg-white shadow-xl border border-lob-line py-1 ${
               align === 'right' ? 'right-0' : 'left-0'
             }`}
           >
@@ -77,13 +77,15 @@ export default function EventAdminMenu({
                 key={it.key}
                 role="menuitem"
                 onClick={() => run(it.onClick)}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-left active:bg-gray-50 ${
-                  it.danger ? 'text-red-600 hover:bg-red-50' : 'text-lob-slate hover:bg-gray-50'
+                className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-left active:bg-lob-well ${
+                  it.danger
+                    ? 'text-lob-danger hover:bg-lob-danger-light'
+                    : 'text-lob-slate hover:bg-lob-well'
                 }`}
               >
                 <it.icon
                   size={16}
-                  className={it.danger ? 'text-red-500' : 'text-lob-muted-light'}
+                  className={it.danger ? 'text-lob-danger-solid' : 'text-lob-muted-light'}
                 />
                 {it.label}
               </button>

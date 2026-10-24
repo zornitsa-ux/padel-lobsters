@@ -50,7 +50,7 @@ function SeasonGroup({
   if (leagues.length === 0) return null
   return (
     <section>
-      <h2 className="text-[10px] font-bold text-lob-muted uppercase tracking-widest px-1 mb-2">
+      <h2 className="text-2xs font-bold text-lob-muted uppercase tracking-widest px-1 mb-2">
         {title}
       </h2>
       <div className="space-y-2">

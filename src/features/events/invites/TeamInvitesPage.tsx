@@ -47,7 +47,7 @@ function InviteCard({
   return (
     <div className="card space-y-5">
       <EventHeading invite={invite} eyebrow="Team invite" />
-      <div className="flex items-center gap-3 rounded-xl bg-gray-50 px-4 py-3">
+      <div className="flex items-center gap-3 rounded-xl bg-lob-well px-4 py-3">
         <Avatar player={{ name: invite.captainName, avatarUrl: captainAvatarUrl }} size="lg" />
         <div className="min-w-0">
           <p className="font-semibold text-lob-dark">{invite.captainName}</p>

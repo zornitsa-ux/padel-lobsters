@@ -138,9 +138,9 @@ function Recommendation({
   evidence: string[]
 }) {
   const styles = {
-    strong: 'bg-green-50 border-green-200 text-green-800',
+    strong: 'bg-lob-success-light border-lob-success-border text-lob-success-strong',
     moderate: 'bg-lob-teal-light border-lob-teal/20 text-lob-teal-dark',
-    mixed: 'bg-amber-50 border-amber-200 text-amber-800',
+    mixed: 'bg-lob-warning-light border-lob-warning-border text-lob-warning-strong',
   }[tone]
 
   return (
@@ -173,7 +173,7 @@ function BreakdownRow({
   const opponentNames = row.opponentIds.map((id) => playerName({ id, playerNamesById })).join(' & ')
 
   return (
-    <li className="grid grid-cols-[1fr_auto] gap-x-3 text-xs border-t border-gray-100 pt-2 first:border-t-0 first:pt-0">
+    <li className="grid grid-cols-[1fr_auto] gap-x-3 text-xs border-t border-lob-line pt-2 first:border-t-0 first:pt-0">
       <span className="text-lob-slate">
         Round {row.round} · with {partnerName} vs {opponentNames}
       </span>
@@ -209,8 +209,8 @@ function ModeButton({
       onClick={onClick}
       disabled={disabled}
       aria-pressed={active}
-      className={`flex-1 px-2 py-2 text-center border-r last:border-r-0 border-gray-200 transition-colors disabled:opacity-50 ${
-        active ? 'bg-lob-coral text-white' : 'bg-white text-lob-slate hover:bg-gray-50'
+      className={`flex-1 px-2 py-2 text-center border-r last:border-r-0 border-lob-line-strong transition-colors disabled:opacity-50 ${
+        active ? 'bg-lob-coral text-white' : 'bg-white text-lob-slate hover:bg-lob-well'
       }`}
     >
       <span className="block text-sm font-semibold">{title}</span>
@@ -284,7 +284,7 @@ function QueueCard({
     <div className="card space-y-3">
       <div className="flex items-start justify-between gap-3">
         <p className="font-semibold text-lob-slate">{playerDisplayName}</p>
-        <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-amber-50 text-amber-700 whitespace-nowrap">
+        <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-lob-warning-light text-lob-warning whitespace-nowrap">
           Needs review
         </span>
       </div>
@@ -305,7 +305,7 @@ function QueueCard({
         <p className="text-xs font-semibold text-lob-muted uppercase tracking-wide mb-1.5">
           Set {playerDisplayName}&apos;s level
         </p>
-        <div className="flex rounded-xl border border-gray-200 overflow-hidden">
+        <div className="flex rounded-xl border border-lob-line-strong overflow-hidden">
           <ModeButton
             active={mode === 'cautious'}
             disabled={reviewing}
@@ -336,7 +336,7 @@ function QueueCard({
               onClick={() => nudgeCustom(-1)}
               disabled={reviewing || customTarget <= loLevel + 1e-9}
               aria-label="Lower target level"
-              className="w-10 h-10 grid place-items-center rounded-lg border border-gray-200 text-lob-slate disabled:opacity-40 hover:bg-gray-50"
+              className="w-10 h-10 grid place-items-center rounded-lg border border-lob-line-strong text-lob-slate disabled:opacity-40 hover:bg-lob-well"
             >
               <Minus size={18} />
             </button>
@@ -348,7 +348,7 @@ function QueueCard({
               onClick={() => nudgeCustom(1)}
               disabled={reviewing || customTarget >= hiLevel - 1e-9}
               aria-label="Raise target level"
-              className="w-10 h-10 grid place-items-center rounded-lg border border-gray-200 text-lob-slate disabled:opacity-40 hover:bg-gray-50"
+              className="w-10 h-10 grid place-items-center rounded-lg border border-lob-line-strong text-lob-slate disabled:opacity-40 hover:bg-lob-well"
             >
               <Plus size={18} />
             </button>
@@ -414,7 +414,7 @@ export default function RatingReview({
       )}
 
       {queue.length === 0 && (
-        <div className="card flex items-center gap-2 text-sm text-green-700 bg-green-50">
+        <div className="card flex items-center gap-2 text-sm text-lob-success bg-lob-success-light">
           <CheckCircle2 size={18} />
           All adjustments auto-applied — nothing to review.
         </div>

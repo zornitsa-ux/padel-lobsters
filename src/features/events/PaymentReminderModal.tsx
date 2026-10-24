@@ -66,7 +66,7 @@ export default function PaymentReminderModal({
             </p>
             <button
               onClick={handleSend}
-              className="w-full flex items-center justify-center gap-2 bg-green-600 text-white font-semibold py-3 rounded-xl active:scale-[0.98] transition-all"
+              className="w-full flex items-center justify-center gap-2 bg-lob-success-solid text-white font-semibold py-3 rounded-xl active:scale-[0.98] transition-all"
             >
               <MessageCircle size={16} />
               Send via WhatsApp
@@ -82,7 +82,7 @@ export default function PaymentReminderModal({
         )}
 
         {state.status === 'error' && (
-          <p className="text-sm text-red-600 text-center py-2">
+          <p className="text-sm text-lob-danger text-center py-2">
             Couldn&apos;t prepare the reminder. Please try again.
           </p>
         )}

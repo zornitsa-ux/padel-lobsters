@@ -140,7 +140,7 @@ export default function ItemEditorForm({
                   type="button"
                   key={s}
                   onClick={() => toggleSize(s)}
-                  className={`text-xs px-2.5 py-1 rounded-lg font-medium border transition-all ${form.sizes.includes(s) ? 'bg-lob-teal text-white border-lob-teal' : 'border-gray-200 text-lob-slate'}`}
+                  className={`text-xs px-2.5 py-1 rounded-lg font-medium border transition-all ${form.sizes.includes(s) ? 'bg-lob-teal text-white border-lob-teal' : 'border-lob-line-strong text-lob-slate'}`}
                 >
                   {s}
                 </button>
@@ -152,7 +152,7 @@ export default function ItemEditorForm({
                   type="button"
                   key={s}
                   onClick={() => toggleSize(s)}
-                  className={`text-xs px-2.5 py-1 rounded-lg font-medium border transition-all ${form.sizes.includes(s) ? 'bg-lob-teal text-white border-lob-teal' : 'border-gray-200 text-lob-slate'}`}
+                  className={`text-xs px-2.5 py-1 rounded-lg font-medium border transition-all ${form.sizes.includes(s) ? 'bg-lob-teal text-white border-lob-teal' : 'border-lob-line-strong text-lob-slate'}`}
                 >
                   {s}
                 </button>
@@ -178,12 +178,12 @@ export default function ItemEditorForm({
                   <img
                     src={url}
                     alt=""
-                    className="w-full h-full object-cover rounded-xl border border-gray-200"
+                    className="w-full h-full object-cover rounded-xl border border-lob-line-strong"
                   />
                   <button
                     type="button"
                     onClick={() => handleRemoveImage(idx)}
-                    className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-bold leading-none"
+                    className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-lob-danger-solid text-white rounded-full flex items-center justify-center text-xs font-bold leading-none"
                   >
                     ×
                   </button>

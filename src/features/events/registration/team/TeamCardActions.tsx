@@ -60,7 +60,7 @@ export function CaptainPendingActions({
       <button
         onClick={() => void cancel()}
         disabled={busy}
-        className="text-xs font-semibold text-red-600 underline underline-offset-2"
+        className="text-xs font-semibold text-lob-danger underline underline-offset-2"
       >
         Cancel team
       </button>

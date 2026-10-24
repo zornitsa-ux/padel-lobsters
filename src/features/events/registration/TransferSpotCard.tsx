@@ -70,10 +70,13 @@ export default function TransferSpotCard({
           const fromFirst = (fromP?.name || '').split(/\s+/)[0] || 'Someone'
           const busy = respondingTo === xfer.id
           return (
-            <div key={xfer.id} className="card border border-amber-300 bg-amber-50 space-y-3">
+            <div
+              key={xfer.id}
+              className="card border border-lob-warning-border bg-lob-warning-light space-y-3"
+            >
               <div className="flex items-center gap-2">
-                <ArrowRightLeft size={14} className="text-amber-700 flex-shrink-0" />
-                <p className="text-sm text-amber-800">
+                <ArrowRightLeft size={14} className="text-lob-warning flex-shrink-0" />
+                <p className="text-sm text-lob-warning-strong">
                   <strong>{fromFirst}</strong> wants to give you their spot
                 </p>
               </div>
@@ -88,7 +91,7 @@ export default function TransferSpotCard({
                 <button
                   onClick={() => onIncomingResponse(xfer, true)}
                   disabled={busy}
-                  className="flex-1 bg-green-600 text-white font-semibold py-2 rounded-xl text-sm active:scale-[0.98] disabled:opacity-50"
+                  className="flex-1 bg-lob-success-solid text-white font-semibold py-2 rounded-xl text-sm active:scale-[0.98] disabled:opacity-50"
                 >
                   {busy ? 'Accepting…' : 'Accept spot'}
                 </button>
@@ -109,8 +112,8 @@ export default function TransferSpotCard({
       <>
         {incomingCards}
         <div className="card">
-          <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 space-y-2">
-            <div className="flex items-center gap-2 text-xs text-amber-800">
+          <div className="bg-lob-warning-light border border-lob-warning-border rounded-xl px-3 py-2 space-y-2">
+            <div className="flex items-center gap-2 text-xs text-lob-warning-strong">
               <Clock size={12} className="flex-shrink-0" />
               <span>Transfer offer pending · waiting on {recipientFirst}</span>
             </div>
@@ -120,7 +123,7 @@ export default function TransferSpotCard({
                   onClick={() =>
                     onOpenShareModal({ transferId: pendingFromMe.id, toPlayer: recipient })
                   }
-                  className="flex-1 text-xs font-semibold text-green-700 bg-white border border-green-600 rounded-lg py-1.5 active:scale-95 transition-all"
+                  className="flex-1 text-xs font-semibold text-lob-success bg-white border border-lob-success-solid rounded-lg py-1.5 active:scale-95 transition-all"
                 >
                   Resend WhatsApp
                 </button>
@@ -128,7 +131,7 @@ export default function TransferSpotCard({
               <button
                 onClick={onCancelMyOffer}
                 disabled={busy}
-                className="flex-1 text-xs font-semibold text-red-600 border border-red-200 rounded-lg py-1.5 active:scale-95 transition-all disabled:opacity-50"
+                className="flex-1 text-xs font-semibold text-lob-danger border border-lob-danger-border rounded-lg py-1.5 active:scale-95 transition-all disabled:opacity-50"
               >
                 {busy ? 'Cancelling…' : 'Cancel offer'}
               </button>
@@ -157,7 +160,7 @@ export default function TransferSpotCard({
       <div className="card">
         <button
           onClick={() => onStartTransfer(myReg)}
-          className="w-full flex items-center justify-center gap-1.5 text-xs text-lob-muted border border-gray-200 rounded-xl py-1.5 font-medium active:scale-95 transition-all"
+          className="w-full flex items-center justify-center gap-1.5 text-xs text-lob-muted border border-lob-line-strong rounded-xl py-1.5 font-medium active:scale-95 transition-all"
         >
           <ArrowRightLeft size={12} /> Transfer spot to another player
         </button>

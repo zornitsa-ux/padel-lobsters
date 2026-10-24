@@ -28,7 +28,7 @@ export default function WaitlistSection({
   return (
     <section>
       <h3 className="font-bold text-lob-slate mb-2 flex items-center gap-2">
-        <Clock size={16} className="text-orange-400" />
+        <Clock size={16} className="text-lob-warning-solid" />
         Waitlist ({waitlisted.length})
       </h3>
       <div className="space-y-2">
@@ -40,10 +40,10 @@ export default function WaitlistSection({
             <PlayerRow
               key={reg.id}
               player={p}
-              avatarTone="bg-orange-100 text-orange-600"
-              className="card border-l-4 border-orange-300"
+              avatarTone="bg-lob-warning-soft text-lob-warning"
+              className="card border-l-4 border-lob-warning-border"
               prefix={
-                <span className="text-xs text-orange-400 w-5 text-center font-bold">
+                <span className="text-xs text-lob-warning-solid w-5 text-center font-bold">
                   W{idx + 1}
                 </span>
               }
@@ -54,7 +54,7 @@ export default function WaitlistSection({
                   <div className="flex gap-1">
                     <button
                       onClick={() => onMoveToRegistered(reg)}
-                      className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-lg font-semibold"
+                      className="text-xs bg-lob-success-soft text-lob-success px-2 py-1 rounded-lg font-semibold"
                     >
                       Confirm
                     </button>

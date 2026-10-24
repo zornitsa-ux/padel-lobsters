@@ -105,14 +105,14 @@ export default function AdminSection({
       <div className="card space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="font-bold text-lob-slate text-sm flex items-center gap-2">
-            <Lightbulb size={15} className="text-amber-500" /> Padel Tips
+            <Lightbulb size={15} className="text-lob-warning-solid" /> Padel Tips
           </h3>
           <div className="flex items-center gap-2">
             {isCustom && (
               <button
                 type="button"
                 onClick={handleResetTips}
-                className="flex items-center gap-1 text-[10px] text-lob-muted-light font-semibold"
+                className="flex items-center gap-1 text-2xs text-lob-muted-light font-semibold"
               >
                 <RotateCcw size={10} /> Reset to defaults
               </button>
@@ -153,8 +153,11 @@ export default function AdminSection({
         {tipsExpanded && (
           <div className="space-y-1.5 max-h-64 overflow-y-auto">
             {activeTips.map((tip, i) => (
-              <div key={i} className="flex items-start gap-2 bg-gray-50 rounded-xl px-3 py-2 group">
-                <span className="text-[10px] text-lob-muted-light font-mono mt-0.5 flex-shrink-0 w-5">
+              <div
+                key={i}
+                className="flex items-start gap-2 bg-lob-well rounded-xl px-3 py-2 group"
+              >
+                <span className="text-2xs text-lob-muted-light font-mono mt-0.5 flex-shrink-0 w-5">
                   {i + 1}
                 </span>
                 {editingTip?.index === i ? (
@@ -171,7 +174,7 @@ export default function AdminSection({
                     <button
                       type="button"
                       onClick={handleSaveEdit}
-                      className="text-xs text-green-600 font-semibold px-2"
+                      className="text-xs text-lob-success font-semibold px-2"
                     >
                       Save
                     </button>
@@ -194,7 +197,7 @@ export default function AdminSection({
                     <button
                       type="button"
                       onClick={() => handleDeleteTip(i)}
-                      className="text-lob-muted-light/60 hover:text-red-500 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="text-lob-muted-light/60 hover:text-lob-danger-solid flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
                     >
                       <Trash2 size={13} />
                     </button>
