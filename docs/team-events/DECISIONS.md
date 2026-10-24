@@ -331,3 +331,48 @@ profile" item.
 
 **Owner approvals, 2026-10-22:** D-013 and D-014 approved. D-014's direct-write
 check is superseded by D-016.
+
+## D-020 — The captain can pay as soon as they sign up (2026-10-24)
+
+**Decision:** The team payment sheet opens right after signup, while the
+partner is still pending (D-015). There's no wait for acceptance.
+
+**Why:** Owner choice. If the partner declines and the team is cancelled, the
+admin reverses the payment by hand. Many players don't pay straight away
+anyway, as with other tournaments, so reminders cover the rest.
+
+**Impact:** None. This keeps the current behaviour. A code review had
+flagged paying before acceptance as a risk.
+
+## D-021 — The invitee confirms a captain-created account at first sign-in (2026-10-24)
+
+**Decision:** The first time a captain-created account signs in, it goes to
+**Finish your account** before anything else, on every page until it's done.
+The player fills in the same profile as self-signup (prefilled from what the
+captain typed) and ticks "This account is mine, and I agree to join Padel
+Lobsters with these details." This sets
+`partner_invites.account_acknowledged_at`. Only then is the team invite shown,
+and `respond_to_team_invite` refuses an answer until it's set.
+
+**Why:** Owner decision. Consent comes from both sides: the captain at
+registration (D-011), then the invitee when they first join. A full profile
+also means the new member matches everyone else from day one.
+
+**Impact:** Supersedes D-019's optional finish-profile step after accepting.
+The `get_my_account_setup` and `acknowledge_my_account` RPCs (CONTRACTS §3).
+The `/finish-account` screen; the shared profile fields with `SignupRequest`.
+
+## D-022 — A captain-created partner can say no without claiming the account (2026-10-24)
+
+**Decision:** The Finish your account screen also offers "I'm not playing". It
+declines every pending team invite and signs the player out, without saving a
+profile or the D-021 acknowledgement. `respond_to_team_invite` requires the
+acknowledgement only to accept. `/account` is exempt from the finish-setup
+redirect, so the player can always sign out.
+
+**Why:** Found in the combined review. Under D-021 alone, someone whose email
+was used without their permission had to tick "This account is mine" before
+they could decline, and had no way to sign out.
+
+**Impact:** Amends D-021. `respond_to_team_invite` (CONTRACTS §3), the
+`/finish-account` screen and the invite redirect.

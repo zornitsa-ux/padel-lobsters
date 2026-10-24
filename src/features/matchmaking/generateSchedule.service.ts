@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { isTeamEvent, type EventKind } from '../events/eventFormat'
 import { supabase } from '../../supabase'
 import { saveMatches, type GeneratedMatch } from '../events/matchQueries'
 import { generateSchedule } from './domain/generate'
@@ -11,13 +12,8 @@ import type { GenerateInput, PlayerInput, PlayerGender, ScheduleRun } from './do
 // through the admin_record_schedule_run RPC (D-016). schedule_runs is a
 // commit-time audit blob, intentionally not atomic with the matches write.
 
-export type EventKind = { entryMode?: string | null; format?: string | null }
-
 export const TEAM_EVENT_GENERATOR_ERROR =
   'The Americano schedule generator cannot run on a team event'
-
-export const isTeamEvent = ({ entryMode, format }: EventKind): boolean =>
-  entryMode === 'team' || format === 'king_of_court'
 
 export function assertNotTeamEvent({ tournament }: { tournament?: EventKind }): void {
   if (tournament && isTeamEvent(tournament)) throw new Error(TEAM_EVENT_GENERATOR_ERROR)

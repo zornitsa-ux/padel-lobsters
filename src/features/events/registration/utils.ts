@@ -2,7 +2,7 @@ import type { NormalisedTournament, Player } from '../../../lib/normalise'
 import type { NormalisedRegistration } from '../registrationQueries'
 import type { NormalisedMatch } from '../matchQueries'
 import type { NormalisedTransfer } from '../transferQueries'
-import { pricePerPlayer } from '../eventHelpers'
+import { pricePerEntry } from '../eventHelpers'
 
 const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000
 const TRANSFER_CUTOFF_MS = 12 * 60 * 60 * 1000
@@ -52,7 +52,8 @@ export interface PaymentConfig {
   hasTikkie: boolean
   /** A single Tikkie link to point a payer at. Null when none is set up. */
   tikkieLink: string | null
-  costPerPlayer: number
+  /** What one signup owes: a player's share, or the team's for a captain. */
+  costPerEntry: number
 }
 
 // The subset of a tournament that decides how a player pays.
@@ -119,7 +120,7 @@ export const computePaymentConfig = (
   return {
     hasTikkie: !!tournament?.tikkieLink,
     tikkieLink: tournament?.tikkieLink || null,
-    costPerPlayer: pricePerPlayer(tournament),
+    costPerEntry: pricePerEntry(tournament),
   }
 }
 

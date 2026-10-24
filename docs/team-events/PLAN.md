@@ -46,21 +46,21 @@
 
 ## 1. Status
 
-| ID  | Task                                                                                                                                                                                                                     | Phase | Depends on | PR  | State |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----- | ---------- | --- | ----- |
-| T0  | Research, owner interview, docs                                                                                                                                                                                          | 0     | —          |     | [x]   |
-| T1  | Migration: `entry_mode`, `starting_courts_published_at`, `event_teams` (seed, final_rank), `registrations.team_id`, `covered`, `partner_invites`; team RPCs; guards on individual/transfer RPCs; `supabase/tests` script | 1     | T0         | #56 | [x]   |
-| T2  | Partner invites: `admin_send_event_invite`, `event_invite` email kind + template, admin Partner invites list (not invited / invited / signed in)                                                                         | 1     | T1         |     | [ ]   |
-| T3  | Event form: Format picker, Max teams, team price                                                                                                                                                                         | 1     | T1         | #58 | [x]   |
-| T4  | Join flow: partner search (active members), new-partner form, confirm + pay (captain)                                                                                                                                    | 1     | T1         |     | [ ]   |
-| T5  | Team card + registration list (teams, waitlist, change partner, transfers hidden)                                                                                                                                        | 1     | T1         |     | [ ]   |
-| T6  | Admin: add/cancel/promote team, change partner, team Payments view + reminder                                                                                                                                            | 1     | T1         |     | [ ]   |
-| T7  | Verify Phase 1 locally (rehearsal data) → **R1**                                                                                                                                                                         | 1     | T1, T3–T6  |     | [ ]   |
-| T8  | King of the Court domain (pure, tests first): `teamStrength`, `seedTeams`, `startingCourts`, `rankFromFinalCourts`                                                                                                       | 2     | T0         |     | [ ]   |
-| T9  | Lifecycle: `eventPhase` King of the Court branch, Finish with zero matches + no ratings, matcher guard                                                                                                                   | 2     | T1         |     | [ ]   |
-| T10 | Admin: seed reorder + Publish starting courts; Final standings entry                                                                                                                                                     | 2     | T8         |     | [ ]   |
-| T11 | Player views: starting court on Schedule / MyTournament / upcoming card; Results ranking; Lobster Review rank                                                                                                            | 2     | T8, T9     |     | [ ]   |
-| T12 | Verify Phase 2 locally (16-team event end to end) → **R2**                                                                                                                                                               | 2     | T9–T11     |     | [ ]   |
+| ID  | Task                                                                                                                                                                                                                     | Phase | Depends on | PR       | State |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----- | ---------- | -------- | ----- |
+| T0  | Research, owner interview, docs                                                                                                                                                                                          | 0     | —          |          | [x]   |
+| T1  | Migration: `entry_mode`, `starting_courts_published_at`, `event_teams` (seed, final_rank), `registrations.team_id`, `covered`, `partner_invites`; team RPCs; guards on individual/transfer RPCs; `supabase/tests` script | 1     | T0         | #56      | [x]   |
+| T2  | Partner invites: `admin_send_event_invite`, `event_invite` email kind + template, admin Partner invites list (not invited / invited / signed in)                                                                         | 1     | T1         |          | [ ]   |
+| T3  | Event form: Format picker, Max teams, team price                                                                                                                                                                         | 1     | T1         | #58      | [x]   |
+| T4  | Join flow: partner search (active members), new-partner form, confirm + pay (captain)                                                                                                                                    | 1     | T1         | #60      | [x]   |
+| T5  | Team card + registration list (teams, waitlist, change partner, transfers hidden)                                                                                                                                        | 1     | T1         | #60      | [x]   |
+| T6  | Admin: add/cancel/promote team, change partner, team Payments view + reminder                                                                                                                                            | 1     | T1         | #59, #60 | [x]   |
+| T7  | Verify Phase 1 locally (rehearsal data) → **R1**                                                                                                                                                                         | 1     | T1, T3–T6  | —        | [~]   |
+| T8  | King of the Court domain (pure, tests first): `teamStrength`, `seedTeams`, `startingCourts`, `rankFromFinalCourts`                                                                                                       | 2     | T0         | #57      | [x]   |
+| T9  | Lifecycle: `eventPhase` King of the Court branch, Finish with zero matches + no ratings, matcher guard                                                                                                                   | 2     | T1         |          | [ ]   |
+| T10 | Admin: seed reorder + Publish starting courts; Final standings entry                                                                                                                                                     | 2     | T8         |          | [ ]   |
+| T11 | Player views: starting court on Schedule / MyTournament / upcoming card; Results ranking; Lobster Review rank                                                                                                            | 2     | T8, T9     |          | [ ]   |
+| T12 | Verify Phase 2 locally (16-team event end to end) → **R2**                                                                                                                                                               | 2     | T9–T11     |          | [ ]   |
 
 States: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked.
 
@@ -71,6 +71,73 @@ States: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked.
 - **T2** ships after R1. Deploy `send-invite-email` (the new kind) first, then
   merge and push the RPC migration.
 - **R2** is client-only.
+
+### Resume here (2026-10-24, after the combined review)
+
+**Where we are.** The comprehensive review of `main...kotc-test` is done and
+its fixes are committed on the branches below. The owner confirmed two findings
+as known choices: an admin partner change leaves the team waiting for the new
+partner, and raising capacity doesn't promote waitlisted teams. **Next: the
+clean local apply, then R1 merges.**
+
+**Branches** (all committed and pushed, 2026-10-24):
+
+| Branch                              | PR   | Base                     | Remote                                        |
+| ----------------------------------- | ---- | ------------------------ | --------------------------------------------- |
+| `team-events-schema`                | #56  | `main`                   | up to date                                    |
+| `team-events-event-form`            | #58  | `team-events-schema`     | up to date                                    |
+| `team-events-signup-ui`             | #60  | `team-events-event-form` | up to date                                    |
+| `team-events-payments`              | #59  | `team-events-schema`     | up to date                                    |
+| `team-events-kotc-domain`           | #57  | `main`                   | up to date                                    |
+| `fix/reset-cache-on-account-switch` | none | `main`                   | not pushed; needs its own PR (bug is on main) |
+
+The integration branch `kotc-test` is local only, in the worktree
+`../padel-lobsters-kotc-test`: `team-events-signup-ui` merged with `-payments`,
+`-kotc-domain` and the cache fix. Rebuild it after changing any branch: reset
+it to `team-events-signup-ui`, merge the other three, and keep "ours" for the
+`PLAN.md` conflict. Review the whole change set with `git diff main...kotc-test`.
+
+**Local database.** The R1 migration file changed after it was first applied
+locally. Changed functions (most recently `respond_to_team_invite`, D-022) and
+the `account_acknowledged_at` column were applied by hand. Before R1, do a clean
+apply (`npm run db:reset`, then `npm run rehearsal:sync`, re-run
+`supabase/tests/team_events.sql` (29 checks) and the integrity counts). The
+local auth server was restarted to pick up the code email template (PIN removal
+DESIGN F-8).
+
+**Fixed in the combined review:**
+
+- D-022: a captain-created partner can say "I'm not playing" without claiming
+  the account; `/account` is exempt from the finish-setup redirect (#56, #60).
+- /me is team-aware: team card, team amount for the captain, and a link to sign
+  up as a team instead of an individual signup the server refuses (#60).
+- `useTeamEntries` refetches teams that a registration points at, so a new team
+  can't drop out of the lists; the roster line counts the same entries (#56,
+  #60, #59).
+- Duplication: one decline dialog (`useConfirmDecline`), one `useEventForm`, one
+  `eventFormat` module, `isActiveRegistration`, `firstRow`, `pricePerEntry`,
+  `playerNameOf`, `teamKeys.allInvites`; team entries built once per render;
+  the player list refetched only after a new partner;
+  `TeamInviteRedirect` → `PartnerOnboardingRedirect`; Payments' dead "covered"
+  badge removed.
+
+**Still open (deliberately):**
+
+- `#57`: Zod schemas are exported but never parsed; `KotcTeam` repeats
+  `EventTeam` fields. Do this in T10, when the domain gets its first caller and
+  #57 sits on the team-events code.
+- Server edge cases: `change_team_partner` and `apply_team_transfer` raise
+  `tournament_full` (from the capacity trigger) on an event an admin has pushed
+  over capacity, instead of returning a status; `apply_team_transfer` skips the
+  matches sync (moot while team events have no matches).
+- `check_new_partner_email` has no rate limit (it reveals no more than signup).
+- `transferQueries.ts` and `playerQueries.ts` still unwrap RPC rows by hand;
+  switch them to `lib/firstRow` in a follow-up on `main`.
+
+**Gates before R1.** The clean local apply above. Merge in order: #56 → (#58 →
+#60, #59) → `db push` from `main`. #57 can merge any time. The cache fix ships
+on its own. Remember the 3-day rule around the Thu 5 Nov PIN cutover and the
+Sun 15 Nov event: R1 is sign-in-facing (the finish-your-account step).
 
 ---
 
@@ -208,3 +275,39 @@ placeholders as partners, was withdrawn by D-010: placeholders aren't offered.)
   - `team_events.sql` now has 24 checks, including acceptance, decline,
     captain cancel, transfers after acceptance and the payment RPC.
 - 2026-10-22: T3 event form: Format picker (Americano / King of the Court), team total, ladder hint, format locked once anyone signs up. Capacity derives from courts (D-017) and the schedule generator refuses team events (D-018).
+- 2026-10-22: T4, T5, T6 (list part): team join flow, team card, teams listed as "A & B", admin Add/Cancel/Confirm team, change partner and the "hasn't signed in yet" hint. The Registration-tab edit form shares `formFromTournament`. The D-015 acceptance UI follows.
+- 2026-10-22: **T7 rehearsal** (pre-D-015) on a production copy: the 14 integrity counts were unchanged after migrating, after creating 3 new partners, after their sign-ins (both Sign in and Sign up land in the captain-created account) and after the UI walk-through. No email was queued. The walk-through at phone width covered the captain, partner and admin flows. Fixes: Back keeps the draft, the roster refreshes after a new partner, and the King of the Court label. To redo after D-015/D-016.
+- 2026-10-22: **D-015/D-019 UI** (#60): pending and confirmed team states, captain swap or cancel while pending, partner accept or decline (with the complete-teams copy at signup and on decline), a declined/cancelled notice with Sign up again, transfers on confirmed teams, the acceptance screen at `/team-invites` (once-per-session redirect, optional finish-profile step for captain-created accounts), admin pending/confirmed badges. Nits fixed: the admin "Their partner…" link, team counts in the roster line, and notices that can be dismissed and clear on status change.
+- 2026-10-22: **T7 rehearsal 2** (D-015/D-016) on a fresh production copy, with an event of 5 courts and 20 players on 15 Nov: three teams were created (two with new partners, one with a member partner). The 14 integrity counts were unchanged after creation and after sign-ins, accept and decline, and no email was queued. Checked with real sessions: a direct registration write is refused (42501), a player can move their payment forward but can't set paid, the partner sees and accepts the invite (created-by-captain flag set), and a decline cancels the team with `partner_declined` visible to the captain. Still to do: the browser walk-through of `/team-invites` and the team card states (the Chrome extension was disconnected).
+- 2026-10-24: Code review of #56–#60, and fixes:
+  - **#56:** declining a transfer while on a waitlisted team failed
+    (`team_inconsistent`, reproduced locally). It now only drops an
+    individual waitlist row. `lock_team` re-reads the team under the lock.
+    `account_created_by_captain` is scoped to the event. A captain's
+    WhatsApp reminder names the team and the team amount.
+    `team_events.sql` has 27 checks.
+  - **#57:** an odd team waits at the bottom court in play (OQ-4), also when
+    every court is full. Empty final-standing slots are skipped.
+  - **#58:** the format picker stays locked while signups load. A save
+    refused with `entry_mode_locked` puts the saved format back.
+  - **#59:** accepting a transfer refreshes the team list. Payments waits for
+    it instead of showing nothing owed.
+  - **#60:** the Registration-tab edit save shows its errors. The invite
+    redirect works for a second account on the same tab, and Not now returns
+    to the interrupted page. `/team-invites` asks signed-out visitors to sign
+    in. The not-signed-in hint names the right player.
+  - **D-020:** the captain can pay before the partner accepts.
+- 2026-10-24: Owner walk-through feedback:
+  - The acceptance screen was redesigned (event heading, the captain's full
+    name and avatar, stacked buttons) and its note is from the partner's side.
+  - Team signup opens in a modal.
+  - **D-021:** a captain-created account finishes its profile and confirms
+    the account at first sign-in, before the invite.
+  - Signing out and into another account on the same tab showed the previous
+    account's profile and invites. This bug is on `main` too; it's fixed in its
+    own PR (the query cache resets when the account changes).
+  - The local stack was serving GoTrue's default link-only sign-in email
+    (DESIGN F-8 of PIN removal). Restarting it fixed this.
+- 2026-10-24: **Checkpoint.** Owner walk-through mostly done and OK. The 14
+  integrity counts after it match the baseline, and no email was queued. Next:
+  a comprehensive review of all branches together (§1 "Resume here").

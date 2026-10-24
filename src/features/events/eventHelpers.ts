@@ -41,6 +41,7 @@ const FORMAT_LABELS: Record<string, string> = {
   roundrobin: 'Round Robin',
   knockout: 'Knockout',
   lobster_matching: 'Lobster Matching',
+  king_of_court: 'King of the Court',
 }
 
 export const formatLabel = (f: string): string => FORMAT_LABELS[f] || f

@@ -5,12 +5,14 @@ import { usePlayers } from '../features/players/usePlayers'
 import { setOwnAvatar } from '../features/players/playerQueries'
 import { playerKeys } from '../features/players/playerKeys'
 import type { Player } from '../lib/normalise'
-import { isE164 } from '../lib/whatsapp'
-import { parseLevel } from '../lib/parseLevel'
 import { processAvatar } from '../lib/processAvatar'
 import { ArrowLeft, UserPlus, Loader2, User, Camera } from 'lucide-react'
-import CountryPicker from './ui/CountryPicker'
-import { SegmentedControl } from './ui/SegmentedControl'
+import {
+  ProfileContactFields,
+  ProfileNameFields,
+  ProfilePlayFields,
+} from '../features/players/ProfileFields'
+import { fullName, profileProblem, type ProfileFieldValues } from '../features/players/profileForm'
 import { requestEmailCode, normaliseEmail } from '../features/auth/authActions'
 import { OtpCodeStep } from '../features/auth/OtpCodeStep'
 import { confirmedJustNow } from '../features/auth/newAccount'
@@ -98,19 +100,10 @@ async function uploadSignupAvatar({ playerId, file }: { playerId: string; file: 
   }
 }
 
-interface SignupFormState {
-  firstName: string
-  lastName: string
+interface SignupFormState extends ProfileFieldValues {
   email: string
-  phone: string
-  playtomicLevel: string
   notes: string
-  gender: string
-  isLeftHanded: boolean
-  country: string
   avatarUrl: string
-  birthday: string
-  preferredPosition: string
 }
 
 const emptyForm: SignupFormState = {
@@ -169,7 +162,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
   // Set once the code is on its way; the form state is kept for "Change email".
   const [awaitingCode, setAwaitingCode] = useState(false)
 
-  const combinedName = `${form.firstName.trim()} ${form.lastName.trim()}`.trim()
+  const combinedName = fullName({ form })
   // Placeholder matches can't be dismissed; only an admin invite resolves them.
   const unresolvedMatch = (p: Player | null) =>
     p && (isPlaceholder(p) || p.id !== declinedId) ? p : null
@@ -203,25 +196,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
     reader.readAsDataURL(file)
   }
 
-  const validate = (): string => {
-    const missing = []
-    if (!form.firstName.trim()) missing.push('First Name')
-    if (!form.lastName.trim()) missing.push('Last Name')
-    if (!form.country) missing.push('Country')
-    if (!form.gender) missing.push('Gender')
-    if (!form.email.trim()) missing.push('Email')
-    if (!form.phone.trim()) missing.push('Phone / WhatsApp')
-    if (!form.playtomicLevel.trim()) missing.push('Playtomic Level')
-    if (missing.length > 0) return `Please complete: ${missing.join(', ')}`
-    // E.164 so we can build wa.me links for transfer offers.
-    if (!isE164(form.phone)) {
-      return 'Phone must start with + and the country code (e.g. +31612345678).'
-    }
-    const level = parseLevel(form.playtomicLevel)
-    if (level === null || level > 7)
-      return 'Playtomic level must be a number from 0 to 7, e.g. 3.5.'
-    return ''
-  }
+  const validate = (): string => profileProblem({ form, email: form.email })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -366,28 +341,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="label">First Name</label>
-              <input
-                required
-                className="input"
-                placeholder="e.g. Augustin"
-                value={form.firstName}
-                onChange={(e) => setForm((f) => ({ ...f, firstName: e.target.value }))}
-              />
-            </div>
-            <div>
-              <label className="label">Last Name</label>
-              <input
-                required
-                className="input"
-                placeholder="e.g. Tapia"
-                value={form.lastName}
-                onChange={(e) => setForm((f) => ({ ...f, lastName: e.target.value }))}
-              />
-            </div>
-          </div>
+          <ProfileNameFields form={form} setForm={setForm} />
 
           {bannerMatch && (
             <NameMatchBanner match={bannerMatch} onSignIn={onBack} onDecline={declineMatch} />
@@ -398,97 +352,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
             </p>
           )}
 
-          <div>
-            <label className="label">Country</label>
-            <CountryPicker
-              value={form.country}
-              onChange={(val) => setForm((f) => ({ ...f, country: val }))}
-            />
-          </div>
-
-          <div>
-            <label className="label">Gender</label>
-            <p className="text-xs text-lob-muted-light mb-2">For optimal pair matching</p>
-            <SegmentedControl
-              ariaLabel="Gender"
-              options={[
-                { value: 'male', label: 'Male' },
-                { value: 'female', label: 'Female' },
-              ]}
-              value={form.gender}
-              onChange={(val) => setForm((f) => ({ ...f, gender: f.gender === val ? '' : val }))}
-            />
-          </div>
-
-          <div>
-            <label className="label">Playing hand</label>
-            <button
-              type="button"
-              onClick={() => setForm((f) => ({ ...f, isLeftHanded: !f.isLeftHanded }))}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all w-full justify-center ${
-                form.isLeftHanded
-                  ? 'bg-amber-100 text-amber-700 border-2 border-amber-300'
-                  : 'bg-gray-100 text-lob-muted'
-              }`}
-            >
-              🤚 {form.isLeftHanded ? 'Left-handed (tap to undo)' : 'Tap if left-handed'}
-            </button>
-          </div>
-
-          <div>
-            <label className="label">Preferred Side</label>
-            <div className="flex gap-2">
-              {[
-                ['left', '👈 Left'],
-                ['right', '👉 Right'],
-                ['both', '↔️ Both'],
-              ].map(([val, lbl]) => (
-                <button
-                  type="button"
-                  key={val}
-                  onClick={() =>
-                    setForm((f) => ({
-                      ...f,
-                      preferredPosition: f.preferredPosition === val ? '' : val,
-                    }))
-                  }
-                  className={`flex-1 py-2 rounded-xl font-semibold text-sm transition-all ${
-                    form.preferredPosition === val
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-gray-100 text-lob-slate'
-                  }`}
-                >
-                  {lbl}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="bg-blue-50 rounded-xl p-4 space-y-3">
-            <p className="text-xs font-bold text-blue-700 uppercase tracking-wide">
-              Playtomic Level
-            </p>
-            <div>
-              <label className="label">Playtomic Level (0–7)</label>
-              <input
-                type="text"
-                inputMode="decimal"
-                className="input"
-                placeholder="e.g. 3.5"
-                value={form.playtomicLevel}
-                onChange={(e) => setForm((f) => ({ ...f, playtomicLevel: e.target.value }))}
-              />
-              {fieldErrors.level && (
-                <p role="alert" className="text-xs text-red-600 bg-red-50 rounded-lg p-2 mt-1">
-                  {fieldErrors.level}
-                </p>
-              )}
-              <p className="text-xs text-lob-muted mt-1">
-                Check your Playtomic app — it shows your current level. We use it to build balanced
-                matches, and it improves as you play.
-              </p>
-            </div>
-          </div>
+          <ProfilePlayFields form={form} setForm={setForm} levelError={fieldErrors.level} />
 
           <div>
             <label className="label">Email</label>
@@ -502,30 +366,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
             <p className="text-xs text-lob-muted-light mt-1">Visible for organizers only</p>
           </div>
 
-          <div>
-            <label className="label">Phone / WhatsApp</label>
-            <input
-              type="tel"
-              className="input"
-              placeholder="+31612345678"
-              value={form.phone}
-              onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-            />
-            <p className="text-xs text-lob-muted-light mt-1">
-              Start with + and your country code, e.g. +31 for the Netherlands. Visible to
-              organizers only.
-            </p>
-          </div>
-
-          <div>
-            <label className="label">Birthday 🎂</label>
-            <input
-              type="date"
-              className="input"
-              value={form.birthday || ''}
-              onChange={(e) => setForm((f) => ({ ...f, birthday: e.target.value }))}
-            />
-          </div>
+          <ProfileContactFields form={form} setForm={setForm} />
 
           <div>
             <label className="label">{lobbyPrompt.label}</label>

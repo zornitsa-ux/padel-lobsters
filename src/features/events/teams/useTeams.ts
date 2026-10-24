@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useToast } from '../../../lib/toastBus'
 import type { NormalisedRegistration } from '../../../lib/normalise'
+import { playerKeys } from '../../players/playerKeys'
 import { registrationKeys } from '../registrationKeys'
 import { registrationMessage } from '../registrationStatusMessages'
 import * as q from './teamQueries'
@@ -102,6 +103,18 @@ export function useMyAccountSetup({ enabled }: { enabled: boolean }) {
   })
 }
 
+// A failed check lets the form continue: registration checks the email again.
+export function useCheckNewPartnerEmail() {
+  return useCallback(async ({ email }: { email: string }) => {
+    try {
+      return await q.checkNewPartnerEmail({ email })
+    } catch (error) {
+      console.error('checkNewPartnerEmail failed:', error)
+      return 'ok' as const
+    }
+  }, [])
+}
+
 export function useAcknowledgeMyAccount() {
   const qc = useQueryClient()
   return useCallback(async () => {
@@ -119,12 +132,14 @@ export function useTeamActions() {
   const { showToast } = useToast()
 
   const invalidate = useCallback(
-    (tournamentId: string) =>
+    (tournamentId: string, { newPlayer = false }: { newPlayer?: boolean } = {}) =>
       Promise.all([
         qc.invalidateQueries({ queryKey: registrationKeys.list(tournamentId) }),
         qc.invalidateQueries({ queryKey: teamKeys.list(tournamentId) }),
         qc.invalidateQueries({ queryKey: teamKeys.allInvites() }),
         qc.invalidateQueries({ queryKey: teamKeys.myInvites() }),
+        // A new partner is a new player; the roster must know their name.
+        newPlayer && qc.invalidateQueries({ queryKey: playerKeys.all() }),
       ]),
     [qc],
   )
@@ -133,7 +148,7 @@ export function useTeamActions() {
     async (args: { tournamentId: string; captainId: string; choice: PartnerChoice }) => {
       try {
         const result = await q.registerTeam(args)
-        await invalidate(args.tournamentId)
+        await invalidate(args.tournamentId, { newPlayer: args.choice.kind === 'new' })
         return result
       } catch (error) {
         console.error('registerTeam failed:', error)
@@ -147,7 +162,7 @@ export function useTeamActions() {
     async (args: { tournamentId: string; teamId: string; choice: PartnerChoice }) => {
       try {
         const result = await q.changeTeamPartner({ teamId: args.teamId, choice: args.choice })
-        await invalidate(args.tournamentId)
+        await invalidate(args.tournamentId, { newPlayer: args.choice.kind === 'new' })
         return result
       } catch (error) {
         console.error('changeTeamPartner failed:', error)

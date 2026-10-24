@@ -9,7 +9,7 @@ interface RegistrationPaymentSheetModalProps {
   isOpen: boolean
   tournament: NormalisedTournament
   paymentSheet: PaymentSheet | null
-  costPerPlayer: number
+  costPerEntry: number
   tikkieClicked: boolean
   declaring: boolean
   onClose: () => void
@@ -21,7 +21,7 @@ export default function RegistrationPaymentSheetModal({
   isOpen,
   tournament,
   paymentSheet,
-  costPerPlayer,
+  costPerEntry,
   tikkieClicked,
   declaring,
   onClose,
@@ -40,10 +40,12 @@ export default function RegistrationPaymentSheetModal({
           </h3>
         </div>
 
-        {costPerPlayer > 0 && (
+        {costPerEntry > 0 && (
           <div className="bg-lob-cream rounded-2xl px-4 py-3 flex items-center justify-between">
-            <span className="text-sm text-lob-slate">Your share</span>
-            <span className="text-2xl font-bold text-lob-teal">{fmtEur(costPerPlayer)}</span>
+            <span className="text-sm text-lob-slate">
+              {tournament.entryMode === 'team' ? 'For your team' : 'Your share'}
+            </span>
+            <span className="text-2xl font-bold text-lob-teal">{fmtEur(costPerEntry)}</span>
           </div>
         )}
 

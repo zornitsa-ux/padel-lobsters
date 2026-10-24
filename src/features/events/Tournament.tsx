@@ -1,18 +1,12 @@
 import React, { useCallback, useState, type FormEvent } from 'react'
 import { useApp } from '../../context/useApp'
-import {
-  useTournaments,
-  useAddTournament,
-  useUpdateTournament,
-  useDeleteTournament,
-} from './useTournaments'
+import { useTournaments, useUpdateTournament, useDeleteTournament } from './useTournaments'
 import { useTransfers } from './useTransfers'
-import { useRegistrations } from './useRegistrations'
-import { buildEventData, formatOption, isEntryModeLocked, isFormatLocked } from './eventFormModel'
+import { useEventForm } from './useEventForm'
 import { Plus, Trophy, Clock } from 'lucide-react'
 import HistoryContent from '../history/History'
 import AdminTransferPanel from '../../components/AdminTransferPanel'
-import { DEFAULT_EVENT_DESCRIPTION, emptyForm } from './eventConstants'
+import { DEFAULT_EVENT_DESCRIPTION } from './eventConstants'
 import { parseLocalDate } from './eventHelpers'
 import EventFormModal from './EventFormModal'
 import UpcomingEventCard from './UpcomingEventCard'
@@ -25,7 +19,7 @@ import { errorMessage, errorCode, FOREIGN_KEY_VIOLATION } from '../../lib/errors
 import { useConfirm } from '../../lib/confirmBus'
 import type { EventNavigate } from './eventHelpers'
 import type { NormalisedTournament } from '../../lib/normalise'
-import type { SetEventFormCourt } from './EventFormModal'
+import type { TournamentInput } from './tournamentQueries'
 
 export { DEFAULT_EVENT_DESCRIPTION }
 
@@ -34,33 +28,16 @@ export default function Tournament({ onNavigate }: { onNavigate: EventNavigate }
   const { session, isAdmin } = useApp()
   const { data: tournaments = [] } = useTournaments()
   const { data: transfers = [] } = useTransfers()
-  const addMut = useAddTournament()
   const updateMut = useUpdateTournament()
   const deleteMut = useDeleteTournament()
-  const addTournament = useCallback(
-    (data: Partial<NormalisedTournament>) => addMut.mutateAsync(data),
-    [addMut],
-  )
   const updateTournament = useCallback(
-    (id: string, data: Partial<NormalisedTournament>) => updateMut.mutateAsync({ id, data }),
+    (id: string, data: TournamentInput) => updateMut.mutateAsync({ id, data }),
     [updateMut],
   )
   const deleteTournament = useCallback((id: string) => deleteMut.mutateAsync(id), [deleteMut])
   const claimedId = session?.user?.id ?? null
 
-  const [showForm, setShowForm] = useState(false)
-  const [editId, setEditId] = useState<string | null>(null)
-  const [form, setForm] = useState(emptyForm)
-  const [saving, setSaving] = useState(false)
-  const [serverLocked, setServerLocked] = useState(false)
-  const { data: editRegistrations = [], isPending: editRegistrationsPending } =
-    useRegistrations(editId)
-  const formatLocked = isFormatLocked({
-    editing: !!editId,
-    serverLocked,
-    registrationsPending: editRegistrationsPending,
-    registrations: editRegistrations,
-  })
+  const eventForm = useEventForm()
   const [showHistory, setShowHistory] = useState(true)
   const [error, setError] = useState('')
   // Admin pending-transfer panel — open for one tournament at a time.
@@ -96,10 +73,7 @@ export default function Tournament({ onNavigate }: { onNavigate: EventNavigate }
       onNavigate?.('settings')
       return
     }
-    setForm(emptyForm)
-    setEditId(null)
-    setServerLocked(false)
-    setShowForm(true)
+    eventForm.openNew()
   }
 
   const openEdit = (t: NormalisedTournament) => {
@@ -107,31 +81,7 @@ export default function Tournament({ onNavigate }: { onNavigate: EventNavigate }
       onNavigate?.('settings')
       return
     }
-    setForm({
-      name: t.name || '',
-      date: t.date || '',
-      time: t.time || '',
-      location: t.location || '',
-      maxPlayers: t.maxPlayers || '16',
-      duration: t.duration || 90,
-      format: t.format || 'lobster_matching',
-      entryMode: t.entryMode || 'individual',
-      genderMode: t.genderMode || 'mixed',
-      courts: t.courts?.length
-        ? t.courts.map((c) => ({ name: c.name || '', booked: !!c.booked }))
-        : [{ name: '', booked: false }],
-      pricePerPerson:
-        parseFloat(String(t.totalPrice)) > 0 && parseInt(String(t.maxPlayers)) > 0
-          ? (parseFloat(String(t.totalPrice)) / parseInt(String(t.maxPlayers)))
-              .toFixed(2)
-              .replace(/\.00$/, '')
-          : (t.totalPrice ?? ''),
-      tikkieLink: t.tikkieLink || '',
-      notes: t.notes || '',
-    })
-    setEditId(t.id)
-    setServerLocked(false)
-    setShowForm(true)
+    eventForm.openEdit(t)
   }
 
   const handleDelete = async (id: string) => {
@@ -156,50 +106,17 @@ export default function Tournament({ onNavigate }: { onNavigate: EventNavigate }
     }
   }
 
-  // Someone signed up while the form was open: put the saved format back so
-  // the next Save goes through, and lock the picker.
-  const revertFormat = () => {
-    const saved = tournaments.find((t) => t.id === editId)
-    if (saved) setForm((f) => ({ ...f, ...formatOption({ format: saved.format }) }))
-    setServerLocked(true)
-  }
-
+  // A format refused by the server is put back and locked by the hook; the
+  // picker's lock note says why.
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    setSaving(true)
     setError('')
     try {
-      const data = buildEventData({ form }) as Partial<NormalisedTournament>
-      try {
-        if (editId) await updateTournament(editId, data)
-        else await addTournament(data)
-        setShowForm(false)
-      } catch (err) {
-        if (isEntryModeLocked(err)) revertFormat()
-        else setError(errorMessage(err, 'Could not save event.'))
-      }
-    } finally {
-      setSaving(false)
+      await eventForm.save()
+    } catch (err) {
+      setError(errorMessage(err, 'Could not save event.'))
     }
   }
-
-  const addCourt = () =>
-    setForm((f) => ({
-      ...f,
-      courts: [...f.courts, { name: '', booked: false }],
-    }))
-
-  const removeCourt = (i: number) =>
-    setForm((f) => ({
-      ...f,
-      courts: f.courts.filter((_, idx) => idx !== i),
-    }))
-
-  const setCourt: SetEventFormCourt = (i, field, value) =>
-    setForm((f) => ({
-      ...f,
-      courts: f.courts.map((c, idx) => (idx === i ? { ...c, [field]: value } : c)),
-    }))
 
   return (
     <div className="-mx-4">
@@ -283,19 +200,7 @@ export default function Tournament({ onNavigate }: { onNavigate: EventNavigate }
           </div>
         </CollapsibleSection>
 
-        <EventFormModal
-          open={showForm}
-          editId={editId}
-          form={form}
-          setForm={setForm}
-          saving={saving}
-          formatLocked={formatLocked}
-          onSubmit={handleSubmit}
-          onClose={() => setShowForm(false)}
-          addCourt={addCourt}
-          removeCourt={removeCourt}
-          setCourt={setCourt}
-        />
+        <EventFormModal {...eventForm.modalProps} onSubmit={(e) => void handleSubmit(e)} />
       </div>
     </div>
   )

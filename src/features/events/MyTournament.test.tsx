@@ -40,6 +40,10 @@ vi.mock('./useEventPhase', () => ({
   useEventPhase: () => ({ phase: mockPhase, oscarsPhase: 'not_created' }),
 }))
 
+vi.mock('./teams/useTeams', () => ({
+  useTeamEntries: () => ({ entries: [] }),
+}))
+
 const mockSync = vi.fn()
 vi.mock('./useTournamentSync', () => ({
   useTournamentSync: (args: unknown) => mockSync(args),
