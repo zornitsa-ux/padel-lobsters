@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { usePlayers } from '../../players/usePlayers'
-import { useMmRatings } from '../../matchmaking/useMatchmaking'
 import { useRegistrations } from '../useRegistrations'
 import { useUpdateTournament } from '../useTournaments'
 import { useTeamEntries } from '../teams/useTeams'
@@ -18,17 +17,17 @@ import type { NormalisedTournament } from '../../../lib/normalise'
 export function useKingOfCourtSeeding({ tournament }: { tournament: NormalisedTournament }) {
   const { data: registrations = [] } = useRegistrations(tournament.id)
   const { data: players = [] } = usePlayers()
-  const { data: mmRatings } = useMmRatings({ enabled: true })
   const { entries } = useTeamEntries({ tournamentId: tournament.id, registrations })
   const [draft, setDraft] = useState<string[] | null>(null)
 
   const registered = useMemo(() => entries.filter((e) => e.status === 'registered'), [entries])
   const teams = useMemo(() => registered.map((entry) => toKotcTeam({ entry })), [registered])
-  const playersById = useMemo(() => toPlayersById({ players, mmRatings }), [players, mmRatings])
+  const playersById = useMemo(() => toPlayersById({ players }), [players])
   const seeded = useMemo(() => seedTeams({ teams, playersById }), [teams, playersById])
   const courts = useMemo(() => toCourts({ courts: tournament.courts }), [tournament.courts])
 
   const saved = useMemo(() => seeded.map((t) => t.teamId), [seeded])
+  const strengthById = useMemo(() => new Map(seeded.map((t) => [t.teamId, t])), [seeded])
   const order = useMemo(() => reconcileOrder({ draft, saved }), [draft, saved])
   const layout = useMemo(() => startingCourts({ seededTeamIds: order, courts }), [order, courts])
 
@@ -48,7 +47,7 @@ export function useKingOfCourtSeeding({ tournament }: { tournament: NormalisedTo
 
   return {
     labelOf,
-    strengthById: new Map(seeded.map((t) => [t.teamId, t])),
+    strengthById,
     teams,
     order,
     setOrder: setDraft,
@@ -93,8 +92,7 @@ export function useKingOfCourtActions({ tournamentId }: { tournamentId: string }
     error,
     saveSeeds: ({ patches }: { patches: EventTeamPatch[] }) =>
       run('seeds', () => saveTeams(patches)),
-    // Seeds are saved first: players can't read mm ratings, so their view
-    // must come from saved seeds, not a recomputed order.
+    // Seeds are saved first, so players see the admin's order, reorders included.
     publish: ({ patches }: { patches: EventTeamPatch[] }) =>
       run('publish', async () => {
         await saveTeams(patches)

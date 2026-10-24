@@ -3,7 +3,6 @@ import {
   finalRankUpdates,
   hasRepeatedTeam,
   initialCourtResults,
-  isEventDayReached,
   moveTeam,
   reconcileOrder,
   seedUpdates,
@@ -116,14 +115,5 @@ describe('hasRepeatedTeam', () => {
         ],
       }),
     ).toBe(false)
-  })
-})
-
-describe('isEventDayReached', () => {
-  const now = new Date(2026, 10, 15, 9) // Sun 15 Nov, local
-  it('opens on the event day, not before', () => {
-    expect(isEventDayReached({ date: '2026-11-16', now })).toBe(false)
-    expect(isEventDayReached({ date: '2026-11-15', now })).toBe(true)
-    expect(isEventDayReached({ date: '2026-11-14', now })).toBe(true)
   })
 })

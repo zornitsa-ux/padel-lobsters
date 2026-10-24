@@ -17,9 +17,6 @@ vi.mock('../useTournaments', () => ({
 }))
 vi.mock('../teams/teamQueries', () => ({ updateEventTeams: m.updateEventTeams }))
 vi.mock('../../players/usePlayers', () => ({ usePlayers: () => ({ data: players }) }))
-vi.mock('../../matchmaking/useMatchmaking', () => ({
-  useMmRatings: () => ({ data: { a1: { mu: 5, sigma: 0.3 } } }),
-}))
 vi.mock('../useRegistrations', () => ({ useRegistrations: () => ({ data: registrations }) }))
 vi.mock('../teams/useTeams', async () => {
   const { buildTeamEntries } = await import('../teams/teamEntries')
@@ -94,7 +91,7 @@ beforeEach(() => {
 afterEach(cleanup)
 
 describe('KingOfCourtAdmin — seeds', () => {
-  it('orders teams strongest first, rating before level', () => {
+  it('orders teams strongest first by Playtomic level', () => {
     renderAdmin()
     const rows = seedRows()
     expect(rows[0]).toContain('A One & A Two')
@@ -164,9 +161,35 @@ describe('KingOfCourtAdmin — seeds', () => {
     )
   })
 
+  it('offers no Save order before the assignments are shown', () => {
+    renderAdmin()
+    fireEvent.click(screen.getByRole('button', { name: 'Move B One & B Two up' }))
+    expect(seedRows()[0]).toContain('B One')
+    expect(screen.queryByRole('button', { name: 'Save order' })).toBeNull()
+  })
+
+  it('shows the reordered list to players, saving the new order', async () => {
+    renderAdmin()
+    fireEvent.click(screen.getByRole('button', { name: 'Move B One & B Two up' }))
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Show starting court assignments to players' }),
+    )
+
+    await waitFor(() =>
+      expect(m.updateEventTeams).toHaveBeenCalledWith({
+        patches: [
+          { id: 'team-b', seed: 1 },
+          { id: 'team-a', seed: 2 },
+          { id: 'team-c', seed: 3 },
+        ],
+      }),
+    )
+  })
+
   it('shows a save failure', async () => {
     m.updateEventTeams.mockRejectedValue(new Error('nope'))
-    renderAdmin()
+    m.teams = [team('a', { seed: 1 }), team('b', { seed: 2 }), team('c', { seed: 3 })]
+    renderAdmin(tournament({ startingCourtsPublishedAt: '2026-11-15T10:00:00Z' }))
     fireEvent.click(screen.getByRole('button', { name: 'Move B One & B Two up' }))
     fireEvent.click(screen.getByRole('button', { name: 'Save order' }))
 

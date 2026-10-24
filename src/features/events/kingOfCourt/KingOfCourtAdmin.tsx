@@ -3,12 +3,12 @@ import { ChevronDown, ChevronUp } from 'lucide-react'
 import { IconButton } from '../../../components/ui/IconButton'
 import { useConfirm } from '../../../lib/confirmBus'
 import { formatDate } from '../eventHelpers'
+import { isEventDayReached } from '../../../lib/tournamentDate'
 import { rankFromFinalCourts } from './domain'
 import {
   finalRankUpdates,
   hasRepeatedTeam,
   initialCourtResults,
-  isEventDayReached,
   moveTeam,
   seedUpdates,
 } from './kotcAdmin'
@@ -160,7 +160,9 @@ function SeedsCard({
                   : 'Show starting court assignments to players'}
               </button>
             )}
-            {patches.length > 0 && (
+            {/* Before they're shown, Show saves the order. Saving earlier would pin
+                today's teams above stronger teams that sign up later. */}
+            {publishedAt && patches.length > 0 && (
               <button
                 type="button"
                 className="btn-secondary py-2 px-4 text-sm"

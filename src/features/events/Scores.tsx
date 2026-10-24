@@ -9,6 +9,7 @@ import { TabSwitcher } from '../../components/ui/TabSwitcher'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { ProgressBar } from '../../components/ui/ProgressBar'
 import { useTournamentSync } from './useTournamentSync'
+import { hasLiveScores } from './eventFormat'
 import { useOscarResults } from '../oscars/useOscarResults'
 import { useRaffleWinners } from '../raffle/useRaffle'
 import { groupOscarResultsByCategory } from '../oscars/oscarResults'
@@ -44,10 +45,9 @@ export default function Scores({ tournament, onNavigate }: ScoresProps) {
   const [activeRoundIdx, setActiveRoundIdx] = useState(0)
 
   // Keep displayed scores current while the event is still running.
-  // Disabled for completed events — scores are frozen.
   useTournamentSync({
     tournamentId: tournament?.id,
-    enabled: tournament != null && tournament.status !== 'completed',
+    enabled: tournament != null && hasLiveScores(tournament),
   })
 
   // `lobster_oscars_get_results` returns nothing until the session's `shared_at`

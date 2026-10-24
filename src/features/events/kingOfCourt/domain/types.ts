@@ -2,7 +2,6 @@ import { z } from 'zod'
 
 export const kotcPlayerSchema = z.object({
   id: z.string().min(1),
-  mmRating: z.number().nullable(),
   playtomicLevel: z.number().nullable(),
 })
 export type KotcPlayer = z.infer<typeof kotcPlayerSchema>

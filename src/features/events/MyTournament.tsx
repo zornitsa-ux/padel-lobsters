@@ -6,6 +6,7 @@ import { useMatches } from './useMatches'
 import { usePlayers } from '../players/usePlayers'
 import { useEventPhase } from './useEventPhase'
 import { useTournamentSync } from './useTournamentSync'
+import { hasLiveScores } from './eventFormat'
 import { resultsWithheld } from './resultsPhase'
 import { splitRegistrationsByStatus, computePaymentConfig } from './registration/utils'
 import { EmptyState } from '../../components/ui/EmptyState'
@@ -41,10 +42,10 @@ export default function MyTournament({ tournament, onNavigate }: Props) {
   // cache and a schedule rewrite refetches it. Broadcast-only, so this adds no
   // database load however many players hold the tab open — but it does make /me
   // the widest subscriber on the channel. See ARCHITECTURE.md "Live-update
-  // scope". Same gate as Schedule and Scores: off once scores are frozen.
+  // scope". Same gate as Schedule and Scores.
   useTournamentSync({
     tournamentId: tournament.id,
-    enabled: claimedId != null && tournament.status !== 'completed',
+    enabled: claimedId != null && hasLiveScores(tournament),
   })
 
   const playerById = useMemo(() => new Map(players.map((p) => [p.id, p])), [players])

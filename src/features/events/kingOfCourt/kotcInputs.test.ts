@@ -38,14 +38,14 @@ describe('toKotcTeam', () => {
 })
 
 describe('toPlayersById', () => {
-  it('uses the learned rating where there is one, the level otherwise', () => {
+  it('keeps only the reported Playtomic level', () => {
     const players = [
-      { id: 'p1', playtomicLevel: 3 },
-      { id: 'p2', playtomicLevel: 2.5 },
+      { id: 'p1', playtomicLevel: 3, name: 'x' },
+      { id: 'p2', playtomicLevel: 2.5, name: 'y' },
     ]
-    expect(toPlayersById({ players, mmRatings: { p1: { mu: 4.2, sigma: 0.3 } } })).toEqual({
-      p1: { id: 'p1', mmRating: 4.2, playtomicLevel: 3 },
-      p2: { id: 'p2', mmRating: null, playtomicLevel: 2.5 },
+    expect(toPlayersById({ players })).toEqual({
+      p1: { id: 'p1', playtomicLevel: 3 },
+      p2: { id: 'p2', playtomicLevel: 2.5 },
     })
   })
 })

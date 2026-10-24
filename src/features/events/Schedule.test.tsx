@@ -47,6 +47,7 @@ vi.mock('./kingOfCourt/KingOfCourtAdmin', () => ({
 
 import Schedule from './Schedule'
 import { TEAM_EVENT_NOTE } from './schedule/ScheduleGeneratorControls'
+import { useTournamentSync } from './useTournamentSync'
 import { fixtureAuth } from '../../test/sessions'
 
 const players = Array.from({ length: 8 }, (_, i) => ({
@@ -101,6 +102,9 @@ describe('Schedule — V2 routing without a rollout flag (D-028)', () => {
     expect(screen.getByTestId('kotc-admin')).toBeTruthy()
     expect(screen.queryByTestId('v2-matchmaking')).toBeNull()
     expect(legacyGenerateButton()).toBeNull()
+    expect(vi.mocked(useTournamentSync)).toHaveBeenLastCalledWith(
+      expect.objectContaining({ enabled: false }),
+    )
   })
 
   it('keeps the generator off any other team event', () => {

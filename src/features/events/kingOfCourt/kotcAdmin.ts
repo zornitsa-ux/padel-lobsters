@@ -1,4 +1,3 @@
-import { localDateString } from '../../../lib/tournamentDate'
 import type { CourtResult, KotcTeam, StartingCourt } from './domain'
 
 export type SeedUpdate = { id: string; seed: number }
@@ -83,11 +82,3 @@ export const hasRepeatedTeam = ({ courtResults }: { courtResults: CourtResult[] 
   const picked = courtResults.flatMap(({ first, second }) => [first, second]).filter(Boolean)
   return new Set(picked).size !== picked.length
 }
-
-export const isEventDayReached = ({
-  date,
-  now = new Date(),
-}: {
-  date: string | null | undefined
-  now?: Date
-}): boolean => !date || date <= localDateString(now)
