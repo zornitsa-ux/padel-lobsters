@@ -33,14 +33,14 @@
 
 ## 0. Timeline
 
-| Milestone                         | Target                           | Notes                                                  |
-| --------------------------------- | -------------------------------- | ------------------------------------------------------ |
-| Docs agreed                       | Wed 21 Oct                       | This PR                                                |
-| **R1: team signup live**          | Tue 27 Oct                       | T1, T3–T7. Slipped from Fri 23 for D-015/D-016         |
-| Partner invites live              | Within the first week of signups | T2 (edge function + RPC), so invites go out well ahead |
-| PIN cutover                       | Thu 5 Nov                        | Other initiative; no event 2–8 Nov                     |
-| **R2: seeding + final standings** | ≥ 3 days before the event        | Phase 2, client-only                                   |
-| Event                             | Sun 15 Nov                       | 5 courts, 10 teams (OQ-1, D-017)                       |
+| Milestone                         | Target           | Notes                                                   |
+| --------------------------------- | ---------------- | ------------------------------------------------------- |
+| Docs agreed                       | Wed 21 Oct       | #55                                                     |
+| **R1: team signup live**          | Tue 27 Oct       | **Shipped Sat 24 Oct** (#56, #58–#61, migration pushed) |
+| Partner invites live              | After R2 (D-023) | T2 (edge function + RPC); deprioritised behind Phase 2  |
+| PIN cutover                       | Thu 5 Nov        | Other initiative; no event 2–8 Nov                      |
+| **R2: seeding + final standings** | By Thu 12 Nov    | Phase 2, client-only                                    |
+| Event                             | Sun 15 Nov       | 5 courts, 10 teams (OQ-1, D-017)                        |
 
 ---
 
@@ -72,74 +72,79 @@ States: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked.
   merge and push the RPC migration.
 - **R2** is client-only.
 
-### Resume here (2026-10-24, R1 merged)
+### Resume here (2026-10-24 checkpoint: R1 shipped)
 
-**Where we are.** **R1 is on `main`** (#56, #58, #59, #60, plus the cache fix
-#61) and the migration is pushed to production. The comprehensive review of
-`main...kotc-test` was done first; the owner confirmed two findings as known
+**Where we are.** **R1 is live.** Everything for Phase 1 except T2 is on `main`:
+#56 (schema and RPCs, migration pushed to production), #58 (event form), #60
+(signup UI), #59 (Payments), #61 (query-cache reset on account switch), and
+#57 (the King of the Court domain, not yet called by anything). All PRs were
+squash-merged. Before merging, a comprehensive review of the whole change set
+was done and fixed (2026-10-24 log). The owner confirmed two findings as known
 choices: an admin partner change leaves the team waiting for the new partner,
-and raising capacity doesn't promote waitlisted teams. The clean local apply
-passed (below). **Next:** merge #57, then T2 (partner invites) and Phase 2
-(T9–T11).
+and raising capacity doesn't promote waitlisted teams.
 
-**Branches** (2026-10-24; #56, #58, #59, #60 and #61 are squash-merged and the R1
-migration is pushed to production):
+**Next, in order** (owner reprioritised 2026-10-24, D-023: Phase 2 first,
+partner invites later):
 
-| Branch                              | PR  | Base   | Status                    |
-| ----------------------------------- | --- | ------ | ------------------------- |
-| `team-events-schema`                | #56 | `main` | merged; `db push` done    |
-| `team-events-event-form`            | #58 | `main` | merged                    |
-| `team-events-signup-ui`             | #60 | `main` | merged                    |
-| `team-events-payments`              | #59 | `main` | merged                    |
-| `team-events-kotc-domain`           | #57 | `main` | open; rebased onto `main` |
-| `fix/reset-cache-on-account-switch` | #61 | `main` | merged                    |
+1. **Phase 2 → R2** (client-only, must be live by Thu 12 Nov, 3 days before
+   the Sun 15 Nov event):
+   - **T9** lifecycle: the `eventPhase` King of the Court branch, Finish with
+     zero matches and no rating changes, the matcher guard.
+   - **T10** admin seeding: reorder seeds, Publish starting courts
+     (`starting_courts_published_at`), final standings entry. This is the
+     domain's first caller: parse its Zod schemas at that boundary and build
+     `KotcTeam` from `EventTeam` instead of repeating the fields.
+   - **T11** player views: starting court on Schedule, /me and the upcoming
+     card; Results ranking; Lobster Review rank.
+   - **T12** local verification (task notes below).
 
-The integration branch `kotc-test` is local only, in the worktree
-`../padel-lobsters-kotc-test`: `team-events-signup-ui` merged with `-payments`,
-`-kotc-domain` and the cache fix. Rebuild it after changing any branch: reset
-it to `team-events-signup-ui`, merge the other three, and keep "ours" for the
-`PLAN.md` conflict. Review the whole change set with `git diff main...kotc-test`.
+   T9 and T10 don't depend on each other: each branches off `main` as its own
+   PR. T11 needs both, so it starts from `main` once they've merged. No PR is
+   stacked on another, so nothing needs rebasing or force-pushing.
 
-**Local database.** Clean apply done 2026-10-24: `rehearsal:sync` from `main`
-(136 players), then `npx supabase migration up --local` from
-`team-events-schema`. All 14 integrity counts were the same before and after
-the migration, `supabase/tests/team_events.sql` passed all 29 checks, and
-`db:grants:check` matched. The local database now holds production data plus
-the R1 migration; `npm run db:reset` puts the seed data back.
+2. **T2: partner invites** (deprioritised). Until then a captain-created
+   partner gets no email: the captain is told to let them know, the partner
+   can sign in with that email at any time, and admins see "hasn't signed in
+   yet" on the team row. What exists: `partner_invites.invited_at` /
+   `invited_by`, `admin_list_partner_invites`, `usePartnerInvites`. What's
+   needed: a new `event_invite` kind in the `send-invite-email` edge function
+   (today it accepts `league_invite`, `added`, `resend`) with the captain and
+   event names; `admin_send_event_invite` reusing `private.send_invite_email`
+   and setting `invited_at` / `invited_by`; an admin "Send invite" action.
+   Check the email locally in Mailpit. Release: merge, deploy the edge function
+   from `main`, then `db push`. It's sign-in-facing, so not from Thu 12 Nov
+   until after the event.
 
-**Fixed in the combined review:**
+**Release windows.** No sign-in-facing release within 3 days of a tournament.
+The PIN cutover is Thu 5 Nov (other initiative). The event is Sun 15 Nov, so
+nothing sign-in-facing ships from Thu 12 Nov.
 
-- D-022: a captain-created partner can say "I'm not playing" without claiming
-  the account; `/account` is exempt from the finish-setup redirect (#56, #60).
-- /me is team-aware: team card, team amount for the captain, and a link to sign
-  up as a team instead of an individual signup the server refuses (#60).
-- `useTeamEntries` refetches teams that a registration points at, so a new team
-  can't drop out of the lists; the roster line counts the same entries (#56,
-  #60, #59).
-- Duplication: one decline dialog (`useConfirmDecline`), one `useEventForm`, one
-  `eventFormat` module, `isActiveRegistration`, `firstRow`, `pricePerEntry`,
-  `playerNameOf`, `teamKeys.allInvites`; team entries built once per render;
-  the player list refetched only after a new partner;
-  `TeamInviteRedirect` → `PartnerOnboardingRedirect`; Payments' dead "covered"
-  badge removed.
+**Working notes.**
+
+- **No stacked PRs.** Branch each task off `main`; if one task needs another,
+  start it after that one merges. When `main` moves under an open PR, merge
+  `origin/main` into the branch rather than rebasing, so a normal push is
+  enough. Update `PLAN.md` in a short docs PR after each merge, so feature PRs
+  don't conflict on it.
+- **Formatting.** Run `npm run format:check` before pushing: commits made in a
+  worktree can skip the pre-commit formatter, and CI fails on it.
+  **Local database.** Production data from 2026-10-24 plus the R1 migration
+  (clean apply: 14 integrity counts unchanged, 29 `team_events.sql` checks,
+  `db:grants:check` matched). `npm run db:reset` puts the seed data back. For
+  a new migration, rehearse the same way: `rehearsal:sync` from `main`, then
+  `npx supabase migration up --local` from the branch (CONTRIBUTING.md).
+- The local integration branch `kotc-test` and the per-PR worktrees are no
+  longer needed.
 
 **Still open (deliberately):**
 
-- `#57`: Zod schemas are exported but never parsed; `KotcTeam` repeats
-  `EventTeam` fields. Do this in T10, when the domain gets its first caller and
-  #57 sits on the team-events code.
 - Server edge cases: `change_team_partner` and `apply_team_transfer` raise
   `tournament_full` (from the capacity trigger) on an event an admin has pushed
   over capacity, instead of returning a status; `apply_team_transfer` skips the
   matches sync (moot while team events have no matches).
 - `check_new_partner_email` has no rate limit (it reveals no more than signup).
 - `transferQueries.ts` and `playerQueries.ts` still unwrap RPC rows by hand;
-  switch them to `lib/firstRow` in a follow-up on `main`.
-
-**Gates before R1.** Merge in order: #56 → (#58 → #60, #59) → `db push` from
-`main`. #57 can merge any time. The cache fix ships on its own. Remember the
-3-day rule around the Thu 5 Nov PIN cutover and the Sun 15 Nov event: R1 is
-sign-in-facing (the finish-your-account step).
+  switch them to `lib/firstRow`.
 
 ---
 
@@ -208,8 +213,6 @@ signed in):
 - Men-only / gender signup check.
 - Team names.
 - Fixed-pair Americano (`team + lobster_matching`).
-- First-sign-in "finish your profile" prompt for captain-created partners
-  (DESIGN §3.5). Pull it forward if time allows.
 - Clean up ghost partner accounts (never signed in, no active registration),
   once PIN removal T16/T17 provides an auth deletion path.
 - The partner can leave a team themselves.
@@ -314,3 +317,21 @@ placeholders as partners, was withdrawn by D-010: placeholders aren't offered.)
 - 2026-10-24: **Checkpoint.** Owner walk-through mostly done and OK. The 14
   integrity counts after it match the baseline, and no email was queued. Next:
   a comprehensive review of all branches together (§1 "Resume here").
+- 2026-10-24: **Combined review** of everything in `main...kotc-test`, and fixes:
+  - **D-022:** a captain-created partner can say "I'm not playing" without
+    claiming the account, and `/account` is exempt from the finish-setup
+    redirect.
+  - /me is team-aware (team card, the team amount for the captain, sign up
+    as a team on the event page).
+  - `useTeamEntries` refetches teams a registration points at, so a new team
+    can't drop out of the lists; the roster line counts the same entries.
+  - Duplication removed: one decline dialog, `useEventForm`, `eventFormat`,
+    `isActiveRegistration`, `firstRow`, `pricePerEntry`, `playerNameOf`, team
+    entries built once per render, the player list refetched only after a new
+    partner; `TeamInviteRedirect` renamed `PartnerOnboardingRedirect`.
+  - Clean local apply on fresh production data: the 14 integrity counts were
+    unchanged by the migration, and `team_events.sql` passed 29 checks.
+- 2026-10-24: **R1 shipped.** #61, #56 (then `db push`), #58, #60, #59 and #57
+  squash-merged in that order. T2 and Phase 2 are next (§1 "Resume here").
+- 2026-10-24: **D-023:** the owner moved Phase 2 (T9–T12) ahead of partner
+  invites (T2). Phase 2 tasks branch off `main` without stacking.
