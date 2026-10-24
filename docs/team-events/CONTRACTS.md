@@ -251,6 +251,15 @@ D-021. `get_my_account_setup` returns one row for a captain-created account
 for anyone else. `acknowledge_my_account` sets
 `partner_invites.account_acknowledged_at`.
 
+```sql
+public.check_new_partner_email(input_email text)
+returns table(status text)   -- 'ok' | 'invalid_email' | 'email_in_use'
+```
+
+The new-partner form's early check, before the confirm step. Same rules as
+`create_partner_player` (shared `private.new_partner_email_problem`). It says
+only whether an account exists, never whose it is.
+
 ### 3.2b `set_registration_payment` (D-016)
 
 ```sql

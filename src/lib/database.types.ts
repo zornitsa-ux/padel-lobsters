@@ -2076,6 +2076,12 @@ export type Database = {
           status: string
         }[]
       }
+      check_new_partner_email: {
+        Args: { input_email: string }
+        Returns: {
+          status: string
+        }[]
+      }
       create_transfer: {
         Args: {
           input_from_player_id?: string

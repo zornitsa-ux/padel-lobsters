@@ -668,6 +668,17 @@ begin
     raise exception 'CHECK 28f FAILED: a member got a setup row';
   end if;
   raise notice 'CHECK 28 ok: account acknowledgement gates the invite answer';
+
+  -- CHECK 29: the new-partner form's early email check matches create_partner_player
+  perform pg_temp.act(v_p[13], false);
+  if (select status from public.check_new_partner_email(
+        upper((select email from public.players where id = v_p[1])))) <> 'email_in_use'
+     or (select status from public.check_new_partner_email('  nope ')) <> 'invalid_email'
+     or (select status from public.check_new_partner_email('x@padelobsters.internal')) <> 'invalid_email'
+     or (select status from public.check_new_partner_email(' Fresh.One@test.invalid ')) <> 'ok' then
+    raise exception 'CHECK 29 FAILED: early email check';
+  end if;
+  raise notice 'CHECK 29 ok: early new-partner email check';
 end $$;
 
 rollback;

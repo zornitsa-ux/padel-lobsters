@@ -12,6 +12,7 @@ import type {
   RespondInviteStatus,
   AccountSetup,
   AcknowledgeAccountStatus,
+  NewPartnerEmailStatus,
   TeamCancelReason,
   TeamInvite,
 } from './teamTypes'
@@ -214,6 +215,17 @@ export async function fetchMyTeamInvites(): Promise<TeamInvite[]> {
     .array(teamInviteRowSchema)
     .parse(data ?? [])
     .map(toTeamInvite)
+}
+
+// Early check for the new-partner form; register_team_for_tournament checks again.
+export async function checkNewPartnerEmail({
+  email,
+}: {
+  email: string
+}): Promise<NewPartnerEmailStatus> {
+  const { data, error } = await supabase.rpc('check_new_partner_email', { input_email: email })
+  if (error) throw error
+  return (firstRow(data)?.status ?? 'ok') as NewPartnerEmailStatus
 }
 
 export async function fetchMyAccountSetup(): Promise<AccountSetup | null> {

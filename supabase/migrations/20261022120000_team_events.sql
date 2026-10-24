@@ -207,6 +207,23 @@ $function$;
 -- The first non-admin path that creates a sign-in-able account for someone
 -- else, so every bound lives here, not in the callers: consent recorded,
 -- unused email, one account per call, 3 a day per person attesting.
+-- Null when a new partner can be created with this email (already lowercased
+-- and trimmed). Shared by create_partner_player and the form's early check.
+create or replace function private.new_partner_email_problem(input_email text)
+returns text
+language sql
+stable
+security definer
+set search_path to 'pg_catalog', 'public', 'extensions'
+as $function$
+  select case
+    when not coalesce(private.is_valid_email(input_email), false)
+         or input_email like '%@padelobsters.internal' then 'invalid_email'
+    when exists (select 1 from public.players p where lower(p.email) = input_email)
+         or exists (select 1 from auth.users u where lower(u.email) = input_email) then 'email_in_use'
+  end
+$function$;
+
 create or replace function private.create_partner_player(
   input_requested_by uuid,
   input_tournament_id uuid,
@@ -224,6 +241,7 @@ declare
   v_email text := lower(nullif(btrim(coalesce(input_new_partner ->> 'email', '')), ''));
   v_level_text text := nullif(btrim(coalesce(input_new_partner ->> 'playtomic_level', '')), '');
   v_level numeric := 0;
+  v_email_problem text;
   v_id uuid;
 begin
   if input_consent is not true then
@@ -232,7 +250,8 @@ begin
   if v_name is null or length(v_name) > 100 then
     return query select 'invalid_name'::text, null::uuid; return;
   end if;
-  if not private.is_valid_email(v_email) or v_email like '%@padelobsters.internal' then
+  v_email_problem := private.new_partner_email_problem(v_email);
+  if v_email_problem = 'invalid_email' then
     return query select 'invalid_email'::text, null::uuid; return;
   end if;
   if v_level_text is not null then
@@ -241,8 +260,7 @@ begin
     end if;
     v_level := v_level_text::numeric;
   end if;
-  if exists (select 1 from public.players p where lower(p.email) = v_email)
-     or exists (select 1 from auth.users u where lower(u.email) = v_email) then
+  if v_email_problem = 'email_in_use' then
     return query select 'email_in_use'::text, null::uuid; return;
   end if;
 
@@ -277,6 +295,25 @@ $function$;
 
 -- Validates the partner for a team: an existing active member not already in
 -- the event, or a new account via create_partner_player.
+-- The new-partner form checks the email before the confirm step. It says only
+-- whether an account exists, as signup would, never whose it is.
+create or replace function public.check_new_partner_email(input_email text)
+returns table(status text)
+language plpgsql
+stable
+security definer
+set search_path to 'pg_catalog', 'public', 'extensions'
+as $function$
+begin
+  if auth.uid() is null then
+    raise exception 'not_authenticated' using errcode = 'P0001';
+  end if;
+  return query select coalesce(
+    private.new_partner_email_problem(lower(nullif(btrim(coalesce(input_email, '')), ''))),
+    'ok');
+end
+$function$;
+
 create or replace function private.resolve_team_partner(
   input_tournament_id uuid,
   input_exclude_player_id uuid,
@@ -1502,6 +1539,7 @@ revoke execute on function public.registrations_team_consistent() from public, a
 revoke execute on function public.tournaments_guard_entry_mode() from public, anon, authenticated;
 revoke execute on function private.team_spot_transferable(uuid, uuid) from public, anon, authenticated;
 revoke execute on function private.caller_is_admin() from public, anon, authenticated;
+revoke execute on function private.new_partner_email_problem(text) from public, anon, authenticated;
 revoke execute on function private.create_partner_player(uuid, uuid, jsonb, boolean, boolean) from public, anon, authenticated;
 revoke execute on function private.resolve_team_partner(uuid, uuid, uuid, jsonb, boolean) from public, anon, authenticated;
 revoke execute on function private.cancel_team_rows(uuid, text) from public, anon, authenticated;
@@ -1514,6 +1552,7 @@ revoke execute on function public.cancel_my_team(uuid) from public, anon;
 revoke execute on function public.respond_to_team_invite(uuid, boolean) from public, anon;
 revoke execute on function public.get_my_team_invites() from public, anon;
 revoke execute on function public.get_my_account_setup() from public, anon;
+revoke execute on function public.check_new_partner_email(text) from public, anon;
 revoke execute on function public.acknowledge_my_account() from public, anon;
 revoke execute on function public.admin_cancel_team(uuid) from public, anon;
 revoke execute on function public.admin_promote_team(uuid) from public, anon;
@@ -1526,6 +1565,7 @@ grant execute on function public.cancel_my_team(uuid) to authenticated;
 grant execute on function public.respond_to_team_invite(uuid, boolean) to authenticated;
 grant execute on function public.get_my_team_invites() to authenticated;
 grant execute on function public.get_my_account_setup() to authenticated;
+grant execute on function public.check_new_partner_email(text) to authenticated;
 grant execute on function public.acknowledge_my_account() to authenticated;
 grant execute on function public.admin_cancel_team(uuid) to authenticated;
 grant execute on function public.admin_promote_team(uuid) to authenticated;

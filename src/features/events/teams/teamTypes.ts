@@ -111,6 +111,8 @@ export interface AccountSetup {
 
 export type AcknowledgeAccountStatus = 'ok' | 'not_needed'
 
+export type NewPartnerEmailStatus = 'ok' | 'invalid_email' | 'email_in_use'
+
 export type CancelTeamStatus = 'cancelled' | 'already_cancelled' | 'not_found'
 
 export type PromoteTeamStatus =
