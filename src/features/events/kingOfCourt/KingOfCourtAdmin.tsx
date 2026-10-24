@@ -17,10 +17,15 @@ import { useKingOfCourtActions, useKingOfCourtSeeding } from './useKingOfCourtAd
 import type { CourtResult } from './domain'
 import type { NormalisedTournament } from '../../../lib/normalise'
 
+// Shown on the event day, so the time matters more than the date.
+const shownAt = (iso: string) =>
+  `${formatDate(iso)}, ${new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`
+
 type Seeding = ReturnType<typeof useKingOfCourtSeeding>
 type Actions = ReturnType<typeof useKingOfCourtActions>
 
-// DESIGN §3.3: seed, publish starting courts, then (optionally) final standings.
+// DESIGN §3.3: seed, show starting court assignments to players, then (optionally)
+// final standings.
 export default function KingOfCourtAdmin({ tournament }: { tournament: NormalisedTournament }) {
   const seeding = useKingOfCourtSeeding({ tournament })
   const actions = useKingOfCourtActions({ tournamentId: tournament.id })
@@ -63,10 +68,10 @@ function SeedsCard({
 
   const publish = async () => {
     const ok = await confirm({
-      title: 'Publish starting courts?',
+      title: 'Show starting court assignments to players?',
       message:
-        'Players will see their starting court. You can still reorder afterwards; they see each saved change.',
-      confirmLabel: 'Publish',
+        'Players will see which court their team starts on. You can still reorder afterwards; they see each saved change.',
+      confirmLabel: 'Show to players',
     })
     if (ok && (await actions.publish({ patches }))) setOrder(null)
   }
@@ -80,13 +85,13 @@ function SeedsCard({
             publishedAt ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-lob-muted'
           }`}
         >
-          {publishedAt ? 'Published' : 'Not published'}
+          {publishedAt ? 'Shown to players' : 'Not shown yet'}
         </span>
       </div>
       <p className="text-xs text-lob-muted">
         {publishedAt
-          ? `Published ${formatDate(publishedAt)}. Players see the saved seeds.`
-          : 'Strongest team first, from ratings. Reorder if needed, then publish.'}
+          ? `Shown to players since ${shownAt(publishedAt)}. They see the saved order.`
+          : 'Strongest team first, from ratings. Reorder if needed, then show the assignments to players, usually a couple of hours before the start.'}
       </p>
 
       {order.length === 0 ? (
@@ -146,11 +151,13 @@ function SeedsCard({
             {!publishedAt && (
               <button
                 type="button"
-                className="btn-primary py-2 px-4 text-sm"
+                className="btn-primary w-full py-2 px-4 text-sm"
                 disabled={actions.busy != null}
                 onClick={() => void publish()}
               >
-                {actions.busy === 'publish' ? 'Publishing…' : 'Publish starting courts'}
+                {actions.busy === 'publish'
+                  ? 'Showing…'
+                  : 'Show starting court assignments to players'}
               </button>
             )}
             {patches.length > 0 && (

@@ -60,7 +60,7 @@ type Busy = null | 'seeds' | 'publish' | 'standings'
 
 const FAILURE: Record<Exclude<Busy, null>, string> = {
   seeds: 'Could not save the seeds.',
-  publish: 'Could not publish the starting courts.',
+  publish: 'Could not show the starting court assignments.',
   standings: 'Could not save the final standings.',
 }
 

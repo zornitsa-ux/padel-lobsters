@@ -110,9 +110,11 @@ describe('KingOfCourtAdmin — seeds', () => {
     )
   })
 
-  it('publishes after saving every seed', async () => {
+  it('shows the assignments to players after saving every seed', async () => {
     renderAdmin()
-    fireEvent.click(screen.getByRole('button', { name: 'Publish starting courts' }))
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Show starting court assignments to players' }),
+    )
 
     await waitFor(() => expect(m.updateTournament).toHaveBeenCalled())
     expect(m.updateEventTeams).toHaveBeenCalledWith({
@@ -128,21 +130,25 @@ describe('KingOfCourtAdmin — seeds', () => {
     })
   })
 
-  it('does not publish when the admin backs out', async () => {
+  it('shows nothing to players when the admin backs out', async () => {
     m.confirm.mockResolvedValue(false)
     renderAdmin()
-    fireEvent.click(screen.getByRole('button', { name: 'Publish starting courts' }))
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Show starting court assignments to players' }),
+    )
 
     await waitFor(() => expect(m.confirm).toHaveBeenCalled())
     expect(m.updateEventTeams).not.toHaveBeenCalled()
     expect(m.updateTournament).not.toHaveBeenCalled()
   })
 
-  it('saves a reorder after publishing, writing only the moved seeds', async () => {
+  it('saves a reorder after showing, writing only the moved seeds', async () => {
     m.teams = [team('a', { seed: 1 }), team('b', { seed: 2 }), team('c', { seed: 3 })]
     renderAdmin(tournament({ startingCourtsPublishedAt: '2026-11-10T10:00:00Z' }))
     expect(screen.queryByRole('button', { name: 'Save order' })).toBeNull()
-    expect(screen.queryByRole('button', { name: 'Publish starting courts' })).toBeNull()
+    expect(
+      screen.queryByRole('button', { name: 'Show starting court assignments to players' }),
+    ).toBeNull()
 
     fireEvent.click(screen.getByRole('button', { name: 'Move C One & C Two up' }))
     expect(seedRows()[1]).toContain('C One')
