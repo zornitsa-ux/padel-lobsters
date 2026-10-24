@@ -17,7 +17,7 @@ import { PlayerRow } from '../../components/ui/PlayerRow'
 import { ProgressBar } from '../../components/ui/ProgressBar'
 import { StatTile } from '../../components/ui/StatTile'
 import PaymentReminderModal from './PaymentReminderModal'
-import { useEventTeams } from './teams/useTeams'
+import { useTeamEntries } from './teams/useTeams'
 import { buildPaymentRows } from './payments/teamPaymentRows'
 import { pricePerPlayer, type EventNavigate } from './eventHelpers'
 import type { NormalisedTournament } from '../../lib/normalise'
@@ -43,10 +43,10 @@ export default function Payments({
   const { data: regsData = [] } = useRegistrations(tournament?.id)
   const teamMode = tournament?.entryMode === 'team'
   const {
-    data: teams = [],
+    entries: teamEntries,
     isPending: teamsPending,
     isError: teamsFailed,
-  } = useEventTeams({ tournamentId: tournament?.id, enabled: teamMode })
+  } = useTeamEntries({ tournamentId: tournament?.id, registrations: regsData, enabled: teamMode })
   const [filter, setFilter] = useState<PaymentFilter>('all')
   const [reminderTarget, setReminderTarget] = useState<{ regId: string; name: string } | null>(null)
 
@@ -81,7 +81,7 @@ export default function Payments({
   const { regs, partnerIdByRegId, unitsPerRow } = buildPaymentRows({
     teamMode,
     registrations: regsData,
-    teams,
+    teamEntries,
   })
   // Status buckets — see Registration.jsx PayBadge for semantics.
   const confirmed = regs.filter(

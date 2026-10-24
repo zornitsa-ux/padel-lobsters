@@ -1,6 +1,5 @@
 import type { NormalisedRegistration } from '../registrationQueries'
-import { buildTeamEntries } from '../teams/teamEntries'
-import type { EventTeam } from '../teams/teamTypes'
+import type { TeamEntry } from '../teams/teamTypes'
 
 export interface PaymentRows {
   regs: NormalisedRegistration[]
@@ -13,11 +12,11 @@ export interface PaymentRows {
 export function buildPaymentRows({
   teamMode,
   registrations,
-  teams,
+  teamEntries,
 }: {
   teamMode: boolean
   registrations: NormalisedRegistration[]
-  teams: EventTeam[]
+  teamEntries: TeamEntry[]
 }): PaymentRows {
   if (!teamMode) {
     return {
@@ -26,9 +25,7 @@ export function buildPaymentRows({
       unitsPerRow: 1,
     }
   }
-  const entries = buildTeamEntries({ teams, registrations }).filter(
-    (e) => e.status === 'registered',
-  )
+  const entries = teamEntries.filter((e) => e.status === 'registered')
   return {
     regs: entries.map((e) => e.captain),
     partnerIdByRegId: new Map(entries.map((e) => [e.captain.id, e.partner.playerId])),
