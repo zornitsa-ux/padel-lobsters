@@ -7,6 +7,7 @@ const m = vi.hoisted(() => ({
   respondToTeamInvite: vi.fn(),
   confirm: vi.fn(),
   invites: [] as unknown[],
+  setup: null as { requestedByName: string; tournamentName: string; acknowledged: boolean } | null,
   session: { user: { id: 'me' } } as { user: { id: string } } | null,
 }))
 
@@ -17,6 +18,7 @@ vi.mock('../../players/usePlayers', () => ({
 }))
 vi.mock('../teams/useTeams', () => ({
   useMyTeamInvites: () => ({ data: m.invites, isPending: false }),
+  useMyAccountSetup: () => ({ data: m.setup, isPending: false }),
   useTeamActions: () => ({ respondToTeamInvite: m.respondToTeamInvite }),
 }))
 
@@ -54,6 +56,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   m.session = { user: { id: 'me' } }
   m.invites = [invite()]
+  m.setup = null
   m.confirm.mockResolvedValue(true)
   window.sessionStorage.clear()
 })
@@ -86,17 +89,11 @@ describe('acceptance screen', () => {
     })
   })
 
-  it('offers an optional profile step to an account the captain created', async () => {
-    m.invites = [invite({ accountCreatedByCaptain: true })]
-    m.respondToTeamInvite.mockResolvedValue('accepted')
+  it('sends an unconfirmed captain-created account to finish setup first', () => {
+    m.setup = { requestedByName: 'Cara Diaz', tournamentName: 'King Sunday', acknowledged: false }
     renderPage()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Accept' }))
-
-    const finish = await screen.findByRole('link', { name: 'Finish your profile' })
-    expect(finish.getAttribute('href')).toBe('/account')
-    fireEvent.click(screen.getByRole('button', { name: 'Skip' }))
-    expect((await screen.findByTestId('where')).textContent).toBe('/events/t1/info')
+    expect(screen.getByTestId('where').textContent).toBe('/finish-account')
   })
 
   it('confirms before declining', async () => {
@@ -198,6 +195,16 @@ describe('invite redirect', () => {
     m.session = { user: { id: 'someone-else' } }
     fireEvent.click(screen.getByRole('link', { name: 'home' }))
     expect(screen.getByTestId('where').textContent).toBe('/team-invites')
+  })
+
+  it('sends an unconfirmed captain-created account to finish setup on every page', () => {
+    m.setup = { requestedByName: 'Cara Diaz', tournamentName: 'King Sunday', acknowledged: false }
+    const first = renderApp()
+    expect(screen.getByTestId('where').textContent).toBe('/finish-account')
+    first.unmount()
+
+    renderApp()
+    expect(screen.getByTestId('where').textContent).toBe('/finish-account')
   })
 
   it('cannot loop when sessionStorage is unavailable', () => {

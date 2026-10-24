@@ -1,6 +1,5 @@
-import { useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { CheckCircle } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useApp } from '../../../context/useApp'
 import { useConfirm } from '../../../lib/confirmBus'
 import { EmptyState } from '../../../components/ui/EmptyState'
@@ -8,10 +7,17 @@ import Avatar from '../../../components/ui/Avatar'
 import DateTile from '../../../components/ui/DateTile'
 import { usePlayers } from '../../players/usePlayers'
 import { partnerAcceptNote } from '../teams/teamStatusMessages'
-import { useMyTeamInvites, useTeamActions } from '../teams/useTeams'
+import { useMyAccountSetup, useMyTeamInvites, useTeamActions } from '../teams/useTeams'
+import { writeStorage } from '../../../lib/safeStorage'
 import type { TeamInvite } from '../teams/teamTypes'
 import { declineMessage } from '../registration/team/teamHelpers'
-import { eventInfoPath, inviteReturnPath, inviteWhen } from './inviteRoutes'
+import {
+  eventInfoPath,
+  FINISH_ACCOUNT_PATH,
+  inviteReturnPath,
+  inviteSeenKey,
+  inviteWhen,
+} from './inviteRoutes'
 
 function EventHeading({ invite, eyebrow }: { invite: TeamInvite; eyebrow: string }) {
   return (
@@ -64,40 +70,22 @@ function InviteCard({
   )
 }
 
-function FinishProfileCard({ invite, onSkip }: { invite: TeamInvite; onSkip: () => void }) {
-  return (
-    <div className="card space-y-5">
-      <EventHeading invite={invite} eyebrow="You're in" />
-      <div className="flex items-start gap-3 rounded-xl bg-green-50 px-4 py-3">
-        <CheckCircle size={20} className="mt-0.5 flex-shrink-0 text-green-600" />
-        <p className="text-sm text-lob-slate leading-relaxed">
-          Your team with {invite.captainName} is confirmed. Add a few details to finish your
-          profile?
-        </p>
-      </div>
-      <div className="space-y-2">
-        <Link to="/account" className="btn-primary block w-full py-3 text-center">
-          Finish your profile
-        </Link>
-        <button onClick={onSkip} className="btn-secondary w-full py-3">
-          Skip
-        </button>
-      </div>
-    </div>
-  )
-}
-
 export default function TeamInvitesPage() {
   const { session } = useApp()
   const navigate = useNavigate()
   const location = useLocation()
   const confirm = useConfirm()
   const { respondToTeamInvite } = useTeamActions()
+  const playerId = session?.user?.id ?? null
   const { data: invites = [], isPending } = useMyTeamInvites({ enabled: !!session })
+  const { data: setup } = useMyAccountSetup({ enabled: !!session })
   const { data: players = [] } = usePlayers()
   const [busyId, setBusyId] = useState<string | null>(null)
   const [answered, setAnswered] = useState<string[]>([])
-  const [profileFor, setProfileFor] = useState<TeamInvite | null>(null)
+
+  useEffect(() => {
+    if (playerId) writeStorage({ area: 'session', key: inviteSeenKey({ playerId }), value: '1' })
+  }, [playerId])
 
   const open = invites.filter((i) => !answered.includes(i.teamId))
 
@@ -120,19 +108,11 @@ export default function TeamInvitesPage() {
     setBusyId(null)
     if (status !== 'accepted' && status !== 'declined') return
     setAnswered((ids) => [...ids, invite.teamId])
-    if (status === 'accepted' && invite.accountCreatedByCaptain) setProfileFor(invite)
-    else if (status === 'accepted') navigate(eventInfoPath({ tournamentId: invite.tournamentId }))
+    if (status === 'accepted') navigate(eventInfoPath({ tournamentId: invite.tournamentId }))
   }
 
-  if (profileFor) {
-    return (
-      <div className="pt-5">
-        <FinishProfileCard
-          invite={profileFor}
-          onSkip={() => navigate(eventInfoPath({ tournamentId: profileFor.tournamentId }))}
-        />
-      </div>
-    )
+  if (setup && !setup.acknowledged) {
+    return <Navigate to={FINISH_ACCOUNT_PATH} state={location.state} replace />
   }
 
   if (!session) {
