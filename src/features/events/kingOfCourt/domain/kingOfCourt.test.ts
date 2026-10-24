@@ -31,21 +31,21 @@ describe('teamStrength', () => {
       unrated: false,
     })
   })
-  it('treats playtomic level 0 as unknown and uses the known value', () => {
+  it('treats playtomic level 0 as unknown and counts it as 1', () => {
     expect(teamStrength({ team: team('t', 'p1', 'p3'), playersById })).toEqual({
-      strength: 4,
+      strength: 2.5,
       unrated: true,
     })
   })
-  it('is 0 and unrated when both are missing', () => {
+  it('is 1 and unrated when both are missing', () => {
     expect(teamStrength({ team: team('t', 'p3', 'p4'), playersById })).toEqual({
-      strength: 0,
+      strength: 1,
       unrated: true,
     })
   })
   it('treats a player absent from the map as missing', () => {
     expect(teamStrength({ team: team('t', 'p1', 'zz'), playersById })).toEqual({
-      strength: 4,
+      strength: 2.5,
       unrated: true,
     })
   })

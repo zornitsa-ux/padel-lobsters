@@ -519,6 +519,22 @@ OQ-4, odd counts, was closed by D-029: capacity matches the courts.)
     pending") and **D-030** (strength is the team's average
     level, shown as "Avg level").
 
+  A `/code-review` pass, and fixes:
+  - A King of the Court ending after midnight showed "Results pending" until
+    its end; it now stays upcoming.
+  - An unreported level counts as 1 (owner), so "Avg level" is a real
+    average for unrated teams too (D-030).
+  - The events are grouped once (`groupEventsByTime`) and the finished ones
+    passed to `PastEventResults`; the plain card is `AwaitingResultsCard`,
+    with only the "Results pending" badge it can show.
+  - Older bugs in the moved file: results cards for events on the same date
+    could swap places (the sort never returned 0), and the card's date
+    parsed as UTC, a day early west of UTC.
+  - Not changed: the Events list doesn't re-render at an event's end while
+    left open (it refreshes on focus); the per-card scans of all matches and
+    registrations predate this PR; an Americano never finished would say
+    "Results pending" for good (owner: very unlikely).
+
   A read-only review of the team-event UI against `components/ui` and the
   tokens (owner request) found: no success, warning or danger tokens (raw
   red, green and amber about 500 times app-wide; waitlist in three colour

@@ -9,7 +9,7 @@ import AdminTransferPanel from '../../components/AdminTransferPanel'
 import { DEFAULT_EVENT_DESCRIPTION } from './eventConstants'
 import EventFormModal from './EventFormModal'
 import UpcomingEventCard from './UpcomingEventCard'
-import { EventCard } from './EventCard'
+import { AwaitingResultsCard } from './AwaitingResultsCard'
 import { LeagueDashboardCard } from '../league/ui/LeagueDashboardCard'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { CollapsibleSection } from '../../components/ui/CollapsibleSection'
@@ -18,7 +18,7 @@ import { errorMessage, errorCode, FOREIGN_KEY_VIOLATION } from '../../lib/errors
 import { useConfirm } from '../../lib/confirmBus'
 import type { EventNavigate } from './eventHelpers'
 import type { NormalisedTournament } from '../../lib/normalise'
-import { eventTimeGroup } from './eventPhase'
+import { groupEventsByTime } from './eventPhase'
 import type { TournamentInput } from './tournamentQueries'
 
 export { DEFAULT_EVENT_DESCRIPTION }
@@ -44,10 +44,7 @@ export default function Tournament({ onNavigate }: { onNavigate: EventNavigate }
   const [adminTransferTournament, setAdminTransferTournament] =
     useState<NormalisedTournament | null>(null)
 
-  const awaitingResults = tournaments.filter(
-    (t) => eventTimeGroup({ tournament: t }) === 'awaitingResults',
-  )
-  const upcoming = tournaments.filter((t) => eventTimeGroup({ tournament: t }) === 'upcoming')
+  const { upcoming, awaitingResults, finished } = groupEventsByTime({ tournaments })
 
   const openAdd = () => {
     if (!isAdmin) {
@@ -171,11 +168,11 @@ export default function Tournament({ onNavigate }: { onNavigate: EventNavigate }
         >
           <div className="space-y-2">
             {awaitingResults.map((t) => (
-              <EventCard key={t.id} tournament={t} past />
+              <AwaitingResultsCard key={t.id} tournament={t} />
             ))}
 
             <div className="mt-4">
-              <PastEventResults onNavigate={onNavigate} />
+              <PastEventResults tournaments={finished} onNavigate={onNavigate} />
             </div>
           </div>
         </CollapsibleSection>

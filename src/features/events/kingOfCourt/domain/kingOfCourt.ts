@@ -11,7 +11,9 @@ import type {
 } from './types'
 
 // D-025, D-030: the team's average reported Playtomic level, never the learned
-// rating. Level 0 means not reported; an unrated team takes the known level.
+// rating. Level 0 means not reported, and an unreported player counts as 1.
+const UNRATED_LEVEL = 1
+
 const playerValue = (player: KotcPlayer | undefined): number | null =>
   player?.playtomicLevel != null && player.playtomicLevel > 0 ? player.playtomicLevel : null
 
@@ -24,8 +26,10 @@ export function teamStrength({
 }): TeamStrength {
   const a = playerValue(playersById[team.captainId])
   const b = playerValue(playersById[team.partnerId])
-  if (a == null || b == null) return { strength: a ?? b ?? 0, unrated: true }
-  return { strength: (a + b) / 2, unrated: false }
+  return {
+    strength: ((a ?? UNRATED_LEVEL) + (b ?? UNRATED_LEVEL)) / 2,
+    unrated: a == null || b == null,
+  }
 }
 
 const byCreatedThenId = (a: KotcTeam, b: KotcTeam) =>

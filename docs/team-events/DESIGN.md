@@ -298,8 +298,8 @@ Built in #63 and #64; revised by D-024 to D-027.
 
 1. **Seeding.** Team strength = the average of both players' reported
    `playtomic_level` (D-025, D-030, never `mm_rating`); the console shows it
-   as "Avg level". A missing level (none or 0) counts as the partner's value
-   and flags the team "unrated". Registered teams are sorted strongest first;
+   as "Avg level". A missing level (none or 0) counts as 1 and flags the
+   team "unrated". Registered teams are sorted strongest first;
    the admin reorders them with up/down buttons. The order is saved to
    `event_teams.seed`.
 2. **Starting courts.** Seeds 1 and 2 start on the King court, 3 and 4 on court
@@ -352,11 +352,13 @@ Built in #63 and #64; revised by D-024 to D-027.
   `isEventUpcoming`) instead of `status = 'completed'`. So do the Past
   results cards and the recently-completed banner (T11), which show the team
   ranking and winning team for King of the Court.
-- **The Events page's Past section** (D-031). `eventTimeGroup` sorts every
-  event: `finished` (over) gets a results card at once
-  (`PastEventResults`, called "History" before #68), `awaitingResults` (date
-  passed, not over: an Americano before Finish) gets a plain card with a
-  "Results pending" badge, and the rest are upcoming. Home's
+- **The Events page's Past section** (D-031). `groupEventsByTime` sorts
+  every event once (`eventTimeGroup`): `finished` (over) gets a results card
+  at once (`PastEventResults`, called "History" before #68),
+  `awaitingResults` (an Americano past its date, before Finish) gets an
+  `AwaitingResultsCard` with a "Results pending" badge, and the rest are
+  upcoming. King of the Court is never awaiting results: it stays upcoming
+  until its scheduled end, even past midnight. Home's
   recently-completed banner still shows for 48 hours after the date.
 - **Phase** for King of the Court (Americano unchanged):
 

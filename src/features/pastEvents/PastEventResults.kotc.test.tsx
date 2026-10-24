@@ -12,7 +12,6 @@ const m = vi.hoisted(() => ({
 vi.mock('../../context/useApp', () => ({
   useApp: () => ({ isAdmin: false, session: m.session }),
 }))
-vi.mock('../events/useTournaments', () => ({ useTournaments: () => ({ data: tournaments }) }))
 vi.mock('../players/usePlayers', () => ({ usePlayers: () => ({ data: players }) }))
 vi.mock('../events/useMatches', () => ({ useAllMatches: () => ({ data: [] }) }))
 vi.mock('../events/useRegistrations', () => ({
@@ -57,7 +56,7 @@ const registrations = ['p1', 'p2', 'p3', 'p4'].map((playerId) =>
 )
 
 const open = () => {
-  render(<PastEventResults onNavigate={vi.fn()} />)
+  render(<PastEventResults tournaments={tournaments as never} onNavigate={vi.fn()} />)
   fireEvent.click(screen.getByText('King Sunday'))
 }
 

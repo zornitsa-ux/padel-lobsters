@@ -508,15 +508,19 @@ ranked.
 ## D-030 — Team strength is the team's average level (2026-10-24)
 
 **Decision:** Team strength is the average of both players' reported
-`playtomic_level`, and the console shows it as "Avg level 4.25". An unrated
-team (one level missing) takes the known level. The seed order doesn't
-change: halving every sum keeps the same order.
+`playtomic_level`, and the console shows it as "Avg level 4.25". A player
+with no reported level (none or 0) counts as **1**, and the team keeps its
+"unrated" flag. Rated teams keep the same order (halving every sum changes
+nothing); an unrated team now sits lower than under D-025, where the known
+level counted double.
 
 **Why:** Owner, after the T12 walk-through: the sum ("8.50") read like a
-single player's level.
+single player's level. Counting a missing level as 1 keeps the average
+honest: the review found that taking the known level alone made "Avg level
+4.00" look like a real team average.
 
-**Impact:** Supersedes the sum in D-025 (the Playtomic-only rule stands).
-DESIGN §3.3 item 1. `teamStrength` and its tests.
+**Impact:** Supersedes the sum and the doubling in D-025 (the Playtomic-only
+rule stands). DESIGN §3.3 item 1. `teamStrength` and its tests.
 
 ## D-031 — Past shows results as soon as an event is over (2026-10-24)
 
@@ -524,7 +528,9 @@ DESIGN §3.3 item 1. `teamStrength` and its tests.
 results card as soon as it's over (King of the Court at its scheduled end,
 Americano at Finish), with no 2-day wait. An event whose date has passed but
 that isn't over (an Americano before Finish) gets a plain card with a
-"Results pending" badge, never "Upcoming". The results component and its
+"Results pending" badge, never "Upcoming". King of the Court never waits for
+results: it's upcoming until its scheduled end, even one that runs past
+midnight. The results component and its
 folder are renamed from History to `PastEventResults`, since users only see
 "Past".
 
@@ -533,5 +539,7 @@ folder are renamed from History to `PastEventResults`, since users only see
 ranking on the Events page. Nothing needs it. Home's recently-completed
 banner keeps its 48 hours, which recent-match scoring depends on.
 
-**Impact:** DESIGN §3.4. `eventTimeGroup` in `eventPhase.ts`, used by the
-Events list, the card badge and `PastEventResults`. #68.
+**Impact:** DESIGN §3.4. `eventTimeGroup` and `groupEventsByTime` in
+`eventPhase.ts`: the Events list groups once and hands the finished events
+to `PastEventResults`; awaiting-results events use `AwaitingResultsCard`.
+#68.
