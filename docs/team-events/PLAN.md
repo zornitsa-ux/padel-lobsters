@@ -77,8 +77,8 @@ States: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked.
 **Where we are.** The comprehensive review of `main...kotc-test` is done and
 its fixes are committed on the branches below. The owner confirmed two findings
 as known choices: an admin partner change leaves the team waiting for the new
-partner, and raising capacity doesn't promote waitlisted teams. **Next: the
-clean local apply, then R1 merges.**
+partner, and raising capacity doesn't promote waitlisted teams. The clean local
+apply passed (below). **Next: the R1 merge.**
 
 **Branches** (all committed and pushed, 2026-10-24):
 
@@ -97,13 +97,12 @@ The integration branch `kotc-test` is local only, in the worktree
 it to `team-events-signup-ui`, merge the other three, and keep "ours" for the
 `PLAN.md` conflict. Review the whole change set with `git diff main...kotc-test`.
 
-**Local database.** The R1 migration file changed after it was first applied
-locally. Changed functions (most recently `respond_to_team_invite`, D-022) and
-the `account_acknowledged_at` column were applied by hand. Before R1, do a clean
-apply (`npm run db:reset`, then `npm run rehearsal:sync`, re-run
-`supabase/tests/team_events.sql` (29 checks) and the integrity counts). The
-local auth server was restarted to pick up the code email template (PIN removal
-DESIGN F-8).
+**Local database.** Clean apply done 2026-10-24: `rehearsal:sync` from `main`
+(136 players), then `npx supabase migration up --local` from
+`team-events-schema`. All 14 integrity counts were the same before and after
+the migration, `supabase/tests/team_events.sql` passed all 29 checks, and
+`db:grants:check` matched. The local database now holds production data plus
+the R1 migration; `npm run db:reset` puts the seed data back.
 
 **Fixed in the combined review:**
 
@@ -134,10 +133,10 @@ DESIGN F-8).
 - `transferQueries.ts` and `playerQueries.ts` still unwrap RPC rows by hand;
   switch them to `lib/firstRow` in a follow-up on `main`.
 
-**Gates before R1.** The clean local apply above. Merge in order: #56 → (#58 →
-#60, #59) → `db push` from `main`. #57 can merge any time. The cache fix ships
-on its own. Remember the 3-day rule around the Thu 5 Nov PIN cutover and the
-Sun 15 Nov event: R1 is sign-in-facing (the finish-your-account step).
+**Gates before R1.** Merge in order: #56 → (#58 → #60, #59) → `db push` from
+`main`. #57 can merge any time. The cache fix ships on its own. Remember the
+3-day rule around the Thu 5 Nov PIN cutover and the Sun 15 Nov event: R1 is
+sign-in-facing (the finish-your-account step).
 
 ---
 
