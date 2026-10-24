@@ -80,16 +80,17 @@ as known choices: an admin partner change leaves the team waiting for the new
 partner, and raising capacity doesn't promote waitlisted teams. The clean local
 apply passed (below). **Next: the R1 merge.**
 
-**Branches** (all committed and pushed, 2026-10-24):
+**Branches** (2026-10-24; #56, #58 and #61 are squash-merged and the R1
+migration is pushed to production):
 
-| Branch                              | PR   | Base                     | Remote                                        |
-| ----------------------------------- | ---- | ------------------------ | --------------------------------------------- |
-| `team-events-schema`                | #56  | `main`                   | up to date                                    |
-| `team-events-event-form`            | #58  | `team-events-schema`     | up to date                                    |
-| `team-events-signup-ui`             | #60  | `team-events-event-form` | up to date                                    |
-| `team-events-payments`              | #59  | `team-events-schema`     | up to date                                    |
-| `team-events-kotc-domain`           | #57  | `main`                   | up to date                                    |
-| `fix/reset-cache-on-account-switch` | #61  | `main`                   | up to date (bug is on main)                   |
+| Branch                              | PR  | Base   | Status                        |
+| ----------------------------------- | --- | ------ | ----------------------------- |
+| `team-events-schema`                | #56 | `main` | merged; `db push` done        |
+| `team-events-event-form`            | #58 | `main` | merged                        |
+| `team-events-signup-ui`             | #60 | `main` | open; rebased onto `main`     |
+| `team-events-payments`              | #59 | `main` | open; rebased onto `main`     |
+| `team-events-kotc-domain`           | #57 | `main` | open; merge after #59 and #60 |
+| `fix/reset-cache-on-account-switch` | #61 | `main` | merged                        |
 
 The integration branch `kotc-test` is local only, in the worktree
 `../padel-lobsters-kotc-test`: `team-events-signup-ui` merged with `-payments`,

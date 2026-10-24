@@ -82,8 +82,7 @@ const teamRows = ({ partnerAccepted }: { partnerAccepted: boolean }) => [
 ]
 
 const onNavigate = vi.fn()
-const renderPage = () =>
-  render(<MyTournament tournament={tournament} onNavigate={onNavigate} />)
+const renderPage = () => render(<MyTournament tournament={tournament} onNavigate={onNavigate} />)
 
 beforeEach(() => {
   vi.clearAllMocks()

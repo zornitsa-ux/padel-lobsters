@@ -62,8 +62,7 @@ export const eligiblePlayers = ({
   players: Player[]
   regs: NormalisedRegistration[]
   excludeIds?: Array<string | null>
-}): Player[] =>
-  getAvailablePlayers({ players, regs }).filter((p) => !excludeIds.includes(p.id))
+}): Player[] => getAvailablePlayers({ players, regs }).filter((p) => !excludeIds.includes(p.id))
 
 // Case and accents ignored ("jime" finds Jiménez); every typed fragment must
 // appear somewhere in the name, in any order ("gar nic" finds Nicolas Garcia).

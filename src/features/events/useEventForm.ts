@@ -30,7 +30,13 @@ export function useEventForm() {
     editing?.id ?? null,
   )
 
-  const show = ({ next, tournament }: { next: EventFormValues; tournament: NormalisedTournament | null }) => {
+  const show = ({
+    next,
+    tournament,
+  }: {
+    next: EventFormValues
+    tournament: NormalisedTournament | null
+  }) => {
     setForm(next)
     setEditing(tournament)
     setServerLocked(false)

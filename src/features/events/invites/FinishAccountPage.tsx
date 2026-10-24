@@ -93,7 +93,10 @@ export default function FinishAccountPage() {
 
   const notPlaying = async () => {
     const declining = invites.length > 0
-    if (declining && !(await confirmDecline({ captainName: setup.requestedByName, signsOut: true })))
+    if (
+      declining &&
+      !(await confirmDecline({ captainName: setup.requestedByName, signsOut: true }))
+    )
       return
     setLeaving(true)
     const statuses = await Promise.all(
