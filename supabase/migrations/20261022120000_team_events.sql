@@ -656,8 +656,11 @@ begin
   if (v_lock.partner).accepted_at is not null then
     return query select 'not_pending'::text; return;
   end if;
-  if exists (select 1 from public.partner_invites pi
-              where pi.player_id = auth.uid() and pi.account_acknowledged_at is null) then
+  -- Accepting claims the account (D-021); declining never needs to (D-022).
+  if input_accept is true and exists (
+    select 1 from public.partner_invites pi
+     where pi.player_id = auth.uid() and pi.account_acknowledged_at is null
+  ) then
     return query select 'account_not_acknowledged'::text; return;
   end if;
   if (v_lock.tournament).status = 'completed'

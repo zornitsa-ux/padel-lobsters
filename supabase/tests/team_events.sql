@@ -656,6 +656,11 @@ begin
   select * into v_r from public.respond_to_team_invite(
     (select team_id from public.registrations where tournament_id = v_t and player_id = v_new), true);
   if v_r.status <> 'account_not_acknowledged' then raise exception 'CHECK 28b FAILED: %', v_r.status; end if;
+  -- D-022: declining needs no acknowledgement.
+  select * into v_r from public.respond_to_team_invite(
+    (select team_id from public.registrations
+      where tournament_id = v_t2 and player_id = v_new and status = 'registered'), false);
+  if v_r.status <> 'declined' then raise exception 'CHECK 28g FAILED: %', v_r.status; end if;
   select * into v_r from public.acknowledge_my_account();
   if v_r.status <> 'ok' then raise exception 'CHECK 28c FAILED: %', v_r.status; end if;
   select * into v_r from public.acknowledge_my_account();
@@ -667,7 +672,7 @@ begin
   if exists (select 1 from public.get_my_account_setup()) then
     raise exception 'CHECK 28f FAILED: a member got a setup row';
   end if;
-  raise notice 'CHECK 28 ok: account acknowledgement gates the invite answer';
+  raise notice 'CHECK 28 ok: acknowledgement gates accepting, not declining';
 
   -- CHECK 29: the new-partner form's early email check matches create_partner_player
   perform pg_temp.act(v_p[13], false);

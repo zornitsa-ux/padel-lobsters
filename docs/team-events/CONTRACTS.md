@@ -223,7 +223,8 @@ returns table(status text)
 The pending partner only (anyone else gets `not_found`). Statuses: `accepted` |
 `declined` | `not_found` | `not_pending` | `tournament_started` |
 `account_not_acknowledged` (a captain-created account must call
-`acknowledge_my_account` first, D-021). A decline
+`acknowledge_my_account` before accepting, D-021; declining needs no
+acknowledgement, D-022). A decline
 cancels both rows (`cancelled_reason = 'partner_declined'`) and promotes the
 waitlist.
 
