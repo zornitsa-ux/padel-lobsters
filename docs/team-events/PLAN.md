@@ -54,7 +54,7 @@
 | T3  | Event form: Format picker, Max teams, team price                                                                                                                                                                         | 1     | T1         |     | [ ]   |
 | T4  | Join flow: partner search (active members), new-partner form, confirm + pay (captain)                                                                                                                                    | 1     | T1         |     | [ ]   |
 | T5  | Team card + registration list (teams, waitlist, change partner, transfers hidden)                                                                                                                                        | 1     | T1         |     | [ ]   |
-| T6  | Admin: add/cancel/promote team, change partner, team Payments view + reminder                                                                                                                                            | 1     | T1         |     | [ ]   |
+| T6  | Admin: add/cancel/promote team, change partner, team Payments view + reminder                                                                                                                                            | 1     | T1         | #59 | [~]   |
 | T7  | Verify Phase 1 locally (rehearsal data) → **R1**                                                                                                                                                                         | 1     | T1, T3–T6  |     | [ ]   |
 | T8  | King of the Court domain (pure, tests first): `teamStrength`, `seedTeams`, `startingCourts`, `rankFromFinalCourts`                                                                                                       | 2     | T0         |     | [ ]   |
 | T9  | Lifecycle: `eventPhase` King of the Court branch, Finish with zero matches + no ratings, matcher guard                                                                                                                   | 2     | T1         |     | [ ]   |
@@ -207,3 +207,4 @@ placeholders as partners, was withdrawn by D-010: placeholders aren't offered.)
   - A notification system was added to §3.
   - `team_events.sql` now has 24 checks, including acceptance, decline,
     captain cancel, transfers after acceptance and the payment RPC.
+- 2026-10-22: T6 (Payments part): one row per team through the captain's registration, covered partner rows hidden, team price and counts, reminder to the captain.
