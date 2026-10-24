@@ -328,9 +328,9 @@ Built in #63 and #64; revised by D-024 to D-027.
   Americano when finished, King of the Court at start + duration. Home's next
   event and countdown, the admin unpaid count, attendance streaks, the Events
   list, the event card badge, signup and the admin team controls use it (or
-  `isEventUpcoming`) instead of `status = 'completed'`. History and the
-  recently-completed banner still read `status`, because they rank by match
-  scores; T11 adds the team ranking there.
+  `isEventUpcoming`) instead of `status = 'completed'`. So do History and the
+  recently-completed banner (T11), which show the team ranking and winning
+  team for King of the Court.
 - **Phase** for King of the Court (Americano unchanged):
 
   | When                                                | Phase          |
@@ -349,9 +349,14 @@ Built in #63 and #64; revised by D-024 to D-027.
 - **Matcher guard:** the generator UI and `generateSchedule.service.ts` refuse
   team events (D-018).
 - The Schedule tab on a King of the Court event: admins get the seeding
-  console (#64); players get the starting-courts view (T11).
-- Lobster Review: a player's per-event rank is their team's `final_rank`. Events
-  without one are left out of rank stats (T11).
+  console (#64); players get the starting-courts view, their team
+  highlighted, once the assignments are shown (T11). The You tab and Home's
+  next-event card show "You start on {court}", then the team's placing once
+  standings are saved.
+- Results on King of the Court: the team ranking, unranked teams after, no
+  Matches tab, no `resultsSharedAt` gate (D-026).
+- Lobster Review: a player's per-event rank is their team's `final_rank` out of
+  the registered teams. Events without one are left out of rank stats (T11).
 - Oscars and the raffle don't change, because they're per player.
 
 ### 3.5 Bringing partners into the app
