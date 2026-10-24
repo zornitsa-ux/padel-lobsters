@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useApp } from '../../../context/useApp'
 import { useConfirm } from '../../../lib/confirmBus'
 import { EmptyState } from '../../../components/ui/EmptyState'
@@ -7,7 +7,7 @@ import { COMPLETE_TEAMS_NOTE } from '../teams/teamStatusMessages'
 import { useMyTeamInvites, useTeamActions } from '../teams/useTeams'
 import type { TeamInvite } from '../teams/teamTypes'
 import { declineMessage } from '../registration/team/teamHelpers'
-import { eventInfoPath, inviteMessage } from './inviteRoutes'
+import { eventInfoPath, inviteMessage, inviteReturnPath } from './inviteRoutes'
 
 function InviteCard({
   invite,
@@ -57,6 +57,7 @@ function FinishProfileCard({ invite, onSkip }: { invite: TeamInvite; onSkip: () 
 export default function TeamInvitesPage() {
   const { session } = useApp()
   const navigate = useNavigate()
+  const location = useLocation()
   const confirm = useConfirm()
   const { respondToTeamInvite } = useTeamActions()
   const { data: invites = [], isPending } = useMyTeamInvites({ enabled: !!session })
@@ -100,6 +101,22 @@ export default function TeamInvitesPage() {
     )
   }
 
+  if (!session) {
+    return (
+      <EmptyState
+        title="Sign in to see your team invites"
+        action={
+          <button
+            onClick={() => navigate('/account')}
+            className="btn-primary mt-2 py-2 px-5 text-sm"
+          >
+            Sign in
+          </button>
+        }
+      />
+    )
+  }
+
   if (isPending) return null
 
   if (open.length === 0) {
@@ -131,7 +148,7 @@ export default function TeamInvitesPage() {
         />
       ))}
       <button
-        onClick={() => navigate('/home')}
+        onClick={() => navigate(inviteReturnPath({ state: location.state }))}
         className="w-full text-sm font-semibold text-lob-muted underline underline-offset-2"
       >
         Not now

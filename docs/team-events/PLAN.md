@@ -212,3 +212,21 @@ placeholders as partners, was withdrawn by D-010: placeholders aren't offered.)
 - 2026-10-22: **T7 rehearsal** (pre-D-015) on a production copy: the 14 integrity counts were unchanged after migrating, after creating 3 new partners, after their sign-ins (both Sign in and Sign up land in the captain-created account) and after the UI walk-through. No email was queued. The walk-through at phone width covered the captain, partner and admin flows. Fixes: Back keeps the draft, the roster refreshes after a new partner, and the King of the Court label. To redo after D-015/D-016.
 - 2026-10-22: **D-015/D-019 UI** (#60): pending and confirmed team states, captain swap or cancel while pending, partner accept or decline (with the complete-teams copy at signup and on decline), a declined/cancelled notice with Sign up again, transfers on confirmed teams, the acceptance screen at `/team-invites` (once-per-session redirect, optional finish-profile step for captain-created accounts), admin pending/confirmed badges. Nits fixed: the admin "Their partner…" link, team counts in the roster line, and notices that can be dismissed and clear on status change.
 - 2026-10-22: **T7 rehearsal 2** (D-015/D-016) on a fresh production copy, with an event of 5 courts and 20 players on 15 Nov: three teams were created (two with new partners, one with a member partner). The 14 integrity counts were unchanged after creation and after sign-ins, accept and decline, and no email was queued. Checked with real sessions: a direct registration write is refused (42501), a player can move their payment forward but can't set paid, the partner sees and accepts the invite (created-by-captain flag set), and a decline cancels the team with `partner_declined` visible to the captain. Still to do: the browser walk-through of `/team-invites` and the team card states (the Chrome extension was disconnected).
+- 2026-10-24: Code review of #56–#60, and fixes:
+  - **#56:** declining a transfer while on a waitlisted team failed
+    (`team_inconsistent`, reproduced locally). It now only drops an
+    individual waitlist row. `lock_team` re-reads the team under the lock.
+    `account_created_by_captain` is scoped to the event. A captain's
+    WhatsApp reminder names the team and the team amount.
+    `team_events.sql` has 27 checks.
+  - **#57:** an odd team waits at the bottom court in play (OQ-4), also when
+    every court is full. Empty final-standing slots are skipped.
+  - **#58:** the format picker stays locked while signups load. A save
+    refused with `entry_mode_locked` puts the saved format back.
+  - **#59:** accepting a transfer refreshes the team list. Payments waits for
+    it instead of showing nothing owed.
+  - **#60:** the Registration-tab edit save shows its errors. The invite
+    redirect works for a second account on the same tab, and Not now returns
+    to the interrupted page. `/team-invites` asks signed-out visitors to sign
+    in. The not-signed-in hint names the right player.
+  - **D-020:** the captain can pay before the partner accepts.

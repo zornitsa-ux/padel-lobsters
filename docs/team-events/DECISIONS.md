@@ -331,3 +331,15 @@ profile" item.
 
 **Owner approvals, 2026-10-22:** D-013 and D-014 approved. D-014's direct-write
 check is superseded by D-016.
+
+## D-020 — The captain can pay as soon as they sign up (2026-10-24)
+
+**Decision:** The team payment sheet opens right after signup, while the
+partner is still pending (D-015). There's no wait for acceptance.
+
+**Why:** Owner choice. If the partner declines and the team is cancelled, the
+admin reverses the payment by hand. Many players don't pay straight away
+anyway, as with other tournaments, so reminders cover the rest.
+
+**Impact:** None. This keeps the current behaviour. A code review had
+flagged paying before acceptance as a risk.

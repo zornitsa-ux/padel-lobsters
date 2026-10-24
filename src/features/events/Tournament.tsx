@@ -10,10 +10,10 @@ import { useTransfers } from './useTransfers'
 import { useRegistrations } from './useRegistrations'
 import {
   buildEventData,
-  formatOption,
   formFromTournament,
   isEntryModeLocked,
   isFormatLocked,
+  withSavedFormat,
 } from './eventFormModel'
 import { Plus, Trophy, Clock } from 'lucide-react'
 import HistoryContent from '../history/History'
@@ -145,7 +145,7 @@ export default function Tournament({ onNavigate }: { onNavigate: EventNavigate }
   // the next Save goes through, and lock the picker.
   const revertFormat = () => {
     const saved = tournaments.find((t) => t.id === editId)
-    if (saved) setForm((f) => ({ ...f, ...formatOption({ format: saved.format }) }))
+    if (saved) setForm((f) => withSavedFormat({ form: f, tournament: saved }))
     setServerLocked(true)
   }
 

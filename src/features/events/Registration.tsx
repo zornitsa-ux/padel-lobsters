@@ -14,7 +14,14 @@ import ShareWhatsAppButton from '../../components/ui/ShareWhatsAppButton'
 import EventDescription from './EventDescription'
 import EventAdminMenu from './EventAdminMenu'
 import EventFormModal from './EventFormModal'
-import { buildEventData, formFromTournament, hasSignups } from './eventFormModel'
+import {
+  buildEventData,
+  FORMAT_LOCKED_NOTE,
+  formFromTournament,
+  hasSignups,
+  isEntryModeLocked,
+  withSavedFormat,
+} from './eventFormModel'
 import { emptyForm } from './eventConstants'
 import { formatLabel } from './eventHelpers'
 import {
@@ -126,11 +133,13 @@ export default function Registration({
   const [showEditForm, setShowEditForm] = useState(false)
   const [editForm, setEditForm] = useState<EventFormValues>(emptyForm)
   const [editSaving, setEditSaving] = useState(false)
+  const [editServerLocked, setEditServerLocked] = useState(false)
 
   const openEdit = useCallback(() => {
     const t = tournament
     if (!t) return
     setEditForm(formFromTournament({ tournament: t }))
+    setEditServerLocked(false)
     setShowEditForm(true)
   }, [tournament])
 
@@ -142,6 +151,17 @@ export default function Registration({
       const data = buildEventData({ form: editForm }) as Partial<NormalisedTournament>
       await updateTournament(tournament.id, data)
       setShowEditForm(false)
+    } catch (err) {
+      if (isEntryModeLocked(err)) {
+        setEditForm((f) => withSavedFormat({ form: f, tournament }))
+        setEditServerLocked(true)
+        showToast({
+          variant: 'error',
+          message: `${FORMAT_LOCKED_NOTE}. The format was put back, so save again.`,
+        })
+      } else {
+        showToast({ variant: 'error', message: errorMessage(err, 'Could not save event.') })
+      }
     } finally {
       setEditSaving(false)
     }
@@ -667,7 +687,7 @@ export default function Registration({
         form={editForm}
         setForm={setEditForm}
         saving={editSaving}
-        formatLocked={hasSignups({ registrations: regs })}
+        formatLocked={editServerLocked || hasSignups({ registrations: regs })}
         onSubmit={handleEditSubmit}
         onClose={() => setShowEditForm(false)}
         addCourt={addEditCourt}
