@@ -1,16 +1,9 @@
 import type { EventFormValues } from './eventConstants'
+import { formatOption, isKingOfTheCourt } from './eventFormat'
 import type { NormalisedTournament } from '../../lib/normalise'
 import type { TournamentInput } from './tournamentQueries'
 
-export const AMERICANO = { format: 'lobster_matching', entryMode: 'individual' } as const
-export const KING_OF_THE_COURT = { format: 'king_of_court', entryMode: 'team' } as const
-
 export const FORMAT_LOCKED_NOTE = "Format can't change once people have signed up"
-
-export const isKingOfTheCourt = ({ format }: { format: string }) => format === 'king_of_court'
-
-export const formatOption = ({ format }: { format: string }) =>
-  isKingOfTheCourt({ format }) ? KING_OF_THE_COURT : AMERICANO
 
 export const teamsForCourts = ({ courts }: { courts: unknown[] }): number => 2 * courts.length
 
