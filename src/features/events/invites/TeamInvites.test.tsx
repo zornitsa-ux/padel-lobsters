@@ -23,7 +23,7 @@ vi.mock('../teams/useTeams', () => ({
 }))
 
 const TeamInvitesPage = (await import('./TeamInvitesPage')).default
-const TeamInviteRedirect = (await import('./TeamInviteRedirect')).default
+const PartnerOnboardingRedirect = (await import('./PartnerOnboardingRedirect')).default
 
 const invite = (overrides: Record<string, unknown> = {}) => ({
   teamId: 'tm1',
@@ -137,7 +137,7 @@ describe('invite redirect', () => {
   const renderApp = () =>
     render(
       <MemoryRouter initialEntries={['/home']}>
-        <TeamInviteRedirect />
+        <PartnerOnboardingRedirect />
         <Where />
       </MemoryRouter>,
     )
@@ -166,7 +166,7 @@ describe('invite redirect', () => {
   it('returns to the interrupted page on Not now', () => {
     render(
       <MemoryRouter initialEntries={['/events/t9/info?tab=list']}>
-        <TeamInviteRedirect />
+        <PartnerOnboardingRedirect />
         <Routes>
           <Route path="/team-invites" element={<TeamInvitesPage />} />
           <Route path="*" element={<Where />} />
@@ -182,7 +182,7 @@ describe('invite redirect', () => {
   it('still redirects another player who signs in on the same tab', () => {
     render(
       <MemoryRouter initialEntries={['/home']}>
-        <TeamInviteRedirect />
+        <PartnerOnboardingRedirect />
         <Where />
         <Link to="/home">home</Link>
       </MemoryRouter>,
@@ -211,7 +211,7 @@ describe('invite redirect', () => {
     m.setup = { requestedByName: 'Cara Diaz', tournamentName: 'King Sunday', acknowledged: false }
     render(
       <MemoryRouter initialEntries={['/account']}>
-        <TeamInviteRedirect />
+        <PartnerOnboardingRedirect />
         <Where />
       </MemoryRouter>,
     )
@@ -227,7 +227,7 @@ describe('invite redirect', () => {
     })
     render(
       <MemoryRouter initialEntries={['/home']}>
-        <TeamInviteRedirect />
+        <PartnerOnboardingRedirect />
         <Routes>
           <Route path="/team-invites" element={<Where />} />
           <Route path="*" element={<Where />} />

@@ -3,6 +3,7 @@ import type { TeamEntry } from '../../teams/teamTypes'
 import PaymentStatusBadge from '../PaymentStatusBadge'
 import type { DisplayName, GetPlayer } from '../utils'
 import { CaptainPendingActions, PartnerPendingActions } from './TeamCardActions'
+import { playerNameOf } from './teamHelpers'
 
 interface TeamCardProps {
   entry: TeamEntry
@@ -11,19 +12,6 @@ interface TeamCardProps {
   candidates: Player[]
   getPlayer: GetPlayer
   displayName: DisplayName
-}
-
-const firstNameOf = ({
-  playerId,
-  getPlayer,
-  displayName,
-}: {
-  playerId: string
-  getPlayer: GetPlayer
-  displayName: DisplayName
-}) => {
-  const p = getPlayer(playerId)
-  return p ? displayName(p) : 'your partner'
 }
 
 const coverLabel = ({
@@ -47,7 +35,8 @@ export default function TeamCard({
 }: TeamCardProps) {
   const isCaptain = entry.captain.playerId === viewerId
   const other = isCaptain ? entry.partner : entry.captain
-  const otherName = firstNameOf({ playerId: other.playerId, getPlayer, displayName })
+  const otherName =
+    playerNameOf({ playerId: other.playerId, getPlayer, displayName }) || 'your partner'
   const waitlisted = entry.status === 'waitlist'
 
   return (

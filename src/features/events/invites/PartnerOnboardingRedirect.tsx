@@ -11,7 +11,7 @@ import { inviteSeenKey, redirectTarget, TEAM_INVITES_PATH } from './inviteRoutes
 // sessionStorage, which can be unavailable, so a failed write can't cause a
 // redirect loop. It holds the player redirected, so another account signing in
 // on the same tab still is.
-export default function TeamInviteRedirect() {
+export default function PartnerOnboardingRedirect() {
   const { session } = useApp()
   const navigate = useNavigate()
   const { pathname, search } = useLocation()

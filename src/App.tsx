@@ -22,7 +22,7 @@ import EventShell from './features/events/EventShell'
 import { AdminLeagueRouteGuard } from './features/league/manage/AdminLeagueRouteGuard'
 import type { EventNavigate } from './features/events/eventHelpers'
 import CommunityShell from './features/community/CommunityShell'
-import TeamInviteRedirect from './features/events/invites/TeamInviteRedirect'
+import PartnerOnboardingRedirect from './features/events/invites/PartnerOnboardingRedirect'
 import { FINISH_ACCOUNT_PATH, TEAM_INVITES_PATH } from './features/events/invites/inviteRoutes'
 
 // Code-split every route off the first paint. The app shell (Layout,
@@ -68,7 +68,7 @@ export default function App() {
       <BrowserRouter>
         <DeepLinkMigrator />
         <PinSignInInterstitial />
-        <TeamInviteRedirect />
+        <PartnerOnboardingRedirect />
         <Layout>
           <VerificationGate>
             <Suspense fallback={<RouteFallback />}>

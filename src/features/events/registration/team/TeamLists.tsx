@@ -9,7 +9,13 @@ import { usePartnerInvites, useTeamActions } from '../../teams/useTeams'
 import type { NormalisedTournament } from '../../tournamentQueries'
 import type { DisplayName, GetPlayer } from '../utils'
 import TeamRow from './TeamRow'
-import { eligiblePlayers, notSignedInHint, partnerNameOf, teamLabel } from './teamHelpers'
+import {
+  eligiblePlayers,
+  notSignedInHint,
+  partnerNameOf,
+  teamCount,
+  teamLabel,
+} from './teamHelpers'
 
 interface TeamListsProps {
   tournament: NormalisedTournament
@@ -89,7 +95,7 @@ export default function TeamLists({
       <section>
         <h3 className="font-bold text-lob-slate mb-2 flex items-center gap-2">
           <CheckCircle size={16} className="text-green-500" />
-          Registered ({registered.length * 2}/{tournament.maxPlayers})
+          Registered ({registered.length}/{teamCount({ players: tournament.maxPlayers })} teams)
         </h3>
         <div className="space-y-2">
           {registered.length === 0 && (
