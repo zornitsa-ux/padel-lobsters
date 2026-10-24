@@ -134,7 +134,9 @@ function Overview({ tournament }: { tournament: NormalisedTournament }) {
           Rendered as an element, never as a component defined in this render
           body: a fresh function identity each pass remounts RunOfShow, which
           owns the Finish/reveal lifecycle state (appliedCount, busy, error). */}
-      {isRunOfShowVisible({ phase, isAdmin: true }) && <RunOfShow tournament={tournament} />}
+      {isRunOfShowVisible({ phase, isAdmin: true, format: tournament.format }) && (
+        <RunOfShow tournament={tournament} />
+      )}
     </div>
   )
 }

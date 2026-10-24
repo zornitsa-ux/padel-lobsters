@@ -20,6 +20,7 @@ import { formatDate, formatLabel, pricePerPlayer } from './eventHelpers'
 import type { EventNavigate } from './eventHelpers'
 import type { NormalisedTournament, TournamentCourt } from '../../lib/normalise'
 import type { NormalisedTransfer } from './transferQueries'
+import { isEventOver } from './eventPhase'
 
 function InfoChip({ icon, label, warn }: { icon: ReactNode; label: string; warn?: boolean }) {
   return (
@@ -54,6 +55,7 @@ export default function UpcomingEventCard({
   updateTournament,
 }: UpcomingEventCardProps) {
   const { data: regsData = [] } = useRegistrations(t?.id)
+  const over = isEventOver({ tournament: t })
   const allBooked = (t.courts || []).every((c) => c.booked)
   const bookedCount = (t.courts || []).filter((c) => c.booked).length
   const totalCourts = (t.courts || []).length
@@ -103,16 +105,16 @@ export default function UpcomingEventCard({
         <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
           <span
             className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-              t.status === 'completed'
+              over
                 ? 'bg-gray-100 text-lob-muted'
                 : t.status === 'active'
                   ? 'bg-green-100 text-green-700'
                   : 'bg-blue-100 text-blue-700'
             }`}
           >
-            {t.status}
+            {over ? 'completed' : t.status}
           </span>
-          {t.status !== 'completed' && (
+          {!over && (
             <div className="flex gap-1">
               <ShareWhatsAppButton tournament={t} variant="icon" />
               <AddToCalendarButton tournament={t} variant="icon" />
@@ -148,7 +150,7 @@ export default function UpcomingEventCard({
                   Someone always cancels last minute. Join the waitlist and keep your racket warm.
                 </p>
               </div>
-            ) : t.status !== 'completed' ? (
+            ) : !over ? (
               <div className="bg-green-50 border border-green-200 rounded-xl px-3 py-1.5 mb-3 flex items-center gap-1.5">
                 <span className="relative flex h-2 w-2 flex-shrink-0">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>

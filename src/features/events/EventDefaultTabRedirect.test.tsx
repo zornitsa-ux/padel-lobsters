@@ -4,9 +4,14 @@ import { render, screen, cleanup } from '@testing-library/react'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 
 const useMatches = vi.fn()
+const useEventTeams = vi.fn((): { data: unknown; isPending: boolean } => ({
+  data: undefined,
+  isPending: true,
+}))
 let mockSession: { user: { id: string } } | null = { user: { id: 'player-1' } }
 
 vi.mock('./useMatches', () => ({ useMatches: () => useMatches() }))
+vi.mock('./teams/useTeams', () => ({ useEventTeams: () => useEventTeams() }))
 vi.mock('../oscars/useOscarsSessionRow', () => ({ useOscarsSessionRow: () => ({ data: null }) }))
 vi.mock('../../context/useApp', () => ({ useApp: () => ({ session: mockSession }) }))
 
@@ -111,5 +116,38 @@ describe('EventDefaultTabRedirect', () => {
     renderRedirect({ ...LIVE_EVENT, status: 'completed', resultsSharedAt: '2020-01-02T00:00:00Z' })
 
     expect(resultsTab()).not.toBeNull()
+  })
+
+  describe('King of the Court', () => {
+    const KOTC = { ...LIVE_EVENT, format: 'king_of_court', date: '2020-01-01', time: '10:00' }
+
+    it('waits for the teams: saved standings decide the landing tab', () => {
+      useMatches.mockReturnValue(settled([]))
+      useEventTeams.mockReturnValue(pending())
+
+      renderRedirect(KOTC)
+
+      expect(spinner()).not.toBeNull()
+    })
+
+    it('sends an event with saved standings to Results', () => {
+      useMatches.mockReturnValue(settled([]))
+      useEventTeams.mockReturnValue(settled([{ finalRank: 1, cancelledAt: null }]))
+
+      renderRedirect(KOTC)
+
+      expect(resultsTab()).not.toBeNull()
+    })
+
+    it('ignores a rank left on a cancelled team', () => {
+      useMatches.mockReturnValue(settled([]))
+      useEventTeams.mockReturnValue(
+        settled([{ finalRank: 1, cancelledAt: '2020-01-01T09:00:00Z' }]),
+      )
+
+      renderRedirect(KOTC)
+
+      expect(infoTab()).not.toBeNull()
+    })
   })
 })

@@ -19,6 +19,7 @@ import { errorMessage, errorCode, FOREIGN_KEY_VIOLATION } from '../../lib/errors
 import { useConfirm } from '../../lib/confirmBus'
 import type { EventNavigate } from './eventHelpers'
 import type { NormalisedTournament } from '../../lib/normalise'
+import { isEventOver } from './eventPhase'
 import type { TournamentInput } from './tournamentQueries'
 
 export { DEFAULT_EVENT_DESCRIPTION }
@@ -58,12 +59,12 @@ export default function Tournament({ onNavigate }: { onNavigate: EventNavigate }
   }
   const past = tournaments.filter((t) => {
     if (isInHistory(t)) return false
-    if (t.status === 'completed') return true
+    if (isEventOver({ tournament: t })) return true
     const d = parseLocalDate(t.date)
     return d !== null && d < today
   })
   const upcoming = tournaments.filter((t) => {
-    if (t.status === 'completed') return false
+    if (isEventOver({ tournament: t })) return false
     const d = parseLocalDate(t.date)
     return d === null || d >= today
   })

@@ -337,10 +337,10 @@ describe('draw_raffle and publish_raffle', () => {
   })
 })
 
-describe('King of the Court (D-006, D-009)', () => {
+describe('King of the Court (D-006, D-009, D-026)', () => {
   const KOTC: Partial<RunOfShowInput> = {
     tournament: {
-      status: 'active',
+      status: 'upcoming',
       resultsSharedAt: null,
       rafflePublishedAt: null,
       format: 'king_of_court',
@@ -348,31 +348,17 @@ describe('King of the Court (D-006, D-009)', () => {
     matches: [],
   }
 
-  it('drops the scoring and rating-review steps', () => {
+  it('keeps only the Oscars and raffle steps: no scores, Finish or Reveal', () => {
     expect(build(KOTC).map((s) => s.id)).toEqual([
-      'finish',
       'open_voting',
       'close_voting',
-      'reveal',
       'draw_raffle',
       'publish_raffle',
     ])
   })
 
-  it('DEFECT GUARD — Finish is available with zero matches (F-3)', () => {
-    expect(stateOf('finish', KOTC)).toBe('available')
-  })
-
-  it('says Finish changes no ratings', () => {
-    expect(stepOf('finish', KOTC).detail).toBe('No ratings change in King of the Court')
-  })
-
-  it('needs only Finish and the reveal to be done', () => {
-    const revealed = build({
-      ...KOTC,
-      tournament: { ...REVEALED.tournament!, format: 'king_of_court' },
-    })
-    expect(runOfShowProgress(revealed)).toEqual({ done: 2, total: 2, allDone: true })
+  it('has nothing required, so nothing to count', () => {
+    expect(runOfShowProgress(build(KOTC))).toEqual({ done: 0, total: 0, allDone: true })
   })
 })
 

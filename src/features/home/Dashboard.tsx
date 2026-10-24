@@ -12,7 +12,8 @@ import { useConfirm } from '../../lib/confirmBus'
 import { mark } from '../../lib/perfMarks'
 import { getGreeting } from './greetings'
 import useGreetingName from './useGreetingName'
-import useCountdown, { tournamentStartMs } from './useCountdown'
+import useCountdown from './useCountdown'
+import { tournamentStartMs } from '../../lib/tournamentStart'
 import Greeting from './Greeting'
 import TransferOfferBanners from './TransferOfferBanners'
 import CountdownClock from './CountdownClock'
@@ -27,6 +28,7 @@ import type { Player, NormalisedTournament } from '../../lib/normalise'
 import type { NormalisedMatch } from '../events/matchQueries'
 import type { NormalisedRegistration } from '../events/registrationQueries'
 import type { NormalisedTransfer } from '../events/transferQueries'
+import { isEventOver } from '../events/eventPhase'
 
 // Only mounts after the player taps "share" on an outgoing transfer offer.
 const TransferPendingModal = lazy(() => import('../../components/TransferPendingModal'))
@@ -150,7 +152,9 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
 
   // Next upcoming tournament
   const upcoming = tournaments
-    .filter((t) => t.status === 'upcoming' || t.status === 'active')
+    .filter(
+      (t) => (t.status === 'upcoming' || t.status === 'active') && !isEventOver({ tournament: t }),
+    )
     .sort((a, b) => ((a.date || '') < (b.date || '') ? -1 : 1))[0]
 
   const regs = upcoming ? getTournamentRegistrations(upcoming.id) : []
@@ -168,7 +172,9 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
   // future. Once the current event starts, the clock automatically flips to the
   // next one so there's always a countdown visible when future events exist.
   const allUpcoming = tournaments
-    .filter((t) => t.status === 'upcoming' || t.status === 'active')
+    .filter(
+      (t) => (t.status === 'upcoming' || t.status === 'active') && !isEventOver({ tournament: t }),
+    )
     .sort((a, b) => ((a.date || '') < (b.date || '') ? -1 : 1))
   const countdownTournament =
     allUpcoming.find((t) => {
@@ -182,7 +188,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
   const myStreak = useMemo(() => {
     if (!claimedId) return 0
     const completed = tournaments
-      .filter((t) => t.status === 'completed')
+      .filter((t) => isEventOver({ tournament: t }))
       .sort((a, b) => ((b.date || '') > (a.date || '') ? 1 : -1))
     let s = 0
     for (const t of completed) {

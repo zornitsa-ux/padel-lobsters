@@ -16,8 +16,9 @@
    drawn. Counting them meant an event that was genuinely closed out sat at
    "6 of 7 done" forever, reading as an unfinished checklist.
 
-   King of the Court has no matches and no ratings (D-006, D-009), so it drops
-   the scoring and rating-review steps and Finish never waits on scores.
+   King of the Court has no matches, no ratings and no Finish or Reveal (D-006,
+   D-009, D-026): it is over by the clock and its standings are public once
+   saved, so only the Oscars and raffle steps remain, all optional.
    ════════════════════════════════════════════════════════════════════════════ */
 
 import { allMatchesScored, isMatchScored } from './eventPhase'
@@ -91,11 +92,7 @@ export function runOfShowSteps({
   const isRafflePublished = Boolean(tournament.rafflePublishedAt)
   const kotc = isKingOfTheCourt(tournament)
 
-  const finishState: RunOfShowStepState = isCompleted
-    ? 'done'
-    : allScored || kotc
-      ? 'available'
-      : 'locked'
+  const finishState: RunOfShowStepState = isCompleted ? 'done' : allScored ? 'available' : 'locked'
   const flagsState: RunOfShowStepState =
     flaggedCount === 0 ? 'done' : isCompleted ? 'available' : 'locked'
   const openVotingState: RunOfShowStepState =
@@ -139,13 +136,9 @@ export function runOfShowSteps({
       id: 'finish',
       title: 'Finish tournament',
       state: finishState,
-      detail: kotc
-        ? isCompleted
-          ? 'Tournament complete'
-          : 'No ratings change in King of the Court'
-        : isCompleted
-          ? 'Ratings applied, tournament complete'
-          : 'Applies learned ratings first',
+      detail: isCompleted
+        ? 'Ratings applied, tournament complete'
+        : 'Applies learned ratings first',
       lockedReason: lockedBecause(finishState, 'Every match needs a score'),
       playersSee: 'Standings stay hidden',
     },
@@ -236,10 +229,15 @@ export function runOfShowSteps({
       optional: true,
     },
   ]
-  return kotc ? steps.filter((s) => !MATCH_ONLY_STEPS.includes(s.id)) : steps
+  return kotc ? steps.filter((s) => !AMERICANO_ONLY_STEPS.includes(s.id)) : steps
 }
 
-const MATCH_ONLY_STEPS: readonly RunOfShowStepId[] = ['enter_scores', 'resolve_flags']
+const AMERICANO_ONLY_STEPS: readonly RunOfShowStepId[] = [
+  'enter_scores',
+  'finish',
+  'resolve_flags',
+  'reveal',
+]
 
 /** Convenience for the collapsed summary line. */
 export function runOfShowProgress(steps: readonly RunOfShowStep[]): {

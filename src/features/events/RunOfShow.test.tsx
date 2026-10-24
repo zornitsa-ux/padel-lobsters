@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, cleanup } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import type { NormalisedTournament } from '../../lib/normalise'
 import type { OscarsPhase } from '../oscars/oscarsPhase'
@@ -11,7 +11,6 @@ const mockUseEventPhase = vi.fn()
 const mockUseRaffleWinners = vi.fn()
 const mockUseEventLifecycle = vi.fn()
 const mockUseOscarsSession = vi.fn()
-const mockConfirm = vi.fn()
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom')
@@ -22,7 +21,6 @@ vi.mock('./useEventPhase', () => ({ useEventPhase: () => mockUseEventPhase() }))
 vi.mock('../raffle/useRaffle', () => ({ useRaffleWinners: () => mockUseRaffleWinners() }))
 vi.mock('./useEventLifecycle', () => ({ useEventLifecycle: () => mockUseEventLifecycle() }))
 vi.mock('../oscars/useOscarsSession', () => ({ useOscarsSession: () => mockUseOscarsSession() }))
-vi.mock('../../lib/confirmBus', () => ({ useConfirm: () => mockConfirm }))
 vi.mock('../matchmaking/ui/RatingReview', () => ({
   default: () => <div data-testid="rating-review" />,
 }))
@@ -329,30 +327,11 @@ describe('RunOfShow — actions', () => {
     expect(finishTournament).toHaveBeenCalledTimes(1)
   })
 
-  it('Finish on King of the Court asks first, since it stops team changes', async () => {
-    mockConfirm.mockResolvedValue(true)
+  it('offers no Finish or Reveal on King of the Court, and no progress count', () => {
     setup({ format: 'king_of_court', matches: [] })
-    fireEvent.click(button(/finish tournament/i)!)
-
-    await waitFor(() => expect(finishTournament).toHaveBeenCalledTimes(1))
-    expect(mockConfirm).toHaveBeenCalledWith(
-      expect.objectContaining({ title: 'Finish the event?' }),
-    )
-  })
-
-  it('Finish on King of the Court does nothing when the admin backs out', async () => {
-    mockConfirm.mockResolvedValue(false)
-    setup({ format: 'king_of_court', matches: [] })
-    fireEvent.click(button(/finish tournament/i)!)
-
-    await waitFor(() => expect(mockConfirm).toHaveBeenCalled())
-    expect(finishTournament).not.toHaveBeenCalled()
-  })
-
-  it('Finish on Americano needs no confirm: every score is already in', () => {
-    setup({ matches: [scored()] })
-    fireEvent.click(button(/finish tournament/i)!)
-    expect(mockConfirm).not.toHaveBeenCalled()
+    expect(button(/finish tournament/i)).toBeNull()
+    expect(button(/reveal the results/i)).toBeNull()
+    expect(screen.queryByText(/of \d+ done/)).toBeNull()
   })
 
   it('Publish calls publishRaffleWinners', () => {

@@ -5,8 +5,6 @@ import { ArrowUpRight, CheckCircle2, Lock, Eye } from 'lucide-react'
 import { useMatches } from './useMatches'
 import { useEventPhase } from './useEventPhase'
 import { useEventLifecycle } from './useEventLifecycle'
-import { isKingOfTheCourt } from './eventFormat'
-import { useConfirm } from '../../lib/confirmBus'
 import { useRaffleWinners } from '../raffle/useRaffle'
 import { useOscarsSession } from '../oscars/useOscarsSession'
 import { runOfShowSteps, runOfShowProgress, votingTurnout } from './runOfShowSteps'
@@ -48,22 +46,7 @@ function useStepActions({
   oscars: ReturnType<typeof useOscarsSession>
 }): Record<RunOfShowStep['id'], StepAction> {
   const navigate = useNavigate()
-  const confirm = useConfirm()
   const [revealingOscars, setRevealingOscars] = useState(false)
-
-  // King of the Court can finish from the event morning, before play (no
-  // scores gate it), and finishing stops every team change.
-  const handleFinish = async () => {
-    const ok =
-      !isKingOfTheCourt(tournament) ||
-      (await confirm({
-        title: 'Finish the event?',
-        message:
-          'Team changes stop for everyone, admins included. Seeds and final standings can still be edited.',
-        confirmLabel: 'Finish',
-      }))
-    if (ok) await lifecycle.finishTournament()
-  }
 
   // Two independent writes. Re-runnable: with the standings already public the
   // first is skipped, so this doubles as the retry for an Oscars share that was
@@ -93,7 +76,7 @@ function useStepActions({
       label: 'Finish tournament',
       busyLabel: 'Finishing…',
       busy: lifecycle.busy === 'finish',
-      onClick: () => void handleFinish(),
+      onClick: () => void lifecycle.finishTournament(),
     },
     resolve_flags: {
       kind: 'custom',
@@ -259,9 +242,12 @@ export default function RunOfShow({ tournament }: { tournament: NormalisedTourna
     <div className="card space-y-4" data-testid="run-of-show">
       <div className="flex items-center justify-between">
         <h2 className="font-bold text-lob-dark">Run of show</h2>
-        <span className="text-xs font-semibold text-lob-muted">
-          {progress.done} of {progress.total} done
-        </span>
+        {/* King of the Court has only optional steps, so nothing to count. */}
+        {progress.total > 0 && (
+          <span className="text-xs font-semibold text-lob-muted">
+            {progress.done} of {progress.total} done
+          </span>
+        )}
       </div>
 
       {/* Two step controls write through the Oscars hook, which keeps its own

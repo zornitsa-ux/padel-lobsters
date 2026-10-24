@@ -3,6 +3,8 @@ import { useMatches } from './useMatches'
 import { useOscarsSessionRow } from '../oscars/useOscarsSessionRow'
 import { derivePhase, toPhaseSession } from '../oscars/oscarsPhase'
 import { eventPhase } from './eventPhase'
+import { isKingOfTheCourt } from './eventFormat'
+import { useEventTeams } from './teams/useTeams'
 import type { EventPhase, PhaseTournament } from './eventPhase'
 import type { OscarsPhase } from '../oscars/oscarsPhase'
 
@@ -29,10 +31,17 @@ export function useEventPhase(tournament: (PhaseTournament & { id: string }) | n
 } {
   const { data: matches = [], isPending: matchesPending } = useMatches(tournament?.id)
   const { data: oscarsSession } = useOscarsSessionRow(tournament?.id)
+  // King of the Court's standings are public as soon as they're saved (D-026).
+  const kotc = tournament != null && isKingOfTheCourt(tournament)
+  const { data: teams, isPending: teamsPending } = useEventTeams({
+    tournamentId: tournament?.id,
+    enabled: kotc,
+  })
+  const hasFinalStandings = Boolean(teams?.some((t) => t.finalRank != null && !t.cancelledAt))
 
   const phase = useMemo(
-    () => (tournament ? eventPhase({ tournament, matches }) : 'open'),
-    [tournament, matches],
+    () => (tournament ? eventPhase({ tournament, matches, hasFinalStandings }) : 'open'),
+    [tournament, matches, hasFinalStandings],
   )
 
   // react-query's `undefined` while loading is exactly derivePhase's loading
@@ -41,5 +50,9 @@ export function useEventPhase(tournament: (PhaseTournament & { id: string }) | n
 
   // No tournament means there is nothing in flight to wait for — react-query
   // reports a disabled query as pending forever.
-  return { phase, oscarsPhase, isPending: tournament != null && matchesPending }
+  return {
+    phase,
+    oscarsPhase,
+    isPending: tournament != null && (matchesPending || (kotc && teamsPending)),
+  }
 }
