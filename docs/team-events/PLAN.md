@@ -61,7 +61,7 @@
 | T10 | Admin: seed reorder + Show starting court assignments (D-024); Final standings entry; court-removal warning (D-027)                                                                                                      | 2     | T8          | #64      | [x]   |
 | T11 | Player views: starting court on Schedule / You / upcoming card; Results ranking; History + recently-completed banner; Lobster Review rank                                                                                | 2     | T8, T9, T10 | #66      | [x]   |
 | T12 | Verify Phase 2 locally (16-team event end to end) → **R2**                                                                                                                                                               | 2     | T9–T11      |          | [ ]   |
-| T13 | Results: courts moved per team and a Biggest climber on Results, the recently-completed banner and History (D-028)                                                                                                       | 2     | T11         |          | [~]   |
+| T13 | Results: courts moved per team and a Biggest climber on Results, the recently-completed banner and History (D-028)                                                                                                       | 2     | T11         | #67      | [~]   |
 
 States: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked.
 
@@ -98,7 +98,7 @@ describe what was built. In short:
 
 **Next, in order:**
 
-1. **T13: merge** (task notes in §2). Built before R2, since it fit.
+1. **T13: merge #67** (task notes in §2). Built before R2, since it fit.
 2. **T12: local verification** (gate in §2): the first browser walk-through of
    the player views, including courts moved. Then **R2**: merge, Vercel
    deploys. No migration. Live by Thu 12 Nov.
@@ -443,7 +443,7 @@ placeholders as partners, was withdrawn by D-010: placeholders aren't offered.)
   the saved seeds and final ranks. Places beaten against seed was rejected.
   Logged as T13.
 - 2026-10-24: **T11 merged** (#66).
-- 2026-10-24: **T13** courts moved and Biggest climber (D-028), before R2.
+- 2026-10-24: **T13** courts moved and Biggest climber (#67, D-028), before R2.
   `courtMoves` and `biggestClimbers` are pure and tested first, next to the
   other domain code. Results and History show "Court 5 → King court ↑4" under
   each ranked team and the Biggest climber above the ranking; the
