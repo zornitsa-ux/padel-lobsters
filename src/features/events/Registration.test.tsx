@@ -35,6 +35,7 @@ vi.mock('./useRegistrations', () => ({
     promoteWaitlistRegistration: vi.fn(),
   }),
 }))
+vi.mock('./teams/useTeams', () => ({ useTeamEntries: () => ({ teams: [], entries: [] }) }))
 vi.mock('../../lib/confirmBus', () => ({ useConfirm: () => vi.fn() }))
 vi.mock('../../lib/toastBus', () => ({ useToast: () => ({ showToast: vi.fn() }) }))
 vi.mock('../settings/useSettings', () => ({ useSettings: () => ({ data: { whatsappLink: '' } }) }))

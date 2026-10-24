@@ -34,19 +34,29 @@ vi.mock('../../useRegistrations', () => ({
     promoteWaitlistRegistration: vi.fn(),
   }),
 }))
-vi.mock('../../teams/useTeams', () => ({
-  useEventTeams: () => ({ data: m.teams }),
-  usePartnerInvites: () => ({ data: m.invites }),
-  useTeamActions: () => ({
-    registerTeam: m.registerTeam,
-    changeTeamPartner: m.changeTeamPartner,
-    adminCancelTeam: m.adminCancelTeam,
-    adminPromoteTeam: m.adminPromoteTeam,
-    cancelMyTeam: m.cancelMyTeam,
-    respondToTeamInvite: m.respondToTeamInvite,
-  }),
-  useCheckNewPartnerEmail: () => m.checkEmail,
-}))
+vi.mock('../../teams/useTeams', async () => {
+  const { buildTeamEntries } = await import('../../teams/teamEntries')
+  return {
+    useTeamEntries: ({
+      registrations,
+    }: {
+      registrations: Parameters<typeof buildTeamEntries>[0]['registrations']
+    }) => ({
+      teams: m.teams,
+      entries: buildTeamEntries({ teams: m.teams as never, registrations }),
+    }),
+    usePartnerInvites: () => ({ data: m.invites }),
+    useTeamActions: () => ({
+      registerTeam: m.registerTeam,
+      changeTeamPartner: m.changeTeamPartner,
+      adminCancelTeam: m.adminCancelTeam,
+      adminPromoteTeam: m.adminPromoteTeam,
+      cancelMyTeam: m.cancelMyTeam,
+      respondToTeamInvite: m.respondToTeamInvite,
+    }),
+    useCheckNewPartnerEmail: () => m.checkEmail,
+  }
+})
 vi.mock('../../../../lib/confirmBus', () => ({ useConfirm: () => m.confirm }))
 vi.mock('../../../../lib/toastBus', () => ({ useToast: () => ({ showToast: vi.fn() }) }))
 vi.mock('../../../settings/useSettings', () => ({

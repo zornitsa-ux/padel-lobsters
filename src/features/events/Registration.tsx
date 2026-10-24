@@ -42,7 +42,8 @@ import RegistrationPaymentSheetModal from './registration/RegistrationPaymentShe
 import AddPlayerCard from './registration/AddPlayerCard'
 import JoinEventCard from './registration/JoinEventCard'
 import { useSelfRegister } from './registration/useSelfRegister'
-import { rosterLine } from './registration/team/teamHelpers'
+import { findMyEntry, rosterLine, teamPrice } from './registration/team/teamHelpers'
+import { useTeamEntries } from './teams/useTeams'
 import TeamTransferCard from './registration/team/TeamTransferCard'
 import TransferSpotCard from './registration/TransferSpotCard'
 import { myRegistrationSummary } from './nextMatch'
@@ -52,8 +53,8 @@ import CancelledSection from './registration/CancelledSection'
 import TeamSignup from './registration/team/TeamSignup'
 import TeamLists from './registration/team/TeamLists'
 import AdminAddTeamCard from './registration/team/AdminAddTeamCard'
-import { teamPrice } from './registration/team/teamHelpers'
 import type { TeamSignupResult } from './registration/team/useTeamSignup'
+import type { TeamEntry } from './teams/teamTypes'
 import { errorMessage } from '../../lib/errors'
 import { REGISTER_FAILURE_MESSAGES, registrationMessage } from './registrationStatusMessages'
 import type { EventFormValues } from './eventConstants'
@@ -191,6 +192,12 @@ export default function Registration({
     () => splitRegistrationsByStatus(regs),
     [regs],
   )
+  const { teams, entries: teamEntries } = useTeamEntries({
+    tournamentId,
+    registrations: regs,
+    enabled: tournament?.entryMode === 'team',
+  })
+  const myTeamEntry = findMyEntry({ entries: teamEntries, playerId: claimedId })
   const availablePlayers = useMemo(
     () => getAvailablePlayers({ players, regs, search }),
     [players, regs, search],
@@ -515,6 +522,8 @@ export default function Registration({
           viewerId={claimedId}
           players={players}
           regs={regs}
+          teams={teams}
+          entry={myTeamEntry}
           getPlayer={getPlayer}
           displayName={displayName}
           onSignedUp={handleTeamSignedUp}
@@ -537,10 +546,8 @@ export default function Registration({
           deliberately doesn't host transfers. */}
       {!isAdmin && claimedId && !isCompleted && (
         <TransferSection
-          tournamentId={tournament.id}
-          viewerId={claimedId}
-          regs={regs}
           isTeamEvent={isTeamEvent}
+          teamEntry={myTeamEntry}
           card={{
             myReg,
             pendingFromMe,
@@ -560,7 +567,7 @@ export default function Registration({
       {/* 3. Roster — the two numbers that matter. */}
       {!isCompleted && (
         <RosterLine
-          isTeamEvent={isTeamEvent}
+          teamEntries={isTeamEvent ? teamEntries : undefined}
           registered={registered.length}
           waitlisted={waitlisted.length}
           maxPlayers={maxPlayers}
@@ -607,6 +614,7 @@ export default function Registration({
           isAdmin={isAdmin}
           players={players}
           regs={regs}
+          entries={teamEntries}
           getPlayer={getPlayer}
           displayName={displayName}
         />
@@ -701,42 +709,36 @@ export default function Registration({
 }
 
 function TransferSection({
-  tournamentId,
-  viewerId,
-  regs,
   isTeamEvent,
+  teamEntry,
   card,
 }: {
-  tournamentId: string
-  viewerId: string
-  regs: NormalisedRegistration[]
   isTeamEvent: boolean
+  teamEntry: TeamEntry | null
   card: ComponentProps<typeof TransferSpotCard>
 }) {
   if (!isTeamEvent) return <TransferSpotCard {...card} />
-  return (
-    <TeamTransferCard tournamentId={tournamentId} viewerId={viewerId} regs={regs} card={card} />
-  )
+  return <TeamTransferCard entry={teamEntry} card={card} />
 }
 
 function RosterLine({
-  isTeamEvent,
+  teamEntries,
   registered,
   waitlisted,
   maxPlayers,
 }: {
-  isTeamEvent: boolean
+  /** Set on a team event: the line counts teams. */
+  teamEntries?: TeamEntry[]
   registered: number
   waitlisted: number
   maxPlayers: number
 }) {
-  const teams = rosterLine({
-    registeredPlayers: registered,
-    waitlistedPlayers: waitlisted,
-    maxPlayers,
-  })
-  const main = isTeamEvent ? teams.main : `${registered} of ${maxPlayers}`
-  const waiting = isTeamEvent ? teams.waiting : waitlisted > 0 ? `${waitlisted} waiting` : null
+  const { main, waiting } = teamEntries
+    ? rosterLine({ entries: teamEntries, maxPlayers })
+    : {
+        main: `${registered} of ${maxPlayers}`,
+        waiting: waitlisted > 0 ? `${waitlisted} waiting` : null,
+      }
   return (
     <p className="text-sm font-semibold text-lob-slate px-1">
       {main}

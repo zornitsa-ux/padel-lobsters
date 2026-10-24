@@ -2,13 +2,13 @@ import { useMemo, useState } from 'react'
 import type { Player } from '../../../../lib/normalise'
 import type { NormalisedRegistration } from '../../registrationQueries'
 import type { NormalisedTournament } from '../../tournamentQueries'
+import type { EventTeam, TeamEntry } from '../../teams/teamTypes'
 import type { DisplayName, GetPlayer } from '../utils'
 import TeamCard from './TeamCard'
 import TeamJoinCard from './TeamJoinCard'
 import TeamNotices from './TeamNotices'
 import EndedTeamNotice from './EndedTeamNotice'
 import { eligiblePlayers, endedTeamNotice } from './teamHelpers'
-import { useMyTeamEntry } from './useMyTeamEntry'
 import type { TeamSignupResult } from './useTeamSignup'
 
 interface TeamSignupProps {
@@ -16,6 +16,9 @@ interface TeamSignupProps {
   viewerId: string
   players: Player[]
   regs: NormalisedRegistration[]
+  teams: EventTeam[]
+  /** The viewer's active team, if any. */
+  entry: TeamEntry | null
   getPlayer: GetPlayer
   displayName: DisplayName
   onSignedUp: (result: TeamSignupResult) => void
@@ -27,16 +30,12 @@ export default function TeamSignup({
   viewerId,
   players,
   regs,
+  teams,
+  entry,
   getPlayer,
   displayName,
   onSignedUp,
 }: TeamSignupProps) {
-  const { teams, entry } = useMyTeamEntry({
-    tournamentId: tournament.id,
-    regs,
-    viewerId,
-    enabled: true,
-  })
   const [signup, setSignup] = useState<{ notices: string[]; status: string } | null>(null)
   const [joinOpen, setJoinOpen] = useState(false)
   const notices =

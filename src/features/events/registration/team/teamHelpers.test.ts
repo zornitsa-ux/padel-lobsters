@@ -8,7 +8,9 @@ import {
   draftToChoice,
   isDraftComplete,
   isLevelValid,
+  rosterLine,
 } from './teamHelpers'
+import type { TeamEntry } from '../../teams/teamTypes'
 
 describe('new partner draft', () => {
   const filled = { ...EMPTY_DRAFT, name: 'A', email: 'a@test.invalid', consent: true }
@@ -67,5 +69,22 @@ describe('filterByName', () => {
   })
   it('shows everyone for an empty search', () => {
     expect(ids('   ')).toHaveLength(3)
+  })
+})
+
+describe('rosterLine', () => {
+  const entry = (status: TeamEntry['status']) => ({ status }) as TeamEntry
+
+  it('counts the team entries, so it matches the team lists', () => {
+    expect(
+      rosterLine({
+        entries: [entry('registered'), entry('registered'), entry('waitlist')],
+        maxPlayers: 20,
+      }),
+    ).toEqual({ main: '2 of 10 teams', waiting: '1 team waiting' })
+  })
+
+  it('has no waiting part with an empty waitlist', () => {
+    expect(rosterLine({ entries: [entry('registered')], maxPlayers: 20 }).waiting).toBeNull()
   })
 })

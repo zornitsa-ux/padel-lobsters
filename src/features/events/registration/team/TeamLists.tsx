@@ -4,9 +4,8 @@ import type { Player } from '../../../../lib/normalise'
 import { useConfirm } from '../../../../lib/confirmBus'
 import { useToast } from '../../../../lib/toastBus'
 import type { NormalisedRegistration } from '../../registrationQueries'
-import { buildTeamEntries } from '../../teams/teamEntries'
 import type { TeamEntry } from '../../teams/teamTypes'
-import { useEventTeams, usePartnerInvites, useTeamActions } from '../../teams/useTeams'
+import { usePartnerInvites, useTeamActions } from '../../teams/useTeams'
 import type { NormalisedTournament } from '../../tournamentQueries'
 import type { DisplayName, GetPlayer } from '../utils'
 import TeamRow from './TeamRow'
@@ -17,6 +16,7 @@ interface TeamListsProps {
   isAdmin: boolean
   players: Player[]
   regs: NormalisedRegistration[]
+  entries: TeamEntry[]
   getPlayer: GetPlayer
   displayName: DisplayName
 }
@@ -26,6 +26,7 @@ export default function TeamLists({
   isAdmin,
   players,
   regs,
+  entries,
   getPlayer,
   displayName,
 }: TeamListsProps) {
@@ -33,10 +34,8 @@ export default function TeamLists({
   const confirm = useConfirm()
   const { showToast } = useToast()
   const { adminCancelTeam, adminPromoteTeam } = useTeamActions()
-  const { data: teams = [] } = useEventTeams({ tournamentId })
   const { data: invites = [] } = usePartnerInvites({ tournamentId, enabled: isAdmin })
 
-  const entries = useMemo(() => buildTeamEntries({ teams, registrations: regs }), [teams, regs])
   const registered = entries.filter((e) => e.status === 'registered')
   const waitlisted = entries.filter((e) => e.status === 'waitlist')
   const candidates = useMemo(() => eligiblePlayers({ players, regs }), [players, regs])

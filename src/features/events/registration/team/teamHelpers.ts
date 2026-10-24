@@ -162,18 +162,18 @@ export const signupNotices = ({
 
 export const teamCount = ({ players }: { players: number }): number => Math.floor(players / 2)
 
+// Counted from the team entries, so the line always matches the team lists.
 export const rosterLine = ({
-  registeredPlayers,
-  waitlistedPlayers,
+  entries,
   maxPlayers,
 }: {
-  registeredPlayers: number
-  waitlistedPlayers: number
+  entries: TeamEntry[]
   maxPlayers: number
 }): { main: string; waiting: string | null } => {
-  const waiting = teamCount({ players: waitlistedPlayers })
+  const registered = entries.filter((e) => e.status === 'registered').length
+  const waiting = entries.length - registered
   return {
-    main: `${teamCount({ players: registeredPlayers })} of ${teamCount({ players: maxPlayers })} teams`,
+    main: `${registered} of ${teamCount({ players: maxPlayers })} teams`,
     waiting: waiting > 0 ? `${waiting} ${waiting === 1 ? 'team' : 'teams'} waiting` : null,
   }
 }
