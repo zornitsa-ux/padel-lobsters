@@ -78,16 +78,16 @@ States: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked.
 its fixes are committed on the branches below. The owner confirmed two findings
 as known choices: an admin partner change leaves the team waiting for the new
 partner, and raising capacity doesn't promote waitlisted teams. **Next: the
-clean local apply, then the owner pushes and R1 merges.**
+clean local apply, then R1 merges.**
 
-**Branches** (all committed; all ahead of GitHub):
+**Branches** (all committed and pushed, 2026-10-24):
 
 | Branch                              | PR   | Base                     | Remote                                        |
 | ----------------------------------- | ---- | ------------------------ | --------------------------------------------- |
-| `team-events-schema`                | #56  | `main`                   | ahead (push)                                  |
-| `team-events-event-form`            | #58  | `team-events-schema`     | rebased (force-push with lease)               |
-| `team-events-signup-ui`             | #60  | `team-events-event-form` | rebased (force-push with lease)               |
-| `team-events-payments`              | #59  | `team-events-schema`     | rebased (force-push with lease)               |
+| `team-events-schema`                | #56  | `main`                   | up to date                                    |
+| `team-events-event-form`            | #58  | `team-events-schema`     | up to date                                    |
+| `team-events-signup-ui`             | #60  | `team-events-event-form` | up to date                                    |
+| `team-events-payments`              | #59  | `team-events-schema`     | up to date                                    |
 | `team-events-kotc-domain`           | #57  | `main`                   | up to date                                    |
 | `fix/reset-cache-on-account-switch` | none | `main`                   | not pushed; needs its own PR (bug is on main) |
 
@@ -134,10 +134,10 @@ DESIGN F-8).
 - `transferQueries.ts` and `playerQueries.ts` still unwrap RPC rows by hand;
   switch them to `lib/firstRow` in a follow-up on `main`.
 
-**Gates before R1.** The clean local apply above. The owner pushes the rebased
-branches. Merge in order: #56 → (#58 → #60, #59) → `db push` from `main`. #57
-can merge any time. The cache fix ships on its own. Remember the 3-day rule around the Thu 5 Nov PIN cutover and
-the Sun 15 Nov event: R1 is sign-in-facing (the finish-your-account step).
+**Gates before R1.** The clean local apply above. Merge in order: #56 → (#58 →
+#60, #59) → `db push` from `main`. #57 can merge any time. The cache fix ships
+on its own. Remember the 3-day rule around the Thu 5 Nov PIN cutover and the
+Sun 15 Nov event: R1 is sign-in-facing (the finish-your-account step).
 
 ---
 
