@@ -56,7 +56,7 @@
 | T5  | Team card + registration list (teams, waitlist, change partner, transfers hidden)                                                                                                                                        | 1     | T1         | #60      | [x]   |
 | T6  | Admin: add/cancel/promote team, change partner, team Payments view + reminder                                                                                                                                            | 1     | T1         | #59, #60 | [x]   |
 | T7  | Verify Phase 1 locally (rehearsal data) → **R1**                                                                                                                                                                         | 1     | T1, T3–T6  | —        | [~]   |
-| T8  | King of the Court domain (pure, tests first): `teamStrength`, `seedTeams`, `startingCourts`, `rankFromFinalCourts`                                                                                                       | 2     | T0         |          | [ ]   |
+| T8  | King of the Court domain (pure, tests first): `teamStrength`, `seedTeams`, `startingCourts`, `rankFromFinalCourts`                                                                                                       | 2     | T0         | #57      | [x]   |
 | T9  | Lifecycle: `eventPhase` King of the Court branch, Finish with zero matches + no ratings, matcher guard                                                                                                                   | 2     | T1         |          | [ ]   |
 | T10 | Admin: seed reorder + Publish starting courts; Final standings entry                                                                                                                                                     | 2     | T8         |          | [ ]   |
 | T11 | Player views: starting court on Schedule / MyTournament / upcoming card; Results ranking; Lobster Review rank                                                                                                            | 2     | T8, T9     |          | [ ]   |
@@ -71,6 +71,80 @@ States: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked.
 - **T2** ships after R1. Deploy `send-invite-email` (the new kind) first, then
   merge and push the RPC migration.
 - **R2** is client-only.
+
+### Resume here (2026-10-24 checkpoint)
+
+**Where we are.** Code review of #56–#60 done and fixed. The owner's walk-through
+(T7) is mostly done and judged good enough to proceed: the 14 integrity counts
+were unchanged and no email was queued. **Next: one comprehensive review of
+everything together**, looking for bugs, duplicated logic or components, and
+simplifications. Then the R1 merge.
+
+**Branches** (all committed; several are ahead of GitHub):
+
+| Branch                              | PR   | Base                     | Remote                                        |
+| ----------------------------------- | ---- | ------------------------ | --------------------------------------------- |
+| `team-events-schema`                | #56  | `main`                   | ahead (push)                                  |
+| `team-events-event-form`            | #58  | `team-events-schema`     | rebased (force-push with lease)               |
+| `team-events-signup-ui`             | #60  | `team-events-event-form` | rebased (force-push with lease)               |
+| `team-events-payments`              | #59  | `team-events-schema`     | rebased (force-push with lease)               |
+| `team-events-kotc-domain`           | #57  | `main`                   | up to date                                    |
+| `fix/reset-cache-on-account-switch` | none | `main`                   | not pushed; needs its own PR (bug is on main) |
+
+The integration branch `kotc-test` is local only, in the worktree
+`../padel-lobsters-kotc-test`: `team-events-signup-ui` merged with `-payments`,
+`-kotc-domain` and the cache fix. Rebuild it after changing any branch: reset
+it to `team-events-signup-ui`, merge the other three, and keep "ours" for the
+`PLAN.md` conflict. Review the whole change set with `git diff main...kotc-test`.
+
+**Local database.** The R1 migration file changed after it was first applied
+locally. The changed functions and the `account_acknowledged_at` column were
+applied by hand, and every function body in the file was checked against the
+database. Before R1, do a clean apply (`npm run db:reset`, then
+`npm run rehearsal:sync`, re-run `supabase/tests/team_events.sql` (29 checks)
+and the integrity counts). The local auth server was restarted to pick up the
+code email template (PIN removal DESIGN F-8).
+
+**Added since the first review:** D-020 (pay before acceptance), D-021
+(finish-your-account step + acknowledgement), the early new-partner email check
+(`check_new_partner_email`), team signup in a modal, the redesigned
+acceptance screen, full names on team events, looser member search, shared
+`ProfileFields`/`profileForm` (extracted from `SignupRequest`), and the
+query-cache reset when the account changes.
+
+**Known duplication and cleanup candidates** (from the per-PR reviews, not yet
+done; verify each before changing):
+
+- Accept/decline UI and its confirm dialog: `invites/TeamInvitesPage.tsx` and
+  `registration/team/TeamCardActions.tsx` (`PartnerPendingActions`).
+- Event edit form logic in both `Tournament.tsx` and `Registration.tsx`
+  (open, submit, courts, `entry_mode_locked` handling); only
+  `withSavedFormat` is shared. Both also cast to `Partial<NormalisedTournament>`
+  where the hooks should take `TournamentInput`.
+- "Active registration" defined three times: `hasSignups` (eventFormModel),
+  `isActive` (teams/teamEntries) and filters in `registration/utils`.
+- Format → entry mode mapping: `isTeamEvent` in `generateSchedule.service.ts`
+  vs `formatOption`/`isKingOfTheCourt` in `eventFormModel.ts`.
+- Team entries built three times per Registration render (`useMyTeamEntry` in
+  `TeamSignup` and `TeamTransferCard`, `buildTeamEntries` in `TeamLists`).
+- `firstRow` copied in `teams/teamQueries.ts` and `registrationQueries.ts`;
+  the hard-coded `['partnerInvites']` key in `useTeams`.
+- `useTeams` invalidates the whole player roster after every team action; only
+  new-partner paths need it.
+- Payments: `costPerPlayer` holds a per-team amount in team mode; rows of an
+  inconsistent team are dropped silently.
+- `TeamInviteRedirect` now also handles account setup (name no longer fits).
+- `#57`: Zod schemas are exported but never parsed; `KotcTeam` repeats
+  `EventTeam` fields.
+- Server edge cases: `change_team_partner` raises `tournament_full` instead of
+  returning a status when over capacity; `apply_team_transfer` skips the
+  matches sync (moot while team events have no matches).
+
+**Gates before R1.** The comprehensive review and its fixes. The clean local
+apply above. The owner pushes the rebased branches. Merge in order: #56 →
+(#58 → #60, #59) → `db push` from `main`. #57 can merge any time. The cache fix
+ships on its own. Remember the 3-day rule around the Thu 5 Nov PIN cutover and
+the Sun 15 Nov event: R1 is sign-in-facing (the finish-your-account step).
 
 ---
 
@@ -241,3 +315,6 @@ placeholders as partners, was withdrawn by D-010: placeholders aren't offered.)
     own PR (the query cache resets when the account changes).
   - The local stack was serving GoTrue's default link-only sign-in email
     (DESIGN F-8 of PIN removal). Restarting it fixed this.
+- 2026-10-24: **Checkpoint.** Owner walk-through mostly done and OK. The 14
+  integrity counts after it match the baseline, and no email was queued. Next:
+  a comprehensive review of all branches together (§1 "Resume here").
