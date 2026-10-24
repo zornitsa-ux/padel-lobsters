@@ -80,14 +80,14 @@ as known choices: an admin partner change leaves the team waiting for the new
 partner, and raising capacity doesn't promote waitlisted teams. The clean local
 apply passed (below). **Next: the R1 merge.**
 
-**Branches** (2026-10-24; #56, #58 and #61 are squash-merged and the R1
+**Branches** (2026-10-24; #56, #58, #60 and #61 are squash-merged and the R1
 migration is pushed to production):
 
 | Branch                              | PR  | Base   | Status                        |
 | ----------------------------------- | --- | ------ | ----------------------------- |
 | `team-events-schema`                | #56 | `main` | merged; `db push` done        |
 | `team-events-event-form`            | #58 | `main` | merged                        |
-| `team-events-signup-ui`             | #60 | `main` | open; rebased onto `main`     |
+| `team-events-signup-ui`             | #60 | `main` | merged                        |
 | `team-events-payments`              | #59 | `main` | open; rebased onto `main`     |
 | `team-events-kotc-domain`           | #57 | `main` | open; merge after #59 and #60 |
 | `fix/reset-cache-on-account-switch` | #61 | `main` | merged                        |
@@ -275,6 +275,7 @@ placeholders as partners, was withdrawn by D-010: placeholders aren't offered.)
   - `team_events.sql` now has 24 checks, including acceptance, decline,
     captain cancel, transfers after acceptance and the payment RPC.
 - 2026-10-22: T3 event form: Format picker (Americano / King of the Court), team total, ladder hint, format locked once anyone signs up. Capacity derives from courts (D-017) and the schedule generator refuses team events (D-018).
+- 2026-10-22: T6 (Payments part): one row per team through the captain's registration, covered partner rows hidden, team price and counts, reminder to the captain.
 - 2026-10-22: T4, T5, T6 (list part): team join flow, team card, teams listed as "A & B", admin Add/Cancel/Confirm team, change partner and the "hasn't signed in yet" hint. The Registration-tab edit form shares `formFromTournament`. The D-015 acceptance UI follows.
 - 2026-10-22: **T7 rehearsal** (pre-D-015) on a production copy: the 14 integrity counts were unchanged after migrating, after creating 3 new partners, after their sign-ins (both Sign in and Sign up land in the captain-created account) and after the UI walk-through. No email was queued. The walk-through at phone width covered the captain, partner and admin flows. Fixes: Back keeps the draft, the roster refreshes after a new partner, and the King of the Court label. To redo after D-015/D-016.
 - 2026-10-22: **D-015/D-019 UI** (#60): pending and confirmed team states, captain swap or cancel while pending, partner accept or decline (with the complete-teams copy at signup and on decline), a declined/cancelled notice with Sign up again, transfers on confirmed teams, the acceptance screen at `/team-invites` (once-per-session redirect, optional finish-profile step for captain-created accounts), admin pending/confirmed badges. Nits fixed: the admin "Their partner…" link, team counts in the roster line, and notices that can be dismissed and clear on status change.
