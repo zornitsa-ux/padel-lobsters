@@ -36,6 +36,19 @@ export function buildEventData({ form }: { form: EventFormValues }): TournamentI
   }
 }
 
+// Capacity follows the courts (D-017), so removing a court from a full event
+// leaves teams with no starting court. Allowed: the admin fixes it by hand.
+export function teamsWithoutCourt({
+  form,
+  registeredTeams,
+}: {
+  form: EventFormValues
+  registeredTeams: number
+}): number {
+  if (!isKingOfTheCourt(form)) return 0
+  return Math.max(0, registeredTeams - teamsForCourts({ courts: form.courts }))
+}
+
 export function hasSignups({
   registrations,
 }: {

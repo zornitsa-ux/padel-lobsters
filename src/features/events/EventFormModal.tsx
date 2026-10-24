@@ -7,6 +7,7 @@ import {
   FORMAT_LOCKED_NOTE,
   effectiveMaxPlayers,
   teamsForCourts,
+  teamsWithoutCourt,
   teamTotal,
 } from './eventFormModel'
 import { formatOption, isKingOfTheCourt } from './eventFormat'
@@ -29,6 +30,8 @@ interface EventFormModalProps {
   saving: boolean
   /** True when people have signed up, so the format can't change. */
   formatLocked?: boolean
+  /** Teams registered on the saved event (team events). */
+  registeredTeams?: number
   onSubmit: (e: FormEvent<HTMLFormElement>) => void
   onClose: () => void
   addCourt: () => void
@@ -43,6 +46,7 @@ export default function EventFormModal({
   setForm,
   saving,
   formatLocked = false,
+  registeredTeams = 0,
   onSubmit,
   onClose,
   addCourt,
@@ -50,6 +54,7 @@ export default function EventFormModal({
   setCourt,
 }: EventFormModalProps) {
   const kotc = isKingOfTheCourt(form)
+  const withoutCourt = teamsWithoutCourt({ form, registeredTeams })
   return (
     <Modal
       open={open}
@@ -127,9 +132,19 @@ export default function EventFormModal({
         </div>
 
         {kotc ? (
-          <p className="text-sm text-lob-slate">
-            {`${teamsForCourts({ courts: form.courts })} teams · 2 per court (${effectiveMaxPlayers({ form })} players)`}
-          </p>
+          <div className="space-y-2">
+            <p className="text-sm text-lob-slate">
+              {`${teamsForCourts({ courts: form.courts })} teams · 2 per court (${effectiveMaxPlayers({ form })} players)`}
+            </p>
+            {withoutCourt > 0 && (
+              <p
+                role="alert"
+                className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2"
+              >
+                {`${registeredTeams} teams are registered, more than these courts fit. ${withoutCourt} ${withoutCourt === 1 ? "team won't have" : "teams won't have"} a starting court until you add a court back or cancel a team.`}
+              </p>
+            )}
+          </div>
         ) : (
           <div>
             <label className="label">Max Players</label>
@@ -208,7 +223,7 @@ export default function EventFormModal({
                     onChange={(e) => setCourt(i, 'name', e.target.value)}
                   />
                   {form.courts.length > 1 && (
-                    <button type="button" onClick={() => removeCourt(i)}>
+                    <button type="button" aria-label="Remove court" onClick={() => removeCourt(i)}>
                       <X size={16} className="text-lob-muted-light" />
                     </button>
                   )}

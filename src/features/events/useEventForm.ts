@@ -86,6 +86,7 @@ export function useEventForm() {
         registrationsPending,
         registrations,
       }),
+      registeredTeams: registrations.filter((r) => r.status === 'registered').length / 2,
       onClose: () => setOpen(false),
       addCourt: () => setCourts((courts) => [...courts, { name: '', booked: false }]),
       removeCourt: (i: number) => setCourts((courts) => courts.filter((_, idx) => idx !== i)),
