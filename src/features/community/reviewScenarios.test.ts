@@ -153,3 +153,35 @@ describe('corpReview — attendance', () => {
     expect(corpReview(player(), [], allThree, threeEvents).scenario).toBe('ironman')
   })
 })
+
+describe('corpReview — King of the Court ranks by team (T11)', () => {
+  const teams = (p1Rank: number | null) =>
+    new Map([
+      [
+        't2',
+        [
+          { teamId: 'a', playerIds: ['p1', 'p9'], finalRank: p1Rank },
+          { teamId: 'b', playerIds: ['p3', 'p4'], finalRank: 2 },
+          { teamId: 'c', playerIds: ['p5', 'p6'], finalRank: 3 },
+          { teamId: 'd', playerIds: ['p7', 'p8'], finalRank: 4 },
+        ],
+      ],
+    ])
+
+  it("uses the team's final rank for the most recent event", () => {
+    expect(corpReview(player(), [], registrations, tournaments, teams(1)).scenario).toBe(
+      'recent-winner',
+    )
+  })
+
+  it('leaves an event without a rank for the player out', () => {
+    const matches = [match(6, 2), match(6, 3, 2), match(6, 4, 3)]
+    // t1 (Americano) is the only ranked event left, and p1 won it.
+    expect(corpReview(player(), matches, registrations, tournaments, teams(null)).scenario).toBe(
+      'recent-winner',
+    )
+    expect(corpReview(player(), [], registrations, tournaments, teams(null)).scenario).toBe(
+      'shows-up-no-data',
+    )
+  })
+})

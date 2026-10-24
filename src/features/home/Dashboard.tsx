@@ -29,6 +29,9 @@ import type { NormalisedMatch } from '../events/matchQueries'
 import type { NormalisedRegistration } from '../events/registrationQueries'
 import type { NormalisedTransfer } from '../events/transferQueries'
 import { isEventOver, isEventUpcoming } from '../events/eventPhase'
+import { useTeamResultsByEvent } from '../events/kingOfCourt/useTeamResultsByEvent'
+import MyKingOfCourtLine from '../events/kingOfCourt/MyKingOfCourtLine'
+import { isKingOfTheCourt } from '../events/eventFormat'
 
 // Only mounts after the player taps "share" on an outgoing transfer offer.
 const TransferPendingModal = lazy(() => import('../../components/TransferPendingModal'))
@@ -143,12 +146,17 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
     new Date(t.date || t.completedAt || 0).getTime()
   const recentlyCompleted = tournaments
     .filter((t) => {
-      if (t.status !== 'completed') return false
+      if (!isEventOver({ tournament: t })) return false
       const refDate = t.date || t.completedAt
       if (!refDate) return false
       return Date.now() - new Date(refDate).getTime() < TWO_DAYS_MS
     })
     .sort((a, b) => completedAtMs(b) - completedAtMs(a))
+  const recentTeamResults = useTeamResultsByEvent({
+    tournaments: recentlyCompleted,
+    registrations,
+    enabled: claimedId != null,
+  })
 
   // Next upcoming tournament
   const upcoming = tournaments
@@ -295,6 +303,13 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
           registrationsPending={registrationsPending}
           onNavigate={onNavigate}
           formatDate={formatDate}
+          kingOfCourtLine={
+            upcoming &&
+            claimedId &&
+            isKingOfTheCourt(upcoming) && (
+              <MyKingOfCourtLine tournament={upcoming} registrations={regs} playerId={claimedId} />
+            )
+          }
         />
 
         <RecentlyCompletedBanners
@@ -302,6 +317,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
           getTournamentMatches={getTournamentMatches}
           getTournamentRegistrations={getTournamentRegistrations}
           players={players}
+          teamResults={recentTeamResults}
           isAdmin={isAdmin}
           onNavigate={onNavigate}
         />

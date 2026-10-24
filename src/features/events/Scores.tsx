@@ -9,7 +9,7 @@ import { TabSwitcher } from '../../components/ui/TabSwitcher'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { ProgressBar } from '../../components/ui/ProgressBar'
 import { useTournamentSync } from './useTournamentSync'
-import { hasLiveScores } from './eventFormat'
+import { hasLiveScores, isKingOfTheCourt } from './eventFormat'
 import { useOscarResults } from '../oscars/useOscarResults'
 import { useRaffleWinners } from '../raffle/useRaffle'
 import { groupOscarResultsByCategory } from '../oscars/oscarResults'
@@ -20,6 +20,7 @@ import ScoresRankingTab from './ScoresRankingTab'
 import type { TournamentStandingRow } from './ScoresRankingTab'
 import ScoresMatchesTab from './ScoresMatchesTab'
 import RaffleWinnersBlock from './RaffleWinnersBlock'
+import KingOfCourtResults from './kingOfCourt/KingOfCourtResults'
 import type { NormalisedTournament } from './tournamentQueries'
 import type { EventNavigate } from './eventHelpers'
 
@@ -117,6 +118,8 @@ export default function Scores({ tournament, onNavigate }: ScoresProps) {
   // ranking/podium is embargoed until the admin reveals it (Schedule.jsx, post-
   // Finish). Admins always see the real ranking.
   const withheld = resultsWithheld({ tournament, isAdmin })
+  // King of the Court records no matches (D-006); its ranking is the teams'.
+  const kotc = isKingOfTheCourt(tournament)
 
   // Guards the frame between the tab disappearing and the effect above
   // committing the reset, so the panel is never blank in between.
@@ -132,7 +135,7 @@ export default function Scores({ tournament, onNavigate }: ScoresProps) {
       <TabSwitcher
         tabs={[
           { id: 'ranking', label: '🥇 Final Ranking' },
-          { id: 'matches', label: '📋 Matches' },
+          ...(kotc ? [] : [{ id: 'matches', label: '📋 Matches' }]),
           ...(hasGameResults ? [{ id: 'games', label: '🦞 Lobster Games' }] : []),
           ...(hasRaffleResults ? [{ id: 'raffle', label: '🎁 Prize Raffle' }] : []),
         ]}
@@ -142,9 +145,12 @@ export default function Scores({ tournament, onNavigate }: ScoresProps) {
       />
 
       {/* ── RANKING tab ─────────────────────────────────────────────────── */}
-      {activeTab === 'ranking' && (
-        <ScoresRankingTab standings={standings} matches={matches} withheld={withheld} />
-      )}
+      {activeTab === 'ranking' &&
+        (kotc ? (
+          <KingOfCourtResults tournament={tournament} />
+        ) : (
+          <ScoresRankingTab standings={standings} matches={matches} withheld={withheld} />
+        ))}
 
       {/* ── MATCHES tab ─────────────────────────────────────────────────── */}
       {activeTab === 'matches' && (

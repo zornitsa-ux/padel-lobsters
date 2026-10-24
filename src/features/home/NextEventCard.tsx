@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { type ReactNode } from 'react'
 import { Calendar, CalendarDays, CreditCard } from 'lucide-react'
 import DateTile from '../../components/ui/DateTile'
 import { EmptyState } from '../../components/ui/EmptyState'
@@ -20,6 +20,8 @@ interface NextEventCardProps {
   registrationsPending?: boolean
   onNavigate: (page: string, tournament?: NormalisedTournament) => void
   formatDate: (date: string | null | undefined) => string
+  /** King of the Court: the viewer's starting court or placing. */
+  kingOfCourtLine?: ReactNode
 }
 
 // Placeholder that mirrors the loaded card's metrics — eyebrow, title, the
@@ -56,6 +58,7 @@ export default function NextEventCard({
   registrationsPending = false,
   onNavigate,
   formatDate,
+  kingOfCourtLine = null,
 }: NextEventCardProps) {
   if (loading) return <NextEventSkeleton />
 
@@ -142,6 +145,7 @@ export default function NextEventCard({
             </span>
           </button>
         ) : null)}
+      {isRegistered && kingOfCourtLine}
 
       {/* Event description — preserves line breaks from the admin form. */}
       {upcoming.notes && upcoming.notes.trim() && (

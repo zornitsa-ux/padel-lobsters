@@ -37,11 +37,18 @@ const renderBanners = ({
   render(
     <RecentlyCompletedBanners
       recentlyCompleted={[
-        { id: 't1', name: 'Saturday Lobster', status: 'completed', resultsSharedAt },
+        {
+          id: 't1',
+          name: 'Saturday Lobster',
+          status: 'completed',
+          resultsSharedAt,
+          format: 'lobster_matching',
+        },
       ]}
       getTournamentMatches={() => matches}
       getTournamentRegistrations={() => registrations}
       players={players}
+      teamResults={new Map()}
       isAdmin={isAdmin}
       onNavigate={vi.fn()}
     />,
@@ -68,5 +75,51 @@ describe('RecentlyCompletedBanners — results withheld (D-029)', () => {
 
     expect(screen.getByText(/winner/i)).toBeTruthy()
     expect(screen.getByRole('button', { name: /see full results/i })).toBeTruthy()
+  })
+})
+
+describe('RecentlyCompletedBanners — King of the Court', () => {
+  const kotc = {
+    id: 'k1',
+    name: 'King Sunday',
+    status: 'upcoming',
+    resultsSharedAt: null,
+    format: 'king_of_court',
+  }
+  const renderKotc = (teamResults: Map<string, unknown[]>) => {
+    const onNavigate = vi.fn()
+    render(
+      <RecentlyCompletedBanners
+        recentlyCompleted={[kotc]}
+        getTournamentMatches={() => []}
+        getTournamentRegistrations={() => registrations}
+        players={players}
+        teamResults={teamResults as never}
+        isAdmin={false}
+        onNavigate={onNavigate}
+      />,
+    )
+    return onNavigate
+  }
+
+  it('names the winning team with no reveal step (D-026)', () => {
+    const onNavigate = renderKotc(
+      new Map([['k1', [{ teamId: 'tm1', playerIds: ['p1', 'p2'], finalRank: 1 }]]]),
+    )
+
+    expect(screen.getByText('Ada Lovelace & Grace Hopper')).toBeTruthy()
+    screen.getByRole('button', { name: 'See Full Results' }).click()
+    expect(onNavigate).toHaveBeenCalledWith('scores', kotc)
+  })
+
+  it('links to the event when no standings were saved', () => {
+    const onNavigate = renderKotc(
+      new Map([['k1', [{ teamId: 'tm1', playerIds: ['p1', 'p2'], finalRank: null }]]]),
+    )
+
+    expect(screen.queryByText(/winner/i)).toBeNull()
+    expect(screen.queryByText(/pending/i)).toBeNull()
+    screen.getByRole('button', { name: 'View Event' }).click()
+    expect(onNavigate).toHaveBeenCalledWith('registration', kotc)
   })
 })

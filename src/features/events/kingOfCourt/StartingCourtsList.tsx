@@ -1,15 +1,20 @@
 import type { StartingCourt } from './domain'
+import { courtLabel } from './kotcPlayer'
 
 export default function StartingCourtsList({
   courts,
   overflowTeamIds,
   order,
   labelOf,
+  highlightTeamId = null,
+  overflowAction = '',
 }: {
   courts: StartingCourt[]
   overflowTeamIds: string[]
   order: string[]
   labelOf: (teamId: string) => string
+  highlightTeamId?: string | null
+  overflowAction?: string
 }) {
   const seedOf = (teamId: string) => order.indexOf(teamId) + 1
 
@@ -19,17 +24,23 @@ export default function StartingCourtsList({
         {courts.map((court) => (
           <li key={court.courtIndex} className="rounded-xl bg-lob-cream px-3 py-2 space-y-1">
             <p className="text-xs font-bold text-lob-teal">
-              {court.courtName || `Court ${court.courtIndex + 1}`}
+              {courtLabel({ court })}
               {court.courtIndex === 0 && <span className="text-lob-muted"> · King court</span>}
             </p>
             {court.teamIds.map((teamId) => (
-              <TeamLine key={teamId} seed={seedOf(teamId)} label={labelOf(teamId)} />
+              <TeamLine
+                key={teamId}
+                seed={seedOf(teamId)}
+                label={labelOf(teamId)}
+                highlight={teamId === highlightTeamId}
+              />
             ))}
             {court.waitingTeamId && (
               <TeamLine
                 seed={seedOf(court.waitingTeamId)}
                 label={labelOf(court.waitingTeamId)}
                 note="waits for the first game"
+                highlight={court.waitingTeamId === highlightTeamId}
               />
             )}
           </li>
@@ -37,16 +48,30 @@ export default function StartingCourtsList({
       </ol>
       {overflowTeamIds.length > 0 && (
         <p role="alert" className="text-xs text-red-600 bg-red-50 rounded-lg p-2">
-          No court for {overflowTeamIds.map(labelOf).join(', ')}. Add a court or cancel a team.
+          No court for {overflowTeamIds.map(labelOf).join(', ')}.
+          {overflowAction && ` ${overflowAction}`}
         </p>
       )}
     </div>
   )
 }
 
-function TeamLine({ seed, label, note }: { seed: number; label: string; note?: string }) {
+function TeamLine({
+  seed,
+  label,
+  note,
+  highlight = false,
+}: {
+  seed: number
+  label: string
+  note?: string
+  highlight?: boolean
+}) {
   return (
-    <p className="text-sm text-lob-dark flex gap-2">
+    <p
+      className={`text-sm text-lob-dark flex gap-2 ${highlight ? 'font-bold bg-white rounded-lg -mx-1 px-1' : ''}`}
+      aria-current={highlight ? 'true' : undefined}
+    >
       <span className="font-mono tabular-nums text-xs text-lob-muted pt-0.5">{seed}</span>
       <span className="min-w-0">
         {label}

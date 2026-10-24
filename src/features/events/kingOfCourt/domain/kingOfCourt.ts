@@ -93,7 +93,7 @@ export function rankFromFinalCourts({
   return ranks
 }
 
-export function rankedTeams({ teams }: { teams: KotcTeam[] }): KotcTeam[] {
+export function rankedTeams<T extends Pick<KotcTeam, 'finalRank'>>({ teams }: { teams: T[] }): T[] {
   const ranked = teams
     .filter((t) => t.finalRank != null)
     .sort((a, b) => a.finalRank! - b.finalRank!)

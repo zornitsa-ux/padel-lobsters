@@ -26,6 +26,7 @@ import { LinkCard, LinkCardIcon } from '../../components/ui/LinkCard'
 import AuthReadinessPanel from './AuthReadinessPanel'
 import type { EventNavigate } from '../events/eventHelpers'
 import { isEventUpcoming } from '../events/eventPhase'
+import { useTeamResultsByEvent } from '../events/kingOfCourt/useTeamResultsByEvent'
 
 type AdminToolsProps = {
   onNavigate?: EventNavigate
@@ -43,6 +44,11 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
   const { data: tournaments = [] } = useTournaments()
   const { data: players = [] } = usePlayers()
   const { data: allRegs = [] } = useAllRegistrations()
+  const teamResults = useTeamResultsByEvent({
+    tournaments,
+    registrations: allRegs,
+    enabled: isAdmin,
+  })
   const { data: allMatches = [] } = useAllMatches()
   const [showReviewBreakdown, setShowReviewBreakdown] = useState(false)
   const { data: interests = [] } = useMerchInterests()
@@ -89,7 +95,7 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
       byScenario.set(s.id, { id: s.id, label: s.label, players: [], samples: new Map() })
     })
     activePlayers.forEach((p) => {
-      const r = corpReview(p, allMatches, allRegs, tournaments)
+      const r = corpReview(p, allMatches, allRegs, tournaments, teamResults)
       let bucket = byScenario.get(r.scenario)
       if (!bucket) {
         bucket = { id: r.scenario, label: r.scenarioLabel, players: [], samples: new Map() }
@@ -103,7 +109,7 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
     return [...byScenario.values()]
       .filter((b) => b.players.length > 0)
       .sort((a, b) => b.players.length - a.players.length)
-  }, [activePlayers, allMatches, allRegs, tournaments])
+  }, [activePlayers, allMatches, allRegs, tournaments, teamResults])
 
   const GENERIC_IDS = new Set(['level-low', 'level-mid', 'level-high', 'level-elite', 'welcome'])
   const genericCount = reviewBreakdown

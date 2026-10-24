@@ -1,4 +1,5 @@
 import { computeTournamentStandings, type MatchForStandings } from '../../lib/standings'
+import type { TeamResultsByEvent } from '../events/kingOfCourt/kotcPlayer'
 
 export interface ReviewScenario {
   id: string
@@ -80,6 +81,7 @@ export function corpReview(
   matches: MatchForStandings[] = [],
   registrations: ReviewRegistration[] = [],
   tournaments: ReviewTournament[] = [],
+  teamResults: TeamResultsByEvent = new Map(),
 ): CorpReview {
   const lvl = player.playtomicLevel || 0
   const name = (player.name || 'Employee').split(' ')[0]
@@ -156,10 +158,20 @@ export function corpReview(
   // Lobster Review never contradicts the official standings screen.
   // We keep the full list so we can detect multi-event patterns (e.g. The
   // Anchor = 2+ last-place finishes), not just the most recent result.
+  // King of the Court ranks teams: the player's rank is their team's saved
+  // final_rank, out of every registered team. Unranked teams are left out.
   const dbTournamentRanks: TournamentRank[] = []
   ;[...tournaments]
     .sort((a, b) => new Date(b.date ?? '').getTime() - new Date(a.date ?? '').getTime())
     .forEach((t) => {
+      const teams = teamResults.get(String(t.id))
+      if (teams) {
+        const rank = teams.find((r) => r.playerIds.includes(spid))?.finalRank
+        if (teams.length >= 4 && rank != null) {
+          dbTournamentRanks.push({ id: t.id, date: t.date ?? '', rank, total: teams.length })
+        }
+        return
+      }
       const standings = computeTournamentStandings(t.id, matches)
       if (standings.length < 4) return
       const pos = standings.findIndex((s) => String(s.id) === spid)

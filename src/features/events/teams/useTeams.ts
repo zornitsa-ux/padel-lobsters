@@ -32,6 +32,20 @@ export function useEventTeams({
 
 const NO_TEAMS: EventTeam[] = []
 
+export function useTeamsForEvents({
+  tournamentIds,
+  enabled = true,
+}: {
+  tournamentIds: string[]
+  enabled?: boolean
+}) {
+  return useQuery({
+    queryKey: teamKeys.forEvents(tournamentIds),
+    queryFn: () => q.fetchTeamsForEvents({ tournamentIds }),
+    enabled: enabled && tournamentIds.length > 0,
+  })
+}
+
 // Teams and registrations are separate queries, so a team that signed up after
 // the last teams fetch can reach the registrations first. Refetch the teams
 // once for it instead of dropping the team. Once per missing set, so a viewer

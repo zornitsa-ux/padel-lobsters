@@ -12,6 +12,11 @@ import { buildDisplayNames } from './displayNames'
 import { groupOscarResultsByCategory } from '../oscars/oscarResults'
 import { useOscarResultsFor } from '../oscars/useOscarResultsFor'
 import { resultsWithheld } from '../events/resultsPhase'
+import { isEventOver } from '../events/eventPhase'
+import { isKingOfTheCourt } from '../events/eventFormat'
+import { useTeamResultsByEvent } from '../events/kingOfCourt/useTeamResultsByEvent'
+import { teamResultLabel } from '../events/kingOfCourt/kotcPlayer'
+import TeamRankingList from '../events/kingOfCourt/TeamRankingList'
 import { TabSwitcher } from '../../components/ui/TabSwitcher'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
 import { ProgressBar } from '../../components/ui/ProgressBar'
@@ -35,7 +40,7 @@ interface HistoryProps {
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function History({ onNavigate }: HistoryProps) {
-  const { isAdmin } = useApp()
+  const { isAdmin, session } = useApp()
   const { data: tournaments = [] } = useTournaments()
   const { data: players = [] } = usePlayers()
   const { data: allMatchesData = [] } = useAllMatches()
@@ -63,7 +68,7 @@ export default function History({ onNavigate }: HistoryProps) {
   const dynamicTournaments = useMemo(() => {
     return tournaments
       .filter((t) => {
-        if (t.status !== 'completed') return false
+        if (!isEventOver({ tournament: t })) return false
         const refDate = t.date || t.completedAt
         if (!refDate) return true
         return Date.now() - new Date(refDate).getTime() >= TWO_DAYS_MS
@@ -95,6 +100,11 @@ export default function History({ onNavigate }: HistoryProps) {
     [dynamicTournaments],
   )
   const { byTournamentId: oscarResultsById } = useOscarResultsFor(dynamicTournamentIds)
+  const teamResultsById = useTeamResultsByEvent({
+    tournaments: dynamicTournaments,
+    registrations: allRegsData,
+    enabled: session != null,
+  })
 
   return (
     <div className="space-y-4">
@@ -103,6 +113,8 @@ export default function History({ onNavigate }: HistoryProps) {
         const open = expandedId === `db-${t.id}`
         const tMatches = getTournamentMatches(t.id)
         const tRegs = getTournamentRegistrations(t.id).filter((r) => r.status === 'registered')
+        // King of the Court ranks teams; it has no matches to score (D-006).
+        const kotc = isKingOfTheCourt(t)
 
         // Compute standings
         const stats: Record<string, DbStandingRow> = {}
@@ -205,7 +217,11 @@ export default function History({ onNavigate }: HistoryProps) {
                           year: 'numeric',
                         })
                       : '—'}
-                    {tRegs.length > 0 ? ` · ${tRegs.length} players` : ''}
+                    {tRegs.length > 0
+                      ? kotc
+                        ? ` · ${tRegs.length / 2} teams`
+                        : ` · ${tRegs.length} players`
+                      : ''}
                   </p>
                 </div>
               </div>
@@ -245,12 +261,13 @@ export default function History({ onNavigate }: HistoryProps) {
                 const hasMatches = tMatches.length > 0
                 // D-029: match scores stay visible (players already saw their own
                 // live), but the podium/final-ranking is embargoed until revealed.
-                const withheld = resultsWithheld({ tournament: t, isAdmin })
+                // King of the Court's saved standings are public at once (D-026).
+                const withheld = !kotc && resultsWithheld({ tournament: t, isAdmin })
 
                 return (
                   <div className="mt-4 space-y-3">
                     {/* Podium */}
-                    {!withheld && top3.length >= 2 && (
+                    {!kotc && !withheld && top3.length >= 2 && (
                       <div className="flex items-end justify-center gap-2 py-2">
                         <div className="flex flex-col items-center gap-1 flex-1">
                           <span className="text-xl">🥈</span>
@@ -313,12 +330,26 @@ export default function History({ onNavigate }: HistoryProps) {
                     />
 
                     {/* ── Full Standings ── */}
+                    {dbTab === 'standings' && kotc && !session && (
+                      <p className="text-sm text-lob-muted-light text-center py-4">
+                        Sign in to see the final standings.
+                      </p>
+                    )}
+                    {dbTab === 'standings' && kotc && session && (
+                      <TeamRankingList
+                        rows={(teamResultsById.get(t.id) ?? []).map((result) => ({
+                          teamId: result.teamId,
+                          label: teamResultLabel({ result, nameOf: dbDnId }),
+                          finalRank: result.finalRank,
+                        }))}
+                      />
+                    )}
                     {dbTab === 'standings' && withheld && (
                       <p className="text-sm text-lob-muted-light text-center py-4">
                         Results pending — the final ranking will be revealed soon.
                       </p>
                     )}
-                    {dbTab === 'standings' && !withheld && rankings.length > 0 && (
+                    {dbTab === 'standings' && !kotc && !withheld && rankings.length > 0 && (
                       <div className="overflow-x-auto">
                         <table className="w-full text-xs">
                           <thead>
@@ -356,7 +387,7 @@ export default function History({ onNavigate }: HistoryProps) {
                         </table>
                       </div>
                     )}
-                    {dbTab === 'standings' && !withheld && rankings.length === 0 && (
+                    {dbTab === 'standings' && !kotc && !withheld && rankings.length === 0 && (
                       <p className="text-sm text-lob-muted-light text-center py-2">
                         No match data available
                       </p>
@@ -501,7 +532,7 @@ export default function History({ onNavigate }: HistoryProps) {
                         onClick={() => onNavigate('scores', t)}
                         className="w-full text-xs text-lob-teal font-semibold border border-lob-teal rounded-xl py-2 active:scale-95 transition-all"
                       >
-                        View full match scores →
+                        {kotc ? 'View event results →' : 'View full match scores →'}
                       </button>
                     )}
                   </div>
