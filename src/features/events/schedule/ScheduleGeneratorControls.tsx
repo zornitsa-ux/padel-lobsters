@@ -4,8 +4,7 @@ import type { SchedulePlayer, ScheduleRound } from './types'
 import { roundsForDuration } from './utils'
 import { SegmentedControl } from '../../../components/ui/SegmentedControl'
 
-export const TEAM_EVENT_NOTE =
-  'King of the Court: starting courts come from team seeding (coming soon).'
+export const TEAM_EVENT_NOTE = "The Americano schedule generator doesn't run on team events."
 
 type Props = {
   generated: unknown

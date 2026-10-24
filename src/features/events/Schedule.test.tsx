@@ -41,8 +41,12 @@ vi.mock('../matchmaking/MatchmakingContainer', () => ({
   default: () => <div data-testid="v2-matchmaking" />,
 }))
 vi.mock('../../supabase', () => mockSupabase())
+vi.mock('./kingOfCourt/KingOfCourtAdmin', () => ({
+  default: () => <div data-testid="kotc-admin" />,
+}))
 
 import Schedule from './Schedule'
+import { TEAM_EVENT_NOTE } from './schedule/ScheduleGeneratorControls'
 import { fixtureAuth } from '../../test/sessions'
 
 const players = Array.from({ length: 8 }, (_, i) => ({
@@ -91,14 +95,20 @@ describe('Schedule — V2 routing without a rollout flag (D-028)', () => {
     expect(legacyGenerateButton()).toBeNull()
   })
 
-  it('shows the seeding note instead of any generator on a team event', () => {
+  it('shows the seeding console instead of any generator on King of the Court', () => {
     renderSchedule({ ...lobsterEvent, format: 'king_of_court', entryMode: 'team' })
 
+    expect(screen.getByTestId('kotc-admin')).toBeTruthy()
     expect(screen.queryByTestId('v2-matchmaking')).toBeNull()
     expect(legacyGenerateButton()).toBeNull()
-    expect(
-      screen.getByText('King of the Court: starting courts come from team seeding (coming soon).'),
-    ).toBeTruthy()
+  })
+
+  it('keeps the generator off any other team event', () => {
+    renderSchedule({ ...lobsterEvent, entryMode: 'team' })
+
+    expect(screen.queryByTestId('kotc-admin')).toBeNull()
+    expect(screen.queryByTestId('v2-matchmaking')).toBeNull()
+    expect(screen.getByText(TEAM_EVENT_NOTE)).toBeTruthy()
   })
 
   it('reads learned priors only on the V2 path', () => {

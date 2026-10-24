@@ -12,7 +12,8 @@ import ScoreEntry from './ScoreEntry'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { ProgressBar } from '../../components/ui/ProgressBar'
 import { useTournamentSync } from './useTournamentSync'
-import { isTeamEvent } from './eventFormat'
+import { isKingOfTheCourt, isTeamEvent } from './eventFormat'
+import KingOfCourtAdmin from './kingOfCourt/KingOfCourtAdmin'
 import ScheduleGeneratorControls from './schedule/ScheduleGeneratorControls'
 import ScheduleValidationSummary from './schedule/ScheduleValidationSummary'
 import MatchmakingContainer from '../matchmaking/MatchmakingContainer'
@@ -243,6 +244,9 @@ export default function Schedule({
       />
     )
   }
+
+  // King of the Court has no matches to generate or score (DESIGN §3.4).
+  if (isAdmin && isKingOfTheCourt(tournament)) return <KingOfCourtAdmin tournament={tournament} />
 
   const display = generated || savedRounds
 

@@ -156,6 +156,14 @@ describe('updateTournament', () => {
     expect(payload.duration).toBe(60)
   })
 
+  it('maps the King of the Court publish timestamp', async () => {
+    await updateTournament('tid5', { startingCourtsPublishedAt: '2026-11-10T10:00:00Z' })
+
+    expect(mockUpdate.mock.calls[0][0]).toEqual({
+      starting_courts_published_at: '2026-11-10T10:00:00Z',
+    })
+  })
+
   it('throws on update error and logs to console.error', async () => {
     const err = { message: 'update failed' }
     mockEq.mockResolvedValue({ error: err })
