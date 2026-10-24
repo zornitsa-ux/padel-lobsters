@@ -123,8 +123,8 @@ There are 131 active players, 83 of them marked male.
 | **New partner**     | A partner without an account. Created as an **active** player with their own email (typed by the captain), so they can sign in straight away. An admin sends the invite email. |
 | **Ladder**          | The ordered court list. Court 1 is the **King court**.                                                                                                                         |
 | **Seed**            | A team's starting position, from team strength, adjustable by an admin.                                                                                                        |
-| **Starting courts** | Seeds placed two per court, top down. Published to players before the event.                                                                                                   |
-| **Final standings** | Optional. The admin records who finished 1st and 2nd on each court after the event.                                                                                            |
+| **Starting courts** | Seeds placed two per court, top down. Shown to players on the event day (D-024).                                                                                               |
+| **Final standings** | Optional. The admin records who finished 1st and 2nd on each court; public once saved (D-026).                                                                                 |
 
 Supported combinations now: `individual + lobster_matching` (unchanged) and
 `team + king_of_court` (new). `team + lobster_matching` (fixed-pair Americano)
@@ -294,47 +294,64 @@ house lock order):
 
 The app does the **seeding before** the event and records the result
 **afterwards** if the admin wants. Nothing is recorded during play (D-006).
+Built in #63 and #64; revised by D-024 to D-027.
 
-1. **Seeding.** Team strength = the sum of both players' `mm_rating`, falling
-   back to `playtomic_level`. A new partner with no level gets the captain's
-   value, and the team is flagged "unrated" for the admin. Teams are sorted
-   strongest first, and the admin can drag to reorder. The order is saved to
-   `event_teams.seed`.
+1. **Seeding.** Team strength = the sum of both players' reported
+   `playtomic_level` (D-025, never `mm_rating`). A missing level (none or 0)
+   counts as the partner's value and flags the team "unrated". Registered
+   teams are sorted strongest first; the admin reorders them with up/down
+   buttons. The order is saved to `event_teams.seed`.
 2. **Starting courts.** Seeds 1 and 2 start on the King court, 3 and 4 on court
    2, and so on. With fewer teams, only the top courts are used. With an odd
-   count, the last team is listed as waiting at the bottom court (OQ-4).
-3. **Publish.** The admin presses **Publish starting courts**, which sets
-   `starting_courts_published_at`. Players then see their starting court on the
-   Schedule tab, in MyTournament and on the upcoming-event card. After that,
-   seeds stay editable until the event (for late swaps or withdrawals), and the
-   published view always reflects the current seeds.
+   count, the last team is listed as waiting at the bottom court (OQ-4). If
+   courts were removed below the registered teams, the extra teams are listed
+   as having no court (D-027).
+3. **Show starting court assignments to players** (D-024). Usually on the event
+   day, a couple of hours before the start. It saves the current order, then
+   sets `starting_courts_published_at`. Players then see their starting court
+   (T11). Seeds stay editable; after showing, Save order appears whenever the
+   order changes, and players see each saved change.
 4. **Play** happens on court with no app involvement.
-5. **Final standings (optional).** Any time from the event day on, the admin
-   opens **Final standings**: courts listed top to bottom, two slots each (1st
-   and 2nd on that court), prefilled from the starting courts. Partial entry is
-   fine, for example only the King court. Each slot is saved as
-   `event_teams.final_rank` (court k: 1st = 2k−1, 2nd = 2k). The Results tab
-   shows the ranking once results are revealed (the existing
-   `results_shared_at` reveal, D-029 independence unchanged). Teams without a
-   rank are listed unranked.
-6. **Ratings.** Finish applies **no** learned ratings, because there are no
-   matches (D-009).
+5. **Final standings (optional).** From the event day, the admin's console has
+   **Final standings**: courts top to bottom, two slots each (1st and 2nd on
+   that court). It starts empty, or with what was saved (D-026: no prefill).
+   Partial entry is fine. Each slot is saved as `event_teams.final_rank`
+   (court k: 1st = 2k−1, 2nd = 2k), and the ranking is **public as soon as
+   it's saved**: there is no reveal step. Teams without a rank are listed
+   unranked.
+6. **No Finish, no ratings.** The event is over at its scheduled end
+   (start + duration). Nothing applies ratings (D-009, D-026).
 
 ### 3.4 Lifecycle changes
 
-- `eventPhase` takes the event's format and publish state. For King of the
-  Court: `open` until starting courts are published, `set` once published and
-  before the event date, then `sealed` from the event date (there is no scoring
-  stage), then `social` and `revealed` as today. The Americano path doesn't
-  change. T9 checks every phase consumer (tabs, RunOfShow, the Results teaser)
-  against this mapping.
-- Finish works with zero matches on King of the Court events.
+- **Over by the clock** (D-026). `isEventOver` (in `eventPhase.ts`):
+  Americano when finished, King of the Court at start + duration. Home's next
+  event and countdown, the admin unpaid count, attendance streaks, the Events
+  list, the event card badge, signup and the admin team controls use it (or
+  `isEventUpcoming`) instead of `status = 'completed'`. History and the
+  recently-completed banner still read `status`, because they rank by match
+  scores; T11 adds the team ranking there.
+- **Phase** for King of the Court (Americano unchanged):
+
+  | When                                                | Phase          |
+  | --------------------------------------------------- | -------------- |
+  | before the event day, assignments not shown / shown | `open` / `set` |
+  | event day, before the scheduled end                 | `live`         |
+  | after the scheduled end                             | `social`       |
+  | any active team has a final rank (event day on)     | `revealed`     |
+
+  `useEventPhase` reads the event's teams for this, and re-derives it every
+  minute while a page is open because it turns on the clock.
+
+- **Run of show** on King of the Court: only the Oscars and raffle steps, from
+  the event day. No Enter scores, Finish, flagged ratings or Reveal.
+- **Live sync** (`hasLiveScores`) is off on King of the Court: no matches.
 - **Matcher guard:** the generator UI and `generateSchedule.service.ts` refuse
-  team events.
-- The Schedule tab on a King of the Court event shows the starting-courts view.
-  Admins get the seed and publish console there.
+  team events (D-018).
+- The Schedule tab on a King of the Court event: admins get the seeding
+  console (#64); players get the starting-courts view (T11).
 - Lobster Review: a player's per-event rank is their team's `final_rank`. Events
-  without one are left out of rank stats.
+  without one are left out of rank stats (T11).
 - Oscars and the raffle don't change, because they're per player.
 
 ### 3.5 Bringing partners into the app
@@ -366,5 +383,5 @@ natural follow-up. It's Phase 3, or earlier if time allows.
 | Wrong email: someone else's inbox can sign in to the new profile | Only the inbox owner can get a code. The profile is new, so there's nothing to take over. The admin sees "never signed in" and corrects the email via player edit (mirrored to auth).                                                                                                                                                                            |
 | Ghost accounts (team cancelled, partner never signed in)         | Partner invites shows them (never signed in, no active registration). Clean up in batches with the T16/T17 deletion path.                                                                                                                                                                                                                                        |
 | Team pair drifts (one row cancelled, the other not)              | Only the team RPCs write team rows, and a local test asserts both rows always share a status.                                                                                                                                                                                                                                                                    |
-| A King of the Court event never unlocks Finish (F-3)             | Phase branch plus tests (T9). Verified end to end in T12.                                                                                                                                                                                                                                                                                                        |
+| A King of the Court event never unlocks Finish (F-3)             | Resolved by D-026: no Finish; over by the clock. Verified in T12.                                                                                                                                                                                                                                                                                                |
 | Releases collide with the PIN cutover (Thu 5 Nov)                | No sign-in-facing release within 3 days of a tournament. The event must be on or after Sun 8 Nov (PLAN §0).                                                                                                                                                                                                                                                      |
