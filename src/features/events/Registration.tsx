@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState, type FormEvent } from 'react'
+import React, { useCallback, type ComponentProps, useMemo, useState, type FormEvent } from 'react'
 import { useApp } from '../../context/useApp'
 import { useUpdateTournament } from './useTournaments'
 import { useTransfers, useTransferActions } from './useTransfers'
@@ -14,7 +14,8 @@ import ShareWhatsAppButton from '../../components/ui/ShareWhatsAppButton'
 import EventDescription from './EventDescription'
 import EventAdminMenu from './EventAdminMenu'
 import EventFormModal from './EventFormModal'
-import { emptyForm } from './eventConstants'
+import { FORMAT_LOCKED_NOTE } from './eventFormModel'
+import { useEventForm } from './useEventForm'
 import { formatLabel } from './eventHelpers'
 import {
   splitRegistrationsByStatus,
@@ -34,20 +35,27 @@ import RegistrationPaymentSheetModal from './registration/RegistrationPaymentShe
 import AddPlayerCard from './registration/AddPlayerCard'
 import JoinEventCard from './registration/JoinEventCard'
 import { useSelfRegister } from './registration/useSelfRegister'
+import { findMyEntry, rosterLine } from './registration/team/teamHelpers'
+import { useTeamEntries } from './teams/useTeams'
+import TeamTransferCard from './registration/team/TeamTransferCard'
 import TransferSpotCard from './registration/TransferSpotCard'
 import { myRegistrationSummary } from './nextMatch'
 import RegisteredSection from './registration/RegisteredSection'
 import WaitlistSection from './registration/WaitlistSection'
 import CancelledSection from './registration/CancelledSection'
+import TeamSignup from './registration/team/TeamSignup'
+import TeamLists from './registration/team/TeamLists'
+import AdminAddTeamCard from './registration/team/AdminAddTeamCard'
+import type { TeamSignupResult } from './registration/team/useTeamSignup'
+import type { TeamEntry } from './teams/teamTypes'
+import type { TournamentInput } from './tournamentQueries'
 import { errorMessage } from '../../lib/errors'
 import { REGISTER_FAILURE_MESSAGES, registrationMessage } from './registrationStatusMessages'
-import type { EventFormValues } from './eventConstants'
 import type { EventNavigate } from './eventHelpers'
 import type { NormalisedTournament } from '../../lib/normalise'
 import type { Player } from '../../lib/normalise'
 import type { NormalisedRegistration } from './registrationQueries'
 import type { NormalisedTransfer } from './transferQueries'
-import type { SetEventFormCourt } from './EventFormModal'
 import type {
   DisplayName,
   GetPlayer,
@@ -71,7 +79,7 @@ export default function Registration({
   const { respondToTransfer, cancelTransfer, adminCancelTransfer } = useTransferActions({ session })
   const updateMut = useUpdateTournament()
   const updateTournament = useCallback(
-    (id: string, data: Partial<NormalisedTournament>) => updateMut.mutateAsync({ id, data }),
+    (id: string, data: TournamentInput) => updateMut.mutateAsync({ id, data }),
     [updateMut],
   )
   const { data: players = [] } = usePlayers()
@@ -80,10 +88,12 @@ export default function Registration({
   const transfersClosed = isTransferWindowClosed(tournament)
   const claimedId = session?.user?.id ?? null
 
-  // Show first name for players, full name for admins
+  // First names for players, full names for admins. Team events show full names
+  // to everyone: picking a partner among people who share a first name.
+  const fullNames = isAdmin || tournament?.entryMode === 'team'
   const displayName = useCallback<DisplayName>(
-    (p) => (isAdmin ? p.name : (p.name || '').split(' ')[0]),
-    [isAdmin],
+    (p) => (fullNames ? (p.name || '').trim() : (p.name || '').split(' ')[0]),
+    [fullNames],
   )
 
   const [search, setSearch] = useState('')
@@ -98,8 +108,11 @@ export default function Registration({
   const [tikkieClicked, setTikkieClicked] = useState(false)
   const [declaring, setDeclaring] = useState(false)
 
+  const [teamPaymentFor, setTeamPaymentFor] = useState<TeamSignupResult | null>(null)
+
   const closePaymentSheet = () => {
     setPaymentSheet(null)
+    setTeamPaymentFor(null)
     setTikkieClicked(false)
   }
 
@@ -112,76 +125,25 @@ export default function Registration({
   const [shareModal, setShareModal] = useState<TransferShareTarget | null>(null)
   const [respondingTo, setRespondingTo] = useState<string | null>(null) // transferId being acted on
 
-  const [showEditForm, setShowEditForm] = useState(false)
-  const [editForm, setEditForm] = useState<EventFormValues>(emptyForm)
-  const [editSaving, setEditSaving] = useState(false)
-
+  const eventForm = useEventForm()
+  const { openEdit: openEventForm } = eventForm
   const openEdit = useCallback(() => {
-    const t = tournament
-    if (!t) return
-    setEditForm({
-      name: t.name || '',
-      date: t.date || '',
-      time: t.time || '',
-      location: t.location || '',
-      maxPlayers: String(t.maxPlayers || 16),
-      duration: t.duration || 90,
-      format: t.format || 'lobster_matching',
-      genderMode: t.genderMode || 'mixed',
-      courts: t.courts?.length
-        ? t.courts.map((c) => ({ name: c.name || '', booked: !!c.booked }))
-        : [{ name: '', booked: false }],
-      pricePerPerson:
-        t.totalPrice > 0 && t.maxPlayers > 0
-          ? (t.totalPrice / t.maxPlayers).toFixed(2).replace(/\.00$/, '')
-          : String(t.totalPrice ?? ''),
-      tikkieLink: t.tikkieLink || '',
-      notes: t.notes || '',
-    })
-    setShowEditForm(true)
-  }, [tournament])
+    if (tournament) openEventForm(tournament)
+  }, [tournament, openEventForm])
 
   const handleEditSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    if (!tournament) return
-    setEditSaving(true)
     try {
-      const mp = parseInt(String(editForm.maxPlayers)) || 16
-      const data = {
-        name: editForm.name,
-        date: editForm.date,
-        time: editForm.time,
-        location: editForm.location,
-        maxPlayers: mp,
-        format: editForm.format,
-        genderMode: editForm.genderMode,
-        duration: Number(editForm.duration) || 90,
-        totalPrice: (parseFloat(String(editForm.pricePerPerson)) || 0) * mp,
-        tikkieLink: editForm.tikkieLink || '',
-        courts: editForm.courts.map((c) => ({ name: c.name, booked: !!c.booked })),
-        notes: editForm.notes,
+      if ((await eventForm.save()) === 'format_reverted') {
+        showToast({
+          variant: 'error',
+          message: `${FORMAT_LOCKED_NOTE}. The format was put back, so save again.`,
+        })
       }
-      await updateTournament(tournament.id, data)
-      setShowEditForm(false)
-    } finally {
-      setEditSaving(false)
+    } catch (err) {
+      showToast({ variant: 'error', message: errorMessage(err, 'Could not save event.') })
     }
   }
-
-  const addEditCourt = () =>
-    setEditForm((f) => ({
-      ...f,
-      courts: [...f.courts, { name: '', booked: false }],
-    }))
-
-  const removeEditCourt = (i: number) =>
-    setEditForm((f) => ({ ...f, courts: f.courts.filter((_, idx) => idx !== i) }))
-
-  const setEditCourt: SetEventFormCourt = (i, field, value) =>
-    setEditForm((f) => ({
-      ...f,
-      courts: f.courts.map((c, idx) => (idx === i ? { ...c, [field]: value } : c)),
-    }))
 
   const tournamentId = tournament?.id
 
@@ -190,6 +152,12 @@ export default function Registration({
     () => splitRegistrationsByStatus(regs),
     [regs],
   )
+  const { teams, entries: teamEntries } = useTeamEntries({
+    tournamentId,
+    registrations: regs,
+    enabled: tournament?.entryMode === 'team',
+  })
+  const myTeamEntry = findMyEntry({ entries: teamEntries, playerId: claimedId })
   const availablePlayers = useMemo(
     () => getAvailablePlayers({ players, regs, search }),
     [players, regs, search],
@@ -200,7 +168,7 @@ export default function Registration({
     playerId: claimedId,
   })
   const isCompleted = tournament?.status === 'completed'
-  const { hasTikkie, tikkieLink, costPerPlayer } = useMemo(
+  const { hasTikkie, tikkieLink, costPerEntry } = useMemo(
     () => computePaymentConfig(tournament),
     [tournament],
   )
@@ -232,6 +200,19 @@ export default function Registration({
     [pendingForTournament],
   )
 
+  const teamSheet = useMemo<PaymentSheet | null>(() => {
+    const captainReg =
+      teamPaymentFor?.status === 'registered'
+        ? regs.find(
+            (r) => r.teamId === teamPaymentFor.teamId && r.playerId === teamPaymentFor.captainId,
+          )
+        : null
+    return captainReg
+      ? { regId: captainReg.id, playerId: captainReg.playerId, paymentStatus: 'unpaid' }
+      : null
+  }, [teamPaymentFor, regs])
+  const activeSheet = paymentSheet ?? teamSheet
+
   const myReg = claimedId
     ? (registered.find((r) => String(r.playerId) === String(claimedId)) ?? null)
     : null
@@ -256,6 +237,10 @@ export default function Registration({
   // No fallback: max_players is NOT NULL and > 0 in the database
   // (20260806213000), so this is the same number the server enforces.
   const maxPlayers = tournament.maxPlayers
+  const isTeamEvent = tournament.entryMode === 'team'
+  const handleTeamSignedUp = (result: TeamSignupResult) => {
+    if (hasTikkie || costPerEntry > 0) setTeamPaymentFor(result)
+  }
 
   // ── Register (the signed-in player, from the Info tab) ─────────────────────
   // ── Register (admin adding another player) ─────────────────────────────────
@@ -277,7 +262,7 @@ export default function Registration({
       // and only if there's a Tikkie link or a cost set. A null regId means the
       // insert failed (registerPlayer swallows the error and still reports the
       // status it *would* have used), so there is no registration to pay for.
-      if (regId && status === 'registered' && (hasTikkie || costPerPlayer > 0)) {
+      if (regId && status === 'registered' && (hasTikkie || costPerEntry > 0)) {
         // registerPlayer inserts every row with payment_status 'unpaid'; the
         // sheet's Tikkie handler needs the *payment* status, not `status`.
         setPaymentSheet({ regId, playerId: selectedPlayer, paymentStatus: 'unpaid' })
@@ -293,10 +278,10 @@ export default function Registration({
 
   // ── Self-declare payment (post-add payment sheet) ──────────────────────────
   const handleSelfDeclare = async () => {
-    if (!paymentSheet?.regId) return
+    if (!activeSheet?.regId) return
     setDeclaring(true)
     await updateRegistration(
-      paymentSheet.regId,
+      activeSheet.regId,
       { paymentStatus: 'pending_confirmation', paymentMethod: 'tikkie' },
       tournamentId,
     )
@@ -491,7 +476,21 @@ export default function Registration({
 
       {/* 3. Sign-up — the player's own way in, next to what they just read.
              /me still owns payment; this links there rather than repeat it. */}
-      {!isAdmin && claimedId && !isCompleted && (
+      {isTeamEvent && !isAdmin && claimedId && !isCompleted && (
+        <TeamSignup
+          tournament={tournament}
+          viewerId={claimedId}
+          players={players}
+          regs={regs}
+          teams={teams}
+          entry={myTeamEntry}
+          getPlayer={getPlayer}
+          displayName={displayName}
+          onSignedUp={handleTeamSignedUp}
+        />
+      )}
+
+      {!isTeamEvent && !isAdmin && claimedId && !isCompleted && (
         <JoinEventCard
           summary={myRegistrationSummary({ registrations: regs, playerId: claimedId })}
           isEventFull={registered.length >= maxPlayers}
@@ -506,32 +505,47 @@ export default function Registration({
       {/* Spot-transfer flow — payment lives on /me; this stays here since /me
           deliberately doesn't host transfers. */}
       {!isAdmin && claimedId && !isCompleted && (
-        <TransferSpotCard
-          myReg={myReg}
-          pendingFromMe={pendingFromMe}
-          incomingForMe={incomingForMe}
-          respondingTo={respondingTo}
-          transfersClosed={transfersClosed}
-          whatsappLink={settings?.whatsappLink}
-          onStartTransfer={startTransfer}
-          onCancelMyOffer={handleCancelMyOffer}
-          onOpenShareModal={setShareModal}
-          onIncomingResponse={handleIncomingResponse}
-          getPlayer={getPlayer}
+        <TransferSection
+          isTeamEvent={isTeamEvent}
+          teamEntry={myTeamEntry}
+          card={{
+            myReg,
+            pendingFromMe,
+            incomingForMe,
+            respondingTo,
+            transfersClosed,
+            whatsappLink: settings?.whatsappLink,
+            onStartTransfer: startTransfer,
+            onCancelMyOffer: handleCancelMyOffer,
+            onOpenShareModal: setShareModal,
+            onIncomingResponse: handleIncomingResponse,
+            getPlayer,
+          }}
         />
       )}
 
       {/* 3. Roster — the two numbers that matter. */}
       {!isCompleted && (
-        <p className="text-sm font-semibold text-lob-slate px-1">
-          {registered.length} of {maxPlayers}
-          {waitlisted.length > 0 && (
-            <span className="text-lob-muted font-normal"> · {waitlisted.length} waiting</span>
-          )}
-        </p>
+        <RosterLine
+          teamEntries={isTeamEvent ? teamEntries : undefined}
+          registered={registered.length}
+          waitlisted={waitlisted.length}
+          maxPlayers={maxPlayers}
+        />
       )}
 
-      {isAdmin && (
+      {isTeamEvent && isAdmin && (
+        <AdminAddTeamCard
+          tournament={tournament}
+          players={players}
+          regs={regs}
+          getPlayer={getPlayer}
+          displayName={displayName}
+          onSignedUp={handleTeamSignedUp}
+        />
+      )}
+
+      {!isTeamEvent && isAdmin && (
         <AddPlayerCard
           isCompleted={isCompleted}
           showAdd={showAdd}
@@ -554,30 +568,44 @@ export default function Registration({
       )}
 
       {/* 4. Registered · Waitlist · Cancelled (collapsed). */}
-      <RegisteredSection
-        isCompleted={isCompleted}
-        getPlayer={getPlayer}
-        registered={registered}
-        maxPlayers={maxPlayers}
-        isAdmin={isAdmin}
-        displayName={displayName}
-        onCancelRegistration={handleCancel}
-        pendingByFromPlayerId={pendingByFromPlayerId}
-        respondingTo={respondingTo}
-        onOpenShareModal={setShareModal}
-        onAdminCancelTransfer={handleAdminCancelTransfer}
-        onStartTransfer={startTransfer}
-      />
+      {isTeamEvent ? (
+        <TeamLists
+          tournament={tournament}
+          isAdmin={isAdmin}
+          players={players}
+          regs={regs}
+          entries={teamEntries}
+          getPlayer={getPlayer}
+          displayName={displayName}
+        />
+      ) : (
+        <>
+          <RegisteredSection
+            isCompleted={isCompleted}
+            getPlayer={getPlayer}
+            registered={registered}
+            maxPlayers={maxPlayers}
+            isAdmin={isAdmin}
+            displayName={displayName}
+            onCancelRegistration={handleCancel}
+            pendingByFromPlayerId={pendingByFromPlayerId}
+            respondingTo={respondingTo}
+            onOpenShareModal={setShareModal}
+            onAdminCancelTransfer={handleAdminCancelTransfer}
+            onStartTransfer={startTransfer}
+          />
 
-      <WaitlistSection
-        isCompleted={isCompleted}
-        waitlisted={waitlisted}
-        getPlayer={getPlayer}
-        displayName={displayName}
-        isAdmin={isAdmin}
-        onMoveToRegistered={handleMoveToRegistered}
-        onCancel={handleCancel}
-      />
+          <WaitlistSection
+            isCompleted={isCompleted}
+            waitlisted={waitlisted}
+            getPlayer={getPlayer}
+            displayName={displayName}
+            isAdmin={isAdmin}
+            onMoveToRegistered={handleMoveToRegistered}
+            onCancel={handleCancel}
+          />
+        </>
+      )}
 
       <CancelledSection
         isCompleted={isCompleted}
@@ -590,10 +618,10 @@ export default function Registration({
 
       {/* ── POST-ADD PAYMENT SHEET (admin) ── */}
       <RegistrationPaymentSheetModal
-        isOpen={!!paymentSheet}
+        isOpen={!!activeSheet}
         tournament={tournament}
-        paymentSheet={paymentSheet}
-        costPerPlayer={costPerPlayer}
+        paymentSheet={activeSheet}
+        costPerEntry={costPerEntry}
         tikkieClicked={tikkieClicked}
         declaring={declaring}
         onClose={closePaymentSheet}
@@ -623,18 +651,46 @@ export default function Registration({
           onCancel={() => setShareModal(null)}
         />
       )}
-      <EventFormModal
-        open={showEditForm}
-        editId={tournament.id}
-        form={editForm}
-        setForm={setEditForm}
-        saving={editSaving}
-        onSubmit={handleEditSubmit}
-        onClose={() => setShowEditForm(false)}
-        addCourt={addEditCourt}
-        removeCourt={removeEditCourt}
-        setCourt={setEditCourt}
-      />
+      <EventFormModal {...eventForm.modalProps} onSubmit={(e) => void handleEditSubmit(e)} />
     </div>
+  )
+}
+
+function TransferSection({
+  isTeamEvent,
+  teamEntry,
+  card,
+}: {
+  isTeamEvent: boolean
+  teamEntry: TeamEntry | null
+  card: ComponentProps<typeof TransferSpotCard>
+}) {
+  if (!isTeamEvent) return <TransferSpotCard {...card} />
+  return <TeamTransferCard entry={teamEntry} card={card} />
+}
+
+function RosterLine({
+  teamEntries,
+  registered,
+  waitlisted,
+  maxPlayers,
+}: {
+  /** Set on a team event: the line counts teams. */
+  teamEntries?: TeamEntry[]
+  registered: number
+  waitlisted: number
+  maxPlayers: number
+}) {
+  const { main, waiting } = teamEntries
+    ? rosterLine({ entries: teamEntries, maxPlayers })
+    : {
+        main: `${registered} of ${maxPlayers}`,
+        waiting: waitlisted > 0 ? `${waitlisted} waiting` : null,
+      }
+  return (
+    <p className="text-sm font-semibold text-lob-slate px-1">
+      {main}
+      {waiting && <span className="text-lob-muted font-normal"> · {waiting}</span>}
+    </p>
   )
 }

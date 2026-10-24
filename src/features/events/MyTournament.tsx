@@ -1,5 +1,5 @@
 import { useMemo, useState, type ReactNode } from 'react'
-import { CheckCircle, Clock, ExternalLink, Send, Trophy, UserRoundX } from 'lucide-react'
+import { CheckCircle, Clock, Trophy, UserRoundX } from 'lucide-react'
 import { useApp } from '../../context/useApp'
 import { useRegistrations, useRegistrationActions } from './useRegistrations'
 import { useMatches } from './useMatches'
@@ -8,10 +8,13 @@ import { useEventPhase } from './useEventPhase'
 import { useTournamentSync } from './useTournamentSync'
 import { resultsWithheld } from './resultsPhase'
 import { splitRegistrationsByStatus, computePaymentConfig } from './registration/utils'
-import { fmtEur } from '../../lib/format'
 import { EmptyState } from '../../components/ui/EmptyState'
 import MyRounds from './MyRounds'
 import { useSelfRegister } from './registration/useSelfRegister'
+import PayPrompt from './registration/PayPrompt'
+import MyTeamRegistration from './registration/team/MyTeamRegistration'
+import { eligiblePlayers, findMyEntry } from './registration/team/teamHelpers'
+import { useTeamEntries } from './teams/useTeams'
 import { buildMyTournamentView, myFinalPlacing } from './nextMatch'
 import type { EventPhase } from './eventPhase'
 import type { NormalisedTournament } from '../../lib/normalise'
@@ -45,7 +48,19 @@ export default function MyTournament({ tournament, onNavigate }: Props) {
   })
 
   const playerById = useMemo(() => new Map(players.map((p) => [p.id, p])), [players])
-  const getPlayer = (id: string | null) => (id ? playerById.get(id) : undefined)
+  const getPlayer = (id: string | null | undefined) => (id ? playerById.get(id) : undefined)
+
+  const teamEvent = tournament.entryMode === 'team'
+  const { entries } = useTeamEntries({
+    tournamentId: tournament.id,
+    registrations,
+    enabled: teamEvent && claimedId != null,
+  })
+  const myEntry = findMyEntry({ entries, playerId: claimedId })
+  const candidates = useMemo(
+    () => eligiblePlayers({ players, regs: registrations, excludeIds: [claimedId] }),
+    [players, registrations, claimedId],
+  )
 
   const view = useMemo(
     () => buildMyTournamentView({ registrations, matches, playerId: claimedId }),
@@ -56,7 +71,7 @@ export default function MyTournament({ tournament, onNavigate }: Props) {
     () => splitRegistrationsByStatus(registrations),
     [registrations],
   )
-  const { hasTikkie, costPerPlayer } = useMemo(() => computePaymentConfig(tournament), [tournament])
+  const { hasTikkie, costPerEntry } = useMemo(() => computePaymentConfig(tournament), [tournament])
   const isEventFull = registered.length >= (tournament.maxPlayers || 16)
 
   const placing = useMemo(() => {
@@ -120,14 +135,44 @@ export default function MyTournament({ tournament, onNavigate }: Props) {
     )
   }
 
-  const registrationSection = (
+  const captainOwes =
+    hasTikkie &&
+    myEntry?.status === 'registered' &&
+    myEntry.captain.playerId === claimedId &&
+    (!myEntry.captain.paymentStatus || myEntry.captain.paymentStatus === 'unpaid')
+
+  const registrationSection = teamEvent ? (
+    <MyTeamRegistration
+      key="registration"
+      entry={myEntry}
+      viewerId={claimedId}
+      tournamentId={tournament.id}
+      isCompleted={tournament.status === 'completed'}
+      candidates={candidates}
+      getPlayer={getPlayer}
+      displayName={(p) => (p.name || '').trim()}
+      pay={
+        captainOwes
+          ? {
+              amount: costPerEntry,
+              tikkieLink: tournament.tikkieLink,
+              tikkieClicked,
+              declaring,
+              onTikkieClick: handleTikkieClick,
+              onSelfDeclare: () => void handleSelfDeclare(),
+            }
+          : null
+      }
+      onSignUp={() => onNavigate('registration', tournament)}
+    />
+  ) : (
     <RegistrationCard
       key="registration"
       registration={view.registration}
       isEventFull={isEventFull}
       waitlistPosition={waitlisted.findIndex((r) => r.playerId === claimedId) + 1 || undefined}
       hasTikkie={hasTikkie}
-      costPerPlayer={costPerPlayer}
+      costPerEntry={costPerEntry}
       tournament={tournament}
       tikkieClicked={tikkieClicked}
       declaring={declaring}
@@ -170,7 +215,7 @@ function RegistrationCard({
   isEventFull,
   waitlistPosition,
   hasTikkie,
-  costPerPlayer,
+  costPerEntry,
   tournament,
   tikkieClicked,
   declaring,
@@ -184,7 +229,7 @@ function RegistrationCard({
   isEventFull: boolean
   waitlistPosition?: number
   hasTikkie: boolean
-  costPerPlayer: number
+  costPerEntry: number
   tournament: NormalisedTournament
   tikkieClicked: boolean
   declaring: boolean
@@ -271,40 +316,17 @@ function RegistrationCard({
   )
 
   if (needsPayment) {
-    const tikkieLinks: Array<{ label: string | null; url: string }> = tournament.tikkieLink
-      ? [{ label: null, url: tournament.tikkieLink }]
-      : []
-
     return (
       <div className="card space-y-3">
         {badge}
-        <div className="bg-orange-50 border border-orange-200 rounded-xl px-3 py-3 space-y-2">
-          <p className="text-xs font-semibold text-orange-800">
-            Pay to lock your spot{costPerPlayer > 0 ? ` · ${fmtEur(costPerPlayer)}` : ''}
-          </p>
-          {tikkieLinks.map(({ label, url }) => (
-            <a
-              key={url}
-              href={url}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={onTikkieClick}
-              className="inline-flex items-center gap-1.5 bg-[#FF6B35] text-white text-sm font-bold px-4 py-2 rounded-xl active:scale-95 transition-all"
-            >
-              <ExternalLink size={14} />
-              {label ? `Pay for ${label}` : 'Pay via Tikkie'}
-            </a>
-          ))}
-        </div>
-        {tikkieClicked && (
-          <button
-            onClick={onSelfDeclare}
-            disabled={declaring}
-            className="w-full flex items-center justify-center gap-2 border-2 border-lob-teal text-lob-teal font-semibold py-2.5 rounded-2xl active:scale-95 transition-all disabled:opacity-40 text-sm"
-          >
-            <Send size={14} /> {declaring ? 'Saving…' : "I've sent the payment"}
-          </button>
-        )}
+        <PayPrompt
+          amount={costPerEntry}
+          tikkieLink={tournament.tikkieLink}
+          tikkieClicked={tikkieClicked}
+          declaring={declaring}
+          onTikkieClick={onTikkieClick}
+          onSelfDeclare={onSelfDeclare}
+        />
       </div>
     )
   }
