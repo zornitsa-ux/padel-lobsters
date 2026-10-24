@@ -128,7 +128,7 @@ export default function VerificationGate({ children }: { children?: React.ReactN
       </div>
 
       {mode === 'signin' && (
-        <p className="text-[11px] text-white/60 mt-6 text-center">
+        <p className="text-xs text-white/60 mt-6 text-center">
           You need to sign in once on this device. We'll remember you after.
         </p>
       )}

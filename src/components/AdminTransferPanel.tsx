@@ -138,12 +138,12 @@ export default function AdminTransferPanel({ tournament, onClose }: AdminTransfe
                 </div>
               </div>
 
-              <div className="flex items-center gap-1.5 text-[11px] text-lob-warning">
+              <div className="flex items-center gap-1.5 text-xs text-lob-warning">
                 <Clock size={11} /> Sent {formatElapsed(xfer.createdAt)} · awaiting acceptance
               </div>
 
               {err && (
-                <div className="bg-lob-danger-light border border-lob-danger-border rounded-lg px-2 py-1.5 text-[11px] text-lob-danger-strong flex items-start gap-1">
+                <div className="bg-lob-danger-light border border-lob-danger-border rounded-lg px-2 py-1.5 text-xs text-lob-danger-strong flex items-start gap-1">
                   <AlertTriangle size={11} className="mt-0.5 flex-shrink-0" />
                   <span>{err}</span>
                 </div>
@@ -169,7 +169,7 @@ export default function AdminTransferPanel({ tournament, onClose }: AdminTransfe
           )
         })}
 
-        <p className="text-[11px] text-lob-muted-light text-center pt-1">
+        <p className="text-xs text-lob-muted-light text-center pt-1">
           Force accept finalises the transfer immediately. The recipient's spot becomes registered,
           and the from-player's registration is cancelled.
         </p>

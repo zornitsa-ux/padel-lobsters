@@ -33,7 +33,7 @@ const LAYOUT: Record<Layout, { container: string; item: string }> = {
 }
 
 const SIZE: Record<Size, string> = {
-  sm: 'text-[11px] px-2.5 py-1',
+  sm: 'text-xs px-2.5 py-1',
   md: 'text-xs px-3 py-1.5',
   lg: 'text-sm px-3 py-2.5',
 }

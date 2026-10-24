@@ -30,8 +30,8 @@ Examples: `text-lob-success`, `bg-lob-warning-light border-lob-warning-border`,
 - `warning` covers every warning, waitlist and pending state, including what
   used to be orange or yellow. `lob-amber` stays as an accent colour for
   non-status uses (e.g. the league draft badge), not for status.
-- `AlertBox` `info` stays teal (`lob-teal`); `lob-info` (sky) is for
-  "paid, awaiting confirmation" and info notes inside feature UI.
+- `info` is sky, not teal, so info alerts don't read as brand teal.
+  `AlertBox` `info` uses it.
 
 ## Neutrals
 
@@ -43,8 +43,8 @@ Examples: `text-lob-success`, `bg-lob-warning-light border-lob-warning-border`,
 
 ## Type, brand, effects
 
-- `text-2xs`: 10px eyebrows and micro labels. `text-[9px]` and `text-[11px]`
-  are still raw (undecided whether they fold into `2xs` / `xs`).
+- `text-2xs`: 10px eyebrows and micro labels. 11px folded into `text-xs`
+  (12px). `text-[9px]` is still raw.
 - `bg-tikkie`, `bg-whatsapp`: third-party brand colours, outside `lob`.
 - `bg-celebrate`: the gold-to-coral gradient on placing and completed banners.
 - `bg-header`: the teal header gradient.

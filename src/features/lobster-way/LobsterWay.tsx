@@ -100,7 +100,7 @@ export default function LobsterWay() {
                 name={ACCORDION_GROUP}
                 className="group bg-lob-cream border border-lob-teal/20 rounded-2xl px-4 py-3"
               >
-                <summary className="flex items-center justify-between gap-3 cursor-pointer list-none text-[11px] font-bold text-lob-teal uppercase tracking-wide marker:content-none">
+                <summary className="flex items-center justify-between gap-3 cursor-pointer list-none text-xs font-bold text-lob-teal uppercase tracking-wide marker:content-none">
                   {section.label}
                   <span className="text-lob-teal text-xs flex-shrink-0 transition-transform group-open:rotate-180">
                     ▾

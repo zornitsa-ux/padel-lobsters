@@ -37,7 +37,7 @@ export default function SignInSecuritySection() {
         </div>
         <div>
           <h3 className="font-bold text-lob-slate text-sm">Sign-in &amp; security</h3>
-          <p className="text-[11px] text-lob-muted-light">
+          <p className="text-xs text-lob-muted-light">
             You sign in with a code we email you. A password is optional.
           </p>
         </div>

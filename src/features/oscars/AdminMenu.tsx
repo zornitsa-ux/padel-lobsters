@@ -51,7 +51,7 @@ export default function AdminMenu({ viewMode, onSetViewMode }: AdminMenuProps) {
             </div>
 
             <div className="p-4 space-y-2">
-              <p className="text-[11px] uppercase tracking-wider font-bold text-lob-muted-light px-1">
+              <p className="text-xs uppercase tracking-wider font-bold text-lob-muted-light px-1">
                 View
               </p>
               <MenuOption

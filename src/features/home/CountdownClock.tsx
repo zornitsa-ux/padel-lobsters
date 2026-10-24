@@ -70,7 +70,7 @@ export default function CountdownClock({
           </div>
         </div>
         {streak > 0 && (
-          <p className="text-[11px] text-lob-muted font-semibold mt-2 flex items-center justify-center gap-1">
+          <p className="text-xs text-lob-muted font-semibold mt-2 flex items-center justify-center gap-1">
             <Flame size={13} className="text-lob-warning-solid" />
             {streak} event{streak > 1 ? 's' : ''} in a row
           </p>
@@ -81,7 +81,7 @@ export default function CountdownClock({
   if (streak > 0) {
     return (
       <div className="flex items-center gap-2">
-        <span className="text-[11px] bg-white border border-lob-line-strong text-lob-slate font-semibold px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1.5">
+        <span className="text-xs bg-white border border-lob-line-strong text-lob-slate font-semibold px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1.5">
           <Flame size={13} className="text-lob-warning-solid" />
           {streak} event{streak > 1 ? 's' : ''} in a row
         </span>

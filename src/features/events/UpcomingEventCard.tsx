@@ -146,7 +146,7 @@ export default function UpcomingEventCard({
             {isFull ? (
               <div className="bg-lob-warning-light border border-lob-warning-border rounded-xl px-3 py-2 mb-3">
                 <p className="text-xs font-bold text-lob-warning">Sold out!</p>
-                <p className="text-[11px] text-lob-warning mt-0.5">
+                <p className="text-xs text-lob-warning mt-0.5">
                   Someone always cancels last minute. Join the waitlist and keep your racket warm.
                 </p>
               </div>

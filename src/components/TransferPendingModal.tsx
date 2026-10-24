@@ -152,13 +152,13 @@ export default function TransferPendingModal({
         </button>
 
         {groupNote && (
-          <p className="text-[11px] text-lob-muted text-center">
+          <p className="text-xs text-lob-muted text-center">
             Message copied to your clipboard — paste it in the group chat.
           </p>
         )}
 
         {phone === '' && (
-          <p className="text-[11px] text-lob-muted-light text-center">
+          <p className="text-xs text-lob-muted-light text-center">
             No WhatsApp number on file for {(toPlayer?.name || 'this player').split(/\s+/)[0]} — use
             the group instead.
           </p>

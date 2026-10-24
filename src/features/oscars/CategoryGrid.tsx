@@ -43,18 +43,18 @@ export default function CategoryGrid({
                 {c.name}
               </p>
               {voted ? (
-                <p className="text-[11px] text-lob-success font-semibold mt-1 flex items-center gap-1">
+                <p className="text-xs text-lob-success font-semibold mt-1 flex items-center gap-1">
                   <Check size={11} /> Voted: {voted.name}
                   {clickable && (
                     <span className="text-lob-muted-light font-normal ml-0.5">· tap to change</span>
                   )}
                 </p>
               ) : showWaitingState ? (
-                <p className="text-[11px] text-lob-muted-light font-medium mt-1">
+                <p className="text-xs text-lob-muted-light font-medium mt-1">
                   You didn&apos;t vote
                 </p>
               ) : (
-                <p className="text-[11px] text-lob-muted-light mt-1">Tap to vote</p>
+                <p className="text-xs text-lob-muted-light mt-1">Tap to vote</p>
               )}
             </div>
           </button>

@@ -10,7 +10,7 @@ interface AlertBoxProps {
 }
 
 const variantClasses: Record<AlertBoxProps['variant'], string> = {
-  info: 'bg-lob-teal/8 border-lob-teal/30 text-lob-teal',
+  info: 'bg-lob-info-light border-lob-info-border text-lob-info',
   warning: 'bg-lob-warning-light border-lob-warning-border text-lob-warning',
   success: 'bg-lob-success-light border-lob-success-border text-lob-success',
   error: 'bg-lob-danger-light border-lob-danger-border text-lob-danger',

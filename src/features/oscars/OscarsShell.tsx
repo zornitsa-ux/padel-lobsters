@@ -22,7 +22,7 @@ export function Shell({ title, headerRight, children }: ShellProps) {
 
 export function SectionLabel({ children }: { children: ReactNode }) {
   return (
-    <p className="text-[11px] uppercase tracking-wider font-bold text-lob-muted-light mt-2 mb-2 px-1">
+    <p className="text-xs uppercase tracking-wider font-bold text-lob-muted-light mt-2 mb-2 px-1">
       {children}
     </p>
   )

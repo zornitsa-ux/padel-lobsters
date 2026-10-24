@@ -164,14 +164,14 @@ export default function NextEventCard({
         </button>
         <button
           onClick={() => onNavigate('schedule', upcoming)}
-          className="flex-none bg-gray-100 text-lob-slate font-semibold py-1.5 px-3 rounded-lg text-[11px] active:scale-95 transition-all flex items-center gap-1"
+          className="flex-none bg-gray-100 text-lob-slate font-semibold py-1.5 px-3 rounded-lg text-xs active:scale-95 transition-all flex items-center gap-1"
         >
           <CalendarDays size={12} /> Schedule
         </button>
         {isAdmin && (
           <button
             onClick={() => onNavigate('payments', upcoming)}
-            className="flex-none bg-gray-100 text-lob-slate font-semibold py-1.5 px-3 rounded-lg text-[11px] active:scale-95 transition-all flex items-center gap-1"
+            className="flex-none bg-gray-100 text-lob-slate font-semibold py-1.5 px-3 rounded-lg text-xs active:scale-95 transition-all flex items-center gap-1"
           >
             <CreditCard size={12} /> Payments
           </button>

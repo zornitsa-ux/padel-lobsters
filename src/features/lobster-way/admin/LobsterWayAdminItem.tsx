@@ -140,7 +140,7 @@ export default function LobsterWayAdminItem({
               <button
                 type="button"
                 onClick={() => set({ list: [...(item.list ?? []), emptyListRow()] })}
-                className="text-[11px] text-lob-teal font-semibold flex items-center gap-1"
+                className="text-xs text-lob-teal font-semibold flex items-center gap-1"
               >
                 <Plus size={11} /> Add row
               </button>
@@ -149,7 +149,7 @@ export default function LobsterWayAdminItem({
             <button
               type="button"
               onClick={() => set({ list: [emptyListRow()] })}
-              className="text-[11px] text-lob-teal font-semibold"
+              className="text-xs text-lob-teal font-semibold"
             >
               + Add bullet list
             </button>
@@ -205,7 +205,7 @@ export default function LobsterWayAdminItem({
               <button
                 type="button"
                 onClick={() => set({ steps: [...(item.steps ?? []), emptyStepRow()] })}
-                className="text-[11px] text-lob-teal font-semibold flex items-center gap-1"
+                className="text-xs text-lob-teal font-semibold flex items-center gap-1"
               >
                 <Plus size={11} /> Add step
               </button>
@@ -214,7 +214,7 @@ export default function LobsterWayAdminItem({
             <button
               type="button"
               onClick={() => set({ steps: [emptyStepRow()] })}
-              className="text-[11px] text-lob-teal font-semibold"
+              className="text-xs text-lob-teal font-semibold"
             >
               + Add numbered steps
             </button>

@@ -106,7 +106,7 @@ export default function Shop({
                   Singular copy below 1, so "1 lobster has this" sounds
                   right when only one person has ordered so far. */}
                 {orderCount(item.id) > 0 && (
-                  <p className="text-[11px] font-semibold text-lob-warning mt-1 flex items-center gap-1">
+                  <p className="text-xs font-semibold text-lob-warning mt-1 flex items-center gap-1">
                     <span className="inline-block w-1.5 h-1.5 rounded-full bg-lob-warning-solid animate-pulse"></span>
                     {orderCount(item.id) === 1
                       ? '1 lobster already ordered 🦞'

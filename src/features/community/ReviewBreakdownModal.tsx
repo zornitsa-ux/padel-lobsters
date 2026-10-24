@@ -71,7 +71,7 @@ export default function ReviewBreakdownModal({
         {b.players.map((p) => (
           <span
             key={p.id}
-            className="text-[11px] bg-white border border-lob-line-strong px-2 py-0.5 rounded-md text-lob-slate"
+            className="text-xs bg-white border border-lob-line-strong px-2 py-0.5 rounded-md text-lob-slate"
           >
             {(p.name || '').split(' ')[0]}
           </span>
@@ -79,7 +79,7 @@ export default function ReviewBreakdownModal({
       </div>
       <div className="space-y-1.5">
         {[...b.samples.values()].map((s, i) => (
-          <details key={i} className="text-[11px]">
+          <details key={i} className="text-xs">
             <summary className="cursor-pointer text-lob-muted font-semibold">
               {b.samples.size > 1
                 ? `Variant ${i + 1} (${s.count} player${s.count > 1 ? 's' : ''})`

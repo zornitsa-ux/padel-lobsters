@@ -148,7 +148,7 @@ export default function PlayerCategoryScreen({
             })}
           </div>
         )}
-        <p className="text-center text-[11px] text-lob-muted-light pt-3">
+        <p className="text-center text-xs text-lob-muted-light pt-3">
           Tap a player to vote. You can change your mind until the admin ends the games.
         </p>
       </div>

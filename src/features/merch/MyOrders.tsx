@@ -50,7 +50,7 @@ export default function MyOrders({ myOrders, items }: MyOrdersProps) {
                           Name: {o.customName}
                         </span>
                       )}
-                      <span className="text-[11px] text-lob-muted-light">
+                      <span className="text-xs text-lob-muted-light">
                         {formatOrderTime(o.created_at)}
                       </span>
                     </div>
@@ -71,7 +71,7 @@ export default function MyOrders({ myOrders, items }: MyOrdersProps) {
                           />
                         )}
                         <div
-                          className={`flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-full ${
+                          className={`flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full ${
                             active
                               ? `${sCfg.bg} ${sCfg.text}`
                               : 'bg-gray-100 text-lob-muted-light/60'

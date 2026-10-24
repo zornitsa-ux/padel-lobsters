@@ -112,7 +112,7 @@ export default function ItemEditorForm({
             value={form.external_orders ?? 0}
             onChange={(e) => setForm((f) => ({ ...f, external_orders: e.target.value }))}
           />
-          <p className="text-[11px] text-lob-muted-light mt-1">
+          <p className="text-xs text-lob-muted-light mt-1">
             Counts toward the "X lobsters already ordered" badge players see in the shop.
           </p>
         </div>

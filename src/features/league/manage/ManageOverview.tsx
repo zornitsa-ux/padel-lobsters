@@ -20,7 +20,7 @@ function PhaseStepper({ status }: { status: string }) {
           <li
             key={phase}
             aria-current={active ? 'step' : undefined}
-            className={`flex-1 flex items-center justify-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold ${
+            className={`flex-1 flex items-center justify-center gap-1 rounded-full px-2 py-1 text-xs font-semibold ${
               active
                 ? 'bg-lob-coral text-white'
                 : done

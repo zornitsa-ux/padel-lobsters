@@ -81,7 +81,7 @@ function LevelLine({
       <div className="font-mono tabular-nums text-sm font-semibold text-lob-dark leading-none">
         {formatLevel(value)}
       </div>
-      <div className="mt-1 text-[11px] uppercase tracking-wide text-lob-muted leading-none">
+      <div className="mt-1 text-xs uppercase tracking-wide text-lob-muted leading-none">
         {caption}
       </div>
     </div>
@@ -120,9 +120,7 @@ function LevelLine({
         <div className="font-mono tabular-nums text-sm font-semibold text-lob-amber leading-none">
           {formatLevel(cautious)}
         </div>
-        <div className="mt-1 text-[11px] uppercase tracking-wide text-lob-muted leading-none">
-          now
-        </div>
+        <div className="mt-1 text-xs uppercase tracking-wide text-lob-muted leading-none">now</div>
       </div>
     </div>
   )

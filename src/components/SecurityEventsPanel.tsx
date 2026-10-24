@@ -133,7 +133,7 @@ export default function SecurityEventsPanel() {
               <button
                 key={f.id}
                 onClick={() => setFilter(f.id)}
-                className={`text-[11px] px-2 py-1 rounded-lg border transition-all ${
+                className={`text-xs px-2 py-1 rounded-lg border transition-all ${
                   filter === f.id
                     ? 'bg-lob-teal text-white border-lob-teal'
                     : 'bg-white text-lob-slate border-lob-line-strong hover:border-lob-teal/50'
@@ -145,7 +145,7 @@ export default function SecurityEventsPanel() {
             <select
               value={limit}
               onChange={(e) => setLimit(parseInt(e.target.value, 10))}
-              className="text-[11px] px-2 py-1 rounded-lg border border-lob-line-strong bg-white ml-auto"
+              className="text-xs px-2 py-1 rounded-lg border border-lob-line-strong bg-white ml-auto"
             >
               <option value={25}>Last 25</option>
               <option value={50}>Last 50</option>

@@ -83,7 +83,7 @@ export default function OrdersTable({ activeOrders, interests, items, players }:
       {activeOrders.length > 0 ? (
         <div className="space-y-2">
           {/* Summary stats */}
-          <div className="flex gap-2 text-[11px] text-lob-muted px-1">
+          <div className="flex gap-2 text-xs text-lob-muted px-1">
             <span>{activeOrders.length} orders</span>
             <span>·</span>
             <span className="text-lob-warning">
@@ -134,13 +134,13 @@ export default function OrdersTable({ activeOrders, interests, items, players }:
                           </span>
                         )}
                         <span className="text-xs font-bold text-lob-teal">€{orderPrice}</span>
-                        <span className="text-[11px] text-lob-muted-light">
+                        <span className="text-xs text-lob-muted-light">
                           {formatOrderTime(o.created_at)}
                         </span>
                       </div>
                     </div>
                     <span
-                      className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.text}`}
+                      className={`inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.text}`}
                     >
                       <StatusIcon size={10} /> {cfg.label}
                     </span>

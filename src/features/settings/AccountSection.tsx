@@ -24,9 +24,7 @@ export default function AccountSection({ isAdmin, signedInPlayer, logout }: Acco
         </div>
         <div>
           <h3 className="font-bold text-lob-slate text-sm">Account</h3>
-          <p className="text-[11px] text-lob-muted-light">
-            One sign-in, works across the whole site
-          </p>
+          <p className="text-xs text-lob-muted-light">One sign-in, works across the whole site</p>
         </div>
       </div>
 
@@ -76,7 +74,7 @@ export default function AccountSection({ isAdmin, signedInPlayer, logout }: Acco
           <div className="text-center py-2">
             <div className="text-3xl mb-1">🦞</div>
             <p className="text-sm font-semibold text-lob-dark">Sign in with your email</p>
-            <p className="text-[11px] text-lob-muted mt-0.5">
+            <p className="text-xs text-lob-muted mt-0.5">
               We&rsquo;ll email you a 6-digit code. No password needed.
             </p>
           </div>
