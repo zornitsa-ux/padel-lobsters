@@ -7,6 +7,7 @@ import type { NormalisedTournament } from '../../../../lib/normalise'
 const m = vi.hoisted(() => ({
   useApp: vi.fn(),
   registerTeam: vi.fn(),
+  checkEmail: vi.fn(),
   changeTeamPartner: vi.fn(),
   adminCancelTeam: vi.fn(),
   adminPromoteTeam: vi.fn(),
@@ -44,6 +45,7 @@ vi.mock('../../teams/useTeams', () => ({
     cancelMyTeam: m.cancelMyTeam,
     respondToTeamInvite: m.respondToTeamInvite,
   }),
+  useCheckNewPartnerEmail: () => m.checkEmail,
 }))
 vi.mock('../../../../lib/confirmBus', () => ({ useConfirm: () => m.confirm }))
 vi.mock('../../../../lib/toastBus', () => ({ useToast: () => ({ showToast: vi.fn() }) }))
@@ -152,6 +154,7 @@ beforeEach(() => {
   m.invites = []
   registrations = [reg('r1', 'p2', 'tm1', 'registered'), reg('r2', 'p3', 'tm1', 'registered')]
   m.confirm.mockResolvedValue(true)
+  m.checkEmail.mockResolvedValue('ok')
 })
 afterEach(cleanup)
 
@@ -182,7 +185,27 @@ describe('team join card', () => {
     for (const excluded of ['Pia', 'Cara', 'Dan', 'Alma']) expect(names).not.toContain(excluded)
   })
 
-  it('shows email_in_use inline', async () => {
+  it('catches an email that already has an account on the form, before confirming', async () => {
+    m.checkEmail.mockResolvedValue('email_in_use')
+    renderInfo()
+    openNewPartnerForm()
+    fillNewPartner()
+    fireEvent.click(screen.getByRole('checkbox'))
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+
+    expect((await screen.findByRole('alert')).textContent).toMatch(/already has an account/i)
+    expect(m.checkEmail).toHaveBeenCalledWith({ email: 'gus@example.com' })
+    expect(screen.queryByText('You + Gus')).toBeNull()
+    expect((screen.getByRole('button', { name: 'Continue' }) as HTMLButtonElement).disabled).toBe(
+      true,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Search members' }))
+    expect((screen.getByLabelText('Search players') as HTMLInputElement).value).toBe('Gus')
+    expect(m.registerTeam).not.toHaveBeenCalled()
+  })
+
+  it('still shows email_in_use from registration if the email was taken meanwhile', async () => {
     m.registerTeam.mockResolvedValue({ status: 'email_in_use', teamId: null, partnerId: null })
     renderInfo()
     openNewPartnerForm()
@@ -190,7 +213,7 @@ describe('team join card', () => {
     fireEvent.click(screen.getByRole('checkbox'))
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
 
-    expect(screen.getByText('You + Gus')).not.toBeNull()
+    expect(await screen.findByText('You + Gus')).not.toBeNull()
     expect(screen.getByText(/€20\.00 for the team/i)).not.toBeNull()
     fireEvent.click(screen.getByRole('button', { name: 'Sign up' }))
 
@@ -213,7 +236,7 @@ describe('team join card', () => {
     fillNewPartner()
     fireEvent.click(screen.getByRole('checkbox'))
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Sign up' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Sign up' }))
 
     expect(
       await screen.findByText('Gus can sign in with gus@example.com to accept. Let them know!'),

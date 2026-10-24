@@ -103,6 +103,18 @@ export function useMyAccountSetup({ enabled }: { enabled: boolean }) {
   })
 }
 
+// A failed check lets the form continue: registration checks the email again.
+export function useCheckNewPartnerEmail() {
+  return useCallback(async ({ email }: { email: string }) => {
+    try {
+      return await q.checkNewPartnerEmail({ email })
+    } catch (error) {
+      console.error('checkNewPartnerEmail failed:', error)
+      return 'ok' as const
+    }
+  }, [])
+}
+
 export function useAcknowledgeMyAccount() {
   const qc = useQueryClient()
   return useCallback(async () => {

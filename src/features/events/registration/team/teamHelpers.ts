@@ -69,9 +69,21 @@ export const eligiblePlayers = ({
   )
 }
 
+// Case and accents ignored ("jime" finds Jiménez); every typed fragment must
+// appear somewhere in the name, in any order ("gar nic" finds Nicolas Garcia).
+const foldName = (text: string) =>
+  text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+
 export const filterByName = ({ players, search }: { players: Player[]; search: string }) => {
-  const q = search.trim().toLowerCase()
-  return q ? players.filter((p) => p.name.toLowerCase().includes(q)) : players
+  const fragments = foldName(search).split(/\s+/).filter(Boolean)
+  if (fragments.length === 0) return players
+  return players.filter((p) => {
+    const name = foldName(p.name)
+    return fragments.every((f) => name.includes(f))
+  })
 }
 
 export const teamPrice = ({ tournament }: { tournament: Parameters<typeof pricePerPlayer>[0] }) =>

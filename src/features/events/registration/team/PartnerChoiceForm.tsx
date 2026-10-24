@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { useCheckNewPartnerEmail } from '../../teams/useTeams'
+import { PARTNER_ERROR_MESSAGES } from '../../teams/teamStatusMessages'
 import type { Player } from '../../../../lib/normalise'
 import type { PartnerChoice } from '../../teams/teamTypes'
 import type { DisplayName } from '../utils'
@@ -36,22 +38,63 @@ export default function PartnerChoiceForm({
     initialChoice?.kind === 'member' ? initialChoice.playerId : '',
   )
   const [draft, setDraft] = useState(() => choiceToDraft({ choice: initialChoice }))
+  const [emailProblem, setEmailProblem] = useState<'' | 'invalid_email' | 'email_in_use'>('')
+  const [checking, setChecking] = useState(false)
+  const [memberSearch, setMemberSearch] = useState('')
+  const checkEmail = useCheckNewPartnerEmail()
 
   const isNew = mode === 'new'
-  const ready = isNew ? isDraftComplete({ draft }) : selectedId !== ''
-  const submit = () =>
-    onSubmit({
-      choice: isNew ? draftToChoice({ draft }) : { kind: 'member', playerId: selectedId },
-    })
+  const ready = isNew ? isDraftComplete({ draft }) && !emailProblem : selectedId !== ''
+
+  const submitNew = async () => {
+    setChecking(true)
+    const status = await checkEmail({ email: draft.email })
+    setChecking(false)
+    if (status !== 'ok') {
+      setEmailProblem(status)
+      return
+    }
+    onSubmit({ choice: draftToChoice({ draft }) })
+  }
+  const submit = () => {
+    if (isNew) void submitNew()
+    else onSubmit({ choice: { kind: 'member', playerId: selectedId } })
+  }
+  const searchMembers = ({ search }: { search: string }) => {
+    setMemberSearch(search)
+    setEmailProblem('')
+    setMode('search')
+  }
+  const emailError = emailProblem && (
+    <span role="alert" className="block mt-1 font-normal text-red-600">
+      {PARTNER_ERROR_MESSAGES[emailProblem]}
+      {emailProblem === 'email_in_use' && (
+        <button
+          type="button"
+          onClick={() => searchMembers({ search: draft.name })}
+          className="block mt-1 font-semibold text-lob-teal underline underline-offset-2"
+        >
+          Search members
+        </button>
+      )}
+    </span>
+  )
 
   return (
     <div className="space-y-3">
       {isNew ? (
         <>
-          <NewPartnerForm draft={draft} onChange={setDraft} />
+          <NewPartnerForm
+            draft={draft}
+            onChange={(next) => {
+              if (next.email !== draft.email) setEmailProblem('')
+              setDraft(next)
+            }}
+            emailError={emailError}
+          />
           <button
             type="button"
-            onClick={() => setMode('search')}
+            onClick={() => searchMembers({ search: '' })}
             className="text-xs font-semibold text-lob-teal underline underline-offset-2"
           >
             ← Search members instead
@@ -64,6 +107,7 @@ export default function PartnerChoiceForm({
             selectedId={selectedId}
             onSelect={setSelectedId}
             displayName={displayName}
+            initialSearch={memberSearch}
           />
           <button
             type="button"
@@ -86,10 +130,10 @@ export default function PartnerChoiceForm({
         <button
           type="button"
           onClick={submit}
-          disabled={!ready || busy}
+          disabled={!ready || busy || checking}
           className="btn-primary flex-1 py-2.5 text-sm"
         >
-          {busy ? 'Saving…' : submitLabel}
+          {busy ? 'Saving…' : checking ? 'Checking…' : submitLabel}
         </button>
       </div>
     </div>

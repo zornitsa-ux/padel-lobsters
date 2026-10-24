@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
+import type { Player } from '../../../../lib/normalise'
 import {
+  filterByName,
   notSignedInHint,
   EMPTY_DRAFT,
   choiceToDraft,
@@ -43,5 +45,27 @@ describe('notSignedInHint', () => {
     expect(notSignedInHint({ captainUnseen: false, partnerUnseen: true })).toMatch(/^Partner/)
     expect(notSignedInHint({ captainUnseen: true, partnerUnseen: false })).toMatch(/^Captain/)
     expect(notSignedInHint({ captainUnseen: true, partnerUnseen: true })).toMatch(/^Neither/)
+  })
+})
+
+describe('filterByName', () => {
+  const players = [
+    { id: '1', name: 'Nicolas Garcia' },
+    { id: '2', name: 'Elena Jiménez' },
+    { id: '3', name: 'Nina Holt' },
+  ] as Player[]
+  const ids = (search: string) => filterByName({ players, search }).map((p) => p.id)
+
+  it('matches a few letters anywhere, ignoring case and accents', () => {
+    expect(ids('NIC')).toEqual(['1'])
+    expect(ids('jime')).toEqual(['2'])
+    expect(ids('ni')).toEqual(['1', '3'])
+  })
+  it('matches several fragments in any order', () => {
+    expect(ids('gar nic')).toEqual(['1'])
+    expect(ids('  nic   holt ')).toEqual([])
+  })
+  it('shows everyone for an empty search', () => {
+    expect(ids('   ')).toHaveLength(3)
   })
 })
