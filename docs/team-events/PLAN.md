@@ -61,6 +61,7 @@
 | T10 | Admin: seed reorder + Show starting court assignments (D-024); Final standings entry; court-removal warning (D-027)                                                                                                      | 2     | T8          | #64      | [x]   |
 | T11 | Player views: starting court on Schedule / You / upcoming card; Results ranking; History + recently-completed banner; Lobster Review rank                                                                                | 2     | T8, T9, T10 | #66      | [~]   |
 | T12 | Verify Phase 2 locally (16-team event end to end) → **R2**                                                                                                                                                               | 2     | T9–T11      |          | [ ]   |
+| T13 | Results: courts moved per team and a Biggest climber on Results, the recently-completed banner and History (D-028)                                                                                                       | 2     | T11         |          | [ ]   |
 
 States: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked.
 
@@ -94,9 +95,12 @@ describe what was built. In short:
 **Next, in order:**
 
 1. **T11: merge #66** (task notes in §2). It gates R2 (live by Thu 12 Nov).
-2. **T12: local verification** (gate in §2): the first browser walk-through of
+2. **T13: courts moved + Biggest climber** (D-028; task notes in §2), after
+   #66 merges. Timing to confirm with the owner: before R2 if it fits,
+   otherwise straight after the event.
+3. **T12: local verification** (gate in §2): the first browser walk-through of
    the player views. Then **R2**: merge, Vercel deploys. No migration.
-3. **T2: partner invites** (unchanged, D-023). It's sign-in-facing, so not
+4. **T2: partner invites** (unchanged, D-023). It's sign-in-facing, so not
    from Thu 12 Nov until after the event on Sun 15 Nov.
 
 **Gap on `main` until #66 merges** (players only; R2 isn't released): once the
@@ -229,6 +233,15 @@ nothing admin-only, so reuse or split it rather than repeating it.
   `corpReview`, called from `PlayerDetailPage` and `AdminTools`): the team's
   `final_rank` out of the registered teams; events without one are left out.
 
+**T13 (courts moved, D-028).** A pure domain function over the saved order,
+the courts and the final ranks (starting court from `startingCourts`, final
+court ⌈rank / 2⌉, tie-break on the lower start), tested first next to the
+other King of the Court domain code. Results shows the journey on each ranked
+row in `TeamRankingList`. Results, the recently-completed banner and History
+name the Biggest climber. The multi-event surfaces need each event's seeds and
+courts, which `teamResultsByEvent` doesn't carry yet. No places-against-seed
+figure.
+
 **T12 gate.** Local event with 16 teams (some with new partners who have never
 signed in):
 
@@ -241,6 +254,8 @@ signed in):
 - the event passing its scheduled end: Home's next event moves on, and the run
   of show offers only Oscars and the raffle (no Finish)
 - partial final standings: public at once on Results, You and Lobster Review
+- courts moved and the Biggest climber match the starting courts players were
+  shown (if T13 is in)
 
 ---
 
@@ -422,3 +437,9 @@ placeholders as partners, was withdrawn by D-010: placeholders aren't offered.)
 
   Checks: `typecheck` clean, 2135 tests passed, `format:check` clean, no new
   lint warnings. Still to do: the browser walk-through (T12).
+
+- 2026-10-24: **D-028:** the owner asked how to report King of the Court
+  results fairly, since a low-starting team often can't reach the King court.
+  Decision: show courts moved for each team and a Biggest climber, both from
+  the saved seeds and final ranks. Places beaten against seed was rejected.
+  Logged as T13.
