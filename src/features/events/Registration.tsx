@@ -35,7 +35,7 @@ import RegistrationPaymentSheetModal from './registration/RegistrationPaymentShe
 import AddPlayerCard from './registration/AddPlayerCard'
 import JoinEventCard from './registration/JoinEventCard'
 import { useSelfRegister } from './registration/useSelfRegister'
-import { findMyEntry, rosterLine, teamPrice } from './registration/team/teamHelpers'
+import { findMyEntry, rosterLine } from './registration/team/teamHelpers'
 import { useTeamEntries } from './teams/useTeams'
 import TeamTransferCard from './registration/team/TeamTransferCard'
 import TransferSpotCard from './registration/TransferSpotCard'
@@ -168,7 +168,7 @@ export default function Registration({
     playerId: claimedId,
   })
   const isCompleted = tournament?.status === 'completed'
-  const { hasTikkie, tikkieLink, costPerPlayer } = useMemo(
+  const { hasTikkie, tikkieLink, costPerEntry } = useMemo(
     () => computePaymentConfig(tournament),
     [tournament],
   )
@@ -239,7 +239,7 @@ export default function Registration({
   const maxPlayers = tournament.maxPlayers
   const isTeamEvent = tournament.entryMode === 'team'
   const handleTeamSignedUp = (result: TeamSignupResult) => {
-    if (hasTikkie || costPerPlayer > 0) setTeamPaymentFor(result)
+    if (hasTikkie || costPerEntry > 0) setTeamPaymentFor(result)
   }
 
   // ── Register (the signed-in player, from the Info tab) ─────────────────────
@@ -262,7 +262,7 @@ export default function Registration({
       // and only if there's a Tikkie link or a cost set. A null regId means the
       // insert failed (registerPlayer swallows the error and still reports the
       // status it *would* have used), so there is no registration to pay for.
-      if (regId && status === 'registered' && (hasTikkie || costPerPlayer > 0)) {
+      if (regId && status === 'registered' && (hasTikkie || costPerEntry > 0)) {
         // registerPlayer inserts every row with payment_status 'unpaid'; the
         // sheet's Tikkie handler needs the *payment* status, not `status`.
         setPaymentSheet({ regId, playerId: selectedPlayer, paymentStatus: 'unpaid' })
@@ -621,7 +621,7 @@ export default function Registration({
         isOpen={!!activeSheet}
         tournament={tournament}
         paymentSheet={activeSheet}
-        costPerPlayer={isTeamEvent ? teamPrice({ tournament }) : costPerPlayer}
+        costPerEntry={costPerEntry}
         tikkieClicked={tikkieClicked}
         declaring={declaring}
         onClose={closePaymentSheet}

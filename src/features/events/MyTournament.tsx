@@ -13,7 +13,7 @@ import MyRounds from './MyRounds'
 import { useSelfRegister } from './registration/useSelfRegister'
 import PayPrompt from './registration/PayPrompt'
 import MyTeamRegistration from './registration/team/MyTeamRegistration'
-import { eligiblePlayers, findMyEntry, teamPrice } from './registration/team/teamHelpers'
+import { eligiblePlayers, findMyEntry } from './registration/team/teamHelpers'
 import { useTeamEntries } from './teams/useTeams'
 import { buildMyTournamentView, myFinalPlacing } from './nextMatch'
 import type { EventPhase } from './eventPhase'
@@ -71,7 +71,7 @@ export default function MyTournament({ tournament, onNavigate }: Props) {
     () => splitRegistrationsByStatus(registrations),
     [registrations],
   )
-  const { hasTikkie, costPerPlayer } = useMemo(() => computePaymentConfig(tournament), [tournament])
+  const { hasTikkie, costPerEntry } = useMemo(() => computePaymentConfig(tournament), [tournament])
   const isEventFull = registered.length >= (tournament.maxPlayers || 16)
 
   const placing = useMemo(() => {
@@ -154,7 +154,7 @@ export default function MyTournament({ tournament, onNavigate }: Props) {
       pay={
         captainOwes
           ? {
-              amount: teamPrice({ tournament }),
+              amount: costPerEntry,
               tikkieLink: tournament.tikkieLink,
               tikkieClicked,
               declaring,
@@ -172,7 +172,7 @@ export default function MyTournament({ tournament, onNavigate }: Props) {
       isEventFull={isEventFull}
       waitlistPosition={waitlisted.findIndex((r) => r.playerId === claimedId) + 1 || undefined}
       hasTikkie={hasTikkie}
-      costPerPlayer={costPerPlayer}
+      costPerEntry={costPerEntry}
       tournament={tournament}
       tikkieClicked={tikkieClicked}
       declaring={declaring}
@@ -215,7 +215,7 @@ function RegistrationCard({
   isEventFull,
   waitlistPosition,
   hasTikkie,
-  costPerPlayer,
+  costPerEntry,
   tournament,
   tikkieClicked,
   declaring,
@@ -229,7 +229,7 @@ function RegistrationCard({
   isEventFull: boolean
   waitlistPosition?: number
   hasTikkie: boolean
-  costPerPlayer: number
+  costPerEntry: number
   tournament: NormalisedTournament
   tikkieClicked: boolean
   declaring: boolean
@@ -320,7 +320,7 @@ function RegistrationCard({
       <div className="card space-y-3">
         {badge}
         <PayPrompt
-          amount={costPerPlayer}
+          amount={costPerEntry}
           tikkieLink={tournament.tikkieLink}
           tikkieClicked={tikkieClicked}
           declaring={declaring}

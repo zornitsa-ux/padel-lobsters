@@ -7,7 +7,8 @@ import type { DisplayName, GetPlayer } from '../utils'
 import { COMPLETE_TEAMS_NOTE } from '../../teams/teamStatusMessages'
 import { Modal } from '../../../../components/ui/Modal'
 import PartnerChoiceForm from './PartnerChoiceForm'
-import { choicePartnerName, teamPrice } from './teamHelpers'
+import { choicePartnerName } from './teamHelpers'
+import { pricePerEntry } from '../../eventHelpers'
 import { useTeamSignup, type TeamSignupResult } from './useTeamSignup'
 
 interface TeamJoinCardProps {
@@ -50,7 +51,7 @@ export default function TeamJoinCard({
     signup.clearError()
   }
 
-  const price = teamPrice({ tournament })
+  const price = pricePerEntry(tournament)
   const submitLabel = signup.busy ? 'Signing up…' : isEventFull ? 'Join the waitlist' : 'Sign up'
 
   return (
