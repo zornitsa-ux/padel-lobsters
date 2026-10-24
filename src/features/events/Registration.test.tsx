@@ -20,6 +20,7 @@ const mockUseApp = vi.fn()
 vi.mock('../../context/useApp', () => ({ useApp: () => mockUseApp() }))
 vi.mock('./useTournaments', () => ({
   useUpdateTournament: () => ({ mutateAsync: vi.fn() }),
+  useAddTournament: () => ({ mutateAsync: vi.fn() }),
 }))
 vi.mock('./useTransfers', () => ({
   useTransfers: () => ({ data: [] }),

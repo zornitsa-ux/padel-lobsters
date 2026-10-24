@@ -14,15 +14,8 @@ import ShareWhatsAppButton from '../../components/ui/ShareWhatsAppButton'
 import EventDescription from './EventDescription'
 import EventAdminMenu from './EventAdminMenu'
 import EventFormModal from './EventFormModal'
-import {
-  buildEventData,
-  FORMAT_LOCKED_NOTE,
-  formFromTournament,
-  hasSignups,
-  isEntryModeLocked,
-  withSavedFormat,
-} from './eventFormModel'
-import { emptyForm } from './eventConstants'
+import { FORMAT_LOCKED_NOTE } from './eventFormModel'
+import { useEventForm } from './useEventForm'
 import { formatLabel } from './eventHelpers'
 import {
   splitRegistrationsByStatus,
@@ -55,15 +48,14 @@ import TeamLists from './registration/team/TeamLists'
 import AdminAddTeamCard from './registration/team/AdminAddTeamCard'
 import type { TeamSignupResult } from './registration/team/useTeamSignup'
 import type { TeamEntry } from './teams/teamTypes'
+import type { TournamentInput } from './tournamentQueries'
 import { errorMessage } from '../../lib/errors'
 import { REGISTER_FAILURE_MESSAGES, registrationMessage } from './registrationStatusMessages'
-import type { EventFormValues } from './eventConstants'
 import type { EventNavigate } from './eventHelpers'
 import type { NormalisedTournament } from '../../lib/normalise'
 import type { Player } from '../../lib/normalise'
 import type { NormalisedRegistration } from './registrationQueries'
 import type { NormalisedTransfer } from './transferQueries'
-import type { SetEventFormCourt } from './EventFormModal'
 import type {
   DisplayName,
   GetPlayer,
@@ -87,7 +79,7 @@ export default function Registration({
   const { respondToTransfer, cancelTransfer, adminCancelTransfer } = useTransferActions({ session })
   const updateMut = useUpdateTournament()
   const updateTournament = useCallback(
-    (id: string, data: Partial<NormalisedTournament>) => updateMut.mutateAsync({ id, data }),
+    (id: string, data: TournamentInput) => updateMut.mutateAsync({ id, data }),
     [updateMut],
   )
   const { data: players = [] } = usePlayers()
@@ -133,57 +125,25 @@ export default function Registration({
   const [shareModal, setShareModal] = useState<TransferShareTarget | null>(null)
   const [respondingTo, setRespondingTo] = useState<string | null>(null) // transferId being acted on
 
-  const [showEditForm, setShowEditForm] = useState(false)
-  const [editForm, setEditForm] = useState<EventFormValues>(emptyForm)
-  const [editSaving, setEditSaving] = useState(false)
-  const [editServerLocked, setEditServerLocked] = useState(false)
-
+  const eventForm = useEventForm()
+  const { openEdit: openEventForm } = eventForm
   const openEdit = useCallback(() => {
-    const t = tournament
-    if (!t) return
-    setEditForm(formFromTournament({ tournament: t }))
-    setEditServerLocked(false)
-    setShowEditForm(true)
-  }, [tournament])
+    if (tournament) openEventForm(tournament)
+  }, [tournament, openEventForm])
 
   const handleEditSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    if (!tournament) return
-    setEditSaving(true)
     try {
-      const data = buildEventData({ form: editForm }) as Partial<NormalisedTournament>
-      await updateTournament(tournament.id, data)
-      setShowEditForm(false)
-    } catch (err) {
-      if (isEntryModeLocked(err)) {
-        setEditForm((f) => withSavedFormat({ form: f, tournament }))
-        setEditServerLocked(true)
+      if ((await eventForm.save()) === 'format_reverted') {
         showToast({
           variant: 'error',
           message: `${FORMAT_LOCKED_NOTE}. The format was put back, so save again.`,
         })
-      } else {
-        showToast({ variant: 'error', message: errorMessage(err, 'Could not save event.') })
       }
-    } finally {
-      setEditSaving(false)
+    } catch (err) {
+      showToast({ variant: 'error', message: errorMessage(err, 'Could not save event.') })
     }
   }
-
-  const addEditCourt = () =>
-    setEditForm((f) => ({
-      ...f,
-      courts: [...f.courts, { name: '', booked: false }],
-    }))
-
-  const removeEditCourt = (i: number) =>
-    setEditForm((f) => ({ ...f, courts: f.courts.filter((_, idx) => idx !== i) }))
-
-  const setEditCourt: SetEventFormCourt = (i, field, value) =>
-    setEditForm((f) => ({
-      ...f,
-      courts: f.courts.map((c, idx) => (idx === i ? { ...c, [field]: value } : c)),
-    }))
 
   const tournamentId = tournament?.id
 
@@ -691,19 +651,7 @@ export default function Registration({
           onCancel={() => setShareModal(null)}
         />
       )}
-      <EventFormModal
-        open={showEditForm}
-        editId={tournament.id}
-        form={editForm}
-        setForm={setEditForm}
-        saving={editSaving}
-        formatLocked={editServerLocked || hasSignups({ registrations: regs })}
-        onSubmit={handleEditSubmit}
-        onClose={() => setShowEditForm(false)}
-        addCourt={addEditCourt}
-        removeCourt={removeEditCourt}
-        setCourt={setEditCourt}
-      />
+      <EventFormModal {...eventForm.modalProps} onSubmit={(e) => void handleEditSubmit(e)} />
     </div>
   )
 }
