@@ -55,6 +55,7 @@ partner_invites                                                               (n
   created_at            timestamptz not null default now()
   invited_at            timestamptz null           (T2)
   invited_by            uuid null → players        (T2)
+  account_acknowledged_at timestamptz null         (the partner confirmed it's their account, D-021)
   index (requested_by, created_at)                 (daily cap)
 ```
 
@@ -220,7 +221,9 @@ returns table(status text)
 ```
 
 The pending partner only (anyone else gets `not_found`). Statuses: `accepted` |
-`declined` | `not_found` | `not_pending` | `tournament_started`. A decline
+`declined` | `not_found` | `not_pending` | `tournament_started` |
+`account_not_acknowledged` (a captain-created account must call
+`acknowledge_my_account` first, D-021). A decline
 cancels both rows (`cancelled_reason = 'partner_declined'`) and promotes the
 waitlist.
 
@@ -234,6 +237,19 @@ returns table(team_id uuid, tournament_id uuid, tournament_name text,
 The caller's pending invites on events that aren't completed.
 `account_created_by_captain` is true when the caller has a `partner_invites`
 row, which is when the profile step is offered (D-019).
+
+```sql
+public.get_my_account_setup()
+returns table(requested_by_name text, tournament_name text, acknowledged boolean)
+
+public.acknowledge_my_account()
+returns table(status text)   -- 'ok' | 'not_needed'
+```
+
+D-021. `get_my_account_setup` returns one row for a captain-created account
+(who created it, for which event, and whether it's been confirmed) and none
+for anyone else. `acknowledge_my_account` sets
+`partner_invites.account_acknowledged_at`.
 
 ### 3.2b `set_registration_payment` (D-016)
 

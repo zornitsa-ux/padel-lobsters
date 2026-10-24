@@ -59,7 +59,9 @@ create table public.partner_invites (
   consent_confirmed_at timestamptz not null,
   created_at timestamptz not null default clock_timestamp(),
   invited_at timestamptz,
-  invited_by uuid references public.players(id)
+  invited_by uuid references public.players(id),
+  -- The partner confirms the account is theirs at first sign-in (D-021).
+  account_acknowledged_at timestamptz
 );
 create index partner_invites_requested_by_idx on public.partner_invites(requested_by, created_at);
 
@@ -617,6 +619,10 @@ begin
   if (v_lock.partner).accepted_at is not null then
     return query select 'not_pending'::text; return;
   end if;
+  if exists (select 1 from public.partner_invites pi
+              where pi.player_id = auth.uid() and pi.account_acknowledged_at is null) then
+    return query select 'account_not_acknowledged'::text; return;
+  end if;
   if (v_lock.tournament).status = 'completed'
      or coalesce(public.tournament_start_ts((v_lock.tournament).id) <= now(), false) then
     return query select 'tournament_started'::text; return;
@@ -629,6 +635,50 @@ begin
 
   perform private.cancel_team_rows(input_team_id, 'partner_declined');
   return query select 'declined'::text;
+end
+$function$;
+
+-- A captain-created account (D-021): who created it, for which event, and
+-- whether the partner has confirmed it is theirs. No row for anyone else.
+create or replace function public.get_my_account_setup()
+returns table(requested_by_name text, tournament_name text, acknowledged boolean)
+language plpgsql
+security definer
+set search_path to 'pg_catalog', 'public', 'extensions'
+as $function$
+begin
+  set local statement_timeout = '30s';
+  if auth.uid() is null then
+    raise exception 'not_authenticated' using errcode = 'P0001';
+  end if;
+
+  return query
+    select btrim(p.name), t.name, pi.account_acknowledged_at is not null
+      from public.partner_invites pi
+      join public.players p on p.id = pi.requested_by
+      join public.tournaments t on t.id = pi.tournament_id
+     where pi.player_id = auth.uid();
+end
+$function$;
+
+create or replace function public.acknowledge_my_account()
+returns table(status text)
+language plpgsql
+security definer
+set search_path to 'pg_catalog', 'public', 'extensions'
+as $function$
+begin
+  set local statement_timeout = '30s';
+  perform set_config('app.audit_source', 'acknowledge_my_account', true);
+  if auth.uid() is null then
+    raise exception 'not_authenticated' using errcode = 'P0001';
+  end if;
+
+  update public.partner_invites pi
+     set account_acknowledged_at = now()
+   where pi.player_id = auth.uid()
+     and pi.account_acknowledged_at is null;
+  return query select case when found then 'ok' else 'not_needed' end;
 end
 $function$;
 
@@ -657,7 +707,7 @@ begin
   end if;
 
   return query
-    select et.id, t.id, t.name, t.date, t.time, et.captain_id, p.name, r.status,
+    select et.id, t.id, t.name, t.date, t.time, et.captain_id, btrim(p.name), r.status,
            exists (select 1 from public.partner_invites pi
                     where pi.player_id = auth.uid() and pi.tournament_id = t.id)
       from public.registrations r
@@ -1463,6 +1513,8 @@ revoke execute on function public.change_team_partner(uuid, uuid, jsonb, boolean
 revoke execute on function public.cancel_my_team(uuid) from public, anon;
 revoke execute on function public.respond_to_team_invite(uuid, boolean) from public, anon;
 revoke execute on function public.get_my_team_invites() from public, anon;
+revoke execute on function public.get_my_account_setup() from public, anon;
+revoke execute on function public.acknowledge_my_account() from public, anon;
 revoke execute on function public.admin_cancel_team(uuid) from public, anon;
 revoke execute on function public.admin_promote_team(uuid) from public, anon;
 revoke execute on function public.set_registration_payment(uuid, text, text) from public, anon;
@@ -1473,6 +1525,8 @@ grant execute on function public.change_team_partner(uuid, uuid, jsonb, boolean)
 grant execute on function public.cancel_my_team(uuid) to authenticated;
 grant execute on function public.respond_to_team_invite(uuid, boolean) to authenticated;
 grant execute on function public.get_my_team_invites() to authenticated;
+grant execute on function public.get_my_account_setup() to authenticated;
+grant execute on function public.acknowledge_my_account() to authenticated;
 grant execute on function public.admin_cancel_team(uuid) to authenticated;
 grant execute on function public.admin_promote_team(uuid) to authenticated;
 grant execute on function public.set_registration_payment(uuid, text, text) to authenticated;

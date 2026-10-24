@@ -669,6 +669,7 @@ export type Database = {
       }
       partner_invites: {
         Row: {
+          account_acknowledged_at: string | null
           consent_confirmed_at: string
           created_at: string
           id: string
@@ -679,6 +680,7 @@ export type Database = {
           tournament_id: string
         }
         Insert: {
+          account_acknowledged_at?: string | null
           consent_confirmed_at: string
           created_at?: string
           id?: string
@@ -689,6 +691,7 @@ export type Database = {
           tournament_id: string
         }
         Update: {
+          account_acknowledged_at?: string | null
           consent_confirmed_at?: string
           created_at?: string
           id?: string
@@ -1584,6 +1587,12 @@ export type Database = {
     }
     Functions: {
       _url_encode: { Args: { input: string }; Returns: string }
+      acknowledge_my_account: {
+        Args: never
+        Returns: {
+          status: string
+        }[]
+      }
       admin_add_player: {
         Args: { input_payload: Json }
         Returns: {
@@ -2121,6 +2130,14 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      get_my_account_setup: {
+        Args: never
+        Returns: {
+          acknowledged: boolean
+          requested_by_name: string
+          tournament_name: string
+        }[]
       }
       get_my_profile_v2: {
         Args: never

@@ -52,6 +52,24 @@ export function useMyTeamInvites({ enabled }: { enabled: boolean }) {
   })
 }
 
+// A captain-created account's setup state (D-021); null for everyone else.
+export function useMyAccountSetup({ enabled }: { enabled: boolean }) {
+  return useQuery({
+    queryKey: teamKeys.accountSetup(),
+    queryFn: q.fetchMyAccountSetup,
+    enabled,
+  })
+}
+
+export function useAcknowledgeMyAccount() {
+  const qc = useQueryClient()
+  return useCallback(async () => {
+    const status = await q.acknowledgeMyAccount()
+    await qc.invalidateQueries({ queryKey: teamKeys.accountSetup() })
+    return status
+  }, [qc])
+}
+
 // Register and change-partner return their status for the form to show inline
 // (most failures are about what was typed). The admin buttons toast instead,
 // like the individual cancel/promote actions.

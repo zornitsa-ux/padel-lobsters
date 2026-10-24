@@ -68,6 +68,7 @@ export const RESPOND_INVITE_MESSAGES: Partial<Record<RespondInviteStatus | 'erro
   not_found: 'This invite is no longer open. The captain may have changed the team.',
   not_pending: "You've already answered this invite.",
   tournament_started: 'This event has already started.',
+  account_not_acknowledged: 'Finish setting up your account first.',
 }
 
 export const CANCEL_TEAM_MESSAGES: Partial<Record<CancelTeamStatus | 'error', string>> = {

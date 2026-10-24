@@ -88,6 +88,7 @@ export type RespondInviteStatus =
   | 'not_found'
   | 'not_pending'
   | 'tournament_started'
+  | 'account_not_acknowledged'
 
 export interface TeamInvite {
   teamId: string
@@ -100,6 +101,15 @@ export interface TeamInvite {
   teamStatus: 'registered' | 'waitlist'
   accountCreatedByCaptain: boolean
 }
+
+// A captain-created account (D-021). Null for everyone else.
+export interface AccountSetup {
+  requestedByName: string
+  tournamentName: string
+  acknowledged: boolean
+}
+
+export type AcknowledgeAccountStatus = 'ok' | 'not_needed'
 
 export type CancelTeamStatus = 'cancelled' | 'already_cancelled' | 'not_found'
 

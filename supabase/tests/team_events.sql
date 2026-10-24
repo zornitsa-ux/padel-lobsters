@@ -646,6 +646,28 @@ begin
     raise exception 'CHECK 27 FAILED: %', v_url;
   end if;
   raise notice 'CHECK 27 ok: team payment reminder copy';
+
+  -- CHECK 28: a captain-created partner confirms the account before answering (D-021)
+  perform pg_temp.act(v_new, false);
+  select * into v_r from public.get_my_account_setup();
+  if v_r.acknowledged is not false or v_r.tournament_name <> 'Team test' then
+    raise exception 'CHECK 28a FAILED: setup row';
+  end if;
+  select * into v_r from public.respond_to_team_invite(
+    (select team_id from public.registrations where tournament_id = v_t and player_id = v_new), true);
+  if v_r.status <> 'account_not_acknowledged' then raise exception 'CHECK 28b FAILED: %', v_r.status; end if;
+  select * into v_r from public.acknowledge_my_account();
+  if v_r.status <> 'ok' then raise exception 'CHECK 28c FAILED: %', v_r.status; end if;
+  select * into v_r from public.acknowledge_my_account();
+  if v_r.status <> 'not_needed' then raise exception 'CHECK 28d FAILED: %', v_r.status; end if;
+  select * into v_r from public.respond_to_team_invite(
+    (select team_id from public.registrations where tournament_id = v_t and player_id = v_new), true);
+  if v_r.status <> 'accepted' then raise exception 'CHECK 28e FAILED: %', v_r.status; end if;
+  perform pg_temp.act(v_p[12], false);
+  if exists (select 1 from public.get_my_account_setup()) then
+    raise exception 'CHECK 28f FAILED: a member got a setup row';
+  end if;
+  raise notice 'CHECK 28 ok: account acknowledgement gates the invite answer';
 end $$;
 
 rollback;

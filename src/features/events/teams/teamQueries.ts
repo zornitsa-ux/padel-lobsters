@@ -10,6 +10,8 @@ import type {
   PromoteTeamStatus,
   RegisterTeamStatus,
   RespondInviteStatus,
+  AccountSetup,
+  AcknowledgeAccountStatus,
   TeamCancelReason,
   TeamInvite,
 } from './teamTypes'
@@ -35,6 +37,12 @@ const teamInviteRowSchema = z.object({
   captain_name: z.string(),
   team_status: z.enum(['registered', 'waitlist']),
   account_created_by_captain: z.boolean(),
+})
+
+const accountSetupRowSchema = z.object({
+  requested_by_name: z.string(),
+  tournament_name: z.string(),
+  acknowledged: z.boolean(),
 })
 
 const partnerInviteRowSchema = z.object({
@@ -206,6 +214,24 @@ export async function fetchMyTeamInvites(): Promise<TeamInvite[]> {
     .array(teamInviteRowSchema)
     .parse(data ?? [])
     .map(toTeamInvite)
+}
+
+export async function fetchMyAccountSetup(): Promise<AccountSetup | null> {
+  const { data, error } = await supabase.rpc('get_my_account_setup')
+  if (error) throw error
+  const row = z.array(accountSetupRowSchema).parse(data ?? [])[0]
+  if (!row) return null
+  return {
+    requestedByName: row.requested_by_name,
+    tournamentName: row.tournament_name,
+    acknowledged: row.acknowledged,
+  }
+}
+
+export async function acknowledgeMyAccount(): Promise<AcknowledgeAccountStatus> {
+  const { data, error } = await supabase.rpc('acknowledge_my_account')
+  if (error) throw error
+  return (firstRow(data)?.status ?? 'not_needed') as AcknowledgeAccountStatus
 }
 
 export async function fetchPartnerInvites({
