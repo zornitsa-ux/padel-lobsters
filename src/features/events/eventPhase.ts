@@ -16,7 +16,7 @@
    D-029 requires the results reveal to stay independent of everything else.
    ════════════════════════════════════════════════════════════════════════════ */
 
-import { localDateString } from '../../lib/tournamentDate'
+import { isEventDayReached, localDateString } from '../../lib/tournamentDate'
 import { isKingOfTheCourt } from './eventFormat'
 import type { OscarsPhase } from '../oscars/oscarsPhase'
 
@@ -113,8 +113,7 @@ function kingOfTheCourtPhase({
   tournament: PhaseTournament
   now: Date
 }): EventPhase {
-  const dayReached = !tournament.date || tournament.date <= localDateString(now)
-  if (dayReached) return 'sealed'
+  if (isEventDayReached({ date: tournament.date ?? '', now })) return 'sealed'
   return tournament.startingCourtsPublishedAt ? 'set' : 'open'
 }
 

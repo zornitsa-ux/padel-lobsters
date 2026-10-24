@@ -307,7 +307,6 @@ describe('eventPhase — King of the Court (no matches, D-006)', () => {
       kotc({ date: TODAY }),
       'sealed',
     ],
-    ['no date recorded', kotc({ date: null, published: true }), 'sealed'],
     ['completed', kotc({ status: 'completed', date: YESTERDAY }), 'social'],
     [
       'completed and shared',

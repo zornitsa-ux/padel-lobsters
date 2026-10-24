@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { localDateString, isTournamentPast } from './tournamentDate'
+import { localDateString, isTournamentPast, isEventDayReached } from './tournamentDate'
 
 describe('localDateString', () => {
   it('formats a known date correctly', () => {
@@ -49,5 +49,14 @@ describe('isTournamentPast', () => {
     expect(localDateString(lateNight)).toBe('2026-05-27')
     // So 2026-05-27 is still not past at 23:59
     expect(isTournamentPast('2026-05-27', lateNight)).toBe(false)
+  })
+})
+
+describe('isEventDayReached', () => {
+  const now = new Date(2026, 10, 15, 9) // Sun 15 Nov, local
+  it('is reached on the event day and after, not before', () => {
+    expect(isEventDayReached({ date: '2026-11-16', now })).toBe(false)
+    expect(isEventDayReached({ date: '2026-11-15', now })).toBe(true)
+    expect(isEventDayReached({ date: '2026-11-14', now })).toBe(true)
   })
 })
