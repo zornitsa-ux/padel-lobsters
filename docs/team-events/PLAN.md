@@ -89,7 +89,7 @@ apply passed (below). **Next: the R1 merge.**
 | `team-events-signup-ui`             | #60  | `team-events-event-form` | up to date                                    |
 | `team-events-payments`              | #59  | `team-events-schema`     | up to date                                    |
 | `team-events-kotc-domain`           | #57  | `main`                   | up to date                                    |
-| `fix/reset-cache-on-account-switch` | none | `main`                   | not pushed; needs its own PR (bug is on main) |
+| `fix/reset-cache-on-account-switch` | #61  | `main`                   | up to date (bug is on main)                   |
 
 The integration branch `kotc-test` is local only, in the worktree
 `../padel-lobsters-kotc-test`: `team-events-signup-ui` merged with `-payments`,
