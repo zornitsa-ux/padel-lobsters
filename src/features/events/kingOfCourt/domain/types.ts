@@ -31,7 +31,8 @@ export type StartingCourt = {
   courtIndex: number
   courtName: string
   teamIds: string[]
-  waiting: boolean
+  waitingTeamId: string | null
 }
 
-export type CourtResult = { first?: string; second?: string }
+// Empty form slots arrive as '' or null as well as undefined.
+export type CourtResult = { first?: string | null; second?: string | null }
