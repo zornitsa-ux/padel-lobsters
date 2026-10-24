@@ -68,6 +68,8 @@ const players = [
   player('p3', 'Dan'),
   player('p4', 'Eve'),
   player('p5', 'Finn'),
+  player('p6', 'Nico Lee'),
+  player('p7', 'Nico Stone'),
   player('ghost', 'Pia', 'placeholder'),
 ]
 
@@ -170,6 +172,16 @@ describe('team join card', () => {
 
     fireEvent.click(screen.getByRole('checkbox'))
     expect(submit.disabled).toBe(false)
+  })
+
+  it('shows players full names, so members who share a first name can be told apart', () => {
+    renderInfo()
+    fireEvent.click(screen.getByRole('button', { name: /sign up as a team/i }))
+    fireEvent.change(screen.getByLabelText('Search players'), { target: { value: 'nico' } })
+
+    const names = screen.getAllByRole('button', { pressed: false }).map((b) => b.textContent ?? '')
+    expect(names.some((n) => n.startsWith('Nico Lee'))).toBe(true)
+    expect(names.some((n) => n.startsWith('Nico Stone'))).toBe(true)
   })
 
   it('searches active members only, excluding placeholders, entered players and yourself', () => {
