@@ -13,6 +13,7 @@ import {
   seedUpdates,
 } from './kotcAdmin'
 import StartingCourtsList from './StartingCourtsList'
+import { courtLabel } from './kotcPlayer'
 import { useKingOfCourtActions, useKingOfCourtSeeding } from './useKingOfCourtAdmin'
 import type { CourtResult } from './domain'
 import type { NormalisedTournament } from '../../../lib/normalise'
@@ -145,6 +146,7 @@ function SeedsCard({
             overflowTeamIds={layout.overflowTeamIds}
             order={order}
             labelOf={labelOf}
+            overflowAction="Add a court or cancel a team."
           />
 
           <div className="flex gap-2 flex-wrap">
@@ -220,7 +222,7 @@ function FinalStandingsCard({ seeding, actions }: { seeding: Seeding; actions: A
       <ol className="space-y-3">
         {layout.courts.map((court, k) => (
           <li key={court.courtIndex} className="space-y-1">
-            <p className="text-xs font-bold text-lob-teal">{court.courtName || `Court ${k + 1}`}</p>
+            <p className="text-xs font-bold text-lob-teal">{courtLabel({ court })}</p>
             {(['first', 'second'] as const).map((slot) => (
               <label key={slot} className="flex items-center gap-2 text-xs text-lob-muted">
                 <span className="w-8">{slot === 'first' ? '1st' : '2nd'}</span>

@@ -18,6 +18,7 @@ import PlayerProfile from './PlayerProfile'
 import PlayerForm from './PlayerForm'
 import InviteSentModal from './InviteSentModal'
 import { corpReview } from './reviewScenarios'
+import { useTeamResultsByEvent } from '../events/kingOfCourt/useTeamResultsByEvent'
 import { levelBadgeClass } from './playerConstants'
 import { usePlayerEditor } from './usePlayerEditor'
 import { buildFirstNameCount, getDisplayName } from './playersSelectors'
@@ -82,6 +83,11 @@ export default function PlayerDetailPage({ playerId, onNavigate }: PlayerDetailP
   const { data: tournaments = [] } = useTournaments()
   const { data: matches = [] } = useAllMatches()
   const { data: registrations = [] } = useAllRegistrations()
+  const { byEvent: teamResults } = useTeamResultsByEvent({
+    tournaments,
+    registrations,
+    enabled: session != null,
+  })
   const editor = usePlayerEditor({ isAdmin })
   const [inviteSent, setInviteSent] = useState<InviteSent | null>(null)
   const [error, setError] = useState('')
@@ -126,7 +132,7 @@ export default function PlayerDetailPage({ playerId, onNavigate }: PlayerDetailP
   }
 
   const visibleError = error || editor.error
-  const review = corpReview(player, matches, registrations, tournaments)
+  const review = corpReview({ player, matches, registrations, tournaments, teamResults })
 
   return (
     <div className="-mx-4">

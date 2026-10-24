@@ -44,6 +44,9 @@ vi.mock('../../supabase', () => mockSupabase())
 vi.mock('./kingOfCourt/KingOfCourtAdmin', () => ({
   default: () => <div data-testid="kotc-admin" />,
 }))
+vi.mock('./kingOfCourt/KingOfCourtPlayerSchedule', () => ({
+  default: () => <div data-testid="kotc-player" />,
+}))
 
 import Schedule from './Schedule'
 import { TEAM_EVENT_NOTE } from './schedule/ScheduleGeneratorControls'
@@ -105,6 +108,15 @@ describe('Schedule — V2 routing without a rollout flag (D-028)', () => {
     expect(vi.mocked(useTournamentSync)).toHaveBeenLastCalledWith(
       expect.objectContaining({ enabled: false }),
     )
+  })
+
+  it('shows players the starting courts view on King of the Court', () => {
+    mockSession = { user: { app_metadata: { role: 'player' } } }
+    renderSchedule({ ...lobsterEvent, format: 'king_of_court', entryMode: 'team' })
+
+    expect(screen.getByTestId('kotc-player')).toBeTruthy()
+    expect(screen.queryByTestId('kotc-admin')).toBeNull()
+    expect(screen.queryByText('No schedule generated yet')).toBeNull()
   })
 
   it('keeps the generator off any other team event', () => {

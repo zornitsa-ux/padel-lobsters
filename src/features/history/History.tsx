@@ -7,11 +7,17 @@ import { useAllMatches } from '../events/useMatches'
 import { useAllRegistrations } from '../events/useRegistrations'
 import type { Player, NormalisedTournament } from '../../lib/normalise'
 import type { NormalisedMatch } from '../events/matchQueries'
+import type { ResultRow } from '../oscars/oscarsSchemas'
 import type { NormalisedRegistration } from '../events/registrationQueries'
 import { buildDisplayNames } from './displayNames'
 import { groupOscarResultsByCategory } from '../oscars/oscarResults'
 import { useOscarResultsFor } from '../oscars/useOscarResultsFor'
 import { resultsWithheld } from '../events/resultsPhase'
+import { isEventOver } from '../events/eventPhase'
+import { isKingOfTheCourt } from '../events/eventFormat'
+import { useTeamResultsByEvent } from '../events/kingOfCourt/useTeamResultsByEvent'
+import { teamResultLabel } from '../events/kingOfCourt/kotcPlayer'
+import { TeamStandings } from '../events/kingOfCourt/TeamRankingList'
 import { TabSwitcher } from '../../components/ui/TabSwitcher'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
 import { ProgressBar } from '../../components/ui/ProgressBar'
@@ -35,7 +41,7 @@ interface HistoryProps {
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function History({ onNavigate }: HistoryProps) {
-  const { isAdmin } = useApp()
+  const { isAdmin, session } = useApp()
   const { data: tournaments = [] } = useTournaments()
   const { data: players = [] } = usePlayers()
   const { data: allMatchesData = [] } = useAllMatches()
@@ -63,7 +69,7 @@ export default function History({ onNavigate }: HistoryProps) {
   const dynamicTournaments = useMemo(() => {
     return tournaments
       .filter((t) => {
-        if (t.status !== 'completed') return false
+        if (!isEventOver({ tournament: t })) return false
         const refDate = t.date || t.completedAt
         if (!refDate) return true
         return Date.now() - new Date(refDate).getTime() >= TWO_DAYS_MS
@@ -95,6 +101,11 @@ export default function History({ onNavigate }: HistoryProps) {
     [dynamicTournaments],
   )
   const { byTournamentId: oscarResultsById } = useOscarResultsFor(dynamicTournamentIds)
+  const teamResults = useTeamResultsByEvent({
+    tournaments: dynamicTournaments,
+    registrations: allRegsData,
+    enabled: session != null,
+  })
 
   return (
     <div className="space-y-4">
@@ -103,6 +114,9 @@ export default function History({ onNavigate }: HistoryProps) {
         const open = expandedId === `db-${t.id}`
         const tMatches = getTournamentMatches(t.id)
         const tRegs = getTournamentRegistrations(t.id).filter((r) => r.status === 'registered')
+        // King of the Court ranks teams; it has no matches to score (D-006).
+        const kotc = isKingOfTheCourt(t)
+        const teamCount = teamResults.byEvent.get(t.id)?.length ?? 0
 
         // Compute standings
         const stats: Record<string, DbStandingRow> = {}
@@ -205,7 +219,9 @@ export default function History({ onNavigate }: HistoryProps) {
                           year: 'numeric',
                         })
                       : '—'}
-                    {tRegs.length > 0 ? ` · ${tRegs.length} players` : ''}
+                    {kotc
+                      ? teamCount > 0 && ` · ${teamCount} teams`
+                      : tRegs.length > 0 && ` · ${tRegs.length} players`}
                   </p>
                 </div>
               </div>
@@ -246,6 +262,47 @@ export default function History({ onNavigate }: HistoryProps) {
                 // D-029: match scores stay visible (players already saw their own
                 // live), but the podium/final-ranking is embargoed until revealed.
                 const withheld = resultsWithheld({ tournament: t, isAdmin })
+                const resultsLink = (label: string) =>
+                  onNavigate && (
+                    <button
+                      onClick={() => onNavigate('scores', t)}
+                      className="w-full text-xs text-lob-teal font-semibold border border-lob-teal rounded-xl py-2 active:scale-95 transition-all"
+                    >
+                      {label}
+                    </button>
+                  )
+
+                // King of the Court ranks teams, has no matches (D-006) and no
+                // reveal: saved standings are public at once (D-026).
+                if (kotc) {
+                  return (
+                    <div className="mt-4 space-y-3">
+                      <TabSwitcher
+                        tabs={[
+                          { id: 'standings', label: 'Final Standings' },
+                          ...(hasGameResults ? [{ id: 'games', label: '🦞 Lobster Games' }] : []),
+                        ]}
+                        value={dbTab}
+                        onChange={(id) => setDbActiveTab((s) => ({ ...s, [t.id]: id as TabId }))}
+                      />
+                      {dbTab === 'standings' && (
+                        <TeamStandings
+                          signedIn={session != null}
+                          isPending={teamResults.isPending}
+                          rows={(teamResults.byEvent.get(t.id) ?? []).map((result) => ({
+                            teamId: result.teamId,
+                            label: teamResultLabel({ result, nameOf: dbDnId }),
+                            finalRank: result.finalRank,
+                          }))}
+                        />
+                      )}
+                      {dbTab === 'games' && hasGameResults && (
+                        <LobsterGamesPanel gameResults={gameResults} />
+                      )}
+                      {resultsLink('View event results →')}
+                    </div>
+                  )
+                }
 
                 return (
                   <div className="mt-4 space-y-3">
@@ -437,79 +494,69 @@ export default function History({ onNavigate }: HistoryProps) {
                     )}
 
                     {/* ── Lobster Games ── */}
-                    {dbTab === 'games' &&
-                      hasGameResults &&
-                      (() => {
-                        const cats = groupOscarResultsByCategory(gameResults)
-                        return (
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2 px-1">
-                              <Gamepad2 size={14} className="text-lob-teal" />
-                              <p className="text-xs font-bold text-lob-slate">🏆 Lobster Oscars</p>
-                              <span className="text-[10px] text-lob-muted-light ml-auto">
-                                {cats.length} categor{cats.length === 1 ? 'y' : 'ies'}
-                              </span>
-                            </div>
-                            {cats.map((cat) => (
-                              <div
-                                key={cat.id}
-                                className="bg-white rounded-xl p-3 space-y-1.5 border border-gray-100"
-                              >
-                                <p className="font-bold text-xs text-lob-slate">
-                                  <span className="mr-1">{cat.icon}</span>
-                                  {cat.name}
-                                </p>
-                                {cat.winners.length > 0 ? (
-                                  <p className="text-xs text-lob-slate">
-                                    🏆{' '}
-                                    <span className="font-bold">
-                                      {cat.winners.map((w) => w.target_name).join(', ')}
-                                    </span>{' '}
-                                    <span className="text-lob-muted-light">
-                                      ({cat.topVotes} vote{cat.topVotes !== 1 ? 's' : ''}
-                                      {cat.winners.length > 1 ? ' — tie' : ''})
-                                    </span>
-                                  </p>
-                                ) : (
-                                  <p className="text-[10px] text-lob-muted-light">No votes</p>
-                                )}
-                                <div className="space-y-0.5">
-                                  {cat.rows.map((r) => (
-                                    <div key={r.target_id} className="flex items-center gap-2">
-                                      <span className="text-[10px] w-16 truncate text-lob-slate">
-                                        {(r.target_name || '').split(' ')[0]}
-                                      </span>
-                                      <ProgressBar
-                                        value={(Number(r.votes_count) / cat.maxVotes) * 100}
-                                        size="md"
-                                        className="flex-1"
-                                      />
-                                      <span className="text-[10px] text-lob-muted w-3 text-right">
-                                        {Number(r.votes_count)}
-                                      </span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )
-                      })()}
-
-                    {onNavigate && (
-                      <button
-                        onClick={() => onNavigate('scores', t)}
-                        className="w-full text-xs text-lob-teal font-semibold border border-lob-teal rounded-xl py-2 active:scale-95 transition-all"
-                      >
-                        View full match scores →
-                      </button>
+                    {dbTab === 'games' && hasGameResults && (
+                      <LobsterGamesPanel gameResults={gameResults} />
                     )}
+
+                    {resultsLink('View full match scores →')}
                   </div>
                 )
               })()}
           </CollapsibleCard>
         )
       })}
+    </div>
+  )
+}
+
+function LobsterGamesPanel({ gameResults }: { gameResults: ResultRow[] }) {
+  const cats = groupOscarResultsByCategory(gameResults)
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2 px-1">
+        <Gamepad2 size={14} className="text-lob-teal" />
+        <p className="text-xs font-bold text-lob-slate">🏆 Lobster Oscars</p>
+        <span className="text-[10px] text-lob-muted-light ml-auto">
+          {cats.length} categor{cats.length === 1 ? 'y' : 'ies'}
+        </span>
+      </div>
+      {cats.map((cat) => (
+        <div key={cat.id} className="bg-white rounded-xl p-3 space-y-1.5 border border-gray-100">
+          <p className="font-bold text-xs text-lob-slate">
+            <span className="mr-1">{cat.icon}</span>
+            {cat.name}
+          </p>
+          {cat.winners.length > 0 ? (
+            <p className="text-xs text-lob-slate">
+              🏆{' '}
+              <span className="font-bold">{cat.winners.map((w) => w.target_name).join(', ')}</span>{' '}
+              <span className="text-lob-muted-light">
+                ({cat.topVotes} vote{cat.topVotes !== 1 ? 's' : ''}
+                {cat.winners.length > 1 ? ' — tie' : ''})
+              </span>
+            </p>
+          ) : (
+            <p className="text-[10px] text-lob-muted-light">No votes</p>
+          )}
+          <div className="space-y-0.5">
+            {cat.rows.map((r) => (
+              <div key={r.target_id} className="flex items-center gap-2">
+                <span className="text-[10px] w-16 truncate text-lob-slate">
+                  {(r.target_name || '').split(' ')[0]}
+                </span>
+                <ProgressBar
+                  value={(Number(r.votes_count) / cat.maxVotes) * 100}
+                  size="md"
+                  className="flex-1"
+                />
+                <span className="text-[10px] text-lob-muted w-3 text-right">
+                  {Number(r.votes_count)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
     </div>
   )
 }

@@ -6,7 +6,7 @@ import { useMatches } from './useMatches'
 import { usePlayers } from '../players/usePlayers'
 import { useEventPhase } from './useEventPhase'
 import { useTournamentSync } from './useTournamentSync'
-import { hasLiveScores } from './eventFormat'
+import { hasLiveScores, isKingOfTheCourt } from './eventFormat'
 import { resultsWithheld } from './resultsPhase'
 import { splitRegistrationsByStatus, computePaymentConfig } from './registration/utils'
 import { EmptyState } from '../../components/ui/EmptyState'
@@ -16,6 +16,8 @@ import PayPrompt from './registration/PayPrompt'
 import MyTeamRegistration from './registration/team/MyTeamRegistration'
 import { eligiblePlayers, findMyEntry } from './registration/team/teamHelpers'
 import { useTeamEntries } from './teams/useTeams'
+import { useMyKingOfCourt } from './kingOfCourt/useKingOfCourtTeams'
+import MyStartingCourtCard from './kingOfCourt/MyStartingCourtCard'
 import { buildMyTournamentView, myFinalPlacing } from './nextMatch'
 import type { EventPhase } from './eventPhase'
 import { isEventOver } from './eventPhase'
@@ -59,6 +61,13 @@ export default function MyTournament({ tournament, onNavigate }: Props) {
     enabled: teamEvent && claimedId != null,
   })
   const myEntry = findMyEntry({ entries, playerId: claimedId })
+  const kingOfCourt = isKingOfTheCourt(tournament)
+  const kotc = useMyKingOfCourt({
+    tournament,
+    registrations,
+    playerId: claimedId,
+    enabled: kingOfCourt && claimedId != null,
+  })
   const candidates = useMemo(
     () => eligiblePlayers({ players, regs: registrations, excludeIds: [claimedId] }),
     [players, registrations, claimedId],
@@ -76,7 +85,9 @@ export default function MyTournament({ tournament, onNavigate }: Props) {
   const { hasTikkie, costPerEntry } = useMemo(() => computePaymentConfig(tournament), [tournament])
   const isEventFull = registered.length >= (tournament.maxPlayers || 16)
 
+  // King of the Court's saved standings are public at once (D-026).
   const placing = useMemo(() => {
+    if (kingOfCourt) return kotc.placing
     if (withheld || !claimedId) return null
     return myFinalPlacing({
       tournamentId: tournament.id,
@@ -84,7 +95,7 @@ export default function MyTournament({ tournament, onNavigate }: Props) {
       playerId: claimedId,
       registeredPlayerIds: registered.map((r) => r.playerId),
     })
-  }, [withheld, claimedId, tournament.id, matches, registered])
+  }, [kingOfCourt, kotc.placing, withheld, claimedId, tournament.id, matches, registered])
 
   const [tikkieClicked, setTikkieClicked] = useState(false)
   const [declaring, setDeclaring] = useState(false)
@@ -186,7 +197,16 @@ export default function MyTournament({ tournament, onNavigate }: Props) {
     />
   )
 
-  const roundsSection = (
+  const roundsSection = kingOfCourt ? (
+    kotc.myTeamId && (
+      <MyStartingCourtCard
+        key="rounds"
+        shown={kotc.shown}
+        startingCourt={kotc.startingCourt}
+        onSeeAll={() => onNavigate('schedule', tournament)}
+      />
+    )
+  ) : (
     <MyRounds
       key="rounds"
       rounds={view.rounds}
@@ -195,8 +215,13 @@ export default function MyTournament({ tournament, onNavigate }: Props) {
     />
   )
 
-  const placingSection =
-    !withheld && placing ? <PlacingCard key="placing" placing={placing} /> : null
+  const placingSection = placing ? (
+    <PlacingCard
+      key="placing"
+      placing={placing}
+      label={kingOfCourt ? "Your team's final placing" : 'Your final placing this event'}
+    />
+  ) : null
 
   const sectionsByPhase: Record<EventPhase, ReactNode[]> = {
     open: [registrationSection],
@@ -367,14 +392,20 @@ function RegistrationCard({
 
 // ── Final placing (revealed phase only) ───────────────────────────────────────
 
-function PlacingCard({ placing }: { placing: { rank: number; total: number } }) {
+function PlacingCard({
+  placing,
+  label,
+}: {
+  placing: { rank: number; total: number }
+  label: string
+}) {
   return (
     <div className="card-elevated bg-gradient-to-r from-yellow-400 to-lob-coral text-white text-center space-y-1">
       <Trophy size={28} className="mx-auto" />
       <p className="text-2xl font-bold">
         #{placing.rank} <span className="text-base font-medium">of {placing.total}</span>
       </p>
-      <p className="text-sm opacity-90">Your final placing this event</p>
+      <p className="text-sm opacity-90">{label}</p>
     </div>
   )
 }

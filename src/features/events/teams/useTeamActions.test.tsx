@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { act } from '@testing-library/react'
 import { renderHookWithClient, makeTestQueryClient } from '../../../test/renderWithClient'
 import { playerKeys } from '../../players/playerKeys'
+import { teamKeys } from './teamKeys'
 import { registrationKeys } from '../registrationKeys'
 import type { PartnerChoice } from './teamTypes'
 import { useTeamActions } from './useTeams'
@@ -36,6 +37,9 @@ describe('useTeamActions invalidation', () => {
     const invalidate = await register({ kind: 'member', playerId: 'p2' })
 
     expect(invalidate).toHaveBeenCalledWith({ queryKey: registrationKeys.list('t1') })
+    // The all-events reads (History, Home) must refresh too.
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: registrationKeys.all(), exact: true })
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: teamKeys.allForEvents() })
     expect(invalidate).not.toHaveBeenCalledWith({ queryKey: playerKeys.all() })
   })
 

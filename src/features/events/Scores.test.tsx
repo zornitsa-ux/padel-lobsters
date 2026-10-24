@@ -27,6 +27,9 @@ vi.mock('./useRegistrations', () => ({ useRegistrations: () => ({ data: registra
 vi.mock('./useTournamentSync', () => ({ useTournamentSync: vi.fn() }))
 vi.mock('../oscars/useOscarResults', () => ({ useOscarResults: () => ({ data: oscarRows }) }))
 vi.mock('../raffle/useRaffle', () => ({ useRaffleWinners: () => ({ data: raffleWinners }) }))
+vi.mock('./kingOfCourt/KingOfCourtResults', () => ({
+  default: () => <div data-testid="kotc-results" />,
+}))
 
 const Scores = (await import('./Scores')).default
 
@@ -184,5 +187,15 @@ describe('Scores — each tab reveals on its own gate', () => {
 
     expect(raffleTab()).toBeNull()
     expect(screen.queryByText('Padel bag')).toBeNull()
+  })
+})
+
+describe('Scores — King of the Court', () => {
+  it('ranks teams with no Matches tab, whatever resultsSharedAt says', () => {
+    renderScores({ format: 'king_of_court', entryMode: 'team', status: 'upcoming' })
+
+    expect(screen.getByTestId('kotc-results')).toBeTruthy()
+    expect(tabNames()).not.toContain('📋 Matches')
+    expect(screen.queryByText(/pending/i)).toBeNull()
   })
 })

@@ -59,8 +59,9 @@
 | T8  | King of the Court domain (pure, tests first): `teamStrength`, `seedTeams`, `startingCourts`, `rankFromFinalCourts`                                                                                                       | 2     | T0          | #57      | [x]   |
 | T9  | Lifecycle: King of the Court phase (over by the clock, standings public once saved, D-026), run of show without Finish/Reveal, matcher guard                                                                             | 2     | T1          | #63      | [x]   |
 | T10 | Admin: seed reorder + Show starting court assignments (D-024); Final standings entry; court-removal warning (D-027)                                                                                                      | 2     | T8          | #64      | [x]   |
-| T11 | Player views: starting court on Schedule / You / upcoming card; Results ranking; History + recently-completed banner; Lobster Review rank                                                                                | 2     | T8, T9, T10 |          | [ ]   |
+| T11 | Player views: starting court on Schedule / You / upcoming card; Results ranking; History + recently-completed banner; Lobster Review rank                                                                                | 2     | T8, T9, T10 | #66      | [~]   |
 | T12 | Verify Phase 2 locally (16-team event end to end) → **R2**                                                                                                                                                               | 2     | T9–T11      |          | [ ]   |
+| T13 | Results: courts moved per team and a Biggest climber on Results, the recently-completed banner and History (D-028)                                                                                                       | 2     | T11         |          | [ ]   |
 
 States: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked.
 
@@ -72,10 +73,11 @@ States: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked.
   merge and push the RPC migration.
 - **R2** is client-only.
 
-### Resume here (2026-10-24 checkpoint: T9 + T10 merged)
+### Resume here (2026-10-24: T11 in review)
 
-**Where we are.** R1 is live. Phase 2 is half done: **T9 (#63) and T10 (#64)
-are merged** to `main` (client-only, no migration). The owner reshaped King of
+**Where we are.** R1 is live. **T9 (#63) and T10 (#64) are merged** to
+`main`, and **T11 (#66, player views) is in review** (all client-only, no
+migration). The owner reshaped King of
 the Court during review, recorded as **D-024 to D-027**; DESIGN §3.3–3.4 now
 describe what was built. In short:
 
@@ -92,14 +94,16 @@ describe what was built. In short:
 
 **Next, in order:**
 
-1. **T11: player views** (branch off `main`; task notes in §2). This is the
-   biggest remaining piece and gates R2 (live by Thu 12 Nov).
-2. **T12: local verification** (gate in §2), then **R2**: merge, Vercel
-   deploys. No migration.
-3. **T2: partner invites** (unchanged, D-023). It's sign-in-facing, so not
+1. **T11: merge #66** (task notes in §2). It gates R2 (live by Thu 12 Nov).
+2. **T13: courts moved + Biggest climber** (D-028; task notes in §2), after
+   #66 merges. Timing to confirm with the owner: before R2 if it fits,
+   otherwise straight after the event.
+3. **T12: local verification** (gate in §2): the first browser walk-through of
+   the player views. Then **R2**: merge, Vercel deploys. No migration.
+4. **T2: partner invites** (unchanged, D-023). It's sign-in-facing, so not
    from Thu 12 Nov until after the event on Sun 15 Nov.
 
-**Gap on `main` until T11 lands** (players only; R2 isn't released): once the
+**Gap on `main` until #66 merges** (players only; R2 isn't released): once the
 assignments are shown, or on the event day, players get the Schedule tab but
 see the empty Americano view; Results on a King of the Court event shows the
 Americano standings component; History and the recently-completed banner skip
@@ -114,8 +118,10 @@ nothing sign-in-facing ships from Thu 12 Nov.
 - **No stacked PRs.** Branch each task off `main`; if one task needs another,
   start it after that one merges. When `main` moves under an open PR, merge
   `origin/main` into the branch rather than rebasing, so a normal push is
-  enough. Update `PLAN.md` in a short docs PR after each merge, so feature PRs
-  don't conflict on it.
+  enough.
+- **Docs go in the same PR.** Each PR updates this file (status, resume
+  point, log) and DESIGN as it goes. A standalone checkpoint PR is fine now
+  and then, not the default.
 - **Formatting.** Run `npm run format:check` before pushing: commits made in a
   worktree can skip the pre-commit formatter, and CI fails on it.
   **Local database.** Production data from 2026-10-24 plus the R1 migration
@@ -128,9 +134,17 @@ nothing sign-in-facing ships from Thu 12 Nov.
 - **Code map (Phase 2).** Domain: `src/features/events/kingOfCourt/domain/`.
   Boundary parsing: `kingOfCourt/kotcInputs.ts`. Admin model and UI:
   `kotcAdmin.ts`, `useKingOfCourtAdmin.ts`, `KingOfCourtAdmin.tsx`,
-  `StartingCourtsList.tsx` (reusable for players). Lifecycle: `eventPhase.ts`
-  (`isEventOver`, `isEventUpcoming`, the King of the Court phase) and
-  `useEventPhase.ts`. Writes: `updateEventTeams` in `teams/teamQueries.ts`.
+  `StartingCourtsList.tsx`. Lifecycle: `eventPhase.ts` (`isEventOver`,
+  `isEventUpcoming`, the King of the Court phase) and `useEventPhase.ts`.
+  Writes: `updateEventTeams` in `teams/teamQueries.ts`.
+  **Player side (T11):** one read path, `useKingOfCourtTeams` (saved seeds →
+  `seedTeams` → `startingCourts`; the admin's `useKingOfCourtSeeding` is a
+  draft layer on top) and `useMyKingOfCourt` (viewer's team, starting court,
+  placing). Pure helpers in `kotcPlayer.ts`. Views: `KingOfCourtPlayerSchedule`,
+  `MyStartingCourtCard`, `MyKingOfCourtLine` (Home), `KingOfCourtResults`,
+  `TeamRankingList`. Multi-event surfaces (History, Home banner, Lobster
+  Review) use `useTeamResultsByEvent`, one `event_teams` query over the King
+  of the Court events only.
 
 **Still open (deliberately):**
 
@@ -148,6 +162,8 @@ nothing sign-in-facing ships from Thu 12 Nov.
   through active team entries, so it never shows; keep it that way in T11.
 - Signed-out viewers can't read `event_teams` (no anon grant), so they never
   see a King of the Court event as `revealed`; their default tab stays Info.
+  History asks them to sign in for those standings, and Lobster Review and
+  the Home banner skip team results for them.
 
 ---
 
@@ -213,8 +229,18 @@ nothing admin-only, so reuse or split it rather than repeating it.
 - **History and the recently-completed banner** (Home): switch to
   `isEventOver` and show the team ranking for King of the Court. Both rank by
   match scores today, so they skip these events.
-- **Lobster Review** (`Players.tsx` per-event ranks): the team's `final_rank`;
-  events without one are left out.
+- **Lobster Review** (per-event ranks in `community/reviewScenarios.ts`,
+  `corpReview`, called from `PlayerDetailPage` and `AdminTools`): the team's
+  `final_rank` out of the registered teams; events without one are left out.
+
+**T13 (courts moved, D-028).** A pure domain function over the saved order,
+the courts and the final ranks (starting court from `startingCourts`, final
+court ⌈rank / 2⌉, tie-break on the lower start), tested first next to the
+other King of the Court domain code. Results shows the journey on each ranked
+row in `TeamRankingList`. Results, the recently-completed banner and History
+name the Biggest climber. The multi-event surfaces need each event's seeds and
+courts, which `teamResultsByEvent` doesn't carry yet. No places-against-seed
+figure.
 
 **T12 gate.** Local event with 16 teams (some with new partners who have never
 signed in):
@@ -228,6 +254,8 @@ signed in):
 - the event passing its scheduled end: Home's next event moves on, and the run
   of show offers only Oscars and the raffle (no Finish)
 - partial final standings: public at once on Results, You and Lobster Review
+- courts moved and the Biggest climber match the starting courts players were
+  shown (if T13 is in)
 
 ---
 
@@ -380,3 +408,38 @@ placeholders as partners, was withdrawn by D-010: placeholders aren't offered.)
   `typecheck` clean). On the local DB, rolled back: an admin can write `seed`,
   `final_rank` and the show timestamp; a player's write touches 0 rows. No
   browser walk-through yet (T12).
+
+- 2026-10-24: **T11** player views (#66). Players read the same saved order
+  as the admin through one hook (`useKingOfCourtTeams`). Schedule shows the
+  starting courts with the viewer's team highlighted once they're shown. You
+  and Home's next-event card show "You start on {court}", then the team's
+  placing once standings are saved. Results shows the team ranking, with no
+  Matches tab and no reveal gate. History and the recently-completed banner
+  use `isEventOver` and show the team ranking and winning team. In Lobster
+  Review, a player's rank is their team's `final_rank`. A `/code-review`
+  pass, and fixes:
+  - Signed-out viewers get a sign-in prompt on Schedule, Results and History
+    instead of empty courts or "no standings recorded".
+  - While teams load, nothing claims that no standings exist, and the King of
+    the Court banner waits.
+  - Team mutations (register, cancel, promote, partner swap, accept) also
+    refresh the all-events registrations and teams queries, so History, Home
+    and Lobster Review don't keep stale teams.
+  - History counts teams from the team results, not registered rows ÷ 2, and
+    branches once for King of the Court. Lobster Games moved into its own
+    component.
+  - `corpReview` takes named arguments; Home memoises the next event's
+    registrations.
+  - Not changed: on the You tab, team entries are built twice (once for the
+    registration card, once for the King of the Court hook) over one cached
+    query. It's about 20 rows, and merging the two would tie the general team
+    card to King of the Court.
+
+  Checks: `typecheck` clean, 2135 tests passed, `format:check` clean, no new
+  lint warnings. Still to do: the browser walk-through (T12).
+
+- 2026-10-24: **D-028:** the owner asked how to report King of the Court
+  results fairly, since a low-starting team often can't reach the King court.
+  Decision: show courts moved for each team and a Biggest climber, both from
+  the saved seeds and final ranks. Places beaten against seed was rejected.
+  Logged as T13.

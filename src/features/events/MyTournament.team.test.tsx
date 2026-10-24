@@ -11,6 +11,7 @@ const m = vi.hoisted(() => ({
   registrations: [] as unknown[],
   teams: [] as unknown[],
   respondToTeamInvite: vi.fn(),
+  phase: 'open',
 }))
 
 vi.mock('../../context/useApp', async () => {
@@ -31,7 +32,7 @@ vi.mock('./useRegistrations', () => ({
   useRegistrationActions: () => ({ updateRegistration: vi.fn(), registerPlayer: vi.fn() }),
 }))
 vi.mock('./useEventPhase', () => ({
-  useEventPhase: () => ({ phase: 'open', oscarsPhase: 'not_created' }),
+  useEventPhase: () => ({ phase: m.phase, oscarsPhase: 'not_created' }),
 }))
 vi.mock('./useTournamentSync', () => ({ useTournamentSync: vi.fn() }))
 vi.mock('../../lib/confirmBus', () => ({ useConfirm: () => vi.fn() }))
@@ -82,13 +83,15 @@ const teamRows = ({ partnerAccepted }: { partnerAccepted: boolean }) => [
 ]
 
 const onNavigate = vi.fn()
-const renderPage = () => render(<MyTournament tournament={tournament} onNavigate={onNavigate} />)
+const renderPage = (extra: Partial<NormalisedTournament> = {}) =>
+  render(<MyTournament tournament={{ ...tournament, ...extra }} onNavigate={onNavigate} />)
 
 beforeEach(() => {
   vi.clearAllMocks()
   m.session = { user: { id: 'p1', app_metadata: { role: 'player' } } }
   m.registrations = []
   m.teams = []
+  m.phase = 'open'
 })
 afterEach(cleanup)
 
@@ -119,5 +122,43 @@ describe('MyTournament on a team event', () => {
     expect(screen.getByText(/has entered you as their partner/i)).not.toBeNull()
     expect(screen.getByRole('button', { name: 'Accept' })).not.toBeNull()
     expect(screen.queryByText(/pay to lock your spot/i)).toBeNull()
+  })
+})
+
+describe('MyTournament on King of the Court', () => {
+  const shown = {
+    courts: [{ name: 'Centre', booked: true }],
+    startingCourtsPublishedAt: '2026-11-15T10:00:00Z',
+  } as Partial<NormalisedTournament>
+
+  beforeEach(() => {
+    m.registrations = teamRows({ partnerAccepted: true })
+  })
+
+  it('holds the starting court back until it is shown', () => {
+    m.teams = [team]
+    m.phase = 'live'
+    renderPage({ courts: shown.courts })
+
+    expect(screen.getByText('Starting courts are shown before the start.')).toBeTruthy()
+  })
+
+  it("shows the team's starting court once shown", () => {
+    m.teams = [team]
+    m.phase = 'set'
+    renderPage(shown)
+
+    expect(screen.getByText('You wait for the first game on Centre')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'All courts ›' }))
+    expect(onNavigate).toHaveBeenCalledWith('schedule', expect.objectContaining({ id: 't1' }))
+  })
+
+  it("shows the team's placing once standings are saved, without a reveal", () => {
+    m.teams = [{ ...team, finalRank: 1 }]
+    m.phase = 'revealed'
+    renderPage(shown)
+
+    expect(screen.getByText("Your team's final placing")).toBeTruthy()
+    expect(screen.getByText('#1')).toBeTruthy()
   })
 })

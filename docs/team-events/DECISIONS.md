@@ -461,3 +461,33 @@ courts (D-017), and the capacity trigger only checks rows moving into
 `registered`, so cancelling a team still works on an over-full event.
 
 **Impact:** #64 (event form warning, `teamsWithoutCourt`, `countRegisteredTeams`).
+
+## D-028 — Results show courts moved and a Biggest climber (2026-10-24)
+
+**Decision:** King of the Court results report each team's journey alongside
+the final ranking, which stays the official result.
+
+- **Courts moved** for each ranked team: its starting court, its final court,
+  and the difference ("Court 5 → King court ↑4", "↓1", "=", and "held" for a
+  team that started and finished on the King court). The starting court comes
+  from `startingCourts` over the saved seeds, the same layout players were
+  shown, so a waiting team counts from the bottom court it waited at. The
+  final court is court ⌈`final_rank` / 2⌉. A team with no final rank, or with
+  no starting court (D-027), shows no movement.
+- **Biggest climber:** the team with the most courts gained. On a tie, the
+  team that started lower wins; if still tied, all of them are named. There
+  is no award when nobody gained a court. It appears on Results, the
+  recently-completed banner and History.
+- **Not included:** places beaten against seed, share of the possible climb,
+  and per-round wins.
+
+**Why:** Owner, as a player: the interesting part of a King of the Court result
+is who moved most. A team starting low often can't reach the King court in
+the rounds available, so the ranking alone undersells it. Both numbers come
+from data already saved (`seed`, `final_rank`), with no round tracking (D-006)
+and no admin step.
+
+**Impact:** Client-only, no migration: T13. Reads through active team entries
+like the rest of T11. Seeds stay editable after the event, so a reorder after
+play changes the reported starting courts; the console already says players
+see each saved change.

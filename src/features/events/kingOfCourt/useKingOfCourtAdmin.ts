@@ -1,49 +1,26 @@
 import { useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { usePlayers } from '../../players/usePlayers'
 import { useRegistrations } from '../useRegistrations'
 import { useUpdateTournament } from '../useTournaments'
-import { useTeamEntries } from '../teams/useTeams'
 import { teamKeys } from '../teams/teamKeys'
 import { updateEventTeams, type EventTeamPatch } from '../teams/teamQueries'
 import { errorMessage } from '../../../lib/errors'
-import { seedTeams, startingCourts } from './domain'
-import { toCourts, toKotcTeam, toPlayersById } from './kotcInputs'
+import { startingCourts } from './domain'
 import { reconcileOrder } from './kotcAdmin'
-import { teamLabel } from '../registration/team/teamHelpers'
+import { useKingOfCourtTeams } from './useKingOfCourtTeams'
 import type { NormalisedTournament } from '../../../lib/normalise'
 
-// Only registered teams are seeded; the waitlist joins if promoted.
+// The admin's draft order over the saved one.
 export function useKingOfCourtSeeding({ tournament }: { tournament: NormalisedTournament }) {
   const { data: registrations = [] } = useRegistrations(tournament.id)
-  const { data: players = [] } = usePlayers()
-  const { entries } = useTeamEntries({ tournamentId: tournament.id, registrations })
+  const { labelOf, strengthById, teams, saved, courts } = useKingOfCourtTeams({
+    tournament,
+    registrations,
+  })
   const [draft, setDraft] = useState<string[] | null>(null)
 
-  const registered = useMemo(() => entries.filter((e) => e.status === 'registered'), [entries])
-  const teams = useMemo(() => registered.map((entry) => toKotcTeam({ entry })), [registered])
-  const playersById = useMemo(() => toPlayersById({ players }), [players])
-  const seeded = useMemo(() => seedTeams({ teams, playersById }), [teams, playersById])
-  const courts = useMemo(() => toCourts({ courts: tournament.courts }), [tournament.courts])
-
-  const saved = useMemo(() => seeded.map((t) => t.teamId), [seeded])
-  const strengthById = useMemo(() => new Map(seeded.map((t) => [t.teamId, t])), [seeded])
   const order = useMemo(() => reconcileOrder({ draft, saved }), [draft, saved])
   const layout = useMemo(() => startingCourts({ seededTeamIds: order, courts }), [order, courts])
-
-  const labelOf = useMemo(() => {
-    const entryById = new Map(registered.map((e) => [e.team.id, e]))
-    const playerById = new Map(players.map((p) => [p.id, p]))
-    return (teamId: string) => {
-      const entry = entryById.get(teamId)
-      if (!entry) return ''
-      return teamLabel({
-        entry,
-        getPlayer: (id) => (id ? playerById.get(id) : undefined),
-        displayName: (p) => (p.name || '').trim(),
-      })
-    }
-  }, [registered, players])
 
   return {
     labelOf,
@@ -79,7 +56,11 @@ export function useKingOfCourtActions({ tournamentId }: { tournamentId: string }
       setError(errorMessage(err, FAILURE[kind]))
       return false
     } finally {
-      await qc.invalidateQueries({ queryKey: teamKeys.list(tournamentId) })
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: teamKeys.list(tournamentId) }),
+        // History, Home and Lobster Review read this event's teams too.
+        qc.invalidateQueries({ queryKey: teamKeys.allForEvents() }),
+      ])
       setBusy(null)
     }
   }

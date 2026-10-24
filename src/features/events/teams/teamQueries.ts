@@ -111,6 +111,15 @@ export const partnerArgs = (choice: PartnerChoice) =>
         input_partner_consent: choice.consent,
       }
 
+const EVENT_TEAM_COLUMNS =
+  'id, tournament_id, captain_id, seed, final_rank, created_at, cancelled_at, cancelled_reason'
+
+const parseEventTeams = (data: unknown): EventTeam[] =>
+  z
+    .array(eventTeamRowSchema)
+    .parse(data ?? [])
+    .map(toEventTeam)
+
 export async function fetchEventTeams({
   tournamentId,
 }: {
@@ -118,15 +127,23 @@ export async function fetchEventTeams({
 }): Promise<EventTeam[]> {
   const { data, error } = await supabase
     .from('event_teams')
-    .select(
-      'id, tournament_id, captain_id, seed, final_rank, created_at, cancelled_at, cancelled_reason',
-    )
+    .select(EVENT_TEAM_COLUMNS)
     .eq('tournament_id', tournamentId)
   if (error) throw error
-  return z
-    .array(eventTeamRowSchema)
-    .parse(data ?? [])
-    .map(toEventTeam)
+  return parseEventTeams(data)
+}
+
+export async function fetchTeamsForEvents({
+  tournamentIds,
+}: {
+  tournamentIds: string[]
+}): Promise<EventTeam[]> {
+  const { data, error } = await supabase
+    .from('event_teams')
+    .select(EVENT_TEAM_COLUMNS)
+    .in('tournament_id', tournamentIds)
+  if (error) throw error
+  return parseEventTeams(data)
 }
 
 export type EventTeamPatch = { id: string; seed?: number | null; finalRank?: number | null }
