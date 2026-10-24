@@ -95,10 +95,12 @@ export default function Registration({
   const transfersClosed = isTransferWindowClosed(tournament)
   const claimedId = session?.user?.id ?? null
 
-  // Show first name for players, full name for admins
+  // First names for players, full names for admins. Team events show full names
+  // to everyone: picking a partner among people who share a first name.
+  const fullNames = isAdmin || tournament?.entryMode === 'team'
   const displayName = useCallback<DisplayName>(
-    (p) => (isAdmin ? p.name : (p.name || '').split(' ')[0]),
-    [isAdmin],
+    (p) => (fullNames ? (p.name || '').trim() : (p.name || '').split(' ')[0]),
+    [fullNames],
   )
 
   const [search, setSearch] = useState('')
