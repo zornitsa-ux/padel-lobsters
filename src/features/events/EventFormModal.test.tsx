@@ -4,7 +4,7 @@ import { describe, it, expect, afterEach } from 'vitest'
 import { render, screen, cleanup, fireEvent } from '@testing-library/react'
 import EventFormModal from './EventFormModal'
 import { emptyForm, type EventFormValues } from './eventConstants'
-import { buildEventData, hasSignups, isEntryModeLocked } from './eventFormModel'
+import { buildEventData, hasSignups, isEntryModeLocked, isFormatLocked } from './eventFormModel'
 
 const noop = () => {}
 
@@ -165,6 +165,20 @@ describe('EventFormModal — format lock', () => {
       true,
     )
     expect(hasSignups({ registrations: [{ status: 'registered' }] })).toBe(true)
+  })
+
+  it('keeps the format locked while registrations load, and after a server lock', () => {
+    const base = {
+      editing: true,
+      serverLocked: false,
+      registrationsPending: false,
+      registrations: [],
+    }
+    expect(isFormatLocked(base)).toBe(false)
+    expect(isFormatLocked({ ...base, registrationsPending: true })).toBe(true)
+    expect(isFormatLocked({ ...base, serverLocked: true })).toBe(true)
+    expect(isFormatLocked({ ...base, registrations: [{ status: 'registered' }] })).toBe(true)
+    expect(isFormatLocked({ ...base, editing: false, registrationsPending: true })).toBe(false)
   })
 
   it('recognises the entry_mode_locked database error', () => {
