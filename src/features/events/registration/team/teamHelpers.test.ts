@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  notSignedInHint,
   EMPTY_DRAFT,
   choiceToDraft,
   draftToChoice,
@@ -33,5 +34,14 @@ describe('choiceToDraft', () => {
   it('starts empty for a member or no choice', () => {
     expect(choiceToDraft({ choice: { kind: 'member', playerId: 'p1' } })).toEqual(EMPTY_DRAFT)
     expect(choiceToDraft({ choice: null })).toEqual(EMPTY_DRAFT)
+  })
+})
+
+describe('notSignedInHint', () => {
+  it('names whoever has not signed in', () => {
+    expect(notSignedInHint({ captainUnseen: false, partnerUnseen: false })).toBeNull()
+    expect(notSignedInHint({ captainUnseen: false, partnerUnseen: true })).toMatch(/^Partner/)
+    expect(notSignedInHint({ captainUnseen: true, partnerUnseen: false })).toMatch(/^Captain/)
+    expect(notSignedInHint({ captainUnseen: true, partnerUnseen: true })).toMatch(/^Neither/)
   })
 })

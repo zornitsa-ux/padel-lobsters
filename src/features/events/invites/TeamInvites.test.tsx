@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, cleanup, fireEvent, waitFor } from '@testing-library/react'
-import { MemoryRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { Link, MemoryRouter, Routes, Route, useLocation } from 'react-router-dom'
 
 const m = vi.hoisted(() => ({
   respondToTeamInvite: vi.fn(),
@@ -121,6 +121,13 @@ describe('acceptance screen', () => {
     expect(screen.getByTestId('where').textContent).toBe('/home')
     expect(m.respondToTeamInvite).not.toHaveBeenCalled()
   })
+
+  it('asks a signed-out visitor to sign in', () => {
+    m.session = null
+    renderPage()
+
+    expect(screen.getByText('Sign in to see your team invites')).not.toBeNull()
+  })
 })
 
 describe('invite redirect', () => {
@@ -151,6 +158,40 @@ describe('invite redirect', () => {
     m.session = null
     renderApp()
     expect(screen.getByTestId('where').textContent).toBe('/home')
+  })
+
+  it('returns to the interrupted page on Not now', () => {
+    render(
+      <MemoryRouter initialEntries={['/events/t9/info?tab=list']}>
+        <TeamInviteRedirect />
+        <Routes>
+          <Route path="/team-invites" element={<TeamInvitesPage />} />
+          <Route path="*" element={<Where />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Not now' }))
+
+    expect(screen.getByTestId('where').textContent).toBe('/events/t9/info')
+  })
+
+  it('still redirects another player who signs in on the same tab', () => {
+    render(
+      <MemoryRouter initialEntries={['/home']}>
+        <TeamInviteRedirect />
+        <Where />
+        <Link to="/home">home</Link>
+      </MemoryRouter>,
+    )
+    expect(screen.getByTestId('where').textContent).toBe('/team-invites')
+
+    fireEvent.click(screen.getByRole('link', { name: 'home' }))
+    expect(screen.getByTestId('where').textContent).toBe('/home')
+
+    m.session = { user: { id: 'someone-else' } }
+    fireEvent.click(screen.getByRole('link', { name: 'home' }))
+    expect(screen.getByTestId('where').textContent).toBe('/team-invites')
   })
 
   it('cannot loop when sessionStorage is unavailable', () => {

@@ -221,5 +221,18 @@ export const findMyEntry = ({
       null)
     : null
 
+export const notSignedInHint = ({
+  captainUnseen,
+  partnerUnseen,
+}: {
+  captainUnseen: boolean
+  partnerUnseen: boolean
+}): string | null => {
+  if (captainUnseen && partnerUnseen) return 'Neither player has signed in yet'
+  if (captainUnseen) return "Captain hasn't signed in yet"
+  if (partnerUnseen) return "Partner hasn't signed in yet"
+  return null
+}
+
 export const declineMessage = ({ captainName }: { captainName: string }) =>
   `If you're not playing, ${captainName}'s team is cancelled. We keep spots for complete teams, so the spots go to the next team on the waitlist.`

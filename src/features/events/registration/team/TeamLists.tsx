@@ -10,7 +10,7 @@ import { useEventTeams, usePartnerInvites, useTeamActions } from '../../teams/us
 import type { NormalisedTournament } from '../../tournamentQueries'
 import type { DisplayName, GetPlayer } from '../utils'
 import TeamRow from './TeamRow'
-import { eligiblePlayers, partnerNameOf, teamLabel } from './teamHelpers'
+import { eligiblePlayers, notSignedInHint, partnerNameOf, teamLabel } from './teamHelpers'
 
 interface TeamListsProps {
   tournament: NormalisedTournament
@@ -72,7 +72,10 @@ export default function TeamLists({
       tournamentId={tournamentId}
       candidates={candidates}
       displayName={displayName}
-      neverSignedIn={unseen.has(entry.partner.playerId) || unseen.has(entry.captain.playerId)}
+      notSignedInHint={notSignedInHint({
+        captainUnseen: unseen.has(entry.captain.playerId),
+        partnerUnseen: unseen.has(entry.partner.playerId),
+      })}
       onCancel={() => void cancel(entry)}
       onConfirm={
         entry.status === 'waitlist'

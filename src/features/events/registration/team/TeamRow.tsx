@@ -14,7 +14,7 @@ interface TeamRowProps {
   tournamentId: string
   candidates: Player[]
   displayName: (player: Player) => string
-  neverSignedIn: boolean
+  notSignedInHint: string | null
   onCancel: () => void
   onConfirm?: () => void
 }
@@ -27,7 +27,7 @@ export default function TeamRow({
   tournamentId,
   candidates,
   displayName,
-  neverSignedIn,
+  notSignedInHint,
   onCancel,
   onConfirm,
 }: TeamRowProps) {
@@ -42,9 +42,7 @@ export default function TeamRow({
           <p className={`text-xs ${entry.confirmed ? 'text-green-700' : 'text-amber-700'}`}>
             {entry.confirmed ? 'Confirmed' : `Waiting for ${partnerName} to accept`}
           </p>
-          {neverSignedIn && (
-            <p className="text-xs text-amber-700">Partner hasn&apos;t signed in yet</p>
-          )}
+          {notSignedInHint && <p className="text-xs text-amber-700">{notSignedInHint}</p>}
         </div>
         <PaymentStatusBadge paymentStatus={entry.captain.paymentStatus} />
         {onConfirm && (

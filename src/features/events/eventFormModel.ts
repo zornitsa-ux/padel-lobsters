@@ -67,6 +67,15 @@ export function isFormatLocked({
   return serverLocked || registrationsPending || hasSignups({ registrations })
 }
 
+// After an entry_mode_locked refusal: the saved format, so the next Save works.
+export const withSavedFormat = ({
+  form,
+  tournament,
+}: {
+  form: EventFormValues
+  tournament: { format: string }
+}): EventFormValues => ({ ...form, ...formatOption({ format: tournament.format }) })
+
 export function isEntryModeLocked(err: unknown): boolean {
   const message = typeof err === 'object' && err !== null && 'message' in err ? err.message : ''
   return String(message).includes('entry_mode_locked')
