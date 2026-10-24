@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useCallback } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useToast } from '../../../lib/toastBus'
+import type { NormalisedRegistration } from '../../../lib/normalise'
 import { registrationKeys } from '../registrationKeys'
 import { registrationMessage } from '../registrationStatusMessages'
 import * as q from './teamQueries'
@@ -11,7 +12,8 @@ import {
   PROMOTE_TEAM_MESSAGES,
   RESPOND_INVITE_MESSAGES,
 } from './teamStatusMessages'
-import type { PartnerChoice } from './teamTypes'
+import { buildTeamEntries, missingTeamIds } from './teamEntries'
+import type { EventTeam, PartnerChoice } from './teamTypes'
 
 export function useEventTeams({
   tournamentId,
@@ -25,6 +27,45 @@ export function useEventTeams({
     queryFn: () => q.fetchEventTeams({ tournamentId: tournamentId! }),
     enabled: enabled && !!tournamentId,
   })
+}
+
+const NO_TEAMS: EventTeam[] = []
+
+// Teams and registrations are separate queries, so a team that signed up after
+// the last teams fetch can reach the registrations first. Refetch the teams
+// once for it instead of dropping the team. Once per missing set, so a viewer
+// who can't read teams never loops.
+export function useTeamEntries({
+  tournamentId,
+  registrations,
+  enabled = true,
+}: {
+  tournamentId: string | null | undefined
+  registrations: NormalisedRegistration[]
+  enabled?: boolean
+}) {
+  const query = useEventTeams({ tournamentId, enabled })
+  const teams = query.data ?? NO_TEAMS
+  const entries = useMemo(() => buildTeamEntries({ teams, registrations }), [teams, registrations])
+  const missing = useMemo(
+    () => missingTeamIds({ teams, registrations }).join(','),
+    [teams, registrations],
+  )
+  const refetchedFor = useRef('')
+  const { isSuccess, isFetching, refetch } = query
+
+  useEffect(() => {
+    if (!missing || !isSuccess || isFetching || refetchedFor.current === missing) return
+    refetchedFor.current = missing
+    void refetch()
+  }, [missing, isSuccess, isFetching, refetch])
+
+  return {
+    teams,
+    entries,
+    isPending: query.isPending,
+    isError: query.isError,
+  }
 }
 
 // Admin only: the RPC rejects anyone else.

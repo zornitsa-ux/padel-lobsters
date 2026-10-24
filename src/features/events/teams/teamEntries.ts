@@ -16,6 +16,21 @@ const toEntry = (team: EventTeam, rows: NormalisedRegistration[]): TeamEntry | n
   }
 }
 
+// Teams that active registrations point at but the team list doesn't hold yet.
+export function missingTeamIds({
+  teams,
+  registrations,
+}: {
+  teams: EventTeam[]
+  registrations: NormalisedRegistration[]
+}): string[] {
+  const known = new Set(teams.map((t) => t.id))
+  const missing = registrations
+    .filter((r) => r.teamId && isActive(r) && !known.has(r.teamId))
+    .map((r) => r.teamId as string)
+  return [...new Set(missing)].sort()
+}
+
 // Active teams only, in the order the waitlist promotes (oldest first).
 export function buildTeamEntries({
   teams,

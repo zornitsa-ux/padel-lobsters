@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { normaliseRegistrations } from '../../../lib/normalise'
-import { buildTeamEntries } from './teamEntries'
+import { buildTeamEntries, missingTeamIds } from './teamEntries'
 import type { EventTeam } from './teamTypes'
 
 const team = (id: string, captainId: string, createdAt: string): EventTeam => ({
@@ -78,5 +78,22 @@ describe('buildTeamEntries', () => {
       ],
     })
     expect(entries.map((e) => e.confirmed)).toEqual([false, true])
+  })
+})
+
+describe('missingTeamIds', () => {
+  it('lists active rows whose team is not loaded yet, once each', () => {
+    expect(
+      missingTeamIds({
+        teams: [team('t1', 'p1', '2026-10-22T09:00:00Z')],
+        registrations: [
+          reg('r1', 'p1', 'registered', 't1'),
+          reg('r3', 'p3', 'waitlist', 't3'),
+          reg('r4', 'p4', 'waitlist', 't3'),
+          reg('r5', 'p5', 'cancelled', 't5'),
+          reg('r6', 'p6', 'registered', null),
+        ],
+      }),
+    ).toEqual(['t3'])
   })
 })
