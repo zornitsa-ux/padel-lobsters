@@ -9,7 +9,7 @@ import type { NormalisedTournament } from '../../lib/normalise'
 
 // Mocked at the api boundary (not at useOscarsSessionRow / useOscarResults) so
 // the real query hooks run and the assertions below exercise the cache keys
-// those reads share with Scores, History and the registration results banner.
+// those reads share with Scores, Past results and the registration results banner.
 vi.mock('../../api/oscars', () => ({
   loadSession: vi.fn(),
   loadCategories: vi.fn(),

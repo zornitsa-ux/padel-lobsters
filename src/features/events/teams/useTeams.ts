@@ -150,7 +150,7 @@ export function useTeamActions() {
       Promise.all([
         qc.invalidateQueries({ queryKey: registrationKeys.list(tournamentId) }),
         qc.invalidateQueries({ queryKey: teamKeys.list(tournamentId) }),
-        // The all-events reads (History, Home, Lobster Review) hold this event too.
+        // The all-events reads (Past results, Home, Lobster Review) hold this event too.
         qc.invalidateQueries({ queryKey: registrationKeys.all(), exact: true }),
         qc.invalidateQueries({ queryKey: teamKeys.allForEvents() }),
         qc.invalidateQueries({ queryKey: teamKeys.allInvites() }),

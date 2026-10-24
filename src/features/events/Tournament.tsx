@@ -4,13 +4,12 @@ import { useTournaments, useUpdateTournament, useDeleteTournament } from './useT
 import { useTransfers } from './useTransfers'
 import { useEventForm } from './useEventForm'
 import { Plus, Trophy, Clock } from 'lucide-react'
-import HistoryContent from '../history/History'
+import PastEventResults from '../pastEvents/PastEventResults'
 import AdminTransferPanel from '../../components/AdminTransferPanel'
 import { DEFAULT_EVENT_DESCRIPTION } from './eventConstants'
-import { parseLocalDate } from './eventHelpers'
 import EventFormModal from './EventFormModal'
 import UpcomingEventCard from './UpcomingEventCard'
-import { EventCard } from './EventCard'
+import { AwaitingResultsCard } from './AwaitingResultsCard'
 import { LeagueDashboardCard } from '../league/ui/LeagueDashboardCard'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { CollapsibleSection } from '../../components/ui/CollapsibleSection'
@@ -19,7 +18,7 @@ import { errorMessage, errorCode, FOREIGN_KEY_VIOLATION } from '../../lib/errors
 import { useConfirm } from '../../lib/confirmBus'
 import type { EventNavigate } from './eventHelpers'
 import type { NormalisedTournament } from '../../lib/normalise'
-import { isEventOver } from './eventPhase'
+import { groupEventsByTime } from './eventPhase'
 import type { TournamentInput } from './tournamentQueries'
 
 export { DEFAULT_EVENT_DESCRIPTION }
@@ -39,35 +38,13 @@ export default function Tournament({ onNavigate }: { onNavigate: EventNavigate }
   const claimedId = session?.user?.id ?? null
 
   const eventForm = useEventForm()
-  const [showHistory, setShowHistory] = useState(true)
+  const [showPast, setShowPast] = useState(true)
   const [error, setError] = useState('')
   // Admin pending-transfer panel — open for one tournament at a time.
   const [adminTransferTournament, setAdminTransferTournament] =
     useState<NormalisedTournament | null>(null)
 
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  // Once a completed event is >= 2 days past its date, the embedded
-  // <HistoryContent /> renders it as a podium card, so don't also list it
-  // here as a past-event card — that's what produced the duplicate render.
-  const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000
-  const isInHistory = (t: NormalisedTournament) => {
-    if (t.status !== 'completed') return false
-    const ref = t.date || t.completedAt
-    if (!ref) return true
-    return Date.now() - new Date(ref).getTime() >= TWO_DAYS_MS
-  }
-  const past = tournaments.filter((t) => {
-    if (isInHistory(t)) return false
-    if (isEventOver({ tournament: t })) return true
-    const d = parseLocalDate(t.date)
-    return d !== null && d < today
-  })
-  const upcoming = tournaments.filter((t) => {
-    if (isEventOver({ tournament: t })) return false
-    const d = parseLocalDate(t.date)
-    return d === null || d >= today
-  })
+  const { upcoming, awaitingResults, finished } = groupEventsByTime({ tournaments })
 
   const openAdd = () => {
     if (!isAdmin) {
@@ -182,21 +159,20 @@ export default function Tournament({ onNavigate }: { onNavigate: EventNavigate }
           ))}
         </div>
 
-        {/* Past events + History — collapsible */}
+        {/* Past: events awaiting results, then results cards — collapsible */}
         <CollapsibleSection
           title="Past"
           icon={<Clock size={13} className="text-lob-muted opacity-60" />}
-          expanded={showHistory}
-          onToggle={() => setShowHistory((h) => !h)}
+          expanded={showPast}
+          onToggle={() => setShowPast((h) => !h)}
         >
           <div className="space-y-2">
-            {past.map((t) => (
-              <EventCard key={t.id} tournament={t} past />
+            {awaitingResults.map((t) => (
+              <AwaitingResultsCard key={t.id} tournament={t} />
             ))}
 
-            {/* Legacy History Records */}
             <div className="mt-4">
-              <HistoryContent onNavigate={onNavigate} />
+              <PastEventResults tournaments={finished} onNavigate={onNavigate} />
             </div>
           </div>
         </CollapsibleSection>

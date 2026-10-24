@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useCallback } from 'react'
 import { Gamepad2, Trophy } from 'lucide-react'
 import { useApp } from '../../context/useApp'
-import { useTournaments } from '../events/useTournaments'
+import { parseLocalDate } from '../events/eventHelpers'
 import { usePlayers } from '../players/usePlayers'
 import { useAllMatches } from '../events/useMatches'
 import { useAllRegistrations } from '../events/useRegistrations'
@@ -13,7 +13,6 @@ import { buildDisplayNames } from './displayNames'
 import { groupOscarResultsByCategory } from '../oscars/oscarResults'
 import { useOscarResultsFor } from '../oscars/useOscarResultsFor'
 import { resultsWithheld } from '../events/resultsPhase'
-import { isEventOver } from '../events/eventPhase'
 import { isKingOfTheCourt } from '../events/eventFormat'
 import { useTeamResultsByEvent } from '../events/kingOfCourt/useTeamResultsByEvent'
 import { teamResultLabel } from '../events/kingOfCourt/kotcPlayer'
@@ -36,14 +35,15 @@ interface DbStandingRow {
   pts: number
 }
 
-interface HistoryProps {
+interface PastEventResultsProps {
+  /** Finished events only (`groupEventsByTime`). */
+  tournaments: NormalisedTournament[]
   onNavigate?: (view: string, tournament: NormalisedTournament) => void
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
-export default function History({ onNavigate }: HistoryProps) {
+export default function PastEventResults({ tournaments, onNavigate }: PastEventResultsProps) {
   const { isAdmin, session } = useApp()
-  const { data: tournaments = [] } = useTournaments()
   const { data: players = [] } = usePlayers()
   const { data: allMatchesData = [] } = useAllMatches()
   const { data: allRegsData = [] } = useAllRegistrations()
@@ -64,19 +64,13 @@ export default function History({ onNavigate }: HistoryProps) {
   const getDbTab = (id: string): TabId => dbActiveTab[id] || 'standings'
   const getDbRound = (id: string): number => dbActiveRound[id] ?? 0
 
-  const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000
-
-  // Completed tournaments from DB older than 2 days after tournament date
-  const dynamicTournaments = useMemo(() => {
-    return tournaments
-      .filter((t) => {
-        if (!isEventOver({ tournament: t })) return false
-        const refDate = t.date || t.completedAt
-        if (!refDate) return true
-        return Date.now() - new Date(refDate).getTime() >= TWO_DAYS_MS
-      })
-      .sort((a, b) => ((b.date || b.completedAt || '') > (a.date || a.completedAt || '') ? 1 : -1))
-  }, [tournaments])
+  const dynamicTournaments = useMemo(
+    () =>
+      [...tournaments].sort((a, b) =>
+        (b.date || b.completedAt || '').localeCompare(a.date || a.completedAt || ''),
+      ),
+    [tournaments],
+  )
 
   // Global first-name disambiguation map across the entire player base.
   // "Gonzalo" stays "Gonzalo" if unique; "Gonzalo U" / "Gonzalo E" if not.
@@ -127,7 +121,7 @@ export default function History({ onNavigate }: HistoryProps) {
         })
         tMatches.forEach((m) => {
           // Both scores required: a half-scored match is incomplete. Matches
-          // computeRankings in events/registration/utils.ts so History and the
+          // computeRankings in events/registration/utils.ts so Past and the
           // event page cannot disagree about the same tournament.
           if (!m.completed || m.score1 == null || m.score2 == null) return
           const s1 = m.score1,
@@ -214,7 +208,7 @@ export default function History({ onNavigate }: HistoryProps) {
                   </p>
                   <p className="text-xs text-lob-muted">
                     {t.date
-                      ? new Date(t.date).toLocaleDateString('en-GB', {
+                      ? parseLocalDate(t.date)?.toLocaleDateString('en-GB', {
                           day: 'numeric',
                           month: 'long',
                           year: 'numeric',

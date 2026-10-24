@@ -37,7 +37,7 @@ describe('useTeamActions invalidation', () => {
     const invalidate = await register({ kind: 'member', playerId: 'p2' })
 
     expect(invalidate).toHaveBeenCalledWith({ queryKey: registrationKeys.list('t1') })
-    // The all-events reads (History, Home) must refresh too.
+    // The all-events reads (Past results, Home) must refresh too.
     expect(invalidate).toHaveBeenCalledWith({ queryKey: registrationKeys.all(), exact: true })
     expect(invalidate).toHaveBeenCalledWith({ queryKey: teamKeys.allForEvents() })
     expect(invalidate).not.toHaveBeenCalledWith({ queryKey: playerKeys.all() })

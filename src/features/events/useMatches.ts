@@ -18,7 +18,7 @@ export function useMatches(tournamentId: string | null | undefined) {
 }
 
 // All matches across every tournament. Genuinely all-time consumers only —
-// History, career stats, the community player pages. It is the single largest
+// Past results, career stats, the community player pages. It is the single largest
 // read in the app (~110KB), so anything that just needs "what happened lately"
 // wants useRecentMatches instead.
 export function useAllMatches() {

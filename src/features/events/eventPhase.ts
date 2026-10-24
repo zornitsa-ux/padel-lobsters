@@ -16,7 +16,7 @@
    D-029 requires the results reveal to stay independent of everything else.
    ════════════════════════════════════════════════════════════════════════════ */
 
-import { isEventDayReached, localDateString } from '../../lib/tournamentDate'
+import { isEventDayReached, isTournamentPast, localDateString } from '../../lib/tournamentDate'
 import { isKingOfTheCourt } from './eventFormat'
 import { tournamentStartMs } from '../../lib/tournamentStart'
 import { DEFAULT_EVENT_DURATION_MINUTES } from '../../lib/normalise'
@@ -153,6 +153,43 @@ export function isEventOver({
   const start = tournamentStartMs(tournament)
   const minutes = tournament.duration ?? DEFAULT_EVENT_DURATION_MINUTES
   return start != null && now.getTime() >= start + minutes * 60_000
+}
+
+/**
+ * Where the Events page lists an event: `finished` events get a results card
+ * under Past; `awaitingResults` (an Americano past its date, before Finish)
+ * get a plain card under Past; the rest are upcoming. King of the Court is
+ * never awaiting results: it's upcoming until its scheduled end, even past
+ * midnight.
+ */
+export type EventTimeGroup = 'upcoming' | 'awaitingResults' | 'finished'
+
+export function eventTimeGroup({
+  tournament,
+  now = new Date(),
+}: {
+  tournament: OverTournament
+  now?: Date
+}): EventTimeGroup {
+  if (isEventOver({ tournament, now })) return 'finished'
+  if (isKingOfTheCourt(tournament)) return 'upcoming'
+  return isTournamentPast(tournament.date, now) ? 'awaitingResults' : 'upcoming'
+}
+
+export function groupEventsByTime<T extends OverTournament>({
+  tournaments,
+  now = new Date(),
+}: {
+  tournaments: T[]
+  now?: Date
+}): Record<EventTimeGroup, T[]> {
+  const tagged = tournaments.map((t) => ({ t, group: eventTimeGroup({ tournament: t, now }) }))
+  const pick = (group: EventTimeGroup) => tagged.filter((x) => x.group === group).map((x) => x.t)
+  return {
+    upcoming: pick('upcoming'),
+    awaitingResults: pick('awaitingResults'),
+    finished: pick('finished'),
+  }
 }
 
 /** Scheduled and not over yet: what Home and the admin tools call "next". */

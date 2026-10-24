@@ -11,6 +11,8 @@ import {
   isRunOfShowVisible,
   isEventOver,
   isEventUpcoming,
+  eventTimeGroup,
+  groupEventsByTime,
   raffleWinnersWithheld,
   EVENT_PHASES,
 } from './eventPhase'
@@ -382,6 +384,55 @@ describe('isEventOver', () => {
     const americano = event({ format: 'lobster_matching', date: YESTERDAY })
     expect(isEventOver({ tournament: americano, now: NOW })).toBe(false)
     expect(isEventOver({ tournament: { ...americano, status: 'completed' }, now: NOW })).toBe(true)
+  })
+})
+
+describe('eventTimeGroup', () => {
+  const event = (over: Record<string, unknown> = {}) => ({
+    status: 'upcoming',
+    format: 'lobster_matching',
+    date: YESTERDAY,
+    time: '10:00',
+    duration: 120,
+    ...over,
+  })
+
+  it('puts an over event straight into finished, with no waiting period', () => {
+    const kotc = event({ format: 'king_of_court', date: TODAY, time: '08:00', duration: 60 })
+    expect(eventTimeGroup({ tournament: kotc, now: new Date(2026, 6, 29, 9) })).toBe('finished')
+    const americano = event({ status: 'completed', date: TODAY })
+    expect(eventTimeGroup({ tournament: americano, now: NOW })).toBe('finished')
+  })
+
+  it('holds an Americano past its date until Finish as awaiting results', () => {
+    expect(eventTimeGroup({ tournament: event(), now: NOW })).toBe('awaitingResults')
+  })
+
+  it('keeps King of the Court upcoming until its end, even past midnight', () => {
+    const late = event({ format: 'king_of_court', date: YESTERDAY, time: '23:00', duration: 120 })
+    expect(eventTimeGroup({ tournament: late, now: new Date(2026, 6, 29, 0, 30) })).toBe('upcoming')
+    expect(eventTimeGroup({ tournament: late, now: new Date(2026, 6, 29, 1, 0) })).toBe('finished')
+  })
+
+  it('keeps an event on its day, before it is over, upcoming', () => {
+    expect(eventTimeGroup({ tournament: event({ date: TODAY }), now: NOW })).toBe('upcoming')
+    expect(eventTimeGroup({ tournament: event({ date: TOMORROW }), now: NOW })).toBe('upcoming')
+  })
+})
+
+describe('groupEventsByTime', () => {
+  it('puts every event in exactly one group, keeping the input order', () => {
+    const base = { status: 'upcoming', format: 'lobster_matching', time: '10:00', duration: 120 }
+    const tournaments = [
+      { ...base, id: 'next', date: TOMORROW },
+      { ...base, id: 'pending', date: YESTERDAY },
+      { ...base, id: 'done', date: YESTERDAY, status: 'completed' },
+      { ...base, id: 'today', date: TODAY },
+    ]
+    const groups = groupEventsByTime({ tournaments, now: NOW })
+    expect(groups.upcoming.map((t) => t.id)).toEqual(['next', 'today'])
+    expect(groups.awaitingResults.map((t) => t.id)).toEqual(['pending'])
+    expect(groups.finished.map((t) => t.id)).toEqual(['done'])
   })
 })
 

@@ -12,7 +12,6 @@ const m = vi.hoisted(() => ({
 vi.mock('../../context/useApp', () => ({
   useApp: () => ({ isAdmin: false, session: m.session }),
 }))
-vi.mock('../events/useTournaments', () => ({ useTournaments: () => ({ data: tournaments }) }))
 vi.mock('../players/usePlayers', () => ({ usePlayers: () => ({ data: players }) }))
 vi.mock('../events/useMatches', () => ({ useAllMatches: () => ({ data: [] }) }))
 vi.mock('../events/useRegistrations', () => ({
@@ -25,7 +24,7 @@ vi.mock('../events/kingOfCourt/useTeamResultsByEvent', () => ({
   useTeamResultsByEvent: () => ({ byEvent: m.teamResults, isPending: m.pending }),
 }))
 
-const { default: History } = await import('./History')
+const { default: PastEventResults } = await import('./PastEventResults')
 
 const players = [
   { id: 'p1', name: 'Ada Lovelace' },
@@ -57,7 +56,7 @@ const registrations = ['p1', 'p2', 'p3', 'p4'].map((playerId) =>
 )
 
 const open = () => {
-  render(<History onNavigate={vi.fn()} />)
+  render(<PastEventResults tournaments={tournaments as never} onNavigate={vi.fn()} />)
   fireEvent.click(screen.getByText('King Sunday'))
 }
 
@@ -77,7 +76,7 @@ beforeEach(() => {
 
 afterEach(cleanup)
 
-describe('History on King of the Court', () => {
+describe('PastEventResults on King of the Court', () => {
   it('lists the event once over and ranks its teams, with no reveal gate', () => {
     open()
 
