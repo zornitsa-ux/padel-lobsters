@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { splitCountdown, tournamentStartMs } from './useCountdown'
+import { splitCountdown } from './useCountdown'
+import { tournamentStartMs } from '../../lib/tournamentStart'
 
 const localMs = (y: number, mo: number, d: number, h: number, m: number) =>
   new Date(y, mo - 1, d, h, m, 0, 0).getTime()

@@ -15,9 +15,14 @@
    derive "this event has one" from — a raffle has no state at all until it is
    drawn. Counting them meant an event that was genuinely closed out sat at
    "6 of 7 done" forever, reading as an unfinished checklist.
+
+   King of the Court has no matches, no ratings and no Finish or Reveal (D-006,
+   D-009, D-026): it is over by the clock and its standings are public once
+   saved, so only the Oscars and raffle steps remain, all optional.
    ════════════════════════════════════════════════════════════════════════════ */
 
 import { allMatchesScored, isMatchScored } from './eventPhase'
+import { isKingOfTheCourt } from './eventFormat'
 import type { PhaseMatch } from './eventPhase'
 import type { OscarsPhase } from '../oscars/oscarsPhase'
 
@@ -52,6 +57,7 @@ export type RunOfShowInput = {
     status: string
     resultsSharedAt: string | null
     rafflePublishedAt?: string | null
+    format?: string | null
   }
   matches: readonly PhaseMatch[]
   oscarsPhase: OscarsPhase
@@ -84,6 +90,7 @@ export function runOfShowSteps({
   const isCompleted = tournament.status === 'completed'
   const isRevealed = Boolean(tournament.resultsSharedAt)
   const isRafflePublished = Boolean(tournament.rafflePublishedAt)
+  const kotc = isKingOfTheCourt(tournament)
 
   const finishState: RunOfShowStepState = isCompleted ? 'done' : allScored ? 'available' : 'locked'
   const flagsState: RunOfShowStepState =
@@ -116,7 +123,7 @@ export function runOfShowSteps({
       ? 'available'
       : 'locked'
 
-  return [
+  const steps: RunOfShowStep[] = [
     {
       id: 'enter_scores',
       title: 'Enter scores',
@@ -222,7 +229,15 @@ export function runOfShowSteps({
       optional: true,
     },
   ]
+  return kotc ? steps.filter((s) => !AMERICANO_ONLY_STEPS.includes(s.id)) : steps
 }
+
+const AMERICANO_ONLY_STEPS: readonly RunOfShowStepId[] = [
+  'enter_scores',
+  'finish',
+  'resolve_flags',
+  'reveal',
+]
 
 /** Convenience for the collapsed summary line. */
 export function runOfShowProgress(steps: readonly RunOfShowStep[]): {

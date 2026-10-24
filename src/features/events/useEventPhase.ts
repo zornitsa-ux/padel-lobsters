@@ -1,9 +1,11 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useMatches } from './useMatches'
 import { useOscarsSessionRow } from '../oscars/useOscarsSessionRow'
 import { derivePhase, toPhaseSession } from '../oscars/oscarsPhase'
 import { eventPhase } from './eventPhase'
-import type { EventPhase } from './eventPhase'
+import { isKingOfTheCourt } from './eventFormat'
+import { useEventTeams } from './teams/useTeams'
+import type { EventPhase, PhaseTournament } from './eventPhase'
 import type { OscarsPhase } from '../oscars/oscarsPhase'
 
 /**
@@ -22,20 +24,29 @@ import type { OscarsPhase } from '../oscars/oscarsPhase'
  * must wait, because a pending matches query reads as zero matches, and zero
  * matches is indistinguishable from phase `open`.
  */
-export function useEventPhase(
-  tournament: {
-    id: string
-    status: string
-    date?: string | null
-    resultsSharedAt: string | null
-  } | null,
-): { phase: EventPhase; oscarsPhase: OscarsPhase; isPending: boolean } {
+export function useEventPhase(tournament: (PhaseTournament & { id: string }) | null): {
+  phase: EventPhase
+  oscarsPhase: OscarsPhase
+  isPending: boolean
+} {
   const { data: matches = [], isPending: matchesPending } = useMatches(tournament?.id)
   const { data: oscarsSession } = useOscarsSessionRow(tournament?.id)
+  // King of the Court's standings are public as soon as they're saved (D-026).
+  const kotc = tournament != null && isKingOfTheCourt(tournament)
+  const { data: teams, isPending: teamsPending } = useEventTeams({
+    tournamentId: tournament?.id,
+    enabled: kotc,
+  })
+  const hasFinalStandings = Boolean(teams?.some((t) => t.finalRank != null && !t.cancelledAt))
+
+  const now = useMinuteClock({ enabled: kotc })
 
   const phase = useMemo(
-    () => (tournament ? eventPhase({ tournament, matches }) : 'open'),
-    [tournament, matches],
+    () =>
+      tournament
+        ? eventPhase({ tournament, matches, hasFinalStandings, now: kotc ? now : new Date() })
+        : 'open',
+    [tournament, matches, hasFinalStandings, kotc, now],
   )
 
   // react-query's `undefined` while loading is exactly derivePhase's loading
@@ -44,5 +55,21 @@ export function useEventPhase(
 
   // No tournament means there is nothing in flight to wait for — react-query
   // reports a disabled query as pending forever.
-  return { phase, oscarsPhase, isPending: tournament != null && matchesPending }
+  return {
+    phase,
+    oscarsPhase,
+    isPending: tournament != null && (matchesPending || (kotc && teamsPending)),
+  }
+}
+
+// King of the Court's phase turns on the clock (the event day, the scheduled
+// end), not on data, so an open page re-derives it every minute.
+function useMinuteClock({ enabled }: { enabled: boolean }): Date {
+  const [now, setNow] = useState(() => new Date())
+  useEffect(() => {
+    if (!enabled) return
+    const id = setInterval(() => setNow(new Date()), 60_000)
+    return () => clearInterval(id)
+  }, [enabled])
+  return now
 }

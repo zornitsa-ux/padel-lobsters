@@ -337,6 +337,31 @@ describe('draw_raffle and publish_raffle', () => {
   })
 })
 
+describe('King of the Court (D-006, D-009, D-026)', () => {
+  const KOTC: Partial<RunOfShowInput> = {
+    tournament: {
+      status: 'upcoming',
+      resultsSharedAt: null,
+      rafflePublishedAt: null,
+      format: 'king_of_court',
+    },
+    matches: [],
+  }
+
+  it('keeps only the Oscars and raffle steps: no scores, Finish or Reveal', () => {
+    expect(build(KOTC).map((s) => s.id)).toEqual([
+      'open_voting',
+      'close_voting',
+      'draw_raffle',
+      'publish_raffle',
+    ])
+  })
+
+  it('has nothing required, so nothing to count', () => {
+    expect(runOfShowProgress(build(KOTC))).toEqual({ done: 0, total: 0, allDone: true })
+  })
+})
+
 describe('runOfShowProgress', () => {
   it('counts only required steps', () => {
     const steps = build({

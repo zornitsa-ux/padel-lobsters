@@ -25,6 +25,7 @@ import { PageHeader } from '../../components/ui/PageHeader'
 import { LinkCard, LinkCardIcon } from '../../components/ui/LinkCard'
 import AuthReadinessPanel from './AuthReadinessPanel'
 import type { EventNavigate } from '../events/eventHelpers'
+import { isEventUpcoming } from '../events/eventPhase'
 
 type AdminToolsProps = {
   onNavigate?: EventNavigate
@@ -54,7 +55,7 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
 
   const unpaidForNextEvent = useMemo(() => {
     const next = tournaments
-      .filter((t) => t.status === 'upcoming' || t.status === 'active')
+      .filter((t) => isEventUpcoming({ tournament: t }))
       .sort((a, b) => ((a.date || '') < (b.date || '') ? -1 : 1))[0]
     if (!next) return 0
     return allRegs.filter(

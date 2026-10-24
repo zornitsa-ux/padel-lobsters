@@ -9,6 +9,8 @@ import {
   isOscarsTabVisible,
   defaultEventTab,
   isRunOfShowVisible,
+  isEventOver,
+  isEventUpcoming,
   raffleWinnersWithheld,
   EVENT_PHASES,
 } from './eventPhase'
@@ -278,6 +280,111 @@ describe('eventPhase', () => {
   })
 })
 
+describe('eventPhase — King of the Court (D-006, D-026)', () => {
+  // NOW is 2026-07-29 00:00 local; a 10:00 start with 120 minutes ends at 12:00.
+  const kotc = ({
+    date = TOMORROW,
+    status = 'upcoming',
+    shown = false,
+  }: {
+    date?: string
+    status?: string
+    shown?: boolean
+  }) => ({
+    format: 'king_of_court',
+    status,
+    date,
+    time: '10:00',
+    duration: 120,
+    resultsSharedAt: null,
+    startingCourtsPublishedAt: shown ? SHARED : null,
+  })
+  const at = (hour: number) => new Date(2026, 6, 29, hour)
+  const phase = (
+    tournament: ReturnType<typeof kotc>,
+    { now = NOW, hasFinalStandings = false } = {},
+  ) => eventPhase({ tournament, matches: [], hasFinalStandings, now })
+
+  it('is open before the assignments are shown, set once they are', () => {
+    expect(phase(kotc({}))).toBe('open')
+    expect(phase(kotc({ shown: true }))).toBe('set')
+  })
+
+  it('is live on the event day until the scheduled end, shown or not', () => {
+    expect(phase(kotc({ date: TODAY, shown: true }), { now: at(11) })).toBe('live')
+    expect(phase(kotc({ date: TODAY }), { now: at(9) })).toBe('live')
+  })
+
+  it('is social once the scheduled end has passed, with nobody finishing it', () => {
+    expect(phase(kotc({ date: TODAY, shown: true }), { now: at(12) })).toBe('social')
+    expect(phase(kotc({ date: YESTERDAY, shown: true }))).toBe('social')
+  })
+
+  it('is revealed as soon as final standings are saved, during the event or after', () => {
+    expect(phase(kotc({ date: TODAY }), { now: at(11), hasFinalStandings: true })).toBe('revealed')
+    expect(phase(kotc({ date: YESTERDAY }), { hasFinalStandings: true })).toBe('revealed')
+  })
+
+  it('ignores standings before the event day', () => {
+    expect(phase(kotc({ shown: true }), { hasFinalStandings: true })).toBe('set')
+  })
+
+  it('ignores a legacy completed status and reveal: standings decide', () => {
+    const legacy = { ...kotc({ date: YESTERDAY, status: 'completed' }), resultsSharedAt: SHARED }
+    expect(eventPhase({ tournament: legacy, matches: [], now: NOW })).toBe('social')
+  })
+
+  it('leaves Americano on the match cascade', () => {
+    const tournament = { ...kotc({ shown: true }), format: 'lobster_matching' }
+    expect(phase(tournament)).toBe('open')
+  })
+})
+
+describe('isEventUpcoming', () => {
+  const event = (over: Record<string, unknown> = {}) => ({
+    status: 'upcoming',
+    format: 'king_of_court',
+    date: TODAY,
+    time: '10:00',
+    duration: 120,
+    ...over,
+  })
+
+  it('is a scheduled event that is not over yet', () => {
+    expect(isEventUpcoming({ tournament: event(), now: new Date(2026, 6, 29, 11) })).toBe(true)
+    expect(isEventUpcoming({ tournament: event(), now: new Date(2026, 6, 29, 12) })).toBe(false)
+    expect(isEventUpcoming({ tournament: event({ status: 'completed' }), now: NOW })).toBe(false)
+  })
+})
+
+describe('isEventOver', () => {
+  const event = (over: Record<string, unknown> = {}) => ({
+    status: 'upcoming',
+    format: 'king_of_court',
+    date: TODAY,
+    time: '10:00',
+    duration: 120,
+    ...over,
+  })
+
+  it('ends King of the Court at start + duration', () => {
+    expect(isEventOver({ tournament: event(), now: new Date(2026, 6, 29, 11, 59) })).toBe(false)
+    expect(isEventOver({ tournament: event(), now: new Date(2026, 6, 29, 12, 0) })).toBe(true)
+  })
+
+  it('defaults to 90 minutes when no duration is stored', () => {
+    const tournament = event({ duration: null })
+    expect(isEventOver({ tournament, now: new Date(2026, 6, 29, 11, 29) })).toBe(false)
+    expect(isEventOver({ tournament, now: new Date(2026, 6, 29, 11, 30) })).toBe(true)
+  })
+
+  it('leaves Americano to the Finish step, however late it is', () => {
+    const americano = event({ format: 'lobster_matching', date: YESTERDAY })
+    expect(isEventOver({ tournament: americano, now: NOW })).toBe(false)
+    expect(isEventOver({ tournament: { ...americano, status: 'completed' }, now: NOW })).toBe(true)
+  })
+})
+
 describe('isPhaseAtLeast', () => {
   it('is true at the floor and above it', () => {
     expect(isPhaseAtLeast('sealed', 'sealed')).toBe(true)
@@ -523,6 +630,14 @@ describe('isRunOfShowVisible', () => {
   it('is never shown to players', () => {
     for (const phase of EVENT_PHASES) {
       expect(isRunOfShowVisible({ phase, isAdmin: false })).toBe(false)
+    }
+  })
+
+  it('appears on the King of the Court event day for its Oscars and raffle', () => {
+    const format = 'king_of_court'
+    expect(isRunOfShowVisible({ phase: 'set', isAdmin: true, format })).toBe(false)
+    for (const phase of ['live', 'social', 'revealed'] as EventPhase[]) {
+      expect(isRunOfShowVisible({ phase, isAdmin: true, format })).toBe(true)
     }
   })
 })

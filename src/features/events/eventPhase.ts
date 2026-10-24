@@ -16,16 +16,24 @@
    D-029 requires the results reveal to stay independent of everything else.
    ════════════════════════════════════════════════════════════════════════════ */
 
-import { localDateString } from '../../lib/tournamentDate'
+import { isEventDayReached, localDateString } from '../../lib/tournamentDate'
+import { isKingOfTheCourt } from './eventFormat'
+import { tournamentStartMs } from '../../lib/tournamentStart'
+import { DEFAULT_EVENT_DURATION_MINUTES } from '../../lib/normalise'
 import type { OscarsPhase } from '../oscars/oscarsPhase'
 
 /**
  *   open     → no schedule yet; registration is the whole story
- *   set      → schedule saved, event day not here yet
+ *   set      → schedule saved (King of the Court: starting courts shown), event
+ *              day not here yet
  *   live     → event under way, matches still unscored
  *   sealed   → every match scored, tournament not completed
  *   social   → completed, final ranking still withheld from players
  *   revealed → `resultsSharedAt` set; standings and winners are public
+ *
+ * King of the Court has no matches, no Finish and no Reveal (D-026): it is
+ * `live` on the event day, `social` once its scheduled end has passed, and
+ * `revealed` as soon as final standings are saved.
  */
 export type EventPhase = 'open' | 'set' | 'live' | 'sealed' | 'social' | 'revealed'
 
@@ -55,6 +63,10 @@ export type PhaseTournament = {
   status: string
   date?: string | null
   resultsSharedAt: string | null
+  format?: string | null
+  startingCourtsPublishedAt?: string | null
+  time?: string | null
+  duration?: number | null
 }
 
 /**
@@ -82,12 +94,18 @@ export function allMatchesScored(matches: readonly PhaseMatch[]): boolean {
 export function eventPhase({
   tournament,
   matches,
+  hasFinalStandings = false,
   now = new Date(),
 }: {
   tournament: PhaseTournament
   matches: readonly PhaseMatch[]
+  /** King of the Court only: some active team has a final rank. */
+  hasFinalStandings?: boolean
   now?: Date
 }): EventPhase {
+  if (isKingOfTheCourt(tournament)) {
+    return kingOfTheCourtPhase({ tournament, hasFinalStandings, now })
+  }
   if (tournament.status === 'completed') {
     return tournament.resultsSharedAt ? 'revealed' : 'social'
   }
@@ -95,6 +113,58 @@ export function eventPhase({
   if (allMatchesScored(matches)) return 'sealed'
   if (tournament.date && tournament.date > localDateString(now)) return 'set'
   return 'live'
+}
+
+function kingOfTheCourtPhase({
+  tournament,
+  hasFinalStandings,
+  now,
+}: {
+  tournament: PhaseTournament
+  hasFinalStandings: boolean
+  now: Date
+}): EventPhase {
+  const dayReached = isEventDayReached({ date: tournament.date ?? '', now })
+  if (dayReached && hasFinalStandings) return 'revealed'
+  if (isEventOver({ tournament, now })) return 'social'
+  if (dayReached) return 'live'
+  return tournament.startingCourtsPublishedAt ? 'set' : 'open'
+}
+
+export type OverTournament = Pick<
+  PhaseTournament,
+  'status' | 'format' | 'date' | 'time' | 'duration'
+>
+
+/**
+ * Whether the event is over. Americano is over when the admin finishes it
+ * (that applies the ratings). Nobody finishes King of the Court, so it is over
+ * once its scheduled end (start + duration) has passed (D-026).
+ */
+export function isEventOver({
+  tournament,
+  now = new Date(),
+}: {
+  tournament: OverTournament
+  now?: Date
+}): boolean {
+  if (tournament.status === 'completed') return true
+  if (!isKingOfTheCourt(tournament)) return false
+  const start = tournamentStartMs(tournament)
+  const minutes = tournament.duration ?? DEFAULT_EVENT_DURATION_MINUTES
+  return start != null && now.getTime() >= start + minutes * 60_000
+}
+
+/** Scheduled and not over yet: what Home and the admin tools call "next". */
+export function isEventUpcoming({
+  tournament,
+  now = new Date(),
+}: {
+  tournament: OverTournament
+  now?: Date
+}): boolean {
+  const scheduled = tournament.status === 'upcoming' || tournament.status === 'active'
+  return scheduled && !isEventOver({ tournament, now })
 }
 
 /* ── Tab visibility ─────────────────────────────────────────────────────────
@@ -218,13 +288,18 @@ export function raffleWinnersWithheld({
   return !isAdmin && !tournament.rafflePublishedAt
 }
 
-/** The run-of-show is the closing sequence — irrelevant before scores are in. */
+/**
+ * The run-of-show is the closing sequence — irrelevant before scores are in.
+ * King of the Court has no scores; its Oscars and raffle run on the event day.
+ */
 export function isRunOfShowVisible({
   phase,
   isAdmin,
+  format,
 }: {
   phase: EventPhase
   isAdmin: boolean
+  format?: string | null
 }): boolean {
-  return isAdmin && isPhaseAtLeast(phase, 'sealed')
+  return isAdmin && isPhaseAtLeast(phase, isKingOfTheCourt({ format }) ? 'live' : 'sealed')
 }

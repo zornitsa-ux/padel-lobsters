@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { CheckCircle, Clock } from 'lucide-react'
 import type { Player } from '../../../../lib/normalise'
+import { isEventOver } from '../../eventPhase'
 import { useConfirm } from '../../../../lib/confirmBus'
 import { useToast } from '../../../../lib/toastBus'
 import type { NormalisedRegistration } from '../../registrationQueries'
@@ -50,7 +51,7 @@ export default function TeamLists({
     [invites],
   )
 
-  if (tournament.status === 'completed') return null
+  if (isEventOver({ tournament })) return null
 
   const labelOf = (entry: TeamEntry) => teamLabel({ entry, getPlayer, displayName })
 

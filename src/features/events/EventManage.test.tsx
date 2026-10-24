@@ -126,6 +126,18 @@ describe('EventManage — overview scoring progress', () => {
     expect(screen.getByText('2/3')).toBeTruthy() // scored
     expect(screen.getByText('2 of 3 matches scored')).toBeTruthy()
   })
+
+  it('leaves scoring out on King of the Court, which records no matches', () => {
+    render(
+      <MemoryRouter initialEntries={['/events/t1/manage']}>
+        <EventManage tournament={{ ...tournament, format: 'king_of_court' }} onNavigate={vi.fn()} />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByText('Registered')).toBeTruthy()
+    expect(screen.queryByText('Scored')).toBeNull()
+    expect(screen.queryByText('Scoring progress')).toBeNull()
+  })
 })
 
 describe('EventManage — run-of-show slot', () => {

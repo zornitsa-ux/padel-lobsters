@@ -17,6 +17,7 @@ import { eligiblePlayers, findMyEntry } from './registration/team/teamHelpers'
 import { useTeamEntries } from './teams/useTeams'
 import { buildMyTournamentView, myFinalPlacing } from './nextMatch'
 import type { EventPhase } from './eventPhase'
+import { isEventOver } from './eventPhase'
 import type { NormalisedTournament } from '../../lib/normalise'
 import type { EventNavigate } from './eventHelpers'
 
@@ -147,7 +148,7 @@ export default function MyTournament({ tournament, onNavigate }: Props) {
       entry={myEntry}
       viewerId={claimedId}
       tournamentId={tournament.id}
-      isCompleted={tournament.status === 'completed'}
+      isCompleted={isEventOver({ tournament })}
       candidates={candidates}
       getPlayer={getPlayer}
       displayName={(p) => (p.name || '').trim()}

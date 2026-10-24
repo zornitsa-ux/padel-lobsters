@@ -6,6 +6,7 @@ import { useAllRegistrations } from '../events/useRegistrations'
 import { useTournaments } from '../events/useTournaments'
 import { buildPlayerStats } from '../../lib/playerStats'
 import YourStatsCard from '../home/YourStatsCard'
+import { isEventOver } from '../events/eventPhase'
 
 export default function AccountStatsSection({ claimedId }: { claimedId: string | null }) {
   const navigate = useNavigate()
@@ -44,7 +45,7 @@ export default function AccountStatsSection({ claimedId }: { claimedId: string |
         .sort((a, b) => b.wins - a.wins)[0] || null
 
     const completedSorted = tournaments
-      .filter((t) => t.status === 'completed')
+      .filter((t) => isEventOver({ tournament: t }))
       .sort((a, b) => ((b.date || '') > (a.date || '') ? 1 : -1))
     let streak = 0
     for (const t of completedSorted) {

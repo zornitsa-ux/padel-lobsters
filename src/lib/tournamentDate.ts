@@ -19,3 +19,9 @@ export function isTournamentPast(
   if (!tournamentDate) return false
   return tournamentDate < localDateString(now)
 }
+
+// True from the event day on (local time). Every event has a date: the event
+// form requires one.
+export function isEventDayReached({ date, now = new Date() }: { date: string; now?: Date }) {
+  return date <= localDateString(now)
+}

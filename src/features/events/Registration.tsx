@@ -53,6 +53,7 @@ import { errorMessage } from '../../lib/errors'
 import { REGISTER_FAILURE_MESSAGES, registrationMessage } from './registrationStatusMessages'
 import type { EventNavigate } from './eventHelpers'
 import type { NormalisedTournament } from '../../lib/normalise'
+import { isEventOver } from './eventPhase'
 import type { Player } from '../../lib/normalise'
 import type { NormalisedRegistration } from './registrationQueries'
 import type { NormalisedTransfer } from './transferQueries'
@@ -167,7 +168,7 @@ export default function Registration({
     tournamentId: tournament?.id,
     playerId: claimedId,
   })
-  const isCompleted = tournament?.status === 'completed'
+  const isCompleted = tournament != null && isEventOver({ tournament })
   const { hasTikkie, tikkieLink, costPerEntry } = useMemo(
     () => computePaymentConfig(tournament),
     [tournament],

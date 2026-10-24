@@ -242,9 +242,12 @@ export default function RunOfShow({ tournament }: { tournament: NormalisedTourna
     <div className="card space-y-4" data-testid="run-of-show">
       <div className="flex items-center justify-between">
         <h2 className="font-bold text-lob-dark">Run of show</h2>
-        <span className="text-xs font-semibold text-lob-muted">
-          {progress.done} of {progress.total} done
-        </span>
+        {/* King of the Court has only optional steps, so nothing to count. */}
+        {progress.total > 0 && (
+          <span className="text-xs font-semibold text-lob-muted">
+            {progress.done} of {progress.total} done
+          </span>
+        )}
       </div>
 
       {/* Two step controls write through the Oscars hook, which keeps its own

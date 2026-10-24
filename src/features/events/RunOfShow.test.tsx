@@ -49,6 +49,7 @@ type Setup = {
   sessionId?: string | null
   error?: string
   oscarsError?: string | null
+  format?: string
 }
 
 function setup({
@@ -63,10 +64,12 @@ function setup({
   sessionId = null,
   error = '',
   oscarsError = null,
+  format = 'lobster_matching',
 }: Setup = {}) {
   const tournament = {
     id: 't1',
     name: 'Friday Padel',
+    format,
     status,
     resultsSharedAt,
     rafflePublishedAt,
@@ -322,6 +325,13 @@ describe('RunOfShow — actions', () => {
     setup({ matches: [scored()] })
     fireEvent.click(button(/finish tournament/i)!)
     expect(finishTournament).toHaveBeenCalledTimes(1)
+  })
+
+  it('offers no Finish or Reveal on King of the Court, and no progress count', () => {
+    setup({ format: 'king_of_court', matches: [] })
+    expect(button(/finish tournament/i)).toBeNull()
+    expect(button(/reveal the results/i)).toBeNull()
+    expect(screen.queryByText(/of \d+ done/)).toBeNull()
   })
 
   it('Publish calls publishRaffleWinners', () => {
