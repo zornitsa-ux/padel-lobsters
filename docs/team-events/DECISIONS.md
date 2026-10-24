@@ -343,3 +343,21 @@ anyway, as with other tournaments, so reminders cover the rest.
 
 **Impact:** None. This keeps the current behaviour. A code review had
 flagged paying before acceptance as a risk.
+
+## D-021 — The invitee confirms a captain-created account at first sign-in (2026-10-24)
+
+**Decision:** The first time a captain-created account signs in, it goes to
+**Finish your account** before anything else, on every page until it's done.
+The player fills in the same profile as self-signup (prefilled from what the
+captain typed) and ticks "This account is mine, and I agree to join Padel
+Lobsters with these details." This sets
+`partner_invites.account_acknowledged_at`. Only then is the team invite shown,
+and `respond_to_team_invite` refuses an answer until it's set.
+
+**Why:** Owner decision. Consent comes from both sides: the captain at
+registration (D-011), then the invitee when they first join. A full profile
+also means the new member matches everyone else from day one.
+
+**Impact:** Supersedes D-019's optional finish-profile step after accepting.
+The `get_my_account_setup` and `acknowledge_my_account` RPCs (CONTRACTS §3).
+The `/finish-account` screen; the shared profile fields with `SignupRequest`.

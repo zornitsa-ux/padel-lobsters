@@ -230,3 +230,14 @@ placeholders as partners, was withdrawn by D-010: placeholders aren't offered.)
     to the interrupted page. `/team-invites` asks signed-out visitors to sign
     in. The not-signed-in hint names the right player.
   - **D-020:** the captain can pay before the partner accepts.
+- 2026-10-24: Owner walk-through feedback:
+  - The acceptance screen was redesigned (event heading, the captain's full
+    name and avatar, stacked buttons) and its note is from the partner's side.
+  - Team signup opens in a modal.
+  - **D-021:** a captain-created account finishes its profile and confirms
+    the account at first sign-in, before the invite.
+  - Signing out and into another account on the same tab showed the previous
+    account's profile and invites. This bug is on `main` too; it's fixed in its
+    own PR (the query cache resets when the account changes).
+  - The local stack was serving GoTrue's default link-only sign-in email
+    (DESIGN F-8 of PIN removal). Restarting it fixed this.

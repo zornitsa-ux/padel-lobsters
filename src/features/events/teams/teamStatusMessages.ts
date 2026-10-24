@@ -16,6 +16,21 @@ export const COMPLETE_TEAMS_NOTE =
 export const partnerAcceptNote = ({ captainName }: { captainName: string }) =>
   `We keep spots for complete teams. Accept to confirm your team with ${captainName}. If you're not playing, the team is cancelled and both spots go to the next team on the waitlist.`
 
+// D-021: the invitee's own acknowledgement, after the captain's consent (D-011).
+export const accountCreatedMessage = ({
+  requestedByName,
+  tournamentName,
+  email,
+}: {
+  requestedByName: string
+  tournamentName: string
+  email: string
+}) =>
+  `${requestedByName} created a Padel Lobsters account for you with ${email} to play ${tournamentName} together. Complete your profile and confirm the account is yours.`
+
+export const ACCOUNT_ACKNOWLEDGEMENT_LABEL =
+  'This account is mine, and I agree to join Padel Lobsters with these details.'
+
 export const PARTNER_DECLINED_NOTICE = (partnerName: string) =>
   `${partnerName} declined, so your team was cancelled. We keep spots for complete teams. Sign up again with another partner if you'd still like to play.`
 

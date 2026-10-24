@@ -23,7 +23,7 @@ import { AdminLeagueRouteGuard } from './features/league/manage/AdminLeagueRoute
 import type { EventNavigate } from './features/events/eventHelpers'
 import CommunityShell from './features/community/CommunityShell'
 import TeamInviteRedirect from './features/events/invites/TeamInviteRedirect'
-import { TEAM_INVITES_PATH } from './features/events/invites/inviteRoutes'
+import { FINISH_ACCOUNT_PATH, TEAM_INVITES_PATH } from './features/events/invites/inviteRoutes'
 
 // Code-split every route off the first paint. The app shell (Layout,
 // VerificationGate) and the logged-out landing (Dashboard) stay
@@ -44,6 +44,7 @@ const Account = lazy(() => import('./features/settings/Settings'))
 const Game = lazy(() => import('./features/oscars/Game'))
 const Admin = lazy(() => import('./features/admin/AdminTools'))
 const TeamInvitesPage = lazy(() => import('./features/events/invites/TeamInvitesPage'))
+const FinishAccountPage = lazy(() => import('./features/events/invites/FinishAccountPage'))
 const TransferAccept = lazy(() => import('./components/TransferAccept'))
 const LeaguePage = lazy(() => import('./features/league/LeaguePage'))
 const LeagueIndexPage = lazy(() => import('./features/league/LeagueIndexPage'))
@@ -103,6 +104,7 @@ export default function App() {
                 <Route path="/history" element={<Navigate to="/events" replace />} />
                 <Route path="/transfer/:id" element={<TransferRoute />} />
                 <Route path={TEAM_INVITES_PATH} element={<TeamInvitesPage />} />
+                <Route path={FINISH_ACCOUNT_PATH} element={<FinishAccountPage />} />
                 <Route path="/league" element={<LeagueIndexPage />} />
                 <Route path="/league/seasons" element={<SeasonsPage />} />
                 <Route path="/league/:id" element={<LeaguePage />} />
