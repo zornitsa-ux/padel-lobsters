@@ -1,11 +1,13 @@
+import type { ReactNode } from 'react'
 import { PARTNER_CONSENT_LABEL, isLevelValid, type NewPartnerDraft } from './teamHelpers'
 
 interface NewPartnerFormProps {
   draft: NewPartnerDraft
   onChange: (draft: NewPartnerDraft) => void
+  emailError?: ReactNode
 }
 
-export default function NewPartnerForm({ draft, onChange }: NewPartnerFormProps) {
+export default function NewPartnerForm({ draft, onChange, emailError }: NewPartnerFormProps) {
   const set = (patch: Partial<NewPartnerDraft>) => onChange({ ...draft, ...patch })
 
   return (
@@ -33,6 +35,7 @@ export default function NewPartnerForm({ draft, onChange }: NewPartnerFormProps)
           onChange={(e) => set({ email: e.target.value })}
           autoComplete="off"
         />
+        {emailError}
       </label>
       <label className="block text-xs font-semibold text-lob-muted">
         Playtomic level (optional)

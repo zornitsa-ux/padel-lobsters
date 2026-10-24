@@ -9,6 +9,7 @@ interface PlayerPickerProps {
   selectedId: string
   onSelect: (id: string) => void
   displayName: DisplayName
+  initialSearch?: string
 }
 
 export default function PlayerPicker({
@@ -16,8 +17,9 @@ export default function PlayerPicker({
   selectedId,
   onSelect,
   displayName,
+  initialSearch = '',
 }: PlayerPickerProps) {
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useState(initialSearch)
   const visible = useMemo(() => filterByName({ players, search }), [players, search])
 
   return (
