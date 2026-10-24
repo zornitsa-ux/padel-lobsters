@@ -1,3 +1,4 @@
+import { parseLevel } from '../../../../lib/parseLevel'
 import type { Player } from '../../../../lib/normalise'
 import type { NormalisedRegistration } from '../../registrationQueries'
 import type { EventTeam, NewPartnerInput, PartnerChoice, TeamEntry } from '../../teams/teamTypes'
@@ -20,14 +21,11 @@ export interface NewPartnerDraft {
 
 export const EMPTY_DRAFT: NewPartnerDraft = { name: '', email: '', level: '', consent: false }
 
-const parseLevel = (level: string): number | null => {
-  const trimmed = level.trim()
-  return trimmed === '' ? null : Number(trimmed.replace(',', '.'))
-}
-
+// Optional on this form: blank is valid; anything typed must be a level 0–7.
 export const isLevelValid = ({ level }: { level: string }): boolean => {
+  if (level.trim() === '') return true
   const value = parseLevel(level)
-  return value === null || (Number.isFinite(value) && value >= 0 && value <= 7)
+  return value !== null && value <= 7
 }
 
 export const isDraftComplete = ({ draft }: { draft: NewPartnerDraft }): boolean =>
@@ -93,16 +91,17 @@ export const choicePartnerName = ({
 }): string =>
   choice.kind === 'new' ? choice.partner.name : (getPlayer(choice.playerId)?.name ?? '')
 
-const nameOf = ({
-  reg,
+// Blank when the player isn't loaded; callers choose the fallback.
+export const playerNameOf = ({
+  playerId,
   getPlayer,
   displayName,
 }: {
-  reg: NormalisedRegistration
+  playerId: string
   getPlayer: GetPlayer
   displayName: DisplayName
 }) => {
-  const p = getPlayer(reg.playerId)
+  const p = getPlayer(playerId)
   return p ? displayName(p) : ''
 }
 
@@ -116,7 +115,7 @@ export const teamLabel = ({
   displayName: DisplayName
 }): string =>
   [entry.captain, entry.partner]
-    .map((reg) => nameOf({ reg, getPlayer, displayName }))
+    .map((reg) => playerNameOf({ playerId: reg.playerId, getPlayer, displayName }))
     .filter(Boolean)
     .join(' & ')
 
@@ -128,7 +127,8 @@ export const partnerNameOf = ({
   entry: TeamEntry
   getPlayer: GetPlayer
   displayName: DisplayName
-}): string => nameOf({ reg: entry.partner, getPlayer, displayName }) || 'the partner'
+}): string =>
+  playerNameOf({ playerId: entry.partner.playerId, getPlayer, displayName }) || 'the partner'
 
 export const signupNotices = ({
   status,
