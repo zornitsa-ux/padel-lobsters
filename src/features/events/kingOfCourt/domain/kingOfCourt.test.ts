@@ -9,15 +9,7 @@ import {
   type KotcTeam,
 } from './index'
 
-const player = (
-  id: string,
-  mmRating: number | null,
-  playtomicLevel: number | null = null,
-): KotcPlayer => ({
-  id,
-  mmRating,
-  playtomicLevel,
-})
+const player = (id: string, playtomicLevel: number | null): KotcPlayer => ({ id, playtomicLevel })
 const byId = (players: KotcPlayer[]) => Object.fromEntries(players.map((p) => [p.id, p]))
 const team = (id: string, a: string, b: string, extra: Partial<KotcTeam> = {}): KotcTeam => ({
   id,
@@ -30,13 +22,8 @@ const team = (id: string, a: string, b: string, extra: Partial<KotcTeam> = {}): 
 })
 
 describe('teamStrength', () => {
-  const playersById = byId([
-    player('p1', 4),
-    player('p2', null, 3),
-    player('p3', null, 0),
-    player('p4', null, null),
-  ])
-  it('sums mm rating with playtomic fallback', () => {
+  const playersById = byId([player('p1', 4), player('p2', 3), player('p3', 0), player('p4', null)])
+  it("sums both players' Playtomic levels", () => {
     expect(teamStrength({ team: team('t', 'p1', 'p2'), playersById })).toEqual({
       strength: 7,
       unrated: false,
@@ -225,7 +212,7 @@ describe('golden scenarios', () => {
   it('7 teams on 4 courts, one unrated', () => {
     const players = [
       ...Array.from({ length: 12 }, (_, i) => player(`p${i + 1}`, 8 - i * 0.5)),
-      player('p13', null, 0),
+      player('p13', 0),
       player('p14', 2),
     ]
     const teams = Array.from({ length: 7 }, (_, i) =>

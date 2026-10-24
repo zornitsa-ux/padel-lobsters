@@ -129,6 +129,24 @@ export async function fetchEventTeams({
     .map(toEventTeam)
 }
 
+export type EventTeamPatch = { id: string; seed?: number | null; finalRank?: number | null }
+
+// Admin-only columns (CONTRACTS §1). RLS turns a non-admin's update into a
+// silent no-op, so a missing row is an error.
+export async function updateEventTeams({ patches }: { patches: EventTeamPatch[] }): Promise<void> {
+  await Promise.all(
+    patches.map(async ({ id, seed, finalRank }) => {
+      const { data, error } = await supabase
+        .from('event_teams')
+        .update({ seed, final_rank: finalRank })
+        .eq('id', id)
+        .select('id')
+      if (error) throw error
+      if (!data?.length) throw new Error(`Team ${id} was not updated`)
+    }),
+  )
+}
+
 export async function registerTeam({
   tournamentId,
   captainId,

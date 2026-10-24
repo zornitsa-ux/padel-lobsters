@@ -9,11 +9,10 @@ import type {
   TeamStrength,
 } from './types'
 
-const playerValue = (player: KotcPlayer | undefined): number | null => {
-  if (!player) return null
-  if (player.mmRating != null) return player.mmRating
-  return player.playtomicLevel != null && player.playtomicLevel > 0 ? player.playtomicLevel : null
-}
+// Owner decision (2026-10-24): team events seed on reported Playtomic levels,
+// never the learned rating. Level 0 means not reported.
+const playerValue = (player: KotcPlayer | undefined): number | null =>
+  player?.playtomicLevel != null && player.playtomicLevel > 0 ? player.playtomicLevel : null
 
 export function teamStrength({
   team,

@@ -4,7 +4,14 @@ import { describe, it, expect, afterEach } from 'vitest'
 import { render, screen, cleanup, fireEvent } from '@testing-library/react'
 import EventFormModal from './EventFormModal'
 import { emptyForm, type EventFormValues } from './eventConstants'
-import { buildEventData, hasSignups, isEntryModeLocked, isFormatLocked } from './eventFormModel'
+import {
+  buildEventData,
+  hasSignups,
+  isEntryModeLocked,
+  isFormatLocked,
+  teamsWithoutCourt,
+  countRegisteredTeams,
+} from './eventFormModel'
 
 const noop = () => {}
 
@@ -15,9 +22,11 @@ let latestForm: EventFormValues = baseForm
 function Harness({
   initial = baseForm,
   formatLocked = false,
+  registeredTeams = 0,
 }: {
   initial?: EventFormValues
   formatLocked?: boolean
+  registeredTeams?: number
 }) {
   const [form, setForm] = useState(initial)
   latestForm = form
@@ -29,12 +38,13 @@ function Harness({
       setForm={setForm}
       saving={false}
       formatLocked={formatLocked}
+      registeredTeams={registeredTeams}
       onSubmit={noop}
       onClose={noop}
       addCourt={() =>
         setForm((f) => ({ ...f, courts: [...f.courts, { name: '', booked: false }] }))
       }
-      removeCourt={noop}
+      removeCourt={(i) => setForm((f) => ({ ...f, courts: f.courts.filter((_, j) => j !== i) }))}
       setCourt={noop}
     />
   )
@@ -131,6 +141,40 @@ describe('EventFormModal — King of the Court', () => {
     })
 
     expect(data.totalPrice).toBe(120)
+  })
+
+  it('warns, without blocking the save, when removing a court strands registered teams', () => {
+    const courts = ['A', 'B', 'C'].map((name) => ({ name, booked: true }))
+    render(<Harness initial={kotcForm({ courts })} registeredTeams={6} />)
+    expect(screen.queryByRole('alert')).toBeNull()
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Remove court' })[2])
+
+    expect(screen.getByRole('alert').textContent).toBe(
+      "6 teams are registered, more than these courts fit. 2 teams won't have a starting court until you add a court back or cancel a team.",
+    )
+    expect(
+      (screen.getByRole('button', { name: 'Create Event' }) as HTMLButtonElement).disabled,
+    ).toBe(false)
+  })
+
+  it('counts registered teams, not rows', () => {
+    const registrations = [
+      { status: 'registered', teamId: 't1' },
+      { status: 'registered', teamId: 't1' },
+      { status: 'registered', teamId: 't2' },
+      { status: 'registered', teamId: 't2' },
+      { status: 'waitlist', teamId: 't3' },
+      { status: 'cancelled', teamId: 't4' },
+    ]
+    expect(countRegisteredTeams({ registrations })).toBe(2)
+  })
+
+  it('counts teams beyond the courts only on King of the Court', () => {
+    const courts = [{ name: 'A', booked: true }]
+    expect(teamsWithoutCourt({ form: kotcForm({ courts }), registeredTeams: 3 })).toBe(1)
+    expect(teamsWithoutCourt({ form: kotcForm({ courts }), registeredTeams: 2 })).toBe(0)
+    expect(teamsWithoutCourt({ form: { ...baseForm, courts }, registeredTeams: 3 })).toBe(0)
   })
 
   it('shows the team total under the per-person price', () => {

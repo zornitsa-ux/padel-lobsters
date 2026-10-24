@@ -14,3 +14,8 @@ export type EventKind = { entryMode?: string | null; format?: string | null }
 // A saved event's entry_mode decides; the format covers a form not saved yet.
 export const isTeamEvent = ({ entryMode, format }: EventKind): boolean =>
   entryMode === 'team' || formatOption({ format }).entryMode === 'team'
+
+// Scores sync live until the event completes. King of the Court records no
+// matches (D-006), so it has nothing to sync.
+export const hasLiveScores = ({ status, format }: { status: string; format?: string | null }) =>
+  status !== 'completed' && !isKingOfTheCourt({ format })
