@@ -17,6 +17,7 @@ import { isEventOver } from '../events/eventPhase'
 import { isKingOfTheCourt } from '../events/eventFormat'
 import { useTeamResultsByEvent } from '../events/kingOfCourt/useTeamResultsByEvent'
 import { teamResultLabel } from '../events/kingOfCourt/kotcPlayer'
+import { toCourts } from '../events/kingOfCourt/kotcInputs'
 import { TeamStandings } from '../events/kingOfCourt/TeamRankingList'
 import { TabSwitcher } from '../../components/ui/TabSwitcher'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
@@ -293,7 +294,9 @@ export default function History({ onNavigate }: HistoryProps) {
                             teamId: result.teamId,
                             label: teamResultLabel({ result, nameOf: dbDnId }),
                             finalRank: result.finalRank,
+                            move: result.move,
                           }))}
+                          courts={toCourts({ courts: t.courts })}
                         />
                       )}
                       {dbTab === 'games' && hasGameResults && (

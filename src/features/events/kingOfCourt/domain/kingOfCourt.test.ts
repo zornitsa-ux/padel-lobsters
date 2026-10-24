@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
+  biggestClimbers,
+  courtMoves,
   rankedTeams,
   rankFromFinalCourts,
   seedTeams,
@@ -186,6 +188,82 @@ describe('rankedTeams', () => {
       team('r1', 'a', 'b', { finalRank: 1 }),
     ]
     expect(rankedTeams({ teams }).map((t) => t.id)).toEqual(['r1', 'r3', 'u1', 'u2'])
+  })
+})
+
+describe('courtMoves', () => {
+  const courts = Array.from({ length: 4 }, (_, i) => ({ name: `Court ${i + 1}` }))
+  const ranked = (ranks: Record<string, number | null>) =>
+    Object.entries(ranks).map(([id, finalRank]) => team(id, 'a', 'b', { finalRank }))
+
+  it('starts from the starting courts and finishes on court ceil(rank / 2)', () => {
+    const moves = courtMoves({
+      seededTeamIds: ['t1', 't2', 't3', 't4', 't5', 't6'],
+      courts,
+      teams: ranked({ t1: 2, t2: 3, t3: 5, t4: 4, t5: 1, t6: 6 }),
+    })
+    expect(moves).toEqual({
+      t1: { startCourtIndex: 0, finalCourtIndex: 0, gained: 0 },
+      t2: { startCourtIndex: 0, finalCourtIndex: 1, gained: -1 },
+      t3: { startCourtIndex: 1, finalCourtIndex: 2, gained: -1 },
+      t4: { startCourtIndex: 1, finalCourtIndex: 1, gained: 0 },
+      t5: { startCourtIndex: 2, finalCourtIndex: 0, gained: 2 },
+      t6: { startCourtIndex: 2, finalCourtIndex: 2, gained: 0 },
+    })
+  })
+
+  it('counts a waiting team from the bottom court it waited at', () => {
+    const moves = courtMoves({
+      seededTeamIds: ['t1', 't2', 't3', 't4', 't5'],
+      courts,
+      teams: ranked({ t5: 1 }),
+    })
+    expect(moves.t5).toEqual({ startCourtIndex: 1, finalCourtIndex: 0, gained: 1 })
+  })
+
+  it('caps the final court at the bottom court in play', () => {
+    const moves = courtMoves({
+      seededTeamIds: ['t1', 't2', 't3', 't4', 't5'],
+      courts,
+      teams: ranked({ t1: 5 }),
+    })
+    expect(moves.t1).toEqual({ startCourtIndex: 0, finalCourtIndex: 1, gained: -1 })
+  })
+
+  it('leaves out teams with no final rank or no starting court', () => {
+    const moves = courtMoves({
+      seededTeamIds: ['t1', 't2', 't3', 't4', 't5', 't6'],
+      courts: courts.slice(0, 2),
+      teams: ranked({ t1: null, t2: 1, t5: 3, t9: 2 }),
+    })
+    expect(Object.keys(moves)).toEqual(['t2'])
+  })
+})
+
+describe('biggestClimbers', () => {
+  const move = (startCourtIndex: number, gained: number) => ({
+    startCourtIndex,
+    finalCourtIndex: startCourtIndex - gained,
+    gained,
+  })
+
+  it('names the team with the most courts gained', () => {
+    expect(biggestClimbers({ moves: { a: move(4, 2), b: move(4, 4), c: move(1, 1) } })).toEqual([
+      'b',
+    ])
+  })
+  it('breaks a tie on the lower start', () => {
+    expect(biggestClimbers({ moves: { a: move(3, 2), b: move(4, 2) } })).toEqual(['b'])
+  })
+  it('names everyone still tied', () => {
+    expect(biggestClimbers({ moves: { a: move(4, 2), b: move(4, 2), c: move(2, 1) } })).toEqual([
+      'a',
+      'b',
+    ])
+  })
+  it('names nobody when no team gained a court', () => {
+    expect(biggestClimbers({ moves: { a: move(0, 0), b: move(2, -1) } })).toEqual([])
+    expect(biggestClimbers({ moves: {} })).toEqual([])
   })
 })
 

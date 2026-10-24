@@ -104,12 +104,21 @@ describe('RecentlyCompletedBanners — King of the Court', () => {
 
   it('names the winning team with no reveal step (D-026)', () => {
     const onNavigate = renderKotc(
-      new Map([['k1', [{ teamId: 'tm1', playerIds: ['p1', 'p2'], finalRank: 1 }]]]),
+      new Map([['k1', [{ teamId: 'tm1', playerIds: ['p1', 'p2'], finalRank: 1, move: null }]]]),
     )
 
     expect(screen.getByText('Ada Lovelace & Grace Hopper')).toBeTruthy()
     screen.getByRole('button', { name: 'See Full Results' }).click()
     expect(onNavigate).toHaveBeenCalledWith('scores', kotc)
+  })
+
+  it('names the Biggest climber (D-028)', () => {
+    const move = { startCourtIndex: 2, finalCourtIndex: 0, gained: 2 }
+    renderKotc(new Map([['k1', [{ teamId: 'tm1', playerIds: ['p1', 'p2'], finalRank: 1, move }]]]))
+
+    expect(screen.getByText(/Biggest climber/).textContent).toBe(
+      '🚀 Biggest climber: Ada Lovelace & Grace Hopper (↑2)',
+    )
   })
 
   it('holds the banner back while the teams load', () => {
@@ -120,7 +129,7 @@ describe('RecentlyCompletedBanners — King of the Court', () => {
 
   it('links to the event when no standings were saved', () => {
     const onNavigate = renderKotc(
-      new Map([['k1', [{ teamId: 'tm1', playerIds: ['p1', 'p2'], finalRank: null }]]]),
+      new Map([['k1', [{ teamId: 'tm1', playerIds: ['p1', 'p2'], finalRank: null, move: null }]]]),
     )
 
     expect(screen.queryByText(/winner/i)).toBeNull()

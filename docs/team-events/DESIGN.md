@@ -321,6 +321,18 @@ Built in #63 and #64; revised by D-024 to D-027.
    unranked.
 6. **No Finish, no ratings.** The event is over at its scheduled end
    (start + duration). Nothing applies ratings (D-009, D-026).
+7. **Courts moved and Biggest climber** (D-028, T13). `courtMoves` (domain)
+   takes each ranked team's starting court from `startingCourts` over the
+   saved order, the same layout players were shown; a waiting team starts
+   from the court it waited at. The final court is ⌈`final_rank` / 2⌉,
+   capped at the bottom court in play: the standings form lists every court,
+   so with an odd count or spare courts a rank can name a court nobody
+   played on. A team with no rank, or no starting court (D-027), has no
+   move. Each ranked row on Results and History shows "Court 5 → King court
+   ↑4" ("↓1", "=", or "held" on the King court). `biggestClimbers` names the
+   most courts gained, then the lower start, all still tied; nobody when no
+   team gained. Results and History show it above the ranking, and the
+   recently-completed banner under the winners.
 
 ### 3.4 Lifecycle changes
 
@@ -353,8 +365,9 @@ Built in #63 and #64; revised by D-024 to D-027.
   highlighted, once the assignments are shown (T11). The You tab and Home's
   next-event card show "You start on {court}", then the team's placing once
   standings are saved.
-- Results on King of the Court: the team ranking, unranked teams after, no
-  Matches tab, no `resultsSharedAt` gate (D-026).
+- Results on King of the Court: the team ranking with courts moved and the
+  Biggest climber (§3.3 item 7), unranked teams after, no Matches tab, no
+  `resultsSharedAt` gate (D-026).
 - Lobster Review: a player's per-event rank is their team's `final_rank` out of
   the registered teams. Events without one are left out of rank stats (T11).
 - Oscars and the raffle don't change, because they're per player.

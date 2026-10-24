@@ -45,6 +45,10 @@ const tournaments = [
     time: '10:00',
     duration: 120,
     resultsSharedAt: null,
+    courts: [
+      { name: 'Centre', booked: true },
+      { name: 'Back', booked: true },
+    ],
   },
 ]
 
@@ -64,8 +68,8 @@ beforeEach(() => {
     [
       'k1',
       [
-        { teamId: 'b', playerIds: ['p3', 'p4'], finalRank: 1 },
-        { teamId: 'a', playerIds: ['p1', 'p2'], finalRank: null },
+        { teamId: 'b', playerIds: ['p3', 'p4'], finalRank: 1, move: null },
+        { teamId: 'a', playerIds: ['p1', 'p2'], finalRank: null, move: null },
       ],
     ],
   ])
@@ -83,6 +87,18 @@ describe('History on King of the Court', () => {
     expect(screen.queryByText(/results pending/i)).toBeNull()
     expect(screen.queryByText(/pts/)).toBeNull()
     expect(screen.getByRole('button', { name: 'View event results →' })).toBeTruthy()
+  })
+
+  it('shows courts moved and the Biggest climber (D-028)', () => {
+    const move = { startCourtIndex: 1, finalCourtIndex: 0, gained: 1 }
+    m.teamResults = new Map([
+      ['k1', [{ teamId: 'b', playerIds: ['p3', 'p4'], finalRank: 1, move }]],
+    ])
+    open()
+
+    expect(screen.getByText(/Biggest climber/).textContent).toBe(
+      '🚀 Biggest climber: Katherine & Margaret (Back → King court ↑1)',
+    )
   })
 
   it('claims nothing while the teams load', () => {

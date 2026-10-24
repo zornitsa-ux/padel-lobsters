@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { usePlayers } from '../../players/usePlayers'
 import { useTeamEntries } from '../teams/useTeams'
 import { findMyEntry, teamLabel } from '../registration/team/teamHelpers'
-import { seedTeams, startingCourts } from './domain'
+import { courtMoves, seedTeams, startingCourts } from './domain'
 import { toCourts, toKotcTeam, toPlayersById } from './kotcInputs'
 import { myStartingCourt, teamPlacing } from './kotcPlayer'
 import type { NormalisedRegistration, NormalisedTournament } from '../../../lib/normalise'
@@ -37,6 +37,10 @@ export function useKingOfCourtTeams({
   const saved = useMemo(() => seeded.map((t) => t.teamId), [seeded])
   const strengthById = useMemo(() => new Map(seeded.map((t) => [t.teamId, t])), [seeded])
   const layout = useMemo(() => startingCourts({ seededTeamIds: saved, courts }), [saved, courts])
+  const moves = useMemo(
+    () => courtMoves({ seededTeamIds: saved, courts, teams }),
+    [saved, courts, teams],
+  )
 
   const labelOf = useMemo(() => {
     const entryById = new Map(registered.map((e) => [e.team.id, e]))
@@ -60,6 +64,7 @@ export function useKingOfCourtTeams({
     saved,
     strengthById,
     layout,
+    moves,
     labelOf,
     isPending: enabled && isPending,
   }

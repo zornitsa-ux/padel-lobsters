@@ -1,4 +1,12 @@
-export type TeamRankingRow = { teamId: string; label: string; finalRank: number | null }
+import type { Court, CourtMove } from './domain'
+import { courtMoveText, eventClimbers } from './kotcPlayer'
+
+export type TeamRankingRow = {
+  teamId: string
+  label: string
+  finalRank: number | null
+  move: CourtMove | null
+}
 
 const MEDALS: Record<number, string> = { 1: '🥇', 2: '🥈', 3: '🥉' }
 
@@ -6,9 +14,11 @@ const MEDALS: Record<number, string> = { 1: '🥇', 2: '🥈', 3: '🥉' }
 // name only: standings may be partial (D-026).
 export default function TeamRankingList({
   rows,
+  courts,
   highlightTeamId = null,
 }: {
   rows: TeamRankingRow[]
+  courts: Court[]
   highlightTeamId?: string | null
 }) {
   const ranked = rows.filter((r) => r.finalRank != null)
@@ -24,6 +34,7 @@ export default function TeamRankingList({
 
   return (
     <div className="space-y-3" data-testid="team-ranking">
+      <BiggestClimber rows={ranked} courts={courts} />
       <ol className="divide-y divide-gray-100">
         {ranked.map((row) => (
           <li
@@ -34,7 +45,10 @@ export default function TeamRankingList({
             <span className="w-7 text-center font-mono tabular-nums text-sm font-bold text-lob-muted">
               {MEDALS[row.finalRank!] ?? row.finalRank}
             </span>
-            <span className="text-sm text-lob-dark min-w-0">{row.label}</span>
+            <span className="min-w-0">
+              <span className="block text-sm text-lob-dark">{row.label}</span>
+              {row.move && <MoveLine move={row.move} courts={courts} />}
+            </span>
           </li>
         ))}
       </ol>
@@ -52,17 +66,45 @@ export default function TeamRankingList({
   )
 }
 
+function MoveLine({ move, courts }: { move: CourtMove; courts: Court[] }) {
+  const { journey, change } = courtMoveText({ move, courts })
+  return (
+    <span className="block text-xs font-normal text-lob-muted">
+      {journey}{' '}
+      <span className={`font-semibold ${move.gained > 0 ? 'text-lob-teal' : ''}`}>{change}</span>
+    </span>
+  )
+}
+
+// D-028. Tied climbers share one start and gain, so one journey describes them all.
+function BiggestClimber({ rows, courts }: { rows: TeamRankingRow[]; courts: Court[] }) {
+  const climbers = eventClimbers({ results: rows })
+  if (climbers.length === 0) return null
+  const { journey, change } = courtMoveText({ move: climbers[0].move!, courts })
+  return (
+    <p className="text-sm text-lob-dark rounded-xl bg-lob-cream px-3 py-2">
+      🚀 {climbers.length > 1 ? 'Biggest climbers' : 'Biggest climber'}:{' '}
+      <span className="font-bold">{climbers.map((r) => r.label).join(', ')}</span>{' '}
+      <span className="text-xs text-lob-muted">
+        ({journey} {change})
+      </span>
+    </p>
+  )
+}
+
 // Signed-out viewers can't read event_teams; while loading, nothing claims
 // that no standings exist.
 export function TeamStandings({
   signedIn,
   isPending,
   rows,
+  courts,
   highlightTeamId = null,
 }: {
   signedIn: boolean
   isPending: boolean
   rows: TeamRankingRow[]
+  courts: Court[]
   highlightTeamId?: string | null
 }) {
   if (!signedIn) {
@@ -73,5 +115,5 @@ export function TeamStandings({
     )
   }
   if (isPending) return null
-  return <TeamRankingList rows={rows} highlightTeamId={highlightTeamId} />
+  return <TeamRankingList rows={rows} courts={courts} highlightTeamId={highlightTeamId} />
 }

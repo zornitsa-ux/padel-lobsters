@@ -26,12 +26,12 @@ vi.mock('../teams/useTeams', async () => {
 
 const { default: KingOfCourtResults } = await import('./KingOfCourtResults')
 
-const players = ['a', 'b', 'c', 'd'].flatMap((t) => [
+const players = ['a', 'b', 'c', 'd', 'e'].flatMap((t) => [
   { id: `${t}1`, name: `${t.toUpperCase()} One` },
   { id: `${t}2`, name: `${t.toUpperCase()} Two` },
 ])
 
-const registrations = ['a', 'b', 'c', 'd'].flatMap((t) =>
+const registrations = ['a', 'b', 'c', 'd', 'e'].flatMap((t) =>
   [1, 2].map((n) => ({
     id: `r-${t}${n}`,
     playerId: `${t}${n}`,
@@ -41,11 +41,11 @@ const registrations = ['a', 'b', 'c', 'd'].flatMap((t) =>
   })),
 )
 
-const team = (t: string, finalRank: number | null) => ({
+const team = (t: string, finalRank: number | null, seed: number | null = null) => ({
   id: `team-${t}`,
   tournamentId: 'e1',
   captainId: `${t}1`,
-  seed: null,
+  seed,
   finalRank,
   createdAt: '2026-10-01T10:00:00Z',
   cancelledAt: null,
@@ -80,6 +80,36 @@ describe('KingOfCourtResults', () => {
     expect(screen.getByText('C One & C Two').closest('li')!.getAttribute('aria-current')).toBe(
       'true',
     )
+  })
+
+  it('shows courts moved from the saved starting courts and names the Biggest climber', () => {
+    m.teams = [team('a', 2, 1), team('b', 3, 2), team('c', 1, 3), team('e', 4, 4)]
+    const courts = [
+      { name: 'Centre', booked: true },
+      { name: 'Back', booked: true },
+    ]
+    render(<KingOfCourtResults tournament={{ ...tournament, courts }} />)
+
+    const row = (label: string) => screen.getAllByText(label).at(-1)!.closest('li')!.textContent
+    expect(row('C One & C Two')).toContain('Back → King court ↑1')
+    expect(row('A One & A Two')).toContain('King court held')
+    expect(row('B One & B Two')).toContain('King court → Back ↓1')
+    expect(row('E One & E Two')).toContain('Back =')
+    expect(screen.getByText(/Biggest climber/).textContent).toBe(
+      '🚀 Biggest climber: C One & C Two (Back → King court ↑1)',
+    )
+  })
+
+  it('names no climber when nobody gained a court', () => {
+    m.teams = [team('a', 1, 1), team('b', 2, 2)]
+    render(
+      <KingOfCourtResults
+        tournament={{ ...tournament, courts: [{ name: 'Centre', booked: true }] }}
+      />,
+    )
+
+    expect(screen.getAllByText('held')).toHaveLength(2)
+    expect(screen.queryByText(/Biggest climber/)).toBeNull()
   })
 
   it('says when nothing was recorded', () => {

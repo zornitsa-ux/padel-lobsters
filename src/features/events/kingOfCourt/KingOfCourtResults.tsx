@@ -20,6 +20,7 @@ export default function KingOfCourtResults({ tournament }: { tournament: Normali
     teamId: t.id,
     label: kotc.labelOf(t.id),
     finalRank: t.finalRank,
+    move: kotc.moves[t.id] ?? null,
   }))
 
   return (
@@ -28,6 +29,7 @@ export default function KingOfCourtResults({ tournament }: { tournament: Normali
         signedIn={session != null}
         isPending={kotc.isPending}
         rows={rows}
+        courts={kotc.courts}
         highlightTeamId={kotc.myTeamId}
       />
     </div>

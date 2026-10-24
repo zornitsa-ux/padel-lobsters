@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import { normaliseRegistrations } from '../../../lib/normalise'
 import {
+  courtMoveText,
+  eventClimbers,
   myStartingCourt,
   startingCourtLine,
   teamPlacing,
   teamResultsByEvent,
   type StartingCourtLayout,
+  type TeamResult,
 } from './kotcPlayer'
 import type { KotcTeam } from './domain'
 import type { EventTeam } from '../teams/teamTypes'
@@ -122,12 +125,83 @@ describe('teamResultsByEvent', () => {
         ...regs('t5', 'e1', 'cancelled'),
         ...regs('t6', 'e1', 'waitlist'),
       ],
+      tournaments: [],
+      playersById: {},
     })
-    expect(results.get('e1')).toEqual([
+    expect(
+      results
+        .get('e1')
+        ?.map(({ teamId, playerIds, finalRank }) => ({ teamId, playerIds, finalRank })),
+    ).toEqual([
       { teamId: 't2', playerIds: ['t2a', 't2b'], finalRank: 1 },
       { teamId: 't3', playerIds: ['t3a', 't3b'], finalRank: 4 },
       { teamId: 't1', playerIds: ['t1a', 't1b'], finalRank: null },
     ])
     expect(results.get('e2')?.map((r) => r.teamId)).toEqual(['t4'])
+  })
+
+  it("moves each ranked team from its event's saved starting court", () => {
+    const results = teamResultsByEvent({
+      teams: [
+        team('t1', 'e1', 3, { seed: 1 }),
+        team('t2', 'e1', 4, { seed: 2 }),
+        team('t3', 'e1', 1, { seed: 3 }),
+        team('t4', 'e1', null, { seed: 4 }),
+      ],
+      registrations: ['t1', 't2', 't3', 't4'].flatMap((id) => regs(id, 'e1', 'registered')),
+      tournaments: [{ id: 'e1', courts: [{ name: 'Centre' }, { name: 'Back' }] }],
+      playersById: {},
+    })
+    expect(Object.fromEntries(results.get('e1')!.map((r) => [r.teamId, r.move]))).toEqual({
+      t3: { startCourtIndex: 1, finalCourtIndex: 0, gained: 1 },
+      t1: { startCourtIndex: 0, finalCourtIndex: 1, gained: -1 },
+      t2: { startCourtIndex: 0, finalCourtIndex: 1, gained: -1 },
+      t4: null,
+    })
+  })
+})
+
+describe('courtMoveText', () => {
+  const courts = [{ name: 'Centre' }, { name: '' }, { name: 'Back' }]
+  const move = (startCourtIndex: number, finalCourtIndex: number) => ({
+    startCourtIndex,
+    finalCourtIndex,
+    gained: startCourtIndex - finalCourtIndex,
+  })
+
+  it('calls court 1 the King court', () => {
+    expect(courtMoveText({ move: move(2, 0), courts })).toEqual({
+      journey: 'Back → King court',
+      change: '↑2',
+    })
+    expect(courtMoveText({ move: move(0, 1), courts })).toEqual({
+      journey: 'King court → Court 2',
+      change: '↓1',
+    })
+  })
+  it('names one court for a team that stayed', () => {
+    expect(courtMoveText({ move: move(2, 2), courts })).toEqual({ journey: 'Back', change: '=' })
+    expect(courtMoveText({ move: move(0, 0), courts })).toEqual({
+      journey: 'King court',
+      change: 'held',
+    })
+  })
+})
+
+describe('eventClimbers', () => {
+  const result = (teamId: string, move: TeamResult['move']): TeamResult => ({
+    teamId,
+    playerIds: [],
+    finalRank: 1,
+    move,
+  })
+  it('returns the results of the biggest climbers', () => {
+    const results = [
+      result('t1', { startCourtIndex: 0, finalCourtIndex: 0, gained: 0 }),
+      result('t2', { startCourtIndex: 2, finalCourtIndex: 0, gained: 2 }),
+      result('t3', null),
+    ]
+    expect(eventClimbers({ results }).map((r) => r.teamId)).toEqual(['t2'])
+    expect(eventClimbers({ results: undefined })).toEqual([])
   })
 })

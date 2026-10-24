@@ -1,7 +1,8 @@
-import { rankedTeams } from './domain'
-import type { KotcTeam, StartingCourt } from './domain'
+import { biggestClimbers, courtMoves, rankedTeams, seedTeams } from './domain'
+import type { Court, CourtMove, KotcTeam, PlayersById, StartingCourt } from './domain'
+import { toCourts, toKotcTeam } from './kotcInputs'
 import { buildTeamEntries } from '../teams/teamEntries'
-import type { EventTeam } from '../teams/teamTypes'
+import type { EventTeam, TeamEntry } from '../teams/teamTypes'
 import type { NormalisedRegistration } from '../../../lib/normalise'
 
 export type StartingCourtLayout = { courts: StartingCourt[]; overflowTeamIds: string[] }
@@ -13,7 +14,14 @@ export type MyStartingCourt =
 
 export type TeamPlacing = { rank: number; total: number }
 
-export type TeamResult = { teamId: string; playerIds: string[]; finalRank: number | null }
+export type TeamResult = {
+  teamId: string
+  playerIds: string[]
+  finalRank: number | null
+  move: CourtMove | null
+}
+
+export type CourtMoveText = { journey: string; change: string }
 
 export type TeamResultsByEvent = Map<string, TeamResult[]>
 
@@ -64,27 +72,55 @@ export const teamPlacing = ({
   return rank != null ? { rank, total: teams.length } : null
 }
 
+// The same saved order and courts as the event's own views (useKingOfCourtTeams).
+const eventTeamResults = ({
+  entries,
+  courts,
+  playersById,
+}: {
+  entries: TeamEntry[]
+  courts: Court[]
+  playersById: PlayersById
+}): TeamResult[] => {
+  const teams = entries.map((entry) => toKotcTeam({ entry }))
+  const seededTeamIds = seedTeams({ teams, playersById }).map((t) => t.teamId)
+  const moves = courtMoves({ seededTeamIds, courts, teams })
+  const results = entries.map((entry) => ({
+    teamId: entry.team.id,
+    playerIds: [entry.captain.playerId, entry.partner.playerId],
+    finalRank: entry.team.finalRank,
+    move: moves[entry.team.id] ?? null,
+  }))
+  return rankedTeams({ teams: results })
+}
+
 // Registered teams only, ranked first. Cancelled and waitlisted teams never show,
 // whatever seed or final_rank they kept.
 export const teamResultsByEvent = ({
   teams,
   registrations,
+  tournaments,
+  playersById,
 }: {
   teams: EventTeam[]
   registrations: NormalisedRegistration[]
+  tournaments: { id: string; courts?: unknown }[]
+  playersById: PlayersById
 }): TeamResultsByEvent => {
-  const byEvent: TeamResultsByEvent = new Map()
+  const entriesByEvent = new Map<string, TeamEntry[]>()
   for (const entry of buildTeamEntries({ teams, registrations })) {
     if (entry.status !== 'registered') continue
-    const results = byEvent.get(entry.team.tournamentId) ?? []
-    results.push({
-      teamId: entry.team.id,
-      playerIds: [entry.captain.playerId, entry.partner.playerId],
-      finalRank: entry.team.finalRank,
-    })
-    byEvent.set(entry.team.tournamentId, results)
+    const entries = entriesByEvent.get(entry.team.tournamentId) ?? []
+    entries.push(entry)
+    entriesByEvent.set(entry.team.tournamentId, entries)
   }
-  return new Map([...byEvent].map(([id, results]) => [id, rankedTeams({ teams: results })]))
+  const courtsOf = new Map(tournaments.map((t) => [t.id, toCourts({ courts: t.courts })]))
+  return new Map(
+    [...entriesByEvent].map(([id, entries]) => [
+      id,
+      eventTeamResults({ entries, courts: courtsOf.get(id) ?? [], playersById }),
+    ]),
+  )
 }
 
 export const teamResultLabel = ({
@@ -97,3 +133,39 @@ export const teamResultLabel = ({
 
 export const eventWinner = ({ results }: { results: TeamResult[] | undefined }) =>
   results?.[0]?.finalRank === 1 ? results[0] : null
+
+export const eventClimbers = <T extends Pick<TeamResult, 'teamId' | 'move'>>({
+  results,
+}: {
+  results: T[] | undefined
+}): T[] => {
+  const moves = Object.fromEntries(
+    (results ?? []).flatMap((r) => (r.move ? [[r.teamId, r.move]] : [])),
+  )
+  const ids = new Set(biggestClimbers({ moves }))
+  return (results ?? []).filter((r) => ids.has(r.teamId))
+}
+
+const moveCourtLabel = ({ courts, courtIndex }: { courts: Court[]; courtIndex: number }) =>
+  courtIndex === 0
+    ? 'King court'
+    : courtLabel({ court: { courtName: courts[courtIndex]?.name ?? '', courtIndex } })
+
+// D-028: "Court 5 → King court ↑4"; a team that stayed names one court.
+export const courtMoveText = ({
+  move,
+  courts,
+}: {
+  move: CourtMove
+  courts: Court[]
+}): CourtMoveText => {
+  const start = moveCourtLabel({ courts, courtIndex: move.startCourtIndex })
+  if (move.gained === 0) {
+    return { journey: start, change: move.startCourtIndex === 0 ? 'held' : '=' }
+  }
+  const final = moveCourtLabel({ courts, courtIndex: move.finalCourtIndex })
+  return {
+    journey: `${start} → ${final}`,
+    change: move.gained > 0 ? `↑${move.gained}` : `↓${-move.gained}`,
+  }
+}
