@@ -106,22 +106,39 @@ describe('startingCourts', () => {
   it('places two per court from the top', () => {
     const r = startingCourts({ seededTeamIds: ['a', 'b', 'c', 'd'], courts })
     expect(r.courts).toEqual([
-      { courtIndex: 0, courtName: 'King', teamIds: ['a', 'b'], waiting: false },
-      { courtIndex: 1, courtName: 'C2', teamIds: ['c', 'd'], waiting: false },
+      { courtIndex: 0, courtName: 'King', teamIds: ['a', 'b'], waitingTeamId: null },
+      { courtIndex: 1, courtName: 'C2', teamIds: ['c', 'd'], waitingTeamId: null },
     ])
     expect(r.overflowTeamIds).toEqual([])
   })
-  it('lists the odd team alone and waiting', () => {
-    const r = startingCourts({ seededTeamIds: ['a', 'b', 'c'], courts })
-    expect(r.courts[1]).toEqual({ courtIndex: 1, courtName: 'C2', teamIds: ['c'], waiting: true })
+  it('has the odd team wait at the bottom court in play', () => {
+    const r = startingCourts({ seededTeamIds: ['a', 'b', 'c', 'd', 'e'], courts })
+    expect(r.courts).toEqual([
+      { courtIndex: 0, courtName: 'King', teamIds: ['a', 'b'], waitingTeamId: null },
+      { courtIndex: 1, courtName: 'C2', teamIds: ['c', 'd'], waitingTeamId: 'e' },
+    ])
+    expect(r.overflowTeamIds).toEqual([])
   })
-  it('overflows extra teams', () => {
+  it('has the odd team wait at the bottom court when every court is full', () => {
     const r = startingCourts({
       seededTeamIds: ['a', 'b', 'c', 'd', 'e'],
       courts: courts.slice(0, 2),
     })
-    expect(r.overflowTeamIds).toEqual(['e'])
-    expect(r.courts.every((c) => !c.waiting)).toBe(true)
+    expect(r.courts[1].waitingTeamId).toBe('e')
+    expect(r.overflowTeamIds).toEqual([])
+  })
+  it('puts a lone team waiting on the King court', () => {
+    expect(startingCourts({ seededTeamIds: ['a'], courts }).courts).toEqual([
+      { courtIndex: 0, courtName: 'King', teamIds: [], waitingTeamId: 'a' },
+    ])
+  })
+  it('overflows teams beyond capacity when more than one is left over', () => {
+    const r = startingCourts({
+      seededTeamIds: ['a', 'b', 'c', 'd', 'e', 'f'],
+      courts: courts.slice(0, 2),
+    })
+    expect(r.overflowTeamIds).toEqual(['e', 'f'])
+    expect(r.courts.every((c) => c.waitingTeamId === null)).toBe(true)
   })
   it('handles no teams', () => {
     expect(startingCourts({ seededTeamIds: [], courts })).toEqual({
@@ -152,6 +169,16 @@ describe('rankFromFinalCourts', () => {
       a: 1,
       z: 6,
     })
+  })
+  it('treats empty form values as unfilled slots', () => {
+    expect(
+      rankFromFinalCourts({
+        courtResults: [
+          { first: 'a', second: '' },
+          { first: '', second: null },
+        ],
+      }),
+    ).toEqual({ a: 1 })
   })
   it('rejects a repeated team', () => {
     expect(() => rankFromFinalCourts({ courtResults: [{ first: 'a', second: 'a' }] })).toThrow(
@@ -213,9 +240,8 @@ describe('golden scenarios', () => {
       ['t1', 't2'],
       ['t3', 't4'],
       ['t5', 't6'],
-      ['t7'],
     ])
-    expect(r.courts[3].waiting).toBe(true)
+    expect(r.courts[2].waitingTeamId).toBe('t7')
     expect(rankFromFinalCourts({ courtResults: [{ first: 't2', second: 't1' }] })).toEqual({
       t2: 1,
       t1: 2,

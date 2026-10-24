@@ -24,7 +24,6 @@ export function teamStrength({
 }): TeamStrength {
   const a = playerValue(playersById[team.captainId])
   const b = playerValue(playersById[team.partnerId])
-  if (a == null && b == null) return { strength: 0, unrated: true }
   if (a == null || b == null) return { strength: 2 * (a ?? b ?? 0), unrated: true }
   return { strength: a + b, unrated: false }
 }
@@ -54,6 +53,8 @@ export function seedTeams({
   }))
 }
 
+// OQ-4: an odd team waits at the bottom court in play (court 1 if none is).
+// Teams beyond the courts' capacity overflow.
 export function startingCourts({
   seededTeamIds,
   courts,
@@ -61,14 +62,17 @@ export function startingCourts({
   seededTeamIds: string[]
   courts: Court[]
 }): { courts: StartingCourt[]; overflowTeamIds: string[] } {
-  const capacity = courts.length * 2
-  const placed = seededTeamIds.slice(0, capacity)
-  const overflowTeamIds = seededTeamIds.slice(capacity)
-  const used = Math.ceil(placed.length / 2)
-  const result = courts.slice(0, used).map((court, courtIndex) => {
-    const teamIds = placed.slice(courtIndex * 2, courtIndex * 2 + 2)
-    return { courtIndex, courtName: court.name, teamIds, waiting: teamIds.length === 1 }
-  })
+  const pairs = Math.min(Math.floor(seededTeamIds.length / 2), courts.length)
+  const rest = seededTeamIds.slice(pairs * 2)
+  const waitingTeamId = rest.length === 1 && courts.length > 0 ? rest[0] : null
+  const overflowTeamIds = waitingTeamId ? [] : rest
+  const used = waitingTeamId ? Math.max(pairs, 1) : pairs
+  const result = courts.slice(0, used).map((court, courtIndex) => ({
+    courtIndex,
+    courtName: court.name,
+    teamIds: seededTeamIds.slice(courtIndex * 2, Math.min(courtIndex * 2 + 2, pairs * 2)),
+    waitingTeamId: courtIndex === used - 1 ? waitingTeamId : null,
+  }))
   return { courts: result, overflowTeamIds }
 }
 
@@ -78,8 +82,8 @@ export function rankFromFinalCourts({
   courtResults: CourtResult[]
 }): Record<string, number> {
   const ranks: Record<string, number> = {}
-  const assign = (teamId: string | undefined, rank: number) => {
-    if (teamId === undefined) return
+  const assign = (teamId: string | null | undefined, rank: number) => {
+    if (!teamId) return
     if (teamId in ranks) throw new Error(`Team ${teamId} appears twice in final standings`)
     ranks[teamId] = rank
   }
