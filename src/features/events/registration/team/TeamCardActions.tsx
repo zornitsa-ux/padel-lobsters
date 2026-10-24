@@ -2,7 +2,7 @@ import { declineMessage } from './teamHelpers'
 import { useState } from 'react'
 import type { Player } from '../../../../lib/normalise'
 import { useConfirm } from '../../../../lib/confirmBus'
-import { COMPLETE_TEAMS_NOTE } from '../../teams/teamStatusMessages'
+import { partnerAcceptNote } from '../../teams/teamStatusMessages'
 import { useTeamActions } from '../../teams/useTeams'
 import type { TeamEntry } from '../../teams/teamTypes'
 import type { DisplayName } from '../utils'
@@ -90,7 +90,7 @@ export function PartnerPendingActions({ entry, tournamentId, otherName }: Action
 
   return (
     <div className="space-y-2">
-      <p className="text-xs text-lob-muted">{COMPLETE_TEAMS_NOTE}</p>
+      <p className="text-xs text-lob-muted">{partnerAcceptNote({ captainName: otherName })}</p>
       <div className="flex gap-2">
         <button
           onClick={() => void respond({ accept: false })}

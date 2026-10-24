@@ -32,5 +32,5 @@ export const inviteReturnPath = ({ state }: { state: unknown }): string => {
   return ours ? from : '/home'
 }
 
-export const inviteMessage = ({ invite }: { invite: TeamInvite }) =>
-  `${invite.captainName} has entered you as their partner for ${invite.tournamentName} on ${formatEventDate(invite.tournamentDate)}.`
+export const inviteWhen = ({ invite }: { invite: TeamInvite }) =>
+  [formatEventDate(invite.tournamentDate), invite.tournamentTime].filter(Boolean).join(' · ')

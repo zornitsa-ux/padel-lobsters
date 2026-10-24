@@ -12,6 +12,10 @@ import type {
 export const COMPLETE_TEAMS_NOTE =
   'We keep spots for complete teams. Your partner needs to accept; if they decline, your team is cancelled and the spots go to the next team on the waitlist.'
 
+// The same rule from the partner's side: they are the one who accepts.
+export const partnerAcceptNote = ({ captainName }: { captainName: string }) =>
+  `We keep spots for complete teams. Accept to confirm your team with ${captainName}. If you're not playing, the team is cancelled and both spots go to the next team on the waitlist.`
+
 export const PARTNER_DECLINED_NOTICE = (partnerName: string) =>
   `${partnerName} declined, so your team was cancelled. We keep spots for complete teams. Sign up again with another partner if you'd still like to play.`
 
