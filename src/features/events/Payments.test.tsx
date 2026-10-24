@@ -23,9 +23,19 @@ vi.mock('./useRegistrations', () => ({
   useRegistrations: () => ({ data: registrations }),
   useRegistrationActions: () => ({ updateRegistration: mockUpdateRegistration }),
 }))
-vi.mock('./teams/useTeams', () => ({
-  useEventTeams: () => ({ data: teams, ...teamsState }),
-}))
+vi.mock('./teams/useTeams', async () => {
+  const { buildTeamEntries } = await import('./teams/teamEntries')
+  return {
+    useTeamEntries: ({
+      registrations: regs,
+    }: {
+      registrations: Parameters<typeof buildTeamEntries>[0]['registrations']
+    }) => ({
+      entries: buildTeamEntries({ teams: teams as never, registrations: regs }),
+      ...teamsState,
+    }),
+  }
+})
 vi.mock('./registrationQueries', () => ({
   fetchPaymentReminderLink: (id: string) => mockFetchReminderLink(id),
 }))
