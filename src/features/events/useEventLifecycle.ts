@@ -15,6 +15,7 @@ import {
   useReviewRatingEvent,
 } from '../matchmaking/useMatchmaking'
 import { errorMessage } from '../../lib/errors'
+import { isKingOfTheCourt } from './eventFormat'
 import type { MatchResult } from '../matchmaking/domain/types'
 import type { RatingReviewProps } from '../matchmaking/ui/RatingReview'
 import type { NormalisedTournament } from '../../lib/normalise'
@@ -38,6 +39,8 @@ export function useEventLifecycle({ tournament }: { tournament: NormalisedTourna
   const { data: players = [] } = usePlayers()
   const { data: regsData = [] } = useRegistrations(tournament.id)
   const { data: savedMatches = [] } = useMatches(tournament.id)
+  // D-009: King of the Court has no matches, so Finish applies no ratings.
+  const appliesRatings = !isKingOfTheCourt(tournament)
 
   const regs = useMemo(() => regsData.filter((r) => r.status === 'registered'), [regsData])
   const registeredPlayers = useMemo(() => {
@@ -48,12 +51,12 @@ export function useEventLifecycle({ tournament }: { tournament: NormalisedTourna
   // The learned prior comes from the admin-only RPC, not the roster: mm_* is
   // excluded from players_public (DESIGN §5), so reading it off `players` would
   // always be null and every event would re-seed from playtomic_level.
-  const { data: mmRatings } = useMmRatings({ enabled: true })
+  const { data: mmRatings } = useMmRatings({ enabled: appliesRatings })
   // Re-derived on mount rather than relying on post-Finish component state:
   // a flagged rating_events row (flagged=true, review_status=null) stays
   // unresolved until an admin acts on it, so it must stay reachable across a
   // navigate-away or refresh, not just for the session that created it.
-  const { data: reviewQueueAll } = useRatingReviewQueue({ enabled: true })
+  const { data: reviewQueueAll } = useRatingReviewQueue({ enabled: appliesRatings })
   const reviewQueue = useMemo(
     () => (reviewQueueAll || []).filter((e) => e.tournament_id === String(tournament.id)),
     [reviewQueueAll, tournament.id],
@@ -126,7 +129,7 @@ export function useEventLifecycle({ tournament }: { tournament: NormalisedTourna
     setError('')
     try {
       try {
-        await applyRatings()
+        if (appliesRatings) await applyRatings()
       } catch (err) {
         // A prior Finish click can have applied ratings successfully and
         // then failed on the status update below — the RPC's double-apply

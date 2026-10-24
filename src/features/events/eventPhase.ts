@@ -17,6 +17,7 @@
    ════════════════════════════════════════════════════════════════════════════ */
 
 import { localDateString } from '../../lib/tournamentDate'
+import { isKingOfTheCourt } from './eventFormat'
 import type { OscarsPhase } from '../oscars/oscarsPhase'
 
 /**
@@ -55,6 +56,8 @@ export type PhaseTournament = {
   status: string
   date?: string | null
   resultsSharedAt: string | null
+  format?: string | null
+  startingCourtsPublishedAt?: string | null
 }
 
 /**
@@ -91,10 +94,28 @@ export function eventPhase({
   if (tournament.status === 'completed') {
     return tournament.resultsSharedAt ? 'revealed' : 'social'
   }
+  if (isKingOfTheCourt(tournament)) return kingOfTheCourtPhase({ tournament, now })
   if (matches.length === 0) return 'open'
   if (allMatchesScored(matches)) return 'sealed'
   if (tournament.date && tournament.date > localDateString(now)) return 'set'
   return 'live'
+}
+
+/**
+ * King of the Court records no matches (D-006), so the phase runs off the
+ * publish and the date. There is no scoring stage: the event day seals it.
+ * The date seals it even unpublished, so Finish can never be stranded (F-3).
+ */
+function kingOfTheCourtPhase({
+  tournament,
+  now,
+}: {
+  tournament: PhaseTournament
+  now: Date
+}): EventPhase {
+  const dayReached = !tournament.date || tournament.date <= localDateString(now)
+  if (dayReached) return 'sealed'
+  return tournament.startingCourtsPublishedAt ? 'set' : 'open'
 }
 
 /* ── Tab visibility ─────────────────────────────────────────────────────────

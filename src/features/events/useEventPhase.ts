@@ -3,7 +3,7 @@ import { useMatches } from './useMatches'
 import { useOscarsSessionRow } from '../oscars/useOscarsSessionRow'
 import { derivePhase, toPhaseSession } from '../oscars/oscarsPhase'
 import { eventPhase } from './eventPhase'
-import type { EventPhase } from './eventPhase'
+import type { EventPhase, PhaseTournament } from './eventPhase'
 import type { OscarsPhase } from '../oscars/oscarsPhase'
 
 /**
@@ -22,14 +22,11 @@ import type { OscarsPhase } from '../oscars/oscarsPhase'
  * must wait, because a pending matches query reads as zero matches, and zero
  * matches is indistinguishable from phase `open`.
  */
-export function useEventPhase(
-  tournament: {
-    id: string
-    status: string
-    date?: string | null
-    resultsSharedAt: string | null
-  } | null,
-): { phase: EventPhase; oscarsPhase: OscarsPhase; isPending: boolean } {
+export function useEventPhase(tournament: (PhaseTournament & { id: string }) | null): {
+  phase: EventPhase
+  oscarsPhase: OscarsPhase
+  isPending: boolean
+} {
   const { data: matches = [], isPending: matchesPending } = useMatches(tournament?.id)
   const { data: oscarsSession } = useOscarsSessionRow(tournament?.id)
 

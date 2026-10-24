@@ -8,6 +8,7 @@ import { useMatches } from './useMatches'
 import { useRegistrations } from './useRegistrations'
 import { useEventPhase } from './useEventPhase'
 import { allMatchesScored, isMatchScored, isRunOfShowVisible } from './eventPhase'
+import { isKingOfTheCourt } from './eventFormat'
 import RunOfShow from './RunOfShow'
 import type { NormalisedTournament } from '../../lib/normalise'
 import type { EventNavigate } from './eventHelpers'
@@ -94,34 +95,40 @@ function Overview({ tournament }: { tournament: NormalisedTournament }) {
   const unpaid = registered.filter((r) => !r.paymentStatus || r.paymentStatus === 'unpaid')
   const scoredCount = matches.filter(isMatchScored).length
   const sealed = allMatchesScored(matches)
+  // King of the Court records no matches (D-006), so there is nothing to score.
+  const scored = !isKingOfTheCourt(tournament)
 
   return (
     <div className="space-y-4">
-      <div className="card grid grid-cols-3 gap-2">
+      <div className={`card grid gap-2 ${scored ? 'grid-cols-3' : 'grid-cols-2'}`}>
         <StatTile value={registered.length} label="Registered" />
         <StatTile
           value={unpaid.length}
           label="Unpaid"
           valueClassName={unpaid.length > 0 ? 'text-red-600' : ''}
         />
-        <StatTile
-          value={matches.length > 0 ? `${scoredCount}/${matches.length}` : '—'}
-          label="Scored"
-        />
+        {scored && (
+          <StatTile
+            value={matches.length > 0 ? `${scoredCount}/${matches.length}` : '—'}
+            label="Scored"
+          />
+        )}
       </div>
 
-      <div className="card space-y-2">
-        <div className="flex items-center justify-between gap-2">
-          <p className="text-sm font-semibold text-lob-dark">Scoring progress</p>
-          <p className="text-xs text-lob-muted">
-            {matches.length === 0
-              ? 'No schedule yet'
-              : `${scoredCount} of ${matches.length} matches scored`}
-          </p>
+      {scored && (
+        <div className="card space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-sm font-semibold text-lob-dark">Scoring progress</p>
+            <p className="text-xs text-lob-muted">
+              {matches.length === 0
+                ? 'No schedule yet'
+                : `${scoredCount} of ${matches.length} matches scored`}
+            </p>
+          </div>
+          <ProgressBar value={matches.length > 0 ? (scoredCount / matches.length) * 100 : 0} />
+          {sealed && <p className="text-xs text-lob-teal font-semibold">All matches scored</p>}
         </div>
-        <ProgressBar value={matches.length > 0 ? (scoredCount / matches.length) * 100 : 0} />
-        {sealed && <p className="text-xs text-lob-teal font-semibold">All matches scored</p>}
-      </div>
+      )}
 
       {/* The end-of-event sequence. Owned by RunOfShow — see workstream C.
           Rendered as an element, never as a component defined in this render

@@ -278,6 +278,59 @@ describe('eventPhase', () => {
   })
 })
 
+describe('eventPhase — King of the Court (no matches, D-006)', () => {
+  const kotc = ({
+    date = TOMORROW,
+    status = 'upcoming',
+    published = false,
+    resultsSharedAt = null,
+  }: {
+    date?: string | null
+    status?: string
+    published?: boolean
+    resultsSharedAt?: string | null
+  }) => ({
+    format: 'king_of_court',
+    status,
+    date,
+    resultsSharedAt,
+    startingCourtsPublishedAt: published ? SHARED : null,
+  })
+
+  const table: Array<[string, ReturnType<typeof kotc>, EventPhase]> = [
+    ['unpublished, before the event date', kotc({}), 'open'],
+    ['published, before the event date', kotc({ published: true }), 'set'],
+    ['published, on the event date', kotc({ published: true, date: TODAY }), 'sealed'],
+    ['published, after the event date', kotc({ published: true, date: YESTERDAY }), 'sealed'],
+    [
+      'DEFECT GUARD — never published, event day still seals (F-3)',
+      kotc({ date: TODAY }),
+      'sealed',
+    ],
+    ['no date recorded', kotc({ date: null, published: true }), 'sealed'],
+    ['completed', kotc({ status: 'completed', date: YESTERDAY }), 'social'],
+    [
+      'completed and shared',
+      kotc({ status: 'completed', date: YESTERDAY, resultsSharedAt: SHARED }),
+      'revealed',
+    ],
+  ]
+
+  it.each(table)('%s → %s', (_label, tournament, expected) => {
+    expect(eventPhase({ tournament, matches: [], now: NOW })).toBe(expected)
+  })
+
+  it('is never live: there is no scoring stage', () => {
+    const tournament = kotc({ published: true, date: TODAY })
+    expect(eventPhase({ tournament, matches: [unscored()], now: NOW })).toBe('sealed')
+  })
+
+  it('leaves Americano on the match cascade', () => {
+    const tournament = { ...kotc({ published: true }), format: 'lobster_matching' }
+    expect(eventPhase({ tournament, matches: [], now: NOW })).toBe('open')
+  })
+})
+
 describe('isPhaseAtLeast', () => {
   it('is true at the floor and above it', () => {
     expect(isPhaseAtLeast('sealed', 'sealed')).toBe(true)

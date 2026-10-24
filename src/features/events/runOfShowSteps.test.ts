@@ -337,6 +337,45 @@ describe('draw_raffle and publish_raffle', () => {
   })
 })
 
+describe('King of the Court (D-006, D-009)', () => {
+  const KOTC: Partial<RunOfShowInput> = {
+    tournament: {
+      status: 'active',
+      resultsSharedAt: null,
+      rafflePublishedAt: null,
+      format: 'king_of_court',
+    },
+    matches: [],
+  }
+
+  it('drops the scoring and rating-review steps', () => {
+    expect(build(KOTC).map((s) => s.id)).toEqual([
+      'finish',
+      'open_voting',
+      'close_voting',
+      'reveal',
+      'draw_raffle',
+      'publish_raffle',
+    ])
+  })
+
+  it('DEFECT GUARD — Finish is available with zero matches (F-3)', () => {
+    expect(stateOf('finish', KOTC)).toBe('available')
+  })
+
+  it('says Finish changes no ratings', () => {
+    expect(stepOf('finish', KOTC).detail).toBe('No ratings change in King of the Court')
+  })
+
+  it('needs only Finish and the reveal to be done', () => {
+    const revealed = build({
+      ...KOTC,
+      tournament: { ...REVEALED.tournament!, format: 'king_of_court' },
+    })
+    expect(runOfShowProgress(revealed)).toEqual({ done: 2, total: 2, allDone: true })
+  })
+})
+
 describe('runOfShowProgress', () => {
   it('counts only required steps', () => {
     const steps = build({
