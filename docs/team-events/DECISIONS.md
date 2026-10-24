@@ -390,3 +390,74 @@ is told to let them know, and admins see who hasn't signed in yet.
 **Impact:** Supersedes the timeline row "partner invites within the first week
 of signups". T2 is sign-in-facing, so it can't ship from Thu 12 Nov until
 after the event.
+
+## D-024 — "Show starting court assignments to players", on the event day (2026-10-24)
+
+**Decision:** The step DESIGN called "Publish starting courts" is labelled
+**Show starting court assignments to players**. It shows which court each team
+starts on; the court list itself is set in the event form. Admins are expected
+to do it on the event day, a couple of hours before the start. Showing saves the
+current seed order first. Before showing, reorders stay on screen and there is
+no Save order; after showing, Save order appears whenever the order changes.
+
+**Why:** Owner: "publishing courts" read as publishing the court list, which
+the admin edits freely. Saving seeds early would pin today's teams above
+stronger teams that sign up later, so the order is only saved when shown.
+
+**Impact:** DESIGN §3.3. #64. The column stays `starting_courts_published_at`.
+
+## D-025 — Seeding uses reported Playtomic levels only (2026-10-24)
+
+**Decision:** Team strength is the sum of both players' reported
+`playtomic_level`. The learned rating (`mm_rating`) is never used for team
+events. A level of 0 or none means not reported: the team is flagged
+"unrated" and the known level counts double.
+
+**Why:** Owner decision.
+
+**Impact:** Supersedes the strength rule in D-007 and DESIGN §3.3.1. The
+domain's `KotcPlayer` has no `mmRating`; the console doesn't load mm ratings,
+so players and admins compute the same order.
+
+## D-026 — King of the Court has no Finish or Reveal (2026-10-24)
+
+**Decision:**
+
+- A King of the Court event is **over by the clock**: at its scheduled end
+  (start + duration, 90 minutes when none is stored). Nobody presses Finish.
+  `isEventOver` is the one check; Americano is still over only when finished,
+  because Finish applies its ratings.
+- **Final standings are public as soon as they're saved.** There is no reveal
+  step. The form starts empty: no prefill from the starting courts, since an
+  untouched form would otherwise publish a made-up ranking.
+- The run of show on King of the Court keeps only the Oscars and raffle steps,
+  from the event day.
+- Phase: `open` → `set` (assignments shown) → `live` on the event day →
+  `social` after the scheduled end → `revealed` as soon as any active team has
+  a final rank.
+
+**Why:** Owner: there are no matches or ratings to finalise, player changes
+already lock on the server 12h before the start, and the time says when the
+event is over. Checked: nothing else needs `status = 'completed'` on these
+events except surfaces that now read `isEventOver`.
+
+**Impact:** Supersedes DESIGN §3.3.5–6 and §3.4, and D-009's Finish branch
+(no Finish exists to branch). #63, #64. History and the recently-completed
+banner still read `status` (they rank by match scores) until T11 gives them
+the team ranking. A no-date event can't exist (the form requires a date), so
+there is no no-date case.
+
+## D-027 — Removing courts is allowed; too many teams is a warning (2026-10-24)
+
+**Decision:** An admin may remove courts from a King of the Court event at any
+time. If the remaining courts fit fewer teams than are registered, the event
+form warns ("6 teams are registered, more than these courts fit. 2 teams won't
+have a starting court until you add a court back or cancel a team.") without
+blocking the save. The seeding console lists the teams with no court.
+
+**Why:** Owner: courts are added or removed depending on signups; the
+over-full case is rare and left to a manual decision. Capacity follows the
+courts (D-017), and the capacity trigger only checks rows moving into
+`registered`, so cancelling a team still works on an over-full event.
+
+**Impact:** #64 (event form warning, `teamsWithoutCourt`, `countRegisteredTeams`).
