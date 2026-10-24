@@ -8,6 +8,7 @@ const mockUpdateRegistration = vi.fn()
 const mockFetchReminderLink = vi.fn()
 let registrations: unknown[] = []
 let teams: unknown[] = []
+let teamsState = { isPending: false, isError: false }
 
 const players = [
   { id: 'p1', name: 'Ada Lovelace' },
@@ -22,7 +23,9 @@ vi.mock('./useRegistrations', () => ({
   useRegistrations: () => ({ data: registrations }),
   useRegistrationActions: () => ({ updateRegistration: mockUpdateRegistration }),
 }))
-vi.mock('./teams/useTeams', () => ({ useEventTeams: () => ({ data: teams }) }))
+vi.mock('./teams/useTeams', () => ({
+  useEventTeams: () => ({ data: teams, ...teamsState }),
+}))
 vi.mock('./registrationQueries', () => ({
   fetchPaymentReminderLink: (id: string) => mockFetchReminderLink(id),
 }))
@@ -63,11 +66,23 @@ describe('Payments, team events', () => {
   beforeEach(() => {
     registrations = teamRegs()
     teams = [team('team1', 'p1'), team('team2', 'p3')]
+    teamsState = { isPending: false, isError: false }
     mockFetchReminderLink.mockResolvedValue('https://wa.me/1')
   })
   afterEach(() => {
     cleanup()
     vi.clearAllMocks()
+  })
+
+  it('waits for the team list instead of showing nothing owed', () => {
+    teamsState = { isPending: true, isError: false }
+    renderPayments(tournament({ entryMode: 'team' }))
+    expect(screen.getByText('Loading teams…')).toBeTruthy()
+    expect(screen.queryByText('No teams here')).toBeNull()
+    cleanup()
+    teamsState = { isPending: false, isError: true }
+    renderPayments(tournament({ entryMode: 'team' }))
+    expect(screen.getByText("Couldn't load the teams")).toBeTruthy()
   })
 
   it('lists one row per team and never the partner on their own', () => {

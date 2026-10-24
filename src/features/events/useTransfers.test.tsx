@@ -4,6 +4,7 @@ import { waitFor, act } from '@testing-library/react'
 import { renderHookWithClient, makeTestQueryClient } from '../../test/renderWithClient'
 import { transferKeys } from './transferKeys'
 import { registrationKeys } from './registrationKeys'
+import { teamKeys } from './teams/teamKeys'
 import { useTransfers, useTransferActions } from './useTransfers'
 
 vi.mock('./transferQueries', () => ({
@@ -81,6 +82,7 @@ describe('useTransferActions', () => {
     expect(q.respondToTransfer).toHaveBeenCalledWith('xfer-1', true)
     expect(client.invalidateQueries).toHaveBeenCalledWith({ queryKey: transferKeys.all() })
     expect(client.invalidateQueries).toHaveBeenCalledWith({ queryKey: registrationKeys.all() })
+    expect(client.invalidateQueries).toHaveBeenCalledWith({ queryKey: teamKeys.all() })
   })
 
   it('respondToTransfer does not invalidate when result is not ok', async () => {

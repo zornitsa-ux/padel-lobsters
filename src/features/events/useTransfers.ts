@@ -2,6 +2,7 @@ import { useCallback } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { transferKeys } from './transferKeys'
 import { registrationKeys } from './registrationKeys'
+import { teamKeys } from './teams/teamKeys'
 import * as q from './transferQueries'
 
 export function useTransfers() {
@@ -23,8 +24,13 @@ export function useTransferActions({
     () => qc.invalidateQueries({ queryKey: transferKeys.all() }),
     [qc],
   )
+  // A team transfer can change event_teams.captain_id as well as the rows.
   const invalidateRegistrations = useCallback(
-    () => qc.invalidateQueries({ queryKey: registrationKeys.all() }),
+    () =>
+      Promise.all([
+        qc.invalidateQueries({ queryKey: registrationKeys.all() }),
+        qc.invalidateQueries({ queryKey: teamKeys.all() }),
+      ]),
     [qc],
   )
 
