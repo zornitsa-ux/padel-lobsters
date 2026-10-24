@@ -5,6 +5,7 @@ import type { PartnerChoice } from '../../teams/teamTypes'
 import type { NormalisedTournament } from '../../tournamentQueries'
 import type { DisplayName, GetPlayer } from '../utils'
 import { COMPLETE_TEAMS_NOTE } from '../../teams/teamStatusMessages'
+import { Modal } from '../../../../components/ui/Modal'
 import PartnerChoiceForm from './PartnerChoiceForm'
 import { choicePartnerName, teamPrice } from './teamHelpers'
 import { useTeamSignup, type TeamSignupResult } from './useTeamSignup'
@@ -49,8 +50,11 @@ export default function TeamJoinCard({
     signup.clearError()
   }
 
-  if (!open) {
-    return (
+  const price = teamPrice({ tournament })
+  const submitLabel = signup.busy ? 'Signing up…' : isEventFull ? 'Join the waitlist' : 'Sign up'
+
+  return (
+    <>
       <div className="card space-y-3">
         <p className="text-sm text-lob-muted">
           {isEventFull
@@ -61,59 +65,69 @@ export default function TeamJoinCard({
           Sign up as a team
         </button>
       </div>
-    )
-  }
 
-  if (choice) {
-    const price = teamPrice({ tournament })
-    const partner = choicePartnerName({ choice, getPlayer })
-    return (
-      <div className="card space-y-3">
-        <p className="font-semibold text-lob-slate">
-          You + {partner}
-          {price > 0 && ` · ${fmtEur(price)} for the team`}
-        </p>
-        <p className="text-xs text-lob-muted">{COMPLETE_TEAMS_NOTE}</p>
-        {signup.error && (
-          <p role="alert" className="text-xs font-semibold text-red-600">
-            {signup.error}
-          </p>
+      <Modal
+        open={open}
+        onClose={close}
+        title={choice ? 'Confirm your team' : 'Choose your partner'}
+        dismissible={!signup.busy}
+        footer={
+          choice && (
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  setLastChoice(choice)
+                  setChoice(null)
+                  signup.clearError()
+                }}
+                disabled={signup.busy}
+                className="btn-secondary flex-1 py-3 text-sm"
+              >
+                Back
+              </button>
+              <button
+                onClick={() => void signup.submit({ choice })}
+                disabled={signup.busy}
+                className="btn-primary flex-1 py-3 text-sm"
+              >
+                {submitLabel}
+              </button>
+            </div>
+          )
+        }
+      >
+        {choice ? (
+          <div className="space-y-4">
+            <div className="rounded-xl bg-gray-50 px-4 py-3">
+              <p className="font-semibold text-lob-dark">
+                You + {choicePartnerName({ choice, getPlayer })}
+              </p>
+              <p className="text-sm text-lob-muted">
+                {tournament.name}
+                {price > 0 && ` · ${fmtEur(price)} for the team`}
+              </p>
+            </div>
+            <p className="text-sm text-lob-slate leading-relaxed">{COMPLETE_TEAMS_NOTE}</p>
+            {signup.error && (
+              <p role="alert" className="text-sm font-semibold text-red-600">
+                {signup.error}
+              </p>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <p className="text-sm text-lob-slate leading-relaxed">{COMPLETE_TEAMS_NOTE}</p>
+            <PartnerChoiceForm
+              candidates={candidates}
+              displayName={displayName}
+              submitLabel="Continue"
+              initialChoice={lastChoice}
+              onSubmit={({ choice: next }) => setChoice(next)}
+              onCancel={close}
+            />
+          </div>
         )}
-        <div className="flex gap-2">
-          <button
-            onClick={() => {
-              setLastChoice(choice)
-              setChoice(null)
-              signup.clearError()
-            }}
-            className="btn-secondary flex-1 py-2.5 text-sm"
-          >
-            Back
-          </button>
-          <button
-            onClick={() => void signup.submit({ choice })}
-            disabled={signup.busy}
-            className="btn-primary flex-1 py-2.5 text-sm"
-          >
-            {signup.busy ? 'Signing up…' : isEventFull ? 'Join the waitlist' : 'Sign up'}
-          </button>
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="card space-y-3">
-      <p className="font-semibold text-lob-slate">Choose your partner</p>
-      <p className="text-xs text-lob-muted">{COMPLETE_TEAMS_NOTE}</p>
-      <PartnerChoiceForm
-        candidates={candidates}
-        displayName={displayName}
-        submitLabel="Continue"
-        initialChoice={lastChoice}
-        onSubmit={({ choice: next }) => setChoice(next)}
-        onCancel={close}
-      />
-    </div>
+      </Modal>
+    </>
   )
 }
