@@ -23,6 +23,7 @@ interface SegmentedControlProps<T extends SegmentedValue> {
   /** Accessible name for the group. */
   ariaLabel?: string
   className?: string
+  disabled?: boolean
 }
 
 const LAYOUT: Record<Layout, { container: string; item: string }> = {
@@ -51,6 +52,7 @@ export function SegmentedControl<T extends SegmentedValue>({
   shape = 'rounded',
   ariaLabel,
   className,
+  disabled = false,
 }: SegmentedControlProps<T>) {
   const { container, item } = LAYOUT[layout]
   return (
@@ -62,8 +64,9 @@ export function SegmentedControl<T extends SegmentedValue>({
             key={String(option.value)}
             type="button"
             aria-pressed={selected}
+            disabled={disabled}
             onClick={() => onChange(option.value)}
-            className={`${item} ${SIZE[size]} ${SHAPE[shape]} font-semibold transition-all active:scale-95 ${
+            className={`${item} ${SIZE[size]} ${SHAPE[shape]} font-semibold transition-all active:scale-95 disabled:opacity-60 disabled:active:scale-100 ${
               selected ? 'bg-lob-teal text-white' : 'bg-lob-teal-light text-lob-muted'
             }`.trim()}
           >

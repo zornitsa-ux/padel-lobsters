@@ -4,6 +4,9 @@ import type { SchedulePlayer, ScheduleRound } from './types'
 import { roundsForDuration } from './utils'
 import { SegmentedControl } from '../../../components/ui/SegmentedControl'
 
+export const TEAM_EVENT_NOTE =
+  'King of the Court: starting courts come from team seeding (coming soon).'
+
 type Props = {
   generated: unknown
   isAdmin: boolean
@@ -20,6 +23,7 @@ type Props = {
   onEditSchedule: () => void
   onDownloadCsv: () => void
   tournamentDuration?: number
+  isTeamEvent?: boolean
 }
 
 export default function ScheduleGeneratorControls({
@@ -38,8 +42,10 @@ export default function ScheduleGeneratorControls({
   onEditSchedule,
   onDownloadCsv,
   tournamentDuration,
+  isTeamEvent = false,
 }: Props) {
   if (generated || !isAdmin) return null
+  if (isTeamEvent) return <p className="card text-sm text-lob-muted">{TEAM_EVENT_NOTE}</p>
 
   return (
     <div className="card space-y-3">

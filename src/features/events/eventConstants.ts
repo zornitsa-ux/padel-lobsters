@@ -16,6 +16,7 @@ export interface EventFormValues {
   maxPlayers: string | number
   duration: string | number
   format: string
+  entryMode?: string
   genderMode: string
   courts: EventFormCourt[]
   pricePerPerson: string | number
@@ -39,6 +40,7 @@ export const emptyForm: EventFormValues = {
   maxPlayers: '16',
   duration: 90,
   format: 'lobster_matching',
+  entryMode: 'individual',
   genderMode: 'mixed',
   courts: [{ name: '', booked: false }],
   pricePerPerson: '',
