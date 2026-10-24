@@ -19,7 +19,7 @@ import { StatTile } from '../../components/ui/StatTile'
 import PaymentReminderModal from './PaymentReminderModal'
 import { useTeamEntries } from './teams/useTeams'
 import { buildPaymentRows } from './payments/teamPaymentRows'
-import { pricePerPlayer, type EventNavigate } from './eventHelpers'
+import { pricePerEntry, type EventNavigate } from './eventHelpers'
 import type { NormalisedTournament } from '../../lib/normalise'
 import type { NormalisedRegistration } from './registrationQueries'
 
@@ -78,7 +78,7 @@ export default function Payments({
     )
   }
 
-  const { regs, partnerIdByRegId, unitsPerRow } = buildPaymentRows({
+  const { regs, partnerIdByRegId } = buildPaymentRows({
     teamMode,
     registrations: regsData,
     teamEntries,
@@ -92,11 +92,12 @@ export default function Payments({
   // True "ghost" unpaid — didn't even click the Tikkie link
   const trulyUnpaid = regs.filter((r) => !r.paymentStatus || r.paymentStatus === 'unpaid')
 
-  const costPerPlayer = pricePerPlayer(tournament) * unitsPerRow
+  // One row per signup: a player, or a team through its captain.
+  const costPerEntry = pricePerEntry(tournament)
   const unitLabel = teamMode ? 'team' : 'player'
 
-  const totalCollected = confirmed.length * costPerPlayer
-  const totalExpected = regs.length * costPerPlayer
+  const totalCollected = confirmed.length * costPerEntry
+  const totalExpected = regs.length * costPerEntry
 
   const filtered =
     filter === 'paid'
@@ -196,7 +197,7 @@ export default function Payments({
           <p className="text-sm text-lob-slate">
             Total: <span className="font-bold text-lob-dark">{fmtEur(tournament.totalPrice)}</span>{' '}
             · Per {unitLabel}:{' '}
-            <span className="font-bold text-lob-teal">{fmtEur(costPerPlayer)}</span>
+            <span className="font-bold text-lob-teal">{fmtEur(costPerEntry)}</span>
             <span className="text-xs text-lob-muted-light">
               {' '}
               (÷ {tournament.maxPlayers} players{teamMode ? ', 2 per team' : ''})
@@ -253,11 +254,11 @@ export default function Payments({
           />
         </div>
 
-        {costPerPlayer > 0 && (
+        {costPerEntry > 0 && (
           <div className="bg-white/10 rounded-xl p-3">
             <div className="flex justify-between text-sm mb-1">
               <span className="opacity-80">Cost per {unitLabel}</span>
-              <span className="font-bold">{fmtEur(costPerPlayer)}</span>
+              <span className="font-bold">{fmtEur(costPerEntry)}</span>
             </div>
             <div className="flex justify-between text-sm mb-1">
               <span className="opacity-80">Collected</span>
@@ -397,10 +398,6 @@ export default function Payments({
                         ? `· ${METHODS.find((m) => m.value === reg.paymentMethod)?.label || reg.paymentMethod}`
                         : ''}
                     </span>
-                  ) : ps === 'covered' ? (
-                    <span className="text-xs font-semibold bg-gray-100 text-lob-muted px-2 py-0.5 rounded-full">
-                      Covered by captain
-                    </span>
                   ) : isSelfPaid ? (
                     <span className="text-xs font-semibold bg-sky-100 text-sky-700 px-2 py-0.5 rounded-full">
                       💬 Paid (self-declared)
@@ -414,8 +411,8 @@ export default function Payments({
                       ⚠ Unpaid
                     </span>
                   )}
-                  {costPerPlayer > 0 && !isTransferred && (
-                    <span className="text-xs text-lob-muted">{fmtEur(costPerPlayer)}</span>
+                  {costPerEntry > 0 && !isTransferred && (
+                    <span className="text-xs text-lob-muted">{fmtEur(costPerEntry)}</span>
                   )}
                 </div>
               </PlayerRow>
