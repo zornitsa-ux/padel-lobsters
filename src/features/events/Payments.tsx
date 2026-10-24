@@ -42,7 +42,11 @@ export default function Payments({
   const { data: players = [] } = usePlayers()
   const { data: regsData = [] } = useRegistrations(tournament?.id)
   const teamMode = tournament?.entryMode === 'team'
-  const { data: teams = [] } = useEventTeams({ tournamentId: tournament?.id, enabled: teamMode })
+  const {
+    data: teams = [],
+    isPending: teamsPending,
+    isError: teamsFailed,
+  } = useEventTeams({ tournamentId: tournament?.id, enabled: teamMode })
   const [filter, setFilter] = useState<PaymentFilter>('all')
   const [reminderTarget, setReminderTarget] = useState<{ regId: string; name: string } | null>(null)
 
@@ -59,6 +63,17 @@ export default function Payments({
             Go to Events
           </button>
         }
+      />
+    )
+  }
+
+  // Without the team list every team would drop out and read as nothing owed.
+  if (teamMode && (teamsPending || teamsFailed)) {
+    return (
+      <EmptyState
+        icon={<AlertCircle size={36} />}
+        title={teamsFailed ? "Couldn't load the teams" : 'Loading teams…'}
+        description={teamsFailed ? 'Open Payments again to retry.' : undefined}
       />
     )
   }
