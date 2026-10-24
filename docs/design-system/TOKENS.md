@@ -2,7 +2,8 @@
 
 Tokens live in `tailwind.config.js` under `colors.lob` (plus a few top-level
 brand tokens). Use them instead of raw Tailwind palette classes
-(`text-green-700`, `bg-red-50`, …) and hex literals.
+(`text-green-700`, `bg-red-50`, …) and hex literals. What is being built on
+top of them is in [`PLAN.md`](./PLAN.md).
 
 ## Status colours
 

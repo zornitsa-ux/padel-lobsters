@@ -107,7 +107,8 @@ D-030**); DESIGN §3.3–3.4 describe what was built. In short:
    (see the T12 log). Owner calls made: "danger" is its own red, not
    `lob-coral`, and "warning" replaces `lob-amber` for status. PR 1
    (`design-tokens`) adds the tokens and migrates raw status colours
-   app-wide; see `docs/design-system/TOKENS.md`.
+   app-wide. The design-system work now runs from
+   `docs/design-system/PLAN.md`.
 3. **T2: partner invites** (unchanged, D-023). It's sign-in-facing, so not
    from Thu 12 Nov until after the event on Sun 15 Nov.
 

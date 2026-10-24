@@ -36,6 +36,9 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Check no raw Tailwind colours were added
+        run: npm run design:check
+
       - name: Check email templates are in step with their source
         run: npm run templates:check
 
