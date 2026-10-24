@@ -92,7 +92,7 @@ function SeedsCard({
       <p className="text-xs text-lob-muted">
         {publishedAt
           ? `Shown to players since ${shownAt(publishedAt)}. They see the saved order.`
-          : 'Strongest team first, by Playtomic level. Reorder if needed, then show the assignments to players, usually a couple of hours before the start.'}
+          : 'Strongest team first, by average Playtomic level. Reorder if needed, then show the assignments to players, usually a couple of hours before the start.'}
       </p>
 
       {order.length === 0 ? (
@@ -111,7 +111,7 @@ function SeedsCard({
                     <p className="text-sm text-lob-dark truncate">{labelOf(teamId)}</p>
                     {strength && (
                       <p className="text-xs text-lob-muted">
-                        {strength.strength.toFixed(2)}
+                        Avg level {strength.strength.toFixed(2)}
                         {strength.unrated && (
                           <span className="ml-1 text-orange-700 bg-orange-50 px-1.5 rounded-full">
                             unrated

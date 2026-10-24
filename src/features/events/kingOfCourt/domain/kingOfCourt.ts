@@ -10,8 +10,8 @@ import type {
   TeamStrength,
 } from './types'
 
-// Owner decision (2026-10-24): team events seed on reported Playtomic levels,
-// never the learned rating. Level 0 means not reported.
+// D-025, D-030: the team's average reported Playtomic level, never the learned
+// rating. Level 0 means not reported; an unrated team takes the known level.
 const playerValue = (player: KotcPlayer | undefined): number | null =>
   player?.playtomicLevel != null && player.playtomicLevel > 0 ? player.playtomicLevel : null
 
@@ -24,8 +24,8 @@ export function teamStrength({
 }): TeamStrength {
   const a = playerValue(playersById[team.captainId])
   const b = playerValue(playersById[team.partnerId])
-  if (a == null || b == null) return { strength: 2 * (a ?? b ?? 0), unrated: true }
-  return { strength: a + b, unrated: false }
+  if (a == null || b == null) return { strength: a ?? b ?? 0, unrated: true }
+  return { strength: (a + b) / 2, unrated: false }
 }
 
 const byCreatedThenId = (a: KotcTeam, b: KotcTeam) =>
@@ -102,8 +102,9 @@ export function rankedTeams<T extends Pick<KotcTeam, 'finalRank'>>({ teams }: { 
 }
 
 // D-028. A waiting team starts from the court it waited at. Final court is
-// ceil(rank / 2), capped at the bottom court in play: the standings form lists
-// every court, including ones no team started on.
+// ceil(rank / 2), capped at the bottom court in play. The standings form only
+// lists courts in play, so the cap applies to ranks saved before the layout
+// shrank (a team cancelled or a court removed afterwards).
 export function courtMoves({
   seededTeamIds,
   courts,

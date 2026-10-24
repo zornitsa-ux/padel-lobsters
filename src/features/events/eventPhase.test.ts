@@ -11,6 +11,7 @@ import {
   isRunOfShowVisible,
   isEventOver,
   isEventUpcoming,
+  isInHistory,
   raffleWinnersWithheld,
   EVENT_PHASES,
 } from './eventPhase'
@@ -382,6 +383,38 @@ describe('isEventOver', () => {
     const americano = event({ format: 'lobster_matching', date: YESTERDAY })
     expect(isEventOver({ tournament: americano, now: NOW })).toBe(false)
     expect(isEventOver({ tournament: { ...americano, status: 'completed' }, now: NOW })).toBe(true)
+  })
+})
+
+describe('isInHistory', () => {
+  const event = (over: Record<string, unknown> = {}) => ({
+    status: 'upcoming',
+    format: 'king_of_court',
+    date: '2026-07-27',
+    time: '10:00',
+    duration: 120,
+    ...over,
+  })
+
+  it('moves King of the Court to History 2 days after its date, with no Finish', () => {
+    expect(isInHistory({ tournament: event(), now: new Date('2026-07-28T23:00:00Z') })).toBe(false)
+    expect(isInHistory({ tournament: event(), now: new Date('2026-07-29T00:00:00Z') })).toBe(true)
+  })
+
+  it('keeps an unfinished Americano out of History', () => {
+    const americano = event({ format: 'lobster_matching' })
+    const later = new Date('2026-08-05T00:00:00Z')
+    expect(isInHistory({ tournament: americano, now: later })).toBe(false)
+    expect(isInHistory({ tournament: { ...americano, status: 'completed' }, now: later })).toBe(
+      true,
+    )
+  })
+
+  it('falls back to completedAt, and to History when there is no date at all', () => {
+    const done = { ...event({ date: null, format: 'lobster_matching' }), status: 'completed' }
+    const recent = { ...done, completedAt: '2026-07-28T20:00:00Z' }
+    expect(isInHistory({ tournament: recent, now: NOW })).toBe(false)
+    expect(isInHistory({ tournament: done, now: NOW })).toBe(true)
   })
 })
 

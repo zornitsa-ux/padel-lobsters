@@ -99,6 +99,11 @@ describe('KingOfCourtAdmin — seeds', () => {
     expect(rows[2]).toContain('C One & C Two')
   })
 
+  it("shows each team's average level", () => {
+    renderAdmin()
+    expect(seedRows()[0]).toContain('Avg level 3.00')
+  })
+
   it('places two teams per court and the odd one waiting at the bottom', () => {
     renderAdmin()
     expect(screen.getByText(/King court/)).toBeTruthy()

@@ -296,14 +296,18 @@ The app does the **seeding before** the event and records the result
 **afterwards** if the admin wants. Nothing is recorded during play (D-006).
 Built in #63 and #64; revised by D-024 to D-027.
 
-1. **Seeding.** Team strength = the sum of both players' reported
-   `playtomic_level` (D-025, never `mm_rating`). A missing level (none or 0)
-   counts as the partner's value and flags the team "unrated". Registered
-   teams are sorted strongest first; the admin reorders them with up/down
-   buttons. The order is saved to `event_teams.seed`.
+1. **Seeding.** Team strength = the average of both players' reported
+   `playtomic_level` (D-025, D-030, never `mm_rating`); the console shows it
+   as "Avg level". A missing level (none or 0) counts as the partner's value
+   and flags the team "unrated". Registered teams are sorted strongest first;
+   the admin reorders them with up/down buttons. The order is saved to
+   `event_teams.seed`.
 2. **Starting courts.** Seeds 1 and 2 start on the King court, 3 and 4 on court
-   2, and so on. With fewer teams, only the top courts are used. With an odd
-   count, the last team is listed as waiting at the bottom court (OQ-4). If
+   2, and so on. With fewer teams, only the top courts are used. Capacity
+   matches the courts and extra teams go on the waitlist, so an odd count is
+   not expected (D-029); if a withdrawal leaves one, the last team is listed
+   as waiting at the bottom court (OQ-4) and the standings form has no slot
+   for it. If
    courts were removed below the registered teams, the extra teams are listed
    as having no court (D-027).
 3. **Show starting court assignments to players** (D-024). Usually on the event
@@ -330,9 +334,9 @@ Built in #63 and #64; revised by D-024 to D-027.
    or reorder after the event changes the moves (D-028 accepts this); team
    changes can't happen then, since the admin team controls close at the
    end. The final court is ⌈`final_rank` / 2⌉,
-   capped at the bottom court in play: the standings form lists every court,
-   so with an odd count or spare courts a rank can name a court nobody
-   played on. A team with no rank, or no starting court (D-027), has no
+   capped at the bottom court in play. The standings form lists only the
+   courts in play, so the cap matters only when the layout shrinks after
+   standings are saved (a court removed afterwards). A team with no rank, or no starting court (D-027), has no
    move. Each ranked row on Results and History shows "Court 5 → King court
    ↑4" ("↓1", "=", or "held" on the King court). `biggestClimbers` names the
    most courts gained, then the lower start, all still tied; nobody when no

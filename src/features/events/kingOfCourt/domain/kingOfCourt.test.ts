@@ -25,15 +25,15 @@ const team = (id: string, a: string, b: string, extra: Partial<KotcTeam> = {}): 
 
 describe('teamStrength', () => {
   const playersById = byId([player('p1', 4), player('p2', 3), player('p3', 0), player('p4', null)])
-  it("sums both players' Playtomic levels", () => {
+  it("averages both players' Playtomic levels", () => {
     expect(teamStrength({ team: team('t', 'p1', 'p2'), playersById })).toEqual({
-      strength: 7,
+      strength: 3.5,
       unrated: false,
     })
   })
-  it('treats playtomic level 0 as unknown and doubles the known value', () => {
+  it('treats playtomic level 0 as unknown and uses the known value', () => {
     expect(teamStrength({ team: team('t', 'p1', 'p3'), playersById })).toEqual({
-      strength: 8,
+      strength: 4,
       unrated: true,
     })
   })
@@ -45,7 +45,7 @@ describe('teamStrength', () => {
   })
   it('treats a player absent from the map as missing', () => {
     expect(teamStrength({ team: team('t', 'p1', 'zz'), playersById })).toEqual({
-      strength: 8,
+      strength: 4,
       unrated: true,
     })
   })
@@ -86,7 +86,7 @@ describe('seedTeams', () => {
     const teams = [team('t2', 'e', 'f'), team('t1', 'a', 'b')]
     const out = seedTeams({ teams, playersById })
     expect(teams[0].id).toBe('t2')
-    expect(out[0]).toEqual({ teamId: 't1', seed: 1, strength: 10, unrated: false })
+    expect(out[0]).toEqual({ teamId: 't1', seed: 1, strength: 5, unrated: false })
   })
 })
 

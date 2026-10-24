@@ -491,3 +491,29 @@ and no admin step.
 like the rest of T11. Seeds stay editable after the event, so a reorder after
 play changes the reported starting courts; the console already says players
 see each saved change.
+
+## D-029 — Team count matches the courts; odd counts aren't expected (2026-10-24)
+
+**Decision:** An event takes as many teams as its courts hold (two per court,
+D-017), and any extra teams wait on the waitlist. An odd count isn't a case
+to design for. The code still handles one (a withdrawal with nobody waiting):
+the last team waits at the bottom court in play (OQ-4), and the standings
+form, which lists only the courts in play, has no slot for it.
+
+**Why:** Owner, after the T12 walk-through found that a waiting team can't be
+ranked.
+
+**Impact:** Closes OQ-4. DESIGN §3.3 items 2 and 7. No code change.
+
+## D-030 — Team strength is the team's average level (2026-10-24)
+
+**Decision:** Team strength is the average of both players' reported
+`playtomic_level`, and the console shows it as "Avg level 4.25". An unrated
+team (one level missing) takes the known level. The seed order doesn't
+change: halving every sum keeps the same order.
+
+**Why:** Owner, after the T12 walk-through: the sum ("8.50") read like a
+single player's level.
+
+**Impact:** Supersedes the sum in D-025 (the Playtomic-only rule stands).
+DESIGN §3.3 item 1. `teamStrength` and its tests.

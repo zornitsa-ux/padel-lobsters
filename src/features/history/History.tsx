@@ -13,7 +13,7 @@ import { buildDisplayNames } from './displayNames'
 import { groupOscarResultsByCategory } from '../oscars/oscarResults'
 import { useOscarResultsFor } from '../oscars/useOscarResultsFor'
 import { resultsWithheld } from '../events/resultsPhase'
-import { isEventOver } from '../events/eventPhase'
+import { isInHistory } from '../events/eventPhase'
 import { isKingOfTheCourt } from '../events/eventFormat'
 import { useTeamResultsByEvent } from '../events/kingOfCourt/useTeamResultsByEvent'
 import { teamResultLabel } from '../events/kingOfCourt/kotcPlayer'
@@ -64,17 +64,9 @@ export default function History({ onNavigate }: HistoryProps) {
   const getDbTab = (id: string): TabId => dbActiveTab[id] || 'standings'
   const getDbRound = (id: string): number => dbActiveRound[id] ?? 0
 
-  const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000
-
-  // Completed tournaments from DB older than 2 days after tournament date
   const dynamicTournaments = useMemo(() => {
     return tournaments
-      .filter((t) => {
-        if (!isEventOver({ tournament: t })) return false
-        const refDate = t.date || t.completedAt
-        if (!refDate) return true
-        return Date.now() - new Date(refDate).getTime() >= TWO_DAYS_MS
-      })
+      .filter((t) => isInHistory({ tournament: t }))
       .sort((a, b) => ((b.date || b.completedAt || '') > (a.date || a.completedAt || '') ? 1 : -1))
   }, [tournaments])
 

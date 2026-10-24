@@ -3,12 +3,11 @@ import { Badge } from '../../components/ui/Badge'
 import type { BadgeProps } from '../../components/ui/Badge'
 import { LinkCard } from '../../components/ui/LinkCard'
 import type { NormalisedTournament } from '../../lib/normalise'
+import { isEventOver } from './eventPhase'
 
-const STATUS_BADGE: Record<string, Pick<BadgeProps, 'variant' | 'label'>> = {
-  upcoming: { variant: 'info', label: 'Upcoming' },
-  active: { variant: 'paid', label: 'Live' },
-  completed: { variant: 'silver', label: 'Completed' },
-}
+type EventBadge = Pick<BadgeProps, 'variant' | 'label'>
+const UPCOMING: EventBadge = { variant: 'info', label: 'Upcoming' }
+const COMPLETED: EventBadge = { variant: 'silver', label: 'Completed' }
 
 interface EventCardProps {
   tournament: NormalisedTournament
@@ -16,7 +15,7 @@ interface EventCardProps {
 }
 
 export function EventCard({ tournament: t, past = false }: EventCardProps) {
-  const badge = STATUS_BADGE[t.status ?? ''] ?? STATUS_BADGE.upcoming
+  const badge = isEventOver({ tournament: t }) ? COMPLETED : UPCOMING
   const details = [t.time, t.location].filter(Boolean).join(' · ')
   return (
     <LinkCard

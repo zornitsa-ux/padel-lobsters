@@ -155,6 +155,25 @@ export function isEventOver({
   return start != null && now.getTime() >= start + minutes * 60_000
 }
 
+const HISTORY_AFTER_MS = 2 * 24 * 60 * 60 * 1000
+
+/**
+ * Over, and 2 days past its date: History shows it as a podium card, and the
+ * Events list stops showing it as a past-event card.
+ */
+export function isInHistory({
+  tournament,
+  now = new Date(),
+}: {
+  tournament: OverTournament & { completedAt?: string | null }
+  now?: Date
+}): boolean {
+  if (!isEventOver({ tournament, now })) return false
+  const ref = tournament.date || tournament.completedAt
+  if (!ref) return true
+  return now.getTime() - new Date(ref).getTime() >= HISTORY_AFTER_MS
+}
+
 /** Scheduled and not over yet: what Home and the admin tools call "next". */
 export function isEventUpcoming({
   tournament,

@@ -19,7 +19,7 @@ import { errorMessage, errorCode, FOREIGN_KEY_VIOLATION } from '../../lib/errors
 import { useConfirm } from '../../lib/confirmBus'
 import type { EventNavigate } from './eventHelpers'
 import type { NormalisedTournament } from '../../lib/normalise'
-import { isEventOver } from './eventPhase'
+import { isEventOver, isInHistory } from './eventPhase'
 import type { TournamentInput } from './tournamentQueries'
 
 export { DEFAULT_EVENT_DESCRIPTION }
@@ -47,18 +47,9 @@ export default function Tournament({ onNavigate }: { onNavigate: EventNavigate }
 
   const today = new Date()
   today.setHours(0, 0, 0, 0)
-  // Once a completed event is >= 2 days past its date, the embedded
-  // <HistoryContent /> renders it as a podium card, so don't also list it
-  // here as a past-event card — that's what produced the duplicate render.
-  const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000
-  const isInHistory = (t: NormalisedTournament) => {
-    if (t.status !== 'completed') return false
-    const ref = t.date || t.completedAt
-    if (!ref) return true
-    return Date.now() - new Date(ref).getTime() >= TWO_DAYS_MS
-  }
+  // The embedded <HistoryContent /> renders these as podium cards.
   const past = tournaments.filter((t) => {
-    if (isInHistory(t)) return false
+    if (isInHistory({ tournament: t })) return false
     if (isEventOver({ tournament: t })) return true
     const d = parseLocalDate(t.date)
     return d !== null && d < today

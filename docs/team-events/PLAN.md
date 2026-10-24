@@ -60,8 +60,8 @@
 | T9  | Lifecycle: King of the Court phase (over by the clock, standings public once saved, D-026), run of show without Finish/Reveal, matcher guard                                                                             | 2     | T1          | #63      | [x]   |
 | T10 | Admin: seed reorder + Show starting court assignments (D-024); Final standings entry; court-removal warning (D-027)                                                                                                      | 2     | T8          | #64      | [x]   |
 | T11 | Player views: starting court on Schedule / You / upcoming card; Results ranking; History + recently-completed banner; Lobster Review rank                                                                                | 2     | T8, T9, T10 | #66      | [x]   |
-| T12 | Verify Phase 2 locally (16-team event end to end) → **R2**                                                                                                                                                               | 2     | T9–T11      |          | [ ]   |
-| T13 | Results: courts moved per team and a Biggest climber on Results, the recently-completed banner and History (D-028)                                                                                                       | 2     | T11         | #67      | [~]   |
+| T12 | Verify Phase 2 locally (16-team event end to end) → **R2**                                                                                                                                                               | 2     | T9–T11      | #68      | [~]   |
+| T13 | Results: courts moved per team and a Biggest climber on Results, the recently-completed banner and History (D-028)                                                                                                       | 2     | T11         | #67      | [x]   |
 
 States: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked.
 
@@ -73,35 +73,39 @@ States: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked.
   merge and push the RPC migration.
 - **R2** is client-only.
 
-### Resume here (2026-10-24: T13 in review)
+### Resume here (2026-10-24: T12 in review)
 
-**Where we are.** R1 is live. **T9 (#63), T10 (#64) and T11 (#66) are
-merged** to `main`, and **T13 (courts moved and Biggest climber, D-028) is
-in review** (all client-only, no migration). The owner reshaped King of
-the Court during review, recorded as **D-024 to D-028**; DESIGN §3.3–3.4 now
-describe what was built. In short:
+**Where we are.** R1 is live. **T9 to T11 and T13 are merged** (#63, #64,
+#66, #67). **T12, the local walk-through, passed** on a 16-team event at
+phone width, and its fixes are in review in **#68** (client-only, no
+migration). The owner reshaped King of the Court during review (**D-024 to
+D-030**); DESIGN §3.3–3.4 describe what was built. In short:
 
-- **Admin flow** (Schedule tab, admins only): seeds sorted by Playtomic level
-  (D-025), up/down reorder, **Show starting court assignments to players** on
-  the event day (D-024; it saves the order first), optional **Final standings**
-  from the event day, starting empty and **public as soon as saved** (D-026).
+- **Admin flow** (Schedule tab, admins only): seeds sorted by average
+  Playtomic level (D-025, D-030), up/down reorder, **Show starting court
+  assignments to players** on the event day (D-024; it saves the order
+  first), optional **Final standings** from the event day, starting empty
+  and **public as soon as saved** (D-026).
 - **No Finish or Reveal** on King of the Court (D-026). The event is over at
   start + duration (`isEventOver`); the run of show keeps only Oscars and the
   raffle. Phase: `open` → `set` (shown) → `live` (event day) → `social` (after
   the end) → `revealed` (standings saved).
 - **Removing courts** is allowed; the event form warns when registered teams
-  no longer fit (D-027).
-- **Player views** (T11): starting court on Schedule, You and Home's next-event
-  card; the team ranking on Results, History, the recently-completed banner
-  and Lobster Review. T13 adds courts moved per ranked team and the Biggest
-  climber (DESIGN §3.3 item 7).
+  no longer fit (D-027). Capacity matches the courts and extras wait, so odd
+  counts aren't designed for (D-029).
+- **Player views**: starting court on Schedule, You and Home's next-event
+  card; the team ranking with courts moved and the Biggest climber on
+  Results, History and the recently-completed banner; the team's rank in
+  Lobster Review (T11, T13).
 
 **Next, in order:**
 
-1. **T13: merge #67** (task notes in §2). Built before R2, since it fit.
-2. **T12: local verification** (gate in §2): the first browser walk-through of
-   the player views, including courts moved. Then **R2**: merge, Vercel
-   deploys. No migration. Live by Thu 12 Nov.
+1. **T12: merge #68**, then **R2**: Vercel deploys. No migration. Live by
+   Thu 12 Nov.
+2. **Design system** (owner, 2026-10-24): a review of the team-event UI
+   proposed status-colour tokens and shared components in 11 small PRs
+   (see the T12 log). Two owner calls first: is "danger" `lob-coral`, and
+   does "warning" replace `lob-amber`?
 3. **T2: partner invites** (unchanged, D-023). It's sign-in-facing, so not
    from Thu 12 Nov until after the event on Sun 15 Nov.
 
@@ -159,6 +163,18 @@ nothing sign-in-facing ships from Thu 12 Nov.
   the admin saves again. Making it atomic needs a migration.
 - A cancelled team keeps its old `seed` and `final_rank`. Everything reads
   through active team entries, so it never shows; keep it that way in T11.
+- `tournaments.status` (`upcoming` | `active` | `completed`): nothing writes
+  `active`, and on Americano `completed` means Finished (ratings applied),
+  which `completed_at` also records. Display code should ask `isEventOver` /
+  `isInHistory`, never the raw status (#68 fixed the Events list). Dropping
+  the column is a migration across the RPC guards; not planned.
+- T12 UX notes, not fixed: a captain-created account is asked "Has your
+  Playtomic score changed? It's been a while!" and sees the PIN-sunset
+  banner at first sign-in; Save order and Save standings give no
+  confirmation; the Info tab reads "15 of 12 teams" when over capacity and
+  numbers the registered list by signup, not seed; "Not ranked" isn't in
+  seed order; the Results heading says "Final Ranking" for a partial
+  ranking; after the event, the You tab still says "You start on Court 4".
 - Signed-out viewers can't read `event_teams` (no anon grant), so they never
   see a King of the Court event as `revealed`; their default tab stays Info.
   History asks them to sign in for those standings, and Lobster Review and
@@ -282,13 +298,13 @@ signed in):
 
 ## 4. Open questions (owner)
 
-| ID   | Question                                                                 | Default if unanswered                                                   |
-| ---- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------- |
-| OQ-4 | Starting courts when teams ≠ 2 × courts (an odd count, or under-filled)? | Fill from the top. An odd team is listed as waiting at the bottom court |
-| OQ-6 | Is this event separate from regular event #13?                           | Assume separate; both must be ≥ Sun 8 Nov                               |
+| ID   | Question                                       | Default if unanswered                     |
+| ---- | ---------------------------------------------- | ----------------------------------------- |
+| OQ-6 | Is this event separate from regular event #13? | Assume separate; both must be ≥ Sun 8 Nov |
 
 (OQ-2 tie rule and OQ-3 rounds were withdrawn by D-006. OQ-5, picking
-placeholders as partners, was withdrawn by D-010: placeholders aren't offered.)
+placeholders as partners, was withdrawn by D-010: placeholders aren't offered.
+OQ-4, odd counts, was closed by D-029: capacity matches the courts.)
 
 ---
 
@@ -465,3 +481,45 @@ placeholders as partners, was withdrawn by D-010: placeholders aren't offered.)
 
   Checks: `typecheck` clean, 2153 tests passed, `format:check` clean, no new
   lint warnings. Not checked in a browser yet (T12).
+
+- 2026-10-24: **T13 merged** (#67).
+- 2026-10-24: **T12** local walk-through (#68) on a production copy: a King
+  of the Court event with 8 courts and 16 teams, 3 of them with new partners
+  who had never signed in, checked at phone width as the admin and as a new
+  partner (first-sign-in setup, then accept). Every gate item passed:
+  - Reorder and show: the saved seeds matched, and the player saw "You start
+    on Court 4" on Schedule, You and Home's card.
+  - A partner swap and a withdrawal after showing: the team kept its seed,
+    the rest closed up, Save order stored 1–15, and the 15th team waited on
+    the bottom court in play.
+  - Down to 6 courts: the form warned and the console named the 3 teams
+    with no court.
+  - Past the end: Home's next event moved on; the run of show offered only
+    Oscars and the raffle.
+  - Partial standings were public at once on Results, You, the Home banner,
+    History and Lobster Review. Courts moved and the Biggest climber matched
+    the shown layout, the waiting team counting from its court.
+
+  Fixes in #68:
+  - The Events list kept a King of the Court event as a past-event card with
+    an "Upcoming" badge, and listed it twice once History took it (2 days
+    after its date): it decided History and the badge from
+    `status = 'completed'`, which King of the Court never reaches (D-026).
+    Both lists now share `isInHistory`, and the badge reads `isEventOver`.
+  - The `courtMoves` comment and DESIGN §3.3 item 7 said the standings form
+    lists every court; it lists the courts in play.
+  - Owner decisions: **D-029** (team count matches the courts; odd counts
+    aren't designed for) and **D-030** (strength is the team's average
+    level, shown as "Avg level").
+
+  A read-only review of the team-event UI against `components/ui` and the
+  tokens (owner request) found: no success, warning or danger tokens (raw
+  red, green and amber about 500 times app-wide; waitlist in three colour
+  families); 15 hand-built alert boxes; the payment-status colours copied 5
+  times, with "Confirmed" (partner) next to "Confirmed ✓" (payment) on a team
+  row; team names built in 5 places ("You & X" and "You + X"); about 50
+  hand-sized buttons; 6 hand-built ranked rows; 4 different sign-in prompts;
+  and `isTeamEvent` bypassed in 7 places. Proposed: tokens first, then
+  AlertBox and FormError, payment status, Badge variants, naming helpers, King
+  of the Court helpers, buttons, RankMarker, empty and sign-in states, card
+  scaffolding (11 PRs, each off `main`). Plus UX notes in "Still open".
