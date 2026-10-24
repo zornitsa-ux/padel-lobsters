@@ -1,5 +1,6 @@
 import type { EventFormValues } from './eventConstants'
 import { formatOption, isKingOfTheCourt } from './eventFormat'
+import { isActiveRegistration } from './registration/utils'
 import type { NormalisedTournament } from '../../lib/normalise'
 import type { TournamentInput } from './tournamentQueries'
 
@@ -40,7 +41,7 @@ export function hasSignups({
 }: {
   registrations: { status?: string | null }[]
 }): boolean {
-  return registrations.some((r) => r.status === 'registered' || r.status === 'waitlist')
+  return registrations.some(isActiveRegistration)
 }
 
 // Locked until the registrations have loaded, so an empty first render can't

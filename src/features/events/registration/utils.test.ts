@@ -134,25 +134,25 @@ describe('computePaymentConfig', () => {
         maxPlayers: 16,
         tikkieLink: 'https://tikkie.example/x',
       }),
-    ).toEqual({ hasTikkie: true, tikkieLink: 'https://tikkie.example/x', costPerPlayer: 10 })
+    ).toEqual({ hasTikkie: true, tikkieLink: 'https://tikkie.example/x', costPerEntry: 10 })
   })
 
   // Shares pricePerPlayer's default so the payment sheet can't quote a
   // different amount than the event card for the same event.
   it('falls back to a 16-player split when maxPlayers is zero', () => {
-    expect(computePaymentConfig({ totalPrice: 160, maxPlayers: 0 }).costPerPlayer).toBe(10)
+    expect(computePaymentConfig({ totalPrice: 160, maxPlayers: 0 }).costPerEntry).toBe(10)
   })
 
   it('handles a missing tournament', () => {
     expect(computePaymentConfig(null)).toEqual({
       hasTikkie: false,
       tikkieLink: null,
-      costPerPlayer: 0,
+      costPerEntry: 0,
     })
   })
 
   it('a free event costs nothing', () => {
-    expect(computePaymentConfig({ totalPrice: 0 }).costPerPlayer).toBe(0)
+    expect(computePaymentConfig({ totalPrice: 0 }).costPerEntry).toBe(0)
   })
 })
 

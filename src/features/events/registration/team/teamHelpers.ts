@@ -1,8 +1,12 @@
-import { pricePerPlayer } from '../../eventHelpers'
 import type { Player } from '../../../../lib/normalise'
 import type { NormalisedRegistration } from '../../registrationQueries'
 import type { EventTeam, NewPartnerInput, PartnerChoice, TeamEntry } from '../../teams/teamTypes'
-import type { DisplayName, GetPlayer } from '../utils'
+import {
+  getAvailablePlayers,
+  isActiveRegistration,
+  type DisplayName,
+  type GetPlayer,
+} from '../utils'
 
 export const PARTNER_CONSENT_LABEL =
   "I have my partner's permission to register them for this event and to create a Padel Lobsters account for them with this email."
@@ -60,14 +64,8 @@ export const eligiblePlayers = ({
   players: Player[]
   regs: NormalisedRegistration[]
   excludeIds?: Array<string | null>
-}): Player[] => {
-  const entered = new Set(
-    regs.filter((r) => r.status === 'registered' || r.status === 'waitlist').map((r) => r.playerId),
-  )
-  return players.filter(
-    (p) => p.status === 'active' && !entered.has(p.id) && !excludeIds.includes(p.id),
-  )
-}
+}): Player[] =>
+  getAvailablePlayers({ players, regs }).filter((p) => !excludeIds.includes(p.id))
 
 // Case and accents ignored ("jime" finds Jiménez); every typed fragment must
 // appear somewhere in the name, in any order ("gar nic" finds Nicolas Garcia).
@@ -85,9 +83,6 @@ export const filterByName = ({ players, search }: { players: Player[]; search: s
     return fragments.every((f) => name.includes(f))
   })
 }
-
-export const teamPrice = ({ tournament }: { tournament: Parameters<typeof pricePerPlayer>[0] }) =>
-  2 * pricePerPlayer(tournament)
 
 export const choicePartnerName = ({
   choice,
@@ -209,9 +204,7 @@ export const endedTeamNotice = ({
   getPlayer: GetPlayer
   displayName: DisplayName
 }): EndedTeamNotice | null => {
-  const hasActive = regs.some(
-    (r) => r.playerId === viewerId && (r.status === 'registered' || r.status === 'waitlist'),
-  )
+  const hasActive = regs.some((r) => r.playerId === viewerId && isActiveRegistration(r))
   const team = hasActive ? null : cancelledTeamOf({ teams, regs, viewerId })
   const reason = team?.cancelledReason
   if (!team || (reason !== 'partner_declined' && reason !== 'admin_cancelled')) return null
