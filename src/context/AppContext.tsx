@@ -1,5 +1,6 @@
 import React from 'react'
 import useAuth from '../hooks/useAuth'
+import { useResetCacheOnUserChange } from '../hooks/useResetCacheOnUserChange'
 import { AppContext } from './useApp'
 
 // Auth/session provider
@@ -14,6 +15,10 @@ interface AppProviderProps {
 
 export function AppProvider({ children }: AppProviderProps) {
   const auth = useAuth()
+  useResetCacheOnUserChange({
+    userId: auth.session?.user?.id ?? null,
+    settled: auth.sessionSettled,
+  })
 
   return (
     <AppContext.Provider
