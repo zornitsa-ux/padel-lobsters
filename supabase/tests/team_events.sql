@@ -581,4 +581,59 @@ begin
   raise notice 'ALL ACCEPTANCE AND PAYMENT CHECKS PASSED';
 end $$;
 
+do $$
+declare
+  v_p uuid[];
+  v_t uuid;
+  v_t2 uuid;
+  v_r record;
+  v_x record;
+  v_team uuid;
+  v_new uuid;
+begin
+  select array_agg(id order by id) into v_p
+    from (select id from public.players where role = 'player' and status = 'active' order by id limit 14) s;
+
+  -- CHECK 25: declining a transfer leaves the recipient's waitlisted team whole
+  v_t := pg_temp.event(4, now() + interval '10 days');
+  perform pg_temp.act(v_p[1], false);
+  select * into v_r from public.register_team_for_tournament(v_t, v_p[1], v_p[2]);
+  v_team := v_r.team_id;
+  perform pg_temp.act(v_p[2], false);
+  perform public.respond_to_team_invite(v_team, true);
+  perform pg_temp.act(v_p[3], false);
+  perform public.register_team_for_tournament(v_t, v_p[3], v_p[4]);
+  perform pg_temp.act(v_p[1], false);
+  select * into v_x from public.create_transfer(v_p[5], v_t);
+  perform pg_temp.act(v_p[5], false);
+  select * into v_r from public.register_team_for_tournament(v_t, v_p[5], v_p[6]);
+  if v_r.status <> 'waitlist' then raise exception 'CHECK 25a FAILED: %', v_r.status; end if;
+  v_team := v_r.team_id;
+  select * into v_r from public.respond_to_transfer(v_x.transfer_id, false);
+  if v_r.status <> 'declined' then raise exception 'CHECK 25b FAILED: %', v_r.status; end if;
+  perform pg_temp.assert_teams(v_t);
+  if (select count(*) from public.registrations where team_id = v_team and status = 'waitlist') <> 2 then
+    raise exception 'CHECK 25c FAILED: waitlisted team split';
+  end if;
+  raise notice 'CHECK 25 ok: transfer decline keeps a waitlisted team whole';
+
+  -- CHECK 26: account_created_by_captain is about this event's invite only
+  v_t := pg_temp.event(8, now() + interval '10 days');
+  v_t2 := pg_temp.event(8, now() + interval '10 days');
+  perform pg_temp.act(v_p[11], false);
+  select * into v_r from public.register_team_for_tournament(
+    v_t, v_p[11], null, '{"name": "Scoped One", "email": "te-scoped@test.invalid"}'::jsonb, true);
+  if v_r.status <> 'registered' then raise exception 'CHECK 26a FAILED: %', v_r.status; end if;
+  v_new := v_r.partner_id;
+  perform pg_temp.act(v_p[12], false);
+  select * into v_r from public.register_team_for_tournament(v_t2, v_p[12], v_new);
+  if v_r.status <> 'registered' then raise exception 'CHECK 26b FAILED: %', v_r.status; end if;
+  perform pg_temp.act(v_new, false);
+  if (select account_created_by_captain from public.get_my_team_invites() where tournament_id = v_t) is not true
+     or (select account_created_by_captain from public.get_my_team_invites() where tournament_id = v_t2) is not false then
+    raise exception 'CHECK 26c FAILED: flag not scoped to the event';
+  end if;
+  raise notice 'CHECK 26 ok: account_created_by_captain scoped to the event';
+end $$;
+
 rollback;

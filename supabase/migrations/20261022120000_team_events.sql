@@ -485,6 +485,8 @@ begin
     return;
   end if;
   select * into v_t from public.tournaments t where t.id = v_team.tournament_id for update;
+  -- Re-read under the lock: a captain transfer may have changed captain_id.
+  select * into v_team from public.event_teams et where et.id = input_team_id;
   select * into v_partner
     from public.registrations r
    where r.team_id = input_team_id
@@ -630,8 +632,8 @@ begin
 end
 $function$;
 
--- The signed-in player's team invites still waiting for an answer, plus teams
--- of theirs cancelled because the partner declined, so the app can say so.
+-- The signed-in player's team invites still waiting for an answer. A captain
+-- learns of a decline from event_teams.cancelled_reason instead.
 create or replace function public.get_my_team_invites()
 returns table(
   team_id uuid,
@@ -656,7 +658,8 @@ begin
 
   return query
     select et.id, t.id, t.name, t.date, t.time, et.captain_id, p.name, r.status,
-           exists (select 1 from public.partner_invites pi where pi.player_id = auth.uid())
+           exists (select 1 from public.partner_invites pi
+                    where pi.player_id = auth.uid() and pi.tournament_id = t.id)
       from public.registrations r
       join public.event_teams et on et.id = r.team_id
       join public.tournaments t on t.id = et.tournament_id
@@ -1121,6 +1124,68 @@ begin
   values (input_tournament_id, v_from_player_id, input_to_player_id)
   returning id into v_new_id;
   return query select v_new_id, 'ok'::text;
+end
+$function$;
+
+-- 20260923101407's body, except a decline only drops an individual waitlist
+-- row: cancelling one row of a waitlisted team would break the pair.
+create or replace function public.respond_to_transfer(input_transfer_id uuid, input_accept boolean)
+returns table(status text)
+language plpgsql
+security definer
+set search_path to 'pg_catalog', 'public', 'extensions'
+as $function$
+declare
+  v_to_player_id uuid;
+  v_xfer public.registration_transfers%rowtype;
+  v_closed boolean;
+  v_result text;
+begin
+  set local statement_timeout = '30s';
+  perform set_config('app.audit_source', 'respond_to_transfer', true);
+  v_to_player_id := auth.uid();
+  if v_to_player_id is null then
+    raise exception 'not_authenticated' using errcode = 'P0001';
+  end if;
+  select * into v_xfer from public.registration_transfers where id = input_transfer_id for update;
+  if not found then return query select 'not_found'::text; return; end if;
+  if v_xfer.to_player_id <> v_to_player_id then return query select 'forbidden'::text; return; end if;
+  if v_xfer.status <> 'pending' then return query select 'not_pending'::text; return; end if;
+
+  if input_accept is not true then
+    update public.registration_transfers set status = 'declined', responded_at = now() where id = v_xfer.id;
+
+    -- Qualified columns: bare `status` is ambiguous with the output column (42702).
+    update public.registrations r
+       set status = 'cancelled'
+     where r.tournament_id = v_xfer.tournament_id
+       and r.player_id = v_to_player_id
+       and r.status = 'waitlist'
+       and r.team_id is null;
+
+    return query select 'declined'::text; return;
+  end if;
+
+  v_closed := public.tournament_transfers_closed(v_xfer.tournament_id);
+  if coalesce(v_closed, true) then
+    update public.registration_transfers
+       set status = 'auto_closed', closed_reason = 'transfers_closed', closed_at = now()
+     where id = v_xfer.id;
+    return query select 'transfers_closed'::text; return;
+  end if;
+
+  v_result := public.apply_registration_transfer(v_xfer.id);
+  if v_result <> 'accepted' then
+    if v_result in ('to_already_registered', 'from_not_registered') then
+      update public.registration_transfers
+         set status = 'auto_closed', closed_reason = v_result, closed_at = now()
+       where id = v_xfer.id;
+    end if;
+    return query select v_result; return;
+  end if;
+
+  update public.registration_transfers set status = 'accepted', responded_at = now() where id = v_xfer.id;
+  return query select 'accepted'::text;
 end
 $function$;
 
