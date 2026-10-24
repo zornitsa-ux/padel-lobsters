@@ -123,7 +123,7 @@ export function useTeamActions() {
       Promise.all([
         qc.invalidateQueries({ queryKey: registrationKeys.list(tournamentId) }),
         qc.invalidateQueries({ queryKey: teamKeys.list(tournamentId) }),
-        qc.invalidateQueries({ queryKey: ['partnerInvites'] }),
+        qc.invalidateQueries({ queryKey: teamKeys.allInvites() }),
         qc.invalidateQueries({ queryKey: teamKeys.myInvites() }),
       ]),
     [qc],

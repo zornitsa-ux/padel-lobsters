@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { supabase } from '../../../supabase'
+import { firstRow } from '../../../lib/firstRow'
 import type {
   CancelMyTeamStatus,
   CancelTeamStatus,
@@ -59,9 +60,6 @@ const partnerInviteRowSchema = z.object({
   last_sign_in_at: z.string().nullable(),
   has_active_registration: z.boolean(),
 })
-
-const firstRow = <T>(data: T[] | T | null): T | null =>
-  (Array.isArray(data) ? data[0] : data) ?? null
 
 const toEventTeam = (row: z.infer<typeof eventTeamRowSchema>): EventTeam => ({
   id: row.id,

@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { supabase } from '../../supabase'
 import { normaliseRegistrations } from '../../lib/normalise'
+import { firstRow } from '../../lib/firstRow'
 
 const nullableString = z.string().nullable().optional()
 
@@ -42,8 +43,6 @@ export async function fetchAllRegistrations(): Promise<NormalisedRegistration[]>
 // registered-vs-waitlist under the tournament row lock, so it is correct even
 // when two people tap at once — which the old client-side count of the query
 // cache never was.
-const firstRow = <T>(data: T[] | T | null): T | null =>
-  (Array.isArray(data) ? data[0] : data) ?? null
 
 export async function registerPlayer(tournamentId: string, playerId: string) {
   const { data, error } = await supabase.rpc('register_for_tournament', {

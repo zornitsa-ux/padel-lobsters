@@ -826,9 +826,6 @@ begin
 end
 $function$;
 
--- D-016: the only way to change a payment status. Players move their own row
--- forward (unpaid → tikkied → pending_confirmation); admins set any status
--- except on a partner's 'covered' row, which only a transfer changes.
 -- 20260807140000's body; a captain's reminder names the partner and the team
 -- amount (D-005: the captain pays for both).
 create or replace function public.get_payment_reminder_link(input_registration_id uuid)
@@ -912,6 +909,9 @@ begin
 end;
 $function$;
 
+-- D-016: the only way to change a payment status. Players move their own row
+-- forward (unpaid → tikkied → pending_confirmation); admins set any status
+-- except on a partner's 'covered' row, which only a transfer changes.
 create or replace function public.set_registration_payment(
   input_registration_id uuid,
   input_payment_status text,

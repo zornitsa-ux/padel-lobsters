@@ -1,7 +1,6 @@
 import type { NormalisedRegistration } from '../../../lib/normalise'
+import { isActiveRegistration } from '../registration/utils'
 import type { EventTeam, TeamEntry } from './teamTypes'
-
-const isActive = (r: NormalisedRegistration) => r.status === 'registered' || r.status === 'waitlist'
 
 const toEntry = (team: EventTeam, rows: NormalisedRegistration[]): TeamEntry | null => {
   const captain = rows.find((r) => r.playerId === team.captainId)
@@ -26,7 +25,7 @@ export function missingTeamIds({
 }): string[] {
   const known = new Set(teams.map((t) => t.id))
   const missing = registrations
-    .filter((r) => r.teamId && isActive(r) && !known.has(r.teamId))
+    .filter((r) => r.teamId && isActiveRegistration(r) && !known.has(r.teamId))
     .map((r) => r.teamId as string)
   return [...new Set(missing)].sort()
 }
@@ -41,7 +40,7 @@ export function buildTeamEntries({
 }): TeamEntry[] {
   const activeByTeam = new Map<string, NormalisedRegistration[]>()
   for (const r of registrations) {
-    if (!r.teamId || !isActive(r)) continue
+    if (!r.teamId || !isActiveRegistration(r)) continue
     activeByTeam.set(r.teamId, [...(activeByTeam.get(r.teamId) ?? []), r])
   }
   return [...teams]
