@@ -16,10 +16,10 @@ export interface BadgeProps {
 }
 
 const variantClasses: Record<BadgeProps['variant'], string> = {
-  paid: 'bg-green-100 text-green-700',
+  paid: 'bg-lob-success-soft text-lob-success',
   unpaid: 'bg-lob-coral-light text-lob-coral',
-  pending: 'bg-yellow-100 text-yellow-700',
-  waitlist: 'bg-lob-amber/15 text-lob-amber',
+  pending: 'bg-lob-warning-soft text-lob-warning',
+  waitlist: 'bg-lob-warning-soft text-lob-warning',
   info: 'bg-lob-teal/10 text-lob-teal',
   gold: 'bg-yellow-50 text-yellow-700',
   silver: 'bg-gray-100 text-lob-slate',

@@ -10,10 +10,10 @@ interface AlertBoxProps {
 }
 
 const variantClasses: Record<AlertBoxProps['variant'], string> = {
-  info: 'bg-lob-teal/8 border-lob-teal/30 text-lob-teal',
-  warning: 'bg-lob-amber/10 border-lob-amber/40 text-lob-amber',
-  success: 'bg-green-50 border-green-200 text-green-700',
-  error: 'bg-lob-coral-light border-lob-coral/40 text-lob-coral',
+  info: 'bg-lob-info-light border-lob-info-border text-lob-info',
+  warning: 'bg-lob-warning-light border-lob-warning-border text-lob-warning',
+  success: 'bg-lob-success-light border-lob-success-border text-lob-success',
+  error: 'bg-lob-danger-light border-lob-danger-border text-lob-danger',
 }
 
 export function AlertBox({ variant, icon, children, onDismiss, className }: AlertBoxProps) {

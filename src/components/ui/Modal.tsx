@@ -78,7 +78,7 @@ export function Modal({ open, onClose, title, children, footer, dismissible = tr
           <div className="h-6 flex-shrink-0" />
         )}
         {title && (
-          <div className="px-5 py-3 border-b border-gray-100 font-semibold text-lob-dark text-base">
+          <div className="px-5 py-3 border-b border-lob-line font-semibold text-lob-dark text-base">
             {title}
           </div>
         )}
@@ -86,7 +86,7 @@ export function Modal({ open, onClose, title, children, footer, dismissible = tr
           {children}
         </div>
         {footer && (
-          <div className="px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-gray-100 flex-shrink-0">
+          <div className="px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-lob-line flex-shrink-0">
             {footer}
           </div>
         )}

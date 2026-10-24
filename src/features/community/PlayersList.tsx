@@ -26,12 +26,12 @@ function PlayerName({
       {player.country && <FlagImg code={player.country} />}
       <span className="truncate">{name}</span>
       {player.isLeftHanded && (
-        <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-semibold">
+        <span className="text-xs bg-lob-warning-soft text-lob-warning px-1.5 py-0.5 rounded-full font-semibold">
           L
         </span>
       )}
       {isSelf && (
-        <span className="text-[10px] bg-lob-teal text-white px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider">
+        <span className="text-2xs bg-lob-teal text-white px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider">
           You
         </span>
       )}

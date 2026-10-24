@@ -126,7 +126,7 @@ export default function AdminTransferPanel({ tournament, onClose }: AdminTransfe
           return (
             <div
               key={xfer.id}
-              className="border border-amber-200 bg-amber-50 rounded-xl p-3 space-y-3"
+              className="border border-lob-warning-border bg-lob-warning-light rounded-xl p-3 space-y-3"
             >
               <div className="flex items-center gap-3">
                 <Avatar player={{ name: fromP?.name || '?' }} size="sm" />
@@ -138,12 +138,12 @@ export default function AdminTransferPanel({ tournament, onClose }: AdminTransfe
                 </div>
               </div>
 
-              <div className="flex items-center gap-1.5 text-[11px] text-amber-700">
+              <div className="flex items-center gap-1.5 text-xs text-lob-warning">
                 <Clock size={11} /> Sent {formatElapsed(xfer.createdAt)} · awaiting acceptance
               </div>
 
               {err && (
-                <div className="bg-red-50 border border-red-200 rounded-lg px-2 py-1.5 text-[11px] text-red-700 flex items-start gap-1">
+                <div className="bg-lob-danger-light border border-lob-danger-border rounded-lg px-2 py-1.5 text-xs text-lob-danger-strong flex items-start gap-1">
                   <AlertTriangle size={11} className="mt-0.5 flex-shrink-0" />
                   <span>{err}</span>
                 </div>
@@ -153,14 +153,14 @@ export default function AdminTransferPanel({ tournament, onClose }: AdminTransfe
                 <button
                   onClick={() => handleCancel(xfer)}
                   disabled={busy}
-                  className="flex-1 text-xs font-semibold text-red-700 bg-white border border-red-200 rounded-lg py-2 active:scale-95 transition-all disabled:opacity-50"
+                  className="flex-1 text-xs font-semibold text-lob-danger-strong bg-white border border-lob-danger-border rounded-lg py-2 active:scale-95 transition-all disabled:opacity-50"
                 >
                   {busy ? '…' : 'Cancel offer'}
                 </button>
                 <button
                   onClick={() => handleForceAccept(xfer)}
                   disabled={busy}
-                  className="flex-1 text-xs font-semibold text-amber-900 bg-amber-200 rounded-lg py-2 active:scale-95 transition-all disabled:opacity-50"
+                  className="flex-1 text-xs font-semibold text-lob-warning-strong bg-lob-warning-soft rounded-lg py-2 active:scale-95 transition-all disabled:opacity-50"
                 >
                   {busy ? 'Working…' : 'Force accept'}
                 </button>
@@ -169,7 +169,7 @@ export default function AdminTransferPanel({ tournament, onClose }: AdminTransfe
           )
         })}
 
-        <p className="text-[11px] text-lob-muted-light text-center pt-1">
+        <p className="text-xs text-lob-muted-light text-center pt-1">
           Force accept finalises the transfer immediately. The recipient's spot becomes registered,
           and the from-player's registration is cancelled.
         </p>

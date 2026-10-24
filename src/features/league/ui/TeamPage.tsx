@@ -108,7 +108,7 @@ export function TeamPage({ team, matches, teamById, onClose, onTeamClick }: Team
           <p className="text-xs font-bold text-lob-muted-light uppercase tracking-wider mb-3">
             Group Stage Record
           </p>
-          <div className="grid grid-cols-4 gap-2 bg-gray-50 rounded-xl p-4">
+          <div className="grid grid-cols-4 gap-2 bg-lob-well rounded-xl p-4">
             <StatTile label="W" value={record.wins} {...statTileProps} />
             <StatTile label="L" value={record.losses} {...statTileProps} />
             <StatTile label="Pts" value={record.wins} {...statTileProps} />

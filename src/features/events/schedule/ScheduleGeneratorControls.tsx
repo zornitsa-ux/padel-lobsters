@@ -59,7 +59,7 @@ export default function ScheduleGeneratorControls({
           {genderMode === 'mixed' ? '🚺🚹 Mixed · gender balanced' : '👥 Same gender'}
         </span>
         {registeredPlayers.some((player) => player.isLeftHanded) && (
-          <span className="text-xs bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full font-medium">
+          <span className="text-xs bg-lob-warning-light text-lob-warning px-2 py-0.5 rounded-full font-medium">
             🤚 {registeredPlayers.filter((player) => player.isLeftHanded).length} lefty — kept
             separate
           </span>
@@ -93,7 +93,7 @@ export default function ScheduleGeneratorControls({
       </button>
 
       {registeredPlayers.length < 4 && (
-        <p className="text-xs text-orange-600">Register at least 4 players first</p>
+        <p className="text-xs text-lob-warning">Register at least 4 players first</p>
       )}
 
       {savedRounds.length > 0 && (
@@ -106,7 +106,7 @@ export default function ScheduleGeneratorControls({
           </button>
           <button
             onClick={onDownloadCsv}
-            className="w-full py-2 text-sm text-lob-slate font-semibold border border-gray-200 rounded-xl flex items-center justify-center gap-2"
+            className="w-full py-2 text-sm text-lob-slate font-semibold border border-lob-line-strong rounded-xl flex items-center justify-center gap-2"
             title="Download the saved schedule as a CSV"
           >
             <Download size={14} /> Download schedule (CSV)

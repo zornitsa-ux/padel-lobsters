@@ -19,23 +19,23 @@ export function GroupStandingsTable({
   return (
     <table className="w-full text-sm">
       <thead>
-        <tr className="border-b border-gray-100">
-          <th className="text-[10px] font-bold text-lob-muted-light uppercase tracking-wider text-left pb-2 w-6">
+        <tr className="border-b border-lob-line">
+          <th className="text-2xs font-bold text-lob-muted-light uppercase tracking-wider text-left pb-2 w-6">
             #
           </th>
-          <th className="text-[10px] font-bold text-lob-muted-light uppercase tracking-wider text-left pb-2">
+          <th className="text-2xs font-bold text-lob-muted-light uppercase tracking-wider text-left pb-2">
             Team
           </th>
-          <th className="text-[10px] font-bold text-lob-muted-light uppercase tracking-wider text-center pb-2 w-8">
+          <th className="text-2xs font-bold text-lob-muted-light uppercase tracking-wider text-center pb-2 w-8">
             W
           </th>
-          <th className="text-[10px] font-bold text-lob-muted-light uppercase tracking-wider text-center pb-2 w-8">
+          <th className="text-2xs font-bold text-lob-muted-light uppercase tracking-wider text-center pb-2 w-8">
             L
           </th>
-          <th className="text-[10px] font-bold text-lob-muted-light uppercase tracking-wider text-center pb-2 w-8">
+          <th className="text-2xs font-bold text-lob-muted-light uppercase tracking-wider text-center pb-2 w-8">
             Pts
           </th>
-          <th className="text-[10px] font-bold text-lob-muted-light uppercase tracking-wider text-center pb-2 w-8">
+          <th className="text-2xs font-bold text-lob-muted-light uppercase tracking-wider text-center pb-2 w-8">
             Set +/−
           </th>
         </tr>

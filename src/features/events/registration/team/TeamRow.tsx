@@ -39,16 +39,16 @@ export default function TeamRow({
         <span className="text-xs text-lob-muted w-6 text-center font-bold">{position}</span>
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-sm text-lob-dark truncate">{label}</p>
-          <p className={`text-xs ${entry.confirmed ? 'text-green-700' : 'text-amber-700'}`}>
+          <p className={`text-xs ${entry.confirmed ? 'text-lob-success' : 'text-lob-warning'}`}>
             {entry.confirmed ? 'Confirmed' : `Waiting for ${partnerName} to accept`}
           </p>
-          {notSignedInHint && <p className="text-xs text-amber-700">{notSignedInHint}</p>}
+          {notSignedInHint && <p className="text-xs text-lob-warning">{notSignedInHint}</p>}
         </div>
         <PaymentStatusBadge paymentStatus={entry.captain.paymentStatus} />
         {onConfirm && (
           <button
             onClick={onConfirm}
-            className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-lg font-semibold"
+            className="text-xs bg-lob-success-soft text-lob-success px-2 py-1 rounded-lg font-semibold"
           >
             Confirm
           </button>

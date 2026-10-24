@@ -105,7 +105,7 @@ export default function ShareWhatsAppButton({
     <button
       type="button"
       onClick={handleClick}
-      className={`w-full flex items-center justify-center gap-2 border-2 border-green-500 text-green-600 font-semibold py-3 rounded-2xl active:scale-95 transition-all ${className}`}
+      className={`w-full flex items-center justify-center gap-2 border-2 border-lob-success-solid text-lob-success font-semibold py-3 rounded-2xl active:scale-95 transition-all ${className}`}
     >
       <Share2 size={18} />
       Share on WhatsApp

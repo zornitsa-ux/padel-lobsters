@@ -268,7 +268,7 @@ function RegistrationCard({
   onSelfDeclare: () => void
 }) {
   const registerErrorNotice = registerError ? (
-    <p role="alert" className="text-xs font-semibold text-red-600">
+    <p role="alert" className="text-xs font-semibold text-lob-danger">
       {registerError}
     </p>
   ) : null
@@ -316,14 +316,14 @@ function RegistrationCard({
 
   if (registration.status === 'waitlisted') {
     return (
-      <div className="card bg-amber-50 border border-amber-200 space-y-1">
+      <div className="card bg-lob-warning-light border border-lob-warning-border space-y-1">
         <div className="flex items-center gap-2">
-          <Clock size={14} className="text-amber-600 flex-shrink-0" />
-          <p className="text-sm font-semibold text-amber-800">
+          <Clock size={14} className="text-lob-warning flex-shrink-0" />
+          <p className="text-sm font-semibold text-lob-warning-strong">
             You&apos;re on the waitlist{waitlistPosition ? ` · #${waitlistPosition}` : ''}
           </p>
         </div>
-        <p className="text-xs text-amber-700 pl-5">You&apos;ll be notified if a spot opens up.</p>
+        <p className="text-xs text-lob-warning pl-5">You&apos;ll be notified if a spot opens up.</p>
       </div>
     )
   }
@@ -337,7 +337,7 @@ function RegistrationCard({
 
   const badge = (
     <div className="flex items-center gap-2">
-      <CheckCircle size={14} className="text-green-500 flex-shrink-0" />
+      <CheckCircle size={14} className="text-lob-success-solid flex-shrink-0" />
       <span className="text-sm font-semibold text-lob-dark">You&apos;re registered</span>
     </div>
   )
@@ -362,8 +362,8 @@ function RegistrationCard({
     return (
       <div className="card space-y-3">
         {badge}
-        <div className="bg-sky-50 border border-sky-200 rounded-xl px-3 py-2">
-          <p className="text-xs font-semibold text-sky-700">
+        <div className="bg-lob-info-light border border-lob-info-border rounded-xl px-3 py-2">
+          <p className="text-xs font-semibold text-lob-info">
             {isTikkied
               ? '🔗 Tikkie sent · awaiting admin confirmation'
               : '💬 Payment declared · admin will confirm shortly'}
@@ -378,7 +378,7 @@ function RegistrationCard({
       <div className="card">
         <div className="flex items-center justify-between">
           {badge}
-          <span className="text-xs font-semibold text-green-700 bg-green-50 border border-green-200 px-2 py-0.5 rounded-full">
+          <span className="text-xs font-semibold text-lob-success bg-lob-success-light border border-lob-success-border px-2 py-0.5 rounded-full">
             ✓ Confirmed
           </span>
         </div>
@@ -400,7 +400,7 @@ function PlacingCard({
   label: string
 }) {
   return (
-    <div className="card-elevated bg-gradient-to-r from-yellow-400 to-lob-coral text-white text-center space-y-1">
+    <div className="card-elevated bg-celebrate text-white text-center space-y-1">
       <Trophy size={28} className="mx-auto" />
       <p className="text-2xl font-bold">
         #{placing.rank} <span className="text-base font-medium">of {placing.total}</span>

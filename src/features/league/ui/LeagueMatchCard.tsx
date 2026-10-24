@@ -82,15 +82,13 @@ export function LeagueMatchCard({
   }
 
   return (
-    <div className="rounded-xl bg-white border border-gray-100 px-4 py-3">
+    <div className="rounded-xl bg-white border border-lob-line px-4 py-3">
       {label && (
-        <p className="text-[10px] font-bold uppercase tracking-wider text-lob-muted mb-1">
-          {label}
-        </p>
+        <p className="text-2xs font-bold uppercase tracking-wider text-lob-muted mb-1">{label}</p>
       )}
       <TeamRow team={team1} isWinner={team1Won} />
 
-      <div className="text-[10px] font-bold text-lob-muted text-center my-1">vs</div>
+      <div className="text-2xs font-bold text-lob-muted text-center my-1">vs</div>
 
       <TeamRow team={team2} isWinner={team2Won} isBye={isByeMatch} />
 
@@ -114,7 +112,7 @@ export function LeagueMatchCard({
       )}
 
       {action && (
-        <div className="mt-3 pt-2 border-t border-gray-100 flex justify-end">{action}</div>
+        <div className="mt-3 pt-2 border-t border-lob-line flex justify-end">{action}</div>
       )}
     </div>
   )

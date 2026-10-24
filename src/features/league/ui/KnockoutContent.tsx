@@ -46,7 +46,7 @@ export function KnockoutContent({
   const standingsB = computeGroupStandings(groupBTeams, divMatches)
 
   const bracketToggle = (
-    <div className="flex rounded-lg overflow-hidden border border-gray-200 text-xs">
+    <div className="flex rounded-lg overflow-hidden border border-lob-line-strong text-xs">
       {(['gold', 'silver'] as const).map((tab) => (
         <button
           key={tab}

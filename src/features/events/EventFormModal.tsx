@@ -139,7 +139,7 @@ export default function EventFormModal({
             {withoutCourt > 0 && (
               <p
                 role="alert"
-                className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2"
+                className="text-xs text-lob-warning-strong bg-lob-warning-light border border-lob-warning-border rounded-lg p-2"
               >
                 {`${registeredTeams} teams are registered, more than these courts fit. ${withoutCourt} ${withoutCourt === 1 ? "team won't have" : "teams won't have"} a starting court until you add a court back or cancel a team.`}
               </p>
@@ -214,7 +214,7 @@ export default function EventFormModal({
           )}
           <div className="space-y-2">
             {form.courts.map((c, i) => (
-              <div key={i} className="bg-gray-50 rounded-xl p-3 space-y-2">
+              <div key={i} className="bg-lob-well rounded-xl p-3 space-y-2">
                 <div className="flex items-center gap-2">
                   <input
                     className="input flex-1 py-2 text-sm"

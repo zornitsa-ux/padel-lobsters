@@ -52,7 +52,7 @@ function EmailChangeForm({ email }: { email: string }) {
     <>
       {!emailEditing && (
         <div className="flex items-center gap-2">
-          <div className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-gray-50 border border-gray-200 text-sm text-lob-slate truncate">
+          <div className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-lob-well border border-lob-line-strong text-sm text-lob-slate truncate">
             {email || <span className="text-lob-muted-light">No email on file</span>}
           </div>
           <button
@@ -84,7 +84,9 @@ function EmailChangeForm({ email }: { email: string }) {
             autoFocus
           />
           {emailStatus && emailStatus !== 'sent' && (
-            <p className="text-xs text-red-600 bg-red-50 rounded-lg p-2">{emailStatus}</p>
+            <p className="text-xs text-lob-danger bg-lob-danger-light rounded-lg p-2">
+              {emailStatus}
+            </p>
           )}
           <div className="flex gap-2">
             <button

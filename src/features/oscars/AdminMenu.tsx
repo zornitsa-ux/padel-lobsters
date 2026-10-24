@@ -25,7 +25,7 @@ export default function AdminMenu({ viewMode, onSetViewMode }: AdminMenuProps) {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1.5 bg-white border border-gray-200 rounded-xl px-3 py-1.5 text-sm font-semibold text-lob-dark active:scale-95 transition-all"
+        className="inline-flex items-center gap-1.5 bg-white border border-lob-line-strong rounded-xl px-3 py-1.5 text-sm font-semibold text-lob-dark active:scale-95 transition-all"
         aria-label="Open admin menu"
       >
         <Settings size={15} /> Menu
@@ -39,7 +39,7 @@ export default function AdminMenu({ viewMode, onSetViewMode }: AdminMenuProps) {
             aria-label="Close menu"
           />
           <div className="relative ml-auto h-full w-72 max-w-[85%] bg-white shadow-xl flex flex-col">
-            <div className="flex items-center justify-between px-4 pt-12 pb-3 border-b border-gray-100">
+            <div className="flex items-center justify-between px-4 pt-12 pb-3 border-b border-lob-line">
               <h3 className="text-base font-bold text-lob-dark">Admin menu</h3>
               <button
                 onClick={() => setOpen(false)}
@@ -51,7 +51,7 @@ export default function AdminMenu({ viewMode, onSetViewMode }: AdminMenuProps) {
             </div>
 
             <div className="p-4 space-y-2">
-              <p className="text-[11px] uppercase tracking-wider font-bold text-lob-muted-light px-1">
+              <p className="text-xs uppercase tracking-wider font-bold text-lob-muted-light px-1">
                 View
               </p>
               <MenuOption
@@ -90,14 +90,16 @@ function MenuOption({ active, icon, title, subtitle, onClick }: MenuOptionProps)
       onClick={onClick}
       aria-pressed={active}
       className={`w-full text-left rounded-xl border p-3 flex items-start gap-3 transition-all active:scale-[0.99] ${
-        active ? 'bg-lob-teal/10 border-lob-teal' : 'bg-white border-gray-200 hover:border-gray-300'
+        active
+          ? 'bg-lob-teal/10 border-lob-teal'
+          : 'bg-white border-lob-line-strong hover:border-gray-300'
       }`}
     >
       <span className={active ? 'text-lob-teal' : 'text-lob-muted'}>{icon}</span>
       <span className="min-w-0">
         <span className={`block text-sm font-bold ${active ? 'text-lob-teal' : 'text-lob-dark'}`}>
           {title}
-          {active && <span className="ml-1.5 text-[10px] font-semibold uppercase">· current</span>}
+          {active && <span className="ml-1.5 text-2xs font-semibold uppercase">· current</span>}
         </span>
         <span className="block text-xs text-lob-muted mt-0.5">{subtitle}</span>
       </span>

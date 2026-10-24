@@ -126,7 +126,7 @@ export default function Players() {
         <h2 className="text-lg font-bold text-lob-dark">
           Players ({activePlayers.length})
           {pendingPlayers.length > 0 && isAdmin && (
-            <span className="ml-2 text-xs bg-orange-100 text-orange-600 font-semibold px-2 py-0.5 rounded-full">
+            <span className="ml-2 text-xs bg-lob-warning-soft text-lob-warning font-semibold px-2 py-0.5 rounded-full">
               {pendingPlayers.length} pending
             </span>
           )}

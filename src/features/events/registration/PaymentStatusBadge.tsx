@@ -7,7 +7,7 @@ interface PaymentStatusBadgeProps {
 export default function PaymentStatusBadge({ paymentStatus }: PaymentStatusBadgeProps) {
   if (paymentStatus === 'paid') {
     return (
-      <span className="text-xs font-semibold bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+      <span className="text-xs font-semibold bg-lob-success-soft text-lob-success px-2 py-0.5 rounded-full">
         Confirmed ✓
       </span>
     )
@@ -23,7 +23,7 @@ export default function PaymentStatusBadge({ paymentStatus }: PaymentStatusBadge
 
   if (paymentStatus === 'pending_confirmation') {
     return (
-      <span className="text-xs font-semibold bg-sky-100 text-sky-700 px-2 py-0.5 rounded-full">
+      <span className="text-xs font-semibold bg-lob-info-soft text-lob-info px-2 py-0.5 rounded-full">
         Paid
       </span>
     )
@@ -31,7 +31,7 @@ export default function PaymentStatusBadge({ paymentStatus }: PaymentStatusBadge
 
   if (paymentStatus === 'tikkied') {
     return (
-      <span className="text-xs font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+      <span className="text-xs font-semibold bg-lob-warning-soft text-lob-warning px-2 py-0.5 rounded-full">
         Tikkied
       </span>
     )

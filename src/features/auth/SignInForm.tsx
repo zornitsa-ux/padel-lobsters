@@ -56,7 +56,7 @@ function EmailField({ email, onChange }: EmailFieldProps) {
 }
 
 const secondaryButton =
-  'w-full text-sm font-semibold text-lob-slate bg-gray-100 hover:bg-gray-200 border border-gray-200 py-2.5 rounded-xl transition-all'
+  'w-full text-sm font-semibold text-lob-slate bg-gray-100 hover:bg-gray-200 border border-lob-line-strong py-2.5 rounded-xl transition-all'
 
 const linkButton = 'text-xs font-semibold text-lob-teal hover:underline'
 

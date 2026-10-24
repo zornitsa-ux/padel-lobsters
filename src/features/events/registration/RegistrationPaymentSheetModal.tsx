@@ -58,7 +58,7 @@ export default function RegistrationPaymentSheetModal({
             className={`flex items-center justify-center gap-2 w-full text-base font-bold py-3.5 rounded-2xl transition-all ${
               tikkieClicked
                 ? 'bg-gray-200 text-lob-muted pointer-events-none'
-                : 'bg-[#FF6B35] text-white active:scale-95'
+                : 'bg-tikkie text-white active:scale-95'
             }`}
           >
             <ExternalLink size={18} />

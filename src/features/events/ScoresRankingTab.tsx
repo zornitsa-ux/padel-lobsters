@@ -123,7 +123,7 @@ export default function ScoresRankingTab({
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-xs text-lob-muted-light uppercase border-b border-gray-100">
+                  <tr className="text-xs text-lob-muted-light uppercase border-b border-lob-line">
                     <th className="text-left pb-2 pl-1">#</th>
                     <th className="text-left pb-2">Player</th>
                     <th className="text-center pb-2">P</th>
@@ -154,8 +154,8 @@ export default function ScoresRankingTab({
                         </div>
                       </td>
                       <td className="text-center py-2.5 text-lob-slate">{s.played}</td>
-                      <td className="text-center py-2.5 text-green-600 font-semibold">{s.won}</td>
-                      <td className="text-center py-2.5 text-red-500">{s.lost}</td>
+                      <td className="text-center py-2.5 text-lob-success font-semibold">{s.won}</td>
+                      <td className="text-center py-2.5 text-lob-danger">{s.lost}</td>
                       <td className="text-center py-2.5 text-lob-muted text-xs">
                         {s.pointsFor}-{s.pointsAgainst}
                       </td>

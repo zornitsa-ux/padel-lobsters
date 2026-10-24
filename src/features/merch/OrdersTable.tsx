@@ -55,7 +55,7 @@ export default function OrdersTable({ activeOrders, interests, items, players }:
               closeCancelModal()
             }}
             disabled={cancelOrder.isPending}
-            className="w-full py-2.5 rounded-xl bg-red-500 text-white font-semibold text-sm active:scale-95 transition-all disabled:opacity-50"
+            className="w-full py-2.5 rounded-xl bg-lob-danger-solid text-white font-semibold text-sm active:scale-95 transition-all disabled:opacity-50"
           >
             {cancelOrder.isPending ? 'Cancelling…' : 'Cancel Order'}
           </button>
@@ -83,14 +83,14 @@ export default function OrdersTable({ activeOrders, interests, items, players }:
       {activeOrders.length > 0 ? (
         <div className="space-y-2">
           {/* Summary stats */}
-          <div className="flex gap-2 text-[11px] text-lob-muted px-1">
+          <div className="flex gap-2 text-xs text-lob-muted px-1">
             <span>{activeOrders.length} orders</span>
             <span>·</span>
-            <span className="text-amber-600">
+            <span className="text-lob-warning">
               {activeOrders.filter((o) => o.status === 'ordered').length} pending
             </span>
             <span>·</span>
-            <span className="text-green-600">
+            <span className="text-lob-success">
               {activeOrders.filter((o) => o.status === 'paid').length} paid
             </span>
             <span>·</span>
@@ -129,18 +129,18 @@ export default function OrdersTable({ activeOrders, interests, items, players }:
                           </span>
                         )}
                         {hasCustomName && (
-                          <span className="text-xs bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full font-medium">
+                          <span className="text-xs bg-lob-warning-light text-lob-warning px-2 py-0.5 rounded-full font-medium">
                             "{o.custom_name}"
                           </span>
                         )}
                         <span className="text-xs font-bold text-lob-teal">€{orderPrice}</span>
-                        <span className="text-[11px] text-lob-muted-light">
+                        <span className="text-xs text-lob-muted-light">
                           {formatOrderTime(o.created_at)}
                         </span>
                       </div>
                     </div>
                     <span
-                      className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.text}`}
+                      className={`inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.text}`}
                     >
                       <StatusIcon size={10} /> {cfg.label}
                     </span>
@@ -152,7 +152,7 @@ export default function OrdersTable({ activeOrders, interests, items, players }:
                       disabled={status === 'paid' || status === 'delivered' || markOrder.isPending}
                       className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                         status === 'paid' || status === 'delivered'
-                          ? 'bg-green-100 text-green-600'
+                          ? 'bg-lob-success-soft text-lob-success'
                           : 'bg-gray-100 text-lob-muted active:scale-95'
                       }`}
                     >
@@ -173,7 +173,7 @@ export default function OrdersTable({ activeOrders, interests, items, players }:
                     </button>
                     <button
                       onClick={() => setCancelTarget(o)}
-                      className="px-2 py-1.5 rounded-lg text-xs font-semibold bg-red-50 text-red-400 active:scale-95 transition-all"
+                      className="px-2 py-1.5 rounded-lg text-xs font-semibold bg-lob-danger-light text-lob-danger active:scale-95 transition-all"
                     >
                       <Ban size={12} />
                     </button>
@@ -199,9 +199,9 @@ export default function OrdersTable({ activeOrders, interests, items, players }:
                         {o.size && `(${o.size})`}
                       </p>
                       {o.admin_comment && (
-                        <p className="text-xs text-red-400 italic">"{o.admin_comment}"</p>
+                        <p className="text-xs text-lob-danger italic">"{o.admin_comment}"</p>
                       )}
-                      <p className="text-[10px] text-lob-muted-light">
+                      <p className="text-2xs text-lob-muted-light">
                         {formatOrderTime(o.cancelled_at || o.created_at)}
                       </p>
                     </div>

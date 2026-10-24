@@ -124,7 +124,10 @@ export function ProfilePlayFields<T extends ProfileFieldValues>({
             onChange={(e) => setForm((f) => ({ ...f, playtomicLevel: e.target.value }))}
           />
           {levelError && (
-            <p role="alert" className="text-xs text-red-600 bg-red-50 rounded-lg p-2 mt-1">
+            <p
+              role="alert"
+              className="text-xs text-lob-danger bg-lob-danger-light rounded-lg p-2 mt-1"
+            >
               {levelError}
             </p>
           )}

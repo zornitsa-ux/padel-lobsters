@@ -86,7 +86,7 @@ export default function NextEventCard({
 
   return (
     <div className="card-elevated">
-      <p className="text-[10px] font-bold text-lob-coral uppercase tracking-wide mb-1">
+      <p className="text-2xs font-bold text-lob-coral uppercase tracking-wide mb-1">
         Your Next Event
       </p>
       <h2 className="text-lg font-bold text-lob-dark">
@@ -130,17 +130,17 @@ export default function NextEventCard({
       {claimedId &&
         !registrationsPending &&
         (isRegistered ? (
-          <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-1.5 inline-flex items-center gap-1.5 mb-3">
-            <span className="text-green-600 text-xs">✓</span>
-            <span className="text-xs font-semibold text-green-700">You're registered!</span>
+          <div className="bg-lob-success-light border border-lob-success-border rounded-lg px-3 py-1.5 inline-flex items-center gap-1.5 mb-3">
+            <span className="text-lob-success-solid text-xs">✓</span>
+            <span className="text-xs font-semibold text-lob-success">You're registered!</span>
           </div>
         ) : !isAdmin ? (
           <button
             onClick={() => onNavigate('registration', upcoming)}
-            className="bg-orange-50 border border-orange-200 rounded-lg px-3 py-1.5 inline-flex items-center gap-1.5 mb-3 active:scale-95 transition-all"
+            className="bg-lob-warning-light border border-lob-warning-border rounded-lg px-3 py-1.5 inline-flex items-center gap-1.5 mb-3 active:scale-95 transition-all"
           >
-            <span className="text-orange-500 text-xs">!</span>
-            <span className="text-xs font-semibold text-orange-700">
+            <span className="text-lob-warning-solid text-xs">!</span>
+            <span className="text-xs font-semibold text-lob-warning">
               Not signed up yet — tap to join
             </span>
           </button>
@@ -164,14 +164,14 @@ export default function NextEventCard({
         </button>
         <button
           onClick={() => onNavigate('schedule', upcoming)}
-          className="flex-none bg-gray-100 text-lob-slate font-semibold py-1.5 px-3 rounded-lg text-[11px] active:scale-95 transition-all flex items-center gap-1"
+          className="flex-none bg-gray-100 text-lob-slate font-semibold py-1.5 px-3 rounded-lg text-xs active:scale-95 transition-all flex items-center gap-1"
         >
           <CalendarDays size={12} /> Schedule
         </button>
         {isAdmin && (
           <button
             onClick={() => onNavigate('payments', upcoming)}
-            className="flex-none bg-gray-100 text-lob-slate font-semibold py-1.5 px-3 rounded-lg text-[11px] active:scale-95 transition-all flex items-center gap-1"
+            className="flex-none bg-gray-100 text-lob-slate font-semibold py-1.5 px-3 rounded-lg text-xs active:scale-95 transition-all flex items-center gap-1"
           >
             <CreditCard size={12} /> Payments
           </button>

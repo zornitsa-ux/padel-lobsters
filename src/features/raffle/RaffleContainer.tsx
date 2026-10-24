@@ -81,13 +81,13 @@ export default function RaffleContainer({
         {committed.length > 0 && (
           <div className="card space-y-3">
             <div className="flex items-center gap-2">
-              <Check size={16} className="text-green-600" />
+              <Check size={16} className="text-lob-success-solid" />
               <p className="font-bold text-lob-dark">Winners{isPast ? '' : ' so far'}</p>
             </div>
             {committed.map((w: RaffleWinner, i: number) => (
               <div
                 key={w.id}
-                className="flex items-center gap-3 bg-gray-50 rounded-xl p-3 border border-gray-100 animate-fade-in-up"
+                className="flex items-center gap-3 bg-lob-well rounded-xl p-3 border border-lob-line animate-fade-in-up"
                 style={{ animationDelay: `${i * 120}ms` }}
               >
                 <span className="text-2xl flex-shrink-0">{medal(i)}</span>
@@ -108,7 +108,7 @@ export default function RaffleContainer({
                   <button
                     onClick={() => removeWinner.mutate(w.id)}
                     title="Remove winner"
-                    className="text-lob-muted-light hover:text-red-500 p-2 flex-shrink-0"
+                    className="text-lob-muted-light hover:text-lob-danger-solid p-2 flex-shrink-0"
                   >
                     <Trash2 size={16} />
                   </button>
@@ -168,7 +168,7 @@ export default function RaffleContainer({
             </button>
 
             {drawError ? (
-              <p className="text-center text-red-300 text-xs sm:text-sm mt-3 leading-snug">
+              <p className="text-center text-lob-danger-on-dark text-xs sm:text-sm mt-3 leading-snug">
                 {drawError}
               </p>
             ) : (

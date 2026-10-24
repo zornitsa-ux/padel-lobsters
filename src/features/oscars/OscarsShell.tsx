@@ -11,7 +11,7 @@ interface ShellProps {
 export function Shell({ title, headerRight, children }: ShellProps) {
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between gap-2 pb-2 border-b border-gray-100">
+      <div className="flex items-center justify-between gap-2 pb-2 border-b border-lob-line">
         <h2 className="text-lg font-bold text-lob-dark">{title}</h2>
         {headerRight}
       </div>
@@ -22,7 +22,7 @@ export function Shell({ title, headerRight, children }: ShellProps) {
 
 export function SectionLabel({ children }: { children: ReactNode }) {
   return (
-    <p className="text-[11px] uppercase tracking-wider font-bold text-lob-muted-light mt-2 mb-2 px-1">
+    <p className="text-xs uppercase tracking-wider font-bold text-lob-muted-light mt-2 mb-2 px-1">
       {children}
     </p>
   )
@@ -40,7 +40,7 @@ export function PhaseBanner({ status, startedAt, closedAt, sharedAt }: PhaseBann
     iso ? new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''
   if (status === 'active') {
     return (
-      <div className="bg-white border border-gray-200 rounded-2xl px-4 py-3 flex items-center gap-3">
+      <div className="bg-white border border-lob-line-strong rounded-2xl px-4 py-3 flex items-center gap-3">
         <span className="w-2 h-2 rounded-full bg-lob-coral animate-pulse" />
         <span className="text-sm font-semibold text-lob-slate">Active</span>
         <span className="text-xs text-lob-muted-light ml-auto">started {stamp(startedAt)}</span>
@@ -60,11 +60,11 @@ export function PhaseBanner({ status, startedAt, closedAt, sharedAt }: PhaseBann
   }
   if (status === 'shared') {
     return (
-      <div className="bg-green-50 border border-green-200 rounded-2xl px-4 py-3">
-        <p className="text-sm font-semibold text-green-800">
+      <div className="bg-lob-success-light border border-lob-success-border rounded-2xl px-4 py-3">
+        <p className="text-sm font-semibold text-lob-success-strong">
           Shared with players at {stamp(sharedAt)}
         </p>
-        <p className="text-xs text-green-700/80 mt-0.5">Everyone can now see the results.</p>
+        <p className="text-xs text-lob-success/80 mt-0.5">Everyone can now see the results.</p>
       </div>
     )
   }

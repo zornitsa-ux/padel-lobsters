@@ -27,7 +27,7 @@ export default function MyRounds({
 
   return (
     <div className="space-y-2">
-      <h3 className="text-[10px] font-bold text-lob-muted uppercase tracking-widest px-1">
+      <h3 className="text-2xs font-bold text-lob-muted uppercase tracking-widest px-1">
         Your rounds
       </h3>
       {rounds.map((round) =>
@@ -103,8 +103,8 @@ function OutcomeBadge({ view }: { view: MyMatchView }) {
   if (!outcome) return null
 
   const styles = {
-    win: 'text-green-700 bg-green-50 border-green-200',
-    loss: 'text-red-600 bg-red-50 border-red-200',
+    win: 'text-lob-success bg-lob-success-light border-lob-success-border',
+    loss: 'text-lob-danger bg-lob-danger-light border-lob-danger-border',
     tie: 'text-lob-muted bg-white border-lob-muted/30',
   }[outcome]
   const label = { win: 'Won', loss: 'Lost', tie: 'Tied' }[outcome]

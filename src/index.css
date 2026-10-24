@@ -29,7 +29,7 @@
   }
 
   .btn-danger {
-    @apply bg-red-500 text-white font-semibold py-2 px-4 rounded-full
+    @apply bg-lob-danger-solid text-white font-semibold py-2 px-4 rounded-full
            active:scale-95 transition-all duration-150 shadow-md;
   }
 
@@ -40,24 +40,16 @@
 
   /* ── Cards ────────────────────────────────────────────────────── */
   .card {
-    @apply bg-white rounded-2xl p-4;
-    box-shadow:
-      0 1px 3px rgba(26, 43, 48, 0.08),
-      0 4px 16px rgba(26, 43, 48, 0.05);
-    border: 1px solid rgba(26, 43, 48, 0.06);
+    @apply bg-white rounded-2xl p-4 shadow-card border border-lob-dark/[0.06];
   }
 
   .card-elevated {
-    @apply bg-white rounded-2xl p-4;
-    box-shadow:
-      0 2px 8px rgba(26, 43, 48, 0.12),
-      0 8px 24px rgba(26, 43, 48, 0.08);
-    border: 1px solid rgba(26, 43, 48, 0.04);
+    @apply bg-white rounded-2xl p-4 shadow-card-elevated border border-lob-dark/[0.04];
   }
 
   /* ── Inputs ────────────────────────────────────────────────────── */
   .input {
-    @apply w-full border border-gray-200 rounded-xl px-4 py-3 text-sm
+    @apply w-full border border-lob-line-strong rounded-xl px-4 py-3 text-sm
            focus:outline-none focus:ring-2 focus:ring-lob-teal focus:border-transparent
            bg-white placeholder-gray-400;
     box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
@@ -70,11 +62,6 @@
   /* ── Badges & Chips ────────────────────────────────────────────────── */
   .badge-unpaid {
     @apply bg-lob-coral-light text-lob-coral text-xs font-semibold px-2 py-0.5 rounded-full;
-  }
-
-  /* ── Header gradient ────────────────────────────────────────────────── */
-  .header-gradient {
-    background: linear-gradient(135deg, #3d7a8a 0%, #2a5a68 100%);
   }
 }
 

@@ -173,7 +173,7 @@ export default function TransferSpotModal({
         )}
 
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl px-3 py-2 text-xs text-red-700">
+          <div className="bg-lob-danger-light border border-lob-danger-border rounded-xl px-3 py-2 text-xs text-lob-danger-strong">
             {error}
           </div>
         )}
@@ -207,12 +207,12 @@ export default function TransferSpotModal({
                 player={p}
                 onClick={() => handlePick(p)}
                 disabled={busy}
-                className="w-full p-3 rounded-2xl bg-gray-50 hover:bg-lob-cream active:scale-[0.98] transition-all disabled:opacity-40"
+                className="w-full p-3 rounded-2xl bg-lob-well hover:bg-lob-cream active:scale-[0.98] transition-all disabled:opacity-40"
                 name={
                   <>
                     {displayName(p)}
                     {isWait && (
-                      <span className="text-[10px] font-semibold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full">
+                      <span className="text-2xs font-semibold bg-lob-warning-soft text-lob-warning px-1.5 py-0.5 rounded-full">
                         On waitlist
                       </span>
                     )}

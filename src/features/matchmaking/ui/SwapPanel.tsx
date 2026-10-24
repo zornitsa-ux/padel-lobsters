@@ -47,7 +47,7 @@ function SwapRow({
         </p>
         {copy.missesTarget && <p className="text-xs text-lob-muted">{copy.missesTarget}</p>}
         {copy.ruleBreaks.map((line) => (
-          <p key={line} className="text-xs font-semibold text-red-600">
+          <p key={line} className="text-xs font-semibold text-lob-danger">
             {line}
           </p>
         ))}
@@ -93,7 +93,7 @@ export default function SwapPanel({
         className="w-full max-w-md bg-white rounded-2xl shadow-xl max-h-[85vh] overflow-y-auto"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="sticky top-0 bg-white px-4 py-3 border-b border-gray-100 flex items-start justify-between gap-4 rounded-t-2xl">
+        <div className="sticky top-0 bg-white px-4 py-3 border-b border-lob-line flex items-start justify-between gap-4 rounded-t-2xl">
           <div>
             <p className="font-semibold text-lob-slate text-sm">{heading.title}</p>
             <p className="text-xs text-lob-muted mt-0.5">{heading.detail}</p>
@@ -142,7 +142,7 @@ export default function SwapPanel({
           )}
         </div>
 
-        <div className="sticky bottom-0 bg-white border-t border-gray-100 px-4 py-3 rounded-b-2xl">
+        <div className="sticky bottom-0 bg-white border-t border-lob-line px-4 py-3 rounded-b-2xl">
           <button
             type="button"
             onClick={onCancel}

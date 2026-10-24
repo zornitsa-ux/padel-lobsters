@@ -5,7 +5,7 @@ export interface StatTileProps {
   size?: 'sm' | 'md'
   /** muted: light background. inverted: coloured background. caps: uppercase key/value. */
   labelVariant?: 'muted' | 'inverted' | 'caps'
-  /** Per-tile value colour, e.g. 'text-green-600'. */
+  /** Per-tile value colour, e.g. 'text-lob-success'. */
   valueClassName?: string
   className?: string
 }
@@ -18,7 +18,7 @@ const valueSizeClasses: Record<NonNullable<StatTileProps['size']>, string> = {
 const labelClasses: Record<NonNullable<StatTileProps['labelVariant']>, string> = {
   muted: 'text-[9px] text-lob-muted-light font-medium',
   inverted: 'text-xs opacity-75',
-  caps: 'text-[10px] font-bold text-lob-muted-light uppercase tracking-wider',
+  caps: 'text-2xs font-bold text-lob-muted-light uppercase tracking-wider',
 }
 
 export function StatTile({

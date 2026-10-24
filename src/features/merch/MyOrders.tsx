@@ -46,11 +46,11 @@ export default function MyOrders({ myOrders, items }: MyOrdersProps) {
                         </span>
                       )}
                       {o.customName && (
-                        <span className="text-xs bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full font-medium">
+                        <span className="text-xs bg-lob-warning-light text-lob-warning px-2 py-0.5 rounded-full font-medium">
                           Name: {o.customName}
                         </span>
                       )}
-                      <span className="text-[11px] text-lob-muted-light">
+                      <span className="text-xs text-lob-muted-light">
                         {formatOrderTime(o.created_at)}
                       </span>
                     </div>
@@ -71,7 +71,7 @@ export default function MyOrders({ myOrders, items }: MyOrdersProps) {
                           />
                         )}
                         <div
-                          className={`flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-full ${
+                          className={`flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full ${
                             active
                               ? `${sCfg.bg} ${sCfg.text}`
                               : 'bg-gray-100 text-lob-muted-light/60'
@@ -85,12 +85,12 @@ export default function MyOrders({ myOrders, items }: MyOrdersProps) {
                 </div>
                 {/* Cancelled notice */}
                 {status === 'cancelled' && (
-                  <div className="bg-red-50 rounded-xl p-2.5 space-y-1">
-                    <p className="text-xs font-semibold text-red-500 flex items-center gap-1">
+                  <div className="bg-lob-danger-light rounded-xl p-2.5 space-y-1">
+                    <p className="text-xs font-semibold text-lob-danger flex items-center gap-1">
                       <Ban size={11} /> Order cancelled by admin
                     </p>
                     {o.admin_comment && (
-                      <p className="text-xs text-red-400 italic">"{o.admin_comment}"</p>
+                      <p className="text-xs text-lob-danger italic">"{o.admin_comment}"</p>
                     )}
                   </div>
                 )}

@@ -36,7 +36,7 @@ export default function KingOfCourtAdmin({ tournament }: { tournament: Normalise
       {actions.error && (
         <p
           role="alert"
-          className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg p-2"
+          className="text-xs text-lob-danger bg-lob-danger-light border border-lob-danger-border rounded-lg p-2"
         >
           {actions.error}
         </p>
@@ -83,7 +83,7 @@ function SeedsCard({
         <h2 className="font-bold text-lob-dark">Seeds and starting courts</h2>
         <span
           className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-            publishedAt ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-lob-muted'
+            publishedAt ? 'bg-lob-success-light text-lob-success' : 'bg-gray-100 text-lob-muted'
           }`}
         >
           {publishedAt ? 'Shown to players' : 'Not shown yet'}
@@ -99,7 +99,7 @@ function SeedsCard({
         <p className="text-sm text-lob-muted">No registered teams yet.</p>
       ) : (
         <>
-          <ol className="divide-y divide-gray-100">
+          <ol className="divide-y divide-lob-line">
             {order.map((teamId, index) => {
               const strength = strengthById.get(teamId)
               return (
@@ -113,7 +113,7 @@ function SeedsCard({
                       <p className="text-xs text-lob-muted">
                         Avg level {strength.strength.toFixed(2)}
                         {strength.unrated && (
-                          <span className="ml-1 text-orange-700 bg-orange-50 px-1.5 rounded-full">
+                          <span className="ml-1 text-lob-warning bg-lob-warning-light px-1.5 rounded-full">
                             unrated
                           </span>
                         )}
@@ -245,7 +245,7 @@ function FinalStandingsCard({ seeding, actions }: { seeding: Seeding; actions: A
       </ol>
 
       {repeated && (
-        <p role="alert" className="text-xs text-red-600">
+        <p role="alert" className="text-xs text-lob-danger">
           A team is picked more than once.
         </p>
       )}

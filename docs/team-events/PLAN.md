@@ -104,8 +104,11 @@ D-030**); DESIGN §3.3–3.4 describe what was built. In short:
    Thu 12 Nov.
 2. **Design system** (owner, 2026-10-24): a review of the team-event UI
    proposed status-colour tokens and shared components in 11 small PRs
-   (see the T12 log). Two owner calls first: is "danger" `lob-coral`, and
-   does "warning" replace `lob-amber`?
+   (see the T12 log). Owner calls made: "danger" is its own red, not
+   `lob-coral`, and "warning" replaces `lob-amber` for status. PR 1
+   (`design-tokens`) adds the tokens and migrates raw status colours
+   app-wide. The design-system work now runs from
+   `docs/design-system/PLAN.md`.
 3. **T2: partner invites** (unchanged, D-023). It's sign-in-facing, so not
    from Thu 12 Nov until after the event on Sun 15 Nov.
 

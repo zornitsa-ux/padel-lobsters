@@ -36,9 +36,9 @@ export default function StatRow({ stat, expanded, voters, onToggle }: StatRowPro
         <ProgressBar value={pct} fillClassName="bg-gradient-to-r from-lob-teal to-lob-coral" />
       </button>
       {expanded && (
-        <div className="px-3 pb-3 pt-2 border-t border-gray-100 grid grid-cols-2 gap-3">
+        <div className="px-3 pb-3 pt-2 border-t border-lob-line grid grid-cols-2 gap-3">
           <div>
-            <p className="text-[10px] uppercase font-bold text-green-700 tracking-wide mb-1">
+            <p className="text-2xs uppercase font-bold text-lob-success tracking-wide mb-1">
               ✓ Voted ({voted.length})
             </p>
             <div className="space-y-0.5">
@@ -53,7 +53,7 @@ export default function StatRow({ stat, expanded, voters, onToggle }: StatRowPro
             </div>
           </div>
           <div>
-            <p className="text-[10px] uppercase font-bold text-lob-muted tracking-wide mb-1">
+            <p className="text-2xs uppercase font-bold text-lob-muted tracking-wide mb-1">
               ○ Not yet ({notVoted.length})
             </p>
             <div className="space-y-0.5">

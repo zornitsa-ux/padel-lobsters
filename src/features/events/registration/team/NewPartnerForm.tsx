@@ -46,7 +46,7 @@ export default function NewPartnerForm({ draft, onChange, emailError }: NewPartn
           onChange={(e) => set({ level: e.target.value })}
         />
         {!isLevelValid({ level: draft.level }) && (
-          <span className="block mt-1 text-red-600">Enter a level between 0 and 7.</span>
+          <span className="block mt-1 text-lob-danger">Enter a level between 0 and 7.</span>
         )}
       </label>
       <label className="flex items-start gap-2 text-xs text-lob-slate">

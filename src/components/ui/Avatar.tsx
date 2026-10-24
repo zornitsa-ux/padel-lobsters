@@ -11,8 +11,8 @@ interface AvatarProps {
   player: AvatarPlayer
   size?: AvatarSize
   /**
-   * Class-based colour replacing the letter palette (e.g. `bg-orange-100
-   * text-orange-600`). A toned avatar is a themed marker rather than a
+   * Class-based colour replacing the letter palette (e.g. `bg-lob-warning-soft
+   * text-lob-warning`). A toned avatar is a themed marker rather than a
    * portrait, so it always renders the initial and never the photo.
    */
   tone?: string

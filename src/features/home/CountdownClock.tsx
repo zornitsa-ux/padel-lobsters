@@ -17,7 +17,7 @@ function CountdownSkeleton() {
   return (
     <div className="text-center" role="status" aria-busy="true">
       <span className="sr-only">Loading the countdown to the next event…</span>
-      <p className="text-[10px] font-bold text-lob-muted-light uppercase tracking-widest mb-2">
+      <p className="text-2xs font-bold text-lob-muted-light uppercase tracking-widest mb-2">
         Next Lobster Event in
       </p>
       <div className="flex justify-center gap-2">
@@ -40,7 +40,7 @@ export default function CountdownClock({
   if (countdown) {
     return (
       <div className="text-center">
-        <p className="text-[10px] font-bold text-lob-muted-light uppercase tracking-widest mb-2">
+        <p className="text-2xs font-bold text-lob-muted-light uppercase tracking-widest mb-2">
           Next Lobster Event in
         </p>
         <div className="flex justify-center gap-2">
@@ -70,8 +70,8 @@ export default function CountdownClock({
           </div>
         </div>
         {streak > 0 && (
-          <p className="text-[11px] text-lob-muted font-semibold mt-2 flex items-center justify-center gap-1">
-            <Flame size={13} className="text-orange-500" />
+          <p className="text-xs text-lob-muted font-semibold mt-2 flex items-center justify-center gap-1">
+            <Flame size={13} className="text-lob-warning-solid" />
             {streak} event{streak > 1 ? 's' : ''} in a row
           </p>
         )}
@@ -81,8 +81,8 @@ export default function CountdownClock({
   if (streak > 0) {
     return (
       <div className="flex items-center gap-2">
-        <span className="text-[11px] bg-white border border-gray-200 text-lob-slate font-semibold px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1.5">
-          <Flame size={13} className="text-orange-500" />
+        <span className="text-xs bg-white border border-lob-line-strong text-lob-slate font-semibold px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1.5">
+          <Flame size={13} className="text-lob-warning-solid" />
           {streak} event{streak > 1 ? 's' : ''} in a row
         </span>
       </div>

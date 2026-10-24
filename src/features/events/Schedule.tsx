@@ -370,9 +370,9 @@ export default function Schedule({
       {/* Preview banner + swap + save */}
       {generated && (
         <div className="space-y-2">
-          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 flex items-center gap-2 flex-wrap">
-            <AlertCircle size={16} className="text-yellow-600 flex-shrink-0" />
-            <p className="text-xs text-yellow-700 flex-1 min-w-0">Preview — not saved yet</p>
+          <div className="bg-lob-warning-light border border-lob-warning-border rounded-xl p-3 flex items-center gap-2 flex-wrap">
+            <AlertCircle size={16} className="text-lob-warning flex-shrink-0" />
+            <p className="text-xs text-lob-warning flex-1 min-w-0">Preview — not saved yet</p>
             <div className="flex gap-1.5 flex-shrink-0 flex-wrap">
               <button
                 onClick={() => {
@@ -388,14 +388,14 @@ export default function Schedule({
               </button>
               <button
                 onClick={handleDownloadCsv}
-                className="text-xs text-yellow-700 font-semibold px-2 py-1 flex items-center gap-1 border border-yellow-300 rounded-lg bg-white active:scale-95"
+                className="text-xs text-lob-warning font-semibold px-2 py-1 flex items-center gap-1 border border-lob-warning-border rounded-lg bg-white active:scale-95"
                 title="Download the preview as a CSV you can review offline before saving"
               >
                 <Download size={12} /> Download
               </button>
               <button
                 onClick={handleGenerate}
-                className="text-xs text-yellow-700 font-semibold px-2 py-1"
+                className="text-xs text-lob-warning font-semibold px-2 py-1"
               >
                 Reshuffle
               </button>
@@ -431,12 +431,12 @@ export default function Schedule({
           )}
           {/* Swap conflict warnings */}
           {swapWarnings.length > 0 && (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-3 space-y-1">
-              <p className="text-xs font-bold text-red-700 flex items-center gap-1.5">
+            <div className="bg-lob-danger-light border border-lob-danger-border rounded-xl p-3 space-y-1">
+              <p className="text-xs font-bold text-lob-danger-strong flex items-center gap-1.5">
                 <AlertCircle size={14} /> Partnership conflicts detected
               </p>
               {swapWarnings.map((w, i) => (
-                <p key={i} className="text-xs text-red-600">
+                <p key={i} className="text-xs text-lob-danger">
                   • {w}
                 </p>
               ))}
@@ -447,9 +447,9 @@ export default function Schedule({
       )}
 
       {saved && (
-        <div className="bg-green-50 border border-green-200 rounded-xl p-3 flex items-center gap-2">
-          <Trophy size={16} className="text-green-600" />
-          <p className="text-sm text-green-700 font-medium">Schedule saved!</p>
+        <div className="bg-lob-success-light border border-lob-success-border rounded-xl p-3 flex items-center gap-2">
+          <Trophy size={16} className="text-lob-success" />
+          <p className="text-sm text-lob-success font-medium">Schedule saved!</p>
         </div>
       )}
 
@@ -464,7 +464,7 @@ export default function Schedule({
                 className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
                   activeRound === i
                     ? 'bg-lob-teal text-white'
-                    : 'bg-white text-lob-slate border border-gray-200'
+                    : 'bg-white text-lob-slate border border-lob-line-strong'
                 }`}
               >
                 {r.label}
@@ -476,7 +476,7 @@ export default function Schedule({
           {display[activeRound] && (
             <div className="space-y-3">
               {display[activeRound].note && (
-                <div className="bg-gray-50 rounded-xl p-3 text-sm text-lob-muted text-center">
+                <div className="bg-lob-well rounded-xl p-3 text-sm text-lob-muted text-center">
                   {display[activeRound].note}
                 </div>
               )}
@@ -549,7 +549,7 @@ export default function Schedule({
                             const tone = !uneven
                               ? 'bg-teal-50 text-teal-700'
                               : avoidable
-                                ? 'bg-amber-50 text-amber-700'
+                                ? 'bg-lob-warning-light text-lob-warning'
                                 : 'bg-gray-100 text-lob-muted'
                             return (
                               <span
@@ -562,7 +562,7 @@ export default function Schedule({
                           })()}
                       </div>
                       {match.completed && (
-                        <span className="text-xs text-green-600 font-semibold">✓ Done</span>
+                        <span className="text-xs text-lob-success font-semibold">✓ Done</span>
                       )}
                     </div>
 
@@ -589,7 +589,7 @@ export default function Schedule({
                                   {p.name[0]}
                                 </div>
                                 {p.isLeftHanded && (
-                                  <span className="absolute -top-1 -right-1 text-[9px] bg-amber-400 text-white rounded-full w-3.5 h-3.5 flex items-center justify-center font-bold">
+                                  <span className="absolute -top-1 -right-1 text-[9px] bg-lob-warning-solid text-white rounded-full w-3.5 h-3.5 flex items-center justify-center font-bold">
                                     L
                                   </span>
                                 )}
@@ -652,7 +652,7 @@ export default function Schedule({
                                   {p.name[0]}
                                 </div>
                                 {p.isLeftHanded && (
-                                  <span className="absolute -top-1 -left-1 text-[9px] bg-amber-400 text-white rounded-full w-3.5 h-3.5 flex items-center justify-center font-bold">
+                                  <span className="absolute -top-1 -left-1 text-[9px] bg-lob-warning-solid text-white rounded-full w-3.5 h-3.5 flex items-center justify-center font-bold">
                                     L
                                   </span>
                                 )}
@@ -674,7 +674,7 @@ export default function Schedule({
 
               {/* Sitting out */}
               {(display[activeRound].sitting || []).length > 0 && (
-                <div className="bg-gray-50 rounded-xl p-3">
+                <div className="bg-lob-well rounded-xl p-3">
                   <p className="text-xs font-semibold text-lob-muted mb-2">
                     Sitting out this round
                   </p>
@@ -684,7 +684,7 @@ export default function Schedule({
                       return p ? (
                         <span
                           key={id}
-                          className="text-xs bg-white border border-gray-200 text-lob-slate px-2 py-1 rounded-full"
+                          className="text-xs bg-white border border-lob-line-strong text-lob-slate px-2 py-1 rounded-full"
                         >
                           {p.name}
                         </span>

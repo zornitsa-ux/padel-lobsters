@@ -137,7 +137,7 @@ export function LeagueDashboardCard({ myPlayerId }: LeagueDashboardCardProps) {
       <div className="bg-gradient-to-r from-lob-teal to-lob-teal-dark px-4 pt-3.5 pb-3">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-white/60 mb-0.5">
+            <p className="text-2xs font-bold uppercase tracking-widest text-white/60 mb-0.5">
               🦞 Lobster League
             </p>
             <h3 className="font-bold text-white text-base leading-tight">{league.name}</h3>

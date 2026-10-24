@@ -29,10 +29,10 @@ export default function CategoryGrid({
             onClick={() => onSelect && onSelect(c.id)}
             className={`rounded-2xl p-3 text-left transition-all min-h-[112px] flex flex-col justify-between border ${
               voted
-                ? 'bg-gray-100 border-gray-200'
+                ? 'bg-gray-100 border-lob-line-strong'
                 : clickable
-                  ? 'bg-white border-gray-100 active:scale-95'
-                  : 'bg-white border-gray-100 opacity-90'
+                  ? 'bg-white border-lob-line active:scale-95'
+                  : 'bg-white border-lob-line opacity-90'
             }`}
           >
             <span className="text-2xl">{c.icon}</span>
@@ -43,18 +43,18 @@ export default function CategoryGrid({
                 {c.name}
               </p>
               {voted ? (
-                <p className="text-[11px] text-green-600 font-semibold mt-1 flex items-center gap-1">
+                <p className="text-xs text-lob-success font-semibold mt-1 flex items-center gap-1">
                   <Check size={11} /> Voted: {voted.name}
                   {clickable && (
                     <span className="text-lob-muted-light font-normal ml-0.5">· tap to change</span>
                   )}
                 </p>
               ) : showWaitingState ? (
-                <p className="text-[11px] text-lob-muted-light font-medium mt-1">
+                <p className="text-xs text-lob-muted-light font-medium mt-1">
                   You didn&apos;t vote
                 </p>
               ) : (
-                <p className="text-[11px] text-lob-muted-light mt-1">Tap to vote</p>
+                <p className="text-xs text-lob-muted-light mt-1">Tap to vote</p>
               )}
             </div>
           </button>

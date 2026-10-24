@@ -64,11 +64,11 @@ export function BracketMatchSlot({ match, team1, team2, onTeamClick }: BracketMa
   return (
     <div
       className={`rounded-xl bg-white p-2 w-36 ${
-        !played ? 'border-2 border-dashed border-gray-200' : 'border border-gray-200'
+        !played ? 'border-2 border-dashed border-lob-line-strong' : 'border border-lob-line-strong'
       }`}
     >
       <TeamRow team={team1} isWinner={t1Won} played={played} onTeamClick={onTeamClick} />
-      <div className="border-t border-gray-100 my-0.5" />
+      <div className="border-t border-lob-line my-0.5" />
       <TeamRow
         team={team2}
         isWinner={t2Won}
@@ -77,7 +77,7 @@ export function BracketMatchSlot({ match, team1, team2, onTeamClick }: BracketMa
         onTeamClick={onTeamClick}
       />
       {scoreString && (
-        <p className="text-[10px] text-lob-muted text-center mt-1.5 font-mono leading-none">
+        <p className="text-2xs text-lob-muted text-center mt-1.5 font-mono leading-none">
           {scoreString}
         </p>
       )}

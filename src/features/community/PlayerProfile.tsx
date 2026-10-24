@@ -148,7 +148,7 @@ export default function PlayerProfile({
           </span>
         )}
         {p.isLeftHanded && (
-          <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-lg font-semibold">
+          <span className="text-xs bg-lob-warning-soft text-lob-warning px-2 py-1 rounded-lg font-semibold">
             🤚 Lefty
           </span>
         )}
@@ -172,11 +172,11 @@ export default function PlayerProfile({
       {/* Learned level — admin-only (mm_rating/mm_sigma, admin RPC) */}
       {isAdmin && learned && (
         <div className="flex items-center gap-1.5 text-xs text-lob-muted">
-          <span className="text-[10px] font-bold text-lob-teal uppercase tracking-wider">
+          <span className="text-2xs font-bold text-lob-teal uppercase tracking-wider">
             Learned level
           </span>
           <span className="font-bold text-lob-slate">{learned.mu.toFixed(2)}</span>
-          <span className={learnedDelta >= 0 ? 'text-green-600' : 'text-red-500'}>
+          <span className={learnedDelta >= 0 ? 'text-lob-success' : 'text-lob-danger'}>
             ({learnedDelta >= 0 ? '+' : ''}
             {learnedDelta.toFixed(2)} vs Playtomic)
           </span>
@@ -185,9 +185,9 @@ export default function PlayerProfile({
             title="Uncertainty in level units — 0.70 is a brand-new player, 0.15 is as confident as the model gets."
             className={
               learned.sigma < 0.3
-                ? 'text-green-600'
+                ? 'text-lob-success'
                 : learned.sigma < 0.5
-                  ? 'text-amber-600'
+                  ? 'text-lob-warning'
                   : 'text-lob-muted-light'
             }
           >
@@ -199,7 +199,7 @@ export default function PlayerProfile({
       {/* Recent form — last 5 matches */}
       {stats.recentForm.length > 0 && (
         <div>
-          <p className="text-[10px] font-bold text-lob-muted-light uppercase tracking-wider mb-1.5">
+          <p className="text-2xs font-bold text-lob-muted-light uppercase tracking-wider mb-1.5">
             Last {stats.recentForm.length}
           </p>
           <div className="flex gap-1">
@@ -208,9 +208,9 @@ export default function PlayerProfile({
                 key={i}
                 className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold ${
                   r === 'W'
-                    ? 'bg-green-100 text-green-700'
+                    ? 'bg-lob-success-soft text-lob-success'
                     : r === 'L'
-                      ? 'bg-red-100 text-red-600'
+                      ? 'bg-lob-danger-soft text-lob-danger'
                       : 'bg-gray-100 text-lob-muted'
                 }`}
               >
@@ -224,26 +224,26 @@ export default function PlayerProfile({
       {/* Detailed match metrics — game points, streaks, averages */}
       {stats.played > 0 && (
         <div>
-          <p className="text-[10px] font-bold text-lob-muted-light uppercase tracking-wider mb-1.5">
+          <p className="text-2xs font-bold text-lob-muted-light uppercase tracking-wider mb-1.5">
             Match Metrics
           </p>
           <div className="grid grid-cols-2 gap-1.5 text-xs">
-            <div className="bg-gray-50 rounded-lg px-2.5 py-1.5">
-              <span className="text-lob-muted-light text-[10px] font-semibold uppercase tracking-wide block">
+            <div className="bg-lob-well rounded-lg px-2.5 py-1.5">
+              <span className="text-lob-muted-light text-2xs font-semibold uppercase tracking-wide block">
                 Points for / against
               </span>
               <span className="text-lob-slate font-bold">
                 {stats.pointsFor} – {stats.pointsAgainst}
                 <span
-                  className={`ml-1 font-normal ${stats.pointDiff >= 0 ? 'text-green-600' : 'text-red-500'}`}
+                  className={`ml-1 font-normal ${stats.pointDiff >= 0 ? 'text-lob-success' : 'text-lob-danger'}`}
                 >
                   ({stats.pointDiff >= 0 ? '+' : ''}
                   {stats.pointDiff})
                 </span>
               </span>
             </div>
-            <div className="bg-gray-50 rounded-lg px-2.5 py-1.5">
-              <span className="text-lob-muted-light text-[10px] font-semibold uppercase tracking-wide block">
+            <div className="bg-lob-well rounded-lg px-2.5 py-1.5">
+              <span className="text-lob-muted-light text-2xs font-semibold uppercase tracking-wide block">
                 Avg per match
               </span>
               <span className="text-lob-slate font-bold">
@@ -251,19 +251,19 @@ export default function PlayerProfile({
               </span>
             </div>
             {stats.bestWinStreak > 0 && (
-              <div className="bg-gray-50 rounded-lg px-2.5 py-1.5">
-                <span className="text-lob-muted-light text-[10px] font-semibold uppercase tracking-wide block">
+              <div className="bg-lob-well rounded-lg px-2.5 py-1.5">
+                <span className="text-lob-muted-light text-2xs font-semibold uppercase tracking-wide block">
                   Best win streak
                 </span>
-                <span className="text-green-700 font-bold">🔥 {stats.bestWinStreak}</span>
+                <span className="text-lob-success font-bold">🔥 {stats.bestWinStreak}</span>
               </div>
             )}
             {stats.worstLossStreak > 0 && (
-              <div className="bg-gray-50 rounded-lg px-2.5 py-1.5">
-                <span className="text-lob-muted-light text-[10px] font-semibold uppercase tracking-wide block">
+              <div className="bg-lob-well rounded-lg px-2.5 py-1.5">
+                <span className="text-lob-muted-light text-2xs font-semibold uppercase tracking-wide block">
                   Longest skid
                 </span>
-                <span className="text-red-600 font-bold">🧊 {stats.worstLossStreak}</span>
+                <span className="text-lob-danger font-bold">🧊 {stats.worstLossStreak}</span>
               </div>
             )}
           </div>
@@ -273,37 +273,37 @@ export default function PlayerProfile({
       {/* Nemesis + Best / Worst partner row */}
       {(nemesis || bestPartner || worstPartner) && (
         <div>
-          <p className="text-[10px] font-bold text-lob-muted-light uppercase tracking-wider mb-1.5">
+          <p className="text-2xs font-bold text-lob-muted-light uppercase tracking-wider mb-1.5">
             Rivalries & Chemistry
           </p>
           <div className="flex flex-col gap-1 text-xs">
             {nemesis && (
-              <div className="flex items-center justify-between bg-red-50 rounded-lg px-2.5 py-1.5">
+              <div className="flex items-center justify-between bg-lob-danger-light rounded-lg px-2.5 py-1.5">
                 <span className="text-lob-slate">
                   😈 <span className="font-semibold">Nemesis</span> · {nemesis.name}
                 </span>
                 <span className="font-semibold">
-                  <span className="text-green-600">{nemesis.won}W</span>{' '}
-                  <span className="text-red-500">{nemesis.lost}L</span>
+                  <span className="text-lob-success">{nemesis.won}W</span>{' '}
+                  <span className="text-lob-danger">{nemesis.lost}L</span>
                 </span>
               </div>
             )}
             {bestPartner && (
-              <div className="flex items-center justify-between bg-green-50 rounded-lg px-2.5 py-1.5">
+              <div className="flex items-center justify-between bg-lob-success-light rounded-lg px-2.5 py-1.5">
                 <span className="text-lob-slate">
                   🤝 <span className="font-semibold">Best partner</span> · {bestPartner.name}
                 </span>
-                <span className="font-semibold text-green-700">
+                <span className="font-semibold text-lob-success">
                   {bestPartner.wins}W / {bestPartner.games}
                 </span>
               </div>
             )}
             {worstPartner && worstPartner.name !== bestPartner?.name && (
-              <div className="flex items-center justify-between bg-amber-50 rounded-lg px-2.5 py-1.5">
+              <div className="flex items-center justify-between bg-lob-warning-light rounded-lg px-2.5 py-1.5">
                 <span className="text-lob-slate">
                   💔 <span className="font-semibold">Jinx partner</span> · {worstPartner.name}
                 </span>
-                <span className="font-semibold text-amber-700">
+                <span className="font-semibold text-lob-warning">
                   {worstPartner.wins}W / {worstPartner.games}
                 </span>
               </div>
@@ -315,7 +315,7 @@ export default function PlayerProfile({
       {/* Head-to-head — top 5 opponent pairs */}
       {topH2HPairs.length > 0 && (
         <div>
-          <p className="text-[10px] font-bold text-lob-muted-light uppercase tracking-wider mb-1.5">
+          <p className="text-2xs font-bold text-lob-muted-light uppercase tracking-wider mb-1.5">
             Head to Head
           </p>
           <div className="space-y-1">
@@ -325,8 +325,8 @@ export default function PlayerProfile({
                   vs {h.names.join(' & ')}
                 </span>
                 <span className="font-semibold">
-                  <span className="text-green-600">{h.won}W</span>{' '}
-                  <span className="text-red-500">{h.lost}L</span>
+                  <span className="text-lob-success">{h.won}W</span>{' '}
+                  <span className="text-lob-danger">{h.lost}L</span>
                   {h.draws > 0 && (
                     <>
                       {' '}
@@ -343,7 +343,7 @@ export default function PlayerProfile({
       {/* Tournament history — clickable */}
       {stats.playerTournaments.length > 0 && (
         <div>
-          <p className="text-[10px] font-bold text-lob-muted-light uppercase tracking-wider mb-1.5">
+          <p className="text-2xs font-bold text-lob-muted-light uppercase tracking-wider mb-1.5">
             Tournaments
           </p>
           <div className="flex flex-wrap gap-1.5">
@@ -371,7 +371,7 @@ export default function PlayerProfile({
       {isAdmin && (
         <div className="space-y-1">
           <div className="flex items-center justify-between">
-            <p className="text-[10px] font-semibold text-lob-muted-light uppercase tracking-wider">
+            <p className="text-2xs font-semibold text-lob-muted-light uppercase tracking-wider">
               Admin only
             </p>
             {pii.revealed && !pii.isLoading && (
@@ -418,7 +418,7 @@ export default function PlayerProfile({
       {/* Player tagline / notes with saved prompt label */}
       {(p.tagline || p.notes) && (
         <div className="bg-lob-cream rounded-xl px-3 py-2">
-          <p className="text-[10px] font-bold text-lob-teal uppercase tracking-wider mb-0.5">
+          <p className="text-2xs font-bold text-lob-teal uppercase tracking-wider mb-0.5">
             {p.taglineLabel || p.tagline_label || '💬 War Cry'}
           </p>
           <p className="text-xs text-lob-slate italic">"{p.tagline || p.notes}"</p>
@@ -428,18 +428,18 @@ export default function PlayerProfile({
       {/* Sign-in invite — admin only. Players sign in with an emailed code,
       so there is nothing to reset: resending just repeats the invite email. */}
       {isAdmin && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center justify-between gap-3">
+        <div className="bg-lob-warning-light border border-lob-warning-border rounded-xl p-3 flex items-center justify-between gap-3">
           <div>
-            <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider mb-0.5">
+            <p className="text-2xs font-bold text-lob-warning uppercase tracking-wider mb-0.5">
               Sign-in invite
             </p>
-            <p className="text-xs text-amber-700/80 leading-snug">
+            <p className="text-xs text-lob-warning/80 leading-snug">
               Emails the player how to sign in. Contains no password or code.
             </p>
           </div>
           <button
             onClick={() => onResendInvite(p)}
-            className="text-xs bg-amber-500 text-white px-3 py-1.5 rounded-xl font-semibold active:scale-95 transition-all flex items-center gap-1.5 flex-shrink-0"
+            className="text-xs bg-lob-warning-solid text-white px-3 py-1.5 rounded-xl font-semibold active:scale-95 transition-all flex items-center gap-1.5 flex-shrink-0"
           >
             <Mail size={12} />
             Resend invite

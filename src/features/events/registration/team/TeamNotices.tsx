@@ -11,16 +11,16 @@ export default function TeamNotices({
   return (
     <div
       role="status"
-      className="card bg-green-50 border border-green-200 flex items-start justify-between gap-2"
+      className="card bg-lob-success-light border border-lob-success-border flex items-start justify-between gap-2"
     >
       <div className="space-y-1">
         {notices.map((notice) => (
-          <p key={notice} className="text-sm text-green-800">
+          <p key={notice} className="text-sm text-lob-success-strong">
             {notice}
           </p>
         ))}
       </div>
-      <button onClick={onDismiss} aria-label="Dismiss" className="text-green-800 shrink-0">
+      <button onClick={onDismiss} aria-label="Dismiss" className="text-lob-success-strong shrink-0">
         <X size={16} />
       </button>
     </div>

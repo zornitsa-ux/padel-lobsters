@@ -58,7 +58,7 @@ describe('SegmentedControl', () => {
         shape: 'pill',
       }),
     )
-    expect(String(propsOf(first).className)).toContain('text-[11px] px-2.5 py-1 rounded-full')
+    expect(String(propsOf(first).className)).toContain('text-xs px-2.5 py-1 rounded-full')
   })
 
   it('supports numeric values', () => {

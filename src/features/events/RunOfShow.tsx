@@ -153,7 +153,7 @@ function StepRow({
           <div className="flex items-center gap-2 flex-wrap">
             <p className="font-semibold text-lob-dark text-sm">{step.title}</p>
             {done && (
-              <span className="inline-flex items-center gap-1 text-xs font-semibold text-green-700 bg-green-50 px-2 py-0.5 rounded-full">
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-lob-success bg-lob-success-light px-2 py-0.5 rounded-full">
                 <CheckCircle2 size={12} /> Done
               </span>
             )}
@@ -257,7 +257,7 @@ export default function RunOfShow({ tournament }: { tournament: NormalisedTourna
         <p
           key={message}
           role="alert"
-          className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg p-2"
+          className="text-xs text-lob-danger bg-lob-danger-light border border-lob-danger-border rounded-lg p-2"
         >
           {message}
         </p>

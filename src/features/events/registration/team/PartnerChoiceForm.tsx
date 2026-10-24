@@ -66,7 +66,7 @@ export default function PartnerChoiceForm({
     setMode('search')
   }
   const emailError = emailProblem && (
-    <span role="alert" className="block mt-1 font-normal text-red-600">
+    <span role="alert" className="block mt-1 font-normal text-lob-danger">
       {PARTNER_ERROR_MESSAGES[emailProblem]}
       {emailProblem === 'email_in_use' && (
         <button
@@ -119,7 +119,7 @@ export default function PartnerChoiceForm({
         </>
       )}
       {error && (
-        <p role="alert" className="text-xs font-semibold text-red-600">
+        <p role="alert" className="text-xs font-semibold text-lob-danger">
           {error}
         </p>
       )}

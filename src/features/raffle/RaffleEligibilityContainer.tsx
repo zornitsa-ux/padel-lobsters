@@ -134,7 +134,7 @@ export default function RaffleEligibilityContainer({
                 onClick={() => toggle(id)}
                 disabled={!!skip}
                 className={`w-full rounded-xl p-3 border transition-all ${
-                  isEligible ? 'bg-white border-gray-100' : 'bg-gray-50 border-gray-100'
+                  isEligible ? 'bg-white border-lob-line' : 'bg-lob-well border-lob-line'
                 } ${skip ? 'cursor-default' : ''} ${dimmed ? 'opacity-70' : ''}`}
                 name={fullNameOf(nameOf(id))}
                 nameClassName={`font-semibold truncate ${

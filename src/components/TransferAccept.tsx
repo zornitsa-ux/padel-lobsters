@@ -177,7 +177,7 @@ export default function TransferAccept({ transferId, onNavigate }: TransferAccep
     return (
       <div className="card py-8 text-center space-y-3">
         {isAccept ? (
-          <CheckCircle size={42} className="mx-auto text-green-500" />
+          <CheckCircle size={42} className="mx-auto text-lob-success-solid" />
         ) : (
           <XCircle size={42} className="mx-auto text-lob-muted-light" />
         )}
@@ -203,7 +203,7 @@ export default function TransferAccept({ transferId, onNavigate }: TransferAccep
   if (wrongIdentity) {
     return (
       <div className="card py-8 text-center space-y-3">
-        <AlertCircle size={36} className="mx-auto text-amber-500" />
+        <AlertCircle size={36} className="mx-auto text-lob-warning-solid" />
         <h2 className="font-bold text-base">This transfer is for {dn(toPlayer)}</h2>
         <p className="text-sm text-lob-slate">
           You're currently signed in as someone else. Sign out and back in with {dn(toPlayer)}'s
@@ -230,7 +230,7 @@ export default function TransferAccept({ transferId, onNavigate }: TransferAccep
       </button>
 
       <div className="card space-y-4">
-        <div className="flex items-center gap-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+        <div className="flex items-center gap-2 text-sm text-lob-warning bg-lob-warning-light border border-lob-warning-border rounded-xl px-3 py-2">
           <ArrowRightLeft size={14} />
           <span>
             <strong>{dn(fromPlayer)}</strong> wants to transfer their spot to you
@@ -272,7 +272,7 @@ export default function TransferAccept({ transferId, onNavigate }: TransferAccep
         </p>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl px-3 py-2 text-xs text-red-700">
+          <div className="bg-lob-danger-light border border-lob-danger-border rounded-xl px-3 py-2 text-xs text-lob-danger-strong">
             {error}
           </div>
         )}
@@ -288,7 +288,7 @@ export default function TransferAccept({ transferId, onNavigate }: TransferAccep
           <button
             onClick={() => handleRespond(true)}
             disabled={!!busy}
-            className="flex-1 bg-green-600 text-white font-semibold py-3 rounded-xl active:scale-[0.98] disabled:opacity-50 transition-all"
+            className="flex-1 bg-lob-success-solid text-white font-semibold py-3 rounded-xl active:scale-[0.98] disabled:opacity-50 transition-all"
           >
             {busy === 'accept' ? 'Accepting…' : 'Accept transfer'}
           </button>

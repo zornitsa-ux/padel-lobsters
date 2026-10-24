@@ -24,9 +24,9 @@ interface IconButtonProps {
 
 const VARIANT: Record<Variant, string> = {
   neutral: 'bg-lob-teal-light text-lob-muted',
-  destructive: 'bg-red-50 text-red-500',
+  destructive: 'bg-lob-danger-light text-lob-danger-solid',
   accent: 'bg-lob-cream text-lob-teal',
-  success: 'bg-green-50 text-green-600',
+  success: 'bg-lob-success-light text-lob-success-solid',
 }
 
 const SIZE: Record<Size, string> = {

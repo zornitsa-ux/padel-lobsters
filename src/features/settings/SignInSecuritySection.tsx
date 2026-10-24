@@ -37,7 +37,7 @@ export default function SignInSecuritySection() {
         </div>
         <div>
           <h3 className="font-bold text-lob-slate text-sm">Sign-in &amp; security</h3>
-          <p className="text-[11px] text-lob-muted-light">
+          <p className="text-xs text-lob-muted-light">
             You sign in with a code we email you. A password is optional.
           </p>
         </div>
@@ -87,7 +87,7 @@ export default function SignInSecuritySection() {
         <button
           type="button"
           onClick={handleSignOutEverywhere}
-          className="flex items-center gap-1 text-xs text-red-500 font-semibold bg-red-50 px-3 py-1.5 rounded-lg active:scale-95 transition-all"
+          className="flex items-center gap-1 text-xs text-lob-danger font-semibold bg-lob-danger-light px-3 py-1.5 rounded-lg active:scale-95 transition-all"
         >
           <LogOut size={12} /> Sign out of all devices
         </button>

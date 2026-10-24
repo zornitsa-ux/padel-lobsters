@@ -95,7 +95,7 @@ export default function TeamLists({
     <>
       <section>
         <h3 className="font-bold text-lob-slate mb-2 flex items-center gap-2">
-          <CheckCircle size={16} className="text-green-500" />
+          <CheckCircle size={16} className="text-lob-success-solid" />
           Registered ({registered.length}/{teamCount({ players: tournament.maxPlayers })} teams)
         </h3>
         <div className="space-y-2">
@@ -113,7 +113,7 @@ export default function TeamLists({
       {waitlisted.length > 0 && (
         <section>
           <h3 className="font-bold text-lob-slate mb-2 flex items-center gap-2">
-            <Clock size={16} className="text-orange-400" />
+            <Clock size={16} className="text-lob-warning-solid" />
             Waitlist ({waitlisted.length})
           </h3>
           <div className="space-y-2">
@@ -129,7 +129,7 @@ export default function TeamLists({
 
 function TeamChip({ label }: { label: string }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-xl px-3 py-1.5 text-xs font-semibold text-lob-dark">
+    <div className="bg-white border border-lob-line-strong rounded-xl px-3 py-1.5 text-xs font-semibold text-lob-dark">
       {label}
     </div>
   )

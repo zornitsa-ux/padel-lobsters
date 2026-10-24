@@ -25,7 +25,7 @@ import { isEventOver } from './eventPhase'
 function InfoChip({ icon, label, warn }: { icon: ReactNode; label: string; warn?: boolean }) {
   return (
     <div
-      className={`flex items-center gap-1 text-xs rounded-lg px-2 py-1.5 ${warn ? 'bg-orange-50 text-orange-600' : 'bg-gray-50 text-lob-slate'}`}
+      className={`flex items-center gap-1 text-xs rounded-lg px-2 py-1.5 ${warn ? 'bg-lob-warning-light text-lob-warning' : 'bg-lob-well text-lob-slate'}`}
     >
       {icon}
       <span className="font-medium">{label}</span>
@@ -108,7 +108,7 @@ export default function UpcomingEventCard({
               over
                 ? 'bg-gray-100 text-lob-muted'
                 : t.status === 'active'
-                  ? 'bg-green-100 text-green-700'
+                  ? 'bg-lob-success-soft text-lob-success'
                   : 'bg-blue-100 text-blue-700'
             }`}
           >
@@ -144,19 +144,19 @@ export default function UpcomingEventCard({
               <InfoChip icon={null} label={ppCost > 0 ? `${fmtEur(ppCost)}/pp` : 'Free'} />
             </div>
             {isFull ? (
-              <div className="bg-orange-50 border border-orange-200 rounded-xl px-3 py-2 mb-3">
-                <p className="text-xs font-bold text-orange-700">Sold out!</p>
-                <p className="text-[11px] text-orange-600 mt-0.5">
+              <div className="bg-lob-warning-light border border-lob-warning-border rounded-xl px-3 py-2 mb-3">
+                <p className="text-xs font-bold text-lob-warning">Sold out!</p>
+                <p className="text-xs text-lob-warning mt-0.5">
                   Someone always cancels last minute. Join the waitlist and keep your racket warm.
                 </p>
               </div>
             ) : !over ? (
-              <div className="bg-green-50 border border-green-200 rounded-xl px-3 py-1.5 mb-3 flex items-center gap-1.5">
+              <div className="bg-lob-success-light border border-lob-success-border rounded-xl px-3 py-1.5 mb-3 flex items-center gap-1.5">
                 <span className="relative flex h-2 w-2 flex-shrink-0">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-lob-success-solid opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-lob-success-solid"></span>
                 </span>
-                <p className="text-xs font-semibold text-green-700">Spots open — sign up now!</p>
+                <p className="text-xs font-semibold text-lob-success">Spots open — sign up now!</p>
               </div>
             ) : null}
           </>
@@ -174,15 +174,15 @@ export default function UpcomingEventCard({
           return (
             <button
               onClick={() => onOpenTransfers(t)}
-              className="w-full mb-3 flex items-center gap-2 bg-amber-50 border border-amber-300 rounded-xl px-3 py-2 text-left active:scale-[0.99] transition-all"
+              className="w-full mb-3 flex items-center gap-2 bg-lob-warning-light border border-lob-warning-border rounded-xl px-3 py-2 text-left active:scale-[0.99] transition-all"
             >
-              <Clock size={14} className="text-amber-600 flex-shrink-0" />
-              <span className="flex-1 text-xs font-semibold text-amber-800">
+              <Clock size={14} className="text-lob-warning flex-shrink-0" />
+              <span className="flex-1 text-xs font-semibold text-lob-warning-strong">
                 {pendingForT.length === 1
                   ? '1 pending transfer'
                   : `${pendingForT.length} pending transfers`}
               </span>
-              <span className="text-[10px] text-amber-600 font-semibold">Review ›</span>
+              <span className="text-2xs text-lob-warning font-semibold">Review ›</span>
             </button>
           )
         })()}
@@ -208,11 +208,11 @@ export default function UpcomingEventCard({
             <div
               key={i}
               className={`inline-flex items-center gap-1 text-xs rounded-full px-2.5 py-1 font-medium ${
-                c.booked ? 'bg-green-50 text-green-700' : 'bg-gray-50 text-lob-muted'
+                c.booked ? 'bg-lob-success-light text-lob-success' : 'bg-lob-well text-lob-muted'
               }`}
             >
               {c.booked ? (
-                <CheckCircle size={11} className="text-green-500 flex-shrink-0" />
+                <CheckCircle size={11} className="text-lob-success-solid flex-shrink-0" />
               ) : (
                 <Circle size={11} className="text-lob-muted-light/60 flex-shrink-0" />
               )}
@@ -221,7 +221,7 @@ export default function UpcomingEventCard({
                 <button
                   onClick={() => handleBookCourt(i)}
                   disabled={bookingIndex === i}
-                  className="ml-0.5 bg-green-100 text-green-700 px-1.5 py-0 rounded-full text-[10px] font-semibold disabled:opacity-50"
+                  className="ml-0.5 bg-lob-success-soft text-lob-success px-1.5 py-0 rounded-full text-2xs font-semibold disabled:opacity-50"
                 >
                   {bookingIndex === i ? '…' : 'Book'}
                 </button>
@@ -231,7 +231,7 @@ export default function UpcomingEventCard({
         </div>
       )}
       {isAdmin && bookError && (
-        <p className="text-xs text-red-600 mb-3" role="alert">
+        <p className="text-xs text-lob-danger mb-3" role="alert">
           {bookError}
         </p>
       )}
@@ -242,7 +242,7 @@ export default function UpcomingEventCard({
       </p>
 
       {/* Actions */}
-      <div className="flex gap-2 pt-2 border-t border-gray-100">
+      <div className="flex gap-2 pt-2 border-t border-lob-line">
         <button
           onClick={() => onNavigate('registration', t)}
           className="flex-1 text-xs font-semibold text-lob-teal py-2 rounded-xl bg-lob-cream active:scale-95 transition-all"

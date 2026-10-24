@@ -20,8 +20,8 @@ export default function PayPrompt({
 }) {
   return (
     <>
-      <div className="bg-orange-50 border border-orange-200 rounded-xl px-3 py-3 space-y-2">
-        <p className="text-xs font-semibold text-orange-800">
+      <div className="bg-lob-warning-light border border-lob-warning-border rounded-xl px-3 py-3 space-y-2">
+        <p className="text-xs font-semibold text-lob-warning-strong">
           Pay to lock your spot{amount > 0 ? ` · ${fmtEur(amount)}` : ''}
         </p>
         {tikkieLink && (
@@ -30,7 +30,7 @@ export default function PayPrompt({
             target="_blank"
             rel="noopener noreferrer"
             onClick={onTikkieClick}
-            className="inline-flex items-center gap-1.5 bg-[#FF6B35] text-white text-sm font-bold px-4 py-2 rounded-xl active:scale-95 transition-all"
+            className="inline-flex items-center gap-1.5 bg-tikkie text-white text-sm font-bold px-4 py-2 rounded-xl active:scale-95 transition-all"
           >
             <ExternalLink size={14} />
             Pay via Tikkie

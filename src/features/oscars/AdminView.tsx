@@ -125,7 +125,7 @@ export default function AdminView({
             {busy ? <Loader2 className="animate-spin" size={18} /> : <Play size={18} />}
             {busy ? 'Starting…' : 'Start Lobster Games'}
           </button>
-          <p className="text-[11px] text-lob-muted-light text-center -mt-1">
+          <p className="text-xs text-lob-muted-light text-center -mt-1">
             Once started, categories can&apos;t be edited. You can end voting at any time.
           </p>
         </div>
@@ -156,7 +156,7 @@ export default function AdminView({
               }
             />
           ))}
-          <p className="text-[11px] text-lob-muted-light text-center pt-1">
+          <p className="text-xs text-lob-muted-light text-center pt-1">
             Refreshes every 10 seconds.
           </p>
 
@@ -209,7 +209,7 @@ export default function AdminView({
               Share with players
             </button>
           ) : (
-            <div className="w-full bg-green-50 text-green-700 font-semibold py-3 rounded-xl text-sm flex items-center justify-center gap-2">
+            <div className="w-full bg-lob-success-light text-lob-success font-semibold py-3 rounded-xl text-sm flex items-center justify-center gap-2">
               <Check size={16} /> Shared with players
             </div>
           )}

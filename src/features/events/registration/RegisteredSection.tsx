@@ -47,7 +47,7 @@ export default function RegisteredSection({
     <>
       <section>
         <h3 className="font-bold text-lob-slate mb-2 flex items-center gap-2">
-          <CheckCircle size={16} className="text-green-500" />
+          <CheckCircle size={16} className="text-lob-success-solid" />
           Registered ({registered.length}/{maxPlayers})
         </h3>
         <div className="space-y-2">
@@ -95,8 +95,8 @@ export default function RegisteredSection({
                     const recipient = getPlayer(myPending.toPlayerId)
                     const recipientFirst = (recipient?.name || '').split(/\s+/)[0] || 'them'
                     return (
-                      <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 space-y-2">
-                        <div className="flex items-center gap-2 text-xs text-amber-800">
+                      <div className="bg-lob-warning-light border border-lob-warning-border rounded-xl px-3 py-2 space-y-2">
+                        <div className="flex items-center gap-2 text-xs text-lob-warning-strong">
                           <Clock size={12} className="flex-shrink-0" />
                           <span>
                             <strong>Pending transfer</strong> to {recipientFirst} — awaiting
@@ -109,14 +109,14 @@ export default function RegisteredSection({
                               onClick={() =>
                                 onOpenShareModal({ transferId: myPending.id, toPlayer: recipient })
                               }
-                              className="flex-1 text-xs font-semibold text-green-700 bg-white border border-green-600 rounded-lg py-1.5 active:scale-95 transition-all"
+                              className="flex-1 text-xs font-semibold text-lob-success bg-white border border-lob-success-solid rounded-lg py-1.5 active:scale-95 transition-all"
                             >
                               Resend WhatsApp
                             </button>
                             <button
                               onClick={() => onAdminCancelTransfer(myPending.id)}
                               disabled={respondingTo === myPending.id}
-                              className="flex-1 text-xs font-semibold text-red-600 border border-red-200 rounded-lg py-1.5 active:scale-95 transition-all disabled:opacity-50"
+                              className="flex-1 text-xs font-semibold text-lob-danger border border-lob-danger-border rounded-lg py-1.5 active:scale-95 transition-all disabled:opacity-50"
                             >
                               {respondingTo === myPending.id ? 'Cancelling…' : 'Cancel offer'}
                             </button>
@@ -132,7 +132,7 @@ export default function RegisteredSection({
                   return (
                     <button
                       onClick={() => onStartTransfer(reg)}
-                      className="w-full flex items-center justify-center gap-1.5 text-xs text-lob-muted border border-gray-200 rounded-xl py-1.5 font-medium active:scale-95 transition-all"
+                      className="w-full flex items-center justify-center gap-1.5 text-xs text-lob-muted border border-lob-line-strong rounded-xl py-1.5 font-medium active:scale-95 transition-all"
                     >
                       <ArrowRightLeft size={12} /> Transfer spot to another player
                     </button>
@@ -150,7 +150,7 @@ export default function RegisteredSection({
                 return (
                   <div
                     key={reg.id}
-                    className="bg-white border border-gray-200 rounded-xl px-2 py-1.5 flex items-center gap-2 min-w-0"
+                    className="bg-white border border-lob-line-strong rounded-xl px-2 py-1.5 flex items-center gap-2 min-w-0"
                   >
                     <Avatar player={p} size="sm" />
                     <span className="text-xs font-semibold text-lob-dark truncate flex-1">

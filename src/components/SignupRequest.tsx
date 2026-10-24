@@ -269,7 +269,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
   if (awaitingCode) {
     return (
       <div className={`space-y-4 ${compact ? '' : 'max-w-md mx-auto p-4'}`}>
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 space-y-4">
+        <div className="bg-white rounded-2xl p-5 shadow-sm border border-lob-line space-y-4">
           <h1 className="text-lg font-extrabold text-lob-dark">Confirm your email 🦞</h1>
           <OtpCodeStep
             email={normaliseEmail(form.email)}
@@ -296,7 +296,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
         </button>
       )}
 
-      <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 space-y-4">
+      <div className="bg-white rounded-2xl p-5 shadow-sm border border-lob-line space-y-4">
         <header className="space-y-1">
           <h1 className="text-lg font-extrabold text-lob-dark flex items-center gap-2">
             <UserPlus size={18} className="text-lob-teal" />
@@ -347,7 +347,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
             <NameMatchBanner match={bannerMatch} onSignIn={onBack} onDecline={declineMatch} />
           )}
           {fieldErrors.name && (
-            <p role="alert" className="text-xs text-red-600 bg-red-50 rounded-lg p-2">
+            <p role="alert" className="text-xs text-lob-danger bg-lob-danger-light rounded-lg p-2">
               {fieldErrors.name}
             </p>
           )}
@@ -379,7 +379,9 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
             />
           </div>
 
-          {error && <p className="text-xs text-red-600 bg-red-50 rounded-lg p-2">{error}</p>}
+          {error && (
+            <p className="text-xs text-lob-danger bg-lob-danger-light rounded-lg p-2">{error}</p>
+          )}
 
           <button
             type="submit"
@@ -417,16 +419,19 @@ function NameMatchBanner({
 }) {
   const needsInvite = isPlaceholder(match)
   return (
-    <div role="alert" className="rounded-2xl bg-amber-50 border border-amber-200 p-4 space-y-3">
+    <div
+      role="alert"
+      className="rounded-2xl bg-lob-warning-light border border-lob-warning-border p-4 space-y-3"
+    >
       <div className="flex items-start gap-3">
         <span className="text-2xl">🦞</span>
         <div>
-          <p className="font-semibold text-amber-800 text-sm">
+          <p className="font-semibold text-lob-warning-strong text-sm">
             {needsInvite
               ? 'Your profile is waiting for an invite'
               : 'This name already has a profile'}
           </p>
-          <p className="text-xs text-amber-700 mt-1">
+          <p className="text-xs text-lob-warning mt-1">
             {needsInvite
               ? PLACEHOLDER_INVITE_TEXT
               : `If you’re ${match.name}, go back and sign in with your email.`}
@@ -437,7 +442,7 @@ function NameMatchBanner({
         <button
           type="button"
           onClick={onSignIn}
-          className="w-full py-2.5 bg-amber-500 text-white rounded-xl font-semibold text-sm active:scale-95 transition-all"
+          className="w-full py-2.5 bg-lob-warning-solid text-white rounded-xl font-semibold text-sm active:scale-95 transition-all"
         >
           {needsInvite ? 'Back to sign in' : 'Go to sign in'}
         </button>
@@ -446,7 +451,7 @@ function NameMatchBanner({
         <button
           type="button"
           onClick={onDecline}
-          className="w-full py-2 text-amber-600 text-xs font-medium"
+          className="w-full py-2 text-lob-warning text-xs font-medium"
         >
           No, I’m a different person
         </button>

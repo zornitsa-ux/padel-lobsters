@@ -33,12 +33,12 @@ export default function CategoryEditor({ cats, onChange, onReset }: CategoryEdit
   return (
     <div className="bg-white rounded-2xl p-3 space-y-2">
       {cats.map((c, i) => (
-        <div key={i} className="flex items-center gap-2 bg-gray-50 rounded-xl px-2.5 py-2">
+        <div key={i} className="flex items-center gap-2 bg-lob-well rounded-xl px-2.5 py-2">
           <input
             type="text"
             value={c.icon || ''}
             onChange={(e) => update(i, { icon: e.target.value.slice(0, 4) })}
-            className="w-10 text-center bg-white border border-gray-200 rounded-lg py-1.5 text-base"
+            className="w-10 text-center bg-white border border-lob-line-strong rounded-lg py-1.5 text-base"
             placeholder="🦞"
             aria-label="Category icon"
           />
@@ -46,13 +46,13 @@ export default function CategoryEditor({ cats, onChange, onReset }: CategoryEdit
             type="text"
             value={c.name || ''}
             onChange={(e) => update(i, { name: e.target.value })}
-            className="flex-1 bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm"
+            className="flex-1 bg-white border border-lob-line-strong rounded-lg px-2.5 py-1.5 text-sm"
             placeholder="Category name"
             aria-label="Category name"
           />
           <button
             onClick={() => remove(i)}
-            className="text-lob-muted-light/60 hover:text-red-400 transition-colors p-1"
+            className="text-lob-muted-light/60 hover:text-lob-danger-solid transition-colors p-1"
             aria-label="Remove category"
           >
             <X size={16} />

@@ -55,7 +55,7 @@ export default function AuthReadinessPanel() {
         Sign-in readiness · PINs stop working on {PIN_SUNSET_LABEL}
       </p>
       {isLoading && <p className="text-sm text-lob-muted">Loading…</p>}
-      {isError && <p className="text-sm text-red-600">Could not load sign-in readiness.</p>}
+      {isError && <p className="text-sm text-lob-danger">Could not load sign-in readiness.</p>}
       {data && <ReadinessBody readiness={data} />}
     </div>
   )

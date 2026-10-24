@@ -36,7 +36,7 @@ export default function TeamRankingList({
   return (
     <div className="space-y-3" data-testid="team-ranking">
       <BiggestClimber rows={ranked} courts={courts} />
-      <ol className="divide-y divide-gray-100">
+      <ol className="divide-y divide-lob-line">
         {ranked.map((row) => (
           <li
             key={row.teamId}

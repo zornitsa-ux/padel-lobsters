@@ -8,6 +8,16 @@
 - Prefer pure functions and immutability.
 - Refactor as you work. If you spot repeated code, create a task to de-duplicate it with a clean extraction rather than leaving it.
 
+## UI and Design System
+
+See `docs/design-system/` (TOKENS.md for tokens, PLAN.md for what's being built).
+
+- Build UI from `src/components/ui` first. Check what exists before writing markup for an alert, badge, button, empty state, row or card header.
+- If a ui component doesn't fit, add the variant or prop to the component. Don't hand-roll a copy in the feature.
+- Colours come from `lob-*` tokens: `lob-success`, `lob-warning`, `lob-danger`, `lob-info` (with `-light`, `-soft`, `-border`, `-on-dark`, `-solid`, `-strong`), plus `lob-well`, `lob-line`, `lob-line-strong`. Never raw Tailwind palette classes (`text-red-600`, `bg-amber-50`) or hex literals (`bg-[#…]`).
+- `npm run design:check` (in CI) fails if a file gains raw palette classes. If you remove some, run `npm run design:baseline` and commit the updated baseline.
+- Need a colour or size with no token? Add the token to `tailwind.config.js` and TOKENS.md in the same PR rather than using a raw value.
+
 ## Database Migrations
 
 - Never apply a migration to production before its PR has been code reviewed and merged. This applies to every developer and agent, with no exceptions for urgency.

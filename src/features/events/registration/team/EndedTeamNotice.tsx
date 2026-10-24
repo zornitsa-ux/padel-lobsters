@@ -15,8 +15,11 @@ export default function EndedTeamNotice({
       ? PARTNER_DECLINED_NOTICE(notice.partnerName)
       : ADMIN_CANCELLED_NOTICE
   return (
-    <div role="status" className="card bg-amber-50 border border-amber-200 space-y-2">
-      <p className="text-sm text-amber-800">{text}</p>
+    <div
+      role="status"
+      className="card bg-lob-warning-light border border-lob-warning-border space-y-2"
+    >
+      <p className="text-sm text-lob-warning-strong">{text}</p>
       <button onClick={onSignUpAgain} className="btn-primary w-full py-2 text-sm">
         Sign up again
       </button>

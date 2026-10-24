@@ -122,8 +122,8 @@ export default function TransferPendingModal({
           know to open it.
         </p>
 
-        <div className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-xs text-lob-slate leading-relaxed">
-          <p className="font-semibold text-lob-muted text-[10px] uppercase tracking-wide mb-1">
+        <div className="bg-lob-well border border-lob-line-strong rounded-xl px-3 py-2.5 text-xs text-lob-slate leading-relaxed">
+          <p className="font-semibold text-lob-muted text-2xs uppercase tracking-wide mb-1">
             Pre-filled message
           </p>
           <p className="whitespace-pre-line">{message}</p>
@@ -133,7 +133,7 @@ export default function TransferPendingModal({
           <button
             onClick={handleDirect}
             disabled={!!busyAction}
-            className="w-full flex items-center justify-center gap-2 bg-green-600 text-white font-semibold py-3 rounded-xl active:scale-[0.98] disabled:opacity-50 transition-all"
+            className="w-full flex items-center justify-center gap-2 bg-lob-success-solid text-white font-semibold py-3 rounded-xl active:scale-[0.98] disabled:opacity-50 transition-all"
           >
             <MessageCircle size={16} />
             {busyAction === 'whatsapp'
@@ -145,33 +145,33 @@ export default function TransferPendingModal({
         <button
           onClick={handleGroup}
           disabled={!!busyAction}
-          className="w-full flex items-center justify-center gap-2 border border-green-600 text-green-700 font-semibold py-3 rounded-xl active:scale-[0.98] disabled:opacity-50 transition-all"
+          className="w-full flex items-center justify-center gap-2 border border-lob-success-solid text-lob-success font-semibold py-3 rounded-xl active:scale-[0.98] disabled:opacity-50 transition-all"
         >
           <Users size={16} />
           {busyAction === 'group' ? 'Copying message…' : 'Post in Lobsters WhatsApp group'}
         </button>
 
         {groupNote && (
-          <p className="text-[11px] text-lob-muted text-center">
+          <p className="text-xs text-lob-muted text-center">
             Message copied to your clipboard — paste it in the group chat.
           </p>
         )}
 
         {phone === '' && (
-          <p className="text-[11px] text-lob-muted-light text-center">
+          <p className="text-xs text-lob-muted-light text-center">
             No WhatsApp number on file for {(toPlayer?.name || 'this player').split(/\s+/)[0]} — use
             the group instead.
           </p>
         )}
 
-        <div className="border-t border-gray-100 pt-3 flex items-center justify-between text-xs">
+        <div className="border-t border-lob-line pt-3 flex items-center justify-between text-xs">
           <span className="text-lob-muted-light inline-flex items-center gap-1">
             <Clock size={12} /> No expiry — closes when the event starts
           </span>
           <button
             onClick={handleCancelOffer}
             disabled={!!busyAction}
-            className="text-red-600 font-semibold disabled:opacity-50"
+            className="text-lob-danger font-semibold disabled:opacity-50"
           >
             {busyAction === 'cancel' ? 'Cancelling…' : 'Cancel offer'}
           </button>

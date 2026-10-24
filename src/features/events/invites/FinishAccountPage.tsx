@@ -145,7 +145,7 @@ export default function FinishAccountPage() {
           <span>{ACCOUNT_ACKNOWLEDGEMENT_LABEL}</span>
         </label>
         {error && (
-          <p role="alert" className="text-xs text-red-600 bg-red-50 rounded-lg p-2">
+          <p role="alert" className="text-xs text-lob-danger bg-lob-danger-light rounded-lg p-2">
             {error}
           </p>
         )}

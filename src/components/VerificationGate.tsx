@@ -112,7 +112,7 @@ export default function VerificationGate({ children }: { children?: React.ReactN
             <button
               type="button"
               onClick={enterSignup}
-              className="w-full text-sm font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all"
+              className="w-full text-sm font-semibold text-lob-warning bg-lob-warning-light hover:bg-lob-warning-soft border border-lob-warning-border py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all"
             >
               <UserPlus size={14} />
               New here? Sign up
@@ -128,7 +128,7 @@ export default function VerificationGate({ children }: { children?: React.ReactN
       </div>
 
       {mode === 'signin' && (
-        <p className="text-[11px] text-white/60 mt-6 text-center">
+        <p className="text-xs text-white/60 mt-6 text-center">
           You need to sign in once on this device. We'll remember you after.
         </p>
       )}

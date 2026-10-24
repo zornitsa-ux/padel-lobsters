@@ -5,8 +5,8 @@ import { childrenOf, propsOf } from '../../test/element'
 describe('AlertBox', () => {
   it('applies the variant token classes', () => {
     const el = AlertBox({ variant: 'error', children: 'boom' })
-    expect(propsOf(el).className).toContain('bg-lob-coral-light')
-    expect(propsOf(el).className).toContain('text-lob-coral')
+    expect(propsOf(el).className).toContain('bg-lob-danger-light')
+    expect(propsOf(el).className).toContain('text-lob-danger')
   })
 
   it('omits the dismiss button when no handler is given', () => {

@@ -50,7 +50,7 @@ export default function PlayerPicker({
             className={`w-full flex items-center gap-3 p-2.5 rounded-xl transition-all ${
               selectedId === p.id
                 ? 'bg-lob-teal text-white'
-                : 'bg-gray-50 text-lob-slate hover:bg-gray-100'
+                : 'bg-lob-well text-lob-slate hover:bg-gray-100'
             }`}
           >
             <span className="flex-1 text-left font-medium text-sm">{displayName(p)}</span>

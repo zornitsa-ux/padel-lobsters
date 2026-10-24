@@ -32,14 +32,14 @@ export default function AdminAlerts({
   return (
     <>
       {unpaid.length > 0 && (
-        <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-xl p-3">
-          <AlertCircle size={18} className="text-red-500 flex-shrink-0" />
-          <p className="text-sm text-red-700 font-medium">
+        <div className="flex items-center gap-3 bg-lob-danger-light border border-lob-danger-border rounded-xl p-3">
+          <AlertCircle size={18} className="text-lob-danger-solid flex-shrink-0" />
+          <p className="text-sm text-lob-danger-strong font-medium">
             {unpaid.length} player{unpaid.length > 1 ? 's' : ''} haven't paid yet
           </p>
           <button
             onClick={() => onNavigate('payments', upcomingEvent)}
-            className="ml-auto text-xs text-red-600 font-semibold"
+            className="ml-auto text-xs text-lob-danger font-semibold"
           >
             View
           </button>

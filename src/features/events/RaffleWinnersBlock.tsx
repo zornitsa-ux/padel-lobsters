@@ -40,7 +40,7 @@ export default function RaffleWinnersBlock({
         ))}
       </ul>
       {!tournament.rafflePublishedAt && (
-        <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2 py-1">
+        <p className="text-xs text-lob-warning bg-lob-warning-light border border-lob-warning-border rounded-lg px-2 py-1">
           Not published yet — only admins can see this.
         </p>
       )}

@@ -35,7 +35,7 @@ export function PageHeader({
   return (
     <div>
       <div
-        className={`bg-white px-4 pt-3 ${hasTabStrip ? 'pb-2' : 'pb-3 border-b border-gray-200'}`}
+        className={`bg-white px-4 pt-3 ${hasTabStrip ? 'pb-2' : 'pb-3 border-b border-lob-line-strong'}`}
       >
         {backLink && (
           <Link
@@ -49,7 +49,7 @@ export function PageHeader({
         <div className="flex items-start justify-between gap-2">
           <div>
             {eyebrow && (
-              <p className="text-[10px] font-bold uppercase tracking-widest text-lob-muted mb-0.5">
+              <p className="text-2xs font-bold uppercase tracking-widest text-lob-muted mb-0.5">
                 {eyebrow}
               </p>
             )}
@@ -65,7 +65,7 @@ export function PageHeader({
       </div>
 
       {hasTabStrip && (
-        <div className="bg-lob-teal-light border-b border-gray-200 overflow-x-auto touch-pan-x overscroll-x-contain [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        <div className="bg-lob-teal-light border-b border-lob-line-strong overflow-x-auto touch-pan-x overscroll-x-contain [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           <div className="flex gap-1 px-3 py-2 min-w-max">
             {tabs
               ? tabs.map(({ label, to, isActive }) => {

@@ -23,7 +23,7 @@ describe('StatTile', () => {
   it.each([
     ['muted', 'text-[9px] text-lob-muted-light font-medium'],
     ['inverted', 'text-xs opacity-75'],
-    ['caps', 'text-[10px] font-bold text-lob-muted-light uppercase tracking-wider'],
+    ['caps', 'text-2xs font-bold text-lob-muted-light uppercase tracking-wider'],
   ] as const)('maps labelVariant %s to %s', (labelVariant, expected) => {
     const [, label] = childrenOf(StatTile({ value: 1, label: 'l', labelVariant }))
     expect(propsOf(label).className).toBe(expected)

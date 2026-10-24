@@ -54,7 +54,7 @@ export default function LobsterWayAdminCategory({
           type="button"
           onClick={onDelete}
           aria-label="Delete category"
-          className="text-gray-300 hover:text-red-500 flex-shrink-0"
+          className="text-gray-300 hover:text-lob-danger-solid flex-shrink-0"
         >
           <Trash2 size={15} />
         </button>

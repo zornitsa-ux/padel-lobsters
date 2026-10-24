@@ -186,7 +186,7 @@ export default function Scores({ tournament, onNavigate }: ScoresProps) {
               {cats.map((cat) => (
                 <div
                   key={cat.id}
-                  className="bg-white rounded-2xl p-4 space-y-2 border border-gray-100"
+                  className="bg-white rounded-2xl p-4 space-y-2 border border-lob-line"
                 >
                   <p className="font-bold text-sm text-lob-slate">
                     <span className="mr-1">{cat.icon}</span>

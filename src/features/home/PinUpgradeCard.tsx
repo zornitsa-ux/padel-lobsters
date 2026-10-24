@@ -11,7 +11,7 @@ import {
 } from './upgradeCardDismissal'
 
 const secondaryButton =
-  'text-xs font-semibold text-lob-slate bg-gray-100 border border-gray-200 px-3 py-2 rounded-xl active:scale-95'
+  'text-xs font-semibold text-lob-slate bg-gray-100 border border-lob-line-strong px-3 py-2 rounded-xl active:scale-95'
 
 function SyntheticCard() {
   return (

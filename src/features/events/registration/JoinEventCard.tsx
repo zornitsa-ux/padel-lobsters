@@ -60,7 +60,7 @@ export default function JoinEventCard({
                 : 'Register for this event'}
         </button>
         {error && (
-          <p role="alert" className="text-xs font-semibold text-red-600">
+          <p role="alert" className="text-xs font-semibold text-lob-danger">
             {error}
           </p>
         )}
@@ -70,15 +70,15 @@ export default function JoinEventCard({
 
   if (summary.status === 'waitlisted') {
     return (
-      <div className="card bg-amber-50 border border-amber-200 space-y-1">
+      <div className="card bg-lob-warning-light border border-lob-warning-border space-y-1">
         <div className="flex items-center gap-2">
-          <Clock size={14} className="text-amber-600 flex-shrink-0" />
-          <p className="text-sm font-semibold text-amber-800">
+          <Clock size={14} className="text-lob-warning-solid flex-shrink-0" />
+          <p className="text-sm font-semibold text-lob-warning-strong">
             You&apos;re on the waitlist
             {summary.waitlistPosition ? ` · #${summary.waitlistPosition}` : ''}
           </p>
         </div>
-        <p className="text-xs text-amber-700 pl-5">You&apos;ll be notified if a spot opens up.</p>
+        <p className="text-xs text-lob-warning pl-5">You&apos;ll be notified if a spot opens up.</p>
       </div>
     )
   }
@@ -90,11 +90,11 @@ export default function JoinEventCard({
   return (
     <div className="card flex items-center justify-between gap-2">
       <div className="flex items-center gap-2 min-w-0">
-        <CheckCircle size={14} className="text-green-500 flex-shrink-0" />
+        <CheckCircle size={14} className="text-lob-success-solid flex-shrink-0" />
         <span className="text-sm font-semibold text-lob-dark">You&apos;re registered</span>
       </div>
       {isConfirmed ? (
-        <span className="text-xs font-semibold text-green-700 bg-green-50 border border-green-200 px-2 py-0.5 rounded-full flex-shrink-0">
+        <span className="text-xs font-semibold text-lob-success bg-lob-success-light border border-lob-success-border px-2 py-0.5 rounded-full flex-shrink-0">
           ✓ Confirmed
         </span>
       ) : needsPayment ? (

@@ -24,18 +24,16 @@ export default function AccountSection({ isAdmin, signedInPlayer, logout }: Acco
         </div>
         <div>
           <h3 className="font-bold text-lob-slate text-sm">Account</h3>
-          <p className="text-[11px] text-lob-muted-light">
-            One sign-in, works across the whole site
-          </p>
+          <p className="text-xs text-lob-muted-light">One sign-in, works across the whole site</p>
         </div>
       </div>
 
       {isAdmin ? (
         // ── Signed in as admin ──────────────────────────────────
-        <div className="rounded-xl border border-green-200 bg-green-50 p-3 flex items-center gap-3">
-          <Shield size={18} className="text-green-600 flex-shrink-0" />
+        <div className="rounded-xl border border-lob-success-border bg-lob-success-light p-3 flex items-center gap-3">
+          <Shield size={18} className="text-lob-success-solid flex-shrink-0" />
           <div className="flex-1">
-            <p className="text-sm font-semibold text-green-700">Admin mode active 🛡️</p>
+            <p className="text-sm font-semibold text-lob-success">Admin mode active 🛡️</p>
             <p className="text-xs text-lob-muted">
               {signedInPlayer
                 ? `Also signed in as ${signedInPlayer.name.split(' ')[0]}`
@@ -44,7 +42,7 @@ export default function AccountSection({ isAdmin, signedInPlayer, logout }: Acco
           </div>
           <button
             onClick={logout}
-            className="flex items-center gap-1 text-xs text-red-500 font-semibold bg-red-50 px-3 py-1.5 rounded-lg active:scale-95 transition-all"
+            className="flex items-center gap-1 text-xs text-lob-danger font-semibold bg-lob-danger-light px-3 py-1.5 rounded-lg active:scale-95 transition-all"
           >
             <LogOut size={12} /> Sign out
           </button>
@@ -64,7 +62,7 @@ export default function AccountSection({ isAdmin, signedInPlayer, logout }: Acco
           </div>
           <button
             onClick={logout}
-            className="flex items-center gap-1 text-xs text-red-500 font-semibold bg-white px-3 py-1.5 rounded-lg active:scale-95 transition-all"
+            className="flex items-center gap-1 text-xs text-lob-danger font-semibold bg-white px-3 py-1.5 rounded-lg active:scale-95 transition-all"
           >
             <LogOut size={12} /> Sign out
           </button>
@@ -76,7 +74,7 @@ export default function AccountSection({ isAdmin, signedInPlayer, logout }: Acco
           <div className="text-center py-2">
             <div className="text-3xl mb-1">🦞</div>
             <p className="text-sm font-semibold text-lob-dark">Sign in with your email</p>
-            <p className="text-[11px] text-lob-muted mt-0.5">
+            <p className="text-xs text-lob-muted mt-0.5">
               We&rsquo;ll email you a 6-digit code. No password needed.
             </p>
           </div>
