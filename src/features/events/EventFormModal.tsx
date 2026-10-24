@@ -5,12 +5,11 @@ import { Modal } from '../../components/ui/Modal'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
 import {
   FORMAT_LOCKED_NOTE,
-  formatOption,
-  isKingOfTheCourt,
   effectiveMaxPlayers,
   teamsForCourts,
   teamTotal,
 } from './eventFormModel'
+import { formatOption, isKingOfTheCourt } from './eventFormat'
 import type { EventFormCourt, EventFormValues } from './eventConstants'
 
 // A court field edit. `booked` is the checkbox; every other field comes off a
