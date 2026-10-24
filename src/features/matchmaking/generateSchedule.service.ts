@@ -11,6 +11,18 @@ import type { GenerateInput, PlayerInput, PlayerGender, ScheduleRun } from './do
 // through the admin_record_schedule_run RPC (D-016). schedule_runs is a
 // commit-time audit blob, intentionally not atomic with the matches write.
 
+export type EventKind = { entryMode?: string | null; format?: string | null }
+
+export const TEAM_EVENT_GENERATOR_ERROR =
+  'The Americano schedule generator cannot run on a team event'
+
+export const isTeamEvent = ({ entryMode, format }: EventKind): boolean =>
+  entryMode === 'team' || format === 'king_of_court'
+
+export function assertNotTeamEvent({ tournament }: { tournament?: EventKind }): void {
+  if (tournament && isTeamEvent(tournament)) throw new Error(TEAM_EVENT_GENERATOR_ERROR)
+}
+
 export type MmRating = { mu: number; sigma: number }
 
 const mmRatingRowsSchema = z.array(
@@ -66,7 +78,11 @@ export async function fetchMmRatings(): Promise<Record<string, MmRating>> {
 
 // Pure preview: run the domain matcher. No writes — throwaway generations must
 // not touch the DB (D-016).
-export function previewSchedule(input: GenerateInput): ScheduleRun {
+export function previewSchedule(
+  input: GenerateInput,
+  { tournament }: { tournament?: EventKind } = {},
+): ScheduleRun {
+  assertNotTeamEvent({ tournament })
   return generateSchedule(input)
 }
 
@@ -107,7 +123,14 @@ export async function recordScheduleRun(run: ScheduleRun): Promise<string> {
 // realtime schedule sync — D-016), then record the audit run. The audit write
 // is best-effort relative to the matches write; they use different mechanisms
 // and are deliberately not one transaction.
-export async function commitSchedule({ run }: { run: ScheduleRun }): Promise<{ runId: string }> {
+export async function commitSchedule({
+  run,
+  tournament,
+}: {
+  run: ScheduleRun
+  tournament?: EventKind
+}): Promise<{ runId: string }> {
+  assertNotTeamEvent({ tournament })
   await saveMatches(run.tournamentId, scheduleRunToMatchRows(run))
   const runId = await recordScheduleRun(run)
   return { runId }

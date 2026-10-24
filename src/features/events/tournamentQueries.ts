@@ -17,6 +17,7 @@ export interface TournamentInput {
   maxPlayers?: number | string
   duration?: number | string
   format?: string
+  entryMode?: string
   totalPrice?: number | string
   tikkieLink?: string
   genderMode?: string
@@ -78,6 +79,7 @@ export async function addTournament(data: TournamentInput): Promise<void> {
     max_players: parseInt(String(data.maxPlayers)) || 16,
     duration: parseInt(String(data.duration)) || 90,
     format: data.format,
+    entry_mode: data.entryMode,
     total_price: parseFloat(String(data.totalPrice)) || 0,
     tikkie_link: data.tikkieLink || '',
     gender_mode: data.genderMode || 'mixed',
@@ -101,6 +103,7 @@ export async function updateTournament(id: string, data: TournamentInput): Promi
   if (data.maxPlayers !== undefined) payload.max_players = parseInt(String(data.maxPlayers)) || 16
   if (data.duration !== undefined) payload.duration = parseInt(String(data.duration)) || 90
   if (data.format !== undefined) payload.format = data.format
+  if (data.entryMode !== undefined) payload.entry_mode = data.entryMode
   if (data.totalPrice !== undefined) payload.total_price = parseFloat(String(data.totalPrice)) || 0
   if (data.tikkieLink !== undefined) payload.tikkie_link = data.tikkieLink || ''
   if (data.genderMode !== undefined) payload.gender_mode = data.genderMode || 'mixed'

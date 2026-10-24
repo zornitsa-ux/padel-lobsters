@@ -91,6 +91,16 @@ describe('Schedule — V2 routing without a rollout flag (D-028)', () => {
     expect(legacyGenerateButton()).toBeNull()
   })
 
+  it('shows the seeding note instead of any generator on a team event', () => {
+    renderSchedule({ ...lobsterEvent, format: 'king_of_court', entryMode: 'team' })
+
+    expect(screen.queryByTestId('v2-matchmaking')).toBeNull()
+    expect(legacyGenerateButton()).toBeNull()
+    expect(
+      screen.getByText('King of the Court: starting courts come from team seeding (coming soon).'),
+    ).toBeTruthy()
+  })
+
   it('reads learned priors only on the V2 path', () => {
     renderSchedule(lobsterEvent)
     expect(mockUseMmRatings).toHaveBeenCalledWith({ enabled: true })
