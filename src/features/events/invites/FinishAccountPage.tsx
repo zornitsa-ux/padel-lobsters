@@ -15,7 +15,13 @@ import {
   type ProfileFieldValues,
 } from '../../players/profileForm'
 import { errorMessage } from '../../../lib/errors'
-import { useAcknowledgeMyAccount, useMyAccountSetup } from '../teams/useTeams'
+import {
+  useAcknowledgeMyAccount,
+  useMyAccountSetup,
+  useMyTeamInvites,
+  useTeamActions,
+} from '../teams/useTeams'
+import { useConfirmDecline } from '../registration/team/useConfirmDecline'
 import { ACCOUNT_ACKNOWLEDGEMENT_LABEL, accountCreatedMessage } from '../teams/teamStatusMessages'
 import { TEAM_INVITES_PATH } from './inviteRoutes'
 
@@ -32,9 +38,10 @@ const EMPTY: ProfileFieldValues = {
 }
 
 // First sign-in of an account a captain created (D-021): the player completes
-// their profile and confirms the account is theirs before anything else.
+// their profile and confirms the account is theirs before anything else, or
+// says they're not playing without claiming it (D-022).
 export default function FinishAccountPage() {
-  const { session, role } = useApp()
+  const { session, role, logout } = useApp()
   const navigate = useNavigate()
   const location = useLocation()
   const playerId = session?.user?.id ?? null
@@ -42,6 +49,10 @@ export default function FinishAccountPage() {
   const profile = useMyProfile(playerId)
   const { updatePlayer } = usePlayerActions({ session, role })
   const acknowledge = useAcknowledgeMyAccount()
+  const { data: invites = [] } = useMyTeamInvites({ enabled: !!playerId })
+  const { respondToTeamInvite } = useTeamActions()
+  const confirmDecline = useConfirmDecline()
+  const [leaving, setLeaving] = useState(false)
   const [form, setForm] = useState<ProfileFieldValues>(EMPTY)
   const [seeded, setSeeded] = useState(false)
   const [confirmed, setConfirmed] = useState(false)
@@ -78,6 +89,24 @@ export default function FinishAccountPage() {
     } finally {
       setSaving(false)
     }
+  }
+
+  const notPlaying = async () => {
+    const declining = invites.length > 0
+    if (declining && !(await confirmDecline({ captainName: setup.requestedByName, signsOut: true })))
+      return
+    setLeaving(true)
+    const statuses = await Promise.all(
+      invites.map((i) =>
+        respondToTeamInvite({ tournamentId: i.tournamentId, teamId: i.teamId, accept: false }),
+      ),
+    )
+    if (statuses.some((s) => s !== 'declined')) {
+      setLeaving(false)
+      return
+    }
+    await logout()
+    navigate('/', { replace: true })
   }
 
   return (
@@ -126,6 +155,47 @@ export default function FinishAccountPage() {
           Finish and see your invite
         </button>
       </div>
+
+      <NotPlayingCard
+        captainName={setup.requestedByName}
+        hasInvites={invites.length > 0}
+        busy={leaving}
+        onLeave={() => void notPlaying()}
+      />
     </form>
+  )
+}
+
+function NotPlayingCard({
+  captainName,
+  hasInvites,
+  busy,
+  onLeave,
+}: {
+  captainName: string
+  hasInvites: boolean
+  busy: boolean
+  onLeave: () => void
+}) {
+  return (
+    <div className="card space-y-3">
+      <p className="text-sm font-semibold text-lob-dark">
+        {hasInvites ? 'Not playing, or not your account?' : 'Not your account?'}
+      </p>
+      <p className="text-sm text-lob-slate leading-relaxed">
+        {hasInvites
+          ? `You can say no without setting anything up. ${captainName}'s team is cancelled and you're signed out.`
+          : 'You can sign out without setting anything up.'}
+      </p>
+      <button
+        type="button"
+        onClick={onLeave}
+        disabled={busy}
+        className="btn-secondary w-full py-3 flex items-center justify-center gap-2 disabled:opacity-50"
+      >
+        {busy && <Loader2 size={14} className="animate-spin" />}
+        {hasInvites ? "I'm not playing" : 'Sign out'}
+      </button>
+    </div>
   )
 }

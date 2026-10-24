@@ -9,7 +9,8 @@ export const inviteSeenKey = ({ playerId }: { playerId: string }) =>
 export const eventInfoPath = ({ tournamentId }: { tournamentId: string }) =>
   `/events/${tournamentId}/info`
 
-const EXEMPT_PREFIXES = [TEAM_INVITES_PATH, FINISH_ACCOUNT_PATH, '/auth/', '/transfer/']
+// /account stays reachable so a captain-created account can always sign out.
+const EXEMPT_PREFIXES = [TEAM_INVITES_PATH, FINISH_ACCOUNT_PATH, '/account', '/auth/', '/transfer/']
 const isExempt = ({ pathname }: { pathname: string }) =>
   EXEMPT_PREFIXES.some((p) => pathname.startsWith(p))
 
