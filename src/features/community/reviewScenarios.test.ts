@@ -179,10 +179,10 @@ describe('corpReview — King of the Court ranks by team (T11)', () => {
       [
         't2',
         [
-          { teamId: 'a', playerIds: ['p1', 'p9'], finalRank: p1Rank },
-          { teamId: 'b', playerIds: ['p3', 'p4'], finalRank: 2 },
-          { teamId: 'c', playerIds: ['p5', 'p6'], finalRank: 3 },
-          { teamId: 'd', playerIds: ['p7', 'p8'], finalRank: 4 },
+          { teamId: 'a', playerIds: ['p1', 'p9'], finalRank: p1Rank, move: null },
+          { teamId: 'b', playerIds: ['p3', 'p4'], finalRank: 2, move: null },
+          { teamId: 'c', playerIds: ['p5', 'p6'], finalRank: 3, move: null },
+          { teamId: 'd', playerIds: ['p7', 'p8'], finalRank: 4, move: null },
         ],
       ],
     ])

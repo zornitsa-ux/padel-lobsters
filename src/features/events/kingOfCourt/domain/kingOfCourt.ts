@@ -1,5 +1,6 @@
 import type {
   Court,
+  CourtMove,
   CourtResult,
   KotcPlayer,
   KotcTeam,
@@ -98,4 +99,43 @@ export function rankedTeams<T extends Pick<KotcTeam, 'finalRank'>>({ teams }: { 
     .filter((t) => t.finalRank != null)
     .sort((a, b) => a.finalRank! - b.finalRank!)
   return [...ranked, ...teams.filter((t) => t.finalRank == null)]
+}
+
+// D-028. A waiting team starts from the court it waited at. Final court is
+// ceil(rank / 2), capped at the bottom court in play: the standings form lists
+// every court, including ones no team started on.
+export function courtMoves({
+  seededTeamIds,
+  courts,
+  teams,
+}: {
+  seededTeamIds: string[]
+  courts: Court[]
+  teams: Pick<KotcTeam, 'id' | 'finalRank'>[]
+}): Record<string, CourtMove> {
+  const layout = startingCourts({ seededTeamIds, courts }).courts
+  const startOf = new Map(
+    layout.flatMap((court) =>
+      [...court.teamIds, court.waitingTeamId].filter(Boolean).map((id) => [id, court.courtIndex]),
+    ),
+  )
+  const finalRankOf = new Map(teams.map((t) => [t.id, t.finalRank]))
+  const moves: Record<string, CourtMove> = {}
+  for (const teamId of seededTeamIds) {
+    const startCourtIndex = startOf.get(teamId)
+    const rank = finalRankOf.get(teamId)
+    if (startCourtIndex == null || rank == null) continue
+    const finalCourtIndex = Math.min(Math.ceil(rank / 2) - 1, layout.length - 1)
+    moves[teamId] = { startCourtIndex, finalCourtIndex, gained: startCourtIndex - finalCourtIndex }
+  }
+  return moves
+}
+
+// D-028: most courts gained, then the lower start; anyone still tied shares it.
+export function biggestClimbers({ moves }: { moves: Record<string, CourtMove> }): string[] {
+  const climbers = Object.entries(moves).filter(([, m]) => m.gained > 0)
+  const best = Math.max(...climbers.map(([, m]) => m.gained))
+  const top = climbers.filter(([, m]) => m.gained === best)
+  const lowest = Math.max(...top.map(([, m]) => m.startCourtIndex))
+  return top.filter(([, m]) => m.startCourtIndex === lowest).map(([id]) => id)
 }

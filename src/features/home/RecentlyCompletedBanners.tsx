@@ -1,8 +1,9 @@
 import React from 'react'
 import { resultsWithheld } from '../events/resultsPhase'
 import { isKingOfTheCourt } from '../events/eventFormat'
-import { eventWinner, teamResultLabel } from '../events/kingOfCourt/kotcPlayer'
+import { eventClimbers, eventWinner, teamResultLabel } from '../events/kingOfCourt/kotcPlayer'
 import type { TeamResultsByEvent } from '../events/kingOfCourt/kotcPlayer'
+import BiggestClimberLine from '../events/kingOfCourt/BiggestClimberLine'
 import type { Player, NormalisedTournament } from '../../lib/normalise'
 import type { NormalisedMatch } from '../events/matchQueries'
 import type { NormalisedRegistration } from '../events/registrationQueries'
@@ -49,7 +50,9 @@ export default function RecentlyCompletedBanners<T extends CompletedTournament>(
         if (isKingOfTheCourt(t)) {
           // Held back while loading, so it never offers the no-standings link first.
           if (!teamResults) return null
-          const winner = eventWinner({ results: teamResults.get(t.id) })
+          const results = teamResults.get(t.id)
+          const winner = eventWinner({ results })
+          const climbers = eventClimbers({ results })
           return (
             <CompletedBanner
               key={t.id}
@@ -59,6 +62,14 @@ export default function RecentlyCompletedBanners<T extends CompletedTournament>(
                   <>
                     🥇 Winners:{' '}
                     <span className="font-bold">{teamResultLabel({ result: winner, nameOf })}</span>
+                    {climbers.length > 0 && (
+                      <span className="block">
+                        <BiggestClimberLine
+                          labels={climbers.map((result) => teamResultLabel({ result, nameOf }))}
+                          detail={`↑${climbers[0].move!.gained}`}
+                        />
+                      </span>
+                    )}
                   </>
                 )
               }

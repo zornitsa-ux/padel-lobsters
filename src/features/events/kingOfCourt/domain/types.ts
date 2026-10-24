@@ -33,5 +33,8 @@ export type StartingCourt = {
   waitingTeamId: string | null
 }
 
+// gained > 0 is courts climbed towards the King court (index 0).
+export type CourtMove = { startCourtIndex: number; finalCourtIndex: number; gained: number }
+
 // Empty form slots arrive as '' or null as well as undefined.
 export type CourtResult = { first?: string | null; second?: string | null }

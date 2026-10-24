@@ -1,5 +1,7 @@
 export * from './types'
 export {
+  biggestClimbers,
+  courtMoves,
   rankedTeams,
   rankFromFinalCourts,
   seedTeams,
