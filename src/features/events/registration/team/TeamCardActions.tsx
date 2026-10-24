@@ -1,4 +1,3 @@
-import { declineMessage } from './teamHelpers'
 import { useState } from 'react'
 import type { Player } from '../../../../lib/normalise'
 import { useConfirm } from '../../../../lib/confirmBus'
@@ -7,6 +6,7 @@ import { useTeamActions } from '../../teams/useTeams'
 import type { TeamEntry } from '../../teams/teamTypes'
 import type { DisplayName } from '../utils'
 import ChangePartnerPanel from './ChangePartnerPanel'
+import { useConfirmDecline } from './useConfirmDecline'
 
 const LINK = 'text-xs font-semibold text-lob-teal underline underline-offset-2'
 
@@ -69,19 +69,13 @@ export function CaptainPendingActions({
 }
 
 export function PartnerPendingActions({ entry, tournamentId, otherName }: ActionsProps) {
-  const confirm = useConfirm()
+  const confirmDecline = useConfirmDecline()
   const { respondToTeamInvite } = useTeamActions()
   const [busy, setBusy] = useState(false)
 
   const respond = async ({ accept }: { accept: boolean }) => {
     if (!accept) {
-      const ok = await confirm({
-        title: 'Not playing?',
-        message: declineMessage({ captainName: otherName }),
-        confirmLabel: "I'm not playing",
-        destructive: true,
-      })
-      if (!ok) return
+      if (!(await confirmDecline({ captainName: otherName }))) return
     }
     setBusy(true)
     await respondToTeamInvite({ tournamentId, teamId: entry.team.id, accept })

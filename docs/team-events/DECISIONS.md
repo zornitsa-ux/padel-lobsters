@@ -361,3 +361,18 @@ also means the new member matches everyone else from day one.
 **Impact:** Supersedes D-019's optional finish-profile step after accepting.
 The `get_my_account_setup` and `acknowledge_my_account` RPCs (CONTRACTS §3).
 The `/finish-account` screen; the shared profile fields with `SignupRequest`.
+
+## D-022 — A captain-created partner can say no without claiming the account (2026-10-24)
+
+**Decision:** The Finish your account screen also offers "I'm not playing". It
+declines every pending team invite and signs the player out, without saving a
+profile or the D-021 acknowledgement. `respond_to_team_invite` requires the
+acknowledgement only to accept. `/account` is exempt from the finish-setup
+redirect, so the player can always sign out.
+
+**Why:** Found in the combined review. Under D-021 alone, someone whose email
+was used without their permission had to tick "This account is mine" before
+they could decline, and had no way to sign out.
+
+**Impact:** Amends D-021. `respond_to_team_invite` (CONTRACTS §3), the
+`/finish-account` screen and the invite redirect.

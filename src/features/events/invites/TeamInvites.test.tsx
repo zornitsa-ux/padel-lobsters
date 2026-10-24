@@ -207,6 +207,17 @@ describe('invite redirect', () => {
     expect(screen.getByTestId('where').textContent).toBe('/finish-account')
   })
 
+  it('leaves /account reachable so an unconfirmed account can sign out', () => {
+    m.setup = { requestedByName: 'Cara Diaz', tournamentName: 'King Sunday', acknowledged: false }
+    render(
+      <MemoryRouter initialEntries={['/account']}>
+        <TeamInviteRedirect />
+        <Where />
+      </MemoryRouter>,
+    )
+    expect(screen.getByTestId('where').textContent).toBe('/account')
+  })
+
   it('cannot loop when sessionStorage is unavailable', () => {
     vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
       throw new Error('blocked')

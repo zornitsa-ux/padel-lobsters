@@ -6,6 +6,10 @@ import { MemoryRouter, Routes, Route, useLocation } from 'react-router-dom'
 const m = vi.hoisted(() => ({
   updatePlayer: vi.fn(),
   acknowledge: vi.fn(),
+  respondToTeamInvite: vi.fn(),
+  confirm: vi.fn(),
+  logout: vi.fn(),
+  invites: [] as unknown[],
   country: '',
   setup: { requestedByName: 'Cara Diaz', tournamentName: 'King Sunday', acknowledged: false } as {
     requestedByName: string
@@ -15,8 +19,13 @@ const m = vi.hoisted(() => ({
 }))
 
 vi.mock('../../../context/useApp', () => ({
-  useApp: () => ({ session: { user: { id: 'me', email: 'new@example.test' } }, role: 'player' }),
+  useApp: () => ({
+    session: { user: { id: 'me', email: 'new@example.test' } },
+    role: 'player',
+    logout: m.logout,
+  }),
 }))
+vi.mock('../../../lib/confirmBus', () => ({ useConfirm: () => m.confirm }))
 vi.mock('../../players/usePlayers', () => ({
   useMyProfile: () => ({
     isLoading: false,
@@ -36,6 +45,8 @@ vi.mock('../../players/usePlayers', () => ({
 vi.mock('../teams/useTeams', () => ({
   useMyAccountSetup: () => ({ data: m.setup, isPending: false }),
   useAcknowledgeMyAccount: () => m.acknowledge,
+  useMyTeamInvites: () => ({ data: m.invites }),
+  useTeamActions: () => ({ respondToTeamInvite: m.respondToTeamInvite }),
 }))
 
 const FinishAccountPage = (await import('./FinishAccountPage')).default
@@ -60,6 +71,10 @@ beforeEach(() => {
   m.updatePlayer.mockResolvedValue(undefined)
   m.acknowledge.mockResolvedValue('ok')
   m.country = ''
+  m.invites = [{ teamId: 'tm1', tournamentId: 't1' }]
+  m.confirm.mockResolvedValue(true)
+  m.respondToTeamInvite.mockResolvedValue('declined')
+  m.logout.mockResolvedValue(undefined)
 })
 afterEach(cleanup)
 
@@ -113,6 +128,39 @@ describe('finish your account', () => {
       expect.objectContaining({ name: 'Gus Grant', gender: 'male', phone: '+31600000000' }),
     )
     expect(m.acknowledge).toHaveBeenCalled()
+  })
+
+  it('declines without claiming the account, then signs out (D-022)', async () => {
+    renderPage()
+    fireEvent.click(screen.getByRole('button', { name: "I'm not playing" }))
+
+    await waitFor(() => expect(screen.getByTestId('where').textContent).toBe('/'))
+    expect(m.respondToTeamInvite).toHaveBeenCalledWith({
+      tournamentId: 't1',
+      teamId: 'tm1',
+      accept: false,
+    })
+    expect(m.acknowledge).not.toHaveBeenCalled()
+    expect(m.updatePlayer).not.toHaveBeenCalled()
+    expect(m.logout).toHaveBeenCalled()
+  })
+
+  it('stays signed in when the decline fails', async () => {
+    m.respondToTeamInvite.mockResolvedValue('error')
+    renderPage()
+    fireEvent.click(screen.getByRole('button', { name: "I'm not playing" }))
+
+    await waitFor(() => expect(m.respondToTeamInvite).toHaveBeenCalled())
+    expect(m.logout).not.toHaveBeenCalled()
+  })
+
+  it('offers a plain sign-out when no invite is waiting', async () => {
+    m.invites = []
+    renderPage()
+    fireEvent.click(screen.getByRole('button', { name: 'Sign out' }))
+
+    await waitFor(() => expect(m.logout).toHaveBeenCalled())
+    expect(m.confirm).not.toHaveBeenCalled()
   })
 
   it('leaves for the invites when there is nothing to finish', async () => {

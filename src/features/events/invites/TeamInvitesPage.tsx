@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useApp } from '../../../context/useApp'
-import { useConfirm } from '../../../lib/confirmBus'
 import { EmptyState } from '../../../components/ui/EmptyState'
 import Avatar from '../../../components/ui/Avatar'
 import DateTile from '../../../components/ui/DateTile'
@@ -10,7 +9,7 @@ import { partnerAcceptNote } from '../teams/teamStatusMessages'
 import { useMyAccountSetup, useMyTeamInvites, useTeamActions } from '../teams/useTeams'
 import { writeStorage } from '../../../lib/safeStorage'
 import type { TeamInvite } from '../teams/teamTypes'
-import { declineMessage } from '../registration/team/teamHelpers'
+import { useConfirmDecline } from '../registration/team/useConfirmDecline'
 import {
   eventInfoPath,
   FINISH_ACCOUNT_PATH,
@@ -74,7 +73,7 @@ export default function TeamInvitesPage() {
   const { session } = useApp()
   const navigate = useNavigate()
   const location = useLocation()
-  const confirm = useConfirm()
+  const confirmDecline = useConfirmDecline()
   const { respondToTeamInvite } = useTeamActions()
   const playerId = session?.user?.id ?? null
   const { data: invites = [], isPending } = useMyTeamInvites({ enabled: !!session })
@@ -91,13 +90,7 @@ export default function TeamInvitesPage() {
 
   const respond = async ({ invite, accept }: { invite: TeamInvite; accept: boolean }) => {
     if (!accept) {
-      const ok = await confirm({
-        title: 'Not playing?',
-        message: declineMessage({ captainName: invite.captainName }),
-        confirmLabel: "I'm not playing",
-        destructive: true,
-      })
-      if (!ok) return
+      if (!(await confirmDecline({ captainName: invite.captainName }))) return
     }
     setBusyId(invite.teamId)
     const status = await respondToTeamInvite({
