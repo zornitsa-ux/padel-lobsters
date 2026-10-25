@@ -13,8 +13,14 @@ describe('TextButton', () => {
     expect(propsOf(el).type).toBe('button')
     expect(propsOf(el).onClick).toBe(onClick)
     expect(classOf(el)).toBe(
-      'font-semibold underline underline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed text-lob-teal text-xs',
+      'font-semibold underline underline-offset-2 text-lob-teal disabled:text-lob-muted-light disabled:cursor-not-allowed text-xs',
     )
+  })
+
+  it('forwards button attributes', () => {
+    const el = TextButton({ children: 'Resend', disabled: true, 'aria-label': 'Resend code' })
+    expect(propsOf(el).disabled).toBe(true)
+    expect(propsOf(el)['aria-label']).toBe('Resend code')
   })
 
   it('applies tone and inherits size', () => {

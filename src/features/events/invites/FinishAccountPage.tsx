@@ -150,8 +150,12 @@ export default function FinishAccountPage() {
             {error}
           </p>
         )}
-        <Button type="submit" disabled={!confirmed || saving} className="w-full">
-          {saving && <Loader2 size={14} className="animate-spin" />}
+        <Button
+          type="submit"
+          disabled={!confirmed || saving}
+          className="w-full"
+          icon={saving && <Loader2 className="animate-spin" />}
+        >
           Finish and see your invite
         </Button>
       </div>
@@ -187,8 +191,13 @@ function NotPlayingCard({
           ? `You can say no without setting anything up. ${captainName}'s team is cancelled and you're signed out.`
           : 'You can sign out without setting anything up.'}
       </p>
-      <Button onClick={onLeave} disabled={busy} variant="secondary" className="w-full">
-        {busy && <Loader2 size={14} className="animate-spin" />}
+      <Button
+        onClick={onLeave}
+        disabled={busy}
+        variant="secondary"
+        className="w-full"
+        icon={busy && <Loader2 className="animate-spin" />}
+      >
         {hasInvites ? "I'm not playing" : 'Sign out'}
       </Button>
     </div>

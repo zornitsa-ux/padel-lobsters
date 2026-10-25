@@ -100,8 +100,12 @@ function EmailChangeForm({ email }: { email: string }) {
             >
               Cancel
             </button>
-            <Button type="submit" disabled={emailBusy || !newEmail.trim()} className="flex-1">
-              <Mail size={13} />
+            <Button
+              type="submit"
+              disabled={emailBusy || !newEmail.trim()}
+              className="flex-1"
+              icon={<Mail />}
+            >
               {emailBusy ? 'Sending…' : 'Send confirmation'}
             </Button>
           </div>

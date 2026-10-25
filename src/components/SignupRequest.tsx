@@ -384,18 +384,13 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
             <p className="text-xs text-lob-danger bg-lob-danger-light rounded-lg p-2">{error}</p>
           )}
 
-          <Button type="submit" disabled={saving} className="w-full">
-            {saving ? (
-              <>
-                <Loader2 size={14} className="animate-spin" />
-                Saving…
-              </>
-            ) : (
-              <>
-                <UserPlus size={14} />
-                Join the Lobsters 🦞
-              </>
-            )}
+          <Button
+            type="submit"
+            disabled={saving}
+            className="w-full"
+            icon={saving ? <Loader2 className="animate-spin" /> : <UserPlus />}
+          >
+            {saving ? 'Saving…' : 'Join the Lobsters 🦞'}
           </Button>
         </form>
       </div>

@@ -24,6 +24,7 @@ import type { EventNavigate } from './features/events/eventHelpers'
 import CommunityShell from './features/community/CommunityShell'
 import PartnerOnboardingRedirect from './features/events/invites/PartnerOnboardingRedirect'
 import { FINISH_ACCOUNT_PATH, TEAM_INVITES_PATH } from './features/events/invites/inviteRoutes'
+import { DESIGN_GALLERY_ENABLED, DESIGN_GALLERY_PATH } from './lib/designGallery'
 
 // Code-split every route off the first paint. The app shell (Layout,
 // VerificationGate) and the logged-out landing (Dashboard) stay
@@ -54,7 +55,7 @@ const LeagueManagePage = lazy(() => import('./features/league/manage/LeagueManag
 const LobsterWay = lazy(() => import('./features/lobster-way/LobsterWay'))
 const LobsterWayAdmin = lazy(() => import('./features/lobster-way/admin/LobsterWayAdmin'))
 // Dev-only gallery; the ternary lets the production build drop the chunk.
-const DesignGallery = import.meta.env.DEV
+const DesignGallery = DESIGN_GALLERY_ENABLED
   ? lazy(() => import('./features/design/DesignGallery'))
   : null
 
@@ -122,7 +123,7 @@ export default function App() {
                   }
                 />
 
-                {DesignGallery && <Route path="/design" element={<DesignGallery />} />}
+                {DesignGallery && <Route path={DESIGN_GALLERY_PATH} element={<DesignGallery />} />}
 
                 <Route path="*" element={<Navigate to="/home" replace />} />
               </Routes>

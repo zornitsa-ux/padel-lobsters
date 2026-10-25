@@ -45,8 +45,13 @@ export default function SchedulePreview({
       <ScheduleRounds rounds={run.rounds} {...handlers} />
 
       <div className="flex gap-2">
-        <Button onClick={onCompare} disabled={busy} variant="secondary" className="flex-1">
-          <Columns2 size={16} />
+        <Button
+          onClick={onCompare}
+          disabled={busy}
+          variant="secondary"
+          className="flex-1"
+          icon={<Columns2 />}
+        >
           Compare
         </Button>
         <Button onClick={onSave} disabled={busy} className="flex-1">

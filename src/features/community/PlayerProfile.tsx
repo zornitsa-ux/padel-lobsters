@@ -14,6 +14,7 @@ import type { CommunityPlayer } from './playersSelectors'
 import { useMmRatings } from '../matchmaking/useMatchmaking'
 import type { EventNavigate } from '../events/eventHelpers'
 import { Button } from '../../components/ui/Button'
+import { TextButton } from '../../components/ui/TextButton'
 
 const MONTH_ABBR = [
   'Jan',
@@ -449,13 +450,23 @@ export default function PlayerProfile({
       )}
 
       {isAdmin && (
-        <div className="flex gap-2 pt-1">
-          <Button onClick={() => onEdit(p)} variant="secondary" className="flex-1">
-            <Pencil size={14} /> Edit
+        <div className="flex items-center gap-4 pt-1">
+          <Button
+            onClick={() => onEdit(p)}
+            variant="secondary"
+            className="flex-1"
+            icon={<Pencil />}
+          >
+            Edit
           </Button>
-          <Button onClick={() => onDelete(p.id)} variant="danger" className="flex-1">
-            <Trash2 size={14} /> Remove
-          </Button>
+          <TextButton
+            onClick={() => onDelete(p.id)}
+            tone="destructive"
+            size="sm"
+            icon={<Trash2 size={14} />}
+          >
+            Remove
+          </TextButton>
         </div>
       )}
     </div>

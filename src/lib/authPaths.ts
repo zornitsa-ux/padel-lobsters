@@ -9,6 +9,8 @@
 //  over quiet deliberately.
 // ============================================================================
 
+import { DESIGN_GALLERY_ENABLED, DESIGN_GALLERY_PATH } from './designGallery'
+
 /**
  * URL path prefixes that a logged-out visitor (role === 'guest') can browse.
  *
@@ -23,7 +25,7 @@ export const PUBLIC_PATHS = Object.freeze([
   '/', // root redirect
   '/home', // landing — every protected sub-tile triggers the sign-in popup
   '/auth/confirm', // magic-link landing — must be reachable without a session
-  ...(import.meta.env.DEV ? ['/design'] : []), // dev-only component gallery
+  ...(DESIGN_GALLERY_ENABLED ? [DESIGN_GALLERY_PATH] : []),
 ])
 
 /**

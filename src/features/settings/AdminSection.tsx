@@ -211,8 +211,7 @@ export default function AdminSection({
       </div>
 
       {/* Save button */}
-      <Button type="submit" disabled={saving} className="w-full">
-        <Save size={16} />
+      <Button type="submit" disabled={saving} className="w-full" icon={<Save />}>
         {saving ? 'Saving...' : saved ? '✓ Saved!' : 'Save Settings'}
       </Button>
     </form>

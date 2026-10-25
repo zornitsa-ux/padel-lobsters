@@ -36,8 +36,8 @@ export default function AdminItemManager({
 }: AdminItemManagerProps) {
   return (
     <div className="space-y-4">
-      <Button onClick={openAdd} className="w-full">
-        <Plus size={16} /> Add Merch Item
+      <Button onClick={openAdd} className="w-full" icon={<Plus />}>
+        Add Merch Item
       </Button>
 
       {/* Item list (draggable) */}

@@ -41,8 +41,8 @@ export default function AddPlayerCard({
 
   if (!showAdd) {
     return (
-      <Button onClick={onOpen} className="w-full">
-        <Plus size={18} /> Register a Player
+      <Button onClick={onOpen} className="w-full" icon={<Plus />}>
+        Register a Player
       </Button>
     )
   }

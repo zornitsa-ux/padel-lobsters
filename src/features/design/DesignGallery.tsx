@@ -62,8 +62,14 @@ function ButtonSection() {
           </Button>
         </Row>
       ))}
+      <Row label="destructive: confirm vs other">
+        <Button variant="danger">Delete season</Button>
+        <TextButton tone="destructive" size="sm" icon={<Trash2 size={14} />}>
+          Remove
+        </TextButton>
+      </Row>
       <Row label="icon, disabled">
-        <Button icon={<Plus size={16} />}>Add player</Button>
+        <Button icon={<Plus />}>Add player</Button>
         <Button disabled>Disabled</Button>
         <Button variant="secondary" disabled>
           Disabled

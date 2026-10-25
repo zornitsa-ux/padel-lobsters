@@ -45,13 +45,13 @@ export default {
             strong: '#92400E',
           },
           danger: {
-            DEFAULT: '#DC2626',
+            DEFAULT: '#B91C1C',
             light: '#FEF2F2',
             soft: '#FEE2E2',
             border: '#FECACA',
             'on-dark': '#FCA5A5',
-            solid: '#EF4444',
-            strong: '#B91C1C',
+            solid: '#B91C1C',
+            strong: '#991B1B',
           },
           info: {
             DEFAULT: '#0369A1',

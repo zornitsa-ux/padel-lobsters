@@ -12,6 +12,7 @@ import { isPublished } from '../domain/lifecycle'
 import { DIVISION_LABELS, leagueDivisions } from '../domain/types'
 import type { Division, League, LeagueMatch, LeagueTeam } from '../domain/types'
 import { Button } from '../../../components/ui/Button'
+import { TextButton } from '../../../components/ui/TextButton'
 
 const ALL_DIVISIONS: Division[] = ['mens', 'womens']
 
@@ -155,9 +156,15 @@ function DeleteCard({ league, matches }: { league: League; matches: LeagueMatch[
         Available until fixtures are generated. Teams in this season are deleted with it.
       </p>
       {deleteLeague.error && <AlertBox variant="error">{errorText(deleteLeague.error)}</AlertBox>}
-      <Button variant="danger" disabled={deleteLeague.isPending} onClick={handleDelete}>
+      <TextButton
+        tone="destructive"
+        size="sm"
+        disabled={deleteLeague.isPending}
+        onClick={handleDelete}
+        className="block"
+      >
         Delete season
-      </Button>
+      </TextButton>
     </div>
   )
 }

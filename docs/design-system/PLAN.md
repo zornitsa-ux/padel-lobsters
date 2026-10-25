@@ -41,6 +41,7 @@ component doesn't fit, fix the component, not the call site.**
 | Field-level error text               | `FormError` (moving to `components/ui`)              | P3         |
 | Status pill                          | `Badge tone=…`                                       | tones: P4  |
 | Button (action or navigation)        | `Button variant=… size=…`                            | exists     |
+| Destructive action, not the CTA      | `TextButton tone="destructive"`                      | exists     |
 | Toggle, filter or info chip          | none yet (`ActionChip` is an action: P2c)            | later      |
 | Underlined / inline text action      | `TextButton tone=… size=…` (`to` / `href` for links) | exists     |
 | Icon-only button                     | `IconButton` (always with `aria-label`)              | ghost: P2b |
@@ -55,6 +56,14 @@ component doesn't fit, fix the component, not the call site.**
 | Eyebrow / overline                   | `.eyebrow` / `.eyebrow-accent`                       | P6         |
 
 ### Buttons and chips (owner, 2026-10-25)
+
+- **Sizes:** `md` (40px) is the default; `sm` (32px) for dense rows; `lg`
+  (52px) for a lead CTA. Button sizes its own icon, so call sites pass
+  `icon={<Plus />}` with no `size`.
+- **Destructive:** `Button variant="danger"` is only the confirming action of
+  a destructive flow (the confirm dialog's button). A destructive action that
+  isn't the screen's CTA, such as "Delete season" or "Remove player", is
+  `TextButton tone="destructive"`.
 
 - **Button:** an action that starts something or takes you somewhere.
 - **Chip:** shows a filter or a piece of info. It has default (inactive),
@@ -75,7 +84,7 @@ the gallery, and runs `npm run design:baseline` when counts drop.
 | P4  | **`Badge` tones** (`success`, `neutral`, `warning`, `outline`) and **payment status single source** (`paymentStatus.ts`, `PaymentStatusBadge` on `Badge`; blue "transferred" gets a token). Rename team-state "Confirmed".                                                                                                                                                                                                                                                                                                                                      |                        |
 | P5  | **Empty and signed-out states.** `EmptyState variant="inline"`, `SignInPrompt`; loading states: a loading card keeps its title or header, so the viewer sees what is loading, and shows `Spinner` / `Skeleton` in the body instead of `return null`.                                                                                                                                                                                                                                                                                                            |                        |
 | P6  | **Layout pieces.** `RankMarker` + `PlayerRow highlighted`, `CardHeader`, `RosterHeading`, `.panel`, `.eyebrow`, `SearchInput`; `ProfileFields` preferred side → `SegmentedControl`.                                                                                                                                                                                                                                                                                                                                                                             |                        |
-| P7  | **Gallery and lock-down.** Dev-only `/design` route listing every component and variant. Tokens for decorative colours (medal gold, avatar palette, gender marks, selection states). Then switch `theme.extend.colors` to a restricted `theme.colors` so raw palette classes stop generating, and add a lint rule for unknown classes (e.g. `eslint-plugin-tailwindcss`, check ESLint 9 support). Retire `design:check` once the theme is locked.                                                                                                               |                        |
+| P7  | **Lock-down.** Tokens for decorative colours (medal gold, avatar palette, gender marks, selection states). Then switch `theme.extend.colors` to a restricted `theme.colors` so raw palette classes stop generating, and add a lint rule for unknown classes (e.g. `eslint-plugin-tailwindcss`, check ESLint 9 support). Retire `design:check` once the theme is locked.                                                                                                                                                                                         |                        |
 
 The gallery exists: `/design` in dev (`src/features/design/DesignGallery.tsx`;
 open to guests in dev only, left out of the production build). Each step adds
@@ -94,8 +103,8 @@ sites, `registeredEntries`, and the King of the Court helpers (`isKingCourt`,
 
 ## Open owner calls
 
-- P2: which buttons, if any, should be `lg` (52px). None use it yet. Likely
-  candidates are a screen's single lead CTA, such as sign-in submit.
+- P2: `lg` (52px) has no call sites. Keep it for a future lead CTA, or drop
+  it to keep the variations down.
 
 ## Log
 
@@ -108,20 +117,21 @@ sites, `registeredEntries`, and the King of the Court helpers (`isKingCourt`,
   P1); `AlertBox` `info` moves to `lob-info` (sky) so it differs from the
   brand teal (done in P1); loading cards keep their title (P5); revisit the
   card-heavy layout later.
-- **2026-10-25.** P2 built on `design-button`. `Button` (`primary`,
-  `secondary`, `neutral`, `danger` × `md`, `sm`) replaces every `.btn-*` use
-  (95 sites), and the `.btn-*` classes are gone from `index.css`. `neutral`
-  is new: the grey "quiet alternative" button hand-built in the sign-in form
-  and PIN upgrade card. All variants carry a 2px border so mixed pairs match
-  height. `TextButton` replaces 20 hand-built text links, which are now always
-  underlined (some were hover-only, so invisible on touch). Calls made in the
-  PR: `py-2.5 text-sm` CTAs → `md`; `text-xs` buttons → `sm`; "Delete season"
-  (secondary with coral text) → `danger sm`. Icon buttons split out to P2b.
-  The dotted-underline "explain" links in matchmaking stay as they are.
-- **2026-10-25.** Owner review of #70: `md` looked large and `sm` looked
-  medium, so the sizes are renamed `lg` (default) and `md`. Rendered sizes
-  are unchanged. A true `sm` is planned as P2c.
-- **2026-10-25.** Owner: `md` is the default, and `sm` is 32px. The four
-  former `text-xs` buttons move to `sm`. Explicit `size="md"` props removed.
-  Owner definition of buttons vs chips recorded, so `ActionChip` becomes a
-  `Button` (P2c).
+- **2026-10-25.** P2 built on `design-button` (#70). `Button` (`primary`,
+  `secondary`, `neutral`, `danger` × `sm`, `md`, `lg`) replaces every
+  `.btn-*` use (95 sites), and the `.btn-*` classes are gone from
+  `index.css`. `neutral` is new: the grey "quiet alternative" button
+  hand-built in the sign-in form and PIN upgrade card. All variants carry a
+  2px border so mixed pairs match height. `TextButton` replaces 20 hand-built
+  text links, which are now always underlined (some were hover-only, so
+  invisible on touch). Icon buttons split out to P2b. The dotted-underline
+  "explain" links in matchmaking stay as they are.
+- **2026-10-25.** Owner review of #70. Consistency over preserving earlier
+  sizes: the old designs carried no real intent, and odd spots get fixed
+  later. `md` (40px) is the default, so every button that was 52px or
+  `py-2.5` is now 40px; the four former `text-xs` buttons are `sm` (32px).
+  `danger` deepens to red-700 so it reads apart from coral, and is kept for
+  the confirm dialog: "Delete season" and "Remove player" become destructive
+  `TextButton`s. Buttons vs chips defined (above), so `ActionChip` becomes a
+  `Button` (P2c). Disabled buttons drop their hover styles, and a disabled
+  `TextButton` is muted instead of half-opacity.

@@ -38,8 +38,8 @@ export function NewSeasonForm() {
 
   if (!open) {
     return (
-      <Button onClick={() => setOpen(true)}>
-        <Plus size={14} aria-hidden="true" /> New season
+      <Button onClick={() => setOpen(true)} icon={<Plus aria-hidden="true" />}>
+        New season
       </Button>
     )
   }

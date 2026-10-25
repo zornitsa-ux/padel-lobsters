@@ -198,8 +198,8 @@ export default function TransferAccept({ transferId, onNavigate }: TransferAccep
           You're currently signed in as someone else. Sign out and back in with {dn(toPlayer)}'s
           email to accept or decline.
         </p>
-        <Button onClick={handleSignOut} className="mt-2">
-          <LogOut size={14} /> Sign out
+        <Button onClick={handleSignOut} className="mt-2" icon={<LogOut />}>
+          Sign out
         </Button>
       </div>
     )

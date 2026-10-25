@@ -11,6 +11,8 @@ describe('Button', () => {
     expect(classOf(el)).toContain('bg-lob-coral text-white')
     expect(classOf(el)).toContain('py-2 px-4 text-sm')
     expect(classOf(el)).toContain('disabled:opacity-50')
+    expect(classOf(el)).toContain('enabled:hover:shadow-xl')
+    expect(classOf(el)).not.toMatch(/(^| )hover:/)
   })
 
   it('applies the secondary and danger variants', () => {
@@ -34,6 +36,11 @@ describe('Button', () => {
     expect(propsOf(el).form).toBe('f')
     expect(propsOf(el).disabled).toBe(true)
     expect(propsOf(el).onClick).toBe(onClick)
+  })
+
+  it('sizes the icon to the button', () => {
+    expect(classOf(Button({ children: 'Go', size: 'sm' }))).toContain('[&>svg]:size-3.5')
+    expect(classOf(Button({ children: 'Go' }))).toContain('[&>svg]:size-4')
   })
 
   it('renders the icon before the label and appends layout classes', () => {

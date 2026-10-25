@@ -366,8 +366,8 @@ export default function ProfileSection({
                 onClick={handleProfileSave}
                 disabled={profileSaving || !hasPii}
                 className="w-full"
+                icon={<Save />}
               >
-                <Save size={16} />
                 {profileSaving
                   ? 'Saving…'
                   : profileLoadFailed

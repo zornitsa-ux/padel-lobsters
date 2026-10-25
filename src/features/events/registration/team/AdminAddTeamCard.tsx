@@ -69,8 +69,9 @@ export default function AdminAddTeamCard({
             setOpen(true)
           }}
           className="w-full"
+          icon={<Plus />}
         >
-          <Plus size={18} /> Add team
+          Add team
         </Button>
       </div>
     )

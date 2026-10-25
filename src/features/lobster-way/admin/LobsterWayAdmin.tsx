@@ -132,8 +132,7 @@ export default function LobsterWayAdmin() {
             </button>
 
             <div className="flex items-center gap-2 pt-2">
-              <Button onClick={handleSave} disabled={saving} className="flex-1">
-                <Save size={16} />
+              <Button onClick={handleSave} disabled={saving} className="flex-1" icon={<Save />}>
                 {saving ? 'Saving…' : saved ? '✓ Saved!' : 'Save changes'}
               </Button>
               <button
