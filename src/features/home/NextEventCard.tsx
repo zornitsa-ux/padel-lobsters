@@ -71,7 +71,7 @@ export default function NextEventCard({
         description="Check back soon — next tournament is around the corner."
         action={
           isAdmin && (
-            <Button onClick={() => onNavigate('tournament')} size="sm" className="mt-2">
+            <Button onClick={() => onNavigate('tournament')} size="md" className="mt-2">
               Create an Event
             </Button>
           )

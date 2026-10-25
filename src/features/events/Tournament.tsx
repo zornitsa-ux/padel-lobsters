@@ -103,7 +103,7 @@ export default function Tournament({ onNavigate }: { onNavigate: EventNavigate }
         title="Events"
         rightAction={
           isAdmin ? (
-            <Button onClick={openAdd} variant="secondary" size="sm">
+            <Button onClick={openAdd} variant="secondary" size="md">
               <Plus size={16} /> New
             </Button>
           ) : undefined

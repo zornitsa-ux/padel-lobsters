@@ -1,8 +1,8 @@
 import React from 'react'
 
 type Variant = 'primary' | 'secondary' | 'neutral' | 'danger'
-/** `md` is the default CTA. `sm` is about 36px tall, so keep it for secondary inline actions. */
-type Size = 'sm' | 'md'
+/** `lg` is the default CTA. `md` is about 40px tall, so keep it for secondary inline actions. */
+type Size = 'md' | 'lg'
 
 interface ButtonProps extends Omit<
   React.ButtonHTMLAttributes<HTMLButtonElement>,
@@ -29,13 +29,13 @@ const VARIANT: Record<Variant, string> = {
 }
 
 const SIZE: Record<Size, string> = {
-  sm: 'py-2 px-4 text-sm',
-  md: 'py-3 px-5',
+  md: 'py-2 px-4 text-sm',
+  lg: 'py-3 px-5',
 }
 
 function buttonClasses({
   variant = 'primary',
-  size = 'md',
+  size = 'lg',
   className,
 }: {
   variant?: Variant

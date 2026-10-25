@@ -54,10 +54,10 @@ function RealEmailCard({ email, playerId }: { email: string; playerId: string })
         <TextButton onClick={goToSecurity}>Not right? Change it</TextButton>
       </p>
       <div className="flex gap-2 pt-1">
-        <Button variant="neutral" size="sm" onClick={goToSecurity}>
+        <Button variant="neutral" size="md" onClick={goToSecurity}>
           Set a password (optional)
         </Button>
-        <Button onClick={handleDismiss} size="sm">
+        <Button onClick={handleDismiss} size="md">
           Got it
         </Button>
       </div>

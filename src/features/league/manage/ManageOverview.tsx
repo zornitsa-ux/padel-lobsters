@@ -95,7 +95,7 @@ function StatusAction({
     <div className="space-y-1">
       <Button
         variant={isCompletion ? 'primary' : 'secondary'}
-        size="sm"
+        size="md"
         className="w-full"
         disabled={updateStatus.isPending || blocker !== null}
         onClick={handleAdvance}

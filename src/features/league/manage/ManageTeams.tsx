@@ -141,7 +141,7 @@ export function ManageTeams({ league, teams, division, allPlayers }: ManageTeams
       {league.status === 'draft' && divisionTeams.length >= 4 && (
         <Button
           variant="secondary"
-          size="sm"
+          size="md"
           className="w-full mt-3"
           onClick={() => setShowGroupFormation(true)}
         >

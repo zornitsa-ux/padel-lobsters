@@ -56,7 +56,7 @@ function SwapRow({
       <Button
         onClick={() => onApply(suggestion)}
         disabled={applying}
-        size="sm"
+        size="md"
         className="flex-shrink-0"
       >
         Apply
@@ -148,7 +148,7 @@ export default function SwapPanel({
             onClick={onCancel}
             disabled={applying}
             variant="secondary"
-            size="sm"
+            size="md"
             className="w-full"
           >
             Cancel

@@ -48,7 +48,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 function ButtonSection() {
   return (
     <Section title="Button">
-      {(['md', 'sm'] as const).map((size) => (
+      {(['lg', 'md'] as const).map((size) => (
         <Row key={size} label={`size="${size}"`}>
           <Button size={size}>Primary</Button>
           <Button size={size} variant="secondary">
@@ -169,7 +169,7 @@ function StatesSection() {
         title="Nothing here yet"
         description="EmptyState with an action."
         action={
-          <Button size="sm" className="mt-2">
+          <Button size="md" className="mt-2">
             Go to Events
           </Button>
         }

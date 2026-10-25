@@ -84,7 +84,7 @@ export function PartnerPendingActions({ entry, tournamentId, otherName }: Action
           onClick={() => void respond({ accept: false })}
           disabled={busy}
           variant="secondary"
-          size="sm"
+          size="md"
           className="flex-1"
         >
           I&apos;m not playing
@@ -92,7 +92,7 @@ export function PartnerPendingActions({ entry, tournamentId, otherName }: Action
         <Button
           onClick={() => void respond({ accept: true })}
           disabled={busy}
-          size="sm"
+          size="md"
           className="flex-1"
         >
           Accept

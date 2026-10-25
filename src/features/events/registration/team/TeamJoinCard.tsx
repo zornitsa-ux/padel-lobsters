@@ -84,7 +84,7 @@ export default function TeamJoinCard({
                 }}
                 disabled={signup.busy}
                 variant="secondary"
-                size="sm"
+                size="md"
                 className="flex-1"
               >
                 Back
@@ -92,7 +92,7 @@ export default function TeamJoinCard({
               <Button
                 onClick={() => void signup.submit({ choice })}
                 disabled={signup.busy}
-                size="sm"
+                size="md"
                 className="flex-1"
               >
                 {submitLabel}

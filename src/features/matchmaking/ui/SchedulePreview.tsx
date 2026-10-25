@@ -41,7 +41,7 @@ export default function SchedulePreview({
           onClick={onUndoSwap}
           disabled={busy}
           variant="secondary"
-          size="sm"
+          size="md"
           className="w-full"
         >
           Undo last swap
@@ -55,13 +55,13 @@ export default function SchedulePreview({
           onClick={onCompare}
           disabled={busy}
           variant="secondary"
-          size="sm"
+          size="md"
           className="flex-1"
         >
           <Columns2 size={16} />
           Compare
         </Button>
-        <Button onClick={onSave} disabled={busy} size="sm" className="flex-1">
+        <Button onClick={onSave} disabled={busy} size="md" className="flex-1">
           {saving ? 'Saving…' : 'Save'}
         </Button>
       </div>

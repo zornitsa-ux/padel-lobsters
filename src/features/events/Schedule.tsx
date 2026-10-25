@@ -235,7 +235,7 @@ export default function Schedule({
         icon={<AlertCircle size={36} />}
         title="No event selected"
         action={
-          <Button onClick={() => onNavigate('tournament')} size="sm" className="mt-2">
+          <Button onClick={() => onNavigate('tournament')} size="md" className="mt-2">
             Go to Events
           </Button>
         }

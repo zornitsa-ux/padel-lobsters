@@ -168,7 +168,7 @@ export function SignInForm({ variant, initialEmail = '', onSignedIn, allowPin }:
           <Button type="submit" disabled={busy} className="w-full">
             {busy ? 'Sending…' : 'Email me a sign-in code'}
           </Button>
-          <Button variant="neutral" size="sm" className="w-full" onClick={() => goTo('password')}>
+          <Button variant="neutral" size="md" className="w-full" onClick={() => goTo('password')}>
             Sign in with password
           </Button>
           {allowPin && (
