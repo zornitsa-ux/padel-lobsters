@@ -450,10 +450,10 @@ export default function PlayerProfile({
 
       {isAdmin && (
         <div className="flex gap-2 pt-1">
-          <Button onClick={() => onEdit(p)} variant="secondary" size="md" className="flex-1">
+          <Button onClick={() => onEdit(p)} variant="secondary" className="flex-1">
             <Pencil size={14} /> Edit
           </Button>
-          <Button onClick={() => onDelete(p.id)} variant="danger" size="md" className="flex-1">
+          <Button onClick={() => onDelete(p.id)} variant="danger" className="flex-1">
             <Trash2 size={14} /> Remove
           </Button>
         </div>

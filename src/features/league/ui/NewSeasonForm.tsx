@@ -38,7 +38,7 @@ export function NewSeasonForm() {
 
   if (!open) {
     return (
-      <Button size="md" onClick={() => setOpen(true)}>
+      <Button onClick={() => setOpen(true)}>
         <Plus size={14} aria-hidden="true" /> New season
       </Button>
     )
@@ -75,10 +75,10 @@ export function NewSeasonForm() {
       </p>
       {error && <AlertBox variant="error">{error}</AlertBox>}
       <div className="flex gap-2">
-        <Button variant="secondary" size="md" onClick={() => setOpen(false)}>
+        <Button variant="secondary" onClick={() => setOpen(false)}>
           Cancel
         </Button>
-        <Button size="md" disabled={createLeague.isPending} onClick={handleCreate}>
+        <Button disabled={createLeague.isPending} onClick={handleCreate}>
           {createLeague.isPending ? 'Creating…' : 'Create season'}
         </Button>
       </div>

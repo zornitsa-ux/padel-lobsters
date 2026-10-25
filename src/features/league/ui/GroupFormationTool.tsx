@@ -163,7 +163,7 @@ export function GroupFormationTool({
       <RecommendationPanel teams={teams} groupA={groupA} groupB={groupB} />
 
       <div className="flex gap-2">
-        <Button variant="secondary" size="md" onClick={handleSuggest}>
+        <Button variant="secondary" onClick={handleSuggest}>
           Suggest balanced groups
         </Button>
       </div>

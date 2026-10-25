@@ -122,7 +122,7 @@ export default function TransferAccept({ transferId, onNavigate }: TransferAccep
         icon={<AlertCircle size={36} />}
         title="No transfer link found."
         action={
-          <Button onClick={() => onNavigate?.('dashboard')} size="md" className="mt-2">
+          <Button onClick={() => onNavigate?.('dashboard')} className="mt-2">
             Back to home
           </Button>
         }
@@ -137,7 +137,7 @@ export default function TransferAccept({ transferId, onNavigate }: TransferAccep
         title="We couldn't find this transfer."
         description="It may have been cancelled or already accepted."
         action={
-          <Button onClick={() => onNavigate?.('dashboard')} size="md" className="mt-2">
+          <Button onClick={() => onNavigate?.('dashboard')} className="mt-2">
             Back to home
           </Button>
         }
@@ -154,11 +154,7 @@ export default function TransferAccept({ transferId, onNavigate }: TransferAccep
         title={`This transfer has ${stateLabel}.`}
         action={
           tournament && (
-            <Button
-              onClick={() => onNavigate?.('registration', tournament)}
-              size="md"
-              className="mt-2"
-            >
+            <Button onClick={() => onNavigate?.('registration', tournament)} className="mt-2">
               See the event
             </Button>
           )
@@ -184,11 +180,7 @@ export default function TransferAccept({ transferId, onNavigate }: TransferAccep
             : `We've let ${dn(fromPlayer)} know you can't take the spot.`}
         </p>
         {tournament && (
-          <Button
-            onClick={() => onNavigate?.('registration', tournament)}
-            size="md"
-            className="mt-2"
-          >
+          <Button onClick={() => onNavigate?.('registration', tournament)} className="mt-2">
             {isAccept ? 'See the event' : 'Back to events'}
           </Button>
         )}
@@ -206,7 +198,7 @@ export default function TransferAccept({ transferId, onNavigate }: TransferAccep
           You're currently signed in as someone else. Sign out and back in with {dn(toPlayer)}'s
           email to accept or decline.
         </p>
-        <Button onClick={handleSignOut} size="md" className="mt-2">
+        <Button onClick={handleSignOut} className="mt-2">
           <LogOut size={14} /> Sign out
         </Button>
       </div>

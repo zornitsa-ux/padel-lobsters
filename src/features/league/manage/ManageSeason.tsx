@@ -48,7 +48,6 @@ function VisibilityCard({ league }: { league: League }) {
         canHide && (
           <Button
             variant="secondary"
-            size="md"
             disabled={setPublished.isPending}
             onClick={() => setPublished.mutate(false)}
           >
@@ -60,7 +59,7 @@ function VisibilityCard({ league }: { league: League }) {
           <p className="text-xs text-lob-muted">
             Only admins can see this season. Publish it when the teams are ready to be announced.
           </p>
-          <Button size="md" disabled={setPublished.isPending} onClick={handlePublish}>
+          <Button disabled={setPublished.isPending} onClick={handlePublish}>
             Publish season
           </Button>
         </>
@@ -121,7 +120,6 @@ function DetailsCard({ league, teams }: { league: League; teams: LeagueTeam[] })
       {updateLeague.error && <AlertBox variant="error">{errorText(updateLeague.error)}</AlertBox>}
       <Button
         variant="secondary"
-        size="md"
         disabled={updateLeague.isPending || !name.trim() || divisions.length === 0}
         onClick={() =>
           updateLeague.mutate(isDraft ? { name: name.trim(), divisions } : { name: name.trim() })
@@ -157,7 +155,7 @@ function DeleteCard({ league, matches }: { league: League; matches: LeagueMatch[
         Available until fixtures are generated. Teams in this season are deleted with it.
       </p>
       {deleteLeague.error && <AlertBox variant="error">{errorText(deleteLeague.error)}</AlertBox>}
-      <Button variant="danger" size="md" disabled={deleteLeague.isPending} onClick={handleDelete}>
+      <Button variant="danger" disabled={deleteLeague.isPending} onClick={handleDelete}>
         Delete season
       </Button>
     </div>

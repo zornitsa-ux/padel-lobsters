@@ -1,8 +1,8 @@
 import React from 'react'
 
 type Variant = 'primary' | 'secondary' | 'neutral' | 'danger'
-/** `lg` is the default CTA. `md` is about 40px tall, so keep it for secondary inline actions. */
-type Size = 'md' | 'lg'
+/** `md` (40px) is the default. `lg` (52px) for a screen's lead CTA; `sm` (32px) for dense rows. */
+type Size = 'sm' | 'md' | 'lg'
 
 interface ButtonProps extends Omit<
   React.ButtonHTMLAttributes<HTMLButtonElement>,
@@ -29,13 +29,14 @@ const VARIANT: Record<Variant, string> = {
 }
 
 const SIZE: Record<Size, string> = {
+  sm: 'py-1.5 px-3 text-xs',
   md: 'py-2 px-4 text-sm',
   lg: 'py-3 px-5',
 }
 
 function buttonClasses({
   variant = 'primary',
-  size = 'lg',
+  size = 'md',
   className,
 }: {
   variant?: Variant

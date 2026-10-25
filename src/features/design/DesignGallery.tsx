@@ -48,7 +48,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 function ButtonSection() {
   return (
     <Section title="Button">
-      {(['lg', 'md'] as const).map((size) => (
+      {(['lg', 'md', 'sm'] as const).map((size) => (
         <Row key={size} label={`size="${size}"`}>
           <Button size={size}>Primary</Button>
           <Button size={size} variant="secondary">
@@ -168,11 +168,7 @@ function StatesSection() {
         icon={<Inbox size={36} />}
         title="Nothing here yet"
         description="EmptyState with an action."
-        action={
-          <Button size="md" className="mt-2">
-            Go to Events
-          </Button>
-        }
+        action={<Button className="mt-2">Go to Events</Button>}
       />
       <Spinner className="py-4" />
       <Skeleton className="h-10 w-full" />

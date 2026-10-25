@@ -5,11 +5,11 @@ import { propsOf } from '../../test/element'
 const classOf = (el: unknown) => String(propsOf(el).className)
 
 describe('Button', () => {
-  it('defaults to a primary lg button of type button', () => {
+  it('defaults to a primary md button of type button', () => {
     const el = Button({ children: 'Save' })
     expect(propsOf(el).type).toBe('button')
     expect(classOf(el)).toContain('bg-lob-coral text-white')
-    expect(classOf(el)).toContain('py-3 px-5')
+    expect(classOf(el)).toContain('py-2 px-4 text-sm')
     expect(classOf(el)).toContain('disabled:opacity-50')
   })
 
@@ -22,8 +22,9 @@ describe('Button', () => {
     )
   })
 
-  it('supports the md size', () => {
-    expect(classOf(Button({ children: 'Go', size: 'md' }))).toContain('py-2 px-4 text-sm')
+  it('supports the sm and lg sizes', () => {
+    expect(classOf(Button({ children: 'Go', size: 'sm' }))).toContain('py-1.5 px-3 text-xs')
+    expect(classOf(Button({ children: 'Go', size: 'lg' }))).toContain('py-3 px-5')
   })
 
   it('keeps a submit type and forwards button attributes', () => {

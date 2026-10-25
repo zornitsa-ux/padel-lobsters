@@ -188,7 +188,7 @@ function StepRow({
                     onClick={action.onClick}
                     disabled={locked || action.busy}
                     variant="secondary"
-                    size="md"
+                    size="sm"
                   >
                     {action.busy ? (action.busyLabel ?? action.label) : action.label}
                   </Button>

@@ -138,7 +138,7 @@ export default function MyTournament({ tournament, onNavigate }: Props) {
         icon={<UserRoundX size={36} />}
         title="Sign in to see your tournament"
         action={
-          <Button onClick={() => onNavigate('settings')} size="md" className="mt-2">
+          <Button onClick={() => onNavigate('settings')} className="mt-2">
             Go to Settings
           </Button>
         }

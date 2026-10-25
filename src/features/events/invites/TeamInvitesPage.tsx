@@ -114,7 +114,7 @@ export default function TeamInvitesPage() {
       <EmptyState
         title="Sign in to see your team invites"
         action={
-          <Button onClick={() => navigate('/account')} size="md" className="mt-2">
+          <Button onClick={() => navigate('/account')} className="mt-2">
             Sign in
           </Button>
         }
@@ -129,7 +129,7 @@ export default function TeamInvitesPage() {
       <EmptyState
         title="No team invites waiting"
         action={
-          <Button onClick={() => navigate('/events')} size="md" className="mt-2">
+          <Button onClick={() => navigate('/events')} className="mt-2">
             Go to Events
           </Button>
         }

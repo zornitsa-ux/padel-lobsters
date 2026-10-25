@@ -55,7 +55,6 @@ function BracketPanel({
       )}
       <Button
         variant={allDone ? 'primary' : 'secondary'}
-        size="md"
         disabled={createBracket.isPending}
         onClick={handleGenerate}
       >
@@ -100,7 +99,7 @@ function FinalsPanel({
       <AlertBox variant="success">
         Semi-finals decided. Ready to create the {tiers} final{pairings.length > 1 ? 's' : ''}.
       </AlertBox>
-      <Button size="md" disabled={createBracket.isPending} onClick={handleGenerate}>
+      <Button disabled={createBracket.isPending} onClick={handleGenerate}>
         {createBracket.isPending ? 'Generating…' : 'Generate Finals'}
       </Button>
       {createBracket.error && (

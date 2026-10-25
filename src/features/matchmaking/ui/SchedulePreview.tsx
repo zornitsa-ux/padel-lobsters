@@ -37,13 +37,7 @@ export default function SchedulePreview({
       </div>
 
       {onUndoSwap && (
-        <Button
-          onClick={onUndoSwap}
-          disabled={busy}
-          variant="secondary"
-          size="md"
-          className="w-full"
-        >
+        <Button onClick={onUndoSwap} disabled={busy} variant="secondary" className="w-full">
           Undo last swap
         </Button>
       )}
@@ -51,17 +45,11 @@ export default function SchedulePreview({
       <ScheduleRounds rounds={run.rounds} {...handlers} />
 
       <div className="flex gap-2">
-        <Button
-          onClick={onCompare}
-          disabled={busy}
-          variant="secondary"
-          size="md"
-          className="flex-1"
-        >
+        <Button onClick={onCompare} disabled={busy} variant="secondary" className="flex-1">
           <Columns2 size={16} />
           Compare
         </Button>
-        <Button onClick={onSave} disabled={busy} size="md" className="flex-1">
+        <Button onClick={onSave} disabled={busy} className="flex-1">
           {saving ? 'Saving…' : 'Save'}
         </Button>
       </div>

@@ -169,10 +169,10 @@ export default function CompareView({
         </div>
 
         <div className="sticky bottom-0 bg-white border-t border-lob-line px-4 py-3 flex gap-2">
-          <Button onClick={onClose} variant="secondary" size="md" className="flex-1">
+          <Button onClick={onClose} variant="secondary" className="flex-1">
             Keep original
           </Button>
-          <Button onClick={onUseAlternative} disabled={!altRun} size="md" className="flex-1">
+          <Button onClick={onUseAlternative} disabled={!altRun} className="flex-1">
             Use alternative
           </Button>
         </div>

@@ -153,7 +153,6 @@ function SeedsCard({
           <div className="flex gap-2 flex-wrap">
             {!publishedAt && (
               <Button
-                size="md"
                 className="w-full"
                 disabled={actions.busy != null}
                 onClick={() => void publish()}
@@ -168,7 +167,6 @@ function SeedsCard({
             {publishedAt && patches.length > 0 && (
               <Button
                 variant="secondary"
-                size="md"
                 disabled={actions.busy != null}
                 onClick={() => void save()}
               >
@@ -253,7 +251,6 @@ function FinalStandingsCard({ seeding, actions }: { seeding: Seeding; actions: A
 
       <div className="flex gap-2 flex-wrap">
         <Button
-          size="md"
           disabled={repeated || patches.length === 0 || actions.busy != null}
           onClick={() => void save()}
         >
@@ -261,7 +258,6 @@ function FinalStandingsCard({ seeding, actions }: { seeding: Seeding; actions: A
         </Button>
         <Button
           variant="secondary"
-          size="md"
           disabled={actions.busy != null}
           onClick={() => setDraft(layout.courts.map(() => ({ first: null, second: null })))}
         >
