@@ -1,8 +1,9 @@
 // Per-file count ratchet for the design checks: counts may only go down.
 import { readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const ROOT = new URL('../..', import.meta.url).pathname
+const ROOT = fileURLToPath(new URL('../..', import.meta.url))
 const SRC = join(ROOT, 'src')
 
 const listFiles = ({ dir, include }) =>

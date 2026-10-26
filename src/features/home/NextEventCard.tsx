@@ -9,7 +9,6 @@ import { fmtEur } from '../../lib/format'
 import type { NormalisedTournament } from '../../lib/normalise'
 import { perPersonCost } from './homeHelpers'
 import { Button } from '../../components/ui/Button'
-import { ActionRow } from '../../components/ui/ActionRow'
 
 interface NextEventCardProps {
   upcoming: NormalisedTournament | undefined
@@ -150,10 +149,12 @@ export default function NextEventCard({
       )}
 
       {/* Action links */}
-      <ActionRow>
-        <Button size="sm" onClick={() => onNavigate('registration', upcoming)}>
-          Registrations
-        </Button>
+      <div className="flex gap-2">
+        <div className="flex-1">
+          <Button size="sm" fullWidth onClick={() => onNavigate('registration', upcoming)}>
+            Registrations
+          </Button>
+        </div>
         <Button
           variant="neutral"
           size="sm"
@@ -172,7 +173,7 @@ export default function NextEventCard({
             Payments
           </Button>
         )}
-      </ActionRow>
+      </div>
     </div>
   )
 }

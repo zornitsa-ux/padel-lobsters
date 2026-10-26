@@ -6,9 +6,8 @@ import { IconButton } from '../../../components/ui/IconButton'
 import type { NormalisedRegistration } from '../registrationQueries'
 import type { NormalisedTransfer } from '../transferQueries'
 import type { DisplayName, GetPlayer, TransferShareTarget } from './utils'
-import { ActionRow } from '../../../components/ui/ActionRow'
 import { Button } from '../../../components/ui/Button'
-import { TextButton } from '../../../components/ui/TextButton'
+import { OutgoingTransferActions } from '../TransferActions'
 
 interface RegisteredSectionProps {
   isCompleted: boolean
@@ -107,24 +106,13 @@ export default function RegisteredSection({
                           </span>
                         </div>
                         {recipient && (
-                          <ActionRow>
-                            <Button
-                              variant="neutral"
-                              size="sm"
-                              onClick={() =>
-                                onOpenShareModal({ transferId: myPending.id, toPlayer: recipient })
-                              }
-                            >
-                              Resend WhatsApp
-                            </Button>
-                            <TextButton
-                              tone="destructive"
-                              onClick={() => onAdminCancelTransfer(myPending.id)}
-                              disabled={respondingTo === myPending.id}
-                            >
-                              {respondingTo === myPending.id ? 'Cancelling…' : 'Cancel offer'}
-                            </TextButton>
-                          </ActionRow>
+                          <OutgoingTransferActions
+                            onResend={() =>
+                              onOpenShareModal({ transferId: myPending.id, toPlayer: recipient })
+                            }
+                            onCancel={() => onAdminCancelTransfer(myPending.id)}
+                            busy={respondingTo === myPending.id}
+                          />
                         )}
                       </div>
                     )

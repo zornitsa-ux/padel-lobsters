@@ -3,9 +3,7 @@ import { ArrowRightLeft, Clock } from 'lucide-react'
 import type { Player } from '../../lib/normalise'
 import type { NormalisedTournament } from '../../lib/normalise'
 import type { NormalisedTransfer } from '../events/transferQueries'
-import { ActionRow } from '../../components/ui/ActionRow'
-import { Button } from '../../components/ui/Button'
-import { TextButton } from '../../components/ui/TextButton'
+import { OutgoingTransferActions, TransferResponseActions } from '../events/TransferActions'
 
 interface TransferOfferBannersProps {
   incomingTransfers: NormalisedTransfer[]
@@ -61,18 +59,11 @@ export default function TransferOfferBanners({
                 )}
               </div>
             </div>
-            <ActionRow>
-              <Button
-                variant="secondary"
-                onClick={() => onIncomingResponse(xfer, false)}
-                disabled={busy}
-              >
-                {busy ? 'Declining…' : 'Decline'}
-              </Button>
-              <Button onClick={() => onIncomingResponse(xfer, true)} disabled={busy}>
-                {busy ? 'Accepting…' : 'Accept'}
-              </Button>
-            </ActionRow>
+            <TransferResponseActions
+              busy={busy}
+              acceptLabel="Accept"
+              onRespond={({ accept }) => onIncomingResponse(xfer, accept)}
+            />
           </div>
         )
       })}
@@ -101,19 +92,11 @@ export default function TransferOfferBanners({
                 )}
               </div>
             </div>
-            <ActionRow>
-              <Button
-                variant="neutral"
-                size="sm"
-                onClick={() => onOutgoingShare(xfer, toP)}
-                disabled={busy || !toP}
-              >
-                Resend WhatsApp
-              </Button>
-              <TextButton tone="destructive" onClick={() => onOutgoingCancel(xfer)} disabled={busy}>
-                {busy ? 'Cancelling…' : 'Cancel offer'}
-              </TextButton>
-            </ActionRow>
+            <OutgoingTransferActions
+              onResend={toP ? () => onOutgoingShare(xfer, toP) : undefined}
+              onCancel={() => onOutgoingCancel(xfer)}
+              busy={busy}
+            />
           </div>
         )
       })}

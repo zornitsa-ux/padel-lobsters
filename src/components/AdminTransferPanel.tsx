@@ -7,8 +7,8 @@ import type { NormalisedTransfer } from '../features/events/transferQueries'
 import Avatar from './ui/Avatar'
 import { Modal } from './ui/Modal'
 import { useConfirm } from '../lib/confirmBus'
-import { ActionRow } from './ui/ActionRow'
 import { Button } from './ui/Button'
+import { TextButton } from './ui/TextButton'
 
 // Admin-only modal that lists every pending transfer for a tournament and
 // surfaces the two admin actions:
@@ -151,24 +151,19 @@ export default function AdminTransferPanel({ tournament, onClose }: AdminTransfe
                 </div>
               )}
 
-              <ActionRow>
+              <div className="flex items-center justify-between gap-3">
                 <Button
                   variant="neutral"
-                  size="sm"
-                  onClick={() => handleCancel(xfer)}
-                  disabled={busy}
-                >
-                  {busy ? '…' : 'Cancel offer'}
-                </Button>
-                <Button
-                  variant="secondary"
                   size="sm"
                   onClick={() => handleForceAccept(xfer)}
                   disabled={busy}
                 >
                   {busy ? 'Working…' : 'Force accept'}
                 </Button>
-              </ActionRow>
+                <TextButton tone="destructive" onClick={() => handleCancel(xfer)} disabled={busy}>
+                  {busy ? '…' : 'Cancel offer'}
+                </TextButton>
+              </div>
             </div>
           )
         })}

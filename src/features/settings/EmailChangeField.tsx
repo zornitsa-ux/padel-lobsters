@@ -59,7 +59,6 @@ function EmailChangeForm({ email }: { email: string }) {
           </div>
           <Button
             variant="secondary"
-            size="sm"
             onClick={() => {
               setEmailEditing(true)
               setNewEmail('')

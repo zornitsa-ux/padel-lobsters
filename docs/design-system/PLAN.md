@@ -274,3 +274,13 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
   X. Left for part 2: expand/collapse headers (ProfileSection, Cancelled)
   onto `CollapsibleCard`, which needs an always-visible summary slot, and
   "Next unscored match →", which needs a trailing icon.
+- **2026-10-26.** Review of #75. `ActionRow` holds `Button`s only: a
+  `Button` with a text action beside it is a `justify-between` row, so the
+  text action keeps its natural width. The transfer pairs, copied in four
+  places, become `TransferResponseActions` (Decline `neutral`, then Accept)
+  and `OutgoingTransferActions` (Resend WhatsApp, then a destructive
+  "Cancel offer") in `features/events/TransferActions.tsx`. The admin
+  transfer panel follows the same pattern. A lead CTA beside smaller links
+  (next-event Registrations) fills what they leave rather than taking an
+  equal share. The email "Change" button is `md`, the height of the field
+  beside it.

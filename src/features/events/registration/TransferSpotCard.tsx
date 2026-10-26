@@ -3,8 +3,8 @@ import type { NormalisedRegistration } from '../registrationQueries'
 import type { NormalisedTransfer } from '../transferQueries'
 import type { GetPlayer, TransferShareTarget } from './utils'
 import { TextButton } from '../../../components/ui/TextButton'
-import { ActionRow } from '../../../components/ui/ActionRow'
 import { Button } from '../../../components/ui/Button'
+import { OutgoingTransferActions, TransferResponseActions } from '../TransferActions'
 
 interface TransferSpotCardProps {
   myReg: NormalisedRegistration | null | undefined
@@ -78,18 +78,11 @@ export default function TransferSpotCard({
                   <strong>{fromFirst}</strong> wants to give you their spot
                 </p>
               </div>
-              <ActionRow>
-                <Button
-                  variant="secondary"
-                  onClick={() => onIncomingResponse(xfer, false)}
-                  disabled={busy}
-                >
-                  {busy ? 'Declining…' : 'Decline'}
-                </Button>
-                <Button onClick={() => onIncomingResponse(xfer, true)} disabled={busy}>
-                  {busy ? 'Accepting…' : 'Accept spot'}
-                </Button>
-              </ActionRow>
+              <TransferResponseActions
+                busy={busy}
+                acceptLabel="Accept spot"
+                onRespond={({ accept }) => onIncomingResponse(xfer, accept)}
+              />
             </div>
           )
         })}
@@ -111,22 +104,15 @@ export default function TransferSpotCard({
               <Clock size={12} className="flex-shrink-0" />
               <span>Transfer offer pending · waiting on {recipientFirst}</span>
             </div>
-            <ActionRow>
-              {recipient && (
-                <Button
-                  variant="neutral"
-                  size="sm"
-                  onClick={() =>
-                    onOpenShareModal({ transferId: pendingFromMe.id, toPlayer: recipient })
-                  }
-                >
-                  Resend WhatsApp
-                </Button>
-              )}
-              <TextButton tone="destructive" onClick={onCancelMyOffer} disabled={busy}>
-                {busy ? 'Cancelling…' : 'Cancel offer'}
-              </TextButton>
-            </ActionRow>
+            <OutgoingTransferActions
+              onResend={
+                recipient
+                  ? () => onOpenShareModal({ transferId: pendingFromMe.id, toPlayer: recipient })
+                  : undefined
+              }
+              onCancel={onCancelMyOffer}
+              busy={busy}
+            />
           </div>
         </div>
       </>

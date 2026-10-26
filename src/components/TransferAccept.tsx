@@ -16,9 +16,9 @@ import { EmptyState } from './ui/EmptyState'
 import { useConfirm } from '../lib/confirmBus'
 import type { Player } from '../lib/normalise'
 import type { EventNavigate } from '../features/events/eventHelpers'
-import { ActionRow } from './ui/ActionRow'
 import { Button } from './ui/Button'
 import { TextButton } from './ui/TextButton'
+import { TransferResponseActions } from '../features/events/TransferActions'
 
 // Landing page Melanie hits after tapping the WhatsApp link
 // (https://padelobsters.nl/?transfer=<id>). Shows the offer details and an
@@ -256,14 +256,11 @@ export default function TransferAccept({ transferId, onNavigate }: TransferAccep
           </div>
         )}
 
-        <ActionRow>
-          <Button variant="secondary" onClick={() => handleRespond(false)} disabled={!!busy}>
-            {busy === 'decline' ? 'Declining…' : 'Decline'}
-          </Button>
-          <Button onClick={() => handleRespond(true)} disabled={!!busy}>
-            {busy === 'accept' ? 'Accepting…' : 'Accept transfer'}
-          </Button>
-        </ActionRow>
+        <TransferResponseActions
+          busy={busy ?? false}
+          acceptLabel="Accept transfer"
+          onRespond={({ accept }) => handleRespond(accept)}
+        />
       </div>
     </div>
   )

@@ -244,20 +244,22 @@ export default function UpcomingEventCard({
       </p>
 
       {/* Actions */}
-      <div className="pt-2 border-t border-lob-line">
-        <ActionRow>
-          <Button variant="secondary" size="sm" onClick={() => onNavigate('registration', t)}>
-            Registrations
-          </Button>
-          <Button variant="neutral" size="sm" onClick={() => onNavigate('schedule', t)}>
-            Schedule
-          </Button>
-          <EventAdminMenu
-            isAdmin={isAdmin}
-            onEdit={() => onEdit(t)}
-            onDelete={() => onDelete(t.id)}
-          />
-        </ActionRow>
+      <div className="flex gap-2 pt-2 border-t border-lob-line">
+        <div className="flex-1">
+          <ActionRow>
+            <Button variant="secondary" size="sm" onClick={() => onNavigate('registration', t)}>
+              Registrations
+            </Button>
+            <Button variant="neutral" size="sm" onClick={() => onNavigate('schedule', t)}>
+              Schedule
+            </Button>
+          </ActionRow>
+        </div>
+        <EventAdminMenu
+          isAdmin={isAdmin}
+          onEdit={() => onEdit(t)}
+          onDelete={() => onDelete(t.id)}
+        />
       </div>
     </div>
   )
