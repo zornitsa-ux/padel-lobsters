@@ -1,7 +1,7 @@
 import React from 'react'
 import { Share2 } from 'lucide-react'
 import { IconButton } from './IconButton'
-import { ActionChip } from './ActionChip'
+import { Button } from './Button'
 
 // ============================================================================
 //  ShareWhatsAppButton
@@ -11,9 +11,8 @@ import { ActionChip } from './ActionChip'
 //  registration page for that tournament. Legacy ?event=<id> links from
 //  older messages still resolve via App.jsx's DeepLinkMigrator.
 //
-//  Three variants: 'icon' (compact square), 'chip' (tertiary ghost chip, for
-//  a utility action sitting under content) and 'full' (wide CTA pill, only
-//  where sharing is the point of the surface).
+//  Two variants: 'icon' (square) and 'compact' (a small labelled button, for
+//  a utility action sitting under content).
 // ============================================================================
 
 // Structural subset of a tournament this button reads. NormalisedTournament
@@ -28,7 +27,7 @@ export interface ShareableEvent {
 
 interface ShareWhatsAppButtonProps {
   tournament?: ShareableEvent | null
-  variant?: 'icon' | 'chip' | 'full'
+  variant?: 'icon' | 'compact'
   className?: string
 }
 
@@ -86,28 +85,17 @@ export default function ShareWhatsAppButton({
     )
   }
 
-  if (variant === 'chip') {
-    return (
-      <ActionChip
-        onClick={handleClick}
-        title="Share on WhatsApp"
-        aria-label="Share on WhatsApp"
-        icon={<Share2 size={13} />}
-        className={className}
-      >
-        Share
-      </ActionChip>
-    )
-  }
-
   return (
-    <button
-      type="button"
+    <Button
+      variant="neutral"
+      size="sm"
       onClick={handleClick}
-      className={`w-full flex items-center justify-center gap-2 border-2 border-lob-success-solid text-lob-success font-semibold py-3 rounded-2xl active:scale-95 transition-all ${className}`}
+      title="Share on WhatsApp"
+      aria-label="Share on WhatsApp"
+      icon={<Share2 />}
+      className={className}
     >
-      <Share2 size={18} />
-      Share on WhatsApp
-    </button>
+      Share
+    </Button>
   )
 }

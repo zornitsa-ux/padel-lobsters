@@ -15,6 +15,8 @@ import { PageHeader } from '../../components/ui/PageHeader'
 import { Button } from '../../components/ui/Button'
 import { TextButton } from '../../components/ui/TextButton'
 import { IconButton } from '../../components/ui/IconButton'
+import ShareWhatsAppButton from '../../components/ui/ShareWhatsAppButton'
+import AddToCalendarButton from '../../components/ui/AddToCalendarButton'
 import { AvatarPicker } from '../../components/ui/AvatarPicker'
 import { AlertBox } from '../../components/ui/AlertBox'
 import { Badge, type BadgeProps } from '../../components/ui/Badge'
@@ -38,6 +40,8 @@ const BADGE_VARIANTS: BadgeProps['variant'][] = [
   'league-knockout',
   'league-completed',
 ]
+
+const SAMPLE_EVENT = { id: 'sample', name: 'Lobster Cup', date: '2026-12-05', time: '19:00' }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -86,6 +90,21 @@ function ButtonSection() {
         <Button variant="secondary" disabled>
           Disabled
         </Button>
+      </Row>
+      <Row label="links: to / href external / disabled">
+        <Button variant="secondary" to="/design">
+          Router link
+        </Button>
+        <Button variant="neutral" href="https://example.com" external icon={<ArrowUpRight />}>
+          New tab
+        </Button>
+        <Button variant="neutral" href="https://example.com" disabled>
+          Disabled link
+        </Button>
+      </Row>
+      <Row label='utility actions: variant="neutral" size="sm"'>
+        <ShareWhatsAppButton tournament={SAMPLE_EVENT} variant="compact" />
+        <AddToCalendarButton tournament={SAMPLE_EVENT} variant="compact" />
       </Row>
       <Row label='className="w-full" / "flex-1"'>
         <Button className="w-full">Register for this event</Button>

@@ -203,14 +203,9 @@ export default function Payments({
           </p>
         )}
         {tournament.tikkieLink && (
-          <a
-            href={tournament.tikkieLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 bg-tikkie text-white text-sm font-bold px-4 py-2 rounded-xl active:scale-95 transition-all"
-          >
-            <ExternalLink size={14} /> Pay via Tikkie
-          </a>
+          <Button href={tournament.tikkieLink} external icon={<ExternalLink />}>
+            Pay via Tikkie
+          </Button>
         )}
         {!tournament.tikkieLink && (
           <p className="text-xs text-lob-muted-light">
@@ -364,15 +359,17 @@ export default function Payments({
                         <PaymentMethodPicker onSelect={(method) => handleMarkPaid(reg, method)} />
                       )}
                       {!!tournament.tikkieLink && !isConfirmed && !isSelfPaid && (
-                        <button
+                        <Button
+                          variant="neutral"
+                          size="sm"
                           onClick={() =>
                             setReminderTarget({ regId: reg.id, name: player.name || 'this player' })
                           }
                           title="Send a WhatsApp payment reminder"
-                          className="text-xs bg-whatsapp text-white px-3 py-1.5 rounded-xl font-semibold active:scale-95 transition-all inline-flex items-center gap-1"
+                          icon={<MessageCircle />}
                         >
-                          <MessageCircle size={12} /> Remind
-                        </button>
+                          Remind
+                        </Button>
                       )}
                       {/* Manual override — lets the admin set any status directly,
                           e.g. correcting a misclick or manually marking Tikkied. */}

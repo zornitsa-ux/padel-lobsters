@@ -65,8 +65,6 @@ export default {
             strong: '#075985',
           },
         },
-        tikkie: '#FF6B35',
-        whatsapp: '#25D366',
       },
       fontSize: {
         '2xs': '10px',
@@ -95,5 +93,8 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    // Tailwind v4's built-in `not-disabled:`. Unlike `enabled:`, it also matches links.
+    ({ addVariant }) => addVariant('not-disabled', '&:not(:disabled)'),
+  ],
 }

@@ -1,6 +1,7 @@
 import { ExternalLink, Send } from 'lucide-react'
 import AddToCalendarButton from '../../../components/ui/AddToCalendarButton'
 import { Modal } from '../../../components/ui/Modal'
+import { Button } from '../../../components/ui/Button'
 import { fmtEur } from '../../../lib/format'
 import type { NormalisedTournament } from '../tournamentQueries'
 import type { PaymentSheet } from './utils'
@@ -50,31 +51,29 @@ export default function RegistrationPaymentSheetModal({
         )}
 
         {tournament.tikkieLink && (
-          <a
+          <Button
             href={tournament.tikkieLink}
-            target="_blank"
-            rel="noopener noreferrer"
+            external
+            disabled={tikkieClicked}
             onClick={() => onTikkieClick(paymentSheet.regId, paymentSheet.paymentStatus)}
-            className={`flex items-center justify-center gap-2 w-full text-base font-bold py-3.5 rounded-2xl transition-all ${
-              tikkieClicked
-                ? 'bg-gray-200 text-lob-muted pointer-events-none'
-                : 'bg-tikkie text-white active:scale-95'
-            }`}
+            icon={<ExternalLink />}
+            className="w-full"
           >
-            <ExternalLink size={18} />
             {tikkieClicked ? 'Tikkie opened ✓' : 'Pay via Tikkie now'}
-          </a>
+          </Button>
         )}
 
         {tikkieClicked && (
           <>
-            <button
+            <Button
+              variant="secondary"
               onClick={onSelfDeclare}
               disabled={declaring}
-              className="w-full flex items-center justify-center gap-2 border-2 border-lob-teal text-lob-teal font-semibold py-3 rounded-2xl active:scale-95 transition-all disabled:opacity-40"
+              icon={<Send />}
+              className="w-full"
             >
-              <Send size={16} /> {declaring ? 'Saving…' : "I've sent the payment"}
-            </button>
+              {declaring ? 'Saving…' : "I've sent the payment"}
+            </Button>
             <p className="text-xs text-lob-muted-light text-center -mt-2">
               This notifies the admin to confirm your payment
             </p>

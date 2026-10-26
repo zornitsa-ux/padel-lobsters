@@ -79,8 +79,7 @@ describe('IconButton', () => {
       children: 'C',
       'aria-label': 'Add to calendar',
       href: 'https://example.com',
-      target: '_blank',
-      rel: 'noopener noreferrer',
+      external: true,
       variant: 'accent',
     })
     expect((el as { type: string }).type).toBe('a')

@@ -2,17 +2,15 @@ import React from 'react'
 import { CalendarPlus } from 'lucide-react'
 import { buildGoogleCalendarUrl, type CalendarEvent } from '../../lib/calendar'
 import { IconButton } from './IconButton'
-import { ActionChip } from './ActionChip'
+import { Button } from './Button'
 
 // ============================================================================
 //  AddToCalendarButton
 //
 //  Opens a Google Calendar pre-fill URL for the tournament. Three variants:
-//    - 'full' → a pill-shaped CTA button with label (used in the post-reg popup,
-//              where it matches the full-width control above it)
-//    - 'chip' → a tertiary ghost chip, for a utility action under content
-//    - 'icon' → a small square icon button (used next to the date on the
-//              event detail page and anywhere space is tight)
+//    - 'full'    → a full-width secondary button (the post-registration popup)
+//    - 'compact' → a small labelled button, for a utility action under content
+//    - 'icon'    → a square icon button, anywhere space is tight
 //
 //  The Google Calendar URL is used instead of an .ics download so iOS Safari
 //  doesn't treat it as a popup and block it. Two reminders (24h + 2h) are
@@ -22,7 +20,7 @@ import { ActionChip } from './ActionChip'
 
 interface AddToCalendarButtonProps {
   tournament: CalendarEvent
-  variant?: 'full' | 'chip' | 'icon'
+  variant?: 'full' | 'compact' | 'icon'
   className?: string
   label?: React.ReactNode
 }
@@ -43,8 +41,7 @@ export default function AddToCalendarButton({
     return (
       <IconButton
         href={gcalUrl}
-        target="_blank"
-        rel="noopener noreferrer"
+        external
         onClick={(e) => e.stopPropagation()}
         aria-label="Add to Google Calendar"
         variant="accent"
@@ -55,32 +52,33 @@ export default function AddToCalendarButton({
     )
   }
 
-  if (variant === 'chip') {
+  if (variant === 'compact') {
     return (
-      <ActionChip
+      <Button
+        variant="neutral"
+        size="sm"
         href={gcalUrl}
-        target="_blank"
-        rel="noopener noreferrer"
+        external
         onClick={(e) => e.stopPropagation()}
         title="Add to Google Calendar"
-        icon={<CalendarPlus size={13} />}
+        icon={<CalendarPlus />}
         className={className}
       >
         {label || 'Add to calendar'}
-      </ActionChip>
+      </Button>
     )
   }
 
   return (
-    <a
+    <Button
+      variant="secondary"
       href={gcalUrl}
-      target="_blank"
-      rel="noopener noreferrer"
+      external
       onClick={(e) => e.stopPropagation()}
-      className={`w-full flex items-center justify-center gap-2 border-2 border-lob-teal text-lob-teal font-semibold py-3 rounded-2xl active:scale-95 transition-all ${className}`}
+      icon={<CalendarPlus />}
+      className={`w-full ${className}`.trim()}
     >
-      <CalendarPlus size={18} />
       {label || 'Add to Google Calendar'}
-    </a>
+    </Button>
   )
 }
