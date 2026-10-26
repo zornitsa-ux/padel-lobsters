@@ -11,6 +11,7 @@ import TeamNotices from './TeamNotices'
 import { eligiblePlayers } from './teamHelpers'
 import { useTeamSignup, type TeamSignupResult } from './useTeamSignup'
 import { Button } from '../../../../components/ui/Button'
+import { IconButton } from '../../../../components/ui/IconButton'
 
 interface AdminAddTeamCardProps {
   tournament: NormalisedTournament
@@ -83,9 +84,9 @@ export default function AdminAddTeamCard({
         <p className="font-semibold text-lob-slate">
           {captainChosen ? `Partner for ${getPlayer(captainId)?.name ?? ''}` : 'Select captain'}
         </p>
-        <button onClick={reset} aria-label="Close">
-          <X size={18} className="text-lob-muted-light" />
-        </button>
+        <IconButton onClick={reset} aria-label="Close" variant="ghost">
+          <X />
+        </IconButton>
       </div>
       {captainChosen ? (
         <PartnerChoiceForm

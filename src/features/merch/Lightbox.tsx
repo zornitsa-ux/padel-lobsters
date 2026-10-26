@@ -20,6 +20,7 @@ export default function Lightbox({ images, startIndex = 0, onClose }: LightboxPr
       {/* Close button */}
       <button
         onClick={onClose}
+        aria-label="Close"
         className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-white"
       >
         <X size={20} />

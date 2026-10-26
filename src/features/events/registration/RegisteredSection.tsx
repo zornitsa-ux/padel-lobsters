@@ -83,7 +83,7 @@ export default function RegisteredSection({
                         variant="destructive"
                         size="sm"
                       >
-                        <X size={14} />
+                        <X />
                       </IconButton>
                     </>
                   }

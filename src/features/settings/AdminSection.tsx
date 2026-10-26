@@ -3,6 +3,7 @@ import { MessageCircle, Save, Info, Lightbulb, Plus, Trash2, RotateCcw } from 'l
 import SecurityEventsPanel from '../../components/SecurityEventsPanel'
 import type { EditingTip, SettingsForm } from './settingsHelpers'
 import { Button } from '../../components/ui/Button'
+import { IconButton } from '../../components/ui/IconButton'
 
 interface AdminSectionProps {
   form: SettingsForm
@@ -154,10 +155,7 @@ export default function AdminSection({
         {tipsExpanded && (
           <div className="space-y-1.5 max-h-64 overflow-y-auto">
             {activeTips.map((tip, i) => (
-              <div
-                key={i}
-                className="flex items-start gap-2 bg-lob-well rounded-xl px-3 py-2 group"
-              >
+              <div key={i} className="flex items-start gap-2 bg-lob-well rounded-xl px-3 py-2">
                 <span className="text-2xs text-lob-muted-light font-mono mt-0.5 flex-shrink-0 w-5">
                   {i + 1}
                 </span>
@@ -195,13 +193,14 @@ export default function AdminSection({
                     >
                       {tip}
                     </p>
-                    <button
-                      type="button"
+                    <IconButton
                       onClick={() => handleDeleteTip(i)}
-                      className="text-lob-muted-light/60 hover:text-lob-danger-solid flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                      aria-label="Delete tip"
+                      variant="ghost-destructive"
+                      size="sm"
                     >
-                      <Trash2 size={13} />
-                    </button>
+                      <Trash2 />
+                    </IconButton>
                   </>
                 )}
               </div>

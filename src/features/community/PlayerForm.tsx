@@ -107,6 +107,7 @@ export default function PlayerForm({
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
+                aria-label="Change photo"
                 className="absolute bottom-0 right-0 w-7 h-7 bg-lob-teal rounded-full flex items-center justify-center text-white shadow-sm active:scale-95"
               >
                 <Camera size={13} />

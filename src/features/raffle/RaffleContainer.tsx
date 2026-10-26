@@ -13,6 +13,7 @@ import type { EventNavigate } from '../events/eventHelpers'
 import { EmptyState } from '../../components/ui/EmptyState'
 import PrizeEditor from './ui/PrizeEditor'
 import Confetti from './ui/Confetti'
+import { IconButton } from '../../components/ui/IconButton'
 
 interface Tournament {
   id: string
@@ -105,13 +106,14 @@ export default function RaffleContainer({
                   />
                 </div>
                 {!isPast && (
-                  <button
+                  <IconButton
                     onClick={() => removeWinner.mutate(w.id)}
-                    title="Remove winner"
-                    className="text-lob-muted-light hover:text-lob-danger-solid p-2 flex-shrink-0"
+                    aria-label="Remove winner"
+                    variant="ghost-destructive"
+                    size="sm"
                   >
-                    <Trash2 size={16} />
-                  </button>
+                    <Trash2 />
+                  </IconButton>
                 )}
               </div>
             ))}

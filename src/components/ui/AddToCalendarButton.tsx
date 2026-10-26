@@ -51,7 +51,7 @@ export default function AddToCalendarButton({
         variant="accent"
         className={className}
       >
-        <CalendarPlus size={16} />
+        <CalendarPlus />
       </IconButton>
     )
   }

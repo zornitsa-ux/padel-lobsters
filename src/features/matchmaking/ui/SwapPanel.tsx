@@ -7,6 +7,7 @@ import { useEscapeToClose } from '../../../hooks/useEscapeToClose'
 import type { PlayerNamesById } from './playerNames'
 import { emptyCopy, panelHeading, swapRowCopy } from './swapCopy'
 import { Button } from '../../../components/ui/Button'
+import { IconButton } from '../../../components/ui/IconButton'
 
 // Presentational only (D-026 "Option A", generalized in D-036): a focused,
 // viewport-anchored overlay listing ranked swaps for one target (a repeat, an
@@ -99,14 +100,9 @@ export default function SwapPanel({
             <p className="font-semibold text-lob-slate text-sm">{heading.title}</p>
             <p className="text-xs text-lob-muted mt-0.5">{heading.detail}</p>
           </div>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="text-lob-muted-light hover:text-lob-slate flex-shrink-0"
-            aria-label="Close swap options"
-          >
-            <X size={20} />
-          </button>
+          <IconButton onClick={onCancel} aria-label="Close swap options" variant="ghost">
+            <X />
+          </IconButton>
         </div>
 
         <div className="px-4 py-4 space-y-3">

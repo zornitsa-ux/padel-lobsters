@@ -12,6 +12,7 @@ import { computeGroupStandings } from './domain/standings'
 import { sortMatchesAsc } from './domain/matchDisplay'
 import { DIVISION_LABELS, leagueDivisions } from './domain/types'
 import type { Division, LeagueTeam } from './domain/types'
+import { IconButton } from '../../components/ui/IconButton'
 
 export default function GroupStageHistoryPage() {
   const { id } = useParams<{ id: string }>()
@@ -44,13 +45,9 @@ export default function GroupStageHistoryPage() {
   return (
     <div>
       <div className="flex items-center gap-2 pb-4">
-        <button
-          onClick={() => navigate(`/league/${id}`)}
-          className="p-1 -ml-1 text-lob-muted"
-          aria-label="Back"
-        >
-          <ChevronLeft size={22} />
-        </button>
+        <IconButton onClick={() => navigate(`/league/${id}`)} aria-label="Back" variant="ghost">
+          <ChevronLeft />
+        </IconButton>
         <h1 className="text-xl font-bold text-lob-dark">Group Stage</h1>
       </div>
 

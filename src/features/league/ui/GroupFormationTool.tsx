@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Users } from 'lucide-react'
+import { Users, X } from 'lucide-react'
 import { suggestGroups, recommendGroupConfig } from '../domain/groupBalancer'
 import type { Division, LeagueTeam } from '../domain/types'
 import { Badge } from '../../../components/ui/Badge'
@@ -7,6 +7,7 @@ import { AlertBox } from '../../../components/ui/AlertBox'
 import { SectionHeader } from '../../../components/ui/SectionHeader'
 import { useConfirmGroups } from '../hooks/useLeagueMutations'
 import { Button } from '../../../components/ui/Button'
+import { IconButton } from '../../../components/ui/IconButton'
 
 interface GroupFormationToolProps {
   leagueId: string
@@ -190,14 +191,14 @@ export function GroupFormationTool({
                     key={id}
                     team={teamById[id]}
                     actions={
-                      <button
-                        type="button"
+                      <IconButton
                         onClick={() => removeFromGroup(id)}
-                        className="text-lob-muted-light hover:text-lob-coral text-xs ml-1"
                         aria-label="Remove from group"
+                        variant="ghost-destructive"
+                        size="sm"
                       >
-                        ✕
-                      </button>
+                        <X />
+                      </IconButton>
                     }
                   />
                 ),
@@ -218,14 +219,14 @@ export function GroupFormationTool({
                     key={id}
                     team={teamById[id]}
                     actions={
-                      <button
-                        type="button"
+                      <IconButton
                         onClick={() => removeFromGroup(id)}
-                        className="text-lob-muted-light hover:text-lob-coral text-xs ml-1"
                         aria-label="Remove from group"
+                        variant="ghost-destructive"
+                        size="sm"
                       >
-                        ✕
-                      </button>
+                        <X />
+                      </IconButton>
                     }
                   />
                 ),

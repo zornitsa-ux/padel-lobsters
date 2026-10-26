@@ -55,7 +55,7 @@ export default function TeamRow({
           </button>
         )}
         <IconButton onClick={onCancel} aria-label="Cancel team" variant="destructive" size="sm">
-          <X size={14} />
+          <X />
         </IconButton>
       </div>
       {changing ? (

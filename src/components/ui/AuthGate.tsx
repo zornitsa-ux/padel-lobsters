@@ -5,6 +5,7 @@ import { Shield, User, LogIn, X, Mail } from 'lucide-react'
 import SignInForm from '../../features/auth/SignInForm'
 import { sessionRole } from '../../features/auth/sessionClaims'
 import { TextButton } from './TextButton'
+import { IconButton } from './IconButton'
 
 /**
  * Site-wide auth middleware.
@@ -179,9 +180,9 @@ export function SignInModal({
             </div>
             <h3 className="font-bold text-lob-dark">{title || 'Sign in'}</h3>
           </div>
-          <button onClick={onClose} aria-label="Close">
-            <X size={22} className="text-lob-muted-light" />
-          </button>
+          <IconButton onClick={onClose} aria-label="Close" variant="ghost">
+            <X />
+          </IconButton>
         </div>
 
         <p className="text-sm text-lob-muted">

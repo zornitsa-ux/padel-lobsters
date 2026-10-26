@@ -13,6 +13,7 @@ import {
 import { formatOption, isKingOfTheCourt } from './eventFormat'
 import type { EventFormCourt, EventFormValues } from './eventConstants'
 import { Button } from '../../components/ui/Button'
+import { IconButton } from '../../components/ui/IconButton'
 
 // A court field edit. `booked` is the checkbox; every other field comes off a
 // text/number input as a string.
@@ -224,9 +225,14 @@ export default function EventFormModal({
                     onChange={(e) => setCourt(i, 'name', e.target.value)}
                   />
                   {form.courts.length > 1 && (
-                    <button type="button" aria-label="Remove court" onClick={() => removeCourt(i)}>
-                      <X size={16} className="text-lob-muted-light" />
-                    </button>
+                    <IconButton
+                      aria-label="Remove court"
+                      onClick={() => removeCourt(i)}
+                      variant="ghost-destructive"
+                      size="sm"
+                    >
+                      <X />
+                    </IconButton>
                   )}
                 </div>
 

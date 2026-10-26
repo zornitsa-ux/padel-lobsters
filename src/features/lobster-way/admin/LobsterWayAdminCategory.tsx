@@ -4,6 +4,7 @@ import MoveButtons from './MoveButtons'
 import LobsterWayAdminItem, { emptyItem } from './LobsterWayAdminItem'
 import { moveItem, removeAt, replaceAt } from '../../../lib/arrayReorder'
 import type { LobsterWayCategory, LobsterWayItem } from '../../../data/lobsterWayContent'
+import { IconButton } from '../../../components/ui/IconButton'
 
 // One category editor: label/emoji, the origin-story toggle, and (for
 // non-story categories) the list of question editors underneath.
@@ -50,14 +51,14 @@ export default function LobsterWayAdminCategory({
             className={`text-gray-400 flex-shrink-0 transition-transform ${open ? 'rotate-180' : ''}`}
           />
         </button>
-        <button
-          type="button"
+        <IconButton
           onClick={onDelete}
           aria-label="Delete category"
-          className="text-gray-300 hover:text-lob-danger-solid flex-shrink-0"
+          variant="ghost-destructive"
+          size="sm"
         >
-          <Trash2 size={15} />
-        </button>
+          <Trash2 />
+        </IconButton>
       </div>
 
       {open && (

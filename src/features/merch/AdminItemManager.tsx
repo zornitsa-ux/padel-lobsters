@@ -80,7 +80,7 @@ export default function AdminItemManager({
             </div>
             <div className="flex gap-1.5 flex-shrink-0">
               <IconButton onClick={() => openEdit(item)} aria-label={`Edit ${item.name}`} size="sm">
-                <Pencil size={13} />
+                <Pencil />
               </IconButton>
               <IconButton
                 onClick={() => handleDeleteItem(item.id)}
@@ -88,7 +88,7 @@ export default function AdminItemManager({
                 variant="destructive"
                 size="sm"
               >
-                <X size={13} />
+                <X />
               </IconButton>
             </div>
           </div>

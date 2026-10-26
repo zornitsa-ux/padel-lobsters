@@ -1,5 +1,15 @@
 import { useState } from 'react'
-import { AlertCircle, Plus, Pencil, Trash2, ArrowUpRight, Inbox } from 'lucide-react'
+import {
+  AlertCircle,
+  Plus,
+  Pencil,
+  Trash2,
+  ArrowUpRight,
+  Inbox,
+  X,
+  ArrowUp,
+  ArrowDown,
+} from 'lucide-react'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { Button } from '../../components/ui/Button'
 import { TextButton } from '../../components/ui/TextButton'
@@ -129,19 +139,33 @@ function IconButtonSection() {
       {(['md', 'sm'] as const).map((size) => (
         <Row key={size} label={`size="${size}"`}>
           <IconButton size={size} aria-label="Edit">
-            <Pencil size={14} />
+            <Pencil />
           </IconButton>
           <IconButton size={size} variant="accent" aria-label="Edit">
-            <Pencil size={14} />
+            <Pencil />
           </IconButton>
           <IconButton size={size} variant="success" aria-label="Add">
-            <Plus size={14} />
+            <Plus />
           </IconButton>
           <IconButton size={size} variant="destructive" aria-label="Delete">
-            <Trash2 size={14} />
+            <Trash2 />
           </IconButton>
         </Row>
       ))}
+      <Row label='variant="ghost" · "ghost-destructive"'>
+        <IconButton variant="ghost" aria-label="Close">
+          <X />
+        </IconButton>
+        <IconButton variant="ghost" size="sm" aria-label="Move up">
+          <ArrowUp />
+        </IconButton>
+        <IconButton variant="ghost" size="sm" aria-label="Move down" disabled>
+          <ArrowDown />
+        </IconButton>
+        <IconButton variant="ghost-destructive" size="sm" aria-label="Delete">
+          <Trash2 />
+        </IconButton>
+      </Row>
     </Section>
   )
 }

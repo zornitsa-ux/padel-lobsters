@@ -11,6 +11,7 @@ import QualityReport from './QualityReport'
 import ScheduleRounds from './ScheduleRounds'
 import { describeQualityDiff } from './dimensions'
 import { Button } from '../../../components/ui/Button'
+import { IconButton } from '../../../components/ui/IconButton'
 
 export type CompareViewProps = {
   open: boolean
@@ -76,14 +77,9 @@ export default function CompareView({
               Your current schedule stays unless you choose the alternative.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-lob-muted-light hover:text-lob-slate flex-shrink-0"
-            aria-label="Close compare"
-          >
-            <X size={20} />
-          </button>
+          <IconButton onClick={onClose} aria-label="Close compare" variant="ghost">
+            <X />
+          </IconButton>
         </div>
 
         <div className="px-4 py-4 space-y-4">

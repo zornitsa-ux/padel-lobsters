@@ -82,7 +82,7 @@ export default function ShareWhatsAppButton({
         variant="success"
         className={className}
       >
-        <Share2 size={16} />
+        <Share2 />
       </IconButton>
     )
   }

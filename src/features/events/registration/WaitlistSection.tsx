@@ -64,7 +64,7 @@ export default function WaitlistSection({
                       variant="destructive"
                       size="sm"
                     >
-                      <X size={14} />
+                      <X />
                     </IconButton>
                   </div>
                 )
