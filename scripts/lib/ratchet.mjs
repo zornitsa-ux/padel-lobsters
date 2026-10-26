@@ -15,7 +15,10 @@ const listFiles = ({ dir, include }) =>
 const currentCounts = ({ include, pattern }) =>
   Object.fromEntries(
     listFiles({ dir: SRC, include })
-      .map((path) => [relative(ROOT, path), (readFileSync(path, 'utf8').match(pattern) ?? []).length])
+      .map((path) => [
+        relative(ROOT, path),
+        (readFileSync(path, 'utf8').match(pattern) ?? []).length,
+      ])
       .filter(([, count]) => count > 0)
       .sort(([a], [b]) => a.localeCompare(b)),
   )
