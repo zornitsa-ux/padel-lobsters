@@ -17,6 +17,7 @@ import {
   inviteSeenKey,
   inviteWhen,
 } from './inviteRoutes'
+import { Button } from '../../../components/ui/Button'
 
 function EventHeading({ invite, eyebrow }: { invite: TeamInvite; eyebrow: string }) {
   return (
@@ -58,12 +59,12 @@ function InviteCard({
         {partnerAcceptNote({ captainName: invite.captainName })}
       </p>
       <div className="space-y-2">
-        <button onClick={onAccept} disabled={busy} className="btn-primary w-full py-3">
+        <Button onClick={onAccept} disabled={busy} className="w-full">
           Accept
-        </button>
-        <button onClick={onDecline} disabled={busy} className="btn-secondary w-full py-3">
+        </Button>
+        <Button onClick={onDecline} disabled={busy} variant="secondary" className="w-full">
           I&apos;m not playing
-        </button>
+        </Button>
       </div>
     </div>
   )
@@ -113,12 +114,9 @@ export default function TeamInvitesPage() {
       <EmptyState
         title="Sign in to see your team invites"
         action={
-          <button
-            onClick={() => navigate('/account')}
-            className="btn-primary mt-2 py-2 px-5 text-sm"
-          >
+          <Button onClick={() => navigate('/account')} className="mt-2">
             Sign in
-          </button>
+          </Button>
         }
       />
     )
@@ -131,12 +129,9 @@ export default function TeamInvitesPage() {
       <EmptyState
         title="No team invites waiting"
         action={
-          <button
-            onClick={() => navigate('/events')}
-            className="btn-primary mt-2 py-2 px-5 text-sm"
-          >
+          <Button onClick={() => navigate('/events')} className="mt-2">
             Go to Events
-          </button>
+          </Button>
         }
       />
     )

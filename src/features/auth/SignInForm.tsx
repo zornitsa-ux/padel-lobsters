@@ -18,6 +18,8 @@ import { PasswordInput } from './PasswordInput'
 import { OtpCodeStep } from './OtpCodeStep'
 import { markPinSignIn } from './pinSignInFlag'
 import { PIN_SUNSET_LABEL } from './pinSunset'
+import { Button } from '../../components/ui/Button'
+import { TextButton } from '../../components/ui/TextButton'
 
 export interface SignInFormProps {
   variant: 'page' | 'modal' | 'inline'
@@ -54,11 +56,6 @@ function EmailField({ email, onChange }: EmailFieldProps) {
     </div>
   )
 }
-
-const secondaryButton =
-  'w-full text-sm font-semibold text-lob-slate bg-gray-100 hover:bg-gray-200 border border-lob-line-strong py-2.5 rounded-xl transition-all'
-
-const linkButton = 'text-xs font-semibold text-lob-teal hover:underline'
 
 export function SignInForm({ variant, initialEmail = '', onSignedIn, allowPin }: SignInFormProps) {
   const [step, setStep] = useState<Step>('email')
@@ -168,16 +165,16 @@ export function SignInForm({ variant, initialEmail = '', onSignedIn, allowPin }:
         <form onSubmit={handleEmailSubmit} noValidate className="space-y-3">
           <EmailField email={email} onChange={setEmail} />
           <FormError message={error} />
-          <button type="submit" disabled={busy} className="btn-primary w-full disabled:opacity-50">
+          <Button type="submit" disabled={busy} className="w-full">
             {busy ? 'Sending…' : 'Email me a sign-in code'}
-          </button>
-          <button type="button" onClick={() => goTo('password')} className={secondaryButton}>
+          </Button>
+          <Button variant="neutral" className="w-full" onClick={() => goTo('password')}>
             Sign in with password
-          </button>
+          </Button>
           {allowPin && (
-            <button type="button" onClick={() => goTo('pin')} className={linkButton}>
+            <TextButton onClick={() => goTo('pin')}>
               Sign in with PIN (until {PIN_SUNSET_LABEL})
-            </button>
+            </TextButton>
           )}
         </form>
       )}
@@ -206,20 +203,12 @@ export function SignInForm({ variant, initialEmail = '', onSignedIn, allowPin }:
             />
           </div>
           <FormError message={error} />
-          <button
-            type="submit"
-            disabled={busy || !password}
-            className="btn-primary w-full disabled:opacity-50"
-          >
+          <Button type="submit" disabled={busy || !password} className="w-full">
             {busy ? 'Signing in…' : 'Sign in'}
-          </button>
+          </Button>
           <div className="flex items-center justify-between">
-            <button type="button" onClick={() => goTo('forgot')} className={linkButton}>
-              Forgot password?
-            </button>
-            <button type="button" onClick={() => goTo('email')} className={linkButton}>
-              Email me a code instead
-            </button>
+            <TextButton onClick={() => goTo('forgot')}>Forgot password?</TextButton>
+            <TextButton onClick={() => goTo('email')}>Email me a code instead</TextButton>
           </div>
         </form>
       )}
@@ -231,12 +220,10 @@ export function SignInForm({ variant, initialEmail = '', onSignedIn, allowPin }:
           </p>
           <EmailField email={email} onChange={setEmail} />
           <FormError message={error} />
-          <button type="submit" disabled={busy} className="btn-primary w-full disabled:opacity-50">
+          <Button type="submit" disabled={busy} className="w-full">
             {busy ? 'Sending…' : 'Send reset code'}
-          </button>
-          <button type="button" onClick={() => goTo('password')} className={linkButton}>
-            Back to password sign-in
-          </button>
+          </Button>
+          <TextButton onClick={() => goTo('password')}>Back to password sign-in</TextButton>
         </form>
       )}
 
@@ -270,16 +257,10 @@ export function SignInForm({ variant, initialEmail = '', onSignedIn, allowPin }:
             className="input text-center text-2xl tracking-[0.5em] font-bold"
           />
           <FormError message={error} />
-          <button
-            type="submit"
-            disabled={busy || !pin}
-            className="btn-primary w-full disabled:opacity-50"
-          >
+          <Button type="submit" disabled={busy || !pin} className="w-full">
             {busy ? 'Checking…' : 'Sign in with PIN'}
-          </button>
-          <button type="button" onClick={() => goTo('email')} className={linkButton}>
-            Use my email instead
-          </button>
+          </Button>
+          <TextButton onClick={() => goTo('email')}>Use my email instead</TextButton>
         </form>
       )}
 

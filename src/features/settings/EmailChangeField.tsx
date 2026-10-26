@@ -3,6 +3,7 @@ import { Mail, Check } from 'lucide-react'
 import { useApp } from '../../context/useApp'
 import { isSyntheticEmail } from '../auth/syntheticEmail'
 import { ADD_EMAIL_REQUEST } from '../auth/upgradeCopy'
+import { Button } from '../../components/ui/Button'
 
 // Self-service email change: type new email -> requestMyEmailChange -> Supabase
 // emails a confirmation link to the new (and old, since double_confirm_changes
@@ -89,24 +90,24 @@ function EmailChangeForm({ email }: { email: string }) {
             </p>
           )}
           <div className="flex gap-2">
-            <button
-              type="button"
+            <Button
+              variant="neutral"
               onClick={() => {
                 setEmailEditing(false)
                 setEmailStatus('')
               }}
-              className="flex-1 text-sm font-semibold text-lob-slate bg-gray-100 py-2 rounded-xl active:scale-95"
+              className="flex-1"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
               disabled={emailBusy || !newEmail.trim()}
-              className="flex-1 btn-primary flex items-center justify-center gap-1.5 disabled:opacity-50"
+              className="flex-1"
+              icon={<Mail />}
             >
-              <Mail size={13} />
               {emailBusy ? 'Sending…' : 'Send confirmation'}
-            </button>
+            </Button>
           </div>
           <p className="text-xs text-lob-muted">
             We'll email a confirmation link to the new address. The change only takes effect once

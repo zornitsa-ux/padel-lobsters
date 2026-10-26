@@ -12,6 +12,7 @@ import {
 } from './eventFormModel'
 import { formatOption, isKingOfTheCourt } from './eventFormat'
 import type { EventFormCourt, EventFormValues } from './eventConstants'
+import { Button } from '../../components/ui/Button'
 
 // A court field edit. `booked` is the checkbox; every other field comes off a
 // text/number input as a string.
@@ -61,9 +62,9 @@ export default function EventFormModal({
       onClose={onClose}
       title={editId ? 'Edit Event' : 'New Event'}
       footer={
-        <button type="submit" form="event-form" disabled={saving} className="btn-primary w-full">
+        <Button type="submit" form="event-form" disabled={saving} className="w-full">
           {saving ? 'Saving...' : editId ? 'Save Changes' : 'Create Event'}
-        </button>
+        </Button>
       }
     >
       <form id="event-form" onSubmit={onSubmit} className="space-y-5">

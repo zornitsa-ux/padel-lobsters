@@ -4,6 +4,7 @@ import type { TeamEntry } from '../../teams/teamTypes'
 import type { DisplayName, GetPlayer } from '../utils'
 import PayPrompt from '../PayPrompt'
 import TeamCard from './TeamCard'
+import { Button } from '../../../../components/ui/Button'
 
 // /me on a team event: the same team card as the event page, plus the
 // captain's Tikkie step for the team amount. Signing up happens on the event
@@ -37,9 +38,9 @@ export default function MyTeamRegistration({
         <p className="text-sm text-lob-muted">
           You haven&apos;t signed up yet. This is a team event: pick a partner on the event page.
         </p>
-        <button onClick={onSignUp} className="btn-primary w-full py-2.5 text-sm">
+        <Button onClick={onSignUp} className="w-full">
           Sign up as a team
-        </button>
+        </Button>
       </div>
     )
   }

@@ -11,6 +11,8 @@ import {
 import { isPublished } from '../domain/lifecycle'
 import { DIVISION_LABELS, leagueDivisions } from '../domain/types'
 import type { Division, League, LeagueMatch, LeagueTeam } from '../domain/types'
+import { Button } from '../../../components/ui/Button'
+import { TextButton } from '../../../components/ui/TextButton'
 
 const ALL_DIVISIONS: Division[] = ['mens', 'womens']
 
@@ -45,26 +47,22 @@ function VisibilityCard({ league }: { league: League }) {
       </div>
       {published ? (
         canHide && (
-          <button
-            className="btn-secondary text-sm"
+          <Button
+            variant="secondary"
             disabled={setPublished.isPending}
             onClick={() => setPublished.mutate(false)}
           >
             Hide again
-          </button>
+          </Button>
         )
       ) : (
         <>
           <p className="text-xs text-lob-muted">
             Only admins can see this season. Publish it when the teams are ready to be announced.
           </p>
-          <button
-            className="btn-primary text-sm"
-            disabled={setPublished.isPending}
-            onClick={handlePublish}
-          >
+          <Button disabled={setPublished.isPending} onClick={handlePublish}>
             Publish season
-          </button>
+          </Button>
         </>
       )}
       {setPublished.error && <AlertBox variant="error">{errorText(setPublished.error)}</AlertBox>}
@@ -121,15 +119,15 @@ function DetailsCard({ league, teams }: { league: League; teams: LeagueTeam[] })
         </p>
       </fieldset>
       {updateLeague.error && <AlertBox variant="error">{errorText(updateLeague.error)}</AlertBox>}
-      <button
-        className="btn-secondary text-sm"
+      <Button
+        variant="secondary"
         disabled={updateLeague.isPending || !name.trim() || divisions.length === 0}
         onClick={() =>
           updateLeague.mutate(isDraft ? { name: name.trim(), divisions } : { name: name.trim() })
         }
       >
         {updateLeague.isPending ? 'Saving…' : 'Save details'}
-      </button>
+      </Button>
     </div>
   )
 }
@@ -158,13 +156,15 @@ function DeleteCard({ league, matches }: { league: League; matches: LeagueMatch[
         Available until fixtures are generated. Teams in this season are deleted with it.
       </p>
       {deleteLeague.error && <AlertBox variant="error">{errorText(deleteLeague.error)}</AlertBox>}
-      <button
-        className="btn-secondary text-sm text-lob-coral"
+      <TextButton
+        tone="destructive"
+        size="sm"
         disabled={deleteLeague.isPending}
         onClick={handleDelete}
+        className="block"
       >
         Delete season
-      </button>
+      </TextButton>
     </div>
   )
 }

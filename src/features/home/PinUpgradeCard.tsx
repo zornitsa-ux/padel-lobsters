@@ -9,9 +9,8 @@ import {
   isUpgradeCardDismissed,
   UPGRADE_CARD_DISMISSED_EVENT,
 } from './upgradeCardDismissal'
-
-const secondaryButton =
-  'text-xs font-semibold text-lob-slate bg-gray-100 border border-lob-line-strong px-3 py-2 rounded-xl active:scale-95'
+import { Button } from '../../components/ui/Button'
+import { TextButton } from '../../components/ui/TextButton'
 
 function SyntheticCard() {
   return (
@@ -52,21 +51,15 @@ function RealEmailCard({ email, playerId }: { email: string; playerId: string })
       </p>
       <p className="text-sm text-lob-slate">
         Your email: <strong className="break-all">{email}</strong>{' '}
-        <button
-          type="button"
-          onClick={goToSecurity}
-          className="text-xs font-semibold text-lob-teal underline"
-        >
-          Not right? Change it
-        </button>
+        <TextButton onClick={goToSecurity}>Not right? Change it</TextButton>
       </p>
       <div className="flex gap-2 pt-1">
-        <button type="button" onClick={goToSecurity} className={secondaryButton}>
+        <Button variant="neutral" size="sm" onClick={goToSecurity}>
           Set a password (optional)
-        </button>
-        <button type="button" onClick={handleDismiss} className="btn-primary !py-2 text-xs">
+        </Button>
+        <Button onClick={handleDismiss} size="sm">
           Got it
-        </button>
+        </Button>
       </div>
     </div>
   )

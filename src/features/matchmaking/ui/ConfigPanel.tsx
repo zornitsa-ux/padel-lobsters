@@ -5,6 +5,7 @@ import type { MatcherPriority } from '../domain/presets'
 import type { FeasibilityResult, MatchConfig, MatchPreset, ResolvedConfig } from '../domain/types'
 import { DIMENSION_LABELS } from './dimensions'
 import { segmentedButtonClass } from './segmentedButton'
+import { Button } from '../../../components/ui/Button'
 
 export type ConfigPanelProps = {
   // Controlled config: preset + optional knob overrides. Container owns state.
@@ -325,15 +326,14 @@ export default function ConfigPanel({
         ))}
       </div>
 
-      <button
-        type="button"
+      <Button
         onClick={onGenerate}
         disabled={disabled}
-        className="btn-primary w-full flex items-center justify-center gap-2"
+        className="w-full"
+        icon={generating ? <Loader2 className="animate-spin" /> : <Shuffle />}
       >
-        {generating ? <Loader2 size={16} className="animate-spin" /> : <Shuffle size={16} />}
         {generating ? 'Generating…' : generateIdleLabel}
-      </button>
+      </Button>
 
       {notEnoughPlayers && (
         <p className="text-xs text-lob-warning">Register at least 4 players first</p>

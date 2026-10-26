@@ -7,6 +7,7 @@ import { clearPinSignIn, hasPinSignIn, PIN_SIGN_IN_EVENT } from './pinSignInFlag
 import { dismissUpgradeCard } from '../home/upgradeCardDismissal'
 import { isSyntheticEmail } from './syntheticEmail'
 import { ADD_EMAIL_REQUEST, SIGN_IN_SECURITY_PATH } from './upgradeCopy'
+import { Button } from '../../components/ui/Button'
 
 function usePinSignInFlag({ signedIn }: { signedIn: boolean }) {
   const [pending, setPending] = useState(hasPinSignIn)
@@ -59,17 +60,13 @@ export default function PinSignInInterstitial() {
       footer={
         <div className="flex gap-2">
           {!synthetic && (
-            <button
-              type="button"
-              onClick={setPasswordNow}
-              className="flex-1 text-sm font-semibold text-lob-slate bg-gray-100 py-2.5 rounded-xl active:scale-95"
-            >
+            <Button variant="neutral" onClick={setPasswordNow} className="flex-1">
               Set a password now
-            </button>
+            </Button>
           )}
-          <button type="button" onClick={close} className="flex-1 btn-primary">
+          <Button onClick={close} className="flex-1">
             Got it
-          </button>
+          </Button>
         </div>
       }
     >

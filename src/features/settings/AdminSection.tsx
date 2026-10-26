@@ -2,6 +2,7 @@ import React, { type Dispatch, type FormEvent, type SetStateAction } from 'react
 import { MessageCircle, Save, Info, Lightbulb, Plus, Trash2, RotateCcw } from 'lucide-react'
 import SecurityEventsPanel from '../../components/SecurityEventsPanel'
 import type { EditingTip, SettingsForm } from './settingsHelpers'
+import { Button } from '../../components/ui/Button'
 
 interface AdminSectionProps {
   form: SettingsForm
@@ -210,14 +211,9 @@ export default function AdminSection({
       </div>
 
       {/* Save button */}
-      <button
-        type="submit"
-        disabled={saving}
-        className="btn-primary w-full flex items-center justify-center gap-2"
-      >
-        <Save size={16} />
+      <Button type="submit" disabled={saving} className="w-full" icon={<Save />}>
         {saving ? 'Saving...' : saved ? '✓ Saved!' : 'Save Settings'}
-      </button>
+      </Button>
     </form>
   )
 }

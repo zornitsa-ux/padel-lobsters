@@ -5,6 +5,7 @@ import Avatar from '../../components/ui/Avatar'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
 import { LOBBY_PROMPTS, type ProfileForm } from './settingsHelpers'
 import type { Player } from '../../lib/normalise'
+import { Button } from '../../components/ui/Button'
 
 interface ProfileSectionProps {
   myPlayer: Player | null
@@ -361,13 +362,12 @@ export default function ProfileSection({
               {/* Save button — disabled until the PII fetch has resolved, so
                   a save can never write blanks over real phone/birthday/email
                   while that overlay is still in flight or has failed. */}
-              <button
-                type="button"
+              <Button
                 onClick={handleProfileSave}
                 disabled={profileSaving || !hasPii}
-                className="btn-primary w-full flex items-center justify-center gap-2"
+                className="w-full"
+                icon={<Save />}
               >
-                <Save size={16} />
                 {profileSaving
                   ? 'Saving…'
                   : profileLoadFailed
@@ -377,7 +377,7 @@ export default function ProfileSection({
                       : profileSaved
                         ? '✓ Saved!'
                         : 'Save Profile'}
-              </button>
+              </Button>
               {profileLoadFailed && (
                 <p className="text-xs text-lob-danger bg-lob-danger-light rounded-lg p-2">
                   Couldn't load your profile details. Check your connection and reload.

@@ -6,6 +6,7 @@ import { Badge } from '../../../components/ui/Badge'
 import { AlertBox } from '../../../components/ui/AlertBox'
 import { SectionHeader } from '../../../components/ui/SectionHeader'
 import { useConfirmGroups } from '../hooks/useLeagueMutations'
+import { Button } from '../../../components/ui/Button'
 
 interface GroupFormationToolProps {
   leagueId: string
@@ -162,9 +163,9 @@ export function GroupFormationTool({
       <RecommendationPanel teams={teams} groupA={groupA} groupB={groupB} />
 
       <div className="flex gap-2">
-        <button type="button" className="btn-secondary text-sm" onClick={handleSuggest}>
+        <Button variant="secondary" onClick={handleSuggest}>
           Suggest balanced groups
-        </button>
+        </Button>
       </div>
 
       {suggested && (
@@ -276,15 +277,14 @@ export function GroupFormationTool({
         </AlertBox>
       )}
 
-      <button
-        type="button"
-        className="btn-primary w-full"
+      <Button
+        className="w-full"
         disabled={!canConfirm || confirmGroups.isPending}
         onClick={handleConfirm}
         title={!canConfirm ? 'Assign all teams (≥2 per group) before confirming' : undefined}
       >
         {confirmGroups.isPending ? 'Generating fixtures…' : 'Confirm Groups & Generate Fixtures'}
-      </button>
+      </Button>
     </div>
   )
 }

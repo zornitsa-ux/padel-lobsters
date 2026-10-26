@@ -5,6 +5,7 @@ import { IconButton } from '../../../../components/ui/IconButton'
 import type { TeamEntry } from '../../teams/teamTypes'
 import PaymentStatusBadge from '../PaymentStatusBadge'
 import ChangePartnerPanel from './ChangePartnerPanel'
+import { TextButton } from '../../../../components/ui/TextButton'
 
 interface TeamRowProps {
   entry: TeamEntry
@@ -66,12 +67,7 @@ export default function TeamRow({
           onClose={() => setChanging(false)}
         />
       ) : (
-        <button
-          onClick={() => setChanging(true)}
-          className="text-xs font-semibold text-lob-teal underline underline-offset-2"
-        >
-          Change partner
-        </button>
+        <TextButton onClick={() => setChanging(true)}>Change partner</TextButton>
       )}
     </div>
   )

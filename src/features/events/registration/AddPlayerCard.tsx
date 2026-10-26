@@ -1,6 +1,7 @@
 import { Plus, Search, X } from 'lucide-react'
 import type { Player } from '../../../lib/normalise'
 import type { DisplayName } from './utils'
+import { Button } from '../../../components/ui/Button'
 
 interface AddPlayerCardProps {
   isCompleted: boolean
@@ -40,12 +41,9 @@ export default function AddPlayerCard({
 
   if (!showAdd) {
     return (
-      <button
-        onClick={onOpen}
-        className="btn-primary w-full flex items-center justify-center gap-2"
-      >
-        <Plus size={18} /> Register a Player
-      </button>
+      <Button onClick={onOpen} className="w-full" icon={<Plus />}>
+        Register a Player
+      </Button>
     )
   }
 
@@ -105,17 +103,13 @@ export default function AddPlayerCard({
         ))}
       </div>
 
-      <button
-        onClick={onAdd}
-        disabled={!selectedPlayer || saving}
-        className="btn-primary w-full py-2.5 text-sm"
-      >
+      <Button onClick={onAdd} disabled={!selectedPlayer || saving} className="w-full">
         {saving
           ? 'Adding...'
           : registeredCount >= maxPlayers
             ? 'Add to Waitlist'
             : 'Register Player'}
-      </button>
+      </Button>
     </div>
   )
 }

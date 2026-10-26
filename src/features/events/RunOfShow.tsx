@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { ArrowUpRight, CheckCircle2, Lock, Eye } from 'lucide-react'
 import { useMatches } from './useMatches'
 import { useEventPhase } from './useEventPhase'
@@ -11,6 +11,8 @@ import { runOfShowSteps, runOfShowProgress, votingTurnout } from './runOfShowSte
 import RatingReview from '../matchmaking/ui/RatingReview'
 import type { RunOfShowStep } from './runOfShowSteps'
 import type { NormalisedTournament } from '../../lib/normalise'
+import { Button } from '../../components/ui/Button'
+import { TextButton } from '../../components/ui/TextButton'
 
 const stepNumber = (index: number): string => String(index + 1).padStart(2, '0')
 
@@ -182,22 +184,19 @@ function StepRow({
                 )
               ) : (
                 <div className="flex items-center gap-3 flex-wrap">
-                  <button
-                    type="button"
+                  <Button
                     onClick={action.onClick}
                     disabled={locked || action.busy}
-                    className="btn-secondary py-2 px-4 text-xs disabled:opacity-50"
+                    variant="secondary"
+                    size="sm"
                   >
                     {action.busy ? (action.busyLabel ?? action.label) : action.label}
-                  </button>
+                  </Button>
                   {/* Hidden while locked — there is nothing to look at yet. */}
                   {action.link && !locked && (
-                    <Link
-                      to={action.link.to}
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-lob-teal underline underline-offset-2 decoration-lob-teal/40"
-                    >
-                      <ArrowUpRight size={12} /> {action.link.label}
-                    </Link>
+                    <TextButton to={action.link.to} icon={<ArrowUpRight size={12} />}>
+                      {action.link.label}
+                    </TextButton>
                   )}
                 </div>
               )}

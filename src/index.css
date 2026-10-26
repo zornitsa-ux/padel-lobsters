@@ -15,29 +15,6 @@
 }
 
 @layer components {
-  /* ── Buttons ────────────────────────────────────────────────────── */
-  .btn-primary {
-    @apply bg-lob-coral text-white font-semibold py-3 px-5 rounded-full
-           active:scale-95 transition-all duration-150 shadow-lg
-           hover:shadow-xl hover:bg-opacity-90 disabled:opacity-50 disabled:cursor-not-allowed;
-  }
-
-  .btn-secondary {
-    @apply bg-white text-lob-teal font-semibold py-3 px-5 rounded-full
-           border-2 border-lob-teal active:scale-95 transition-all duration-150
-           hover:bg-lob-teal-light disabled:opacity-50 disabled:cursor-not-allowed;
-  }
-
-  .btn-danger {
-    @apply bg-lob-danger-solid text-white font-semibold py-2 px-4 rounded-full
-           active:scale-95 transition-all duration-150 shadow-md;
-  }
-
-  .btn-orange {
-    @apply bg-lob-coral text-white font-semibold py-3 px-5 rounded-full
-           active:scale-95 transition-all duration-150 shadow-lg;
-  }
-
   /* ── Cards ────────────────────────────────────────────────────── */
   .card {
     @apply bg-white rounded-2xl p-4 shadow-card border border-lob-dark/[0.06];

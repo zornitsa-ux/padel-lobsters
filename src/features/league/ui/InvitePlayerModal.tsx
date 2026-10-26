@@ -3,6 +3,7 @@ import { Modal } from '../../../components/ui/Modal'
 import { AlertBox } from '../../../components/ui/AlertBox'
 import { useInviteLeaguePlayer } from '../hooks/useLeagueMutations'
 import { describeInviteError } from '../../players/inviteErrors'
+import { Button } from '../../../components/ui/Button'
 
 interface InvitePlayerModalProps {
   open: boolean
@@ -39,22 +40,22 @@ export function InvitePlayerModal({
   }
 
   const footer = invite.isSuccess ? (
-    <button type="button" className="btn-primary w-full" onClick={handleClose}>
+    <Button className="w-full" onClick={handleClose}>
       Done
-    </button>
+    </Button>
   ) : (
     <div className="flex gap-3">
-      <button type="button" className="btn-secondary flex-1" onClick={handleClose}>
+      <Button variant="secondary" className="flex-1" onClick={handleClose}>
         Cancel
-      </button>
-      <button
+      </Button>
+      <Button
         type="submit"
         form="invite-player-form"
-        className="btn-primary flex-1"
+        className="flex-1"
         disabled={invite.isPending}
       >
         {invite.isPending ? 'Sending…' : 'Send Invite'}
-      </button>
+      </Button>
     </div>
   )
 

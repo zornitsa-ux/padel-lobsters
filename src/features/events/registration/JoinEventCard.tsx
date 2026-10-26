@@ -1,5 +1,7 @@
 import { CheckCircle, Clock, UserRoundX } from 'lucide-react'
 import type { MyRegistrationSummary } from '../nextMatch'
+import { Button } from '../../../components/ui/Button'
+import { TextButton } from '../../../components/ui/TextButton'
 
 interface JoinEventCardProps {
   /** Derived by `myRegistrationSummary` — the same source /me reads. */
@@ -46,11 +48,7 @@ export default function JoinEventCard({
             "You haven't signed up yet."
           )}
         </p>
-        <button
-          onClick={onRegister}
-          disabled={registering}
-          className="btn-primary w-full py-2.5 text-sm"
-        >
+        <Button onClick={onRegister} disabled={registering} className="w-full">
           {registering
             ? 'Signing up…'
             : isEventFull
@@ -58,7 +56,7 @@ export default function JoinEventCard({
               : wasCancelled
                 ? 'Register again'
                 : 'Register for this event'}
-        </button>
+        </Button>
         {error && (
           <p role="alert" className="text-xs font-semibold text-lob-danger">
             {error}
@@ -98,12 +96,9 @@ export default function JoinEventCard({
           ✓ Confirmed
         </span>
       ) : needsPayment ? (
-        <button
-          onClick={onGoToPayment}
-          className="text-xs font-semibold text-lob-coral underline underline-offset-2 flex-shrink-0"
-        >
+        <TextButton tone="primary" className="flex-shrink-0" onClick={onGoToPayment}>
           Pay on the You tab
-        </button>
+        </TextButton>
       ) : null}
     </div>
   )

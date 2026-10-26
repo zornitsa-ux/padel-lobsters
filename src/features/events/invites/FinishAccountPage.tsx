@@ -24,6 +24,7 @@ import {
 import { useConfirmDecline } from '../registration/team/useConfirmDecline'
 import { ACCOUNT_ACKNOWLEDGEMENT_LABEL, accountCreatedMessage } from '../teams/teamStatusMessages'
 import { TEAM_INVITES_PATH } from './inviteRoutes'
+import { Button } from '../../../components/ui/Button'
 
 const EMPTY: ProfileFieldValues = {
   firstName: '',
@@ -149,14 +150,14 @@ export default function FinishAccountPage() {
             {error}
           </p>
         )}
-        <button
+        <Button
           type="submit"
           disabled={!confirmed || saving}
-          className="btn-primary w-full py-3 flex items-center justify-center gap-2 disabled:opacity-50"
+          className="w-full"
+          icon={saving && <Loader2 className="animate-spin" />}
         >
-          {saving && <Loader2 size={14} className="animate-spin" />}
           Finish and see your invite
-        </button>
+        </Button>
       </div>
 
       <NotPlayingCard
@@ -190,15 +191,15 @@ function NotPlayingCard({
           ? `You can say no without setting anything up. ${captainName}'s team is cancelled and you're signed out.`
           : 'You can sign out without setting anything up.'}
       </p>
-      <button
-        type="button"
+      <Button
         onClick={onLeave}
         disabled={busy}
-        className="btn-secondary w-full py-3 flex items-center justify-center gap-2 disabled:opacity-50"
+        variant="secondary"
+        className="w-full"
+        icon={busy && <Loader2 className="animate-spin" />}
       >
-        {busy && <Loader2 size={14} className="animate-spin" />}
         {hasInvites ? "I'm not playing" : 'Sign out'}
-      </button>
+      </Button>
     </div>
   )
 }

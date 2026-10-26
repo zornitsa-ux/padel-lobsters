@@ -2,6 +2,7 @@ import { ArrowRightLeft, Clock } from 'lucide-react'
 import type { NormalisedRegistration } from '../registrationQueries'
 import type { NormalisedTransfer } from '../transferQueries'
 import type { GetPlayer, TransferShareTarget } from './utils'
+import { TextButton } from '../../../components/ui/TextButton'
 
 interface TransferSpotCardProps {
   myReg: NormalisedRegistration | null | undefined
@@ -47,14 +48,9 @@ export default function TransferSpotCard({
       <p className="text-xs text-lob-muted text-center py-1.5">
         Transfers are closed for this event. Reach out to the{' '}
         {whatsappLink ? (
-          <a
-            href={whatsappLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-lob-teal font-semibold underline underline-offset-2"
-          >
+          <TextButton href={whatsappLink} external size="inherit">
             community admins
-          </a>
+          </TextButton>
         ) : (
           'community admins'
         )}{' '}

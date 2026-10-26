@@ -7,8 +7,8 @@ import type { TeamEntry } from '../../teams/teamTypes'
 import type { DisplayName } from '../utils'
 import ChangePartnerPanel from './ChangePartnerPanel'
 import { useConfirmDecline } from './useConfirmDecline'
-
-const LINK = 'text-xs font-semibold text-lob-teal underline underline-offset-2'
+import { Button } from '../../../../components/ui/Button'
+import { TextButton } from '../../../../components/ui/TextButton'
 
 interface ActionsProps {
   entry: TeamEntry
@@ -54,16 +54,10 @@ export function CaptainPendingActions({
   }
   return (
     <div className="flex gap-4">
-      <button onClick={() => setChanging(true)} className={LINK}>
-        Change partner
-      </button>
-      <button
-        onClick={() => void cancel()}
-        disabled={busy}
-        className="text-xs font-semibold text-lob-danger underline underline-offset-2"
-      >
+      <TextButton onClick={() => setChanging(true)}>Change partner</TextButton>
+      <TextButton tone="destructive" onClick={() => void cancel()} disabled={busy}>
         Cancel team
-      </button>
+      </TextButton>
     </div>
   )
 }
@@ -86,20 +80,17 @@ export function PartnerPendingActions({ entry, tournamentId, otherName }: Action
     <div className="space-y-2">
       <p className="text-xs text-lob-muted">{partnerAcceptNote({ captainName: otherName })}</p>
       <div className="flex gap-2">
-        <button
+        <Button
           onClick={() => void respond({ accept: false })}
           disabled={busy}
-          className="btn-secondary flex-1 py-2 text-sm"
+          variant="secondary"
+          className="flex-1"
         >
           I&apos;m not playing
-        </button>
-        <button
-          onClick={() => void respond({ accept: true })}
-          disabled={busy}
-          className="btn-primary flex-1 py-2 text-sm"
-        >
+        </Button>
+        <Button onClick={() => void respond({ accept: true })} disabled={busy} className="flex-1">
           Accept
-        </button>
+        </Button>
       </div>
     </div>
   )

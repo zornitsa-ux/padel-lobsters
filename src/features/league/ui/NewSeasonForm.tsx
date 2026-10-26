@@ -6,6 +6,7 @@ import { useCreateLeague } from '../hooks/useLeagueMutations'
 import { createLeagueSchema } from '../domain/leagueSchemas'
 import { DIVISION_LABELS } from '../domain/types'
 import type { Division } from '../domain/types'
+import { Button } from '../../../components/ui/Button'
 
 const ALL_DIVISIONS: Division[] = ['mens', 'womens']
 
@@ -37,9 +38,9 @@ export function NewSeasonForm() {
 
   if (!open) {
     return (
-      <button className="btn-primary text-sm flex items-center gap-1" onClick={() => setOpen(true)}>
-        <Plus size={14} aria-hidden="true" /> New season
-      </button>
+      <Button onClick={() => setOpen(true)} icon={<Plus aria-hidden="true" />}>
+        New season
+      </Button>
     )
   }
 
@@ -74,16 +75,12 @@ export function NewSeasonForm() {
       </p>
       {error && <AlertBox variant="error">{error}</AlertBox>}
       <div className="flex gap-2">
-        <button className="btn-secondary text-sm" onClick={() => setOpen(false)}>
+        <Button variant="secondary" onClick={() => setOpen(false)}>
           Cancel
-        </button>
-        <button
-          className="btn-primary text-sm"
-          disabled={createLeague.isPending}
-          onClick={handleCreate}
-        >
+        </Button>
+        <Button disabled={createLeague.isPending} onClick={handleCreate}>
           {createLeague.isPending ? 'Creating…' : 'Create season'}
-        </button>
+        </Button>
       </div>
     </div>
   )

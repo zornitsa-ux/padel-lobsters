@@ -1,6 +1,7 @@
 import { Check } from 'lucide-react'
 import { useConfirm } from '../../../lib/confirmBus'
 import { StatTile } from '../../../components/ui/StatTile'
+import { Button } from '../../../components/ui/Button'
 import { useUpdateLeagueStatus } from '../hooks/useLeagueMutations'
 import { LEAGUE_PHASES, phaseReadiness } from '../domain/lifecycle'
 import { divisionProgress } from '../domain/progress'
@@ -92,13 +93,14 @@ function StatusAction({
 
   return (
     <div className="space-y-1">
-      <button
-        className={`${isCompletion ? 'btn-primary' : 'btn-secondary'} text-sm w-full`}
+      <Button
+        variant={isCompletion ? 'primary' : 'secondary'}
+        className="w-full"
         disabled={updateStatus.isPending || blocker !== null}
         onClick={handleAdvance}
       >
         {isCompletion ? 'Complete Season' : `Advance → ${nextLabel}`}
-      </button>
+      </Button>
       {blocker && <p className="text-xs text-lob-muted text-center">{blocker}</p>}
     </div>
   )

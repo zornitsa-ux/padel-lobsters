@@ -11,6 +11,7 @@ import STATIC_LOBSTER_WAY_CONTENT, {
 } from '../../../data/lobsterWayContent'
 import { moveItem, removeAt, replaceAt } from '../../../lib/arrayReorder'
 import LobsterWayAdminCategory, { emptyCategory } from './LobsterWayAdminCategory'
+import { Button } from '../../../components/ui/Button'
 
 // Admin editor for "The Lobster Way" — add/edit/delete/reorder categories
 // and questions. Persists to settings.lobster_way_content (see
@@ -131,15 +132,9 @@ export default function LobsterWayAdmin() {
             </button>
 
             <div className="flex items-center gap-2 pt-2">
-              <button
-                type="button"
-                onClick={handleSave}
-                disabled={saving}
-                className="btn-primary flex-1 flex items-center justify-center gap-2"
-              >
-                <Save size={16} />
+              <Button onClick={handleSave} disabled={saving} className="flex-1" icon={<Save />}>
                 {saving ? 'Saving…' : saved ? '✓ Saved!' : 'Save changes'}
-              </button>
+              </Button>
               <button
                 type="button"
                 onClick={handleReset}

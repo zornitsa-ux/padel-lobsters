@@ -13,6 +13,8 @@ import { levelBadgeClass } from './playerConstants'
 import type { CommunityPlayer } from './playersSelectors'
 import { useMmRatings } from '../matchmaking/useMatchmaking'
 import type { EventNavigate } from '../events/eventHelpers'
+import { Button } from '../../components/ui/Button'
+import { TextButton } from '../../components/ui/TextButton'
 
 const MONTH_ABBR = [
   'Jan',
@@ -448,19 +450,23 @@ export default function PlayerProfile({
       )}
 
       {isAdmin && (
-        <div className="flex gap-2 pt-1">
-          <button
+        <div className="flex items-center gap-4 pt-1">
+          <Button
             onClick={() => onEdit(p)}
-            className="btn-secondary flex-1 py-2 text-sm flex items-center justify-center gap-1"
+            variant="secondary"
+            className="flex-1"
+            icon={<Pencil />}
           >
-            <Pencil size={14} /> Edit
-          </button>
-          <button
+            Edit
+          </Button>
+          <TextButton
             onClick={() => onDelete(p.id)}
-            className="btn-danger flex-1 py-2 text-sm flex items-center justify-center gap-1"
+            tone="destructive"
+            size="sm"
+            icon={<Trash2 size={14} />}
           >
-            <Trash2 size={14} /> Remove
-          </button>
+            Remove
+          </TextButton>
         </div>
       )}
     </div>

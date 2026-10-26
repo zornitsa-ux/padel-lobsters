@@ -6,6 +6,8 @@ import { requestEmailCode, verifyEmailCode, type AuthResult } from './authAction
 import { FormError } from './FormError'
 import { CODE_LENGTH, sanitiseCode } from './otpCode'
 import { formatCountdown, useCountdown } from './useCountdown'
+import { Button } from '../../components/ui/Button'
+import { TextButton } from '../../components/ui/TextButton'
 
 const RESEND_SECONDS = 60
 
@@ -102,30 +104,21 @@ export function OtpCodeStep({
       <FormError message={error} />
       {notice && <p className="text-xs text-lob-teal font-medium">{notice}</p>}
 
-      <button
-        type="submit"
-        disabled={busy || code.length !== CODE_LENGTH}
-        className="btn-primary w-full disabled:opacity-50"
-      >
+      <Button type="submit" disabled={busy || code.length !== CODE_LENGTH} className="w-full">
         {busy ? 'Checking…' : submitLabel}
-      </button>
+      </Button>
 
       <p className="text-xs text-lob-muted text-center">Or tap the link in the email.</p>
 
       <div className="flex items-center justify-between text-xs">
-        <button
-          type="button"
-          onClick={handleResend}
-          disabled={remaining > 0}
-          className="font-semibold text-lob-teal disabled:text-lob-muted-light"
-        >
+        <TextButton onClick={handleResend} disabled={remaining > 0}>
           {remaining > 0
             ? `Resend code (in ${formatCountdown({ seconds: remaining })})`
             : 'Resend code'}
-        </button>
-        <button type="button" onClick={onChangeEmail} className="text-lob-slate hover:underline">
+        </TextButton>
+        <TextButton tone="neutral" onClick={onChangeEmail}>
           Change email
-        </button>
+        </TextButton>
       </div>
     </form>
   )

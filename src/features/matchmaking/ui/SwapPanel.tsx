@@ -6,6 +6,7 @@ import { useBodyScrollLock } from '../../../hooks/useBodyScrollLock'
 import { useEscapeToClose } from '../../../hooks/useEscapeToClose'
 import type { PlayerNamesById } from './playerNames'
 import { emptyCopy, panelHeading, swapRowCopy } from './swapCopy'
+import { Button } from '../../../components/ui/Button'
 
 // Presentational only (D-026 "Option A", generalized in D-036): a focused,
 // viewport-anchored overlay listing ranked swaps for one target (a repeat, an
@@ -52,14 +53,14 @@ function SwapRow({
           </p>
         ))}
       </div>
-      <button
-        type="button"
+      <Button
         onClick={() => onApply(suggestion)}
         disabled={applying}
-        className="btn-primary text-xs px-3 py-1.5 flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+        size="sm"
+        className="flex-shrink-0"
       >
         Apply
-      </button>
+      </Button>
     </li>
   )
 }
@@ -143,14 +144,9 @@ export default function SwapPanel({
         </div>
 
         <div className="sticky bottom-0 bg-white border-t border-lob-line px-4 py-3 rounded-b-2xl">
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={applying}
-            className="btn-secondary text-sm w-full disabled:opacity-50 disabled:cursor-not-allowed"
-          >
+          <Button onClick={onCancel} disabled={applying} variant="secondary" className="w-full">
             Cancel
-          </button>
+          </Button>
         </div>
       </div>
     </div>,

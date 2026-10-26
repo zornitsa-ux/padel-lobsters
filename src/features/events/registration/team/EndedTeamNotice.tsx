@@ -1,5 +1,6 @@
 import { PARTNER_DECLINED_NOTICE } from '../../teams/teamStatusMessages'
 import type { EndedTeamNotice as Ended } from './teamHelpers'
+import { Button } from '../../../../components/ui/Button'
 
 export const ADMIN_CANCELLED_NOTICE = 'An admin cancelled your team.'
 
@@ -20,9 +21,9 @@ export default function EndedTeamNotice({
       className="card bg-lob-warning-light border border-lob-warning-border space-y-2"
     >
       <p className="text-sm text-lob-warning-strong">{text}</p>
-      <button onClick={onSignUpAgain} className="btn-primary w-full py-2 text-sm">
+      <Button onClick={onSignUpAgain} className="w-full">
         Sign up again
-      </button>
+      </Button>
     </div>
   )
 }

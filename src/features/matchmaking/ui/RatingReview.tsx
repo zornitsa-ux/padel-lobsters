@@ -3,6 +3,7 @@ import { ChevronDown, ChevronRight, CheckCircle2, Minus, Plus } from 'lucide-rea
 import type { RatingEventRow } from '../matchmakingSchemas'
 import { describeRatingRecommendation } from './ratingRecommendation'
 import { playerName, type PlayerNamesById } from './playerNames'
+import { Button } from '../../../components/ui/Button'
 
 export type RatingReviewProps = {
   // Count of adjustments auto-applied without review (small, within-cap moves).
@@ -388,9 +389,9 @@ function QueueCard({
       )}
 
       <div className="pt-1">
-        <button type="button" onClick={confirm} disabled={reviewing} className="btn-primary">
+        <Button onClick={confirm} disabled={reviewing}>
           {confirmLabel}
-        </button>
+        </Button>
       </div>
     </div>
   )

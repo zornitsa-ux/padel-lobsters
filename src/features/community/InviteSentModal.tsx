@@ -1,3 +1,4 @@
+import { Button } from '../../components/ui/Button'
 export interface InviteSent {
   name: string
   email: string
@@ -24,9 +25,9 @@ export default function InviteSentModal({ inviteSent, onClose }: InviteSentModal
         <p className="text-2xs text-lob-muted-light">
           Nothing in the email works as a password, so it’s safe to resend.
         </p>
-        <button onClick={onClose} className="btn-primary w-full">
+        <Button onClick={onClose} className="w-full">
           Done
-        </button>
+        </Button>
       </div>
     </div>
   )

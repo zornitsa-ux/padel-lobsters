@@ -1,0 +1,203 @@
+import { useState } from 'react'
+import { AlertCircle, Plus, Pencil, Trash2, ArrowUpRight, Inbox } from 'lucide-react'
+import { PageHeader } from '../../components/ui/PageHeader'
+import { Button } from '../../components/ui/Button'
+import { TextButton } from '../../components/ui/TextButton'
+import { IconButton } from '../../components/ui/IconButton'
+import { AlertBox } from '../../components/ui/AlertBox'
+import { Badge, type BadgeProps } from '../../components/ui/Badge'
+import { EmptyState } from '../../components/ui/EmptyState'
+import { SegmentedControl } from '../../components/ui/SegmentedControl'
+import { Spinner } from '../../components/ui/Spinner'
+import { Skeleton } from '../../components/ui/Skeleton'
+
+// Dev-only (`/design`). Each design-system step adds its components here.
+
+const BADGE_VARIANTS: BadgeProps['variant'][] = [
+  'paid',
+  'unpaid',
+  'pending',
+  'waitlist',
+  'info',
+  'gold',
+  'silver',
+  'league-draft',
+  'league-group-stage',
+  'league-knockout',
+  'league-completed',
+]
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="card space-y-3">
+      <h2 className="text-sm font-bold text-lob-dark">{title}</h2>
+      {children}
+    </section>
+  )
+}
+
+function Row({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <p className="text-2xs font-semibold uppercase tracking-wide text-lob-muted">{label}</p>
+      <div className="flex flex-wrap items-center gap-2">{children}</div>
+    </div>
+  )
+}
+
+function ButtonSection() {
+  return (
+    <Section title="Button">
+      {(['lg', 'md', 'sm'] as const).map((size) => (
+        <Row key={size} label={`size="${size}"`}>
+          <Button size={size}>Primary</Button>
+          <Button size={size} variant="secondary">
+            Secondary
+          </Button>
+          <Button size={size} variant="neutral">
+            Neutral
+          </Button>
+          <Button size={size} variant="danger">
+            Danger
+          </Button>
+        </Row>
+      ))}
+      <Row label="destructive: confirm vs other">
+        <Button variant="danger">Delete season</Button>
+        <TextButton tone="destructive" size="sm" icon={<Trash2 size={14} />}>
+          Remove
+        </TextButton>
+      </Row>
+      <Row label="icon, disabled">
+        <Button icon={<Plus />}>Add player</Button>
+        <Button disabled>Disabled</Button>
+        <Button variant="secondary" disabled>
+          Disabled
+        </Button>
+      </Row>
+      <Row label='className="w-full" / "flex-1"'>
+        <Button className="w-full">Register for this event</Button>
+        <div className="flex gap-2 w-full">
+          <Button variant="secondary" className="flex-1">
+            Cancel
+          </Button>
+          <Button className="flex-1">Save</Button>
+        </div>
+      </Row>
+    </Section>
+  )
+}
+
+function TextButtonSection() {
+  return (
+    <Section title="TextButton">
+      <Row label="tone">
+        <TextButton>Accent</TextButton>
+        <TextButton tone="primary">Primary</TextButton>
+        <TextButton tone="destructive">Destructive</TextButton>
+        <TextButton tone="warning">Warning</TextButton>
+        <TextButton tone="neutral">Neutral</TextButton>
+        <TextButton tone="neutral" to="/design">
+          Neutral link
+        </TextButton>
+        <TextButton disabled>Disabled</TextButton>
+      </Row>
+      <Row label="size, icon, to / href / href external">
+        <TextButton size="sm">Small</TextButton>
+        <TextButton to="/design" icon={<ArrowUpRight size={12} />}>
+          Router link
+        </TextButton>
+        <p className="text-xs text-lob-muted">
+          Inline in a sentence:{' '}
+          <TextButton size="inherit" href="mailto:hello@example.com">
+            email link
+          </TextButton>{' '}
+          or{' '}
+          <TextButton size="inherit" href="https://example.com" external>
+            external link
+          </TextButton>
+          .
+        </p>
+      </Row>
+    </Section>
+  )
+}
+
+function IconButtonSection() {
+  return (
+    <Section title="IconButton">
+      {(['md', 'sm'] as const).map((size) => (
+        <Row key={size} label={`size="${size}"`}>
+          <IconButton size={size} aria-label="Edit">
+            <Pencil size={14} />
+          </IconButton>
+          <IconButton size={size} variant="accent" aria-label="Edit">
+            <Pencil size={14} />
+          </IconButton>
+          <IconButton size={size} variant="success" aria-label="Add">
+            <Plus size={14} />
+          </IconButton>
+          <IconButton size={size} variant="destructive" aria-label="Delete">
+            <Trash2 size={14} />
+          </IconButton>
+        </Row>
+      ))}
+    </Section>
+  )
+}
+
+function StatusSection() {
+  return (
+    <Section title="AlertBox and Badge">
+      {(['info', 'warning', 'success', 'error'] as const).map((variant) => (
+        <AlertBox key={variant} variant={variant} icon={<AlertCircle size={14} />}>
+          AlertBox variant=&quot;{variant}&quot;
+        </AlertBox>
+      ))}
+      <Row label="Badge variant">
+        {BADGE_VARIANTS.map((variant) => (
+          <Badge key={variant} variant={variant} label={variant} />
+        ))}
+      </Row>
+    </Section>
+  )
+}
+
+function StatesSection() {
+  const [choice, setChoice] = useState('left')
+  return (
+    <Section title="Choice, empty and loading">
+      <SegmentedControl
+        options={[
+          { value: 'left', label: 'Left' },
+          { value: 'right', label: 'Right' },
+          { value: 'both', label: 'Both' },
+        ]}
+        value={choice}
+        onChange={setChoice}
+        ariaLabel="Preferred side"
+      />
+      <EmptyState
+        icon={<Inbox size={36} />}
+        title="Nothing here yet"
+        description="EmptyState with an action."
+        action={<Button className="mt-2">Go to Events</Button>}
+      />
+      <Spinner className="py-4" />
+      <Skeleton className="h-10 w-full" />
+    </Section>
+  )
+}
+
+export default function DesignGallery() {
+  return (
+    <div className="space-y-4">
+      <PageHeader title="Design system" eyebrow="Dev only" />
+      <ButtonSection />
+      <TextButtonSection />
+      <IconButtonSection />
+      <StatusSection />
+      <StatesSection />
+    </div>
+  )
+}
