@@ -15,6 +15,7 @@ import type { EventNavigate } from '../events/eventHelpers'
 import { ActionRow } from '../../components/ui/ActionRow'
 import { Button } from '../../components/ui/Button'
 import { TextButton } from '../../components/ui/TextButton'
+import { Chip, ChipGroup } from '../../components/ui/Chip'
 
 const MONTH_ABBR = [
   'Jan',
@@ -348,24 +349,23 @@ export default function PlayerProfile({
           <p className="text-2xs font-bold text-lob-muted-light uppercase tracking-wider mb-1.5">
             Tournaments
           </p>
-          <div className="flex flex-wrap gap-1.5">
+          <ChipGroup ariaLabel="Tournaments played">
             {playerTournaments.map((t) => (
-              <button
+              <Chip
                 key={t.id}
                 onClick={(e) => {
                   e.stopPropagation()
                   onNavigate?.('scores', t)
                 }}
-                className="text-xs bg-lob-cream text-lob-teal px-2.5 py-1 rounded-lg font-semibold hover:bg-lob-teal hover:text-white transition-all active:scale-95"
               >
                 {t.name ||
                   new Date(t.date ?? '').toLocaleDateString('en-GB', {
                     month: 'short',
                     year: '2-digit',
                   })}
-              </button>
+              </Chip>
             ))}
-          </div>
+          </ChipGroup>
         </div>
       )}
 

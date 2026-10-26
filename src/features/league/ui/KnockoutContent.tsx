@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Trophy, CheckCircle, Archive } from 'lucide-react'
 import { SectionHeader } from '../../../components/ui/SectionHeader'
+import { SegmentedControl } from '../../../components/ui/SegmentedControl'
 import { GroupStandingsTable } from './GroupStandingsTable'
 import { LeagueMatchCard } from './LeagueMatchCard'
 import { KnockoutBracket } from './KnockoutBracket'
@@ -10,6 +11,13 @@ import { divisionChampions } from '../domain/champions'
 import { computeGroupStandings } from '../domain/standings'
 import { sortMatchesDesc } from '../domain/matchDisplay'
 import type { LeagueTeam, LeagueMatch } from '../domain/types'
+
+type Bracket = 'gold' | 'silver'
+
+const BRACKETS: { value: Bracket; label: string }[] = [
+  { value: 'gold', label: 'Gold' },
+  { value: 'silver', label: 'Silver' },
+]
 
 interface KnockoutContentProps {
   leagueId: string
@@ -28,7 +36,7 @@ export function KnockoutContent({
   teamById,
   onTeamClick,
 }: KnockoutContentProps) {
-  const [bracketTab, setBracketTab] = useState<'gold' | 'silver'>('gold')
+  const [bracketTab, setBracketTab] = useState<Bracket>('gold')
 
   const goldSemis = divMatches.filter((m) => m.stage === 'gold_semi')
   const goldFinal = divMatches.find((m) => m.stage === 'gold_final')
@@ -46,17 +54,13 @@ export function KnockoutContent({
   const standingsB = computeGroupStandings(groupBTeams, divMatches)
 
   const bracketToggle = (
-    <div className="flex rounded-lg overflow-hidden border border-lob-line-strong text-xs">
-      {(['gold', 'silver'] as const).map((tab) => (
-        <button
-          key={tab}
-          onClick={() => setBracketTab(tab)}
-          className={`px-2 py-1 capitalize ${bracketTab === tab ? 'bg-lob-teal text-white' : 'bg-white text-lob-muted'}`}
-        >
-          {tab}
-        </button>
-      ))}
-    </div>
+    <SegmentedControl
+      ariaLabel="Bracket"
+      layout="wrap"
+      options={BRACKETS}
+      value={bracketTab}
+      onChange={setBracketTab}
+    />
   )
 
   return (

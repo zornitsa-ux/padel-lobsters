@@ -56,8 +56,6 @@ export default function GroupStageHistoryPage() {
           <SegmentedControl
             ariaLabel="Division"
             layout="wrap"
-            size="md"
-            shape="pill"
             options={divisions.map((div) => ({ value: div, label: DIVISION_LABELS[div] }))}
             value={safeDivision}
             onChange={(div) => setDivision(div)}

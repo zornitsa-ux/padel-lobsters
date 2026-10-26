@@ -34,8 +34,6 @@ export default function ScoresMatchesTab({
           <SegmentedControl
             ariaLabel="Round"
             layout="scroll"
-            size="md"
-            className="pb-2"
             options={rounds.map((r, i) => ({ value: i, label: `R${r.round}` }))}
             value={activeRoundIdx}
             onChange={onSelectRound}

@@ -23,6 +23,7 @@ import { pricePerEntry, type EventNavigate } from './eventHelpers'
 import type { NormalisedTournament } from '../../lib/normalise'
 import type { NormalisedRegistration } from './registrationQueries'
 import { Button } from '../../components/ui/Button'
+import { SegmentedControl } from '../../components/ui/SegmentedControl'
 
 const METHODS = [
   { value: 'tikkie', label: 'Tikkie' },
@@ -112,34 +113,13 @@ export default function Payments({
 
   // Order follows the payment funnel: everyone → unpaid (never clicked) →
   // tikkied → paid (self-declared) → confirmed (admin verified).
-  const filterTabs: { value: PaymentFilter; label: string; count: number; activeClass: string }[] =
-    [
-      { value: 'all', label: 'All', count: regs.length, activeClass: 'bg-lob-coral text-white' },
-      {
-        value: 'unpaid',
-        label: 'Unpaid',
-        count: trulyUnpaid.length,
-        activeClass: 'bg-lob-danger-solid text-white',
-      },
-      {
-        value: 'tikkied',
-        label: 'Tikkied',
-        count: tikkied.length,
-        activeClass: 'bg-lob-warning-solid text-white',
-      },
-      {
-        value: 'pending',
-        label: 'Paid',
-        count: selfPaid.length,
-        activeClass: 'bg-lob-info-solid text-white',
-      },
-      {
-        value: 'paid',
-        label: 'Confirmed',
-        count: confirmed.length,
-        activeClass: 'bg-lob-success-solid text-white',
-      },
-    ]
+  const filterTabs: { value: PaymentFilter; label: string; count: number }[] = [
+    { value: 'all', label: 'All', count: regs.length },
+    { value: 'unpaid', label: 'Unpaid', count: trulyUnpaid.length },
+    { value: 'tikkied', label: 'Tikkied', count: tikkied.length },
+    { value: 'pending', label: 'Paid', count: selfPaid.length },
+    { value: 'paid', label: 'Confirmed', count: confirmed.length },
+  ]
 
   const handleMarkPaid = async (reg: NormalisedRegistration, method: string) => {
     if (!isAdmin) {
@@ -270,27 +250,13 @@ export default function Payments({
         )}
       </div>
 
-      {/* Filter tabs — pill style */}
-      <div className="flex gap-1.5 overflow-x-auto -mx-1 px-1">
-        {filterTabs.map(({ value: v, label: l, count, activeClass }) => (
-          <button
-            key={v}
-            onClick={() => setFilter(v)}
-            className={`flex-shrink-0 py-2 px-3 text-xs font-semibold rounded-full transition-all whitespace-nowrap ${
-              filter === v
-                ? `${activeClass} shadow-md`
-                : 'bg-lob-teal-light text-lob-muted hover:bg-opacity-80'
-            }`}
-          >
-            {l}
-            <span
-              className={`ml-1 text-xs font-bold ${filter === v ? 'text-white/80' : 'text-lob-muted'}`}
-            >
-              {count}
-            </span>
-          </button>
-        ))}
-      </div>
+      <SegmentedControl
+        ariaLabel="Payment status"
+        layout="scroll"
+        options={filterTabs}
+        value={filter}
+        onChange={setFilter}
+      />
 
       {/* Payment list */}
       <div className="space-y-2">

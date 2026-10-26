@@ -70,20 +70,10 @@ export default function LobsterWay() {
         title="The Lobster way"
         eyebrow="Help & FAQ"
         backLink={{ to: '/account', label: 'Account' }}
-        tabStrip={
-          <div className="flex gap-1.5">
-            {content.map((section) => (
-              <button
-                key={section.slug}
-                type="button"
-                onClick={() => scrollToSection(section.slug)}
-                className="px-3.5 py-1.5 text-sm font-semibold rounded-full whitespace-nowrap text-lob-teal hover:bg-white/60 transition-colors"
-              >
-                {section.chipEmoji} {section.label}
-              </button>
-            ))}
-          </div>
-        }
+        tabs={content.map((section) => ({
+          label: `${section.chipEmoji} ${section.label}`,
+          onClick: () => scrollToSection(section.slug),
+        }))}
       />
 
       <div className="px-4 pt-4 pb-8 space-y-5">

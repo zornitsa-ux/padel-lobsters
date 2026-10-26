@@ -4,6 +4,7 @@ import CountryPicker from '../../components/ui/CountryPicker'
 import Avatar from '../../components/ui/Avatar'
 import { AvatarPicker } from '../../components/ui/AvatarPicker'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
+import { ProfileChoiceFields } from '../players/ProfileFields'
 import { LOBBY_PROMPTS, type ProfileForm } from './settingsHelpers'
 import type { Player } from '../../lib/normalise'
 import { ActionRow } from '../../components/ui/ActionRow'
@@ -141,24 +142,23 @@ export default function ProfileSection({
             {/* War Cry — toggleable prompt categories */}
             <div>
               <label className="label">War Cry</label>
-              <SegmentedControl
-                ariaLabel="War cry prompt"
-                layout="wrap"
-                size="sm"
-                shape="pill"
-                className="mb-2"
-                options={LOBBY_PROMPTS.map((p, i) => ({ value: i, label: p.label }))}
-                value={activePrompt}
-                onChange={setActivePrompt}
-              />
-              <input
-                className="input"
-                type="text"
-                maxLength={80}
-                placeholder={LOBBY_PROMPTS[activePrompt].placeholder}
-                value={profileForm.tagline}
-                onChange={(e) => setProfileForm((f) => ({ ...f, tagline: e.target.value }))}
-              />
+              <div className="space-y-2">
+                <SegmentedControl
+                  ariaLabel="War cry prompt"
+                  layout="wrap"
+                  options={LOBBY_PROMPTS.map((p, i) => ({ value: i, label: p.label }))}
+                  value={activePrompt}
+                  onChange={setActivePrompt}
+                />
+                <input
+                  className="input"
+                  type="text"
+                  maxLength={80}
+                  placeholder={LOBBY_PROMPTS[activePrompt].placeholder}
+                  value={profileForm.tagline}
+                  onChange={(e) => setProfileForm((f) => ({ ...f, tagline: e.target.value }))}
+                />
+              </div>
               <p className="text-xs text-lob-muted-light mt-1">
                 Appears on your player card. {80 - profileForm.tagline.length} chars left.
               </p>
@@ -173,78 +173,7 @@ export default function ProfileSection({
               />
             </div>
 
-            {/* Gender */}
-            <div>
-              <label className="label">Gender</label>
-              <p className="text-xs text-lob-muted-light mb-2">For optimal pair matching</p>
-              <div className="flex gap-3">
-                {[
-                  ['male', 'Male'],
-                  ['female', 'Female'],
-                ].map(([val, lbl]) => (
-                  <button
-                    type="button"
-                    key={val}
-                    onClick={() =>
-                      setProfileForm((f) => ({ ...f, gender: f.gender === val ? '' : val }))
-                    }
-                    className={`flex-1 py-2.5 rounded-xl font-semibold text-sm transition-all ${
-                      profileForm.gender === val
-                        ? 'bg-lob-teal text-white'
-                        : 'bg-gray-100 text-lob-slate'
-                    }`}
-                  >
-                    {lbl}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Left-handed */}
-            <div>
-              <label className="label">Playing Hand</label>
-              <button
-                type="button"
-                onClick={() => setProfileForm((f) => ({ ...f, isLeftHanded: !f.isLeftHanded }))}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all w-full justify-center ${
-                  profileForm.isLeftHanded
-                    ? 'bg-amber-100 text-amber-700 border-2 border-amber-300'
-                    : 'bg-gray-100 text-lob-muted'
-                }`}
-              >
-                🤚 {profileForm.isLeftHanded ? 'Left-handed (tap to undo)' : 'Tap if left-handed'}
-              </button>
-            </div>
-
-            {/* Preferred side */}
-            <div>
-              <label className="label">Preferred Side</label>
-              <div className="flex gap-2">
-                {[
-                  ['left', '👈 Left'],
-                  ['right', '👉 Right'],
-                  ['both', '↔️ Both'],
-                ].map(([val, lbl]) => (
-                  <button
-                    type="button"
-                    key={val}
-                    onClick={() =>
-                      setProfileForm((f) => ({
-                        ...f,
-                        preferredPosition: f.preferredPosition === val ? '' : val,
-                      }))
-                    }
-                    className={`flex-1 py-2 rounded-xl font-semibold text-sm transition-all ${
-                      profileForm.preferredPosition === val
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-gray-100 text-lob-slate'
-                    }`}
-                  >
-                    {lbl}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <ProfileChoiceFields form={profileForm} setForm={setProfileForm} />
 
             {/* Playtomic level */}
             <div className="bg-blue-50 rounded-xl p-4 space-y-3">

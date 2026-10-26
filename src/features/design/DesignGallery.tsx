@@ -21,6 +21,7 @@ import AddToCalendarButton from '../../components/ui/AddToCalendarButton'
 import { AvatarPicker } from '../../components/ui/AvatarPicker'
 import { AlertBox } from '../../components/ui/AlertBox'
 import { Badge, type BadgeProps } from '../../components/ui/Badge'
+import { Chip, ChipGroup } from '../../components/ui/Chip'
 import { Disclosure } from '../../components/ui/Disclosure'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
@@ -223,21 +224,94 @@ function StatusSection() {
   )
 }
 
+const ROUNDS = [1, 2, 3, 4, 5, 6, 7].map((n) => ({ value: n, label: `Round ${n}` }))
+
+function ChoiceSection() {
+  const [side, setSide] = useState('left')
+  const [group, setGroup] = useState('A')
+  const [round, setRound] = useState(1)
+  const [filter, setFilter] = useState('all')
+  const [sizes, setSizes] = useState<string[]>(['M'])
+  const toggleSize = (size: string) =>
+    setSizes((current) =>
+      current.includes(size) ? current.filter((s) => s !== size) : [...current, size],
+    )
+  return (
+    <Section title="Chip and SegmentedControl">
+      <Row label="SegmentedControl (fill, 2–4 choices)">
+        <div className="w-full">
+          <SegmentedControl
+            options={[
+              { value: 'left', label: 'Left' },
+              { value: 'right', label: 'Right' },
+              { value: 'both', label: 'Both' },
+            ]}
+            value={side}
+            onChange={setSide}
+            ariaLabel="Preferred side"
+          />
+        </div>
+      </Row>
+      <Row label="SegmentedControl with detail">
+        <div className="w-full">
+          <SegmentedControl
+            options={[
+              { value: 'A', label: 'Group A', detail: '3 teams · suggested' },
+              { value: 'B', label: 'Group B', detail: '4 teams' },
+            ]}
+            value={group}
+            onChange={setGroup}
+            ariaLabel="Group"
+          />
+        </div>
+      </Row>
+      <Row label='SegmentedControl layout="scroll"'>
+        <div className="w-full min-w-0">
+          <SegmentedControl
+            layout="scroll"
+            options={ROUNDS}
+            value={round}
+            onChange={setRound}
+            ariaLabel="Round"
+          />
+        </div>
+      </Row>
+      <Row label='SegmentedControl layout="wrap" with counts'>
+        <SegmentedControl
+          layout="wrap"
+          options={[
+            { value: 'all', label: 'All', count: 24 },
+            { value: 'unpaid', label: 'Unpaid', count: 3 },
+            { value: 'paid', label: 'Confirmed', count: 21 },
+          ]}
+          value={filter}
+          onChange={setFilter}
+          ariaLabel="Payment status"
+        />
+      </Row>
+      <Row label="Chip toggles in a ChipGroup (multi-select)">
+        <ChipGroup ariaLabel="Sizes">
+          {['S', 'M', 'L', 'XL'].map((size) => (
+            <Chip key={size} selected={sizes.includes(size)} onClick={() => toggleSize(size)}>
+              {size}
+            </Chip>
+          ))}
+          <Chip disabled selected={false}>
+            XXL
+          </Chip>
+        </ChipGroup>
+      </Row>
+      <Row label="Chip link (no toggle state)">
+        <Chip to="/design">Lobster Cup</Chip>
+      </Row>
+    </Section>
+  )
+}
+
 function StatesSection() {
-  const [choice, setChoice] = useState('left')
   const [open, setOpen] = useState(false)
   return (
-    <Section title="Choice, empty and loading">
-      <SegmentedControl
-        options={[
-          { value: 'left', label: 'Left' },
-          { value: 'right', label: 'Right' },
-          { value: 'both', label: 'Both' },
-        ]}
-        value={choice}
-        onChange={setChoice}
-        ariaLabel="Preferred side"
-      />
+    <Section title="Disclosure, empty and loading">
       <Disclosure expanded={open} onToggle={() => setOpen((o) => !o)}>
         Advanced
       </Disclosure>
@@ -262,6 +336,7 @@ export default function DesignGallery() {
       <TextButtonSection />
       <IconButtonSection />
       <StatusSection />
+      <ChoiceSection />
       <StatesSection />
     </div>
   )

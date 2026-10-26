@@ -2,9 +2,15 @@ import { useState } from 'react'
 import { Loader2, Shuffle } from 'lucide-react'
 import { COURT_JITTER_SCALE } from '../domain/courts'
 import type { MatcherPriority } from '../domain/presets'
-import type { FeasibilityResult, MatchConfig, MatchPreset, ResolvedConfig } from '../domain/types'
+import type {
+  FeasibilityResult,
+  LeftyRule,
+  MatchConfig,
+  MatchPreset,
+  ResolvedConfig,
+} from '../domain/types'
 import { DIMENSION_LABELS } from './dimensions'
-import { segmentedButtonClass } from './segmentedButton'
+import { SegmentedControl } from '../../../components/ui/SegmentedControl'
 import { Button } from '../../../components/ui/Button'
 import { TextButton } from '../../../components/ui/TextButton'
 import { Disclosure } from '../../../components/ui/Disclosure'
@@ -37,6 +43,11 @@ const PRESETS: { value: MatchPreset; label: string }[] = [
   { value: 'competitive', label: 'Competitive' },
   { value: 'balanced', label: 'Balanced' },
   { value: 'social', label: 'Social' },
+]
+
+const LEFTY_RULES: { value: LeftyRule; label: string }[] = [
+  { value: 'hard', label: 'Keep lefties apart' },
+  { value: 'off', label: 'Ignore' },
 ]
 
 const RULE_LABELS: Record<string, string> = {
@@ -181,18 +192,12 @@ export default function ConfigPanel({
 
       <div>
         <label className="label">Preset</label>
-        <div className="flex gap-2">
-          {PRESETS.map(({ value, label }) => (
-            <button
-              key={value}
-              type="button"
-              onClick={() => onConfigChange({ preset: value })}
-              className={segmentedButtonClass(config.preset === value)}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+        <SegmentedControl
+          ariaLabel="Preset"
+          options={PRESETS}
+          value={config.preset}
+          onChange={(preset) => onConfigChange({ preset })}
+        />
         <p className="mt-2 text-xs text-lob-muted">{presetIntent}</p>
       </div>
 
@@ -269,22 +274,12 @@ export default function ConfigPanel({
                 </span>
               )}
             </div>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => onConfigChange({ ...config, leftyRule: 'hard' })}
-                className={segmentedButtonClass(resolvedConfig.leftyRule === 'hard')}
-              >
-                Keep lefties apart
-              </button>
-              <button
-                type="button"
-                onClick={() => onConfigChange({ ...config, leftyRule: 'off' })}
-                className={segmentedButtonClass(resolvedConfig.leftyRule === 'off')}
-              >
-                Ignore
-              </button>
-            </div>
+            <SegmentedControl
+              ariaLabel="Left-handed players"
+              options={LEFTY_RULES}
+              value={resolvedConfig.leftyRule}
+              onChange={(leftyRule) => onConfigChange({ ...config, leftyRule })}
+            />
           </div>
 
           {priorities.length > 0 && (

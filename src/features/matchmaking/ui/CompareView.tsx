@@ -6,7 +6,7 @@ import type { MatcherPriority } from '../domain/presets'
 import { useBodyScrollLock } from '../../../hooks/useBodyScrollLock'
 import { useEscapeToClose } from '../../../hooks/useEscapeToClose'
 import ConfigPanel from './ConfigPanel'
-import { segmentedButtonClass } from './segmentedButton'
+import { SegmentedControl } from '../../../components/ui/SegmentedControl'
 import QualityReport from './QualityReport'
 import ScheduleRounds from './ScheduleRounds'
 import { describeQualityDiff } from './dimensions'
@@ -31,6 +31,13 @@ export type CompareViewProps = {
   onUseAlternative: () => void
 }
 
+type RoundsTab = 'original' | 'alternative'
+
+const ROUNDS_TABS: { value: RoundsTab; label: string }[] = [
+  { value: 'original', label: 'Original rounds' },
+  { value: 'alternative', label: 'Alternative rounds' },
+]
+
 export default function CompareView({
   open,
   onClose,
@@ -47,7 +54,7 @@ export default function CompareView({
   altRun,
   onUseAlternative,
 }: CompareViewProps) {
-  const [roundsTab, setRoundsTab] = useState<'original' | 'alternative'>('original')
+  const [roundsTab, setRoundsTab] = useState<RoundsTab>('original')
 
   useBodyScrollLock(open)
   useEscapeToClose({ active: open, onClose })
@@ -137,21 +144,13 @@ export default function CompareView({
           />
 
           <div className="space-y-2">
-            <div className="flex gap-2" role="tablist" aria-label="Rounds">
-              {(['original', 'alternative'] as const).map((tab) => (
-                <button
-                  key={tab}
-                  type="button"
-                  role="tab"
-                  aria-selected={roundsTab === tab}
-                  onClick={() => setRoundsTab(tab)}
-                  className={`${segmentedButtonClass(roundsTab === tab)} capitalize`}
-                >
-                  {tab} rounds
-                </button>
-              ))}
-            </div>
-            <div role="tabpanel">
+            <SegmentedControl
+              ariaLabel="Rounds"
+              options={ROUNDS_TABS}
+              value={roundsTab}
+              onChange={setRoundsTab}
+            />
+            <div>
               {roundsTab === 'original' ? (
                 <ScheduleRounds rounds={original.rounds} />
               ) : altRun ? (

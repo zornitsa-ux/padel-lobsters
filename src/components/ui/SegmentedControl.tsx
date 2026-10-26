@@ -1,62 +1,68 @@
 import React from 'react'
+import { Chip, ChipGroup } from './Chip'
 
-export type SegmentedValue = string | number
+export type SegmentedValue = string | number | boolean
 
 export interface SegmentedOption<T extends SegmentedValue> {
   value: T
   label: React.ReactNode
+  /** Second line under the label (`fill` only), e.g. "3 teams · suggested". */
+  detail?: React.ReactNode
+  /** Shown after the label (`wrap` and `scroll` only), e.g. a filter's row count. */
+  count?: number
+  disabled?: boolean
 }
 
-/** `fill` = equal-width row, `scroll` = horizontally scrollable strip, `wrap` = auto-width chips. */
-type Layout = 'fill' | 'scroll' | 'wrap'
-/** `sm` chip, `md` strip button, `lg` form control. */
-type Size = 'sm' | 'md' | 'lg'
-type Shape = 'rounded' | 'pill'
+/**
+ * `fill` is an equal-width row of segments, for two to four choices. `wrap` and `scroll`
+ * render `Chip`s, for longer sets such as rounds, filters or sizes.
+ */
+type Layout = 'fill' | 'wrap' | 'scroll'
 
 interface SegmentedControlProps<T extends SegmentedValue> {
   options: SegmentedOption<T>[]
   value: T | null | undefined
   onChange: (value: T) => void
   layout?: Layout
-  size?: Size
-  shape?: Shape
   /** Accessible name for the group. */
   ariaLabel?: string
-  className?: string
   disabled?: boolean
 }
 
-const LAYOUT: Record<Layout, { container: string; item: string }> = {
-  fill: { container: 'flex gap-2', item: 'flex-1' },
-  scroll: { container: 'flex gap-1.5 overflow-x-auto', item: 'flex-shrink-0' },
-  wrap: { container: 'flex gap-1.5 flex-wrap', item: '' },
-}
+const SEGMENT =
+  'flex-1 min-w-0 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all not-disabled:active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed'
 
-const SIZE: Record<Size, string> = {
-  sm: 'text-xs px-2.5 py-1',
-  md: 'text-xs px-3 py-1.5',
-  lg: 'text-sm px-3 py-2.5',
-}
-
-const SHAPE: Record<Shape, string> = {
-  rounded: 'rounded-xl',
-  pill: 'rounded-full',
-}
+const segmentClasses = ({ selected }: { selected: boolean }) =>
+  `${SEGMENT} ${selected ? 'bg-lob-teal text-white' : 'bg-lob-teal-light text-lob-muted'}`
 
 export function SegmentedControl<T extends SegmentedValue>({
   options,
   value,
   onChange,
   layout = 'fill',
-  size = 'lg',
-  shape = 'rounded',
   ariaLabel,
-  className,
   disabled = false,
 }: SegmentedControlProps<T>) {
-  const { container, item } = LAYOUT[layout]
+  if (layout !== 'fill') {
+    return (
+      <ChipGroup layout={layout} ariaLabel={ariaLabel}>
+        {options.map((option) => (
+          <Chip
+            key={String(option.value)}
+            selected={option.value === value}
+            count={option.count}
+            disabled={disabled || option.disabled}
+            onClick={() => onChange(option.value)}
+          >
+            {option.label}
+          </Chip>
+        ))}
+      </ChipGroup>
+    )
+  }
+
   return (
-    <div role="group" aria-label={ariaLabel} className={`${container} ${className ?? ''}`.trim()}>
+    <div role="group" aria-label={ariaLabel} className="flex gap-2">
       {options.map((option) => {
         const selected = option.value === value
         return (
@@ -64,13 +70,18 @@ export function SegmentedControl<T extends SegmentedValue>({
             key={String(option.value)}
             type="button"
             aria-pressed={selected}
-            disabled={disabled}
+            disabled={disabled || option.disabled}
             onClick={() => onChange(option.value)}
-            className={`${item} ${SIZE[size]} ${SHAPE[shape]} font-semibold transition-all active:scale-95 disabled:opacity-60 disabled:active:scale-100 ${
-              selected ? 'bg-lob-teal text-white' : 'bg-lob-teal-light text-lob-muted'
-            }`.trim()}
+            className={segmentClasses({ selected })}
           >
             {option.label}
+            {option.detail && (
+              <span
+                className={`block text-xs font-normal ${selected ? 'text-white/80' : 'text-lob-muted'}`}
+              >
+                {option.detail}
+              </span>
+            )}
           </button>
         )
       })}
