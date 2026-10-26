@@ -28,3 +28,6 @@ test-results/
 /test-results/
 /playwright-report/
 /e2e/.cache/
+
+# TypeScript incremental build cache
+*.tsbuildinfo
