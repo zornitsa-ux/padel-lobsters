@@ -144,8 +144,8 @@ export default function LobsterWayAdminItem({
               </TextButton>
             </div>
           ) : (
-            <TextButton onClick={() => set({ list: [emptyListRow()] })}>
-              + Add bullet list
+            <TextButton icon={<Plus size={11} />} onClick={() => set({ list: [emptyListRow()] })}>
+              Add bullet list
             </TextButton>
           )}
 
@@ -201,8 +201,8 @@ export default function LobsterWayAdminItem({
               </TextButton>
             </div>
           ) : (
-            <TextButton onClick={() => set({ steps: [emptyStepRow()] })}>
-              + Add numbered steps
+            <TextButton icon={<Plus size={11} />} onClick={() => set({ steps: [emptyStepRow()] })}>
+              Add numbered steps
             </TextButton>
           )}
         </div>

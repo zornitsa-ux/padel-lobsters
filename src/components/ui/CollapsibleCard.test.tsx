@@ -73,4 +73,10 @@ describe('CollapsibleCard', () => {
       expect(summary).toBe('SUMMARY')
     }
   })
+
+  it('dims the whole card when muted', () => {
+    expect(propsOf(CollapsibleCard({ ...base, expanded: false, muted: true })).className).toBe(
+      'card opacity-60',
+    )
+  })
 })

@@ -26,8 +26,7 @@ export default function CancelledSection({
   return (
     <CollapsibleCard
       className=""
-      headerClassName="opacity-60"
-      chevronClassName="text-lob-slate"
+      muted
       expanded={expanded}
       onToggle={onToggle}
       header={
@@ -37,7 +36,7 @@ export default function CancelledSection({
         </span>
       }
     >
-      <div className="space-y-2 opacity-60 mt-2">
+      <div className="space-y-2 mt-2">
         {cancelled.map((reg) => {
           const p = getPlayer(reg.playerId)
           if (!p) return null

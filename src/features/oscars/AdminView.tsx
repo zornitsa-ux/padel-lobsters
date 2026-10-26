@@ -121,10 +121,10 @@ export default function AdminView({
           <Button
             size="lg"
             fullWidth
+            icon={busy ? <Loader2 className="animate-spin" /> : <Play />}
             onClick={handleStart}
             disabled={busy || baseCats.length === 0}
           >
-            {busy ? <Loader2 className="animate-spin" size={18} /> : <Play size={18} />}
             {busy ? 'Starting…' : 'Start Lobster Games'}
           </Button>
           <p className="text-xs text-lob-muted-light text-center -mt-1">
@@ -168,8 +168,13 @@ export default function AdminView({
             </AlertBox>
           )}
 
-          <Button size="lg" fullWidth onClick={onEnd} disabled={busy}>
-            {busy ? <Loader2 className="animate-spin" size={18} /> : <X size={18} />}
+          <Button
+            size="lg"
+            fullWidth
+            icon={busy ? <Loader2 className="animate-spin" /> : <X />}
+            onClick={onEnd}
+            disabled={busy}
+          >
             End game
           </Button>
         </div>
@@ -198,8 +203,12 @@ export default function AdminView({
 
         <div className="pt-2">
           {phase === 'ended' ? (
-            <Button fullWidth onClick={onShare} disabled={busy}>
-              {busy ? <Loader2 className="animate-spin" size={16} /> : <Share2 size={16} />}
+            <Button
+              fullWidth
+              icon={busy ? <Loader2 className="animate-spin" /> : <Share2 />}
+              onClick={onShare}
+              disabled={busy}
+            >
               Share with players
             </Button>
           ) : (
