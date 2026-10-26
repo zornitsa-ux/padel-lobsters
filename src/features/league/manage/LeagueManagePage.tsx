@@ -5,7 +5,7 @@ import { Badge } from '../../../components/ui/Badge'
 import { PageHeader } from '../../../components/ui/PageHeader'
 import { SegmentedControl } from '../../../components/ui/SegmentedControl'
 import { Spinner } from '../../../components/ui/Spinner'
-import { DivisionPills } from '../ui/DivisionPills'
+import { divisionTabs } from '../ui/divisionTabs'
 import { LeagueNotFound } from '../ui/LeagueNotFound'
 import { LEAGUE_STATUS_PILL, statusPill } from '../ui/statusPill'
 import {
@@ -81,10 +81,10 @@ function LeagueManage({ league }: { league: League }) {
             <Badge variant={pill.variant} label={pill.label} />
           </>
         }
-        tabStrip={
-          showDivisions ? (
-            <DivisionPills divisions={divisions} value={division} onChange={setDivision} />
-          ) : undefined
+        tabs={
+          showDivisions
+            ? divisionTabs({ divisions, value: division, onChange: setDivision })
+            : undefined
         }
       />
 

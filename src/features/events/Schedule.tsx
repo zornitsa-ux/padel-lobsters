@@ -36,6 +36,8 @@ import type { GenderMode } from '../matchmaking/domain/types'
 import { savedCourtIsUneven, savedRoundHasAvoidableUneven } from '../matchmaking/ui/genderCopy'
 import { Button } from '../../components/ui/Button'
 import { TextButton } from '../../components/ui/TextButton'
+import { SegmentedControl } from '../../components/ui/SegmentedControl'
+import { Chip } from '../../components/ui/Chip'
 
 // A player slot the admin has tapped first in swap mode.
 interface SwapAnchor {
@@ -400,24 +402,23 @@ export default function Schedule({
           </div>
           {/* Swap mode toggle */}
           {isAdmin && (
-            <button
+            <Chip
+              selected={swapMode}
               onClick={() => {
                 setSwapMode((s) => !s)
                 setSwapFirst(null)
                 setSwapWarnings([])
               }}
-              className={`w-full py-2 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
-                swapMode
-                  ? 'bg-orange-100 text-orange-700 border-2 border-orange-300'
-                  : 'bg-gray-100 text-lob-slate'
-              }`}
             >
-              {swapMode
-                ? swapFirst
-                  ? '👆 Tap another player to swap…'
-                  : '↔️ Swap Mode ON — tap a player'
-                : '↔️ Manually swap players'}
-            </button>
+              ↔️ Swap players
+            </Chip>
+          )}
+          {isAdmin && swapMode && (
+            <p className="text-sm font-semibold text-lob-teal" aria-live="polite">
+              {swapFirst
+                ? '👆 Tap another player to swap with.'
+                : 'Swap mode is on: tap the first player.'}
+            </p>
           )}
           {/* Swap conflict warnings */}
           {swapWarnings.length > 0 && (
@@ -446,21 +447,13 @@ export default function Schedule({
       {/* Round tabs */}
       {display.length > 0 && (
         <>
-          <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-1">
-            {display.map((r, i) => (
-              <button
-                key={i}
-                onClick={() => setActiveRound(i)}
-                className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
-                  activeRound === i
-                    ? 'bg-lob-teal text-white'
-                    : 'bg-white text-lob-slate border border-lob-line-strong'
-                }`}
-              >
-                {r.label}
-              </button>
-            ))}
-          </div>
+          <SegmentedControl
+            ariaLabel="Round"
+            layout="scroll"
+            options={display.map((r, i) => ({ value: i, label: r.label }))}
+            value={activeRound}
+            onChange={setActiveRound}
+          />
 
           {/* Active round matches */}
           {display[activeRound] && (

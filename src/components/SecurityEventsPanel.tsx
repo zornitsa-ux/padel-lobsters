@@ -13,6 +13,7 @@ import {
 import type { LucideIcon } from 'lucide-react'
 import { CollapsibleCard } from './ui/CollapsibleCard'
 import { IconButton } from './ui/IconButton'
+import { SegmentedControl } from './ui/SegmentedControl'
 
 /**
  * Admin-only Security panel.
@@ -29,10 +30,10 @@ import { IconButton } from './ui/IconButton'
  */
 type EventFilter = 'all' | 'failures' | 'pii'
 
-const EVENT_FILTERS: ReadonlyArray<{ id: EventFilter; label: string }> = [
-  { id: 'all', label: 'All' },
-  { id: 'failures', label: 'Failures only' },
-  { id: 'pii', label: 'PII reads' },
+const EVENT_FILTERS: { value: EventFilter; label: string }[] = [
+  { value: 'all', label: 'All' },
+  { value: 'failures', label: 'Failures only' },
+  { value: 'pii', label: 'PII reads' },
 ]
 
 // Kinds that record an admin reading player contact details.
@@ -125,24 +126,20 @@ export default function SecurityEventsPanel() {
             </IconButton>
           </div>
 
-          <div className="flex flex-wrap gap-1.5">
-            {EVENT_FILTERS.map((f) => (
-              <button
-                key={f.id}
-                onClick={() => setFilter(f.id)}
-                className={`text-xs px-2 py-1 rounded-lg border transition-all ${
-                  filter === f.id
-                    ? 'bg-lob-teal text-white border-lob-teal'
-                    : 'bg-white text-lob-slate border-lob-line-strong hover:border-lob-teal/50'
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
+          <div className="flex items-start gap-1.5">
+            <div className="flex-1 min-w-0">
+              <SegmentedControl
+                ariaLabel="Event type"
+                layout="wrap"
+                options={EVENT_FILTERS}
+                value={filter}
+                onChange={setFilter}
+              />
+            </div>
             <select
               value={limit}
               onChange={(e) => setLimit(parseInt(e.target.value, 10))}
-              className="text-xs px-2 py-1 rounded-lg border border-lob-line-strong bg-white ml-auto"
+              className="h-8 text-xs px-2 rounded-lg border border-lob-line-strong bg-white"
             >
               <option value={25}>Last 25</option>
               <option value={50}>Last 50</option>

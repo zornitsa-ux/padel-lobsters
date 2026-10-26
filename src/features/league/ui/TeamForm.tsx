@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useMemo } from 'react'
 import { teamFormSchema } from '../domain/leagueSchemas'
 import type { Division, GroupLabel, LeagueTeam } from '../domain/types'
 import { suggestGroupForTeam } from '../domain/groupBalancer'
+import { SegmentedControl } from '../../../components/ui/SegmentedControl'
 import { TabSwitcher } from '../../../components/ui/TabSwitcher'
 import { AlertBox } from '../../../components/ui/AlertBox'
 import Avatar from '../../../components/ui/Avatar'
@@ -343,34 +344,19 @@ export function TeamForm({
       {groupsFormed && (
         <div className="mb-4">
           <label className="label">Assign to Group</label>
-          <div className="flex gap-2 mt-1">
-            {(['A', 'B'] as GroupLabel[]).map((g) => {
+          <SegmentedControl
+            ariaLabel="Group"
+            options={(['A', 'B'] as GroupLabel[]).map((g) => {
               const count = teamsForGroupSuggestion.filter((t) => t.group_label === g).length
-              const isSuggested = g === suggestedGroup
-              const isSelected = g === selectedGroup
-              return (
-                <button
-                  key={g}
-                  type="button"
-                  className={[
-                    'flex-1 py-2.5 rounded-xl border transition-colors text-center',
-                    isSelected
-                      ? 'bg-lob-teal text-white border-lob-teal'
-                      : 'bg-white text-lob-dark border-lob-line-strong hover:border-lob-teal/50',
-                  ].join(' ')}
-                  onClick={() => setSelectedGroup(g)}
-                >
-                  <span className="block text-sm font-semibold">Group {g}</span>
-                  <span
-                    className={`block text-xs font-normal mt-0.5 ${isSelected ? 'text-white/70' : 'text-lob-muted'}`}
-                  >
-                    {count} team{count !== 1 ? 's' : ''}
-                    {isSuggested ? ' · suggested' : ''}
-                  </span>
-                </button>
-              )
+              return {
+                value: g,
+                label: `Group ${g}`,
+                detail: `${count} team${count !== 1 ? 's' : ''}${g === suggestedGroup ? ' · suggested' : ''}`,
+              }
             })}
-          </div>
+            value={selectedGroup}
+            onChange={setSelectedGroup}
+          />
         </div>
       )}
 

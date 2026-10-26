@@ -5,7 +5,7 @@ import { Badge } from '../../../components/ui/Badge'
 import { statusPill } from './statusPill'
 import type { StatusPill } from './statusPill'
 import { PageHeader } from '../../../components/ui/PageHeader'
-import { DivisionPills } from './DivisionPills'
+import { divisionTabs } from './divisionTabs'
 import { DraftSection } from './DraftSection'
 import { GroupStageContent } from './GroupStageContent'
 import { KnockoutContent } from './KnockoutContent'
@@ -77,11 +77,7 @@ export function LeagueHome({ league, teams, matches, myTeam, isAdmin = false }: 
             </Link>
           ) : undefined
         }
-        tabStrip={
-          divisions.length > 1 ? (
-            <DivisionPills divisions={divisions} value={division} onChange={setDivision} />
-          ) : undefined
-        }
+        tabs={divisionTabs({ divisions, value: division, onChange: setDivision })}
       />
 
       <div className="px-4 pt-4 space-y-5">

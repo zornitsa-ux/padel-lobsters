@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { SegmentedControl } from './SegmentedControl'
+import { Chip, ChipGroup } from './Chip'
 import { childrenOf, propsOf } from '../../test/element'
 
 const options = [
@@ -33,32 +34,60 @@ describe('SegmentedControl', () => {
     expect(onChange).toHaveBeenCalledWith('b')
   })
 
-  it('defaults to the fill layout and lg size', () => {
+  it('defaults to the fill layout of equal-width segments', () => {
     const el = SegmentedControl({ options, value: 'a', onChange: () => {} })
     expect(propsOf(el).className).toBe('flex gap-2')
     const [first] = childrenOf(el)
-    expect(String(propsOf(first).className)).toContain('flex-1 text-sm px-3 py-2.5 rounded-xl')
+    expect(String(propsOf(first).className)).toContain('flex-1 min-w-0 px-3 py-2.5 rounded-xl')
   })
 
-  it('supports the scrollable strip layout', () => {
-    const el = SegmentedControl({ options, value: 'a', onChange: () => {}, layout: 'scroll' })
-    expect(propsOf(el).className).toBe('flex gap-1.5 overflow-x-auto')
-    const [first] = childrenOf(el)
-    expect(String(propsOf(first).className)).toContain('flex-shrink-0')
+  it('renders chips for the wrap and scroll layouts', () => {
+    const el = SegmentedControl({
+      options: [
+        { value: 'a', label: 'A', count: 3 },
+        { value: 'b', label: 'B', disabled: true },
+      ],
+      value: 'a',
+      onChange: () => {},
+      layout: 'scroll',
+    })
+    expect(el.type).toBe(ChipGroup)
+    expect(propsOf(el).layout).toBe('scroll')
+    const [first, second] = childrenOf(el)
+    expect(first.type).toBe(Chip)
+    expect(propsOf(first).selected).toBe(true)
+    expect(propsOf(first).count).toBe(3)
+    expect(propsOf(second).selected).toBe(false)
+    expect(propsOf(second).disabled).toBe(true)
   })
 
-  it('supports pill-shaped chips', () => {
+  it('shows a detail line under a segment label', () => {
     const [first] = childrenOf(
       SegmentedControl({
-        options,
+        options: [{ value: 'a', label: 'Group A', detail: '3 teams' }],
         value: 'a',
         onChange: () => {},
-        layout: 'wrap',
-        size: 'sm',
-        shape: 'pill',
       }),
     )
-    expect(String(propsOf(first).className)).toContain('text-xs px-2.5 py-1 rounded-full')
+    const [, detail] = childrenOf(first)
+    expect(propsOf(detail).children).toBe('3 teams')
+    expect(String(propsOf(detail).className)).toContain('text-white/80')
+  })
+
+  it('supports boolean values', () => {
+    const onChange = vi.fn()
+    const [, second] = childrenOf(
+      SegmentedControl({
+        options: [
+          { value: false, label: 'Right' },
+          { value: true, label: 'Left' },
+        ],
+        value: false,
+        onChange,
+      }),
+    )
+    ;(propsOf(second).onClick as () => void)()
+    expect(onChange).toHaveBeenCalledWith(true)
   })
 
   it('supports numeric values', () => {
@@ -77,15 +106,8 @@ describe('SegmentedControl', () => {
     expect(onChange).toHaveBeenCalledWith(60)
   })
 
-  it('appends extra className and exposes a group label', () => {
-    const el = SegmentedControl({
-      options,
-      value: 'a',
-      onChange: () => {},
-      className: 'mb-3',
-      ariaLabel: 'Round',
-    })
-    expect(String(propsOf(el).className).endsWith('mb-3')).toBe(true)
+  it('exposes a group label', () => {
+    const el = SegmentedControl({ options, value: 'a', onChange: () => {}, ariaLabel: 'Round' })
     expect(propsOf(el)['aria-label']).toBe('Round')
     expect(propsOf(el).role).toBe('group')
   })

@@ -2,7 +2,7 @@ import React from 'react'
 import { AvatarPicker } from '../../components/ui/AvatarPicker'
 import CountryPicker from '../../components/ui/CountryPicker'
 import { Modal } from '../../components/ui/Modal'
-import { SegmentedControl } from '../../components/ui/SegmentedControl'
+import { ProfileChoiceFields } from '../players/ProfileFields'
 import type { LobbyPrompt, PlayerFormState } from './playerConstants'
 import type { CommunityPlayer } from './playersSelectors'
 import { ActionRow } from '../../components/ui/ActionRow'
@@ -158,68 +158,7 @@ export default function PlayerForm({
             />
           </div>
 
-          {/* Gender — for optimal pair matching */}
-          <div>
-            <label className="label">Gender</label>
-            <p className="text-xs text-lob-muted-light mb-2">For optimal pair matching</p>
-            <SegmentedControl
-              ariaLabel="Gender"
-              options={[
-                { value: 'male', label: 'Male' },
-                { value: 'female', label: 'Female' },
-              ]}
-              value={form.gender}
-              onChange={(val: string) =>
-                setForm((f) => ({ ...f, gender: f.gender === val ? '' : val }))
-              }
-            />
-          </div>
-
-          {/* Left-handed */}
-          <div>
-            <label className="label">Playing hand</label>
-            <button
-              type="button"
-              onClick={() => setForm((f) => ({ ...f, isLeftHanded: !f.isLeftHanded }))}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all w-full justify-center ${
-                form.isLeftHanded
-                  ? 'bg-amber-100 text-amber-700 border-2 border-amber-300'
-                  : 'bg-gray-100 text-lob-muted'
-              }`}
-            >
-              🤚 {form.isLeftHanded ? 'Left-handed (tap to undo)' : 'Tap if left-handed'}
-            </button>
-          </div>
-
-          {/* Preferred position */}
-          <div>
-            <label className="label">Preferred Side</label>
-            <div className="flex gap-2">
-              {[
-                ['left', '👈 Left'],
-                ['right', '👉 Right'],
-                ['both', '↔️ Both'],
-              ].map(([val, lbl]) => (
-                <button
-                  type="button"
-                  key={val}
-                  onClick={() =>
-                    setForm((f) => ({
-                      ...f,
-                      preferredPosition: f.preferredPosition === val ? '' : val,
-                    }))
-                  }
-                  className={`flex-1 py-2 rounded-xl font-semibold text-sm transition-all ${
-                    form.preferredPosition === val
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-gray-100 text-lob-slate'
-                  }`}
-                >
-                  {lbl}
-                </button>
-              ))}
-            </div>
-          </div>
+          <ProfileChoiceFields form={form} setForm={setForm} />
 
           <div className="bg-blue-50 rounded-xl p-4 space-y-3">
             <p className="text-xs font-bold text-blue-700 uppercase tracking-wide">

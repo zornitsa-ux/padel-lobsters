@@ -421,12 +421,10 @@ export default function PastEventResults({ tournaments, onNavigate }: PastEventR
 
                     {/* ── Match Results ── */}
                     {dbTab === 'matches' && hasMatches && (
-                      <div>
+                      <div className="space-y-3">
                         <SegmentedControl
                           ariaLabel="Round"
                           layout="scroll"
-                          size="md"
-                          className="pb-2 mb-3"
                           options={dbRounds.map((r, i) => ({ value: i, label: `R${r.round}` }))}
                           value={dbRi}
                           onChange={(i) => setDbActiveRound((s) => ({ ...s, [t.id]: i }))}

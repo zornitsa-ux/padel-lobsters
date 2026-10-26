@@ -7,6 +7,7 @@ import type { MerchItem } from './merchSchemas'
 import { ActionRow } from '../../components/ui/ActionRow'
 import { Button } from '../../components/ui/Button'
 import { IconButton } from '../../components/ui/IconButton'
+import { Chip, ChipGroup } from '../../components/ui/Chip'
 
 type ItemEditorFormProps = {
   showForm: boolean
@@ -131,30 +132,20 @@ export default function ItemEditorForm({
         <div>
           <label className="label">Sizes (select applicable)</label>
           <div className="space-y-2">
-            <div className="flex flex-wrap gap-1.5">
+            <ChipGroup ariaLabel="Apparel sizes">
               {SIZES_APPAREL.map((s) => (
-                <button
-                  type="button"
-                  key={s}
-                  onClick={() => toggleSize(s)}
-                  className={`text-xs px-2.5 py-1 rounded-lg font-medium border transition-all ${form.sizes.includes(s) ? 'bg-lob-teal text-white border-lob-teal' : 'border-lob-line-strong text-lob-slate'}`}
-                >
+                <Chip key={s} selected={form.sizes.includes(s)} onClick={() => toggleSize(s)}>
                   {s}
-                </button>
+                </Chip>
               ))}
-            </div>
-            <div className="flex flex-wrap gap-1.5">
+            </ChipGroup>
+            <ChipGroup ariaLabel="Sock sizes">
               {SIZES_SOCKS.map((s) => (
-                <button
-                  type="button"
-                  key={s}
-                  onClick={() => toggleSize(s)}
-                  className={`text-xs px-2.5 py-1 rounded-lg font-medium border transition-all ${form.sizes.includes(s) ? 'bg-lob-teal text-white border-lob-teal' : 'border-lob-line-strong text-lob-slate'}`}
-                >
+                <Chip key={s} selected={form.sizes.includes(s)} onClick={() => toggleSize(s)}>
                   {s}
-                </button>
+                </Chip>
               ))}
-            </div>
+            </ChipGroup>
             {form.sizes.length === 0 && (
               <p className="text-xs text-lob-muted-light">No sizes = one-size item</p>
             )}

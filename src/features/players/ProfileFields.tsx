@@ -3,7 +3,7 @@ import CountryPicker from '../../components/ui/CountryPicker'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
 import type { ProfileFieldValues } from './profileForm'
 
-type FieldsProps<T extends ProfileFieldValues> = {
+type FieldsProps<T> = {
   form: T
   setForm: Dispatch<SetStateAction<T>>
 }
@@ -35,11 +35,73 @@ export function ProfileNameFields<T extends ProfileFieldValues>({ form, setForm 
   )
 }
 
+const GENDERS = [
+  { value: 'male', label: 'Male' },
+  { value: 'female', label: 'Female' },
+]
+
+const HANDS = [
+  { value: false, label: 'Right' },
+  { value: true, label: '🤚 Left' },
+]
+
 const SIDES = [
-  ['left', '👈 Left'],
-  ['right', '👉 Right'],
-  ['both', '↔️ Both'],
-] as const
+  { value: 'left', label: '👈 Left' },
+  { value: 'right', label: '👉 Right' },
+  { value: 'both', label: '↔️ Both' },
+]
+
+type ChoiceValues = Pick<ProfileFieldValues, 'gender' | 'isLeftHanded' | 'preferredPosition'>
+
+// Gender, hand and side, shared by signup, settings and the admin player form.
+// Tapping the chosen gender or side again clears it.
+export function ProfileChoiceFields<T extends ChoiceValues>({
+  form,
+  setForm,
+}: {
+  form: T
+  setForm: (update: (form: T) => T) => void
+}) {
+  return (
+    <>
+      <div>
+        <label className="label">Gender</label>
+        <p className="text-xs text-lob-muted-light mb-2">For optimal pair matching</p>
+        <SegmentedControl
+          ariaLabel="Gender"
+          options={GENDERS}
+          value={form.gender}
+          onChange={(val) => setForm((f) => ({ ...f, gender: f.gender === val ? '' : val }))}
+        />
+      </div>
+
+      <div>
+        <label className="label">Playing hand</label>
+        <SegmentedControl
+          ariaLabel="Playing hand"
+          options={HANDS}
+          value={form.isLeftHanded}
+          onChange={(val) => setForm((f) => ({ ...f, isLeftHanded: val }))}
+        />
+      </div>
+
+      <div>
+        <label className="label">Preferred side</label>
+        <SegmentedControl
+          ariaLabel="Preferred side"
+          options={SIDES}
+          value={form.preferredPosition}
+          onChange={(val) =>
+            setForm((f) => ({
+              ...f,
+              preferredPosition: f.preferredPosition === val ? '' : val,
+            }))
+          }
+        />
+      </div>
+    </>
+  )
+}
 
 // Country, gender, hand, side and Playtomic level.
 export function ProfilePlayFields<T extends ProfileFieldValues>({
@@ -57,59 +119,7 @@ export function ProfilePlayFields<T extends ProfileFieldValues>({
         />
       </div>
 
-      <div>
-        <label className="label">Gender</label>
-        <p className="text-xs text-lob-muted-light mb-2">For optimal pair matching</p>
-        <SegmentedControl
-          ariaLabel="Gender"
-          options={[
-            { value: 'male', label: 'Male' },
-            { value: 'female', label: 'Female' },
-          ]}
-          value={form.gender}
-          onChange={(val) => setForm((f) => ({ ...f, gender: f.gender === val ? '' : val }))}
-        />
-      </div>
-
-      <div>
-        <label className="label">Playing hand</label>
-        <button
-          type="button"
-          onClick={() => setForm((f) => ({ ...f, isLeftHanded: !f.isLeftHanded }))}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all w-full justify-center ${
-            form.isLeftHanded
-              ? 'bg-amber-100 text-amber-700 border-2 border-amber-300'
-              : 'bg-gray-100 text-lob-muted'
-          }`}
-        >
-          🤚 {form.isLeftHanded ? 'Left-handed (tap to undo)' : 'Tap if left-handed'}
-        </button>
-      </div>
-
-      <div>
-        <label className="label">Preferred Side</label>
-        <div className="flex gap-2">
-          {SIDES.map(([val, lbl]) => (
-            <button
-              type="button"
-              key={val}
-              onClick={() =>
-                setForm((f) => ({
-                  ...f,
-                  preferredPosition: f.preferredPosition === val ? '' : val,
-                }))
-              }
-              className={`flex-1 py-2 rounded-xl font-semibold text-sm transition-all ${
-                form.preferredPosition === val
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-100 text-lob-slate'
-              }`}
-            >
-              {lbl}
-            </button>
-          ))}
-        </div>
-      </div>
+      <ProfileChoiceFields form={form} setForm={setForm} />
 
       <div className="bg-blue-50 rounded-xl p-4 space-y-3">
         <p className="text-xs font-bold text-blue-700 uppercase tracking-wide">Playtomic Level</p>

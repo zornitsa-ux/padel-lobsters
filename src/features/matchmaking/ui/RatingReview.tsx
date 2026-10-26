@@ -6,6 +6,7 @@ import { playerName, type PlayerNamesById } from './playerNames'
 import { Button } from '../../../components/ui/Button'
 import { IconButton } from '../../../components/ui/IconButton'
 import { Disclosure } from '../../../components/ui/Disclosure'
+import { SegmentedControl } from '../../../components/ui/SegmentedControl'
 
 export type RatingReviewProps = {
   // Count of adjustments auto-applied without review (small, within-cap moves).
@@ -191,38 +192,7 @@ function BreakdownRow({
 
 type Mode = 'cautious' | 'custom' | 'full'
 
-function ModeButton({
-  active,
-  disabled,
-  onClick,
-  title,
-  sub,
-}: {
-  active: boolean
-  disabled: boolean
-  onClick: () => void
-  title: string
-  sub: string
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      aria-pressed={active}
-      className={`flex-1 px-2 py-2 text-center border-r last:border-r-0 border-lob-line-strong transition-colors disabled:opacity-50 ${
-        active ? 'bg-lob-coral text-white' : 'bg-white text-lob-slate hover:bg-lob-well'
-      }`}
-    >
-      <span className="block text-sm font-semibold">{title}</span>
-      <span
-        className={`block font-mono tabular-nums text-xs ${active ? 'text-white/85' : 'text-lob-muted-light'}`}
-      >
-        {sub}
-      </span>
-    </button>
-  )
-}
+const levelDetail = (text: string) => <span className="font-mono tabular-nums">{text}</span>
 
 function QueueCard({
   row,
@@ -306,29 +276,25 @@ function QueueCard({
         <p className="text-xs font-semibold text-lob-muted uppercase tracking-wide mb-1.5">
           Set {playerDisplayName}&apos;s level
         </p>
-        <div className="flex rounded-xl border border-lob-line-strong overflow-hidden">
-          <ModeButton
-            active={mode === 'cautious'}
-            disabled={reviewing}
-            onClick={() => setMode('cautious')}
-            title="Keep cautious"
-            sub={formatLevel(cautiousLevel)}
-          />
-          <ModeButton
-            active={mode === 'custom'}
-            disabled={reviewing}
-            onClick={() => setMode('custom')}
-            title="Custom"
-            sub={`${formatLevel(loLevel)}–${formatLevel(hiLevel)}`}
-          />
-          <ModeButton
-            active={mode === 'full'}
-            disabled={reviewing}
-            onClick={() => setMode('full')}
-            title="Apply full"
-            sub={formatLevel(fullLevel)}
-          />
-        </div>
+        <SegmentedControl<Mode>
+          ariaLabel="Level to set"
+          disabled={reviewing}
+          options={[
+            {
+              value: 'cautious',
+              label: 'Keep cautious',
+              detail: levelDetail(formatLevel(cautiousLevel)),
+            },
+            {
+              value: 'custom',
+              label: 'Custom',
+              detail: levelDetail(`${formatLevel(loLevel)}–${formatLevel(hiLevel)}`),
+            },
+            { value: 'full', label: 'Apply full', detail: levelDetail(formatLevel(fullLevel)) },
+          ]}
+          value={mode}
+          onChange={setMode}
+        />
 
         {mode === 'custom' && (
           <div className="mt-3 flex items-center gap-3">

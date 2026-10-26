@@ -21,6 +21,7 @@ import AddToCalendarButton from '../../components/ui/AddToCalendarButton'
 import { AvatarPicker } from '../../components/ui/AvatarPicker'
 import { AlertBox } from '../../components/ui/AlertBox'
 import { Badge, type BadgeProps } from '../../components/ui/Badge'
+import { Chip, ChipGroup } from '../../components/ui/Chip'
 import { Disclosure } from '../../components/ui/Disclosure'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
@@ -54,11 +55,20 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   )
 }
 
-function Row({ label, children }: { label: string; children: React.ReactNode }) {
+// `block` gives a full-width child (a fill SegmentedControl) the whole row.
+function Row({
+  label,
+  block = false,
+  children,
+}: {
+  label: string
+  block?: boolean
+  children: React.ReactNode
+}) {
   return (
     <div className="space-y-1.5">
       <p className="text-2xs font-semibold uppercase tracking-wide text-lob-muted">{label}</p>
-      <div className="flex flex-wrap items-center gap-2">{children}</div>
+      {block ? children : <div className="flex flex-wrap items-center gap-2">{children}</div>}
     </div>
   )
 }
@@ -110,12 +120,10 @@ function ButtonSection() {
       </Row>
       <Row label="fullWidth · ActionRow (alternative first, confirm last)">
         <Button fullWidth>Register for this event</Button>
-        <div className="w-full">
-          <ActionRow>
-            <Button variant="secondary">Cancel</Button>
-            <Button>Save</Button>
-          </ActionRow>
-        </div>
+        <ActionRow>
+          <Button variant="secondary">Cancel</Button>
+          <Button>Save</Button>
+        </ActionRow>
       </Row>
     </Section>
   )
@@ -223,21 +231,98 @@ function StatusSection() {
   )
 }
 
+const ROUNDS = [1, 2, 3, 4, 5, 6, 7].map((n) => ({ value: n, label: `Round ${n}` }))
+
+function ChoiceSection() {
+  const [side, setSide] = useState('left')
+  const [group, setGroup] = useState('A')
+  const [round, setRound] = useState(1)
+  const [filter, setFilter] = useState('all')
+  const [sizes, setSizes] = useState<string[]>(['M'])
+  const toggleSize = (size: string) =>
+    setSizes((current) =>
+      current.includes(size) ? current.filter((s) => s !== size) : [...current, size],
+    )
+  return (
+    <Section title="Chip and SegmentedControl">
+      <Row label="SegmentedControl (fill, 2–4 choices)" block>
+        <SegmentedControl
+          options={[
+            { value: 'left', label: 'Left' },
+            { value: 'right', label: 'Right' },
+            { value: 'both', label: 'Both' },
+          ]}
+          value={side}
+          onChange={setSide}
+          ariaLabel="Preferred side"
+        />
+      </Row>
+      <Row label="SegmentedControl with detail" block>
+        <SegmentedControl
+          options={[
+            { value: 'A', label: 'Group A', detail: '3 teams · suggested' },
+            { value: 'B', label: 'Group B', detail: '4 teams' },
+          ]}
+          value={group}
+          onChange={setGroup}
+          ariaLabel="Group"
+        />
+      </Row>
+      <Row label='SegmentedControl layout="scroll"' block>
+        <SegmentedControl
+          layout="scroll"
+          options={ROUNDS}
+          value={round}
+          onChange={setRound}
+          ariaLabel="Round"
+        />
+      </Row>
+      <Row label='SegmentedControl layout="wrap" with counts'>
+        <SegmentedControl
+          layout="wrap"
+          options={[
+            { value: 'all', label: 'All', count: 24 },
+            { value: 'unpaid', label: 'Unpaid', count: 3 },
+            { value: 'paid', label: 'Confirmed', count: 21 },
+          ]}
+          value={filter}
+          onChange={setFilter}
+          ariaLabel="Payment status"
+        />
+      </Row>
+      <Row label="SegmentedControl invalid (required, nothing picked)">
+        <SegmentedControl
+          layout="wrap"
+          invalid
+          options={['S', 'M', 'L'].map((size) => ({ value: size, label: size }))}
+          value={null}
+          onChange={() => {}}
+          ariaLabel="Size"
+        />
+      </Row>
+      <Row label="Chip toggles in a ChipGroup (multi-select)">
+        <ChipGroup ariaLabel="Sizes">
+          {['S', 'M', 'L', 'XL'].map((size) => (
+            <Chip key={size} selected={sizes.includes(size)} onClick={() => toggleSize(size)}>
+              {size}
+            </Chip>
+          ))}
+          <Chip disabled selected={false}>
+            XXL
+          </Chip>
+        </ChipGroup>
+      </Row>
+      <Row label="Chip link (no toggle state)">
+        <Chip to="/design">Lobster Cup</Chip>
+      </Row>
+    </Section>
+  )
+}
+
 function StatesSection() {
-  const [choice, setChoice] = useState('left')
   const [open, setOpen] = useState(false)
   return (
-    <Section title="Choice, empty and loading">
-      <SegmentedControl
-        options={[
-          { value: 'left', label: 'Left' },
-          { value: 'right', label: 'Right' },
-          { value: 'both', label: 'Both' },
-        ]}
-        value={choice}
-        onChange={setChoice}
-        ariaLabel="Preferred side"
-      />
+    <Section title="Disclosure, empty and loading">
       <Disclosure expanded={open} onToggle={() => setOpen((o) => !o)}>
         Advanced
       </Disclosure>
@@ -262,6 +347,7 @@ export default function DesignGallery() {
       <TextButtonSection />
       <IconButtonSection />
       <StatusSection />
+      <ChoiceSection />
       <StatesSection />
     </div>
   )

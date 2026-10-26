@@ -5,6 +5,7 @@ import { EmptyState } from '../../components/ui/EmptyState'
 import { sizeRank } from './sizes'
 import type { LightboxState } from './Lightbox'
 import type { MerchItem } from './merchSchemas'
+import { SegmentedControl } from '../../components/ui/SegmentedControl'
 
 type ByItem<T> = Record<number, T>
 
@@ -134,28 +135,20 @@ export default function Shop({
                 >
                   {sizeError[item.id] ? '⚠ Please select a size:' : 'Select size:'}
                 </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {[...item.sizes]
+                <SegmentedControl
+                  ariaLabel="Size"
+                  layout="wrap"
+                  options={[...item.sizes]
                     .sort((a, b) => sizeRank(a) - sizeRank(b))
-                    .map((s) => (
-                      <button
-                        key={s}
-                        onClick={() => {
-                          setSelectedSize((si) => ({ ...si, [item.id]: s }))
-                          setSizeError((e) => ({ ...e, [item.id]: false }))
-                        }}
-                        className={`text-xs px-2.5 py-1 rounded-lg font-medium border transition-all ${
-                          selectedSize[item.id] === s
-                            ? 'bg-lob-teal text-white border-lob-teal'
-                            : sizeError[item.id]
-                              ? 'border-lob-danger-border text-lob-slate'
-                              : 'border-lob-line-strong text-lob-slate'
-                        }`}
-                      >
-                        {s}
-                      </button>
-                    ))}
-                </div>
+                    .map((size) => ({ value: size, label: size }))}
+                  value={selectedSize[item.id]}
+                  invalid={!!sizeError[item.id]}
+                  disabled={ordered[item.id]}
+                  onChange={(size) => {
+                    setSelectedSize((si) => ({ ...si, [item.id]: size }))
+                    setSizeError((e) => ({ ...e, [item.id]: false }))
+                  }}
+                />
               </div>
             )}
 
