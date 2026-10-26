@@ -11,7 +11,9 @@ import STATIC_LOBSTER_WAY_CONTENT, {
 } from '../../../data/lobsterWayContent'
 import { moveItem, removeAt, replaceAt } from '../../../lib/arrayReorder'
 import LobsterWayAdminCategory, { emptyCategory } from './LobsterWayAdminCategory'
+import { ActionRow } from '../../../components/ui/ActionRow'
 import { Button } from '../../../components/ui/Button'
+import { TextButton } from '../../../components/ui/TextButton'
 
 // Admin editor for "The Lobster Way" — add/edit/delete/reorder categories
 // and questions. Persists to settings.lobster_way_content (see
@@ -131,17 +133,15 @@ export default function LobsterWayAdmin() {
               <Plus size={14} /> Add category
             </button>
 
-            <div className="flex items-center gap-2 pt-2">
-              <Button onClick={handleSave} disabled={saving} className="flex-1" icon={<Save />}>
-                {saving ? 'Saving…' : saved ? '✓ Saved!' : 'Save changes'}
-              </Button>
-              <button
-                type="button"
-                onClick={handleReset}
-                className="flex items-center gap-1 text-xs text-gray-400 font-semibold px-2"
-              >
-                <RotateCcw size={11} /> Reset to defaults
-              </button>
+            <div className="pt-2">
+              <ActionRow>
+                <TextButton tone="neutral" onClick={handleReset} icon={<RotateCcw size={11} />}>
+                  Reset to defaults
+                </TextButton>
+                <Button onClick={handleSave} disabled={saving} icon={<Save />}>
+                  {saving ? 'Saving…' : saved ? '✓ Saved!' : 'Save changes'}
+                </Button>
+              </ActionRow>
             </div>
           </>
         )}

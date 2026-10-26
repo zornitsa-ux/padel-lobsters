@@ -87,7 +87,7 @@ export default function ScheduleGeneratorControls({
       <Button
         onClick={onGenerate}
         disabled={generating || registeredPlayers.length < 4}
-        className="w-full"
+        fullWidth
         icon={<Shuffle />}
       >
         {generating ? 'Generating...' : 'Generate Pairings'}

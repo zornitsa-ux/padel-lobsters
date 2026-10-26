@@ -7,6 +7,7 @@ import type { DisplayName } from '../utils'
 import NewPartnerForm from './NewPartnerForm'
 import PlayerPicker from './PlayerPicker'
 import { choiceToDraft, draftToChoice, isDraftComplete } from './teamHelpers'
+import { ActionRow } from '../../../../components/ui/ActionRow'
 import { Button } from '../../../../components/ui/Button'
 import { TextButton } from '../../../../components/ui/TextButton'
 
@@ -71,13 +72,11 @@ export default function PartnerChoiceForm({
     <span role="alert" className="block mt-1 font-normal text-lob-danger">
       {PARTNER_ERROR_MESSAGES[emailProblem]}
       {emailProblem === 'email_in_use' && (
-        <TextButton
-          size="inherit"
-          className="block mt-1"
-          onClick={() => searchMembers({ search: draft.name })}
-        >
-          Search members
-        </TextButton>
+        <span className="block mt-1">
+          <TextButton size="inherit" onClick={() => searchMembers({ search: draft.name })}>
+            Search members
+          </TextButton>
+        </span>
       )}
     </span>
   )
@@ -117,14 +116,14 @@ export default function PartnerChoiceForm({
           {error}
         </p>
       )}
-      <div className="flex gap-2">
-        <Button onClick={onCancel} variant="secondary" className="flex-1">
+      <ActionRow>
+        <Button onClick={onCancel} variant="secondary">
           Cancel
         </Button>
-        <Button onClick={submit} disabled={!ready || busy || checking} className="flex-1">
+        <Button onClick={submit} disabled={!ready || busy || checking}>
           {busy ? 'Saving…' : checking ? 'Checking…' : submitLabel}
         </Button>
-      </div>
+      </ActionRow>
     </div>
   )
 }

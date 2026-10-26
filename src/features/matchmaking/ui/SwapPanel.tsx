@@ -54,12 +54,7 @@ function SwapRow({
           </p>
         ))}
       </div>
-      <Button
-        onClick={() => onApply(suggestion)}
-        disabled={applying}
-        size="sm"
-        className="flex-shrink-0"
-      >
+      <Button onClick={() => onApply(suggestion)} disabled={applying} size="sm">
         Apply
       </Button>
     </li>
@@ -140,7 +135,7 @@ export default function SwapPanel({
         </div>
 
         <div className="sticky bottom-0 bg-white border-t border-lob-line px-4 py-3 rounded-b-2xl">
-          <Button onClick={onCancel} disabled={applying} variant="secondary" className="w-full">
+          <Button onClick={onCancel} disabled={applying} variant="secondary" fullWidth>
             Cancel
           </Button>
         </div>

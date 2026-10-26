@@ -7,6 +7,7 @@ import { AlertBox } from '../../../components/ui/AlertBox'
 import Avatar from '../../../components/ui/Avatar'
 import { useCreateTeam, useUpdateTeam } from '../hooks/useLeagueMutations'
 import { isSelectablePlayer } from '../../players/playerSelectors'
+import { ActionRow } from '../../../components/ui/ActionRow'
 import { Button } from '../../../components/ui/Button'
 
 interface PlayerOption {
@@ -378,13 +379,15 @@ export function TeamForm({
           {mutationError.message ?? 'Something went wrong. Please try again.'}
         </AlertBox>
       )}
-      <div className="flex gap-3 pt-2">
-        <Button variant="secondary" className="flex-1" onClick={onCancel}>
-          Cancel
-        </Button>
-        <Button type="submit" className="flex-1" disabled={mutation.isPending}>
-          {mutation.isPending ? 'Saving…' : 'Save Team'}
-        </Button>
+      <div className="pt-2">
+        <ActionRow>
+          <Button variant="secondary" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button type="submit" disabled={mutation.isPending}>
+            {mutation.isPending ? 'Saving…' : 'Save Team'}
+          </Button>
+        </ActionRow>
       </div>
     </form>
   )

@@ -7,6 +7,7 @@ import { clearPinSignIn, hasPinSignIn, PIN_SIGN_IN_EVENT } from './pinSignInFlag
 import { dismissUpgradeCard } from '../home/upgradeCardDismissal'
 import { isSyntheticEmail } from './syntheticEmail'
 import { ADD_EMAIL_REQUEST, SIGN_IN_SECURITY_PATH } from './upgradeCopy'
+import { ActionRow } from '../../components/ui/ActionRow'
 import { Button } from '../../components/ui/Button'
 
 function usePinSignInFlag({ signedIn }: { signedIn: boolean }) {
@@ -58,16 +59,14 @@ export default function PinSignInInterstitial() {
       onClose={close}
       title={`PINs stop working on ${PIN_SUNSET_LABEL}`}
       footer={
-        <div className="flex gap-2">
+        <ActionRow>
           {!synthetic && (
-            <Button variant="neutral" onClick={setPasswordNow} className="flex-1">
+            <Button variant="neutral" onClick={setPasswordNow}>
               Set a password now
             </Button>
           )}
-          <Button onClick={close} className="flex-1">
-            Got it
-          </Button>
-        </div>
+          <Button onClick={close}>Got it</Button>
+        </ActionRow>
       }
     >
       {synthetic ? (

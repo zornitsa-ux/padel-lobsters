@@ -11,8 +11,6 @@ interface TextButtonContentProps {
   size?: Size
   /** Leading icon; sizing stays with the caller. */
   icon?: React.ReactNode
-  /** Layout only (margins, `block`). */
-  className?: string
 }
 
 type TextButtonProps = TextButtonContentProps & ActionProps
@@ -35,7 +33,6 @@ const textButtonClasses = ({
   tone = 'accent',
   size = 'xs',
   icon,
-  className,
 }: Omit<TextButtonContentProps, 'children'>) =>
   [
     icon ? 'inline-flex items-center gap-1' : '',
@@ -43,15 +40,14 @@ const textButtonClasses = ({
     TONE[tone],
     'disabled:text-lob-muted-light disabled:cursor-not-allowed',
     SIZE[size],
-    className ?? '',
   ]
     .filter(Boolean)
     .join(' ')
 
-export function TextButton({ children, tone, size, icon, className, ...props }: TextButtonProps) {
+export function TextButton({ children, tone, size, icon, ...props }: TextButtonProps) {
   return renderAction({
     props,
-    className: textButtonClasses({ tone, size, icon, className }),
+    className: textButtonClasses({ tone, size, icon }),
     children: (
       <>
         {icon}

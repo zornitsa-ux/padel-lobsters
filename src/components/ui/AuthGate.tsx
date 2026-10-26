@@ -203,9 +203,11 @@ export function SignInModal({
         />
 
         {onNavigate && (
-          <TextButton tone="neutral" className="w-full" onClick={goToSettings}>
-            Manage profile in Settings →
-          </TextButton>
+          <div className="text-center">
+            <TextButton tone="neutral" onClick={goToSettings}>
+              Manage profile in Settings →
+            </TextButton>
+          </div>
         )}
       </div>
     </div>

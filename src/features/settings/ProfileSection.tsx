@@ -334,7 +334,7 @@ export default function ProfileSection({
               <Button
                 onClick={handleProfileSave}
                 disabled={profileSaving || !hasPii}
-                className="w-full"
+                fullWidth
                 icon={<Save />}
               >
                 {profileSaving

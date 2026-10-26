@@ -10,6 +10,7 @@ import PartnerChoiceForm from './PartnerChoiceForm'
 import { choicePartnerName } from './teamHelpers'
 import { pricePerEntry } from '../../eventHelpers'
 import { useTeamSignup, type TeamSignupResult } from './useTeamSignup'
+import { ActionRow } from '../../../../components/ui/ActionRow'
 import { Button } from '../../../../components/ui/Button'
 
 interface TeamJoinCardProps {
@@ -63,7 +64,7 @@ export default function TeamJoinCard({
             ? 'This event is full. Sign up as a team to join the waitlist.'
             : "You haven't signed up yet. Pick a partner to enter as a team."}
         </p>
-        <Button onClick={() => onOpenChange(true)} className="w-full">
+        <Button onClick={() => onOpenChange(true)} fullWidth>
           Sign up as a team
         </Button>
       </div>
@@ -75,7 +76,7 @@ export default function TeamJoinCard({
         dismissible={!signup.busy}
         footer={
           choice && (
-            <div className="flex gap-2">
+            <ActionRow>
               <Button
                 onClick={() => {
                   setLastChoice(choice)
@@ -84,18 +85,13 @@ export default function TeamJoinCard({
                 }}
                 disabled={signup.busy}
                 variant="secondary"
-                className="flex-1"
               >
                 Back
               </Button>
-              <Button
-                onClick={() => void signup.submit({ choice })}
-                disabled={signup.busy}
-                className="flex-1"
-              >
+              <Button onClick={() => void signup.submit({ choice })} disabled={signup.busy}>
                 {submitLabel}
               </Button>
-            </div>
+            </ActionRow>
           )
         }
       >

@@ -37,7 +37,7 @@ export default function PayPrompt({
           onClick={onSelfDeclare}
           disabled={declaring}
           icon={<Send />}
-          className="w-full"
+          fullWidth
         >
           {declaring ? 'Saving…' : "I've sent the payment"}
         </Button>

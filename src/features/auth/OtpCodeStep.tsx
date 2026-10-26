@@ -104,7 +104,7 @@ export function OtpCodeStep({
       <FormError message={error} />
       {notice && <p className="text-xs text-lob-teal font-medium">{notice}</p>}
 
-      <Button type="submit" disabled={busy || code.length !== CODE_LENGTH} className="w-full">
+      <Button type="submit" disabled={busy || code.length !== CODE_LENGTH} fullWidth>
         {busy ? 'Checking…' : submitLabel}
       </Button>
 

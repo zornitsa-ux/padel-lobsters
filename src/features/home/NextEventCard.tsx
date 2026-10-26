@@ -70,11 +70,7 @@ export default function NextEventCard({
         title="No upcoming events right now"
         description="Check back soon — next tournament is around the corner."
         action={
-          isAdmin && (
-            <Button onClick={() => onNavigate('tournament')} className="mt-2">
-              Create an Event
-            </Button>
-          )
+          isAdmin && <Button onClick={() => onNavigate('tournament')}>Create an Event</Button>
         }
       />
     )

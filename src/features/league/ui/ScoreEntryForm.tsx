@@ -3,6 +3,7 @@ import { AlertBox } from '../../../components/ui/AlertBox'
 import type { LeagueMatch, LeagueTeam } from '../domain/types'
 import { useRecordResult } from '../hooks/useLeagueMutations'
 import { resolveTeamShortName } from '../domain/teamDisplay'
+import { ActionRow } from '../../../components/ui/ActionRow'
 import { Button } from '../../../components/ui/Button'
 
 interface ScoreEntryFormProps {
@@ -236,13 +237,15 @@ export function ScoreEntryForm({
         </AlertBox>
       )}
 
-      <div className="flex gap-3 pt-4">
-        <Button variant="secondary" className="flex-1" onClick={onCancel}>
-          Cancel
-        </Button>
-        <Button type="submit" className="flex-1" disabled={recordResult.isPending}>
-          {recordResult.isPending ? 'Saving…' : 'Save Result'}
-        </Button>
+      <div className="pt-4">
+        <ActionRow>
+          <Button variant="secondary" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button type="submit" disabled={recordResult.isPending}>
+            {recordResult.isPending ? 'Saving…' : 'Save Result'}
+          </Button>
+        </ActionRow>
       </div>
     </form>
   )

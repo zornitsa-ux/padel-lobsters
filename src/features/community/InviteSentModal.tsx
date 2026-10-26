@@ -25,7 +25,7 @@ export default function InviteSentModal({ inviteSent, onClose }: InviteSentModal
         <p className="text-2xs text-lob-muted-light">
           Nothing in the email works as a password, so it’s safe to resend.
         </p>
-        <Button onClick={onClose} className="w-full">
+        <Button onClick={onClose} fullWidth>
           Done
         </Button>
       </div>

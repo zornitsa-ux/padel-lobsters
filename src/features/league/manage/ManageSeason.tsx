@@ -161,7 +161,6 @@ function DeleteCard({ league, matches }: { league: League; matches: LeagueMatch[
         size="sm"
         disabled={deleteLeague.isPending}
         onClick={handleDelete}
-        className="block"
       >
         Delete season
       </TextButton>

@@ -63,7 +63,7 @@ export default function EventFormModal({
       onClose={onClose}
       title={editId ? 'Edit Event' : 'New Event'}
       footer={
-        <Button type="submit" form="event-form" disabled={saving} className="w-full">
+        <Button type="submit" form="event-form" disabled={saving} fullWidth>
           {saving ? 'Saving...' : editId ? 'Save Changes' : 'Create Event'}
         </Button>
       }

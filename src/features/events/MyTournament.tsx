@@ -137,11 +137,7 @@ export default function MyTournament({ tournament, onNavigate }: Props) {
       <EmptyState
         icon={<UserRoundX size={36} />}
         title="Sign in to see your tournament"
-        action={
-          <Button onClick={() => onNavigate('settings')} className="mt-2">
-            Go to Settings
-          </Button>
-        }
+        action={<Button onClick={() => onNavigate('settings')}>Go to Settings</Button>}
       />
     )
   }
@@ -277,7 +273,7 @@ function RegistrationCard({
         <p className="text-sm text-lob-muted">
           {isEventFull ? 'This event is full.' : "You haven't signed up yet."}
         </p>
-        <Button onClick={onRegister} disabled={registering} className="w-full">
+        <Button onClick={onRegister} disabled={registering} fullWidth>
           {registering
             ? 'Signing up…'
             : isEventFull
@@ -296,7 +292,7 @@ function RegistrationCard({
           <UserRoundX size={14} className="text-lob-muted flex-shrink-0" />
           <p className="text-sm font-semibold text-lob-slate">Your registration was cancelled</p>
         </div>
-        <Button onClick={onRegister} disabled={registering} className="w-full">
+        <Button onClick={onRegister} disabled={registering} fullWidth>
           {registering ? 'Signing up…' : 'Register again'}
         </Button>
         {registerErrorNotice}

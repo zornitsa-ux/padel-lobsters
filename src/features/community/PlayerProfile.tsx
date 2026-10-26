@@ -12,6 +12,7 @@ import { levelBadgeClass } from './playerConstants'
 import type { CommunityPlayer } from './playersSelectors'
 import { useMmRatings } from '../matchmaking/useMatchmaking'
 import type { EventNavigate } from '../events/eventHelpers'
+import { ActionRow } from '../../components/ui/ActionRow'
 import { Button } from '../../components/ui/Button'
 import { TextButton } from '../../components/ui/TextButton'
 
@@ -451,23 +452,20 @@ export default function PlayerProfile({
       )}
 
       {isAdmin && (
-        <div className="flex items-center gap-4 pt-1">
-          <Button
-            onClick={() => onEdit(p)}
-            variant="secondary"
-            className="flex-1"
-            icon={<Pencil />}
-          >
-            Edit
-          </Button>
-          <TextButton
-            onClick={() => onDelete(p.id)}
-            tone="destructive"
-            size="sm"
-            icon={<Trash2 size={14} />}
-          >
-            Remove
-          </TextButton>
+        <div className="pt-1">
+          <ActionRow>
+            <Button onClick={() => onEdit(p)} variant="secondary" icon={<Pencil />}>
+              Edit
+            </Button>
+            <TextButton
+              onClick={() => onDelete(p.id)}
+              tone="destructive"
+              size="sm"
+              icon={<Trash2 size={14} />}
+            >
+              Remove
+            </TextButton>
+          </ActionRow>
         </div>
       )}
     </div>

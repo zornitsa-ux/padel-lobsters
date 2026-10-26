@@ -12,6 +12,7 @@ import {
   Info,
 } from 'lucide-react'
 import { PageHeader } from '../../components/ui/PageHeader'
+import { ActionRow } from '../../components/ui/ActionRow'
 import { Button } from '../../components/ui/Button'
 import { TextButton } from '../../components/ui/TextButton'
 import { IconButton } from '../../components/ui/IconButton'
@@ -106,13 +107,13 @@ function ButtonSection() {
         <ShareWhatsAppButton tournament={SAMPLE_EVENT} variant="compact" />
         <AddToCalendarButton tournament={SAMPLE_EVENT} variant="compact" />
       </Row>
-      <Row label='className="w-full" / "flex-1"'>
-        <Button className="w-full">Register for this event</Button>
-        <div className="flex gap-2 w-full">
-          <Button variant="secondary" className="flex-1">
-            Cancel
-          </Button>
-          <Button className="flex-1">Save</Button>
+      <Row label="fullWidth · ActionRow (alternative first, confirm last)">
+        <Button fullWidth>Register for this event</Button>
+        <div className="w-full">
+          <ActionRow>
+            <Button variant="secondary">Cancel</Button>
+            <Button>Save</Button>
+          </ActionRow>
         </div>
       </Row>
     </Section>
@@ -239,7 +240,7 @@ function StatesSection() {
         icon={<Inbox size={36} />}
         title="Nothing here yet"
         description="EmptyState with an action."
-        action={<Button className="mt-2">Go to Events</Button>}
+        action={<Button>Go to Events</Button>}
       />
       <Spinner className="py-4" />
       <Skeleton className="h-10 w-full" />

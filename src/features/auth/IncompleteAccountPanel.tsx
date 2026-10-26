@@ -11,7 +11,7 @@ export function IncompleteAccountPanel() {
           Your account isn&rsquo;t fully set up. Message an admin on WhatsApp and we&rsquo;ll sort
           it out.
         </p>
-        <Button onClick={() => void logout()} className="w-full">
+        <Button onClick={() => void logout()} fullWidth>
           Sign out
         </Button>
       </div>

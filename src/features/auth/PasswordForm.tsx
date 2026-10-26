@@ -105,7 +105,7 @@ export function PasswordForm({ requireCurrentPassword, submitLabel, onDone }: Pa
       <Button
         type="submit"
         disabled={busy || !password || (needsCode && nonce.length !== CODE_LENGTH)}
-        className="w-full"
+        fullWidth
       >
         {busy ? 'Saving…' : submitLabel}
       </Button>

@@ -44,10 +44,14 @@ describe('Button', () => {
     expect(classOf(Button({ children: 'Go' }))).toContain('[&>svg]:size-4')
   })
 
-  it('renders the icon before the label and appends layout classes', () => {
-    const el = Button({ children: 'Add', icon: 'ICON', className: 'w-full' })
+  it('renders the icon before the label', () => {
+    const el = Button({ children: 'Add', icon: 'ICON' })
     expect(propsOf(propsOf(el).children).children).toEqual(['ICON', 'Add'])
-    expect(classOf(el).endsWith('w-full')).toBe(true)
+  })
+
+  it('fills its container only when fullWidth', () => {
+    expect(classOf(Button({ children: 'Go' }))).not.toContain('w-full')
+    expect(classOf(Button({ children: 'Go', fullWidth: true }))).toMatch(/ w-full$/)
   })
   it('renders a router Link for `to`', () => {
     const el = Button({ children: 'Open', to: '/events' })

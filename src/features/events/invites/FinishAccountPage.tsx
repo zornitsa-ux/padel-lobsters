@@ -153,7 +153,7 @@ export default function FinishAccountPage() {
         <Button
           type="submit"
           disabled={!confirmed || saving}
-          className="w-full"
+          fullWidth
           icon={saving && <Loader2 className="animate-spin" />}
         >
           Finish and see your invite
@@ -195,7 +195,7 @@ function NotPlayingCard({
         onClick={onLeave}
         disabled={busy}
         variant="secondary"
-        className="w-full"
+        fullWidth
         icon={busy && <Loader2 className="animate-spin" />}
       >
         {hasInvites ? "I'm not playing" : 'Sign out'}

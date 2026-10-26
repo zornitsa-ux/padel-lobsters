@@ -10,6 +10,7 @@ import { segmentedButtonClass } from './segmentedButton'
 import QualityReport from './QualityReport'
 import ScheduleRounds from './ScheduleRounds'
 import { describeQualityDiff } from './dimensions'
+import { ActionRow } from '../../../components/ui/ActionRow'
 import { Button } from '../../../components/ui/Button'
 import { IconButton } from '../../../components/ui/IconButton'
 
@@ -164,13 +165,15 @@ export default function CompareView({
           </div>
         </div>
 
-        <div className="sticky bottom-0 bg-white border-t border-lob-line px-4 py-3 flex gap-2">
-          <Button onClick={onClose} variant="secondary" className="flex-1">
-            Keep original
-          </Button>
-          <Button onClick={onUseAlternative} disabled={!altRun} className="flex-1">
-            Use alternative
-          </Button>
+        <div className="sticky bottom-0 bg-white border-t border-lob-line px-4 py-3">
+          <ActionRow>
+            <Button onClick={onClose} variant="secondary">
+              Keep original
+            </Button>
+            <Button onClick={onUseAlternative} disabled={!altRun}>
+              Use alternative
+            </Button>
+          </ActionRow>
         </div>
       </div>
     </div>,

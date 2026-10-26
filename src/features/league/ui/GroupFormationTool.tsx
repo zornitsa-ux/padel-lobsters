@@ -279,7 +279,7 @@ export function GroupFormationTool({
       )}
 
       <Button
-        className="w-full"
+        fullWidth
         disabled={!canConfirm || confirmGroups.isPending}
         onClick={handleConfirm}
         title={!canConfirm ? 'Assign all teams (≥2 per group) before confirming' : undefined}

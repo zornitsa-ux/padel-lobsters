@@ -358,7 +358,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
           <Button
             type="submit"
             disabled={saving}
-            className="w-full"
+            fullWidth
             icon={saving ? <Loader2 className="animate-spin" /> : <UserPlus />}
           >
             {saving ? 'Saving…' : 'Join the Lobsters 🦞'}
