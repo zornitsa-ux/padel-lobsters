@@ -441,13 +441,9 @@ export default function PlayerProfile({
               Emails the player how to sign in. Contains no password or code.
             </p>
           </div>
-          <button
-            onClick={() => onResendInvite(p)}
-            className="text-xs bg-lob-warning-solid text-white px-3 py-1.5 rounded-xl font-semibold active:scale-95 transition-all flex items-center gap-1.5 flex-shrink-0"
-          >
-            <Mail size={12} />
+          <Button variant="neutral" size="sm" icon={<Mail />} onClick={() => onResendInvite(p)}>
             Resend invite
-          </button>
+          </Button>
         </div>
       )}
 

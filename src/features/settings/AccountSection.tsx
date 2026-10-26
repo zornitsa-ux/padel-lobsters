@@ -2,6 +2,7 @@ import { Shield, User, LogIn, LogOut } from 'lucide-react'
 import Avatar from '../../components/ui/Avatar'
 import type { Player } from '../../lib/normalise'
 import SignInForm from '../auth/SignInForm'
+import { TextButton } from '../../components/ui/TextButton'
 
 interface AccountSectionProps {
   isAdmin: boolean
@@ -40,12 +41,9 @@ export default function AccountSection({ isAdmin, signedInPlayer, logout }: Acco
                 : 'You can edit all data'}
             </p>
           </div>
-          <button
-            onClick={logout}
-            className="flex items-center gap-1 text-xs text-lob-danger font-semibold bg-lob-danger-light px-3 py-1.5 rounded-lg active:scale-95 transition-all"
-          >
-            <LogOut size={12} /> Sign out
-          </button>
+          <TextButton tone="destructive" icon={<LogOut size={12} />} onClick={logout}>
+            Sign out
+          </TextButton>
         </div>
       ) : signedInPlayer ? (
         // ── Signed in as player ─────────────────────────────────
@@ -60,12 +58,9 @@ export default function AccountSection({ isAdmin, signedInPlayer, logout }: Acco
               site.
             </p>
           </div>
-          <button
-            onClick={logout}
-            className="flex items-center gap-1 text-xs text-lob-danger font-semibold bg-white px-3 py-1.5 rounded-lg active:scale-95 transition-all"
-          >
-            <LogOut size={12} /> Sign out
-          </button>
+          <TextButton tone="destructive" icon={<LogOut size={12} />} onClick={logout}>
+            Sign out
+          </TextButton>
         </div>
       ) : null}
 

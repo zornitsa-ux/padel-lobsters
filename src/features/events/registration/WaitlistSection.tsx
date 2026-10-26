@@ -3,6 +3,7 @@ import { IconButton } from '../../../components/ui/IconButton'
 import { PlayerRow } from '../../../components/ui/PlayerRow'
 import type { NormalisedRegistration } from '../registrationQueries'
 import type { DisplayName, GetPlayer } from './utils'
+import { Button } from '../../../components/ui/Button'
 
 interface WaitlistSectionProps {
   isCompleted: boolean
@@ -52,12 +53,9 @@ export default function WaitlistSection({
               trailing={
                 isAdmin && (
                   <div className="flex gap-1">
-                    <button
-                      onClick={() => onMoveToRegistered(reg)}
-                      className="text-xs bg-lob-success-soft text-lob-success px-2 py-1 rounded-lg font-semibold"
-                    >
+                    <Button variant="neutral" size="sm" onClick={() => onMoveToRegistered(reg)}>
                       Confirm
-                    </button>
+                    </Button>
                     <IconButton
                       onClick={() => onCancel(reg)}
                       aria-label="Remove from waitlist"

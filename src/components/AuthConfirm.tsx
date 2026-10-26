@@ -6,6 +6,7 @@ import { supabase } from '../supabase'
 import { useApp } from '../context/useApp'
 import { PasswordForm } from '../features/auth/PasswordForm'
 import { isSafeReturnPath, takeReturnPath } from '../features/auth/returnPath'
+import { Button } from './ui/Button'
 
 type Status = 'ready' | 'verifying' | 'error' | 'email_change_confirmed' | 'set_password'
 
@@ -96,13 +97,9 @@ export default function AuthConfirm() {
         <AlertCircle className="mx-auto h-10 w-10 text-lob-coral" />
         <h2 className="mt-3 text-xl font-semibold text-lob-dark">Link didn't work</h2>
         <p className="mt-2 text-sm text-lob-muted">{error}</p>
-        <button
-          type="button"
-          onClick={() => navigate('/home', { replace: true })}
-          className="mt-5 inline-flex items-center rounded-lg bg-lob-teal px-4 py-2 text-sm font-medium text-white hover:bg-lob-teal/90"
-        >
-          Back to home
-        </button>
+        <div className="mt-5">
+          <Button onClick={() => navigate('/home', { replace: true })}>Back to home</Button>
+        </div>
       </div>
     )
   }
@@ -116,13 +113,9 @@ export default function AuthConfirm() {
           Your Padel Lobsters email has been changed. The matching email we sent to your previous
           address was just a heads-up — you can safely ignore (or delete) that one.
         </p>
-        <button
-          type="button"
-          onClick={() => navigate('/account', { replace: true })}
-          className="mt-5 inline-flex items-center rounded-lg bg-lob-teal px-4 py-2 text-sm font-medium text-white hover:bg-lob-teal/90"
-        >
-          Back to account
-        </button>
+        <div className="mt-5">
+          <Button onClick={() => navigate('/account', { replace: true })}>Back to account</Button>
+        </div>
       </div>
     )
   }
@@ -144,13 +137,9 @@ export default function AuthConfirm() {
     return (
       <div className="mx-auto mt-16 max-w-md rounded-2xl border border-lob-teal/20 bg-white p-6 text-center shadow-sm">
         <h2 className="text-xl font-semibold text-lob-dark">{readyTitle({ type })}</h2>
-        <button
-          type="button"
-          onClick={confirm}
-          className="mt-5 inline-flex items-center rounded-lg bg-lob-teal px-4 py-2 text-sm font-medium text-white hover:bg-lob-teal/90"
-        >
-          {readyButton({ type })}
-        </button>
+        <div className="mt-5">
+          <Button onClick={confirm}>{readyButton({ type })}</Button>
+        </div>
       </div>
     )
   }

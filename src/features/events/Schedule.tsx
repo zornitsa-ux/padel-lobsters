@@ -35,6 +35,7 @@ import type { NormalisedTournament, Player } from '../../lib/normalise'
 import type { GenderMode } from '../matchmaking/domain/types'
 import { savedCourtIsUneven, savedRoundHasAvoidableUneven } from '../matchmaking/ui/genderCopy'
 import { Button } from '../../components/ui/Button'
+import { TextButton } from '../../components/ui/TextButton'
 
 // A player slot the admin has tapped first in swap mode.
 interface SwapAnchor {
@@ -368,7 +369,8 @@ export default function Schedule({
             <AlertCircle size={16} className="text-lob-warning flex-shrink-0" />
             <p className="text-xs text-lob-warning flex-1 min-w-0">Preview — not saved yet</p>
             <div className="flex gap-1.5 flex-shrink-0 flex-wrap">
-              <button
+              <TextButton
+                tone="neutral"
                 onClick={() => {
                   setGenerated(null)
                   setSwapMode(false)
@@ -376,30 +378,24 @@ export default function Schedule({
                   setSwapWarnings([])
                   setScheduleWarnings([])
                 }}
-                className="text-xs text-lob-muted font-semibold px-2 py-1"
               >
                 Cancel
-              </button>
-              <button
+              </TextButton>
+              <Button
+                variant="neutral"
+                size="sm"
+                icon={<Download />}
                 onClick={handleDownloadCsv}
-                className="text-xs text-lob-warning font-semibold px-2 py-1 flex items-center gap-1 border border-lob-warning-border rounded-lg bg-white active:scale-95"
                 title="Download the preview as a CSV you can review offline before saving"
               >
-                <Download size={12} /> Download
-              </button>
-              <button
-                onClick={handleGenerate}
-                className="text-xs text-lob-warning font-semibold px-2 py-1"
-              >
+                Download
+              </Button>
+              <TextButton tone="warning" onClick={handleGenerate}>
                 Reshuffle
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={generating}
-                className="text-xs bg-lob-teal text-white px-3 py-1 rounded-lg font-semibold"
-              >
+              </TextButton>
+              <Button size="sm" onClick={handleSave} disabled={generating}>
                 Save
-              </button>
+              </Button>
             </div>
           </div>
           {/* Swap mode toggle */}

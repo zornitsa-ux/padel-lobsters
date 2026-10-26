@@ -6,6 +6,9 @@ import { IconButton } from '../../../components/ui/IconButton'
 import type { NormalisedRegistration } from '../registrationQueries'
 import type { NormalisedTransfer } from '../transferQueries'
 import type { DisplayName, GetPlayer, TransferShareTarget } from './utils'
+import { ActionRow } from '../../../components/ui/ActionRow'
+import { Button } from '../../../components/ui/Button'
+import { TextButton } from '../../../components/ui/TextButton'
 
 interface RegisteredSectionProps {
   isCompleted: boolean
@@ -104,23 +107,24 @@ export default function RegisteredSection({
                           </span>
                         </div>
                         {recipient && (
-                          <div className="flex gap-2">
-                            <button
+                          <ActionRow>
+                            <Button
+                              variant="neutral"
+                              size="sm"
                               onClick={() =>
                                 onOpenShareModal({ transferId: myPending.id, toPlayer: recipient })
                               }
-                              className="flex-1 text-xs font-semibold text-lob-success bg-white border border-lob-success-solid rounded-lg py-1.5 active:scale-95 transition-all"
                             >
                               Resend WhatsApp
-                            </button>
-                            <button
+                            </Button>
+                            <TextButton
+                              tone="destructive"
                               onClick={() => onAdminCancelTransfer(myPending.id)}
                               disabled={respondingTo === myPending.id}
-                              className="flex-1 text-xs font-semibold text-lob-danger border border-lob-danger-border rounded-lg py-1.5 active:scale-95 transition-all disabled:opacity-50"
                             >
                               {respondingTo === myPending.id ? 'Cancelling…' : 'Cancel offer'}
-                            </button>
-                          </div>
+                            </TextButton>
+                          </ActionRow>
                         )}
                       </div>
                     )
@@ -130,12 +134,15 @@ export default function RegisteredSection({
                   // transferred onward — payment_status stays 'transferred' as a
                   // record of how the player got in, not a lock on the spot.
                   return (
-                    <button
+                    <Button
+                      variant="neutral"
+                      size="sm"
+                      fullWidth
+                      icon={<ArrowRightLeft />}
                       onClick={() => onStartTransfer(reg)}
-                      className="w-full flex items-center justify-center gap-1.5 text-xs text-lob-muted border border-lob-line-strong rounded-xl py-1.5 font-medium active:scale-95 transition-all"
                     >
-                      <ArrowRightLeft size={12} /> Transfer spot to another player
-                    </button>
+                      Transfer spot to another player
+                    </Button>
                   )
                 })()}
               </div>

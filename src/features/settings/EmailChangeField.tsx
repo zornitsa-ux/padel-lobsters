@@ -57,17 +57,17 @@ function EmailChangeForm({ email }: { email: string }) {
           <div className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-lob-well border border-lob-line-strong text-sm text-lob-slate truncate">
             {email || <span className="text-lob-muted-light">No email on file</span>}
           </div>
-          <button
-            type="button"
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={() => {
               setEmailEditing(true)
               setNewEmail('')
               setEmailStatus('')
             }}
-            className="text-xs font-semibold text-lob-teal bg-lob-cream border border-lob-teal/30 px-3 py-2 rounded-xl active:scale-95"
           >
             Change
-          </button>
+          </Button>
         </div>
       )}
       {emailEditing && emailStatus !== 'sent' && (
@@ -120,16 +120,16 @@ function EmailChangeForm({ email }: { email: string }) {
               that email to finish the change.
             </p>
           </div>
-          <button
-            type="button"
+          <Button
+            variant="secondary"
+            fullWidth
             onClick={() => {
               setEmailEditing(false)
               setEmailStatus('')
             }}
-            className="w-full text-sm font-semibold text-lob-teal py-2 rounded-xl bg-white border border-lob-teal/30"
           >
             Done
-          </button>
+          </Button>
         </div>
       )}
     </>

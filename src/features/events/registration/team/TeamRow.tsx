@@ -6,6 +6,7 @@ import type { TeamEntry } from '../../teams/teamTypes'
 import PaymentStatusBadge from '../PaymentStatusBadge'
 import ChangePartnerPanel from './ChangePartnerPanel'
 import { TextButton } from '../../../../components/ui/TextButton'
+import { Button } from '../../../../components/ui/Button'
 
 interface TeamRowProps {
   entry: TeamEntry
@@ -47,12 +48,9 @@ export default function TeamRow({
         </div>
         <PaymentStatusBadge paymentStatus={entry.captain.paymentStatus} />
         {onConfirm && (
-          <button
-            onClick={onConfirm}
-            className="text-xs bg-lob-success-soft text-lob-success px-2 py-1 rounded-lg font-semibold"
-          >
+          <Button variant="neutral" size="sm" onClick={onConfirm}>
             Confirm
-          </button>
+          </Button>
         )}
         <IconButton onClick={onCancel} aria-label="Cancel team" variant="destructive" size="sm">
           <X />

@@ -1,5 +1,6 @@
 import { Crown } from 'lucide-react'
 import { startingCourtLine, type MyStartingCourt } from './kotcPlayer'
+import { TextButton } from '../../../components/ui/TextButton'
 
 export default function MyStartingCourtCard({
   shown,
@@ -26,13 +27,7 @@ export default function MyStartingCourtCard({
       <p className="flex-1 text-sm font-semibold text-lob-dark">
         {startingCourtLine({ startingCourt })}
       </p>
-      <button
-        type="button"
-        onClick={onSeeAll}
-        className="text-xs font-semibold text-lob-teal flex-shrink-0"
-      >
-        All courts ›
-      </button>
+      <TextButton onClick={onSeeAll}>All courts ›</TextButton>
     </div>
   )
 }

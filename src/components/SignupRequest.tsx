@@ -25,6 +25,7 @@ import {
   type SignupField,
 } from '../features/auth/signupErrors'
 import { Button } from './ui/Button'
+import { TextButton } from './ui/TextButton'
 
 // =============================================================================
 //  SignupRequest — the self-serve "Join the Lobsters" form shown inside the
@@ -288,13 +289,9 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
   return (
     <div className={`space-y-3 ${compact ? '' : 'max-w-md mx-auto p-4'}`}>
       {onBack && (
-        <button
-          onClick={onBack}
-          className="text-sm text-lob-slate hover:text-lob-teal flex items-center gap-1"
-          type="button"
-        >
-          <ArrowLeft size={14} /> Back to sign in
-        </button>
+        <TextButton tone="neutral" size="sm" icon={<ArrowLeft size={14} />} onClick={onBack}>
+          Back to sign in
+        </TextButton>
       )}
 
       <div className="bg-white rounded-2xl p-5 shadow-sm border border-lob-line space-y-4">
@@ -402,22 +399,16 @@ function NameMatchBanner({
         </div>
       </div>
       {onSignIn && (
-        <button
-          type="button"
-          onClick={onSignIn}
-          className="w-full py-2.5 bg-lob-warning-solid text-white rounded-xl font-semibold text-sm active:scale-95 transition-all"
-        >
+        <Button fullWidth onClick={onSignIn}>
           {needsInvite ? 'Back to sign in' : 'Go to sign in'}
-        </button>
+        </Button>
       )}
       {!needsInvite && (
-        <button
-          type="button"
-          onClick={onDecline}
-          className="w-full py-2 text-lob-warning text-xs font-medium"
-        >
-          No, I’m a different person
-        </button>
+        <div className="text-center">
+          <TextButton tone="warning" onClick={onDecline}>
+            No, I’m a different person
+          </TextButton>
+        </div>
       )}
     </div>
   )

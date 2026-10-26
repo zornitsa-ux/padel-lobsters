@@ -21,6 +21,8 @@ import type { EventNavigate } from './eventHelpers'
 import type { NormalisedTournament, TournamentCourt } from '../../lib/normalise'
 import type { NormalisedTransfer } from './transferQueries'
 import { isEventOver } from './eventPhase'
+import { ActionRow } from '../../components/ui/ActionRow'
+import { Button } from '../../components/ui/Button'
 
 function InfoChip({ icon, label, warn }: { icon: ReactNode; label: string; warn?: boolean }) {
   return (
@@ -242,24 +244,20 @@ export default function UpcomingEventCard({
       </p>
 
       {/* Actions */}
-      <div className="flex gap-2 pt-2 border-t border-lob-line">
-        <button
-          onClick={() => onNavigate('registration', t)}
-          className="flex-1 text-xs font-semibold text-lob-teal py-2 rounded-xl bg-lob-cream active:scale-95 transition-all"
-        >
-          Registrations
-        </button>
-        <button
-          onClick={() => onNavigate('schedule', t)}
-          className="flex-1 text-xs font-semibold text-lob-slate py-2 rounded-xl bg-gray-100 active:scale-95 transition-all"
-        >
-          Schedule
-        </button>
-        <EventAdminMenu
-          isAdmin={isAdmin}
-          onEdit={() => onEdit(t)}
-          onDelete={() => onDelete(t.id)}
-        />
+      <div className="pt-2 border-t border-lob-line">
+        <ActionRow>
+          <Button variant="secondary" size="sm" onClick={() => onNavigate('registration', t)}>
+            Registrations
+          </Button>
+          <Button variant="neutral" size="sm" onClick={() => onNavigate('schedule', t)}>
+            Schedule
+          </Button>
+          <EventAdminMenu
+            isAdmin={isAdmin}
+            onEdit={() => onEdit(t)}
+            onDelete={() => onDelete(t.id)}
+          />
+        </ActionRow>
       </div>
     </div>
   )

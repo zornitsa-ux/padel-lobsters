@@ -1,6 +1,7 @@
 import React from 'react'
 import { Award, Flame } from 'lucide-react'
 import { StatTile } from '../../components/ui/StatTile'
+import { TextButton } from '../../components/ui/TextButton'
 
 // Shape produced by AccountStatsSection from lib/playerStats — only the
 // fields this card renders are modelled here.
@@ -36,12 +37,9 @@ export default function YourStatsCard({ claimedId, myStats, onNavigate }: YourSt
         <h3 className="font-bold text-lob-slate flex items-center gap-1.5">
           <Award size={15} className="text-lob-coral" /> Your Stats
         </h3>
-        <button
-          onClick={() => onNavigate('players', { focusPlayerId: claimedId })}
-          className="text-xs text-lob-teal font-semibold"
-        >
+        <TextButton onClick={() => onNavigate('players', { focusPlayerId: claimedId })}>
           View full profile
-        </button>
+        </TextButton>
       </div>
       <div
         className="bg-white/80 rounded-2xl p-4 shadow-sm border border-white/90"

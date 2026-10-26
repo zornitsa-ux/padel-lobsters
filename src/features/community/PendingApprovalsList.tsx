@@ -6,6 +6,8 @@ import { TextButton } from '../../components/ui/TextButton'
 import { Skeleton } from '../../components/ui/Skeleton'
 import { useRevealPii } from './useRevealPii'
 import type { CommunityPlayer } from './playersSelectors'
+import { ActionRow } from '../../components/ui/ActionRow'
+import { Button } from '../../components/ui/Button'
 
 // Per-row, on-demand email reveal. Approve/Reject need no PII at all;
 // only "Played before?" (identity disambiguation) does, and that flow
@@ -88,20 +90,14 @@ export default function PendingApprovalsList({
               </IconButton>
             }
           />
-          <div className="flex gap-2">
-            <button
-              onClick={() => onApprove(p)}
-              className="flex-1 text-xs bg-lob-success-solid text-white px-3 py-2 rounded-xl font-semibold active:scale-95 transition-all"
-            >
+          <ActionRow>
+            <Button size="sm" onClick={() => onApprove(p)}>
               ✓ Approve as new player
-            </button>
-            <button
-              onClick={() => onLink(p)}
-              className="flex-1 text-xs bg-lob-teal text-white px-3 py-2 rounded-xl font-semibold active:scale-95 transition-all"
-            >
+            </Button>
+            <Button variant="secondary" size="sm" onClick={() => onLink(p)}>
               🔗 Played before?
-            </button>
-          </div>
+            </Button>
+          </ActionRow>
         </div>
       ))}
     </div>

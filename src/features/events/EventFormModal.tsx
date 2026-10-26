@@ -14,6 +14,7 @@ import { formatOption, isKingOfTheCourt } from './eventFormat'
 import type { EventFormCourt, EventFormValues } from './eventConstants'
 import { Button } from '../../components/ui/Button'
 import { IconButton } from '../../components/ui/IconButton'
+import { TextButton } from '../../components/ui/TextButton'
 
 // A court field edit. `booked` is the checkbox; every other field comes off a
 // text/number input as a string.
@@ -201,13 +202,9 @@ export default function EventFormModal({
         <div>
           <div className="flex items-center justify-between mb-2">
             <label className="label mb-0">Courts</label>
-            <button
-              type="button"
-              onClick={addCourt}
-              className="text-xs text-lob-teal font-semibold flex items-center gap-1"
-            >
-              <Plus size={13} /> Add court
-            </button>
+            <TextButton icon={<Plus size={13} />} onClick={addCourt}>
+              Add court
+            </TextButton>
           </div>
           {kotc && (
             <p className="text-xs text-lob-muted-light mb-2">

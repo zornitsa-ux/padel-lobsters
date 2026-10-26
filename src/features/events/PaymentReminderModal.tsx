@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { MessageCircle } from 'lucide-react'
 import { Modal } from '../../components/ui/Modal'
 import { fetchPaymentReminderLink } from './registrationQueries'
+import { Button } from '../../components/ui/Button'
 
 type LinkState =
   | { status: 'loading' }
@@ -64,13 +65,9 @@ export default function PaymentReminderModal({
               Opens WhatsApp with a pre-filled Tikkie payment nudge to {firstName}
               {isTeam ? ', the team captain, who pays for both players' : ''}.
             </p>
-            <button
-              onClick={handleSend}
-              className="w-full flex items-center justify-center gap-2 bg-lob-success-solid text-white font-semibold py-3 rounded-xl active:scale-[0.98] transition-all"
-            >
-              <MessageCircle size={16} />
+            <Button fullWidth icon={<MessageCircle />} onClick={handleSend}>
               Send via WhatsApp
-            </button>
+            </Button>
           </>
         )}
 

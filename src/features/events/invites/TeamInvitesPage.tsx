@@ -18,6 +18,7 @@ import {
   inviteWhen,
 } from './inviteRoutes'
 import { Button } from '../../../components/ui/Button'
+import { TextButton } from '../../../components/ui/TextButton'
 
 function EventHeading({ invite, eyebrow }: { invite: TeamInvite; eyebrow: string }) {
   return (
@@ -141,12 +142,15 @@ export default function TeamInvitesPage() {
           onDecline={() => void respond({ invite, accept: false })}
         />
       ))}
-      <button
-        onClick={() => navigate(inviteReturnPath({ state: location.state }))}
-        className="block mx-auto px-4 py-2 text-sm font-semibold text-lob-muted"
-      >
-        Not now
-      </button>
+      <div className="text-center">
+        <TextButton
+          tone="neutral"
+          size="sm"
+          onClick={() => navigate(inviteReturnPath({ state: location.state }))}
+        >
+          Not now
+        </TextButton>
+      </div>
     </div>
   )
 }

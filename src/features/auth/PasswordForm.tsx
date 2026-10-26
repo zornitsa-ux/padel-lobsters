@@ -5,6 +5,7 @@ import { PasswordInput } from './PasswordInput'
 import { CODE_LENGTH, sanitiseCode } from './otpCode'
 import { describePasswordError, PASSWORD_RULES_COPY } from './passwordErrors'
 import { Button } from '../../components/ui/Button'
+import { TextButton } from '../../components/ui/TextButton'
 
 export interface PasswordFormProps {
   requireCurrentPassword: boolean
@@ -91,13 +92,9 @@ export function PasswordForm({ requireCurrentPassword, submitLabel, onDone }: Pa
             maxLength={CODE_LENGTH}
             className="input"
           />
-          <button
-            type="button"
-            onClick={sendCode}
-            className="text-xs font-semibold text-lob-teal mt-1"
-          >
-            Send a new code
-          </button>
+          <div className="mt-1">
+            <TextButton onClick={sendCode}>Send a new code</TextButton>
+          </div>
         </div>
       )}
       {notice && <p className="text-xs text-lob-teal font-medium">{notice}</p>}

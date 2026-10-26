@@ -10,6 +10,8 @@ import {
   shareToDirectChat,
   shareToLobstersGroup,
 } from '../lib/whatsapp'
+import { TextButton } from './ui/TextButton'
+import { Button } from './ui/Button'
 
 // Confirmation modal that comes up after a transfer offer is sent.
 // Shows two share actions:
@@ -130,26 +132,22 @@ export default function TransferPendingModal({
         </div>
 
         {phoneIsValid && (
-          <button
-            onClick={handleDirect}
-            disabled={!!busyAction}
-            className="w-full flex items-center justify-center gap-2 bg-lob-success-solid text-white font-semibold py-3 rounded-xl active:scale-[0.98] disabled:opacity-50 transition-all"
-          >
-            <MessageCircle size={16} />
+          <Button fullWidth icon={<MessageCircle />} onClick={handleDirect} disabled={!!busyAction}>
             {busyAction === 'whatsapp'
               ? 'Opening WhatsApp…'
               : `Contact ${(toPlayer?.name || '').split(/\s+/)[0]} on WhatsApp`}
-          </button>
+          </Button>
         )}
 
-        <button
+        <Button
+          variant="secondary"
+          fullWidth
+          icon={<Users />}
           onClick={handleGroup}
           disabled={!!busyAction}
-          className="w-full flex items-center justify-center gap-2 border border-lob-success-solid text-lob-success font-semibold py-3 rounded-xl active:scale-[0.98] disabled:opacity-50 transition-all"
         >
-          <Users size={16} />
           {busyAction === 'group' ? 'Copying message…' : 'Post in Lobsters WhatsApp group'}
-        </button>
+        </Button>
 
         {groupNote && (
           <p className="text-xs text-lob-muted text-center">
@@ -168,13 +166,9 @@ export default function TransferPendingModal({
           <span className="text-lob-muted-light inline-flex items-center gap-1">
             <Clock size={12} /> No expiry — closes when the event starts
           </span>
-          <button
-            onClick={handleCancelOffer}
-            disabled={!!busyAction}
-            className="text-lob-danger font-semibold disabled:opacity-50"
-          >
+          <TextButton tone="destructive" onClick={handleCancelOffer} disabled={!!busyAction}>
             {busyAction === 'cancel' ? 'Cancelling…' : 'Cancel offer'}
-          </button>
+          </TextButton>
         </div>
       </div>
     </Modal>

@@ -3,6 +3,7 @@ import { AlertCircle } from 'lucide-react'
 import type { NormalisedTournament } from '../../lib/normalise'
 import type { NormalisedRegistration } from '../events/registrationQueries'
 import { upcomingBirthdays, type BirthdayPlayer } from './homeHelpers'
+import { TextButton } from '../../components/ui/TextButton'
 
 interface AdminAlertsProps {
   isAdmin: boolean
@@ -37,12 +38,11 @@ export default function AdminAlerts({
           <p className="text-sm text-lob-danger-strong font-medium">
             {unpaid.length} player{unpaid.length > 1 ? 's' : ''} haven't paid yet
           </p>
-          <button
-            onClick={() => onNavigate('payments', upcomingEvent)}
-            className="ml-auto text-xs text-lob-danger font-semibold"
-          >
-            View
-          </button>
+          <div className="ml-auto">
+            <TextButton tone="destructive" onClick={() => onNavigate('payments', upcomingEvent)}>
+              View
+            </TextButton>
+          </div>
         </div>
       )}
 

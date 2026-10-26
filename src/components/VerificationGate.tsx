@@ -8,6 +8,7 @@ import { IncompleteAccountPanel } from '../features/auth/IncompleteAccountPanel'
 import { useSessionCheck } from '../features/auth/useSessionCheck'
 import SignInForm from '../features/auth/SignInForm'
 import { parseSignInDeepLink } from '../features/auth/useSignInDeepLink'
+import { Button } from './ui/Button'
 
 // The gate itself is entry-critical — it decides what the first paint shows.
 // The signup form is not: it only renders once someone taps "sign up", and it
@@ -109,14 +110,9 @@ export default function VerificationGate({ children }: { children?: React.ReactN
         {mode === 'signin' && (
           <>
             <SignInForm variant="page" initialEmail={initialEmail} allowPin />
-            <button
-              type="button"
-              onClick={enterSignup}
-              className="w-full text-sm font-semibold text-lob-warning bg-lob-warning-light hover:bg-lob-warning-soft border border-lob-warning-border py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all"
-            >
-              <UserPlus size={14} />
+            <Button variant="secondary" fullWidth icon={<UserPlus />} onClick={enterSignup}>
               New here? Sign up
-            </button>
+            </Button>
           </>
         )}
 

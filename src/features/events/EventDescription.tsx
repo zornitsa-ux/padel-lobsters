@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Pencil, Check } from 'lucide-react'
 import type { NormalisedTournament } from './tournamentQueries'
 import { IconButton } from '../../components/ui/IconButton'
+import { Button } from '../../components/ui/Button'
 
 interface EventDescriptionProps {
   tournament: NormalisedTournament
@@ -63,22 +64,12 @@ export default function EventDescription({ tournament, isAdmin, onSave }: EventD
           placeholder="What should players know about this event?"
         />
         <div className="flex gap-2 justify-end">
-          <button
-            type="button"
-            onClick={cancel}
-            disabled={saving}
-            className="text-xs font-semibold text-lob-slate px-3 py-1.5 rounded-lg bg-white border border-lob-line-strong active:scale-95 transition-all"
-          >
+          <Button variant="neutral" size="sm" onClick={cancel} disabled={saving}>
             Cancel
-          </button>
-          <button
-            type="button"
-            onClick={save}
-            disabled={saving}
-            className="text-xs font-semibold text-white px-3 py-1.5 rounded-lg bg-lob-teal active:scale-95 transition-all flex items-center gap-1"
-          >
-            <Check size={12} /> {saving ? 'Saving...' : 'Save'}
-          </button>
+          </Button>
+          <Button size="sm" icon={<Check />} onClick={save} disabled={saving}>
+            {saving ? 'Saving...' : 'Save'}
+          </Button>
         </div>
       </div>
     )

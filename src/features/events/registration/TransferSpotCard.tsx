@@ -3,6 +3,8 @@ import type { NormalisedRegistration } from '../registrationQueries'
 import type { NormalisedTransfer } from '../transferQueries'
 import type { GetPlayer, TransferShareTarget } from './utils'
 import { TextButton } from '../../../components/ui/TextButton'
+import { ActionRow } from '../../../components/ui/ActionRow'
+import { Button } from '../../../components/ui/Button'
 
 interface TransferSpotCardProps {
   myReg: NormalisedRegistration | null | undefined
@@ -76,22 +78,18 @@ export default function TransferSpotCard({
                   <strong>{fromFirst}</strong> wants to give you their spot
                 </p>
               </div>
-              <div className="flex gap-2">
-                <button
+              <ActionRow>
+                <Button
+                  variant="secondary"
                   onClick={() => onIncomingResponse(xfer, false)}
                   disabled={busy}
-                  className="flex-1 border border-gray-300 text-lob-slate font-semibold py-2 rounded-xl text-sm active:scale-[0.98] disabled:opacity-50"
                 >
                   {busy ? 'Declining…' : 'Decline'}
-                </button>
-                <button
-                  onClick={() => onIncomingResponse(xfer, true)}
-                  disabled={busy}
-                  className="flex-1 bg-lob-success-solid text-white font-semibold py-2 rounded-xl text-sm active:scale-[0.98] disabled:opacity-50"
-                >
+                </Button>
+                <Button onClick={() => onIncomingResponse(xfer, true)} disabled={busy}>
                   {busy ? 'Accepting…' : 'Accept spot'}
-                </button>
-              </div>
+                </Button>
+              </ActionRow>
             </div>
           )
         })}
@@ -113,25 +111,22 @@ export default function TransferSpotCard({
               <Clock size={12} className="flex-shrink-0" />
               <span>Transfer offer pending · waiting on {recipientFirst}</span>
             </div>
-            <div className="flex gap-2">
+            <ActionRow>
               {recipient && (
-                <button
+                <Button
+                  variant="neutral"
+                  size="sm"
                   onClick={() =>
                     onOpenShareModal({ transferId: pendingFromMe.id, toPlayer: recipient })
                   }
-                  className="flex-1 text-xs font-semibold text-lob-success bg-white border border-lob-success-solid rounded-lg py-1.5 active:scale-95 transition-all"
                 >
                   Resend WhatsApp
-                </button>
+                </Button>
               )}
-              <button
-                onClick={onCancelMyOffer}
-                disabled={busy}
-                className="flex-1 text-xs font-semibold text-lob-danger border border-lob-danger-border rounded-lg py-1.5 active:scale-95 transition-all disabled:opacity-50"
-              >
+              <TextButton tone="destructive" onClick={onCancelMyOffer} disabled={busy}>
                 {busy ? 'Cancelling…' : 'Cancel offer'}
-              </button>
-            </div>
+              </TextButton>
+            </ActionRow>
           </div>
         </div>
       </>
@@ -154,12 +149,15 @@ export default function TransferSpotCard({
     <>
       {incomingCards}
       <div className="card">
-        <button
+        <Button
+          variant="neutral"
+          size="sm"
+          fullWidth
+          icon={<ArrowRightLeft />}
           onClick={() => onStartTransfer(myReg)}
-          className="w-full flex items-center justify-center gap-1.5 text-xs text-lob-muted border border-lob-line-strong rounded-xl py-1.5 font-medium active:scale-95 transition-all"
         >
-          <ArrowRightLeft size={12} /> Transfer spot to another player
-        </button>
+          Transfer spot to another player
+        </Button>
       </div>
     </>
   )

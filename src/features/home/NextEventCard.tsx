@@ -9,6 +9,7 @@ import { fmtEur } from '../../lib/format'
 import type { NormalisedTournament } from '../../lib/normalise'
 import { perPersonCost } from './homeHelpers'
 import { Button } from '../../components/ui/Button'
+import { ActionRow } from '../../components/ui/ActionRow'
 
 interface NextEventCardProps {
   upcoming: NormalisedTournament | undefined
@@ -149,28 +150,29 @@ export default function NextEventCard({
       )}
 
       {/* Action links */}
-      <div className="flex gap-2">
-        <button
-          onClick={() => onNavigate('registration', upcoming)}
-          className="flex-1 bg-lob-coral text-white font-semibold py-2 rounded-xl text-xs active:scale-95 transition-all"
-        >
+      <ActionRow>
+        <Button size="sm" onClick={() => onNavigate('registration', upcoming)}>
           Registrations
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="neutral"
+          size="sm"
+          icon={<CalendarDays />}
           onClick={() => onNavigate('schedule', upcoming)}
-          className="flex-none bg-gray-100 text-lob-slate font-semibold py-1.5 px-3 rounded-lg text-xs active:scale-95 transition-all flex items-center gap-1"
         >
-          <CalendarDays size={12} /> Schedule
-        </button>
+          Schedule
+        </Button>
         {isAdmin && (
-          <button
+          <Button
+            variant="neutral"
+            size="sm"
+            icon={<CreditCard />}
             onClick={() => onNavigate('payments', upcoming)}
-            className="flex-none bg-gray-100 text-lob-slate font-semibold py-1.5 px-3 rounded-lg text-xs active:scale-95 transition-all flex items-center gap-1"
           >
-            <CreditCard size={12} /> Payments
-          </button>
+            Payments
+          </Button>
         )}
-      </div>
+      </ActionRow>
     </div>
   )
 }
