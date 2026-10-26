@@ -76,8 +76,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
               </IconButton>
               <IconButton
                 href="https://www.instagram.com/padelobsters?utm_source=qr&igsh=MTVwcHdod3pkanQxaQ=="
-                target="_blank"
-                rel="noopener noreferrer"
+                external
                 aria-label="Padel Lobsters on Instagram"
                 variant="on-dark"
                 size="sm"

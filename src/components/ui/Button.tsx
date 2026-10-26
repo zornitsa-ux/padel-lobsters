@@ -1,5 +1,5 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
+import { renderAction, type ActionProps } from './action'
 
 /**
  * `danger` is for the confirming action of a destructive flow (the confirm dialog).
@@ -19,28 +19,7 @@ interface ButtonContentProps {
   className?: string
 }
 
-type AnchorAttributes = Omit<
-  React.AnchorHTMLAttributes<HTMLAnchorElement>,
-  'className' | 'children' | 'href'
-> & {
-  /** A disabled link renders as a disabled button, so it can't navigate. */
-  disabled?: boolean
-}
-type ButtonAttributes = Omit<
-  React.ButtonHTMLAttributes<HTMLButtonElement>,
-  'className' | 'children'
->
-
-/**
- * `to` is in-app navigation (router Link). `href` is a plain anchor; add `external` to
- * open it in a new tab.
- */
-type ButtonProps = ButtonContentProps &
-  (
-    | (AnchorAttributes & { to: string; href?: never; external?: never })
-    | (AnchorAttributes & { href: string; external?: boolean; to?: never })
-    | (ButtonAttributes & { to?: never; href?: never; external?: never })
-  )
+type ButtonProps = ButtonContentProps & ActionProps
 
 const BASE =
   'inline-flex items-center justify-center gap-2 font-semibold rounded-full border-2 not-disabled:active:scale-95 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed [&>svg]:shrink-0'
@@ -68,35 +47,15 @@ function buttonClasses({
   return `${BASE} ${VARIANT[variant]} ${SIZE[size]} ${className ?? ''}`.trim()
 }
 
-export function Button(props: ButtonProps) {
-  const { children, variant, size, icon, className, to, href, external, disabled, ...rest } = props
-  const classes = buttonClasses({ variant, size, className })
-  const content = (
-    <>
-      {icon}
-      {children}
-    </>
-  )
-
-  if (to !== undefined && !disabled) {
-    return (
-      <Link to={to} {...(rest as AnchorAttributes)} className={classes}>
-        {content}
-      </Link>
-    )
-  }
-  if (href !== undefined && !disabled) {
-    const newTab = external ? { target: '_blank', rel: 'noopener noreferrer' } : {}
-    return (
-      <a href={href} {...newTab} {...(rest as AnchorAttributes)} className={classes}>
-        {content}
-      </a>
-    )
-  }
-  const { type = 'button', ...button } = rest as ButtonAttributes
-  return (
-    <button type={type} disabled={disabled} {...button} className={classes}>
-      {content}
-    </button>
-  )
+export function Button({ children, variant, size, icon, className, ...props }: ButtonProps) {
+  return renderAction({
+    props,
+    className: buttonClasses({ variant, size, className }),
+    children: (
+      <>
+        {icon}
+        {children}
+      </>
+    ),
+  })
 }

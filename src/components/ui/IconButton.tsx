@@ -1,5 +1,5 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
+import { renderAction, type ActionProps } from './action'
 
 /**
  * Filled variants sit on a tinted square. `ghost` is a bare muted icon for close, back,
@@ -17,30 +17,20 @@ type Variant =
 /** `md` (40px, matching `Button md`) is the default; `sm` (32px) for rows and inline controls. */
 type Size = 'sm' | 'md'
 
-interface IconButtonProps {
+interface IconButtonContentProps {
   /** Icon element. The button sets its size; colour comes from the variant. */
   children: React.ReactNode
   /** Required: these buttons have no visible text. Also the default tooltip. */
   'aria-label': string
-  onClick?: (event: React.MouseEvent<HTMLButtonElement | HTMLAnchorElement>) => void
-  /** In-app navigation: renders a router Link. */
-  to?: string
-  /** Renders a plain anchor. */
-  href?: string
-  target?: string
-  rel?: string
   variant?: Variant
   size?: Size
   /** Tooltip; defaults to `aria-label`. */
   title?: string
-  /** A disabled `to` / `href` renders as a disabled button, so it can't navigate. */
-  disabled?: boolean
   /** Layout only (positioning, margins). */
   className?: string
-  'aria-haspopup'?: React.AriaAttributes['aria-haspopup']
-  'aria-expanded'?: boolean
-  'aria-pressed'?: boolean
 }
+
+type IconButtonProps = IconButtonContentProps & ActionProps
 
 const BASE =
   'flex shrink-0 items-center justify-center rounded-xl active:scale-95 transition-all disabled:opacity-50 disabled:pointer-events-none'
@@ -62,42 +52,15 @@ const SIZE: Record<Size, string> = {
 
 export function IconButton({
   children,
-  to,
-  href,
-  target,
-  rel,
   variant = 'neutral',
   size = 'md',
   title,
-  disabled,
   className,
-  ...rest
+  ...props
 }: IconButtonProps) {
-  const shared = {
-    ...rest,
-    title: title ?? rest['aria-label'],
+  return renderAction({
+    props: { ...props, title: title ?? props['aria-label'] },
     className: `${SIZE[size]} ${BASE} ${VARIANT[variant]} ${className ?? ''}`.trim(),
-  }
-
-  if (to && !disabled) {
-    return (
-      <Link to={to} {...shared}>
-        {children}
-      </Link>
-    )
-  }
-
-  if (href && !disabled) {
-    return (
-      <a href={href} target={target} rel={rel} {...shared}>
-        {children}
-      </a>
-    )
-  }
-
-  return (
-    <button type="button" disabled={disabled} {...shared}>
-      {children}
-    </button>
-  )
+    children,
+  })
 }

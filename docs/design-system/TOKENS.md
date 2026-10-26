@@ -49,7 +49,8 @@ Examples: `text-lob-success`, `bg-lob-warning-light border-lob-warning-border`,
 
 - `text-2xs`: 10px eyebrows and micro labels. 11px folded into `text-xs`
   (12px). `text-[9px]` is still raw.
-- `bg-tikkie`, `bg-whatsapp`: third-party brand colours, outside `lob`.
+- `bg-whatsapp`: a third-party brand colour, outside `lob`. There is no Tikkie
+  colour: pay links are standard `Button`s (owner, 2026-10-26).
 - `bg-celebrate`: the gold-to-coral gradient on placing and completed banners.
 - `bg-header`: the teal header gradient.
 - `shadow-card`, `shadow-card-elevated`: the `.card` / `.card-elevated`

@@ -1,5 +1,5 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
+import { renderAction, type ActionProps } from './action'
 
 type Tone = 'accent' | 'primary' | 'destructive' | 'warning' | 'neutral'
 /** `inherit` takes the surrounding text size, for links inside a sentence. */
@@ -15,25 +15,7 @@ interface TextButtonContentProps {
   className?: string
 }
 
-type AnchorAttributes = Omit<
-  React.AnchorHTMLAttributes<HTMLAnchorElement>,
-  'className' | 'children' | 'href'
->
-type ButtonAttributes = Omit<
-  React.ButtonHTMLAttributes<HTMLButtonElement>,
-  'className' | 'children'
->
-
-/**
- * `to` is in-app navigation (router Link). `href` is a plain anchor (mailto:, tel:);
- * add `external` to open it in a new tab.
- */
-type TextButtonProps = TextButtonContentProps &
-  (
-    | (AnchorAttributes & { to: string; href?: never; external?: never })
-    | (AnchorAttributes & { href: string; external?: boolean; to?: never })
-    | (ButtonAttributes & { to?: never; href?: never; external?: never })
-  )
+type TextButtonProps = TextButtonContentProps & ActionProps
 
 const TONE: Record<Tone, string> = {
   accent: 'text-lob-teal',
@@ -66,36 +48,15 @@ const textButtonClasses = ({
     .filter(Boolean)
     .join(' ')
 
-export function TextButton(props: TextButtonProps) {
-  const { children, tone, size, icon, className, ...rest } = props
-  const classes = textButtonClasses({ tone, size, icon, className })
-  const content = (
-    <>
-      {icon}
-      {children}
-    </>
-  )
-
-  if (rest.to !== undefined) {
-    return (
-      <Link {...rest} className={classes}>
-        {content}
-      </Link>
-    )
-  }
-  if (rest.href !== undefined) {
-    const { external, ...anchor } = rest
-    const newTab = external ? { target: '_blank', rel: 'noopener noreferrer' } : {}
-    return (
-      <a {...newTab} {...anchor} className={classes}>
-        {content}
-      </a>
-    )
-  }
-  const { type = 'button', ...button } = rest
-  return (
-    <button type={type} {...button} className={classes}>
-      {content}
-    </button>
-  )
+export function TextButton({ children, tone, size, icon, className, ...props }: TextButtonProps) {
+  return renderAction({
+    props,
+    className: textButtonClasses({ tone, size, icon, className }),
+    children: (
+      <>
+        {icon}
+        {children}
+      </>
+    ),
+  })
 }

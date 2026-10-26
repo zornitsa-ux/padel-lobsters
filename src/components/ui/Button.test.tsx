@@ -68,9 +68,21 @@ describe('Button', () => {
   })
 
   it('renders a disabled link as a disabled button so it cannot navigate', () => {
-    const el = Button({ children: 'Open', href: 'https://x.nl', disabled: true })
+    const el = Button({
+      children: 'Open',
+      href: 'https://x.nl',
+      external: true,
+      target: '_self',
+      download: 'file',
+      disabled: true,
+      title: 'Open it',
+    })
     expect((el as { type: unknown }).type).toBe('button')
     expect(propsOf(el).disabled).toBe(true)
     expect(propsOf(el).href).toBeUndefined()
+    // Anchor-only attributes don't leak onto the button; shared ones survive.
+    expect(propsOf(el).target).toBeUndefined()
+    expect(propsOf(el).download).toBeUndefined()
+    expect(propsOf(el).title).toBe('Open it')
   })
 })

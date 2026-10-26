@@ -41,8 +41,7 @@ export default function AddToCalendarButton({
     return (
       <IconButton
         href={gcalUrl}
-        target="_blank"
-        rel="noopener noreferrer"
+        external
         onClick={(e) => e.stopPropagation()}
         aria-label="Add to Google Calendar"
         variant="accent"

@@ -65,7 +65,6 @@ export default {
             strong: '#075985',
           },
         },
-        tikkie: '#FF6B35',
         whatsapp: '#25D366',
       },
       fontSize: {

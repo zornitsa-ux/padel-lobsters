@@ -214,3 +214,13 @@ None.
   the chip: "Show contact details" is a `neutral sm` Button; "Show email"
   (inline in a row subtitle), "Hide" (in the "Admin only" header) and "Try
   again" (in a warning box) are `TextButton`s.
+- **2026-10-26.** Review of #73. The `to` / `href` / `external` handling,
+  copied in `Button`, `TextButton` and `IconButton`, moves into one
+  `renderAction` (`components/ui/action.tsx`). All three now share the API
+  (`IconButton` callers drop `target` / `rel` for `external`), and a disabled
+  link renders as a button without anchor-only attributes. Owner: no
+  third-party brand colours on buttons, fewer special cases. The three Tikkie
+  pay links (payment sheet, /me pay prompt, admin Payments) become primary
+  `Button`s, the "I've sent the payment" pair becomes `secondary`, and the
+  `tikkie` token is gone. The root `DESIGN_SYSTEM.md` button section still
+  described `.btn-*` and `ActionChip`; it now points at the components.

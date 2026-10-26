@@ -23,6 +23,7 @@ describe('AddToCalendarButton', () => {
     expect((el as { type: unknown }).type).toBe(IconButton)
     expect(propsOf(el)['aria-label']).toBe('Add to Google Calendar')
     expect(propsOf(el).href).toBe('https://calendar.google.com/calendar/render?action=TEMPLATE')
+    expect(propsOf(el).external).toBe(true)
     expect(propsOf(el).variant).toBe('accent')
   })
 

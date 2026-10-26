@@ -95,22 +95,22 @@ Same shape, stronger shadow. Use for hero/featured cards only (NextEventCard, Le
 
 ## Buttons
 
-Four variants only. Do not create custom one-off button styles.
+Use the components in `src/components/ui`. Do not hand-style a `<button>` or a link that looks like one. The full "need X → use Y" table and the owner decisions are in [`docs/design-system/PLAN.md`](docs/design-system/PLAN.md).
 
-| Class            | Shape                                                       | Use                                        |
-| ---------------- | ----------------------------------------------------------- | ------------------------------------------ |
-| `.btn-primary`   | Coral, `rounded-full`, `py-3 px-5`                          | One per screen max — the single key action |
-| `.btn-secondary` | White/teal border, `rounded-full`, `py-3 px-5`              | Alongside a primary                        |
-| `.btn-danger`    | Red, `rounded-full`, `py-2 px-4`                            | Destructive confirm                        |
-| `<ActionChip>`   | `bg-gray-100 text-lob-muted rounded-lg px-3 py-1.5 text-xs` | Tertiary (Share, Add to calendar…)         |
+| Component    | Variants                                                                                     | Use                                                                                                |
+| ------------ | -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `Button`     | `primary`, `secondary`, `neutral`, `danger` × `sm` (32px), `md` (40px, default), `lg` (52px) | An action that starts something or takes you somewhere. `danger` only confirms a destructive flow. |
+| `TextButton` | tone `accent`, `primary`, `destructive`, `warning`, `neutral`                                | Underlined inline action, and a destructive action that isn't the screen's CTA                     |
+| `IconButton` | filled, `ghost`, `ghost-destructive`, `on-dark` × `sm`, `md`                                 | Icon-only action, always with `aria-label`                                                         |
 
-Do not override `.btn-primary` padding. If you need a smaller action button, use `<ActionChip>`.
-
-`<ActionChip>` (`components/ui/ActionChip.tsx`) is width-of-its-label by design — never give it `w-full`. Two stretched outline pills is what "Share on WhatsApp" and "Add to Google Calendar" used to be on the event Info tab, and they read as primary actions competing with registration. A tertiary utility should sit quietly under the content it belongs to. It renders an `<a>` when given an `href` and a `<button>` otherwise, so link-based actions keep working on iOS Safari.
+- A small utility action under content (Share, Add to calendar) is `Button variant="neutral" size="sm"`.
+- All three take `to` (router link), `href` (anchor) and `external` (new tab). Use a real `href` for links that must open on iOS Safari, which blocks `window.open` as a popup. A disabled link renders as a disabled button.
+- The components size their own icons: pass `icon={<Plus />}` or `<X />` with no `size`.
+- `className` on these components is for layout only (margins, `w-full`, `flex-1`).
 
 ### Where component styles live
 
-The first three rows above are global classes in `src/index.css`, kept because they are used in dozens of places across every feature. **New component styling does not go there.** Co-locate it with the component as a CSS module — `ActionChip.tsx` + `ActionChip.module.css` is the reference pair. Compose from Tailwind theme tokens with `@apply` inside the module so the token layer stays the single source of truth for colour and spacing; do not hard-code hex values in a module.
+Styling lives in the component, as class maps built from Tailwind tokens (see `Button.tsx`), not in global classes in `src/index.css` and not at the call site. Use a co-located CSS module only for what classes can't express. `Skeleton.tsx` + `Skeleton.module.css` is the reference pair. Compose from tokens with `@apply` inside the module; do not hard-code hex values.
 
 ---
 
