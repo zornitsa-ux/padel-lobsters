@@ -142,6 +142,8 @@ export default function Shop({
                     .sort((a, b) => sizeRank(a) - sizeRank(b))
                     .map((size) => ({ value: size, label: size }))}
                   value={selectedSize[item.id]}
+                  invalid={!!sizeError[item.id]}
+                  disabled={ordered[item.id]}
                   onChange={(size) => {
                     setSelectedSize((si) => ({ ...si, [item.id]: size }))
                     setSizeError((e) => ({ ...e, [item.id]: false }))

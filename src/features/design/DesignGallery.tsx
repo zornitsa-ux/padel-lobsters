@@ -55,11 +55,20 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   )
 }
 
-function Row({ label, children }: { label: string; children: React.ReactNode }) {
+// `block` gives a full-width child (a fill SegmentedControl) the whole row.
+function Row({
+  label,
+  block = false,
+  children,
+}: {
+  label: string
+  block?: boolean
+  children: React.ReactNode
+}) {
   return (
     <div className="space-y-1.5">
       <p className="text-2xs font-semibold uppercase tracking-wide text-lob-muted">{label}</p>
-      <div className="flex flex-wrap items-center gap-2">{children}</div>
+      {block ? children : <div className="flex flex-wrap items-center gap-2">{children}</div>}
     </div>
   )
 }
@@ -111,12 +120,10 @@ function ButtonSection() {
       </Row>
       <Row label="fullWidth · ActionRow (alternative first, confirm last)">
         <Button fullWidth>Register for this event</Button>
-        <div className="w-full">
-          <ActionRow>
-            <Button variant="secondary">Cancel</Button>
-            <Button>Save</Button>
-          </ActionRow>
-        </div>
+        <ActionRow>
+          <Button variant="secondary">Cancel</Button>
+          <Button>Save</Button>
+        </ActionRow>
       </Row>
     </Section>
   )
@@ -238,43 +245,37 @@ function ChoiceSection() {
     )
   return (
     <Section title="Chip and SegmentedControl">
-      <Row label="SegmentedControl (fill, 2–4 choices)">
-        <div className="w-full">
-          <SegmentedControl
-            options={[
-              { value: 'left', label: 'Left' },
-              { value: 'right', label: 'Right' },
-              { value: 'both', label: 'Both' },
-            ]}
-            value={side}
-            onChange={setSide}
-            ariaLabel="Preferred side"
-          />
-        </div>
+      <Row label="SegmentedControl (fill, 2–4 choices)" block>
+        <SegmentedControl
+          options={[
+            { value: 'left', label: 'Left' },
+            { value: 'right', label: 'Right' },
+            { value: 'both', label: 'Both' },
+          ]}
+          value={side}
+          onChange={setSide}
+          ariaLabel="Preferred side"
+        />
       </Row>
-      <Row label="SegmentedControl with detail">
-        <div className="w-full">
-          <SegmentedControl
-            options={[
-              { value: 'A', label: 'Group A', detail: '3 teams · suggested' },
-              { value: 'B', label: 'Group B', detail: '4 teams' },
-            ]}
-            value={group}
-            onChange={setGroup}
-            ariaLabel="Group"
-          />
-        </div>
+      <Row label="SegmentedControl with detail" block>
+        <SegmentedControl
+          options={[
+            { value: 'A', label: 'Group A', detail: '3 teams · suggested' },
+            { value: 'B', label: 'Group B', detail: '4 teams' },
+          ]}
+          value={group}
+          onChange={setGroup}
+          ariaLabel="Group"
+        />
       </Row>
-      <Row label='SegmentedControl layout="scroll"'>
-        <div className="w-full min-w-0">
-          <SegmentedControl
-            layout="scroll"
-            options={ROUNDS}
-            value={round}
-            onChange={setRound}
-            ariaLabel="Round"
-          />
-        </div>
+      <Row label='SegmentedControl layout="scroll"' block>
+        <SegmentedControl
+          layout="scroll"
+          options={ROUNDS}
+          value={round}
+          onChange={setRound}
+          ariaLabel="Round"
+        />
       </Row>
       <Row label='SegmentedControl layout="wrap" with counts'>
         <SegmentedControl
@@ -287,6 +288,16 @@ function ChoiceSection() {
           value={filter}
           onChange={setFilter}
           ariaLabel="Payment status"
+        />
+      </Row>
+      <Row label="SegmentedControl invalid (required, nothing picked)">
+        <SegmentedControl
+          layout="wrap"
+          invalid
+          options={['S', 'M', 'L'].map((size) => ({ value: size, label: size }))}
+          value={null}
+          onChange={() => {}}
+          ariaLabel="Size"
         />
       </Row>
       <Row label="Chip toggles in a ChipGroup (multi-select)">

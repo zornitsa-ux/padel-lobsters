@@ -410,12 +410,15 @@ export default function Schedule({
                 setSwapWarnings([])
               }}
             >
-              {swapMode
-                ? swapFirst
-                  ? '👆 Tap another player to swap…'
-                  : '↔️ Swap mode on: tap a player'
-                : '↔️ Manually swap players'}
+              ↔️ Swap players
             </Chip>
+          )}
+          {isAdmin && swapMode && (
+            <p className="text-sm font-semibold text-lob-teal" aria-live="polite">
+              {swapFirst
+                ? '👆 Tap another player to swap with.'
+                : 'Swap mode is on: tap the first player.'}
+            </p>
           )}
           {/* Swap conflict warnings */}
           {swapWarnings.length > 0 && (

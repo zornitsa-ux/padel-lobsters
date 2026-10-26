@@ -13,7 +13,7 @@ describe('Chip', () => {
     expect(propsOf(el).type).toBe('button')
     expect(propsOf(el)['aria-pressed']).toBeUndefined()
     expect(propsOf(el).onClick).toBe(onClick)
-    expect(classOf(el)).toContain('h-8 px-3 rounded-full')
+    expect(classOf(el)).toContain('min-h-8 max-w-full px-3 py-1 rounded-full')
     expect(classOf(el)).toContain('bg-white border-lob-line-strong text-lob-slate')
   })
 
@@ -33,6 +33,13 @@ describe('Chip', () => {
     expect(classOf(count)).toBe('text-white/80')
   })
 
+  it('marks an unselected chip invalid with a danger border', () => {
+    expect(classOf(Chip({ children: 'M', selected: false, invalid: true }))).toContain(
+      'border-lob-danger-border',
+    )
+    expect(classOf(Chip({ children: 'M', selected: true, invalid: true }))).not.toContain('danger')
+  })
+
   it('renders a router link for `to`, without aria-pressed', () => {
     const el = Chip({ children: 'Spring Open', to: '/events/1', selected: false })
     expect(el.type).toBe(Link)
@@ -45,6 +52,7 @@ describe('ChipGroup', () => {
     expect(classOf(ChipGroup({ children: null }))).toBe('flex flex-wrap gap-1.5')
     const scroll = ChipGroup({ children: null, layout: 'scroll', ariaLabel: 'Round' })
     expect(classOf(scroll)).toContain('overflow-x-auto')
+    expect(classOf(scroll)).toContain('[&>*]:whitespace-nowrap')
     expect(propsOf(scroll).role).toBe('group')
     expect(propsOf(scroll)['aria-label']).toBe('Round')
   })

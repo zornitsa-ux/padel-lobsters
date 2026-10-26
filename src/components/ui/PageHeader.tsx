@@ -84,8 +84,8 @@ export function PageHeader({
       {hasTabStrip && (
         <div className="bg-lob-teal-light border-b border-lob-line-strong overflow-x-auto touch-pan-x overscroll-x-contain [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           <div className="flex gap-1 px-3 py-2 min-w-max">
-            {tabs.map((tab) => (
-              <HeaderTab key={tab.to ?? tab.label} tab={tab} pathname={pathname} />
+            {tabs.map((tab, index) => (
+              <HeaderTab key={tab.to ?? `${index}-${tab.label}`} tab={tab} pathname={pathname} />
             ))}
           </div>
         </div>

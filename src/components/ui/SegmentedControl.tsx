@@ -1,5 +1,5 @@
 import React from 'react'
-import { Chip, ChipGroup } from './Chip'
+import { Chip, ChipGroup, secondaryText } from './Chip'
 
 export type SegmentedValue = string | number | boolean
 
@@ -27,13 +27,17 @@ interface SegmentedControlProps<T extends SegmentedValue> {
   /** Accessible name for the group. */
   ariaLabel?: string
   disabled?: boolean
+  /** Nothing picked yet where a pick is required; marks the unselected options. */
+  invalid?: boolean
 }
 
 const SEGMENT =
   'flex-1 min-w-0 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all not-disabled:active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed'
 
-const segmentClasses = ({ selected }: { selected: boolean }) =>
-  `${SEGMENT} ${selected ? 'bg-lob-teal text-white' : 'bg-lob-teal-light text-lob-muted'}`
+const segmentClasses = ({ selected, invalid }: { selected: boolean; invalid: boolean }) => {
+  if (selected) return `${SEGMENT} bg-lob-teal text-white`
+  return `${SEGMENT} bg-lob-teal-light text-lob-muted${invalid ? ' ring-1 ring-lob-danger-border' : ''}`
+}
 
 export function SegmentedControl<T extends SegmentedValue>({
   options,
@@ -42,15 +46,17 @@ export function SegmentedControl<T extends SegmentedValue>({
   layout = 'fill',
   ariaLabel,
   disabled = false,
+  invalid = false,
 }: SegmentedControlProps<T>) {
   if (layout !== 'fill') {
     return (
-      <ChipGroup layout={layout} ariaLabel={ariaLabel}>
+      <ChipGroup layout={layout} ariaLabel={ariaLabel} invalid={invalid}>
         {options.map((option) => (
           <Chip
             key={String(option.value)}
             selected={option.value === value}
             count={option.count}
+            invalid={invalid}
             disabled={disabled || option.disabled}
             onClick={() => onChange(option.value)}
           >
@@ -62,7 +68,12 @@ export function SegmentedControl<T extends SegmentedValue>({
   }
 
   return (
-    <div role="group" aria-label={ariaLabel} className="flex gap-2">
+    <div
+      role="group"
+      aria-label={ariaLabel}
+      aria-invalid={invalid || undefined}
+      className="flex gap-2"
+    >
       {options.map((option) => {
         const selected = option.value === value
         return (
@@ -72,13 +83,11 @@ export function SegmentedControl<T extends SegmentedValue>({
             aria-pressed={selected}
             disabled={disabled || option.disabled}
             onClick={() => onChange(option.value)}
-            className={segmentClasses({ selected })}
+            className={segmentClasses({ selected, invalid })}
           >
             {option.label}
             {option.detail && (
-              <span
-                className={`block text-xs font-normal ${selected ? 'text-white/80' : 'text-lob-muted'}`}
-              >
+              <span className={`block text-xs font-normal ${secondaryText({ selected })}`}>
                 {option.detail}
               </span>
             )}
