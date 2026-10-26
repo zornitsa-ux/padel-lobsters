@@ -453,8 +453,8 @@ export default function Registration({
           </p>
           {/* Share + calendar sit with the date and time they act on. */}
           <div className="flex gap-2">
-            <ShareWhatsAppButton tournament={tournament} variant="chip" />
-            <AddToCalendarButton tournament={tournament} variant="chip" />
+            <ShareWhatsAppButton tournament={tournament} variant="compact" />
+            <AddToCalendarButton tournament={tournament} variant="compact" />
           </div>
         </div>
       </div>

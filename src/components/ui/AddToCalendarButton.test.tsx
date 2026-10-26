@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import AddToCalendarButton from './AddToCalendarButton'
 import { IconButton } from './IconButton'
-import { ActionChip } from './ActionChip'
+import { Button } from './Button'
 import { propsOf } from '../../test/element'
 
 vi.mock('../../lib/calendar', () => ({
@@ -26,32 +26,35 @@ describe('AddToCalendarButton', () => {
     expect(propsOf(el).variant).toBe('accent')
   })
 
-  it('renders full variant label by default', () => {
+  it('renders the full variant as a full-width secondary Button link', () => {
     const el = AddToCalendarButton({ tournament, label: undefined })
-    const children = propsOf(el).children
-    const textChild = Array.isArray(children) ? children[1] : children
-    expect(textChild).toBe('Add to Google Calendar')
+    expect((el as { type: unknown }).type).toBe(Button)
+    expect(propsOf(el).variant).toBe('secondary')
+    expect(propsOf(el).href).toBe('https://calendar.google.com/calendar/render?action=TEMPLATE')
+    expect(propsOf(el).external).toBe(true)
+    expect(propsOf(el).className).toBe('w-full')
+    expect(propsOf(el).children).toBe('Add to Google Calendar')
   })
 
-  it('renders the chip variant as a shared ActionChip, still link-based', () => {
-    const el = AddToCalendarButton({ tournament, variant: 'chip', label: undefined })
-    expect((el as { type: unknown }).type).toBe(ActionChip)
+  it('renders the compact variant as a small neutral Button, still link-based', () => {
+    const el = AddToCalendarButton({ tournament, variant: 'compact', label: undefined })
+    expect((el as { type: unknown }).type).toBe(Button)
+    expect(propsOf(el).variant).toBe('neutral')
+    expect(propsOf(el).size).toBe('sm')
     // href, not onClick: iOS Safari blocks window.open here as a popup.
     expect(propsOf(el).href).toBe('https://calendar.google.com/calendar/render?action=TEMPLATE')
-    expect(propsOf(el).target).toBe('_blank')
-    expect(propsOf(el).rel).toBe('noopener noreferrer')
-    expect(String(propsOf(el).className ?? '')).not.toContain('w-full')
+    expect(propsOf(el).external).toBe(true)
     expect(propsOf(el).title).toBe('Add to Google Calendar')
   })
 
-  it('shortens the chip label but keeps the full one reachable as a title', () => {
-    const el = AddToCalendarButton({ tournament, variant: 'chip', label: undefined })
+  it('shortens the compact label but keeps the full one reachable as a title', () => {
+    const el = AddToCalendarButton({ tournament, variant: 'compact', label: undefined })
     expect(propsOf(el).children).toBe('Add to calendar')
     expect(propsOf(el).title).toBe('Add to Google Calendar')
   })
 
-  it('lets a caller override the chip label', () => {
-    const el = AddToCalendarButton({ tournament, variant: 'chip', label: 'Save the date' })
+  it('lets a caller override the compact label', () => {
+    const el = AddToCalendarButton({ tournament, variant: 'compact', label: 'Save the date' })
     expect(propsOf(el).children).toBe('Save the date')
   })
 })

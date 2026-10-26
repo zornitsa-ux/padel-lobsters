@@ -2,7 +2,7 @@ import React from 'react'
 import { Clock, X, Mail, RotateCcw } from 'lucide-react'
 import { PlayerRow } from '../../components/ui/PlayerRow'
 import { IconButton } from '../../components/ui/IconButton'
-import { ActionChip } from '../../components/ui/ActionChip'
+import { TextButton } from '../../components/ui/TextButton'
 import { Skeleton } from '../../components/ui/Skeleton'
 import { useRevealPii } from './useRevealPii'
 import type { CommunityPlayer } from './playersSelectors'
@@ -16,9 +16,9 @@ function PendingEmailReveal({ playerId }: { playerId: string }) {
 
   if (!revealed) {
     return (
-      <ActionChip icon={<Mail size={10} />} onClick={reveal}>
+      <TextButton tone="neutral" size="inherit" icon={<Mail size={12} />} onClick={reveal}>
         Show email
-      </ActionChip>
+      </TextButton>
     )
   }
   if (isLoading) {

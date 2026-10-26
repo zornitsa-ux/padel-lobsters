@@ -2,7 +2,6 @@ import React from 'react'
 import { Pencil, Trash2, Mail, EyeOff, AlertTriangle } from 'lucide-react'
 import { Skeleton } from '../../components/ui/Skeleton'
 import { AlertBox } from '../../components/ui/AlertBox'
-import { ActionChip } from '../../components/ui/ActionChip'
 import { useRevealPii } from './useRevealPii'
 import {
   buildPlayerStats,
@@ -377,16 +376,16 @@ export default function PlayerProfile({
               Admin only
             </p>
             {pii.revealed && !pii.isLoading && (
-              <ActionChip icon={<EyeOff size={11} />} onClick={pii.hide}>
+              <TextButton tone="neutral" icon={<EyeOff size={12} />} onClick={pii.hide}>
                 Hide
-              </ActionChip>
+              </TextButton>
             )}
           </div>
 
           {!pii.revealed && (
-            <ActionChip icon={<Mail size={11} />} onClick={pii.reveal}>
+            <Button variant="neutral" size="sm" icon={<Mail />} onClick={pii.reveal}>
               Show contact details
-            </ActionChip>
+            </Button>
           )}
 
           {pii.revealed && pii.isLoading && (
@@ -401,7 +400,9 @@ export default function PlayerProfile({
             <AlertBox variant="warning" icon={<AlertTriangle size={14} />}>
               <div className="flex items-center justify-between gap-2">
                 <span>Couldn't load contact details.</span>
-                <ActionChip onClick={() => pii.retry()}>Try again</ActionChip>
+                <TextButton tone="warning" onClick={() => pii.retry()}>
+                  Try again
+                </TextButton>
               </div>
             </AlertBox>
           )}

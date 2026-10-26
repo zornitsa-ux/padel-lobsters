@@ -95,5 +95,8 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    // Tailwind v4's built-in `not-disabled:`. Unlike `enabled:`, it also matches links.
+    ({ addVariant }) => addVariant('not-disabled', '&:not(:disabled)'),
+  ],
 }
