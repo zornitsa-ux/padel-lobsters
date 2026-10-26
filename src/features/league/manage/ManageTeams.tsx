@@ -36,14 +36,16 @@ function PlayerName({
     <>
       {player?.name ?? '?'}
       {player?.status === 'placeholder' && (
-        <TextButton
-          tone="warning"
-          size="inherit"
-          className="ml-1"
-          onClick={() => onInvite({ id: playerId, name: player.name })}
-        >
-          (invite)
-        </TextButton>
+        <>
+          {' '}
+          <TextButton
+            tone="warning"
+            size="inherit"
+            onClick={() => onInvite({ id: playerId, name: player.name })}
+          >
+            (invite)
+          </TextButton>
+        </>
       )}
     </>
   )
@@ -117,8 +119,8 @@ export function ManageTeams({ league, teams, division, allPlayers }: ManageTeams
   const closeForm = () => setFormTeam(undefined)
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-2">
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
         <SectionHeader icon={<Plus size={15} />} title={`Teams (${divisionTeams.length})`} />
         <button
           className="text-xs font-semibold text-lob-teal flex items-center gap-1"
@@ -139,11 +141,7 @@ export function ManageTeams({ league, teams, division, allPlayers }: ManageTeams
       )}
 
       {league.status === 'draft' && divisionTeams.length >= 4 && (
-        <Button
-          variant="secondary"
-          className="w-full mt-3"
-          onClick={() => setShowGroupFormation(true)}
-        >
+        <Button variant="secondary" fullWidth onClick={() => setShowGroupFormation(true)}>
           Assign Groups &amp; Generate Fixtures
         </Button>
       )}

@@ -328,7 +328,7 @@ export default function ConfigPanel({
       <Button
         onClick={onGenerate}
         disabled={disabled}
-        className="w-full"
+        fullWidth
         icon={generating ? <Loader2 className="animate-spin" /> : <Shuffle />}
       >
         {generating ? 'Generating…' : generateIdleLabel}

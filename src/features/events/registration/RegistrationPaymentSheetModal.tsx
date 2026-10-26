@@ -57,7 +57,7 @@ export default function RegistrationPaymentSheetModal({
             disabled={tikkieClicked}
             onClick={() => onTikkieClick(paymentSheet.regId, paymentSheet.paymentStatus)}
             icon={<ExternalLink />}
-            className="w-full"
+            fullWidth
           >
             {tikkieClicked ? 'Tikkie opened ✓' : 'Pay via Tikkie now'}
           </Button>
@@ -70,7 +70,7 @@ export default function RegistrationPaymentSheetModal({
               onClick={onSelfDeclare}
               disabled={declaring}
               icon={<Send />}
-              className="w-full"
+              fullWidth
             >
               {declaring ? 'Saving…' : "I've sent the payment"}
             </Button>

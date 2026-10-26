@@ -15,8 +15,8 @@ interface ButtonContentProps {
   size?: Size
   /** Leading icon. The button sets its size. */
   icon?: React.ReactNode
-  /** Layout only (`w-full`, `flex-1`, margins). Size and colour come from the props. */
-  className?: string
+  /** Fills its container's width. Otherwise the button keeps its natural width and never shrinks. */
+  fullWidth?: boolean
 }
 
 type ButtonProps = ButtonContentProps & ActionProps
@@ -42,15 +42,16 @@ const SIZE: Record<Size, string> = {
 function buttonClasses({
   variant = 'primary',
   size = 'md',
-  className,
+  fullWidth = false,
 }: Omit<ButtonContentProps, 'children' | 'icon'>) {
-  return `${BASE} ${VARIANT[variant]} ${SIZE[size]} ${className ?? ''}`.trim()
+  const width = fullWidth ? 'w-full' : 'shrink-0'
+  return `${BASE} ${VARIANT[variant]} ${SIZE[size]} ${width}`
 }
 
-export function Button({ children, variant, size, icon, className, ...props }: ButtonProps) {
+export function Button({ children, variant, size, icon, fullWidth, ...props }: ButtonProps) {
   return renderAction({
     props,
-    className: buttonClasses({ variant, size, className }),
+    className: buttonClasses({ variant, size, fullWidth }),
     children: (
       <>
         {icon}

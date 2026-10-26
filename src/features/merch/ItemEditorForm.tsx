@@ -4,6 +4,7 @@ import { Modal } from '../../components/ui/Modal'
 import { SIZES_APPAREL, SIZES_SOCKS } from './sizes'
 import type { ItemFormState } from './itemForm'
 import type { MerchItem } from './merchSchemas'
+import { ActionRow } from '../../components/ui/ActionRow'
 import { Button } from '../../components/ui/Button'
 import { IconButton } from '../../components/ui/IconButton'
 
@@ -42,24 +43,18 @@ export default function ItemEditorForm({
       title={editItem ? 'Edit Item' : 'Add Merch Item'}
       dismissible={false}
       footer={
-        <div className="flex gap-2">
+        <ActionRow>
           <Button
             onClick={() => setShowForm(false)}
             disabled={saving || uploading}
             variant="secondary"
-            className="flex-1"
           >
             Cancel
           </Button>
-          <Button
-            type="submit"
-            form="item-editor-form"
-            disabled={saving || uploading}
-            className="flex-1"
-          >
+          <Button type="submit" form="item-editor-form" disabled={saving || uploading}>
             {saving ? 'Saving…' : editItem ? 'Save Changes' : 'Add Item'}
           </Button>
-        </div>
+        </ActionRow>
       }
     >
       <form id="item-editor-form" onSubmit={handleSaveItem} className="space-y-4">

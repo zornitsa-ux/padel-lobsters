@@ -154,11 +154,7 @@ function SeedsCard({
 
           <div className="flex gap-2 flex-wrap">
             {!publishedAt && (
-              <Button
-                className="w-full"
-                disabled={actions.busy != null}
-                onClick={() => void publish()}
-              >
+              <Button fullWidth disabled={actions.busy != null} onClick={() => void publish()}>
                 {actions.busy === 'publish'
                   ? 'Showing…'
                   : 'Show starting court assignments to players'}

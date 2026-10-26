@@ -21,14 +21,12 @@ import { Button } from './Button'
 interface AddToCalendarButtonProps {
   tournament: CalendarEvent
   variant?: 'full' | 'compact' | 'icon'
-  className?: string
   label?: React.ReactNode
 }
 
 export default function AddToCalendarButton({
   tournament,
   variant = 'full',
-  className = '',
   label,
 }: AddToCalendarButtonProps) {
   if (!tournament?.date) return null
@@ -45,7 +43,6 @@ export default function AddToCalendarButton({
         onClick={(e) => e.stopPropagation()}
         aria-label="Add to Google Calendar"
         variant="accent"
-        className={className}
       >
         <CalendarPlus />
       </IconButton>
@@ -62,7 +59,6 @@ export default function AddToCalendarButton({
         onClick={(e) => e.stopPropagation()}
         title="Add to Google Calendar"
         icon={<CalendarPlus />}
-        className={className}
       >
         {label || 'Add to calendar'}
       </Button>
@@ -76,7 +72,7 @@ export default function AddToCalendarButton({
       external
       onClick={(e) => e.stopPropagation()}
       icon={<CalendarPlus />}
-      className={`w-full ${className}`.trim()}
+      fullWidth
     >
       {label || 'Add to Google Calendar'}
     </Button>

@@ -99,7 +99,7 @@ export default function ReviewBreakdownModal({
       onClose={onClose}
       title="Review breakdown"
       footer={
-        <Button onClick={onClose} className="w-full">
+        <Button onClick={onClose} fullWidth>
           Close
         </Button>
       }

@@ -106,7 +106,7 @@ Use the components in `src/components/ui`. Do not hand-style a `<button>` or a l
 - A small utility action under content (Share, Add to calendar) is `Button variant="neutral" size="sm"`.
 - All three take `to` (router link), `href` (anchor) and `external` (new tab). Use a real `href` for links that must open on iOS Safari, which blocks `window.open` as a popup. A disabled link renders as a disabled button.
 - The components size their own icons: pass `icon={<Plus />}` or `<X />` with no `size`.
-- `className` on these components is for layout only (margins, `w-full`, `flex-1`).
+- Layout lives in the components and their parents, not in `className`. `Button fullWidth` fills its container; buttons sharing a row go in `ActionRow` (alternative first, confirm last); `EmptyState` spaces its own action. `Button` and `TextButton` take no `className` and never shrink. Spacing between elements comes from the parent (`space-y-*`, `gap-*`).
 
 ### Where component styles live
 

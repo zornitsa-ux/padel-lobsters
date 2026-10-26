@@ -7,6 +7,7 @@ import type { TeamEntry } from '../../teams/teamTypes'
 import type { DisplayName } from '../utils'
 import ChangePartnerPanel from './ChangePartnerPanel'
 import { useConfirmDecline } from './useConfirmDecline'
+import { ActionRow } from '../../../../components/ui/ActionRow'
 import { Button } from '../../../../components/ui/Button'
 import { TextButton } from '../../../../components/ui/TextButton'
 
@@ -79,19 +80,14 @@ export function PartnerPendingActions({ entry, tournamentId, otherName }: Action
   return (
     <div className="space-y-2">
       <p className="text-xs text-lob-muted">{partnerAcceptNote({ captainName: otherName })}</p>
-      <div className="flex gap-2">
-        <Button
-          onClick={() => void respond({ accept: false })}
-          disabled={busy}
-          variant="secondary"
-          className="flex-1"
-        >
+      <ActionRow>
+        <Button onClick={() => void respond({ accept: false })} disabled={busy} variant="secondary">
           I&apos;m not playing
         </Button>
-        <Button onClick={() => void respond({ accept: true })} disabled={busy} className="flex-1">
+        <Button onClick={() => void respond({ accept: true })} disabled={busy}>
           Accept
         </Button>
-      </div>
+      </ActionRow>
     </div>
   )
 }

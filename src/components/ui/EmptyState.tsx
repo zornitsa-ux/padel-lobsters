@@ -3,7 +3,7 @@ interface EmptyStateProps {
   icon?: React.ReactNode
   title: React.ReactNode
   description?: React.ReactNode
-  /** Optional call-to-action rendered under the copy. */
+  /** Optional call-to-action rendered under the copy, spaced by the component. */
   action?: React.ReactNode
   className?: string
 }
@@ -16,7 +16,7 @@ export function EmptyState({ icon, title, description, action, className }: Empt
       {icon && <span className="text-lob-muted opacity-40">{icon}</span>}
       <p className="text-sm font-semibold text-lob-dark">{title}</p>
       {description && <p className="text-xs text-lob-muted">{description}</p>}
-      {action}
+      {action && <div className="mt-2">{action}</div>}
     </div>
   )
 }

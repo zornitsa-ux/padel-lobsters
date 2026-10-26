@@ -48,7 +48,7 @@ export default function JoinEventCard({
             "You haven't signed up yet."
           )}
         </p>
-        <Button onClick={onRegister} disabled={registering} className="w-full">
+        <Button onClick={onRegister} disabled={registering} fullWidth>
           {registering
             ? 'Signing up…'
             : isEventFull
@@ -96,7 +96,7 @@ export default function JoinEventCard({
           ✓ Confirmed
         </span>
       ) : needsPayment ? (
-        <TextButton tone="primary" className="flex-shrink-0" onClick={onGoToPayment}>
+        <TextButton tone="primary" onClick={onGoToPayment}>
           Pay on the You tab
         </TextButton>
       ) : null}

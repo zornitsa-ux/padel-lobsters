@@ -38,7 +38,7 @@ export default function MyTeamRegistration({
         <p className="text-sm text-lob-muted">
           You haven&apos;t signed up yet. This is a team event: pick a partner on the event page.
         </p>
-        <Button onClick={onSignUp} className="w-full">
+        <Button onClick={onSignUp} fullWidth>
           Sign up as a team
         </Button>
       </div>

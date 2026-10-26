@@ -2,6 +2,7 @@ import { Columns2 } from 'lucide-react'
 import type { ScheduleRun } from '../domain/types'
 import QualityReport from './QualityReport'
 import ScheduleRounds, { type SwapHandlers } from './ScheduleRounds'
+import { ActionRow } from '../../../components/ui/ActionRow'
 import { Button } from '../../../components/ui/Button'
 
 export type SchedulePreviewProps = {
@@ -37,27 +38,21 @@ export default function SchedulePreview({
       </div>
 
       {onUndoSwap && (
-        <Button onClick={onUndoSwap} disabled={busy} variant="secondary" className="w-full">
+        <Button onClick={onUndoSwap} disabled={busy} variant="secondary" fullWidth>
           Undo last swap
         </Button>
       )}
 
       <ScheduleRounds rounds={run.rounds} {...handlers} />
 
-      <div className="flex gap-2">
-        <Button
-          onClick={onCompare}
-          disabled={busy}
-          variant="secondary"
-          className="flex-1"
-          icon={<Columns2 />}
-        >
+      <ActionRow>
+        <Button onClick={onCompare} disabled={busy} variant="secondary" icon={<Columns2 />}>
           Compare
         </Button>
-        <Button onClick={onSave} disabled={busy} className="flex-1">
+        <Button onClick={onSave} disabled={busy}>
           {saving ? 'Saving…' : 'Save'}
         </Button>
-      </div>
+      </ActionRow>
     </div>
   )
 }

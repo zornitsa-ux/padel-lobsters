@@ -21,7 +21,7 @@ export default function EndedTeamNotice({
       className="card bg-lob-warning-light border border-lob-warning-border space-y-2"
     >
       <p className="text-sm text-lob-warning-strong">{text}</p>
-      <Button onClick={onSignUpAgain} className="w-full">
+      <Button onClick={onSignUpAgain} fullWidth>
         Sign up again
       </Button>
     </div>

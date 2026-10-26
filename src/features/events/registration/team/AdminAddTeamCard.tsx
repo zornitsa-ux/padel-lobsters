@@ -69,7 +69,7 @@ export default function AdminAddTeamCard({
             setNotices([])
             setOpen(true)
           }}
-          className="w-full"
+          fullWidth
           icon={<Plus />}
         >
           Add team
@@ -110,7 +110,7 @@ export default function AdminAddTeamCard({
             onSelect={setCaptainId}
             displayName={displayName}
           />
-          <Button onClick={() => setCaptainChosen(true)} disabled={!captainId} className="w-full">
+          <Button onClick={() => setCaptainChosen(true)} disabled={!captainId} fullWidth>
             Next
           </Button>
         </>

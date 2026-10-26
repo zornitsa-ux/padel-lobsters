@@ -165,10 +165,10 @@ export function SignInForm({ variant, initialEmail = '', onSignedIn, allowPin }:
         <form onSubmit={handleEmailSubmit} noValidate className="space-y-3">
           <EmailField email={email} onChange={setEmail} />
           <FormError message={error} />
-          <Button type="submit" disabled={busy} className="w-full">
+          <Button type="submit" disabled={busy} fullWidth>
             {busy ? 'Sending…' : 'Email me a sign-in code'}
           </Button>
-          <Button variant="neutral" className="w-full" onClick={() => goTo('password')}>
+          <Button variant="neutral" fullWidth onClick={() => goTo('password')}>
             Sign in with password
           </Button>
           {allowPin && (
@@ -203,7 +203,7 @@ export function SignInForm({ variant, initialEmail = '', onSignedIn, allowPin }:
             />
           </div>
           <FormError message={error} />
-          <Button type="submit" disabled={busy || !password} className="w-full">
+          <Button type="submit" disabled={busy || !password} fullWidth>
             {busy ? 'Signing in…' : 'Sign in'}
           </Button>
           <div className="flex items-center justify-between">
@@ -220,7 +220,7 @@ export function SignInForm({ variant, initialEmail = '', onSignedIn, allowPin }:
           </p>
           <EmailField email={email} onChange={setEmail} />
           <FormError message={error} />
-          <Button type="submit" disabled={busy} className="w-full">
+          <Button type="submit" disabled={busy} fullWidth>
             {busy ? 'Sending…' : 'Send reset code'}
           </Button>
           <TextButton onClick={() => goTo('password')}>Back to password sign-in</TextButton>
@@ -257,7 +257,7 @@ export function SignInForm({ variant, initialEmail = '', onSignedIn, allowPin }:
             className="input text-center text-2xl tracking-[0.5em] font-bold"
           />
           <FormError message={error} />
-          <Button type="submit" disabled={busy || !pin} className="w-full">
+          <Button type="submit" disabled={busy || !pin} fullWidth>
             {busy ? 'Checking…' : 'Sign in with PIN'}
           </Button>
           <TextButton onClick={() => goTo('email')}>Use my email instead</TextButton>

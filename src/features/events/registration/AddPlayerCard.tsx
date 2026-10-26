@@ -42,7 +42,7 @@ export default function AddPlayerCard({
 
   if (!showAdd) {
     return (
-      <Button onClick={onOpen} className="w-full" icon={<Plus />}>
+      <Button onClick={onOpen} fullWidth icon={<Plus />}>
         Register a Player
       </Button>
     )
@@ -104,7 +104,7 @@ export default function AddPlayerCard({
         ))}
       </div>
 
-      <Button onClick={onAdd} disabled={!selectedPlayer || saving} className="w-full">
+      <Button onClick={onAdd} disabled={!selectedPlayer || saving} fullWidth>
         {saving
           ? 'Adding...'
           : registeredCount >= maxPlayers

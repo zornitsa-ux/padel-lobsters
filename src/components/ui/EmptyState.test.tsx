@@ -29,7 +29,8 @@ describe('EmptyState', () => {
     )
     expect(propsOf(description).children).toBe('more copy')
     expect(propsOf(description).className).toBe('text-xs text-lob-muted')
-    expect(action).toBe('ACTION')
+    expect(propsOf(action).className).toBe('mt-2')
+    expect(propsOf(action).children).toBe('ACTION')
   })
 
   it('appends extra className', () => {

@@ -28,13 +28,11 @@ export interface ShareableEvent {
 interface ShareWhatsAppButtonProps {
   tournament?: ShareableEvent | null
   variant?: 'icon' | 'compact'
-  className?: string
 }
 
 export default function ShareWhatsAppButton({
   tournament,
   variant = 'icon',
-  className = '',
 }: ShareWhatsAppButtonProps) {
   if (!tournament?.id) return null
 
@@ -74,12 +72,7 @@ export default function ShareWhatsAppButton({
 
   if (variant === 'icon') {
     return (
-      <IconButton
-        onClick={handleClick}
-        aria-label="Share on WhatsApp"
-        variant="success"
-        className={className}
-      >
+      <IconButton onClick={handleClick} aria-label="Share on WhatsApp" variant="success">
         <Share2 />
       </IconButton>
     )
@@ -93,7 +86,6 @@ export default function ShareWhatsAppButton({
       title="Share on WhatsApp"
       aria-label="Share on WhatsApp"
       icon={<Share2 />}
-      className={className}
     >
       Share
     </Button>

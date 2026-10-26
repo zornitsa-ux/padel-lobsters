@@ -33,7 +33,7 @@ describe('AddToCalendarButton', () => {
     expect(propsOf(el).variant).toBe('secondary')
     expect(propsOf(el).href).toBe('https://calendar.google.com/calendar/render?action=TEMPLATE')
     expect(propsOf(el).external).toBe(true)
-    expect(propsOf(el).className).toBe('w-full')
+    expect(propsOf(el).fullWidth).toBe(true)
     expect(propsOf(el).children).toBe('Add to Google Calendar')
   })
 

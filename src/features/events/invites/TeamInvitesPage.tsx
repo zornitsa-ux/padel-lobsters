@@ -59,10 +59,10 @@ function InviteCard({
         {partnerAcceptNote({ captainName: invite.captainName })}
       </p>
       <div className="space-y-2">
-        <Button onClick={onAccept} disabled={busy} className="w-full">
+        <Button onClick={onAccept} disabled={busy} fullWidth>
           Accept
         </Button>
-        <Button onClick={onDecline} disabled={busy} variant="secondary" className="w-full">
+        <Button onClick={onDecline} disabled={busy} variant="secondary" fullWidth>
           I&apos;m not playing
         </Button>
       </div>
@@ -113,11 +113,7 @@ export default function TeamInvitesPage() {
     return (
       <EmptyState
         title="Sign in to see your team invites"
-        action={
-          <Button onClick={() => navigate('/account')} className="mt-2">
-            Sign in
-          </Button>
-        }
+        action={<Button onClick={() => navigate('/account')}>Sign in</Button>}
       />
     )
   }
@@ -128,11 +124,7 @@ export default function TeamInvitesPage() {
     return (
       <EmptyState
         title="No team invites waiting"
-        action={
-          <Button onClick={() => navigate('/events')} className="mt-2">
-            Go to Events
-          </Button>
-        }
+        action={<Button onClick={() => navigate('/events')}>Go to Events</Button>}
       />
     )
   }

@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { Modal } from './Modal'
 import { ConfirmContext, type ConfirmOptions } from '../../lib/confirmBus'
+import { ActionRow } from './ActionRow'
 import { Button } from './Button'
 
 interface PendingConfirm extends ConfirmOptions {
@@ -34,18 +35,14 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo(() => confirm, [confirm])
 
   const footer = pending && (
-    <div className="flex gap-2">
-      <Button onClick={() => settle(false)} variant="secondary" className="flex-1">
+    <ActionRow>
+      <Button onClick={() => settle(false)} variant="secondary">
         {pending.cancelLabel || 'Cancel'}
       </Button>
-      <Button
-        onClick={() => settle(true)}
-        variant={pending.destructive ? 'danger' : 'primary'}
-        className="flex-1"
-      >
+      <Button onClick={() => settle(true)} variant={pending.destructive ? 'danger' : 'primary'}>
         {pending.confirmLabel || 'Confirm'}
       </Button>
-    </div>
+    </ActionRow>
   )
 
   return (

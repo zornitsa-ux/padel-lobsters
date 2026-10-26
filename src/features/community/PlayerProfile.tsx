@@ -452,12 +452,7 @@ export default function PlayerProfile({
 
       {isAdmin && (
         <div className="flex items-center gap-4 pt-1">
-          <Button
-            onClick={() => onEdit(p)}
-            variant="secondary"
-            className="flex-1"
-            icon={<Pencil />}
-          >
+          <Button onClick={() => onEdit(p)} variant="secondary" fullWidth icon={<Pencil />}>
             Edit
           </Button>
           <TextButton

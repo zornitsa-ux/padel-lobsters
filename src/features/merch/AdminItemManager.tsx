@@ -36,7 +36,7 @@ export default function AdminItemManager({
 }: AdminItemManagerProps) {
   return (
     <div className="space-y-4">
-      <Button onClick={openAdd} className="w-full" icon={<Plus />}>
+      <Button onClick={openAdd} fullWidth icon={<Plus />}>
         Add Merch Item
       </Button>
 
