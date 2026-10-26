@@ -11,6 +11,7 @@ import { buildDivisionBracket, buildFinalPairings } from '../domain/bracket'
 import { sortMatchesDesc, stageToLabel } from '../domain/matchDisplay'
 import type { Division, League, LeagueMatch, LeagueTeam } from '../domain/types'
 import { Button } from '../../../components/ui/Button'
+import { TextButton } from '../../../components/ui/TextButton'
 
 function BracketPanel({
   league,
@@ -140,15 +141,7 @@ function MatchList({
             team2={teamById[m.team2_id ?? '']}
             label={stageToLabel(m.stage, teamById[m.team1_id ?? '']?.group_label)}
             action={
-              action && (
-                <button
-                  type="button"
-                  className="text-xs font-semibold text-lob-teal"
-                  onClick={() => action.onAction(m)}
-                >
-                  {action.label}
-                </button>
-              )
+              action && <TextButton onClick={() => action.onAction(m)}>{action.label}</TextButton>
             }
           />
         ))}

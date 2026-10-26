@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react'
 import { Settings, X, Gamepad2, SlidersHorizontal } from 'lucide-react'
 import type { ViewMode } from './oscarsPhase'
 import { IconButton } from '../../components/ui/IconButton'
+import { Button } from '../../components/ui/Button'
 
 interface AdminMenuProps {
   viewMode: ViewMode
@@ -24,13 +25,15 @@ export default function AdminMenu({ viewMode, onSetViewMode }: AdminMenuProps) {
 
   return (
     <>
-      <button
+      <Button
+        variant="neutral"
+        size="sm"
+        icon={<Settings />}
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1.5 bg-white border border-lob-line-strong rounded-xl px-3 py-1.5 text-sm font-semibold text-lob-dark active:scale-95 transition-all"
         aria-label="Open admin menu"
       >
-        <Settings size={15} /> Menu
-      </button>
+        Menu
+      </Button>
 
       {open && (
         <div className="fixed inset-0 z-[60] flex" role="dialog" aria-modal="true">

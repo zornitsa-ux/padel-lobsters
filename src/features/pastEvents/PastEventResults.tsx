@@ -22,6 +22,7 @@ import { TabSwitcher } from '../../components/ui/TabSwitcher'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
 import { ProgressBar } from '../../components/ui/ProgressBar'
 import { CollapsibleCard } from '../../components/ui/CollapsibleCard'
+import { Button } from '../../components/ui/Button'
 
 type TabId = 'standings' | 'matches' | 'games'
 
@@ -259,12 +260,14 @@ export default function PastEventResults({ tournaments, onNavigate }: PastEventR
                 const withheld = resultsWithheld({ tournament: t, isAdmin })
                 const resultsLink = (label: string) =>
                   onNavigate && (
-                    <button
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      fullWidth
                       onClick={() => onNavigate('scores', t)}
-                      className="w-full text-xs text-lob-teal font-semibold border border-lob-teal rounded-xl py-2 active:scale-95 transition-all"
                     >
                       {label}
-                    </button>
+                    </Button>
                   )
 
                 // King of the Court ranks teams, has no matches (D-006) and no

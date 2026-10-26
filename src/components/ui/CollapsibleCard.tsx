@@ -5,7 +5,11 @@ export interface CollapsibleCardProps {
   header: React.ReactNode
   expanded: boolean
   onToggle: () => void
+  /** Shown under the header whether or not the card is expanded. */
+  summary?: React.ReactNode
   children: React.ReactNode
+  /** Dimmed, for an inactive list such as cancelled registrations. */
+  muted?: boolean
   /** Wrapper classes. Defaults to the design-system card shell. */
   className?: string
   headerClassName?: string
@@ -19,14 +23,16 @@ export function CollapsibleCard({
   header,
   expanded,
   onToggle,
+  summary,
   children,
+  muted = false,
   className = 'card',
   headerClassName = '',
   chevronClassName = 'text-lob-muted-light flex-shrink-0',
 }: CollapsibleCardProps) {
   const Chevron = expanded ? ChevronUp : ChevronDown
   return (
-    <div className={className}>
+    <div className={`${className}${muted ? ' opacity-60' : ''}`.trim() || undefined}>
       <button
         type="button"
         onClick={onToggle}
@@ -36,6 +42,7 @@ export function CollapsibleCard({
         {header}
         <Chevron size={16} className={chevronClassName} />
       </button>
+      {summary}
       {expanded && children}
     </div>
   )

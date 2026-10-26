@@ -250,20 +250,12 @@ export function GroupFormationTool({
                 team={t}
                 actions={
                   <div className="flex gap-1 ml-1">
-                    <button
-                      type="button"
-                      onClick={() => moveToA(t.id)}
-                      className="text-xs font-semibold text-lob-teal border border-lob-teal/30 rounded px-1.5 py-0.5 hover:bg-lob-teal/5"
-                    >
+                    <Button variant="neutral" size="sm" onClick={() => moveToA(t.id)}>
                       → A
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => moveToB(t.id)}
-                      className="text-xs font-semibold text-lob-teal border border-lob-teal/30 rounded px-1.5 py-0.5 hover:bg-lob-teal/5"
-                    >
+                    </Button>
+                    <Button variant="neutral" size="sm" onClick={() => moveToB(t.id)}>
                       → B
-                    </button>
+                    </Button>
                   </div>
                 }
               />

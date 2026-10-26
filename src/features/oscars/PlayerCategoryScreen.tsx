@@ -6,6 +6,8 @@ import { AlertBox } from '../../components/ui/AlertBox'
 import type { CategoryRow } from './oscarsSchemas'
 import type { OscarVote, ShortNamePlayer } from './useOscarsSession'
 import type { Player } from '../../lib/normalise'
+import { Button } from '../../components/ui/Button'
+import { TextButton } from '../../components/ui/TextButton'
 
 interface PlayerCategoryScreenProps {
   category: CategoryRow
@@ -40,23 +42,16 @@ export default function PlayerCategoryScreen({
   return (
     <div>
       <div className="pb-3 border-b border-lob-line mb-3">
-        <button
-          onClick={onBack}
-          className="inline-flex items-center gap-1.5 bg-white border border-lob-line-strong rounded-xl px-3 py-1.5 text-sm font-semibold text-lob-dark active:scale-95 transition-all"
-        >
-          <ChevronLeft size={15} /> Games home
-        </button>
+        <Button variant="neutral" size="sm" icon={<ChevronLeft />} onClick={onBack}>
+          Games home
+        </Button>
         <div className="mt-3 flex items-center gap-2">
           <span className="text-2xl">{category.icon}</span>
           <h2 className="text-xl font-bold text-lob-dark flex-1">{category.name}</h2>
           {myVote && (
-            <button
-              onClick={onClear}
-              disabled={busy}
-              className="text-xs font-semibold text-lob-danger hover:text-lob-danger disabled:opacity-50 px-2 py-1 rounded-lg bg-lob-danger-light border border-lob-danger-border active:scale-95 transition-all flex items-center gap-1"
-            >
-              <X size={12} /> Clear vote
-            </button>
+            <TextButton tone="destructive" icon={<X size={12} />} onClick={onClear} disabled={busy}>
+              Clear vote
+            </TextButton>
           )}
         </div>
       </div>

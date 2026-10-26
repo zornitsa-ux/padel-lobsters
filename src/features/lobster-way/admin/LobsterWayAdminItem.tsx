@@ -8,6 +8,7 @@ import type {
   LobsterWayStep,
 } from '../../../data/lobsterWayContent'
 import { IconButton } from '../../../components/ui/IconButton'
+import { TextButton } from '../../../components/ui/TextButton'
 
 const emptyListRow = (): LobsterWayListRow => ({ emoji: '', label: '', text: '' })
 const emptyStepRow = (): LobsterWayStep => ({ title: '', text: '', image: '' })
@@ -101,13 +102,9 @@ export default function LobsterWayAdminItem({
             <div className="space-y-1.5 bg-white rounded-lg border border-lob-line p-2">
               <div className="flex items-center justify-between">
                 <p className="label">Bullet list</p>
-                <button
-                  type="button"
-                  onClick={() => set({ list: undefined })}
-                  className="text-2xs text-gray-400 font-semibold"
-                >
+                <TextButton tone="neutral" onClick={() => set({ list: undefined })}>
                   Remove list
-                </button>
+                </TextButton>
               </div>
               {item.list.map((row, i) => (
                 <div key={i} className="flex items-center gap-1.5">
@@ -139,22 +136,17 @@ export default function LobsterWayAdminItem({
                   </IconButton>
                 </div>
               ))}
-              <button
-                type="button"
+              <TextButton
+                icon={<Plus size={11} />}
                 onClick={() => set({ list: [...(item.list ?? []), emptyListRow()] })}
-                className="text-xs text-lob-teal font-semibold flex items-center gap-1"
               >
-                <Plus size={11} /> Add row
-              </button>
+                Add row
+              </TextButton>
             </div>
           ) : (
-            <button
-              type="button"
-              onClick={() => set({ list: [emptyListRow()] })}
-              className="text-xs text-lob-teal font-semibold"
-            >
-              + Add bullet list
-            </button>
+            <TextButton icon={<Plus size={11} />} onClick={() => set({ list: [emptyListRow()] })}>
+              Add bullet list
+            </TextButton>
           )}
 
           {/* Numbered steps block (walkthroughs, e.g. transferring a spot) */}
@@ -162,13 +154,9 @@ export default function LobsterWayAdminItem({
             <div className="space-y-2 bg-white rounded-lg border border-lob-line p-2">
               <div className="flex items-center justify-between">
                 <p className="label">Numbered steps</p>
-                <button
-                  type="button"
-                  onClick={() => set({ steps: undefined })}
-                  className="text-2xs text-gray-400 font-semibold"
-                >
+                <TextButton tone="neutral" onClick={() => set({ steps: undefined })}>
                   Remove steps
-                </button>
+                </TextButton>
               </div>
               {item.steps.map((step, i) => (
                 <div key={i} className="space-y-1 border-b border-lob-line pb-2 last:border-0">
@@ -205,22 +193,17 @@ export default function LobsterWayAdminItem({
                   />
                 </div>
               ))}
-              <button
-                type="button"
+              <TextButton
+                icon={<Plus size={11} />}
                 onClick={() => set({ steps: [...(item.steps ?? []), emptyStepRow()] })}
-                className="text-xs text-lob-teal font-semibold flex items-center gap-1"
               >
-                <Plus size={11} /> Add step
-              </button>
+                Add step
+              </TextButton>
             </div>
           ) : (
-            <button
-              type="button"
-              onClick={() => set({ steps: [emptyStepRow()] })}
-              className="text-xs text-lob-teal font-semibold"
-            >
-              + Add numbered steps
-            </button>
+            <TextButton icon={<Plus size={11} />} onClick={() => set({ steps: [emptyStepRow()] })}>
+              Add numbered steps
+            </TextButton>
           )}
         </div>
       )}

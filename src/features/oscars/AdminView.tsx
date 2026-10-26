@@ -17,6 +17,7 @@ import type {
 } from './oscarsSchemas'
 import type { OscarCategoryInput } from './useOscarsSession'
 import type { Player } from '../../lib/normalise'
+import { Button } from '../../components/ui/Button'
 
 interface AdminViewProps {
   phase: OscarsPhase
@@ -117,14 +118,15 @@ export default function AdminView({
             </AlertBox>
           )}
 
-          <button
+          <Button
+            size="lg"
+            fullWidth
+            icon={busy ? <Loader2 className="animate-spin" /> : <Play />}
             onClick={handleStart}
             disabled={busy || baseCats.length === 0}
-            className="w-full bg-lob-teal text-white font-bold py-4 rounded-2xl text-base flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50 mt-4"
           >
-            {busy ? <Loader2 className="animate-spin" size={18} /> : <Play size={18} />}
             {busy ? 'Starting…' : 'Start Lobster Games'}
-          </button>
+          </Button>
           <p className="text-xs text-lob-muted-light text-center -mt-1">
             Once started, categories can&apos;t be edited. You can end voting at any time.
           </p>
@@ -166,14 +168,15 @@ export default function AdminView({
             </AlertBox>
           )}
 
-          <button
+          <Button
+            size="lg"
+            fullWidth
+            icon={busy ? <Loader2 className="animate-spin" /> : <X />}
             onClick={onEnd}
             disabled={busy}
-            className="w-full bg-lob-coral text-white font-bold py-4 rounded-2xl text-base flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50 mt-4"
           >
-            {busy ? <Loader2 className="animate-spin" size={18} /> : <X size={18} />}
             End game
-          </button>
+          </Button>
         </div>
       </Shell>
     )
@@ -200,14 +203,14 @@ export default function AdminView({
 
         <div className="pt-2">
           {phase === 'ended' ? (
-            <button
+            <Button
+              fullWidth
+              icon={busy ? <Loader2 className="animate-spin" /> : <Share2 />}
               onClick={onShare}
               disabled={busy}
-              className="w-full bg-lob-teal text-white font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50"
             >
-              {busy ? <Loader2 className="animate-spin" size={16} /> : <Share2 size={16} />}
               Share with players
-            </button>
+            </Button>
           ) : (
             <div className="w-full bg-lob-success-light text-lob-success font-semibold py-3 rounded-xl text-sm flex items-center justify-center gap-2">
               <Check size={16} /> Shared with players

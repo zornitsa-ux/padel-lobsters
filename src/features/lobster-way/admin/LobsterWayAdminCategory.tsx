@@ -5,6 +5,7 @@ import LobsterWayAdminItem, { emptyItem } from './LobsterWayAdminItem'
 import { moveItem, removeAt, replaceAt } from '../../../lib/arrayReorder'
 import type { LobsterWayCategory, LobsterWayItem } from '../../../data/lobsterWayContent'
 import { IconButton } from '../../../components/ui/IconButton'
+import { TextButton } from '../../../components/ui/TextButton'
 
 // One category editor: label/emoji, the origin-story toggle, and (for
 // non-story categories) the list of question editors underneath.
@@ -119,13 +120,9 @@ export default function LobsterWayAdminCategory({
                   onDelete={() => deleteItemAt(i)}
                 />
               ))}
-              <button
-                type="button"
-                onClick={addItem}
-                className="text-xs text-lob-teal font-semibold flex items-center gap-1"
-              >
-                <Plus size={12} /> Add question
-              </button>
+              <TextButton icon={<Plus size={12} />} onClick={addItem}>
+                Add question
+              </TextButton>
             </div>
           )}
         </div>
