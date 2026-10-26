@@ -8,6 +8,8 @@ import { PasswordForm } from '../auth/PasswordForm'
 import { sessionUsedPassword } from '../auth/sessionClaims'
 import { SIGN_IN_SECURITY_ID } from '../auth/upgradeCopy'
 import { EmailChangeField } from './EmailChangeField'
+import { TextButton } from '../../components/ui/TextButton'
+import { Button } from '../../components/ui/Button'
 
 export default function SignInSecuritySection() {
   const { session } = useApp()
@@ -60,37 +62,33 @@ export default function SignInSecuritySection() {
                 setPasswordSaved(true)
               }}
             />
-            <button
-              type="button"
-              onClick={() => setEditingPassword(false)}
-              className="text-xs font-semibold text-lob-slate"
-            >
+            <TextButton tone="neutral" onClick={() => setEditingPassword(false)}>
               Cancel
-            </button>
+            </TextButton>
           </>
         ) : (
-          <button
-            type="button"
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={() => {
               setPasswordSaved(false)
               setEditingPassword(true)
             }}
-            className="text-xs font-semibold text-lob-teal bg-lob-cream border border-lob-teal/30 px-3 py-2 rounded-xl active:scale-95"
           >
             {passwordLabel}
-          </button>
+          </Button>
         )}
         {passwordSaved && <p className="text-xs text-lob-teal font-medium">Password saved.</p>}
       </div>
 
       <div className="space-y-1">
-        <button
-          type="button"
+        <TextButton
+          tone="destructive"
+          icon={<LogOut size={12} />}
           onClick={handleSignOutEverywhere}
-          className="flex items-center gap-1 text-xs text-lob-danger font-semibold bg-lob-danger-light px-3 py-1.5 rounded-lg active:scale-95 transition-all"
         >
-          <LogOut size={12} /> Sign out of all devices
-        </button>
+          Sign out of all devices
+        </TextButton>
         <FormError message={signOutError} />
       </div>
     </div>

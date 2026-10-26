@@ -3,6 +3,7 @@ import { ArrowRightLeft, Clock } from 'lucide-react'
 import type { Player } from '../../lib/normalise'
 import type { NormalisedTournament } from '../../lib/normalise'
 import type { NormalisedTransfer } from '../events/transferQueries'
+import { OutgoingTransferActions, TransferResponseActions } from '../events/TransferActions'
 
 interface TransferOfferBannersProps {
   incomingTransfers: NormalisedTransfer[]
@@ -58,22 +59,11 @@ export default function TransferOfferBanners({
                 )}
               </div>
             </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => onIncomingResponse(xfer, false)}
-                disabled={busy}
-                className="flex-1 border border-gray-300 text-lob-slate font-semibold py-2 rounded-xl text-sm active:scale-[0.98] disabled:opacity-50"
-              >
-                {busy ? 'Declining…' : 'Decline'}
-              </button>
-              <button
-                onClick={() => onIncomingResponse(xfer, true)}
-                disabled={busy}
-                className="flex-1 bg-lob-success-solid text-white font-semibold py-2 rounded-xl text-sm active:scale-[0.98] disabled:opacity-50"
-              >
-                {busy ? 'Accepting…' : 'Accept'}
-              </button>
-            </div>
+            <TransferResponseActions
+              busy={busy}
+              acceptLabel="Accept"
+              onRespond={({ accept }) => onIncomingResponse(xfer, accept)}
+            />
           </div>
         )
       })}
@@ -102,22 +92,11 @@ export default function TransferOfferBanners({
                 )}
               </div>
             </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => onOutgoingShare(xfer, toP)}
-                disabled={busy || !toP}
-                className="flex-1 text-xs font-semibold text-lob-success bg-white border border-lob-success-solid rounded-xl py-2 active:scale-95 transition-all disabled:opacity-50"
-              >
-                Resend WhatsApp
-              </button>
-              <button
-                onClick={() => onOutgoingCancel(xfer)}
-                disabled={busy}
-                className="flex-1 text-xs font-semibold text-lob-danger border border-lob-danger-border rounded-xl py-2 active:scale-95 transition-all disabled:opacity-50"
-              >
-                {busy ? 'Cancelling…' : 'Cancel offer'}
-              </button>
-            </div>
+            <OutgoingTransferActions
+              onResend={toP ? () => onOutgoingShare(xfer, toP) : undefined}
+              onCancel={() => onOutgoingCancel(xfer)}
+              busy={busy}
+            />
           </div>
         )
       })}

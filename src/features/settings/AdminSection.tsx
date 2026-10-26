@@ -4,6 +4,7 @@ import SecurityEventsPanel from '../../components/SecurityEventsPanel'
 import type { EditingTip, SettingsForm } from './settingsHelpers'
 import { Button } from '../../components/ui/Button'
 import { IconButton } from '../../components/ui/IconButton'
+import { TextButton } from '../../components/ui/TextButton'
 
 interface AdminSectionProps {
   form: SettingsForm
@@ -111,21 +112,13 @@ export default function AdminSection({
           </h3>
           <div className="flex items-center gap-2">
             {isCustom && (
-              <button
-                type="button"
-                onClick={handleResetTips}
-                className="flex items-center gap-1 text-2xs text-lob-muted-light font-semibold"
-              >
-                <RotateCcw size={10} /> Reset to defaults
-              </button>
+              <TextButton tone="neutral" icon={<RotateCcw size={10} />} onClick={handleResetTips}>
+                Reset to defaults
+              </TextButton>
             )}
-            <button
-              type="button"
-              onClick={() => setTipsExpanded((e) => !e)}
-              className="text-xs text-lob-teal font-semibold"
-            >
+            <TextButton onClick={() => setTipsExpanded((e) => !e)}>
               {tipsExpanded ? 'Collapse' : `View all (${activeTips.length})`}
-            </button>
+            </TextButton>
           </div>
         </div>
         <p className="text-xs text-lob-muted-light">
@@ -142,13 +135,9 @@ export default function AdminSection({
             onChange={(e) => setNewTip(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTip())}
           />
-          <button
-            type="button"
-            onClick={handleAddTip}
-            className="bg-lob-teal text-white px-3 rounded-xl text-xs font-semibold flex items-center gap-1 active:scale-95 transition-all"
-          >
-            <Plus size={14} /> Add
-          </button>
+          <Button icon={<Plus />} onClick={handleAddTip}>
+            Add
+          </Button>
         </div>
 
         {/* Tips list */}
@@ -170,20 +159,10 @@ export default function AdminSection({
                       onKeyDown={(e) => e.key === 'Enter' && handleSaveEdit()}
                       autoFocus
                     />
-                    <button
-                      type="button"
-                      onClick={handleSaveEdit}
-                      className="text-xs text-lob-success font-semibold px-2"
-                    >
-                      Save
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setEditingTip(null)}
-                      className="text-xs text-lob-muted-light font-semibold px-1"
-                    >
+                    <TextButton onClick={handleSaveEdit}>Save</TextButton>
+                    <TextButton tone="neutral" onClick={() => setEditingTip(null)}>
                       Cancel
-                    </button>
+                    </TextButton>
                   </div>
                 ) : (
                   <>

@@ -17,6 +17,8 @@ import { useConfirm } from '../lib/confirmBus'
 import type { Player } from '../lib/normalise'
 import type { EventNavigate } from '../features/events/eventHelpers'
 import { Button } from './ui/Button'
+import { TextButton } from './ui/TextButton'
+import { TransferResponseActions } from '../features/events/TransferActions'
 
 // Landing page Melanie hits after tapping the WhatsApp link
 // (https://padelobsters.nl/?transfer=<id>). Shows the offer details and an
@@ -198,12 +200,13 @@ export default function TransferAccept({ transferId, onNavigate }: TransferAccep
   // ── Main offer view ──────────────────────────────────────────────────────
   return (
     <div className="space-y-4">
-      <button
+      <TextButton
+        tone="neutral"
+        icon={<ChevronLeft size={14} />}
         onClick={() => onNavigate?.('dashboard')}
-        className="text-xs text-lob-muted-light inline-flex items-center gap-1"
       >
-        <ChevronLeft size={14} /> Home
-      </button>
+        Home
+      </TextButton>
 
       <div className="card space-y-4">
         <div className="flex items-center gap-2 text-sm text-lob-warning bg-lob-warning-light border border-lob-warning-border rounded-xl px-3 py-2">
@@ -253,22 +256,11 @@ export default function TransferAccept({ transferId, onNavigate }: TransferAccep
           </div>
         )}
 
-        <div className="flex gap-2 pt-1">
-          <button
-            onClick={() => handleRespond(false)}
-            disabled={!!busy}
-            className="flex-1 border border-gray-300 text-lob-slate font-semibold py-3 rounded-xl active:scale-[0.98] disabled:opacity-50 transition-all"
-          >
-            {busy === 'decline' ? 'Declining…' : 'Decline'}
-          </button>
-          <button
-            onClick={() => handleRespond(true)}
-            disabled={!!busy}
-            className="flex-1 bg-lob-success-solid text-white font-semibold py-3 rounded-xl active:scale-[0.98] disabled:opacity-50 transition-all"
-          >
-            {busy === 'accept' ? 'Accepting…' : 'Accept transfer'}
-          </button>
-        </div>
+        <TransferResponseActions
+          busy={busy ?? false}
+          acceptLabel="Accept transfer"
+          onRespond={({ accept }) => handleRespond(accept)}
+        />
       </div>
     </div>
   )

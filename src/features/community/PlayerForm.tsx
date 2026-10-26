@@ -7,6 +7,7 @@ import type { LobbyPrompt, PlayerFormState } from './playerConstants'
 import type { CommunityPlayer } from './playersSelectors'
 import { ActionRow } from '../../components/ui/ActionRow'
 import { Button } from '../../components/ui/Button'
+import { TextButton } from '../../components/ui/TextButton'
 
 interface PlayerFormProps {
   showForm: boolean
@@ -136,22 +137,16 @@ export default function PlayerForm({
                   )}
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={acceptMerge}
-                className="w-full py-2.5 bg-lob-warning-solid text-white rounded-xl font-semibold text-sm active:scale-95 transition-all"
-              >
+              <Button fullWidth onClick={acceptMerge}>
                 {isAdmin
                   ? `Update ${(mergePlayer.name || '').split(' ')[0]}'s profile`
                   : 'Yes, complete my profile'}
-              </button>
-              <button
-                type="button"
-                onClick={() => setMergePlayer(null)}
-                className="w-full py-2 text-lob-warning text-xs font-medium"
-              >
-                {isAdmin ? 'No, create as a new player' : "No, I'm a different person"}
-              </button>
+              </Button>
+              <div className="text-center">
+                <TextButton tone="warning" onClick={() => setMergePlayer(null)}>
+                  {isAdmin ? 'No, create as a new player' : "No, I'm a different person"}
+                </TextButton>
+              </div>
             </div>
           )}
 

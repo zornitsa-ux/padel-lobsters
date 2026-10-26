@@ -99,19 +99,18 @@ export default function ScheduleGeneratorControls({
 
       {savedRounds.length > 0 && (
         <>
-          <button
-            onClick={onEditSchedule}
-            className="w-full py-2 text-sm text-lob-teal font-semibold border border-lob-teal rounded-xl"
-          >
+          <Button variant="secondary" fullWidth onClick={onEditSchedule}>
             ✏️ Edit existing schedule
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="neutral"
+            fullWidth
+            icon={<Download />}
             onClick={onDownloadCsv}
-            className="w-full py-2 text-sm text-lob-slate font-semibold border border-lob-line-strong rounded-xl flex items-center justify-center gap-2"
             title="Download the saved schedule as a CSV"
           >
-            <Download size={14} /> Download schedule (CSV)
-          </button>
+            Download schedule (CSV)
+          </Button>
         </>
       )}
 

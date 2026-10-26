@@ -338,19 +338,16 @@ export default function Payments({
                       {/* Primary action — varies by status, keeps the most common
                           next step one tap away for the admin. */}
                       {isConfirmed ? (
-                        <button
-                          onClick={() => handleMarkUnpaid(reg)}
-                          className="text-xs text-lob-muted border border-lob-line-strong px-3 py-1.5 rounded-xl font-semibold active:scale-95 transition-all"
-                        >
+                        <Button variant="neutral" size="sm" onClick={() => handleMarkUnpaid(reg)}>
                           Undo
-                        </button>
+                        </Button>
                       ) : isSelfPaid || isTikkied ? (
-                        <button
+                        <Button
+                          size="sm"
                           onClick={() => handleMarkPaid(reg, reg.paymentMethod || 'tikkie')}
-                          className="text-xs bg-lob-success-solid text-white px-3 py-1.5 rounded-xl font-semibold active:scale-95 transition-all"
                         >
                           Confirm ✓
-                        </button>
+                        </Button>
                       ) : (
                         <PaymentMethodPicker onSelect={(method) => handleMarkPaid(reg, method)} />
                       )}
@@ -428,12 +425,9 @@ function PaymentMethodPicker({ onSelect }: { onSelect: (method: string) => void 
   const [open, setOpen] = useState(false)
   return (
     <div className="relative">
-      <button
-        onClick={() => setOpen(!open)}
-        className="text-xs bg-lob-success-solid text-white px-3 py-1.5 rounded-xl font-semibold active:scale-95 transition-all"
-      >
+      <Button size="sm" onClick={() => setOpen(!open)}>
         Mark Paid ▾
-      </button>
+      </Button>
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />

@@ -6,6 +6,7 @@ import { AvatarPicker } from '../../components/ui/AvatarPicker'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
 import { LOBBY_PROMPTS, type ProfileForm } from './settingsHelpers'
 import type { Player } from '../../lib/normalise'
+import { ActionRow } from '../../components/ui/ActionRow'
 import { Button } from '../../components/ui/Button'
 
 interface ProfileSectionProps {
@@ -84,23 +85,14 @@ export default function ProfileSection({
                 {profileError}
               </p>
             )}
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={dismissPlaytomicPrompt}
-                className="flex-1 text-sm font-semibold text-lob-muted py-2.5 rounded-xl border border-lob-line-strong active:scale-95 transition-all"
-              >
+            <ActionRow>
+              <Button variant="neutral" onClick={dismissPlaytomicPrompt}>
                 No change
-              </button>
-              <button
-                type="button"
-                onClick={handleProfileSave}
-                disabled={profileSaving}
-                className="flex-1 bg-lob-teal text-white text-sm font-bold py-2.5 rounded-xl active:scale-95 transition-all disabled:opacity-50"
-              >
+              </Button>
+              <Button onClick={handleProfileSave} disabled={profileSaving}>
                 {profileSaving ? 'Saving…' : 'Update'}
-              </button>
-            </div>
+              </Button>
+            </ActionRow>
           </div>
         </div>
       )}
