@@ -28,6 +28,8 @@ component doesn't fit, fix the component, not the call site.**
    - The CLAUDE.md "UI and Design System" section, which every agent reads.
    - `npm run design:check` in CI: a per-file ratchet on raw palette classes
      (`scripts/raw-colours-baseline.json`). Counts may only go down.
+   - No hand-built buttons (owner, 2026-10-26): every `<button>` lives in
+     `src/components/ui`. A ratchet from P2e, absolute once P2f reaches zero.
    - Later: remove raw palettes from the Tailwind theme, plus a lint rule for
      unknown classes (step 7).
 4. **Discoverability.** A dev-only `/design` gallery of every component and
@@ -43,7 +45,9 @@ component doesn't fit, fix the component, not the call site.**
 | Button (action or navigation)        | `Button variant=… size=…` (`to` / `href` for links)  | exists    |
 | Utility action under content         | `Button variant="neutral" size="sm"`                 | exists    |
 | Destructive action, not the CTA      | `TextButton tone="destructive"`                      | exists    |
-| Toggle, filter or info chip          | none yet                                             | later     |
+| Toggle, filter or info chip          | `Chip`                                               | P2f       |
+| Pick one from a list (player, tile)  | option row / tile                                    | P2f       |
+| Menu of actions                      | `Menu` + `MenuItem`                                  | P2f       |
 | Underlined / inline text action      | `TextButton tone=… size=…` (`to` / `href` for links) | exists    |
 | Icon-only button                     | `IconButton` (always with `aria-label`)              | exists    |
 | Bare icon (close, back, reorder)     | `IconButton variant="ghost"`                         | exists    |
@@ -105,6 +109,8 @@ the gallery, and runs `npm run design:baseline` when counts drop.
 | P2b | **Ghost `IconButton`.** About 15 bare icon buttons (close X, remove, delete, move up/down, refresh, back) are a muted icon with a hover colour. Add a `ghost` variant with a proper tap target, then migrate them.                                                                                                                                                                                                                                                                                                                                              | Done (#72)                  |
 | P2c | **`ActionChip` → `Button size="sm"`.** Share and Add to calendar are actions, so they are buttons, not chips (see "Buttons and chips"). Pick the variant (likely `neutral`), migrate the two chip call sites and delete `ActionChip`.                                                                                                                                                                                                                                                                                                                           | Branch `design-action-chip` |
 | P2d | **Layout props instead of `className`.** Bring the repeated layout classes into the components. Button: `fullWidth` for `w-full` (39 uses); an `ActionRow` component for paired buttons, replacing `flex-1` (28) and fixing their order and gap; `EmptyState` spaces its own action, replacing `mt-2` (14); Button never shrinks, replacing `flex-shrink-0` (1). Then review the remaining `className` uses on `TextButton` (5) and `IconButton` (3). Once a component has no `className` callers left, consider removing the prop.                             | Next                        |
+| P2e | **Zero hand-built buttons: actions.** 176 raw `<button>`s in 80 files outside `src/components/ui` (2026-10-26 inventory). Move the ~100 actions and text actions onto `Button` and `TextButton` (CTAs, accept/decline and save/cancel pairs, Sign out, Confirm, "Add question", "Reset to defaults"), and expand/collapse headers onto `CollapsibleSection` / `CollapsibleCard`. Add a lint rule banning `<button>` outside `src/components/ui`, as a per-file ratchet so the count can only go down. Depends on P2d's `fullWidth` and `ActionRow`.             |                             |
+| P2f | **Zero hand-built buttons: chips, options, menus.** New components for what's left: `Chip` (toggle, filter, selection: filter pills, sizes, rounds, divisions, lefty, gender and position), an option row / tile (player pickers, Oscars vote tiles and category grid, lightbox thumbnails) and `Menu` + `MenuItem` (event admin menu, payment method picker, status override, team search). Two-to-four way choices go to `SegmentedControl`. The ratchet reaches zero and the rule becomes absolute.                                                          |                             |
 | P3  | **`AlertBox` size and role, `FormError` in ui.** Migrate the 15 hand-built alert boxes and 7 field-error spellings. The dismiss X in a tinted box (`AlertBox`, `TeamNotices`, the event error banner) is still a bare 14px icon: give it a proper tap target here.                                                                                                                                                                                                                                                                                              |                             |
 | P4  | **`Badge` tones** (`success`, `neutral`, `warning`, `outline`) and **payment status single source** (`paymentStatus.ts`, `PaymentStatusBadge` on `Badge`; blue "transferred" gets a token). Rename team-state "Confirmed".                                                                                                                                                                                                                                                                                                                                      |                             |
 | P5  | **Empty and signed-out states.** `EmptyState variant="inline"`, `SignInPrompt`; loading states: a loading card keeps its title or header, so the viewer sees what is loading, and shows `Spinner` / `Skeleton` in the body instead of `return null`.                                                                                                                                                                                                                                                                                                            |                             |
@@ -122,11 +128,6 @@ sites, `registeredEntries`, and the King of the Court helpers (`isKingCourt`,
 
 ## Later
 
-- **Hand-built buttons outside `.btn-*`.** P2 replaced every `.btn-*` use,
-  but about 50 files still style their own `<button>` (for example Sign out
-  in Account, Schedule and Payments on the next-event card, merch order
-  actions, oscars controls). Some are buttons, some toggles, tiles or chips.
-  Audit after P2d and map each onto `Button`, `TextButton` or a chip.
 - **Colour pairings** (owner, 2026-10-26). Document which foregrounds and
   fills may sit on which surfaces, so a component can't pick a pair that
   doesn't read. Prompted by #72's review: the `ghost` hover fill (`lob-line`)
@@ -226,3 +227,9 @@ None.
   "Remind" button is a `neutral sm` Button and the `whatsapp` token is gone.
   The root `DESIGN_SYSTEM.md` button section still described `.btn-*` and
   `ActionChip`; it now points at the components.
+- **2026-10-26.** Owner: no hand-built buttons, and stop listing them as
+  follow-ups; take the count to zero. The "Later" audit becomes P2e (actions
+  onto `Button` / `TextButton`, plus a lint ratchet on `<button>` outside
+  `components/ui`) and P2f (`Chip`, option row / tile, `Menu`), after P2d.
+  The inventory found 176 raw `<button>`s in 80 files, not the ~50 files
+  estimated.
