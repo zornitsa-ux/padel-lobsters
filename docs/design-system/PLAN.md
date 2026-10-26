@@ -80,8 +80,8 @@ component doesn't fit, fix the component, not the call site.**
 - **Ghost** (`ghost`, `ghost-destructive`): a muted icon with a hover fill.
   Close, back, refresh and reorder are `ghost`; delete and remove in a list
   row are `ghost-destructive`.
-- `md` (36px) for close and back in modal, panel and card headers; `sm`
-  (32px) inside rows.
+- `md` (40px, the same height as `Button md`) for close and back in modal,
+  panel and card headers; `sm` (32px) inside rows.
 - Reorder uses `ArrowUp` / `ArrowDown`, not chevrons, so it can't be read as
   an expand toggle.
 
@@ -128,8 +128,7 @@ sites, `registeredEntries`, and the King of the Court helpers (`isKingCourt`,
 
 ## Open owner calls
 
-- P2: `lg` (52px) has no call sites. Keep it for a future lead CTA, or drop
-  it to keep the variations down.
+None.
 
 ## Log
 
@@ -180,3 +179,7 @@ sites, `registeredEntries`, and the King of the Court helpers (`isKingCourt`,
   32px box would make the slider row jump when "overridden" appears. Icon-only
   buttons left hand-built (password eye, rating stepper, avatar camera,
   image-remove badge, lightbox close) all now carry an `aria-label`.
+- **2026-10-26.** Owner review of #72: `IconButton md` grows from 36px to
+  40px so it matches `Button md` beside it. `Button lg` (52px) stays with no
+  call sites, so a future lead CTA has a size ready rather than someone
+  inventing one.

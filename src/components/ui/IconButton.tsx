@@ -5,7 +5,7 @@ import React from 'react'
  * refresh and reorder; `ghost-destructive` is the same for delete and remove in a row.
  */
 type Variant = 'neutral' | 'destructive' | 'accent' | 'success' | 'ghost' | 'ghost-destructive'
-/** `md` (36px) is the default; `sm` (32px) for rows and inline controls. */
+/** `md` (40px, matching `Button md`) is the default; `sm` (32px) for rows and inline controls. */
 type Size = 'sm' | 'md'
 
 interface IconButtonProps {
@@ -42,7 +42,7 @@ const VARIANT: Record<Variant, string> = {
 
 const SIZE: Record<Size, string> = {
   sm: 'w-8 h-8 [&>svg]:size-3.5',
-  md: 'w-9 h-9 [&>svg]:size-4',
+  md: 'w-10 h-10 [&>svg]:size-4',
 }
 
 export function IconButton({

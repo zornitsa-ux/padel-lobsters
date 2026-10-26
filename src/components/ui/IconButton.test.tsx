@@ -6,7 +6,7 @@ describe('IconButton', () => {
   it('renders a button with the shared square shell and neutral tokens', () => {
     const el = IconButton({ children: 'ICON', 'aria-label': 'Edit' })
     expect(propsOf(el).className).toBe(
-      'w-9 h-9 [&>svg]:size-4 flex shrink-0 items-center justify-center rounded-xl active:scale-95 transition-all disabled:opacity-50 disabled:pointer-events-none bg-lob-teal-light text-lob-muted',
+      'w-10 h-10 [&>svg]:size-4 flex shrink-0 items-center justify-center rounded-xl active:scale-95 transition-all disabled:opacity-50 disabled:pointer-events-none bg-lob-teal-light text-lob-muted',
     )
     expect(propsOf(el).type).toBe('button')
     expect(propsOf(el)['aria-label']).toBe('Edit')
