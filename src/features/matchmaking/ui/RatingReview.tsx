@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { ChevronDown, ChevronRight, CheckCircle2, Minus, Plus } from 'lucide-react'
+import { CheckCircle2, Minus, Plus } from 'lucide-react'
 import type { RatingEventRow } from '../matchmakingSchemas'
 import { describeRatingRecommendation } from './ratingRecommendation'
 import { playerName, type PlayerNamesById } from './playerNames'
 import { Button } from '../../../components/ui/Button'
 import { IconButton } from '../../../components/ui/IconButton'
+import { Disclosure } from '../../../components/ui/Disclosure'
 
 export type RatingReviewProps = {
   // Count of adjustments auto-applied without review (small, within-cap moves).
@@ -357,14 +358,9 @@ function QueueCard({
 
       {row.breakdown.length > 0 && (
         <div>
-          <button
-            type="button"
-            onClick={() => setBreakdownOpen((open) => !open)}
-            className="flex items-center gap-1 text-sm font-semibold text-lob-teal"
-          >
-            {breakdownOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+          <Disclosure expanded={breakdownOpen} onToggle={() => setBreakdownOpen((open) => !open)}>
             See the {row.breakdown.length} matches behind this
-          </button>
+          </Disclosure>
           {breakdownOpen && (
             <>
               <p className="mt-1.5 text-xs text-lob-muted-light">

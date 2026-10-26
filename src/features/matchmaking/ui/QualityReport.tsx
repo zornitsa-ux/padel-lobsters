@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { ChevronDown, ChevronRight } from 'lucide-react'
 import type { QualityDimensions, ScheduleRun, Violation } from '../domain/types'
 import { playerNamesById, violationLine, violationsSummary } from './violationCopy'
 import { DIMENSIONS } from './dimensions'
 import { ProgressBar } from '../../../components/ui/ProgressBar'
+import { Disclosure } from '../../../components/ui/Disclosure'
 
 export type QualityReportProps = {
   quality: { overall: QualityDimensions; perRound: QualityDimensions[] }
@@ -90,14 +90,9 @@ export default function QualityReport({
 
       {!compact && (
         <div className="space-y-2">
-          <button
-            type="button"
-            onClick={() => setDetailsOpen((open) => !open)}
-            className="flex items-center gap-1 text-sm font-semibold text-lob-teal"
-          >
-            {detailsOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+          <Disclosure expanded={detailsOpen} onToggle={() => setDetailsOpen((open) => !open)}>
             Details
-          </button>
+          </Disclosure>
 
           {detailsOpen && (
             <div className="space-y-4 pl-1">

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronDown, ChevronRight, Loader2, Shuffle } from 'lucide-react'
+import { Loader2, Shuffle } from 'lucide-react'
 import { COURT_JITTER_SCALE } from '../domain/courts'
 import type { MatcherPriority } from '../domain/presets'
 import type { FeasibilityResult, MatchConfig, MatchPreset, ResolvedConfig } from '../domain/types'
@@ -7,6 +7,7 @@ import { DIMENSION_LABELS } from './dimensions'
 import { segmentedButtonClass } from './segmentedButton'
 import { Button } from '../../../components/ui/Button'
 import { TextButton } from '../../../components/ui/TextButton'
+import { Disclosure } from '../../../components/ui/Disclosure'
 
 export type ConfigPanelProps = {
   // Controlled config: preset + optional knob overrides. Container owns state.
@@ -195,14 +196,9 @@ export default function ConfigPanel({
         <p className="mt-2 text-xs text-lob-muted">{presetIntent}</p>
       </div>
 
-      <button
-        type="button"
-        onClick={() => setAdvancedOpen((open) => !open)}
-        className="flex items-center gap-1 text-sm font-semibold text-lob-teal"
-      >
-        {advancedOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+      <Disclosure expanded={advancedOpen} onToggle={() => setAdvancedOpen((open) => !open)}>
         Advanced
-      </button>
+      </Disclosure>
 
       {advancedOpen && (
         <div className="space-y-3 pl-1">

@@ -1,5 +1,8 @@
 import { X, Plus } from 'lucide-react'
 import { IconButton } from '../../components/ui/IconButton'
+import { Button } from '../../components/ui/Button'
+import { TextButton } from '../../components/ui/TextButton'
+import { ActionRow } from '../../components/ui/ActionRow'
 
 /* A category row while it is being edited: the fields are still loose because
    they come either from a saved `lobster_oscars_categories` row (nullable
@@ -61,19 +64,15 @@ export default function CategoryEditor({ cats, onChange, onReset }: CategoryEdit
           </IconButton>
         </div>
       ))}
-      <div className="flex gap-2 pt-1">
-        <button
-          onClick={add}
-          className="flex-1 flex items-center justify-center gap-1 text-lob-teal text-sm font-semibold bg-lob-teal/5 hover:bg-lob-teal/10 rounded-xl py-2 transition-colors"
-        >
-          <Plus size={14} /> Add category
-        </button>
-        <button
-          onClick={onReset}
-          className="text-lob-muted text-xs font-semibold px-3 hover:text-lob-slate"
-        >
-          Reset to defaults
-        </button>
+      <div className="pt-1">
+        <ActionRow>
+          <Button variant="secondary" icon={<Plus />} onClick={add}>
+            Add category
+          </Button>
+          <TextButton tone="neutral" onClick={onReset}>
+            Reset to defaults
+          </TextButton>
+        </ActionRow>
       </div>
     </div>
   )

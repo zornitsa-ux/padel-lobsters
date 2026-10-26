@@ -6,6 +6,7 @@ import { LeagueMatchCard } from './LeagueMatchCard'
 import { computeGroupStandings } from '../domain/standings'
 import { sortMatchesDesc } from '../domain/matchDisplay'
 import type { LeagueTeam, LeagueMatch } from '../domain/types'
+import { TextButton } from '../../../components/ui/TextButton'
 
 interface GroupStageContentProps {
   divTeams: LeagueTeam[]
@@ -102,12 +103,11 @@ export function GroupStageContent({
                 ))}
               </div>
               {completedResults.length > 5 && !showAllResults && (
-                <button
-                  onClick={() => setShowAllResults(true)}
-                  className="text-sm text-lob-teal mt-3 w-full text-center"
-                >
-                  Show all ({completedResults.length}) ↓
-                </button>
+                <div className="mt-3 text-center">
+                  <TextButton size="sm" onClick={() => setShowAllResults(true)}>
+                    Show all ({completedResults.length}) ↓
+                  </TextButton>
+                </div>
               )}
             </>
           )}

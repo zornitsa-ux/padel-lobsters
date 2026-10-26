@@ -16,7 +16,7 @@ describe('CollapsibleCard', () => {
   })
 
   it('hides the children when collapsed and shows a down chevron', () => {
-    const [button, body] = childrenOf(CollapsibleCard({ ...base, expanded: false }))
+    const [button, , body] = childrenOf(CollapsibleCard({ ...base, expanded: false }))
     expect(body).toBe(false)
     const [header, chevron] = childrenOf(button)
     expect(header).toBe('HEADER')
@@ -26,7 +26,7 @@ describe('CollapsibleCard', () => {
 
   it('shows the children when expanded and flips the chevron', () => {
     const el = CollapsibleCard({ ...base, expanded: true })
-    const [button, body] = childrenOf(el)
+    const [button, , body] = childrenOf(el)
     expect(body).toBe('BODY')
     expect(propsOf(button)['aria-expanded']).toBe(true)
     const [, chevron] = childrenOf(button)
@@ -65,5 +65,12 @@ describe('CollapsibleCard', () => {
     const [button] = childrenOf(CollapsibleCard({ ...base, onToggle, expanded: false }))
     ;(propsOf(button).onClick as () => void)()
     expect(onToggle).toHaveBeenCalledTimes(1)
+  })
+
+  it('shows the summary under the header whether or not it is expanded', () => {
+    for (const expanded of [false, true]) {
+      const [, summary] = childrenOf(CollapsibleCard({ ...base, expanded, summary: 'SUMMARY' }))
+      expect(summary).toBe('SUMMARY')
+    }
   })
 })

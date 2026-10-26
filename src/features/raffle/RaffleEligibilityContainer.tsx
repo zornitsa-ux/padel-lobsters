@@ -7,6 +7,8 @@ import { useRegistrations } from '../events/useRegistrations'
 import { useExclusions, useIneligible, useSetExclusions } from './useRaffle'
 import type { IneligibleReason } from './raffleQueries'
 import type { EventNavigate } from '../events/eventHelpers'
+import { Button } from '../../components/ui/Button'
+import { TextButton } from '../../components/ui/TextButton'
 
 interface Tournament {
   id: string
@@ -91,13 +93,13 @@ export default function RaffleEligibilityContainer({
 
   return (
     <div className="space-y-4">
-      <button
+      <TextButton
+        size="sm"
+        icon={<ArrowLeft size={16} />}
         onClick={() => onNavigate?.('raffle', tournament)}
-        className="flex items-center gap-1 text-sm font-semibold text-lob-teal"
       >
-        <ArrowLeft size={16} />
         Back to raffle
-      </button>
+      </TextButton>
 
       <div className="card space-y-1">
         <div className="flex items-center gap-2">
@@ -168,14 +170,15 @@ export default function RaffleEligibilityContainer({
         </div>
       )}
 
-      <button
+      <Button
+        size="lg"
+        fullWidth
+        icon={<Save />}
         onClick={save}
         disabled={!dirty || setExclusions.isPending}
-        className="w-full bg-lob-teal hover:bg-lob-teal-dark disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-all"
       >
-        <Save size={18} />
         {setExclusions.isPending ? 'Saving…' : dirty ? 'Save eligibility' : 'Saved'}
-      </button>
+      </Button>
     </div>
   )
 }

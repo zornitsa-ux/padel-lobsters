@@ -87,15 +87,12 @@ function TeamRow({
             variant={LEVEL_BADGE[team.experience_level] ?? 'silver'}
             label={team.experience_level}
           />
-          <button
-            className="text-xs text-lob-muted hover:text-lob-teal"
-            onClick={() => onEdit(team)}
-          >
+          <TextButton tone="neutral" onClick={() => onEdit(team)}>
             Edit
-          </button>
-          <button className="text-xs text-lob-muted hover:text-lob-coral" onClick={handleRemove}>
+          </TextButton>
+          <TextButton tone="destructive" onClick={handleRemove}>
             Remove
-          </button>
+          </TextButton>
         </>
       }
     />
@@ -122,12 +119,9 @@ export function ManageTeams({ league, teams, division, allPlayers }: ManageTeams
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <SectionHeader icon={<Plus size={15} />} title={`Teams (${divisionTeams.length})`} />
-        <button
-          className="text-xs font-semibold text-lob-teal flex items-center gap-1"
-          onClick={() => setFormTeam(null)}
-        >
-          <Plus size={13} /> Add Team
-        </button>
+        <TextButton icon={<Plus size={13} />} onClick={() => setFormTeam(null)}>
+          Add Team
+        </TextButton>
       </div>
 
       {divisionTeams.length === 0 ? (

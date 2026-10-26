@@ -8,6 +8,7 @@ import { errorMessage, formatOrderTime, getPlayerName, orderTimestamp } from './
 import { useMerchActions } from './useMerch'
 import type { MerchInterest, MerchItem } from './merchSchemas'
 import { IconButton } from '../../components/ui/IconButton'
+import { Button } from '../../components/ui/Button'
 
 type OrdersTableProps = {
   activeOrders: MerchInterest[]
@@ -44,7 +45,9 @@ export default function OrdersTable({ activeOrders, interests, items, players }:
         onClose={closeCancelModal}
         title="Cancel Order"
         footer={
-          <button
+          <Button
+            variant="danger"
+            fullWidth
             onClick={async () => {
               if (!cancelTarget) return
               try {
@@ -56,10 +59,9 @@ export default function OrdersTable({ activeOrders, interests, items, players }:
               closeCancelModal()
             }}
             disabled={cancelOrder.isPending}
-            className="w-full py-2.5 rounded-xl bg-lob-danger-solid text-white font-semibold text-sm active:scale-95 transition-all disabled:opacity-50"
           >
             {cancelOrder.isPending ? 'Cancelling…' : 'Cancel Order'}
-          </button>
+          </Button>
         }
       >
         {cancelTarget && (

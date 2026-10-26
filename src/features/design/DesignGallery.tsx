@@ -21,6 +21,7 @@ import AddToCalendarButton from '../../components/ui/AddToCalendarButton'
 import { AvatarPicker } from '../../components/ui/AvatarPicker'
 import { AlertBox } from '../../components/ui/AlertBox'
 import { Badge, type BadgeProps } from '../../components/ui/Badge'
+import { Disclosure } from '../../components/ui/Disclosure'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
 import { Spinner } from '../../components/ui/Spinner'
@@ -224,6 +225,7 @@ function StatusSection() {
 
 function StatesSection() {
   const [choice, setChoice] = useState('left')
+  const [open, setOpen] = useState(false)
   return (
     <Section title="Choice, empty and loading">
       <SegmentedControl
@@ -236,6 +238,10 @@ function StatesSection() {
         onChange={setChoice}
         ariaLabel="Preferred side"
       />
+      <Disclosure expanded={open} onToggle={() => setOpen((o) => !o)}>
+        Advanced
+      </Disclosure>
+      {open && <p className="text-xs text-lob-muted">Extra detail shown by Disclosure.</p>}
       <EmptyState
         icon={<Inbox size={36} />}
         title="Nothing here yet"

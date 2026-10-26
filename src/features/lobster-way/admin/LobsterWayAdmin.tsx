@@ -125,13 +125,9 @@ export default function LobsterWayAdmin() {
               />
             ))}
 
-            <button
-              type="button"
-              onClick={addCategory}
-              className="w-full flex items-center justify-center gap-1.5 text-sm text-lob-teal font-semibold border border-dashed border-lob-teal/40 rounded-xl py-3"
-            >
-              <Plus size={14} /> Add category
-            </button>
+            <Button variant="secondary" fullWidth icon={<Plus />} onClick={addCategory}>
+              Add category
+            </Button>
 
             <div className="pt-2">
               <ActionRow>

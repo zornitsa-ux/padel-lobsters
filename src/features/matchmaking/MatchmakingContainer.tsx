@@ -10,6 +10,8 @@ import { useConfigDerivations } from './useConfigDerivations'
 import { suggestSwaps } from './domain/swaps'
 import type { SwapSuggestion, SwapTarget } from './domain/swaps'
 import type { GenderMode, MatchConfig, ScheduleRun } from './domain/types'
+import { ActionRow } from '../../components/ui/ActionRow'
+import { Button } from '../../components/ui/Button'
 
 type RosterRow = Parameters<typeof toPlayerInput>[0]
 
@@ -397,27 +399,25 @@ export default function MatchmakingContainer({
             className="input"
             autoFocus
           />
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={doCommit}
-              disabled={confirmText !== CONFIRM_PHRASE || commit.isPending}
-              className="flex-1 py-2 text-sm rounded-xl font-semibold bg-lob-danger-solid text-white disabled:opacity-50"
-            >
-              {commit.isPending ? 'Saving…' : 'Discard scores & save'}
-            </button>
-            <button
-              type="button"
+          <ActionRow>
+            <Button
+              variant="neutral"
               onClick={() => {
                 setConfirming(false)
                 setConfirmText('')
               }}
               disabled={commit.isPending}
-              className="flex-1 py-2 text-sm rounded-xl font-semibold bg-gray-100 text-lob-slate disabled:opacity-50"
             >
               Cancel
-            </button>
-          </div>
+            </Button>
+            <Button
+              variant="danger"
+              onClick={doCommit}
+              disabled={confirmText !== CONFIRM_PHRASE || commit.isPending}
+            >
+              {commit.isPending ? 'Saving…' : 'Discard scores & save'}
+            </Button>
+          </ActionRow>
         </div>
       )}
     </div>

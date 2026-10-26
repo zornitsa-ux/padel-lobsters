@@ -5,6 +5,8 @@ export interface CollapsibleCardProps {
   header: React.ReactNode
   expanded: boolean
   onToggle: () => void
+  /** Shown under the header whether or not the card is expanded. */
+  summary?: React.ReactNode
   children: React.ReactNode
   /** Wrapper classes. Defaults to the design-system card shell. */
   className?: string
@@ -19,6 +21,7 @@ export function CollapsibleCard({
   header,
   expanded,
   onToggle,
+  summary,
   children,
   className = 'card',
   headerClassName = '',
@@ -36,6 +39,7 @@ export function CollapsibleCard({
         {header}
         <Chevron size={16} className={chevronClassName} />
       </button>
+      {summary}
       {expanded && children}
     </div>
   )
