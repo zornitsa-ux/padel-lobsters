@@ -239,11 +239,14 @@ None.
   The inventory found 176 raw `<button>`s in 80 files, not the ~50 files
   estimated.
 - **2026-10-26.** P2d built on `design-layout-props`. `Button fullWidth`
-  replaces `w-full` (42 sites); without it a button keeps its natural width
-  and never shrinks (`shrink-0`), and `TextButton` never shrinks either.
-  `ActionRow` (`flex gap-2`, children at equal width) replaces the 13
-  `flex gap-2` / `gap-3` + `flex-1` pairs, including `ConfirmDialog`, so every
-  pair has the same gap and puts the alternative first. `EmptyState` spaces
+  replaces `w-full` (42 sites). `ActionRow` (`flex gap-2`, children at equal
+  width) replaces the 15 `flex-1` rows, including `ConfirmDialog`, so every
+  pair has the same 8px gap (three league forms had 12px) and puts the
+  alternative first. A button beside a text action (Edit / Remove, Save /
+  Reset to defaults) is an `ActionRow` too, not a `fullWidth` button in a
+  row. "Button never shrinks" is dropped: a flex item already can't shrink
+  below its longest word, and `shrink-0` made long labels overflow narrow
+  rows instead of wrapping (review of #74). `EmptyState` spaces
   its action, replacing 12 `mt-2`s. Owner: a component never adds its own
   spacing; the layout component or parent places it. So the remaining
   margins move to their parents too (TransferAccept's cards, ManageTeams'

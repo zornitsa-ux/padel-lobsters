@@ -15,7 +15,7 @@ interface ButtonContentProps {
   size?: Size
   /** Leading icon. The button sets its size. */
   icon?: React.ReactNode
-  /** Fills its container's width. Otherwise the button keeps its natural width and never shrinks. */
+  /** Fills its container's width. Buttons sharing a row go in `ActionRow` instead. */
   fullWidth?: boolean
 }
 
@@ -44,8 +44,7 @@ function buttonClasses({
   size = 'md',
   fullWidth = false,
 }: Omit<ButtonContentProps, 'children' | 'icon'>) {
-  const width = fullWidth ? 'w-full' : 'shrink-0'
-  return `${BASE} ${VARIANT[variant]} ${SIZE[size]} ${width}`
+  return `${BASE} ${VARIANT[variant]} ${SIZE[size]}${fullWidth ? ' w-full' : ''}`
 }
 
 export function Button({ children, variant, size, icon, fullWidth, ...props }: ButtonProps) {

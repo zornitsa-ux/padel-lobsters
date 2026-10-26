@@ -36,7 +36,7 @@ const textButtonClasses = ({
 }: Omit<TextButtonContentProps, 'children'>) =>
   [
     icon ? 'inline-flex items-center gap-1' : '',
-    'shrink-0 font-semibold underline underline-offset-2',
+    'font-semibold underline underline-offset-2',
     TONE[tone],
     'disabled:text-lob-muted-light disabled:cursor-not-allowed',
     SIZE[size],

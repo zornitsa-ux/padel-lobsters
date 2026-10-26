@@ -13,7 +13,7 @@ describe('TextButton', () => {
     expect(propsOf(el).type).toBe('button')
     expect(propsOf(el).onClick).toBe(onClick)
     expect(classOf(el)).toBe(
-      'shrink-0 font-semibold underline underline-offset-2 text-lob-teal disabled:text-lob-muted-light disabled:cursor-not-allowed text-xs',
+      'font-semibold underline underline-offset-2 text-lob-teal disabled:text-lob-muted-light disabled:cursor-not-allowed text-xs',
     )
   })
 

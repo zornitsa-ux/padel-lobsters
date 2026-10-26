@@ -49,11 +49,9 @@ describe('Button', () => {
     expect(propsOf(propsOf(el).children).children).toEqual(['ICON', 'Add'])
   })
 
-  it('never shrinks unless it fills its container', () => {
-    expect(classOf(Button({ children: 'Go' }))).toContain('shrink-0')
-    const full = classOf(Button({ children: 'Go', fullWidth: true }))
-    expect(full).toContain('w-full')
-    expect(full).not.toMatch(/(^| )shrink-0/)
+  it('fills its container only when fullWidth', () => {
+    expect(classOf(Button({ children: 'Go' }))).not.toContain('w-full')
+    expect(classOf(Button({ children: 'Go', fullWidth: true }))).toMatch(/ w-full$/)
   })
   it('renders a router Link for `to`', () => {
     const el = Button({ children: 'Open', to: '/events' })
