@@ -48,7 +48,7 @@ export default function TransferSpotCard({
       <p className="text-xs text-lob-muted text-center py-1.5">
         Transfers are closed for this event. Reach out to the{' '}
         {whatsappLink ? (
-          <TextButton href={whatsappLink} size="inherit">
+          <TextButton href={whatsappLink} external size="inherit">
             community admins
           </TextButton>
         ) : (

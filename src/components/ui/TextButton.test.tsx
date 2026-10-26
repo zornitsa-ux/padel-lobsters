@@ -36,10 +36,24 @@ describe('TextButton', () => {
     expect(classOf(el).startsWith('inline-flex items-center gap-1')).toBe(true)
   })
 
-  it('renders an external anchor for `href`', () => {
-    const el = TextButton({ children: 'Admins', href: 'https://example.com' })
+  it('renders a same-tab anchor for `href`', () => {
+    const el = TextButton({ children: 'Email us', href: 'mailto:hi@example.com' })
+    expect((el as { type: string }).type).toBe('a')
+    expect(propsOf(el).target).toBeUndefined()
+    expect(propsOf(el).rel).toBeUndefined()
+    expect(propsOf(el).external).toBeUndefined()
+  })
+
+  it('opens `external` anchors in a new tab', () => {
+    const el = TextButton({ children: 'Admins', href: 'https://example.com', external: true })
     expect((el as { type: string }).type).toBe('a')
     expect(propsOf(el).target).toBe('_blank')
     expect(propsOf(el).rel).toBe('noopener noreferrer')
+  })
+
+  it('gives neutral links a hover state', () => {
+    const el = TextButton({ children: 'Account', tone: 'neutral', to: '/account' })
+    expect(classOf(el)).toContain('hover:text-lob-slate')
+    expect(classOf(el)).not.toContain('enabled:')
   })
 })

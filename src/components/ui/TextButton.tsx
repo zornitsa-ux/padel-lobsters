@@ -24,11 +24,15 @@ type ButtonAttributes = Omit<
   'className' | 'children'
 >
 
+/**
+ * `to` is in-app navigation (router Link). `href` is a plain anchor (mailto:, tel:);
+ * add `external` to open it in a new tab.
+ */
 type TextButtonProps = TextButtonContentProps &
   (
-    | (AnchorAttributes & { to: string; href?: never })
-    | (AnchorAttributes & { href: string; to?: never })
-    | (ButtonAttributes & { to?: never; href?: never })
+    | (AnchorAttributes & { to: string; href?: never; external?: never })
+    | (AnchorAttributes & { href: string; external?: boolean; to?: never })
+    | (ButtonAttributes & { to?: never; href?: never; external?: never })
   )
 
 const TONE: Record<Tone, string> = {
@@ -36,7 +40,7 @@ const TONE: Record<Tone, string> = {
   primary: 'text-lob-coral',
   destructive: 'text-lob-danger',
   warning: 'text-lob-warning',
-  neutral: 'text-lob-muted enabled:hover:text-lob-slate',
+  neutral: 'text-lob-muted hover:text-lob-slate',
 }
 
 const SIZE: Record<Size, string> = {
@@ -80,8 +84,10 @@ export function TextButton(props: TextButtonProps) {
     )
   }
   if (rest.href !== undefined) {
+    const { external, ...anchor } = rest
+    const newTab = external ? { target: '_blank', rel: 'noopener noreferrer' } : {}
     return (
-      <a target="_blank" rel="noopener noreferrer" {...rest} className={classes}>
+      <a {...newTab} {...anchor} className={classes}>
         {content}
       </a>
     )

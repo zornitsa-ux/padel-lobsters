@@ -60,13 +60,9 @@ export default function PinSignInInterstitial() {
       footer={
         <div className="flex gap-2">
           {!synthetic && (
-            <button
-              type="button"
-              onClick={setPasswordNow}
-              className="flex-1 text-sm font-semibold text-lob-slate bg-gray-100 py-2.5 rounded-xl active:scale-95"
-            >
+            <Button variant="neutral" onClick={setPasswordNow} className="flex-1">
               Set a password now
-            </button>
+            </Button>
           )}
           <Button onClick={close} className="flex-1">
             Got it

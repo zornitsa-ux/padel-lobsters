@@ -136,6 +136,11 @@ sites, `registeredEntries`, and the King of the Court helpers (`isKingCourt`,
   `TextButton`s. Buttons vs chips defined (above), so `ActionChip` becomes a
   `Button` (P2c). Disabled buttons drop their hover styles, and a disabled
   `TextButton` is muted instead of half-opacity.
+- **2026-10-26.** Owner: red-700 `danger` still sat too close to coral, so
+  it moves to a deep crimson (`#9B1C31`, hover `#7A1526`). This shifts every
+  `-solid`, `-strong` and danger text use app-wide, which is intended.
+  `TextButton`: `to` is in-app router navigation, `href` is a same-tab
+  anchor, and `external` opens a new tab.
 - **2026-10-26.** Owner: repeated layout classes on ui components should be
   brought into the design system as props or layout components (P2d).
   CLAUDE.md asks for `className` to stay layout-only and sparing.

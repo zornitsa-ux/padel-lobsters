@@ -97,16 +97,23 @@ function TextButtonSection() {
         <TextButton tone="destructive">Destructive</TextButton>
         <TextButton tone="warning">Warning</TextButton>
         <TextButton tone="neutral">Neutral</TextButton>
+        <TextButton tone="neutral" to="/design">
+          Neutral link
+        </TextButton>
         <TextButton disabled>Disabled</TextButton>
       </Row>
-      <Row label="size, icon, to / href">
+      <Row label="size, icon, to / href / href external">
         <TextButton size="sm">Small</TextButton>
         <TextButton to="/design" icon={<ArrowUpRight size={12} />}>
           Router link
         </TextButton>
         <p className="text-xs text-lob-muted">
           Inline in a sentence:{' '}
-          <TextButton size="inherit" href="https://example.com">
+          <TextButton size="inherit" href="mailto:hello@example.com">
+            email link
+          </TextButton>{' '}
+          or{' '}
+          <TextButton size="inherit" href="https://example.com" external>
             external link
           </TextButton>
           .

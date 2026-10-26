@@ -90,16 +90,16 @@ function EmailChangeForm({ email }: { email: string }) {
             </p>
           )}
           <div className="flex gap-2">
-            <button
-              type="button"
+            <Button
+              variant="neutral"
               onClick={() => {
                 setEmailEditing(false)
                 setEmailStatus('')
               }}
-              className="flex-1 text-sm font-semibold text-lob-slate bg-gray-100 py-2 rounded-xl active:scale-95"
+              className="flex-1"
             >
               Cancel
-            </button>
+            </Button>
             <Button
               type="submit"
               disabled={emailBusy || !newEmail.trim()}

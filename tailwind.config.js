@@ -2,6 +2,8 @@ const teal = '#3D7A8A'
 const tealDark = '#2A5A68'
 const coral = '#D94F2B'
 const gold = '#FACC15'
+/** Deep crimson, kept well apart from coral. Text and fills share one shade. */
+const danger = '#9B1C31'
 const darkRgb = '28 43 48' // lob.dark
 const ink = (alpha) => `rgb(${darkRgb} / ${alpha})`
 
@@ -45,13 +47,13 @@ export default {
             strong: '#92400E',
           },
           danger: {
-            DEFAULT: '#B91C1C',
+            DEFAULT: danger,
             light: '#FEF2F2',
             soft: '#FEE2E2',
             border: '#FECACA',
             'on-dark': '#FCA5A5',
-            solid: '#B91C1C',
-            strong: '#991B1B',
+            solid: danger,
+            strong: '#7A1526',
           },
           info: {
             DEFAULT: '#0369A1',
