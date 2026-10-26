@@ -1,10 +1,11 @@
 import React, { type ChangeEvent, type Dispatch, type FormEvent, type SetStateAction } from 'react'
-import { Upload } from 'lucide-react'
+import { Upload, X } from 'lucide-react'
 import { Modal } from '../../components/ui/Modal'
 import { SIZES_APPAREL, SIZES_SOCKS } from './sizes'
 import type { ItemFormState } from './itemForm'
 import type { MerchItem } from './merchSchemas'
 import { Button } from '../../components/ui/Button'
+import { IconButton } from '../../components/ui/IconButton'
 
 type ItemEditorFormProps = {
   showForm: boolean
@@ -181,13 +182,15 @@ export default function ItemEditorForm({
                     alt=""
                     className="w-full h-full object-cover rounded-xl border border-lob-line-strong"
                   />
-                  <button
-                    type="button"
+                  <IconButton
                     onClick={() => handleRemoveImage(idx)}
-                    className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-lob-danger-solid text-white rounded-full flex items-center justify-center text-xs font-bold leading-none"
+                    aria-label="Remove image"
+                    variant="destructive"
+                    size="sm"
+                    className="absolute top-1 right-1"
                   >
-                    ×
-                  </button>
+                    <X />
+                  </IconButton>
                   {idx === 0 && (
                     <span className="absolute bottom-1 left-1 text-[9px] bg-black/50 text-white px-1 rounded">
                       main

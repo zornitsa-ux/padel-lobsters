@@ -1,4 +1,5 @@
 import { X, Plus } from 'lucide-react'
+import { IconButton } from '../../components/ui/IconButton'
 
 /* A category row while it is being edited: the fields are still loose because
    they come either from a saved `lobster_oscars_categories` row (nullable
@@ -50,13 +51,14 @@ export default function CategoryEditor({ cats, onChange, onReset }: CategoryEdit
             placeholder="Category name"
             aria-label="Category name"
           />
-          <button
+          <IconButton
             onClick={() => remove(i)}
-            className="text-lob-muted-light/60 hover:text-lob-danger-solid transition-colors p-1"
             aria-label="Remove category"
+            variant="ghost-destructive"
+            size="sm"
           >
-            <X size={16} />
-          </button>
+            <X />
+          </IconButton>
         </div>
       ))}
       <div className="flex gap-2 pt-1">

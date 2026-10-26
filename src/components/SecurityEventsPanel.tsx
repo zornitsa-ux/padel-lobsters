@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { CollapsibleCard } from './ui/CollapsibleCard'
+import { IconButton } from './ui/IconButton'
 
 /**
  * Admin-only Security panel.
@@ -119,13 +120,9 @@ export default function SecurityEventsPanel() {
               details were read. Watch for bursts of failures or any "Full roster PII read" — that
               path is no longer used and shouldn't appear.
             </p>
-            <button
-              onClick={load}
-              aria-label="Refresh"
-              className="text-lob-muted-light hover:text-lob-teal flex-shrink-0"
-            >
-              <RefreshCw size={14} />
-            </button>
+            <IconButton onClick={load} aria-label="Refresh" variant="ghost" size="sm">
+              <RefreshCw />
+            </IconButton>
           </div>
 
           <div className="flex flex-wrap gap-1.5">

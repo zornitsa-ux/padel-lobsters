@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { ChevronDown, ChevronRight, Loader2, RotateCcw, Shuffle } from 'lucide-react'
+import { ChevronDown, ChevronRight, Loader2, Shuffle } from 'lucide-react'
 import { COURT_JITTER_SCALE } from '../domain/courts'
 import type { MatcherPriority } from '../domain/presets'
 import type { FeasibilityResult, MatchConfig, MatchPreset, ResolvedConfig } from '../domain/types'
 import { DIMENSION_LABELS } from './dimensions'
 import { segmentedButtonClass } from './segmentedButton'
 import { Button } from '../../../components/ui/Button'
+import { TextButton } from '../../../components/ui/TextButton'
 
 export type ConfigPanelProps = {
   // Controlled config: preset + optional knob overrides. Container owns state.
@@ -223,14 +224,13 @@ export default function ConfigPanel({
                         >
                           overridden
                         </span>
-                        <button
-                          type="button"
+                        <TextButton
+                          tone="neutral"
                           onClick={() => onConfigChange(clearOverride({ config, key }))}
-                          className="text-lob-muted-light hover:text-lob-slate"
                           title="Reset to preset default"
                         >
-                          <RotateCcw size={12} />
-                        </button>
+                          Reset
+                        </TextButton>
                       </>
                     )}
                   </span>
@@ -263,14 +263,13 @@ export default function ConfigPanel({
                   >
                     overridden
                   </span>
-                  <button
-                    type="button"
+                  <TextButton
+                    tone="neutral"
                     onClick={() => onConfigChange(clearOverride({ config, key: 'leftyRule' }))}
-                    className="text-lob-muted-light hover:text-lob-slate"
                     title="Reset to preset default"
                   >
-                    <RotateCcw size={12} />
-                  </button>
+                    Reset
+                  </TextButton>
                 </span>
               )}
             </div>

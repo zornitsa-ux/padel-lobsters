@@ -486,7 +486,7 @@ function StatusOverrideMenu({
   return (
     <div className="relative">
       <IconButton onClick={() => setOpen(!open)} aria-label="More payment options" size="sm">
-        <MoreVertical size={14} />
+        <MoreVertical />
       </IconButton>
       {open && (
         <>

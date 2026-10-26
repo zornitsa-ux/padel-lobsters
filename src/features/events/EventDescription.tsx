@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Pencil, Check } from 'lucide-react'
 import type { NormalisedTournament } from './tournamentQueries'
+import { IconButton } from '../../components/ui/IconButton'
 
 interface EventDescriptionProps {
   tournament: NormalisedTournament
@@ -89,21 +90,22 @@ export default function EventDescription({ tournament, isAdmin, onSave }: EventD
   return (
     <div className="card relative">
       {hasText ? (
-        <p className="text-sm text-lob-slate leading-relaxed whitespace-pre-line pr-7">
+        <p className="text-sm text-lob-slate leading-relaxed whitespace-pre-line pr-8">
           {tournament.notes}
         </p>
       ) : (
-        <p className="text-sm text-lob-muted-light italic pr-7">No description yet.</p>
+        <p className="text-sm text-lob-muted-light italic pr-8">No description yet.</p>
       )}
       {isAdmin && (
-        <button
-          type="button"
+        <IconButton
           onClick={startEdit}
           aria-label="Edit description"
-          className="absolute top-1.5 right-1.5 w-7 h-7 flex items-center justify-center rounded-lg text-lob-muted-light hover:text-lob-teal hover:bg-white active:scale-95 transition-all"
+          variant="ghost"
+          size="sm"
+          className="absolute top-1 right-1"
         >
-          <Pencil size={13} />
-        </button>
+          <Pencil />
+        </IconButton>
       )}
     </div>
   )

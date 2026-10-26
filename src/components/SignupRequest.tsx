@@ -6,7 +6,8 @@ import { setOwnAvatar } from '../features/players/playerQueries'
 import { playerKeys } from '../features/players/playerKeys'
 import type { Player } from '../lib/normalise'
 import { processAvatar } from '../lib/processAvatar'
-import { ArrowLeft, UserPlus, Loader2, User, Camera } from 'lucide-react'
+import { ArrowLeft, UserPlus, Loader2 } from 'lucide-react'
+import { AvatarPicker } from './ui/AvatarPicker'
 import {
   ProfileContactFields,
   ProfileNameFields,
@@ -158,7 +159,6 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
   // so the user sees their pick immediately.
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Set once the code is on its way; the form state is kept for "Change email".
   const [awaitingCode, setAwaitingCode] = useState(false)
@@ -311,36 +311,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Avatar — optional, but the same slot the in-app form offered. */}
-          <div className="flex flex-col items-center gap-2">
-            <div className="relative">
-              {avatarPreview ? (
-                <img
-                  src={avatarPreview}
-                  alt="Preview"
-                  className="w-20 h-20 rounded-full object-cover border-2 border-lob-teal"
-                />
-              ) : (
-                <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center text-lob-muted-light border-2 border-dashed border-gray-300">
-                  <User size={28} />
-                </div>
-              )}
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="absolute bottom-0 right-0 w-7 h-7 bg-lob-teal rounded-full flex items-center justify-center text-white shadow-sm active:scale-95"
-              >
-                <Camera size={13} />
-              </button>
-            </div>
-            <p className="text-xs text-lob-muted-light">Tap camera icon to add photo</p>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleAvatarChange}
-            />
-          </div>
+          <AvatarPicker preview={avatarPreview} onChange={handleAvatarChange} />
 
           <ProfileNameFields form={form} setForm={setForm} />
 

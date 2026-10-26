@@ -1,5 +1,6 @@
 import React from 'react'
-import { ChevronUp, ChevronDown } from 'lucide-react'
+import { ArrowUp, ArrowDown } from 'lucide-react'
+import { IconButton } from '../../../components/ui/IconButton'
 
 // Up/down reorder controls, disabled at the ends of the list.
 export default function MoveButtons({
@@ -12,25 +13,25 @@ export default function MoveButtons({
   onMove: (direction: number) => void
 }) {
   return (
-    <div className="flex flex-col flex-shrink-0">
-      <button
-        type="button"
+    <div className="flex">
+      <IconButton
         aria-label="Move up"
         disabled={index === 0}
         onClick={() => onMove(-1)}
-        className="text-gray-300 hover:text-lob-teal disabled:opacity-30 disabled:hover:text-gray-300"
+        variant="ghost"
+        size="sm"
       >
-        <ChevronUp size={14} />
-      </button>
-      <button
-        type="button"
+        <ArrowUp />
+      </IconButton>
+      <IconButton
         aria-label="Move down"
         disabled={index === count - 1}
         onClick={() => onMove(1)}
-        className="text-gray-300 hover:text-lob-teal disabled:opacity-30 disabled:hover:text-gray-300"
+        variant="ghost"
+        size="sm"
       >
-        <ChevronDown size={14} />
-      </button>
+        <ArrowDown />
+      </IconButton>
     </div>
   )
 }

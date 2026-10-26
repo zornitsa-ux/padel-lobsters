@@ -72,7 +72,7 @@ export default function LinkPlayerModal({
                 size="sm"
                 onClick={() => pendingPii.retry()}
               >
-                <RotateCcw size={10} />
+                <RotateCcw />
               </IconButton>
             </span>
           )}
@@ -146,7 +146,7 @@ function CandidateRow({
       <div className="flex-shrink-0 text-xs text-lob-muted max-w-[40%] text-right">
         {!pii.revealed && (
           <IconButton aria-label={`Show ${p.name}'s email`} size="sm" onClick={pii.reveal}>
-            <Eye size={12} />
+            <Eye />
           </IconButton>
         )}
         {pii.revealed && pii.isLoading && (
@@ -163,7 +163,7 @@ function CandidateRow({
               size="sm"
               onClick={() => pii.retry()}
             >
-              <RotateCcw size={10} />
+              <RotateCcw />
             </IconButton>
           </span>
         )}

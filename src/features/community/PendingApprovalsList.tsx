@@ -34,7 +34,7 @@ function PendingEmailReveal({ playerId }: { playerId: string }) {
       <span className="inline-flex items-center gap-1 text-lob-amber">
         couldn't load
         <IconButton aria-label="Retry loading email" size="sm" onClick={() => retry()}>
-          <RotateCcw size={10} />
+          <RotateCcw />
         </IconButton>
       </span>
     )
@@ -83,9 +83,8 @@ export default function PendingApprovalsList({
                 aria-label={`Reject ${p.name}`}
                 variant="destructive"
                 size="sm"
-                className="flex-shrink-0"
               >
-                <X size={13} />
+                <X />
               </IconButton>
             }
           />

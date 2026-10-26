@@ -60,7 +60,7 @@ export default function EventAdminMenu({
         aria-haspopup="menu"
         aria-expanded={open}
       >
-        <MoreVertical size={16} />
+        <MoreVertical />
       </IconButton>
 
       {open && (

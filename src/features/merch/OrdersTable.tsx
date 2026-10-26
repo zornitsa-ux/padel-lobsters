@@ -7,6 +7,7 @@ import { STATUS_CONFIG } from './statusConfig'
 import { errorMessage, formatOrderTime, getPlayerName, orderTimestamp } from './formatters'
 import { useMerchActions } from './useMerch'
 import type { MerchInterest, MerchItem } from './merchSchemas'
+import { IconButton } from '../../components/ui/IconButton'
 
 type OrdersTableProps = {
   activeOrders: MerchInterest[]
@@ -171,12 +172,14 @@ export default function OrdersTable({ activeOrders, interests, items, players }:
                     >
                       {status === 'delivered' ? '✓ Delivered' : 'Mark Delivered'}
                     </button>
-                    <button
+                    <IconButton
                       onClick={() => setCancelTarget(o)}
-                      className="px-2 py-1.5 rounded-lg text-xs font-semibold bg-lob-danger-light text-lob-danger active:scale-95 transition-all"
+                      aria-label="Cancel order"
+                      variant="destructive"
+                      size="sm"
                     >
-                      <Ban size={12} />
-                    </button>
+                      <Ban />
+                    </IconButton>
                   </div>
                 </div>
               )

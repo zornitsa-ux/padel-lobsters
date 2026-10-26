@@ -7,6 +7,7 @@ import type {
   LobsterWayListRow,
   LobsterWayStep,
 } from '../../../data/lobsterWayContent'
+import { IconButton } from '../../../components/ui/IconButton'
 
 const emptyListRow = (): LobsterWayListRow => ({ emoji: '', label: '', text: '' })
 const emptyStepRow = (): LobsterWayStep => ({ title: '', text: '', image: '' })
@@ -55,14 +56,14 @@ export default function LobsterWayAdminItem({
             className={`text-gray-400 flex-shrink-0 transition-transform ${open ? 'rotate-180' : ''}`}
           />
         </button>
-        <button
-          type="button"
+        <IconButton
           onClick={onDelete}
           aria-label="Delete question"
-          className="text-gray-300 hover:text-lob-danger-solid flex-shrink-0"
+          variant="ghost-destructive"
+          size="sm"
         >
-          <Trash2 size={14} />
-        </button>
+          <Trash2 />
+        </IconButton>
       </div>
 
       {open && (
@@ -128,13 +129,14 @@ export default function LobsterWayAdminItem({
                     value={row.text || ''}
                     onChange={(e) => setListRow(i, { text: e.target.value })}
                   />
-                  <button
-                    type="button"
+                  <IconButton
                     onClick={() => set({ list: removeAt(item.list ?? [], i) })}
-                    className="text-gray-300 hover:text-lob-danger-solid flex-shrink-0"
+                    aria-label="Delete row"
+                    variant="ghost-destructive"
+                    size="sm"
                   >
-                    <Trash2 size={12} />
-                  </button>
+                    <Trash2 />
+                  </IconButton>
                 </div>
               ))}
               <button
@@ -180,13 +182,14 @@ export default function LobsterWayAdminItem({
                       value={step.title || ''}
                       onChange={(e) => setStepRow(i, { title: e.target.value })}
                     />
-                    <button
-                      type="button"
+                    <IconButton
                       onClick={() => set({ steps: removeAt(item.steps ?? [], i) })}
-                      className="text-gray-300 hover:text-lob-danger-solid flex-shrink-0"
+                      aria-label="Delete step"
+                      variant="ghost-destructive"
+                      size="sm"
                     >
-                      <Trash2 size={12} />
-                    </button>
+                      <Trash2 />
+                    </IconButton>
                   </div>
                   <textarea
                     className="input text-xs py-1 ml-6"

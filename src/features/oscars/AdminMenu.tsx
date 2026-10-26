@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { Settings, X, Gamepad2, SlidersHorizontal } from 'lucide-react'
 import type { ViewMode } from './oscarsPhase'
+import { IconButton } from '../../components/ui/IconButton'
 
 interface AdminMenuProps {
   viewMode: ViewMode
@@ -41,13 +42,9 @@ export default function AdminMenu({ viewMode, onSetViewMode }: AdminMenuProps) {
           <div className="relative ml-auto h-full w-72 max-w-[85%] bg-white shadow-xl flex flex-col">
             <div className="flex items-center justify-between px-4 pt-12 pb-3 border-b border-lob-line">
               <h3 className="text-base font-bold text-lob-dark">Admin menu</h3>
-              <button
-                onClick={() => setOpen(false)}
-                className="text-lob-muted-light hover:text-lob-slate"
-                aria-label="Close menu"
-              >
-                <X size={20} />
-              </button>
+              <IconButton onClick={() => setOpen(false)} aria-label="Close menu" variant="ghost">
+                <X />
+              </IconButton>
             </div>
 
             <div className="p-4 space-y-2">

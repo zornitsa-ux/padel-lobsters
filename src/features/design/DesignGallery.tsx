@@ -1,9 +1,21 @@
 import { useState } from 'react'
-import { AlertCircle, Plus, Pencil, Trash2, ArrowUpRight, Inbox } from 'lucide-react'
+import {
+  AlertCircle,
+  Plus,
+  Pencil,
+  Trash2,
+  ArrowUpRight,
+  Inbox,
+  X,
+  ArrowUp,
+  ArrowDown,
+  Info,
+} from 'lucide-react'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { Button } from '../../components/ui/Button'
 import { TextButton } from '../../components/ui/TextButton'
 import { IconButton } from '../../components/ui/IconButton'
+import { AvatarPicker } from '../../components/ui/AvatarPicker'
 import { AlertBox } from '../../components/ui/AlertBox'
 import { Badge, type BadgeProps } from '../../components/ui/Badge'
 import { EmptyState } from '../../components/ui/EmptyState'
@@ -129,19 +141,46 @@ function IconButtonSection() {
       {(['md', 'sm'] as const).map((size) => (
         <Row key={size} label={`size="${size}"`}>
           <IconButton size={size} aria-label="Edit">
-            <Pencil size={14} />
+            <Pencil />
           </IconButton>
           <IconButton size={size} variant="accent" aria-label="Edit">
-            <Pencil size={14} />
+            <Pencil />
           </IconButton>
           <IconButton size={size} variant="success" aria-label="Add">
-            <Plus size={14} />
+            <Plus />
           </IconButton>
           <IconButton size={size} variant="destructive" aria-label="Delete">
-            <Trash2 size={14} />
+            <Trash2 />
           </IconButton>
         </Row>
       ))}
+      <Row label='variant="ghost" · "ghost-destructive"'>
+        <IconButton variant="ghost" aria-label="Close">
+          <X />
+        </IconButton>
+        <IconButton variant="ghost" size="sm" aria-label="Move up">
+          <ArrowUp />
+        </IconButton>
+        <IconButton variant="ghost" size="sm" aria-label="Move down" disabled>
+          <ArrowDown />
+        </IconButton>
+        <IconButton variant="ghost-destructive" size="sm" aria-label="Delete">
+          <Trash2 />
+        </IconButton>
+      </Row>
+      <Row label='variant="on-dark"'>
+        <div className="flex items-center gap-2 rounded-xl bg-header p-2">
+          <IconButton variant="on-dark" aria-label="Close">
+            <X />
+          </IconButton>
+          <IconButton variant="on-dark" size="sm" aria-label="Help">
+            <Info />
+          </IconButton>
+        </div>
+      </Row>
+      <Row label="AvatarPicker">
+        <AvatarPicker preview={null} onChange={() => {}} />
+      </Row>
     </Section>
   )
 }

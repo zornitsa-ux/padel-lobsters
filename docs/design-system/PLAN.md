@@ -35,25 +35,29 @@ component doesn't fit, fix the component, not the call site.**
 
 ## Need X → use Y
 
-| Need                                 | Use                                                  | Status     |
-| ------------------------------------ | ---------------------------------------------------- | ---------- |
-| Error / warning / success / info box | `AlertBox variant=… (size="sm")`                     | size: P3   |
-| Field-level error text               | `FormError` (moving to `components/ui`)              | P3         |
-| Status pill                          | `Badge tone=…`                                       | tones: P4  |
-| Button (action or navigation)        | `Button variant=… size=…`                            | exists     |
-| Destructive action, not the CTA      | `TextButton tone="destructive"`                      | exists     |
-| Toggle, filter or info chip          | none yet (`ActionChip` is an action: P2c)            | later      |
-| Underlined / inline text action      | `TextButton tone=… size=…` (`to` / `href` for links) | exists     |
-| Icon-only button                     | `IconButton` (always with `aria-label`)              | ghost: P2b |
-| Empty list / nothing yet             | `EmptyState` (`variant="inline"` coming)             | P5         |
-| Signed-out viewer                    | `SignInPrompt`                                       | P5         |
-| Player or team row, ranked row       | `PlayerRow` + `RankMarker`                           | P6         |
-| Card title + pill + description      | `CardHeader`                                         | P6         |
-| Inset panel / well                   | `.panel` / `.panel-accent`                           | P6         |
-| Search field                         | `SearchInput`                                        | P6         |
-| Two-to-four way choice               | `SegmentedControl`                                   | exists     |
-| Loading                              | `Spinner` / `Skeleton`                               | exists     |
-| Eyebrow / overline                   | `.eyebrow` / `.eyebrow-accent`                       | P6         |
+| Need                                 | Use                                                  | Status    |
+| ------------------------------------ | ---------------------------------------------------- | --------- |
+| Error / warning / success / info box | `AlertBox variant=… (size="sm")`                     | size: P3  |
+| Field-level error text               | `FormError` (moving to `components/ui`)              | P3        |
+| Status pill                          | `Badge tone=…`                                       | tones: P4 |
+| Button (action or navigation)        | `Button variant=… size=…`                            | exists    |
+| Destructive action, not the CTA      | `TextButton tone="destructive"`                      | exists    |
+| Toggle, filter or info chip          | none yet (`ActionChip` is an action: P2c)            | later     |
+| Underlined / inline text action      | `TextButton tone=… size=…` (`to` / `href` for links) | exists    |
+| Icon-only button                     | `IconButton` (always with `aria-label`)              | exists    |
+| Bare icon (close, back, reorder)     | `IconButton variant="ghost"`                         | exists    |
+| Bare icon delete / remove in a row   | `IconButton variant="ghost-destructive"`             | exists    |
+| Icon button on a dark surface        | `IconButton variant="on-dark"`                       | exists    |
+| Avatar photo upload                  | `AvatarPicker`                                       | exists    |
+| Empty list / nothing yet             | `EmptyState` (`variant="inline"` coming)             | P5        |
+| Signed-out viewer                    | `SignInPrompt`                                       | P5        |
+| Player or team row, ranked row       | `PlayerRow` + `RankMarker`                           | P6        |
+| Card title + pill + description      | `CardHeader`                                         | P6        |
+| Inset panel / well                   | `.panel` / `.panel-accent`                           | P6        |
+| Search field                         | `SearchInput`                                        | P6        |
+| Two-to-four way choice               | `SegmentedControl`                                   | exists    |
+| Loading                              | `Spinner` / `Skeleton`                               | exists    |
+| Eyebrow / overline                   | `.eyebrow` / `.eyebrow-accent`                       | P6        |
 
 ### Buttons and chips (owner, 2026-10-25)
 
@@ -69,23 +73,42 @@ component doesn't fit, fix the component, not the call site.**
 - **Chip:** shows a filter or a piece of info. It has default (inactive),
   active and disabled states, and is often a toggle.
 
+### Icon buttons
+
+- `IconButton` sizes its own icon (`sm` 14px, `md` 16px), so call sites pass
+  `<X />` with no `size`. It never shrinks.
+- **Filled** (`neutral`, `accent`, `success`, `destructive`): a tinted
+  square, for a standalone action such as a menu, share or cancel.
+- **Ghost** (`ghost`, `ghost-destructive`): a muted icon with a hover fill.
+  Close, back, refresh and reorder are `ghost`; delete and remove in a list
+  row are `ghost-destructive`.
+- **On dark** (`on-dark`): a translucent white square for the app header and
+  the merch lightbox.
+- `aria-label` is also the tooltip unless `title` overrides it. `to` renders
+  a router Link, `href` an anchor; a disabled one renders as a disabled
+  button so it can't navigate.
+- `md` (40px, the same height as `Button md`) for close and back in modal,
+  panel and card headers; `sm` (32px) inside rows.
+- Reorder uses `ArrowUp` / `ArrowDown`, not chevrons, so it can't be read as
+  an expand toggle.
+
 ## Steps
 
 Each step is one branch off `main` and one PR. Each PR updates this file and
 the gallery, and runs `npm run design:baseline` when counts drop.
 
-| #   | Step                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | Status                 |
-| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
-| P1  | **Tokens and migration.** Status/neutral/type/brand/shadow tokens; ui primitives and every status use moved onto them; CLAUDE.md rules; `design:check` ratchet.                                                                                                                                                                                                                                                                                                                                                                                                 | Done (#69)             |
-| P2  | **`Button` and `TextButton`.** A `Button variant size` component replacing `.btn-*` plus overrides (about 50 `text-sm`/`py-2` overrides, 9 redundant `disabled:opacity-50`), and `TextButton` for the 10 hand-built text links. Bare icon buttons → `IconButton`. Sizes: `md` (default, `py-2 px-4 text-sm`, 40px), `lg` (today's `.btn-*`, `py-3 px-5`, 52px) and `sm` (`py-1.5 px-3 text-xs`, 32px). Unsized buttons move from 52px to 40px. The four `text-xs` buttons (PIN card "Got it" and "Set a password", swap "Apply", run-of-show actions) are `sm`. | Branch `design-button` |
-| P2b | **Ghost `IconButton`.** About 15 bare icon buttons (close X, remove, delete, move up/down, refresh, back) are a muted icon with a hover colour. Add a `ghost` variant with a proper tap target, then migrate them.                                                                                                                                                                                                                                                                                                                                              | Next                   |
-| P2c | **`ActionChip` → `Button size="sm"`.** Share and Add to calendar are actions, so they are buttons, not chips (see "Buttons and chips"). Pick the variant (likely `neutral`), migrate the two chip call sites and delete `ActionChip`.                                                                                                                                                                                                                                                                                                                           |                        |
-| P2d | **Layout props instead of `className`.** Bring the repeated layout classes into the components. Button: `fullWidth` for `w-full` (39 uses); an `ActionRow` component for paired buttons, replacing `flex-1` (28) and fixing their order and gap; `EmptyState` spaces its own action, replacing `mt-2` (14); Button never shrinks, replacing `flex-shrink-0` (1). Then review the remaining `className` uses on `TextButton` (5) and `IconButton` (3). Once a component has no `className` callers left, consider removing the prop.                             |                        |
-| P3  | **`AlertBox` size and role, `FormError` in ui.** Migrate the 15 hand-built alert boxes and 7 field-error spellings.                                                                                                                                                                                                                                                                                                                                                                                                                                             |                        |
-| P4  | **`Badge` tones** (`success`, `neutral`, `warning`, `outline`) and **payment status single source** (`paymentStatus.ts`, `PaymentStatusBadge` on `Badge`; blue "transferred" gets a token). Rename team-state "Confirmed".                                                                                                                                                                                                                                                                                                                                      |                        |
-| P5  | **Empty and signed-out states.** `EmptyState variant="inline"`, `SignInPrompt`; loading states: a loading card keeps its title or header, so the viewer sees what is loading, and shows `Spinner` / `Skeleton` in the body instead of `return null`.                                                                                                                                                                                                                                                                                                            |                        |
-| P6  | **Layout pieces.** `RankMarker` + `PlayerRow highlighted`, `CardHeader`, `RosterHeading`, `.panel`, `.eyebrow`, `SearchInput`; `ProfileFields` preferred side → `SegmentedControl`.                                                                                                                                                                                                                                                                                                                                                                             |                        |
-| P7  | **Lock-down.** Tokens for decorative colours (medal gold, avatar palette, gender marks, selection states). Then switch `theme.extend.colors` to a restricted `theme.colors` so raw palette classes stop generating, and add a lint rule for unknown classes (e.g. `eslint-plugin-tailwindcss`, check ESLint 9 support). Retire `design:check` once the theme is locked.                                                                                                                                                                                         |                        |
+| #   | Step                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | Status                      |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| P1  | **Tokens and migration.** Status/neutral/type/brand/shadow tokens; ui primitives and every status use moved onto them; CLAUDE.md rules; `design:check` ratchet.                                                                                                                                                                                                                                                                                                                                                                                                 | Done (#69)                  |
+| P2  | **`Button` and `TextButton`.** A `Button variant size` component replacing `.btn-*` plus overrides (about 50 `text-sm`/`py-2` overrides, 9 redundant `disabled:opacity-50`), and `TextButton` for the 10 hand-built text links. Bare icon buttons → `IconButton`. Sizes: `md` (default, `py-2 px-4 text-sm`, 40px), `lg` (today's `.btn-*`, `py-3 px-5`, 52px) and `sm` (`py-1.5 px-3 text-xs`, 32px). Unsized buttons move from 52px to 40px. The four `text-xs` buttons (PIN card "Got it" and "Set a password", swap "Apply", run-of-show actions) are `sm`. | Done (#70)                  |
+| P2b | **Ghost `IconButton`.** About 15 bare icon buttons (close X, remove, delete, move up/down, refresh, back) are a muted icon with a hover colour. Add a `ghost` variant with a proper tap target, then migrate them.                                                                                                                                                                                                                                                                                                                                              | Branch `design-icon-button` |
+| P2c | **`ActionChip` → `Button size="sm"`.** Share and Add to calendar are actions, so they are buttons, not chips (see "Buttons and chips"). Pick the variant (likely `neutral`), migrate the two chip call sites and delete `ActionChip`.                                                                                                                                                                                                                                                                                                                           | Next                        |
+| P2d | **Layout props instead of `className`.** Bring the repeated layout classes into the components. Button: `fullWidth` for `w-full` (39 uses); an `ActionRow` component for paired buttons, replacing `flex-1` (28) and fixing their order and gap; `EmptyState` spaces its own action, replacing `mt-2` (14); Button never shrinks, replacing `flex-shrink-0` (1). Then review the remaining `className` uses on `TextButton` (5) and `IconButton` (3). Once a component has no `className` callers left, consider removing the prop.                             |                             |
+| P3  | **`AlertBox` size and role, `FormError` in ui.** Migrate the 15 hand-built alert boxes and 7 field-error spellings. The dismiss X in a tinted box (`AlertBox`, `TeamNotices`, the event error banner) is still a bare 14px icon: give it a proper tap target here.                                                                                                                                                                                                                                                                                              |                             |
+| P4  | **`Badge` tones** (`success`, `neutral`, `warning`, `outline`) and **payment status single source** (`paymentStatus.ts`, `PaymentStatusBadge` on `Badge`; blue "transferred" gets a token). Rename team-state "Confirmed".                                                                                                                                                                                                                                                                                                                                      |                             |
+| P5  | **Empty and signed-out states.** `EmptyState variant="inline"`, `SignInPrompt`; loading states: a loading card keeps its title or header, so the viewer sees what is loading, and shows `Spinner` / `Skeleton` in the body instead of `return null`.                                                                                                                                                                                                                                                                                                            |                             |
+| P6  | **Layout pieces.** `RankMarker` + `PlayerRow highlighted`, `CardHeader`, `RosterHeading`, `.panel`, `.eyebrow`, `SearchInput`; `ProfileFields` preferred side → `SegmentedControl`.                                                                                                                                                                                                                                                                                                                                                                             |                             |
+| P7  | **Lock-down.** Tokens for decorative colours (medal gold, avatar palette, gender marks, selection states). Then switch `theme.extend.colors` to a restricted `theme.colors` so raw palette classes stop generating, and add a lint rule for unknown classes (e.g. `eslint-plugin-tailwindcss`, check ESLint 9 support). Retire `design:check` once the theme is locked.                                                                                                                                                                                         |                             |
 
 The gallery exists: `/design` in dev (`src/features/design/DesignGallery.tsx`;
 open to guests in dev only, left out of the production build). Each step adds
@@ -98,14 +121,23 @@ sites, `registeredEntries`, and the King of the Court helpers (`isKingCourt`,
 
 ## Later
 
+- **Hand-built buttons outside `.btn-*`.** P2 replaced every `.btn-*` use,
+  but about 50 files still style their own `<button>` (for example Sign out
+  in Account, Schedule and Payments on the next-event card, merch order
+  actions, oscars controls). Some are buttons, some toggles, tiles or chips.
+  Audit after P2d and map each onto `Button`, `TextButton` or a chip.
+- **Colour pairings** (owner, 2026-10-26). Document which foregrounds and
+  fills may sit on which surfaces, so a component can't pick a pair that
+  doesn't read. Prompted by #72's review: the `ghost` hover fill (`lob-line`)
+  is nearly invisible on `lob-well` rows.
+
 - **Revisit the heavy card pattern** (owner, 2026-10-24). Most screens stack
   white shadowed cards. Scope still to be set. Have this conversation before
   P6, since `CardHeader` and `.panel` would otherwise cement today's shape.
 
 ## Open owner calls
 
-- P2: `lg` (52px) has no call sites. Keep it for a future lead CTA, or drop
-  it to keep the variations down.
+None.
 
 ## Log
 
@@ -144,3 +176,28 @@ sites, `registeredEntries`, and the King of the Court helpers (`isKingCourt`,
 - **2026-10-26.** Owner: repeated layout classes on ui components should be
   brought into the design system as props or layout components (P2d).
   CLAUDE.md asks for `className` to stay layout-only and sparing.
+- **2026-10-26.** P2b built on `design-icon-button`. `IconButton` gains
+  `ghost` and `ghost-destructive`, sizes its own icon like `Button`, never
+  shrinks, and has a disabled state with no hover. 21 bare icon buttons move
+  onto it (close, back, refresh, reorder, delete, remove), up from the 15
+  estimated; the merch "cancel order" icon becomes a filled `destructive`
+  `IconButton`. Delete-tip buttons in Admin were hover-only (invisible on
+  touch) and now always show. Lobster Way reorder goes from a stacked pair
+  to side by side, and both it and King of the Court reorder use arrows. The
+  matchmaking "reset to preset" icon becomes a `TextButton` "Reset", since a
+  32px box would make the slider row jump when "overridden" appears. Icon-only
+  buttons left hand-built (password eye, rating stepper, avatar camera,
+  image-remove badge, lightbox close) all now carry an `aria-label`.
+- **2026-10-26.** Owner review of #72: `IconButton md` grows from 36px to
+  40px so it matches `Button md` beside it. `Button lg` (52px) stays with no
+  call sites, so a future lead CTA has a size ready rather than someone
+  inventing one.
+- **2026-10-26.** Owner: no hand-built icon buttons. The ones #72 had left
+  move onto `IconButton`: password eye (`ghost sm`), rating stepper
+  (`neutral md`), image-remove badge (`destructive sm`), lightbox close and
+  the header help and Instagram links (new `on-dark` variant; `IconButton`
+  gains `to`). The avatar camera, copied in three forms, is now one
+  `AvatarPicker` with an `accent sm` camera button. `aria-label` doubles as
+  the tooltip, and a disabled `href` / `to` no longer navigates. The dismiss
+  X in alert boxes stays for P3, and the header's WhatsApp text link for the
+  hand-built buttons audit.

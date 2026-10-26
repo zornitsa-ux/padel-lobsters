@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
+import { IconButton } from '../../components/ui/IconButton'
 
 export interface PasswordInputProps {
   id: string
@@ -30,15 +31,16 @@ export function PasswordInput({
         aria-describedby={describedBy}
         className="input pr-10"
       />
-      <button
-        type="button"
+      <IconButton
         onClick={() => setVisible((v) => !v)}
         aria-label={visible ? 'Hide password' : 'Show password'}
         aria-pressed={visible}
-        className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-lob-muted-light"
+        variant="ghost"
+        size="sm"
+        className="absolute right-1 top-1/2 -translate-y-1/2"
       >
-        <Icon size={18} aria-hidden="true" />
-      </button>
+        <Icon aria-hidden="true" />
+      </IconButton>
     </div>
   )
 }

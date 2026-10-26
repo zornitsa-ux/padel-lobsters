@@ -2,6 +2,7 @@ import { Plus, Search, X } from 'lucide-react'
 import type { Player } from '../../../lib/normalise'
 import type { DisplayName } from './utils'
 import { Button } from '../../../components/ui/Button'
+import { IconButton } from '../../../components/ui/IconButton'
 
 interface AddPlayerCardProps {
   isCompleted: boolean
@@ -51,9 +52,9 @@ export default function AddPlayerCard({
     <div className="card space-y-3">
       <div className="flex items-center justify-between">
         <p className="font-semibold text-lob-slate">Select Player</p>
-        <button onClick={onClose}>
-          <X size={18} className="text-lob-muted-light" />
-        </button>
+        <IconButton onClick={onClose} aria-label="Close" variant="ghost">
+          <X />
+        </IconButton>
       </div>
 
       <div className="relative">

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronDown, ChevronUp } from 'lucide-react'
+import { ArrowDown, ArrowUp } from 'lucide-react'
 import { IconButton } from '../../../components/ui/IconButton'
 import { useConfirm } from '../../../lib/confirmBus'
 import { formatDate } from '../eventHelpers'
@@ -122,20 +122,22 @@ function SeedsCard({
                     )}
                   </div>
                   <IconButton
+                    variant="ghost"
                     size="sm"
                     aria-label={`Move ${labelOf(teamId)} up`}
                     disabled={index === 0}
                     onClick={() => setOrder(moveTeam({ order, index, delta: -1 }))}
                   >
-                    <ChevronUp size={16} />
+                    <ArrowUp />
                   </IconButton>
                   <IconButton
+                    variant="ghost"
                     size="sm"
                     aria-label={`Move ${labelOf(teamId)} down`}
                     disabled={index === order.length - 1}
                     onClick={() => setOrder(moveTeam({ order, index, delta: 1 }))}
                   >
-                    <ChevronDown size={16} />
+                    <ArrowDown />
                   </IconButton>
                 </li>
               )
