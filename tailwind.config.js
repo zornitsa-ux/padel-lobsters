@@ -65,7 +65,6 @@ export default {
             strong: '#075985',
           },
         },
-        whatsapp: '#25D366',
       },
       fontSize: {
         '2xs': '10px',

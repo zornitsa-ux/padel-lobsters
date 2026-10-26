@@ -222,5 +222,7 @@ None.
   third-party brand colours on buttons, fewer special cases. The three Tikkie
   pay links (payment sheet, /me pay prompt, admin Payments) become primary
   `Button`s, the "I've sent the payment" pair becomes `secondary`, and the
-  `tikkie` token is gone. The root `DESIGN_SYSTEM.md` button section still
-  described `.btn-*` and `ActionChip`; it now points at the components.
+  `tikkie` token is gone. The same goes for WhatsApp: the admin Payments
+  "Remind" button is a `neutral sm` Button and the `whatsapp` token is gone.
+  The root `DESIGN_SYSTEM.md` button section still described `.btn-*` and
+  `ActionChip`; it now points at the components.
