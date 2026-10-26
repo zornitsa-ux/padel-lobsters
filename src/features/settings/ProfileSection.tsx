@@ -1,7 +1,8 @@
-import React, { useRef, type ChangeEvent, type Dispatch, type SetStateAction } from 'react'
-import { Save, User, ChevronDown, ChevronUp, Camera } from 'lucide-react'
+import React, { type ChangeEvent, type Dispatch, type SetStateAction } from 'react'
+import { Save, User, ChevronDown, ChevronUp } from 'lucide-react'
 import CountryPicker from '../../components/ui/CountryPicker'
 import Avatar from '../../components/ui/Avatar'
+import { AvatarPicker } from '../../components/ui/AvatarPicker'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
 import { LOBBY_PROMPTS, type ProfileForm } from './settingsHelpers'
 import type { Player } from '../../lib/normalise'
@@ -46,8 +47,6 @@ export default function ProfileSection({
   showPlaytomicPrompt,
   dismissPlaytomicPrompt,
 }: ProfileSectionProps) {
-  const fileInputRef = useRef<HTMLInputElement>(null)
-
   return (
     <>
       {/* ── Playtomic update popup ─────────────────────────────── */}
@@ -141,38 +140,7 @@ export default function ProfileSection({
           {/* Expanded full edit form */}
           {profileExpanded && (
             <div className="space-y-4 pt-2 border-t border-lob-line">
-              {/* Avatar upload */}
-              <div className="flex flex-col items-center gap-2">
-                <div className="relative">
-                  {avatarPreview ? (
-                    <img
-                      src={avatarPreview}
-                      alt="Preview"
-                      className="w-20 h-20 rounded-full object-cover border-2 border-lob-teal"
-                    />
-                  ) : (
-                    <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center text-lob-muted-light border-2 border-dashed border-gray-300">
-                      <User size={28} />
-                    </div>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    aria-label="Change photo"
-                    className="absolute bottom-0 right-0 w-7 h-7 bg-lob-teal rounded-full flex items-center justify-center text-white shadow-sm active:scale-95"
-                  >
-                    <Camera size={13} />
-                  </button>
-                </div>
-                <p className="text-xs text-lob-muted-light">Tap camera icon to change photo</p>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleAvatarChange}
-                />
-              </div>
+              <AvatarPicker preview={avatarPreview} onChange={handleAvatarChange} />
 
               {/* Full Name */}
               <div>

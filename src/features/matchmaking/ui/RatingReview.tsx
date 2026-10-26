@@ -4,6 +4,7 @@ import type { RatingEventRow } from '../matchmakingSchemas'
 import { describeRatingRecommendation } from './ratingRecommendation'
 import { playerName, type PlayerNamesById } from './playerNames'
 import { Button } from '../../../components/ui/Button'
+import { IconButton } from '../../../components/ui/IconButton'
 
 export type RatingReviewProps = {
   // Count of adjustments auto-applied without review (small, within-cap moves).
@@ -330,27 +331,23 @@ function QueueCard({
 
         {mode === 'custom' && (
           <div className="mt-3 flex items-center gap-3">
-            <button
-              type="button"
+            <IconButton
               onClick={() => nudgeCustom(-1)}
               disabled={reviewing || customTarget <= loLevel + 1e-9}
               aria-label="Lower target level"
-              className="w-10 h-10 grid place-items-center rounded-lg border border-lob-line-strong text-lob-slate disabled:opacity-40 hover:bg-lob-well"
             >
-              <Minus size={18} />
-            </button>
+              <Minus />
+            </IconButton>
             <span className="font-mono tabular-nums text-xl font-semibold text-lob-dark w-16 text-center">
               {formatLevel(customTarget)}
             </span>
-            <button
-              type="button"
+            <IconButton
               onClick={() => nudgeCustom(1)}
               disabled={reviewing || customTarget >= hiLevel - 1e-9}
               aria-label="Raise target level"
-              className="w-10 h-10 grid place-items-center rounded-lg border border-lob-line-strong text-lob-slate disabled:opacity-40 hover:bg-lob-well"
             >
-              <Plus size={18} />
-            </button>
+              <Plus />
+            </IconButton>
             <span className="text-xs text-lob-muted-light">
               between {formatLevel(loLevel)} and {formatLevel(hiLevel)}
             </span>

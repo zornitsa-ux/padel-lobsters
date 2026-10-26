@@ -1,5 +1,5 @@
 import React from 'react'
-import { User, Camera } from 'lucide-react'
+import { AvatarPicker } from '../../components/ui/AvatarPicker'
 import CountryPicker from '../../components/ui/CountryPicker'
 import { Modal } from '../../components/ui/Modal'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
@@ -14,7 +14,6 @@ interface PlayerFormProps {
   form: PlayerFormState
   setForm: React.Dispatch<React.SetStateAction<PlayerFormState>>
   avatarPreview: string | null
-  fileInputRef: React.RefObject<HTMLInputElement>
   handleAvatarChange: (e: React.ChangeEvent<HTMLInputElement>) => void
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void
   saving: boolean
@@ -35,7 +34,6 @@ export default function PlayerForm({
   form,
   setForm,
   avatarPreview,
-  fileInputRef,
   handleAvatarChange,
   handleSubmit,
   saving,
@@ -90,38 +88,7 @@ export default function PlayerForm({
             blank placeholders at that point, so editing them now would be
             edits against a value about to be replaced. */}
         <fieldset disabled={!formReady} className="space-y-4">
-          {/* Avatar upload */}
-          <div className="flex flex-col items-center gap-2">
-            <div className="relative">
-              {avatarPreview ? (
-                <img
-                  src={avatarPreview}
-                  alt="Preview"
-                  className="w-20 h-20 rounded-full object-cover border-2 border-lob-teal"
-                />
-              ) : (
-                <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center text-lob-muted-light border-2 border-dashed border-gray-300">
-                  <User size={28} />
-                </div>
-              )}
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                aria-label="Change photo"
-                className="absolute bottom-0 right-0 w-7 h-7 bg-lob-teal rounded-full flex items-center justify-center text-white shadow-sm active:scale-95"
-              >
-                <Camera size={13} />
-              </button>
-            </div>
-            <p className="text-xs text-lob-muted-light">Tap camera icon to add photo</p>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleAvatarChange}
-            />
-          </div>
+          <AvatarPicker preview={avatarPreview} onChange={handleAvatarChange} />
 
           <div className="grid grid-cols-2 gap-2">
             <div>

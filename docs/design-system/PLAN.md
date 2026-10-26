@@ -47,6 +47,8 @@ component doesn't fit, fix the component, not the call site.**
 | Icon-only button                     | `IconButton` (always with `aria-label`)              | exists    |
 | Bare icon (close, back, reorder)     | `IconButton variant="ghost"`                         | exists    |
 | Bare icon delete / remove in a row   | `IconButton variant="ghost-destructive"`             | exists    |
+| Icon button on a dark surface        | `IconButton variant="on-dark"`                       | exists    |
+| Avatar photo upload                  | `AvatarPicker`                                       | exists    |
 | Empty list / nothing yet             | `EmptyState` (`variant="inline"` coming)             | P5        |
 | Signed-out viewer                    | `SignInPrompt`                                       | P5        |
 | Player or team row, ranked row       | `PlayerRow` + `RankMarker`                           | P6        |
@@ -80,6 +82,11 @@ component doesn't fit, fix the component, not the call site.**
 - **Ghost** (`ghost`, `ghost-destructive`): a muted icon with a hover fill.
   Close, back, refresh and reorder are `ghost`; delete and remove in a list
   row are `ghost-destructive`.
+- **On dark** (`on-dark`): a translucent white square for the app header and
+  the merch lightbox.
+- `aria-label` is also the tooltip unless `title` overrides it. `to` renders
+  a router Link, `href` an anchor; a disabled one renders as a disabled
+  button so it can't navigate.
 - `md` (40px, the same height as `Button md`) for close and back in modal,
   panel and card headers; `sm` (32px) inside rows.
 - Reorder uses `ArrowUp` / `ArrowDown`, not chevrons, so it can't be read as
@@ -119,8 +126,10 @@ sites, `registeredEntries`, and the King of the Court helpers (`isKingCourt`,
   in Account, Schedule and Payments on the next-event card, merch order
   actions, oscars controls). Some are buttons, some toggles, tiles or chips.
   Audit after P2d and map each onto `Button`, `TextButton` or a chip.
-- **Avatar photo button.** The camera overlay on the avatar is copied in
-  `SignupRequest`, `PlayerForm` and `ProfileSection`. Extract one component.
+- **Colour pairings** (owner, 2026-10-26). Document which foregrounds and
+  fills may sit on which surfaces, so a component can't pick a pair that
+  doesn't read. Prompted by #72's review: the `ghost` hover fill (`lob-line`)
+  is nearly invisible on `lob-well` rows.
 
 - **Revisit the heavy card pattern** (owner, 2026-10-24). Most screens stack
   white shadowed cards. Scope still to be set. Have this conversation before
@@ -183,3 +192,12 @@ None.
   40px so it matches `Button md` beside it. `Button lg` (52px) stays with no
   call sites, so a future lead CTA has a size ready rather than someone
   inventing one.
+- **2026-10-26.** Owner: no hand-built icon buttons. The ones #72 had left
+  move onto `IconButton`: password eye (`ghost sm`), rating stepper
+  (`neutral md`), image-remove badge (`destructive sm`), lightbox close and
+  the header help and Instagram links (new `on-dark` variant; `IconButton`
+  gains `to`). The avatar camera, copied in three forms, is now one
+  `AvatarPicker` with an `accent sm` camera button. `aria-label` doubles as
+  the tooltip, and a disabled `href` / `to` no longer navigates. The dismiss
+  X in alert boxes stays for P3, and the header's WhatsApp text link for the
+  hand-built buttons audit.

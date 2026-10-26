@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
+import { Link } from 'react-router-dom'
 import { IconButton } from './IconButton'
 import { propsOf } from '../../test/element'
 
@@ -40,6 +41,37 @@ describe('IconButton', () => {
   it('forwards disabled', () => {
     const el = IconButton({ children: 'X', 'aria-label': 'Move up', disabled: true })
     expect(propsOf(el).disabled).toBe(true)
+  })
+
+  it('uses aria-label as the tooltip unless a title is given', () => {
+    expect(propsOf(IconButton({ children: 'X', 'aria-label': 'Remove winner' })).title).toBe(
+      'Remove winner',
+    )
+    expect(
+      propsOf(IconButton({ children: 'X', 'aria-label': 'Share', title: 'Share on WhatsApp' }))
+        .title,
+    ).toBe('Share on WhatsApp')
+  })
+
+  it('renders a router Link when to is supplied', () => {
+    const el = IconButton({ children: 'i', 'aria-label': 'Help', to: '/lobster-way' })
+    expect((el as { type: unknown }).type).toBe(Link)
+    expect(propsOf(el).to).toBe('/lobster-way')
+  })
+
+  it('renders a disabled link as a disabled button so it cannot navigate', () => {
+    for (const nav of [{ href: 'https://example.com' }, { to: '/lobster-way' }]) {
+      const el = IconButton({ children: 'C', 'aria-label': 'Open', disabled: true, ...nav })
+      expect((el as { type: string }).type).toBe('button')
+      expect(propsOf(el).disabled).toBe(true)
+      expect(propsOf(el).href).toBeUndefined()
+      expect(propsOf(el).to).toBeUndefined()
+    }
+  })
+
+  it('renders the on-dark variant as a translucent white square', () => {
+    const el = IconButton({ children: 'X', 'aria-label': 'Close', variant: 'on-dark' })
+    expect(String(propsOf(el).className)).toContain('bg-white/15 text-white')
   })
 
   it('renders an anchor when href is supplied', () => {

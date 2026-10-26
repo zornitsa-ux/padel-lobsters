@@ -47,7 +47,6 @@ export default function AddToCalendarButton({
         rel="noopener noreferrer"
         onClick={(e) => e.stopPropagation()}
         aria-label="Add to Google Calendar"
-        title="Add to Google Calendar"
         variant="accent"
         className={className}
       >

@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { X } from 'lucide-react'
+import { IconButton } from '../../components/ui/IconButton'
 
 // ── Image Lightbox ────────────────────────────────────────────────────────────
 export type LightboxState = { images: string[]; index: number }
@@ -17,14 +18,14 @@ export default function Lightbox({ images, startIndex = 0, onClose }: LightboxPr
       className="fixed inset-0 bg-black/90 z-50 flex flex-col items-center justify-center"
       onClick={onClose}
     >
-      {/* Close button */}
-      <button
+      <IconButton
         onClick={onClose}
         aria-label="Close"
-        className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-white"
+        variant="on-dark"
+        className="absolute top-4 right-4"
       >
-        <X size={20} />
-      </button>
+        <X />
+      </IconButton>
 
       {/* Main image */}
       <img

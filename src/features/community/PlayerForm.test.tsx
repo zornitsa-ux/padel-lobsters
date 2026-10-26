@@ -15,7 +15,6 @@ const renderForm = () =>
       form={{ ...emptyForm, firstName: 'Ada', lastName: 'Lovelace', playtomicLevel: '3.5' }}
       setForm={noop}
       avatarPreview={null}
-      fileInputRef={{ current: null }}
       handleAvatarChange={noop}
       handleSubmit={noop}
       saving={false}

@@ -78,7 +78,6 @@ export default function ShareWhatsAppButton({
       <IconButton
         onClick={handleClick}
         aria-label="Share on WhatsApp"
-        title="Share on WhatsApp"
         variant="success"
         className={className}
       >

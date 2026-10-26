@@ -9,11 +9,13 @@ import {
   X,
   ArrowUp,
   ArrowDown,
+  Info,
 } from 'lucide-react'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { Button } from '../../components/ui/Button'
 import { TextButton } from '../../components/ui/TextButton'
 import { IconButton } from '../../components/ui/IconButton'
+import { AvatarPicker } from '../../components/ui/AvatarPicker'
 import { AlertBox } from '../../components/ui/AlertBox'
 import { Badge, type BadgeProps } from '../../components/ui/Badge'
 import { EmptyState } from '../../components/ui/EmptyState'
@@ -165,6 +167,19 @@ function IconButtonSection() {
         <IconButton variant="ghost-destructive" size="sm" aria-label="Delete">
           <Trash2 />
         </IconButton>
+      </Row>
+      <Row label='variant="on-dark"'>
+        <div className="flex items-center gap-2 rounded-xl bg-header p-2">
+          <IconButton variant="on-dark" aria-label="Close">
+            <X />
+          </IconButton>
+          <IconButton variant="on-dark" size="sm" aria-label="Help">
+            <Info />
+          </IconButton>
+        </div>
+      </Row>
+      <Row label="AvatarPicker">
+        <AvatarPicker preview={null} onChange={() => {}} />
       </Row>
     </Section>
   )

@@ -41,7 +41,6 @@ export function usePlayerEditor({ isAdmin }: { isAdmin: boolean }) {
   const uploadAvatar = useAvatarUpload()
   const resolveWithPii = useResolveWithPii()
   const lobbyPrompt = useMemo(() => randomPrompt(), [])
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [showForm, setShowForm] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
@@ -173,7 +172,6 @@ export function usePlayerEditor({ isAdmin }: { isAdmin: boolean }) {
       form,
       setForm,
       avatarPreview,
-      fileInputRef,
       handleAvatarChange,
       handleSubmit,
       saving,
