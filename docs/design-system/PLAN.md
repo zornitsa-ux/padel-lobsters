@@ -188,6 +188,12 @@ on-behalf message's line breaks). Each is a small PR whenever it suits.
   doesn't read. Prompted by #72's review: the `ghost` hover fill (`lob-line`)
   is nearly invisible on `lob-well` rows.
 
+- **Radix out of first paint** (review of #90). Radix Dialog adds about 13
+  KB gzip to first paint, because `ConfirmProvider` and
+  `PinSignInInterstitial` (both in the entry chunk) use `Modal`. After the
+  PIN cutover (5 November) removes the interstitial, lazy-load the confirm
+  sheet and re-measure with a `localdev` build.
+
 - **Revisit the heavy card pattern** (owner, 2026-10-24). Most screens stack
   white shadowed cards. Scope still to be set. Have this conversation before
   P6, since `CardHeader` and `.panel` would otherwise cement today's shape.
@@ -576,3 +582,7 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
   CI caught an unhandled error from the drag-to-dismiss tests: Radix's scroll
   lock (`react-remove-scroll`) reads `changedTouches`, which the test touch
   events left out. The tests now fill it in, as a browser does.
+- **2026-10-28.** Checkpoint after #90 and #91. DESIGN_SYSTEM.md gains an
+  "Overlays" section (`Modal`, `useConfirm`, `data-autofocus`, `dismissible`,
+  `labelId`, real-input browser checks). "Later" gains the first-paint
+  follow-up for Radix. Next is step 3, `Menu` onto Radix DropdownMenu.
