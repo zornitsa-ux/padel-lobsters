@@ -67,6 +67,8 @@ function TeamNames({
             {onPickPlayer ? (
               <TextButton
                 size="inherit"
+                truncate
+                hitArea
                 onClick={() => onPickPlayer(id)}
                 aria-label={`Swap options for ${player?.name ?? id}`}
               >
@@ -176,6 +178,7 @@ function CourtCard({
               {onFixRematch && (
                 <TextButton
                   tone="warning"
+                  hitArea
                   onClick={() => onFixRematch({ roundIndex, pair: [a, b] })}
                 >
                   Fix

@@ -23,11 +23,9 @@ export function ChampionBanner({ champions, teamById, onTeamClick }: ChampionBan
         <Trophy size={28} className="text-lob-amber shrink-0" aria-hidden="true" />
         <div className="min-w-0">
           <p className="text-2xs font-bold uppercase tracking-wider text-lob-muted">Champions</p>
-          <p className="text-lg">
-            <TextButton size="inherit" onClick={() => onTeamClick(gold)}>
-              {resolveTeamName(gold)}
-            </TextButton>
-          </p>
+          <TextButton size="lg" truncate onClick={() => onTeamClick(gold)}>
+            {resolveTeamName(gold)}
+          </TextButton>
           {players && <p className="text-xs text-lob-muted truncate">{players}</p>}
         </div>
       </div>
@@ -36,7 +34,7 @@ export function ChampionBanner({ champions, teamById, onTeamClick }: ChampionBan
           <Medal size={16} className="text-lob-muted shrink-0" aria-hidden="true" />
           <span className="text-lob-muted">Silver bracket winners</span>
           <span className="ml-auto min-w-0 text-right">
-            <TextButton size="inherit" onClick={() => onTeamClick(silver)}>
+            <TextButton size="inherit" truncate onClick={() => onTeamClick(silver)}>
               {resolveTeamName(silver)}
             </TextButton>
           </span>

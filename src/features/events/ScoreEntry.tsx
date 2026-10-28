@@ -134,6 +134,7 @@ export default function ScoreEntry({ match, onUpdate, variant = 'input' }: Score
       <TextButton
         tone="warning"
         size="inherit"
+        hitArea
         onClick={() => applyExternal(conflict.s1, conflict.s2)}
         aria-label={`Use the other admin's score, ${conflict.s1 || '—'}–${conflict.s2 || '—'}`}
       >

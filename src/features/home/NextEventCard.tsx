@@ -1,5 +1,5 @@
 import React, { type ReactNode } from 'react'
-import { Calendar, CalendarDays, CreditCard } from 'lucide-react'
+import { Calendar, CalendarDays, Check, CreditCard } from 'lucide-react'
 import DateTile from '../../components/ui/DateTile'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { Skeleton } from '../../components/ui/Skeleton'
@@ -9,6 +9,7 @@ import { fmtEur } from '../../lib/format'
 import type { NormalisedTournament } from '../../lib/normalise'
 import { perPersonCost } from './homeHelpers'
 import { Button } from '../../components/ui/Button'
+import { Badge } from '../../components/ui/Badge'
 
 interface NextEventCardProps {
   upcoming: NormalisedTournament | undefined
@@ -117,14 +118,12 @@ export default function NextEventCard({
       {claimedId &&
         !registrationsPending &&
         (isRegistered ? (
-          <div className="bg-lob-success-light border border-lob-success-border rounded-lg px-3 py-1.5 inline-flex items-center gap-1.5 mb-3">
-            <span className="text-lob-success-solid text-xs">✓</span>
-            <span className="text-xs font-semibold text-lob-success">You're registered!</span>
+          <div className="mb-3">
+            <Badge variant="paid" icon={<Check size={12} />} label="You're registered!" />
           </div>
         ) : !isAdmin ? (
-          <div className="bg-lob-warning-light border border-lob-warning-border rounded-lg px-3 py-1.5 inline-flex items-center gap-1.5 mb-3">
-            <span className="text-lob-warning-solid text-xs">!</span>
-            <span className="text-xs font-semibold text-lob-warning">Not signed up yet</span>
+          <div className="mb-3">
+            <Badge variant="pending" label="Not signed up yet" />
           </div>
         ) : null)}
       {isRegistered && kingOfCourtLine}
@@ -138,11 +137,9 @@ export default function NextEventCard({
 
       {/* Action links */}
       <div className="flex gap-2">
-        <div className="flex-1">
-          <Button size="sm" fullWidth onClick={() => onNavigate('registration', upcoming)}>
-            Registrations
-          </Button>
-        </div>
+        <Button size="sm" grow onClick={() => onNavigate('registration', upcoming)}>
+          Registrations
+        </Button>
         <Button
           variant="neutral"
           size="sm"

@@ -56,7 +56,7 @@ export function CourtGenderChip({
         {chip.text}
       </span>
       {onFix && (
-        <TextButton tone="warning" onClick={onFix} aria-label={fixLabel}>
+        <TextButton tone="warning" hitArea onClick={onFix} aria-label={fixLabel}>
           Fix
         </TextButton>
       )}

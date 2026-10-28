@@ -181,11 +181,9 @@ export default function Shop({
                   <Check size={16} /> Ordered!
                 </p>
               ) : (
-                <div className="flex-1">
-                  <Button fullWidth icon={<ShoppingCart />} onClick={() => placeOrder(item.id)}>
-                    Order
-                  </Button>
-                </div>
+                <Button grow icon={<ShoppingCart />} onClick={() => placeOrder(item.id)}>
+                  Order
+                </Button>
               )}
               {isAdmin &&
                 orderCount(item.id) > 0 &&

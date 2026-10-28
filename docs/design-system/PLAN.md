@@ -50,6 +50,7 @@ component doesn't fit, fix the component, not the call site.**
 | Button (action or navigation)        | `Button variant=… size=…` (`to` / `href` for links)  | exists    |
 | Arrow onward, chevron opening a menu | `Button trailingIcon`                                | exists    |
 | Button on a dark or gradient surface | `Button variant="on-dark"`                           | exists    |
+| Button filling what a row leaves     | `Button grow` (beside a count, IconButton or link)   | exists    |
 | Full-width button                    | `Button fullWidth`                                   | exists    |
 | Buttons sharing a row (Cancel, Save) | `ActionRow` (alternative first, confirm last)        | exists    |
 | Utility action under content         | `Button variant="neutral" size="sm"`                 | exists    |
@@ -65,6 +66,7 @@ component doesn't fit, fix the component, not the call site.**
 | Menu of actions                      | `Menu` + `MenuItem` (`tone="danger"`, `current`)     | exists    |
 | Suggestions under a search field     | `MenuList keepFocus` + `MenuItem`                    | exists    |
 | Underlined / inline text action      | `TextButton tone=… size=…` (`to` / `href` for links) | exists    |
+| Name link in a tight row             | `TextButton truncate` (`hitArea` for a 40px target)  | exists    |
 | Icon-only button                     | `IconButton` (always with `aria-label`)              | exists    |
 | Bare icon (close, back, reorder)     | `IconButton variant="ghost"`                         | exists    |
 | Bare icon delete / remove in a row   | `IconButton variant="ghost-destructive"`             | exists    |
@@ -440,3 +442,17 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
   `TextButton`. Five one-digit choices use `fill`, against the "two to four"
   guide, because they fit as equal segments. 107 raw colour classes remain
   (was 114).
+- **2026-10-28.** Review of #86. `TextButton` gains `truncate` (one line with
+  an ellipsis, shrinks in a flex row), `hitArea` (padding with a matching
+  negative margin, so a lone small action gets a 40px tap target without
+  moving the layout) and `size="lg"`. The swappable player names truncate
+  again and keep their 40px target, so long names no longer push the gender
+  marks out of the row; the matchmaking "Fix" links and the score-conflict
+  "use" get `hitArea`; the champion name is `lg` and truncates. `Button`
+  gains `grow` (`flex-1`), replacing the five `<div className="flex-1">`
+  wrappers around a `fullWidth` Button (next-event Registrations, Oscars "Add
+  category", merch Order, Mark Paid / Mark Delivered). A finished merch order
+  step shows a green "✓ Paid" / "✓ Delivered" line instead of a greyed-out
+  disabled button. `CardLink flush` is `card p-0 overflow-hidden` rather than
+  a copy of `.card`, and a disabled `CardLink` dims and doesn't animate. The
+  next-event "You're registered!" and "Not signed up yet" pills are `Badge`s.

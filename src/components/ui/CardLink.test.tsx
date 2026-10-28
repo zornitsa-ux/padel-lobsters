@@ -24,8 +24,14 @@ describe('CardLink', () => {
 
   it('drops the padding and clips to the edge when flush', () => {
     const cls = classOf(CardLink({ to: '/x', flush: true, children: 'BODY' }))
-    expect(cls).toContain('rounded-2xl overflow-hidden shadow-card')
-    expect(cls).not.toMatch(/(^| )card( |$)/)
+    expect(cls).toMatch(/^card p-0 overflow-hidden /)
+  })
+
+  it('dims a disabled card and skips the press animation', () => {
+    const el = CardLink({ to: '/x', disabled: true, children: 'B' })
+    expect(el.type).toBe('button')
+    expect(classOf(el)).toContain('not-disabled:active:scale-[0.99]')
+    expect(classOf(el)).toContain('disabled:opacity-50')
   })
 
   it('sets the row layout', () => {

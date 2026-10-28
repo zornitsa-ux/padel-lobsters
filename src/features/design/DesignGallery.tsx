@@ -128,6 +128,14 @@ function ButtonSection() {
           Disabled link
         </Button>
       </Row>
+      <Row label="grow (fills what a fixed item leaves)" block>
+        <div className="flex items-center gap-2">
+          <Button grow icon={<Plus />}>
+            Add category
+          </Button>
+          <TextButton tone="neutral">Reset to defaults</TextButton>
+        </div>
+      </Row>
       <Row label="trailingIcon (onward arrow, menu chevron)">
         <Button variant="neutral" size="sm" trailingIcon={<ArrowRight />}>
           Next unscored match
@@ -191,6 +199,25 @@ function TextButtonSection() {
           </TextButton>
           .
         </p>
+      </Row>
+      <Row label='size="lg" (headline name) · truncate · hitArea' block>
+        <div className="space-y-2">
+          <TextButton size="lg" truncate>
+            Net Gains and the Very Long Team Name Club
+          </TextButton>
+          <div className="flex items-center gap-1 min-h-10 text-sm text-lob-slate truncate">
+            <TextButton size="inherit" truncate hitArea>
+              Alexandra Fitzgerald-Hughes-Montgomery
+            </TextButton>
+            <span className="shrink-0">♀ 🤚</span>
+          </div>
+          <p className="text-xs text-lob-warning">
+            Ana vs Ben — repeat{' '}
+            <TextButton tone="warning" hitArea>
+              Fix
+            </TextButton>
+          </p>
+        </div>
       </Row>
     </Section>
   )

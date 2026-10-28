@@ -64,11 +64,9 @@ export default function CategoryEditor({ cats, onChange, onReset }: CategoryEdit
         </div>
       ))}
       <div className="flex items-center gap-3 pt-1">
-        <div className="flex-1">
-          <Button variant="secondary" fullWidth icon={<Plus />} onClick={add}>
-            Add category
-          </Button>
-        </div>
+        <Button variant="secondary" grow icon={<Plus />} onClick={add}>
+          Add category
+        </Button>
         <TextButton tone="neutral" onClick={onReset}>
           Reset to defaults
         </TextButton>

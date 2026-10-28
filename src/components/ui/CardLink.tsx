@@ -22,7 +22,7 @@ const LAYOUT: Record<Layout, string> = {
 
 const SHELL = {
   padded: 'card',
-  flush: 'bg-white rounded-2xl overflow-hidden shadow-card border border-lob-dark/[0.06]',
+  flush: 'card p-0 overflow-hidden',
 }
 
 /**
@@ -41,7 +41,7 @@ export function CardLink({
     className: [
       flush ? SHELL.flush : SHELL.padded,
       LAYOUT[layout],
-      'w-full text-left active:scale-[0.99] transition-transform',
+      'w-full text-left not-disabled:active:scale-[0.99] transition-transform disabled:opacity-50 disabled:cursor-not-allowed',
       className,
     ]
       .filter(Boolean)

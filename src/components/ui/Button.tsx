@@ -20,6 +20,8 @@ interface ButtonContentProps {
   trailingIcon?: React.ReactNode
   /** Fills its container's width. Buttons sharing a row go in `ActionRow` instead. */
   fullWidth?: boolean
+  /** Takes the space its flex row leaves, beside fixed-width items (a count, an IconButton). */
+  grow?: boolean
 }
 
 type ButtonProps = ButtonContentProps & ActionProps
@@ -47,8 +49,9 @@ function buttonClasses({
   variant = 'primary',
   size = 'md',
   fullWidth = false,
+  grow = false,
 }: Omit<ButtonContentProps, 'children' | 'icon' | 'trailingIcon'>) {
-  return `${BASE} ${VARIANT[variant]} ${SIZE[size]}${fullWidth ? ' w-full' : ''}`
+  return `${BASE} ${VARIANT[variant]} ${SIZE[size]}${fullWidth ? ' w-full' : ''}${grow ? ' flex-1' : ''}`
 }
 
 export function Button({
@@ -58,11 +61,12 @@ export function Button({
   icon,
   trailingIcon,
   fullWidth,
+  grow,
   ...props
 }: ButtonProps) {
   return renderAction({
     props,
-    className: buttonClasses({ variant, size, fullWidth }),
+    className: buttonClasses({ variant, size, fullWidth, grow }),
     children: (
       <>
         {icon}

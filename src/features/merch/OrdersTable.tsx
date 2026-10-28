@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Ban } from 'lucide-react'
+import { Ban, Check } from 'lucide-react'
 import type { Player } from '../../lib/normalise'
 import { Modal } from '../../components/ui/Modal'
 import { EmptyState } from '../../components/ui/EmptyState'
@@ -150,32 +150,34 @@ export default function OrdersTable({ activeOrders, interests, items, players }:
                   </div>
                   {/* Status action buttons */}
                   <div className="flex gap-1.5">
-                    <div className="flex-1">
+                    {status === 'paid' || status === 'delivered' ? (
+                      <StepDone>Paid</StepDone>
+                    ) : (
                       <Button
                         variant="neutral"
                         size="sm"
-                        fullWidth
+                        grow
                         onClick={() => markOrder.mutate({ id: o.id, status: 'paid' }, { onError })}
-                        disabled={
-                          status === 'paid' || status === 'delivered' || markOrder.isPending
-                        }
+                        disabled={markOrder.isPending}
                       >
-                        {status === 'paid' || status === 'delivered' ? '✓ Paid' : 'Mark Paid'}
+                        Mark Paid
                       </Button>
-                    </div>
-                    <div className="flex-1">
+                    )}
+                    {status === 'delivered' ? (
+                      <StepDone>Delivered</StepDone>
+                    ) : (
                       <Button
                         variant="neutral"
                         size="sm"
-                        fullWidth
+                        grow
                         onClick={() =>
                           markOrder.mutate({ id: o.id, status: 'delivered' }, { onError })
                         }
-                        disabled={status === 'delivered' || markOrder.isPending}
+                        disabled={markOrder.isPending}
                       >
-                        {status === 'delivered' ? '✓ Delivered' : 'Mark Delivered'}
+                        Mark Delivered
                       </Button>
-                    </div>
+                    )}
                     <IconButton
                       onClick={() => setCancelTarget(o)}
                       aria-label="Cancel order"
@@ -222,5 +224,14 @@ export default function OrdersTable({ activeOrders, interests, items, players }:
         <EmptyState title="No orders yet — orders will appear here when players place them from the Shop tab" />
       )}
     </div>
+  )
+}
+
+// A finished order step, in place of its button; the same 32px height keeps the row steady.
+function StepDone({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="flex-1 min-h-8 flex items-center justify-center gap-1 text-xs font-semibold text-lob-success">
+      <Check size={14} /> {children}
+    </p>
   )
 }

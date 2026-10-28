@@ -31,6 +31,11 @@ describe('Button', () => {
     expect(cls).toContain('not-disabled:hover:bg-white/25')
   })
 
+  it('grows into the space its row leaves', () => {
+    expect(classOf(Button({ children: 'Order', grow: true }))).toMatch(/ flex-1$/)
+    expect(classOf(Button({ children: 'Order' }))).not.toContain('flex-1')
+  })
+
   it('puts a trailing icon after the label', () => {
     const el = Button({ children: 'Next', icon: 'LEAD', trailingIcon: 'TRAIL' })
     expect(propsOf(propsOf(el).children).children).toEqual(['LEAD', 'Next', 'TRAIL'])
