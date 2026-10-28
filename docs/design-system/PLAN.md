@@ -373,7 +373,7 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
   and question rows, move onto it. A shared `plural` (`src/lib/plural.ts`)
   replaces the run-of-show copy. Review of this PR: Lobster Way questions are
   keyed by index while each keeps its own open state, so reordering leaves a
-  different question open (older bug, not fixed here).
+  different question open (older bug, #82).
 - **2026-10-28.** P2f part 3 on `design-menus` (31 → 24). New `Menu` (the
   trigger is a render prop that spreads `aria-haspopup`, `aria-expanded` and
   `onClick` onto a `Button` or `IconButton`; the panel is a `role="menu"` named
@@ -403,7 +403,7 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
   to the input after Escape or a choice from the keyboard, focuses the first
   item on the first ArrowDown even while closed, and reports `aria-expanded`
   only while a list shows. The Oscars drawer moves focus to its close button
-  on open and back to "Menu" on close. Older bug, not fixed here:
+  on open and back to "Menu" on close. Older bug, #84:
   `ConfirmDialog` doesn't move focus into itself, so after a keyboard choice
   that opens a confirm, Enter on the focused control behind it fires again.
   The search suggestions use `role="menu"`; a full combobox / listbox pattern
