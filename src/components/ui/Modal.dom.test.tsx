@@ -134,13 +134,15 @@ describe('Modal Escape', () => {
     expect(onWindowKey).not.toHaveBeenCalled()
   })
 
-  it('closes an open menu in the sheet first', () => {
+  it('closes an open menu in the sheet first', async () => {
     renderHarness({ withMenu: true })
-    fireEvent.click(screen.getByText('Tools'))
+    const tools = screen.getByText('Tools')
+    tools.focus()
+    fireEvent.keyDown(tools, { key: 'Enter' })
     fireEvent.keyDown(screen.getByText('Rename'), { key: 'Escape' })
     expect(screen.queryByRole('menu')).toBeNull()
     expect(screen.getByRole('dialog')).toBeTruthy()
-    expect(document.activeElement).toBe(screen.getByText('Tools'))
+    await waitFor(() => expect(document.activeElement).toBe(tools))
   })
 
   it('closes the list of a search field first, then the sheet', () => {

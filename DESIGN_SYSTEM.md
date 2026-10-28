@@ -75,8 +75,10 @@ is the exception: `Greeting` acts as its header.
 - **`dismissible`** (the default) closes on a backdrop tap, a drag down and Escape. An open menu
   or search list inside the sheet takes Escape first. A sheet with no `title` names itself with
   `labelId`.
-- **Menus** are `Menu` + `MenuItem`. They move onto Radix DropdownMenu next, and SwapPanel,
-  CompareView and the Oscars drawer onto Dialog (PLAN.md "Next").
+- **Menus** are `Menu` + `MenuItem`, on Radix DropdownMenu. Spread the trigger props onto one
+  `Button` or `IconButton`. The chosen item's `onSelect` runs once the menu has closed and focus
+  is back on the trigger. Suggestions under a search field are `MenuList` (no Radix). SwapPanel,
+  CompareView and the Oscars drawer move onto Dialog next (PLAN.md "Next").
 - **Test overlays with real input.** In the browser, use real taps and key presses: a scripted
   `.click()` or jsdom `fireEvent` misses timing bugs like #88.
 

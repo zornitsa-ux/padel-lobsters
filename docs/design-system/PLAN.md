@@ -163,8 +163,8 @@ primitives (see the Log) before P3:
 1. ~~**Menu choices with real input (issue #88).**~~ Fixed; see the Log.
 2. ~~**Dialog focus (#84) on Radix Dialog.** `Modal` and `ConfirmDialog`
    keep their props and wrap `@radix-ui/react-dialog`.~~ Done; see the Log.
-3. **`Menu` onto Radix DropdownMenu.** `MenuList` for search suggestions
-   stays ours until a combobox (P6 `SearchInput`).
+3. ~~**`Menu` onto Radix DropdownMenu.** `MenuList` for search suggestions
+   stays ours until a combobox (P6 `SearchInput`).~~ Done; see the Log.
 4. **SwapPanel, CompareView and the Oscars drawer onto Dialog.** Each rolls
    its own Escape, scroll lock and focus today.
 5. **P3 part 1: alerts.** `AlertBox` size, role and dismiss, then the
@@ -586,3 +586,49 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
   "Overlays" section (`Modal`, `useConfirm`, `data-autofocus`, `dismissible`,
   `labelId`, real-input browser checks). "Later" gains the first-paint
   follow-up for Radix. Next is step 3, `Menu` onto Radix DropdownMenu.
+- **2026-10-28.** Step 3 on `menu-radix`: `Menu`, `MenuItem` and
+  `MenuSeparator` keep their API and wrap `@radix-ui/react-dropdown-menu`,
+  so the event admin menu, "Mark Paid" and the status override are
+  unchanged at the call site. What changes and what stays ours:
+  - **Trigger.** Radix needs the trigger's DOM node, and `Button` /
+    `IconButton` don't forward refs, so `Menu` reads it through a
+    `display: contents` wrapper (the trigger render returns one element).
+    A mouse opens the menu on press, as Radix does; touch and pen open it on
+    the click, since a finger landing on a trigger may be starting a scroll
+    (review). Enter, Space and ArrowDown open it too. From the keyboard the
+    first item takes focus; from a tap, the menu itself does.
+  - **Choosing.** The item's action runs after the menu has closed and focus
+    is back on the trigger. So the on-behalf confirm from "Mark Paid" gets
+    focus and returns it to "Mark Paid", and an item that focuses a field
+    keeps it there. The action runs a tick after the tap, outside the click,
+    so an item that needs the click itself (a file picker, `navigator.share`)
+    would need another way. Radix moves arrow-key focus in a timeout, so keys sent
+    within a millisecond (a script, not a person) act on the previous item.
+  - **Keys.** Arrows wrap (`loop`), Home and End jump, and typing a letter
+    jumps to the matching item (new). Tab no longer closes the menu: Radix
+    keeps focus in an open menu, and Escape or a choice closes it.
+  - **Escape.** A menu is a Radix layer above the sheet, so in a `Modal` it
+    takes Escape first without `escapeIsForPopup`, which now only covers
+    `MenuList` and the TeamForm search field. `Menu` stops the key, so
+    SwapPanel, CompareView and the Oscars drawer (`window` listeners) stay
+    open.
+  - **Outside taps.** The page behind is inert while a menu is open; a tap
+    outside only closes the menu.
+  - **`MenuList`** is the TeamForm search list only: it loses `align`,
+    `showLabel`, `keepFocus` (now always on), `autoFocus`, `onItemSelected`,
+    `onEscape` and `onTab`, which only `Menu` used. `menuFocus.ts` stays
+    whole, since `MenuList` and TeamForm use all of it. `MenuItem` is a Radix
+    item inside a `Menu` (which provides it through `menuShell.ts`) and a
+    plain button inside a `MenuList`. `MenuItem`, `MenuList` and `Menu` are
+    separate files, so the TeamForm search doesn't load Radix (review).
+
+  First paint is unchanged: 210.5 → 210.6 KB gzip (`localdev` build, the
+  files index.html loads; main measured 210.5 KB with the same script, the
+  #90 entry's 209.8 used a different sum). The lazy `Menu` chunk grows from
+  1.6 to 19.2 KB gzip (Radix Menu, Popper, floating-ui), plus a 0.8 KB
+  `MenuItem` chunk. Every event page loaded `EventAdminMenu`, so its menu
+  now lazy-loads for admins only (`EventAdminTools`; the same trigger shows
+  disabled while it loads). Manage → Payments loads the chunk, as an admin
+  page; league manage doesn't. Review of this PR: no lazy chunk in the app
+  recovers from a failed load (a stale deploy blanks the screen); older
+  than this PR, #93.
