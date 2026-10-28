@@ -33,7 +33,8 @@ import { Chip, ChipGroup } from '../../components/ui/Chip'
 import { CollapsibleCard } from '../../components/ui/CollapsibleCard'
 import { Disclosure } from '../../components/ui/Disclosure'
 import { EmptyState } from '../../components/ui/EmptyState'
-import { Menu, MenuItem, MenuList, MenuSeparator } from '../../components/ui/Menu'
+import { Menu, MenuItem, MenuSeparator } from '../../components/ui/Menu'
+import { MenuList } from '../../components/ui/MenuList'
 import { Modal } from '../../components/ui/Modal'
 import { useConfirm } from '../../lib/confirmBus'
 import { CardLink } from '../../components/ui/CardLink'
@@ -519,7 +520,7 @@ function MenuSection() {
               defaultValue="Jo"
               readOnly
             />
-            <MenuList label="Player options" align="stretch" keepFocus>
+            <MenuList label="Player options">
               {SAMPLE_PLAYERS.map((p) => (
                 <MenuItem key={p.id} icon={<Avatar player={p} size="xs" />} onSelect={() => {}}>
                   {p.name}

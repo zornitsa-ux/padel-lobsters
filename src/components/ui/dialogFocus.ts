@@ -1,9 +1,10 @@
 import { useLayoutEffect, useRef } from 'react'
 
-// Not a menu trigger: it has no Escape handler of its own, the open menu does.
+// A `MenuList` and the search field above it while the list shows (the TeamForm player search).
+// A `Menu` needs no entry: it is a Radix layer above the sheet, so Radix gives it Escape first.
 const OPEN_POPUP = '[role="menu"], input[aria-haspopup][aria-expanded="true"]'
 
-/** Escape from inside an open popup (a menu, or a field whose list is showing) closes that first. */
+/** Escape from inside an open search list, or its field, closes the list first. */
 export const escapeIsForPopup = ({ target }: { target: EventTarget | null }) =>
   target instanceof Element && target.closest(OPEN_POPUP) !== null
 
