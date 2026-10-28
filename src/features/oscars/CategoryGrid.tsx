@@ -1,4 +1,5 @@
 import { Check } from 'lucide-react'
+import { OptionTile } from '../../components/ui/OptionTile'
 import type { CategoryRow } from './oscarsSchemas'
 import type { OscarVote } from './useOscarsSession'
 
@@ -21,43 +22,35 @@ export default function CategoryGrid({
     <div className="grid grid-cols-2 gap-2.5">
       {categories.map((c) => {
         const voted = myVoteByCat[c.id]
-        const clickable = !!onSelect
         return (
-          <button
+          <OptionTile
             key={c.id}
-            disabled={!clickable}
-            onClick={() => onSelect && onSelect(c.id)}
-            className={`rounded-2xl p-3 text-left transition-all min-h-[112px] flex flex-col justify-between border ${
-              voted
-                ? 'bg-gray-100 border-lob-line-strong'
-                : clickable
-                  ? 'bg-white border-lob-line active:scale-95'
-                  : 'bg-white border-lob-line opacity-90'
-            }`}
+            muted={!!voted}
+            onClick={onSelect ? () => onSelect(c.id) : undefined}
           >
-            <span className="text-2xl">{c.icon}</span>
-            <div>
-              <p
-                className={`font-bold text-sm leading-tight ${voted ? 'text-lob-slate' : 'text-lob-dark'}`}
-              >
-                {c.name}
-              </p>
-              {voted ? (
-                <p className="text-xs text-lob-success font-semibold mt-1 flex items-center gap-1">
-                  <Check size={11} /> Voted: {voted.name}
-                  {clickable && (
-                    <span className="text-lob-muted-light font-normal ml-0.5">· tap to change</span>
-                  )}
-                </p>
-              ) : showWaitingState ? (
-                <p className="text-xs text-lob-muted-light font-medium mt-1">
-                  You didn&apos;t vote
-                </p>
-              ) : (
-                <p className="text-xs text-lob-muted-light mt-1">Tap to vote</p>
-              )}
-            </div>
-          </button>
+            <span className="min-h-[88px] flex flex-col justify-between">
+              <span className="text-2xl">{c.icon}</span>
+              <span>
+                <span className="block font-bold text-sm leading-tight text-lob-dark">
+                  {c.name}
+                </span>
+                {voted ? (
+                  <span className="text-xs text-lob-success font-semibold mt-1 flex items-center gap-1">
+                    <Check size={11} /> Voted: {voted.name}
+                    {onSelect && (
+                      <span className="text-lob-muted-light font-normal ml-0.5">
+                        · tap to change
+                      </span>
+                    )}
+                  </span>
+                ) : (
+                  <span className="block text-xs text-lob-muted-light mt-1">
+                    {showWaitingState ? "You didn't vote" : 'Tap to vote'}
+                  </span>
+                )}
+              </span>
+            </span>
+          </OptionTile>
         )
       })}
     </div>

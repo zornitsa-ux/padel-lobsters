@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import type { ReactElement } from 'react'
 import StatRow from './StatRow'
 import { ProgressBar } from '../../components/ui/ProgressBar'
+import { CollapsibleCard } from '../../components/ui/CollapsibleCard'
 import { propsOf, childrenOf } from '../../test/element'
 import type { AdminStatRow, CategoryVoterRow } from './oscarsSchemas'
 
@@ -33,8 +34,10 @@ const render = (
   voters?: CategoryVoterRow[],
 ) => StatRow({ stat: stat(votes, participants), expanded, voters, onToggle: vi.fn() })
 
-// The bar is the trigger button's second child, after the label row.
-const barOf = (el: unknown) => childrenOf(childrenOf(el)[0])[1]
+// StatRow returns a CollapsibleCard: the bar sits in its header, under the label
+// row, so it is part of the tap target; the voter columns are its body.
+const barOf = (el: unknown) => childrenOf(propsOf(el).header)[1]
+const columnsOf = (el: unknown) => childrenOf(propsOf(el).children)
 
 // A column header reads "✓ Voted (1)" — its children are text/number fragments.
 const headerTextOf = (column: unknown) => childrenOf(childrenOf(column)[0]).join('')
@@ -55,15 +58,16 @@ describe('StatRow', () => {
     expect(propsOf(barOf(render(1, 3))).value).toBe(33)
   })
 
-  it('renders no voter breakdown while collapsed', () => {
+  it('is a CollapsibleCard that follows `expanded`', () => {
     const el = render(1, 2, false, [voter('p1', true), voter('p2', false)])
 
-    expect(childrenOf(el).filter(Boolean)).toHaveLength(1)
+    expect(typeOf(el)).toBe(CollapsibleCard)
+    expect(propsOf(el).expanded).toBe(false)
   })
 
   it('splits voters into voted and not-yet columns when expanded', () => {
     const el = render(1, 3, true, [voter('p1', true), voter('p2', false), voter('p3', false)])
-    const [votedColumn, notVotedColumn] = childrenOf(childrenOf(el)[1])
+    const [votedColumn, notVotedColumn] = columnsOf(el)
 
     expect(headerTextOf(votedColumn)).toBe('✓ Voted (1)')
     expect(headerTextOf(notVotedColumn)).toBe('○ Not yet (2)')
@@ -71,7 +75,7 @@ describe('StatRow', () => {
 
   it('counts nobody when the voter list has not loaded yet', () => {
     const el = render(1, 3, true, undefined)
-    const [votedColumn, notVotedColumn] = childrenOf(childrenOf(el)[1])
+    const [votedColumn, notVotedColumn] = columnsOf(el)
 
     expect(headerTextOf(votedColumn)).toBe('✓ Voted (0)')
     expect(headerTextOf(notVotedColumn)).toBe('○ Not yet (0)')

@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
-import { ChevronDown, Trophy } from 'lucide-react'
+import { Trophy } from 'lucide-react'
+import { CollapsibleCard } from '../../components/ui/CollapsibleCard'
 import type { ResultRow } from './oscarsSchemas'
 
 interface ResultsViewProps {
@@ -68,19 +69,13 @@ export default function ResultsView({
         const isOpen = collapsible ? openIds.has(cat.id) : true
 
         const Header = (
-          <div className="flex items-center gap-2">
+          <span className="flex-1 min-w-0 flex items-center gap-2">
             <span className="text-lg">{cat.icon}</span>
             <span className="flex-1 font-bold text-sm text-lob-dark">{cat.name}</span>
             {collapsible && !isOpen && (
               <span className="text-xs text-lob-muted-light italic">tap to reveal</span>
             )}
-            {collapsible && (
-              <ChevronDown
-                size={14}
-                className={`text-lob-muted-light transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}
-              />
-            )}
-          </div>
+          </span>
         )
 
         const Body = isOpen && (
@@ -126,20 +121,20 @@ export default function ResultsView({
 
         if (collapsible) {
           return (
-            <div key={cat.id} className="bg-white rounded-2xl overflow-hidden">
-              <button
-                onClick={() => toggle(cat.id)}
-                className="w-full p-3.5 text-left active:scale-[0.99] transition-all"
-              >
-                {Header}
-              </button>
-              {isOpen && <div className="px-3.5 pb-3.5 space-y-2">{Body}</div>}
-            </div>
+            <CollapsibleCard
+              key={cat.id}
+              className="card space-y-2"
+              expanded={isOpen}
+              onToggle={() => toggle(cat.id)}
+              header={Header}
+            >
+              {Body}
+            </CollapsibleCard>
           )
         }
 
         return (
-          <div key={cat.id} className="bg-white rounded-2xl p-3.5 space-y-2">
+          <div key={cat.id} className="card space-y-2">
             {Header}
             {Body}
           </div>

@@ -93,7 +93,6 @@ export default function SecurityEventsPanel() {
   return (
     <CollapsibleCard
       className="card space-y-3"
-      chevronClassName="text-lob-muted-light"
       expanded={expanded}
       onToggle={() => setExpanded((v) => !v)}
       header={

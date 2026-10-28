@@ -100,7 +100,6 @@ export default function Registration({
     [fullNames],
   )
 
-  const [search, setSearch] = useState('')
   const [showAdd, setShowAdd] = useState(false)
   const [selectedPlayer, setSelectedPlayer] = useState('')
   const [saving, setSaving] = useState(false)
@@ -162,10 +161,7 @@ export default function Registration({
     enabled: tournament?.entryMode === 'team',
   })
   const myTeamEntry = findMyEntry({ entries: teamEntries, playerId: claimedId })
-  const availablePlayers = useMemo(
-    () => getAvailablePlayers({ players, regs, search }),
-    [players, regs, search],
-  )
+  const availablePlayers = useMemo(() => getAvailablePlayers({ players, regs }), [players, regs])
 
   const selfRegister = useSelfRegister({
     tournamentId: tournament?.id,
@@ -274,7 +270,6 @@ export default function Registration({
       }
       setSelectedPlayer('')
       setShowAdd(false)
-      setSearch('')
     } finally {
       setSaving(false)
     }
@@ -554,12 +549,7 @@ export default function Registration({
           isCompleted={isCompleted}
           showAdd={showAdd}
           onOpen={() => setShowAdd(true)}
-          onClose={() => {
-            setShowAdd(false)
-            setSearch('')
-          }}
-          search={search}
-          onSearchChange={setSearch}
+          onClose={() => setShowAdd(false)}
           availablePlayers={availablePlayers}
           selectedPlayer={selectedPlayer}
           onSelectPlayer={setSelectedPlayer}

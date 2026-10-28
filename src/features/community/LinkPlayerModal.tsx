@@ -4,6 +4,7 @@ import Avatar from '../../components/ui/Avatar'
 import { Modal } from '../../components/ui/Modal'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { IconButton } from '../../components/ui/IconButton'
+import { OptionRow } from '../../components/ui/OptionRow'
 import { Skeleton } from '../../components/ui/Skeleton'
 import { useRevealPii } from './useRevealPii'
 import type { CommunityPlayer } from './playersSelectors'
@@ -100,7 +101,7 @@ export default function LinkPlayerModal({
             description="Type at least 2 characters to see matching players."
           />
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-1">
             {candidates.length === 0 && (
               <p className="text-xs text-lob-muted-light text-center py-4">No players match.</p>
             )}
@@ -119,9 +120,7 @@ export default function LinkPlayerModal({
 }
 
 // One candidate row. Its email is revealed independently, per row, on tap —
-// never eagerly for the whole filtered list. The reveal control is a
-// sibling of the confirm button, not nested inside it — a <button> inside a
-// <button> is invalid HTML and breaks click handling.
+// never eagerly for the whole filtered list.
 function CandidateRow({
   player: p,
   onConfirm,
@@ -131,46 +130,41 @@ function CandidateRow({
 }) {
   const pii = useRevealPii(String(p.id))
   return (
-    <div className="w-full flex items-center gap-2 p-3 rounded-2xl bg-lob-well hover:bg-lob-cream transition-all">
-      <button
-        onClick={() => onConfirm(p)}
-        className="flex-1 min-w-0 flex items-center gap-3 text-left active:scale-[0.98] transition-all"
-      >
-        <Avatar player={p} size="sm" />
-        <div className="flex-1 min-w-0">
-          <p className="font-semibold text-sm text-lob-dark truncate">{p.name}</p>
-          <p className="text-xs text-lob-muted">Lv {(p.playtomicLevel || 0).toFixed(1)}</p>
-        </div>
-      </button>
-
-      <div className="flex-shrink-0 text-xs text-lob-muted max-w-[40%] text-right">
-        {!pii.revealed && (
-          <IconButton aria-label={`Show ${p.name}'s email`} size="sm" onClick={pii.reveal}>
-            <Eye />
-          </IconButton>
-        )}
-        {pii.revealed && pii.isLoading && (
-          <span role="status" aria-live="polite">
-            <span className="sr-only">Loading email…</span>
-            <Skeleton className="h-3 w-24 inline-block align-middle" />
-          </span>
-        )}
-        {pii.revealed && pii.isError && (
-          <span className="inline-flex items-center gap-1 text-lob-amber">
-            failed
-            <IconButton
-              aria-label={`Retry loading ${p.name}'s email`}
-              size="sm"
-              onClick={() => pii.retry()}
-            >
-              <RotateCcw />
+    <OptionRow
+      onClick={() => onConfirm(p)}
+      leading={<Avatar player={p} size="sm" />}
+      title={p.name ?? '?'}
+      subtitle={`Lv ${(p.playtomicLevel || 0).toFixed(1)}`}
+      actions={
+        <>
+          {!pii.revealed && (
+            <IconButton aria-label={`Show ${p.name}'s email`} size="sm" onClick={pii.reveal}>
+              <Eye />
             </IconButton>
-          </span>
-        )}
-        {pii.revealed && !pii.isLoading && !pii.isError && (
-          <span className="truncate block">{pii.pii?.email || 'no email on file'}</span>
-        )}
-      </div>
-    </div>
+          )}
+          {pii.revealed && pii.isLoading && (
+            <span role="status" aria-live="polite">
+              <span className="sr-only">Loading email…</span>
+              <Skeleton className="h-3 w-24 inline-block align-middle" />
+            </span>
+          )}
+          {pii.revealed && pii.isError && (
+            <span className="inline-flex items-center gap-1 text-lob-amber">
+              failed
+              <IconButton
+                aria-label={`Retry loading ${p.name}'s email`}
+                size="sm"
+                onClick={() => pii.retry()}
+              >
+                <RotateCcw />
+              </IconButton>
+            </span>
+          )}
+          {pii.revealed && !pii.isLoading && !pii.isError && (
+            <span className="truncate">{pii.pii?.email || 'no email on file'}</span>
+          )}
+        </>
+      }
+    />
   )
 }

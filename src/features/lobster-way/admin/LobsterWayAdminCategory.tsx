@@ -1,9 +1,10 @@
 import React, { useState } from 'react'
-import { Trash2, Plus, ChevronDown } from 'lucide-react'
+import { Trash2, Plus } from 'lucide-react'
 import MoveButtons from './MoveButtons'
 import LobsterWayAdminItem, { emptyItem } from './LobsterWayAdminItem'
 import { moveItem, removeAt, replaceAt } from '../../../lib/arrayReorder'
 import type { LobsterWayCategory, LobsterWayItem } from '../../../data/lobsterWayContent'
+import { CollapsibleCard } from '../../../components/ui/CollapsibleCard'
 import { IconButton } from '../../../components/ui/IconButton'
 import { TextButton } from '../../../components/ui/TextButton'
 
@@ -36,22 +37,12 @@ export default function LobsterWayAdminCategory({
   const addItem = () => set({ items: [...(category.items || []), emptyItem()] })
 
   return (
-    <div className="card">
-      <div className="flex items-center gap-2">
-        <MoveButtons index={index} count={count} onMove={onMove} />
-        <button
-          type="button"
-          onClick={() => setOpen((o) => !o)}
-          className="flex-1 min-w-0 flex items-center justify-between gap-2 text-left"
-        >
-          <span className="text-sm font-bold text-gray-700 truncate">
-            {category.chipEmoji} {category.label || 'Untitled category'}
-          </span>
-          <ChevronDown
-            size={15}
-            className={`text-gray-400 flex-shrink-0 transition-transform ${open ? 'rotate-180' : ''}`}
-          />
-        </button>
+    <CollapsibleCard
+      className="card space-y-3"
+      expanded={open}
+      onToggle={() => setOpen((o) => !o)}
+      leading={<MoveButtons index={index} count={count} onMove={onMove} />}
+      actions={
         <IconButton
           onClick={onDelete}
           aria-label="Delete category"
@@ -60,74 +51,77 @@ export default function LobsterWayAdminCategory({
         >
           <Trash2 />
         </IconButton>
-      </div>
-
-      {open && (
-        <div className="mt-3 space-y-3">
-          <div className="flex gap-2">
-            <div className="w-16 flex-shrink-0">
-              <label className="label">Emoji</label>
-              <input
-                className="input text-sm text-center"
-                value={category.chipEmoji || ''}
-                onChange={(e) => set({ chipEmoji: e.target.value })}
-              />
-            </div>
-            <div className="flex-1">
-              <label className="label">Category name</label>
-              <input
-                className="input text-sm"
-                value={category.label}
-                onChange={(e) => set({ label: e.target.value })}
-              />
-            </div>
-          </div>
-
-          <label className="flex items-center gap-2 text-xs text-gray-600">
+      }
+      header={
+        <span className="text-sm font-bold text-lob-slate truncate">
+          {category.chipEmoji} {category.label || 'Untitled category'}
+        </span>
+      }
+    >
+      <div className="space-y-3">
+        <div className="flex gap-2">
+          <div className="w-16 flex-shrink-0">
+            <label className="label">Emoji</label>
             <input
-              type="checkbox"
-              checked={!!category.isStory}
-              onChange={(e) =>
-                set(
-                  e.target.checked
-                    ? { isStory: true, story: category.story || '', items: undefined }
-                    : { isStory: false, story: undefined, items: category.items || [] },
-                )
-              }
+              className="input text-sm text-center"
+              value={category.chipEmoji || ''}
+              onChange={(e) => set({ chipEmoji: e.target.value })}
             />
-            This is the Origin story block (plain text, not a Q&A list)
-          </label>
-
-          {category.isStory ? (
-            <div>
-              <label className="label">Story text</label>
-              <textarea
-                className="input text-sm min-h-[90px]"
-                value={category.story || ''}
-                onChange={(e) => set({ story: e.target.value })}
-              />
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {(category.items || []).map((item, i) => (
-                <LobsterWayAdminItem
-                  key={i}
-                  item={item}
-                  index={i}
-                  count={(category.items ?? []).length}
-                  onChange={(next) => setItem(i, next)}
-                  onMove={(dir) => moveItemAt(i, dir)}
-                  onDelete={() => deleteItemAt(i)}
-                />
-              ))}
-              <TextButton icon={<Plus size={12} />} onClick={addItem}>
-                Add question
-              </TextButton>
-            </div>
-          )}
+          </div>
+          <div className="flex-1">
+            <label className="label">Category name</label>
+            <input
+              className="input text-sm"
+              value={category.label}
+              onChange={(e) => set({ label: e.target.value })}
+            />
+          </div>
         </div>
-      )}
-    </div>
+
+        <label className="flex items-center gap-2 text-xs text-gray-600">
+          <input
+            type="checkbox"
+            checked={!!category.isStory}
+            onChange={(e) =>
+              set(
+                e.target.checked
+                  ? { isStory: true, story: category.story || '', items: undefined }
+                  : { isStory: false, story: undefined, items: category.items || [] },
+              )
+            }
+          />
+          This is the Origin story block (plain text, not a Q&A list)
+        </label>
+
+        {category.isStory ? (
+          <div>
+            <label className="label">Story text</label>
+            <textarea
+              className="input text-sm min-h-[90px]"
+              value={category.story || ''}
+              onChange={(e) => set({ story: e.target.value })}
+            />
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {(category.items || []).map((item, i) => (
+              <LobsterWayAdminItem
+                key={i}
+                item={item}
+                index={i}
+                count={(category.items ?? []).length}
+                onChange={(next) => setItem(i, next)}
+                onMove={(dir) => moveItemAt(i, dir)}
+                onDelete={() => deleteItemAt(i)}
+              />
+            ))}
+            <TextButton icon={<Plus size={12} />} onClick={addItem}>
+              Add question
+            </TextButton>
+          </div>
+        )}
+      </div>
+    </CollapsibleCard>
   )
 }
 
