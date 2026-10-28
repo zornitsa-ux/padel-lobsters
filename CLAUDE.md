@@ -24,7 +24,6 @@ See `docs/design-system/` (TOKENS.md for tokens, PLAN.md for what's being built)
 
 - Admins keep the power to act for any player. Wherever an admin picks a player other than themselves (captain, partner, registrant, payer), make it unmistakable who was picked.
 - Name the chosen player in the form, and confirm with `useConfirmOnBehalf` (`src/lib/confirmOnBehalf.ts`), restating who and what, before the write. Never default silently to someone else.
-- Admin-only forms should look different from the player-facing ones.
 
 ## Database Migrations
 
