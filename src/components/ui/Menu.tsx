@@ -15,7 +15,7 @@ interface MenuListProps {
   /** Show `label` as a heading above the items. */
   showLabel?: boolean
   align?: Align
-  /** Runs before the chosen item's `onSelect`. */
+  /** Runs after the chosen item's `onSelect`, e.g. to close the menu. */
   onItemSelected?: () => void
   /** Escape inside the menu; it stops there, so a surrounding panel stays open. */
   onEscape?: () => void
@@ -72,8 +72,9 @@ export function MenuList({
     items[next].focus()
   }
 
-  // Capture phase, so the menu closes before the item acts (e.g. opens a confirm dialog).
-  const handleClickCapture = (event: React.MouseEvent) => {
+  // Bubble phase, after the item's onClick. Not capture: a real tap lets React render between
+  // the capture and bubble phases, which would unmount the item before it acts (#88).
+  const handleClick = (event: React.MouseEvent) => {
     if ((event.target as HTMLElement).closest(ITEM_SELECTOR)) onItemSelected?.()
   }
 
@@ -84,7 +85,7 @@ export function MenuList({
       role="menu"
       aria-label={label}
       onKeyDown={handleKeyDown}
-      onClickCapture={handleClickCapture}
+      onClick={handleClick}
       onMouseDown={keepFocus ? (event) => event.preventDefault() : undefined}
       className={`absolute top-full z-50 mt-1 py-1 max-h-60 overflow-y-auto rounded-xl bg-white border border-lob-line shadow-xl [&>[role=separator]]:my-1 ${ALIGN[align]}`}
     >
@@ -122,10 +123,19 @@ type MenuProps = Pick<MenuListProps, 'label' | 'showLabel' | 'children'> & {
 export function Menu({ label, showLabel, align = 'right', trigger, children }: MenuProps) {
   const [open, setOpen] = useState(false)
   const triggerRef = useRef<HTMLElement | null>(null)
+  const listRef = useRef<HTMLDivElement>(null)
 
   const closeToTrigger = () => {
     setOpen(false)
     triggerRef.current?.focus()
+  }
+
+  // Leaves focus where the item put it (a field it revealed); otherwise back to the trigger.
+  const closeAfterChoice = () => {
+    const active = document.activeElement
+    const moved = active && active !== document.body && !listRef.current?.contains(active)
+    if (moved) setOpen(false)
+    else closeToTrigger()
   }
 
   return (
@@ -142,11 +152,12 @@ export function Menu({ label, showLabel, align = 'right', trigger, children }: M
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} aria-hidden="true" />
           <MenuList
+            listRef={listRef}
             label={label}
             showLabel={showLabel}
             align={align}
             autoFocus
-            onItemSelected={closeToTrigger}
+            onItemSelected={closeAfterChoice}
             onEscape={closeToTrigger}
             // Focusing the trigger before the browser moves on makes Tab continue from it.
             onTab={closeToTrigger}

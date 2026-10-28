@@ -157,26 +157,29 @@ sites, `registeredEntries`, and the King of the Court helpers (`isKingCourt`,
 
 ## Next
 
-Order of work after P2f (owner, 2026-10-28):
+Order of work after P2f (owner, 2026-10-28). Overlays move onto Radix
+primitives (see the Log) before P3:
 
-1. ~~**Dialog focus (#84).** `Modal` and `ConfirmDialog` take focus on open,
-   keep it inside, close on Escape when dismissible and return focus on
-   close.~~ Done on `dialog-focus`.
-2. **P3 part 1: alerts.** `AlertBox` size, role and dismiss, then the
+1. ~~**Menu choices with real input (issue #88).**~~ Fixed; see the Log.
+2. ~~**Dialog focus (#84) on Radix Dialog.** `Modal` and `ConfirmDialog`
+   keep their props and wrap `@radix-ui/react-dialog`.~~ Done; see the Log.
+3. **`Menu` onto Radix DropdownMenu.** `MenuList` for search suggestions
+   stays ours until a combobox (P6 `SearchInput`).
+4. **SwapPanel, CompareView and the Oscars drawer onto Dialog.** Each rolls
+   its own Escape, scroll lock and focus today.
+5. **P3 part 1: alerts.** `AlertBox` size, role and dismiss, then the
    hand-built tinted boxes.
-3. **P3 part 2: field errors.** `FormError` in ui and the hand-built error
+6. **P3 part 2: field errors.** `FormError` in ui and the hand-built error
    lines.
-4. **P4: `Badge` tones and payment status.**
-5. **P5: empty, signed-out and loading states.**
-6. **Card-pattern conversation** with the owner (below), then **P6**.
-7. **P7: lock-down.**
+7. **P4: `Badge` tones and payment status.**
+8. **P5: empty, signed-out and loading states.**
+9. **Card-pattern conversation** with the owner (below), then **P6**.
+10. **P7: lock-down.**
 
 Feature bugs found along the way are GitHub issues, outside this plan:
 #82 (Lobster Way open question after a reorder), #83 (Admin "unpaid
-registrations" row opens merch), #88 (a `Menu` choice made by a real tap or
-key does nothing) and #89 (the confirm dialog drops the on-behalf message's
-line breaks). Each is a small PR whenever it suits; #88 breaks every admin
-menu, so it comes first.
+registrations" row opens merch) and #89 (the confirm dialog drops the
+on-behalf message's line breaks). Each is a small PR whenever it suits.
 
 ## Later
 
@@ -492,32 +495,63 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
   `SegmentedControl`. New "Next" section with the proposed order.
 - **2026-10-28.** Owner: dialog focus (#84) first, then P3 as two PRs (alerts,
   then field errors), each started after the previous one merges.
-- **2026-10-28.** Dialog focus on `dialog-focus` (#84). `Modal` handles it, so
-  every sheet and confirm gets it (`components/ui/dialogFocus.ts`). On open,
-  focus moves into the sheet, unless an `autoFocus` child already took it (the
-  link-player and transfer searches). Two focus guards around the sheet wrap
-  Tab and Shift+Tab, so focus can't reach the page behind. Escape stops at the
-  sheet, so SwapPanel, CompareView or a sheet behind stays open, and closes it
-  only when `dismissible`. A backdrop tap no longer drops focus to the page.
-  On close, focus returns to the element that opened the sheet, like `Menu`
-  returns it to its trigger, unless focus has moved elsewhere since. The sheet is
-  `role="dialog"` with `aria-modal`, named by its title; `ConfirmDialog` is an
-  `alertdialog`. `ConfirmDialog` focuses Confirm, so Enter confirms, but
-  Cancel in a destructive flow, so a stray Enter can't delete. A confirm
-  opened from inside a sheet takes focus, Escape closes only the confirm, and
-  focus goes back to the button in the sheet. Browser test found two older
-  bugs: #88 (`Menu` closes in the click capture phase, so with a real tap or
-  key the item never acts; every admin menu, including "Mark Paid", is
-  affected) and #89 (on-behalf confirm messages lose their line breaks).
-- **2026-10-28.** Review of the dialog focus PR. The TeamForm player search
-  stops the Escape that closes its list, so it no longer closes the Edit
-  Team sheet as well; with the list closed, Escape still closes the sheet.
-  A confirm with no title (most of them) is named by its message, and a
-  titled one is described by it. A confirm that follows another while the
-  dialog stays open focuses its own default button again. Escape during IME
-  composition leaves the sheet open. The focus guards are no longer
-  `aria-hidden`, and the Tab wrap skips anything with `tabindex="-1"`. Not
-  handled: if the focused control inside a sheet removes itself, focus drops
-  to the page and Escape and the Tab wrap stop working until the next tap
-  in the sheet. A document-level focus guard would need a stack of open
-  dialogs; revisit if a sheet hits it.
+- **2026-10-28.** Browser testing the dialog focus PR (#90) found #88: no
+  `Menu` choice made with a real tap or key did anything, so every admin menu
+  (event admin menu, "Mark Paid", the status override) was dead. `MenuList`
+  closed the menu in the click capture phase. A real tap runs microtasks
+  between the capture and bubble listeners, so React unmounted the item
+  before its `onClick` ran. `fireEvent` and a scripted `.click()` don't, which
+  is why the tests passed. Fixed on `menu-select-fix`: the menu closes in
+  the bubble phase, after the item acts, and refocuses its trigger unless the
+  item moved focus somewhere itself (a field it revealed). A dialog the item
+  opens still returns focus to the trigger, since the dialog reads focus when
+  it renders, after the click. The new test flushes React at the target to
+  stand in for a real tap, and fails if closing moves back to the capture
+  phase. Keyboard selection has no separate test: Enter on a menu item fires
+  the same click. Browser checks of menus and dialogs use real taps and key
+  presses, not scripted clicks. Radix DropdownMenu (step 3 of "Next")
+  replaces this code.
+- **2026-10-28.** Owner: overlays use an established library rather than our
+  own focus code, since #88, a TeamForm Escape regression and an unhandled
+  focus case all came from hand-rolled overlay code in one day. Radix
+  primitives (`@radix-ui/react-dialog`, `react-dropdown-menu`), installed from
+  npm and wrapped in `src/components/ui` so feature code keeps today's API.
+  Not shadcn/ui, which copies styled components into the repo. Considered:
+  Base UI (same founding team, has a combobox, 1.0 in December 2025), React
+  Aria (heavier API), native `<dialog>` (Chrome ignores a cancelled Escape
+  without a fresh user activation, so a non-dismissible form could close).
+  Measure the first-paint bundle when Dialog lands, since `ConfirmProvider`
+  is mounted at the root.
+- **2026-10-28.** Dialog focus (#84) on `dialog-focus`, on Radix Dialog.
+  It replaces the hand-rolled version first opened in #90 (focus guards and
+  our own Tab wrap), which never merged. `Modal` keeps its props and wraps
+  `@radix-ui/react-dialog`. Radix traps Tab, hides the page behind from
+  assistive tech, locks scroll, and handles a dialog opened from inside
+  another: Escape and outside taps reach only the top one, and the outer
+  sheet's trap pauses. The sheet renders in a portal on `<body>`. What stays
+  ours (`components/ui/dialogFocus.ts`):
+  - **First focus:** the child marked `data-autofocus`, otherwise the sheet
+    itself, not the first field, which would pop the keyboard on a phone.
+    React's `autoFocus` still works (the link-player and transfer searches),
+    except in a dialog opened from inside another, where the outer trap pulls
+    focus back first. So `ConfirmDialog` uses `data-autofocus`.
+  - **Return focus:** to whatever had focus when the sheet opened, unless
+    focus has moved elsewhere since. Radix only returns it to a
+    `Dialog.Trigger`, and our dialogs open from code.
+  - **Escape:** Radix hears it on the document before anything inside. An
+    open popup in the sheet (a `role="menu"`, or a field with `aria-haspopup`
+    and `aria-expanded="true"`, like the TeamForm search) closes first.
+    Otherwise Escape stops at the sheet, so SwapPanel, CompareView or the
+    Oscars drawer behind stays open, and it closes the sheet only when
+    `dismissible`. Escape during IME composition is left alone. The TeamForm
+    search stops the Escape that closes its list.
+
+  `ConfirmDialog` is an `alertdialog`, named by its message when it has no
+  title (27 of 29 confirms) and described by it otherwise. It focuses
+  Confirm, so Enter confirms, but Cancel in a destructive flow, so a stray
+  Enter can't delete. A confirm that follows another while the dialog stays
+  open moves focus to its own default button. A backdrop tap on a
+  non-dismissible sheet keeps focus in it. Radix adds about 13 KB gzip to
+  first paint (196.7 → 209.8 KB, measured with a `localdev` build), since
+  `ConfirmProvider` is mounted at the root. Browser testing also found #89
+  (on-behalf confirm messages lose their line breaks).
