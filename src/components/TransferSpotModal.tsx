@@ -122,11 +122,12 @@ export default function TransferSpotModal({
   const handlePick = async (toPlayer: Player) => {
     if (busy || !effectiveFromId) return
     if (isOnBehalf) {
+      if (!fromPlayer) return
       setBusy(true)
       const ok = await confirmOnBehalf({
         title: 'Transfer this spot?',
         lines: [
-          `From: ${fromPlayer?.name ?? ''}`,
+          `From: ${fromPlayer.name}`,
           `To: ${toPlayer.name}`,
           transferImmediately
             ? 'Moves immediately, no acceptance needed.'

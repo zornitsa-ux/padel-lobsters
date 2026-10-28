@@ -33,8 +33,10 @@ const TransferSpotModal = (await import('./TransferSpotModal')).default
 
 const tournament = { id: 't1' } as unknown as NormalisedTournament
 
-const renderOnBehalf = () =>
-  render(<TransferSpotModal tournament={tournament} fromPlayerId="p1" onClose={vi.fn()} />)
+const renderOnBehalf = ({ fromPlayerId = 'p1' }: { fromPlayerId?: string } = {}) =>
+  render(
+    <TransferSpotModal tournament={tournament} fromPlayerId={fromPlayerId} onClose={vi.fn()} />,
+  )
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -78,6 +80,15 @@ describe('TransferSpotModal, admin on behalf', () => {
     fireEvent.click(screen.getByRole('button', { name: /bob stone/i }))
 
     await waitFor(() => expect(mockConfirm).toHaveBeenCalled())
+    expect(mockCreateTransfer).not.toHaveBeenCalled()
+  })
+
+  it("doesn't open the confirmation when the spot's owner isn't loaded", () => {
+    renderOnBehalf({ fromPlayerId: 'ghost' })
+
+    fireEvent.click(screen.getByRole('button', { name: /bob stone/i }))
+
+    expect(mockConfirm).not.toHaveBeenCalled()
     expect(mockCreateTransfer).not.toHaveBeenCalled()
   })
 })

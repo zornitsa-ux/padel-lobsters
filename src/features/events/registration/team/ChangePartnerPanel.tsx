@@ -33,7 +33,7 @@ export default function ChangePartnerPanel({
   const [error, setError] = useState('')
 
   const submit = async ({ choice }: { choice: PartnerChoice }) => {
-    if (onBehalfOf) {
+    if (onBehalfOf !== undefined) {
       const ok = await confirmOnBehalf({
         title: 'Change partner?',
         lines: [
