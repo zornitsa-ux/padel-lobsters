@@ -20,6 +20,12 @@ See `docs/design-system/` (TOKENS.md for tokens, PLAN.md for what's being built)
 - Ui components don't carry their own spacing. The parent or a layout component (`ActionRow`, `space-y-*`) places them.
 - Need a colour or size with no token? Add the token to `tailwind.config.js` and TOKENS.md in the same PR rather than using a raw value.
 
+### Admin actions on behalf of others
+
+- Admins keep the power to act for any player. Wherever an admin picks a player other than themselves (captain, partner, registrant, payer), make it unmistakable who was picked.
+- Name the chosen player in the form, and confirm with `useConfirmOnBehalf` (`src/lib/confirmOnBehalf.ts`), restating who and what, before the write. Never default silently to someone else.
+- Admin-only forms should look different from the player-facing ones.
+
 ## Database Migrations
 
 - Never apply a migration to production before its PR has been code reviewed and merged. This applies to every developer and agent, with no exceptions for urgency.

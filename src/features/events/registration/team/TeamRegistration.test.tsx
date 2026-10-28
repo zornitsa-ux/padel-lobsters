@@ -568,6 +568,46 @@ describe('admin team actions', () => {
         choice: { kind: 'member', playerId: 'p1' },
       }),
     )
+    expect(m.confirm).toHaveBeenCalledWith({
+      title: 'Add this team?',
+      message: expect.stringMatching(/Captain: Alma\nPartner: Bob/),
+      confirmLabel: 'Add team',
+    })
+  })
+
+  it('confirms a new partner with their email', async () => {
+    m.registerTeam.mockResolvedValue({ status: 'registered', teamId: 'tm9', partnerId: 'p9' })
+    renderInfo({ isAdmin: true })
+
+    fireEvent.click(screen.getByRole('button', { name: /add team/i }))
+    fireEvent.click(screen.getByRole('button', { name: /alma/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }))
+    fireEvent.click(screen.getByRole('button', { name: /^their partner isn't on padel lobsters/i }))
+    fillNewPartner()
+    fireEvent.click(screen.getByRole('checkbox'))
+    fireEvent.click(screen.getByRole('button', { name: 'Add team' }))
+
+    await waitFor(() =>
+      expect(m.confirm).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: expect.stringContaining('Partner: Gus (gus@example.com, new to Padel Lobsters)'),
+        }),
+      ),
+    )
+  })
+
+  it("doesn't add the team when the admin backs out of the confirmation", async () => {
+    m.confirm.mockResolvedValue(false)
+    renderInfo({ isAdmin: true })
+
+    fireEvent.click(screen.getByRole('button', { name: /add team/i }))
+    fireEvent.click(screen.getByRole('button', { name: /alma/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }))
+    fireEvent.click(screen.getByRole('button', { name: /bob/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Add team' }))
+
+    await waitFor(() => expect(m.confirm).toHaveBeenCalled())
+    expect(m.registerTeam).not.toHaveBeenCalled()
   })
 })
 
