@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react'
 import { ArrowRightLeft, Search } from 'lucide-react'
 import { useApp } from '../context/useApp'
+import { useConfirmOnBehalf } from '../lib/confirmOnBehalf'
 import { usePlayers } from '../features/players/usePlayers'
 import { useRegistrations } from '../features/events/useRegistrations'
 import { useTransferActions } from '../features/events/useTransfers'
@@ -71,6 +72,7 @@ export default function TransferSpotModal({
 }: TransferSpotModalProps) {
   const { session, isAdmin } = useApp()
   const { createTransfer, adminTransferRegistration } = useTransferActions({ session })
+  const confirmOnBehalf = useConfirmOnBehalf()
   const { data: players = [] } = usePlayers()
   const { data: regs = [] } = useRegistrations(tournament?.id)
   const claimedId = session?.user?.id ?? null
@@ -119,6 +121,22 @@ export default function TransferSpotModal({
 
   const handlePick = async (toPlayer: Player) => {
     if (busy || !effectiveFromId) return
+    if (isOnBehalf) {
+      setBusy(true)
+      const ok = await confirmOnBehalf({
+        title: 'Transfer this spot?',
+        lines: [
+          `From: ${fromPlayer?.name ?? ''}`,
+          `To: ${toPlayer.name}`,
+          transferImmediately
+            ? 'Moves immediately, no acceptance needed.'
+            : 'They will be asked to accept.',
+        ],
+        confirmLabel: 'Transfer spot',
+      })
+      setBusy(false)
+      if (!ok) return
+    }
     setBusy(true)
     setError(null)
     if (isOnBehalf && transferImmediately) {

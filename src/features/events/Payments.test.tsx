@@ -6,6 +6,7 @@ import { mkRegistration } from '../../test/factories'
 
 const mockUpdateRegistration = vi.fn()
 const mockFetchReminderLink = vi.fn()
+const mockConfirm = vi.fn()
 let registrations: unknown[] = []
 let teams: unknown[] = []
 let teamsState = { isPending: false, isError: false }
@@ -19,6 +20,7 @@ const players = [
 
 vi.mock('../../context/useApp', () => ({ useApp: () => ({ isAdmin: true }) }))
 vi.mock('../players/usePlayers', () => ({ usePlayers: () => ({ data: players }) }))
+vi.mock('../../lib/confirmBus', () => ({ useConfirm: () => mockConfirm }))
 vi.mock('./useRegistrations', () => ({
   useRegistrations: () => ({ data: registrations }),
   useRegistrationActions: () => ({ updateRegistration: mockUpdateRegistration }),
@@ -78,6 +80,7 @@ describe('Payments, team events', () => {
     teams = [team('team1', 'p1'), team('team2', 'p3')]
     teamsState = { isPending: false, isError: false }
     mockFetchReminderLink.mockResolvedValue('https://wa.me/1')
+    mockConfirm.mockResolvedValue(true)
   })
   afterEach(() => {
     cleanup()
@@ -146,6 +149,21 @@ describe('Payments, team events', () => {
         't1',
       ),
     )
+    expect(mockConfirm).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: expect.stringMatching(/Player: .*\nChange: Mark as paid \(tikkie\)/),
+      }),
+    )
+  })
+
+  it("doesn't change the payment when the admin backs out", async () => {
+    mockConfirm.mockResolvedValue(false)
+    renderPayments(tournament({ entryMode: 'team' }))
+    fireEvent.click(screen.getByRole('button', { name: /Mark Paid/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Tikkie' }))
+
+    await waitFor(() => expect(mockConfirm).toHaveBeenCalled())
+    expect(mockUpdateRegistration).not.toHaveBeenCalled()
   })
 })
 

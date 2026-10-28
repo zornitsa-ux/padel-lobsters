@@ -8,3 +8,11 @@ describe('onBehalfMessage', () => {
     )
   })
 })
+
+describe('onBehalfMessage footer', () => {
+  it('takes a per-action footer', () => {
+    expect(onBehalfMessage({ lines: ['Mark Alma as paid'], footer: 'Check the amount.' })).toBe(
+      'Mark Alma as paid\n\nCheck the amount.',
+    )
+  })
+})

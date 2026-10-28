@@ -551,6 +551,37 @@ describe('admin team actions', () => {
     ).not.toBeNull()
   })
 
+  it("confirms the team and new partner before an admin changes a team's partner", async () => {
+    m.changeTeamPartner.mockResolvedValue({ status: 'changed', partnerId: 'p1' })
+    renderInfo({ isAdmin: true })
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Change partner' })[0])
+    fireEvent.click(screen.getByRole('button', { name: /bob/i }))
+    fireEvent.click(screen.getAllByRole('button', { name: 'Change partner' })[0])
+
+    await waitFor(() =>
+      expect(m.confirm).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: 'Change partner?',
+          message: expect.stringMatching(/Team: .*\nNew partner: Bob/),
+        }),
+      ),
+    )
+    await waitFor(() => expect(m.changeTeamPartner).toHaveBeenCalled())
+  })
+
+  it("doesn't change the partner when the admin backs out", async () => {
+    m.confirm.mockResolvedValue(false)
+    renderInfo({ isAdmin: true })
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Change partner' })[0])
+    fireEvent.click(screen.getByRole('button', { name: /bob/i }))
+    fireEvent.click(screen.getAllByRole('button', { name: 'Change partner' })[0])
+
+    await waitFor(() => expect(m.confirm).toHaveBeenCalled())
+    expect(m.changeTeamPartner).not.toHaveBeenCalled()
+  })
+
   it('adds a team for a chosen captain', async () => {
     m.registerTeam.mockResolvedValue({ status: 'registered', teamId: 'tm9', partnerId: 'p1' })
     renderInfo({ isAdmin: true })
