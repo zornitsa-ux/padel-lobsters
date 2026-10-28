@@ -5,6 +5,22 @@ brand tokens). Use them instead of raw Tailwind palette classes
 (`text-green-700`, `bg-red-50`, …) and hex literals. What is being built on
 top of them is in [`PLAN.md`](./PLAN.md).
 
+## Brand and text
+
+| Token             | Value     | Use                                                   |
+| ----------------- | --------- | ----------------------------------------------------- |
+| `lob-teal`        | `#3D7A8A` | Brand, links, selected states (chips, segments, rows) |
+| `lob-teal-dark`   | `#2A5A68` | Header gradient end, hover darken                     |
+| `lob-teal-light`  | `#EAF4F7` | Selected row tint, segment track, icon button fill    |
+| `lob-coral`       | `#D94F2B` | Primary CTA (`Button` primary), active nav tab        |
+| `lob-coral-light` | `#FAEAE5` | Coral tint (unpaid badge)                             |
+| `lob-amber`       | `#E8A030` | Accent only, not status (league draft badge)          |
+| `lob-cream`       | `#F5F0E8` | Page background (`body`), accent icon button          |
+| `lob-dark`        | `#1C2B30` | Headings and body text; base of the card shadows      |
+| `lob-slate`       | `#40565C` | Secondary text that needs more weight than muted      |
+| `lob-muted`       | `#6B8A92` | Secondary text, inactive icons                        |
+| `lob-muted-light` | `#97ADB3` | Tertiary text, placeholder, disabled text             |
+
 ## Status colours
 
 Four families: `success`, `warning`, `danger`, `info`. Each has the same
@@ -59,7 +75,12 @@ Examples: `text-lob-success`, `bg-lob-warning-light border-lob-warning-border`,
 ## Still raw, on purpose
 
 Decorative and categorical colour isn't status, so it stays on the Tailwind
-palette for now: medal / podium / trophy gold, raffle and Oscars gold, the
-avatar letter palette (`playerConstants.ts`), gender marks, blue "selected"
-toggles, and the blue "transferred" / "delivered" pills (these move with the
-payment-status single source).
+palette for now (107 classes, held by the `design:check` ratchet; tokens for
+these are P7):
+
+- Medal, podium and trophy gold; raffle and Oscars gold.
+- The avatar letter palette (`playerConstants.ts`) and the gender marks.
+- The blue "transferred" payment pill and "delivered" merch status. These move
+  with the payment-status single source (P4).
+- The blue Playtomic-level panel, copied in `ProfileFields`, `ProfileSection`
+  and `PlayerForm` (a `.panel` candidate, P6).
