@@ -519,7 +519,7 @@ function MenuSection() {
               defaultValue="Jo"
               readOnly
             />
-            <MenuList label="Player options" align="stretch" keepFocus>
+            <MenuList label="Player options">
               {SAMPLE_PLAYERS.map((p) => (
                 <MenuItem key={p.id} icon={<Avatar player={p} size="xs" />} onSelect={() => {}}>
                   {p.name}

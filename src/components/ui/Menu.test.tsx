@@ -8,13 +8,10 @@ const classOf = (el: unknown) => String(propsOf(el).className)
 const labelRowOf = (el: unknown) => childrenOf(childrenOf(childrenOf(el)[1])[0])
 
 describe('MenuItem', () => {
-  it('is a menuitem button that calls onSelect', () => {
+  it('hands onSelect to the item and styles it', () => {
     const onSelect = vi.fn()
     const el = MenuItem({ children: 'Edit event', onSelect })
-    expect(el.type).toBe('button')
-    expect(propsOf(el).type).toBe('button')
-    expect(propsOf(el).role).toBe('menuitem')
-    expect(propsOf(el).onClick).toBe(onSelect)
+    expect(propsOf(el).onSelect).toBe(onSelect)
     expect(propsOf(el).disabled).toBe(false)
     expect(classOf(el)).toContain('px-4 py-2.5 text-sm font-semibold')
     expect(classOf(el)).toContain('text-lob-slate enabled:hover:bg-lob-well')

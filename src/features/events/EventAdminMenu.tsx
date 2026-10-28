@@ -1,6 +1,9 @@
-import { MoreVertical, Pencil, Trash2 } from 'lucide-react'
+import { lazy, Suspense } from 'react'
+import { MoreVertical } from 'lucide-react'
 import { IconButton } from '../../components/ui/IconButton'
-import { Menu, MenuItem } from '../../components/ui/Menu'
+
+// Radix DropdownMenu is about 18 KB gzip; event pages load it for admins only.
+const EventAdminTools = lazy(() => import('./EventAdminTools'))
 
 // Shared admin-tools overflow menu for a tournament. Renders nothing for
 // non-admins. Each action is optional — pass only the handlers the surface
@@ -24,25 +27,14 @@ export default function EventAdminMenu({
   if (!isAdmin || (!onEdit && !onDelete)) return null
 
   return (
-    <Menu
-      label="Admin tools"
-      align={align}
-      trigger={(props) => (
-        <IconButton {...props} aria-label="Admin tools">
+    <Suspense
+      fallback={
+        <IconButton aria-label="Admin tools" disabled>
           <MoreVertical />
         </IconButton>
-      )}
+      }
     >
-      {onEdit && (
-        <MenuItem icon={<Pencil />} onSelect={onEdit}>
-          Edit event
-        </MenuItem>
-      )}
-      {onDelete && (
-        <MenuItem icon={<Trash2 />} tone="danger" onSelect={onDelete}>
-          Delete event
-        </MenuItem>
-      )}
-    </Menu>
+      <EventAdminTools onEdit={onEdit} onDelete={onDelete} align={align} />
+    </Suspense>
   )
 }

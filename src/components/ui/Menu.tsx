@@ -1,81 +1,45 @@
-import React, { useEffect, useRef, useState } from 'react'
-import { focusFirstItem, ITEM_SELECTOR, itemsIn, nextItemIndex } from './menuFocus'
+import React, { createContext, forwardRef, useCallback, useContext, useRef } from 'react'
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
+import { itemsIn, nextItemIndex } from './menuFocus'
 
-type Align = 'left' | 'right' | 'stretch'
+const PANEL =
+  'py-1 max-h-60 overflow-y-auto rounded-xl bg-white border border-lob-line shadow-xl [&>[role=separator]]:my-1'
 
-const ALIGN: Record<Align, string> = {
-  right: 'right-0 w-max min-w-44 max-w-72',
-  left: 'left-0 w-max min-w-44 max-w-72',
-  stretch: 'inset-x-0',
+function MenuHeading({ label }: { label: string }) {
+  return (
+    <div
+      aria-hidden="true"
+      className="px-4 pt-1.5 pb-1 text-2xs font-bold uppercase tracking-wider text-lob-muted-light"
+    >
+      {label}
+    </div>
+  )
 }
 
 interface MenuListProps {
-  /** Accessible name of the menu. */
+  /** Accessible name of the list. */
   label: string
-  /** Show `label` as a heading above the items. */
-  showLabel?: boolean
-  align?: Align
-  /** Runs after the chosen item's `onSelect`, e.g. to close the menu. */
-  onItemSelected?: () => void
-  /** Escape inside the menu; it stops there, so a surrounding panel stays open. */
-  onEscape?: () => void
-  /** Tab leaves the menu. */
-  onTab?: () => void
-  /** Keep focus in the field that opened the list (a search input) when an item is tapped. */
-  keepFocus?: boolean
-  /** Focus the first item on mount. */
-  autoFocus?: boolean
   id?: string
   listRef?: React.RefObject<HTMLDivElement>
   children: React.ReactNode
 }
 
 /**
- * The floating panel of a menu, placed under its parent (`relative`). `Menu` wraps it with a
- * trigger; a search field that suggests items renders it directly.
+ * Suggestions under a search field, placed full width under its parent (`relative`). Tapping an
+ * item keeps focus in the field; arrow keys, Home and End move between items. The field owns
+ * opening, closing and Escape.
  */
-export function MenuList({
-  label,
-  showLabel = false,
-  align = 'right',
-  onItemSelected,
-  onEscape,
-  onTab,
-  keepFocus = false,
-  autoFocus = false,
-  id,
-  listRef,
-  children,
-}: MenuListProps) {
+export function MenuList({ label, id, listRef, children }: MenuListProps) {
   const ownRef = useRef<HTMLDivElement>(null)
   const ref = listRef ?? ownRef
 
-  useEffect(() => {
-    if (autoFocus) focusFirstItem(ref.current)
-  }, [autoFocus, ref])
-
   const handleKeyDown = (event: React.KeyboardEvent) => {
-    if (event.key === 'Escape' && onEscape) {
-      event.stopPropagation()
-      onEscape()
-      return
-    }
-    if (event.key === 'Tab') {
-      onTab?.()
-      return
-    }
     const items = itemsIn(ref.current)
     const index = items.indexOf(document.activeElement as HTMLElement)
     const next = nextItemIndex({ key: event.key, index, count: items.length })
     if (next === null) return
     event.preventDefault()
     items[next].focus()
-  }
-
-  // Bubble phase, after the item's onClick. Not capture: a real tap lets React render between
-  // the capture and bubble phases, which would unmount the item before it acts (#88).
-  const handleClick = (event: React.MouseEvent) => {
-    if ((event.target as HTMLElement).closest(ITEM_SELECTOR)) onItemSelected?.()
   }
 
   return (
@@ -85,88 +49,142 @@ export function MenuList({
       role="menu"
       aria-label={label}
       onKeyDown={handleKeyDown}
-      onClick={handleClick}
-      onMouseDown={keepFocus ? (event) => event.preventDefault() : undefined}
-      className={`absolute top-full z-50 mt-1 py-1 max-h-60 overflow-y-auto rounded-xl bg-white border border-lob-line shadow-xl [&>[role=separator]]:my-1 ${ALIGN[align]}`}
+      onMouseDown={(event) => event.preventDefault()}
+      className={`absolute top-full inset-x-0 z-50 mt-1 ${PANEL}`}
     >
-      {showLabel && (
-        <div
-          aria-hidden="true"
-          className="px-4 pt-1.5 pb-1 text-2xs font-bold uppercase tracking-wider text-lob-muted-light"
-        >
-          {label}
-        </div>
-      )}
       {children}
     </div>
   )
 }
 
 export interface MenuTriggerProps {
-  onClick: (event: React.MouseEvent<HTMLElement>) => void
-  'aria-haspopup': 'menu'
-  'aria-expanded': boolean
+  id?: string
+  type?: 'button'
+  disabled?: boolean
+  'aria-haspopup'?: 'menu'
+  'aria-expanded'?: boolean
+  'aria-controls'?: string
+  onPointerDown?: React.PointerEventHandler<HTMLElement>
+  onKeyDown?: React.KeyboardEventHandler<HTMLElement>
 }
 
-type MenuProps = Pick<MenuListProps, 'label' | 'showLabel' | 'children'> & {
+type TriggerSlotProps = MenuTriggerProps & {
+  render: (props: MenuTriggerProps) => React.ReactNode
+}
+
+// Radix needs the trigger's DOM node, and `Button` / `IconButton` don't forward refs, so the
+// node is read through a `display: contents` wrapper.
+const TriggerSlot = forwardRef<HTMLElement, TriggerSlotProps>(function TriggerSlot(
+  { render, ...props },
+  ref,
+) {
+  const setRef = useCallback(
+    (span: HTMLSpanElement | null) => {
+      const node = (span?.firstElementChild as HTMLElement | null) ?? null
+      if (typeof ref === 'function') ref(node)
+      else if (ref) ref.current = node
+    },
+    [ref],
+  )
+  return (
+    <span ref={setRef} className="contents">
+      {render(props)}
+    </span>
+  )
+})
+
+/** Set inside a `Menu`: items hand their action to it rather than running it on click. */
+const RunAfterClose = createContext<((action: () => void) => void) | null>(null)
+
+interface MenuProps {
+  /** Accessible name of the menu. */
+  label: string
+  /** Show `label` as a heading above the items. */
+  showLabel?: boolean
   /** Which edge of the trigger the menu lines up with. */
-  align?: Exclude<Align, 'stretch'>
+  align?: 'left' | 'right'
   /** Renders the trigger: spread the props onto a `Button` or `IconButton`. */
   trigger: (props: MenuTriggerProps) => React.ReactNode
+  children: React.ReactNode
 }
 
 /**
- * A button that opens a list of actions (`MenuItem`s, optionally split by `MenuSeparator`).
- * Escape and choosing an item close it and return focus to the trigger; a tap outside closes
- * it; arrow keys, Home and End move between items.
+ * A button that opens a list of actions (`MenuItem`s, optionally split by `MenuSeparator`), on
+ * Radix DropdownMenu. Escape, a tap outside and choosing an item close it and return focus to
+ * the trigger. Escape stops at the menu, so a panel around it stays open.
  */
-export function Menu({ label, showLabel, align = 'right', trigger, children }: MenuProps) {
-  const [open, setOpen] = useState(false)
+export function Menu({ label, showLabel = false, align = 'right', trigger, children }: MenuProps) {
   const triggerRef = useRef<HTMLElement | null>(null)
-  const listRef = useRef<HTMLDivElement>(null)
+  const chosen = useRef<(() => void) | null>(null)
+  const runAfterClose = useCallback((action: () => void) => {
+    chosen.current = action
+  }, [])
 
-  const closeToTrigger = () => {
-    setOpen(false)
+  // The chosen action runs once the menu is gone and the trigger has focus again, so a dialog it
+  // opens returns focus to the trigger, and a field it focuses keeps focus.
+  const handleCloseAutoFocus = (event: Event) => {
+    const action = chosen.current
+    if (!action) return
+    chosen.current = null
+    event.preventDefault()
     triggerRef.current?.focus()
-  }
-
-  // Leaves focus where the item put it (a field it revealed); otherwise back to the trigger.
-  const closeAfterChoice = () => {
-    const active = document.activeElement
-    const moved = active && active !== document.body && !listRef.current?.contains(active)
-    if (moved) setOpen(false)
-    else closeToTrigger()
+    action()
   }
 
   return (
-    <div className="relative">
-      {trigger({
-        onClick: (event) => {
-          triggerRef.current = event.currentTarget
-          setOpen((o) => !o)
-        },
-        'aria-haspopup': 'menu',
-        'aria-expanded': open,
-      })}
-      {open && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} aria-hidden="true" />
-          <MenuList
-            listRef={listRef}
-            label={label}
-            showLabel={showLabel}
-            align={align}
-            autoFocus
-            onItemSelected={closeAfterChoice}
-            onEscape={closeToTrigger}
-            // Focusing the trigger before the browser moves on makes Tab continue from it.
-            onTab={closeToTrigger}
-          >
-            {children}
-          </MenuList>
-        </>
-      )}
-    </div>
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger asChild>
+        <TriggerSlot ref={triggerRef} render={trigger} />
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content
+          align={align === 'left' ? 'start' : 'end'}
+          sideOffset={4}
+          collisionPadding={8}
+          loop
+          aria-label={label}
+          // Radix names the menu after its trigger.
+          aria-labelledby={undefined}
+          // Radix closes the menu but lets the key go on to `window` listeners (SwapPanel,
+          // CompareView, the Oscars drawer), which would close the panel too.
+          onEscapeKeyDown={(event) => event.stopPropagation()}
+          onCloseAutoFocus={handleCloseAutoFocus}
+          className={`z-50 w-max min-w-44 max-w-72 ${PANEL}`}
+        >
+          {showLabel && <MenuHeading label={label} />}
+          <RunAfterClose.Provider value={runAfterClose}>{children}</RunAfterClose.Provider>
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
+  )
+}
+
+interface ItemButtonProps {
+  onSelect: () => void
+  disabled: boolean
+  className: string
+  children: React.ReactNode
+}
+
+/** A Radix item inside a `Menu`; a plain button inside a `MenuList`. */
+function ItemButton({ onSelect, disabled, className, children }: ItemButtonProps) {
+  const runAfterClose = useContext(RunAfterClose)
+  const button = (
+    <button
+      type="button"
+      role="menuitem"
+      onClick={runAfterClose ? undefined : onSelect}
+      disabled={disabled}
+      className={className}
+    >
+      {children}
+    </button>
+  )
+  if (!runAfterClose) return button
+  return (
+    <DropdownMenu.Item asChild disabled={disabled} onSelect={() => runAfterClose(onSelect)}>
+      {button}
+    </DropdownMenu.Item>
   )
 }
 
@@ -200,7 +218,7 @@ const TONE: Record<Tone, { text: string; icon: string }> = {
 const ITEM =
   'w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-left outline-none disabled:text-lob-muted-light disabled:cursor-default'
 
-/** One action in a `Menu` (or a `MenuList`). The menu closes after `onSelect`. */
+/** One action in a `Menu` (or a `MenuList`). The menu closes, then `onSelect` runs. */
 export function MenuItem({
   children,
   onSelect,
@@ -212,10 +230,8 @@ export function MenuItem({
 }: MenuItemProps) {
   const toneClasses = TONE[tone]
   return (
-    <button
-      type="button"
-      role="menuitem"
-      onClick={onSelect}
+    <ItemButton
+      onSelect={onSelect}
       disabled={disabled || current}
       className={`${ITEM} ${toneClasses.text}`}
     >
@@ -234,7 +250,7 @@ export function MenuItem({
         </span>
         {hint && <span className="block text-xs font-normal text-lob-muted">{hint}</span>}
       </span>
-    </button>
+    </ItemButton>
   )
 }
 

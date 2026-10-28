@@ -135,13 +135,7 @@ function PlayerPicker({
           onFocus={() => setOpen(true)}
         />
         {showList && (
-          <MenuList
-            id={listId}
-            label={`${label} options`}
-            align="stretch"
-            keepFocus
-            listRef={listRef}
-          >
+          <MenuList id={listId} label={`${label} options`} listRef={listRef}>
             {filtered.map((p) => (
               <MenuItem
                 key={p.id}
