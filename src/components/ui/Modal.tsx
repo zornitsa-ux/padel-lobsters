@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
-import { escapeIsForPopup, useReturnFocus } from './dialogFocus'
+import { escapeIsForPopup, isToast, useReturnFocus } from './dialogFocus'
 
 interface ModalProps {
   open: boolean
@@ -17,8 +17,12 @@ interface ModalProps {
   dismissible?: boolean
   /** `alertdialog` for a confirmation that interrupts the flow. */
   role?: 'dialog' | 'alertdialog'
-  /** Id of the text that describes the dialog. It names the dialog when there is no `title`. */
+  /** Without a `title`: id of the heading or text inside that names the dialog. */
+  labelId?: string
+  /** Id of the text that describes the dialog. */
   descriptionId?: string
+  /** Changing it moves focus as on open again, for a dialog that stays open across requests. */
+  focusKey?: string | number
 }
 
 /**
@@ -35,7 +39,9 @@ export function Modal({
   footer,
   dismissible = true,
   role = 'dialog',
+  labelId,
   descriptionId,
+  focusKey,
 }: ModalProps) {
   const dragStartY = useRef<number | null>(null)
   const [dragY, setDragY] = useState(0)
@@ -73,11 +79,16 @@ export function Modal({
 
   // Radix hears Escape on the document before anything inside the sheet does.
   function handleEscape(e: KeyboardEvent) {
-    if (e.isComposing || escapeIsForPopup({ target: e.target })) {
+    // An open popup's own handler closes it and stops the event there.
+    if (escapeIsForPopup({ target: e.target })) {
       e.preventDefault()
       return
     }
     e.stopPropagation()
+    if (e.isComposing) {
+      e.preventDefault()
+      return
+    }
     if (!dismissible) e.preventDefault()
   }
 
@@ -89,8 +100,9 @@ export function Modal({
     ;(sheet.querySelector<HTMLElement>('[data-autofocus]') ?? sheet).focus()
   }
 
-  const preventUnlessDismissible = (e: Event) => {
-    if (!dismissible) e.preventDefault()
+  // A tap on a toast (its dismiss X) isn't a tap on the page behind.
+  const handleInteractOutside = (e: Event) => {
+    if (!dismissible || isToast({ target: e.target })) e.preventDefault()
   }
 
   return (
@@ -102,9 +114,10 @@ export function Modal({
           onMouseDown={(e) => e.target === e.currentTarget && e.preventDefault()}
         >
           <Dialog.Content
+            key={focusKey}
             role={role}
-            {...(title ? {} : { 'aria-labelledby': descriptionId })}
-            aria-describedby={title ? descriptionId : undefined}
+            {...(title ? {} : { 'aria-labelledby': labelId })}
+            aria-describedby={descriptionId}
             className="w-full max-w-lg bg-white rounded-t-3xl shadow-xl flex flex-col max-h-[90dvh] outline-none"
             style={{
               transform: `translateY(${dragY}px)`,
@@ -113,7 +126,9 @@ export function Modal({
             onOpenAutoFocus={focusFirst}
             onCloseAutoFocus={returnFocus}
             onEscapeKeyDown={handleEscape}
-            onInteractOutside={preventUnlessDismissible}
+            onInteractOutside={handleInteractOutside}
+            // The sheet is portaled, but React events still bubble to whatever renders it.
+            onClick={(e) => e.stopPropagation()}
             onTouchStart={dismissible ? handleTouchStart : undefined}
             onTouchMove={dismissible ? handleTouchMove : undefined}
             onTouchEnd={dismissible ? handleTouchEnd : undefined}

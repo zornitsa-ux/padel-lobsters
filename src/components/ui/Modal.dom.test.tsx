@@ -153,10 +153,14 @@ describe('Modal Escape', () => {
     expect(screen.queryByRole('dialog')).toBeNull()
   })
 
-  it('leaves the sheet open while a composition is in progress', () => {
+  it('leaves the sheet, and a panel behind it, open while a composition is in progress', () => {
+    const onWindowKey = vi.fn()
+    window.addEventListener('keydown', onWindowKey)
     renderHarness()
     fireEvent.keyDown(screen.getByLabelText('Name'), { key: 'Escape', isComposing: true })
+    window.removeEventListener('keydown', onWindowKey)
     expect(screen.getByRole('dialog')).toBeTruthy()
+    expect(onWindowKey).not.toHaveBeenCalled()
   })
 })
 
@@ -220,5 +224,41 @@ describe('ConfirmDialog focus', () => {
     expect(screen.queryByRole('alertdialog')).toBeNull()
     expect(screen.getByRole('dialog', { name: 'Edit player' })).toBeTruthy()
     await waitFor(() => expect(document.activeElement).toBe(save))
+  })
+})
+
+describe('Modal and the page around it', () => {
+  it('keeps toasts audible and treats a tap on one as inside the sheet', async () => {
+    const onClose = vi.fn()
+    render(
+      <>
+        <div data-toast-viewport aria-live="polite">
+          <button>Dismiss toast</button>
+        </div>
+        <Modal open onClose={onClose} title="Edit player">
+          body
+        </Modal>
+      </>,
+    )
+    const toast = screen.getByText('Dismiss toast')
+    expect(toast.closest('[aria-hidden="true"]')).toBeNull()
+
+    await act(() => new Promise((resolve) => setTimeout(resolve, 0)))
+    fireEvent.pointerDown(toast, { button: 0 })
+    fireEvent.click(toast)
+    expect(onClose).not.toHaveBeenCalled()
+  })
+
+  it('keeps clicks in the sheet from reaching what renders it', () => {
+    const onRowClick = vi.fn()
+    render(
+      <div onClick={onRowClick}>
+        <Modal open onClose={() => {}} title="Edit player">
+          <button>Inside</button>
+        </Modal>
+      </div>,
+    )
+    fireEvent.click(screen.getByText('Inside'))
+    expect(onRowClick).not.toHaveBeenCalled()
   })
 })

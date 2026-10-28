@@ -53,7 +53,11 @@ function ToastViewport({
   onDismiss: (id: number) => void
 }) {
   return (
+    // Always a live region, so an open dialog's aria-hidden (Radix, via aria-hidden) skips it
+    // and toasts are still announced; Modal treats a tap here as inside.
     <div
+      data-toast-viewport
+      aria-live="polite"
       className="fixed inset-x-0 z-[70] flex flex-col items-center gap-2 px-4 pointer-events-none"
       style={{ bottom: 'calc(5rem + env(safe-area-inset-bottom))' }}
     >

@@ -194,6 +194,13 @@ on-behalf message's line breaks). Each is a small PR whenever it suits.
 
 ## Open owner calls
 
+- **Escape on form sheets** (from the review of the Radix dialog PR). Escape
+  now closes every dismissible sheet, as a backdrop tap already did. The
+  long forms that are still dismissible (`EventFormModal`, Add / Edit Team in
+  `ManageTeams`, `ManageMatches` score entry, `InvitePlayerModal`) can lose
+  typed input that way. Make them `dismissible={false}` (no backdrop or
+  Escape close), or leave them?
+
 - **Card-pattern conversation**: when to have it. It has to come before P6;
   P3 to P5 don't depend on it.
 
@@ -553,5 +560,20 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
   open moves focus to its own default button. A backdrop tap on a
   non-dismissible sheet keeps focus in it. Radix adds about 13 KB gzip to
   first paint (196.7 → 209.8 KB, measured with a `localdev` build), since
-  `ConfirmProvider` is mounted at the root. Browser testing also found #89
+  `ConfirmProvider` and `PinSignInInterstitial` (both in the entry chunk) use
+  `Modal`. Browser testing also found #89
   (on-behalf confirm messages lose their line breaks).
+
+- **2026-10-28.** Review of the Radix dialog PR. A tap on a toast (its
+  dismiss X) no longer closes the sheet, and the toast viewport is always a
+  live region (`data-toast-viewport`), so Radix's `aria-hidden` on the page
+  skips it and toasts are still announced while a sheet is open. Escape during
+  IME composition stops at the sheet too. A menu trigger no longer counts as
+  an open popup for Escape, only a menu or a search field with its list
+  showing. `Modal` gains `labelId` (a heading inside names the sheet; the
+  payment sheet uses it) and `focusKey` (moves focus as on open again, so
+  `ConfirmDialog` drops its own focus effect). The opener is read in a layout
+  effect rather than during render: the portal mounts the sheet in the next
+  render, so the opener still has focus then. Clicks inside the sheet stop at
+  it, since React events bubble from a portal to whatever renders `Modal`.
+  Open owner call below: Escape now closes dismissible form sheets.
