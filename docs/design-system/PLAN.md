@@ -54,6 +54,7 @@ component doesn't fit, fix the component, not the call site.**
 | Destructive action, not the CTA      | `TextButton tone="destructive"`                      | exists    |
 | Toggle, filter or info chip          | `Chip` (a row of them: `ChipGroup`)                  | exists    |
 | Pick one from a list (player, tile)  | option row / tile                                    | P2f       |
+| Admin acts for another player        | `useConfirmOnBehalf` before the write                | exists    |
 | Menu of actions                      | `Menu` + `MenuItem`                                  | P2f       |
 | Underlined / inline text action      | `TextButton tone=… size=…` (`to` / `href` for links) | exists    |
 | Icon-only button                     | `IconButton` (always with `aria-label`)              | exists    |
@@ -331,3 +332,11 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
   rounds). Payments filter pills lose their per-status active colours, and
   the merch size picker no longer turns its borders red when no size is
   picked: the "Please select a size" line already says so.
+- **2026-10-28.** Owner: admins keep full control to act for other players,
+  but the UI must make who they picked unmistakable. An admin registering the
+  women's KotC team picked the wrong captain; the server allows it by design
+  (`register_team_for_tournament` only requires admin when the captain isn't
+  the caller). Rule added to CLAUDE.md. `useConfirmOnBehalf` wraps
+  `useConfirm` and `AdminAddTeamCard` uses it. Follow-ups, each checked
+  against the rule: the individual-event admin add, admin partner swap,
+  admin payment marking.

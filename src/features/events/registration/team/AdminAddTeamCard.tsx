@@ -8,8 +8,10 @@ import type { DisplayName, GetPlayer } from '../utils'
 import PartnerChoiceForm from './PartnerChoiceForm'
 import PlayerPicker from './PlayerPicker'
 import TeamNotices from './TeamNotices'
-import { eligiblePlayers } from './teamHelpers'
+import { choicePartnerName, eligiblePlayers } from './teamHelpers'
 import { useTeamSignup, type TeamSignupResult } from './useTeamSignup'
+import { useConfirmOnBehalf } from '../../../../lib/confirmOnBehalf'
+import type { PartnerChoice } from '../../teams/teamTypes'
 import { Button } from '../../../../components/ui/Button'
 import { IconButton } from '../../../../components/ui/IconButton'
 
@@ -45,6 +47,18 @@ export default function AdminAddTeamCard({
       reset()
     },
   })
+  const confirmOnBehalf = useConfirmOnBehalf()
+  const confirmAndSubmit = async ({ choice }: { choice: PartnerChoice }) => {
+    const ok = await confirmOnBehalf({
+      title: 'Add this team?',
+      lines: [
+        `Captain: ${getPlayer(captainId)?.name ?? ''}`,
+        `Partner: ${choicePartnerName({ choice, getPlayer })}`,
+      ],
+      confirmLabel: 'Add team',
+    })
+    if (ok) await signup.submit({ choice })
+  }
   const available = useMemo(() => eligiblePlayers({ players, regs }), [players, regs])
   const partners = useMemo(
     () => available.filter((p) => p.id !== captainId),
@@ -96,7 +110,7 @@ export default function AdminAddTeamCard({
           newPartnerLabel="Their partner isn't on Padel Lobsters →"
           busy={signup.busy}
           error={signup.error}
-          onSubmit={(args) => void signup.submit(args)}
+          onSubmit={(args) => void confirmAndSubmit(args)}
           onCancel={() => {
             setCaptainChosen(false)
             signup.clearError()

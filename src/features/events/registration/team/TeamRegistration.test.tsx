@@ -568,6 +568,23 @@ describe('admin team actions', () => {
         choice: { kind: 'member', playerId: 'p1' },
       }),
     )
+    expect(m.confirm).toHaveBeenCalledWith(
+      expect.objectContaining({ message: expect.stringContaining('Captain: Alma') }),
+    )
+  })
+
+  it("doesn't add the team when the admin backs out of the confirmation", async () => {
+    m.confirm.mockResolvedValue(false)
+    renderInfo({ isAdmin: true })
+
+    fireEvent.click(screen.getByRole('button', { name: /add team/i }))
+    fireEvent.click(screen.getByRole('button', { name: /alma/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }))
+    fireEvent.click(screen.getByRole('button', { name: /bob/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Add team' }))
+
+    await waitFor(() => expect(m.confirm).toHaveBeenCalled())
+    expect(m.registerTeam).not.toHaveBeenCalled()
   })
 })
 
