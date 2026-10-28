@@ -509,3 +509,15 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
   bugs: #88 (`Menu` closes in the click capture phase, so with a real tap or
   key the item never acts; every admin menu, including "Mark Paid", is
   affected) and #89 (on-behalf confirm messages lose their line breaks).
+- **2026-10-28.** Review of the dialog focus PR. The TeamForm player search
+  stops the Escape that closes its list, so it no longer closes the Edit
+  Team sheet as well; with the list closed, Escape still closes the sheet.
+  A confirm with no title (most of them) is named by its message, and a
+  titled one is described by it. A confirm that follows another while the
+  dialog stays open focuses its own default button again. Escape during IME
+  composition leaves the sheet open. The focus guards are no longer
+  `aria-hidden`, and the Tab wrap skips anything with `tabindex="-1"`. Not
+  handled: if the focused control inside a sheet removes itself, focus drops
+  to the page and Escape and the Tab wrap stop working until the next tap
+  in the sheet. A document-level focus guard would need a stack of open
+  dialogs; revisit if a sheet hits it.

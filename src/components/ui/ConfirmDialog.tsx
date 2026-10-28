@@ -1,10 +1,11 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useId, useMemo, useRef, useState } from 'react'
 import { Modal } from './Modal'
 import { ConfirmContext, type ConfirmOptions } from '../../lib/confirmBus'
 import { ActionRow } from './ActionRow'
 import { Button } from './Button'
 
 interface PendingConfirm extends ConfirmOptions {
+  id: number
   resolve: (value: boolean) => void
 }
 
@@ -15,11 +16,13 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
   // is harmless, but calling resolve twice from two different paths is a
   // sign something is wrong, so we only ever let one path fire.
   const settledRef = useRef(false)
+  const nextId = useRef(0)
+  const messageId = useId()
 
   const confirm = useCallback((options: ConfirmOptions) => {
     return new Promise<boolean>((resolve) => {
       settledRef.current = false
-      setPending({ ...options, resolve })
+      setPending({ ...options, id: nextId.current++, resolve })
     })
   }, [])
 
@@ -35,8 +38,9 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo(() => confirm, [confirm])
 
   // Enter confirms by default; a destructive flow starts on Cancel so Enter can't delete.
+  // Keyed per request so autoFocus runs again when one confirm follows another while open.
   const footer = pending && (
-    <ActionRow>
+    <ActionRow key={pending.id}>
       <Button onClick={() => settle(false)} variant="secondary" autoFocus={pending.destructive}>
         {pending.cancelLabel || 'Cancel'}
       </Button>
@@ -57,10 +61,13 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
         open={pending !== null}
         onClose={() => settle(false)}
         role="alertdialog"
+        descriptionId={messageId}
         title={pending?.title}
         footer={footer}
       >
-        <p className="text-sm text-lob-dark">{pending?.message}</p>
+        <p id={messageId} className="text-sm text-lob-dark">
+          {pending?.message}
+        </p>
       </Modal>
     </ConfirmContext.Provider>
   )

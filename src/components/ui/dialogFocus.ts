@@ -1,24 +1,30 @@
 import { useEffect, useRef, type RefObject } from 'react'
 
+const NOT_SKIPPED = ':not([tabindex="-1"])'
 const TABBABLE = [
   'a[href]',
   'button:not(:disabled)',
   'input:not(:disabled):not([type="hidden"])',
   'select:not(:disabled)',
   'textarea:not(:disabled)',
-  '[tabindex]:not([tabindex="-1"])',
-].join(', ')
+  '[tabindex]',
+]
+  .map((selector) => selector + NOT_SKIPPED)
+  .join(', ')
+
+const inDocumentOrder = (a: Node, b: Node) =>
+  a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1
 
 /** Elements Tab can reach inside `root`, in document order. Skips hidden ones where the browser can tell. */
-export const tabbablesIn = (root: HTMLElement | null) =>
-  // Matching each element, not querySelectorAll(TABBABLE): jsdom groups that by selector.
-  Array.from(root?.querySelectorAll<HTMLElement>('*') ?? []).filter(
-    (element) => element.matches(TABBABLE) && (element.checkVisibility?.() ?? true),
-  )
+export const tabbablesIn = ({ root }: { root: HTMLElement | null }) =>
+  Array.from(root?.querySelectorAll<HTMLElement>(TABBABLE) ?? [])
+    .filter((element) => element.checkVisibility?.() ?? true)
+    // jsdom returns a selector list grouped by selector rather than in document order.
+    .sort(inDocumentOrder)
 
 /** Focuses the first or last tabbable element in `sheet`, or the sheet itself when it has none. */
 export function focusEdge({ sheet, edge }: { sheet: HTMLElement | null; edge: 'first' | 'last' }) {
-  const items = tabbablesIn(sheet)
+  const items = tabbablesIn({ root: sheet })
   const target = edge === 'first' ? items[0] : items[items.length - 1]
   ;(target ?? sheet)?.focus()
 }

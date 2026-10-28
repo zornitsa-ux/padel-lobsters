@@ -50,7 +50,7 @@ function renderHarness(props: Parameters<typeof Harness>[0] = {}) {
   return opener
 }
 
-const guards = () => document.querySelectorAll<HTMLElement>('span[tabindex="0"][aria-hidden]')
+const guards = () => document.querySelectorAll<HTMLElement>('[data-focus-guard]')
 
 describe('Modal focus', () => {
   it('focuses the sheet on open, named by its title', () => {
@@ -121,6 +121,11 @@ describe('ConfirmDialog focus', () => {
     fireEvent.click(screen.getByText('Ask'))
     return screen.getByRole('alertdialog')
   }
+
+  it('is named by its message when it has no title', () => {
+    ask(false)
+    expect(screen.getByRole('alertdialog', { name: 'Go?' })).toBeTruthy()
+  })
 
   it('focuses Confirm, so Enter confirms', () => {
     ask(false)

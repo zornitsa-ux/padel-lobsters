@@ -60,6 +60,18 @@ describe('TeamForm player search', () => {
     expect(document.activeElement).toBe(input)
   })
 
+  it('keeps Escape that closes the list from closing the sheet around the form', () => {
+    const onWindowKey = vi.fn()
+    window.addEventListener('keydown', onWindowKey)
+    const input = renderForm()
+    fireEvent.focus(input)
+    fireEvent.keyDown(input, { key: 'Escape' })
+    expect(onWindowKey).not.toHaveBeenCalled()
+    fireEvent.keyDown(input, { key: 'Escape' })
+    window.removeEventListener('keydown', onWindowKey)
+    expect(onWindowKey).toHaveBeenCalledOnce()
+  })
+
   it('returns focus to the input after choosing a player', () => {
     const input = renderForm()
     input.focus()

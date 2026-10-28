@@ -17,6 +17,8 @@ interface ModalProps {
   dismissible?: boolean
   /** `alertdialog` for a confirmation that interrupts the flow. */
   role?: 'dialog' | 'alertdialog'
+  /** Id of the text that describes the dialog. It names the dialog when there is no `title`. */
+  descriptionId?: string
 }
 
 /**
@@ -32,6 +34,7 @@ export function Modal({
   footer,
   dismissible = true,
   role = 'dialog',
+  descriptionId,
 }: ModalProps) {
   const dragStartY = useRef<number | null>(null)
   const [dragY, setDragY] = useState(0)
@@ -74,15 +77,15 @@ export function Modal({
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
-    if (e.key !== 'Escape') return
+    if (e.key !== 'Escape' || e.nativeEvent.isComposing) return
     e.stopPropagation()
     if (dismissible) onClose()
   }
 
-  const focusGuard = (edge: 'first' | 'last') => (
+  const focusGuard = ({ edge }: { edge: 'first' | 'last' }) => (
     <span
       tabIndex={0}
-      aria-hidden="true"
+      data-focus-guard
       className="fixed outline-none"
       onFocus={() => focusEdge({ sheet: sheetRef.current, edge })}
     />
@@ -96,12 +99,13 @@ export function Modal({
       // A tap on the backdrop would otherwise drop focus to the page behind.
       onMouseDown={(e) => e.target === e.currentTarget && e.preventDefault()}
     >
-      {focusGuard('last')}
+      {focusGuard({ edge: 'last' })}
       <div
         ref={sheetRef}
         role={role}
         aria-modal="true"
-        aria-labelledby={title ? titleId : undefined}
+        aria-labelledby={title ? titleId : descriptionId}
+        aria-describedby={title ? descriptionId : undefined}
         tabIndex={-1}
         className="w-full max-w-lg bg-white rounded-t-3xl shadow-xl flex flex-col max-h-[90dvh] outline-none"
         style={{
@@ -137,7 +141,7 @@ export function Modal({
           </div>
         )}
       </div>
-      {focusGuard('first')}
+      {focusGuard({ edge: 'first' })}
     </div>
   )
 }
