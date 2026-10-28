@@ -1,12 +1,10 @@
-import { useState } from 'react'
-import type { LucideIcon } from 'lucide-react'
 import { MoreVertical, Pencil, Trash2 } from 'lucide-react'
 import { IconButton } from '../../components/ui/IconButton'
+import { Menu, MenuItem } from '../../components/ui/Menu'
 
 // Shared admin-tools overflow menu for a tournament. Renders nothing for
 // non-admins. Each action is optional — pass only the handlers the surface
-// needs, and the matching item appears. Dependency-free dropdown: a fixed
-// transparent backdrop catches outside clicks.
+// needs, and the matching item appears.
 //
 // Raffle, eligibility, payments and scores moved to /manage's tabs/sections
 // (EventManage.tsx) — this menu now only carries Edit/Delete.
@@ -17,82 +15,34 @@ interface EventAdminMenuProps {
   align?: 'left' | 'right'
 }
 
-interface MenuItem {
-  key: string
-  label: string
-  icon: LucideIcon
-  onClick: () => void
-  danger?: boolean
-}
-
 export default function EventAdminMenu({
   isAdmin,
   onEdit = undefined,
   onDelete = undefined,
   align = 'right',
 }: EventAdminMenuProps) {
-  const [open, setOpen] = useState(false)
-  if (!isAdmin) return null
-
-  const items = [
-    onEdit && { key: 'edit', label: 'Edit event', icon: Pencil, onClick: onEdit },
-    onDelete && {
-      key: 'delete',
-      label: 'Delete event',
-      icon: Trash2,
-      onClick: onDelete,
-      danger: true,
-    },
-  ].filter((it): it is MenuItem => Boolean(it))
-
-  if (items.length === 0) return null
-
-  const run = (fn: () => void) => {
-    setOpen(false)
-    fn()
-  }
+  if (!isAdmin || (!onEdit && !onDelete)) return null
 
   return (
-    <div className="relative flex-shrink-0">
-      <IconButton
-        onClick={() => setOpen((v) => !v)}
-        aria-label="Admin tools"
-        aria-haspopup="menu"
-        aria-expanded={open}
-      >
-        <MoreVertical />
-      </IconButton>
-
-      {open && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} aria-hidden />
-          <div
-            role="menu"
-            className={`absolute z-50 mt-2 w-52 rounded-2xl bg-white shadow-xl border border-lob-line py-1 ${
-              align === 'right' ? 'right-0' : 'left-0'
-            }`}
-          >
-            {items.map((it) => (
-              <button
-                key={it.key}
-                role="menuitem"
-                onClick={() => run(it.onClick)}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-left active:bg-lob-well ${
-                  it.danger
-                    ? 'text-lob-danger hover:bg-lob-danger-light'
-                    : 'text-lob-slate hover:bg-lob-well'
-                }`}
-              >
-                <it.icon
-                  size={16}
-                  className={it.danger ? 'text-lob-danger-solid' : 'text-lob-muted-light'}
-                />
-                {it.label}
-              </button>
-            ))}
-          </div>
-        </>
+    <Menu
+      label="Admin tools"
+      align={align}
+      trigger={(props) => (
+        <IconButton {...props} aria-label="Admin tools">
+          <MoreVertical />
+        </IconButton>
       )}
-    </div>
+    >
+      {onEdit && (
+        <MenuItem icon={<Pencil />} onSelect={onEdit}>
+          Edit event
+        </MenuItem>
+      )}
+      {onDelete && (
+        <MenuItem icon={<Trash2 />} tone="danger" onSelect={onDelete}>
+          Delete event
+        </MenuItem>
+      )}
+    </Menu>
   )
 }

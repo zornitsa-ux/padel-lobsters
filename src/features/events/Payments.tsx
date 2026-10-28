@@ -14,6 +14,7 @@ import { fmtEur } from '../../lib/format'
 import { useConfirmOnBehalf } from '../../lib/confirmOnBehalf'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { IconButton } from '../../components/ui/IconButton'
+import { Menu, MenuItem } from '../../components/ui/Menu'
 import { PlayerRow } from '../../components/ui/PlayerRow'
 import { ProgressBar } from '../../components/ui/ProgressBar'
 import { StatTile } from '../../components/ui/StatTile'
@@ -402,32 +403,21 @@ export default function Payments({
 }
 
 function PaymentMethodPicker({ onSelect }: { onSelect: (method: string) => void }) {
-  const [open, setOpen] = useState(false)
   return (
-    <div className="relative">
-      <Button size="sm" onClick={() => setOpen(!open)}>
-        Mark Paid ▾
-      </Button>
-      {open && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-xl border border-lob-line z-50 min-w-[130px] overflow-hidden">
-            {METHODS.map((m) => (
-              <button
-                key={m.value}
-                onClick={() => {
-                  onSelect(m.value)
-                  setOpen(false)
-                }}
-                className="w-full text-left px-4 py-2.5 text-sm font-medium text-lob-slate hover:bg-lob-well active:bg-gray-100"
-              >
-                {m.label}
-              </button>
-            ))}
-          </div>
-        </>
+    <Menu
+      label="Payment method"
+      trigger={(props) => (
+        <Button size="sm" {...props}>
+          Mark Paid ▾
+        </Button>
       )}
-    </div>
+    >
+      {METHODS.map((m) => (
+        <MenuItem key={m.value} onSelect={() => onSelect(m.value)}>
+          {m.label}
+        </MenuItem>
+      ))}
+    </Menu>
   )
 }
 
@@ -449,46 +439,26 @@ function StatusOverrideMenu({
   currentStatus: string | null | undefined
   onSelect: (status: string) => void
 }) {
-  const [open, setOpen] = useState(false)
   return (
-    <div className="relative">
-      <IconButton onClick={() => setOpen(!open)} aria-label="More payment options" size="sm">
-        <MoreVertical />
-      </IconButton>
-      {open && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-xl border border-lob-line z-50 min-w-[190px] overflow-hidden">
-            <div className="px-3 py-1.5 text-2xs font-bold text-lob-muted-light uppercase tracking-wider bg-lob-well">
-              Set status
-            </div>
-            {OVERRIDE_STATUSES.map((s) => {
-              const isCurrent = s.value === currentStatus
-              return (
-                <button
-                  key={s.value}
-                  onClick={() => {
-                    if (!isCurrent) onSelect(s.value)
-                    setOpen(false)
-                  }}
-                  disabled={isCurrent}
-                  className={`w-full text-left px-3 py-2 text-sm font-medium transition-all ${
-                    isCurrent
-                      ? 'bg-lob-well text-lob-muted-light cursor-default'
-                      : 'text-lob-slate hover:bg-lob-well active:bg-gray-100'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span>{s.label}</span>
-                    {isCurrent && <span className="text-2xs text-lob-muted-light">· current</span>}
-                  </div>
-                  <p className="text-2xs text-lob-muted-light leading-tight">{s.hint}</p>
-                </button>
-              )
-            })}
-          </div>
-        </>
+    <Menu
+      label="Set status"
+      showLabel
+      trigger={(props) => (
+        <IconButton {...props} aria-label="More payment options" size="sm">
+          <MoreVertical />
+        </IconButton>
       )}
-    </div>
+    >
+      {OVERRIDE_STATUSES.map((s) => (
+        <MenuItem
+          key={s.value}
+          current={s.value === currentStatus}
+          hint={s.hint}
+          onSelect={() => onSelect(s.value)}
+        >
+          {s.label}
+        </MenuItem>
+      ))}
+    </Menu>
   )
 }

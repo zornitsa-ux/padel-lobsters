@@ -1,4 +1,6 @@
-import { useState, useRef, useEffect, useMemo } from 'react'
+import { useState, useRef, useEffect, useId, useMemo } from 'react'
+import { flushSync } from 'react-dom'
+import { Plus } from 'lucide-react'
 import { teamFormSchema } from '../domain/leagueSchemas'
 import type { Division, GroupLabel, LeagueTeam } from '../domain/types'
 import { suggestGroupForTeam } from '../domain/groupBalancer'
@@ -10,6 +12,8 @@ import { useCreateTeam, useUpdateTeam } from '../hooks/useLeagueMutations'
 import { isSelectablePlayer } from '../../players/playerSelectors'
 import { ActionRow } from '../../../components/ui/ActionRow'
 import { Button } from '../../../components/ui/Button'
+import { MenuItem, MenuList, MenuSeparator } from '../../../components/ui/Menu'
+import { focusFirstItem } from '../../../components/ui/menuFocus'
 
 interface PlayerOption {
   id: string
@@ -58,15 +62,9 @@ function PlayerPicker({
 }: PlayerPickerProps) {
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    function onClickOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', onClickOutside)
-    return () => document.removeEventListener('mousedown', onClickOutside)
-  }, [])
+  const inputRef = useRef<HTMLInputElement>(null)
+  const listRef = useRef<HTMLDivElement>(null)
+  const listId = useId()
 
   const eligible = players.filter(
     (p) => isSelectablePlayer(p) && p.status !== 'placeholder' && p.id !== excludeId,
@@ -84,59 +82,83 @@ function PlayerPicker({
       ? `${selectedName} (placeholder)`
       : ''
 
+  const showList = open && (filtered.length > 0 || showCreate)
+
+  // Refocusing the input runs its onFocus (open), so close after it.
+  const closeToInput = () => {
+    inputRef.current?.focus()
+    setOpen(false)
+  }
+
+  const choose = (select: () => void) => {
+    select()
+    setQuery('')
+    closeToInput()
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      closeToInput()
+    } else if (e.key === 'ArrowDown' && e.target === inputRef.current) {
+      e.preventDefault()
+      // Render the list now so its first item can take focus.
+      flushSync(() => setOpen(true))
+      focusFirstItem(listRef.current)
+    }
+  }
+
   return (
-    <div className="mb-4" ref={ref}>
+    <div
+      className="mb-4"
+      onKeyDown={handleKeyDown}
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setOpen(false)
+      }}
+    >
       <label className="label">{label}</label>
       <div className="relative">
         <input
+          ref={inputRef}
           type="text"
           className="input w-full"
           placeholder="Search by name…"
           value={query}
+          aria-haspopup="menu"
+          aria-expanded={showList}
+          aria-controls={showList ? listId : undefined}
           onChange={(e) => {
             setQuery(e.target.value)
             setOpen(true)
           }}
           onFocus={() => setOpen(true)}
         />
-        {open && (filtered.length > 0 || showCreate) && (
-          <div className="absolute z-10 w-full bg-white rounded-xl border border-lob-line-strong shadow-lg mt-1 max-h-48 overflow-y-auto">
+        {showList && (
+          <MenuList
+            id={listId}
+            label={`${label} options`}
+            align="stretch"
+            keepFocus
+            listRef={listRef}
+          >
             {filtered.map((p) => (
-              <button
+              <MenuItem
                 key={p.id}
-                type="button"
-                className="w-full flex items-center gap-2 px-3 py-2 hover:bg-lob-well text-left"
-                onMouseDown={(e) => {
-                  e.preventDefault()
-                  onSelectPlayer(p.id)
-                  setQuery('')
-                  setOpen(false)
-                }}
+                icon={<Avatar player={p} size="xs" tone="bg-lob-teal/10 text-lob-teal" />}
+                onSelect={() => choose(() => onSelectPlayer(p.id))}
               >
-                <Avatar player={p} size="xs" tone="bg-lob-teal/10 text-lob-teal" />
-                <span className="text-sm text-lob-dark">{p.name}</span>
-              </button>
+                {p.name}
+              </MenuItem>
             ))}
+            {showCreate && filtered.length > 0 && <MenuSeparator />}
             {showCreate && (
-              <button
-                type="button"
-                className="w-full flex items-center gap-2 px-3 py-2 hover:bg-lob-well text-left border-t border-lob-line"
-                onMouseDown={(e) => {
-                  e.preventDefault()
-                  onSelectPlaceholder(query.trim())
-                  setQuery('')
-                  setOpen(false)
-                }}
+              <MenuItem
+                icon={<Plus />}
+                onSelect={() => choose(() => onSelectPlaceholder(query.trim()))}
               >
-                <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold bg-lob-amber/10 text-lob-amber flex-shrink-0">
-                  +
-                </div>
-                <span className="text-sm text-lob-dark">
-                  Create placeholder: <span className="font-semibold">{query.trim()}</span>
-                </span>
-              </button>
+                Create placeholder: {query.trim()}
+              </MenuItem>
             )}
-          </div>
+          </MenuList>
         )}
       </div>
       {displayValue && <p className="text-xs text-lob-muted mt-1">{displayValue}</p>}
