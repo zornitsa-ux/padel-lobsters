@@ -55,16 +55,14 @@ export function Modal({ open, onClose, dismissible = true, ...rest }: ModalProps
       onClose={onClose}
       dismissible={dismissible}
       bodyRef={scrollRef}
-      drag={
-        dismissible
-          ? {
-              style,
-              onTouchStart: handleTouchStart,
-              onTouchMove: handleTouchMove,
-              onTouchEnd: handleTouchEnd,
-            }
-          : { style }
-      }
+      drag={{
+        style,
+        ...(dismissible && {
+          onTouchStart: handleTouchStart,
+          onTouchMove: handleTouchMove,
+          onTouchEnd: handleTouchEnd,
+        }),
+      }}
       {...rest}
     />
   )

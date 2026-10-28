@@ -39,45 +39,64 @@ export interface DialogShellProps extends DialogProps {
   bodyRef?: React.Ref<HTMLDivElement>
 }
 
-const OVERLAY: Record<DialogShape, string> = {
-  sheet: 'fixed inset-0 z-50 bg-black/60 flex items-end justify-center',
-  fullscreen: 'fixed inset-0 z-50 bg-white',
-  drawer: 'fixed inset-0 z-50 bg-black/60 flex justify-end',
+interface ShapeStyle {
+  overlay: string
+  content: string
+  /** Lines up the header, body and footer content; the dialog itself spans the overlay. */
+  column: string
+  /** The sheet shows a drag handle; the others close with an X in the header. */
+  closeWith: 'handle' | 'button'
 }
 
-const CONTENT: Record<DialogShape, string> = {
-  sheet: 'w-full max-w-lg max-h-[90dvh] bg-white rounded-t-3xl shadow-xl',
-  fullscreen: 'mx-auto h-full w-full max-w-2xl bg-white',
-  drawer: 'h-full w-72 max-w-[85%] bg-white shadow-xl',
+const SHAPES: Record<DialogShape, ShapeStyle> = {
+  sheet: {
+    overlay: 'fixed inset-0 z-50 bg-black/60 flex items-end justify-center',
+    content: 'w-full max-w-lg max-h-[90dvh] bg-white rounded-t-3xl shadow-xl',
+    column: '',
+    closeWith: 'handle',
+  },
+  fullscreen: {
+    overlay: 'fixed inset-0 z-50',
+    content: 'h-full w-full bg-white',
+    column: 'mx-auto w-full max-w-2xl',
+    closeWith: 'button',
+  },
+  drawer: {
+    overlay: 'fixed inset-0 z-50 bg-black/60 flex justify-end',
+    content: 'h-full w-72 max-w-[85%] bg-white shadow-xl',
+    column: '',
+    closeWith: 'button',
+  },
 }
-
-/** The sheet goes with its drag handle; the others close with an X in the header. */
-const HAS_CLOSE: Record<DialogShape, boolean> = { sheet: false, fullscreen: true, drawer: true }
 
 function DialogHeader({
   title,
   description,
   onClose,
+  column,
 }: {
   title: string
   description?: string
   onClose?: () => void
+  column: string
 }) {
   return (
-    <div className="px-5 py-3 border-b border-lob-line flex items-center justify-between gap-4 flex-shrink-0">
-      <div>
-        <Dialog.Title className="font-semibold text-lob-dark text-base">{title}</Dialog.Title>
-        {description && (
-          <Dialog.Description className="text-xs text-lob-muted mt-0.5">
-            {description}
-          </Dialog.Description>
+    <div className="px-5 py-3 border-b border-lob-line flex-shrink-0">
+      <div className={`${column} flex items-center justify-between gap-4`}>
+        <div>
+          <Dialog.Title className="font-semibold text-lob-dark text-base">{title}</Dialog.Title>
+          {description && (
+            <Dialog.Description className="text-xs text-lob-muted mt-0.5">
+              {description}
+            </Dialog.Description>
+          )}
+        </div>
+        {onClose && (
+          <IconButton variant="ghost" aria-label="Close" onClick={onClose}>
+            <X />
+          </IconButton>
         )}
       </div>
-      {onClose && (
-        <IconButton variant="ghost" aria-label="Close" onClick={onClose}>
-          <X />
-        </IconButton>
-      )}
     </div>
   )
 }
@@ -86,7 +105,8 @@ function DialogHeader({
  * The Radix Dialog every shape builds on. On open, focus moves to the child marked
  * `data-autofocus`, or else the dialog itself. Tab stays inside, the page behind is hidden from
  * assistive tech and doesn't scroll, and focus returns to the opener on close. A dialog opened
- * from inside another takes Escape and outside taps alone.
+ * from inside another takes Escape and outside taps alone. Build dialogs with `Modal`,
+ * `FullScreenDialog` or `Drawer`: the last two need a `title`, whose header holds their X.
  */
 export function DialogShell({
   shape,
@@ -105,6 +125,9 @@ export function DialogShell({
   bodyRef,
 }: DialogShellProps) {
   const returnFocus = useReturnFocus({ open })
+  const style = SHAPES[shape]
+  const inColumn = (node: React.ReactNode) =>
+    style.column ? <div className={style.column}>{node}</div> : node
 
   // Radix hears Escape on the document before anything inside the dialog does, and gives it only to
   // the top layer (a menu, or a dialog opened from inside this one).
@@ -121,17 +144,16 @@ export function DialogShell({
     ;(dialog.querySelector<HTMLElement>('[data-autofocus]') ?? dialog).focus()
   }
 
-  // A tap on a toast (its dismiss X) isn't a tap on the page behind. The full-screen dialog has no
-  // page behind: a tap beside its column is still on it.
+  // A tap on a toast (its dismiss X) isn't a tap on the page behind.
   const handleInteractOutside = (e: Event) => {
-    if (!dismissible || shape === 'fullscreen' || isToast({ target: e.target })) e.preventDefault()
+    if (!dismissible || isToast({ target: e.target })) e.preventDefault()
   }
 
   return (
     <Dialog.Root open={open} onOpenChange={(next) => !next && onClose()}>
       <Dialog.Portal>
         <Dialog.Overlay
-          className={OVERLAY[shape]}
+          className={style.overlay}
           // A tap on the backdrop would otherwise drop focus to the page behind.
           onMouseDown={(e) => e.target === e.currentTarget && e.preventDefault()}
         >
@@ -140,7 +162,7 @@ export function DialogShell({
             role={role}
             {...(title ? {} : { 'aria-labelledby': labelId })}
             {...(description ? {} : { 'aria-describedby': descriptionId })}
-            className={`${CONTENT[shape]} flex flex-col outline-none`}
+            className={`${style.content} flex flex-col outline-none`}
             onOpenAutoFocus={focusFirst}
             onCloseAutoFocus={returnFocus}
             onEscapeKeyDown={handleEscape}
@@ -149,7 +171,7 @@ export function DialogShell({
             onClick={(e) => e.stopPropagation()}
             {...drag}
           >
-            {shape === 'sheet' &&
+            {style.closeWith === 'handle' &&
               (dismissible ? (
                 <div className="w-10 h-1 bg-lob-line-strong rounded-full mx-auto mt-3 mb-2 flex-shrink-0" />
               ) : (
@@ -161,15 +183,16 @@ export function DialogShell({
               <DialogHeader
                 title={title}
                 description={description}
-                onClose={HAS_CLOSE[shape] ? onClose : undefined}
+                onClose={style.closeWith === 'button' ? onClose : undefined}
+                column={style.column}
               />
             )}
             <div ref={bodyRef} className="px-5 py-4 flex-1 overflow-y-auto">
-              {children}
+              {inColumn(children)}
             </div>
             {footer && (
               <div className="px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-lob-line flex-shrink-0">
-                {footer}
+                {inColumn(footer)}
               </div>
             )}
           </Dialog.Content>

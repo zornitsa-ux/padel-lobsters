@@ -3,6 +3,7 @@ import type { ScheduleRun } from '../domain/types'
 import type { PlayerNamesById } from './playerNames'
 import { emptyCopy, panelHeading, swapRowCopy } from './swapCopy'
 import { Button } from '../../../components/ui/Button'
+import { AlertBox } from '../../../components/ui/AlertBox'
 import { Modal } from '../../../components/ui/Modal'
 import { TextButton } from '../../../components/ui/TextButton'
 
@@ -23,6 +24,8 @@ export type SwapPanelProps = {
   onApply: (suggestion: SwapSuggestion) => void
   onCancel: () => void
   applying?: boolean
+  // Shown inside the sheet, since the page behind it is hidden from assistive tech.
+  error?: string | null
 }
 
 function SwapRow({
@@ -68,6 +71,7 @@ export default function SwapPanel({
   onApply,
   onCancel,
   applying = false,
+  error = null,
 }: SwapPanelProps) {
   const heading = panelHeading({ target, names: playerNamesById })
 
@@ -75,6 +79,8 @@ export default function SwapPanel({
     <Modal
       open
       onClose={onCancel}
+      // A swap query in flight would reopen the sheet once it lands.
+      dismissible={!applying}
       title={heading.title}
       description={heading.detail}
       footer={
@@ -87,6 +93,11 @@ export default function SwapPanel({
         <p className="sr-only" role="status" aria-live="polite">
           {suggestions.length} swap option{suggestions.length === 1 ? '' : 's'}
         </p>
+        {error && (
+          <div role="alert">
+            <AlertBox variant="error">{error}</AlertBox>
+          </div>
+        )}
         {suggestions.length === 0 ? (
           <p className="text-xs text-lob-muted">{emptyCopy({ target, showAll: showingAll })}</p>
         ) : (

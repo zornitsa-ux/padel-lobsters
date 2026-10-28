@@ -127,10 +127,11 @@ describe('Drawer', () => {
 })
 
 describe('FullScreenDialog', () => {
-  it('stays open on a tap beside its column, which is still on the dialog', async () => {
+  it('spans the screen, so a tap beside its column is on the dialog', async () => {
     const onClose = vi.fn()
     renderHarness({ shape: 'fullscreen', onClose })
-    await tap(overlay())
+    await tap(screen.getByRole('dialog'))
     expect(onClose).not.toHaveBeenCalled()
+    expect(screen.getByRole('dialog').className).toContain('w-full')
   })
 })

@@ -644,8 +644,8 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
   per shape:
   - **`Modal`**: the bottom sheet, unchanged apart from the shell. It keeps
     drag-to-dismiss and the handle.
-  - **`FullScreenDialog`**: CompareView. A white screen with the content in a
-    `max-w-2xl` column; a tap beside the column doesn't close it.
+  - **`FullScreenDialog`**: CompareView. A white screen that scrolls as a
+    whole, with header, body and footer in a `max-w-2xl` column.
   - **`Drawer`**: the Oscars admin menu, from the right (`w-72 max-w-[85%]`).
     A backdrop tap closes it.
   - All three take `description` (a line under the title, which also describes
@@ -665,3 +665,22 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
   to the top layer. `escapeIsForPopup` stays whole, for `MenuList` and the
   TeamForm search, which aren't Radix layers. First paint: 210.6 → 210.8 KB
   gzip (`localdev` build).
+
+  Review of this PR. The matchmaking error alert and status line sit on the
+  page, which is now hidden from assistive tech behind the dialog, so
+  CompareView and SwapPanel show the error inside (an `AlertBox`), and
+  CompareView announces the container's status, so "Regenerate alternative"
+  is announced again. Opening Compare clears an older error. SwapPanel isn't
+  dismissible while a swap query runs, as its Cancel already wasn't, since the
+  query would reopen it. The shapes' differences live in one `SHAPES` record.
+  Browser testing (real clicks and keys) on /design, SwapPanel and CompareView
+  in the schedule, and the Oscars drawer passed every check: focus in and
+  back, Tab kept inside, Escape and backdrop taps, a sheet, menu or confirm
+  inside closing alone, the status lines announcing, the page behind not
+  scrolling. Choosing a view in the Oscars drawer drops focus to the page,
+  since the view switch remounts the "Menu" trigger; that was so before, and
+  is #95. One failure showed only when a scripted page evaluation (the browser tool's
+  JavaScript step) ran between closing a menu inside a dialog and the next
+  tap: Radix then kept the menu's layer, and a confirm opened next lost Escape
+  to the dialog behind. It happens with `Menu`'s old `stopPropagation` too, and
+  never with real input alone.

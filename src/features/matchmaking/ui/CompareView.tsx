@@ -7,6 +7,7 @@ import QualityReport from './QualityReport'
 import ScheduleRounds from './ScheduleRounds'
 import { describeQualityDiff } from './dimensions'
 import { ActionRow } from '../../../components/ui/ActionRow'
+import { AlertBox } from '../../../components/ui/AlertBox'
 import { Button } from '../../../components/ui/Button'
 import { FullScreenDialog } from '../../../components/ui/FullScreenDialog'
 
@@ -25,6 +26,10 @@ export type CompareViewProps = {
   generatingAlt: boolean
   altRun: ScheduleRun | null
   onUseAlternative: () => void
+  // The container's announcements, shown inside the dialog: the page behind it is hidden from
+  // assistive tech.
+  status: string
+  error?: string | null
 }
 
 type RoundsTab = 'original' | 'alternative'
@@ -49,6 +54,8 @@ export default function CompareView({
   generatingAlt,
   altRun,
   onUseAlternative,
+  status,
+  error = null,
 }: CompareViewProps) {
   const [roundsTab, setRoundsTab] = useState<RoundsTab>('original')
 
@@ -78,8 +85,13 @@ export default function CompareView({
     >
       <div className="space-y-4">
         <p className="sr-only" role="status" aria-live="polite">
-          {altRun ? 'Alternative generated' : ''}
+          {status}
         </p>
+        {error && (
+          <div role="alert">
+            <AlertBox variant="error">{error}</AlertBox>
+          </div>
+        )}
 
         <div className="card space-y-3">
           <p className="font-semibold text-lob-slate text-sm">How they compare</p>

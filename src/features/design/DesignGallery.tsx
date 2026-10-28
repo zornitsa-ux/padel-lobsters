@@ -623,8 +623,8 @@ type GalleryDialog = 'plain' | 'form' | 'fullscreen' | 'drawer'
 function DialogSection() {
   const confirm = useConfirm()
   const [dialog, setDialog] = useState<GalleryDialog | null>(null)
-  const [sheet, setSheet] = useState(false)
-  const [view, setView] = useState<'play' | 'admin'>('play')
+  const [nestedSheetOpen, setNestedSheetOpen] = useState(false)
+  const [view, setView] = useState<'schedule' | 'standings'>('schedule')
   const close = () => setDialog(null)
   const sheetOpen = dialog === 'plain' || dialog === 'form'
   return (
@@ -709,7 +709,7 @@ function DialogSection() {
             A sheet, a menu or a confirm opened from here closes alone on Escape.
           </p>
           <ActionRow>
-            <Button variant="neutral" onClick={() => setSheet(true)}>
+            <Button variant="neutral" onClick={() => setNestedSheetOpen(true)}>
               Open a sheet
             </Button>
             <Button variant="neutral" onClick={() => confirm({ message: 'Use this one?' })}>
@@ -730,24 +730,22 @@ function DialogSection() {
           <Skeleton className="h-96 w-full" />
         </div>
       </FullScreenDialog>
-      <Modal open={sheet} onClose={() => setSheet(false)} title="Edit round">
+      <Modal open={nestedSheetOpen} onClose={() => setNestedSheetOpen(false)} title="Edit round">
         <p className="text-sm text-lob-slate">Escape closes this sheet only.</p>
       </Modal>
-      <Drawer open={dialog === 'drawer'} onClose={close} title="Admin menu">
+      <Drawer open={dialog === 'drawer'} onClose={close} title="View">
         <div className="space-y-1">
           <OptionRow
-            selected={view === 'play'}
-            leading={<Gamepad2 size={18} className="text-lob-muted" />}
-            title="Play & vote"
-            subtitle="Cast your own votes as a participant."
-            onClick={() => setView('play')}
+            selected={view === 'schedule'}
+            title="Schedule"
+            subtitle="Rounds and courts."
+            onClick={() => setView('schedule')}
           />
           <OptionRow
-            selected={view === 'admin'}
-            leading={<SlidersHorizontal size={18} className="text-lob-muted" />}
-            title="Admin controls"
-            subtitle="Start, monitor, end and share the games."
-            onClick={() => setView('admin')}
+            selected={view === 'standings'}
+            title="Standings"
+            subtitle="Points so far."
+            onClick={() => setView('standings')}
           />
         </div>
       </Drawer>
