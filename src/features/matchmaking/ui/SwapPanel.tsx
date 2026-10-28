@@ -8,6 +8,7 @@ import type { PlayerNamesById } from './playerNames'
 import { emptyCopy, panelHeading, swapRowCopy } from './swapCopy'
 import { Button } from '../../../components/ui/Button'
 import { IconButton } from '../../../components/ui/IconButton'
+import { TextButton } from '../../../components/ui/TextButton'
 
 // Presentational only (D-026 "Option A", generalized in D-036): a focused,
 // viewport-anchored overlay listing ranked swaps for one target (a repeat, an
@@ -123,14 +124,9 @@ export default function SwapPanel({
               Showing every swap, including ones that break a rule.
             </p>
           ) : (
-            <button
-              type="button"
-              onClick={onShowAll}
-              disabled={applying}
-              className="text-xs underline decoration-dotted underline-offset-2 text-lob-muted hover:text-lob-slate disabled:opacity-50"
-            >
+            <TextButton tone="neutral" onClick={onShowAll} disabled={applying}>
               Show all swaps
-            </button>
+            </TextButton>
           )}
         </div>
 

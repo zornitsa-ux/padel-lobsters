@@ -17,7 +17,7 @@ See `docs/design-system/` (TOKENS.md for tokens, PLAN.md for what's being built)
 - If a ui component doesn't fit, add the variant or prop to the component. Don't hand-roll a copy in the feature.
 - Keep `className` on ui components to layout, and use it sparingly. When the same class keeps appearing on a component across features (`w-full`, `flex-1`, a fixed margin), bring it into the component as a prop or a layout component instead of repeating it.
 - Colours come from `lob-*` tokens: `lob-success`, `lob-warning`, `lob-danger`, `lob-info` (with `-light`, `-soft`, `-border`, `-on-dark`, `-solid`, `-strong`), plus `lob-well`, `lob-line`, `lob-line-strong`. Never raw Tailwind palette classes (`text-red-600`, `bg-amber-50`) or hex literals (`bg-[#…]`).
-- `npm run design:check` (in CI) fails if a file gains raw palette classes or hand-built `<button>`s outside `src/components/ui`. If you remove some, run `npm run design:baseline` and commit the updated baselines.
+- Every `<button>` lives in `src/components/ui`. `npm run design:check` (in CI) fails on any hand-built `<button>` elsewhere, and on any file that gains raw palette classes. If you remove raw palette classes, run `npm run design:baseline` and commit the updated baseline.
 - Ui components don't carry their own spacing. The parent or a layout component (`ActionRow`, `space-y-*`) places them.
 - Need a colour or size with no token? Add the token to `tailwind.config.js` and TOKENS.md in the same PR rather than using a raw value.
 

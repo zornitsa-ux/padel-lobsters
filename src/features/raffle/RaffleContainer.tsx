@@ -14,6 +14,10 @@ import { EmptyState } from '../../components/ui/EmptyState'
 import PrizeEditor from './ui/PrizeEditor'
 import Confetti from './ui/Confetti'
 import { IconButton } from '../../components/ui/IconButton'
+import { Button } from '../../components/ui/Button'
+import { SegmentedControl } from '../../components/ui/SegmentedControl'
+
+const PRIZE_COUNTS = [1, 2, 3, 4, 5].map((n) => ({ value: n, label: String(n) }))
 
 interface Tournament {
   id: string
@@ -129,45 +133,38 @@ export default function RaffleContainer({
             </div>
             <p className="text-center text-white/80 text-sm sm:text-base mb-5">{tournament.name}</p>
 
-            <button
-              onClick={() => onNavigate?.('eligibility', tournament)}
-              className="w-full mb-5 bg-white/10 hover:bg-white/20 text-white/90 font-semibold text-sm py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all"
-            >
-              <SlidersHorizontal size={16} />
-              Manage eligibility
-            </button>
-
             <div className="mb-5">
-              <p className="text-sm text-white/80 mb-2 text-center font-semibold">
-                How many prizes?
-              </p>
-              <div className="flex gap-2 justify-center">
-                {[1, 2, 3, 4, 5].map((n) => (
-                  <button
-                    key={n}
-                    onClick={() => setNumPrizes(n)}
-                    className={`flex-1 max-w-[64px] py-3 rounded-xl text-lg font-extrabold transition-all ${
-                      numPrizes === n
-                        ? 'bg-yellow-400 text-lob-dark scale-110 shadow-md'
-                        : 'bg-white/15 text-white hover:bg-white/25'
-                    }`}
-                  >
-                    {n}
-                  </button>
-                ))}
-              </div>
+              <Button
+                variant="on-dark"
+                fullWidth
+                icon={<SlidersHorizontal />}
+                onClick={() => onNavigate?.('eligibility', tournament)}
+              >
+                Manage eligibility
+              </Button>
             </div>
 
-            <button
+            <div className="mb-5 rounded-2xl bg-white p-3 space-y-2">
+              <p className="text-sm text-lob-slate text-center font-semibold">How many prizes?</p>
+              <SegmentedControl
+                ariaLabel="How many prizes?"
+                options={PRIZE_COUNTS}
+                value={numPrizes}
+                onChange={setNumPrizes}
+              />
+            </div>
+
+            <Button
+              size="lg"
+              fullWidth
+              icon={<Shuffle className={draw.isPending ? 'animate-spin' : ''} />}
               onClick={runDraw}
               disabled={draw.isPending}
-              className="w-full bg-yellow-400 hover:bg-yellow-500 disabled:opacity-40 disabled:cursor-not-allowed text-lob-dark font-black text-lg sm:text-xl py-4 sm:py-5 rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all shadow-lg"
             >
-              <Shuffle size={22} className={draw.isPending ? 'animate-spin' : ''} />
               {draw.isPending
                 ? 'Drawing…'
                 : `🎲 Draw ${numPrizes === 1 ? 'winner' : `${numPrizes} winners`}`}
-            </button>
+            </Button>
 
             {drawError ? (
               <p className="text-center text-lob-danger-on-dark text-xs sm:text-sm mt-3 leading-snug">

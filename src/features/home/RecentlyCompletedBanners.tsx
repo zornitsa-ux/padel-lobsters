@@ -4,6 +4,7 @@ import { isKingOfTheCourt } from '../events/eventFormat'
 import { eventClimbers, eventWinner, teamResultLabel } from '../events/kingOfCourt/kotcPlayer'
 import type { TeamResultsByEvent } from '../events/kingOfCourt/kotcPlayer'
 import BiggestClimberLine from '../events/kingOfCourt/BiggestClimberLine'
+import { Button } from '../../components/ui/Button'
 import type { Player, NormalisedTournament } from '../../lib/normalise'
 import type { NormalisedMatch } from '../events/matchQueries'
 import type { NormalisedRegistration } from '../events/registrationQueries'
@@ -158,12 +159,9 @@ function CompletedBanner({
       </div>
       <h3 className="font-bold text-base mb-0.5">{name}</h3>
       {line && <p className="text-sm opacity-90 mb-3">{line}</p>}
-      <button
-        onClick={onAction}
-        className="w-full bg-white/20 hover:bg-white/30 text-white font-semibold py-2 rounded-xl text-sm active:scale-95 transition-all"
-      >
+      <Button variant="on-dark" fullWidth onClick={onAction}>
         {actionLabel}
-      </button>
+      </Button>
     </div>
   )
 }

@@ -6,6 +6,7 @@ import { sizeRank } from './sizes'
 import type { LightboxState } from './Lightbox'
 import type { MerchItem } from './merchSchemas'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
+import { Button } from '../../components/ui/Button'
 
 type ByItem<T> = Record<number, T>
 
@@ -172,25 +173,18 @@ export default function Shop({
 
             {/* Order button */}
             <div className="flex items-center gap-2">
-              <button
-                onClick={() => placeOrder(item.id)}
-                disabled={ordered[item.id]}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all ${
-                  ordered[item.id]
-                    ? 'bg-lob-success-soft text-lob-success'
-                    : 'bg-lob-teal text-white active:scale-95'
-                }`}
-              >
-                {ordered[item.id] ? (
-                  <>
-                    <Check size={15} /> Ordered!
-                  </>
-                ) : (
-                  <>
-                    <ShoppingCart size={15} /> Order
-                  </>
-                )}
-              </button>
+              {ordered[item.id] ? (
+                <p
+                  role="status"
+                  className="flex-1 py-2 flex items-center justify-center gap-2 text-sm font-semibold text-lob-success"
+                >
+                  <Check size={16} /> Ordered!
+                </p>
+              ) : (
+                <Button grow icon={<ShoppingCart />} onClick={() => placeOrder(item.id)}>
+                  Order
+                </Button>
+              )}
               {isAdmin &&
                 orderCount(item.id) > 0 &&
                 (() => {

@@ -12,6 +12,8 @@ import {
   Info,
   Eye,
   ChevronRight,
+  ChevronDown,
+  ArrowRight,
   MoreVertical,
   Gamepad2,
   SlidersHorizontal,
@@ -32,6 +34,8 @@ import { CollapsibleCard } from '../../components/ui/CollapsibleCard'
 import { Disclosure } from '../../components/ui/Disclosure'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { Menu, MenuItem, MenuList, MenuSeparator } from '../../components/ui/Menu'
+import { CardLink } from '../../components/ui/CardLink'
+import { LinkCard, LinkCardIcon } from '../../components/ui/LinkCard'
 import { OptionRow } from '../../components/ui/OptionRow'
 import { ImageTile, OptionTile } from '../../components/ui/OptionTile'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
@@ -124,6 +128,32 @@ function ButtonSection() {
           Disabled link
         </Button>
       </Row>
+      <Row label="grow (fills what a fixed item leaves)" block>
+        <div className="flex items-center gap-2">
+          <Button grow icon={<Plus />}>
+            Add category
+          </Button>
+          <TextButton tone="neutral">Reset to defaults</TextButton>
+        </div>
+      </Row>
+      <Row label="trailingIcon (onward arrow, menu chevron)">
+        <Button variant="neutral" size="sm" trailingIcon={<ArrowRight />}>
+          Next unscored match
+        </Button>
+        <Button size="sm" trailingIcon={<ChevronDown />}>
+          Mark Paid
+        </Button>
+      </Row>
+      <Row label='variant="on-dark" (banners, raffle)' block>
+        <div className="bg-celebrate rounded-2xl p-4 space-y-2">
+          <Button variant="on-dark" fullWidth>
+            See Full Results
+          </Button>
+          <Button variant="on-dark" size="sm" icon={<SlidersHorizontal />}>
+            Manage eligibility
+          </Button>
+        </div>
+      </Row>
       <Row label='utility actions: variant="neutral" size="sm"'>
         <ShareWhatsAppButton tournament={SAMPLE_EVENT} variant="compact" />
         <AddToCalendarButton tournament={SAMPLE_EVENT} variant="compact" />
@@ -169,6 +199,25 @@ function TextButtonSection() {
           </TextButton>
           .
         </p>
+      </Row>
+      <Row label='size="lg" (headline name) · truncate · hitArea' block>
+        <div className="space-y-2">
+          <TextButton size="lg" truncate>
+            Net Gains and the Very Long Team Name Club
+          </TextButton>
+          <div className="flex items-center gap-1 min-h-10 text-sm text-lob-slate truncate">
+            <TextButton size="inherit" truncate hitArea>
+              Alexandra Fitzgerald-Hughes-Montgomery
+            </TextButton>
+            <span className="shrink-0">♀ 🤚</span>
+          </div>
+          <p className="text-xs text-lob-warning">
+            Ana vs Ben — repeat{' '}
+            <TextButton tone="warning" hitArea>
+              Fix
+            </TextButton>
+          </p>
+        </div>
       </Row>
     </Section>
   )
@@ -417,6 +466,43 @@ function OptionSection() {
   )
 }
 
+function CardLinkSection() {
+  return (
+    <Section title="CardLink and LinkCard">
+      <Row label="LinkCard (title, subtitle, leading, trailing; built on CardLink)" block>
+        <div className="space-y-2">
+          <LinkCard
+            to="/design"
+            title="The Lobster Way"
+            subtitle="How we play, pay and swap spots"
+            leading={
+              <LinkCardIcon>
+                <Info size={18} />
+              </LinkCardIcon>
+            }
+          />
+          <LinkCard
+            onClick={() => {}}
+            title="Season 1"
+            trailing={<Badge variant="info" label="Live" />}
+          />
+        </div>
+      </Row>
+      <Row label="CardLink flush (full-bleed band, e.g. the league card)" block>
+        <CardLink to="/design" flush>
+          <div className="bg-gradient-to-r from-lob-teal to-lob-teal-dark px-4 py-3">
+            <p className="font-bold text-white">Lobster League</p>
+          </div>
+          <div className="bg-lob-teal-light px-4 py-2.5 flex items-center justify-between gap-2">
+            <p className="text-sm text-lob-muted">#2 Group A · 3 matches remaining</p>
+            <span className="text-xs font-semibold text-lob-teal">View →</span>
+          </div>
+        </CardLink>
+      </Row>
+    </Section>
+  )
+}
+
 function MenuSection() {
   const [status, setStatus] = useState('paid')
   const [view, setView] = useState('play')
@@ -466,8 +552,8 @@ function MenuSection() {
           label="Payment method"
           align="left"
           trigger={(props) => (
-            <Button size="sm" {...props}>
-              Mark Paid ▾
+            <Button size="sm" trailingIcon={<ChevronDown />} {...props}>
+              Mark Paid
             </Button>
           )}
         >
@@ -596,6 +682,7 @@ export default function DesignGallery() {
       <ChoiceSection />
       <OptionSection />
       <MenuSection />
+      <CardLinkSection />
       <CollapsibleSectionDemo />
       <StatesSection />
     </div>

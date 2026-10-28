@@ -4,6 +4,7 @@ import { pairKey } from '../domain/scheduleOps'
 import type { ScheduleRun } from '../domain/types'
 import { courtChip, hasBothGenders } from './genderCopy'
 import { CourtGenderChip, GenderLegendEntries, GenderMark } from './genderMarks'
+import { TextButton } from '../../../components/ui/TextButton'
 
 type RoundReport = ScheduleRun['rounds'][number]
 type CourtReport = RoundReport['courts'][number]
@@ -61,17 +62,18 @@ function TeamNames({
         return (
           <div
             key={id}
-            className="flex items-center gap-1 text-sm font-medium text-lob-slate truncate"
+            className={`flex items-center gap-1 text-sm font-medium text-lob-slate truncate ${onPickPlayer ? 'min-h-10' : ''}`}
           >
             {onPickPlayer ? (
-              <button
-                type="button"
+              <TextButton
+                size="inherit"
+                truncate
+                hitArea
                 onClick={() => onPickPlayer(id)}
                 aria-label={`Swap options for ${player?.name ?? id}`}
-                className="min-w-0 truncate min-h-[40px] text-left font-medium hover:underline decoration-dotted underline-offset-2"
               >
                 {player?.name ?? id}
-              </button>
+              </TextButton>
             ) : (
               <span className="min-w-0 truncate">{player?.name ?? id}</span>
             )}
@@ -132,7 +134,7 @@ function CourtCard({
               onFix={
                 canEvenOut ? () => onFixUnevenCourt({ roundIndex, courtIndex: index }) : undefined
               }
-              fixLabel={`Even out Court ${index + 1}`}
+              fixLabel={`Fix: even out Court ${index + 1}`}
             />
           )}
         </div>
@@ -174,13 +176,13 @@ function CourtCard({
             >
               {players[a]?.name ?? a} vs {players[b]?.name ?? b} — repeat
               {onFixRematch && (
-                <button
-                  type="button"
+                <TextButton
+                  tone="warning"
+                  hitArea
                   onClick={() => onFixRematch({ roundIndex, pair: [a, b] })}
-                  className="underline decoration-dotted underline-offset-2 hover:text-lob-warning-strong"
                 >
                   Fix
-                </button>
+                </TextButton>
               )}
             </span>
           ))}

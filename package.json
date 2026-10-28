@@ -30,7 +30,7 @@
     "templates:build": "node scripts/build-email-templates.mjs",
     "templates:check": "node scripts/build-email-templates.mjs --check",
     "design:check": "node scripts/check-raw-colours.mjs && node scripts/check-raw-buttons.mjs",
-    "design:baseline": "node scripts/check-raw-colours.mjs --update && node scripts/check-raw-buttons.mjs --update",
+    "design:baseline": "node scripts/check-raw-colours.mjs --update",
     "functions:serve": "supabase functions serve",
     "claude": "claude --strict-mcp-config --mcp-config .mcp.json",
     "lint": "eslint .",

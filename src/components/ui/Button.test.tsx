@@ -25,6 +25,22 @@ describe('Button', () => {
     )
   })
 
+  it('applies the on-dark variant', () => {
+    const cls = classOf(Button({ children: 'See results', variant: 'on-dark' }))
+    expect(cls).toContain('bg-white/15 text-white border-transparent')
+    expect(cls).toContain('not-disabled:hover:bg-white/25')
+  })
+
+  it('grows into the space its row leaves', () => {
+    expect(classOf(Button({ children: 'Order', grow: true }))).toMatch(/ flex-1$/)
+    expect(classOf(Button({ children: 'Order' }))).not.toContain('flex-1')
+  })
+
+  it('puts a trailing icon after the label', () => {
+    const el = Button({ children: 'Next', icon: 'LEAD', trailingIcon: 'TRAIL' })
+    expect(propsOf(propsOf(el).children).children).toEqual(['LEAD', 'Next', 'TRAIL'])
+  })
+
   it('supports the sm and lg sizes', () => {
     expect(classOf(Button({ children: 'Go', size: 'sm' }))).toContain('py-1.5 px-3 text-xs')
     expect(classOf(Button({ children: 'Go', size: 'lg' }))).toContain('py-3 px-5')
@@ -46,7 +62,7 @@ describe('Button', () => {
 
   it('renders the icon before the label', () => {
     const el = Button({ children: 'Add', icon: 'ICON' })
-    expect(propsOf(propsOf(el).children).children).toEqual(['ICON', 'Add'])
+    expect(propsOf(propsOf(el).children).children).toEqual(['ICON', 'Add', undefined])
   })
 
   it('fills its container only when fullWidth', () => {

@@ -23,6 +23,22 @@ describe('TextButton', () => {
     expect(propsOf(el)['aria-label']).toBe('Resend code')
   })
 
+  it('has an lg size for a headline name', () => {
+    expect(classOf(TextButton({ children: 'Net Gains', size: 'lg' }))).toContain('text-lg')
+  })
+
+  it('cuts to one line with an ellipsis when truncate is set', () => {
+    expect(classOf(TextButton({ children: 'Ana', truncate: true }))).toContain(
+      'min-w-0 max-w-full truncate',
+    )
+  })
+
+  it('grows the tap target without moving the layout when hitArea is set', () => {
+    const cls = classOf(TextButton({ children: 'Fix', hitArea: true }))
+    expect(cls).toContain('px-2 -mx-2 py-3 -my-3')
+    expect(classOf(TextButton({ children: 'Fix' }))).not.toContain('-my-3')
+  })
+
   it('applies tone and inherits size', () => {
     const el = TextButton({ children: 'Cancel team', tone: 'destructive', size: 'inherit' })
     expect(classOf(el)).toContain('text-lob-danger')

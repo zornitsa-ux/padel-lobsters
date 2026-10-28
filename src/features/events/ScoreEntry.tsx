@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import type { MatchScoreUpdate } from './matchQueries'
+import { TextButton } from '../../components/ui/TextButton'
 
 /* ════════════════════════════════════════════════════════════════════════════
    ScoreEntry — batched score input for a single match.
@@ -125,14 +126,21 @@ export default function ScoreEntry({ match, onUpdate, variant = 'input' }: Score
   // and wrapping because the Schedule grid's score column is ~90px wide between
   // two team columns — a wider pill would shove them around.
   const conflictNotice = conflict && (
-    <button
-      type="button"
-      onClick={() => applyExternal(conflict.s1, conflict.s2)}
+    <p
       aria-live="polite"
       className="mt-1 w-full max-w-[96px] self-center text-2xs leading-tight font-semibold text-lob-warning-strong bg-lob-warning-soft border border-lob-warning-border rounded-lg px-1 py-0.5"
     >
-      Another admin: {conflict.s1 || '—'}–{conflict.s2 || '—'} · tap to use
-    </button>
+      Another admin: {conflict.s1 || '—'}–{conflict.s2 || '—'} ·{' '}
+      <TextButton
+        tone="warning"
+        size="inherit"
+        hitArea
+        onClick={() => applyExternal(conflict.s1, conflict.s2)}
+        aria-label={`Use the other admin's score, ${conflict.s1 || '—'}–${conflict.s2 || '—'}`}
+      >
+        use
+      </TextButton>
+    </p>
   )
 
   if (variant === 'select') {

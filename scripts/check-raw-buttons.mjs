@@ -1,18 +1,24 @@
 #!/usr/bin/env node
-// Ratchet on hand-built <button>s outside src/components/ui. Per-file counts may
-// only go down; see "Need X → use Y" in docs/design-system/PLAN.md.
-//   node scripts/check-raw-buttons.mjs           check against the baseline
-//   node scripts/check-raw-buttons.mjs --update  rewrite the baseline
-import { runRatchet } from './lib/ratchet.mjs'
+// No hand-built <button>s outside src/components/ui: features compose Button, TextButton,
+// IconButton, Chip, OptionRow, MenuItem, CardLink and the rest. See "Need X → use Y" in
+// docs/design-system/PLAN.md.
+import { countMatches } from './lib/ratchet.mjs'
 
-runRatchet({
-  name: 'Hand-built buttons',
-  baselineFile: 'raw-buttons-baseline.json',
+const found = countMatches({
   include: (path) =>
     path.endsWith('.tsx') && !path.startsWith('src/components/ui/') && !path.endsWith('.test.tsx'),
   pattern: /<button\b/g,
-  grewHelp: [
-    'Hand-built <button>s were added. Use Button, TextButton, IconButton or another',
-    'component from src/components/ui (docs/design-system/PLAN.md, "Need X → use Y"):',
-  ].join('\n'),
 })
+
+const files = Object.entries(found)
+if (files.length) {
+  console.error(
+    [
+      'Hand-built <button>s outside src/components/ui. Use a component from src/components/ui',
+      '(docs/design-system/PLAN.md, "Need X → use Y"), or add the variant it needs:',
+      ...files.map(([file, count]) => `  ${file}: ${count}`),
+    ].join('\n'),
+  )
+  process.exit(1)
+}
+console.log('Hand-built buttons check passed: none outside src/components/ui.')

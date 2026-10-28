@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { TextButton } from '../../../components/ui/TextButton'
 
 interface Props {
   prize: string | null
@@ -52,13 +53,15 @@ export default function PrizeEditor({ prize, winnerId, onSave }: Props) {
   }
 
   return (
-    <button
-      onClick={() => setEditing(true)}
-      className={`mt-1 text-sm sm:text-base font-semibold text-left ${
-        prize ? 'text-amber-900/80' : 'text-amber-900/40 italic'
-      }`}
-    >
-      {prize || '+ add prize'}
-    </button>
+    <p className="mt-1 text-sm sm:text-base">
+      <TextButton
+        tone="neutral"
+        size="inherit"
+        onClick={() => setEditing(true)}
+        aria-label={prize ? `Edit prize: ${prize}` : undefined}
+      >
+        {prize || '+ add prize'}
+      </TextButton>
+    </p>
   )
 }

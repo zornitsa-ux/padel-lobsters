@@ -1,4 +1,4 @@
-import { X } from 'lucide-react'
+import { AlertBox } from '../../../../components/ui/AlertBox'
 
 export default function TeamNotices({
   notices,
@@ -9,20 +9,14 @@ export default function TeamNotices({
 }) {
   if (notices.length === 0) return null
   return (
-    <div
-      role="status"
-      className="card bg-lob-success-light border border-lob-success-border flex items-start justify-between gap-2"
-    >
-      <div className="space-y-1">
-        {notices.map((notice) => (
-          <p key={notice} className="text-sm text-lob-success-strong">
-            {notice}
-          </p>
-        ))}
-      </div>
-      <button onClick={onDismiss} aria-label="Dismiss" className="text-lob-success-strong shrink-0">
-        <X size={16} />
-      </button>
+    <div role="status">
+      <AlertBox variant="success" onDismiss={onDismiss}>
+        <div className="space-y-1">
+          {notices.map((notice) => (
+            <p key={notice}>{notice}</p>
+          ))}
+        </div>
+      </AlertBox>
     </div>
   )
 }
