@@ -3,6 +3,8 @@ import { Search } from 'lucide-react'
 import type { Player } from '../../../../lib/normalise'
 import { filterByName } from './teamHelpers'
 import type { DisplayName } from '../utils'
+import Avatar from '../../../../components/ui/Avatar'
+import { OptionRow } from '../../../../components/ui/OptionRow'
 
 interface PlayerPickerProps {
   players: Player[]
@@ -10,6 +12,8 @@ interface PlayerPickerProps {
   onSelect: (id: string) => void
   displayName: DisplayName
   initialSearch?: string
+  /** Shown when there is nobody to pick at all, before any search. */
+  emptyLabel?: string
 }
 
 export default function PlayerPicker({
@@ -18,6 +22,7 @@ export default function PlayerPicker({
   onSelect,
   displayName,
   initialSearch = '',
+  emptyLabel = 'No players found',
 }: PlayerPickerProps) {
   const [search, setSearch] = useState(initialSearch)
   const visible = useMemo(() => filterByName({ players, search }), [players, search])
@@ -37,25 +42,21 @@ export default function PlayerPicker({
           onChange={(e) => setSearch(e.target.value)}
         />
       </div>
-      <div className="max-h-48 overflow-y-auto space-y-1">
+      <div className="max-h-56 overflow-y-auto space-y-1">
         {visible.length === 0 && (
-          <p className="text-sm text-lob-muted-light text-center py-3">No players found</p>
+          <p className="text-sm text-lob-muted-light text-center py-3">
+            {players.length === 0 ? emptyLabel : 'No players found'}
+          </p>
         )}
         {visible.map((p) => (
-          <button
+          <OptionRow
             key={p.id}
-            type="button"
-            aria-pressed={selectedId === p.id}
+            selected={selectedId === p.id}
             onClick={() => onSelect(selectedId === p.id ? '' : p.id)}
-            className={`w-full flex items-center gap-3 p-2.5 rounded-xl transition-all ${
-              selectedId === p.id
-                ? 'bg-lob-teal text-white'
-                : 'bg-lob-well text-lob-slate hover:bg-gray-100'
-            }`}
-          >
-            <span className="flex-1 text-left font-medium text-sm">{displayName(p)}</span>
-            <span className="text-xs font-bold">Lv {(p.playtomicLevel || 0).toFixed(1)}</span>
-          </button>
+            leading={<Avatar player={p} size="sm" />}
+            title={displayName(p)}
+            trailing={`Lv ${(p.playtomicLevel || 0).toFixed(1)}`}
+          />
         ))}
       </div>
     </div>

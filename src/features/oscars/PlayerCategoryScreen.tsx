@@ -8,6 +8,7 @@ import type { OscarVote, ShortNamePlayer } from './useOscarsSession'
 import type { Player } from '../../lib/normalise'
 import { Button } from '../../components/ui/Button'
 import { TextButton } from '../../components/ui/TextButton'
+import { OptionTile } from '../../components/ui/OptionTile'
 
 interface PlayerCategoryScreenProps {
   category: CategoryRow
@@ -80,19 +81,13 @@ export default function PlayerCategoryScreen({
               const isMyVote = myVote && String(myVote.id) === String(p.id)
               const history = isYou ? [] : computeHistory(claimedId, p.id, matches)
               return (
-                <button
+                <OptionTile
                   key={p.id}
+                  selected={!!isMyVote}
                   disabled={isYou || busy}
                   onClick={() => onVote(p.id)}
-                  className={`rounded-xl p-2 text-left transition-all border flex flex-col gap-1 ${
-                    isMyVote
-                      ? 'bg-lob-teal/10 border-lob-teal'
-                      : isYou
-                        ? 'bg-lob-well border-lob-line opacity-50 cursor-not-allowed'
-                        : 'bg-white border-lob-line active:scale-95'
-                  }`}
                 >
-                  <div className="flex items-center gap-2 min-w-0">
+                  <span className="flex items-center gap-2 min-w-0">
                     <span
                       className="flex-shrink-0 text-2xs font-bold text-white px-1.5 py-0.5 rounded leading-none"
                       style={{ backgroundColor: letterColor(p.name) }}
@@ -103,13 +98,13 @@ export default function PlayerCategoryScreen({
                       {shortName(p)}
                     </span>
                     {isYou && (
-                      <span className="text-[9px] uppercase tracking-wide font-semibold text-lob-muted bg-gray-200 rounded px-1.5 py-0.5">
+                      <span className="text-[9px] uppercase tracking-wide font-semibold text-lob-muted bg-lob-line-strong rounded px-1.5 py-0.5">
                         you
                       </span>
                     )}
                     {isMyVote && <Check size={14} className="text-lob-teal flex-shrink-0" />}
-                  </div>
-                  <div className="text-[10.5px] text-lob-muted leading-snug space-y-0.5">
+                  </span>
+                  <span className="block text-[10.5px] text-lob-muted leading-snug space-y-0.5">
                     {isYou ? (
                       <span className="italic opacity-70">that&apos;s you</span>
                     ) : history.length === 0 ? (
@@ -118,27 +113,27 @@ export default function PlayerCategoryScreen({
                       history.slice(0, 2).map((h, i) => {
                         if (h.type === 'with') {
                           return (
-                            <div key={i} className="truncate">
+                            <span key={i} className="block truncate">
                               R{h.round}: you &amp;{' '}
                               <strong className="text-lob-dark">{shortName(p)}</strong>
-                            </div>
+                            </span>
                           )
                         }
                         const partner = tournamentParticipants.find(
                           (pp) => String(pp.id) === String(h.partnerId),
                         )
                         return (
-                          <div key={i} className="truncate">
+                          <span key={i} className="block truncate">
                             <strong className="text-lob-dark">
                               R{h.round}: vs {shortName(p)}
                             </strong>
                             {partner ? <> &amp; {shortName(partner)}</> : null}
-                          </div>
+                          </span>
                         )
                       })
                     )}
-                  </div>
-                </button>
+                  </span>
+                </OptionTile>
               )
             })}
           </div>

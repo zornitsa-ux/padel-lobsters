@@ -101,17 +101,14 @@ export const getInTournamentPlayerIds = (
 export const getAvailablePlayers = ({
   players = [],
   regs = [],
-  search = '',
 }: {
   players?: Player[]
   regs?: NormalisedRegistration[]
-  search?: string
 }): Player[] => {
-  const q = String(search || '').toLowerCase()
   const { inTournamentIds } = getInTournamentPlayerIds(regs)
   return players
     .filter((p) => (p.status || 'active') === 'active')
-    .filter((p) => !inTournamentIds.includes(p.id) && (p.name?.toLowerCase().includes(q) || !q))
+    .filter((p) => !inTournamentIds.includes(p.id))
 }
 
 export const computePaymentConfig = (

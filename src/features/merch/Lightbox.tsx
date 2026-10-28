@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { X } from 'lucide-react'
 import { IconButton } from '../../components/ui/IconButton'
+import { ImageTile } from '../../components/ui/OptionTile'
 
 // ── Image Lightbox ────────────────────────────────────────────────────────────
 export type LightboxState = { images: string[]; index: number }
@@ -39,13 +40,13 @@ export default function Lightbox({ images, startIndex = 0, onClose }: LightboxPr
       {images.length > 1 && (
         <div className="flex gap-2 mt-4" onClick={(e) => e.stopPropagation()}>
           {images.map((url, i) => (
-            <button
+            <ImageTile
               key={i}
+              src={url}
+              selected={i === current}
               onClick={() => setCurrent(i)}
-              className={`w-12 h-12 rounded-lg overflow-hidden border-2 transition-all ${i === current ? 'border-white' : 'border-transparent opacity-50'}`}
-            >
-              <img src={url} alt="" className="w-full h-full object-cover" />
-            </button>
+              aria-label={`Photo ${i + 1} of ${images.length}`}
+            />
           ))}
         </div>
       )}

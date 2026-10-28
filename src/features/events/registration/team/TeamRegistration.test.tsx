@@ -193,9 +193,8 @@ describe('team join card', () => {
     fireEvent.click(screen.getByRole('button', { name: /sign up as a team/i }))
     fireEvent.change(screen.getByLabelText('Search players'), { target: { value: 'nico' } })
 
-    const names = screen.getAllByRole('button', { pressed: false }).map((b) => b.textContent ?? '')
-    expect(names.some((n) => n.startsWith('Nico Lee'))).toBe(true)
-    expect(names.some((n) => n.startsWith('Nico Stone'))).toBe(true)
+    expect(screen.getByRole('button', { name: /^Nico Lee/, pressed: false })).not.toBeNull()
+    expect(screen.getByRole('button', { name: /^Nico Stone/, pressed: false })).not.toBeNull()
   })
 
   it('searches active members only, excluding placeholders, entered players and yourself', () => {

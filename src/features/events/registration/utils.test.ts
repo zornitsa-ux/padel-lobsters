@@ -113,16 +113,8 @@ describe('getAvailablePlayers', () => {
     expect(getAvailablePlayers({ players, regs }).map((p) => p.id)).toContain('p1')
   })
 
-  it('filters by a case-insensitive name search', () => {
-    expect(getAvailablePlayers({ players, search: 'GRACE' }).map((p) => p.id)).toEqual(['p2'])
-  })
-
-  it('an empty search matches every active player', () => {
-    expect(getAvailablePlayers({ players, search: '' }).map((p) => p.id)).toEqual([
-      'p1',
-      'p2',
-      'p4',
-    ])
+  it('with no registrations, returns every active player', () => {
+    expect(getAvailablePlayers({ players }).map((p) => p.id)).toEqual(['p1', 'p2', 'p4'])
   })
 })
 

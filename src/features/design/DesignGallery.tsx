@@ -10,6 +10,8 @@ import {
   ArrowUp,
   ArrowDown,
   Info,
+  Eye,
+  ChevronRight,
 } from 'lucide-react'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { ActionRow } from '../../components/ui/ActionRow'
@@ -21,9 +23,13 @@ import AddToCalendarButton from '../../components/ui/AddToCalendarButton'
 import { AvatarPicker } from '../../components/ui/AvatarPicker'
 import { AlertBox } from '../../components/ui/AlertBox'
 import { Badge, type BadgeProps } from '../../components/ui/Badge'
+import Avatar from '../../components/ui/Avatar'
 import { Chip, ChipGroup } from '../../components/ui/Chip'
+import { CollapsibleCard } from '../../components/ui/CollapsibleCard'
 import { Disclosure } from '../../components/ui/Disclosure'
 import { EmptyState } from '../../components/ui/EmptyState'
+import { OptionRow } from '../../components/ui/OptionRow'
+import { ImageTile, OptionTile } from '../../components/ui/OptionTile'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
 import { Spinner } from '../../components/ui/Spinner'
 import { Skeleton } from '../../components/ui/Skeleton'
@@ -319,6 +325,135 @@ function ChoiceSection() {
   )
 }
 
+const SAMPLE_PLAYERS = [
+  { id: 'p1', name: 'Ana Ruiz', level: '3.5' },
+  { id: 'p2', name: 'Ben Okafor', level: '2.8' },
+  { id: 'p3', name: 'Chloé Martin', level: '4.1' },
+]
+
+const SAMPLE_PHOTOS = ['#E8735A', '#F4C542', '#9CA3AF'].map(
+  (fill) =>
+    `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="48" height="48" fill="${fill}"/></svg>`)}`,
+)
+
+function OptionSection() {
+  const [picked, setPicked] = useState('p1')
+  const [tile, setTile] = useState('p2')
+  const [photo, setPhoto] = useState(0)
+  return (
+    <Section title="OptionRow and OptionTile">
+      <Row label="OptionRow selected (pick one player)" block>
+        <div className="space-y-1">
+          {SAMPLE_PLAYERS.map((p) => (
+            <OptionRow
+              key={p.id}
+              selected={picked === p.id}
+              onClick={() => setPicked(p.id)}
+              leading={<Avatar player={p} size="sm" />}
+              title={p.name}
+              trailing={`Lv ${p.level}`}
+            />
+          ))}
+          <OptionRow
+            selected={false}
+            disabled
+            leading={<Avatar player={{ name: 'Dee Sol' }} size="sm" />}
+            title="Dee Sol"
+            trailing="Lv 3.0"
+          />
+        </div>
+      </Row>
+      <Row label="OptionRow acting straight away · subtitle · actions · trailing chevron" block>
+        <div className="space-y-1">
+          <OptionRow
+            onClick={() => {}}
+            leading={<Avatar player={{ name: 'Ana Ruiz' }} size="sm" />}
+            title="Ana Ruiz"
+            subtitle="Lv 3.5"
+            actions={
+              <IconButton aria-label="Show email" size="sm">
+                <Eye />
+              </IconButton>
+            }
+          />
+          <OptionRow
+            to="/design"
+            title="3 player signups awaiting approval"
+            trailing={<ChevronRight size={16} className="text-lob-muted-light" />}
+          />
+        </div>
+      </Row>
+      <Row label="OptionTile (grid): selected · default · disabled · read-only" block>
+        <div className="grid grid-cols-2 gap-2">
+          {SAMPLE_PLAYERS.slice(0, 2).map((p) => (
+            <OptionTile key={p.id} selected={tile === p.id} onClick={() => setTile(p.id)}>
+              <span className="font-semibold text-sm text-lob-dark">{p.name}</span>
+              <span className="text-xs text-lob-muted">R2: you &amp; {p.name.split(' ')[0]}</span>
+            </OptionTile>
+          ))}
+          <OptionTile disabled onClick={() => {}}>
+            <span className="font-semibold text-sm text-lob-dark">You</span>
+            <span className="text-xs text-lob-muted">that&apos;s you</span>
+          </OptionTile>
+          <OptionTile>
+            <span className="font-semibold text-sm text-lob-dark">Best smash</span>
+            <span className="text-xs text-lob-muted-light">You didn&apos;t vote</span>
+          </OptionTile>
+        </div>
+      </Row>
+      <Row label="ImageTile (photo switcher)">
+        {SAMPLE_PHOTOS.map((src, i) => (
+          <ImageTile
+            key={src}
+            src={src}
+            selected={photo === i}
+            onClick={() => setPhoto(i)}
+            aria-label={`Photo ${i + 1} of ${SAMPLE_PHOTOS.length}`}
+          />
+        ))}
+      </Row>
+    </Section>
+  )
+}
+
+function CollapsibleSectionDemo() {
+  const [open, setOpen] = useState(false)
+  const [rowOpen, setRowOpen] = useState(false)
+  return (
+    <Section title="CollapsibleCard">
+      <CollapsibleCard
+        className="rounded-xl border border-lob-line bg-lob-well p-3 space-y-2"
+        expanded={open}
+        onToggle={() => setOpen((o) => !o)}
+        header={<span className="text-sm font-semibold text-lob-slate">Best Lobster</span>}
+        summary={<p className="text-xs text-lob-muted">summary stays visible</p>}
+      >
+        <p className="text-xs text-lob-muted">Body shown while expanded.</p>
+      </CollapsibleCard>
+      <CollapsibleCard
+        className="rounded-xl border border-lob-line bg-lob-well p-3 space-y-2"
+        expanded={rowOpen}
+        onToggle={() => setRowOpen((o) => !o)}
+        leading={
+          <IconButton variant="ghost" size="sm" aria-label="Move up">
+            <ArrowUp />
+          </IconButton>
+        }
+        actions={
+          <IconButton variant="ghost-destructive" size="sm" aria-label="Delete">
+            <Trash2 />
+          </IconButton>
+        }
+        header={
+          <span className="text-sm font-medium text-lob-slate truncate">leading + actions</span>
+        }
+      >
+        <p className="text-xs text-lob-muted">Reorder and delete sit outside the toggle.</p>
+      </CollapsibleCard>
+    </Section>
+  )
+}
+
 function StatesSection() {
   const [open, setOpen] = useState(false)
   return (
@@ -348,6 +483,8 @@ export default function DesignGallery() {
       <IconButtonSection />
       <StatusSection />
       <ChoiceSection />
+      <OptionSection />
+      <CollapsibleSectionDemo />
       <StatesSection />
     </div>
   )

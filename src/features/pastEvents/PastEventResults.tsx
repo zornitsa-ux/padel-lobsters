@@ -175,7 +175,6 @@ export default function PastEventResults({ tournaments, onNavigate }: PastEventR
           <CollapsibleCard
             key={`db-${t.id}`}
             className="card overflow-hidden border-l-4 border-yellow-400"
-            headerClassName="gap-3"
             expanded={open}
             onToggle={() => setExpandedId(open ? null : `db-${t.id}`)}
             header={

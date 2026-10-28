@@ -23,6 +23,7 @@ import {
 } from 'lucide-react'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { LinkCard, LinkCardIcon } from '../../components/ui/LinkCard'
+import { OptionRow } from '../../components/ui/OptionRow'
 import AuthReadinessPanel from './AuthReadinessPanel'
 import type { EventNavigate } from '../events/eventHelpers'
 import { isEventUpcoming } from '../events/eventPhase'
@@ -82,7 +83,27 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
     return interests.filter((o) => (o.created_at || '') >= lastChecked).length
   }, [isAdmin, interests])
 
-  const totalPending = pendingSignups + unpaidForNextEvent + newOrdersCount
+  const plural = (n: number, word: string) => `${n} ${word}${n !== 1 ? 's' : ''}`
+  const attention = [
+    {
+      id: 'unpaid',
+      count: unpaidForNextEvent,
+      title: `${plural(unpaidForNextEvent, 'unpaid registration')} for next event`,
+      target: 'merch-orders',
+    },
+    {
+      id: 'signups',
+      count: pendingSignups,
+      title: `${plural(pendingSignups, 'player signup')} awaiting approval`,
+      target: 'players',
+    },
+    {
+      id: 'orders',
+      count: newOrdersCount,
+      title: plural(newOrdersCount, 'new merch order'),
+      target: 'merch-orders',
+    },
+  ].filter((item) => item.count > 0)
 
   const activePlayers = useMemo(
     () => players.filter((p) => (p.status || 'active') === 'active'),
@@ -194,45 +215,21 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
       <PageHeader title="Admin" />
       <div className="px-4 pt-4 space-y-4">
         {/* Needs Attention */}
-        {totalPending > 0 && (
+        {attention.length > 0 && (
           <div className="card space-y-2 border-l-4 border-lob-amber">
             <p className="text-xs font-bold text-lob-muted uppercase tracking-wide flex items-center gap-1.5">
               <AlertCircle size={13} className="text-lob-amber" /> Needs attention
             </p>
-            {unpaidForNextEvent > 0 && (
-              <button
-                onClick={() => onNavigate?.('merch-orders')}
-                className="w-full flex items-center justify-between text-sm text-lob-slate hover:text-lob-teal"
-              >
-                <span>
-                  {unpaidForNextEvent} unpaid registration{unpaidForNextEvent !== 1 ? 's' : ''} for
-                  next event
-                </span>
-                <ChevronRight size={14} className="text-lob-muted-light" />
-              </button>
-            )}
-            {pendingSignups > 0 && (
-              <button
-                onClick={() => onNavigate?.('players')}
-                className="w-full flex items-center justify-between text-sm text-lob-slate hover:text-lob-teal"
-              >
-                <span>
-                  {pendingSignups} player signup{pendingSignups !== 1 ? 's' : ''} awaiting approval
-                </span>
-                <ChevronRight size={14} className="text-lob-muted-light" />
-              </button>
-            )}
-            {newOrdersCount > 0 && (
-              <button
-                onClick={() => onNavigate?.('merch-orders')}
-                className="w-full flex items-center justify-between text-sm text-lob-slate hover:text-lob-teal"
-              >
-                <span>
-                  {newOrdersCount} new merch order{newOrdersCount !== 1 ? 's' : ''}
-                </span>
-                <ChevronRight size={14} className="text-lob-muted-light" />
-              </button>
-            )}
+            <div className="space-y-1">
+              {attention.map(({ id, title, target }) => (
+                <OptionRow
+                  key={id}
+                  onClick={() => onNavigate?.(target)}
+                  title={title}
+                  trailing={<ChevronRight size={16} className="text-lob-muted-light" />}
+                />
+              ))}
+            </div>
           </div>
         )}
 
