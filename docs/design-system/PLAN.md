@@ -160,7 +160,7 @@ sites, `registeredEntries`, and the King of the Court helpers (`isKingCourt`,
 Order of work after P2f (owner, 2026-10-28). Overlays move onto Radix
 primitives (see the Log) before P3:
 
-1. ~~**Menu choices with real input (#88).**~~ Done on `menu-select-fix`.
+1. ~~**Menu choices with real input (issue #88).**~~ Fixed; see the Log.
 2. **Dialog focus (#84) on Radix Dialog.** `Modal` and `ConfirmDialog`
    keep their props and wrap `@radix-ui/react-dialog`: focus on open, Tab
    kept inside, Escape when dismissible, focus returned on close, the page
@@ -503,12 +503,16 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
   closed the menu in the click capture phase. A real tap runs microtasks
   between the capture and bubble listeners, so React unmounted the item
   before its `onClick` ran. `fireEvent` and a scripted `.click()` don't, which
-  is why the tests passed. Fixed on `menu-select-fix`: focus still moves to
-  the trigger in the capture phase (`onBeforeSelect`), so a dialog the item
-  opens returns focus there, but the menu closes after the item acts
-  (`onItemSelected`, bubble phase). The new test flushes React at the target
-  to stand in for a real tap. Browser checks of menus and dialogs use real
-  taps and key presses, not scripted clicks.
+  is why the tests passed. Fixed on `menu-select-fix`: the menu closes in
+  the bubble phase, after the item acts, and refocuses its trigger unless the
+  item moved focus somewhere itself (a field it revealed). A dialog the item
+  opens still returns focus to the trigger, since the dialog reads focus when
+  it renders, after the click. The new test flushes React at the target to
+  stand in for a real tap, and fails if closing moves back to the capture
+  phase. Keyboard selection has no separate test: Enter on a menu item fires
+  the same click. Browser checks of menus and dialogs use real taps and key
+  presses, not scripted clicks. Radix DropdownMenu (step 3 of "Next")
+  replaces this code.
 - **2026-10-28.** Owner: overlays use an established library rather than our
   own focus code, since #88, a TeamForm Escape regression and an unhandled
   focus case all came from hand-rolled overlay code in one day. Radix

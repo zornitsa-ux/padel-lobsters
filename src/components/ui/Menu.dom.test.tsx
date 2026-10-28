@@ -61,18 +61,25 @@ describe('Menu', () => {
     expect(onWindowKey).not.toHaveBeenCalled()
   })
 
-  it('closes and refocuses the trigger before the item acts', () => {
-    let focusedDuringSelect: Element | null = null
-    const onEdit = vi.fn(() => {
-      focusedDuringSelect = document.activeElement
-    })
+  it('closes and refocuses the trigger after the item acts', () => {
+    const onEdit = vi.fn()
     const trigger = renderMenu({ onEdit })
     fireEvent.click(trigger)
     fireEvent.click(item('Edit') as Element)
     expect(onEdit).toHaveBeenCalledOnce()
     expect(screen.queryByRole('menu')).toBeNull()
-    expect(focusedDuringSelect).toBe(trigger)
     expect(document.activeElement).toBe(trigger)
+  })
+
+  it('leaves focus where the item moved it', () => {
+    const field = document.createElement('input')
+    document.body.append(field)
+    const trigger = renderMenu({ onEdit: () => field.focus() })
+    fireEvent.click(trigger)
+    fireEvent.click(item('Edit') as Element)
+    expect(screen.queryByRole('menu')).toBeNull()
+    expect(document.activeElement).toBe(field)
+    field.remove()
   })
 
   // A real tap or key runs microtasks between the capture and bubble listeners, so React
