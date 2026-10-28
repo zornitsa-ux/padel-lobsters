@@ -7,6 +7,7 @@
 - Prefer named arguments (destructured objects) over positional parameters.
 - Prefer pure functions and immutability.
 - Refactor as you work. If you spot repeated code, create a task to de-duplicate it with a clean extraction rather than leaving it.
+- Older bugs found while working or in review, outside the PR's scope: open a GitHub issue (labels `bug`, `found-in-review`) and link it from the PR, rather than noting it only in the PR or a PLAN log. Issues are public: no player names, emails or IDs.
 
 ## UI and Design System
 
