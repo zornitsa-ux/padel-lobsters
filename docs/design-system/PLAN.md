@@ -663,7 +663,7 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
   nothing else used them. With no `window` Escape listeners left, `Menu` and
   the shell stop calling `stopPropagation` on Escape: Radix gives the key only
   to the top layer. `escapeIsForPopup` stays whole, for `MenuList` and the
-  TeamForm search, which aren't Radix layers. First paint: 210.6 → 210.8 KB
+  TeamForm search, which aren't Radix layers. First paint: 210.6 → 210.9 KB
   gzip (`localdev` build).
 
   Review of this PR. The matchmaking error alert and status line sit on the
