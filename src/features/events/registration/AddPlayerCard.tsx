@@ -3,7 +3,7 @@ import type { Player } from '../../../lib/normalise'
 import type { DisplayName } from './utils'
 import { Button } from '../../../components/ui/Button'
 import { IconButton } from '../../../components/ui/IconButton'
-import PlayerPicker from './team/PlayerPicker'
+import PlayerPicker from './PlayerPicker'
 
 interface AddPlayerCardProps {
   isCompleted: boolean

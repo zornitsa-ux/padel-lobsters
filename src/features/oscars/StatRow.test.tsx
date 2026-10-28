@@ -34,9 +34,9 @@ const render = (
   voters?: CategoryVoterRow[],
 ) => StatRow({ stat: stat(votes, participants), expanded, voters, onToggle: vi.fn() })
 
-// StatRow returns a CollapsibleCard: the bar is its always-visible summary and
-// the voter columns are its body.
-const barOf = (el: unknown) => propsOf(el).summary
+// StatRow returns a CollapsibleCard: the bar sits in its header, under the label
+// row, so it is part of the tap target; the voter columns are its body.
+const barOf = (el: unknown) => childrenOf(propsOf(el).header)[1]
 const columnsOf = (el: unknown) => childrenOf(propsOf(el).children)
 
 // A column header reads "✓ Voted (1)" — its children are text/number fragments.

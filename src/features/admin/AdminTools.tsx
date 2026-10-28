@@ -24,6 +24,7 @@ import {
 import { PageHeader } from '../../components/ui/PageHeader'
 import { LinkCard, LinkCardIcon } from '../../components/ui/LinkCard'
 import { OptionRow } from '../../components/ui/OptionRow'
+import { plural } from '../../lib/plural'
 import AuthReadinessPanel from './AuthReadinessPanel'
 import type { EventNavigate } from '../events/eventHelpers'
 import { isEventUpcoming } from '../events/eventPhase'
@@ -83,24 +84,23 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
     return interests.filter((o) => (o.created_at || '') >= lastChecked).length
   }, [isAdmin, interests])
 
-  const plural = (n: number, word: string) => `${n} ${word}${n !== 1 ? 's' : ''}`
   const attention = [
     {
       id: 'unpaid',
       count: unpaidForNextEvent,
-      title: `${plural(unpaidForNextEvent, 'unpaid registration')} for next event`,
+      title: `${plural({ count: unpaidForNextEvent, one: 'unpaid registration' })} for next event`,
       target: 'merch-orders',
     },
     {
       id: 'signups',
       count: pendingSignups,
-      title: `${plural(pendingSignups, 'player signup')} awaiting approval`,
+      title: `${plural({ count: pendingSignups, one: 'player signup' })} awaiting approval`,
       target: 'players',
     },
     {
       id: 'orders',
       count: newOrdersCount,
-      title: plural(newOrdersCount, 'new merch order'),
+      title: plural({ count: newOrdersCount, one: 'new merch order' }),
       target: 'merch-orders',
     },
   ].filter((item) => item.count > 0)

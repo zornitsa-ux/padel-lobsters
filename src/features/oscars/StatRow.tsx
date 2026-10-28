@@ -21,17 +21,19 @@ export default function StatRow({ stat, expanded, voters, onToggle }: StatRowPro
       expanded={expanded}
       onToggle={onToggle}
       header={
-        <span className="flex-1 min-w-0 flex items-center gap-2">
-          <span className="text-lg">{stat.category_icon}</span>
-          <span className="flex-1 font-semibold text-sm text-lob-slate">{stat.category_name}</span>
-          <span className="text-xs text-lob-muted font-semibold">
-            <span className="text-lob-teal text-base font-bold">{stat.votes_count}</span> of{' '}
-            {stat.total_participants} voted
+        <span className="flex-1 min-w-0 block space-y-2">
+          <span className="flex items-center gap-2">
+            <span className="text-lg">{stat.category_icon}</span>
+            <span className="flex-1 font-semibold text-sm text-lob-slate">
+              {stat.category_name}
+            </span>
+            <span className="text-xs text-lob-muted font-semibold">
+              <span className="text-lob-teal text-base font-bold">{stat.votes_count}</span> of{' '}
+              {stat.total_participants} voted
+            </span>
           </span>
+          <ProgressBar value={pct} fillClassName="bg-gradient-to-r from-lob-teal to-lob-coral" />
         </span>
-      }
-      summary={
-        <ProgressBar value={pct} fillClassName="bg-gradient-to-r from-lob-teal to-lob-coral" />
       }
     >
       <div className="pt-2 border-t border-lob-line grid grid-cols-2 gap-3">

@@ -84,8 +84,10 @@ export default function PlayerCategoryScreen({
                 <OptionTile
                   key={p.id}
                   selected={!!isMyVote}
-                  disabled={isYou || busy}
-                  onClick={() => onVote(p.id)}
+                  disabled={isYou}
+                  onClick={() => {
+                    if (!busy) onVote(p.id)
+                  }}
                 >
                   <span className="flex items-center gap-2 min-w-0">
                     <span

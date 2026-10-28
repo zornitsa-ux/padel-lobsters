@@ -69,13 +69,13 @@ export default function ResultsView({
         const isOpen = collapsible ? openIds.has(cat.id) : true
 
         const Header = (
-          <div className="flex-1 min-w-0 flex items-center gap-2">
+          <span className="flex-1 min-w-0 flex items-center gap-2">
             <span className="text-lg">{cat.icon}</span>
             <span className="flex-1 font-bold text-sm text-lob-dark">{cat.name}</span>
             {collapsible && !isOpen && (
               <span className="text-xs text-lob-muted-light italic">tap to reveal</span>
             )}
-          </div>
+          </span>
         )
 
         const Body = isOpen && (

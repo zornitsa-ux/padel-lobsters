@@ -23,6 +23,7 @@
 
 import { allMatchesScored, isMatchScored } from './eventPhase'
 import { isKingOfTheCourt } from './eventFormat'
+import { plural } from '../../lib/plural'
 import type { PhaseMatch } from './eventPhase'
 import type { OscarsPhase } from '../oscars/oscarsPhase'
 
@@ -69,8 +70,6 @@ export type RunOfShowInput = {
   /** Live voting turnout, once a session exists. */
   turnout?: { voted: number; total: number } | null
 }
-
-const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
 
 /** A reason belongs on a step only while that step is actually locked. */
 const lockedBecause = (state: RunOfShowStepState, reason: string) =>
@@ -149,9 +148,9 @@ export function runOfShowSteps({
       state: flagsState,
       detail:
         flaggedCount > 0
-          ? `${plural(flaggedCount, 'rating', 'ratings')} to review`
+          ? `${plural({ count: flaggedCount, one: 'rating' })} to review`
           : appliedCount != null
-            ? `${plural(appliedCount, 'rating', 'ratings')} applied automatically, nothing to review`
+            ? `${plural({ count: appliedCount, one: 'rating' })} applied automatically, nothing to review`
             : 'Nothing to review',
       lockedReason: lockedBecause(flagsState, 'Finish the tournament first'),
       playersSee: 'Nothing — ratings are admin-only',

@@ -23,7 +23,11 @@ export default function CategoryGrid({
       {categories.map((c) => {
         const voted = myVoteByCat[c.id]
         return (
-          <OptionTile key={c.id} {...(onSelect ? { onClick: () => onSelect(c.id) } : {})}>
+          <OptionTile
+            key={c.id}
+            muted={!!voted}
+            onClick={onSelect ? () => onSelect(c.id) : undefined}
+          >
             <span className="min-h-[88px] flex flex-col justify-between">
               <span className="text-2xl">{c.icon}</span>
               <span>

@@ -331,10 +331,7 @@ const SAMPLE_PLAYERS = [
   { id: 'p3', name: 'Chloé Martin', level: '4.1' },
 ]
 
-const SAMPLE_PHOTOS = ['#E8735A', '#F4C542', '#9CA3AF'].map(
-  (fill) =>
-    `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="48" height="48" fill="${fill}"/></svg>`)}`,
-)
+const SAMPLE_PHOTOS = ['/logo-256.webp', '/lobster-way/transfer-step-1.png', '/favicon-64.png']
 
 function OptionSection() {
   const [picked, setPicked] = useState('p1')
@@ -383,7 +380,7 @@ function OptionSection() {
           />
         </div>
       </Row>
-      <Row label="OptionTile (grid): selected · default · disabled · read-only" block>
+      <Row label="OptionTile (grid): default · selected · disabled · muted read-only" block>
         <div className="grid grid-cols-2 gap-2">
           {SAMPLE_PLAYERS.slice(0, 2).map((p) => (
             <OptionTile key={p.id} selected={tile === p.id} onClick={() => setTile(p.id)}>
@@ -395,9 +392,9 @@ function OptionSection() {
             <span className="font-semibold text-sm text-lob-dark">You</span>
             <span className="text-xs text-lob-muted">that&apos;s you</span>
           </OptionTile>
-          <OptionTile>
+          <OptionTile muted>
             <span className="font-semibold text-sm text-lob-dark">Best smash</span>
-            <span className="text-xs text-lob-muted-light">You didn&apos;t vote</span>
+            <span className="text-xs font-semibold text-lob-success">Voted: Ana</span>
           </OptionTile>
         </div>
       </Row>

@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react'
 import { Search } from 'lucide-react'
-import type { Player } from '../../../../lib/normalise'
-import { filterByName } from './teamHelpers'
-import type { DisplayName } from '../utils'
-import Avatar from '../../../../components/ui/Avatar'
-import { OptionRow } from '../../../../components/ui/OptionRow'
+import type { Player } from '../../../lib/normalise'
+import { filterByName } from './team/teamHelpers'
+import type { DisplayName } from './utils'
+import Avatar from '../../../components/ui/Avatar'
+import { OptionRow } from '../../../components/ui/OptionRow'
 
 interface PlayerPickerProps {
   players: Player[]

@@ -55,7 +55,7 @@ component doesn't fit, fix the component, not the call site.**
 | Toggle, filter or info chip          | `Chip` (a row of them: `ChipGroup`)                  | exists    |
 | Pick one from a list (player)        | `OptionRow selected` (`actions` beside, outside tap) | exists    |
 | Row that jumps to a task             | `OptionRow` (`trailing` chevron)                     | exists    |
-| Pick one tile from a grid            | `OptionTile selected` (no handler: read-only tile)   | exists    |
+| Pick one tile from a grid            | `OptionTile selected` (`muted` when done)            | exists    |
 | Switch between photos                | `ImageTile`                                          | exists    |
 | Admin acts for another player        | `useConfirmOnBehalf` before the write                | exists    |
 | Menu of actions                      | `Menu` + `MenuItem`                                  | P2f       |
@@ -360,12 +360,16 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
   tile, same selected look; with no handler it is a read-only tile), plus
   `ImageTile` for the merch lightbox thumbnails (teal border on the current
   photo, named "Photo 2 of 3"). `AddPlayerCard` now reuses the team
-  `PlayerPicker`, so the admin add gets the accent-folding name search and
+  `PlayerPicker` (moved up to `registration/`), so the admin add gets the accent-folding name search and
   avatars, and `getAvailablePlayers` loses its `search`. `LinkPlayerModal`
   candidates and the Admin "Needs attention" rows are `OptionRow`s; the Oscars
-  vote tiles and category grid are `OptionTile`s. A voted category no longer
-  greys out: its "Voted: …" line says so. `CollapsibleCard` gains `leading`
+  vote tiles and category grid are `OptionTile`s. A voted category is a
+  `muted` tile (grey well). Row titles wrap rather than truncate, so a
+  "Needs attention" line is never cut off. `CollapsibleCard` gains `leading`
   and `actions` slots outside the toggle, and loses `headerClassName` and
   `chevronClassName` (its header always has `gap-3`). The Oscars stat rows
-  (progress bar as `summary`) and results, and the Lobster Way admin category
-  and question rows, move onto it.
+  (the progress bar stays inside the toggle) and results, and the Lobster Way admin category
+  and question rows, move onto it. A shared `plural` (`src/lib/plural.ts`)
+  replaces the run-of-show copy. Review of this PR: Lobster Way questions are
+  keyed by index while each keeps its own open state, so reordering leaves a
+  different question open (older bug, not fixed here).
