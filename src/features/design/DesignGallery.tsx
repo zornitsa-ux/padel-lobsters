@@ -422,6 +422,29 @@ function MenuSection() {
   const [view, setView] = useState('play')
   return (
     <Section title="Menu and MenuItem">
+      <Row label="MenuList under a search field (always open here) · MenuSeparator" block>
+        <div className="h-72">
+          <div className="relative">
+            <input
+              className="input w-full"
+              placeholder="Search by name…"
+              defaultValue="Jo"
+              readOnly
+            />
+            <MenuList label="Player options" align="stretch" keepFocus>
+              {SAMPLE_PLAYERS.map((p) => (
+                <MenuItem key={p.id} icon={<Avatar player={p} size="xs" />} onSelect={() => {}}>
+                  {p.name}
+                </MenuItem>
+              ))}
+              <MenuSeparator />
+              <MenuItem icon={<Plus />} onSelect={() => {}}>
+                Create placeholder: Jo
+              </MenuItem>
+            </MenuList>
+          </div>
+        </div>
+      </Row>
       <Row label="icon items · danger tone (event admin menu)">
         <Menu
           label="Admin tools"
@@ -481,27 +504,6 @@ function MenuSection() {
             </MenuItem>
           ))}
         </Menu>
-      </Row>
-      <Row label="MenuList under a search field (always open here) · MenuSeparator" block>
-        <div className="relative h-52">
-          <input
-            className="input w-full"
-            placeholder="Search by name…"
-            defaultValue="Jo"
-            readOnly
-          />
-          <MenuList label="Player options" align="stretch" keepFocus>
-            {SAMPLE_PLAYERS.map((p) => (
-              <MenuItem key={p.id} icon={<Avatar player={p} size="xs" />} onSelect={() => {}}>
-                {p.name}
-              </MenuItem>
-            ))}
-            <MenuSeparator />
-            <MenuItem icon={<Plus />} onSelect={() => {}}>
-              Create placeholder: Jo
-            </MenuItem>
-          </MenuList>
-        </div>
       </Row>
       <Row label="drawer choice: OptionRow selected (Oscars admin menu)" block>
         <div className="space-y-1">
