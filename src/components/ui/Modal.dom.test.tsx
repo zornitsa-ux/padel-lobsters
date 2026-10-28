@@ -12,15 +12,34 @@ afterEach(() => {
   cleanup()
 })
 
+// Like the TeamForm player search: a field that shows a list and closes it on Escape.
+function SearchField() {
+  const [listOpen, setListOpen] = useState(true)
+  return (
+    <input
+      aria-label="Search"
+      aria-haspopup="menu"
+      aria-expanded={listOpen}
+      onKeyDown={(e) => {
+        if (e.key !== 'Escape' || !listOpen) return
+        e.stopPropagation()
+        setListOpen(false)
+      }}
+    />
+  )
+}
+
 function Harness({
   dismissible,
   autoFocusField = false,
   withMenu = false,
+  withSearch = false,
   onConfirmed = () => {},
 }: {
   dismissible?: boolean
   autoFocusField?: boolean
   withMenu?: boolean
+  withSearch?: boolean
   onConfirmed?: (ok: boolean) => void
 }) {
   const [open, setOpen] = useState(false)
@@ -35,6 +54,7 @@ function Harness({
         dismissible={dismissible}
       >
         <input aria-label="Name" autoFocus={autoFocusField} />
+        {withSearch && <SearchField />}
         {withMenu && (
           <Menu label="Tools" trigger={(props) => <button {...props}>Tools</button>}>
             <MenuItem onSelect={() => {}}>Rename</MenuItem>
@@ -121,6 +141,16 @@ describe('Modal Escape', () => {
     expect(screen.queryByRole('menu')).toBeNull()
     expect(screen.getByRole('dialog')).toBeTruthy()
     expect(document.activeElement).toBe(screen.getByText('Tools'))
+  })
+
+  it('closes the list of a search field first, then the sheet', () => {
+    renderHarness({ withSearch: true })
+    const search = screen.getByLabelText('Search')
+    fireEvent.keyDown(search, { key: 'Escape' })
+    expect(search.getAttribute('aria-expanded')).toBe('false')
+    expect(screen.getByRole('dialog')).toBeTruthy()
+    fireEvent.keyDown(search, { key: 'Escape' })
+    expect(screen.queryByRole('dialog')).toBeNull()
   })
 
   it('leaves the sheet open while a composition is in progress', () => {
