@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
-import { Link } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
+import { CardLink } from './CardLink'
 
 interface LinkCardContentProps {
   title: ReactNode
@@ -17,21 +17,11 @@ type LinkCardProps = LinkCardContentProps &
   ({ to: string; onClick?: never } | { onClick: () => void; to?: never })
 
 export function LinkCard({ to, onClick, className, ...content }: LinkCardProps) {
-  const classes =
-    `card w-full text-left flex items-center gap-3 active:scale-[0.99] transition-transform ${className ?? ''}`.trim()
-  const body = <LinkCardContent {...content} />
-
-  if (to !== undefined) {
-    return (
-      <Link to={to} className={classes}>
-        {body}
-      </Link>
-    )
-  }
+  const action = to !== undefined ? { to } : { onClick }
   return (
-    <button type="button" onClick={onClick} className={classes}>
-      {body}
-    </button>
+    <CardLink layout="row" className={className} {...action}>
+      <LinkCardContent {...content} />
+    </CardLink>
   )
 }
 

@@ -316,12 +316,14 @@ export default function Schedule({
               {scoredCount} of {totalMatchCount} scored
             </span>
             {isAdmin && !generated && nextUnscored && (
-              <button
+              <Button
+                variant="neutral"
+                size="sm"
+                trailingIcon={<ArrowRight />}
                 onClick={handleJumpToNextUnscored}
-                className="text-xs font-semibold text-lob-teal flex items-center gap-1 active:scale-95"
               >
-                Next unscored match <ArrowRight size={12} />
-              </button>
+                Next unscored match
+              </Button>
             )}
           </div>
           <ProgressBar value={(scoredCount / totalMatchCount) * 100} />

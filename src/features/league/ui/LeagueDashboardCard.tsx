@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { Badge } from '../../../components/ui/Badge'
+import { CardLink } from '../../../components/ui/CardLink'
 import { statusPill } from './statusPill'
 import type { StatusPill } from './statusPill'
 import { useActiveLeagueBundle } from '../hooks/useLeagueQueries'
@@ -19,7 +19,6 @@ const STATUS_BADGE: Record<string, StatusPill> = {
 }
 
 export function LeagueDashboardCard({ myPlayerId }: LeagueDashboardCardProps) {
-  const navigate = useNavigate()
   const { data } = useActiveLeagueBundle()
   const league = data?.league ?? null
   const teams = data?.teams ?? []
@@ -130,10 +129,7 @@ export function LeagueDashboardCard({ myPlayerId }: LeagueDashboardCardProps) {
   }
 
   return (
-    <button
-      className="w-full text-left rounded-2xl overflow-hidden shadow-md active:scale-[0.99] transition-transform"
-      onClick={() => navigate(`/league/${league.id}`)}
-    >
+    <CardLink to={`/league/${league.id}`} flush>
       <div className="bg-gradient-to-r from-lob-teal to-lob-teal-dark px-4 pt-3.5 pb-3">
         <div className="flex items-start justify-between gap-2">
           <div>
@@ -150,6 +146,6 @@ export function LeagueDashboardCard({ myPlayerId }: LeagueDashboardCardProps) {
         <div className="min-w-0">{renderBody()}</div>
         <span className="text-xs font-semibold text-lob-teal flex-shrink-0">View →</span>
       </div>
-    </button>
+    </CardLink>
   )
 }

@@ -83,14 +83,7 @@ export default function NextEventCard({
       <p className="text-2xs font-bold text-lob-coral uppercase tracking-wide mb-1">
         Your Next Event
       </p>
-      <h2 className="text-lg font-bold text-lob-dark">
-        <button
-          onClick={() => onNavigate('registration', upcoming)}
-          className="hover:text-lob-teal active:scale-95 transition-all text-left"
-        >
-          {upcoming.name}
-        </button>
-      </h2>
+      <h2 className="text-lg font-bold text-lob-dark">{upcoming.name}</h2>
       {/* Match the Event page header exactly: DateTile + bold date label
           + time/duration on a second line + add-to-calendar icon. */}
       <div className="mt-2 mb-3 flex items-center gap-3">
@@ -129,15 +122,10 @@ export default function NextEventCard({
             <span className="text-xs font-semibold text-lob-success">You're registered!</span>
           </div>
         ) : !isAdmin ? (
-          <button
-            onClick={() => onNavigate('registration', upcoming)}
-            className="bg-lob-warning-light border border-lob-warning-border rounded-lg px-3 py-1.5 inline-flex items-center gap-1.5 mb-3 active:scale-95 transition-all"
-          >
+          <div className="bg-lob-warning-light border border-lob-warning-border rounded-lg px-3 py-1.5 inline-flex items-center gap-1.5 mb-3">
             <span className="text-lob-warning-solid text-xs">!</span>
-            <span className="text-xs font-semibold text-lob-warning">
-              Not signed up yet — tap to join
-            </span>
-          </button>
+            <span className="text-xs font-semibold text-lob-warning">Not signed up yet</span>
+          </div>
         ) : null)}
       {isRegistered && kingOfCourtLine}
 

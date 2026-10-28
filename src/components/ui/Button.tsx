@@ -4,8 +4,9 @@ import { renderAction, type ActionProps } from './action'
 /**
  * `danger` is for the confirming action of a destructive flow (the confirm dialog).
  * A destructive action that isn't the screen's CTA is `TextButton tone="destructive"`.
+ * `on-dark` is a translucent button for dark or gradient surfaces (banners, the raffle).
  */
-type Variant = 'primary' | 'secondary' | 'neutral' | 'danger'
+type Variant = 'primary' | 'secondary' | 'neutral' | 'danger' | 'on-dark'
 /** `md` (40px) is the default. `lg` (52px) for a screen's lead CTA; `sm` (32px) for dense rows. */
 type Size = 'sm' | 'md' | 'lg'
 
@@ -15,6 +16,8 @@ interface ButtonContentProps {
   size?: Size
   /** Leading icon. The button sets its size. */
   icon?: React.ReactNode
+  /** Icon after the label: an arrow onward, a chevron that opens a menu. Sized like `icon`. */
+  trailingIcon?: React.ReactNode
   /** Fills its container's width. Buttons sharing a row go in `ActionRow` instead. */
   fullWidth?: boolean
 }
@@ -31,6 +34,7 @@ const VARIANT: Record<Variant, string> = {
   neutral: 'bg-lob-well text-lob-slate border-lob-line-strong not-disabled:hover:bg-lob-line',
   danger:
     'bg-lob-danger-solid text-white border-transparent shadow-md not-disabled:hover:bg-lob-danger-strong',
+  'on-dark': 'bg-white/15 text-white border-transparent not-disabled:hover:bg-white/25',
 }
 
 const SIZE: Record<Size, string> = {
@@ -43,11 +47,19 @@ function buttonClasses({
   variant = 'primary',
   size = 'md',
   fullWidth = false,
-}: Omit<ButtonContentProps, 'children' | 'icon'>) {
+}: Omit<ButtonContentProps, 'children' | 'icon' | 'trailingIcon'>) {
   return `${BASE} ${VARIANT[variant]} ${SIZE[size]}${fullWidth ? ' w-full' : ''}`
 }
 
-export function Button({ children, variant, size, icon, fullWidth, ...props }: ButtonProps) {
+export function Button({
+  children,
+  variant,
+  size,
+  icon,
+  trailingIcon,
+  fullWidth,
+  ...props
+}: ButtonProps) {
   return renderAction({
     props,
     className: buttonClasses({ variant, size, fullWidth }),
@@ -55,6 +67,7 @@ export function Button({ children, variant, size, icon, fullWidth, ...props }: B
       <>
         {icon}
         {children}
+        {trailingIcon}
       </>
     ),
   })

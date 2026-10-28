@@ -1,5 +1,6 @@
 import type { PlayerGender } from '../domain/types'
 import type { CourtChip } from './genderCopy'
+import { TextButton } from '../../../components/ui/TextButton'
 
 const MARKS = {
   female: { letter: 'W', label: 'Woman', className: 'bg-pink-100 text-pink-700' },
@@ -55,14 +56,9 @@ export function CourtGenderChip({
         {chip.text}
       </span>
       {onFix && (
-        <button
-          type="button"
-          onClick={onFix}
-          aria-label={fixLabel}
-          className="text-xs px-1.5 py-1 underline decoration-dotted underline-offset-2 text-lob-warning hover:text-lob-warning-strong"
-        >
+        <TextButton tone="warning" onClick={onFix} aria-label={fixLabel}>
           Fix
-        </button>
+        </TextButton>
       )}
     </>
   )

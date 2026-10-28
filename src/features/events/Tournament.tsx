@@ -21,6 +21,7 @@ import type { NormalisedTournament } from '../../lib/normalise'
 import { groupEventsByTime } from './eventPhase'
 import type { TournamentInput } from './tournamentQueries'
 import { Button } from '../../components/ui/Button'
+import { AlertBox } from '../../components/ui/AlertBox'
 
 export { DEFAULT_EVENT_DESCRIPTION }
 
@@ -119,16 +120,9 @@ export default function Tournament({ onNavigate }: { onNavigate: EventNavigate }
         )}
 
         {error && (
-          <div className="bg-lob-danger-light border border-lob-danger-border text-lob-danger-strong text-xs rounded-lg p-2 flex items-start justify-between gap-2">
-            <span>{error}</span>
-            <button
-              onClick={() => setError('')}
-              className="text-lob-danger-solid font-bold leading-none px-1"
-              aria-label="Dismiss error"
-            >
-              ×
-            </button>
-          </div>
+          <AlertBox variant="error" onDismiss={() => setError('')}>
+            {error}
+          </AlertBox>
         )}
 
         <LeagueDashboardCard myPlayerId={claimedId} />

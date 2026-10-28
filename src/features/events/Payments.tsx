@@ -8,6 +8,7 @@ import {
   ExternalLink,
   ShieldCheck,
   MoreVertical,
+  ChevronDown,
   MessageCircle,
 } from 'lucide-react'
 import { fmtEur } from '../../lib/format'
@@ -407,8 +408,8 @@ function PaymentMethodPicker({ onSelect }: { onSelect: (method: string) => void 
     <Menu
       label="Payment method"
       trigger={(props) => (
-        <Button size="sm" {...props}>
-          Mark Paid ▾
+        <Button size="sm" trailingIcon={<ChevronDown />} {...props}>
+          Mark Paid
         </Button>
       )}
     >

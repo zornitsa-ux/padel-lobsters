@@ -45,7 +45,7 @@ describe('ScoreEntry — peer updates vs. a local draft', () => {
 
     expect(boxes().t1.value).toBe('6') // draft survives
     expect(boxes().t2.value).toBe('')
-    expect(conflictButton()?.textContent).toContain('Another admin: 3–5')
+    expect(conflictButton()?.closest('p')?.textContent).toContain('Another admin: 3–5')
   })
 
   it('adopts the parked peer score when the admin taps it', () => {
@@ -136,7 +136,7 @@ describe('ScoreEntry — peer updates vs. a local draft', () => {
     )
 
     expect(boxes().t1.value).toBe('6')
-    expect(conflictButton()?.textContent).toContain('Another admin: 3–5')
+    expect(conflictButton()?.closest('p')?.textContent).toContain('Another admin: 3–5')
   })
 })
 

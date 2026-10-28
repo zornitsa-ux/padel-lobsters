@@ -23,6 +23,9 @@ import type { NormalisedTransfer } from './transferQueries'
 import { isEventOver } from './eventPhase'
 import { ActionRow } from '../../components/ui/ActionRow'
 import { Button } from '../../components/ui/Button'
+import { AlertBox } from '../../components/ui/AlertBox'
+import { TextButton } from '../../components/ui/TextButton'
+import { plural } from '../../lib/plural'
 
 function InfoChip({ icon, label, warn }: { icon: ReactNode; label: string; warn?: boolean }) {
   return (
@@ -86,14 +89,7 @@ export default function UpcomingEventCard({
       <div className="flex items-start gap-3 mb-3">
         <DateTile date={t.date} size="md" />
         <div className="flex-1 min-w-0">
-          <h3 className="font-bold text-lob-dark truncate">
-            <button
-              onClick={() => onNavigate('registration', t)}
-              className="hover:text-lob-teal active:scale-95 transition-all text-left"
-            >
-              {t.name}
-            </button>
-          </h3>
+          <h3 className="font-bold text-lob-dark truncate">{t.name}</h3>
           <p className="text-sm font-semibold text-lob-slate flex items-center gap-1 mt-0.5">
             <Calendar size={13} /> {formatDate(t.date)}
             {t.time && <span className="text-lob-muted">· {t.time}</span>}
@@ -174,18 +170,18 @@ export default function UpcomingEventCard({
           )
           if (pendingForT.length === 0) return null
           return (
-            <button
-              onClick={() => onOpenTransfers(t)}
-              className="w-full mb-3 flex items-center gap-2 bg-lob-warning-light border border-lob-warning-border rounded-xl px-3 py-2 text-left active:scale-[0.99] transition-all"
-            >
-              <Clock size={14} className="text-lob-warning flex-shrink-0" />
-              <span className="flex-1 text-xs font-semibold text-lob-warning-strong">
-                {pendingForT.length === 1
-                  ? '1 pending transfer'
-                  : `${pendingForT.length} pending transfers`}
-              </span>
-              <span className="text-2xs text-lob-warning font-semibold">Review ›</span>
-            </button>
+            <div className="mb-3">
+              <AlertBox variant="warning" icon={<Clock size={14} />}>
+                <span className="flex items-center justify-between gap-2">
+                  <span className="font-semibold">
+                    {plural({ count: pendingForT.length, one: 'pending transfer' })}
+                  </span>
+                  <TextButton tone="warning" onClick={() => onOpenTransfers(t)}>
+                    Review
+                  </TextButton>
+                </span>
+              </AlertBox>
+            </div>
           )
         })()}
 
@@ -220,13 +216,9 @@ export default function UpcomingEventCard({
               )}
               <span>{c.name || `Court ${i + 1}`}</span>
               {isAdmin && !c.booked && (
-                <button
-                  onClick={() => handleBookCourt(i)}
-                  disabled={bookingIndex === i}
-                  className="ml-0.5 bg-lob-success-soft text-lob-success px-1.5 py-0 rounded-full text-2xs font-semibold disabled:opacity-50"
-                >
+                <TextButton onClick={() => handleBookCourt(i)} disabled={bookingIndex === i}>
                   {bookingIndex === i ? '…' : 'Book'}
-                </button>
+                </TextButton>
               )}
             </div>
           ))}

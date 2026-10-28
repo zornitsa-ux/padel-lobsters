@@ -150,30 +150,32 @@ export default function OrdersTable({ activeOrders, interests, items, players }:
                   </div>
                   {/* Status action buttons */}
                   <div className="flex gap-1.5">
-                    <button
-                      onClick={() => markOrder.mutate({ id: o.id, status: 'paid' }, { onError })}
-                      disabled={status === 'paid' || status === 'delivered' || markOrder.isPending}
-                      className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                        status === 'paid' || status === 'delivered'
-                          ? 'bg-lob-success-soft text-lob-success'
-                          : 'bg-gray-100 text-lob-muted active:scale-95'
-                      }`}
-                    >
-                      {status === 'paid' || status === 'delivered' ? '✓ Paid' : 'Mark Paid'}
-                    </button>
-                    <button
-                      onClick={() =>
-                        markOrder.mutate({ id: o.id, status: 'delivered' }, { onError })
-                      }
-                      disabled={status === 'delivered' || markOrder.isPending}
-                      className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                        status === 'delivered'
-                          ? 'bg-blue-100 text-blue-600'
-                          : 'bg-gray-100 text-lob-muted active:scale-95'
-                      }`}
-                    >
-                      {status === 'delivered' ? '✓ Delivered' : 'Mark Delivered'}
-                    </button>
+                    <div className="flex-1">
+                      <Button
+                        variant="neutral"
+                        size="sm"
+                        fullWidth
+                        onClick={() => markOrder.mutate({ id: o.id, status: 'paid' }, { onError })}
+                        disabled={
+                          status === 'paid' || status === 'delivered' || markOrder.isPending
+                        }
+                      >
+                        {status === 'paid' || status === 'delivered' ? '✓ Paid' : 'Mark Paid'}
+                      </Button>
+                    </div>
+                    <div className="flex-1">
+                      <Button
+                        variant="neutral"
+                        size="sm"
+                        fullWidth
+                        onClick={() =>
+                          markOrder.mutate({ id: o.id, status: 'delivered' }, { onError })
+                        }
+                        disabled={status === 'delivered' || markOrder.isPending}
+                      >
+                        {status === 'delivered' ? '✓ Delivered' : 'Mark Delivered'}
+                      </Button>
+                    </div>
                     <IconButton
                       onClick={() => setCancelTarget(o)}
                       aria-label="Cancel order"

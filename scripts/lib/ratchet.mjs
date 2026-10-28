@@ -13,7 +13,8 @@ const listFiles = ({ dir, include }) =>
     return include(relative(ROOT, path)) ? [path] : []
   })
 
-const currentCounts = ({ include, pattern }) =>
+/** Per-file match counts under src/, files with no match left out. */
+export const countMatches = ({ include, pattern }) =>
   Object.fromEntries(
     listFiles({ dir: SRC, include })
       .map((path) => [
@@ -45,7 +46,7 @@ const total = (counts) => Object.values(counts).reduce((sum, n) => sum + n, 0)
  */
 export function runRatchet({ name, baselineFile, include, pattern, grewHelp }) {
   const baselinePath = join(ROOT, 'scripts', baselineFile)
-  const current = currentCounts({ include, pattern })
+  const current = countMatches({ include, pattern })
 
   if (process.argv.includes('--update')) {
     writeFileSync(baselinePath, `${JSON.stringify(current, null, 2)}\n`)
