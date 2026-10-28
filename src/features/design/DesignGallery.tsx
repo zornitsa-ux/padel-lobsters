@@ -12,6 +12,9 @@ import {
   Info,
   Eye,
   ChevronRight,
+  MoreVertical,
+  Gamepad2,
+  SlidersHorizontal,
 } from 'lucide-react'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { ActionRow } from '../../components/ui/ActionRow'
@@ -28,6 +31,7 @@ import { Chip, ChipGroup } from '../../components/ui/Chip'
 import { CollapsibleCard } from '../../components/ui/CollapsibleCard'
 import { Disclosure } from '../../components/ui/Disclosure'
 import { EmptyState } from '../../components/ui/EmptyState'
+import { Menu, MenuItem, MenuList, MenuSeparator } from '../../components/ui/Menu'
 import { OptionRow } from '../../components/ui/OptionRow'
 import { ImageTile, OptionTile } from '../../components/ui/OptionTile'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
@@ -413,6 +417,114 @@ function OptionSection() {
   )
 }
 
+function MenuSection() {
+  const [status, setStatus] = useState('paid')
+  const [view, setView] = useState('play')
+  return (
+    <Section title="Menu and MenuItem">
+      <Row label="icon items · danger tone (event admin menu)">
+        <Menu
+          label="Admin tools"
+          align="left"
+          trigger={(props) => (
+            <IconButton {...props} aria-label="Admin tools">
+              <MoreVertical />
+            </IconButton>
+          )}
+        >
+          <MenuItem icon={<Pencil />} onSelect={() => {}}>
+            Edit event
+          </MenuItem>
+          <MenuItem icon={<Trash2 />} tone="danger" onSelect={() => {}}>
+            Delete event
+          </MenuItem>
+        </Menu>
+        <Menu
+          label="Payment method"
+          align="left"
+          trigger={(props) => (
+            <Button size="sm" {...props}>
+              Mark Paid ▾
+            </Button>
+          )}
+        >
+          {['Tikkie', 'Cash', 'Bank transfer'].map((m) => (
+            <MenuItem key={m} onSelect={() => {}}>
+              {m}
+            </MenuItem>
+          ))}
+        </Menu>
+      </Row>
+      <Row label="showLabel · hint · current (status override)">
+        <Menu
+          label="Set status"
+          showLabel
+          align="left"
+          trigger={(props) => (
+            <IconButton {...props} aria-label="More payment options" size="sm">
+              <MoreVertical />
+            </IconButton>
+          )}
+        >
+          {[
+            { value: 'unpaid', label: 'Unpaid', hint: 'Never paid' },
+            { value: 'pending', label: 'Paid', hint: 'Player says they paid' },
+            { value: 'paid', label: 'Confirmed', hint: 'Admin verified' },
+          ].map((s) => (
+            <MenuItem
+              key={s.value}
+              current={s.value === status}
+              hint={s.hint}
+              onSelect={() => setStatus(s.value)}
+            >
+              {s.label}
+            </MenuItem>
+          ))}
+        </Menu>
+      </Row>
+      <Row label="MenuList under a search field (always open here) · MenuSeparator" block>
+        <div className="relative h-52">
+          <input
+            className="input w-full"
+            placeholder="Search by name…"
+            defaultValue="Jo"
+            readOnly
+          />
+          <MenuList label="Player options" align="stretch" keepFocus>
+            {SAMPLE_PLAYERS.map((p) => (
+              <MenuItem key={p.id} icon={<Avatar player={p} size="xs" />} onSelect={() => {}}>
+                {p.name}
+              </MenuItem>
+            ))}
+            <MenuSeparator />
+            <MenuItem icon={<Plus />} onSelect={() => {}}>
+              Create placeholder: Jo
+            </MenuItem>
+          </MenuList>
+        </div>
+      </Row>
+      <Row label="drawer choice: OptionRow selected (Oscars admin menu)" block>
+        <div className="space-y-1">
+          <OptionRow
+            selected={view === 'play'}
+            leading={<Gamepad2 size={18} className="text-lob-muted" />}
+            title="Play & vote"
+            subtitle="Cast your own votes as a participant."
+            onClick={() => setView('play')}
+          />
+          <OptionRow
+            selected={view === 'admin'}
+            leading={<SlidersHorizontal size={18} className="text-lob-muted" />}
+            title="Admin controls"
+            subtitle="Start, monitor, end and share the games."
+            onClick={() => setView('admin')}
+          />
+        </div>
+      </Row>
+    </Section>
+  )
+}
+
 function CollapsibleSectionDemo() {
   const [open, setOpen] = useState(false)
   const [rowOpen, setRowOpen] = useState(false)
@@ -481,6 +593,7 @@ export default function DesignGallery() {
       <StatusSection />
       <ChoiceSection />
       <OptionSection />
+      <MenuSection />
       <CollapsibleSectionDemo />
       <StatesSection />
     </div>

@@ -1,8 +1,10 @@
-import { useState, type ReactNode } from 'react'
+import { useCallback, useState } from 'react'
 import { Settings, X, Gamepad2, SlidersHorizontal } from 'lucide-react'
 import type { ViewMode } from './oscarsPhase'
 import { IconButton } from '../../components/ui/IconButton'
 import { Button } from '../../components/ui/Button'
+import { OptionRow } from '../../components/ui/OptionRow'
+import { useEscapeToClose } from '../../hooks/useEscapeToClose'
 
 interface AdminMenuProps {
   viewMode: ViewMode
@@ -17,6 +19,8 @@ interface AdminMenuProps {
    ════════════════════════════════════════════════════════════════════════════ */
 export default function AdminMenu({ viewMode, onSetViewMode }: AdminMenuProps) {
   const [open, setOpen] = useState(false)
+  const close = useCallback(() => setOpen(false), [])
+  useEscapeToClose({ active: open, onClose: close })
 
   const select = (mode: ViewMode) => {
     onSetViewMode(mode)
@@ -37,15 +41,11 @@ export default function AdminMenu({ viewMode, onSetViewMode }: AdminMenuProps) {
 
       {open && (
         <div className="fixed inset-0 z-[60] flex" role="dialog" aria-modal="true">
-          <button
-            className="absolute inset-0 bg-black/40"
-            onClick={() => setOpen(false)}
-            aria-label="Close menu"
-          />
+          <div className="absolute inset-0 bg-black/40" onClick={close} aria-hidden="true" />
           <div className="relative ml-auto h-full w-72 max-w-[85%] bg-white shadow-xl flex flex-col">
             <div className="flex items-center justify-between px-4 pt-12 pb-3 border-b border-lob-line">
               <h3 className="text-base font-bold text-lob-dark">Admin menu</h3>
-              <IconButton onClick={() => setOpen(false)} aria-label="Close menu" variant="ghost">
+              <IconButton onClick={close} aria-label="Close menu" variant="ghost">
                 <X />
               </IconButton>
             </div>
@@ -54,55 +54,26 @@ export default function AdminMenu({ viewMode, onSetViewMode }: AdminMenuProps) {
               <p className="text-xs uppercase tracking-wider font-bold text-lob-muted-light px-1">
                 View
               </p>
-              <MenuOption
-                active={viewMode === 'play'}
-                icon={<Gamepad2 size={18} />}
-                title="Play & vote"
-                subtitle="Cast your own votes as a participant."
-                onClick={() => select('play')}
-              />
-              <MenuOption
-                active={viewMode === 'admin'}
-                icon={<SlidersHorizontal size={18} />}
-                title="Admin controls"
-                subtitle="Start, monitor, end and share the games."
-                onClick={() => select('admin')}
-              />
+              <div className="space-y-1">
+                <OptionRow
+                  selected={viewMode === 'play'}
+                  leading={<Gamepad2 size={18} className="text-lob-muted" />}
+                  title="Play & vote"
+                  subtitle="Cast your own votes as a participant."
+                  onClick={() => select('play')}
+                />
+                <OptionRow
+                  selected={viewMode === 'admin'}
+                  leading={<SlidersHorizontal size={18} className="text-lob-muted" />}
+                  title="Admin controls"
+                  subtitle="Start, monitor, end and share the games."
+                  onClick={() => select('admin')}
+                />
+              </div>
             </div>
           </div>
         </div>
       )}
     </>
-  )
-}
-
-interface MenuOptionProps {
-  active: boolean
-  icon: ReactNode
-  title: string
-  subtitle: string
-  onClick: () => void
-}
-
-function MenuOption({ active, icon, title, subtitle, onClick }: MenuOptionProps) {
-  return (
-    <button
-      onClick={onClick}
-      aria-pressed={active}
-      className={`w-full text-left rounded-xl border p-3 flex items-start gap-3 transition-all active:scale-[0.99] ${
-        active
-          ? 'bg-lob-teal/10 border-lob-teal'
-          : 'bg-white border-lob-line-strong hover:border-gray-300'
-      }`}
-    >
-      <span className={active ? 'text-lob-teal' : 'text-lob-muted'}>{icon}</span>
-      <span className="min-w-0">
-        <span className={`block text-sm font-bold ${active ? 'text-lob-teal' : 'text-lob-dark'}`}>
-          {title}
-          {active && <span className="ml-1.5 text-2xs font-semibold uppercase">· current</span>}
-        </span>
-        <span className="block text-xs text-lob-muted mt-0.5">{subtitle}</span>
-      </span>
-    </button>
   )
 }

@@ -141,7 +141,7 @@ describe('Payments, team events', () => {
   it('marks the captain registration paid', async () => {
     renderPayments(tournament({ entryMode: 'team' }))
     fireEvent.click(screen.getByRole('button', { name: /Mark Paid/ }))
-    fireEvent.click(screen.getByRole('button', { name: 'Tikkie' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Tikkie' }))
     await waitFor(() =>
       expect(mockUpdateRegistration).toHaveBeenCalledWith(
         'r3',
@@ -160,7 +160,7 @@ describe('Payments, team events', () => {
     mockConfirm.mockResolvedValue(false)
     renderPayments(tournament({ entryMode: 'team' }))
     fireEvent.click(screen.getByRole('button', { name: /Mark Paid/ }))
-    fireEvent.click(screen.getByRole('button', { name: 'Tikkie' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Tikkie' }))
 
     await waitFor(() => expect(mockConfirm).toHaveBeenCalled())
     expect(mockUpdateRegistration).not.toHaveBeenCalled()
