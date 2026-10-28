@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { Pencil } from 'lucide-react'
-import { MenuItem, MenuSeparator } from './Menu'
+import { MenuItem, MenuSeparator } from './MenuItem'
 import { nextItemIndex } from './menuFocus'
 import { childrenOf, propsOf } from '../../test/element'
 

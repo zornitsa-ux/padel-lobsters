@@ -45,9 +45,17 @@ describe('Menu', () => {
     expect(document.activeElement).toBe(item('Edit'))
   })
 
-  it('opens on a press of the trigger', () => {
+  it('opens on a mouse press of the trigger', () => {
     const trigger = renderMenu()
-    fireEvent.pointerDown(trigger, { button: 0, ctrlKey: false })
+    fireEvent.pointerDown(trigger, { button: 0, ctrlKey: false, pointerType: 'mouse' })
+    expect(screen.getByRole('menu')).toBeTruthy()
+  })
+
+  it('opens on the click of a tap, not on touch down, which may start a scroll', () => {
+    const trigger = renderMenu()
+    fireEvent.pointerDown(trigger, { button: 0, ctrlKey: false, pointerType: 'touch' })
+    expect(screen.queryByRole('menu')).toBeNull()
+    fireEvent.click(trigger)
     expect(screen.getByRole('menu')).toBeTruthy()
   })
 

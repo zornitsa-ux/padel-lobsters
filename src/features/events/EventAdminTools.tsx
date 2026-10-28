@@ -1,6 +1,6 @@
-import { MoreVertical, Pencil, Trash2 } from 'lucide-react'
-import { IconButton } from '../../components/ui/IconButton'
+import { Pencil, Trash2 } from 'lucide-react'
 import { Menu, MenuItem } from '../../components/ui/Menu'
+import { AdminToolsButton } from './EventAdminMenu'
 
 interface EventAdminToolsProps {
   onEdit?: () => void
@@ -10,15 +10,7 @@ interface EventAdminToolsProps {
 
 export default function EventAdminTools({ onEdit, onDelete, align }: EventAdminToolsProps) {
   return (
-    <Menu
-      label="Admin tools"
-      align={align}
-      trigger={(props) => (
-        <IconButton {...props} aria-label="Admin tools">
-          <MoreVertical />
-        </IconButton>
-      )}
-    >
+    <Menu label="Admin tools" align={align} trigger={(props) => <AdminToolsButton {...props} />}>
       {onEdit && (
         <MenuItem icon={<Pencil />} onSelect={onEdit}>
           Edit event

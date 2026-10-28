@@ -140,7 +140,10 @@ describe('Payments, team events', () => {
 
   it('marks the captain registration paid', async () => {
     renderPayments(tournament({ entryMode: 'team' }))
-    fireEvent.pointerDown(screen.getByRole('button', { name: /Mark Paid/ }), { button: 0 })
+    fireEvent.pointerDown(screen.getByRole('button', { name: /Mark Paid/ }), {
+      button: 0,
+      pointerType: 'mouse',
+    })
     fireEvent.click(screen.getByRole('menuitem', { name: 'Tikkie' }))
     await waitFor(() =>
       expect(mockUpdateRegistration).toHaveBeenCalledWith(
@@ -159,7 +162,10 @@ describe('Payments, team events', () => {
   it("doesn't change the payment when the admin backs out", async () => {
     mockConfirm.mockResolvedValue(false)
     renderPayments(tournament({ entryMode: 'team' }))
-    fireEvent.pointerDown(screen.getByRole('button', { name: /Mark Paid/ }), { button: 0 })
+    fireEvent.pointerDown(screen.getByRole('button', { name: /Mark Paid/ }), {
+      button: 0,
+      pointerType: 'mouse',
+    })
     fireEvent.click(screen.getByRole('menuitem', { name: 'Tikkie' }))
 
     await waitFor(() => expect(mockConfirm).toHaveBeenCalled())

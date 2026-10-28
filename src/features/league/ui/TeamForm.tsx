@@ -12,7 +12,8 @@ import { useCreateTeam, useUpdateTeam } from '../hooks/useLeagueMutations'
 import { isSelectablePlayer } from '../../players/playerSelectors'
 import { ActionRow } from '../../../components/ui/ActionRow'
 import { Button } from '../../../components/ui/Button'
-import { MenuItem, MenuList, MenuSeparator } from '../../../components/ui/Menu'
+import { MenuItem, MenuSeparator } from '../../../components/ui/MenuItem'
+import { MenuList } from '../../../components/ui/MenuList'
 import { focusFirstItem } from '../../../components/ui/menuFocus'
 
 interface PlayerOption {
