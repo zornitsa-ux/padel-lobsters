@@ -1,10 +1,12 @@
 // @vitest-environment jsdom
 import { useState } from 'react'
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Modal } from './Modal'
+import { Menu, MenuItem } from './Menu'
 import { ConfirmProvider } from './ConfirmDialog'
 import { useConfirm } from '../../lib/confirmBus'
+import type { ConfirmContextValue } from '../../lib/confirmBus'
 
 afterEach(() => {
   cleanup()
@@ -13,10 +15,12 @@ afterEach(() => {
 function Harness({
   dismissible,
   autoFocusField = false,
+  withMenu = false,
   onConfirmed = () => {},
 }: {
   dismissible?: boolean
   autoFocusField?: boolean
+  withMenu?: boolean
   onConfirmed?: (ok: boolean) => void
 }) {
   const [open, setOpen] = useState(false)
@@ -31,6 +35,11 @@ function Harness({
         dismissible={dismissible}
       >
         <input aria-label="Name" autoFocus={autoFocusField} />
+        {withMenu && (
+          <Menu label="Tools" trigger={(props) => <button {...props}>Tools</button>}>
+            <MenuItem onSelect={() => {}}>Rename</MenuItem>
+          </Menu>
+        )}
         <button onClick={async () => onConfirmed(await confirm({ message: 'Save?' }))}>Save</button>
         <button onClick={() => setOpen(false)}>Done</button>
       </Modal>
@@ -50,14 +59,12 @@ function renderHarness(props: Parameters<typeof Harness>[0] = {}) {
   return opener
 }
 
-const guards = () => document.querySelectorAll<HTMLElement>('[data-focus-guard]')
-
 describe('Modal focus', () => {
-  it('focuses the sheet on open, named by its title', () => {
-    renderHarness()
+  it('focuses the sheet on open, named by its title, and hides the page behind', () => {
+    const opener = renderHarness()
     const sheet = screen.getByRole('dialog', { name: 'Edit player' })
-    expect(sheet.getAttribute('aria-modal')).toBe('true')
     expect(document.activeElement).toBe(sheet)
+    expect(opener.closest('[aria-hidden="true"]')).toBeTruthy()
   })
 
   it('leaves focus on an autoFocus child', () => {
@@ -65,29 +72,31 @@ describe('Modal focus', () => {
     expect(document.activeElement).toBe(screen.getByLabelText('Name'))
   })
 
-  it('returns focus to the opener on close', () => {
+  it('returns focus to the opener on close', async () => {
     const opener = renderHarness({ autoFocusField: true })
     fireEvent.click(screen.getByText('Done'))
     expect(screen.queryByRole('dialog')).toBeNull()
-    expect(document.activeElement).toBe(opener)
+    await waitFor(() => expect(document.activeElement).toBe(opener))
   })
 
   it('wraps Tab from the last element to the first, and Shift+Tab back', () => {
     renderHarness()
-    const [before, after] = guards()
-    after.focus()
-    expect(document.activeElement).toBe(screen.getByLabelText('Name'))
-    before.focus()
-    expect(document.activeElement).toBe(screen.getByText('Done'))
+    const name = screen.getByLabelText('Name')
+    const done = screen.getByText('Done')
+    done.focus()
+    fireEvent.keyDown(done, { key: 'Tab' })
+    expect(document.activeElement).toBe(name)
+    fireEvent.keyDown(name, { key: 'Tab', shiftKey: true })
+    expect(document.activeElement).toBe(done)
   })
 })
 
 describe('Modal Escape', () => {
-  it('closes a dismissible sheet and returns focus', () => {
+  it('closes a dismissible sheet and returns focus', async () => {
     const opener = renderHarness()
     fireEvent.keyDown(screen.getByLabelText('Name'), { key: 'Escape' })
     expect(screen.queryByRole('dialog')).toBeNull()
-    expect(document.activeElement).toBe(opener)
+    await waitFor(() => expect(document.activeElement).toBe(opener))
   })
 
   it('does not close a sheet that is not dismissible', () => {
@@ -99,16 +108,34 @@ describe('Modal Escape', () => {
   it('keeps Escape from reaching a panel behind the sheet', () => {
     const onWindowKey = vi.fn()
     window.addEventListener('keydown', onWindowKey)
-    renderHarness({ dismissible: false })
+    renderHarness()
     fireEvent.keyDown(screen.getByLabelText('Name'), { key: 'Escape' })
     window.removeEventListener('keydown', onWindowKey)
     expect(onWindowKey).not.toHaveBeenCalled()
   })
+
+  it('closes an open menu in the sheet first', () => {
+    renderHarness({ withMenu: true })
+    fireEvent.click(screen.getByText('Tools'))
+    fireEvent.keyDown(screen.getByText('Rename'), { key: 'Escape' })
+    expect(screen.queryByRole('menu')).toBeNull()
+    expect(screen.getByRole('dialog')).toBeTruthy()
+    expect(document.activeElement).toBe(screen.getByText('Tools'))
+  })
+
+  it('leaves the sheet open while a composition is in progress', () => {
+    renderHarness()
+    fireEvent.keyDown(screen.getByLabelText('Name'), { key: 'Escape', isComposing: true })
+    expect(screen.getByRole('dialog')).toBeTruthy()
+  })
 })
 
 describe('ConfirmDialog focus', () => {
+  let confirmRef: ConfirmContextValue | null = null
+
   function ConfirmButton({ destructive = false }: { destructive?: boolean }) {
     const confirm = useConfirm()
+    confirmRef = confirm
     return <button onClick={() => confirm({ message: 'Go?', destructive })}>Ask</button>
   }
 
@@ -137,6 +164,16 @@ describe('ConfirmDialog focus', () => {
     expect(document.activeElement).toBe(screen.getByText('Cancel'))
   })
 
+  it('moves focus to Cancel when a destructive confirm follows another while open', () => {
+    ask(false)
+    act(() => {
+      fireEvent.click(screen.getByText('Confirm'))
+      void confirmRef?.({ message: 'Delete?', confirmLabel: 'Delete', destructive: true })
+    })
+    expect(screen.getByRole('alertdialog', { name: 'Delete?' })).toBeTruthy()
+    expect(document.activeElement).toBe(screen.getByText('Cancel'))
+  })
+
   it('opened from inside a sheet, Escape closes only the confirm and refocuses its opener', async () => {
     const onConfirmed = vi.fn()
     renderHarness({ onConfirmed })
@@ -152,6 +189,6 @@ describe('ConfirmDialog focus', () => {
     expect(onConfirmed).toHaveBeenCalledWith(false)
     expect(screen.queryByRole('alertdialog')).toBeNull()
     expect(screen.getByRole('dialog', { name: 'Edit player' })).toBeTruthy()
-    expect(document.activeElement).toBe(save)
+    await waitFor(() => expect(document.activeElement).toBe(save))
   })
 })

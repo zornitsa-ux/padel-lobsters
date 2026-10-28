@@ -74,7 +74,10 @@ describe('ConfirmDialog', () => {
     const backdrop = screen.getByText('Remove this item?').closest('.fixed.inset-0')
     expect(backdrop).toBeTruthy()
 
+    // Radix listens for outside taps a tick after opening.
+    await act(() => new Promise((resolve) => setTimeout(resolve, 0)))
     await act(async () => {
+      fireEvent.pointerDown(backdrop as Element, { button: 0 })
       fireEvent.click(backdrop as Element)
     })
 

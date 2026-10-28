@@ -1,6 +1,6 @@
-import { useEffect, useId, useRef, useState } from 'react'
-import { useBodyScrollLock } from '../../hooks/useBodyScrollLock'
-import { focusEdge, useDialogFocus } from './dialogFocus'
+import { useEffect, useRef, useState } from 'react'
+import * as Dialog from '@radix-ui/react-dialog'
+import { escapeIsForPopup, useReturnFocus } from './dialogFocus'
 
 interface ModalProps {
   open: boolean
@@ -22,9 +22,10 @@ interface ModalProps {
 }
 
 /**
- * A bottom sheet. Focus moves into it on open (an `autoFocus` child chooses where), Tab stays
- * inside, and focus returns to the opener on close. Escape stops at the sheet, so a panel
- * behind it stays open.
+ * A bottom sheet on Radix Dialog. On open, focus moves to the child marked `data-autofocus`, or
+ * else the sheet itself. Tab stays inside, the page behind is hidden from assistive tech, and
+ * focus returns to the opener on close. Escape stops at the sheet, so a panel behind it stays
+ * open.
  */
 export function Modal({
   open,
@@ -39,17 +40,11 @@ export function Modal({
   const dragStartY = useRef<number | null>(null)
   const [dragY, setDragY] = useState(0)
   const scrollRef = useRef<HTMLDivElement>(null)
-  const sheetRef = useRef<HTMLDivElement>(null)
-  const titleId = useId()
-
-  useBodyScrollLock(open)
-  useDialogFocus({ open, sheetRef })
+  const returnFocus = useReturnFocus({ open })
 
   useEffect(() => {
     if (!open) setDragY(0)
   }, [open])
-
-  if (!open) return null
 
   const CLOSE_THRESHOLD = 120
 
@@ -76,72 +71,76 @@ export function Modal({
     }
   }
 
-  function handleKeyDown(e: React.KeyboardEvent) {
-    if (e.key !== 'Escape' || e.nativeEvent.isComposing) return
+  // Radix hears Escape on the document before anything inside the sheet does.
+  function handleEscape(e: KeyboardEvent) {
+    if (e.isComposing || escapeIsForPopup({ target: e.target })) {
+      e.preventDefault()
+      return
+    }
     e.stopPropagation()
-    if (dismissible) onClose()
+    if (!dismissible) e.preventDefault()
   }
 
-  const focusGuard = ({ edge }: { edge: 'first' | 'last' }) => (
-    <span
-      tabIndex={0}
-      data-focus-guard
-      className="fixed outline-none"
-      onFocus={() => focusEdge({ sheet: sheetRef.current, edge })}
-    />
-  )
+  // Not the first field, which would pop the keyboard on a phone. React's autoFocus also works,
+  // but not in a dialog opened from inside another, whose trap pulls it back before this runs.
+  function focusFirst(e: Event) {
+    e.preventDefault()
+    const sheet = e.currentTarget as HTMLElement
+    ;(sheet.querySelector<HTMLElement>('[data-autofocus]') ?? sheet).focus()
+  }
+
+  const preventUnlessDismissible = (e: Event) => {
+    if (!dismissible) e.preventDefault()
+  }
 
   return (
-    <div
-      className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center"
-      onClick={dismissible ? onClose : undefined}
-      onKeyDown={handleKeyDown}
-      // A tap on the backdrop would otherwise drop focus to the page behind.
-      onMouseDown={(e) => e.target === e.currentTarget && e.preventDefault()}
-    >
-      {focusGuard({ edge: 'last' })}
-      <div
-        ref={sheetRef}
-        role={role}
-        aria-modal="true"
-        aria-labelledby={title ? titleId : descriptionId}
-        aria-describedby={title ? descriptionId : undefined}
-        tabIndex={-1}
-        className="w-full max-w-lg bg-white rounded-t-3xl shadow-xl flex flex-col max-h-[90dvh] outline-none"
-        style={{
-          transform: `translateY(${dragY}px)`,
-          transition: dragY === 0 ? 'transform 0.25s ease' : 'none',
-        }}
-        onClick={(e) => e.stopPropagation()}
-        onTouchStart={dismissible ? handleTouchStart : undefined}
-        onTouchMove={dismissible ? handleTouchMove : undefined}
-        onTouchEnd={dismissible ? handleTouchEnd : undefined}
-      >
-        {dismissible ? (
-          <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mt-3 mb-2 flex-shrink-0" />
-        ) : (
-          // Matches the handle's total height so the header keeps its gap
-          // from the rounded top edge.
-          <div className="h-6 flex-shrink-0" />
-        )}
-        {title && (
-          <div
-            id={titleId}
-            className="px-5 py-3 border-b border-lob-line font-semibold text-lob-dark text-base"
+    <Dialog.Root open={open} onOpenChange={(next) => !next && onClose()}>
+      <Dialog.Portal>
+        <Dialog.Overlay
+          className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center"
+          // A tap on the backdrop would otherwise drop focus to the page behind.
+          onMouseDown={(e) => e.target === e.currentTarget && e.preventDefault()}
+        >
+          <Dialog.Content
+            role={role}
+            {...(title ? {} : { 'aria-labelledby': descriptionId })}
+            aria-describedby={title ? descriptionId : undefined}
+            className="w-full max-w-lg bg-white rounded-t-3xl shadow-xl flex flex-col max-h-[90dvh] outline-none"
+            style={{
+              transform: `translateY(${dragY}px)`,
+              transition: dragY === 0 ? 'transform 0.25s ease' : 'none',
+            }}
+            onOpenAutoFocus={focusFirst}
+            onCloseAutoFocus={returnFocus}
+            onEscapeKeyDown={handleEscape}
+            onInteractOutside={preventUnlessDismissible}
+            onTouchStart={dismissible ? handleTouchStart : undefined}
+            onTouchMove={dismissible ? handleTouchMove : undefined}
+            onTouchEnd={dismissible ? handleTouchEnd : undefined}
           >
-            {title}
-          </div>
-        )}
-        <div ref={scrollRef} className="px-5 py-4 flex-1 overflow-y-auto">
-          {children}
-        </div>
-        {footer && (
-          <div className="px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-lob-line flex-shrink-0">
-            {footer}
-          </div>
-        )}
-      </div>
-      {focusGuard({ edge: 'first' })}
-    </div>
+            {dismissible ? (
+              <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mt-3 mb-2 flex-shrink-0" />
+            ) : (
+              // Matches the handle's total height so the header keeps its gap
+              // from the rounded top edge.
+              <div className="h-6 flex-shrink-0" />
+            )}
+            {title && (
+              <Dialog.Title className="px-5 py-3 border-b border-lob-line font-semibold text-lob-dark text-base">
+                {title}
+              </Dialog.Title>
+            )}
+            <div ref={scrollRef} className="px-5 py-4 flex-1 overflow-y-auto">
+              {children}
+            </div>
+            {footer && (
+              <div className="px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-lob-line flex-shrink-0">
+                {footer}
+              </div>
+            )}
+          </Dialog.Content>
+        </Dialog.Overlay>
+      </Dialog.Portal>
+    </Dialog.Root>
   )
 }

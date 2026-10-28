@@ -1,11 +1,10 @@
-import { useCallback, useId, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { Modal } from './Modal'
 import { ConfirmContext, type ConfirmOptions } from '../../lib/confirmBus'
 import { ActionRow } from './ActionRow'
 import { Button } from './Button'
 
 interface PendingConfirm extends ConfirmOptions {
-  id: number
   resolve: (value: boolean) => void
 }
 
@@ -16,13 +15,12 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
   // is harmless, but calling resolve twice from two different paths is a
   // sign something is wrong, so we only ever let one path fire.
   const settledRef = useRef(false)
-  const nextId = useRef(0)
   const messageId = useId()
 
   const confirm = useCallback((options: ConfirmOptions) => {
     return new Promise<boolean>((resolve) => {
       settledRef.current = false
-      setPending({ ...options, id: nextId.current++, resolve })
+      setPending({ ...options, resolve })
     })
   }, [])
 
@@ -37,17 +35,27 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo(() => confirm, [confirm])
 
+  // Modal moves focus only as it opens; a confirm that follows another while open moves it here.
+  useEffect(() => {
+    if (!pending) return
+    const dialog = document.getElementById(messageId)?.closest('[role="alertdialog"]')
+    dialog?.querySelector<HTMLElement>('[data-autofocus]')?.focus()
+  }, [pending, messageId])
+
   // Enter confirms by default; a destructive flow starts on Cancel so Enter can't delete.
-  // Keyed per request so autoFocus runs again when one confirm follows another while open.
   const footer = pending && (
-    <ActionRow key={pending.id}>
-      <Button onClick={() => settle(false)} variant="secondary" autoFocus={pending.destructive}>
+    <ActionRow>
+      <Button
+        onClick={() => settle(false)}
+        variant="secondary"
+        data-autofocus={pending.destructive || undefined}
+      >
         {pending.cancelLabel || 'Cancel'}
       </Button>
       <Button
         onClick={() => settle(true)}
         variant={pending.destructive ? 'danger' : 'primary'}
-        autoFocus={!pending.destructive}
+        data-autofocus={!pending.destructive || undefined}
       >
         {pending.confirmLabel || 'Confirm'}
       </Button>
