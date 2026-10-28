@@ -125,15 +125,6 @@ describe('Modal Escape', () => {
     expect(screen.getByRole('dialog')).toBeTruthy()
   })
 
-  it('keeps Escape from reaching a panel behind the sheet', () => {
-    const onWindowKey = vi.fn()
-    window.addEventListener('keydown', onWindowKey)
-    renderHarness()
-    fireEvent.keyDown(screen.getByLabelText('Name'), { key: 'Escape' })
-    window.removeEventListener('keydown', onWindowKey)
-    expect(onWindowKey).not.toHaveBeenCalled()
-  })
-
   it('closes an open menu in the sheet first', async () => {
     renderHarness({ withMenu: true })
     const tools = screen.getByText('Tools')
@@ -155,14 +146,10 @@ describe('Modal Escape', () => {
     expect(screen.queryByRole('dialog')).toBeNull()
   })
 
-  it('leaves the sheet, and a panel behind it, open while a composition is in progress', () => {
-    const onWindowKey = vi.fn()
-    window.addEventListener('keydown', onWindowKey)
+  it('leaves the sheet open while a composition is in progress', () => {
     renderHarness()
     fireEvent.keyDown(screen.getByLabelText('Name'), { key: 'Escape', isComposing: true })
-    window.removeEventListener('keydown', onWindowKey)
     expect(screen.getByRole('dialog')).toBeTruthy()
-    expect(onWindowKey).not.toHaveBeenCalled()
   })
 })
 

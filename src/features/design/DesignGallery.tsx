@@ -36,6 +36,8 @@ import { EmptyState } from '../../components/ui/EmptyState'
 import { Menu, MenuItem, MenuSeparator } from '../../components/ui/Menu'
 import { MenuList } from '../../components/ui/MenuList'
 import { Modal } from '../../components/ui/Modal'
+import { FullScreenDialog } from '../../components/ui/FullScreenDialog'
+import { Drawer } from '../../components/ui/Drawer'
 import { useConfirm } from '../../lib/confirmBus'
 import { CardLink } from '../../components/ui/CardLink'
 import { LinkCard, LinkCardIcon } from '../../components/ui/LinkCard'
@@ -616,18 +618,31 @@ function MenuSection() {
   )
 }
 
+type GalleryDialog = 'plain' | 'form' | 'fullscreen' | 'drawer'
+
 function DialogSection() {
   const confirm = useConfirm()
-  const [sheet, setSheet] = useState<'plain' | 'form' | null>(null)
-  const close = () => setSheet(null)
+  const [dialog, setDialog] = useState<GalleryDialog | null>(null)
+  const [sheet, setSheet] = useState(false)
+  const [view, setView] = useState<'play' | 'admin'>('play')
+  const close = () => setDialog(null)
+  const sheetOpen = dialog === 'plain' || dialog === 'form'
   return (
-    <Section title="Modal and ConfirmDialog">
-      <Row label="Modal: dismissible · not dismissible, autoFocus field">
-        <Button variant="secondary" onClick={() => setSheet('plain')}>
+    <Section title="Modal, FullScreenDialog, Drawer and ConfirmDialog">
+      <Row label="Modal: dismissible, with a description · not dismissible, autoFocus field">
+        <Button variant="secondary" onClick={() => setDialog('plain')}>
           Open sheet
         </Button>
-        <Button variant="secondary" onClick={() => setSheet('form')}>
+        <Button variant="secondary" onClick={() => setDialog('form')}>
           Open form sheet
+        </Button>
+      </Row>
+      <Row label="FullScreenDialog: X and Escape close · Drawer: X, Escape and a backdrop tap">
+        <Button variant="secondary" onClick={() => setDialog('fullscreen')}>
+          Open full screen
+        </Button>
+        <Button variant="secondary" onClick={() => setDialog('drawer')}>
+          Open drawer
         </Button>
       </Row>
       <Row label="ConfirmDialog: focuses Confirm · destructive focuses Cancel">
@@ -652,10 +667,11 @@ function DialogSection() {
         </Button>
       </Row>
       <Modal
-        open={sheet !== null}
+        open={sheetOpen}
         onClose={close}
-        title={sheet === 'form' ? 'Edit player' : 'Swap partner'}
-        dismissible={sheet !== 'form'}
+        title={dialog === 'form' ? 'Edit player' : 'Swap partner'}
+        description={dialog === 'form' ? undefined : 'Pick who plays with Alex.'}
+        dismissible={dialog !== 'form'}
         footer={
           <ActionRow>
             <Button variant="secondary" onClick={close}>
@@ -667,13 +683,74 @@ function DialogSection() {
       >
         <div className="space-y-3">
           <p className="text-sm text-lob-slate">
-            {sheet === 'form'
+            {dialog === 'form'
               ? 'Escape and a backdrop tap do nothing here; use Cancel.'
               : 'Escape, a backdrop tap or a drag down closes it.'}
           </p>
-          <input className="input w-full" placeholder="Name" autoFocus={sheet === 'form'} />
+          <input className="input w-full" placeholder="Name" autoFocus={dialog === 'form'} />
         </div>
       </Modal>
+      <FullScreenDialog
+        open={dialog === 'fullscreen'}
+        onClose={close}
+        title="Compare schedules"
+        description="Your current schedule stays unless you choose the alternative."
+        footer={
+          <ActionRow>
+            <Button variant="secondary" onClick={close}>
+              Keep original
+            </Button>
+            <Button onClick={close}>Use alternative</Button>
+          </ActionRow>
+        }
+      >
+        <div className="space-y-3">
+          <p className="text-sm text-lob-slate">
+            A sheet, a menu or a confirm opened from here closes alone on Escape.
+          </p>
+          <ActionRow>
+            <Button variant="neutral" onClick={() => setSheet(true)}>
+              Open a sheet
+            </Button>
+            <Button variant="neutral" onClick={() => confirm({ message: 'Use this one?' })}>
+              Confirm
+            </Button>
+          </ActionRow>
+          <Menu
+            label="Schedule tools"
+            trigger={(props) => (
+              <Button variant="neutral" trailingIcon={<ChevronDown />} {...props}>
+                Tools
+              </Button>
+            )}
+          >
+            <MenuItem onSelect={() => {}}>Regenerate</MenuItem>
+            <MenuItem onSelect={() => {}}>Reset to defaults</MenuItem>
+          </Menu>
+          <Skeleton className="h-96 w-full" />
+        </div>
+      </FullScreenDialog>
+      <Modal open={sheet} onClose={() => setSheet(false)} title="Edit round">
+        <p className="text-sm text-lob-slate">Escape closes this sheet only.</p>
+      </Modal>
+      <Drawer open={dialog === 'drawer'} onClose={close} title="Admin menu">
+        <div className="space-y-1">
+          <OptionRow
+            selected={view === 'play'}
+            leading={<Gamepad2 size={18} className="text-lob-muted" />}
+            title="Play & vote"
+            subtitle="Cast your own votes as a participant."
+            onClick={() => setView('play')}
+          />
+          <OptionRow
+            selected={view === 'admin'}
+            leading={<SlidersHorizontal size={18} className="text-lob-muted" />}
+            title="Admin controls"
+            subtitle="Start, monitor, end and share the games."
+            onClick={() => setView('admin')}
+          />
+        </div>
+      </Drawer>
     </Section>
   )
 }
