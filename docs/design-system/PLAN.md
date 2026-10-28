@@ -157,24 +157,31 @@ sites, `registeredEntries`, and the King of the Court helpers (`isKingCourt`,
 
 ## Next
 
-Order of work after P2f (proposed 2026-10-28, see "Open owner calls"):
+Order of work after P2f (owner, 2026-10-28). Overlays move onto Radix
+primitives (see the Log) before P3:
 
-1. **Dialog focus (#84).** `Modal` and `ConfirmDialog` take focus on open,
-   keep it inside, close on Escape when dismissible and return focus on
-   close. A ui fix that every confirm, including the on-behalf ones, relies
-   on for keyboard use. Small; its own PR.
-2. **P3 part 1: alerts.** `AlertBox` size, role and dismiss, then the
+1. ~~**Menu choices with real input (#88).**~~ Done on `menu-select-fix`.
+2. **Dialog focus (#84) on Radix Dialog.** `Modal` and `ConfirmDialog`
+   keep their props and wrap `@radix-ui/react-dialog`: focus on open, Tab
+   kept inside, Escape when dismissible, focus returned on close, the page
+   behind inert. Our drag-to-dismiss stays on top. Reworks #90.
+3. **`Menu` onto Radix DropdownMenu.** `MenuList` for search suggestions
+   stays ours until a combobox (P6 `SearchInput`).
+4. **SwapPanel, CompareView and the Oscars drawer onto Dialog.** Each rolls
+   its own Escape, scroll lock and focus today.
+5. **P3 part 1: alerts.** `AlertBox` size, role and dismiss, then the
    hand-built tinted boxes.
-3. **P3 part 2: field errors.** `FormError` in ui and the hand-built error
+6. **P3 part 2: field errors.** `FormError` in ui and the hand-built error
    lines.
-4. **P4: `Badge` tones and payment status.**
-5. **P5: empty, signed-out and loading states.**
-6. **Card-pattern conversation** with the owner (below), then **P6**.
-7. **P7: lock-down.**
+7. **P4: `Badge` tones and payment status.**
+8. **P5: empty, signed-out and loading states.**
+9. **Card-pattern conversation** with the owner (below), then **P6**.
+10. **P7: lock-down.**
 
 Feature bugs found along the way are GitHub issues, outside this plan:
-#82 (Lobster Way open question after a reorder) and #83 (Admin "unpaid
-registrations" row opens merch). Each is a small PR whenever it suits.
+#82 (Lobster Way open question after a reorder), #83 (Admin "unpaid
+registrations" row opens merch) and #89 (the confirm dialog drops the
+on-behalf message's line breaks). Each is a small PR whenever it suits.
 
 ## Later
 
@@ -189,8 +196,6 @@ registrations" row opens merch). Each is a small PR whenever it suits.
 
 ## Open owner calls
 
-- **Order of the next steps** (above): dialog focus (#84) before P3, or fold it
-  into a later step?
 - **Card-pattern conversation**: when to have it. It has to come before P6;
   P3 to P5 don't depend on it.
 
@@ -490,3 +495,28 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
   Steps P3, P4, P6 and P7 are re-counted from the code. `ProfileFields`
   preferred side leaves P6, since P2f part 1 already made it a
   `SegmentedControl`. New "Next" section with the proposed order.
+- **2026-10-28.** Owner: dialog focus (#84) first, then P3 as two PRs (alerts,
+  then field errors), each started after the previous one merges.
+- **2026-10-28.** Browser testing the dialog focus PR (#90) found #88: no
+  `Menu` choice made with a real tap or key did anything, so every admin menu
+  (event admin menu, "Mark Paid", the status override) was dead. `MenuList`
+  closed the menu in the click capture phase. A real tap runs microtasks
+  between the capture and bubble listeners, so React unmounted the item
+  before its `onClick` ran. `fireEvent` and a scripted `.click()` don't, which
+  is why the tests passed. Fixed on `menu-select-fix`: focus still moves to
+  the trigger in the capture phase (`onBeforeSelect`), so a dialog the item
+  opens returns focus there, but the menu closes after the item acts
+  (`onItemSelected`, bubble phase). The new test flushes React at the target
+  to stand in for a real tap. Browser checks of menus and dialogs use real
+  taps and key presses, not scripted clicks.
+- **2026-10-28.** Owner: overlays use an established library rather than our
+  own focus code, since #88, a TeamForm Escape regression and an unhandled
+  focus case all came from hand-rolled overlay code in one day. Radix
+  primitives (`@radix-ui/react-dialog`, `react-dropdown-menu`), installed from
+  npm and wrapped in `src/components/ui` so feature code keeps today's API.
+  Not shadcn/ui, which copies styled components into the repo. Considered:
+  Base UI (same founding team, has a combobox, 1.0 in December 2025), React
+  Aria (heavier API), native `<dialog>` (Chrome ignores a cancelled Escape
+  without a fresh user activation, so a non-dismissible form could close).
+  Measure the first-paint bundle when Dialog lands, since `ConfirmProvider`
+  is mounted at the root.

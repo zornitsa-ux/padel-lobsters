@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { flushSync } from 'react-dom'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Menu, MenuItem } from './Menu'
@@ -71,6 +72,20 @@ describe('Menu', () => {
     expect(onEdit).toHaveBeenCalledOnce()
     expect(screen.queryByRole('menu')).toBeNull()
     expect(focusedDuringSelect).toBe(trigger)
+    expect(document.activeElement).toBe(trigger)
+  })
+
+  // A real tap or key runs microtasks between the capture and bubble listeners, so React
+  // renders there; fireEvent doesn't. Flushing at the target stands in for that.
+  it('acts on a real tap, which lets React render between the capture and bubble phases', () => {
+    const onEdit = vi.fn()
+    const trigger = renderMenu({ onEdit })
+    fireEvent.click(trigger)
+    const edit = item('Edit') as Element
+    edit.addEventListener('click', () => flushSync(() => {}))
+    fireEvent.click(edit)
+    expect(onEdit).toHaveBeenCalledOnce()
+    expect(screen.queryByRole('menu')).toBeNull()
     expect(document.activeElement).toBe(trigger)
   })
 

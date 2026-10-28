@@ -15,7 +15,9 @@ interface MenuListProps {
   /** Show `label` as a heading above the items. */
   showLabel?: boolean
   align?: Align
-  /** Runs before the chosen item's `onSelect`. */
+  /** Runs before the chosen item's `onSelect`, e.g. to move focus back to the trigger. */
+  onBeforeSelect?: () => void
+  /** Runs after the chosen item's `onSelect`, e.g. to close the menu. */
   onItemSelected?: () => void
   /** Escape inside the menu; it stops there, so a surrounding panel stays open. */
   onEscape?: () => void
@@ -38,6 +40,7 @@ export function MenuList({
   label,
   showLabel = false,
   align = 'right',
+  onBeforeSelect,
   onItemSelected,
   onEscape,
   onTab,
@@ -72,9 +75,17 @@ export function MenuList({
     items[next].focus()
   }
 
-  // Capture phase, so the menu closes before the item acts (e.g. opens a confirm dialog).
+  const isItem = (event: React.MouseEvent) =>
+    (event.target as HTMLElement).closest(ITEM_SELECTOR) !== null
+
+  // Focus moves in the capture phase, so a dialog the item opens returns focus to the trigger.
+  // Closing waits for the bubble phase: a real tap lets React render between the two phases,
+  // and closing earlier would unmount the item before its onClick runs.
   const handleClickCapture = (event: React.MouseEvent) => {
-    if ((event.target as HTMLElement).closest(ITEM_SELECTOR)) onItemSelected?.()
+    if (isItem(event)) onBeforeSelect?.()
+  }
+  const handleClick = (event: React.MouseEvent) => {
+    if (isItem(event)) onItemSelected?.()
   }
 
   return (
@@ -85,6 +96,7 @@ export function MenuList({
       aria-label={label}
       onKeyDown={handleKeyDown}
       onClickCapture={handleClickCapture}
+      onClick={handleClick}
       onMouseDown={keepFocus ? (event) => event.preventDefault() : undefined}
       className={`absolute top-full z-50 mt-1 py-1 max-h-60 overflow-y-auto rounded-xl bg-white border border-lob-line shadow-xl [&>[role=separator]]:my-1 ${ALIGN[align]}`}
     >
@@ -146,6 +158,7 @@ export function Menu({ label, showLabel, align = 'right', trigger, children }: M
             showLabel={showLabel}
             align={align}
             autoFocus
+            onBeforeSelect={() => triggerRef.current?.focus()}
             onItemSelected={closeToTrigger}
             onEscape={closeToTrigger}
             // Focusing the trigger before the browser moves on makes Tab continue from it.
