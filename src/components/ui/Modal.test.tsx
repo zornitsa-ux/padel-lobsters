@@ -11,6 +11,17 @@ afterEach(() => {
 // outside taps a tick after opening, then closes on the click that follows a pointerdown.
 const backdrop = () => document.querySelector('.fixed.inset-0') as HTMLElement
 
+// Radix's scroll lock reads changedTouches, so a test drag fills it in like a browser does.
+function dragDown({ sheet, distance }: { sheet: HTMLElement; distance: number }) {
+  const at = (clientY: number) => {
+    const touch = { clientX: 0, clientY }
+    return { touches: [touch], changedTouches: [touch] }
+  }
+  fireEvent.touchStart(sheet, at(0))
+  fireEvent.touchMove(sheet, at(distance))
+  fireEvent.touchEnd(sheet, { touches: [], changedTouches: [{ clientX: 0, clientY: distance }] })
+}
+
 async function tapBackdrop() {
   await act(() => new Promise((resolve) => setTimeout(resolve, 0)))
   fireEvent.pointerDown(backdrop(), { button: 0 })
@@ -78,9 +89,7 @@ describe('Modal', () => {
       )
       const sheet = screen.getByText('body').parentElement!
 
-      fireEvent.touchStart(sheet, { touches: [{ clientY: 0 }] })
-      fireEvent.touchMove(sheet, { touches: [{ clientY: 300 }] })
-      fireEvent.touchEnd(sheet)
+      dragDown({ sheet, distance: 300 })
 
       expect(onClose).not.toHaveBeenCalled()
     })
@@ -115,9 +124,7 @@ describe('Modal', () => {
     )
     const sheet = screen.getByText('body').parentElement!
 
-    fireEvent.touchStart(sheet, { touches: [{ clientY: 0 }] })
-    fireEvent.touchMove(sheet, { touches: [{ clientY: 300 }] })
-    fireEvent.touchEnd(sheet)
+    dragDown({ sheet, distance: 300 })
 
     expect(onClose).toHaveBeenCalledTimes(1)
   })

@@ -194,13 +194,6 @@ on-behalf message's line breaks). Each is a small PR whenever it suits.
 
 ## Open owner calls
 
-- **Escape on form sheets** (from the review of the Radix dialog PR). Escape
-  now closes every dismissible sheet, as a backdrop tap already did. The
-  long forms that are still dismissible (`EventFormModal`, Add / Edit Team in
-  `ManageTeams`, `ManageMatches` score entry, `InvitePlayerModal`) can lose
-  typed input that way. Make them `dismissible={false}` (no backdrop or
-  Escape close), or leave them?
-
 - **Card-pattern conversation**: when to have it. It has to come before P6;
   P3 to P5 don't depend on it.
 
@@ -576,4 +569,10 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
   effect rather than during render: the portal mounts the sheet in the next
   render, so the opener still has focus then. Clicks inside the sheet stop at
   it, since React events bubble from a portal to whatever renders `Modal`.
-  Open owner call below: Escape now closes dismissible form sheets.
+  Escape now closes every dismissible sheet, as a backdrop tap already did.
+- **2026-10-28.** Owner: sheets stay dismissible by default, Escape included,
+  so the long forms that are dismissible today (`EventFormModal`, Add / Edit
+  Team, score entry, Invite Player) keep closing on Escape and a backdrop tap.
+  CI caught an unhandled error from the drag-to-dismiss tests: Radix's scroll
+  lock (`react-remove-scroll`) reads `changedTouches`, which the test touch
+  events left out. The tests now fill it in, as a browser does.
