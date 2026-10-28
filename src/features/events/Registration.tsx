@@ -30,6 +30,7 @@ import {
 } from './registration/utils'
 import { useSettings } from '../settings/useSettings'
 import { useConfirm } from '../../lib/confirmBus'
+import { useConfirmOnBehalf } from '../../lib/confirmOnBehalf'
 import { useToast } from '../../lib/toastBus'
 import RegistrationPaymentSheetModal from './registration/RegistrationPaymentSheetModal'
 import AddPlayerCard from './registration/AddPlayerCard'
@@ -73,6 +74,7 @@ export default function Registration({
   onNavigate: EventNavigate
 }) {
   const confirm = useConfirm()
+  const confirmOnBehalf = useConfirmOnBehalf()
   const { showToast } = useToast()
   const { session, isAdmin } = useApp()
   const { updateRegistration, cancelRegistration, registerPlayer, promoteWaitlistRegistration } =
@@ -240,7 +242,14 @@ export default function Registration({
   // ── Register (the signed-in player, from the Info tab) ─────────────────────
   // ── Register (admin adding another player) ─────────────────────────────────
   const handleAdd = async () => {
-    if (!selectedPlayer) return
+    const player = getPlayer(selectedPlayer)
+    if (!player) return
+    const ok = await confirmOnBehalf({
+      title: 'Add this player?',
+      lines: [`Player: ${displayName(player)}`, `Event: ${tournament.name}`],
+      confirmLabel: 'Add player',
+    })
+    if (!ok) return
     setSaving(true)
     try {
       const { regId, status } = await registerPlayer(tournament.id, selectedPlayer)

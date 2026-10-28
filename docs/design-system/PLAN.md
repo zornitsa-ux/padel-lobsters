@@ -340,3 +340,12 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
   `useConfirm` and `AdminAddTeamCard` uses it. Follow-ups, each checked
   against the rule: the individual-event admin add, admin partner swap,
   admin payment marking.
+- **2026-10-28.** The other admin-on-behalf flows follow the rule (#78
+  follow-up): individual-event add, admin partner change, admin transfer of
+  a spot (both the offer and the immediate path) and payment marking (Mark
+  Paid, Undo, status override). `useConfirmOnBehalf` takes an optional
+  `footer` so payments check the payment rather than "the right person".
+  Already confirming before this: cancel registration, cancel team,
+  force-accept and cancel transfer. Not confirmed, as they pick nobody:
+  promoting a waitlisted player or team. Payment marking adds one tap per
+  payment; revisit if admins find it slow in bulk.

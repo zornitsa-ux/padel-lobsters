@@ -67,6 +67,7 @@ vi.mock('../../../settings/useSettings', () => ({
 }))
 
 const Registration = (await import('../../Registration')).default
+const ChangePartnerPanel = (await import('./ChangePartnerPanel')).default
 
 const player = (id: string, name: string, status = 'active') => ({
   id,
@@ -549,6 +550,56 @@ describe('admin team actions', () => {
     expect(
       screen.getByRole('button', { name: /^their partner isn't on padel lobsters/i }),
     ).not.toBeNull()
+  })
+
+  it("confirms the team and new partner before an admin changes a team's partner", async () => {
+    m.changeTeamPartner.mockResolvedValue({ status: 'changed', partnerId: 'p1' })
+    renderInfo({ isAdmin: true })
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Change partner' })[0])
+    fireEvent.click(screen.getByRole('button', { name: /bob/i }))
+    fireEvent.click(screen.getAllByRole('button', { name: 'Change partner' })[0])
+
+    await waitFor(() =>
+      expect(m.confirm).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: 'Change partner?',
+          message: expect.stringMatching(/Team: .*\nNew partner: Bob/),
+        }),
+      ),
+    )
+    await waitFor(() => expect(m.changeTeamPartner).toHaveBeenCalled())
+  })
+
+  it("still confirms when the team's label is empty", async () => {
+    m.changeTeamPartner.mockResolvedValue({ status: 'changed', partnerId: 'p1' })
+    render(
+      <ChangePartnerPanel
+        tournamentId="t1"
+        teamId="tm1"
+        candidates={[{ id: 'p1', name: 'Bob' } as never]}
+        onBehalfOf=""
+        displayName={(p) => p.name}
+        onClose={vi.fn()}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /bob/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Change partner' }))
+
+    await waitFor(() => expect(m.confirm).toHaveBeenCalled())
+  })
+
+  it("doesn't change the partner when the admin backs out", async () => {
+    m.confirm.mockResolvedValue(false)
+    renderInfo({ isAdmin: true })
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Change partner' })[0])
+    fireEvent.click(screen.getByRole('button', { name: /bob/i }))
+    fireEvent.click(screen.getAllByRole('button', { name: 'Change partner' })[0])
+
+    await waitFor(() => expect(m.confirm).toHaveBeenCalled())
+    expect(m.changeTeamPartner).not.toHaveBeenCalled()
   })
 
   it('adds a team for a chosen captain', async () => {

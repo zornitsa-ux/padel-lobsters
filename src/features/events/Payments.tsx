@@ -11,6 +11,7 @@ import {
   MessageCircle,
 } from 'lucide-react'
 import { fmtEur } from '../../lib/format'
+import { useConfirmOnBehalf } from '../../lib/confirmOnBehalf'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { IconButton } from '../../components/ui/IconButton'
 import { PlayerRow } from '../../components/ui/PlayerRow'
@@ -40,6 +41,7 @@ export default function Payments({
   onNavigate: EventNavigate
 }) {
   const { isAdmin } = useApp()
+  const confirmOnBehalf = useConfirmOnBehalf()
   const { updateRegistration } = useRegistrationActions()
   const { data: players = [] } = usePlayers()
   const { data: regsData = [] } = useRegistrations(tournament?.id)
@@ -121,11 +123,20 @@ export default function Payments({
     { value: 'paid', label: 'Confirmed', count: confirmed.length },
   ]
 
+  const confirmPaymentChange = ({ reg, change }: { reg: NormalisedRegistration; change: string }) =>
+    confirmOnBehalf({
+      title: 'Update payment?',
+      lines: [`Player: ${rowName(reg, getPlayer(reg.playerId)?.name ?? '')}`, `Change: ${change}`],
+      confirmLabel: 'Update payment',
+      footer: 'Check this is the right payment before you continue.',
+    })
+
   const handleMarkPaid = async (reg: NormalisedRegistration, method: string) => {
     if (!isAdmin) {
       onNavigate?.('settings')
       return
     }
+    if (!(await confirmPaymentChange({ reg, change: `Mark as paid (${method})` }))) return
     await updateRegistration(
       reg.id,
       { paymentStatus: 'paid', paymentMethod: method },
@@ -138,6 +149,7 @@ export default function Payments({
       onNavigate?.('settings')
       return
     }
+    if (!(await confirmPaymentChange({ reg, change: 'Mark as unpaid' }))) return
     await updateRegistration(reg.id, { paymentStatus: 'unpaid', paymentMethod: '' }, tournament.id)
   }
 
@@ -148,6 +160,8 @@ export default function Payments({
       onNavigate?.('settings')
       return
     }
+    const label = OVERRIDE_STATUSES.find((s) => s.value === status)?.label ?? status
+    if (!(await confirmPaymentChange({ reg, change: `Set status to ${label}` }))) return
     await updateRegistration(
       reg.id,
       {

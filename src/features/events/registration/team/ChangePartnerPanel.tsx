@@ -5,12 +5,16 @@ import { CHANGE_PARTNER_MESSAGES } from '../../teams/teamStatusMessages'
 import { useTeamActions } from '../../teams/useTeams'
 import type { PartnerChoice } from '../../teams/teamTypes'
 import type { DisplayName } from '../utils'
+import { useConfirmOnBehalf } from '../../../../lib/confirmOnBehalf'
 import PartnerChoiceForm from './PartnerChoiceForm'
+import { partnerConfirmLine } from './teamHelpers'
 
 interface ChangePartnerPanelProps {
   tournamentId: string
   teamId: string
   candidates: Player[]
+  /** Set when an admin changes a team's partner: the team's label for the confirmation. */
+  onBehalfOf?: string
   displayName: DisplayName
   onClose: () => void
 }
@@ -19,14 +23,32 @@ export default function ChangePartnerPanel({
   tournamentId,
   teamId,
   candidates,
+  onBehalfOf,
   displayName,
   onClose,
 }: ChangePartnerPanelProps) {
   const { changeTeamPartner } = useTeamActions()
+  const confirmOnBehalf = useConfirmOnBehalf()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
   const submit = async ({ choice }: { choice: PartnerChoice }) => {
+    if (onBehalfOf !== undefined) {
+      const ok = await confirmOnBehalf({
+        title: 'Change partner?',
+        lines: [
+          `Team: ${onBehalfOf}`,
+          partnerConfirmLine({
+            label: 'New partner',
+            choice,
+            getPlayer: (id) => candidates.find((p) => p.id === id),
+            displayName,
+          }),
+        ],
+        confirmLabel: 'Change partner',
+      })
+      if (!ok) return
+    }
     setBusy(true)
     setError('')
     const { status } = await changeTeamPartner({ tournamentId, teamId, choice })

@@ -61,6 +61,7 @@ export default function TeamRow({
           tournamentId={tournamentId}
           teamId={entry.team.id}
           candidates={candidates}
+          onBehalfOf={label}
           displayName={displayName}
           onClose={() => setChanging(false)}
         />
