@@ -46,18 +46,31 @@ describe('Menu', () => {
   it('closes on Escape and returns focus to the trigger', () => {
     const trigger = renderMenu()
     fireEvent.click(trigger)
-    fireEvent.keyDown(window, { key: 'Escape' })
+    fireEvent.keyDown(item('Edit') as Element, { key: 'Escape' })
     expect(screen.queryByRole('menu')).toBeNull()
     expect(document.activeElement).toBe(trigger)
   })
 
-  it('closes after an item is chosen', () => {
-    const onEdit = vi.fn()
+  it('keeps Escape from reaching a surrounding panel', () => {
+    const onWindowKey = vi.fn()
+    window.addEventListener('keydown', onWindowKey)
+    fireEvent.click(renderMenu())
+    fireEvent.keyDown(item('Edit') as Element, { key: 'Escape' })
+    window.removeEventListener('keydown', onWindowKey)
+    expect(onWindowKey).not.toHaveBeenCalled()
+  })
+
+  it('closes and refocuses the trigger before the item acts', () => {
+    let focusedDuringSelect: Element | null = null
+    const onEdit = vi.fn(() => {
+      focusedDuringSelect = document.activeElement
+    })
     const trigger = renderMenu({ onEdit })
     fireEvent.click(trigger)
     fireEvent.click(item('Edit') as Element)
     expect(onEdit).toHaveBeenCalledOnce()
     expect(screen.queryByRole('menu')).toBeNull()
+    expect(focusedDuringSelect).toBe(trigger)
     expect(document.activeElement).toBe(trigger)
   })
 

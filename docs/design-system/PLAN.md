@@ -394,3 +394,17 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
   from `font-medium` and the admin menu from `rounded-2xl`. The Oscars admin
   drawer's choices are `OptionRow selected` (its check replaces "· current"),
   its backdrop is a plain overlay, and Escape closes it.
+- **2026-10-28.** Review of #81. Escape is handled inside the menu and stops
+  there, so a menu in a panel that also closes on Escape (SwapPanel,
+  CompareView, the Oscars drawer) no longer closes both. The menu closes and
+  refocuses its trigger before the item acts, and finds the trigger from the
+  click rather than a DOM query. `MenuList` places `MenuSeparator`'s margin,
+  since a ui component carries no spacing. The TeamForm search returns focus
+  to the input after Escape or a choice from the keyboard, focuses the first
+  item on the first ArrowDown even while closed, and reports `aria-expanded`
+  only while a list shows. The Oscars drawer moves focus to its close button
+  on open and back to "Menu" on close. Older bug, not fixed here:
+  `ConfirmDialog` doesn't move focus into itself, so after a keyboard choice
+  that opens a confirm, Enter on the focused control behind it fires again.
+  The search suggestions use `role="menu"`; a full combobox / listbox pattern
+  would suit them better if a `SearchInput` (P6) takes them on.

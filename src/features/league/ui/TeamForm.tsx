@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect, useMemo } from 'react'
+import { useState, useRef, useEffect, useId, useMemo } from 'react'
+import { flushSync } from 'react-dom'
 import { Plus } from 'lucide-react'
 import { teamFormSchema } from '../domain/leagueSchemas'
 import type { Division, GroupLabel, LeagueTeam } from '../domain/types'
@@ -63,6 +64,7 @@ function PlayerPicker({
   const [open, setOpen] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
+  const listId = useId()
 
   const eligible = players.filter(
     (p) => isSelectablePlayer(p) && p.status !== 'placeholder' && p.id !== excludeId,
@@ -80,19 +82,27 @@ function PlayerPicker({
       ? `${selectedName} (placeholder)`
       : ''
 
+  const showList = open && (filtered.length > 0 || showCreate)
+
+  // Refocusing the input runs its onFocus (open), so close after it.
+  const closeToInput = () => {
+    inputRef.current?.focus()
+    setOpen(false)
+  }
+
   const choose = (select: () => void) => {
     select()
     setQuery('')
-    setOpen(false)
+    closeToInput()
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
-      setOpen(false)
-      inputRef.current?.focus()
+      closeToInput()
     } else if (e.key === 'ArrowDown' && e.target === inputRef.current) {
       e.preventDefault()
-      setOpen(true)
+      // Render the list now so its first item can take focus.
+      flushSync(() => setOpen(true))
       focusFirstItem(listRef.current)
     }
   }
@@ -114,15 +124,22 @@ function PlayerPicker({
           placeholder="Search by name…"
           value={query}
           aria-haspopup="menu"
-          aria-expanded={open}
+          aria-expanded={showList}
+          aria-controls={showList ? listId : undefined}
           onChange={(e) => {
             setQuery(e.target.value)
             setOpen(true)
           }}
           onFocus={() => setOpen(true)}
         />
-        {open && (filtered.length > 0 || showCreate) && (
-          <MenuList label={`${label} options`} align="stretch" keepFocus listRef={listRef}>
+        {showList && (
+          <MenuList
+            id={listId}
+            label={`${label} options`}
+            align="stretch"
+            keepFocus
+            listRef={listRef}
+          >
             {filtered.map((p) => (
               <MenuItem
                 key={p.id}

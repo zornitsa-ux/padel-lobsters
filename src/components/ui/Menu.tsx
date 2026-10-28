@@ -1,5 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { useEscapeToClose } from '../../hooks/useEscapeToClose'
+import React, { useEffect, useRef, useState } from 'react'
 import { focusFirstItem, ITEM_SELECTOR, itemsIn, nextItemIndex } from './menuFocus'
 
 type Align = 'left' | 'right' | 'stretch'
@@ -16,14 +15,17 @@ interface MenuListProps {
   /** Show `label` as a heading above the items. */
   showLabel?: boolean
   align?: Align
-  /** Called after an item is chosen. */
+  /** Runs before the chosen item's `onSelect`. */
   onItemSelected?: () => void
+  /** Escape inside the menu; it stops there, so a surrounding panel stays open. */
+  onEscape?: () => void
   /** Tab leaves the menu. */
   onTab?: () => void
   /** Keep focus in the field that opened the list (a search input) when an item is tapped. */
   keepFocus?: boolean
   /** Focus the first item on mount. */
   autoFocus?: boolean
+  id?: string
   listRef?: React.RefObject<HTMLDivElement>
   children: React.ReactNode
 }
@@ -37,9 +39,11 @@ export function MenuList({
   showLabel = false,
   align = 'right',
   onItemSelected,
+  onEscape,
   onTab,
   keepFocus = false,
   autoFocus = false,
+  id,
   listRef,
   children,
 }: MenuListProps) {
@@ -51,6 +55,11 @@ export function MenuList({
   }, [autoFocus, ref])
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Escape' && onEscape) {
+      event.stopPropagation()
+      onEscape()
+      return
+    }
     if (event.key === 'Tab') {
       onTab?.()
       return
@@ -63,19 +72,21 @@ export function MenuList({
     items[next].focus()
   }
 
-  const handleClick = (event: React.MouseEvent) => {
+  // Capture phase, so the menu closes before the item acts (e.g. opens a confirm dialog).
+  const handleClickCapture = (event: React.MouseEvent) => {
     if ((event.target as HTMLElement).closest(ITEM_SELECTOR)) onItemSelected?.()
   }
 
   return (
     <div
       ref={ref}
+      id={id}
       role="menu"
       aria-label={label}
       onKeyDown={handleKeyDown}
-      onClick={handleClick}
+      onClickCapture={handleClickCapture}
       onMouseDown={keepFocus ? (event) => event.preventDefault() : undefined}
-      className={`absolute top-full z-50 mt-1 py-1 max-h-60 overflow-y-auto rounded-xl bg-white border border-lob-line shadow-xl ${ALIGN[align]}`}
+      className={`absolute top-full z-50 mt-1 py-1 max-h-60 overflow-y-auto rounded-xl bg-white border border-lob-line shadow-xl [&>[role=separator]]:my-1 ${ALIGN[align]}`}
     >
       {showLabel && (
         <div
@@ -91,47 +102,39 @@ export function MenuList({
 }
 
 export interface MenuTriggerProps {
-  onClick: () => void
+  onClick: (event: React.MouseEvent<HTMLElement>) => void
   'aria-haspopup': 'menu'
   'aria-expanded': boolean
 }
 
-interface MenuProps {
-  /** Accessible name of the menu. */
-  label: string
-  /** Show `label` as a heading above the items. */
-  showLabel?: boolean
+type MenuProps = Pick<MenuListProps, 'label' | 'showLabel' | 'children'> & {
   /** Which edge of the trigger the menu lines up with. */
-  align?: 'left' | 'right'
+  align?: Exclude<Align, 'stretch'>
   /** Renders the trigger: spread the props onto a `Button` or `IconButton`. */
   trigger: (props: MenuTriggerProps) => React.ReactNode
-  /** `MenuItem`s, optionally split by `MenuSeparator`. */
-  children: React.ReactNode
 }
 
 /**
- * A button that opens a list of actions. Escape and choosing an item close it and return
- * focus to the trigger; a tap outside closes it; arrow keys, Home and End move between items.
+ * A button that opens a list of actions (`MenuItem`s, optionally split by `MenuSeparator`).
+ * Escape and choosing an item close it and return focus to the trigger; a tap outside closes
+ * it; arrow keys, Home and End move between items.
  */
 export function Menu({ label, showLabel, align = 'right', trigger, children }: MenuProps) {
   const [open, setOpen] = useState(false)
-  const rootRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLElement | null>(null)
 
-  const focusTrigger = useCallback(
-    () => rootRef.current?.querySelector<HTMLElement>('[aria-haspopup]')?.focus(),
-    [],
-  )
-  const closeToTrigger = useCallback(() => {
+  const closeToTrigger = () => {
     setOpen(false)
-    focusTrigger()
-  }, [focusTrigger])
-
-  useEscapeToClose({ active: open, onClose: closeToTrigger })
+    triggerRef.current?.focus()
+  }
 
   return (
-    <div ref={rootRef} className="relative">
+    <div className="relative">
       {trigger({
-        onClick: () => setOpen((o) => !o),
+        onClick: (event) => {
+          triggerRef.current = event.currentTarget
+          setOpen((o) => !o)
+        },
         'aria-haspopup': 'menu',
         'aria-expanded': open,
       })}
@@ -144,11 +147,9 @@ export function Menu({ label, showLabel, align = 'right', trigger, children }: M
             align={align}
             autoFocus
             onItemSelected={closeToTrigger}
-            onTab={() => {
-              // Focus the trigger before the browser moves on, so Tab continues from it.
-              focusTrigger()
-              setOpen(false)
-            }}
+            onEscape={closeToTrigger}
+            // Focusing the trigger before the browser moves on makes Tab continue from it.
+            onTab={closeToTrigger}
           >
             {children}
           </MenuList>
@@ -228,5 +229,5 @@ export function MenuItem({
 
 /** A rule between groups of items. */
 export function MenuSeparator() {
-  return <div role="separator" className="my-1 border-t border-lob-line" />
+  return <div role="separator" className="border-t border-lob-line" />
 }
