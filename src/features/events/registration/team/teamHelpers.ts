@@ -90,6 +90,24 @@ export const choicePartnerName = ({
 }): string =>
   choice.kind === 'new' ? choice.partner.name : (getPlayer(choice.playerId)?.name ?? '')
 
+export const addTeamConfirmLines = ({
+  captain,
+  choice,
+  getPlayer,
+  displayName,
+}: {
+  captain: Player
+  choice: PartnerChoice
+  getPlayer: GetPlayer
+  displayName: DisplayName
+}): string[] => {
+  const partner =
+    choice.kind === 'new'
+      ? `${choice.partner.name} (${choice.partner.email}, new to Padel Lobsters)`
+      : playerNameOf({ playerId: choice.playerId, getPlayer, displayName })
+  return [`Captain: ${displayName(captain)}`, `Partner: ${partner}`]
+}
+
 // Blank when the player isn't loaded; callers choose the fallback.
 export const playerNameOf = ({
   playerId,
