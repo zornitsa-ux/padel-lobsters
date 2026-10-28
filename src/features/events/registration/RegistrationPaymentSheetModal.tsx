@@ -1,3 +1,4 @@
+import { useId } from 'react'
 import { ExternalLink, Send } from 'lucide-react'
 import AddToCalendarButton from '../../../components/ui/AddToCalendarButton'
 import { Modal } from '../../../components/ui/Modal'
@@ -29,14 +30,15 @@ export default function RegistrationPaymentSheetModal({
   onTikkieClick,
   onSelfDeclare,
 }: RegistrationPaymentSheetModalProps) {
+  const headingId = useId()
   if (!paymentSheet) return null
 
   return (
-    <Modal open={isOpen} onClose={onClose}>
+    <Modal open={isOpen} onClose={onClose} labelId={headingId}>
       <div className="space-y-5">
         <div>
           <p className="text-xl">🦞</p>
-          <h3 className="font-bold text-lob-dark mt-1">
+          <h3 id={headingId} className="font-bold text-lob-dark mt-1">
             You&apos;re in! Now pay to lock your spot
           </h3>
         </div>

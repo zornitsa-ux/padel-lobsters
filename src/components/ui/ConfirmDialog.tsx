@@ -1,10 +1,11 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useId, useMemo, useRef, useState } from 'react'
 import { Modal } from './Modal'
 import { ConfirmContext, type ConfirmOptions } from '../../lib/confirmBus'
 import { ActionRow } from './ActionRow'
 import { Button } from './Button'
 
 interface PendingConfirm extends ConfirmOptions {
+  id: number
   resolve: (value: boolean) => void
 }
 
@@ -15,11 +16,13 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
   // is harmless, but calling resolve twice from two different paths is a
   // sign something is wrong, so we only ever let one path fire.
   const settledRef = useRef(false)
+  const nextId = useRef(0)
+  const messageId = useId()
 
   const confirm = useCallback((options: ConfirmOptions) => {
     return new Promise<boolean>((resolve) => {
       settledRef.current = false
-      setPending({ ...options, resolve })
+      setPending({ ...options, id: nextId.current++, resolve })
     })
   }, [])
 
@@ -34,12 +37,21 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo(() => confirm, [confirm])
 
+  // Enter confirms by default; a destructive flow starts on Cancel so Enter can't delete.
   const footer = pending && (
     <ActionRow>
-      <Button onClick={() => settle(false)} variant="secondary">
+      <Button
+        onClick={() => settle(false)}
+        variant="secondary"
+        data-autofocus={pending.destructive || undefined}
+      >
         {pending.cancelLabel || 'Cancel'}
       </Button>
-      <Button onClick={() => settle(true)} variant={pending.destructive ? 'danger' : 'primary'}>
+      <Button
+        onClick={() => settle(true)}
+        variant={pending.destructive ? 'danger' : 'primary'}
+        data-autofocus={!pending.destructive || undefined}
+      >
         {pending.confirmLabel || 'Confirm'}
       </Button>
     </ActionRow>
@@ -51,10 +63,16 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
       <Modal
         open={pending !== null}
         onClose={() => settle(false)}
+        role="alertdialog"
+        focusKey={pending?.id}
+        labelId={pending?.title ? undefined : messageId}
+        descriptionId={pending?.title ? messageId : undefined}
         title={pending?.title}
         footer={footer}
       >
-        <p className="text-sm text-lob-dark">{pending?.message}</p>
+        <p id={messageId} className="text-sm text-lob-dark">
+          {pending?.message}
+        </p>
       </Modal>
     </ConfirmContext.Provider>
   )

@@ -97,7 +97,9 @@ function PlayerPicker({
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') {
+    if (e.key === 'Escape' && showList) {
+      // Stops here, so the sheet around the form stays open.
+      e.stopPropagation()
       closeToInput()
     } else if (e.key === 'ArrowDown' && e.target === inputRef.current) {
       e.preventDefault()

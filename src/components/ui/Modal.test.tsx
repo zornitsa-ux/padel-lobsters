@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Modal } from './Modal'
 
@@ -7,31 +7,46 @@ afterEach(() => {
   cleanup()
 })
 
-// The backdrop is the outer element; the sheet stops propagation, so clicking
-// the sheet must not close it.
-function backdropOf(container: HTMLElement): HTMLElement {
-  return container.firstElementChild as HTMLElement
+// The sheet renders in a portal on <body>; the backdrop wraps it. Radix starts listening for
+// outside taps a tick after opening, then closes on the click that follows a pointerdown.
+const backdrop = () => document.querySelector('.fixed.inset-0') as HTMLElement
+
+// Radix's scroll lock reads changedTouches, so a test drag fills it in like a browser does.
+function dragDown({ sheet, distance }: { sheet: HTMLElement; distance: number }) {
+  const at = (clientY: number) => {
+    const touch = { clientX: 0, clientY }
+    return { touches: [touch], changedTouches: [touch] }
+  }
+  fireEvent.touchStart(sheet, at(0))
+  fireEvent.touchMove(sheet, at(distance))
+  fireEvent.touchEnd(sheet, { touches: [], changedTouches: [{ clientX: 0, clientY: distance }] })
+}
+
+async function tapBackdrop() {
+  await act(() => new Promise((resolve) => setTimeout(resolve, 0)))
+  fireEvent.pointerDown(backdrop(), { button: 0 })
+  fireEvent.click(backdrop())
 }
 
 describe('Modal', () => {
   it('renders nothing when closed', () => {
-    const { container } = render(
+    render(
       <Modal open={false} onClose={() => {}}>
         body
       </Modal>,
     )
-    expect(container.firstChild).toBeNull()
+    expect(screen.queryByText('body')).toBeNull()
   })
 
-  it('closes on backdrop click by default', () => {
+  it('closes on backdrop click by default', async () => {
     const onClose = vi.fn()
-    const { container } = render(
+    render(
       <Modal open onClose={onClose}>
         body
       </Modal>,
     )
 
-    fireEvent.click(backdropOf(container))
+    await tapBackdrop()
 
     expect(onClose).toHaveBeenCalledTimes(1)
   })
@@ -52,15 +67,15 @@ describe('Modal', () => {
   describe('dismissible={false}', () => {
     // Guards the data-loss case: ItemEditorForm and PlayerForm are long
     // forms where a stray backdrop tap would discard everything typed.
-    it('ignores a backdrop click', () => {
+    it('ignores a backdrop click', async () => {
       const onClose = vi.fn()
-      const { container } = render(
+      render(
         <Modal open onClose={onClose} dismissible={false}>
           body
         </Modal>,
       )
 
-      fireEvent.click(backdropOf(container))
+      await tapBackdrop()
 
       expect(onClose).not.toHaveBeenCalled()
     })
@@ -74,29 +89,27 @@ describe('Modal', () => {
       )
       const sheet = screen.getByText('body').parentElement!
 
-      fireEvent.touchStart(sheet, { touches: [{ clientY: 0 }] })
-      fireEvent.touchMove(sheet, { touches: [{ clientY: 300 }] })
-      fireEvent.touchEnd(sheet)
+      dragDown({ sheet, distance: 300 })
 
       expect(onClose).not.toHaveBeenCalled()
     })
 
     it('hides the drag handle, which would advertise a gesture that does nothing', () => {
-      const { container: draggable } = render(
+      render(
         <Modal open onClose={() => {}}>
           body
         </Modal>,
       )
-      const withHandle = draggable.querySelectorAll('.rounded-full').length
+      const withHandle = document.body.querySelectorAll('.rounded-full').length
 
       cleanup()
 
-      const { container: fixed } = render(
+      render(
         <Modal open onClose={() => {}} dismissible={false}>
           body
         </Modal>,
       )
-      const withoutHandle = fixed.querySelectorAll('.rounded-full').length
+      const withoutHandle = document.body.querySelectorAll('.rounded-full').length
 
       expect(withHandle).toBeGreaterThan(withoutHandle)
     })
@@ -111,9 +124,7 @@ describe('Modal', () => {
     )
     const sheet = screen.getByText('body').parentElement!
 
-    fireEvent.touchStart(sheet, { touches: [{ clientY: 0 }] })
-    fireEvent.touchMove(sheet, { touches: [{ clientY: 300 }] })
-    fireEvent.touchEnd(sheet)
+    dragDown({ sheet, distance: 300 })
 
     expect(onClose).toHaveBeenCalledTimes(1)
   })

@@ -34,6 +34,8 @@ import { CollapsibleCard } from '../../components/ui/CollapsibleCard'
 import { Disclosure } from '../../components/ui/Disclosure'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { Menu, MenuItem, MenuList, MenuSeparator } from '../../components/ui/Menu'
+import { Modal } from '../../components/ui/Modal'
+import { useConfirm } from '../../lib/confirmBus'
 import { CardLink } from '../../components/ui/CardLink'
 import { LinkCard, LinkCardIcon } from '../../components/ui/LinkCard'
 import { OptionRow } from '../../components/ui/OptionRow'
@@ -613,6 +615,68 @@ function MenuSection() {
   )
 }
 
+function DialogSection() {
+  const confirm = useConfirm()
+  const [sheet, setSheet] = useState<'plain' | 'form' | null>(null)
+  const close = () => setSheet(null)
+  return (
+    <Section title="Modal and ConfirmDialog">
+      <Row label="Modal: dismissible · not dismissible, autoFocus field">
+        <Button variant="secondary" onClick={() => setSheet('plain')}>
+          Open sheet
+        </Button>
+        <Button variant="secondary" onClick={() => setSheet('form')}>
+          Open form sheet
+        </Button>
+      </Row>
+      <Row label="ConfirmDialog: focuses Confirm · destructive focuses Cancel">
+        <Button
+          variant="neutral"
+          onClick={() => confirm({ title: 'Mark as paid?', message: 'Paid by Tikkie.' })}
+        >
+          Confirm
+        </Button>
+        <Button
+          variant="neutral"
+          onClick={() =>
+            confirm({
+              title: 'Delete season?',
+              message: 'This removes every match.',
+              confirmLabel: 'Delete',
+              destructive: true,
+            })
+          }
+        >
+          Destructive confirm
+        </Button>
+      </Row>
+      <Modal
+        open={sheet !== null}
+        onClose={close}
+        title={sheet === 'form' ? 'Edit player' : 'Swap partner'}
+        dismissible={sheet !== 'form'}
+        footer={
+          <ActionRow>
+            <Button variant="secondary" onClick={close}>
+              Cancel
+            </Button>
+            <Button onClick={() => confirm({ message: 'Save these changes?' })}>Save</Button>
+          </ActionRow>
+        }
+      >
+        <div className="space-y-3">
+          <p className="text-sm text-lob-slate">
+            {sheet === 'form'
+              ? 'Escape and a backdrop tap do nothing here; use Cancel.'
+              : 'Escape, a backdrop tap or a drag down closes it.'}
+          </p>
+          <input className="input w-full" placeholder="Name" autoFocus={sheet === 'form'} />
+        </div>
+      </Modal>
+    </Section>
+  )
+}
+
 function CollapsibleSectionDemo() {
   const [open, setOpen] = useState(false)
   const [rowOpen, setRowOpen] = useState(false)
@@ -682,6 +746,7 @@ export default function DesignGallery() {
       <ChoiceSection />
       <OptionSection />
       <MenuSection />
+      <DialogSection />
       <CardLinkSection />
       <CollapsibleSectionDemo />
       <StatesSection />

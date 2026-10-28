@@ -161,10 +161,8 @@ Order of work after P2f (owner, 2026-10-28). Overlays move onto Radix
 primitives (see the Log) before P3:
 
 1. ~~**Menu choices with real input (issue #88).**~~ Fixed; see the Log.
-2. **Dialog focus (#84) on Radix Dialog.** `Modal` and `ConfirmDialog`
-   keep their props and wrap `@radix-ui/react-dialog`: focus on open, Tab
-   kept inside, Escape when dismissible, focus returned on close, the page
-   behind inert. Our drag-to-dismiss stays on top. Reworks #90.
+2. ~~**Dialog focus (#84) on Radix Dialog.** `Modal` and `ConfirmDialog`
+   keep their props and wrap `@radix-ui/react-dialog`.~~ Done; see the Log.
 3. **`Menu` onto Radix DropdownMenu.** `MenuList` for search suggestions
    stays ours until a combobox (P6 `SearchInput`).
 4. **SwapPanel, CompareView and the Oscars drawer onto Dialog.** Each rolls
@@ -524,3 +522,57 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
   without a fresh user activation, so a non-dismissible form could close).
   Measure the first-paint bundle when Dialog lands, since `ConfirmProvider`
   is mounted at the root.
+- **2026-10-28.** Dialog focus (#84) on `dialog-focus`, on Radix Dialog.
+  It replaces the hand-rolled version first opened in #90 (focus guards and
+  our own Tab wrap), which never merged. `Modal` keeps its props and wraps
+  `@radix-ui/react-dialog`. Radix traps Tab, hides the page behind from
+  assistive tech, locks scroll, and handles a dialog opened from inside
+  another: Escape and outside taps reach only the top one, and the outer
+  sheet's trap pauses. The sheet renders in a portal on `<body>`. What stays
+  ours (`components/ui/dialogFocus.ts`):
+  - **First focus:** the child marked `data-autofocus`, otherwise the sheet
+    itself, not the first field, which would pop the keyboard on a phone.
+    React's `autoFocus` still works (the link-player and transfer searches),
+    except in a dialog opened from inside another, where the outer trap pulls
+    focus back first. So `ConfirmDialog` uses `data-autofocus`.
+  - **Return focus:** to whatever had focus when the sheet opened, unless
+    focus has moved elsewhere since. Radix only returns it to a
+    `Dialog.Trigger`, and our dialogs open from code.
+  - **Escape:** Radix hears it on the document before anything inside. An
+    open popup in the sheet (a `role="menu"`, or a field with `aria-haspopup`
+    and `aria-expanded="true"`, like the TeamForm search) closes first.
+    Otherwise Escape stops at the sheet, so SwapPanel, CompareView or the
+    Oscars drawer behind stays open, and it closes the sheet only when
+    `dismissible`. Escape during IME composition is left alone. The TeamForm
+    search stops the Escape that closes its list.
+
+  `ConfirmDialog` is an `alertdialog`, named by its message when it has no
+  title (27 of 29 confirms) and described by it otherwise. It focuses
+  Confirm, so Enter confirms, but Cancel in a destructive flow, so a stray
+  Enter can't delete. A confirm that follows another while the dialog stays
+  open moves focus to its own default button. A backdrop tap on a
+  non-dismissible sheet keeps focus in it. Radix adds about 13 KB gzip to
+  first paint (196.7 → 209.8 KB, measured with a `localdev` build), since
+  `ConfirmProvider` and `PinSignInInterstitial` (both in the entry chunk) use
+  `Modal`. Browser testing also found #89
+  (on-behalf confirm messages lose their line breaks).
+
+- **2026-10-28.** Review of the Radix dialog PR. A tap on a toast (its
+  dismiss X) no longer closes the sheet, and the toast viewport is always a
+  live region (`data-toast-viewport`), so Radix's `aria-hidden` on the page
+  skips it and toasts are still announced while a sheet is open. Escape during
+  IME composition stops at the sheet too. A menu trigger no longer counts as
+  an open popup for Escape, only a menu or a search field with its list
+  showing. `Modal` gains `labelId` (a heading inside names the sheet; the
+  payment sheet uses it) and `focusKey` (moves focus as on open again, so
+  `ConfirmDialog` drops its own focus effect). The opener is read in a layout
+  effect rather than during render: the portal mounts the sheet in the next
+  render, so the opener still has focus then. Clicks inside the sheet stop at
+  it, since React events bubble from a portal to whatever renders `Modal`.
+  Escape now closes every dismissible sheet, as a backdrop tap already did.
+- **2026-10-28.** Owner: sheets stay dismissible by default, Escape included,
+  so the long forms that are dismissible today (`EventFormModal`, Add / Edit
+  Team, score entry, Invite Player) keep closing on Escape and a backdrop tap.
+  CI caught an unhandled error from the drag-to-dismiss tests: Radix's scroll
+  lock (`react-remove-scroll`) reads `changedTouches`, which the test touch
+  events left out. The tests now fill it in, as a browser does.
