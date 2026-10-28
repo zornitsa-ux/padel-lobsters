@@ -1,186 +1,86 @@
 # Padel Lobsters Design System
 
-## Color Palette
+Feature code composes components from `src/components/ui`. Components own colour, size and
+state, built on `lob-*` tokens. This file covers conventions; the details live in three places:
 
-The palette is defined in `tailwind.config.js` under the `lob` namespace. Use **only** `lob-*` tokens.
+| Need                                  | Where                                                                         |
+| ------------------------------------- | ----------------------------------------------------------------------------- |
+| Which component for a job             | [`docs/design-system/PLAN.md`](docs/design-system/PLAN.md), "Need X → use Y"  |
+| Every component and variant, rendered | `/design` in dev (`src/features/design/DesignGallery.tsx`), works signed out  |
+| Colour, type and shadow tokens        | [`docs/design-system/TOKENS.md`](docs/design-system/TOKENS.md)                |
+| Owner decisions and what is next      | [`docs/design-system/PLAN.md`](docs/design-system/PLAN.md), "Steps" and "Log" |
 
-### Token map
+## Rules
 
-| Token             | Hex       | Use                                              |
-| ----------------- | --------- | ------------------------------------------------ |
-| `lob-teal`        | `#3D7A8A` | Primary brand, icons, links, active states       |
-| `lob-teal-dark`   | `#2A5A68` | Header gradient end, hover darken                |
-| `lob-teal-light`  | `#EAF4F7` | Tab tracks, chip backgrounds, subtle rows        |
-| `lob-coral`       | `#D94F2B` | Primary CTAs, active nav tab, destructive alerts |
-| `lob-coral-light` | `#FAEAE5` | Alert/warning card backgrounds                   |
-| `lob-amber`       | `#E8A030` | Warnings, in-progress, streak indicators         |
-| `lob-cream`       | `#F5F0E8` | Page background (set on `body`)                  |
-| `lob-dark`        | `#1C2B30` | All headings and body text                       |
-| `lob-muted`       | `#6B8A92` | Secondary text, placeholders, inactive icons     |
+These are enforced in review, and the first two in CI (`npm run design:check`):
 
-### Raw gray ban
+- **No hand-built buttons.** Every `<button>` lives in `src/components/ui`. Use `Button`,
+  `TextButton`, `IconButton`, `Chip`, `SegmentedControl`, `OptionRow`, `OptionTile`, `MenuItem`,
+  `CardLink` and the rest. If none fits, add the variant or prop to the component.
+- **Tokens only.** Colours come from `lob-*` tokens, never raw Tailwind palette classes
+  (`text-red-600`, `bg-amber-50`) or hex literals. The raw classes still in the code are held
+  by a per-file ratchet (`scripts/raw-colours-baseline.json`) that may only go down.
+- **Layout belongs to the parent.** Ui components carry no margins. The parent or a layout
+  component (`ActionRow`, `space-y-*`, `gap-*`) places them. `Button` and `TextButton` take no
+  `className`; their layout props are `fullWidth` and `grow`.
+- **Admins acting for another player** see the chosen player named and confirm with
+  `useConfirmOnBehalf` (CLAUDE.md, "Admin actions on behalf of others").
 
-Do not use Tailwind's `gray-*` scale for content text. Map to lob tokens:
-
-| Raw gray                          | Lob token                              |
-| --------------------------------- | -------------------------------------- |
-| `text-gray-800` / `text-gray-700` | `text-lob-dark`                        |
-| `text-gray-600` / `text-gray-500` | `text-lob-muted`                       |
-| `text-gray-400`                   | `text-lob-muted` (or add `opacity-70`) |
-
-`bg-gray-100` tracks → `bg-lob-teal-light`. `bg-gray-50` states → `bg-lob-teal-light` or `bg-white`.
-
-Exception: semantic status colors (`bg-green-50`, `text-green-700` for success) are fine — those are not brand tokens.
-
----
-
-## Page Structure
-
-Every top-level page uses this three-layer layout:
+## Page structure
 
 ```
-Page Header   ← h1 + optional primary CTA
-Sub-tabs      ← pill tab bar (only if page has distinct sections)
-Content area  ← space-y-4 cards
+PageHeader   ← title, optional eyebrow, back link, badge, right action and tabs
+Content      ← space-y-4 stack of cards
 ```
 
-### Page header
+`PageHeader tabs` covers page sections. A choice inside the page is `SegmentedControl`. Dashboard
+is the exception: `Greeting` acts as its header.
 
-```jsx
-<div className="flex items-center justify-between mb-1">
-  <h1 className="text-xl font-bold text-lob-dark">Page Title</h1>
-  {/* one optional primary action */}
-</div>
-```
+## Typography
 
-All six top-level pages use this exact pattern. Dashboard is the exception — the `<Greeting>` component acts as the page header.
+| Role                   | Classes                                                      |
+| ---------------------- | ------------------------------------------------------------ |
+| Page title             | `PageHeader title`                                           |
+| Card / section title   | `text-base font-semibold text-lob-dark`                      |
+| Eyebrow label          | `text-2xs font-bold uppercase tracking-wider text-lob-muted` |
+| Body                   | `text-sm text-lob-dark`                                      |
+| Secondary / supporting | `text-sm text-lob-muted`                                     |
+| Caption / meta         | `text-xs text-lob-muted`                                     |
 
----
+`text-2xs` is the 10px token (11px folded into `text-xs`); `text-[9px]` is still raw. An
+`.eyebrow` class is planned (P6).
 
-## Typography Scale
+## Cards
 
-| Role                           | Classes                                                          |
-| ------------------------------ | ---------------------------------------------------------------- |
-| Page title                     | `text-xl font-bold text-lob-dark`                                |
-| Card / section title           | `text-base font-semibold text-lob-dark`                          |
-| Eyebrow label                  | `text-[10px] font-bold text-lob-muted uppercase tracking-widest` |
-| Body                           | `text-sm text-lob-dark`                                          |
-| Secondary / supporting         | `text-sm text-lob-muted`                                         |
-| Caption / meta                 | `text-xs text-lob-muted`                                         |
-| Micro (nav labels, badge text) | `text-[10px] text-lob-muted`                                     |
+- `.card`: `bg-white rounded-2xl p-4`, card shadow and hairline border. The default.
+- `.card-elevated`: same shape, stronger shadow, for a hero card (`NextEventCard`).
+- A card that is one link is `CardLink` (`flush` for a full-bleed band, as on
+  `LeagueDashboardCard`), or `LinkCard` for the title / subtitle / chevron card.
+- A card that collapses is `CollapsibleCard`; a section label that collapses is
+  `CollapsibleSection`.
 
----
+## States
 
-## Card System
+- Empty: `EmptyState` (an inline variant is planned, P5).
+- Loading: `Spinner` or `Skeleton`. A loading card keeps its title (P5).
+- Alerts: `AlertBox variant`. Status labels: `Badge` (more tones planned, P4).
 
-Three variants — choose the right one, do not write inline card styles.
+## Where component styles live
 
-### `.card` (default)
-
-`bg-white rounded-2xl p-4` with subtle shadow + thin border. Use for all standard content cards.
-
-### `.card-elevated`
-
-Same shape, stronger shadow. Use for hero/featured cards only (NextEventCard, LeagueDashboardCard).
-
-### Accent card (inline modifier)
-
-```jsx
-<div className="card border-l-4 border-lob-amber">…</div>   // warning
-<div className="card border-l-4 border-lob-coral">…</div>   // error/action
-<div className="card border-l-4 border-lob-teal">…</div>    // info
-```
-
----
-
-## Buttons
-
-Use the components in `src/components/ui`. Do not hand-style a `<button>` or a link that looks like one. The full "need X → use Y" table and the owner decisions are in [`docs/design-system/PLAN.md`](docs/design-system/PLAN.md).
-
-| Component    | Variants                                                                                     | Use                                                                                                |
-| ------------ | -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| `Button`     | `primary`, `secondary`, `neutral`, `danger` × `sm` (32px), `md` (40px, default), `lg` (52px) | An action that starts something or takes you somewhere. `danger` only confirms a destructive flow. |
-| `TextButton` | tone `accent`, `primary`, `destructive`, `warning`, `neutral`                                | Underlined inline action, and a destructive action that isn't the screen's CTA                     |
-| `IconButton` | filled, `ghost`, `ghost-destructive`, `on-dark` × `sm`, `md`                                 | Icon-only action, always with `aria-label`                                                         |
-
-- A small utility action under content (Share, Add to calendar) is `Button variant="neutral" size="sm"`.
-- All three take `to` (router link), `href` (anchor) and `external` (new tab). Use a real `href` for links that must open on iOS Safari, which blocks `window.open` as a popup. A disabled link renders as a disabled button.
-- The components size their own icons: pass `icon={<Plus />}` or `<X />` with no `size`.
-- Layout lives in the components and their parents, not in `className`. `Button fullWidth` fills its container; buttons sharing a row go in `ActionRow` (alternative first, confirm last); `EmptyState` spaces its own action. `Button` and `TextButton` take no `className`. Spacing between elements comes from the parent (`space-y-*`, `gap-*`).
-
-### Where component styles live
-
-Styling lives in the component, as class maps built from Tailwind tokens (see `Button.tsx`), not in global classes in `src/index.css` and not at the call site. Use a co-located CSS module only for what classes can't express. `Skeleton.tsx` + `Skeleton.module.css` is the reference pair. Compose from tokens with `@apply` inside the module; do not hard-code hex values.
-
----
-
-## Sub-tab Pattern
-
-For pages with 2–3 distinct views:
-
-```jsx
-<div className="flex gap-1 bg-lob-teal-light p-1 rounded-xl mb-4">
-  {/* active */}
-  <button className="flex-1 py-1.5 text-xs font-semibold rounded-lg text-center bg-white text-lob-teal shadow-sm">
-    Members
-  </button>
-  {/* inactive */}
-  <button className="flex-1 py-1.5 text-xs font-semibold rounded-lg text-center text-lob-muted">
-    Shop
-  </button>
-</div>
-```
-
-Tab track is always `bg-lob-teal-light` (not `bg-gray-100`).
-
----
-
-## Empty States
-
-```jsx
-<div className="card flex flex-col items-center py-10 text-center gap-2">
-  <Icon size={36} className="text-lob-muted opacity-40" />
-  <p className="text-sm font-semibold text-lob-dark">Nothing here yet</p>
-  <p className="text-xs text-lob-muted">Supporting copy</p>
-</div>
-```
-
----
-
-## Section Dividers
-
-Use an eyebrow label + optional chevron toggle instead of `<hr>`:
-
-```jsx
-<button className="w-full flex items-center justify-between py-3 px-1">
-  <span className="text-[10px] font-bold text-lob-muted uppercase tracking-widest flex items-center gap-2">
-    <Clock size={13} className="text-lob-muted opacity-60" />
-    Past
-  </span>
-  <ChevronDown size={14} className="text-lob-muted opacity-60" />
-</button>
-```
-
----
-
-## Loading States
-
-Spinner: `border-lob-teal border-t-transparent animate-spin`. Reference: `RouteFallback` in `App.jsx`.
-
----
+Styling lives in the component, as class maps built from tokens (see `Button.tsx`), not in global
+classes in `src/index.css` and not at the call site. Use a co-located CSS module only for what
+classes can't express; `Skeleton.tsx` + `Skeleton.module.css` is the reference pair.
 
 ## Motion
 
-- Press feedback: `active:scale-95 transition-all duration-150` on all interactive elements
-- Progress bars: `transition-all duration-500`
-- Route entry: `animate-fade-in-up` (defined in tailwind config)
+- Press feedback: `not-disabled:active:scale-95` (the components already apply it).
+- Progress bars: `transition-all duration-500`.
+- Route entry: `animate-fade-in-up` (Tailwind config).
 
----
+## What not to touch
 
-## What Not to Touch
-
-- `src/lib/letterColors.ts` — **LOCKED 2026-04-30**, do not change avatar color values
-- `.header-gradient` CSS class — keep the exact teal gradient values
-- `.card` and `.card-elevated` shadow values — deliberately tuned, do not adjust
-- `pb-safe` iOS safe-area utility
-- Bottom nav layout, active state, and icon sizes
+- `src/lib/letterColors.ts`: **locked 2026-04-30**, do not change the avatar colour values.
+- `bg-header` (`tailwind.config.js`): keep the exact teal gradient values.
+- `.card` and `.card-elevated` shadows: deliberately tuned.
+- The `pb-safe` iOS safe-area utility.
+- Bottom nav layout, active state and icon sizes.

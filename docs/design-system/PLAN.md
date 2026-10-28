@@ -140,11 +140,11 @@ the gallery, and runs `npm run design:baseline` when counts drop.
 | P2d | **Layout props instead of `className`.** Bring the repeated layout classes into the components. Button: `fullWidth` for `w-full` (39 uses); an `ActionRow` component for paired buttons, replacing `flex-1` (28) and fixing their order and gap; `EmptyState` spaces its own action, replacing `mt-2` (14); Button never shrinks, replacing `flex-shrink-0` (1). Then review the remaining `className` uses on `TextButton` (5) and `IconButton` (3). Once a component has no `className` callers left, consider removing the prop.                                                                                                                | Done (#74)                |
 | P2e | **Zero hand-built buttons: actions.** 176 raw `<button>`s in 80 files outside `src/components/ui` (2026-10-26 inventory). Move the ~100 actions and text actions onto `Button` and `TextButton` (CTAs, accept/decline and save/cancel pairs, Sign out, Confirm, "Add question", "Reset to defaults"), and expand/collapse headers onto `CollapsibleSection` / `CollapsibleCard`. Add a lint rule banning `<button>` outside `src/components/ui`, as a per-file ratchet so the count can only go down. Depends on P2d's `fullWidth` and `ActionRow`.                                                                                                | Done (#75, #76)           |
 | P2f | **Zero hand-built buttons: chips, options, menus.** New components for what's left: `Chip` (toggle, filter, selection: filter pills, sizes, rounds, divisions, lefty, gender and position), an option row / tile (player pickers, Oscars vote tiles and category grid, lightbox thumbnails) and `Menu` + `MenuItem` (event admin menu, payment method picker, status override, team search). Two-to-four way choices go to `SegmentedControl`. Card-shaped links: `CardLink` (owner, 2026-10-26). The ratchet reaches zero and the rule becomes absolute. Four PRs: chips and choices, option rows and tiles, menus, then card links and the rest. | Done (#77, #80, #81, #86) |
-| P3  | **`AlertBox` size and role, `FormError` in ui.** Migrate the 15 hand-built alert boxes and 7 field-error spellings. The dismiss X in a tinted box (`AlertBox`, `TeamNotices`, the event error banner) is still a bare 14px icon: give it a proper tap target here.                                                                                                                                                                                                                                                                                                                                                                                 |                           |
-| P4  | **`Badge` tones** (`success`, `neutral`, `warning`, `outline`) and **payment status single source** (`paymentStatus.ts`, `PaymentStatusBadge` on `Badge`; blue "transferred" gets a token). Rename team-state "Confirmed".                                                                                                                                                                                                                                                                                                                                                                                                                         |                           |
+| P3  | **`AlertBox` size, role and dismiss; `FormError` in ui.** About 29 files build a tinted box by hand (`-light` surface with a `-border` border; triage first, as some are highlighted rows or cards rather than alerts) and about 23 lines spell a field error by hand (`text-xs text-lob-coral` / `-danger`). `AlertBox` gains `size="sm"`, a `role` (alert for errors, status otherwise) and a dismiss that is an `IconButton ghost sm` instead of the bare 14px X. `FormError` moves from `features/auth` to `components/ui`. Two PRs: alerts, then field errors.                                                                                |                           |
+| P4  | **`Badge` tones** (`success`, `neutral`, `warning`, `outline`) and **payment status single source** (`paymentStatus.ts`, `PaymentStatusBadge` on `Badge`; the blue "transferred" pill and merch "delivered" get a token). About 13 hand-built status pills move onto `Badge`. Rename team-state "Confirmed".                                                                                                                                                                                                                                                                                                                                       |                           |
 | P5  | **Empty and signed-out states.** `EmptyState variant="inline"`, `SignInPrompt`; loading states: a loading card keeps its title or header, so the viewer sees what is loading, and shows `Spinner` / `Skeleton` in the body instead of `return null`.                                                                                                                                                                                                                                                                                                                                                                                               |                           |
-| P6  | **Layout pieces.** `RankMarker` + `PlayerRow highlighted`, `CardHeader`, `RosterHeading`, `.panel`, `.eyebrow`, `SearchInput`; `ProfileFields` preferred side → `SegmentedControl`; a heading element inside the `CollapsibleCard` header button (review of #76).                                                                                                                                                                                                                                                                                                                                                                                  |                           |
-| P7  | **Lock-down.** Tokens for decorative colours (medal gold, avatar palette, gender marks, selection states). Then switch `theme.extend.colors` to a restricted `theme.colors` so raw palette classes stop generating, and add a lint rule for unknown classes (e.g. `eslint-plugin-tailwindcss`, check ESLint 9 support). Retire `design:check` once the theme is locked.                                                                                                                                                                                                                                                                            |                           |
+| P6  | **Layout pieces.** `RankMarker` + `PlayerRow highlighted`, `CardHeader`, `RosterHeading`, `.panel` (first use: the blue Playtomic-level panel copied in three forms), `.eyebrow`, `SearchInput` (the TeamForm player search could become a proper combobox here, see #81); a heading element inside the `CollapsibleCard` header button (review of #76). Starts after the card-pattern conversation (see "Later").                                                                                                                                                                                                                                 |                           |
+| P7  | **Lock-down.** Tokens for decorative colours (medal gold, avatar palette, gender marks) and for `text-[9px]` (14 uses, the bottom nav labels among them). Then switch `theme.extend.colors` to a restricted `theme.colors` so raw palette classes stop generating, and add a lint rule for unknown classes (e.g. `eslint-plugin-tailwindcss`, check ESLint 9 support). Retire the colour ratchet once the theme is locked; keep the `<button>` check.                                                                                                                                                                                              |                           |
 
 The gallery exists: `/design` in dev (`src/features/design/DesignGallery.tsx`;
 open to guests in dev only, left out of the production build). Each step adds
@@ -154,6 +154,27 @@ its components to it.
 helpers: `formatTeamName` / `fullName`, `isTeamEvent` at the 7 `entryMode`
 sites, `registeredEntries`, and the King of the Court helpers (`isKingCourt`,
 `placingText`, `ordinal`, `medalFor`, `useViewerKingOfCourt`).
+
+## Next
+
+Order of work after P2f (proposed 2026-10-28, see "Open owner calls"):
+
+1. **Dialog focus (#84).** `Modal` and `ConfirmDialog` take focus on open,
+   keep it inside, close on Escape when dismissible and return focus on
+   close. A ui fix that every confirm, including the on-behalf ones, relies
+   on for keyboard use. Small; its own PR.
+2. **P3 part 1: alerts.** `AlertBox` size, role and dismiss, then the
+   hand-built tinted boxes.
+3. **P3 part 2: field errors.** `FormError` in ui and the hand-built error
+   lines.
+4. **P4: `Badge` tones and payment status.**
+5. **P5: empty, signed-out and loading states.**
+6. **Card-pattern conversation** with the owner (below), then **P6**.
+7. **P7: lock-down.**
+
+Feature bugs found along the way are GitHub issues, outside this plan:
+#82 (Lobster Way open question after a reorder) and #83 (Admin "unpaid
+registrations" row opens merch). Each is a small PR whenever it suits.
 
 ## Later
 
@@ -168,7 +189,10 @@ sites, `registeredEntries`, and the King of the Court helpers (`isKingCourt`,
 
 ## Open owner calls
 
-None.
+- **Order of the next steps** (above): dialog focus (#84) before P3, or fold it
+  into a later step?
+- **Card-pattern conversation**: when to have it. It has to come before P6;
+  P3 to P5 don't depend on it.
 
 ## Log
 
@@ -456,3 +480,13 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
   disabled button. `CardLink flush` is `card p-0 overflow-hidden` rather than
   a copy of `.card`, and a disabled `CardLink` dims and doesn't animate. The
   next-event "You're registered!" and "Not signed up yet" pills are `Badge`s.
+- **2026-10-28.** Docs refresh after P2f. The root `DESIGN_SYSTEM.md` still
+  showed hand-built tabs, empty states, section toggles and spinners, raw
+  10px sizes and a "status colours may stay raw" exception. It is now a short
+  conventions page that points here, to TOKENS.md and to `/design`, and states
+  the CI rules. TOKENS.md gains the brand and text tokens (from the old root
+  table) and an up-to-date "still raw" list: the blue "selected" toggles are
+  gone, and the blue Playtomic-level panel, copied three times, is listed.
+  Steps P3, P4, P6 and P7 are re-counted from the code. `ProfileFields`
+  preferred side leaves P6, since P2f part 1 already made it a
+  `SegmentedControl`. New "Next" section with the proposed order.
