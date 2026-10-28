@@ -65,6 +65,23 @@ is the exception: `Greeting` acts as its header.
 - Loading: `Spinner` or `Skeleton`. A loading card keeps its title (P5).
 - Alerts: `AlertBox variant`. Status labels: `Badge` (more tones planned, P4).
 
+## Overlays
+
+- **Sheets and dialogs** are `Modal` (a bottom sheet). Confirmations go through `useConfirm`, or
+  `useConfirmOnBehalf` for an admin acting for another player. Both wrap Radix Dialog, which
+  keeps Tab inside, hides the page behind and handles a dialog opened from inside another.
+- **First focus** goes to the child marked `data-autofocus`, otherwise the sheet itself, so a
+  form doesn't pop the phone keyboard. Focus returns to the opener on close.
+- **`dismissible`** (the default) closes on a backdrop tap, a drag down and Escape. An open menu
+  or search list inside the sheet takes Escape first. A sheet with no `title` names itself with
+  `labelId`.
+- **Menus** are `Menu` + `MenuItem`, on Radix DropdownMenu. Spread the trigger props onto one
+  `Button` or `IconButton`. The chosen item's `onSelect` runs once the menu has closed and focus
+  is back on the trigger. Suggestions under a search field are `MenuList` (no Radix). SwapPanel,
+  CompareView and the Oscars drawer move onto Dialog next (PLAN.md "Next").
+- **Test overlays with real input.** In the browser, use real taps and key presses: a scripted
+  `.click()` or jsdom `fireEvent` misses timing bugs like #88.
+
 ## Where component styles live
 
 Styling lives in the component, as class maps built from tokens (see `Button.tsx`), not in global
