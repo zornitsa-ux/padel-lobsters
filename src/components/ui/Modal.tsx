@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock'
+import { focusEdge, useDialogFocus } from './dialogFocus'
 
 interface ModalProps {
   open: boolean
@@ -8,20 +9,38 @@ interface ModalProps {
   children: React.ReactNode
   footer?: React.ReactNode
   /**
-   * Backdrop tap and drag-down close the sheet. Set false for long forms,
+   * Backdrop tap, drag-down and Escape close the sheet. Set false for long forms,
    * where a mis-tap would discard typed input — closing then has to go
    * through an explicit control. The drag handle is hidden too, since it
    * advertises a gesture that would no longer do anything.
    */
   dismissible?: boolean
+  /** `alertdialog` for a confirmation that interrupts the flow. */
+  role?: 'dialog' | 'alertdialog'
 }
 
-export function Modal({ open, onClose, title, children, footer, dismissible = true }: ModalProps) {
+/**
+ * A bottom sheet. Focus moves into it on open (an `autoFocus` child chooses where), Tab stays
+ * inside, and focus returns to the opener on close. Escape stops at the sheet, so a panel
+ * behind it stays open.
+ */
+export function Modal({
+  open,
+  onClose,
+  title,
+  children,
+  footer,
+  dismissible = true,
+  role = 'dialog',
+}: ModalProps) {
   const dragStartY = useRef<number | null>(null)
   const [dragY, setDragY] = useState(0)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const sheetRef = useRef<HTMLDivElement>(null)
+  const titleId = useId()
 
   useBodyScrollLock(open)
+  useDialogFocus({ open, sheetRef })
 
   useEffect(() => {
     if (!open) setDragY(0)
@@ -54,13 +73,37 @@ export function Modal({ open, onClose, title, children, footer, dismissible = tr
     }
   }
 
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key !== 'Escape') return
+    e.stopPropagation()
+    if (dismissible) onClose()
+  }
+
+  const focusGuard = (edge: 'first' | 'last') => (
+    <span
+      tabIndex={0}
+      aria-hidden="true"
+      className="fixed outline-none"
+      onFocus={() => focusEdge({ sheet: sheetRef.current, edge })}
+    />
+  )
+
   return (
     <div
       className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center"
       onClick={dismissible ? onClose : undefined}
+      onKeyDown={handleKeyDown}
+      // A tap on the backdrop would otherwise drop focus to the page behind.
+      onMouseDown={(e) => e.target === e.currentTarget && e.preventDefault()}
     >
+      {focusGuard('last')}
       <div
-        className="w-full max-w-lg bg-white rounded-t-3xl shadow-xl flex flex-col max-h-[90dvh]"
+        ref={sheetRef}
+        role={role}
+        aria-modal="true"
+        aria-labelledby={title ? titleId : undefined}
+        tabIndex={-1}
+        className="w-full max-w-lg bg-white rounded-t-3xl shadow-xl flex flex-col max-h-[90dvh] outline-none"
         style={{
           transform: `translateY(${dragY}px)`,
           transition: dragY === 0 ? 'transform 0.25s ease' : 'none',
@@ -78,7 +121,10 @@ export function Modal({ open, onClose, title, children, footer, dismissible = tr
           <div className="h-6 flex-shrink-0" />
         )}
         {title && (
-          <div className="px-5 py-3 border-b border-lob-line font-semibold text-lob-dark text-base">
+          <div
+            id={titleId}
+            className="px-5 py-3 border-b border-lob-line font-semibold text-lob-dark text-base"
+          >
             {title}
           </div>
         )}
@@ -91,6 +137,7 @@ export function Modal({ open, onClose, title, children, footer, dismissible = tr
           </div>
         )}
       </div>
+      {focusGuard('first')}
     </div>
   )
 }

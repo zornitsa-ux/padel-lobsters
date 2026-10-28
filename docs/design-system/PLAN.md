@@ -157,12 +157,11 @@ sites, `registeredEntries`, and the King of the Court helpers (`isKingCourt`,
 
 ## Next
 
-Order of work after P2f (proposed 2026-10-28, see "Open owner calls"):
+Order of work after P2f (owner, 2026-10-28):
 
-1. **Dialog focus (#84).** `Modal` and `ConfirmDialog` take focus on open,
+1. ~~**Dialog focus (#84).** `Modal` and `ConfirmDialog` take focus on open,
    keep it inside, close on Escape when dismissible and return focus on
-   close. A ui fix that every confirm, including the on-behalf ones, relies
-   on for keyboard use. Small; its own PR.
+   close.~~ Done on `dialog-focus`.
 2. **P3 part 1: alerts.** `AlertBox` size, role and dismiss, then the
    hand-built tinted boxes.
 3. **P3 part 2: field errors.** `FormError` in ui and the hand-built error
@@ -173,8 +172,11 @@ Order of work after P2f (proposed 2026-10-28, see "Open owner calls"):
 7. **P7: lock-down.**
 
 Feature bugs found along the way are GitHub issues, outside this plan:
-#82 (Lobster Way open question after a reorder) and #83 (Admin "unpaid
-registrations" row opens merch). Each is a small PR whenever it suits.
+#82 (Lobster Way open question after a reorder), #83 (Admin "unpaid
+registrations" row opens merch), #88 (a `Menu` choice made by a real tap or
+key does nothing) and #89 (the confirm dialog drops the on-behalf message's
+line breaks). Each is a small PR whenever it suits; #88 breaks every admin
+menu, so it comes first.
 
 ## Later
 
@@ -189,8 +191,6 @@ registrations" row opens merch). Each is a small PR whenever it suits.
 
 ## Open owner calls
 
-- **Order of the next steps** (above): dialog focus (#84) before P3, or fold it
-  into a later step?
 - **Card-pattern conversation**: when to have it. It has to come before P6;
   P3 to P5 don't depend on it.
 
@@ -490,3 +490,22 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
   Steps P3, P4, P6 and P7 are re-counted from the code. `ProfileFields`
   preferred side leaves P6, since P2f part 1 already made it a
   `SegmentedControl`. New "Next" section with the proposed order.
+- **2026-10-28.** Owner: dialog focus (#84) first, then P3 as two PRs (alerts,
+  then field errors), each started after the previous one merges.
+- **2026-10-28.** Dialog focus on `dialog-focus` (#84). `Modal` handles it, so
+  every sheet and confirm gets it (`components/ui/dialogFocus.ts`). On open,
+  focus moves into the sheet, unless an `autoFocus` child already took it (the
+  link-player and transfer searches). Two focus guards around the sheet wrap
+  Tab and Shift+Tab, so focus can't reach the page behind. Escape stops at the
+  sheet, so SwapPanel, CompareView or a sheet behind stays open, and closes it
+  only when `dismissible`. A backdrop tap no longer drops focus to the page.
+  On close, focus returns to the element that opened the sheet, like `Menu`
+  returns it to its trigger, unless focus has moved elsewhere since. The sheet is
+  `role="dialog"` with `aria-modal`, named by its title; `ConfirmDialog` is an
+  `alertdialog`. `ConfirmDialog` focuses Confirm, so Enter confirms, but
+  Cancel in a destructive flow, so a stray Enter can't delete. A confirm
+  opened from inside a sheet takes focus, Escape closes only the confirm, and
+  focus goes back to the button in the sheet. Browser test found two older
+  bugs: #88 (`Menu` closes in the click capture phase, so with a real tap or
+  key the item never acts; every admin menu, including "Mark Paid", is
+  affected) and #89 (on-behalf confirm messages lose their line breaks).

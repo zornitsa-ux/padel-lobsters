@@ -34,12 +34,17 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo(() => confirm, [confirm])
 
+  // Enter confirms by default; a destructive flow starts on Cancel so Enter can't delete.
   const footer = pending && (
     <ActionRow>
-      <Button onClick={() => settle(false)} variant="secondary">
+      <Button onClick={() => settle(false)} variant="secondary" autoFocus={pending.destructive}>
         {pending.cancelLabel || 'Cancel'}
       </Button>
-      <Button onClick={() => settle(true)} variant={pending.destructive ? 'danger' : 'primary'}>
+      <Button
+        onClick={() => settle(true)}
+        variant={pending.destructive ? 'danger' : 'primary'}
+        autoFocus={!pending.destructive}
+      >
         {pending.confirmLabel || 'Confirm'}
       </Button>
     </ActionRow>
@@ -51,6 +56,7 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
       <Modal
         open={pending !== null}
         onClose={() => settle(false)}
+        role="alertdialog"
         title={pending?.title}
         footer={footer}
       >
