@@ -186,6 +186,7 @@ export default function MatchmakingContainer({
   const handleOpenCompare = () => {
     setAltConfig(config)
     setAltRun(null)
+    setError(null)
     setComparing(true)
   }
 
@@ -359,6 +360,7 @@ export default function MatchmakingContainer({
           onApply={handleApplyFix}
           onCancel={handleCancelFix}
           applying={busy === 'fix'}
+          error={error}
         />
       )}
 
@@ -378,6 +380,8 @@ export default function MatchmakingContainer({
           generatingAlt={busy === 'alt'}
           altRun={altRun}
           onUseAlternative={handleUseAlternative}
+          status={status}
+          error={error}
         />
       )}
 

@@ -114,9 +114,6 @@ export function Menu({ label, showLabel = false, align = 'right', trigger, child
           aria-label={label}
           // Radix names the menu after its trigger.
           aria-labelledby={undefined}
-          // Radix closes the menu but lets the key go on to `window` listeners (SwapPanel,
-          // CompareView, the Oscars drawer), which would close the panel too.
-          onEscapeKeyDown={(event) => event.stopPropagation()}
           onCloseAutoFocus={handleCloseAutoFocus}
           className={`z-50 w-max min-w-44 max-w-72 ${MENU_PANEL}`}
         >

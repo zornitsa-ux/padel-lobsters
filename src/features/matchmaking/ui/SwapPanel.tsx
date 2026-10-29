@@ -1,20 +1,17 @@
-import { createPortal } from 'react-dom'
-import { X } from 'lucide-react'
 import type { SwapSuggestion, SwapTarget } from '../domain/swaps'
 import type { ScheduleRun } from '../domain/types'
-import { useBodyScrollLock } from '../../../hooks/useBodyScrollLock'
-import { useEscapeToClose } from '../../../hooks/useEscapeToClose'
 import type { PlayerNamesById } from './playerNames'
 import { emptyCopy, panelHeading, swapRowCopy } from './swapCopy'
 import { Button } from '../../../components/ui/Button'
-import { IconButton } from '../../../components/ui/IconButton'
+import { AlertBox } from '../../../components/ui/AlertBox'
+import { Modal } from '../../../components/ui/Modal'
 import { TextButton } from '../../../components/ui/TextButton'
 
-// Presentational only (D-026 "Option A", generalized in D-036): a focused,
-// viewport-anchored overlay listing ranked swaps for one target (a repeat, an
-// uneven court, or a tapped player), each in plain player-facing language
-// (D-022 — no cost numbers, no dimension jargon) with an Apply action.
-// Viewport-anchored so it is visible wherever the admin tapped (M3.6 Finding 8).
+// Presentational only (D-026 "Option A", generalized in D-036): a sheet listing
+// ranked swaps for one target (a repeat, an uneven court, or a tapped player),
+// each in plain player-facing language (D-022 — no cost numbers, no dimension
+// jargon) with an Apply action. A sheet rather than inline, so it is visible
+// wherever the admin tapped (M3.6 Finding 8).
 
 export type SwapPanelProps = {
   target: SwapTarget
@@ -27,6 +24,8 @@ export type SwapPanelProps = {
   onApply: (suggestion: SwapSuggestion) => void
   onCancel: () => void
   applying?: boolean
+  // Shown inside the sheet, since the page behind it is hidden from assistive tech.
+  error?: string | null
 }
 
 function SwapRow({
@@ -72,71 +71,60 @@ export default function SwapPanel({
   onApply,
   onCancel,
   applying = false,
+  error = null,
 }: SwapPanelProps) {
-  useBodyScrollLock(true)
-  useEscapeToClose({ active: true, onClose: onCancel })
-
   const heading = panelHeading({ target, names: playerNamesById })
 
-  return createPortal(
-    <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-4"
-      onClick={onCancel}
+  return (
+    <Modal
+      open
+      onClose={onCancel}
+      // A swap query in flight would reopen the sheet once it lands.
+      dismissible={!applying}
+      title={heading.title}
+      description={heading.detail}
+      footer={
+        <Button onClick={onCancel} disabled={applying} variant="secondary" fullWidth>
+          Cancel
+        </Button>
+      }
     >
-      <p className="sr-only" role="status" aria-live="polite">
-        {suggestions.length} swap option{suggestions.length === 1 ? '' : 's'}
-      </p>
-
-      <div
-        className="w-full max-w-md bg-white rounded-2xl shadow-xl max-h-[85vh] overflow-y-auto"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="sticky top-0 bg-white px-4 py-3 border-b border-lob-line flex items-start justify-between gap-4 rounded-t-2xl">
-          <div>
-            <p className="font-semibold text-lob-slate text-sm">{heading.title}</p>
-            <p className="text-xs text-lob-muted mt-0.5">{heading.detail}</p>
+      <div className="space-y-3">
+        <p className="sr-only" role="status" aria-live="polite">
+          {suggestions.length} swap option{suggestions.length === 1 ? '' : 's'}
+        </p>
+        {error && (
+          <div role="alert">
+            <AlertBox variant="error">{error}</AlertBox>
           </div>
-          <IconButton onClick={onCancel} aria-label="Close swap options" variant="ghost">
-            <X />
-          </IconButton>
-        </div>
-
-        <div className="px-4 py-4 space-y-3">
-          {suggestions.length === 0 ? (
-            <p className="text-xs text-lob-muted">{emptyCopy({ target, showAll: showingAll })}</p>
-          ) : (
-            <ul className="space-y-3">
-              {suggestions.map((suggestion) => (
-                <SwapRow
-                  key={`${suggestion.move.outPlayerId}-${suggestion.move.inPlayerId}`}
-                  suggestion={suggestion}
-                  currentRun={currentRun}
-                  target={target}
-                  playerNamesById={playerNamesById}
-                  onApply={onApply}
-                  applying={applying}
-                />
-              ))}
-            </ul>
-          )}
-          {showingAll ? (
-            <p className="text-xs text-lob-muted">
-              Showing every swap, including ones that break a rule.
-            </p>
-          ) : (
-            <TextButton tone="neutral" onClick={onShowAll} disabled={applying}>
-              Show all swaps
-            </TextButton>
-          )}
-        </div>
-
-        <div className="sticky bottom-0 bg-white border-t border-lob-line px-4 py-3 rounded-b-2xl">
-          <Button onClick={onCancel} disabled={applying} variant="secondary" fullWidth>
-            Cancel
-          </Button>
-        </div>
+        )}
+        {suggestions.length === 0 ? (
+          <p className="text-xs text-lob-muted">{emptyCopy({ target, showAll: showingAll })}</p>
+        ) : (
+          <ul className="space-y-3">
+            {suggestions.map((suggestion) => (
+              <SwapRow
+                key={`${suggestion.move.outPlayerId}-${suggestion.move.inPlayerId}`}
+                suggestion={suggestion}
+                currentRun={currentRun}
+                target={target}
+                playerNamesById={playerNamesById}
+                onApply={onApply}
+                applying={applying}
+              />
+            ))}
+          </ul>
+        )}
+        {showingAll ? (
+          <p className="text-xs text-lob-muted">
+            Showing every swap, including ones that break a rule.
+          </p>
+        ) : (
+          <TextButton tone="neutral" onClick={onShowAll} disabled={applying}>
+            Show all swaps
+          </TextButton>
+        )}
       </div>
-    </div>,
-    document.body,
+    </Modal>
   )
 }

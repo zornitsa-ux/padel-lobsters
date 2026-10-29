@@ -63,6 +63,9 @@ component doesn't fit, fix the component, not the call site.**
 | Admin acts for another player        | `useConfirmOnBehalf` before the write                | exists    |
 | Whole card is one link               | `CardLink` (`flush` for a full-bleed band)           | exists    |
 | Card link: title, subtitle, chevron  | `LinkCard` (built on `CardLink`)                     | exists    |
+| Sheet or dialog                      | `Modal` (`description` for a line under the title)   | exists    |
+| Task with more room than a sheet     | `FullScreenDialog`                                   | exists    |
+| Short list of choices from the side  | `Drawer`                                             | exists    |
 | Menu of actions                      | `Menu` + `MenuItem` (`tone="danger"`, `current`)     | exists    |
 | Suggestions under a search field     | `MenuList keepFocus` + `MenuItem`                    | exists    |
 | Underlined / inline text action      | `TextButton tone=… size=…` (`to` / `href` for links) | exists    |
@@ -165,8 +168,8 @@ primitives (see the Log) before P3:
    keep their props and wrap `@radix-ui/react-dialog`.~~ Done; see the Log.
 3. ~~**`Menu` onto Radix DropdownMenu.** `MenuList` for search suggestions
    stays ours until a combobox (P6 `SearchInput`).~~ Done; see the Log.
-4. **SwapPanel, CompareView and the Oscars drawer onto Dialog.** Each rolls
-   its own Escape, scroll lock and focus today.
+4. ~~**SwapPanel, CompareView and the Oscars drawer onto Dialog.** Each rolls
+   its own Escape, scroll lock and focus today.~~ Done; see the Log.
 5. **P3 part 1: alerts.** `AlertBox` size, role and dismiss, then the
    hand-built tinted boxes.
 6. **P3 part 2: field errors.** `FormError` in ui and the hand-built error
@@ -632,3 +635,52 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
   page; league manage doesn't. Review of this PR: no lazy chunk in the app
   recovers from a failed load (a stale deploy blanks the screen); older
   than this PR, #93.
+
+- **2026-10-28.** Step 4 on `panels-dialog`. Owner: a shared Radix base that
+  `Modal` and new shape components build on, rather than a placement prop on
+  `Modal`. `DialogShell` (`components/ui/DialogShell.tsx`) holds what `Modal`
+  did (first focus, return focus, Escape, outside taps, toasts as inside,
+  `labelId`, `focusKey`) and the header, body and footer, with one class map
+  per shape:
+  - **`Modal`**: the bottom sheet, unchanged apart from the shell. It keeps
+    drag-to-dismiss and the handle.
+  - **`FullScreenDialog`**: CompareView. A white screen that scrolls as a
+    whole, with header, body and footer in a `max-w-2xl` column.
+  - **`Drawer`**: the Oscars admin menu, from the right (`w-72 max-w-[85%]`).
+    A backdrop tap closes it.
+  - All three take `description` (a line under the title, which also describes
+    the dialog). `FullScreenDialog` and `Drawer` close with an X in the header
+    (`IconButton ghost`, "Close"); the sheet has its handle instead.
+
+  SwapPanel becomes a plain `Modal`, so it is a bottom sheet on desktop too
+  rather than a centred card, and loses its X (Cancel, Escape, a backdrop tap
+  and a drag still close it). Each panel's status line moves inside the
+  dialog, where Radix's `aria-hidden` doesn't reach it. Visual shifts, all
+  onto the shared shape: headers use the sheet's title style and `px-5`
+  padding, the drawer's backdrop darkens to the sheet's `black/60` and its
+  header loses `pt-12`, and the drawer opens with focus on itself rather than
+  on its X. `useEscapeToClose` and `useBodyScrollLock` are deleted, since
+  nothing else used them. With no `window` Escape listeners left, `Menu` and
+  the shell stop calling `stopPropagation` on Escape: Radix gives the key only
+  to the top layer. `escapeIsForPopup` stays whole, for `MenuList` and the
+  TeamForm search, which aren't Radix layers. First paint: 210.6 → 210.9 KB
+  gzip (`localdev` build).
+
+  Review of this PR. The matchmaking error alert and status line sit on the
+  page, which is now hidden from assistive tech behind the dialog, so
+  CompareView and SwapPanel show the error inside (an `AlertBox`), and
+  CompareView announces the container's status, so "Regenerate alternative"
+  is announced again. Opening Compare clears an older error. SwapPanel isn't
+  dismissible while a swap query runs, as its Cancel already wasn't, since the
+  query would reopen it. The shapes' differences live in one `SHAPES` record.
+  Browser testing (real clicks and keys) on /design, SwapPanel and CompareView
+  in the schedule, and the Oscars drawer passed every check: focus in and
+  back, Tab kept inside, Escape and backdrop taps, a sheet, menu or confirm
+  inside closing alone, the status lines announcing, the page behind not
+  scrolling. Choosing a view in the Oscars drawer drops focus to the page,
+  since the view switch remounts the "Menu" trigger; that was so before, and
+  is #95. One failure showed only when a scripted page evaluation (the browser tool's
+  JavaScript step) ran between closing a menu inside a dialog and the next
+  tap: Radix then kept the menu's layer, and a confirm opened next lost Escape
+  to the dialog behind. It happens with `Menu`'s old `stopPropagation` too, and
+  never with real input alone.

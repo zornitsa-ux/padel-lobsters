@@ -78,16 +78,6 @@ describe('Menu', () => {
     await waitFor(() => expect(document.activeElement).toBe(trigger))
   })
 
-  it('keeps Escape from reaching a surrounding panel', () => {
-    openWithKeyboard(renderMenu())
-    const onWindowKey = vi.fn()
-    window.addEventListener('keydown', onWindowKey)
-    fireEvent.keyDown(item('Edit') as Element, { key: 'Escape' })
-    window.removeEventListener('keydown', onWindowKey)
-    expect(screen.queryByRole('menu')).toBeNull()
-    expect(onWindowKey).not.toHaveBeenCalled()
-  })
-
   it('closes, refocuses the trigger, then runs the chosen item', async () => {
     let focusWhenRun: Element | null = null
     const onEdit = vi.fn(() => {

@@ -67,18 +67,23 @@ is the exception: `Greeting` acts as its header.
 
 ## Overlays
 
-- **Sheets and dialogs** are `Modal` (a bottom sheet). Confirmations go through `useConfirm`, or
-  `useConfirmOnBehalf` for an admin acting for another player. Both wrap Radix Dialog, which
-  keeps Tab inside, hides the page behind and handles a dialog opened from inside another.
-- **First focus** goes to the child marked `data-autofocus`, otherwise the sheet itself, so a
+- **Sheets and dialogs** are `Modal` (a bottom sheet). A task that needs more room is
+  `FullScreenDialog`; a short list of choices from the side is `Drawer`. Confirmations go through
+  `useConfirm`, or `useConfirmOnBehalf` for an admin acting for another player. All of them build
+  on `DialogShell` (Radix Dialog), which keeps Tab inside, hides the page behind, locks its
+  scroll and handles a dialog or menu opened from inside another: Escape and outside taps reach
+  only the top one.
+- **Header:** `title`, and `description` for a line under it. `FullScreenDialog` and `Drawer`
+  close with an X there; the sheet has its drag handle. A live status line goes inside the
+  dialog, since the page behind is hidden from assistive tech.
+- **First focus** goes to the child marked `data-autofocus`, otherwise the dialog itself, so a
   form doesn't pop the phone keyboard. Focus returns to the opener on close.
-- **`dismissible`** (the default) closes on a backdrop tap, a drag down and Escape. An open menu
-  or search list inside the sheet takes Escape first. A sheet with no `title` names itself with
-  `labelId`.
+- **`dismissible`** (the default) closes on Escape and a backdrop tap, and the sheet on a drag
+  down. An open menu or search list inside takes Escape first. A sheet with no `title` names
+  itself with `labelId`.
 - **Menus** are `Menu` + `MenuItem`, on Radix DropdownMenu. Spread the trigger props onto one
   `Button` or `IconButton`. The chosen item's `onSelect` runs once the menu has closed and focus
-  is back on the trigger. Suggestions under a search field are `MenuList` (no Radix). SwapPanel,
-  CompareView and the Oscars drawer move onto Dialog next (PLAN.md "Next").
+  is back on the trigger. Suggestions under a search field are `MenuList` (no Radix).
 - **Test overlays with real input.** In the browser, use real taps and key presses: a scripted
   `.click()` or jsdom `fireEvent` misses timing bugs like #88.
 
