@@ -170,19 +170,84 @@ primitives (see the Log) before P3:
    stays ours until a combobox (P6 `SearchInput`).~~ Done; see the Log.
 4. ~~**SwapPanel, CompareView and the Oscars drawer onto Dialog.** Each rolls
    its own Escape, scroll lock and focus today.~~ Done; see the Log.
-5. **P3 part 1: alerts.** `AlertBox` size, role and dismiss, then the
+5. **E2E safety net** (owner, 2026-10-29; below). Before any more UI moves.
+6. **P3 part 1: alerts.** `AlertBox` size, role and dismiss, then the
    hand-built tinted boxes.
-6. **P3 part 2: field errors.** `FormError` in ui and the hand-built error
+7. **P3 part 2: field errors.** `FormError` in ui and the hand-built error
    lines.
-7. **P4: `Badge` tones and payment status.**
-8. **P5: empty, signed-out and loading states.**
-9. **Card-pattern conversation** with the owner (below), then **P6**.
-10. **P7: lock-down.**
+8. **P4: `Badge` tones and payment status.**
+9. **P5: empty, signed-out and loading states.**
+10. **Card-pattern conversation** with the owner (below), then **P6**.
+11. **P7: lock-down.**
+
+### E2E safety net
+
+Every step so far has moved UI the whole app depends on, and the unit tests
+didn't catch #88 (every admin menu dead), because they don't use real input.
+Before P3, an end-to-end suite has to show that the player and admin views
+work and that the database behind them does.
+
+**At the start (2026-10-29).** Two specs in `e2e/` (13 tests): `email-sign-in.spec.ts` (sign-in,
+signup, password, magic link, transfer deep link, PIN interstitial, upgrade
+card) and `tournament-flow.spec.ts` (one admin + player run-of-show). They run
+only nightly (`e2e-nightly.yml`), and that run has failed every night since
+2026-10-22, the day after PIN T₀ (#50, #51). The same two upgrade-card tests
+fail each time: the card on Home never shows its "Signing in is getting
+easier" or "Add your email" text. Nothing else covers events, registration,
+payments, league, community, merch or any admin page. The SQL checks in
+`supabase/tests/` run only when someone remembers to run them.
+
+**Scope.** Two PRs: #97 (everything but the admin views), then the admin
+views off `main` once #97 merges.
+
+1. **Green first.** Find out why the upgrade card doesn't show (a test that
+   no longer matches the T₀ behaviour, or a real bug), and fix the test or
+   the app. The nightly is green before anything is added. Done (#97); see
+   the Log.
+2. **Seed** (owner, 2026-10-29: "do what is best practice"). A synthetic
+   `seed.sql` replaces the July copy of production, which named real players
+   in a public repo and had no league, team event, shop or Oscars. Done
+   (#97).
+3. **Fixtures.** Shared helpers in `e2e/fixtures/`: the seed's IDs, a saved
+   session per role, a second browser for another account, throwaway events
+   and players, and cleanup that leaves nothing behind. Every page fails its
+   test on an uncaught or console error. Done (#97).
+4. **Player views and flows.** Every page signed out and as a player, from
+   seeded data; and what a player writes, read back from the database:
+   register, pay by Tikkie, transfer a spot and accept it, sign up a pair and
+   accept the invite, order from the shop, edit the profile. Done (#97).
+   Cancelling a registration and entering scores (league and event) are
+   admin-only, so they move to step 5.
+5. **Admin views.** Admin, event Manage (create an event, add a player and a
+   team for someone else through the on-behalf confirm, Mark Paid through the
+   menu, cancel a registration, enter a score), league Manage (enter a score),
+   shop items, Lobster Way admin. A player can't reach any of them (the
+   player spec checks the gates). PR 2.
+6. **Database.** `npm run db:test` runs `supabase/tests/` in the e2e job, and
+   the specs read back each write through the database. Done (#97).
+7. **Real input.** Menus, dialogs and confirms are driven with Playwright's
+   real clicks and key presses, never `dispatchEvent` or a scripted
+   `.click()` (the lesson from #88).
+8. **Docs.** CONTRIBUTING.md: the seed, `db:test`, and how to run and extend
+   the suite. Done (#97).
+
+Not in scope: visual snapshots, and coverage of every edge case the unit
+tests already hold. The aim is that a broken page or a broken write fails
+the suite, not exhaustive behaviour.
+
+**When it runs** (owner, 2026-10-29). On every PR that touches `src/`,
+`supabase/`, `e2e/` or the dependencies, as well as nightly (`e2e.yml`), as a
+trial: measure what it adds to a PR before choosing between the full suite and
+a smoke subset. The nightly job took about 4–5 minutes, most of it starting
+Supabase.
 
 Feature bugs found along the way are GitHub issues, outside this plan:
 #82 (Lobster Way open question after a reorder), #83 (Admin "unpaid
-registrations" row opens merch) and #89 (the confirm dialog drops the
-on-behalf message's line breaks). Each is a small PR whenever it suits.
+registrations" row opens merch), #89 (the confirm dialog drops the
+on-behalf message's line breaks), #95 (the Oscars view switch drops focus),
+#98 (the Oscars results fetch fires with an empty ID) and #99 (shop orders
+fail in production). Each is a small PR whenever it suits; #99 first, since
+no player can order.
 
 ## Later
 
@@ -684,3 +749,44 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
   tap: Radix then kept the menu's layer, and a confirm opened next lost Escape
   to the dialog behind. It happens with `Menu`'s old `stopPropagation` too, and
   never with real input alone.
+
+- **2026-10-29.** #96 merged. Owner: an end-to-end safety net comes next,
+  before P3, so the player and admin views and the database are known to work
+  before more UI moves. The nightly e2e run has failed since 2026-10-22 (two
+  upgrade-card tests in `email-sign-in.spec.ts`), and the suite covers only
+  sign-in and one run-of-show. Scope in "E2E safety net".
+- **2026-10-29.** Owner: run the e2e suite on every PR as a trial and measure
+  the time it adds. `e2e-nightly.yml` is now `e2e.yml`, on pull requests that
+  touch app code, the database, the specs or the dependencies, as well as
+  nightly. Newer pushes to a PR cancel its running job. The two failing tests
+  had never passed in CI: they were added in #51 the day before. Their sign-in
+  helper clicked "Sign in" and went straight to Home. On a slow runner that
+  navigation landed before the session was stored, so Home showed signed out
+  with no card. The helper now waits for the sign-in form to close. Locally
+  they passed, as the warm dev server signs in faster.
+- **2026-10-29.** E2E PR 1 on `e2e-suite` (#97): 13 tests → 40, plus the
+  database tests. What changed:
+  - **Seed.** Synthetic, about 30 made-up players with fixed IDs: an upcoming
+    and a finished individual event (results and Oscars shared), a team event,
+    a King of the Court, a league in its group stage, shop items. Sign-in
+    accounts are `admin@` and `player@lobsters.test`; the sign-in specs get
+    their own accounts, since they change auth state.
+  - **Fixtures.** One `signIn` (it was copied in two specs, one copy with the
+    race above), a saved session per role (`auth.setup.ts`), `openAs` for a
+    second account, `createEvent` / `createPlayer`, and cleanup through a
+    direct Postgres connection (the `postgres` package). The service role
+    can't touch `event_teams` or the status log.
+  - **Leaks fixed.** `deleteTournament` had failed silently since
+    registrations became RESTRICT, so each run left its event behind, and the
+    signup tests never deleted their players. The suite now passes twice in a
+    row with nothing left over.
+  - **Specs.** `player-views` (every page signed out and as a player, the
+    admin gates) and `player-flows` (six writes, each read back).
+  - **Database.** `npm run db:test` (`scripts/db-tests.sh`) runs the nine
+    `supabase/tests` scripts in the e2e job, before the specs.
+
+  Found by the suite, older than this PR: shop orders have failed in
+  production since 18 May (#99; `authenticated` lost the sequence grant in
+  the security phase C migration; no orders since). Its test is marked
+  `test.fail` until the fix. And the Oscars results fetch first fires with an
+  empty ID (#98); the console check allows it until it's fixed.

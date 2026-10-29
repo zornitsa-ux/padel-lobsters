@@ -7,6 +7,12 @@
 #  Docs: https://supabase.com/docs/guides/local-development
 # =============================================================================
 
+# Names the Docker containers (supabase_db_padel-lobsters and so on), which
+# scripts/db-tests.sh and scripts/prod-rehearsal/sync.sh address directly.
+# Without it the CLI uses the checkout's folder name, so a worktree or a clone
+# in another folder would get different names.
+project_id = "padel-lobsters"
+
 [api]
 enabled = true
 port = 54321

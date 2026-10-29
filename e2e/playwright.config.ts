@@ -8,7 +8,6 @@ const baseURL = 'http://127.0.0.1:5173'
 
 export default defineConfig({
   testDir: '.',
-  testMatch: '**/*.spec.ts',
   timeout: 60_000,
   expect: { timeout: 10_000 },
   fullyParallel: false,
@@ -19,7 +18,15 @@ export default defineConfig({
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [
+    { name: 'setup', testMatch: 'auth.setup.ts' },
+    {
+      name: 'chromium',
+      testMatch: '**/*.spec.ts',
+      dependencies: ['setup'],
+      use: { ...devices['Desktop Chrome'] },
+    },
+  ],
   // Reuses a dev server the developer already has running (the common local
   // case); CI always starts its own so a stale one can't mask a regression.
   webServer: {

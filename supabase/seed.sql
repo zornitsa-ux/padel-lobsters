@@ -1,20 +1,20 @@
 -- =============================================================================
---  PADEL LOBSTERS — Local Development Seed Data
+--  PADEL LOBSTERS — Local development seed
 --
---  Generated from production on 2026-07-26.
---  This file is run automatically by `supabase db reset` after all migrations.
---  It populates the local database with realistic data so you can develop and
---  test without touching production.
+--  Run by `supabase db reset` after the migrations. Synthetic data only: every
+--  player is made up, so nothing here names a real player. For production-like
+--  data, use scripts/prod-rehearsal/sync.sh instead.
 --
---  Known logins: PIN '9999' = admin (Jon Grim), PIN '1234' = plain player (Trunal).
---  Passwords (e2e): jon@lobsters.test / Lobster-Admin-9999, trunal@lobsters.test /
---  Lobster-Player-1234. Any @lobsters.test address also takes an email code via Mailpit.
---  Trunal holds the player-login PIN instead of Zornitsa Mihaylova (used pre-2026-07-26)
---  because Zornitsa is now an admin in production — keeping the test PINs on a
---  non-admin/admin pair avoids surprising a "log in as player" test with admin UI.
---  Emails: All replaced with @lobsters.test addresses.
+--  One of each feature, so every page has something to show. Dates are relative
+--  to the day of the reset. IDs are fixed so e2e specs (e2e/fixtures/seed.ts)
+--  can find them. Specs that write create their own data; they read this world
+--  and leave it as it was.
 --
---  NOTE: This is NOT run against production. It is local-only.
+--  Sign-in (any @lobsters.test address also takes an email code via Mailpit):
+--    admin@lobsters.test   Lobster-Admin-9999   PIN 9999   admin
+--    player@lobsters.test  Lobster-Player-1234  PIN 1234   player
+--
+--  Local only. Never run against production.
 -- =============================================================================
 
 -- ── Settings ─────────────────────────────────────────────────────────────────
@@ -34,167 +34,231 @@ ON CONFLICT (id) DO UPDATE SET
   lobster_way_content = EXCLUDED.lobster_way_content;
 
 -- ── Players ──────────────────────────────────────────────────────────────────
--- Full roster from production with sanitised emails (105 players, incl.
--- status='placeholder' shadow accounts for league teammates without app
--- accounts — see docs on the placeholder player pattern).
--- Players marked with pin = '9999' or '1234' can be used to test the login flow.
--- The sync_player_pin_hash trigger will bcrypt-hash the PIN on insert.
+-- 00…01–19: league and event regulars. 00…20–26: reserved for the sign-in
+-- specs (e2e/email-sign-in.spec.ts), which change their auth state, so they
+-- play in nothing. 00…27–28: placeholders (league partners with no account).
+-- The ensure_auth_user trigger creates each auth user; sync_player_pin_hash
+-- hashes the PINs.
 
-INSERT INTO players (name, gender, playtomic_level, adjustment, adjusted_level, status, is_left_handed, country, preferred_position, email, pin)
+INSERT INTO players (id, name, gender, playtomic_level, adjusted_level, status, is_left_handed, country, preferred_position, email, pin, role)
 VALUES
-  ('Adriana Dinu', 'female', 1.5, 0, 1.5, 'active', false, 'RO', 'right', 'adriana@lobsters.test', ''),
-  ('Aimée van der Pijl', 'female', 2.8, 0, 2.8, 'active', false, 'NL', 'left', 'aimee@lobsters.test', ''),
-  ('Alejandro González', 'male', 2.2, 0, 2.2, 'active', true, 'ES', 'right', 'alejandro.g@lobsters.test', ''),
-  ('Alejandro Muñoz', 'male', 2.5, 0, 2.5, 'active', false, 'ES', 'left', 'alejandro.m@lobsters.test', ''),
-  ('Alex B', 'male', 3, 0, 3, 'active', false, 'RO', 'left', 'alex.b@lobsters.test', ''),
-  ('Alex Gomez', 'male', 3, 0, 3, 'active', true, 'ES', 'right', 'alex.g@lobsters.test', ''),
-  ('Andres Mendoza', 'male', 1.2, 1.3, 2.5, 'active', true, 'MX', 'right', 'andres@lobsters.test', ''),
-  ('Anne Lamsveldt', '', 0, 0, 0, 'placeholder', false, NULL, NULL, 'anne@lobsters.test', ''),
-  ('Anthony Kay', 'male', 2, 0.3, 2.3, 'active', false, 'GB', 'right', 'anthony@lobsters.test', ''),
-  ('Anton Volodin', 'male', 2.5, 0, 2.5, 'active', false, 'NL', 'both', 'anton@lobsters.test', ''),
-  ('Arda Yucel', 'male', 2.5, 0, 2.5, 'active', false, 'TR', 'left', 'arda@lobsters.test', ''),
-  ('Ashwanth', 'male', 2, 0, 2, 'active', false, 'NL', 'left', 'ashwanth@lobsters.test', ''),
-  ('Aysegul Muslu', 'female', 2.5, 0, 2.5, 'active', false, 'NL', 'both', 'aysegul@lobsters.test', ''),
-  ('Baris Evruke', 'male', 2, 0, 2, 'active', false, 'NL', 'both', 'baris@lobsters.test', ''),
-  ('Baturay Ucer', 'male', 2, 0.5, 2.5, 'active', false, 'TR', 'right', 'baturay@lobsters.test', ''),
-  ('Bianca Hoogkamer', 'female', 2.5, -0.5, 2, 'active', false, 'NL', 'left', 'bianca@lobsters.test', ''),
-  ('Can Bezmen', 'male', 2, 0, 2, 'active', false, 'TR', 'right', 'can@lobsters.test', ''),
-  ('Carolien van den Berg', 'female', 2, 0, 2, 'active', true, 'NL', 'right', 'carolien@lobsters.test', ''),
-  ('Chelsea Veldman', '', 2, 0, 2, 'active', false, NULL, NULL, 'chelsea@lobsters.test', ''),
-  ('Chloe Precey', 'female', 1.7, 0, 1.7, 'active', true, 'GB', '', 'chloe@lobsters.test', ''),
-  ('Chris Desjardins ', 'male', 1.4, 0, 1.4, 'active', false, 'NL', 'both', 'chris@lobsters.test', ''),
-  ('Craig Butler', 'male', 3.3, 0, 3.3, 'active', false, 'NL', 'right', 'craig@lobsters.test', ''),
-  ('Daniel Net Hitter', 'male', 2.8, 0, 2.8, 'active', false, 'NL', 'left', 'daniel@lobsters.test', ''),
-  ('Davide Di Domenico', 'male', 2.7, 0, 2.7, 'active', false, 'IT', '', 'davide@lobsters.test', ''),
-  ('Dominika Rychlewicz', 'female', 2, 0, 2, 'active', false, 'NL', 'left', 'dominika@lobsters.test', ''),
-  ('Elena Jiménez ', 'female', 3, 0, 3, 'active', false, 'ES', 'right', 'elena.j@lobsters.test', ''),
-  ('Elena Quesada', '', 0, 0, 0, 'placeholder', false, NULL, NULL, 'elena.q@lobsters.test', ''),
-  ('Elisabeth Vaudevire ', 'female', 2, 0, 2, 'active', false, 'FR', 'left', 'elisabeth@lobsters.test', ''),
-  ('Emiliano Cenizo', 'male', 0.8, 0, 0.8, 'active', false, 'AR', 'right', 'emiliano@lobsters.test', ''),
-  ('Emre Can Turkkan', 'male', 2.5, 0, 2.5, 'active', false, 'NL', 'left', 'emre.t@lobsters.test', ''),
-  ('Emre Can Türkkan', '', 0, 0, 0, 'placeholder', false, NULL, NULL, 'emre.tu@lobsters.test', ''),
-  ('Eric ten Kate', 'male', 2, 0, 2, 'active', false, 'NL', 'both', 'eric@lobsters.test', ''),
-  ('Erica van Asten', 'female', 1.3, 0.3, 1.6, 'active', false, 'NL', 'left', 'erica@lobsters.test', ''),
-  ('Favio Gerometta', 'male', 1, 0.5, 1.5, 'active', false, 'AR', 'both', 'favio@lobsters.test', ''),
-  ('Francesco Di Vincenzo', 'male', 2.2, 0, 2.2, 'active', false, 'IT', 'right', 'francesco@lobsters.test', ''),
-  ('Gabriela Malovrh', 'female', 1, 0, 1, 'active', false, 'AR', 'both', 'gabriela@lobsters.test', ''),
-  ('Gagan Shetty', 'male', 1.3, 0.2, 1.5, 'active', false, 'IN', '', 'gagan@lobsters.test', ''),
-  ('George Chondrompilas', 'male', 2.27, 0.3, 2.57, 'active', false, 'GR', 'both', 'george@lobsters.test', ''),
-  ('Gino', 'male', 3, 0, 3, 'active', false, 'IT', 'both', 'gino@lobsters.test', ''),
-  ('Gonzalo Espeche', 'male', 3, -0.5, 2.5, 'active', false, 'AR', 'both', 'gonzalo@lobsters.test', ''),
-  ('Greg', 'male', 1.3, 0.7, 2, 'active', false, 'FR', 'both', 'greg@lobsters.test', ''),
-  ('Gregorio .', 'male', 2.2, 0, 2.2, 'active', false, 'IT', 'both', 'gregorio@lobsters.test', ''),
-  ('Ilaria .', 'female', 2, 0, 2, 'active', false, 'NL', '', 'ilaria@lobsters.test', ''),
-  ('Ingrid Oudejans', 'female', 2.7, 0, 2.7, 'active', false, 'NL', NULL, 'ingrid@lobsters.test', ''),
-  ('Ini', 'female', 1.9, 0.4, 2.3, 'active', false, 'ES', 'left', 'ini@lobsters.test', ''),
-  ('Jens N', 'male', 2, 0, 2, 'active', false, 'NL', 'right', 'jens@lobsters.test', ''),
-  ('Jessica Spotowski', 'female', 2.4, -1, 1.4, 'active', false, 'NL', 'both', 'jessica@lobsters.test', ''),
-  -- Jon (admin) gets a unique test PIN. Keep this distinct from any other
-  -- seeded PIN so admin login is unambiguous when verify_player_pin_v2
-  -- matches by bcrypt and there are multiple seeded test PINs.
-  ('Jon Grim', 'male', 3, 0, 3, 'active', false, 'US', 'both', 'jon@lobsters.test', '9999'),
-  ('Josephine Tolley', 'female', 1, 1, 2, 'active', false, 'NL', 'right', 'josephine@lobsters.test', ''),
-  ('Juan Blas Diaz', 'male', 2.6, 0, 2.6, 'active', false, 'AR', 'both', 'juan.d@lobsters.test', ''),
-  ('Juan Dominguez', 'male', 2, 0.5, 2.5, 'active', false, 'AR', 'both', 'juan.do@lobsters.test', ''),
-  ('Julian Keerl', 'male', 2.5, 0, 2.5, 'active', false, 'NL', 'both', 'julian@lobsters.test', ''),
-  ('Karlijn Oortman', '', 2.23, 0, 2.23, 'placeholder', false, NULL, NULL, 'karlijn@lobsters.test', ''),
-  ('Kate Adams', '', 0, 0, 0, 'active', false, NULL, NULL, 'kate@lobsters.test', ''),
-  ('Keita Eriawan', 'male', 2.7, 0.3, 3.0, 'active', false, 'ID', 'left', 'keita@lobsters.test', ''),
-  ('Kemal', 'male', 1.6, 0.7, 2.3, 'active', false, 'TR', 'both', 'kemal@lobsters.test', ''),
-  ('Kyle Fiore', 'male', 3, 0, 3, 'active', false, 'NL', 'left', 'kyle@lobsters.test', ''),
-  ('Lara Leser', 'female', 2, 0, 2, 'active', false, 'NL', 'right', 'lara@lobsters.test', ''),
-  ('Lars Theunissen', 'male', 3, 0, 3, 'active', false, 'NL', 'left', 'lars@lobsters.test', ''),
-  ('Laura Schelhaas', 'female', 1.9, 0, 1.9, 'active', false, 'NL', 'left', 'laura@lobsters.test', ''),
-  ('Lucas Eichhorn', 'male', 2.3, 0.5, 2.8, 'active', false, 'AR', 'right', 'lucas@lobsters.test', ''),
-  ('Lucia Juelke', 'female', 2.5, 0, 2.5, 'active', true, 'DE', 'right', 'lucia@lobsters.test', ''),
-  ('Lucie', '', 0, 0, 0, 'placeholder', false, NULL, NULL, 'lucie@lobsters.test', ''),
-  ('Lucie Johnston', 'female', 2.5, 0, 2.5, 'active', false, 'NL', 'right', 'lucie.j@lobsters.test', ''),
-  ('Maria Mata', '', 2, 0, 2, 'active', false, NULL, NULL, 'maria@lobsters.test', ''),
-  ('Marielle Braak', 'female', 1.5, 0, 1.5, 'active', false, 'NL', 'right', 'marielle@lobsters.test', ''),
-  ('Mario Villani', 'male', 2, 0, 2, 'active', false, 'IT', 'both', 'mario@lobsters.test', ''),
-  ('Markus', 'male', 1.9, 0, 1.9, 'active', false, 'DE', 'right', 'markus@lobsters.test', ''),
-  ('Massiel Dongo', 'female', 2.2, 0, 2.2, 'active', false, 'ES', 'both', 'massiel@lobsters.test', ''),
-  ('Mauricio Wiersma', 'male', 3.5, 0, 3.5, 'active', false, 'AR', 'left', 'mauricio@lobsters.test', ''),
-  ('Melanie Burger', 'female', 1, 0.5, 1.5, 'active', false, 'NL', 'both', 'melanie@lobsters.test', ''),
-  ('Melvin Veldhuizen', 'male', 2.5, 0, 2.5, 'active', false, 'NL', 'left', 'melvin@lobsters.test', ''),
-  ('Mert Gulleroglu', 'male', 2, 0.5, 2.5, 'active', false, 'NL', 'right', 'mert@lobsters.test', ''),
-  ('Mick De Nijs', 'male', 2.5, 0, 2.5, 'active', false, 'NL', 'left', 'mick@lobsters.test', ''),
-  ('Miguel Lopez', 'male', 2.1, 0.4, 2.5, 'active', false, 'US', NULL, 'miguel@lobsters.test', ''),
-  ('Milan Kölling', 'male', 3, 0, 3, 'active', false, 'DE', 'left', 'milan@lobsters.test', ''),
-  ('Miriam Hendriks', 'female', 2.4, 0, 2.4, 'active', false, 'NL', 'left', 'miriam@lobsters.test', ''),
-  ('Nazar T.', 'male', 1.3, 1.7, 3.0, 'active', false, 'NL', 'right', 'nazar@lobsters.test', ''),
-  ('Niall Hurley', 'male', 2.2, 0, 2.2, 'active', false, 'NL', 'left', 'niall@lobsters.test', ''),
-  ('Nico Tzinieris', 'male', 1.9, 0.1, 2.0, 'active', false, 'DE', 'left', 'nico@lobsters.test', ''),
-  ('Nicole Charlene', 'female', 0.7, 0.5, 1.2, 'active', false, 'ID', 'left', 'nicole@lobsters.test', ''),
-  ('Nik van der Poel', 'male', 2.7, 0, 2.7, 'active', false, 'NL', 'left', 'nik@lobsters.test', ''),
-  ('Noyan Tufekcioglu', 'male', 3.5, 0, 3.5, 'active', false, 'NL', 'left', 'noyan@lobsters.test', ''),
-  ('Omar younis', 'male', 2, 0, 2, 'active', true, 'NL', 'right', 'omar@lobsters.test', ''),
-  ('Omid H', 'male', 2, 0, 2, 'active', false, 'NL', 'left', 'omid@lobsters.test', ''),
-  ('Orhan Ozkan', 'male', 2, 0, 2, 'active', false, 'NL', 'both', 'orhan@lobsters.test', ''),
-  ('Özer Yılmaz', 'male', 3.5, 0, 3.5, 'active', false, 'NL', '', 'ozer@lobsters.test', ''),
-  ('Paola Hasbún Lopez', 'female', 1, 0.8, 1.8, 'active', false, 'CL', 'left', 'paola@lobsters.test', ''),
-  ('Paul Wood', 'male', 2.4, 0, 2.4, 'active', false, 'NL', 'left', 'paul@lobsters.test', ''),
-  ('Raoul Chamuleau', 'male', 3.6, 0, 3.6, 'active', false, 'NL', 'both', 'raoul@lobsters.test', ''),
-  ('Ravi Panday', 'male', 3.5, 0, 3.5, 'active', false, 'NL', 'both', 'ravi@lobsters.test', ''),
-  ('Rowan Hesta', 'female', 1.5, 0.5, 2.0, 'active', false, 'NL', 'both', 'rowan@lobsters.test', ''),
-  ('Sebas solis', 'male', 2.9, 0.3, 3.2, 'active', false, 'CR', 'left', 'sebas@lobsters.test', ''),
-  ('Sebastian Araneda', 'male', 2.5, 0.3, 2.8, 'active', false, 'CL', 'right', 'sebastian.a@lobsters.test', ''),
-  ('Sebastian Fennell', 'male', 3, 0, 3, 'active', false, 'AR', 'left', 'sebastian.f@lobsters.test', ''),
-  ('Shivam Aggarwal', 'male', 1.4, 0.3, 1.7, 'active', false, 'NL', 'left', 'shivam@lobsters.test', ''),
-  ('Stephanie v. Baarsen', 'female', 3, 0, 3, 'active', false, 'NL', 'both', 'stephanie@lobsters.test', ''),
-  ('Timothy Tjen', 'male', 2.5, 0, 2.5, 'active', false, 'NL', 'left', 'timothy@lobsters.test', ''),
-  -- Trunal gets the plain player test PIN — see header note.
-  ('Trunal', 'male', 2.5, 0, 2.5, 'active', false, 'NL', 'both', 'trunal@lobsters.test', '1234'),
-  ('Uziel Brito', 'male', 3, -0.3, 2.7, 'active', false, 'CL', 'right', 'uziel@lobsters.test', ''),
-  ('Valesca', 'female', 2.4, 0, 2.4, 'active', false, 'NL', 'left', 'valesca@lobsters.test', ''),
-  ('Xander Bliek', 'male', 0.5, 0, 0.5, 'active', false, 'NL', 'right', 'xander@lobsters.test', ''),
-  ('Yaiza Lopez', '', 0, 0, 0, 'active', false, NULL, NULL, 'yaiza@lobsters.test', ''),
-  ('Zeyon Henry', 'male', 2.5, 0, 2.5, 'active', false, 'NL', 'both', 'zeyon@lobsters.test', ''),
-  ('Zornitsa Mihaylova', 'female', 1.6, 0.4, 2.0, 'active', false, 'BG', 'both', 'zornitsa@lobsters.test', '')
-ON CONFLICT DO NOTHING;
+  ('00000000-0000-4000-a000-000000000001', 'Mara Quint',     'female', 3.0, 3.0, 'active', false, 'NL', 'left',  'admin@lobsters.test',  '9999', 'admin'),
+  ('00000000-0000-4000-a000-000000000002', 'Lena Voss',      'female', 2.4, 2.4, 'active', false, 'DE', 'right', 'lena@lobsters.test',   '', 'player'),
+  ('00000000-0000-4000-a000-000000000003', 'Ines Calder',    'female', 1.8, 1.8, 'active', true,  'PT', 'both',  'ines@lobsters.test',   '', 'player'),
+  ('00000000-0000-4000-a000-000000000004', 'Noor Haddad',    'female', 2.9, 2.9, 'active', false, 'NL', 'left',  'noor@lobsters.test',   '', 'player'),
+  ('00000000-0000-4000-a000-000000000005', 'Sofia Brandt',   'female', 1.5, 1.5, 'active', false, 'SE', 'right', 'sofia@lobsters.test',  '', 'player'),
+  ('00000000-0000-4000-a000-000000000006', 'Elif Kaya',      'female', 2.2, 2.2, 'active', false, 'TR', 'both',  'elif@lobsters.test',   '', 'player'),
+  ('00000000-0000-4000-a000-000000000007', 'Hanna Moreau',   'female', 3.2, 3.2, 'active', false, 'FR', 'left',  'hanna@lobsters.test',  '', 'player'),
+  ('00000000-0000-4000-a000-000000000008', 'Priya Menon',    'female', 2.6, 2.6, 'active', false, 'IN', 'right', 'priya@lobsters.test',  '', 'player'),
+  ('00000000-0000-4000-a000-000000000009', 'Clara Duval',    'female', 2.0, 2.0, 'active', false, 'BE', 'right', 'clara@lobsters.test',  '', 'player'),
+  ('00000000-0000-4000-a000-000000000010', 'Theo Lind',      'male',   2.5, 2.5, 'active', false, 'NL', 'right', 'player@lobsters.test', '1234', 'player'),
+  ('00000000-0000-4000-a000-000000000011', 'Bram Visser',    'male',   3.1, 3.1, 'active', false, 'NL', 'left',  'bram@lobsters.test',   '', 'player'),
+  ('00000000-0000-4000-a000-000000000012', 'Diego Ferraz',   'male',   2.7, 2.7, 'active', true,  'BR', 'both',  'diego@lobsters.test',  '', 'player'),
+  ('00000000-0000-4000-a000-000000000013', 'Kofi Mensah',    'male',   1.9, 1.9, 'active', false, 'GH', 'right', 'kofi@lobsters.test',   '', 'player'),
+  ('00000000-0000-4000-a000-000000000014', 'Luca Bianchi',   'male',   3.4, 3.4, 'active', false, 'IT', 'left',  'luca@lobsters.test',   '', 'player'),
+  ('00000000-0000-4000-a000-000000000015', 'Omar Sayed',     'male',   2.3, 2.3, 'active', false, 'EG', 'right', 'omar@lobsters.test',   '', 'player'),
+  ('00000000-0000-4000-a000-000000000016', 'Jonas Weber',    'male',   1.6, 1.6, 'active', false, 'DE', 'both',  'jonas@lobsters.test',  '', 'player'),
+  ('00000000-0000-4000-a000-000000000017', 'Ravi Kapoor',    'male',   2.8, 2.8, 'active', false, 'IN', 'right', 'ravi@lobsters.test',   '', 'player'),
+  ('00000000-0000-4000-a000-000000000018', 'Felix Novak',    'male',   2.1, 2.1, 'active', false, 'CZ', 'left',  'felix@lobsters.test',  '', 'player'),
+  ('00000000-0000-4000-a000-000000000019', 'Mateo Ruiz',     'male',   3.0, 3.0, 'active', false, 'ES', 'right', 'mateo@lobsters.test',  '', 'player'),
+  ('00000000-0000-4000-a000-000000000020', 'Wren Abbott',    'female', 2.0, 2.0, 'active', false, 'GB', 'right', 'code@lobsters.test',          '', 'player'),
+  ('00000000-0000-4000-a000-000000000021', 'Nina Okoro',     'female', 2.0, 2.0, 'active', false, 'NG', 'right', 'modal@lobsters.test',         '', 'player'),
+  ('00000000-0000-4000-a000-000000000022', 'Ada Park',       'female', 2.0, 2.0, 'active', false, 'KR', 'left',  'password@lobsters.test',      '', 'player'),
+  ('00000000-0000-4000-a000-000000000023', 'Erik Sand',      'male',   2.0, 2.0, 'active', false, 'NO', 'right', 'link@lobsters.test',          '', 'player'),
+  ('00000000-0000-4000-a000-000000000024', 'Fay Lund',       'female', 2.0, 2.0, 'active', false, 'DK', 'both',  'reset@lobsters.test',         '', 'player'),
+  ('00000000-0000-4000-a000-000000000025', 'Gil Moss',       'male',   2.0, 2.0, 'active', false, 'IE', 'right', 'transfer-from@lobsters.test', '', 'player'),
+  ('00000000-0000-4000-a000-000000000026', 'Hugo Lane',      'male',   2.0, 2.0, 'active', false, 'FR', 'left',  'transfer-to@lobsters.test',   '', 'player'),
+  ('00000000-0000-4000-a000-000000000027', 'Kit Morrow',     'male',   1.8, 1.8, 'placeholder', false, NULL, NULL, NULL, '', 'player'),
+  ('00000000-0000-4000-a000-000000000028', 'Joss Ainsley',   'female', 1.7, 1.7, 'placeholder', false, NULL, NULL, NULL, '', 'player');
 
--- Grant admin role to match production (Jon Grim, Uziel Brito, Zornitsa Mihaylova).
-UPDATE players SET role = 'admin' WHERE name IN ('Jon Grim', 'Uziel Brito', 'Zornitsa Mihaylova');
-
--- Seeded passwords for the e2e sign-in (they meet the D-17 rules). Local only.
--- PIN sign-in is retiring; signInAt in e2e/tournament-flow.spec.ts uses these.
+-- Passwords for the e2e sign-in (they meet the D-17 rules).
 UPDATE auth.users
 SET encrypted_password = extensions.crypt('Lobster-Admin-9999', extensions.gen_salt('bf'))
-WHERE email = 'jon@lobsters.test';
+WHERE email = 'admin@lobsters.test';
 UPDATE auth.users
 SET encrypted_password = extensions.crypt('Lobster-Player-1234', extensions.gen_salt('bf'))
-WHERE email = 'trunal@lobsters.test';
+WHERE email = 'player@lobsters.test';
 
--- ── Tournaments ──────────────────────────────────────────────────────────────
+-- ── Events ───────────────────────────────────────────────────────────────────
+-- …101 upcoming individual · …102 finished individual (results and Oscars
+-- shared) · …103 upcoming team event · …104 upcoming King of the Court.
 
-INSERT INTO tournaments (name, date, time, location, max_players, format, status, duration, gender_mode, notes)
+INSERT INTO tournaments (id, name, date, time, location, max_players, format, entry_mode, status, duration, gender_mode, total_price, tikkie_link, courts, notes, completed_at, ratings_applied_at, results_shared_at)
 VALUES
-  ('Upcoming Test Tournament',  CURRENT_DATE + INTERVAL '7 days',  '18:00', 'Test Courts Amsterdam', 16, 'lobster_matching', 'upcoming', 90, 'mixed', 'Auto-generated for local development'),
-  ('Past Test Tournament',      CURRENT_DATE - INTERVAL '14 days', '17:30', 'Test Courts Amsterdam', 16, 'lobster_matching', 'completed', 90, 'mixed', 'Auto-generated for local development')
-ON CONFLICT DO NOTHING;
+  ('00000000-0000-4000-b000-000000000101', 'Lobster Social', CURRENT_DATE + 7, '18:00', 'Seed Courts Amsterdam', 16, 'lobster_matching', 'individual', 'upcoming', 90, 'mixed', 160, 'https://tikkie.me/pay/seed-local',
+   '[{"name":"Court 1","booked":true},{"name":"Court 2","booked":true},{"name":"Court 3","booked":false},{"name":"Court 4","booked":false}]',
+   'Seed event: open for registration.', NULL, NULL, NULL),
+  ('00000000-0000-4000-b000-000000000102', 'Season Opener', CURRENT_DATE - 14, '17:30', 'Seed Courts Amsterdam', 8, 'lobster_matching', 'individual', 'completed', 90, 'mixed', 80, NULL,
+   '[{"name":"Court 1","booked":true},{"name":"Court 2","booked":true}]',
+   'Seed event: finished, results shared.', now() - interval '14 days', now() - interval '14 days', now() - interval '13 days'),
+  ('00000000-0000-4000-b000-000000000103', 'Mixed Pairs Night', CURRENT_DATE + 14, '19:00', 'Seed Courts Amsterdam', 16, 'lobster_matching', 'team', 'upcoming', 120, 'mixed', 160, NULL,
+   '[{"name":"Court 1","booked":true},{"name":"Court 2","booked":false}]',
+   'Seed event: register as a pair.', NULL, NULL, NULL),
+  ('00000000-0000-4000-b000-000000000104', 'King of the Court', CURRENT_DATE + 21, '18:30', 'Seed Courts Amsterdam', 12, 'king_of_court', 'team', 'upcoming', 120, 'mixed', 120, NULL,
+   '[{"name":"Centre","booked":true},{"name":"Court 2","booked":true},{"name":"Court 3","booked":true}]',
+   'Seed event: King of the Court.', NULL, NULL, NULL);
+
+-- Lobster Social: 12 of 16 spots, every payment state. Theo (player@) is in,
+-- Bram and Mateo are not.
+INSERT INTO registrations (tournament_id, player_id, status, payment_status, payment_method)
+SELECT '00000000-0000-4000-b000-000000000101', p.id::uuid, 'registered', p.pay, p.method
+FROM (VALUES
+  ('00000000-0000-4000-a000-000000000001', 'paid',                 'tikkie'),
+  ('00000000-0000-4000-a000-000000000002', 'paid',                 'tikkie'),
+  ('00000000-0000-4000-a000-000000000003', 'unpaid',               NULL),
+  ('00000000-0000-4000-a000-000000000004', 'pending_confirmation', 'tikkie'),
+  ('00000000-0000-4000-a000-000000000005', 'tikkied',              NULL),
+  ('00000000-0000-4000-a000-000000000006', 'unpaid',               NULL),
+  ('00000000-0000-4000-a000-000000000010', 'unpaid',               NULL),
+  ('00000000-0000-4000-a000-000000000012', 'paid',                 'cash'),
+  ('00000000-0000-4000-a000-000000000013', 'covered',              NULL),
+  ('00000000-0000-4000-a000-000000000014', 'unpaid',               NULL),
+  ('00000000-0000-4000-a000-000000000015', 'paid',                 'tikkie'),
+  ('00000000-0000-4000-a000-000000000016', 'unpaid',               NULL)
+) AS p(id, pay, method);
+
+-- Season Opener: 8 players, two rounds on two courts, all scored.
+INSERT INTO registrations (tournament_id, player_id, status, payment_status)
+SELECT '00000000-0000-4000-b000-000000000102', id::uuid, 'registered', 'paid'
+FROM unnest(ARRAY[
+  '00000000-0000-4000-a000-000000000001', '00000000-0000-4000-a000-000000000002',
+  '00000000-0000-4000-a000-000000000003', '00000000-0000-4000-a000-000000000004',
+  '00000000-0000-4000-a000-000000000010', '00000000-0000-4000-a000-000000000011',
+  '00000000-0000-4000-a000-000000000012', '00000000-0000-4000-a000-000000000013'
+]) AS id;
+
+INSERT INTO matches (tournament_id, round, court, team1_ids, team2_ids, score1, score2, completed)
+VALUES
+  ('00000000-0000-4000-b000-000000000102', 1, 'Court 1',
+   ARRAY['00000000-0000-4000-a000-000000000001', '00000000-0000-4000-a000-000000000010']::uuid[],
+   ARRAY['00000000-0000-4000-a000-000000000002', '00000000-0000-4000-a000-000000000011']::uuid[], 6, 4, true),
+  ('00000000-0000-4000-b000-000000000102', 1, 'Court 2',
+   ARRAY['00000000-0000-4000-a000-000000000003', '00000000-0000-4000-a000-000000000012']::uuid[],
+   ARRAY['00000000-0000-4000-a000-000000000004', '00000000-0000-4000-a000-000000000013']::uuid[], 3, 6, true),
+  ('00000000-0000-4000-b000-000000000102', 2, 'Court 1',
+   ARRAY['00000000-0000-4000-a000-000000000001', '00000000-0000-4000-a000-000000000012']::uuid[],
+   ARRAY['00000000-0000-4000-a000-000000000004', '00000000-0000-4000-a000-000000000011']::uuid[], 6, 5, true),
+  ('00000000-0000-4000-b000-000000000102', 2, 'Court 2',
+   ARRAY['00000000-0000-4000-a000-000000000002', '00000000-0000-4000-a000-000000000013']::uuid[],
+   ARRAY['00000000-0000-4000-a000-000000000003', '00000000-0000-4000-a000-000000000010']::uuid[], 2, 6, true);
+
+-- Its Oscars: voting closed and shared, two categories.
+INSERT INTO lobster_oscars_sessions (id, tournament_id, started_at, closed_at, shared_at)
+VALUES ('00000000-0000-4000-c000-000000000102', '00000000-0000-4000-b000-000000000102',
+        now() - interval '14 days', now() - interval '13 days', now() - interval '13 days');
+
+INSERT INTO lobster_oscars_categories (id, session_id, name, icon, display_order)
+VALUES
+  ('00000000-0000-4000-c000-000000000201', '00000000-0000-4000-c000-000000000102', 'Best Lobster', '🦞', 1),
+  ('00000000-0000-4000-c000-000000000202', '00000000-0000-4000-c000-000000000102', 'Shot of the Night', '🎯', 2);
+
+INSERT INTO lobster_oscars_votes (category_id, voter_id, target_id)
+SELECT c.id::uuid, v.voter::uuid, v.target::uuid
+FROM (VALUES
+  ('00000000-0000-4000-c000-000000000201', '00000000-0000-4000-a000-000000000001', '00000000-0000-4000-a000-000000000004'),
+  ('00000000-0000-4000-c000-000000000201', '00000000-0000-4000-a000-000000000002', '00000000-0000-4000-a000-000000000004'),
+  ('00000000-0000-4000-c000-000000000201', '00000000-0000-4000-a000-000000000010', '00000000-0000-4000-a000-000000000012'),
+  ('00000000-0000-4000-c000-000000000202', '00000000-0000-4000-a000-000000000001', '00000000-0000-4000-a000-000000000013'),
+  ('00000000-0000-4000-c000-000000000202', '00000000-0000-4000-a000-000000000011', '00000000-0000-4000-a000-000000000013')
+) AS v(id, voter, target)
+JOIN lobster_oscars_categories c ON c.id = v.id::uuid;
+
+-- Team events: a captain and partner register together in one statement, as
+-- the team-consistency trigger checks both rows at once.
+INSERT INTO event_teams (id, tournament_id, captain_id, seed)
+VALUES
+  ('00000000-0000-4000-d000-000000000301', '00000000-0000-4000-b000-000000000103', '00000000-0000-4000-a000-000000000010', NULL),
+  ('00000000-0000-4000-d000-000000000302', '00000000-0000-4000-b000-000000000103', '00000000-0000-4000-a000-000000000004', NULL),
+  ('00000000-0000-4000-d000-000000000303', '00000000-0000-4000-b000-000000000103', '00000000-0000-4000-a000-000000000014', NULL),
+  ('00000000-0000-4000-d000-000000000401', '00000000-0000-4000-b000-000000000104', '00000000-0000-4000-a000-000000000011', 1),
+  ('00000000-0000-4000-d000-000000000402', '00000000-0000-4000-b000-000000000104', '00000000-0000-4000-a000-000000000007', 2),
+  ('00000000-0000-4000-d000-000000000403', '00000000-0000-4000-b000-000000000104', '00000000-0000-4000-a000-000000000017', 3),
+  ('00000000-0000-4000-d000-000000000404', '00000000-0000-4000-b000-000000000104', '00000000-0000-4000-a000-000000000008', 4);
+
+INSERT INTO registrations (tournament_id, player_id, team_id, status, payment_status, accepted_at)
+SELECT et.tournament_id, m.player::uuid, et.id, 'registered', 'unpaid', now()
+FROM (VALUES
+  ('00000000-0000-4000-d000-000000000301', '00000000-0000-4000-a000-000000000010'),
+  ('00000000-0000-4000-d000-000000000301', '00000000-0000-4000-a000-000000000002'),
+  ('00000000-0000-4000-d000-000000000302', '00000000-0000-4000-a000-000000000004'),
+  ('00000000-0000-4000-d000-000000000302', '00000000-0000-4000-a000-000000000015'),
+  ('00000000-0000-4000-d000-000000000303', '00000000-0000-4000-a000-000000000014'),
+  ('00000000-0000-4000-d000-000000000303', '00000000-0000-4000-a000-000000000009'),
+  ('00000000-0000-4000-d000-000000000401', '00000000-0000-4000-a000-000000000011'),
+  ('00000000-0000-4000-d000-000000000401', '00000000-0000-4000-a000-000000000006'),
+  ('00000000-0000-4000-d000-000000000402', '00000000-0000-4000-a000-000000000007'),
+  ('00000000-0000-4000-d000-000000000402', '00000000-0000-4000-a000-000000000019'),
+  ('00000000-0000-4000-d000-000000000403', '00000000-0000-4000-a000-000000000017'),
+  ('00000000-0000-4000-d000-000000000403', '00000000-0000-4000-a000-000000000005'),
+  ('00000000-0000-4000-d000-000000000404', '00000000-0000-4000-a000-000000000008'),
+  ('00000000-0000-4000-d000-000000000404', '00000000-0000-4000-a000-000000000018')
+) AS m(team, player)
+JOIN event_teams et ON et.id = m.team::uuid;
+
+-- ── League ───────────────────────────────────────────────────────────────────
+-- In its group stage, per division: group A of three pairs (one match still to
+-- play, Theo's pair in it) and group B of two. One partner per division is a
+-- placeholder.
+
+INSERT INTO leagues (id, name, status, divisions, signup_closes_at, starts_at, ends_at,
+                     group_stage_start, group_stage_end, semis_start, semis_end, finals_start, finals_end,
+                     description_md, published_at, created_by)
+VALUES ('00000000-0000-4000-e000-000000000501', 'Autumn League', 'group_stage', ARRAY['mens', 'womens'],
+        now() - interval '30 days', CURRENT_DATE - 21, CURRENT_DATE + 42,
+        CURRENT_DATE - 21, CURRENT_DATE + 14, CURRENT_DATE + 15, CURRENT_DATE + 28, CURRENT_DATE + 29, CURRENT_DATE + 42,
+        'Fixed pairs, two groups per division, then semis and finals. Book your own court and enter the score.',
+        now() - interval '30 days', '00000000-0000-4000-a000-000000000001');
+
+INSERT INTO league_teams (id, league_id, division, player1_id, player2_id, team_name, experience_level, group_label)
+VALUES
+  ('00000000-0000-4000-e000-000000000601', '00000000-0000-4000-e000-000000000501', 'mens',   '00000000-0000-4000-a000-000000000010', '00000000-0000-4000-a000-000000000011', 'Net Rushers', 'intermediate', 'A'),
+  ('00000000-0000-4000-e000-000000000602', '00000000-0000-4000-e000-000000000501', 'mens',   '00000000-0000-4000-a000-000000000012', '00000000-0000-4000-a000-000000000013', 'Glass Bangers', 'intermediate', 'A'),
+  ('00000000-0000-4000-e000-000000000603', '00000000-0000-4000-e000-000000000501', 'mens',   '00000000-0000-4000-a000-000000000014', '00000000-0000-4000-a000-000000000015', 'Bandeja Bros', 'advanced', 'A'),
+  ('00000000-0000-4000-e000-000000000604', '00000000-0000-4000-e000-000000000501', 'mens',   '00000000-0000-4000-a000-000000000016', '00000000-0000-4000-a000-000000000027', 'Late Lobs', 'beginner', 'B'),
+  ('00000000-0000-4000-e000-000000000605', '00000000-0000-4000-e000-000000000501', 'mens',   '00000000-0000-4000-a000-000000000017', '00000000-0000-4000-a000-000000000018', 'Vibora Club', 'intermediate', 'B'),
+  ('00000000-0000-4000-e000-000000000611', '00000000-0000-4000-e000-000000000501', 'womens', '00000000-0000-4000-a000-000000000001', '00000000-0000-4000-a000-000000000002', 'Smash Sisters', 'advanced', 'A'),
+  ('00000000-0000-4000-e000-000000000612', '00000000-0000-4000-e000-000000000501', 'womens', '00000000-0000-4000-a000-000000000003', '00000000-0000-4000-a000-000000000004', 'Volley Queens', 'intermediate', 'A'),
+  ('00000000-0000-4000-e000-000000000613', '00000000-0000-4000-e000-000000000501', 'womens', '00000000-0000-4000-a000-000000000005', '00000000-0000-4000-a000-000000000006', 'Chiquita Club', 'beginner', 'A'),
+  ('00000000-0000-4000-e000-000000000614', '00000000-0000-4000-e000-000000000501', 'womens', '00000000-0000-4000-a000-000000000007', '00000000-0000-4000-a000-000000000028', 'Wall Whisperers', 'intermediate', 'B'),
+  ('00000000-0000-4000-e000-000000000615', '00000000-0000-4000-e000-000000000501', 'womens', '00000000-0000-4000-a000-000000000008', '00000000-0000-4000-a000-000000000009', 'Bajada Belles', 'intermediate', 'B');
+
+INSERT INTO league_matches (league_id, division, stage, team1_id, team2_id, set_scores, winner_id, played_on, location)
+VALUES
+  ('00000000-0000-4000-e000-000000000501', 'mens', 'group', '00000000-0000-4000-e000-000000000601', '00000000-0000-4000-e000-000000000602',
+   '[{"t1":6,"t2":4},{"t1":6,"t2":3}]', '00000000-0000-4000-e000-000000000601', CURRENT_DATE - 10, 'Seed Courts Amsterdam'),
+  ('00000000-0000-4000-e000-000000000501', 'mens', 'group', '00000000-0000-4000-e000-000000000602', '00000000-0000-4000-e000-000000000603',
+   '[{"t1":6,"t2":4},{"t1":2,"t2":6},{"t1":5,"t2":7}]', '00000000-0000-4000-e000-000000000603', CURRENT_DATE - 6, 'Seed Courts Amsterdam'),
+  ('00000000-0000-4000-e000-000000000501', 'mens', 'group', '00000000-0000-4000-e000-000000000601', '00000000-0000-4000-e000-000000000603',
+   NULL, NULL, NULL, NULL),
+  ('00000000-0000-4000-e000-000000000501', 'mens', 'group', '00000000-0000-4000-e000-000000000604', '00000000-0000-4000-e000-000000000605',
+   '[{"t1":4,"t2":6},{"t1":6,"t2":2},{"t1":7,"t2":5}]', '00000000-0000-4000-e000-000000000604', CURRENT_DATE - 8, 'Seed Courts Amsterdam'),
+  ('00000000-0000-4000-e000-000000000501', 'womens', 'group', '00000000-0000-4000-e000-000000000611', '00000000-0000-4000-e000-000000000612',
+   '[{"t1":6,"t2":2},{"t1":6,"t2":1}]', '00000000-0000-4000-e000-000000000611', CURRENT_DATE - 9, 'Seed Courts Amsterdam'),
+  ('00000000-0000-4000-e000-000000000501', 'womens', 'group', '00000000-0000-4000-e000-000000000612', '00000000-0000-4000-e000-000000000613',
+   '[{"t1":6,"t2":3},{"t1":6,"t2":4}]', '00000000-0000-4000-e000-000000000612', CURRENT_DATE - 5, 'Seed Courts Amsterdam'),
+  ('00000000-0000-4000-e000-000000000501', 'womens', 'group', '00000000-0000-4000-e000-000000000611', '00000000-0000-4000-e000-000000000613',
+   NULL, NULL, NULL, NULL),
+  ('00000000-0000-4000-e000-000000000501', 'womens', 'group', '00000000-0000-4000-e000-000000000614', '00000000-0000-4000-e000-000000000615',
+   '[{"t1":3,"t2":6},{"t1":4,"t2":6}]', '00000000-0000-4000-e000-000000000615', CURRENT_DATE - 4, 'Seed Courts Amsterdam');
+
+-- ── Shop ─────────────────────────────────────────────────────────────────────
+
+INSERT INTO merch_items (id, name, description, price, sizes, category, active, display_order)
+VALUES
+  (1, 'Lobster Tee',  'Soft cotton tee with the club lobster.', 25, ARRAY['S', 'M', 'L', 'XL'], 'apparel', true, 1),
+  (2, 'Lobster Cap',  'One size, adjustable strap.',            18, NULL,                       'apparel', true, 2);
+SELECT setval(pg_get_serial_sequence('merch_items', 'id'), 2);
+
+-- One order in each state: ordered, paid, delivered.
+INSERT INTO merch_interests (player_id, merch_item_id, size, paid, delivered, status)
+VALUES
+  ('00000000-0000-4000-a000-000000000012', 1, 'L',  false, false, 'ordered'),
+  ('00000000-0000-4000-a000-000000000002', 1, 'M',  true,  false, 'paid'),
+  ('00000000-0000-4000-a000-000000000004', 2, NULL, true,  true,  'delivered');
 
 -- ── Raffle winners (historical) ──────────────────────────────────────────────
--- All historical entries use tournament_id = NULL because the seed tournaments
--- above are local test stubs, not the real LOBS #3/5/6 events.
--- Idempotent: skips any row where (player_id, won_at_date) already exists.
-INSERT INTO public.raffle_winners (player_id, tournament_id, won_at_date, tournament_label, cooldown_offset, prize)
-SELECT p.id, NULL, v.won_at_date, v.tournament_label, v.cooldown_offset, v.prize
-FROM (VALUES
-  ('Alejandro González', '2026-03-22'::date, 'LOBStournament #3', 1, 'tshirt'),
-  ('Alejandro Muñoz',    '2026-03-22'::date, 'LOBStournament #3', 1, 'grips'),
-  ('Gagan Shetty',       '2026-03-22'::date, 'LOBStournament #3', 1, 'sticker'),
-  ('Baturay Ucer',       '2026-03-22'::date, 'LOBStournament #3', 1, 'canvas bag'),
-  ('Paola Hasbún Lopez', '2026-04-19'::date, 'LOBStournament #5', 0, NULL),
-  ('Ini',                '2026-04-19'::date, 'LOBStournament #5', 0, NULL),
-  ('Nico Tzinieris',     '2026-04-19'::date, 'LOBStournament #5', 0, NULL),
-  ('Sebas solis',        '2026-05-03'::date, 'LOBStournament #6', 0, 'tshirt'),
-  ('Nico Tzinieris',     '2026-05-03'::date, 'LOBStournament #6', 0, 'hat'),
-  ('Trunal',             '2026-05-03'::date, 'LOBStournament #6', 0, 'canvas bag'),
-  ('Juan Blas Diaz',     '2026-05-03'::date, 'LOBStournament #6', 0, 'sticker'),
-  ('Mauricio Wiersma',   '2026-05-03'::date, 'LOBStournament #6', 0, 'sticker')
-) AS v(player_name, won_at_date, tournament_label, cooldown_offset, prize)
-JOIN public.players p ON p.name = v.player_name
-WHERE NOT EXISTS (
-  SELECT 1 FROM public.raffle_winners w
-   WHERE w.player_id = p.id AND w.won_at_date = v.won_at_date
-);
+
+INSERT INTO raffle_winners (player_id, tournament_id, won_at_date, tournament_label, cooldown_offset, prize)
+VALUES
+  ('00000000-0000-4000-a000-000000000005', '00000000-0000-4000-b000-000000000102', CURRENT_DATE - 14, 'Season Opener', 0, 'Lobster Tee'),
+  ('00000000-0000-4000-a000-000000000013', '00000000-0000-4000-b000-000000000102', CURRENT_DATE - 14, 'Season Opener', 0, 'Lobster Cap');
