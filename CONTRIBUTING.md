@@ -111,18 +111,23 @@ templates changed: `npm run db:stop && npm run db:start`.
 
 - **Specs.** `player-views` (every page, signed out and as a player),
   `player-flows` (what a player writes, read back from the database),
-  `email-sign-in`, `tournament-flow` (admin and player run of show).
+  `admin-views` and `admin-flows` (the same for an admin), `email-sign-in`,
+  `tournament-flow` (admin and player run of show).
 - **Fixtures** (`e2e/fixtures/`). Import `test` and `expect` from
   `fixtures/test.ts`: it fails a test on any uncaught error or console error
   (`allowConsoleErrors` for one the test causes on purpose; known app bugs
   are listed there with their issue). `auth.setup.ts` saves a signed-in
   session per role, so a spec starts signed in with
   `test.use({ storageState: SESSION_FILES.player })`. `openAs` opens a
-  second browser for another account.
+  second browser for another account. `fixtures/locators.ts` finds one row
+  in a list (`rowWith`) and a field by its visible label (`fieldAfterLabel`,
+  until labels are tied to their inputs, #103).
 - **Data.** Read the seed; never change it. A spec that writes creates its
   own event or player (`createEvent`, `createPlayer`), checks what was stored
   through the database (`admin`, `sql` in `fixtures/db.ts`) and deletes it in
-  `finally`. The suite has to pass twice in a row without a reset.
+  `finally`. A test that has to change a seeded row (the league match, the
+  Lobster Way) saves it first and restores it in `finally`. The suite has to
+  pass twice in a row without a reset.
 - **Real input.** Click and type as a person would. Never `dispatchEvent` or
   a scripted `.click()`: menus and dialogs have broken in ways only real input
   shows (#88).

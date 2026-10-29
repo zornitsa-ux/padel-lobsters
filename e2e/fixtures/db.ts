@@ -124,11 +124,12 @@ async function saveRatings({ playerIds }: { playerIds: string[] }): Promise<() =
 /**
  * Removes an event a spec created, with the rows that block a tournament
  * delete (registrations and teams are RESTRICT). Cascades take the rest.
+ * The status log goes after the registrations: deleting one logs it.
  */
 export async function deleteEvent({ id }: { id: string }): Promise<void> {
   await sql.begin(async (tx) => {
-    await tx`delete from registration_status_events where tournament_id = ${id}`
     await tx`delete from registrations where tournament_id = ${id}`
+    await tx`delete from registration_status_events where tournament_id = ${id}`
     await tx`delete from event_teams where tournament_id = ${id}`
     await tx`delete from tournaments where id = ${id}`
   })
@@ -239,8 +240,8 @@ export async function createPlayer({ email }: { email?: string } = {}): Promise<
 /** Removes a player made by a spec, with the rows that would block it. */
 export async function deletePlayer({ id }: { id: string }): Promise<void> {
   await sql.begin(async (tx) => {
-    await tx`delete from registration_status_events where player_id = ${id}`
     await tx`delete from registrations where player_id = ${id}`
+    await tx`delete from registration_status_events where player_id = ${id}`
     await tx`delete from event_teams where captain_id = ${id}`
     await tx`delete from registration_transfers where ${id} in (from_player_id, to_player_id)`
     await tx`delete from partner_invites where ${id} in (requested_by, invited_by)`
