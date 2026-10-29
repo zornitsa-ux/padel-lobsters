@@ -810,12 +810,17 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
     it and enter a score; enter the seeded league match's score; add a shop
     item (no `test.fail`: #99 merged first); edit and save the Lobster Way.
     The league match and the Lobster Way are seeded rows, restored after.
+    Spec files run in parallel, so those two tests are tagged `@seed-write`
+    and run in their own Playwright project after the rest (review).
   - **Fixtures.** `locators.ts`: `rowWith` (one player's or match's row) and
     `fieldAfterLabel`.
   - **Leak fixed.** `deleteEvent` and `deletePlayer` cleared the status log
     before deleting registrations, and each delete logs a row, so every run
     since #97 left about 36 rows behind. Now the log goes last; two full runs
-    leave every table as seeded.
+    leave every table as seeded. `deletePlayer` also removes a teammate's
+    registration on the player's team, which blocked the team's delete.
+  - **Shared.** `registrationOf` moved to `fixtures/db.ts`; scores are
+    committed with a real Tab instead of a scripted blur.
 
   Found by the suite, older than this PR: 66 form labels aren't tied to their
   inputs (#103, fits P3 part 2), and after an admin adds another player, the

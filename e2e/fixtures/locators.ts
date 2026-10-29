@@ -23,9 +23,11 @@ export function rowWith({
   texts: string[]
   button: string
 }): Locator {
+  // `has` resolves inside each candidate, so it's built from the page, not the scope.
+  const page = 'page' in scope ? scope.page() : scope
   const rows = texts.reduce(
-    (found, text) => found.filter({ has: scope.getByText(text, { exact: true }) }),
+    (found, text) => found.filter({ has: page.getByText(text, { exact: true }) }),
     scope.locator('div'),
   )
-  return rows.filter({ has: scope.getByRole('button', { name: button, exact: true }) }).last()
+  return rows.filter({ has: page.getByRole('button', { name: button, exact: true }) }).last()
 }

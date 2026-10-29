@@ -126,8 +126,10 @@ templates changed: `npm run db:stop && npm run db:start`.
   own event or player (`createEvent`, `createPlayer`), checks what was stored
   through the database (`admin`, `sql` in `fixtures/db.ts`) and deletes it in
   `finally`. A test that has to change a seeded row (the league match, the
-  Lobster Way) saves it first and restores it in `finally`. The suite has to
-  pass twice in a row without a reset.
+  Lobster Way) saves it first, restores it in `finally`, and is tagged
+  `{ tag: '@seed-write' }`: spec files run in parallel, so those tests run in
+  their own project once the rest are done. The suite has to pass twice in a
+  row without a reset.
 - **Real input.** Click and type as a person would. Never `dispatchEvent` or
   a scripted `.click()`: menus and dialogs have broken in ways only real input
   shows (#88).

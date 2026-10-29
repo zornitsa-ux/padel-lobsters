@@ -8,6 +8,7 @@ import {
   deletePlayer,
   PLAYER_PASSWORD,
   registerPlayers,
+  registrationOf,
 } from './fixtures/db'
 import { PLAYER } from './fixtures/seed'
 import { SESSION_FILES } from './fixtures/sessions'
@@ -21,17 +22,6 @@ import { expect, test } from './fixtures/test'
    ════════════════════════════════════════════════════════════════════════════ */
 
 test.use({ storageState: SESSION_FILES.player })
-
-async function registrationOf({ eventId, playerId }: { eventId: string; playerId: string }) {
-  const { data, error } = await admin
-    .from('registrations')
-    .select('status, payment_status, team_id, accepted_at')
-    .eq('tournament_id', eventId)
-    .eq('player_id', playerId)
-    .maybeSingle()
-  if (error) throw new Error(`Could not read the registration: ${error.message}`)
-  return data
-}
 
 async function transfersOf({ eventId }: { eventId: string }) {
   const { data, error } = await admin

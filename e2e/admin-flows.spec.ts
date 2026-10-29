@@ -1,5 +1,13 @@
 import type { Page } from '@playwright/test'
-import { admin, cleanUp, createEvent, deleteEvent, registerPlayers, sql } from './fixtures/db'
+import {
+  admin,
+  cleanUp,
+  createEvent,
+  deleteEvent,
+  registerPlayers,
+  registrationOf,
+  sql,
+} from './fixtures/db'
 import { fieldAfterLabel, rowWith } from './fixtures/locators'
 import { ADMIN, SEED_LEAGUE, SEED_PLAYERS } from './fixtures/seed'
 import { SESSION_FILES } from './fixtures/sessions'
@@ -8,7 +16,8 @@ import { expect, test } from './fixtures/test'
 /* ════════════════════════════════════════════════════════════════════════════
    What an admin writes, through the UI, each read back from the database.
    Event flows run on a throwaway event. Where a flow has to change a seeded
-   row (the league match, the Lobster Way), it restores the row afterwards.
+   row (the league match, the Lobster Way), it restores the row afterwards and
+   is tagged @seed-write, so it runs after the specs that read the seed.
    Acting for another player goes through the on-behalf confirm, which must
    name who was picked.
    ════════════════════════════════════════════════════════════════════════════ */
@@ -16,17 +25,6 @@ import { expect, test } from './fixtures/test'
 test.use({ storageState: SESSION_FILES.admin })
 
 const { lena, noor, kofi } = SEED_PLAYERS
-
-async function registrationOf({ eventId, playerId }: { eventId: string; playerId: string }) {
-  const { data, error } = await admin
-    .from('registrations')
-    .select('status, payment_status, payment_method, team_id')
-    .eq('tournament_id', eventId)
-    .eq('player_id', playerId)
-    .maybeSingle()
-  if (error) throw new Error(`Could not read the registration: ${error.message}`)
-  return data
-}
 
 /** The open confirm dialog; checks it names every line before returning it. */
 async function confirmDialog({
@@ -89,10 +87,15 @@ test('create an event through the form', async ({ page }) => {
 test('add a player for someone else: the confirm names them', async ({ page }) => {
   const event = await createEvent()
   try {
+    // The payment sheet after the add speaks as if the admin had registered
+    // (#104); close it whenever it shows rather than assert it.
+    await page.addLocatorHandler(page.getByRole('dialog', { name: /pay to lock your spot/ }), () =>
+      page.keyboard.press('Escape'),
+    )
     await page.goto(`/events/${event.id}/info`)
     await page.getByRole('button', { name: 'Register a Player' }).click()
     await page.getByRole('textbox', { name: 'Search players' }).fill(lena.name)
-    await page.getByRole('button', { name: new RegExp(`^${lena.name}`) }).click()
+    await page.getByRole('button', { name: lena.name }).click()
     await page.getByRole('button', { name: 'Register Player' }).click()
 
     const dialog = await confirmDialog({
@@ -101,9 +104,6 @@ test('add a player for someone else: the confirm names them', async ({ page }) =
       lines: [`Player: ${lena.name}`, `Event: ${event.name}`],
     })
     await dialog.getByRole('button', { name: 'Add player' }).click()
-    // The payment sheet that follows doesn't name the player (#104).
-    await expect(page.getByRole('dialog', { name: /Now pay to lock your spot/ })).toBeVisible()
-    await page.keyboard.press('Escape')
 
     await expect
       .poll(() => registrationOf({ eventId: event.id, playerId: lena.id }))
@@ -120,11 +120,11 @@ test('add a team for someone else: the confirm names captain and partner', async
     await page.goto(`/events/${event.id}/info`)
     await page.getByRole('button', { name: 'Add team' }).click()
     await page.getByRole('textbox', { name: 'Search players' }).fill(lena.name)
-    await page.getByRole('button', { name: new RegExp(`^${lena.name}`) }).click()
+    await page.getByRole('button', { name: lena.name }).click()
     await page.getByRole('button', { name: 'Next' }).click()
     await expect(page.getByText(`Partner for ${lena.name}`)).toBeVisible()
     await page.getByRole('textbox', { name: 'Search players' }).fill(noor.name)
-    await page.getByRole('button', { name: new RegExp(`^${noor.name}`) }).click()
+    await page.getByRole('button', { name: noor.name }).click()
     await page.getByRole('button', { name: 'Add team' }).click()
 
     const dialog = await confirmDialog({
@@ -138,7 +138,9 @@ test('add a team for someone else: the confirm names captain and partner', async
     const partner = () => registrationOf({ eventId: event.id, playerId: noor.id })
     await expect.poll(captain).toMatchObject({ status: 'registered' })
     await expect.poll(partner).toMatchObject({ status: 'registered' })
-    expect((await partner())?.team_id).toBe((await captain())?.team_id)
+    const teamId = (await captain())?.team_id
+    expect(teamId).toBeTruthy()
+    expect((await partner())?.team_id).toBe(teamId)
   } finally {
     await deleteEvent({ id: event.id })
   }
@@ -223,7 +225,7 @@ test('generate a schedule, save it and enter a score', async ({ page }) => {
     await page.getByRole('spinbutton', { name: 'Team 1 score' }).first().fill('6')
     const score2 = page.getByRole('spinbutton', { name: 'Team 2 score' }).first()
     await score2.fill('3')
-    await score2.blur()
+    await page.keyboard.press('Tab')
     await expect
       .poll(async () => (await matches())[0])
       .toMatchObject({
@@ -237,14 +239,16 @@ test('generate a schedule, save it and enter a score', async ({ page }) => {
   }
 })
 
-test('league Manage: enter the pending score', async ({ page }) => {
+test('league Manage: enter the pending score', { tag: '@seed-write' }, async ({ page }) => {
   const { team1, team2 } = SEED_LEAGUE.pendingMatch
   // The service role has no grant on league_matches, so this goes through sql.
   const readMatch = async () => {
-    const [row] = await sql`
+    const rows = await sql`
       select id, set_scores, winner_id, played_on::text, location from league_matches
-       where team1_id = ${team1.id} and team2_id = ${team2.id}`
-    return row
+       where league_id = ${SEED_LEAGUE.id} and stage = 'group'
+         and team1_id = ${team1.id} and team2_id = ${team2.id}`
+    if (rows.length !== 1) throw new Error(`Expected the one seeded match, found ${rows.length}`)
+    return rows[0]
   }
   const saved = await readMatch()
   try {
@@ -305,9 +309,17 @@ test('add a shop item', async ({ page }) => {
   }
 })
 
-test('Lobster Way admin saves an edit', async ({ page }) => {
-  const content = admin.from('settings').select('lobster_way_content').eq('id', 1)
-  const { data: saved } = await content.single().throwOnError()
+test('Lobster Way admin saves an edit', { tag: '@seed-write' }, async ({ page }) => {
+  const readContent = async () => {
+    const { data } = await admin
+      .from('settings')
+      .select('lobster_way_content')
+      .eq('id', 1)
+      .single()
+      .throwOnError()
+    return data
+  }
+  const saved = await readContent()
   const story = `E2E story ${Date.now()}`
   try {
     await page.goto('/admin/lobster-way')
@@ -316,7 +328,7 @@ test('Lobster Way admin saves an edit', async ({ page }) => {
     await page.getByRole('button', { name: 'Save changes' }).click()
 
     await expect
-      .poll(async () => (await content.single()).data?.lobster_way_content[0])
+      .poll(async () => (await readContent()).lobster_way_content[0])
       .toMatchObject({ label: 'Origin story', story })
   } finally {
     await admin.from('settings').update(saved).eq('id', 1).throwOnError()

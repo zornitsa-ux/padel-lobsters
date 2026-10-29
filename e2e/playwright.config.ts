@@ -6,6 +6,9 @@ import { defineConfig, devices } from '@playwright/test'
 // `localhost` or a different port.
 const baseURL = 'http://127.0.0.1:5173'
 
+// Tag for tests that change a seeded row: `test('…', { tag: '@seed-write' }, …)`.
+const SEED_WRITE = /@seed-write/
+
 export default defineConfig({
   testDir: '.',
   timeout: 60_000,
@@ -23,7 +26,18 @@ export default defineConfig({
     {
       name: 'chromium',
       testMatch: '**/*.spec.ts',
+      grepInvert: SEED_WRITE,
       dependencies: ['setup'],
+      use: { ...devices['Desktop Chrome'] },
+    },
+    // Files run in parallel, so a test that changes a seeded row (and restores
+    // it) would race the views that read it. These run once the rest have
+    // passed; if any failed, these are reported as not run.
+    {
+      name: 'seed-writes',
+      testMatch: '**/*.spec.ts',
+      grep: SEED_WRITE,
+      dependencies: ['chromium'],
       use: { ...devices['Desktop Chrome'] },
     },
   ],

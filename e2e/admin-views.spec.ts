@@ -55,7 +55,8 @@ test('league Manage shows the season and its matches', async ({ page }) => {
   await expect(page.getByRole('list', { name: 'Season phase' })).toBeVisible()
 
   await page.getByRole('button', { name: 'Teams' }).click()
-  await expect(page.getByText(team1.name).first()).toBeVisible()
+  await expect(page.getByText('Teams (5)')).toBeVisible()
+  await expect(rowWith({ scope: page, texts: [team1.name], button: 'Remove' })).toBeVisible()
 
   await page.getByRole('button', { name: 'Matches' }).click()
   await expect(page.getByText('Pending Matches (1)')).toBeVisible()
@@ -72,8 +73,10 @@ test('shop Manage lists the items', async ({ page }) => {
   for (const item of SEED_MERCH) {
     await expect(page.getByRole('button', { name: `Edit ${item}` })).toBeVisible()
   }
+  // No fixed count: player-flows places and removes an order alongside.
   await page.getByRole('button', { name: /Orders/ }).click()
-  await expect(page.getByText(SEED_MERCH[0]).first()).toBeVisible()
+  await expect(page.getByText(/^\d+ orders$/)).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Mark Delivered' }).first()).toBeVisible()
 })
 
 test('Lobster Way admin lists the categories', async ({ page }) => {
