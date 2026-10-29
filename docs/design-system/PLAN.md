@@ -796,5 +796,6 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
   read-only, no item created since April). Migration
   `20261029120000_merch_sequence_grants.sql` gives `authenticated` USAGE on
   both sequences, and the shop order test is no longer `test.fail`. New
-  `supabase/tests/sequence_grants.sql` fails if `authenticated` can insert
-  into a table but can't use its sequence.
+  `supabase/tests/sequence_grants.sql` fails if `anon` or `authenticated`
+  can insert into a table but can't use a sequence behind it. Review found
+  an older race on a double-tapped Order, live again with this fix (#100).

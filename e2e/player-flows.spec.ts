@@ -162,7 +162,7 @@ test('order from the shop', async ({ page }) => {
       })
       .toMatchObject([{ merch_item_id: 1, size: 'M', status: 'ordered' }])
   } finally {
-    await admin.from('merch_interests').delete().eq('player_id', PLAYER.id)
+    await admin.from('merch_interests').delete().eq('player_id', PLAYER.id).eq('merch_item_id', 1)
   }
 })
 
