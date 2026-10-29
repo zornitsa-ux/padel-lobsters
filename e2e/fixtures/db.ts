@@ -46,11 +46,13 @@ function localDateString(now = new Date()): string {
 export interface TournamentFixture {
   tournamentId: string
   players: { admin: string; player: string; p3: string; p4: string }
+  /** Finish writes each player's matchmaking rating; this puts the seed's back. */
+  restoreRatings: () => Promise<void>
 }
 
 /**
- * A 2-round, single-court tournament: round 1 pre-scored via SQL, round 2
- * left open. The smoke test enters round 2's score through the UI — that's
+ * A 2-round, single-court tournament today: round 1 pre-scored, round 2 left
+ * open. The smoke test enters round 2's score through the UI — that's
  * genuinely "the last score" (it flips the tournament from `live` to
  * `sealed`), not just "the only score".
  *
@@ -67,37 +69,14 @@ export async function seedTournament(): Promise<TournamentFixture> {
     SEED_PLAYERS.noor.id,
     SEED_PLAYERS.kofi.id,
   ]
-
-  const { data: tournament, error: tErr } = await admin
-    .from('tournaments')
-    .insert({
-      name: `E2E Smoke ${Date.now()}`,
-      date: localDateString(),
-      time: '18:00',
-      location: 'E2E Court',
-      max_players: 8,
-      format: 'lobster_matching',
-      status: 'active',
-      duration: 90,
-      gender_mode: 'mixed',
-    })
-    .select('id')
-    .single()
-  if (tErr || !tournament) {
-    throw new Error(`e2e fixture: could not create tournament — ${tErr?.message}`)
-  }
-  const tournamentId = tournament.id as string
-
-  const { error: regErr } = await admin.from('registrations').insert(
-    [adminId, playerId, p3, p4].map((id) => ({
-      tournament_id: tournamentId,
-      player_id: id,
-      status: 'registered',
-    })),
-  )
-  if (regErr) {
-    throw new Error(`e2e fixture: could not register players — ${regErr.message}`)
-  }
+  const restoreRatings = await saveRatings({ playerIds: [adminId, playerId, p3, p4] })
+  const { id: tournamentId } = await createEvent({
+    name: `E2E Smoke ${Date.now()}`,
+    status: 'active',
+    daysAhead: 0,
+    maxPlayers: 8,
+  })
+  await registerPlayers({ eventId: tournamentId, playerIds: [adminId, playerId, p3, p4] })
 
   const { error: matchErr } = await admin.from('matches').insert([
     {
@@ -125,7 +104,21 @@ export async function seedTournament(): Promise<TournamentFixture> {
     throw new Error(`e2e fixture: could not create matches — ${matchErr.message}`)
   }
 
-  return { tournamentId, players: { admin: adminId, player: playerId, p3, p4 } }
+  return { tournamentId, players: { admin: adminId, player: playerId, p3, p4 }, restoreRatings }
+}
+
+async function saveRatings({ playerIds }: { playerIds: string[] }): Promise<() => Promise<void>> {
+  const saved = await sql`
+    select id, mm_rating, mm_sigma, mm_rating_updated_at from players where id in ${sql(playerIds)}`
+  return async () => {
+    for (const row of saved) {
+      await sql`
+        update players
+           set mm_rating = ${row.mm_rating}, mm_sigma = ${row.mm_sigma},
+               mm_rating_updated_at = ${row.mm_rating_updated_at}
+         where id = ${row.id}`
+    }
+  }
 }
 
 /**
@@ -141,23 +134,39 @@ export async function deleteEvent({ id }: { id: string }): Promise<void> {
   })
 }
 
+/** Runs every cleanup step, in order, even when one fails; then reports the failures. */
+export async function cleanUp(...steps: (() => Promise<unknown>)[]): Promise<void> {
+  const failures: unknown[] = []
+  for (const step of steps) {
+    try {
+      await step()
+    } catch (error) {
+      failures.push(error)
+    }
+  }
+  if (failures.length) throw new AggregateError(failures, 'e2e cleanup failed')
+}
+
 export interface EventOptions {
+  name?: string
   entryMode?: 'individual' | 'team'
   format?: 'lobster_matching' | 'king_of_court'
+  status?: 'upcoming' | 'active'
   maxPlayers?: number
   daysAhead?: number
 }
 
-/** An upcoming event no one has registered for. Delete it with deleteEvent. */
+/** An event no one has registered for, upcoming by default. Delete it with deleteEvent. */
 export async function createEvent({
+  name = `E2E event ${Date.now()}`,
   entryMode = 'individual',
   format = 'lobster_matching',
+  status = 'upcoming',
   maxPlayers = 16,
   daysAhead = 10,
 }: EventOptions = {}): Promise<{ id: string; name: string }> {
   const date = new Date()
   date.setDate(date.getDate() + daysAhead)
-  const name = `E2E ${entryMode} ${Date.now()}`
   const { data, error } = await admin
     .from('tournaments')
     .insert({
@@ -168,7 +177,7 @@ export async function createEvent({
       max_players: maxPlayers,
       format,
       entry_mode: entryMode,
-      status: 'upcoming',
+      status,
       duration: 90,
       gender_mode: 'mixed',
       total_price: maxPlayers * 10,
@@ -242,7 +251,6 @@ export async function deletePlayer({ id }: { id: string }): Promise<void> {
 
 /** For accounts a spec signed up through the app, known only by email. */
 export async function deletePlayerByEmail({ email }: { email: string }): Promise<void> {
-  const { data } = await admin.auth.admin.listUsers({ perPage: 1000 })
-  const user = data.users.find((u) => u.email === email)
-  if (user) await deletePlayer({ id: user.id })
+  const users = await sql`select id from auth.users where email = ${email}`
+  for (const { id } of users) await deletePlayer({ id })
 }

@@ -1,5 +1,5 @@
 import { signIn } from './fixtures/auth'
-import { deleteEvent, seedTournament } from './fixtures/db'
+import { cleanUp, deleteEvent, seedTournament } from './fixtures/db'
 import type { TournamentFixture } from './fixtures/db'
 import { ADMIN, PLAYER } from './fixtures/seed'
 import { expect, guardPage, test } from './fixtures/test'
@@ -32,7 +32,12 @@ test.beforeAll(async () => {
 })
 
 test.afterAll(async () => {
-  if (fixture) await deleteEvent({ id: fixture.tournamentId })
+  if (fixture) {
+    await cleanUp(
+      () => deleteEvent({ id: fixture.tournamentId }),
+      () => fixture.restoreRatings(),
+    )
+  }
 })
 
 // Any protected path shows the sign-in gate in place of the route, then the

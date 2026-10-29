@@ -1,6 +1,7 @@
 import { openAs } from './fixtures/auth'
 import {
   admin,
+  cleanUp,
   createEvent,
   createPlayer,
   deleteEvent,
@@ -21,13 +22,14 @@ import { allowConsoleErrors, expect, test } from './fixtures/test'
 
 test.use({ storageState: SESSION_FILES.player })
 
-async function registrationsOf({ eventId }: { eventId: string }) {
+async function registrationOf({ eventId, playerId }: { eventId: string; playerId: string }) {
   const { data, error } = await admin
     .from('registrations')
-    .select('player_id, status, payment_status, team_id, accepted_at')
+    .select('status, payment_status, team_id, accepted_at')
     .eq('tournament_id', eventId)
-    .order('created_at')
-  if (error) throw new Error(`Could not read registrations: ${error.message}`)
+    .eq('player_id', playerId)
+    .maybeSingle()
+  if (error) throw new Error(`Could not read the registration: ${error.message}`)
   return data
 }
 
@@ -48,18 +50,15 @@ test('register for an event, then pay by Tikkie', async ({ page }) => {
     await page.getByRole('button', { name: 'Register for this event' }).click()
     await expect(page.getByText("You're registered")).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Registered (1/16)' })).toBeVisible()
-    await expect
-      .poll(() => registrationsOf({ eventId: event.id }))
-      .toMatchObject([{ player_id: PLAYER.id, status: 'registered', payment_status: 'unpaid' }])
+    const mine = () => registrationOf({ eventId: event.id, playerId: PLAYER.id })
+    await expect.poll(mine).toMatchObject({ status: 'registered', payment_status: 'unpaid' })
 
     await page.getByRole('link', { name: 'You' }).click()
     const tikkieTab = page.context().waitForEvent('page')
     await page.getByRole('link', { name: 'Pay via Tikkie' }).click()
     await (await tikkieTab).close()
     await expect(page.getByText(/Tikkie sent · awaiting admin confirmation/)).toBeVisible()
-    await expect
-      .poll(async () => (await registrationsOf({ eventId: event.id }))[0]?.payment_status)
-      .toBe('tikkied')
+    await expect.poll(async () => (await mine())?.payment_status).toBe('tikkied')
   } finally {
     await deleteEvent({ id: event.id })
   }
@@ -90,25 +89,21 @@ test('transfer a spot: the other player accepts and takes it', async ({ page, br
       await other.page.goto(`/transfer/${offer.id}`)
       await other.page.getByRole('button', { name: 'Accept transfer' }).click()
       await expect
-        .poll(() => registrationsOf({ eventId: event.id }))
-        .toEqual(
-          expect.arrayContaining([
-            expect.objectContaining({ player_id: recipient.id, status: 'registered' }),
-          ]),
+        .poll(
+          async () => (await registrationOf({ eventId: event.id, playerId: recipient.id }))?.status,
         )
-      const { data: theirs } = await admin
-        .from('registrations')
-        .select('status')
-        .eq('tournament_id', event.id)
-        .eq('player_id', PLAYER.id)
-      expect(theirs?.every(({ status }) => status !== 'registered')).toBe(true)
+        .toBe('registered')
+      const mine = await registrationOf({ eventId: event.id, playerId: PLAYER.id })
+      expect(mine?.status).not.toBe('registered')
       expect(other.errors).toEqual([])
     } finally {
       await other.context.close()
     }
   } finally {
-    await deleteEvent({ id: event.id })
-    await deletePlayer({ id: recipient.id })
+    await cleanUp(
+      () => deleteEvent({ id: event.id }),
+      () => deletePlayer({ id: recipient.id }),
+    )
   }
 })
 
@@ -125,23 +120,18 @@ test('sign up as a pair: the partner accepts the invite', async ({ page, browser
     await expect(confirm.getByText(`You + ${partner.firstName} Tester`)).toBeVisible()
     await confirm.getByRole('button', { name: 'Sign up' }).click()
 
-    await expect
-      .poll(() => registrationsOf({ eventId: event.id }))
-      .toMatchObject([
-        { player_id: PLAYER.id, status: 'registered' },
-        { player_id: partner.id, status: 'registered', accepted_at: null },
-      ])
-    const [captainRow, partnerRow] = await registrationsOf({ eventId: event.id })
-    expect(partnerRow.team_id).toBe(captainRow.team_id)
+    const captainRow = () => registrationOf({ eventId: event.id, playerId: PLAYER.id })
+    const partnerRow = () => registrationOf({ eventId: event.id, playerId: partner.id })
+    await expect.poll(captainRow).toMatchObject({ status: 'registered' })
+    await expect.poll(partnerRow).toMatchObject({ status: 'registered', accepted_at: null })
+    expect((await partnerRow())?.team_id).toBe((await captainRow())?.team_id)
 
     const other = await openAs({ browser, email: partner.email, password: PLAYER_PASSWORD })
     try {
       await other.page.goto('/team-invites')
       await expect(other.page.getByText('has entered you as their partner')).toBeVisible()
       await other.page.getByRole('button', { name: 'Accept' }).click()
-      await expect
-        .poll(async () => (await registrationsOf({ eventId: event.id }))[1]?.accepted_at)
-        .not.toBeNull()
+      await expect.poll(async () => (await partnerRow())?.accepted_at).not.toBeNull()
       await other.page.goto(`/events/${event.id}/me`)
       await expect(other.page.getByText(`You & ${PLAYER.name}`)).toBeVisible()
       expect(other.errors).toEqual([])
@@ -149,8 +139,10 @@ test('sign up as a pair: the partner accepts the invite', async ({ page, browser
       await other.context.close()
     }
   } finally {
-    await deleteEvent({ id: event.id })
-    await deletePlayer({ id: partner.id })
+    await cleanUp(
+      () => deleteEvent({ id: event.id }),
+      () => deletePlayer({ id: partner.id }),
+    )
   }
 })
 
@@ -194,7 +186,9 @@ test('edit the profile', async ({ browser }) => {
       .toBe('Vamos!')
     expect(other.errors).toEqual([])
   } finally {
-    await other.context.close()
-    await deletePlayer({ id: player.id })
+    await cleanUp(
+      () => other.context.close(),
+      () => deletePlayer({ id: player.id }),
+    )
   }
 })

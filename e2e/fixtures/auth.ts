@@ -3,8 +3,8 @@ import { guardPage } from './test'
 
 /**
  * Password sign-in through the app's sign-in form, at `at` when given. The
- * gate closing isn't enough: a navigation before the session is stored lands
- * signed out, so it also waits for the network to settle.
+ * gate closing isn't enough: a navigation before Supabase stores the session
+ * in localStorage lands signed out, so it waits for that too.
  */
 export async function signIn({
   page,
@@ -23,7 +23,9 @@ export async function signIn({
   await page.getByLabel('Password', { exact: true }).fill(password)
   await page.getByRole('button', { name: /^sign in$/i }).click()
   await expect(page.getByLabel('Password', { exact: true })).toHaveCount(0)
-  await page.waitForLoadState('networkidle')
+  await page.waitForFunction(() =>
+    Object.keys(localStorage).some((key) => /^sb-.+-auth-token$/.test(key)),
+  )
 }
 
 const SIGNED_OUT = { cookies: [], origins: [] }

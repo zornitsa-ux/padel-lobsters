@@ -4,7 +4,7 @@ import { test as base, type ConsoleMessage, type Page } from '@playwright/test'
 // when the issue is fixed.
 const KNOWN_CONSOLE_ERRORS: { pattern: RegExp; issue: number }[] = [
   { pattern: /get_results: .*invalid input syntax for type uuid: ""/, issue: 98 },
-  { pattern: /lobster_oscars_get_results/, issue: 98 },
+  { pattern: /status of 400 .*rpc\/lobster_oscars_get_results/, issue: 98 },
 ]
 
 const allowedByPage = new WeakMap<Page, RegExp[]>()

@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test'
-import { ADMIN, PLAYER, SEED_EVENTS, SEED_LEAGUE, SEED_MERCH } from './fixtures/seed'
+import { ADMIN, PLAYER, SEED_EVENTS, SEED_LEAGUE, SEED_MERCH, SEED_PLAYERS } from './fixtures/seed'
 import { SESSION_FILES } from './fixtures/sessions'
 import { expect, test } from './fixtures/test'
 
@@ -89,7 +89,7 @@ test.describe('player', () => {
 
   test('team event: the pair on You, the teams on Info', async ({ page }) => {
     await page.goto(`/events/${pairs.id}/me`)
-    await expect(page.getByText('You & Lena Voss')).toBeVisible()
+    await expect(page.getByText(`You & ${SEED_PLAYERS.lena.name}`)).toBeVisible()
     await expect(page.getByText(/Your team is registered/)).toBeVisible()
 
     await page.goto(`/events/${kingOfCourt.id}/info`)

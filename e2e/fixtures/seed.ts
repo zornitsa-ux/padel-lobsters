@@ -30,12 +30,7 @@ export const PLAYER: Account = {
 export const SEED_PLAYERS = {
   lena: { id: player(2), name: 'Lena Voss' },
   noor: { id: player(4), name: 'Noor Haddad' },
-  hanna: { id: player(7), name: 'Hanna Moreau' },
-  bram: { id: player(11), name: 'Bram Visser' },
-  diego: { id: player(12), name: 'Diego Ferraz' },
   kofi: { id: player(13), name: 'Kofi Mensah' },
-  mateo: { id: player(19), name: 'Mateo Ruiz' },
-  kit: { id: player(27), name: 'Kit Morrow' },
 }
 
 /** Sign-in specs change these accounts' auth state, so they play in nothing. */
