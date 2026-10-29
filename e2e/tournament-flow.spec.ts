@@ -67,7 +67,7 @@ test('run-of-show: schedule → finish → oscars → reveal (admin + player)', 
     await admin.getByRole('spinbutton', { name: 'Team 1 score' }).fill('6')
     const round2Score2 = admin.getByRole('spinbutton', { name: 'Team 2 score' })
     await round2Score2.fill('2')
-    await round2Score2.blur()
+    await admin.keyboard.press('Tab')
     await expect(admin.getByText('✓ Done')).toBeVisible()
 
     // ── 3. Admin finishes the tournament from /manage, not Schedule ──────

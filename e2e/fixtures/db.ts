@@ -124,14 +124,35 @@ async function saveRatings({ playerIds }: { playerIds: string[] }): Promise<() =
 /**
  * Removes an event a spec created, with the rows that block a tournament
  * delete (registrations and teams are RESTRICT). Cascades take the rest.
+ * The status log goes after the registrations: deleting one logs it.
  */
 export async function deleteEvent({ id }: { id: string }): Promise<void> {
   await sql.begin(async (tx) => {
-    await tx`delete from registration_status_events where tournament_id = ${id}`
     await tx`delete from registrations where tournament_id = ${id}`
+    await tx`delete from registration_status_events where tournament_id = ${id}`
     await tx`delete from event_teams where tournament_id = ${id}`
     await tx`delete from tournaments where id = ${id}`
   })
+}
+
+/** One player's registration on an event, or null. */
+export async function registrationOf({
+  eventId,
+  playerId,
+  columns = '*',
+}: {
+  eventId: string
+  playerId: string
+  columns?: string
+}) {
+  const { data, error } = await admin
+    .from('registrations')
+    .select(columns)
+    .eq('tournament_id', eventId)
+    .eq('player_id', playerId)
+    .maybeSingle()
+  if (error) throw new Error(`Could not read the registration: ${error.message}`)
+  return data as Record<string, unknown> | null
 }
 
 /** Runs every cleanup step, in order, even when one fails; then reports the failures. */
@@ -239,8 +260,14 @@ export async function createPlayer({ email }: { email?: string } = {}): Promise<
 /** Removes a player made by a spec, with the rows that would block it. */
 export async function deletePlayer({ id }: { id: string }): Promise<void> {
   await sql.begin(async (tx) => {
-    await tx`delete from registration_status_events where player_id = ${id}`
-    await tx`delete from registrations where player_id = ${id}`
+    const deleted = await tx`
+      delete from registrations
+       where player_id = ${id}
+          or team_id in (select id from event_teams where captain_id = ${id})
+      returning id`
+    await tx`
+      delete from registration_status_events
+       where player_id = ${id} or registration_id = any(${deleted.map((r) => r.id)}::uuid[])`
     await tx`delete from event_teams where captain_id = ${id}`
     await tx`delete from registration_transfers where ${id} in (from_player_id, to_player_id)`
     await tx`delete from partner_invites where ${id} in (requested_by, invited_by)`

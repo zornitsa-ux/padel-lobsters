@@ -55,6 +55,11 @@ export const SEED_LEAGUE = {
   id: '00000000-0000-4000-e000-000000000501',
   name: 'Autumn League',
   playerTeam: 'Net Rushers',
+  /** The men's group match still to be played. */
+  pendingMatch: {
+    team1: { id: '00000000-0000-4000-e000-000000000601', name: 'Net Rushers' },
+    team2: { id: '00000000-0000-4000-e000-000000000603', name: 'Bandeja Bros' },
+  },
 }
 
 export const SEED_MERCH = ['Lobster Tee', 'Lobster Cap']

@@ -222,7 +222,7 @@ views off `main` once #97 merges.
    team for someone else through the on-behalf confirm, Mark Paid through the
    menu, cancel a registration, enter a score), league Manage (enter a score),
    shop items, Lobster Way admin. A player can't reach any of them (the
-   player spec checks the gates). PR 2.
+   player spec checks the gates). Done (PR 2); see the Log.
 6. **Database.** `npm run db:test` runs `supabase/tests/` in the e2e job, and
    the specs read back each write through the database. Done (#97).
 7. **Real input.** Menus, dialogs and confirms are driven with Playwright's
@@ -245,9 +245,11 @@ Feature bugs found along the way are GitHub issues, outside this plan:
 #82 (Lobster Way open question after a reorder), #83 (Admin "unpaid
 registrations" row opens merch), #89 (the confirm dialog drops the
 on-behalf message's line breaks), #95 (the Oscars view switch drops focus),
-#98 (the Oscars results fetch fires with an empty ID) and #99 (shop orders
-fail in production; fixed before PR 2, see the Log). Each is a small PR
-whenever it suits.
+#98 (the Oscars results fetch fires with an empty ID), #99 (shop orders
+failed in production; fixed in #101), #100 (a double-tapped Order shows a
+failure), #102 (table grants differ between production and local), #103 (form
+labels not tied to their inputs) and #104 (the payment sheet after an admin
+adds someone doesn't name them). Each is a small PR whenever it suits.
 
 ## Later
 
@@ -799,3 +801,29 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
   `supabase/tests/sequence_grants.sql` fails if `anon` or `authenticated`
   can insert into a table but can't use a sequence behind it. Review found
   an older race on a double-tapped Order, live again with this fix (#100).
+- **2026-10-29.** E2E PR 2 on `e2e-admin-views`: 40 tests → 54. What changed:
+  - **Specs.** `admin-views` (Admin, event Manage's four sections, league
+    Manage, shop Manage, Lobster Way admin) and `admin-flows` (nine writes,
+    each read back): create an event through the form; add a player and a
+    team for someone else, where the confirm must name who was picked; Mark
+    Paid through the menu; cancel a registration; generate a schedule, save
+    it and enter a score; enter the seeded league match's score; add a shop
+    item (no `test.fail`: #99 merged first); edit and save the Lobster Way.
+    The league match and the Lobster Way are seeded rows, restored after.
+    Spec files run in parallel, so those two tests are tagged `@seed-write`
+    and run in their own Playwright project after the rest (review).
+  - **Fixtures.** `locators.ts`: `rowWith` (one player's or match's row) and
+    `fieldAfterLabel`.
+  - **Leak fixed.** `deleteEvent` and `deletePlayer` cleared the status log
+    before deleting registrations, and each delete logs a row, so every run
+    since #97 left about 36 rows behind. Now the log goes last; two full runs
+    leave every table as seeded. `deletePlayer` also removes a teammate's
+    registration on the player's team, which blocked the team's delete.
+  - **Shared.** `registrationOf` moved to `fixtures/db.ts`; scores are
+    committed with a real Tab instead of a scripted blur.
+
+  Found by the suite, older than this PR: 66 form labels aren't tied to their
+  inputs (#103, fits P3 part 2), and after an admin adds another player, the
+  payment sheet says "You're in!" and never names them (#104). Also #102:
+  production's default privileges give `anon` and `authenticated` all table
+  grants on new tables; local gives none (RLS still gates).
