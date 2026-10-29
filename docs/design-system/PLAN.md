@@ -246,8 +246,8 @@ Feature bugs found along the way are GitHub issues, outside this plan:
 registrations" row opens merch), #89 (the confirm dialog drops the
 on-behalf message's line breaks), #95 (the Oscars view switch drops focus),
 #98 (the Oscars results fetch fires with an empty ID) and #99 (shop orders
-fail in production). Each is a small PR whenever it suits; #99 first, since
-no player can order.
+fail in production; fixed before PR 2, see the Log). Each is a small PR
+whenever it suits.
 
 ## Later
 
@@ -790,3 +790,12 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
   the security phase C migration; no orders since). Its test is marked
   `test.fail` until the fix. And the Oscars results fetch first fires with an
   empty ID (#98); the console check allows it until it's fixed.
+
+- **2026-10-29.** Owner: fix #99 before PR 2. Admins couldn't add shop items
+  either: `merch_items_id_seq` lost the same grant (production checked
+  read-only, no item created since April). Migration
+  `20261029120000_merch_sequence_grants.sql` gives `authenticated` USAGE on
+  both sequences, and the shop order test is no longer `test.fail`. New
+  `supabase/tests/sequence_grants.sql` fails if `anon` or `authenticated`
+  can insert into a table but can't use a sequence behind it. Review found
+  an older race on a double-tapped Order, live again with this fix (#100).

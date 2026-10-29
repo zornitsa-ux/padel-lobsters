@@ -11,7 +11,7 @@ import {
 } from './fixtures/db'
 import { PLAYER } from './fixtures/seed'
 import { SESSION_FILES } from './fixtures/sessions'
-import { allowConsoleErrors, expect, test } from './fixtures/test'
+import { expect, test } from './fixtures/test'
 
 /* ════════════════════════════════════════════════════════════════════════════
    What a player writes, through the UI, each read back from the database. Every
@@ -147,8 +147,6 @@ test('sign up as a pair: the partner accepts the invite', async ({ page, browser
 })
 
 test('order from the shop', async ({ page }) => {
-  test.fail(true, 'Orders fail in production too: #99')
-  allowConsoleErrors({ page, patterns: [/merch_interests_id_seq/] })
   try {
     await page.goto('/community/shop')
     await page.getByRole('button', { name: 'M', exact: true }).click()
@@ -164,7 +162,7 @@ test('order from the shop', async ({ page }) => {
       })
       .toMatchObject([{ merch_item_id: 1, size: 'M', status: 'ordered' }])
   } finally {
-    await admin.from('merch_interests').delete().eq('player_id', PLAYER.id)
+    await admin.from('merch_interests').delete().eq('player_id', PLAYER.id).eq('merch_item_id', 1)
   }
 })
 
