@@ -170,14 +170,69 @@ primitives (see the Log) before P3:
    stays ours until a combobox (P6 `SearchInput`).~~ Done; see the Log.
 4. ~~**SwapPanel, CompareView and the Oscars drawer onto Dialog.** Each rolls
    its own Escape, scroll lock and focus today.~~ Done; see the Log.
-5. **P3 part 1: alerts.** `AlertBox` size, role and dismiss, then the
+5. **E2E safety net** (owner, 2026-10-29; below). Before any more UI moves.
+6. **P3 part 1: alerts.** `AlertBox` size, role and dismiss, then the
    hand-built tinted boxes.
-6. **P3 part 2: field errors.** `FormError` in ui and the hand-built error
+7. **P3 part 2: field errors.** `FormError` in ui and the hand-built error
    lines.
-7. **P4: `Badge` tones and payment status.**
-8. **P5: empty, signed-out and loading states.**
-9. **Card-pattern conversation** with the owner (below), then **P6**.
-10. **P7: lock-down.**
+8. **P4: `Badge` tones and payment status.**
+9. **P5: empty, signed-out and loading states.**
+10. **Card-pattern conversation** with the owner (below), then **P6**.
+11. **P7: lock-down.**
+
+### E2E safety net
+
+Every step so far has moved UI the whole app depends on, and the unit tests
+didn't catch #88 (every admin menu dead), because they don't use real input.
+Before P3, an end-to-end suite has to show that the player and admin views
+work and that the database behind them does.
+
+**Today.** Two specs in `e2e/` (13 tests): `email-sign-in.spec.ts` (sign-in,
+signup, password, magic link, transfer deep link, PIN interstitial, upgrade
+card) and `tournament-flow.spec.ts` (one admin + player run-of-show). They run
+only nightly (`e2e-nightly.yml`), and that run has failed every night since
+2026-10-22, the day after PIN T₀ (#50, #51). The same two upgrade-card tests
+fail each time: the card on Home never shows its "Signing in is getting
+easier" or "Add your email" text. Nothing else covers events, registration,
+payments, league, community, merch or any admin page. The SQL checks in
+`supabase/tests/` run only when someone remembers to run them.
+
+**Scope.** One branch, possibly split into PRs by area:
+
+1. **Green first.** Find out why the upgrade card doesn't show (a test that
+   no longer matches the T₀ behaviour, or a real bug), and fix the test or
+   the app. The nightly is green before anything is added.
+2. **Fixtures.** Shared helpers in `e2e/fixtures/` to seed a player, an admin,
+   an event (individual and team), a league season, and to sign in as each,
+   so a spec doesn't hand-build its data. Every spec cleans up after itself.
+3. **Player views** (signed in, and signed out where a guest can see the
+   page). Each page loads with its real data and no console errors: Home,
+   Events, an event's Info, Me, Schedule, Results and Oscars tabs, Community
+   and a player's page, Shop, League (season page and group stage), Lobster
+   Way, Account. Key flows: register for an individual event, register a team
+   and accept the invite, cancel, offer and accept a transfer, enter a score.
+4. **Admin views.** Admin, event Manage (create an event, add a player and a
+   team for someone else through the on-behalf confirm, Mark Paid through the
+   menu), league Manage, Lobster Way admin. A player who isn't an admin can't
+   reach any of them.
+5. **Database.** Run `supabase/tests/*.sql` in the e2e job against the fresh
+   local stack, so the database's own invariants are checked every run. The
+   specs read back what each write stored (through the service-role client in
+   `e2e/fixtures/db.ts`), so a page that renders but saved the wrong row
+   fails.
+6. **Real input.** Menus, dialogs and confirms are driven with Playwright's
+   real clicks and key presses, never `dispatchEvent` or a scripted
+   `.click()` (the lesson from #88).
+7. **Docs.** CONTRIBUTING.md says how to run the suite locally and when to
+   add a spec; this section logs what landed.
+
+Not in scope: visual snapshots, and coverage of every edge case the unit
+tests already hold. The aim is that a broken page or a broken write fails
+the suite, not exhaustive behaviour.
+
+**Owner call: when it runs.** Nightly only (today), or a short smoke subset on
+every PR that touches `src/` or `supabase/` with the full suite nightly. The
+nightly job takes about 4–5 minutes, most of it starting Supabase.
 
 Feature bugs found along the way are GitHub issues, outside this plan:
 #82 (Lobster Way open question after a reorder), #83 (Admin "unpaid
@@ -203,6 +258,8 @@ on-behalf message's line breaks). Each is a small PR whenever it suits.
 
 ## Open owner calls
 
+- **E2E on pull requests**: nightly only, or a smoke subset on every PR (see
+  "E2E safety net").
 - **Card-pattern conversation**: when to have it. It has to come before P6;
   P3 to P5 don't depend on it.
 
@@ -684,3 +741,9 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
   tap: Radix then kept the menu's layer, and a confirm opened next lost Escape
   to the dialog behind. It happens with `Menu`'s old `stopPropagation` too, and
   never with real input alone.
+
+- **2026-10-29.** #96 merged. Owner: an end-to-end safety net comes next,
+  before P3, so the player and admin views and the database are known to work
+  before more UI moves. The nightly e2e run has failed since 2026-10-22 (two
+  upgrade-card tests in `email-sign-in.spec.ts`), and the suite covers only
+  sign-in and one run-of-show. Scope in "E2E safety net".
