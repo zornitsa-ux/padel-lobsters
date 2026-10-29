@@ -289,6 +289,8 @@ async function signInWithPassword({ page, email }: { page: Page; email: string }
   await page.getByLabel('Email').fill(email)
   await page.getByLabel('Password', { exact: true }).fill(CARD_PASSWORD)
   await page.getByRole('button', { name: /^sign in$/i }).click()
+  // A navigation before the session is stored lands signed out.
+  await expect(page.getByLabel('Password', { exact: true })).toHaveCount(0)
 }
 
 async function openHomeSignedIn({ page, email }: { page: Page; email: string }) {

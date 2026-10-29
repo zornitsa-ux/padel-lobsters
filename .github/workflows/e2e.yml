@@ -1,23 +1,32 @@
-name: E2E (nightly)
+name: E2E
 
-# Deliberately NOT on pull_request/push — a full run drives real Chrome
-# through a two-role tournament flow against a real local Supabase, on the
-# order of a minute-plus. That's an unacceptable tax on every PR for a single
-# smoke test. Nightly (plus manual dispatch) catches a regression within a
-# day without slowing anyone's merge.
-#
-# See e2e/tournament-flow.spec.ts for what this actually covers, and the
-# spike report in the PR that introduced this file for the Playwright vs.
-# puppeteer-core comparison that motivated it.
+# Runs on every PR that can change app behaviour, and nightly on main. Trial
+# (owner, 2026-10-29): measure what it adds to a PR, then decide between the
+# full suite and a smoke subset (docs/design-system/PLAN.md, "E2E safety
+# net"). See e2e/ for what the specs cover.
 
 on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'supabase/**'
+      - 'e2e/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.js'
+      - '.github/workflows/e2e.yml'
   schedule:
     - cron: '17 3 * * *' # 03:17 UTC daily — off the hour, avoids GH Actions' peak-minute queueing
   workflow_dispatch: {}
 
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   e2e:
-    name: Tournament run-of-show smoke test
+    name: Playwright against local Supabase
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -59,7 +68,7 @@ jobs:
       - name: Start Supabase
         run: npx supabase start
 
-      - name: Run the smoke test
+      - name: Run the e2e suite
         run: npm run test:e2e
 
       - name: Upload Playwright report

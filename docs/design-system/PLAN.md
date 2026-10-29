@@ -187,7 +187,7 @@ didn't catch #88 (every admin menu dead), because they don't use real input.
 Before P3, an end-to-end suite has to show that the player and admin views
 work and that the database behind them does.
 
-**Today.** Two specs in `e2e/` (13 tests): `email-sign-in.spec.ts` (sign-in,
+**At the start (2026-10-29).** Two specs in `e2e/` (13 tests): `email-sign-in.spec.ts` (sign-in,
 signup, password, magic link, transfer deep link, PIN interstitial, upgrade
 card) and `tournament-flow.spec.ts` (one admin + player run-of-show). They run
 only nightly (`e2e-nightly.yml`), and that run has failed every night since
@@ -201,7 +201,8 @@ payments, league, community, merch or any admin page. The SQL checks in
 
 1. **Green first.** Find out why the upgrade card doesn't show (a test that
    no longer matches the T₀ behaviour, or a real bug), and fix the test or
-   the app. The nightly is green before anything is added.
+   the app. The nightly is green before anything is added. Done; see the
+   Log.
 2. **Fixtures.** Shared helpers in `e2e/fixtures/` to seed a player, an admin,
    an event (individual and team), a league season, and to sign in as each,
    so a spec doesn't hand-build its data. Every spec cleans up after itself.
@@ -230,9 +231,11 @@ Not in scope: visual snapshots, and coverage of every edge case the unit
 tests already hold. The aim is that a broken page or a broken write fails
 the suite, not exhaustive behaviour.
 
-**Owner call: when it runs.** Nightly only (today), or a short smoke subset on
-every PR that touches `src/` or `supabase/` with the full suite nightly. The
-nightly job takes about 4–5 minutes, most of it starting Supabase.
+**When it runs** (owner, 2026-10-29). On every PR that touches `src/`,
+`supabase/`, `e2e/` or the dependencies, as well as nightly (`e2e.yml`), as a
+trial: measure what it adds to a PR before choosing between the full suite and
+a smoke subset. The nightly job took about 4–5 minutes, most of it starting
+Supabase.
 
 Feature bugs found along the way are GitHub issues, outside this plan:
 #82 (Lobster Way open question after a reorder), #83 (Admin "unpaid
@@ -258,8 +261,6 @@ on-behalf message's line breaks). Each is a small PR whenever it suits.
 
 ## Open owner calls
 
-- **E2E on pull requests**: nightly only, or a smoke subset on every PR (see
-  "E2E safety net").
 - **Card-pattern conversation**: when to have it. It has to come before P6;
   P3 to P5 don't depend on it.
 
@@ -747,3 +748,12 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
   before more UI moves. The nightly e2e run has failed since 2026-10-22 (two
   upgrade-card tests in `email-sign-in.spec.ts`), and the suite covers only
   sign-in and one run-of-show. Scope in "E2E safety net".
+- **2026-10-29.** Owner: run the e2e suite on every PR as a trial and measure
+  the time it adds. `e2e-nightly.yml` is now `e2e.yml`, on pull requests that
+  touch app code, the database, the specs or the dependencies, as well as
+  nightly. Newer pushes to a PR cancel its running job. The two failing tests
+  had never passed in CI: they were added in #51 the day before. Their sign-in
+  helper clicked "Sign in" and went straight to Home. On a slow runner that
+  navigation landed before the session was stored, so Home showed signed out
+  with no card. The helper now waits for the sign-in form to close. Locally
+  they passed, as the warm dev server signs in faster.
