@@ -10,8 +10,21 @@
 | `npm run db:stop`                                  | Stop the local stack                                       |
 | `npm run db:reset`                                 | Wipe and recreate the local DB from migrations + seed data |
 | `npm run db:migration -- <name>`                   | Create a new empty migration file                          |
+| `npm run db:test`                                  | Run the database tests in `supabase/tests`                 |
 | `npm run rehearsal:sync`                           | Replace the local DB with production data (see below)      |
 | `npm run rehearsal:integrity -- --local\|--linked` | Auth integrity counts, local or production (read-only)     |
+
+### Seed data
+
+`supabase/seed.sql` is a small synthetic world: made-up players (no real
+names, since the repo is public), one event of each kind, a league in its
+group stage, shop items and Oscars. Dates are relative to the day of the
+reset, and IDs are fixed so the e2e specs can find them
+(`e2e/fixtures/seed.ts`). Its header lists the sign-in accounts.
+
+Keep it small and keep it synthetic. When a feature needs data to show, add
+one example to the seed and its IDs to `e2e/fixtures/seed.ts`. For
+production-like data, use `npm run rehearsal:sync` instead.
 
 ### Creating a database migration
 
@@ -23,6 +36,7 @@ npm run db:migration -- add_birthday_column
 
 # 3. Test it locally — replays ALL migrations from scratch + seeds
 npm run db:reset
+npm run db:test   # plus a test in supabase/tests for what the migration enforces
 
 # 4. Commit the migration file and open a PR
 ```
@@ -80,6 +94,44 @@ and migrations, its description should say which goes first.
 
 ---
 
+## End-to-end tests
+
+`npm run test:e2e` drives Chrome through the app (Playwright) against the
+local stack. CI runs it, after `npm run db:test`, on every PR that touches
+`src/`, `supabase/`, `e2e/` or the dependencies, and nightly
+(`.github/workflows/e2e.yml`).
+
+```bash
+npm run db:start && npm run db:reset   # the specs expect the seed
+npm run test:e2e                       # starts dev:local unless it's running
+```
+
+If sign-in emails arrive without a code, the stack started before the email
+templates changed: `npm run db:stop && npm run db:start`.
+
+- **Specs.** `player-views` (every page, signed out and as a player),
+  `player-flows` (what a player writes, read back from the database),
+  `email-sign-in`, `tournament-flow` (admin and player run of show).
+- **Fixtures** (`e2e/fixtures/`). Import `test` and `expect` from
+  `fixtures/test.ts`: it fails a test on any uncaught error or console error
+  (`allowConsoleErrors` for one the test causes on purpose; known app bugs
+  are listed there with their issue). `auth.setup.ts` saves a signed-in
+  session per role, so a spec starts signed in with
+  `test.use({ storageState: SESSION_FILES.player })`. `openAs` opens a
+  second browser for another account.
+- **Data.** Read the seed; never change it. A spec that writes creates its
+  own event or player (`createEvent`, `createPlayer`), checks what was stored
+  through the database (`admin`, `sql` in `fixtures/db.ts`) and deletes it in
+  `finally`. The suite has to pass twice in a row without a reset.
+- **Real input.** Click and type as a person would. Never `dispatchEvent` or
+  a scripted `.click()`: menus and dialogs have broken in ways only real input
+  shows (#88).
+- **New pages and flows** get a check in the matching spec in the same PR.
+- **A known app bug** that fails a test: open an issue and mark the test
+  `test.fail(true, '… #NN')`, so it goes red again once the bug is fixed.
+
+---
+
 ## Pre-commit hook
 
 Commits run Prettier + ESLint on changed files automatically (Husky). A
@@ -93,6 +145,7 @@ the file/line.
 ```
 padel-lobsters/
 ├── .github/workflows/   CI pipeline (GitHub Actions)
+├── e2e/                  End-to-end specs and fixtures (Playwright)
 ├── src/
 │   ├── features/         Primary code organization — see ARCHITECTURE.md
 │   │                      for the domain/application/state/ui layer shape
@@ -103,5 +156,6 @@ padel-lobsters/
 └── supabase/
     ├── functions/         Edge Functions (server-side code)
     ├── migrations/        Database migrations (applied in order)
-    └── seed.sql           Sample data for local development
+    ├── tests/             Database tests (npm run db:test)
+    └── seed.sql           Synthetic data for local development and e2e
 ```

@@ -1,6 +1,15 @@
-import { test, expect, type Page } from '@playwright/test'
-import { admin } from './fixtures/db'
+import type { Page } from '@playwright/test'
+import { signIn } from './fixtures/auth'
+import {
+  admin,
+  createPlayer,
+  deletePlayer,
+  deletePlayerByEmail,
+  PLAYER_PASSWORD,
+} from './fixtures/db'
 import { clearInbox, waitForCode, waitForConfirmPath } from './fixtures/mailpit'
+import { PLAYER, SEED_EVENTS, SIGN_IN_EMAILS } from './fixtures/seed'
+import { allowConsoleErrors, expect, test } from './fixtures/test'
 
 /* ════════════════════════════════════════════════════════════════════════════
    Email-code and password sign-in against the local stack. Codes come from
@@ -8,16 +17,21 @@ import { clearInbox, waitForCode, waitForConfirmPath } from './fixtures/mailpit'
    ════════════════════════════════════════════════════════════════════════════ */
 
 // Separate players: GoTrue allows one code per address per 60 s.
-const CODE_PLAYER = 'ilaria@lobsters.test'
-const MODAL_PLAYER = 'ingrid@lobsters.test'
-const PASSWORD_PLAYER = 'adriana@lobsters.test'
-const LINK_PLAYER = 'erica@lobsters.test'
-const RESET_PLAYER = 'favio@lobsters.test'
-const TRANSFER_FROM = 'gabriela@lobsters.test'
-const TRANSFER_TO = 'francesco@lobsters.test'
-const RESET_PASSWORD = 'Reset-Password-2026'
-const FIRST_PASSWORD = 'First-Password-2026'
-const NEXT_PASSWORD = 'Second-Password-2026'
+const {
+  code: CODE_PLAYER,
+  modal: MODAL_PLAYER,
+  password: PASSWORD_PLAYER,
+  link: LINK_PLAYER,
+  reset: RESET_PLAYER,
+  transferFrom: TRANSFER_FROM,
+  transferTo: TRANSFER_TO,
+} = SIGN_IN_EMAILS
+// Unique per run: GoTrue rejects a new password equal to the current one, and
+// these accounts keep the last run's.
+const RUN = Date.now()
+const RESET_PASSWORD = `Reset-Password-${RUN}`
+const FIRST_PASSWORD = `First-Password-${RUN}`
+const NEXT_PASSWORD = `Second-Password-${RUN}`
 
 async function requestCode({ page, email }: { page: Page; email: string }) {
   await clearInbox({ to: email })
@@ -35,11 +49,10 @@ async function playerId({ email }: { email: string }): Promise<string> {
 }
 
 async function createTransfer(): Promise<string> {
-  const { data: tournament } = await admin.from('tournaments').select('id').limit(1).single()
   const { data, error } = await admin
     .from('registration_transfers')
     .insert({
-      tournament_id: tournament?.id,
+      tournament_id: SEED_EVENTS.social.id,
       from_player_id: await playerId({ email: TRANSFER_FROM }),
       to_player_id: await playerId({ email: TRANSFER_TO }),
     })
@@ -66,7 +79,14 @@ async function fillSignupForm({ page, email }: { page: Page; email: string }) {
   await page.getByRole('button', { name: /netherlands/i }).click()
 }
 
+const signedUp: string[] = []
+
+test.afterEach(async () => {
+  for (const email of signedUp.splice(0)) await deletePlayerByEmail({ email })
+})
+
 async function startSignup({ page, email }: { page: Page; email: string }) {
+  signedUp.push(email)
   await page.goto('/events')
   await page.getByRole('button', { name: /sign up/i }).click()
   await fillSignupForm({ page, email })
@@ -120,6 +140,10 @@ test('native signup: code creates the players row', async ({ page }) => {
 })
 
 test('signup retry after 60 s: only the newest code works', async ({ page }) => {
+  allowConsoleErrors({
+    page,
+    patterns: [/status of 429 .*\/auth\/v1\/otp/, /status of 403 .*\/auth\/v1\/verify/],
+  })
   test.setTimeout(150_000)
   const email = `e2e-retry-${Date.now()}@lobsters.test`
   await startSignup({ page, email })
@@ -147,9 +171,6 @@ test('signup retry after 60 s: only the newest code works', async ({ page }) => 
 })
 
 test('password path: set on a code session, sign in with it, change it', async ({ page }) => {
-  // A stale Playtomic level pops a modal over the page whenever the profile loads.
-  const stalePrompt = page.getByRole('button', { name: /no change/i })
-  await page.addLocatorHandler(stalePrompt, (button) => button.click())
   await page.goto('/account')
   const code = await requestCode({ page, email: PASSWORD_PLAYER })
   await enterCode({ page, code })
@@ -161,10 +182,7 @@ test('password path: set on a code session, sign in with it, change it', async (
   await expect(page.getByText('Password saved.')).toBeVisible()
 
   await page.getByRole('button', { name: /^sign out$/i }).click()
-  await page.getByRole('button', { name: /sign in with password/i }).click()
-  await page.getByLabel('Email').fill(PASSWORD_PLAYER)
-  await page.getByLabel('Password', { exact: true }).fill(FIRST_PASSWORD)
-  await page.getByRole('button', { name: /^sign in$/i }).click()
+  await signIn({ page, email: PASSWORD_PLAYER, password: FIRST_PASSWORD })
 
   await page.getByRole('button', { name: /change password/i }).click()
   await expect(page.getByLabel('Current password')).toBeVisible()
@@ -190,8 +208,7 @@ test('magic link: tap to confirm returns to the page it was requested from', asy
 })
 
 test('forgot password: reset code, rule messages, new password signs in', async ({ page }) => {
-  const stalePrompt = page.getByRole('button', { name: /no change/i })
-  await page.addLocatorHandler(stalePrompt, (button) => button.click())
+  allowConsoleErrors({ page, patterns: [/status of 422 .*\/auth\/v1\/user/] })
   await page.goto('/events')
   await page.getByRole('button', { name: /sign in with password/i }).click()
   await page.getByRole('button', { name: /forgot password/i }).click()
@@ -218,11 +235,7 @@ test('forgot password: reset code, rule messages, new password signs in', async 
 
   await page.goto('/account')
   await page.getByRole('button', { name: /^sign out$/i }).click()
-  await page.getByRole('button', { name: /sign in with password/i }).click()
-  await page.getByLabel('Email').fill(RESET_PLAYER)
-  await page.getByLabel('Password', { exact: true }).fill(RESET_PASSWORD)
-  await page.getByRole('button', { name: /^sign in$/i }).click()
-  await expect(page.getByRole('button', { name: /^sign in$/i })).toHaveCount(0)
+  await signIn({ page, email: RESET_PLAYER, password: RESET_PASSWORD })
   await expect(page).toHaveURL(/\/account$/)
 })
 
@@ -244,6 +257,7 @@ test('signed-out transfer deep link: code sign-in lands on the transfer', async 
 test('an account with no players row sees the incomplete-account panel and can sign out', async ({
   page,
 }) => {
+  allowConsoleErrors({ page, patterns: [/\[auth\] incomplete session/] })
   const email = `e2e-orphan-${Date.now()}@lobsters.test`
   // No name metadata: the C-4 trigger skips the players row.
   const { data, error } = await admin.auth.admin.createUser({ email, email_confirm: true })
@@ -265,53 +279,20 @@ test('an account with no players row sees the incomplete-account panel and can s
    PIN sunset comms: post-PIN interstitial and the Home upgrade card.
    ════════════════════════════════════════════════════════════════════════════ */
 
-const PIN_PLAYER = { email: 'trunal@lobsters.test', pin: '1234' }
-const CARD_PASSWORD = 'Card-Password-2026'
-
-async function createPasswordPlayer({ email }: { email: string }): Promise<string> {
-  const { data, error } = await admin.auth.admin.createUser({
-    email,
-    password: CARD_PASSWORD,
-    email_confirm: true,
-    user_metadata: { name: `E2E Card ${Date.now()}` },
-  })
-  if (error || !data.user) throw new Error(`Could not create ${email}: ${error?.message}`)
-  return data.user.id
-}
-
-async function deletePlayerUser({ id }: { id: string }) {
-  await admin.from('players').delete().eq('id', id)
-  await admin.auth.admin.deleteUser(id)
-}
-
-async function signInWithPassword({ page, email }: { page: Page; email: string }) {
-  await page.getByRole('button', { name: /sign in with password/i }).click()
-  await page.getByLabel('Email').fill(email)
-  await page.getByLabel('Password', { exact: true }).fill(CARD_PASSWORD)
-  await page.getByRole('button', { name: /^sign in$/i }).click()
-  // A navigation before the session is stored lands signed out.
-  await expect(page.getByLabel('Password', { exact: true })).toHaveCount(0)
-}
-
 async function openHomeSignedIn({ page, email }: { page: Page; email: string }) {
-  // A stale Playtomic level pops a modal over the page whenever the profile loads.
-  await page.addLocatorHandler(page.getByRole('button', { name: /no change/i }), (button) =>
-    button.click(),
-  )
-  await page.goto('/events')
-  await signInWithPassword({ page, email })
+  await signIn({ page, email, password: PLAYER_PASSWORD, at: '/events' })
   await page.goto('/home')
 }
 
 test('PIN sign-in shows the interstitial once, with the player email', async ({ page }) => {
   await page.goto('/events')
   await page.getByRole('button', { name: /sign in with pin \(until/i }).click()
-  await page.getByLabel(/your pin/i).fill(PIN_PLAYER.pin)
+  await page.getByLabel(/your pin/i).fill(PLAYER.pin)
   await page.getByRole('button', { name: /^sign in with pin$/i }).click()
 
   const dialogTitle = page.getByText(/^PINs stop working on /)
   await expect(dialogTitle).toBeVisible()
-  await expect(page.getByText(PIN_PLAYER.email)).toBeVisible()
+  await expect(page.getByText(PLAYER.email)).toBeVisible()
   await page.getByRole('button', { name: /^got it$/i }).click()
   await expect(dialogTitle).toHaveCount(0)
 
@@ -322,7 +303,7 @@ test('PIN sign-in shows the interstitial once, with the player email', async ({ 
 
 test('upgrade card on Home: shows the email, Got it dismisses it for good', async ({ page }) => {
   const email = `e2e-card-${Date.now()}@lobsters.test`
-  const id = await createPasswordPlayer({ email })
+  const { id } = await createPlayer({ email })
   try {
     await openHomeSignedIn({ page, email })
     const card = page.getByTestId('pin-upgrade-card')
@@ -337,7 +318,7 @@ test('upgrade card on Home: shows the email, Got it dismisses it for good', asyn
     await expect(page.getByText('Welcome to Padel Lobsters!')).toHaveCount(0)
     await expect(page.getByTestId('pin-upgrade-card')).toHaveCount(0)
   } finally {
-    await deletePlayerUser({ id })
+    await deletePlayer({ id })
   }
 })
 
@@ -346,7 +327,7 @@ test('synthetic account sees the add-email card until an admin sets a real email
 }) => {
   const synthetic = `player-${crypto.randomUUID()}@padelobsters.internal`
   const realEmail = `e2e-fixed-${Date.now()}@lobsters.test`
-  const id = await createPasswordPlayer({ email: synthetic })
+  const { id } = await createPlayer({ email: synthetic })
   try {
     await openHomeSignedIn({ page, email: synthetic })
     const card = page.getByTestId('pin-upgrade-card')
@@ -362,10 +343,10 @@ test('synthetic account sees the add-email card until an admin sets a real email
 
     await page.goto('/account')
     await page.getByRole('button', { name: /^sign out$/i }).click()
-    await signInWithPassword({ page, email: realEmail })
+    await signIn({ page, email: realEmail, password: PLAYER_PASSWORD })
     await page.goto('/home')
     await expect(page.getByTestId('pin-upgrade-card')).toContainText('Signing in is getting easier')
   } finally {
-    await deletePlayerUser({ id })
+    await deletePlayer({ id })
   }
 })

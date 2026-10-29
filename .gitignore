@@ -28,6 +28,7 @@ test-results/
 /test-results/
 /playwright-report/
 /e2e/.cache/
+/e2e/.auth/
 
 # TypeScript incremental build cache
 *.tsbuildinfo

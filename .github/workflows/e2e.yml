@@ -3,7 +3,8 @@ name: E2E
 # Runs on every PR that can change app behaviour, and nightly on main. Trial
 # (owner, 2026-10-29): measure what it adds to a PR, then decide between the
 # full suite and a smoke subset (docs/design-system/PLAN.md, "E2E safety
-# net"). See e2e/ for what the specs cover.
+# net"). The job runs the database tests in supabase/tests, then the
+# Playwright specs in e2e/.
 
 on:
   pull_request:
@@ -67,6 +68,9 @@ jobs:
 
       - name: Start Supabase
         run: npx supabase start
+
+      - name: Run the database tests
+        run: npm run db:test
 
       - name: Run the e2e suite
         run: npm run test:e2e

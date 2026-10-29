@@ -1,6 +1,8 @@
-import { test, expect, type Page } from '@playwright/test'
-import { seedTournament, deleteTournament } from './fixtures/db'
+import { signIn } from './fixtures/auth'
+import { deleteEvent, seedTournament } from './fixtures/db'
 import type { TournamentFixture } from './fixtures/db'
+import { ADMIN, PLAYER } from './fixtures/seed'
+import { expect, guardPage, test } from './fixtures/test'
 
 /* ════════════════════════════════════════════════════════════════════════════
    Smoke test — the run-of-show closing sequence, across both roles.
@@ -23,13 +25,6 @@ import type { TournamentFixture } from './fixtures/db'
    slower and flakier without exercising anything new.
    ════════════════════════════════════════════════════════════════════════════ */
 
-interface Credentials {
-  email: string
-  password: string
-}
-const ADMIN: Credentials = { email: 'jon@lobsters.test', password: 'Lobster-Admin-9999' }
-const PLAYER: Credentials = { email: 'trunal@lobsters.test', password: 'Lobster-Player-1234' }
-
 let fixture: TournamentFixture
 
 test.beforeAll(async () => {
@@ -37,33 +32,11 @@ test.beforeAll(async () => {
 })
 
 test.afterAll(async () => {
-  if (fixture) await deleteTournament(fixture.tournamentId)
+  if (fixture) await deleteEvent({ id: fixture.tournamentId })
 })
 
-// A fresh (unauthenticated) context hitting any protected path — which is
-// every path here, see src/lib/authPaths.ts — gets VerificationGate's
-// full-screen sign-in in place of the route, then renders the route in
-// place once signed in. So signing in *at* the deep link, rather than via
-// /account first, is both simpler and a more faithful repro of "cold link
-// while logged out" than a two-step sign-in-then-navigate would be. The seeded
-// passwords (supabase/seed.sql) avoid a Mailpit round trip per sign-in.
-async function signInAt(page: Page, url: string, credentials: Credentials) {
-  await page.goto(url)
-  await page.getByRole('button', { name: /sign in with password/i }).click()
-  await page.getByLabel('Email').fill(credentials.email)
-  await page.getByLabel('Password', { exact: true }).fill(credentials.password)
-  await page.getByRole('button', { name: /^sign in$/i }).click()
-  // The gate unmounts once `role` flips off 'guest' — confirms the sign-in
-  // landed before we do anything else.
-  await page.getByLabel('Password', { exact: true }).waitFor({ state: 'hidden' })
-  // The gate unmounting doesn't mean the session has been persisted yet. A
-  // hard page.goto() right after can race that write — the reload reads
-  // localStorage before it lands and briefly looks signed-out. Draining the
-  // network queue here avoids hand-rolling a poll/retry around every
-  // subsequent navigation.
-  await page.waitForLoadState('networkidle')
-}
-
+// Any protected path shows the sign-in gate in place of the route, then the
+// route once signed in, so signing in at the deep link repros a cold link.
 test('run-of-show: schedule → finish → oscars → reveal (admin + player)', async ({ browser }) => {
   test.slow()
 
@@ -71,6 +44,7 @@ test('run-of-show: schedule → finish → oscars → reveal (admin + player)', 
   const playerCtx = await browser.newContext()
   const admin = await adminCtx.newPage()
   const player = await playerCtx.newPage()
+  const pageErrors = [await guardPage({ page: admin }), await guardPage({ page: player })]
   const eventPath = `/events/${fixture.tournamentId}`
 
   try {
@@ -78,7 +52,7 @@ test('run-of-show: schedule → finish → oscars → reveal (admin + player)', 
     // A full navigation straight to the nested Schedule route, not a
     // client-side tab click. The regression this guards against: this used
     // to bounce to /events before the tournament/session resolved.
-    await signInAt(admin, `${eventPath}/schedule`, ADMIN)
+    await signIn({ page: admin, ...ADMIN, at: `${eventPath}/schedule` })
     await expect(admin).toHaveURL(new RegExp(`${fixture.tournamentId}/schedule$`))
     await expect(admin.getByRole('button', { name: 'Round 1' })).toBeVisible()
 
@@ -98,7 +72,7 @@ test('run-of-show: schedule → finish → oscars → reveal (admin + player)', 
     await expect(admin.getByText('Ratings applied, tournament complete')).toBeVisible()
 
     // ── 4. Player still cannot see standings ──────────────────────────────
-    await signInAt(player, eventPath, PLAYER)
+    await signIn({ page: player, ...PLAYER, at: eventPath })
     await expect(player.getByRole('link', { name: 'Results', exact: true })).toHaveCount(0)
     // Defense in depth: the route itself withholds standings even if hit
     // directly, independent of the tab strip.
@@ -116,11 +90,11 @@ test('run-of-show: schedule → finish → oscars → reveal (admin + player)', 
     await player.goto(`${eventPath}/oscars`)
     await player.getByRole('button', { name: /Best Lobster/ }).click()
     // Exact match: a player tile's accessible name also folds in its
-    // match-history blurb ("R1: vs Baturay & Jon"), which makes every other
+    // match-history blurb ("R1: vs Noor & Mara"), which makes every other
     // tile's name a substring of someone's history text too. Only the name
-    // label itself renders as an isolated "Baturay" text node.
-    await player.getByText('Baturay', { exact: true }).click()
-    await expect(player.getByText(/Voted: Baturay/)).toBeVisible()
+    // label itself renders as an isolated "Noor" text node.
+    await player.getByText('Noor', { exact: true }).click()
+    await expect(player.getByText(/Voted: Noor/)).toBeVisible()
 
     // ── 7. Admin closes voting ─────────────────────────────────────────────
     await admin.goto(`${eventPath}/manage`)
@@ -141,6 +115,7 @@ test('run-of-show: schedule → finish → oscars → reveal (admin + player)', 
     await player.goto(`${eventPath}/oscars`)
     await expect(player.getByRole('heading', { name: /The Results/ })).toBeVisible()
     await expect(player.getByText('Best Lobster')).toBeVisible()
+    expect(pageErrors.flat()).toEqual([])
   } finally {
     await adminCtx.close()
     await playerCtx.close()

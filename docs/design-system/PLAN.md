@@ -197,35 +197,39 @@ easier" or "Add your email" text. Nothing else covers events, registration,
 payments, league, community, merch or any admin page. The SQL checks in
 `supabase/tests/` run only when someone remembers to run them.
 
-**Scope.** One branch, possibly split into PRs by area:
+**Scope.** Two PRs: #97 (everything but the admin views), then the admin
+views off `main` once #97 merges.
 
 1. **Green first.** Find out why the upgrade card doesn't show (a test that
    no longer matches the T₀ behaviour, or a real bug), and fix the test or
-   the app. The nightly is green before anything is added. Done; see the
-   Log.
-2. **Fixtures.** Shared helpers in `e2e/fixtures/` to seed a player, an admin,
-   an event (individual and team), a league season, and to sign in as each,
-   so a spec doesn't hand-build its data. Every spec cleans up after itself.
-3. **Player views** (signed in, and signed out where a guest can see the
-   page). Each page loads with its real data and no console errors: Home,
-   Events, an event's Info, Me, Schedule, Results and Oscars tabs, Community
-   and a player's page, Shop, League (season page and group stage), Lobster
-   Way, Account. Key flows: register for an individual event, register a team
-   and accept the invite, cancel, offer and accept a transfer, enter a score.
-4. **Admin views.** Admin, event Manage (create an event, add a player and a
+   the app. The nightly is green before anything is added. Done (#97); see
+   the Log.
+2. **Seed** (owner, 2026-10-29: "do what is best practice"). A synthetic
+   `seed.sql` replaces the July copy of production, which named real players
+   in a public repo and had no league, team event, shop or Oscars. Done
+   (#97).
+3. **Fixtures.** Shared helpers in `e2e/fixtures/`: the seed's IDs, a saved
+   session per role, a second browser for another account, throwaway events
+   and players, and cleanup that leaves nothing behind. Every page fails its
+   test on an uncaught or console error. Done (#97).
+4. **Player views and flows.** Every page signed out and as a player, from
+   seeded data; and what a player writes, read back from the database:
+   register, pay by Tikkie, transfer a spot and accept it, sign up a pair and
+   accept the invite, order from the shop, edit the profile. Done (#97).
+   Cancelling a registration and entering scores (league and event) are
+   admin-only, so they move to step 5.
+5. **Admin views.** Admin, event Manage (create an event, add a player and a
    team for someone else through the on-behalf confirm, Mark Paid through the
-   menu), league Manage, Lobster Way admin. A player who isn't an admin can't
-   reach any of them.
-5. **Database.** Run `supabase/tests/*.sql` in the e2e job against the fresh
-   local stack, so the database's own invariants are checked every run. The
-   specs read back what each write stored (through the service-role client in
-   `e2e/fixtures/db.ts`), so a page that renders but saved the wrong row
-   fails.
-6. **Real input.** Menus, dialogs and confirms are driven with Playwright's
+   menu, cancel a registration, enter a score), league Manage (enter a score),
+   shop items, Lobster Way admin. A player can't reach any of them (the
+   player spec checks the gates). PR 2.
+6. **Database.** `npm run db:test` runs `supabase/tests/` in the e2e job, and
+   the specs read back each write through the database. Done (#97).
+7. **Real input.** Menus, dialogs and confirms are driven with Playwright's
    real clicks and key presses, never `dispatchEvent` or a scripted
    `.click()` (the lesson from #88).
-7. **Docs.** CONTRIBUTING.md says how to run the suite locally and when to
-   add a spec; this section logs what landed.
+8. **Docs.** CONTRIBUTING.md: the seed, `db:test`, and how to run and extend
+   the suite. Done (#97).
 
 Not in scope: visual snapshots, and coverage of every edge case the unit
 tests already hold. The aim is that a broken page or a broken write fails
@@ -239,8 +243,11 @@ Supabase.
 
 Feature bugs found along the way are GitHub issues, outside this plan:
 #82 (Lobster Way open question after a reorder), #83 (Admin "unpaid
-registrations" row opens merch) and #89 (the confirm dialog drops the
-on-behalf message's line breaks). Each is a small PR whenever it suits.
+registrations" row opens merch), #89 (the confirm dialog drops the
+on-behalf message's line breaks), #95 (the Oscars view switch drops focus),
+#98 (the Oscars results fetch fires with an empty ID) and #99 (shop orders
+fail in production). Each is a small PR whenever it suits; #99 first, since
+no player can order.
 
 ## Later
 
@@ -757,3 +764,29 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
   navigation landed before the session was stored, so Home showed signed out
   with no card. The helper now waits for the sign-in form to close. Locally
   they passed, as the warm dev server signs in faster.
+- **2026-10-29.** E2E PR 1 on `e2e-suite` (#97): 13 tests → 40, plus the
+  database tests. What changed:
+  - **Seed.** Synthetic, about 30 made-up players with fixed IDs: an upcoming
+    and a finished individual event (results and Oscars shared), a team event,
+    a King of the Court, a league in its group stage, shop items. Sign-in
+    accounts are `admin@` and `player@lobsters.test`; the sign-in specs get
+    their own accounts, since they change auth state.
+  - **Fixtures.** One `signIn` (it was copied in two specs, one copy with the
+    race above), a saved session per role (`auth.setup.ts`), `openAs` for a
+    second account, `createEvent` / `createPlayer`, and cleanup through a
+    direct Postgres connection (the `postgres` package). The service role
+    can't touch `event_teams` or the status log.
+  - **Leaks fixed.** `deleteTournament` had failed silently since
+    registrations became RESTRICT, so each run left its event behind, and the
+    signup tests never deleted their players. The suite now passes twice in a
+    row with nothing left over.
+  - **Specs.** `player-views` (every page signed out and as a player, the
+    admin gates) and `player-flows` (six writes, each read back).
+  - **Database.** `npm run db:test` (`scripts/db-tests.sh`) runs the nine
+    `supabase/tests` scripts in the e2e job, before the specs.
+
+  Found by the suite, older than this PR: shop orders have failed in
+  production since 18 May (#99; `authenticated` lost the sequence grant in
+  the security phase C migration; no orders since). Its test is marked
+  `test.fail` until the fix. And the Oscars results fetch first fires with an
+  empty ID (#98); the console check allows it until it's fixed.
