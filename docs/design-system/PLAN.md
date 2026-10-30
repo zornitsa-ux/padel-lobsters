@@ -146,7 +146,7 @@ the gallery, and runs `npm run design:baseline` when counts drop.
 | P2e | **Zero hand-built buttons: actions.** 176 raw `<button>`s in 80 files outside `src/components/ui` (2026-10-26 inventory). Move the ~100 actions and text actions onto `Button` and `TextButton` (CTAs, accept/decline and save/cancel pairs, Sign out, Confirm, "Add question", "Reset to defaults"), and expand/collapse headers onto `CollapsibleSection` / `CollapsibleCard`. Add a lint rule banning `<button>` outside `src/components/ui`, as a per-file ratchet so the count can only go down. Depends on P2d's `fullWidth` and `ActionRow`.                                                                                                | Done (#75, #76)           |
 | P2f | **Zero hand-built buttons: chips, options, menus.** New components for what's left: `Chip` (toggle, filter, selection: filter pills, sizes, rounds, divisions, lefty, gender and position), an option row / tile (player pickers, Oscars vote tiles and category grid, lightbox thumbnails) and `Menu` + `MenuItem` (event admin menu, payment method picker, status override, team search). Two-to-four way choices go to `SegmentedControl`. Card-shaped links: `CardLink` (owner, 2026-10-26). The ratchet reaches zero and the rule becomes absolute. Four PRs: chips and choices, option rows and tiles, menus, then card links and the rest. | Done (#77, #80, #81, #86) |
 | P3  | **`AlertBox` size, role and dismiss; `FormError` in ui.** About 29 files build a tinted box by hand (`-light` surface with a `-border` border; triage first, as some are highlighted rows or cards rather than alerts) and about 23 lines spell a field error by hand (`text-xs text-lob-coral` / `-danger`). `AlertBox` gains `size="sm"`, a `role` (alert for errors, status otherwise) and a dismiss that is an `IconButton ghost sm` instead of the bare 14px X. `FormError` moves from `features/auth` to `components/ui`. Two PRs: alerts, then field errors.                                                                                | Done (#108, #109)         |
-| P4  | **`Badge` tones** (`success`, `neutral`, `warning`, `outline`) and **payment status single source** (`paymentStatus.ts`, `PaymentStatusBadge` on `Badge`; the blue "transferred" pill and merch "delivered" get a token). About 13 hand-built status pills move onto `Badge`. Rename team-state "Confirmed".                                                                                                                                                                                                                                                                                                                                       | In review (#110)          |
+| P4  | **`Badge` tones** (`success`, `neutral`, `warning`, `outline`) and **payment status single source** (`paymentStatus.ts`, `PaymentStatusBadge` on `Badge`; the blue "transferred" pill and merch "delivered" get a token). About 13 hand-built status pills move onto `Badge`. Rename team-state "Confirmed".                                                                                                                                                                                                                                                                                                                                       | Done (#110)               |
 | P5  | **Empty and signed-out states.** `EmptyState variant="inline"`, `SignInPrompt`; loading states: a loading card keeps its title or header, so the viewer sees what is loading, and shows `Spinner` / `Skeleton` in the body instead of `return null`.                                                                                                                                                                                                                                                                                                                                                                                               |                           |
 | P6  | **Layout pieces.** `RankMarker` + `PlayerRow highlighted`, `CardHeader`, `RosterHeading`, `.panel` (first use: the blue Playtomic-level panel copied in three forms), `.eyebrow`, `SearchInput` (the TeamForm player search could become a proper combobox here, see #81); a heading element inside the `CollapsibleCard` header button (review of #76). Starts after the card-pattern conversation (see "Later").                                                                                                                                                                                                                                 |                           |
 | P7  | **Lock-down.** Tokens for decorative colours (medal gold, avatar palette, gender marks) and for `text-[9px]` (14 uses, the bottom nav labels among them). Then switch `theme.extend.colors` to a restricted `theme.colors` so raw palette classes stop generating, and add a lint rule for unknown classes (e.g. `eslint-plugin-tailwindcss`, check ESLint 9 support). Retire the colour ratchet once the theme is locked; keep the `<button>` check.                                                                                                                                                                                              |                           |
@@ -178,10 +178,22 @@ primitives (see the Log) before P3:
    hand-built tinted boxes.~~ Done in #108; see the Log.
 7. ~~**P3 part 2: field errors.** `FormError` in ui and the hand-built error
    lines.~~ Done in #109; see the Log.
-8. ~~**P4: `Badge` tones and payment status.**~~ Done; see the Log.
+8. ~~**P4: `Badge` tones and payment status.**~~ Done in #110; see the Log.
 9. **P5: empty, signed-out and loading states.**
-10. **Card-pattern conversation** with the owner (below), then **P6**.
-11. **P7: lock-down.**
+10. **Review the `lob-amber` text and icons** (owner, 2026-10-30). P4 gave the
+    `accent` badge `lob-amber-strong` because `lob-amber` text is 2.0:1 on its
+    tint (about 2.2:1 on white). Other spots still use `lob-amber` for text or
+    icons, and some read as warnings, which are `lob-warning`. Triage each:
+    warning → `lob-warning`; accent text → `lob-amber-strong`; decorative
+    (icon, border) can stay. One small PR.
+    - Text: AdminTools "Needs attention", the `GroupFormationTool` warning
+      line, the `RatingReview` level figure, the `LinkPlayerModal` (two) and
+      `PendingApprovalsList` labels.
+    - Icons and borders: the `ChampionBanner` trophy and borders, the
+      `MyRounds` sit-out coffee and highlight border, the `PinUpgradeCard` and
+      AdminTools card borders, the `GroupStandingsTable` dashed divider.
+11. **Card-pattern conversation** with the owner (below), then **P6**.
+12. **P7: lock-down.**
 
 ### E2E safety net
 
