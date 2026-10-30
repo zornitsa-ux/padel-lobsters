@@ -133,9 +133,7 @@ export default function RaffleEligibilityContainer({
               <CheckRow key={id} checked={isEligible} onToggle={() => toggle(id)} disabled={!!skip}>
                 <PlayerRow
                   player={{ name: fullNameOf(nameOf(id)) }}
-                  avatarTone={
-                    isEligible ? 'bg-lob-amber text-white' : 'bg-lob-line-strong text-lob-muted'
-                  }
+                  avatarTone={isEligible ? undefined : 'bg-lob-line-strong text-lob-muted'}
                   name={fullNameOf(nameOf(id))}
                   nameClassName={`font-semibold truncate ${
                     isEligible ? 'text-lob-dark' : 'text-lob-muted line-through'

@@ -38,23 +38,14 @@ import {
   isUnpaid,
   paymentStatusInfo,
   toPaymentStatus,
-  type PaymentTone,
 } from './paymentStatus'
 import PaymentStatusBadge from './registration/PaymentStatusBadge'
+import { BADGE_TONE_CLASSES } from '../../components/ui/badgeTones'
 
 const METHODS = [
   { value: 'tikkie', label: 'Tikkie' },
   { value: 'playtomic', label: 'Playtomic' },
 ]
-
-// A row's avatar follows its status tone.
-const AVATAR_TONE: Record<PaymentTone, string> = {
-  success: 'bg-lob-success-soft text-lob-success',
-  info: 'bg-lob-info-soft text-lob-info',
-  warning: 'bg-lob-warning-soft text-lob-warning',
-  danger: 'bg-lob-danger-soft text-lob-danger',
-  neutral: 'bg-lob-line text-lob-slate',
-}
 
 type PaymentFilter = 'all' | 'paid' | 'pending' | 'tikkied' | 'unpaid'
 
@@ -318,7 +309,7 @@ export default function Payments({
                 <PlayerRow
                   player={player}
                   avatarSize="lg"
-                  avatarTone={AVATAR_TONE[tone]}
+                  avatarTone={BADGE_TONE_CLASSES[tone]}
                   name={rowName(reg, player.name)}
                   trailing={
                     isAdmin && (

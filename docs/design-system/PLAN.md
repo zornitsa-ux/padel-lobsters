@@ -1140,5 +1140,10 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
   - Payments and pending approvals: one `ListCard` each, no left border.
     Payments keeps the status-toned avatar.
   - Raffle eligibility: a `ListCard` of `CheckRow`s instead of bordered
-    `PlayerRow` buttons inside a card. The avatar tones move from raw amber and
-    gray onto `lob-amber` and `lob-line-strong`.
+    `PlayerRow` buttons inside a card. Eligible players keep their own avatar
+    colour; an excluded one is `lob-line-strong` (was raw amber and gray;
+    white on amber failed contrast and `lob-amber` is decorative only).
+  - Review: an empty `ListCard` renders nothing, so a list whose rows all
+    drop out shows no empty card. Payments tints its avatars from
+    `BADGE_TONE_CLASSES` (`badgeTones.ts`, Badge's own map) rather than a
+    copy. `ListRow` has no `highlighted` until a list needs it.

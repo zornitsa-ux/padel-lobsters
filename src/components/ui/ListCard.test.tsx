@@ -20,6 +20,11 @@ describe('ListCard', () => {
     expect(list.className).toContain('divide-y')
     expect(screen.getAllByRole('listitem').map((item) => item.textContent)).toEqual(['Ana', 'Ben'])
   })
+
+  it('renders nothing when every row is empty', () => {
+    render(<ListCard label="Players">{[null, false]}</ListCard>)
+    expect(screen.queryByRole('list')).toBeNull()
+  })
 })
 
 describe('LinkRow', () => {
@@ -66,11 +71,6 @@ describe('ListRow', () => {
     const [item] = screen.getAllByRole('listitem')
     expect(item.textContent).toBe('AnaTransfer')
     expect(item.firstElementChild?.className).toContain('px-4')
-  })
-
-  it('tints a highlighted row', () => {
-    render(<ListRow highlighted>Ana</ListRow>)
-    expect(screen.getByText('Ana').className).toContain('bg-lob-teal-light')
   })
 })
 
