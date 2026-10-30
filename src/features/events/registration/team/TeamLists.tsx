@@ -18,6 +18,8 @@ import {
   teamLabel,
 } from './teamHelpers'
 import { EmptyState } from '../../../../components/ui/EmptyState'
+import { ListCard } from '../../../../components/ui/ListCard'
+import { Section } from '../../../../components/ui/Section'
 
 interface TeamListsProps {
   tournament: NormalisedTournament
@@ -92,35 +94,36 @@ export default function TeamLists({
     />
   )
 
+  const renderList = ({ list, prefix }: { list: TeamEntry[]; prefix: string }) =>
+    isAdmin ? (
+      list.length > 0 && (
+        <ListCard>{list.map((e, i) => renderRow(e, `${prefix}${i + 1}`))}</ListCard>
+      )
+    ) : (
+      <div className="space-y-2">
+        {list.map((e) => (
+          <TeamChip key={e.team.id} label={labelOf(e)} />
+        ))}
+      </div>
+    )
+
   return (
     <>
-      <section>
-        <h3 className="font-bold text-lob-slate mb-2 flex items-center gap-2">
-          <CheckCircle size={16} className="text-lob-success-solid" />
-          Registered ({registered.length}/{teamCount({ players: tournament.maxPlayers })} teams)
-        </h3>
-        <div className="space-y-2">
-          {registered.length === 0 && (
-            <EmptyState variant="inline" title="No teams registered yet" />
-          )}
-          {isAdmin
-            ? registered.map((e, i) => renderRow(e, `#${i + 1}`))
-            : registered.map((e) => <TeamChip key={e.team.id} label={labelOf(e)} />)}
-        </div>
-      </section>
+      <Section
+        icon={<CheckCircle className="text-lob-success-solid" />}
+        title={`Registered (${registered.length}/${teamCount({ players: tournament.maxPlayers })} teams)`}
+      >
+        {registered.length === 0 && <EmptyState variant="inline" title="No teams registered yet" />}
+        {renderList({ list: registered, prefix: '#' })}
+      </Section>
 
       {waitlisted.length > 0 && (
-        <section>
-          <h3 className="font-bold text-lob-slate mb-2 flex items-center gap-2">
-            <Clock size={16} className="text-lob-warning-solid" />
-            Waitlist ({waitlisted.length})
-          </h3>
-          <div className="space-y-2">
-            {isAdmin
-              ? waitlisted.map((e, i) => renderRow(e, `W${i + 1}`))
-              : waitlisted.map((e) => <TeamChip key={e.team.id} label={labelOf(e)} />)}
-          </div>
-        </section>
+        <Section
+          icon={<Clock className="text-lob-warning-solid" />}
+          title={`Waitlist (${waitlisted.length})`}
+        >
+          {renderList({ list: waitlisted, prefix: 'W' })}
+        </Section>
       )}
     </>
   )

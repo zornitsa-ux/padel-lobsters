@@ -62,7 +62,9 @@ Owner, 2026-10-30 (being applied in P6):
 - A page section is `Section`: a heading (optional icon and action) on the background, then its
   content.
 - A list of like items is `ListCard`; a row that is one link or action is `LinkRow` (`LinkCard`'s
-  content as a row, `highlighted` for the viewer's own row).
+  content as a row, `highlighted` for the viewer's own row). A row with its own controls is
+  `ListRow` (a `PlayerRow` with buttons, and anything under it); a row that is one checkbox is
+  `CheckRow`. Status shows in a `Badge` or avatar tone, not a coloured left border.
 - `.card`: `bg-white rounded-2xl p-4`, card shadow and hairline border. The default.
 - `.card-elevated`: same shape, stronger shadow, for a hero card (`NextEventCard`).
 - A card that is one link is `CardLink` (`flush` for a full-bleed band, as on

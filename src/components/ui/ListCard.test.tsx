@@ -2,7 +2,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import { LinkRow, ListCard } from './ListCard'
+import { CheckRow, LinkRow, ListCard, ListRow } from './ListCard'
 
 afterEach(cleanup)
 
@@ -19,6 +19,11 @@ describe('ListCard', () => {
     expect(list.className).toContain('card')
     expect(list.className).toContain('divide-y')
     expect(screen.getAllByRole('listitem').map((item) => item.textContent)).toEqual(['Ana', 'Ben'])
+  })
+
+  it('renders nothing when every row is empty', () => {
+    render(<ListCard label="Players">{[null, false]}</ListCard>)
+    expect(screen.queryByRole('list')).toBeNull()
   })
 })
 
@@ -50,5 +55,48 @@ describe('LinkRow', () => {
     render(<LinkRow onClick={onClick} title="Open" />)
     fireEvent.click(screen.getByRole('button', { name: 'Open' }))
     expect(onClick).toHaveBeenCalledOnce()
+  })
+})
+
+describe('ListRow', () => {
+  it('is a padded row that holds its own controls', () => {
+    render(
+      <ListCard label="Registered">
+        <ListRow>
+          <span>Ana</span>
+          <button type="button">Transfer</button>
+        </ListRow>
+      </ListCard>,
+    )
+    const [item] = screen.getAllByRole('listitem')
+    expect(item.textContent).toBe('AnaTransfer')
+    expect(item.firstElementChild?.className).toContain('px-4')
+  })
+})
+
+describe('CheckRow', () => {
+  it('is a checkbox that toggles from anywhere on the row', () => {
+    const onToggle = vi.fn()
+    render(
+      <CheckRow checked onToggle={onToggle}>
+        Ana
+      </CheckRow>,
+    )
+    const box = screen.getByRole('checkbox', { name: 'Ana' })
+    expect(box.getAttribute('aria-checked')).toBe('true')
+    fireEvent.click(box)
+    expect(onToggle).toHaveBeenCalledOnce()
+  })
+
+  it('locks a disabled row', () => {
+    const onToggle = vi.fn()
+    render(
+      <CheckRow checked={false} onToggle={onToggle} disabled>
+        Ben
+      </CheckRow>,
+    )
+    const box = screen.getByRole('checkbox', { name: 'Ben' })
+    expect(box.getAttribute('aria-checked')).toBe('false')
+    expect((box as HTMLButtonElement).disabled).toBe(true)
   })
 })

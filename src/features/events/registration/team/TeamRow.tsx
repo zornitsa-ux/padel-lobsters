@@ -7,6 +7,7 @@ import PaymentStatusBadge from '../PaymentStatusBadge'
 import ChangePartnerPanel from './ChangePartnerPanel'
 import { TextButton } from '../../../../components/ui/TextButton'
 import { Button } from '../../../../components/ui/Button'
+import { ListRow } from '../../../../components/ui/ListCard'
 
 interface TeamRowProps {
   entry: TeamEntry
@@ -36,7 +37,7 @@ export default function TeamRow({
   const [changing, setChanging] = useState(false)
 
   return (
-    <div className="card space-y-2">
+    <ListRow>
       <div className="flex items-center gap-2">
         <span className="text-xs text-lob-muted w-6 text-center font-bold">{position}</span>
         <div className="flex-1 min-w-0">
@@ -68,6 +69,6 @@ export default function TeamRow({
       ) : (
         <TextButton onClick={() => setChanging(true)}>Change partner</TextButton>
       )}
-    </div>
+    </ListRow>
   )
 }

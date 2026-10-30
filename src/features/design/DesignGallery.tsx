@@ -51,7 +51,8 @@ import { Drawer } from '../../components/ui/Drawer'
 import { useConfirm } from '../../lib/confirmBus'
 import { CardLink } from '../../components/ui/CardLink'
 import { LinkCard, LinkCardIcon } from '../../components/ui/LinkCard'
-import { LinkRow, ListCard } from '../../components/ui/ListCard'
+import { CheckRow, LinkRow, ListCard, ListRow } from '../../components/ui/ListCard'
+import { PlayerRow } from '../../components/ui/PlayerRow'
 import { Section } from '../../components/ui/Section'
 import { OptionRow } from '../../components/ui/OptionRow'
 import { ImageTile, OptionTile } from '../../components/ui/OptionTile'
@@ -589,7 +590,7 @@ function CardLinkSection() {
 
 function SectionListSection() {
   return (
-    <GallerySection title="Section and ListCard">
+    <GallerySection title="Section, ListCard and its rows">
       <Row label="Section (heading on the background) with a ListCard of LinkRows" block>
         <div className="rounded-2xl bg-lob-cream p-3">
           <Section
@@ -625,7 +626,65 @@ function SectionListSection() {
           </Section>
         </div>
       </Row>
+      <Row
+        label="ListRow: a row with its own controls (PlayerRow, buttons, anything under it)"
+        block
+      >
+        <div className="rounded-2xl bg-lob-cream p-3">
+          <ListCard label="Registered">
+            <ListRow>
+              <PlayerRow
+                player={{ name: 'Theo' }}
+                name="Theo"
+                subtitle="Level 2.5"
+                trailing={
+                  <>
+                    <PaymentStatusBadge paymentStatus="paid" />
+                    <IconButton aria-label="Cancel registration" variant="destructive" size="sm">
+                      <X />
+                    </IconButton>
+                  </>
+                }
+              />
+              <Button variant="neutral" size="sm" fullWidth>
+                Transfer spot to another player
+              </Button>
+            </ListRow>
+            <ListRow>
+              <PlayerRow
+                player={{ name: 'Mara' }}
+                name="Mara"
+                subtitle="Level 3.0"
+                trailing={<PaymentStatusBadge paymentStatus="unpaid" />}
+              />
+            </ListRow>
+          </ListCard>
+        </div>
+      </Row>
+      <CheckRowDemo />
     </GallerySection>
+  )
+}
+
+function CheckRowDemo() {
+  const [checked, setChecked] = useState(true)
+  return (
+    <Row label="CheckRow: the whole row is one checkbox; disabled says why in its content" block>
+      <div className="rounded-2xl bg-lob-cream p-3">
+        <ListCard label="Eligible players">
+          <CheckRow checked={checked} onToggle={() => setChecked((v) => !v)}>
+            <PlayerRow player={{ name: 'Theo' }} name="Theo" />
+          </CheckRow>
+          <CheckRow checked={false} onToggle={() => {}} disabled>
+            <PlayerRow
+              player={{ name: 'Lena' }}
+              name="Lena"
+              trailing={<Badge tone="warning" label="On cooldown" />}
+            />
+          </CheckRow>
+        </ListCard>
+      </div>
+    </Row>
   )
 }
 

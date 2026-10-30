@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowLeft, Check, Users, Save, Clock, Trophy } from 'lucide-react'
+import { ArrowLeft, Users, Save, Clock, Trophy } from 'lucide-react'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { PlayerRow } from '../../components/ui/PlayerRow'
+import { CheckRow, ListCard } from '../../components/ui/ListCard'
 import { usePlayers } from '../players/usePlayers'
 import { useRegistrations } from '../events/useRegistrations'
 import { useExclusions, useIneligible, useSetExclusions } from './useRaffle'
@@ -124,46 +125,25 @@ export default function RaffleEligibilityContainer({
       {registered.length === 0 ? (
         <EmptyState title="No registered players yet" />
       ) : (
-        <div className="card space-y-2">
+        <ListCard label="Registered players">
           {registered.map((id: string) => {
             const skip = autoSkip.get(id)
             const isEligible = !skip && !excluded.has(id)
-            const dimmed = !isEligible
             return (
-              <PlayerRow
-                key={id}
-                player={{ name: fullNameOf(nameOf(id)) }}
-                avatarTone={isEligible ? 'bg-amber-400 text-white' : 'bg-gray-300 text-white'}
-                onClick={() => toggle(id)}
-                disabled={!!skip}
-                className={`w-full rounded-xl p-3 border transition-all ${
-                  isEligible ? 'bg-white border-lob-line' : 'bg-lob-well border-lob-line'
-                } ${skip ? 'cursor-default' : ''} ${dimmed ? 'opacity-70' : ''}`}
-                name={fullNameOf(nameOf(id))}
-                nameClassName={`font-semibold truncate ${
-                  isEligible ? 'text-lob-dark' : 'text-lob-muted line-through'
-                }`}
-                trailing={
-                  skip ? (
-                    skip === 'cooldown' ? (
-                      <Badge tone="warning" icon={<Clock />} label="On cooldown" />
-                    ) : (
-                      <Badge tone="neutral" icon={<Trophy />} label="Won this raffle" />
-                    )
-                  ) : (
-                    <span
-                      className={`w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 ${
-                        isEligible ? 'bg-lob-teal text-white' : 'border-2 border-gray-300'
-                      }`}
-                    >
-                      {isEligible && <Check size={16} />}
-                    </span>
-                  )
-                }
-              />
+              <CheckRow key={id} checked={isEligible} onToggle={() => toggle(id)} disabled={!!skip}>
+                <PlayerRow
+                  player={{ name: fullNameOf(nameOf(id)) }}
+                  avatarTone={isEligible ? undefined : 'bg-lob-line-strong text-lob-muted'}
+                  name={fullNameOf(nameOf(id))}
+                  nameClassName={`font-semibold truncate ${
+                    isEligible ? 'text-lob-dark' : 'text-lob-muted line-through'
+                  }`}
+                  trailing={skip && <SkipBadge reason={skip} />}
+                />
+              </CheckRow>
             )
           })}
-        </div>
+        </ListCard>
       )}
 
       <Button
@@ -176,5 +156,13 @@ export default function RaffleEligibilityContainer({
         {setExclusions.isPending ? 'Saving…' : dirty ? 'Save eligibility' : 'Saved'}
       </Button>
     </div>
+  )
+}
+
+function SkipBadge({ reason }: { reason: IneligibleReason }) {
+  return reason === 'cooldown' ? (
+    <Badge tone="warning" icon={<Clock />} label="On cooldown" />
+  ) : (
+    <Badge tone="neutral" icon={<Trophy />} label="Won this raffle" />
   )
 }
