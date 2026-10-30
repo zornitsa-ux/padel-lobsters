@@ -64,7 +64,8 @@ describe('AdminTools new-orders badge', () => {
 
     renderAdminTools()
 
-    expect(await screen.findByText('2 new merch orders')).toBeTruthy()
+    expect(await screen.findByRole('button', { name: '2 new merch orders' })).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'Needs attention' })).toBeTruthy()
   })
 
   it('singularises a count of one', async () => {

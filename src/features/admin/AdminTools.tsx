@@ -14,14 +14,16 @@ import {
   Calculator,
   ShoppingBag,
   BarChart3,
-  ChevronRight,
   AlertCircle,
+  Wallet,
+  Wrench,
   Info,
   Trophy,
 } from 'lucide-react'
 import { PageHeader } from '../../components/ui/PageHeader'
-import { LinkCard, LinkCardIcon } from '../../components/ui/LinkCard'
-import { OptionRow } from '../../components/ui/OptionRow'
+import { LinkCardIcon } from '../../components/ui/LinkCard'
+import { LinkRow, ListCard } from '../../components/ui/ListCard'
+import { Section } from '../../components/ui/Section'
 import { plural } from '../../lib/plural'
 import AuthReadinessPanel from './AuthReadinessPanel'
 import type { EventNavigate } from '../events/eventHelpers'
@@ -82,18 +84,21 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
       id: 'unpaid',
       count: unpaidForNextEvent,
       title: `${plural({ count: unpaidForNextEvent, one: 'unpaid registration' })} for next event`,
+      icon: Wallet,
       target: 'merch-orders',
     },
     {
       id: 'signups',
       count: pendingSignups,
       title: `${plural({ count: pendingSignups, one: 'player signup' })} awaiting approval`,
+      icon: Users,
       target: 'players',
     },
     {
       id: 'orders',
       count: newOrdersCount,
       title: plural({ count: newOrdersCount, one: 'new merch order' }),
+      icon: ShoppingBag,
       target: 'merch-orders',
     },
   ].filter((item) => item.count > 0)
@@ -191,42 +196,44 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
     <div className="-mx-4">
       <PageHeader title="Admin" />
       <div className="px-4 pt-4 space-y-4">
-        {/* Needs Attention */}
         {attention.length > 0 && (
-          <div className="card space-y-2 border-l-4 border-lob-warning-solid">
-            <p className="text-xs font-bold text-lob-muted uppercase tracking-wide flex items-center gap-1.5">
-              <AlertCircle size={13} className="text-lob-warning-solid" /> Needs attention
-            </p>
-            <div className="space-y-1">
-              {attention.map(({ id, title, target }) => (
-                <OptionRow
+          <Section title="Needs attention" icon={<AlertCircle />}>
+            <ListCard>
+              {attention.map(({ id, title, icon: Icon, target }) => (
+                <LinkRow
                   key={id}
                   onClick={() => onNavigate?.(target)}
+                  leading={
+                    <LinkCardIcon className="bg-lob-warning-light text-lob-warning">
+                      <Icon size={16} />
+                    </LinkCardIcon>
+                  }
                   title={title}
-                  trailing={<ChevronRight size={16} className="text-lob-muted-light" />}
                 />
               ))}
-            </div>
-          </div>
+            </ListCard>
+          </Section>
         )}
 
         <AuthReadinessPanel />
 
-        <div className="space-y-2">
-          {tools.map(({ id, title, description, icon: Icon, ...action }) => (
-            <LinkCard
-              key={id}
-              {...action}
-              leading={
-                <LinkCardIcon>
-                  <Icon size={16} />
-                </LinkCardIcon>
-              }
-              title={title}
-              subtitle={description}
-            />
-          ))}
-        </div>
+        <Section title="Tools" icon={<Wrench />}>
+          <ListCard>
+            {tools.map(({ id, title, description, icon: Icon, ...action }) => (
+              <LinkRow
+                key={id}
+                {...action}
+                leading={
+                  <LinkCardIcon>
+                    <Icon size={16} />
+                  </LinkCardIcon>
+                }
+                title={title}
+                subtitle={description}
+              />
+            ))}
+          </ListCard>
+        </Section>
 
         {showReviewBreakdown && (
           <ReviewBreakdownModal

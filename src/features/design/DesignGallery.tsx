@@ -631,6 +631,34 @@ function SectionListSection() {
         </div>
       </Row>
       <Row
+        label="LinkRow with a LinkCardIcon; a status-toned tile flags what needs attention"
+        block
+      >
+        <div className="rounded-2xl bg-lob-cream p-3">
+          <ListCard label="Needs attention">
+            <LinkRow
+              onClick={() => {}}
+              leading={
+                <LinkCardIcon className="bg-lob-warning-light text-lob-warning">
+                  <Users size={16} />
+                </LinkCardIcon>
+              }
+              title="2 player signups awaiting approval"
+            />
+            <LinkRow
+              to="/design"
+              leading={
+                <LinkCardIcon>
+                  <Info size={16} />
+                </LinkCardIcon>
+              }
+              title="The Lobster Way"
+              subtitle="Add, edit, reorder, or remove FAQ categories and questions."
+            />
+          </ListCard>
+        </div>
+      </Row>
+      <Row
         label="ListRow: a row with its own controls (PlayerRow, buttons, anything under it)"
         block
       >
