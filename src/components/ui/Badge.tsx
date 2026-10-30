@@ -26,7 +26,7 @@ const toneClasses: Record<BadgeTone, string> = {
   neutral: 'bg-lob-line text-lob-slate',
   brand: 'bg-lob-teal-light text-lob-teal',
   outline: 'bg-white text-lob-slate ring-1 ring-inset ring-lob-line-strong',
-  accent: 'bg-lob-amber/15 text-lob-amber',
+  accent: 'bg-lob-amber/15 text-lob-amber-strong',
 }
 
 // Shrinks under pressure and truncates the label rather than overflowing a

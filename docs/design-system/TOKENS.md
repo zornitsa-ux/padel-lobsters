@@ -7,18 +7,19 @@ top of them is in [`PLAN.md`](./PLAN.md).
 
 ## Brand and text
 
-| Token             | Value     | Use                                                   |
-| ----------------- | --------- | ----------------------------------------------------- |
-| `lob-teal`        | `#3D7A8A` | Brand, links, selected states (chips, segments, rows) |
-| `lob-teal-dark`   | `#2A5A68` | Header gradient end, hover darken                     |
-| `lob-teal-light`  | `#EAF4F7` | Selected row tint, segment track, icon button fill    |
-| `lob-coral`       | `#D94F2B` | Primary CTA (`Button` primary), active nav tab        |
-| `lob-amber`       | `#E8A030` | Accent only, not status (`Badge` tone `accent`)       |
-| `lob-cream`       | `#F5F0E8` | Page background (`body`), accent icon button          |
-| `lob-dark`        | `#1C2B30` | Headings and body text; base of the card shadows      |
-| `lob-slate`       | `#40565C` | Secondary text that needs more weight than muted      |
-| `lob-muted`       | `#6B8A92` | Secondary text, inactive icons                        |
-| `lob-muted-light` | `#97ADB3` | Tertiary text, placeholder, disabled text             |
+| Token              | Value     | Use                                                   |
+| ------------------ | --------- | ----------------------------------------------------- |
+| `lob-teal`         | `#3D7A8A` | Brand, links, selected states (chips, segments, rows) |
+| `lob-teal-dark`    | `#2A5A68` | Header gradient end, hover darken                     |
+| `lob-teal-light`   | `#EAF4F7` | Selected row tint, segment track, icon button fill    |
+| `lob-coral`        | `#D94F2B` | Primary CTA (`Button` primary), active nav tab        |
+| `lob-amber`        | `#E8A030` | Accent only, not status (`Badge` tone `accent` fill)  |
+| `lob-amber-strong` | `#8C5A0E` | Text on an amber tint (`Badge` tone `accent`)         |
+| `lob-cream`        | `#F5F0E8` | Page background (`body`), accent icon button          |
+| `lob-dark`         | `#1C2B30` | Headings and body text; base of the card shadows      |
+| `lob-slate`        | `#40565C` | Secondary text that needs more weight than muted      |
+| `lob-muted`        | `#6B8A92` | Secondary text, inactive icons                        |
+| `lob-muted-light`  | `#97ADB3` | Tertiary text, placeholder, disabled text             |
 
 ## Status colours
 
@@ -64,10 +65,12 @@ onto tones. Each is a `-soft` fill (or a token tint) with the text shade:
 | `neutral` | `lob-line` / `lob-slate`                    | Optional, hidden, completed, transferred    |
 | `brand`   | `lob-teal-light` / `lob-teal`               | Live, bye, division, "You", league knockout |
 | `outline` | white, `lob-line-strong` ring / `lob-slate` | League group stage, tied, streak            |
-| `accent`  | `lob-amber` 15% / `lob-amber`               | League draft, intermediate level            |
+| `accent`  | `lob-amber` 15% / `lob-amber-strong`        | League draft, intermediate level            |
 
 - Coral is not a Badge tone: it is the CTA colour. Unpaid is `danger`, matching
   its row on the Payments page.
+- `accent` text is `lob-amber-strong` (owner, 2026-10-30): `lob-amber` text
+  on its tint was 2.0:1; the strong shade is 5.3:1 (WCAG AA for small text).
 - No token for the old blue: "Transferred" is `neutral` (the spot came by
   transfer, nothing is owed) and merch "Delivered" is `success`.
 

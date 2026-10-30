@@ -973,3 +973,6 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
     pill is green only once the captain has paid, `neutral` before. The last
     four hand-written unpaid checks use `isUnpaid`. League phase pills share
     `leagueStatusPills`, so the three label maps no longer repeat the tones.
+  - Owner: `accent` text moves to a new `lob-amber-strong` (`#8C5A0E`, 5.3:1
+    on the tint, was 2.0:1 with `lob-amber`), so league "Draft" and the
+    intermediate level pass WCAG AA.

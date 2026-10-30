@@ -21,6 +21,9 @@ describe('Badge', () => {
       'bg-lob-danger-soft text-lob-danger',
     )
     expect(classOf(Badge({ tone: 'outline', label: 'Tied' }))).toContain('ring-lob-line-strong')
+    expect(classOf(Badge({ tone: 'accent', label: 'Draft' }))).toContain(
+      'bg-lob-amber/15 text-lob-amber-strong',
+    )
   })
 
   it('sizes its icon and keeps it before the label', () => {
