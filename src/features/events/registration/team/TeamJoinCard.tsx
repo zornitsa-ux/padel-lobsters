@@ -12,6 +12,7 @@ import { pricePerEntry } from '../../eventHelpers'
 import { useTeamSignup, type TeamSignupResult } from './useTeamSignup'
 import { ActionRow } from '../../../../components/ui/ActionRow'
 import { Button } from '../../../../components/ui/Button'
+import { AlertBox } from '../../../../components/ui/AlertBox'
 
 interface TeamJoinCardProps {
   tournament: NormalisedTournament
@@ -108,9 +109,9 @@ export default function TeamJoinCard({
             </div>
             <p className="text-sm text-lob-slate leading-relaxed">{COMPLETE_TEAMS_NOTE}</p>
             {signup.error && (
-              <p role="alert" className="text-sm font-semibold text-lob-danger">
+              <AlertBox variant="error" size="sm">
                 {signup.error}
-              </p>
+              </AlertBox>
             )}
           </div>
         ) : (

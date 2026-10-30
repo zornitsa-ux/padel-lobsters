@@ -1,6 +1,8 @@
 import type { Dispatch, SetStateAction } from 'react'
 import CountryPicker from '../../components/ui/CountryPicker'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
+import { FormError } from '../../components/ui/FormError'
+import { useFieldError } from '../../components/ui/useFieldError'
 import type { ProfileFieldValues } from './profileForm'
 
 type FieldsProps<T> = {
@@ -8,29 +10,39 @@ type FieldsProps<T> = {
   setForm: Dispatch<SetStateAction<T>>
 }
 
-export function ProfileNameFields<T extends ProfileFieldValues>({ form, setForm }: FieldsProps<T>) {
+export function ProfileNameFields<T extends ProfileFieldValues>({
+  form,
+  setForm,
+  nameError,
+}: FieldsProps<T> & { nameError?: string }) {
+  const { errorId, fieldProps } = useFieldError({ message: nameError })
   return (
-    <div className="grid grid-cols-2 gap-2">
-      <div>
-        <label className="label">First Name</label>
-        <input
-          required
-          className="input"
-          placeholder="e.g. Augustin"
-          value={form.firstName}
-          onChange={(e) => setForm((f) => ({ ...f, firstName: e.target.value }))}
-        />
+    <div className="space-y-1">
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <label className="label">First Name</label>
+          <input
+            required
+            className="input"
+            placeholder="e.g. Augustin"
+            value={form.firstName}
+            onChange={(e) => setForm((f) => ({ ...f, firstName: e.target.value }))}
+            {...fieldProps}
+          />
+        </div>
+        <div>
+          <label className="label">Last Name</label>
+          <input
+            required
+            className="input"
+            placeholder="e.g. Tapia"
+            value={form.lastName}
+            onChange={(e) => setForm((f) => ({ ...f, lastName: e.target.value }))}
+            {...fieldProps}
+          />
+        </div>
       </div>
-      <div>
-        <label className="label">Last Name</label>
-        <input
-          required
-          className="input"
-          placeholder="e.g. Tapia"
-          value={form.lastName}
-          onChange={(e) => setForm((f) => ({ ...f, lastName: e.target.value }))}
-        />
-      </div>
+      <FormError id={errorId} message={nameError} />
     </div>
   )
 }
@@ -109,6 +121,7 @@ export function ProfilePlayFields<T extends ProfileFieldValues>({
   setForm,
   levelError,
 }: FieldsProps<T> & { levelError?: string }) {
+  const { errorId, fieldProps } = useFieldError({ message: levelError })
   return (
     <>
       <div>
@@ -125,26 +138,22 @@ export function ProfilePlayFields<T extends ProfileFieldValues>({
         <p className="text-xs font-bold text-blue-700 uppercase tracking-wide">Playtomic Level</p>
         <div>
           <label className="label">Playtomic Level (0–7)</label>
-          <input
-            type="text"
-            inputMode="decimal"
-            className="input"
-            placeholder="e.g. 3.5"
-            value={form.playtomicLevel}
-            onChange={(e) => setForm((f) => ({ ...f, playtomicLevel: e.target.value }))}
-          />
-          {levelError && (
-            <p
-              role="alert"
-              className="text-xs text-lob-danger bg-lob-danger-light rounded-lg p-2 mt-1"
-            >
-              {levelError}
+          <div className="space-y-1">
+            <input
+              type="text"
+              inputMode="decimal"
+              className="input"
+              placeholder="e.g. 3.5"
+              value={form.playtomicLevel}
+              onChange={(e) => setForm((f) => ({ ...f, playtomicLevel: e.target.value }))}
+              {...fieldProps}
+            />
+            <FormError id={errorId} message={levelError} />
+            <p className="text-xs text-lob-muted">
+              Check your Playtomic app — it shows your current level. We use it to build balanced
+              matches, and it improves as you play.
             </p>
-          )}
-          <p className="text-xs text-lob-muted mt-1">
-            Check your Playtomic app — it shows your current level. We use it to build balanced
-            matches, and it improves as you play.
-          </p>
+          </div>
         </div>
       </div>
     </>

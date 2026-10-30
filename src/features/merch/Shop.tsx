@@ -1,4 +1,4 @@
-import React, { type Dispatch, type SetStateAction } from 'react'
+import React, { useId, type Dispatch, type SetStateAction } from 'react'
 import { ShoppingBag, ShoppingCart, Check } from 'lucide-react'
 import { SignInBanner } from '../../components/ui/AuthGate'
 import { EmptyState } from '../../components/ui/EmptyState'
@@ -7,6 +7,7 @@ import type { LightboxState } from './Lightbox'
 import type { MerchItem } from './merchSchemas'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
 import { Button } from '../../components/ui/Button'
+import { FormError } from '../../components/ui/FormError'
 
 type ByItem<T> = Record<number, T>
 
@@ -48,6 +49,7 @@ export default function Shop({
   websiteOrderCount,
   setLightbox,
 }: ShopProps) {
+  const sizeErrorPrefix = useId()
   return (
     <div className="space-y-3">
       <p className="text-xs text-lob-muted">
@@ -130,12 +132,8 @@ export default function Shop({
 
             {/* Size picker */}
             {item.sizes.length > 0 && (
-              <div>
-                <p
-                  className={`text-xs mb-1.5 font-medium ${sizeError[item.id] ? 'text-lob-danger' : 'text-lob-muted'}`}
-                >
-                  {sizeError[item.id] ? '⚠ Please select a size:' : 'Select size:'}
-                </p>
+              <div className="space-y-1.5">
+                <p className="text-xs font-medium text-lob-muted">Select size:</p>
                 <SegmentedControl
                   ariaLabel="Size"
                   layout="wrap"
@@ -144,11 +142,16 @@ export default function Shop({
                     .map((size) => ({ value: size, label: size }))}
                   value={selectedSize[item.id]}
                   invalid={!!sizeError[item.id]}
+                  describedBy={`${sizeErrorPrefix}-${item.id}`}
                   disabled={ordered[item.id]}
                   onChange={(size) => {
                     setSelectedSize((si) => ({ ...si, [item.id]: size }))
                     setSizeError((e) => ({ ...e, [item.id]: false }))
                   }}
+                />
+                <FormError
+                  id={`${sizeErrorPrefix}-${item.id}`}
+                  message={sizeError[item.id] ? 'Please select a size.' : ''}
                 />
               </div>
             )}

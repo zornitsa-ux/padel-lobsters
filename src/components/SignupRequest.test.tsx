@@ -183,7 +183,8 @@ describe('SignupRequest — hook rejections', () => {
       field === 'name'
         ? screen.getByPlaceholderText('e.g. Tapia')
         : screen.getByPlaceholderText('e.g. 3.5')
-    expect(alert.closest('form')).toBe(near.closest('form'))
+    expect(near.getAttribute('aria-invalid')).toBe('true')
+    expect(near.getAttribute('aria-describedby')).toBe(alert.closest('[role="alert"]')?.id)
     expect(screen.queryByText(/we sent a 6-digit code/i)).toBeNull()
   })
 

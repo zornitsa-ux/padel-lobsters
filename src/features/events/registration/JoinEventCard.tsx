@@ -3,6 +3,7 @@ import type { MyRegistrationSummary } from '../nextMatch'
 import { Button } from '../../../components/ui/Button'
 import { TextButton } from '../../../components/ui/TextButton'
 import WaitlistNotice from './WaitlistNotice'
+import { AlertBox } from '../../../components/ui/AlertBox'
 
 interface JoinEventCardProps {
   /** Derived by `myRegistrationSummary` — the same source /me reads. */
@@ -59,9 +60,9 @@ export default function JoinEventCard({
                 : 'Register for this event'}
         </Button>
         {error && (
-          <p role="alert" className="text-xs font-semibold text-lob-danger">
+          <AlertBox variant="error" size="sm">
             {error}
-          </p>
+          </AlertBox>
         )}
       </div>
     )

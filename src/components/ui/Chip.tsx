@@ -62,14 +62,23 @@ interface ChipGroupProps {
   ariaLabel?: string
   /** A required pick is missing (`aria-invalid`); mark the chips with `Chip invalid`. */
   invalid?: boolean
+  /** Id of the `FormError` shown while `invalid`. */
+  describedBy?: string
 }
 
-export function ChipGroup({ children, layout = 'wrap', ariaLabel, invalid }: ChipGroupProps) {
+export function ChipGroup({
+  children,
+  layout = 'wrap',
+  ariaLabel,
+  invalid,
+  describedBy,
+}: ChipGroupProps) {
   return (
     <div
       role="group"
       aria-label={ariaLabel}
       aria-invalid={invalid || undefined}
+      aria-describedby={invalid ? describedBy : undefined}
       className={LAYOUT[layout]}
     >
       {children}

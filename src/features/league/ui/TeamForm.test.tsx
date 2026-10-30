@@ -92,3 +92,18 @@ describe('TeamForm player search', () => {
     expect(item('Ana Ruiz')).toBeTruthy()
   })
 })
+
+describe('TeamForm player errors', () => {
+  it('marks the empty player invalid on save and clears it once a player is chosen', () => {
+    const input = renderForm()
+    fireEvent.click(screen.getByRole('button', { name: 'Save Team' }))
+    const error = screen.getAllByRole('alert')[0]
+    expect(input.getAttribute('aria-invalid')).toBe('true')
+    expect(input.getAttribute('aria-describedby')).toBe(error.id)
+
+    fireEvent.focus(input)
+    fireEvent.click(item('Ana Ruiz') as Element)
+    expect(input.hasAttribute('aria-invalid')).toBe(false)
+    expect(screen.queryByText(error.textContent ?? '')).toBeNull()
+  })
+})

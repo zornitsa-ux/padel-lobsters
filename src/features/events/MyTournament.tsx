@@ -264,9 +264,9 @@ function RegistrationCard({
   onSelfDeclare: () => void
 }) {
   const registerErrorNotice = registerError ? (
-    <p role="alert" className="text-xs font-semibold text-lob-danger">
+    <AlertBox variant="error" size="sm">
       {registerError}
-    </p>
+    </AlertBox>
   ) : null
 
   if (registration.status === 'not_registered') {

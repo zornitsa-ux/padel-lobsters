@@ -29,6 +29,8 @@ interface SegmentedControlProps<T extends SegmentedValue> {
   disabled?: boolean
   /** Nothing picked yet where a pick is required; marks the unselected options. */
   invalid?: boolean
+  /** Id of the `FormError` shown while `invalid`. */
+  describedBy?: string
 }
 
 const SEGMENT =
@@ -47,10 +49,11 @@ export function SegmentedControl<T extends SegmentedValue>({
   ariaLabel,
   disabled = false,
   invalid = false,
+  describedBy,
 }: SegmentedControlProps<T>) {
   if (layout !== 'fill') {
     return (
-      <ChipGroup layout={layout} ariaLabel={ariaLabel} invalid={invalid}>
+      <ChipGroup layout={layout} ariaLabel={ariaLabel} invalid={invalid} describedBy={describedBy}>
         {options.map((option) => (
           <Chip
             key={String(option.value)}
@@ -72,6 +75,7 @@ export function SegmentedControl<T extends SegmentedValue>({
       role="group"
       aria-label={ariaLabel}
       aria-invalid={invalid || undefined}
+      aria-describedby={invalid ? describedBy : undefined}
       className="flex gap-2"
     >
       {options.map((option) => {

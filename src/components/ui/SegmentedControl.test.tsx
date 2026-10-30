@@ -18,6 +18,16 @@ describe('SegmentedControl', () => {
     expect(String(propsOf(inactive).className)).not.toContain('gray')
   })
 
+  it('points at its FormError only while invalid', () => {
+    const props = { options, value: null, onChange: () => {}, describedBy: 'size-error' }
+    expect(propsOf(SegmentedControl({ ...props, invalid: true }))['aria-describedby']).toBe(
+      'size-error',
+    )
+    expect(propsOf(SegmentedControl(props))['aria-describedby']).toBeUndefined()
+    const wrap = SegmentedControl({ ...props, layout: 'wrap', invalid: true })
+    expect(propsOf(wrap).describedBy).toBe('size-error')
+  })
+
   it('marks the selected option with aria-pressed', () => {
     const [active, inactive] = childrenOf(
       SegmentedControl({ options, value: 'b', onChange: () => {} }),

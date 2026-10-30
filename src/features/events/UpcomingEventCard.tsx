@@ -230,9 +230,11 @@ export default function UpcomingEventCard({
         </div>
       )}
       {isAdmin && bookError && (
-        <p className="text-xs text-lob-danger mb-3" role="alert">
-          {bookError}
-        </p>
+        <div className="mb-3">
+          <AlertBox variant="error" size="sm">
+            {bookError}
+          </AlertBox>
+        </div>
       )}
 
       {/* Format chip */}

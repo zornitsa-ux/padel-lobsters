@@ -6,6 +6,7 @@ import SignInForm from '../../features/auth/SignInForm'
 import { sessionRole } from '../../features/auth/sessionClaims'
 import { TextButton } from './TextButton'
 import { IconButton } from './IconButton'
+import { AlertBox } from './AlertBox'
 
 /**
  * Site-wide auth middleware.
@@ -190,9 +191,9 @@ export function SignInModal({
         </p>
 
         {notice && (
-          <p role="alert" className="text-xs text-lob-danger font-medium">
+          <AlertBox variant="error" size="sm">
             {notice}
-          </p>
+          </AlertBox>
         )}
 
         <SignInForm

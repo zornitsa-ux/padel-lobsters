@@ -46,7 +46,7 @@ component doesn't fit, fix the component, not the call site.**
 | ------------------------------------ | ---------------------------------------------------- | --------- |
 | Error / warning / success / info box | `AlertBox variant=… (size="sm")`                     | exists    |
 | Notice with a title, link or buttons | `AlertBox title` · `action` · `actions`              | exists    |
-| Field-level error text               | `FormError` (moving to `components/ui`)              | P3        |
+| Field-level error text               | `FormError` (`useFieldError` ties it to the field)   | exists    |
 | Status pill                          | `Badge tone=…`                                       | tones: P4 |
 | Button (action or navigation)        | `Button variant=… size=…` (`to` / `href` for links)  | exists    |
 | Arrow onward, chevron opening a menu | `Button trailingIcon`                                | exists    |
@@ -144,7 +144,7 @@ the gallery, and runs `npm run design:baseline` when counts drop.
 | P2d | **Layout props instead of `className`.** Bring the repeated layout classes into the components. Button: `fullWidth` for `w-full` (39 uses); an `ActionRow` component for paired buttons, replacing `flex-1` (28) and fixing their order and gap; `EmptyState` spaces its own action, replacing `mt-2` (14); Button never shrinks, replacing `flex-shrink-0` (1). Then review the remaining `className` uses on `TextButton` (5) and `IconButton` (3). Once a component has no `className` callers left, consider removing the prop.                                                                                                                | Done (#74)                |
 | P2e | **Zero hand-built buttons: actions.** 176 raw `<button>`s in 80 files outside `src/components/ui` (2026-10-26 inventory). Move the ~100 actions and text actions onto `Button` and `TextButton` (CTAs, accept/decline and save/cancel pairs, Sign out, Confirm, "Add question", "Reset to defaults"), and expand/collapse headers onto `CollapsibleSection` / `CollapsibleCard`. Add a lint rule banning `<button>` outside `src/components/ui`, as a per-file ratchet so the count can only go down. Depends on P2d's `fullWidth` and `ActionRow`.                                                                                                | Done (#75, #76)           |
 | P2f | **Zero hand-built buttons: chips, options, menus.** New components for what's left: `Chip` (toggle, filter, selection: filter pills, sizes, rounds, divisions, lefty, gender and position), an option row / tile (player pickers, Oscars vote tiles and category grid, lightbox thumbnails) and `Menu` + `MenuItem` (event admin menu, payment method picker, status override, team search). Two-to-four way choices go to `SegmentedControl`. Card-shaped links: `CardLink` (owner, 2026-10-26). The ratchet reaches zero and the rule becomes absolute. Four PRs: chips and choices, option rows and tiles, menus, then card links and the rest. | Done (#77, #80, #81, #86) |
-| P3  | **`AlertBox` size, role and dismiss; `FormError` in ui.** About 29 files build a tinted box by hand (`-light` surface with a `-border` border; triage first, as some are highlighted rows or cards rather than alerts) and about 23 lines spell a field error by hand (`text-xs text-lob-coral` / `-danger`). `AlertBox` gains `size="sm"`, a `role` (alert for errors, status otherwise) and a dismiss that is an `IconButton ghost sm` instead of the bare 14px X. `FormError` moves from `features/auth` to `components/ui`. Two PRs: alerts, then field errors.                                                                                | Part 1 in review (#108)   |
+| P3  | **`AlertBox` size, role and dismiss; `FormError` in ui.** About 29 files build a tinted box by hand (`-light` surface with a `-border` border; triage first, as some are highlighted rows or cards rather than alerts) and about 23 lines spell a field error by hand (`text-xs text-lob-coral` / `-danger`). `AlertBox` gains `size="sm"`, a `role` (alert for errors, status otherwise) and a dismiss that is an `IconButton ghost sm` instead of the bare 14px X. `FormError` moves from `features/auth` to `components/ui`. Two PRs: alerts, then field errors.                                                                                | Done (#108, #109)         |
 | P4  | **`Badge` tones** (`success`, `neutral`, `warning`, `outline`) and **payment status single source** (`paymentStatus.ts`, `PaymentStatusBadge` on `Badge`; the blue "transferred" pill and merch "delivered" get a token). About 13 hand-built status pills move onto `Badge`. Rename team-state "Confirmed".                                                                                                                                                                                                                                                                                                                                       |                           |
 | P5  | **Empty and signed-out states.** `EmptyState variant="inline"`, `SignInPrompt`; loading states: a loading card keeps its title or header, so the viewer sees what is loading, and shows `Spinner` / `Skeleton` in the body instead of `return null`.                                                                                                                                                                                                                                                                                                                                                                                               |                           |
 | P6  | **Layout pieces.** `RankMarker` + `PlayerRow highlighted`, `CardHeader`, `RosterHeading`, `.panel` (first use: the blue Playtomic-level panel copied in three forms), `.eyebrow`, `SearchInput` (the TeamForm player search could become a proper combobox here, see #81); a heading element inside the `CollapsibleCard` header button (review of #76). Starts after the card-pattern conversation (see "Later").                                                                                                                                                                                                                                 |                           |
@@ -173,10 +173,10 @@ primitives (see the Log) before P3:
    its own Escape, scroll lock and focus today.~~ Done; see the Log.
 5. ~~**E2E safety net** (owner, 2026-10-29; below). Before any more UI moves.~~
    Done in #97 and #105.
-6. **P3 part 1: alerts.** `AlertBox` size, role and dismiss, then the
-   hand-built tinted boxes. In review (#108); see the Log.
-7. **P3 part 2: field errors.** `FormError` in ui and the hand-built error
-   lines.
+6. ~~**P3 part 1: alerts.** `AlertBox` size, role and dismiss, then the
+   hand-built tinted boxes.~~ Done in #108; see the Log.
+7. ~~**P3 part 2: field errors.** `FormError` in ui and the hand-built error
+   lines.~~ Done in #109; see the Log.
 8. **P4: `Badge` tones and payment status.**
 9. **P5: empty, signed-out and loading states.**
 10. **Card-pattern conversation** with the owner (below), then **P6**.
@@ -862,3 +862,48 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
   "voting closed" banner was raw yellow and is now `warning` (ratchet 107 →
   103). Two warnings that had `role="alert"` (the court warning in the event
   form, the signup name-match banner) are now `status`.
+
+- **2026-10-30.** P3 part 2 on `design-system-p3-field-errors` (#109).
+  `FormError` moves from `features/auth` to `components/ui` and the gallery.
+  - The boundary: `FormError` is what's wrong with the input, shown while
+    editing (one field, or a check across the inputs above it). A failed save
+    or load is `AlertBox variant="error"`.
+  - `FormError` gains `action` (an inline `TextButton size="inherit"`, for
+    "Search members"), an optional `message`, and `polite` for a check made
+    while the user types or picks (new-partner level, KotC repeat, matchmaking
+    fit): `status` instead of an interrupting `alert`. No margins; the
+    parent's `space-y` places it.
+  - `useFieldError` ties a field to its error: `aria-invalid` and
+    `aria-describedby` on the input while there is a message. Every
+    single-field error moved here uses it; the KotC repeat and matchmaking
+    fit checks span several inputs and stay untied. `SegmentedControl` and
+    `ChipGroup` take `describedBy` for the same. The league score and team
+    player errors now clear when that field is edited, so a fixed field isn't
+    left marked invalid (review).
+  - It doesn't tie labels to inputs; #103 stays its own PR. Field plus error
+    is now a repeated `space-y-1` wrapper, so the #103 fix should bring in a
+    `Field` layout (label `htmlFor`, the input, `FormError` with
+    `useFieldError` built in) and replace it.
+
+  Triage of the hand-built error lines:
+  - Onto `FormError`: the profile level and the signup name (both were tinted
+    boxes; the name error moves into `ProfileNameFields`), the league score
+    and team-player errors (were coral), the new-partner email and level
+    errors (moved out of their `<label>`s, so they're no longer read as part
+    of the field's name), the KotC "team picked more than once", the
+    matchmaking "can't fit" detail, and the shop's size prompt (the label
+    stays "Select size:"; the error goes under the chips).
+  - Onto `AlertBox variant="error"`: failed sign-ups (`JoinEventCard`,
+    `MyTournament`, `TeamJoinCard`, `PartnerChoiceForm`), a failed court
+    booking, sign-out-everywhere, the sign-in modal's "needs an admin
+    account" (`AuthGate`, review), and the shop, sign-in readiness and
+    payment-reminder load errors.
+  - Staying: auth forms keep `FormError` for their single-field errors (not
+    tied to the field yet; fits #103). Swap rule breaks, an order's admin
+    comment and the pending-match accents are content, not errors. The
+    raffle draw error sits on the dark header, which `AlertBox` has no
+    variant for. The "Register at least 4 players" hint is a warning, not an
+    error.
+
+  E2E: the shop order first taps Order with no size and checks the size group
+  is invalid and described by the error.

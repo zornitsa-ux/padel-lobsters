@@ -56,4 +56,10 @@ describe('ChipGroup', () => {
     expect(propsOf(scroll).role).toBe('group')
     expect(propsOf(scroll)['aria-label']).toBe('Round')
   })
+
+  it('points at its FormError only while invalid', () => {
+    const props = { children: null, describedBy: 'size-error' }
+    expect(propsOf(ChipGroup({ ...props, invalid: true }))['aria-describedby']).toBe('size-error')
+    expect(propsOf(ChipGroup(props))['aria-describedby']).toBeUndefined()
+  })
 })

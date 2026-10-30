@@ -139,9 +139,19 @@ test('sign up as a pair: the partner accepts the invite', async ({ page, browser
 test('order from the shop', async ({ page }) => {
   try {
     await page.goto('/community/shop')
-    await page.getByRole('button', { name: 'M', exact: true }).click()
-    await page.getByRole('button', { name: 'Order', exact: true }).first().click()
-    await expect(page.getByText('Ordered!')).toBeVisible()
+    // Scoped to the seeded tee: "add a shop item" may add a sized item in parallel.
+    const tee = page
+      .locator('.card')
+      .filter({ has: page.getByText('Lobster Tee', { exact: true }) })
+    const order = tee.getByRole('button', { name: 'Order', exact: true })
+    await order.click()
+    const sizes = tee.getByRole('group', { name: 'Size' })
+    await expect(sizes).toHaveAttribute('aria-invalid', 'true')
+    await expect(sizes).toHaveAccessibleDescription('Please select a size.')
+    await sizes.getByRole('button', { name: 'M', exact: true }).click()
+    await expect(tee.getByText('Please select a size.')).toHaveCount(0)
+    await order.click()
+    await expect(tee.getByText('Ordered!')).toBeVisible()
     await expect
       .poll(async () => {
         const { data } = await admin

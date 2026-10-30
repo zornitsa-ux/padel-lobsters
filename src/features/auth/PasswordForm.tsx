@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { requestReauthentication, setPassword } from './authActions'
-import { FormError } from './FormError'
+import { FormError } from '../../components/ui/FormError'
 import { PasswordInput } from './PasswordInput'
 import { CODE_LENGTH, sanitiseCode } from './otpCode'
 import { describePasswordError, PASSWORD_RULES_COPY } from './passwordErrors'

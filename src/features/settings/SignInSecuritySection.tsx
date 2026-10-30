@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom'
 import { LogOut, ShieldCheck } from 'lucide-react'
 import { useApp } from '../../context/useApp'
 import { signOutEverywhere } from '../auth/authActions'
-import { FormError } from '../auth/FormError'
+import { AlertBox } from '../../components/ui/AlertBox'
 import { PasswordForm } from '../auth/PasswordForm'
 import { sessionUsedPassword } from '../auth/sessionClaims'
 import { SIGN_IN_SECURITY_ID } from '../auth/upgradeCopy'
@@ -89,7 +89,11 @@ export default function SignInSecuritySection() {
         >
           Sign out of all devices
         </TextButton>
-        <FormError message={signOutError} />
+        {signOutError && (
+          <AlertBox variant="error" size="sm">
+            {signOutError}
+          </AlertBox>
+        )}
       </div>
     </div>
   )
