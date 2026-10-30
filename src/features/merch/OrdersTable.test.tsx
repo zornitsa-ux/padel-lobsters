@@ -51,4 +51,10 @@ describe('OrdersTable', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Show' }))
     expect(screen.getAllByRole('listitem')).toHaveLength(2)
   })
+
+  it('still offers the cancelled orders when none are open', () => {
+    renderTable([order(1, 'cancelled')])
+    expect(screen.getByText(/No open orders/)).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'Cancelled (1)' })).toBeTruthy()
+  })
 })

@@ -21,6 +21,10 @@ type OrdersTableProps = {
   players: Player[]
 }
 
+// A failed status write used to be swallowed, leaving the button looking like
+// it had worked until the next refetch.
+const onError = (err: unknown) => alert('Could not update the order: ' + errorMessage(err))
+
 // ── Orders tab (admin-facing) ────────────────────────────────────────────────
 export default function OrdersTable({ activeOrders, interests, items, players }: OrdersTableProps) {
   const { markOrder, cancelOrder } = useMerchActions()
@@ -84,46 +88,44 @@ export default function OrdersTable({ activeOrders, interests, items, players }:
       </Modal>
 
       {activeOrders.length > 0 ? (
-        <div className="space-y-4">
-          <div className="space-y-2">
-            {/* Summary stats */}
-            <div className="flex gap-2 text-xs text-lob-muted px-1">
-              <span>{activeOrders.length} orders</span>
-              <span>·</span>
-              <span className="text-lob-warning">
-                {activeOrders.filter((o) => o.status === 'ordered').length} pending
-              </span>
-              <span>·</span>
-              <span className="text-lob-success">
-                {activeOrders.filter((o) => o.status === 'paid').length} paid
-              </span>
-              <span>·</span>
-              <span className="text-lob-success">
-                {activeOrders.filter((o) => o.status === 'delivered').length} delivered
-              </span>
-            </div>
-
-            <ListCard>
-              {[...activeOrders]
-                .sort((a, b) => orderTimestamp(b.created_at) - orderTimestamp(a.created_at))
-                .map((o) => (
-                  <OrderRow
-                    key={o.id}
-                    order={o}
-                    item={items.find((i) => i.id === o.merch_item_id)}
-                    playerName={getPlayerName({ order: o, players })}
-                    markOrder={markOrder}
-                    onCancel={() => setCancelTarget(o)}
-                  />
-                ))}
-            </ListCard>
+        <div className="space-y-2">
+          {/* Summary stats */}
+          <div className="flex gap-2 text-xs text-lob-muted px-1">
+            <span>{activeOrders.length} orders</span>
+            <span>·</span>
+            <span className="text-lob-warning">
+              {activeOrders.filter((o) => o.status === 'ordered').length} pending
+            </span>
+            <span>·</span>
+            <span className="text-lob-success">
+              {activeOrders.filter((o) => o.status === 'paid').length} paid
+            </span>
+            <span>·</span>
+            <span className="text-lob-success">
+              {activeOrders.filter((o) => o.status === 'delivered').length} delivered
+            </span>
           </div>
 
-          <CancelledOrders orders={cancelledOrders} items={items} players={players} />
+          <ListCard>
+            {[...activeOrders]
+              .sort((a, b) => orderTimestamp(b.created_at) - orderTimestamp(a.created_at))
+              .map((o) => (
+                <OrderRow
+                  key={o.id}
+                  order={o}
+                  item={items.find((i) => i.id === o.merch_item_id)}
+                  playerName={getPlayerName({ order: o, players })}
+                  markOrder={markOrder}
+                  onCancel={() => setCancelTarget(o)}
+                />
+              ))}
+          </ListCard>
         </div>
       ) : (
-        <EmptyState title="No orders yet — orders will appear here when players place them from the Shop tab" />
+        <EmptyState title="No open orders — new orders appear here when players place them from the Shop tab" />
       )}
+
+      <CancelledOrders orders={cancelledOrders} items={items} players={players} />
     </div>
   )
 }
@@ -141,9 +143,6 @@ function OrderRow({
   markOrder: ReturnType<typeof useMerchActions>['markOrder']
   onCancel: () => void
 }) {
-  // A failed status write used to be swallowed, leaving the button looking like
-  // it had worked until the next refetch.
-  const onError = (err: unknown) => alert('Could not update the order: ' + errorMessage(err))
   const status = o.status
   const cfg = STATUS_CONFIG[status]
   const StatusIcon = cfg.icon
@@ -166,7 +165,7 @@ function OrderRow({
             )}
             {hasCustomName && (
               <span className="text-xs bg-lob-warning-light text-lob-warning px-2 py-0.5 rounded-full font-medium">
-                "{o.custom_name}"
+                "{o.customName}"
               </span>
             )}
             <span className="text-xs font-bold text-lob-teal">€{orderPrice}</span>

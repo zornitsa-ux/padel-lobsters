@@ -1193,3 +1193,8 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
     rows move into their own components (`OrderRow`, `StatusTimeline`,
     `CancelledOrders`). The size and custom-name pills stay for `Tag` (P6e);
     the Account "My Orders" heading stays for P6d.
+  - Review: the cancelled orders sit outside the open-orders branch, so an
+    admin still sees them when every order is cancelled (they were hidden
+    behind "No orders yet"); the custom-name pill shows the normalised name.
+    Found: the unpaid-registrations row opens shop orders, not the event's
+    payments (#120).
