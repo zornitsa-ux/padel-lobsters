@@ -22,6 +22,7 @@ on:
       - 'postcss.config.js'
       - '.env.localdev.example'
       - '.github/workflows/e2e.yml'
+      - '.github/actions/start-supabase/**'
   schedule:
     - cron: '17 3 * * *' # 03:17 UTC daily — off the hour, avoids GH Actions' peak-minute queueing
   workflow_dispatch: {}
@@ -74,7 +75,7 @@ jobs:
         run: cp .env.localdev.example .env.localdev
 
       - name: Start Supabase
-        run: npx supabase start
+        uses: ./.github/actions/start-supabase
 
       - name: Run the database tests
         run: npm run db:test

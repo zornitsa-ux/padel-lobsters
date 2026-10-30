@@ -14,6 +14,7 @@ on:
       - 'supabase/migrations/**'
       - 'src/lib/database.types.ts'
       - '.github/workflows/db-types.yml'
+      - '.github/actions/start-supabase/**'
   push:
     branches: [main]
     paths:
@@ -46,7 +47,7 @@ jobs:
       # `db start` replays every migration in supabase/migrations, so the
       # generated types reflect the repo rather than whatever is deployed.
       - name: Start Supabase
-        run: npx supabase start
+        uses: ./.github/actions/start-supabase
 
       # Delegates to scripts/gen-db-types.sh so CI and a developer's machine run
       # byte-identical generation. This step used to inline its own copy of the
