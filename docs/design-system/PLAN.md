@@ -190,7 +190,7 @@ primitives (see the Log) before P3:
     action on the background; replaces `SectionHeader` and the planned
     `CardHeader` as P6b and P6d move their users) and `ListCard` + `LinkRow`
     (one card, hairline dividers; `LinkRow` is `LinkCard`'s content as a
-    row). Pilot: the Community players list. In review.
+    row). Pilot: the Community players list. In review (#114).
 13. **P6b: lists onto `ListCard`.** Inventory first: registered players and
     teams, league teams and fixtures, standings, payments, shop orders. Rows
     that aren't links (`PlayerRow`, `OptionRow`) get their `ListCard` row
@@ -1083,7 +1083,7 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
   P6 is rescoped around these (P6a to P6e under "Next"); the "Identity labels"
   and "heavy card pattern" items leave "Later".
 
-- **2026-10-30.** P6a on `design-system-p6a-card-pieces`. `Section` and
+- **2026-10-30.** P6a on `design-system-p6a-card-pieces` (#114). `Section` and
   `ListCard` + `LinkRow`, each with tests and a gallery entry (the gallery's
   own card helper is renamed `GallerySection`). `LinkCard` exports its
   content (`LinkCardContent`) so `LinkRow` shares it. `Well` moves to P6c and
