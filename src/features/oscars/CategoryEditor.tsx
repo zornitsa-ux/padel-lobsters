@@ -2,6 +2,7 @@ import { X, Plus } from 'lucide-react'
 import { IconButton } from '../../components/ui/IconButton'
 import { Button } from '../../components/ui/Button'
 import { TextButton } from '../../components/ui/TextButton'
+import { ListCard, ListRow } from '../../components/ui/ListCard'
 
 /* A category row while it is being edited: the fields are still loose because
    they come either from a saved `lobster_oscars_categories` row (nullable
@@ -35,34 +36,38 @@ export default function CategoryEditor({ cats, onChange, onReset }: CategoryEdit
   }
   return (
     <div className="bg-white rounded-2xl p-3 space-y-2">
-      {cats.map((c, i) => (
-        <div key={i} className="flex items-center gap-2 bg-lob-well rounded-xl px-2.5 py-2">
-          <input
-            type="text"
-            value={c.icon || ''}
-            onChange={(e) => update(i, { icon: e.target.value.slice(0, 4) })}
-            className="w-10 text-center bg-white border border-lob-line-strong rounded-lg py-1.5 text-base"
-            placeholder="🦞"
-            aria-label="Category icon"
-          />
-          <input
-            type="text"
-            value={c.name || ''}
-            onChange={(e) => update(i, { name: e.target.value })}
-            className="flex-1 bg-white border border-lob-line-strong rounded-lg px-2.5 py-1.5 text-sm"
-            placeholder="Category name"
-            aria-label="Category name"
-          />
-          <IconButton
-            onClick={() => remove(i)}
-            aria-label="Remove category"
-            variant="ghost-destructive"
-            size="sm"
-          >
-            <X />
-          </IconButton>
-        </div>
-      ))}
+      <ListCard inset>
+        {cats.map((c, i) => (
+          <ListRow key={i}>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={c.icon || ''}
+                onChange={(e) => update(i, { icon: e.target.value.slice(0, 4) })}
+                className="w-10 text-center bg-white border border-lob-line-strong rounded-lg py-1.5 text-base"
+                placeholder="🦞"
+                aria-label="Category icon"
+              />
+              <input
+                type="text"
+                value={c.name || ''}
+                onChange={(e) => update(i, { name: e.target.value })}
+                className="flex-1 bg-white border border-lob-line-strong rounded-lg px-2.5 py-1.5 text-sm"
+                placeholder="Category name"
+                aria-label="Category name"
+              />
+              <IconButton
+                onClick={() => remove(i)}
+                aria-label="Remove category"
+                variant="ghost-destructive"
+                size="sm"
+              >
+                <X />
+              </IconButton>
+            </div>
+          </ListRow>
+        ))}
+      </ListCard>
       <div className="flex items-center gap-3 pt-1">
         <Button variant="secondary" grow icon={<Plus />} onClick={add}>
           Add category

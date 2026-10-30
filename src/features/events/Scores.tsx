@@ -3,16 +3,17 @@ import { useApp } from '../../context/useApp'
 import { usePlayers } from '../players/usePlayers'
 import { useMatches } from './useMatches'
 import { useRegistrations } from './useRegistrations'
-import { AlertCircle } from 'lucide-react'
+import { AlertCircle, Trophy } from 'lucide-react'
 import { computeTournamentStandings } from '../../lib/standings'
 import { TabSwitcher } from '../../components/ui/TabSwitcher'
 import { EmptyState } from '../../components/ui/EmptyState'
-import { ProgressBar } from '../../components/ui/ProgressBar'
+import { Section } from '../../components/ui/Section'
 import { useTournamentSync } from './useTournamentSync'
 import { hasLiveScores, isKingOfTheCourt } from './eventFormat'
 import { useOscarResults } from '../oscars/useOscarResults'
 import { useRaffleWinners } from '../raffle/useRaffle'
 import { groupOscarResultsByCategory } from '../oscars/oscarResults'
+import { OscarResultsList } from '../oscars/OscarResultsList'
 import { buildRounds } from './buildRounds'
 import { resultsWithheld } from './resultsPhase'
 import { raffleWinnersWithheld } from './eventPhase'
@@ -164,62 +165,18 @@ export default function Scores({ tournament, onNavigate }: ScoresProps) {
           const totalVoters = cats[0]?.totalVoters ?? 0
 
           return (
-            <div className="space-y-4">
-              <div className="card">
-                <p className="font-bold text-lob-slate">🏆 Lobster Oscars</p>
-                <p className="text-xs text-lob-muted-light">
+            <Section
+              title="Lobster Oscars"
+              icon={<Trophy />}
+              action={
+                <span className="text-xs text-lob-muted-light">
                   {cats.length} categor{cats.length === 1 ? 'y' : 'ies'}
-                  {totalVoters > 0 && (
-                    <>
-                      {' '}
-                      · {totalVoters} voter{totalVoters === 1 ? '' : 's'}
-                    </>
-                  )}
-                </p>
-              </div>
-              {cats.map((cat) => (
-                <div
-                  key={cat.id}
-                  className="bg-white rounded-2xl p-4 space-y-2 border border-lob-line"
-                >
-                  <p className="font-bold text-sm text-lob-slate">
-                    <span className="mr-1">{cat.icon}</span>
-                    {cat.name}
-                  </p>
-                  {cat.winners.length > 0 ? (
-                    <p className="text-sm text-lob-slate">
-                      🏆{' '}
-                      <span className="font-bold">
-                        {cat.winners.map((w) => w.target_name).join(', ')}
-                      </span>{' '}
-                      <span className="text-lob-muted-light">
-                        ({cat.topVotes} vote{cat.topVotes !== 1 ? 's' : ''}
-                        {cat.winners.length > 1 ? ' — tie' : ''})
-                      </span>
-                    </p>
-                  ) : (
-                    <p className="text-xs text-lob-muted-light">No votes</p>
-                  )}
-                  <div className="space-y-1">
-                    {cat.rows.map((r) => (
-                      <div key={r.target_id} className="flex items-center gap-2">
-                        <span className="text-xs w-16 truncate text-lob-slate">
-                          {(r.target_name || '').split(' ')[0]}
-                        </span>
-                        <ProgressBar
-                          value={(Number(r.votes_count) / cat.maxVotes) * 100}
-                          size="lg"
-                          className="flex-1"
-                        />
-                        <span className="text-xs text-lob-muted w-3 text-right">
-                          {Number(r.votes_count)}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
+                  {totalVoters > 0 && ` · ${totalVoters} voter${totalVoters === 1 ? '' : 's'}`}
+                </span>
+              }
+            >
+              <OscarResultsList categories={cats} />
+            </Section>
           )
         })()}
 

@@ -14,6 +14,9 @@ import { EmptyState } from '../../components/ui/EmptyState'
 import PrizeEditor from './ui/PrizeEditor'
 import Confetti from './ui/Confetti'
 import { IconButton } from '../../components/ui/IconButton'
+import Avatar from '../../components/ui/Avatar'
+import { ListCard, ListRow } from '../../components/ui/ListCard'
+import { Section } from '../../components/ui/Section'
 import { Button } from '../../components/ui/Button'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
 
@@ -26,7 +29,6 @@ interface Tournament {
 }
 
 const fullNameOf = (name?: string | null) => (name || '').trim() || 'Player'
-const initialOf = (name?: string | null) => fullNameOf(name).charAt(0).toUpperCase() || '?'
 const medal = (i: number) => (i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`)
 
 export default function RaffleContainer({
@@ -84,44 +86,41 @@ export default function RaffleContainer({
       <div className="space-y-6">
         {/* Recorded winners — shown first, since this is the part on screen. */}
         {committed.length > 0 && (
-          <div className="card space-y-3">
-            <div className="flex items-center gap-2">
-              <Check size={16} className="text-lob-success-solid" />
-              <p className="font-bold text-lob-dark">Winners{isPast ? '' : ' so far'}</p>
-            </div>
-            {committed.map((w: RaffleWinner, i: number) => (
-              <div
-                key={w.id}
-                className="flex items-center gap-3 bg-lob-well rounded-xl p-3 border border-lob-line animate-fade-in-up"
-                style={{ animationDelay: `${i * 120}ms` }}
-              >
-                <span className="text-2xl flex-shrink-0">{medal(i)}</span>
-                <div className="w-10 h-10 rounded-full bg-amber-400 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
-                  {initialOf(nameOf(w.playerId))}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold text-lob-dark truncate">
-                    {fullNameOf(nameOf(w.playerId))}
-                  </p>
-                  <PrizeEditor
-                    prize={w.prize}
-                    winnerId={w.id}
-                    onSave={(winnerId, prize) => updatePrize.mutate({ winnerId, prize })}
-                  />
-                </div>
-                {!isPast && (
-                  <IconButton
-                    onClick={() => removeWinner.mutate(w.id)}
-                    aria-label="Remove winner"
-                    variant="ghost-destructive"
-                    size="sm"
+          <Section title={`Winners${isPast ? '' : ' so far'}`} icon={<Check />}>
+            <ListCard>
+              {committed.map((w: RaffleWinner, i: number) => (
+                <ListRow key={w.id}>
+                  <div
+                    className="flex items-center gap-3 animate-fade-in-up"
+                    style={{ animationDelay: `${i * 120}ms` }}
                   >
-                    <Trash2 />
-                  </IconButton>
-                )}
-              </div>
-            ))}
-          </div>
+                    <span className="text-2xl flex-shrink-0">{medal(i)}</span>
+                    <Avatar player={{ name: fullNameOf(nameOf(w.playerId)) }} size="lg" />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-lob-dark truncate">
+                        {fullNameOf(nameOf(w.playerId))}
+                      </p>
+                      <PrizeEditor
+                        prize={w.prize}
+                        winnerId={w.id}
+                        onSave={(winnerId, prize) => updatePrize.mutate({ winnerId, prize })}
+                      />
+                    </div>
+                    {!isPast && (
+                      <IconButton
+                        onClick={() => removeWinner.mutate(w.id)}
+                        aria-label="Remove winner"
+                        variant="ghost-destructive"
+                        size="sm"
+                      >
+                        <Trash2 />
+                      </IconButton>
+                    )}
+                  </div>
+                </ListRow>
+              ))}
+            </ListCard>
+          </Section>
         )}
 
         {/* Draw controls — below the winners, hidden for past tournaments. */}

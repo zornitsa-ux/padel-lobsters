@@ -21,6 +21,20 @@ describe('ListCard', () => {
     expect(screen.getAllByRole('listitem').map((item) => item.textContent)).toEqual(['Ana', 'Ben'])
   })
 
+  it('inset: divided rows with no card, and its ListRows drop their side padding', () => {
+    render(
+      <ListCard label="Tips" inset>
+        <ListRow>
+          <span>Bend your knees</span>
+        </ListRow>
+      </ListCard>,
+    )
+    const list = screen.getByRole('list', { name: 'Tips' })
+    expect(list.className).not.toContain('card')
+    expect(list.className).toContain('divide-y')
+    expect(screen.getByText('Bend your knees').parentElement!.className).not.toContain('px-4')
+  })
+
   it('renders nothing when every row is empty', () => {
     render(<ListCard label="Players">{[null, false]}</ListCard>)
     expect(screen.queryByRole('list')).toBeNull()

@@ -5,6 +5,7 @@ import type { EditingTip, SettingsForm } from './settingsHelpers'
 import { Button } from '../../components/ui/Button'
 import { IconButton } from '../../components/ui/IconButton'
 import { TextButton } from '../../components/ui/TextButton'
+import { ListCard, ListRow } from '../../components/ui/ListCard'
 
 interface AdminSectionProps {
   form: SettingsForm
@@ -142,48 +143,54 @@ export default function AdminSection({
 
         {/* Tips list */}
         {tipsExpanded && (
-          <div className="space-y-1.5 max-h-64 overflow-y-auto">
-            {activeTips.map((tip, i) => (
-              <div key={i} className="flex items-start gap-2 bg-lob-well rounded-xl px-3 py-2">
-                <span className="text-2xs text-lob-muted-light font-mono mt-0.5 flex-shrink-0 w-5">
-                  {i + 1}
-                </span>
-                {editingTip?.index === i ? (
-                  <div className="flex-1 flex gap-1">
-                    <input
-                      className="input flex-1 text-xs py-1"
-                      value={editingTip.text}
-                      onChange={(e) =>
-                        setEditingTip((prev) => (prev ? { ...prev, text: e.target.value } : prev))
-                      }
-                      onKeyDown={(e) => e.key === 'Enter' && handleSaveEdit()}
-                      autoFocus
-                    />
-                    <TextButton onClick={handleSaveEdit}>Save</TextButton>
-                    <TextButton tone="neutral" onClick={() => setEditingTip(null)}>
-                      Cancel
-                    </TextButton>
+          <div className="max-h-64 overflow-y-auto">
+            <ListCard inset>
+              {activeTips.map((tip, i) => (
+                <ListRow key={i}>
+                  <div className="flex items-start gap-2">
+                    <span className="text-2xs text-lob-muted-light font-mono mt-0.5 flex-shrink-0 w-5">
+                      {i + 1}
+                    </span>
+                    {editingTip?.index === i ? (
+                      <div className="flex-1 flex gap-1">
+                        <input
+                          className="input flex-1 text-xs py-1"
+                          value={editingTip.text}
+                          onChange={(e) =>
+                            setEditingTip((prev) =>
+                              prev ? { ...prev, text: e.target.value } : prev,
+                            )
+                          }
+                          onKeyDown={(e) => e.key === 'Enter' && handleSaveEdit()}
+                          autoFocus
+                        />
+                        <TextButton onClick={handleSaveEdit}>Save</TextButton>
+                        <TextButton tone="neutral" onClick={() => setEditingTip(null)}>
+                          Cancel
+                        </TextButton>
+                      </div>
+                    ) : (
+                      <>
+                        <p
+                          className="flex-1 text-xs text-lob-slate leading-relaxed cursor-pointer"
+                          onClick={() => handleEditTip(i)}
+                        >
+                          {tip}
+                        </p>
+                        <IconButton
+                          onClick={() => handleDeleteTip(i)}
+                          aria-label="Delete tip"
+                          variant="ghost-destructive"
+                          size="sm"
+                        >
+                          <Trash2 />
+                        </IconButton>
+                      </>
+                    )}
                   </div>
-                ) : (
-                  <>
-                    <p
-                      className="flex-1 text-xs text-lob-slate leading-relaxed cursor-pointer"
-                      onClick={() => handleEditTip(i)}
-                    >
-                      {tip}
-                    </p>
-                    <IconButton
-                      onClick={() => handleDeleteTip(i)}
-                      aria-label="Delete tip"
-                      variant="ghost-destructive"
-                      size="sm"
-                    >
-                      <Trash2 />
-                    </IconButton>
-                  </>
-                )}
-              </div>
-            ))}
+                </ListRow>
+              ))}
+            </ListCard>
           </div>
         )}
       </div>

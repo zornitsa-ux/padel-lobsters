@@ -13,7 +13,7 @@
   "src/features/matchmaking/ui/genderMarks.tsx": 4,
   "src/features/oscars/ResultsView.tsx": 7,
   "src/features/pastEvents/PastEventResults.tsx": 11,
-  "src/features/raffle/RaffleContainer.tsx": 4,
+  "src/features/raffle/RaffleContainer.tsx": 3,
   "src/features/raffle/ui/PrizeEditor.tsx": 3,
   "src/features/settings/AdminSection.tsx": 2
 }

@@ -10,6 +10,7 @@ import type {
 import { CollapsibleCard } from '../../../components/ui/CollapsibleCard'
 import { IconButton } from '../../../components/ui/IconButton'
 import { TextButton } from '../../../components/ui/TextButton'
+import { Well } from '../../../components/ui/Well'
 
 const emptyListRow = (): LobsterWayListRow => ({ emoji: '', label: '', text: '' })
 const emptyStepRow = (): LobsterWayStep => ({ title: '', text: '', image: '' })
@@ -43,7 +44,7 @@ export default function LobsterWayAdminItem({
 
   return (
     <CollapsibleCard
-      className="border border-lob-line rounded-xl bg-lob-well/60 px-3 py-2 space-y-2"
+      className="space-y-2"
       expanded={open}
       onToggle={() => setOpen((o) => !o)}
       leading={<MoveButtons index={index} count={count} onMove={onMove} />}
@@ -92,7 +93,7 @@ export default function LobsterWayAdminItem({
 
         {/* Bulleted list block (perks, vote categories, profile fields...) */}
         {item.list ? (
-          <div className="space-y-1.5 bg-white rounded-lg border border-lob-line p-2">
+          <Well>
             <div className="flex items-center justify-between">
               <p className="label">Bullet list</p>
               <TextButton tone="neutral" onClick={() => set({ list: undefined })}>
@@ -135,7 +136,7 @@ export default function LobsterWayAdminItem({
             >
               Add row
             </TextButton>
-          </div>
+          </Well>
         ) : (
           <TextButton icon={<Plus size={11} />} onClick={() => set({ list: [emptyListRow()] })}>
             Add bullet list
@@ -144,7 +145,7 @@ export default function LobsterWayAdminItem({
 
         {/* Numbered steps block (walkthroughs, e.g. transferring a spot) */}
         {item.steps ? (
-          <div className="space-y-2 bg-white rounded-lg border border-lob-line p-2">
+          <Well>
             <div className="flex items-center justify-between">
               <p className="label">Numbered steps</p>
               <TextButton tone="neutral" onClick={() => set({ steps: undefined })}>
@@ -192,7 +193,7 @@ export default function LobsterWayAdminItem({
             >
               Add step
             </TextButton>
-          </div>
+          </Well>
         ) : (
           <TextButton icon={<Plus size={11} />} onClick={() => set({ steps: [emptyStepRow()] })}>
             Add numbered steps

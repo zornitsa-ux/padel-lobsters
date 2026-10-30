@@ -15,6 +15,8 @@ import { Button } from '../../components/ui/Button'
 import { TextButton } from '../../components/ui/TextButton'
 import { AlertBox } from '../../components/ui/AlertBox'
 import { Badge } from '../../components/ui/Badge'
+import { ListCard, ListRow } from '../../components/ui/ListCard'
+import { Section } from '../../components/ui/Section'
 
 const stepNumber = (index: number): string => String(index + 1).padStart(2, '0')
 
@@ -148,7 +150,7 @@ function StepRow({
   const done = step.state === 'done'
 
   return (
-    <li className="card space-y-2">
+    <ListRow>
       <div className="flex items-start gap-3">
         <span className="flex-shrink-0 font-mono tabular-nums text-xs font-bold text-lob-muted-light pt-0.5">
           {stepNumber(index)}
@@ -198,7 +200,7 @@ function StepRow({
           )}
         </div>
       </div>
-    </li>
+    </ListRow>
   )
 }
 
@@ -232,17 +234,17 @@ export default function RunOfShow({ tournament }: { tournament: NormalisedTourna
   const actions = useStepActions({ tournament, oscarsPhase, lifecycle, oscars })
 
   return (
-    <div className="card space-y-4" data-testid="run-of-show">
-      <div className="flex items-center justify-between">
-        <h2 className="font-bold text-lob-dark">Run of show</h2>
-        {/* King of the Court has only optional steps, so nothing to count. */}
-        {progress.total > 0 && (
+    <Section
+      title="Run of show"
+      action={
+        // King of the Court has only optional steps, so nothing to count.
+        progress.total > 0 && (
           <span className="text-xs font-semibold text-lob-muted">
             {progress.done} of {progress.total} done
           </span>
-        )}
-      </div>
-
+        )
+      }
+    >
       {/* Two step controls write through the Oscars hook, which keeps its own
           error — without this a failed close/share left the step "available"
           with no explanation. */}
@@ -252,11 +254,11 @@ export default function RunOfShow({ tournament }: { tournament: NormalisedTourna
         </AlertBox>
       ))}
 
-      <ol className="space-y-3">
+      <ListCard>
         {steps.map((step, i) => (
           <StepRow key={step.id} step={step} index={i} action={actions[step.id]} />
         ))}
-      </ol>
-    </div>
+      </ListCard>
+    </Section>
   )
 }

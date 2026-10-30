@@ -1,4 +1,4 @@
-import { Children, isValidElement, type ReactNode } from 'react'
+import { Children, createContext, isValidElement, useContext, type ReactNode } from 'react'
 import { Check } from 'lucide-react'
 import { linkOrActionProps, renderAction, type LinkOrAction } from './action'
 import { LinkCardContent, type LinkCardContentProps } from './LinkCard'
@@ -7,18 +7,27 @@ interface ListCardProps {
   children: ReactNode
   /** Names the list for screen readers when no heading labels it. */
   label?: string
+  /** Inside a card already: divided rows with no card of their own, flush with the card's content. */
+  inset?: boolean
 }
 
+const InsetContext = createContext(false)
+
 /** A list of like items: one card, hairline dividers between rows. */
-export function ListCard({ children, label }: ListCardProps) {
+export function ListCard({ children, label, inset = false }: ListCardProps) {
   const rows = Children.toArray(children)
   if (rows.length === 0) return null
   return (
-    <ul aria-label={label} className="card p-0 overflow-hidden divide-y divide-lob-line">
-      {rows.map((child, index) => (
-        <li key={isValidElement(child) && child.key !== null ? child.key : index}>{child}</li>
-      ))}
-    </ul>
+    <InsetContext.Provider value={inset}>
+      <ul
+        aria-label={label}
+        className={`divide-y divide-lob-line ${inset ? '' : 'card p-0 overflow-hidden'}`.trim()}
+      >
+        {rows.map((child, index) => (
+          <li key={isValidElement(child) && child.key !== null ? child.key : index}>{child}</li>
+        ))}
+      </ul>
+    </InsetContext.Provider>
   )
 }
 
@@ -41,7 +50,8 @@ export function LinkRow({ to, onClick, highlighted = false, ...content }: LinkRo
 
 /** A `ListCard` row that holds its own controls: a `PlayerRow` with buttons, and anything under it. */
 export function ListRow({ children }: { children: ReactNode }) {
-  return <div className="px-4 py-3 space-y-2">{children}</div>
+  const inset = useContext(InsetContext)
+  return <div className={`${inset ? '' : 'px-4 '}py-3 space-y-2`}>{children}</div>
 }
 
 interface CheckRowProps {
