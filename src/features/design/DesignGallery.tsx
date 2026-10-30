@@ -21,6 +21,8 @@ import {
   EyeOff,
   Search,
   Users,
+  Calendar,
+  Trophy,
 } from 'lucide-react'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { ActionRow } from '../../components/ui/ActionRow'
@@ -54,6 +56,8 @@ import { LinkCard, LinkCardIcon } from '../../components/ui/LinkCard'
 import { CheckRow, LinkRow, ListCard, ListRow } from '../../components/ui/ListCard'
 import { PlayerRow } from '../../components/ui/PlayerRow'
 import { Section } from '../../components/ui/Section'
+import { LeagueMatchRow } from '../league/ui/LeagueMatchRow'
+import type { LeagueMatch, LeagueTeam } from '../league/domain/types'
 import { OptionRow } from '../../components/ui/OptionRow'
 import { ImageTile, OptionTile } from '../../components/ui/OptionTile'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
@@ -666,6 +670,115 @@ function SectionListSection() {
   )
 }
 
+const sampleTeam = (id: string, team_name: string) => ({ id, team_name }) as LeagueTeam
+
+const SAMPLE_TEAMS = {
+  t1: sampleTeam('t1', 'Smash Bros'),
+  t2: sampleTeam('t2', 'Net Ninjas'),
+  t3: sampleTeam('t3', 'The Bandeja Boys'),
+  t4: sampleTeam('t4', 'Lob Story'),
+}
+
+const sampleMatch = (match: Partial<LeagueMatch>) =>
+  ({
+    id: 'm',
+    team1_id: 't1',
+    team2_id: 't2',
+    winner_id: null,
+    set_scores: null,
+    played_on: null,
+    location: null,
+    ...match,
+  }) as LeagueMatch
+
+const SAMPLE_MATCHES = [
+  sampleMatch({
+    id: 'm1',
+    winner_id: 't1',
+    set_scores: [
+      { t1: 6, t2: 4 },
+      { t1: 6, t2: 3 },
+    ],
+    played_on: '2026-10-12',
+    location: 'Padel Club Noord',
+  }),
+  sampleMatch({
+    id: 'm2',
+    team1_id: 't3',
+    team2_id: 't4',
+    winner_id: 't4',
+    set_scores: [
+      { t1: 6, t2: 4 },
+      { t1: 3, t2: 6 },
+      { t1: 8, t2: 10 },
+    ],
+    played_on: '2026-10-08',
+  }),
+  sampleMatch({ id: 'm3', team1_id: 't1', team2_id: 't3' }),
+]
+
+function LeagueMatchRowSection() {
+  const teamFor = (id: string | null) =>
+    id ? SAMPLE_TEAMS[id as keyof typeof SAMPLE_TEAMS] : undefined
+  const rowProps = (match: LeagueMatch) => ({
+    match,
+    team1: teamFor(match.team1_id),
+    team2: teamFor(match.team2_id),
+  })
+  return (
+    <GallerySection title="LeagueMatchRow (league feature, in a ListCard)">
+      <Row label="Fixtures and results: team names open the team (TextButton)" block>
+        <div className="rounded-2xl bg-lob-cream p-3">
+          <Section title="Matches" icon={<Calendar />}>
+            <ListCard>
+              {SAMPLE_MATCHES.map((match) => (
+                <LeagueMatchRow key={match.id} {...rowProps(match)} onTeamClick={() => {}} />
+              ))}
+              <LeagueMatchRow
+                {...rowProps(sampleMatch({ id: 'm4', team2_id: null, winner_id: 't2' }))}
+                team1={SAMPLE_TEAMS.t2}
+                onTeamClick={() => {}}
+              />
+            </ListCard>
+          </Section>
+        </div>
+      </Row>
+      <Row label="Manage: stage label and an action (replaces Pending), names not links" block>
+        <div className="rounded-2xl bg-lob-cream p-3">
+          <Section title="Pending Matches (2)" icon={<Trophy />}>
+            <ListCard>
+              <LeagueMatchRow
+                {...rowProps(SAMPLE_MATCHES[2])}
+                label="Group A"
+                action={<TextButton onClick={() => {}}>Enter Score</TextButton>}
+              />
+              <LeagueMatchRow
+                {...rowProps(sampleMatch({ id: 'm5', team1_id: 't2', team2_id: 't4' }))}
+                label="Gold Final"
+                action={<TextButton onClick={() => {}}>Enter Score</TextButton>}
+              />
+            </ListCard>
+          </Section>
+          <div className="mt-4">
+            <Section title="Results (2)" icon={<Trophy />}>
+              <ListCard>
+                {SAMPLE_MATCHES.slice(0, 2).map((match, index) => (
+                  <LeagueMatchRow
+                    key={match.id}
+                    {...rowProps(match)}
+                    label={index === 0 ? 'Group A' : 'Group B'}
+                    action={<TextButton onClick={() => {}}>Edit</TextButton>}
+                  />
+                ))}
+              </ListCard>
+            </Section>
+          </div>
+        </div>
+      </Row>
+    </GallerySection>
+  )
+}
+
 function CheckRowDemo() {
   const [checked, setChecked] = useState(true)
   return (
@@ -1024,6 +1137,7 @@ export default function DesignGallery() {
       <DialogSection />
       <CardLinkSection />
       <SectionListSection />
+      <LeagueMatchRowSection />
       <CollapsibleSectionDemo />
       <StatesSection />
     </div>

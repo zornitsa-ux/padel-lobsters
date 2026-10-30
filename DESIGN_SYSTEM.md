@@ -65,6 +65,9 @@ Owner, 2026-10-30 (being applied in P6):
   content as a row, `highlighted` for the viewer's own row). A row with its own controls is
   `ListRow` (a `PlayerRow` with buttons, and anything under it); a row that is one checkbox is
   `CheckRow`. Status shows in a `Badge` or avatar tone, not a coloured left border.
+- A match in a list is a row too (league: `LeagueMatchRow` in a `ListCard`). A match keeps its
+  own card only where it stands alone, and Schedule court matches, where scores are entered, stay
+  cards.
 - `.card`: `bg-white rounded-2xl p-4`, card shadow and hairline border. The default.
 - `.card-elevated`: same shape, stronger shadow, for a hero card (`NextEventCard`).
 - A card that is one link is `CardLink` (`flush` for a full-bleed band, as on

@@ -2,10 +2,11 @@ import { useState } from 'react'
 import { Trophy } from 'lucide-react'
 import { Modal } from '../../../components/ui/Modal'
 import { AlertBox } from '../../../components/ui/AlertBox'
-import { SectionHeader } from '../../../components/ui/SectionHeader'
+import { Section } from '../../../components/ui/Section'
 import { useConfirm } from '../../../lib/confirmBus'
 import { ScoreEntryForm } from '../ui/ScoreEntryForm'
-import { LeagueMatchCard } from '../ui/LeagueMatchCard'
+import { LeagueMatchRow } from '../ui/LeagueMatchRow'
+import { ListCard } from '../../../components/ui/ListCard'
 import { useCreateBracket } from '../hooks/useLeagueMutations'
 import { buildDivisionBracket, buildFinalPairings } from '../domain/bracket'
 import { sortMatchesDesc, stageToLabel } from '../domain/matchDisplay'
@@ -130,11 +131,10 @@ function MatchList({
 }) {
   if (matches.length === 0) return null
   return (
-    <div>
-      <SectionHeader icon={<Trophy size={15} />} title={`${title} (${matches.length})`} />
-      <div className="space-y-2">
+    <Section title={`${title} (${matches.length})`} icon={<Trophy />}>
+      <ListCard>
         {matches.map((m) => (
-          <LeagueMatchCard
+          <LeagueMatchRow
             key={m.id}
             match={m}
             team1={teamById[m.team1_id ?? '']}
@@ -145,8 +145,8 @@ function MatchList({
             }
           />
         ))}
-      </div>
-    </div>
+      </ListCard>
+    </Section>
   )
 }
 

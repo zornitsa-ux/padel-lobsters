@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
 import { Users, X } from 'lucide-react'
 import { suggestGroups, recommendGroupConfig } from '../domain/groupBalancer'
-import type { Division, LeagueTeam } from '../domain/types'
+import type { Division, GroupLabel, LeagueTeam } from '../domain/types'
+import { resolveTeamShortName } from '../domain/teamDisplay'
 import { Badge } from '../../../components/ui/Badge'
 import { experienceTone } from './statusPill'
 import { AlertBox } from '../../../components/ui/AlertBox'
-import { SectionHeader } from '../../../components/ui/SectionHeader'
+import { Section } from '../../../components/ui/Section'
 import { useConfirmGroups } from '../hooks/useLeagueMutations'
 import { Button } from '../../../components/ui/Button'
 import { IconButton } from '../../../components/ui/IconButton'
@@ -74,13 +75,6 @@ function RecommendationPanel({ teams, groupA, groupB }: RecommendationPanelProps
   )
 }
 
-function teamLabel(t: LeagueTeam) {
-  if (t.team_name) return t.team_name
-  const p1 = t.player1?.name?.split(' ')[0] ?? '?'
-  const p2 = t.player2?.name?.split(' ')[0] ?? '?'
-  return `${p1} & ${p2}`
-}
-
 interface TeamCardProps {
   team: LeagueTeam
   actions: React.ReactNode
@@ -90,11 +84,47 @@ function TeamCard({ team, actions }: TeamCardProps) {
   return (
     <div className="flex items-center gap-2 rounded-xl bg-lob-well px-3 py-2">
       <span className="text-sm font-semibold text-lob-dark flex-1 min-w-0 truncate">
-        {teamLabel(team)}
+        {resolveTeamShortName(team)}
       </span>
       <Badge tone={experienceTone(team.experience_level)} label={team.experience_level} />
       {actions}
     </div>
+  )
+}
+
+function GroupColumn({
+  label,
+  teams,
+  onRemove,
+}: {
+  label: GroupLabel
+  teams: LeagueTeam[]
+  onRemove: (id: string) => void
+}) {
+  return (
+    <Section title={`Group ${label} (${teams.length})`} icon={<Users />}>
+      <div className="space-y-2">
+        {teams.map((team) => (
+          <TeamCard
+            key={team.id}
+            team={team}
+            actions={
+              <IconButton
+                onClick={() => onRemove(team.id)}
+                aria-label="Remove from group"
+                variant="ghost-destructive"
+                size="sm"
+              >
+                <X />
+              </IconButton>
+            }
+          />
+        ))}
+        {teams.length === 0 && (
+          <p className="text-xs text-lob-muted-light px-2">No teams assigned</p>
+        )}
+      </div>
+    </Section>
   )
 }
 
@@ -173,61 +203,14 @@ export function GroupFormationTool({
       )}
 
       <div className="grid grid-cols-2 gap-3">
-        <div>
-          <SectionHeader icon={<Users size={15} />} title={`Group A (${groupA.length})`} />
-          <div className="space-y-2">
-            {groupA.map(
-              (id) =>
-                teamById[id] && (
-                  <TeamCard
-                    key={id}
-                    team={teamById[id]}
-                    actions={
-                      <IconButton
-                        onClick={() => removeFromGroup(id)}
-                        aria-label="Remove from group"
-                        variant="ghost-destructive"
-                        size="sm"
-                      >
-                        <X />
-                      </IconButton>
-                    }
-                  />
-                ),
-            )}
-            {groupA.length === 0 && (
-              <p className="text-xs text-lob-muted-light px-2">No teams assigned</p>
-            )}
-          </div>
-        </div>
-
-        <div>
-          <SectionHeader icon={<Users size={15} />} title={`Group B (${groupB.length})`} />
-          <div className="space-y-2">
-            {groupB.map(
-              (id) =>
-                teamById[id] && (
-                  <TeamCard
-                    key={id}
-                    team={teamById[id]}
-                    actions={
-                      <IconButton
-                        onClick={() => removeFromGroup(id)}
-                        aria-label="Remove from group"
-                        variant="ghost-destructive"
-                        size="sm"
-                      >
-                        <X />
-                      </IconButton>
-                    }
-                  />
-                ),
-            )}
-            {groupB.length === 0 && (
-              <p className="text-xs text-lob-muted-light px-2">No teams assigned</p>
-            )}
-          </div>
-        </div>
+        {(['A', 'B'] as const).map((label) => (
+          <GroupColumn
+            key={label}
+            label={label}
+            teams={(label === 'A' ? groupA : groupB).flatMap((id) => teamById[id] ?? [])}
+            onRemove={removeFromGroup}
+          />
+        ))}
       </div>
 
       {unassigned.length > 0 && (

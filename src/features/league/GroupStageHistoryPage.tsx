@@ -1,14 +1,14 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { BarChart2, CheckCircle, ChevronLeft } from 'lucide-react'
-import { SectionHeader } from '../../components/ui/SectionHeader'
+import { Section } from '../../components/ui/Section'
 import { Spinner } from '../../components/ui/Spinner'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
-import { GroupStandingsTable } from './ui/GroupStandingsTable'
-import { LeagueMatchCard } from './ui/LeagueMatchCard'
+import { GroupStandings } from './ui/GroupStandings'
+import { ListCard } from '../../components/ui/ListCard'
+import { LeagueMatchRow } from './ui/LeagueMatchRow'
 import { TeamPage } from './ui/TeamPage'
 import { useLeagueById, useLeagueTeams, useLeagueMatches } from './hooks/useLeagueQueries'
-import { computeGroupStandings } from './domain/standings'
 import { sortMatchesAsc } from './domain/matchDisplay'
 import { DIVISION_LABELS, leagueDivisions } from './domain/types'
 import type { Division, LeagueTeam } from './domain/types'
@@ -40,11 +40,6 @@ export default function GroupStageHistoryPage() {
   const divMatches = matches.filter((m) => m.division === safeDivision)
   const teamById = Object.fromEntries(teams.map((t) => [t.id, t]))
 
-  const groupATeams = divTeams.filter((t) => t.group_label === 'A')
-  const groupBTeams = divTeams.filter((t) => t.group_label === 'B')
-  const standingsA = computeGroupStandings(groupATeams, divMatches)
-  const standingsB = computeGroupStandings(groupBTeams, divMatches)
-
   const groupResults = divMatches
     .filter((m) => m.stage === 'group' && m.winner_id !== null)
     .sort(sortMatchesAsc)
@@ -66,42 +61,20 @@ export default function GroupStageHistoryPage() {
       )}
 
       <div className="space-y-5">
-        {(standingsA.length > 0 || standingsB.length > 0) && (
-          <div className="card">
-            <SectionHeader icon={<BarChart2 size={15} />} title="Standings" />
-            {standingsA.length > 0 && (
-              <>
-                <p className="text-xs uppercase tracking-wide text-lob-muted mb-2">Group A</p>
-                <GroupStandingsTable
-                  standings={standingsA}
-                  myTeamId={null}
-                  onTeamClick={setSelectedTeam}
-                />
-              </>
-            )}
-            {standingsB.length > 0 && (
-              <>
-                <p
-                  className={`text-xs uppercase tracking-wide text-lob-muted mb-2 ${standingsA.length > 0 ? 'mt-4' : ''}`}
-                >
-                  Group B
-                </p>
-                <GroupStandingsTable
-                  standings={standingsB}
-                  myTeamId={null}
-                  onTeamClick={setSelectedTeam}
-                />
-              </>
-            )}
-          </div>
-        )}
+        <GroupStandings
+          title="Standings"
+          icon={<BarChart2 />}
+          divTeams={divTeams}
+          divMatches={divMatches}
+          myTeamId={null}
+          onTeamClick={setSelectedTeam}
+        />
 
         {groupResults.length > 0 && (
-          <div>
-            <SectionHeader icon={<CheckCircle size={15} />} title="All Results" />
-            <div className="space-y-2">
+          <Section title="All Results" icon={<CheckCircle />}>
+            <ListCard>
               {groupResults.map((m) => (
-                <LeagueMatchCard
+                <LeagueMatchRow
                   key={m.id}
                   match={m}
                   team1={teamById[m.team1_id ?? '']}
@@ -109,8 +82,8 @@ export default function GroupStageHistoryPage() {
                   onTeamClick={setSelectedTeam}
                 />
               ))}
-            </div>
-          </div>
+            </ListCard>
+          </Section>
         )}
       </div>
 

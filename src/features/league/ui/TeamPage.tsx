@@ -3,7 +3,8 @@ import { PlayerRow } from '../../../components/ui/PlayerRow'
 import { Badge } from '../../../components/ui/Badge'
 import { experienceTone } from './statusPill'
 import { StatTile } from '../../../components/ui/StatTile'
-import { LeagueMatchCard } from './LeagueMatchCard'
+import { LeagueMatchRow } from './LeagueMatchRow'
+import { ListCard } from '../../../components/ui/ListCard'
 import { getTeamRecord } from '../domain/standings'
 import { resolveTeamName } from '../domain/teamDisplay'
 import { formatSetDiff, sortMatchesDesc } from '../domain/matchDisplay'
@@ -117,18 +118,17 @@ export function TeamPage({ team, matches, teamById, onClose, onTeamClick }: Team
             <p className="text-xs font-bold text-lob-muted-light uppercase tracking-wider mb-2">
               Match History
             </p>
-            <div className="space-y-2">
+            <ListCard>
               {teamMatches.map((m) => (
-                <LeagueMatchCard
+                <LeagueMatchRow
                   key={m.id}
                   match={m}
                   team1={teamById[m.team1_id ?? '']}
                   team2={teamById[m.team2_id ?? '']}
-                  compact
                   onTeamClick={onTeamClick}
                 />
               ))}
-            </div>
+            </ListCard>
           </div>
         )}
       </div>

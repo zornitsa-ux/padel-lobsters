@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { Plus } from 'lucide-react'
+import { Plus, Users } from 'lucide-react'
 import { Modal } from '../../../components/ui/Modal'
 import { Badge } from '../../../components/ui/Badge'
 import { experienceTone } from '../ui/statusPill'
-import { SectionHeader } from '../../../components/ui/SectionHeader'
+import { Section } from '../../../components/ui/Section'
+import { ListCard, ListRow } from '../../../components/ui/ListCard'
 import { PlayerRow } from '../../../components/ui/PlayerRow'
 import { useConfirm } from '../../../lib/confirmBus'
 import { TeamForm } from '../ui/TeamForm'
@@ -65,28 +66,30 @@ function TeamRow({
   }
 
   return (
-    <PlayerRow
-      className="card"
-      name={resolveTeamName(team)}
-      subtitle={
-        <>
-          <PlayerName player={team.player1} playerId={team.player1_id} onInvite={onInvite} /> &amp;{' '}
-          <PlayerName player={team.player2} playerId={team.player2_id} onInvite={onInvite} />
-        </>
-      }
-      trailing={
-        <>
-          {team.group_label && <Badge tone="outline" label={`Group ${team.group_label}`} />}
-          <Badge tone={experienceTone(team.experience_level)} label={team.experience_level} />
-          <TextButton tone="neutral" onClick={() => onEdit(team)}>
-            Edit
-          </TextButton>
-          <TextButton tone="destructive" onClick={handleRemove}>
-            Remove
-          </TextButton>
-        </>
-      }
-    />
+    <ListRow>
+      <PlayerRow
+        name={resolveTeamName(team)}
+        subtitle={
+          <>
+            <PlayerName player={team.player1} playerId={team.player1_id} onInvite={onInvite} />{' '}
+            &amp;{' '}
+            <PlayerName player={team.player2} playerId={team.player2_id} onInvite={onInvite} />
+          </>
+        }
+        trailing={
+          <>
+            {team.group_label && <Badge tone="outline" label={`Group ${team.group_label}`} />}
+            <Badge tone={experienceTone(team.experience_level)} label={team.experience_level} />
+            <TextButton tone="neutral" onClick={() => onEdit(team)}>
+              Edit
+            </TextButton>
+            <TextButton tone="destructive" onClick={handleRemove}>
+              Remove
+            </TextButton>
+          </>
+        }
+      />
+    </ListRow>
   )
 }
 
@@ -107,22 +110,23 @@ export function ManageTeams({ league, teams, division, allPlayers }: ManageTeams
   const closeForm = () => setFormTeam(undefined)
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <SectionHeader icon={<Plus size={15} />} title={`Teams (${divisionTeams.length})`} />
+    <Section
+      title={`Teams (${divisionTeams.length})`}
+      icon={<Users />}
+      action={
         <TextButton icon={<Plus size={13} />} onClick={() => setFormTeam(null)}>
           Add Team
         </TextButton>
-      </div>
-
+      }
+    >
       {divisionTeams.length === 0 ? (
         <EmptyState variant="inline" title="No teams in this division yet." />
       ) : (
-        <div className="space-y-2">
+        <ListCard>
           {divisionTeams.map((t) => (
             <TeamRow key={t.id} team={t} onEdit={setFormTeam} onInvite={setInvitePlayer} />
           ))}
-        </div>
+        </ListCard>
       )}
 
       {league.status === 'draft' && divisionTeams.length >= 4 && (
@@ -169,6 +173,6 @@ export function ManageTeams({ league, teams, division, allPlayers }: ManageTeams
           onSuccess={() => setShowGroupFormation(false)}
         />
       </Modal>
-    </div>
+    </Section>
   )
 }
