@@ -1,0 +1,16 @@
+name: Start Supabase
+description: Start the local Supabase stack (every migration and supabase/seed.sql).
+
+runs:
+  using: composite
+  steps:
+    # The runner picks outbound ports from 32768-60999, which covers Supabase's
+    # local ports (54320-54329). A connection made while images pull can hold
+    # one, and `supabase start` then fails with "address already in use".
+    - name: Keep outbound ports clear of Supabase's
+      shell: bash
+      run: sudo sysctl -w net.ipv4.ip_local_port_range="55000 65000"
+
+    - name: Start Supabase
+      shell: bash
+      run: npx supabase start
