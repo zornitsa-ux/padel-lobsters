@@ -193,9 +193,9 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
       <div className="px-4 pt-4 space-y-4">
         {/* Needs Attention */}
         {attention.length > 0 && (
-          <div className="card space-y-2 border-l-4 border-lob-amber">
+          <div className="card space-y-2 border-l-4 border-lob-warning-solid">
             <p className="text-xs font-bold text-lob-muted uppercase tracking-wide flex items-center gap-1.5">
-              <AlertCircle size={13} className="text-lob-amber" /> Needs attention
+              <AlertCircle size={13} className="text-lob-warning-solid" /> Needs attention
             </p>
             <div className="space-y-1">
               {attention.map(({ id, title, target }) => (

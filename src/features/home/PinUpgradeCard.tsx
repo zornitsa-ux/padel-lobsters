@@ -14,7 +14,10 @@ import { TextButton } from '../../components/ui/TextButton'
 
 function SyntheticCard() {
   return (
-    <div className="card space-y-2 border-l-4 border-lob-amber" data-testid="pin-upgrade-card">
+    <div
+      className="card space-y-2 border-l-4 border-lob-warning-solid"
+      data-testid="pin-upgrade-card"
+    >
       <h3 className="font-bold text-lob-slate text-sm">
         Add your email so you can keep signing in
       </h3>

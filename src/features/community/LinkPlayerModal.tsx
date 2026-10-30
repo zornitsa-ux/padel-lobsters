@@ -66,7 +66,7 @@ export default function LinkPlayerModal({
           <span className="text-lob-muted">Signing up as </span>
           {pendingPii.isLoading && <Skeleton className="h-3 w-32 inline-block align-middle" />}
           {pendingPii.isError && (
-            <span className="inline-flex items-center gap-1 text-lob-amber">
+            <span className="inline-flex items-center gap-1 text-lob-warning">
               couldn't load email
               <IconButton
                 aria-label="Retry loading email"
@@ -147,7 +147,7 @@ function CandidateRow({
             </span>
           )}
           {pii.revealed && pii.isError && (
-            <span className="inline-flex items-center gap-1 text-lob-amber">
+            <span className="inline-flex items-center gap-1 text-lob-warning">
               failed
               <IconButton
                 aria-label={`Retry loading ${p.name}'s email`}

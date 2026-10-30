@@ -123,7 +123,7 @@ function LevelLine({
         className="absolute text-center -translate-x-1/2 whitespace-nowrap"
         style={{ left: `${nowPos}%`, top: '66px' }}
       >
-        <div className="font-mono tabular-nums text-sm font-semibold text-lob-amber leading-none">
+        <div className="font-mono tabular-nums text-sm font-semibold text-lob-amber-strong leading-none">
           {formatLevel(cautious)}
         </div>
         <div className="mt-1 text-xs uppercase tracking-wide text-lob-muted leading-none">now</div>

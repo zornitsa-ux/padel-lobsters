@@ -13,8 +13,8 @@ top of them is in [`PLAN.md`](./PLAN.md).
 | `lob-teal-dark`    | `#2A5A68` | Header gradient end, hover darken                     |
 | `lob-teal-light`   | `#EAF4F7` | Selected row tint, segment track, icon button fill    |
 | `lob-coral`        | `#D94F2B` | Primary CTA (`Button` primary), active nav tab        |
-| `lob-amber`        | `#E8A030` | Accent only, not status (`Badge` tone `accent` fill)  |
-| `lob-amber-strong` | `#8C5A0E` | Text on an amber tint (`Badge` tone `accent`)         |
+| `lob-amber`        | `#E8A030` | Decorative accent: icons, borders, `accent` fill      |
+| `lob-amber-strong` | `#8C5A0E` | Accent text, on white or an amber tint                |
 | `lob-cream`        | `#F5F0E8` | Page background (`body`), accent icon button          |
 | `lob-dark`         | `#1C2B30` | Headings and body text; base of the card shadows      |
 | `lob-slate`        | `#40565C` | Secondary text that needs more weight than muted      |
@@ -49,7 +49,9 @@ Examples: `text-lob-success`, `bg-lob-warning-light border-lob-warning-border`,
   `tailwind.config.js`.
 - `warning` covers every warning, waitlist and pending state, including what
   used to be orange or yellow. `lob-amber` stays as an accent colour for
-  non-status uses (e.g. the league draft badge), not for status.
+  non-status uses (e.g. the league draft badge), not for status. It is
+  decorative only (icons, borders); accent text is `lob-amber-strong`, as
+  `lob-amber` text is about 2.2:1 on white (2026-10-30).
 - `info` is sky, not teal, so info alerts don't read as brand teal.
   `AlertBox` `info` uses it.
 
