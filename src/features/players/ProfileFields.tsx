@@ -1,8 +1,9 @@
-import type { Dispatch, SetStateAction } from 'react'
+import { useId, type Dispatch, type SetStateAction } from 'react'
 import CountryPicker from '../../components/ui/CountryPicker'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
 import { FormError } from '../../components/ui/FormError'
 import { useFieldError } from '../../components/ui/useFieldError'
+import { Well } from '../../components/ui/Well'
 import type { ProfileFieldValues } from './profileForm'
 
 type FieldsProps<T> = {
@@ -121,7 +122,6 @@ export function ProfilePlayFields<T extends ProfileFieldValues>({
   setForm,
   levelError,
 }: FieldsProps<T> & { levelError?: string }) {
-  const { errorId, fieldProps } = useFieldError({ message: levelError })
   return (
     <>
       <div>
@@ -134,29 +134,53 @@ export function ProfilePlayFields<T extends ProfileFieldValues>({
 
       <ProfileChoiceFields form={form} setForm={setForm} />
 
-      <div className="bg-blue-50 rounded-xl p-4 space-y-3">
-        <p className="text-xs font-bold text-blue-700 uppercase tracking-wide">Playtomic Level</p>
-        <div>
-          <label className="label">Playtomic Level (0–7)</label>
-          <div className="space-y-1">
-            <input
-              type="text"
-              inputMode="decimal"
-              className="input"
-              placeholder="e.g. 3.5"
-              value={form.playtomicLevel}
-              onChange={(e) => setForm((f) => ({ ...f, playtomicLevel: e.target.value }))}
-              {...fieldProps}
-            />
-            <FormError id={errorId} message={levelError} />
-            <p className="text-xs text-lob-muted">
-              Check your Playtomic app — it shows your current level. We use it to build balanced
-              matches, and it improves as you play.
-            </p>
-          </div>
-        </div>
-      </div>
+      <PlaytomicLevelField
+        value={form.playtomicLevel}
+        onChange={(value) => setForm((f) => ({ ...f, playtomicLevel: value }))}
+        error={levelError}
+        hint="We use it to build balanced matches, and it improves as you play."
+      />
     </>
+  )
+}
+
+// Text with a decimal keypad, not type="number", so "3,5" can be typed; saves parse it with parseLevel.
+export function PlaytomicLevelField({
+  value,
+  onChange,
+  hint,
+  error,
+}: {
+  value: string | number
+  onChange: (value: string) => void
+  /** Second sentence of the help text: what the level is used for here. */
+  hint: string
+  error?: string
+}) {
+  const inputId = useId()
+  const { errorId, fieldProps } = useFieldError({ message: error })
+  return (
+    <Well>
+      <label className="label" htmlFor={inputId}>
+        Playtomic Level (0–7)
+      </label>
+      <div className="space-y-1">
+        <input
+          id={inputId}
+          type="text"
+          inputMode="decimal"
+          className="input"
+          placeholder="e.g. 3.5"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          {...fieldProps}
+        />
+        <FormError id={errorId} message={error} />
+        <p className="text-xs text-lob-muted">
+          Check your Playtomic app — it shows your current level. {hint}
+        </p>
+      </div>
+    </Well>
   )
 }
 

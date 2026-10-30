@@ -122,9 +122,9 @@ describe('ProfileSection — self-service profile', () => {
   it('offers a Playtomic level field and no adjustment field', () => {
     render(profileSection())
 
-    expect(screen.getByText('Playtomic Level (0–7)')).toBeTruthy()
-    // Exactly one numeric field remains in the level card.
-    expect(document.querySelectorAll('input[type="number"]').length).toBe(1)
+    // One level field, a decimal keypad so "3,5" can be typed.
+    expect(screen.getByLabelText('Playtomic Level (0–7)').getAttribute('inputmode')).toBe('decimal')
+    expect(document.querySelectorAll('input[inputmode="decimal"]').length).toBe(1)
     expect(screen.queryByText(/personal adjustment/i)).toBeNull()
     expect(screen.queryByText(/adjusted level/i)).toBeNull()
     expect(screen.queryByText(/positive = stronger/i)).toBeNull()

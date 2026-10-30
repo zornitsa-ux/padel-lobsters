@@ -4,7 +4,7 @@ import CountryPicker from '../../components/ui/CountryPicker'
 import Avatar from '../../components/ui/Avatar'
 import { AvatarPicker } from '../../components/ui/AvatarPicker'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
-import { ProfileChoiceFields } from '../players/ProfileFields'
+import { PlaytomicLevelField, ProfileChoiceFields } from '../players/ProfileFields'
 import { LOBBY_PROMPTS, type ProfileForm } from './settingsHelpers'
 import type { Player } from '../../lib/normalise'
 import { ActionRow } from '../../components/ui/ActionRow'
@@ -176,31 +176,11 @@ export default function ProfileSection({
 
             <ProfileChoiceFields form={profileForm} setForm={setProfileForm} />
 
-            {/* Playtomic level */}
-            <div className="bg-blue-50 rounded-xl p-4 space-y-3">
-              <p className="text-xs font-bold text-blue-700 uppercase tracking-wide">
-                Playtomic Level
-              </p>
-              <div>
-                <label className="label">Playtomic Level (0–7)</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  min="0"
-                  max="7"
-                  className="input"
-                  placeholder="e.g. 3.5"
-                  value={profileForm.playtomicLevel}
-                  onChange={(e) =>
-                    setProfileForm((f) => ({ ...f, playtomicLevel: e.target.value }))
-                  }
-                />
-                <p className="text-xs text-lob-muted mt-1">
-                  Check your Playtomic app — it shows your current level. Update it whenever it
-                  changes: your matches are built from it.
-                </p>
-              </div>
-            </div>
+            <PlaytomicLevelField
+              value={profileForm.playtomicLevel}
+              onChange={(value) => setProfileForm((f) => ({ ...f, playtomicLevel: value }))}
+              hint="Update it whenever it changes: your matches are built from it."
+            />
 
             {/* Email is read-only here: changes go through the confirmed flow in Sign-in & security. */}
             <div>

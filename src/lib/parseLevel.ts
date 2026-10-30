@@ -5,3 +5,9 @@ export function parseLevel(value: unknown): number | null {
     .replace(',', '.')
   return /^\d+(\.\d+)?$/.test(text) ? Number(text) : null
 }
+
+/** A typed level is a number up to 7 and at least `min`. Blank is the caller's call. */
+export function isLevelInRange({ value, min = 0 }: { value: unknown; min?: number }): boolean {
+  const level = parseLevel(value)
+  return level !== null && level >= min && level <= 7
+}

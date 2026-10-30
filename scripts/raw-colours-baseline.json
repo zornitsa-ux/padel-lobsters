@@ -2,7 +2,6 @@
   "src/components/LobsterWayLink.tsx": 2,
   "src/components/VerificationGate.tsx": 2,
   "src/features/community/playerConstants.ts": 14,
-  "src/features/community/PlayerForm.tsx": 2,
   "src/features/community/PlayerProfile.tsx": 2,
   "src/features/community/ReviewBreakdownModal.tsx": 4,
   "src/features/events/Payments.tsx": 2,
@@ -14,9 +13,7 @@
   "src/features/matchmaking/ui/genderMarks.tsx": 4,
   "src/features/oscars/ResultsView.tsx": 7,
   "src/features/pastEvents/PastEventResults.tsx": 11,
-  "src/features/players/ProfileFields.tsx": 2,
   "src/features/raffle/RaffleContainer.tsx": 4,
   "src/features/raffle/ui/PrizeEditor.tsx": 3,
-  "src/features/settings/AdminSection.tsx": 2,
-  "src/features/settings/ProfileSection.tsx": 2
+  "src/features/settings/AdminSection.tsx": 2
 }

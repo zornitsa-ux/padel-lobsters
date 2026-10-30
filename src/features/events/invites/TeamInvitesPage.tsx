@@ -21,6 +21,7 @@ import {
 } from './inviteRoutes'
 import { Button } from '../../../components/ui/Button'
 import { TextButton } from '../../../components/ui/TextButton'
+import { Well } from '../../../components/ui/Well'
 
 function EventHeading({ invite, eyebrow }: { invite: TeamInvite; eyebrow: string }) {
   return (
@@ -51,13 +52,15 @@ function InviteCard({
   return (
     <div className="card space-y-5">
       <EventHeading invite={invite} eyebrow="Team invite" />
-      <div className="flex items-center gap-3 rounded-xl bg-lob-well px-4 py-3">
-        <Avatar player={{ name: invite.captainName, avatarUrl: captainAvatarUrl }} size="lg" />
-        <div className="min-w-0">
-          <p className="font-semibold text-lob-dark">{invite.captainName}</p>
-          <p className="text-sm text-lob-muted">has entered you as their partner</p>
+      <Well>
+        <div className="flex items-center gap-3">
+          <Avatar player={{ name: invite.captainName, avatarUrl: captainAvatarUrl }} size="lg" />
+          <div className="min-w-0">
+            <p className="font-semibold text-lob-dark">{invite.captainName}</p>
+            <p className="text-sm text-lob-muted">has entered you as their partner</p>
+          </div>
         </div>
-      </div>
+      </Well>
       <p className="text-sm text-lob-slate leading-relaxed">
         {partnerAcceptNote({ captainName: invite.captainName })}
       </p>

@@ -13,6 +13,7 @@ import { useTeamSignup, type TeamSignupResult } from './useTeamSignup'
 import { ActionRow } from '../../../../components/ui/ActionRow'
 import { Button } from '../../../../components/ui/Button'
 import { AlertBox } from '../../../../components/ui/AlertBox'
+import { Well } from '../../../../components/ui/Well'
 
 interface TeamJoinCardProps {
   tournament: NormalisedTournament
@@ -98,15 +99,17 @@ export default function TeamJoinCard({
       >
         {choice ? (
           <div className="space-y-4">
-            <div className="rounded-xl bg-lob-well px-4 py-3">
-              <p className="font-semibold text-lob-dark">
-                You + {choicePartnerName({ choice, getPlayer })}
-              </p>
-              <p className="text-sm text-lob-muted">
-                {tournament.name}
-                {price > 0 && ` · ${fmtEur(price)} for the team`}
-              </p>
-            </div>
+            <Well>
+              <div>
+                <p className="font-semibold text-lob-dark">
+                  You + {choicePartnerName({ choice, getPlayer })}
+                </p>
+                <p className="text-sm text-lob-muted">
+                  {tournament.name}
+                  {price > 0 && ` · ${fmtEur(price)} for the team`}
+                </p>
+              </div>
+            </Well>
             <p className="text-sm text-lob-slate leading-relaxed">{COMPLETE_TEAMS_NOTE}</p>
             {signup.error && (
               <AlertBox variant="error" size="sm">

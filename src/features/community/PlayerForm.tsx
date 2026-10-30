@@ -2,13 +2,14 @@ import React from 'react'
 import { AvatarPicker } from '../../components/ui/AvatarPicker'
 import CountryPicker from '../../components/ui/CountryPicker'
 import { Modal } from '../../components/ui/Modal'
-import { ProfileChoiceFields } from '../players/ProfileFields'
+import { PlaytomicLevelField, ProfileChoiceFields } from '../players/ProfileFields'
 import type { LobbyPrompt, PlayerFormState } from './playerConstants'
 import type { CommunityPlayer } from './playersSelectors'
 import { ActionRow } from '../../components/ui/ActionRow'
 import { Button } from '../../components/ui/Button'
 import { TextButton } from '../../components/ui/TextButton'
 import { AlertBox } from '../../components/ui/AlertBox'
+import { Spinner } from '../../components/ui/Spinner'
 
 interface PlayerFormProps {
   showForm: boolean
@@ -22,6 +23,8 @@ interface PlayerFormProps {
   saving: boolean
   /** False while the PII resolve for an edit/merge is still in flight. */
   formReady: boolean
+  /** The level failed its check on save; shown under the field, as the modal hides page errors. */
+  levelError: string
   /** Existing player matching the typed name; drives the merge banner. */
   mergePlayer: CommunityPlayer | null
   setMergePlayer: (player: CommunityPlayer | null) => void
@@ -41,6 +44,7 @@ export default function PlayerForm({
   handleSubmit,
   saving,
   formReady,
+  levelError,
   mergePlayer,
   setMergePlayer,
   acceptMerge,
@@ -76,11 +80,7 @@ export default function PlayerForm({
         {!editId && !isAdmin && (
           <p className="text-xs text-lob-muted -mt-2">You'll sign in with a code we email you</p>
         )}
-        {editId && !formReady && (
-          <p className="text-xs text-lob-muted bg-lob-well rounded-lg p-2 -mt-2">
-            Loading this player's details…
-          </p>
-        )}
+        {editId && !formReady && <Spinner size="inline" label="Loading this player's details…" />}
         {/* Disabled while an edit/merge's PII resolve is in flight — the
             fields below may still be seeded from a previous player or be
             blank placeholders at that point, so editing them now would be
@@ -155,28 +155,12 @@ export default function PlayerForm({
 
           <ProfileChoiceFields form={form} setForm={setForm} />
 
-          <div className="bg-blue-50 rounded-xl p-4 space-y-3">
-            <p className="text-xs font-bold text-blue-700 uppercase tracking-wide">
-              Playtomic Level
-            </p>
-            <div>
-              <label className="label">Playtomic Level (0–7)</label>
-              <input
-                type="number"
-                step="0.1"
-                min="0"
-                max="7"
-                className="input"
-                placeholder="e.g. 3.5"
-                value={form.playtomicLevel}
-                onChange={(e) => setForm((f) => ({ ...f, playtomicLevel: e.target.value }))}
-              />
-              <p className="text-xs text-lob-muted mt-1">
-                Check your Playtomic app — it shows your current level. Editing it re-anchors the
-                player's learned level.
-              </p>
-            </div>
-          </div>
+          <PlaytomicLevelField
+            value={form.playtomicLevel}
+            onChange={(value) => setForm((f) => ({ ...f, playtomicLevel: value }))}
+            hint="Editing it re-anchors the player's learned level."
+            error={levelError}
+          />
 
           <div>
             <label className="label">Email</label>

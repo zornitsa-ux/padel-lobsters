@@ -1,5 +1,5 @@
 import { isE164 } from '../../lib/whatsapp'
-import { parseLevel } from '../../lib/parseLevel'
+import { isLevelInRange } from '../../lib/parseLevel'
 
 // The profile every member fills in: self-signup and a captain-created
 // account finishing setup (D-021) use the same fields and rules.
@@ -36,8 +36,8 @@ export function profileProblem({
   if (!isE164(form.phone)) {
     return 'Phone must start with + and the country code (e.g. +31612345678).'
   }
-  const level = parseLevel(form.playtomicLevel)
-  if (level === null || level > 7) return 'Playtomic level must be a number from 0 to 7, e.g. 3.5.'
+  if (!isLevelInRange({ value: form.playtomicLevel }))
+    return 'Playtomic level must be a number from 0 to 7, e.g. 3.5.'
   return ''
 }
 

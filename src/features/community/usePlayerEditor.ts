@@ -5,6 +5,7 @@ import { usePlayerActions, useAvatarUpload } from '../players/usePlayers'
 import { randomAvatarFilename } from '../players/playerQueries'
 import { processAvatar } from '../../lib/processAvatar'
 import { errorMessage } from '../../lib/errors'
+import { isLevelInRange } from '../../lib/parseLevel'
 import { randomPrompt, emptyForm, type PlayerFormState } from './playerConstants'
 import { getMissingPlayerFormFields } from './playerFormSchema'
 import { buildPlayerEditPatch } from './playerPatch'
@@ -53,6 +54,7 @@ export function usePlayerEditor({ isAdmin }: { isAdmin: boolean }) {
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
   const [error, setError] = useState('')
+  const [levelError, setLevelError] = useState('')
 
   // Opening A then B, with A's PII resolving last, must not land A's data on
   // B's form. Each open bumps the token; stale resolves are dropped.
@@ -69,6 +71,7 @@ export function usePlayerEditor({ isAdmin }: { isAdmin: boolean }) {
     if (!isAdmin) return
     const token = ++editRequestRef.current
     setError('')
+    setLevelError('')
     setAvatarFile(null)
     setAvatarPreview(null)
     setForm(emptyForm)
@@ -135,6 +138,14 @@ export function usePlayerEditor({ isAdmin }: { isAdmin: boolean }) {
       setError('Player data is still loading — try again in a moment.')
       return
     }
+    if (
+      String(form.playtomicLevel ?? '').trim() &&
+      !isLevelInRange({ value: form.playtomicLevel })
+    ) {
+      setLevelError('Playtomic level must be a number from 0 to 7, e.g. 3.5.')
+      return
+    }
+    setLevelError('')
     setSaving(true)
     setError('')
     try {
@@ -176,6 +187,7 @@ export function usePlayerEditor({ isAdmin }: { isAdmin: boolean }) {
       handleSubmit,
       saving,
       formReady,
+      levelError,
       mergePlayer: null,
       setMergePlayer: noop,
       acceptMerge: noop,

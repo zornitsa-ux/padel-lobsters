@@ -39,6 +39,7 @@ import { TextButton } from '../../components/ui/TextButton'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
 import { Chip } from '../../components/ui/Chip'
 import { AlertBox } from '../../components/ui/AlertBox'
+import { Well } from '../../components/ui/Well'
 
 // A player slot the admin has tapped first in swap mode.
 interface SwapAnchor {
@@ -457,9 +458,9 @@ export default function Schedule({
           {display[activeRound] && (
             <div className="space-y-3">
               {display[activeRound].note && (
-                <div className="bg-lob-well rounded-xl p-3 text-sm text-lob-muted text-center">
-                  {display[activeRound].note}
-                </div>
+                <Well>
+                  <p className="text-sm text-lob-muted text-center">{display[activeRound].note}</p>
+                </Well>
               )}
 
               {display[activeRound].matches.length === 0 && !display[activeRound].note && (
@@ -653,10 +654,8 @@ export default function Schedule({
 
               {/* Sitting out */}
               {(display[activeRound].sitting || []).length > 0 && (
-                <div className="bg-lob-well rounded-xl p-3">
-                  <p className="text-xs font-semibold text-lob-muted mb-2">
-                    Sitting out this round
-                  </p>
+                <Well>
+                  <p className="text-xs font-semibold text-lob-muted">Sitting out this round</p>
                   <div className="flex flex-wrap gap-2">
                     {(display[activeRound].sitting || []).map((id) => {
                       const p = getPlayer(id)
@@ -670,7 +669,7 @@ export default function Schedule({
                       ) : null
                     })}
                   </div>
-                </div>
+                </Well>
               )}
             </div>
           )}

@@ -98,10 +98,8 @@ onto tones. Each is a `-soft` fill (or a token tint) with the text shade:
 ## Still raw, on purpose
 
 Decorative and categorical colour isn't status, so it stays on the Tailwind
-palette for now (88 classes, held by the `design:check` ratchet; tokens for
+palette for now (81 classes, held by the `design:check` ratchet; tokens for
 these are P7):
 
 - Medal, podium and trophy gold; raffle and Oscars gold.
 - The avatar letter palette (`playerConstants.ts`) and the gender marks.
-- The blue Playtomic-level panel, copied in `ProfileFields`, `ProfileSection`
-  and `PlayerForm` (a `.panel` candidate, P6).
