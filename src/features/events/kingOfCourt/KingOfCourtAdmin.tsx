@@ -19,6 +19,7 @@ import type { CourtResult } from './domain'
 import type { NormalisedTournament } from '../../../lib/normalise'
 import { Button } from '../../../components/ui/Button'
 import { AlertBox } from '../../../components/ui/AlertBox'
+import { FormError } from '../../../components/ui/FormError'
 
 // Shown on the event day, so the time matters more than the date.
 const shownAt = (iso: string) =>
@@ -239,11 +240,7 @@ function FinalStandingsCard({ seeding, actions }: { seeding: Seeding; actions: A
         ))}
       </ol>
 
-      {repeated && (
-        <p role="alert" className="text-xs text-lob-danger">
-          A team is picked more than once.
-        </p>
-      )}
+      <FormError message={repeated ? 'A team is picked more than once.' : ''} polite />
 
       <div className="flex gap-2 flex-wrap">
         <Button

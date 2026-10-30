@@ -4,6 +4,7 @@ import { usePlayers } from '../players/usePlayers'
 import { useAuthPrompt } from '../../components/ui/AuthGate'
 import { useConfirm } from '../../lib/confirmBus'
 import { TabSwitcher } from '../../components/ui/TabSwitcher'
+import { AlertBox } from '../../components/ui/AlertBox'
 import { emptyItem, itemFormFrom, toItemPayload, type ItemFormState } from './itemForm'
 import { errorMessage } from './formatters'
 import { useMerchActions, useMerchInterests, useMerchItems } from './useMerch'
@@ -288,9 +289,9 @@ export default function Merch({ initialTab, onNavigate }: MerchProps) {
 
       {/* A failed read is surfaced rather than rendered as an empty shop. */}
       {loadError && (
-        <p className="text-sm text-lob-danger">
+        <AlertBox variant="error">
           Could not load the shop: {errorMessage(loadError)}. Try again shortly.
-        </p>
+        </AlertBox>
       )}
 
       {/* Tab bar */}

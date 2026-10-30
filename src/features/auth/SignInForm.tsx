@@ -13,7 +13,7 @@ import {
 } from './authActions'
 import { describeSignInError, type AuthErrorLike, type SignInStep } from './authErrors'
 import { takeReturnPath } from './returnPath'
-import { FormError } from './FormError'
+import { FormError } from '../../components/ui/FormError'
 import { PasswordInput } from './PasswordInput'
 import { OtpCodeStep } from './OtpCodeStep'
 import { markPinSignIn } from './pinSignInFlag'

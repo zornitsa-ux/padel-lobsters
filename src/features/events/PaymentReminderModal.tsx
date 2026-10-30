@@ -3,6 +3,7 @@ import { MessageCircle } from 'lucide-react'
 import { Modal } from '../../components/ui/Modal'
 import { fetchPaymentReminderLink } from './registrationQueries'
 import { Button } from '../../components/ui/Button'
+import { AlertBox } from '../../components/ui/AlertBox'
 
 type LinkState =
   | { status: 'loading' }
@@ -79,9 +80,7 @@ export default function PaymentReminderModal({
         )}
 
         {state.status === 'error' && (
-          <p className="text-sm text-lob-danger text-center py-2">
-            Couldn&apos;t prepare the reminder. Please try again.
-          </p>
+          <AlertBox variant="error">Couldn&apos;t prepare the reminder. Please try again.</AlertBox>
         )}
       </div>
     </Modal>

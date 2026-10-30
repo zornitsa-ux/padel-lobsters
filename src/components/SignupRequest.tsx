@@ -311,15 +311,10 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
           {/* Avatar — optional, but the same slot the in-app form offered. */}
           <AvatarPicker preview={avatarPreview} onChange={handleAvatarChange} />
 
-          <ProfileNameFields form={form} setForm={setForm} />
+          <ProfileNameFields form={form} setForm={setForm} nameError={fieldErrors.name} />
 
           {bannerMatch && (
             <NameMatchBanner match={bannerMatch} onSignIn={onBack} onDecline={declineMatch} />
-          )}
-          {fieldErrors.name && (
-            <p role="alert" className="text-xs text-lob-danger bg-lob-danger-light rounded-lg p-2">
-              {fieldErrors.name}
-            </p>
           )}
 
           <ProfilePlayFields form={form} setForm={setForm} levelError={fieldErrors.level} />

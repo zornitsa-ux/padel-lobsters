@@ -14,6 +14,7 @@ import { SegmentedControl } from '../../../components/ui/SegmentedControl'
 import { Button } from '../../../components/ui/Button'
 import { TextButton } from '../../../components/ui/TextButton'
 import { Disclosure } from '../../../components/ui/Disclosure'
+import { FormError } from '../../../components/ui/FormError'
 
 export type ConfigPanelProps = {
   // Controlled config: preset + optional knob overrides. Container owns state.
@@ -328,8 +329,8 @@ export default function ConfigPanel({
       {notEnoughPlayers && (
         <p className="text-xs text-lob-warning">Register at least 4 players first</p>
       )}
-      {!notEnoughPlayers && !feasibility.feasible && infeasibleEntry && (
-        <p className="text-xs text-lob-danger">{infeasibleEntry.detail}</p>
+      {!notEnoughPlayers && !feasibility.feasible && (
+        <FormError message={infeasibleEntry?.detail} polite />
       )}
     </div>
   )

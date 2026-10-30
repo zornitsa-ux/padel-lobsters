@@ -15,6 +15,8 @@ import { Button } from '../../../components/ui/Button'
 import { MenuItem, MenuSeparator } from '../../../components/ui/MenuItem'
 import { MenuList } from '../../../components/ui/MenuList'
 import { focusFirstItem } from '../../../components/ui/menuFocus'
+import { FormError } from '../../../components/ui/FormError'
+import { useFieldError } from '../../../components/ui/useFieldError'
 
 interface PlayerOption {
   id: string
@@ -66,6 +68,7 @@ function PlayerPicker({
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
   const listId = useId()
+  const { errorId, fieldProps } = useFieldError({ message: error })
 
   const eligible = players.filter(
     (p) => isSelectablePlayer(p) && p.status !== 'placeholder' && p.id !== excludeId,
@@ -112,6 +115,7 @@ function PlayerPicker({
 
   return (
     <div
+      className="space-y-1"
       onKeyDown={handleKeyDown}
       onBlur={(e) => {
         if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setOpen(false)
@@ -133,6 +137,7 @@ function PlayerPicker({
             setOpen(true)
           }}
           onFocus={() => setOpen(true)}
+          {...fieldProps}
         />
         {showList && (
           <MenuList id={listId} label={`${label} options`} listRef={listRef}>
@@ -157,8 +162,8 @@ function PlayerPicker({
           </MenuList>
         )}
       </div>
-      {displayValue && <p className="text-xs text-lob-muted mt-1">{displayValue}</p>}
-      {error && <p className="text-xs text-lob-coral mt-1">{error}</p>}
+      {displayValue && <p className="text-xs text-lob-muted">{displayValue}</p>}
+      <FormError id={errorId} message={error} />
     </div>
   )
 }
@@ -188,6 +193,7 @@ export function TeamForm({
   )
   const [preferredTimes, setPreferredTimes] = useState(editTeam?.preferred_play_times ?? '')
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
+  const clearError = (key: string) => setValidationErrors(({ [key]: _cleared, ...rest }) => rest)
 
   // Group assignment — only shown when some teams already have group labels.
   // Exclude the team being edited so its current group doesn't skew the count.
@@ -277,10 +283,12 @@ export function TeamForm({
           onSelectPlayer={(id) => {
             setPlayer1Id(id)
             setPlayer1Name(undefined)
+            clearError('player1_id')
           }}
           onSelectPlaceholder={(name) => {
             setPlayer1Id(undefined)
             setPlayer1Name(name)
+            clearError('player1_id')
           }}
           error={validationErrors.player1_id}
         />
@@ -300,10 +308,12 @@ export function TeamForm({
           onSelectPlayer={(id) => {
             setPlayer2Id(id)
             setPlayer2Name(undefined)
+            clearError('player2_id')
           }}
           onSelectPlaceholder={(name) => {
             setPlayer2Id(undefined)
             setPlayer2Name(name)
+            clearError('player2_id')
           }}
           error={validationErrors.player2_id}
         />

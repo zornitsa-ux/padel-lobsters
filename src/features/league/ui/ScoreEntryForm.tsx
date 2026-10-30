@@ -5,6 +5,8 @@ import { useRecordResult } from '../hooks/useLeagueMutations'
 import { resolveTeamShortName } from '../domain/teamDisplay'
 import { ActionRow } from '../../../components/ui/ActionRow'
 import { Button } from '../../../components/ui/Button'
+import { FormError } from '../../../components/ui/FormError'
+import { useFieldError } from '../../../components/ui/useFieldError'
 
 interface ScoreEntryFormProps {
   match: LeagueMatch
@@ -27,9 +29,10 @@ interface SetInputProps {
 }
 
 function SetInput({ label, t1, t2, onT1, onT2, team1Label, team2Label, error }: SetInputProps) {
+  const { errorId, fieldProps } = useFieldError({ message: error })
   return (
-    <div className="mb-3">
-      <p className="text-xs font-semibold text-lob-muted mb-1">{label}</p>
+    <div className="mb-3 space-y-1">
+      <p className="text-xs font-semibold text-lob-muted">{label}</p>
       <div className="flex items-center gap-3">
         <span className="text-sm text-lob-dark truncate max-w-[80px]">{team1Label}</span>
         <input
@@ -38,6 +41,7 @@ function SetInput({ label, t1, t2, onT1, onT2, team1Label, team2Label, error }: 
           max="99"
           value={t1}
           onChange={(e) => onT1(e.target.value)}
+          {...fieldProps}
           className="input w-16 text-center text-lg font-bold [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
         />
         <span className="text-sm text-lob-muted-light">vs</span>
@@ -47,11 +51,12 @@ function SetInput({ label, t1, t2, onT1, onT2, team1Label, team2Label, error }: 
           max="99"
           value={t2}
           onChange={(e) => onT2(e.target.value)}
+          {...fieldProps}
           className="input w-16 text-center text-lg font-bold [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
         />
         <span className="text-sm text-lob-dark truncate max-w-[80px]">{team2Label}</span>
       </div>
-      {error && <p className="text-xs text-lob-coral mt-1">{error}</p>}
+      <FormError id={errorId} message={error} />
     </div>
   )
 }
@@ -127,6 +132,14 @@ export function ScoreEntryForm({
     return errs
   }
 
+  // A set's error stays until its scores are edited.
+  const editSet =
+    ({ key, set }: { key: string; set: (value: string) => void }) =>
+    (value: string) => {
+      set(value)
+      setErrors(({ [key]: _cleared, ...rest }) => rest)
+    }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     const errs = validate()
@@ -159,8 +172,8 @@ export function ScoreEntryForm({
         label="Set 1"
         t1={s1t1}
         t2={s1t2}
-        onT1={setS1t1}
-        onT2={setS1t2}
+        onT1={editSet({ key: 'set1', set: setS1t1 })}
+        onT2={editSet({ key: 'set1', set: setS1t2 })}
         team1Label={t1Label}
         team2Label={t2Label}
         error={errors.set1}
@@ -169,8 +182,8 @@ export function ScoreEntryForm({
         label="Set 2"
         t1={s2t1}
         t2={s2t2}
-        onT1={setS2t1}
-        onT2={setS2t2}
+        onT1={editSet({ key: 'set2', set: setS2t1 })}
+        onT2={editSet({ key: 'set2', set: setS2t2 })}
         team1Label={t1Label}
         team2Label={t2Label}
         error={errors.set2}
@@ -200,8 +213,8 @@ export function ScoreEntryForm({
           label="Set 3 (Super tiebreak)"
           t1={s3t1}
           t2={s3t2}
-          onT1={setS3t1}
-          onT2={setS3t2}
+          onT1={editSet({ key: 'set3', set: setS3t1 })}
+          onT2={editSet({ key: 'set3', set: setS3t2 })}
           team1Label={t1Label}
           team2Label={t2Label}
           error={errors.set3}

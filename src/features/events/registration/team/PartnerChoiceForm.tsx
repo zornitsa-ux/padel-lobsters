@@ -10,6 +10,7 @@ import { choiceToDraft, draftToChoice, isDraftComplete } from './teamHelpers'
 import { ActionRow } from '../../../../components/ui/ActionRow'
 import { Button } from '../../../../components/ui/Button'
 import { TextButton } from '../../../../components/ui/TextButton'
+import { AlertBox } from '../../../../components/ui/AlertBox'
 
 interface PartnerChoiceFormProps {
   candidates: Player[]
@@ -68,17 +69,10 @@ export default function PartnerChoiceForm({
     setEmailProblem('')
     setMode('search')
   }
-  const emailError = emailProblem && (
-    <span role="alert" className="block mt-1 font-normal text-lob-danger">
-      {PARTNER_ERROR_MESSAGES[emailProblem]}
-      {emailProblem === 'email_in_use' && (
-        <span className="block mt-1">
-          <TextButton size="inherit" onClick={() => searchMembers({ search: draft.name })}>
-            Search members
-          </TextButton>
-        </span>
-      )}
-    </span>
+  const searchMembersAction = emailProblem === 'email_in_use' && (
+    <TextButton size="inherit" onClick={() => searchMembers({ search: draft.name })}>
+      Search members
+    </TextButton>
   )
 
   return (
@@ -91,7 +85,8 @@ export default function PartnerChoiceForm({
               if (next.email !== draft.email) setEmailProblem('')
               setDraft(next)
             }}
-            emailError={emailError}
+            emailError={emailProblem && PARTNER_ERROR_MESSAGES[emailProblem]}
+            emailErrorAction={searchMembersAction}
           />
           <TextButton onClick={() => searchMembers({ search: '' })}>
             ← Search members instead
@@ -112,9 +107,9 @@ export default function PartnerChoiceForm({
         </>
       )}
       {error && (
-        <p role="alert" className="text-xs font-semibold text-lob-danger">
+        <AlertBox variant="error" size="sm">
           {error}
-        </p>
+        </AlertBox>
       )}
       <ActionRow>
         <Button onClick={onCancel} variant="secondary">

@@ -27,6 +27,8 @@ import ShareWhatsAppButton from '../../components/ui/ShareWhatsAppButton'
 import AddToCalendarButton from '../../components/ui/AddToCalendarButton'
 import { AvatarPicker } from '../../components/ui/AvatarPicker'
 import { AlertBox } from '../../components/ui/AlertBox'
+import { FormError } from '../../components/ui/FormError'
+import { useFieldError } from '../../components/ui/useFieldError'
 import { Badge, type BadgeProps } from '../../components/ui/Badge'
 import Avatar from '../../components/ui/Avatar'
 import { Chip, ChipGroup } from '../../components/ui/Chip'
@@ -337,6 +339,31 @@ function StatusSection() {
 }
 
 const ROUNDS = [1, 2, 3, 4, 5, 6, 7].map((n) => ({ value: n, label: `Round ${n}` }))
+
+function FormErrorSection() {
+  const { errorId, fieldProps } = useFieldError({ message: 'Enter a level between 0 and 7.' })
+  return (
+    <Section title="FormError">
+      <Row label="Under a field (useFieldError ties it to the input)" block>
+        <div className="space-y-1">
+          <input className="input" defaultValue="9" aria-label="Playtomic level" {...fieldProps} />
+          <FormError id={errorId} message="Enter a level between 0 and 7." />
+        </div>
+      </Row>
+      <Row label="action (inline follow-up)" block>
+        <FormError
+          message="That email already has an account."
+          action={<TextButton size="inherit">Search members</TextButton>}
+        />
+      </Row>
+      <Row label='A failed save or load is AlertBox variant="error", not FormError' block>
+        <AlertBox variant="error" size="sm">
+          Could not sign you up. Please try again.
+        </AlertBox>
+      </Row>
+    </Section>
+  )
+}
 
 function ChoiceSection() {
   const [side, setSide] = useState('left')
@@ -860,6 +887,7 @@ export default function DesignGallery() {
       <TextButtonSection />
       <IconButtonSection />
       <StatusSection />
+      <FormErrorSection />
       <ChoiceSection />
       <OptionSection />
       <MenuSection />
