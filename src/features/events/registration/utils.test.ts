@@ -20,6 +20,7 @@ import {
   getPlayerFirstName,
   computeRankings,
   isMatchVisibleForPlayer,
+  sheetForName,
 } from './utils'
 
 const players = normalisePlayers([
@@ -115,6 +116,36 @@ describe('getAvailablePlayers', () => {
 
   it('with no registrations, returns every active player', () => {
     expect(getAvailablePlayers({ players }).map((p) => p.id)).toEqual(['p1', 'p2', 'p4'])
+  })
+})
+
+describe('sheetForName', () => {
+  const getPlayer = (id: string | null | undefined) => players.find((p) => p.id === id)
+  const displayName = (p: { name?: string | null }) => p.name ?? ''
+  const sheet = { regId: 'r1', playerId: 'p1', paymentStatus: 'unpaid' }
+
+  it('names the player on an individual sign-up', () => {
+    const regs = [mkRegistration({ id: 'r1', playerId: 'p1' })]
+
+    expect(sheetForName({ sheet, regs, getPlayer, displayName })).toBe('Ada Lovelace')
+  })
+
+  it('names captain and partner on a team', () => {
+    const regs = [
+      mkRegistration({ id: 'r1', playerId: 'p1', teamId: 'team1' }),
+      mkRegistration({ id: 'r2', playerId: 'p2', teamId: 'team1' }),
+      mkRegistration({ id: 'r3', playerId: 'p4', teamId: 'team2' }),
+    ]
+
+    expect(sheetForName({ sheet, regs, getPlayer, displayName })).toBe(
+      'Ada Lovelace & Grace Hopper',
+    )
+  })
+
+  it("is never blank when the player isn't loaded yet", () => {
+    expect(
+      sheetForName({ sheet: { ...sheet, playerId: 'missing' }, regs: [], getPlayer, displayName }),
+    ).toBe('this player')
   })
 })
 

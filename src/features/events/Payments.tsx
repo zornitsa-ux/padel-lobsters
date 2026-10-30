@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { fmtEur } from '../../lib/format'
 import { useConfirmOnBehalf } from '../../lib/confirmOnBehalf'
+import { paymentChangeConfirm } from './paymentChangeConfirm'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { IconButton } from '../../components/ui/IconButton'
 import { Menu, MenuItem } from '../../components/ui/Menu'
@@ -126,12 +127,9 @@ export default function Payments({
   ]
 
   const confirmPaymentChange = ({ reg, change }: { reg: NormalisedRegistration; change: string }) =>
-    confirmOnBehalf({
-      title: 'Update payment?',
-      lines: [`Player: ${rowName(reg, getPlayer(reg.playerId)?.name ?? '')}`, `Change: ${change}`],
-      confirmLabel: 'Update payment',
-      footer: 'Check this is the right payment before you continue.',
-    })
+    confirmOnBehalf(
+      paymentChangeConfirm({ name: rowName(reg, getPlayer(reg.playerId)?.name ?? ''), change }),
+    )
 
   const handleMarkPaid = async (reg: NormalisedRegistration, method: string) => {
     if (!isAdmin) {
