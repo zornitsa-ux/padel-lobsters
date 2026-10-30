@@ -52,6 +52,13 @@ is the exception: `Greeting` acts as its header.
 
 ## Cards
 
+Owner, 2026-10-30 (being applied in P6):
+
+- A card is one thing you act on: an event, a match, a team. Page sections and settings sit on
+  the background under a section heading.
+- A list of like items is one card with divided rows, not a card per row.
+- No card inside a card. Inside a card, use a flat well or a divider.
+
 - `.card`: `bg-white rounded-2xl p-4`, card shadow and hairline border. The default.
 - `.card-elevated`: same shape, stronger shadow, for a hero card (`NextEventCard`).
 - A card that is one link is `CardLink` (`flush` for a full-bleed band, as on

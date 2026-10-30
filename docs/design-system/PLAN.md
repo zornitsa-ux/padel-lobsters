@@ -150,7 +150,7 @@ the gallery, and runs `npm run design:baseline` when counts drop.
 | P3  | **`AlertBox` size, role and dismiss; `FormError` in ui.** About 29 files build a tinted box by hand (`-light` surface with a `-border` border; triage first, as some are highlighted rows or cards rather than alerts) and about 23 lines spell a field error by hand (`text-xs text-lob-coral` / `-danger`). `AlertBox` gains `size="sm"`, a `role` (alert for errors, status otherwise) and a dismiss that is an `IconButton ghost sm` instead of the bare 14px X. `FormError` moves from `features/auth` to `components/ui`. Two PRs: alerts, then field errors.                                                                                | Done (#108, #109)         |
 | P4  | **`Badge` tones** (`success`, `neutral`, `warning`, `outline`) and **payment status single source** (`paymentStatus.ts`, `PaymentStatusBadge` on `Badge`; the blue "transferred" pill and merch "delivered" get a token). About 13 hand-built status pills move onto `Badge`. Rename team-state "Confirmed".                                                                                                                                                                                                                                                                                                                                       | Done (#110)               |
 | P5  | **Empty and signed-out states.** `EmptyState variant="inline"`, `SignInPrompt`; loading states: a loading card keeps its title or header, so the viewer sees what is loading, and shows `Spinner` / `Skeleton` in the body instead of `return null`.                                                                                                                                                                                                                                                                                                                                                                                               | Done (#112)               |
-| P6  | **Layout pieces.** `RankMarker` + `PlayerRow highlighted`, `CardHeader`, `RosterHeading`, `.panel` (first use: the blue Playtomic-level panel copied in three forms), `.eyebrow`, `SearchInput` (the TeamForm player search could become a proper combobox here, see #81); a heading element inside the `CollapsibleCard` header button (review of #76). Starts after the card-pattern conversation (see "Later").                                                                                                                                                                                                                                 |                           |
+| P6  | **Cards for objects, lists and sections.** Owner calls 2026-10-30 (Log). A card is one thing you act on; page sections sit on the background under a heading; a list of like items is one card with divided rows; no card inside a card. Pieces: `Section`, `ListCard`, `Well` (the planned `.panel`), `Tag`, `.eyebrow`, `RankMarker` + `PlayerRow highlighted`, `RosterHeading`, `SearchInput` (#81), a heading element inside the `CollapsibleCard` header button (review of #76). Five PRs: P6a to P6e under "Next".                                                                                                                           |                           |
 | P7  | **Lock-down.** Tokens for decorative colours (medal gold, avatar palette, gender marks) and for `text-[9px]` (14 uses, the bottom nav labels among them). Then switch `theme.extend.colors` to a restricted `theme.colors` so raw palette classes stop generating, and add a lint rule for unknown classes (e.g. `eslint-plugin-tailwindcss`, check ESLint 9 support). Retire the colour ratchet once the theme is locked; keep the `<button>` check.                                                                                                                                                                                              |                           |
 
 The gallery exists: `/design` in dev (`src/features/design/DesignGallery.tsx`;
@@ -183,8 +183,25 @@ primitives (see the Log) before P3:
 8. ~~**P4: `Badge` tones and payment status.**~~ Done in #110; see the Log.
 9. ~~**P5: empty, signed-out and loading states.**~~ Done in #112; see the Log.
 10. ~~**Review the `lob-amber` text and icons.**~~ Done in #113; see the Log.
-11. **Card-pattern conversation** with the owner (below), then **P6**.
-12. **P7: lock-down.**
+11. ~~**Card-pattern conversation** with the owner.~~ Done; see the Log.
+12. **P6a: the pieces.** `Section` (heading and optional action on the
+    background, replacing `SectionHeader` and the planned `CardHeader`),
+    `ListCard` (one card, hairline dividers between rows; takes `PlayerRow`,
+    `OptionRow` and `LinkCard`-style rows), `Well` (flat `lob-well` inset, no
+    shadow: what goes inside a card), `Tag` (names a thing: Court 2, Round 3,
+    a shirt size; `Badge` stays for states) and `.eyebrow`. Gallery entries,
+    and one pilot: the Community players list onto `ListCard`.
+13. **P6b: lists onto `ListCard`.** Inventory first: registered players and
+    teams, league teams and fixtures, standings, payments, shop orders.
+14. **P6c: no card inside a card.** Nested `.card`s and shadowed boxes inside
+    cards become a `Well` or a divider (four on Events and Home today; the
+    tinted boxes inside cards are triaged, as alerts stay `AlertBox`).
+15. **P6d: sections, not cards.** Account, settings and admin tools: each
+    section is a `Section` on the background, not a card.
+16. **P6e: the rest of the layout pieces.** Identity labels onto `Tag` (about
+    ten), `RankMarker` + `PlayerRow highlighted`, `RosterHeading`,
+    `SearchInput` (#81), the `CollapsibleCard` heading element.
+17. **P7: lock-down.**
 
 ### E2E safety net
 
@@ -271,22 +288,9 @@ it suits.
   PIN cutover (5 November) removes the interstitial, lazy-load the confirm
   sheet and re-measure with a `localdev` build.
 
-- **Identity labels** (review of P4). Court N, Round N, a shirt size, the
-  event format and a custom print name are cream-on-teal pills built by hand
-  in about ten places (`ScheduleRounds`, `Schedule`, `MyRounds`,
-  `ScoresMatchesTab`, `PastEventResults`, `ScheduleGeneratorControls`, the
-  merch orders). They name a thing rather than a state, so P4 left them. A
-  `Badge` tone or a small `Tag` would take them; decide with the card-pattern
-  conversation.
-
-- **Revisit the heavy card pattern** (owner, 2026-10-24). Most screens stack
-  white shadowed cards. Scope still to be set. Have this conversation before
-  P6, since `CardHeader` and `.panel` would otherwise cement today's shape.
-
 ## Open owner calls
 
-- **Card-pattern conversation**: when to have it. It has to come before P6;
-  P3 to P5 don't depend on it.
+- None.
 
 ## Log
 
@@ -1058,3 +1062,18 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
     stays amber.
   - Staying: the `ChampionBanner` trophy and borders, the `MyRounds` sit-out
     coffee and highlight border, and the `GroupStandingsTable` cutoff divider.
+
+- **2026-10-30.** Card-pattern conversation (step 11 of Next). Most screens
+  stacked white shadowed cards: 143 `.card` uses, one per row in lists (26 on
+  Community), and four shadowed cards inside cards (Events, Home). Owner
+  calls:
+  - Cards for objects only. A card is one thing you act on (an event, a match,
+    a team). Page sections and settings sit on the background under a
+    section heading.
+  - A list of like items is one card with divided rows, not a card per row.
+  - No card inside a card. Inside a card, use a flat well or a divider.
+  - Identity labels (Court N, Round N, a shirt size, the event format) get a
+    small `Tag` component; `Badge` stays for states.
+
+  P6 is rescoped around these (P6a to P6e under "Next"); the "Identity labels"
+  and "heavy card pattern" items leave "Later".
