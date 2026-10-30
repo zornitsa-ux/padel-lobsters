@@ -8,6 +8,7 @@ import { IconButton } from '../../../components/ui/IconButton'
 import { Disclosure } from '../../../components/ui/Disclosure'
 import { SegmentedControl } from '../../../components/ui/SegmentedControl'
 import { AlertBox } from '../../../components/ui/AlertBox'
+import { Badge } from '../../../components/ui/Badge'
 
 export type RatingReviewProps = {
   // Count of adjustments auto-applied without review (small, within-cap moves).
@@ -256,9 +257,7 @@ function QueueCard({
     <div className="card space-y-3">
       <div className="flex items-start justify-between gap-3">
         <p className="font-semibold text-lob-slate">{playerDisplayName}</p>
-        <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-lob-warning-light text-lob-warning whitespace-nowrap">
-          Needs review
-        </span>
+        <Badge tone="warning" label="Needs review" />
       </div>
 
       <LevelLine before={before} cautious={cautiousLevel} full={fullLevel} direction={direction} />

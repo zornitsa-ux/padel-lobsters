@@ -29,6 +29,7 @@ import AuthReadinessPanel from './AuthReadinessPanel'
 import type { EventNavigate } from '../events/eventHelpers'
 import { isEventUpcoming } from '../events/eventPhase'
 import { useTeamResultsByEvent } from '../events/kingOfCourt/useTeamResultsByEvent'
+import { owesPayment } from '../events/paymentStatus'
 
 type AdminToolsProps = {
   onNavigate?: EventNavigate
@@ -68,10 +69,7 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
     if (!next) return 0
     return allRegs.filter(
       (r) =>
-        r.tournamentId === next.id &&
-        r.status === 'registered' &&
-        r.paymentStatus !== 'paid' &&
-        r.paymentStatus !== 'transferred',
+        r.tournamentId === next.id && r.status === 'registered' && owesPayment(r.paymentStatus),
     ).length
   }, [tournaments, allRegs])
 

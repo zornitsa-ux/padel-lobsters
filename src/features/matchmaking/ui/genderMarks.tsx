@@ -1,6 +1,7 @@
 import type { PlayerGender } from '../domain/types'
 import type { CourtChip } from './genderCopy'
 import { TextButton } from '../../../components/ui/TextButton'
+import { Badge, type BadgeTone } from '../../../components/ui/Badge'
 
 const MARKS = {
   female: { letter: 'W', label: 'Woman', className: 'bg-pink-100 text-pink-700' },
@@ -33,9 +34,9 @@ export function GenderLegendEntries() {
 }
 
 const CHIP_TONES = {
-  neutral: 'bg-gray-100 text-lob-muted',
-  uneven: 'bg-lob-warning-light text-lob-warning',
-} as const
+  neutral: 'neutral',
+  uneven: 'warning',
+} as const satisfies Record<string, BadgeTone>
 
 export function CourtGenderChip({
   chip,
@@ -49,12 +50,7 @@ export function CourtGenderChip({
   if (!chip) return null
   return (
     <>
-      <span
-        title={chip.title}
-        className={`text-xs px-2 py-0.5 rounded-full font-medium ${CHIP_TONES[chip.tone]}`}
-      >
-        {chip.text}
-      </span>
+      <Badge tone={CHIP_TONES[chip.tone]} label={chip.text} title={chip.title} />
       {onFix && (
         <TextButton tone="warning" hitArea onClick={onFix} aria-label={fixLabel}>
           Fix

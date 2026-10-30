@@ -18,7 +18,6 @@ export default {
           'teal-dark': tealDark,
           'teal-light': '#EAF4F7',
           coral,
-          'coral-light': '#FAEAE5',
           amber: '#E8A030',
           cream: '#F5F0E8',
           dark: `rgb(${darkRgb})`,

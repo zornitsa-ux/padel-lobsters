@@ -42,7 +42,7 @@ export default function TeamRow({
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-sm text-lob-dark truncate">{label}</p>
           <p className={`text-xs ${entry.confirmed ? 'text-lob-success' : 'text-lob-warning'}`}>
-            {entry.confirmed ? 'Confirmed' : `Waiting for ${partnerName} to accept`}
+            {entry.confirmed ? `${partnerName} accepted` : `Waiting for ${partnerName} to accept`}
           </p>
           {notSignedInHint && <p className="text-xs text-lob-warning">{notSignedInHint}</p>}
         </div>

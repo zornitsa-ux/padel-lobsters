@@ -32,6 +32,7 @@ import { isEventOver, isEventUpcoming } from '../events/eventPhase'
 import { useTeamResultsByEvent } from '../events/kingOfCourt/useTeamResultsByEvent'
 import MyKingOfCourtLine from '../events/kingOfCourt/MyKingOfCourtLine'
 import { isKingOfTheCourt } from '../events/eventFormat'
+import { owesPayment } from '../events/paymentStatus'
 
 // Only mounts after the player taps "share" on an outgoing transfer offer.
 const TransferPendingModal = lazy(() => import('../../components/TransferPendingModal'))
@@ -168,10 +169,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
     () => (upcoming ? getTournamentRegistrations(upcoming.id) : []),
     [upcoming, getTournamentRegistrations],
   )
-  const unpaid = regs.filter(
-    (r) =>
-      r.status === 'registered' && r.paymentStatus !== 'paid' && r.paymentStatus !== 'transferred',
-  )
+  const unpaid = regs.filter((r) => r.status === 'registered' && owesPayment(r.paymentStatus))
 
   const isRegistered =
     upcoming && claimedId

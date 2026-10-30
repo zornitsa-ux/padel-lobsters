@@ -1,7 +1,7 @@
-import type { BadgeProps } from '../../../components/ui/Badge'
+import type { BadgeTone } from '../../../components/ui/Badge'
 
 export interface StatusPill {
-  variant: BadgeProps['variant']
+  tone: BadgeTone
   label: string
 }
 
@@ -17,14 +17,31 @@ export interface StatusPill {
 // Object.prototype members, so a status of 'toString' would return a function
 // instead of falling back.
 export function statusPill(map: Record<string, StatusPill>, status: string): StatusPill {
-  return Object.hasOwn(map, status) ? map[status] : { variant: 'info', label: status }
+  return Object.hasOwn(map, status) ? map[status] : { tone: 'neutral', label: status }
 }
+
+// One colour per phase, whatever the copy: draft, then groups, knockout, done.
+export const LEAGUE_STATUS_TONE = {
+  draft: 'accent',
+  group_stage: 'outline',
+  knockout: 'brand',
+  completed: 'neutral',
+} as const satisfies Record<string, BadgeTone>
 
 // Admin-facing and seasons-list labels. LeagueHome and the dashboard card keep
 // their own player-facing copy ("Registering", "Coming Soon").
 export const LEAGUE_STATUS_PILL: Record<string, StatusPill> = {
-  draft: { variant: 'league-draft', label: 'Draft' },
-  group_stage: { variant: 'league-group-stage', label: 'Group Stage' },
-  knockout: { variant: 'league-knockout', label: 'Knockout' },
-  completed: { variant: 'league-completed', label: 'Completed' },
+  draft: { tone: LEAGUE_STATUS_TONE.draft, label: 'Draft' },
+  group_stage: { tone: LEAGUE_STATUS_TONE.group_stage, label: 'Group Stage' },
+  knockout: { tone: LEAGUE_STATUS_TONE.knockout, label: 'Knockout' },
+  completed: { tone: LEAGUE_STATUS_TONE.completed, label: 'Completed' },
 }
+
+const EXPERIENCE_TONE: Record<string, BadgeTone> = {
+  advanced: 'brand',
+  intermediate: 'accent',
+  beginner: 'neutral',
+}
+
+export const experienceTone = (level: string): BadgeTone =>
+  Object.hasOwn(EXPERIENCE_TONE, level) ? EXPERIENCE_TONE[level] : 'neutral'

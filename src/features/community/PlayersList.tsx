@@ -3,6 +3,7 @@ import Avatar from '../../components/ui/Avatar'
 import { FlagImg } from '../../components/ui/CountryPicker'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { LinkCard } from '../../components/ui/LinkCard'
+import { Badge } from '../../components/ui/Badge'
 import { levelBadgeClass } from './playerConstants'
 import type { CommunityPlayer, OrderedPlayer } from './playersSelectors'
 
@@ -25,16 +26,8 @@ function PlayerName({
     <span className="flex items-center gap-1.5 min-w-0">
       {player.country && <FlagImg code={player.country} />}
       <span className="truncate">{name}</span>
-      {player.isLeftHanded && (
-        <span className="text-xs bg-lob-warning-soft text-lob-warning px-1.5 py-0.5 rounded-full font-semibold">
-          L
-        </span>
-      )}
-      {isSelf && (
-        <span className="text-2xs bg-lob-teal text-white px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider">
-          You
-        </span>
-      )}
+      {player.isLeftHanded && <Badge tone="warning" label="L" title="Left-handed" />}
+      {isSelf && <Badge tone="brand" label="You" />}
     </span>
   )
 }

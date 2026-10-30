@@ -25,6 +25,7 @@ import { ActionRow } from '../../components/ui/ActionRow'
 import { Button } from '../../components/ui/Button'
 import { AlertBox } from '../../components/ui/AlertBox'
 import { TextButton } from '../../components/ui/TextButton'
+import { Badge } from '../../components/ui/Badge'
 import { plural } from '../../lib/plural'
 
 function InfoChip({ icon, label, warn }: { icon: ReactNode; label: string; warn?: boolean }) {
@@ -101,17 +102,10 @@ export default function UpcomingEventCard({
           )}
         </div>
         <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-          <span
-            className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-              over
-                ? 'bg-gray-100 text-lob-muted'
-                : t.status === 'active'
-                  ? 'bg-lob-success-soft text-lob-success'
-                  : 'bg-blue-100 text-blue-700'
-            }`}
-          >
-            {over ? 'completed' : t.status}
-          </span>
+          <Badge
+            tone={over ? 'neutral' : t.status === 'active' ? 'success' : 'info'}
+            label={over ? 'completed' : t.status}
+          />
           {!over && (
             <div className="flex gap-1">
               <ShareWhatsAppButton tournament={t} variant="icon" />
@@ -192,12 +186,10 @@ export default function UpcomingEventCard({
 
       {/* Booking mode badge — admin only */}
       {isAdmin && (
-        <div className="mb-2">
-          <span className="inline-flex items-center gap-1 text-xs bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full font-medium">
-            <ShieldCheck size={11} /> Admin books all courts
-          </span>
+        <div className="mb-2 flex flex-wrap items-center gap-2">
+          <Badge tone="brand" icon={<ShieldCheck />} label="Admin books all courts" />
           {t.totalPrice > 0 && (
-            <span className="ml-2 text-xs text-lob-muted">
+            <span className="text-xs text-lob-muted">
               Total {fmtEur(t.totalPrice)} incl. courts + food + prizes
             </span>
           )}

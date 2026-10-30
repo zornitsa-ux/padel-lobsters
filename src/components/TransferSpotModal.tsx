@@ -9,6 +9,7 @@ import { Modal } from './ui/Modal'
 import { PlayerRow } from './ui/PlayerRow'
 import type { Player } from '../lib/normalise'
 import { AlertBox } from './ui/AlertBox'
+import { Badge } from './ui/Badge'
 
 // Picker modal Josephine sees when she taps "Transfer spot to another player".
 // Lists waitlist players first (so transferring to them is a one-tap promotion
@@ -231,11 +232,7 @@ export default function TransferSpotModal({
                 name={
                   <>
                     {displayName(p)}
-                    {isWait && (
-                      <span className="text-2xs font-semibold bg-lob-warning-soft text-lob-warning px-1.5 py-0.5 rounded-full">
-                        On waitlist
-                      </span>
-                    )}
+                    {isWait && <Badge tone="warning" label="On waitlist" />}
                   </>
                 }
                 nameClassName="font-semibold text-sm text-lob-dark flex items-center gap-1.5"

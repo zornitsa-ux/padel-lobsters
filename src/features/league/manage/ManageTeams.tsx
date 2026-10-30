@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import { Modal } from '../../../components/ui/Modal'
 import { Badge } from '../../../components/ui/Badge'
+import { experienceTone } from '../ui/statusPill'
 import { SectionHeader } from '../../../components/ui/SectionHeader'
 import { PlayerRow } from '../../../components/ui/PlayerRow'
 import { useConfirm } from '../../../lib/confirmBus'
@@ -16,12 +17,6 @@ import { Button } from '../../../components/ui/Button'
 import { TextButton } from '../../../components/ui/TextButton'
 
 type InviteTarget = { id: string; name: string }
-
-const LEVEL_BADGE: Record<string, 'info' | 'gold' | 'silver'> = {
-  advanced: 'info',
-  intermediate: 'gold',
-  beginner: 'silver',
-}
 
 function PlayerName({
   player,
@@ -80,13 +75,8 @@ function TeamRow({
       }
       trailing={
         <>
-          {team.group_label && (
-            <Badge variant="league-group-stage" label={`Group ${team.group_label}`} />
-          )}
-          <Badge
-            variant={LEVEL_BADGE[team.experience_level] ?? 'silver'}
-            label={team.experience_level}
-          />
+          {team.group_label && <Badge tone="outline" label={`Group ${team.group_label}`} />}
+          <Badge tone={experienceTone(team.experience_level)} label={team.experience_level} />
           <TextButton tone="neutral" onClick={() => onEdit(team)}>
             Edit
           </TextButton>

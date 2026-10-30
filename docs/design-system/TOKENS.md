@@ -13,8 +13,7 @@ top of them is in [`PLAN.md`](./PLAN.md).
 | `lob-teal-dark`   | `#2A5A68` | Header gradient end, hover darken                     |
 | `lob-teal-light`  | `#EAF4F7` | Selected row tint, segment track, icon button fill    |
 | `lob-coral`       | `#D94F2B` | Primary CTA (`Button` primary), active nav tab        |
-| `lob-coral-light` | `#FAEAE5` | Coral tint (unpaid badge)                             |
-| `lob-amber`       | `#E8A030` | Accent only, not status (league draft badge)          |
+| `lob-amber`       | `#E8A030` | Accent only, not status (`Badge` tone `accent`)       |
 | `lob-cream`       | `#F5F0E8` | Page background (`body`), accent icon button          |
 | `lob-dark`        | `#1C2B30` | Headings and body text; base of the card shadows      |
 | `lob-slate`       | `#40565C` | Secondary text that needs more weight than muted      |
@@ -53,6 +52,25 @@ Examples: `text-lob-success`, `bg-lob-warning-light border-lob-warning-border`,
 - `info` is sky, not teal, so info alerts don't read as brand teal.
   `AlertBox` `info` uses it.
 
+**Badge tones (owner, 2026-10-30).** A tone is a colour family; meanings map
+onto tones. Each is a `-soft` fill (or a token tint) with the text shade:
+
+| Tone      | Fill / text                                 | For                                         |
+| --------- | ------------------------------------------- | ------------------------------------------- |
+| `success` | `lob-success-soft` / `lob-success`          | Paid, done, won, shown to players           |
+| `warning` | `lob-warning-soft` / `lob-warning`          | Pending, waitlist, tikkied, needs review    |
+| `danger`  | `lob-danger-soft` / `lob-danger`            | Unpaid, cancelled, lost, failed             |
+| `info`    | `lob-info-soft` / `lob-info`                | Self-declared payment, upcoming event       |
+| `neutral` | `lob-line` / `lob-slate`                    | Optional, hidden, completed, transferred    |
+| `brand`   | `lob-teal-light` / `lob-teal`               | Live, bye, division, "You", league knockout |
+| `outline` | white, `lob-line-strong` ring / `lob-slate` | League group stage, tied, streak            |
+| `accent`  | `lob-amber` 15% / `lob-amber`               | League draft, intermediate level            |
+
+- Coral is not a Badge tone: it is the CTA colour. Unpaid is `danger`, matching
+  its row on the Payments page.
+- No token for the old blue: "Transferred" is `neutral` (the spot came by
+  transfer, nothing is owed) and merch "Delivered" is `success`.
+
 ## Neutrals
 
 | Token             | Use                         | Value    |
@@ -75,12 +93,10 @@ Examples: `text-lob-success`, `bg-lob-warning-light border-lob-warning-border`,
 ## Still raw, on purpose
 
 Decorative and categorical colour isn't status, so it stays on the Tailwind
-palette for now (103 classes, held by the `design:check` ratchet; tokens for
+palette for now (88 classes, held by the `design:check` ratchet; tokens for
 these are P7):
 
 - Medal, podium and trophy gold; raffle and Oscars gold.
 - The avatar letter palette (`playerConstants.ts`) and the gender marks.
-- The blue "transferred" payment pill and "delivered" merch status. These move
-  with the payment-status single source (P4).
 - The blue Playtomic-level panel, copied in `ProfileFields`, `ProfileSection`
   and `PlayerForm` (a `.panel` candidate, P6).

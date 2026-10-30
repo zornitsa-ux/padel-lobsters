@@ -13,7 +13,7 @@ export function AwaitingResultsCard({ tournament: t }: { tournament: NormalisedT
       leading={<DateTile date={t.date} size="sm" className="grayscale" />}
       title={t.name}
       subtitle={details || undefined}
-      trailing={<Badge variant="pending" label="Results pending" />}
+      trailing={<Badge tone="warning" label="Results pending" />}
     />
   )
 }

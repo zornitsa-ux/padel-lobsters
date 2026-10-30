@@ -17,6 +17,8 @@ import {
   MoreVertical,
   Gamepad2,
   SlidersHorizontal,
+  Check,
+  EyeOff,
 } from 'lucide-react'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { ActionRow } from '../../components/ui/ActionRow'
@@ -29,7 +31,10 @@ import { AvatarPicker } from '../../components/ui/AvatarPicker'
 import { AlertBox } from '../../components/ui/AlertBox'
 import { FormError } from '../../components/ui/FormError'
 import { useFieldError } from '../../components/ui/useFieldError'
-import { Badge, type BadgeProps } from '../../components/ui/Badge'
+import { Badge, BADGE_TONES } from '../../components/ui/Badge'
+import PaymentStatusBadge from '../events/registration/PaymentStatusBadge'
+import { PAYMENT_STATUSES } from '../events/paymentStatus'
+import { STATUS_CONFIG } from '../merch/statusConfig'
 import Avatar from '../../components/ui/Avatar'
 import { Chip, ChipGroup } from '../../components/ui/Chip'
 import { CollapsibleCard } from '../../components/ui/CollapsibleCard'
@@ -50,20 +55,6 @@ import { Spinner } from '../../components/ui/Spinner'
 import { Skeleton } from '../../components/ui/Skeleton'
 
 // Dev-only (`/design`). Each design-system step adds its components here.
-
-const BADGE_VARIANTS: BadgeProps['variant'][] = [
-  'paid',
-  'unpaid',
-  'pending',
-  'waitlist',
-  'info',
-  'gold',
-  'silver',
-  'league-draft',
-  'league-group-stage',
-  'league-knockout',
-  'league-completed',
-]
 
 const SAMPLE_EVENT = { id: 'sample', name: 'Lobster Cup', date: '2026-12-05', time: '19:00' }
 
@@ -329,9 +320,24 @@ function StatusSection() {
           Summer Social · Sat 14 Nov
         </AlertBox>
       </Row>
-      <Row label="Badge variant">
-        {BADGE_VARIANTS.map((variant) => (
-          <Badge key={variant} variant={variant} label={variant} />
+      <Row label="Badge tone (one size; meanings map onto tones)">
+        {BADGE_TONES.map((tone) => (
+          <Badge key={tone} tone={tone} label={tone} />
+        ))}
+      </Row>
+      <Row label="Badge icon (the badge sizes it)">
+        <Badge tone="success" icon={<Check />} label="You're registered!" />
+        <Badge tone="neutral" icon={<EyeOff />} label="Hidden" />
+      </Row>
+      <Row label="PaymentStatusBadge (paymentStatus.ts; detail for the method)">
+        {[...PAYMENT_STATUSES, 'covered'].map((status) => (
+          <PaymentStatusBadge key={status} paymentStatus={status} />
+        ))}
+        <PaymentStatusBadge paymentStatus="paid" detail="Tikkie" />
+      </Row>
+      <Row label="Merch order status (statusConfig.ts)">
+        {Object.entries(STATUS_CONFIG).map(([status, { label, tone, icon: Icon }]) => (
+          <Badge key={status} tone={tone} label={label} icon={<Icon />} />
         ))}
       </Row>
     </Section>
@@ -557,7 +563,7 @@ function CardLinkSection() {
           <LinkCard
             onClick={() => {}}
             title="Season 1"
-            trailing={<Badge variant="info" label="Live" />}
+            trailing={<Badge tone="brand" label="Live" />}
           />
         </div>
       </Row>

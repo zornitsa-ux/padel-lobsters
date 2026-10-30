@@ -4,6 +4,8 @@ import { Button } from '../../../components/ui/Button'
 import { TextButton } from '../../../components/ui/TextButton'
 import WaitlistNotice from './WaitlistNotice'
 import { AlertBox } from '../../../components/ui/AlertBox'
+import { isSettled } from '../paymentStatus'
+import PaymentStatusBadge from './PaymentStatusBadge'
 
 interface JoinEventCardProps {
   /** Derived by `myRegistrationSummary` — the same source /me reads. */
@@ -73,7 +75,7 @@ export default function JoinEventCard({
   }
 
   const ps = summary.paymentStatus
-  const isConfirmed = ps === 'paid' || ps === 'transferred'
+  const isConfirmed = isSettled(ps)
   const needsPayment = (!ps || ps === 'unpaid') && hasTikkie
 
   return (
@@ -83,9 +85,7 @@ export default function JoinEventCard({
         <span className="text-sm font-semibold text-lob-dark">You&apos;re registered</span>
       </div>
       {isConfirmed ? (
-        <span className="text-xs font-semibold text-lob-success bg-lob-success-light border border-lob-success-border px-2 py-0.5 rounded-full flex-shrink-0">
-          ✓ Confirmed
-        </span>
+        <PaymentStatusBadge paymentStatus={ps} />
       ) : needsPayment ? (
         <TextButton tone="primary" onClick={onGoToPayment}>
           Pay on the You tab

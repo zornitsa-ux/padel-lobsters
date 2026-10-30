@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Settings } from 'lucide-react'
 import { Badge } from '../../../components/ui/Badge'
-import { statusPill } from './statusPill'
+import { LEAGUE_STATUS_TONE, statusPill } from './statusPill'
 import type { StatusPill } from './statusPill'
 import { PageHeader } from '../../../components/ui/PageHeader'
 import { divisionTabs } from './divisionTabs'
@@ -17,10 +17,10 @@ import { leagueDivisions } from '../domain/types'
 import type { Division, League, LeagueTeam, LeagueMatch } from '../domain/types'
 
 const PHASE_PILL: Record<string, StatusPill> = {
-  draft: { variant: 'league-draft', label: 'Registering' },
-  group_stage: { variant: 'league-group-stage', label: 'Group Stage' },
-  knockout: { variant: 'league-knockout', label: 'Knockout' },
-  completed: { variant: 'league-completed', label: 'Completed' },
+  draft: { tone: LEAGUE_STATUS_TONE.draft, label: 'Registering' },
+  group_stage: { tone: LEAGUE_STATUS_TONE.group_stage, label: 'Group Stage' },
+  knockout: { tone: LEAGUE_STATUS_TONE.knockout, label: 'Knockout' },
+  completed: { tone: LEAGUE_STATUS_TONE.completed, label: 'Completed' },
 }
 
 interface LeagueHomeProps {
@@ -66,7 +66,7 @@ export function LeagueHome({ league, teams, matches, myTeam, isAdmin = false }: 
         title={league.name}
         eyebrow="🦞 Lobster League"
         backLink={{ to: '/league/seasons', label: 'Seasons' }}
-        badge={<Badge variant={pill.variant} label={pill.label} />}
+        badge={<Badge tone={pill.tone} label={pill.label} />}
         rightAction={
           isAdmin ? (
             <Link

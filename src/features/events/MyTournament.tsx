@@ -26,6 +26,8 @@ import type { EventNavigate } from './eventHelpers'
 import { Button } from '../../components/ui/Button'
 import WaitlistNotice from './registration/WaitlistNotice'
 import { AlertBox } from '../../components/ui/AlertBox'
+import { isSettled } from './paymentStatus'
+import PaymentStatusBadge from './registration/PaymentStatusBadge'
 
 type Props = {
   tournament: NormalisedTournament
@@ -308,7 +310,7 @@ function RegistrationCard({
 
   // status === 'registered'
   const ps = registration.paymentStatus
-  const isConfirmed = ps === 'paid' || ps === 'transferred'
+  const isConfirmed = isSettled(ps)
   const isTikkied = ps === 'tikkied'
   const isSelfDeclared = ps === 'pending_confirmation'
   const needsPayment = (!ps || ps === 'unpaid') && hasTikkie
@@ -354,9 +356,7 @@ function RegistrationCard({
       <div className="card">
         <div className="flex items-center justify-between">
           {badge}
-          <span className="text-xs font-semibold text-lob-success bg-lob-success-light border border-lob-success-border px-2 py-0.5 rounded-full">
-            ✓ Confirmed
-          </span>
+          <PaymentStatusBadge paymentStatus={ps} />
         </div>
       </div>
     )

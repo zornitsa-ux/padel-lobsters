@@ -119,11 +119,11 @@ export default function NextEventCard({
         !registrationsPending &&
         (isRegistered ? (
           <div className="mb-3">
-            <Badge variant="paid" icon={<Check size={12} />} label="You're registered!" />
+            <Badge tone="success" icon={<Check />} label="You're registered!" />
           </div>
         ) : !isAdmin ? (
           <div className="mb-3">
-            <Badge variant="pending" label="Not signed up yet" />
+            <Badge tone="warning" label="Not signed up yet" />
           </div>
         ) : null)}
       {isRegistered && kingOfCourtLine}

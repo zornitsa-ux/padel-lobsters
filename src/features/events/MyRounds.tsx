@@ -1,5 +1,6 @@
 import { Check, MapPin, Coffee } from 'lucide-react'
 import Avatar from '../../components/ui/Avatar'
+import { Badge } from '../../components/ui/Badge'
 import { matchOutcome, type MyMatchView, type MyRoundView } from './nextMatch'
 import type { Player } from '../../lib/normalise'
 
@@ -102,16 +103,10 @@ function OutcomeBadge({ view }: { view: MyMatchView }) {
   const outcome = matchOutcome(view)
   if (!outcome) return null
 
-  const styles = {
-    win: 'text-lob-success bg-lob-success-light border-lob-success-border',
-    loss: 'text-lob-danger bg-lob-danger-light border-lob-danger-border',
-    tie: 'text-lob-muted bg-white border-lob-muted/30',
-  }[outcome]
+  const tone = ({ win: 'success', loss: 'danger', tie: 'outline' } as const)[outcome]
   const label = { win: 'Won', loss: 'Lost', tie: 'Tied' }[outcome]
 
-  return (
-    <span className={`text-xs font-bold border px-2 py-0.5 rounded-full ${styles}`}>{label}</span>
-  )
+  return <Badge tone={tone} label={label} />
 }
 
 function PlayedRoundRow({ round, getPlayer }: { round: MyRoundView; getPlayer: GetPlayer }) {

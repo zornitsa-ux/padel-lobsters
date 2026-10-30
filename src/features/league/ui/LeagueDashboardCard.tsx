@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { Badge } from '../../../components/ui/Badge'
 import { CardLink } from '../../../components/ui/CardLink'
-import { statusPill } from './statusPill'
+import { LEAGUE_STATUS_TONE, statusPill } from './statusPill'
 import type { StatusPill } from './statusPill'
 import { useActiveLeagueBundle } from '../hooks/useLeagueQueries'
 import { computeGroupStandings } from '../domain/standings'
@@ -12,10 +12,10 @@ interface LeagueDashboardCardProps {
 }
 
 const STATUS_BADGE: Record<string, StatusPill> = {
-  draft: { label: 'Coming Soon', variant: 'league-draft' },
-  group_stage: { label: 'Group Stage', variant: 'league-group-stage' },
-  knockout: { label: 'Knockout Stage', variant: 'league-knockout' },
-  completed: { label: 'Completed', variant: 'league-completed' },
+  draft: { label: 'Coming Soon', tone: LEAGUE_STATUS_TONE.draft },
+  group_stage: { label: 'Group Stage', tone: LEAGUE_STATUS_TONE.group_stage },
+  knockout: { label: 'Knockout Stage', tone: LEAGUE_STATUS_TONE.knockout },
+  completed: { label: 'Completed', tone: LEAGUE_STATUS_TONE.completed },
 }
 
 export function LeagueDashboardCard({ myPlayerId }: LeagueDashboardCardProps) {
@@ -48,7 +48,7 @@ export function LeagueDashboardCard({ myPlayerId }: LeagueDashboardCardProps) {
 
   if (!league || league.status === 'completed') return null
 
-  const { label, variant } = statusPill(STATUS_BADGE, league.status)
+  const { label, tone } = statusPill(STATUS_BADGE, league.status)
 
   const myPendingMatches = myTeam
     ? matches.filter(
@@ -138,7 +138,7 @@ export function LeagueDashboardCard({ myPlayerId }: LeagueDashboardCardProps) {
             </p>
             <h3 className="font-bold text-white text-base leading-tight">{league.name}</h3>
           </div>
-          <Badge variant={variant} label={label} />
+          <Badge tone={tone} label={label} />
         </div>
       </div>
 

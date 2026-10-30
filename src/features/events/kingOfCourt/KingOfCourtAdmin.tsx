@@ -20,6 +20,7 @@ import type { NormalisedTournament } from '../../../lib/normalise'
 import { Button } from '../../../components/ui/Button'
 import { AlertBox } from '../../../components/ui/AlertBox'
 import { FormError } from '../../../components/ui/FormError'
+import { Badge } from '../../../components/ui/Badge'
 
 // Shown on the event day, so the time matters more than the date.
 const shownAt = (iso: string) =>
@@ -81,13 +82,10 @@ function SeedsCard({
     <div className="card space-y-3">
       <div className="flex items-center justify-between gap-2">
         <h2 className="font-bold text-lob-dark">Seeds and starting courts</h2>
-        <span
-          className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-            publishedAt ? 'bg-lob-success-light text-lob-success' : 'bg-gray-100 text-lob-muted'
-          }`}
-        >
-          {publishedAt ? 'Shown to players' : 'Not shown yet'}
-        </span>
+        <Badge
+          tone={publishedAt ? 'success' : 'neutral'}
+          label={publishedAt ? 'Shown to players' : 'Not shown yet'}
+        />
       </div>
       <p className="text-xs text-lob-muted">
         {publishedAt
@@ -110,13 +108,9 @@ function SeedsCard({
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-lob-dark truncate">{labelOf(teamId)}</p>
                     {strength && (
-                      <p className="text-xs text-lob-muted">
+                      <p className="flex items-center gap-1 text-xs text-lob-muted">
                         Avg level {strength.strength.toFixed(2)}
-                        {strength.unrated && (
-                          <span className="ml-1 text-lob-warning bg-lob-warning-light px-1.5 rounded-full">
-                            unrated
-                          </span>
-                        )}
+                        {strength.unrated && <Badge tone="warning" label="unrated" />}
                       </p>
                     )}
                   </div>
@@ -206,9 +200,7 @@ function FinalStandingsCard({ seeding, actions }: { seeding: Seeding; actions: A
     <div className="card space-y-3">
       <div className="flex items-center justify-between gap-2">
         <h2 className="font-bold text-lob-dark">Final standings</h2>
-        <span className="text-xs font-medium text-lob-muted-light bg-gray-100 px-2 py-0.5 rounded-full">
-          Optional
-        </span>
+        <Badge tone="neutral" label="Optional" />
       </div>
       <p className="text-xs text-lob-muted">
         Who finished 1st and 2nd on each court. Fill in as much as you know; the rest stay unranked.

@@ -14,6 +14,7 @@ import type { NormalisedTournament } from '../../lib/normalise'
 import { Button } from '../../components/ui/Button'
 import { TextButton } from '../../components/ui/TextButton'
 import { AlertBox } from '../../components/ui/AlertBox'
+import { Badge } from '../../components/ui/Badge'
 
 const stepNumber = (index: number): string => String(index + 1).padStart(2, '0')
 
@@ -155,16 +156,8 @@ function StepRow({
         <div className="flex-1 min-w-0 space-y-1.5">
           <div className="flex items-center gap-2 flex-wrap">
             <p className="font-semibold text-lob-dark text-sm">{step.title}</p>
-            {done && (
-              <span className="inline-flex items-center gap-1 text-xs font-semibold text-lob-success bg-lob-success-light px-2 py-0.5 rounded-full">
-                <CheckCircle2 size={12} /> Done
-              </span>
-            )}
-            {step.optional && !done && (
-              <span className="text-xs font-medium text-lob-muted-light bg-gray-100 px-2 py-0.5 rounded-full">
-                Optional
-              </span>
-            )}
+            {done && <Badge tone="success" icon={<CheckCircle2 />} label="Done" />}
+            {step.optional && !done && <Badge tone="neutral" label="Optional" />}
           </div>
           <p className="text-xs text-lob-muted">{step.detail}</p>
           <p className="text-xs text-lob-teal-dark bg-lob-teal-light inline-flex items-center gap-1 px-2 py-0.5 rounded-full">
