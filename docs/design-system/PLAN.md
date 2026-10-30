@@ -922,7 +922,8 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
   tones (owner): `success`, `warning`, `danger`, `info`, `neutral`, `brand`,
   `outline`, `accent`. A meaning picks a tone; the table is in TOKENS.md.
   - One size (`text-xs`, `px-2 py-0.5`); the old `py-1`, `px-3` and `text-2xs`
-    pills take it. The badge sizes its icon, never wraps or shrinks, takes a
+    pills take it. The badge sizes its icon, shrinks and truncates its label in a
+    tight row rather than overflowing (review), takes a
     `title` for a tooltip and carries no margins.
   - Owner calls: coral is not a tone, so unpaid is `danger` (as its Payments
     row already was) and league knockout is `brand` (phases read draft amber,
@@ -951,7 +952,7 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
     accept";
     the viewer's team card says "{partner} accepted ✓" or "You accepted ✓".
   - Triage. Onto `Badge`: every payment pill, merch order status and the order
-    timeline steps (future steps `outline`), the team "Paid by / Covered by"
+    timeline steps (future steps `neutral`), the team "Paid by / Covered by"
     pill, event status, "Admin books all courts", run-of-show "Done" and
     "Optional", the KotC "Shown to players", "Optional" and "unrated", "Needs
     review", the court gender chip, feasibility chips, the quality band, the
@@ -964,3 +965,11 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
     category marks (P7), the review-breakdown bucket counts, the "Up next"
     marker on the coral-ringed card, image overlays and evidence lines. Raw
     palette classes 103 → 88.
+  - Review: the viewer's own registered card says "Confirmed" for a spot that
+    came by transfer (the admin list keeps "Transferred"). The admin row pill
+    reads "Paid · self-declared", so a phone shows what still needs confirming;
+    the status hints stay in the admin menu, not as tooltips on player screens.
+    A row's border and avatar follow its status tone. A partner's "Covered by"
+    pill is green only once the captain has paid, `neutral` before. The last
+    four hand-written unpaid checks use `isUnpaid`. League phase pills share
+    `leagueStatusPills`, so the three label maps no longer repeat the tones.

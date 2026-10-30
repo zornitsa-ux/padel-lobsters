@@ -3,6 +3,7 @@ import {
   PAYMENT_STATUSES,
   PAYMENT_STATUS_INFO,
   isSettled,
+  isUnpaid,
   owesPayment,
   paymentStatusInfo,
   toPaymentStatus,
@@ -35,7 +36,13 @@ describe('paymentStatusInfo', () => {
   })
 })
 
-describe('isSettled and owesPayment', () => {
+describe('isUnpaid, isSettled and owesPayment', () => {
+  it('is unpaid only before any step', () => {
+    expect(ALL.filter(isUnpaid)).toEqual(['unpaid'])
+    expect(isUnpaid(null)).toBe(true)
+    expect(isUnpaid('refunded')).toBe(true)
+  })
+
   it('settles only money paid in', () => {
     expect(ALL.filter(isSettled)).toEqual(['paid', 'transferred'])
     expect(isSettled(null)).toBe(false)

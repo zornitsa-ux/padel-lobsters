@@ -30,12 +30,22 @@ export const LEAGUE_STATUS_TONE = {
 
 // Admin-facing and seasons-list labels. LeagueHome and the dashboard card keep
 // their own player-facing copy ("Registering", "Coming Soon").
-export const LEAGUE_STATUS_PILL: Record<string, StatusPill> = {
-  draft: { tone: LEAGUE_STATUS_TONE.draft, label: 'Draft' },
-  group_stage: { tone: LEAGUE_STATUS_TONE.group_stage, label: 'Group Stage' },
-  knockout: { tone: LEAGUE_STATUS_TONE.knockout, label: 'Knockout' },
-  completed: { tone: LEAGUE_STATUS_TONE.completed, label: 'Completed' },
-}
+export const leagueStatusPills = (
+  labels: Record<keyof typeof LEAGUE_STATUS_TONE, string>,
+): Record<string, StatusPill> =>
+  Object.fromEntries(
+    Object.entries(LEAGUE_STATUS_TONE).map(([status, tone]) => [
+      status,
+      { tone, label: labels[status as keyof typeof LEAGUE_STATUS_TONE] },
+    ]),
+  )
+
+export const LEAGUE_STATUS_PILL = leagueStatusPills({
+  draft: 'Draft',
+  group_stage: 'Group Stage',
+  knockout: 'Knockout',
+  completed: 'Completed',
+})
 
 const EXPERIENCE_TONE: Record<string, BadgeTone> = {
   advanced: 'brand',

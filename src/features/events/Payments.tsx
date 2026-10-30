@@ -28,13 +28,30 @@ import type { NormalisedTournament } from '../../lib/normalise'
 import type { NormalisedRegistration } from './registrationQueries'
 import { Button } from '../../components/ui/Button'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
-import { PAYMENT_STATUSES, PAYMENT_STATUS_INFO, isSettled, toPaymentStatus } from './paymentStatus'
+import {
+  PAYMENT_STATUSES,
+  PAYMENT_STATUS_INFO,
+  isSettled,
+  isUnpaid,
+  paymentStatusInfo,
+  toPaymentStatus,
+  type PaymentTone,
+} from './paymentStatus'
 import PaymentStatusBadge from './registration/PaymentStatusBadge'
 
 const METHODS = [
   { value: 'tikkie', label: 'Tikkie' },
   { value: 'playtomic', label: 'Playtomic' },
 ]
+
+// A row's left border and avatar follow its status tone.
+const ROW_ACCENT: Record<PaymentTone, { border: string; avatar: string }> = {
+  success: { border: 'border-lob-success-solid', avatar: 'bg-lob-success-soft text-lob-success' },
+  info: { border: 'border-lob-info-solid', avatar: 'bg-lob-info-soft text-lob-info' },
+  warning: { border: 'border-lob-warning-solid', avatar: 'bg-lob-warning-soft text-lob-warning' },
+  danger: { border: 'border-lob-danger-border', avatar: 'bg-lob-danger-soft text-lob-danger' },
+  neutral: { border: 'border-lob-line-strong', avatar: 'bg-lob-line text-lob-slate' },
+}
 
 type PaymentFilter = 'all' | 'paid' | 'pending' | 'tikkied' | 'unpaid'
 
@@ -90,7 +107,7 @@ export default function Payments({
   const selfPaid = regs.filter((r) => r.paymentStatus === 'pending_confirmation')
   const tikkied = regs.filter((r) => r.paymentStatus === 'tikkied')
   // True "ghost" unpaid — didn't even click the Tikkie link
-  const trulyUnpaid = regs.filter((r) => toPaymentStatus(r.paymentStatus) === 'unpaid')
+  const trulyUnpaid = regs.filter((r) => isUnpaid(r.paymentStatus))
 
   // One row per signup: a player, or a team through its captain.
   const costPerEntry = pricePerEntry(tournament)
@@ -295,28 +312,19 @@ export default function Payments({
           const isTransferred = ps === 'transferred'
           const method =
             METHODS.find((m) => m.value === reg.paymentMethod)?.label || reg.paymentMethod
+          const detail = ps === 'paid' ? method : isSelfPaid ? 'self-declared' : ''
 
-          const borderColor = isConfirmed
-            ? 'border-lob-success-solid'
-            : isSelfPaid
-              ? 'border-lob-info-solid'
-              : isTikkied
-                ? 'border-lob-warning-solid'
-                : 'border-lob-danger-border'
-          const avatarColor = isConfirmed
-            ? 'bg-lob-success-soft text-lob-success'
-            : isSelfPaid
-              ? 'bg-lob-info-soft text-lob-info'
-              : isTikkied
-                ? 'bg-lob-warning-soft text-lob-warning'
-                : 'bg-lob-danger-soft text-lob-danger'
+          const { tone } = paymentStatusInfo(ps)
 
           return (
-            <div key={reg.id} className={`card transition-all border-l-4 ${borderColor}`}>
+            <div
+              key={reg.id}
+              className={`card transition-all border-l-4 ${ROW_ACCENT[tone].border}`}
+            >
               <PlayerRow
                 player={player}
                 avatarSize="lg"
-                avatarTone={avatarColor}
+                avatarTone={ROW_ACCENT[tone].avatar}
                 name={rowName(reg, player.name)}
                 trailing={
                   isAdmin && (
@@ -361,10 +369,7 @@ export default function Payments({
                 }
               >
                 <div className="flex items-center gap-2 flex-wrap">
-                  <PaymentStatusBadge
-                    paymentStatus={ps}
-                    detail={ps === 'paid' ? method || undefined : undefined}
-                  />
+                  <PaymentStatusBadge paymentStatus={ps} detail={detail || undefined} />
                   {costPerEntry > 0 && !isTransferred && (
                     <span className="text-xs text-lob-muted">{fmtEur(costPerEntry)}</span>
                   )}

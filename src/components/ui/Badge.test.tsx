@@ -26,7 +26,15 @@ describe('Badge', () => {
   it('sizes its icon and keeps it before the label', () => {
     const el = Badge({ tone: 'brand', label: 'Live', icon: 'i' })
     expect(classOf(el)).toContain('[&>svg]:size-3')
-    expect(propsOf(el).children).toEqual(['i', 'Live'])
+    const [icon, label] = propsOf(el).children as unknown[]
+    expect(icon).toBe('i')
+    expect(propsOf(label).children).toBe('Live')
+  })
+
+  it('truncates a long label instead of overflowing its row', () => {
+    const el = Badge({ tone: 'success', label: 'Paid by a very long name' })
+    expect(classOf(el)).toContain('min-w-0 max-w-full')
+    expect(classOf((propsOf(el).children as unknown[])[1])).toBe('truncate')
   })
 
   it('passes a tooltip through', () => {

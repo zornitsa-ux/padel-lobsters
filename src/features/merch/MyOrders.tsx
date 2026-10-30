@@ -73,7 +73,7 @@ export default function MyOrders({ myOrders, items }: MyOrdersProps) {
                           />
                         )}
                         <Badge
-                          tone={active ? sCfg.tone : 'outline'}
+                          tone={active ? sCfg.tone : 'neutral'}
                           label={sCfg.label}
                           icon={<SIcon />}
                         />

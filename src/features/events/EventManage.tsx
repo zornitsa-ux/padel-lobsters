@@ -12,6 +12,7 @@ import { isKingOfTheCourt } from './eventFormat'
 import RunOfShow from './RunOfShow'
 import type { NormalisedTournament } from '../../lib/normalise'
 import type { EventNavigate } from './eventHelpers'
+import { isUnpaid } from './paymentStatus'
 
 // Heavy sections were previously their own lazy routes (App.tsx); now they
 // mount inside /manage, so the split moves here — the overview no longer
@@ -92,7 +93,7 @@ function Overview({ tournament }: { tournament: NormalisedTournament }) {
   const { phase } = useEventPhase(tournament)
 
   const registered = regsData.filter((r) => r.status === 'registered')
-  const unpaid = registered.filter((r) => !r.paymentStatus || r.paymentStatus === 'unpaid')
+  const unpaid = registered.filter((r) => isUnpaid(r.paymentStatus))
   const scoredCount = matches.filter(isMatchScored).length
   const sealed = allMatchesScored(matches)
   // King of the Court records no matches (D-006), so there is nothing to score.

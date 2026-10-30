@@ -2,8 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Settings } from 'lucide-react'
 import { Badge } from '../../../components/ui/Badge'
-import { LEAGUE_STATUS_TONE, statusPill } from './statusPill'
-import type { StatusPill } from './statusPill'
+import { leagueStatusPills, statusPill } from './statusPill'
 import { PageHeader } from '../../../components/ui/PageHeader'
 import { divisionTabs } from './divisionTabs'
 import { DraftSection } from './DraftSection'
@@ -16,12 +15,12 @@ import { TeamPage } from './TeamPage'
 import { leagueDivisions } from '../domain/types'
 import type { Division, League, LeagueTeam, LeagueMatch } from '../domain/types'
 
-const PHASE_PILL: Record<string, StatusPill> = {
-  draft: { tone: LEAGUE_STATUS_TONE.draft, label: 'Registering' },
-  group_stage: { tone: LEAGUE_STATUS_TONE.group_stage, label: 'Group Stage' },
-  knockout: { tone: LEAGUE_STATUS_TONE.knockout, label: 'Knockout' },
-  completed: { tone: LEAGUE_STATUS_TONE.completed, label: 'Completed' },
-}
+const PHASE_PILL = leagueStatusPills({
+  draft: 'Registering',
+  group_stage: 'Group Stage',
+  knockout: 'Knockout',
+  completed: 'Completed',
+})
 
 interface LeagueHomeProps {
   league: League

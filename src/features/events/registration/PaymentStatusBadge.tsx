@@ -7,6 +7,6 @@ interface PaymentStatusBadgeProps {
 }
 
 export default function PaymentStatusBadge({ paymentStatus, detail }: PaymentStatusBadgeProps) {
-  const { label, tone, hint } = paymentStatusInfo(paymentStatus)
-  return <Badge tone={tone} label={detail ? `${label} · ${detail}` : label} title={hint} />
+  const { label, tone } = paymentStatusInfo(paymentStatus)
+  return <Badge tone={tone} label={detail ? `${label} · ${detail}` : label} />
 }

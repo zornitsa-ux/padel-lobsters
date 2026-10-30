@@ -48,7 +48,7 @@ export default function TeamCard({
           <PaymentStatusBadge paymentStatus={entry.captain.paymentStatus} />
         ) : (
           <Badge
-            tone="success"
+            tone={isSettled(entry.captain.paymentStatus) ? 'success' : 'neutral'}
             label={coverLabel({ captainPayment: entry.captain.paymentStatus, otherName })}
           />
         )}

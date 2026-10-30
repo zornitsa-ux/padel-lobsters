@@ -15,9 +15,11 @@ export const PAYMENT_STATUSES = [
 // and only a transfer changes it.
 export type PaymentStatus = (typeof PAYMENT_STATUSES)[number] | 'covered'
 
+export type PaymentTone = Extract<BadgeTone, 'success' | 'warning' | 'danger' | 'info' | 'neutral'>
+
 interface PaymentStatusInfo {
   label: string
-  tone: BadgeTone
+  tone: PaymentTone
   hint: string
 }
 
@@ -38,6 +40,10 @@ export function toPaymentStatus(raw: string | null | undefined): PaymentStatus {
 
 export const paymentStatusInfo = (raw: string | null | undefined): PaymentStatusInfo =>
   PAYMENT_STATUS_INFO[toPaymentStatus(raw)]
+
+// Never paid: hasn't even clicked the Tikkie link.
+export const isUnpaid = (raw: string | null | undefined): boolean =>
+  toPaymentStatus(raw) === 'unpaid'
 
 // Paid in: an admin confirmed it, or the spot came by transfer.
 export const isSettled = (raw: string | null | undefined): boolean => {
