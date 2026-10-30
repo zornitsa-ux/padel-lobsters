@@ -1,6 +1,7 @@
 import { EyeOff } from 'lucide-react'
 import { Badge } from '../../components/ui/Badge'
-import { LinkCard } from '../../components/ui/LinkCard'
+import { LinkRow, ListCard } from '../../components/ui/ListCard'
+import { Section } from '../../components/ui/Section'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { Spinner } from '../../components/ui/Spinner'
 import { useApp } from '../../context/useApp'
@@ -23,7 +24,7 @@ function championsLine(champions: LeagueTeam[]) {
 
 function SeasonRow({ league, champions }: { league: League; champions: LeagueTeam[] }) {
   return (
-    <LinkCard
+    <LinkRow
       to={`/league/${league.id}`}
       title={league.name}
       subtitle={championsLine(champions.filter((t) => t.league_id === league.id))}
@@ -50,16 +51,13 @@ function SeasonGroup({
 }) {
   if (leagues.length === 0) return null
   return (
-    <section>
-      <h2 className="text-2xs font-bold text-lob-muted uppercase tracking-widest px-1 mb-2">
-        {title}
-      </h2>
-      <div className="space-y-2">
+    <Section title={title}>
+      <ListCard>
         {leagues.map((l) => (
           <SeasonRow key={l.id} league={l} champions={champions} />
         ))}
-      </div>
-    </section>
+      </ListCard>
+    </Section>
   )
 }
 

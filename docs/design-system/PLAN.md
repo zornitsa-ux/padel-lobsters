@@ -200,9 +200,9 @@ primitives (see the Log) before P3:
       pending approvals, raffle eligibility. Done in #116.
     - **P6b-2: league.** `SectionHeader` users onto `Section`, then delete
       it; draft and manage team lists; fixtures and results as `ListCard`
-      rows; standings headings. In review.
+      rows; standings headings. Done in #118.
     - **P6b-3: link lists and orders.** Seasons, Admin tools (tools and
-      Needs attention), shop orders.
+      Needs attention), shop orders. In review.
 14. **P6c: no card inside a card.** Builds `Well` (flat `lob-well` inset, no
     shadow; the planned `.panel`). Nested `.card`s and shadowed boxes inside
     cards become a `Well` or a divider (four on Events and Home today; the
@@ -1176,3 +1176,25 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
     local date (it showed a day early west of UTC); a bye gets no Enter Score
     or Edit on Manage (it opened the score form for a match with no
     opponent).
+
+- **2026-10-30.** P6b-3 on `design-system-p6b-links`, the last P6b PR.
+  - Seasons: Current, Upcoming and Past are `Section`s (were hand-built
+    uppercase `h2`s), each a `ListCard` of `LinkRow`s instead of a `LinkCard`
+    per season.
+  - Admin tools: the tools are one `ListCard` of `LinkRow`s under a "Tools"
+    `Section`. Needs attention was a card with a warning left border holding
+    `OptionRow`s; it is a `Section` with a `ListCard` of `LinkRow`s, each led
+    by a warning-toned `LinkCardIcon` naming what it is about (payments,
+    signups, orders).
+  - Shop orders: the player's orders (Shop tab and Account) and the admin's
+    open orders are one `ListCard` of `ListRow`s each, not a card per order.
+    The admin's cancelled orders were a native `<details>` of cards; they are
+    a `Section` with a Show / Hide `TextButton`, as on the event page. The
+    rows move into their own components (`OrderRow`, `StatusTimeline`,
+    `CancelledOrders`). The size and custom-name pills stay for `Tag` (P6e);
+    the Account "My Orders" heading stays for P6d.
+  - Review: the cancelled orders sit outside the open-orders branch, so an
+    admin still sees them when every order is cancelled (they were hidden
+    behind "No orders yet"); the custom-name pill shows the normalised name.
+    Found: the unpaid-registrations row opens shop orders, not the event's
+    payments (#120).
