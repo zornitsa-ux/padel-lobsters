@@ -86,7 +86,7 @@ component doesn't fit, fix the component, not the call site.**
 | List of like items                   | `ListCard` + `LinkRow` (one card, divided rows)      | exists |
 | List row with its own controls       | `ListRow` (`PlayerRow`, buttons, anything under it)  | exists |
 | List row that is one checkbox        | `CheckRow`                                           | exists |
-| Inset panel / well inside a card     | `Well`                                               | P6c    |
+| Inset panel / well inside a card     | `Well` (a list inside a card: divided rows)          | exists |
 | Search field                         | `SearchInput`                                        | P6     |
 | Collapsible card (+ summary)         | `CollapsibleCard` (`summary` stays visible)          | exists |
 | Collapsible row with reorder/delete  | `CollapsibleCard leading actions`                    | exists |
@@ -193,20 +193,27 @@ primitives (see the Log) before P3:
     `CardHeader` as P6b and P6d move their users) and `ListCard` + `LinkRow`
     (one card, hairline dividers; `LinkRow` is `LinkCard`'s content as a
     row). Pilot: the Community players list.~~ Done in #114.
-13. **P6b: lists onto `ListCard`.** Inventory and owner calls in the Log
-    (2026-10-30). Three PRs:
-    - **P6b-1: player and team rows.** Builds `ListRow` and `CheckRow`.
+13. ~~**P6b: lists onto `ListCard`.** Inventory and owner calls in the Log
+    (2026-10-30). Three PRs:~~
+    - ~~**P6b-1: player and team rows.** Builds `ListRow` and `CheckRow`.
       Registered, Waitlist and Cancelled players, team rows, Payments,
-      pending approvals, raffle eligibility. Done in #116.
-    - **P6b-2: league.** `SectionHeader` users onto `Section`, then delete
+      pending approvals, raffle eligibility.~~ Done in #116.
+    - ~~**P6b-2: league.** `SectionHeader` users onto `Section`, then delete
       it; draft and manage team lists; fixtures and results as `ListCard`
-      rows; standings headings. Done in #118.
-    - **P6b-3: link lists and orders.** Seasons, Admin tools (tools and
-      Needs attention), shop orders. In review.
-14. **P6c: no card inside a card.** Builds `Well` (flat `lob-well` inset, no
-    shadow; the planned `.panel`). Nested `.card`s and shadowed boxes inside
-    cards become a `Well` or a divider (four on Events and Home today; the
-    tinted boxes inside cards are triaged, as alerts stay `AlertBox`).
+      rows; standings headings.~~ Done in #118.
+    - ~~**P6b-3: link lists and orders.** Seasons, Admin tools (tools and
+      Needs attention), shop orders.~~ Done in #119.
+14. **P6c: no card inside a card.** Inventory and owner calls in the Log
+    (2026-10-30). Three PRs:
+    - **P6c-1: `Well`.** Flat `lob-well` inset, no shadow (the planned
+      `.panel`). The hand-built `lob-well` insets and the Playtomic panel
+      move onto it. In progress.
+    - **P6c-2: cards inside cards.** Run of show, Lobster Way admin, Oscars
+      results, the past event's match boxes, security events; lists with a
+      well or box per row (Admin tips, Oscars categories, raffle winners,
+      group formation teams).
+    - **P6c-3: tinted boxes inside cards.** Alerts onto `AlertBox`, the rest
+      onto `Well` or plain text.
 15. **P6d: sections, not cards.** Account, settings and admin tools: each
     section is a `Section` on the background, not a card.
 16. **P6e: labels and the rest.** Builds `Tag` (names a thing: Court 2, Round
@@ -1198,3 +1205,82 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
     behind "No orders yet"); the custom-name pill shows the normalised name.
     Found: the unpaid-registrations row opens shop orders, not the event's
     payments (#120).
+
+- **2026-10-30.** P6c inventory (step 14 of Next), from the code and a DOM
+  sweep of every route in the local seed as admin (anything with a card
+  ancestor that is itself a card, shadowed, or a padded rounded fill or
+  border). No `.card` or shadowed box sits inside a card on Home or the
+  Events list any more; the "four" counted in the card-pattern Log were
+  partly removed by P6b. What is left:
+  - **Cards inside cards.** Run of show: each step is an `li.card` inside
+    the run-of-show card. Lobster Way admin: a `CollapsibleCard` per
+    category holds a bordered `lob-well/60` box per item, which holds white
+    bordered boxes (three levels). Oscars results: a white bordered box per
+    category, copied in `PastEventResults` (inside the past event's
+    `CollapsibleCard`) and the event Results "Lobster Games" tab (a card per
+    category under a summary card). Security events: a tinted, bordered box
+    per event inside the `CollapsibleCard`.
+  - **Hand-built `lob-well` insets → `Well`.** TeamPage Group Stage Record;
+    Schedule's round note and Sitting out; `TeamJoinCard` and
+    `TeamInvitesPage` (the partner line); `EventFormModal` courts; the
+    `PlayerForm` loading line; `TransferPendingModal`.
+  - **A well or bordered box per row (lists, so divided rows).**
+    `GroupFormationTool`'s `TeamCard`; the past event's match boxes
+    (`PastEventResults`, copied in `ScoresMatchesTab`, where they sit on the
+    background); Admin tips; Oscars `CategoryEditor` rows; raffle winners.
+    Not wells: the read-only email
+    and name fields on Account (an input look), the `UpcomingEventCard` and
+    Schedule pills (P6e `Tag`), the shop image placeholder.
+  - **Tinted boxes inside cards (triage).** Alerts that stay or become
+    `AlertBox`: Account "Admin mode active", the pending-transfer rows in
+    `AdminTransferPanel` (warning), the `PlayerProfile` warning. Not alerts:
+    the cream boxes (Account claim, `EmailChangeField` hint, `OtpCodeStep`,
+    the Account Playtomic level readout), `GroupFormationTool`'s teal
+    "Bracket recommendation", the Payments teal summary, `ResultsView`'s
+    yellow winner boxes, the `PlayerProfile` stat chips, `StartingCourtsList`
+    highlight. `PendingMatchCard` (coral, one card with divided rows) and
+    Lobster Way's cream story `details` are cards in their own right, left
+    alone.
+  - **Playtomic panel.** The blue `bg-blue-50` box, copied in
+    `ProfileFields`, `ProfileSection` and `PlayerForm`, groups one field
+    under an eyebrow. Blue is neither status nor brand (owner, #73: no
+    third-party brand colours), so it becomes a `Well`, and the three copies
+    become one field.
+  - **Cards holding lists, sorted.** P6c: Oscars results, security events,
+    Lobster Way admin (cards inside cards, above). P6d: `MyTournament` (an
+    object card per state, and `MyRounds` a card per round), the Home
+    birthdays card (raw pink, coloured left border), the Oscars shell's
+    hand-built white cards.
+  - **Proposed split.**
+    - **P6c-1: `Well`.** Builds it and moves the `lob-well` insets and the
+      Playtomic panel (one shared field) onto it.
+    - **P6c-2: cards inside cards.** Run of show, Lobster Way admin, Oscars
+      results and the past event's match boxes (one component each for the
+      two copies), security events, and the lists of boxed rows above:
+      rows divided, not boxed.
+    - **P6c-3: tinted boxes.** The triage above: alerts onto `AlertBox`,
+      the rest onto `Well` or plain text.
+
+  Owner calls: three PRs as proposed; the Playtomic panel is a `Well` and one
+  shared field.
+
+- **2026-10-30.** P6c-1 on `design-system-p6c-well`. `Well` (flat `lob-well`
+  inset, no border or shadow, `px-4 py-3`, children spaced `space-y-2` like
+  `ListRow`) with a test and a gallery entry.
+  - Onto it: TeamPage's Group Stage Record, Schedule's round note and
+    Sitting out, the partner line on `TeamJoinCard` and `TeamInvitesPage`,
+    `EventFormModal`'s courts, `TransferPendingModal`'s pre-filled message
+    (it lost its border). The `PlayerForm` loading line was a well holding
+    text; it is `Spinner size="inline"`, as P5 set for loading.
+  - Playtomic panel: the three blue copies are one `PlaytomicLevelField`
+    (players feature) in a `Well`, with each caller's own last sentence of
+    help. The blue eyebrow repeated the field's label and is gone. It is a
+    text field with a decimal keypad everywhere (was `type="number"` on
+    Account and admin Edit Player, which can't take "3,5"), so signup,
+    Account and admin Edit Player share one check, `isLevelInRange`
+    (`parseLevel.ts`): Account takes 0.5 to 7, the others 0 to 7. Admin Edit
+    Player shows a refused level under the field, as the sheet covers the
+    page's error box.
+  - Found: Edit Player's other save errors still show behind the sheet
+    (#121); Account's Playtomic update prompt is a hand-built overlay, not a
+    dialog (#122).
