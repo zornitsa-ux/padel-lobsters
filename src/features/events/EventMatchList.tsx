@@ -73,7 +73,7 @@ function TeamNames({
       className={`flex-1 min-w-0 ${alignEnd ? 'text-right' : ''} ${won ? 'text-lob-success' : 'text-lob-slate'}`}
     >
       {(ids ?? []).map((id, i) => (
-        <p key={i} className="text-sm font-semibold leading-tight truncate">
+        <p key={i} className="text-sm font-semibold leading-tight">
           {nameFor(id)}
         </p>
       ))}

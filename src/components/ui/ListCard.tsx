@@ -7,26 +7,35 @@ interface ListCardProps {
   children: ReactNode
   /** Names the list for screen readers when no heading labels it. */
   label?: string
-  /** Inside a card already: divided rows with no card of their own, flush with the card's content. */
+  /**
+   * Inside a card already: divided rows with no card of their own, flush with the card's content.
+   * For `ListRow`s; a pressable row keeps its padding so its hover fill clears the text.
+   */
   inset?: boolean
+  /** The order is the content, e.g. numbered steps: an `ol`. */
+  ordered?: boolean
 }
+
+// Inset rows sit flush: no padding above the first or below the last, so the parent spaces the list.
+const INSET_LIST = '[&>li:first-child>*]:pt-0 [&>li:last-child>*]:pb-0'
 
 const InsetContext = createContext(false)
 
 /** A list of like items: one card, hairline dividers between rows. */
-export function ListCard({ children, label, inset = false }: ListCardProps) {
+export function ListCard({ children, label, inset = false, ordered = false }: ListCardProps) {
   const rows = Children.toArray(children)
   if (rows.length === 0) return null
+  const List = ordered ? 'ol' : 'ul'
   return (
     <InsetContext.Provider value={inset}>
-      <ul
+      <List
         aria-label={label}
-        className={`divide-y divide-lob-line ${inset ? '' : 'card p-0 overflow-hidden'}`.trim()}
+        className={`divide-y divide-lob-line ${inset ? INSET_LIST : 'card p-0 overflow-hidden'}`}
       >
         {rows.map((child, index) => (
           <li key={isValidElement(child) && child.key !== null ? child.key : index}>{child}</li>
         ))}
-      </ul>
+      </List>
     </InsetContext.Provider>
   )
 }

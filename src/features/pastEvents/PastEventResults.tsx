@@ -25,6 +25,7 @@ import { OscarResultsList } from '../oscars/OscarResultsList'
 import { EventMatchList } from '../events/EventMatchList'
 import { Button } from '../../components/ui/Button'
 import { EmptyState } from '../../components/ui/EmptyState'
+import { plural } from '../../lib/plural'
 
 type TabId = 'standings' | 'matches' | 'games'
 
@@ -461,7 +462,7 @@ function LobsterGamesPanel({ gameResults }: { gameResults: ResultRow[] }) {
         <Gamepad2 size={14} className="text-lob-teal" />
         <p className="text-xs font-bold text-lob-slate">🏆 Lobster Oscars</p>
         <span className="text-2xs text-lob-muted-light ml-auto">
-          {cats.length} categor{cats.length === 1 ? 'y' : 'ies'}
+          {plural({ count: cats.length, one: 'category', many: 'categories' })}
         </span>
       </div>
       <OscarResultsList categories={cats} inset />

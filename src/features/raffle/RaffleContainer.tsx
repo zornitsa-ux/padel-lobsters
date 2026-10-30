@@ -90,10 +90,7 @@ export default function RaffleContainer({
             <ListCard>
               {committed.map((w: RaffleWinner, i: number) => (
                 <ListRow key={w.id}>
-                  <div
-                    className="flex items-center gap-3 animate-fade-in-up"
-                    style={{ animationDelay: `${i * 120}ms` }}
-                  >
+                  <div className="flex items-center gap-3 animate-fade-in-up">
                     <span className="text-2xl flex-shrink-0">{medal(i)}</span>
                     <Avatar player={{ name: fullNameOf(nameOf(w.playerId)) }} size="lg" />
                     <div className="flex-1 min-w-0">

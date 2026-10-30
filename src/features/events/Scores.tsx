@@ -25,6 +25,7 @@ import KingOfCourtResults from './kingOfCourt/KingOfCourtResults'
 import type { NormalisedTournament } from './tournamentQueries'
 import type { EventNavigate } from './eventHelpers'
 import { Button } from '../../components/ui/Button'
+import { plural } from '../../lib/plural'
 
 type ScoresTabId = 'ranking' | 'matches' | 'games' | 'raffle'
 
@@ -170,8 +171,8 @@ export default function Scores({ tournament, onNavigate }: ScoresProps) {
               icon={<Trophy />}
               action={
                 <span className="text-xs text-lob-muted-light">
-                  {cats.length} categor{cats.length === 1 ? 'y' : 'ies'}
-                  {totalVoters > 0 && ` · ${totalVoters} voter${totalVoters === 1 ? '' : 's'}`}
+                  {plural({ count: cats.length, one: 'category', many: 'categories' })}
+                  {totalVoters > 0 && ` · ${plural({ count: totalVoters, one: 'voter' })}`}
                 </span>
               }
             >

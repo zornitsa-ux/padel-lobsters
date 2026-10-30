@@ -254,7 +254,7 @@ export default function RunOfShow({ tournament }: { tournament: NormalisedTourna
         </AlertBox>
       ))}
 
-      <ListCard>
+      <ListCard ordered>
         {steps.map((step, i) => (
           <StepRow key={step.id} step={step} index={i} action={actions[step.id]} />
         ))}

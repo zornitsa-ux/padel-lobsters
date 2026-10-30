@@ -1316,5 +1316,11 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
     `ListCard inset` rows (were a well per team); an empty group is
     `EmptyState inline`. Not reachable with the seed (groups are set), so a
     unit test covers it.
+  - Review: `ListCard ordered` renders an `ol` (Run of show's steps lost
+    their order for screen readers); an inset list has no padding above its
+    first row or below its last, so the parent spaces it; inset is for
+    `ListRow`s, as a pressable row keeps its padding for its hover fill;
+    contact reads in security events get a `PII` warning badge in place of
+    the row tint; match names wrap rather than truncate.
   - Found: Padel Tips are edited by tapping the text only, not by keyboard
     (#124).

@@ -33,6 +33,17 @@ describe('ListCard', () => {
     expect(list.className).not.toContain('card')
     expect(list.className).toContain('divide-y')
     expect(screen.getByText('Bend your knees').parentElement!.className).not.toContain('px-4')
+    expect(list.className).toContain('[&>li:first-child>*]:pt-0')
+  })
+
+  it('ordered: an ol, for steps whose order is the content', () => {
+    render(
+      <ListCard label="Steps" ordered>
+        <span>Score</span>
+        <span>Finish</span>
+      </ListCard>,
+    )
+    expect(screen.getByRole('list', { name: 'Steps' }).tagName).toBe('OL')
   })
 
   it('renders nothing when every row is empty', () => {

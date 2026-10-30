@@ -71,7 +71,7 @@ Owner, 2026-10-30 (being applied in P6):
 - An inset inside a card or sheet (a record, a note, a field with its explanation) is `Well`: flat
   `lob-well`, no border or shadow. A list inside a card or sheet is `ListCard inset`: divided rows
   with no card of their own, flush with the card's content (its `ListRow`s drop their side
-  padding). Never a well or box per row.
+  padding). Never a well or box per row. Steps whose order matters are `ListCard ordered`.
 - `.card`: `bg-white rounded-2xl p-4`, card shadow and hairline border. The default.
 - `.card-elevated`: same shape, stronger shadow, for a hero card (`NextEventCard`).
 - A card that is one link is `CardLink` (`flush` for a full-bleed band, as on

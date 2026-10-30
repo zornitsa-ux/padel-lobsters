@@ -181,6 +181,9 @@ function EventRow({ ev }: { ev: SecurityEventRow }) {
         <div className="flex items-center gap-1.5 flex-wrap">
           <span className={`font-semibold ${colors.text}`}>{labelForKind(ev.attempt_kind)}</span>
           {ev.succeeded === false && <Badge tone="danger" label="fail" />}
+          {ev.succeeded !== false && PII_ATTEMPT_KINDS.includes(ev.attempt_kind) && (
+            <Badge tone="warning" label="PII" />
+          )}
           <span className="text-lob-muted-light ml-auto whitespace-nowrap">
             {formatTime(ev.attempted_at)}
           </span>
