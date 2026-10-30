@@ -81,11 +81,7 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: number)
   }, [id, variant])
 
   return (
-    <div
-      role="status"
-      aria-live={variant === 'error' ? 'assertive' : 'polite'}
-      className="w-full max-w-md pointer-events-auto shadow-lg"
-    >
+    <div className="w-full max-w-md pointer-events-auto shadow-lg">
       <AlertBox variant={variant} onDismiss={() => onDismiss(id)}>
         {message}
       </AlertBox>

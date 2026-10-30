@@ -1,85 +1,51 @@
 import React from 'react'
-import { AlertCircle } from 'lucide-react'
+import { AlertCircle, CheckCircle2 } from 'lucide-react'
 import type { ScheduleWarning } from './types'
+import { AlertBox } from '../../../components/ui/AlertBox'
 
 type Props = {
   warnings: ScheduleWarning[]
   showSuccess: boolean
 }
 
-export default function ScheduleValidationSummary({ warnings, showSuccess }: Props) {
-  if (warnings.length === 0) {
-    if (!showSuccess) return null
-    return (
-      <div className="bg-lob-success-light border border-lob-success-border rounded-xl p-3 flex items-center gap-2">
-        <span className="text-sm">✅</span>
-        <p className="text-xs text-lob-success font-medium">
-          All rules pass — no conflicts detected
-        </p>
-      </div>
-    )
-  }
+const SECTIONS = [
+  { severity: 'error', variant: 'error', title: 'Rule violations' },
+  { severity: 'warning', variant: 'warning', title: 'Heads up' },
+  { severity: 'info', variant: 'info', title: 'Unavoidable — no action needed' },
+] as const
 
+const hasRound = (warning: ScheduleWarning) =>
+  warning.severity === 'error' || (warning.severity === 'info' && warning.round > 0)
+
+const warningLine = (warning: ScheduleWarning) =>
+  hasRound(warning) ? `R${warning.round}: ${warning.message}` : warning.message
+
+export default function ScheduleValidationSummary({ warnings, showSuccess }: Props) {
   const hasError = warnings.some((warning) => warning.severity === 'error')
   const hasWarning = warnings.some((warning) => warning.severity === 'warning')
 
   return (
     <>
-      <div className="rounded-xl border overflow-hidden">
-        {hasError && (
-          <div className="bg-lob-danger-light border-b border-lob-danger-border p-3 space-y-1">
-            <p className="text-xs font-bold text-lob-danger-strong flex items-center gap-1.5">
-              <AlertCircle size={14} /> Rule violations
-            </p>
-            {warnings
-              .filter((warning) => warning.severity === 'error')
-              .map((warning, index) => (
-                <p key={`e${index}`} className="text-xs text-lob-danger">
-                  • R{warning.round}: {warning.message}
-                </p>
+      {SECTIONS.map(({ severity, variant, title }) => {
+        const lines = warnings.filter((warning) => warning.severity === severity)
+        if (lines.length === 0) return null
+        return (
+          <AlertBox key={severity} variant={variant} icon={<AlertCircle />} title={title}>
+            <ul className="space-y-0.5">
+              {lines.map((warning, index) => (
+                <li key={index}>• {warningLine(warning)}</li>
               ))}
-          </div>
-        )}
-
-        {hasWarning && (
-          <div className="bg-lob-warning-light border-b border-lob-warning-border p-3 space-y-1">
-            <p className="text-xs font-bold text-lob-warning flex items-center gap-1.5">
-              <AlertCircle size={14} /> Heads up
-            </p>
-            {warnings
-              .filter((warning) => warning.severity === 'warning')
-              .map((warning, index) => (
-                <p key={`w${index}`} className="text-xs text-lob-warning">
-                  • {warning.message}
-                </p>
-              ))}
-          </div>
-        )}
-
-        {warnings.some((warning) => warning.severity === 'info') && (
-          <div className="bg-lob-info-light p-3 space-y-1">
-            <p className="text-xs font-bold text-lob-info flex items-center gap-1.5">
-              <AlertCircle size={14} /> Unavoidable — no action needed
-            </p>
-            {warnings
-              .filter((warning) => warning.severity === 'info')
-              .map((warning, index) => (
-                <p key={`i${index}`} className="text-xs text-lob-info">
-                  • {warning.round > 0 ? `R${warning.round}: ` : ''}
-                  {warning.message}
-                </p>
-              ))}
-          </div>
-        )}
-      </div>
+            </ul>
+          </AlertBox>
+        )
+      })}
 
       {!hasError && !hasWarning && showSuccess && (
-        <div className="bg-lob-success-light border border-lob-success-border rounded-xl p-3 flex items-center gap-2">
-          <span className="text-sm">✅</span>
-          <p className="text-xs text-lob-success font-medium">
-            No rule violations — only unavoidable notes above
-          </p>
-        </div>
+        <AlertBox variant="success" icon={<CheckCircle2 />}>
+          {warnings.length === 0
+            ? 'All rules pass — no conflicts detected'
+            : 'No rule violations — only unavoidable notes above'}
+        </AlertBox>
       )}
     </>
   )

@@ -146,11 +146,11 @@ describe('EventFormModal — King of the Court', () => {
   it('warns, without blocking the save, when removing a court strands registered teams', () => {
     const courts = ['A', 'B', 'C'].map((name) => ({ name, booked: true }))
     render(<Harness initial={kotcForm({ courts })} registeredTeams={6} />)
-    expect(screen.queryByRole('alert')).toBeNull()
+    expect(screen.queryByRole('status')).toBeNull()
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Remove court' })[2])
 
-    expect(screen.getByRole('alert').textContent).toBe(
+    expect(screen.getByRole('status').textContent).toBe(
       "6 teams are registered, more than these courts fit. 2 teams won't have a starting court until you add a court back or cancel a team.",
     )
     expect(

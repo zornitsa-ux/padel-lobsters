@@ -9,6 +9,7 @@ import { Modal } from './ui/Modal'
 import { useConfirm } from '../lib/confirmBus'
 import { Button } from './ui/Button'
 import { TextButton } from './ui/TextButton'
+import { AlertBox } from './ui/AlertBox'
 
 // Admin-only modal that lists every pending transfer for a tournament and
 // surfaces the two admin actions:
@@ -145,10 +146,9 @@ export default function AdminTransferPanel({ tournament, onClose }: AdminTransfe
               </div>
 
               {err && (
-                <div className="bg-lob-danger-light border border-lob-danger-border rounded-lg px-2 py-1.5 text-xs text-lob-danger-strong flex items-start gap-1">
-                  <AlertTriangle size={11} className="mt-0.5 flex-shrink-0" />
-                  <span>{err}</span>
-                </div>
+                <AlertBox variant="error" size="sm" icon={<AlertTriangle />}>
+                  {err}
+                </AlertBox>
               )}
 
               <div className="flex items-center justify-between gap-3">

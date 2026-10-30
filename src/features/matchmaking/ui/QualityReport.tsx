@@ -4,6 +4,7 @@ import { playerNamesById, violationLine, violationsSummary } from './violationCo
 import { DIMENSIONS } from './dimensions'
 import { ProgressBar } from '../../../components/ui/ProgressBar'
 import { Disclosure } from '../../../components/ui/Disclosure'
+import { AlertBox } from '../../../components/ui/AlertBox'
 
 export type QualityReportProps = {
   quality: { overall: QualityDimensions; perRound: QualityDimensions[] }
@@ -47,12 +48,9 @@ function DimensionBar({ label, value }: { label: string; value: number }) {
 function ViolationsBanner({ summary }: { summary: string | null }) {
   if (!summary) return null
   return (
-    <p
-      role="alert"
-      className="text-xs text-lob-danger-strong bg-lob-danger-light rounded-lg px-2 py-1.5"
-    >
+    <AlertBox variant="error" size="sm">
       {summary}
-    </p>
+    </AlertBox>
   )
 }
 

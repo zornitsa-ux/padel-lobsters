@@ -281,11 +281,52 @@ function IconButtonSection() {
 function StatusSection() {
   return (
     <Section title="AlertBox and Badge">
-      {(['info', 'warning', 'success', 'error'] as const).map((variant) => (
-        <AlertBox key={variant} variant={variant} icon={<AlertCircle size={14} />}>
-          AlertBox variant=&quot;{variant}&quot;
+      <Row label="AlertBox variant (error is role alert, the rest role status)" block>
+        <div className="space-y-2">
+          {(['info', 'warning', 'success', 'error'] as const).map((variant) => (
+            <AlertBox key={variant} variant={variant} icon={<AlertCircle />}>
+              AlertBox variant=&quot;{variant}&quot;
+            </AlertBox>
+          ))}
+        </div>
+      </Row>
+      <Row label='size="sm" (inside a card, row or form)' block>
+        <div className="space-y-2">
+          <AlertBox variant="warning" size="sm" icon={<AlertCircle />}>
+            Not published yet — only admins can see this.
+          </AlertBox>
+          <AlertBox variant="error" size="sm" onDismiss={() => {}}>
+            Couldn&apos;t save. Try again.
+          </AlertBox>
+        </div>
+      </Row>
+      <Row label="title · action · onDismiss" block>
+        <div className="space-y-2">
+          <AlertBox
+            variant="warning"
+            icon={<AlertCircle />}
+            title="2 pending transfers"
+            action={<TextButton tone="warning">Review</TextButton>}
+          />
+          <AlertBox variant="error" title="Rule violations" onDismiss={() => {}}>
+            R2: the same pair plays twice.
+          </AlertBox>
+        </div>
+      </Row>
+      <Row label="actions (buttons under the text)" block>
+        <AlertBox
+          variant="warning"
+          title="A player wants to give you their spot"
+          actions={
+            <ActionRow>
+              <Button variant="neutral">Decline</Button>
+              <Button>Accept</Button>
+            </ActionRow>
+          }
+        >
+          Summer Social · Sat 14 Nov
         </AlertBox>
-      ))}
+      </Row>
       <Row label="Badge variant">
         {BADGE_VARIANTS.map((variant) => (
           <Badge key={variant} variant={variant} label={variant} />

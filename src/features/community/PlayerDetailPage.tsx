@@ -149,7 +149,6 @@ export default function PlayerDetailPage({ playerId, onNavigate }: PlayerDetailP
               setError('')
               editor.clearError()
             }}
-            className="text-xs"
           >
             {visibleError}
           </AlertBox>

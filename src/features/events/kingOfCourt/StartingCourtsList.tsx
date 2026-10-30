@@ -1,5 +1,6 @@
 import type { StartingCourt } from './domain'
 import { courtLabel } from './kotcPlayer'
+import { AlertBox } from '../../../components/ui/AlertBox'
 
 export default function StartingCourtsList({
   courts,
@@ -47,10 +48,10 @@ export default function StartingCourtsList({
         ))}
       </ol>
       {overflowTeamIds.length > 0 && (
-        <p role="alert" className="text-xs text-lob-danger bg-lob-danger-light rounded-lg p-2">
+        <AlertBox variant="error" size="sm">
           No court for {overflowTeamIds.map(labelOf).join(', ')}.
           {overflowAction && ` ${overflowAction}`}
-        </p>
+        </AlertBox>
       )}
     </div>
   )

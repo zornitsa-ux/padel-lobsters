@@ -25,6 +25,7 @@ import { useConfirmDecline } from '../registration/team/useConfirmDecline'
 import { ACCOUNT_ACKNOWLEDGEMENT_LABEL, accountCreatedMessage } from '../teams/teamStatusMessages'
 import { TEAM_INVITES_PATH } from './inviteRoutes'
 import { Button } from '../../../components/ui/Button'
+import { AlertBox } from '../../../components/ui/AlertBox'
 
 const EMPTY: ProfileFieldValues = {
   firstName: '',
@@ -146,9 +147,9 @@ export default function FinishAccountPage() {
           <span>{ACCOUNT_ACKNOWLEDGEMENT_LABEL}</span>
         </label>
         {error && (
-          <p role="alert" className="text-xs text-lob-danger bg-lob-danger-light rounded-lg p-2">
+          <AlertBox variant="error" size="sm">
             {error}
-          </p>
+          </AlertBox>
         )}
         <Button
           type="submit"

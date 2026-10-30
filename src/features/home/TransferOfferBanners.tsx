@@ -4,6 +4,11 @@ import type { Player } from '../../lib/normalise'
 import type { NormalisedTournament } from '../../lib/normalise'
 import type { NormalisedTransfer } from '../events/transferQueries'
 import { OutgoingTransferActions, TransferResponseActions } from '../events/TransferActions'
+import { AlertBox } from '../../components/ui/AlertBox'
+import { formatDate } from '../events/eventHelpers'
+
+const eventLine = (t: NormalisedTournament) =>
+  t.date ? `${t.name} · ${formatDate(t.date)}` : t.name
 
 interface TransferOfferBannersProps {
   incomingTransfers: NormalisedTransfer[]
@@ -40,31 +45,21 @@ export default function TransferOfferBanners({
         const fromFirst = (fromP?.name || '').split(/\s+/)[0] || 'Someone'
         const busy = transferBusy === xfer.id
         return (
-          <div
+          <AlertBox
             key={xfer.id}
-            className="card border border-lob-warning-border bg-lob-warning-light space-y-2"
+            variant="warning"
+            icon={<ArrowRightLeft />}
+            title={`${fromFirst} wants to transfer their spot to you`}
+            actions={
+              <TransferResponseActions
+                busy={busy}
+                acceptLabel="Accept"
+                onRespond={({ accept }) => onIncomingResponse(xfer, accept)}
+              />
+            }
           >
-            <div className="flex items-start gap-2">
-              <ArrowRightLeft size={14} className="text-lob-warning mt-1 flex-shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm text-lob-warning-strong">
-                  <strong>{fromFirst}</strong> wants to transfer their spot to you
-                </p>
-                {t && (
-                  <p className="text-xs text-lob-warning mt-0.5">
-                    {t.name}
-                    {t.date &&
-                      ` · ${new Date(t.date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}`}
-                  </p>
-                )}
-              </div>
-            </div>
-            <TransferResponseActions
-              busy={busy}
-              acceptLabel="Accept"
-              onRespond={({ accept }) => onIncomingResponse(xfer, accept)}
-            />
-          </div>
+            {t && eventLine(t)}
+          </AlertBox>
         )
       })}
       {outgoingTransfers.map((xfer) => {
@@ -73,31 +68,21 @@ export default function TransferOfferBanners({
         const toFirst = (toP?.name || '').split(/\s+/)[0] || 'them'
         const busy = transferBusy === xfer.id
         return (
-          <div
+          <AlertBox
             key={xfer.id}
-            className="card border border-lob-warning-border bg-lob-warning-light/60 space-y-2"
+            variant="warning"
+            icon={<Clock />}
+            title={`Pending transfer to ${toFirst} — awaiting acceptance.`}
+            actions={
+              <OutgoingTransferActions
+                onResend={toP ? () => onOutgoingShare(xfer, toP) : undefined}
+                onCancel={() => onOutgoingCancel(xfer)}
+                busy={busy}
+              />
+            }
           >
-            <div className="flex items-start gap-2">
-              <Clock size={14} className="text-lob-warning mt-1 flex-shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm text-lob-warning-strong">
-                  <strong>Pending transfer</strong> to {toFirst} — awaiting acceptance.
-                </p>
-                {t && (
-                  <p className="text-xs text-lob-warning mt-0.5">
-                    {t.name}
-                    {t.date &&
-                      ` · ${new Date(t.date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}`}
-                  </p>
-                )}
-              </div>
-            </div>
-            <OutgoingTransferActions
-              onResend={toP ? () => onOutgoingShare(xfer, toP) : undefined}
-              onCancel={() => onOutgoingCancel(xfer)}
-              busy={busy}
-            />
-          </div>
+            {t && eventLine(t)}
+          </AlertBox>
         )
       })}
     </div>

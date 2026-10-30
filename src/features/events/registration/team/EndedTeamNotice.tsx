@@ -1,6 +1,7 @@
 import { PARTNER_DECLINED_NOTICE } from '../../teams/teamStatusMessages'
 import type { EndedTeamNotice as Ended } from './teamHelpers'
 import { Button } from '../../../../components/ui/Button'
+import { AlertBox } from '../../../../components/ui/AlertBox'
 
 export const ADMIN_CANCELLED_NOTICE = 'An admin cancelled your team.'
 
@@ -16,14 +17,15 @@ export default function EndedTeamNotice({
       ? PARTNER_DECLINED_NOTICE(notice.partnerName)
       : ADMIN_CANCELLED_NOTICE
   return (
-    <div
-      role="status"
-      className="card bg-lob-warning-light border border-lob-warning-border space-y-2"
+    <AlertBox
+      variant="warning"
+      actions={
+        <Button onClick={onSignUpAgain} fullWidth>
+          Sign up again
+        </Button>
+      }
     >
-      <p className="text-sm text-lob-warning-strong">{text}</p>
-      <Button onClick={onSignUpAgain} fullWidth>
-        Sign up again
-      </Button>
-    </div>
+      {text}
+    </AlertBox>
   )
 }

@@ -17,7 +17,6 @@
   "src/features/matchmaking/ui/genderMarks.tsx": 4,
   "src/features/merch/OrdersTable.tsx": 1,
   "src/features/merch/statusConfig.ts": 2,
-  "src/features/oscars/OscarsShell.tsx": 4,
   "src/features/oscars/ResultsView.tsx": 7,
   "src/features/pastEvents/PastEventResults.tsx": 11,
   "src/features/players/ProfileFields.tsx": 2,

@@ -232,9 +232,11 @@ export function ScoreEntryForm({
       </div>
 
       {recordResult.error && (
-        <AlertBox variant="error" className="mt-2">
-          {(recordResult.error as Error).message ?? 'Failed to save result. Please try again.'}
-        </AlertBox>
+        <div className="pt-2">
+          <AlertBox variant="error">
+            {(recordResult.error as Error).message ?? 'Failed to save result. Please try again.'}
+          </AlertBox>
+        </div>
       )}
 
       <div className="pt-4">

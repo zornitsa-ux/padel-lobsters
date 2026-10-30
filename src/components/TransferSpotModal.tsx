@@ -8,6 +8,7 @@ import { useTransferActions } from '../features/events/useTransfers'
 import { Modal } from './ui/Modal'
 import { PlayerRow } from './ui/PlayerRow'
 import type { Player } from '../lib/normalise'
+import { AlertBox } from './ui/AlertBox'
 
 // Picker modal Josephine sees when she taps "Transfer spot to another player".
 // Lists waitlist players first (so transferring to them is a one-tap promotion
@@ -192,9 +193,9 @@ export default function TransferSpotModal({
         )}
 
         {error && (
-          <div className="bg-lob-danger-light border border-lob-danger-border rounded-xl px-3 py-2 text-xs text-lob-danger-strong">
+          <AlertBox variant="error" size="sm">
             {error}
-          </div>
+          </AlertBox>
         )}
 
         <div className="relative">

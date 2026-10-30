@@ -1,7 +1,8 @@
-import { CheckCircle, Clock, UserRoundX } from 'lucide-react'
+import { CheckCircle, UserRoundX } from 'lucide-react'
 import type { MyRegistrationSummary } from '../nextMatch'
 import { Button } from '../../../components/ui/Button'
 import { TextButton } from '../../../components/ui/TextButton'
+import WaitlistNotice from './WaitlistNotice'
 
 interface JoinEventCardProps {
   /** Derived by `myRegistrationSummary` — the same source /me reads. */
@@ -67,18 +68,7 @@ export default function JoinEventCard({
   }
 
   if (summary.status === 'waitlisted') {
-    return (
-      <div className="card bg-lob-warning-light border border-lob-warning-border space-y-1">
-        <div className="flex items-center gap-2">
-          <Clock size={14} className="text-lob-warning-solid flex-shrink-0" />
-          <p className="text-sm font-semibold text-lob-warning-strong">
-            You&apos;re on the waitlist
-            {summary.waitlistPosition ? ` · #${summary.waitlistPosition}` : ''}
-          </p>
-        </div>
-        <p className="text-xs text-lob-warning pl-5">You&apos;ll be notified if a spot opens up.</p>
-      </div>
-    )
+    return <WaitlistNotice position={summary.waitlistPosition} />
   }
 
   const ps = summary.paymentStatus

@@ -5,6 +5,7 @@ import type { GetPlayer, TransferShareTarget } from './utils'
 import { TextButton } from '../../../components/ui/TextButton'
 import { Button } from '../../../components/ui/Button'
 import { OutgoingTransferActions, TransferResponseActions } from '../TransferActions'
+import { AlertBox } from '../../../components/ui/AlertBox'
 
 interface TransferSpotCardProps {
   myReg: NormalisedRegistration | null | undefined
@@ -68,22 +69,19 @@ export default function TransferSpotCard({
           const fromFirst = (fromP?.name || '').split(/\s+/)[0] || 'Someone'
           const busy = respondingTo === xfer.id
           return (
-            <div
+            <AlertBox
               key={xfer.id}
-              className="card border border-lob-warning-border bg-lob-warning-light space-y-3"
-            >
-              <div className="flex items-center gap-2">
-                <ArrowRightLeft size={14} className="text-lob-warning flex-shrink-0" />
-                <p className="text-sm text-lob-warning-strong">
-                  <strong>{fromFirst}</strong> wants to give you their spot
-                </p>
-              </div>
-              <TransferResponseActions
-                busy={busy}
-                acceptLabel="Accept spot"
-                onRespond={({ accept }) => onIncomingResponse(xfer, accept)}
-              />
-            </div>
+              variant="warning"
+              icon={<ArrowRightLeft />}
+              title={`${fromFirst} wants to give you their spot`}
+              actions={
+                <TransferResponseActions
+                  busy={busy}
+                  acceptLabel="Accept spot"
+                  onRespond={({ accept }) => onIncomingResponse(xfer, accept)}
+                />
+              }
+            />
           )
         })}
       </div>
@@ -99,21 +97,24 @@ export default function TransferSpotCard({
       <>
         {incomingCards}
         <div className="card">
-          <div className="bg-lob-warning-light border border-lob-warning-border rounded-xl px-3 py-2 space-y-2">
-            <div className="flex items-center gap-2 text-xs text-lob-warning-strong">
-              <Clock size={12} className="flex-shrink-0" />
-              <span>Transfer offer pending · waiting on {recipientFirst}</span>
-            </div>
-            <OutgoingTransferActions
-              onResend={
-                recipient
-                  ? () => onOpenShareModal({ transferId: pendingFromMe.id, toPlayer: recipient })
-                  : undefined
-              }
-              onCancel={onCancelMyOffer}
-              busy={busy}
-            />
-          </div>
+          <AlertBox
+            variant="warning"
+            size="sm"
+            icon={<Clock />}
+            actions={
+              <OutgoingTransferActions
+                onResend={
+                  recipient
+                    ? () => onOpenShareModal({ transferId: pendingFromMe.id, toPlayer: recipient })
+                    : undefined
+                }
+                onCancel={onCancelMyOffer}
+                busy={busy}
+              />
+            }
+          >
+            Transfer offer pending · waiting on {recipientFirst}
+          </AlertBox>
         </div>
       </>
     )

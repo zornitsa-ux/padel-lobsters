@@ -117,7 +117,7 @@ export default function Players() {
   return (
     <div className="space-y-4">
       {error && (
-        <AlertBox variant="error" onDismiss={() => setError('')} className="text-xs">
+        <AlertBox variant="error" onDismiss={() => setError('')}>
           {error}
         </AlertBox>
       )}

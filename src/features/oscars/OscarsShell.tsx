@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import type { OscarsPhase } from './oscarsPhase'
+import { AlertBox } from '../../components/ui/AlertBox'
 
 interface ShellProps {
   title: string
@@ -49,23 +50,17 @@ export function PhaseBanner({ status, startedAt, closedAt, sharedAt }: PhaseBann
   }
   if (status === 'ended') {
     return (
-      <div className="bg-yellow-50 border border-yellow-200 rounded-2xl px-4 py-3">
-        <p className="text-sm font-semibold text-yellow-800">Voting closed at {stamp(closedAt)}</p>
-        <p className="text-xs text-yellow-700/80 mt-0.5">
-          Players see a "waiting for results" screen. Press <em>Share with players</em> below to
-          reveal.
-        </p>
-      </div>
+      <AlertBox variant="warning" title={`Voting closed at ${stamp(closedAt)}`}>
+        Players see a "waiting for results" screen. Press <em>Share with players</em> below to
+        reveal.
+      </AlertBox>
     )
   }
   if (status === 'shared') {
     return (
-      <div className="bg-lob-success-light border border-lob-success-border rounded-2xl px-4 py-3">
-        <p className="text-sm font-semibold text-lob-success-strong">
-          Shared with players at {stamp(sharedAt)}
-        </p>
-        <p className="text-xs text-lob-success/80 mt-0.5">Everyone can now see the results.</p>
-      </div>
+      <AlertBox variant="success" title={`Shared with players at ${stamp(sharedAt)}`}>
+        Everyone can now see the results.
+      </AlertBox>
     )
   }
   return null

@@ -75,7 +75,7 @@ Examples: `text-lob-success`, `bg-lob-warning-light border-lob-warning-border`,
 ## Still raw, on purpose
 
 Decorative and categorical colour isn't status, so it stays on the Tailwind
-palette for now (107 classes, held by the `design:check` ratchet; tokens for
+palette for now (103 classes, held by the `design:check` ratchet; tokens for
 these are P7):
 
 - Medal, podium and trophy gold; raffle and Oscars gold.

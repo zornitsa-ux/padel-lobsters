@@ -44,7 +44,8 @@ component doesn't fit, fix the component, not the call site.**
 
 | Need                                 | Use                                                  | Status    |
 | ------------------------------------ | ---------------------------------------------------- | --------- |
-| Error / warning / success / info box | `AlertBox variant=… (size="sm")`                     | size: P3  |
+| Error / warning / success / info box | `AlertBox variant=… (size="sm")`                     | exists    |
+| Notice with a title, link or buttons | `AlertBox title` · `action` · `actions`              | exists    |
 | Field-level error text               | `FormError` (moving to `components/ui`)              | P3        |
 | Status pill                          | `Badge tone=…`                                       | tones: P4 |
 | Button (action or navigation)        | `Button variant=… size=…` (`to` / `href` for links)  | exists    |
@@ -170,9 +171,10 @@ primitives (see the Log) before P3:
    stays ours until a combobox (P6 `SearchInput`).~~ Done; see the Log.
 4. ~~**SwapPanel, CompareView and the Oscars drawer onto Dialog.** Each rolls
    its own Escape, scroll lock and focus today.~~ Done; see the Log.
-5. **E2E safety net** (owner, 2026-10-29; below). Before any more UI moves.
+5. ~~**E2E safety net** (owner, 2026-10-29; below). Before any more UI moves.~~
+   Done in #97 and #105.
 6. **P3 part 1: alerts.** `AlertBox` size, role and dismiss, then the
-   hand-built tinted boxes.
+   hand-built tinted boxes. In review on `design-alerts`; see the Log.
 7. **P3 part 2: field errors.** `FormError` in ui and the hand-built error
    lines.
 8. **P4: `Badge` tones and payment status.**
@@ -828,3 +830,35 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
   payment sheet says "You're in!" and never names them (#104). Also #102:
   production's default privileges give `anon` and `authenticated` all table
   grants on new tables; local gives none (RLS still gates).
+
+- **2026-10-30.** P3 part 1 on `design-alerts`. `AlertBox` gains:
+  - `size="sm"` for a notice inside a card, row or form; `md` stays the
+    default for page and section notices. The box sizes its icon.
+  - A `role`: `alert` for errors, `status` for the rest. `Toast`,
+    `CompareView`, `SwapPanel` and `TeamNotices` drop the wrapper role they
+    put around the box. The admin "haven't paid yet" notice is a pending
+    state, so it moves from `error` to `warning` and isn't announced as an
+    alert on every Home visit (review).
+  - `title` (bold first line in the `-strong` shade), `action` (one trailing
+    `TextButton`: View, Review, Try again) and `actions` (buttons under the
+    text: accept / decline, Pay via Tikkie, Sign up again).
+  - A dismiss that is an `IconButton ghost sm`. Negative margins pull its 32px
+    target back to one line of text, so the box doesn't grow.
+  - No `className`. The margins at its call sites (`TeamForm`,
+    `InvitePlayerModal`, `ScoreEntryForm`) move to the parent's `space-y`, and
+    two page errors' one-off `text-xs` become the standard `md`.
+
+  Triage of the hand-built tinted boxes: 29 files move onto `AlertBox`,
+  including six borderless form errors (settings, finish account, starting
+  courts, schedule quality, a cancelled order). Staying as they are:
+  highlighted rows and cards (waitlisted `TeamCard`, `AdminTransferPanel`
+  rows, security events, review-breakdown buckets and band, profile stat
+  rows, rating signal cards), the admin identity card in `AccountSection`,
+  `AuthGate` (P5 `SignInPrompt`), `TipOfTheDay`, the admin sign-in-invite
+  panel, and status pills (P4). Field errors (`ProfileFields` level, the
+  signup name) are part 2. Notices that were `card`s (transfer offers, the
+  waitlist, an ended team) lose the card shadow. The waitlist notice, copied
+  in `MyTournament` and `JoinEventCard`, is now `WaitlistNotice`. The Oscars
+  "voting closed" banner was raw yellow and is now `warning` (ratchet 107 →
+  103). Two warnings that had `role="alert"` (the court warning in the event
+  form, the signup name-match banner) are now `status`.

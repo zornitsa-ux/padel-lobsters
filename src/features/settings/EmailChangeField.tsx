@@ -5,6 +5,7 @@ import { isSyntheticEmail } from '../auth/syntheticEmail'
 import { ADD_EMAIL_REQUEST } from '../auth/upgradeCopy'
 import { ActionRow } from '../../components/ui/ActionRow'
 import { Button } from '../../components/ui/Button'
+import { AlertBox } from '../../components/ui/AlertBox'
 
 // Self-service email change: type new email -> requestMyEmailChange -> Supabase
 // emails a confirmation link to the new (and old, since double_confirm_changes
@@ -85,9 +86,9 @@ function EmailChangeForm({ email }: { email: string }) {
             autoFocus
           />
           {emailStatus && emailStatus !== 'sent' && (
-            <p className="text-xs text-lob-danger bg-lob-danger-light rounded-lg p-2">
+            <AlertBox variant="error" size="sm">
               {emailStatus}
-            </p>
+            </AlertBox>
           )}
           <ActionRow>
             <Button

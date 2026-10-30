@@ -1,5 +1,5 @@
 import { useMemo, useState, type ReactNode } from 'react'
-import { CheckCircle, Clock, Trophy, UserRoundX } from 'lucide-react'
+import { CheckCircle, Trophy, UserRoundX } from 'lucide-react'
 import { useApp } from '../../context/useApp'
 import { useRegistrations, useRegistrationActions } from './useRegistrations'
 import { useMatches } from './useMatches'
@@ -24,6 +24,8 @@ import { isEventOver } from './eventPhase'
 import type { NormalisedTournament } from '../../lib/normalise'
 import type { EventNavigate } from './eventHelpers'
 import { Button } from '../../components/ui/Button'
+import WaitlistNotice from './registration/WaitlistNotice'
+import { AlertBox } from '../../components/ui/AlertBox'
 
 type Props = {
   tournament: NormalisedTournament
@@ -301,17 +303,7 @@ function RegistrationCard({
   }
 
   if (registration.status === 'waitlisted') {
-    return (
-      <div className="card bg-lob-warning-light border border-lob-warning-border space-y-1">
-        <div className="flex items-center gap-2">
-          <Clock size={14} className="text-lob-warning flex-shrink-0" />
-          <p className="text-sm font-semibold text-lob-warning-strong">
-            You&apos;re on the waitlist{waitlistPosition ? ` · #${waitlistPosition}` : ''}
-          </p>
-        </div>
-        <p className="text-xs text-lob-warning pl-5">You&apos;ll be notified if a spot opens up.</p>
-      </div>
-    )
+    return <WaitlistNotice position={waitlistPosition} />
   }
 
   // status === 'registered'
@@ -348,13 +340,11 @@ function RegistrationCard({
     return (
       <div className="card space-y-3">
         {badge}
-        <div className="bg-lob-info-light border border-lob-info-border rounded-xl px-3 py-2">
-          <p className="text-xs font-semibold text-lob-info">
-            {isTikkied
-              ? '🔗 Tikkie sent · awaiting admin confirmation'
-              : '💬 Payment declared · admin will confirm shortly'}
-          </p>
-        </div>
+        <AlertBox variant="info" size="sm">
+          {isTikkied
+            ? '🔗 Tikkie sent · awaiting admin confirmation'
+            : '💬 Payment declared · admin will confirm shortly'}
+        </AlertBox>
       </div>
     )
   }

@@ -13,6 +13,7 @@ import type { RunOfShowStep } from './runOfShowSteps'
 import type { NormalisedTournament } from '../../lib/normalise'
 import { Button } from '../../components/ui/Button'
 import { TextButton } from '../../components/ui/TextButton'
+import { AlertBox } from '../../components/ui/AlertBox'
 
 const stepNumber = (index: number): string => String(index + 1).padStart(2, '0')
 
@@ -253,13 +254,9 @@ export default function RunOfShow({ tournament }: { tournament: NormalisedTourna
           error — without this a failed close/share left the step "available"
           with no explanation. */}
       {[lifecycle.error, oscars.error].filter(Boolean).map((message) => (
-        <p
-          key={message}
-          role="alert"
-          className="text-xs text-lob-danger bg-lob-danger-light border border-lob-danger-border rounded-lg p-2"
-        >
+        <AlertBox key={message} variant="error" size="sm">
           {message}
-        </p>
+        </AlertBox>
       ))}
 
       <ol className="space-y-3">
