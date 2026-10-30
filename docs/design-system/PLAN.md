@@ -197,10 +197,10 @@ primitives (see the Log) before P3:
     (2026-10-30). Three PRs:
     - **P6b-1: player and team rows.** Builds `ListRow` and `CheckRow`.
       Registered, Waitlist and Cancelled players, team rows, Payments,
-      pending approvals, raffle eligibility. In review.
+      pending approvals, raffle eligibility. Done in #116.
     - **P6b-2: league.** `SectionHeader` users onto `Section`, then delete
       it; draft and manage team lists; fixtures and results as `ListCard`
-      rows; standings headings.
+      rows; standings headings. In review.
     - **P6b-3: link lists and orders.** Seasons, Admin tools (tools and
       Needs attention), shop orders.
 14. **P6c: no card inside a card.** Builds `Well` (flat `lob-well` inset, no
@@ -1147,3 +1147,32 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
     drop out shows no empty card. Payments tints its avatars from
     `BADGE_TONE_CLASSES` (`badgeTones.ts`, Badge's own map) rather than a
     copy. `ListRow` has no `highlighted` until a list needs it.
+
+- **2026-10-30.** P6b-2 on `design-system-p6b-league`. `SectionHeader` is gone:
+  its seven users are `Section`s, and the headings that sat inside a card
+  (standings, bracket, draft teams) are on the background with the card under
+  them.
+  - Standings: the Group A / B tables were copied on three screens; they are
+    one `GroupStandings` (a `Section` over one card). The knockout copy had no
+    card and now has one.
+  - Teams: the draft list is a `ListCard` of `LinkRow onClick`, the viewer's
+    team `highlighted` (was a hand-built tinted row with a left border).
+    Manage is a `ListCard` of `ListRow`s instead of a card per team, with Add
+    Team as the `Section` action. `GroupFormationTool`'s two copied group
+    columns are one `GroupColumn`.
+  - Matches: `LeagueMatchCard` is replaced by `LeagueMatchRow` (league
+    feature, in the gallery), one `ListCard` per list on all five screens.
+    Teams stack with their games per set in columns; the winner's line is
+    bold, the loser's muted; a detail line gives the stage label, date and
+    place; an unplayed match shows `Pending`, a bye one team and `Bye`.
+    Owner calls on the mockup:
+    - Team names are `TextButton`s, which opens the team by keyboard too
+      (they were `div onClick`s).
+    - An action (Enter Score) takes the `Pending` badge's place.
+    - The league page's Matches splits into Fixtures and Results sections
+      instead of one list with a hand-built "Completed" label.
+  - Review: the set columns are hidden from screen readers, which hear one
+    line instead ("Won by …, 6-4, 3-6, 8-10"); the match date parses as a
+    local date (it showed a day early west of UTC); a bye gets no Enter Score
+    or Edit on Manage (it opened the score form for a match with no
+    opponent).

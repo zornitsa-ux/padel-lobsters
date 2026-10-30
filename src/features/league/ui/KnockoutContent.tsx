@@ -1,14 +1,14 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import { Trophy, CheckCircle, Archive } from 'lucide-react'
-import { SectionHeader } from '../../../components/ui/SectionHeader'
+import { Section } from '../../../components/ui/Section'
+import { TextButton } from '../../../components/ui/TextButton'
 import { SegmentedControl } from '../../../components/ui/SegmentedControl'
-import { GroupStandingsTable } from './GroupStandingsTable'
-import { LeagueMatchCard } from './LeagueMatchCard'
+import { GroupStandings } from './GroupStandings'
+import { ListCard } from '../../../components/ui/ListCard'
+import { LeagueMatchRow } from './LeagueMatchRow'
 import { KnockoutBracket } from './KnockoutBracket'
 import { ChampionBanner } from './ChampionBanner'
 import { divisionChampions } from '../domain/champions'
-import { computeGroupStandings } from '../domain/standings'
 import { sortMatchesDesc } from '../domain/matchDisplay'
 import type { LeagueTeam, LeagueMatch } from '../domain/types'
 
@@ -48,11 +48,6 @@ export function KnockoutContent({
     .filter((m) => m.stage !== 'group' && m.winner_id !== null && m.team2_id !== null)
     .sort(sortMatchesDesc)
 
-  const groupATeams = divTeams.filter((t) => t.group_label === 'A')
-  const groupBTeams = divTeams.filter((t) => t.group_label === 'B')
-  const standingsA = computeGroupStandings(groupATeams, divMatches)
-  const standingsB = computeGroupStandings(groupBTeams, divMatches)
-
   const bracketToggle = (
     <SegmentedControl
       ariaLabel="Bracket"
@@ -71,27 +66,27 @@ export function KnockoutContent({
         onTeamClick={onTeamClick}
       />
 
-      <div className="card">
-        <SectionHeader icon={<Trophy size={15} />} title="Bracket" action={bracketToggle} />
-        {hasKnockout ? (
-          <KnockoutBracket
-            semi1={bracketTab === 'gold' ? goldSemis[0] : silverSemis[0]}
-            semi2={bracketTab === 'gold' ? goldSemis[1] : silverSemis[1]}
-            final={bracketTab === 'gold' ? goldFinal : silverFinal}
-            teamById={teamById}
-            onTeamClick={onTeamClick}
-          />
-        ) : (
-          <p className="text-sm text-lob-muted text-center py-6">Bracket not yet generated.</p>
-        )}
-      </div>
+      <Section title="Bracket" icon={<Trophy />} action={bracketToggle}>
+        <div className="card">
+          {hasKnockout ? (
+            <KnockoutBracket
+              semi1={bracketTab === 'gold' ? goldSemis[0] : silverSemis[0]}
+              semi2={bracketTab === 'gold' ? goldSemis[1] : silverSemis[1]}
+              final={bracketTab === 'gold' ? goldFinal : silverFinal}
+              teamById={teamById}
+              onTeamClick={onTeamClick}
+            />
+          ) : (
+            <p className="text-sm text-lob-muted text-center py-6">Bracket not yet generated.</p>
+          )}
+        </div>
+      </Section>
 
       {knockoutResults.length > 0 && (
-        <div>
-          <SectionHeader icon={<CheckCircle size={15} />} title="Results" />
-          <div className="space-y-2">
+        <Section title="Results" icon={<CheckCircle />}>
+          <ListCard>
             {knockoutResults.map((m) => (
-              <LeagueMatchCard
+              <LeagueMatchRow
                 key={m.id}
                 match={m}
                 team1={teamById[m.team1_id ?? '']}
@@ -99,50 +94,19 @@ export function KnockoutContent({
                 onTeamClick={onTeamClick}
               />
             ))}
-          </div>
-        </div>
+          </ListCard>
+        </Section>
       )}
 
-      {(standingsA.length > 0 || standingsB.length > 0) && (
-        <div>
-          <SectionHeader
-            icon={<Archive size={15} />}
-            title="Group Stage"
-            action={
-              <Link
-                to={`/league/${leagueId}/group-stage`}
-                className="text-xs text-lob-teal font-medium"
-              >
-                View →
-              </Link>
-            }
-          />
-          {standingsA.length > 0 && (
-            <>
-              <p className="text-xs uppercase tracking-wide text-lob-muted mb-2">Group A</p>
-              <GroupStandingsTable
-                standings={standingsA}
-                myTeamId={myTeam?.id ?? null}
-                onTeamClick={onTeamClick}
-              />
-            </>
-          )}
-          {standingsB.length > 0 && (
-            <>
-              <p
-                className={`text-xs uppercase tracking-wide text-lob-muted mb-2 ${standingsA.length > 0 ? 'mt-4' : ''}`}
-              >
-                Group B
-              </p>
-              <GroupStandingsTable
-                standings={standingsB}
-                myTeamId={myTeam?.id ?? null}
-                onTeamClick={onTeamClick}
-              />
-            </>
-          )}
-        </div>
-      )}
+      <GroupStandings
+        title="Group Stage"
+        icon={<Archive />}
+        action={<TextButton to={`/league/${leagueId}/group-stage`}>View →</TextButton>}
+        divTeams={divTeams}
+        divMatches={divMatches}
+        myTeamId={myTeam?.id ?? null}
+        onTeamClick={onTeamClick}
+      />
     </>
   )
 }

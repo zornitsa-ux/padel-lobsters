@@ -1,5 +1,5 @@
 import { Users } from 'lucide-react'
-import { SectionHeader } from '../../../components/ui/SectionHeader'
+import { Section } from '../../../components/ui/Section'
 import { TeamsList } from './TeamsList'
 import type { LeagueTeam } from '../domain/types'
 
@@ -14,9 +14,8 @@ export function DraftSection({
 }) {
   if (divTeams.length === 0) return null
   return (
-    <div className="card">
-      <SectionHeader icon={<Users size={15} />} title={`Teams (${divTeams.length})`} />
+    <Section title={`Teams (${divTeams.length})`} icon={<Users />}>
       <TeamsList teams={divTeams} myTeamId={myTeam?.id ?? null} onTeamClick={onTeamClick} />
-    </div>
+    </Section>
   )
 }

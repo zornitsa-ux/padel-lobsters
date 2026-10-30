@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { BarChart2, Calendar } from 'lucide-react'
-import { SectionHeader } from '../../../components/ui/SectionHeader'
-import { GroupStandingsTable } from './GroupStandingsTable'
-import { LeagueMatchCard } from './LeagueMatchCard'
-import { computeGroupStandings } from '../domain/standings'
+import { BarChart2, Calendar, CheckCircle } from 'lucide-react'
+import { Section } from '../../../components/ui/Section'
+import { GroupStandings } from './GroupStandings'
+import { LeagueMatchRow } from './LeagueMatchRow'
+import { ListCard } from '../../../components/ui/ListCard'
 import { sortMatchesDesc } from '../domain/matchDisplay'
 import type { LeagueTeam, LeagueMatch } from '../domain/types'
 import { TextButton } from '../../../components/ui/TextButton'
@@ -25,93 +25,60 @@ export function GroupStageContent({
 }: GroupStageContentProps) {
   const [showAllResults, setShowAllResults] = useState(false)
 
-  const groupATeams = divTeams.filter((t) => t.group_label === 'A')
-  const groupBTeams = divTeams.filter((t) => t.group_label === 'B')
-  const standingsA = computeGroupStandings(groupATeams, divMatches)
-  const standingsB = computeGroupStandings(groupBTeams, divMatches)
-
   const upcomingMatches = divMatches.filter((m) => m.stage === 'group' && m.winner_id === null)
   const completedResults = divMatches
     .filter((m) => m.stage === 'group' && m.winner_id !== null)
     .sort(sortMatchesDesc)
   const visibleResults = showAllResults ? completedResults : completedResults.slice(0, 5)
 
-  const hasStandings = standingsA.length > 0 || standingsB.length > 0
-
   return (
     <>
-      {hasStandings && (
-        <div className="card">
-          <SectionHeader icon={<BarChart2 size={15} />} title="Standings" />
-          {standingsA.length > 0 && (
-            <>
-              <p className="text-xs uppercase tracking-wide text-lob-muted mb-2">Group A</p>
-              <GroupStandingsTable
-                standings={standingsA}
-                myTeamId={myTeam?.id ?? null}
+      <GroupStandings
+        title="Standings"
+        icon={<BarChart2 />}
+        divTeams={divTeams}
+        divMatches={divMatches}
+        myTeamId={myTeam?.id ?? null}
+        onTeamClick={onTeamClick}
+      />
+
+      {upcomingMatches.length > 0 && (
+        <Section title="Fixtures" icon={<Calendar />}>
+          <ListCard>
+            {upcomingMatches.map((m) => (
+              <LeagueMatchRow
+                key={m.id}
+                match={m}
+                team1={teamById[m.team1_id ?? '']}
+                team2={teamById[m.team2_id ?? '']}
                 onTeamClick={onTeamClick}
               />
-            </>
-          )}
-          {standingsB.length > 0 && (
-            <>
-              <p
-                className={`text-xs uppercase tracking-wide text-lob-muted mb-2 ${standingsA.length > 0 ? 'mt-4' : ''}`}
-              >
-                Group B
-              </p>
-              <GroupStandingsTable
-                standings={standingsB}
-                myTeamId={myTeam?.id ?? null}
-                onTeamClick={onTeamClick}
-              />
-            </>
-          )}
-        </div>
+            ))}
+          </ListCard>
+        </Section>
       )}
 
-      {(upcomingMatches.length > 0 || completedResults.length > 0) && (
-        <div>
-          <SectionHeader icon={<Calendar size={15} />} title="Matches" />
-          {upcomingMatches.length > 0 && (
-            <div className="space-y-2 mb-3">
-              {upcomingMatches.map((m) => (
-                <LeagueMatchCard
-                  key={m.id}
-                  match={m}
-                  team1={teamById[m.team1_id ?? '']}
-                  team2={teamById[m.team2_id ?? '']}
-                  onTeamClick={onTeamClick}
-                />
-              ))}
+      {completedResults.length > 0 && (
+        <Section title="Results" icon={<CheckCircle />}>
+          <ListCard>
+            {visibleResults.map((m) => (
+              <LeagueMatchRow
+                key={m.id}
+                match={m}
+                team1={teamById[m.team1_id ?? '']}
+                team2={teamById[m.team2_id ?? '']}
+                onTeamClick={onTeamClick}
+              />
+            ))}
+          </ListCard>
+          {completedResults.length > 5 && !showAllResults && (
+            <div className="text-center">
+              <TextButton size="sm" onClick={() => setShowAllResults(true)}>
+                Show all ({completedResults.length}) ↓
+              </TextButton>
             </div>
           )}
-          {completedResults.length > 0 && (
-            <>
-              {upcomingMatches.length > 0 && (
-                <p className="text-xs text-lob-muted text-center py-1">Completed</p>
-              )}
-              <div className="space-y-2">
-                {visibleResults.map((m) => (
-                  <LeagueMatchCard
-                    key={m.id}
-                    match={m}
-                    team1={teamById[m.team1_id ?? '']}
-                    team2={teamById[m.team2_id ?? '']}
-                    onTeamClick={onTeamClick}
-                  />
-                ))}
-              </div>
-              {completedResults.length > 5 && !showAllResults && (
-                <div className="mt-3 text-center">
-                  <TextButton size="sm" onClick={() => setShowAllResults(true)}>
-                    Show all ({completedResults.length}) ↓
-                  </TextButton>
-                </div>
-              )}
-            </>
-          )}
-        </div>
+        </Section>
       )}
     </>
   )
