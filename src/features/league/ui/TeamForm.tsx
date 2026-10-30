@@ -112,7 +112,6 @@ function PlayerPicker({
 
   return (
     <div
-      className="mb-4"
       onKeyDown={handleKeyDown}
       onBlur={(e) => {
         if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setOpen(false)
@@ -267,50 +266,54 @@ export function TeamForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate>
-      <PlayerPicker
-        label="Player 1"
-        players={players}
-        excludeId={player2Id}
-        selectedId={player1Id}
-        selectedName={player1Name}
-        onSelectPlayer={(id) => {
-          setPlayer1Id(id)
-          setPlayer1Name(undefined)
-        }}
-        onSelectPlaceholder={(name) => {
-          setPlayer1Id(undefined)
-          setPlayer1Name(name)
-        }}
-        error={validationErrors.player1_id}
-      />
-      {player1Conflict && (
-        <AlertBox variant="warning" className="-mt-2 mb-4">
-          This player is already on <strong>{player1Conflict}</strong>.
-        </AlertBox>
-      )}
-      <PlayerPicker
-        label="Player 2"
-        players={players}
-        excludeId={player1Id}
-        selectedId={player2Id}
-        selectedName={player2Name}
-        onSelectPlayer={(id) => {
-          setPlayer2Id(id)
-          setPlayer2Name(undefined)
-        }}
-        onSelectPlaceholder={(name) => {
-          setPlayer2Id(undefined)
-          setPlayer2Name(name)
-        }}
-        error={validationErrors.player2_id}
-      />
-      {player2Conflict && (
-        <AlertBox variant="warning" className="-mt-2 mb-4">
-          This player is already on <strong>{player2Conflict}</strong>.
-        </AlertBox>
-      )}
-      <div className="mb-4">
+    <form onSubmit={handleSubmit} noValidate className="space-y-4">
+      <div className="space-y-2">
+        <PlayerPicker
+          label="Player 1"
+          players={players}
+          excludeId={player2Id}
+          selectedId={player1Id}
+          selectedName={player1Name}
+          onSelectPlayer={(id) => {
+            setPlayer1Id(id)
+            setPlayer1Name(undefined)
+          }}
+          onSelectPlaceholder={(name) => {
+            setPlayer1Id(undefined)
+            setPlayer1Name(name)
+          }}
+          error={validationErrors.player1_id}
+        />
+        {player1Conflict && (
+          <AlertBox variant="warning" size="sm">
+            This player is already on <strong>{player1Conflict}</strong>.
+          </AlertBox>
+        )}
+      </div>
+      <div className="space-y-2">
+        <PlayerPicker
+          label="Player 2"
+          players={players}
+          excludeId={player1Id}
+          selectedId={player2Id}
+          selectedName={player2Name}
+          onSelectPlayer={(id) => {
+            setPlayer2Id(id)
+            setPlayer2Name(undefined)
+          }}
+          onSelectPlaceholder={(name) => {
+            setPlayer2Id(undefined)
+            setPlayer2Name(name)
+          }}
+          error={validationErrors.player2_id}
+        />
+        {player2Conflict && (
+          <AlertBox variant="warning" size="sm">
+            This player is already on <strong>{player2Conflict}</strong>.
+          </AlertBox>
+        )}
+      </div>
+      <div>
         <label className="label">Team Name</label>
         <input
           type="text"
@@ -320,7 +323,7 @@ export function TeamForm({
           onChange={(e) => setTeamName(e.target.value)}
         />
       </div>
-      <div className="mb-4">
+      <div>
         <label className="label">Team Song</label>
         <input
           type="text"
@@ -330,7 +333,7 @@ export function TeamForm({
           onChange={(e) => setTeamSong(e.target.value)}
         />
       </div>
-      <div className="mb-4">
+      <div>
         <label className="label">Spirit Animal</label>
         <input
           type="text"
@@ -341,7 +344,7 @@ export function TeamForm({
         />
         <p className="text-xs text-lob-muted mt-1">Emoji or animal name</p>
       </div>
-      <div className="mb-4">
+      <div>
         <label className="label">Experience Level</label>
         <TabSwitcher
           tabs={EXPERIENCE_TABS}
@@ -349,7 +352,7 @@ export function TeamForm({
           onChange={(v) => setExperienceLevel(v as typeof experienceLevel)}
         />
       </div>
-      <div className="mb-4">
+      <div>
         <label className="label">Preferred Play Times</label>
         <textarea
           className="input w-full resize-none"
@@ -361,7 +364,7 @@ export function TeamForm({
         <p className="text-xs text-lob-muted mt-1">Visible to other teams for scheduling</p>
       </div>
       {groupsFormed && (
-        <div className="mb-4">
+        <div>
           <label className="label">Assign to Group</label>
           <SegmentedControl
             ariaLabel="Group"
@@ -380,7 +383,7 @@ export function TeamForm({
       )}
 
       {mutationError && (
-        <AlertBox variant="error" className="mb-4">
+        <AlertBox variant="error">
           {mutationError.message ?? 'Something went wrong. Please try again.'}
         </AlertBox>
       )}

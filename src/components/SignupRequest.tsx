@@ -26,6 +26,7 @@ import {
 } from '../features/auth/signupErrors'
 import { Button } from './ui/Button'
 import { TextButton } from './ui/TextButton'
+import { AlertBox } from './ui/AlertBox'
 
 // =============================================================================
 //  SignupRequest — the self-serve "Join the Lobsters" form shown inside the
@@ -349,7 +350,9 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
           </div>
 
           {error && (
-            <p className="text-xs text-lob-danger bg-lob-danger-light rounded-lg p-2">{error}</p>
+            <AlertBox variant="error" size="sm">
+              {error}
+            </AlertBox>
           )}
 
           <Button
@@ -379,37 +382,33 @@ function NameMatchBanner({
 }) {
   const needsInvite = isPlaceholder(match)
   return (
-    <div
-      role="alert"
-      className="rounded-2xl bg-lob-warning-light border border-lob-warning-border p-4 space-y-3"
+    <AlertBox
+      variant="warning"
+      title={
+        needsInvite ? 'Your profile is waiting for an invite' : 'This name already has a profile'
+      }
+      actions={
+        (onSignIn || !needsInvite) && (
+          <div className="space-y-3">
+            {onSignIn && (
+              <Button fullWidth onClick={onSignIn}>
+                {needsInvite ? 'Back to sign in' : 'Go to sign in'}
+              </Button>
+            )}
+            {!needsInvite && (
+              <div className="text-center">
+                <TextButton tone="warning" onClick={onDecline}>
+                  No, I’m a different person
+                </TextButton>
+              </div>
+            )}
+          </div>
+        )
+      }
     >
-      <div className="flex items-start gap-3">
-        <span className="text-2xl">🦞</span>
-        <div>
-          <p className="font-semibold text-lob-warning-strong text-sm">
-            {needsInvite
-              ? 'Your profile is waiting for an invite'
-              : 'This name already has a profile'}
-          </p>
-          <p className="text-xs text-lob-warning mt-1">
-            {needsInvite
-              ? PLACEHOLDER_INVITE_TEXT
-              : `If you’re ${match.name}, go back and sign in with your email.`}
-          </p>
-        </div>
-      </div>
-      {onSignIn && (
-        <Button fullWidth onClick={onSignIn}>
-          {needsInvite ? 'Back to sign in' : 'Go to sign in'}
-        </Button>
-      )}
-      {!needsInvite && (
-        <div className="text-center">
-          <TextButton tone="warning" onClick={onDecline}>
-            No, I’m a different person
-          </TextButton>
-        </div>
-      )}
-    </div>
+      {needsInvite
+        ? PLACEHOLDER_INVITE_TEXT
+        : `If you’re ${match.name}, go back and sign in with your email.`}
+    </AlertBox>
   )
 }

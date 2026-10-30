@@ -19,6 +19,7 @@ import type { EventNavigate } from '../features/events/eventHelpers'
 import { Button } from './ui/Button'
 import { TextButton } from './ui/TextButton'
 import { TransferResponseActions } from '../features/events/TransferActions'
+import { AlertBox } from './ui/AlertBox'
 
 // Landing page Melanie hits after tapping the WhatsApp link
 // (https://padelobsters.nl/?transfer=<id>). Shows the offer details and an
@@ -209,12 +210,9 @@ export default function TransferAccept({ transferId, onNavigate }: TransferAccep
       </TextButton>
 
       <div className="card space-y-4">
-        <div className="flex items-center gap-2 text-sm text-lob-warning bg-lob-warning-light border border-lob-warning-border rounded-xl px-3 py-2">
-          <ArrowRightLeft size={14} />
-          <span>
-            <strong>{dn(fromPlayer)}</strong> wants to transfer their spot to you
-          </span>
-        </div>
+        <AlertBox variant="warning" icon={<ArrowRightLeft />}>
+          <strong>{dn(fromPlayer)}</strong> wants to transfer their spot to you
+        </AlertBox>
 
         <div>
           <h2 className="font-bold text-lg">{tournament?.name || 'Event'}</h2>
@@ -251,9 +249,9 @@ export default function TransferAccept({ transferId, onNavigate }: TransferAccep
         </p>
 
         {error && (
-          <div className="bg-lob-danger-light border border-lob-danger-border rounded-xl px-3 py-2 text-xs text-lob-danger-strong">
+          <AlertBox variant="error" size="sm">
             {error}
-          </div>
+          </AlertBox>
         )}
 
         <TransferResponseActions

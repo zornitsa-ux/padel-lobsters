@@ -12,6 +12,7 @@ import type { SwapSuggestion, SwapTarget } from './domain/swaps'
 import type { GenderMode, MatchConfig, ScheduleRun } from './domain/types'
 import { ActionRow } from '../../components/ui/ActionRow'
 import { Button } from '../../components/ui/Button'
+import { AlertBox } from '../../components/ui/AlertBox'
 
 type RosterRow = Parameters<typeof toPlayerInput>[0]
 
@@ -327,11 +328,7 @@ export default function MatchmakingContainer({
       </p>
 
       {(error || commit.isError) && (
-        <div role="alert" className="card border border-lob-danger-border bg-lob-danger-light">
-          <p className="text-sm font-semibold text-lob-danger-strong">
-            {error ?? SAVE_FAILURE_MESSAGE}
-          </p>
-        </div>
+        <AlertBox variant="error">{error ?? SAVE_FAILURE_MESSAGE}</AlertBox>
       )}
 
       {preview && (
@@ -386,43 +383,45 @@ export default function MatchmakingContainer({
       )}
 
       {confirming && (
-        <div className="card space-y-3 border border-lob-danger-border bg-lob-danger-light">
-          <div>
-            <p className="font-semibold text-lob-danger-strong text-sm">Discard entered scores?</p>
-            <p className="text-xs text-lob-danger mt-0.5">
-              This tournament already has scores entered. Saving a new schedule replaces every match
-              and permanently discards those scores. Type{' '}
-              <span className="font-mono font-bold">{CONFIRM_PHRASE}</span> to confirm.
-            </p>
-          </div>
-          <input
-            type="text"
-            value={confirmText}
-            onChange={(event) => setConfirmText(event.target.value)}
-            placeholder={CONFIRM_PHRASE}
-            className="input"
-            autoFocus
-          />
-          <ActionRow>
-            <Button
-              variant="neutral"
-              onClick={() => {
-                setConfirming(false)
-                setConfirmText('')
-              }}
-              disabled={commit.isPending}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="danger"
-              onClick={doCommit}
-              disabled={confirmText !== CONFIRM_PHRASE || commit.isPending}
-            >
-              {commit.isPending ? 'Saving…' : 'Discard scores & save'}
-            </Button>
-          </ActionRow>
-        </div>
+        <AlertBox
+          variant="error"
+          title="Discard entered scores?"
+          actions={
+            <div className="space-y-3">
+              <input
+                type="text"
+                value={confirmText}
+                onChange={(event) => setConfirmText(event.target.value)}
+                placeholder={CONFIRM_PHRASE}
+                className="input"
+                autoFocus
+              />
+              <ActionRow>
+                <Button
+                  variant="neutral"
+                  onClick={() => {
+                    setConfirming(false)
+                    setConfirmText('')
+                  }}
+                  disabled={commit.isPending}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="danger"
+                  onClick={doCommit}
+                  disabled={confirmText !== CONFIRM_PHRASE || commit.isPending}
+                >
+                  {commit.isPending ? 'Saving…' : 'Discard scores & save'}
+                </Button>
+              </ActionRow>
+            </div>
+          }
+        >
+          This tournament already has scores entered. Saving a new schedule replaces every match and
+          permanently discards those scores. Type{' '}
+          <span className="font-mono font-bold">{CONFIRM_PHRASE}</span> to confirm.
+        </AlertBox>
       )}
     </div>
   )

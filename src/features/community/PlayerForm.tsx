@@ -8,6 +8,7 @@ import type { CommunityPlayer } from './playersSelectors'
 import { ActionRow } from '../../components/ui/ActionRow'
 import { Button } from '../../components/ui/Button'
 import { TextButton } from '../../components/ui/TextButton'
+import { AlertBox } from '../../components/ui/AlertBox'
 
 interface PlayerFormProps {
   showForm: boolean
@@ -112,42 +113,36 @@ export default function PlayerForm({
 
           {/* Merge banner — shown for both admins and players when name already exists */}
           {mergePlayer && !editId && (
-            <div className="rounded-2xl bg-lob-warning-light border border-lob-warning-border p-4 space-y-3">
-              <div className="flex items-start gap-3">
-                <span className="text-2xl">🦞</span>
-                <div>
-                  {isAdmin ? (
-                    <>
-                      <p className="font-semibold text-lob-warning-strong text-sm">
-                        Player already exists!
-                      </p>
-                      <p className="text-xs text-lob-warning mt-1">
-                        <strong>{mergePlayer.name}</strong> is already in the system. Update their
-                        existing profile instead of creating a duplicate?
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      <p className="font-semibold text-lob-warning-strong text-sm">Welcome back!</p>
-                      <p className="text-xs text-lob-warning mt-1">
-                        Your profile already exists — you've played in a past Lobster tournament.
-                        Finish setting up your profile and we'll link everything together.
-                      </p>
-                    </>
-                  )}
+            <AlertBox
+              variant="warning"
+              title={isAdmin ? 'Player already exists!' : 'Welcome back!'}
+              actions={
+                <div className="space-y-3">
+                  <Button fullWidth onClick={acceptMerge}>
+                    {isAdmin
+                      ? `Update ${(mergePlayer.name || '').split(' ')[0]}'s profile`
+                      : 'Yes, complete my profile'}
+                  </Button>
+                  <div className="text-center">
+                    <TextButton tone="warning" onClick={() => setMergePlayer(null)}>
+                      {isAdmin ? 'No, create as a new player' : "No, I'm a different person"}
+                    </TextButton>
+                  </div>
                 </div>
-              </div>
-              <Button fullWidth onClick={acceptMerge}>
-                {isAdmin
-                  ? `Update ${(mergePlayer.name || '').split(' ')[0]}'s profile`
-                  : 'Yes, complete my profile'}
-              </Button>
-              <div className="text-center">
-                <TextButton tone="warning" onClick={() => setMergePlayer(null)}>
-                  {isAdmin ? 'No, create as a new player' : "No, I'm a different person"}
-                </TextButton>
-              </div>
-            </div>
+              }
+            >
+              {isAdmin ? (
+                <>
+                  <strong>{mergePlayer.name}</strong> is already in the system. Update their
+                  existing profile instead of creating a duplicate?
+                </>
+              ) : (
+                <>
+                  Your profile already exists — you've played in a past Lobster tournament. Finish
+                  setting up your profile and we'll link everything together.
+                </>
+              )}
+            </AlertBox>
           )}
 
           <div>

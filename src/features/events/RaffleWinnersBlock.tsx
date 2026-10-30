@@ -3,6 +3,7 @@ import { useRaffleWinners } from '../raffle/useRaffle'
 import { usePlayers } from '../players/usePlayers'
 import { raffleWinnersWithheld } from './eventPhase'
 import type { NormalisedTournament } from './tournamentQueries'
+import { AlertBox } from '../../components/ui/AlertBox'
 
 /**
  * Raffle winners on the Results tab. `raffle_winners` is world-readable
@@ -40,9 +41,9 @@ export default function RaffleWinnersBlock({
         ))}
       </ul>
       {!tournament.rafflePublishedAt && (
-        <p className="text-xs text-lob-warning bg-lob-warning-light border border-lob-warning-border rounded-lg px-2 py-1">
+        <AlertBox variant="warning" size="sm">
           Not published yet — only admins can see this.
-        </p>
+        </AlertBox>
       )}
     </div>
   )

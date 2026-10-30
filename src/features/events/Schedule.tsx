@@ -38,6 +38,7 @@ import { Button } from '../../components/ui/Button'
 import { TextButton } from '../../components/ui/TextButton'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
 import { Chip } from '../../components/ui/Chip'
+import { AlertBox } from '../../components/ui/AlertBox'
 
 // A player slot the admin has tapped first in swap mode.
 interface SwapAnchor {
@@ -369,39 +370,42 @@ export default function Schedule({
       {/* Preview banner + swap + save */}
       {generated && (
         <div className="space-y-2">
-          <div className="bg-lob-warning-light border border-lob-warning-border rounded-xl p-3 flex items-center gap-2 flex-wrap">
-            <AlertCircle size={16} className="text-lob-warning flex-shrink-0" />
-            <p className="text-xs text-lob-warning flex-1 min-w-0">Preview — not saved yet</p>
-            <div className="flex gap-1.5 flex-shrink-0 flex-wrap">
-              <TextButton
-                tone="neutral"
-                onClick={() => {
-                  setGenerated(null)
-                  setSwapMode(false)
-                  setSwapFirst(null)
-                  setSwapWarnings([])
-                  setScheduleWarnings([])
-                }}
-              >
-                Cancel
-              </TextButton>
-              <Button
-                variant="neutral"
-                size="sm"
-                icon={<Download />}
-                onClick={handleDownloadCsv}
-                title="Download the preview as a CSV you can review offline before saving"
-              >
-                Download
-              </Button>
-              <TextButton tone="warning" onClick={handleGenerate}>
-                Reshuffle
-              </TextButton>
-              <Button size="sm" onClick={handleSave} disabled={generating}>
-                Save
-              </Button>
-            </div>
-          </div>
+          <AlertBox
+            variant="warning"
+            icon={<AlertCircle />}
+            title="Preview — not saved yet"
+            actions={
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <TextButton
+                  tone="neutral"
+                  onClick={() => {
+                    setGenerated(null)
+                    setSwapMode(false)
+                    setSwapFirst(null)
+                    setSwapWarnings([])
+                    setScheduleWarnings([])
+                  }}
+                >
+                  Cancel
+                </TextButton>
+                <Button
+                  variant="neutral"
+                  size="sm"
+                  icon={<Download />}
+                  onClick={handleDownloadCsv}
+                  title="Download the preview as a CSV you can review offline before saving"
+                >
+                  Download
+                </Button>
+                <TextButton tone="warning" onClick={handleGenerate}>
+                  Reshuffle
+                </TextButton>
+                <Button size="sm" onClick={handleSave} disabled={generating}>
+                  Save
+                </Button>
+              </div>
+            }
+          />
           {/* Swap mode toggle */}
           {isAdmin && (
             <Chip
@@ -424,27 +428,19 @@ export default function Schedule({
           )}
           {/* Swap conflict warnings */}
           {swapWarnings.length > 0 && (
-            <div className="bg-lob-danger-light border border-lob-danger-border rounded-xl p-3 space-y-1">
-              <p className="text-xs font-bold text-lob-danger-strong flex items-center gap-1.5">
-                <AlertCircle size={14} /> Partnership conflicts detected
-              </p>
-              {swapWarnings.map((w, i) => (
-                <p key={i} className="text-xs text-lob-danger">
-                  • {w}
-                </p>
-              ))}
-            </div>
+            <AlertBox variant="error" icon={<AlertCircle />} title="Partnership conflicts detected">
+              <ul className="space-y-0.5">
+                {swapWarnings.map((w, i) => (
+                  <li key={i}>• {w}</li>
+                ))}
+              </ul>
+            </AlertBox>
           )}
           <ScheduleValidationSummary warnings={scheduleWarnings} showSuccess={Boolean(generated)} />
         </div>
       )}
 
-      {saved && (
-        <div className="bg-lob-success-light border border-lob-success-border rounded-xl p-3 flex items-center gap-2">
-          <Trophy size={16} className="text-lob-success" />
-          <p className="text-sm text-lob-success font-medium">Schedule saved!</p>
-        </div>
-      )}
+      {saved && <AlertBox variant="success" icon={<Trophy />} title="Schedule saved!" />}
 
       {/* Round tabs */}
       {display.length > 0 && (

@@ -10,6 +10,7 @@ import type { Player } from '../../lib/normalise'
 import { ActionRow } from '../../components/ui/ActionRow'
 import { Button } from '../../components/ui/Button'
 import { CollapsibleCard } from '../../components/ui/CollapsibleCard'
+import { AlertBox } from '../../components/ui/AlertBox'
 
 interface ProfileSectionProps {
   myPlayer: Player | null
@@ -83,9 +84,9 @@ export default function ProfileSection({
               />
             </div>
             {profileError && (
-              <p className="text-xs text-lob-danger bg-lob-danger-light rounded-lg p-2">
+              <AlertBox variant="error" size="sm">
                 {profileError}
-              </p>
+              </AlertBox>
             )}
             <ActionRow>
               <Button variant="neutral" onClick={dismissPlaytomicPrompt}>
@@ -262,14 +263,14 @@ export default function ProfileSection({
                       : 'Save Profile'}
             </Button>
             {profileLoadFailed && (
-              <p className="text-xs text-lob-danger bg-lob-danger-light rounded-lg p-2">
+              <AlertBox variant="error" size="sm">
                 Couldn't load your profile details. Check your connection and reload.
-              </p>
+              </AlertBox>
             )}
             {profileError && (
-              <p className="text-xs text-lob-danger bg-lob-danger-light rounded-lg p-2">
+              <AlertBox variant="error" size="sm">
                 {profileError}
-              </p>
+              </AlertBox>
             )}
           </div>
         </CollapsibleCard>

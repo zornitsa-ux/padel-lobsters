@@ -18,6 +18,7 @@ import { useKingOfCourtActions, useKingOfCourtSeeding } from './useKingOfCourtAd
 import type { CourtResult } from './domain'
 import type { NormalisedTournament } from '../../../lib/normalise'
 import { Button } from '../../../components/ui/Button'
+import { AlertBox } from '../../../components/ui/AlertBox'
 
 // Shown on the event day, so the time matters more than the date.
 const shownAt = (iso: string) =>
@@ -35,12 +36,9 @@ export default function KingOfCourtAdmin({ tournament }: { tournament: Normalise
   return (
     <div className="space-y-4" data-testid="kotc-admin">
       {actions.error && (
-        <p
-          role="alert"
-          className="text-xs text-lob-danger bg-lob-danger-light border border-lob-danger-border rounded-lg p-2"
-        >
+        <AlertBox variant="error" size="sm">
           {actions.error}
-        </p>
+        </AlertBox>
       )}
       <SeedsCard tournament={tournament} seeding={seeding} actions={actions} />
       {isEventDayReached({ date: tournament.date }) && seeding.order.length > 0 && (

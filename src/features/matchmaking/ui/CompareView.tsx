@@ -87,11 +87,7 @@ export default function CompareView({
         <p className="sr-only" role="status" aria-live="polite">
           {status}
         </p>
-        {error && (
-          <div role="alert">
-            <AlertBox variant="error">{error}</AlertBox>
-          </div>
-        )}
+        {error && <AlertBox variant="error">{error}</AlertBox>}
 
         <div className="card space-y-3">
           <p className="font-semibold text-lob-slate text-sm">How they compare</p>

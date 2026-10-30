@@ -93,11 +93,7 @@ export default function SwapPanel({
         <p className="sr-only" role="status" aria-live="polite">
           {suggestions.length} swap option{suggestions.length === 1 ? '' : 's'}
         </p>
-        {error && (
-          <div role="alert">
-            <AlertBox variant="error">{error}</AlertBox>
-          </div>
-        )}
+        {error && <AlertBox variant="error">{error}</AlertBox>}
         {suggestions.length === 0 ? (
           <p className="text-xs text-lob-muted">{emptyCopy({ target, showAll: showingAll })}</p>
         ) : (

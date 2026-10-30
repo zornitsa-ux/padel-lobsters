@@ -126,7 +126,7 @@ describe('Toast', () => {
     expect(screen.getByText('Second error')).toBeTruthy()
   })
 
-  it('exposes an assertive live region for errors and a polite one for success', () => {
+  it('announces errors as alerts and success as status', () => {
     render(
       <ToastProvider>
         <ShowToastButton variant="error" message="Error toast" />
@@ -138,11 +138,8 @@ describe('Toast', () => {
     fireEvent.click(errorTrigger)
     fireEvent.click(successTrigger)
 
-    const errorRegion = screen.getByText('Error toast').closest('[role="status"]')
-    const successRegion = screen.getByText('Success toast').closest('[role="status"]')
-
-    expect(errorRegion?.getAttribute('aria-live')).toBe('assertive')
-    expect(successRegion?.getAttribute('aria-live')).toBe('polite')
+    expect(screen.getByRole('alert').textContent).toContain('Error toast')
+    expect(screen.getByRole('status').textContent).toContain('Success toast')
   })
 
   it('gives the dismiss control an accessible name', () => {

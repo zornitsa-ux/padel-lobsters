@@ -9,14 +9,12 @@ export default function TeamNotices({
 }) {
   if (notices.length === 0) return null
   return (
-    <div role="status">
-      <AlertBox variant="success" onDismiss={onDismiss}>
-        <div className="space-y-1">
-          {notices.map((notice) => (
-            <p key={notice}>{notice}</p>
-          ))}
-        </div>
-      </AlertBox>
-    </div>
+    <AlertBox variant="success" onDismiss={onDismiss}>
+      <div className="space-y-1">
+        {notices.map((notice) => (
+          <p key={notice}>{notice}</p>
+        ))}
+      </div>
+    </AlertBox>
   )
 }

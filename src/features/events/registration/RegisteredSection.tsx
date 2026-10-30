@@ -8,6 +8,7 @@ import type { NormalisedTransfer } from '../transferQueries'
 import type { DisplayName, GetPlayer, TransferShareTarget } from './utils'
 import { Button } from '../../../components/ui/Button'
 import { OutgoingTransferActions } from '../TransferActions'
+import { AlertBox } from '../../../components/ui/AlertBox'
 
 interface RegisteredSectionProps {
   isCompleted: boolean
@@ -97,24 +98,24 @@ export default function RegisteredSection({
                     const recipient = getPlayer(myPending.toPlayerId)
                     const recipientFirst = (recipient?.name || '').split(/\s+/)[0] || 'them'
                     return (
-                      <div className="bg-lob-warning-light border border-lob-warning-border rounded-xl px-3 py-2 space-y-2">
-                        <div className="flex items-center gap-2 text-xs text-lob-warning-strong">
-                          <Clock size={12} className="flex-shrink-0" />
-                          <span>
-                            <strong>Pending transfer</strong> to {recipientFirst} — awaiting
-                            acceptance.
-                          </span>
-                        </div>
-                        {recipient && (
-                          <OutgoingTransferActions
-                            onResend={() =>
-                              onOpenShareModal({ transferId: myPending.id, toPlayer: recipient })
-                            }
-                            onCancel={() => onAdminCancelTransfer(myPending.id)}
-                            busy={respondingTo === myPending.id}
-                          />
-                        )}
-                      </div>
+                      <AlertBox
+                        variant="warning"
+                        size="sm"
+                        icon={<Clock />}
+                        actions={
+                          recipient && (
+                            <OutgoingTransferActions
+                              onResend={() =>
+                                onOpenShareModal({ transferId: myPending.id, toPlayer: recipient })
+                              }
+                              onCancel={() => onAdminCancelTransfer(myPending.id)}
+                              busy={respondingTo === myPending.id}
+                            />
+                          )
+                        }
+                      >
+                        <strong>Pending transfer</strong> to {recipientFirst} — awaiting acceptance.
+                      </AlertBox>
                     )
                   }
 

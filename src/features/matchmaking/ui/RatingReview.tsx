@@ -7,6 +7,7 @@ import { Button } from '../../../components/ui/Button'
 import { IconButton } from '../../../components/ui/IconButton'
 import { Disclosure } from '../../../components/ui/Disclosure'
 import { SegmentedControl } from '../../../components/ui/SegmentedControl'
+import { AlertBox } from '../../../components/ui/AlertBox'
 
 export type RatingReviewProps = {
   // Count of adjustments auto-applied without review (small, within-cap moves).
@@ -372,10 +373,9 @@ export default function RatingReview({
       )}
 
       {queue.length === 0 && (
-        <div className="card flex items-center gap-2 text-sm text-lob-success bg-lob-success-light">
-          <CheckCircle2 size={18} />
+        <AlertBox variant="success" icon={<CheckCircle2 />}>
           All adjustments auto-applied — nothing to review.
-        </div>
+        </AlertBox>
       )}
 
       {queue.map((row) => (

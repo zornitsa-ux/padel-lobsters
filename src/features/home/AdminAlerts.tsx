@@ -4,6 +4,7 @@ import type { NormalisedTournament } from '../../lib/normalise'
 import type { NormalisedRegistration } from '../events/registrationQueries'
 import { upcomingBirthdays, type BirthdayPlayer } from './homeHelpers'
 import { TextButton } from '../../components/ui/TextButton'
+import { AlertBox } from '../../components/ui/AlertBox'
 
 interface AdminAlertsProps {
   isAdmin: boolean
@@ -33,17 +34,16 @@ export default function AdminAlerts({
   return (
     <>
       {unpaid.length > 0 && (
-        <div className="flex items-center gap-3 bg-lob-danger-light border border-lob-danger-border rounded-xl p-3">
-          <AlertCircle size={18} className="text-lob-danger-solid flex-shrink-0" />
-          <p className="text-sm text-lob-danger-strong font-medium">
-            {unpaid.length} player{unpaid.length > 1 ? 's' : ''} haven't paid yet
-          </p>
-          <div className="ml-auto">
-            <TextButton tone="destructive" onClick={() => onNavigate('payments', upcomingEvent)}>
+        <AlertBox
+          variant="warning"
+          icon={<AlertCircle />}
+          title={`${unpaid.length} player${unpaid.length > 1 ? 's' : ''} haven't paid yet`}
+          action={
+            <TextButton tone="warning" onClick={() => onNavigate('payments', upcomingEvent)}>
               View
             </TextButton>
-          </div>
-        </div>
+          }
+        />
       )}
 
       {/* ── Birthday alerts (admin) ───────────────────────────── */}

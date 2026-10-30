@@ -57,38 +57,38 @@ export function InvitePlayerModal({
 
   return (
     <Modal open={open} onClose={handleClose} title="Invite Player" footer={footer}>
-      <p className="text-sm text-lob-muted mb-4">
-        Send {playerName} an invite email. They sign in with the email address you enter. Only
-        invite someone you’ve confirmed is {playerName}.
-      </p>
+      <div className="space-y-4">
+        <p className="text-sm text-lob-muted">
+          Send {playerName} an invite email. They sign in with the email address you enter. Only
+          invite someone you’ve confirmed is {playerName}.
+        </p>
 
-      <form id="invite-player-form" onSubmit={handleSubmit} noValidate>
-        <label className="label">Email address</label>
-        <input
-          type="email"
-          className="input w-full mt-1"
-          placeholder="player@example.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          disabled={invite.isPending || invite.isSuccess}
-        />
-      </form>
+        <form id="invite-player-form" onSubmit={handleSubmit} noValidate>
+          <label className="label">Email address</label>
+          <input
+            type="email"
+            className="input w-full mt-1"
+            placeholder="player@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            disabled={invite.isPending || invite.isSuccess}
+          />
+        </form>
 
-      {invite.error && (
-        <AlertBox variant="error" className="mt-4">
-          {describeInviteError({
-            error: invite.error,
-            fallback: 'Failed to send invite. Please try again.',
-          })}
-        </AlertBox>
-      )}
+        {invite.error && (
+          <AlertBox variant="error">
+            {describeInviteError({
+              error: invite.error,
+              fallback: 'Failed to send invite. Please try again.',
+            })}
+          </AlertBox>
+        )}
 
-      {invite.isSuccess && (
-        <AlertBox variant="success" className="mt-4">
-          Invite sent to {email.trim().toLowerCase()}.
-        </AlertBox>
-      )}
+        {invite.isSuccess && (
+          <AlertBox variant="success">Invite sent to {email.trim().toLowerCase()}.</AlertBox>
+        )}
+      </div>
     </Modal>
   )
 }

@@ -398,13 +398,16 @@ export default function PlayerProfile({
           )}
 
           {pii.revealed && pii.isError && (
-            <AlertBox variant="warning" icon={<AlertTriangle size={14} />}>
-              <div className="flex items-center justify-between gap-2">
-                <span>Couldn't load contact details.</span>
+            <AlertBox
+              variant="warning"
+              icon={<AlertTriangle />}
+              action={
                 <TextButton tone="warning" onClick={() => pii.retry()}>
                   Try again
                 </TextButton>
-              </div>
+              }
+            >
+              Couldn't load contact details.
             </AlertBox>
           )}
 

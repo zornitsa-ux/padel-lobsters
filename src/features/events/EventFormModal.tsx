@@ -15,6 +15,7 @@ import type { EventFormCourt, EventFormValues } from './eventConstants'
 import { Button } from '../../components/ui/Button'
 import { IconButton } from '../../components/ui/IconButton'
 import { TextButton } from '../../components/ui/TextButton'
+import { AlertBox } from '../../components/ui/AlertBox'
 
 // A court field edit. `booked` is the checkbox; every other field comes off a
 // text/number input as a string.
@@ -140,12 +141,9 @@ export default function EventFormModal({
               {`${teamsForCourts({ courts: form.courts })} teams · 2 per court (${effectiveMaxPlayers({ form })} players)`}
             </p>
             {withoutCourt > 0 && (
-              <p
-                role="alert"
-                className="text-xs text-lob-warning-strong bg-lob-warning-light border border-lob-warning-border rounded-lg p-2"
-              >
+              <AlertBox variant="warning" size="sm">
                 {`${registeredTeams} teams are registered, more than these courts fit. ${withoutCourt} ${withoutCourt === 1 ? "team won't have" : "teams won't have"} a starting court until you add a court back or cancel a team.`}
-              </p>
+              </AlertBox>
             )}
           </div>
         ) : (

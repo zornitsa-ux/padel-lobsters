@@ -142,19 +142,24 @@ export default function UpcomingEventCard({
               <InfoChip icon={null} label={ppCost > 0 ? `${fmtEur(ppCost)}/pp` : 'Free'} />
             </div>
             {isFull ? (
-              <div className="bg-lob-warning-light border border-lob-warning-border rounded-xl px-3 py-2 mb-3">
-                <p className="text-xs font-bold text-lob-warning">Sold out!</p>
-                <p className="text-xs text-lob-warning mt-0.5">
+              <div className="mb-3">
+                <AlertBox variant="warning" size="sm" title="Sold out!">
                   Someone always cancels last minute. Join the waitlist and keep your racket warm.
-                </p>
+                </AlertBox>
               </div>
             ) : !over ? (
-              <div className="bg-lob-success-light border border-lob-success-border rounded-xl px-3 py-1.5 mb-3 flex items-center gap-1.5">
-                <span className="relative flex h-2 w-2 flex-shrink-0">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-lob-success-solid opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-lob-success-solid"></span>
-                </span>
-                <p className="text-xs font-semibold text-lob-success">Spots open — sign up now!</p>
+              <div className="mb-3">
+                <AlertBox
+                  variant="success"
+                  size="sm"
+                  icon={
+                    <span className="relative flex h-2 w-2 mt-0.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-lob-success-solid opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-lob-success-solid"></span>
+                    </span>
+                  }
+                  title="Spots open — sign up now!"
+                />
               </div>
             ) : null}
           </>
@@ -171,16 +176,16 @@ export default function UpcomingEventCard({
           if (pendingForT.length === 0) return null
           return (
             <div className="mb-3">
-              <AlertBox variant="warning" icon={<Clock size={14} />}>
-                <span className="flex items-center justify-between gap-2">
-                  <span className="font-semibold">
-                    {plural({ count: pendingForT.length, one: 'pending transfer' })}
-                  </span>
+              <AlertBox
+                variant="warning"
+                icon={<Clock />}
+                title={plural({ count: pendingForT.length, one: 'pending transfer' })}
+                action={
                   <TextButton tone="warning" onClick={() => onOpenTransfers(t)}>
                     Review
                   </TextButton>
-                </span>
-              </AlertBox>
+                }
+              />
             </div>
           )
         })()}

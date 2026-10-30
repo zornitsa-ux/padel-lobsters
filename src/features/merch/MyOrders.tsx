@@ -4,6 +4,7 @@ import { EmptyState } from '../../components/ui/EmptyState'
 import { STATUS_CONFIG } from './statusConfig'
 import { formatOrderTime, orderTimestamp } from './formatters'
 import type { MerchInterest, MerchItem, OrderStatus } from './merchSchemas'
+import { AlertBox } from '../../components/ui/AlertBox'
 
 const STEPS: readonly OrderStatus[] = ['ordered', 'paid', 'delivered']
 
@@ -85,14 +86,14 @@ export default function MyOrders({ myOrders, items }: MyOrdersProps) {
                 </div>
                 {/* Cancelled notice */}
                 {status === 'cancelled' && (
-                  <div className="bg-lob-danger-light rounded-xl p-2.5 space-y-1">
-                    <p className="text-xs font-semibold text-lob-danger flex items-center gap-1">
-                      <Ban size={11} /> Order cancelled by admin
-                    </p>
-                    {o.admin_comment && (
-                      <p className="text-xs text-lob-danger italic">"{o.admin_comment}"</p>
-                    )}
-                  </div>
+                  <AlertBox
+                    variant="error"
+                    size="sm"
+                    icon={<Ban />}
+                    title="Order cancelled by admin"
+                  >
+                    {o.admin_comment && <span className="italic">"{o.admin_comment}"</span>}
+                  </AlertBox>
                 )}
               </div>
             )
