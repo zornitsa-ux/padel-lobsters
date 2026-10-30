@@ -75,10 +75,8 @@ export default function ProfileSection({
               </label>
               <input
                 className="input text-center text-lg font-bold"
-                type="number"
-                step="0.01"
-                min="0"
-                max="10"
+                type="text"
+                inputMode="decimal"
                 value={profileForm.playtomicLevel}
                 onChange={(e) => setProfileForm((f) => ({ ...f, playtomicLevel: e.target.value }))}
               />

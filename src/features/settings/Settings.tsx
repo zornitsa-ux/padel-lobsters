@@ -10,7 +10,7 @@ import { useApp } from '../../context/useApp'
 import { useSettings, useSaveSettings } from './useSettings'
 import { useMyProfile, usePlayerActions, useAvatarUpload } from '../players/usePlayers'
 import { isE164 } from '../../lib/whatsapp'
-import { isLevelInRange } from '../../lib/parseLevel'
+import { levelProblem } from '../../lib/parseLevel'
 import { errorMessage } from '../../lib/errors'
 import DEFAULT_TIPS from '../../data/padelTips'
 import { processAvatar } from '../../lib/processAvatar'
@@ -160,11 +160,9 @@ export default function Settings() {
       setProfileError('Phone must start with + and the country code (e.g. +31612345678).')
       return
     }
-    if (
-      profileForm.playtomicLevel.trim() !== '' &&
-      !isLevelInRange({ value: profileForm.playtomicLevel, min: 0.5 })
-    ) {
-      setProfileError('Playtomic level must be a number from 0.5 to 7, e.g. 3.5.')
+    const levelError = levelProblem({ value: profileForm.playtomicLevel, min: 0.5 })
+    if (levelError) {
+      setProfileError(levelError)
       return
     }
     setProfileSaving(true)

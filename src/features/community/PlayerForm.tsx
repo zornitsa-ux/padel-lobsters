@@ -9,7 +9,6 @@ import { ActionRow } from '../../components/ui/ActionRow'
 import { Button } from '../../components/ui/Button'
 import { TextButton } from '../../components/ui/TextButton'
 import { AlertBox } from '../../components/ui/AlertBox'
-import { Spinner } from '../../components/ui/Spinner'
 
 interface PlayerFormProps {
   showForm: boolean
@@ -80,7 +79,11 @@ export default function PlayerForm({
         {!editId && !isAdmin && (
           <p className="text-xs text-lob-muted -mt-2">You'll sign in with a code we email you</p>
         )}
-        {editId && !formReady && <Spinner size="inline" label="Loading this player's details…" />}
+        {editId && !formReady && (
+          <p className="text-xs text-lob-muted -mt-2" role="status">
+            Loading this player&apos;s details…
+          </p>
+        )}
         {/* Disabled while an edit/merge's PII resolve is in flight — the
             fields below may still be seeded from a previous player or be
             blank placeholders at that point, so editing them now would be

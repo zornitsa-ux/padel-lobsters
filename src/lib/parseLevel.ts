@@ -6,8 +6,10 @@ export function parseLevel(value: unknown): number | null {
   return /^\d+(\.\d+)?$/.test(text) ? Number(text) : null
 }
 
-/** A typed level is a number up to 7 and at least `min`. Blank is the caller's call. */
-export function isLevelInRange({ value, min = 0 }: { value: unknown; min?: number }): boolean {
+/** What's wrong with a typed level, or '' when it's blank or a number from `min` to 7. */
+export function levelProblem({ value, min = 0 }: { value: unknown; min?: number }): string {
+  if (!String(value ?? '').trim()) return ''
   const level = parseLevel(value)
-  return level !== null && level >= min && level <= 7
+  if (level !== null && level >= min && level <= 7) return ''
+  return `Playtomic level must be a number from ${min} to 7, e.g. 3.5.`
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isLevelInRange, parseLevel } from './parseLevel'
+import { levelProblem, parseLevel } from './parseLevel'
 
 describe('parseLevel', () => {
   it.each([
@@ -17,17 +17,17 @@ describe('parseLevel', () => {
   })
 })
 
-describe('isLevelInRange', () => {
-  it.each(['0', '3,5', '7'])('takes %j', (value) => {
-    expect(isLevelInRange({ value })).toBe(true)
+describe('levelProblem', () => {
+  it.each(['', '  ', '0', '3,5', '7'])('takes %j', (value) => {
+    expect(levelProblem({ value })).toBe('')
   })
 
-  it.each(['7.1', 'abc', '3abc', ''])('refuses %j', (value) => {
-    expect(isLevelInRange({ value })).toBe(false)
+  it.each(['7.1', 'abc', '3abc'])('refuses %j', (value) => {
+    expect(levelProblem({ value })).toBe('Playtomic level must be a number from 0 to 7, e.g. 3.5.')
   })
 
   it('holds a minimum', () => {
-    expect(isLevelInRange({ value: '0.4', min: 0.5 })).toBe(false)
-    expect(isLevelInRange({ value: '0.5', min: 0.5 })).toBe(true)
+    expect(levelProblem({ value: '0.4', min: 0.5 })).toContain('from 0.5 to 7')
+    expect(levelProblem({ value: '0.5', min: 0.5 })).toBe('')
   })
 })

@@ -145,9 +145,8 @@ describe('ProfileSection — self-service profile', () => {
     expect(screen.getByText(/has your playtomic score changed/i)).toBeTruthy()
     expect(screen.getByText(/new playtomic level/i)).toBeTruthy()
     expect(screen.queryByText(/adjustment/i)).toBeNull()
-    // One number input in the prompt: the level itself.
-    const numberInputs = document.querySelectorAll('input[type="number"]')
-    expect(numberInputs.length).toBe(1)
+    // One input in the prompt, the level itself, with a decimal keypad so "3,5" can be typed.
+    expect(document.querySelectorAll('input[inputmode="decimal"]').length).toBe(1)
   })
 
   // Finding 2: a failed/unresolved profile RPC must not leave the Save

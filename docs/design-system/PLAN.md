@@ -207,7 +207,7 @@ primitives (see the Log) before P3:
     (2026-10-30). Three PRs:
     - **P6c-1: `Well`.** Flat `lob-well` inset, no shadow (the planned
       `.panel`). The hand-built `lob-well` insets and the Playtomic panel
-      move onto it. In progress.
+      move onto it. In review (#123).
     - **P6c-2: cards inside cards.** Run of show, Lobster Way admin, Oscars
       results, the past event's match boxes, security events; lists with a
       well or box per row (Admin tips, Oscars categories, raffle winners,
@@ -1271,16 +1271,18 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
     Sitting out, the partner line on `TeamJoinCard` and `TeamInvitesPage`,
     `EventFormModal`'s courts, `TransferPendingModal`'s pre-filled message
     (it lost its border). The `PlayerForm` loading line was a well holding
-    text; it is `Spinner size="inline"`, as P5 set for loading.
+    text; it is plain muted text, which says why the fields are disabled.
   - Playtomic panel: the three blue copies are one `PlaytomicLevelField`
     (players feature) in a `Well`, with each caller's own last sentence of
     help. The blue eyebrow repeated the field's label and is gone. It is a
     text field with a decimal keypad everywhere (was `type="number"` on
     Account and admin Edit Player, which can't take "3,5"), so signup,
-    Account and admin Edit Player share one check, `isLevelInRange`
-    (`parseLevel.ts`): Account takes 0.5 to 7, the others 0 to 7. Admin Edit
-    Player shows a refused level under the field, as the sheet covers the
-    page's error box.
+    Account and admin Edit Player share one check and message,
+    `levelProblem` (`parseLevel.ts`): Account takes 0.5 to 7, the others 0
+    to 7 (the minimums differed before; unchanged). Admin Edit Player shows
+    a refused level under the field, as the sheet covers the page's error
+    box, and the error clears as the level is corrected. Account's update
+    prompt takes "3,5" too.
   - Found: Edit Player's other save errors still show behind the sheet
     (#121); Account's Playtomic update prompt is a hand-built overlay, not a
     dialog (#122).
