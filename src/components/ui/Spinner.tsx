@@ -1,17 +1,27 @@
+type SpinnerSize = 'page' | 'inline'
+
 interface SpinnerProps {
-  /** Wrapper utilities — mainly vertical padding for the block it fills. */
-  className?: string
+  /** `page`: a page or route body. `inline`: the body of a loading card, under its title. */
+  size?: SpinnerSize
   label?: string
 }
 
-export function Spinner({ className = 'py-16', label = 'Loading…' }: SpinnerProps) {
+const sizes: Record<SpinnerSize, { wrapper: string; ring: string }> = {
+  page: { wrapper: 'py-16', ring: 'h-8 w-8' },
+  inline: { wrapper: 'py-4', ring: 'h-5 w-5' },
+}
+
+export function Spinner({ size = 'page', label = 'Loading…' }: SpinnerProps) {
+  const s = sizes[size]
   return (
     <div
-      className={`flex items-center justify-center ${className}`.trim()}
+      className={`flex items-center justify-center ${s.wrapper}`}
       role="status"
       aria-live="polite"
     >
-      <div className="h-8 w-8 border-2 border-lob-teal border-t-transparent rounded-full animate-spin" />
+      <div
+        className={`${s.ring} border-2 border-lob-teal border-t-transparent rounded-full animate-spin`}
+      />
       <span className="sr-only">{label}</span>
     </div>
   )

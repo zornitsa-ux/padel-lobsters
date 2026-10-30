@@ -13,6 +13,7 @@ import { sortMatchesAsc } from './domain/matchDisplay'
 import { DIVISION_LABELS, leagueDivisions } from './domain/types'
 import type { Division, LeagueTeam } from './domain/types'
 import { IconButton } from '../../components/ui/IconButton'
+import { LeagueNotFound } from './ui/LeagueNotFound'
 
 export default function GroupStageHistoryPage() {
   const { id } = useParams<{ id: string }>()
@@ -24,8 +25,14 @@ export default function GroupStageHistoryPage() {
   const { data: teams = [] } = useLeagueTeams(league?.id)
   const { data: matches = [] } = useLeagueMatches(league?.id)
 
-  if (isLoading) return <Spinner />
-  if (!league) return null
+  if (isLoading || !league) {
+    return (
+      <div>
+        <GroupStageHeader onBack={() => navigate(`/league/${id}`)} />
+        {isLoading ? <Spinner /> : <LeagueNotFound />}
+      </div>
+    )
+  }
 
   const divisions = leagueDivisions(league)
   const safeDivision = divisions.includes(division) ? division : divisions[0]
@@ -44,12 +51,7 @@ export default function GroupStageHistoryPage() {
 
   return (
     <div>
-      <div className="flex items-center gap-2 pb-4">
-        <IconButton onClick={() => navigate(`/league/${id}`)} aria-label="Back" variant="ghost">
-          <ChevronLeft />
-        </IconButton>
-        <h1 className="text-xl font-bold text-lob-dark">Group Stage</h1>
-      </div>
+      <GroupStageHeader onBack={() => navigate(`/league/${id}`)} />
 
       {divisions.length > 1 && (
         <div className="-mx-4 px-4 py-2 bg-lob-cream border-b border-lob-line sticky top-0 z-10 mb-4">
@@ -119,6 +121,17 @@ export default function GroupStageHistoryPage() {
         onClose={() => setSelectedTeam(null)}
         onTeamClick={setSelectedTeam}
       />
+    </div>
+  )
+}
+
+function GroupStageHeader({ onBack }: { onBack: () => void }) {
+  return (
+    <div className="flex items-center gap-2 pb-4">
+      <IconButton onClick={onBack} aria-label="Back" variant="ghost">
+        <ChevronLeft />
+      </IconButton>
+      <h1 className="text-xl font-bold text-lob-dark">Group Stage</h1>
     </div>
   )
 }

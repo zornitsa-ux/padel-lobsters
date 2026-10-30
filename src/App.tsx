@@ -20,6 +20,7 @@ import VerificationGate from './components/VerificationGate'
 import { mark } from './lib/perfMarks'
 import EventShell from './features/events/EventShell'
 import { AdminLeagueRouteGuard } from './features/league/manage/AdminLeagueRouteGuard'
+import { AdminRouteGuard } from './features/admin/AdminRouteGuard'
 import type { EventNavigate } from './features/events/eventHelpers'
 import CommunityShell from './features/community/CommunityShell'
 import PartnerOnboardingRedirect from './features/events/invites/PartnerOnboardingRedirect'
@@ -104,7 +105,14 @@ export default function App() {
                 <Route path="/admin" element={<AdminRoute />} />
                 <Route path="/account" element={<AccountRoute />} />
                 <Route path="/lobster-way" element={<LobsterWay />} />
-                <Route path="/admin/lobster-way" element={<LobsterWayAdmin />} />
+                <Route
+                  path="/admin/lobster-way"
+                  element={
+                    <AdminRouteGuard redirectTo="/lobster-way">
+                      <LobsterWayAdmin />
+                    </AdminRouteGuard>
+                  }
+                />
                 <Route path="/settings" element={<Navigate to="/account" replace />} />
                 <Route path="/history" element={<Navigate to="/events" replace />} />
                 <Route path="/transfer/:id" element={<TransferRoute />} />
@@ -283,7 +291,11 @@ function AccountRoute() {
 
 function AdminRoute() {
   const onNavigate = useLegacyNavigate()
-  return <Admin onNavigate={onNavigate} />
+  return (
+    <AdminRouteGuard redirectTo="/home">
+      <Admin onNavigate={onNavigate} />
+    </AdminRouteGuard>
+  )
 }
 
 function TransferRoute() {

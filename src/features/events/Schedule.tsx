@@ -236,7 +236,7 @@ export default function Schedule({
   if (!tournament) {
     return (
       <EmptyState
-        icon={<AlertCircle size={36} />}
+        icon={<AlertCircle />}
         title="No event selected"
         action={<Button onClick={() => onNavigate('tournament')}>Go to Events</Button>}
       />
@@ -463,9 +463,7 @@ export default function Schedule({
               )}
 
               {display[activeRound].matches.length === 0 && !display[activeRound].note && (
-                <p className="text-sm text-lob-muted-light text-center py-4">
-                  No matches for this round
-                </p>
+                <EmptyState variant="inline" title="No matches for this round" />
               )}
 
               {display[activeRound].matches.map((match, i) => {
@@ -680,7 +678,7 @@ export default function Schedule({
       )}
 
       {display.length === 0 && !isAdmin && (
-        <EmptyState icon={<Shuffle size={36} />} title="No schedule generated yet" />
+        <EmptyState icon={<Shuffle />} title="No schedule generated yet" />
       )}
     </div>
   )

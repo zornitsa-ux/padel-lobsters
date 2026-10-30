@@ -44,7 +44,7 @@ export default function ScoresRankingTab({
   if (withheld) {
     return (
       <EmptyState
-        icon={<Trophy size={36} />}
+        icon={<Trophy />}
         title="Results pending"
         description="The final ranking will be revealed soon — check back!"
       />
@@ -55,7 +55,7 @@ export default function ScoresRankingTab({
     <>
       {matches.length === 0 && (
         <EmptyState
-          icon={<Trophy size={36} />}
+          icon={<Trophy />}
           title="No scores entered yet."
           description="Enter scores in the Schedule tab."
         />

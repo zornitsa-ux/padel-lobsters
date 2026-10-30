@@ -107,7 +107,7 @@ export default function PlayerView({
   return (
     <Shell title="🦞 The Results" headerRight={headerRight}>
       {playerResults === null ? (
-        <Spinner className="py-10" />
+        <Spinner />
       ) : (
         <ResultsView results={playerResults} highlightWinners />
       )}

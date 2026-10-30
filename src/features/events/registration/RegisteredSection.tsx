@@ -9,6 +9,7 @@ import type { DisplayName, GetPlayer, TransferShareTarget } from './utils'
 import { Button } from '../../../components/ui/Button'
 import { OutgoingTransferActions } from '../TransferActions'
 import { AlertBox } from '../../../components/ui/AlertBox'
+import { EmptyState } from '../../../components/ui/EmptyState'
 
 interface RegisteredSectionProps {
   isCompleted: boolean
@@ -55,9 +56,7 @@ export default function RegisteredSection({
         </h3>
         <div className="space-y-2">
           {registered.length === 0 && (
-            <p className="text-sm text-lob-muted-light card py-4 text-center">
-              No players registered yet
-            </p>
+            <EmptyState variant="inline" title="No players registered yet" />
           )}
 
           {registered.map((reg, idx) => {

@@ -1,6 +1,9 @@
 import type { Court, CourtMove } from './domain'
 import { courtMoveText, eventClimbers } from './kotcPlayer'
 import BiggestClimberLine from './BiggestClimberLine'
+import { EmptyState } from '../../../components/ui/EmptyState'
+import { SignInPrompt } from '../../../components/ui/SignInPrompt'
+import { Spinner } from '../../../components/ui/Spinner'
 
 export type TeamRankingRow = {
   teamId: string
@@ -26,11 +29,7 @@ export default function TeamRankingList({
   const unranked = rows.filter((r) => r.finalRank == null)
 
   if (ranked.length === 0) {
-    return (
-      <p className="text-sm text-lob-muted-light text-center py-4">
-        No final standings were recorded for this event.
-      </p>
-    )
+    return <EmptyState variant="inline" title="No final standings were recorded for this event." />
   }
 
   return (
@@ -103,13 +102,8 @@ export function TeamStandings({
   courts: Court[]
   highlightTeamId?: string | null
 }) {
-  if (!signedIn) {
-    return (
-      <p className="text-sm text-lob-muted-light text-center py-4">
-        Sign in to see the final standings.
-      </p>
-    )
-  }
-  if (isPending) return null
+  if (!signedIn)
+    return <SignInPrompt variant="inline" title="Sign in to see the final standings." />
+  if (isPending) return <Spinner size="inline" />
   return <TeamRankingList rows={rows} courts={courts} highlightTeamId={highlightTeamId} />
 }

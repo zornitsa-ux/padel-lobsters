@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { ChevronDown } from 'lucide-react'
+import { EmptyState } from './EmptyState'
 
 const COUNTRIES: ReadonlyArray<readonly [string, string]> = [
   ['', 'Select country…'],
@@ -142,9 +143,7 @@ export default function CountryPicker({ value, onChange }: CountryPickerProps) {
 
       {open && (
         <div className="absolute z-50 left-0 right-0 mt-1 bg-white border border-lob-line-strong rounded-xl shadow-lg max-h-52 overflow-y-auto">
-          {filtered.length === 0 && (
-            <p className="text-xs text-lob-muted-light px-3 py-3 text-center">No countries found</p>
-          )}
+          {filtered.length === 0 && <EmptyState variant="inline" title="No countries found" />}
           {filtered.map(([code, label]) => (
             <button
               key={code}

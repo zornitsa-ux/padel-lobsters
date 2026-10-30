@@ -101,7 +101,7 @@ export default function Scores({ tournament, onNavigate }: ScoresProps) {
   if (!tournament) {
     return (
       <EmptyState
-        icon={<AlertCircle size={36} />}
+        icon={<AlertCircle />}
         title="No event selected"
         action={<Button onClick={() => onNavigate('tournament')}>Go to Events</Button>}
       />

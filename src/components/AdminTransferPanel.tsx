@@ -10,6 +10,7 @@ import { useConfirm } from '../lib/confirmBus'
 import { Button } from './ui/Button'
 import { TextButton } from './ui/TextButton'
 import { AlertBox } from './ui/AlertBox'
+import { EmptyState } from './ui/EmptyState'
 
 // Admin-only modal that lists every pending transfer for a tournament and
 // surfaces the two admin actions:
@@ -116,9 +117,7 @@ export default function AdminTransferPanel({ tournament, onClose }: AdminTransfe
         <p className="text-xs text-lob-muted-light -mt-2">{tournament?.name}</p>
 
         {pending.length === 0 && (
-          <p className="text-sm text-lob-muted-light text-center py-6">
-            No pending transfers for this event.
-          </p>
+          <EmptyState variant="inline" title="No pending transfers for this event." />
         )}
 
         {pending.map((xfer) => {

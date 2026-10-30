@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { PIN_SUNSET_LABEL } from '../auth/pinSunset'
 import { authReadinessKey, fetchAuthReadiness, type AuthReadiness } from './authReadiness'
 import { AlertBox } from '../../components/ui/AlertBox'
+import { Spinner } from '../../components/ui/Spinner'
 
 const formatPinDate = (iso: string) =>
   new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
@@ -55,7 +56,7 @@ export default function AuthReadinessPanel() {
       <p className="text-xs font-bold text-lob-muted uppercase tracking-wide">
         Sign-in readiness · PINs stop working on {PIN_SUNSET_LABEL}
       </p>
-      {isLoading && <p className="text-sm text-lob-muted">Loading…</p>}
+      {isLoading && <Spinner size="inline" />}
       {isError && (
         <AlertBox variant="error" size="sm">
           Could not load sign-in readiness.

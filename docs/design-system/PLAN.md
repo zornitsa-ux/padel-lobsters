@@ -77,8 +77,10 @@ component doesn't fit, fix the component, not the call site.**
 | Bare icon delete / remove in a row   | `IconButton variant="ghost-destructive"`             | exists |
 | Icon button on a dark surface        | `IconButton variant="on-dark"`                       | exists |
 | Avatar photo upload                  | `AvatarPicker`                                       | exists |
-| Empty list / nothing yet             | `EmptyState` (`variant="inline"` coming)             | P5     |
-| Signed-out viewer                    | `SignInPrompt`                                       | P5     |
+| Empty page or tab                    | `EmptyState`                                         | exists |
+| Empty list inside a card or modal    | `EmptyState variant="inline"`                        | exists |
+| Signed-out viewer                    | `SignInPrompt` (`variant="inline"` in a card)        | exists |
+| Admin-only page                      | `AdminRouteGuard redirectTo` (never a sign-in ask)   | exists |
 | Player or team row, ranked row       | `PlayerRow` + `RankMarker`                           | P6     |
 | Card title + pill + description      | `CardHeader`                                         | P6     |
 | Inset panel / well                   | `.panel` / `.panel-accent`                           | P6     |
@@ -89,7 +91,7 @@ component doesn't fit, fix the component, not the call site.**
 | Two-to-four way choice               | `SegmentedControl` (`detail` for a second line)      | exists |
 | Pick one of many (rounds, filters)   | `SegmentedControl layout="scroll"` / `"wrap"`        | exists |
 | Page tabs (route or in-page)         | `PageHeader tabs` (`to` or `onClick`)                | exists |
-| Loading                              | `Spinner` / `Skeleton`                               | exists |
+| Loading                              | `Spinner` (`size="inline"` in a card) / `Skeleton`   | exists |
 | Eyebrow / overline                   | `.eyebrow` / `.eyebrow-accent`                       | P6     |
 
 ### Buttons and chips (owner, 2026-10-25)
@@ -146,8 +148,8 @@ the gallery, and runs `npm run design:baseline` when counts drop.
 | P2e | **Zero hand-built buttons: actions.** 176 raw `<button>`s in 80 files outside `src/components/ui` (2026-10-26 inventory). Move the ~100 actions and text actions onto `Button` and `TextButton` (CTAs, accept/decline and save/cancel pairs, Sign out, Confirm, "Add question", "Reset to defaults"), and expand/collapse headers onto `CollapsibleSection` / `CollapsibleCard`. Add a lint rule banning `<button>` outside `src/components/ui`, as a per-file ratchet so the count can only go down. Depends on P2d's `fullWidth` and `ActionRow`.                                                                                                | Done (#75, #76)           |
 | P2f | **Zero hand-built buttons: chips, options, menus.** New components for what's left: `Chip` (toggle, filter, selection: filter pills, sizes, rounds, divisions, lefty, gender and position), an option row / tile (player pickers, Oscars vote tiles and category grid, lightbox thumbnails) and `Menu` + `MenuItem` (event admin menu, payment method picker, status override, team search). Two-to-four way choices go to `SegmentedControl`. Card-shaped links: `CardLink` (owner, 2026-10-26). The ratchet reaches zero and the rule becomes absolute. Four PRs: chips and choices, option rows and tiles, menus, then card links and the rest. | Done (#77, #80, #81, #86) |
 | P3  | **`AlertBox` size, role and dismiss; `FormError` in ui.** About 29 files build a tinted box by hand (`-light` surface with a `-border` border; triage first, as some are highlighted rows or cards rather than alerts) and about 23 lines spell a field error by hand (`text-xs text-lob-coral` / `-danger`). `AlertBox` gains `size="sm"`, a `role` (alert for errors, status otherwise) and a dismiss that is an `IconButton ghost sm` instead of the bare 14px X. `FormError` moves from `features/auth` to `components/ui`. Two PRs: alerts, then field errors.                                                                                | Done (#108, #109)         |
-| P4  | **`Badge` tones** (`success`, `neutral`, `warning`, `outline`) and **payment status single source** (`paymentStatus.ts`, `PaymentStatusBadge` on `Badge`; the blue "transferred" pill and merch "delivered" get a token). About 13 hand-built status pills move onto `Badge`. Rename team-state "Confirmed".                                                                                                                                                                                                                                                                                                                                       | In review (#110)          |
-| P5  | **Empty and signed-out states.** `EmptyState variant="inline"`, `SignInPrompt`; loading states: a loading card keeps its title or header, so the viewer sees what is loading, and shows `Spinner` / `Skeleton` in the body instead of `return null`.                                                                                                                                                                                                                                                                                                                                                                                               |                           |
+| P4  | **`Badge` tones** (`success`, `neutral`, `warning`, `outline`) and **payment status single source** (`paymentStatus.ts`, `PaymentStatusBadge` on `Badge`; the blue "transferred" pill and merch "delivered" get a token). About 13 hand-built status pills move onto `Badge`. Rename team-state "Confirmed".                                                                                                                                                                                                                                                                                                                                       | Done (#110)               |
+| P5  | **Empty and signed-out states.** `EmptyState variant="inline"`, `SignInPrompt`; loading states: a loading card keeps its title or header, so the viewer sees what is loading, and shows `Spinner` / `Skeleton` in the body instead of `return null`.                                                                                                                                                                                                                                                                                                                                                                                               | Done (#112)               |
 | P6  | **Layout pieces.** `RankMarker` + `PlayerRow highlighted`, `CardHeader`, `RosterHeading`, `.panel` (first use: the blue Playtomic-level panel copied in three forms), `.eyebrow`, `SearchInput` (the TeamForm player search could become a proper combobox here, see #81); a heading element inside the `CollapsibleCard` header button (review of #76). Starts after the card-pattern conversation (see "Later").                                                                                                                                                                                                                                 |                           |
 | P7  | **Lock-down.** Tokens for decorative colours (medal gold, avatar palette, gender marks) and for `text-[9px]` (14 uses, the bottom nav labels among them). Then switch `theme.extend.colors` to a restricted `theme.colors` so raw palette classes stop generating, and add a lint rule for unknown classes (e.g. `eslint-plugin-tailwindcss`, check ESLint 9 support). Retire the colour ratchet once the theme is locked; keep the `<button>` check.                                                                                                                                                                                              |                           |
 
@@ -178,10 +180,22 @@ primitives (see the Log) before P3:
    hand-built tinted boxes.~~ Done in #108; see the Log.
 7. ~~**P3 part 2: field errors.** `FormError` in ui and the hand-built error
    lines.~~ Done in #109; see the Log.
-8. ~~**P4: `Badge` tones and payment status.**~~ Done; see the Log.
-9. **P5: empty, signed-out and loading states.**
-10. **Card-pattern conversation** with the owner (below), then **P6**.
-11. **P7: lock-down.**
+8. ~~**P4: `Badge` tones and payment status.**~~ Done in #110; see the Log.
+9. ~~**P5: empty, signed-out and loading states.**~~ Done in #112; see the Log.
+10. **Review the `lob-amber` text and icons** (owner, 2026-10-30). P4 gave the
+    `accent` badge `lob-amber-strong` because `lob-amber` text is 2.0:1 on its
+    tint (about 2.2:1 on white). Other spots still use `lob-amber` for text or
+    icons, and some read as warnings, which are `lob-warning`. Triage each:
+    warning → `lob-warning`; accent text → `lob-amber-strong`; decorative
+    (icon, border) can stay. One small PR.
+    - Text: AdminTools "Needs attention", the `GroupFormationTool` warning
+      line, the `RatingReview` level figure, the `LinkPlayerModal` (two) and
+      `PendingApprovalsList` labels.
+    - Icons and borders: the `ChampionBanner` trophy and borders, the
+      `MyRounds` sit-out coffee and highlight border, the `PinUpgradeCard` and
+      AdminTools card borders, the `GroupStandingsTable` dashed divider.
+11. **Card-pattern conversation** with the owner (below), then **P6**.
+12. **P7: lock-down.**
 
 ### E2E safety net
 
@@ -976,3 +990,68 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
   - Owner: `accent` text moves to a new `lob-amber-strong` (`#8C5A0E`, 5.3:1
     on the tint, was 2.0:1 with `lob-amber`), so league "Draft" and the
     intermediate level pass WCAG AA.
+
+- **2026-10-30.** P5 on `design-system-p5-states` (#112). Empty, signed-out and
+  loading states.
+  - `EmptyState` gains `variant="inline"` for an empty list inside a card,
+    modal or headed section: no card, `py-4`, a 20px icon and a muted
+    regular-weight title, so it doesn't compete with the card's own heading
+    (owner). `card` stays for an empty page or tab body. The component sizes
+    its icon (36px card, 20px inline), so call sites pass `<Calendar />` with
+    no `size` (they had 22, 28, 32 and 36). `className` is gone; its one
+    caller, LinkPlayerModal's `py-6`, is now inline.
+  - `SignInPrompt` replaces the 4 sign-in prompts (team-events UI review):
+    `SignInBanner` (card and `compact`), sign-in `EmptyState`s that pointed at
+    Settings or `/account` (or had no action), and a plain "Sign in to see the
+    final standings." line. It is an `EmptyState` with a `LogIn` icon and a
+    Sign in button that opens `SignInModal` in place (owner), so there is no
+    `onNavigate` plumbing and the content renders once the session lands.
+    Neutral, not tinted: needing to sign in isn't a warning (owner).
+  - **No admin sign-in prompts** (owner): an exposed action that asks for an
+    admin sign-in is a bug. `/admin` and `/admin/lobster-way` now sit behind
+    `AdminRouteGuard`, which sends a non-admin to Home and to the public
+    Lobster way page, as the event and league manage routes already did.
+    `AdminLeagueRouteGuard` is built on it. `SignInBanner` is deleted.
+  - `Spinner` takes `size` instead of `className`: `page` (32px, `py-16`; the
+    route fallback's `py-24` folds in) and `inline` (20px, `py-4`) for the
+    body of a loading card, under its title.
+
+  Triage:
+  - Onto `SignInPrompt`: MyTournament, team invites, the KotC starting courts
+    and final standings (inline), and the Shop's order notice (inline).
+  - Onto `EmptyState variant="inline"`: LinkPlayerModal (both), the league
+    division's teams, KotC admin teams and final standings, the past-event "No
+    match data", a schedule round, the registered players and teams lists,
+    the review breakdown, the transfer pickers (player search, admin pending
+    list), `PlayerPicker`, security events and `CountryPicker`. "No seasons
+    yet." and `LeagueNotFound` (was hand-built with a 🦞) are the card variant.
+  - Loading cards that keep their title: KotC starting courts (the not-shown,
+    signed-out and loading states now sit under the "Starting courts" heading)
+    and the KotC standings, which were blank while loading. Sign-in readiness,
+    security events, the shop and the Lobster way editor swap their "Loading…"
+    text for `Spinner`. PlayerDetailPage and Group Stage keep their header
+    while loading; Group Stage with no league showed a blank page and is now
+    `LeagueNotFound`. Team invites and finish-account were `null` and are now
+    a page spinner.
+  - Empty states that showed before the data landed: the Events list ("No
+    upcoming events"), the Players roster ("No players yet") and a transfer
+    link ("We couldn't find this transfer") now show `Spinner` until their
+    query resolves. Payments' "Loading teams…" was an `EmptyState` with an
+    alert icon; it is a spinner, and the failure is `AlertBox variant="error"`.
+  - Staying: placeholders inside a row ("No votes", "No teams assigned", "No
+    description yet", "No email on file"), the YourStatsCard footnote under
+    zeroed tiles, the Oscars game screens (their 🤷 panels belong to that
+    screen's look), the Home skeletons (already right), and the league pages
+    whose title is the league name, which can't show a header before it loads.
+    Busy buttons ("Saving…", a spinning `Loader2` icon in six places) are a
+    `Button busy` prop for later. `SignInModal` and the full-screen
+    `VerificationGate` are the sign-in forms, not prompts.
+
+  - Review: `SignInModal` renders through a portal, so a parent's `space-y`
+    margin no longer pushes its backdrop down. A first load that fails shows an
+    error rather than the empty state (`loadFailed`). Team invites wait for
+    the account-setup check that can redirect them. The sign-in modal still
+    doesn't trap focus or close on Escape (#111).
+
+  E2E: a player opening `/admin` lands on Home, and `/admin/lobster-way` on the
+  public Lobster way page.

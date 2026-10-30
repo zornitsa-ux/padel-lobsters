@@ -7,6 +7,7 @@ import { useConfirm } from '../../lib/confirmBus'
 import { useResolveWithPii } from './useRevealPii'
 import { AlertBox } from '../../components/ui/AlertBox'
 import { Badge } from '../../components/ui/Badge'
+import { Spinner } from '../../components/ui/Spinner'
 import LinkPlayerModal from './LinkPlayerModal'
 import PendingApprovalsList from './PendingApprovalsList'
 import PlayersList from './PlayersList'
@@ -17,6 +18,7 @@ import {
   sortPlayersChronological,
 } from './playersSelectors'
 import type { CommunityPlayer } from './playersSelectors'
+import { loadFailed } from '../../lib/queryState'
 
 // The roster only needs the public player rows; stats, reviews and admin
 // actions load on the player's own page (PlayerDetailPage).
@@ -24,7 +26,10 @@ export default function Players() {
   const confirm = useConfirm()
   const { session, role, isAdmin } = useApp()
   const { updatePlayer, deletePlayer } = usePlayerActions({ session, role })
-  const { data: players = [] } = usePlayers()
+  const playersQuery = usePlayers()
+  const players = playersQuery.data ?? []
+  const playersPending = playersQuery.isPending
+  const playersFailed = loadFailed(playersQuery)
   const resolveWithPii = useResolveWithPii()
   const claimedId = session?.user?.id ?? null
 
@@ -176,11 +181,17 @@ export default function Players() {
         />
       </div>
 
-      <PlayersList
-        orderedForRender={orderedForRender}
-        displayName={displayName}
-        emptyTitle={search ? 'No players match your search.' : undefined}
-      />
+      {playersPending ? (
+        <Spinner />
+      ) : playersFailed ? (
+        <AlertBox variant="error">Couldn&apos;t load the players. Reload to try again.</AlertBox>
+      ) : (
+        <PlayersList
+          orderedForRender={orderedForRender}
+          displayName={displayName}
+          emptyTitle={search ? 'No players match your search.' : undefined}
+        />
+      )}
     </div>
   )
 }

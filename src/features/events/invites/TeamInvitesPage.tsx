@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useApp } from '../../../context/useApp'
 import { EmptyState } from '../../../components/ui/EmptyState'
+import { SignInPrompt } from '../../../components/ui/SignInPrompt'
+import { Spinner } from '../../../components/ui/Spinner'
 import Avatar from '../../../components/ui/Avatar'
 import DateTile from '../../../components/ui/DateTile'
 import { usePlayers } from '../../players/usePlayers'
@@ -79,7 +81,7 @@ export default function TeamInvitesPage() {
   const { respondToTeamInvite } = useTeamActions()
   const playerId = session?.user?.id ?? null
   const { data: invites = [], isPending } = useMyTeamInvites({ enabled: !!session })
-  const { data: setup } = useMyAccountSetup({ enabled: !!session })
+  const { data: setup, isPending: setupPending } = useMyAccountSetup({ enabled: !!session })
   const { data: players = [] } = usePlayers()
   const [busyId, setBusyId] = useState<string | null>(null)
   const [answered, setAnswered] = useState<string[]>([])
@@ -111,15 +113,11 @@ export default function TeamInvitesPage() {
   }
 
   if (!session) {
-    return (
-      <EmptyState
-        title="Sign in to see your team invites"
-        action={<Button onClick={() => navigate('/account')}>Sign in</Button>}
-      />
-    )
+    return <SignInPrompt title="Sign in to see your team invites" />
   }
 
-  if (isPending) return null
+  // Setup can redirect to finish-account, so invites wait for it too.
+  if (isPending || setupPending) return <Spinner />
 
   if (open.length === 0) {
     return (

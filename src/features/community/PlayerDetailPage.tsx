@@ -98,13 +98,16 @@ export default function PlayerDetailPage({ playerId, onNavigate }: PlayerDetailP
     [players],
   )
 
-  if (isLoading) return <Spinner />
-  if (!player) {
+  if (isLoading || !player) {
     return (
       <div className="-mx-4">
         <PageHeader title="Player" backLink={BACK_LINK} />
         <div className="px-4 pt-4">
-          <EmptyState icon={<User size={36} />} title="This player could not be found." />
+          {isLoading ? (
+            <Spinner />
+          ) : (
+            <EmptyState icon={<User />} title="This player could not be found." />
+          )}
         </div>
       </div>
     )

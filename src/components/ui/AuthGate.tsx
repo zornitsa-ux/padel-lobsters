@@ -1,30 +1,16 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import type { Session } from '@supabase/supabase-js'
 import { useApp } from '../../context/useApp'
-import { Shield, User, LogIn, X, Mail } from 'lucide-react'
+import { X, Mail } from 'lucide-react'
 import SignInForm from '../../features/auth/SignInForm'
 import { sessionRole } from '../../features/auth/sessionClaims'
 import { TextButton } from './TextButton'
 import { IconButton } from './IconButton'
 import { AlertBox } from './AlertBox'
 
-/**
- * Site-wide auth middleware.
- *
- * Wraps a section or action that requires a given role. When the current
- * session satisfies the role, the children render normally. Otherwise a
- * single, consistent banner appears with a one-tap deep-link to
- * Settings → Account so the user signs in ONCE and their session carries
- * across every page — no more per-page modal prompts.
- *
- * Props
- *   role        'admin' | 'player' — who is allowed to see the children
- *   onNavigate  the app-level navigate fn (required so "Sign in" works)
- *   message     optional override for the banner body copy
- *   compact     render a slim inline banner rather than a full card
- *   fallback    if provided, render this instead of the default banner
- *               (e.g. `null` to hide entirely)
- */
+// The sign-in modal and the hook that gates an action behind it. A signed-out
+// stand-in for content is `SignInPrompt`.
 export type GateRole = 'admin' | 'player'
 
 // A fresh session may not carry its role yet (it syncs just after sign-in), so
@@ -37,77 +23,6 @@ const ADMIN_REQUIRED_NOTICE = 'This needs an admin account.'
 // The navigation callback these surfaces use ('settings' is the only
 // destination they ever ask for).
 export type GateNavigate = (destination: string) => void
-
-/**
- * Standalone banner — exported so pages can surface it at the top of a
- * section without wrapping children (e.g. "read-only view" notices).
- */
-export function SignInBanner({
-  role,
-  onNavigate,
-  message,
-  compact,
-}: {
-  role: GateRole
-  onNavigate?: GateNavigate
-  message?: string
-  compact?: boolean
-}) {
-  const isAdmin = role === 'admin'
-  const Icon = isAdmin ? Shield : User
-  const accent = isAdmin ? 'amber' : 'teal'
-
-  const bg =
-    accent === 'amber'
-      ? 'bg-lob-warning-light border-lob-warning-border'
-      : 'bg-lob-cream border-lob-teal/30'
-  const iconTxt = accent === 'amber' ? 'text-lob-warning-solid' : 'text-lob-teal'
-  const title = accent === 'amber' ? 'text-lob-warning-strong' : 'text-lob-teal'
-  const body = accent === 'amber' ? 'text-lob-warning' : 'text-lob-slate'
-
-  const defaultCopy = isAdmin
-    ? "Sign in with your admin email to manage this. We'll send you a code."
-    : "Sign in with your email to post, react, or place orders. We'll send you a code."
-
-  const goToSettings = () => onNavigate?.('settings')
-
-  if (compact) {
-    return (
-      <div className={`rounded-xl border ${bg} p-2.5 flex items-center gap-2`}>
-        <Icon size={14} className={iconTxt + ' flex-shrink-0'} />
-        <p className={`text-xs ${body} flex-1`}>{message || defaultCopy}</p>
-        <button
-          onClick={goToSettings}
-          className="text-xs font-semibold text-lob-teal bg-white px-2.5 py-1 rounded-lg active:scale-95 transition-all flex items-center gap-1"
-        >
-          <LogIn size={11} /> Sign in
-        </button>
-      </div>
-    )
-  }
-
-  return (
-    <div className={`rounded-2xl border ${bg} p-4 flex items-start gap-3`}>
-      <div
-        className={`w-9 h-9 rounded-full bg-white flex items-center justify-center flex-shrink-0 ${iconTxt}`}
-      >
-        <Icon size={16} />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className={`text-sm font-semibold ${title}`}>
-          {isAdmin ? 'Admin sign-in required' : 'Verify your identity'}
-        </p>
-        <p className={`text-xs ${body} mt-0.5`}>{message || defaultCopy}</p>
-        <button
-          onClick={goToSettings}
-          className="mt-2 text-xs font-bold text-white bg-lob-teal px-3 py-1.5 rounded-lg active:scale-95 transition-all inline-flex items-center gap-1"
-        >
-          <LogIn size={12} /> Sign in
-        </button>
-      </div>
-    </div>
-  )
-}
 
 /**
  * The sign-in modal: the just-in-time surface for anything that needs identity.
@@ -165,7 +80,8 @@ export function SignInModal({
   const accentBg = isAdminAsk ? 'bg-lob-warning-light' : 'bg-lob-cream'
   const accentTxt = isAdminAsk ? 'text-lob-warning' : 'text-lob-teal'
 
-  return (
+  // Portalled so a parent's `space-y` margin can't offset the fixed backdrop.
+  return createPortal(
     <div
       className="fixed inset-0 bg-black/50 z-[60] flex items-end sm:items-center justify-center"
       onClick={onClose}
@@ -211,7 +127,8 @@ export function SignInModal({
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 

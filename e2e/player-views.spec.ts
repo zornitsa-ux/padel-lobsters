@@ -145,10 +145,11 @@ test.describe('player', () => {
   })
 
   test('admin pages and tabs stay closed', async ({ page }) => {
-    for (const path of ['/admin', '/admin/lobster-way']) {
-      await page.goto(path)
-      await expect(page.getByText('Admin sign-in required')).toBeVisible()
-    }
+    await page.goto('/admin')
+    await expect(page).toHaveURL(/\/home$/)
+    await page.goto('/admin/lobster-way')
+    await expect(page).toHaveURL(/\/lobster-way$/)
+    await expect(page.getByRole('heading', { name: 'Getting started' })).toBeVisible()
     await page.goto(`/events/${social.id}/manage`)
     await expect(page).toHaveURL(/\/info$/)
     await expect(page.getByRole('link', { name: 'Manage' })).toHaveCount(0)

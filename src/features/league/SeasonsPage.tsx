@@ -11,6 +11,7 @@ import { groupSeasons, isPublished } from './domain/lifecycle'
 import { resolveTeamShortName } from './domain/teamDisplay'
 import { DIVISION_LABELS } from './domain/types'
 import type { League, LeagueTeam } from './domain/types'
+import { EmptyState } from '../../components/ui/EmptyState'
 
 function championsLine(champions: LeagueTeam[]) {
   if (champions.length === 0) return null
@@ -76,7 +77,7 @@ export function SeasonsList() {
         {isLoading ? (
           <Spinner />
         ) : leagues.length === 0 ? (
-          <p className="text-sm text-lob-muted text-center py-8">No seasons yet.</p>
+          <EmptyState title="No seasons yet." />
         ) : (
           <>
             <SeasonGroup title="Current" leagues={current ? [current] : []} champions={champions} />

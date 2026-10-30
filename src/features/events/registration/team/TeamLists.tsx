@@ -17,6 +17,7 @@ import {
   teamCount,
   teamLabel,
 } from './teamHelpers'
+import { EmptyState } from '../../../../components/ui/EmptyState'
 
 interface TeamListsProps {
   tournament: NormalisedTournament
@@ -100,9 +101,7 @@ export default function TeamLists({
         </h3>
         <div className="space-y-2">
           {registered.length === 0 && (
-            <p className="text-sm text-lob-muted-light card py-4 text-center">
-              No teams registered yet
-            </p>
+            <EmptyState variant="inline" title="No teams registered yet" />
           )}
           {isAdmin
             ? registered.map((e, i) => renderRow(e, `#${i + 1}`))

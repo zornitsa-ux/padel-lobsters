@@ -9,7 +9,7 @@ import { useTournamentSync } from './useTournamentSync'
 import { hasLiveScores, isKingOfTheCourt } from './eventFormat'
 import { resultsWithheld } from './resultsPhase'
 import { splitRegistrationsByStatus, computePaymentConfig } from './registration/utils'
-import { EmptyState } from '../../components/ui/EmptyState'
+import { SignInPrompt } from '../../components/ui/SignInPrompt'
 import MyRounds from './MyRounds'
 import { useSelfRegister } from './registration/useSelfRegister'
 import PayPrompt from './registration/PayPrompt'
@@ -137,13 +137,7 @@ export default function MyTournament({ tournament, onNavigate }: Props) {
   }
 
   if (!claimedId) {
-    return (
-      <EmptyState
-        icon={<UserRoundX size={36} />}
-        title="Sign in to see your tournament"
-        action={<Button onClick={() => onNavigate('settings')}>Go to Settings</Button>}
-      />
-    )
+    return <SignInPrompt title="Sign in to see your tournament" />
   }
 
   const captainOwes =
