@@ -1171,3 +1171,8 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
     - An action (Enter Score) takes the `Pending` badge's place.
     - The league page's Matches splits into Fixtures and Results sections
       instead of one list with a hand-built "Completed" label.
+  - Review: the set columns are hidden from screen readers, which hear one
+    line instead ("Won by …, 6-4, 3-6, 8-10"); the match date parses as a
+    local date (it showed a day early west of UTC); a bye gets no Enter Score
+    or Edit on Manage (it opened the score form for a match with no
+    opponent).

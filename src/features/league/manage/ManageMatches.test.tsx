@@ -97,6 +97,13 @@ describe('ManageMatches', () => {
     expect(screen.queryByRole('button', { name: 'Generate Finals' })).toBeNull()
   })
 
+  it('offers no score edit on a bye', () => {
+    const bye = mkLeagueMatch({ id: 'bye', stage: 'silver_semi', team1_id: 'A3', team2_id: null })
+    renderMatches({ status: 'completed', matches: [{ ...bye, winner_id: 'A3' }] })
+    expect(screen.getByText('Bye')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull()
+  })
+
   it('points to group assignment while the season is a draft', () => {
     renderMatches({ status: 'draft', matches: [] })
     expect(screen.getByText(/assign groups in the Teams section/)).toBeTruthy()

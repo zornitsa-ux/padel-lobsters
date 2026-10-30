@@ -94,15 +94,18 @@ function TeamCard({ team, actions }: TeamCardProps) {
 
 function GroupColumn({
   label,
-  teams,
+  ids,
+  teamById,
   onRemove,
 }: {
   label: GroupLabel
-  teams: LeagueTeam[]
+  ids: string[]
+  teamById: Record<string, LeagueTeam>
   onRemove: (id: string) => void
 }) {
+  const teams = ids.flatMap((id) => teamById[id] ?? [])
   return (
-    <Section title={`Group ${label} (${teams.length})`} icon={<Users />}>
+    <Section title={`Group ${label} (${ids.length})`} icon={<Users />}>
       <div className="space-y-2">
         {teams.map((team) => (
           <TeamCard
@@ -120,9 +123,7 @@ function GroupColumn({
             }
           />
         ))}
-        {teams.length === 0 && (
-          <p className="text-xs text-lob-muted-light px-2">No teams assigned</p>
-        )}
+        {ids.length === 0 && <p className="text-xs text-lob-muted-light px-2">No teams assigned</p>}
       </div>
     </Section>
   )
@@ -207,7 +208,8 @@ export function GroupFormationTool({
           <GroupColumn
             key={label}
             label={label}
-            teams={(label === 'A' ? groupA : groupB).flatMap((id) => teamById[id] ?? [])}
+            ids={label === 'A' ? groupA : groupB}
+            teamById={teamById}
             onRemove={removeFromGroup}
           />
         ))}

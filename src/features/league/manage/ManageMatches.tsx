@@ -141,7 +141,10 @@ function MatchList({
             team2={teamById[m.team2_id ?? '']}
             label={stageToLabel(m.stage, teamById[m.team1_id ?? '']?.group_label)}
             action={
-              action && <TextButton onClick={() => action.onAction(m)}>{action.label}</TextButton>
+              action &&
+              m.team2_id !== null && (
+                <TextButton onClick={() => action.onAction(m)}>{action.label}</TextButton>
+              )
             }
           />
         ))}

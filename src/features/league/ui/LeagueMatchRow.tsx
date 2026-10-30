@@ -17,8 +17,14 @@ interface LeagueMatchRowProps {
 
 type Side = 't1' | 't2'
 
+// `played_on` is a date column; without a time it would parse as UTC midnight.
 const formatDate = (date: string) =>
-  new Date(date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+  new Date(`${date}T00:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+
+function resultText({ match, winner }: { match: LeagueMatch; winner: LeagueTeam | undefined }) {
+  const sets = (match.set_scores ?? []).map((set) => `${set.t1}-${set.t2}`).join(', ')
+  return winner && sets ? `Won by ${resolveTeamName(winner)}, ${sets}` : null
+}
 
 function TeamName({
   team,
@@ -54,6 +60,7 @@ function TeamName({
 function SetGames({ match, side, won }: { match: LeagueMatch; side: Side; won: boolean }) {
   return (
     <span
+      aria-hidden="true"
       className={`flex tabular-nums text-sm ${won ? 'font-bold text-lob-dark' : 'text-lob-muted'}`}
     >
       {(match.set_scores ?? []).map((set, index) => (
@@ -79,6 +86,10 @@ export function LeagueMatchRow({
   const details = [label, match.played_on && formatDate(match.played_on), match.location]
     .filter(Boolean)
     .join(' · ')
+  const result = resultText({
+    match,
+    winner: match.winner_id === match.team1_id ? team1 : team2,
+  })
   const lines = [
     { side: 't1' as const, team: team1, id: match.team1_id },
     ...(isBye ? [] : [{ side: 't2' as const, team: team2, id: match.team2_id }]),
@@ -100,6 +111,7 @@ export function LeagueMatchRow({
             />
           ))}
         </div>
+        {result && <p className="sr-only">{result}</p>}
         {details && <p className="text-xs text-lob-muted truncate">{details}</p>}
       </div>
       {isBye ? (

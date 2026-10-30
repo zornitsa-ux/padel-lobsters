@@ -32,6 +32,7 @@ describe('LeagueMatchRow', () => {
     )
     expect(screen.getByText('Group A · 12 Oct · Court 3')).toBeTruthy()
     expect(screen.queryByText('Pending')).toBeNull()
+    expect(screen.getByText('Won by Net Ninjas, 6-4, 3-6, 8-10').className).toContain('sr-only')
   })
 
   it('opens a team from its name, a real button', () => {
