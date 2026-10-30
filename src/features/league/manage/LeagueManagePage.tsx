@@ -72,13 +72,9 @@ function LeagueManage({ league }: { league: League }) {
         badge={
           <>
             {!isPublished(league) && (
-              <Badge
-                variant="silver"
-                label="Hidden"
-                icon={<EyeOff size={11} aria-hidden="true" />}
-              />
+              <Badge tone="neutral" label="Hidden" icon={<EyeOff aria-hidden="true" />} />
             )}
-            <Badge variant={pill.variant} label={pill.label} />
+            <Badge tone={pill.tone} label={pill.label} />
           </>
         }
         tabs={

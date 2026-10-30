@@ -4,6 +4,8 @@ import { Button } from '../../../components/ui/Button'
 import { TextButton } from '../../../components/ui/TextButton'
 import WaitlistNotice from './WaitlistNotice'
 import { AlertBox } from '../../../components/ui/AlertBox'
+import { isSettled, isUnpaid } from '../paymentStatus'
+import PaymentStatusBadge from './PaymentStatusBadge'
 
 interface JoinEventCardProps {
   /** Derived by `myRegistrationSummary` — the same source /me reads. */
@@ -73,8 +75,8 @@ export default function JoinEventCard({
   }
 
   const ps = summary.paymentStatus
-  const isConfirmed = ps === 'paid' || ps === 'transferred'
-  const needsPayment = (!ps || ps === 'unpaid') && hasTikkie
+  const isConfirmed = isSettled(ps)
+  const needsPayment = isUnpaid(ps) && hasTikkie
 
   return (
     <div className="card flex items-center justify-between gap-2">
@@ -82,10 +84,9 @@ export default function JoinEventCard({
         <CheckCircle size={14} className="text-lob-success-solid flex-shrink-0" />
         <span className="text-sm font-semibold text-lob-dark">You&apos;re registered</span>
       </div>
+      {/* The viewer's own settled spot reads Confirmed, also when it came by transfer. */}
       {isConfirmed ? (
-        <span className="text-xs font-semibold text-lob-success bg-lob-success-light border border-lob-success-border px-2 py-0.5 rounded-full flex-shrink-0">
-          ✓ Confirmed
-        </span>
+        <PaymentStatusBadge paymentStatus="paid" />
       ) : needsPayment ? (
         <TextButton tone="primary" onClick={onGoToPayment}>
           Pay on the You tab

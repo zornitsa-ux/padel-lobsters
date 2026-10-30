@@ -1,11 +1,12 @@
 import { Ban, Clock, Package, CreditCard, type LucideIcon } from 'lucide-react'
+import type { BadgeTone } from '../../components/ui/Badge'
 import type { OrderStatus } from './merchSchemas'
 
-type StatusConfig = { label: string; icon: LucideIcon; bg: string; text: string }
+type StatusConfig = { label: string; icon: LucideIcon; tone: BadgeTone }
 
 export const STATUS_CONFIG: Record<OrderStatus, StatusConfig> = {
-  ordered: { label: 'Ordered', icon: Clock, bg: 'bg-lob-warning-soft', text: 'text-lob-warning' },
-  paid: { label: 'Paid', icon: CreditCard, bg: 'bg-lob-success-soft', text: 'text-lob-success' },
-  delivered: { label: 'Delivered', icon: Package, bg: 'bg-blue-100', text: 'text-blue-700' },
-  cancelled: { label: 'Cancelled', icon: Ban, bg: 'bg-lob-danger-soft', text: 'text-lob-danger' },
+  ordered: { label: 'Ordered', icon: Clock, tone: 'warning' },
+  paid: { label: 'Paid', icon: CreditCard, tone: 'success' },
+  delivered: { label: 'Delivered', icon: Package, tone: 'success' },
+  cancelled: { label: 'Cancelled', icon: Ban, tone: 'danger' },
 }

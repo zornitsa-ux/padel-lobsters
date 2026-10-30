@@ -1,41 +1,44 @@
+export const BADGE_TONES = [
+  'success',
+  'warning',
+  'danger',
+  'info',
+  'neutral',
+  'brand',
+  'outline',
+  'accent',
+] as const
+
+export type BadgeTone = (typeof BADGE_TONES)[number]
+
 export interface BadgeProps {
-  variant:
-    | 'paid'
-    | 'unpaid'
-    | 'pending'
-    | 'waitlist'
-    | 'info'
-    | 'gold'
-    | 'silver'
-    | 'league-draft'
-    | 'league-group-stage'
-    | 'league-knockout'
-    | 'league-completed'
+  tone: BadgeTone
   label: string
   icon?: React.ReactNode
+  title?: string
 }
 
-const variantClasses: Record<BadgeProps['variant'], string> = {
-  paid: 'bg-lob-success-soft text-lob-success',
-  unpaid: 'bg-lob-coral-light text-lob-coral',
-  pending: 'bg-lob-warning-soft text-lob-warning',
-  waitlist: 'bg-lob-warning-soft text-lob-warning',
-  info: 'bg-lob-teal/10 text-lob-teal',
-  gold: 'bg-yellow-50 text-yellow-700',
-  silver: 'bg-gray-100 text-lob-slate',
-  'league-draft': 'bg-lob-amber/15 text-lob-amber',
-  'league-group-stage': 'bg-white text-lob-teal ring-1 ring-lob-teal/30',
-  'league-knockout': 'bg-lob-coral/10 text-lob-coral',
-  'league-completed': 'bg-gray-100 text-lob-muted',
+const toneClasses: Record<BadgeTone, string> = {
+  success: 'bg-lob-success-soft text-lob-success',
+  warning: 'bg-lob-warning-soft text-lob-warning',
+  danger: 'bg-lob-danger-soft text-lob-danger',
+  info: 'bg-lob-info-soft text-lob-info',
+  neutral: 'bg-lob-line text-lob-slate',
+  brand: 'bg-lob-teal-light text-lob-teal',
+  outline: 'bg-white text-lob-slate ring-1 ring-inset ring-lob-line-strong',
+  accent: 'bg-lob-amber/15 text-lob-amber-strong',
 }
 
-export function Badge({ variant, label, icon }: BadgeProps) {
+// Shrinks under pressure and truncates the label rather than overflowing a
+// narrow row; the icon keeps its size.
+export function Badge({ tone, label, icon, title }: BadgeProps) {
   return (
     <span
-      className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${variantClasses[variant]}`}
+      title={title}
+      className={`inline-flex min-w-0 max-w-full items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold [&>svg]:size-3 [&>svg]:shrink-0 ${toneClasses[tone]}`}
     >
       {icon}
-      {label}
+      <span className="truncate">{label}</span>
     </span>
   )
 }

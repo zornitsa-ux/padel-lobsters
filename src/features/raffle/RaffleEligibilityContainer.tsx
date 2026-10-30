@@ -9,6 +9,7 @@ import type { IneligibleReason } from './raffleQueries'
 import type { EventNavigate } from '../events/eventHelpers'
 import { Button } from '../../components/ui/Button'
 import { TextButton } from '../../components/ui/TextButton'
+import { Badge } from '../../components/ui/Badge'
 
 interface Tournament {
   id: string
@@ -144,16 +145,11 @@ export default function RaffleEligibilityContainer({
                 }`}
                 trailing={
                   skip ? (
-                    <span
-                      className={`flex items-center gap-1 text-xs font-semibold rounded-full px-2.5 py-1 flex-shrink-0 ${
-                        skip === 'cooldown'
-                          ? 'bg-amber-50 text-amber-700'
-                          : 'bg-gray-200 text-lob-slate'
-                      }`}
-                    >
-                      {skip === 'cooldown' ? <Clock size={12} /> : <Trophy size={12} />}
-                      {skip === 'cooldown' ? 'On cooldown' : 'Won this raffle'}
-                    </span>
+                    skip === 'cooldown' ? (
+                      <Badge tone="warning" icon={<Clock />} label="On cooldown" />
+                    ) : (
+                      <Badge tone="neutral" icon={<Trophy />} label="Won this raffle" />
+                    )
                   ) : (
                     <span
                       className={`w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 ${

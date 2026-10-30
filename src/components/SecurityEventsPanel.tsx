@@ -14,6 +14,7 @@ import type { LucideIcon } from 'lucide-react'
 import { CollapsibleCard } from './ui/CollapsibleCard'
 import { IconButton } from './ui/IconButton'
 import { SegmentedControl } from './ui/SegmentedControl'
+import { Badge } from './ui/Badge'
 
 /**
  * Admin-only Security panel.
@@ -100,14 +101,13 @@ export default function SecurityEventsPanel() {
           <Activity size={15} className="text-lob-teal" />
           Recent security events
           {failureCount !== null && failureCount > 0 && (
-            <span className="text-2xs text-white bg-lob-danger-solid px-1.5 py-0.5 rounded-full font-bold">
-              {failureCount} fail
-            </span>
+            <Badge tone="danger" label={`${failureCount} fail`} />
           )}
           {piiReadCount !== null && piiReadCount > 0 && (
-            <span className="text-2xs text-white bg-lob-warning-solid px-1.5 py-0.5 rounded-full font-bold">
-              {piiReadCount} PII read{piiReadCount === 1 ? '' : 's'}
-            </span>
+            <Badge
+              tone="warning"
+              label={`${piiReadCount} PII read${piiReadCount === 1 ? '' : 's'}`}
+            />
           )}
         </h3>
       }
@@ -175,11 +175,7 @@ function EventRow({ ev }: { ev: SecurityEventRow }) {
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5 flex-wrap">
           <span className={`font-semibold ${colors.text}`}>{labelForKind(ev.attempt_kind)}</span>
-          {ev.succeeded === false && (
-            <span className="text-2xs font-bold text-lob-danger-strong bg-lob-danger-soft px-1.5 py-0.5 rounded uppercase">
-              fail
-            </span>
-          )}
+          {ev.succeeded === false && <Badge tone="danger" label="fail" />}
           <span className="text-lob-muted-light ml-auto whitespace-nowrap">
             {formatTime(ev.attempted_at)}
           </span>

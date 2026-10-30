@@ -5,6 +5,7 @@ import { STATUS_CONFIG } from './statusConfig'
 import { formatOrderTime, orderTimestamp } from './formatters'
 import type { MerchInterest, MerchItem, OrderStatus } from './merchSchemas'
 import { AlertBox } from '../../components/ui/AlertBox'
+import { Badge } from '../../components/ui/Badge'
 
 const STEPS: readonly OrderStatus[] = ['ordered', 'paid', 'delivered']
 
@@ -68,18 +69,14 @@ export default function MyOrders({ myOrders, items }: MyOrdersProps) {
                       <React.Fragment key={s}>
                         {i > 0 && (
                           <div
-                            className={`flex-1 h-0.5 rounded ${active ? 'bg-lob-teal' : 'bg-gray-200'}`}
+                            className={`flex-1 h-0.5 rounded ${active ? 'bg-lob-teal' : 'bg-lob-line-strong'}`}
                           />
                         )}
-                        <div
-                          className={`flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full ${
-                            active
-                              ? `${sCfg.bg} ${sCfg.text}`
-                              : 'bg-gray-100 text-lob-muted-light/60'
-                          }`}
-                        >
-                          <SIcon size={10} /> {sCfg.label}
-                        </div>
+                        <Badge
+                          tone={active ? sCfg.tone : 'neutral'}
+                          label={sCfg.label}
+                          icon={<SIcon />}
+                        />
                       </React.Fragment>
                     )
                   })}

@@ -42,54 +42,55 @@ component doesn't fit, fix the component, not the call site.**
 
 ## Need X → use Y
 
-| Need                                 | Use                                                  | Status    |
-| ------------------------------------ | ---------------------------------------------------- | --------- |
-| Error / warning / success / info box | `AlertBox variant=… (size="sm")`                     | exists    |
-| Notice with a title, link or buttons | `AlertBox title` · `action` · `actions`              | exists    |
-| Field-level error text               | `FormError` (`useFieldError` ties it to the field)   | exists    |
-| Status pill                          | `Badge tone=…`                                       | tones: P4 |
-| Button (action or navigation)        | `Button variant=… size=…` (`to` / `href` for links)  | exists    |
-| Arrow onward, chevron opening a menu | `Button trailingIcon`                                | exists    |
-| Button on a dark or gradient surface | `Button variant="on-dark"`                           | exists    |
-| Button filling what a row leaves     | `Button grow` (beside a count, IconButton or link)   | exists    |
-| Full-width button                    | `Button fullWidth`                                   | exists    |
-| Buttons sharing a row (Cancel, Save) | `ActionRow` (alternative first, confirm last)        | exists    |
-| Utility action under content         | `Button variant="neutral" size="sm"`                 | exists    |
-| Destructive action, not the CTA      | `TextButton tone="destructive"`                      | exists    |
-| Toggle, filter or info chip          | `Chip` (a row of them: `ChipGroup`)                  | exists    |
-| Pick one from a list (player)        | `OptionRow selected` (`actions` beside, outside tap) | exists    |
-| Row that jumps to a task             | `OptionRow` (`trailing` chevron)                     | exists    |
-| Pick one tile from a grid            | `OptionTile selected` (`muted` when done)            | exists    |
-| Switch between photos                | `ImageTile`                                          | exists    |
-| Admin acts for another player        | `useConfirmOnBehalf` before the write                | exists    |
-| Whole card is one link               | `CardLink` (`flush` for a full-bleed band)           | exists    |
-| Card link: title, subtitle, chevron  | `LinkCard` (built on `CardLink`)                     | exists    |
-| Sheet or dialog                      | `Modal` (`description` for a line under the title)   | exists    |
-| Task with more room than a sheet     | `FullScreenDialog`                                   | exists    |
-| Short list of choices from the side  | `Drawer`                                             | exists    |
-| Menu of actions                      | `Menu` + `MenuItem` (`tone="danger"`, `current`)     | exists    |
-| Suggestions under a search field     | `MenuList keepFocus` + `MenuItem`                    | exists    |
-| Underlined / inline text action      | `TextButton tone=… size=…` (`to` / `href` for links) | exists    |
-| Name link in a tight row             | `TextButton truncate` (`hitArea` for a 40px target)  | exists    |
-| Icon-only button                     | `IconButton` (always with `aria-label`)              | exists    |
-| Bare icon (close, back, reorder)     | `IconButton variant="ghost"`                         | exists    |
-| Bare icon delete / remove in a row   | `IconButton variant="ghost-destructive"`             | exists    |
-| Icon button on a dark surface        | `IconButton variant="on-dark"`                       | exists    |
-| Avatar photo upload                  | `AvatarPicker`                                       | exists    |
-| Empty list / nothing yet             | `EmptyState` (`variant="inline"` coming)             | P5        |
-| Signed-out viewer                    | `SignInPrompt`                                       | P5        |
-| Player or team row, ranked row       | `PlayerRow` + `RankMarker`                           | P6        |
-| Card title + pill + description      | `CardHeader`                                         | P6        |
-| Inset panel / well                   | `.panel` / `.panel-accent`                           | P6        |
-| Search field                         | `SearchInput`                                        | P6        |
-| Collapsible card (+ summary)         | `CollapsibleCard` (`summary` stays visible)          | exists    |
-| Collapsible row with reorder/delete  | `CollapsibleCard leading actions`                    | exists    |
-| Inline show / hide detail            | `Disclosure`                                         | exists    |
-| Two-to-four way choice               | `SegmentedControl` (`detail` for a second line)      | exists    |
-| Pick one of many (rounds, filters)   | `SegmentedControl layout="scroll"` / `"wrap"`        | exists    |
-| Page tabs (route or in-page)         | `PageHeader tabs` (`to` or `onClick`)                | exists    |
-| Loading                              | `Spinner` / `Skeleton`                               | exists    |
-| Eyebrow / overline                   | `.eyebrow` / `.eyebrow-accent`                       | P6        |
+| Need                                 | Use                                                  | Status |
+| ------------------------------------ | ---------------------------------------------------- | ------ |
+| Error / warning / success / info box | `AlertBox variant=… (size="sm")`                     | exists |
+| Notice with a title, link or buttons | `AlertBox title` · `action` · `actions`              | exists |
+| Field-level error text               | `FormError` (`useFieldError` ties it to the field)   | exists |
+| Status pill                          | `Badge tone=…` (one size; `icon`, `title`)           | exists |
+| Payment state (event or team)        | `PaymentStatusBadge` (`paymentStatus.ts`)            | exists |
+| Button (action or navigation)        | `Button variant=… size=…` (`to` / `href` for links)  | exists |
+| Arrow onward, chevron opening a menu | `Button trailingIcon`                                | exists |
+| Button on a dark or gradient surface | `Button variant="on-dark"`                           | exists |
+| Button filling what a row leaves     | `Button grow` (beside a count, IconButton or link)   | exists |
+| Full-width button                    | `Button fullWidth`                                   | exists |
+| Buttons sharing a row (Cancel, Save) | `ActionRow` (alternative first, confirm last)        | exists |
+| Utility action under content         | `Button variant="neutral" size="sm"`                 | exists |
+| Destructive action, not the CTA      | `TextButton tone="destructive"`                      | exists |
+| Toggle, filter or info chip          | `Chip` (a row of them: `ChipGroup`)                  | exists |
+| Pick one from a list (player)        | `OptionRow selected` (`actions` beside, outside tap) | exists |
+| Row that jumps to a task             | `OptionRow` (`trailing` chevron)                     | exists |
+| Pick one tile from a grid            | `OptionTile selected` (`muted` when done)            | exists |
+| Switch between photos                | `ImageTile`                                          | exists |
+| Admin acts for another player        | `useConfirmOnBehalf` before the write                | exists |
+| Whole card is one link               | `CardLink` (`flush` for a full-bleed band)           | exists |
+| Card link: title, subtitle, chevron  | `LinkCard` (built on `CardLink`)                     | exists |
+| Sheet or dialog                      | `Modal` (`description` for a line under the title)   | exists |
+| Task with more room than a sheet     | `FullScreenDialog`                                   | exists |
+| Short list of choices from the side  | `Drawer`                                             | exists |
+| Menu of actions                      | `Menu` + `MenuItem` (`tone="danger"`, `current`)     | exists |
+| Suggestions under a search field     | `MenuList keepFocus` + `MenuItem`                    | exists |
+| Underlined / inline text action      | `TextButton tone=… size=…` (`to` / `href` for links) | exists |
+| Name link in a tight row             | `TextButton truncate` (`hitArea` for a 40px target)  | exists |
+| Icon-only button                     | `IconButton` (always with `aria-label`)              | exists |
+| Bare icon (close, back, reorder)     | `IconButton variant="ghost"`                         | exists |
+| Bare icon delete / remove in a row   | `IconButton variant="ghost-destructive"`             | exists |
+| Icon button on a dark surface        | `IconButton variant="on-dark"`                       | exists |
+| Avatar photo upload                  | `AvatarPicker`                                       | exists |
+| Empty list / nothing yet             | `EmptyState` (`variant="inline"` coming)             | P5     |
+| Signed-out viewer                    | `SignInPrompt`                                       | P5     |
+| Player or team row, ranked row       | `PlayerRow` + `RankMarker`                           | P6     |
+| Card title + pill + description      | `CardHeader`                                         | P6     |
+| Inset panel / well                   | `.panel` / `.panel-accent`                           | P6     |
+| Search field                         | `SearchInput`                                        | P6     |
+| Collapsible card (+ summary)         | `CollapsibleCard` (`summary` stays visible)          | exists |
+| Collapsible row with reorder/delete  | `CollapsibleCard leading actions`                    | exists |
+| Inline show / hide detail            | `Disclosure`                                         | exists |
+| Two-to-four way choice               | `SegmentedControl` (`detail` for a second line)      | exists |
+| Pick one of many (rounds, filters)   | `SegmentedControl layout="scroll"` / `"wrap"`        | exists |
+| Page tabs (route or in-page)         | `PageHeader tabs` (`to` or `onClick`)                | exists |
+| Loading                              | `Spinner` / `Skeleton`                               | exists |
+| Eyebrow / overline                   | `.eyebrow` / `.eyebrow-accent`                       | P6     |
 
 ### Buttons and chips (owner, 2026-10-25)
 
@@ -145,7 +146,7 @@ the gallery, and runs `npm run design:baseline` when counts drop.
 | P2e | **Zero hand-built buttons: actions.** 176 raw `<button>`s in 80 files outside `src/components/ui` (2026-10-26 inventory). Move the ~100 actions and text actions onto `Button` and `TextButton` (CTAs, accept/decline and save/cancel pairs, Sign out, Confirm, "Add question", "Reset to defaults"), and expand/collapse headers onto `CollapsibleSection` / `CollapsibleCard`. Add a lint rule banning `<button>` outside `src/components/ui`, as a per-file ratchet so the count can only go down. Depends on P2d's `fullWidth` and `ActionRow`.                                                                                                | Done (#75, #76)           |
 | P2f | **Zero hand-built buttons: chips, options, menus.** New components for what's left: `Chip` (toggle, filter, selection: filter pills, sizes, rounds, divisions, lefty, gender and position), an option row / tile (player pickers, Oscars vote tiles and category grid, lightbox thumbnails) and `Menu` + `MenuItem` (event admin menu, payment method picker, status override, team search). Two-to-four way choices go to `SegmentedControl`. Card-shaped links: `CardLink` (owner, 2026-10-26). The ratchet reaches zero and the rule becomes absolute. Four PRs: chips and choices, option rows and tiles, menus, then card links and the rest. | Done (#77, #80, #81, #86) |
 | P3  | **`AlertBox` size, role and dismiss; `FormError` in ui.** About 29 files build a tinted box by hand (`-light` surface with a `-border` border; triage first, as some are highlighted rows or cards rather than alerts) and about 23 lines spell a field error by hand (`text-xs text-lob-coral` / `-danger`). `AlertBox` gains `size="sm"`, a `role` (alert for errors, status otherwise) and a dismiss that is an `IconButton ghost sm` instead of the bare 14px X. `FormError` moves from `features/auth` to `components/ui`. Two PRs: alerts, then field errors.                                                                                | Done (#108, #109)         |
-| P4  | **`Badge` tones** (`success`, `neutral`, `warning`, `outline`) and **payment status single source** (`paymentStatus.ts`, `PaymentStatusBadge` on `Badge`; the blue "transferred" pill and merch "delivered" get a token). About 13 hand-built status pills move onto `Badge`. Rename team-state "Confirmed".                                                                                                                                                                                                                                                                                                                                       |                           |
+| P4  | **`Badge` tones** (`success`, `neutral`, `warning`, `outline`) and **payment status single source** (`paymentStatus.ts`, `PaymentStatusBadge` on `Badge`; the blue "transferred" pill and merch "delivered" get a token). About 13 hand-built status pills move onto `Badge`. Rename team-state "Confirmed".                                                                                                                                                                                                                                                                                                                                       | In review (#110)          |
 | P5  | **Empty and signed-out states.** `EmptyState variant="inline"`, `SignInPrompt`; loading states: a loading card keeps its title or header, so the viewer sees what is loading, and shows `Spinner` / `Skeleton` in the body instead of `return null`.                                                                                                                                                                                                                                                                                                                                                                                               |                           |
 | P6  | **Layout pieces.** `RankMarker` + `PlayerRow highlighted`, `CardHeader`, `RosterHeading`, `.panel` (first use: the blue Playtomic-level panel copied in three forms), `.eyebrow`, `SearchInput` (the TeamForm player search could become a proper combobox here, see #81); a heading element inside the `CollapsibleCard` header button (review of #76). Starts after the card-pattern conversation (see "Later").                                                                                                                                                                                                                                 |                           |
 | P7  | **Lock-down.** Tokens for decorative colours (medal gold, avatar palette, gender marks) and for `text-[9px]` (14 uses, the bottom nav labels among them). Then switch `theme.extend.colors` to a restricted `theme.colors` so raw palette classes stop generating, and add a lint rule for unknown classes (e.g. `eslint-plugin-tailwindcss`, check ESLint 9 support). Retire the colour ratchet once the theme is locked; keep the `<button>` check.                                                                                                                                                                                              |                           |
@@ -177,7 +178,7 @@ primitives (see the Log) before P3:
    hand-built tinted boxes.~~ Done in #108; see the Log.
 7. ~~**P3 part 2: field errors.** `FormError` in ui and the hand-built error
    lines.~~ Done in #109; see the Log.
-8. **P4: `Badge` tones and payment status.**
+8. ~~**P4: `Badge` tones and payment status.**~~ Done; see the Log.
 9. **P5: empty, signed-out and loading states.**
 10. **Card-pattern conversation** with the owner (below), then **P6**.
 11. **P7: lock-down.**
@@ -266,6 +267,14 @@ it suits.
   `PinSignInInterstitial` (both in the entry chunk) use `Modal`. After the
   PIN cutover (5 November) removes the interstitial, lazy-load the confirm
   sheet and re-measure with a `localdev` build.
+
+- **Identity labels** (review of P4). Court N, Round N, a shirt size, the
+  event format and a custom print name are cream-on-teal pills built by hand
+  in about ten places (`ScheduleRounds`, `Schedule`, `MyRounds`,
+  `ScoresMatchesTab`, `PastEventResults`, `ScheduleGeneratorControls`, the
+  merch orders). They name a thing rather than a state, so P4 left them. A
+  `Badge` tone or a small `Tag` would take them; decide with the card-pattern
+  conversation.
 
 - **Revisit the heavy card pattern** (owner, 2026-10-24). Most screens stack
   white shadowed cards. Scope still to be set. Have this conversation before
@@ -907,3 +916,63 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
 
   E2E: the shop order first taps Order with no size and checks the size group
   is invalid and described by the error.
+
+- **2026-10-30.** P4 on `design-system-p4-badge-tones` (#110). `Badge` drops its
+  per-meaning variants (`paid`, `unpaid`, `gold`, `league-*`, …) for eight
+  tones (owner): `success`, `warning`, `danger`, `info`, `neutral`, `brand`,
+  `outline`, `accent`. A meaning picks a tone; the table is in TOKENS.md.
+  - One size (`text-xs`, `px-2 py-0.5`); the old `py-1`, `px-3` and `text-2xs`
+    pills take it. The badge sizes its icon, shrinks and truncates its label in a
+    tight row rather than overflowing (review), takes a
+    `title` for a tooltip and carries no margins.
+  - Owner calls: coral is not a tone, so unpaid is `danger` (as its Payments
+    row already was) and league knockout is `brand` (phases read draft amber,
+    group outline, knockout teal, completed grey). No token for the old blue:
+    transferred is `neutral`, merch delivered `success`. Intermediate level
+    moves from raw yellow to `accent`. `lob-coral-light` lost its last use and
+    is gone.
+  - **Payment status single source.** `paymentStatus.ts` holds the label, tone
+    and hint of each state, plus `toPaymentStatus` (unknown reads as unpaid),
+    `isSettled` and `owesPayment`. Before, the labels lived in five places with
+    two vocabularies ("✓ Confirmed · Tikkie", "💬 Paid (self-declared)", "⚠
+    Unpaid" on the admin row; "Confirmed ✓", "Paid", "Unpaid" elsewhere) and
+    `paid || transferred` was spelled out in seven files. `PaymentStatusBadge`
+    is now a `Badge` (with `detail` for the method) and replaces the admin row
+    pill and the "✓ Confirmed" pills in `MyTournament` and `JoinEventCard`. The
+    Payments filter tabs, tiles and status menu read their labels from it. Merch
+    keeps its own order states in `statusConfig.ts`, now as tones.
+  - Found on the way: `'transferred'` is the _receiving_ player's status (the
+    spot came by transfer), so the menu hint now says so rather than "Gave up
+    their spot". A team partner's `'covered'` row read as "Unpaid", and the Home
+    "haven't paid yet" alert and the admin unpaid count counted every covered
+    partner as owing. `owesPayment` leaves covered rows out.
+  - **Team state renamed** (owner). "Confirmed" (the partner accepted, D-015)
+    sat next to the payment "Confirmed" on the admin team row. It now names the
+    partner: "{partner} accepted", against the existing "Waiting for {partner} to
+    accept";
+    the viewer's team card says "{partner} accepted ✓" or "You accepted ✓".
+  - Triage. Onto `Badge`: every payment pill, merch order status and the order
+    timeline steps (future steps `neutral`), the team "Paid by / Covered by"
+    pill, event status, "Admin books all courts", run-of-show "Done" and
+    "Optional", the KotC "Shown to players", "Optional" and "unrated", "Needs
+    review", the court gender chip, feasibility chips, the quality band, the
+    raffle "On cooldown" / "Won", Won / Lost / Tied, the Players "N pending"
+    count, the lefty "L" and "You" markers, the security-event fail and PII
+    counts and per-event "fail", "On waitlist" in the transfer picker, and the
+    Home streak. The experience-level map, copied in three league files, is now
+    `experienceTone`. Staying: identity labels (see "Later"), steppers (league
+    phases), pills holding an action (court booking, rematch "Fix"), gender and
+    category marks (P7), the review-breakdown bucket counts, the "Up next"
+    marker on the coral-ringed card, image overlays and evidence lines. Raw
+    palette classes 103 → 88.
+  - Review: the viewer's own registered card says "Confirmed" for a spot that
+    came by transfer (the admin list keeps "Transferred"). The admin row pill
+    reads "Paid · self-declared", so a phone shows what still needs confirming;
+    the status hints stay in the admin menu, not as tooltips on player screens.
+    A row's border and avatar follow its status tone. A partner's "Covered by"
+    pill is green only once the captain has paid, `neutral` before. The last
+    four hand-written unpaid checks use `isUnpaid`. League phase pills share
+    `leagueStatusPills`, so the three label maps no longer repeat the tones.
+  - Owner: `accent` text moves to a new `lob-amber-strong` (`#8C5A0E`, 5.3:1
+    on the tint, was 2.0:1 with `lob-amber`), so league "Draft" and the
+    intermediate level pass WCAG AA.

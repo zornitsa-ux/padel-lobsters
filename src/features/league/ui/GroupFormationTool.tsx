@@ -3,6 +3,7 @@ import { Users, X } from 'lucide-react'
 import { suggestGroups, recommendGroupConfig } from '../domain/groupBalancer'
 import type { Division, LeagueTeam } from '../domain/types'
 import { Badge } from '../../../components/ui/Badge'
+import { experienceTone } from './statusPill'
 import { AlertBox } from '../../../components/ui/AlertBox'
 import { SectionHeader } from '../../../components/ui/SectionHeader'
 import { useConfirmGroups } from '../hooks/useLeagueMutations'
@@ -80,12 +81,6 @@ function teamLabel(t: LeagueTeam) {
   return `${p1} & ${p2}`
 }
 
-function experienceBadgeVariant(level: string): 'info' | 'gold' | 'silver' {
-  if (level === 'advanced') return 'info'
-  if (level === 'intermediate') return 'gold'
-  return 'silver'
-}
-
 interface TeamCardProps {
   team: LeagueTeam
   actions: React.ReactNode
@@ -97,10 +92,7 @@ function TeamCard({ team, actions }: TeamCardProps) {
       <span className="text-sm font-semibold text-lob-dark flex-1 min-w-0 truncate">
         {teamLabel(team)}
       </span>
-      <Badge
-        variant={experienceBadgeVariant(team.experience_level)}
-        label={team.experience_level}
-      />
+      <Badge tone={experienceTone(team.experience_level)} label={team.experience_level} />
       {actions}
     </div>
   )

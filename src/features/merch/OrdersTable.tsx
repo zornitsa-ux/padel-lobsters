@@ -9,6 +9,7 @@ import { useMerchActions } from './useMerch'
 import type { MerchInterest, MerchItem } from './merchSchemas'
 import { IconButton } from '../../components/ui/IconButton'
 import { Button } from '../../components/ui/Button'
+import { Badge } from '../../components/ui/Badge'
 
 type OrdersTableProps = {
   activeOrders: MerchInterest[]
@@ -97,7 +98,7 @@ export default function OrdersTable({ activeOrders, interests, items, players }:
               {activeOrders.filter((o) => o.status === 'paid').length} paid
             </span>
             <span>·</span>
-            <span className="text-blue-600">
+            <span className="text-lob-success">
               {activeOrders.filter((o) => o.status === 'delivered').length} delivered
             </span>
           </div>
@@ -142,11 +143,7 @@ export default function OrdersTable({ activeOrders, interests, items, players }:
                         </span>
                       </div>
                     </div>
-                    <span
-                      className={`inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.text}`}
-                    >
-                      <StatusIcon size={10} /> {cfg.label}
-                    </span>
+                    <Badge tone={cfg.tone} label={cfg.label} icon={<StatusIcon />} />
                   </div>
                   {/* Status action buttons */}
                   <div className="flex gap-1.5">

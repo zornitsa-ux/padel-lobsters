@@ -1,5 +1,7 @@
 import type { Player } from '../../../../lib/normalise'
 import type { TeamEntry } from '../../teams/teamTypes'
+import { Badge } from '../../../../components/ui/Badge'
+import { isSettled } from '../../paymentStatus'
 import PaymentStatusBadge from '../PaymentStatusBadge'
 import type { DisplayName, GetPlayer } from '../utils'
 import { CaptainPendingActions, PartnerPendingActions } from './TeamCardActions'
@@ -20,10 +22,7 @@ const coverLabel = ({
 }: {
   captainPayment: string
   otherName: string
-}) =>
-  ['paid', 'transferred'].includes(captainPayment)
-    ? `Paid by ${otherName}`
-    : `Covered by ${otherName}`
+}) => (isSettled(captainPayment) ? `Paid by ${otherName}` : `Covered by ${otherName}`)
 
 export default function TeamCard({
   entry,
@@ -48,9 +47,10 @@ export default function TeamCard({
         {isCaptain ? (
           <PaymentStatusBadge paymentStatus={entry.captain.paymentStatus} />
         ) : (
-          <span className="text-xs font-semibold text-lob-success bg-lob-success-light border border-lob-success-border px-2 py-0.5 rounded-full">
-            {coverLabel({ captainPayment: entry.captain.paymentStatus, otherName })}
-          </span>
+          <Badge
+            tone={isSettled(entry.captain.paymentStatus) ? 'success' : 'neutral'}
+            label={coverLabel({ captainPayment: entry.captain.paymentStatus, otherName })}
+          />
         )}
       </div>
       <TeamStatusLine entry={entry} isCaptain={isCaptain} otherName={otherName} />
@@ -94,7 +94,9 @@ function TeamStatusLine({
   }
   return (
     <p className={`text-sm ${tone}`}>
-      <span className="font-semibold text-lob-success">Confirmed ✓</span>
+      <span className="font-semibold text-lob-success">
+        {isCaptain ? `${otherName} accepted` : 'You accepted'} ✓
+      </span>
       {waitlisted ? " · You're both on the waitlist." : ' · Your team is registered.'}
     </p>
   )

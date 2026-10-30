@@ -6,6 +6,7 @@ import { errorMessage } from '../../lib/errors'
 import { useConfirm } from '../../lib/confirmBus'
 import { useResolveWithPii } from './useRevealPii'
 import { AlertBox } from '../../components/ui/AlertBox'
+import { Badge } from '../../components/ui/Badge'
 import LinkPlayerModal from './LinkPlayerModal'
 import PendingApprovalsList from './PendingApprovalsList'
 import PlayersList from './PlayersList'
@@ -123,12 +124,10 @@ export default function Players() {
       )}
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold text-lob-dark">
+        <h2 className="flex items-center gap-2 text-lg font-bold text-lob-dark">
           Players ({activePlayers.length})
           {pendingPlayers.length > 0 && isAdmin && (
-            <span className="ml-2 text-xs bg-lob-warning-soft text-lob-warning font-semibold px-2 py-0.5 rounded-full">
-              {pendingPlayers.length} pending
-            </span>
+            <Badge tone="warning" label={`${pendingPlayers.length} pending`} />
           )}
         </h2>
         {/* "Join" button removed — new-player signup now lives exclusively

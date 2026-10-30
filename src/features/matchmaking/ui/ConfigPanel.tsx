@@ -15,6 +15,7 @@ import { Button } from '../../../components/ui/Button'
 import { TextButton } from '../../../components/ui/TextButton'
 import { Disclosure } from '../../../components/ui/Disclosure'
 import { FormError } from '../../../components/ui/FormError'
+import { Badge, type BadgeTone } from '../../../components/ui/Badge'
 
 export type ConfigPanelProps = {
   // Controlled config: preset + optional knob overrides. Container owns state.
@@ -57,10 +58,10 @@ const RULE_LABELS: Record<string, string> = {
   infeasible: 'Infeasible',
 }
 
-const CHIP_STATUS_CLASSES: Record<string, string> = {
-  ok: 'bg-lob-success-light text-lob-success',
-  relaxed: 'bg-lob-warning-light text-lob-warning',
-  infeasible: 'bg-lob-danger-light text-lob-danger-strong',
+const CHIP_STATUS_TONE: Record<string, BadgeTone> = {
+  ok: 'success',
+  relaxed: 'warning',
+  infeasible: 'danger',
 }
 
 type NumericKnob = 'socialDial' | 'maxCourtSpread' | 'maxPartnerGap' | 'balanceTolerance'
@@ -300,20 +301,19 @@ export default function ConfigPanel({
       )}
 
       <div className="flex flex-wrap gap-1.5">
-        <span className="text-xs bg-gray-100 text-lob-slate px-2 py-0.5 rounded-full font-medium">
-          {feasibility.courtsUsed} court{feasibility.courtsUsed === 1 ? '' : 's'} ·{' '}
-          {feasibility.sittersPerRound} sit-out{feasibility.sittersPerRound === 1 ? '' : 's'}/round
-        </span>
+        <Badge
+          tone="neutral"
+          label={`${feasibility.courtsUsed} court${feasibility.courtsUsed === 1 ? '' : 's'} · ${
+            feasibility.sittersPerRound
+          } sit-out${feasibility.sittersPerRound === 1 ? '' : 's'}/round`}
+        />
         {feasibility.entries.map((entry) => (
-          <span
+          <Badge
             key={entry.rule}
+            tone={CHIP_STATUS_TONE[entry.status] ?? 'neutral'}
+            label={`${entry.rule} · ${RULE_LABELS[entry.status] ?? entry.status}`}
             title={entry.detail}
-            className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-              CHIP_STATUS_CLASSES[entry.status] ?? 'bg-gray-100 text-lob-slate'
-            }`}
-          >
-            {entry.rule} · {RULE_LABELS[entry.status] ?? entry.status}
-          </span>
+          />
         ))}
       </div>
 

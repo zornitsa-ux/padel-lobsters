@@ -1,6 +1,7 @@
 import { Modal } from '../../../components/ui/Modal'
 import { PlayerRow } from '../../../components/ui/PlayerRow'
 import { Badge } from '../../../components/ui/Badge'
+import { experienceTone } from './statusPill'
 import { StatTile } from '../../../components/ui/StatTile'
 import { LeagueMatchCard } from './LeagueMatchCard'
 import { getTeamRecord } from '../domain/standings'
@@ -18,12 +19,6 @@ interface TeamPageProps {
 }
 
 const statTileProps = { size: 'sm', labelVariant: 'caps', valueClassName: 'text-lob-dark' } as const
-
-const EXPERIENCE_BADGE: Record<string, 'info' | 'gold' | 'silver'> = {
-  advanced: 'info',
-  intermediate: 'gold',
-  beginner: 'silver',
-}
 
 function TeamPlayerRow({
   player,
@@ -58,10 +53,10 @@ export function TeamPage({ team, matches, teamById, onClose, onTeamClick }: Team
       <div className="space-y-5">
         <div className="flex flex-wrap gap-2 justify-center">
           <Badge
-            variant={EXPERIENCE_BADGE[team.experience_level] ?? 'silver'}
+            tone={experienceTone(team.experience_level)}
             label={team.experience_level.charAt(0).toUpperCase() + team.experience_level.slice(1)}
           />
-          <Badge variant="info" label={DIVISION_LABELS[team.division]} />
+          <Badge tone="brand" label={DIVISION_LABELS[team.division]} />
         </div>
 
         {(team.spirit_animal || team.team_song) && (

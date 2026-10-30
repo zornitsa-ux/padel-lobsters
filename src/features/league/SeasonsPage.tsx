@@ -29,7 +29,7 @@ function SeasonRow({ league, champions }: { league: League; champions: LeagueTea
       trailing={
         <>
           {!isPublished(league) && (
-            <Badge variant="silver" label="Hidden" icon={<EyeOff size={11} aria-hidden="true" />} />
+            <Badge tone="neutral" label="Hidden" icon={<EyeOff aria-hidden="true" />} />
           )}
           <Badge {...statusPill(LEAGUE_STATUS_PILL, league.status)} />
         </>

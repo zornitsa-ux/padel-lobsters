@@ -63,7 +63,8 @@ is the exception: `Greeting` acts as its header.
 
 - Empty: `EmptyState` (an inline variant is planned, P5).
 - Loading: `Spinner` or `Skeleton`. A loading card keeps its title (P5).
-- Alerts: `AlertBox variant`. Status labels: `Badge` (more tones planned, P4).
+- Alerts: `AlertBox variant`. Status labels: `Badge tone`, one size; a meaning maps onto a
+  tone. A payment state is always `PaymentStatusBadge` (labels and tones in `paymentStatus.ts`).
 
 ## Overlays
 

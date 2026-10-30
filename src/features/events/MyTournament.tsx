@@ -26,6 +26,8 @@ import type { EventNavigate } from './eventHelpers'
 import { Button } from '../../components/ui/Button'
 import WaitlistNotice from './registration/WaitlistNotice'
 import { AlertBox } from '../../components/ui/AlertBox'
+import { isSettled, isUnpaid } from './paymentStatus'
+import PaymentStatusBadge from './registration/PaymentStatusBadge'
 
 type Props = {
   tournament: NormalisedTournament
@@ -148,7 +150,7 @@ export default function MyTournament({ tournament, onNavigate }: Props) {
     hasTikkie &&
     myEntry?.status === 'registered' &&
     myEntry.captain.playerId === claimedId &&
-    (!myEntry.captain.paymentStatus || myEntry.captain.paymentStatus === 'unpaid')
+    isUnpaid(myEntry.captain.paymentStatus)
 
   const registrationSection = teamEvent ? (
     <MyTeamRegistration
@@ -308,10 +310,10 @@ function RegistrationCard({
 
   // status === 'registered'
   const ps = registration.paymentStatus
-  const isConfirmed = ps === 'paid' || ps === 'transferred'
+  const isConfirmed = isSettled(ps)
   const isTikkied = ps === 'tikkied'
   const isSelfDeclared = ps === 'pending_confirmation'
-  const needsPayment = (!ps || ps === 'unpaid') && hasTikkie
+  const needsPayment = isUnpaid(ps) && hasTikkie
 
   const badge = (
     <div className="flex items-center gap-2">
@@ -354,9 +356,8 @@ function RegistrationCard({
       <div className="card">
         <div className="flex items-center justify-between">
           {badge}
-          <span className="text-xs font-semibold text-lob-success bg-lob-success-light border border-lob-success-border px-2 py-0.5 rounded-full">
-            ✓ Confirmed
-          </span>
+          {/* The viewer's own settled spot reads Confirmed, also when it came by transfer. */}
+          <PaymentStatusBadge paymentStatus="paid" />
         </div>
       </div>
     )

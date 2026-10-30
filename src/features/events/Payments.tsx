@@ -28,11 +28,30 @@ import type { NormalisedTournament } from '../../lib/normalise'
 import type { NormalisedRegistration } from './registrationQueries'
 import { Button } from '../../components/ui/Button'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
+import {
+  PAYMENT_STATUSES,
+  PAYMENT_STATUS_INFO,
+  isSettled,
+  isUnpaid,
+  paymentStatusInfo,
+  toPaymentStatus,
+  type PaymentTone,
+} from './paymentStatus'
+import PaymentStatusBadge from './registration/PaymentStatusBadge'
 
 const METHODS = [
   { value: 'tikkie', label: 'Tikkie' },
   { value: 'playtomic', label: 'Playtomic' },
 ]
+
+// A row's left border and avatar follow its status tone.
+const ROW_ACCENT: Record<PaymentTone, { border: string; avatar: string }> = {
+  success: { border: 'border-lob-success-solid', avatar: 'bg-lob-success-soft text-lob-success' },
+  info: { border: 'border-lob-info-solid', avatar: 'bg-lob-info-soft text-lob-info' },
+  warning: { border: 'border-lob-warning-solid', avatar: 'bg-lob-warning-soft text-lob-warning' },
+  danger: { border: 'border-lob-danger-border', avatar: 'bg-lob-danger-soft text-lob-danger' },
+  neutral: { border: 'border-lob-line-strong', avatar: 'bg-lob-line text-lob-slate' },
+}
 
 type PaymentFilter = 'all' | 'paid' | 'pending' | 'tikkied' | 'unpaid'
 
@@ -83,14 +102,12 @@ export default function Payments({
     registrations: regsData,
     teamEntries,
   })
-  // Status buckets — see Registration.jsx PayBadge for semantics.
-  const confirmed = regs.filter(
-    (r) => r.paymentStatus === 'paid' || r.paymentStatus === 'transferred',
-  )
+  // Status buckets; labels and meanings in ./paymentStatus.
+  const confirmed = regs.filter((r) => isSettled(r.paymentStatus))
   const selfPaid = regs.filter((r) => r.paymentStatus === 'pending_confirmation')
   const tikkied = regs.filter((r) => r.paymentStatus === 'tikkied')
   // True "ghost" unpaid — didn't even click the Tikkie link
-  const trulyUnpaid = regs.filter((r) => !r.paymentStatus || r.paymentStatus === 'unpaid')
+  const trulyUnpaid = regs.filter((r) => isUnpaid(r.paymentStatus))
 
   // One row per signup: a player, or a team through its captain.
   const costPerEntry = pricePerEntry(tournament)
@@ -120,10 +137,14 @@ export default function Payments({
   // tikkied → paid (self-declared) → confirmed (admin verified).
   const filterTabs: { value: PaymentFilter; label: string; count: number }[] = [
     { value: 'all', label: 'All', count: regs.length },
-    { value: 'unpaid', label: 'Unpaid', count: trulyUnpaid.length },
-    { value: 'tikkied', label: 'Tikkied', count: tikkied.length },
-    { value: 'pending', label: 'Paid', count: selfPaid.length },
-    { value: 'paid', label: 'Confirmed', count: confirmed.length },
+    { value: 'unpaid', label: PAYMENT_STATUS_INFO.unpaid.label, count: trulyUnpaid.length },
+    { value: 'tikkied', label: PAYMENT_STATUS_INFO.tikkied.label, count: tikkied.length },
+    {
+      value: 'pending',
+      label: PAYMENT_STATUS_INFO.pending_confirmation.label,
+      count: selfPaid.length,
+    },
+    { value: 'paid', label: PAYMENT_STATUS_INFO.paid.label, count: confirmed.length },
   ]
 
   const confirmPaymentChange = ({ reg, change }: { reg: NormalisedRegistration; change: string }) =>
@@ -160,7 +181,7 @@ export default function Payments({
       onNavigate?.('settings')
       return
     }
-    const label = OVERRIDE_STATUSES.find((s) => s.value === status)?.label ?? status
+    const label = PAYMENT_STATUS_INFO[toPaymentStatus(status)].label
     if (!(await confirmPaymentChange({ reg, change: `Set status to ${label}` }))) return
     await updateRegistration(
       reg.id,
@@ -209,28 +230,28 @@ export default function Payments({
         <div className="grid grid-cols-4 gap-2 mb-4">
           <StatTile
             value={confirmed.length}
-            label="Confirmed"
+            label={PAYMENT_STATUS_INFO.paid.label}
             size="md"
             labelVariant="inverted"
             valueClassName="text-lob-success-on-dark"
           />
           <StatTile
             value={selfPaid.length}
-            label="Paid"
+            label={PAYMENT_STATUS_INFO.pending_confirmation.label}
             size="md"
             labelVariant="inverted"
             valueClassName="text-lob-info-on-dark"
           />
           <StatTile
             value={tikkied.length}
-            label="Tikkied"
+            label={PAYMENT_STATUS_INFO.tikkied.label}
             size="md"
             labelVariant="inverted"
             valueClassName="text-lob-warning-on-dark"
           />
           <StatTile
             value={trulyUnpaid.length}
-            label="Unpaid"
+            label={PAYMENT_STATUS_INFO.unpaid.label}
             size="md"
             labelVariant="inverted"
             valueClassName="text-lob-danger-on-dark"
@@ -285,32 +306,25 @@ export default function Payments({
           const player = getPlayer(reg.playerId)
           if (!player) return null
           const ps = reg.paymentStatus
-          const isConfirmed = ps === 'paid' || ps === 'transferred'
+          const isConfirmed = isSettled(ps)
           const isSelfPaid = ps === 'pending_confirmation'
           const isTikkied = ps === 'tikkied'
           const isTransferred = ps === 'transferred'
+          const method =
+            METHODS.find((m) => m.value === reg.paymentMethod)?.label || reg.paymentMethod
+          const detail = ps === 'paid' ? method : isSelfPaid ? 'self-declared' : ''
 
-          const borderColor = isConfirmed
-            ? 'border-lob-success-solid'
-            : isSelfPaid
-              ? 'border-lob-info-solid'
-              : isTikkied
-                ? 'border-lob-warning-solid'
-                : 'border-lob-danger-border'
-          const avatarColor = isConfirmed
-            ? 'bg-lob-success-soft text-lob-success'
-            : isSelfPaid
-              ? 'bg-lob-info-soft text-lob-info'
-              : isTikkied
-                ? 'bg-lob-warning-soft text-lob-warning'
-                : 'bg-lob-danger-soft text-lob-danger'
+          const { tone } = paymentStatusInfo(ps)
 
           return (
-            <div key={reg.id} className={`card transition-all border-l-4 ${borderColor}`}>
+            <div
+              key={reg.id}
+              className={`card transition-all border-l-4 ${ROW_ACCENT[tone].border}`}
+            >
               <PlayerRow
                 player={player}
                 avatarSize="lg"
-                avatarTone={avatarColor}
+                avatarTone={ROW_ACCENT[tone].avatar}
                 name={rowName(reg, player.name)}
                 trailing={
                   isAdmin && (
@@ -355,30 +369,7 @@ export default function Payments({
                 }
               >
                 <div className="flex items-center gap-2 flex-wrap">
-                  {isTransferred ? (
-                    <span className="text-xs font-semibold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
-                      ↔ Transferred
-                    </span>
-                  ) : isConfirmed ? (
-                    <span className="text-xs font-semibold bg-lob-success-soft text-lob-success px-2 py-0.5 rounded-full">
-                      ✓ Confirmed{' '}
-                      {reg.paymentMethod
-                        ? `· ${METHODS.find((m) => m.value === reg.paymentMethod)?.label || reg.paymentMethod}`
-                        : ''}
-                    </span>
-                  ) : isSelfPaid ? (
-                    <span className="text-xs font-semibold bg-lob-info-soft text-lob-info px-2 py-0.5 rounded-full">
-                      💬 Paid (self-declared)
-                    </span>
-                  ) : isTikkied ? (
-                    <span className="text-xs font-semibold bg-lob-warning-soft text-lob-warning px-2 py-0.5 rounded-full">
-                      🔗 Tikkied
-                    </span>
-                  ) : (
-                    <span className="text-xs font-semibold bg-lob-coral-light text-lob-coral px-2 py-0.5 rounded-full">
-                      ⚠ Unpaid
-                    </span>
-                  )}
+                  <PaymentStatusBadge paymentStatus={ps} detail={detail || undefined} />
                   {costPerEntry > 0 && !isTransferred && (
                     <span className="text-xs text-lob-muted">{fmtEur(costPerEntry)}</span>
                   )}
@@ -423,14 +414,6 @@ function PaymentMethodPicker({ onSelect }: { onSelect: (method: string) => void 
 // Admin-only "three dots" menu to manually set any payment status. Useful for
 // fixing accidental clicks or recording out-of-app payments without going
 // through the natural funnel.
-const OVERRIDE_STATUSES = [
-  { value: 'unpaid', label: 'Unpaid', hint: 'Never paid' },
-  { value: 'tikkied', label: 'Tikkied', hint: 'Clicked Tikkie link' },
-  { value: 'pending_confirmation', label: 'Paid', hint: 'Player says they paid' },
-  { value: 'paid', label: 'Confirmed', hint: 'Admin verified' },
-  { value: 'transferred', label: 'Transferred', hint: 'Gave up their spot' },
-]
-
 function StatusOverrideMenu({
   currentStatus,
   onSelect,
@@ -448,14 +431,14 @@ function StatusOverrideMenu({
         </IconButton>
       )}
     >
-      {OVERRIDE_STATUSES.map((s) => (
+      {PAYMENT_STATUSES.map((s) => (
         <MenuItem
-          key={s.value}
-          current={s.value === currentStatus}
-          hint={s.hint}
-          onSelect={() => onSelect(s.value)}
+          key={s}
+          current={s === toPaymentStatus(currentStatus)}
+          hint={PAYMENT_STATUS_INFO[s].hint}
+          onSelect={() => onSelect(s)}
         >
-          {s.label}
+          {PAYMENT_STATUS_INFO[s].label}
         </MenuItem>
       ))}
     </Menu>

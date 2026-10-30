@@ -94,13 +94,13 @@ export function LeagueMatchCard({
 
       {isByeMatch ? (
         <div className="mt-2 flex justify-center">
-          <Badge variant="info" label="Bye" />
+          <Badge tone="brand" label="Bye" />
         </div>
       ) : played && scoreString ? (
         <div className="mt-2 text-xs text-lob-muted text-center">{scoreString}</div>
       ) : (
         <div className="mt-2 flex justify-center">
-          <Badge variant="pending" label="Pending" />
+          <Badge tone="warning" label="Pending" />
         </div>
       )}
 

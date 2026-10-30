@@ -356,11 +356,11 @@ describe('pending and confirmed team card', () => {
     expect(m.cancelMyTeam).not.toHaveBeenCalled()
   })
 
-  it('shows a confirmed team as confirmed, with transfer and no cancel or change', () => {
+  it('shows an accepted team as accepted, with transfer and no cancel or change', () => {
     mine({ partnerAccepted: true })
     renderInfo()
 
-    expect(screen.getByText(/confirmed ✓/i)).not.toBeNull()
+    expect(screen.getByText(/Bob accepted ✓/)).not.toBeNull()
     expect(screen.queryByRole('button', { name: 'Cancel team' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Change partner' })).toBeNull()
     expect(screen.getByRole('button', { name: /transfer spot/i })).not.toBeNull()
@@ -525,7 +525,7 @@ describe('admin team actions', () => {
     expect(screen.getAllByText(/hasn't signed in yet/i)).toHaveLength(1)
   })
 
-  it('badges pending and confirmed teams', () => {
+  it('names the partner on pending and accepted teams', () => {
     registrations = [
       reg('r1', 'p2', 'tm1', 'registered'),
       reg('r2', 'p3', 'tm1', 'registered', null),
@@ -535,7 +535,7 @@ describe('admin team actions', () => {
     renderInfo({ isAdmin: true })
 
     expect(screen.getByText('Waiting for Dan to accept')).not.toBeNull()
-    expect(screen.getByText('Confirmed')).not.toBeNull()
+    expect(screen.getByText('Finn accepted')).not.toBeNull()
     expect(screen.getAllByRole('button', { name: 'Change partner' }).length).toBe(2)
   })
 

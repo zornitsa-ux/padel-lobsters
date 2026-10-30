@@ -5,6 +5,7 @@ import { DIMENSIONS } from './dimensions'
 import { ProgressBar } from '../../../components/ui/ProgressBar'
 import { Disclosure } from '../../../components/ui/Disclosure'
 import { AlertBox } from '../../../components/ui/AlertBox'
+import { Badge, type BadgeTone } from '../../../components/ui/Badge'
 
 export type QualityReportProps = {
   quality: { overall: QualityDimensions; perRound: QualityDimensions[] }
@@ -15,17 +16,11 @@ export type QualityReportProps = {
   rounds?: ScheduleRun['rounds']
 }
 
-function gradeBand(pct: number): { label: string; textClass: string; bgClass: string } {
-  if (pct >= 90)
-    return { label: 'Excellent', textClass: 'text-lob-success', bgClass: 'bg-lob-success-light' }
-  if (pct >= 80) return { label: 'Good', textClass: 'text-lob-teal', bgClass: 'bg-lob-teal/10' }
-  if (pct >= 70)
-    return { label: 'Fair', textClass: 'text-lob-warning', bgClass: 'bg-lob-warning-light' }
-  return {
-    label: 'Needs work',
-    textClass: 'text-lob-danger-strong',
-    bgClass: 'bg-lob-danger-light',
-  }
+function gradeBand(pct: number): { label: string; textClass: string; tone: BadgeTone } {
+  if (pct >= 90) return { label: 'Excellent', textClass: 'text-lob-success', tone: 'success' }
+  if (pct >= 80) return { label: 'Good', textClass: 'text-lob-teal', tone: 'brand' }
+  if (pct >= 70) return { label: 'Fair', textClass: 'text-lob-warning', tone: 'warning' }
+  return { label: 'Needs work', textClass: 'text-lob-danger-strong', tone: 'danger' }
 }
 
 function meanOverall(overall: QualityDimensions): number {
@@ -71,11 +66,7 @@ export default function QualityReport({
     <div className="space-y-3">
       <div className="flex items-center gap-3">
         <span className={`text-2xl font-bold ${band.textClass}`}>{overallPct}%</span>
-        <span
-          className={`text-xs px-2 py-0.5 rounded-full font-medium ${band.bgClass} ${band.textClass}`}
-        >
-          {band.label}
-        </span>
+        <Badge tone={band.tone} label={band.label} />
       </div>
 
       <ViolationsBanner summary={summary} />
