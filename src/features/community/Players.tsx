@@ -7,6 +7,7 @@ import { useConfirm } from '../../lib/confirmBus'
 import { useResolveWithPii } from './useRevealPii'
 import { AlertBox } from '../../components/ui/AlertBox'
 import { Badge } from '../../components/ui/Badge'
+import { Section } from '../../components/ui/Section'
 import { Spinner } from '../../components/ui/Spinner'
 import LinkPlayerModal from './LinkPlayerModal'
 import PendingApprovalsList from './PendingApprovalsList'
@@ -127,33 +128,6 @@ export default function Players() {
           {error}
         </AlertBox>
       )}
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h2 className="flex items-center gap-2 text-lg font-bold text-lob-dark">
-          Players ({activePlayers.length})
-          {pendingPlayers.length > 0 && isAdmin && (
-            <Badge tone="warning" label={`${pendingPlayers.length} pending`} />
-          )}
-        </h2>
-        {/* "Join" button removed — new-player signup now lives exclusively
-            on the home page via the sign-in / sign-up popup
-            (VerificationGate → SignupRequest). The in-app Players roster
-            stays focused on viewing / editing existing members. */}
-      </div>
-
-      {/* Pending approvals */}
-      {isAdmin && (
-        <PendingApprovalsList
-          pendingPlayers={pendingPlayers}
-          onApprove={handleApprove}
-          onReject={handleReject}
-          onLink={(p) => {
-            setLinkModal(p)
-            setLinkSearch('')
-          }}
-        />
-      )}
-
       {/* Link-to-existing modal */}
       <LinkPlayerModal
         linkModal={linkModal}
@@ -167,31 +141,54 @@ export default function Players() {
         onConfirm={handleLinkConfirm}
       />
 
-      {/* Search */}
-      <div className="relative">
-        <Search
-          size={16}
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-lob-muted-light"
-        />
-        <input
-          className="input pl-9"
-          placeholder="Search players..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </div>
+      <Section
+        title={
+          <>
+            Players ({activePlayers.length})
+            {pendingPlayers.length > 0 && isAdmin && (
+              <Badge tone="warning" label={`${pendingPlayers.length} pending`} />
+            )}
+          </>
+        }
+      >
+        {/* Pending approvals */}
+        {isAdmin && (
+          <PendingApprovalsList
+            pendingPlayers={pendingPlayers}
+            onApprove={handleApprove}
+            onReject={handleReject}
+            onLink={(p) => {
+              setLinkModal(p)
+              setLinkSearch('')
+            }}
+          />
+        )}
 
-      {playersPending ? (
-        <Spinner />
-      ) : playersFailed ? (
-        <AlertBox variant="error">Couldn&apos;t load the players. Reload to try again.</AlertBox>
-      ) : (
-        <PlayersList
-          orderedForRender={orderedForRender}
-          displayName={displayName}
-          emptyTitle={search ? 'No players match your search.' : undefined}
-        />
-      )}
+        <div className="relative">
+          <Search
+            size={16}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-lob-muted-light"
+          />
+          <input
+            className="input pl-9"
+            placeholder="Search players..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+
+        {playersPending ? (
+          <Spinner />
+        ) : playersFailed ? (
+          <AlertBox variant="error">Couldn&apos;t load the players. Reload to try again.</AlertBox>
+        ) : (
+          <PlayersList
+            orderedForRender={orderedForRender}
+            displayName={displayName}
+            emptyTitle={search ? 'No players match your search.' : undefined}
+          />
+        )}
+      </Section>
     </div>
   )
 }

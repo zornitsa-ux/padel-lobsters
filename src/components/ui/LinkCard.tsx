@@ -1,31 +1,29 @@
 import type { ReactNode } from 'react'
 import { ChevronRight } from 'lucide-react'
 import { CardLink } from './CardLink'
+import { linkOrActionProps, type LinkOrAction } from './action'
 
-interface LinkCardContentProps {
+export interface LinkCardContentProps {
   title: ReactNode
   subtitle?: ReactNode
   /** Icon tile on the left. Omit for the text-only variant. */
   leading?: ReactNode
   /** Badges or other status shown before the chevron. */
   trailing?: ReactNode
-  className?: string
 }
 
-/** Navigates with `to`, or runs `onClick` for in-page actions such as opening a modal. */
-type LinkCardProps = LinkCardContentProps &
-  ({ to: string; onClick?: never } | { onClick: () => void; to?: never })
+type LinkCardProps = LinkCardContentProps & { className?: string } & LinkOrAction
 
 export function LinkCard({ to, onClick, className, ...content }: LinkCardProps) {
-  const action = to !== undefined ? { to } : { onClick }
   return (
-    <CardLink layout="row" className={className} {...action}>
+    <CardLink layout="row" className={className} {...linkOrActionProps({ to, onClick })}>
       <LinkCardContent {...content} />
     </CardLink>
   )
 }
 
-function LinkCardContent({ title, subtitle, leading, trailing }: LinkCardContentProps) {
+/** Title, subtitle, leading, trailing and chevron; shared with `LinkRow`. */
+export function LinkCardContent({ title, subtitle, leading, trailing }: LinkCardContentProps) {
   return (
     <>
       {leading}
