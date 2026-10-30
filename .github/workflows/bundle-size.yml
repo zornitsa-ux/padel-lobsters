@@ -33,6 +33,9 @@ jobs:
           build-script: 'build'
           # Report the hashed JS/CSS chunks Vite emits under dist/assets.
           pattern: './dist/assets/**/*.{js,css}'
+          # Drop Vite's 8-char content hash so base and PR builds of a chunk
+          # compare as one file instead of "removed" + "new file".
+          strip-hash: "-([A-Za-z0-9_-]{8})\\.(?:js|css)$"
           # Hide rows whose change is below this (bytes) to cut comment noise.
           minimum-change-threshold: 100
         env:
