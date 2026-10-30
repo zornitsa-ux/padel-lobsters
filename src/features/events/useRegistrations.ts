@@ -54,6 +54,7 @@ export function useRegistrationActions() {
       try {
         await q.updateRegistration(id, data)
         invalidateRegistrations(tournamentId)
+        return true
       } catch (error) {
         console.error('updateRegistration failed:', error)
         // Callers (Registration.tsx, Payments.tsx) fire-and-forget this call
@@ -63,6 +64,7 @@ export function useRegistrationActions() {
           variant: 'error',
           message: 'Could not save the payment status. Please try again.',
         })
+        return false
       }
     },
     [invalidateRegistrations, showToast],

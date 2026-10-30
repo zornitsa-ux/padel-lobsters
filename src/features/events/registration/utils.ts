@@ -24,6 +24,31 @@ export interface PaymentSheet {
   paymentStatus: string
 }
 
+/** Who a sheet is for: "Captain & Partner" on a team, else the player; never blank. */
+export const sheetForName = ({
+  sheet,
+  regs,
+  getPlayer,
+  displayName,
+}: {
+  sheet: PaymentSheet
+  regs: NormalisedRegistration[]
+  getPlayer: GetPlayer
+  displayName: DisplayName
+}): string => {
+  const nameOf = (id: string) => {
+    const player = getPlayer(id)
+    return player ? displayName(player) : ''
+  }
+  const teamId = regs.find((r) => r.id === sheet.regId)?.teamId
+  const partner = teamId
+    ? regs.find((r) => r.teamId === teamId && r.playerId !== sheet.playerId)
+    : undefined
+  const captain = nameOf(sheet.playerId) || 'this player'
+  const partnerName = partner ? nameOf(partner.playerId) : ''
+  return partnerName ? `${captain} & ${partnerName}` : captain
+}
+
 export interface TransferShareTarget {
   transferId: string
   toPlayer: Player

@@ -249,7 +249,8 @@ on-behalf message's line breaks), #95 (the Oscars view switch drops focus),
 failed in production; fixed in #101), #100 (a double-tapped Order shows a
 failure), #102 (table grants differ between production and local), #103 (form
 labels not tied to their inputs) and #104 (the payment sheet after an admin
-adds someone doesn't name them). Each is a small PR whenever it suits.
+adds someone doesn't name them; fixed in #106). Each is a small PR whenever
+it suits.
 
 ## Later
 

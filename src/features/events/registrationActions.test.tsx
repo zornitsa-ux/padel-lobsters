@@ -287,7 +287,9 @@ describe('useRegistrationActions — updateRegistration', () => {
     const { result } = renderHookWithClientAndToast(() => useRegistrationActions(), client)
 
     await act(async () => {
-      await result.current.updateRegistration('r1', { paymentStatus: 'paid' }, 'tid-1')
+      expect(
+        await result.current.updateRegistration('r1', { paymentStatus: 'paid' }, 'tid-1'),
+      ).toBe(true)
     })
 
     expect(q.updateRegistration).toHaveBeenCalledWith('r1', { paymentStatus: 'paid' })
@@ -303,9 +305,10 @@ describe('useRegistrationActions — updateRegistration', () => {
 
     const { result, showToast } = renderHookWithClientAndToast(() => useRegistrationActions())
 
-    // Should not throw
     await act(async () => {
-      await result.current.updateRegistration('r1', { paymentStatus: 'paid' }, 'tid-1')
+      expect(
+        await result.current.updateRegistration('r1', { paymentStatus: 'paid' }, 'tid-1'),
+      ).toBe(false)
     })
 
     expect(showToast).toHaveBeenCalledWith({

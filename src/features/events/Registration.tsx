@@ -27,11 +27,13 @@ import {
   getIncomingForPlayer,
   buildPendingByFromPlayerId,
   isTransferWindowClosed,
+  sheetForName,
 } from './registration/utils'
 import { useSettings } from '../settings/useSettings'
 import { useConfirm } from '../../lib/confirmBus'
 import { useConfirmOnBehalf } from '../../lib/confirmOnBehalf'
 import { useToast } from '../../lib/toastBus'
+import { paymentChangeConfirm } from './paymentChangeConfirm'
 import RegistrationPaymentSheetModal from './registration/RegistrationPaymentSheetModal'
 import AddPlayerCard from './registration/AddPlayerCard'
 import JoinEventCard from './registration/JoinEventCard'
@@ -106,7 +108,8 @@ export default function Registration({
   const [cancelledExpanded, setCancelledExpanded] = useState(false)
 
   // Post-registration payment sheet — shown to the admin after adding a
-  // player, so a Tikkie link is on screen to hand over on the spot.
+  // player, so a Tikkie link is on screen to hand over on the spot. Team
+  // signups (a captain's own, or an admin's add) open it via `teamPaymentFor`.
   const [paymentSheet, setPaymentSheet] = useState<PaymentSheet | null>(null)
   const [tikkieClicked, setTikkieClicked] = useState(false)
   const [declaring, setDeclaring] = useState(false)
@@ -212,6 +215,11 @@ export default function Registration({
       : null
   }, [teamPaymentFor, regs])
   const activeSheet = paymentSheet ?? teamSheet
+  const sheetForOther = activeSheet != null && activeSheet.playerId !== claimedId
+  const sheetPlayerName =
+    activeSheet && sheetForOther
+      ? sheetForName({ sheet: activeSheet, regs, getPlayer, displayName })
+      : null
 
   const myReg = claimedId
     ? (registered.find((r) => String(r.playerId) === String(claimedId)) ?? null)
@@ -276,16 +284,28 @@ export default function Registration({
   }
 
   // ── Self-declare payment (post-add payment sheet) ──────────────────────────
+  // For someone else, the admin marks it paid outright: they are the one who
+  // would confirm a self-declare anyway.
   const handleSelfDeclare = async () => {
     if (!activeSheet?.regId) return
+    if (
+      sheetForOther &&
+      !(await confirmOnBehalf(
+        paymentChangeConfirm({ name: sheetPlayerName ?? '', change: 'Mark as paid (tikkie)' }),
+      ))
+    )
+      return
     setDeclaring(true)
-    await updateRegistration(
+    const saved = await updateRegistration(
       activeSheet.regId,
-      { paymentStatus: 'pending_confirmation', paymentMethod: 'tikkie' },
+      {
+        paymentStatus: sheetForOther ? 'paid' : 'pending_confirmation',
+        paymentMethod: 'tikkie',
+      },
       tournamentId,
     )
     setDeclaring(false)
-    closePaymentSheet()
+    if (saved) closePaymentSheet()
   }
 
   // ── Auto-mark "Tikkied" when a player taps a Tikkie link ──────────────────
@@ -615,13 +635,15 @@ export default function Registration({
         isOpen={!!activeSheet}
         tournament={tournament}
         paymentSheet={activeSheet}
+        forPlayerName={sheetPlayerName}
         costPerEntry={costPerEntry}
         tikkieClicked={tikkieClicked}
         declaring={declaring}
         onClose={closePaymentSheet}
         onTikkieClick={(regId, currentStatus) => {
           setTikkieClicked(true)
-          markTikkied(regId, currentStatus)
+          // An admin opening the link says nothing about whether the player paid.
+          if (!sheetForOther) markTikkied(regId, currentStatus)
         }}
         onSelfDeclare={handleSelfDeclare}
       />

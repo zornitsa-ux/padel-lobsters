@@ -84,14 +84,11 @@ test('create an event through the form', async ({ page }) => {
   }
 })
 
-test('add a player for someone else: the confirm names them', async ({ page }) => {
+test('add a player for someone else: the confirm and the payment sheet name them', async ({
+  page,
+}) => {
   const event = await createEvent()
   try {
-    // The payment sheet after the add speaks as if the admin had registered
-    // (#104); close it whenever it shows rather than assert it.
-    await page.addLocatorHandler(page.getByRole('dialog', { name: /pay to lock your spot/ }), () =>
-      page.keyboard.press('Escape'),
-    )
     await page.goto(`/events/${event.id}/info`)
     await page.getByRole('button', { name: 'Register a Player' }).click()
     await page.getByRole('textbox', { name: 'Search players' }).fill(lena.name)
@@ -105,9 +102,36 @@ test('add a player for someone else: the confirm names them', async ({ page }) =
     })
     await dialog.getByRole('button', { name: 'Add player' }).click()
 
-    await expect
-      .poll(() => registrationOf({ eventId: event.id, playerId: lena.id }))
-      .toMatchObject({ status: 'registered', payment_status: 'unpaid' })
+    const lenaReg = () => registrationOf({ eventId: event.id, playerId: lena.id })
+    await expect.poll(lenaReg).toMatchObject({ status: 'registered', payment_status: 'unpaid' })
+
+    const sheet = page.getByRole('dialog', {
+      name: `${lena.name} is in. Now pay to lock their spot`,
+    })
+    await expect(sheet.getByText('Their share')).toBeVisible()
+    await expect(sheet.getByText('Add to calendar')).toHaveCount(0)
+
+    // Opening the link as the admin says nothing about whether Lena paid.
+    const paymentWrites: string[] = []
+    page.on('request', (request) => {
+      if (request.url().includes('set_registration_payment')) paymentWrites.push(request.url())
+    })
+    const tikkie = sheet.getByRole('link', { name: `Pay via Tikkie for ${lena.name}` })
+    const tikkieTab = page.context().waitForEvent('page')
+    await tikkie.click()
+    await (await tikkieTab).close()
+    await expect(tikkie).toBeEnabled()
+    await sheet.getByRole('button', { name: `Mark ${lena.name} as paid` }).click()
+    const update = await confirmDialog({
+      page,
+      title: 'Update payment?',
+      lines: [`Player: ${lena.name}`, 'Change: Mark as paid (tikkie)'],
+    })
+    expect(paymentWrites).toEqual([])
+    await update.getByRole('button', { name: 'Update payment' }).click()
+
+    await expect.poll(lenaReg).toMatchObject({ payment_status: 'paid', payment_method: 'tikkie' })
+    await expect(sheet).toBeHidden()
     await expect(page.getByRole('heading', { name: 'Registered (1/16)' })).toBeVisible()
   } finally {
     await deleteEvent({ id: event.id })
@@ -138,6 +162,11 @@ test('add a team for someone else: the confirm names captain and partner', async
     const partner = () => registrationOf({ eventId: event.id, playerId: noor.id })
     await expect.poll(captain).toMatchObject({ status: 'registered' })
     await expect.poll(partner).toMatchObject({ status: 'registered' })
+    await expect(
+      page.getByRole('dialog', {
+        name: `Team ${lena.name} & ${noor.name} is in. Now pay to lock their spot`,
+      }),
+    ).toBeVisible()
     const teamId = (await captain())?.team_id
     expect(teamId).toBeTruthy()
     expect((await partner())?.team_id).toBe(teamId)
