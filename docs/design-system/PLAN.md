@@ -84,6 +84,8 @@ component doesn't fit, fix the component, not the call site.**
 | Player or team row, ranked row       | `PlayerRow` + `RankMarker`                           | P6     |
 | Page section with a heading          | `Section` (on the background, not a card)            | exists |
 | List of like items                   | `ListCard` + `LinkRow` (one card, divided rows)      | exists |
+| List row with its own controls       | `ListRow` (`PlayerRow`, buttons, anything under it)  | exists |
+| List row that is one checkbox        | `CheckRow`                                           | exists |
 | Inset panel / well inside a card     | `Well`                                               | P6c    |
 | Search field                         | `SearchInput`                                        | P6     |
 | Collapsible card (+ summary)         | `CollapsibleCard` (`summary` stays visible)          | exists |
@@ -185,16 +187,22 @@ primitives (see the Log) before P3:
 9. ~~**P5: empty, signed-out and loading states.**~~ Done in #112; see the Log.
 10. ~~**Review the `lob-amber` text and icons.**~~ Done in #113; see the Log.
 11. ~~**Card-pattern conversation** with the owner.~~ Done; see the Log.
-12. **P6a: `Section` and `ListCard`.** Each piece lands with its first users,
+12. ~~**P6a: `Section` and `ListCard`.** Each piece lands with its first users,
     so P6a builds the two the pilot needs: `Section` (heading and optional
     action on the background; replaces `SectionHeader` and the planned
     `CardHeader` as P6b and P6d move their users) and `ListCard` + `LinkRow`
     (one card, hairline dividers; `LinkRow` is `LinkCard`'s content as a
-    row). Pilot: the Community players list. In review (#114).
-13. **P6b: lists onto `ListCard`.** Inventory first: registered players and
-    teams, league teams and fixtures, standings, payments, shop orders. Rows
-    that aren't links (`PlayerRow`, `OptionRow`) get their `ListCard` row
-    here. `SectionHeader` users move onto `Section`.
+    row). Pilot: the Community players list.~~ Done in #114.
+13. **P6b: lists onto `ListCard`.** Inventory and owner calls in the Log
+    (2026-10-30). Three PRs:
+    - **P6b-1: player and team rows.** Builds `ListRow` and `CheckRow`.
+      Registered, Waitlist and Cancelled players, team rows, Payments,
+      pending approvals, raffle eligibility. In review.
+    - **P6b-2: league.** `SectionHeader` users onto `Section`, then delete
+      it; draft and manage team lists; fixtures and results as `ListCard`
+      rows; standings headings.
+    - **P6b-3: link lists and orders.** Seasons, Admin tools (tools and
+      Needs attention), shop orders.
 14. **P6c: no card inside a card.** Builds `Well` (flat `lob-well` inset, no
     shadow; the planned `.panel`). Nested `.card`s and shadowed boxes inside
     cards become a `Well` or a divider (four on Events and Home today; the
@@ -1099,3 +1107,38 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
     outline; the list takes its name from the `Section` heading rather than a
     label of its own; `LinkCard` and `LinkRow` share `LinkOrAction` and
     `linkOrActionProps` from `action.tsx`.
+
+- **2026-10-30.** P6b inventory (step 13 of Next). Lists with a card per row:
+  Registered, Waitlist and Cancelled players and team rows (event page),
+  Payments, pending approvals, raffle eligibility, shop orders, league teams
+  (draft and manage), league fixtures and results (five screens), Seasons and
+  Admin tools (a `LinkCard` per row). `SectionHeader` has seven users, all in
+  league; four sit inside a card. Left alone: objects (shop products, team
+  invites, events, Schedule court matches), pickers in modals (already flat
+  `OptionRow`s in a sheet), `PendingMatchCard` (already one card with divided
+  rows), and the cards holding lists that belong to P6c and P6d (Oscars,
+  `MyTournament`, birthdays, security events, Lobster Way admin). Owner calls:
+  - League matches in a list (fixtures, results, match history) become
+    `ListCard` rows. A match keeps its own card where it stands alone, and
+    Schedule court matches, where scores are entered, stay cards.
+  - The coloured left borders on Payments, Waitlist and pending approval
+    rows go. Status shows in the `Badge` and avatar tone, and each list sits
+    under its own heading.
+  - Three PRs (P6b-1 to P6b-3 under "Next").
+
+- **2026-10-30.** P6b-1 on `design-system-p6b-player-rows`. `ListCard` gains
+  two rows beside `LinkRow`: `ListRow` (a padded row holding its own
+  controls, e.g. a `PlayerRow` with buttons and a transfer button under it)
+  and `CheckRow` (the whole row is one checkbox, `role="checkbox"`, with an
+  inset focus ring; a disabled row hides the box and says why in its
+  content). Both are in the gallery.
+  - Event page: Registered, Waitlist and team lists are a `Section` (was a
+    hand-built `h3`) with a `ListCard` for the admin's rows. Players still see
+    name chips. Cancelled was a `CollapsibleCard` of cards; it is a `Section`
+    with a Show / Hide `TextButton` and a `ListCard`. The registered row's
+    transfer control moves into its own component.
+  - Payments and pending approvals: one `ListCard` each, no left border.
+    Payments keeps the status-toned avatar.
+  - Raffle eligibility: a `ListCard` of `CheckRow`s instead of bordered
+    `PlayerRow` buttons inside a card. The avatar tones move from raw amber and
+    gray onto `lob-amber` and `lob-line-strong`.

@@ -1,4 +1,5 @@
 import { Children, isValidElement, type ReactNode } from 'react'
+import { Check } from 'lucide-react'
 import { linkOrActionProps, renderAction, type LinkOrAction } from './action'
 import { LinkCardContent, type LinkCardContentProps } from './LinkCard'
 
@@ -24,14 +25,63 @@ type LinkRowProps = LinkCardContentProps & {
   highlighted?: boolean
 } & LinkOrAction
 
-const ROW =
+const PRESSABLE_ROW =
   'flex w-full items-center gap-3 px-4 py-3 text-left transition-colors not-disabled:active:bg-lob-well focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-lob-teal'
+
+const HIGHLIGHT = 'bg-lob-teal-light'
 
 /** A `ListCard` row that is one link or action: `LinkCard`'s content without the card. */
 export function LinkRow({ to, onClick, highlighted = false, ...content }: LinkRowProps) {
   return renderAction({
     props: linkOrActionProps({ to, onClick }),
-    className: `${ROW} ${highlighted ? 'bg-lob-teal-light' : 'hover:bg-lob-well'}`,
+    className: `${PRESSABLE_ROW} ${highlighted ? HIGHLIGHT : 'hover:bg-lob-well'}`,
     children: <LinkCardContent {...content} />,
   })
+}
+
+interface ListRowProps {
+  children: ReactNode
+  /** Tints the row, e.g. the viewer's own row in a roster. */
+  highlighted?: boolean
+}
+
+/** A `ListCard` row that holds its own controls: a `PlayerRow` with buttons, and anything under it. */
+export function ListRow({ children, highlighted = false }: ListRowProps) {
+  return (
+    <div className={`px-4 py-3 space-y-2 ${highlighted ? HIGHLIGHT : ''}`.trim()}>{children}</div>
+  )
+}
+
+interface CheckRowProps {
+  children: ReactNode
+  checked: boolean
+  onToggle: () => void
+  /** Locks the row and hides its checkbox; say why in `children`. */
+  disabled?: boolean
+}
+
+/** A `ListCard` row that is one checkbox: the whole row toggles, the box sits at the end. */
+export function CheckRow({ children, checked, onToggle, disabled = false }: CheckRowProps) {
+  return (
+    <button
+      type="button"
+      role="checkbox"
+      aria-checked={checked}
+      onClick={onToggle}
+      disabled={disabled}
+      className={`${PRESSABLE_ROW} not-disabled:hover:bg-lob-well disabled:cursor-default`}
+    >
+      <span className="flex-1 min-w-0">{children}</span>
+      {!disabled && (
+        <span
+          aria-hidden="true"
+          className={`w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 ${
+            checked ? 'bg-lob-teal text-white' : 'border-2 border-lob-line-strong'
+          }`}
+        >
+          {checked && <Check size={16} />}
+        </span>
+      )}
+    </button>
+  )
 }

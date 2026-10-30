@@ -1,5 +1,6 @@
 import React from 'react'
 import { Clock, X, Mail, RotateCcw } from 'lucide-react'
+import { ListCard, ListRow } from '../../components/ui/ListCard'
 import { PlayerRow } from '../../components/ui/PlayerRow'
 import { IconButton } from '../../components/ui/IconButton'
 import { TextButton } from '../../components/ui/TextButton'
@@ -66,40 +67,42 @@ export default function PendingApprovalsList({
           Waiting for approval ({pendingPlayers.length})
         </p>
       </div>
-      {pendingPlayers.map((p) => (
-        <div key={p.id} className="card border-l-4 border-lob-warning-border space-y-2">
-          <PlayerRow
-            player={p}
-            avatarSize="lg"
-            name={p.name}
-            nameClassName="font-semibold text-lob-dark truncate"
-            subtitle={
-              <span className="inline-flex items-center gap-1">
-                Lv {(p.playtomicLevel || 0).toFixed(1)} ·{' '}
-                <PendingEmailReveal playerId={String(p.id)} />
-              </span>
-            }
-            trailing={
-              <IconButton
-                onClick={() => onReject(p.id)}
-                aria-label={`Reject ${p.name}`}
-                variant="destructive"
-                size="sm"
-              >
-                <X />
-              </IconButton>
-            }
-          />
-          <ActionRow>
-            <Button size="sm" onClick={() => onApprove(p)}>
-              ✓ Approve as new player
-            </Button>
-            <Button variant="secondary" size="sm" onClick={() => onLink(p)}>
-              🔗 Played before?
-            </Button>
-          </ActionRow>
-        </div>
-      ))}
+      <ListCard label="Waiting for approval">
+        {pendingPlayers.map((p) => (
+          <ListRow key={p.id}>
+            <PlayerRow
+              player={p}
+              avatarSize="lg"
+              name={p.name}
+              nameClassName="font-semibold text-lob-dark truncate"
+              subtitle={
+                <span className="inline-flex items-center gap-1">
+                  Lv {(p.playtomicLevel || 0).toFixed(1)} ·{' '}
+                  <PendingEmailReveal playerId={String(p.id)} />
+                </span>
+              }
+              trailing={
+                <IconButton
+                  onClick={() => onReject(p.id)}
+                  aria-label={`Reject ${p.name}`}
+                  variant="destructive"
+                  size="sm"
+                >
+                  <X />
+                </IconButton>
+              }
+            />
+            <ActionRow>
+              <Button size="sm" onClick={() => onApprove(p)}>
+                ✓ Approve as new player
+              </Button>
+              <Button variant="secondary" size="sm" onClick={() => onLink(p)}>
+                🔗 Played before?
+              </Button>
+            </ActionRow>
+          </ListRow>
+        ))}
+      </ListCard>
     </div>
   )
 }

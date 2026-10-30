@@ -20,6 +20,7 @@ import { Spinner } from '../../components/ui/Spinner'
 import { IconButton } from '../../components/ui/IconButton'
 import { Menu, MenuItem } from '../../components/ui/Menu'
 import { PlayerRow } from '../../components/ui/PlayerRow'
+import { ListCard, ListRow } from '../../components/ui/ListCard'
 import { ProgressBar } from '../../components/ui/ProgressBar'
 import { StatTile } from '../../components/ui/StatTile'
 import PaymentReminderModal from './PaymentReminderModal'
@@ -46,13 +47,13 @@ const METHODS = [
   { value: 'playtomic', label: 'Playtomic' },
 ]
 
-// A row's left border and avatar follow its status tone.
-const ROW_ACCENT: Record<PaymentTone, { border: string; avatar: string }> = {
-  success: { border: 'border-lob-success-solid', avatar: 'bg-lob-success-soft text-lob-success' },
-  info: { border: 'border-lob-info-solid', avatar: 'bg-lob-info-soft text-lob-info' },
-  warning: { border: 'border-lob-warning-solid', avatar: 'bg-lob-warning-soft text-lob-warning' },
-  danger: { border: 'border-lob-danger-border', avatar: 'bg-lob-danger-soft text-lob-danger' },
-  neutral: { border: 'border-lob-line-strong', avatar: 'bg-lob-line text-lob-slate' },
+// A row's avatar follows its status tone.
+const AVATAR_TONE: Record<PaymentTone, string> = {
+  success: 'bg-lob-success-soft text-lob-success',
+  info: 'bg-lob-info-soft text-lob-info',
+  warning: 'bg-lob-warning-soft text-lob-warning',
+  danger: 'bg-lob-danger-soft text-lob-danger',
+  neutral: 'bg-lob-line text-lob-slate',
 }
 
 type PaymentFilter = 'all' | 'paid' | 'pending' | 'tikkied' | 'unpaid'
@@ -294,92 +295,88 @@ export default function Payments({
         onChange={setFilter}
       />
 
-      {/* Payment list */}
-      <div className="space-y-2">
-        {filtered.length === 0 && (
-          <EmptyState
-            icon={<CheckCircle />}
-            title={teamMode ? 'No teams here' : 'No players here'}
-          />
-        )}
+      {filtered.length === 0 ? (
+        <EmptyState icon={<CheckCircle />} title={teamMode ? 'No teams here' : 'No players here'} />
+      ) : (
+        <ListCard label={teamMode ? 'Team payments' : 'Player payments'}>
+          {filtered.map((reg) => {
+            const player = getPlayer(reg.playerId)
+            if (!player) return null
+            const ps = reg.paymentStatus
+            const isConfirmed = isSettled(ps)
+            const isSelfPaid = ps === 'pending_confirmation'
+            const isTikkied = ps === 'tikkied'
+            const isTransferred = ps === 'transferred'
+            const method =
+              METHODS.find((m) => m.value === reg.paymentMethod)?.label || reg.paymentMethod
+            const detail = ps === 'paid' ? method : isSelfPaid ? 'self-declared' : ''
 
-        {filtered.map((reg) => {
-          const player = getPlayer(reg.playerId)
-          if (!player) return null
-          const ps = reg.paymentStatus
-          const isConfirmed = isSettled(ps)
-          const isSelfPaid = ps === 'pending_confirmation'
-          const isTikkied = ps === 'tikkied'
-          const isTransferred = ps === 'transferred'
-          const method =
-            METHODS.find((m) => m.value === reg.paymentMethod)?.label || reg.paymentMethod
-          const detail = ps === 'paid' ? method : isSelfPaid ? 'self-declared' : ''
+            const { tone } = paymentStatusInfo(ps)
 
-          const { tone } = paymentStatusInfo(ps)
-
-          return (
-            <div
-              key={reg.id}
-              className={`card transition-all border-l-4 ${ROW_ACCENT[tone].border}`}
-            >
-              <PlayerRow
-                player={player}
-                avatarSize="lg"
-                avatarTone={ROW_ACCENT[tone].avatar}
-                name={rowName(reg, player.name)}
-                trailing={
-                  isAdmin && (
-                    <div className="flex items-center gap-1">
-                      {/* Primary action — varies by status, keeps the most common
+            return (
+              <ListRow key={reg.id}>
+                <PlayerRow
+                  player={player}
+                  avatarSize="lg"
+                  avatarTone={AVATAR_TONE[tone]}
+                  name={rowName(reg, player.name)}
+                  trailing={
+                    isAdmin && (
+                      <div className="flex items-center gap-1">
+                        {/* Primary action — varies by status, keeps the most common
                           next step one tap away for the admin. */}
-                      {isConfirmed ? (
-                        <Button variant="neutral" size="sm" onClick={() => handleMarkUnpaid(reg)}>
-                          Undo
-                        </Button>
-                      ) : isSelfPaid || isTikkied ? (
-                        <Button
-                          size="sm"
-                          onClick={() => handleMarkPaid(reg, reg.paymentMethod || 'tikkie')}
-                        >
-                          Confirm ✓
-                        </Button>
-                      ) : (
-                        <PaymentMethodPicker onSelect={(method) => handleMarkPaid(reg, method)} />
-                      )}
-                      {!!tournament.tikkieLink && !isConfirmed && !isSelfPaid && (
-                        <Button
-                          variant="neutral"
-                          size="sm"
-                          onClick={() =>
-                            setReminderTarget({ regId: reg.id, name: player.name || 'this player' })
-                          }
-                          title="Send a WhatsApp payment reminder"
-                          icon={<MessageCircle />}
-                        >
-                          Remind
-                        </Button>
-                      )}
-                      {/* Manual override — lets the admin set any status directly,
+                        {isConfirmed ? (
+                          <Button variant="neutral" size="sm" onClick={() => handleMarkUnpaid(reg)}>
+                            Undo
+                          </Button>
+                        ) : isSelfPaid || isTikkied ? (
+                          <Button
+                            size="sm"
+                            onClick={() => handleMarkPaid(reg, reg.paymentMethod || 'tikkie')}
+                          >
+                            Confirm ✓
+                          </Button>
+                        ) : (
+                          <PaymentMethodPicker onSelect={(method) => handleMarkPaid(reg, method)} />
+                        )}
+                        {!!tournament.tikkieLink && !isConfirmed && !isSelfPaid && (
+                          <Button
+                            variant="neutral"
+                            size="sm"
+                            onClick={() =>
+                              setReminderTarget({
+                                regId: reg.id,
+                                name: player.name || 'this player',
+                              })
+                            }
+                            title="Send a WhatsApp payment reminder"
+                            icon={<MessageCircle />}
+                          >
+                            Remind
+                          </Button>
+                        )}
+                        {/* Manual override — lets the admin set any status directly,
                           e.g. correcting a misclick or manually marking Tikkied. */}
-                      <StatusOverrideMenu
-                        currentStatus={ps}
-                        onSelect={(s) => handleSetStatus(reg, s)}
-                      />
-                    </div>
-                  )
-                }
-              >
-                <div className="flex items-center gap-2 flex-wrap">
-                  <PaymentStatusBadge paymentStatus={ps} detail={detail || undefined} />
-                  {costPerEntry > 0 && !isTransferred && (
-                    <span className="text-xs text-lob-muted">{fmtEur(costPerEntry)}</span>
-                  )}
-                </div>
-              </PlayerRow>
-            </div>
-          )
-        })}
-      </div>
+                        <StatusOverrideMenu
+                          currentStatus={ps}
+                          onSelect={(s) => handleSetStatus(reg, s)}
+                        />
+                      </div>
+                    )
+                  }
+                >
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <PaymentStatusBadge paymentStatus={ps} detail={detail || undefined} />
+                    {costPerEntry > 0 && !isTransferred && (
+                      <span className="text-xs text-lob-muted">{fmtEur(costPerEntry)}</span>
+                    )}
+                  </div>
+                </PlayerRow>
+              </ListRow>
+            )
+          })}
+        </ListCard>
+      )}
 
       {reminderTarget && (
         <PaymentReminderModal
