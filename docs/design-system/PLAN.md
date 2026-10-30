@@ -82,8 +82,9 @@ component doesn't fit, fix the component, not the call site.**
 | Signed-out viewer                    | `SignInPrompt` (`variant="inline"` in a card)        | exists |
 | Admin-only page                      | `AdminRouteGuard redirectTo` (never a sign-in ask)   | exists |
 | Player or team row, ranked row       | `PlayerRow` + `RankMarker`                           | P6     |
-| Card title + pill + description      | `CardHeader`                                         | P6     |
-| Inset panel / well                   | `.panel` / `.panel-accent`                           | P6     |
+| Page section with a heading          | `Section` (on the background, not a card)            | exists |
+| List of like items                   | `ListCard` + `LinkRow` (one card, divided rows)      | exists |
+| Inset panel / well inside a card     | `Well`                                               | P6c    |
 | Search field                         | `SearchInput`                                        | P6     |
 | Collapsible card (+ summary)         | `CollapsibleCard` (`summary` stays visible)          | exists |
 | Collapsible row with reorder/delete  | `CollapsibleCard leading actions`                    | exists |
@@ -92,7 +93,7 @@ component doesn't fit, fix the component, not the call site.**
 | Pick one of many (rounds, filters)   | `SegmentedControl layout="scroll"` / `"wrap"`        | exists |
 | Page tabs (route or in-page)         | `PageHeader tabs` (`to` or `onClick`)                | exists |
 | Loading                              | `Spinner` (`size="inline"` in a card) / `Skeleton`   | exists |
-| Eyebrow / overline                   | `.eyebrow` / `.eyebrow-accent`                       | P6     |
+| Eyebrow / overline                   | `.eyebrow` / `.eyebrow-accent`                       | P6e    |
 
 ### Buttons and chips (owner, 2026-10-25)
 
@@ -184,22 +185,26 @@ primitives (see the Log) before P3:
 9. ~~**P5: empty, signed-out and loading states.**~~ Done in #112; see the Log.
 10. ~~**Review the `lob-amber` text and icons.**~~ Done in #113; see the Log.
 11. ~~**Card-pattern conversation** with the owner.~~ Done; see the Log.
-12. **P6a: the pieces.** `Section` (heading and optional action on the
-    background, replacing `SectionHeader` and the planned `CardHeader`),
-    `ListCard` (one card, hairline dividers between rows; takes `PlayerRow`,
-    `OptionRow` and `LinkCard`-style rows), `Well` (flat `lob-well` inset, no
-    shadow: what goes inside a card), `Tag` (names a thing: Court 2, Round 3,
-    a shirt size; `Badge` stays for states) and `.eyebrow`. Gallery entries,
-    and one pilot: the Community players list onto `ListCard`.
+12. **P6a: `Section` and `ListCard`.** Each piece lands with its first users,
+    so P6a builds the two the pilot needs: `Section` (heading and optional
+    action on the background; replaces `SectionHeader` and the planned
+    `CardHeader` as P6b and P6d move their users) and `ListCard` + `LinkRow`
+    (one card, hairline dividers; `LinkRow` is `LinkCard`'s content as a
+    row). Pilot: the Community players list. In review.
 13. **P6b: lists onto `ListCard`.** Inventory first: registered players and
-    teams, league teams and fixtures, standings, payments, shop orders.
-14. **P6c: no card inside a card.** Nested `.card`s and shadowed boxes inside
+    teams, league teams and fixtures, standings, payments, shop orders. Rows
+    that aren't links (`PlayerRow`, `OptionRow`) get their `ListCard` row
+    here. `SectionHeader` users move onto `Section`.
+14. **P6c: no card inside a card.** Builds `Well` (flat `lob-well` inset, no
+    shadow; the planned `.panel`). Nested `.card`s and shadowed boxes inside
     cards become a `Well` or a divider (four on Events and Home today; the
     tinted boxes inside cards are triaged, as alerts stay `AlertBox`).
 15. **P6d: sections, not cards.** Account, settings and admin tools: each
     section is a `Section` on the background, not a card.
-16. **P6e: the rest of the layout pieces.** Identity labels onto `Tag` (about
-    ten), `RankMarker` + `PlayerRow highlighted`, `RosterHeading`,
+16. **P6e: labels and the rest.** Builds `Tag` (names a thing: Court 2, Round
+    3, a shirt size; `Badge` stays for states) and moves the identity labels
+    onto it (about ten); `.eyebrow` and the hand-built eyebrows (about 39
+    variants); `RankMarker` + `PlayerRow highlighted`, `RosterHeading`,
     `SearchInput` (#81), the `CollapsibleCard` heading element.
 17. **P7: lock-down.**
 
@@ -1077,3 +1082,16 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
 
   P6 is rescoped around these (P6a to P6e under "Next"); the "Identity labels"
   and "heavy card pattern" items leave "Later".
+
+- **2026-10-30.** P6a on `design-system-p6a-card-pieces`. `Section` and
+  `ListCard` + `LinkRow`, each with tests and a gallery entry (the gallery's
+  own card helper is renamed `GallerySection`). `LinkCard` exports its
+  content (`LinkCardContent`) so `LinkRow` shares it. `Well` moves to P6c and
+  `Tag` and `.eyebrow` to P6e, so each piece lands with its first users.
+  - Pilot: the Community players list is one `ListCard` of `LinkRow`s (26
+    cards become one), under a `Section` heading "Players (n)" (was a
+    hand-built `text-lg` h2) that holds the search and the list. Pending
+    approvals sit above it.
+  - The viewer's own row is `LinkRow highlighted` (the `lob-teal-light`
+    selected-row tint) instead of a ring. Its "You" badge is `outline`: the
+    `brand` badge's fill is the same tint and disappeared on the row.

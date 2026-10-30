@@ -20,6 +20,7 @@ import {
   Check,
   EyeOff,
   Search,
+  Users,
 } from 'lucide-react'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { ActionRow } from '../../components/ui/ActionRow'
@@ -50,6 +51,8 @@ import { Drawer } from '../../components/ui/Drawer'
 import { useConfirm } from '../../lib/confirmBus'
 import { CardLink } from '../../components/ui/CardLink'
 import { LinkCard, LinkCardIcon } from '../../components/ui/LinkCard'
+import { LinkRow, ListCard } from '../../components/ui/ListCard'
+import { Section } from '../../components/ui/Section'
 import { OptionRow } from '../../components/ui/OptionRow'
 import { ImageTile, OptionTile } from '../../components/ui/OptionTile'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
@@ -60,7 +63,7 @@ import { Skeleton } from '../../components/ui/Skeleton'
 
 const SAMPLE_EVENT = { id: 'sample', name: 'Lobster Cup', date: '2026-12-05', time: '19:00' }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function GallerySection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="card space-y-3">
       <h2 className="text-sm font-bold text-lob-dark">{title}</h2>
@@ -89,7 +92,7 @@ function Row({
 
 function ButtonSection() {
   return (
-    <Section title="Button">
+    <GallerySection title="Button">
       {(['lg', 'md', 'sm'] as const).map((size) => (
         <Row key={size} label={`size="${size}"`}>
           <Button size={size}>Primary</Button>
@@ -165,13 +168,13 @@ function ButtonSection() {
           <Button>Save</Button>
         </ActionRow>
       </Row>
-    </Section>
+    </GallerySection>
   )
 }
 
 function TextButtonSection() {
   return (
-    <Section title="TextButton">
+    <GallerySection title="TextButton">
       <Row label="tone">
         <TextButton>Accent</TextButton>
         <TextButton tone="primary">Primary</TextButton>
@@ -219,13 +222,13 @@ function TextButtonSection() {
           </p>
         </div>
       </Row>
-    </Section>
+    </GallerySection>
   )
 }
 
 function IconButtonSection() {
   return (
-    <Section title="IconButton">
+    <GallerySection title="IconButton">
       {(['md', 'sm'] as const).map((size) => (
         <Row key={size} label={`size="${size}"`}>
           <IconButton size={size} aria-label="Edit">
@@ -269,13 +272,13 @@ function IconButtonSection() {
       <Row label="AvatarPicker">
         <AvatarPicker preview={null} onChange={() => {}} />
       </Row>
-    </Section>
+    </GallerySection>
   )
 }
 
 function StatusSection() {
   return (
-    <Section title="AlertBox and Badge">
+    <GallerySection title="AlertBox and Badge">
       <Row label="AlertBox variant (error is role alert, the rest role status)" block>
         <div className="space-y-2">
           {(['info', 'warning', 'success', 'error'] as const).map((variant) => (
@@ -342,7 +345,7 @@ function StatusSection() {
           <Badge key={status} tone={tone} label={label} icon={<Icon />} />
         ))}
       </Row>
-    </Section>
+    </GallerySection>
   )
 }
 
@@ -351,7 +354,7 @@ const ROUNDS = [1, 2, 3, 4, 5, 6, 7].map((n) => ({ value: n, label: `Round ${n}`
 function FormErrorSection() {
   const { errorId, fieldProps } = useFieldError({ message: 'Enter a level between 0 and 7.' })
   return (
-    <Section title="FormError">
+    <GallerySection title="FormError">
       <Row label="Under a field (useFieldError ties it to the input)" block>
         <div className="space-y-1">
           <input className="input" defaultValue="9" aria-label="Playtomic level" {...fieldProps} />
@@ -369,7 +372,7 @@ function FormErrorSection() {
           Could not sign you up. Please try again.
         </AlertBox>
       </Row>
-    </Section>
+    </GallerySection>
   )
 }
 
@@ -384,7 +387,7 @@ function ChoiceSection() {
       current.includes(size) ? current.filter((s) => s !== size) : [...current, size],
     )
   return (
-    <Section title="Chip and SegmentedControl">
+    <GallerySection title="Chip and SegmentedControl">
       <Row label="SegmentedControl (fill, 2–4 choices)" block>
         <SegmentedControl
           options={[
@@ -455,7 +458,7 @@ function ChoiceSection() {
       <Row label="Chip link (no toggle state)">
         <Chip to="/design">Lobster Cup</Chip>
       </Row>
-    </Section>
+    </GallerySection>
   )
 }
 
@@ -472,7 +475,7 @@ function OptionSection() {
   const [tile, setTile] = useState('p2')
   const [photo, setPhoto] = useState(0)
   return (
-    <Section title="OptionRow and OptionTile">
+    <GallerySection title="OptionRow and OptionTile">
       <Row label="OptionRow selected (pick one player)" block>
         <div className="space-y-1">
           {SAMPLE_PLAYERS.map((p) => (
@@ -543,13 +546,13 @@ function OptionSection() {
           />
         ))}
       </Row>
-    </Section>
+    </GallerySection>
   )
 }
 
 function CardLinkSection() {
   return (
-    <Section title="CardLink and LinkCard">
+    <GallerySection title="CardLink and LinkCard">
       <Row label="LinkCard (title, subtitle, leading, trailing; built on CardLink)" block>
         <div className="space-y-2">
           <LinkCard
@@ -580,7 +583,49 @@ function CardLinkSection() {
           </div>
         </CardLink>
       </Row>
-    </Section>
+    </GallerySection>
+  )
+}
+
+function SectionListSection() {
+  return (
+    <GallerySection title="Section and ListCard">
+      <Row label="Section (heading on the background) with a ListCard of LinkRows" block>
+        <div className="rounded-2xl bg-lob-cream p-3">
+          <Section
+            title="Players (3)"
+            icon={<Users />}
+            action={<TextButton onClick={() => {}}>Invite</TextButton>}
+          >
+            <ListCard label="Players">
+              <LinkRow
+                to="/design"
+                highlighted
+                leading={<Avatar player={{ name: 'Theo' }} size="md" />}
+                title={
+                  <span className="flex items-center gap-1.5">
+                    Theo <Badge tone="outline" label="You" />
+                  </span>
+                }
+                trailing={<span className="text-sm font-bold text-lob-teal">2.5</span>}
+              />
+              <LinkRow
+                to="/design"
+                leading={<Avatar player={{ name: 'Mara' }} size="md" />}
+                title="Mara"
+                trailing={<span className="text-sm font-bold text-lob-teal">3.0</span>}
+              />
+              <LinkRow
+                onClick={() => {}}
+                leading={<Avatar player={{ name: 'Lena' }} size="md" />}
+                title="Lena"
+                subtitle="Opens a sheet (onClick)"
+              />
+            </ListCard>
+          </Section>
+        </div>
+      </Row>
+    </GallerySection>
   )
 }
 
@@ -588,7 +633,7 @@ function MenuSection() {
   const [status, setStatus] = useState('paid')
   const [view, setView] = useState('play')
   return (
-    <Section title="Menu and MenuItem">
+    <GallerySection title="Menu and MenuItem">
       <Row label="MenuList under a search field (always open here) · MenuSeparator" block>
         <div className="h-72">
           <div className="relative">
@@ -690,7 +735,7 @@ function MenuSection() {
           />
         </div>
       </Row>
-    </Section>
+    </GallerySection>
   )
 }
 
@@ -704,7 +749,7 @@ function DialogSection() {
   const close = () => setDialog(null)
   const sheetOpen = dialog === 'plain' || dialog === 'form'
   return (
-    <Section title="Modal, FullScreenDialog, Drawer and ConfirmDialog">
+    <GallerySection title="Modal, FullScreenDialog, Drawer and ConfirmDialog">
       <Row label="Modal: dismissible, with a description · not dismissible, autoFocus field">
         <Button variant="secondary" onClick={() => setDialog('plain')}>
           Open sheet
@@ -825,7 +870,7 @@ function DialogSection() {
           />
         </div>
       </Drawer>
-    </Section>
+    </GallerySection>
   )
 }
 
@@ -833,7 +878,7 @@ function CollapsibleSectionDemo() {
   const [open, setOpen] = useState(false)
   const [rowOpen, setRowOpen] = useState(false)
   return (
-    <Section title="CollapsibleCard">
+    <GallerySection title="CollapsibleCard">
       <CollapsibleCard
         className="rounded-xl border border-lob-line bg-lob-well p-3 space-y-2"
         expanded={open}
@@ -863,14 +908,14 @@ function CollapsibleSectionDemo() {
       >
         <p className="text-xs text-lob-muted">Reorder and delete sit outside the toggle.</p>
       </CollapsibleCard>
-    </Section>
+    </GallerySection>
   )
 }
 
 function StatesSection() {
   const [open, setOpen] = useState(false)
   return (
-    <Section title="Disclosure, empty, signed-out and loading">
+    <GallerySection title="Disclosure, empty, signed-out and loading">
       <Disclosure expanded={open} onToggle={() => setOpen((o) => !o)}>
         Advanced
       </Disclosure>
@@ -901,7 +946,7 @@ function StatesSection() {
       </div>
       <Spinner />
       <Skeleton className="h-10 w-full" />
-    </Section>
+    </GallerySection>
   )
 }
 
@@ -919,6 +964,7 @@ export default function DesignGallery() {
       <MenuSection />
       <DialogSection />
       <CardLinkSection />
+      <SectionListSection />
       <CollapsibleSectionDemo />
       <StatesSection />
     </div>

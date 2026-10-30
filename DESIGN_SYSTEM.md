@@ -30,7 +30,7 @@ These are enforced in review, and the first two in CI (`npm run design:check`):
 
 ```
 PageHeader   ← title, optional eyebrow, back link, badge, right action and tabs
-Content      ← space-y-4 stack of cards
+Content      ← space-y-4 stack of Sections and cards
 ```
 
 `PageHeader tabs` covers page sections. A choice inside the page is `SegmentedControl`. Dashboard
@@ -59,6 +59,10 @@ Owner, 2026-10-30 (being applied in P6):
 - A list of like items is one card with divided rows, not a card per row.
 - No card inside a card. Inside a card, use a flat well or a divider.
 
+- A page section is `Section`: a heading (optional icon and action) on the background, then its
+  content.
+- A list of like items is `ListCard`; a row that is one link or action is `LinkRow` (`LinkCard`'s
+  content as a row, `highlighted` for the viewer's own row).
 - `.card`: `bg-white rounded-2xl p-4`, card shadow and hairline border. The default.
 - `.card-elevated`: same shape, stronger shadow, for a hero card (`NextEventCard`).
 - A card that is one link is `CardLink` (`flush` for a full-bleed band, as on
