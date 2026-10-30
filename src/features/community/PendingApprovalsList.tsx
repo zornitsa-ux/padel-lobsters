@@ -33,7 +33,7 @@ function PendingEmailReveal({ playerId }: { playerId: string }) {
   }
   if (isError) {
     return (
-      <span className="inline-flex items-center gap-1 text-lob-amber">
+      <span className="inline-flex items-center gap-1 text-lob-warning">
         couldn't load
         <IconButton aria-label="Retry loading email" size="sm" onClick={() => retry()}>
           <RotateCcw />

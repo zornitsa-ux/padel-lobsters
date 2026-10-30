@@ -69,7 +69,7 @@ function RecommendationPanel({ teams, groupA, groupB }: RecommendationPanelProps
           <p className="font-semibold text-lob-dark">{SILVER_LABEL[rec.silverBracket]}</p>
         </div>
       </div>
-      {rec.warning && <p className="text-xs text-lob-amber">{rec.warning}</p>}
+      {rec.warning && <p className="text-xs text-lob-warning">{rec.warning}</p>}
     </div>
   )
 }

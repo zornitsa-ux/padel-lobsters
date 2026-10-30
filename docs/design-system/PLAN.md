@@ -182,18 +182,7 @@ primitives (see the Log) before P3:
    lines.~~ Done in #109; see the Log.
 8. ~~**P4: `Badge` tones and payment status.**~~ Done in #110; see the Log.
 9. ~~**P5: empty, signed-out and loading states.**~~ Done in #112; see the Log.
-10. **Review the `lob-amber` text and icons** (owner, 2026-10-30). P4 gave the
-    `accent` badge `lob-amber-strong` because `lob-amber` text is 2.0:1 on its
-    tint (about 2.2:1 on white). Other spots still use `lob-amber` for text or
-    icons, and some read as warnings, which are `lob-warning`. Triage each:
-    warning → `lob-warning`; accent text → `lob-amber-strong`; decorative
-    (icon, border) can stay. One small PR.
-    - Text: AdminTools "Needs attention", the `GroupFormationTool` warning
-      line, the `RatingReview` level figure, the `LinkPlayerModal` (two) and
-      `PendingApprovalsList` labels.
-    - Icons and borders: the `ChampionBanner` trophy and borders, the
-      `MyRounds` sit-out coffee and highlight border, the `PinUpgradeCard` and
-      AdminTools card borders, the `GroupStandingsTable` dashed divider.
+10. ~~**Review the `lob-amber` text and icons.**~~ Done in #113; see the Log.
 11. **Card-pattern conversation** with the owner (below), then **P6**.
 12. **P7: lock-down.**
 
@@ -1055,3 +1044,17 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
 
   E2E: a player opening `/admin` lands on Home, and `/admin/lobster-way` on the
   public Lobster way page.
+
+- **2026-10-30.** Step 10 of Next on `design-system-amber-review` (#113).
+  `lob-amber` uses triaged; it is now decorative only (icons, borders,
+  dividers), never text or status.
+  - Onto `lob-warning`: the `GroupFormationTool` warning line; the PII load
+    failures in `LinkPlayerModal` (two) and `PendingApprovalsList`, matching
+    the `PlayerProfile` contact-details failure, already a `warning`
+    `AlertBox`; AdminTools "Needs attention" (icon and left border, `-solid`);
+    the `PinUpgradeCard` no-email card's left border, as it warns that
+    sign-in will stop working (the real-email card stays teal).
+  - Onto `lob-amber-strong`: the `RatingReview` "now" level figure. Its dot
+    stays amber.
+  - Staying: the `ChampionBanner` trophy and borders, the `MyRounds` sit-out
+    coffee and highlight border, and the `GroupStandingsTable` cutoff divider.
