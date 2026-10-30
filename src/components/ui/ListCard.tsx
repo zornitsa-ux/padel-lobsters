@@ -1,5 +1,5 @@
 import { Children, isValidElement, type ReactNode } from 'react'
-import { renderAction } from './action'
+import { linkOrActionProps, renderAction, type LinkOrAction } from './action'
 import { LinkCardContent, type LinkCardContentProps } from './LinkCard'
 
 interface ListCardProps {
@@ -22,15 +22,15 @@ export function ListCard({ children, label }: ListCardProps) {
 type LinkRowProps = LinkCardContentProps & {
   /** Tints the row, e.g. the viewer's own row in a roster. */
   highlighted?: boolean
-} & ({ to: string; onClick?: never } | { onClick: () => void; to?: never })
+} & LinkOrAction
 
 const ROW =
-  'flex w-full items-center gap-3 px-4 py-3 text-left transition-colors not-disabled:active:bg-lob-well'
+  'flex w-full items-center gap-3 px-4 py-3 text-left transition-colors not-disabled:active:bg-lob-well focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-lob-teal'
 
 /** A `ListCard` row that is one link or action: `LinkCard`'s content without the card. */
 export function LinkRow({ to, onClick, highlighted = false, ...content }: LinkRowProps) {
   return renderAction({
-    props: to !== undefined ? { to } : { onClick },
+    props: linkOrActionProps({ to, onClick }),
     className: `${ROW} ${highlighted ? 'bg-lob-teal-light' : 'hover:bg-lob-well'}`,
     children: <LinkCardContent {...content} />,
   })

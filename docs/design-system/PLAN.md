@@ -1090,8 +1090,12 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
   `Tag` and `.eyebrow` to P6e, so each piece lands with its first users.
   - Pilot: the Community players list is one `ListCard` of `LinkRow`s (26
     cards become one), under a `Section` heading "Players (n)" (was a
-    hand-built `text-lg` h2) that holds the search and the list. Pending
-    approvals sit above it.
+    hand-built `text-lg` h2) that holds the admin's pending approvals, the
+    search and the list.
   - The viewer's own row is `LinkRow highlighted` (the `lob-teal-light`
     selected-row tint) instead of a ring. Its "You" badge is `outline`: the
     `brand` badge's fill is the same tint and disappeared on the row.
+  - Review: a `LinkRow` has an inset focus ring, as `ListCard` clips an
+    outline; the list takes its name from the `Section` heading rather than a
+    label of its own; `LinkCard` and `LinkRow` share `LinkOrAction` and
+    `linkOrActionProps` from `action.tsx`.

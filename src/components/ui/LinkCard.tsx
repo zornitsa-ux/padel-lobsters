@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { ChevronRight } from 'lucide-react'
 import { CardLink } from './CardLink'
+import { linkOrActionProps, type LinkOrAction } from './action'
 
 export interface LinkCardContentProps {
   title: ReactNode
@@ -11,15 +12,11 @@ export interface LinkCardContentProps {
   trailing?: ReactNode
 }
 
-/** Navigates with `to`, or runs `onClick` for in-page actions such as opening a modal. */
-type LinkCardProps = LinkCardContentProps & {
-  className?: string
-} & ({ to: string; onClick?: never } | { onClick: () => void; to?: never })
+type LinkCardProps = LinkCardContentProps & { className?: string } & LinkOrAction
 
 export function LinkCard({ to, onClick, className, ...content }: LinkCardProps) {
-  const action = to !== undefined ? { to } : { onClick }
   return (
-    <CardLink layout="row" className={className} {...action}>
+    <CardLink layout="row" className={className} {...linkOrActionProps({ to, onClick })}>
       <LinkCardContent {...content} />
     </CardLink>
   )

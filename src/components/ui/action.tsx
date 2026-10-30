@@ -73,3 +73,14 @@ export function renderAction({
     </button>
   )
 }
+
+/** A whole surface that navigates with `to`, or runs `onClick` for an in-page action such as opening a modal. */
+export type LinkOrAction = { to: string; onClick?: never } | { onClick: () => void; to?: never }
+
+export const linkOrActionProps = ({
+  to,
+  onClick,
+}: {
+  to?: string
+  onClick?: () => void
+}): ActionProps => (to !== undefined ? { to } : { onClick })

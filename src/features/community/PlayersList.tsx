@@ -41,7 +41,7 @@ export default function PlayersList({
     return <EmptyState icon={<User />} title={emptyTitle} />
   }
   return (
-    <ListCard label="Players">
+    <ListCard>
       {orderedForRender.map(({ p, isSelf }) => {
         const level = p.playtomicLevel || 0
         return (

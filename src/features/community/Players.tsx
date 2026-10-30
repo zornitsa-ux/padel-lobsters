@@ -128,19 +128,6 @@ export default function Players() {
           {error}
         </AlertBox>
       )}
-      {/* Pending approvals */}
-      {isAdmin && (
-        <PendingApprovalsList
-          pendingPlayers={pendingPlayers}
-          onApprove={handleApprove}
-          onReject={handleReject}
-          onLink={(p) => {
-            setLinkModal(p)
-            setLinkSearch('')
-          }}
-        />
-      )}
-
       {/* Link-to-existing modal */}
       <LinkPlayerModal
         linkModal={linkModal}
@@ -164,6 +151,19 @@ export default function Players() {
           </>
         }
       >
+        {/* Pending approvals */}
+        {isAdmin && (
+          <PendingApprovalsList
+            pendingPlayers={pendingPlayers}
+            onApprove={handleApprove}
+            onReject={handleReject}
+            onLink={(p) => {
+              setLinkModal(p)
+              setLinkSearch('')
+            }}
+          />
+        )}
+
         <div className="relative">
           <Search
             size={16}
