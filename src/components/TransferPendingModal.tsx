@@ -12,6 +12,7 @@ import {
 } from '../lib/whatsapp'
 import { TextButton } from './ui/TextButton'
 import { Button } from './ui/Button'
+import { Well } from './ui/Well'
 
 // Confirmation modal that comes up after a transfer offer is sent.
 // Shows two share actions:
@@ -124,12 +125,14 @@ export default function TransferPendingModal({
           know to open it.
         </p>
 
-        <div className="bg-lob-well border border-lob-line-strong rounded-xl px-3 py-2.5 text-xs text-lob-slate leading-relaxed">
-          <p className="font-semibold text-lob-muted text-2xs uppercase tracking-wide mb-1">
-            Pre-filled message
-          </p>
-          <p className="whitespace-pre-line">{message}</p>
-        </div>
+        <Well>
+          <div className="text-xs text-lob-slate leading-relaxed">
+            <p className="font-semibold text-lob-muted text-2xs uppercase tracking-wide mb-1">
+              Pre-filled message
+            </p>
+            <p className="whitespace-pre-line">{message}</p>
+          </div>
+        </Well>
 
         {phoneIsValid && (
           <Button fullWidth icon={<MessageCircle />} onClick={handleDirect} disabled={!!busyAction}>

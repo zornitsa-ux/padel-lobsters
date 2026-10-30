@@ -68,6 +68,8 @@ Owner, 2026-10-30 (being applied in P6):
 - A match in a list is a row too (league: `LeagueMatchRow` in a `ListCard`). A match keeps its
   own card only where it stands alone, and Schedule court matches, where scores are entered, stay
   cards.
+- An inset inside a card or sheet (a record, a note, a field with its explanation) is `Well`: flat
+  `lob-well`, no border or shadow. A list inside a card is divided rows, not a well per row.
 - `.card`: `bg-white rounded-2xl p-4`, card shadow and hairline border. The default.
 - `.card-elevated`: same shape, stronger shadow, for a hero card (`NextEventCard`).
 - A card that is one link is `CardLink` (`flush` for a full-bleed band, as on

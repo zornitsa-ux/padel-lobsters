@@ -81,3 +81,22 @@ describe('usePlayerEditor — plain edit of a pending player', () => {
     expect(patch).not.toHaveProperty('status')
   })
 })
+
+describe('usePlayerEditor — Playtomic level check', () => {
+  it('refuses a level over 7 in the sheet, and clears the error once corrected', async () => {
+    render(<Harness />)
+    fireEvent.click(screen.getByText('trigger edit'))
+    await waitFor(() => expect(screen.getByRole('button', { name: /save changes/i })).toBeTruthy())
+
+    const level = screen.getByLabelText('Playtomic Level (0–7)')
+    fireEvent.change(level, { target: { value: '9' } })
+    fireEvent.click(screen.getByRole('button', { name: /save changes/i }))
+
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('from 0 to 7'))
+    expect(updatePlayerMock).not.toHaveBeenCalled()
+
+    fireEvent.change(level, { target: { value: '3,5' } })
+    expect(screen.queryByRole('alert')).toBeNull()
+    expect(level.getAttribute('aria-invalid')).toBeNull()
+  })
+})

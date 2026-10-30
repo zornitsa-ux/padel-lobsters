@@ -10,6 +10,7 @@ import { resolveTeamName } from '../domain/teamDisplay'
 import { formatSetDiff, sortMatchesDesc } from '../domain/matchDisplay'
 import { DIVISION_LABELS } from '../domain/types'
 import type { LeagueTeam, LeagueMatch } from '../domain/types'
+import { Well } from '../../../components/ui/Well'
 
 interface TeamPageProps {
   team: LeagueTeam | null
@@ -104,12 +105,14 @@ export function TeamPage({ team, matches, teamById, onClose, onTeamClick }: Team
           <p className="text-xs font-bold text-lob-muted-light uppercase tracking-wider mb-3">
             Group Stage Record
           </p>
-          <div className="grid grid-cols-4 gap-2 bg-lob-well rounded-xl p-4">
-            <StatTile label="W" value={record.wins} {...statTileProps} />
-            <StatTile label="L" value={record.losses} {...statTileProps} />
-            <StatTile label="Pts" value={record.wins} {...statTileProps} />
-            <StatTile label="Set +/−" value={formatSetDiff(record.setDiff)} {...statTileProps} />
-          </div>
+          <Well>
+            <div className="grid grid-cols-4 gap-2">
+              <StatTile label="W" value={record.wins} {...statTileProps} />
+              <StatTile label="L" value={record.losses} {...statTileProps} />
+              <StatTile label="Pts" value={record.wins} {...statTileProps} />
+              <StatTile label="Set +/−" value={formatSetDiff(record.setDiff)} {...statTileProps} />
+            </div>
+          </Well>
         </div>
 
         {/* Match history */}

@@ -63,6 +63,9 @@ import { ImageTile, OptionTile } from '../../components/ui/OptionTile'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
 import { Spinner } from '../../components/ui/Spinner'
 import { Skeleton } from '../../components/ui/Skeleton'
+import { StatTile } from '../../components/ui/StatTile'
+import { Well } from '../../components/ui/Well'
+import { PlaytomicLevelField } from '../players/ProfileFields'
 
 // Dev-only (`/design`). Each design-system step adds its components here.
 
@@ -698,6 +701,31 @@ function SectionListSection() {
   )
 }
 
+function WellSection() {
+  const [level, setLevel] = useState('3.5')
+  return (
+    <GallerySection title="Well">
+      <Row label="Flat inset inside a card: no border, no shadow" block>
+        <Well>
+          <div className="grid grid-cols-4 gap-2">
+            <StatTile label="W" value={3} />
+            <StatTile label="L" value={1} />
+            <StatTile label="Pts" value={3} />
+            <StatTile label="Set +/−" value="+4" />
+          </div>
+        </Well>
+      </Row>
+      <Row label="PlaytomicLevelField (players feature): one field in a Well" block>
+        <PlaytomicLevelField
+          value={level}
+          onChange={setLevel}
+          hint="We use it to build balanced matches, and it improves as you play."
+        />
+      </Row>
+    </GallerySection>
+  )
+}
+
 const sampleTeam = (id: string, team_name: string) => ({ id, team_name }) as LeagueTeam
 
 const SAMPLE_TEAMS = {
@@ -1165,6 +1193,7 @@ export default function DesignGallery() {
       <DialogSection />
       <CardLinkSection />
       <SectionListSection />
+      <WellSection />
       <LeagueMatchRowSection />
       <CollapsibleSectionDemo />
       <StatesSection />

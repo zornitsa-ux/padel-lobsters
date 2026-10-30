@@ -6,7 +6,7 @@ import { emptyForm } from './playerConstants'
 
 const noop = () => {}
 
-const renderForm = () =>
+const renderForm = ({ levelError = '' }: { levelError?: string } = {}) =>
   render(
     <PlayerForm
       showForm
@@ -19,6 +19,7 @@ const renderForm = () =>
       handleSubmit={noop}
       saving={false}
       formReady
+      levelError={levelError}
       mergePlayer={null}
       setMergePlayer={noop}
       acceptMerge={noop}
@@ -37,6 +38,15 @@ describe('PlayerForm — admin add/edit (D-028)', () => {
     expect(screen.queryByText(/personal adjustment/i)).toBeNull()
     expect(screen.queryByText(/adjusted level/i)).toBeNull()
     expect(screen.queryByText(/positive = stronger/i)).toBeNull()
+  })
+
+  it('shows a refused level under its field, inside the sheet', () => {
+    renderForm({ levelError: 'Playtomic level must be a number from 0 to 7, e.g. 3.5.' })
+
+    const field = screen.getByLabelText('Playtomic Level (0–7)')
+    const error = screen.getByRole('alert')
+    expect(error.textContent).toContain('from 0 to 7')
+    expect(field.getAttribute('aria-describedby')).toContain(error.id)
   })
 
   it('has no adjustment key in the shared form default', () => {

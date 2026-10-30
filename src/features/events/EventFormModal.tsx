@@ -16,6 +16,7 @@ import { Button } from '../../components/ui/Button'
 import { IconButton } from '../../components/ui/IconButton'
 import { TextButton } from '../../components/ui/TextButton'
 import { AlertBox } from '../../components/ui/AlertBox'
+import { Well } from '../../components/ui/Well'
 
 // A court field edit. `booked` is the checkbox; every other field comes off a
 // text/number input as a string.
@@ -211,7 +212,7 @@ export default function EventFormModal({
           )}
           <div className="space-y-2">
             {form.courts.map((c, i) => (
-              <div key={i} className="bg-lob-well rounded-xl p-3 space-y-2">
+              <Well key={i}>
                 <div className="flex items-center gap-2">
                   <input
                     className="input flex-1 py-2 text-sm"
@@ -240,7 +241,7 @@ export default function EventFormModal({
                   />
                   Court confirmed / booked
                 </label>
-              </div>
+              </Well>
             ))}
           </div>
         </div>
