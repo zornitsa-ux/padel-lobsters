@@ -95,7 +95,7 @@ describe('Payments, team events', () => {
     cleanup()
     teamsState = { isPending: false, isError: true }
     renderPayments(tournament({ entryMode: 'team' }))
-    expect(screen.getByText("Couldn't load the teams")).toBeTruthy()
+    expect(screen.getByRole('alert').textContent).toContain("Couldn't load the teams")
   })
 
   it('lists one row per team and never the partner on their own', () => {

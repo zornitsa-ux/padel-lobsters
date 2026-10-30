@@ -5,5 +5,5 @@ import { Spinner } from './Spinner'
 // (header/nav) is already painted around it, so this only fills the content
 // area.
 export function RouteFallback() {
-  return <Spinner className="py-24" />
+  return <Spinner />
 }

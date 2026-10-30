@@ -1,9 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { Plus, Save, RotateCcw } from 'lucide-react'
 import { PageHeader } from '../../../components/ui/PageHeader'
-import { SignInBanner } from '../../../components/ui/AuthGate'
-import { useApp } from '../../../context/useApp'
 import { useSettings, useSaveSettings } from '../../settings/useSettings'
 import STATIC_LOBSTER_WAY_CONTENT, {
   resolveLobsterWayContent,
@@ -14,13 +11,12 @@ import LobsterWayAdminCategory, { emptyCategory } from './LobsterWayAdminCategor
 import { ActionRow } from '../../../components/ui/ActionRow'
 import { Button } from '../../../components/ui/Button'
 import { TextButton } from '../../../components/ui/TextButton'
+import { Spinner } from '../../../components/ui/Spinner'
 
 // Admin editor for "The Lobster Way" — add/edit/delete/reorder categories
 // and questions. Persists to settings.lobster_way_content (see
 // resolveLobsterWayContent), the same column the public page reads from.
 export default function LobsterWayAdmin() {
-  const navigate = useNavigate()
-  const { isAdmin } = useApp()
   const { data: settings } = useSettings()
   const saveSettingsMutation = useSaveSettings()
 
@@ -81,20 +77,6 @@ export default function LobsterWayAdmin() {
     }
   }
 
-  if (!isAdmin) {
-    return (
-      <div className="-mx-4">
-        <PageHeader title="The Lobster way" backLink={{ to: '/admin', label: 'Admin' }} />
-        <div className="px-4 pt-4">
-          <SignInBanner
-            role="admin"
-            onNavigate={(page: string) => page === 'settings' && navigate('/account')}
-          />
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="-mx-4">
       <PageHeader
@@ -104,13 +86,13 @@ export default function LobsterWayAdmin() {
       />
 
       <div className="px-4 pt-4 pb-8 space-y-3">
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-lob-muted">
           Changes save to the live FAQ page once you tap Save — nothing updates for players until
           then.
         </p>
 
         {!content ? (
-          <p className="text-sm text-gray-400">Loading…</p>
+          <Spinner />
         ) : (
           <>
             {content.map((category, i) => (

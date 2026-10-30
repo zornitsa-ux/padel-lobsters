@@ -22,13 +22,18 @@ import { groupEventsByTime } from './eventPhase'
 import type { TournamentInput } from './tournamentQueries'
 import { Button } from '../../components/ui/Button'
 import { AlertBox } from '../../components/ui/AlertBox'
+import { Spinner } from '../../components/ui/Spinner'
+import { loadFailed } from '../../lib/queryState'
 
 export { DEFAULT_EVENT_DESCRIPTION }
 
 export default function Tournament({ onNavigate }: { onNavigate: EventNavigate }) {
   const confirm = useConfirm()
   const { session, isAdmin } = useApp()
-  const { data: tournaments = [] } = useTournaments()
+  const tournamentsQuery = useTournaments()
+  const tournaments = tournamentsQuery.data ?? []
+  const tournamentsPending = tournamentsQuery.isPending
+  const tournamentsFailed = loadFailed(tournamentsQuery)
   const { data: transfers = [] } = useTransfers()
   const updateMut = useUpdateTournament()
   const deleteMut = useDeleteTournament()
@@ -129,11 +134,12 @@ export default function Tournament({ onNavigate }: { onNavigate: EventNavigate }
 
         {/* Upcoming events */}
         <div className="space-y-3">
-          {upcoming.length === 0 && (
-            <EmptyState
-              icon={<Trophy size={36} />}
-              title="No upcoming events. Create your first one!"
-            />
+          {tournamentsPending && <Spinner />}
+          {tournamentsFailed && (
+            <AlertBox variant="error">Couldn&apos;t load the events. Reload to try again.</AlertBox>
+          )}
+          {!tournamentsPending && !tournamentsFailed && upcoming.length === 0 && (
+            <EmptyState icon={<Trophy />} title="No upcoming events. Create your first one!" />
           )}
 
           {upcoming.map((t) => (

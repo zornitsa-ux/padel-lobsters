@@ -96,10 +96,7 @@ export default function MyOrders({ myOrders, items }: MyOrdersProps) {
             )
           })
       ) : (
-        <EmptyState
-          icon={<Package size={32} />}
-          title="No orders yet — browse the Shop to get started"
-        />
+        <EmptyState icon={<Package />} title="No orders yet — browse the Shop to get started" />
       )}
     </div>
   )

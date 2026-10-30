@@ -15,6 +15,7 @@ import type { PlayerOption } from '../api/leagueQueries'
 import type { Division, League, LeagueTeam } from '../domain/types'
 import { Button } from '../../../components/ui/Button'
 import { TextButton } from '../../../components/ui/TextButton'
+import { EmptyState } from '../../../components/ui/EmptyState'
 
 type InviteTarget = { id: string; name: string }
 
@@ -115,7 +116,7 @@ export function ManageTeams({ league, teams, division, allPlayers }: ManageTeams
       </div>
 
       {divisionTeams.length === 0 ? (
-        <p className="text-sm text-lob-muted">No teams in this division yet.</p>
+        <EmptyState variant="inline" title="No teams in this division yet." />
       ) : (
         <div className="space-y-2">
           {divisionTeams.map((t) => (

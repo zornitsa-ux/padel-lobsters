@@ -61,8 +61,7 @@ export default function Merch({ initialTab, onNavigate }: MerchProps) {
   const { createItem, updateItem, deactivateItem, reorderItems, uploadImages, placeOrder } =
     useMerchActions()
 
-  // Identity is managed in Settings → Account, but for friction-free ordering
-  // we also pop a sign-in prompt right where the player tapped.
+  // Ordering signed out opens the sign-in modal where the player tapped.
   const { requireAuth, AuthPromptModal } = useAuthPrompt({ onNavigate })
   const goToSignIn = () => onNavigate?.('settings')
   const [showForm, setShowForm] = useState(false)
@@ -274,8 +273,6 @@ export default function Merch({ initialTab, onNavigate }: MerchProps) {
   return (
     <div className="space-y-4">
       <AuthPromptModal />
-      {/* Identity is now handled entirely in Settings → Account. */}
-
       {/* Lightbox */}
       {lightbox && (
         <Lightbox
@@ -304,7 +301,6 @@ export default function Merch({ initialTab, onNavigate }: MerchProps) {
           loading={itemsQuery.isPending}
           isAdmin={isAdmin}
           claimedId={claimedId}
-          onNavigate={onNavigate}
           selectedSize={selectedSize}
           setSelectedSize={setSelectedSize}
           sizeError={sizeError}

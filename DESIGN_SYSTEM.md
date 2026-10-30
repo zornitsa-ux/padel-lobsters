@@ -61,8 +61,13 @@ is the exception: `Greeting` acts as its header.
 
 ## States
 
-- Empty: `EmptyState` (an inline variant is planned, P5).
-- Loading: `Spinner` or `Skeleton`. A loading card keeps its title (P5).
+- Empty: `EmptyState` for an empty page or tab; `variant="inline"` for an empty list inside a
+  card, modal or headed section. It sizes its own icon.
+- Signed out: `SignInPrompt` (`variant="inline"` in a card). Its Sign in button opens the
+  sign-in modal in place. Admin-only pages redirect a non-admin (`AdminRouteGuard`); they never
+  ask for an admin sign-in.
+- Loading: `Spinner` or `Skeleton`, never `null`, and never the empty state before the data has
+  landed. A loading card keeps its title and shows `Spinner size="inline"` in its body.
 - Alerts: `AlertBox variant`. Status labels: `Badge tone`, one size; a meaning maps onto a
   tone. A payment state is always `PaymentStatusBadge` (labels and tones in `paymentStatus.ts`).
 

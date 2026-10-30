@@ -15,6 +15,8 @@ import { CollapsibleCard } from './ui/CollapsibleCard'
 import { IconButton } from './ui/IconButton'
 import { SegmentedControl } from './ui/SegmentedControl'
 import { Badge } from './ui/Badge'
+import { EmptyState } from './ui/EmptyState'
+import { Spinner } from './ui/Spinner'
 
 /**
  * Admin-only Security panel.
@@ -148,9 +150,9 @@ export default function SecurityEventsPanel() {
           </div>
 
           {loading ? (
-            <p className="text-xs text-lob-muted-light italic">Loading…</p>
+            <Spinner size="inline" />
           ) : filtered.length === 0 ? (
-            <p className="text-xs text-lob-muted-light italic">No events match this filter.</p>
+            <EmptyState variant="inline" title="No events match this filter." />
           ) : (
             <div className="max-h-96 overflow-y-auto -mx-1 px-1">
               <div className="space-y-1.5">

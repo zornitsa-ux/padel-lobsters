@@ -13,6 +13,7 @@ import { useTournaments } from '../features/events/useTournaments'
 import { useTransfers, useTransferActions } from '../features/events/useTransfers'
 import Avatar from './ui/Avatar'
 import { EmptyState } from './ui/EmptyState'
+import { Spinner } from './ui/Spinner'
 import { useConfirm } from '../lib/confirmBus'
 import type { Player } from '../lib/normalise'
 import type { EventNavigate } from '../features/events/eventHelpers'
@@ -20,6 +21,7 @@ import { Button } from './ui/Button'
 import { TextButton } from './ui/TextButton'
 import { TransferResponseActions } from '../features/events/TransferActions'
 import { AlertBox } from './ui/AlertBox'
+import { loadFailed } from '../lib/queryState'
 
 // Landing page Melanie hits after tapping the WhatsApp link
 // (https://padelobsters.nl/?transfer=<id>). Shows the offer details and an
@@ -64,7 +66,9 @@ export default function TransferAccept({ transferId, onNavigate }: TransferAccep
   const confirm = useConfirm()
   const { session, logout, sessionSettled, isAdmin } = useApp()
   const { data: tournaments = [] } = useTournaments()
-  const { data: transfers = [] } = useTransfers()
+  const transfersQuery = useTransfers()
+  const transfersPending = transfersQuery.isPending
+  const transfersFailed = loadFailed(transfersQuery)
   const { respondToTransfer } = useTransferActions({ session })
   const { data: players = [] } = usePlayers()
   const claimedId = session?.user?.id ?? null
@@ -74,8 +78,8 @@ export default function TransferAccept({ transferId, onNavigate }: TransferAccep
   const [error, setError] = useState<string | null>(null)
 
   const transfer = useMemo(
-    () => transfers.find((t) => String(t.id) === String(transferId)),
-    [transfers, transferId],
+    () => transfersQuery.data?.find((t) => String(t.id) === String(transferId)),
+    [transfersQuery.data, transferId],
   )
   const fromPlayer = transfer && players.find((p) => String(p.id) === String(transfer.fromPlayerId))
   const toPlayer = transfer && players.find((p) => String(p.id) === String(transfer.toPlayerId))
@@ -111,18 +115,18 @@ export default function TransferAccept({ transferId, onNavigate }: TransferAccep
   }
 
   // ── Loading / not-found / error states ───────────────────────────────────
-  if (!sessionSettled) {
+  // Until transfers land, a missing one would read as "couldn't find".
+  if (!sessionSettled || transfersPending) return <Spinner label="Loading transfer…" />
+  if (transfersFailed) {
     return (
-      <div className="card py-10 text-center text-lob-muted-light">
-        <p>Loading transfer…</p>
-      </div>
+      <AlertBox variant="error">Couldn&apos;t load this transfer. Reload to try again.</AlertBox>
     )
   }
 
   if (!transferId) {
     return (
       <EmptyState
-        icon={<AlertCircle size={36} />}
+        icon={<AlertCircle />}
         title="No transfer link found."
         action={<Button onClick={() => onNavigate?.('dashboard')}>Back to home</Button>}
       />
@@ -132,7 +136,7 @@ export default function TransferAccept({ transferId, onNavigate }: TransferAccep
   if (!transfer) {
     return (
       <EmptyState
-        icon={<AlertCircle size={36} />}
+        icon={<AlertCircle />}
         title="We couldn't find this transfer."
         description="It may have been cancelled or already accepted."
         action={<Button onClick={() => onNavigate?.('dashboard')}>Back to home</Button>}
@@ -145,7 +149,7 @@ export default function TransferAccept({ transferId, onNavigate }: TransferAccep
     const stateLabel = CLOSED_STATE_LABELS[transfer.status ?? ''] || 'already closed'
     return (
       <EmptyState
-        icon={<AlertCircle size={36} />}
+        icon={<AlertCircle />}
         title={`This transfer has ${stateLabel}.`}
         action={
           tournament && (

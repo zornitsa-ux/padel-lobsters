@@ -67,7 +67,7 @@ export default function NextEventCard({
   if (!upcoming) {
     return (
       <EmptyState
-        icon={<Calendar size={36} />}
+        icon={<Calendar />}
         title="No upcoming events right now"
         description="Check back soon — next tournament is around the corner."
         action={

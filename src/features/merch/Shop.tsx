@@ -1,6 +1,7 @@
 import React, { useId, type Dispatch, type SetStateAction } from 'react'
 import { ShoppingBag, ShoppingCart, Check } from 'lucide-react'
-import { SignInBanner } from '../../components/ui/AuthGate'
+import { SignInPrompt } from '../../components/ui/SignInPrompt'
+import { Spinner } from '../../components/ui/Spinner'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { sizeRank } from './sizes'
 import type { LightboxState } from './Lightbox'
@@ -16,7 +17,6 @@ type ShopProps = {
   loading: boolean
   isAdmin: boolean
   claimedId: string | null
-  onNavigate?: (path: string) => void
   selectedSize: ByItem<string>
   setSelectedSize: Dispatch<SetStateAction<ByItem<string>>>
   sizeError: ByItem<boolean>
@@ -36,7 +36,6 @@ export default function Shop({
   loading,
   isAdmin,
   claimedId,
-  onNavigate,
   selectedSize,
   setSelectedSize,
   sizeError,
@@ -57,17 +56,9 @@ export default function Shop({
         shipping.
       </p>
 
-      {/* Identity notice — deep-links to Settings → Account */}
-      {!claimedId && (
-        <SignInBanner
-          role="player"
-          onNavigate={onNavigate}
-          compact
-          message="Sign in from Settings → Account before you can place orders."
-        />
-      )}
+      {!claimedId && <SignInPrompt title="Sign in to place an order" />}
 
-      {loading && <p className="text-center text-lob-muted-light py-8 text-sm">Loading…</p>}
+      {loading && <Spinner />}
 
       {items.map((item) => {
         const allImgs = item.images
@@ -209,7 +200,7 @@ export default function Shop({
       })}
 
       {!loading && items.length === 0 && (
-        <EmptyState icon={<ShoppingBag size={36} />} title="No merch items yet" />
+        <EmptyState icon={<ShoppingBag />} title="No merch items yet" />
       )}
     </div>
   )

@@ -19,6 +19,7 @@ import {
   SlidersHorizontal,
   Check,
   EyeOff,
+  Search,
 } from 'lucide-react'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { ActionRow } from '../../components/ui/ActionRow'
@@ -40,6 +41,7 @@ import { Chip, ChipGroup } from '../../components/ui/Chip'
 import { CollapsibleCard } from '../../components/ui/CollapsibleCard'
 import { Disclosure } from '../../components/ui/Disclosure'
 import { EmptyState } from '../../components/ui/EmptyState'
+import { SignInPrompt } from '../../components/ui/SignInPrompt'
 import { Menu, MenuItem, MenuSeparator } from '../../components/ui/Menu'
 import { MenuList } from '../../components/ui/MenuList'
 import { Modal } from '../../components/ui/Modal'
@@ -868,18 +870,36 @@ function CollapsibleSectionDemo() {
 function StatesSection() {
   const [open, setOpen] = useState(false)
   return (
-    <Section title="Disclosure, empty and loading">
+    <Section title="Disclosure, empty, signed-out and loading">
       <Disclosure expanded={open} onToggle={() => setOpen((o) => !o)}>
         Advanced
       </Disclosure>
       {open && <p className="text-xs text-lob-muted">Extra detail shown by Disclosure.</p>}
       <EmptyState
-        icon={<Inbox size={36} />}
+        icon={<Inbox />}
         title="Nothing here yet"
-        description="EmptyState with an action."
+        description="EmptyState: the page or tab body is empty."
         action={<Button>Go to Events</Button>}
       />
-      <Spinner className="py-4" />
+      <div className="card space-y-3">
+        <h2 className="font-bold text-lob-dark">Registered teams</h2>
+        <EmptyState
+          variant="inline"
+          icon={<Search />}
+          title="No teams registered yet"
+          description='variant="inline": a list inside a card, modal or headed section.'
+        />
+      </div>
+      <SignInPrompt title="Sign in to see your tournament" />
+      <div className="card space-y-3">
+        <h2 className="font-bold text-lob-dark">Final standings</h2>
+        <SignInPrompt variant="inline" title="Sign in to see the final standings." />
+      </div>
+      <div className="card space-y-3">
+        <h2 className="font-bold text-lob-dark">Starting courts</h2>
+        <Spinner size="inline" />
+      </div>
+      <Spinner />
       <Skeleton className="h-10 w-full" />
     </Section>
   )

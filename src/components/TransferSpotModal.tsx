@@ -10,6 +10,7 @@ import { PlayerRow } from './ui/PlayerRow'
 import type { Player } from '../lib/normalise'
 import { AlertBox } from './ui/AlertBox'
 import { Badge } from './ui/Badge'
+import { EmptyState } from './ui/EmptyState'
 
 // Picker modal Josephine sees when she taps "Transfer spot to another player".
 // Lists waitlist players first (so transferring to them is a one-tap promotion
@@ -216,9 +217,7 @@ export default function TransferSpotModal({
 
         <div className="space-y-2">
           {candidates.length === 0 && (
-            <p className="text-sm text-lob-muted-light text-center py-4">
-              No matching players found
-            </p>
+            <EmptyState variant="inline" title="No matching players found" />
           )}
           {candidates.map((p) => {
             const isWait = waitlistedIds.includes(String(p.id))

@@ -28,7 +28,7 @@ export default function ScoresMatchesTab({
   return (
     <>
       {rounds.length === 0 ? (
-        <EmptyState icon={<AlertCircle size={36} />} title="No matches for this tournament." />
+        <EmptyState icon={<AlertCircle />} title="No matches for this tournament." />
       ) : (
         <>
           <SegmentedControl

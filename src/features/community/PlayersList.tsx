@@ -38,7 +38,7 @@ export default function PlayersList({
   emptyTitle = 'No players yet. Be the first to join!',
 }: PlayersListProps) {
   if (orderedForRender.length === 0) {
-    return <EmptyState icon={<User size={36} />} title={emptyTitle} />
+    return <EmptyState icon={<User />} title={emptyTitle} />
   }
   return (
     <div className="space-y-2">

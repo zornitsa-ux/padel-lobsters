@@ -2,6 +2,7 @@ import React from 'react'
 import { Modal } from '../../components/ui/Modal'
 import { REVIEW_SCENARIOS } from './reviewScenarios'
 import { Button } from '../../components/ui/Button'
+import { EmptyState } from '../../components/ui/EmptyState'
 
 // One message variant plus how many players receive it.
 export interface ReviewSample {
@@ -142,9 +143,7 @@ export default function ReviewBreakdownModal({
         )}
 
         {reviewBreakdown.length === 0 && (
-          <p className="text-center text-lob-muted-light text-sm py-10">
-            No reviews to break down yet.
-          </p>
+          <EmptyState variant="inline" title="No reviews to break down yet." />
         )}
       </div>
     </Modal>

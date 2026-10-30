@@ -15,6 +15,8 @@ import { fmtEur } from '../../lib/format'
 import { useConfirmOnBehalf } from '../../lib/confirmOnBehalf'
 import { paymentChangeConfirm } from './paymentChangeConfirm'
 import { EmptyState } from '../../components/ui/EmptyState'
+import { AlertBox } from '../../components/ui/AlertBox'
+import { Spinner } from '../../components/ui/Spinner'
 import { IconButton } from '../../components/ui/IconButton'
 import { Menu, MenuItem } from '../../components/ui/Menu'
 import { PlayerRow } from '../../components/ui/PlayerRow'
@@ -79,7 +81,7 @@ export default function Payments({
   if (!tournament) {
     return (
       <EmptyState
-        icon={<AlertCircle size={36} />}
+        icon={<AlertCircle />}
         title="No event selected"
         action={<Button onClick={() => onNavigate('tournament')}>Go to Events</Button>}
       />
@@ -87,15 +89,14 @@ export default function Payments({
   }
 
   // Without the team list every team would drop out and read as nothing owed.
-  if (teamMode && (teamsPending || teamsFailed)) {
+  if (teamMode && teamsFailed) {
     return (
-      <EmptyState
-        icon={<AlertCircle size={36} />}
-        title={teamsFailed ? "Couldn't load the teams" : 'Loading teams…'}
-        description={teamsFailed ? 'Open Payments again to retry.' : undefined}
-      />
+      <AlertBox variant="error">
+        Couldn&apos;t load the teams. Open Payments again to retry.
+      </AlertBox>
     )
   }
+  if (teamMode && teamsPending) return <Spinner label="Loading teams…" />
 
   const { regs, partnerIdByRegId } = buildPaymentRows({
     teamMode,
@@ -297,7 +298,7 @@ export default function Payments({
       <div className="space-y-2">
         {filtered.length === 0 && (
           <EmptyState
-            icon={<CheckCircle size={28} />}
+            icon={<CheckCircle />}
             title={teamMode ? 'No teams here' : 'No players here'}
           />
         )}

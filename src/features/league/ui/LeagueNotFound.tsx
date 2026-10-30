@@ -1,13 +1,13 @@
-import { Link } from 'react-router-dom'
+import { Trophy } from 'lucide-react'
+import { EmptyState } from '../../../components/ui/EmptyState'
+import { TextButton } from '../../../components/ui/TextButton'
 
 export function LeagueNotFound() {
   return (
-    <div className="flex flex-col items-center py-16 text-center gap-3">
-      <span className="text-5xl">🦞</span>
-      <p className="font-bold text-lob-dark">League not found</p>
-      <Link to="/league/seasons" className="text-sm text-lob-teal">
-        View all seasons →
-      </Link>
-    </div>
+    <EmptyState
+      icon={<Trophy />}
+      title="League not found"
+      action={<TextButton to="/league/seasons">View all seasons →</TextButton>}
+    />
   )
 }

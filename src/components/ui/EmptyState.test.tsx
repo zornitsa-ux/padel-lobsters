@@ -17,9 +17,9 @@ describe('EmptyState', () => {
     expect(propsOf(title).className).toBe('text-sm font-semibold text-lob-dark')
   })
 
-  it('wraps the icon in the muted token instead of a raw gray', () => {
+  it('sizes and mutes the icon itself', () => {
     const [icon] = childrenOf(EmptyState({ title: 't', icon: 'ICON' }))
-    expect(propsOf(icon).className).toBe('text-lob-muted opacity-40')
+    expect(propsOf(icon).className).toBe('text-lob-muted opacity-40 [&>svg]:size-9')
     expect(propsOf(icon).children).toBe('ICON')
   })
 
@@ -33,8 +33,12 @@ describe('EmptyState', () => {
     expect(propsOf(action).children).toBe('ACTION')
   })
 
-  it('appends extra className', () => {
-    const el = EmptyState({ title: 't', className: 'mt-4' })
-    expect(String(propsOf(el).className).endsWith('mt-4')).toBe(true)
+  it('inline drops the card and quietens the copy for use inside a card or modal', () => {
+    const el = EmptyState({ variant: 'inline', title: 't', icon: 'ICON', description: 'd' })
+    expect(propsOf(el).className).toBe('flex flex-col items-center py-4 text-center gap-1')
+    const [icon, title, description] = childrenOf(el)
+    expect(propsOf(icon).className).toBe('text-lob-muted opacity-40 [&>svg]:size-5')
+    expect(propsOf(title).className).toBe('text-sm text-lob-muted')
+    expect(propsOf(description).className).toBe('text-xs text-lob-muted-light')
   })
 })

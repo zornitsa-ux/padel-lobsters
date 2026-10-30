@@ -5,6 +5,7 @@ import { filterByName } from './team/teamHelpers'
 import type { DisplayName } from './utils'
 import Avatar from '../../../components/ui/Avatar'
 import { OptionRow } from '../../../components/ui/OptionRow'
+import { EmptyState } from '../../../components/ui/EmptyState'
 
 interface PlayerPickerProps {
   players: Player[]
@@ -44,9 +45,10 @@ export default function PlayerPicker({
       </div>
       <div className="max-h-56 overflow-y-auto space-y-1">
         {visible.length === 0 && (
-          <p className="text-sm text-lob-muted-light text-center py-3">
-            {players.length === 0 ? emptyLabel : 'No players found'}
-          </p>
+          <EmptyState
+            variant="inline"
+            title={players.length === 0 ? emptyLabel : 'No players found'}
+          />
         )}
         {visible.map((p) => (
           <OptionRow

@@ -1,12 +1,10 @@
 import React, { useMemo, useState } from 'react'
-import { useApp } from '../../context/useApp'
 import { useTournaments } from '../events/useTournaments'
 import { usePlayers } from '../players/usePlayers'
 import { useAllRegistrations } from '../events/useRegistrations'
 import { useAllMatches } from '../events/useMatches'
 import { useMerchInterests } from '../merch/useMerch'
 import { readMerchLastChecked } from '../merch/lastChecked'
-import { SignInBanner } from '../../components/ui/AuthGate'
 import ReviewBreakdownModal from '../community/ReviewBreakdownModal'
 import type { ReviewBucket } from '../community/ReviewBreakdownModal'
 import { REVIEW_SCENARIOS, corpReview } from '../community/reviewScenarios'
@@ -43,14 +41,12 @@ type ToolCard = {
 } & ({ to: string } | { onClick: () => void })
 
 export default function AdminTools({ onNavigate }: AdminToolsProps) {
-  const { isAdmin } = useApp()
   const { data: tournaments = [] } = useTournaments()
   const { data: players = [] } = usePlayers()
   const { data: allRegs = [] } = useAllRegistrations()
   const { byEvent: teamResults } = useTeamResultsByEvent({
     tournaments,
     registrations: allRegs,
-    enabled: isAdmin,
   })
   const { data: allMatches = [] } = useAllMatches()
   const [showReviewBreakdown, setShowReviewBreakdown] = useState(false)
@@ -77,10 +73,9 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
   // query returned no rows, so reading `data.length` always yielded 0 and the
   // badge never appeared.
   const newOrdersCount = useMemo(() => {
-    if (!isAdmin) return 0
     const lastChecked = readMerchLastChecked()
     return interests.filter((o) => (o.created_at || '') >= lastChecked).length
-  }, [isAdmin, interests])
+  }, [interests])
 
   const attention = [
     {
@@ -191,22 +186,6 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
     ],
     [personalisedCount, genericCount],
   )
-
-  if (!isAdmin) {
-    return (
-      <div className="-mx-4">
-        <PageHeader title="Admin" />
-        <div className="px-4 pt-4 space-y-3">
-          <SignInBanner
-            role="admin"
-            onNavigate={onNavigate}
-            message={undefined}
-            compact={undefined}
-          />
-        </div>
-      </div>
-    )
-  }
 
   return (
     <div className="-mx-4">

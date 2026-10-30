@@ -21,6 +21,7 @@ import { Button } from '../../../components/ui/Button'
 import { AlertBox } from '../../../components/ui/AlertBox'
 import { FormError } from '../../../components/ui/FormError'
 import { Badge } from '../../../components/ui/Badge'
+import { EmptyState } from '../../../components/ui/EmptyState'
 
 // Shown on the event day, so the time matters more than the date.
 const shownAt = (iso: string) =>
@@ -94,7 +95,7 @@ function SeedsCard({
       </p>
 
       {order.length === 0 ? (
-        <p className="text-sm text-lob-muted">No registered teams yet.</p>
+        <EmptyState variant="inline" title="No registered teams yet." />
       ) : (
         <>
           <ol className="divide-y divide-lob-line">

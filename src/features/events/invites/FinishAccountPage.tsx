@@ -25,6 +25,7 @@ import { useConfirmDecline } from '../registration/team/useConfirmDecline'
 import { ACCOUNT_ACKNOWLEDGEMENT_LABEL, accountCreatedMessage } from '../teams/teamStatusMessages'
 import { TEAM_INVITES_PATH } from './inviteRoutes'
 import { Button } from '../../../components/ui/Button'
+import { Spinner } from '../../../components/ui/Spinner'
 import { AlertBox } from '../../../components/ui/AlertBox'
 
 const EMPTY: ProfileFieldValues = {
@@ -68,7 +69,7 @@ export default function FinishAccountPage() {
   }, [profile.data, seeded])
 
   if (!playerId) return <Navigate to="/account" replace />
-  if (setupPending || profile.isLoading) return null
+  if (setupPending || profile.isLoading) return <Spinner />
   if (!setup || setup.acknowledged) {
     return <Navigate to={TEAM_INVITES_PATH} state={location.state} replace />
   }

@@ -101,7 +101,7 @@ describe('KingOfCourtPlayerSchedule', () => {
     render(<KingOfCourtPlayerSchedule tournament={tournament()} />)
 
     expect(screen.queryByText(/You start|You wait/)).toBeNull()
-    expect(screen.getByTestId('kotc-starting-courts')).toBeTruthy()
+    expect(screen.getAllByText(/ & /)).toHaveLength(3)
   })
 
   it('asks signed-out viewers to sign in instead of showing empty courts', () => {
@@ -109,6 +109,7 @@ describe('KingOfCourtPlayerSchedule', () => {
     render(<KingOfCourtPlayerSchedule tournament={tournament()} />)
 
     expect(screen.getByText('Sign in to see the starting courts')).toBeTruthy()
-    expect(screen.queryByTestId('kotc-starting-courts')).toBeNull()
+    expect(screen.getByRole('heading', { name: 'Starting courts' })).toBeTruthy()
+    expect(screen.queryByText(/ & /)).toBeNull()
   })
 })

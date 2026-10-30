@@ -23,6 +23,7 @@ import { SegmentedControl } from '../../components/ui/SegmentedControl'
 import { ProgressBar } from '../../components/ui/ProgressBar'
 import { CollapsibleCard } from '../../components/ui/CollapsibleCard'
 import { Button } from '../../components/ui/Button'
+import { EmptyState } from '../../components/ui/EmptyState'
 
 type TabId = 'standings' | 'matches' | 'games'
 
@@ -413,9 +414,7 @@ export default function PastEventResults({ tournaments, onNavigate }: PastEventR
                       </div>
                     )}
                     {dbTab === 'standings' && !withheld && rankings.length === 0 && (
-                      <p className="text-sm text-lob-muted-light text-center py-2">
-                        No match data available
-                      </p>
+                      <EmptyState variant="inline" title="No match data available" />
                     )}
 
                     {/* ── Match Results ── */}

@@ -95,16 +95,14 @@ export default function LinkPlayerModal({
 
         {!searchLongEnough ? (
           <EmptyState
-            className="py-6"
-            icon={<Search size={22} />}
+            variant="inline"
+            icon={<Search />}
             title="Search for the existing player by name"
             description="Type at least 2 characters to see matching players."
           />
         ) : (
           <div className="space-y-1">
-            {candidates.length === 0 && (
-              <p className="text-xs text-lob-muted-light text-center py-4">No players match.</p>
-            )}
+            {candidates.length === 0 && <EmptyState variant="inline" title="No players match." />}
             {candidates.map((p) => (
               <CandidateRow key={p.id} player={p} onConfirm={onConfirm} />
             ))}

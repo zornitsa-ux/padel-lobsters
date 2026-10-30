@@ -61,7 +61,7 @@ export default function RaffleContainer({
   }, [confetti])
 
   if (!tournament) {
-    return <EmptyState icon={<Gift size={32} />} title="Open a tournament first to run a raffle" />
+    return <EmptyState icon={<Gift />} title="Open a tournament first to run a raffle" />
   }
 
   const runDraw = async () => {
@@ -180,10 +180,7 @@ export default function RaffleContainer({
         )}
 
         {isPast && committed.length === 0 && (
-          <EmptyState
-            icon={<Gift size={32} />}
-            title="No raffle was recorded for this tournament"
-          />
+          <EmptyState icon={<Gift />} title="No raffle was recorded for this tournament" />
         )}
       </div>
     </>
