@@ -5,7 +5,6 @@ import type { ResultRow } from './oscarsSchemas'
 
 interface ResultsViewProps {
   results: ResultRow[]
-  highlightWinners?: boolean
   collapsible?: boolean
 }
 
@@ -18,11 +17,7 @@ interface ResultCategory {
 }
 
 /* ─── Results view (used by both admin post-end and player post-share) ── */
-export default function ResultsView({
-  results,
-  highlightWinners = false,
-  collapsible = false,
-}: ResultsViewProps) {
+export default function ResultsView({ results, collapsible = false }: ResultsViewProps) {
   // Track which categories are revealed (only used when collapsible)
   const [openIds, setOpenIds] = useState<Set<string>>(() => new Set())
   const toggle = (id: string) => {
@@ -81,17 +76,15 @@ export default function ResultsView({
         const Body = isOpen && (
           <>
             {winners.length > 0 && (
-              <div
-                className={`rounded-xl px-3 py-2 ${highlightWinners ? 'bg-yellow-50 border border-yellow-200' : 'bg-yellow-50/60'}`}
-              >
-                <p className="text-sm font-bold text-yellow-900 flex items-center gap-1.5">
+              <div>
+                <p className="text-sm font-bold text-lob-dark flex items-center gap-1.5">
                   <Trophy size={15} className="text-yellow-600" />
                   {winners.map((w) => w.target_name).join(', ')}
                   {winners.length > 1 && (
-                    <span className="text-xs font-semibold text-yellow-700/80 ml-1">(tied)</span>
+                    <span className="text-xs font-semibold text-lob-muted ml-1">(tied)</span>
                   )}
                 </p>
-                <p className="text-xs text-yellow-700/80 mt-0.5">
+                <p className="text-xs text-lob-muted mt-0.5">
                   {Number(winners[0].votes_count)} vote
                   {Number(winners[0].votes_count) === 1 ? '' : 's'}
                   {winners.length > 1 ? ' each' : ''}

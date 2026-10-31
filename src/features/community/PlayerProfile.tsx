@@ -16,6 +16,7 @@ import { ActionRow } from '../../components/ui/ActionRow'
 import { Button } from '../../components/ui/Button'
 import { TextButton } from '../../components/ui/TextButton'
 import { Chip, ChipGroup } from '../../components/ui/Chip'
+import { Well } from '../../components/ui/Well'
 
 const MONTH_ABBR = [
   'Jan',
@@ -230,46 +231,48 @@ export default function PlayerProfile({
           <p className="text-2xs font-bold text-lob-muted-light uppercase tracking-wider mb-1.5">
             Match Metrics
           </p>
-          <div className="grid grid-cols-2 gap-1.5 text-xs">
-            <div className="bg-lob-well rounded-lg px-2.5 py-1.5">
-              <span className="text-lob-muted-light text-2xs font-semibold uppercase tracking-wide block">
-                Points for / against
-              </span>
-              <span className="text-lob-slate font-bold">
-                {stats.pointsFor} – {stats.pointsAgainst}
-                <span
-                  className={`ml-1 font-normal ${stats.pointDiff >= 0 ? 'text-lob-success' : 'text-lob-danger'}`}
-                >
-                  ({stats.pointDiff >= 0 ? '+' : ''}
-                  {stats.pointDiff})
-                </span>
-              </span>
-            </div>
-            <div className="bg-lob-well rounded-lg px-2.5 py-1.5">
-              <span className="text-lob-muted-light text-2xs font-semibold uppercase tracking-wide block">
-                Avg per match
-              </span>
-              <span className="text-lob-slate font-bold">
-                {stats.avgPointsFor.toFixed(1)} – {stats.avgPointsAgainst.toFixed(1)}
-              </span>
-            </div>
-            {stats.bestWinStreak > 0 && (
-              <div className="bg-lob-well rounded-lg px-2.5 py-1.5">
+          <Well>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+              <div>
                 <span className="text-lob-muted-light text-2xs font-semibold uppercase tracking-wide block">
-                  Best win streak
+                  Points for / against
                 </span>
-                <span className="text-lob-success font-bold">🔥 {stats.bestWinStreak}</span>
+                <span className="text-lob-slate font-bold">
+                  {stats.pointsFor} – {stats.pointsAgainst}
+                  <span
+                    className={`ml-1 font-normal ${stats.pointDiff >= 0 ? 'text-lob-success' : 'text-lob-danger'}`}
+                  >
+                    ({stats.pointDiff >= 0 ? '+' : ''}
+                    {stats.pointDiff})
+                  </span>
+                </span>
               </div>
-            )}
-            {stats.worstLossStreak > 0 && (
-              <div className="bg-lob-well rounded-lg px-2.5 py-1.5">
+              <div>
                 <span className="text-lob-muted-light text-2xs font-semibold uppercase tracking-wide block">
-                  Longest skid
+                  Avg per match
                 </span>
-                <span className="text-lob-danger font-bold">🧊 {stats.worstLossStreak}</span>
+                <span className="text-lob-slate font-bold">
+                  {stats.avgPointsFor.toFixed(1)} – {stats.avgPointsAgainst.toFixed(1)}
+                </span>
               </div>
-            )}
-          </div>
+              {stats.bestWinStreak > 0 && (
+                <div>
+                  <span className="text-lob-muted-light text-2xs font-semibold uppercase tracking-wide block">
+                    Best win streak
+                  </span>
+                  <span className="text-lob-success font-bold">🔥 {stats.bestWinStreak}</span>
+                </div>
+              )}
+              {stats.worstLossStreak > 0 && (
+                <div>
+                  <span className="text-lob-muted-light text-2xs font-semibold uppercase tracking-wide block">
+                    Longest skid
+                  </span>
+                  <span className="text-lob-danger font-bold">🧊 {stats.worstLossStreak}</span>
+                </div>
+              )}
+            </div>
+          </Well>
         </div>
       )}
 
@@ -279,9 +282,9 @@ export default function PlayerProfile({
           <p className="text-2xs font-bold text-lob-muted-light uppercase tracking-wider mb-1.5">
             Rivalries & Chemistry
           </p>
-          <div className="flex flex-col gap-1 text-xs">
+          <div className="space-y-1 text-xs">
             {nemesis && (
-              <div className="flex items-center justify-between bg-lob-danger-light rounded-lg px-2.5 py-1.5">
+              <div className="flex items-center justify-between">
                 <span className="text-lob-slate">
                   😈 <span className="font-semibold">Nemesis</span> · {nemesis.name}
                 </span>
@@ -292,7 +295,7 @@ export default function PlayerProfile({
               </div>
             )}
             {bestPartner && (
-              <div className="flex items-center justify-between bg-lob-success-light rounded-lg px-2.5 py-1.5">
+              <div className="flex items-center justify-between">
                 <span className="text-lob-slate">
                   🤝 <span className="font-semibold">Best partner</span> · {bestPartner.name}
                 </span>
@@ -302,7 +305,7 @@ export default function PlayerProfile({
               </div>
             )}
             {worstPartner && worstPartner.name !== bestPartner?.name && (
-              <div className="flex items-center justify-between bg-lob-warning-light rounded-lg px-2.5 py-1.5">
+              <div className="flex items-center justify-between">
                 <span className="text-lob-slate">
                   💔 <span className="font-semibold">Jinx partner</span> · {worstPartner.name}
                 </span>
@@ -424,23 +427,23 @@ export default function PlayerProfile({
       )}
       {/* Player tagline / notes with saved prompt label */}
       {(p.tagline || p.notes) && (
-        <div className="bg-lob-cream rounded-xl px-3 py-2">
-          <p className="text-2xs font-bold text-lob-teal uppercase tracking-wider mb-0.5">
+        <Well>
+          <p className="text-2xs font-bold text-lob-teal uppercase tracking-wider">
             {p.taglineLabel || p.tagline_label || '💬 War Cry'}
           </p>
           <p className="text-xs text-lob-slate italic">"{p.tagline || p.notes}"</p>
-        </div>
+        </Well>
       )}
 
       {/* Sign-in invite — admin only. Players sign in with an emailed code,
       so there is nothing to reset: resending just repeats the invite email. */}
       {isAdmin && (
-        <div className="bg-lob-warning-light border border-lob-warning-border rounded-xl p-3 flex items-center justify-between gap-3">
+        <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-2xs font-bold text-lob-warning uppercase tracking-wider mb-0.5">
+            <p className="text-2xs font-bold text-lob-muted-light uppercase tracking-wider mb-0.5">
               Sign-in invite
             </p>
-            <p className="text-xs text-lob-warning/80 leading-snug">
+            <p className="text-xs text-lob-muted leading-snug">
               Emails the player how to sign in. Contains no password or code.
             </p>
           </div>

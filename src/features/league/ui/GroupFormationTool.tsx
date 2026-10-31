@@ -9,6 +9,7 @@ import { AlertBox } from '../../../components/ui/AlertBox'
 import { Section } from '../../../components/ui/Section'
 import { ListCard, ListRow } from '../../../components/ui/ListCard'
 import { EmptyState } from '../../../components/ui/EmptyState'
+import { Well } from '../../../components/ui/Well'
 import { useConfirmGroups } from '../hooks/useLeagueMutations'
 import { Button } from '../../../components/ui/Button'
 import { IconButton } from '../../../components/ui/IconButton'
@@ -41,7 +42,7 @@ function RecommendationPanel({ teams, groupA, groupB }: RecommendationPanelProps
   const matchesRec = currentA === rec.sizeA && currentB === rec.sizeB
 
   return (
-    <div className="rounded-xl bg-lob-teal/5 border border-lob-teal/20 p-3 space-y-2">
+    <Well>
       <p className="text-xs font-bold text-lob-teal uppercase tracking-wide">
         Bracket recommendation
       </p>
@@ -73,7 +74,7 @@ function RecommendationPanel({ teams, groupA, groupB }: RecommendationPanelProps
         </div>
       </div>
       {rec.warning && <p className="text-xs text-lob-warning">{rec.warning}</p>}
-    </div>
+    </Well>
   )
 }
 

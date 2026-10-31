@@ -1,6 +1,7 @@
 import type { StartingCourt } from './domain'
 import { courtLabel } from './kotcPlayer'
 import { AlertBox } from '../../../components/ui/AlertBox'
+import { ListCard, ListRow } from '../../../components/ui/ListCard'
 
 export default function StartingCourtsList({
   courts,
@@ -21,9 +22,9 @@ export default function StartingCourtsList({
 
   return (
     <div className="space-y-2">
-      <ol className="space-y-2">
+      <ListCard inset ordered label="Starting courts">
         {courts.map((court) => (
-          <li key={court.courtIndex} className="rounded-xl bg-lob-cream px-3 py-2 space-y-1">
+          <ListRow key={court.courtIndex}>
             <p className="text-xs font-bold text-lob-teal">
               {courtLabel({ court })}
               {court.courtIndex === 0 && <span className="text-lob-muted"> · King court</span>}
@@ -44,9 +45,9 @@ export default function StartingCourtsList({
                 highlight={court.waitingTeamId === highlightTeamId}
               />
             )}
-          </li>
+          </ListRow>
         ))}
-      </ol>
+      </ListCard>
       {overflowTeamIds.length > 0 && (
         <AlertBox variant="error" size="sm">
           No court for {overflowTeamIds.map(labelOf).join(', ')}.
@@ -70,7 +71,7 @@ function TeamLine({
 }) {
   return (
     <p
-      className={`text-sm text-lob-dark flex gap-2 ${highlight ? 'font-bold bg-white rounded-lg -mx-1 px-1' : ''}`}
+      className={`text-sm text-lob-dark flex gap-2 ${highlight ? 'font-bold bg-lob-teal-light rounded-lg -mx-1 px-1' : ''}`}
       aria-current={highlight ? 'true' : undefined}
     >
       <span className="font-mono tabular-nums text-xs text-lob-muted pt-0.5">{seed}</span>

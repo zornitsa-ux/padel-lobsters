@@ -138,6 +138,7 @@ function SeedsCard({
             })}
           </ol>
 
+          <h3 className="pt-2 text-sm font-bold text-lob-dark">Starting courts</h3>
           <StartingCourtsList
             courts={layout.courts}
             overflowTeamIds={layout.overflowTeamIds}

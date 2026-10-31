@@ -3,6 +3,8 @@ import Avatar from '../../components/ui/Avatar'
 import type { Player } from '../../lib/normalise'
 import SignInForm from '../auth/SignInForm'
 import { TextButton } from '../../components/ui/TextButton'
+import { AlertBox } from '../../components/ui/AlertBox'
+import { Well } from '../../components/ui/Well'
 
 interface AccountSectionProps {
   isAdmin: boolean
@@ -31,37 +33,39 @@ export default function AccountSection({ isAdmin, signedInPlayer, logout }: Acco
 
       {isAdmin ? (
         // ── Signed in as admin ──────────────────────────────────
-        <div className="rounded-xl border border-lob-success-border bg-lob-success-light p-3 flex items-center gap-3">
-          <Shield size={18} className="text-lob-success-solid flex-shrink-0" />
-          <div className="flex-1">
-            <p className="text-sm font-semibold text-lob-success">Admin mode active 🛡️</p>
-            <p className="text-xs text-lob-muted">
-              {signedInPlayer
-                ? `Also signed in as ${signedInPlayer.name.split(' ')[0]}`
-                : 'You can edit all data'}
-            </p>
-          </div>
-          <TextButton tone="destructive" icon={<LogOut size={12} />} onClick={logout}>
-            Sign out
-          </TextButton>
-        </div>
+        <AlertBox
+          variant="success"
+          icon={<Shield />}
+          title="Admin mode active"
+          action={
+            <TextButton tone="destructive" icon={<LogOut size={12} />} onClick={logout}>
+              Sign out
+            </TextButton>
+          }
+        >
+          {signedInPlayer
+            ? `Also signed in as ${signedInPlayer.name.split(' ')[0]}`
+            : 'You can edit all data'}
+        </AlertBox>
       ) : signedInPlayer ? (
         // ── Signed in as player ─────────────────────────────────
-        <div className="rounded-xl border border-lob-teal/30 bg-lob-cream p-3 flex items-center gap-3">
-          <Avatar player={signedInPlayer} size="md" />
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-lob-dark truncate">
-              Signed in as {signedInPlayer.name} <span className="text-lob-teal text-xs">✓</span>
-            </p>
-            <p className="text-xs text-lob-muted">
-              You can register for events, place orders, and manage your profile anywhere on the
-              site.
-            </p>
+        <Well>
+          <div className="flex items-center gap-3">
+            <Avatar player={signedInPlayer} size="md" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-lob-dark truncate">
+                Signed in as {signedInPlayer.name} <span className="text-lob-teal text-xs">✓</span>
+              </p>
+              <p className="text-xs text-lob-muted">
+                You can register for events, place orders, and manage your profile anywhere on the
+                site.
+              </p>
+            </div>
+            <TextButton tone="destructive" icon={<LogOut size={12} />} onClick={logout}>
+              Sign out
+            </TextButton>
           </div>
-          <TextButton tone="destructive" icon={<LogOut size={12} />} onClick={logout}>
-            Sign out
-          </TextButton>
-        </div>
+        </Well>
       ) : null}
 
       {!isAdmin && !signedInPlayer && (

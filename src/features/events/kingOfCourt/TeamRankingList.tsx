@@ -4,6 +4,7 @@ import BiggestClimberLine from './BiggestClimberLine'
 import { EmptyState } from '../../../components/ui/EmptyState'
 import { SignInPrompt } from '../../../components/ui/SignInPrompt'
 import { Spinner } from '../../../components/ui/Spinner'
+import { Well } from '../../../components/ui/Well'
 
 export type TeamRankingRow = {
   teamId: string
@@ -81,9 +82,11 @@ function BiggestClimber({ rows, courts }: { rows: TeamRankingRow[]; courts: Cour
   if (climbers.length === 0) return null
   const { journey, change } = courtMoveText({ move: climbers[0].move!, courts })
   return (
-    <p className="text-sm text-lob-dark rounded-xl bg-lob-cream px-3 py-2">
-      <BiggestClimberLine labels={climbers.map((r) => r.label)} detail={`${journey} ${change}`} />
-    </p>
+    <Well>
+      <p className="text-sm text-lob-dark">
+        <BiggestClimberLine labels={climbers.map((r) => r.label)} detail={`${journey} ${change}`} />
+      </p>
+    </Well>
   )
 }
 
