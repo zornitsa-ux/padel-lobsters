@@ -2,7 +2,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import { CheckRow, LinkRow, ListCard, ListRow } from './ListCard'
+import { CheckRow, DragRow, LinkRow, ListCard, ListRow } from './ListCard'
+import { moveItem, useDragReorder } from './useDragReorder'
 
 afterEach(cleanup)
 
@@ -136,5 +137,61 @@ describe('CheckRow', () => {
     const box = screen.getByRole('checkbox', { name: 'Ben' })
     expect(box.getAttribute('aria-checked')).toBe('false')
     expect((box as HTMLButtonElement).disabled).toBe(true)
+  })
+})
+
+function DragList({ onMove }: { onMove: (move: { from: number; to: number }) => void }) {
+  const { rowProps } = useDragReorder({ onMove })
+  return (
+    <ListCard label="Items">
+      {['Tee', 'Cap', 'Mug'].map((name, index) => (
+        <DragRow key={name} {...rowProps(index)}>
+          <span>{name}</span>
+        </DragRow>
+      ))}
+    </ListCard>
+  )
+}
+
+const rowOf = (name: string) => screen.getByText(name).closest('[draggable]') as HTMLElement
+const dataTransfer = () => ({ effectAllowed: '', dropEffect: '' })
+
+describe('DragRow and useDragReorder', () => {
+  it('fades the dragged row, rings the row under it, and reports the move on drop', () => {
+    const onMove = vi.fn()
+    render(<DragList onMove={onMove} />)
+
+    fireEvent.dragStart(rowOf('Tee'), { dataTransfer: dataTransfer() })
+    fireEvent.dragOver(rowOf('Mug'), { dataTransfer: dataTransfer() })
+    expect(rowOf('Tee').className).toContain('opacity-40')
+    expect(rowOf('Mug').className).toContain('ring-2')
+    expect(rowOf('Cap').className).not.toContain('ring-2')
+
+    fireEvent.drop(rowOf('Mug'), { dataTransfer: dataTransfer() })
+    expect(onMove).toHaveBeenCalledWith({ from: 0, to: 2 })
+    expect(rowOf('Tee').className).not.toContain('opacity-40')
+    expect(rowOf('Mug').className).not.toContain('ring-2')
+  })
+
+  it('ignores a drop on the row being dragged, and clears on drag end', () => {
+    const onMove = vi.fn()
+    render(<DragList onMove={onMove} />)
+
+    fireEvent.dragStart(rowOf('Cap'), { dataTransfer: dataTransfer() })
+    fireEvent.dragOver(rowOf('Cap'), { dataTransfer: dataTransfer() })
+    expect(rowOf('Cap').className).not.toContain('ring-2')
+    fireEvent.drop(rowOf('Cap'), { dataTransfer: dataTransfer() })
+    expect(onMove).not.toHaveBeenCalled()
+
+    fireEvent.dragStart(rowOf('Cap'), { dataTransfer: dataTransfer() })
+    fireEvent.dragEnd(rowOf('Cap'))
+    expect(rowOf('Cap').className).not.toContain('opacity-40')
+  })
+
+  it('moveItem returns a new array with the item moved', () => {
+    const items = ['a', 'b', 'c']
+    expect(moveItem({ items, from: 0, to: 2 })).toEqual(['b', 'c', 'a'])
+    expect(moveItem({ items, from: 2, to: 0 })).toEqual(['c', 'a', 'b'])
+    expect(items).toEqual(['a', 'b', 'c'])
   })
 })

@@ -23,6 +23,7 @@ import { FormError } from '../../../components/ui/FormError'
 import { Badge } from '../../../components/ui/Badge'
 import { EmptyState } from '../../../components/ui/EmptyState'
 import { ListCard, ListRow } from '../../../components/ui/ListCard'
+import { Section } from '../../../components/ui/Section'
 
 // Shown on the event day, so the time matters more than the date.
 const shownAt = (iso: string) =>
@@ -44,15 +45,15 @@ export default function KingOfCourtAdmin({ tournament }: { tournament: Normalise
           {actions.error}
         </AlertBox>
       )}
-      <SeedsCard tournament={tournament} seeding={seeding} actions={actions} />
+      <SeedsSection tournament={tournament} seeding={seeding} actions={actions} />
       {isEventDayReached({ date: tournament.date }) && seeding.order.length > 0 && (
-        <FinalStandingsCard seeding={seeding} actions={actions} />
+        <FinalStandingsSection seeding={seeding} actions={actions} />
       )}
     </div>
   )
 }
 
-function SeedsCard({
+function SeedsSection({
   tournament,
   seeding,
   actions,
@@ -81,25 +82,25 @@ function SeedsCard({
   }
 
   return (
-    <div className="card space-y-3">
-      <div className="flex items-center justify-between gap-2">
-        <h2 className="font-bold text-lob-dark">Seeds and starting courts</h2>
+    <Section
+      title="Seeds and starting courts"
+      action={
         <Badge
           tone={publishedAt ? 'success' : 'neutral'}
           label={publishedAt ? 'Shown to players' : 'Not shown yet'}
         />
-      </div>
-      <p className="text-xs text-lob-muted">
-        {publishedAt
+      }
+      description={
+        publishedAt
           ? `Shown to players since ${shownAt(publishedAt)}. They see the saved order.`
-          : 'Strongest team first, by average Playtomic level. Reorder if needed, then show the assignments to players, usually a couple of hours before the start.'}
-      </p>
-
+          : 'Strongest team first, by average Playtomic level. Reorder if needed, then show the assignments to players, usually a couple of hours before the start.'
+      }
+    >
       {order.length === 0 ? (
         <EmptyState variant="inline" title="No registered teams yet." />
       ) : (
         <>
-          <ListCard inset ordered>
+          <ListCard ordered label="Seeds">
             {order.map((teamId, index) => {
               const strength = strengthById.get(teamId)
               return (
@@ -141,7 +142,7 @@ function SeedsCard({
             })}
           </ListCard>
 
-          <h3 className="pt-2 text-sm font-bold text-lob-dark">Starting courts</h3>
+          <h3 className="pt-1 text-sm font-semibold text-lob-dark">Starting courts</h3>
           <StartingCourtsList
             courts={layout.courts}
             overflowTeamIds={layout.overflowTeamIds}
@@ -172,11 +173,11 @@ function SeedsCard({
           </div>
         </>
       )}
-    </div>
+    </Section>
   )
 }
 
-function FinalStandingsCard({ seeding, actions }: { seeding: Seeding; actions: Actions }) {
+function FinalStandingsSection({ seeding, actions }: { seeding: Seeding; actions: Actions }) {
   const { order, teams, labelOf, layout } = seeding
   const [draft, setDraft] = useState<CourtResult[] | null>(null)
   const saved = savedCourtResults({ teams, courtCount: layout.courts.length })
@@ -202,19 +203,14 @@ function FinalStandingsCard({ seeding, actions }: { seeding: Seeding; actions: A
   }
 
   return (
-    <div className="card space-y-3">
-      <div className="flex items-center justify-between gap-2">
-        <h2 className="font-bold text-lob-dark">Final standings</h2>
-        <Badge tone="neutral" label="Optional" />
-      </div>
-      <p className="text-xs text-lob-muted">
-        Who finished 1st and 2nd on each court. Fill in as much as you know; the rest stay unranked.
-        Players see the ranking as soon as you save.
-      </p>
-
-      <ol className="space-y-3">
+    <Section
+      title="Final standings"
+      action={<Badge tone="neutral" label="Optional" />}
+      description="Who finished 1st and 2nd on each court. Fill in as much as you know; the rest stay unranked. Players see the ranking as soon as you save."
+    >
+      <ListCard ordered label="Courts">
         {layout.courts.map((court, k) => (
-          <li key={court.courtIndex} className="space-y-1">
+          <ListRow key={court.courtIndex}>
             <p className="text-xs font-bold text-lob-teal">{courtLabel({ court })}</p>
             {(['first', 'second'] as const).map((slot) => (
               <label key={slot} className="flex items-center gap-2 text-xs text-lob-muted">
@@ -233,9 +229,9 @@ function FinalStandingsCard({ seeding, actions }: { seeding: Seeding; actions: A
                 </select>
               </label>
             ))}
-          </li>
+          </ListRow>
         ))}
-      </ol>
+      </ListCard>
 
       <FormError message={repeated ? 'A team is picked more than once.' : ''} polite />
 
@@ -254,6 +250,6 @@ function FinalStandingsCard({ seeding, actions }: { seeding: Seeding; actions: A
           Clear all
         </Button>
       </div>
-    </div>
+    </Section>
   )
 }

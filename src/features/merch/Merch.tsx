@@ -1,4 +1,4 @@
-import React, { useState, useEffect, type ChangeEvent, type DragEvent, type FormEvent } from 'react'
+import React, { useState, useEffect, type ChangeEvent, type FormEvent } from 'react'
 import { useApp } from '../../context/useApp'
 import { usePlayers } from '../players/usePlayers'
 import { useAuthPrompt } from '../../components/ui/AuthGate'
@@ -21,6 +21,7 @@ import Shop from './Shop'
 import MyOrders from './MyOrders'
 import OrdersTable from './OrdersTable'
 import AdminItemManager from './AdminItemManager'
+import { moveItem, useDragReorder } from '../../components/ui/useDragReorder'
 import ItemEditorForm from './ItemEditorForm'
 import type { EventNavigate } from '../events/eventHelpers'
 
@@ -153,41 +154,15 @@ export default function Merch({ initialTab, onNavigate }: MerchProps) {
   }
 
   // ── Drag-and-drop reorder (admin) ───────────────────────────────────────────
-  const [dragIdx, setDragIdx] = useState<number | null>(null)
-  const [overIdx, setOverIdx] = useState<number | null>(null)
-
-  const handleDragStart = (idx: number) => (e: DragEvent<HTMLDivElement>) => {
-    setDragIdx(idx)
-    e.dataTransfer.effectAllowed = 'move'
-  }
-
-  const handleDragOver = (idx: number) => (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault()
-    e.dataTransfer.dropEffect = 'move'
-    if (idx !== overIdx) setOverIdx(idx)
-  }
-
-  const handleDrop = (idx: number) => (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault()
-    const from = dragIdx
-    setDragIdx(null)
-    setOverIdx(null)
-    if (from === null || from === idx) return
-    const reordered = [...items]
-    const [moved] = reordered.splice(from, 1)
-    reordered.splice(idx, 0, moved)
-    // The cache is updated optimistically inside the mutation, so no local copy
-    // of the list is needed to keep the drag from snapping back.
-    reorderItems.mutate(
-      { orderedIds: reordered.map((item) => item.id) },
-      { onError: (err) => alert('Could not save the new order: ' + errorMessage(err)) },
-    )
-  }
-
-  const handleDragEnd = () => {
-    setDragIdx(null)
-    setOverIdx(null)
-  }
+  // The cache is updated optimistically inside the mutation, so no local copy
+  // of the list is needed to keep the drag from snapping back.
+  const { rowProps: dragRow } = useDragReorder({
+    onMove: ({ from, to }) =>
+      reorderItems.mutate(
+        { orderedIds: moveItem({ items, from, to }).map((item) => item.id) },
+        { onError: (err) => alert('Could not save the new order: ' + errorMessage(err)) },
+      ),
+  })
 
   const toggleSize = (size: string) => {
     setForm((f) => ({
@@ -338,12 +313,7 @@ export default function Merch({ initialTab, onNavigate }: MerchProps) {
           openEdit={openEdit}
           handleDeleteItem={handleDeleteItem}
           orderCount={orderCount}
-          dragIdx={dragIdx}
-          overIdx={overIdx}
-          handleDragStart={handleDragStart}
-          handleDragOver={handleDragOver}
-          handleDrop={handleDrop}
-          handleDragEnd={handleDragEnd}
+          dragRow={dragRow}
         />
       )}
 

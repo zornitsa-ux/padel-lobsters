@@ -1,7 +1,8 @@
 import { Children, createContext, isValidElement, useContext, type ReactNode } from 'react'
-import { Check } from 'lucide-react'
+import { Check, GripVertical } from 'lucide-react'
 import { linkOrActionProps, renderAction, type LinkOrAction } from './action'
 import { LinkCardContent, type LinkCardContentProps } from './LinkCard'
+import type { DragRowHandlers } from './useDragReorder'
 
 type ListCardProps = {
   children: ReactNode
@@ -84,6 +85,43 @@ export function LinkRow({ to, onClick, highlighted = false, ...content }: LinkRo
 export function ListRow({ children }: { children: ReactNode }) {
   const inset = useContext(InsetContext)
   return <div className={`${inset ? '' : 'px-4 '}py-3 space-y-2`}>{children}</div>
+}
+
+type DragRowProps = DragRowHandlers & { children: ReactNode }
+
+/**
+ * A `ListCard` row the admin drags to reorder: a grip, then the row's content. Takes
+ * `useDragReorder`'s `rowProps(index)`. Dragging is mouse only, so keep another way to act on each row.
+ */
+export function DragRow({
+  children,
+  dragging,
+  dropTarget,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  onDragEnd,
+}: DragRowProps) {
+  return (
+    <div
+      draggable
+      onDragStart={onDragStart}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+      onDragEnd={onDragEnd}
+      className={`flex items-center gap-3 px-4 py-3 transition-opacity ${dragging ? 'opacity-40' : ''} ${
+        dropTarget ? 'ring-2 ring-inset ring-lob-teal' : ''
+      }`}
+    >
+      <span
+        aria-hidden="true"
+        className="-ml-1 flex-shrink-0 cursor-grab text-lob-muted-light hover:text-lob-muted active:cursor-grabbing"
+      >
+        <GripVertical size={18} />
+      </span>
+      <div className="flex flex-1 min-w-0 items-center gap-3">{children}</div>
+    </div>
+  )
 }
 
 interface CheckRowProps {

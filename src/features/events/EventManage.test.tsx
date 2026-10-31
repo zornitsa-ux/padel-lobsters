@@ -86,12 +86,12 @@ describe('EventManage — section routing', () => {
 
   it('falls back to overview when section is absent', () => {
     renderManage('/events/t1/manage')
-    expect(screen.getByText('Scoring progress')).toBeTruthy()
+    expect(screen.getByText('No schedule yet')).toBeTruthy()
   })
 
   it('falls back to overview when section is garbage', () => {
     renderManage('/events/t1/manage?section=nonsense')
-    expect(screen.getByText('Scoring progress')).toBeTruthy()
+    expect(screen.getByText('No schedule yet')).toBeTruthy()
   })
 
   it('updates the URL section when a different tab is chosen', async () => {
@@ -127,6 +127,17 @@ describe('EventManage — overview scoring progress', () => {
     expect(screen.getByText('2 of 3 matches scored')).toBeTruthy()
   })
 
+  it('says so once every match is scored', () => {
+    mockUseMatches.mockReturnValue({
+      data: [match({ completed: true, score1: 6, score2: 4 })],
+    } as unknown as ReturnType<typeof useMatches>)
+
+    renderManage('/events/t1/manage')
+
+    expect(screen.getByText('All matches scored')).toBeTruthy()
+    expect(screen.queryByText('1 of 1 matches scored')).toBeNull()
+  })
+
   it('leaves scoring out on King of the Court, which records no matches', () => {
     render(
       <MemoryRouter initialEntries={['/events/t1/manage']}>
@@ -136,7 +147,7 @@ describe('EventManage — overview scoring progress', () => {
 
     expect(screen.getByText('Registered')).toBeTruthy()
     expect(screen.queryByText('Scored')).toBeNull()
-    expect(screen.queryByText('Scoring progress')).toBeNull()
+    expect(screen.queryByText('No schedule yet')).toBeNull()
   })
 })
 
