@@ -46,6 +46,19 @@ describe('ListCard', () => {
     expect(screen.getByRole('list', { name: 'Steps' }).tagName).toBe('OL')
   })
 
+  it('scrollable: the card caps its height and scrolls inside', () => {
+    render(
+      <ListCard label="Log" scrollable>
+        <span>One</span>
+      </ListCard>,
+    )
+    const list = screen.getByRole('list', { name: 'Log' })
+    expect(list.className).toContain('card')
+    expect(list.className).toContain('overflow-y-auto')
+    expect(list.className).not.toContain('overflow-hidden')
+    expect(list.getAttribute('tabindex')).toBe('0')
+  })
+
   it('renders nothing when every row is empty', () => {
     render(<ListCard label="Players">{[null, false]}</ListCard>)
     expect(screen.queryByRole('list')).toBeNull()

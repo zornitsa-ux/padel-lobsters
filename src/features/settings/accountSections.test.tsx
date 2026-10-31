@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { render, screen, cleanup } from '@testing-library/react'
-import { childrenOf, propsOf } from '../../test/element'
+import { propsOf } from '../../test/element'
 import { normalisePlayers } from '../../lib/normalise'
 import { mockSupabase } from '../../test/mockSupabase'
 
@@ -63,8 +63,7 @@ describe('AccountOrdersSection', () => {
 
   it('passes the player id down to the orders list', () => {
     const el = AccountOrdersSection({ myPlayer: player })
-    const [, ordersList] = childrenOf(el)
 
-    expect(propsOf(ordersList).playerId).toBe('p1')
+    expect(propsOf(propsOf(el).children).playerId).toBe('p1')
   })
 })

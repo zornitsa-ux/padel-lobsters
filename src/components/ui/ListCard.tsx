@@ -3,34 +3,57 @@ import { Check } from 'lucide-react'
 import { linkOrActionProps, renderAction, type LinkOrAction } from './action'
 import { LinkCardContent, type LinkCardContentProps } from './LinkCard'
 
-interface ListCardProps {
+type ListCardProps = {
   children: ReactNode
   /** Names the list for screen readers when no heading labels it. */
   label?: string
-  /**
-   * Inside a card already: divided rows with no card of their own, flush with the card's content.
-   * For `ListRow`s; a pressable row keeps its padding so its hover fill clears the text.
-   */
-  inset?: boolean
   /** The order is the content, e.g. numbered steps: an `ol`. */
   ordered?: boolean
-}
+} & (
+  | {
+      /**
+       * Inside a card already: divided rows with no card of their own, flush with the card's
+       * content. For `ListRow`s; a pressable row keeps its padding so its hover fill clears the text.
+       */
+      inset: true
+      scrollable?: never
+    }
+  | {
+      inset?: false
+      /**
+       * A long list (a log, every tip): the card caps its height and scrolls inside. It takes
+       * focus so the keyboard can scroll it.
+       */
+      scrollable?: boolean
+    }
+)
 
 // Inset rows sit flush: no padding above the first or below the last, so the parent spaces the list.
 const INSET_LIST = '[&>li:first-child>*]:pt-0 [&>li:last-child>*]:pb-0'
 
+const SCROLLABLE =
+  'max-h-96 overflow-y-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lob-teal'
+
 const InsetContext = createContext(false)
 
 /** A list of like items: one card, hairline dividers between rows. */
-export function ListCard({ children, label, inset = false, ordered = false }: ListCardProps) {
+export function ListCard({
+  children,
+  label,
+  inset = false,
+  ordered = false,
+  scrollable = false,
+}: ListCardProps) {
   const rows = Children.toArray(children)
   if (rows.length === 0) return null
   const List = ordered ? 'ol' : 'ul'
+  const surface = inset ? INSET_LIST : `card p-0 ${scrollable ? SCROLLABLE : 'overflow-hidden'}`
   return (
     <InsetContext.Provider value={inset}>
       <List
         aria-label={label}
-        className={`divide-y divide-lob-line ${inset ? INSET_LIST : 'card p-0 overflow-hidden'}`}
+        tabIndex={scrollable ? 0 : undefined}
+        className={`divide-y divide-lob-line ${surface}`}
       >
         {rows.map((child, index) => (
           <li key={isValidElement(child) && child.key !== null ? child.key : index}>{child}</li>

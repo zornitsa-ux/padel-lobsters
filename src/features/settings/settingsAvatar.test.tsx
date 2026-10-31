@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { fireEvent, render, screen, waitFor, cleanup } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within, cleanup } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { mockSupabase } from '../../test/mockSupabase'
 
@@ -67,9 +67,13 @@ const renderSettings = () =>
     </MemoryRouter>,
   )
 
-// Expands the profile card and attaches a photo to the (hidden) file input.
+// Opens the profile form and attaches a photo to the (hidden) file input.
 const pickAvatar = () => {
-  fireEvent.click(screen.getByRole('button', { name: /my lobster profile/i }))
+  fireEvent.click(
+    within(screen.getByRole('region', { name: 'My Lobster Profile' })).getByRole('button', {
+      name: 'Edit',
+    }),
+  )
   const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement
   fireEvent.change(fileInput, {
     target: { files: [new File(['raw'], 'me.png', { type: 'image/png' })] },
@@ -126,7 +130,11 @@ describe('Settings — avatar upload', () => {
 
   it('does not upload when no new photo was picked', async () => {
     renderSettings()
-    fireEvent.click(screen.getByRole('button', { name: /my lobster profile/i }))
+    fireEvent.click(
+      within(screen.getByRole('region', { name: 'My Lobster Profile' })).getByRole('button', {
+        name: 'Edit',
+      }),
+    )
 
     fireEvent.click(screen.getByRole('button', { name: /save profile/i }))
 

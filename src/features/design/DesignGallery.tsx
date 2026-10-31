@@ -697,6 +697,26 @@ function SectionListSection() {
         </div>
       </Row>
       <CheckRowDemo />
+      <Row
+        label="Section description, and ListCard scrollable: a long list scrolls inside its card"
+        block
+      >
+        <div className="rounded-2xl bg-lob-cream p-3">
+          <Section
+            title="Padel Tips"
+            icon={<Info />}
+            description="One tip shows per day on the home page."
+          >
+            <ListCard label="Tips" scrollable>
+              {Array.from({ length: 12 }, (_, i) => (
+                <ListRow key={i}>
+                  <p className="text-sm text-lob-slate">Tip {i + 1}: bend your knees.</p>
+                </ListRow>
+              ))}
+            </ListCard>
+          </Section>
+        </div>
+      </Row>
       <Row label="ListCard inset: a list inside a card or sheet, divided rows with no card" block>
         <ListCard label="Recent security events" inset>
           <ListRow>

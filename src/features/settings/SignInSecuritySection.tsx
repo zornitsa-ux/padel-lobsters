@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { LogOut, ShieldCheck } from 'lucide-react'
 import { useApp } from '../../context/useApp'
@@ -10,6 +10,7 @@ import { SIGN_IN_SECURITY_ID } from '../auth/upgradeCopy'
 import { EmailChangeField } from './EmailChangeField'
 import { TextButton } from '../../components/ui/TextButton'
 import { Button } from '../../components/ui/Button'
+import { Section } from '../../components/ui/Section'
 
 export default function SignInSecuritySection() {
   const { session } = useApp()
@@ -18,11 +19,11 @@ export default function SignInSecuritySection() {
   const [signOutError, setSignOutError] = useState('')
   const usedPassword = sessionUsedPassword({ session })
   const { hash } = useLocation()
-  const sectionRef = useRef<HTMLDivElement>(null)
   const passwordLabel = usedPassword ? 'Change password' : 'Set or change password'
 
   useEffect(() => {
-    if (hash === `#${SIGN_IN_SECURITY_ID}`) sectionRef.current?.scrollIntoView?.()
+    if (hash === `#${SIGN_IN_SECURITY_ID}`)
+      document.getElementById(SIGN_IN_SECURITY_ID)?.scrollIntoView?.()
   }, [hash])
 
   async function handleSignOutEverywhere() {
@@ -32,19 +33,12 @@ export default function SignInSecuritySection() {
   }
 
   return (
-    <div id={SIGN_IN_SECURITY_ID} ref={sectionRef} className="card space-y-4">
-      <div className="flex items-center gap-2">
-        <div className="w-8 h-8 bg-lob-teal/10 rounded-lg flex items-center justify-center">
-          <ShieldCheck size={16} className="text-lob-teal" />
-        </div>
-        <div>
-          <h3 className="font-bold text-lob-slate text-sm">Sign-in &amp; security</h3>
-          <p className="text-xs text-lob-muted-light">
-            You sign in with a code we email you. A password is optional.
-          </p>
-        </div>
-      </div>
-
+    <Section
+      id={SIGN_IN_SECURITY_ID}
+      title="Sign-in & security"
+      icon={<ShieldCheck />}
+      description="You sign in with a code we email you. A password is optional."
+    >
       <div>
         <label className="label">Sign-in email</label>
         <EmailChangeField email={session?.user?.email ?? ''} />
@@ -95,6 +89,6 @@ export default function SignInSecuritySection() {
           </AlertBox>
         )}
       </div>
-    </div>
+    </Section>
   )
 }

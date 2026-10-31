@@ -8,7 +8,7 @@ export default function LobsterWayLink() {
     <LinkCard
       to="/lobster-way"
       leading={
-        <LinkCardIcon className="bg-amber-100 text-amber-700">
+        <LinkCardIcon>
           <Info size={16} />
         </LinkCardIcon>
       }

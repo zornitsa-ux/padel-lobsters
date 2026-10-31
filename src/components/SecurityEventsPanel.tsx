@@ -11,7 +11,8 @@ import {
   Eye,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { CollapsibleCard } from './ui/CollapsibleCard'
+import { Section } from './ui/Section'
+import { TextButton } from './ui/TextButton'
 import { ListCard, ListRow } from './ui/ListCard'
 import { IconButton } from './ui/IconButton'
 import { SegmentedControl } from './ui/SegmentedControl'
@@ -95,13 +96,10 @@ export default function SecurityEventsPanel() {
     : null
 
   return (
-    <CollapsibleCard
-      className="card space-y-3"
-      expanded={expanded}
-      onToggle={() => setExpanded((v) => !v)}
-      header={
-        <h3 className="font-bold text-lob-slate text-sm flex items-center gap-2">
-          <Activity size={15} className="text-lob-teal" />
+    <Section
+      icon={<Activity />}
+      title={
+        <>
           Recent security events
           {failureCount !== null && failureCount > 0 && (
             <Badge tone="danger" label={`${failureCount} fail`} />
@@ -112,7 +110,12 @@ export default function SecurityEventsPanel() {
               label={`${piiReadCount} PII read${piiReadCount === 1 ? '' : 's'}`}
             />
           )}
-        </h3>
+        </>
+      }
+      action={
+        <TextButton hitArea aria-expanded={expanded} onClick={() => setExpanded((v) => !v)}>
+          {expanded ? 'Hide' : 'Show'}
+        </TextButton>
       }
     >
       {expanded && (
@@ -155,19 +158,17 @@ export default function SecurityEventsPanel() {
           ) : filtered.length === 0 ? (
             <EmptyState variant="inline" title="No events match this filter." />
           ) : (
-            <div className="max-h-96 overflow-y-auto">
-              <ListCard inset>
-                {filtered.map((ev) => (
-                  <ListRow key={ev.id}>
-                    <EventRow ev={ev} />
-                  </ListRow>
-                ))}
-              </ListCard>
-            </div>
+            <ListCard label="Security events" scrollable>
+              {filtered.map((ev) => (
+                <ListRow key={ev.id}>
+                  <EventRow ev={ev} />
+                </ListRow>
+              ))}
+            </ListCard>
           )}
         </>
       )}
-    </CollapsibleCard>
+    </Section>
   )
 }
 

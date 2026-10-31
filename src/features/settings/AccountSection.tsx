@@ -4,7 +4,7 @@ import type { Player } from '../../lib/normalise'
 import SignInForm from '../auth/SignInForm'
 import { TextButton } from '../../components/ui/TextButton'
 import { AlertBox } from '../../components/ui/AlertBox'
-import { Well } from '../../components/ui/Well'
+import { Section } from '../../components/ui/Section'
 
 interface AccountSectionProps {
   isAdmin: boolean
@@ -13,62 +13,39 @@ interface AccountSectionProps {
 }
 
 export default function AccountSection({ isAdmin, signedInPlayer, logout }: AccountSectionProps) {
-  return (
-    <div className="card space-y-3">
-      <div className="flex items-center gap-2">
-        <div className="w-8 h-8 bg-lob-teal/10 rounded-lg flex items-center justify-center">
-          {isAdmin ? (
-            <Shield size={16} className="text-lob-teal" />
-          ) : signedInPlayer ? (
-            <User size={16} className="text-lob-teal" />
-          ) : (
-            <LogIn size={16} className="text-lob-teal" />
-          )}
-        </div>
-        <div>
-          <h3 className="font-bold text-lob-slate text-sm">Account</h3>
-          <p className="text-xs text-lob-muted-light">One sign-in, works across the whole site</p>
-        </div>
-      </div>
+  const signOut = (
+    <TextButton tone="destructive" icon={<LogOut size={12} />} onClick={logout}>
+      Sign out
+    </TextButton>
+  )
 
+  return (
+    <Section
+      title="Account"
+      icon={isAdmin ? <Shield /> : signedInPlayer ? <User /> : <LogIn />}
+      description="One sign-in, works across the whole site"
+    >
       {isAdmin ? (
-        // ── Signed in as admin ──────────────────────────────────
-        <AlertBox
-          variant="success"
-          icon={<Shield />}
-          title="Admin mode active"
-          action={
-            <TextButton tone="destructive" icon={<LogOut size={12} />} onClick={logout}>
-              Sign out
-            </TextButton>
-          }
-        >
+        <AlertBox variant="success" title="Admin mode active" action={signOut}>
           {signedInPlayer
             ? `Also signed in as ${signedInPlayer.name.split(' ')[0]}`
             : 'You can edit all data'}
         </AlertBox>
       ) : signedInPlayer ? (
-        // ── Signed in as player ─────────────────────────────────
-        <Well>
-          <div className="flex items-center gap-3">
-            <Avatar player={signedInPlayer} size="md" />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-lob-dark truncate">
-                Signed in as {signedInPlayer.name} <span className="text-lob-teal text-xs">✓</span>
-              </p>
-              <p className="text-xs text-lob-muted">
-                You can register for events, place orders, and manage your profile anywhere on the
-                site.
-              </p>
-            </div>
-            <TextButton tone="destructive" icon={<LogOut size={12} />} onClick={logout}>
-              Sign out
-            </TextButton>
+        <div className="flex items-center gap-3">
+          <Avatar player={signedInPlayer} size="md" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-lob-dark truncate">
+              Signed in as {signedInPlayer.name} <span className="text-lob-teal text-xs">✓</span>
+            </p>
+            <p className="text-xs text-lob-muted">
+              You can register for events, place orders, and manage your profile anywhere on the
+              site.
+            </p>
           </div>
-        </Well>
-      ) : null}
-
-      {!isAdmin && !signedInPlayer && (
+          {signOut}
+        </div>
+      ) : (
         <>
           <div className="text-center py-2">
             <div className="text-3xl mb-1">🦞</div>
@@ -80,6 +57,6 @@ export default function AccountSection({ isAdmin, signedInPlayer, logout }: Acco
           <SignInForm variant="inline" allowPin={false} />
         </>
       )}
-    </div>
+    </Section>
   )
 }

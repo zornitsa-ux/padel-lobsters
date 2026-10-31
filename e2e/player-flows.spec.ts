@@ -171,7 +171,10 @@ test('edit the profile', async ({ browser }) => {
   const other = await openAs({ browser, email: player.email, password: PLAYER_PASSWORD })
   try {
     await other.page.goto('/account')
-    await other.page.getByRole('button', { name: 'My Lobster Profile' }).click()
+    await other.page
+      .getByRole('region', { name: 'My Lobster Profile' })
+      .getByRole('button', { name: 'Edit' })
+      .click()
     await other.page
       .getByRole('textbox', { name: 'What do you scream before a match?' })
       .fill('Vamos!')

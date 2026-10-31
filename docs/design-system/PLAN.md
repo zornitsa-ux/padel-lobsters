@@ -82,12 +82,13 @@ component doesn't fit, fix the component, not the call site.**
 | Signed-out viewer                    | `SignInPrompt` (`variant="inline"` in a card)        | exists |
 | Admin-only page                      | `AdminRouteGuard redirectTo` (never a sign-in ask)   | exists |
 | Player or team row, ranked row       | `PlayerRow` + `RankMarker`                           | P6     |
-| Page section with a heading          | `Section` (on the background, not a card)            | exists |
+| Page section with a heading          | `Section` (`description` for a line under it)        | exists |
 | List of like items                   | `ListCard` + `LinkRow` (one card, divided rows)      | exists |
 | List row with its own controls       | `ListRow` (`PlayerRow`, buttons, anything under it)  | exists |
 | List row that is one checkbox        | `CheckRow`                                           | exists |
 | Inset panel / well inside a card     | `Well`                                               | exists |
 | List inside a card or sheet          | `ListCard inset` (divided rows, no card of its own)  | exists |
+| Long list (a log, every tip)         | `ListCard scrollable` (scrolls inside its card)      | exists |
 | Search field                         | `SearchInput`                                        | P6     |
 | Collapsible card (+ summary)         | `CollapsibleCard` (`summary` stays visible)          | exists |
 | Collapsible row with reorder/delete  | `CollapsibleCard leading actions`                    | exists |
@@ -204,19 +205,31 @@ primitives (see the Log) before P3:
       rows; standings headings.~~ Done in #118.
     - ~~**P6b-3: link lists and orders.** Seasons, Admin tools (tools and
       Needs attention), shop orders.~~ Done in #119.
-14. **P6c: no card inside a card.** Inventory and owner calls in the Log
-    (2026-10-30). Three PRs:
-    - **P6c-1: `Well`.** Flat `lob-well` inset, no shadow (the planned
+14. ~~**P6c: no card inside a card.** Inventory and owner calls in the Log
+    (2026-10-30). Three PRs:~~
+    - ~~**P6c-1: `Well`.** Flat `lob-well` inset, no shadow (the planned
       `.panel`). The hand-built `lob-well` insets and the Playtomic panel
-      move onto it. Done in #123.
-    - **P6c-2: cards inside cards.** Run of show, Lobster Way admin, Oscars
+      move onto it.~~ Done in #123.
+    - ~~**P6c-2: cards inside cards.** Run of show, Lobster Way admin, Oscars
       results, the past event's match boxes, security events; lists with a
       well or box per row (Admin tips, Oscars categories, raffle winners,
-      group formation teams). Done in #125.
-    - **P6c-3: tinted boxes inside cards.** Alerts onto `AlertBox`, the rest
-      onto `Well` or plain text. In progress.
+      group formation teams).~~ Done in #125.
+    - ~~**P6c-3: tinted boxes inside cards.** Alerts onto `AlertBox`, the rest
+      onto `Well` or plain text.~~ Done in #126.
 15. **P6d: sections, not cards.** Account, settings and admin tools: each
-    section is a `Section` on the background, not a card.
+    section is a `Section` on the background, not a card. Inventory and owner
+    calls in the Log (2026-10-31). Four PRs:
+    - **P6d-1: Account.** Every Account card, the admin settings on it, and
+      the app info. In progress.
+    - **P6d-2: admin tools.** Event Manage (Overview, the Payments banner,
+      the Eligibility header), the King of the Court admin, league Manage
+      (Overview and Season), the merch admin items as one `ListCard`.
+    - **P6d-3: You tab and Home.** `MyTournament` (one registration card,
+      not seven copies), `MyRounds` (Up next and Your rounds), the Home
+      birthdays.
+    - **P6d-4: Oscars and the Lobster Way page.** Intro and empty boxes,
+      the phase banner, `SectionLabel`, `StatRow` and `ResultsView` as
+      lists; the Lobster Way categories under Sections.
 16. **P6e: labels and the rest.** Builds `Tag` (names a thing: Court 2, Round
     3, a shirt size; `Badge` stays for states) and moves the identity labels
     onto it (about ten); `.eyebrow` and the hand-built eyebrows (about 39
@@ -1357,3 +1370,72 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
     TOKENS, P7). Found: force-accept doesn't confirm who, and transfer rows
     share one busy state (#127); the jinx partner is matched by first name
     (#128).
+
+- **2026-10-31.** P6d inventory (step 15 of Next), from the code and
+  screenshots of the local seed as admin and player. What is a card that
+  should be a section, by screen:
+  - **Account.** Every section is a card with a hand-built icon tile and
+    `h3`: Account, Sign-in & security, My Lobster Profile (a
+    `CollapsibleCard` holding the whole form), Your Stats (a hand-built
+    glass card under a hand-built heading), My Orders (a hand-built heading
+    and a raw `Link`), the app info, and the admin's Group Info, WhatsApp
+    Community, Padel Tips and security events (a `CollapsibleCard`). The
+    WhatsApp link is a hand-built green anchor; the Lobster Way link's icon
+    is raw amber.
+  - **Admin tools.** Admin itself was done in P6b-3; the sign-in readiness
+    panel goes with the PIN cutover. Event Manage: Overview's stat card and
+    Scoring progress card, the Payments `bg-lob-teal-light` banner on the
+    background, the Eligibility header card. King of the Court admin: two
+    cards with `h2`s. League Manage: a card per division on Overview, and
+    Visibility, Details and Delete on Season. Merch admin: a card per item
+    in a drag-to-reorder list.
+  - **Parked from P6c.** `MyTournament` (seven `.card` branches, one per
+    registration state), `MyRounds` (a hand-built eyebrow, then a card or
+    tinted box per round), the Home birthdays (raw pink, coloured left
+    border), the Oscars intro and empty boxes (hand-built white), the
+    `PhaseBanner` "Active" box, `SectionLabel`, `StatRow` and `ResultsView`
+    (a card per category), and the Lobster Way page (a card per category,
+    raw grays).
+  - **Left alone.** The dark Payments summary, the raffle draw panel,
+    `PlacingCard` (heroes); `NewSeasonForm` (a form you open and act on);
+    the readiness panel.
+
+  Owner calls: four PRs (P6d-1 to P6d-4 under "Next"). My Lobster Profile is
+  a `Section` with Edit / Close as its action and the form on the
+  background. Event Manage's stats and scoring progress merge into one card.
+  `MyRounds` is an "Up next" section holding the hero card, then "Your
+  rounds" as one `ListCard`. The merch admin items are one `ListCard`
+  (`ListRow` learns drag-to-reorder). Generate Schedule and the matchmaking
+  `ConfigPanel` stay cards: each is a task you act on.
+
+- **2026-10-31.** P6d-1 on `design-system-p6d-account`. `Section` gains
+  `description` (a muted line under the heading) and `ListCard` gains
+  `scrollable` (caps the card at `max-h-96` and scrolls inside it, for a
+  log or every tip); both have tests and gallery entries.
+  - Account, Sign-in & security, My Lobster Profile, Your Stats and My
+    Orders are `Section`s on the background. The hand-built icon tiles and
+    subtitles are the `Section` icon and `description`. The signed-in
+    player row was a `Well` inside the card; on the background it is a
+    plain row.
+  - My Lobster Profile: the avatar summary always shows, and Edit / Close
+    (`aria-expanded`) opens the form under it, as with Cancelled on the
+    event page. The Playtomic field keeps its `Well`, now on the background.
+  - Your Stats moves to `settings/` (only Account uses it). The stats sit
+    in one `.card` (was a hand-built translucent card with a blur), and
+    View full profile is a link to the profile rather than a navigate
+    callback. The best-partner pill is `lob-info` (was raw blue).
+  - My Orders: Browse shop is the `Section` action (was a raw `Link`).
+  - Admin settings: Group Info, WhatsApp Community and Padel Tips are
+    `Section`s (Reset and View all are the Tips action); security events is
+    a `Section` with a Show / Hide `TextButton`, its log a `ListCard
+scrollable`, and so is the tips list. Open WhatsApp Community is a
+    `Button variant="secondary" href` (was a hand-built green anchor).
+  - The app info is a plain footer, and the Lobster Way link's icon takes
+    `LinkCardIcon`'s default tone (was raw amber; on Home too).
+  - Review: a `scrollable` list takes focus so the keyboard can scroll it,
+    and can't be combined with `inset` (the types forbid it); the tips list
+    grows from `max-h-64` to the shared `max-h-96`. `Section` takes an `id`
+    for a hash link, so Sign-in & security drops its wrapper. View all on
+    Padel Tips has `aria-expanded`, and the default-tips count comes from the
+    list. The admin alert drops its shield, which the heading already shows.
+    Your Stats' streak, nemesis and partner pills stay hand-built for P6e.

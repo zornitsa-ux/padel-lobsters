@@ -2,6 +2,7 @@ import React from 'react'
 import { Award, Flame } from 'lucide-react'
 import { StatTile } from '../../components/ui/StatTile'
 import { TextButton } from '../../components/ui/TextButton'
+import { Section } from '../../components/ui/Section'
 
 // Shape produced by AccountStatsSection from lib/playerStats — only the
 // fields this card renders are modelled here.
@@ -21,7 +22,6 @@ export interface YourStats {
 interface YourStatsCardProps {
   claimedId: string | null
   myStats: YourStats | null
-  onNavigate: (page: string, payload?: { focusPlayerId: string }) => void
 }
 
 // ── Your Stats (personal) ─────────────────────────────── */
@@ -29,22 +29,15 @@ interface YourStatsCardProps {
 // when there are no DB matches yet, so the card doesn't silently
 // disappear for brand-new players or those with only historical
 // (pre-app) matches.
-export default function YourStatsCard({ claimedId, myStats, onNavigate }: YourStatsCardProps) {
+export default function YourStatsCard({ claimedId, myStats }: YourStatsCardProps) {
   if (!claimedId || !myStats) return null
   return (
-    <section>
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="font-bold text-lob-slate flex items-center gap-1.5">
-          <Award size={15} className="text-lob-coral" /> Your Stats
-        </h3>
-        <TextButton onClick={() => onNavigate('players', { focusPlayerId: claimedId })}>
-          View full profile
-        </TextButton>
-      </div>
-      <div
-        className="bg-white/80 rounded-2xl p-4 shadow-sm border border-white/90"
-        style={{ backdropFilter: 'blur(12px)' }}
-      >
+    <Section
+      title="Your Stats"
+      icon={<Award />}
+      action={<TextButton to={`/community/${claimedId}`}>View full profile</TextButton>}
+    >
+      <div className="card">
         <div className="grid grid-cols-4 gap-2 text-center">
           <StatTile value={myStats.played} label="Played" valueClassName="text-lob-dark" />
           <StatTile value={myStats.won} label="Won" valueClassName="text-lob-success" />
@@ -80,7 +73,7 @@ export default function YourStatsCard({ claimedId, myStats, onNavigate }: YourSt
                   </span>
                 )}
                 {myStats.bestPartner && (
-                  <span className="text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-lg font-semibold">
+                  <span className="text-xs bg-lob-info-light text-lob-info px-2.5 py-1 rounded-lg font-semibold">
                     🤝 Best partner: {myStats.bestPartner.name} ({myStats.bestPartner.wins}W/
                     {myStats.bestPartner.games}G)
                   </span>
@@ -98,6 +91,6 @@ export default function YourStatsCard({ claimedId, myStats, onNavigate }: YourSt
           </>
         )}
       </div>
-    </section>
+    </Section>
   )
 }
