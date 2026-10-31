@@ -22,6 +22,7 @@ import { AlertBox } from '../../../components/ui/AlertBox'
 import { FormError } from '../../../components/ui/FormError'
 import { Badge } from '../../../components/ui/Badge'
 import { EmptyState } from '../../../components/ui/EmptyState'
+import { ListCard, ListRow } from '../../../components/ui/ListCard'
 
 // Shown on the event day, so the time matters more than the date.
 const shownAt = (iso: string) =>
@@ -98,45 +99,47 @@ function SeedsCard({
         <EmptyState variant="inline" title="No registered teams yet." />
       ) : (
         <>
-          <ol className="divide-y divide-lob-line">
+          <ListCard inset ordered>
             {order.map((teamId, index) => {
               const strength = strengthById.get(teamId)
               return (
-                <li key={teamId} className="flex items-center gap-2 py-2">
-                  <span className="w-5 font-mono tabular-nums text-xs font-bold text-lob-muted">
-                    {index + 1}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-lob-dark truncate">{labelOf(teamId)}</p>
-                    {strength && (
-                      <p className="flex items-center gap-1 text-xs text-lob-muted">
-                        Avg level {strength.strength.toFixed(2)}
-                        {strength.unrated && <Badge tone="warning" label="unrated" />}
-                      </p>
-                    )}
+                <ListRow key={teamId}>
+                  <div className="flex items-center gap-2">
+                    <span className="w-5 font-mono tabular-nums text-xs font-bold text-lob-muted">
+                      {index + 1}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-lob-dark truncate">{labelOf(teamId)}</p>
+                      {strength && (
+                        <p className="flex items-center gap-1 text-xs text-lob-muted">
+                          Avg level {strength.strength.toFixed(2)}
+                          {strength.unrated && <Badge tone="warning" label="unrated" />}
+                        </p>
+                      )}
+                    </div>
+                    <IconButton
+                      variant="ghost"
+                      size="sm"
+                      aria-label={`Move ${labelOf(teamId)} up`}
+                      disabled={index === 0}
+                      onClick={() => setOrder(moveTeam({ order, index, delta: -1 }))}
+                    >
+                      <ArrowUp />
+                    </IconButton>
+                    <IconButton
+                      variant="ghost"
+                      size="sm"
+                      aria-label={`Move ${labelOf(teamId)} down`}
+                      disabled={index === order.length - 1}
+                      onClick={() => setOrder(moveTeam({ order, index, delta: 1 }))}
+                    >
+                      <ArrowDown />
+                    </IconButton>
                   </div>
-                  <IconButton
-                    variant="ghost"
-                    size="sm"
-                    aria-label={`Move ${labelOf(teamId)} up`}
-                    disabled={index === 0}
-                    onClick={() => setOrder(moveTeam({ order, index, delta: -1 }))}
-                  >
-                    <ArrowUp />
-                  </IconButton>
-                  <IconButton
-                    variant="ghost"
-                    size="sm"
-                    aria-label={`Move ${labelOf(teamId)} down`}
-                    disabled={index === order.length - 1}
-                    onClick={() => setOrder(moveTeam({ order, index, delta: 1 }))}
-                  >
-                    <ArrowDown />
-                  </IconButton>
-                </li>
+                </ListRow>
               )
             })}
-          </ol>
+          </ListCard>
 
           <h3 className="pt-2 text-sm font-bold text-lob-dark">Starting courts</h3>
           <StartingCourtsList

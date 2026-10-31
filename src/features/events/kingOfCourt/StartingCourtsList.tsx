@@ -22,7 +22,7 @@ export default function StartingCourtsList({
 
   return (
     <div className="space-y-2">
-      <ListCard inset ordered label="Starting courts">
+      <ListCard inset ordered>
         {courts.map((court) => (
           <ListRow key={court.courtIndex}>
             <p className="text-xs font-bold text-lob-teal">

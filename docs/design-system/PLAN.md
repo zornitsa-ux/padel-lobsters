@@ -1351,3 +1351,9 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
     from the seeds list above.
   - Not changed: the Payments banner sits on the page background, not in a
     card (P6d). The profile's played, position and lefty pills are P6e `Tag`.
+  - Review: the admin seeds list above the courts is an ordered, inset
+    `ListCard` too (was a hand-built divided `ol`), and the courts list drops
+    its label, as both callers' headings name it. Trophy gold stays raw (see
+    TOKENS, P7). Found: force-accept doesn't confirm who, and transfer rows
+    share one busy state (#127); the jinx partner is matched by first name
+    (#128).
