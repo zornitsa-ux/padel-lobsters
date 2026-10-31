@@ -13,6 +13,8 @@ import { DIVISION_LABELS, leagueDivisions } from '../domain/types'
 import type { Division, League, LeagueMatch, LeagueTeam } from '../domain/types'
 import { Button } from '../../../components/ui/Button'
 import { TextButton } from '../../../components/ui/TextButton'
+import { Section } from '../../../components/ui/Section'
+import { Badge } from '../../../components/ui/Badge'
 
 const ALL_DIVISIONS: Division[] = ['mens', 'womens']
 
@@ -20,7 +22,7 @@ function errorText(error: unknown): string | null {
   return error ? ((error as Error).message ?? 'Something went wrong.') : null
 }
 
-function VisibilityCard({ league }: { league: League }) {
+function VisibilitySection({ league }: { league: League }) {
   const confirm = useConfirm()
   const setPublished = useSetLeaguePublished(league.id)
   const published = isPublished(league)
@@ -34,17 +36,20 @@ function VisibilityCard({ league }: { league: League }) {
   }
 
   return (
-    <div className="card space-y-2">
-      <div className="flex items-center gap-2">
-        {published ? (
-          <Eye size={16} className="text-lob-teal" aria-hidden="true" />
-        ) : (
-          <EyeOff size={16} className="text-lob-muted" aria-hidden="true" />
-        )}
-        <p className="text-sm font-semibold text-lob-dark">
-          {published ? 'Visible to players' : 'Hidden from players'}
-        </p>
-      </div>
+    <Section
+      title="Visibility"
+      icon={published ? <Eye /> : <EyeOff />}
+      action={
+        <Badge
+          tone={published ? 'success' : 'neutral'}
+          label={published ? 'Visible to players' : 'Hidden from players'}
+        />
+      }
+      description={
+        !published &&
+        'Only admins can see this season. Publish it when the teams are ready to be announced.'
+      }
+    >
       {published ? (
         canHide && (
           <Button
@@ -56,21 +61,16 @@ function VisibilityCard({ league }: { league: League }) {
           </Button>
         )
       ) : (
-        <>
-          <p className="text-xs text-lob-muted">
-            Only admins can see this season. Publish it when the teams are ready to be announced.
-          </p>
-          <Button disabled={setPublished.isPending} onClick={handlePublish}>
-            Publish season
-          </Button>
-        </>
+        <Button disabled={setPublished.isPending} onClick={handlePublish}>
+          Publish season
+        </Button>
       )}
       {setPublished.error && <AlertBox variant="error">{errorText(setPublished.error)}</AlertBox>}
-    </div>
+    </Section>
   )
 }
 
-function DetailsCard({ league, teams }: { league: League; teams: LeagueTeam[] }) {
+function DetailsSection({ league, teams }: { league: League; teams: LeagueTeam[] }) {
   const updateLeague = useUpdateLeague(league.id)
   const [name, setName] = useState(league.name)
   const [divisions, setDivisions] = useState<Division[]>(leagueDivisions(league))
@@ -82,8 +82,7 @@ function DetailsCard({ league, teams }: { league: League; teams: LeagueTeam[] })
   }
 
   return (
-    <div className="card space-y-3">
-      <p className="text-sm font-semibold text-lob-dark">Details</p>
+    <Section title="Details">
       <div>
         <label className="label" htmlFor="season-name">
           Season name
@@ -128,11 +127,11 @@ function DetailsCard({ league, teams }: { league: League; teams: LeagueTeam[] })
       >
         {updateLeague.isPending ? 'Saving…' : 'Save details'}
       </Button>
-    </div>
+    </Section>
   )
 }
 
-function DeleteCard({ league, matches }: { league: League; matches: LeagueMatch[] }) {
+function DeleteSection({ league, matches }: { league: League; matches: LeagueMatch[] }) {
   const confirm = useConfirm()
   const navigate = useNavigate()
   const deleteLeague = useDeleteLeague(league.id)
@@ -150,11 +149,10 @@ function DeleteCard({ league, matches }: { league: League; matches: LeagueMatch[
   }
 
   return (
-    <div className="card space-y-2">
-      <p className="text-sm font-semibold text-lob-dark">Delete season</p>
-      <p className="text-xs text-lob-muted">
-        Available until fixtures are generated. Teams in this season are deleted with it.
-      </p>
+    <Section
+      title="Delete season"
+      description="Available until fixtures are generated. Teams in this season are deleted with it."
+    >
       {deleteLeague.error && <AlertBox variant="error">{errorText(deleteLeague.error)}</AlertBox>}
       <TextButton
         tone="destructive"
@@ -164,7 +162,7 @@ function DeleteCard({ league, matches }: { league: League; matches: LeagueMatch[
       >
         Delete season
       </TextButton>
-    </div>
+    </Section>
   )
 }
 
@@ -177,9 +175,9 @@ interface ManageSeasonProps {
 export function ManageSeason({ league, teams, matches }: ManageSeasonProps) {
   return (
     <div className="space-y-4">
-      <VisibilityCard league={league} />
-      <DetailsCard league={league} teams={teams} />
-      <DeleteCard league={league} matches={matches} />
+      <VisibilitySection league={league} />
+      <DetailsSection league={league} teams={teams} />
+      <DeleteSection league={league} matches={matches} />
     </div>
   )
 }

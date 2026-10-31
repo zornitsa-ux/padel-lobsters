@@ -10,6 +10,7 @@ export default function StartingCourtsList({
   labelOf,
   highlightTeamId = null,
   overflowAction = '',
+  inset = false,
 }: {
   courts: StartingCourt[]
   overflowTeamIds: string[]
@@ -17,12 +18,14 @@ export default function StartingCourtsList({
   labelOf: (teamId: string) => string
   highlightTeamId?: string | null
   overflowAction?: string
+  /** Inside a card already: rows with no card of their own. */
+  inset?: boolean
 }) {
   const seedOf = (teamId: string) => order.indexOf(teamId) + 1
 
   return (
     <div className="space-y-2">
-      <ListCard inset ordered>
+      <ListCard inset={inset} ordered>
         {courts.map((court) => (
           <ListRow key={court.courtIndex}>
             <p className="text-xs font-bold text-lob-teal">

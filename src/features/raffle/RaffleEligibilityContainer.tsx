@@ -11,10 +11,10 @@ import type { EventNavigate } from '../events/eventHelpers'
 import { Button } from '../../components/ui/Button'
 import { TextButton } from '../../components/ui/TextButton'
 import { Badge } from '../../components/ui/Badge'
+import { Section } from '../../components/ui/Section'
 
 interface Tournament {
   id: string
-  name?: string
 }
 
 const fullNameOf = (name?: string | null) => (name || '').trim() || 'Player'
@@ -103,48 +103,46 @@ export default function RaffleEligibilityContainer({
         Back to raffle
       </TextButton>
 
-      <div className="card space-y-1">
-        <div className="flex items-center gap-2">
-          <Users size={18} className="text-lob-teal" />
-          <p className="font-bold text-lob-dark">Raffle eligibility</p>
-        </div>
-        <p className="text-sm text-lob-muted">{tournament.name}</p>
-        <p className="text-xs text-lob-muted-light leading-snug pt-1">
-          Everyone registered is eligible by default. Uncheck anyone to drop them from this
-          tournament's draw only — it doesn't affect their chances in any future raffle. Players on
-          cooldown from a recent win are skipped automatically.
-        </p>
-        <p className="text-sm font-semibold text-lob-slate pt-2">
+      <Section
+        title="Raffle eligibility"
+        icon={<Users />}
+        description="Everyone registered is eligible by default. Uncheck anyone to drop them from this tournament's draw only — it doesn't affect their chances in any future raffle. Players on cooldown from a recent win are skipped automatically."
+      >
+        <p className="text-sm font-semibold text-lob-slate">
           {eligibleCount} of {registered.length} eligible
           {cooldownCount > 0 && (
-            <span className="font-normal text-lob-muted-light"> · {cooldownCount} on cooldown</span>
+            <span className="font-normal text-lob-muted"> · {cooldownCount} on cooldown</span>
           )}
         </p>
-      </div>
-
-      {registered.length === 0 ? (
-        <EmptyState title="No registered players yet" />
-      ) : (
-        <ListCard label="Registered players">
-          {registered.map((id: string) => {
-            const skip = autoSkip.get(id)
-            const isEligible = !skip && !excluded.has(id)
-            return (
-              <CheckRow key={id} checked={isEligible} onToggle={() => toggle(id)} disabled={!!skip}>
-                <PlayerRow
-                  player={{ name: fullNameOf(nameOf(id)) }}
-                  avatarTone={isEligible ? undefined : 'bg-lob-line-strong text-lob-muted'}
-                  name={fullNameOf(nameOf(id))}
-                  nameClassName={`font-semibold truncate ${
-                    isEligible ? 'text-lob-dark' : 'text-lob-muted line-through'
-                  }`}
-                  trailing={skip && <SkipBadge reason={skip} />}
-                />
-              </CheckRow>
-            )
-          })}
-        </ListCard>
-      )}
+        {registered.length === 0 ? (
+          <EmptyState title="No registered players yet" />
+        ) : (
+          <ListCard label="Registered players">
+            {registered.map((id: string) => {
+              const skip = autoSkip.get(id)
+              const isEligible = !skip && !excluded.has(id)
+              return (
+                <CheckRow
+                  key={id}
+                  checked={isEligible}
+                  onToggle={() => toggle(id)}
+                  disabled={!!skip}
+                >
+                  <PlayerRow
+                    player={{ name: fullNameOf(nameOf(id)) }}
+                    avatarTone={isEligible ? undefined : 'bg-lob-line-strong text-lob-muted'}
+                    name={fullNameOf(nameOf(id))}
+                    nameClassName={`font-semibold truncate ${
+                      isEligible ? 'text-lob-dark' : 'text-lob-muted line-through'
+                    }`}
+                    trailing={skip && <SkipBadge reason={skip} />}
+                  />
+                </CheckRow>
+              )
+            })}
+          </ListCard>
+        )}
+      </Section>
 
       <Button
         size="lg"

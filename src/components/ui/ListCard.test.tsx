@@ -2,7 +2,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import { CheckRow, LinkRow, ListCard, ListRow } from './ListCard'
+import { CheckRow, DragRow, LinkRow, ListCard, ListRow } from './ListCard'
+import { moveItem, useDragReorder } from './useDragReorder'
 
 afterEach(cleanup)
 
@@ -136,5 +137,92 @@ describe('CheckRow', () => {
     const box = screen.getByRole('checkbox', { name: 'Ben' })
     expect(box.getAttribute('aria-checked')).toBe('false')
     expect((box as HTMLButtonElement).disabled).toBe(true)
+  })
+})
+
+function DragList({
+  onMove,
+  names = ['Tee', 'Cap', 'Mug'],
+}: {
+  onMove: (move: { from: number; to: number }) => void
+  names?: string[]
+}) {
+  const { rowProps } = useDragReorder({ keys: names, onMove })
+  return (
+    <ListCard label="Items">
+      {names.map((name, index) => (
+        <DragRow key={name} {...rowProps(index)}>
+          <span>{name}</span>
+        </DragRow>
+      ))}
+    </ListCard>
+  )
+}
+
+const rowOf = (name: string) => screen.getByText(name).closest('[draggable]') as HTMLElement
+const dataTransfer = () => ({ effectAllowed: '', dropEffect: '' })
+
+describe('DragRow and useDragReorder', () => {
+  it('fades the dragged row, rings the row under it, and reports the move on drop', () => {
+    const onMove = vi.fn()
+    render(<DragList onMove={onMove} />)
+
+    fireEvent.dragStart(rowOf('Tee'), { dataTransfer: dataTransfer() })
+    fireEvent.dragOver(rowOf('Mug'), { dataTransfer: dataTransfer() })
+    expect(rowOf('Tee').className).toContain('opacity-40')
+    expect(rowOf('Mug').className).toContain('ring-2')
+    expect(rowOf('Cap').className).not.toContain('ring-2')
+
+    fireEvent.drop(rowOf('Mug'), { dataTransfer: dataTransfer() })
+    expect(onMove).toHaveBeenCalledWith({ from: 0, to: 2 })
+    expect(rowOf('Tee').className).not.toContain('opacity-40')
+    expect(rowOf('Mug').className).not.toContain('ring-2')
+  })
+
+  it('ignores a drop on the row being dragged, and clears on drag end', () => {
+    const onMove = vi.fn()
+    render(<DragList onMove={onMove} />)
+
+    fireEvent.dragStart(rowOf('Cap'), { dataTransfer: dataTransfer() })
+    fireEvent.dragOver(rowOf('Cap'), { dataTransfer: dataTransfer() })
+    expect(rowOf('Cap').className).not.toContain('ring-2')
+    fireEvent.drop(rowOf('Cap'), { dataTransfer: dataTransfer() })
+    expect(onMove).not.toHaveBeenCalled()
+
+    fireEvent.dragStart(rowOf('Cap'), { dataTransfer: dataTransfer() })
+    fireEvent.dragEnd(rowOf('Cap'))
+    expect(rowOf('Cap').className).not.toContain('opacity-40')
+  })
+
+  it('moves the row that was picked up when the list changes mid-drag', () => {
+    const onMove = vi.fn()
+    const { rerender } = render(<DragList onMove={onMove} />)
+
+    fireEvent.dragStart(rowOf('Cap'), { dataTransfer: dataTransfer() })
+    rerender(<DragList onMove={onMove} names={['New', 'Tee', 'Cap', 'Mug']} />)
+    fireEvent.dragOver(rowOf('Mug'), { dataTransfer: dataTransfer() })
+    fireEvent.drop(rowOf('Mug'), { dataTransfer: dataTransfer() })
+    expect(onMove).toHaveBeenCalledWith({ from: 2, to: 3 })
+  })
+
+  it('ignores a drag from outside the list, and drops the ring when the drag leaves', () => {
+    render(<DragList onMove={vi.fn()} />)
+
+    const outside = new Event('dragover', { bubbles: true, cancelable: true })
+    rowOf('Tee').dispatchEvent(outside)
+    expect(outside.defaultPrevented).toBe(false)
+
+    fireEvent.dragStart(rowOf('Tee'), { dataTransfer: dataTransfer() })
+    fireEvent.dragOver(rowOf('Mug'), { dataTransfer: dataTransfer() })
+    expect(rowOf('Mug').className).toContain('ring-2')
+    fireEvent.dragLeave(rowOf('Mug'), { relatedTarget: document.body })
+    expect(rowOf('Mug').className).not.toContain('ring-2')
+  })
+
+  it('moveItem returns a new array with the item moved', () => {
+    const items = ['a', 'b', 'c']
+    expect(moveItem({ items, from: 0, to: 2 })).toEqual(['b', 'c', 'a'])
+    expect(moveItem({ items, from: 2, to: 0 })).toEqual(['c', 'a', 'b'])
+    expect(items).toEqual(['a', 'b', 'c'])
   })
 })

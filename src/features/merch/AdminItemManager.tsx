@@ -1,10 +1,9 @@
-import React, { type DragEvent } from 'react'
-import { Plus, Pencil, X, ShoppingBag, GripVertical } from 'lucide-react'
+import { Plus, Pencil, X, ShoppingBag } from 'lucide-react'
 import { IconButton } from '../../components/ui/IconButton'
 import type { MerchItem } from './merchSchemas'
 import { Button } from '../../components/ui/Button'
-
-type DragHandler = (idx: number) => (e: DragEvent<HTMLDivElement>) => void
+import { DragRow, ListCard } from '../../components/ui/ListCard'
+import type { DragRowHandlers } from '../../components/ui/useDragReorder'
 
 type AdminItemManagerProps = {
   items: MerchItem[]
@@ -12,12 +11,7 @@ type AdminItemManagerProps = {
   openEdit: (item: MerchItem) => void
   handleDeleteItem: (id: number) => void
   orderCount: (id: number) => number
-  dragIdx: number | null
-  overIdx: number | null
-  handleDragStart: DragHandler
-  handleDragOver: DragHandler
-  handleDrop: DragHandler
-  handleDragEnd: () => void
+  dragRow: (index: number) => DragRowHandlers
 }
 
 // ── Manage tab (admin) — drag-and-drop CRUD list of merch items ─────────────
@@ -27,12 +21,7 @@ export default function AdminItemManager({
   openEdit,
   handleDeleteItem,
   orderCount,
-  dragIdx,
-  overIdx,
-  handleDragStart,
-  handleDragOver,
-  handleDrop,
-  handleDragEnd,
+  dragRow,
 }: AdminItemManagerProps) {
   return (
     <div className="space-y-4">
@@ -40,24 +29,10 @@ export default function AdminItemManager({
         Add Merch Item
       </Button>
 
-      {/* Item list (draggable) */}
-      <div className="space-y-2">
+      <ListCard label="Shop items">
         {items.map((item, idx) => (
-          <div
-            key={item.id}
-            draggable
-            onDragStart={handleDragStart(idx)}
-            onDragOver={handleDragOver(idx)}
-            onDrop={handleDrop(idx)}
-            onDragEnd={handleDragEnd}
-            className={`card flex items-center gap-3 transition-all ${
-              dragIdx === idx ? 'opacity-40 scale-[0.97]' : ''
-            } ${overIdx === idx && dragIdx !== idx ? 'ring-2 ring-lob-teal ring-offset-1' : ''}`}
-          >
-            <div className="cursor-grab active:cursor-grabbing touch-none flex-shrink-0 text-lob-muted-light/60 hover:text-lob-muted -ml-1">
-              <GripVertical size={18} />
-            </div>
-            <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100">
+          <DragRow key={item.id} {...dragRow(idx)}>
+            <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-lob-line">
               {item.image_url ? (
                 <img
                   src={item.image_url}
@@ -91,9 +66,9 @@ export default function AdminItemManager({
                 <X />
               </IconButton>
             </div>
-          </div>
+          </DragRow>
         ))}
-      </div>
+      </ListCard>
     </div>
   )
 }

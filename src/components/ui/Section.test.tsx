@@ -18,6 +18,18 @@ describe('Section', () => {
     expect(screen.getByText('Body')).toBeTruthy()
   })
 
+  it('level 3: a section within a section, an h3', () => {
+    render(
+      <Section title="Seeds">
+        <Section title="Starting courts" level={3}>
+          <p>Courts</p>
+        </Section>
+      </Section>,
+    )
+    expect(screen.getByRole('heading', { level: 3, name: 'Starting courts' })).toBeTruthy()
+    expect(screen.getByRole('region', { name: 'Starting courts' })).toBeTruthy()
+  })
+
   it('renders the icon hidden from screen readers, and the action', () => {
     render(
       <Section title="Matches" icon={<svg data-testid="icon" />} action={<span>Show all</span>}>
