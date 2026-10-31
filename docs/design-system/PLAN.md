@@ -212,9 +212,9 @@ primitives (see the Log) before P3:
     - **P6c-2: cards inside cards.** Run of show, Lobster Way admin, Oscars
       results, the past event's match boxes, security events; lists with a
       well or box per row (Admin tips, Oscars categories, raffle winners,
-      group formation teams). In progress.
+      group formation teams). Done in #125.
     - **P6c-3: tinted boxes inside cards.** Alerts onto `AlertBox`, the rest
-      onto `Well` or plain text.
+      onto `Well` or plain text. In progress.
 15. **P6d: sections, not cards.** Account, settings and admin tools: each
     section is a `Section` on the background, not a card.
 16. **P6e: labels and the rest.** Builds `Tag` (names a thing: Court 2, Round
@@ -1324,3 +1324,36 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
     the row tint; match names wrap rather than truncate.
   - Found: Padel Tips are edited by tapping the text only, not by keyboard
     (#124).
+
+- **2026-10-31.** P6c-3 on `design-system-p6c-tinted-boxes`, the triage from
+  the inventory. No new components.
+  - Alerts: Account's "Admin mode active" is an `AlertBox success` with
+    Sign out as its action (the emoji repeated the icon).
+  - Onto `Well`: Account's signed-in player box, `OtpCodeStep`'s "Check your
+    inbox", `EmailChangeField`'s confirmation sent, `GroupFormationTool`'s
+    bracket recommendation, the player profile's war cry and match metrics
+    (one well holding the four figures, not a box each), and the King of the
+    Court biggest-climber note (`TeamRankingList`; a cream box the inventory
+    missed, as the seed has no standings).
+  - Plain text: the Playtomic prompt's current level; the profile's
+    Rivalries rows (were status-tinted, now plain rows like Head to Head);
+    the Oscars winner line (`ResultsView`, was a raw yellow box; the trophy
+    stays raw gold until P7) and its `highlightWinners` prop, which only
+    styled the box.
+  - Two calls that differ from the triage. The pending-transfer rows in
+    `AdminTransferPanel` are a `ListCard inset`, not an `AlertBox` each: they
+    are a list, and a row's error is already an `AlertBox`, which would sit
+    inside another. The profile's "Sign-in invite" was warning-tinted but is
+    an admin action, not a warning: plain text and its button.
+  - `StartingCourtsList`: the cream box per court is an ordered, inset
+    `ListCard` row, and the viewer's team is tinted `lob-teal-light` (was
+    white on the cream). On the admin card a "Starting courts" subheading parts it
+    from the seeds list above.
+  - Not changed: the Payments banner sits on the page background, not in a
+    card (P6d). The profile's played, position and lefty pills are P6e `Tag`.
+  - Review: the admin seeds list above the courts is an ordered, inset
+    `ListCard` too (was a hand-built divided `ol`), and the courts list drops
+    its label, as both callers' headings name it. Trophy gold stays raw (see
+    TOKENS, P7). Found: force-accept doesn't confirm who, and transfer rows
+    share one busy state (#127); the jinx partner is matched by first name
+    (#128).

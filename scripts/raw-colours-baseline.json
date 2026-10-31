@@ -11,7 +11,7 @@
   "src/features/home/AdminAlerts.tsx": 3,
   "src/features/home/YourStatsCard.tsx": 2,
   "src/features/matchmaking/ui/genderMarks.tsx": 4,
-  "src/features/oscars/ResultsView.tsx": 7,
+  "src/features/oscars/ResultsView.tsx": 1,
   "src/features/pastEvents/PastEventResults.tsx": 11,
   "src/features/raffle/RaffleContainer.tsx": 3,
   "src/features/raffle/ui/PrizeEditor.tsx": 3,

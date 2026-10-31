@@ -64,11 +64,9 @@ export default function ProfileSection({
                 It's been a while! Your current level on file:
               </p>
             </div>
-            <div className="bg-lob-cream rounded-2xl p-4 text-center">
-              <p className="text-3xl font-bold text-lob-teal">
-                {(parseFloat(String(myPlayer.playtomicLevel)) || 0).toFixed(1)}
-              </p>
-            </div>
+            <p className="text-3xl font-bold text-lob-teal text-center">
+              {(parseFloat(String(myPlayer.playtomicLevel)) || 0).toFixed(1)}
+            </p>
             <div>
               <label className="text-xs font-semibold text-lob-slate mb-1 block">
                 New Playtomic Level

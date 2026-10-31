@@ -6,6 +6,7 @@ import { ADD_EMAIL_REQUEST } from '../auth/upgradeCopy'
 import { ActionRow } from '../../components/ui/ActionRow'
 import { Button } from '../../components/ui/Button'
 import { AlertBox } from '../../components/ui/AlertBox'
+import { Well } from '../../components/ui/Well'
 
 // Self-service email change: type new email -> requestMyEmailChange -> Supabase
 // emails a confirmation link to the new (and old, since double_confirm_changes
@@ -112,14 +113,16 @@ function EmailChangeForm({ email }: { email: string }) {
       )}
       {emailEditing && emailStatus === 'sent' && (
         <div className="space-y-2">
-          <div className="rounded-xl bg-lob-cream border border-lob-teal/30 p-3 flex items-start gap-2">
-            <Check size={14} className="text-lob-teal mt-0.5 flex-shrink-0" />
-            <p className="text-xs text-lob-slate leading-snug">
-              Confirmation sent to{' '}
-              <span className="font-semibold break-all">{newEmail.trim()}</span>. Click the link in
-              that email to finish the change.
+          <Well>
+            <p className="flex items-start gap-2 text-xs text-lob-slate leading-snug">
+              <Check size={14} className="text-lob-teal mt-0.5 flex-shrink-0" />
+              <span>
+                Confirmation sent to{' '}
+                <span className="font-semibold break-all">{newEmail.trim()}</span>. Click the link
+                in that email to finish the change.
+              </span>
             </p>
-          </div>
+          </Well>
           <Button
             variant="secondary"
             fullWidth

@@ -11,6 +11,7 @@ import { Button } from './ui/Button'
 import { TextButton } from './ui/TextButton'
 import { AlertBox } from './ui/AlertBox'
 import { EmptyState } from './ui/EmptyState'
+import { ListCard, ListRow } from './ui/ListCard'
 
 // Admin-only modal that lists every pending transfer for a tournament and
 // surfaces the two admin actions:
@@ -120,52 +121,51 @@ export default function AdminTransferPanel({ tournament, onClose }: AdminTransfe
           <EmptyState variant="inline" title="No pending transfers for this event." />
         )}
 
-        {pending.map((xfer) => {
-          const fromP = getPlayer(xfer.fromPlayerId)
-          const toP = getPlayer(xfer.toPlayerId)
-          const busy = busyId === xfer.id
-          const err = errorById[xfer.id]
-          return (
-            <div
-              key={xfer.id}
-              className="border border-lob-warning-border bg-lob-warning-light rounded-xl p-3 space-y-3"
-            >
-              <div className="flex items-center gap-3">
-                <Avatar player={{ name: fromP?.name || '?' }} size="sm" />
-                <div className="text-sm font-semibold text-lob-dark">{fromP?.name || '—'}</div>
-                <ArrowRightLeft size={14} className="text-lob-muted" />
-                <Avatar player={{ name: toP?.name || '?' }} size="sm" />
-                <div className="flex-1 text-sm font-semibold text-lob-dark truncate">
-                  {toP?.name || '—'}
+        <ListCard inset label="Pending transfers">
+          {pending.map((xfer) => {
+            const fromP = getPlayer(xfer.fromPlayerId)
+            const toP = getPlayer(xfer.toPlayerId)
+            const busy = busyId === xfer.id
+            const err = errorById[xfer.id]
+            return (
+              <ListRow key={xfer.id}>
+                <div className="flex items-center gap-3">
+                  <Avatar player={{ name: fromP?.name || '?' }} size="sm" />
+                  <div className="text-sm font-semibold text-lob-dark">{fromP?.name || '—'}</div>
+                  <ArrowRightLeft size={14} className="text-lob-muted" />
+                  <Avatar player={{ name: toP?.name || '?' }} size="sm" />
+                  <div className="flex-1 text-sm font-semibold text-lob-dark truncate">
+                    {toP?.name || '—'}
+                  </div>
                 </div>
-              </div>
 
-              <div className="flex items-center gap-1.5 text-xs text-lob-warning">
-                <Clock size={11} /> Sent {formatElapsed(xfer.createdAt)} · awaiting acceptance
-              </div>
+                <div className="flex items-center gap-1.5 text-xs text-lob-warning">
+                  <Clock size={11} /> Sent {formatElapsed(xfer.createdAt)} · awaiting acceptance
+                </div>
 
-              {err && (
-                <AlertBox variant="error" size="sm" icon={<AlertTriangle />}>
-                  {err}
-                </AlertBox>
-              )}
+                {err && (
+                  <AlertBox variant="error" size="sm" icon={<AlertTriangle />}>
+                    {err}
+                  </AlertBox>
+                )}
 
-              <div className="flex items-center justify-between gap-3">
-                <Button
-                  variant="neutral"
-                  size="sm"
-                  onClick={() => handleForceAccept(xfer)}
-                  disabled={busy}
-                >
-                  {busy ? 'Working…' : 'Force accept'}
-                </Button>
-                <TextButton tone="destructive" onClick={() => handleCancel(xfer)} disabled={busy}>
-                  {busy ? '…' : 'Cancel offer'}
-                </TextButton>
-              </div>
-            </div>
-          )
-        })}
+                <div className="flex items-center justify-between gap-3">
+                  <Button
+                    variant="neutral"
+                    size="sm"
+                    onClick={() => handleForceAccept(xfer)}
+                    disabled={busy}
+                  >
+                    {busy ? 'Working…' : 'Force accept'}
+                  </Button>
+                  <TextButton tone="destructive" onClick={() => handleCancel(xfer)} disabled={busy}>
+                    {busy ? '…' : 'Cancel offer'}
+                  </TextButton>
+                </div>
+              </ListRow>
+            )
+          })}
+        </ListCard>
 
         <p className="text-xs text-lob-muted-light text-center pt-1">
           Force accept finalises the transfer immediately. The recipient's spot becomes registered,

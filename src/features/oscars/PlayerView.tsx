@@ -106,11 +106,7 @@ export default function PlayerView({
   // Shared — winners
   return (
     <Shell title="🦞 The Results" headerRight={headerRight}>
-      {playerResults === null ? (
-        <Spinner />
-      ) : (
-        <ResultsView results={playerResults} highlightWinners />
-      )}
+      {playerResults === null ? <Spinner /> : <ResultsView results={playerResults} />}
     </Shell>
   )
 }

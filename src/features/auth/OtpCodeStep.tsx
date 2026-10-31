@@ -8,6 +8,7 @@ import { CODE_LENGTH, sanitiseCode } from './otpCode'
 import { formatCountdown, useCountdown } from './useCountdown'
 import { Button } from '../../components/ui/Button'
 import { TextButton } from '../../components/ui/TextButton'
+import { Well } from '../../components/ui/Well'
 
 const RESEND_SECONDS = 60
 
@@ -68,18 +69,20 @@ export function OtpCodeStep({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
-      <div className="rounded-2xl bg-lob-cream border border-lob-teal/30 p-4 flex items-start gap-3">
-        <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center flex-shrink-0 text-lob-teal">
-          <Check size={16} />
+      <Well>
+        <div className="flex items-start gap-3">
+          <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center flex-shrink-0 text-lob-teal">
+            <Check size={16} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-lob-teal">Check your inbox</p>
+            <p className="text-xs text-lob-slate mt-1 leading-snug">
+              We sent a 6-digit code to <span className="font-semibold break-all">{email}</span>. If
+              you ask for another code, only the newest one works.
+            </p>
+          </div>
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-lob-teal">Check your inbox</p>
-          <p className="text-xs text-lob-slate mt-1 leading-snug">
-            We sent a 6-digit code to <span className="font-semibold break-all">{email}</span>. If
-            you ask for another code, only the newest one works.
-          </p>
-        </div>
-      </div>
+      </Well>
 
       <div>
         <label htmlFor="otp-code" className="label">
