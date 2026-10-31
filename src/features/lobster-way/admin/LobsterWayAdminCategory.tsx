@@ -5,6 +5,7 @@ import LobsterWayAdminItem, { emptyItem } from './LobsterWayAdminItem'
 import { moveItem, removeAt, replaceAt } from '../../../lib/arrayReorder'
 import type { LobsterWayCategory, LobsterWayItem } from '../../../data/lobsterWayContent'
 import { CollapsibleCard } from '../../../components/ui/CollapsibleCard'
+import { ListCard, ListRow } from '../../../components/ui/ListCard'
 import { IconButton } from '../../../components/ui/IconButton'
 import { TextButton } from '../../../components/ui/TextButton'
 
@@ -104,17 +105,20 @@ export default function LobsterWayAdminCategory({
           </div>
         ) : (
           <div className="space-y-2">
-            {(category.items || []).map((item, i) => (
-              <LobsterWayAdminItem
-                key={i}
-                item={item}
-                index={i}
-                count={(category.items ?? []).length}
-                onChange={(next) => setItem(i, next)}
-                onMove={(dir) => moveItemAt(i, dir)}
-                onDelete={() => deleteItemAt(i)}
-              />
-            ))}
+            <ListCard inset>
+              {(category.items || []).map((item, i) => (
+                <ListRow key={i}>
+                  <LobsterWayAdminItem
+                    item={item}
+                    index={i}
+                    count={(category.items ?? []).length}
+                    onChange={(next) => setItem(i, next)}
+                    onMove={(dir) => moveItemAt(i, dir)}
+                    onDelete={() => deleteItemAt(i)}
+                  />
+                </ListRow>
+              ))}
+            </ListCard>
             <TextButton icon={<Plus size={12} />} onClick={addItem}>
               Add question
             </TextButton>

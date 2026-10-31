@@ -20,10 +20,12 @@ import { toCourts } from '../events/kingOfCourt/kotcInputs'
 import { TeamStandings } from '../events/kingOfCourt/TeamRankingList'
 import { TabSwitcher } from '../../components/ui/TabSwitcher'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
-import { ProgressBar } from '../../components/ui/ProgressBar'
 import { CollapsibleCard } from '../../components/ui/CollapsibleCard'
+import { OscarResultsList } from '../oscars/OscarResultsList'
+import { EventMatchList } from '../events/EventMatchList'
 import { Button } from '../../components/ui/Button'
 import { EmptyState } from '../../components/ui/EmptyState'
+import { plural } from '../../lib/plural'
 
 type TabId = 'standings' | 'matches' | 'games'
 
@@ -428,64 +430,11 @@ export default function PastEventResults({ tournaments, onNavigate }: PastEventR
                           onChange={(i) => setDbActiveRound((s) => ({ ...s, [t.id]: i }))}
                         />
 
-                        <div className="space-y-2">
-                          {dbRounds[dbRi]?.matches.map((mt) => {
-                            const s1 = mt.score1,
-                              s2 = mt.score2
-                            const scored = mt.completed && s1 != null && s2 != null
-                            const t1won = scored && s1 > s2
-                            const t2won = scored && s2 > s1
-                            const t1Names = ((mt.team1Ids || []) as string[]).map(dbDnId)
-                            const t2Names = ((mt.team2Ids || []) as string[]).map(dbDnId)
-                            return (
-                              <div key={mt.id} className="bg-lob-well rounded-xl p-3">
-                                <div className="flex items-center justify-between mb-1.5">
-                                  <span className="text-2xs font-bold text-lob-teal bg-lob-cream px-2 py-0.5 rounded-full">
-                                    {mt.court || `Round ${mt.round}`}
-                                  </span>
-                                  {scored && s1 === s2 && (
-                                    <span className="text-2xs text-lob-muted-light font-medium">
-                                      Draw
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <div
-                                    className={`flex-1 min-w-0 ${t1won ? 'text-lob-success' : 'text-lob-slate'}`}
-                                  >
-                                    {t1Names.map((name, i) => (
-                                      <p key={i} className="text-sm font-semibold leading-tight">
-                                        {name}
-                                      </p>
-                                    ))}
-                                  </div>
-                                  <div className="flex items-center gap-1 flex-shrink-0">
-                                    <span
-                                      className={`text-lg font-bold w-7 text-center ${t1won ? 'text-lob-success' : 'text-lob-muted-light'}`}
-                                    >
-                                      {scored ? s1 : '—'}
-                                    </span>
-                                    <span className="text-lob-muted-light/60 text-sm">–</span>
-                                    <span
-                                      className={`text-lg font-bold w-7 text-center ${t2won ? 'text-lob-success' : 'text-lob-muted-light'}`}
-                                    >
-                                      {scored ? s2 : '—'}
-                                    </span>
-                                  </div>
-                                  <div
-                                    className={`flex-1 min-w-0 text-right ${t2won ? 'text-lob-success' : 'text-lob-slate'}`}
-                                  >
-                                    {t2Names.map((name, i) => (
-                                      <p key={i} className="text-sm font-semibold leading-tight">
-                                        {name}
-                                      </p>
-                                    ))}
-                                  </div>
-                                </div>
-                              </div>
-                            )
-                          })}
-                        </div>
+                        <EventMatchList
+                          matches={dbRounds[dbRi]?.matches ?? []}
+                          nameFor={dbDnId}
+                          inset
+                        />
                       </div>
                     )}
 
@@ -513,46 +462,10 @@ function LobsterGamesPanel({ gameResults }: { gameResults: ResultRow[] }) {
         <Gamepad2 size={14} className="text-lob-teal" />
         <p className="text-xs font-bold text-lob-slate">🏆 Lobster Oscars</p>
         <span className="text-2xs text-lob-muted-light ml-auto">
-          {cats.length} categor{cats.length === 1 ? 'y' : 'ies'}
+          {plural({ count: cats.length, one: 'category', many: 'categories' })}
         </span>
       </div>
-      {cats.map((cat) => (
-        <div key={cat.id} className="bg-white rounded-xl p-3 space-y-1.5 border border-lob-line">
-          <p className="font-bold text-xs text-lob-slate">
-            <span className="mr-1">{cat.icon}</span>
-            {cat.name}
-          </p>
-          {cat.winners.length > 0 ? (
-            <p className="text-xs text-lob-slate">
-              🏆{' '}
-              <span className="font-bold">{cat.winners.map((w) => w.target_name).join(', ')}</span>{' '}
-              <span className="text-lob-muted-light">
-                ({cat.topVotes} vote{cat.topVotes !== 1 ? 's' : ''}
-                {cat.winners.length > 1 ? ' — tie' : ''})
-              </span>
-            </p>
-          ) : (
-            <p className="text-2xs text-lob-muted-light">No votes</p>
-          )}
-          <div className="space-y-0.5">
-            {cat.rows.map((r) => (
-              <div key={r.target_id} className="flex items-center gap-2">
-                <span className="text-2xs w-16 truncate text-lob-slate">
-                  {(r.target_name || '').split(' ')[0]}
-                </span>
-                <ProgressBar
-                  value={(Number(r.votes_count) / cat.maxVotes) * 100}
-                  size="md"
-                  className="flex-1"
-                />
-                <span className="text-2xs text-lob-muted w-3 text-right">
-                  {Number(r.votes_count)}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
+      <OscarResultsList categories={cats} inset />
     </div>
   )
 }

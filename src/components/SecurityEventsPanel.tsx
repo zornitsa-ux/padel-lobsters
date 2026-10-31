@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { CollapsibleCard } from './ui/CollapsibleCard'
+import { ListCard, ListRow } from './ui/ListCard'
 import { IconButton } from './ui/IconButton'
 import { SegmentedControl } from './ui/SegmentedControl'
 import { Badge } from './ui/Badge'
@@ -154,12 +155,14 @@ export default function SecurityEventsPanel() {
           ) : filtered.length === 0 ? (
             <EmptyState variant="inline" title="No events match this filter." />
           ) : (
-            <div className="max-h-96 overflow-y-auto -mx-1 px-1">
-              <div className="space-y-1.5">
+            <div className="max-h-96 overflow-y-auto">
+              <ListCard inset>
                 {filtered.map((ev) => (
-                  <EventRow key={ev.id} ev={ev} />
+                  <ListRow key={ev.id}>
+                    <EventRow ev={ev} />
+                  </ListRow>
                 ))}
-              </div>
+              </ListCard>
             </div>
           )}
         </>
@@ -172,12 +175,15 @@ function EventRow({ ev }: { ev: SecurityEventRow }) {
   const Icon = iconForKind(ev.attempt_kind)
   const colors = colorsForEvent(ev)
   return (
-    <div className={`text-xs rounded-lg border px-2.5 py-2 flex items-start gap-2 ${colors.bg}`}>
+    <div className="text-xs flex items-start gap-2">
       <Icon size={12} className={`flex-shrink-0 mt-0.5 ${colors.icon}`} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5 flex-wrap">
           <span className={`font-semibold ${colors.text}`}>{labelForKind(ev.attempt_kind)}</span>
           {ev.succeeded === false && <Badge tone="danger" label="fail" />}
+          {ev.succeeded !== false && PII_ATTEMPT_KINDS.includes(ev.attempt_kind) && (
+            <Badge tone="warning" label="PII" />
+          )}
           <span className="text-lob-muted-light ml-auto whitespace-nowrap">
             {formatTime(ev.attempted_at)}
           </span>
@@ -238,22 +244,14 @@ function iconForKind(kind: string): LucideIcon {
   }
 }
 
-function colorsForEvent(ev: SecurityEventRow): { bg: string; text: string; icon: string } {
+function colorsForEvent(ev: SecurityEventRow): { text: string; icon: string } {
   if (ev.succeeded === false) {
-    return {
-      bg: 'bg-lob-danger-light border-lob-danger-border',
-      text: 'text-lob-danger-strong',
-      icon: 'text-lob-danger-solid',
-    }
+    return { text: 'text-lob-danger-strong', icon: 'text-lob-danger-solid' }
   }
   if (PII_ATTEMPT_KINDS.includes(ev.attempt_kind)) {
-    return {
-      bg: 'bg-lob-warning-light border-lob-warning-border',
-      text: 'text-lob-warning-strong',
-      icon: 'text-lob-warning',
-    }
+    return { text: 'text-lob-warning-strong', icon: 'text-lob-warning' }
   }
-  return { bg: 'bg-lob-well border-lob-line', text: 'text-lob-slate', icon: 'text-lob-muted' }
+  return { text: 'text-lob-slate', icon: 'text-lob-muted' }
 }
 
 function formatTime(iso?: string | null): string {

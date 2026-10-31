@@ -697,6 +697,16 @@ function SectionListSection() {
         </div>
       </Row>
       <CheckRowDemo />
+      <Row label="ListCard inset: a list inside a card or sheet, divided rows with no card" block>
+        <ListCard label="Recent security events" inset>
+          <ListRow>
+            <p className="text-sm text-lob-slate">Player sign-in · 19:42</p>
+          </ListRow>
+          <ListRow>
+            <p className="text-sm text-lob-slate">Player contact read · 19:40</p>
+          </ListRow>
+        </ListCard>
+      </Row>
     </GallerySection>
   )
 }

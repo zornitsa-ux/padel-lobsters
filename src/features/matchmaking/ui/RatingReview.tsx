@@ -9,6 +9,7 @@ import { Disclosure } from '../../../components/ui/Disclosure'
 import { SegmentedControl } from '../../../components/ui/SegmentedControl'
 import { AlertBox } from '../../../components/ui/AlertBox'
 import { Badge } from '../../../components/ui/Badge'
+import { Well } from '../../../components/ui/Well'
 
 export type RatingReviewProps = {
   // Count of adjustments auto-applied without review (small, within-cap moves).
@@ -196,7 +197,7 @@ type Mode = 'cautious' | 'custom' | 'full'
 
 const levelDetail = (text: string) => <span className="font-mono tabular-nums">{text}</span>
 
-function QueueCard({
+function QueueItem({
   row,
   playerNamesById,
   onReview,
@@ -254,7 +255,7 @@ function QueueCard({
         : `Set level to ${formatLevel(customTarget)}`
 
   return (
-    <div className="card space-y-3">
+    <Well>
       <div className="flex items-start justify-between gap-3">
         <p className="font-semibold text-lob-slate">{playerDisplayName}</p>
         <Badge tone="warning" label="Needs review" />
@@ -352,7 +353,7 @@ function QueueCard({
           {confirmLabel}
         </Button>
       </div>
-    </div>
+    </Well>
   )
 }
 
@@ -378,7 +379,7 @@ export default function RatingReview({
       )}
 
       {queue.map((row) => (
-        <QueueCard
+        <QueueItem
           key={row.id}
           row={row}
           playerNamesById={playerNamesById}

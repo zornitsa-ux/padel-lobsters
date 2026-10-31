@@ -7,6 +7,8 @@ import { Badge } from '../../../components/ui/Badge'
 import { experienceTone } from './statusPill'
 import { AlertBox } from '../../../components/ui/AlertBox'
 import { Section } from '../../../components/ui/Section'
+import { ListCard, ListRow } from '../../../components/ui/ListCard'
+import { EmptyState } from '../../../components/ui/EmptyState'
 import { useConfirmGroups } from '../hooks/useLeagueMutations'
 import { Button } from '../../../components/ui/Button'
 import { IconButton } from '../../../components/ui/IconButton'
@@ -75,14 +77,14 @@ function RecommendationPanel({ teams, groupA, groupB }: RecommendationPanelProps
   )
 }
 
-interface TeamCardProps {
+interface TeamRowProps {
   team: LeagueTeam
   actions: React.ReactNode
 }
 
-function TeamCard({ team, actions }: TeamCardProps) {
+function TeamRow({ team, actions }: TeamRowProps) {
   return (
-    <div className="flex items-center gap-2 rounded-xl bg-lob-well px-3 py-2">
+    <div className="flex items-center gap-2">
       <span className="text-sm font-semibold text-lob-dark flex-1 min-w-0 truncate">
         {resolveTeamShortName(team)}
       </span>
@@ -106,25 +108,26 @@ function GroupColumn({
   const teams = ids.flatMap((id) => teamById[id] ?? [])
   return (
     <Section title={`Group ${label} (${ids.length})`} icon={<Users />}>
-      <div className="space-y-2">
+      <ListCard inset>
         {teams.map((team) => (
-          <TeamCard
-            key={team.id}
-            team={team}
-            actions={
-              <IconButton
-                onClick={() => onRemove(team.id)}
-                aria-label="Remove from group"
-                variant="ghost-destructive"
-                size="sm"
-              >
-                <X />
-              </IconButton>
-            }
-          />
+          <ListRow key={team.id}>
+            <TeamRow
+              team={team}
+              actions={
+                <IconButton
+                  onClick={() => onRemove(team.id)}
+                  aria-label="Remove from group"
+                  variant="ghost-destructive"
+                  size="sm"
+                >
+                  <X />
+                </IconButton>
+              }
+            />
+          </ListRow>
         ))}
-        {ids.length === 0 && <p className="text-xs text-lob-muted-light px-2">No teams assigned</p>}
-      </div>
+      </ListCard>
+      {ids.length === 0 && <EmptyState variant="inline" title="No teams assigned" />}
     </Section>
   )
 }
@@ -220,24 +223,25 @@ export function GroupFormationTool({
           <p className="text-xs font-bold text-lob-muted uppercase tracking-wide mb-2">
             Unassigned
           </p>
-          <div className="space-y-2">
+          <ListCard inset>
             {unassigned.map((t) => (
-              <TeamCard
-                key={t.id}
-                team={t}
-                actions={
-                  <div className="flex gap-1 ml-1">
-                    <Button variant="neutral" size="sm" onClick={() => moveToA(t.id)}>
-                      → A
-                    </Button>
-                    <Button variant="neutral" size="sm" onClick={() => moveToB(t.id)}>
-                      → B
-                    </Button>
-                  </div>
-                }
-              />
+              <ListRow key={t.id}>
+                <TeamRow
+                  team={t}
+                  actions={
+                    <div className="flex gap-1 ml-1">
+                      <Button variant="neutral" size="sm" onClick={() => moveToA(t.id)}>
+                        → A
+                      </Button>
+                      <Button variant="neutral" size="sm" onClick={() => moveToB(t.id)}>
+                        → B
+                      </Button>
+                    </div>
+                  }
+                />
+              </ListRow>
             ))}
-          </div>
+          </ListCard>
         </div>
       )}
 

@@ -86,7 +86,8 @@ component doesn't fit, fix the component, not the call site.**
 | List of like items                   | `ListCard` + `LinkRow` (one card, divided rows)      | exists |
 | List row with its own controls       | `ListRow` (`PlayerRow`, buttons, anything under it)  | exists |
 | List row that is one checkbox        | `CheckRow`                                           | exists |
-| Inset panel / well inside a card     | `Well` (a list inside a card: divided rows)          | exists |
+| Inset panel / well inside a card     | `Well`                                               | exists |
+| List inside a card or sheet          | `ListCard inset` (divided rows, no card of its own)  | exists |
 | Search field                         | `SearchInput`                                        | P6     |
 | Collapsible card (+ summary)         | `CollapsibleCard` (`summary` stays visible)          | exists |
 | Collapsible row with reorder/delete  | `CollapsibleCard leading actions`                    | exists |
@@ -207,11 +208,11 @@ primitives (see the Log) before P3:
     (2026-10-30). Three PRs:
     - **P6c-1: `Well`.** Flat `lob-well` inset, no shadow (the planned
       `.panel`). The hand-built `lob-well` insets and the Playtomic panel
-      move onto it. In review (#123).
+      move onto it. Done in #123.
     - **P6c-2: cards inside cards.** Run of show, Lobster Way admin, Oscars
       results, the past event's match boxes, security events; lists with a
       well or box per row (Admin tips, Oscars categories, raffle winners,
-      group formation teams).
+      group formation teams). In progress.
     - **P6c-3: tinted boxes inside cards.** Alerts onto `AlertBox`, the rest
       onto `Well` or plain text.
 15. **P6d: sections, not cards.** Account, settings and admin tools: each
@@ -1286,3 +1287,40 @@ sm`; text-only action and back links → `TextButton`; Sign out and Cancel
   - Found: Edit Player's other save errors still show behind the sheet
     (#121); Account's Playtomic update prompt is a hand-built overlay, not a
     dialog (#122).
+
+- **2026-10-30.** P6c-2 on `design-system-p6c-cards-in-cards`. `ListCard`
+  gains `inset`: a list inside a card or sheet, divided rows with no card of
+  its own; its `ListRow`s drop their side padding so the rows line up with
+  the card's content. Test and gallery entry.
+  - Run of show: a `Section` (was a card with an h2) over a `ListCard` of
+    `ListRow` steps (was an `li.card` per step). The flagged-rating review
+    inside a step was a third card level; each flagged player is a `Well`.
+  - Lobster Way admin: a category card's questions are a `ListCard inset`
+    (each was a bordered `lob-well/60` box), and a question's bullet list
+    and numbered steps are `Well`s (were white bordered boxes).
+  - Oscars results: the two copies (event Results "Lobster Games" tab and the
+    past event card) are one `OscarResultsList`, a `ListCard` row per
+    category (was a bordered white box each); `inset` in the past event
+    card. The Results tab's summary card is a `Section` "Lobster Oscars"
+    with the counts as its action.
+  - Match boxes: the two copies (Results "Matches" tab and the past event
+    card) are one `EventMatchList` (`ListCard` rows; `inset` in the card)
+    instead of a `lob-well` box per match.
+  - Security events: a `ListCard inset` of rows; the tinted box per event is
+    gone, and status stays in the icon and label tone and the `fail` badge.
+  - Admin tips and Oscars categories: `ListCard inset` rows (each was a
+    `lob-well` box). Raffle winners: a `Section` with a `ListCard` (was a
+    card of bordered well rows); the winner's initial is `Avatar` (white on
+    raw amber-400 failed contrast).
+  - Group formation (in a sheet): groups and unassigned teams are
+    `ListCard inset` rows (were a well per team); an empty group is
+    `EmptyState inline`. Not reachable with the seed (groups are set), so a
+    unit test covers it.
+  - Review: `ListCard ordered` renders an `ol` (Run of show's steps lost
+    their order for screen readers); an inset list has no padding above its
+    first row or below its last, so the parent spaces it; inset is for
+    `ListRow`s, as a pressable row keeps its padding for its hover fill;
+    contact reads in security events get a `PII` warning badge in place of
+    the row tint; match names wrap rather than truncate.
+  - Found: Padel Tips are edited by tapping the text only, not by keyboard
+    (#124).
