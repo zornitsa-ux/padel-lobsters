@@ -140,11 +140,17 @@ describe('CheckRow', () => {
   })
 })
 
-function DragList({ onMove }: { onMove: (move: { from: number; to: number }) => void }) {
-  const { rowProps } = useDragReorder({ onMove })
+function DragList({
+  onMove,
+  names = ['Tee', 'Cap', 'Mug'],
+}: {
+  onMove: (move: { from: number; to: number }) => void
+  names?: string[]
+}) {
+  const { rowProps } = useDragReorder({ keys: names, onMove })
   return (
     <ListCard label="Items">
-      {['Tee', 'Cap', 'Mug'].map((name, index) => (
+      {names.map((name, index) => (
         <DragRow key={name} {...rowProps(index)}>
           <span>{name}</span>
         </DragRow>
@@ -186,6 +192,31 @@ describe('DragRow and useDragReorder', () => {
     fireEvent.dragStart(rowOf('Cap'), { dataTransfer: dataTransfer() })
     fireEvent.dragEnd(rowOf('Cap'))
     expect(rowOf('Cap').className).not.toContain('opacity-40')
+  })
+
+  it('moves the row that was picked up when the list changes mid-drag', () => {
+    const onMove = vi.fn()
+    const { rerender } = render(<DragList onMove={onMove} />)
+
+    fireEvent.dragStart(rowOf('Cap'), { dataTransfer: dataTransfer() })
+    rerender(<DragList onMove={onMove} names={['New', 'Tee', 'Cap', 'Mug']} />)
+    fireEvent.dragOver(rowOf('Mug'), { dataTransfer: dataTransfer() })
+    fireEvent.drop(rowOf('Mug'), { dataTransfer: dataTransfer() })
+    expect(onMove).toHaveBeenCalledWith({ from: 2, to: 3 })
+  })
+
+  it('ignores a drag from outside the list, and drops the ring when the drag leaves', () => {
+    render(<DragList onMove={vi.fn()} />)
+
+    const outside = new Event('dragover', { bubbles: true, cancelable: true })
+    rowOf('Tee').dispatchEvent(outside)
+    expect(outside.defaultPrevented).toBe(false)
+
+    fireEvent.dragStart(rowOf('Tee'), { dataTransfer: dataTransfer() })
+    fireEvent.dragOver(rowOf('Mug'), { dataTransfer: dataTransfer() })
+    expect(rowOf('Mug').className).toContain('ring-2')
+    fireEvent.dragLeave(rowOf('Mug'), { relatedTarget: document.body })
+    expect(rowOf('Mug').className).not.toContain('ring-2')
   })
 
   it('moveItem returns a new array with the item moved', () => {

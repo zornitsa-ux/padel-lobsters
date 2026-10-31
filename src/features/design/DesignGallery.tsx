@@ -719,6 +719,27 @@ function SectionListSection() {
           </Section>
         </div>
       </Row>
+      <Row label="Section level={3}: a section within a section, with a smaller heading" block>
+        <div className="rounded-2xl bg-lob-cream p-3">
+          <Section
+            title="Seeds and starting courts"
+            action={<Badge tone="neutral" label="Not shown yet" />}
+          >
+            <ListCard label="Seeds" ordered>
+              <ListRow>
+                <p className="text-sm text-lob-dark">Theo &amp; Mara</p>
+              </ListRow>
+            </ListCard>
+            <Section title="Starting courts" level={3}>
+              <ListCard label="Courts" ordered>
+                <ListRow>
+                  <p className="text-sm text-lob-dark">Centre · King court</p>
+                </ListRow>
+              </ListCard>
+            </Section>
+          </Section>
+        </div>
+      </Row>
       <Row label="ListCard inset: a list inside a card or sheet, divided rows with no card" block>
         <ListCard label="Recent security events" inset>
           <ListRow>
@@ -870,6 +891,7 @@ function LeagueMatchRowSection() {
 function DragRowDemo() {
   const [items, setItems] = useState(['Lobster Tee', 'Lobster Cap', 'Lobster Mug'])
   const { rowProps } = useDragReorder({
+    keys: items,
     onMove: ({ from, to }) => setItems((list) => moveItem({ items: list, from, to })),
   })
   return (

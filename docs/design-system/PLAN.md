@@ -235,7 +235,10 @@ primitives (see the Log) before P3:
     3, a shirt size; `Badge` stays for states) and moves the identity labels
     onto it (about ten); `.eyebrow` and the hand-built eyebrows (about 39
     variants); `RankMarker` + `PlayerRow highlighted`, `RosterHeading`,
-    `SearchInput` (#81), the `CollapsibleCard` heading element.
+    `SearchInput` (#81), the `CollapsibleCard` heading element. A `StatGrid`
+    for the hand-built StatTile grids (`grid grid-cols-N gap-2`, often on a
+    `.card`): Event Manage Overview, Payments, league Manage Overview, the
+    league team page and Your Stats (review of P6d-2).
 17. **P7: lock-down.**
 
 ### E2E safety net
@@ -1458,11 +1461,22 @@ scrollable`, and so is the tips list. Open WhatsApp Community is a
   - King of the Court admin: "Seeds and starting courts" and "Final
     standings" are `Section`s with their Badge as the action. The seeds and
     courts lists are plain `ListCard`s (`StartingCourtsList` takes `inset`,
-    which the player card still passes); "Starting courts" is an `h3` on
-    the background between them. Final standings' courts are one `ListCard`
+    which the player card still passes); "Starting courts" is a
+    `Section level={3}` (new: an `h3`, smaller) between them. Final standings' courts are one `ListCard`
     with a `ListRow` per court.
   - League Manage: Overview is a `Section` per division over a card of
     StatTiles. Season: Visibility (its state a Badge as the action),
     Details and Delete season are `Section`s; Delete stays a `TextButton`.
   - Merch admin: the items are one `ListCard` of `DragRow`s; `Merch` keeps
     only the reorder mutation.
+  - Review (`/code-review`): `useDragReorder` takes the rows' `keys` and
+    holds the dragged key, so a list that refetches mid-drag still moves the
+    row picked up (the index-only version was there before the extraction).
+    A file or text dragged over the list is not a move, and the ring clears
+    when the drag leaves a row. "Starting courts" moved from a hand-styled
+    `h3` onto `Section level={3}` (test and gallery entry). Kept: no event
+    name on Eligibility (the page header names it), `StartingCourtsList`
+    defaults to a card like `ListCard`, and dragging stays mouse only, as
+    before. Found: shop items can't be reordered by touch or keyboard
+    (#131). The StatTile
+    grid repeated across five features is a `StatGrid` task under P6e.

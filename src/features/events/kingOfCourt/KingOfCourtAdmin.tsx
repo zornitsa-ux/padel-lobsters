@@ -142,14 +142,15 @@ function SeedsSection({
             })}
           </ListCard>
 
-          <h3 className="pt-1 text-sm font-semibold text-lob-dark">Starting courts</h3>
-          <StartingCourtsList
-            courts={layout.courts}
-            overflowTeamIds={layout.overflowTeamIds}
-            order={order}
-            labelOf={labelOf}
-            overflowAction="Add a court or cancel a team."
-          />
+          <Section title="Starting courts" level={3}>
+            <StartingCourtsList
+              courts={layout.courts}
+              overflowTeamIds={layout.overflowTeamIds}
+              order={order}
+              labelOf={labelOf}
+              overflowAction="Add a court or cancel a team."
+            />
+          </Section>
 
           <div className="flex gap-2 flex-wrap">
             {!publishedAt && (

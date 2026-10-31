@@ -7,6 +7,7 @@ export interface DragRowHandlers {
   dropTarget: boolean
   onDragStart: (e: DragEvent<HTMLElement>) => void
   onDragOver: (e: DragEvent<HTMLElement>) => void
+  onDragLeave: (e: DragEvent<HTMLElement>) => void
   onDrop: (e: DragEvent<HTMLElement>) => void
   onDragEnd: () => void
 }
@@ -27,37 +28,49 @@ export function moveItem<T>({
   return reordered
 }
 
-/** Drag-to-reorder state for a list of `DragRow`s: spread `rowProps(index)` on each row. */
-export function useDragReorder({
+/**
+ * Drag-to-reorder state for a list of `DragRow`s: spread `rowProps(index)` on each row. `keys`
+ * identify the rows in their current order, so a list that changes mid-drag still moves the
+ * row that was picked up.
+ */
+export function useDragReorder<K>({
+  keys,
   onMove,
 }: {
+  keys: readonly K[]
   onMove: (move: { from: number; to: number }) => void
 }) {
-  const [dragIndex, setDragIndex] = useState<number | null>(null)
+  const [dragKey, setDragKey] = useState<K | null>(null)
   const [overIndex, setOverIndex] = useState<number | null>(null)
+  const dragIndex = dragKey === null ? -1 : keys.indexOf(dragKey)
 
   const reset = () => {
-    setDragIndex(null)
+    setDragKey(null)
     setOverIndex(null)
   }
 
   const rowProps = (index: number): DragRowHandlers => ({
     dragging: dragIndex === index,
-    dropTarget: dragIndex !== null && dragIndex !== index && overIndex === index,
+    dropTarget: dragIndex !== -1 && dragIndex !== index && overIndex === index,
     onDragStart: (e) => {
-      setDragIndex(index)
+      setDragKey(keys[index])
       e.dataTransfer.effectAllowed = 'move'
     },
+    // Only this list's rows: a file or text dragged over it is not a move.
     onDragOver: (e) => {
+      if (dragIndex === -1) return
       e.preventDefault()
       e.dataTransfer.dropEffect = 'move'
       if (index !== overIndex) setOverIndex(index)
     },
+    onDragLeave: (e) => {
+      if (e.currentTarget.contains(e.relatedTarget as Node | null)) return
+      setOverIndex((current) => (current === index ? null : current))
+    },
     onDrop: (e) => {
       e.preventDefault()
-      const from = dragIndex
       reset()
-      if (from !== null && from !== index) onMove({ from, to: index })
+      if (dragIndex !== -1 && dragIndex !== index) onMove({ from: dragIndex, to: index })
     },
     onDragEnd: reset,
   })

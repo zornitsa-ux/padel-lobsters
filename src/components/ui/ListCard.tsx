@@ -99,6 +99,7 @@ export function DragRow({
   dropTarget,
   onDragStart,
   onDragOver,
+  onDragLeave,
   onDrop,
   onDragEnd,
 }: DragRowProps) {
@@ -107,6 +108,7 @@ export function DragRow({
       draggable
       onDragStart={onDragStart}
       onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
       onDrop={onDrop}
       onDragEnd={onDragEnd}
       className={`flex items-center gap-3 px-4 py-3 transition-opacity ${dragging ? 'opacity-40' : ''} ${

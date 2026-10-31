@@ -157,6 +157,7 @@ export default function Merch({ initialTab, onNavigate }: MerchProps) {
   // The cache is updated optimistically inside the mutation, so no local copy
   // of the list is needed to keep the drag from snapping back.
   const { rowProps: dragRow } = useDragReorder({
+    keys: items.map((item) => item.id),
     onMove: ({ from, to }) =>
       reorderItems.mutate(
         { orderedIds: moveItem({ items, from, to }).map((item) => item.id) },
