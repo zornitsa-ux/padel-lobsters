@@ -376,8 +376,7 @@ export default function Settings() {
           />
         )}
 
-        {/* App info */}
-        <div className="card text-center space-y-1 py-5">
+        <footer className="text-center space-y-1 py-5">
           <img
             src="/logo-256.webp"
             alt="Padel Lobsters"
@@ -388,7 +387,7 @@ export default function Settings() {
           <p className="font-bold text-lob-slate">Padel Lobsters</p>
           <p className="text-xs text-lob-muted-light">Tournament Manager · v1.0</p>
           <p className="text-xs text-lob-muted-light/60 mt-2">Made with 🦞 for the crew</p>
-        </div>
+        </footer>
       </div>
     </div>
   )

@@ -1,9 +1,10 @@
-import { Link } from 'react-router-dom'
 import { ShoppingBag } from 'lucide-react'
 import { useMerchItems, useMerchInterests } from '../merch/useMerch'
 import { ordersForPlayer } from '../merch/merchSelectors'
 import MyOrders from '../merch/MyOrders'
 import type { Player } from '../../lib/normalise'
+import { Section } from '../../components/ui/Section'
+import { TextButton } from '../../components/ui/TextButton'
 
 // Split so the merch queries only mount once there is a player to read orders
 // for — the previous direct fetch bailed out on a missing id the same way.
@@ -20,16 +21,12 @@ export default function AccountOrdersSection({ myPlayer }: { myPlayer: Player | 
   if (!myPlayer) return null
 
   return (
-    <section>
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="font-bold text-lob-slate flex items-center gap-1.5">
-          <ShoppingBag size={15} className="text-lob-teal" /> My Orders
-        </h3>
-        <Link to="/community/shop" className="text-xs text-lob-teal font-semibold">
-          Browse shop →
-        </Link>
-      </div>
+    <Section
+      title="My Orders"
+      icon={<ShoppingBag />}
+      action={<TextButton to="/community/shop">Browse shop</TextButton>}
+    >
       <OrdersList playerId={myPlayer.id} />
-    </section>
+    </Section>
   )
 }

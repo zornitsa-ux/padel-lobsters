@@ -1,15 +1,13 @@
 import { useMemo, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { usePlayers } from '../players/usePlayers'
 import { useAllMatches } from '../events/useMatches'
 import { useAllRegistrations } from '../events/useRegistrations'
 import { useTournaments } from '../events/useTournaments'
 import { buildPlayerStats } from '../../lib/playerStats'
-import YourStatsCard from '../home/YourStatsCard'
+import YourStatsCard from './YourStatsCard'
 import { isEventOver } from '../events/eventPhase'
 
 export default function AccountStatsSection({ claimedId }: { claimedId: string | null }) {
-  const navigate = useNavigate()
   const { data: tournaments = [] } = useTournaments()
   const { data: players = [] } = usePlayers()
   const { data: allMatchesData = [] } = useAllMatches()
@@ -72,11 +70,5 @@ export default function AccountStatsSection({ claimedId }: { claimedId: string |
 
   if (!claimedId || !myStats) return null
 
-  const onNavigate = (page: string, payload?: { focusPlayerId: string }) => {
-    if (page === 'players' && payload?.focusPlayerId) {
-      navigate(`/community/${payload.focusPlayerId}`)
-    }
-  }
-
-  return <YourStatsCard claimedId={claimedId} myStats={myStats} onNavigate={onNavigate} />
+  return <YourStatsCard claimedId={claimedId} myStats={myStats} />
 }

@@ -27,4 +27,22 @@ describe('Section', () => {
     expect(screen.getByTestId('icon').parentElement?.getAttribute('aria-hidden')).toBe('true')
     expect(screen.getByText('Show all')).toBeTruthy()
   })
+
+  it('takes an id for a hash link', () => {
+    render(
+      <Section id="security" title="Security">
+        <p>Body</p>
+      </Section>,
+    )
+    expect(screen.getByRole('region', { name: 'Security' }).id).toBe('security')
+  })
+
+  it('renders a description under the heading', () => {
+    render(
+      <Section title="Account" description="One sign-in, works across the whole site">
+        <p>Body</p>
+      </Section>,
+    )
+    expect(screen.getByText('One sign-in, works across the whole site')).toBeTruthy()
+  })
 })
