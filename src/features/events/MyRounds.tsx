@@ -1,6 +1,8 @@
 import { Check, MapPin, Coffee } from 'lucide-react'
 import Avatar from '../../components/ui/Avatar'
 import { Badge } from '../../components/ui/Badge'
+import { ListCard, ListRow } from '../../components/ui/ListCard'
+import { Section } from '../../components/ui/Section'
 import { matchOutcome, type MyMatchView, type MyRoundView } from './nextMatch'
 import type { Player } from '../../lib/normalise'
 
@@ -10,8 +12,8 @@ const firstName = (player: Player | undefined, fallback: string): string =>
   player ? (player.name || fallback).split(' ')[0] : fallback
 
 /**
- * The player's whole event, one row per round in order. Scored rounds recede
- * (flat, tinted, muted); the next match is the one elevated card.
+ * The player's whole event: the next match as the one elevated card under "Up next", then every
+ * other round in order as one list.
  */
 export default function MyRounds({
   rounds,
@@ -22,30 +24,37 @@ export default function MyRounds({
   currentRound: number | null
   getPlayer: GetPlayer
 }) {
-  if (rounds.length === 0) return null
-
+  const nextRound = rounds.find((r) => r.status === 'next' && r.match)
+  const others = rounds.filter((r) => r !== nextRound)
   const lastPlayedRound = [...rounds].reverse().find((r) => r.match)?.round ?? null
 
   return (
-    <div className="space-y-2">
-      <h3 className="text-2xs font-bold text-lob-muted uppercase tracking-widest px-1">
-        Your rounds
-      </h3>
-      {rounds.map((round) =>
-        round.status === 'next' && round.match ? (
-          <NextRoundCard key={round.round} view={round.match} getPlayer={getPlayer} />
-        ) : round.match ? (
-          <PlayedRoundRow key={round.round} round={round} getPlayer={getPlayer} />
-        ) : (
-          <SittingOutRow
-            key={round.round}
-            round={round}
-            isCurrent={round.round === currentRound}
-            hasLaterMatch={lastPlayedRound != null && lastPlayedRound > round.round}
-          />
-        ),
+    <>
+      {nextRound?.match && (
+        <Section title="Up next">
+          <NextRoundCard view={nextRound.match} getPlayer={getPlayer} />
+        </Section>
       )}
-    </div>
+      {others.length > 0 && (
+        <Section title="Your rounds">
+          <ListCard>
+            {others.map((round) => (
+              <ListRow key={round.round}>
+                {round.match ? (
+                  <PlayedRound round={round} getPlayer={getPlayer} />
+                ) : (
+                  <SittingOut
+                    round={round}
+                    isCurrent={round.round === currentRound}
+                    hasLaterMatch={lastPlayedRound != null && lastPlayedRound > round.round}
+                  />
+                )}
+              </ListRow>
+            ))}
+          </ListCard>
+        </Section>
+      )}
+    </>
   )
 }
 
@@ -56,16 +65,11 @@ function NextRoundCard({ view, getPlayer }: { view: MyMatchView; getPlayer: GetP
   const opponents = view.opponentIds.map((id) => getPlayer(id))
 
   return (
-    <div className="card-elevated space-y-4 ring-2 ring-lob-coral ring-offset-2 ring-offset-lob-cream">
+    <div className="card-elevated space-y-4">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-white bg-lob-coral px-2.5 py-1 rounded-full">
-            Up next
-          </span>
-          <span className="text-xs font-bold text-lob-teal bg-lob-cream px-2.5 py-1 rounded-full">
-            Round {view.round}
-          </span>
-        </div>
+        <span className="text-xs font-bold text-lob-teal bg-lob-cream px-2.5 py-1 rounded-full">
+          Round {view.round}
+        </span>
         {view.court && (
           <span className="flex items-center gap-1 text-sm font-bold text-lob-dark">
             <MapPin size={14} className="text-lob-coral" />
@@ -109,20 +113,14 @@ function OutcomeBadge({ view }: { view: MyMatchView }) {
   return <Badge tone={tone} label={label} />
 }
 
-function PlayedRoundRow({ round, getPlayer }: { round: MyRoundView; getPlayer: GetPlayer }) {
+function PlayedRound({ round, getPlayer }: { round: MyRoundView; getPlayer: GetPlayer }) {
   const view = round.match as MyMatchView
   const done = round.status === 'complete'
   const partner = getPlayer(view.partnerId)
   const opponents = view.opponentIds.map((id) => getPlayer(id))
 
   return (
-    <div
-      className={
-        done
-          ? 'flex items-center justify-between gap-2 rounded-2xl bg-lob-teal-light px-4 py-3'
-          : 'card flex items-center justify-between gap-2'
-      }
-    >
+    <div className="flex items-center justify-between gap-2">
       <div className="min-w-0">
         <p
           className={`text-xs font-semibold flex items-center gap-1 ${
@@ -156,7 +154,7 @@ function PlayedRoundRow({ round, getPlayer }: { round: MyRoundView; getPlayer: G
 
 // ── Rounds the player sits out ───────────────────────────────────────────────
 
-function SittingOutRow({
+function SittingOut({
   round,
   isCurrent,
   hasLaterMatch,
@@ -168,11 +166,7 @@ function SittingOutRow({
   const highlight = isCurrent && round.status !== 'complete'
 
   return (
-    <div
-      className={`flex items-center gap-2 rounded-2xl border border-dashed px-4 py-3 ${
-        highlight ? 'border-lob-amber bg-lob-cream' : 'border-lob-muted/30'
-      }`}
-    >
+    <div className="flex items-center gap-2">
       <Coffee size={14} className={highlight ? 'text-lob-amber' : 'text-lob-muted-light'} />
       <p className={`text-sm ${highlight ? 'text-lob-slate font-semibold' : 'text-lob-muted'}`}>
         Round {round.round} · Sitting out

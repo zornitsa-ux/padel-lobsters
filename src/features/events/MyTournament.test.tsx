@@ -309,6 +309,17 @@ describe('MyTournament — every round is visible', () => {
     expect(screen.getByText(/Court 2/)).not.toBeNull() // the up-next court
   })
 
+  it('shows the next round under Up next, not again in Your rounds', () => {
+    registrations = [mkRegistration({ id: 'r1', playerId: 'p1', status: 'registered' })]
+    matches = fourRounds()
+
+    renderMyTournament()
+
+    expect(screen.getByRole('heading', { name: 'Up next' })).not.toBeNull()
+    expect(screen.getByRole('heading', { name: 'Your rounds' })).not.toBeNull()
+    expect(screen.getAllByText(/Round 2/)).toHaveLength(1)
+  })
+
   it('shows the score and outcome on rounds that are already saved', () => {
     registrations = [mkRegistration({ id: 'r1', playerId: 'p1', status: 'registered' })]
     matches = fourRounds()

@@ -259,6 +259,10 @@ function RegistrationCard({
   onTikkieClick: () => void
   onSelfDeclare: () => void
 }) {
+  if (registration.status === 'waitlisted') {
+    return <WaitlistNotice position={waitlistPosition} />
+  }
+
   const registerErrorNotice = registerError ? (
     <AlertBox variant="error" size="sm">
       {registerError}
@@ -267,10 +271,13 @@ function RegistrationCard({
 
   if (registration.status === 'not_registered') {
     return (
-      <div className="card space-y-3">
-        <p className="text-sm text-lob-muted">
-          {isEventFull ? 'This event is full.' : "You haven't signed up yet."}
-        </p>
+      <RegistrationShell
+        status={
+          <p className="text-sm text-lob-muted">
+            {isEventFull ? 'This event is full.' : "You haven't signed up yet."}
+          </p>
+        }
+      >
         <Button onClick={onRegister} disabled={registering} fullWidth>
           {registering
             ? 'Signing up…'
@@ -279,47 +286,37 @@ function RegistrationCard({
               : 'Register for this event'}
         </Button>
         {registerErrorNotice}
-      </div>
+      </RegistrationShell>
     )
   }
 
   if (registration.status === 'cancelled') {
     return (
-      <div className="card space-y-3">
-        <div className="flex items-center gap-2">
-          <UserRoundX size={14} className="text-lob-muted flex-shrink-0" />
-          <p className="text-sm font-semibold text-lob-slate">Your registration was cancelled</p>
-        </div>
+      <RegistrationShell
+        status={
+          <StatusLine icon={<UserRoundX size={14} className="text-lob-muted flex-shrink-0" />}>
+            Your registration was cancelled
+          </StatusLine>
+        }
+      >
         <Button onClick={onRegister} disabled={registering} fullWidth>
           {registering ? 'Signing up…' : 'Register again'}
         </Button>
         {registerErrorNotice}
-      </div>
+      </RegistrationShell>
     )
   }
 
-  if (registration.status === 'waitlisted') {
-    return <WaitlistNotice position={waitlistPosition} />
-  }
-
-  // status === 'registered'
   const ps = registration.paymentStatus
-  const isConfirmed = isSettled(ps)
-  const isTikkied = ps === 'tikkied'
-  const isSelfDeclared = ps === 'pending_confirmation'
-  const needsPayment = isUnpaid(ps) && hasTikkie
-
-  const badge = (
-    <div className="flex items-center gap-2">
-      <CheckCircle size={14} className="text-lob-success-solid flex-shrink-0" />
-      <span className="text-sm font-semibold text-lob-dark">You&apos;re registered</span>
-    </div>
+  const registered = (
+    <StatusLine icon={<CheckCircle size={14} className="text-lob-success-solid flex-shrink-0" />}>
+      You&apos;re registered
+    </StatusLine>
   )
 
-  if (needsPayment) {
+  if (isUnpaid(ps) && hasTikkie) {
     return (
-      <div className="card space-y-3">
-        {badge}
+      <RegistrationShell status={registered}>
         <PayPrompt
           amount={costPerEntry}
           tikkieLink={tournament.tikkieLink}
@@ -328,37 +325,59 @@ function RegistrationCard({
           onTikkieClick={onTikkieClick}
           onSelfDeclare={onSelfDeclare}
         />
-      </div>
+      </RegistrationShell>
     )
   }
 
-  if (isTikkied || isSelfDeclared) {
+  if (ps === 'tikkied' || ps === 'pending_confirmation') {
     return (
-      <div className="card space-y-3">
-        {badge}
+      <RegistrationShell status={registered}>
         <AlertBox variant="info" size="sm">
-          {isTikkied
+          {ps === 'tikkied'
             ? '🔗 Tikkie sent · awaiting admin confirmation'
             : '💬 Payment declared · admin will confirm shortly'}
         </AlertBox>
-      </div>
+      </RegistrationShell>
     )
   }
 
-  if (isConfirmed) {
-    return (
-      <div className="card">
-        <div className="flex items-center justify-between">
-          {badge}
-          {/* The viewer's own settled spot reads Confirmed, also when it came by transfer. */}
-          <PaymentStatusBadge paymentStatus="paid" />
-        </div>
-      </div>
-    )
-  }
+  return (
+    <RegistrationShell
+      status={registered}
+      // The viewer's own settled spot reads Confirmed, also when it came by transfer.
+      badge={isSettled(ps) ? <PaymentStatusBadge paymentStatus="paid" /> : undefined}
+    />
+  )
+}
 
-  // Registered, no payment required (free event or no Tikkie configured)
-  return <div className="card">{badge}</div>
+/** The one registration card: a status line, an optional trailing badge, then what to do next. */
+function RegistrationShell({
+  status,
+  badge,
+  children,
+}: {
+  status: ReactNode
+  badge?: ReactNode
+  children?: ReactNode
+}) {
+  return (
+    <div className="card space-y-3">
+      <div className="flex items-center justify-between gap-2">
+        {status}
+        {badge}
+      </div>
+      {children}
+    </div>
+  )
+}
+
+function StatusLine({ icon, children }: { icon: ReactNode; children: ReactNode }) {
+  return (
+    <div className="flex items-center gap-2">
+      {icon}
+      <span className="text-sm font-semibold text-lob-dark">{children}</span>
+    </div>
+  )
 }
 
 // ── Final placing (revealed phase only) ───────────────────────────────────────
