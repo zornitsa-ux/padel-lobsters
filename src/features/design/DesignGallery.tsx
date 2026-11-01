@@ -53,7 +53,8 @@ import { Drawer } from '../../components/ui/Drawer'
 import { useConfirm } from '../../lib/confirmBus'
 import { CardLink } from '../../components/ui/CardLink'
 import { LinkCard, LinkCardIcon } from '../../components/ui/LinkCard'
-import { CheckRow, LinkRow, ListCard, ListRow } from '../../components/ui/ListCard'
+import { CheckRow, DragRow, LinkRow, ListCard, ListRow } from '../../components/ui/ListCard'
+import { moveItem, useDragReorder } from '../../components/ui/useDragReorder'
 import { PlayerRow } from '../../components/ui/PlayerRow'
 import { Section } from '../../components/ui/Section'
 import { LeagueMatchRow } from '../league/ui/LeagueMatchRow'
@@ -697,6 +698,7 @@ function SectionListSection() {
         </div>
       </Row>
       <CheckRowDemo />
+      <DragRowDemo />
       <Row
         label="Section description, and ListCard scrollable: a long list scrolls inside its card"
         block
@@ -714,6 +716,27 @@ function SectionListSection() {
                 </ListRow>
               ))}
             </ListCard>
+          </Section>
+        </div>
+      </Row>
+      <Row label="Section level={3}: a section within a section, with a smaller heading" block>
+        <div className="rounded-2xl bg-lob-cream p-3">
+          <Section
+            title="Seeds and starting courts"
+            action={<Badge tone="neutral" label="Not shown yet" />}
+          >
+            <ListCard label="Seeds" ordered>
+              <ListRow>
+                <p className="text-sm text-lob-dark">Theo &amp; Mara</p>
+              </ListRow>
+            </ListCard>
+            <Section title="Starting courts" level={3}>
+              <ListCard label="Courts" ordered>
+                <ListRow>
+                  <p className="text-sm text-lob-dark">Centre · King court</p>
+                </ListRow>
+              </ListCard>
+            </Section>
           </Section>
         </div>
       </Row>
@@ -862,6 +885,33 @@ function LeagueMatchRowSection() {
         </div>
       </Row>
     </GallerySection>
+  )
+}
+
+function DragRowDemo() {
+  const [items, setItems] = useState(['Lobster Tee', 'Lobster Cap', 'Lobster Mug'])
+  const { rowProps } = useDragReorder({
+    keys: items,
+    onMove: ({ from, to }) => setItems((list) => moveItem({ items: list, from, to })),
+  })
+  return (
+    <Row
+      label="DragRow + useDragReorder: drag a row to reorder (mouse); the row under it shows a ring"
+      block
+    >
+      <div className="rounded-2xl bg-lob-cream p-3">
+        <ListCard label="Shop items">
+          {items.map((name, index) => (
+            <DragRow key={name} {...rowProps(index)}>
+              <p className="flex-1 min-w-0 text-sm font-semibold text-lob-dark">{name}</p>
+              <IconButton aria-label={`Edit ${name}`} size="sm">
+                <Pencil />
+              </IconButton>
+            </DragRow>
+          ))}
+        </ListCard>
+      </div>
+    </Row>
   )
 }
 

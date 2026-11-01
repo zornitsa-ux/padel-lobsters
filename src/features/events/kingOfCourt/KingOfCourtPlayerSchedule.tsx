@@ -66,6 +66,7 @@ function StartingCourtsBody({
         order={kotc.saved}
         labelOf={kotc.labelOf}
         highlightTeamId={kotc.myTeamId}
+        inset
       />
     </>
   )

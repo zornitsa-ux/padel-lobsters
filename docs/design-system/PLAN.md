@@ -220,10 +220,11 @@ primitives (see the Log) before P3:
     section is a `Section` on the background, not a card. Inventory and owner
     calls in the Log (2026-10-31). Four PRs:
     - **P6d-1: Account.** Every Account card, the admin settings on it, and
-      the app info. In progress.
+      the app info. Done in #129.
     - **P6d-2: admin tools.** Event Manage (Overview, the Payments banner,
       the Eligibility header), the King of the Court admin, league Manage
-      (Overview and Season), the merch admin items as one `ListCard`.
+      (Overview and Season), the merch admin items as one `ListCard`. In
+      progress.
     - **P6d-3: You tab and Home.** `MyTournament` (one registration card,
       not seven copies), `MyRounds` (Up next and Your rounds), the Home
       birthdays.
@@ -234,7 +235,10 @@ primitives (see the Log) before P3:
     3, a shirt size; `Badge` stays for states) and moves the identity labels
     onto it (about ten); `.eyebrow` and the hand-built eyebrows (about 39
     variants); `RankMarker` + `PlayerRow highlighted`, `RosterHeading`,
-    `SearchInput` (#81), the `CollapsibleCard` heading element.
+    `SearchInput` (#81), the `CollapsibleCard` heading element. A `StatGrid`
+    for the hand-built StatTile grids (`grid grid-cols-N gap-2`, often on a
+    `.card`): Event Manage Overview, Payments, league Manage Overview, the
+    league team page and Your Stats (review of P6d-2).
 17. **P7: lock-down.**
 
 ### E2E safety net
@@ -1439,3 +1443,40 @@ scrollable`, and so is the tips list. Open WhatsApp Community is a
     Padel Tips has `aria-expanded`, and the default-tips count comes from the
     list. The admin alert drops its shield, which the heading already shows.
     Your Stats' streak, nemesis and partner pills stay hand-built for P6e.
+
+- **2026-10-31.** P6d-2 on `design-system-p6d-admin-tools`. `ListCard`
+  gains `DragRow` (a grip, then the row's content; fades while dragged, a
+  ring on the row under it) and `useDragReorder` (the drag state, with
+  `rowProps(index)` to spread on each row, and a pure `moveItem`); tests and
+  a gallery entry.
+  - Event Manage Overview: the stat tiles and scoring progress are one card
+    with no heading. The progress line says "n of m matches scored", or "All
+    matches scored" once sealed (it no longer repeats the count).
+  - Payments: "Admin booked all courts" is a `Section` with the price line
+    and the Tikkie button on the background. The summary's progress fill is
+    `lob-success-on-dark` (was a raw green gradient).
+  - Eligibility: a "Raffle eligibility" `Section`, the explanation its
+    `description`, the "n of m eligible" count on the background over the
+    list. The event name under the heading goes (the page header shows it).
+  - King of the Court admin: "Seeds and starting courts" and "Final
+    standings" are `Section`s with their Badge as the action. The seeds and
+    courts lists are plain `ListCard`s (`StartingCourtsList` takes `inset`,
+    which the player card still passes); "Starting courts" is a
+    `Section level={3}` (new: an `h3`, smaller) between them. Final standings' courts are one `ListCard`
+    with a `ListRow` per court.
+  - League Manage: Overview is a `Section` per division over a card of
+    StatTiles. Season: Visibility (its state a Badge as the action),
+    Details and Delete season are `Section`s; Delete stays a `TextButton`.
+  - Merch admin: the items are one `ListCard` of `DragRow`s; `Merch` keeps
+    only the reorder mutation.
+  - Review (`/code-review`): `useDragReorder` takes the rows' `keys` and
+    holds the dragged key, so a list that refetches mid-drag still moves the
+    row picked up (the index-only version was there before the extraction).
+    A file or text dragged over the list is not a move, and the ring clears
+    when the drag leaves a row. "Starting courts" moved from a hand-styled
+    `h3` onto `Section level={3}` (test and gallery entry). Kept: no event
+    name on Eligibility (the page header names it), `StartingCourtsList`
+    defaults to a card like `ListCard`, and dragging stays mouse only, as
+    before. Found: shop items can't be reordered by touch or keyboard
+    (#131). The StatTile
+    grid repeated across five features is a `StatGrid` task under P6e.

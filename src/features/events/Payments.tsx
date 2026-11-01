@@ -23,6 +23,7 @@ import { PlayerRow } from '../../components/ui/PlayerRow'
 import { ListCard, ListRow } from '../../components/ui/ListCard'
 import { ProgressBar } from '../../components/ui/ProgressBar'
 import { StatTile } from '../../components/ui/StatTile'
+import { Section } from '../../components/ui/Section'
 import PaymentReminderModal from './PaymentReminderModal'
 import { useTeamEntries } from './teams/useTeams'
 import { buildPaymentRows } from './payments/teamPaymentRows'
@@ -189,12 +190,7 @@ export default function Payments({
 
   return (
     <div className="space-y-4">
-      {/* Payment info banner */}
-      <div className="bg-lob-teal-light rounded-2xl p-4 space-y-2 border border-lob-teal/10">
-        <div className="flex items-center gap-2 mb-1">
-          <ShieldCheck size={15} className="text-lob-teal" />
-          <span className="text-sm font-bold text-lob-slate">Admin booked all courts</span>
-        </div>
+      <Section title="Admin booked all courts" icon={<ShieldCheck />}>
         {tournament.totalPrice > 0 && (
           <p className="text-sm text-lob-slate">
             Total: <span className="font-bold text-lob-dark">{fmtEur(tournament.totalPrice)}</span>{' '}
@@ -206,17 +202,16 @@ export default function Payments({
             </span>
           </p>
         )}
-        {tournament.tikkieLink && (
+        {tournament.tikkieLink ? (
           <Button href={tournament.tikkieLink} external icon={<ExternalLink />}>
             Pay via Tikkie
           </Button>
-        )}
-        {!tournament.tikkieLink && (
-          <p className="text-xs text-lob-muted-light">
+        ) : (
+          <p className="text-xs text-lob-muted">
             No Tikkie link set — payment via Playtomic or cash
           </p>
         )}
-      </div>
+      </Section>
 
       {/* Summary */}
       <div className="bg-lob-teal rounded-2xl p-4 text-white shadow-lg">
@@ -271,7 +266,7 @@ export default function Payments({
               value={totalExpected > 0 ? (totalCollected / totalExpected) * 100 : 0}
               size="lg"
               trackClassName="bg-white/20"
-              fillClassName="bg-gradient-to-r from-green-300 to-green-400"
+              fillClassName="bg-lob-success-on-dark"
               className="mt-3 w-full"
             />
           </div>

@@ -2,6 +2,7 @@ import { Check } from 'lucide-react'
 import { useConfirm } from '../../../lib/confirmBus'
 import { StatTile } from '../../../components/ui/StatTile'
 import { Button } from '../../../components/ui/Button'
+import { Section } from '../../../components/ui/Section'
 import { useUpdateLeagueStatus } from '../hooks/useLeagueMutations'
 import { LEAGUE_PHASES, phaseReadiness } from '../domain/lifecycle'
 import { divisionProgress } from '../domain/progress'
@@ -42,7 +43,7 @@ function progressLabel({ played, total }: StageProgress): string {
   return total === 0 ? '—' : `${played}/${total}`
 }
 
-function DivisionProgressCard({
+function DivisionProgressSection({
   teams,
   matches,
   division,
@@ -53,15 +54,14 @@ function DivisionProgressCard({
 }) {
   const progress = divisionProgress({ teams, matches, division })
   return (
-    <div className="card space-y-2">
-      <p className="text-sm font-semibold text-lob-dark">{DIVISION_LABELS[division]}</p>
-      <div className="grid grid-cols-4 gap-2">
+    <Section title={DIVISION_LABELS[division]}>
+      <div className="card grid grid-cols-4 gap-2">
         <StatTile value={progress.teams} label="Teams" />
         <StatTile value={progressLabel(progress.group)} label="Group" />
         <StatTile value={progressLabel(progress.semis)} label="Semis" />
         <StatTile value={progressLabel(progress.finals)} label="Finals" />
       </div>
-    </div>
+    </Section>
   )
 }
 
@@ -117,7 +117,12 @@ export function ManageOverview({ league, teams, matches }: ManageOverviewProps) 
     <div className="space-y-4">
       <PhaseStepper status={league.status} />
       {leagueDivisions(league).map((division) => (
-        <DivisionProgressCard key={division} teams={teams} matches={matches} division={division} />
+        <DivisionProgressSection
+          key={division}
+          teams={teams}
+          matches={matches}
+          division={division}
+        />
       ))}
       <StatusAction league={league} teams={teams} matches={matches} />
     </div>

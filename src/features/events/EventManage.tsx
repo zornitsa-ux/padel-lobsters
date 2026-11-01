@@ -101,35 +101,25 @@ function Overview({ tournament }: { tournament: NormalisedTournament }) {
 
   return (
     <div className="space-y-4">
-      <div className={`card grid gap-2 ${scored ? 'grid-cols-3' : 'grid-cols-2'}`}>
-        <StatTile value={registered.length} label="Registered" />
-        <StatTile
-          value={unpaid.length}
-          label="Unpaid"
-          valueClassName={unpaid.length > 0 ? 'text-lob-danger' : ''}
-        />
-        {scored && (
+      <div className="card space-y-3">
+        <div className={`grid gap-2 ${scored ? 'grid-cols-3' : 'grid-cols-2'}`}>
+          <StatTile value={registered.length} label="Registered" />
           <StatTile
-            value={matches.length > 0 ? `${scoredCount}/${matches.length}` : '—'}
-            label="Scored"
+            value={unpaid.length}
+            label="Unpaid"
+            valueClassName={unpaid.length > 0 ? 'text-lob-danger' : ''}
           />
+          {scored && (
+            <StatTile
+              value={matches.length > 0 ? `${scoredCount}/${matches.length}` : '—'}
+              label="Scored"
+            />
+          )}
+        </div>
+        {scored && (
+          <ScoringProgress scoredCount={scoredCount} total={matches.length} sealed={sealed} />
         )}
       </div>
-
-      {scored && (
-        <div className="card space-y-2">
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-sm font-semibold text-lob-dark">Scoring progress</p>
-            <p className="text-xs text-lob-muted">
-              {matches.length === 0
-                ? 'No schedule yet'
-                : `${scoredCount} of ${matches.length} matches scored`}
-            </p>
-          </div>
-          <ProgressBar value={matches.length > 0 ? (scoredCount / matches.length) * 100 : 0} />
-          {sealed && <p className="text-xs text-lob-teal font-semibold">All matches scored</p>}
-        </div>
-      )}
 
       {/* The end-of-event sequence. Owned by RunOfShow — see workstream C.
           Rendered as an element, never as a component defined in this render
@@ -137,6 +127,29 @@ function Overview({ tournament }: { tournament: NormalisedTournament }) {
           owns the Finish/reveal lifecycle state (appliedCount, busy, error). */}
       {isRunOfShowVisible({ phase, isAdmin: true, format: tournament.format }) && (
         <RunOfShow tournament={tournament} />
+      )}
+    </div>
+  )
+}
+
+function ScoringProgress({
+  scoredCount,
+  total,
+  sealed,
+}: {
+  scoredCount: number
+  total: number
+  sealed: boolean
+}) {
+  return (
+    <div className="space-y-1.5">
+      <ProgressBar value={total > 0 ? (scoredCount / total) * 100 : 0} />
+      {sealed ? (
+        <p className="text-xs font-semibold text-lob-teal">All matches scored</p>
+      ) : (
+        <p className="text-xs text-lob-muted">
+          {total === 0 ? 'No schedule yet' : `${scoredCount} of ${total} matches scored`}
+        </p>
       )}
     </div>
   )
