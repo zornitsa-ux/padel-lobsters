@@ -4,6 +4,7 @@ import { SegmentedControl } from '../../components/ui/SegmentedControl'
 import { StatTile } from '../../components/ui/StatTile'
 import { ProgressBar } from '../../components/ui/ProgressBar'
 import { Spinner } from '../../components/ui/Spinner'
+import { StatGrid } from '../../components/ui/StatGrid'
 import { useMatches } from './useMatches'
 import { useRegistrations } from './useRegistrations'
 import { useEventPhase } from './useEventPhase'
@@ -102,7 +103,7 @@ function Overview({ tournament }: { tournament: NormalisedTournament }) {
   return (
     <div className="space-y-4">
       <div className="card space-y-3">
-        <div className={`grid gap-2 ${scored ? 'grid-cols-3' : 'grid-cols-2'}`}>
+        <StatGrid>
           <StatTile value={registered.length} label="Registered" />
           <StatTile
             value={unpaid.length}
@@ -115,7 +116,7 @@ function Overview({ tournament }: { tournament: NormalisedTournament }) {
               label="Scored"
             />
           )}
-        </div>
+        </StatGrid>
         {scored && (
           <ScoringProgress scoredCount={scoredCount} total={matches.length} sealed={sealed} />
         )}

@@ -2,6 +2,7 @@ import React from 'react'
 import { resolveTeamName } from '../domain/teamDisplay'
 import { formatSetDiff } from '../domain/matchDisplay'
 import type { GroupStanding } from '../domain/types'
+import { RankMarker } from '../../../components/ui/RankMarker'
 
 interface GroupStandingsTableProps {
   standings: GroupStanding[]
@@ -20,7 +21,7 @@ export function GroupStandingsTable({
     <table className="w-full text-sm">
       <thead>
         <tr className="border-b border-lob-line">
-          <th className="text-2xs font-bold text-lob-muted-light uppercase tracking-wider text-left pb-2 w-6">
+          <th className="text-2xs font-bold text-lob-muted-light uppercase tracking-wider text-center pb-2 w-7">
             #
           </th>
           <th className="text-2xs font-bold text-lob-muted-light uppercase tracking-wider text-left pb-2">
@@ -48,7 +49,9 @@ export function GroupStandingsTable({
           return (
             <React.Fragment key={standing.team.id}>
               <tr className={isMine ? 'bg-lob-teal/5 border-l-2 border-lob-teal' : ''}>
-                <td className="py-2 text-xs text-lob-muted pl-1">{`#${standing.rank}`}</td>
+                <td className="py-2">
+                  <RankMarker rank={standing.rank} />
+                </td>
                 <td className="py-2">
                   <div
                     className={`flex items-center gap-2 ${onTeamClick ? 'cursor-pointer active:opacity-70' : ''}`}

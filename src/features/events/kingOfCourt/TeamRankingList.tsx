@@ -5,6 +5,7 @@ import { EmptyState } from '../../../components/ui/EmptyState'
 import { SignInPrompt } from '../../../components/ui/SignInPrompt'
 import { Spinner } from '../../../components/ui/Spinner'
 import { Well } from '../../../components/ui/Well'
+import { RankMarker } from '../../../components/ui/RankMarker'
 
 export type TeamRankingRow = {
   teamId: string
@@ -12,8 +13,6 @@ export type TeamRankingRow = {
   finalRank: number | null
   move: CourtMove | null
 }
-
-const MEDALS: Record<number, string> = { 1: '🥇', 2: '🥈', 3: '🥉' }
 
 // Rows arrive ranked first (rankedTeams). Unranked teams are listed after, by
 // name only: standings may be partial (D-026).
@@ -43,9 +42,7 @@ export default function TeamRankingList({
             className={`flex items-center gap-3 py-2 ${row.teamId === highlightTeamId ? 'font-bold' : ''}`}
             aria-current={row.teamId === highlightTeamId ? 'true' : undefined}
           >
-            <span className="w-7 text-center font-mono tabular-nums text-sm font-bold text-lob-muted">
-              {MEDALS[row.finalRank!] ?? row.finalRank}
-            </span>
+            <RankMarker rank={row.finalRank!} kind="medal" />
             <span className="min-w-0">
               <span className="block text-sm text-lob-dark">{row.label}</span>
               {row.move && <MoveLine move={row.move} courts={courts} />}

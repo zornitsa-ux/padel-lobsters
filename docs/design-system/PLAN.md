@@ -81,7 +81,8 @@ component doesn't fit, fix the component, not the call site.**
 | Empty list inside a card or modal    | `EmptyState variant="inline"`                        | exists |
 | Signed-out viewer                    | `SignInPrompt` (`variant="inline"` in a card)        | exists |
 | Admin-only page                      | `AdminRouteGuard redirectTo` (never a sign-in ask)   | exists |
-| Player or team row, ranked row       | `PlayerRow` + `RankMarker`                           | P6e-3  |
+| Player or team row, ranked row       | `PlayerRow` + `RankMarker` (`prefix`)                | exists |
+| Row of stat tiles                    | `StatGrid` of `StatTile`s (in a card or `Well`)      | exists |
 | Page section with a heading          | `Section` (`description` for a line under it)        | exists |
 | List of like items                   | `ListCard` + `LinkRow` (one card, divided rows)      | exists |
 | List row with its own controls       | `ListRow` (`PlayerRow`, buttons, anything under it)  | exists |
@@ -242,7 +243,7 @@ primitives (see the Log) before P3:
     - **P6e-3: `StatGrid` and `RankMarker`.** `StatGrid` for the StatTile
       grids (Event Manage Overview, Payments, league Manage Overview, the
       league team page, Your Stats); `RankMarker` + `PlayerRow highlighted`
-      for the hand-built rank prefixes (W1, #3, medals).
+      for the hand-built rank prefixes (W1, #3, medals). Done in #141.
     - **P6e-4: `SearchInput` and the `CollapsibleCard` heading.** The search
       field (icon, input, clear) for the five search fields; a heading
       element inside the `CollapsibleCard` header button (review of #76).
@@ -1636,3 +1637,28 @@ scrollable`, and so is the tips list. Open WhatsApp Community is a
     `RatingReview`'s captions under the level figures. The level picker's
     label is the form `.label`. The gallery's row labels use `.eyebrow`.
     `.eyebrow-accent` shares `.eyebrow`'s rule and only changes colour.
+
+- **2026-11-02.** P6e-3 on `design-system-p6e-statgrid-rank`.
+  - `StatGrid`: a row of `StatTile`s, one column per tile (two to four,
+    counting only tiles that render, so Event Manage's conditional "Scored"
+    tile needs no class switch). No surface: the caller's card or `Well`
+    holds it. Onto it: Event Manage Overview, Payments' summary (its
+    `mb-4` is the summary's `space-y-4`), league Manage Overview, the
+    league team page's record and Your Stats.
+  - `RankMarker`: a fixed-width rank before a row's name. `position` "#3"
+    (Registered, group standings, Oscars runners-up), `waitlist` "W2" in the
+    warning tone, `medal` 🥇🥈🥉 then "#4" (King of the Court ranking; was
+    a bare "4"). Tests and gallery entries for both.
+  - `PlayerRow highlighted` is not built: no list hand-builds a highlighted
+    `PlayerRow`. It lands with its first user.
+  - Left alone: the Scores ranking table's medal trophies (raw medal
+    colours, P7).
+  - Found: on Payments, the action buttons squeeze an unpaid player's name
+    to one letter on a phone (#140).
+  - Review: the team event's Registered and Waitlist rows (`TeamRow`)
+    were missed and are on `RankMarker` too, so both waitlists show "W2" in
+    the warning tone. `RankMarker` is `inline-block` (it kept no width in a
+    table cell), `w-7`, medals a size up, and an empty slot for a missing
+    rank (was "#0"). The standings' "#" header is centred over it. The
+    raffle's medals use `medalFor`. `StatGrid` counts tiles inside a
+    fragment one each and allows one column.

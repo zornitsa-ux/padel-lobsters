@@ -12,6 +12,7 @@ import { AlertBox } from '../../../components/ui/AlertBox'
 import { EmptyState } from '../../../components/ui/EmptyState'
 import { ListCard, ListRow } from '../../../components/ui/ListCard'
 import { Section } from '../../../components/ui/Section'
+import { RankMarker } from '../../../components/ui/RankMarker'
 
 interface RegisteredSectionProps {
   isCompleted: boolean
@@ -66,11 +67,7 @@ export default function RegisteredSection({
               <ListRow key={reg.id}>
                 <PlayerRow
                   player={p}
-                  prefix={
-                    <span className="text-xs text-lob-muted w-5 text-center font-bold">
-                      #{idx + 1}
-                    </span>
-                  }
+                  prefix={<RankMarker rank={idx + 1} />}
                   name={displayName(p)}
                   subtitle={`Level ${(p.playtomicLevel || 0).toFixed(1)}`}
                   trailing={

@@ -11,6 +11,7 @@ import { formatSetDiff, sortMatchesDesc } from '../domain/matchDisplay'
 import { DIVISION_LABELS } from '../domain/types'
 import type { LeagueTeam, LeagueMatch } from '../domain/types'
 import { Well } from '../../../components/ui/Well'
+import { StatGrid } from '../../../components/ui/StatGrid'
 
 interface TeamPageProps {
   team: LeagueTeam | null
@@ -100,12 +101,12 @@ export function TeamPage({ team, matches, teamById, onClose, onTeamClick }: Team
         <div>
           <p className="eyebrow mb-3">Group Stage Record</p>
           <Well>
-            <div className="grid grid-cols-4 gap-2">
+            <StatGrid>
               <StatTile label="W" value={record.wins} {...statTileProps} />
               <StatTile label="L" value={record.losses} {...statTileProps} />
               <StatTile label="Pts" value={record.wins} {...statTileProps} />
               <StatTile label="Set +/−" value={formatSetDiff(record.setDiff)} {...statTileProps} />
-            </div>
+            </StatGrid>
           </Well>
         </div>
 
