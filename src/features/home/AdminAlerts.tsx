@@ -1,10 +1,12 @@
 import React from 'react'
-import { AlertCircle } from 'lucide-react'
+import { AlertCircle, Cake } from 'lucide-react'
 import type { NormalisedTournament } from '../../lib/normalise'
 import type { NormalisedRegistration } from '../events/registrationQueries'
 import { upcomingBirthdays, type BirthdayPlayer } from './homeHelpers'
 import { TextButton } from '../../components/ui/TextButton'
 import { AlertBox } from '../../components/ui/AlertBox'
+import { ListCard, ListRow } from '../../components/ui/ListCard'
+import { Section } from '../../components/ui/Section'
 
 interface AdminAlertsProps {
   isAdmin: boolean
@@ -46,21 +48,25 @@ export default function AdminAlerts({
         />
       )}
 
-      {/* ── Birthday alerts (admin) ───────────────────────────── */}
       {upcoming7.length > 0 && (
-        <div className="card border-l-4 border-pink-300 bg-pink-50/40 space-y-2">
-          <p className="font-bold text-sm text-pink-700">🎂 Upcoming Birthdays</p>
-          {upcoming7.map(({ p, diff }) => (
-            <div key={p.id} className="flex items-center gap-2">
-              <span className="text-base">{diff === 0 ? '🎉' : '🎂'}</span>
-              <span className="text-sm font-semibold text-lob-slate">{p.name.split(' ')[0]}</span>
-              <span className="text-xs text-lob-muted ml-auto">
-                {diff === 0 ? 'Today! 🎈' : diff === 1 ? 'Tomorrow' : `In ${diff} days`}
-              </span>
-            </div>
-          ))}
-        </div>
+        <Section title="Upcoming birthdays" icon={<Cake />}>
+          <ListCard>
+            {upcoming7.map(({ p, diff }) => (
+              <ListRow key={p.id}>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-lob-dark">
+                    {p.name.split(' ')[0]}
+                  </span>
+                  <span className="ml-auto text-xs text-lob-muted">{birthdayWhen(diff)}</span>
+                </div>
+              </ListRow>
+            ))}
+          </ListCard>
+        </Section>
       )}
     </>
   )
 }
+
+const birthdayWhen = (diff: number): string =>
+  diff === 0 ? 'Today 🎉' : diff === 1 ? 'Tomorrow' : `In ${diff} days`

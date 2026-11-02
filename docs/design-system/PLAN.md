@@ -223,11 +223,11 @@ primitives (see the Log) before P3:
       the app info. Done in #129.
     - **P6d-2: admin tools.** Event Manage (Overview, the Payments banner,
       the Eligibility header), the King of the Court admin, league Manage
-      (Overview and Season), the merch admin items as one `ListCard`. In
-      progress.
+      (Overview and Season), the merch admin items as one `ListCard`. Done
+      in #130.
     - **P6d-3: You tab and Home.** `MyTournament` (one registration card,
       not seven copies), `MyRounds` (Up next and Your rounds), the Home
-      birthdays.
+      birthdays. Done in #133.
     - **P6d-4: Oscars and the Lobster Way page.** Intro and empty boxes,
       the phase banner, `SectionLabel`, `StatRow` and `ResultsView` as
       lists; the Lobster Way categories under Sections.
@@ -325,6 +325,10 @@ it suits.
   `PinSignInInterstitial` (both in the entry chunk) use `Modal`. After the
   PIN cutover (5 November) removes the interstitial, lazy-load the confirm
   sheet and re-measure with a `localdev` build.
+
+- **Remove the birthdays feature** (owner, 2026-11-02). We won't show
+  players' birthdays, so the Home "Upcoming birthdays" block goes rather
+  than being fixed (#132). Its own PR, outside the design system.
 
 ## Open owner calls
 
@@ -1480,3 +1484,33 @@ scrollable`, and so is the tips list. Open WhatsApp Community is a
     before. Found: shop items can't be reordered by touch or keyboard
     (#131). The StatTile
     grid repeated across five features is a `StatGrid` task under P6e.
+
+- **2026-11-01.** P6d-3 on `design-system-p6d-you-home`. No new ui pieces.
+  - `MyTournament`: the registration is one card (`RegistrationShell`): a
+    status line, an optional trailing Badge (Confirmed), then what to do
+    next (register, pay, the Tikkie-sent note). Each state fills it in
+    rather than building its own `.card`. The waitlist stays a
+    `WaitlistNotice` alert, shared with the event page. The team event's
+    cards (`TeamCard`, the captain's pay card) are left alone.
+  - `MyRounds`: an "Up next" `Section` holding the hero card, then "Your
+    rounds" as one `ListCard` of `ListRow`s with every other round in order
+    (the next one isn't repeated). The hero drops its "Up next" pill (the
+    heading says it) and its coral ring; its Round chip stays hand-built for
+    `Tag` (P6e). Rows lose their tinted, white and dashed boxes: a scored
+    round is muted with a check, score and outcome Badge; a sit-out keeps
+    the amber coffee when it's the current round.
+  - Home birthdays: an "Upcoming birthdays" `Section` (cake icon) over a
+    `ListCard`, a row per player with "Today 🎉", "Tomorrow" or "In n days".
+    The raw pink and left border go (`AdminAlerts` leaves the baseline).
+  - Found: the birthdays never show, because the roster from
+    `players_public` has no full `birthday` (#132). Seed matches store
+    courts as "Court 1", so seed screens read "Court Court 1"; the
+    generator writes "1", so real events are fine.
+  - Review: a player sitting out the round being played saw the next match
+    first, as "Up next", with the sit-out further down as a plain row. That
+    sit-out now leads "Up next" as a `warning` `AlertBox` (coffee icon,
+    "You're back for Round n" or "You're done playing"), before the hero
+    card, and leaves "Your rounds". It replaces the hand-built amber border
+    kept in P6c. The not-registered status line uses `StatusLine` like the
+    other states. The first-name split repeated across features is #134.
+  - Owner call: the birthdays feature is to be removed, not fixed (Later).

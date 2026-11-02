@@ -45,6 +45,6 @@ describe('AdminAlerts', () => {
     const birthday = new Date(1990, now.getMonth(), now.getDate(), 12).toISOString()
     renderAlerts({ players: [{ id: 'p1', name: 'Ada Lovelace', birthday }] })
     expect(screen.getByText('Ada')).toBeTruthy()
-    expect(screen.getByText(/today!/i)).toBeTruthy()
+    expect(screen.getByText('Today 🎉')).toBeTruthy()
   })
 })
