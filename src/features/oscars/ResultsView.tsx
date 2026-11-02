@@ -5,6 +5,7 @@ import { EmptyState } from '../../components/ui/EmptyState'
 import { ListCard, ListRow } from '../../components/ui/ListCard'
 import { groupOscarResultsByCategory, type OscarCategoryResult } from './oscarResults'
 import type { ResultRow } from './oscarsSchemas'
+import { RankMarker } from '../../components/ui/RankMarker'
 
 interface ResultsViewProps {
   results: ResultRow[]
@@ -95,9 +96,7 @@ function CategoryBody({ cat }: { cat: OscarCategoryResult }) {
               key={`${r.target_id}-${i}`}
               className="flex items-center gap-2 text-xs text-lob-slate"
             >
-              <span className="w-5 text-center font-semibold text-lob-muted-light">
-                {r.rank_in_category}
-              </span>
+              <RankMarker rank={Number(r.rank_in_category)} />
               <span className="flex-1 truncate">{r.target_name}</span>
               <span className="text-lob-muted">{votesLabel(Number(r.votes_count))}</span>
             </div>

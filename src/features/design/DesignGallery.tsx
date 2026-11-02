@@ -66,6 +66,8 @@ import { SegmentedControl } from '../../components/ui/SegmentedControl'
 import { Spinner } from '../../components/ui/Spinner'
 import { Skeleton } from '../../components/ui/Skeleton'
 import { StatTile } from '../../components/ui/StatTile'
+import { StatGrid } from '../../components/ui/StatGrid'
+import { RankMarker } from '../../components/ui/RankMarker'
 import { Well } from '../../components/ui/Well'
 import { PlaytomicLevelField } from '../players/ProfileFields'
 
@@ -677,11 +679,18 @@ function SectionListSection() {
         label="ListRow: a row with its own controls (PlayerRow, buttons, anything under it)"
         block
       >
+        <div className="mb-3 flex items-center gap-4">
+          <RankMarker rank={3} />
+          <RankMarker rank={2} kind="waitlist" />
+          <RankMarker rank={1} kind="medal" />
+          <RankMarker rank={4} kind="medal" />
+        </div>
         <div className="rounded-2xl bg-lob-cream p-3">
           <ListCard label="Registered">
             <ListRow>
               <PlayerRow
                 player={{ name: 'Theo' }}
+                prefix={<RankMarker rank={1} />}
                 name="Theo"
                 subtitle="Level 2.5"
                 trailing={
@@ -769,14 +778,14 @@ function WellSection() {
   const [level, setLevel] = useState('3.5')
   return (
     <GallerySection title="Well">
-      <Row label="Flat inset inside a card: no border, no shadow" block>
+      <Row label="Flat inset inside a card: no border, no shadow (a StatGrid here)" block>
         <Well>
-          <div className="grid grid-cols-4 gap-2">
+          <StatGrid>
             <StatTile label="W" value={3} />
             <StatTile label="L" value={1} />
             <StatTile label="Pts" value={3} />
             <StatTile label="Set +/−" value="+4" />
-          </div>
+          </StatGrid>
         </Well>
       </Row>
       <Row label="PlaytomicLevelField (players feature): one field in a Well" block>

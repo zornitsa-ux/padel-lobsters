@@ -3,6 +3,7 @@ import { useConfirm } from '../../../lib/confirmBus'
 import { StatTile } from '../../../components/ui/StatTile'
 import { Button } from '../../../components/ui/Button'
 import { Section } from '../../../components/ui/Section'
+import { StatGrid } from '../../../components/ui/StatGrid'
 import { useUpdateLeagueStatus } from '../hooks/useLeagueMutations'
 import { LEAGUE_PHASES, phaseReadiness } from '../domain/lifecycle'
 import { divisionProgress } from '../domain/progress'
@@ -55,11 +56,13 @@ function DivisionProgressSection({
   const progress = divisionProgress({ teams, matches, division })
   return (
     <Section title={DIVISION_LABELS[division]}>
-      <div className="card grid grid-cols-4 gap-2">
-        <StatTile value={progress.teams} label="Teams" />
-        <StatTile value={progressLabel(progress.group)} label="Group" />
-        <StatTile value={progressLabel(progress.semis)} label="Semis" />
-        <StatTile value={progressLabel(progress.finals)} label="Finals" />
+      <div className="card">
+        <StatGrid>
+          <StatTile value={progress.teams} label="Teams" />
+          <StatTile value={progressLabel(progress.group)} label="Group" />
+          <StatTile value={progressLabel(progress.semis)} label="Semis" />
+          <StatTile value={progressLabel(progress.finals)} label="Finals" />
+        </StatGrid>
       </div>
     </Section>
   )

@@ -42,6 +42,7 @@ import {
 } from './paymentStatus'
 import PaymentStatusBadge from './registration/PaymentStatusBadge'
 import { BADGE_TONE_CLASSES } from '../../components/ui/badgeTones'
+import { StatGrid } from '../../components/ui/StatGrid'
 
 const METHODS = [
   { value: 'tikkie', label: 'Tikkie' },
@@ -214,8 +215,8 @@ export default function Payments({
       </Section>
 
       {/* Summary */}
-      <div className="bg-lob-teal rounded-2xl p-4 text-white shadow-lg">
-        <div className="grid grid-cols-4 gap-2 mb-4">
+      <div className="bg-lob-teal rounded-2xl p-4 text-white shadow-lg space-y-4">
+        <StatGrid>
           <StatTile
             value={confirmed.length}
             label={PAYMENT_STATUS_INFO.paid.label}
@@ -244,7 +245,7 @@ export default function Payments({
             labelVariant="inverted"
             valueClassName="text-lob-danger-on-dark"
           />
-        </div>
+        </StatGrid>
 
         {costPerEntry > 0 && (
           <div className="bg-white/10 rounded-xl p-3">

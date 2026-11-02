@@ -6,6 +6,7 @@ import type { DisplayName, GetPlayer } from './utils'
 import { Button } from '../../../components/ui/Button'
 import { ListCard, ListRow } from '../../../components/ui/ListCard'
 import { Section } from '../../../components/ui/Section'
+import { RankMarker } from '../../../components/ui/RankMarker'
 
 interface WaitlistSectionProps {
   isCompleted: boolean
@@ -43,11 +44,7 @@ export default function WaitlistSection({
               <PlayerRow
                 player={p}
                 avatarTone="bg-lob-warning-soft text-lob-warning"
-                prefix={
-                  <span className="text-xs text-lob-warning-solid w-5 text-center font-bold">
-                    W{idx + 1}
-                  </span>
-                }
+                prefix={<RankMarker rank={idx + 1} kind="waitlist" />}
                 name={displayName(p)}
                 subtitle={`Waitlist position ${idx + 1}`}
                 trailing={

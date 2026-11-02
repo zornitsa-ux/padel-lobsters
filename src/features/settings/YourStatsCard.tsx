@@ -3,6 +3,7 @@ import { Award, Flame } from 'lucide-react'
 import { StatTile } from '../../components/ui/StatTile'
 import { TextButton } from '../../components/ui/TextButton'
 import { Section } from '../../components/ui/Section'
+import { StatGrid } from '../../components/ui/StatGrid'
 
 // Shape produced by AccountStatsSection from lib/playerStats — only the
 // fields this card renders are modelled here.
@@ -38,7 +39,7 @@ export default function YourStatsCard({ claimedId, myStats }: YourStatsCardProps
       action={<TextButton to={`/community/${claimedId}`}>View full profile</TextButton>}
     >
       <div className="card">
-        <div className="grid grid-cols-4 gap-2 text-center">
+        <StatGrid>
           <StatTile value={myStats.played} label="Played" valueClassName="text-lob-dark" />
           <StatTile value={myStats.won} label="Won" valueClassName="text-lob-success" />
           <StatTile value={myStats.lost} label="Lost" valueClassName="text-lob-danger" />
@@ -47,7 +48,7 @@ export default function YourStatsCard({ claimedId, myStats }: YourStatsCardProps
             label="Win Rate"
             valueClassName="text-lob-coral"
           />
-        </div>
+        </StatGrid>
 
         {myStats.played === 0 ? (
           <div className="mt-3 pt-3 border-t border-lob-line text-xs text-lob-muted text-center">
