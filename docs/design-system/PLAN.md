@@ -345,9 +345,7 @@ it suits.
 
 ## Open owner calls
 
-- **Eyebrow contrast** (P6e-2). `.eyebrow` in `lob-muted` is about 3.7:1 on
-  white, under WCAG AA's 4.5:1 for 10px text. `lob-slate` (about 7:1) passes
-  but reads heavier.
+- None.
 
 ## Log
 
@@ -1613,12 +1611,13 @@ scrollable`, and so is the tips list. Open WhatsApp Community is a
 
 - **2026-11-02.** P6e-2 on `design-system-p6e-eyebrow`. `.eyebrow` and
   `.eyebrow-accent` in `index.css` (components layer): `text-2xs`, bold,
-  uppercase, `tracking-wider`, in `lob-muted` or `lob-teal`. The hand-built
+  uppercase, `tracking-wider`, in `lob-slate` or `lob-teal`. The hand-built
   overlines came in six mixes (`text-2xs` / `text-xs`; `wide`, `wider`,
   `widest`; `muted-light`, `muted`, `teal`, coral, warning). Gallery entry.
-  - Colour: `lob-muted`, not the more common `muted-light` (about 2.3:1 on
-    white). `lob-muted` is about 3.7:1, still under WCAG AA's 4.5:1 for
-    10px text; `lob-teal` passes (about 4.9:1). Open owner call below.
+  - Colour (owner, 2026-11-02): `lob-slate`, about 7:1 on white, so 10px
+    text passes WCAG AA. The more common `muted-light` was about 2.3:1 and
+    `lob-muted` about 3.7:1. `lob-teal` passes (about 4.9:1). "Your Next
+    Event" on Home moves from coral to the teal accent (owner).
   - Coral and warning eyebrows on a white card (next event) take
     `.eyebrow-accent`. Eyebrows on a tinted surface keep the surface's
     colour as a utility over `.eyebrow`: Tip of the Day and the review

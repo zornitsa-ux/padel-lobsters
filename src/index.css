@@ -27,7 +27,7 @@
   /* ── Eyebrow: a small uppercase overline above a heading, value or group ── */
   .eyebrow,
   .eyebrow-accent {
-    @apply text-2xs font-bold uppercase tracking-wider text-lob-muted;
+    @apply text-2xs font-bold uppercase tracking-wider text-lob-slate;
   }
 
   .eyebrow-accent {
