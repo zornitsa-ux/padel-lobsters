@@ -37,8 +37,9 @@ const stamp = (iso: string | null | undefined) =>
 export function PhaseBanner({ status, startedAt, closedAt, sharedAt }: PhaseBannerProps) {
   if (status === 'active') {
     return (
-      <AlertBox variant="info" title={`Voting open since ${stamp(startedAt)}`}>
-        Players can vote until you end the game.
+      <AlertBox variant="info" title="Voting is open">
+        {startedAt ? `Started at ${stamp(startedAt)}. ` : ''}Players can vote until you end the
+        game.
       </AlertBox>
     )
   }

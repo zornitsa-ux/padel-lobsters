@@ -89,6 +89,7 @@ describe('groupOscarResultsByCategory', () => {
     const [cat] = groupOscarResultsByCategory(rows)
     expect(cat.winners).toHaveLength(2)
     expect(cat.winners.map((w) => w.target_id)).toEqual(['p1', 'p2'])
+    expect(cat.others.map((r) => r.target_id)).toEqual(['p3'])
   })
 
   it('sets topVotes from the first winner', () => {

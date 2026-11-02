@@ -31,25 +31,28 @@ export default function ResultsView({ results, collapsible = false }: ResultsVie
 
   return (
     <ListCard>
-      {categories.map((cat) => (
-        <ListRow key={cat.id}>
-          {collapsible ? (
-            <CollapsibleCard
-              className="space-y-2"
-              expanded={openIds.has(cat.id)}
-              onToggle={() => toggle(cat.id)}
-              header={<CategoryHeader cat={cat} hint={!openIds.has(cat.id)} />}
-            >
-              <CategoryBody cat={cat} />
-            </CollapsibleCard>
-          ) : (
-            <>
-              <CategoryHeader cat={cat} hint={false} />
-              <CategoryBody cat={cat} />
-            </>
-          )}
-        </ListRow>
-      ))}
+      {categories.map((cat) => {
+        const isOpen = openIds.has(cat.id)
+        return (
+          <ListRow key={cat.id}>
+            {collapsible ? (
+              <CollapsibleCard
+                className="space-y-2"
+                expanded={isOpen}
+                onToggle={() => toggle(cat.id)}
+                header={<CategoryHeader cat={cat} hint={!isOpen} />}
+              >
+                <CategoryBody cat={cat} />
+              </CollapsibleCard>
+            ) : (
+              <>
+                <CategoryHeader cat={cat} hint={false} />
+                <CategoryBody cat={cat} />
+              </>
+            )}
+          </ListRow>
+        )
+      })}
     </ListCard>
   )
 }
@@ -67,7 +70,7 @@ function CategoryHeader({ cat, hint }: { cat: OscarCategoryResult; hint: boolean
 const votesLabel = (n: number) => `${n} vote${n === 1 ? '' : 's'}`
 
 function CategoryBody({ cat }: { cat: OscarCategoryResult }) {
-  const others = cat.rows.filter((r) => Number(r.rank_in_category) !== 1)
+  const { others } = cat
   return (
     <>
       {cat.winners.length > 0 && (

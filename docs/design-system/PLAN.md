@@ -1521,18 +1521,19 @@ scrollable`, and so is the tips list. Open WhatsApp Community is a
     player voting, voting closed) are a line on the background under the
     title. The player's "Voting hasn't started yet" box is an `EmptyState`
     (`Gamepad2`, was a 🎮 emoji), and so is `ResultsView`'s "No votes were
-    cast" (`Vote`). The admin's "No data yet" is `EmptyState inline`.
+    cast" (`Vote`). The admin's "No data yet" while stats load is a
+    `Spinner inline`.
   - `SectionLabel` is gone: Categories and Live participation are
     `Section`s. The category editor is a `.card` (was hand-built white).
   - `PhaseBanner` "Active" (a white bordered box with a pulsing coral dot)
-    is an `info` `AlertBox`, "Voting open since 14:05", like the closed and
-    shared phases beside it.
+    is an `info` `AlertBox`, "Voting is open" (started at 14:05), like the
+    closed and shared phases beside it.
   - `StatRow` and `ResultsView`: one `ListCard`, a `ListRow` per category
     (each was a `CollapsibleCard` card). Rows that open keep
     `CollapsibleCard` without its card, as the Lobster Way admin questions
     do. `ResultsView` groups with `groupOscarResultsByCategory`, shared with
-    `OscarResultsList`, instead of its own copy. The trophy stays raw gold
-    (P7).
+    `OscarResultsList`, instead of its own copy; the helper also returns
+    `others` (rows that didn't win). The trophy stays raw gold (P7).
   - Dropped: the hand-built green "Shared with players" box under the
     results, which repeated the `PhaseBanner` above it. "Refreshes every 10
     seconds" was wrong (the screen loads on entry and on refocus, no poll);
@@ -1543,3 +1544,9 @@ scrollable`, and so is the tips list. Open WhatsApp Community is a
     story stays a cream `details` (P6c triage).
   - Not checkable on the seed: the active phase (no live session); unit
     tests cover it.
+  - Review: the loading state said "no data", and the active banner read
+    "Voting open since " with no start time; both fixed above. Found: the
+    player's "waiting for the admin to share" spinner and an expanded
+    category's voter lists don't update until the tab is refocused (#136).
+    Left: a Lobster Way category with no questions shows its heading over
+    nothing (it showed an empty card before).

@@ -6,9 +6,9 @@ import CategoryEditor from './CategoryEditor'
 import StatRow from './StatRow'
 import ResultsView from './ResultsView'
 import { AlertBox } from '../../components/ui/AlertBox'
-import { EmptyState } from '../../components/ui/EmptyState'
 import { ListCard, ListRow } from '../../components/ui/ListCard'
 import { Section } from '../../components/ui/Section'
+import { Spinner } from '../../components/ui/Spinner'
 import type { EditableCategory } from './CategoryEditor'
 import type { OscarsPhase } from './oscarsPhase'
 import type {
@@ -151,7 +151,7 @@ export default function AdminView({
             description="Updates when you open this screen or come back to it."
           >
             {adminStats.length === 0 ? (
-              <EmptyState variant="inline" title="No participation data yet" />
+              <Spinner size="inline" label="Loading participation…" />
             ) : (
               <ListCard>
                 {adminStats.map((s) => (
