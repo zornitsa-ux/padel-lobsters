@@ -9,7 +9,7 @@ interface StatRowProps {
   onToggle: () => void
 }
 
-/* ─── Admin: per-category live participation row ──────────────────────── */
+/* ─── Admin: per-category live participation, a row in a `ListCard` ───── */
 export default function StatRow({ stat, expanded, voters, onToggle }: StatRowProps) {
   const pct =
     stat.total_participants > 0 ? Math.round((stat.votes_count / stat.total_participants) * 100) : 0
@@ -17,7 +17,7 @@ export default function StatRow({ stat, expanded, voters, onToggle }: StatRowPro
   const notVoted = (voters || []).filter((v) => !v.voted)
   return (
     <CollapsibleCard
-      className="card space-y-2"
+      className="space-y-2"
       expanded={expanded}
       onToggle={onToggle}
       header={

@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react'
-import { RotateCw } from 'lucide-react'
+import { Gamepad2, RotateCw } from 'lucide-react'
 import { Shell } from './OscarsShell'
 import CategoryGrid from './CategoryGrid'
 import ResultsView from './ResultsView'
 import { AlertBox } from '../../components/ui/AlertBox'
+import { EmptyState } from '../../components/ui/EmptyState'
 import { Spinner } from '../../components/ui/Spinner'
 import type { OscarsPhase } from './oscarsPhase'
 import type { CategoryRow, ResultRow } from './oscarsSchemas'
@@ -41,13 +42,11 @@ export default function PlayerView({
   if (phase === 'not_created' || phase === 'pre_start') {
     return (
       <Shell title="🦞 Lobster Games" headerRight={headerRight}>
-        <div className="bg-white rounded-2xl p-6 text-center space-y-3">
-          <p className="text-5xl">🎮</p>
-          <p className="text-lg font-bold text-lob-slate">Voting hasn&apos;t started yet</p>
-          <p className="text-sm text-lob-muted">
-            Your admin will open Lobster Oscars at some point during the tournament.
-          </p>
-        </div>
+        <EmptyState
+          icon={<Gamepad2 />}
+          title="Voting hasn't started yet"
+          description="Your admin will open Lobster Oscars at some point during the tournament."
+        />
       </Shell>
     )
   }
@@ -55,13 +54,11 @@ export default function PlayerView({
   // Active — category tile grid
   if (phase === 'active') {
     return (
-      <Shell title="🦞 Lobster Games" headerRight={headerRight}>
-        <div className="bg-white rounded-2xl p-4 mb-3">
-          <p className="text-sm text-lob-slate leading-snug">
-            Vote for your favorites in each category. You can change your vote anytime until the
-            admin closes the games.
-          </p>
-        </div>
+      <Shell
+        title="🦞 Lobster Games"
+        headerRight={headerRight}
+        intro="Vote for your favorites in each category. You can change your vote anytime until the admin closes the games."
+      >
         {error && (
           <AlertBox variant="error" onDismiss={onDismissError}>
             {error}
@@ -72,7 +69,7 @@ export default function PlayerView({
           myVoteByCat={myVoteByCat}
           onSelect={onSelectCategory}
         />
-        <p className="text-center text-xs text-lob-muted-light pt-3">
+        <p className="text-center text-xs text-lob-muted-light">
           <span className="font-semibold text-lob-slate">{Object.keys(myVoteByCat).length}</span> of{' '}
           {categories.length} voted
         </p>
@@ -83,20 +80,18 @@ export default function PlayerView({
   // Ended — waiting for share
   if (phase === 'ended') {
     return (
-      <Shell title="🦞 Voting closed" headerRight={headerRight}>
-        <div className="bg-white rounded-2xl p-4 mb-3">
-          <p className="text-sm text-lob-slate leading-snug">
-            Voting is closed. Your admin will share the final results shortly. Below is a recap of
-            who you voted for.
-          </p>
-        </div>
+      <Shell
+        title="🦞 Voting closed"
+        headerRight={headerRight}
+        intro="Voting is closed. Your admin will share the final results shortly. Below is a recap of who you voted for."
+      >
         <CategoryGrid
           categories={categories}
           myVoteByCat={myVoteByCat}
           onSelect={null}
           showWaitingState
         />
-        <p className="text-center text-xs text-lob-muted-light pt-3 flex items-center justify-center gap-1">
+        <p className="text-center text-xs text-lob-muted-light flex items-center justify-center gap-1">
           <RotateCw size={11} className="animate-spin" /> waiting for the admin to share
         </p>
       </Shell>

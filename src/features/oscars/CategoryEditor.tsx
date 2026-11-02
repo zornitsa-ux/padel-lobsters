@@ -35,7 +35,7 @@ export default function CategoryEditor({ cats, onChange, onReset }: CategoryEdit
     onChange(next)
   }
   return (
-    <div className="bg-white rounded-2xl p-3 space-y-2">
+    <div className="card space-y-2">
       <ListCard inset>
         {cats.map((c, i) => (
           <ListRow key={i}>

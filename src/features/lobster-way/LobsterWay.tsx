@@ -1,5 +1,7 @@
 import React, { useRef } from 'react'
 import { PageHeader } from '../../components/ui/PageHeader'
+import { ListCard, ListRow } from '../../components/ui/ListCard'
+import { Section } from '../../components/ui/Section'
 import { useSettings } from '../settings/useSettings'
 import { resolveLobsterWayContent, type LobsterWayItem } from '../../data/lobsterWayContent'
 
@@ -14,16 +16,16 @@ const ACCORDION_GROUP = 'lobster-way'
 function AnswerBody({ item }: { item: LobsterWayItem }) {
   return (
     <div className="mt-2 space-y-2">
-      <p className="text-sm text-gray-600 leading-relaxed">{item.a}</p>
+      <p className="text-sm text-lob-slate leading-relaxed">{item.a}</p>
 
       {item.list && (
         <ul className="space-y-1.5">
           {item.list.map((entry, i) => (
-            <li key={i} className="text-sm text-gray-600 leading-relaxed flex gap-2">
+            <li key={i} className="text-sm text-lob-slate leading-relaxed flex gap-2">
               {entry.emoji && <span className="flex-shrink-0">{entry.emoji}</span>}
               <span>
                 {entry.label && (
-                  <span className="font-semibold text-gray-700">{entry.label}: </span>
+                  <span className="font-semibold text-lob-dark">{entry.label}: </span>
                 )}
                 {entry.text}
               </span>
@@ -35,8 +37,8 @@ function AnswerBody({ item }: { item: LobsterWayItem }) {
       {item.steps && (
         <ol className="space-y-3 list-decimal list-inside">
           {item.steps.map((step, i) => (
-            <li key={i} className="text-sm text-gray-600 leading-relaxed">
-              <span className="font-semibold text-gray-700">{step.title}</span> {step.text}
+            <li key={i} className="text-sm text-lob-slate leading-relaxed">
+              <span className="font-semibold text-lob-dark">{step.title}</span> {step.text}
               {step.image && (
                 <img
                   src={step.image}
@@ -50,7 +52,7 @@ function AnswerBody({ item }: { item: LobsterWayItem }) {
         </ol>
       )}
 
-      {item.note && <p className="text-sm text-gray-600 leading-relaxed">{item.note}</p>}
+      {item.note && <p className="text-sm text-lob-slate leading-relaxed">{item.note}</p>}
     </div>
   )
 }
@@ -96,34 +98,31 @@ export default function LobsterWay() {
                     ▾
                   </span>
                 </summary>
-                <p className="text-sm text-gray-700 leading-relaxed italic mt-2">{section.story}</p>
+                <p className="text-sm text-lob-dark leading-relaxed italic mt-2">{section.story}</p>
               </details>
             ) : (
-              <div className="card space-y-2">
-                <h2 className="font-bold text-gray-700 text-sm">{section.label}</h2>
-                <div className="divide-y divide-lob-line">
+              <Section title={section.label}>
+                <ListCard>
                   {(section.items ?? []).map((item) => (
-                    <details
-                      key={item.q}
-                      name={ACCORDION_GROUP}
-                      className="group py-2.5 first:pt-0 last:pb-0"
-                    >
-                      <summary className="flex items-center justify-between gap-3 cursor-pointer list-none text-sm font-semibold text-gray-800 marker:content-none">
-                        {item.q}
-                        <span className="text-gray-400 text-xs flex-shrink-0 transition-transform group-open:rotate-180">
-                          ▾
-                        </span>
-                      </summary>
-                      <AnswerBody item={item} />
-                    </details>
+                    <ListRow key={item.q}>
+                      <details name={ACCORDION_GROUP} className="group">
+                        <summary className="flex items-center justify-between gap-3 cursor-pointer list-none text-sm font-semibold text-lob-dark marker:content-none">
+                          {item.q}
+                          <span className="text-lob-muted-light text-xs flex-shrink-0 transition-transform group-open:rotate-180">
+                            ▾
+                          </span>
+                        </summary>
+                        <AnswerBody item={item} />
+                      </details>
+                    </ListRow>
                   ))}
-                </div>
-              </div>
+                </ListCard>
+              </Section>
             )}
           </div>
         ))}
 
-        <p className="text-xs text-gray-400 text-center pt-2">
+        <p className="text-xs text-lob-muted-light text-center pt-2">
           Question not here? Ask in the Padel Lobsters WhatsApp group.
         </p>
       </div>

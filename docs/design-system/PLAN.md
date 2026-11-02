@@ -216,21 +216,21 @@ primitives (see the Log) before P3:
       group formation teams).~~ Done in #125.
     - ~~**P6c-3: tinted boxes inside cards.** Alerts onto `AlertBox`, the rest
       onto `Well` or plain text.~~ Done in #126.
-15. **P6d: sections, not cards.** Account, settings and admin tools: each
+15. ~~**P6d: sections, not cards.** Account, settings and admin tools: each
     section is a `Section` on the background, not a card. Inventory and owner
-    calls in the Log (2026-10-31). Four PRs:
-    - **P6d-1: Account.** Every Account card, the admin settings on it, and
-      the app info. Done in #129.
-    - **P6d-2: admin tools.** Event Manage (Overview, the Payments banner,
+    calls in the Log (2026-10-31). Four PRs:~~
+    - ~~**P6d-1: Account.** Every Account card, the admin settings on it, and
+      the app info.~~ Done in #129.
+    - ~~**P6d-2: admin tools.** Event Manage (Overview, the Payments banner,
       the Eligibility header), the King of the Court admin, league Manage
-      (Overview and Season), the merch admin items as one `ListCard`. Done
-      in #130.
-    - **P6d-3: You tab and Home.** `MyTournament` (one registration card,
+      (Overview and Season), the merch admin items as one `ListCard`.~~
+      Done in #130.
+    - ~~**P6d-3: You tab and Home.** `MyTournament` (one registration card,
       not seven copies), `MyRounds` (Up next and Your rounds), the Home
-      birthdays. Done in #133.
-    - **P6d-4: Oscars and the Lobster Way page.** Intro and empty boxes,
+      birthdays.~~ Done in #133.
+    - ~~**P6d-4: Oscars and the Lobster Way page.** Intro and empty boxes,
       the phase banner, `SectionLabel`, `StatRow` and `ResultsView` as
-      lists; the Lobster Way categories under Sections.
+      lists; the Lobster Way categories under Sections.~~ In progress.
 16. **P6e: labels and the rest.** Builds `Tag` (names a thing: Court 2, Round
     3, a shirt size; `Badge` stays for states) and moves the identity labels
     onto it (about ten); `.eyebrow` and the hand-built eyebrows (about 39
@@ -1514,3 +1514,32 @@ scrollable`, and so is the tips list. Open WhatsApp Community is a
     kept in P6c. The not-registered status line uses `StatusLine` like the
     other states. The first-name split repeated across features is #134.
   - Owner call: the birthdays feature is to be removed, not fixed (Later).
+
+- **2026-11-02.** P6d-4 on `design-system-p6d-oscars-lobster-way`. No new ui
+  pieces.
+  - Oscars `Shell` gains `intro`: the three white intro boxes (admin start,
+    player voting, voting closed) are a line on the background under the
+    title. The player's "Voting hasn't started yet" box is an `EmptyState`
+    (`Gamepad2`, was a 🎮 emoji), and so is `ResultsView`'s "No votes were
+    cast" (`Vote`). The admin's "No data yet" is `EmptyState inline`.
+  - `SectionLabel` is gone: Categories and Live participation are
+    `Section`s. The category editor is a `.card` (was hand-built white).
+  - `PhaseBanner` "Active" (a white bordered box with a pulsing coral dot)
+    is an `info` `AlertBox`, "Voting open since 14:05", like the closed and
+    shared phases beside it.
+  - `StatRow` and `ResultsView`: one `ListCard`, a `ListRow` per category
+    (each was a `CollapsibleCard` card). Rows that open keep
+    `CollapsibleCard` without its card, as the Lobster Way admin questions
+    do. `ResultsView` groups with `groupOscarResultsByCategory`, shared with
+    `OscarResultsList`, instead of its own copy. The trophy stays raw gold
+    (P7).
+  - Dropped: the hand-built green "Shared with players" box under the
+    results, which repeated the `PhaseBanner` above it. "Refreshes every 10
+    seconds" was wrong (the screen loads on entry and on refocus, no poll);
+    it is now Live participation's description, saying so.
+  - Lobster Way page: each category is a `Section` over a `ListCard`, a
+    `ListRow` per question (was a card with an `h2` and divided rows). Raw
+    grays onto `lob-dark`, `lob-slate` and `lob-muted-light`. The Origin
+    story stays a cream `details` (P6c triage).
+  - Not checkable on the seed: the active phase (no live session); unit
+    tests cover it.

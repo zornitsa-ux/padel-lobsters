@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import { Play, X, Share2, Loader2, Check } from 'lucide-react'
-import { Shell, SectionLabel, PhaseBanner } from './OscarsShell'
+import { Play, X, Share2, Loader2 } from 'lucide-react'
+import { Shell, PhaseBanner } from './OscarsShell'
 import { buildDefaultCategories } from './oscarCategories'
 import CategoryEditor from './CategoryEditor'
 import StatRow from './StatRow'
 import ResultsView from './ResultsView'
 import { AlertBox } from '../../components/ui/AlertBox'
+import { EmptyState } from '../../components/ui/EmptyState'
+import { ListCard, ListRow } from '../../components/ui/ListCard'
+import { Section } from '../../components/ui/Section'
 import type { EditableCategory } from './CategoryEditor'
 import type { OscarsPhase } from './oscarsPhase'
 import type {
@@ -76,8 +79,7 @@ export default function AdminView({
     return buildDefaultCategories(regPlayers)
   }, [editCats, categories, regPlayers])
 
-  // Load the expanded category's voter list once on expand. Re-expanding (or the
-  // header refresh / tab refocus driving loadAdminStats) re-pulls it — no poll.
+  // Load the expanded category's voter list once on expand. Re-expanding re-pulls it — no poll.
   useEffect(() => {
     if (!expandedStatCatId || phase !== 'active') return
     loadCategoryVoters(expandedStatCatId)
@@ -95,22 +97,25 @@ export default function AdminView({
   /* ── pre-start / not-created: configure + start ───────────────────────── */
   if (phase === 'not_created' || phase === 'pre_start') {
     return (
-      <Shell title="🦞 Lobster Games" headerRight={headerRight}>
+      <Shell
+        title="🦞 Lobster Games"
+        headerRight={headerRight}
+        intro={
+          <>
+            <span className="font-semibold text-lob-dark">Async Lobster Oscars.</span> Once you
+            start, players vote any time during the tournament. End voting when the tournament wraps
+            up. Results stay private to you until you press <em>Share</em>.
+          </>
+        }
+      >
         <div className="space-y-3">
-          <div className="bg-white rounded-2xl p-4">
-            <p className="text-sm text-lob-slate leading-snug">
-              <span className="font-semibold text-lob-dark">Async Lobster Oscars.</span> Once you
-              start, players vote any time during the tournament. End voting when the tournament
-              wraps up. Results stay private to you until you press <em>Share</em>.
-            </p>
-          </div>
-
-          <SectionLabel>Categories</SectionLabel>
-          <CategoryEditor
-            cats={baseCats}
-            onChange={setEditCats}
-            onReset={() => setEditCats(buildDefaultCategories(regPlayers))}
-          />
+          <Section title="Categories">
+            <CategoryEditor
+              cats={baseCats}
+              onChange={setEditCats}
+              onReset={() => setEditCats(buildDefaultCategories(regPlayers))}
+            />
+          </Section>
 
           {error && (
             <AlertBox variant="error" onDismiss={onDismissError}>
@@ -141,26 +146,31 @@ export default function AdminView({
       <Shell title="🦞 Lobster Games" headerRight={headerRight}>
         <div className="space-y-3">
           <PhaseBanner status="active" startedAt={session?.started_at} />
-          <SectionLabel>Live participation</SectionLabel>
-          {adminStats.length === 0 && (
-            <div className="bg-white rounded-2xl p-4 text-center text-sm text-lob-muted-light">
-              No data yet — refreshing…
-            </div>
-          )}
-          {adminStats.map((s) => (
-            <StatRow
-              key={s.category_id}
-              stat={s}
-              expanded={expandedStatCatId === s.category_id}
-              voters={categoryVoters[s.category_id]}
-              onToggle={() =>
-                setExpandedStatCatId((prev) => (prev === s.category_id ? null : s.category_id))
-              }
-            />
-          ))}
-          <p className="text-xs text-lob-muted-light text-center pt-1">
-            Refreshes every 10 seconds.
-          </p>
+          <Section
+            title="Live participation"
+            description="Updates when you open this screen or come back to it."
+          >
+            {adminStats.length === 0 ? (
+              <EmptyState variant="inline" title="No participation data yet" />
+            ) : (
+              <ListCard>
+                {adminStats.map((s) => (
+                  <ListRow key={s.category_id}>
+                    <StatRow
+                      stat={s}
+                      expanded={expandedStatCatId === s.category_id}
+                      voters={categoryVoters[s.category_id]}
+                      onToggle={() =>
+                        setExpandedStatCatId((prev) =>
+                          prev === s.category_id ? null : s.category_id,
+                        )
+                      }
+                    />
+                  </ListRow>
+                ))}
+              </ListCard>
+            )}
+          </Section>
 
           {error && (
             <AlertBox variant="error" onDismiss={onDismissError}>
@@ -201,22 +211,16 @@ export default function AdminView({
           </AlertBox>
         )}
 
-        <div className="pt-2">
-          {phase === 'ended' ? (
-            <Button
-              fullWidth
-              icon={busy ? <Loader2 className="animate-spin" /> : <Share2 />}
-              onClick={onShare}
-              disabled={busy}
-            >
-              Share with players
-            </Button>
-          ) : (
-            <div className="w-full bg-lob-success-light text-lob-success font-semibold py-3 rounded-xl text-sm flex items-center justify-center gap-2">
-              <Check size={16} /> Shared with players
-            </div>
-          )}
-        </div>
+        {phase === 'ended' && (
+          <Button
+            fullWidth
+            icon={busy ? <Loader2 className="animate-spin" /> : <Share2 />}
+            onClick={onShare}
+            disabled={busy}
+          >
+            Share with players
+          </Button>
+        )}
       </div>
     </Shell>
   )
