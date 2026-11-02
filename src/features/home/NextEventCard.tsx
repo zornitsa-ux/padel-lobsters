@@ -81,9 +81,7 @@ export default function NextEventCard({
 
   return (
     <div className="card-elevated">
-      <p className="text-2xs font-bold text-lob-coral uppercase tracking-wide mb-1">
-        Your Next Event
-      </p>
+      <p className="eyebrow-accent mb-1">Your Next Event</p>
       <h2 className="text-lg font-bold text-lob-dark">{upcoming.name}</h2>
       {/* Match the Event page header exactly: DateTile + bold date label
           + time/duration on a second line + add-to-calendar icon. */}

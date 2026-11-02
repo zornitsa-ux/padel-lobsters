@@ -346,6 +346,10 @@ function StatusSection() {
         <Tag label="M" />
         <Tag label="Mixed" />
       </Row>
+      <Row label="Eyebrow (.eyebrow / .eyebrow-accent): a small overline">
+        <p className="eyebrow">Match metrics</p>
+        <p className="eyebrow-accent">Lobster review</p>
+      </Row>
       <Row label="Badge icon (the badge sizes it)">
         <Badge tone="success" icon={<Check />} label="You're registered!" />
         <Badge tone="neutral" icon={<EyeOff />} label="Hidden" />

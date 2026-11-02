@@ -11,7 +11,7 @@ const formatPinDate = (iso: string) =>
 function NameList({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1">
-      <p className="text-xs font-bold text-lob-muted uppercase tracking-wide">{title}</p>
+      <p className="eyebrow">{title}</p>
       <ul className="text-sm text-lob-slate space-y-0.5">{children}</ul>
     </div>
   )
@@ -53,9 +53,7 @@ export default function AuthReadinessPanel() {
 
   return (
     <div className="card space-y-3" data-testid="auth-readiness">
-      <p className="text-xs font-bold text-lob-muted uppercase tracking-wide">
-        Sign-in readiness · PINs stop working on {PIN_SUNSET_LABEL}
-      </p>
+      <p className="eyebrow">Sign-in readiness · PINs stop working on {PIN_SUNSET_LABEL}</p>
       {isLoading && <Spinner size="inline" />}
       {isError && (
         <AlertBox variant="error" size="sm">

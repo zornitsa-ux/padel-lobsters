@@ -9,6 +9,7 @@ import type { Player } from '../../lib/normalise'
 import { Button } from '../../components/ui/Button'
 import { TextButton } from '../../components/ui/TextButton'
 import { OptionTile } from '../../components/ui/OptionTile'
+import { Badge } from '../../components/ui/Badge'
 
 interface PlayerCategoryScreenProps {
   category: CategoryRow
@@ -99,11 +100,7 @@ export default function PlayerCategoryScreen({
                     <span className="font-semibold text-[13px] flex-1 min-w-0 truncate text-lob-dark">
                       {shortName(p)}
                     </span>
-                    {isYou && (
-                      <span className="text-[9px] uppercase tracking-wide font-semibold text-lob-muted bg-lob-line-strong rounded px-1.5 py-0.5">
-                        you
-                      </span>
-                    )}
+                    {isYou && <Badge tone="outline" label="You" />}
                     {isMyVote && <Check size={14} className="text-lob-teal flex-shrink-0" />}
                   </span>
                   <span className="block text-[10.5px] text-lob-muted leading-snug space-y-0.5">

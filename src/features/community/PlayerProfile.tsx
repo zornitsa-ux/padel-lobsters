@@ -173,9 +173,7 @@ export default function PlayerProfile({
       {/* Learned level — admin-only (mm_rating/mm_sigma, admin RPC) */}
       {isAdmin && learned && (
         <div className="flex items-center gap-1.5 text-xs text-lob-muted">
-          <span className="text-2xs font-bold text-lob-teal uppercase tracking-wider">
-            Learned level
-          </span>
+          <span className="eyebrow-accent">Learned level</span>
           <span className="font-bold text-lob-slate">{learned.mu.toFixed(2)}</span>
           <span className={learnedDelta >= 0 ? 'text-lob-success' : 'text-lob-danger'}>
             ({learnedDelta >= 0 ? '+' : ''}
@@ -200,9 +198,7 @@ export default function PlayerProfile({
       {/* Recent form — last 5 matches */}
       {stats.recentForm.length > 0 && (
         <div>
-          <p className="text-2xs font-bold text-lob-muted-light uppercase tracking-wider mb-1.5">
-            Last {stats.recentForm.length}
-          </p>
+          <p className="eyebrow mb-1.5">Last {stats.recentForm.length}</p>
           <div className="flex gap-1">
             {stats.recentForm.map((r, i) => (
               <span
@@ -225,15 +221,11 @@ export default function PlayerProfile({
       {/* Detailed match metrics — game points, streaks, averages */}
       {stats.played > 0 && (
         <div>
-          <p className="text-2xs font-bold text-lob-muted-light uppercase tracking-wider mb-1.5">
-            Match Metrics
-          </p>
+          <p className="eyebrow mb-1.5">Match Metrics</p>
           <Well>
             <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
               <div>
-                <span className="text-lob-muted-light text-2xs font-semibold uppercase tracking-wide block">
-                  Points for / against
-                </span>
+                <span className="eyebrow block">Points for / against</span>
                 <span className="text-lob-slate font-bold">
                   {stats.pointsFor} – {stats.pointsAgainst}
                   <span
@@ -245,26 +237,20 @@ export default function PlayerProfile({
                 </span>
               </div>
               <div>
-                <span className="text-lob-muted-light text-2xs font-semibold uppercase tracking-wide block">
-                  Avg per match
-                </span>
+                <span className="eyebrow block">Avg per match</span>
                 <span className="text-lob-slate font-bold">
                   {stats.avgPointsFor.toFixed(1)} – {stats.avgPointsAgainst.toFixed(1)}
                 </span>
               </div>
               {stats.bestWinStreak > 0 && (
                 <div>
-                  <span className="text-lob-muted-light text-2xs font-semibold uppercase tracking-wide block">
-                    Best win streak
-                  </span>
+                  <span className="eyebrow block">Best win streak</span>
                   <span className="text-lob-success font-bold">🔥 {stats.bestWinStreak}</span>
                 </div>
               )}
               {stats.worstLossStreak > 0 && (
                 <div>
-                  <span className="text-lob-muted-light text-2xs font-semibold uppercase tracking-wide block">
-                    Longest skid
-                  </span>
+                  <span className="eyebrow block">Longest skid</span>
                   <span className="text-lob-danger font-bold">🧊 {stats.worstLossStreak}</span>
                 </div>
               )}
@@ -276,9 +262,7 @@ export default function PlayerProfile({
       {/* Nemesis + Best / Worst partner row */}
       {(nemesis || bestPartner || worstPartner) && (
         <div>
-          <p className="text-2xs font-bold text-lob-muted-light uppercase tracking-wider mb-1.5">
-            Rivalries & Chemistry
-          </p>
+          <p className="eyebrow mb-1.5">Rivalries & Chemistry</p>
           <div className="space-y-1 text-xs">
             {nemesis && (
               <div className="flex items-center justify-between">
@@ -318,9 +302,7 @@ export default function PlayerProfile({
       {/* Head-to-head — top 5 opponent pairs */}
       {topH2HPairs.length > 0 && (
         <div>
-          <p className="text-2xs font-bold text-lob-muted-light uppercase tracking-wider mb-1.5">
-            Head to Head
-          </p>
+          <p className="eyebrow mb-1.5">Head to Head</p>
           <div className="space-y-1">
             {topH2HPairs.map((h, i) => (
               <div key={i} className="flex items-center justify-between text-xs">
@@ -346,9 +328,7 @@ export default function PlayerProfile({
       {/* Tournament history — clickable */}
       {stats.playerTournaments.length > 0 && (
         <div>
-          <p className="text-2xs font-bold text-lob-muted-light uppercase tracking-wider mb-1.5">
-            Tournaments
-          </p>
+          <p className="eyebrow mb-1.5">Tournaments</p>
           <ChipGroup ariaLabel="Tournaments played">
             {playerTournaments.map((t) => (
               <Chip
@@ -373,9 +353,7 @@ export default function PlayerProfile({
       {isAdmin && (
         <div className="space-y-1">
           <div className="flex items-center justify-between">
-            <p className="text-2xs font-semibold text-lob-muted-light uppercase tracking-wider">
-              Admin only
-            </p>
+            <p className="eyebrow">Admin only</p>
             {pii.revealed && !pii.isLoading && (
               <TextButton tone="neutral" icon={<EyeOff size={12} />} onClick={pii.hide}>
                 Hide
@@ -425,9 +403,7 @@ export default function PlayerProfile({
       {/* Player tagline / notes with saved prompt label */}
       {(p.tagline || p.notes) && (
         <Well>
-          <p className="text-2xs font-bold text-lob-teal uppercase tracking-wider">
-            {p.taglineLabel || p.tagline_label || '💬 War Cry'}
-          </p>
+          <p className="eyebrow-accent">{p.taglineLabel || p.tagline_label || '💬 War Cry'}</p>
           <p className="text-xs text-lob-slate italic">"{p.tagline || p.notes}"</p>
         </Well>
       )}
@@ -437,9 +413,7 @@ export default function PlayerProfile({
       {isAdmin && (
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-2xs font-bold text-lob-muted-light uppercase tracking-wider mb-0.5">
-              Sign-in invite
-            </p>
+            <p className="eyebrow mb-0.5">Sign-in invite</p>
             <p className="text-xs text-lob-muted leading-snug">
               Emails the player how to sign in. Contains no password or code.
             </p>

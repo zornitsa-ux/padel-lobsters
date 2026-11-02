@@ -55,7 +55,7 @@ export default function TeamRankingList({
       </ol>
       {unranked.length > 0 && (
         <div className="space-y-1">
-          <p className="text-xs font-semibold text-lob-muted-light uppercase">Not ranked</p>
+          <p className="eyebrow">Not ranked</p>
           <ul className="text-sm text-lob-slate space-y-1">
             {unranked.map((row) => (
               <li key={row.teamId}>{row.label}</li>

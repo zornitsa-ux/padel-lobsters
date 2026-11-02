@@ -111,13 +111,9 @@ export function KnockoutBracket({
   return (
     <div className="overflow-x-auto pb-2">
       <div className="flex min-w-max mb-2">
-        <div className="w-36 text-2xs font-bold text-lob-muted-light uppercase tracking-wider text-center">
-          Semi-finals
-        </div>
+        <div className="eyebrow w-36 text-center">Semi-finals</div>
         <div className="w-10" />
-        <div className="w-36 text-2xs font-bold text-lob-muted-light uppercase tracking-wider text-center">
-          Final
-        </div>
+        <div className="eyebrow w-36 text-center">Final</div>
       </div>
 
       <div className="relative flex items-stretch min-w-max" ref={containerRef}>

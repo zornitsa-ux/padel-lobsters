@@ -98,7 +98,7 @@ function NextRoundCard({ view, getPlayer }: { view: MyMatchView; getPlayer: GetP
       </div>
 
       <div className="text-center">
-        <p className="text-xs font-semibold text-lob-muted-light uppercase tracking-wide">vs</p>
+        <p className="eyebrow">vs</p>
         <div className="flex items-center justify-center gap-3 mt-1">
           {opponents.map((opp, i) => (
             <div key={view.opponentIds[i] ?? i} className="flex items-center gap-1.5">

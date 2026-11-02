@@ -98,7 +98,7 @@ component doesn't fit, fix the component, not the call site.**
 | Page tabs (route or in-page)         | `PageHeader tabs` (`to` or `onClick`)                | exists |
 | Loading                              | `Spinner` (`size="inline"` in a card) / `Skeleton`   | exists |
 | Identity label (Court 2, a size)     | `Tag` (a state is a `Badge`)                         | exists |
-| Eyebrow / overline                   | `.eyebrow` / `.eyebrow-accent`                       | P6e-2  |
+| Eyebrow / overline                   | `.eyebrow` / `.eyebrow-accent`                       | exists |
 
 ### Buttons and chips (owner, 2026-10-25)
 
@@ -238,7 +238,7 @@ primitives (see the Log) before P3:
       event format); `Badge` stays for states. The hand-built identity pills
       move onto it. Done in #138.
     - **P6e-2: `.eyebrow`.** `.eyebrow` / `.eyebrow-accent` and the
-      hand-built uppercase overlines (about 45 in 28 files).
+      hand-built uppercase overlines (about 45 in 28 files). In progress.
     - **P6e-3: `StatGrid` and `RankMarker`.** `StatGrid` for the StatTile
       grids (Event Manage Overview, Payments, league Manage Overview, the
       league team page, Your Stats); `RankMarker` + `PlayerRow highlighted`
@@ -1608,3 +1608,23 @@ scrollable`, and so is the tips list. Open WhatsApp Community is a
     surcharge and a print step (the player's own order keeps a `Tag`).
     `Badge` and `Tag` share one shell (`labelShell.ts`). The profile's match
     record stays a `Tag`, as planned in P6c.
+
+- **2026-11-02.** P6e-2 on `design-system-p6e-eyebrow`. `.eyebrow` and
+  `.eyebrow-accent` in `index.css` (components layer): `text-2xs`, bold,
+  uppercase, `tracking-wider`, in `lob-muted` or `lob-teal`. The hand-built
+  overlines came in six mixes (`text-2xs` / `text-xs`; `wide`, `wider`,
+  `widest`; `muted-light`, `muted`, `teal`, coral, warning). Gallery entry.
+  - Colour: `lob-muted`, not the more common `muted-light`, as 10px text
+    needs the contrast (`muted-light` on white is about 2.3:1).
+  - Coral and warning eyebrows on a white card (next event) take
+    `.eyebrow-accent`. Eyebrows on a tinted surface keep the surface's
+    colour as a utility over `.eyebrow`: Tip of the Day and the review
+    banner (warning), the pending match card (coral), the Oscars "Voted"
+    column (success).
+  - ui pieces onto it: `PageHeader`'s eyebrow, `Menu`'s group label,
+    `CollapsibleSection`'s title, `StatTile`'s `caps` label.
+  - The Oscars voting screen's hand-built "you" pill is a `Badge outline`
+    "You", as in the Community list.
+  - Left alone: table headers (group standings, the past event and Scores
+    tables), the dark hero banners (`LeagueDashboardCard`, `ChampionBanner`,
+    the recently completed banner) and `DateTile`.

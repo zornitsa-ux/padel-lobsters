@@ -38,9 +38,7 @@ export default function StatRow({ stat, expanded, voters, onToggle }: StatRowPro
     >
       <div className="pt-2 border-t border-lob-line grid grid-cols-2 gap-3">
         <div>
-          <p className="text-2xs uppercase font-bold text-lob-success tracking-wide mb-1">
-            ✓ Voted ({voted.length})
-          </p>
+          <p className="eyebrow text-lob-success mb-1">✓ Voted ({voted.length})</p>
           <div className="space-y-0.5">
             {voted.length === 0 && <p className="text-xs text-lob-muted-light italic">none yet</p>}
             {voted.map((v) => (
@@ -51,9 +49,7 @@ export default function StatRow({ stat, expanded, voters, onToggle }: StatRowPro
           </div>
         </div>
         <div>
-          <p className="text-2xs uppercase font-bold text-lob-muted tracking-wide mb-1">
-            ○ Not yet ({notVoted.length})
-          </p>
+          <p className="eyebrow mb-1">○ Not yet ({notVoted.length})</p>
           <div className="space-y-0.5">
             {notVoted.length === 0 && (
               <p className="text-xs text-lob-muted-light italic">all voted!</p>

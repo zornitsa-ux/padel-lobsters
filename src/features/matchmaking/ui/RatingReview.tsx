@@ -88,9 +88,7 @@ function LevelLine({
       <div className="font-mono tabular-nums text-sm font-semibold text-lob-dark leading-none">
         {formatLevel(value)}
       </div>
-      <div className="mt-1 text-xs uppercase tracking-wide text-lob-muted leading-none">
-        {caption}
-      </div>
+      <div className="eyebrow mt-1 leading-none">{caption}</div>
     </div>
   )
 
@@ -127,7 +125,7 @@ function LevelLine({
         <div className="font-mono tabular-nums text-sm font-semibold text-lob-amber-strong leading-none">
           {formatLevel(cautious)}
         </div>
-        <div className="mt-1 text-xs uppercase tracking-wide text-lob-muted leading-none">now</div>
+        <div className="eyebrow mt-1 leading-none">now</div>
       </div>
     </div>
   )
@@ -274,9 +272,7 @@ function QueueItem({
       <Recommendation tone={rec.tone} headline={rec.headline} evidence={rec.evidence} />
 
       <div>
-        <p className="text-xs font-semibold text-lob-muted uppercase tracking-wide mb-1.5">
-          Set {playerDisplayName}&apos;s level
-        </p>
+        <p className="eyebrow mb-1.5">Set {playerDisplayName}&apos;s level</p>
         <SegmentedControl<Mode>
           ariaLabel="Level to set"
           disabled={reviewing}

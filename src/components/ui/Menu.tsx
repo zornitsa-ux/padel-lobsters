@@ -118,10 +118,7 @@ export function Menu({ label, showLabel = false, align = 'right', trigger, child
           className={`z-50 w-max min-w-44 max-w-72 ${MENU_PANEL}`}
         >
           {showLabel && (
-            <div
-              aria-hidden="true"
-              className="px-4 pt-1.5 pb-1 text-2xs font-bold uppercase tracking-wider text-lob-muted-light"
-            >
+            <div aria-hidden="true" className="eyebrow px-4 pt-1.5 pb-1">
               {label}
             </div>
           )}
