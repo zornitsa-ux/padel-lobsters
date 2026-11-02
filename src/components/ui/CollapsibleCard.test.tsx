@@ -17,7 +17,7 @@ describe('CollapsibleCard', () => {
     ).toBe('h3')
     expect(
       (
-        headingOf(CollapsibleCard({ ...base, expanded: false, headingLevel: 4 })) as {
+        headingOf(CollapsibleCard({ ...base, expanded: false, level: 4 })) as {
           type: unknown
         }
       ).type,

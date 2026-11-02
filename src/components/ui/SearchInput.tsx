@@ -1,4 +1,4 @@
-import { useRef, type InputHTMLAttributes, type Ref } from 'react'
+import { useCallback, useRef, type InputHTMLAttributes, type Ref } from 'react'
 import { Search, X } from 'lucide-react'
 import { IconButton } from './IconButton'
 
@@ -18,11 +18,15 @@ interface SearchInputProps extends NativeProps {
 /** A search field: icon, input, and a clear button once there's text. The field only; no suggestion list. */
 export function SearchInput({ value, onChange, label, inputRef, ...rest }: SearchInputProps) {
   const ownRef = useRef<HTMLInputElement | null>(null)
-  const setRefs = (el: HTMLInputElement | null) => {
-    ownRef.current = el
-    if (typeof inputRef === 'function') inputRef(el)
-    else if (inputRef) (inputRef as { current: HTMLInputElement | null }).current = el
-  }
+  const setRefs = useCallback(
+    (el: HTMLInputElement | null) => {
+      ownRef.current = el
+      if (typeof inputRef === 'function') inputRef(el)
+      else if (inputRef) (inputRef as { current: HTMLInputElement | null }).current = el
+    },
+    [inputRef],
+  )
+  const canClear = Boolean(value) && !rest.disabled && !rest.readOnly
   const clear = () => {
     onChange('')
     ownRef.current?.focus()
@@ -44,7 +48,7 @@ export function SearchInput({ value, onChange, label, inputRef, ...rest }: Searc
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />
-      {value && (
+      {canClear && (
         <span className="absolute right-1 top-1/2 -translate-y-1/2">
           <IconButton variant="ghost" size="sm" aria-label="Clear search" onClick={clear}>
             <X />

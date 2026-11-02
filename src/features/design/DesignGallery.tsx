@@ -374,12 +374,11 @@ function StatusSection() {
 
 const ROUNDS = [1, 2, 3, 4, 5, 6, 7].map((n) => ({ value: n, label: `Round ${n}` }))
 
-function FormErrorSection() {
-  const { errorId, fieldProps } = useFieldError({ message: 'Enter a level between 0 and 7.' })
+function SearchInputSection() {
   const [search, setSearch] = useState('Ada')
   return (
-    <GallerySection title="SearchInput and FormError">
-      <Row label="SearchInput: icon, field, clear once there's text (label names it)" block>
+    <GallerySection title="SearchInput">
+      <Row label="Icon, field, clear once there's text (label names it)" block>
         <SearchInput
           label="Search players"
           placeholder="Search players…"
@@ -387,6 +386,14 @@ function FormErrorSection() {
           onChange={setSearch}
         />
       </Row>
+    </GallerySection>
+  )
+}
+
+function FormErrorSection() {
+  const { errorId, fieldProps } = useFieldError({ message: 'Enter a level between 0 and 7.' })
+  return (
+    <GallerySection title="FormError">
       <Row label="Under a field (useFieldError ties it to the input)" block>
         <div className="space-y-1">
           <input className="input" defaultValue="9" aria-label="Playtomic level" {...fieldProps} />
@@ -1296,6 +1303,7 @@ export default function DesignGallery() {
       <TextButtonSection />
       <IconButtonSection />
       <StatusSection />
+      <SearchInputSection />
       <FormErrorSection />
       <ChoiceSection />
       <OptionSection />

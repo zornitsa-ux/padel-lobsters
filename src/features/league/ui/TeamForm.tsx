@@ -69,6 +69,7 @@ function PlayerPicker({
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
   const listId = useId()
+  const inputId = useId()
   const { errorId, fieldProps } = useFieldError({ message: error })
 
   const eligible = players.filter(
@@ -122,9 +123,12 @@ function PlayerPicker({
         if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setOpen(false)
       }}
     >
-      <label className="label">{label}</label>
+      <label className="label" htmlFor={inputId}>
+        {label}
+      </label>
       <div className="relative">
         <SearchInput
+          id={inputId}
           inputRef={inputRef}
           placeholder="Search by name…"
           value={query}

@@ -1677,7 +1677,13 @@ scrollable`, and so is the tips list. Open WhatsApp Community is a
     had no accessible name; they take "Search players" / "Search existing
     players".
   - `CollapsibleCard`: the toggle sits in a heading, `h3` by default
-    (`headingLevel`), the accordion pattern, so a screen reader's outline
-    lists each card. The Lobster Way admin's questions, inside a category,
-    are `h4`.
+    (`level`, as on `Section`), the accordion pattern, so a screen reader's
+    outline lists each card. `CollapsibleSection` does the same (`h2` by
+    default) and gains `aria-expanded`. Lobster Way admin: categories `h2`,
+    questions `h3`, under the page's `h1`.
+  - Review: TeamForm's two pickers had no accessible name (the visible
+    label wasn't tied to the field); it now is (`htmlFor`). `SearchInput`
+    offers no clear when disabled or read-only, and keeps one ref callback
+    across renders. The Oscars results' categories are `h3`s when not
+    collapsible too. `SearchInput` has its own gallery section.
   - P6e is done with this PR.

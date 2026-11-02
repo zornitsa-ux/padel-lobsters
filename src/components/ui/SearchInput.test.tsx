@@ -47,6 +47,14 @@ describe('SearchInput', () => {
     expect(screen.queryByRole('button', { name: 'Clear search' })).toBeNull()
   })
 
+  it('offers no clear button when the field is disabled or read-only', () => {
+    render(<SearchInput value="ada" onChange={() => {}} disabled />)
+    expect(screen.queryByRole('button', { name: 'Clear search' })).toBeNull()
+    cleanup()
+    render(<SearchInput value="ada" onChange={() => {}} readOnly />)
+    expect(screen.queryByRole('button', { name: 'Clear search' })).toBeNull()
+  })
+
   it('passes other input props through, e.g. for a suggestion list', () => {
     render(<SearchInput value="" onChange={() => {}} aria-expanded aria-haspopup="menu" />)
     const field = screen.getByRole('textbox')

@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react'
-
 import type { Player } from '../../../lib/normalise'
 import { filterByName } from './team/teamHelpers'
 import type { DisplayName } from './utils'
