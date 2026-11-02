@@ -5,16 +5,31 @@ import { childrenOf, propsOf } from '../../test/element'
 
 const base = { header: 'HEADER', onToggle: () => {}, children: 'BODY' }
 
-// Wrapper children: [header row, summary, body]; header row: [leading, button, actions].
-const headerButtonOf = (el: unknown) => childrenOf(childrenOf(el)[0])[1]
+// Wrapper children: [header row, summary, body]; header row: [leading, heading, actions];
+// the heading holds the toggle button.
+const headingOf = (el: unknown) => childrenOf(childrenOf(el)[0])[1]
+const headerButtonOf = (el: unknown) => propsOf(headingOf(el)).children
 
 describe('CollapsibleCard', () => {
+  it('puts the toggle in an h3 by default, or the given level', () => {
+    expect(
+      (headingOf(CollapsibleCard({ ...base, expanded: false })) as { type: unknown }).type,
+    ).toBe('h3')
+    expect(
+      (
+        headingOf(CollapsibleCard({ ...base, expanded: false, headingLevel: 4 })) as {
+          type: unknown
+        }
+      ).type,
+    ).toBe('h4')
+  })
+
   it('defaults to the card shell with a full-width header button', () => {
     const el = CollapsibleCard({ ...base, expanded: false })
     expect(propsOf(el).className).toBe('card')
     const button = headerButtonOf(el)
     expect(propsOf(button).className).toBe(
-      'flex-1 min-w-0 flex items-center justify-between gap-3 text-left',
+      'w-full min-w-0 flex items-center justify-between gap-3 text-left',
     )
     expect(propsOf(button).type).toBe('button')
     expect(propsOf(button)['aria-expanded']).toBe(false)
@@ -54,9 +69,9 @@ describe('CollapsibleCard', () => {
 
   it('puts leading and actions outside the toggle button', () => {
     const el = CollapsibleCard({ ...base, expanded: false, leading: 'MOVE', actions: 'DELETE' })
-    const [leading, button, actions] = childrenOf(childrenOf(el)[0])
+    const [leading, heading, actions] = childrenOf(childrenOf(el)[0])
     expect(leading).toBe('MOVE')
-    expect(propsOf(button).type).toBe('button')
+    expect(propsOf(propsOf(heading).children).type).toBe('button')
     expect(actions).toBe('DELETE')
   })
 

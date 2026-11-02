@@ -67,6 +67,7 @@ import { Spinner } from '../../components/ui/Spinner'
 import { Skeleton } from '../../components/ui/Skeleton'
 import { StatTile } from '../../components/ui/StatTile'
 import { StatGrid } from '../../components/ui/StatGrid'
+import { SearchInput } from '../../components/ui/SearchInput'
 import { RankMarker } from '../../components/ui/RankMarker'
 import { Well } from '../../components/ui/Well'
 import { PlaytomicLevelField } from '../players/ProfileFields'
@@ -375,8 +376,17 @@ const ROUNDS = [1, 2, 3, 4, 5, 6, 7].map((n) => ({ value: n, label: `Round ${n}`
 
 function FormErrorSection() {
   const { errorId, fieldProps } = useFieldError({ message: 'Enter a level between 0 and 7.' })
+  const [search, setSearch] = useState('Ada')
   return (
-    <GallerySection title="FormError">
+    <GallerySection title="SearchInput and FormError">
+      <Row label="SearchInput: icon, field, clear once there's text (label names it)" block>
+        <SearchInput
+          label="Search players"
+          placeholder="Search players…"
+          value={search}
+          onChange={setSearch}
+        />
+      </Row>
       <Row label="Under a field (useFieldError ties it to the input)" block>
         <div className="space-y-1">
           <input className="input" defaultValue="9" aria-label="Playtomic level" {...fieldProps} />

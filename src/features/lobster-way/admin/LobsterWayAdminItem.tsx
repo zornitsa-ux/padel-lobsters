@@ -44,6 +44,7 @@ export default function LobsterWayAdminItem({
 
   return (
     <CollapsibleCard
+      headingLevel={4}
       className="space-y-2"
       expanded={open}
       onToggle={() => setOpen((o) => !o)}

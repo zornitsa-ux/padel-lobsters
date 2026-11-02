@@ -17,6 +17,7 @@ import { MenuList } from '../../../components/ui/MenuList'
 import { focusFirstItem } from '../../../components/ui/menuFocus'
 import { FormError } from '../../../components/ui/FormError'
 import { useFieldError } from '../../../components/ui/useFieldError'
+import { SearchInput } from '../../../components/ui/SearchInput'
 
 interface PlayerOption {
   id: string
@@ -123,17 +124,15 @@ function PlayerPicker({
     >
       <label className="label">{label}</label>
       <div className="relative">
-        <input
-          ref={inputRef}
-          type="text"
-          className="input w-full"
+        <SearchInput
+          inputRef={inputRef}
           placeholder="Search by name…"
           value={query}
           aria-haspopup="menu"
           aria-expanded={showList}
           aria-controls={showList ? listId : undefined}
-          onChange={(e) => {
-            setQuery(e.target.value)
+          onChange={(value) => {
+            setQuery(value)
             setOpen(true)
           }}
           onFocus={() => setOpen(true)}

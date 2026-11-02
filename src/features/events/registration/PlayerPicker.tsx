@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react'
-import { Search } from 'lucide-react'
+
 import type { Player } from '../../../lib/normalise'
 import { filterByName } from './team/teamHelpers'
 import type { DisplayName } from './utils'
 import Avatar from '../../../components/ui/Avatar'
 import { OptionRow } from '../../../components/ui/OptionRow'
 import { EmptyState } from '../../../components/ui/EmptyState'
+import { SearchInput } from '../../../components/ui/SearchInput'
 
 interface PlayerPickerProps {
   players: Player[]
@@ -30,19 +31,12 @@ export default function PlayerPicker({
 
   return (
     <div className="space-y-2">
-      <div className="relative">
-        <Search
-          size={14}
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-lob-muted-light"
-        />
-        <input
-          className="input pl-9 py-2 text-sm"
-          placeholder="Search..."
-          aria-label="Search players"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </div>
+      <SearchInput
+        label="Search players"
+        placeholder="Search players…"
+        value={search}
+        onChange={setSearch}
+      />
       <div className="max-h-56 overflow-y-auto space-y-1">
         {visible.length === 0 && (
           <EmptyState
