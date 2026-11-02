@@ -236,7 +236,7 @@ primitives (see the Log) before P3:
     (2026-11-02). Four PRs:
     - **P6e-1: `Tag`.** Names a thing (Court 2, Round 3, a shirt size, the
       event format); `Badge` stays for states. The hand-built identity pills
-      move onto it. In progress.
+      move onto it. Done in #138.
     - **P6e-2: `.eyebrow`.** `.eyebrow` / `.eyebrow-accent` and the
       hand-built uppercase overlines (about 45 in 28 files).
     - **P6e-3: `StatGrid` and `RankMarker`.** `StatGrid` for the StatTile
