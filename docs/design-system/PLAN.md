@@ -246,8 +246,8 @@ primitives (see the Log) before P3:
       for the hand-built rank prefixes (W1, #3, medals). Done in #141.
     - **P6e-4: `SearchInput` and the `CollapsibleCard` heading.** The search
       field (icon, input, clear) for the five search fields; a heading
-      element inside the `CollapsibleCard` header button (review of #76). In
-      progress.
+      element inside the `CollapsibleCard` header button (review of #76).
+      Done in #142.
 17. **P7: lock-down.**
 
 ### E2E safety net
