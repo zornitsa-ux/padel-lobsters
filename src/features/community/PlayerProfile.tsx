@@ -17,6 +17,7 @@ import { Button } from '../../components/ui/Button'
 import { TextButton } from '../../components/ui/TextButton'
 import { Chip, ChipGroup } from '../../components/ui/Chip'
 import { Well } from '../../components/ui/Well'
+import { Tag } from '../../components/ui/Tag'
 
 const MONTH_ABBR = [
   'Jan',
@@ -51,6 +52,13 @@ interface PlayerProfileProps {
   onDelete: (id: string) => void
   onResendInvite: (player: CommunityPlayer) => void
 }
+
+const positionLabel = (position: string): string =>
+  position === 'left' || position === 'drive'
+    ? '👈 Left'
+    : position === 'right' || position === 'reves'
+      ? '👉 Right'
+      : '↔️ Both'
 
 export default function PlayerProfile({
   player: p,
@@ -137,25 +145,14 @@ export default function PlayerProfile({
       {/* Match record + tags row */}
       <div className="flex items-center gap-2 flex-wrap">
         {stats.played > 0 && (
-          <span className="text-xs bg-gray-100 text-lob-slate px-2 py-1 rounded-lg font-semibold">
-            {stats.played} played · {stats.won}W {stats.lost}L
-            {stats.draws > 0 ? ` ${stats.draws}D` : ''} · {stats.winRate}%
-          </span>
+          <Tag
+            label={`${stats.played} played · ${stats.won}W ${stats.lost}L${
+              stats.draws > 0 ? ` ${stats.draws}D` : ''
+            } · ${stats.winRate}%`}
+          />
         )}
-        {p.preferredPosition && (
-          <span className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-lg font-semibold capitalize">
-            {p.preferredPosition === 'left' || p.preferredPosition === 'drive'
-              ? '👈 Left'
-              : p.preferredPosition === 'right' || p.preferredPosition === 'reves'
-                ? '👉 Right'
-                : '↔️ Both'}
-          </span>
-        )}
-        {p.isLeftHanded && (
-          <span className="text-xs bg-lob-warning-soft text-lob-warning px-2 py-1 rounded-lg font-semibold">
-            🤚 Lefty
-          </span>
-        )}
+        {p.preferredPosition && <Tag label={positionLabel(p.preferredPosition)} />}
+        {p.isLeftHanded && <Tag label="🤚 Lefty" />}
         {/* Day + month only, no year — this is public (players_public), not
             PII, so it renders with zero contact-details fetch. */}
         {p.birthday_month && p.birthday_day && (

@@ -81,7 +81,7 @@ component doesn't fit, fix the component, not the call site.**
 | Empty list inside a card or modal    | `EmptyState variant="inline"`                        | exists |
 | Signed-out viewer                    | `SignInPrompt` (`variant="inline"` in a card)        | exists |
 | Admin-only page                      | `AdminRouteGuard redirectTo` (never a sign-in ask)   | exists |
-| Player or team row, ranked row       | `PlayerRow` + `RankMarker`                           | P6     |
+| Player or team row, ranked row       | `PlayerRow` + `RankMarker`                           | P6e-3  |
 | Page section with a heading          | `Section` (`description` for a line under it)        | exists |
 | List of like items                   | `ListCard` + `LinkRow` (one card, divided rows)      | exists |
 | List row with its own controls       | `ListRow` (`PlayerRow`, buttons, anything under it)  | exists |
@@ -89,7 +89,7 @@ component doesn't fit, fix the component, not the call site.**
 | Inset panel / well inside a card     | `Well`                                               | exists |
 | List inside a card or sheet          | `ListCard inset` (divided rows, no card of its own)  | exists |
 | Long list (a log, every tip)         | `ListCard scrollable` (scrolls inside its card)      | exists |
-| Search field                         | `SearchInput`                                        | P6     |
+| Search field                         | `SearchInput`                                        | P6e-4  |
 | Collapsible card (+ summary)         | `CollapsibleCard` (`summary` stays visible)          | exists |
 | Collapsible row with reorder/delete  | `CollapsibleCard leading actions`                    | exists |
 | Inline show / hide detail            | `Disclosure`                                         | exists |
@@ -97,7 +97,8 @@ component doesn't fit, fix the component, not the call site.**
 | Pick one of many (rounds, filters)   | `SegmentedControl layout="scroll"` / `"wrap"`        | exists |
 | Page tabs (route or in-page)         | `PageHeader tabs` (`to` or `onClick`)                | exists |
 | Loading                              | `Spinner` (`size="inline"` in a card) / `Skeleton`   | exists |
-| Eyebrow / overline                   | `.eyebrow` / `.eyebrow-accent`                       | P6e    |
+| Identity label (Court 2, a size)     | `Tag` (a state is a `Badge`)                         | exists |
+| Eyebrow / overline                   | `.eyebrow` / `.eyebrow-accent`                       | P6e-2  |
 
 ### Buttons and chips (owner, 2026-10-25)
 
@@ -155,7 +156,7 @@ the gallery, and runs `npm run design:baseline` when counts drop.
 | P3  | **`AlertBox` size, role and dismiss; `FormError` in ui.** About 29 files build a tinted box by hand (`-light` surface with a `-border` border; triage first, as some are highlighted rows or cards rather than alerts) and about 23 lines spell a field error by hand (`text-xs text-lob-coral` / `-danger`). `AlertBox` gains `size="sm"`, a `role` (alert for errors, status otherwise) and a dismiss that is an `IconButton ghost sm` instead of the bare 14px X. `FormError` moves from `features/auth` to `components/ui`. Two PRs: alerts, then field errors.                                                                                | Done (#108, #109)         |
 | P4  | **`Badge` tones** (`success`, `neutral`, `warning`, `outline`) and **payment status single source** (`paymentStatus.ts`, `PaymentStatusBadge` on `Badge`; the blue "transferred" pill and merch "delivered" get a token). About 13 hand-built status pills move onto `Badge`. Rename team-state "Confirmed".                                                                                                                                                                                                                                                                                                                                       | Done (#110)               |
 | P5  | **Empty and signed-out states.** `EmptyState variant="inline"`, `SignInPrompt`; loading states: a loading card keeps its title or header, so the viewer sees what is loading, and shows `Spinner` / `Skeleton` in the body instead of `return null`.                                                                                                                                                                                                                                                                                                                                                                                               | Done (#112)               |
-| P6  | **Cards for objects, lists and sections.** Owner calls 2026-10-30 (Log). A card is one thing you act on; page sections sit on the background under a heading; a list of like items is one card with divided rows; no card inside a card. Pieces: `Section`, `ListCard`, `Well` (the planned `.panel`), `Tag`, `.eyebrow`, `RankMarker` + `PlayerRow highlighted`, `RosterHeading`, `SearchInput` (#81), a heading element inside the `CollapsibleCard` header button (review of #76). Five PRs: P6a to P6e under "Next".                                                                                                                           |                           |
+| P6  | **Cards for objects, lists and sections.** Owner calls 2026-10-30 (Log). A card is one thing you act on; page sections sit on the background under a heading; a list of like items is one card with divided rows; no card inside a card. Pieces: `Section`, `ListCard`, `Well` (the planned `.panel`), `Tag`, `.eyebrow`, `RankMarker` + `PlayerRow highlighted`, ~~`RosterHeading`~~ (dropped 2026-11-02), `SearchInput` (#81), a heading element inside the `CollapsibleCard` header button (review of #76). Five PRs: P6a to P6e under "Next".                                                                                                  |                           |
 | P7  | **Lock-down.** Tokens for decorative colours (medal gold, avatar palette, gender marks) and for `text-[9px]` (14 uses, the bottom nav labels among them). Then switch `theme.extend.colors` to a restricted `theme.colors` so raw palette classes stop generating, and add a lint rule for unknown classes (e.g. `eslint-plugin-tailwindcss`, check ESLint 9 support). Retire the colour ratchet once the theme is locked; keep the `<button>` check.                                                                                                                                                                                              |                           |
 
 The gallery exists: `/design` in dev (`src/features/design/DesignGallery.tsx`;
@@ -231,14 +232,20 @@ primitives (see the Log) before P3:
     - ~~**P6d-4: Oscars and the Lobster Way page.** Intro and empty boxes,
       the phase banner, `SectionLabel`, `StatRow` and `ResultsView` as
       lists; the Lobster Way categories under Sections.~~ Done in #135.
-16. **P6e: labels and the rest.** Builds `Tag` (names a thing: Court 2, Round
-    3, a shirt size; `Badge` stays for states) and moves the identity labels
-    onto it (about ten); `.eyebrow` and the hand-built eyebrows (about 39
-    variants); `RankMarker` + `PlayerRow highlighted`, `RosterHeading`,
-    `SearchInput` (#81), the `CollapsibleCard` heading element. A `StatGrid`
-    for the hand-built StatTile grids (`grid grid-cols-N gap-2`, often on a
-    `.card`): Event Manage Overview, Payments, league Manage Overview, the
-    league team page and Your Stats (review of P6d-2).
+16. **P6e: labels and the rest.** Inventory and owner calls in the Log
+    (2026-11-02). Four PRs:
+    - **P6e-1: `Tag`.** Names a thing (Court 2, Round 3, a shirt size, the
+      event format); `Badge` stays for states. The hand-built identity pills
+      move onto it. In progress.
+    - **P6e-2: `.eyebrow`.** `.eyebrow` / `.eyebrow-accent` and the
+      hand-built uppercase overlines (about 45 in 28 files).
+    - **P6e-3: `StatGrid` and `RankMarker`.** `StatGrid` for the StatTile
+      grids (Event Manage Overview, Payments, league Manage Overview, the
+      league team page, Your Stats); `RankMarker` + `PlayerRow highlighted`
+      for the hand-built rank prefixes (W1, #3, medals).
+    - **P6e-4: `SearchInput` and the `CollapsibleCard` heading.** The search
+      field (icon, input, clear) for the five search fields; a heading
+      element inside the `CollapsibleCard` header button (review of #76).
 17. **P7: lock-down.**
 
 ### E2E safety net
@@ -328,7 +335,13 @@ it suits.
 
 - **Remove the birthdays feature** (owner, 2026-11-02). We won't show
   players' birthdays, so the Home "Upcoming birthdays" block goes rather
-  than being fixed (#132). Its own PR, outside the design system.
+  than being fixed (#132). The public player profile also shows the day and
+  month (🎂, from `players_public`), which goes too. Its own PR, outside the
+  design system.
+
+- **Search suggestions as a combobox** (owner, 2026-11-02). The TeamForm and
+  `PlayerPicker` suggestion lists use `role="menu"` (#81). `SearchInput`
+  (P6e-4) is the field only; an ARIA combobox / listbox comes later.
 
 ## Open owner calls
 
@@ -1550,3 +1563,42 @@ scrollable`, and so is the tips list. Open WhatsApp Community is a
     category's voter lists don't update until the tab is refocused (#136).
     Left: a Lobster Way category with no questions shows its heading over
     nothing (it showed an empty card before).
+
+- **2026-11-02.** P6e inventory (step 16 of Next), from the code:
+  - **`Tag`.** Hand-built cream / teal pills that name a thing: the Round
+    chip (`MyRounds`), the court or round on `EventMatchList`, Schedule's
+    format, court and sitting-out names, `ScheduleRounds` Court N, shirt
+    size and custom name (`OrdersTable`, `MyOrders`), the generator's
+    setting pills, the profile's record, position and lefty pills, and the
+    past event's category (raw pink, indigo and blue). About 15 in 9 files.
+  - **Eyebrows.** About 45 hand-built uppercase overlines in 28 files, in
+    six mixes of size (`text-2xs` / `text-xs`), tracking (`wide`, `wider`,
+    `widest`) and colour (`muted-light`, `muted`, `teal`). `PlayerProfile`
+    alone has 13. Table headers (`GroupStandingsTable`) are not eyebrows.
+  - **`StatGrid`.** Five StatTile grids, listed under step 16.
+  - **`RankMarker`.** Rank prefixes by hand: the waitlist's `W1`, group
+    standings' `#3`, King of the Court's medal emoji, the Scores ranking's
+    medal trophy.
+  - **`SearchInput`.** Five fields (`input pl-9` + an icon): Players,
+    `PlayerPicker`, TeamForm, `LinkPlayerModal`, `TransferSpotModal`.
+  - **`RosterHeading`.** Never specified; `Section` with a count ("Players
+    (n)") already does the job.
+  - **Left alone.** The rematch warnings in `ScheduleRounds` (a state with a
+    Fix button inside), `UpcomingEventCard`'s court booking chips (a state
+    with an action), `ReviewBreakdownModal`'s count bubbles, `RunOfShow`'s
+    "Players see" hint.
+
+  Owner calls: four PRs (P6e-1 to P6e-4 under "Next"). `RosterHeading` is
+  dropped. `SearchInput` is the field only; the combobox goes to Later.
+
+- **2026-11-02.** P6e-1 on `design-system-p6e-tag`. `Tag`: one size,
+  `lob-cream` fill, `lob-teal` semibold text, `rounded-md` so a label reads
+  differently from a `rounded-full` state `Badge`; it truncates in a narrow
+  row. Test and gallery entry.
+  - Onto `Tag`: everything under "`Tag`" in the inventory above. The
+    custom-name, lefty and generator pills lose their warning, blue and pink
+    fills: they name a thing, not a state. The past event's category drops
+    four raw colour pairs (baseline 63 → 53), and Schedule shows no empty
+    pill for a court with no name.
+  - Found: Schedule hand-builds its own court gender chip (Men, Ladies,
+    Mixed, Uneven, raw colours) instead of `CourtGenderChip` (#137).

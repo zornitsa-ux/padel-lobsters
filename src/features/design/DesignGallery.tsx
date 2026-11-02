@@ -36,6 +36,7 @@ import { AlertBox } from '../../components/ui/AlertBox'
 import { FormError } from '../../components/ui/FormError'
 import { useFieldError } from '../../components/ui/useFieldError'
 import { Badge, BADGE_TONES } from '../../components/ui/Badge'
+import { Tag } from '../../components/ui/Tag'
 import PaymentStatusBadge from '../events/registration/PaymentStatusBadge'
 import { PAYMENT_STATUSES } from '../events/paymentStatus'
 import { STATUS_CONFIG } from '../merch/statusConfig'
@@ -287,7 +288,7 @@ function IconButtonSection() {
 
 function StatusSection() {
   return (
-    <GallerySection title="AlertBox and Badge">
+    <GallerySection title="AlertBox, Badge and Tag">
       <Row label="AlertBox variant (error is role alert, the rest role status)" block>
         <div className="space-y-2">
           {(['info', 'warning', 'success', 'error'] as const).map((variant) => (
@@ -338,6 +339,12 @@ function StatusSection() {
         {BADGE_TONES.map((tone) => (
           <Badge key={tone} tone={tone} label={tone} />
         ))}
+      </Row>
+      <Row label="Tag (names a thing; a state is a Badge)">
+        <Tag label="Court 2" />
+        <Tag label="Round 3" />
+        <Tag label="M" />
+        <Tag label="Mixed" />
       </Row>
       <Row label="Badge icon (the badge sizes it)">
         <Badge tone="success" icon={<Check />} label="You're registered!" />

@@ -1,4 +1,5 @@
 import { ListCard, ListRow } from '../../components/ui/ListCard'
+import { Tag } from '../../components/ui/Tag'
 import type { NormalisedMatch } from './matchQueries'
 
 /** One round's matches: court, both teams and the score, a row each. */
@@ -37,9 +38,7 @@ function EventMatchRow({
   return (
     <>
       <div className="flex items-center justify-between">
-        <span className="text-2xs font-bold text-lob-teal bg-lob-cream px-2 py-0.5 rounded-full">
-          {match.court || `Round ${match.round}`}
-        </span>
+        <Tag label={match.court || `Round ${match.round}`} />
         {score && score.s1 === score.s2 && (
           <span className="text-2xs text-lob-muted-light font-medium">Draw</span>
         )}

@@ -4,6 +4,7 @@ import { Badge } from '../../components/ui/Badge'
 import { AlertBox } from '../../components/ui/AlertBox'
 import { ListCard, ListRow } from '../../components/ui/ListCard'
 import { Section } from '../../components/ui/Section'
+import { Tag } from '../../components/ui/Tag'
 import { matchOutcome, type MyMatchView, type MyRoundView } from './nextMatch'
 import type { Player } from '../../lib/normalise'
 
@@ -79,9 +80,7 @@ function NextRoundCard({ view, getPlayer }: { view: MyMatchView; getPlayer: GetP
   return (
     <div className="card-elevated space-y-4">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-bold text-lob-teal bg-lob-cream px-2.5 py-1 rounded-full">
-          Round {view.round}
-        </span>
+        <Tag label={`Round ${view.round}`} />
         {view.court && (
           <span className="flex items-center gap-1 text-sm font-bold text-lob-dark">
             <MapPin size={14} className="text-lob-coral" />

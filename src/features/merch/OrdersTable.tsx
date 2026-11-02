@@ -13,6 +13,7 @@ import { Badge } from '../../components/ui/Badge'
 import { ListCard, ListRow } from '../../components/ui/ListCard'
 import { Section } from '../../components/ui/Section'
 import { TextButton } from '../../components/ui/TextButton'
+import { Tag } from '../../components/ui/Tag'
 
 type OrdersTableProps = {
   activeOrders: MerchInterest[]
@@ -158,16 +159,8 @@ function OrderRow({
             <span className="font-normal text-lob-muted ml-1.5 text-xs">{item?.name || '—'}</span>
           </p>
           <div className="flex items-center gap-2 mt-0.5">
-            {o.size && (
-              <span className="text-xs font-bold bg-lob-cream text-lob-teal px-2 py-0.5 rounded-full">
-                {o.size}
-              </span>
-            )}
-            {hasCustomName && (
-              <span className="text-xs bg-lob-warning-light text-lob-warning px-2 py-0.5 rounded-full font-medium">
-                "{o.customName}"
-              </span>
-            )}
+            {o.size && <Tag label={o.size} />}
+            {hasCustomName && <Tag label={`"${o.customName}"`} />}
             <span className="text-xs font-bold text-lob-teal">€{orderPrice}</span>
             <span className="text-xs text-lob-muted-light">{formatOrderTime(o.created_at)}</span>
           </div>
