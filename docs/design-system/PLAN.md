@@ -238,7 +238,7 @@ primitives (see the Log) before P3:
       event format); `Badge` stays for states. The hand-built identity pills
       move onto it. Done in #138.
     - **P6e-2: `.eyebrow`.** `.eyebrow` / `.eyebrow-accent` and the
-      hand-built uppercase overlines (about 45 in 28 files). In progress.
+      hand-built uppercase overlines (about 45 in 28 files). Done in #139.
     - **P6e-3: `StatGrid` and `RankMarker`.** `StatGrid` for the StatTile
       grids (Event Manage Overview, Payments, league Manage Overview, the
       league team page, Your Stats); `RankMarker` + `PlayerRow highlighted`
