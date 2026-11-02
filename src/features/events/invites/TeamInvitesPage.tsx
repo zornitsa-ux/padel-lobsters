@@ -28,7 +28,7 @@ function EventHeading({ invite, eyebrow }: { invite: TeamInvite; eyebrow: string
     <div className="flex items-center gap-4">
       <DateTile date={invite.tournamentDate} />
       <div className="min-w-0">
-        <p className="text-xs font-semibold uppercase tracking-wider text-lob-teal">{eyebrow}</p>
+        <p className="eyebrow-accent">{eyebrow}</p>
         <h2 className="text-lg font-bold text-lob-dark leading-snug">{invite.tournamentName}</h2>
         <p className="text-sm text-lob-muted">{inviteWhen({ invite })}</p>
       </div>

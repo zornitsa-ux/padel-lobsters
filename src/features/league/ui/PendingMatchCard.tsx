@@ -28,9 +28,7 @@ export function PendingMatchCard({
 
   return (
     <div className="rounded-2xl bg-lob-coral/[0.08] border border-lob-coral/20 overflow-hidden">
-      <p className="text-2xs uppercase font-bold text-lob-coral tracking-wider px-4 pt-4 pb-2">
-        {title}
-      </p>
+      <p className="eyebrow text-lob-coral px-4 pt-4 pb-2">{title}</p>
       <div className="divide-y divide-lob-coral/10">
         {pendingMatches.map(({ match, opponent }) => (
           <PlayerRow

@@ -18,9 +18,7 @@ function CountdownSkeleton() {
   return (
     <div className="text-center" role="status" aria-busy="true">
       <span className="sr-only">Loading the countdown to the next event…</span>
-      <p className="text-2xs font-bold text-lob-muted-light uppercase tracking-widest mb-2">
-        Next Lobster Event in
-      </p>
+      <p className="eyebrow mb-2">Next Lobster Event in</p>
       <div className="flex justify-center gap-2">
         {['days', 'hours', 'mins', 'secs'].map((unit) => (
           <Skeleton key={unit} className="w-16 h-[66px] rounded-xl" />
@@ -41,9 +39,7 @@ export default function CountdownClock({
   if (countdown) {
     return (
       <div className="text-center">
-        <p className="text-2xs font-bold text-lob-muted-light uppercase tracking-widest mb-2">
-          Next Lobster Event in
-        </p>
+        <p className="eyebrow mb-2">Next Lobster Event in</p>
         <div className="flex justify-center gap-2">
           <div className="bg-lob-teal-dark rounded-xl w-16 py-2.5">
             <p className="text-2xl font-black text-white tabular-nums">

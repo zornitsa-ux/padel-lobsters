@@ -40,7 +40,7 @@ export function GroupStandings({
       <div className="card space-y-4">
         {groups.map(({ label, standings }) => (
           <div key={label} className="space-y-2">
-            <p className="text-xs uppercase tracking-wide text-lob-muted">Group {label}</p>
+            <p className="eyebrow">Group {label}</p>
             <GroupStandingsTable
               standings={standings}
               myTeamId={myTeamId}

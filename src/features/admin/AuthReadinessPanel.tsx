@@ -11,7 +11,7 @@ const formatPinDate = (iso: string) =>
 function NameList({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1">
-      <p className="text-xs font-bold text-lob-muted uppercase tracking-wide">{title}</p>
+      <p className="eyebrow">{title}</p>
       <ul className="text-sm text-lob-slate space-y-0.5">{children}</ul>
     </div>
   )

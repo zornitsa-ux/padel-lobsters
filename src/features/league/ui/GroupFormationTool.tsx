@@ -43,9 +43,7 @@ function RecommendationPanel({ teams, groupA, groupB }: RecommendationPanelProps
 
   return (
     <Well>
-      <p className="text-xs font-bold text-lob-teal uppercase tracking-wide">
-        Bracket recommendation
-      </p>
+      <p className="eyebrow-accent">Bracket recommendation</p>
       <div className="flex items-baseline gap-1.5 flex-wrap">
         <span className="text-sm text-lob-dark">
           With <span className="font-bold">{teams.length}</span> teams: suggested{' '}
@@ -221,9 +219,7 @@ export function GroupFormationTool({
 
       {unassigned.length > 0 && (
         <div>
-          <p className="text-xs font-bold text-lob-muted uppercase tracking-wide mb-2">
-            Unassigned
-          </p>
+          <p className="eyebrow mb-2">Unassigned</p>
           <ListCard inset>
             {unassigned.map((t) => (
               <ListRow key={t.id}>

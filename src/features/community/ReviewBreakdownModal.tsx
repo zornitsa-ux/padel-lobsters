@@ -111,9 +111,7 @@ export default function ReviewBreakdownModal({
 
       {/* Performance summary banner */}
       <div className="-mx-5 px-5 py-3 bg-lob-warning-light border-y border-lob-warning-border mb-3">
-        <p className="text-xs font-bold text-lob-warning-strong uppercase tracking-wide mb-1">
-          ⭐ Performance messages
-        </p>
+        <p className="eyebrow text-lob-warning-strong mb-1">⭐ Performance messages</p>
         <p className="text-xs text-lob-warning">
           <strong>{perfFiring} of 10</strong> performance scenarios firing, reaching{' '}
           <strong>{perfPlayers}</strong> player{perfPlayers === 1 ? '' : 's'}. Everyone else gets
@@ -130,9 +128,7 @@ export default function ReviewBreakdownModal({
         {/* Other scenarios (historical + filler) */}
         {otherBuckets.length > 0 && (
           <>
-            <p className="text-2xs font-bold text-lob-muted-light uppercase tracking-wider mt-2 px-1">
-              Other scenarios
-            </p>
+            <p className="eyebrow mt-2 px-1">Other scenarios</p>
             <div className="space-y-2">
               {otherBuckets.map((b) => {
                 const isHist = b.id.startsWith('hist-')

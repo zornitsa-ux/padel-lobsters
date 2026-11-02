@@ -94,7 +94,7 @@ function Row({
 }) {
   return (
     <div className="space-y-1.5">
-      <p className="text-2xs font-semibold uppercase tracking-wide text-lob-muted">{label}</p>
+      <p className="eyebrow">{label}</p>
       {block ? children : <div className="flex flex-wrap items-center gap-2">{children}</div>}
     </div>
   )
@@ -345,6 +345,10 @@ function StatusSection() {
         <Tag label="Round 3" />
         <Tag label="M" />
         <Tag label="Mixed" />
+      </Row>
+      <Row label="Eyebrow (.eyebrow / .eyebrow-accent): a small overline">
+        <p className="eyebrow">Match metrics</p>
+        <p className="eyebrow-accent">Lobster review</p>
       </Row>
       <Row label="Badge icon (the badge sizes it)">
         <Badge tone="success" icon={<Check />} label="You're registered!" />

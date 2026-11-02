@@ -39,9 +39,7 @@ export default function AdminMenu({ viewMode, onSetViewMode }: AdminMenuProps) {
 
       <Drawer open={open} onClose={close} title="Admin menu">
         <div className="space-y-2">
-          <p className="text-xs uppercase tracking-wider font-bold text-lob-muted-light px-1">
-            View
-          </p>
+          <p className="eyebrow px-1">View</p>
           <div className="space-y-1">
             <OptionRow
               selected={viewMode === 'play'}

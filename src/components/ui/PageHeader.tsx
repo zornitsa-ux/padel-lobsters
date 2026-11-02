@@ -65,11 +65,7 @@ export function PageHeader({
         )}
         <div className="flex items-start justify-between gap-2">
           <div>
-            {eyebrow && (
-              <p className="text-2xs font-bold uppercase tracking-widest text-lob-muted mb-0.5">
-                {eyebrow}
-              </p>
-            )}
+            {eyebrow && <p className="eyebrow mb-0.5">{eyebrow}</p>}
             <h1 className="text-xl font-semibold text-lob-dark leading-snug">{title}</h1>
           </div>
           {(badge || rightAction) && (

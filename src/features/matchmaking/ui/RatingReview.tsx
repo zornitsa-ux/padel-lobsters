@@ -274,9 +274,7 @@ function QueueItem({
       <Recommendation tone={rec.tone} headline={rec.headline} evidence={rec.evidence} />
 
       <div>
-        <p className="text-xs font-semibold text-lob-muted uppercase tracking-wide mb-1.5">
-          Set {playerDisplayName}&apos;s level
-        </p>
+        <p className="label">Set {playerDisplayName}&apos;s level</p>
         <SegmentedControl<Mode>
           ariaLabel="Level to set"
           disabled={reviewing}

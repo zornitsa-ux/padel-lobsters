@@ -118,9 +118,7 @@ export default function FinishAccountPage() {
   return (
     <form onSubmit={(e) => void handleSubmit(e)} className="pt-5 space-y-4">
       <div className="card space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-wider text-lob-teal">
-          Finish your account
-        </p>
+        <p className="eyebrow-accent">Finish your account</p>
         <h2 className="text-lg font-bold text-lob-dark leading-snug">Welcome to Padel Lobsters</h2>
         <p className="text-sm text-lob-slate leading-relaxed">
           {accountCreatedMessage({

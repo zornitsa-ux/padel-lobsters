@@ -14,9 +14,7 @@ export default function TipOfTheDay({ tip }: TipOfTheDayProps) {
         <Lightbulb size={17} className="text-white" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-xs font-bold text-lob-warning uppercase tracking-wide mb-1">
-          Tip of the Day
-        </p>
+        <p className="eyebrow text-lob-warning mb-1">Tip of the Day</p>
         <p className="text-sm text-lob-slate leading-relaxed">{tip}</p>
         <p className="text-xs text-lob-muted-light italic mt-1.5">– ask Jon for more tips</p>
       </div>

@@ -127,9 +127,7 @@ export default function TransferPendingModal({
 
         <Well>
           <div className="text-xs text-lob-slate leading-relaxed">
-            <p className="font-semibold text-lob-muted text-2xs uppercase tracking-wide mb-1">
-              Pre-filled message
-            </p>
+            <p className="eyebrow mb-1">Pre-filled message</p>
             <p className="whitespace-pre-line">{message}</p>
           </div>
         </Well>

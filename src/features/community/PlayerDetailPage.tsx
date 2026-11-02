@@ -59,9 +59,7 @@ function PlayerHero({
         </div>
       </div>
       <div>
-        <p className="text-2xs font-bold text-lob-teal uppercase tracking-wider mb-0.5">
-          Lobster Review
-        </p>
+        <p className="eyebrow-accent mb-0.5">Lobster Review</p>
         <p className="text-xs text-lob-muted leading-relaxed">
           {review.hasLabel && (
             <span className="font-bold text-lob-teal">{review.scenarioLabel}</span>

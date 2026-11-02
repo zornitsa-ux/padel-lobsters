@@ -24,6 +24,16 @@
     @apply bg-white rounded-2xl p-4 shadow-card-elevated border border-lob-dark/[0.04];
   }
 
+  /* ── Eyebrow: a small uppercase overline above a heading, value or group ── */
+  .eyebrow,
+  .eyebrow-accent {
+    @apply text-2xs font-bold uppercase tracking-wider text-lob-slate;
+  }
+
+  .eyebrow-accent {
+    @apply text-lob-teal;
+  }
+
   /* ── Inputs ────────────────────────────────────────────────────── */
   .input {
     @apply w-full border border-lob-line-strong rounded-xl px-4 py-3 text-sm
