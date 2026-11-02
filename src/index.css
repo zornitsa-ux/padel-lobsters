@@ -25,12 +25,13 @@
   }
 
   /* ── Eyebrow: a small uppercase overline above a heading, value or group ── */
-  .eyebrow {
+  .eyebrow,
+  .eyebrow-accent {
     @apply text-2xs font-bold uppercase tracking-wider text-lob-muted;
   }
 
   .eyebrow-accent {
-    @apply text-2xs font-bold uppercase tracking-wider text-lob-teal;
+    @apply text-lob-teal;
   }
 
   /* ── Inputs ────────────────────────────────────────────────────── */

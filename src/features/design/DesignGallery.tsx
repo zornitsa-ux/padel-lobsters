@@ -94,7 +94,7 @@ function Row({
 }) {
   return (
     <div className="space-y-1.5">
-      <p className="text-2xs font-semibold uppercase tracking-wide text-lob-muted">{label}</p>
+      <p className="eyebrow">{label}</p>
       {block ? children : <div className="flex flex-wrap items-center gap-2">{children}</div>}
     </div>
   )

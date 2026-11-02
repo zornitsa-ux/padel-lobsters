@@ -345,7 +345,9 @@ it suits.
 
 ## Open owner calls
 
-- None.
+- **Eyebrow contrast** (P6e-2). `.eyebrow` in `lob-muted` is about 3.7:1 on
+  white, under WCAG AA's 4.5:1 for 10px text. `lob-slate` (about 7:1) passes
+  but reads heavier.
 
 ## Log
 
@@ -1614,8 +1616,9 @@ scrollable`, and so is the tips list. Open WhatsApp Community is a
   uppercase, `tracking-wider`, in `lob-muted` or `lob-teal`. The hand-built
   overlines came in six mixes (`text-2xs` / `text-xs`; `wide`, `wider`,
   `widest`; `muted-light`, `muted`, `teal`, coral, warning). Gallery entry.
-  - Colour: `lob-muted`, not the more common `muted-light`, as 10px text
-    needs the contrast (`muted-light` on white is about 2.3:1).
+  - Colour: `lob-muted`, not the more common `muted-light` (about 2.3:1 on
+    white). `lob-muted` is about 3.7:1, still under WCAG AA's 4.5:1 for
+    10px text; `lob-teal` passes (about 4.9:1). Open owner call below.
   - Coral and warning eyebrows on a white card (next event) take
     `.eyebrow-accent`. Eyebrows on a tinted surface keep the surface's
     colour as a utility over `.eyebrow`: Tip of the Day and the review
@@ -1626,5 +1629,11 @@ scrollable`, and so is the tips list. Open WhatsApp Community is a
   - The Oscars voting screen's hand-built "you" pill is a `Badge outline`
     "You", as in the Community list.
   - Left alone: table headers (group standings, the past event and Scores
-    tables), the dark hero banners (`LeagueDashboardCard`, `ChampionBanner`,
-    the recently completed banner) and `DateTile`.
+    tables), the dark hero banners (`LeagueDashboardCard`, the recently
+    completed banner) and `DateTile`.
+  - Review: `ChampionBanner` (a cream card, not a dark hero) takes
+    `.eyebrow`. Not overlines, so restored: the Lobster Way story summary
+    (a section's own title), the sign-in readiness card's title, and
+    `RatingReview`'s captions under the level figures. The level picker's
+    label is the form `.label`. The gallery's row labels use `.eyebrow`.
+    `.eyebrow-accent` shares `.eyebrow`'s rule and only changes colour.
