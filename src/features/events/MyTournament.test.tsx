@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, cleanup } from '@testing-library/react'
+import { render, screen, cleanup, within } from '@testing-library/react'
 import type { NormalisedTournament } from '../../lib/normalise'
 import type { EventPhase } from './eventPhase'
 import { mkMatch, mkRegistration } from '../../test/factories'
@@ -315,9 +315,30 @@ describe('MyTournament — every round is visible', () => {
 
     renderMyTournament()
 
-    expect(screen.getByRole('heading', { name: 'Up next' })).not.toBeNull()
-    expect(screen.getByRole('heading', { name: 'Your rounds' })).not.toBeNull()
-    expect(screen.getAllByText(/Round 2/)).toHaveLength(1)
+    const upNext = screen.getByRole('region', { name: 'Up next' })
+    const yourRounds = screen.getByRole('region', { name: 'Your rounds' })
+    expect(within(upNext).getByText('Round 2')).not.toBeNull()
+    expect(within(yourRounds).queryByText(/Round 2/)).toBeNull()
+  })
+
+  it('puts sitting out the round being played under Up next, before the next match', () => {
+    registrations = [mkRegistration({ id: 'r1', playerId: 'p1', status: 'registered' })]
+    // Round 1 is scored; p1 sits out round 2, which is being played, and plays round 3.
+    matches = [
+      fourRounds()[0],
+      mkMatch({ id: 'm2', round: 2, court: '2', team1Ids: ['p2', 'p3'], team2Ids: ['p4', 'p5'] }),
+      fourRounds()[2],
+    ]
+
+    renderMyTournament()
+
+    const upNext = screen.getByRole('region', { name: 'Up next' })
+    const sitOut = within(upNext).getByText('Round 2 · Sitting out')
+    const nextMatch = within(upNext).getByText('Round 3')
+    expect(sitOut.compareDocumentPosition(nextMatch)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+    expect(within(upNext).getByText("You're back for Round 3")).not.toBeNull()
+    const yourRounds = screen.getByRole('region', { name: 'Your rounds' })
+    expect(within(yourRounds).queryByText(/Round 2/)).toBeNull()
   })
 
   it('shows the score and outcome on rounds that are already saved', () => {

@@ -1,6 +1,7 @@
 import { Check, MapPin, Coffee } from 'lucide-react'
 import Avatar from '../../components/ui/Avatar'
 import { Badge } from '../../components/ui/Badge'
+import { AlertBox } from '../../components/ui/AlertBox'
 import { ListCard, ListRow } from '../../components/ui/ListCard'
 import { Section } from '../../components/ui/Section'
 import { matchOutcome, type MyMatchView, type MyRoundView } from './nextMatch'
@@ -12,8 +13,8 @@ const firstName = (player: Player | undefined, fallback: string): string =>
   player ? (player.name || fallback).split(' ')[0] : fallback
 
 /**
- * The player's whole event: the next match as the one elevated card under "Up next", then every
- * other round in order as one list.
+ * The player's whole event: what's next under "Up next" (sitting out the round being played, then
+ * the next match as the one elevated card), then every other round in order as one list.
  */
 export default function MyRounds({
   rounds,
@@ -25,14 +26,21 @@ export default function MyRounds({
   getPlayer: GetPlayer
 }) {
   const nextRound = rounds.find((r) => r.status === 'next' && r.match)
-  const others = rounds.filter((r) => r !== nextRound)
-  const lastPlayedRound = [...rounds].reverse().find((r) => r.match)?.round ?? null
+  const sittingOutNow = rounds.find(
+    (r) => r.round === currentRound && !r.match && r.status !== 'complete',
+  )
+  const others = rounds.filter((r) => r !== nextRound && r !== sittingOutNow)
 
   return (
     <>
-      {nextRound?.match && (
+      {(sittingOutNow || nextRound?.match) && (
         <Section title="Up next">
-          <NextRoundCard view={nextRound.match} getPlayer={getPlayer} />
+          <div className="space-y-3">
+            {sittingOutNow && (
+              <SittingOutNow round={sittingOutNow.round} backForRound={nextRound?.round ?? null} />
+            )}
+            {nextRound?.match && <NextRoundCard view={nextRound.match} getPlayer={getPlayer} />}
+          </div>
         </Section>
       )}
       {others.length > 0 && (
@@ -43,11 +51,7 @@ export default function MyRounds({
                 {round.match ? (
                   <PlayedRound round={round} getPlayer={getPlayer} />
                 ) : (
-                  <SittingOut
-                    round={round}
-                    isCurrent={round.round === currentRound}
-                    hasLaterMatch={lastPlayedRound != null && lastPlayedRound > round.round}
-                  />
+                  <SittingOut round={round.round} />
                 )}
               </ListRow>
             ))}
@@ -55,6 +59,14 @@ export default function MyRounds({
         </Section>
       )}
     </>
+  )
+}
+
+function SittingOutNow({ round, backForRound }: { round: number; backForRound: number | null }) {
+  return (
+    <AlertBox variant="warning" icon={<Coffee />} title={`Round ${round} · Sitting out`}>
+      {backForRound ? `You're back for Round ${backForRound}` : "You're done playing"}
+    </AlertBox>
   )
 }
 
@@ -154,28 +166,11 @@ function PlayedRound({ round, getPlayer }: { round: MyRoundView; getPlayer: GetP
 
 // ── Rounds the player sits out ───────────────────────────────────────────────
 
-function SittingOut({
-  round,
-  isCurrent,
-  hasLaterMatch,
-}: {
-  round: MyRoundView
-  isCurrent: boolean
-  hasLaterMatch: boolean
-}) {
-  const highlight = isCurrent && round.status !== 'complete'
-
+function SittingOut({ round }: { round: number }) {
   return (
     <div className="flex items-center gap-2">
-      <Coffee size={14} className={highlight ? 'text-lob-amber' : 'text-lob-muted-light'} />
-      <p className={`text-sm ${highlight ? 'text-lob-slate font-semibold' : 'text-lob-muted'}`}>
-        Round {round.round} · Sitting out
-      </p>
-      {highlight && (
-        <p className="text-xs text-lob-muted ml-auto">
-          {hasLaterMatch ? "You're back soon" : 'Done playing'}
-        </p>
-      )}
+      <Coffee size={14} className="text-lob-muted-light" />
+      <p className="text-sm text-lob-muted">Round {round} · Sitting out</p>
     </div>
   )
 }

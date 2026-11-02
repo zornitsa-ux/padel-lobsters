@@ -273,9 +273,9 @@ function RegistrationCard({
     return (
       <RegistrationShell
         status={
-          <p className="text-sm text-lob-muted">
+          <StatusLine>
             {isEventFull ? 'This event is full.' : "You haven't signed up yet."}
-          </p>
+          </StatusLine>
         }
       >
         <Button onClick={onRegister} disabled={registering} fullWidth>
@@ -371,7 +371,7 @@ function RegistrationShell({
   )
 }
 
-function StatusLine({ icon, children }: { icon: ReactNode; children: ReactNode }) {
+function StatusLine({ icon, children }: { icon?: ReactNode; children: ReactNode }) {
   return (
     <div className="flex items-center gap-2">
       {icon}

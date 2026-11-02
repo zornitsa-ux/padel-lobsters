@@ -223,11 +223,11 @@ primitives (see the Log) before P3:
       the app info. Done in #129.
     - **P6d-2: admin tools.** Event Manage (Overview, the Payments banner,
       the Eligibility header), the King of the Court admin, league Manage
-      (Overview and Season), the merch admin items as one `ListCard`. In
-      progress.
+      (Overview and Season), the merch admin items as one `ListCard`. Done
+      in #130.
     - **P6d-3: You tab and Home.** `MyTournament` (one registration card,
       not seven copies), `MyRounds` (Up next and Your rounds), the Home
-      birthdays. In progress.
+      birthdays. Done in #133.
     - **P6d-4: Oscars and the Lobster Way page.** Intro and empty boxes,
       the phase banner, `SectionLabel`, `StatRow` and `ResultsView` as
       lists; the Lobster Way categories under Sections.
@@ -325,6 +325,10 @@ it suits.
   `PinSignInInterstitial` (both in the entry chunk) use `Modal`. After the
   PIN cutover (5 November) removes the interstitial, lazy-load the confirm
   sheet and re-measure with a `localdev` build.
+
+- **Remove the birthdays feature** (owner, 2026-11-02). We won't show
+  players' birthdays, so the Home "Upcoming birthdays" block goes rather
+  than being fixed (#132). Its own PR, outside the design system.
 
 ## Open owner calls
 
@@ -1502,3 +1506,11 @@ scrollable`, and so is the tips list. Open WhatsApp Community is a
     `players_public` has no full `birthday` (#132). Seed matches store
     courts as "Court 1", so seed screens read "Court Court 1"; the
     generator writes "1", so real events are fine.
+  - Review: a player sitting out the round being played saw the next match
+    first, as "Up next", with the sit-out further down as a plain row. That
+    sit-out now leads "Up next" as a `warning` `AlertBox` (coffee icon,
+    "You're back for Round n" or "You're done playing"), before the hero
+    card, and leaves "Your rounds". It replaces the hand-built amber border
+    kept in P6c. The not-registered status line uses `StatusLine` like the
+    other states. The first-name split repeated across features is #134.
+  - Owner call: the birthdays feature is to be removed, not fixed (Later).
