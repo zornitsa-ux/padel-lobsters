@@ -230,7 +230,7 @@ primitives (see the Log) before P3:
       birthdays.~~ Done in #133.
     - ~~**P6d-4: Oscars and the Lobster Way page.** Intro and empty boxes,
       the phase banner, `SectionLabel`, `StatRow` and `ResultsView` as
-      lists; the Lobster Way categories under Sections.~~ In progress.
+      lists; the Lobster Way categories under Sections.~~ Done in #135.
 16. **P6e: labels and the rest.** Builds `Tag` (names a thing: Court 2, Round
     3, a shirt size; `Badge` stays for states) and moves the identity labels
     onto it (about ten); `.eyebrow` and the hand-built eyebrows (about 39
