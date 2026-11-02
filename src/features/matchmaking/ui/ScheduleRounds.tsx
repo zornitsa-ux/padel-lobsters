@@ -5,6 +5,7 @@ import type { ScheduleRun } from '../domain/types'
 import { courtChip, hasBothGenders } from './genderCopy'
 import { CourtGenderChip, GenderLegendEntries, GenderMark } from './genderMarks'
 import { TextButton } from '../../../components/ui/TextButton'
+import { Tag } from '../../../components/ui/Tag'
 
 type RoundReport = ScheduleRun['rounds'][number]
 type CourtReport = RoundReport['courts'][number]
@@ -125,9 +126,7 @@ function CourtCard({
     <div className="card space-y-2">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
-          <span className="text-xs font-bold text-lob-teal bg-lob-cream px-2 py-0.5 rounded-full">
-            Court {index + 1}
-          </span>
+          <Tag label={`Court ${index + 1}`} />
           {showGender && (
             <CourtGenderChip
               chip={courtChip({ teams: court.teams, players: court.players, flags: court.flags })}

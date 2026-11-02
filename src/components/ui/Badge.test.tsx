@@ -7,8 +7,8 @@ const classOf = (el: unknown) => String(propsOf(el).className)
 describe('Badge', () => {
   it('is one size of pill for every tone', () => {
     BADGE_TONES.forEach((tone) =>
-      expect(classOf(Badge({ tone, label: 'x' }))).toContain(
-        'rounded-full px-2 py-0.5 text-xs font-semibold',
+      ['rounded-full', 'px-2', 'py-0.5', 'text-xs', 'font-semibold'].forEach((cls) =>
+        expect(classOf(Badge({ tone, label: 'x' }))).toContain(cls),
       ),
     )
   })
@@ -36,7 +36,8 @@ describe('Badge', () => {
 
   it('truncates a long label instead of overflowing its row', () => {
     const el = Badge({ tone: 'success', label: 'Paid by a very long name' })
-    expect(classOf(el)).toContain('min-w-0 max-w-full')
+    expect(classOf(el)).toContain('min-w-0')
+    expect(classOf(el)).toContain('max-w-full')
     expect(classOf((propsOf(el).children as unknown[])[1])).toBe('truncate')
   })
 

@@ -25,6 +25,7 @@ import { OscarResultsList } from '../oscars/OscarResultsList'
 import { EventMatchList } from '../events/EventMatchList'
 import { Button } from '../../components/ui/Button'
 import { EmptyState } from '../../components/ui/EmptyState'
+import { Tag } from '../../components/ui/Tag'
 import { plural } from '../../lib/plural'
 
 type TabId = 'standings' | 'matches' | 'games'
@@ -45,7 +46,15 @@ interface PastEventResultsProps {
   onNavigate?: (view: string, tournament: NormalisedTournament) => void
 }
 
+const CATEGORY_LABEL = {
+  ladies: 'Ladies',
+  mens: 'Mens',
+  mixed: 'Mixed',
+  same: 'Same Gender',
+} as const
+
 // ── Main component ────────────────────────────────────────────────────────────
+
 export default function PastEventResults({ tournaments, onNavigate }: PastEventResultsProps) {
   const { isAdmin, session } = useApp()
   const { data: players = [] } = usePlayers()
@@ -188,26 +197,7 @@ export default function PastEventResults({ tournaments, onNavigate }: PastEventR
                 <div className="text-left">
                   <p className="font-bold text-lob-dark text-sm flex items-center gap-1.5 flex-wrap">
                     <span>{t.name}</span>
-                    {tCategory === 'ladies' && (
-                      <span className="text-2xs font-bold bg-pink-100 text-pink-600 px-1.5 py-0.5 rounded-full">
-                        Ladies
-                      </span>
-                    )}
-                    {tCategory === 'mens' && (
-                      <span className="text-2xs font-bold bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded-full">
-                        Mens
-                      </span>
-                    )}
-                    {tCategory === 'mixed' && (
-                      <span className="text-2xs font-bold bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full">
-                        Mixed
-                      </span>
-                    )}
-                    {tCategory === 'same' && (
-                      <span className="text-2xs font-bold bg-gray-100 text-lob-slate px-1.5 py-0.5 rounded-full">
-                        Same Gender
-                      </span>
-                    )}
+                    {tCategory && <Tag label={CATEGORY_LABEL[tCategory]} />}
                   </p>
                   <p className="text-xs text-lob-muted">
                     {t.date

@@ -40,6 +40,7 @@ import { SegmentedControl } from '../../components/ui/SegmentedControl'
 import { Chip } from '../../components/ui/Chip'
 import { AlertBox } from '../../components/ui/AlertBox'
 import { Well } from '../../components/ui/Well'
+import { Tag } from '../../components/ui/Tag'
 
 // A player slot the admin has tapped first in swap mode.
 interface SwapAnchor {
@@ -304,9 +305,7 @@ export default function Schedule({
           <Users size={15} className="text-lob-teal" />
           {registeredPlayers.length} players · {numCourts} court{numCourts > 1 ? 's' : ''}
         </div>
-        <span className="text-xs font-semibold bg-lob-cream text-lob-teal px-2.5 py-1 rounded-full">
-          {formatLabel(format)}
-        </span>
+        <Tag label={formatLabel(format)} />
       </div>
 
       {/* Scoring progress — saved schedule only; a live preview has nothing
@@ -486,9 +485,7 @@ export default function Schedule({
                   >
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-bold text-lob-teal bg-lob-cream px-2 py-0.5 rounded-full">
-                          {match.court}
-                        </span>
+                        {match.court && <Tag label={match.court} />}
                         {genderMode === 'mixed' &&
                           (() => {
                             const w = [...t1, ...t2].filter((p) => p?.gender === 'female').length
@@ -659,14 +656,7 @@ export default function Schedule({
                   <div className="flex flex-wrap gap-2">
                     {(display[activeRound].sitting || []).map((id) => {
                       const p = getPlayer(id)
-                      return p ? (
-                        <span
-                          key={id}
-                          className="text-xs bg-white border border-lob-line-strong text-lob-slate px-2 py-1 rounded-full"
-                        >
-                          {p.name}
-                        </span>
-                      ) : null
+                      return p ? <Tag key={id} label={p.name} /> : null
                     })}
                   </div>
                 </Well>

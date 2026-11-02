@@ -7,6 +7,7 @@ import type { MerchInterest, MerchItem, OrderStatus } from './merchSchemas'
 import { AlertBox } from '../../components/ui/AlertBox'
 import { Badge } from '../../components/ui/Badge'
 import { ListCard, ListRow } from '../../components/ui/ListCard'
+import { Tag } from '../../components/ui/Tag'
 
 const STEPS: readonly OrderStatus[] = ['ordered', 'paid', 'delivered']
 
@@ -49,16 +50,8 @@ function OrderRow({ order: o, item }: { order: MerchInterest; item: MerchItem | 
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-lob-dark">{item?.name || 'Item'}</p>
             <div className="flex items-center gap-2 flex-wrap mt-0.5">
-              {o.size && (
-                <span className="text-xs font-bold bg-lob-cream text-lob-teal px-2 py-0.5 rounded-full">
-                  {o.size}
-                </span>
-              )}
-              {o.customName && (
-                <span className="text-xs bg-lob-warning-light text-lob-warning px-2 py-0.5 rounded-full font-medium">
-                  Name: {o.customName}
-                </span>
-              )}
+              {o.size && <Tag label={o.size} />}
+              {o.customName && <Tag label={`Name: ${o.customName}`} />}
               <span className="text-xs text-lob-muted-light">{formatOrderTime(o.created_at)}</span>
             </div>
           </div>

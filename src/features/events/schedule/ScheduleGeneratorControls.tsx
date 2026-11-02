@@ -4,6 +4,7 @@ import type { SchedulePlayer, ScheduleRound } from './types'
 import { roundsForDuration } from './utils'
 import { SegmentedControl } from '../../../components/ui/SegmentedControl'
 import { Button } from '../../../components/ui/Button'
+import { Tag } from '../../../components/ui/Tag'
 
 export const TEAM_EVENT_NOTE = "The Americano schedule generator doesn't run on team events."
 
@@ -46,29 +47,17 @@ export default function ScheduleGeneratorControls({
 }: Props) {
   if (generated || !isAdmin) return null
   if (isTeamEvent) return <p className="card text-sm text-lob-muted">{TEAM_EVENT_NOTE}</p>
+  const leftyCount = registeredPlayers.filter((player) => player.isLeftHanded).length
 
   return (
     <div className="card space-y-3">
       <p className="font-semibold text-lob-slate text-sm">Generate Schedule</p>
 
       <div className="flex flex-wrap gap-1.5">
-        <span
-          className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-            genderMode === 'mixed' ? 'bg-pink-50 text-pink-700' : 'bg-gray-100 text-lob-slate'
-          }`}
-        >
-          {genderMode === 'mixed' ? '🚺🚹 Mixed · gender balanced' : '👥 Same gender'}
-        </span>
-        {registeredPlayers.some((player) => player.isLeftHanded) && (
-          <span className="text-xs bg-lob-warning-light text-lob-warning px-2 py-0.5 rounded-full font-medium">
-            🤚 {registeredPlayers.filter((player) => player.isLeftHanded).length} lefty — kept
-            separate
-          </span>
-        )}
+        <Tag label={genderMode === 'mixed' ? '🚺🚹 Mixed · gender balanced' : '👥 Same gender'} />
+        {leftyCount > 0 && <Tag label={`🤚 ${leftyCount} lefty — kept separate`} />}
         {isLobster && (
-          <span className="text-xs bg-lob-cream text-lob-teal px-2 py-0.5 rounded-full font-medium">
-            🦞 {roundsForDuration(tournamentDuration)} rounds · partners rotate
-          </span>
+          <Tag label={`🦞 ${roundsForDuration(tournamentDuration)} rounds · partners rotate`} />
         )}
       </div>
 
