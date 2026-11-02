@@ -1,4 +1,5 @@
 import { BADGE_TONE_CLASSES } from './badgeTones'
+import { LABEL_SHELL } from './labelShell'
 
 export const BADGE_TONES = [
   'success',
@@ -26,7 +27,7 @@ export function Badge({ tone, label, icon, title }: BadgeProps) {
   return (
     <span
       title={title}
-      className={`inline-flex min-w-0 max-w-full items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold [&>svg]:size-3 [&>svg]:shrink-0 ${BADGE_TONE_CLASSES[tone]}`}
+      className={`${LABEL_SHELL} gap-1 rounded-full [&>svg]:size-3 [&>svg]:shrink-0 ${BADGE_TONE_CLASSES[tone]}`}
     >
       {icon}
       <span className="truncate">{label}</span>

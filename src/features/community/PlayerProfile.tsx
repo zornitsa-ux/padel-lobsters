@@ -53,7 +53,7 @@ interface PlayerProfileProps {
   onResendInvite: (player: CommunityPlayer) => void
 }
 
-const positionLabel = (position: string): string =>
+const positionLabel = ({ position }: { position: string }): string =>
   position === 'left' || position === 'drive'
     ? '👈 Left'
     : position === 'right' || position === 'reves'
@@ -151,7 +151,7 @@ export default function PlayerProfile({
             } · ${stats.winRate}%`}
           />
         )}
-        {p.preferredPosition && <Tag label={positionLabel(p.preferredPosition)} />}
+        {p.preferredPosition && <Tag label={positionLabel({ position: p.preferredPosition })} />}
         {p.isLeftHanded && <Tag label="🤚 Lefty" />}
         {/* Day + month only, no year — this is public (players_public), not
             PII, so it renders with zero contact-details fetch. */}

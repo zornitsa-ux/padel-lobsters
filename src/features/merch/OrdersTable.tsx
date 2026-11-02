@@ -158,9 +158,9 @@ function OrderRow({
             {playerName?.split(' ')[0] || `Player #${o.player_id}`}
             <span className="font-normal text-lob-muted ml-1.5 text-xs">{item?.name || '—'}</span>
           </p>
-          <div className="flex items-center gap-2 mt-0.5">
+          <div className="flex flex-wrap items-center gap-2 mt-0.5">
             {o.size && <Tag label={o.size} />}
-            {hasCustomName && <Tag label={`"${o.customName}"`} />}
+            {hasCustomName && <Badge tone="warning" label={`"${o.customName}"`} />}
             <span className="text-xs font-bold text-lob-teal">€{orderPrice}</span>
             <span className="text-xs text-lob-muted-light">{formatOrderTime(o.created_at)}</span>
           </div>

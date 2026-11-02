@@ -18,7 +18,9 @@ describe('Tag', () => {
 
   it('truncates a long label instead of overflowing its row', () => {
     const el = Tag({ label: 'A very long custom shirt name' })
-    expect(classOf(el)).toContain('min-w-0 max-w-full')
+    expect(classOf(el)).toContain('min-w-0')
+    expect(classOf(el)).toContain('max-w-full')
+    expect(propsOf(el).title).toBe('A very long custom shirt name')
     const label = propsOf(el).children
     expect(String(propsOf(label).className)).toBe('truncate')
     expect(propsOf(label).children).toBe('A very long custom shirt name')

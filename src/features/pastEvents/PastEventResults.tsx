@@ -46,14 +46,14 @@ interface PastEventResultsProps {
   onNavigate?: (view: string, tournament: NormalisedTournament) => void
 }
 
-// ── Main component ────────────────────────────────────────────────────────────
-
 const CATEGORY_LABEL = {
   ladies: 'Ladies',
   mens: 'Mens',
   mixed: 'Mixed',
   same: 'Same Gender',
 } as const
+
+// ── Main component ────────────────────────────────────────────────────────────
 
 export default function PastEventResults({ tournaments, onNavigate }: PastEventResultsProps) {
   const { isAdmin, session } = useApp()

@@ -1602,3 +1602,9 @@ scrollable`, and so is the tips list. Open WhatsApp Community is a
     pill for a court with no name.
   - Found: Schedule hand-builds its own court gender chip (Men, Ladies,
     Mixed, Uneven, raw colours) instead of `CourtGenderChip` (#137).
+  - Review: `Tag` truncates, so it takes its label as a tooltip, and the
+    admin orders row wraps rather than cutting a custom name short. The
+    admin's custom-name pill stays a `warning` `Badge`: it flags a €5
+    surcharge and a print step (the player's own order keeps a `Tag`).
+    `Badge` and `Tag` share one shell (`labelShell.ts`). The profile's match
+    record stays a `Tag`, as planned in P6c.

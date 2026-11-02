@@ -47,6 +47,7 @@ export default function ScheduleGeneratorControls({
 }: Props) {
   if (generated || !isAdmin) return null
   if (isTeamEvent) return <p className="card text-sm text-lob-muted">{TEAM_EVENT_NOTE}</p>
+  const leftyCount = registeredPlayers.filter((player) => player.isLeftHanded).length
 
   return (
     <div className="card space-y-3">
@@ -54,11 +55,7 @@ export default function ScheduleGeneratorControls({
 
       <div className="flex flex-wrap gap-1.5">
         <Tag label={genderMode === 'mixed' ? '🚺🚹 Mixed · gender balanced' : '👥 Same gender'} />
-        {registeredPlayers.some((player) => player.isLeftHanded) && (
-          <Tag
-            label={`🤚 ${registeredPlayers.filter((player) => player.isLeftHanded).length} lefty — kept separate`}
-          />
-        )}
+        {leftyCount > 0 && <Tag label={`🤚 ${leftyCount} lefty — kept separate`} />}
         {isLobster && (
           <Tag label={`🦞 ${roundsForDuration(tournamentDuration)} rounds · partners rotate`} />
         )}
