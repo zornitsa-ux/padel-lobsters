@@ -8,12 +8,14 @@ import ChangePartnerPanel from './ChangePartnerPanel'
 import { TextButton } from '../../../../components/ui/TextButton'
 import { Button } from '../../../../components/ui/Button'
 import { ListRow } from '../../../../components/ui/ListCard'
+import { RankMarker } from '../../../../components/ui/RankMarker'
 
 interface TeamRowProps {
   entry: TeamEntry
   label: string
   partnerName: string
-  position: string
+  /** 1-based place in its list (registered or waitlist). */
+  rank: number
   tournamentId: string
   candidates: Player[]
   displayName: (player: Player) => string
@@ -26,7 +28,7 @@ export default function TeamRow({
   entry,
   label,
   partnerName,
-  position,
+  rank,
   tournamentId,
   candidates,
   displayName,
@@ -39,7 +41,7 @@ export default function TeamRow({
   return (
     <ListRow>
       <div className="flex items-center gap-2">
-        <span className="text-xs text-lob-muted w-6 text-center font-bold">{position}</span>
+        <RankMarker rank={rank} kind={entry.status === 'waitlist' ? 'waitlist' : 'position'} />
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-sm text-lob-dark truncate">{label}</p>
           <p className={`text-xs ${entry.confirmed ? 'text-lob-success' : 'text-lob-warning'}`}>

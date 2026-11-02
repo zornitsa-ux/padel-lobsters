@@ -71,13 +71,13 @@ export default function TeamLists({
     }
   }
 
-  const renderRow = (entry: TeamEntry, position: string) => (
+  const renderRow = (entry: TeamEntry, rank: number) => (
     <TeamRow
       key={entry.team.id}
       entry={entry}
       label={labelOf(entry)}
       partnerName={partnerNameOf({ entry, getPlayer, displayName })}
-      position={position}
+      rank={rank}
       tournamentId={tournamentId}
       candidates={candidates}
       displayName={displayName}
@@ -94,11 +94,9 @@ export default function TeamLists({
     />
   )
 
-  const renderList = ({ list, prefix }: { list: TeamEntry[]; prefix: string }) =>
+  const renderList = ({ list }: { list: TeamEntry[] }) =>
     isAdmin ? (
-      list.length > 0 && (
-        <ListCard>{list.map((e, i) => renderRow(e, `${prefix}${i + 1}`))}</ListCard>
-      )
+      list.length > 0 && <ListCard>{list.map((e, i) => renderRow(e, i + 1))}</ListCard>
     ) : (
       <div className="space-y-2">
         {list.map((e) => (
@@ -114,7 +112,7 @@ export default function TeamLists({
         title={`Registered (${registered.length}/${teamCount({ players: tournament.maxPlayers })} teams)`}
       >
         {registered.length === 0 && <EmptyState variant="inline" title="No teams registered yet" />}
-        {renderList({ list: registered, prefix: '#' })}
+        {renderList({ list: registered })}
       </Section>
 
       {waitlisted.length > 0 && (
@@ -122,7 +120,7 @@ export default function TeamLists({
           icon={<Clock className="text-lob-warning-solid" />}
           title={`Waitlist (${waitlisted.length})`}
         >
-          {renderList({ list: waitlisted, prefix: 'W' })}
+          {renderList({ list: waitlisted })}
         </Section>
       )}
     </>

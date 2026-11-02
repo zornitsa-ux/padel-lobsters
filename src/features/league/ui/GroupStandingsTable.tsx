@@ -21,7 +21,7 @@ export function GroupStandingsTable({
     <table className="w-full text-sm">
       <thead>
         <tr className="border-b border-lob-line">
-          <th className="text-2xs font-bold text-lob-muted-light uppercase tracking-wider text-left pb-2 w-6">
+          <th className="text-2xs font-bold text-lob-muted-light uppercase tracking-wider text-center pb-2 w-7">
             #
           </th>
           <th className="text-2xs font-bold text-lob-muted-light uppercase tracking-wider text-left pb-2">

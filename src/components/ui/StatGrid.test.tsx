@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { createElement, Fragment } from 'react'
 import { StatGrid } from './StatGrid'
 import { propsOf } from '../../test/element'
 
@@ -14,8 +15,13 @@ describe('StatGrid', () => {
     expect(classOf(StatGrid({ children: ['a', 'b', false] }))).toContain('grid-cols-2')
   })
 
-  it('keeps two to four columns', () => {
-    expect(classOf(StatGrid({ children: ['a'] }))).toContain('grid-cols-2')
+  it('counts the tiles inside a fragment one each', () => {
+    const group = createElement(Fragment, null, 'b', 'c')
+    expect(classOf(StatGrid({ children: ['a', group] }))).toContain('grid-cols-3')
+  })
+
+  it('keeps one to four columns', () => {
+    expect(classOf(StatGrid({ children: ['a'] }))).toContain('grid-cols-1')
     expect(classOf(StatGrid({ children: ['a', 'b', 'c', 'd', 'e'] }))).toContain('grid-cols-4')
   })
 })

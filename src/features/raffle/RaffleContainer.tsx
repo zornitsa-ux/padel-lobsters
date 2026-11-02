@@ -19,6 +19,7 @@ import { ListCard, ListRow } from '../../components/ui/ListCard'
 import { Section } from '../../components/ui/Section'
 import { Button } from '../../components/ui/Button'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
+import { medalFor } from '../../components/ui/RankMarker'
 
 const PRIZE_COUNTS = [1, 2, 3, 4, 5].map((n) => ({ value: n, label: String(n) }))
 
@@ -29,7 +30,7 @@ interface Tournament {
 }
 
 const fullNameOf = (name?: string | null) => (name || '').trim() || 'Player'
-const medal = (i: number) => (i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`)
+const medal = (i: number) => medalFor({ rank: i + 1 }) ?? `${i + 1}.`
 
 export default function RaffleContainer({
   tournament,

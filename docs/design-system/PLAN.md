@@ -1655,3 +1655,10 @@ scrollable`, and so is the tips list. Open WhatsApp Community is a
     colours, P7).
   - Found: on Payments, the action buttons squeeze an unpaid player's name
     to one letter on a phone (#140).
+  - Review: the team event's Registered and Waitlist rows (`TeamRow`)
+    were missed and are on `RankMarker` too, so both waitlists show "W2" in
+    the warning tone. `RankMarker` is `inline-block` (it kept no width in a
+    table cell), `w-7`, medals a size up, and an empty slot for a missing
+    rank (was "#0"). The standings' "#" header is centred over it. The
+    raffle's medals use `medalFor`. `StatGrid` counts tiles inside a
+    fragment one each and allows one column.
