@@ -8,6 +8,8 @@ export type OscarCategoryResult = {
   totalVoters: number
   rows: ResultRow[]
   winners: ResultRow[]
+  /** Every row that isn't a winner, in rank order. */
+  others: ResultRow[]
   topVotes: number
   maxVotes: number
 }
@@ -28,6 +30,7 @@ export function groupOscarResultsByCategory(
         totalVoters: r.total_voters ?? 0,
         rows: [],
         winners: [],
+        others: [],
         topVotes: 0,
         maxVotes: 1,
       })
@@ -38,6 +41,7 @@ export function groupOscarResultsByCategory(
   const cats = Array.from(byCat.values())
   for (const cat of cats) {
     cat.winners = cat.rows.filter((r) => Number(r.rank_in_category) === 1)
+    cat.others = cat.rows.filter((r) => Number(r.rank_in_category) !== 1)
     cat.maxVotes = Math.max(1, ...cat.rows.map((r) => Number(r.votes_count)))
     cat.topVotes = cat.winners.length ? Number(cat.winners[0].votes_count) : 0
   }

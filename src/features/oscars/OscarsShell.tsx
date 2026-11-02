@@ -5,27 +5,22 @@ import { AlertBox } from '../../components/ui/AlertBox'
 interface ShellProps {
   title: string
   headerRight?: ReactNode
+  /** What this screen is for, on the background under the title. */
+  intro?: ReactNode
   children: ReactNode
 }
 
 /* ─── Content shell with title and an optional header-right slot ── */
-export function Shell({ title, headerRight, children }: ShellProps) {
+export function Shell({ title, headerRight, intro, children }: ShellProps) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2 pb-2 border-b border-lob-line">
         <h2 className="text-lg font-bold text-lob-dark">{title}</h2>
         {headerRight}
       </div>
+      {intro && <p className="text-sm text-lob-slate leading-snug">{intro}</p>}
       {children}
     </div>
-  )
-}
-
-export function SectionLabel({ children }: { children: ReactNode }) {
-  return (
-    <p className="text-xs uppercase tracking-wider font-bold text-lob-muted-light mt-2 mb-2 px-1">
-      {children}
-    </p>
   )
 }
 
@@ -36,16 +31,16 @@ interface PhaseBannerProps {
   sharedAt?: string | null
 }
 
+const stamp = (iso: string | null | undefined) =>
+  iso ? new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''
+
 export function PhaseBanner({ status, startedAt, closedAt, sharedAt }: PhaseBannerProps) {
-  const stamp = (iso: string | null | undefined) =>
-    iso ? new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''
   if (status === 'active') {
     return (
-      <div className="bg-white border border-lob-line-strong rounded-2xl px-4 py-3 flex items-center gap-3">
-        <span className="w-2 h-2 rounded-full bg-lob-coral animate-pulse" />
-        <span className="text-sm font-semibold text-lob-slate">Active</span>
-        <span className="text-xs text-lob-muted-light ml-auto">started {stamp(startedAt)}</span>
-      </div>
+      <AlertBox variant="info" title="Voting is open">
+        {startedAt ? `Started at ${stamp(startedAt)}. ` : ''}Players can vote until you end the
+        game.
+      </AlertBox>
     )
   }
   if (status === 'ended') {

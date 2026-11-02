@@ -22,7 +22,7 @@ describe('ResultsView', () => {
   it('tells the reader nothing was voted on when there are no rows', () => {
     render(<ResultsView results={[]} />)
 
-    expect(screen.getByText('No votes were cast.')).toBeTruthy()
+    expect(screen.getByText('No votes were cast')).toBeTruthy()
   })
 
   it('orders categories by display_order', () => {
