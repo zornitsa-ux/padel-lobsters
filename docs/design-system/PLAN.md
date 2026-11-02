@@ -243,7 +243,7 @@ primitives (see the Log) before P3:
     - **P6e-3: `StatGrid` and `RankMarker`.** `StatGrid` for the StatTile
       grids (Event Manage Overview, Payments, league Manage Overview, the
       league team page, Your Stats); `RankMarker` + `PlayerRow highlighted`
-      for the hand-built rank prefixes (W1, #3, medals). In progress.
+      for the hand-built rank prefixes (W1, #3, medals). Done in #141.
     - **P6e-4: `SearchInput` and the `CollapsibleCard` heading.** The search
       field (icon, input, clear) for the five search fields; a heading
       element inside the `CollapsibleCard` header button (review of #76).
