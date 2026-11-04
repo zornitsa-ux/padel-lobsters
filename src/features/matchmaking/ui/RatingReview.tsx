@@ -92,7 +92,7 @@ function LevelLine({
     </div>
   )
 
-  const dot = (pos: number, size: number, ring: string) => (
+  const dot = ({ pos, size, ring }: { pos: number; size: number; ring: string }) => (
     <span
       className={`absolute rounded-full bg-white -translate-x-1/2 ring ${ring}`}
       style={{
@@ -112,9 +112,13 @@ function LevelLine({
         style={{ left: '10%', right: '10%', top: '48px', height: '6px' }}
         aria-hidden
       />
-      {dot(track(before), 12, 'ring-lob-muted')}
-      {dot(nowPos, 14, 'ring-lob-amber')}
-      {dot(track(full), 12, direction === 'up' ? 'ring-lob-teal' : 'ring-lob-coral')}
+      {dot({ pos: track(before), size: 12, ring: 'ring-lob-muted' })}
+      {dot({ pos: nowPos, size: 14, ring: 'ring-lob-amber' })}
+      {dot({
+        pos: track(full),
+        size: 12,
+        ring: direction === 'up' ? 'ring-lob-teal' : 'ring-lob-coral',
+      })}
       <Endpoint value={left.value} caption={left.caption} align="left" />
       <Endpoint value={right.value} caption={right.caption} align="right" />
       <div

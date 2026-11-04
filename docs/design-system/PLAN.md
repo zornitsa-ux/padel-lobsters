@@ -1776,8 +1776,17 @@ scrollable`, and so is the tips list. Open WhatsApp Community is a
     was needed: `RatingReview`'s gradient and dot rings (`from-lob-*`,
     `ring-lob-*`), confetti (`bg-lob-*`; its pink and emerald became the
     info and success solids), the bracket lines
-    (`stroke-lob-line-strong`), the header's WhatsApp pill (`bg-white/15
-backdrop-blur`), and two shadows as tokens (`shadow-nav`,
+    (`stroke-lob-line-strong`), the header's WhatsApp pill (`bg-white/15 backdrop-blur`), and two shadows as tokens (`shadow-nav`,
     `shadow-input`, from `lob-dark` like the card shadows).
   - Tests that passed raw classes as props use tokens, ahead of P7c's
     lint.
+  - Review: the saved schedule's two copies of the swap row are one
+    `SwapPlayer` on the ui `Avatar`; the picked player's disc is inverted
+    (white, teal ring), as a teal disc read like the teal letter colours.
+    `DateTile`'s day is `leading-none`, so the `sm` tile's 9px labels fit.
+    The countdown maps its four units. The raffle's "prize set after
+    confirming" hint is `lob-muted` (was amber at 50%). DESIGN_SYSTEM.md
+    no longer calls `text-[9px]` raw.
+  - Found: the swap rows can't be picked by keyboard (#145). The shop's
+    custom-name field hand-builds a compact `.input` (no inset shadow); a
+    `sm` input size is a later call.

@@ -42,7 +42,7 @@ export default function DateTile({ date, size = 'md', className = '' }: DateTile
         {month}
       </div>
       <div className="flex-1 flex flex-col items-center justify-center gap-0.5 leading-none">
-        <span className={`${dims.day} font-black text-lob-dark`}>{day}</span>
+        <span className={`${dims.day} leading-none font-black text-lob-dark`}>{day}</span>
         <span className={`${dims.dow} font-semibold text-lob-muted uppercase tracking-wider`}>
           {dow}
         </span>

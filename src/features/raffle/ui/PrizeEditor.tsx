@@ -19,9 +19,7 @@ export default function PrizeEditor({ prize, winnerId, onSave }: Props) {
   }, [initial])
 
   if (!winnerId) {
-    return (
-      <p className="mt-1 text-sm text-lob-amber-strong/50 italic">prize set after confirming</p>
-    )
+    return <p className="mt-1 text-sm text-lob-muted italic">prize set after confirming</p>
   }
 
   const commit = () => {
