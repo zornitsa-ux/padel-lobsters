@@ -22,12 +22,111 @@ shipped and the funnel has been measured.
 
 ---
 
+## Resume here (paused 5 Nov 2026)
+
+**Where things stand**
+
+- **G1 is live** (#151, merged 4 Nov). Guests can browse upcoming events and
+  open an event page; "Join" goes through signup back to the event.
+- **G5b (traffic funnel) is deferred** by the owner. Don't build it unless
+  asked.
+- **G2 (link previews) is paused, blocked on Vercel access.** Its code is in
+  draft PR #152 (branch `g2-link-previews`).
+
+**What happened with G2**
+
+1. #152 built previews as two **Vercel edge functions** (`api/event-preview`,
+   `api/event-image`) plus crawler-only rewrites in `vercel.json`. CI passes,
+   but **every Vercel deployment of the branch failed**. Nobody on the team
+   can read the build log yet, so the cause is unknown. Moving the tests to
+   `api/_tests` (Vercel deploys every other file in `api/` as a function)
+   did not fix it.
+2. The owner doesn't use Vercel edge functions and prefers a design without
+   them. **Chosen direction: static previews generated at build time** (below).
+3. That design depends on one unverified Vercel behaviour, so a **probe
+   deployment** was pushed to test it. It deployed, but preview deployments
+   are behind **Vercel Deployment Protection**, so it can't be checked from
+   outside. The owner is getting access to the Vercel project.
+
+**Blocker:** access to the Vercel project (owner), to run the probe checks
+below. With access, the failed #152 build logs can also be read
+(`npx vercel inspect <deployment> --logs`), but the static design no longer
+needs that answer.
+
+### Next step 1: run the probe
+
+- Branch `probe-vercel-static-routing` (commit `55ce30a`, never merge) adds
+  `public/events/route-probe/index.html` (marker `PROBE-INDEX-7f3a`) and
+  `public/events/route-probe/info/index.html` (marker `PROBE-INFO-9c1e`).
+- Preview host: `padel-lobsters-git-probe-vercel-st-cb4fd3-zornitsa-uxs-projects.vercel.app`.
+  If it has changed, the "Vercel Preview Comments" check on commit `55ce30a`
+  links to it.
+- Get past protection with either a **Protection Bypass for Automation** token
+  (Vercel → padel-lobsters → Settings → Deployment Protection), sent as the
+  `x-vercel-protection-bypass` header, or a browser signed in to Vercel. Keep
+  the token out of chat and commits: run the check yourself with `!` in Claude
+  Code.
+
+```sh
+T=<bypass token>; H=https://padel-lobsters-git-probe-vercel-st-cb4fd3-zornitsa-uxs-projects.vercel.app
+for p in /events/route-probe /events/route-probe/ /events/route-probe/info /events/route-probe/schedule /events/00000000-0000-4000-b000-000000000101; do
+  b=$(curl -s -H "x-vercel-protection-bypass: $T" -w '\n%{http_code}' "$H$p")
+  echo "$(echo "$b" | tail -1)  $(echo "$b" | grep -oE 'PROBE-(INDEX-7f3a|INFO-9c1e)|<div id="root"' | head -1)  $p"
+done
+curl -s -A "WhatsApp/2.23.20.0 A" -H "x-vercel-protection-bypass: $T" "$H/events/route-probe" | grep -oE 'PROBE-INDEX-7f3a|<div id="root"'
+```
+
+| Path                                             | Pass                                                                           |
+| ------------------------------------------------ | ------------------------------------------------------------------------------ |
+| `/events/route-probe` and `/events/route-probe/` | `200  PROBE-INDEX-7f3a` (folder `index.html` served before the app rewrite)    |
+| `/events/route-probe/info`                       | `200  PROBE-INFO-9c1e` (nested folders work, so `/events/:id/info` is covered) |
+| `/events/route-probe/schedule`                   | `200  <div id="root"` (no file, so the app)                                    |
+| a real event id                                  | `200  <div id="root"` (unchanged)                                              |
+| as WhatsApp                                      | `PROBE-INDEX-7f3a` (crawlers get the same file)                                |
+
+After the probe: delete the branch (`git push origin --delete
+probe-vercel-static-routing`).
+
+### Next step 2: rework #152 to static previews (if the probe passes)
+
+- **Remove:** `api/event-preview.ts`, `api/event-image.tsx`, `api/_lib/env.ts`,
+  the two crawler rewrites in `vercel.json` (restore the plain catch-all) and
+  the `@vercel/og` dependency.
+- **Keep and move** to a build script (e.g. `scripts/event-previews/`):
+  `eventPreview.ts` (text, escaping, closed events, image version),
+  `EventImage.tsx` (the share card), `logo.ts`, and their tests.
+  `brandColors.js` stays; Tailwind already uses it.
+- **Add a post-build step** (`npm run build` → `vite build && node
+scripts/event-previews/build.mjs`). It reads events from Supabase with the
+  anon key (event facts only), then writes:
+  - `dist/events/<id>/index.html` and `dist/events/<id>/info/index.html`: a
+    copy of `dist/index.html` with that event's tags;
+  - `dist/previews/<id>-<version>.png`: rendered with `satori` and
+    `@resvg/resvg-js` (or `resvg-wasm`), using `@vercel/og`'s Geist Regular
+    font (vendor the `.ttf` once `@vercel/og` is removed).
+    A local render with that toolchain already works (4 Nov).
+- **People and crawlers get the same page**, so there's no user-agent rule and
+  no `?app=1` redirect.
+- **Fail soft:** if Supabase is unreachable at build time, skip the previews
+  and keep the build green.
+- **Open decision (owner): how often to rebuild.** New or edited events show
+  the generic preview until the next deploy. Options: a scheduled GitHub
+  Action calling a Vercel deploy hook (e.g. every 2 hours; recommended), a
+  database trigger on event changes (needs a migration), or normal deploys
+  only.
+
+**If the probe fails** (folder `index.html` isn't served first), try
+`events/<id>.html` with `"cleanUrls": true` in a second probe before
+considering any function.
+
+---
+
 ## Phase 1: shareable events (the leak)
 
 | #   | Task                        | What ships                                                                                                                                                                                                                                                                                                                                                                             | Status      |
 | --- | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
 | G1  | Public event page           | Guests see the upcoming events list (`/events`, upcoming only) and `/events/:id/info`: a read-only card (name, date, time, location, format, price, spots left) plus a "Join to play" CTA, or "Join to get on the waitlist" when full. Other tabs stay protected. See G1 notes.                                                                                                        | Done (#151) |
-| G2  | Link previews               | A Vercel function or middleware serves per-event `og:title`/`og:description`/`og:image` for `/events/:id*`, with a generated image (date, format, venue). No live spot count, because previews are cached. Check it in the WhatsApp and Instagram link preview. See G2 notes.                                                                                                          | In review   |
+| G2  | Link previews               | Per-event `og:title`/`og:description`/`og:image` for `/events/:id*`, with a generated image (date, format, venue). No live spot count, because previews are cached. Check it in the WhatsApp and Instagram link preview. See **Resume here** and G2 notes.                                                                                                                             | Blocked     |
 | G3  | Signup returns to the event | CTA → signup carrying the event as the return path (`returnPath.ts`). After verifying, land on the event with the register action focused (or the waitlist action, if it's full).                                                                                                                                                                                                      | Not started |
 | G4  | Share button                | Extend the existing `ShareWhatsAppButton` (`src/components/ui`): `navigator.share` with the pre-written message and URL, falling back to WhatsApp and copy link. Shown on the event page for members and admins. The admin version has a longer "announcement" text for WhatsApp, plus "Download image", which serves the G2 preview image for an Instagram story with a link sticker. | Not started |
 | G5  | Attribution                 | Shared URLs carry `?src=` (`wa`, `ig`, `share`) and `?ref=` (the sharing member's opaque referral code, never a player ID). Stored on signup (`players.signup_source`, `referred_by`) and on the registration. Admin view: signups and first events by source.                                                                                                                         | Not started |
@@ -155,3 +254,8 @@ are the owner's calls, made from fill speed and waitlist data (CASE-STUDY §3).
   study corrected: a WhatsApp share button already exists.
 - 4 Nov 2026: G1 merged (#151). G5b deferred by the owner. G2 built (crawler
   previews and share image).
+- 4 Nov 2026: G2 review fixes. Every Vercel deploy of #152 failed; logs not
+  readable.
+- 5 Nov 2026: owner prefers no Vercel edge functions. Direction: static
+  previews at build time. Probe pushed but blocked by preview protection.
+  Paused until the owner has Vercel access (see Resume here).
