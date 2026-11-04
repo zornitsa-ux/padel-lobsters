@@ -3,10 +3,13 @@ import { describe, expect, it } from 'vitest'
 
 interface Rewrite {
   source: string
+  destination: string
   has?: { type: string; key: string; value: string }[]
 }
 
-const { rewrites } = JSON.parse(readFileSync('vercel.json', 'utf8')) as { rewrites: Rewrite[] }
+const { rewrites } = JSON.parse(
+  readFileSync(new URL('../vercel.json', import.meta.url), 'utf8'),
+) as { rewrites: Rewrite[] }
 const crawlerRules = rewrites.filter((r) => r.has?.some((h) => h.key === 'user-agent'))
 const crawlerUa = new RegExp(crawlerRules[0].has![0].value)
 
@@ -14,7 +17,21 @@ describe('vercel.json crawler routes', () => {
   it('covers the event index and info paths, before the app catch-all', () => {
     expect(crawlerRules.map((r) => r.source)).toEqual(['/events/:id', '/events/:id/info'])
     expect(rewrites.at(-1)?.source).toBe('/((?!api/).*)')
+    // Two rules, one regex: keep them identical.
     expect(new Set(crawlerRules.map((r) => r.has![0].value)).size).toBe(1)
+  })
+
+  it('tells the preview which tab was opened', () => {
+    expect(crawlerRules.map((r) => r.destination)).toEqual([
+      '/api/event-preview?id=:id',
+      '/api/event-preview?id=:id&tab=info',
+    ])
+  })
+
+  it('leaves out search crawlers, which should index the app', () => {
+    expect(
+      crawlerUa.test('Mozilla/5.0 (compatible; Applebot/0.1; +http://www.apple.com/go/applebot)'),
+    ).toBe(false)
   })
 
   it.each([

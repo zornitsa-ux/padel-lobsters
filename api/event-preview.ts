@@ -1,11 +1,13 @@
 import {
   SITE_DESCRIPTION,
   SITE_NAME,
+  appUrlFor,
   fetchPreviewEvent,
-  imageVersion,
+  imageUrlFor,
   isEventId,
   previewText,
   renderPreviewHtml,
+  todayUtc,
 } from './_lib/eventPreview'
 import { supabaseEnv } from './_lib/env'
 
@@ -16,19 +18,26 @@ export const config = { runtime: 'edge' }
 export default async function handler(request: Request): Promise<Response> {
   const url = new URL(request.url)
   const id = url.searchParams.get('id')
-  const pageUrl = isEventId(id) ? `${url.origin}/events/${id}/info` : `${url.origin}/events`
-  const event = isEventId(id) ? await fetchPreviewEvent({ ...supabaseEnv(), id }) : null
+  const tab = url.searchParams.get('tab')
+  const valid = isEventId(id)
+  const pageUrl = valid ? `${url.origin}/events/${id}/info` : `${url.origin}/events`
+  const appUrl = valid
+    ? appUrlFor({ origin: url.origin, id, tab, search: url.searchParams })
+    : `${url.origin}/events?app=1`
+  const event = valid ? await fetchPreviewEvent({ ...supabaseEnv(), id }) : null
 
   const html = event
     ? renderPreviewHtml({
-        ...previewText({ event }),
+        ...previewText({ event, today: todayUtc() }),
         pageUrl,
-        imageUrl: `${url.origin}/api/event-image?id=${event.id}&v=${imageVersion({ event })}`,
+        appUrl,
+        imageUrl: imageUrlFor({ origin: url.origin, event }),
       })
     : renderPreviewHtml({
         title: SITE_NAME,
         description: SITE_DESCRIPTION,
         pageUrl,
+        appUrl,
         imageUrl: `${url.origin}/logo-hd.png`,
       })
 

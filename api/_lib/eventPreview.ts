@@ -10,6 +10,7 @@ export interface PreviewEvent {
   time: string | null
   location: string | null
   format: string | null
+  status: string | null
 }
 
 export const SITE_NAME = 'Padel Lobsters'
@@ -17,7 +18,8 @@ export const IMAGE_SIZE = { width: 1200, height: 630 }
 export const SITE_DESCRIPTION =
   'The Amsterdam padel community. See upcoming events and join the next one.'
 
-const PREVIEW_COLUMNS = 'id,name,date,time,location,format'
+const PREVIEW_COLUMNS = 'id,name,date,time,location,format,status'
+const FETCH_TIMEOUT_MS = 2500
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 export const isEventId = (id: string | null): id is string => !!id && UUID.test(id)
@@ -37,6 +39,8 @@ export async function fetchPreviewEvent({
   try {
     const res = await fetch(url, {
       headers: { apikey: anonKey, Authorization: `Bearer ${anonKey}` },
+      // A crawler gives up after a few seconds; fall back before it does.
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     })
     if (!res.ok) return null
     const rows = (await res.json()) as PreviewEvent[]
@@ -61,16 +65,25 @@ export const formatPreviewDate = ({ date, time }: Pick<PreviewEvent, 'date' | 't
   return time ? `${day} · ${time}` : day
 }
 
-export function previewText({ event }: { event: PreviewEvent }): {
+export const todayUtc = (now = new Date()): string => now.toISOString().slice(0, 10)
+
+// Started, finished or past: the link no longer leads to a sign-up.
+export const isClosed = ({ event, today }: { event: PreviewEvent; today: string }): boolean =>
+  event.status !== 'upcoming' || (!!event.date && event.date < today)
+
+export function previewText({ event, today }: { event: PreviewEvent; today: string }): {
   title: string
   description: string
 } {
   const when = formatPreviewDate(event)
   const what = event.format ? formatLabel(event.format) : ''
   const details = [when, event.location, what].filter(Boolean).join(' · ')
+  const ask = isClosed({ event, today })
+    ? `Sign-ups are closed. See what's coming up on ${SITE_NAME}.`
+    : `See the details and join on ${SITE_NAME}.`
   return {
     title: event.name || `${SITE_NAME} event`,
-    description: `${details}${details ? '. ' : ''}See the details and join on ${SITE_NAME}.`,
+    description: `${details}${details ? '. ' : ''}${ask}`,
   }
 }
 
@@ -83,6 +96,9 @@ export const imageVersion = ({ event }: { event: PreviewEvent }): string => {
   return hash.toString(36)
 }
 
+export const imageUrlFor = ({ origin, event }: { origin: string; event: PreviewEvent }): string =>
+  `${origin}/api/event-image?id=${event.id}&v=${imageVersion({ event })}`
+
 const escapeHtml = (s: string): string => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)
 
 export function renderPreviewHtml({
@@ -90,15 +106,17 @@ export function renderPreviewHtml({
   description,
   pageUrl,
   imageUrl,
+  appUrl,
 }: {
   title: string
   description: string
   pageUrl: string
   imageUrl: string
+  /** The link that was opened, plus `app=1`: where a person sent here by mistake goes. */
+  appUrl: string
 }): string {
   const meta = (attr: 'property' | 'name', key: string, value: string) =>
     `<meta ${attr}="${key}" content="${escapeHtml(value)}" />`
-  const appUrl = `${pageUrl}${pageUrl.includes('?') ? '&' : '?'}app=1`
   return [
     '<!doctype html>',
     '<html lang="en"><head><meta charset="utf-8" />',
@@ -113,10 +131,30 @@ export function renderPreviewHtml({
     meta('property', 'og:image:width', String(IMAGE_SIZE.width)),
     meta('property', 'og:image:height', String(IMAGE_SIZE.height)),
     meta('name', 'twitter:card', 'summary_large_image'),
-    // A person sent here by mistake goes on to the app; `app=1` skips this route.
+    // `app=1` makes vercel.json skip this route, so the app loads.
     `<script>location.replace(${JSON.stringify(appUrl).replace(/</g, '\\u003c')})</script>`,
     '</head><body>',
     `<a href="${escapeHtml(appUrl)}">${escapeHtml(title)}</a>`,
     '</body></html>',
   ].join('\n')
+}
+
+// The URL that was opened (path and query, e.g. `?src=wa`), with `app=1`, so a
+// person sent here by mistake lands where the link pointed.
+export function appUrlFor({
+  origin,
+  id,
+  tab,
+  search,
+}: {
+  origin: string
+  id: string
+  tab: string | null
+  search: URLSearchParams
+}): string {
+  const params = new URLSearchParams(search)
+  params.delete('id')
+  params.delete('tab')
+  params.set('app', '1')
+  return `${origin}/events/${id}${tab === 'info' ? '/info' : ''}?${params.toString()}`
 }

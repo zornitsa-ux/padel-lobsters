@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
+  appUrlFor,
   formatPreviewDate,
+  isClosed,
   imageVersion,
   isEventId,
   previewText,
@@ -15,7 +17,9 @@ const EVENT: PreviewEvent = {
   time: '10:00',
   location: 'Padel Club Amsterdam',
   format: 'king_of_court',
+  status: 'upcoming',
 }
+const TODAY = '2026-11-04'
 
 describe('event preview', () => {
   it('accepts only uuids as event ids', () => {
@@ -32,11 +36,36 @@ describe('event preview', () => {
   })
 
   it('writes the title and description from event facts only', () => {
-    expect(previewText({ event: EVENT })).toEqual({
+    expect(previewText({ event: EVENT, today: TODAY })).toEqual({
       title: 'King of the Court',
       description:
         'Sunday 15 November · 10:00 · Padel Club Amsterdam · King of the Court. See the details and join on Padel Lobsters.',
     })
+  })
+
+  it('says sign-ups are closed once an event has started, finished or passed', () => {
+    expect(isClosed({ event: EVENT, today: TODAY })).toBe(false)
+    expect(isClosed({ event: { ...EVENT, status: 'active' }, today: TODAY })).toBe(true)
+    expect(isClosed({ event: { ...EVENT, status: 'completed' }, today: TODAY })).toBe(true)
+    expect(isClosed({ event: EVENT, today: '2026-11-16' })).toBe(true)
+    expect(
+      previewText({ event: { ...EVENT, status: 'completed' }, today: TODAY }).description,
+    ).toMatch(/Sign-ups are closed\. See what's coming up on Padel Lobsters\.$/)
+  })
+
+  it('sends a person back to the link they opened, keeping its query', () => {
+    const search = new URLSearchParams({ id: EVENT.id, tab: 'info', src: 'wa' })
+    expect(
+      appUrlFor({ origin: 'https://padelobsters.nl', id: EVENT.id, tab: 'info', search }),
+    ).toBe(`https://padelobsters.nl/events/${EVENT.id}/info?src=wa&app=1`)
+    expect(
+      appUrlFor({
+        origin: 'https://padelobsters.nl',
+        id: EVENT.id,
+        tab: null,
+        search: new URLSearchParams(),
+      }),
+    ).toBe(`https://padelobsters.nl/events/${EVENT.id}?app=1`)
   })
 
   it('changes the image version when a shown fact changes', () => {
@@ -51,6 +80,7 @@ describe('event preview', () => {
       description: 'd',
       pageUrl: 'https://padelobsters.nl/events/x/info',
       imageUrl: 'https://padelobsters.nl/i.png',
+      appUrl: 'https://padelobsters.nl/events/x/info?app=1',
     })
     expect(html).not.toContain('<script>alert')
     expect(html).toContain('&#60;script&#62;')

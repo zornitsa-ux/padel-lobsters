@@ -1,15 +1,10 @@
 import { formatLabel } from '../../src/features/events/eventHelpers'
+import { coral, cream, teal, tealDark } from '../../brandColors.js'
 import { SITE_NAME, formatPreviewDate, type PreviewEvent } from './eventPreview'
 
-// Brand values from tailwind.config.js (teal, tealDark, coral, cream). The
-// image is rendered by Satori, outside Tailwind, so they're repeated here.
-const BRAND = {
-  teal: '#3D7A8A',
-  tealDark: '#2A5A68',
-  coral: '#D94F2B',
-  cream: '#F5F0E8',
-  white: '#FFFFFF',
-}
+// Satori renders outside Tailwind, so the brand colours come from the module
+// tailwind.config.js builds its lob-* tokens from.
+const BRAND = { teal, tealDark, coral, cream, white: '#FFFFFF' }
 
 // 1200×630 share card: who's hosting, what, when, where. No spot count.
 export function EventImage({ event, logo }: { event: PreviewEvent | null; logo: string }) {
@@ -60,7 +55,7 @@ export function EventImage({ event, logo }: { event: PreviewEvent | null; logo: 
         ) : (
           <div style={{ display: 'flex' }} />
         )}
-        <div style={{ fontSize: 30, color: BRAND.cream }}>Tap to see details and join</div>
+        <div style={{ fontSize: 30, color: BRAND.cream }}>padelobsters.nl</div>
       </div>
     </div>
   )

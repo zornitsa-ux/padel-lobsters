@@ -22,22 +22,29 @@ describe('event-preview handler', () => {
       {
         id: ID,
         name: 'Sunday mix',
-        date: '2026-11-15',
+        date: '2099-11-15',
         time: '10:00',
         location: 'Club',
         format: 'lobster_matching',
+        status: 'upcoming',
       },
     ])
 
-    const res = await handler(new Request(`https://padelobsters.nl/api/event-preview?id=${ID}`))
+    const res = await handler(
+      new Request(`https://padelobsters.nl/api/event-preview?id=${ID}&tab=info&src=wa`),
+    )
     const html = await res.text()
+    expect(html).toContain(
+      `location.replace("https://padelobsters.nl/events/${ID}/info?src=wa&app=1")`,
+    )
+    expect(html).toContain('See the details and join')
 
     expect(res.headers.get('content-type')).toContain('text/html')
     expect(html).toContain('<meta property="og:title" content="Sunday mix" />')
     expect(html).toContain(`content="https://padelobsters.nl/events/${ID}/info"`)
     expect(html).toMatch(new RegExp(`/api/event-image\\?id=${ID}&#38;v=\\w+`))
     const [url] = fetchMock.mock.calls[0] as unknown as [string]
-    expect(url).toContain('select=id,name,date,time,location,format')
+    expect(url).toContain('select=id,name,date,time,location,format,status')
     expect(url).toContain(`id=eq.${ID}`)
   })
 

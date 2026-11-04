@@ -1,6 +1,5 @@
-const teal = '#3D7A8A'
-const tealDark = '#2A5A68'
-const coral = '#D94F2B'
+import { coral, cream, teal, tealDark } from './brandColors.js'
+
 const gold = '#FACC15'
 const lineStrong = '#E5E7EB'
 /** Deep crimson, kept well apart from coral. Text and fills share one shade. */
@@ -30,7 +29,7 @@ export default {
         coral,
         amber: '#E8A030',
         'amber-strong': '#8C5A0E',
-        cream: '#F5F0E8',
+        cream,
         dark: `rgb(${darkRgb})`,
         muted: '#6B8A92',
         'muted-light': '#97ADB3',

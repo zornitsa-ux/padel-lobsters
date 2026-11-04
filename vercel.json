@@ -6,10 +6,15 @@
         {
           "type": "header",
           "key": "user-agent",
-          "value": ".*(facebookexternalhit|Facebot|WhatsApp|Twitterbot|Slackbot|TelegramBot|Discordbot|LinkedInBot|Pinterest|SkypeUriPreview|redditbot|Applebot|Embedly|vkShare).*"
+          "value": ".*(facebookexternalhit|Facebot|WhatsApp|Twitterbot|Slackbot|TelegramBot|Discordbot|LinkedInBot|Pinterest|SkypeUriPreview|redditbot|Iframely|Embedly|vkShare).*"
         }
       ],
-      "missing": [{ "type": "query", "key": "app" }],
+      "missing": [
+        {
+          "type": "query",
+          "key": "app"
+        }
+      ],
       "destination": "/api/event-preview?id=:id"
     },
     {
@@ -18,12 +23,20 @@
         {
           "type": "header",
           "key": "user-agent",
-          "value": ".*(facebookexternalhit|Facebot|WhatsApp|Twitterbot|Slackbot|TelegramBot|Discordbot|LinkedInBot|Pinterest|SkypeUriPreview|redditbot|Applebot|Embedly|vkShare).*"
+          "value": ".*(facebookexternalhit|Facebot|WhatsApp|Twitterbot|Slackbot|TelegramBot|Discordbot|LinkedInBot|Pinterest|SkypeUriPreview|redditbot|Iframely|Embedly|vkShare).*"
         }
       ],
-      "missing": [{ "type": "query", "key": "app" }],
-      "destination": "/api/event-preview?id=:id"
+      "missing": [
+        {
+          "type": "query",
+          "key": "app"
+        }
+      ],
+      "destination": "/api/event-preview?id=:id&tab=info"
     },
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+    {
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
+    }
   ]
 }
