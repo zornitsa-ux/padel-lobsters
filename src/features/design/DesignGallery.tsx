@@ -69,6 +69,9 @@ import { StatTile } from '../../components/ui/StatTile'
 import { StatGrid } from '../../components/ui/StatGrid'
 import { SearchInput } from '../../components/ui/SearchInput'
 import { RankMarker } from '../../components/ui/RankMarker'
+import { Podium } from '../../components/ui/Podium'
+import { LevelBadge } from '../../components/ui/LevelBadge'
+import { GenderLegendEntries } from '../matchmaking/ui/genderMarks'
 import { Well } from '../../components/ui/Well'
 import { PlaytomicLevelField } from '../players/ProfileFields'
 
@@ -385,6 +388,36 @@ function SearchInputSection() {
           value={search}
           onChange={setSearch}
         />
+      </Row>
+    </GallerySection>
+  )
+}
+
+function DecorativeSection() {
+  return (
+    <GallerySection title="Podium, medals, levels and gender marks">
+      <Row label="Podium (lob-gold, lob-silver, lob-bronze)" block>
+        <Podium
+          places={[
+            { name: 'Ana', points: 30 },
+            { name: 'Bo', points: 24 },
+            { name: 'Cy', points: 18 },
+          ]}
+        />
+      </Row>
+      <Row label="Medal trophies">
+        <Trophy size={16} className="text-lob-gold-strong" />
+        <Trophy size={16} className="text-lob-silver" />
+        <Trophy size={16} className="text-lob-bronze" />
+      </Row>
+      <Row label="LevelBadge: under 2, 2–3.9, 4–4.9, 5 and up; sm">
+        {[1.5, 2.6, 4.3, 5.2].map((level) => (
+          <LevelBadge key={level} level={level} />
+        ))}
+        <LevelBadge level={3.4} size="sm" />
+      </Row>
+      <Row label="Gender marks (lob-gender-f, lob-gender-m)">
+        <GenderLegendEntries />
       </Row>
     </GallerySection>
   )
@@ -1304,6 +1337,7 @@ export default function DesignGallery() {
       <IconButtonSection />
       <StatusSection />
       <SearchInputSection />
+      <DecorativeSection />
       <FormErrorSection />
       <ChoiceSection />
       <OptionSection />

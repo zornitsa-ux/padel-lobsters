@@ -8,7 +8,7 @@ import {
   type DbMatchForStats,
   type TournamentForStats,
 } from '../../lib/playerStats'
-import { levelBadgeClass } from './playerConstants'
+import { LevelBadge } from '../../components/ui/LevelBadge'
 import type { CommunityPlayer } from './playersSelectors'
 import { useMmRatings } from '../matchmaking/useMatchmaking'
 import type { EventNavigate } from '../events/eventHelpers'
@@ -165,9 +165,7 @@ export default function PlayerProfile({
       {/* Level row — compact */}
       <div className="flex items-center gap-1.5 text-xs text-lob-muted">
         <span>Playtomic</span>
-        <span className={`font-bold px-1.5 py-0.5 rounded ${levelBadgeClass(p.playtomicLevel)}`}>
-          {(p.playtomicLevel || 0).toFixed(1)}
-        </span>
+        <LevelBadge level={p.playtomicLevel} size="sm" />
       </div>
 
       {/* Learned level — admin-only (mm_rating/mm_sigma, admin RPC) */}

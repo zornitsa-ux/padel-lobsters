@@ -4,6 +4,7 @@ import { GENDER_UNEVEN_AVOIDABLE_FLAG, GENDER_UNEVEN_FLAG } from '../domain/repo
 import {
   courtChip,
   hasBothGenders,
+  savedCourtChip,
   savedCourtIsUneven,
   savedRoundHasAvoidableUneven,
 } from './genderCopy'
@@ -86,5 +87,36 @@ describe('saved-view unevenness', () => {
     const ffmm = { team1: [f('f2'), f('f3')], team2: [m('m4'), m('m5')] }
     expect(savedRoundHasAvoidableUneven({ courts: [lone, mixed] })).toBe(false)
     expect(savedRoundHasAvoidableUneven({ courts: [lone, ffmm] })).toBe(true)
+  })
+})
+
+describe('savedCourtChip', () => {
+  const m = (id: string) => ({ id, gender: 'male' })
+  const f = (id: string) => ({ id, gender: 'female' })
+  const lone = { team1: [f('f1'), m('m1')], team2: [m('m2'), m('m3')] }
+  const mixed = { team1: [f('f2'), m('m4')], team2: [f('f3'), m('m5')] }
+  const ffmm = { team1: [f('f2'), f('f3')], team2: [m('m4'), m('m5')] }
+
+  it('names even courts as the generator does', () => {
+    expect(savedCourtChip({ court: mixed, round: [mixed] })?.text).toBe('Mixed')
+    const men = { team1: [m('a'), m('b')], team2: [m('c'), m('d')] }
+    expect(savedCourtChip({ court: men, round: [men] })?.text).toBe('Men')
+  })
+
+  it('tells an avoidable uneven court from an unavoidable one', () => {
+    expect(savedCourtChip({ court: lone, round: [lone, mixed] })?.text).toBe(
+      'Uneven · unavoidable this round',
+    )
+    expect(savedCourtChip({ court: ffmm, round: [lone, ffmm] })).toMatchObject({
+      text: 'Uneven · women v men',
+      tone: 'uneven',
+    })
+  })
+
+  it('shows nothing for a court with a missing player', () => {
+    const short = { team1: [f('f1')], team2: [m('m1'), m('m2')] }
+    expect(savedCourtChip({ court: short, round: [short] })).toBeNull()
+    const men = { team1: [m('m1')], team2: [m('m2'), m('m3')] }
+    expect(savedCourtChip({ court: men, round: [men] })).toBeNull()
   })
 })

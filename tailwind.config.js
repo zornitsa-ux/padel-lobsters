@@ -28,6 +28,11 @@ export default {
           well: '#F9FAFB',
           line: '#F3F4F6',
           'line-strong': '#E5E7EB',
+          gold: { DEFAULT: gold, light: '#FEFCE8', strong: '#CA8A04', 'on-dark': '#FDE047' },
+          silver: { DEFAULT: '#9CA3AF', soft: '#E5E7EB' },
+          bronze: '#CD7F32',
+          'gender-f': { DEFAULT: '#BE185D', soft: '#FCE7F3' },
+          'gender-m': { DEFAULT: '#1D4ED8', soft: '#DBEAFE' },
           success: {
             DEFAULT: '#15803D',
             light: '#F0FDF4',

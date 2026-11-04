@@ -26,6 +26,7 @@ import { EventMatchList } from '../events/EventMatchList'
 import { Button } from '../../components/ui/Button'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { Tag } from '../../components/ui/Tag'
+import { Podium } from '../../components/ui/Podium'
 import { plural } from '../../lib/plural'
 
 type TabId = 'standings' | 'matches' | 'games'
@@ -186,13 +187,13 @@ export default function PastEventResults({ tournaments, onNavigate }: PastEventR
         return (
           <CollapsibleCard
             key={`db-${t.id}`}
-            className="card overflow-hidden border-l-4 border-yellow-400"
+            className="card overflow-hidden border-l-4 border-lob-gold"
             expanded={open}
             onToggle={() => setExpandedId(open ? null : `db-${t.id}`)}
             header={
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-yellow-50 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <Trophy size={20} className="text-yellow-500" />
+                <div className="w-10 h-10 bg-lob-gold-light rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Trophy size={20} className="text-lob-gold-strong" />
                 </div>
                 <div className="text-left">
                   <p className="font-bold text-lob-dark text-sm flex items-center gap-1.5 flex-wrap">
@@ -299,55 +300,10 @@ export default function PastEventResults({ tournaments, onNavigate }: PastEventR
                 return (
                   <div className="mt-4 space-y-3">
                     {/* Podium */}
-                    {!withheld && top3.length >= 2 && (
-                      <div className="flex items-end justify-center gap-2 py-2">
-                        <div className="flex flex-col items-center gap-1 flex-1">
-                          <span className="text-xl">🥈</span>
-                          <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-bold text-lob-slate">
-                            {top3[1].player.name[0]}
-                          </div>
-                          <p className="text-sm font-semibold w-full text-center leading-tight px-1">
-                            {dbDn(top3[1].player.name)}
-                          </p>
-                          <div className="bg-gray-200 w-full h-10 rounded-t-xl flex items-center justify-center">
-                            <span className="text-xs font-bold text-lob-slate">
-                              {top3[1].pts}pts
-                            </span>
-                          </div>
-                        </div>
-                        <div className="flex flex-col items-center gap-1 flex-1">
-                          <span className="text-2xl">🥇</span>
-                          <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center font-bold text-white text-lg">
-                            {top3[0].player.name[0]}
-                          </div>
-                          <p className="text-base font-bold w-full text-center leading-tight px-1">
-                            {dbDn(top3[0].player.name)}
-                          </p>
-                          <div className="bg-yellow-400 w-full h-16 rounded-t-xl flex items-center justify-center">
-                            <span className="text-xs font-bold text-white">{top3[0].pts}pts</span>
-                          </div>
-                        </div>
-                        {top3[2] && (
-                          <div className="flex flex-col items-center gap-1 flex-1">
-                            <span className="text-xl">🥉</span>
-                            <div
-                              className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white"
-                              style={{ background: '#CD7F32' }}
-                            >
-                              {top3[2].player.name[0]}
-                            </div>
-                            <p className="text-sm font-semibold w-full text-center leading-tight px-1">
-                              {dbDn(top3[2].player.name)}
-                            </p>
-                            <div
-                              className="w-full h-7 rounded-t-xl flex items-center justify-center"
-                              style={{ background: '#CD7F32' }}
-                            >
-                              <span className="text-xs font-bold text-white">{top3[2].pts}pts</span>
-                            </div>
-                          </div>
-                        )}
-                      </div>
+                    {!withheld && (
+                      <Podium
+                        places={top3.map((s) => ({ name: dbDn(s.player.name), points: s.pts }))}
+                      />
                     )}
 
                     {/* Tabs — Full Standings | Match Results | Lobster Games (conditional) */}
@@ -382,7 +338,7 @@ export default function PastEventResults({ tournaments, onNavigate }: PastEventR
                           </thead>
                           <tbody>
                             {rankings.map((s, i) => (
-                              <tr key={s.player.id} className="border-b border-gray-50">
+                              <tr key={s.player.id} className="border-b border-lob-line">
                                 <td className="py-1.5 pl-1 text-lob-muted-light font-bold">
                                   {i + 1}
                                 </td>

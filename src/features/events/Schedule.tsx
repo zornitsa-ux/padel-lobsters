@@ -33,7 +33,8 @@ import type { EntityId, ScheduleRound, ScheduleWarning } from './schedule/types'
 import type { EventNavigate } from './eventHelpers'
 import type { NormalisedTournament, Player } from '../../lib/normalise'
 import type { GenderMode } from '../matchmaking/domain/types'
-import { savedCourtIsUneven, savedRoundHasAvoidableUneven } from '../matchmaking/ui/genderCopy'
+import { savedCourtChip } from '../matchmaking/ui/genderCopy'
+import { CourtGenderChip } from '../matchmaking/ui/genderMarks'
 import { Button } from '../../components/ui/Button'
 import { TextButton } from '../../components/ui/TextButton'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
@@ -255,6 +256,11 @@ export default function Schedule({
   }
 
   const display = generated || savedRounds
+  const isPlayer = (p: Player | undefined): p is Player => Boolean(p)
+  const roundCourts = (display?.[activeRound]?.matches ?? []).map((m) => ({
+    team1: m.team1Ids?.map(getPlayer).filter(isPlayer) || [],
+    team2: m.team2Ids?.map(getPlayer).filter(isPlayer) || [],
+  }))
 
   // MatchmakingContainer is the only generator (`useV2Matcher = isAdmin`), so
   // this handler is only ever reached by a non-admin, who gets bounced.
@@ -467,9 +473,7 @@ export default function Schedule({
               )}
 
               {display[activeRound].matches.map((match, i) => {
-                const isPlayer = (p: Player | undefined): p is Player => Boolean(p)
-                const t1 = match.team1Ids?.map(getPlayer).filter(isPlayer) || []
-                const t2 = match.team2Ids?.map(getPlayer).filter(isPlayer) || []
+                const { team1: t1, team2: t2 } = roundCourts[i]
                 const isSwapping = swapMode && generated
 
                 return (
@@ -486,57 +490,11 @@ export default function Schedule({
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-1.5">
                         {match.court && <Tag label={match.court} />}
-                        {genderMode === 'mixed' &&
-                          (() => {
-                            const w = [...t1, ...t2].filter((p) => p?.gender === 'female').length
-                            if (w === 0) {
-                              return (
-                                <span
-                                  title="All-male court"
-                                  className="text-xs font-bold bg-blue-100 text-blue-700 px-3 py-0.5 rounded-full"
-                                >
-                                  Men
-                                </span>
-                              )
-                            }
-                            if (w === 4) {
-                              return (
-                                <span
-                                  title="All-female court"
-                                  className="text-xs font-bold bg-pink-100 text-pink-700 px-3 py-0.5 rounded-full"
-                                >
-                                  Ladies
-                                </span>
-                              )
-                            }
-                            const uneven = savedCourtIsUneven({ team1: t1, team2: t2 })
-                            const avoidable =
-                              uneven &&
-                              savedRoundHasAvoidableUneven({
-                                courts: display[activeRound].matches.map((m) => ({
-                                  team1: m.team1Ids?.map(getPlayer).filter(isPlayer) || [],
-                                  team2: m.team2Ids?.map(getPlayer).filter(isPlayer) || [],
-                                })),
-                              })
-                            const title = !uneven
-                              ? 'Mixed court'
-                              : avoidable
-                                ? 'Uneven court'
-                                : 'Uneven court, unavoidable this round'
-                            const tone = !uneven
-                              ? 'bg-teal-50 text-teal-700'
-                              : avoidable
-                                ? 'bg-lob-warning-light text-lob-warning'
-                                : 'bg-gray-100 text-lob-muted'
-                            return (
-                              <span
-                                title={title}
-                                className={`text-xs font-semibold px-3 py-0.5 rounded-full ${tone}`}
-                              >
-                                {uneven ? 'Uneven' : 'Mixed'}
-                              </span>
-                            )
-                          })()}
+                        {genderMode === 'mixed' && (
+                          <CourtGenderChip
+                            chip={savedCourtChip({ court: roundCourts[i], round: roundCourts })}
+                          />
+                        )}
                       </div>
                       {match.completed && (
                         <span className="text-xs text-lob-success font-semibold">✓ Done</span>

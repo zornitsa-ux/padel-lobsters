@@ -4,8 +4,8 @@ import { TextButton } from '../../../components/ui/TextButton'
 import { Badge, type BadgeTone } from '../../../components/ui/Badge'
 
 const MARKS = {
-  female: { letter: 'W', label: 'Woman', className: 'bg-pink-100 text-pink-700' },
-  male: { letter: 'M', label: 'Man', className: 'bg-blue-100 text-blue-700' },
+  female: { letter: 'W', label: 'Woman', className: 'bg-lob-gender-f-soft text-lob-gender-f' },
+  male: { letter: 'M', label: 'Man', className: 'bg-lob-gender-m-soft text-lob-gender-m' },
 } as const
 
 const BADGE = 'inline-flex items-center justify-center rounded-full text-2xs font-bold w-4 h-4'
