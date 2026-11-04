@@ -5,8 +5,8 @@ const ImageResponse = vi.fn(function (this: Response, _el: unknown, init: Respon
 })
 vi.mock('@vercel/og', () => ({ ImageResponse }))
 
-const { default: handler } = await import('./event-image')
-const { imageVersion } = await import('./_lib/eventPreview')
+const { default: handler } = await import('../event-image')
+const { imageVersion } = await import('../_lib/eventPreview')
 
 const ID = '00000000-0000-4000-b000-000000000101'
 const EVENT = {

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import handler from './event-preview'
+import handler from '../event-preview'
 
 const ID = '00000000-0000-4000-b000-000000000101'
 

@@ -8,7 +8,7 @@ import {
   previewText,
   renderPreviewHtml,
   type PreviewEvent,
-} from './eventPreview'
+} from '../_lib/eventPreview'
 
 const EVENT: PreviewEvent = {
   id: '00000000-0000-4000-b000-000000000101',

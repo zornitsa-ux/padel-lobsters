@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 
 interface Rewrite {
@@ -8,7 +8,7 @@ interface Rewrite {
 }
 
 const { rewrites } = JSON.parse(
-  readFileSync(new URL('../vercel.json', import.meta.url), 'utf8'),
+  readFileSync(new URL('../../vercel.json', import.meta.url), 'utf8'),
 ) as { rewrites: Rewrite[] }
 const crawlerRules = rewrites.filter((r) => r.has?.some((h) => h.key === 'user-agent'))
 const crawlerUa = new RegExp(crawlerRules[0].has![0].value)
@@ -51,4 +51,11 @@ describe('vercel.json crawler routes', () => {
   ])('leaves people in in-app and normal browsers on the app: %s', (ua) => {
     expect(crawlerUa.test(ua)).toBe(false)
   })
+})
+
+// Vercel deploys every file in api/ not under an `_` folder as a function, so
+// tests and helpers must stay in api/_tests and api/_lib.
+it('keeps only function entry points at the top of api/', () => {
+  const entries = readdirSync(new URL('..', import.meta.url)).filter((f) => !f.startsWith('_'))
+  expect(entries.sort()).toEqual(['event-image.tsx', 'event-preview.ts'])
 })
