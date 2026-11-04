@@ -160,7 +160,7 @@ the gallery, and runs `npm run design:baseline` when counts drop.
 | P4  | **`Badge` tones** (`success`, `neutral`, `warning`, `outline`) and **payment status single source** (`paymentStatus.ts`, `PaymentStatusBadge` on `Badge`; the blue "transferred" pill and merch "delivered" get a token). About 13 hand-built status pills move onto `Badge`. Rename team-state "Confirmed".                                                                                                                                                                                                                                                                                                                                       | Done (#110)               |
 | P5  | **Empty and signed-out states.** `EmptyState variant="inline"`, `SignInPrompt`; loading states: a loading card keeps its title or header, so the viewer sees what is loading, and shows `Spinner` / `Skeleton` in the body instead of `return null`.                                                                                                                                                                                                                                                                                                                                                                                               | Done (#112)               |
 | P6  | **Cards for objects, lists and sections.** Owner calls 2026-10-30 (Log). A card is one thing you act on; page sections sit on the background under a heading; a list of like items is one card with divided rows; no card inside a card. Pieces: `Section`, `ListCard`, `Well` (the planned `.panel`), `Tag`, `.eyebrow`, `RankMarker` + `PlayerRow highlighted`, ~~`RosterHeading`~~ (dropped 2026-11-02), `SearchInput` (#81), a heading element inside the `CollapsibleCard` header button (review of #76). Five PRs: P6a to P6e under "Next".                                                                                                  |                           |
-| P7  | **Lock-down.** Tokens for decorative colours (medal gold, avatar palette, gender marks) and for `text-[9px]` (14 uses, the bottom nav labels among them). Then switch `theme.extend.colors` to a restricted `theme.colors` so raw palette classes stop generating, and add a lint rule for unknown classes (e.g. `eslint-plugin-tailwindcss`, check ESLint 9 support). Retire the colour ratchet once the theme is locked; keep the `<button>` check.                                                                                                                                                                                              | Done: #143, #144, P7c     |
+| P7  | **Lock-down.** Tokens for decorative colours (medal gold, avatar palette, gender marks) and for `text-[9px]` (14 uses, the bottom nav labels among them). Then switch `theme.extend.colors` to a restricted `theme.colors` so raw palette classes stop generating, and add a lint rule for unknown classes (e.g. `eslint-plugin-tailwindcss`, check ESLint 9 support). Retire the colour ratchet once the theme is locked; keep the `<button>` check.                                                                                                                                                                                              | Done (#143, #144, #146)   |
 
 The gallery exists: `/design` in dev (`src/features/design/DesignGallery.tsx`;
 open to guests in dev only, left out of the production build). Each step adds
@@ -250,7 +250,7 @@ primitives (see the Log) before P3:
       field (icon, input, clear) for the five search fields; a heading
       element inside the `CollapsibleCard` header button (review of #76).
       Done in #142.
-17. **P7: lock-down.** Inventory and owner calls in the Log (2026-11-04).
+17. **P7: lock-down.** Done. Inventory and owner calls in the Log (2026-11-04).
     Three PRs:
     - **P7a: decorative tokens.** `lob-gold` / `-silver` / `-bronze` and a
       `Podium` for the two hand-built podiums; `lob-gender-f` / `-m` for the
@@ -267,7 +267,7 @@ primitives (see the Log) before P3:
     - **P7c: lock.** A restricted `theme.colors` (lob, white, black,
       transparent, current, inherit), `eslint-plugin-tailwindcss` 3.18
       (`no-custom-classname`; 4.x needs Tailwind 4), and the colour check
-      made absolute (zero, no baseline) rather than retired. In progress.
+      made absolute (zero, no baseline) rather than retired. #146.
 
 ### E2E safety net
 
