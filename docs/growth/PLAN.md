@@ -24,14 +24,14 @@ shipped and the funnel has been measured.
 
 ## Phase 1: shareable events (the leak)
 
-| #   | Task                        | What ships                                                                                                                                                                                                                                                                                                                                     | Status      |
-| --- | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
-| G1  | Public event page           | Guests see the upcoming events list (`/events`, upcoming only) and `/events/:id/info`: a read-only card (name, date, time, location, format, gender mode, price, spots left) plus a "Join to play" CTA, or "Join to get on the waitlist" when full. Other tabs stay protected. See G1 notes.                                                   | Not started |
-| G2  | Link previews               | A Vercel function or middleware serves per-event `og:title`/`og:description`/`og:image` for `/events/:id*`, with a generated image (date, format, venue). No live spot count, because previews are cached. Check it in the WhatsApp and Instagram link preview.                                                                                | Not started |
-| G3  | Signup returns to the event | CTA → signup carrying the event as the return path (`returnPath.ts`). After verifying, land on the event with the register action focused (or the waitlist action, if it's full).                                                                                                                                                              | Not started |
-| G4  | Share button                | A `ShareButton` in `src/components/ui`: `navigator.share` with a pre-written message and URL, falling back to copy link. Shown on the event page for members and admins. The admin version has a longer "announcement" text for WhatsApp, plus "Download image", which serves the G2 preview image for an Instagram story with a link sticker. | Not started |
-| G5  | Attribution                 | Shared URLs carry `?src=` (`wa`, `ig`, `share`) and `?ref=` (the sharing member's opaque referral code, never a player ID). Stored on signup (`players.signup_source`, `referred_by`) and on the registration. Admin view: signups and first events by source.                                                                                 | Not started |
-| G5b | Traffic funnel              | Cookieless analytics (Vercel Web Analytics, or Plausible/Umami if custom events need a paid tier): public page views plus `event_page_view`, `share_tap`, `signup_start`, `signup_complete`, `event_register`, each tagged with `src`. Ships with G1.                                                                                          | Not started |
+| #   | Task                        | What ships                                                                                                                                                                                                                                                                                                                                                                             | Status      |
+| --- | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| G1  | Public event page           | Guests see the upcoming events list (`/events`, upcoming only) and `/events/:id/info`: a read-only card (name, date, time, location, format, gender mode, price, spots left) plus a "Join to play" CTA, or "Join to get on the waitlist" when full. Other tabs stay protected. See G1 notes.                                                                                           | In review   |
+| G2  | Link previews               | A Vercel function or middleware serves per-event `og:title`/`og:description`/`og:image` for `/events/:id*`, with a generated image (date, format, venue). No live spot count, because previews are cached. Check it in the WhatsApp and Instagram link preview.                                                                                                                        | Not started |
+| G3  | Signup returns to the event | CTA → signup carrying the event as the return path (`returnPath.ts`). After verifying, land on the event with the register action focused (or the waitlist action, if it's full).                                                                                                                                                                                                      | Not started |
+| G4  | Share button                | Extend the existing `ShareWhatsAppButton` (`src/components/ui`): `navigator.share` with the pre-written message and URL, falling back to WhatsApp and copy link. Shown on the event page for members and admins. The admin version has a longer "announcement" text for WhatsApp, plus "Download image", which serves the G2 preview image for an Instagram story with a link sticker. | Not started |
+| G5  | Attribution                 | Shared URLs carry `?src=` (`wa`, `ig`, `share`) and `?ref=` (the sharing member's opaque referral code, never a player ID). Stored on signup (`players.signup_source`, `referred_by`) and on the registration. Admin view: signups and first events by source.                                                                                                                         | Not started |
+| G5b | Traffic funnel              | Cookieless analytics (Vercel Web Analytics, or Plausible/Umami if custom events need a paid tier): public page views plus `event_page_view`, `share_tap`, `signup_start`, `signup_complete`, `event_register`, each tagged with `src`. Ships with G1.                                                                                                                                  | Not started |
 
 **Order:** G1 + G5b → G3 → G2 → G5 → G4. G2 needs G1, because a preview that
 opens to a sign-in wall wastes the tap. G5 ships before G4, so shares are
@@ -44,12 +44,15 @@ source.
 
 ### G1 notes
 
-- **Data access.** Anon can already read the whole `tournaments` table
-  (`tournaments_read_all` is `USING (true)`, and anon holds the table grant),
-  including `notes` and `tikkie_link`. G1 narrows that: revoke the anon table
-  grant and give anon a column grant, or a `public_events` view, with only
-  the card's columns. Spots taken come from the existing
-  `public_tournament_registration_counts`, not a new count.
+- **Data access.** Guest pages read only event facts (an explicit column
+  list, never `*`, no payment link or courts) and spots taken from the
+  existing `public_tournament_registration_counts`. They never read
+  registrations or player data, so they keep working when anon database
+  access is tightened. That tightening is a separate project (owner decision,
+  4 Nov), not part of G1. See #150.
+- **Join.** "Join to play" goes to `/events/:id/join?signup=1`, a protected
+  route. The gate opens in signup mode, and once signed in the route forwards
+  to the event's info page. "Sign in" uses the same route without `signup`.
 - **Routing.** `isPublicPath` matches fixed prefixes only. Adding `/events`
   as a prefix would make every sub-tab public (schedule, results, Oscars). G1
   adds exact matches for `/events`, `/events/:id` and `/events/:id/info`,
@@ -123,3 +126,6 @@ are the owner's calls, made from fill speed and waitlist data (CASE-STUDY §3).
 - 4 Nov 2026: owner dropped G7 (new-event email). Focus is Phase 1, the
   shareable event page.
 - 4 Nov 2026: owner answered the open questions (see Decisions).
+- 4 Nov 2026: G1 built (guest events list, guest event page, join via the
+  sign-in gate). Anon database access split out as its own project. Case
+  study corrected: a WhatsApp share button already exists.

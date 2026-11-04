@@ -33,7 +33,7 @@ afterEach(cleanup)
 describe('VerificationGate — session check', () => {
   it('renders the page while the check is pending', () => {
     mockCheck.mockReturnValue({ status: 'pending' })
-    renderGate('/events')
+    renderGate('/community')
 
     expect(screen.getByText('page content')).toBeTruthy()
   })
@@ -41,7 +41,7 @@ describe('VerificationGate — session check', () => {
   it('renders nothing for a signed-in session with no role claim while pending', () => {
     mockUseApp.mockReturnValue({ role: 'guest', session: {}, sessionSettled: true, logout })
     mockCheck.mockReturnValue({ status: 'pending' })
-    const view = renderGate('/events')
+    const view = renderGate('/community')
 
     expect(view.container.innerHTML).toBe('')
   })
@@ -49,9 +49,24 @@ describe('VerificationGate — session check', () => {
   it('still shows the sign-in form to a signed-out guest', () => {
     mockUseApp.mockReturnValue({ role: 'guest', session: null, sessionSettled: true, logout })
     mockCheck.mockReturnValue({ status: 'complete' })
-    renderGate('/events')
+    renderGate('/community')
 
     expect(screen.getByText('sign-in form')).toBeTruthy()
+  })
+
+  it('opens straight into signup for a guest following a join link', async () => {
+    mockUseApp.mockReturnValue({ role: 'guest', session: null, sessionSettled: true, logout })
+    renderGate('/events/evt-1/join?signup=1')
+
+    expect(await screen.findByText(/set up your lobster profile/i)).toBeTruthy()
+    expect(screen.queryByText('sign-in form')).toBeNull()
+  })
+
+  it('lets a guest browse the public event pages', () => {
+    mockUseApp.mockReturnValue({ role: 'guest', session: null, sessionSettled: true, logout })
+    renderGate('/events/evt-1/info')
+
+    expect(screen.getByText('page content')).toBeTruthy()
   })
 
   it('shows only the panel for an incomplete session, on any route, and signs out', () => {
@@ -65,7 +80,7 @@ describe('VerificationGate — session check', () => {
   })
 
   it('renders the page for a complete session', () => {
-    renderGate('/events')
+    renderGate('/community')
 
     expect(screen.getByText('page content')).toBeTruthy()
   })

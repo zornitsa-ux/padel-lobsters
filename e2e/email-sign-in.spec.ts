@@ -87,19 +87,19 @@ test.afterEach(async () => {
 
 async function startSignup({ page, email }: { page: Page; email: string }) {
   signedUp.push(email)
-  await page.goto('/events')
+  await page.goto('/community')
   await page.getByRole('button', { name: /sign up/i }).click()
   await fillSignupForm({ page, email })
   await clearInbox({ to: email })
 }
 
 test('code sign-in on the page gate stays on the page', async ({ page }) => {
-  await page.goto('/events')
+  await page.goto('/community')
   const code = await requestCode({ page, email: CODE_PLAYER })
   await enterCode({ page, code })
 
   await expect(page.getByLabel('Code')).toBeHidden()
-  await expect(page).toHaveURL(/\/events$/)
+  await expect(page).toHaveURL(/\/community$/)
 })
 
 test('code sign-in in the deep-link modal stays on the page', async ({ page }) => {
@@ -193,7 +193,7 @@ test('password path: set on a code session, sign in with it, change it', async (
 })
 
 test('magic link: tap to confirm returns to the page it was requested from', async ({ page }) => {
-  await page.goto('/events')
+  await page.goto('/community')
   await clearInbox({ to: LINK_PLAYER })
   const since = Date.now() - 1000
   await page.getByLabel('Email').fill(LINK_PLAYER)
@@ -203,13 +203,13 @@ test('magic link: tap to confirm returns to the page it was requested from', asy
   await page.goto(await waitForConfirmPath({ to: LINK_PLAYER, since }))
   await page.getByRole('button', { name: /tap to finish signing in/i }).click()
 
-  await expect(page).toHaveURL(/\/events$/)
+  await expect(page).toHaveURL(/\/community$/)
   await expect(page.getByLabel('Email')).toHaveCount(0)
 })
 
 test('forgot password: reset code, rule messages, new password signs in', async ({ page }) => {
   allowConsoleErrors({ page, patterns: [/status of 422 .*\/auth\/v1\/user/] })
-  await page.goto('/events')
+  await page.goto('/community')
   await page.getByRole('button', { name: /sign in with password/i }).click()
   await page.getByRole('button', { name: /forgot password/i }).click()
   await clearInbox({ to: RESET_PLAYER })
@@ -231,7 +231,7 @@ test('forgot password: reset code, rule messages, new password signs in', async 
   ).toBeVisible()
   await page.getByLabel('New password').fill(RESET_PASSWORD)
   await save.click()
-  await expect(page).toHaveURL(/\/events$/)
+  await expect(page).toHaveURL(/\/community$/)
 
   await page.goto('/account')
   await page.getByRole('button', { name: /^sign out$/i }).click()
@@ -280,12 +280,12 @@ test('an account with no players row sees the incomplete-account panel and can s
    ════════════════════════════════════════════════════════════════════════════ */
 
 async function openHomeSignedIn({ page, email }: { page: Page; email: string }) {
-  await signIn({ page, email, password: PLAYER_PASSWORD, at: '/events' })
+  await signIn({ page, email, password: PLAYER_PASSWORD, at: '/community' })
   await page.goto('/home')
 }
 
 test('PIN sign-in shows the interstitial once, with the player email', async ({ page }) => {
-  await page.goto('/events')
+  await page.goto('/community')
   await page.getByRole('button', { name: /sign in with pin \(until/i }).click()
   await page.getByLabel(/your pin/i).fill(PLAYER.pin)
   await page.getByRole('button', { name: /^sign in with pin$/i }).click()

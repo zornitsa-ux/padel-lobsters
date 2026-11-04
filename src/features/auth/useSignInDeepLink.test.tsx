@@ -63,7 +63,7 @@ describe('useSignInDeepLink', () => {
   })
 
   it('leaves a protected path to the gate', () => {
-    const { result } = render({ url: '/events?signin=1&email=ada%40example.com', session: null })
+    const { result } = render({ url: '/community?signin=1&email=ada%40example.com', session: null })
 
     expect(result.current.link.open).toBe(false)
     expect(result.current.location.search).toBe('?signin=1&email=ada%40example.com')
