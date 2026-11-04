@@ -52,15 +52,15 @@ funnel:
 
 ## 2. Today's funnel, step by step
 
-| Step                          | Today                                                                                                                                                     | Leak                                                 |
-| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| **1. Hear about it**          | An admin posts in the members' WhatsApp group. Occasionally on Instagram.                                                                                 | Outsiders aren't in the group.                       |
-| **2. See the link**           | `index.html` has one fixed title and **no Open Graph tags**. A pasted event link previews as "Padel Lobsters", with no date, venue, format or spots left. | Nothing makes the link worth tapping.                |
-| **3. Open the link**          | `/events/*` is protected (`src/lib/authPaths.ts`, default-deny). A logged-out visitor gets the **sign-in card** and never sees the event.                 | The biggest leak: a wall before any value.           |
-| **4. Sign up**                | Self-serve email-code signup exists, with name matching for placeholder accounts.                                                                         | Works, but the visitor's reason (the event) is gone. |
-| **5. Register for the event** | Has to find the event again after signup.                                                                                                                 | Context is lost between signup and register.         |
-| **6. Share / bring a friend** | No share button or `navigator.share` anywhere. Only team events let a player bring a partner (by email, admin invites).                                   | Members can't easily recruit.                        |
-| **7. Come back**              | Strong: most first-timers return.                                                                                                                         | Fine.                                                |
+| Step                          | Today                                                                                                                                                                                   | Leak                                                 |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| **1. Hear about it**          | An admin posts in the members' WhatsApp group. Occasionally on Instagram.                                                                                                               | Outsiders aren't in the group.                       |
+| **2. See the link**           | `index.html` has one fixed title and **no Open Graph tags**. A pasted event link previews as "Padel Lobsters", with no date, venue, format or spots left.                               | Nothing makes the link worth tapping.                |
+| **3. Open the link**          | `/events/*` is protected (`src/lib/authPaths.ts`, default-deny). A logged-out visitor gets the **sign-in card** and never sees the event.                                               | The biggest leak: a wall before any value.           |
+| **4. Sign up**                | Self-serve email-code signup exists, with name matching for placeholder accounts.                                                                                                       | Works, but the visitor's reason (the event) is gone. |
+| **5. Register for the event** | Has to find the event again after signup.                                                                                                                                               | Context is lost between signup and register.         |
+| **6. Share / bring a friend** | A WhatsApp share button exists (Home, events list, event page), but the link it shares opens to the sign-in card. No native share sheet. Only team events let a player bring a partner. | Members can't easily recruit.                        |
+| **7. Come back**              | Strong: most first-timers return.                                                                                                                                                       | Fine.                                                |
 
 None of this is measured. Signups and registrations don't record where they
 came from, so we can't tell an Instagram signup from a WhatsApp forward.
@@ -80,9 +80,10 @@ Ranked by impact against effort.
 3. **Signup that returns to the event.** After signing up from an event page,
    land back on it with registration one tap away. That closes the step 4→5
    leak.
-4. **A share button.** One tap gives a ready-written message ("King of the
-   Court, Sunday, 3 spots left") through the native share sheet
-   (WhatsApp, Instagram, copy link). Both admins and members can use it.
+4. **A better share button.** The existing WhatsApp share gains the native
+   share sheet (WhatsApp, Instagram, copy link), with a ready-written message
+   ("King of the Court, Sunday, 3 spots left"). Its links finally land
+   somewhere useful once the public page exists.
 5. **Attribution.** Add `?src=` (and a member's referral code) to shared links,
    and store the source on signup and registration. Without this we can't tell
    whether anything here worked.
@@ -134,9 +135,9 @@ repo.
 - The public page shows **counts, not names**: spots taken and spots left,
   never who registered. Schedule, results and Oscars stay behind sign-in.
 - Preview images and share text carry **event facts only**.
-- Anon reads event data only through an explicit column list (a column grant
-  or a `public_*` view). Today anon can read the whole `tournaments` table,
-  including notes and the payment link. G1 narrows this (PLAN, G1 notes).
+- Guest pages read event data only through an explicit column list, plus
+  registration counts. Tightening anon database access generally is a
+  separate project (#150).
 - Attribution stores a source label and a referrer's player ID in the
   database only. It never shows up in URLs as a name or email.
 

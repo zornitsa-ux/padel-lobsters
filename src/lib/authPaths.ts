@@ -29,11 +29,22 @@ export const PUBLIC_PATHS = Object.freeze([
 ])
 
 /**
+ * Exact public routes inside otherwise-protected sections. A prefix can't
+ * express these: `/events` as a prefix would open every event tab.
+ * `/events/:id/join` stays protected so the gate asks a guest to sign up.
+ */
+const PUBLIC_PATTERNS: readonly RegExp[] = Object.freeze([
+  /^\/events\/?$/, // upcoming events list
+  /^\/events\/[^/]+\/?$/, // event index (redirects to info)
+  /^\/events\/[^/]+\/info\/?$/, // event details, no player names
+])
+
+/**
  * URL path prefixes that require authentication. Documentation only — the
  * runtime enforcement is default-deny in isPublicPath().
  */
 export const PROTECTED_PATHS = Object.freeze([
-  '/events', // tournament list + detail + sub-tabs (schedule/scores/payments/oscars)
+  '/events', // event tabs; the list and an event's info page are PUBLIC_PATTERNS
   '/community', // roster + per-player profile
   '/merch', // merch orders + raffle
   '/account', // profile + admin (was /settings)
@@ -55,5 +66,8 @@ const matchesPrefix = (pathname: string, prefix: string): boolean => {
  */
 export function isPublicPath(pathname: string | null | undefined): boolean {
   if (!pathname) return false
-  return PUBLIC_PATHS.some((p) => matchesPrefix(pathname, p))
+  return (
+    PUBLIC_PATHS.some((p) => matchesPrefix(pathname, p)) ||
+    PUBLIC_PATTERNS.some((re) => re.test(pathname))
+  )
 }

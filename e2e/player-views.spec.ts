@@ -26,9 +26,26 @@ test.describe('signed out', () => {
     await expect(page.getByRole('heading', { name: SEED_LEAGUE.name })).toBeVisible()
   })
 
+  test('Events lists upcoming events only, with spots left', async ({ page }) => {
+    await page.goto('/events')
+    for (const event of [social, pairs, kingOfCourt]) {
+      await expect(page.getByRole('heading', { name: event.name })).toBeVisible()
+    }
+    await expect(page.getByRole('heading', { name: opener.name })).toHaveCount(0)
+    await expect(page.getByText(/spots? left|teams? left|^Full$/).first()).toBeVisible()
+  })
+
+  test('an event page shows the details and joins through signup', async ({ page }) => {
+    await page.goto(`/events/${social.id}`)
+    await expect(page).toHaveURL(new RegExp(`/events/${social.id}/info$`))
+    await expect(page.getByRole('heading', { name: social.name }).first()).toBeVisible()
+    await page.getByRole('link', { name: /join to (play|get on the waitlist)/i }).click()
+    await expect(page.getByText(/set up your lobster profile/i)).toBeVisible()
+  })
+
   const protectedPaths = [
-    '/events',
-    `/events/${social.id}`,
+    `/events/${social.id}/schedule`,
+    `/events/${social.id}/me`,
     '/community',
     '/community/shop',
     '/league',

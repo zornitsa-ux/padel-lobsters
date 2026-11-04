@@ -27,6 +27,7 @@ import PartnerOnboardingRedirect from './features/events/invites/PartnerOnboardi
 import { FINISH_ACCOUNT_PATH, TEAM_INVITES_PATH } from './features/events/invites/inviteRoutes'
 import { DESIGN_GALLERY_ENABLED, DESIGN_GALLERY_PATH } from './lib/designGallery'
 import { GROUP_SETTINGS_PATH } from './features/settings/settingsHelpers'
+import { useApp } from './context/useApp'
 
 // Code-split every route off the first paint. The app shell (Layout,
 // VerificationGate) and the logged-out landing (Dashboard) stay
@@ -37,6 +38,13 @@ const AuthConfirm = lazy(() => import('./components/AuthConfirm'))
 const Players = lazy(() => import('./features/community/Players'))
 const PlayerDetailPage = lazy(() => import('./features/community/PlayerDetailPage'))
 const Tournament = lazy(() => import('./features/events/Tournament'))
+const GuestEvents = lazy(() => import('./features/events/public/GuestEvents'))
+const GuestEventShell = lazy(() =>
+  import('./features/events/public/GuestEventPage').then((m) => ({ default: m.GuestEventShell })),
+)
+const GuestEventInfo = lazy(() =>
+  import('./features/events/public/GuestEventPage').then((m) => ({ default: m.GuestEventInfo })),
+)
 const Registration = lazy(() => import('./features/events/Registration'))
 const MyTournament = lazy(() => import('./features/events/MyTournament'))
 const EventManage = lazy(() => import('./features/events/EventManage'))
@@ -95,6 +103,7 @@ export default function App() {
                   <Route path="scores" element={<Navigate to="../results" replace />} />
                   <Route path="oscars" element={<EventOscarsRoute />} />
                   <Route path="manage" element={<EventManageRoute />} />
+                  <Route path="join" element={<Navigate to="../info" replace />} />
                 </Route>
 
                 <Route path="/community" element={<CommunityShell />}>
@@ -211,16 +220,29 @@ function HomeRoute() {
   return <Dashboard onNavigate={onNavigate} />
 }
 
+// The events list and an event's info page are public (authPaths). Signed out
+// gets the guest pages, which never read registrations or player data. Keyed
+// on the session, not the role: a fresh session's role lands a moment later.
+function useIsGuest() {
+  return !useApp().session
+}
+
 function EventsRoute() {
   const onNavigate = useLegacyNavigate()
+  const isGuest = useIsGuest()
+  if (isGuest) return <GuestEvents />
   return <Tournament onNavigate={onNavigate} />
 }
 
 function EventShellRoute() {
+  const isGuest = useIsGuest()
+  if (isGuest) return <GuestEventShell />
   return <EventRouteGuard>{(tournament) => <EventShell tournament={tournament} />}</EventRouteGuard>
 }
 
 function EventIndexRoute() {
+  const isGuest = useIsGuest()
+  if (isGuest) return <Navigate to="info" replace />
   return (
     <EventRouteGuard>
       {(tournament) => <EventDefaultTabRedirect tournament={tournament} />}
@@ -230,6 +252,8 @@ function EventIndexRoute() {
 
 function EventDetailRoute() {
   const onNavigate = useLegacyNavigate()
+  const isGuest = useIsGuest()
+  if (isGuest) return <GuestEventInfo />
   return (
     <EventRouteGuard>
       {(tournament) => <Registration tournament={tournament} onNavigate={onNavigate} />}

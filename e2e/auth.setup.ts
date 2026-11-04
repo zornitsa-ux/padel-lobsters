@@ -11,7 +11,7 @@ for (const [role, account] of [
   ['player', PLAYER],
 ] as const) {
   setup(`sign in as ${role}`, async ({ page }) => {
-    await signIn({ page, email: account.email, password: account.password, at: '/events' })
+    await signIn({ page, email: account.email, password: account.password, at: '/community' })
     await page.context().storageState({ path: SESSION_FILES[role] })
   })
 }

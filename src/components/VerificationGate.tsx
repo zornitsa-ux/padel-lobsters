@@ -50,6 +50,15 @@ export default function VerificationGate({ children }: { children?: React.ReactN
     setSignupKey((k) => k + 1)
   }
 
+  // `?signup=1` (the guest event page's "Join" link) opens straight into
+  // signup, and its absence back into sign-in. The gate stays mounted across
+  // routes, so the mode follows the URL on every navigation.
+  const wantsSignup = new URLSearchParams(location.search).has('signup')
+  useEffect(() => {
+    if (wantsSignup) enterSignup()
+    else setMode('signin')
+  }, [wantsSignup, location.pathname])
+
   // Switching into signup grows the card ~3x; the browser keeps the old scroll
   // position, so reset the overlay and window to the top on every mode change.
   // The rAF follow-up re-pins after iOS Safari's own post-focus adjustment.

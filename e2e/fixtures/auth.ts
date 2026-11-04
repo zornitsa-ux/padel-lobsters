@@ -48,6 +48,6 @@ export async function openAs({
   const context = await browser.newContext({ storageState: SIGNED_OUT })
   const page = await context.newPage()
   const errors = await guardPage({ page })
-  await signIn({ page, email, password, at: '/events' })
+  await signIn({ page, email, password, at: '/community' })
   return { context, page, errors }
 }
