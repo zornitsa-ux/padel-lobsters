@@ -160,7 +160,7 @@ export function KnockoutBracket({
             <path
               d={paths.d1}
               fill="none"
-              stroke="#e5e7eb"
+              className="stroke-lob-line-strong"
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -168,7 +168,7 @@ export function KnockoutBracket({
             <path
               d={paths.d2}
               fill="none"
-              stroke="#e5e7eb"
+              className="stroke-lob-line-strong"
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"

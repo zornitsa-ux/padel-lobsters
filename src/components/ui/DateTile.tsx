@@ -29,8 +29,8 @@ export default function DateTile({ date, size = 'md', className = '' }: DateTile
     size === 'lg'
       ? { box: 'w-16 h-20', day: 'text-3xl', month: 'text-2xs py-0.5', dow: 'text-2xs' }
       : size === 'sm'
-        ? { box: 'w-11 h-12', day: 'text-lg', month: 'text-[8px]  py-[1px]', dow: 'text-[8px]' }
-        : { box: 'w-14 h-16', day: 'text-2xl', month: 'text-[9px]  py-0.5', dow: 'text-[9px]' } // md
+        ? { box: 'w-11 h-12', day: 'text-lg', month: 'text-3xs py-px', dow: 'text-3xs' }
+        : { box: 'w-14 h-16', day: 'text-2xl', month: 'text-3xs py-0.5', dow: 'text-3xs' } // md
 
   return (
     <div
@@ -42,7 +42,7 @@ export default function DateTile({ date, size = 'md', className = '' }: DateTile
         {month}
       </div>
       <div className="flex-1 flex flex-col items-center justify-center gap-0.5 leading-none">
-        <span className={`${dims.day} font-black text-lob-dark`}>{day}</span>
+        <span className={`${dims.day} leading-none font-black text-lob-dark`}>{day}</span>
         <span className={`${dims.dow} font-semibold text-lob-muted uppercase tracking-wider`}>
           {dow}
         </span>

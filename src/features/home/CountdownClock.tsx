@@ -41,30 +41,21 @@ export default function CountdownClock({
       <div className="text-center">
         <p className="eyebrow mb-2">Next Lobster Event in</p>
         <div className="flex justify-center gap-2">
-          <div className="bg-lob-teal-dark rounded-xl w-16 py-2.5">
-            <p className="text-2xl font-black text-white tabular-nums">
-              {String(countdown.days).padStart(2, '0')}
-            </p>
-            <p className="text-[9px] text-white/60 font-medium mt-0.5">DAYS</p>
-          </div>
-          <div className="bg-lob-teal-dark rounded-xl w-16 py-2.5">
-            <p className="text-2xl font-black text-white tabular-nums">
-              {String(countdown.hours).padStart(2, '0')}
-            </p>
-            <p className="text-[9px] text-white/60 font-medium mt-0.5">HOURS</p>
-          </div>
-          <div className="bg-lob-teal-dark rounded-xl w-16 py-2.5">
-            <p className="text-2xl font-black text-white tabular-nums">
-              {String(countdown.mins).padStart(2, '0')}
-            </p>
-            <p className="text-[9px] text-white/60 font-medium mt-0.5">MIN</p>
-          </div>
-          <div className="bg-lob-teal-dark rounded-xl w-16 py-2.5">
-            <p className="text-2xl font-black text-white tabular-nums">
-              {String(countdown.secs).padStart(2, '0')}
-            </p>
-            <p className="text-[9px] text-white/60 font-medium mt-0.5">SEC</p>
-          </div>
+          {(
+            [
+              ['DAYS', countdown.days],
+              ['HOURS', countdown.hours],
+              ['MIN', countdown.mins],
+              ['SEC', countdown.secs],
+            ] as const
+          ).map(([unit, value]) => (
+            <div key={unit} className="bg-lob-teal-dark rounded-xl w-16 py-2.5">
+              <p className="text-2xl font-black text-white tabular-nums">
+                {String(value).padStart(2, '0')}
+              </p>
+              <p className="text-3xs text-white/60 font-medium mt-0.5">{unit}</p>
+            </div>
+          ))}
         </div>
         {streak > 0 && (
           <p className="text-xs text-lob-muted font-semibold mt-2 flex items-center justify-center gap-1">

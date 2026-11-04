@@ -36,11 +36,11 @@ describe('PlayerRow', () => {
       player: { name: 'Ana' },
       name: 'Ana',
       avatarSize: 'xs',
-      avatarTone: 'bg-orange-100 text-orange-600',
+      avatarTone: 'bg-lob-warning-soft text-lob-warning',
     })
     const [, leading] = slots(el)
     expect(propsOf(leading).size).toBe('xs')
-    expect(propsOf(leading).tone).toBe('bg-orange-100 text-orange-600')
+    expect(propsOf(leading).tone).toBe('bg-lob-warning-soft text-lob-warning')
   })
 
   it('prefers a custom avatar node over the player avatar', () => {

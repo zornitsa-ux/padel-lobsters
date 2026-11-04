@@ -41,7 +41,7 @@ export default function ReviewBreakdownModal({
         accent === 'perf'
           ? 'bg-lob-warning-light border-lob-warning-border'
           : accent === 'hist'
-            ? 'bg-teal-50 border-teal-200'
+            ? 'bg-lob-teal-light border-lob-teal/25'
             : 'bg-lob-well border-lob-line-strong'
       }`}
     >
@@ -51,7 +51,7 @@ export default function ReviewBreakdownModal({
             accent === 'perf'
               ? 'text-lob-warning-strong'
               : accent === 'hist'
-                ? 'text-teal-700'
+                ? 'text-lob-teal-dark'
                 : 'text-lob-muted'
           }`}
         >
@@ -62,8 +62,8 @@ export default function ReviewBreakdownModal({
             accent === 'perf'
               ? 'bg-lob-warning-solid text-white'
               : accent === 'hist'
-                ? 'bg-teal-500 text-white'
-                : 'bg-gray-200 text-lob-slate'
+                ? 'bg-lob-teal text-white'
+                : 'bg-lob-line-strong text-lob-slate'
           }`}
         >
           {b.players.length}

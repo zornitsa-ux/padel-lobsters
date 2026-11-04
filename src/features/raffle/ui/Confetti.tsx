@@ -4,7 +4,14 @@ import { useMemo } from 'react'
 // coloured pieces; mount it briefly (the caller unmounts after ~3s). Each
 // piece gets a randomised column, delay, duration, colour and size so the
 // burst looks organic without any physics library.
-const COLORS = ['#E8A030', '#D94F2B', '#3D7A8A', '#34d399', '#f472b6', '#facc15']
+const COLORS = [
+  'bg-lob-amber',
+  'bg-lob-coral',
+  'bg-lob-teal',
+  'bg-lob-success-solid',
+  'bg-lob-info-solid',
+  'bg-lob-gold',
+]
 
 export default function Confetti({ pieces = 80 }: { pieces?: number }) {
   const bits = useMemo(
@@ -26,12 +33,11 @@ export default function Confetti({ pieces = 80 }: { pieces?: number }) {
       {bits.map((b) => (
         <span
           key={b.key}
-          className="absolute top-0 animate-confetti-fall"
+          className={`absolute top-0 animate-confetti-fall ${b.color}`}
           style={{
             left: `${b.left}%`,
             width: `${b.size}px`,
             height: `${b.size * 1.4}px`,
-            backgroundColor: b.color,
             borderRadius: b.rounded ? '9999px' : '2px',
             animationDelay: `${b.delay}s`,
             animationDuration: `${b.duration}s`,

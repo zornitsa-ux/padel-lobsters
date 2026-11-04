@@ -19,7 +19,7 @@ export default function PrizeEditor({ prize, winnerId, onSave }: Props) {
   }, [initial])
 
   if (!winnerId) {
-    return <p className="mt-1 text-sm text-amber-900/40 italic">prize set after confirming</p>
+    return <p className="mt-1 text-sm text-lob-muted italic">prize set after confirming</p>
   }
 
   const commit = () => {
@@ -46,7 +46,7 @@ export default function PrizeEditor({ prize, winnerId, onSave }: Props) {
             setEditing(false)
           }
         }}
-        className="mt-1 px-2 py-1 rounded-md border border-amber-300 bg-white/80 text-amber-900 text-sm sm:text-base font-semibold w-full max-w-xs"
+        className="mt-1 px-2 py-1 rounded-md border border-lob-amber bg-white/80 text-lob-amber-strong text-sm sm:text-base font-semibold w-full max-w-xs"
         placeholder="e.g. tshirt, hat, sticker"
       />
     )

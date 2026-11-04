@@ -160,7 +160,7 @@ export default function Shop({
                   disabled={ordered[item.id]}
                   value={customName[item.id] || ''}
                   onChange={(e) => setCustomName((n) => ({ ...n, [item.id]: e.target.value }))}
-                  className="w-full rounded-xl border border-lob-line-strong px-3 py-2 text-sm text-lob-dark placeholder-gray-300 focus:outline-none focus:border-lob-teal focus:ring-1 focus:ring-lob-teal transition-all disabled:opacity-40 disabled:bg-lob-well"
+                  className="w-full rounded-xl border border-lob-line-strong px-3 py-2 text-sm text-lob-dark placeholder-lob-muted-light focus:outline-none focus:border-lob-teal focus:ring-1 focus:ring-lob-teal transition-all disabled:opacity-40 disabled:bg-lob-well"
                 />
               </div>
             )}

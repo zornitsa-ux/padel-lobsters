@@ -129,7 +129,7 @@ export default function CountryPicker({ value, onChange }: CountryPickerProps) {
         {value && !open && <FlagImg code={value} />}
         <input
           type="text"
-          className="flex-1 bg-transparent outline-none text-sm text-lob-dark placeholder-gray-400 min-w-0"
+          className="flex-1 bg-transparent outline-none text-sm text-lob-dark placeholder-lob-muted-light min-w-0"
           placeholder={open ? 'Type to search…' : selectedLabel || 'Select country…'}
           value={open ? query : selectedLabel || ''}
           onChange={(e) => {

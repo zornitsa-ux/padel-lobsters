@@ -20,7 +20,7 @@ export function ProgressBar({
   value,
   size = 'sm',
   fillClassName = 'bg-lob-teal',
-  trackClassName = 'bg-gray-100',
+  trackClassName = 'bg-lob-line',
   className = '',
 }: ProgressBarProps) {
   return (

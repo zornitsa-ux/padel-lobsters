@@ -91,7 +91,7 @@ export default function VerificationGate({ children }: { children?: React.ReactN
   return (
     <div
       ref={scrollRef}
-      className={`fixed inset-0 bg-gradient-to-br from-lob-teal via-teal-700 to-teal-900 flex flex-col ${alignClasses} p-6 z-[100] overflow-y-auto`}
+      className={`fixed inset-0 bg-header flex flex-col ${alignClasses} p-6 z-[100] overflow-y-auto`}
     >
       <div
         className={`bg-white rounded-3xl p-6 sm:p-8 shadow-2xl w-full ${cardWidth} space-y-5 my-6 mx-auto`}

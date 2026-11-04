@@ -61,9 +61,7 @@ function LevelLine({
   const nowPos = track(cautious)
 
   const lineColor =
-    direction === 'up'
-      ? 'linear-gradient(90deg, #E8A030, #3D7A8A)'
-      : 'linear-gradient(90deg, #D94F2B, #E8A030)'
+    direction === 'up' ? 'from-lob-amber to-lob-teal' : 'from-lob-coral to-lob-amber'
 
   const results = { value: full, caption: 'results say' }
   const start = { value: before, caption: 'before' }
@@ -94,15 +92,14 @@ function LevelLine({
     </div>
   )
 
-  const dot = (pos: number, size: number, color: string) => (
+  const dot = ({ pos, size, ring }: { pos: number; size: number; ring: string }) => (
     <span
-      className="absolute rounded-full bg-white -translate-x-1/2"
+      className={`absolute rounded-full bg-white -translate-x-1/2 ring ${ring}`}
       style={{
         left: `${pos}%`,
         top: `${51 - size / 2}px`,
         width: size,
         height: size,
-        boxShadow: `0 0 0 3px ${color}`,
       }}
       aria-hidden
     />
@@ -111,13 +108,17 @@ function LevelLine({
   return (
     <div className="relative my-2" style={{ height: '96px' }}>
       <div
-        className="absolute rounded-full"
-        style={{ left: '10%', right: '10%', top: '48px', height: '6px', background: lineColor }}
+        className={`absolute rounded-full bg-gradient-to-r ${lineColor}`}
+        style={{ left: '10%', right: '10%', top: '48px', height: '6px' }}
         aria-hidden
       />
-      {dot(track(before), 12, '#6B8A92')}
-      {dot(nowPos, 14, '#E8A030')}
-      {dot(track(full), 12, direction === 'up' ? '#3D7A8A' : '#D94F2B')}
+      {dot({ pos: track(before), size: 12, ring: 'ring-lob-muted' })}
+      {dot({ pos: nowPos, size: 14, ring: 'ring-lob-amber' })}
+      {dot({
+        pos: track(full),
+        size: 12,
+        ring: direction === 'up' ? 'ring-lob-teal' : 'ring-lob-coral',
+      })}
       <Endpoint value={left.value} caption={left.caption} align="left" />
       <Endpoint value={right.value} caption={right.caption} align="right" />
       <div

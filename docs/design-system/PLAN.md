@@ -160,7 +160,7 @@ the gallery, and runs `npm run design:baseline` when counts drop.
 | P4  | **`Badge` tones** (`success`, `neutral`, `warning`, `outline`) and **payment status single source** (`paymentStatus.ts`, `PaymentStatusBadge` on `Badge`; the blue "transferred" pill and merch "delivered" get a token). About 13 hand-built status pills move onto `Badge`. Rename team-state "Confirmed".                                                                                                                                                                                                                                                                                                                                       | Done (#110)               |
 | P5  | **Empty and signed-out states.** `EmptyState variant="inline"`, `SignInPrompt`; loading states: a loading card keeps its title or header, so the viewer sees what is loading, and shows `Spinner` / `Skeleton` in the body instead of `return null`.                                                                                                                                                                                                                                                                                                                                                                                               | Done (#112)               |
 | P6  | **Cards for objects, lists and sections.** Owner calls 2026-10-30 (Log). A card is one thing you act on; page sections sit on the background under a heading; a list of like items is one card with divided rows; no card inside a card. Pieces: `Section`, `ListCard`, `Well` (the planned `.panel`), `Tag`, `.eyebrow`, `RankMarker` + `PlayerRow highlighted`, ~~`RosterHeading`~~ (dropped 2026-11-02), `SearchInput` (#81), a heading element inside the `CollapsibleCard` header button (review of #76). Five PRs: P6a to P6e under "Next".                                                                                                  |                           |
-| P7  | **Lock-down.** Tokens for decorative colours (medal gold, avatar palette, gender marks) and for `text-[9px]` (14 uses, the bottom nav labels among them). Then switch `theme.extend.colors` to a restricted `theme.colors` so raw palette classes stop generating, and add a lint rule for unknown classes (e.g. `eslint-plugin-tailwindcss`, check ESLint 9 support). Retire the colour ratchet once the theme is locked; keep the `<button>` check.                                                                                                                                                                                              | P7a in #143               |
+| P7  | **Lock-down.** Tokens for decorative colours (medal gold, avatar palette, gender marks) and for `text-[9px]` (14 uses, the bottom nav labels among them). Then switch `theme.extend.colors` to a restricted `theme.colors` so raw palette classes stop generating, and add a lint rule for unknown classes (e.g. `eslint-plugin-tailwindcss`, check ESLint 9 support). Retire the colour ratchet once the theme is locked; keep the `<button>` check.                                                                                                                                                                                              | P7a #143, P7b #144        |
 
 The gallery exists: `/design` in dev (`src/features/design/DesignGallery.tsx`;
 open to guests in dev only, left out of the production build). Each step adds
@@ -255,14 +255,15 @@ primitives (see the Log) before P3:
     - **P7a: decorative tokens.** `lob-gold` / `-silver` / `-bronze` and a
       `Podium` for the two hand-built podiums; `lob-gender-f` / `-m` for the
       W / M marks, and the saved schedule's court chip onto
-      `CourtGenderChip` (#137); level badges in four teal bands. #143.
+      `CourtGenderChip` (#137); level badges in four teal bands. Done in
+      #143.
     - **P7b: the rest of the raw colour.** The teal gradients onto
       `bg-header`, the saved schedule's orange swap selection to teal
       (selected is teal), the review breakdown and prize editor onto
       tokens, the grays the ratchet doesn't count (about 20, onto
       `lob-line*` / `lob-muted*`), a `text-3xs` (9px) token (`text-[8px]`
       folds into it, `text-[13px]` becomes `text-sm`), and hex in TS read
-      from shared tokens. The avatar letter palette stays.
+      from shared tokens. The avatar letter palette stays. #144.
     - **P7c: lock.** A restricted `theme.colors` (lob, white, black,
       transparent, current, inherit), `eslint-plugin-tailwindcss` 3.18
       (`no-custom-classname`; 4.x needs Tailwind 4), and the colour check
@@ -1755,3 +1756,37 @@ scrollable`, and so is the tips list. Open WhatsApp Community is a
   - Kept, as in the generator: an unavoidable uneven court reads "Uneven ·
     unavoidable this round" in the warning tone (was a muted "Uneven"), and
     a court with a player of unknown gender shows no chip.
+
+- **2026-11-04.** P7b on `design-system-p7b-raw-colour`. The ratchet is at
+  zero (`{}`), so every file is held at none.
+  - Teal gradients (verification gate, raffle draw) are `bg-header`.
+  - The saved schedule's swap: the picked player is teal (`lob-teal-light`
+    row, `lob-teal` ring and disc), as selection is everywhere; the court
+    being swapped has a `lob-teal/30` ring.
+  - The review breakdown's history bucket is `lob-teal-light` with
+    `lob-teal-dark` text; the prize editor's amber is `lob-amber` /
+    `lob-amber-strong`.
+  - Grays: `gray-100` → `lob-line`, `gray-200` and `gray-300` →
+    `lob-line-strong`, `gray-400` → `lob-muted-light`, `gray-600` →
+    `lob-slate`; placeholders are `lob-muted-light` (as TOKENS says).
+    `ProgressBar`'s default track is `lob-line`.
+  - `text-3xs` (9px). `DateTile` `sm` drops from 8px to it; the Oscars
+    vote row's 13px name is `text-sm`.
+  - Hex and rgba in TS became token classes, so no shared tokens module
+    was needed: `RatingReview`'s gradient and dot rings (`from-lob-*`,
+    `ring-lob-*`), confetti (`bg-lob-*`; its pink and emerald became the
+    info and success solids), the bracket lines
+    (`stroke-lob-line-strong`), the header's WhatsApp pill (`bg-white/15 backdrop-blur`), and two shadows as tokens (`shadow-nav`,
+    `shadow-input`, from `lob-dark` like the card shadows).
+  - Tests that passed raw classes as props use tokens, ahead of P7c's
+    lint.
+  - Review: the saved schedule's two copies of the swap row are one
+    `SwapPlayer` on the ui `Avatar`; the picked player's disc is inverted
+    (white, teal ring), as a teal disc read like the teal letter colours.
+    `DateTile`'s day is `leading-none`, so the `sm` tile's 9px labels fit.
+    The countdown maps its four units. The raffle's "prize set after
+    confirming" hint is `lob-muted` (was amber at 50%). DESIGN_SYSTEM.md
+    no longer calls `text-[9px]` raw.
+  - Found: the swap rows can't be picked by keyboard (#145). The shop's
+    custom-name field hand-builds a compact `.input` (no inset shadow); a
+    `sm` input size is a later call.

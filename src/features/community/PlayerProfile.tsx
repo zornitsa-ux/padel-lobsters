@@ -206,7 +206,7 @@ export default function PlayerProfile({
                     ? 'bg-lob-success-soft text-lob-success'
                     : r === 'L'
                       ? 'bg-lob-danger-soft text-lob-danger'
-                      : 'bg-gray-100 text-lob-muted'
+                      : 'bg-lob-line text-lob-muted'
                 }`}
               >
                 {r}

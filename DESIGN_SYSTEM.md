@@ -18,8 +18,8 @@ These are enforced in review, and the first two in CI (`npm run design:check`):
   `TextButton`, `IconButton`, `Chip`, `SegmentedControl`, `OptionRow`, `OptionTile`, `MenuItem`,
   `CardLink` and the rest. If none fits, add the variant or prop to the component.
 - **Tokens only.** Colours come from `lob-*` tokens, never raw Tailwind palette classes
-  (`text-red-600`, `bg-amber-50`) or hex literals. The raw classes still in the code are held
-  by a per-file ratchet (`scripts/raw-colours-baseline.json`) that may only go down.
+  (`text-red-600`, `bg-amber-50`) or hex literals. The ratchet
+  (`scripts/raw-colours-baseline.json`) is at zero, so no file may add one.
 - **Layout belongs to the parent.** Ui components carry no margins. The parent or a layout
   component (`ActionRow`, `space-y-*`, `gap-*`) places them. `Button` and `TextButton` take no
   `className`; their layout props are `fullWidth` and `grow`.
@@ -38,17 +38,17 @@ is the exception: `Greeting` acts as its header.
 
 ## Typography
 
-| Role                   | Classes                                                      |
-| ---------------------- | ------------------------------------------------------------ |
-| Page title             | `PageHeader title`                                           |
-| Card / section title   | `text-base font-semibold text-lob-dark`                      |
-| Eyebrow label          | `text-2xs font-bold uppercase tracking-wider text-lob-muted` |
-| Body                   | `text-sm text-lob-dark`                                      |
-| Secondary / supporting | `text-sm text-lob-muted`                                     |
-| Caption / meta         | `text-xs text-lob-muted`                                     |
+| Role                   | Classes                                        |
+| ---------------------- | ---------------------------------------------- |
+| Page title             | `PageHeader title`                             |
+| Card / section title   | `text-base font-semibold text-lob-dark`        |
+| Eyebrow label          | `.eyebrow` (`.eyebrow-accent` on a white card) |
+| Body                   | `text-sm text-lob-dark`                        |
+| Secondary / supporting | `text-sm text-lob-muted`                       |
+| Caption / meta         | `text-xs text-lob-muted`                       |
 
-`text-2xs` is the 10px token (11px folded into `text-xs`); `text-[9px]` is still raw. An
-`.eyebrow` class is planned (P6).
+`text-2xs` is the 10px token (11px folded into `text-xs`); `text-3xs` is 9px, the smallest.
+Overlines use `.eyebrow`.
 
 ## Cards
 

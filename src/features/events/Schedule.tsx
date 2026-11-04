@@ -4,7 +4,6 @@ import { usePlayers } from '../players/usePlayers'
 import { useMatches, useMatchActions } from './useMatches'
 import { useRegistrations } from './useRegistrations'
 import { Shuffle, AlertCircle, Trophy, Users, Download, ArrowRight } from 'lucide-react'
-import { letterColor } from '../../lib/letterColors'
 import validateSchedule from './validateSchedule'
 import { formatLabel } from './eventHelpers'
 import { shortName } from './scheduleHelpers'
@@ -35,6 +34,7 @@ import type { NormalisedTournament, Player } from '../../lib/normalise'
 import type { GenderMode } from '../matchmaking/domain/types'
 import { savedCourtChip } from '../matchmaking/ui/genderCopy'
 import { CourtGenderChip } from '../matchmaking/ui/genderMarks'
+import { SwapPlayer } from './SwapPlayer'
 import { Button } from '../../components/ui/Button'
 import { TextButton } from '../../components/ui/TextButton'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
@@ -485,7 +485,7 @@ export default function Schedule({
                       if (el) matchRefs.current.set(key, el)
                       else matchRefs.current.delete(key)
                     }}
-                    className={`card transition-all ${isSwapping ? 'ring-2 ring-orange-200' : ''}`}
+                    className={`card transition-all ${isSwapping ? 'ring-2 ring-lob-teal/30' : ''}`}
                   >
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-1.5">
@@ -504,35 +504,18 @@ export default function Schedule({
                     <div className="flex items-center gap-2">
                       {/* Team 1 */}
                       <div className="flex-1">
-                        {t1.map((p, pi) => {
-                          const isSelected = swapFirst?.playerId === p.id
-                          return (
-                            <div
-                              key={p.id}
-                              onClick={() => handlePlayerTap(activeRound, i, 1, pi, p.id)}
-                              className={`flex items-center gap-1.5 mb-1 rounded-lg px-1 transition-all ${isSwapping ? 'cursor-pointer active:scale-95' : ''} ${isSelected ? 'bg-orange-100 ring-2 ring-orange-400' : isSwapping ? 'hover:bg-gray-100' : ''}`}
-                            >
-                              <div className="relative w-7 h-7 flex-shrink-0">
-                                <div
-                                  className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold ${isSelected ? 'bg-orange-500' : ''}`}
-                                  style={
-                                    isSelected
-                                      ? undefined
-                                      : { backgroundColor: letterColor(p.name) }
-                                  }
-                                >
-                                  {p.name[0]}
-                                </div>
-                                {p.isLeftHanded && (
-                                  <span className="absolute -top-1 -right-1 text-[9px] bg-lob-warning-solid text-white rounded-full w-3.5 h-3.5 flex items-center justify-center font-bold">
-                                    L
-                                  </span>
-                                )}
-                              </div>
-                              <span className="text-sm font-medium truncate">{sn(p)}</span>
-                            </div>
-                          )
-                        })}
+                        {t1.map((p, pi) => (
+                          <SwapPlayer
+                            key={p.id}
+                            name={p.name}
+                            label={sn(p)}
+                            isLeftHanded={p.isLeftHanded}
+                            side="left"
+                            swapping={Boolean(isSwapping)}
+                            selected={swapFirst?.playerId === p.id}
+                            onTap={() => handlePlayerTap(activeRound, i, 1, pi, p.id)}
+                          />
+                        ))}
 
                         {match.team1Level && (
                           <p className="text-xs text-lob-muted-light mt-1">
@@ -566,35 +549,18 @@ export default function Schedule({
 
                       {/* Team 2 */}
                       <div className="flex-1 text-right">
-                        {t2.map((p, pi) => {
-                          const isSelected = swapFirst?.playerId === p.id
-                          return (
-                            <div
-                              key={p.id}
-                              onClick={() => handlePlayerTap(activeRound, i, 2, pi, p.id)}
-                              className={`flex items-center justify-end gap-1.5 mb-1 rounded-lg px-1 transition-all ${isSwapping ? 'cursor-pointer active:scale-95' : ''} ${isSelected ? 'bg-orange-100 ring-2 ring-orange-400' : isSwapping ? 'hover:bg-gray-100' : ''}`}
-                            >
-                              <span className="text-sm font-medium truncate">{sn(p)}</span>
-                              <div className="relative w-7 h-7 flex-shrink-0">
-                                <div
-                                  className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold ${isSelected ? 'bg-orange-500' : ''}`}
-                                  style={
-                                    isSelected
-                                      ? undefined
-                                      : { backgroundColor: letterColor(p.name) }
-                                  }
-                                >
-                                  {p.name[0]}
-                                </div>
-                                {p.isLeftHanded && (
-                                  <span className="absolute -top-1 -left-1 text-[9px] bg-lob-warning-solid text-white rounded-full w-3.5 h-3.5 flex items-center justify-center font-bold">
-                                    L
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          )
-                        })}
+                        {t2.map((p, pi) => (
+                          <SwapPlayer
+                            key={p.id}
+                            name={p.name}
+                            label={sn(p)}
+                            isLeftHanded={p.isLeftHanded}
+                            side="right"
+                            swapping={Boolean(isSwapping)}
+                            selected={swapFirst?.playerId === p.id}
+                            onTap={() => handlePlayerTap(activeRound, i, 2, pi, p.id)}
+                          />
+                        ))}
 
                         {match.team2Level && (
                           <p className="text-xs text-lob-muted-light mt-1">
