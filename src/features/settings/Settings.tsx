@@ -65,6 +65,7 @@ export default function Settings() {
 
   // Playtomic update popup — show if player hasn't visited settings in 30+ days
   const [showPlaytomicPrompt, setShowPlaytomicPrompt] = useState(false)
+  const [seedKey, setSeedKey] = useState(0)
 
   // Seed the form from myPlayer (roster identity + PII, already merged by
   // useMyProfile). Skipped once the form is dirty so an in-flight edit is never
@@ -96,14 +97,25 @@ export default function Settings() {
         const idx = LOBBY_PROMPTS.findIndex((p) => p.label === savedLabel)
         if (idx >= 0) setActivePrompt(idx)
       }
-      // Check if we should prompt for Playtomic update
-      const lastCheck = localStorage.getItem(`lobster_playtomic_check_${claimedId}`)
-      const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000
-      if (!lastCheck || parseInt(lastCheck) < thirtyDaysAgo) {
-        setShowPlaytomicPrompt(true)
-      }
     }
-  }, [myPlayer, hasPii, claimedId])
+  }, [myPlayer, hasPii, seedKey])
+
+  const myPlayerId = myPlayer?.id
+  useEffect(() => {
+    if (!hasPii || !myPlayerId) return
+    const lastCheck = localStorage.getItem(`lobster_playtomic_check_${claimedId}`)
+    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000
+    if (!lastCheck || parseInt(lastCheck) < thirtyDaysAgo) setShowPlaytomicPrompt(true)
+  }, [myPlayerId, hasPii, claimedId])
+
+  // Closing the editor without saving discards the edits: the form re-seeds from the server.
+  const cancelProfileEdit = () => {
+    profileDirty.current = false
+    setAvatarFile(null)
+    setProfileError('')
+    setProfileExpanded(false)
+    setSeedKey((key) => key + 1)
+  }
 
   const handleAvatarChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -223,8 +235,10 @@ export default function Settings() {
               isAdmin={isAdmin}
               hasPii={hasPii}
               profileLoadFailed={profileLoadFailed}
+              email={session.user?.email ?? ''}
               profileExpanded={profileExpanded}
-              setProfileExpanded={setProfileExpanded}
+              openProfileEdit={() => setProfileExpanded(true)}
+              cancelProfileEdit={cancelProfileEdit}
               profileForm={profileForm}
               setProfileForm={editProfileForm}
               profileSaving={profileSaving}

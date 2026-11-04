@@ -141,4 +141,27 @@ describe('Settings — avatar upload', () => {
     expect(uploadMock).not.toHaveBeenCalled()
     expect(processAvatarMock).not.toHaveBeenCalled()
   })
+
+  it('discards unsaved edits when the editor is closed', async () => {
+    renderSettings()
+    pickAvatar()
+    fireEvent.change(screen.getByPlaceholderText('e.g. Augustin Tapia'), {
+      target: { value: 'Someone Else' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: /close/i }))
+
+    fireEvent.click(
+      within(screen.getByRole('region', { name: 'My Lobster Profile' })).getByRole('button', {
+        name: 'Edit profile',
+      }),
+    )
+    expect((screen.getByPlaceholderText('e.g. Augustin Tapia') as HTMLInputElement).value).toBe(
+      'Ada Lovelace',
+    )
+    fireEvent.click(screen.getByRole('button', { name: /save profile/i }))
+
+    await waitFor(() => expect(updatePlayerMock).toHaveBeenCalledTimes(1))
+    expect(updatePlayerMock.mock.calls[0][1].name).toBe('Ada Lovelace')
+    expect(uploadMock).not.toHaveBeenCalled()
+  })
 })

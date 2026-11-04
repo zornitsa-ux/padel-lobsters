@@ -14,13 +14,35 @@ import { Section } from '../../components/ui/Section'
 import { ListCard, ListRow } from '../../components/ui/ListCard'
 import { SettingRow } from '../../components/ui/SettingRow'
 
+const SETTLE_MS = 3000
+const USER_SCROLL_EVENTS = ['wheel', 'touchstart', 'keydown'] as const
+
+/**
+ * Scrolls to the section and keeps it there while the cards above it load and push it down, until
+ * the page settles or the user scrolls. Returns the cleanup.
+ */
+function holdInView(id: string) {
+  const scroll = () => document.getElementById(id)?.scrollIntoView?.()
+  scroll()
+  if (typeof ResizeObserver === 'undefined') return
+  const observer = new ResizeObserver(scroll)
+  observer.observe(document.body)
+  const stop = () => {
+    observer.disconnect()
+    clearTimeout(timer)
+    USER_SCROLL_EVENTS.forEach((event) => window.removeEventListener(event, stop))
+  }
+  const timer = setTimeout(stop, SETTLE_MS)
+  USER_SCROLL_EVENTS.forEach((event) => window.addEventListener(event, stop, { passive: true }))
+  return stop
+}
+
 export default function SignInSecuritySection() {
   const { session } = useApp()
   const { hash } = useLocation()
 
   useEffect(() => {
-    if (hash === `#${SIGN_IN_SECURITY_ID}`)
-      document.getElementById(SIGN_IN_SECURITY_ID)?.scrollIntoView?.()
+    if (hash === `#${SIGN_IN_SECURITY_ID}`) return holdInView(SIGN_IN_SECURITY_ID)
   }, [hash])
 
   return (
@@ -96,25 +118,24 @@ function SignOutEverywhereRow() {
   }
 
   return (
-    <>
-      <SettingRow
-        label="All devices"
-        value="Ends every session, this one included."
-        action={
-          <TextButton
-            tone="destructive"
-            icon={<LogOut size={12} />}
-            onClick={handleSignOutEverywhere}
-          >
-            Sign out of all devices
-          </TextButton>
-        }
-      />
+    <SettingRow
+      label="All devices"
+      value="Ends every session, this one included."
+      action={
+        <TextButton
+          tone="destructive"
+          icon={<LogOut size={12} />}
+          onClick={handleSignOutEverywhere}
+        >
+          Sign out of all devices
+        </TextButton>
+      }
+    >
       {error && (
         <AlertBox variant="error" size="sm">
           {error}
         </AlertBox>
       )}
-    </>
+    </SettingRow>
   )
 }

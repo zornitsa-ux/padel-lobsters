@@ -1,4 +1,9 @@
+import { parseLevel } from '../../lib/parseLevel'
+import type { Player } from '../../lib/normalise'
+
 export const GROUP_SETTINGS_PATH = '/admin/settings'
+
+export const playerLevel = (player: Player) => parseLevel(player.playtomicLevel) ?? 0
 
 // The two admin-editable settings fields, held as form state in GroupSettingsPage and
 // rendered by AdminSection.

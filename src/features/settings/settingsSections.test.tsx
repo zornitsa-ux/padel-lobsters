@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { screen, cleanup } from '@testing-library/react'
+import { screen, cleanup, fireEvent } from '@testing-library/react'
 import { render as rtlRender } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import type { ReactElement } from 'react'
@@ -73,14 +73,18 @@ const profileSection = ({
   prompt = false,
   hasPii = true,
   profileLoadFailed = false,
+  player = myPlayer as typeof myPlayer | null,
+  isAdmin = false,
 } = {}) => (
   <ProfileSection
-    myPlayer={myPlayer}
-    isAdmin={false}
+    myPlayer={player}
+    isAdmin={isAdmin}
+    email="ada@example.com"
     hasPii={hasPii}
     profileLoadFailed={profileLoadFailed}
     profileExpanded={expanded}
-    setProfileExpanded={noop}
+    openProfileEdit={noop}
+    cancelProfileEdit={noop}
     profileForm={profileForm}
     setProfileForm={noop}
     profileSaving={false}
@@ -162,6 +166,23 @@ describe('ProfileSection — self-service profile', () => {
     expect(screen.queryByText(/adjustment/i)).toBeNull()
     // One input in the prompt, the level itself, with a decimal keypad so "3,5" can be typed.
     expect(document.querySelectorAll('input[inputmode="decimal"]').length).toBe(1)
+  })
+
+  it('keeps the refresh prompt open until a button is pressed', () => {
+    render(profileSection({ expanded: false, prompt: true }))
+
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' })
+
+    expect(screen.getByText(/has your playtomic level changed/i)).toBeTruthy()
+  })
+
+  it('shows who is signed in, and admin, when there is no player profile', () => {
+    render(profileSection({ player: null, isAdmin: true }))
+
+    expect(screen.getByRole('region', { name: 'Signed in' }).textContent).toContain(
+      'ada@example.com',
+    )
+    expect(screen.getByText('Admin')).toBeTruthy()
   })
 
   // Finding 2: a failed/unresolved profile RPC must not leave the Save

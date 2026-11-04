@@ -1,27 +1,31 @@
-import React, { type ChangeEvent, type Dispatch, type SetStateAction } from 'react'
+import React, { type ChangeEvent } from 'react'
 import { Save } from 'lucide-react'
 import CountryPicker from '../../components/ui/CountryPicker'
 import { AvatarPicker } from '../../components/ui/AvatarPicker'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
 import { PlaytomicLevelField, ProfileChoiceFields } from '../players/ProfileFields'
-import { LOBBY_PROMPTS, type ProfileForm } from './settingsHelpers'
+import { LOBBY_PROMPTS, playerLevel, type ProfileForm } from './settingsHelpers'
 import type { Player } from '../../lib/normalise'
 import { ActionRow } from '../../components/ui/ActionRow'
 import { Button } from '../../components/ui/Button'
 import { AlertBox } from '../../components/ui/AlertBox'
 import { Modal } from '../../components/ui/Modal'
 import { FullScreenDialog } from '../../components/ui/FullScreenDialog'
-import ProfileCard from './ProfileCard'
+import ProfileCard, { SignedInCard } from './ProfileCard'
 
 type SetProfileForm = (updater: (form: ProfileForm) => ProfileForm) => void
 
 interface ProfileSectionProps {
   myPlayer: Player | null
   isAdmin: boolean
+  /** Shown in place of the profile when the session has no player row (yet). */
+  email: string
   hasPii: boolean
   profileLoadFailed?: boolean
   profileExpanded: boolean
-  setProfileExpanded: Dispatch<SetStateAction<boolean>>
+  openProfileEdit: () => void
+  /** Closes the editor and discards unsaved edits. */
+  cancelProfileEdit: () => void
   profileForm: ProfileForm
   setProfileForm: SetProfileForm
   profileSaving: boolean
@@ -35,26 +39,22 @@ interface ProfileSectionProps {
   dismissPlaytomicPrompt: () => void
 }
 
-const formatLevel = (player: Player) => (parseFloat(String(player.playtomicLevel)) || 0).toFixed(1)
-
 export default function ProfileSection({
   myPlayer,
   isAdmin,
+  email,
   profileExpanded,
-  setProfileExpanded,
+  openProfileEdit,
+  cancelProfileEdit,
   showPlaytomicPrompt,
   dismissPlaytomicPrompt,
   ...form
 }: ProfileSectionProps) {
-  if (!myPlayer) return null
+  if (!myPlayer) return <SignedInCard email={email} isAdmin={isAdmin} />
   return (
     <>
-      <ProfileCard player={myPlayer} isAdmin={isAdmin} onEdit={() => setProfileExpanded(true)} />
-      <ProfileEditDialog
-        open={profileExpanded}
-        onClose={() => setProfileExpanded(false)}
-        {...form}
-      />
+      <ProfileCard player={myPlayer} isAdmin={isAdmin} onEdit={openProfileEdit} />
+      <ProfileEditDialog open={profileExpanded} onClose={cancelProfileEdit} {...form} />
       <PlaytomicPrompt
         open={showPlaytomicPrompt && !profileExpanded}
         player={myPlayer}
@@ -94,8 +94,9 @@ function PlaytomicPrompt({
     <Modal
       open={open}
       onClose={onDismiss}
+      dismissible={false}
       title="Has your Playtomic level changed?"
-      description={`It's been a while. Your level on file is ${formatLevel(player)}.`}
+      description={`It's been a while. Your level on file is ${playerLevel(player).toFixed(1)}.`}
       footer={
         <ActionRow>
           <Button variant="neutral" onClick={onDismiss}>
@@ -150,6 +151,7 @@ function ProfileEditDialog({
     <FullScreenDialog
       open={open}
       onClose={onClose}
+      dismissible={false}
       title="Edit profile"
       footer={
         <div className="space-y-2">
