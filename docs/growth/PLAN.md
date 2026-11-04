@@ -70,14 +70,18 @@ source.
   `facebookexternalhit` for Facebook and Instagram, iMessage, Telegram,
   Discord and others) on `/events/:id` and `/events/:id/info` to
   `api/event-preview`. People, including Instagram and Facebook in-app
-  browsers, get the app as before. A person matched by mistake is sent on
-  with `?app=1`, which the rule skips.
+  browsers, get the app as before. Search crawlers (Googlebot, Applebot) are
+  left out so they index the app. A person matched by mistake is sent on to
+  the link they opened, query included, with `?app=1`, which the rule skips.
 - **Tags and image.** The function reads event facts only (name, date, time,
   venue, format) and returns `og:*` tags. `api/event-image` renders the
   1200×630 card. Its URL carries a version from those facts, so it's cached
-  hard and an edited event gets a new image. No spot count (cached).
+  hard and an edited event gets a new image; any other version redirects to
+  the current one. No spot count (cached). Started, finished or past events
+  say sign-ups are closed. The logo is inlined, so a render fetches nothing.
 - **Fallback.** `index.html` carries site-wide tags, used for every other
-  link, and by the function when the event is unknown or Supabase fails.
+  link, and by the function when the event is unknown, or Supabase fails or
+  takes over 2.5s.
 - **Font.** The card uses the regular weight `@vercel/og` ships with, so no
   font file is bundled.
 - **Check after deploy.** The functions read `VITE_SUPABASE_URL` and
