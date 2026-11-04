@@ -77,7 +77,10 @@ test('run-of-show: schedule → finish → oscars → reveal (admin + player)', 
     await expect(admin.getByText('Ratings applied, tournament complete')).toBeVisible()
 
     // ── 4. Player still cannot see standings ──────────────────────────────
-    await signIn({ page: player, ...PLAYER, at: eventPath })
+    // The event page is public; /join is where its "Sign in" leads, and it
+    // forwards to the event once signed in.
+    await signIn({ page: player, ...PLAYER, at: `${eventPath}/join` })
+    await expect(player).toHaveURL(new RegExp(`${fixture.tournamentId}/info$`))
     await expect(player.getByRole('link', { name: 'Results', exact: true })).toHaveCount(0)
     // Defense in depth: the route itself withholds standings even if hit
     // directly, independent of the tab strip.
