@@ -12,7 +12,8 @@ players into events, with the least extra work for admins?
   posting. There's almost no outreach to people outside the community.
 - **Demand:** mixed.
 - **Public event view:** a logged-out visitor sees the event details (date,
-  venue, format, level, price, spots left) but **no player names**.
+  venue, format, price, spots left) but **no player names**. Level is left
+  off for now. Guests can also browse the upcoming events list.
 
 Product read is from the code at `main` (`256799f`). The findings come from
 read-only aggregates of production data, taken 4 Nov 2026. The figures stay
