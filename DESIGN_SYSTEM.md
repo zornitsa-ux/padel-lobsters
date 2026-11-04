@@ -18,8 +18,9 @@ These are enforced in review, and the first two in CI (`npm run design:check`):
   `TextButton`, `IconButton`, `Chip`, `SegmentedControl`, `OptionRow`, `OptionTile`, `MenuItem`,
   `CardLink` and the rest. If none fits, add the variant or prop to the component.
 - **Tokens only.** Colours come from `lob-*` tokens, never raw Tailwind palette classes
-  (`text-red-600`, `bg-amber-50`) or hex literals. The ratchet
-  (`scripts/raw-colours-baseline.json`) is at zero, so no file may add one.
+  (`text-red-600`, `bg-amber-50`) or hex literals. The theme only has the `lob-*` colours, so
+  a raw class renders nothing; `npm run design:check` and `npm run lint`
+  (`tailwindcss/no-custom-classname`) fail on one.
 - **Layout belongs to the parent.** Ui components carry no margins. The parent or a layout
   component (`ActionRow`, `space-y-*`, `gap-*`) places them. `Button` and `TextButton` take no
   `className`; their layout props are `fullWidth` and `grow`.

@@ -26,8 +26,10 @@ component doesn't fit, fix the component, not the call site.**
    covers its real variants, so nobody needs a copy.
 3. **Guardrails.**
    - The CLAUDE.md "UI and Design System" section, which every agent reads.
-   - `npm run design:check` in CI: a per-file ratchet on raw palette classes
-     (`scripts/raw-colours-baseline.json`). Counts may only go down.
+   - Locked theme (P7c): `theme.colors` is the `lob-*` tokens plus white,
+     black and the CSS keywords. `npm run design:check` fails on any raw
+     palette class or arbitrary colour in `src/`, and `npm run lint` on any
+     class Tailwind doesn't generate (`tailwindcss/no-custom-classname`).
    - Layout belongs to layout components and parents (owner, 2026-10-26):
      `Button` and `TextButton` take no `className`, so no margins or widths
      at call sites.
@@ -35,8 +37,6 @@ component doesn't fit, fix the component, not the call site.**
      `src/components/ui`. `npm run design:check` fails on any `<button>`
      outside it (`scripts/check-raw-buttons.mjs`; absolute since P2f, no
      baseline).
-   - Later: remove raw palettes from the Tailwind theme, plus a lint rule for
-     unknown classes (step 7).
 4. **Discoverability.** A dev-only `/design` gallery of every component and
    variant, and a "need X → use Y" table (below).
 
@@ -160,7 +160,7 @@ the gallery, and runs `npm run design:baseline` when counts drop.
 | P4  | **`Badge` tones** (`success`, `neutral`, `warning`, `outline`) and **payment status single source** (`paymentStatus.ts`, `PaymentStatusBadge` on `Badge`; the blue "transferred" pill and merch "delivered" get a token). About 13 hand-built status pills move onto `Badge`. Rename team-state "Confirmed".                                                                                                                                                                                                                                                                                                                                       | Done (#110)               |
 | P5  | **Empty and signed-out states.** `EmptyState variant="inline"`, `SignInPrompt`; loading states: a loading card keeps its title or header, so the viewer sees what is loading, and shows `Spinner` / `Skeleton` in the body instead of `return null`.                                                                                                                                                                                                                                                                                                                                                                                               | Done (#112)               |
 | P6  | **Cards for objects, lists and sections.** Owner calls 2026-10-30 (Log). A card is one thing you act on; page sections sit on the background under a heading; a list of like items is one card with divided rows; no card inside a card. Pieces: `Section`, `ListCard`, `Well` (the planned `.panel`), `Tag`, `.eyebrow`, `RankMarker` + `PlayerRow highlighted`, ~~`RosterHeading`~~ (dropped 2026-11-02), `SearchInput` (#81), a heading element inside the `CollapsibleCard` header button (review of #76). Five PRs: P6a to P6e under "Next".                                                                                                  |                           |
-| P7  | **Lock-down.** Tokens for decorative colours (medal gold, avatar palette, gender marks) and for `text-[9px]` (14 uses, the bottom nav labels among them). Then switch `theme.extend.colors` to a restricted `theme.colors` so raw palette classes stop generating, and add a lint rule for unknown classes (e.g. `eslint-plugin-tailwindcss`, check ESLint 9 support). Retire the colour ratchet once the theme is locked; keep the `<button>` check.                                                                                                                                                                                              | P7a #143, P7b #144        |
+| P7  | **Lock-down.** Tokens for decorative colours (medal gold, avatar palette, gender marks) and for `text-[9px]` (14 uses, the bottom nav labels among them). Then switch `theme.extend.colors` to a restricted `theme.colors` so raw palette classes stop generating, and add a lint rule for unknown classes (e.g. `eslint-plugin-tailwindcss`, check ESLint 9 support). Retire the colour ratchet once the theme is locked; keep the `<button>` check.                                                                                                                                                                                              | Done: #143, #144, P7c     |
 
 The gallery exists: `/design` in dev (`src/features/design/DesignGallery.tsx`;
 open to guests in dev only, left out of the production build). Each step adds
@@ -267,7 +267,7 @@ primitives (see the Log) before P3:
     - **P7c: lock.** A restricted `theme.colors` (lob, white, black,
       transparent, current, inherit), `eslint-plugin-tailwindcss` 3.18
       (`no-custom-classname`; 4.x needs Tailwind 4), and the colour check
-      made absolute (zero, no baseline) rather than retired.
+      made absolute (zero, no baseline) rather than retired. In progress.
 
 ### E2E safety net
 
@@ -1790,3 +1790,24 @@ scrollable`, and so is the tips list. Open WhatsApp Community is a
   - Found: the swap rows can't be picked by keyboard (#145). The shop's
     custom-name field hand-builds a compact `.input` (no inset shadow); a
     `sm` input size is a later call.
+
+- **2026-11-04.** P7c on `design-system-p7c-lock`.
+  - `theme.colors` replaces `theme.extend.colors`: the `lob-*` tokens plus
+    `transparent`, `current`, `inherit`, `white` and `black`. The compiled
+    CSS was diffed before and after: the only change was preflight's
+    default border colour (gray-200 → `currentColor`, as gray-200 is gone),
+    so `borderColor.DEFAULT` is pinned to `lob-line-strong`. After that the
+    CSS is identical; the app looks the same.
+  - `eslint-plugin-tailwindcss` 3.18.3 with only
+    `tailwindcss/no-custom-classname` as an error, on `src/`. It reads
+    `src/**/*.css`, so `.card`, `.eyebrow`, `.input` and the CSS module
+    classes are known. It needs the config's absolute path to resolve
+    Tailwind. A probe caught `text-red-600`, `bg-gray-100` and a typo
+    (`bg-lob-tael`). The codebase had no violations. Lint takes about 3s.
+  - It only reads `className` attributes (and `clsx`-style calls), not
+    class strings kept in constants, so `design:check`'s colour check
+    stays, made absolute: no baseline, all palettes (grays included),
+    arbitrary `#hex`, `rgb()` and `hsl()` values, test files too.
+    `design:baseline`, `raw-colours-baseline.json` and the ratchet helper
+    are gone (`scripts/lib/countMatches.mjs` is what both checks share).
+  - P7 is done with this PR, and with it the design system plan's steps.

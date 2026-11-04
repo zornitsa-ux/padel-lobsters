@@ -1,9 +1,18 @@
 # Design tokens
 
 Tokens live in `tailwind.config.js` under `colors.lob` (plus a few top-level
-brand tokens). Use them instead of raw Tailwind palette classes
-(`text-green-700`, `bg-red-50`, …) and hex literals. What is being built on
-top of them is in [`PLAN.md`](./PLAN.md).
+brand tokens). What is being built on top of them is in [`PLAN.md`](./PLAN.md).
+
+**The theme is locked (P7c).** `theme.colors` is the `lob-*` tokens plus
+`white`, `black`, `transparent`, `current` and `inherit`; Tailwind's palette
+doesn't generate, so `text-green-700` or `bg-red-50` renders nothing. CI
+fails on one twice over: `npm run lint` (`tailwindcss/no-custom-classname`,
+any class Tailwind doesn't know, in a `className`) and `npm run
+design:check` (raw palette classes and arbitrary colours anywhere in `src/`,
+including class strings in constants). A colour with no token gets one,
+here and in `tailwind.config.js`, in the same PR.
+Preflight's default border colour is pinned to `lob-line-strong` (it fell
+back to gray-200).
 
 ## Brand and text
 

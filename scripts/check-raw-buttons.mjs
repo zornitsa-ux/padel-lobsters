@@ -2,7 +2,7 @@
 // No hand-built <button>s outside src/components/ui: features compose Button, TextButton,
 // IconButton, Chip, OptionRow, MenuItem, CardLink and the rest. See "Need X → use Y" in
 // docs/design-system/PLAN.md.
-import { countMatches } from './lib/ratchet.mjs'
+import { countMatches } from './lib/countMatches.mjs'
 
 const found = countMatches({
   include: (path) =>
