@@ -14,7 +14,7 @@ players into events, with the least extra work for admins?
 - **Public event view:** a logged-out visitor sees the event details (date,
   venue, format, level, price, spots left) but **no player names**.
 
-Product read is from the code at `main` (`c1dd17a`). The findings come from
+Product read is from the code at `main` (`256799f`). The findings come from
 read-only aggregates of production data, taken 4 Nov 2026. The figures stay
 out of this public repo. The owner holds the baseline privately.
 
@@ -74,7 +74,7 @@ Ranked by impact against effort.
    names, sees spots left, and gets one "Join to play" button. This removes the
    biggest leak, and every other channel depends on it.
 2. **Rich link previews.** Each event gets its own title, description and
-   preview image (date, format, spots left), so a WhatsApp or Instagram link
+   preview image (date, format, venue), so a WhatsApp or Instagram link
    sells itself. Cheap, and it lifts every share.
 3. **Signup that returns to the event.** After signing up from an event page,
    land back on it with registration one tap away. That closes the step 4→5
@@ -133,9 +133,9 @@ repo.
 - The public page shows **counts, not names**: spots taken and spots left,
   never who registered. Schedule, results and Oscars stay behind sign-in.
 - Preview images and share text carry **event facts only**.
-- Anon access goes through a dedicated `public_*` view with an explicit column
-  list, never through the base tables (the pattern already used for
-  `public_tournament_registration_counts`).
+- Anon reads event data only through an explicit column list (a column grant
+  or a `public_*` view). Today anon can read the whole `tournaments` table,
+  including notes and the payment link. G1 narrows this (PLAN, G1 notes).
 - Attribution stores a source label and a referrer's player ID in the
   database only. It never shows up in URLs as a name or email.
 
