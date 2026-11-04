@@ -37,7 +37,7 @@ export default {
         slate: '#40565C',
         well: '#F9FAFB',
         line: '#F3F4F6',
-        'line-strong': '#E5E7EB',
+        'line-strong': lineStrong,
         gold: { DEFAULT: gold, light: '#FEFCE8', strong: '#CA8A04', 'on-dark': '#FDE047' },
         silver: { DEFAULT: '#9CA3AF', soft: '#E5E7EB' },
         bronze: '#CD7F32',

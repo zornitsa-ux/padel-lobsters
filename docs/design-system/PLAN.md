@@ -145,7 +145,7 @@ component doesn't fit, fix the component, not the call site.**
 ## Steps
 
 Each step is one branch off `main` and one PR. Each PR updates this file and
-the gallery, and runs `npm run design:baseline` when counts drop.
+the gallery.
 
 | #   | Step                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Status                    |
 | --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
@@ -1810,4 +1810,12 @@ scrollable`, and so is the tips list. Open WhatsApp Community is a
     arbitrary `#hex`, `rgb()` and `hsl()` values, test files too.
     `design:baseline`, `raw-colours-baseline.json` and the ratchet helper
     are gone (`scripts/lib/countMatches.mjs` is what both checks share).
+  - Review: the colour check also catches typed arbitrary colours
+    (`text-[color:#c00]`), colour functions (`oklch()`, `hwb()`, `theme()`
+    and the rest), arbitrary properties (`[background:#fff]`) and the
+    logical `border-s` / `border-e` sides. `lob-line-strong` and the
+    default border share one constant. CLAUDE.md lists `inherit` and says
+    the lint rule reads `className`s only: a typo in a class constant is
+    caught by neither check. Test files stay in the colour check, as their
+    fixtures pass classes into components.
   - P7 is done with this PR, and with it the design system plan's steps.

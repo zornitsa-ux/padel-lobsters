@@ -8,11 +8,15 @@ import { countMatches } from './lib/countMatches.mjs'
 const PALETTES =
   'slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose'
 const UTILITIES =
-  'text|bg|border(?:-[trblxy])?|ring(?:-offset)?|divide|from|via|to|fill|stroke|outline|accent|caret|placeholder|decoration|shadow'
+  'text|bg|border(?:-[trblxyse])?|ring(?:-offset)?|divide|from|via|to|fill|stroke|outline|accent|caret|placeholder|decoration|shadow'
+const COLOUR_FUNCTIONS = '(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color|theme)\\('
 const RAW_CLASS = new RegExp(
   [
     `\\b(?:${UTILITIES})-(?:${PALETTES})-\\d{2,3}\\b`,
-    `\\b(?:${UTILITIES})-\\[(?:#|rgba?\\(|hsla?\\()`,
+    // Arbitrary colours, typed or not: bg-[#fff], text-[color:#c00], bg-[oklch(…)].
+    `\\b(?:${UTILITIES})-\\[(?:color:)?(?:#|${COLOUR_FUNCTIONS})`,
+    // Arbitrary properties: [background:#fff], [color:rgb(…)].
+    `\\[(?:color|background(?:-color)?|border(?:-[a-z]+)?-color|fill|stroke|outline-color):`,
   ].join('|'),
   'g',
 )
