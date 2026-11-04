@@ -60,6 +60,7 @@ component doesn't fit, fix the component, not the call site.**
 | Toggle, filter or info chip          | `Chip` (a row of them: `ChipGroup`)                  | exists |
 | Pick one from a list (player)        | `OptionRow selected` (`actions` beside, outside tap) | exists |
 | Row that jumps to a task             | `OptionRow` (`trailing` chevron)                     | exists |
+| One setting: label, value, control   | `SettingRow` in a `ListCard` `ListRow`               | exists |
 | Pick one tile from a grid            | `OptionTile selected` (`muted` when done)            | exists |
 | Switch between photos                | `ImageTile`                                          | exists |
 | Admin acts for another player        | `useConfirmOnBehalf` before the write                | exists |

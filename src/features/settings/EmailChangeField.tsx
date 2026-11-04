@@ -7,6 +7,9 @@ import { ActionRow } from '../../components/ui/ActionRow'
 import { Button } from '../../components/ui/Button'
 import { AlertBox } from '../../components/ui/AlertBox'
 import { Well } from '../../components/ui/Well'
+import { SettingRow } from '../../components/ui/SettingRow'
+
+const LABEL = 'Sign-in email'
 
 // Self-service email change: type new email -> requestMyEmailChange -> Supabase
 // emails a confirmation link to the new (and old, since double_confirm_changes
@@ -21,11 +24,7 @@ export function EmailChangeField({ email }: { email: string }) {
 // A synthetic address never receives mail, so double_confirm_changes can't
 // complete a self-service change; an admin sets the email instead.
 function MissingEmailNotice() {
-  return (
-    <p className="text-sm text-lob-slate leading-snug">
-      Your account has no email yet. {ADD_EMAIL_REQUEST}
-    </p>
-  )
+  return <SettingRow label={LABEL} value={`Your account has no email yet. ${ADD_EMAIL_REQUEST}`} />
 }
 
 function EmailChangeForm({ email }: { email: string }) {
@@ -52,15 +51,15 @@ function EmailChangeForm({ email }: { email: string }) {
     setEmailStatus('Something went wrong. Try again in a moment.')
   }
 
-  return (
-    <>
-      {!emailEditing && (
-        <div className="flex items-center gap-2">
-          <div className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-lob-well border border-lob-line-strong text-sm text-lob-slate truncate">
-            {email || <span className="text-lob-muted-light">No email on file</span>}
-          </div>
+  if (!emailEditing)
+    return (
+      <SettingRow
+        label={LABEL}
+        value={<span className="break-all">{email || 'No email on file'}</span>}
+        action={
           <Button
             variant="secondary"
+            size="sm"
             onClick={() => {
               setEmailEditing(true)
               setNewEmail('')
@@ -69,9 +68,13 @@ function EmailChangeForm({ email }: { email: string }) {
           >
             Change
           </Button>
-        </div>
-      )}
-      {emailEditing && emailStatus !== 'sent' && (
+        }
+      />
+    )
+
+  return (
+    <SettingRow label={LABEL} value={<span className="break-all">{email}</span>}>
+      {emailStatus !== 'sent' && (
         <form onSubmit={submitEmailChange} className="space-y-2">
           <input
             type="email"
@@ -111,7 +114,7 @@ function EmailChangeForm({ email }: { email: string }) {
           </p>
         </form>
       )}
-      {emailEditing && emailStatus === 'sent' && (
+      {emailStatus === 'sent' && (
         <div className="space-y-2">
           <Well>
             <p className="flex items-start gap-2 text-xs text-lob-slate leading-snug">
@@ -135,6 +138,6 @@ function EmailChangeForm({ email }: { email: string }) {
           </Button>
         </div>
       )}
-    </>
+    </SettingRow>
   )
 }

@@ -11,26 +11,17 @@ import { EmailChangeField } from './EmailChangeField'
 import { TextButton } from '../../components/ui/TextButton'
 import { Button } from '../../components/ui/Button'
 import { Section } from '../../components/ui/Section'
+import { ListCard, ListRow } from '../../components/ui/ListCard'
+import { SettingRow } from '../../components/ui/SettingRow'
 
 export default function SignInSecuritySection() {
   const { session } = useApp()
-  const [editingPassword, setEditingPassword] = useState(false)
-  const [passwordSaved, setPasswordSaved] = useState(false)
-  const [signOutError, setSignOutError] = useState('')
-  const usedPassword = sessionUsedPassword({ session })
   const { hash } = useLocation()
-  const passwordLabel = usedPassword ? 'Change password' : 'Set or change password'
 
   useEffect(() => {
     if (hash === `#${SIGN_IN_SECURITY_ID}`)
       document.getElementById(SIGN_IN_SECURITY_ID)?.scrollIntoView?.()
   }, [hash])
-
-  async function handleSignOutEverywhere() {
-    setSignOutError('')
-    const { error } = await signOutEverywhere()
-    if (error) setSignOutError('Could not sign you out everywhere. Try again.')
-  }
 
   return (
     <Section
@@ -39,56 +30,91 @@ export default function SignInSecuritySection() {
       icon={<ShieldCheck />}
       description="You sign in with a code we email you. A password is optional."
     >
-      <div>
-        <label className="label">Sign-in email</label>
-        <EmailChangeField email={session?.user?.email ?? ''} />
-      </div>
-
-      <div className="space-y-2">
-        <label className="label">Password</label>
-        {editingPassword ? (
-          <>
-            <PasswordForm
-              requireCurrentPassword={usedPassword}
-              submitLabel="Save password"
-              onDone={() => {
-                setEditingPassword(false)
-                setPasswordSaved(true)
-              }}
-            />
-            <TextButton tone="neutral" onClick={() => setEditingPassword(false)}>
-              Cancel
-            </TextButton>
-          </>
-        ) : (
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => {
-              setPasswordSaved(false)
-              setEditingPassword(true)
-            }}
-          >
-            {passwordLabel}
-          </Button>
-        )}
-        {passwordSaved && <p className="text-xs text-lob-teal font-medium">Password saved.</p>}
-      </div>
-
-      <div className="space-y-1">
-        <TextButton
-          tone="destructive"
-          icon={<LogOut size={12} />}
-          onClick={handleSignOutEverywhere}
-        >
-          Sign out of all devices
-        </TextButton>
-        {signOutError && (
-          <AlertBox variant="error" size="sm">
-            {signOutError}
-          </AlertBox>
-        )}
-      </div>
+      <ListCard label="Sign-in & security">
+        <ListRow>
+          <EmailChangeField email={session?.user?.email ?? ''} />
+        </ListRow>
+        <ListRow>
+          <PasswordRow usedPassword={sessionUsedPassword({ session })} />
+        </ListRow>
+        <ListRow>
+          <SignOutEverywhereRow />
+        </ListRow>
+      </ListCard>
     </Section>
+  )
+}
+
+function PasswordRow({ usedPassword }: { usedPassword: boolean }) {
+  const [editing, setEditing] = useState(false)
+  const [saved, setSaved] = useState(false)
+
+  if (editing)
+    return (
+      <SettingRow label="Password">
+        <PasswordForm
+          requireCurrentPassword={usedPassword}
+          submitLabel="Save password"
+          onDone={() => {
+            setEditing(false)
+            setSaved(true)
+          }}
+        />
+        <TextButton tone="neutral" onClick={() => setEditing(false)}>
+          Cancel
+        </TextButton>
+      </SettingRow>
+    )
+
+  return (
+    <SettingRow
+      label="Password"
+      value={saved ? 'Password saved.' : 'Optional: sign in without waiting for a code.'}
+      action={
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => {
+            setSaved(false)
+            setEditing(true)
+          }}
+        >
+          {usedPassword ? 'Change password' : 'Set or change password'}
+        </Button>
+      }
+    />
+  )
+}
+
+function SignOutEverywhereRow() {
+  const [error, setError] = useState('')
+
+  async function handleSignOutEverywhere() {
+    setError('')
+    const { error: signOutError } = await signOutEverywhere()
+    if (signOutError) setError('Could not sign you out everywhere. Try again.')
+  }
+
+  return (
+    <>
+      <SettingRow
+        label="All devices"
+        value="Ends every session, this one included."
+        action={
+          <TextButton
+            tone="destructive"
+            icon={<LogOut size={12} />}
+            onClick={handleSignOutEverywhere}
+          >
+            Sign out of all devices
+          </TextButton>
+        }
+      />
+      {error && (
+        <AlertBox variant="error" size="sm">
+          {error}
+        </AlertBox>
+      )}
+    </>
   )
 }

@@ -1,41 +1,31 @@
-import React, {
-  useState,
-  useEffect,
-  useRef,
-  useCallback,
-  type ChangeEvent,
-  type FormEvent,
-} from 'react'
+import React, { useState, useEffect, useRef, useCallback, type ChangeEvent } from 'react'
+import { LogOut, Settings as SettingsIcon, Shield } from 'lucide-react'
 import { useApp } from '../../context/useApp'
-import { useSettings, useSaveSettings } from './useSettings'
 import { useMyProfile, usePlayerActions, useAvatarUpload } from '../players/usePlayers'
 import { isE164 } from '../../lib/whatsapp'
 import { levelProblem } from '../../lib/parseLevel'
 import { errorMessage } from '../../lib/errors'
-import DEFAULT_TIPS from '../../data/padelTips'
 import { processAvatar } from '../../lib/processAvatar'
 import { ownAvatarFilename } from '../players/playerQueries'
-import {
-  LOBBY_PROMPTS,
-  type EditingTip,
-  type ProfileForm,
-  type SettingsForm,
-} from './settingsHelpers'
+import { GROUP_SETTINGS_PATH, LOBBY_PROMPTS, type ProfileForm } from './settingsHelpers'
 import AccountSection from './AccountSection'
 import SignInSecuritySection from './SignInSecuritySection'
 import ProfileSection from './ProfileSection'
 import AccountStatsSection from './AccountStatsSection'
 import AccountOrdersSection from './AccountOrdersSection'
-import AdminSection from './AdminSection'
 import { PageHeader } from '../../components/ui/PageHeader'
 import LobsterWayLink from '../../components/LobsterWayLink'
+import { useToast } from '../../lib/toastBus'
+import { Section } from '../../components/ui/Section'
+import { ListCard, LinkRow } from '../../components/ui/ListCard'
+import { LinkCardIcon } from '../../components/ui/LinkCard'
+import { Button } from '../../components/ui/Button'
 
 export default function Settings() {
   const { session, role, logout, isAdmin } = useApp()
   const { updatePlayer } = usePlayerActions({ session, role })
   const avatarUpload = useAvatarUpload()
-  const { data: settings } = useSettings()
-  const saveSettingsMutation = useSaveSettings()
+  const { showToast } = useToast()
   const claimedId = session?.user?.id ?? null
   // Own profile: identity from the public roster merged with PII from
   // get_my_profile_v2. Single source — no separate poll/overlay, so a
@@ -44,18 +34,6 @@ export default function Settings() {
   // silently stuck on "Loading" forever.
   const { data: myPlayer, hasPii, piiUnavailable: profileLoadFailed } = useMyProfile(claimedId)
 
-  const [form, setForm] = useState<SettingsForm>({
-    whatsappLink: '',
-    groupName: 'Padel Lobsters',
-  })
-  const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
-  const [tips, setTips] = useState<string[] | null>(null) // null = use defaults
-  const [newTip, setNewTip] = useState('')
-  const [editingTip, setEditingTip] = useState<EditingTip | null>(null)
-  const [tipsExpanded, setTipsExpanded] = useState(false)
-
-  // ── My Lobster Profile ──────────────────────────────────────────────────
   const [profileExpanded, setProfileExpanded] = useState(false)
   const [profileForm, setProfileForm] = useState<ProfileForm>({
     name: '',
@@ -71,7 +49,6 @@ export default function Settings() {
     avatarUrl: '',
   })
   const [profileSaving, setProfileSaving] = useState(false)
-  const [profileSaved, setProfileSaved] = useState(false)
   const [profileError, setProfileError] = useState('')
   // Once the user touches the form it's "dirty"; the seed effect below then
   // stops re-initialising from myPlayer so a background refetch / cache
@@ -220,8 +197,8 @@ export default function Settings() {
       profileDirty.current = false
       localStorage.setItem(`lobster_playtomic_check_${claimedId}`, String(Date.now()))
       setShowPlaytomicPrompt(false)
-      setProfileSaved(true)
-      setTimeout(() => setProfileSaved(false), 2500)
+      setProfileExpanded(false)
+      showToast({ variant: 'success', message: 'Profile saved.' })
     } catch (err) {
       setProfileError(errorMessage(err, 'Could not save profile.'))
     } finally {
@@ -234,146 +211,49 @@ export default function Settings() {
     setShowPlaytomicPrompt(false)
   }
 
-  useEffect(() => {
-    if (settings) {
-      setForm({
-        whatsappLink: settings.whatsappLink || '',
-        groupName: settings.groupName || 'Padel Lobsters',
-      })
-      setTips(settings.padelTips && settings.padelTips.length > 0 ? settings.padelTips : null)
-    }
-  }, [settings])
-
-  const activeTips = tips || DEFAULT_TIPS
-  const isCustom = tips !== null
-
-  const handleSave = async (e: FormEvent) => {
-    e.preventDefault()
-    if (!isAdmin) return // admin-only form is hidden when not admin
-    setSaving(true)
-    try {
-      await saveSettingsMutation.mutateAsync({ ...form, padelTips: tips })
-      setSaved(true)
-      setTimeout(() => setSaved(false), 2500)
-    } catch (err) {
-      alert('Could not save settings: ' + errorMessage(err, 'unknown error'))
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  // ── Tip CRUD ─────────────────────────────────────────────────────────
-  // Each tip change auto-saves to the DB immediately. Previously, edits
-  // were only held in local state until the admin remembered to scroll
-  // down and click "Save Settings" — a forgotten click meant the delete
-  // was lost on the next page load and the old tip reappeared. Errors
-  // now roll back the optimistic UI so the admin sees the true state.
-  const persistTips = async (nextTips: string[] | null, prevTipsForRollback: string[] | null) => {
-    try {
-      await saveSettingsMutation.mutateAsync({ ...form, padelTips: nextTips })
-    } catch (err) {
-      setTips(prevTipsForRollback) // revert UI if DB write failed
-      alert('Could not save tip change: ' + errorMessage(err, 'unknown error'))
-    }
-  }
-
-  const handleAddTip = () => {
-    if (!newTip.trim()) return
-    const prev = tips
-    const updated = [...activeTips, newTip.trim()]
-    setTips(updated)
-    setNewTip('')
-    persistTips(updated, prev)
-  }
-
-  const handleDeleteTip = (idx: number) => {
-    const prev = tips
-    const updated = activeTips.filter((_, i) => i !== idx)
-    const next = updated.length > 0 ? updated : null
-    setTips(next)
-    persistTips(next, prev)
-  }
-
-  const handleEditTip = (idx: number) => {
-    setEditingTip({ index: idx, text: activeTips[idx] })
-  }
-
-  const handleSaveEdit = () => {
-    if (!editingTip || !editingTip.text.trim()) return
-    const prev = tips
-    const updated = [...activeTips]
-    updated[editingTip.index] = editingTip.text.trim()
-    setTips(updated)
-    setEditingTip(null)
-    persistTips(updated, prev)
-  }
-
-  const handleResetTips = () => {
-    const prev = tips
-    setTips(null)
-    persistTips(null, prev)
-  }
-
-  // Active sign-in session — used by the Account card.
-  const signedInPlayer = myPlayer
-
   return (
     <div className="-mx-4">
       <PageHeader title="Account" />
 
-      <div className="px-4 pt-4 space-y-5">
-        <AccountSection isAdmin={isAdmin} signedInPlayer={signedInPlayer} logout={logout} />
+      <div className="px-4 pt-4 space-y-6">
+        {session ? (
+          <>
+            <ProfileSection
+              myPlayer={myPlayer}
+              isAdmin={isAdmin}
+              hasPii={hasPii}
+              profileLoadFailed={profileLoadFailed}
+              profileExpanded={profileExpanded}
+              setProfileExpanded={setProfileExpanded}
+              profileForm={profileForm}
+              setProfileForm={editProfileForm}
+              profileSaving={profileSaving}
+              profileError={profileError}
+              avatarPreview={avatarPreview}
+              handleAvatarChange={handleAvatarChange}
+              handleProfileSave={handleProfileSave}
+              activePrompt={activePrompt}
+              setActivePrompt={setActivePrompt}
+              showPlaytomicPrompt={showPlaytomicPrompt}
+              dismissPlaytomicPrompt={dismissPlaytomicPrompt}
+            />
+            <AccountStatsSection claimedId={claimedId} />
+            <AccountOrdersSection myPlayer={myPlayer} />
+            <SignInSecuritySection />
+            {isAdmin && <AdminLinks />}
+          </>
+        ) : (
+          <AccountSection />
+        )}
 
-        {session && <SignInSecuritySection />}
+        <Section title="Help">
+          <LobsterWayLink />
+        </Section>
 
-        <ProfileSection
-          myPlayer={myPlayer}
-          hasPii={hasPii}
-          profileLoadFailed={profileLoadFailed}
-          profileExpanded={profileExpanded}
-          setProfileExpanded={setProfileExpanded}
-          profileForm={profileForm}
-          setProfileForm={editProfileForm}
-          profileSaving={profileSaving}
-          profileSaved={profileSaved}
-          profileError={profileError}
-          avatarPreview={avatarPreview}
-          handleAvatarChange={handleAvatarChange}
-          handleProfileSave={handleProfileSave}
-          activePrompt={activePrompt}
-          setActivePrompt={setActivePrompt}
-          showPlaytomicPrompt={showPlaytomicPrompt}
-          dismissPlaytomicPrompt={dismissPlaytomicPrompt}
-        />
-
-        <AccountStatsSection claimedId={claimedId} />
-
-        <AccountOrdersSection myPlayer={myPlayer} />
-
-        <LobsterWayLink />
-
-        {/* App config — admin only */}
-        {isAdmin && (
-          <AdminSection
-            form={form}
-            setForm={setForm}
-            saving={saving}
-            saved={saved}
-            handleSave={handleSave}
-            activeTips={activeTips}
-            isCustom={isCustom}
-            tipsExpanded={tipsExpanded}
-            setTipsExpanded={setTipsExpanded}
-            newTip={newTip}
-            setNewTip={setNewTip}
-            editingTip={editingTip}
-            setEditingTip={setEditingTip}
-            handleAddTip={handleAddTip}
-            handleDeleteTip={handleDeleteTip}
-            handleEditTip={handleEditTip}
-            handleSaveEdit={handleSaveEdit}
-            handleResetTips={handleResetTips}
-          />
+        {session && (
+          <Button variant="neutral" fullWidth icon={<LogOut />} onClick={logout}>
+            Sign out
+          </Button>
         )}
 
         <footer className="text-center space-y-1 py-5">
@@ -390,5 +270,24 @@ export default function Settings() {
         </footer>
       </div>
     </div>
+  )
+}
+
+function AdminLinks() {
+  return (
+    <Section title="Admin" icon={<Shield />}>
+      <ListCard label="Admin">
+        <LinkRow
+          to={GROUP_SETTINGS_PATH}
+          leading={
+            <LinkCardIcon>
+              <SettingsIcon size={16} />
+            </LinkCardIcon>
+          }
+          title="Group settings"
+          subtitle="Group name, WhatsApp link, daily tips, security log"
+        />
+      </ListCard>
+    </Section>
   )
 }

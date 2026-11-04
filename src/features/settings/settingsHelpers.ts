@@ -1,4 +1,6 @@
-// The two admin-editable settings fields, held as form state in Settings and
+export const GROUP_SETTINGS_PATH = '/admin/settings'
+
+// The two admin-editable settings fields, held as form state in GroupSettingsPage and
 // rendered by AdminSection.
 export interface SettingsForm {
   whatsappLink: string
