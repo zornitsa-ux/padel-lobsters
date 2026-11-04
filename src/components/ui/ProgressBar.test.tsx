@@ -7,7 +7,7 @@ const fillOf = (el: unknown) => propsOf(el).children
 describe('ProgressBar', () => {
   it('defaults to the sm track with the lob-teal fill', () => {
     const el = ProgressBar({ value: 50 })
-    expect(propsOf(el).className).toBe('h-2 bg-gray-100 rounded-full overflow-hidden')
+    expect(propsOf(el).className).toBe('h-2 bg-lob-line rounded-full overflow-hidden')
     const fill = fillOf(el)
     expect(propsOf(fill).className).toBe('h-full rounded-full transition-all bg-lob-teal')
     expect(propsOf(fill).style).toEqual({ width: '50%' })
@@ -41,7 +41,7 @@ describe('ProgressBar', () => {
 
   it('appends className to the track', () => {
     const el = ProgressBar({ value: 10, className: 'flex-1' })
-    expect(propsOf(el).className).toBe('h-2 bg-gray-100 rounded-full overflow-hidden flex-1')
+    expect(propsOf(el).className).toBe('h-2 bg-lob-line rounded-full overflow-hidden flex-1')
   })
 
   it('does not leave a trailing space when className is omitted', () => {

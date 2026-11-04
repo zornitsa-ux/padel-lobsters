@@ -255,14 +255,15 @@ primitives (see the Log) before P3:
     - **P7a: decorative tokens.** `lob-gold` / `-silver` / `-bronze` and a
       `Podium` for the two hand-built podiums; `lob-gender-f` / `-m` for the
       W / M marks, and the saved schedule's court chip onto
-      `CourtGenderChip` (#137); level badges in four teal bands. #143.
+      `CourtGenderChip` (#137); level badges in four teal bands. Done in
+      #143.
     - **P7b: the rest of the raw colour.** The teal gradients onto
       `bg-header`, the saved schedule's orange swap selection to teal
       (selected is teal), the review breakdown and prize editor onto
       tokens, the grays the ratchet doesn't count (about 20, onto
       `lob-line*` / `lob-muted*`), a `text-3xs` (9px) token (`text-[8px]`
       folds into it, `text-[13px]` becomes `text-sm`), and hex in TS read
-      from shared tokens. The avatar letter palette stays.
+      from shared tokens. The avatar letter palette stays. In progress.
     - **P7c: lock.** A restricted `theme.colors` (lob, white, black,
       transparent, current, inherit), `eslint-plugin-tailwindcss` 3.18
       (`no-custom-classname`; 4.x needs Tailwind 4), and the colour check
@@ -1755,3 +1756,28 @@ scrollable`, and so is the tips list. Open WhatsApp Community is a
   - Kept, as in the generator: an unavoidable uneven court reads "Uneven ·
     unavoidable this round" in the warning tone (was a muted "Uneven"), and
     a court with a player of unknown gender shows no chip.
+
+- **2026-11-04.** P7b on `design-system-p7b-raw-colour`. The ratchet is at
+  zero (`{}`), so every file is held at none.
+  - Teal gradients (verification gate, raffle draw) are `bg-header`.
+  - The saved schedule's swap: the picked player is teal (`lob-teal-light`
+    row, `lob-teal` ring and disc), as selection is everywhere; the court
+    being swapped has a `lob-teal/30` ring.
+  - The review breakdown's history bucket is `lob-teal-light` with
+    `lob-teal-dark` text; the prize editor's amber is `lob-amber` /
+    `lob-amber-strong`.
+  - Grays: `gray-100` → `lob-line`, `gray-200` and `gray-300` →
+    `lob-line-strong`, `gray-400` → `lob-muted-light`, `gray-600` →
+    `lob-slate`; placeholders are `lob-muted-light` (as TOKENS says).
+    `ProgressBar`'s default track is `lob-line`.
+  - `text-3xs` (9px). `DateTile` `sm` drops from 8px to it; the Oscars
+    vote row's 13px name is `text-sm`.
+  - Hex and rgba in TS became token classes, so no shared tokens module
+    was needed: `RatingReview`'s gradient and dot rings (`from-lob-*`,
+    `ring-lob-*`), confetti (`bg-lob-*`; its pink and emerald became the
+    info and success solids), the bracket lines
+    (`stroke-lob-line-strong`), the header's WhatsApp pill (`bg-white/15
+backdrop-blur`), and two shadows as tokens (`shadow-nav`,
+    `shadow-input`, from `lob-dark` like the card shadows).
+  - Tests that passed raw classes as props use tokens, ahead of P7c's
+    lint.

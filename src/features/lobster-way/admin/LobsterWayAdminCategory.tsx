@@ -80,7 +80,7 @@ export default function LobsterWayAdminCategory({
           </div>
         </div>
 
-        <label className="flex items-center gap-2 text-xs text-gray-600">
+        <label className="flex items-center gap-2 text-xs text-lob-slate">
           <input
             type="checkbox"
             checked={!!category.isStory}

@@ -60,7 +60,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
               </div>
               <div>
                 <h1 className="font-bold text-base leading-tight tracking-tight">Padel Lobsters</h1>
-                <p className="text-[9px] opacity-60 leading-tight tracking-wide">
+                <p className="text-3xs opacity-60 leading-tight tracking-wide">
                   Amsterdam Padel Community
                 </p>
               </div>
@@ -88,8 +88,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
                   href={settings.whatsappLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-white text-xs font-semibold px-3 py-2 rounded-2xl transition-all active:scale-95"
-                  style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)' }}
+                  className="flex items-center gap-1.5 text-white text-xs font-semibold px-3 py-2 rounded-2xl transition-all active:scale-95 bg-white/15 backdrop-blur"
                 >
                   <MessageCircle size={14} />
                   WhatsApp
@@ -103,10 +102,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
       </main>
 
       {/* Bottom navigation */}
-      <nav
-        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white pb-safe z-30"
-        style={{ boxShadow: '0 -1px 0 rgba(0,0,0,0.06), 0 -4px 16px rgba(0,0,0,0.06)' }}
-      >
+      <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white pb-safe z-30 shadow-nav">
         <div className="flex items-center justify-around py-2">
           {navItems.map(({ to, label, icon: Icon, end }) => (
             <NavLink
@@ -122,7 +118,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
               {({ isActive }) => (
                 <>
                   <Icon size={20} strokeWidth={isActive ? 2.5 : 1.8} />
-                  <span className={`text-[9px] ${isActive ? 'font-bold' : 'font-medium'}`}>
+                  <span className={`text-3xs ${isActive ? 'font-bold' : 'font-medium'}`}>
                     {label}
                   </span>
                 </>

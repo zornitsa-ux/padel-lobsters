@@ -87,13 +87,18 @@ onto tones. Each is a `-soft` fill (or a token tint) with the text shade:
 ## Type, brand, effects
 
 - `text-2xs`: 10px eyebrows and micro labels. 11px folded into `text-xs`
-  (12px). `text-[9px]` is still raw.
+  (12px).
+- `text-3xs`: 9px, the smallest size: bottom nav labels, the header
+  tagline, `DateTile` month and weekday, `StatTile`'s muted label, the
+  countdown units, the lefty and "main" marks. 8px folded into it; 13px
+  into `text-sm`.
 - No third-party brand colours (owner, 2026-10-26). Tikkie pay links and the
   WhatsApp reminder are standard `Button`s.
 - `bg-celebrate`: the gold-to-coral gradient on placing and completed banners.
 - `bg-header`: the teal header gradient.
 - `shadow-card`, `shadow-card-elevated`: the `.card` / `.card-elevated`
-  shadows, built from `lob-dark`.
+  shadows, built from `lob-dark`. `shadow-nav` (the bottom nav) and
+  `shadow-input` (`.input`'s inset) are built the same way.
 
 ## Decorative colours (P7a)
 
@@ -122,11 +127,8 @@ Not status, so they sit outside the status families (owner, 2026-11-04).
 
 ## Still raw, on purpose
 
-Held by the `design:check` ratchet (18 classes) until P7b:
-
-- The teal gradients (verification gate, raffle), the saved schedule's
-  orange swap selection, the review breakdown's teal, the prize editor's
-  amber, and the grays the ratchet doesn't count.
-- Hex in TS that no class check sees: confetti, the `RatingReview`
-  gradient, the knockout bracket's lines. The avatar letter palette
-  (`letterColors.ts`, owner, 2026-04-30) is data and stays.
+- The avatar letter palette (`letterColors.ts`, owner, 2026-04-30): 26
+  colours, one per first letter, applied as inline styles. It is data, not
+  a token set.
+- `white` and `black` with opacity (`bg-white/15` on the header,
+  `bg-black/50` on a photo) stay; P7c's locked theme keeps them.

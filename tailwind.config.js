@@ -73,6 +73,7 @@ export default {
       },
       fontSize: {
         '2xs': '10px',
+        '3xs': '9px',
       },
       backgroundImage: {
         celebrate: `linear-gradient(to right, ${gold}, ${coral})`,
@@ -81,6 +82,8 @@ export default {
       boxShadow: {
         card: `0 1px 3px ${ink(0.08)}, 0 4px 16px ${ink(0.05)}`,
         'card-elevated': `0 2px 8px ${ink(0.12)}, 0 8px 24px ${ink(0.08)}`,
+        nav: `0 -1px 0 ${ink(0.06)}, 0 -4px 16px ${ink(0.06)}`,
+        input: `inset 0 1px 2px ${ink(0.04)}`,
       },
       keyframes: {
         'fade-in-up': {

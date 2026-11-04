@@ -28,7 +28,7 @@ function PhaseStepper({ status }: { status: string }) {
                 ? 'bg-lob-coral text-white'
                 : done
                   ? 'bg-lob-teal-light text-lob-teal'
-                  : 'bg-gray-100 text-lob-muted'
+                  : 'bg-lob-line text-lob-muted'
             }`}
           >
             {done && <Check size={11} strokeWidth={3} aria-hidden="true" />}

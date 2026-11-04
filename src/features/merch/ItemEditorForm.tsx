@@ -178,7 +178,7 @@ export default function ItemEditorForm({
                     <X />
                   </IconButton>
                   {idx === 0 && (
-                    <span className="absolute bottom-1 left-1 text-[9px] bg-black/50 text-white px-1 rounded">
+                    <span className="absolute bottom-1 left-1 text-3xs bg-black/50 text-white px-1 rounded">
                       main
                     </span>
                   )}
@@ -190,7 +190,7 @@ export default function ItemEditorForm({
           {/* Upload button — only show if under 3 */}
           {(form.image_urls || []).length < 3 && (
             <label
-              className={`flex items-center justify-center gap-2 w-full py-3 rounded-xl border-2 border-dashed border-gray-300 text-sm text-lob-muted font-medium cursor-pointer transition-all hover:border-lob-teal hover:text-lob-teal ${uploading ? 'opacity-50' : ''}`}
+              className={`flex items-center justify-center gap-2 w-full py-3 rounded-xl border-2 border-dashed border-lob-line-strong text-sm text-lob-muted font-medium cursor-pointer transition-all hover:border-lob-teal hover:text-lob-teal ${uploading ? 'opacity-50' : ''}`}
             >
               <Upload size={16} />
               {uploading

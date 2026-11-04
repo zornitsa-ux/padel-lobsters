@@ -485,7 +485,7 @@ export default function Schedule({
                       if (el) matchRefs.current.set(key, el)
                       else matchRefs.current.delete(key)
                     }}
-                    className={`card transition-all ${isSwapping ? 'ring-2 ring-orange-200' : ''}`}
+                    className={`card transition-all ${isSwapping ? 'ring-2 ring-lob-teal/30' : ''}`}
                   >
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-1.5">
@@ -510,11 +510,11 @@ export default function Schedule({
                             <div
                               key={p.id}
                               onClick={() => handlePlayerTap(activeRound, i, 1, pi, p.id)}
-                              className={`flex items-center gap-1.5 mb-1 rounded-lg px-1 transition-all ${isSwapping ? 'cursor-pointer active:scale-95' : ''} ${isSelected ? 'bg-orange-100 ring-2 ring-orange-400' : isSwapping ? 'hover:bg-gray-100' : ''}`}
+                              className={`flex items-center gap-1.5 mb-1 rounded-lg px-1 transition-all ${isSwapping ? 'cursor-pointer active:scale-95' : ''} ${isSelected ? 'bg-lob-teal-light ring-2 ring-lob-teal' : isSwapping ? 'hover:bg-lob-line' : ''}`}
                             >
                               <div className="relative w-7 h-7 flex-shrink-0">
                                 <div
-                                  className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold ${isSelected ? 'bg-orange-500' : ''}`}
+                                  className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold ${isSelected ? 'bg-lob-teal' : ''}`}
                                   style={
                                     isSelected
                                       ? undefined
@@ -524,7 +524,7 @@ export default function Schedule({
                                   {p.name[0]}
                                 </div>
                                 {p.isLeftHanded && (
-                                  <span className="absolute -top-1 -right-1 text-[9px] bg-lob-warning-solid text-white rounded-full w-3.5 h-3.5 flex items-center justify-center font-bold">
+                                  <span className="absolute -top-1 -right-1 text-3xs bg-lob-warning-solid text-white rounded-full w-3.5 h-3.5 flex items-center justify-center font-bold">
                                     L
                                   </span>
                                 )}
@@ -572,12 +572,12 @@ export default function Schedule({
                             <div
                               key={p.id}
                               onClick={() => handlePlayerTap(activeRound, i, 2, pi, p.id)}
-                              className={`flex items-center justify-end gap-1.5 mb-1 rounded-lg px-1 transition-all ${isSwapping ? 'cursor-pointer active:scale-95' : ''} ${isSelected ? 'bg-orange-100 ring-2 ring-orange-400' : isSwapping ? 'hover:bg-gray-100' : ''}`}
+                              className={`flex items-center justify-end gap-1.5 mb-1 rounded-lg px-1 transition-all ${isSwapping ? 'cursor-pointer active:scale-95' : ''} ${isSelected ? 'bg-lob-teal-light ring-2 ring-lob-teal' : isSwapping ? 'hover:bg-lob-line' : ''}`}
                             >
                               <span className="text-sm font-medium truncate">{sn(p)}</span>
                               <div className="relative w-7 h-7 flex-shrink-0">
                                 <div
-                                  className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold ${isSelected ? 'bg-orange-500' : ''}`}
+                                  className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold ${isSelected ? 'bg-lob-teal' : ''}`}
                                   style={
                                     isSelected
                                       ? undefined
@@ -587,7 +587,7 @@ export default function Schedule({
                                   {p.name[0]}
                                 </div>
                                 {p.isLeftHanded && (
-                                  <span className="absolute -top-1 -left-1 text-[9px] bg-lob-warning-solid text-white rounded-full w-3.5 h-3.5 flex items-center justify-center font-bold">
+                                  <span className="absolute -top-1 -left-1 text-3xs bg-lob-warning-solid text-white rounded-full w-3.5 h-3.5 flex items-center justify-center font-bold">
                                     L
                                   </span>
                                 )}

@@ -16,7 +16,7 @@ const valueSizeClasses: Record<NonNullable<StatTileProps['size']>, string> = {
 }
 
 const labelClasses: Record<NonNullable<StatTileProps['labelVariant']>, string> = {
-  muted: 'text-[9px] text-lob-muted-light font-medium',
+  muted: 'text-3xs text-lob-muted-light font-medium',
   inverted: 'text-xs opacity-75',
   caps: 'eyebrow',
 }

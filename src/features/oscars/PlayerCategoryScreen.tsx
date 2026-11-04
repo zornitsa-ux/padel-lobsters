@@ -97,7 +97,7 @@ export default function PlayerCategoryScreen({
                     >
                       {(p.name || '?').trim()[0]?.toUpperCase() || '?'}
                     </span>
-                    <span className="font-semibold text-[13px] flex-1 min-w-0 truncate text-lob-dark">
+                    <span className="font-semibold text-sm flex-1 min-w-0 truncate text-lob-dark">
                       {shortName(p)}
                     </span>
                     {isYou && <Badge tone="outline" label="You" />}

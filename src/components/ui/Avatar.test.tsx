@@ -30,11 +30,11 @@ describe('Avatar', () => {
   it('a tone replaces the letter palette and suppresses the photo', () => {
     const el = Avatar({
       player: { name: 'Ana', avatarUrl: 'https://example.com/a.png' },
-      tone: 'bg-orange-100 text-orange-600',
+      tone: 'bg-lob-warning-soft text-lob-warning',
     })
     expect((el as { type: string }).type).not.toBe('img')
     expect(propsOf(el).style).toBeUndefined()
-    expect(String(propsOf(el).className)).toContain('bg-orange-100 text-orange-600')
+    expect(String(propsOf(el).className)).toContain('bg-lob-warning-soft text-lob-warning')
     expect(String(propsOf(el).className)).not.toContain('text-white')
   })
 

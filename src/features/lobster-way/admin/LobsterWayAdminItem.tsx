@@ -156,7 +156,7 @@ export default function LobsterWayAdminItem({
             {item.steps.map((step, i) => (
               <div key={i} className="space-y-1 border-b border-lob-line pb-2 last:border-0">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-2xs text-gray-400 font-mono w-4 flex-shrink-0">
+                  <span className="text-2xs text-lob-muted-light font-mono w-4 flex-shrink-0">
                     {i + 1}
                   </span>
                   <input
