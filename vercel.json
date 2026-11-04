@@ -1,3 +1,29 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "rewrites": [
+    {
+      "source": "/events/:id",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|WhatsApp|Twitterbot|Slackbot|TelegramBot|Discordbot|LinkedInBot|Pinterest|SkypeUriPreview|redditbot|Applebot|Embedly|vkShare).*"
+        }
+      ],
+      "missing": [{ "type": "query", "key": "app" }],
+      "destination": "/api/event-preview?id=:id"
+    },
+    {
+      "source": "/events/:id/info",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|WhatsApp|Twitterbot|Slackbot|TelegramBot|Discordbot|LinkedInBot|Pinterest|SkypeUriPreview|redditbot|Applebot|Embedly|vkShare).*"
+        }
+      ],
+      "missing": [{ "type": "query", "key": "app" }],
+      "destination": "/api/event-preview?id=:id"
+    },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
+  ]
 }

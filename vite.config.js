@@ -51,6 +51,10 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
-    include: ['src/**/*.test.{js,jsx,ts,tsx}', 'scripts/prod-rehearsal/*.test.ts'],
+    include: [
+      'src/**/*.test.{js,jsx,ts,tsx}',
+      'api/**/*.test.{ts,tsx}',
+      'scripts/prod-rehearsal/*.test.ts',
+    ],
   },
 })

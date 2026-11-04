@@ -26,16 +26,16 @@ shipped and the funnel has been measured.
 
 | #   | Task                        | What ships                                                                                                                                                                                                                                                                                                                                                                             | Status      |
 | --- | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
-| G1  | Public event page           | Guests see the upcoming events list (`/events`, upcoming only) and `/events/:id/info`: a read-only card (name, date, time, location, format, price, spots left) plus a "Join to play" CTA, or "Join to get on the waitlist" when full. Other tabs stay protected. See G1 notes.                                                                                                        | In review   |
-| G2  | Link previews               | A Vercel function or middleware serves per-event `og:title`/`og:description`/`og:image` for `/events/:id*`, with a generated image (date, format, venue). No live spot count, because previews are cached. Check it in the WhatsApp and Instagram link preview.                                                                                                                        | Not started |
+| G1  | Public event page           | Guests see the upcoming events list (`/events`, upcoming only) and `/events/:id/info`: a read-only card (name, date, time, location, format, price, spots left) plus a "Join to play" CTA, or "Join to get on the waitlist" when full. Other tabs stay protected. See G1 notes.                                                                                                        | Done (#151) |
+| G2  | Link previews               | A Vercel function or middleware serves per-event `og:title`/`og:description`/`og:image` for `/events/:id*`, with a generated image (date, format, venue). No live spot count, because previews are cached. Check it in the WhatsApp and Instagram link preview. See G2 notes.                                                                                                          | In review   |
 | G3  | Signup returns to the event | CTA → signup carrying the event as the return path (`returnPath.ts`). After verifying, land on the event with the register action focused (or the waitlist action, if it's full).                                                                                                                                                                                                      | Not started |
 | G4  | Share button                | Extend the existing `ShareWhatsAppButton` (`src/components/ui`): `navigator.share` with the pre-written message and URL, falling back to WhatsApp and copy link. Shown on the event page for members and admins. The admin version has a longer "announcement" text for WhatsApp, plus "Download image", which serves the G2 preview image for an Instagram story with a link sticker. | Not started |
 | G5  | Attribution                 | Shared URLs carry `?src=` (`wa`, `ig`, `share`) and `?ref=` (the sharing member's opaque referral code, never a player ID). Stored on signup (`players.signup_source`, `referred_by`) and on the registration. Admin view: signups and first events by source.                                                                                                                         | Not started |
-| G5b | Traffic funnel              | Cookieless analytics (Vercel Web Analytics, or Plausible/Umami if custom events need a paid tier): public page views plus `event_page_view`, `share_tap`, `signup_start`, `signup_complete`, `event_register`, each tagged with `src`. Ships with G1.                                                                                                                                  | Not started |
+| G5b | Traffic funnel              | Cookieless analytics (Vercel Web Analytics, or Plausible/Umami if custom events need a paid tier): public page views plus `event_page_view`, `share_tap`, `signup_start`, `signup_complete`, `event_register`, each tagged with `src`.                                                                                                                                                 | Deferred    |
 
-**Order:** G1 + G5b → G3 → G2 → G5 → G4. G2 needs G1, because a preview that
-opens to a sign-in wall wastes the tap. G5 ships before G4, so shares are
-counted from day one.
+**Order:** G1 → G2 → G3 → G5 → G4. G2 needs G1, because a preview that opens
+to a sign-in wall wastes the tap. G5 ships before G4, so shares are counted
+from day one. G5b (traffic funnel) is deferred by the owner (4 Nov).
 
 **Done when:** a logged-out phone opens a WhatsApp-shared event link and sees
 a rich preview, then the event details. It can sign up and be registered
@@ -64,7 +64,27 @@ source.
 - **Full events.** The card shows "Full" and "Join to get on the waitlist".
   Signup continues to the event's waitlist (G3).
 
-### G5b: traffic funnel
+### G2 notes
+
+- **Crawlers only.** `vercel.json` sends link-preview crawlers (WhatsApp,
+  `facebookexternalhit` for Facebook and Instagram, iMessage, Telegram,
+  Discord and others) on `/events/:id` and `/events/:id/info` to
+  `api/event-preview`. People, including Instagram and Facebook in-app
+  browsers, get the app as before. A person matched by mistake is sent on
+  with `?app=1`, which the rule skips.
+- **Tags and image.** The function reads event facts only (name, date, time,
+  venue, format) and returns `og:*` tags. `api/event-image` renders the
+  1200×630 card. Its URL carries a version from those facts, so it's cached
+  hard and an edited event gets a new image. No spot count (cached).
+- **Fallback.** `index.html` carries site-wide tags, used for every other
+  link, and by the function when the event is unknown or Supabase fails.
+- **Font.** The card uses the regular weight `@vercel/og` ships with, so no
+  font file is bundled.
+- **Check after deploy.** The functions read `VITE_SUPABASE_URL` and
+  `VITE_SUPABASE_ANON_KEY` at runtime from the Vercel project env. Paste an
+  event link into WhatsApp, or `curl -A WhatsApp/2 <event url>`.
+
+### G5b: traffic funnel (deferred)
 
 **Why.** G5 records sources only for people who convert. G5b counts the
 anonymous steps before that (link opened → page viewed → signup started), so
@@ -129,3 +149,5 @@ are the owner's calls, made from fill speed and waitlist data (CASE-STUDY §3).
 - 4 Nov 2026: G1 built (guest events list, guest event page, join via the
   sign-in gate). Anon database access split out as its own project. Case
   study corrected: a WhatsApp share button already exists.
+- 4 Nov 2026: G1 merged (#151). G5b deferred by the owner. G2 built (crawler
+  previews and share image).
