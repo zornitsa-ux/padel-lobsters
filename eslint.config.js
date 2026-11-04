@@ -1,9 +1,11 @@
+import { fileURLToPath } from 'node:url'
 import js from '@eslint/js'
 import globals from 'globals'
 import reactPlugin from 'eslint-plugin-react'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 import tseslint from 'typescript-eslint'
+import tailwind from 'eslint-plugin-tailwindcss'
 
 export default [
   { ignores: ['dist', 'dist-*', 'node_modules', '.claude'] },
@@ -66,6 +68,20 @@ export default [
       '@typescript-eslint/no-explicit-any': 'error',
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
     },
+  },
+  {
+    // Design system lock-down (P7c): a class Tailwind doesn't generate, such as a raw
+    // palette colour the locked theme dropped, renders nothing. Classes defined in CSS
+    // (`.card`, `.eyebrow`, CSS modules) are read from the stylesheets.
+    files: ['src/**/*.{js,jsx,ts,tsx}'],
+    plugins: { tailwindcss: tailwind },
+    settings: {
+      tailwindcss: {
+        config: fileURLToPath(new URL('./tailwind.config.js', import.meta.url)),
+        cssFiles: ['src/**/*.css'],
+      },
+    },
+    rules: { 'tailwindcss/no-custom-classname': 'error' },
   },
   {
     // Pure domain modules must stay import-free of the Supabase client so a

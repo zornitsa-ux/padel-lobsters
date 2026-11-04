@@ -2,6 +2,7 @@ const teal = '#3D7A8A'
 const tealDark = '#2A5A68'
 const coral = '#D94F2B'
 const gold = '#FACC15'
+const lineStrong = '#E5E7EB'
 /** Deep crimson, kept well apart from coral. Text and fills share one shade. */
 const danger = '#9B1C31'
 const darkRgb = '28 43 48' // lob.dark
@@ -11,66 +12,78 @@ const ink = (alpha) => `rgb(${darkRgb} / ${alpha})`
 export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
-    extend: {
-      colors: {
-        lob: {
-          teal,
-          'teal-dark': tealDark,
-          'teal-light': '#EAF4F7',
-          coral,
-          amber: '#E8A030',
-          'amber-strong': '#8C5A0E',
-          cream: '#F5F0E8',
-          dark: `rgb(${darkRgb})`,
-          muted: '#6B8A92',
-          'muted-light': '#97ADB3',
-          slate: '#40565C',
-          well: '#F9FAFB',
-          line: '#F3F4F6',
-          'line-strong': '#E5E7EB',
-          gold: { DEFAULT: gold, light: '#FEFCE8', strong: '#CA8A04', 'on-dark': '#FDE047' },
-          silver: { DEFAULT: '#9CA3AF', soft: '#E5E7EB' },
-          bronze: '#CD7F32',
-          'gender-f': { DEFAULT: '#BE185D', soft: '#FCE7F3' },
-          'gender-m': { DEFAULT: '#1D4ED8', soft: '#DBEAFE' },
-          success: {
-            DEFAULT: '#15803D',
-            light: '#F0FDF4',
-            soft: '#DCFCE7',
-            border: '#BBF7D0',
-            'on-dark': '#86EFAC',
-            solid: '#16A34A',
-            strong: '#166534',
-          },
-          warning: {
-            DEFAULT: '#B45309',
-            light: '#FFFBEB',
-            soft: '#FEF3C7',
-            border: '#FDE68A',
-            'on-dark': '#FCD34D',
-            solid: '#F59E0B',
-            strong: '#92400E',
-          },
-          danger: {
-            DEFAULT: danger,
-            light: '#FEF2F2',
-            soft: '#FEE2E2',
-            border: '#FECACA',
-            'on-dark': '#FCA5A5',
-            solid: danger,
-            strong: '#7A1526',
-          },
-          info: {
-            DEFAULT: '#0369A1',
-            light: '#F0F9FF',
-            soft: '#E0F2FE',
-            border: '#BAE6FD',
-            'on-dark': '#7DD3FC',
-            solid: '#0EA5E9',
-            strong: '#075985',
-          },
+    /**
+     * Locked (P7c): only lob tokens plus the CSS keywords and white/black.
+     * Tailwind's palette doesn't generate, so `text-red-600` renders nothing
+     * and `eslint-plugin-tailwindcss` flags it.
+     */
+    colors: {
+      transparent: 'transparent',
+      current: 'currentColor',
+      inherit: 'inherit',
+      white: '#FFFFFF',
+      black: '#000000',
+      lob: {
+        teal,
+        'teal-dark': tealDark,
+        'teal-light': '#EAF4F7',
+        coral,
+        amber: '#E8A030',
+        'amber-strong': '#8C5A0E',
+        cream: '#F5F0E8',
+        dark: `rgb(${darkRgb})`,
+        muted: '#6B8A92',
+        'muted-light': '#97ADB3',
+        slate: '#40565C',
+        well: '#F9FAFB',
+        line: '#F3F4F6',
+        'line-strong': lineStrong,
+        gold: { DEFAULT: gold, light: '#FEFCE8', strong: '#CA8A04', 'on-dark': '#FDE047' },
+        silver: { DEFAULT: '#9CA3AF', soft: '#E5E7EB' },
+        bronze: '#CD7F32',
+        'gender-f': { DEFAULT: '#BE185D', soft: '#FCE7F3' },
+        'gender-m': { DEFAULT: '#1D4ED8', soft: '#DBEAFE' },
+        success: {
+          DEFAULT: '#15803D',
+          light: '#F0FDF4',
+          soft: '#DCFCE7',
+          border: '#BBF7D0',
+          'on-dark': '#86EFAC',
+          solid: '#16A34A',
+          strong: '#166534',
+        },
+        warning: {
+          DEFAULT: '#B45309',
+          light: '#FFFBEB',
+          soft: '#FEF3C7',
+          border: '#FDE68A',
+          'on-dark': '#FCD34D',
+          solid: '#F59E0B',
+          strong: '#92400E',
+        },
+        danger: {
+          DEFAULT: danger,
+          light: '#FEF2F2',
+          soft: '#FEE2E2',
+          border: '#FECACA',
+          'on-dark': '#FCA5A5',
+          solid: danger,
+          strong: '#7A1526',
+        },
+        info: {
+          DEFAULT: '#0369A1',
+          light: '#F0F9FF',
+          soft: '#E0F2FE',
+          border: '#BAE6FD',
+          'on-dark': '#7DD3FC',
+          solid: '#0EA5E9',
+          strong: '#075985',
         },
       },
+    },
+    extend: {
+      /** Preflight's default border colour; it fell back to gray-200, which the locked palette drops. */
+      borderColor: { DEFAULT: lineStrong },
       fontSize: {
         '2xs': '10px',
         '3xs': '9px',
