@@ -86,8 +86,8 @@ Ranked by impact against effort.
    and store the source on signup and registration. Without this we can't tell
    whether anything here worked.
 6. **First-event activation.** For accounts that have never played: a
-   "Your first event" card on Home, and an email when an event opens. The
-   `send-invite-email` function shows the email path already works.
+   "Your first event" card on Home. (A new-event email was considered and
+   dropped by the owner.)
 7. **Bring a friend.** Generalise the team-events partner flow so a member
    can bring a friend to any event. October suggests this is the strongest
    organic channel.

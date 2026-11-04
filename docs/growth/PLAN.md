@@ -6,6 +6,9 @@
 **Goal.** More new players at their first event. Make every event link
 shareable, readable without signing in, and one tap from registering.
 
+**Focus: Phase 1 (shareable event page).** Phase 2 waits until Phase 1 has
+shipped and the funnel has been measured.
+
 **Constraints**
 
 - **Migrations:** review → merge → `npx supabase db push` from `main`
@@ -82,12 +85,11 @@ Signups and registrations are counted from the database (G5).
 - **Reviewed monthly** against the owner's private baseline. No live
   dashboards.
 
-## Phase 2: activation and referral
+## Phase 2: activation and referral (later)
 
 | #   | Task                | What ships                                                                                                                                                                                       | Status      |
 | --- | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------- |
 | G6  | First-event card    | A Home card for accounts that haven't played yet: the next open event, level fit, and "Register".                                                                                                | Not started |
-| G7  | New-event email     | An email when an event opens (consent model: open question 4), starting with never-played accounts. Reuses the edge-function email path.                                                         | Not started |
 | G8  | Bring a friend      | Generalise the team-events partner invite: register yourself plus a friend's email for any event, and the admin invites them.                                                                    | Not started |
 | G9  | Re-sell freed spots | On a cancellation with no waitlist, prompt the admin (or player) to share "1 spot open". Waitlist promotion builds on the existing waitlist status (decisions in `docs/registration-capacity/`). | Not started |
 
@@ -108,8 +110,6 @@ are the owner's calls, made from fill speed and waitlist data (CASE-STUDY §3).
    only, no names)?
 3. **Instagram:** is a downloadable story image per event worth it, or does
    the link preview cover it?
-4. **Email (G7):** OK to email accounts that have never played, as opt-out,
-   or opt-in only?
 
 ## Log
 
@@ -117,3 +117,5 @@ are the owner's calls, made from fill speed and waitlist data (CASE-STUDY §3).
   code read. Figures kept out of the repo. Added G5b (traffic funnel).
 - 4 Nov 2026: review fixes: ship order, G1 data access and routing notes,
   level guidance, cached previews drop spot count.
+- 4 Nov 2026: owner dropped G7 (new-event email). Focus is Phase 1, the
+  shareable event page.
