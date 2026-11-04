@@ -91,3 +91,23 @@ export function savedRoundHasAvoidableUneven({
   })
   return roundGenderSummary({ matches, genderOf: savedGenderOf(full) }).avoidable > 0
 }
+
+/** The generator's court chip for a saved court; `round` is every court in its round. */
+export function savedCourtChip({
+  court,
+  round,
+}: {
+  court: SavedCourt
+  round: readonly SavedCourt[]
+}): CourtChip | null {
+  const flags = !savedCourtIsUneven(court)
+    ? []
+    : savedRoundHasAvoidableUneven({ courts: round })
+      ? [GENDER_UNEVEN_FLAG, GENDER_UNEVEN_AVOIDABLE_FLAG]
+      : [GENDER_UNEVEN_FLAG]
+  const players = [...court.team1, ...court.team2].map((p) => ({
+    playerId: String(p.id),
+    gender: toPlayerGender(p.gender),
+  }))
+  return courtChip({ teams: savedTeams(court), players, flags })
+}

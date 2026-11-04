@@ -83,6 +83,7 @@ component doesn't fit, fix the component, not the call site.**
 | Admin-only page                      | `AdminRouteGuard redirectTo` (never a sign-in ask)   | exists |
 | Player or team row, ranked row       | `PlayerRow` + `RankMarker` (`prefix`)                | exists |
 | Row of stat tiles                    | `StatGrid` of `StatTile`s (in a card or `Well`)      | exists |
+| Top three (podium)                   | `Podium` (medal colours: `lob-gold` etc.)            | exists |
 | Page section with a heading          | `Section` (`description` for a line under it)        | exists |
 | List of like items                   | `ListCard` + `LinkRow` (one card, divided rows)      | exists |
 | List row with its own controls       | `ListRow` (`PlayerRow`, buttons, anything under it)  | exists |
@@ -158,7 +159,7 @@ the gallery, and runs `npm run design:baseline` when counts drop.
 | P4  | **`Badge` tones** (`success`, `neutral`, `warning`, `outline`) and **payment status single source** (`paymentStatus.ts`, `PaymentStatusBadge` on `Badge`; the blue "transferred" pill and merch "delivered" get a token). About 13 hand-built status pills move onto `Badge`. Rename team-state "Confirmed".                                                                                                                                                                                                                                                                                                                                       | Done (#110)               |
 | P5  | **Empty and signed-out states.** `EmptyState variant="inline"`, `SignInPrompt`; loading states: a loading card keeps its title or header, so the viewer sees what is loading, and shows `Spinner` / `Skeleton` in the body instead of `return null`.                                                                                                                                                                                                                                                                                                                                                                                               | Done (#112)               |
 | P6  | **Cards for objects, lists and sections.** Owner calls 2026-10-30 (Log). A card is one thing you act on; page sections sit on the background under a heading; a list of like items is one card with divided rows; no card inside a card. Pieces: `Section`, `ListCard`, `Well` (the planned `.panel`), `Tag`, `.eyebrow`, `RankMarker` + `PlayerRow highlighted`, ~~`RosterHeading`~~ (dropped 2026-11-02), `SearchInput` (#81), a heading element inside the `CollapsibleCard` header button (review of #76). Five PRs: P6a to P6e under "Next".                                                                                                  |                           |
-| P7  | **Lock-down.** Tokens for decorative colours (medal gold, avatar palette, gender marks) and for `text-[9px]` (14 uses, the bottom nav labels among them). Then switch `theme.extend.colors` to a restricted `theme.colors` so raw palette classes stop generating, and add a lint rule for unknown classes (e.g. `eslint-plugin-tailwindcss`, check ESLint 9 support). Retire the colour ratchet once the theme is locked; keep the `<button>` check.                                                                                                                                                                                              |                           |
+| P7  | **Lock-down.** Tokens for decorative colours (medal gold, avatar palette, gender marks) and for `text-[9px]` (14 uses, the bottom nav labels among them). Then switch `theme.extend.colors` to a restricted `theme.colors` so raw palette classes stop generating, and add a lint rule for unknown classes (e.g. `eslint-plugin-tailwindcss`, check ESLint 9 support). Retire the colour ratchet once the theme is locked; keep the `<button>` check.                                                                                                                                                                                              | Done: P7a (#TBD)          |
 
 The gallery exists: `/design` in dev (`src/features/design/DesignGallery.tsx`;
 open to guests in dev only, left out of the production build). Each step adds
@@ -248,7 +249,24 @@ primitives (see the Log) before P3:
       field (icon, input, clear) for the five search fields; a heading
       element inside the `CollapsibleCard` header button (review of #76).
       Done in #142.
-17. **P7: lock-down.**
+17. **P7: lock-down.** Inventory and owner calls in the Log (2026-11-04).
+    Three PRs:
+    - **P7a: decorative tokens.** `lob-gold` / `-silver` / `-bronze` and a
+      `Podium` for the two hand-built podiums; `lob-gender-f` / `-m` for the
+      W / M marks, and the saved schedule's court chip onto
+      `CourtGenderChip` (#137); level badges in four teal bands. In
+      progress.
+    - **P7b: the rest of the raw colour.** The teal gradients onto
+      `bg-header`, the saved schedule's orange swap selection to teal
+      (selected is teal), the review breakdown and prize editor onto
+      tokens, the grays the ratchet doesn't count (about 20, onto
+      `lob-line*` / `lob-muted*`), a `text-3xs` (9px) token (`text-[8px]`
+      folds into it, `text-[13px]` becomes `text-sm`), and hex in TS read
+      from shared tokens. The avatar letter palette stays.
+    - **P7c: lock.** A restricted `theme.colors` (lob, white, black,
+      transparent, current, inherit), `eslint-plugin-tailwindcss` 3.18
+      (`no-custom-classname`; 4.x needs Tailwind 4), and the colour check
+      made absolute (zero, no baseline) rather than retired.
 
 ### E2E safety net
 
@@ -1687,3 +1705,43 @@ scrollable`, and so is the tips list. Open WhatsApp Community is a
     across renders. The Oscars results' categories are `h3`s when not
     collapsible too. `SearchInput` has its own gallery section.
   - P6e is done with this PR.
+
+- **2026-11-04.** P7 inventory and owner calls.
+  - Raw colour: 53 classes in 10 files under the ratchet, plus about 20
+    grays it doesn't count (`bg-gray-100/200`, `placeholder-gray-*`,
+    `text-gray-*`, `border-gray-300`) in 14 files, which a locked theme
+    would also drop. Hex in TS no class check sees: the avatar letter
+    palette (`letterColors.ts`), confetti, `RatingReview`'s gradient (brand
+    hex copied in), the knockout bracket's lines (`lob-line-strong`), the
+    medal silver and bronze. Odd sizes: `text-[9px]` 11 times in 6 files,
+    `text-[8px]` twice (`DateTile`), `text-[13px]` once.
+  - Owner calls: medals get `lob-gold`, `lob-silver`, `lob-bronze`; the
+    gender marks get two tokens and #137 is fixed on the way; the level
+    badges drop their eight hues for four bands on a teal ramp (under 2,
+    2 to 3.9, 4 to 4.9, 5 and up); once the theme is locked, both
+    `eslint-plugin-tailwindcss` and an absolute colour check fail CI (the
+    plan had retired the check). `eslint-plugin-tailwindcss` 4.x needs
+    Tailwind 4, so 3.18 (ESLint 9, Tailwind 3).
+  - Calls made without the owner, as they follow earlier ones: the teal
+    gradients become `bg-header`; the swap selection goes teal (selected is
+    always teal, P2f); the avatar letter palette is data the owner locked
+    (2026-04-30) and stays.
+
+- **2026-11-04.** P7a on `design-system-p7a-decorative-tokens`.
+  - Tokens: `lob-gold` (`light`, `strong`, `on-dark`), `lob-silver`
+    (`soft`), `lob-bronze`, `lob-gender-f` / `lob-gender-m` (`soft`).
+    `bg-celebrate` uses `lob-gold`. TOKENS.md has the table.
+  - `Podium`: the top two or three as steps in medal colours. Read first
+    to third (an `ol`, a "Place n" label for screen readers), drawn second,
+    first, third. One size: the Scores tab and the past event's podium
+    each had their own. Test and gallery entry.
+  - Medal trophies (Scores ranking, past events, Oscars results, raffle)
+    onto the medal tokens; the Scores ranking's inline hex and rgba go.
+  - Gender: `GenderMark` onto the tokens. The saved schedule's court chip
+    is `CourtGenderChip` via a new `savedCourtChip`, so Men / Women / Mixed
+    are neutral there too, "Ladies" is "Women", and an uneven court shows
+    its counts as in the generator (fixes #137).
+  - Level badges: `levelBadgeClass` in four bands. The lowest band's fill
+    is `lob-line-strong` rather than `lob-well` (the call's preview), which
+    vanishes on a white card.
+  - Ratchet 53 → 18.

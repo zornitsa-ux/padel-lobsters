@@ -79,7 +79,7 @@ function CategoryBody({ cat }: { cat: OscarCategoryResult }) {
       {cat.winners.length > 0 && (
         <div>
           <p className="text-sm font-bold text-lob-dark flex items-center gap-1.5">
-            <Trophy size={15} className="text-yellow-600" />
+            <Trophy size={15} className="text-lob-gold-strong" />
             {cat.winners.map((w) => w.target_name).join(', ')}
             {cat.winners.length > 1 && (
               <span className="text-xs font-semibold text-lob-muted ml-1">(tied)</span>

@@ -95,11 +95,37 @@ onto tones. Each is a `-soft` fill (or a token tint) with the text shade:
 - `shadow-card`, `shadow-card-elevated`: the `.card` / `.card-elevated`
   shadows, built from `lob-dark`.
 
+## Decorative colours (P7a)
+
+Not status, so they sit outside the status families (owner, 2026-11-04).
+
+| Token              | Value     | Use                                                |
+| ------------------ | --------- | -------------------------------------------------- |
+| `lob-gold`         | `#FACC15` | First-place fills (`Podium`), winner borders       |
+| `lob-gold-light`   | `#FEFCE8` | Winner tint (trophy tile, top rows)                |
+| `lob-gold-strong`  | `#CA8A04` | Gold trophy icon on white                          |
+| `lob-gold-on-dark` | `#FDE047` | Gold icon on teal (raffle)                         |
+| `lob-silver`       | `#9CA3AF` | Silver trophy icon                                 |
+| `lob-silver-soft`  | `#E5E7EB` | Second-place fills (`Podium`)                      |
+| `lob-bronze`       | `#CD7F32` | Third-place fills and icon; `/10` for the row tint |
+| `lob-gender-f`     | `#BE185D` | Woman mark text (`GenderMark`); `-soft` its fill   |
+| `lob-gender-m`     | `#1D4ED8` | Man mark text (`GenderMark`); `-soft` its fill     |
+
+- `bg-celebrate`'s gold is `lob-gold`.
+- Court gender chips (Men, Women, Mixed) are neutral `Badge`s, in the
+  generator and the saved schedule alike; only the W / M marks are coloured.
+- **Level badges** (`levelBadgeClass`): four bands on a teal ramp, no
+  colour per level (owner, 2026-11-04). Under 2 `lob-line-strong` /
+  `lob-slate`; 2 to 3.9 `lob-teal-light` / `lob-teal`; 4 to 4.9 a
+  `lob-teal` ring; 5 and up solid `lob-teal` with white text.
+
 ## Still raw, on purpose
 
-Decorative and categorical colour isn't status, so it stays on the Tailwind
-palette for now (81 classes, held by the `design:check` ratchet; tokens for
-these are P7):
+Held by the `design:check` ratchet (18 classes) until P7b:
 
-- Medal, podium and trophy gold; raffle and Oscars gold.
-- The avatar letter palette (`playerConstants.ts`) and the gender marks.
+- The teal gradients (verification gate, raffle), the saved schedule's
+  orange swap selection, the review breakdown's teal, the prize editor's
+  amber, and the grays the ratchet doesn't count.
+- Hex in TS that no class check sees: confetti, the `RatingReview`
+  gradient, the knockout bracket's lines. The avatar letter palette
+  (`letterColors.ts`, owner, 2026-04-30) is data and stays.

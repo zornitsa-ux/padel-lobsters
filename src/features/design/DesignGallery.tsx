@@ -69,6 +69,9 @@ import { StatTile } from '../../components/ui/StatTile'
 import { StatGrid } from '../../components/ui/StatGrid'
 import { SearchInput } from '../../components/ui/SearchInput'
 import { RankMarker } from '../../components/ui/RankMarker'
+import { Podium } from '../../components/ui/Podium'
+import { levelBadgeClass } from '../community/playerConstants'
+import { GenderLegendEntries } from '../matchmaking/ui/genderMarks'
 import { Well } from '../../components/ui/Well'
 import { PlaytomicLevelField } from '../players/ProfileFields'
 
@@ -385,6 +388,40 @@ function SearchInputSection() {
           value={search}
           onChange={setSearch}
         />
+      </Row>
+    </GallerySection>
+  )
+}
+
+function DecorativeSection() {
+  return (
+    <GallerySection title="Podium, medals, levels and gender marks">
+      <Row label="Podium (lob-gold, lob-silver, lob-bronze)" block>
+        <Podium
+          places={[
+            { name: 'Ana', points: 30 },
+            { name: 'Bo', points: 24 },
+            { name: 'Cy', points: 18 },
+          ]}
+        />
+      </Row>
+      <Row label="Medal trophies">
+        <Trophy size={16} className="text-lob-gold-strong" />
+        <Trophy size={16} className="text-lob-silver" />
+        <Trophy size={16} className="text-lob-bronze" />
+      </Row>
+      <Row label="Level badges: under 2, 2–3.9, 4–4.9, 5 and up">
+        {[1.5, 2.6, 4.3, 5.2].map((level) => (
+          <span
+            key={level}
+            className={`text-sm font-bold px-2.5 py-1 rounded-lg ${levelBadgeClass(level)}`}
+          >
+            {level.toFixed(1)}
+          </span>
+        ))}
+      </Row>
+      <Row label="Gender marks (lob-gender-f, lob-gender-m)">
+        <GenderLegendEntries />
       </Row>
     </GallerySection>
   )
@@ -1304,6 +1341,7 @@ export default function DesignGallery() {
       <IconButtonSection />
       <StatusSection />
       <SearchInputSection />
+      <DecorativeSection />
       <FormErrorSection />
       <ChoiceSection />
       <OptionSection />

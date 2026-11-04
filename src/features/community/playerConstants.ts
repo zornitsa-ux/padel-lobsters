@@ -1,17 +1,14 @@
-export const LEVEL_COLORS: string[] = [
-  'bg-gray-200 text-lob-slate',
-  'bg-blue-100 text-blue-700',
-  'bg-green-100 text-green-700',
-  'bg-teal-100 text-teal-700',
-  'bg-yellow-100 text-yellow-700',
-  'bg-orange-100 text-orange-700',
-  'bg-red-100 text-red-700',
-  'bg-purple-100 text-purple-700',
-]
+/** Playtomic level bands (owner, 2026-11-04): a teal ramp, darker as the level rises. */
+const LEVEL_BANDS = [
+  { below: 2, className: 'bg-lob-line-strong text-lob-slate' },
+  { below: 4, className: 'bg-lob-teal-light text-lob-teal' },
+  { below: 5, className: 'ring-1 ring-inset ring-lob-teal text-lob-teal' },
+  { below: Infinity, className: 'bg-lob-teal text-white' },
+] as const
 
 export function levelBadgeClass(level: number | null | undefined): string {
-  const idx = Math.min(7, Math.max(0, Math.floor(level || 0)))
-  return LEVEL_COLORS[idx] || LEVEL_COLORS[0]
+  const value = level ?? 0
+  return (LEVEL_BANDS.find((band) => value < band.below) ?? LEVEL_BANDS[0]).className
 }
 
 // Per-player stats live in ../lib/playerStats so Dashboard.jsx and

@@ -125,7 +125,7 @@ export default function RaffleContainer({
         {!isPast && (
           <div className="rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-lob-teal via-teal-600 to-teal-800 text-white shadow-2xl">
             <div className="flex items-center justify-center gap-3 mb-3">
-              <Gift size={32} className="text-yellow-300" />
+              <Gift size={32} className="text-lob-gold-on-dark" />
               <p className="text-2xl sm:text-3xl font-extrabold tracking-tight">Prize Raffle</p>
             </div>
             <p className="text-center text-white/80 text-sm sm:text-base mb-5">{tournament.name}</p>

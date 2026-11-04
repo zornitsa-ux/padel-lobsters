@@ -1,7 +1,7 @@
-import React from 'react'
 import { Trophy } from 'lucide-react'
 import Avatar from '../../components/ui/Avatar'
 import { EmptyState } from '../../components/ui/EmptyState'
+import { Podium } from '../../components/ui/Podium'
 import type { PlayerStanding } from '../../lib/standings'
 import type { NormalisedMatch } from './matchQueries'
 
@@ -25,16 +25,12 @@ interface ScoresRankingTabProps {
   withheld?: boolean
 }
 
-// Silver and bronze are medal colours, not neutrals — they stay literal so the
-// design-system token sweep can't tint them teal alongside real body text.
-const MEDAL_HEX: Record<number, string> = { 1: '#9CA3AF', 2: '#CD7F32' }
+const MEDAL_TEXT = ['text-lob-gold-strong', 'text-lob-silver', 'text-lob-bronze']
 
-const medalColor = (i: number): string => {
-  if (i === 0) return 'text-yellow-500'
-  if (i === 1 || i === 2) return ''
-  return 'text-lob-muted-light/60'
-}
-const medalStyle = (i: number): React.CSSProperties => (MEDAL_HEX[i] ? { color: MEDAL_HEX[i] } : {})
+const rowTint = (i: number): string =>
+  i < 2 ? 'bg-lob-gold-light/40' : i === 2 ? 'bg-lob-bronze/10' : ''
+
+const medalColor = (i: number): string => MEDAL_TEXT[i] ?? 'text-lob-muted-light/60'
 
 export default function ScoresRankingTab({
   standings,
@@ -67,53 +63,11 @@ export default function ScoresRankingTab({
           {standings.length >= 3 && matches.length > 0 && (
             <div className="card">
               <h3 className="font-bold text-center text-lob-slate mb-4">Podium</h3>
-              <div className="flex items-end justify-center gap-3">
-                {/* 2nd */}
-                <div className="flex flex-col items-center gap-1 flex-1">
-                  <p className="text-2xl">🥈</p>
-                  <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center font-bold text-lob-slate text-lg">
-                    {standings[1]?.player.name[0]}
-                  </div>
-                  <p className="text-xs font-semibold text-center text-lob-slate truncate w-full">
-                    {standings[1]?.player.name.split(' ')[0]}
-                  </p>
-                  <div className="bg-gray-200 w-full h-12 rounded-t-xl flex items-center justify-center">
-                    <span className="font-bold text-lob-slate">{standings[1]?.points}pts</span>
-                  </div>
-                </div>
-                {/* 1st */}
-                <div className="flex flex-col items-center gap-1 flex-1">
-                  <p className="text-3xl">🥇</p>
-                  <div className="w-14 h-14 bg-yellow-400 rounded-full flex items-center justify-center font-bold text-white text-xl">
-                    {standings[0]?.player.name[0]}
-                  </div>
-                  <p className="text-xs font-bold text-center text-lob-dark truncate w-full">
-                    {standings[0]?.player.name.split(' ')[0]}
-                  </p>
-                  <div className="bg-yellow-400 w-full h-20 rounded-t-xl flex items-center justify-center">
-                    <span className="font-bold text-white">{standings[0]?.points}pts</span>
-                  </div>
-                </div>
-                {/* 3rd */}
-                <div className="flex flex-col items-center gap-1 flex-1">
-                  <p className="text-2xl">🥉</p>
-                  <div
-                    className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-white text-lg"
-                    style={{ background: '#CD7F32' }}
-                  >
-                    {standings[2]?.player.name[0]}
-                  </div>
-                  <p className="text-xs font-semibold text-center text-lob-slate truncate w-full">
-                    {standings[2]?.player.name.split(' ')[0]}
-                  </p>
-                  <div
-                    className="w-full h-8 rounded-t-xl flex items-center justify-center"
-                    style={{ background: '#CD7F32' }}
-                  >
-                    <span className="font-bold text-white">{standings[2]?.points}pts</span>
-                  </div>
-                </div>
-              </div>
+              <Podium
+                places={standings
+                  .slice(0, 3)
+                  .map((s) => ({ name: s.player.name.split(' ')[0], points: s.points }))}
+              />
             </div>
           )}
 
@@ -137,13 +91,10 @@ export default function ScoresRankingTab({
                   {standings.map((s, i) => (
                     <tr
                       key={s.player.id}
-                      className={`border-b border-gray-50 ${i < 2 && matches.length > 0 ? 'bg-yellow-50/40' : ''}`}
-                      style={
-                        i === 2 && matches.length > 0 ? { background: 'rgba(205,127,50,0.08)' } : {}
-                      }
+                      className={`border-b border-lob-line ${matches.length > 0 ? rowTint(i) : ''}`}
                     >
                       <td className="py-2.5 pl-1">
-                        <Trophy size={14} className={medalColor(i)} style={medalStyle(i)} />
+                        <Trophy size={14} className={medalColor(i)} />
                       </td>
                       <td className="py-2.5">
                         <div className="flex items-center gap-2">
