@@ -47,7 +47,9 @@ export default function ResultsView({ results, collapsible = false }: ResultsVie
               </CollapsibleCard>
             ) : (
               <>
-                <CategoryHeader cat={cat} hint={false} />
+                <h3>
+                  <CategoryHeader cat={cat} hint={false} />
+                </h3>
                 <CategoryBody cat={cat} />
               </>
             )}

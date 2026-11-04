@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react'
-import { ArrowRightLeft, Search } from 'lucide-react'
+import { ArrowRightLeft } from 'lucide-react'
 import { useApp } from '../context/useApp'
 import { useConfirmOnBehalf } from '../lib/confirmOnBehalf'
 import { usePlayers } from '../features/players/usePlayers'
@@ -11,6 +11,7 @@ import type { Player } from '../lib/normalise'
 import { AlertBox } from './ui/AlertBox'
 import { Badge } from './ui/Badge'
 import { EmptyState } from './ui/EmptyState'
+import { SearchInput } from './ui/SearchInput'
 
 // Picker modal Josephine sees when she taps "Transfer spot to another player".
 // Lists waitlist players first (so transferring to them is a one-tap promotion
@@ -200,20 +201,13 @@ export default function TransferSpotModal({
           </AlertBox>
         )}
 
-        <div className="relative">
-          <Search
-            size={14}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-lob-muted-light"
-          />
-          <input
-            type="text"
-            placeholder="Search player…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="input pl-9"
-            autoFocus
-          />
-        </div>
+        <SearchInput
+          label="Search players"
+          placeholder="Search players…"
+          value={search}
+          onChange={setSearch}
+          autoFocus
+        />
 
         <div className="space-y-2">
           {candidates.length === 0 && (

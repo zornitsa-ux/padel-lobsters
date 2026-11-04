@@ -67,6 +67,7 @@ import { Spinner } from '../../components/ui/Spinner'
 import { Skeleton } from '../../components/ui/Skeleton'
 import { StatTile } from '../../components/ui/StatTile'
 import { StatGrid } from '../../components/ui/StatGrid'
+import { SearchInput } from '../../components/ui/SearchInput'
 import { RankMarker } from '../../components/ui/RankMarker'
 import { Well } from '../../components/ui/Well'
 import { PlaytomicLevelField } from '../players/ProfileFields'
@@ -372,6 +373,22 @@ function StatusSection() {
 }
 
 const ROUNDS = [1, 2, 3, 4, 5, 6, 7].map((n) => ({ value: n, label: `Round ${n}` }))
+
+function SearchInputSection() {
+  const [search, setSearch] = useState('Ada')
+  return (
+    <GallerySection title="SearchInput">
+      <Row label="Icon, field, clear once there's text (label names it)" block>
+        <SearchInput
+          label="Search players"
+          placeholder="Search players…"
+          value={search}
+          onChange={setSearch}
+        />
+      </Row>
+    </GallerySection>
+  )
+}
 
 function FormErrorSection() {
   const { errorId, fieldProps } = useFieldError({ message: 'Enter a level between 0 and 7.' })
@@ -1286,6 +1303,7 @@ export default function DesignGallery() {
       <TextButtonSection />
       <IconButtonSection />
       <StatusSection />
+      <SearchInputSection />
       <FormErrorSection />
       <ChoiceSection />
       <OptionSection />

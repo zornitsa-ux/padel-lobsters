@@ -90,7 +90,7 @@ component doesn't fit, fix the component, not the call site.**
 | Inset panel / well inside a card     | `Well`                                               | exists |
 | List inside a card or sheet          | `ListCard inset` (divided rows, no card of its own)  | exists |
 | Long list (a log, every tip)         | `ListCard scrollable` (scrolls inside its card)      | exists |
-| Search field                         | `SearchInput`                                        | P6e-4  |
+| Search field                         | `SearchInput` (`label` names it)                     | exists |
 | Collapsible card (+ summary)         | `CollapsibleCard` (`summary` stays visible)          | exists |
 | Collapsible row with reorder/delete  | `CollapsibleCard leading actions`                    | exists |
 | Inline show / hide detail            | `Disclosure`                                         | exists |
@@ -247,6 +247,7 @@ primitives (see the Log) before P3:
     - **P6e-4: `SearchInput` and the `CollapsibleCard` heading.** The search
       field (icon, input, clear) for the five search fields; a heading
       element inside the `CollapsibleCard` header button (review of #76).
+      Done in #142.
 17. **P7: lock-down.**
 
 ### E2E safety net
@@ -1662,3 +1663,27 @@ scrollable`, and so is the tips list. Open WhatsApp Community is a
     rank (was "#0"). The standings' "#" header is centred over it. The
     raffle's medals use `medalFor`. `StatGrid` counts tiles inside a
     fragment one each and allows one column.
+
+- **2026-11-02.** P6e-4 on `design-system-p6e-search-heading`.
+  - `SearchInput`: icon, field and a clear button (`IconButton ghost sm`)
+    once there's text; clearing refocuses the field. `label` names it for
+    screen readers; other input props pass through, so TeamForm keeps its
+    menu wiring (`aria-haspopup`, `aria-expanded`, `useFieldError`).
+    `type="text"`: the browser clears a `type="search"` field on Escape,
+    which TeamForm uses to close its list. Test and gallery entry.
+  - Onto it: Community Players, `PlayerPicker` (loses its smaller one-off
+    size), TeamForm, `LinkPlayerModal` (was a 🔍 in the placeholder) and
+    `TransferSpotModal`. Players, `LinkPlayerModal` and `TransferSpotModal`
+    had no accessible name; they take "Search players" / "Search existing
+    players".
+  - `CollapsibleCard`: the toggle sits in a heading, `h3` by default
+    (`level`, as on `Section`), the accordion pattern, so a screen reader's
+    outline lists each card. `CollapsibleSection` does the same (`h2` by
+    default) and gains `aria-expanded`. Lobster Way admin: categories `h2`,
+    questions `h3`, under the page's `h1`.
+  - Review: TeamForm's two pickers had no accessible name (the visible
+    label wasn't tied to the field); it now is (`htmlFor`). `SearchInput`
+    offers no clear when disabled or read-only, and keeps one ref callback
+    across renders. The Oscars results' categories are `h3`s when not
+    collapsible too. `SearchInput` has its own gallery section.
+  - P6e is done with this PR.

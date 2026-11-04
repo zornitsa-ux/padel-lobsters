@@ -16,6 +16,8 @@ export interface CollapsibleCardProps {
   muted?: boolean
   /** Wrapper classes. Defaults to the design-system card shell. */
   className?: string
+  /** The toggle sits in a heading of this level (the accordion pattern), so the outline lists it. */
+  level?: 2 | 3 | 4
 }
 
 // Card-shaped disclosure: rich header content plus a size-16 chevron.
@@ -31,21 +33,25 @@ export function CollapsibleCard({
   children,
   muted = false,
   className = 'card',
+  level = 3,
 }: CollapsibleCardProps) {
   const Chevron = expanded ? ChevronUp : ChevronDown
+  const Heading = `h${level}` as const
   return (
     <div className={`${className}${muted ? ' opacity-60' : ''}`.trim() || undefined}>
       <div className="flex items-center gap-2">
         {leading}
-        <button
-          type="button"
-          onClick={onToggle}
-          aria-expanded={expanded}
-          className="flex-1 min-w-0 flex items-center justify-between gap-3 text-left"
-        >
-          {header}
-          <Chevron size={16} className="text-lob-muted-light flex-shrink-0" />
-        </button>
+        <Heading className="flex-1 min-w-0">
+          <button
+            type="button"
+            onClick={onToggle}
+            aria-expanded={expanded}
+            className="w-full min-w-0 flex items-center justify-between gap-3 text-left"
+          >
+            {header}
+            <Chevron size={16} className="text-lob-muted-light flex-shrink-0" />
+          </button>
+        </Heading>
         {actions}
       </div>
       {summary}

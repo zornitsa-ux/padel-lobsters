@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react'
-import { Search } from 'lucide-react'
 import { useApp } from '../../context/useApp'
 import { usePlayers, usePlayerActions } from '../players/usePlayers'
 import { errorMessage } from '../../lib/errors'
@@ -9,6 +8,7 @@ import { AlertBox } from '../../components/ui/AlertBox'
 import { Badge } from '../../components/ui/Badge'
 import { Section } from '../../components/ui/Section'
 import { Spinner } from '../../components/ui/Spinner'
+import { SearchInput } from '../../components/ui/SearchInput'
 import LinkPlayerModal from './LinkPlayerModal'
 import PendingApprovalsList from './PendingApprovalsList'
 import PlayersList from './PlayersList'
@@ -164,18 +164,12 @@ export default function Players() {
           />
         )}
 
-        <div className="relative">
-          <Search
-            size={16}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-lob-muted-light"
-          />
-          <input
-            className="input pl-9"
-            placeholder="Search players..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
+        <SearchInput
+          label="Search players"
+          placeholder="Search players…"
+          value={search}
+          onChange={setSearch}
+        />
 
         {playersPending ? (
           <Spinner />

@@ -6,6 +6,7 @@ import { EmptyState } from '../../components/ui/EmptyState'
 import { IconButton } from '../../components/ui/IconButton'
 import { OptionRow } from '../../components/ui/OptionRow'
 import { Skeleton } from '../../components/ui/Skeleton'
+import { SearchInput } from '../../components/ui/SearchInput'
 import { useRevealPii } from './useRevealPii'
 import type { CommunityPlayer } from './playersSelectors'
 
@@ -84,12 +85,11 @@ export default function LinkPlayerModal({
           )}
         </div>
 
-        <input
-          type="text"
-          placeholder="🔍 Search existing players… (2+ characters)"
+        <SearchInput
+          label="Search existing players"
+          placeholder="Search existing players (2+ characters)"
           value={linkSearch}
-          onChange={(e) => setLinkSearch(e.target.value)}
-          className="input"
+          onChange={setLinkSearch}
           autoFocus
         />
 
