@@ -11,19 +11,25 @@ import { usePublicEvents } from './usePublicEvents'
 import { isFull, isOpenToJoin, joinPath } from './publicEventHelpers'
 import { GuestEventSummary } from './GuestEventSummary'
 import type { PublicEvent } from './publicEventQueries'
+import { loadFailed } from '../../../lib/queryState'
 
-function usePublicEventFromUrl(): { event: PublicEvent | null; isPending: boolean } {
+function usePublicEventFromUrl() {
   const { id } = useParams()
-  const { data, isPending } = usePublicEvents()
-  return { event: (data ?? []).find((e) => e.id === id) ?? null, isPending }
+  const query = usePublicEvents()
+  const event: PublicEvent | null = (query.data ?? []).find((e) => e.id === id) ?? null
+  return { event, isPending: query.isPending, failed: loadFailed(query) }
 }
 
 const noEdit = () => undefined
 
 // Signed-out shell for /events/:id: the event's name, and no member tabs.
 export function GuestEventShell() {
-  const { event, isPending } = usePublicEventFromUrl()
+  const { event, isPending, failed } = usePublicEventFromUrl()
   if (isPending) return <RouteFallback />
+  // Keep the shared URL on a failed load so a reload can still reach the event.
+  if (failed) {
+    return <AlertBox variant="error">Couldn&apos;t load this event. Reload to try again.</AlertBox>
+  }
   if (!event) return <Navigate to="/events" replace />
   return (
     <div className="-mx-4">
@@ -70,7 +76,7 @@ export function GuestEventInfo() {
       {!open && (
         <EmptyState
           icon={<CalendarCheck />}
-          title="This event has finished"
+          title="Sign-ups are closed"
           description="See what's coming up next."
           action={<Button to="/events">Upcoming events</Button>}
         />

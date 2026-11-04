@@ -1,13 +1,17 @@
-import { eventTimeGroup, isEventUpcoming } from '../eventPhase'
+import { eventTimeGroup, isEventOver } from '../eventPhase'
+import { teamCount } from '../registration/team/teamHelpers'
 import type { PublicEvent } from './publicEventQueries'
 
 type CountedEvent = Pick<PublicEvent, 'maxPlayers' | 'registeredCount' | 'entryMode'>
 
-// A team entry holds two registrations, so capacity is counted in entries.
-const entrySize = ({ event }: { event: CountedEvent }) => (event.entryMode === 'team' ? 2 : 1)
-
-export const spotsLeft = ({ event }: { event: CountedEvent }): number =>
-  Math.max(0, Math.floor((event.maxPlayers - event.registeredCount) / entrySize({ event })))
+// A team entry holds two registrations; capacity matches the members' roster line.
+export const spotsLeft = ({ event }: { event: CountedEvent }): number => {
+  const left =
+    event.entryMode === 'team'
+      ? teamCount({ players: event.maxPlayers }) - teamCount({ players: event.registeredCount })
+      : event.maxPlayers - event.registeredCount
+  return Math.max(0, left)
+}
 
 export const isFull = ({ event }: { event: CountedEvent }): boolean => spotsLeft({ event }) === 0
 
@@ -18,9 +22,11 @@ export const spotsLabel = ({ event }: { event: CountedEvent }): string => {
   return `${left} ${unit}${left === 1 ? '' : 's'} left`
 }
 
-// Scheduled, not over, and not an Americano past its date awaiting results.
+// Taking sign-ups: still 'upcoming' (not started), not over, and not an
+// Americano past its date awaiting results.
 export const isOpenToJoin = ({ event, now = new Date() }: { event: PublicEvent; now?: Date }) =>
-  isEventUpcoming({ tournament: event, now }) &&
+  event.status === 'upcoming' &&
+  !isEventOver({ tournament: event, now }) &&
   eventTimeGroup({ tournament: event, now }) === 'upcoming'
 
 export const upcomingPublicEvents = ({

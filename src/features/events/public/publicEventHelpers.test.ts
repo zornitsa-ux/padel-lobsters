@@ -32,6 +32,8 @@ describe('spots left', () => {
     const team = event({ raw: { entry_mode: 'team' }, registeredCount: 16 })
     expect(spotsLeft({ event: team })).toBe(2)
     expect(spotsLabel({ event: team })).toBe('2 teams left')
+    const odd = event({ raw: { entry_mode: 'team', max_players: 21 }, registeredCount: 18 })
+    expect(spotsLeft({ event: odd })).toBe(1)
   })
 
   it('is full at or over capacity', () => {
@@ -46,6 +48,7 @@ describe('upcomingPublicEvents', () => {
     const events = [
       event({ id: 'future' }),
       event({ id: 'done', raw: { status: 'completed' } }),
+      event({ id: 'live', raw: { status: 'active' } }),
       event({ id: 'awaiting', raw: { date: '2026-10-18', format: 'lobster_matching' } }),
     ]
     expect(upcomingPublicEvents({ events, now: NOW }).map((e) => e.id)).toEqual(['future'])

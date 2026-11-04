@@ -1,22 +1,13 @@
 import React, { useState, type ReactNode } from 'react'
 import { useRegistrations } from './useRegistrations'
-import {
-  Calendar,
-  Users,
-  MapPin,
-  Clock,
-  CheckCircle,
-  Circle,
-  Building2,
-  ShieldCheck,
-} from 'lucide-react'
+import { Users, MapPin, Clock, CheckCircle, Circle, ShieldCheck } from 'lucide-react'
 import EventAdminMenu from './EventAdminMenu'
-import DateTile from '../../components/ui/DateTile'
+import { EventHeading } from './EventHeading'
 import AddToCalendarButton from '../../components/ui/AddToCalendarButton'
 import ShareWhatsAppButton from '../../components/ui/ShareWhatsAppButton'
 import { fmtEur } from '../../lib/format'
 import { errorMessage } from '../../lib/errors'
-import { formatDate, formatLabel, pricePerPlayer } from './eventHelpers'
+import { formatLabel, pricePerPlayer } from './eventHelpers'
 import type { EventNavigate } from './eventHelpers'
 import type { NormalisedTournament, TournamentCourt } from '../../lib/normalise'
 import type { NormalisedTransfer } from './transferQueries'
@@ -88,19 +79,7 @@ export default function UpcomingEventCard({
       {/* Header row — date tile is the visual anchor so players can tell
           at a glance which event is which. */}
       <div className="flex items-start gap-3 mb-3">
-        <DateTile date={t.date} size="md" />
-        <div className="flex-1 min-w-0">
-          <h3 className="font-bold text-lob-dark truncate">{t.name}</h3>
-          <p className="text-sm font-semibold text-lob-slate flex items-center gap-1 mt-0.5">
-            <Calendar size={13} /> {formatDate(t.date)}
-            {t.time && <span className="text-lob-muted">· {t.time}</span>}
-          </p>
-          {t.location && (
-            <p className="text-xs text-lob-teal flex items-center gap-1 mt-0.5">
-              <Building2 size={11} /> {t.location}
-            </p>
-          )}
-        </div>
+        <EventHeading event={t} />
         <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
           <Badge
             tone={over ? 'neutral' : t.status === 'active' ? 'success' : 'info'}

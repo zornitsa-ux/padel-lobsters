@@ -40,7 +40,7 @@ function renderAt(path: string) {
 }
 
 const loaded = (events: PublicEvent[]) =>
-  usePublicEvents.mockReturnValue({ data: events, isPending: false })
+  usePublicEvents.mockReturnValue({ data: events, isPending: false, isError: false })
 
 afterEach(() => {
   cleanup()
@@ -69,10 +69,24 @@ describe('guest event page', () => {
     expect(screen.getByRole('link', { name: /join to get on the waitlist/i })).toBeTruthy()
   })
 
-  it('points a finished event to upcoming events, with no join', () => {
+  it('closes sign-ups on a finished event, pointing to upcoming events, with no join', () => {
     loaded([event({ status: 'completed' }, 20)])
     renderAt('/events/evt-1/info')
-    expect(screen.getByText('This event has finished')).toBeTruthy()
+    expect(screen.getByText('Sign-ups are closed')).toBeTruthy()
+    expect(screen.queryByRole('link', { name: /join/i })).toBeNull()
+  })
+
+  it('keeps the URL and shows an error when the load fails', () => {
+    usePublicEvents.mockReturnValue({ data: undefined, isPending: false, isError: true })
+    renderAt('/events/evt-1/info')
+    expect(screen.getByText(/couldn.t load this event/i)).toBeTruthy()
+    expect(screen.queryByText('EVENTS LIST')).toBeNull()
+  })
+
+  it('closes sign-ups once the event has started', () => {
+    loaded([event({ status: 'active' }, 10)])
+    renderAt('/events/evt-1/info')
+    expect(screen.getByText('Sign-ups are closed')).toBeTruthy()
     expect(screen.queryByRole('link', { name: /join/i })).toBeNull()
   })
 

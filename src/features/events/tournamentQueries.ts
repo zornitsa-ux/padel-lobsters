@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { supabase } from '../../supabase'
 import { normaliseTournaments, type TournamentCourt } from '../../lib/normalise'
-import type { Tables, TablesInsert, TablesUpdate } from '../../lib/database.types'
+import type { TablesInsert, TablesUpdate } from '../../lib/database.types'
 import { tournamentRowSchema } from './tournamentSchemas'
 
 export type NormalisedTournament = ReturnType<typeof normaliseTournaments>[number]
@@ -48,27 +48,6 @@ export async function fetchTournaments(): Promise<NormalisedTournament[]> {
   if (error) throw error
   const rows = z.array(tournamentRowSchema).parse(data ?? [])
   return normaliseTournaments(rows)
-}
-
-// Guest-only: count-of-registrations per tournament from the public view.
-// Never returns player_ids — only the totals the UI needs to render
-// "5 / 16 registered" on the guest dashboard / event page.
-export type PublicRegistrationCount = Tables<'public_tournament_registration_counts'>
-
-export async function loadPublicCounts(): Promise<Record<string, PublicRegistrationCount>> {
-  try {
-    const { data, error } = await supabase.from('public_tournament_registration_counts').select('*')
-    if (error) throw error
-    const map: Record<string, PublicRegistrationCount> = {}
-    ;(data || []).forEach((row) => {
-      if (row.tournament_id) map[row.tournament_id] = row
-    })
-    return map
-  } catch (e: unknown) {
-    // View not present yet (pre-v24) — degrade to empty counts.
-    console.warn('loadPublicCounts skipped:', e instanceof Error ? e.message : e)
-    return {}
-  }
 }
 
 export async function addTournament(data: TournamentInput): Promise<void> {

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { MemoryRouter, useNavigate, type NavigateFunction } from 'react-router-dom'
 
 const { mockUseApp, mockCheck, logout } = vi.hoisted(() => ({
   mockUseApp: vi.fn(),
@@ -60,6 +60,27 @@ describe('VerificationGate — session check', () => {
 
     expect(await screen.findByText(/set up your lobster profile/i)).toBeTruthy()
     expect(screen.queryByText('sign-in form')).toBeNull()
+  })
+
+  it('goes back to sign-in when the next URL has no signup param', async () => {
+    mockUseApp.mockReturnValue({ role: 'guest', session: null, sessionSettled: true, logout })
+    let navigate: NavigateFunction = () => undefined
+    const CaptureNavigate = () => {
+      navigate = useNavigate()
+      return null
+    }
+    render(
+      <MemoryRouter initialEntries={['/events/evt-1/join?signup=1']}>
+        <CaptureNavigate />
+        <VerificationGate>
+          <p>page content</p>
+        </VerificationGate>
+      </MemoryRouter>,
+    )
+    expect(await screen.findByText(/set up your lobster profile/i)).toBeTruthy()
+
+    act(() => navigate('/events/evt-1/join'))
+    expect(await screen.findByText('sign-in form')).toBeTruthy()
   })
 
   it('lets a guest browse the public event pages', () => {
