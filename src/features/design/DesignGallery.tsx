@@ -70,7 +70,7 @@ import { StatGrid } from '../../components/ui/StatGrid'
 import { SearchInput } from '../../components/ui/SearchInput'
 import { RankMarker } from '../../components/ui/RankMarker'
 import { Podium } from '../../components/ui/Podium'
-import { levelBadgeClass } from '../community/playerConstants'
+import { LevelBadge } from '../../components/ui/LevelBadge'
 import { GenderLegendEntries } from '../matchmaking/ui/genderMarks'
 import { Well } from '../../components/ui/Well'
 import { PlaytomicLevelField } from '../players/ProfileFields'
@@ -410,15 +410,11 @@ function DecorativeSection() {
         <Trophy size={16} className="text-lob-silver" />
         <Trophy size={16} className="text-lob-bronze" />
       </Row>
-      <Row label="Level badges: under 2, 2–3.9, 4–4.9, 5 and up">
+      <Row label="LevelBadge: under 2, 2–3.9, 4–4.9, 5 and up; sm">
         {[1.5, 2.6, 4.3, 5.2].map((level) => (
-          <span
-            key={level}
-            className={`text-sm font-bold px-2.5 py-1 rounded-lg ${levelBadgeClass(level)}`}
-          >
-            {level.toFixed(1)}
-          </span>
+          <LevelBadge key={level} level={level} />
         ))}
+        <LevelBadge level={3.4} size="sm" />
       </Row>
       <Row label="Gender marks (lob-gender-f, lob-gender-m)">
         <GenderLegendEntries />

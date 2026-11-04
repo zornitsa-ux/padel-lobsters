@@ -300,7 +300,7 @@ export default function PastEventResults({ tournaments, onNavigate }: PastEventR
                 return (
                   <div className="mt-4 space-y-3">
                     {/* Podium */}
-                    {!withheld && top3.length >= 2 && (
+                    {!withheld && (
                       <Podium
                         places={top3.map((s) => ({ name: dbDn(s.player.name), points: s.pts }))}
                       />

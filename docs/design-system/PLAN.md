@@ -84,6 +84,7 @@ component doesn't fit, fix the component, not the call site.**
 | Player or team row, ranked row       | `PlayerRow` + `RankMarker` (`prefix`)                | exists |
 | Row of stat tiles                    | `StatGrid` of `StatTile`s (in a card or `Well`)      | exists |
 | Top three (podium)                   | `Podium` (medal colours: `lob-gold` etc.)            | exists |
+| Player's Playtomic level             | `LevelBadge` (`size="sm"` inline in text)            | exists |
 | Page section with a heading          | `Section` (`description` for a line under it)        | exists |
 | List of like items                   | `ListCard` + `LinkRow` (one card, divided rows)      | exists |
 | List row with its own controls       | `ListRow` (`PlayerRow`, buttons, anything under it)  | exists |
@@ -1744,3 +1745,13 @@ scrollable`, and so is the tips list. Open WhatsApp Community is a
     is `lob-line-strong` rather than `lob-well` (the call's preview), which
     vanishes on a white card.
   - Ratchet 53 → 18.
+  - Review: `LevelBadge` in ui holds the bands (the three hand-built level
+    pills and the gallery move onto it); the 2 to 4.9 bands take
+    `lob-teal-dark` text (`lob-teal` on its tint was about 4.3:1). `Podium`
+    puts `lob-dark` text on gold and bronze (white was about 1.5:1 and
+    3:1), wraps a long name, and needs two places on both pages. A saved
+    court with a missing player shows no chip; the round's courts are built
+    once per render. The Scores table tints second place silver, not gold.
+  - Kept, as in the generator: an unavoidable uneven court reads "Uneven ·
+    unavoidable this round" in the warning tone (was a muted "Uneven"), and
+    a court with a player of unknown gender shows no chip.

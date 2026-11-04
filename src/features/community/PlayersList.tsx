@@ -4,7 +4,7 @@ import { FlagImg } from '../../components/ui/CountryPicker'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { LinkRow, ListCard } from '../../components/ui/ListCard'
 import { Badge } from '../../components/ui/Badge'
-import { levelBadgeClass } from './playerConstants'
+import { LevelBadge } from '../../components/ui/LevelBadge'
 import type { CommunityPlayer, OrderedPlayer } from './playersSelectors'
 
 interface PlayersListProps {
@@ -51,13 +51,7 @@ export default function PlayersList({
             highlighted={isSelf}
             leading={<Avatar player={p} size="md" />}
             title={<PlayerName player={p} name={displayName(p)} isSelf={isSelf} />}
-            trailing={
-              <span
-                className={`text-sm font-bold px-2.5 py-1 rounded-lg ${levelBadgeClass(level)}`}
-              >
-                {level.toFixed(1)}
-              </span>
-            }
+            trailing={<LevelBadge level={level} />}
           />
         )
       })}

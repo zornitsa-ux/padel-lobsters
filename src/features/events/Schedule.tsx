@@ -256,6 +256,11 @@ export default function Schedule({
   }
 
   const display = generated || savedRounds
+  const isPlayer = (p: Player | undefined): p is Player => Boolean(p)
+  const roundCourts = (display?.[activeRound]?.matches ?? []).map((m) => ({
+    team1: m.team1Ids?.map(getPlayer).filter(isPlayer) || [],
+    team2: m.team2Ids?.map(getPlayer).filter(isPlayer) || [],
+  }))
 
   // MatchmakingContainer is the only generator (`useV2Matcher = isAdmin`), so
   // this handler is only ever reached by a non-admin, who gets bounced.
@@ -468,9 +473,7 @@ export default function Schedule({
               )}
 
               {display[activeRound].matches.map((match, i) => {
-                const isPlayer = (p: Player | undefined): p is Player => Boolean(p)
-                const t1 = match.team1Ids?.map(getPlayer).filter(isPlayer) || []
-                const t2 = match.team2Ids?.map(getPlayer).filter(isPlayer) || []
+                const { team1: t1, team2: t2 } = roundCourts[i]
                 const isSwapping = swapMode && generated
 
                 return (
@@ -489,13 +492,7 @@ export default function Schedule({
                         {match.court && <Tag label={match.court} />}
                         {genderMode === 'mixed' && (
                           <CourtGenderChip
-                            chip={savedCourtChip({
-                              court: { team1: t1, team2: t2 },
-                              round: display[activeRound].matches.map((m) => ({
-                                team1: m.team1Ids?.map(getPlayer).filter(isPlayer) || [],
-                                team2: m.team2Ids?.map(getPlayer).filter(isPlayer) || [],
-                              })),
-                            })}
+                            chip={savedCourtChip({ court: roundCourts[i], round: roundCourts })}
                           />
                         )}
                       </div>

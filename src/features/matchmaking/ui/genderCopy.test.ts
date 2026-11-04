@@ -116,5 +116,7 @@ describe('savedCourtChip', () => {
   it('shows nothing for a court with a missing player', () => {
     const short = { team1: [f('f1')], team2: [m('m1'), m('m2')] }
     expect(savedCourtChip({ court: short, round: [short] })).toBeNull()
+    const men = { team1: [m('m1')], team2: [m('m2'), m('m3')] }
+    expect(savedCourtChip({ court: men, round: [men] })).toBeNull()
   })
 })

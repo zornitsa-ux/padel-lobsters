@@ -92,7 +92,7 @@ export function savedRoundHasAvoidableUneven({
   return roundGenderSummary({ matches, genderOf: savedGenderOf(full) }).avoidable > 0
 }
 
-/** The generator's court chip for a saved court; `round` is every court in its round. */
+/** The generator's court chip for a saved court; `round` is every court in its round. None for a court with a missing player. */
 export function savedCourtChip({
   court,
   round,
@@ -100,6 +100,7 @@ export function savedCourtChip({
   court: SavedCourt
   round: readonly SavedCourt[]
 }): CourtChip | null {
+  if (!isFullCourt(court)) return null
   const flags = !savedCourtIsUneven(court)
     ? []
     : savedRoundHasAvoidableUneven({ courts: round })

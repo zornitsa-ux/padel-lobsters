@@ -28,7 +28,7 @@ interface ScoresRankingTabProps {
 const MEDAL_TEXT = ['text-lob-gold-strong', 'text-lob-silver', 'text-lob-bronze']
 
 const rowTint = (i: number): string =>
-  i < 2 ? 'bg-lob-gold-light/40' : i === 2 ? 'bg-lob-bronze/10' : ''
+  ['bg-lob-gold-light/40', 'bg-lob-silver-soft/40', 'bg-lob-bronze/10'][i] ?? ''
 
 const medalColor = (i: number): string => MEDAL_TEXT[i] ?? 'text-lob-muted-light/60'
 
@@ -59,8 +59,8 @@ export default function ScoresRankingTab({
 
       {standings.length > 0 && (
         <>
-          {/* Top 3 podium */}
-          {standings.length >= 3 && matches.length > 0 && (
+          {/* Podium: needs two places, as Podium does */}
+          {standings.length >= 2 && matches.length > 0 && (
             <div className="card">
               <h3 className="font-bold text-center text-lob-slate mb-4">Podium</h3>
               <Podium

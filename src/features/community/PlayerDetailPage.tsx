@@ -19,7 +19,7 @@ import PlayerForm from './PlayerForm'
 import InviteSentModal from './InviteSentModal'
 import { corpReview } from './reviewScenarios'
 import { useTeamResultsByEvent } from '../events/kingOfCourt/useTeamResultsByEvent'
-import { levelBadgeClass } from './playerConstants'
+import { LevelBadge } from '../../components/ui/LevelBadge'
 import { usePlayerEditor } from './usePlayerEditor'
 import { buildFirstNameCount, getDisplayName } from './playersSelectors'
 import type { CommunityPlayer } from './playersSelectors'
@@ -51,11 +51,9 @@ function PlayerHero({
             {player.country && <FlagImg code={player.country} />}
             <span className="truncate">{player.name}</span>
           </p>
-          <span
-            className={`inline-block mt-1 text-sm font-bold px-2.5 py-1 rounded-lg ${levelBadgeClass(level)}`}
-          >
-            {level.toFixed(1)}
-          </span>
+          <div className="mt-1">
+            <LevelBadge level={level} />
+          </div>
         </div>
       </div>
       <div>

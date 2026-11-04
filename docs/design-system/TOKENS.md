@@ -114,10 +114,11 @@ Not status, so they sit outside the status families (owner, 2026-11-04).
 - `bg-celebrate`'s gold is `lob-gold`.
 - Court gender chips (Men, Women, Mixed) are neutral `Badge`s, in the
   generator and the saved schedule alike; only the W / M marks are coloured.
-- **Level badges** (`levelBadgeClass`): four bands on a teal ramp, no
-  colour per level (owner, 2026-11-04). Under 2 `lob-line-strong` /
-  `lob-slate`; 2 to 3.9 `lob-teal-light` / `lob-teal`; 4 to 4.9 a
-  `lob-teal` ring; 5 and up solid `lob-teal` with white text.
+- `Podium` text on gold and bronze is `lob-dark`; white doesn't read.
+- **Level badges** (`LevelBadge`): four bands on a teal ramp, no colour per
+  level (owner, 2026-11-04). Under 2 `lob-line-strong` / `lob-slate`; 2 to
+  3.9 `lob-teal-light` / `lob-teal-dark`; 4 to 4.9 a `lob-teal` ring with
+  `lob-teal-dark` text; 5 and up solid `lob-teal` with white text.
 
 ## Still raw, on purpose
 
