@@ -1,7 +1,6 @@
 import React from 'react'
 import { Award, Flame } from 'lucide-react'
 import { StatTile } from '../../components/ui/StatTile'
-import { TextButton } from '../../components/ui/TextButton'
 import { Section } from '../../components/ui/Section'
 import { StatGrid } from '../../components/ui/StatGrid'
 
@@ -33,11 +32,7 @@ interface YourStatsCardProps {
 export default function YourStatsCard({ claimedId, myStats }: YourStatsCardProps) {
   if (!claimedId || !myStats) return null
   return (
-    <Section
-      title="Your Stats"
-      icon={<Award />}
-      action={<TextButton to={`/community/${claimedId}`}>View full profile</TextButton>}
-    >
+    <Section title="Your Stats" icon={<Award />}>
       <div className="card">
         <StatGrid>
           <StatTile value={myStats.played} label="Played" valueClassName="text-lob-dark" />
@@ -52,9 +47,7 @@ export default function YourStatsCard({ claimedId, myStats }: YourStatsCardProps
 
         {myStats.played === 0 ? (
           <div className="mt-3 pt-3 border-t border-lob-line text-xs text-lob-muted text-center">
-            No matches logged yet — your stats will populate as soon as a tournament result is
-            recorded. Tap <span className="font-semibold text-lob-teal">View full profile</span> for
-            your historical record.
+            No matches logged yet. Your stats fill in once a tournament result is recorded.
           </div>
         ) : (
           <>

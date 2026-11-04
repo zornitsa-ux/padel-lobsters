@@ -136,12 +136,16 @@ test.describe('player', () => {
     await expect(page.getByRole('heading', { name: 'Getting started' })).toBeVisible()
   })
 
-  test('Account: profile, sign-in settings and orders', async ({ page }) => {
+  test('Account: profile, sign-in settings, no empty orders', async ({ page }) => {
     await page.goto('/account')
     await expect(page.getByText(PLAYER.email)).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Sign-in & security' })).toBeVisible()
-    await expect(page.getByRole('heading', { name: /My Lobster Profile/ })).toBeVisible()
-    await expect(page.getByRole('heading', { name: /My Orders/ })).toBeVisible()
+    await expect(
+      page.getByRole('region', { name: 'My Lobster Profile' }).getByText(PLAYER.name),
+    ).toBeVisible()
+    await expect(page.getByRole('button', { name: /^sign out$/i })).toBeVisible()
+    // The seed player has no orders, so the section stays out of the way.
+    await expect(page.getByRole('heading', { name: /My Orders/ })).toHaveCount(0)
   })
 
   test('admin pages and tabs stay closed', async ({ page }) => {

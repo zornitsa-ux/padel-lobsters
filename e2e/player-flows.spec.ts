@@ -173,7 +173,7 @@ test('edit the profile', async ({ browser }) => {
     await other.page.goto('/account')
     await other.page
       .getByRole('region', { name: 'My Lobster Profile' })
-      .getByRole('button', { name: 'Edit' })
+      .getByRole('button', { name: 'Edit profile' })
       .click()
     await other.page
       .getByRole('textbox', { name: 'What do you scream before a match?' })

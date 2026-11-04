@@ -55,6 +55,7 @@ import { useConfirm } from '../../lib/confirmBus'
 import { CardLink } from '../../components/ui/CardLink'
 import { LinkCard, LinkCardIcon } from '../../components/ui/LinkCard'
 import { CheckRow, DragRow, LinkRow, ListCard, ListRow } from '../../components/ui/ListCard'
+import { SettingRow } from '../../components/ui/SettingRow'
 import { moveItem, useDragReorder } from '../../components/ui/useDragReorder'
 import { PlayerRow } from '../../components/ui/PlayerRow'
 import { Section } from '../../components/ui/Section'
@@ -762,6 +763,30 @@ function SectionListSection() {
                 name="Mara"
                 subtitle="Level 3.0"
                 trailing={<PaymentStatusBadge paymentStatus="unpaid" />}
+              />
+            </ListRow>
+          </ListCard>
+        </div>
+      </Row>
+      <Row label="SettingRow in ListRows: label and value, its control at the end" block>
+        <div className="rounded-2xl bg-lob-cream p-3">
+          <ListCard label="Settings">
+            <ListRow>
+              <SettingRow
+                label="Sign-in email"
+                value="mara@example.com"
+                action={
+                  <Button variant="secondary" size="sm">
+                    Change
+                  </Button>
+                }
+              />
+            </ListRow>
+            <ListRow>
+              <SettingRow
+                label="All devices"
+                value="Ends every session, this one included."
+                action={<TextButton tone="destructive">Sign out of all devices</TextButton>}
               />
             </ListRow>
           </ListCard>

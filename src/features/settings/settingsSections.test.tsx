@@ -1,7 +1,9 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { screen, cleanup } from '@testing-library/react'
-import { render } from '@testing-library/react'
+import { screen, cleanup, fireEvent } from '@testing-library/react'
+import { render as rtlRender } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
+import type { ReactElement } from 'react'
 
 // D-028: the Account page must expose neither the Matchmaking V2 rollout flag
 // nor any Playtomic-adjustment field. SecurityEventsPanel is mocked because it
@@ -18,6 +20,9 @@ import ProfileSection from './ProfileSection'
 import { normalisePlayers } from '../../lib/normalise'
 
 const noop = () => {}
+
+// ProfileCard links to the public profile, so the tree needs a router.
+const render = (ui: ReactElement) => rtlRender(<MemoryRouter>{ui}</MemoryRouter>)
 
 const adminSection = (
   <AdminSection
@@ -68,17 +73,21 @@ const profileSection = ({
   prompt = false,
   hasPii = true,
   profileLoadFailed = false,
+  player = myPlayer as typeof myPlayer | null,
+  isAdmin = false,
 } = {}) => (
   <ProfileSection
-    myPlayer={myPlayer}
+    myPlayer={player}
+    isAdmin={isAdmin}
+    email="ada@example.com"
     hasPii={hasPii}
     profileLoadFailed={profileLoadFailed}
     profileExpanded={expanded}
-    setProfileExpanded={noop}
+    openProfileEdit={noop}
+    cancelProfileEdit={noop}
     profileForm={profileForm}
     setProfileForm={noop}
     profileSaving={false}
-    profileSaved={false}
     profileError=""
     avatarPreview={null}
     handleAvatarChange={noop}
@@ -133,20 +142,47 @@ describe('ProfileSection — self-service profile', () => {
   it('summarises the level as the Playtomic level alone', () => {
     render(profileSection({ expanded: false }))
 
-    expect(screen.getByText(/playtomic level:/i)).toBeTruthy()
-    expect(screen.getByText('3.5')).toBeTruthy()
+    const card = screen.getByRole('region', { name: 'My Lobster Profile' })
+    expect(card.textContent).toContain('3.5')
     // The old summary rendered "(Playtomic 3.5 +0.5)".
     expect(screen.queryByText(/\+0\.5/)).toBeNull()
+  })
+
+  it('keeps the form closed until Edit profile is pressed', () => {
+    render(profileSection({ expanded: false }))
+
+    expect(screen.getByRole('button', { name: 'Edit profile' })).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'View profile' }).getAttribute('href')).toBe(
+      '/community/p1',
+    )
+    expect(screen.queryByRole('button', { name: /save profile/i })).toBeNull()
   })
 
   it('asks only for a new Playtomic level in the 30-day refresh prompt', () => {
     render(profileSection({ expanded: false, prompt: true }))
 
-    expect(screen.getByText(/has your playtomic score changed/i)).toBeTruthy()
-    expect(screen.getByText(/new playtomic level/i)).toBeTruthy()
+    expect(screen.getByText(/has your playtomic level changed/i)).toBeTruthy()
+    expect(screen.getByLabelText('Playtomic Level (0–7)')).toBeTruthy()
     expect(screen.queryByText(/adjustment/i)).toBeNull()
     // One input in the prompt, the level itself, with a decimal keypad so "3,5" can be typed.
     expect(document.querySelectorAll('input[inputmode="decimal"]').length).toBe(1)
+  })
+
+  it('keeps the refresh prompt open until a button is pressed', () => {
+    render(profileSection({ expanded: false, prompt: true }))
+
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' })
+
+    expect(screen.getByText(/has your playtomic level changed/i)).toBeTruthy()
+  })
+
+  it('shows who is signed in, and admin, when there is no player profile', () => {
+    render(profileSection({ player: null, isAdmin: true }))
+
+    expect(screen.getByRole('region', { name: 'Signed in' }).textContent).toContain(
+      'ada@example.com',
+    )
+    expect(screen.getByText('Admin')).toBeTruthy()
   })
 
   // Finding 2: a failed/unresolved profile RPC must not leave the Save

@@ -26,6 +26,7 @@ import CommunityShell from './features/community/CommunityShell'
 import PartnerOnboardingRedirect from './features/events/invites/PartnerOnboardingRedirect'
 import { FINISH_ACCOUNT_PATH, TEAM_INVITES_PATH } from './features/events/invites/inviteRoutes'
 import { DESIGN_GALLERY_ENABLED, DESIGN_GALLERY_PATH } from './lib/designGallery'
+import { GROUP_SETTINGS_PATH } from './features/settings/settingsHelpers'
 
 // Code-split every route off the first paint. The app shell (Layout,
 // VerificationGate) and the logged-out landing (Dashboard) stay
@@ -43,6 +44,7 @@ const Schedule = lazy(() => import('./features/events/Schedule'))
 const Scores = lazy(() => import('./features/events/Scores'))
 const Merch = lazy(() => import('./features/merch/Merch'))
 const Account = lazy(() => import('./features/settings/Settings'))
+const GroupSettings = lazy(() => import('./features/settings/GroupSettingsPage'))
 const Game = lazy(() => import('./features/oscars/Game'))
 const Admin = lazy(() => import('./features/admin/AdminTools'))
 const TeamInvitesPage = lazy(() => import('./features/events/invites/TeamInvitesPage'))
@@ -104,6 +106,14 @@ export default function App() {
                 <Route path="/merch" element={<Navigate to="/community/shop" replace />} />
                 <Route path="/admin" element={<AdminRoute />} />
                 <Route path="/account" element={<AccountRoute />} />
+                <Route
+                  path={GROUP_SETTINGS_PATH}
+                  element={
+                    <AdminRouteGuard redirectTo="/account">
+                      <GroupSettings />
+                    </AdminRouteGuard>
+                  }
+                />
                 <Route path="/lobster-way" element={<LobsterWay />} />
                 <Route
                   path="/admin/lobster-way"

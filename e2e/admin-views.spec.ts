@@ -20,7 +20,7 @@ test('Admin shows what needs attention and every section', async ({ page }) => {
   await expect(page.getByRole('button', { name: /Lobster Review Breakdown/ })).toBeVisible()
   for (const section of [
     'Player Approvals',
-    'Ratings & Admin Settings',
+    'Group Settings',
     'Merch Admin',
     'The Lobster Way',
     'League',

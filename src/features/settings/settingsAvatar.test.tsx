@@ -37,10 +37,7 @@ vi.mock('../players/usePlayers', () => ({
   usePlayerActions: () => ({ updatePlayer: updatePlayerMock }),
   useAvatarUpload: () => ({ mutateAsync: uploadMock }),
 }))
-vi.mock('./useSettings', () => ({
-  useSettings: () => ({ data: undefined }),
-  useSaveSettings: () => ({ mutateAsync: vi.fn() }),
-}))
+vi.mock('../../lib/toastBus', () => ({ useToast: () => ({ showToast: vi.fn() }) }))
 vi.mock('../../context/useApp', () => ({
   useApp: () => ({
     session: { user: { id: 'p1', app_metadata: { role: 'player' } } },
@@ -71,7 +68,7 @@ const renderSettings = () =>
 const pickAvatar = () => {
   fireEvent.click(
     within(screen.getByRole('region', { name: 'My Lobster Profile' })).getByRole('button', {
-      name: 'Edit',
+      name: 'Edit profile',
     }),
   )
   const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement
@@ -83,6 +80,8 @@ const pickAvatar = () => {
 beforeEach(() => {
   vi.clearAllMocks()
   localStorage.clear()
+  // Keeps the 30-day Playtomic prompt closed, so its modal doesn't hide the page.
+  localStorage.setItem('lobster_playtomic_check_p1', String(Date.now()))
   processAvatarMock.mockResolvedValue(processed)
   uploadMock.mockResolvedValue('https://cdn.test/player-p1.webp')
   updatePlayerMock.mockResolvedValue({ ok: true })
@@ -132,7 +131,7 @@ describe('Settings — avatar upload', () => {
     renderSettings()
     fireEvent.click(
       within(screen.getByRole('region', { name: 'My Lobster Profile' })).getByRole('button', {
-        name: 'Edit',
+        name: 'Edit profile',
       }),
     )
 
@@ -141,5 +140,28 @@ describe('Settings — avatar upload', () => {
     await waitFor(() => expect(updatePlayerMock).toHaveBeenCalledTimes(1))
     expect(uploadMock).not.toHaveBeenCalled()
     expect(processAvatarMock).not.toHaveBeenCalled()
+  })
+
+  it('discards unsaved edits when the editor is closed', async () => {
+    renderSettings()
+    pickAvatar()
+    fireEvent.change(screen.getByPlaceholderText('e.g. Augustin Tapia'), {
+      target: { value: 'Someone Else' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: /close/i }))
+
+    fireEvent.click(
+      within(screen.getByRole('region', { name: 'My Lobster Profile' })).getByRole('button', {
+        name: 'Edit profile',
+      }),
+    )
+    expect((screen.getByPlaceholderText('e.g. Augustin Tapia') as HTMLInputElement).value).toBe(
+      'Ada Lovelace',
+    )
+    fireEvent.click(screen.getByRole('button', { name: /save profile/i }))
+
+    await waitFor(() => expect(updatePlayerMock).toHaveBeenCalledTimes(1))
+    expect(updatePlayerMock.mock.calls[0][1].name).toBe('Ada Lovelace')
+    expect(uploadMock).not.toHaveBeenCalled()
   })
 })

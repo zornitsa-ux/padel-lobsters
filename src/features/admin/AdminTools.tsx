@@ -11,7 +11,7 @@ import { REVIEW_SCENARIOS, corpReview } from '../community/reviewScenarios'
 import type { LucideIcon } from 'lucide-react'
 import {
   Users,
-  Calculator,
+  Settings,
   ShoppingBag,
   BarChart3,
   AlertCircle,
@@ -28,6 +28,7 @@ import { plural } from '../../lib/plural'
 import AuthReadinessPanel from './AuthReadinessPanel'
 import type { EventNavigate } from '../events/eventHelpers'
 import { isEventUpcoming } from '../events/eventPhase'
+import { GROUP_SETTINGS_PATH } from '../settings/settingsHelpers'
 import { useTeamResultsByEvent } from '../events/kingOfCourt/useTeamResultsByEvent'
 import { owesPayment } from '../events/paymentStatus'
 
@@ -160,11 +161,11 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
         to: '/community',
       },
       {
-        id: 'ratings',
-        title: 'Ratings & Admin Settings',
-        description: 'Manage admin settings and run rating recompute from a single place.',
-        icon: Calculator,
-        to: '/account',
+        id: 'group-settings',
+        title: 'Group Settings',
+        description: 'Group name, WhatsApp link, daily padel tips and recent security events.',
+        icon: Settings,
+        to: GROUP_SETTINGS_PATH,
       },
       {
         id: 'merch',
