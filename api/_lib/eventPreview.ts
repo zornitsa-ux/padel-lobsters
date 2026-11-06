@@ -24,7 +24,12 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 export const isEventId = (id: string | null): id is string => !!id && UUID.test(id)
 
-export async function fetchPreviewEvent({
+export type PreviewLookup =
+  | { status: 'found'; event: PreviewEvent }
+  | { status: 'missing' }
+  | { status: 'failed' }
+
+export async function lookupPreviewEvent({
   supabaseUrl,
   anonKey,
   id,
@@ -32,22 +37,31 @@ export async function fetchPreviewEvent({
   supabaseUrl: string
   anonKey: string
   id: string
-}): Promise<PreviewEvent | null> {
-  if (!supabaseUrl || !anonKey) return null
+}): Promise<PreviewLookup> {
+  if (!supabaseUrl || !anonKey) return { status: 'failed' }
   const url = `${supabaseUrl}/rest/v1/tournaments?select=${PREVIEW_COLUMNS}&id=eq.${id}&limit=1`
-  // A preview must never fail the share: any error falls back to the site card.
   try {
     const res = await fetch(url, {
       headers: { apikey: anonKey, Authorization: `Bearer ${anonKey}` },
       // A crawler gives up after a few seconds; fall back before it does.
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     })
-    if (!res.ok) return null
+    if (!res.ok) return { status: 'failed' }
     const rows = (await res.json()) as PreviewEvent[]
-    return rows[0] ?? null
+    return rows[0] ? { status: 'found', event: rows[0] } : { status: 'missing' }
   } catch {
-    return null
+    return { status: 'failed' }
   }
+}
+
+// A preview must never fail the share: any error falls back to the site card.
+export async function fetchPreviewEvent(args: {
+  supabaseUrl: string
+  anonKey: string
+  id: string
+}): Promise<PreviewEvent | null> {
+  const lookup = await lookupPreviewEvent(args)
+  return lookup.status === 'found' ? lookup.event : null
 }
 
 // Date-only strings are calendar dates: format them in UTC so the server's
@@ -65,7 +79,9 @@ export const formatPreviewDate = ({ date, time }: Pick<PreviewEvent, 'date' | 't
   return time ? `${day} · ${time}` : day
 }
 
-export const todayUtc = (now = new Date()): string => now.toISOString().slice(0, 10)
+// Event dates are Amsterdam calendar dates.
+export const todayInAmsterdam = (now = new Date()): string =>
+  now.toLocaleDateString('en-CA', { timeZone: 'Europe/Amsterdam' })
 
 // Started, finished or past: the link no longer leads to a sign-up.
 export const isClosed = ({ event, today }: { event: PreviewEvent; today: string }): boolean =>

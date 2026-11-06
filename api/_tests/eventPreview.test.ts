@@ -7,6 +7,7 @@ import {
   isEventId,
   previewText,
   renderPreviewHtml,
+  todayInAmsterdam,
   type PreviewEvent,
 } from '../_lib/eventPreview'
 
@@ -86,5 +87,11 @@ describe('event preview', () => {
     expect(html).toContain('&#60;script&#62;')
     expect(html).toContain('<meta property="og:image" content="https://padelobsters.nl/i.png" />')
     expect(html).toContain('location.replace("https://padelobsters.nl/events/x/info?app=1")')
+  })
+
+  it("takes today from Amsterdam's calendar, not UTC", () => {
+    // 23:30 UTC on 14 Nov is 00:30 on 15 Nov in Amsterdam.
+    expect(todayInAmsterdam(new Date('2026-11-14T23:30:00Z'))).toBe('2026-11-15')
+    expect(todayInAmsterdam(new Date('2026-11-14T12:00:00Z'))).toBe('2026-11-14')
   })
 })

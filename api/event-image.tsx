@@ -6,9 +6,9 @@ import {
   SITE_NAME,
   formatPreviewDate,
   type PreviewEvent,
-  fetchPreviewEvent,
+  type PreviewLookup,
+  lookupPreviewEvent,
   imageUrlFor,
-  imageVersion,
   isEventId,
 } from './_lib/eventPreview.js'
 import { LOGO_DATA_URL } from './_lib/logo.js'
@@ -19,9 +19,9 @@ import { supabaseEnv } from './_lib/env.js'
 const BRAND = { teal, tealDark, coral, cream, white: '#FFFFFF' }
 
 // 1200×630 share card: who's hosting, what, when, where. No spot count.
-function EventImage({ event, logo }: { event: PreviewEvent | null; logo: string }) {
-  const when = event ? formatPreviewDate(event) : ''
-  const format = event?.format ? formatLabel(event.format) : ''
+function EventImage({ event, logo }: { event: PreviewEvent; logo: string }) {
+  const when = formatPreviewDate(event)
+  const format = event.format ? formatLabel(event.format) : ''
   return (
     <div
       style={{
@@ -42,10 +42,10 @@ function EventImage({ event, logo }: { event: PreviewEvent | null; logo: string 
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div style={{ display: 'block', fontSize: 76, lineHeight: 1.05, lineClamp: 2 }}>
-          {event?.name || 'Upcoming events'}
+          {event.name || SITE_NAME}
         </div>
         {when && <div style={{ fontSize: 40, color: BRAND.cream }}>{when}</div>}
-        {event?.location && (
+        {event.location && (
           <div style={{ fontSize: 34, color: BRAND.cream, opacity: 0.85 }}>{event.location}</div>
         )}
       </div>
@@ -74,24 +74,30 @@ function EventImage({ event, logo }: { event: PreviewEvent | null; logo: string 
 }
 
 // The share image for one event. Its URL carries a version (imageVersion), so
-// it's cached hard: an edited event gets a new URL. Any other `v` redirects to
-// the current one, so made-up versions can't each force a fresh render.
+// it's cached hard: an edited event gets a new URL. Any other URL for the event
+// redirects to that one, so made-up versions or params can't each force a render.
+// Only real events render; unknown ids get the static site image.
 async function handler(request: Request): Promise<Response> {
   const url = new URL(request.url)
   const id = url.searchParams.get('id')
-  const event = isEventId(id) ? await fetchPreviewEvent({ ...supabaseEnv(), id }) : null
+  const lookup: PreviewLookup = isEventId(id)
+    ? await lookupPreviewEvent({ ...supabaseEnv(), id })
+    : { status: 'missing' }
 
-  if (event && url.searchParams.get('v') !== imageVersion({ event })) {
-    return Response.redirect(imageUrlFor({ origin: url.origin, event }), 308)
+  // Not cached, so a crawler retries rather than keeping a wrong image.
+  if (lookup.status === 'failed') {
+    return new Response(null, { status: 503, headers: { 'cache-control': 'no-store' } })
+  }
+  if (lookup.status === 'missing') {
+    return Response.redirect(`${url.origin}/logo-hd.png`, 308)
   }
 
-  return new ImageResponse(<EventImage event={event} logo={LOGO_DATA_URL} />, {
+  const canonical = imageUrlFor({ origin: url.origin, event: lookup.event })
+  if (url.href !== canonical) return Response.redirect(canonical, 308)
+
+  return new ImageResponse(<EventImage event={lookup.event} logo={LOGO_DATA_URL} />, {
     ...IMAGE_SIZE,
-    headers: {
-      'cache-control': event
-        ? 'public, max-age=86400, s-maxage=31536000, immutable'
-        : 'public, max-age=300, s-maxage=300',
-    },
+    headers: { 'cache-control': 'public, max-age=86400, s-maxage=31536000, immutable' },
   })
 }
 

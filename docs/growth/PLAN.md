@@ -96,12 +96,18 @@ source.
 - **Tags and image.** The function reads event facts only (name, date, time,
   venue, format) and returns `og:*` tags. `api/event-image` renders the
   1200×630 card. Its URL carries a version from those facts, so it's cached
-  hard and an edited event gets a new image; any other version redirects to
-  the current one. No spot count (cached). Started, finished or past events
-  say sign-ups are closed. The logo is inlined, so a render fetches nothing.
+  hard and an edited event gets a new image; any other URL for the event
+  (wrong version, extra params) redirects to the current one, so only real
+  events render, once per version. No spot count (cached). Started, finished
+  or past events say sign-ups are closed, judged by Amsterdam's date. The
+  logo is inlined, so a render fetches nothing.
 - **Fallback.** `index.html` carries site-wide tags, used for every other
   link, and by the function when the event is unknown, or Supabase fails or
-  takes over 2.5s.
+  takes over 2.5s. The image function sends an unknown id to the static
+  `logo-hd.png`, and answers a Supabase failure with an uncached 503, so a
+  crawler retries rather than keeping a wrong image.
+- **Not covered:** links to the other event tabs (schedule, results) get the
+  site card. Those are for members, not sharing.
 - **Font.** The card uses the regular weight `@vercel/og` ships with, so no
   font file is bundled.
 - **Node.js runtime.** The functions export `{ fetch }` and run as plain Node

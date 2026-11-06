@@ -58,9 +58,53 @@ describe('event-image handler', () => {
     expect(ImageResponse).not.toHaveBeenCalled()
   })
 
-  it('renders the site card, briefly cached, for an unknown event', async () => {
-    const res = await handler.fetch(new Request('https://padelobsters.nl/api/event-image?id=nope'))
-    expect(ImageResponse).toHaveBeenCalledOnce()
-    expect(res.headers.get('cache-control')).toBe('public, max-age=300, s-maxage=300')
+  it('redirects extra query params to the current version without rendering', async () => {
+    vi.stubEnv('VITE_SUPABASE_URL', 'https://db.example')
+    vi.stubEnv('VITE_SUPABASE_ANON_KEY', 'anon')
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify([EVENT]))),
+    )
+    const v = imageVersion({ event: EVENT })
+    const res = await handler.fetch(
+      new Request(`https://padelobsters.nl/api/event-image?id=${ID}&v=${v}&x=1`),
+    )
+    expect(res.status).toBe(308)
+    expect(res.headers.get('location')).toBe(
+      `https://padelobsters.nl/api/event-image?id=${ID}&v=${v}`,
+    )
+    expect(ImageResponse).not.toHaveBeenCalled()
+  })
+
+  it('sends an unknown or malformed id to the static site image', async () => {
+    vi.stubEnv('VITE_SUPABASE_URL', 'https://db.example')
+    vi.stubEnv('VITE_SUPABASE_ANON_KEY', 'anon')
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('[]')),
+    )
+    for (const id of ['nope', ID]) {
+      const res = await handler.fetch(
+        new Request(`https://padelobsters.nl/api/event-image?id=${id}&v=1`),
+      )
+      expect(res.status).toBe(308)
+      expect(res.headers.get('location')).toBe('https://padelobsters.nl/logo-hd.png')
+    }
+    expect(ImageResponse).not.toHaveBeenCalled()
+  })
+
+  it('fails uncached when Supabase fails, so crawlers retry', async () => {
+    vi.stubEnv('VITE_SUPABASE_URL', 'https://db.example')
+    vi.stubEnv('VITE_SUPABASE_ANON_KEY', 'anon')
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('oops', { status: 500 })),
+    )
+    const res = await handler.fetch(
+      new Request(`https://padelobsters.nl/api/event-image?id=${ID}&v=1`),
+    )
+    expect(res.status).toBe(503)
+    expect(res.headers.get('cache-control')).toBe('no-store')
+    expect(ImageResponse).not.toHaveBeenCalled()
   })
 })

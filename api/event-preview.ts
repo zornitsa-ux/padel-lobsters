@@ -7,7 +7,7 @@ import {
   isEventId,
   previewText,
   renderPreviewHtml,
-  todayUtc,
+  todayInAmsterdam,
 } from './_lib/eventPreview.js'
 import { supabaseEnv } from './_lib/env.js'
 
@@ -26,7 +26,7 @@ async function handler(request: Request): Promise<Response> {
 
   const html = event
     ? renderPreviewHtml({
-        ...previewText({ event, today: todayUtc() }),
+        ...previewText({ event, today: todayInAmsterdam() }),
         pageUrl,
         appUrl,
         imageUrl: imageUrlFor({ origin: url.origin, event }),
