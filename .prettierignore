@@ -7,3 +7,4 @@ supabase/.temp
 .claude/
 test-results
 playwright-report
+.vercel/

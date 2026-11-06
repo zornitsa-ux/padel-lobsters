@@ -8,14 +8,12 @@ import {
   previewText,
   renderPreviewHtml,
   todayUtc,
-} from './_lib/eventPreview'
-import { supabaseEnv } from './_lib/env'
-
-export const config = { runtime: 'edge' }
+} from './_lib/eventPreview.js'
+import { supabaseEnv } from './_lib/env.js'
 
 // Served only to link-preview crawlers on /events/:id and /events/:id/info
 // (see vercel.json); people get the app as usual.
-export default async function handler(request: Request): Promise<Response> {
+async function handler(request: Request): Promise<Response> {
   const url = new URL(request.url)
   const id = url.searchParams.get('id')
   const tab = url.searchParams.get('tab')
@@ -48,3 +46,5 @@ export default async function handler(request: Request): Promise<Response> {
     },
   })
 }
+
+export default { fetch: handler }

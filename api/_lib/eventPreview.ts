@@ -1,4 +1,4 @@
-import { formatLabel } from '../../src/features/events/eventHelpers'
+import { formatLabel } from '../../src/features/events/eventHelpers.js'
 
 // Link previews for shared event links. Event facts only: no player data,
 // and no spot count, because WhatsApp and Instagram cache previews.

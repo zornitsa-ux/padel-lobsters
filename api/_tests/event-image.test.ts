@@ -34,7 +34,7 @@ describe('event-image handler', () => {
       vi.fn(async () => new Response(JSON.stringify([EVENT]))),
     )
     const v = imageVersion({ event: EVENT })
-    const res = await handler(
+    const res = await handler.fetch(
       new Request(`https://padelobsters.nl/api/event-image?id=${ID}&v=${v}`),
     )
     expect(ImageResponse).toHaveBeenCalledOnce()
@@ -48,7 +48,7 @@ describe('event-image handler', () => {
       'fetch',
       vi.fn(async () => new Response(JSON.stringify([EVENT]))),
     )
-    const res = await handler(
+    const res = await handler.fetch(
       new Request(`https://padelobsters.nl/api/event-image?id=${ID}&v=made-up`),
     )
     expect(res.status).toBe(308)
@@ -59,7 +59,7 @@ describe('event-image handler', () => {
   })
 
   it('renders the site card, briefly cached, for an unknown event', async () => {
-    const res = await handler(new Request('https://padelobsters.nl/api/event-image?id=nope'))
+    const res = await handler.fetch(new Request('https://padelobsters.nl/api/event-image?id=nope'))
     expect(ImageResponse).toHaveBeenCalledOnce()
     expect(res.headers.get('cache-control')).toBe('public, max-age=300, s-maxage=300')
   })

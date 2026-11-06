@@ -59,3 +59,19 @@ it('keeps only function entry points at the top of api/', () => {
   const entries = readdirSync(new URL('..', import.meta.url)).filter((f) => !f.startsWith('_'))
   expect(entries.sort()).toEqual(['event-image.tsx', 'event-preview.ts'])
 })
+
+// Vercel runs functions as plain Node ES modules, which need file extensions on
+// relative imports. Without them a function builds but fails on its first call.
+it('gives every relative import in the functions a file extension', () => {
+  const files = ['.', '_lib'].flatMap((dir) =>
+    readdirSync(new URL(`../${dir}/`, import.meta.url))
+      .filter((f) => /\.tsx?$/.test(f))
+      .map((f) => new URL(`../${dir}/${f}`, import.meta.url)),
+  )
+  const bare = files.flatMap((file) =>
+    [...readFileSync(file, 'utf8').matchAll(/from '(\.{1,2}\/[^']+)'/g)]
+      .map((m) => m[1])
+      .filter((spec) => !/\.(js|json)$/.test(spec)),
+  )
+  expect(bare).toEqual([])
+})

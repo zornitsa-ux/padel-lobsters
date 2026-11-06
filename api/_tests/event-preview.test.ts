@@ -30,7 +30,7 @@ describe('event-preview handler', () => {
       },
     ])
 
-    const res = await handler(
+    const res = await handler.fetch(
       new Request(`https://padelobsters.nl/api/event-preview?id=${ID}&tab=info&src=wa`),
     )
     const html = await res.text()
@@ -55,22 +55,30 @@ describe('event-preview handler', () => {
       'fetch',
       vi.fn(async () => Promise.reject(new Error('offline'))),
     )
-    const res = await handler(new Request(`https://padelobsters.nl/api/event-preview?id=${ID}`))
+    const res = await handler.fetch(
+      new Request(`https://padelobsters.nl/api/event-preview?id=${ID}`),
+    )
     expect(res.status).toBe(200)
     expect(await res.text()).toContain('<meta property="og:title" content="Padel Lobsters" />')
 
     vi.stubEnv('VITE_SUPABASE_URL', '')
-    const unset = await handler(new Request(`https://padelobsters.nl/api/event-preview?id=${ID}`))
+    const unset = await handler.fetch(
+      new Request(`https://padelobsters.nl/api/event-preview?id=${ID}`),
+    )
     expect(await unset.text()).toContain('<meta property="og:title" content="Padel Lobsters" />')
   })
 
   it('falls back to the site tags for an unknown or malformed id', async () => {
     const fetchMock = mockFetch([])
-    const bad = await handler(new Request('https://padelobsters.nl/api/event-preview?id=nope'))
+    const bad = await handler.fetch(
+      new Request('https://padelobsters.nl/api/event-preview?id=nope'),
+    )
     expect(fetchMock).not.toHaveBeenCalled()
     expect(await bad.text()).toContain('<meta property="og:title" content="Padel Lobsters" />')
 
-    const missing = await handler(new Request(`https://padelobsters.nl/api/event-preview?id=${ID}`))
+    const missing = await handler.fetch(
+      new Request(`https://padelobsters.nl/api/event-preview?id=${ID}`),
+    )
     expect(await missing.text()).toContain('content="https://padelobsters.nl/logo-hd.png"')
   })
 })
