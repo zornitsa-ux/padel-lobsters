@@ -88,6 +88,9 @@ function h2hWinsInGroup(teamId: string, groupIds: Set<string>, played: LeagueMat
  * 2. Overall set difference
  * 3. Overall game difference
  */
+export const TIEBREAK_NOTE =
+  'Teams level on points are split by wins in matches between them, then set difference, then game difference.'
+
 function sortTiedGroup(group: Standing[], played: LeagueMatch[]): Standing[] {
   if (group.length <= 1) return group
 
