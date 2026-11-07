@@ -150,6 +150,28 @@ templates changed: `npm run db:stop && npm run db:start`.
 
 ---
 
+## Environment files
+
+Vite picks the env file from the mode. Every mode also reads `.env`, and the
+mode's own file wins over it.
+
+| Command                        | Mode                    | Reads                   | Points at             |
+| ------------------------------ | ----------------------- | ----------------------- | --------------------- |
+| `npm run dev`, `npm run build` | development, production | `.env`                  | whatever `.env` holds |
+| `npm run dev:local` (and e2e)  | `localdev`              | `.env.localdev`         | local Supabase        |
+| `npm run dev:prod`             | `prod`                  | `.env.prod`             | production Supabase   |
+| `npm test` (Vitest)            | `test`                  | `.env.test` (committed) | placeholders only     |
+
+- Set up: copy `.env.localdev.example` to `.env.localdev`, and to `.env` too, so
+  plain `dev`/`build` use the local stack and never production.
+- **Don't keep values in `.env.local`.** The Vercel CLI owns it: `vercel link`
+  and `vercel env pull` overwrite it with an OIDC token, and it beats `.env` in
+  every mode. To pull Vercel's env, name a file: `vercel env pull .env.vercel`.
+- `npm run build` doesn't need any env file: the Supabase preconnect tags are
+  left out when `VITE_SUPABASE_URL` is unset (worktrees and fresh clones).
+
+---
+
 ## Pre-commit hook
 
 Commits run Prettier + ESLint on changed files automatically (Husky). A

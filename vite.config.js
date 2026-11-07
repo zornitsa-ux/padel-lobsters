@@ -26,9 +26,35 @@ const siteMetaTags = () => ({
   ],
 })
 
+// Start the DNS + TLS handshake to Supabase during HTML parse. Without this it
+// only begins once the entry chunk has downloaded and executed, serialising
+// ~70ms of connection setup ahead of the first query. Skipped when the URL is
+// unset (a worktree or fresh clone with no env file), so the build still runs.
+const supabasePreconnect = () => {
+  let url
+  return {
+    name: 'supabase-preconnect',
+    configResolved: (config) => {
+      url = config.env.VITE_SUPABASE_URL
+    },
+    transformIndexHtml: () =>
+      url
+        ? [
+            {
+              tag: 'link',
+              attrs: { rel: 'preconnect', href: url, crossorigin: true },
+              injectTo: 'head',
+            },
+            { tag: 'link', attrs: { rel: 'dns-prefetch', href: url }, injectTo: 'head' },
+          ]
+        : [],
+  }
+}
+
 export default defineConfig({
   plugins: [
     react(),
+    supabasePreconnect(),
     siteMetaTags(),
     analyze &&
       visualizer({
