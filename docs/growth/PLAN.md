@@ -29,8 +29,8 @@ shipped and the funnel has been measured.
   `confirmation.html` are pasted into the hosted email templates, and the
   hosted redirect allow-list now has `https://padelobsters.nl/**` (it held
   only `/auth/confirm` before).
-- **G5 is paused** (owner, 7 Nov). See G5 notes. It comes back, if at all,
-  with G5b.
+- **G5 is paused** (owner, 7 Nov). See G5 notes. Reconsider it, if at all,
+  after the first monthly G5b review.
 - **G5b is live** (#159). The owner enabled Web Analytics on the Vercel
   project on 7 Nov. Review monthly (see G5b). Speed Insights later, with the
   perf work.
@@ -300,26 +300,38 @@ review.
 
 **What the app holds**
 
-- **Account:** email and sign-in details (Supabase Auth).
+- **Account:** email and sign-in details (Supabase Auth), plus a copy of the
+  email on `players`, which admins see.
 - **Profile** (`players`): name, phone, gender, country, birthday,
   handedness, position, tagline, Playtomic level and username, free-text
-  notes, and an avatar in the public `avatars` bucket. Members see name,
-  avatar, levels and birthday day and month; admins also see email and phone.
+  notes, and an avatar in the public `avatars` bucket.
+- **Shown to others** (`players_public`, readable by anyone today, #150):
+  name, avatar, gender, country, handedness, position, tagline, levels and
+  learned rating, role, and birthday day and month. Admins also see email and
+  phone.
 - **Derived:** learned and matchmaking ratings, `rating_events`.
 - **Activity:** registrations and their status history, teams, matches,
   transfers, Oscars votes, raffle wins, league teams and interests, merch
-  orders.
+  orders, and the reminder-email log (`tournament_reminders_sent`).
 - **Payments:** a Tikkie link per event and a paid flag. No bank data.
 - **Given by others:** admin-added players, partner invites by email.
-- **Security log:** IP and user agent in `pin_attempts` (may go with PIN
-  removal PR 5).
-- **On the device:** a device ID, the greeting name cache and a Playtomic
-  check timestamp in `localStorage`. Functional; no cookies.
+- **History:** old names linked to players (`player_aliases`), and old email
+  addresses with who cleared them and how (`player_email_clears`). A deletion
+  must cover these too.
+- **Security log:** IP, user agent and device ID in `pin_attempts`. It stays:
+  the PIN removal plan renames it as the audit log (pin-auth-removal D-5).
+- **On the device:** the sign-in session token (Supabase, `localStorage`), a
+  device ID, the greeting name cache, the sign-in return path, the merch
+  last-checked time, the Playtomic check time and a perf flag; partner-invite
+  "seen" flags in `sessionStorage`. Functional; no cookies.
 
 **Processors and where they run**
 
 - Supabase: database, auth, storage. Database in Zurich (owner).
-- Resend: invite emails and the sign-in emails (owner).
+- Resend: the sign-in emails (owner), invite emails, PIN emails
+  (`send-pin-email`, until PIN removal deletes it) and event reminder emails.
+  Reminders go through the `send-tournament-reminders-batch` edge function,
+  which isn't in this repo; check whether it still runs.
 - Vercel: hosting (edge network), the link-preview functions in `iad1`
   (Washington DC, US; the default, read from the deployment), and cookieless
   Web Analytics for signed-out pages.
@@ -338,13 +350,14 @@ without consent ⚖ (low-impact, no cookies).
 **Owner choices so far:** plain English, short (a summary, then short
 sections). Linked from the signup form, The Lobster way and a small footer on
 the signed-out home and event pages. Public at `/privacy` (an exact public
-path). Linking it from signup makes it sign-in-facing (release freeze).
+path). Linking it from signup makes it sign-in-facing, so it can't merge
+within 3 days of a tournament (see Constraints).
 
 **Open before building**
 
 1. Controller name and contact address (public in the repo).
 2. Retention: past results after an account is deleted (keep anonymised or
-   delete); how long the security log is kept.
+   delete); how long the security log and the old-email history are kept.
 3. Whether to move the Vercel functions to an EU region (`regions` in
    `vercel.json`), which would also put them closer to Supabase.
 4. #160: self-host the flags, or name flagcdn.com.
