@@ -54,6 +54,14 @@ test('create an event through the form', async ({ page }) => {
     await form.getByRole('button', { name: 'King of the Court' }).click()
     await form.getByRole('button', { name: 'Create Event' }).click()
     await expect(form).toBeHidden()
+
+    // A new event opens the share prompt, with the event's sign-up message.
+    const share = page.getByRole('dialog', { name: 'Share event' })
+    await expect(share).toContainText('Your event is live')
+    await expect(share.getByTestId('share-message')).toContainText(name.toUpperCase())
+    await page.keyboard.press('Escape')
+    await expect(share).toBeHidden()
+
     await expect(page.getByRole('heading', { name })).toBeVisible()
 
     await expect
