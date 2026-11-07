@@ -1,3 +1,7 @@
+Vite picks the env file from the mode. Every mode also reads `.env` and
+`.env.local`, and the mode's own files (`.env.[mode]`, `.env.[mode].local`) win
+over them. The table lists the files this project uses.
+
 # Contributing to Padel Lobsters
 
 ## Working with the database
@@ -167,8 +171,12 @@ mode's own file wins over it.
 - **Don't keep values in `.env.local`.** The Vercel CLI owns it: `vercel link`
   and `vercel env pull` overwrite it with an OIDC token, and it beats `.env` in
   every mode. To pull Vercel's env, name a file: `vercel env pull .env.vercel`.
-- `npm run build` doesn't need any env file: the Supabase preconnect tags are
-  left out when `VITE_SUPABASE_URL` is unset (worktrees and fresh clones).
+- `npm run build` runs without any env file (worktrees, fresh clones): the
+  Supabase preconnect tags are left out and it warns. The app it builds won't
+  run without `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. In CI and on
+  Vercel a missing URL fails the build.
+- All `.env.*` files are gitignored except the committed `.env.example`,
+  `.env.localdev.example` and `.env.test`.
 
 ---
 

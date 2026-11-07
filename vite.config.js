@@ -29,13 +29,17 @@ const siteMetaTags = () => ({
 // Start the DNS + TLS handshake to Supabase during HTML parse. Without this it
 // only begins once the entry chunk has downloaded and executed, serialising
 // ~70ms of connection setup ahead of the first query. Skipped when the URL is
-// unset (a worktree or fresh clone with no env file), so the build still runs.
+// unset (a worktree or fresh clone with no env file), so a local build still runs.
 const supabasePreconnect = () => {
   let url
   return {
     name: 'supabase-preconnect',
     configResolved: (config) => {
       url = config.env.VITE_SUPABASE_URL
+      if (url || config.command !== 'build') return
+      // CI and Vercel always set it; a deploy without it would build green and break at runtime.
+      if (process.env.CI || process.env.VERCEL) throw new Error('VITE_SUPABASE_URL is not set')
+      config.logger.warn('VITE_SUPABASE_URL is not set: building anyway, but the app will not run.')
     },
     transformIndexHtml: () =>
       url
