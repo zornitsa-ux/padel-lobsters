@@ -380,3 +380,6 @@ are the owner's calls, made from fill speed and waitlist data (CASE-STUDY §3).
   only (owner). Custom events and UTM are paid, so the funnel is page views
   plus Supabase counts. Speed Insights later.
 - 7 Nov 2026: owner: research and create a privacy page (none exists yet).
+- 7 Nov 2026: Vercel functions (link previews) moved from `iad1` (US) to
+  `fra1` (Frankfurt), the EU region nearest the Supabase database in Zurich
+  (owner). Set in `vercel.json`.
