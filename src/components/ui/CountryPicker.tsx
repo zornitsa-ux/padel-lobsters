@@ -80,6 +80,7 @@ export function FlagImg({ code, className = '' }: { code?: string | null; classN
       src={`/flags/${code.toLowerCase()}.svg`}
       width="21"
       height="14"
+      loading="lazy"
       alt={code}
       className={`inline-block flex-shrink-0 ${className}`}
     />
