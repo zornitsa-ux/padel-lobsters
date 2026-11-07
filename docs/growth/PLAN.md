@@ -101,9 +101,10 @@ source.
   events render, once per version. No spot count (cached). Started, finished
   or past events say sign-ups are closed, judged by Amsterdam's date. The
   logo is inlined, so a render fetches nothing.
-- **Fallback.** `index.html` carries site-wide tags (from `siteMeta.js`), used for every other
-  link, and by the function when the event is unknown, or Supabase fails or
-  takes over 2.5s. The image function sends an unknown id to the static
+- **Fallback.** `index.html` carries site-wide tags (from `siteMeta.js`),
+  used for every other link, and by the function when the event is unknown,
+  or Supabase fails or takes over 2.5s. After a Supabase failure the page
+  isn't cached. The image function sends an unknown id to the static
   `logo-hd.png`, and answers a Supabase failure with an uncached 503, so a
   crawler retries rather than keeping a wrong image.
 - **Not covered:** links to the other event tabs (schedule, results) get the

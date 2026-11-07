@@ -10,6 +10,7 @@ const mockFetch = (rows: unknown[]) => {
 }
 
 afterEach(() => {
+  vi.restoreAllMocks()
   vi.unstubAllGlobals()
   vi.unstubAllEnvs()
 })
@@ -48,7 +49,8 @@ describe('event-preview handler', () => {
     expect(url).toContain(`id=eq.${ID}`)
   })
 
-  it('falls back to the site tags when Supabase is unreachable or unset', async () => {
+  it('falls back to the site tags, uncached, when Supabase is unreachable or unset', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
     vi.stubEnv('VITE_SUPABASE_URL', 'https://db.example')
     vi.stubEnv('VITE_SUPABASE_ANON_KEY', 'anon')
     vi.stubGlobal(
@@ -59,6 +61,7 @@ describe('event-preview handler', () => {
       new Request(`https://padelobsters.nl/api/event-preview?id=${ID}`),
     )
     expect(res.status).toBe(200)
+    expect(res.headers.get('cache-control')).toBe('no-store')
     expect(await res.text()).toContain('<meta property="og:title" content="Padel Lobsters" />')
 
     vi.stubEnv('VITE_SUPABASE_URL', '')
@@ -80,5 +83,6 @@ describe('event-preview handler', () => {
       new Request(`https://padelobsters.nl/api/event-preview?id=${ID}`),
     )
     expect(await missing.text()).toContain('content="https://padelobsters.nl/logo-hd.png"')
+    expect(missing.headers.get('cache-control')).toContain('s-maxage=300')
   })
 })

@@ -1,6 +1,7 @@
 import {
   appUrlFor,
-  fetchPreviewEvent,
+  lookupPreviewEvent,
+  type PreviewLookup,
   imageUrlFor,
   isEventId,
   previewText,
@@ -21,7 +22,11 @@ async function handler(request: Request): Promise<Response> {
   const appUrl = valid
     ? appUrlFor({ origin: url.origin, id, tab, search: url.searchParams })
     : `${url.origin}/events?app=1`
-  const event = valid ? await fetchPreviewEvent({ ...supabaseEnv(), id }) : null
+  const lookup: PreviewLookup = valid
+    ? await lookupPreviewEvent({ ...supabaseEnv(), id })
+    : { status: 'missing' }
+  const event = lookup.status === 'found' ? lookup.event : null
+  if (lookup.status === 'failed') console.warn('event-preview: event lookup failed')
 
   const html = event
     ? renderPreviewHtml({
@@ -41,7 +46,11 @@ async function handler(request: Request): Promise<Response> {
   return new Response(html, {
     headers: {
       'content-type': 'text/html; charset=utf-8',
-      'cache-control': 'public, max-age=0, s-maxage=300, stale-while-revalidate=3600',
+      // A failed lookup isn't cached, so the next crawler gets the real preview.
+      'cache-control':
+        lookup.status === 'failed'
+          ? 'no-store'
+          : 'public, max-age=0, s-maxage=300, stale-while-revalidate=3600',
     },
   })
 }

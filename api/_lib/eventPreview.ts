@@ -52,16 +52,6 @@ export async function lookupPreviewEvent({
   }
 }
 
-// A preview must never fail the share: any error falls back to the site card.
-export async function fetchPreviewEvent(args: {
-  supabaseUrl: string
-  anonKey: string
-  id: string
-}): Promise<PreviewEvent | null> {
-  const lookup = await lookupPreviewEvent(args)
-  return lookup.status === 'found' ? lookup.event : null
-}
-
 // Date-only strings are calendar dates: format them in UTC so the server's
 // timezone can't shift the day.
 export const formatPreviewDate = ({ date, time }: Pick<PreviewEvent, 'date' | 'time'>): string => {
