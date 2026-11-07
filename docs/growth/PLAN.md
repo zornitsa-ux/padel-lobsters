@@ -31,13 +31,13 @@ shipped and the funnel has been measured.
   only `/auth/confirm` before).
 - **G5 is paused** (owner, 7 Nov). See G5 notes. It comes back, if at all,
   with G5b.
-- **G5b (traffic funnel) is in review.** Vercel Web Analytics on Hobby,
-  signed-out funnel pages only. See G5b. After merge, the owner enables Web
-  Analytics on the Vercel project. Speed Insights later, with the perf work.
+- **G5b is live** (#159). The owner enabled Web Analytics on the Vercel
+  project on 7 Nov. Review monthly (see G5b). Speed Insights later, with the
+  perf work.
 - **G4 leftovers** (admin announcement text, "Download image") are still open.
-- **To do: a privacy page.** The app has none. Research what it must say
-  (GDPR; the app holds player profiles and contact details, and G5b adds
-  cookieless analytics), then write it and link it from the app. See G5b.
+- **Privacy page: researched, parked as an open planning item** (owner, 7 Nov).
+  See "Privacy page (open)". It needs a controller and contact before it can
+  be built.
 
 ---
 
@@ -51,7 +51,7 @@ shipped and the funnel has been measured.
 | G4  | Share button                | `ShareEventButton` opens an in-app `ShareSheet`: the message, then `navigator.share` (where available), copy message and copy link. See G4 notes. Shown on the event page for members and admins. The admin version has a longer "announcement" text for WhatsApp, plus "Download image", which serves the G2 preview image for an Instagram story with a link sticker. | Done (#154) |
 | G4b | More places to share        | A full-width "Share with friends" variant, then share right after signing up (`JoinEventCard` registered state), after an admin creates an event, in the event header on every tab while sign-ups are open (`EventShell`), and on the You tab. Then the signed-out event page. The Manage tab ("Fill the spots") was dropped. See G4 notes.                             | Done (#155) |
 | G5  | Attribution                 | Shared URLs carry `?src=` (`wa`, `ig`, `share`) and `?ref=` (the sharing member's opaque referral code, never a player ID). Stored on signup (`players.signup_source`, `referred_by`) and on the registration. Admin view: signups and first events by source.                                                                                                          | Paused      |
-| G5b | Traffic funnel              | Vercel Web Analytics (free on Hobby): page views of the signed-out steps only (landing, events list, event page, join), query strings dropped, members never tracked. Signups and registrations are counted in Supabase. See G5b.                                                                                                                                       | In review   |
+| G5b | Traffic funnel              | Vercel Web Analytics (free on Hobby): page views of the signed-out steps only (landing, events list, event page, join), query strings dropped, members never tracked. Signups and registrations are counted in Supabase. See G5b.                                                                                                                                       | Done (#159) |
 
 **Order:** G1 → G2 → G3 → G5 → G4. G2 needs G1, because a preview that opens
 to a sign-in wall wastes the tap. G5 ships before G4, so shares are counted
@@ -284,17 +284,73 @@ Checked 7 Nov against Vercel's docs:
   needed.
 
 **After merge (owner):** Vercel project → Analytics → Enable Web Analytics.
-Until then the script 404s harmlessly.
+Done 7 Nov.
 
-**Still to do: a privacy page** (owner, 7 Nov). The app has no privacy
-page. First research what it needs to cover: the player data the app keeps
-(profiles, contact details, registrations, payments), email sign-in, and
-Vercel Web Analytics, under GDPR. Then create the page and link it from the
-app (e.g. the footer and the signup form).
+**Privacy page:** researched, still open. See "Privacy page (open)".
 
 **Reviewing:** monthly, before the 1-month window rolls over. Copy the counts
 into the owner's private baseline; keep numbers out of the repo. Compare
 event-page views → join views → signups (Supabase) for the month.
+
+### Privacy page (open)
+
+Researched 7 Nov from the code, the schema and Dutch GDPR guidance. Parked as
+an open planning item (owner). Not legal advice: points marked ⚖ need legal
+review.
+
+**What the app holds**
+
+- **Account:** email and sign-in details (Supabase Auth).
+- **Profile** (`players`): name, phone, gender, country, birthday,
+  handedness, position, tagline, Playtomic level and username, free-text
+  notes, and an avatar in the public `avatars` bucket. Members see name,
+  avatar, levels and birthday day and month; admins also see email and phone.
+- **Derived:** learned and matchmaking ratings, `rating_events`.
+- **Activity:** registrations and their status history, teams, matches,
+  transfers, Oscars votes, raffle wins, league teams and interests, merch
+  orders.
+- **Payments:** a Tikkie link per event and a paid flag. No bank data.
+- **Given by others:** admin-added players, partner invites by email.
+- **Security log:** IP and user agent in `pin_attempts` (may go with PIN
+  removal PR 5).
+- **On the device:** a device ID, the greeting name cache and a Playtomic
+  check timestamp in `localStorage`. Functional; no cookies.
+
+**Processors and where they run**
+
+- Supabase: database, auth, storage. Database in Zurich (owner).
+- Resend: invite emails and the sign-in emails (owner).
+- Vercel: hosting (edge network), the link-preview functions in `iad1`
+  (Washington DC, US; the default, read from the deployment), and cookieless
+  Web Analytics for signed-out pages.
+- flagcdn.com: country flag images, so it receives visitor IPs (#160).
+- WhatsApp, Tikkie, Google Calendar and Instagram are links the user opens.
+
+**What the page must cover** (GDPR Art. 13/14): controller and contact;
+what's held and why; legal basis per purpose ⚖; recipients and processors;
+transfers outside the EU ⚖ (Switzerland has an EU adequacy decision; the
+providers are US companies); retention; the rights to access, correct,
+delete, restrict, object and port; complaint to the Autoriteit
+Persoonsgegevens; the source of data others entered; automated decisions
+(matchmaking uses levels); age ⚖ (16 is the Dutch consent age). Analytics
+without consent ⚖ (low-impact, no cookies).
+
+**Owner choices so far:** plain English, short (a summary, then short
+sections). Linked from the signup form, The Lobster way and a small footer on
+the signed-out home and event pages. Public at `/privacy` (an exact public
+path). Linking it from signup makes it sign-in-facing (release freeze).
+
+**Open before building**
+
+1. Controller name and contact address (public in the repo).
+2. Retention: past results after an account is deleted (keep anonymised or
+   delete); how long the security log is kept.
+3. Whether to move the Vercel functions to an EU region (`regions` in
+   `vercel.json`), which would also put them closer to Supabase.
+4. #160: self-host the flags, or name flagcdn.com.
+5. The page can't say "only members see your profile" until anon reads of
+   `players_public` are closed (#150), or "delete your account yourself":
+   there is no self-service deletion, so requests go to the admins.
 
 ## Phase 2: activation and referral (later)
 
@@ -380,3 +436,7 @@ are the owner's calls, made from fill speed and waitlist data (CASE-STUDY §3).
   only (owner). Custom events and UTM are paid, so the funnel is page views
   plus Supabase counts. Speed Insights later.
 - 7 Nov 2026: owner: research and create a privacy page (none exists yet).
+- 7 Nov 2026: G5b merged (#159); owner enabled Web Analytics.
+- 7 Nov 2026: privacy page researched (data inventory, processors, GDPR
+  contents); parked as an open planning item until the controller and
+  contact are chosen. Flag images from flagcdn.com split out as #160.
