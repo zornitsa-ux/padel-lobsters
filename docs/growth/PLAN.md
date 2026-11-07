@@ -22,23 +22,17 @@ shipped and the funnel has been measured.
 
 ---
 
-## Resume here (6 Nov 2026)
+## Resume here (7 Nov 2026)
 
 - **G1 is live** (#151, merged 4 Nov). Guests can browse upcoming events and
   open an event page; "Join" goes through signup back to the event.
-- **G5b (traffic funnel) is deferred** by the owner. Don't build it unless
-  asked.
-- **G2 (link previews) is back on Vercel functions**, now on the Node.js
-  runtime, in #152 (branch `g2-link-previews`). With steady Vercel access the
-  owner reconsidered (6 Nov): functions stay always current with no rebuild
-  schedule, and crawler-only traffic is a tiny share of the Hobby plan's
-  1M invocations and 4 CPU-hours a month. The static build-time design and
-  its routing probe are dropped.
-- **Why #152's deploys failed:** the build log showed `The Edge Function
-"api/event-image" is referencing unsupported modules: module`. The edge
-  runtime is gone, and the fixes it took to run on Node are in the G2 notes.
-- **Next:** check the preview deployment as a crawler (it's behind Vercel
-  Deployment Protection), then review and merge #152.
+- **G4 share sheet** is in #154 (branch `g4-share-sheet`). Next is G4b,
+  more places to share, branched off `main` once #154 merges.
+- **G5b (traffic funnel) is back in scope** (owner, 7 Nov), for after G4b and
+  G5. Before building it, look into Vercel Web Analytics and Speed Insights
+  (see G5b).
+- **G2 (link previews) is live** (#152 merged), on Vercel functions on the
+  Node.js runtime. See G2 notes.
 
 ---
 
@@ -47,15 +41,17 @@ shipped and the funnel has been measured.
 | #   | Task                        | What ships                                                                                                                                                                                                                                                                                                                                                                        | Status             |
 | --- | --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
 | G1  | Public event page           | Guests see the upcoming events list (`/events`, upcoming only) and `/events/:id/info`: a read-only card (name, date, time, location, format, price, spots left) plus a "Join to play" CTA, or "Join to get on the waitlist" when full. Other tabs stay protected. See G1 notes.                                                                                                   | Done (#151)        |
-| G2  | Link previews               | Per-event `og:title`/`og:description`/`og:image` for `/events/:id*`, with a generated image (date, format, venue). No live spot count, because previews are cached. Check it in the WhatsApp and Instagram link preview. See **Resume here** and G2 notes.                                                                                                                        | In progress (#152) |
+| G2  | Link previews               | Per-event `og:title`/`og:description`/`og:image` for `/events/:id*`, with a generated image (date, format, venue). No live spot count, because previews are cached. Check it in the WhatsApp and Instagram link preview. See G2 notes.                                                                                                                                            | Done (#152)        |
 | G3  | Signup returns to the event | CTA → signup carrying the event as the return path (`returnPath.ts`). After verifying, land on the event with the register action focused (or the waitlist action, if it's full).                                                                                                                                                                                                 | Not started        |
-| G4  | Share button                | `ShareEventButton` opens an in-app `ShareSheet`: the message, then `navigator.share` (where available), WhatsApp, copy message and copy link. See G4 notes. Shown on the event page for members and admins. The admin version has a longer "announcement" text for WhatsApp, plus "Download image", which serves the G2 preview image for an Instagram story with a link sticker. | In progress        |
+| G4  | Share button                | `ShareEventButton` opens an in-app `ShareSheet`: the message, then `navigator.share` (where available), WhatsApp, copy message and copy link. See G4 notes. Shown on the event page for members and admins. The admin version has a longer "announcement" text for WhatsApp, plus "Download image", which serves the G2 preview image for an Instagram story with a link sticker. | In progress (#154) |
+| G4b | More places to share        | A full-width "Share with friends" variant, then share right after signing up (`JoinEventCard` registered state), after an admin creates an event, in the event header on every tab while sign-ups are open (`EventShell`), and on the You tab. Then, if still wanted: the signed-out event page and the Manage tab ("Fill the spots"). See G4 notes.                              | Not started        |
 | G5  | Attribution                 | Shared URLs carry `?src=` (`wa`, `ig`, `share`) and `?ref=` (the sharing member's opaque referral code, never a player ID). Stored on signup (`players.signup_source`, `referred_by`) and on the registration. Admin view: signups and first events by source.                                                                                                                    | Not started        |
-| G5b | Traffic funnel              | Cookieless analytics (Vercel Web Analytics, or Plausible/Umami if custom events need a paid tier): public page views plus `event_page_view`, `share_tap`, `signup_start`, `signup_complete`, `event_register`, each tagged with `src`.                                                                                                                                            | Deferred           |
+| G5b | Traffic funnel              | Cookieless analytics (Vercel Web Analytics, or Plausible/Umami if custom events need a paid tier): public page views plus `event_page_view`, `share_tap`, `signup_start`, `signup_complete`, `event_register`, each tagged with `src`.                                                                                                                                            | Later              |
 
 **Order:** G1 → G2 → G3 → G5 → G4. G2 needs G1, because a preview that opens
 to a sign-in wall wastes the tap. G5 ships before G4, so shares are counted
-from day one. G5b (traffic funnel) is deferred by the owner (4 Nov).
+from day one. On 7 Nov the owner took the G4 share sheet and G4b first. G5b
+(traffic funnel) is back in scope for later.
 
 **Done when:** a logged-out phone opens a WhatsApp-shared event link and sees
 a rich preview, then the event details. It can sign up and be registered
@@ -133,10 +129,35 @@ source.
   price per player, spots left (or "Full, join the waitlist") and the sign-up
   link. No player names, unlike Playtomic's list of who's in: the message is
   forwarded outside the group.
+- **Only while sign-ups are open.** `ShareEventButton` renders nothing once
+  the event has started, finished or passed (`isOpenToJoin`, the same rule as
+  the guest page and the G2 previews), because the message says "Sign up".
+- **Where it shows now:** the home next-event card (icon), the events-list
+  card (icon), and the Info tab's date card (compact).
+- **Gaps found (7 Nov), for G4b, by growth impact:**
+  1. Right after signing up: the card just switches to "You're registered"
+     (`JoinEventCard`). This is the best moment to ask someone to bring a
+     friend.
+  2. After an admin creates an event: the form closes with no prompt.
+  3. The event header on every tab: during the event members land on the You
+     tab, where share isn't visible.
+  4. The You tab, for registered players.
+  5. The signed-out event page (safe, since the message has no names).
+  6. The Manage tab: "Fill the spots" next to the counts.
+  7. A spot freed by a cancellation with no waitlist: belongs to G9.
+- **Not shared:** past events, partner invites (a private invite), the
+  signed-out events list (its cards are already links), and the waitlist
+  notice (sharing a full event only grows the waitlist).
 - **Still to do:** the admin announcement text and "Download image", and
   `?src=`/`?ref=` on the link once G5 lands.
 
-### G5b: traffic funnel (deferred)
+### G5b: traffic funnel (later)
+
+**Back in scope** (owner, 7 Nov), after G4b and G5. **First, look into
+Vercel's own tools:** Web Analytics (page views, and whether custom events
+like `share_tap` need a paid plan on Hobby) and Speed Insights (real-user load
+times, alongside the existing perf CI). Check each against the acceptance
+criteria below before choosing a vendor.
 
 **Why.** G5 records sources only for people who convert. G5b counts the
 anonymous steps before that (link opened → page viewed → signup started), so
@@ -215,3 +236,6 @@ are the owner's calls, made from fill speed and waitlist data (CASE-STUDY §3).
   dropped.
 - 7 Nov 2026: G4 member share sheet built (in-app options, cleaner message),
   ahead of G3 and G5 at the owner's request.
+- 7 Nov 2026: share placement audit. Share hidden once sign-ups close. Added
+  G4b (more places to share). G5b back in scope for later, starting with a
+  look at Vercel Web Analytics and Speed Insights.

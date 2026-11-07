@@ -1,4 +1,4 @@
-import { eventTimeGroup, isEventOver } from '../eventPhase'
+import { eventTimeGroup, isEventOver, type OverTournament } from '../eventPhase'
 import { teamCount } from '../registration/team/teamHelpers'
 import type { PublicEvent } from './publicEventQueries'
 
@@ -24,7 +24,7 @@ export const spotsLabel = ({ event }: { event: CountedEvent }): string => {
 
 // Taking sign-ups: still 'upcoming' (not started), not over, and not an
 // Americano past its date awaiting results.
-export const isOpenToJoin = ({ event, now = new Date() }: { event: PublicEvent; now?: Date }) =>
+export const isOpenToJoin = ({ event, now = new Date() }: { event: OverTournament; now?: Date }) =>
   event.status === 'upcoming' &&
   !isEventOver({ tournament: event, now }) &&
   eventTimeGroup({ tournament: event, now }) === 'upcoming'

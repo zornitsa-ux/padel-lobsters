@@ -234,8 +234,11 @@ describe('Info tab — players sign themselves up here', () => {
 })
 
 describe('Info tab — share and calendar sit with the date', () => {
+  // Share shows only while sign-ups are open.
+  const open = { status: 'upcoming', date: '2099-07-29' }
+
   it('puts both chips inside the date and time card', () => {
-    renderInfo()
+    renderInfo(open)
 
     const share = screen.getByRole('button', { name: 'Share' })
     const calendar = screen.getByTitle('Add to Google Calendar')
@@ -245,5 +248,12 @@ describe('Info tab — share and calendar sit with the date', () => {
     expect(metaCard).not.toBeNull()
     expect(metaCard?.contains(share)).toBe(true)
     expect(metaCard?.contains(calendar)).toBe(true)
+  })
+
+  it('drops share once the event has started', () => {
+    renderInfo({ ...open, status: 'active' })
+
+    expect(screen.queryByRole('button', { name: 'Share' })).toBeNull()
+    expect(screen.getByTitle('Add to Google Calendar')).toBeTruthy()
   })
 })

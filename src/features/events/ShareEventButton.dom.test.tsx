@@ -3,7 +3,13 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import ShareEventButton from './ShareEventButton'
 
-const event = { id: 't1', name: 'Lobster Cup', maxPlayers: 16 }
+const event = {
+  id: 't1',
+  name: 'Lobster Cup',
+  status: 'upcoming',
+  date: '2099-06-01',
+  maxPlayers: 16,
+}
 
 afterEach(cleanup)
 
@@ -11,6 +17,18 @@ describe('ShareEventButton', () => {
   it('renders nothing without an event id', () => {
     const { container } = render(<ShareEventButton event={null} />)
     expect(container.innerHTML).toBe('')
+  })
+
+  it('renders nothing once sign-ups close', () => {
+    for (const closed of [
+      { ...event, status: 'active' },
+      { ...event, status: 'completed' },
+      { ...event, date: '2020-06-01' },
+    ]) {
+      const { container } = render(<ShareEventButton event={closed} />)
+      expect(container.innerHTML).toBe('')
+      cleanup()
+    }
   })
 
   it('opens the sheet with the event link and spots left', () => {

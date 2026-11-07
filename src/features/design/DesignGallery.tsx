@@ -80,8 +80,10 @@ import { PlaytomicLevelField } from '../players/ProfileFields'
 
 const SAMPLE_EVENT = {
   id: 'sample',
+  status: 'upcoming',
   name: 'Lobster Cup',
-  date: '2026-12-05',
+  // Far ahead: the share button hides once an event's date has passed.
+  date: '2099-12-05',
   time: '19:00',
   duration: 90,
   location: 'Padel Club Amsterdam',
