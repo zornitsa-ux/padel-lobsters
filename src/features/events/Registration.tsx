@@ -476,22 +476,8 @@ export default function Registration({
         </div>
       </div>
 
-      {/* 2. Description — read-only for players, inline-editable for admins
-          (click the pencil → textarea with Save / Cancel). */}
-      <EventDescription
-        tournament={tournament}
-        isAdmin={isAdmin}
-        onSave={async (next) => {
-          try {
-            await updateTournament(tournament.id, { notes: next })
-          } catch (err) {
-            alert(errorMessage(err, 'Could not save description.'))
-          }
-        }}
-      />
-
-      {/* 3. Sign-up — the player's own way in, next to what they just read.
-             /me still owns payment; this links there rather than repeat it. */}
+      {/* 2. Sign-up, straight under the date so it's on screen on landing
+             (G3). /me owns payment; this links there rather than repeat it. */}
       {isTeamEvent && !isAdmin && claimedId && !isCompleted && (
         <TeamSignup
           tournament={tournament}
@@ -550,7 +536,21 @@ export default function Registration({
         />
       )}
 
-      {/* 3. Roster — the two numbers that matter. */}
+      {/* 3. Description — read-only for players, inline-editable for admins
+          (click the pencil → textarea with Save / Cancel). */}
+      <EventDescription
+        tournament={tournament}
+        isAdmin={isAdmin}
+        onSave={async (next) => {
+          try {
+            await updateTournament(tournament.id, { notes: next })
+          } catch (err) {
+            alert(errorMessage(err, 'Could not save description.'))
+          }
+        }}
+      />
+
+      {/* 4. Roster — the two numbers that matter. */}
       {!isCompleted && (
         <RosterLine
           teamEntries={isTeamEvent ? teamEntries : undefined}
@@ -588,7 +588,7 @@ export default function Registration({
         />
       )}
 
-      {/* 4. Registered · Waitlist · Cancelled (collapsed). */}
+      {/* 5. Registered · Waitlist · Cancelled (collapsed). */}
       {isTeamEvent ? (
         <TeamLists
           tournament={tournament}

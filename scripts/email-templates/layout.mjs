@@ -4,8 +4,9 @@ const LOGO_URL =
 const BODY_TEXT = 'margin: 0 0 24px; font-size: 15px; line-height: 1.6; color: #4a5568'
 const FOOT_TEXT = 'margin: 0; font-size: 13px; color: #6b8a92; line-height: 1.5'
 
-const confirmUrl = ({ type, next }) =>
-  `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=${type}&next=${next}`
+// returnTo adds RedirectTo (the page the code was requested from) for AuthConfirm.
+const confirmUrl = ({ type, next, returnTo }) =>
+  `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=${type}&next=${next}${returnTo ? '&return_to={{ .RedirectTo }}' : ''}`
 
 const codeBlock = ({
   codeLabel,

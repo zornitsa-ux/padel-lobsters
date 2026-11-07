@@ -9,6 +9,7 @@ import {
 } from './fixtures/db'
 import { clearInbox, waitForCode, waitForConfirmPath } from './fixtures/mailpit'
 import { SEED_EVENTS, SIGN_IN_EMAILS } from './fixtures/seed'
+import { fillSignupForm } from './fixtures/signup'
 import { allowConsoleErrors, expect, test } from './fixtures/test'
 
 /* ════════════════════════════════════════════════════════════════════════════
@@ -65,18 +66,6 @@ async function createTransfer(): Promise<string> {
 async function enterCode({ page, code }: { page: Page; code: string }) {
   await page.getByLabel('Code').fill(code)
   await page.getByRole('button', { name: /^(sign in|finish signing up)$/i }).click()
-}
-
-async function fillSignupForm({ page, email }: { page: Page; email: string }) {
-  // A unique name: an existing roster match would block the submit.
-  await page.getByPlaceholder('e.g. Augustin').fill('Eve')
-  await page.getByPlaceholder('e.g. Tapia').fill(`Nightly${Date.now()}`)
-  await page.getByPlaceholder('player@email.com').fill(email)
-  await page.getByPlaceholder('+31612345678').fill('+31611111111')
-  await page.getByPlaceholder('e.g. 3.5').fill('2.5')
-  await page.getByRole('button', { name: /^female$/i }).click()
-  await page.getByPlaceholder(/select country/i).fill('Netherlands')
-  await page.getByRole('button', { name: /netherlands/i }).click()
 }
 
 const signedUp: string[] = []

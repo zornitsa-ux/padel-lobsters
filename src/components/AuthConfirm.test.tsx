@@ -61,6 +61,20 @@ describe('AuthConfirm — tap to confirm', () => {
     expect(window.localStorage.getItem('pl_auth_return_path')).toBeNull()
   })
 
+  it('goes to the emailed return_to when this browser saved no path', async () => {
+    const returnTo = encodeURIComponent(`${window.location.origin}/events/7/join?signup=1`)
+    renderAt(`/auth/confirm?token_hash=abc&type=email&next=/home&return_to=${returnTo}`)
+    fireEvent.click(screen.getByRole('button'))
+    expect((await screen.findByTestId('where')).textContent).toBe('/events/7/join?signup=1')
+  })
+
+  it('ignores a return_to on another origin', async () => {
+    const returnTo = encodeURIComponent('https://evil.example/events/7')
+    renderAt(`/auth/confirm?token_hash=abc&type=email&next=/home&return_to=${returnTo}`)
+    fireEvent.click(screen.getByRole('button'))
+    expect((await screen.findByTestId('where')).textContent).toBe('/home')
+  })
+
   it('falls back to a valid next, then /home', async () => {
     renderAt('/auth/confirm?token_hash=abc&type=email&next=/events')
     fireEvent.click(screen.getByRole('button'))

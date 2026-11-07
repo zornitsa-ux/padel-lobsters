@@ -24,16 +24,15 @@ shipped and the funnel has been measured.
 
 ## Resume here (7 Nov 2026)
 
-- **G1 is live** (#151, merged 4 Nov). Guests can browse upcoming events and
-  open an event page; "Join" goes through signup back to the event.
-- **G4 share sheet is live** (#154 merged). **G4b** (more places to share)
-  is in review (#155): gaps 1 to 5 in the G4 notes are built. Gap 6 (Manage
-  tab "Fill the spots") was dropped by the owner (7 Nov).
-- **G5b (traffic funnel) is back in scope** (owner, 7 Nov), for after G4b and
-  G5. Before building it, look into Vercel Web Analytics and Speed Insights
-  (see G5b).
-- **G2 (link previews) is live** (#152 merged), on Vercel functions on the
-  Node.js runtime. See G2 notes.
+- **G1, G2, G4 and G4b are live** (#151, #152, #154, #155). G4b merged 7 Nov;
+  gap 6 (Manage tab "Fill the spots") was dropped by the owner.
+- **G3 (signup returns to the event) is in review.** See G3 notes. After it
+  merges, the owner pastes `magic_link.html` and `confirmation.html` into the
+  hosted dashboard's email templates. Merge by ~11 Nov (release freeze before
+  the 15 Nov event), or after the 15th.
+- **Next: G5** (attribution, needs a migration). Then G5b (traffic funnel):
+  first look into Vercel Web Analytics and Speed Insights (see G5b).
+- **G4 leftovers** (admin announcement text, "Download image") are still open.
 
 ---
 
@@ -43,9 +42,9 @@ shipped and the funnel has been measured.
 | --- | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
 | G1  | Public event page           | Guests see the upcoming events list (`/events`, upcoming only) and `/events/:id/info`: a read-only card (name, date, time, location, format, price, spots left) plus a "Join to play" CTA, or "Join to get on the waitlist" when full. Other tabs stay protected. See G1 notes.                                                                                         | Done (#151) |
 | G2  | Link previews               | Per-event `og:title`/`og:description`/`og:image` for `/events/:id*`, with a generated image (date, format, venue). No live spot count, because previews are cached. Check it in the WhatsApp and Instagram link preview. See G2 notes.                                                                                                                                  | Done (#152) |
-| G3  | Signup returns to the event | CTA → signup carrying the event as the return path (`returnPath.ts`). After verifying, land on the event with the register action focused (or the waitlist action, if it's full).                                                                                                                                                                                       | Not started |
+| G3  | Signup returns to the event | CTA → signup carrying the event as the return path (`returnPath.ts`), also when the email link opens in another browser. Land on the event's Info tab with the sign-up action on screen (or the waitlist action, if it's full). See G3 notes.                                                                                                                           | In review   |
 | G4  | Share button                | `ShareEventButton` opens an in-app `ShareSheet`: the message, then `navigator.share` (where available), copy message and copy link. See G4 notes. Shown on the event page for members and admins. The admin version has a longer "announcement" text for WhatsApp, plus "Download image", which serves the G2 preview image for an Instagram story with a link sticker. | Done (#154) |
-| G4b | More places to share        | A full-width "Share with friends" variant, then share right after signing up (`JoinEventCard` registered state), after an admin creates an event, in the event header on every tab while sign-ups are open (`EventShell`), and on the You tab. Then the signed-out event page. The Manage tab ("Fill the spots") was dropped. See G4 notes.                             | In review   |
+| G4b | More places to share        | A full-width "Share with friends" variant, then share right after signing up (`JoinEventCard` registered state), after an admin creates an event, in the event header on every tab while sign-ups are open (`EventShell`), and on the You tab. Then the signed-out event page. The Manage tab ("Fill the spots") was dropped. See G4 notes.                             | Done (#155) |
 | G5  | Attribution                 | Shared URLs carry `?src=` (`wa`, `ig`, `share`) and `?ref=` (the sharing member's opaque referral code, never a player ID). Stored on signup (`players.signup_source`, `referred_by`) and on the registration. Admin view: signups and first events by source.                                                                                                          | Not started |
 | G5b | Traffic funnel              | Cookieless analytics (Vercel Web Analytics, or Plausible/Umami if custom events need a paid tier): public page views plus `event_page_view`, `share_tap`, `signup_start`, `signup_complete`, `event_register`, each tagged with `src`.                                                                                                                                  | Later       |
 
@@ -118,6 +117,37 @@ source.
 - **Check after deploy.** The functions read `VITE_SUPABASE_URL` and
   `VITE_SUPABASE_ANON_KEY` at runtime from the Vercel project env. Paste an
   event link into WhatsApp, or `curl -A WhatsApp/2 <event url>`.
+
+### G3 notes
+
+- **Checked end to end** (e2e `signup-to-event.spec.ts`, phone-sized): a new
+  account by code, a new account by the email link opened in another browser,
+  a full event (waitlist), an existing member signing in, and a team event.
+  The code path and a same-browser link already returned to the event (G1).
+- **Fixed: the email link in another browser.** The link said `next=/home`,
+  and the return path lived only in the first browser's storage, so signing up
+  in Instagram's in-app browser and tapping the link in Mail lost the event.
+  `requestEmailCode` now sends the current page as `emailRedirectTo`, and the
+  magic-link and signup templates add it to the link as
+  `return_to={{ .RedirectTo }}`. `AuthConfirm` uses it (same origin only, never
+  `/auth/*`) after the saved path and before `next`. If GoTrue drops it (not on
+  the redirect allow-list) it sends the site URL, which is ignored. The hosted
+  allow-list is the production origin `/**` (pin-auth-removal DESIGN §2).
+  Either deploy order is safe: app first sends no `return_to` to old
+  templates; templates first get the old `/auth/confirm` URL, which is
+  ignored.
+- **Register on screen on landing, for everyone** (owner, 7 Nov). The owner
+  called the old layout a design flaw, not something to work around with a
+  scroll or highlight after signup. The Info tab now puts the sign-up card
+  (and the transfer card) straight under the date card, above the
+  description, for individual and team events alike. At 375×667 "Register for
+  this event" and "Sign up as a team" are on screen without scrolling. Nothing
+  registers without a tap, and team events still open the partner picker from
+  "Sign up as a team".
+- **Waitlist.** "Join to get on the waitlist" uses the same join route, and a
+  full event's card shows "Join the waitlist", so it needed no change.
+- **Not changed:** the password-reset link (recovery) still returns via the
+  saved path or `/home`.
 
 ### G4 notes
 
@@ -260,3 +290,7 @@ are the owner's calls, made from fill speed and waitlist data (CASE-STUDY §3).
   phone's share sheet works better.
 - 7 Nov 2026: share on the signed-out event page (header icon). Manage tab
   "Fill the spots" dropped by the owner.
+- 7 Nov 2026: G4b merged (#155).
+- 7 Nov 2026: G3 built. Owner: sign-up must be on screen on landing for
+  everyone (moved above the description), and fix the email link in this PR
+  (`return_to` from RedirectTo). E2e for the signup → event paths.

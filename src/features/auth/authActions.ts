@@ -1,6 +1,6 @@
 import type { AuthError, EmailOtpType, Session } from '@supabase/supabase-js'
 import { supabase } from '../../supabase'
-import { saveReturnPath } from './returnPath'
+import { emailReturnUrl, saveReturnPath } from './returnPath'
 
 export interface AuthResult {
   error: AuthError | null
@@ -31,7 +31,7 @@ export async function requestEmailCode({
   saveReturnPath()
   const { error } = await supabase.auth.signInWithOtp({
     email,
-    options: { shouldCreateUser, data, emailRedirectTo: confirmUrl('?next=/home') },
+    options: { shouldCreateUser, data, emailRedirectTo: emailReturnUrl() },
   })
   return { error }
 }

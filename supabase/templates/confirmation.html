@@ -2,6 +2,11 @@
   Sign-up email: sent instead of magic_link to a brand-new address while
   email confirmations are on (they are on in the hosted project).
 
+  The link carries return_to={{ .RedirectTo }}: the page the code was asked
+  for on (emailRedirectTo), so the link lands there in any browser. GoTrue
+  sends the site URL instead when it isn't on the redirect allow-list, and
+  AuthConfirm then falls back to next.
+
   Shared shape (docs/pin-auth-removal DESIGN §2): the 6-digit code first,
   because a link tapped on iPhone opens Safari, not the home-screen app; then a
   token_hash link through the SPA's /auth/confirm route, never
@@ -120,7 +125,7 @@
                     <tr>
                       <td style="background: #d94f2b; border-radius: 8px">
                         <a
-                          href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&next=/home"
+                          href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&next=/home&return_to={{ .RedirectTo }}"
                           style="
                             display: inline-block;
                             padding: 14px 32px;
@@ -141,10 +146,10 @@
                     up for Padel Lobsters, you can safely ignore this email.<br /><br />
                     Or copy and paste this link into your browser:<br />
                     <a
-                      href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&next=/home"
+                      href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&next=/home&return_to={{ .RedirectTo }}"
                       style="color: #d94f2b; text-decoration: underline; word-break: break-all"
                       >{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash
-                      }}&type=email&next=/home</a
+                      }}&type=email&next=/home&return_to={{ .RedirectTo }}</a
                     >
                   </p>
                 </td>
