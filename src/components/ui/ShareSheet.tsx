@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Copy, Link2, MessageCircle, Share2 } from 'lucide-react'
+import { Copy, Link2, Share2 } from 'lucide-react'
 import { Modal } from './Modal'
 import { OptionRow } from './OptionRow'
-import { buildShareUrl, copyToClipboard } from '../../lib/whatsapp'
+import { copyToClipboard } from '../../lib/whatsapp'
 
 interface ShareSheetProps {
   open: boolean
@@ -22,7 +22,9 @@ const canShareNatively = () => typeof navigator !== 'undefined' && 'share' in na
 
 /**
  * A bottom sheet for sharing a message and link: the phone's own share sheet (where the browser
- * has one), WhatsApp, or a copy of the message or the link. Shows the message as it will be sent.
+ * has one), or a copy of the message or the link. Shows the message as it will be sent.
+ * No direct WhatsApp (`wa.me`) option: it mangled emoji and was clunkier than WhatsApp picked
+ * from the phone's share sheet (owner, 7 Nov).
  */
 export function ShareSheet({ open, onClose, title, lead, message, url }: ShareSheetProps) {
   const [outcome, setOutcome] = useState<Outcome>(null)
@@ -79,21 +81,13 @@ export function ShareSheet({ open, onClose, title, lead, message, url }: ShareSh
               subtitle={subtitle({
                 target: 'native',
                 ok: '',
-                fail: "Couldn't open. Try WhatsApp or copy the message.",
-                idle: 'Messages, Instagram, Telegram and more',
+                fail: "Couldn't open. Copy the message instead.",
+                idle: 'WhatsApp, Messages, Instagram and more',
               })}
               leading={<Share2 size={18} />}
               onClick={shareNatively}
             />
           )}
-          <OptionRow
-            title="WhatsApp"
-            subtitle="Send to a chat or group"
-            leading={<MessageCircle size={18} />}
-            href={buildShareUrl(message)}
-            external
-            onClick={onClose}
-          />
           <OptionRow
             title="Copy message"
             subtitle={subtitle({

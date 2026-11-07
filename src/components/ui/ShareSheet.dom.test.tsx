@@ -28,10 +28,9 @@ describe('ShareSheet', () => {
     expect(screen.getByTestId('share-message').textContent).toBe(message)
   })
 
-  it('links WhatsApp with the message pre-filled', () => {
+  it("has no direct WhatsApp link: WhatsApp is reached through the phone's share sheet", () => {
     renderSheet()
-    const link = screen.getByRole('link', { name: /WhatsApp/ })
-    expect(link.getAttribute('href')).toBe(`https://wa.me/?text=${encodeURIComponent(message)}`)
+    expect(screen.queryByRole('link', { name: /WhatsApp/ })).toBeNull()
   })
 
   it('copies the message or the link, and says so', async () => {

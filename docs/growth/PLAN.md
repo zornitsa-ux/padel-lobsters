@@ -40,15 +40,15 @@ shipped and the funnel has been measured.
 
 ## Phase 1: shareable events (the leak)
 
-| #   | Task                        | What ships                                                                                                                                                                                                                                                                                                                                                                        | Status      |
-| --- | --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
-| G1  | Public event page           | Guests see the upcoming events list (`/events`, upcoming only) and `/events/:id/info`: a read-only card (name, date, time, location, format, price, spots left) plus a "Join to play" CTA, or "Join to get on the waitlist" when full. Other tabs stay protected. See G1 notes.                                                                                                   | Done (#151) |
-| G2  | Link previews               | Per-event `og:title`/`og:description`/`og:image` for `/events/:id*`, with a generated image (date, format, venue). No live spot count, because previews are cached. Check it in the WhatsApp and Instagram link preview. See G2 notes.                                                                                                                                            | Done (#152) |
-| G3  | Signup returns to the event | CTA → signup carrying the event as the return path (`returnPath.ts`). After verifying, land on the event with the register action focused (or the waitlist action, if it's full).                                                                                                                                                                                                 | Not started |
-| G4  | Share button                | `ShareEventButton` opens an in-app `ShareSheet`: the message, then `navigator.share` (where available), WhatsApp, copy message and copy link. See G4 notes. Shown on the event page for members and admins. The admin version has a longer "announcement" text for WhatsApp, plus "Download image", which serves the G2 preview image for an Instagram story with a link sticker. | Done (#154) |
-| G4b | More places to share        | A full-width "Share with friends" variant, then share right after signing up (`JoinEventCard` registered state), after an admin creates an event, in the event header on every tab while sign-ups are open (`EventShell`), and on the You tab. Then, if still wanted: the signed-out event page and the Manage tab ("Fill the spots"). See G4 notes.                              | In review   |
-| G5  | Attribution                 | Shared URLs carry `?src=` (`wa`, `ig`, `share`) and `?ref=` (the sharing member's opaque referral code, never a player ID). Stored on signup (`players.signup_source`, `referred_by`) and on the registration. Admin view: signups and first events by source.                                                                                                                    | Not started |
-| G5b | Traffic funnel              | Cookieless analytics (Vercel Web Analytics, or Plausible/Umami if custom events need a paid tier): public page views plus `event_page_view`, `share_tap`, `signup_start`, `signup_complete`, `event_register`, each tagged with `src`.                                                                                                                                            | Later       |
+| #   | Task                        | What ships                                                                                                                                                                                                                                                                                                                                                              | Status      |
+| --- | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| G1  | Public event page           | Guests see the upcoming events list (`/events`, upcoming only) and `/events/:id/info`: a read-only card (name, date, time, location, format, price, spots left) plus a "Join to play" CTA, or "Join to get on the waitlist" when full. Other tabs stay protected. See G1 notes.                                                                                         | Done (#151) |
+| G2  | Link previews               | Per-event `og:title`/`og:description`/`og:image` for `/events/:id*`, with a generated image (date, format, venue). No live spot count, because previews are cached. Check it in the WhatsApp and Instagram link preview. See G2 notes.                                                                                                                                  | Done (#152) |
+| G3  | Signup returns to the event | CTA → signup carrying the event as the return path (`returnPath.ts`). After verifying, land on the event with the register action focused (or the waitlist action, if it's full).                                                                                                                                                                                       | Not started |
+| G4  | Share button                | `ShareEventButton` opens an in-app `ShareSheet`: the message, then `navigator.share` (where available), copy message and copy link. See G4 notes. Shown on the event page for members and admins. The admin version has a longer "announcement" text for WhatsApp, plus "Download image", which serves the G2 preview image for an Instagram story with a link sticker. | Done (#154) |
+| G4b | More places to share        | A full-width "Share with friends" variant, then share right after signing up (`JoinEventCard` registered state), after an admin creates an event, in the event header on every tab while sign-ups are open (`EventShell`), and on the You tab. Then, if still wanted: the signed-out event page and the Manage tab ("Fill the spots"). See G4 notes.                    | In review   |
+| G5  | Attribution                 | Shared URLs carry `?src=` (`wa`, `ig`, `share`) and `?ref=` (the sharing member's opaque referral code, never a player ID). Stored on signup (`players.signup_source`, `referred_by`) and on the registration. Admin view: signups and first events by source.                                                                                                          | Not started |
+| G5b | Traffic funnel              | Cookieless analytics (Vercel Web Analytics, or Plausible/Umami if custom events need a paid tier): public page views plus `event_page_view`, `share_tap`, `signup_start`, `signup_complete`, `event_register`, each tagged with `src`.                                                                                                                                  | Later       |
 
 **Order:** G1 → G2 → G3 → G5 → G4. G2 needs G1, because a preview that opens
 to a sign-in wall wastes the tap. G5 ships before G4, so shares are counted
@@ -124,9 +124,13 @@ source.
 
 - **Member share sheet first** (owner, 7 Nov): taken ahead of G3 and G5.
   "Share" opens an in-app sheet (`ShareSheet`) showing the message, with the
-  phone's share sheet (`navigator.share`, where available), WhatsApp, copy
-  message and copy link. It replaces `ShareWhatsAppButton`, which went
-  straight to a `wa.me` page.
+  phone's share sheet (`navigator.share`, where available), copy message and
+  copy link. It replaces `ShareWhatsAppButton`, which went straight to a
+  `wa.me` page.
+- **No direct WhatsApp option** (owner, 7 Nov, in G4b). The `wa.me` row
+  didn't carry the emoji across and was clunky. Picking WhatsApp from "Share
+  via…" (the phone's share sheet) works better, so the row is gone. Where a
+  browser has no share sheet (some desktops), people copy the message.
 - **Message** (`eventShareMessage.ts`): name, date and time, venue, format,
   price per player, spots left (or "Full, join the waitlist") and the sign-up
   link. No player names, unlike Playtomic's list of who's in: the message is
@@ -251,3 +255,6 @@ are the owner's calls, made from fill speed and waitlist data (CASE-STUDY §3).
   registering (Info and You tabs), in the event header, and after creating an
   event (`addTournament` now returns the saved event). Signed-out page and
   Manage tab left for the owner to decide.
+- 7 Nov 2026: removed the share sheet's direct WhatsApp (`wa.me`) option at
+  the owner's request: emoji came through broken, and WhatsApp via the
+  phone's share sheet works better.
