@@ -122,6 +122,9 @@ source.
 - **Check after deploy.** The functions read `VITE_SUPABASE_URL` and
   `VITE_SUPABASE_ANON_KEY` at runtime from the Vercel project env. Paste an
   event link into WhatsApp, or `curl -A WhatsApp/2 <event url>`.
+- **Region.** The functions run in `fra1` (Frankfurt), set by `regions` in
+  `vercel.json`: EU processing, and the nearest Vercel region to the Supabase
+  database in Zurich. Hobby allows one region.
 
 ### G3 notes
 
@@ -332,10 +335,11 @@ review.
   (`send-pin-email`, until PIN removal deletes it) and event reminder emails.
   Reminders go through the `send-tournament-reminders-batch` edge function,
   which isn't in this repo; check whether it still runs.
-- Vercel: hosting (edge network), the link-preview functions in `iad1`
-  (Washington DC, US; the default, read from the deployment), and cookieless
-  Web Analytics for signed-out pages.
-- flagcdn.com: country flag images, so it receives visitor IPs (#160).
+- Vercel: hosting (edge network), the link-preview functions in `fra1`
+  (Frankfurt; moved from the US default `iad1` in #162), and cookieless Web
+  Analytics for signed-out pages.
+- flagcdn.com: country flag images, so it receives visitor IPs (#160; flags
+  self-hosted in #163).
 - WhatsApp, Tikkie, Google Calendar and Instagram are links the user opens.
 
 **What the page must cover** (GDPR Art. 13/14): controller and contact;
@@ -358,10 +362,7 @@ within 3 days of a tournament (see Constraints).
 1. Controller name and contact address (public in the repo).
 2. Retention: past results after an account is deleted (keep anonymised or
    delete); how long the security log and the old-email history are kept.
-3. Whether to move the Vercel functions to an EU region (`regions` in
-   `vercel.json`), which would also put them closer to Supabase.
-4. #160: self-host the flags, or name flagcdn.com.
-5. The page can't say "only members see your profile" until anon reads of
+3. The page can't say "only members see your profile" until anon reads of
    `players_public` are closed (#150), or "delete your account yourself":
    there is no self-service deletion, so requests go to the admins.
 
@@ -388,7 +389,7 @@ are the owner's calls, made from fill speed and waitlist data (CASE-STUDY §3).
 3. **Instagram:** reuse the G2 preview image as a "Download image" action
    (G4). No separate story design.
 4. **Full events:** offer "Join to get on the waitlist".
-   . **Link previews (G2), 6 Nov:** Vercel functions on the Node.js runtime,
+5. **Link previews (G2), 6 Nov:** Vercel functions on the Node.js runtime,
    not static pages built at deploy time.
 
 ## Log
@@ -453,3 +454,6 @@ are the owner's calls, made from fill speed and waitlist data (CASE-STUDY §3).
 - 7 Nov 2026: privacy page researched (data inventory, processors, GDPR
   contents); parked as an open planning item until the controller and
   contact are chosen. Flag images from flagcdn.com split out as #160.
+- 7 Nov 2026: Vercel functions (link previews) moved from `iad1` (US) to
+  `fra1` (Frankfurt), the EU region nearest the Supabase database in Zurich
+  (owner). Set in `vercel.json`.
