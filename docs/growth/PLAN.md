@@ -39,9 +39,10 @@ shipped and the funnel has been measured.
 - **Anon lockdown (#150) is live** (#164, pushed 7 Nov). Checked in
   production: the public API refuses everything but the guest-page columns,
   and the signed-out site works (desktop, and on a phone by the owner).
-- **Grant drift (#102) in review.** Same default privileges in production and
-  locally, a table grants check in CI, and `npm run db:grants:prod` to compare
-  production read-only after each `db push`.
+- **Grant drift (#102) is fixed** (#165, pushed 7 Nov). New tables,
+  sequences and functions start closed to browser roles in production too.
+  After each `db push`, run `npm run db:grants:prod` (read-only); it matched
+  on 7 Nov.
 - **Privacy page: researched, parked as an open planning item** (owner, 7 Nov).
   See "Privacy page (open)". It needs a controller and contact before it can
   be built.
@@ -514,3 +515,5 @@ are the owner's calls, made from fill speed and waitlist data (CASE-STUDY §3).
   off member tables. #102 next.
 - 7 Nov 2026: #164 merged and pushed; production verified. #102 (grant
   defaults and table grants check) opened.
+- 7 Nov 2026: #165 merged and pushed; `db:grants:prod` shows no drift.
+  #150, #102 and #160 closed.
