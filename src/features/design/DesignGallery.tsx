@@ -45,6 +45,7 @@ import { Chip, ChipGroup } from '../../components/ui/Chip'
 import { CollapsibleCard } from '../../components/ui/CollapsibleCard'
 import { Disclosure } from '../../components/ui/Disclosure'
 import { EmptyState } from '../../components/ui/EmptyState'
+import { ErrorFallback } from '../../components/ui/ErrorBoundary'
 import { SignInPrompt } from '../../components/ui/SignInPrompt'
 import { Menu, MenuItem, MenuSeparator } from '../../components/ui/Menu'
 import { MenuList } from '../../components/ui/MenuList'
@@ -1335,7 +1336,7 @@ function CollapsibleSectionDemo() {
 function StatesSection() {
   const [open, setOpen] = useState(false)
   return (
-    <GallerySection title="Disclosure, empty, signed-out and loading">
+    <GallerySection title="Disclosure, empty, error, signed-out and loading">
       <Disclosure expanded={open} onToggle={() => setOpen((o) => !o)}>
         Advanced
       </Disclosure>
@@ -1346,6 +1347,7 @@ function StatesSection() {
         description="EmptyState: the page or tab body is empty."
         action={<Button>Go to Events</Button>}
       />
+      <ErrorFallback />
       <div className="card space-y-3">
         <h2 className="font-bold text-lob-dark">Registered teams</h2>
         <EmptyState

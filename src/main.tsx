@@ -10,9 +10,11 @@ import { mark } from './lib/perfMarks'
 import { prefetchPlayers } from './features/players/usePlayers'
 import { prefetchTournaments } from './features/events/useTournaments'
 import { hasStoredSession } from './lib/storedSession'
+import { installChunkReload } from './lib/chunkReload'
 import './index.css'
 
 mark('boot')
+installChunkReload()
 
 // Issue the two requests that gate the most visible home-screen content (the
 // greeting name and the next-event card) before React mounts, so they overlap

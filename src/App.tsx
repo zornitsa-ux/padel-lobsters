@@ -14,6 +14,7 @@ import { EventRouteGuard, AdminEventRouteGuard } from './features/events/EventRo
 import EventDefaultTabRedirect from './features/events/EventDefaultTabRedirect'
 import Layout from './components/Layout'
 import { RouteFallback } from './components/ui/RouteFallback'
+import { ErrorBoundary } from './components/ui/ErrorBoundary'
 import Dashboard from './features/home/Dashboard'
 import GuestHome from './features/home/GuestHome'
 import VerificationGate from './components/VerificationGate'
@@ -87,80 +88,90 @@ export default function App() {
         <FunnelAnalytics />
         <PartnerOnboardingRedirect />
         <Layout>
-          <VerificationGate>
-            <Suspense fallback={<RouteFallback />}>
-              <Routes>
-                <Route path="/" element={<Navigate to="/home" replace />} />
-                <Route path="/home" element={<HomeRoute />} />
-                <Route path="/auth/confirm" element={<AuthConfirm />} />
+          <RouteErrorBoundary>
+            <VerificationGate>
+              <Suspense fallback={<RouteFallback />}>
+                <Routes>
+                  <Route path="/" element={<Navigate to="/home" replace />} />
+                  <Route path="/home" element={<HomeRoute />} />
+                  <Route path="/auth/confirm" element={<AuthConfirm />} />
 
-                <Route path="/events" element={<EventsRoute />} />
-                <Route path="/events/:id" element={<EventShellRoute />}>
-                  <Route index element={<EventIndexRoute />} />
-                  <Route path="info" element={<EventDetailRoute />} />
-                  <Route path="me" element={<EventMeRoute />} />
-                  <Route path="schedule" element={<EventScheduleRoute />} />
-                  <Route path="results" element={<EventScoresRoute />} />
-                  <Route path="scores" element={<Navigate to="../results" replace />} />
-                  <Route path="oscars" element={<EventOscarsRoute />} />
-                  <Route path="manage" element={<EventManageRoute />} />
-                  <Route path="join" element={<Navigate to="../info" replace />} />
-                </Route>
+                  <Route path="/events" element={<EventsRoute />} />
+                  <Route path="/events/:id" element={<EventShellRoute />}>
+                    <Route index element={<EventIndexRoute />} />
+                    <Route path="info" element={<EventDetailRoute />} />
+                    <Route path="me" element={<EventMeRoute />} />
+                    <Route path="schedule" element={<EventScheduleRoute />} />
+                    <Route path="results" element={<EventScoresRoute />} />
+                    <Route path="scores" element={<Navigate to="../results" replace />} />
+                    <Route path="oscars" element={<EventOscarsRoute />} />
+                    <Route path="manage" element={<EventManageRoute />} />
+                    <Route path="join" element={<Navigate to="../info" replace />} />
+                  </Route>
 
-                <Route path="/community" element={<CommunityShell />}>
-                  <Route index element={<Players />} />
-                  <Route path="shop" element={<MerchRoute />} />
-                </Route>
+                  <Route path="/community" element={<CommunityShell />}>
+                    <Route index element={<Players />} />
+                    <Route path="shop" element={<MerchRoute />} />
+                  </Route>
 
-                <Route path="/community/:id" element={<PlayerDetailRoute />} />
-                <Route path="/merch" element={<Navigate to="/community/shop" replace />} />
-                <Route path="/admin" element={<AdminRoute />} />
-                <Route path="/account" element={<AccountRoute />} />
-                <Route
-                  path={GROUP_SETTINGS_PATH}
-                  element={
-                    <AdminRouteGuard redirectTo="/account">
-                      <GroupSettings />
-                    </AdminRouteGuard>
-                  }
-                />
-                <Route path="/lobster-way" element={<LobsterWay />} />
-                <Route
-                  path="/admin/lobster-way"
-                  element={
-                    <AdminRouteGuard redirectTo="/lobster-way">
-                      <LobsterWayAdmin />
-                    </AdminRouteGuard>
-                  }
-                />
-                <Route path="/settings" element={<Navigate to="/account" replace />} />
-                <Route path="/history" element={<Navigate to="/events" replace />} />
-                <Route path="/transfer/:id" element={<TransferRoute />} />
-                <Route path={TEAM_INVITES_PATH} element={<TeamInvitesPage />} />
-                <Route path={FINISH_ACCOUNT_PATH} element={<FinishAccountPage />} />
-                <Route path="/league" element={<LeagueIndexPage />} />
-                <Route path="/league/seasons" element={<SeasonsPage />} />
-                <Route path="/league/:id" element={<LeaguePage />} />
-                <Route path="/league/:id/group-stage" element={<GroupStageHistoryPage />} />
-                <Route
-                  path="/league/:id/manage"
-                  element={
-                    <AdminLeagueRouteGuard>
-                      <LeagueManagePage />
-                    </AdminLeagueRouteGuard>
-                  }
-                />
+                  <Route path="/community/:id" element={<PlayerDetailRoute />} />
+                  <Route path="/merch" element={<Navigate to="/community/shop" replace />} />
+                  <Route path="/admin" element={<AdminRoute />} />
+                  <Route path="/account" element={<AccountRoute />} />
+                  <Route
+                    path={GROUP_SETTINGS_PATH}
+                    element={
+                      <AdminRouteGuard redirectTo="/account">
+                        <GroupSettings />
+                      </AdminRouteGuard>
+                    }
+                  />
+                  <Route path="/lobster-way" element={<LobsterWay />} />
+                  <Route
+                    path="/admin/lobster-way"
+                    element={
+                      <AdminRouteGuard redirectTo="/lobster-way">
+                        <LobsterWayAdmin />
+                      </AdminRouteGuard>
+                    }
+                  />
+                  <Route path="/settings" element={<Navigate to="/account" replace />} />
+                  <Route path="/history" element={<Navigate to="/events" replace />} />
+                  <Route path="/transfer/:id" element={<TransferRoute />} />
+                  <Route path={TEAM_INVITES_PATH} element={<TeamInvitesPage />} />
+                  <Route path={FINISH_ACCOUNT_PATH} element={<FinishAccountPage />} />
+                  <Route path="/league" element={<LeagueIndexPage />} />
+                  <Route path="/league/seasons" element={<SeasonsPage />} />
+                  <Route path="/league/:id" element={<LeaguePage />} />
+                  <Route path="/league/:id/group-stage" element={<GroupStageHistoryPage />} />
+                  <Route
+                    path="/league/:id/manage"
+                    element={
+                      <AdminLeagueRouteGuard>
+                        <LeagueManagePage />
+                      </AdminLeagueRouteGuard>
+                    }
+                  />
 
-                {DesignGallery && <Route path={DESIGN_GALLERY_PATH} element={<DesignGallery />} />}
+                  {DesignGallery && (
+                    <Route path={DESIGN_GALLERY_PATH} element={<DesignGallery />} />
+                  )}
 
-                <Route path="*" element={<Navigate to="/home" replace />} />
-              </Routes>
-            </Suspense>
-          </VerificationGate>
+                  <Route path="*" element={<Navigate to="/home" replace />} />
+                </Routes>
+              </Suspense>
+            </VerificationGate>
+          </RouteErrorBoundary>
         </Layout>
       </BrowserRouter>
     </AppProvider>
   )
+}
+
+// Keeps the header and nav up when a route throws, and clears on navigation.
+function RouteErrorBoundary({ children }: { children: React.ReactNode }) {
+  const { pathname, search } = useLocation()
+  return <ErrorBoundary resetKey={pathname + search}>{children}</ErrorBoundary>
 }
 
 // Translate the legacy onNavigate(page, tournament?) signature to URL
@@ -372,8 +383,10 @@ function FunnelAnalytics() {
   if (!guestSeen && sessionSettled && !session) setGuestSeen(true)
   if (!import.meta.env.PROD || !guestSeen) return null
   return (
-    <Suspense fallback={null}>
-      <GuestAnalytics />
-    </Suspense>
+    <ErrorBoundary fallback={null}>
+      <Suspense fallback={null}>
+        <GuestAnalytics />
+      </Suspense>
+    </ErrorBoundary>
   )
 }
