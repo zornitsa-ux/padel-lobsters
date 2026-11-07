@@ -296,7 +296,7 @@ test('synthetic account sees the add-email card until an admin sets a real email
 }) => {
   const synthetic = `player-${crypto.randomUUID()}@padelobsters.internal`
   const realEmail = `e2e-fixed-${Date.now()}@lobsters.test`
-  const { id } = await createPlayer({ email: synthetic })
+  const { id, firstName } = await createPlayer({ email: synthetic })
   try {
     await openHomeSignedIn({ page, email: synthetic })
     const card = page.getByTestId('add-email-card')
@@ -314,6 +314,7 @@ test('synthetic account sees the add-email card until an admin sets a real email
     await page.getByRole('button', { name: /^sign out$/i }).click()
     await signIn({ page, email: realEmail, password: PLAYER_PASSWORD })
     await page.goto('/home')
+    await expect(page.getByText(new RegExp(firstName))).toBeVisible()
     await expect(page.getByTestId('add-email-card')).toHaveCount(0)
   } finally {
     await deletePlayer({ id })

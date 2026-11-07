@@ -4,7 +4,6 @@ import { Disclosure } from '../../components/ui/Disclosure'
 export const PIN_RETIRED_EXPLAINER =
   "PINs have retired. Enter the email you use for Padel Lobsters and we'll send you a code. Don't know which email that is, or lost access to it? Message an admin on WhatsApp and we'll sort it out."
 
-/** Shown under the email sign-in until PR 7 (PIN auth removal, T12) removes it. */
 export function PinRetiredExplainer() {
   const [open, setOpen] = useState(false)
   return (

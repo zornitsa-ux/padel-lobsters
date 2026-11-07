@@ -3,7 +3,6 @@
 // PIN sign-in is retired (PIN auth removal, PR 4). Every request gets
 // 410 { error, code: 'pin_retired' }. Clients from before the cutover show
 // `error` to the player verbatim, so it is the sentence they should read.
-// Phase 4 (PR 6) deletes this function.
 
 import { serve } from 'https://deno.land/std@0.224.0/http/server.ts'
 

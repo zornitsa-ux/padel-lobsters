@@ -93,7 +93,7 @@ export function canToggleViewMode(opts: { isAdmin: boolean; amRegistered: boolea
 }
 
 const CAST_VOTE_ERRORS: Record<string, string> = {
-  invalid_pin: 'Sign-in expired — please re-enter your PIN.',
+  invalid_pin: 'Sign-in expired — please sign in again.',
   self_vote: "You can't vote for yourself.",
   not_started: "Voting hasn't started yet.",
   closed: 'Voting has closed.',

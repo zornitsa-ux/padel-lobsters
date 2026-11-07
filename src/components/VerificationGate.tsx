@@ -28,7 +28,7 @@ const SignupRequest = lazy(() => import('./SignupRequest'))
  *      otherwise show the auth card.
  *
  * Auth card modes:
- *   - signin (default): SignInForm (email code, password, or PIN until the sunset).
+ *   - signin (default): SignInForm (email code or password).
  *   - signup: self-serve native signup (email code).
  */
 type GateMode = 'signin' | 'signup'

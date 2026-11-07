@@ -21,7 +21,7 @@ function ReadinessBody({ readiness }: { readiness: AuthReadiness }) {
   return (
     <>
       <p className="text-sm font-semibold text-lob-slate">
-        Switched to email: {switched_count} · Still on PIN: {still_pin_count}
+        Switched to email: {switched_count} · Last signed in with a PIN: {still_pin_count}
       </p>
       {no_email.length > 0 && (
         <NameList title="No real email — contact these players">
@@ -31,7 +31,7 @@ function ReadinessBody({ readiness }: { readiness: AuthReadiness }) {
         </NameList>
       )}
       {recent_pin_users.length > 0 && (
-        <NameList title="Signed in with a PIN in the last 14 days">
+        <NameList title="Last signed in with a PIN, in the past 14 days">
           {recent_pin_users.map((p) => (
             <li key={p.id} className="flex justify-between gap-2">
               <span>{p.name}</span>
