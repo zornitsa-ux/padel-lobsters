@@ -1,12 +1,6 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it } from 'vitest'
-import {
-  emailReturnUrl,
-  isSafeReturnPath,
-  returnPathFromUrl,
-  saveReturnPath,
-  takeReturnPath,
-} from './returnPath'
+import { emailReturnUrl, returnPathFromUrl, saveReturnPath, takeReturnPath } from './returnPath'
 
 beforeEach(() => {
   window.localStorage.clear()
@@ -23,7 +17,7 @@ describe('returnPath', () => {
     expect(takeReturnPath()).toBeNull()
   })
 
-  it.each(['//evil.example', '/\\evil.example', 'https://evil.example', 'home', ''])(
+  it.each(['//evil.example', '/\\evil.example', 'https://evil.example', 'javascript:alert(1)', ''])(
     'discards %j',
     (value) => {
       window.localStorage.setItem('pl_auth_return_path', value)
@@ -31,12 +25,6 @@ describe('returnPath', () => {
       expect(window.localStorage.getItem('pl_auth_return_path')).toBeNull()
     },
   )
-
-  it('validates next params the same way', () => {
-    expect(isSafeReturnPath('/home')).toBe(true)
-    expect(isSafeReturnPath('//x')).toBe(false)
-    expect(isSafeReturnPath(null)).toBe(false)
-  })
 
   it('leaves out the sign-in deep link params, keeping the rest', () => {
     window.history.replaceState({}, '', '/community?signin=1&email=a%40b.test&tab=shop#top')

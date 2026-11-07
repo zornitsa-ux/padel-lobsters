@@ -1,11 +1,7 @@
+import { safeAppPath } from '../../lib/safePath'
 import { readStorage, removeStorage, writeStorage } from '../../lib/safeStorage'
 
 const STORAGE_KEY = 'pl_auth_return_path'
-
-export function isSafeReturnPath(path: string | null | undefined): path is string {
-  if (!path || !path.startsWith('/')) return false
-  return !path.startsWith('//') && !path.startsWith('/\\')
-}
 
 /** Drops the sign-in deep link's `?signin=1&email=` from a query string. */
 export function withoutDeepLinkParams({ search }: { search: string }): string {
@@ -28,7 +24,7 @@ export function saveReturnPath(): void {
 export function takeReturnPath(): string | null {
   const path = readStorage({ area: 'local', key: STORAGE_KEY })
   removeStorage({ area: 'local', key: STORAGE_KEY })
-  return isSafeReturnPath(path) ? path : null
+  return safeAppPath({ input: path })
 }
 
 /**
@@ -53,7 +49,7 @@ export function returnPathFromUrl({ url }: { url: string | null | undefined }): 
   } catch {
     return null
   }
+  if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return null
   if (parsed.pathname === '/' || parsed.pathname.startsWith('/auth/')) return null
-  const path = parsed.pathname + parsed.search
-  return isSafeReturnPath(path) ? path : null
+  return safeAppPath({ input: parsed.pathname + parsed.search })
 }

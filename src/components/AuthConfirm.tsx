@@ -5,7 +5,8 @@ import type { AuthError, EmailOtpType } from '@supabase/auth-js'
 import { supabase } from '../supabase'
 import { useApp } from '../context/useApp'
 import { PasswordForm } from '../features/auth/PasswordForm'
-import { isSafeReturnPath, returnPathFromUrl, takeReturnPath } from '../features/auth/returnPath'
+import { returnPathFromUrl, takeReturnPath } from '../features/auth/returnPath'
+import { safeAppPath } from '../lib/safePath'
 import { Button } from './ui/Button'
 
 type Status = 'ready' | 'verifying' | 'error' | 'email_change_confirmed' | 'set_password'
@@ -76,8 +77,8 @@ export default function AuthConfirm() {
   const goToDestination = () => {
     const saved = takeReturnPath()
     const emailed = returnPathFromUrl({ url: params.get('return_to') })
-    const next = params.get('next')
-    navigate(emailed ?? saved ?? (isSafeReturnPath(next) ? next : '/home'), { replace: true })
+    const next = safeAppPath({ input: params.get('next') })
+    navigate(emailed ?? saved ?? next ?? '/home', { replace: true })
   }
 
   async function confirm() {

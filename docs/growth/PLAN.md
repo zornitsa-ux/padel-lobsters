@@ -140,9 +140,12 @@ source.
 - **Security (7 Nov).** Anyone can ask GoTrue to email a sign-in link to
   any address, with any allow-listed `redirect_to`, so `return_to` is chosen
   by whoever asked for the email. That's acceptable because:
-  - it's reduced to an in-app path. `//host`, `/\host`, `javascript:` and
-    `data:` are rejected (unit tests), and a page outside the app can't be
-    reached;
+  - it's reduced to an in-app path by `safeAppPath` (`src/lib/safePath.ts`):
+    the browser's own URL parser resolves it against our origin and anything
+    on another origin is rejected (`//host`, `/\host`, `javascript:`,
+    `data:`, whitespace tricks; unit tests). No hand-rolled string checks. The
+    same helper guards the saved path, `next`, and the team-invite "Not now"
+    return;
   - no page writes on load: transfers, team invites and registration all
     need a tap (checked 7 Nov). Keep it that way: a route that acts on open
     would make this a one-click attack;
@@ -314,3 +317,7 @@ are the owner's calls, made from fill speed and waitlist data (CASE-STUDY §3).
   path, is URL-encoded in the template, and is read as a path only.
 - 7 Nov 2026: G3 security pass on the redirects: return paths drop
   `?signin`/`email`, more unsafe-URL tests, notes in G3.
+- 7 Nov 2026: return paths validated with the WHATWG URL parser
+  (`safeAppPath`) instead of string checks; the invite return uses it too. No
+  npm package fit: `@braintree/sanitize-url` blocks XSS schemes, not
+  off-site redirects.
