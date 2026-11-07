@@ -233,27 +233,41 @@ describe('Info tab — players sign themselves up here', () => {
   })
 })
 
-describe('Info tab — share and calendar sit with the date', () => {
-  // Share shows only while sign-ups are open.
+describe('Info tab — calendar with the date, share once registered', () => {
+  // Share shows only while sign-ups are open. The event header carries the general share.
   const open = { status: 'upcoming', date: '2099-07-29' }
 
-  it('puts both chips inside the date and time card', () => {
+  it('keeps the calendar in the date card, with no share there', () => {
     renderInfo(open)
 
-    const share = screen.getByRole('button', { name: 'Share' })
-    const calendar = screen.getByTitle('Add to Google Calendar')
-    // The meta card is the one holding the location; both chips live in it.
     const metaCard = screen.getByText('Padel Inc').closest('.card')
+    expect(metaCard?.contains(screen.getByTitle('Add to Google Calendar'))).toBe(true)
+    expect(screen.queryByRole('button', { name: 'Share' })).toBeNull()
+  })
 
-    expect(metaCard).not.toBeNull()
-    expect(metaCard?.contains(share)).toBe(true)
-    expect(metaCard?.contains(calendar)).toBe(true)
+  it('asks a registered player to share with friends', () => {
+    renderInfo(open)
+
+    const share = screen.getByRole('button', { name: 'Share with friends' })
+    expect(
+      screen
+        .getByText(/you're registered/i)
+        .closest('.card')
+        ?.contains(share),
+    ).toBe(true)
+  })
+
+  it('does not ask before the player has registered', () => {
+    registrations = allRegistered().filter((r) => r.playerId !== 'p0')
+    renderInfo(open)
+
+    expect(screen.queryByRole('button', { name: 'Share with friends' })).toBeNull()
   })
 
   it('drops share once the event has started', () => {
     renderInfo({ ...open, status: 'active' })
 
-    expect(screen.queryByRole('button', { name: 'Share' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Share with friends' })).toBeNull()
     expect(screen.getByTitle('Add to Google Calendar')).toBeTruthy()
   })
 })

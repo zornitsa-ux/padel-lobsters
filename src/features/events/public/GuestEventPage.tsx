@@ -7,6 +7,7 @@ import { AlertBox } from '../../../components/ui/AlertBox'
 import { Button } from '../../../components/ui/Button'
 import { ActionRow } from '../../../components/ui/ActionRow'
 import EventDescription from '../EventDescription'
+import ShareEventButton from '../ShareEventButton'
 import { usePublicEvents } from './usePublicEvents'
 import { isFull, isOpenToJoin, joinPath } from './publicEventHelpers'
 import { GuestEventSummary } from './GuestEventSummary'
@@ -33,7 +34,11 @@ export function GuestEventShell() {
   if (!event) return <Navigate to="/events" replace />
   return (
     <div className="-mx-4">
-      <PageHeader title={event.name} backLink={{ to: '/events', label: 'Events' }} />
+      <PageHeader
+        title={event.name}
+        backLink={{ to: '/events', label: 'Events' }}
+        rightAction={<ShareEventButton event={event} registeredCount={event.registeredCount} />}
+      />
       <div className="px-4 pt-4">
         <Outlet />
       </div>

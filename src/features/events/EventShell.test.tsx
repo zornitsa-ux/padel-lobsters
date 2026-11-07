@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, cleanup } from '@testing-library/react'
+import { render, screen, cleanup, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 
 const useApp = vi.fn()
@@ -8,6 +8,11 @@ const useEventPhase = vi.fn()
 
 vi.mock('../../context/useApp', () => ({ useApp: () => useApp() }))
 vi.mock('./useEventPhase', () => ({ useEventPhase: () => useEventPhase() }))
+vi.mock('./useRegistrations', () => ({
+  useRegistrations: (id: string | null) => ({
+    data: id ? [{ status: 'registered' }, { status: 'waitlist' }] : undefined,
+  }),
+}))
 
 const EventShell = (await import('./EventShell')).default
 
@@ -24,11 +29,13 @@ function renderShell({
   isAdmin,
   oscarsPhase = 'not_created',
   rafflePublishedAt = null,
+  tournament = {},
 }: {
   phase: EventPhase
   isAdmin: boolean
   oscarsPhase?: OscarsPhase
   rafflePublishedAt?: string | null
+  tournament?: Partial<NormalisedTournament>
 }) {
   useApp.mockReturnValue({
     session: { user: { id: 'u1' } },
@@ -38,7 +45,9 @@ function renderShell({
   useEventPhase.mockReturnValue({ phase, oscarsPhase })
   render(
     <MemoryRouter initialEntries={[`/events/evt-1/info`]}>
-      <EventShell tournament={{ ...TOURNAMENT, rafflePublishedAt } as NormalisedTournament} />
+      <EventShell
+        tournament={{ ...TOURNAMENT, rafflePublishedAt, ...tournament } as NormalisedTournament}
+      />
     </MemoryRouter>,
   )
 }
@@ -150,5 +159,24 @@ describe('EventShell tab strip — phase × role matrix', () => {
       '/events/evt-1/oscars',
       '/events/evt-1/manage',
     ])
+  })
+})
+
+describe('EventShell header share', () => {
+  const open = { status: 'upcoming', date: '2099-07-29', maxPlayers: 16 }
+
+  it('offers share on every tab while sign-ups are open, with spots left', () => {
+    renderShell({ phase: 'open', isAdmin: false, tournament: open })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Share event' }))
+    expect(screen.getByTestId('share-message').textContent).toContain('15 spots left')
+  })
+
+  it('drops share once sign-ups close', () => {
+    for (const closed of [{ status: 'active' }, { status: 'completed' }, { date: '2020-01-01' }]) {
+      renderShell({ phase: 'live', isAdmin: true, tournament: { ...open, ...closed } })
+      expect(screen.queryByRole('button', { name: 'Share event' })).toBeNull()
+      cleanup()
+    }
   })
 })

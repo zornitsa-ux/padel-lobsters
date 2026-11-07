@@ -187,8 +187,13 @@ function ButtonSection() {
         </div>
       </Row>
       <Row label='utility actions: variant="neutral" size="sm"'>
-        <ShareEventButton event={SAMPLE_EVENT} registeredCount={12} variant="compact" />
         <AddToCalendarButton tournament={SAMPLE_EVENT} variant="compact" />
+      </Row>
+      <Row label='share: ShareEventButton variant="icon" · variant="full"' block>
+        <div className="space-y-2">
+          <ShareEventButton event={SAMPLE_EVENT} registeredCount={12} variant="icon" />
+          <ShareEventButton event={SAMPLE_EVENT} registeredCount={12} variant="full" />
+        </div>
       </Row>
       <Row label="fullWidth · ActionRow (alternative first, confirm last)">
         <Button fullWidth>Register for this event</Button>

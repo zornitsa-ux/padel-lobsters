@@ -8,6 +8,7 @@ import PastEventResults from '../pastEvents/PastEventResults'
 import AdminTransferPanel from '../../components/AdminTransferPanel'
 import { DEFAULT_EVENT_DESCRIPTION } from './eventConstants'
 import EventFormModal from './EventFormModal'
+import { EventShareSheet } from './ShareEventButton'
 import UpcomingEventCard from './UpcomingEventCard'
 import { AwaitingResultsCard } from './AwaitingResultsCard'
 import { LeagueDashboardCard } from '../league/ui/LeagueDashboardCard'
@@ -176,6 +177,15 @@ export default function Tournament({ onNavigate }: { onNavigate: EventNavigate }
         </CollapsibleSection>
 
         <EventFormModal {...eventForm.modalProps} onSubmit={(e) => void handleSubmit(e)} />
+        {eventForm.created && (
+          <EventShareSheet
+            event={eventForm.created}
+            registeredCount={0}
+            open
+            onClose={eventForm.dismissCreated}
+            lead="Your event is live. Share it now so people can sign up."
+          />
+        )}
       </div>
     </div>
   )

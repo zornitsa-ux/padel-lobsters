@@ -2,16 +2,25 @@ import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { mockSupabase } from '../../test/mockSupabase'
 
 // Chain helpers hoisted so the vi.mock factory can reference them.
-const { mockOrder, mockSelect, mockInsert, mockUpdate, mockEq, mockDelete, mockDeleteEq } =
-  vi.hoisted(() => ({
-    mockOrder: vi.fn(),
-    mockSelect: vi.fn(),
-    mockInsert: vi.fn(),
-    mockUpdate: vi.fn(),
-    mockEq: vi.fn(),
-    mockDelete: vi.fn(),
-    mockDeleteEq: vi.fn(),
-  }))
+const {
+  mockOrder,
+  mockSelect,
+  mockInsert,
+  mockInsertSingle,
+  mockUpdate,
+  mockEq,
+  mockDelete,
+  mockDeleteEq,
+} = vi.hoisted(() => ({
+  mockOrder: vi.fn(),
+  mockInsertSingle: vi.fn(),
+  mockSelect: vi.fn(),
+  mockInsert: vi.fn(),
+  mockUpdate: vi.fn(),
+  mockEq: vi.fn(),
+  mockDelete: vi.fn(),
+  mockDeleteEq: vi.fn(),
+}))
 
 vi.mock('../../supabase', () =>
   mockSupabase({
@@ -41,7 +50,8 @@ beforeEach(() => {
   vi.spyOn(console, 'error').mockImplementation(() => {})
   mockSelect.mockReturnValue({ order: mockOrder })
   mockOrder.mockResolvedValue({ data: [], error: null })
-  mockInsert.mockResolvedValue({ error: null })
+  mockInsert.mockReturnValue({ select: () => ({ single: mockInsertSingle }) })
+  mockInsertSingle.mockResolvedValue({ data: { id: 'new-id', name: 'Test Cup' }, error: null })
   mockUpdate.mockReturnValue({ eq: mockEq })
   mockEq.mockResolvedValue({ error: null })
   mockDelete.mockReturnValue({ eq: mockDeleteEq })
@@ -127,9 +137,20 @@ describe('addTournament', () => {
     })
   })
 
+  it('returns the saved event, normalised', async () => {
+    const saved = await addTournament({ name: 'Test Cup' })
+    expect(saved).toMatchObject({ id: 'new-id', name: 'Test Cup' })
+  })
+
+  it('returns null rather than failing when the saved row does not parse', async () => {
+    mockInsertSingle.mockResolvedValue({ data: { id: 42 }, error: null })
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+    await expect(addTournament({ name: 'X' })).resolves.toBeNull()
+  })
+
   it('throws on insert error and logs to console.error', async () => {
     const err = { message: 'insert failed' }
-    mockInsert.mockResolvedValue({ error: err })
+    mockInsertSingle.mockResolvedValue({ data: null, error: err })
     await expect(addTournament({ name: 'X' })).rejects.toBe(err)
     expect(console.error).toHaveBeenCalled()
   })

@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { CheckCircle, UserRoundX } from 'lucide-react'
 import type { MyRegistrationSummary } from '../nextMatch'
 import { Button } from '../../../components/ui/Button'
@@ -19,6 +20,8 @@ interface JoinEventCardProps {
   onRegister: () => void
   /** Sends the player to /me, which owns the payment flow. */
   onGoToPayment: () => void
+  /** Shown under "You're registered": the moment to ask them to bring a friend. */
+  share?: ReactNode
 }
 
 /**
@@ -35,6 +38,7 @@ export default function JoinEventCard({
   error,
   onRegister,
   onGoToPayment,
+  share,
 }: JoinEventCardProps) {
   if (summary.status === 'not_registered' || summary.status === 'cancelled') {
     const wasCancelled = summary.status === 'cancelled'
@@ -79,19 +83,22 @@ export default function JoinEventCard({
   const needsPayment = isUnpaid(ps) && hasTikkie
 
   return (
-    <div className="card flex items-center justify-between gap-2">
-      <div className="flex items-center gap-2 min-w-0">
-        <CheckCircle size={14} className="text-lob-success-solid flex-shrink-0" />
-        <span className="text-sm font-semibold text-lob-dark">You&apos;re registered</span>
+    <div className="card space-y-3">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <CheckCircle size={14} className="text-lob-success-solid flex-shrink-0" />
+          <span className="text-sm font-semibold text-lob-dark">You&apos;re registered</span>
+        </div>
+        {/* The viewer's own settled spot reads Confirmed, also when it came by transfer. */}
+        {isConfirmed ? (
+          <PaymentStatusBadge paymentStatus="paid" />
+        ) : needsPayment ? (
+          <TextButton tone="primary" onClick={onGoToPayment}>
+            Pay on the You tab
+          </TextButton>
+        ) : null}
       </div>
-      {/* The viewer's own settled spot reads Confirmed, also when it came by transfer. */}
-      {isConfirmed ? (
-        <PaymentStatusBadge paymentStatus="paid" />
-      ) : needsPayment ? (
-        <TextButton tone="primary" onClick={onGoToPayment}>
-          Pay on the You tab
-        </TextButton>
-      ) : null}
+      {share}
     </div>
   )
 }

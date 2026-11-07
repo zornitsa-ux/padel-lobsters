@@ -4,6 +4,10 @@ import { PageHeader } from '../../components/ui/PageHeader'
 import type { PageHeaderTab } from '../../components/ui/PageHeader'
 import type { NormalisedTournament } from '../../lib/normalise'
 import { useEventPhase } from './useEventPhase'
+import { useRegistrations } from './useRegistrations'
+import ShareEventButton from './ShareEventButton'
+import { isOpenToJoin } from './public/publicEventHelpers'
+import { splitRegistrationsByStatus } from './registration/utils'
 import { visibleEventTabs } from './eventPhase'
 import type { EventTab } from './eventPhase'
 
@@ -24,6 +28,11 @@ export default function EventShell({ tournament }: Props) {
   const { isAdmin } = useApp()
   const { phase, oscarsPhase } = useEventPhase(tournament)
   const base = `/events/${tournament.id}`
+  const openToJoin = isOpenToJoin({ event: tournament })
+  // Same query key as the tabs, so the spots-left count costs no extra fetch. ShareEventButton
+  // hides itself once sign-ups close; the gate here only skips the query.
+  const { data: regs } = useRegistrations(openToJoin ? tournament.id : null)
+  const registeredCount = regs && splitRegistrationsByStatus(regs).registered.length
 
   // Which tabs exist is a phase question, not a role question — splitting on
   // `isAdmin` alone is what put a Results tab on events with no scores.
@@ -46,6 +55,7 @@ export default function EventShell({ tournament }: Props) {
         title={tournament.name}
         backLink={{ to: '/events', label: 'Events' }}
         tabs={tabs}
+        rightAction={<ShareEventButton event={tournament} registeredCount={registeredCount} />}
       />
       <div className="px-4 pt-4">
         <Outlet />
