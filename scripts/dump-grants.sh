@@ -61,7 +61,7 @@ functions_sql="
     join aclexplode(p.proacl) a on true
    where p.pronamespace = 'public'::regnamespace
      and a.privilege_type = 'EXECUTE'
-     and a.grantee in ('anon'::regrole, 'authenticated'::regrole)"
+     and $browser_roles"
 
 tables_sql="
   select 'public.' || c.relname || ' ' || $grantee_sql || ' '
@@ -69,7 +69,7 @@ tables_sql="
     from pg_class c
     join aclexplode(c.relacl) a on true
    where c.relnamespace = 'public'::regnamespace
-     and c.relkind in ('r', 'v', 'm', 'S')
+     and c.relkind in ('r', 'p', 'v', 'm', 'f', 'S')
      and $browser_roles
    group by c.relname, a.grantee
   union all
@@ -101,8 +101,8 @@ case "$mode" in
     ;;
   check)
     status=0
-    diff -u --label expected "$functions_file" --label "$target" <(printf '%s\n' "$functions") || status=1
-    diff -u --label expected "$tables_file" --label "$target" <(printf '%s\n' "$tables") || status=1
+    diff -u --label expected_function_grants.txt "$functions_file" --label "functions ($target)" <(printf '%s\n' "$functions") || status=1
+    diff -u --label expected_table_grants.txt "$tables_file" --label "tables ($target)" <(printf '%s\n' "$tables") || status=1
     if (( status )); then
       echo "Grants for anon/authenticated drifted from supabase/expected_*_grants.txt — review the diff above. If the change is intentional, run \`npm run db:grants\` and commit the result." >&2
     fi

@@ -14,9 +14,8 @@
 -- Their version also revokes service_role's defaults; this one leaves
 -- service_role alone, but local tests already run without them.
 --
--- Functions are not covered: their EXECUTE comes from Postgres' built-in
--- PUBLIC grant, which default privileges don't remove on this stack
--- (20260727194010, section 2). db:grants:check guards functions and tables.
+-- Only objects created by postgres (every migration) are covered; defaults
+-- for objects supabase_admin creates are the platform's and need its role.
 
 -- ── 1. New tables and sequences: no browser access unless granted ────────
 -- Checked locally: with production's defaults in place, a table created after
@@ -25,6 +24,14 @@ alter default privileges for role postgres in schema public
   revoke all on tables from anon, authenticated;
 alter default privileges for role postgres in schema public
   revoke all on sequences from anon, authenticated;
+
+-- New functions: production also grants anon and authenticated EXECUTE
+-- explicitly, so a migration's `revoke execute ... from public` (the pattern
+-- 20260727194010 asks for) closed a function locally but left it callable by
+-- anon in production. PUBLIC's built-in EXECUTE stays on both, as that
+-- migration found; the revoke from public is still needed per function.
+alter default privileges for role postgres in schema public
+  revoke execute on functions from anon, authenticated;
 
 -- ── 2. Tables created under the old production defaults ──────────────────
 -- End state matches what their migrations grant (and local already has).
