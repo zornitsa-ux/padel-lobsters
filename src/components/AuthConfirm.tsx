@@ -5,7 +5,8 @@ import type { AuthError, EmailOtpType } from '@supabase/auth-js'
 import { supabase } from '../supabase'
 import { useApp } from '../context/useApp'
 import { PasswordForm } from '../features/auth/PasswordForm'
-import { isSafeReturnPath, takeReturnPath } from '../features/auth/returnPath'
+import { returnPathFromUrl, takeReturnPath } from '../features/auth/returnPath'
+import { safeAppPath } from '../lib/safePath'
 import { Button } from './ui/Button'
 
 type Status = 'ready' | 'verifying' | 'error' | 'email_change_confirmed' | 'set_password'
@@ -48,7 +49,9 @@ const MISSING_TOKEN_ERROR = 'This link is missing its verification token. Reques
 // execute links, and an automatic verify would burn the single-use token before
 // the person clicks.
 //
-// Sign-in types go to the saved return path, then `next`, then /home. A recovery
+// Sign-in types go to the email's `return_to` (the page this link's code was
+// asked for on, in any browser), then the saved return path, then `next`, then
+// /home. A recovery
 // link lands on "Set a new password". email_change stops on a confirmation
 // screen: the change applies on the first redemption (GoTrue v2.189 collapses
 // the double confirm for the token_hash flow), so the second email's link
@@ -72,8 +75,10 @@ export default function AuthConfirm() {
   const view = verifiedRecovery ? recoveryView({ session, sessionSettled }) : status
 
   const goToDestination = () => {
-    const next = params.get('next')
-    navigate(takeReturnPath() ?? (isSafeReturnPath(next) ? next : '/home'), { replace: true })
+    const saved = takeReturnPath()
+    const emailed = returnPathFromUrl({ url: params.get('return_to') })
+    const next = safeAppPath({ input: params.get('next') })
+    navigate(emailed ?? saved ?? next ?? '/home', { replace: true })
   }
 
   async function confirm() {

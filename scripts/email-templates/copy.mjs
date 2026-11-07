@@ -1,3 +1,10 @@
+const RETURN_TO = `  The link carries return_to (RedirectTo, encoded): the page the code was asked
+  for on (emailRedirectTo), so the link lands there in any browser. GoTrue
+  sends the site URL instead when it isn't on the redirect allow-list, and
+  AuthConfirm then falls back to next.
+
+`
+
 const SHARED = `  Shared shape (docs/pin-auth-removal DESIGN §2): the 6-digit code first,
   because a link tapped on iPhone opens Safari, not the home-screen app; then a
   token_hash link through the SPA's /auth/confirm route, never
@@ -27,14 +34,14 @@ export const TEMPLATES = {
   magic_link: {
     comment: `  Sign-in email: sent by signInWithOtp for an existing user.
 
-${SHARED}`,
+${RETURN_TO}${SHARED}`,
     title: 'Sign in to Padel Lobsters',
     heading: 'Sign in to Padel Lobsters',
     intro: 'Type this code into the app when it asks for a sign-in code.',
     codeLabel: 'Your sign-in code',
     buttonIntro: 'Or sign in on this device with the button.',
     buttonLabel: 'Sign in',
-    link: { type: 'magiclink', next: '/home' },
+    link: { type: 'magiclink', next: '/home', returnTo: true },
     wrapLinkText: true,
     footnote: `The code and link work once and expire in 1 hour.<br /><br />If you didn't ask to sign in, you can safely ignore this email.<br /><br />`,
   },
@@ -42,14 +49,14 @@ ${SHARED}`,
     comment: `  Sign-up email: sent instead of magic_link to a brand-new address while
   email confirmations are on (they are on in the hosted project).
 
-${SHARED}`,
+${RETURN_TO}${SHARED}`,
     title: 'Confirm your email',
     heading: 'Welcome to Padel Lobsters',
     intro: 'Type this code into the app to confirm your email and finish signing up.',
     codeLabel: 'Your code',
     buttonIntro: 'Or confirm on this device with the button.',
     buttonLabel: 'Confirm my email',
-    link: { type: 'email', next: '/home' },
+    link: { type: 'email', next: '/home', returnTo: true },
     wrapLinkText: true,
     footnote: `The code and link work once and expire in 1 hour.<br /><br />If you didn't sign up for Padel Lobsters, you can safely ignore this email.<br /><br />`,
   },

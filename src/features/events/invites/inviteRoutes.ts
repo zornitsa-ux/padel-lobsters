@@ -1,3 +1,4 @@
+import { safeAppPath } from '../../../lib/safePath'
 import { formatEventDate } from '../registration/utils'
 import type { TeamInvite } from '../teams/teamTypes'
 export const TEAM_INVITES_PATH = '/team-invites'
@@ -36,12 +37,8 @@ export const redirectTarget = ({
 // Where "Not now" goes: the page the redirect interrupted, if it was ours.
 export const inviteReturnPath = ({ state }: { state: unknown }): string => {
   const from = typeof state === 'object' && state !== null && 'from' in state ? state.from : null
-  const ours =
-    typeof from === 'string' &&
-    from.startsWith('/') &&
-    !from.startsWith('//') &&
-    !isExempt({ pathname: from })
-  return ours ? from : '/home'
+  const path = typeof from === 'string' ? safeAppPath({ input: from }) : null
+  return path && !isExempt({ pathname: path }) ? path : '/home'
 }
 
 export const inviteWhen = ({ invite }: { invite: TeamInvite }) =>

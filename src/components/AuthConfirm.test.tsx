@@ -61,6 +61,29 @@ describe('AuthConfirm — tap to confirm', () => {
     expect(window.localStorage.getItem('pl_auth_return_path')).toBeNull()
   })
 
+  it('goes to the emailed return_to when this browser saved no path', async () => {
+    const returnTo = encodeURIComponent(`${window.location.origin}/events/7/join?signup=1`)
+    renderAt(`/auth/confirm?token_hash=abc&type=email&next=/home&return_to=${returnTo}`)
+    fireEvent.click(screen.getByRole('button'))
+    expect((await screen.findByTestId('where')).textContent).toBe('/events/7/join?signup=1')
+  })
+
+  it("prefers the link's return_to over an older saved path, and clears the saved one", async () => {
+    window.localStorage.setItem('pl_auth_return_path', '/community')
+    const returnTo = encodeURIComponent(`${window.location.origin}/events/7/join?signup=1`)
+    renderAt(`/auth/confirm?token_hash=abc&type=email&next=/home&return_to=${returnTo}`)
+    fireEvent.click(screen.getByRole('button'))
+    expect((await screen.findByTestId('where')).textContent).toBe('/events/7/join?signup=1')
+    expect(window.localStorage.getItem('pl_auth_return_path')).toBeNull()
+  })
+
+  it('ignores a return_to that is only the site URL', async () => {
+    const returnTo = encodeURIComponent(`${window.location.origin}/`)
+    renderAt(`/auth/confirm?token_hash=abc&type=email&next=/events&return_to=${returnTo}`)
+    fireEvent.click(screen.getByRole('button'))
+    expect((await screen.findByTestId('where')).textContent).toBe('/events')
+  })
+
   it('falls back to a valid next, then /home', async () => {
     renderAt('/auth/confirm?token_hash=abc&type=email&next=/events')
     fireEvent.click(screen.getByRole('button'))
